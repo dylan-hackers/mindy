@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.1 1994/03/24 22:50:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.2 1994/03/28 11:06:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -60,11 +60,13 @@ struct load_info {
     char *name;
     int fd;
     unsigned char *buffer, *ptr, *end;
-    obj_t *table, *table_fill, *table_end;
+    obj_t *table, *table_end;
+    int next_handle;
     boolean swap_bytes;
     boolean done;
     struct library *library;
     struct module *module;
+    obj_t source_file;
 };
 
 static obj_t (*opcodes[256])(struct load_info *info);
@@ -213,40 +215,51 @@ static obj_t fop_byte_order(struct load_info *info)
     return obj_False;
 }
 
-static obj_t store(struct load_info *info, obj_t value)
+static int next_handle(struct load_info *info)
 {
-    if (info->table_fill == info->table_end) {
-	if (info->table) {
-	    int size = info->table_fill - info->table;
-	    int new_size = (size < 16*1024) ? size*2 : size+8*1024;
-	    info->table = realloc(info->table, sizeof(obj_t) * new_size);
-	    info->table_end = info->table + new_size;
-	    info->table_fill = info->table + size;
+    int res = info->next_handle++;
+    return res;
+}
+
+static obj_t store(struct load_info *info, obj_t value, int handle)
+{
+    int size = info->table_end - info->table;
+
+    if (handle >= size) {
+	if (handle < 16*1024) {
+	    if (size == 0)
+		size = 1024;
+	    while (handle >= size)
+		size *= 2;
 	}
-	else {
-	    info->table = malloc(sizeof(obj_t) * 1024);
-	    info->table_fill = info->table;
-	    info->table_end = info->table + 1024;
-	}
+	else
+	    size = ((handle + 16*1024-1) / (16*1024)) * 16*1024;
+	if (info->table)
+	    info->table = realloc(info->table, sizeof(obj_t) * size);
+	else
+	    info->table = malloc(sizeof(obj_t) * size);
+	info->table_end = info->table + size;
     }
 
-    *info->table_fill++ = value;
+    info->table[handle] = value;
 
     return value;
 }
 
 static obj_t fop_store(struct load_info *info)
 {
-    return(store(info, read_thing(info)));
+    int handle = next_handle(info);
+    return(store(info, read_thing(info), handle));
 }
 
 static obj_t ref(struct load_info *info, int index)
 {
-    int table_size = info->table_fill - info->table;
+    int table_size = info->table_end - info->table;
 
     if (index < 0 || index >= table_size)
 	lose("Bogus ref index %d, should be >= 0 and < %d\n",
 	     index, table_size);
+
     return info->table[index];
 }
 
@@ -347,22 +360,26 @@ static obj_t fop_string(struct load_info *info)
 
 static obj_t fop_short_symbol(struct load_info *info)
 {
-    return store(info, symbol(string_chars(fop_short_string(info))));
+    return store(info, symbol(string_chars(fop_short_string(info))),
+		 next_handle(info));
 }
 
 static obj_t fop_symbol(struct load_info *info)
 {
-    return store(info, symbol(string_chars(fop_string(info))));
+    return store(info, symbol(string_chars(fop_string(info))),
+		 next_handle(info));
 }
 
 static obj_t fop_short_keyword(struct load_info *info)
 {
-    return store(info, keyword(string_chars(fop_short_string(info))));
+    return store(info, keyword(string_chars(fop_short_string(info))),
+		 next_handle(info));
 }
 
 static obj_t fop_keyword(struct load_info *info)
 {
-    return store(info, keyword(string_chars(fop_string(info))));
+    return store(info, keyword(string_chars(fop_string(info))),
+		 next_handle(info));
 }
 
 static obj_t fop_nil(struct load_info *info)
@@ -541,9 +558,11 @@ static obj_t fop_vectorn(struct load_info *info)
     int len = read_byte(info);
 
     if (len == 255)
-	len = read_int4(info);
+	len = read_int4(info)+9+254+(1<<16);
     else if (len == 254)
-	len = read_uint2(info);
+	len = read_uint2(info)+9+254;
+    else
+	len += 9;
 
     return read_vector(info, len);
 }
@@ -572,7 +591,11 @@ static obj_t fop_builtin_writable_value_cell(struct load_info *info)
 
 static obj_t read_component(struct load_info *info, int nconst, int nbytes)
 {
-    obj_t res = make_component(read_thing(info), nconst, nbytes);
+    obj_t debug_name = read_thing(info);
+    int frame_size = fixnum_value(read_thing(info));
+    obj_t debug_info = read_thing(info);
+    obj_t res = make_component(debug_name, frame_size, info->source_file,
+			       debug_info, nconst, nbytes);
     int i;
 
     for (i = 0; i < nconst; i++)
@@ -656,6 +679,12 @@ static obj_t fop_in_module(struct load_info *info)
     if (CurModule == NULL)
 	CurModule = info->module;
     return name;
+}
+
+static obj_t fop_source_file(struct load_info *info)
+{
+    info->source_file = read_thing(info);
+    return info->source_file;
 }
 
 static obj_t make_top_level_method(obj_t component)
@@ -804,7 +833,7 @@ static obj_t fop_done(struct load_info *info)
 static void load_group(struct load_info *info)
 {
     info->done = FALSE;
-    info->table_fill = info->table;
+    info->next_handle = 0;
     while (!info->done)
 	read_thing(info);
 }
@@ -818,11 +847,12 @@ struct load_info *make_load_info(char *name, int fd)
     info->fd = fd;
     info->buffer = (unsigned char *)malloc(BUFFER_SIZE);
     info->ptr = info->end = info->buffer;
-    info->table = info->table_fill = info->table_end = 0;
+    info->table = info->table_end = 0;
     info->swap_bytes = FALSE;
     info->done = FALSE;
     info->library = NULL;
     info->module = NULL;
+    info->source_file = obj_False;
 
     return info;
 }
@@ -1030,6 +1060,7 @@ void init_loader(void)
     opcodes[fop_SHORT_METHOD] = fop_short_method;
     opcodes[fop_IN_LIBRARY] = fop_in_library;
     opcodes[fop_IN_MODULE] = fop_in_module;
+    opcodes[fop_SOURCE_FILE] = fop_source_file;
     opcodes[fop_TOP_LEVEL_FORM] = fop_top_level_form;
     opcodes[fop_DEFINE_CONSTANT] = fop_define_constant;
     opcodes[fop_DEFINE_VARIABLE] = fop_define_variable;
