@@ -8,12 +8,12 @@
 #include <signal.h>
 #include <stdio.h>
 #include <errno.h>
+#include <time.h>
 
 int fd_open (const char *filename, int flags, int mode)
 {
     return open(filename, flags, mode);
 }
-#   include <sys/time.h>
 
 int fd_close (int fd)
 {
