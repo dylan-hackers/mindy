@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.8 1995/04/30 04:29:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.9 1995/05/03 07:13:19 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -110,9 +110,6 @@ define method seed-representations () => ();
       class.speed-representation := speed-rep;
       class.space-representation := space-rep;
     end;
-  set-representations(dylan-value(#"<object>"), $general-rep, $general-rep);
-  set-representations(dylan-value(#"<functional-object>"),
-		      $general-rep, $general-rep);
   begin
     let space-rep = make(<immediate-representation>,
 			 more-general: $boolean-rep,
@@ -227,46 +224,155 @@ end;
 
 define variable *assigning-representations-for* = #();
 
+define method potentially-uses-data-word-rep? (class :: <cclass>)
+    => res :: <boolean>;
+  class.functional?
+    & ~member?(class, *assigning-representations-for*)
+    & class.sealed?
+    & empty?(class.direct-subclasses)
+    & class.all-slot-infos.size == 2;
+end;
+
+
 define method assign-representations (class :: <cclass>) => ();
   //
-  // First, fill in a heap representation.  But to do that, we need to
-  // determine if a data-word is possible.
-  if (class.functional?
-	& ~member?(class, *assigning-representations-for*)
-	& class.sealed?
-	& size(class.subclasses) == 1
-	& size(class.all-slot-infos) == 2)
-    let old-assigning-reps-for = *assigning-representations-for*;
-    block ()
-      *assigning-representations-for* := pair(class, old-assigning-reps-for);
-      let type = class.all-slot-infos[1].slot-type;
-      let speed-rep = pick-representation(type, #"speed");
-      if (instance?(speed-rep, <data-word-representation>))
-	local
-	  method dup-rep (rep :: <data-word-representation>)
-	    make(<data-word-representation>,
-		 more-general: $general-rep,
-		 to-more-general: #f,
-		 from-more-general: rep.representation-from-more-general,
-		 alignment: rep.representation-alignment,
-		 size: rep.representation-size,
-		 c-type: rep.representation-c-type,
-		 class: class,
-		 data-word-member: rep.representation-data-word-member);
+  // First, check to see if the class is abstract.
+  if (class.abstract?)
+    //
+    // Currently, abstract classes can only have abstract superclasses, but
+    // check that because we depend on it and it might change.
+    assert(every?(abstract?, class.precedence-list));
+    //
+    // The class is indeed abstract.  So we have to pick between the
+    // general rep and the heap rep.  We would rather use the heap rep
+    // but we can only do that if we can determine that no subclasses can
+    // possibly have a data-word rep.
+    let rep
+      = if (class.sealed?)
+	  //
+	  // The class is sealed, so we can check all the subclasses if
+	  // necessary.
+	  //
+	  if (class.all-slot-infos.size > 2)
+	    //
+	    // If there are more than two slots, no subclass can possibly use
+	    // a data word representation.
+	    $heap-rep;
+	  else
+	    block (return)
+	      for (subclass in class.subclasses)
+		//
+		// Don't bother considering abstract classes.
+		unless (subclass.abstract?)
+		  //
+		  // Check the representation of the subclass.  Note: if the
+		  // slot type of the subclass is this class we will end
+		  // up right back here.  But the subclass will have been
+		  // added to *assigning-reps-for* so the next time though
+		  // it will return $heap-rep.  Which is what we want to
+		  // see.
+		  let subclass-rep = pick-representation(subclass, #"speed");
+		  if (instance?(subclass-rep, <data-word-representation>)
+			| instance?(subclass-rep, <general-representation>))
+		    return($general-rep);
+		  end;
+		end;
+	      end;
+	      //
+	      // We only get here if none of the subclasses wanted a data
+	      // word.  So use the heap representation.
+	      $heap-rep;
+	    end;
 	  end;
-	class.speed-representation := dup-rep(speed-rep);
-	class.space-representation
-	  := dup-rep(pick-representation(type, #"space"));
-      else
-	class.speed-representation := $heap-rep;
-	class.space-representation := $heap-rep;    
-      end;
-    cleanup
-      *assigning-representations-for* := old-assigning-reps-for;
-    end;
+	else
+	  //
+	  // The class is open, so new classes could be added at any time.
+	  //
+	  select (class.all-slot-infos.size)
+	    1 =>
+	      // Only one slot (%object-class) so any newly added subclass
+	      // might very well pick a data-word representation.
+	      $general-rep;
+	    2 =>
+	      // Two slots (%object-class and one other).  If that other slot
+	      // can't have a data-word representation, then no subclasses
+	      // can have a data-word representation.  Therefore, we can use
+	      // the heap representation.
+	      //
+	      // But we need to protect against recursion.  This can happen
+	      // two ways: the slot's type involves us directly, or the slot's
+	      // type is another potentially data-word represented class
+	      // that involves us in its slot type.  The second case will
+	      // be handled by the recursion protection below, but the first
+	      // case won't be.  So we have to protect against it here.
+	      //
+	      // Either way, we guess we won't end up needed the general rep.
+	      // This guess might turn out wrong, but if so, we'll fix it up
+	      // during the unwind.
+	      // 
+	      if (member?(class, *assigning-representations-for*))
+		$heap-rep;
+	      else
+		let old-assigning-reps-for = *assigning-representations-for*;
+		block ()
+		  *assigning-representations-for*
+		    := pair(class, old-assigning-reps-for);
+		  let type = class.all-slot-infos[1].slot-type;
+		  let slot-rep = pick-representation(type, #"speed");
+		  if (instance?(slot-rep, <data-word-representation>)
+			| instance?(slot-rep, <general-representation>))
+		    $general-rep;
+		  else
+		    $heap-rep;
+		  end;
+		cleanup
+		  *assigning-representations-for* := old-assigning-reps-for;
+		end;
+	      end;
+	    otherwise =>
+	      $heap-rep;
+	  end;
+	end;
+    class.speed-representation := rep;
+    class.space-representation := rep;
+
   else
-    class.speed-representation := $heap-rep;
-    class.space-representation := $heap-rep;    
+    //
+    // The class is concrete.  See if we can use a data-word representation
+    // for it.  If not, then use the heap representation.
+    if (potentially-uses-data-word-rep?(class))
+      let old-assigning-reps-for = *assigning-representations-for*;
+      block ()
+	*assigning-representations-for* := pair(class, old-assigning-reps-for);
+	let type = class.all-slot-infos[1].slot-type;
+	let speed-rep = pick-representation(type, #"speed");
+	if (instance?(speed-rep, <data-word-representation>))
+	  local
+	    method dup-rep (rep :: <data-word-representation>)
+	      make(<data-word-representation>,
+		   more-general: $general-rep,
+		   to-more-general: #f,
+		   from-more-general: rep.representation-from-more-general,
+		   alignment: rep.representation-alignment,
+		   size: rep.representation-size,
+		   c-type: rep.representation-c-type,
+		   class: class,
+		   data-word-member: rep.representation-data-word-member);
+	    end;
+	  class.speed-representation := dup-rep(speed-rep);
+	  class.space-representation
+	    := dup-rep(pick-representation(type, #"space"));
+	else
+	  class.speed-representation := $heap-rep;
+	  class.space-representation := $heap-rep;    
+	end;
+      cleanup
+	*assigning-representations-for* := old-assigning-reps-for;
+      end;
+    else
+      class.speed-representation := $heap-rep;
+      class.space-representation := $heap-rep;    
+    end;
   end;
 end;
 
@@ -288,8 +394,8 @@ define method pick-representation
     let char-rep = pick-representation(type.base-class, optimize-for);
     *byte-char-rep*
       := make(<data-word-representation>, more-general: char-rep,
-	      alignment: 1, size: 1, c-type: "char", class: type.base-class,
-	      data-word-member: "l");
+	      alignment: 1, size: 1, c-type: "unsigned char",
+	      class: type.base-class, data-word-member: "l");
   end;
 end;
 
