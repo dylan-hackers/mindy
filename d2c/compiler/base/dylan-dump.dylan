@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.8 1996/02/13 14:48:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.9 1996/02/18 05:21:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -102,8 +102,18 @@ define method dump-od(obj :: <extended-integer>, buf :: <dump-state>)
   			 raw-data: $odf-word-raw-data-format);
   let len = ceiling/(integer-length(obj), $word-bits);
   dump-word(len, buf);
-  for (i from 0 below len, x = obj then ash(x, - $word-bits))
-    dump-word(logand(x, $word-mask), buf);
+  for (i :: <integer> from 0 below len,
+       x :: <extended-integer> = obj then ash(x, - $word-bits))
+    let word = logand(x, $word-mask);
+#if (~mindy)
+    let word :: <integer>
+      = if (word <= $maximum-integer)
+	  as(<integer>, word);
+	else
+	  as(<integer>, logior(word, ash(-$e1, $word-bits)));
+	end if;
+#end
+    dump-word(word, buf);
   end;
 end method;
 
@@ -121,8 +131,9 @@ add-od-loader(*default-dispatcher*, #"extended-integer",
       = sign-extend(buffer-word(buffer, next + ((len - 1) * $word-bytes)));
 
     for (i from len - 2 to 0 by -1)
-      res := logior(buffer-word(buffer, (i * $word-bytes) + next),
-                    ash(res, $word-bits));
+      res := logior(logand(buffer-word(buffer, (i * $word-bytes) + next),
+			   $word-mask),
+		    ash(res, $word-bits));
     end for;
 
     state.od-next := next + bsize;
