@@ -1,18 +1,14 @@
 module:  c-lexer
 author:  Robert Stockton (rgs@cs.cmu.edu)
-synopsis: Encapsulates the lexical conventions of the C language.  Along with
-          c-lexer-cpp.dylan, this file also incorporates most of the
-          functionality of CPP.
+synopsis: Encapsulates the lexical conventions of the C language.
+          This file also incorporates most of the functionality of CPP.
 copyright: see below
-	   This code was produced by the Gwydion Project at Carnegie Mellon
-	   University.  If you are interested in using this code, contact
-	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: 
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-lexer-cpp.dylan,v 1.15 2003/04/09 17:52:24 gabor Exp $
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -34,14 +30,6 @@ rcs-header: $Header:
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 // Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
-//======================================================================
-
-//======================================================================
-//
-// Copyright (c) 1994  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
-// All rights reserved.
-// 
 //======================================================================
 
 //======================================================================
@@ -144,10 +132,13 @@ end method find-framework;
 // matching to the formal parameters and for actually expanding the token
 // sequences when they are matched.
 //
-define method get-macro-params
-    (state :: <tokenizer>, params :: <list>) => (params :: <list>);
+define function get-macro-params
+    (state :: <tokenizer>,
+     params :: <list>,
+     #key expand)
+ => (params :: <list>);
   let paren-count = 0;
-  for (token = get-token(state) then get-token(state, expand: #f),
+  for (token = get-token(state) then get-token(state, expand: expand),
        list = #() then pair(token, list),
        until: (paren-count == 0
 		& instance?(token, type-union(<rparen-token>, <comma-token>))))
@@ -165,7 +156,7 @@ define method get-macro-params
       pair(list, params);
     end if;
   end for;
-end method get-macro-params;
+end function get-macro-params;
 
 // When we are generating expansions, we wish to make copies of the token
 // rather than return the original.  This will put the right character
@@ -194,15 +185,21 @@ define constant empty-table = make(<self-organizing-list>);
 // cpp-table.  Thus they will have appropriate location information for error
 // reporting. 
 //
-// XXX - added forbidden-expansions to prevent recursive macro
-// expansion. This is insufficient by itself; we're also supposed to tag
+// Added forbidden-expansions to prevent recursive macro
+// expansion. [obsolete: This is insufficient by itself; we're also supposed to tag
 // tokens which we weren't allow to expand to ensure that they never get
 // expanded in any other place. But this should handle the most common
-// problems.
+// problems.]
+// Now the called functions accept #key expand to be a list of forbidden-expansions
+// from the outer level. This means that the expansion will be done for all but the
+// names included in the list. This way we can expand macro calls to "foo" that appear
+// as actuals of an outer macro call to "foo" (as in foo(foo(XXX))) but suppress
+// expansion in a "#define foo(P) foo(P)" situation, because "foo" in the rhs will
+// be put in the forbidden-expansions.
 
 define constant $maximum-cpp-expansion-depth = 32;
 
-define /* exported */ method check-cpp-expansion
+define /* exported */ function check-cpp-expansion
     (string :: <string>, tokenizer :: <tokenizer>,
      #key parameters: parameter-table = empty-table,
      forbidden-expansions = #(),
@@ -213,6 +210,32 @@ define /* exported */ method check-cpp-expansion
   let token-list :: type-union(<sequence>, <false>)
     = (element(parameter-table, headless-string, default: #f)
 	 | element(tokenizer.cpp-table, string, default: #f));
+
+  local method expand-inner(token-list :: <sequence>, #key parameters = empty-table)
+  	let forbidden = pair(string, forbidden-expansions);
+	for (token in token-list)
+	  unless (check-cpp-expansion(token.string-value, tokenizer,
+				      parameters: parameters,
+				      current-depth: current-depth + 1,
+				      forbidden-expansions: forbidden))
+	    // Successful call will have already pushed the expanded tokens
+	    let cls = element(reserved-word-table,
+			      token.string-value, default: #f);
+	    if (cls)
+	      let reserved-word-token = make(cls,
+					     position: tokenizer.position,
+					     string: string-value(token),
+					     generator: tokenizer);
+	      push(tokenizer.unget-stack, reserved-word-token);
+	    else
+	      push(tokenizer.unget-stack, copy-token(token, tokenizer));
+	    end if;
+	  end unless;
+	finally
+	  #t;
+	end for;
+      end method expand-inner;
+
   case
     current-depth >= $maximum-cpp-expansion-depth =>
       parse-error(tokenizer, "Preprocessor macro expansion of ~s too deep",
@@ -253,7 +276,7 @@ define /* exported */ method check-cpp-expansion
 	push(tokenizer.unget-stack, lparen-token);
 	#f;
       else
-	let params = get-macro-params(tokenizer, #());
+	let params = get-macro-params(tokenizer, #(), expand: forbidden-expansions);
 	let formal-params = token-list.head;
 	if (params.size ~= formal-params.size)
 	  parse-error(tokenizer, "Wrong number of parameters in macro use.")
@@ -263,59 +286,17 @@ define /* exported */ method check-cpp-expansion
 	for (key in formal-params, value in params)
 	  params-table[key] := value;
 	end for;
-	let forbidden = pair(string, forbidden-expansions);
-	for (token in token-list.tail)
-	  unless (check-cpp-expansion(token.string-value, tokenizer,
-				      parameters: params-table,
-				      current-depth: current-depth + 1,
-				      forbidden-expansions: forbidden))
-	    // Successful call will have already pushed the expanded tokens
-	    let cls = element(reserved-word-table,
-			      token.string-value, default: #f);
-	    if (cls)
-	      let reserved-word-token = make(cls,
-					     position: tokenizer.position,
-					     string: string-value(token),
-					     generator: tokenizer);
-	      push(tokenizer.unget-stack, reserved-word-token);
-	    else
-	      push(tokenizer.unget-stack, copy-token(token, tokenizer));
-	    end if;
-	  end unless;
-	finally
-	  #t;
-	end for;
+	expand-inner(token-list.tail, parameters: params-table);
       end if;
     otherwise =>
       // Depends upon the fact that tokens are stored in reverse order in the
       // stored macro expansion.
-      
-      let forbidden = pair(string, forbidden-expansions);
-      for (token in token-list)
-	unless (check-cpp-expansion(token.string-value, tokenizer,
-				    current-depth: current-depth + 1,
-				    forbidden-expansions: forbidden))
-	  // Successful call will have already pushed the expanded tokens
-	  let cls = element(reserved-word-table,
-			    token.string-value, default: #f);
-	  if (cls)
-	    let reserved-word-token = make(cls,
-					   position: tokenizer.position,
-					   string: string-value(token),
-					   generator: tokenizer);
-	    push(tokenizer.unget-stack, reserved-word-token);
-	  else
-	    push(tokenizer.unget-stack, copy-token(token, tokenizer));
-	  end if;
-	end unless;
-      finally
-	#t;
-      end for;
+      expand-inner(token-list);
   end case;
-end method check-cpp-expansion;
+end function check-cpp-expansion;
 
 // framework-include
-// Ceck for #include<Framework/Framework.h>
+// Check for #include<Framework/Framework.h>
 
 define method framework-include( filename :: <string> )
 =>( full-name :: false-or( <string> ), stream :: false-or( <stream> ) )
