@@ -1,7 +1,7 @@
 module: garbage-collection
 
 define interface
-  #include "gc/gc.h",
+  #include "gc.h",
     import: all-recursive,
     name-mapper: c-to-dylan,
     exclude: {"pthread_create", "pthread_sigmask", 

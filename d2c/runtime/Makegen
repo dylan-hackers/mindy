@@ -2,8 +2,7 @@ local($common);
 
 if (!$enable_bootstrap || $enable_mindy_bootstrap) {
     if ($host_name eq $target_name) {
-	do compile_subdirs('c-code',
-			   'gc');
+	do compile_subdirs('c-code');
     };
 
     do compile_subdirs('dylan',

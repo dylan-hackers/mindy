@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.12 2002/12/23 00:24:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.13 2003/01/21 07:38:21 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -289,7 +289,6 @@ define method build-executable (state :: <single-file-mode-state>) => ();
 
   // Under Unix, the order of the libraries is significant!  First to
   // be added go at the end of the command line...
-  add-archive("gc");
   add-archive("runtime");
 
   for (unit in *units*)
@@ -322,10 +321,14 @@ define method build-executable (state :: <single-file-mode-state>) => ();
   let objects = format-to-string("%s%s %s", state.unit-name, state.unit-target.object-filename-suffix, unit-libs);
 
   let compile-string
-    = substring-replace(format-to-string(state.unit-target.compile-c-command,
-                                         concatenate(state.unit-name, ".c"),
-                                         concatenate(state.unit-name, state.unit-target.object-filename-suffix)),
-                        "$(CCFLAGS)", cc-flags);
+    = format-to-string(state.unit-target.compile-c-command,
+                       concatenate(state.unit-name, ".c"),
+                       concatenate(state.unit-name,
+                                   state.unit-target.object-filename-suffix));
+  let compile-string
+    = substring-replace(compile-string, "$(CCFLAGS)", cc-flags);
+  let compile-string
+    = substring-replace(compile-string, "$(GC_LIBS)", $gc-libs);
 
   close(state.unit-stream);
   state.unit-stream := #f;

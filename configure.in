@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.107 2003/01/15 02:19:15 prom Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.108 2003/01/21 07:38:15 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -401,8 +401,8 @@ AC_SUBST(enable_d2c_bootstrap)
 #--------------------------------------------------------------------
 
 # Runtime libraries which must match the compiler used to build d2c.
-RUNTIME_LIBRARIES="libgc.a libruntime.a dylan.lib.du melange-support.lib.du"
-EXTRA_RUNTIME_LIBRARIES="libdylan.a libdylan-dylan.a llibmelange.a libmelange-support.a libmelange-support-dylan.a"
+RUNTIME_LIBRARIES="libruntime.a dylan.lib.du melange-support.lib.du"
+EXTRA_RUNTIME_LIBRARIES="libgc.a libdylan.a libdylan-dylan.a llibmelange.a libmelange-support.a libmelange-support-dylan.a"
 
 # Delete our local runtime directory, if it exists.
 LOCAL_RUNTIME="$buildroot"/previous_runtime
@@ -476,6 +476,33 @@ if test "$with_site_dylan_prefix" = yes; then
     with_site_dylan_prefix=no
 fi
 AC_SUBST(with_site_dylan_prefix)
+
+#--------------------------------------------------------------------
+#	Look for gc, set GC_CFLAGS and GC_LIBS
+#--------------------------------------------------------------------
+AC_ARG_WITH(gc-prefix, [  --with-gc-prefix=PFX    Prefix where Boehm gc is installed],
+            gc_prefix="$withval", gc_prefix="")
+if test "x$gc_prefix" != x; then
+  GC_CFLAGS="-I$gc_prefix/include"
+  GC_LIBS="-L$gc_prefix/lib -lgc"
+fi
+save_CPPFLAGS="$CPPFLAGS"
+save_LIBS="$LIBS"
+CPPFLAGS="$GC_CFLAGS $CPPFLAGS"
+LIBS="$GC_LIBS $LIBS"
+AC_CHECK_HEADER(gc.h, , AC_MSG_ERROR([
+Cannot locate the Boehm-Weiser conservative garbage collector. Please
+download the library from http://www.hpl.hp.com/personal/Hans_Boehm/gc/
+or from your operating system distribution.]))
+AC_TRY_LINK([#include "gc.h"], [void *a = GC_malloc_ignore_off_page(512)],
+            , AC_MSG_ERROR([
+Cannot link with the Boehm-Weiser conservative garbage collector library.
+Please download the library from http://www.hpl.hp.com/personal/Hans_Boehm/gc/
+or from your operating system distribution.]))
+CPPLAGS="$save_CPPLAGS"
+LIBS="$save_LIBS"
+AC_SUBST(GC_CFLAGS)
+AC_SUBST(GC_LIBS)
 
 #--------------------------------------------------------------------
 #	Look for GTK+, set GTK_CFLAGS and GTK_LIBS

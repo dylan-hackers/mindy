@@ -2,6 +2,8 @@ if ($host_platform{'integer_length'} >= 64) {
         $CFLAGS = "$CFLAGS -DDYLAN_64BIT";
 }       
 	
+$COPTS = "$COPTS $GC_CFLAGS";
+
 $D2CFLAGS = '-L../dylan';
 
 do emit_library_rule(

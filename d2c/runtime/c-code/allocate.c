@@ -3,7 +3,7 @@
 
 #include "runtime.h"
 
-#include "../gc/include/gc.h"
+#include <gc.h>
 
 heapptr_t allocate(int bytes)
 {

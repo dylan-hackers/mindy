@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.12 2002/12/23 00:24:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.13 2003/01/21 07:38:21 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -367,6 +367,7 @@ define method emit-make-prologue (state :: <lid-mode-state>) => ();
   if (libtool)
     format(makefile, "LIBTOOL = %s\n", libtool);
   end;
+  format(makefile, "GC_LIBS = %s\n", $gc-libs);   
 
   format(makefile, "# We only know the ultimate target when we've finished"
 	   " building the rest\n");
@@ -714,7 +715,6 @@ define method link-arguments (state :: <lid-mode-state>)
 
   // Under Unix, the order of the libraries is significant!  First to
   // be added go at the end of the command line...
-  add-archive("gc");
   add-archive("runtime");
 
   for (unit in *units*)

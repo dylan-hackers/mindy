@@ -1,6 +1,6 @@
 module: garbage-collection
 
-c-include("gc/include/gc.h");
+c-include("gc.h");
 
 define constant <GC-PTR> = <machine-pointer>;
 
