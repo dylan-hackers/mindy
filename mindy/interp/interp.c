@@ -1,7 +1,7 @@
 /**********************************************************************\
 *
 *  Copyright (c) 1994  Carnegie Mellon University
-*  Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
+*  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
 *  
 *  Use and copying of this software and preparation of derivative
@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.6 2003/03/15 22:25:03 gabor Exp $
+* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.7 2003/03/17 23:27:20 andreas Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -673,100 +673,102 @@ static void op_gt(int byte, struct thread *thread)
     }
 }
 
-void interpret_next_byte(struct thread *thread)
+__inline__ void interpret_byte(int byte, struct thread *thread)
 {
-# define FIFTEEN_TIMES(op) \
+
+static void (*const preters[0x100])(int byte, struct thread *thread)
+  = {
+    op_flame,
+    op_breakpoint,
+    op_return_single,
+    op_make_value_cell,
+    op_value_cell_ref,
+    op_value_cell_set,
+    op_make_method,
+    op_check_type,
+    op_check_type_function,
+    op_canonicalize_value,
+    op_push_byte,
+    op_push_int,
+    op_conditional_branch,
+    op_branch,
+    op_push_nil,
+    op_push_unbound,
+    op_push_true,
+    op_push_false,
+    op_dup,
+    op_dot_tail,
+    op_dot,  // twice!
+    op_dot, // twice!
+    
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    
+
+#define FIFTEEN_TIMES(op) \
   op,op,op,op,op,op,op,op,op,op,op,op,op,op,op
 
-# define SIXTEEN_TIMES(op) \
+#define SIXTEEN_TIMES(op) \
   FIFTEEN_TIMES(op ## _immed),op
+    
+    SIXTEEN_TIMES(op_push_constant),
+    SIXTEEN_TIMES(op_push_arg),
+    
+    SIXTEEN_TIMES(op_pop_arg),
+    SIXTEEN_TIMES(op_push_local),
+    SIXTEEN_TIMES(op_pop_local),
+    SIXTEEN_TIMES(op_call_tail),
+    SIXTEEN_TIMES(op_call), // twice!
+    SIXTEEN_TIMES(op_call), // twice!
+    SIXTEEN_TIMES(op_push_value),
+    SIXTEEN_TIMES(op_push_function),
+    SIXTEEN_TIMES(op_pop_value),
+    
+    FIFTEEN_TIMES(op_flame), op_flame,
+    FIFTEEN_TIMES(op_flame), op_flame,
+    
+    op_plus,
+    op_minus,
+    op_lt,
+    op_le,
+    op_eq,
+    op_idp,
+    op_ne,
+    op_ge,
+    op_gt,
+    
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame,
+    op_flame
+    
+  };
+ 
+ preters[byte](byte, thread);
+}
 
-  static void (*const preters[0x100])(int byte, struct thread *thread)
-   = {
-       op_flame,
-       op_breakpoint,
-       op_return_single,
-       op_make_value_cell,
-       op_value_cell_ref,
-       op_value_cell_set,
-       op_make_method,
-       op_check_type,
-       op_check_type_function,
-       op_canonicalize_value,
-       op_push_byte,
-       op_push_int,
-       op_conditional_branch,
-       op_branch,
-       op_push_nil,
-       op_push_unbound,
-       op_push_true,
-       op_push_false,
-       op_dup,
-       op_dot_tail,
-       op_dot,  // twice!
-       op_dot, // twice!
-
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-
-       SIXTEEN_TIMES(op_push_constant),
-       SIXTEEN_TIMES(op_push_arg),
-
-       SIXTEEN_TIMES(op_pop_arg),
-       SIXTEEN_TIMES(op_push_local),
-       SIXTEEN_TIMES(op_pop_local),
-       SIXTEEN_TIMES(op_call_tail),
-       SIXTEEN_TIMES(op_call), // twice!
-       SIXTEEN_TIMES(op_call), // twice!
-       SIXTEEN_TIMES(op_push_value),
-       SIXTEEN_TIMES(op_push_function),
-       SIXTEEN_TIMES(op_pop_value),
-
-       FIFTEEN_TIMES(op_flame), op_flame,
-       FIFTEEN_TIMES(op_flame), op_flame,
-
-       op_plus,
-       op_minus,
-       op_lt,
-       op_le,
-       op_eq,
-       op_idp,
-       op_ne,
-       op_ge,
-       op_gt,
-
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame,
-       op_flame
-     };
-
-# undef FIFTEEN_TIMES
-# undef SIXTEEN_TIMES
-
+void interpret_next_byte(struct thread *thread)
+{
   int timer = OPS_PER_TIME_SLICE ;
 
-  while(timer-- > 0)
-  {
-    int byte = decode_byte(thread);
-    preters[byte](byte, thread);
-  }
+  while(timer-- > 0) 
+    interpret_byte(decode_byte(thread), thread);
 }
 
 
 
-/* Entry points into the interpteter. */
+/* Entry points into the interpreter. */
 
 void set_byte_continuation(struct thread *thread, obj_t component)
 {
