@@ -1,11 +1,11 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.7 2001/05/31 03:00:03 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.8 2001/06/01 17:43:28 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -272,14 +272,8 @@ define method initialize
   op.derived-type := guaranteed-type.ctype-extent;
 end;
 
-
-define constant boolean-ctype-extent
-    = method () => boolean-ctype-extent :: <ctype>;
-	specifier-type(#"<boolean>").ctype-extent;
-      end method;
-
 define class <instance?> (<operation>)
-  inherited slot derived-type, init-function: boolean-ctype-extent;
+  inherited slot derived-type, init-function: boolean-ctype;
   slot type :: <ctype>, required-init-keyword: type:;
 end;
 
@@ -679,6 +673,7 @@ define sealed domain make(singleton(<function-literal>));
 define sealed domain make(singleton(<method-literal>));
 // <exit-function> -- subclass of <abstract-function-literal>, <dependent-mixin>
 define sealed domain make(singleton(<exit-function>));
+define sealed domain initialize(<exit-function>);
 // <fer-function-region> -- subclass of <function-region>, <queueable-mixin>, <annotatable>
 define sealed domain make(singleton(<fer-function-region>));
 define sealed domain initialize(<fer-function-region>);
