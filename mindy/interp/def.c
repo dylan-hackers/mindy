@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.11 1994/07/11 20:28:42 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.12 1994/08/18 18:42:49 wlott Exp $
 *
 * This file implements the stuff to install definitions.
 *
@@ -233,15 +233,14 @@ static obj_t defslot(obj_t getter, obj_t setter)
 	var = obj_rawptr(setter);
 	if (var->value == obj_Unbound)
 	    var->value = make_generic_function(var->name, 2, FALSE, obj_False,
-					       FALSE, list1(obj_ObjectClass),
-					       obj_False);
+					       FALSE, obj_Nil,
+					       obj_ObjectClass);
     }
 
     var = obj_rawptr(getter);
     if (var->value == obj_Unbound)
 	var->value = make_generic_function(var->name, 1, FALSE, obj_False,
-					   FALSE, list1(obj_ObjectClass),
-					   obj_False);
+					   FALSE, obj_Nil, obj_ObjectClass);
 
     return var->name;
 }
