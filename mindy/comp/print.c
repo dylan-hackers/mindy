@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.7 1994/04/10 21:50:50 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.8 1994/04/18 03:28:02 wlott Exp $
 *
 * This file does whatever.
 *
@@ -59,9 +59,22 @@ static void print_integer_literal(struct integer_literal *l, int depth)
     printf("%sinteger %ld\n", indent(depth), l->value);
 }
 
-static void print_float_literal(struct float_literal *l, int depth)
+static void print_single_float_literal(struct single_float_literal *l,
+				       int depth)
 {
-    printf("%sfloat %g\n", indent(depth), l->value);
+    printf("%ssingle float %g\n", indent(depth), l->value);
+}
+
+static void print_double_float_literal(struct double_float_literal *l,
+				       int depth)
+{
+    printf("%sdouble float %g\n", indent(depth), l->value);
+}
+
+static void print_extended_float_literal(struct extended_float_literal *l,
+					 int depth)
+{
+    printf("%sextended float %g\n", indent(depth), (double)l->value);
 }
 
 static void print_char(int c, int quote)
@@ -148,9 +161,10 @@ static void print_unbound_literal(struct literal *l, int depth)
 
 static void (*LiteralPrinters[(int)literal_Kinds])() = {
     print_symbol_literal, print_integer_literal,
-    print_float_literal, print_character_literal, print_string_literal,
-    print_list_literal, print_vector_literal, print_true_literal,
-    print_false_literal, print_unbound_literal
+    print_single_float_literal, print_double_float_literal,
+    print_extended_float_literal, print_character_literal,
+    print_string_literal, print_list_literal, print_vector_literal,
+    print_true_literal, print_false_literal, print_unbound_literal
 };
 
 void print_literal(struct literal *literal, int depth)
