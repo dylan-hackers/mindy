@@ -62,7 +62,7 @@ define module c-lexer
     <ge-op-token>, <le-op-token>, <ne-op-token>, <and-op-token>, <or-op-token>,
     <left-op-token>, <right-op-token>, <lcurly-token>, <rcurly-token>,
     <type-specifier-token>,
-    *handle-//-coments*;
+    *handle-//-comments*;
 end module c-lexer;
 
 define module portability

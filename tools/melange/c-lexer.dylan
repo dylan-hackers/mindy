@@ -660,7 +660,7 @@ end method try-punctuation;
 
 define constant match-comment-end = make-substring-positioner("*/");
 
-define variable *handle-//-coments* :: <boolean> = #f;
+define variable *handle-//-comments* :: <boolean> = #f;
 
 // Skip over whitespace characters (including newlines) and comments.
 //
@@ -679,7 +679,7 @@ define method skip-whitespace (contents :: <string>, position :: <integer>)
 		error("Incomplete comment in C header file.");
 	      end if;
 	      skip-comments(end-index + 2);
-	    elseif (*handle-//-coments* & i < sz - 1 
+	    elseif (*handle-//-comments* & i < sz - 1 
 		      & contents[i] == '/' & contents[i + 1] == '/')
 	      while (i < sz & contents[i] ~== '\n')
 		i := i + 1;
