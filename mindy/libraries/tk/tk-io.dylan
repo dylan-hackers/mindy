@@ -209,6 +209,9 @@ define constant lbrace = as(<integer>, '{');
 define constant rbrace = as(<integer>, '}');
 define constant slash = as(<integer>, '\\');
 define constant newline = as(<integer>, '\n');
+#if (newlines-are-CRLF)
+  define constant carriage-return = as(<integer>, '\r');
+#endif
 
 // Reads one logical "line" of text from the WISH interpreter.  This may
 // actually contain several newlines, since newlines within brackets don't
@@ -248,8 +251,8 @@ define method read-tk-line () => (result :: false-or(<string>));
 	      // Input is available -- see if it is a special character.  We
 	      // keep a count of nested brackets and only exit on a newline
 	      // which is outside of the brackets.  Any of special characters
-	      // may be quoted by a backslas, in which case it is treated
-	      // normally. 
+	      // may be quoted by a backslash, in which case it is treated
+	      // normally.
 	      let ch = buffer[buff-pos];
 	      case
 		ch == lbrace & ~quoted? =>
@@ -258,6 +261,22 @@ define method read-tk-line () => (result :: false-or(<string>));
 		  read-stuff(buff-pos + 1, brackets - 1, pieces, #f);
 		ch == slash & ~quoted? =>
 		  read-stuff(buff-pos + 1, brackets, pieces, #t);
+		#if (newlines-are-CRLF)
+		ch == carriage-return & ~quoted? & brackets <= 0 =>
+		  // same as newline except skips 2 characters (CRLF) 
+		  // instead of one (LF).  Asumes 1 LF after every CR
+                  // (not a bad assumption, really...)
+		  let contents = buffer-subsequence(buffer, <byte-string>,
+						    buffer.buffer-next,
+						    buff-pos);
+		  buffer.buffer-next := buff-pos + 2;
+		  release-input-buffer(tk-out);
+		  if (empty?(pieces))
+		    contents;
+		  else
+		    apply(concatenate, reverse!(pair(contents, pieces)));
+		  end if;
+		#endif
 		ch == newline & ~quoted? & brackets <= 0 =>
 		  // We've finally reached the end.  We therefore grab the
 		  // useful text in the buffer and concatenate it with saved
@@ -310,6 +329,10 @@ define method put-tk-line (#rest strings) => ();
   if (buff.buffer-next == buff.buffer-end)
     buff := next-output-buffer(tk-in, bytes: 1);
   end if;
+  #if (newlines-are-CRLF)
+     buff[buff.buffer-next] := carriage-return;
+     buff.buffer-next := buff.buffer-next + 1;
+  #endif
   buff[buff.buffer-next] := newline;
   buff.buffer-next := buff.buffer-next + 1;
 //write(*standard-output*, '\n');
