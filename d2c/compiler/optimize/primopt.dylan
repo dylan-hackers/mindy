@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.20 1996/03/17 00:41:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.21 1996/04/06 07:09:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,6 +49,20 @@ define-primitive-transformer
 		       use-generic-entry: #t));
 			 
    end);
+
+define-primitive-transformer
+  (#"main-entry",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let func = primitive.depends-on.source-exp;
+     if (instance?(func, <definition-constant-leaf>))
+       replace-expression
+	 (component, primitive.dependents,
+	  make-literal-constant
+	    (make-builder(component),
+	     make(<ct-entry-point>, for: func.const-defn.ct-value,
+		  kind: #"main")));
+     end if;
+   end method);
 
 
 // Values manipulation primitives.
@@ -359,7 +373,7 @@ define-primitive-transformer
 	     assert-type(component, assign, next, type);
 	     repeat(next.dependent-next);
 	   else
-	     compiler-error("Type spec with no argument in call-out");
+	     compiler-fatal-error("Type spec with no argument in call-out");
 	   end;
 	 end;
        end;
