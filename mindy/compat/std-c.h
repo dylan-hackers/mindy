@@ -33,8 +33,8 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.3 1995/03/12 16:37:15 nkramer Exp $ SPRITE (Berkeley)
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.3 1995/03/12 16:37:15 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.4 1995/04/04 16:46:19 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.4 1995/04/04 16:46:19 nkramer Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_C_H_
@@ -167,6 +167,13 @@ extern double rint();
 #   include "std-bstring.h"
 #else
 #   include <bstring.h>
+#endif
+
+/*
+ * Visual C++ puts alloca in malloc.h.
+ */
+#ifdef WIN32
+#   include <malloc.h>
 #endif
 
 #endif	/* _STD_C_H_ */
