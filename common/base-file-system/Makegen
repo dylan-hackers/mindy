@@ -1,12 +1,7 @@
 &makegen_include("../common-Makegen");
 
-if ($features{'compiled_for_unix'}) {
-    $system_lid_file = 'base-file-system';
-} else {
-    &unknown_platform_error();
-}
+$D2CFLAGS = "$D2CFLAGS -L../standard-io -L../format-out -L.";
 
-$D2CFLAGS = "$D2CFLAGS -L../streams -L../string-ext -L../regexp";
+&emit_library_rule('base-file-system', '$(BUILDROOT)/force.timestamp',
+		   '', 'compile', 'compile-mindy', 'install');
 
-&emit_library_rule($system_lid_file, '$(BUILDROOT)/force.timestamp', '',
-                   'compile', 'compile-mindy', 'install');
