@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.11 1995/11/20 17:29:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.12 1995/12/01 16:53:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -426,6 +426,16 @@ end;
 define method ct-initialized?
     (expr :: <prologue>) => res :: one-of(#t, #f, #"can't tell");
   #"can't tell";
+end;
+
+define method ct-initialized?
+    (expr :: <slot-ref>) => res :: one-of(#t, #f, #"can't tell");
+  if (slot-guaranteed-initialized?(expr.slot-info,
+				   expr.depends-on.source-exp.derived-type))
+    #t;
+  else
+    #"can't tell";
+  end;
 end;
 
 define method ct-initialized?
