@@ -1,11 +1,11 @@
 module: fer-convert
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.3 2000/01/24 04:56:14 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.4 2001/02/25 19:44:35 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -70,7 +70,7 @@ define method deliver-result
     => res :: <result>;
   build-assignment
     (builder, policy, source, datum,
-     result | make-literal-constant(builder, make(<literal-false>)));
+     result | make-literal-constant(builder, #f));
 
   #f;
 end;
@@ -81,7 +81,7 @@ define method deliver-result
     => res :: <result>;
   build-let
     (builder, policy, source, datum,
-     result | make-literal-constant(builder, make(<literal-false>)));
+     result | make-literal-constant(builder, #f));
   #f;
 end;
 
@@ -89,14 +89,14 @@ define method deliver-result
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      want == #"expr", datum :: <result-datum>, result :: <result>)
     => res :: <result>;
-  result | make-literal-constant(builder, make(<literal-false>));
+  result | make-literal-constant(builder, #f);
 end;
 
 define method deliver-result
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      want == #"leaf", datum :: <result-datum>, result :: <result>)
     => res :: <result>;
-  result | make-literal-constant(builder, make(<literal-false>));
+  result | make-literal-constant(builder, #f);
 end;
 
 define method deliver-result
@@ -195,8 +195,7 @@ define method fer-convert
        concatenate(temps, list(rest-temp)),
        make-operation(builder, <primitive>,
 		      list(cluster,
-			   make-literal-constant(builder,
-						 as(<ct-value>, temps.size))),
+			   make-literal-constant(builder, temps.size)),
 		      name: #"canonicalize-results"));
   else
     fer-convert(builder, form.let-expression,
@@ -227,7 +226,7 @@ define method fer-convert
 
   // Supply #f as the result.
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-literal-constant(builder, make(<literal-false>)));
+		 make-literal-constant(builder, #f));
 end;
 
 define method fer-convert
@@ -267,7 +266,7 @@ define method fer-convert
 
   // Supply #f as the result.
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-literal-constant(builder, make(<literal-false>)));
+		 make-literal-constant(builder, #f));
 end;
 
 // Coerce a token to a <basic-name>
@@ -304,7 +303,7 @@ define method fer-convert
 
   // Supply #f as the result.
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-literal-constant(builder, make(<literal-false>)));
+		 make-literal-constant(builder, #f));
 end;
 
 define method fer-convert
@@ -340,8 +339,7 @@ define method fer-convert
 		       (builder, lexenv.lexenv-policy, source,
 			"Undefined variable: %s",
 			make-literal-constant
-			  (builder,
-			   as(<ct-value>, format-to-string("%s", name))));
+			  (builder, format-to-string("%s", name)));
 		   end;
 		 end);
 end;
@@ -385,8 +383,7 @@ define method fer-convert
 	   (builder, lexenv.lexenv-policy, source,
 	    "Undefined variable: %s",
 	    make-literal-constant
-	      (builder,
-	       as(<ct-value>, format-to-string("%s", name)))));
+	      (builder, format-to-string("%s", name))));
     elseif (~instance?(defn, <variable-definition>))
       compiler-warning-location
 	(form, "Attept to assign constant module variable: %s", name);
@@ -396,8 +393,7 @@ define method fer-convert
 	   (builder, lexenv.lexenv-policy, source,
 	    "Can't assign constant module variable: %s",
 	    make-literal-constant
-	      (builder,
-	       as(<ct-value>, format-to-string("%s", name)))));
+	      (builder, format-to-string("%s", name))));
     else
       let temp = fer-convert(builder, form.varset-value,
 			     make(<lexenv>, inside: lexenv),
@@ -787,7 +783,7 @@ define method fer-convert-method
       // We can statically tell that there is no next method.  So just bind
       // the #next var to #f.
       build-let(body-builder, policy, source, var,
-		make-literal-constant(body-builder, as(<ct-value>, #f)));
+		make-literal-constant(body-builder, #f));
     else
       let orig-args-var
 	= make-local-var(body-builder, #"orig-args",
@@ -815,7 +811,7 @@ define method fer-convert-method
 	   make-operation
 	     (body-builder, <primitive>,
 	      list(cluster,
-		   make-literal-constant(body-builder, as(<ct-value>, 0))),
+		   make-literal-constant(body-builder, 0)),
 	      name: #"canonicalize-results"));
       else
 	build-assignment
@@ -829,8 +825,7 @@ define method fer-convert-method
 	 make-operation
 	   (body-builder, <primitive>,
 	    list(if (next-method-info)
-		   make-literal-constant
-		     (body-builder, as(<ct-value>, next-method-info));
+		   make-literal-constant(body-builder, next-method-info);
 		 else
 		   next-info-var;
 		 end if,
@@ -995,8 +990,7 @@ define method fer-convert-method
 	 make-operation(builder, <primitive>,
 			list(cluster,
 			     make-literal-constant
-			       (builder,
-				as(<ct-value>, fixed-results.size))),
+			       (builder, fixed-results.size)),
 			name: #"canonicalize-results"));
 
       build-region(builder, builder-result(result-check-builder));

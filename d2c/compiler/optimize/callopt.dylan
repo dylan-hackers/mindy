@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.5 2001/02/08 22:34:28 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.6 2001/02/25 19:45:46 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1015,7 +1015,7 @@ define method convert-to-known-call
       if (next-method-info)
 	add!(new-ops, next-method-info);
       else
-	add!(new-ops, make-literal-constant(builder, as(<ct-value>, #())));
+	add!(new-ops, make-literal-constant(builder, #()));
       end;
     end;
     // Need to assert the key types before we build the #rest vector.
@@ -1114,7 +1114,7 @@ define method convert-to-known-call
     if (next-method-info)
       add!(args, next-method-info);
     else
-      add!(args, make-literal-constant(builder, as(<ct-value>, #())));
+      add!(args, make-literal-constant(builder, #()));
     end;
   end;
 
@@ -1138,7 +1138,7 @@ define method convert-to-known-call
        (builder, <primitive>,
 	list(cluster,
 	     make-literal-constant
-	       (builder, as(<ct-value>, sig.specializers.size))),
+	       (builder, sig.specializers.size)),
 	name: #"canonicalize-results"));
 
   // Insert the assignment.
@@ -1318,7 +1318,7 @@ define method optimize-slot-ref
 	 make-operation
 	   (builder, <heap-slot-ref>,
 	    list(slot-home,
-		 make-literal-constant(builder, as(<ct-value>, init?-offset))),
+		 make-literal-constant(builder, init?-offset)),
 	    derived-type: init?-slot.slot-type.ctype-extent,
 	    slot-info: init?-slot));
       build-if-body(builder, policy, source, temp);
@@ -1340,7 +1340,7 @@ define method optimize-slot-ref
 	 make-operation
 	   (builder, <heap-slot-ref>,
 	    pair(slot-home,
-		 pair(make-literal-constant(builder, as(<ct-value>, offset)),
+		 pair(make-literal-constant(builder, offset),
 		      args.tail)),
 	    derived-type: meta-slot.slot-type.ctype-extent,
 	    slot-info: meta-slot);
@@ -1402,7 +1402,7 @@ define method optimize-slot-ref
 	 make-operation
 	   (builder, <heap-slot-ref>,
 	    list(instance,
-		 make-literal-constant(builder, as(<ct-value>, init?-offset))),
+		 make-literal-constant(builder, init?-offset)),
 	    derived-type: init?-slot.slot-type.ctype-extent,
 	    slot-info: init?-slot));
       build-if-body(builder, policy, source, temp);
@@ -1426,7 +1426,7 @@ define method optimize-slot-ref
 	 make-operation
 	   (builder, <heap-slot-ref>,
 	    pair(instance,
-		 pair(make-literal-constant(builder, as(<ct-value>, offset)),
+		 pair(make-literal-constant(builder, offset),
 		      args.tail)),
 	    derived-type: slot.slot-type.ctype-extent,
 	    slot-info: slot);
@@ -1477,9 +1477,8 @@ define method optimize-slot-set
 	  apply(list,
 	  	new,
 		slot-home,
-		make-literal-constant
-		  (builder, as(<ct-value>, offset)),
-		   args.tail.tail),
+		make-literal-constant(builder, offset),
+		args.tail.tail),
 	  slot-info: meta-slot));
     begin
       let init?-slot = meta-slot.slot-initialized?-slot;
@@ -1489,13 +1488,12 @@ define method optimize-slot-set
 	  error("The slot is at a fixed offset, but the initialized flag "
 		  "isn't?");
 	end;
-	let true-leaf = make-literal-constant(builder, make(<literal-true>));
+	let true-leaf = make-literal-constant(builder, #t);
 	let init-op = make-operation(builder, <heap-slot-set>,
 				     list(true-leaf,
 					  slot-home,
 					  make-literal-constant
-					    (builder,
-					     as(<ct-value>, init?-offset))),
+					    (builder, init?-offset)),
 				     slot-info: init?-slot);
 	build-assignment(builder, policy, source, #(), init-op);
       end;
@@ -1530,8 +1528,7 @@ define method optimize-slot-set
 	 (builder, <heap-slot-set>,
 	  pair(new,
 	       pair(instance,
-		    pair(make-literal-constant
-			   (builder, as(<ct-value>, offset)),
+		    pair(make-literal-constant(builder, offset),
 			 args.tail.tail))),
 	  slot-info: slot));
     begin
@@ -1542,12 +1539,11 @@ define method optimize-slot-set
 	  error("The slot is at a fixed offset, but the initialized flag "
 		  "isn't?");
 	end;
-	let true-leaf = make-literal-constant(builder, make(<literal-true>));
+	let true-leaf = make-literal-constant(builder, #t);
 	let init-op = make-operation(builder, <heap-slot-set>,
 				     list(true-leaf, instance,
 					  make-literal-constant
-					    (builder,
-					     as(<ct-value>, init?-offset))),
+					    (builder, init?-offset)),
 				     slot-info: init?-slot);
 	build-assignment(builder, call-assign.policy,
 			 call-assign.source-location, #(), init-op);
@@ -1583,8 +1579,7 @@ define method expand-next-method-call-ref
      make-operation
        (builder, <primitive>,
 	list(next-method-info,
-	     make-literal-constant
-	       (builder, as(<ct-value>, #()))),
+	     make-literal-constant(builder, #())),
 	name: #"=="));
   build-if-body(builder, policy, source, empty?-leaf);
   build-assignment
@@ -1655,7 +1650,7 @@ define method expand-next-method-call-ref
 	     make-operation
 	       (builder, <primitive>,
 		list(new-args,
-		     make-literal-constant(builder, as(<ct-value>, 0))),
+		     make-literal-constant(builder, 0)),
 		name: #"canonicalize-results"));
 	  let args-empty?-leaf
 	    = make-local-var(builder, #"empty?", object-ctype());

@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.8 2001/02/08 22:22:17 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.9 2001/02/25 19:43:10 gabor Exp $
 copyright: see below
 
 
@@ -677,19 +677,19 @@ define method convert-generic-definition
     let args = make(<stretchy-vector>);
     
     add!(args, ref-dylan-defn(builder, policy, source, #"<generic-function>"));
-    add!(args, make-literal-constant(builder, as(<ct-value>, #"name")));
+    add!(args, make-literal-constant(builder, #"name"));
     add!(args,
 	 make-literal-constant
-	   (builder, as(<ct-value>, format-to-string("%s", defn.defn-name))));
-    add!(args, make-literal-constant(builder, as(<ct-value>, #"required")));
+	   (builder, format-to-string("%s", defn.defn-name)));
+    add!(args, make-literal-constant(builder, #"required"));
     add!(args,
 	 build-type-vector(builder, policy, source,
 			   map(param-type, parameters.varlist-fixed)));
-    add!(args, make-literal-constant(builder, as(<ct-value>, #"rest?")));
+    add!(args, make-literal-constant(builder, #"rest?"));
     add!(args,
 	 make-literal-constant
-	   (builder, as(<ct-value>, ~(~parameters.varlist-rest))));
-    add!(args, make-literal-constant(builder, as(<ct-value>, #"key")));
+	   (builder, ~(~parameters.varlist-rest)));
+    add!(args, make-literal-constant(builder, #"key"));
     add!(args,
 	 make-literal-constant
 	   (builder,
@@ -697,23 +697,23 @@ define method convert-generic-definition
 	      make(<literal-simple-object-vector>,
 		   contents: map(param-keyword, parameters.paramlist-keys));
 	    else
-	      as(<ct-value>, #f);
+	      #f;
 	    end if));
-    add!(args, make-literal-constant(builder, as(<ct-value>, #"all-keys?")));
+    add!(args, make-literal-constant(builder, #"all-keys?"));
     add!(args,
 	 make-literal-constant
-	   (builder, as(<ct-value>, parameters.paramlist-all-keys?)));
-    add!(args, make-literal-constant(builder, as(<ct-value>, #"values")));
+	   (builder, parameters.paramlist-all-keys?));
+    add!(args, make-literal-constant(builder, #"values"));
     add!(args,
 	 build-type-vector(builder, policy, source,
 			   map(param-type, results.varlist-fixed)));
-    add!(args, make-literal-constant(builder, as(<ct-value>, #"rest-value")));
+    add!(args, make-literal-constant(builder, #"rest-value"));
     add!(args,
 	 if (results.varlist-rest)
 	   build-type(builder, policy, source,
 		      results.varlist-rest.param-type);
 	 else
-	   make-literal-constant(builder, as(<ct-value>, #f));
+	   make-literal-constant(builder, #f);
 	 end if);
     let temp = make-local-var(builder, #"gf", object-ctype());
     build-assignment
@@ -1093,8 +1093,9 @@ define method build-discriminator-tree
 	else
 	  let half-way-point = ash(min + max, -1);
 	  let cond-temp = make-local-var(builder, #"cond", object-ctype());
-	  let ctv = as(<ct-value>, ranges[half-way-point].second + 1);
-	  let bound = make-literal-constant(builder, ctv);
+	  let bound
+	    = make-literal-constant(builder,
+				    ranges[half-way-point].second + 1);
 	  build-assignment(builder, policy, source, cond-temp,
 			   make-unknown-call(builder, less-then, #f,
 					     list(id-temp, bound)));

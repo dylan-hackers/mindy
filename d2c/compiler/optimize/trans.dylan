@@ -1,11 +1,11 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.2 2000/01/24 04:56:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.3 2001/02/25 19:45:24 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -331,21 +331,18 @@ define method trivial-==-optimization
   if (always-the-same?(x.origin, y.origin))
     // Same variable or same literal constant.
     replace-expression(component, operation.dependents,
-		       make-literal-constant(make-builder(component),
-					     as(<ct-value>, #t)));
+		       make-literal-constant(make-builder(component), #t));
     #t;
   else
     let x-type = x.derived-type;
     let y-type = y.derived-type;
     if (~ctypes-intersect?(x-type, y-type))
       replace-expression(component, operation.dependents,
-			 make-literal-constant(make-builder(component),
-					       as(<ct-value>, #f)));
+			 make-literal-constant(make-builder(component), #f));
       #t;
     elseif (instance?(x-type, <singleton-ctype>) & x-type == y-type)
       replace-expression(component, operation.dependents,
-			 make-literal-constant(make-builder(component),
-					       as(<ct-value>, #t)));
+			 make-literal-constant(make-builder(component), #t));
       #t;
     else
       #f;
@@ -424,7 +421,7 @@ define method replace-==-with-instance?-then-==
   build-else(builder, policy, source);
   build-assignment
     (builder, policy, source, result-temp,
-     make-literal-constant(builder, as(<ct-value>, #f)));
+     make-literal-constant(builder, #f));
   end-body(builder);
 
   insert-before(component, assign, builder-result(builder));
@@ -600,7 +597,7 @@ define method replace-with-functional-==
     build-else(builder, policy, source);
     build-assignment
       (builder, policy, source, result-temp,
-       make-literal-constant(builder, as(<ct-value>, #f)));
+       make-literal-constant(builder, #f));
     end-body(builder);
   end if;
 
@@ -671,9 +668,9 @@ define method instance?-transformer
       replace-expression
 	(component, call.dependents,
 	 if (csubtype?(derived-type, type-extent))
-	   make-literal-constant(make-builder(component), as(<ct-value>, #t));
+	   make-literal-constant(make-builder(component), #t);
 	 elseif (~ctypes-intersect?(derived-type, type-extent))
-	   make-literal-constant(make-builder(component), as(<ct-value>, #f));
+	   make-literal-constant(make-builder(component), #f);
 	 else
 	   make-operation
 	     (make-builder(component), <instance?>, list(value-leaf),
@@ -694,11 +691,11 @@ define method optimize
   if (csubtype?(value-type, test-type))
     replace-expression
       (component, op.dependents,
-       make-literal-constant(make-builder(component), as(<ct-value>, #t)));
+       make-literal-constant(make-builder(component), #t));
   elseif (~ctypes-intersect?(value-type, test-type))
     replace-expression
       (component, op.dependents,
-       make-literal-constant(make-builder(component), as(<ct-value>, #f)));
+       make-literal-constant(make-builder(component), #f));
   end if;
 end method optimize;
 
@@ -746,7 +743,7 @@ define method build-instance?
     method repeat (remaining :: <list>)
       if (remaining == #())
 	build-assignment(builder, policy, source, res,
-			 make-literal-constant(builder, as(<ct-value>, #f)));
+			 make-literal-constant(builder, #f));
       else
 	let member-type = remaining.head;
 	if (ctypes-intersect?(value.derived-type, member-type))
@@ -757,7 +754,7 @@ define method build-instance?
 					   member-type));
 	  build-if-body(builder, policy, source, temp);
 	  build-assignment(builder, policy, source, res,
-			   make-literal-constant(builder, as(<ct-value>, #t)));
+			   make-literal-constant(builder, #t));
 	  build-else(builder, policy, source);
 	  repeat(remaining.tail);
 	  end-body(builder);
@@ -812,11 +809,11 @@ define method build-instance?
      make-unknown-call
        (builder, ref-dylan-defn(builder, policy, source, #"<"), #f,
 	list(char-code-temp,
-	     make-literal-constant(builder, as(<ct-value>, 256)))));
+	     make-literal-constant(builder, 256))));
   unless (guaranteed-character?)
     build-else(builder, policy, source);
     build-assignment(builder, policy, source, res,
-		     make-literal-constant(builder, as(<ct-value>, #f)));
+		     make-literal-constant(builder, #f));
     end-body(builder);
   end;
   res;
@@ -833,19 +830,19 @@ define method build-instance?
 	(builder, policy, source, res,
 	 make-unknown-call
 	   (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
-	    list(value, make-literal-constant(builder, as(<ct-value>, #f)))));
+	    list(value, make-literal-constant(builder, #f))));
     elseif (class == specifier-type(#"<true>"))
       build-assignment
 	(builder, policy, source, res,
 	 make-unknown-call
 	   (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
-	    list(value, make-literal-constant(builder, as(<ct-value>, #t)))));
+	    list(value, make-literal-constant(builder, #t))));
     elseif (class == specifier-type(#"<empty-list>"))
       build-assignment
 	(builder, policy, source, res,
 	 make-unknown-call
 	   (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
-	    list(value, make-literal-constant(builder, as(<ct-value>, #())))));
+	    list(value, make-literal-constant(builder, #()))));
     else
       let class-temp = make-local-var(builder, #"class", object-ctype());
       build-assignment
@@ -902,10 +899,10 @@ define method build-instance?
 		list(id-temp,
 		     make-literal-constant
 		       (builder,
-			as(<ct-value>, class.subclass-id-range-min)))));
+			class.subclass-id-range-min))));
 	  build-if-body(builder, policy, source, temp);
 	  build-assignment(builder, policy, source, res,
-			   make-literal-constant(builder, as(<ct-value>, #f)));
+			   make-literal-constant(builder, #f));
 	  build-else(builder, policy, source);
 	end;
 	if (test-max?)
@@ -916,15 +913,15 @@ define method build-instance?
 	     make-unknown-call
 	       (builder, ref-dylan-defn(builder, policy, source, #"<"), #f,
 		list(make-literal-constant
-		       (builder, as(<ct-value>, class.subclass-id-range-max)),
+		       (builder, class.subclass-id-range-max),
 		     id-temp)));
 	  build-if-body(builder, policy, source, temp);
 	  build-assignment(builder, policy, source, res,
-			   make-literal-constant(builder, as(<ct-value>, #f)));
+			   make-literal-constant(builder, #f));
 	  build-else(builder, policy, source);
 	end;
 	build-assignment(builder, policy, source, res,
-			 make-literal-constant(builder, as(<ct-value>, #t)));
+			 make-literal-constant(builder, #t));
 	if (test-max?)
 	  end-body(builder);
 	end;
@@ -954,8 +951,7 @@ define method build-instance?
 			 make-literal-constant(builder, remaining.head))));
 	      build-if-body(builder, policy, source, temp);
 	      build-assignment(builder, policy, source, res,
-			       make-literal-constant
-				 (builder, as(<ct-value>, #t)));
+			       make-literal-constant(builder, #t));
 	      build-else(builder, policy, source);
 	      repeat(remaining.tail);
 	      end-body(builder);
@@ -1010,7 +1006,7 @@ define method build-instance?
       build-assignment(builder, policy, source, res, build-subtype-call());
       build-else(builder, policy, source);
       build-assignment(builder, policy, source, res,
-		       make-literal-constant(builder, as(<ct-value>, #f)));
+		       make-literal-constant(builder, #f));
       end-body(builder);
       res;
     end if;
@@ -1038,7 +1034,7 @@ define method slot-initialized?-transformer
     let instance-type = instance.derived-type;
     if (slot-guaranteed-initialized?(slot, instance-type))
       replace-expression(component, call.dependents,
-			 make-literal-constant(builder, as(<ct-value>, #t)));
+			 make-literal-constant(builder, #t));
       done(#t);
     end if;
 
@@ -1051,8 +1047,7 @@ define method slot-initialized?-transformer
 	(component, call.dependents,
 	 make-operation(builder, <heap-slot-ref>,
 			list(instance,
-			     make-literal-constant(builder,
-						   as(<ct-value>, offset))),
+			     make-literal-constant(builder, offset)),
 			derived-type: init?-slot.slot-type.ctype-extent,
 			slot-info: init?-slot));
       done(#t);
@@ -1071,8 +1066,7 @@ define method slot-initialized?-transformer
       (builder, policy, source, temp,
        make-operation(builder, <heap-slot-ref>,
 		      list(instance,
-			   make-literal-constant(builder,
-						 as(<ct-value>, offset))),
+			   make-literal-constant(builder, offset)),
 		      derived-type: slot.slot-type.ctype-extent,
 		      slot-info: slot));
     replace-expression(component, dep,
@@ -1198,7 +1192,7 @@ define method list-transformer
     let policy = assign.policy;
     let source = assign.source-location;
     let pair-leaf = ref-dylan-defn(builder, policy, source, #"pair");
-    let current-value = make-literal-constant(builder, as(<ct-value>, #()));
+    let current-value = make-literal-constant(builder, #());
     for (arg in reverse!(args))
       let temp = make-local-var(builder, #"temp", object-ctype());
       build-assignment
@@ -1374,7 +1368,7 @@ define method do-transformer
     end-body(builder); // block
     insert-before(component, assign, builder-result(builder));
     replace-expression(component, call.dependents,
-		       make-literal-constant(builder, as(<ct-value>, #f)));
+		       make-literal-constant(builder, #f));
     #t;
   end;
 end;

@@ -1,12 +1,12 @@
 module: define-constants-and-variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.5 2001/01/27 18:15:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.6 2001/02/25 19:44:12 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -436,7 +436,7 @@ define method convert-top-level-form
 	 make-operation
 	   (builder, <primitive>,
 	    list(cluster,
-		 make-literal-constant(builder, as(<ct-value>, vars.size))),
+		 make-literal-constant(builder, vars.size)),
 	    name: #"canonicalize-results"));
       build-defn-set(init-builder, policy, source, rest-defn, rest-temp);
     else

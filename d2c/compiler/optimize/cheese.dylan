@@ -1,12 +1,12 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.6 2000/10/30 09:02:25 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.7 2001/02/25 19:45:00 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -474,8 +474,7 @@ define method optimize
 	      // We know we will be defaulting this variable to #f, so
 	      // use <false> as the type and see if we can propagate the #f
 	      // to users of the variable.
-	      let false = make-literal-constant(make-builder(component),
-						make(<literal-false>));
+	      let false = make-literal-constant(make-builder(component), #f);
 	      for (var = var then var.definer-next,
 		   while: var)
 		maybe-restrict-type(component, var, false-type);
@@ -933,7 +932,7 @@ define method expand-next-method-if-ref
        (builder, <primitive>,
 	list(maybe-copy(component, next-method-maker.depends-on.source-exp,
 			next-method-maker, ref-site.home-function-region),
-	     make-literal-constant(builder, as(<ct-value>, #()))),
+	     make-literal-constant(builder, #())),
 	name: #"=="));
 
   insert-before(component, ref-site, builder-result(builder));
@@ -1384,8 +1383,8 @@ define method replace-placeholder
 	   (builder, ref-dylan-defn(builder, policy, source, #"make"), #f,
 	    list(ref-dylan-defn(builder, policy, source,
 				#"<simple-object-vector>"),
-		 make-literal-constant(builder, as(<ct-value>, size:)),
-		 make-literal-constant(builder, as(<ct-value>, len)))));
+		 make-literal-constant(builder, size:),
+		 make-literal-constant(builder, len))));
       for (dep = op.depends-on then dep.dependent-next,
 	   index from 0,
 	   while: dep)
@@ -1396,7 +1395,7 @@ define method replace-placeholder
 	      ref-dylan-defn(builder, policy, source, #"%element-setter"),
 	      #f,
 	      list(dep.source-exp, vec,
-		   make-literal-constant(builder, as(<ct-value>, index)))));
+		   make-literal-constant(builder, index))));
       end;
       insert-before(component, assign, builder-result(builder));
       replace-expression(component, dep, vec);
@@ -1475,7 +1474,7 @@ define method replace-placeholder
   let catcher = op.depends-on.source-exp;
   let cluster = op.depends-on.dependent-next.source-exp;
   let temp = make-local-var(builder, #"values", object-ctype());
-  let zero-leaf = make-literal-constant(builder, as(<ct-value>, 0));
+  let zero-leaf = make-literal-constant(builder, 0);
   build-assignment(builder, assign.policy, assign.source-location, temp,
 		   make-operation(builder, <primitive>,
 				  list(cluster, zero-leaf),
@@ -1741,8 +1740,7 @@ define method maybe-close-over
 	  let value-cell-type-leaf
 	    = make-literal-constant(builder, value-cell-type);
 	  let value-keyword-leaf
-	    = make-literal-constant(builder,
-				    make(<literal-symbol>, value: #"value"));
+	    = make-literal-constant(builder, #"value");
 	  let op
 	    = make-unknown-call(builder, make-leaf, #f, 
 				list(value-cell-type-leaf, value-keyword-leaf,
@@ -1843,8 +1841,7 @@ define-primitive-transformer
 	  (builder, ref-dylan-defn(builder, policy, source, #"make-closure"),
 	   #f,
 	   list(make-literal-constant(builder, ctv),
-		make-literal-constant(builder,
-				      as(<ct-value>, closure-size)))));
+		make-literal-constant(builder, closure-size))));
      let closure-var-setter-leaf
        = ref-dylan-defn(builder, policy, source, #"closure-var-setter");
      for (dep = primitive.depends-on.dependent-next then dep.dependent-next,
@@ -1856,7 +1853,7 @@ define-primitive-transformer
 	    (builder, closure-var-setter-leaf, #f,
 	     list(dep.source-exp,
 		  var,
-		  make-literal-constant(builder, as(<ct-value>, index)))));
+		  make-literal-constant(builder, index))));
      end;
      insert-before(component, assign, builder-result(builder));
      replace-expression(component, assign.depends-on, var);

@@ -1,11 +1,11 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/constraint.dylan,v 1.2 2000/01/24 04:56:25 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/constraint.dylan,v 1.3 2001/02/25 19:44:25 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -271,8 +271,7 @@ define method extract-if-constraints
     add-renaming(then-renamings,
 		 cond,
 		 method () => new :: <leaf>;
-		   make-literal-constant(make-builder(component),
-					 as(<ct-value>, #t));
+		   make-literal-constant(make-builder(component), #t);
 		 end method);
   else
     maybe-constrain-type
@@ -282,8 +281,7 @@ define method extract-if-constraints
   add-renaming(else-renamings,
 	       cond,
 	       method () => new :: <leaf>;
-		 make-literal-constant(make-builder(component),
-				       as(<ct-value>, #f));
+		 make-literal-constant(make-builder(component), #f);
 	       end method);
   extract-if-constraints(component, region,
 			 cond.definer.depends-on.source-exp,

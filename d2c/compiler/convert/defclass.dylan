@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.13 2001/02/08 22:49:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.14 2001/02/25 19:43:40 gabor Exp $
 copyright: see below
 
 
@@ -1648,7 +1648,7 @@ define method convert-top-level-form
 	    let results = build-call(#"list", type-var);
 	    let cclass-leaf = make-literal-constant(evals-builder, cclass);
 	    let false-leaf
-	      = make-literal-constant(evals-builder, as(<ct-value>, #f));
+	      = make-literal-constant(evals-builder, #f);
 	    begin
 	      let getter
 		= build-getter(evals-builder, #f, slot-defn, slot-info);
@@ -1985,8 +1985,7 @@ define method build-maker-function-body
 		    data-word-leaf := leaf;
 		  else
 		    let posn-leaf
-		      = make-literal-constant(init-builder,
-					      as(<ct-value>, posn));
+		      = make-literal-constant(init-builder, posn);
 		    if (instance?(slot, <vector-slot-info>))
 		      // We need to build a loop to initialize every
 		      // element.
@@ -1997,8 +1996,7 @@ define method build-maker-function-body
 					 specifier-type(#"<integer>"));
 		      build-assignment
 			(init-builder, policy, source, index,
-			 make-literal-constant
-			   (init-builder, as(<ct-value>, 0)));
+			 make-literal-constant(init-builder, 0));
 		      build-loop-body(init-builder, policy, source);
 		      let more?
 			= make-local-var(init-builder, #"more?",
@@ -2026,8 +2024,7 @@ define method build-maker-function-body
 					   #"+"),
 			    #f,
 			    list(index,
-				 make-literal-constant
-				   (init-builder, as(<ct-value>, 1)))));
+				 make-literal-constant(init-builder, 1))));
 		      build-else(init-builder, policy, source);
 		      build-exit
 			(init-builder, policy, source, block-region);
@@ -2062,8 +2059,7 @@ define method build-maker-function-body
 	      add!(maker-args, init-value-var);
 	      build-slot-init(slot, init-value-var);
 	      build-slot-init(slot.slot-initialized?-slot,
-			      make-literal-constant(init-builder,
-						    as(<ct-value>, #t)));
+			      make-literal-constant(init-builder, #t));
 	    else
 	      let arg = make-local-var(maker-builder, key, type);
 	      add!(maker-args, arg);
@@ -2093,8 +2089,7 @@ define method build-maker-function-body
 		   make-error-operation
 		     (maker-builder, policy, source,
 		      #"missing-required-init-keyword-error",
-		      make-literal-constant
-			(maker-builder, as(<ct-value>, key)),
+		      make-literal-constant(maker-builder, key),
 		      make-literal-constant(maker-builder, cclass)));
 	      else
 		build-assignment(maker-builder, policy, source,
@@ -2106,8 +2101,7 @@ define method build-maker-function-body
 	      build-slot-init(slot, init-value-var);
 	      build-slot-init(slot.slot-initialized?-slot,
 			      if (init-value | init-function)
-				make-literal-constant(init-builder,
-						      as(<ct-value>, #t));
+				make-literal-constant(init-builder, #t);
 			      else
 				supplied?-arg;
 			      end);
@@ -2125,15 +2119,14 @@ define method build-maker-function-body
 	      end;
 	      build-slot-init(slot, init-value-var);
 	      build-slot-init(slot.slot-initialized?-slot,
-			      make-literal-constant(init-builder,
-						    as(<ct-value>, #t)));
+			      make-literal-constant(init-builder, #t));
 	    else
 	      build-slot-init
 		(slot, make(<uninitialized-value>,
 			    derived-type: type.ctype-extent));
 	      build-slot-init
 		(slot.slot-initialized?-slot,
-		 make-literal-constant(init-builder, as(<ct-value>, #f)));
+		 make-literal-constant(init-builder, #f));
 	    end if;
 	  end if;
 	<each-subclass-slot-info> =>
@@ -2146,10 +2139,7 @@ define method build-maker-function-body
 	  // ### If the slot is keyword-initializable, add stuff to the maker
 	  // to check for that keyword and change the class slot.
 	  
-	  // TODO:
-	  //	pointed slots	¥¥¥
-	  //	major reuse of case-legs here!
-	  //	od-loader needed?
+	  //	¥¥¥ major reuse of case-legs possible here!
 	  
 	  local
 	    method build-slot-init
@@ -2171,28 +2161,11 @@ define method build-maker-function-body
 			slot-name);
 		else
 		  let posn-leaf
-		    = make-literal-constant(init-builder,
-					    as(<ct-value>, posn));
+		    = make-literal-constant(init-builder, posn);
 		  
 		  let slot-initialized?-posn-leaf :: false-or(<leaf>)
 		    = associated.slot-initialized?-slot
-		    & make-literal-constant
-		    (init-builder,
-		     as(<ct-value>, posn));
-		  
-		  
-		  
-		  
-		  // reuse¥¥¥done
-		  //  let slot-home = make-local-var(init-builder, symcat(slot-name, #"-home"), specifier-type(#"<class>"));
-		  //
-		  //  build-assignment
-		  //    (init-builder, policy, source, slot-home,
-		  //	   make-literal-constant(init-builder, cclass));
-		  // this area!
-		  
-		  //	let slot-home
-		  //	  = build-slot-home(init-builder, slot-name, cclass, policy, source);
+			& make-literal-constant(init-builder, posn);
 
 		  let slot-home
 		    = build-slot-home(slot-name,
@@ -2229,13 +2202,10 @@ define method build-maker-function-body
 	      add!(maker-args, init-value-var);
 	      build-slot-init(slot,
 			      init-value-var,
-			      make-literal-constant
-				(init-builder,
-				 as(<ct-value>, #t)));
+			      make-literal-constant(init-builder, #t));
 	      /* typeerr!	¥¥¥      
 		build-slot-init(slot.slot-initialized?-slot,
-				make-literal-constant(init-builder,
-						      as(<ct-value>, #t)));
+				make-literal-constant(init-builder, #t));
 		*/
 	    else
 	      let arg = make-local-var(maker-builder, key, type);
@@ -2266,8 +2236,7 @@ define method build-maker-function-body
 		   make-error-operation
 		     (maker-builder, policy, source,
 		      #"missing-required-init-keyword-error",
-		      make-literal-constant
-			(maker-builder, as(<ct-value>, key)),
+		      make-literal-constant(maker-builder, key),
 		      make-literal-constant(maker-builder, cclass)));
 	      else
 		build-assignment(maker-builder, policy, source,
@@ -2279,9 +2248,7 @@ define method build-maker-function-body
 	      build-slot-init(slot,
 			      init-value-var,
 			      if (init-value | init-function)
-				make-literal-constant
-				  (init-builder,
-				   as(<ct-value>, #t));
+				make-literal-constant(init-builder, #t);
 			      else
 				supplied?-arg;
 			      end);
@@ -2299,7 +2266,7 @@ define method build-maker-function-body
   build-region(tl-builder, builder-result(maker-builder));
   let bytes = cclass.instance-slots-layout.layout-length;
   let base-len
-    = make-literal-constant(tl-builder, as(<ct-value>, bytes));
+    = make-literal-constant(tl-builder, bytes);
   let len-leaf
     = if (vector-slot)
 	let fi = specifier-type(#"<integer>");
@@ -2311,8 +2278,7 @@ define method build-maker-function-body
 	    else
 	      let var = make-local-var(tl-builder, #"extra", fi);
 	      let elsize-leaf
-		= make-literal-constant(tl-builder,
-					as(<ct-value>, elsize));
+		= make-literal-constant(tl-builder, elsize);
 	      build-assignment
 		(tl-builder, policy, source, var,
 		 make-unknown-call
@@ -2500,15 +2466,6 @@ define method build-getter
 			 #f,
 			 list(instance)),
 		      builder, policy, source);
-
-OLD:
-  build-assignment
-    (builder, policy, source, slot-home,
-	   make-unknown-call
-	     (builder,
-	      ref-dylan-defn(builder, policy, source, #"%object-class"),
-	      #f,
-	      list(instance)));
 */
 
 
@@ -2518,7 +2475,7 @@ OLD:
     (builder, policy, source, result,
      make-operation
        (builder, <heap-slot-ref>,
-	list(slot-home, make-literal-constant(builder, as(<ct-value>, offset))),
+	list(slot-home, make-literal-constant(builder, offset)),
 	derived-type: type.ctype-extent,
 	slot-info: slot.associated-meta-slot));
 
@@ -2556,8 +2513,7 @@ OLD:
 	   make-unknown-call
 	     (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
 	      list(offset,
-		   make-literal-constant
-		     (builder, as(<ct-value>, #"data-word")))));
+		   make-literal-constant(builder, #"data-word"))));
 	build-if-body(builder, policy, source, temp);
 	build-assignment
 	  (builder, policy, source, result,
@@ -2677,8 +2633,7 @@ define method build-getter
 	   make-unknown-call
 	     (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
 	      list(offset,
-		   make-literal-constant
-		     (builder, as(<ct-value>, #"data-word")))));
+		   make-literal-constant(builder, #"data-word"))));
 	build-if-body(builder, policy, source, temp);
 	build-assignment
 	  (builder, policy, source, result,
@@ -2769,24 +2724,19 @@ define method build-setter
      type, #t);
   let result = make-local-var(builder, #"result", type);
 
-
   let slot-home
     = build-slot-home(slot.slot-getter.variable-name,
 		      make-literal-constant(builder, cclass),
 		      builder, policy, source);
 
-//  let slot-home = make-local-var(builder, #"home", specifier-type(#"<class>"));
-//
-//  build-assignment
-//    (builder, policy, source, slot-home,
-//	   make-literal-constant(builder, cclass));
-
   let offset = get-universal-position(slot.associated-meta-slot.slot-positions);
 
-      build-assignment(builder, policy, source, #(),
-		       make-operation(builder, <heap-slot-set>,
-					list(new, slot-home, make-literal-constant(builder, as(<ct-value>, offset))),
-				      slot-info: slot.associated-meta-slot));
+  build-assignment(builder, policy, source, #(),
+		   make-operation(builder, <heap-slot-set>,
+				  list(new,
+				       slot-home,
+				       make-literal-constant(builder, offset)),
+				  slot-info: slot.associated-meta-slot));
 
 /*  local
     method set (offset :: <leaf>, init?-offset :: false-or(<leaf>)) => ();
@@ -2800,7 +2750,7 @@ define method build-setter
 				      slot-info: slot));
       if (init?-offset)
 	let init?-slot = slot.slot-initialized?-slot;
-	let true-leaf = make-literal-constant(builder, make(<literal-true>));
+	let true-leaf = make-literal-constant(builder, #t);
 	let init-op = make-operation
 	  (builder, <heap-slot-set>, list(true-leaf, instance, init?-offset),
 	   slot-info: init?-slot);
@@ -2870,7 +2820,7 @@ define method build-setter
 				      slot-info: slot));
       if (init?-offset)
 	let init?-slot = slot.slot-initialized?-slot;
-	let true-leaf = make-literal-constant(builder, make(<literal-true>));
+	let true-leaf = make-literal-constant(builder, #t);
 	let init-op = make-operation
 	  (builder, <heap-slot-set>, list(true-leaf, instance, init?-offset),
 	   slot-info: init?-slot);
@@ -2905,10 +2855,9 @@ define method build-slot-posn-dispatch
       = method (offset :: <slot-position>,
 		init?-offset :: false-or(<slot-position>))
 	    => ();
-	  thunk(make-literal-constant(builder, as(<ct-value>, offset)),
+	  thunk(make-literal-constant(builder, offset),
 		init?-offset
-		  & make-literal-constant(builder,
-					  as(<ct-value>, init?-offset)));
+		  & make-literal-constant(builder, init?-offset));
 	end method;
     let position = get-universal-position(slot.slot-positions);
     let init?-slot = slot.slot-initialized?-slot;
@@ -3005,8 +2954,8 @@ define method build-unique-id-slot-posn-dispatch
 	else
 	  let half-way-point = ash(min + max, -1);
 	  let cond-temp = make-local-var(builder, #"cond", object-ctype());
-	  let ctv = as(<ct-value>, ranges[half-way-point][1] + 1);
-	  let bound = make-literal-constant(builder, ctv);
+	  let bound = make-literal-constant(builder,
+					    ranges[half-way-point][1] + 1);
 	  build-assignment
 	    (builder, policy, source, cond-temp,
 	     make-unknown-call(builder, less-then, #f,

@@ -1,12 +1,12 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.2 2000/01/24 04:56:29 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.3 2001/02/25 19:44:10 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -56,8 +56,7 @@ define-primitive-transformer
    method (component :: <component>, primitive :: <primitive>) => ();
      break("Hit break primitive.");
      replace-expression(component, primitive.dependents,
-			make-literal-constant(make-builder(component),
-					      as(<ct-value>, #f)));
+			make-literal-constant(make-builder(component), #f));
    end);
 
 
@@ -128,7 +127,7 @@ define-primitive-transformer
 	 let val = if (val-dep)
 		     val-dep.source-exp;
 		   else
-		     make-literal-constant(builder, make(<literal-false>));
+		     make-literal-constant(builder, #f);
 		   end;
 	 if (let?)
 	   build-let(builder, assign.policy, assign.source-location, var, val);
@@ -176,11 +175,11 @@ define-primitive-transformer
 			      concatenate(fixed, list(rest-temp)),
 			      name: #"values");
 	     else
-	       let false = make-literal-constant(builder, as(<ct-value>, #f));
+	       let false = make-literal-constant(builder, #f);
 	       let falses = make(<list>, size: nfixed - type.min-values,
 				 fill: false);
 	       let empty-vect
-		 = make-literal-constant(builder, as(<ct-value>, #[]));
+		 = make-literal-constant(builder, #[]);
 	       make-operation(builder, <primitive>,
 			      concatenate(temps, falses, list(empty-vect)),
 			      name: #"values");
@@ -354,13 +353,11 @@ define-primitive-transformer
      if (~maybe-less?)
        replace-expression
 	 (component, primitive.dependents,
-	  make-literal-constant
-	    (make-builder(component), as(<ct-value>, #f)));
+	  make-literal-constant(make-builder(component), #f));
      elseif (~(maybe-greater? | maybe-eql?))
        replace-expression
 	 (component, primitive.dependents,
-	  make-literal-constant
-	    (make-builder(component), as(<ct-value>, #t)));
+	  make-literal-constant(make-builder(component), #t));
      end if;
    end method);
 	 
@@ -375,12 +372,12 @@ define-primitive-transformer
        replace-expression
 	 (component, primitive.dependents,
 	  make-literal-constant
-	    (make-builder(component), as(<ct-value>, #f)));
+	    (make-builder(component), #f));
      elseif (~(maybe-less? | maybe-greater?))
        replace-expression
 	 (component, primitive.dependents,
 	  make-literal-constant
-	    (make-builder(component), as(<ct-value>, #t)));
+	    (make-builder(component), #t));
      end if;
    end method);
 	 
@@ -738,8 +735,7 @@ define-primitive-transformer
        replace-expression(component, primitive.dependents, arg);
      elseif (~ctypes-intersect?(arg-type, false-type))
        replace-expression(component, primitive.dependents,
-			  make-literal-constant(make-builder(component),
-						as(<ct-value>, #t)));
+			  make-literal-constant(make-builder(component), #t));
      elseif (instance?(arg, <ssa-variable>))
        let arg-source = arg.definer.depends-on.source-exp;
        if (instance?(arg-source, <primitive>)
@@ -763,12 +759,10 @@ define-primitive-transformer
      let false-type = specifier-type(#"<false>");
      if (csubtype?(arg-type, false-type))
        replace-expression(component, primitive.dependents,
-			  make-literal-constant(make-builder(component),
-						as(<ct-value>, #t)));
+			  make-literal-constant(make-builder(component), #t));
      elseif (~ctypes-intersect?(arg-type, false-type))
        replace-expression(component, primitive.dependents,
-			  make-literal-constant(make-builder(component),
-						as(<ct-value>, #f)));
+			  make-literal-constant(make-builder(component), #f));
      elseif (instance?(arg, <ssa-variable>))
        let arg-source = arg.definer.depends-on.source-exp;
        if (instance?(arg-source, <primitive>))
@@ -804,18 +798,17 @@ define-primitive-transformer
      let x = ct-initialized?(primitive.depends-on.source-exp);
      unless (x == #"can't tell")
        replace-expression(component, primitive.dependents,
-			  make-literal-constant(make-builder(component),
-						as(<ct-value>, x)));
+			  make-literal-constant(make-builder(component), x));
      end;
    end);
 
 define method ct-initialized?
-    (expr :: <expression>) => res :: one-of(#t, #f, #"can't tell");
+    (expr :: <expression>) => res :: singleton(#t);
   #t;
 end;
 
 define method ct-initialized?
-    (expr :: <primitive>) => res :: one-of(#t, #f, #"can't tell");
+    (expr :: <primitive>) => res :: one-of(#t, #"can't tell");
   if (expr.primitive-name == #"ref-slot")
     #"can't tell";
   else
@@ -824,7 +817,7 @@ define method ct-initialized?
 end;
 
 define method ct-initialized?
-    (expr :: <prologue>) => res :: one-of(#t, #f, #"can't tell");
+    (expr :: <prologue>) => res :: singleton(#"can't tell");
   #"can't tell";
 end;
 
@@ -839,12 +832,12 @@ define method ct-initialized?
 end;
 
 define method ct-initialized?
-    (expr :: <uninitialized-value>) => res :: one-of(#t, #f, #"can't tell");
+    (expr :: <uninitialized-value>) => res :: singleton(#f);
   #f;
 end;
 
 define method ct-initialized?
-    (expr :: <abstract-variable>) => res :: one-of(#t, #f, #"can't tell");
+    (expr :: <abstract-variable>) => res :: singleton(#"can't tell");
   #"can't tell";
 end;
 
@@ -865,14 +858,12 @@ define-primitive-transformer
      let y-type = y.derived-type;
      if (~ctypes-intersect?(x-type, y-type))
        replace-expression(component, primitive.dependents,
-			  make-literal-constant(make-builder(component),
-						as(<ct-value>, #f)));
+			  make-literal-constant(make-builder(component), #f));
      elseif (instance?(x-type, <limited-integer-ctype>)
 	       & x-type == y-type
 	       & x-type.low-bound = x-type.high-bound)
        replace-expression(component, primitive.dependents,
-			  make-literal-constant(make-builder(component),
-						as(<ct-value>, #t)));
+			  make-literal-constant(make-builder(component), #t));
      end;
    end);
 
@@ -887,12 +878,10 @@ define-primitive-transformer
 	   & instance?(y-type, <limited-integer-ctype>))
        if (x-type.high-bound < y-type.low-bound)
 	 replace-expression(component, primitive.dependents,
-			    make-literal-constant(make-builder(component),
-						  as(<ct-value>, #t)));
+			    make-literal-constant(make-builder(component), #t));
        elseif (x-type.low-bound >= y-type.high-bound)
 	 replace-expression(component, primitive.dependents,
-			    make-literal-constant(make-builder(component),
-						  as(<ct-value>, #f)));
+			    make-literal-constant(make-builder(component), #f));
        end;
      end;
    end);

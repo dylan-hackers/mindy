@@ -1,12 +1,12 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/Attic/xep.dylan,v 1.3 2000/01/24 04:56:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/Attic/xep.dylan,v 1.4 2001/02/25 19:44:41 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -208,7 +208,7 @@ define method aux-build-xep
       let copy = closure-var.copy-var;
       let pre-type = make-local-var(builder, copy.var-info.debug-name,
 				    object-ctype());
-      let index-leaf = make-literal-constant(builder, as(<ct-value>, index));
+      let index-leaf = make-literal-constant(builder, index);
       build-assignment(builder, policy, source, pre-type,
 		       make-unknown-call(builder, closure-ref-leaf, #f,
 					 list(self-leaf, index-leaf)));
@@ -225,7 +225,7 @@ define method aux-build-xep
   let raw-ptr-type = dylan-value(#"<raw-pointer>");
   let args-leaf = make-local-var(builder, #"args", raw-ptr-type);
   let wanted-leaf
-    = make-literal-constant(builder, as(<ct-value>, arg-types.size));
+    = make-literal-constant(builder, arg-types.size);
   if (generic-entry?)
     // We don't have to check the number of arguments, we just have to
     // find the arg pointer.
@@ -251,7 +251,7 @@ define method aux-build-xep
 	(builder, policy, source, #(),
 	 make-error-operation
 	   (builder, policy, source, #"wrong-number-of-arguments-error",
-	    make-literal-constant(builder, as(<ct-value>, #t)),
+	    make-literal-constant(builder, #t),
 	    wanted-leaf, nargs-leaf));
       end-body(builder);
       build-assignment(builder, policy, source, args-leaf,
@@ -269,7 +269,7 @@ define method aux-build-xep
 	  (builder, policy, source, #(),
 	   make-error-operation
 	   (builder, policy, source, #"wrong-number-of-arguments-error",
-	    make-literal-constant(builder, as(<ct-value>, #f)),
+	    make-literal-constant(builder, #f),
 	    wanted-leaf, nargs-leaf));
 	build-else(builder, policy, source);
 	end-body(builder);
@@ -307,7 +307,7 @@ define method aux-build-xep
 			      else
 				type;
 			      end);
-    let index-leaf = make-literal-constant(builder, as(<ct-value>, index));
+    let index-leaf = make-literal-constant(builder, index);
     build-assignment(builder, policy, source, temp,
 		     make-operation(builder, <primitive>,
 				    list(args-leaf, index-leaf),
@@ -328,7 +328,7 @@ define method aux-build-xep
 	 if (generic-entry?)
 	   next-info-leaf;
 	 else
-	   make-literal-constant(builder, as(<ct-value>, #()));
+	   make-literal-constant(builder, #());
 	 end);
   end;
 
@@ -379,7 +379,7 @@ define method aux-build-xep
 	  end;
 	  build-assignment
 	    (builder, policy, source, supplied?-var,
-	     make-literal-constant(builder, as(<ct-value>, #f)));
+	     make-literal-constant(builder, #f));
 	end;
 	make(<keyarg-info>, key-info: key-info, var: var,
 	     default-bogus?: default-bogus?, supplied?-var: supplied?-var);
@@ -396,7 +396,7 @@ define method aux-build-xep
 	  #f,
 	  list(nargs-leaf,
 	       make-literal-constant
-		 (builder, as(<ct-value>, 2)))));
+		 (builder, 2))));
 
     let done-block = build-block-body(builder, policy, source);
     build-loop-body(builder, policy, source);
@@ -429,8 +429,7 @@ define method aux-build-xep
 			 ref-dylan-defn(builder, policy, source, #"+"),
 			 #f,
 			 list(index-var,
-			      make-literal-constant(builder,
-						    as(<ct-value>, 1)))));
+			      make-literal-constant(builder, 1))));
     let val-var = make-local-var(builder, #"value", object-ctype());
     build-assignment
       (builder, policy, source, val-var,
@@ -462,7 +461,7 @@ define method aux-build-xep
 		  ref-dylan-defn(builder, policy, source, #"=="),
 		  #f,
 		  list(key-var,
-		       make-literal-constant(builder, as(<ct-value>, key)))));
+		       make-literal-constant(builder, key))));
 	    build-if-body(builder, policy, source, temp);
 
 	    for (keyarg-info :: <keyarg-info> in remaining)
@@ -473,7 +472,7 @@ define method aux-build-xep
 		if (supplied?-var)
 		  build-assignment
 		    (builder, policy, source, supplied?-var, 
-		     make-literal-constant(builder, as(<ct-value>, #t)));
+		     make-literal-constant(builder, #t));
 		end;
 	      end if;
 	    end for;
@@ -491,8 +490,7 @@ define method aux-build-xep
 			 ref-dylan-defn(builder, policy, source, #"-"),
 			 #f,
 			 list(index-var,
-			      make-literal-constant(builder,
-						    as(<ct-value>, 2)))));
+			      make-literal-constant(builder, 2))));
     end-body(builder); // if
     end-body(builder); // loop
     end-body(builder); // block
@@ -569,7 +567,7 @@ define method build-callback-xep
       let copy = closure-var.copy-var;
       let pre-type = make-local-var(builder, copy.var-info.debug-name,
 				    object-ctype());
-      let index-leaf = make-literal-constant(builder, as(<ct-value>, index));
+      let index-leaf = make-literal-constant(builder, index);
       build-assignment(builder, policy, source, pre-type,
 		       make-unknown-call(builder, closure-ref-leaf, #f,
 					 list(self-leaf, index-leaf)));
