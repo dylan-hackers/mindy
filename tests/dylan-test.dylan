@@ -377,10 +377,10 @@ end method;
 define method tautology(arg == #"deques")
   let d = make(<deque>);
   for (i from 5 to 1 by -1)
-    d := push(d, i);
+    push(d, i);
   end;
   for (i from 6 to 10)
-    d := push-last(d, i);
+    push-last(d, i);
   end;
   let p = pop(d);
   (p = 1)
@@ -510,7 +510,7 @@ define method tautology(arg :: <sequence>) => <integer>;
   warnings + fatals;
 end method;
 
-define method main(argv0, #rest args)
+define method main(argv0 :: <byte-string>, #rest args)
   if (empty?(args))
     exit(exit-code: tautology(tautologies));
   else
