@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.31 1995/05/03 09:44:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.32 1995/05/04 09:24:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -682,7 +682,6 @@ end;
 define method emit-region (return :: <return>, output-info :: <output-info>)
     => ();
   /* ### emit-joins(region.join-region, output-info); */
-  spew-pending-defines(output-info);
   let lambda :: <lambda> = return.block-of;
   let lambda-info = get-info-for(lambda, output-info);
   let result-rep = lambda-info.lambda-info-result-representation;
@@ -699,8 +698,8 @@ end;
 define method emit-return
     (return :: <return>, result-rep == #"void", output-info :: <output-info>)
     => ();
-  let stream = output-info.output-info-guts-stream;
-  write("return;\n", stream);
+  spew-pending-defines(output-info);
+  write("return;\n", output-info.output-info-guts-stream);
 end;
 
 define method emit-return
@@ -716,6 +715,7 @@ define method emit-return
     unless (bottom-name = "orig_sp")
       error("Delivering a cluster that isn't at the bottom of the frame?");
     end;
+    spew-pending-defines(output-info);
     format(stream, "return %s;\n", top-name);
   else
     for (dep = results then dep.dependent-next,
@@ -724,6 +724,7 @@ define method emit-return
       format(stream, "orig_sp[%d] = %s;\n", count,
 	     ref-leaf($general-rep, dep.source-exp, output-info));
     finally
+      spew-pending-defines(output-info);
       format(stream, "return orig_sp + %d;\n", count);
     end;
   end;
@@ -734,8 +735,9 @@ define method emit-return
      output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
-  format(stream, "return %s;\n",
-	 ref-leaf(result-rep, return.depends-on.source-exp, output-info));
+  let expr = ref-leaf(result-rep, return.depends-on.source-exp, output-info);
+  spew-pending-defines(output-info);
+  format(stream, "return %s;\n", expr);
 end;
 
 define method emit-return
@@ -754,6 +756,7 @@ define method emit-return
     format(stream, "%s.R%d = %s;\n",
 	   temp, index, ref-leaf(rep, dep.source-exp, output-info));
   end;
+  spew-pending-defines(output-info);
   format(stream, "return %s;\n", temp);
 end;
 
@@ -1088,6 +1091,53 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
+     op :: <slot-ref>, output-info :: <output-info>)
+    => ();
+  let offset = op.slot-offset;
+  let instance-leaf = op.depends-on.source-exp;
+  let instance-rep = pick-representation(instance-leaf.derived-type, #"speed");
+  let slot = op.slot-info;
+  let slot-rep = slot.slot-representation;
+  let (expr, now-dammit?)
+    = if (~zero?(offset) & instance?(instance-rep, <data-word-representation>))
+	// Extracting the data-word.
+	unless (representation-data-word-member(instance-rep)
+		  = representation-data-word-member(slot-rep))
+	  error("The instance and slot representations don't match in a "
+		  "data-word reference?");
+	end;
+	values(ref-leaf(instance-rep, instance-leaf, output-info), #f);
+      else
+	let instance-expr = ref-leaf($heap-rep, instance-leaf, output-info);
+	spew-pending-defines(output-info);
+	values(format-to-string("SLOT(%s, %s, %d)",
+				instance-expr,
+				slot-rep.representation-c-type,
+				offset),
+	       ~slot.slot-read-only?);
+      end;
+  deliver-results(results, vector(pair(expr, slot-rep)),
+		  now-dammit?, output-info);
+end;
+
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>),
+     op :: <slot-set>, output-info :: <output-info>)
+    => ();
+  let slot = op.slot-info;
+  let offset = op.slot-offset;
+  let slot-rep = slot.slot-representation;
+  let (new, instance)
+    = extract-operands(op, output-info, slot-rep, $heap-rep);
+  format(output-info.output-info-guts-stream,
+	 "SLOT(%s, %s, %d) = %s;\n",
+	 instance, slot-rep.representation-c-type, offset, new);
+  deliver-results(results, #[], #t, output-info);
+end;
+
+
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>),
      op :: <truly-the>, output-info :: <output-info>)
     => ();
   if (results)
@@ -1264,6 +1314,19 @@ define-primitive
        add!(results, pair(expr, $general-rep));
      end;
      deliver-results(defines, results, #f, output-info);
+   end);
+
+define-primitive
+  (#"initialized?",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let expr = extract-operands(operation, output-info, $heap-rep);
+     deliver-results(defines,
+		     vector(pair(format-to-string("(%s != NULL)", expr),
+				 $boolean-rep)),
+		     #f, output-info);
    end);
 
 
