@@ -95,7 +95,7 @@ define method pane-layout
 end method pane-layout;
 
 // The current pane in this thread
-define /*thread*/ variable *current-pane* = #f;
+define thread variable *current-pane* = #f;
 
 define inline function current-pane () *current-pane* end;
 
@@ -222,7 +222,7 @@ end method frame-manager-setter;
 // "Sideways" because 'relayout-parent' is a forward reference from DUIM-Sheets.
 //--- We should maybe do something to protect users from calling this
 //--- before the sheets are mirrored, since 'compose-space' will blow out
-define /*sideways*/ method relayout-parent 
+define sideways method relayout-parent 
     (sheet :: <sheet>, #key width, height) => (did-layout? :: <boolean>)
   when (sheet-attached?(sheet))		// be forgiving
     reset-space-requirement(sheet);	// force 'compose-space' to run anew...

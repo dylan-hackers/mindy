@@ -461,7 +461,7 @@ define sealed method make
 end method make;
 
 // Seal the constructors and initializers for all space requirements
-//* define sealed domain make (subclass(<space-requirement>));
+define sealed domain make (subclass(<space-requirement>));
 define sealed domain initialize (<space-requirement>);
 
 
