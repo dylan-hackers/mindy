@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.27 1996/04/15 18:15:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.28 1996/05/01 12:53:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -1243,9 +1243,9 @@ end;
 
 // #next method handling
 
-define constant %make-next-method-cookie = method
-    (next-method-info :: <list>, #rest original-args)
- => (res :: type-union(<false>, <function>));
+define movable method %make-next-method-cookie
+    (next-method-info :: <list>, original-args :: <simple-object-vector>)
+    => (res :: type-union(<false>, <function>));
   if (next-method-info == #())
     #f;
   elseif (instance?(next-method-info.head, <pair>))
@@ -1263,9 +1263,9 @@ define constant %make-next-method-cookie = method
       %%primitive(invoke-generic-entry,
 		  next-method-info.head, next-method-info.tail,
 		  values-sequence(args));
-    end;
-  end;
-end;
+    end method;
+  end if;
+end method %make-next-method-cookie;
 
 
 // Functional Operations

@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.55 1996/04/14 13:22:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.56 1996/05/01 12:52:00 wlott Exp $
 copyright: Copyright (c) 1994, 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -705,7 +705,7 @@ define open generic odd? (x :: <general-integer>) => res :: <boolean>;
 define open generic %closure-ref
     (closure :: <method>, index :: <integer>) => res :: <object>;
 define open generic %make-next-method-cookie
-    (next-method-info :: <list>, #rest original-args)
+    (next-method-info :: <list>, original-args :: <simple-object-vector>)
     => res :: type-union(<false>, <function>);
 define open generic as (class :: <class>, thing :: <object>)
     => result :: <object>;
