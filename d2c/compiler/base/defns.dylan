@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.5 1995/03/04 21:53:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.6 1995/04/26 07:03:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,7 +11,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // definitions exist for things like the type of a variable (when it isn't a
 // compile-time constant).
 // 
-define abstract class <definition> (<object>)
+define abstract class <definition> (<annotatable>)
   //
   // The name this is the definition for.
   slot defn-name :: <name>, required-init-keyword: name:;
