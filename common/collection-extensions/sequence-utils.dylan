@@ -241,10 +241,10 @@ define function pair-foldl (cons :: <function>, nil, lst :: <list>)
 	  if (pair?(lst))
 	    recur(tail(lst), cons(lst, acc));
 	  else
-	    nil;
+	    acc;
 	  end if;
 	end method;
-  recur(lst, #());
+  recur(lst, nil);
 end function pair-foldl;
 
 // PAIR-FOLDR -- analogous to FOLDR, but applied to successive
