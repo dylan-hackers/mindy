@@ -348,7 +348,7 @@ define method pick-representation
     error("The empty type has no representation.");
   else
     reduce1(merge-representations,
-	    map(rcurry(pick-representation, optimize-for)));
+	    map(rcurry(pick-representation, optimize-for), mem));
   end;
 end;
 
