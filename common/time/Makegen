@@ -3,31 +3,27 @@
 $D2CFLAGS = "$D2CFLAGS -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../collection-extensions";
 $CPPFLAGS = $CPPFLAGS . ' -I$(SRCDIR) -I$(top_builddir)';
 
+$plat = "unix";
+
+
+# N.B.: The order of tests is important!  The cygnus
+# test MUST preceed the unix test.
+
+if ($features{'compiled_for_cygnus'}) {
+    # default -- don't need $plat = "cygnus" here
+} elsif ($features{'compiled_for_unix'}) {
+    # default
+} elsif ($features{'compiled_for_win32'}) {
+    $plat = "win32";
+} else {
+    &unknown_platform_error();
+}
+
 &emit_melange_rule('time-intr');
 
 &emit_c_file_rule("time-portability") if ($enable_d2c);
+$time_lid_file = "$plat-time";
 
-do emit_library_rule('Time', '$(BUILDROOT)/force.timestamp', '', 'compile', 
+do emit_library_rule($time_lid_file, '$(BUILDROOT)/force.timestamp', '', 'compile', 
 		     'compile-mindy', 'install');
-
-# Win32 has to be different at every possible opportunity
-if ($features{'compiled_for_win32'}) {
-	# This is really just a 'sed' script, but saves us from having to
-	# install it to build on win32.
-	open(OLDLID, "<Time.lid") || die("Can't open Time.lid: $!\n");
-	open(NEWLID, ">,Time.lid") || die("Can't open ,Time.lid: $!\n");
-
-	while(<OLDLID>) {
-		if (/.*\.o /)
-		{
-			$_ =~ s/\.o /\.obj /;	# Only one per line
-		}
-		print NEWLID $_;
-	}
-
-	close(OLDLID);
-	close(NEWLID);
-	`del /F Time.lid` && die ("Can't delete old file: $!\n");
-	`rename ",Time.lid" Time.lid` && die ("Can't rename temp file: $!\n");
-}
 	
