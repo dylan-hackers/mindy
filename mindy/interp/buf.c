@@ -9,11 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.2 1994/04/09 13:35:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.3 1994/04/28 04:47:09 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
+
+#include <string.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -28,6 +30,8 @@
 #include "def.h"
 #include "sym.h"
 #include "type.h"
+#include "vec.h"
+#include "str.h"
 #include "buf.h"
 
 obj_t obj_BufferClass = NULL;
@@ -73,6 +77,21 @@ static obj_t dylan_buffer_element_setter(obj_t val, obj_t buffer, obj_t index)
     return val;
 }
 
+static obj_t dylan_memcpy(obj_t dst, obj_t dst_off, obj_t src, obj_t src_off,
+			  obj_t count)
+{
+    if (dst == src)
+	memmove(buffer_data(dst) + fixnum_value(dst_off),
+		buffer_data(src) + fixnum_value(src_off),
+		fixnum_value(count));
+    else
+	memcpy(buffer_data(dst) + fixnum_value(dst_off),
+	       buffer_data(src) + fixnum_value(src_off),
+	       fixnum_value(count));
+
+    return dst;
+}
+
 
 /* GC stuff. */
 
@@ -111,6 +130,8 @@ void init_buffer_classes(void)
 
 void init_buffer_functions(void)
 {
+    obj_t u;
+
     define_method("element", list2(obj_BufferClass, obj_IntegerClass),
 		  FALSE, list1(pair(symbol("default"), obj_Unbound)),
 		  obj_IntegerClass, dylan_buffer_element);
@@ -123,4 +144,11 @@ void init_buffer_functions(void)
     define_method("make", list1(singleton(obj_BufferClass)), FALSE,
 		  list1(pair(symbol("size"), make_fixnum(4096))),
 		  obj_BufferClass, dylan_buffer_make);
+
+    u = type_union(obj_ByteStringClass, obj_ByteVectorClass);
+    u = type_union(u, obj_BufferClass);
+    define_method("copy-bytes",
+		  listn(5, u, obj_IntegerClass, u, obj_IntegerClass,
+			obj_IntegerClass),
+		  FALSE, obj_False, u, dylan_memcpy);
 }
