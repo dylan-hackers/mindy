@@ -334,9 +334,6 @@ end method refresh-menu-bar;
 
 /// Menu buttons
 
-// Menu buttons are unmirrored, but have to update themselves on their
-// menu which will be mirrored.
-
 define open abstract class <gtk-menu-button-mixin>
     (<gtk-gadget-mixin>,
      <value-gadget>)
@@ -362,6 +359,19 @@ define sealed method make-gtk-mirror
 	 sheet:  gadget)
   end
 end method make-gtk-mirror;
+
+define method install-event-handlers
+    (sheet :: <gtk-menu-button-mixin>, mirror :: <gadget-mirror>) => ()
+  next-method();
+  install-named-handlers(mirror, #[#"activate"])
+end method install-event-handlers;
+
+// #"activate" signal
+define method gtk-activate-signal-handler (gadget :: <gtk-menu-button-mixin>,
+					   user-data :: <gpointer>)
+  ignore(user-data);
+  activate-gtk-gadget(gadget);
+end;
 
 define method update-mirror-attributes
     (gadget :: <gtk-menu-button-mixin>, mirror :: <menu-button-mirror>) => ()
