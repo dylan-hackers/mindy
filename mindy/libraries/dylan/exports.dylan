@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.77 1996/01/07 23:03:24 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.78 1996/01/11 18:43:32 wlott Exp $
 
 //======================================================================
 //
@@ -39,15 +39,15 @@ end Dylan;
 define module Builtin-Stuff
   export
     \~, \*, \+, \-, \/, \<, \<=, \=, \==, \~=, \~==,
-    $maximum-fixed-integer, $minimum-fixed-integer, $Newlines-Are-CRLF,
+    $maximum-integer, $minimum-integer, $Newlines-Are-CRLF,
     <array>,
     <boolean>, <buffer>, <byte-character>, <byte-string>, <byte-vector>,
     <character>, <class>, <collection>, <complex>,
     <defined-class>, <double-float>,
     <empty-list>, <event>, <explicit-key-collection>, <extended-float>,
     <extended-integer>,
-    <false>, <fixed-integer>, <float>, <function>,
-    <generic-function>,
+    <false>, <float>, <function>,
+    <general-integer>, <generic-function>,
     <integer>,
     <limited-integer>, <list>, <lock>,
     <method>, <mutable-collection>, <mutable-explicit-key-collection>,
@@ -228,10 +228,10 @@ define module Extensions
   use Dylan;
   use Builtin-Stuff,
     import: {main, exit, on-exit, load, *print-GC-messages*,
-	     $maximum-fixed-integer, $minimum-fixed-integer,
+	     $maximum-integer, $minimum-integer,
 	     <byte-character>, <byte-vector>,
 	     <boolean>, <true>, <false>,
-	     <fixed-integer>, <extended-integer>,
+	     <general-integer>, <extended-integer>,
 	     <weak-pointer>, weak-pointer-object},
     export: all;
   use extras,

@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.6 1994/11/03 23:51:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.7 1996/01/11 18:43:34 wlott Exp $
 
 //======================================================================
 //
@@ -119,7 +119,7 @@ define class <unbounded-range> (<range>) end class;
 // places in the range constructor.  Please use RANGE instead.
 //
 define class <bounded-range> (<range>)
-   slot range-size :: <fixed-integer>,
+   slot range-size :: <integer>,
       required-init-keyword: size:;
 end class;
 
@@ -161,7 +161,7 @@ define constant <false-or-real> =
    union (singleton (#f), <real>);
 
 define constant <false-or-fixed> =
-   union (singleton (#f), <fixed-integer>);
+   union (singleton (#f), <integer>);
 
 define method compute-range-size (r-from :: <real>,
 				  r-by :: <real>,
@@ -199,9 +199,9 @@ end method;
 // (The <integer> method is slightly optimized for case where the
 // increment is +1 or -1.)
 //
-define method compute-to-size (start :: <fixed-integer>,
-			       increment :: <fixed-integer>,
-			       bound :: <fixed-integer>)
+define method compute-to-size (start :: <integer>,
+			       increment :: <integer>,
+			       bound :: <integer>)
       => to-size :: <false-or-fixed>;
    select (increment by \=)
       0 =>
@@ -242,9 +242,9 @@ end method;
 // returned (no limiting size).  But if START is below ABOVE, 0 is
 // returned.
 //
-define method compute-above-size (start :: <fixed-integer>,
-				  increment :: <fixed-integer>,
-				  bound :: <fixed-integer>)
+define method compute-above-size (start :: <integer>,
+				  increment :: <integer>,
+				  bound :: <integer>)
       => above-size :: <false-or-fixed>;
    if (negative? (increment))
       if (increment = -1)
@@ -291,9 +291,9 @@ end method;
 // returned (no limiting size).  But if START is above BELOW, 0 is
 // returned.
 //
-define method compute-below-size (start :: <fixed-integer>,
-				  increment :: <fixed-integer>,
-				  bound :: <fixed-integer>)
+define method compute-below-size (start :: <integer>,
+				  increment :: <integer>,
+				  bound :: <integer>)
       => below-size :: <false-or-fixed>;
    if (positive? (increment))
       if (increment = 1)
@@ -338,7 +338,7 @@ end method;
 //			 (N - FROM) / BY
 //
 define method approximate-range-key (range :: <range>, element :: <real>)
-      => key :: <fixed-integer>;
+      => key :: <integer>;
    round/ (element - range.range-from, range.range-by)
 end method;
 
@@ -395,7 +395,7 @@ end method;
 // bounds of the range, the default is returned or an error is
 // signalled.
 //
-define method element (range :: <bounded-range>, key :: <fixed-integer>,
+define method element (range :: <bounded-range>, key :: <integer>,
                        #key default = no-default)
       => range-element :: <real>;
    case
@@ -408,7 +408,7 @@ define method element (range :: <bounded-range>, key :: <fixed-integer>,
    end case;
 end method;
 //
-define method element (range :: <unbounded-range>, key :: <fixed-integer>,
+define method element (range :: <unbounded-range>, key :: <integer>,
                        #key default = no-default)
       => range-element :: <real>;
    case
@@ -456,24 +456,24 @@ define method forward-iteration-protocol (range :: <bounded-range>)
 	  current-element-setter :: <function>, copy-state? :: <function>);
    let initial-state = 0;
    let limit = range.range-size;
-   local method next-state (r :: <range>, s :: <fixed-integer>)
+   local method next-state (r :: <range>, s :: <integer>)
 	    s + 1
 	 end method;
-   local method finished-state? (r :: <range>, s :: <fixed-integer>,
-				 l :: <fixed-integer>)
+   local method finished-state? (r :: <range>, s :: <integer>,
+				 l :: <integer>)
 	    s = l
 	 end method;
-   local method current-key (r :: <range>, s :: <fixed-integer>)
+   local method current-key (r :: <range>, s :: <integer>)
 	    s
 	 end method;
-   local method current-element (r :: <range>, s :: <fixed-integer>)
+   local method current-element (r :: <range>, s :: <integer>)
 	    r[s];
 	 end method;
-   local method current-element-setter (r :: <range>, s :: <fixed-integer>,
+   local method current-element-setter (r :: <range>, s :: <integer>,
 					value)
             error ("CURRENT-ELEMENT-SETTER not applicable for <range>");
 	 end method;
-   local method copy-state (r :: <range>, s :: <fixed-integer>)
+   local method copy-state (r :: <range>, s :: <integer>)
 	    s
 	 end method;
    values (initial-state, limit, next-state, finished-state?, current-key,
@@ -487,23 +487,23 @@ define method forward-iteration-protocol (range :: <unbounded-range>)
 	  current-element-setter :: <function>, copy-state? :: <function>);
    let initial-state = 0;
    let limit = #f;
-   local method next-state (r :: <range>, s :: <fixed-integer>)
+   local method next-state (r :: <range>, s :: <integer>)
 	    s + 1
 	 end method;
-   local method finished-state? (r :: <range>, s :: <fixed-integer>, l)
+   local method finished-state? (r :: <range>, s :: <integer>, l)
 	    #f
 	 end method;
-   local method current-key (r :: <range>, s :: <fixed-integer>)
+   local method current-key (r :: <range>, s :: <integer>)
 	    s
 	 end method;
-   local method current-element (r :: <range>, s :: <fixed-integer>)
+   local method current-element (r :: <range>, s :: <integer>)
 	    r[s];
 	 end method;
-   local method current-element-setter (r :: <range>, s :: <fixed-integer>, 
+   local method current-element-setter (r :: <range>, s :: <integer>, 
 					value)
             error ("CURRENT-ELEMENT-SETTER not applicable for <range>");
 	 end method;
-   local method copy-state (r :: <range>, s :: <fixed-integer>)
+   local method copy-state (r :: <range>, s :: <integer>)
 	    s
 	 end method;
    values (initial-state, limit, next-state, finished-state?, current-key,

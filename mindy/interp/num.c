@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.24 1995/10/26 16:10:36 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.25 1996/01/11 18:43:29 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -1742,13 +1742,13 @@ static obj_t dylan_ei_as_fi(obj_t class, obj_t x)
     if (digits[length-1] & SIGN_MASK) {
 	/* It is negative, make sure it is not too negative. */
 	if (compare_bignums(x, as_bignum(MIN_FIXNUM)) < 0)
-	    error("Can't convert %= to <fixed-integer>", x);
+	    error("Can't convert %= to <integer>", x);
 	res = -1;
     }
     else {
 	/* It is positive, make sure it is not too positive. */
 	if (compare_bignums(x, as_bignum(MAX_FIXNUM)) > 0)
-	    error("Can't convert %= to <fixed-integer>", x);
+	    error("Can't convert %= to <integer>", x);
     }
 
     for (i = length - 1; i >= 0; i--)
@@ -2009,8 +2009,9 @@ void init_num_classes(void)
     init_builtin_class(obj_ComplexClass, "<complex>", obj_NumberClass, NULL);
     init_builtin_class(obj_RealClass, "<real>", obj_ComplexClass, NULL);
     init_builtin_class(obj_RationalClass, "<rational>", obj_RealClass, NULL);
-    init_builtin_class(obj_IntegerClass, "<integer>", obj_RationalClass, NULL);
-    init_builtin_class(obj_FixnumClass, "<fixed-integer>", obj_IntegerClass,
+    init_builtin_class(obj_IntegerClass, "<general-integer>",
+		       obj_RationalClass, NULL);
+    init_builtin_class(obj_FixnumClass, "<integer>", obj_IntegerClass,
 		       NULL);
     def_printer(obj_FixnumClass, print_fixnum);
     init_builtin_class(obj_BignumClass, "<extended-integer>", obj_IntegerClass,
@@ -2358,8 +2359,8 @@ void init_num_functions(void)
 		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
 		  dylan_as_identity);
 
-    define_constant("$maximum-fixed-integer", MAX_FIXNUM);
-    define_constant("$minimum-fixed-integer", MIN_FIXNUM);
+    define_constant("$maximum-integer", MAX_FIXNUM);
+    define_constant("$minimum-integer", MIN_FIXNUM);
 
     define_constant("$pi", make_double(M_PI));
     define_constant("$e", make_double(M_E));

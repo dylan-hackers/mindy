@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exit.dylan,v 1.4 1994/11/03 23:50:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exit.dylan,v 1.5 1996/01/11 18:43:32 wlott Exp $
 
 //======================================================================
 //
@@ -31,7 +31,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exit.dyl
 
 define constant *on-exit* = make(<deque>);
 
-define method exit (#key exit-code :: <fixed-integer> = 0)
+define method exit (#key exit-code :: <integer> = 0)
   while (~empty?(*on-exit*))
     pop(*on-exit*)();
   end;

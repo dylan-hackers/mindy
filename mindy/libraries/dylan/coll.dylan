@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.26 1995/09/01 17:30:30 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.27 1996/01/11 18:43:30 wlott Exp $
 
 //======================================================================
 //
@@ -113,7 +113,7 @@ define method \=(a :: <collection>, b :: <collection>) => <object>;
 end method \=;
 
 
-define method size(collection :: <collection>) => <fixed-integer>;
+define method size(collection :: <collection>) => <integer>;
   for (count from 0, elem in collection)
   finally
     count;
@@ -700,7 +700,7 @@ define method remove! (sequence :: <mutable-sequence>, value,
        current-element, current-element-setter,
        copy-state) = forward-iteration-protocol(sequence);
   local method replace (dest-state, src-state,
-			replaced :: <fixed-integer>, length :: <fixed-integer>)
+			replaced :: <integer>, length :: <integer>)
 	  case
 	    done?(sequence, src-state, limit) =>
 	      shrink!(sequence, length);

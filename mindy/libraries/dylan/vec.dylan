@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.18 1995/11/20 02:23:52 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.19 1996/01/11 18:43:37 wlott Exp $
 
 //======================================================================
 //
@@ -35,8 +35,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dyla
 define constant vector-prev-state =
   begin
     local
-      method vector-prev-state (vec :: <vector>, state :: <fixed-integer>)
-	  => <fixed-integer>;
+      method vector-prev-state (vec :: <vector>, state :: <integer>)
+	  => <integer>;
 	state - 1;
       end;
     vector-prev-state;
@@ -45,8 +45,8 @@ define constant vector-prev-state =
 define constant vector-next-state =
   begin
     local
-      method vector-next-state (vec :: <vector>, state :: <fixed-integer>)
-	  => <fixed-integer>;
+      method vector-next-state (vec :: <vector>, state :: <integer>)
+	  => <integer>;
 	state + 1;
       end;
     vector-next-state;
@@ -55,8 +55,8 @@ define constant vector-next-state =
 define constant vector-finished? =
   begin
     local
-      method vector-finished? (vec :: <vector>, state :: <fixed-integer>,
-			       limit :: <fixed-integer>)
+      method vector-finished? (vec :: <vector>, state :: <integer>,
+			       limit :: <integer>)
 	state == limit;
       end;
     vector-finished?;
@@ -65,7 +65,7 @@ define constant vector-finished? =
 define constant vector-current-key =
   begin
     local
-      method vector-current-key (vec :: <vector>, state :: <fixed-integer>)
+      method vector-current-key (vec :: <vector>, state :: <integer>)
 	  => <object>;
 	state;
       end;
@@ -75,7 +75,7 @@ define constant vector-current-key =
 define constant vector-current-element =
   begin
     local
-      method vector-current-element (vec :: <vector>, state :: <fixed-integer>)
+      method vector-current-element (vec :: <vector>, state :: <integer>)
 	  => <object>;
 	element(vec, state);
       end;
@@ -86,7 +86,7 @@ define constant vector-current-element-setter =
   begin
     local
       method vector-current-element-setter (value :: <object>, vec :: <vector>,
-					    state :: <fixed-integer>)
+					    state :: <integer>)
 	  => <object>;
 	element(vec, state) := value;
       end;
@@ -96,8 +96,8 @@ define constant vector-current-element-setter =
 define constant vector-copy-state =
   begin
     local
-      method vector-copy-state (vec :: <vector>, state :: <fixed-integer>)
-	  => <fixed-integer>;
+      method vector-copy-state (vec :: <vector>, state :: <integer>)
+	  => <integer>;
 	state;
       end;
     vector-copy-state;
@@ -339,7 +339,7 @@ define method subsequence-position(big :: <byte-string>,
 	let last-char = pattern[pat-last];
 	let skip = make(<vector>, size: 256, fill: pat-sz);
 	for (i from 0 below pat-last)
-	  skip[as(<fixed-integer>, pattern[i])] := pat-last - i;
+	  skip[as(<integer>, pattern[i])] := pat-last - i;
 	end for;
 	local method do-skip(index, count)
 		if (index >= sz)
@@ -349,7 +349,7 @@ define method subsequence-position(big :: <byte-string>,
 		  if (char == last-char)
 		    search(index - pat-last, index, pat-last, count);
 		  else
-		    do-skip(index + skip[as(<fixed-integer>, char)], count);
+		    do-skip(index + skip[as(<integer>, char)], count);
 		  end if;
 		end if;
 	      end method,
@@ -449,7 +449,7 @@ define method aref-setter (new, vector :: <vector>, #rest indices)
   end;
 end;
 
-define method size (v :: <vector>) => size :: <fixed-integer>;
+define method size (v :: <vector>) => size :: <integer>;
   error("The array method for size must be overridden by vectors.");
 end;
 
@@ -460,11 +460,11 @@ end method dimensions;
 
 //// Special purpose element setter methods.
 
-define method element-setter (value, v :: <byte-vector>, index :: <fixed-integer>)
+define method element-setter (value, v :: <byte-vector>, index :: <integer>)
   error("%= is not an integer between 0 and 255.", value);
 end;
 
-define method element-setter (value, v :: <buffer>, index :: <fixed-integer>)
+define method element-setter (value, v :: <buffer>, index :: <integer>)
   error("%= is not an integer between 0 and 255.", value);
 end;
 

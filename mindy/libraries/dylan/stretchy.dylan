@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.13 1996/01/02 01:16:01 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.14 1996/01/11 18:43:35 wlott Exp $
 
 //======================================================================
 //
@@ -47,7 +47,7 @@ end method;
 
 define class <simple-stretchy-vector> (<stretchy-vector>)
   slot ssv-data :: <simple-object-vector>, init-keyword: data:;
-  slot ssv-fill :: <fixed-integer>, init-keyword: fill:;
+  slot ssv-fill :: <integer>, init-keyword: fill:;
 end class <simple-stretchy-vector>;
   
 
@@ -82,11 +82,11 @@ define method make(cls == <simple-stretchy-vector>,
   end if;
 end method make;
 
-define method size(ssv :: <simple-stretchy-vector>) => <fixed-integer>;
+define method size(ssv :: <simple-stretchy-vector>) => <integer>;
   ssv-fill(ssv);
 end method size;
 
-define method size-setter(new :: <fixed-integer>, ssv :: <simple-stretchy-vector>)
+define method size-setter(new :: <integer>, ssv :: <simple-stretchy-vector>)
   let fill = ssv-fill(ssv);
   let data = ssv-data(ssv);
   if (new > fill)
@@ -119,7 +119,7 @@ end method dimensions;
 
 define constant ssv_no_default = pair(#f, #f);
 
-define method element(ssv :: <simple-stretchy-vector>, key :: <fixed-integer>,
+define method element(ssv :: <simple-stretchy-vector>, key :: <integer>,
 		      #key default = ssv_no_default)
   case
     key >= 0 & key < size(ssv) =>
@@ -132,7 +132,7 @@ define method element(ssv :: <simple-stretchy-vector>, key :: <fixed-integer>,
 end method element;
 
 define method element-setter(value, ssv :: <simple-stretchy-vector>,
-			     key :: <fixed-integer>)
+			     key :: <integer>)
   if (key < 0)
     error("Element %d not in %=", key, ssv);
   else

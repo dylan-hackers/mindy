@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.11 1995/11/20 02:23:52 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.12 1996/01/11 18:43:33 wlott Exp $
 
 //======================================================================
 //
@@ -32,11 +32,11 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dyla
 
 // Predicates.
 
-define method odd? (x :: <integer>)
+define method odd? (x :: <general-integer>)
   logbit?(0, x);
 end;
 
-define method even? (x :: <integer>)
+define method even? (x :: <general-integer>)
   ~logbit?(0, x);
 end;
 
@@ -52,7 +52,7 @@ define method negative? (x :: <real>)
   x < 0;
 end;
 
-define method integral? (x :: <integer>)
+define method integral? (x :: <general-integer>)
   #t
 end;
 
@@ -63,11 +63,11 @@ end;
 
 // Contagion.
 
-define method combine-contagion (x :: <fixed-integer>, y :: <extended-integer>)
+define method combine-contagion (x :: <integer>, y :: <extended-integer>)
   values (as (<extended-integer>, x), y);
 end method;
 
-define method combine-contagion (x :: <extended-integer>, y :: <fixed-integer>)
+define method combine-contagion (x :: <extended-integer>, y :: <integer>)
   values (x, as (<extended-integer>, y));
 end method;
 
@@ -152,90 +152,90 @@ define method \/ (x :: <float>, y :: <rational>)
   x / y;
 end;
 
-define method truncate (x :: <integer>)
-      => (q :: <integer>, r :: <fixed-integer>);
+define method truncate (x :: <general-integer>)
+      => (q :: <general-integer>, r :: <integer>);
   truncate/ (x, 1);
 end;
 
-define method floor (x :: <integer>)
-      => (q :: <integer>, r :: <fixed-integer>);
+define method floor (x :: <general-integer>)
+      => (q :: <general-integer>, r :: <integer>);
   floor/ (x, 1);
 end;
 
-define method ceiling (x :: <integer>)
-      => (q :: <integer>, r :: <fixed-integer>);
+define method ceiling (x :: <general-integer>)
+      => (q :: <general-integer>, r :: <integer>);
   ceiling/ (x, 1);
 end;
 
-define method round (x :: <integer>)
-      => (q :: <integer>, r :: <fixed-integer>);
+define method round (x :: <general-integer>)
+      => (q :: <general-integer>, r :: <integer>);
   round/ (x, 1);
 end;
 
-define method floor/ (x :: <extended-integer>, y :: <fixed-integer>)
-    => (q :: <extended-integer>, r :: <fixed-integer>);
+define method floor/ (x :: <extended-integer>, y :: <integer>)
+    => (q :: <extended-integer>, r :: <integer>);
   let (q, r) = floor/ (x, as(<extended-integer>, y));
-  values(q, as(<fixed-integer>, r));
+  values(q, as(<integer>, r));
 end;
 
-define method floor/ (x :: <fixed-integer>, y :: <extended-integer>)
+define method floor/ (x :: <integer>, y :: <extended-integer>)
     => (q :: <extended-integer>, r :: <extended-integer>);
   floor/ (as(<extended-integer>, x), y);
 end;
 
 define method floor/ (x :: <real>, y :: <real>)
-    => (q :: <integer>, r :: <real>);
+    => (q :: <general-integer>, r :: <real>);
   let res = floor (x / y);
   values (res, x - res * y);
 end;
 
-define method ceiling/ (x :: <extended-integer>, y :: <fixed-integer>)
-    => (q :: <extended-integer>, r :: <fixed-integer>);
+define method ceiling/ (x :: <extended-integer>, y :: <integer>)
+    => (q :: <extended-integer>, r :: <integer>);
   let (q, r) = ceiling/ (x, as(<extended-integer>, y));
-  values(q, as(<fixed-integer>, r));
+  values(q, as(<integer>, r));
 end;
 
-define method ceiling/ (x :: <fixed-integer>, y :: <extended-integer>)
+define method ceiling/ (x :: <integer>, y :: <extended-integer>)
     => (q :: <extended-integer>, r :: <extended-integer>);
   ceiling/ (as(<extended-integer>, x), y);
 end;
 
 define method ceiling/ (x :: <real>, y :: <real>)
-    => (q :: <integer>, r :: <real>);
+    => (q :: <general-integer>, r :: <real>);
   let res = ceiling (x / y);
   values (res, x - res * y);
 end;
 
-define method round/ (x :: <extended-integer>, y :: <fixed-integer>)
-    => (q :: <extended-integer>, r :: <fixed-integer>);
+define method round/ (x :: <extended-integer>, y :: <integer>)
+    => (q :: <extended-integer>, r :: <integer>);
   let (q, r) = round/ (x, as(<extended-integer>, y));
-  values(q, as(<fixed-integer>, r));
+  values(q, as(<integer>, r));
 end;
 
-define method round/ (x :: <fixed-integer>, y :: <extended-integer>)
+define method round/ (x :: <integer>, y :: <extended-integer>)
     => (q :: <extended-integer>, r :: <extended-integer>);
   round/ (as(<extended-integer>, x), y);
 end;
 
 define method round/ (x :: <real>, y :: <real>)
-    => (q :: <integer>, r :: <real>);
+    => (q :: <general-integer>, r :: <real>);
   let res = round (x / y);
   values (res, x - res * y);
 end;
 
-define method truncate/ (x :: <extended-integer>, y :: <fixed-integer>)
-    => (q :: <extended-integer>, r :: <fixed-integer>);
+define method truncate/ (x :: <extended-integer>, y :: <integer>)
+    => (q :: <extended-integer>, r :: <integer>);
   let (q, r) = truncate/ (x, as(<extended-integer>, y));
-  values(q, as(<fixed-integer>, r));
+  values(q, as(<integer>, r));
 end;
 
-define method truncate/ (x :: <fixed-integer>, y :: <extended-integer>)
+define method truncate/ (x :: <integer>, y :: <extended-integer>)
     => (q :: <extended-integer>, r :: <extended-integer>);
   truncate/ (as(<extended-integer>, x), y);
 end;
 
 define method truncate/ (x :: <real>, y :: <real>)
-    => (q :: <integer>, r :: <real>);
+    => (q :: <general-integer>, r :: <real>);
   let res = truncate (x / y);
   values(res, x - res * y);
 end;
@@ -250,17 +250,17 @@ define method remainder (x :: <real>, y :: <real>)
   rem;
 end;
 
-define method binary-logand (x :: <integer>, y :: <integer>)
+define method binary-logand (x :: <general-integer>, y :: <general-integer>)
   let (x, y) = combine-contagion(x, y);
   binary-logand(x, y);
 end;
 
-define method binary-logior (x :: <integer>, y :: <integer>)
+define method binary-logior (x :: <general-integer>, y :: <general-integer>)
   let (x, y) = combine-contagion(x, y);
   binary-logior(x, y);
 end;
 
-define method binary-logxor (x :: <integer>, y :: <integer>)
+define method binary-logxor (x :: <general-integer>, y :: <general-integer>)
   let (x, y) = combine-contagion(x, y);
   binary-logxor(x, y);
 end;
@@ -289,7 +289,7 @@ end;
 
 // Other routines.
 
-define method \^ (base :: <number>, power :: <integer>)
+define method \^ (base :: <number>, power :: <general-integer>)
   case
     negative? (power) =>
       1 / (base ^ (- power));
@@ -344,11 +344,11 @@ define method logand (#rest integers)
   end if;
 end;
 
-define method lcm (n :: <integer>, m :: <integer>)
+define method lcm (n :: <general-integer>, m :: <general-integer>)
   truncate/(max(n, m), gcd(n, m)) * min(n, m);
 end;
 
-define method gcd (u :: <integer>, v :: <integer>)
+define method gcd (u :: <general-integer>, v :: <general-integer>)
   case
     zero?(u) => v;
     zero?(v) => u;

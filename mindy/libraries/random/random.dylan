@@ -30,7 +30,7 @@ define constant random-const-a = 8373;
 define constant random-const-c = 101010101;
 define constant random-max = 54;
 
-define method integer-length (int :: <integer>) => n-bits :: <fixed-integer>;
+define method integer-length (int :: <general-integer>) => n-bits :: <integer>;
   let num = if (int < 0) -int else int + 1 end;
   for (count from 1, n = num then ash(n, -1), while n > 0)
   finally
@@ -41,14 +41,12 @@ end method integer-length;
 // Inclusive upper bound on the size of fixnum kept in the state (and returned
 // by random-chunk.)  Must be even.
 //
-define constant random-upper-bound = $maximum-fixed-integer - 3;
+define constant random-upper-bound = $maximum-integer - 3;
 define constant random-chunk-length = random-upper-bound.integer-length;
 
-define variable rand-seed :: <integer> = 0;  // Dummy value; assigned in make.
-
 define sealed class <random-state> (<object>)
-  slot state-j :: <integer>, init-value: 24;
-  slot state-k :: <integer>, init-value: 0;
+  slot state-j :: <general-integer>, init-value: 24;
+  slot state-k :: <general-integer>, init-value: 0;
   slot state-seed :: <simple-object-vector>;
 end class <random-state>;
 
@@ -63,12 +61,12 @@ define method initialize (state :: <random-state>, #next next-method,
   next-method();
   let rand-seed = if (~seed)
 		    get-time-of-day();
-		  elseif (~ instance?(seed, <integer>))
+		  elseif (~ instance?(seed, <general-integer>))
 		    error("Seed must be an integer");
 		  else
 		    seed;
 		  end if;
-  local method rand1 () => random-number :: <integer>;
+  local method rand1 () => random-number :: <general-integer>;
 	  rand-seed := modulo((rand-seed * random-const-a) + random-const-c,
 			      random-upper-bound + 1);
 	end method rand1;
@@ -98,7 +96,7 @@ end method shallow-copy;
 // even positive fixnum.  State is the random state to use.
 //
 define method random-chunk (state :: <random-state>)
- => number :: <fixed-integer>;
+ => number :: <integer>;
   if (instance?(state, <threadsafe-random-state>)) 
     grab-lock(state.mutex);
   end if;
@@ -134,8 +132,8 @@ define constant random-fixnum-max
 
 // Interface to the outside world:
 
-define method random (arg :: <integer>, #key state = *random-state*) 
- => random-number :: <integer>;
+define method random (arg :: <general-integer>, #key state = *random-state*) 
+ => random-number :: <general-integer>;
   let shift = random-chunk-length - random-integer-overlap;
   if (arg <= random-fixnum-max)
     remainder(random-chunk(state), arg);
@@ -155,7 +153,7 @@ define constant $random-bits-count
   = random-chunk-length - random-integer-extra-bits;
 
 define method random-bits (#key state = *random-state*) 
- => bits :: <fixed-integer>;
+ => bits :: <integer>;
   ash(random-chunk(*random-state*), - random-integer-extra-bits);
 end method random-bits;
 
@@ -255,7 +253,7 @@ end method random-exponential;
 // square root of r.
 //
 define method chi-square 
-    (generator :: <function>, r :: <integer>) => chi-square :: <number>;
+    (generator :: <function>, r :: <general-integer>) => chi-square :: <number>;
   let N = 10 * r;
   let f = as(<double-float>, N) / as(<double-float>, r);
   let freq = make(<vector>, size: r, fill: 0);

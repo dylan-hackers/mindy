@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ratio.dylan,v 1.3 1995/03/13 15:39:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ratio.dylan,v 1.4 1996/01/11 18:43:37 wlott Exp $
 
 //======================================================================
 //
@@ -58,7 +58,7 @@ define method make (class == <ratio>, #key numerator, denominator)
   end;
 end;
 
-define method ratio (num :: <integer>, denom :: <integer>)
+define method ratio (num :: <general-integer>, denom :: <general-integer>)
     => res :: <ratio>;
   make(<ratio>, numerator: num, denominator: denom);
 end;
@@ -186,7 +186,7 @@ define method abs (r :: <ratio>)
   ratio(r.numerator.abs, r.denominator);
 end;
 
-define method rationalize (num :: <integer>) => res :: <ratio>;
+define method rationalize (num :: <general-integer>) => res :: <ratio>;
   ratio(num, 1);
 end;
 
@@ -229,17 +229,17 @@ end;
 // to be pulled apart and thrown away.  And we also avoid a bunch of spurious
 // multiplies by 1.
 
-define method \= (a :: <ratio>, b :: <integer>)
+define method \= (a :: <ratio>, b :: <general-integer>)
     => res :: <boolean>;
   a.numerator = b & a.denominator = 1;
 end;
 
-define method \= (a :: <integer>, b :: <ratio>)
+define method \= (a :: <general-integer>, b :: <ratio>)
     => res :: <boolean>;
   a = b.numerator & 1 = b.denominator;
 end;
 
-define method \< (a :: <ratio>, b :: <integer>)
+define method \< (a :: <ratio>, b :: <general-integer>)
     => res :: <boolean>;
   // Start with:
   //   a_n/a_d < b
@@ -248,7 +248,7 @@ define method \< (a :: <ratio>, b :: <integer>)
   a.numerator < b * a.denominator;
 end;
 
-define method \< (a :: <integer>, b :: <ratio>)
+define method \< (a :: <general-integer>, b :: <ratio>)
     => res :: <boolean>;
   // Start with:
   //   a < b_n/b_d
@@ -257,7 +257,7 @@ define method \< (a :: <integer>, b :: <ratio>)
   a * b.denominator < b.numerator;
 end;
 
-define method \+ (a :: <integer>, b :: <ratio>)
+define method \+ (a :: <general-integer>, b :: <ratio>)
     => res :: <ratio>;
   // Start with:
   //   a + b_n/b_d
@@ -266,7 +266,7 @@ define method \+ (a :: <integer>, b :: <ratio>)
   ratio(a * b.denominator + b.numerator, b.denominator);
 end;
 
-define method \+ (a :: <ratio>, b :: <integer>)
+define method \+ (a :: <ratio>, b :: <general-integer>)
     => res :: <ratio>;
   // Start with:
   //   a_n/a_d + b
@@ -275,17 +275,17 @@ define method \+ (a :: <ratio>, b :: <integer>)
   ratio(a.numerator + b * a.denominator, a.denominator);
 end;
 
-define method \* (a :: <integer>, b :: <ratio>)
+define method \* (a :: <general-integer>, b :: <ratio>)
     => res :: <ratio>;
   ratio(a * b.numerator, b.denominator);
 end;
 
-define method \* (a :: <ratio>, b :: <integer>)
+define method \* (a :: <ratio>, b :: <general-integer>)
     => res :: <ratio>;
   ratio(a.numerator * b, a.denominator);
 end;
 
-define method \- (a :: <integer>, b :: <ratio>)
+define method \- (a :: <general-integer>, b :: <ratio>)
     => res :: <ratio>;
   // Start with:
   //   a - b_n/b_d
@@ -294,7 +294,7 @@ define method \- (a :: <integer>, b :: <ratio>)
   ratio(a * b.denominator - b.numerator, b.denominator);
 end;
 
-define method \- (a :: <ratio>, b :: <integer>)
+define method \- (a :: <ratio>, b :: <general-integer>)
     => res :: <ratio>;
   // Start with:
   //   a_n/a_d - b
@@ -303,7 +303,7 @@ define method \- (a :: <ratio>, b :: <integer>)
   ratio(a.numerator - b * a.denominator, a.denominator);
 end;
 
-define method \/ (a :: <integer>, b :: <ratio>)
+define method \/ (a :: <general-integer>, b :: <ratio>)
     => res :: <ratio>;
   // Start with:
   //   a / b_n/b_d
@@ -314,7 +314,7 @@ define method \/ (a :: <integer>, b :: <ratio>)
   ratio(a * b.denominator, b.numerator);
 end;
 
-define method \/ (a :: <ratio>, b :: <integer>)
+define method \/ (a :: <ratio>, b :: <general-integer>)
     => res :: <ratio>;
   // Start with:
   //   a_n/a_d / b

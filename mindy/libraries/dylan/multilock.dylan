@@ -1,5 +1,5 @@
 module: threads
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/multilock.dylan,v 1.4 1994/11/03 23:51:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/multilock.dylan,v 1.5 1996/01/11 18:43:33 wlott Exp $
 
 //======================================================================
 //
@@ -42,7 +42,7 @@ define class <multilock> (<lock>)
 
   // The number of times the multilock has been locked by the locking
   // thread.
-  slot count :: limited(<fixed-integer>, min: 0), init-value: 0;
+  slot count :: limited(<integer>, min: 0), init-value: 0;
 
   // The event we signal whenever the multilock becomes available.
   slot available :: <event>, setter: #f,

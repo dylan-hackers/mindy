@@ -1,7 +1,7 @@
 module:   dylan
 language: infix-dylan
 author:   Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.6 1994/12/14 11:11:30 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.7 1996/01/11 18:43:30 wlott Exp $
 
 //======================================================================
 //
@@ -36,7 +36,7 @@ define constant no-default = list(#"no-default");
 define class <multiD-array> (<array>)
   slot dimensions-slot  :: <simple-object-vector>;  // Sequence of integers
   slot contents-slot    :: <simple-object-vector>;
-  slot size-slot        :: <fixed-integer>;
+  slot size-slot        :: <integer>;
 end class <multiD-array>;
 
 // General array methods
@@ -55,7 +55,7 @@ end method make;
 
 
 define method row-major-index (array :: <array>, #rest indices)
- => index :: <fixed-integer>;
+ => index :: <integer>;
   let dims = dimensions(array);
   let sum = 0;
   if (size(indices) ~= size(dims))
@@ -91,27 +91,27 @@ end method aref-setter;
 
 // rank -- the number of dimensions
 //
-define method rank (array :: <array>) => the-rank-of-array :: <fixed-integer>;
+define method rank (array :: <array>) => the-rank-of-array :: <integer>;
   size(dimensions(array));
 end method rank;
 
 
 // Also defined below on multiD-arrays
 //
-define method size (array :: <array>) => size :: <fixed-integer>;
+define method size (array :: <array>) => size :: <integer>;
   reduce(\*, 1, dimensions(array));
 end method size;
 
 
-define method dimension (array :: <array>, axis :: <fixed-integer>) 
-             => dim-of-that-axis :: <fixed-integer>;
+define method dimension (array :: <array>, axis :: <integer>) 
+             => dim-of-that-axis :: <integer>;
   element(dimensions(array), axis);
 end method dimension;
 
 
 define method forward-iteration-protocol (array :: <array>)
-  => (initial-state          :: <fixed-integer>,
-      limit                  :: <fixed-integer>,
+  => (initial-state          :: <integer>,
+      limit                  :: <integer>,
       next-state             :: <function>,  finished-state? :: <function>,
       current-key            :: <function>,  current-element :: <function>,
       current-element-setter :: <function>,  copy-state      :: <function>);
@@ -119,45 +119,45 @@ define method forward-iteration-protocol (array :: <array>)
 	 size(array),       // limit 
 
 	      // next-state
-	 method (array :: <array>, state :: <fixed-integer>) 
-	  => next-state :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>) 
+	  => next-state :: <integer>;
 	   state + 1;
 	 end method,
 
 	      // finished-state?
-	 method (array :: <array>, state :: <fixed-integer>,
-		 limit :: <fixed-integer>)
+	 method (array :: <array>, state :: <integer>,
+		 limit :: <integer>)
 	  => answer :: <boolean>;
 	   state = limit;
 	 end method,
 
 	     // current-key
-	 method (array :: <array>, state :: <fixed-integer>)
-	     => key :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>)
+	     => key :: <integer>;
 	   state;
 	 end method,
 
 	     // current-element
-	 method (array :: <array>, state :: <fixed-integer>)
+	 method (array :: <array>, state :: <integer>)
 	   array[state];
 	 end method,
 
 	    // current-element-setter
-	 method (value, array :: <array>, state :: <fixed-integer>)
+	 method (value, array :: <array>, state :: <integer>)
 	   array [state] := value;
 	 end method,
 
 	    // copy-state
-	 method (array :: <array>, state :: <fixed-integer>) 
-	  => new-state :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>) 
+	  => new-state :: <integer>;
 	   state;
 	 end method);
 end method forward-iteration-protocol;
 
 
 define method backward-iteration-protocol (array :: <array>)
-  => (final-state            :: <fixed-integer>,
-      limit                  :: <fixed-integer>,
+  => (final-state            :: <integer>,
+      limit                  :: <integer>,
       previous-state         :: <function>,  finished-state? :: <function>,
       current-key            :: <function>,  current-element :: <function>,
       current-element-setter :: <function>,  copy-state      :: <function>);
@@ -166,37 +166,37 @@ define method backward-iteration-protocol (array :: <array>)
 	 -1,                               // limit 
 
 	     // next-state
-	 method (array :: <array>, state :: <fixed-integer>)    
+	 method (array :: <array>, state :: <integer>)    
 	   state - 1;
 	 end method,
 
 	     // Everything else the same as forward-iteration-protocol
 
 	     // finished-state?
-	 method (array :: <array>, state :: <fixed-integer>,
-		 limit :: <fixed-integer>)
+	 method (array :: <array>, state :: <integer>,
+		 limit :: <integer>)
 	   state = limit;
 	 end method,
 
 	     // current-key
-	 method (array :: <array>, state :: <fixed-integer>)
-	     => key :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>)
+	     => key :: <integer>;
 	   state;
 	 end method,
 
 	     // current-element
-	 method (array :: <array>, state :: <fixed-integer>)
+	 method (array :: <array>, state :: <integer>)
 	   array [state];
 	 end method,
 
 	    // current-element-setter
-	 method (value, array :: <array>, state :: <fixed-integer>)
+	 method (value, array :: <array>, state :: <integer>)
 	   array [state] := value;
 	 end method,
 
 	    // copy-state
-	 method (array :: <array>, state :: <fixed-integer>) 
-	  => new-state :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>) 
+	  => new-state :: <integer>;
 	   state;
 	 end method);
 end method backward-iteration-protocol;
@@ -223,7 +223,7 @@ define method initialize (array :: <multiD-array>,
 end method initialize;
 
 
-define method element (array :: <multiD-array>, index :: <fixed-integer>,
+define method element (array :: <multiD-array>, index :: <integer>,
 		       #key default: default = no-default);
   if (default == no-default)
     array.contents-slot[index];
@@ -234,12 +234,12 @@ end method element;
 
 
 define method element-setter (value, array :: <multiD-array>, 
-			      index :: <fixed-integer>);
+			      index :: <integer>);
   array.contents-slot[index] := value;
 end method element-setter;
 
 
-define method size (array :: <multiD-array>) => size :: <fixed-integer>;
+define method size (array :: <multiD-array>) => size :: <integer>;
   array.size-slot;
 end method size;
 

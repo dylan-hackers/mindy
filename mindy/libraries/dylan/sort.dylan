@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.7 1995/11/18 04:08:41 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.8 1996/01/11 18:43:34 wlott Exp $
 
 //======================================================================
 //
@@ -61,8 +61,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dyl
 //
 // Swaps two elements in a vector.
 //
-define method swap-elements! (vector :: <vector>, key1 :: <fixed-integer>,
-			      key2 :: <fixed-integer>)
+define method swap-elements! (vector :: <vector>, key1 :: <integer>,
+			      key2 :: <integer>)
   let element1 = vector[key1];
   let element2 = vector[key2];
   vector[key1] := element2;
@@ -331,9 +331,9 @@ end method merge-sort;
 // convention, "last" is an exclusive bound.
 //
 define constant median-of-three = method 
-    (vec :: <vector>, first :: <fixed-integer>, last :: <fixed-integer>,
+    (vec :: <vector>, first :: <integer>, last :: <integer>,
      less-than :: <function>)
- => pivot-index :: <fixed-integer>;
+ => pivot-index :: <integer>;
   let first-elem = vec[first];
   let last-elem = vec[last - 1];
   let middle = truncate/(first + last, 2);

@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.7 1994/11/03 23:51:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.8 1996/01/11 18:43:33 wlott Exp $
 
 //======================================================================
 //
@@ -65,7 +65,7 @@ define constant \:= =
 define method make (c == <generic-function>,
 		    #key debug-name, required: req, rest?, key, all-keys?)
   let req = select (req by instance?)
-	      <fixed-integer> =>
+	      <integer> =>
 		if (req < 0)
 		  error("required: can't be negative: %d",
 			req);
