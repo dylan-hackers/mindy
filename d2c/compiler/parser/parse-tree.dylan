@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.11 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.12 1996/02/08 02:24:47 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -13,10 +13,11 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 define class <property> (<object>)
   //
   // The keyword.
-  slot prop-keyword :: <keyword-token>, required-init-keyword: keyword:;
+  slot prop-keyword :: <keyword-token>, setter: #f,
+    required-init-keyword: keyword:;
   //
   // And the associated property, either an expression or a <property-set>.
-  slot prop-value :: type-union(<expression>, <property-set>),
+  slot prop-value :: type-union(<expression>, <property-set>), setter: #f,
     required-init-keyword: value:;
 end;
 
@@ -34,7 +35,7 @@ end;
 define class <bindings> (<token>)
   //
   // The parameters being bound.
-  slot bindings-parameter-list :: <parameter-list>,
+  slot bindings-parameter-list :: <parameter-list>, setter: #f,
     required-init-keyword: parameter-list:;
   //
   // The expression they are being bound to.
@@ -68,11 +69,11 @@ define class <parameter-list> (<object>)
     init-value: #f, init-keyword: next:;
   //
   // Either #f or a (possibly empty) vector of <keyword-parameter>s.
-  slot paramlist-keys :: false-or(<simple-object-vector>),
+  slot paramlist-keys :: false-or(<simple-object-vector>), setter: #f,
     init-value: #f, init-keyword: keys:;
   //
   // #t if #all-keys was supplied, #f otherwise.
-  slot paramlist-all-keys? :: <boolean>,
+  slot paramlist-all-keys? :: <boolean>, setter: #f,
     init-value: #f, init-keyword: all-keys:;
 end;
 
@@ -97,10 +98,11 @@ end;
 define class <parameter> (<object>)
   //
   // The name.
-  slot param-name :: <name-token>, required-init-keyword: name:;
+  slot param-name :: <name-token>, setter: #f,
+    required-init-keyword: name:;
   //
   // The type expression if there is one, or #f if not.
-  slot param-type :: false-or(<expression>),
+  slot param-type :: false-or(<expression>), setter: #f,
     init-value: #f, init-keyword: type:;
 end;
 
@@ -113,9 +115,9 @@ end;
 // <keyword-parameter> -- exported.
 //
 define class <keyword-parameter> (<parameter>)
-  slot param-keyword :: <symbol>,
+  slot param-keyword :: <symbol>, setter: #f,
     required-init-keyword: keyword:;
-  slot param-default :: false-or(<expression>),
+  slot param-default :: false-or(<expression>), setter: #f,
     required-init-keyword: default:;
 end;
 
@@ -137,11 +139,11 @@ define class <method-parse> (<object>)
     init-value: #f, init-keyword: name:;
   //
   // The parameter list.
-  slot method-param-list :: <parameter-list>,
+  slot method-param-list :: <parameter-list>, setter: #f,
     required-init-keyword: parameter-list:;
   //
   // Parameter list describing the return values.
-  slot method-returns :: <parameter-list>,
+  slot method-returns :: <parameter-list>, setter: #f,
     init-function: method ()
 		     make(<parameter-list>,
 			  required: #[],
@@ -152,7 +154,8 @@ define class <method-parse> (<object>)
     init-keyword: returns:;
   //
   // The body, a vector of constituents.
-  slot method-body :: <simple-object-vector>, required-init-keyword: body:;
+  slot method-body :: <simple-object-vector>, setter: #f,
+    required-init-keyword: body:;
 end;
 
 define method print-object (meth :: <method-parse>, stream :: <stream>) => ();
@@ -169,7 +172,7 @@ define class <case-clause> (<object>)
   //
   // The ``label'' for this case clause.  Either a vector of expressions, or
   // #t for otherwise labels.
-  slot case-label :: type-union(<simple-object-vector>, <true>),
+  slot case-label :: type-union(<simple-object-vector>, <true>), setter: #f,
     required-init-keyword: label:;
   
   // Starts out a stretchy-vector, and is converted into a simple-object
@@ -188,7 +191,7 @@ end;
 // <property-set> -- exported.
 // 
 define class <property-set> (<token>)
-  slot property-set-members :: <simple-object-vector>,
+  slot property-set-members :: <simple-object-vector>, setter: #f,
     required-init-keyword: members:;
 end;
 
@@ -199,16 +202,17 @@ end;
 // <use-clause> -- exported.
 //
 define class <use-clause> (<object>)
-  slot use-name :: <name-token>, required-init-keyword: name:;
-  slot use-import :: type-union(<expression>, <property-set>),
+  slot use-name :: <name-token>, setter: #f,
+    required-init-keyword: name:;
+  slot use-import :: type-union(<expression>, <property-set>), setter: #f,
     required-init-keyword: import:;
-  slot use-exclude :: type-union(<expression>, <property-set>),
+  slot use-exclude :: type-union(<expression>, <property-set>), setter: #f,
     required-init-keyword: exclude:;
-  slot use-prefix :: type-union(<expression>, <property-set>),
+  slot use-prefix :: type-union(<expression>, <property-set>), setter: #f,
     required-init-keyword: prefix:;
-  slot use-rename :: type-union(<expression>, <property-set>),
+  slot use-rename :: type-union(<expression>, <property-set>), setter: #f,
     required-init-keyword: rename:;
-  slot use-export :: type-union(<expression>, <property-set>),
+  slot use-export :: type-union(<expression>, <property-set>), setter: #f,
     required-init-keyword: export:;
 end;
 
@@ -225,7 +229,8 @@ end;
 // <export-clause> -- exported.
 //
 define class <export-clause> (<object>)
-  slot export-names :: <simple-object-vector>, required-init-keyword: names:;
+  slot export-names :: <simple-object-vector>, setter: #f,
+    required-init-keyword: names:;
 end;
 
 define method print-object (clause :: <export-clause>, stream :: <stream>)
@@ -236,7 +241,8 @@ end;
 // <create-clause> -- exported.
 //
 define class <create-clause> (<object>)
-  slot create-names :: <simple-object-vector>, required-init-keyword: names:;
+  slot create-names :: <simple-object-vector>, setter: #f,
+    required-init-keyword: names:;
 end;
 
 define method print-object (clause :: <create-clause>, stream :: <stream>)
@@ -249,37 +255,44 @@ define abstract class <for-clause> (<object>)
 end;
 
 define class <for-while-clause> (<for-clause>)
-  slot for-clause-condition :: <expression>, required-init-keyword: condition:;
+  slot for-clause-condition :: <expression>, setter: #f,
+    required-init-keyword: condition:;
 end;
 
 define abstract class <for-var-clause> (<for-clause>)
-  slot for-clause-variable :: <parameter>, required-init-keyword: variable:;
+  slot for-clause-variable :: <parameter>, setter: #f,
+    required-init-keyword: variable:;
 end;
 
 define class <for-in-clause> (<for-var-clause>)
-  slot for-clause-collection :: <expression>, required-init-keyword: collection:;
+  slot for-clause-collection :: <expression>, setter: #f,
+    required-init-keyword: collection:;
 end;
 
 define class <for-step-clause> (<for-var-clause>)
-  slot for-clause-init :: <expression>, required-init-keyword: init:;
-  slot for-clause-step :: <expression>, required-init-keyword: step:;
+  slot for-clause-init :: <expression>, setter: #f,
+    required-init-keyword: init:;
+  slot for-clause-step :: <expression>, setter: #f,
+    required-init-keyword: step:;
 end;
 
 define class <for-from-clause> (<for-var-clause>)
-  slot for-clause-from :: <expression>, required-init-keyword: from:;
-  slot for-clause-by :: <expression>, required-init-keyword: by:;
-  slot for-clause-kind :: one-of(#"above", #"below", #"to", #f),
+  slot for-clause-from :: <expression>, setter: #f,
+    required-init-keyword: from:;
+  slot for-clause-by :: <expression>, setter: #f,
+    required-init-keyword: by:;
+  slot for-clause-kind :: one-of(#"above", #"below", #"to", #f), setter: #f,
     init-value: #f, init-keyword: kind:;
-  slot for-clause-bound :: false-or(<expression>),
+  slot for-clause-bound :: false-or(<expression>), setter: #f,
     init-value: #f, init-keyword: bound:;
 end;
 
 define class <classopt> (<object>)
-  slot classopt-kind :: one-of(#"slot", #"inherited", #"keyword"),
+  slot classopt-kind :: one-of(#"slot", #"inherited", #"keyword"), setter: #f,
     required-init-keyword: kind:;
-  slot classopt-name :: type-union(<name-token>, <keyword-token>),
+  slot classopt-name :: type-union(<name-token>, <keyword-token>), setter: #f,
     required-init-keyword: name:;
-  slot classopt-plist :: <simple-object-vector>,
+  slot classopt-plist :: <simple-object-vector>, setter: #f,
     required-init-keyword: plist:;
 end;
 
@@ -314,11 +327,11 @@ end;
 define class <define-class-parse> (<modified-defining-form>)
   //
   // The name being defined.
-  slot defclass-name :: <name-token>,
+  slot defclass-name :: <name-token>, setter: #f,
     required-init-keyword: name:;
   //
   // Vector of superclass expressions.
-  slot defclass-supers :: <simple-object-vector>,
+  slot defclass-supers :: <simple-object-vector>, setter: #f,
     required-init-keyword: supers:;
   //
   // Vector of slots.
@@ -362,7 +375,7 @@ define class <define-generic-parse> (<modified-defining-form>)
     required-init-keyword: parameter-list:;
   //
   // The return types.
-  slot defgen-returns :: <parameter-list>,
+  slot defgen-returns :: <parameter-list>, setter: #f,
     init-function: method ()
 		     make(<parameter-list>,
 			  required: #[],
@@ -893,7 +906,7 @@ define class <variable-pattern> (<simple-pattern>)
   //
   // The pattern-variable that gets bound to the type expression or <object>
   // if there is no type expression.
-  slot variable-type-pattern :: false-or(<pattern-variable>),
+  slot variable-type-pattern :: false-or(<pattern-variable>), setter: #f,
     init-value: #f, init-keyword: type:;
 end;
 
@@ -1011,10 +1024,10 @@ end;
 define class <property-list-pattern> (<object>)
   slot plistpat-rest :: false-or(<symbol>),
     init-value: #f, init-keyword: rest:;
-  slot plistpat-keys :: false-or(<simple-object-vector>),
+  slot plistpat-keys :: false-or(<simple-object-vector>), setter: #f,
     init-value: #f, init-keyword: keys:;
-  slot plistpat-all-keys? :: <boolean>, init-keyword: all-keys:,
-    init-value: #f;
+  slot plistpat-all-keys? :: <boolean>, setter: #f,
+    init-value: #f, init-keyword: all-keys:;
 end;
 
 define class <pattern-keyword> (<object>)
@@ -1029,7 +1042,8 @@ define class <pattern-keyword> (<object>)
   //
   // #t if the word should be bound to a sequence of all the occurences of the
   // keyword instead of just the first.
-  slot patkey-all? :: <boolean>, init-value: #f, init-keyword: all:;
+  slot patkey-all? :: <boolean>, setter: #f,
+    init-value: #f, init-keyword: all:;
 end;
 
 define class <auxiliary-rule-set> (<object>)
@@ -1088,12 +1102,12 @@ end;
 define class <pattern-variable-reference> (<object>)
   //
   // The name being referenced, or #f if ...
-  slot patvarref-name :: false-or(<symbol>),
+  slot patvarref-name :: false-or(<symbol>), setter: #f,
     init-value: #f, init-keyword: name:;
   //
   // The separator to stick between elements if the pattern variable holds
   // a collection.
-  slot patvarref-separator :: false-or(<token>),
+  slot patvarref-separator :: false-or(<token>), setter: #f,
     init-value: #f, init-keyword: separator:;
 end;
 
