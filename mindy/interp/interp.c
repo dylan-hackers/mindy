@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.4 2000/01/24 04:58:19 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.5 2003/03/15 22:12:01 gabor Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -675,7 +675,121 @@ static void op_gt(int byte, struct thread *thread)
 
 __inline__ void interpret_byte(int byte, struct thread *thread)
 {
-    switch (byte) {
+
+static void (*const preters[0x100])(int byte, struct thread *thread)
+ = {
+ 	op_flame,
+ 	op_breakpoint,
+ 	op_return_single,
+ 	op_make_value_cell,
+ 	op_value_cell_ref,
+ 	op_value_cell_set,
+ 	op_make_method,
+ 	op_check_type,
+ 	op_check_type_function,
+ 	op_canonicalize_value,
+ 	op_push_byte,
+ 	op_push_int,
+ 	op_conditional_branch,
+ 	op_branch,
+ 	op_push_nil,
+ 	op_push_unbound,
+ 	op_push_true,
+ 	op_push_false,
+ 	op_dup,
+ 	op_dot_tail,
+ 	op_dot,  // twice!
+ 	op_dot, // twice!
+ 	
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+
+
+#define FIFTEEN_TIMES(op) \
+  op,op,op,op,op,op,op,op,op,op,op,op,op,op,op
+
+#define SIXTEEN_TIMES(op) \
+  FIFTEEN_TIMES(op ## _immed),op
+
+/* 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant_immed,
+ 	op_push_constant,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg_immed,
+ 	op_push_arg,*/
+ 	SIXTEEN_TIMES(op_push_constant),
+ 	SIXTEEN_TIMES(op_push_arg),
+ 	
+ 	SIXTEEN_TIMES(op_pop_arg),
+ 	SIXTEEN_TIMES(op_push_local),
+ 	SIXTEEN_TIMES(op_pop_local),
+ 	SIXTEEN_TIMES(op_call_tail),
+ 	SIXTEEN_TIMES(op_call), // twice!
+ 	SIXTEEN_TIMES(op_call), // twice!
+ 	SIXTEEN_TIMES(op_push_value),
+ 	SIXTEEN_TIMES(op_push_function),
+ 	SIXTEEN_TIMES(op_pop_value),
+
+ 	FIFTEEN_TIMES(op_flame), op_flame,
+ 	FIFTEEN_TIMES(op_flame), op_flame,
+
+ 	op_plus,
+ 	op_minus,
+ 	op_lt,
+ 	op_le,
+ 	op_eq,
+ 	op_idp,
+ 	op_ne,
+ 	op_ge,
+ 	op_gt,
+
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame,
+ 	op_flame
+ 	
+ };
+ 
+preters[byte](byte, thread);
+ 
+/*    switch (byte) {
       case op_BREAKPOINT:
 	op_breakpoint(byte, thread);
 	break;
@@ -982,7 +1096,7 @@ __inline__ void interpret_byte(int byte, struct thread *thread)
 	break;
       default:
 	op_flame(byte, thread);
-    }
+    }*/
 }
 
 void interpret_next_byte(struct thread *thread)
