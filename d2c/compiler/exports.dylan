@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.72 1995/06/04 22:55:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.73 1995/06/05 21:05:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -563,7 +563,11 @@ define module compile-time-functions
     <ct-function>, ct-function-name, ct-function-signature,
     ct-function-definition,
 
-    <ct-generic-function>, <ct-method>;
+    <ct-generic-function>,
+
+    <ct-method>, ct-method-closure-var-types,
+
+    <ct-entry-point>, ct-entry-point-for, ct-entry-point-kind;
 end;
 
 define module compile-time-eval
@@ -1001,7 +1005,8 @@ define module cback
 
   export
     <output-info>, output-info-init-roots,
-    emit-prologue, emit-tlf-gunk, emit-component, emit-epilogue;
+    emit-prologue, emit-tlf-gunk, emit-component, emit-epilogue,
+    entry-point-c-name;
 end;
 
 define module heap
@@ -1014,6 +1019,9 @@ define module heap
   use ctype;
   use classes;
   use compile-time-functions;
+  use definitions;
+  use define-functions;
+  use cback;
 
   export
     build-initial-heap;
