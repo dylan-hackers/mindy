@@ -6,6 +6,8 @@ define library common-extensions
   use format;
   use streams;
   use standard-io;
+  use table-extensions;
+  use format-out;
 
   // Only import transcendentals if we have them.
 #if (~compiled-for-solaris)
@@ -57,8 +59,10 @@ define module common-extensions
              <byte-character>};
   use %Hash-Tables,
     export: {remove-all-keys!};
+  use table-extensions,
+    export: {<string-table>};
   use c-support;
-  use format;
+  use format, export: all;
   use streams, import: { new-line, force-output };
   use standard-io;
 
@@ -137,7 +141,8 @@ define module finalization
 end module;
 
 define module simple-io
-  // XXX - Needs definition.
+  use format-out,
+    export: {format-out};
 end module;
 
 define module simple-random
@@ -162,12 +167,16 @@ define module functional-extensions
   use dylan;
   use extensions, exclude: { position, assert };
   use common-extensions, import: { find-element };
-  export without-bounds-checks, find-value, assert, 
+  export without-bounds-checks, find-value, // assert already in common-extensions 
     with-keywords-removed, dynamic-bind,
+    <synchronization>, <exclusive-lock>,
+    <semaphore>, <recursive-lock>,
+    <read-write-lock>,
     <lock>, <simple-lock>, with-lock,
     <thread>, atomic-increment!, current-thread,
     <notification>, wait-for, release-all,
-    put-property!, get-property, \remove-property!;
+    put-property!, get-property, \remove-property!,
+    element-range-error;
 end module;
 
 

@@ -16,6 +16,9 @@ define library common-dylan
      import: { transcendental => transcendentals },
      export: all;
 
+  use streams,
+     export: all;
+
   export
     common-dylan,
 end library;
@@ -24,6 +27,8 @@ define module common-dylan
   use dylan,
     export: all;
   use common-extensions,
+    export: all;
+  use streams,
     export: all;
 end module;
   

@@ -239,7 +239,7 @@ end method float-to-string;
 define method integer-to-string(    integer :: <integer>,
                                     #key base :: type-union(	limited(<integer>, min: 2, max: 36), 
                                                                 object-class( $unsupplied ) ) = $unsupplied,
-                                    desired-size :: <integer> = 0,
+                                    size: desired-size :: <integer> = 0,
                                     fill :: <character> = '0')
  => ( string :: <byte-string> )
   if( supplied?( base ) )

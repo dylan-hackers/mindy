@@ -152,15 +152,14 @@ end macro dynamic-bind;
 
 // Dummy multithreading support implementations
 
-
-// <lock>
-
-define class <lock> ( <object> ) end class;
-
-
-// <simple-lock>
-
-define class <simple-lock> ( <lock> ) end class;
+define abstract class <synchronization> (<object>) end class;
+define open class <lock> (<synchronization>) end class;
+define class <notification> (<synchronization>) end class;
+define open class <exclusive-lock> (<lock>) end class;
+define primary class <semaphore> (<lock>) end class;
+define primary class <recursive-lock> (<exclusive-lock>) end class;
+define primary class <read-write-lock> (<exclusive-lock>) end class;
+define primary class <simple-lock> ( <exclusive-lock> ) end class;
 
 
 // with-lock
@@ -198,10 +197,6 @@ define macro atomic-increment!
      => { ?to := ?to + 1 }
 end macro atomic-increment!;
 
-
-// <notification>
-
-define class <notification> ( <object> ) end class;
 
 // wait-for
 // do-nothing implementation
@@ -273,3 +268,7 @@ define macro remove-property!
            result;
          end }
 end macro;
+
+define inline method element-range-error (sequence, index)
+  error("Range check error!\n");
+end method element-range-error;
