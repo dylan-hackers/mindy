@@ -1,6 +1,6 @@
 module: dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.15 1996/03/26 22:37:13 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.16 1996/04/22 15:24:11 nkramer Exp $
 
 //======================================================================
 //
@@ -31,6 +31,59 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dy
 //
 
 define variable *debug-output* = #"cheap-IO";
+define variable *inspect-function* :: false-or(<function>) = #f;
+define variable *xinspect-function* :: false-or(<function>) = #f;
+
+// Blatantly copied from debugger-print
+//
+define method debugger-generic-inspect (exprs, inspect)
+  if (exprs.empty?)
+    inspect();
+  else
+    block ()
+      let num-debug-vars = debug-variables.size;
+      for (expr in exprs)
+	block ()
+	  let obj = eval-debugger-expr(expr, num-debug-vars);
+	  inspect(obj);
+	exception (problem :: <error>)
+	  condition-format(*debug-output*, "invocation failed:\n  ");
+	  report-problem(problem);
+	  condition-format(*debug-output*, "\n");
+	  condition-force-output(*debug-output*);
+	end block;
+      end for;
+    exception (<abort>, init-arguments: list(description: "Blow off print"))
+      #f;
+    exception (<error>)
+      puts("Could not recover from earlier error.\n");
+    end block;
+  end if;
+end method debugger-generic-inspect;
+
+define method debugger-inspect (exprs)
+  if (*inspect-function* == #f)
+    load-library(#"text-inspector");
+  end if;
+  let inspect = if (*inspect-function* == #f)
+		  error("*inspect-function* is not a function.");
+		else
+		  *inspect-function*;
+		end if;
+  debugger-generic-inspect(exprs, inspect);
+end method debugger-inspect;
+
+define method debugger-xinspect (exprs)
+  if (*xinspect-function* == #f)
+    load-library(#"X-inspector");
+  end if;
+  let xinspect = if (*xinspect-function* == #f)
+		   error("*xinspect-function* is not a function.");
+		 else
+		   *xinspect-function*;
+		 end if;
+  debugger-generic-inspect(exprs, xinspect);
+end method debugger-xinspect;
 
 define method report-problem (problem)
   block ()
@@ -92,7 +145,7 @@ define method debugger-eval (expr)
 end method debugger-eval;
 
 
-define method eval-and-print (expr, num-debug-vars)
+define method eval-and-print(expr, num-debug-vars)
   let (#rest results) = eval-debugger-expr(expr, num-debug-vars);
   if (empty?(results))
     condition-format(*debug-output*, "[0 values returned]");

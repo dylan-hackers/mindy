@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.92 1996/04/10 20:44:57 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.93 1996/04/22 15:24:11 nkramer Exp $
 
 //======================================================================
 //
@@ -133,14 +133,14 @@ define module Builtin-Stuff
     table-protocol, negative?,
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
-    debugger-return, debugger-eval,
+    debugger-return, debugger-eval, debugger-inspect, debugger-xinspect,
     on-exit, exit;
 end Builtin-Stuff;
 
 
 define module extras
   create
-    *debug-output*, *warning-output*,
+    *debug-output*, *warning-output*, *inspect-function*, *xinspect-function*,
     <format-string-condition>, report-condition,
     condition-format, condition-force-output,
     ratio, $not-supplied, false-or, instantiable?;
