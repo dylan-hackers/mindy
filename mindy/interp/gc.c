@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.20 1995/03/12 16:42:06 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.21 1995/07/11 12:40:04 wlott Exp $
 *
 * This file is the garbage collector.
 *
@@ -80,7 +80,7 @@ struct block {
 };
 
 #define BLOCK_SIZE (128*1024)
-#define BYTES_CONSED_BETWEEN_GCS (2*1024*1024)
+#define DEFAULT_BYTES_CONSED_BETWEEN_GCS (2*1024*1024)
 
 static struct block *FreeBlocks = 0;
 static struct block *UsedBlocks = 0;
@@ -90,7 +90,8 @@ static struct block *OldBlocks = 0;
 static struct block *cur_block = 0;
 static void *cur_fill = 0, *cur_end = 0;
 static int BytesInUse = 0;
-static int GCTrigger = BYTES_CONSED_BETWEEN_GCS;
+static int BytesConsedBetweenGCs = DEFAULT_BYTES_CONSED_BETWEEN_GCS;
+static int GCTrigger = DEFAULT_BYTES_CONSED_BETWEEN_GCS;
 
 static int bytes_in_use(void)
 {
@@ -362,7 +363,7 @@ void collect_garbage(void)
 #endif
 
     bytes_at_end = bytes_in_use();
-    GCTrigger = bytes_at_end + BYTES_CONSED_BETWEEN_GCS;
+    GCTrigger = bytes_at_end + BytesConsedBetweenGCs;
     TimeToGC = FALSE;
 
     if (print_message) {
@@ -385,4 +386,21 @@ void init_gc_functions(void)
     var->function = func_No;
     var->type = obj_BooleanClass;
     var->value = obj_False;
+
+    {
+	char *str = getenv("BYTES_CONSED_BETWEEN_GCS");
+
+	if (str) {
+	    int bcbgcs = atoi(str);
+	    if (bcbgcs < DEFAULT_BYTES_CONSED_BETWEEN_GCS) {
+		fprintf(stderr,
+			"Bogus value for BYTES_CONSED_BETWEEN_GCS, using %d\n",
+			DEFAULT_BYTES_CONSED_BETWEEN_GCS);
+	    }
+	    else {
+		GCTrigger += bcbgcs - BytesConsedBetweenGCs;
+		BytesConsedBetweenGCs = bcbgcs;
+	    }
+	}
+    }
 }
