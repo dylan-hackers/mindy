@@ -153,8 +153,8 @@ define module carbon-events
 						$kEventParamTabletProximityRec, $typeTabletPointerRec, $typeTabletProximityRec,
 
             <EventTypeSpec>,
-            event-type-spec-eventClass,event-type-spec-eventClass-setter,
-            event-type-spec-eventKind, event-type-spec-eventKind-setter,
+            eventClass, eventClass-setter,
+            eventKind, eventKind-setter,
             
             // methods
             NewEventHandlerUPP, DisposeEventHandlerUPP,

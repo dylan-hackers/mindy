@@ -85,47 +85,51 @@ define method content-size( cls == <EventTypeSpec> )
 	c-expr( int: "sizeof(EventTypeSpec)" );
 end method content-size;
 
-/*
-	initialize <EventTypeSpec>
-*/
-
-define method initialize( es :: <EventTypeSpec>, #key eventClass :: <integer>, eventKind :: <integer>, #all-keys)
-=> ( result :: <EventTypeSpec> )
-
-  event-type-spec-eventClass( es ) := eventClass;
-  event-type-spec-eventKind( es ) := eventKind;
-  
-  es;
-
-end method initialize;
-
 
 /*
 	Accessors for the eventKind and eventClass components of an <EventTypeSpec>
 */
 
-define method event-type-spec-eventClass (es :: <EventTypeSpec>) 
+define method eventClass (es :: <EventTypeSpec>) 
 => (eventClass :: <integer>);
 	unsigned-long-at(es, offset: 0);
-end method event-type-spec-eventClass;
+end method eventClass;
 
 
-define method event-type-spec-eventClass-setter (value :: <integer>, es :: <EventTypeSpec>) 
+define method eventClass-setter (value :: <integer>, es :: <EventTypeSpec>) 
 => (value :: <integer>);
 	unsigned-long-at(es, offset: 0) := value;
-end method event-type-spec-eventClass-setter;
+	value;
+end method eventClass-setter;
 
 
-define method event-type-spec-eventKind (es :: <EventTypeSpec>) 
+define method eventKind (es :: <EventTypeSpec>) 
 => (eventKind :: <integer>);
 	unsigned-long-at(es, offset: 4);
-end method event-type-spec-eventKind;
+end method eventKind;
 
 
-define method event-type-spec-eventKind-setter (value :: <integer>, es :: <EventTypeSpec>) 
+define method eventKind-setter (value :: <integer>, es :: <EventTypeSpec>) 
 => (value :: <integer>);
 	unsigned-long-at(es, offset: 4) := value;
-end method event-type-spec-eventKind-setter;
+	value;
+end method eventKind-setter;
+
+/*
+	initialize <EventTypeSpec>
+*/
+
+define method initialize( es :: <EventTypeSpec>, 
+													#key eventClass :: <integer> = 0, 
+													eventKind :: <integer> = 0 )
+=> ( result :: <EventTypeSpec> )
+	next-method();
+
+  eventClass( es ) := eventClass;
+  eventKind( es ) := eventKind;
+  
+  es;
+end method initialize;
 
 
 // Values
@@ -519,8 +523,8 @@ define method GetEventParameter( inEvent :: <EventRef>,
 																 ioBuffer :: <statically-typed-pointer> )
 => ( result :: <OSStatus> )
 	let result = call-out( "GetEventParameter", int:, ptr: inEvent.raw-value,
-												 int: inName, int: inDesiredType, ptr: $NULL,
-												 int: inBufferSize, ptr: $NULL, ptr: ioBuffer.raw-value );
+												 int: inName, int: inDesiredType, ptr: $NULL.raw-value,
+												 int: inBufferSize, ptr: $NULL.raw-value, ptr: ioBuffer.raw-value );
 	as( <OSStatus>, result );
 end method GetEventParameter;
 
