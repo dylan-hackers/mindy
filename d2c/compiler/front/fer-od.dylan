@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.10 1996/04/13 21:15:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.11 1996/04/15 11:56:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -550,18 +550,21 @@ add-od-loader(*compiler-dispatcher*, #"fer-component",
 );
 
 
-// lambda: component, source, name, arg-vars, arg-types, result-type,
-// hidden-references, "self", body.  We shallow-bind *dump-component* so that
-// nested operation dumpers can get at it.
+// fer-function-region: component, lambda?, source, name, arg-vars, arg-types,
+// result-type, hidden-references, "self", body.  We shallow-bind
+// *dump-component* so that nested operation dumpers can get at it.
 //
-define method dump-od (obj :: <lambda>, buf :: <dump-state>) => ();
+define method dump-od (obj :: <fer-function-region>, buf :: <dump-state>)
+    => ();
   if (maybe-dump-reference(obj, buf))
     let odc = *dump-component*;
     block ()
       *dump-component* := obj.parent;
       let start-pos = buf.current-pos;
-      dump-definition-header(#"fer-lambda", buf, subobjects: #t);
+      
+      dump-definition-header(#"fer-function-region", buf, subobjects: #t);
       dump-od(obj.parent, buf);
+      dump-od(instance?(obj, <lambda>), buf);
       dump-od(obj.source-location, buf);
       dump-od(obj.name, buf);
 
@@ -598,9 +601,10 @@ end method;
 // As for blocks, we resolve our self-references before loading the body so
 // that enclosed code can directly get at the actual lambda.
 //
-add-od-loader(*compiler-dispatcher*, #"fer-lambda", 
-  method (state :: <load-state>) => res :: <lambda>;
+add-od-loader(*compiler-dispatcher*, #"fer-function-region", 
+  method (state :: <load-state>) => res :: <fer-function-region>;
     let builder = load-object-dispatch(state);
+    let lambda? = load-object-dispatch(state);
     let source = load-object-dispatch(state);
     let name = load-object-dispatch(state);
     let arg-vars = load-object-dispatch(state);
@@ -608,7 +612,7 @@ add-od-loader(*compiler-dispatcher*, #"fer-lambda",
     let result-type = load-object-dispatch(state);
     let hidden = load-object-dispatch(state);
     let self = load-object-dispatch(state);
-    let res = build-function-body(builder, $default-policy, source, #t,
+    let res = build-function-body(builder, $default-policy, source, lambda?,
     				  name, arg-vars, result-type, hidden);
     resolve-forward-ref(self, res);
     res.argument-types := arg-types;
