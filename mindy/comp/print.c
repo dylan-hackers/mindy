@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.9 1994/04/20 00:23:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.10 1994/06/11 02:20:01 wlott Exp $
 *
 * This file does whatever.
 *
@@ -223,6 +223,8 @@ static void print_param_list(struct param_list *list, int depth)
 		print_expr(k->def, depth+3);
 	    }
 	}
+	if (list->all_keys)
+	    printf("%s#all-keys\n", indent(depth));
     }
 }
 

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.14 1994/06/03 00:37:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.15 1994/06/11 02:20:06 wlott Exp $
 *
 * This file does whatever.
 *
@@ -881,6 +881,11 @@ static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
 	expr = make_literal_ref(make_false_literal());
 	add_argument(init_args, make_argument(expr));
     }
+
+    expr = make_literal_ref(c->params->all_keys
+			    ? make_true_literal()
+			    : make_false_literal());
+    add_argument(init_args, make_argument(expr));
 
     if (c->rettypes) {
 	bind_rettypes(body, c->rettypes);

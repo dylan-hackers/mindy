@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.12 1994/06/02 23:28:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.13 1994/06/11 02:20:04 wlott Exp $
 *
 * This file does whatever.
 *
@@ -431,11 +431,13 @@ static void dump_method(struct method *method)
 	param_info = 1;
     else
 	param_info = 0;
+    if (params->all_keys)
+	param_info |= 2;
     if (params->allow_keys) {
 	nkeys = 0;
 	for (k = params->keyword_params; k != NULL; k = k->next)
 	    nkeys++;
-	param_info = param_info | (nkeys+1)<<1;
+	param_info = param_info | (nkeys+1)<<2;
     }
 	
     nclosure_vars = 0;

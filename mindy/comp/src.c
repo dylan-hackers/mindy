@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.17 1994/06/02 23:28:03 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.18 1994/06/11 02:19:28 wlott Exp $
 *
 * This file does whatever.
 *
@@ -350,8 +350,8 @@ struct param_list *make_param_list(void)
     res->next_param = NULL;
     res->rest_param = NULL;
     res->allow_keys = FALSE;
+    res->all_keys = FALSE;
     res->keyword_params = NULL;
-    res->keyword_params_tail = &res->keyword_params;
 
     return res;
 }
@@ -391,10 +391,10 @@ struct param *make_param(struct id *id, struct expr *type)
 }
 
 struct param_list
-    *add_keyword_param(struct param_list *list, struct keyword_param *param)
+    *push_keyword_param(struct keyword_param *param, struct param_list *list)
 {
-    *list->keyword_params_tail = param;
-    list->keyword_params_tail = &param->next;
+    param->next = list->keyword_params;
+    list->keyword_params = param;
 
     return list;
 }
@@ -402,6 +402,14 @@ struct param_list
 struct param_list *allow_keywords(struct param_list *param_list)
 {
     param_list->allow_keys = TRUE;
+
+    return param_list;
+}
+
+struct param_list *allow_all_keywords(struct param_list *param_list)
+{
+    param_list->allow_keys = TRUE;
+    param_list->all_keys = TRUE;
 
     return param_list;
 }
