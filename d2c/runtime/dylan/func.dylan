@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.9 2002/08/08 04:11:19 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.10 2002/08/08 06:29:12 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -791,9 +791,8 @@ define constant general-call
 // These two functions must be kept in sync with the calls to them from
 // compiler/cback/cback.dylan.
 // 
-define function gf-call-lookup (self :: <generic-function>, args :: <simple-object-vector>)
+define function gf-call-lookup (self :: <generic-function>, nargs :: <integer>)
  => (meth :: <method>, next :: <list>);
-  let nargs = args.size;
   let specializers = self.function-specializers;
   let nfixed = specializers.size;
   if (nfixed ~== nargs)
@@ -808,20 +807,20 @@ define function gf-call-lookup (self :: <generic-function>, args :: <simple-obje
       wrong-number-of-arguments-error(#t, nfixed, nargs);
     end;
   end;
-  //let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
+  let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
   let (meth, next-info, valid-keywords)
-    = cached-sorted-applicable-methods(self, nfixed, args);
+    = cached-sorted-applicable-methods(self, nfixed, arg-ptr);
   if (nfixed ~== nargs)
     case 
       (valid-keywords == #f) => #t;
       (valid-keywords == #"all") =>
         for (index :: <integer> from nfixed below nargs by 2)
-          check-type(args[index], <symbol>);
+          check-type(%%primitive(extract-arg, arg-ptr, index), <symbol>);
         end for;
       otherwise =>
         check-type(valid-keywords, <simple-object-vector>);
         for (index :: <integer> from nfixed below nargs by 2)
-          let key :: <symbol> = args[index];
+          let key :: <symbol> = %%primitive(extract-arg, arg-ptr, index);
           block (found)
             for (i :: <integer> from 0 below valid-keywords.size)
               if (%element(valid-keywords, i) == key) found() end if;
@@ -836,10 +835,11 @@ define function gf-call-lookup (self :: <generic-function>, args :: <simple-obje
   elseif (next-info.empty?)
     for (index :: <integer> from 0 below nfixed)
       let specializer :: <type> = %element(specializers, index);
-      let arg = args[index];
+      let arg = %%primitive(extract-arg, arg-ptr, index);
       %check-type(arg, specializer);
     end;
-    no-applicable-methods-error(self, args);
+    no-applicable-methods-error
+      (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
   else
     // There is no unambiguous "first method"
     ambiguous-method-error(next-info.first);
@@ -864,23 +864,23 @@ end function;
 // argument.
 //
 define constant gf-call-one-arg
-  = method (self :: <generic-function>, #rest args)
-      let nargs = args.size;
+  = method (self :: <generic-function>, nargs :: <integer>)
       if (nargs ~= 1)
        wrong-number-of-arguments-error(#t, 1, nargs);
       end;
+      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
       let (meth, next-info, valid-keywords)
-       = one-arg-sorted-applicable-methods(self, args);
+       = one-arg-sorted-applicable-methods(self, arg-ptr);
       if (meth)
 	%%primitive(invoke-generic-entry, meth, next-info,
-		    args);
+		    %%primitive(pop-args, arg-ptr));
       elseif (next-info.empty?)
 	let specializers = self.function-specializers;                         
 	let specializer :: <type> = %element(specializers, 0);
-	let arg = args[0];
+	let arg = %%primitive(extract-arg, arg-ptr, 0);
 	%check-type(arg, specializer);
 	no-applicable-methods-error
-	  (self, args);
+	  (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
       else
 	// There is no unambiguous "first method"
 	ambiguous-method-error(next-info.first);
@@ -889,7 +889,7 @@ define constant gf-call-one-arg
 
 define method internal-sorted-applicable-methods
     (gf :: <generic-function>, nargs :: <integer>,
-     args :: <simple-object-vector>)
+     arg-ptr :: <raw-pointer>)
     => (meth :: false-or(<method>), next-method-info :: <list>, 
 	valid-keywords
 	  :: type-union(<simple-object-vector>, one-of(#f, #"all")));
@@ -899,7 +899,7 @@ define method internal-sorted-applicable-methods
   let cache-classes = make(<type-vector>, size: nargs);
   for (i :: <integer> from 0 below nargs)
     %element(cache-classes, i)
-      := args[i].object-class;
+      := (%%primitive(extract-arg, arg-ptr, i)).object-class;
   end for;
   let cache = make(<gf-cache>, classes: cache-classes);
 
@@ -920,7 +920,7 @@ define method internal-sorted-applicable-methods
       end if;
 
   for (meth :: <method> in gf.generic-function-methods)
-    if (internal-applicable-method?(meth, args, cache))
+    if (internal-applicable-method?(meth, arg-ptr, cache))
       unless (valid-keywords == #f | valid-keywords == #"all")
 	if (meth.function-all-keys?)
 	  valid-keywords := #"all";
@@ -941,7 +941,7 @@ define method internal-sorted-applicable-methods
 	  //
 	  // Grab the method to compare this method against.
 	  let other = remaining.head;
-	  select (%compare-methods(meth, other, args))
+	  select (%compare-methods(meth, other, arg-ptr))
 	    //
 	    // Our method is more specific, so insert it in the list of ordered
 	    // methods and go on to the next method.
@@ -983,7 +983,7 @@ define method internal-sorted-applicable-methods
 	  let ambiguous-with = #();
 	  for (remaining :: <list> = ambiguous then remaining.tail,
 	       until: remaining == #())
-	    select (%compare-methods(meth, remaining.head, args))
+	    select (%compare-methods(meth, remaining.head, arg-ptr))
 	      #"more-specific" =>
 		#f;
 	      #"less-specific" =>
@@ -1065,7 +1065,7 @@ define variable *debug-generic-threshold* :: <integer> = -1;
 
 define inline method cached-sorted-applicable-methods
     (gf :: <generic-function>, nargs :: <integer>,
-     args :: <simple-object-vector>)
+     arg-ptr :: <raw-pointer>)
  => (function :: false-or(<method>),
      next-method-info :: <list>, 
      valid-keywords :: type-union(<simple-object-vector>, one-of(#f, #"all")));
@@ -1081,13 +1081,13 @@ define inline method cached-sorted-applicable-methods
 	if (cache.simple)
 	  for (index :: <integer> from 0 below nargs)
 	    let type :: <type> = %element(classes, index);
-	    let arg = args[index];
+	    let arg = %%primitive(extract-arg, arg-ptr, index);
 	    unless (type == arg.object-class) no-match() end unless;
 	  end for;
 	else
 	  for (index :: <integer> from 0 below nargs)
 	    let type :: <type> = %element(classes, index);
-	    let arg = args[index];
+	    let arg = %%primitive(extract-arg, arg-ptr, index);
 	    case
 	      // The easy check for matches
 	      (type == arg.object-class) => #t;
@@ -1115,19 +1115,19 @@ define inline method cached-sorted-applicable-methods
 	       cache.cached-valid-keywords);
       end block;
     end for;
-    internal-sorted-applicable-methods(gf, nargs, args);
+    internal-sorted-applicable-methods(gf, nargs, arg-ptr);
   end block;
 end method cached-sorted-applicable-methods;
 
 define inline method one-arg-sorted-applicable-methods
-    (gf :: <generic-function>, args :: <simple-object-vector>)
+    (gf :: <generic-function>, arg-ptr :: <raw-pointer>)
  => (function :: false-or(<method>),
      next-method-info :: <list>, 
      valid-keywords :: type-union(<simple-object-vector>, one-of(#f, #"all")));
-  let arg-class = args[0].object-class;
+  let arg-class = (%%primitive(extract-arg, arg-ptr, 0)).object-class;
   let cache = gf.method-cache;
   if (~cache)
-    internal-sorted-applicable-methods(gf, 1, args);
+    internal-sorted-applicable-methods(gf, 1, arg-ptr);
   elseif (%element(cache.cached-classes, 0) == arg-class)
     values(cache.cached-method, cache.cached-next-info, #f);
   else
@@ -1148,20 +1148,20 @@ define inline method one-arg-sorted-applicable-methods
          return(cache.cached-method, cache.cached-next-info, #f);
        end block;
       end for;
-      internal-sorted-applicable-methods(gf, 1, args);
+      internal-sorted-applicable-methods(gf, 1, arg-ptr);
     end block;
   end if;
 end method one-arg-sorted-applicable-methods;
 
 define method internal-applicable-method?
-    (meth :: <method>, args :: <simple-object-vector>, cache :: <gf-cache>)
+    (meth :: <method>, arg-ptr :: <raw-pointer>, cache :: <gf-cache>)
  => (res :: <boolean>);
   block (return)
     let classes :: <type-vector> = cache.cached-classes;
     for (specializer :: <type> in meth.function-specializers,
 	 index :: <integer> from 0)
       let arg-type = classes[index];
-      let arg :: <object> = args[index];
+      let arg :: <object> = %%primitive(extract-arg, arg-ptr, index);
 
       // arg-type may be either a singleton, a limited-int, or a class.  This
       // stuff has been worked out on a case by case basis.  It could
@@ -1224,7 +1224,7 @@ define method internal-applicable-method?
 end;
 
 define method %compare-methods
-    (meth1 :: <method>, meth2 :: <method>, args :: <simple-object-vector>)
+    (meth1 :: <method>, meth2 :: <method>, arg-ptr :: <raw-pointer>)
     => res :: one-of(#"more-specific", #"less-specific", #"ambiguous",
 		     #"identical");
   block (return)
@@ -1259,7 +1259,7 @@ define method %compare-methods
 		    // Defer to compare-overlapping-specializers to figure
 		    // out their ordering.
 		    compare-overlapping-specializers
-		      (spec1, spec2, args[index]);
+		      (spec1, spec2, %%primitive(extract-arg, arg-ptr, index));
 		  end if;
 	// Now merge the constrain imposed by this position with the constrain
 	// accumulated from the positions we have already looked at.
