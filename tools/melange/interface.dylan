@@ -511,4 +511,4 @@ define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
   end for;
   apply(main, args);
 end method %main;
-#end
+#endif
