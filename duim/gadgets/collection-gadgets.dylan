@@ -568,14 +568,23 @@ define method gadget-value
     & gadget-value(progress-bar)
 end method gadget-value;
 
-// Allow #f meaning don't display the progress bar if possible
 define method normalize-gadget-value
-    (status-bar :: <status-bar>, value :: false-or(<real>))
- => (value :: false-or(<real>))
+    (status-bar :: <status-bar>, value :: <real>)
+ => (value :: <real>)
   let progress-bar = status-bar-progress-bar(status-bar);
   if (progress-bar)
-    value & normalize-gadget-value(progress-bar, value)
+    normalize-gadget-value(progress-bar, value)
   else
+    next-method()
+  end
+end method normalize-gadget-value;
+
+// Allow #f meaning don't display the progress bar if possible
+define method normalize-gadget-value
+    (status-bar :: <status-bar>, value :: singleton(#f))
+ => (value :: false-or(<real>))
+  let progress-bar = status-bar-progress-bar(status-bar);
+  unless (progress-bar)
     next-method()
   end
 end method normalize-gadget-value;
