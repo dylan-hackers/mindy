@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.14 1994/04/12 20:10:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.15 1994/04/12 20:14:14 wlott Exp $
 *
 * This file does whatever.
 *
@@ -69,7 +69,7 @@ static void trace_call(obj_t function, obj_t *args, int nargs)
 
 static void trace_return(obj_t *old_sp, obj_t *vals, int nvals)
 {
-    printf("< 0x%08xl: ", (unsigned long)old_sp);
+    printf("< 0x%08lx: ", (unsigned long)old_sp);
     if (nvals > 0) {
 	prin1(*vals++);
 	while (--nvals > 0) {
