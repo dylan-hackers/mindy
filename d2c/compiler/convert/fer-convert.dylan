@@ -1,11 +1,11 @@
 module: fer-convert
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.9 2003/02/19 01:11:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.10 2003/02/19 23:39:34 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -697,7 +697,7 @@ end;
 
 // fer-convert-method  --  Exported
 //
-define method fer-convert-method
+define function fer-convert-method
     (builder :: <fer-builder>, meth :: <method-parse>,
      name :: <name>, ctv :: false-or(<ct-function>),
      visibility :: <function-visibility>, specializer-lexenv :: <lexenv>,
@@ -705,7 +705,8 @@ define method fer-convert-method
      #key next-method-info :: false-or(<list>))
     => res :: <leaf>;
   let lexenv = make(<lexenv>, inside: lexenv);
-  let source = meth.source-location;
+  let source = meth.method-body.source-location; // FIXME: better change lines make(<method-parse> in parser.input
+  // FIXME: and "method-definition (method-and-name method-body END method-and-name-opt)" to update source-loc
   let policy = lexenv.lexenv-policy;
   let specializer-policy = specializer-lexenv.lexenv-policy;
 
@@ -1078,7 +1079,7 @@ end;
 
 // fer-convert-callback-method
 //
-define method fer-convert-callback-method
+define function fer-convert-callback-method
     (builder :: <fer-builder>, meth :: <callback-method-parse>,
      name :: <name>, ctv :: false-or(<ct-function>),
      visibility :: <function-visibility>, specializer-lexenv :: <lexenv>,
