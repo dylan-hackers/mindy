@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.84 1995/12/07 17:45:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.85 1995/12/09 21:12:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -388,6 +388,36 @@ define method produce-cluster
   produce-cluster(cluster.definition-of, file);
 end;
 
+
+// definition stuff.
+
+define method emit-prototype-for
+    (name :: <byte-string>, defn :: <definition>, file :: <file-state>)
+    => ();
+  let info = get-info-for(defn, file);
+  let stream = file.file-body-stream;
+  let rep = info.backend-var-info-rep;
+  if (instance?(rep, <immediate-representation>))
+    format(stream, "extern %s %s;\t/* %s */\n\n",
+	   rep.representation-c-type,
+	   info.backend-var-info-name,
+	   defn.defn-name);
+  end if;
+  unless (rep.representation-has-bottom-value?
+	    | defn.defn-guaranteed-initialized?)
+    format(stream, "extern boolean %s_initialized;\n\n",
+	   info.backend-var-info-name);
+  end;
+end;  
+
+define method defn-guaranteed-initialized? (defn :: <definition>)
+    => res :: <boolean>;
+  defn.ct-value ~== #f;
+end method defn-guaranteed-initialized?;
+
+define method defn-guaranteed-initialized? (defn :: <variable-definition>)
+  defn.defn-init-value ~== #f;
+end method defn-guaranteed-initialized?;
 
 
 
@@ -881,31 +911,6 @@ define method emit-bindings-definition-gunk
 	   info.backend-var-info-name);
   end;
 end;
-
-define method emit-prototype-for
-    (name :: <byte-string>, defn :: <bindings-definition>,
-     file :: <file-state>)
-    => ();
-  let info = get-info-for(defn, file);
-  let stream = file.file-body-stream;
-  let rep = info.backend-var-info-rep;
-  if (instance?(rep, <immediate-representation>))
-    format(stream, "extern %s %s;\t/* %s */\n",
-	   rep.representation-c-type,
-	   info.backend-var-info-name,
-	   defn.defn-name);
-    let init-value = if (instance?(defn, <variable-definition>))
-		       defn.defn-init-value;
-		     else
-		       defn.ct-value;
-		     end;
-    unless (init-value)
-      format(stream, "extern boolean %s_initialized;\n",
-	     info.backend-var-info-name);
-    end;
-    write('\n', stream);
-  end;
-end;  
 
 define method emit-bindings-definition-gunk
     (defn :: <variable-definition>, file :: <file-state>,
@@ -1733,7 +1738,7 @@ define method emit-assignment
   maybe-emit-prototype(name, defn, file);
   let rep = info.backend-var-info-rep;
   let stream = file.file-guts-stream;
-  unless (defn.defn-init-value)
+  unless (defn.defn-guaranteed-initialized?)
     if (rep.representation-has-bottom-value?)
       let temp = new-local(file, modifier: "temp");
       format(file.file-vars-stream, "%s %s;\n",
@@ -1759,7 +1764,8 @@ define method emit-assignment
   let source = extract-operands(set, file, rep);
   spew-pending-defines(file);
   emit-copy(target, rep, source, rep, file);
-  unless (defn.defn-init-value | rep.representation-has-bottom-value?)
+  unless (defn.defn-guaranteed-initialized?
+	    | rep.representation-has-bottom-value?)
     let stream = file.file-guts-stream;
     format(stream, "%s_initialized = TRUE;\n", target);
   end;
@@ -2115,7 +2121,14 @@ define method c-expr-and-rep (lit :: <literal-fixed-integer>,
 			      rep-hint :: <representation>,
 			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
-  values(format-to-string("%d", lit.literal-value),
+  let val = lit.literal-value;
+  values(if (val == runtime-$minimum-fixed-integer)
+	   // Some compilers (gcc) warn about minimum-fixed-integer.  So we
+	   // print it in hex (assuming 2's compliment).
+	   format-to-string("0x%x", -val);
+	 else
+	   format-to-string("%d", val);
+	 end if,
 	 pick-representation(dylan-value(#"<fixed-integer>"), #"speed"));
 end;
 
