@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.3 2000/01/24 04:56:19 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.4 2000/09/09 20:39:21 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -177,7 +177,7 @@ end class;
 define class <error-call> (<abstract-call>)
 end;
 
-// A prologue is used to represent the incomming arguments to a function.
+// A prologue is used to represent the incoming arguments to a function.
 // 
 define class <prologue> (<operation>)
   slot function :: <fer-function-region>, required-init-keyword: function:;
@@ -349,7 +349,7 @@ end class;
 // For example, unsupplied keywords with hairy defaults, and uninitialized
 // slots.  The uninitialized-value cannot reliably be tested against, because
 // in some representations, every bit pattern has an interpretation.  It is
-// up to the user of the uninitialized-value to known when the value is
+// up to the user of the uninitialized-value to know when the value is
 // initialized and when it isn't.
 // 
 define class <uninitialized-value> (<constant>)
@@ -495,7 +495,7 @@ define class <fer-function-region>
   slot result-type :: <values-ctype>,
     init-function: wild-ctype, init-keyword: result-type:;
 
-  // An guess about the result type, used during optimistic type inference.
+  // A guess about the result type, used during optimistic type inference.
   slot guessed-result-type :: <values-ctype>, 
     init-function: empty-ctype;
 
@@ -547,8 +547,7 @@ end;
 define class <fer-component> (<component>, <identity-preserving-mixin>)
 
   // All the function literals mentioned in this component.
-  slot all-function-literals :: <stretchy-vector>,
-    init-function: curry(make, <stretchy-vector>);
+  slot all-function-literals :: <stretchy-vector> = make(<stretchy-vector>);
 
   // Chain of all the lets (though let-next) in this component.  Used by
   // environment analysis.  Deleted lets are left in this chain, so beware.
@@ -558,8 +557,7 @@ define class <fer-component> (<component>, <identity-preserving-mixin>)
   slot name :: <byte-string>, init-value: "<unknown>", init-keyword: name:;
 
   // Table mapping <ct-value>s to <literal-constant>s.
-  slot constants :: <object-table>,
-    init-function: curry(make, <object-table>);
+  slot constants :: <object-table> = make(<object-table>);
 
 end class;
 
