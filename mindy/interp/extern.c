@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.3 1995/02/14 02:30:58 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.4 1995/03/27 23:45:35 rgs Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -415,6 +415,8 @@ obj_t signed_byte_at(obj_t /* <statically-typed-pointer> */ pointer,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     return make_fixnum(*((char *)((int)ptr + true_offset)));
 }
 
@@ -427,6 +429,8 @@ obj_t signed_byte_at_setter(obj_t /* <integer> */ value,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     *((char *)((int)ptr + true_offset)) = fixnum_value(value);
     return value;
 }
@@ -439,6 +443,8 @@ obj_t unsigned_byte_at(obj_t /* <statically-typed-pointer> */ pointer,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     return make_fixnum(*((unsigned char *)((int)ptr + true_offset)));
 }
 
@@ -451,6 +457,8 @@ obj_t unsigned_byte_at_setter(obj_t /* <integer> */ value,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     *((unsigned char *)((int)ptr + true_offset)) = fixnum_value(value);
     return value;
 }
@@ -463,6 +471,8 @@ obj_t signed_short_at(obj_t /* <statically-typed-pointer> */ pointer,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     return make_fixnum(*((short *)((int)ptr + true_offset)));
 }
 
@@ -475,6 +485,8 @@ obj_t signed_short_at_setter(obj_t /* <integer> */ value,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     *((short *)((int)ptr + true_offset)) = fixnum_value(value);
     return value;
 }
@@ -487,6 +499,8 @@ obj_t unsigned_short_at(obj_t /* <statically-typed-pointer> */ pointer,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     return make_fixnum(*((unsigned short *)((int)ptr + true_offset)));
 }
 
@@ -499,6 +513,8 @@ obj_t unsigned_short_at_setter(obj_t /* <integer> */ value,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     *((unsigned short *)((int)ptr + true_offset)) = fixnum_value(value);
     return value;
 }
@@ -511,6 +527,8 @@ obj_t signed_long_at(obj_t /* <statically-typed-pointer> */ pointer,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     return make_fixnum(*((long *)((int)ptr + true_offset)));
 }
 
@@ -523,6 +541,8 @@ obj_t signed_long_at_setter(obj_t /* <integer> */ value,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     *((long *)((int)ptr + true_offset)) = fixnum_value(value);
     return value;
 }
@@ -535,6 +555,8 @@ obj_t unsigned_long_at(obj_t /* <statically-typed-pointer> */ pointer,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     return make_fixnum(*((unsigned long *)((int)ptr + true_offset)));
 }
 
@@ -547,6 +569,8 @@ obj_t unsigned_long_at_setter(obj_t /* <integer> */ value,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     *((unsigned long *)((int)ptr + true_offset)) = fixnum_value(value);
     return value;
 }
@@ -560,6 +584,8 @@ obj_t pointer_at(obj_t /* <statically-typed-pointer> */ pointer,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     if (!instancep(cls, obj_StaticTypeClass))
 	error("class is not statically typed pointer: %=", cls);
     /* pointer size object -- dereference as (void **) */
@@ -577,6 +603,8 @@ obj_t pointer_at_setter(obj_t /* <statically-typed-pointer> */ value,
     
     if (!obj_is_fixnum(offset))
 	error("Offset is not fixnum: %=", offset);
+    else if (ptr == 0)
+	error("Attempt to dereference null <statically-typed-pointer>: %=");
     if (!instancep(cls, obj_StaticTypeClass))
 	error("class is not statically typed pointer: %=", cls);
     if (!instancep(value, cls))

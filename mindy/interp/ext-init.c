@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.6 1995/03/12 16:41:59 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.7 1995/03/27 23:45:35 rgs Exp $
 *
 * This file does whatever.
 *
@@ -44,8 +44,11 @@ void add_explicit_symbol(char *name, void *address);
  */
 #define temp_malloc(sz) malloc(sz)
 #undef malloc
+#define temp_calloc(sz, cnt) calloc(sz, cnt)
+#undef calloc
 #include "extern1.def"
 #define malloc(sz) temp_malloc(sz)
+#define calloc(sz, cnt) temp_calloc(sz, cnt)
 
 void add_explicit_symbol(char *name, void *address)
 {
