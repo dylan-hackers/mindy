@@ -20,7 +20,7 @@ EOF
 	print <<'EOF';
 CC = gcc
 
-CPLUSPLUSFLAGS = -O4 -finline-functions -Dtry=__try -Dexcept=__except -Dleave=__leave -Dfinally=__finally -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -D_X86_=1 -DWINVER=0x0400 -DWIN32_GCC -DWIN32 -D_WIN32 -DSMALL_CONFIG -DSILENT -DALL_INTERIOR_POINTERS -I$(SRCDIR)
+CPLUSPLUSFLAGS = -O4 -finline-functions -Dtry=__try -Dexcept=__except -Dleave=__leave -Dfinally=__finally -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -D_X86_=1 -DWINVER=0x0400 -DWIN32_GCC -DWIN32 -D_WIN32 -DSILENT -DALL_INTERIOR_POINTERS -I$(SRCDIR)
 
 CCFLAGS = $(CPLUSPLUSFLAGS) -D__STDC__
 
@@ -29,7 +29,7 @@ EOF
 	print <<'EOF';
 CC = cl
 
-CPLUSPLUSFLAGS = -Ox -W3 -Dtry=__try -Dexcept=__except -Dleave=__leave -Dfinally=__finally -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -nologo -D_X86_=1 -DWINVER=0x0400 -DWIN32  -D_WIN32 -DSMALL_CONFIG -DSILENT -DALL_INTERIOR_POINTERS -I$(SRCDIR)
+CPLUSPLUSFLAGS = -Ox -W3 -Dtry=__try -Dexcept=__except -Dleave=__leave -Dfinally=__finally -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -nologo -D_X86_=1 -DWINVER=0x0400 -DWIN32  -D_WIN32 -DSILENT -DALL_INTERIOR_POINTERS -I$(SRCDIR)
 
 CCFLAGS = $(CPLUSPLUSFLAGS) -D__STDC__
 
@@ -83,10 +83,10 @@ gc_cpp.obj : gc_cpp.cpp
 
 
 #.c.obj:
-#	$(cc) $(cdebug) $(cflags) $(cvars) -DSMALL_CONFIG -DSILENT -DALL_INTERIOR_POINTERS -D__STDC__ $*.c /Fo$*.obj
+#	$(cc) $(cdebug) $(cflags) $(cvars) -DSILENT -DALL_INTERIOR_POINTERS -D__STDC__ $*.c /Fo$*.obj
 
 #.cpp.obj:
-#	$(cc) $(cdebug) $(cflags) $(cvars) -DSMALL_CONFIG -DSILENT -DALL_INTERIOR_POINTERS $*.CPP /Fo$*.obj
+#	$(cc) $(cdebug) $(cflags) $(cvars) -DSILENT -DALL_INTERIOR_POINTERS $*.CPP /Fo$*.obj
 
 $(OBJS) test.obj: $(SRCDIR)/gc_priv.h $(SRCDIR)/gc_hdrs.h $(SRCDIR)/gc.h
 
