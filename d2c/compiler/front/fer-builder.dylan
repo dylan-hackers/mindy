@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.6 1994/12/16 16:37:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.7 1995/01/10 16:24:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -305,6 +305,14 @@ define method make-builder(wot :: <internal-fer-builder>)
   make(<internal-fer-builder>, component: wot.component);
 end method;
 
+
+define method make-primitive-operation
+    (builder :: <fer-builder>, name :: <symbol>, operands :: <list>)
+ => res :: <operation>;
+  ignore(builder);
+  make-operand-dependencies(make(<primitive>, name: name), operands);
+end method;
+  
 
 define method make-mv-operation
     (builder :: <fer-builder>, operands :: <list>)
