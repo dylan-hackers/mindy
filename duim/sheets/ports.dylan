@@ -184,7 +184,8 @@ define method find-color
   find-color(name, port-default-palette(port), error?: error?)
 end method find-color;
 
-
+define variable *default-port-class-name* :: false-or(<symbol>) = #f;
+define variable *port-classes* :: <object-table> = make(<object-table>);
 define variable *ports* :: <stretchy-object-vector> = make(<stretchy-vector>);
 
 define method initialize (_port :: <port>, #key)
@@ -198,6 +199,14 @@ define method initialize (_port :: <basic-port>, #key server-path)
   next-method()
 end method initialize;
 
+define method register-port-class
+    (name :: <symbol>, class :: subclass(<port>), #key default? :: <boolean> = #f)
+ => ()
+  *port-classes*[name] := class;
+  if (default?)
+    *default-port-class-name* := name
+  end
+end method register-port-class;
 
 
 /// Making ports
@@ -306,6 +315,15 @@ define method class-for-make-port
     (type :: <class>, #key)
  => (class :: <class>, initargs :: false-or(<sequence>))
   values(type, #f)
+end method class-for-make-port;
+
+define method class-for-make-port
+    (type == #"local", #rest initargs, #key)
+ => (class :: <class>, initargs :: false-or(<sequence>))
+  unless (*default-port-class-name*)
+    error("Cannot create a port, as no port classes were registered")
+  end;
+  apply(class-for-make-port, *default-port-class-name*, initargs)
 end method class-for-make-port;
 
 define method class-for-make-port

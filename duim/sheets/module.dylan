@@ -394,6 +394,7 @@ define module duim-sheets-internals
   export <basic-port>,
          <focus-policy>,
          *global-lock*,
+         register-port-class,
 	 class-for-make-port,
          note-focus-in, note-focus-out,
 	 port-default-background,
