@@ -204,28 +204,53 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
   end;
 end;
 
+define method dump (op :: <operation>, stream :: <stream>) => ();
+  format(stream, "%s[%d]", op.kind, op.id);
+  dump-operands(op.depends-on, stream);
+end;
+
+define method kind (op :: <operation>) => res :: <string>;
+  "???";
+end;
+
+define method kind (op :: <abstract-call>) => res :: <string>;
+  "CALL";
+end;
+
+define method kind (op :: <local-call>) => res :: <string>;
+  "LOCAL-CALL";
+end;
+
+define method kind (op :: <known-call>) => res :: <string>;
+  "KNOWN-CALL";
+end;
+
+define method kind (op :: <unknown-call>) => res :: <string>;
+  "UNKNOWN-CALL";
+end;
+
+define method kind (op :: <error-call>) => res :: <string>;
+  "ERROR-CALL";
+end;
+
+define method kind (op :: <mv-call>) => res :: <string>;
+  "MV-CALL";
+end;
+
+define method kind (op :: <prologue>) => res :: <string>;
+  "PROLOGUE";
+end;
+
+define method kind (op :: <catcher>) => res :: <string>;
+  "CATCHER";
+end;
+
+define method kind (op :: <pitcher>) => res :: <string>;
+  "PITCHER";
+end;
+
 define method dump (op :: <primitive>, stream :: <stream>) => ();
   format(stream, "primitive %s[%d]", op.name, op.id);
-  dump-operands(op.depends-on, stream);
-end;
-
-define method dump (call :: <abstract-call>, stream :: <stream>) => ();
-  format(stream, "CALL[%d]", call.id);
-  dump-operands(call.depends-on, stream);
-end;
-
-define method dump (call :: <mv-call>, stream :: <stream>) => ();
-  format(stream, "MV-CALL[%d]", call.id);
-  dump-operands(call.depends-on, stream);
-end;
-
-define method dump (op :: <prologue>, stream :: <stream>) => ();
-  format(stream, "PROLOGUE[%d]", op.id);
-  dump-operands(op.depends-on, stream);
-end;
-
-define method dump (op :: <catcher>, stream :: <stream>) => ();
-  format(stream, "CATCHER[%d]", op.id);
   dump-operands(op.depends-on, stream);
 end;
 
