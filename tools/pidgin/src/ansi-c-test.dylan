@@ -186,6 +186,10 @@ define function test-c-type-repositories () => ()
 	     format-c-type(type));
       force-output(*standard-output*);
       find-canonical-pointer-to-c-type(r, type);
+    end,
+    method dump-entry(type :: <c-type>) => ()
+      format(*standard-output*, "  %s\n", format-c-type(type));
+      force-output(*standard-output*);
     end;
 
   add-type($c-char-type);
@@ -208,6 +212,9 @@ define function test-c-type-repositories () => ()
   let t6 = add-type(make(<c-array-type>, referent: t1, size: 10));  
   let t7 = add-type(make(<c-array-type>, referent: t1));  
   add-type(make(<c-array-type>, referent: t1, size: 10));  
+
+  format(*standard-output*, "Dumping type repository:\n");
+  do-c-type-repository-entries(dump-entry, r);
 end function test-c-type-repositories;
 
 
