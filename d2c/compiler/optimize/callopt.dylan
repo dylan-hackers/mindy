@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.17 1996/07/12 02:16:13 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.18 1996/09/19 14:16:28 nkramer Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -419,7 +419,7 @@ define method optimize-generic
 		assert(instance?(ctv, <literal-symbol>));
 		unless (recognized == #"all"
 			  | member?(ctv.literal-value, recognized))
-		  compiler-warning-location
+		  compiler-error-location
 		    (call.dependents.dependent,
 		     "Unrecognized keyword (%s) as the %s argument"
 		       " in call of %s",
@@ -639,7 +639,7 @@ define method compare-call-against-signature
 	 arg-dep = arguments then arg-dep.dependent-next,
 	 count from 0)
       unless (arg-dep)
-	compiler-warning-location
+	compiler-error-location
 	  (call.dependents.dependent,
 	   "Not enough arguments in call of %s.\n"
 	     "  Wanted %s %d, but only got %d",
@@ -655,7 +655,7 @@ define method compare-call-against-signature
 	return();
       end;
       unless (ctypes-intersect?(arg-dep.source-exp.derived-type, spec))
-	compiler-warning-location
+	compiler-error-location
 	  (call.dependents.dependent,
 	   "Wrong type for the %s argument in call of %s.\n"
 	     "  Wanted %s, but got %s",
@@ -673,7 +673,7 @@ define method compare-call-against-signature
 	     while: key-dep)
 	  let val-dep = key-dep.dependent-next;
 	  unless (val-dep)
-	    compiler-warning-location
+	    compiler-error-location
 	      (call.dependents.dependent,
 	       "Odd number of keyword/value arguments in call of %s.",
 	       func-name);
@@ -684,7 +684,7 @@ define method compare-call-against-signature
 	  if (~instance?(leaf, <literal-constant>))
 	    unless (ctypes-intersect?(leaf.derived-type,
 				      specifier-type(#"<symbol>")))
-	      compiler-warning-location
+	      compiler-error-location
 		(call.dependents.dependent,
 		 "Bogus keyword as the %s argument in call of %s",
 		 integer-to-english(count + 1, as: #"ordinal"),
@@ -699,7 +699,7 @@ define method compare-call-against-signature
 	      if (keyinfo.key-name == key)
 		unless (ctypes-intersect?(val-dep.source-exp.derived-type,
 					  keyinfo.key-type))
-		  compiler-warning-location
+		  compiler-error-location
 		    (call.dependents.dependent,
 		     "Wrong type for keyword argument %s in call of %s.\n"
 		       "  Wanted %s, but got %s",
@@ -714,7 +714,7 @@ define method compare-call-against-signature
 	    end for;
 	    unless (found-key? | sig.all-keys? | call.use-generic-entry?
 		      | ~check-keywords?)
-	      compiler-warning-location
+	      compiler-error-location
 		(call.dependents.dependent,
 		 "Unrecognized keyword (%s) as the %s argument in call of %s",
 		 key,
@@ -723,7 +723,7 @@ define method compare-call-against-signature
 	      bogus? := #t;
 	    end unless;
 	  else
-	    compiler-warning-location
+	    compiler-error-location
 	      (call.dependents.dependent,
 	       "Bogus keyword (%s) as the %s argument in call of %s",
 	       leaf.value,
@@ -744,7 +744,7 @@ define method compare-call-against-signature
 		end;
 	      end;
 	      if (keyinfo.required?)
-		compiler-warning-location
+		compiler-error-location
 		  (call.dependents.dependent,
 		   "Required keyword %s missing in call of %s",
 		   keyinfo.key-name,
@@ -760,7 +760,7 @@ define method compare-call-against-signature
 	     while: arg-dep)
 	  unless (ctypes-intersect?(arg-dep.source-exp.derived-type,
 				    sig.rest-type))
-	    compiler-warning-location
+	    compiler-error-location
 	      (call.dependents.dependent,
 	       "Wrong type for the %s argument in call of %s.\n"
 		 "  Wanted %s, but got %s",
@@ -776,7 +776,7 @@ define method compare-call-against-signature
 	     have from count,
 	     while: arg-dep)
 	finally
-	  compiler-warning-location
+	  compiler-error-location
 	    (call.dependents.dependent,
 	     "Too many arguments in call of %s.\n"
 	       "  Wanted exactly %d, but got %d.",
@@ -820,7 +820,7 @@ define method compare-call-against-signature
 			     default: cluster-type.rest-value-type);
       if (arg-type == empty-ctype())
 	// Can't have enough arguments.
-	compiler-warning-location
+	compiler-error-location
 	  (call.dependents.dependent,
 	   "Not enough arguments in call of %s.\n"
 	     "  Wanted %s %d, but got no more than %d.",
@@ -834,7 +834,7 @@ define method compare-call-against-signature
 	   index);
 	return(#"bogus");
       elseif (~ctypes-intersect?(arg-type, gf-spec))
-	compiler-warning-location
+	compiler-error-location
 	  (call.dependents.dependent,
 	   "Wrong type for %s argument in call of %s.\n"
 	     "  Wanted %s, but got %s.",
@@ -867,7 +867,7 @@ define method compare-call-against-signature
 	       below cluster-type.positional-types.size)
 	  let arg-type = cluster-type.positional-types[index];
 	  unless (ctypes-intersect?(arg-type, sig.rest-type))
-	    compiler-warning-location
+	    compiler-error-location
 	      (call.dependents.dependent,
 	       "Wrong type for %s argument in call of %s.\n"
 		 "  Wanted %s, but got %s.",
@@ -879,7 +879,7 @@ define method compare-call-against-signature
 	  end unless;
 	end for;
 	unless (ctypes-intersect?(cluster-type.rest-value-type, sig.rest-type))
-	  compiler-warning-location
+	  compiler-error-location
 	    (call.dependents.dependent,
 	     "Wrong type for the %s argument and on in call of %s.\n"
 	       "  Wanted %s, but got %s.",
@@ -905,7 +905,7 @@ define method compare-call-against-signature
       // There are a fixed number of values.  Make sure we don't have too
       // many.
       if (cluster-type.min-values > sig.specializers.size)
-	compiler-warning-location
+	compiler-error-location
 	  (call.dependents.dependent,
 	   "Too many arguments in call of %s.\n"
 	     "  Wanted exactly %d, but got at least %d.",
