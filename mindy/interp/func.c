@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.33 1994/11/03 22:19:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.34 1994/11/06 19:59:23 rgs Exp $
 *
 * This file implements functions.
 *
@@ -48,6 +48,7 @@
 #include "driver.h"
 #include "error.h"
 #include "def.h"
+#include "extern.h"
 #include "func.h"
 
 obj_t obj_FunctionClass = NULL;
@@ -57,6 +58,7 @@ obj_t obj_ByteMethodClass = NULL;
 static obj_t obj_RawMethodClass;
 static obj_t obj_BuiltinMethodClass = NULL;
 static obj_t obj_AccessorMethodClass = NULL;
+obj_t obj_CFunctionClass = NULL;
 obj_t obj_GFClass = NULL;
 obj_t obj_MethodInfoClass = NULL;
 static obj_t obj_GFCacheClass = NULL;
@@ -1037,6 +1039,141 @@ void set_accessor_method_datum(obj_t method, obj_t datum)
 }
 
 
+/* C functions. */
+
+struct c_function {
+    obj_t class;
+    void (*xep)(struct thread *thread, int nargs);
+    obj_t debug_name;
+    int required_args;
+    boolean restp;
+    obj_t keywords;
+    boolean all_keys;
+    obj_t result_types;
+    obj_t more_results_type;
+    obj_t specializers;
+    obj_t class_cache;			/* #F or a gf_cache */
+    void (*iep)(obj_t self, struct thread *thread, obj_t *args);
+    void *pointer;
+};
+
+#define C_FUNCTION(o) obj_ptr(struct c_function *, o)
+
+static void c_function_xep(struct thread *thread, int nargs)
+{
+    obj_t *args = thread->sp - nargs;
+    obj_t cf = args[-1];
+    int (*fun)() = (int(*) ()) C_FUNCTION(cf)->pointer;
+    obj_t res_type = HEAD(C_FUNCTION(cf)->result_types);
+    int result;
+    obj_t *old_sp;
+    obj_t value;
+
+    push_linkage(thread, args);
+
+    switch (nargs) {
+    case 0:
+	result = fun();
+	break;
+    case 1:
+	result = fun(get_c_object(args[0]));
+	break;
+    case 2:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]));
+	break;
+    case 3:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]),
+		     get_c_object(args[2]));
+	break;
+    case 4:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]),
+		     get_c_object(args[2]), get_c_object(args[3]),
+		     get_c_object(args[4]));
+	break;
+    case 5:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]),
+		     get_c_object(args[2]), get_c_object(args[3]),
+		     get_c_object(args[4]));
+	break;
+    case 6:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]),
+		     get_c_object(args[2]), get_c_object(args[3]),
+		     get_c_object(args[4]), get_c_object(args[5]));
+	break;
+    case 7:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]),
+		     get_c_object(args[2]), get_c_object(args[3]),
+		     get_c_object(args[4]), get_c_object(args[5]),
+		     get_c_object(args[6]));
+	break;
+    case 8:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]),
+		     get_c_object(args[2]), get_c_object(args[3]),
+		     get_c_object(args[4]), get_c_object(args[5]),
+		     get_c_object(args[6]), get_c_object(args[7]));
+	break;
+    case 9:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]),
+		     get_c_object(args[2]), get_c_object(args[3]),
+		     get_c_object(args[4]), get_c_object(args[5]),
+		     get_c_object(args[6]), get_c_object(args[7]),
+		     get_c_object(args[8]));
+	break;
+    case 10:
+	result = fun(get_c_object(args[0]), get_c_object(args[1]),
+		     get_c_object(args[2]), get_c_object(args[3]),
+		     get_c_object(args[4]), get_c_object(args[5]),
+		     get_c_object(args[6]), get_c_object(args[7]),
+		     get_c_object(args[8]), get_c_object(args[9]));
+	break;
+    default:
+	result = 0;		/* make compiler happy */
+	lose("Can't call a c function with more than 10 args");
+    }
+
+    value = convert_c_object(res_type, (void *)result, TRUE);
+
+    old_sp = pop_linkage(thread);
+    *old_sp = value;
+    thread->sp = old_sp+1;
+
+    do_return(thread, old_sp, old_sp);
+}
+
+obj_t make_c_function(obj_t debug_name, void *pointer)
+{
+    obj_t res = alloc(obj_CFunctionClass, sizeof(struct c_function));
+
+    C_FUNCTION(res)->xep = c_function_xep;
+    C_FUNCTION(res)->debug_name = debug_name;
+    C_FUNCTION(res)->required_args = 0;
+    C_FUNCTION(res)->restp = TRUE;
+    C_FUNCTION(res)->keywords = obj_False;
+    C_FUNCTION(res)->all_keys = FALSE;
+    C_FUNCTION(res)->result_types = obj_ObjectClass;
+    C_FUNCTION(res)->more_results_type = obj_False;
+    C_FUNCTION(res)->pointer = pointer;
+    C_FUNCTION(res)->specializers = obj_Nil;
+    C_FUNCTION(res)->class_cache = obj_False;
+    C_FUNCTION(res)->iep = NULL;
+
+    return res;
+}
+
+obj_t constrain_c_function(obj_t /* <c-function> */ res,
+			   obj_t /* <list> */ specializers,
+			   obj_t restp,
+			   obj_t /* <list> */ result_types)
+{
+    C_FUNCTION(res)->required_args = length(specializers);
+    C_FUNCTION(res)->restp = (restp != obj_False);
+    C_FUNCTION(res)->result_types = result_types;
+    C_FUNCTION(res)->specializers = specializers;
+
+    return res;
+}
+    
+
 /* Generic functions. */
 
 struct gf {
@@ -1736,6 +1873,19 @@ static obj_t trans_accessor_method(obj_t method)
     return transport(method, sizeof(struct accessor_method));
 }
 
+static int scav_c_function(struct object *ptr)
+{
+    scav_func((struct function *)ptr);
+    scavenge(&((struct c_function *)ptr)->specializers);
+
+    return sizeof(struct c_function);
+}
+    
+static obj_t trans_c_function(obj_t method)
+{
+    return transport(method, sizeof(struct c_function));
+}
+
 static int scav_gf(struct object *ptr)
 {
     struct gf *gf = (struct gf *)ptr;
@@ -1781,6 +1931,7 @@ void scavenge_func_roots(void)
     scavenge(&obj_BuiltinMethodClass);
     scavenge(&obj_ByteMethodClass);
     scavenge(&obj_AccessorMethodClass);
+    scavenge(&obj_CFunctionClass);
     scavenge(&obj_MethodInfoClass);
     scavenge(&obj_GFClass);
     scavenge(&obj_GFCacheClass);
@@ -1802,6 +1953,8 @@ void make_func_classes(void)
 	= make_builtin_class(scav_byte_method, trans_byte_method);
     obj_AccessorMethodClass
 	= make_builtin_class(scav_accessor_method, trans_accessor_method);
+    obj_CFunctionClass
+	= make_builtin_class(scav_c_function, trans_c_function);
     obj_MethodInfoClass
 	= make_builtin_class(scav_method_info, trans_method_info);
     obj_GFClass = make_builtin_class(scav_gf, trans_gf);
@@ -1826,6 +1979,8 @@ void init_func_classes(void)
 		       obj_ObjectClass, NULL);
     init_builtin_class(obj_AccessorMethodClass, "<slot-accessor-method>",
 		       obj_MethodClass, NULL);
+    init_builtin_class(obj_CFunctionClass, "<c-function>",
+		       obj_FunctionClass, NULL);
     init_builtin_class(obj_GFClass, "<generic-function>",
 		       obj_FunctionClass, NULL);
     init_builtin_class(obj_GFCacheClass, "<generic-function-cache>",
@@ -1890,4 +2045,9 @@ void init_func_functions(void)
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    FALSE, obj_False, FALSE, obj_Nil,
 				    obj_ObjectClass, dylan_do_next_method));
+    define_method("constrain-c-function",
+		  listn(4, obj_CFunctionClass, obj_ListClass, 
+			obj_ObjectClass, obj_ListClass),
+		  TRUE, obj_False, FALSE, obj_ObjectClass,
+		  constrain_c_function);
 }

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.10 1994/10/05 21:01:59 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.11 1994/11/06 20:00:10 rgs Exp $
 *
 \**********************************************************************/
 
@@ -33,6 +33,7 @@ extern obj_t obj_MethodInfoClass;
 extern obj_t obj_MethodClass;
 extern obj_t obj_ByteMethodClass;
 extern obj_t obj_GFClass;
+extern obj_t obj_CFunctionClass;
 
 struct method_info {
     obj_t class;
@@ -74,6 +75,8 @@ extern obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
 					   obj_t *args));
 extern obj_t accessor_method_datum(obj_t method);
 extern void set_accessor_method_datum(obj_t method, obj_t datum);
+
+extern obj_t make_c_function(obj_t debug_name, void *pointer);
 
 extern obj_t make_generic_function(obj_t debug_name, int required_args,
 				   boolean restp, obj_t keys, boolean all_keys,
