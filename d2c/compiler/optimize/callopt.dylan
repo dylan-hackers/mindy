@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.9 2003/02/18 23:07:44 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.10 2003/03/03 00:12:35 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -262,14 +262,9 @@ define method optimize-general-call-defn
     => ();
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns.ctype-extent);
-  if (inlining-candidate?(defn))
-    maybe-change-to-known-or-error-call
-      (component, call, sig, defn.defn-name, defn.method-defn-inline-function,
-       defn.function-defn-hairy?);
-  else
-    maybe-change-to-known-or-error-call
-      (component, call, sig, defn.defn-name, #f, defn.function-defn-hairy?);
-  end if;
+  maybe-change-to-known-or-error-call
+    (component, call, sig, defn.defn-name, defn.inlining-candidate?,
+     defn.function-defn-hairy?);
 end method optimize-general-call-defn;
 
 // optimize-general-call-ctv{<ct-value>}
@@ -654,10 +649,12 @@ define method maybe-change-to-known-or-error-call
 end;
 
 // XXX not really enough information available here to make a good decision.
-// Need 
+// Need to analyse the size of the function to be
+// inlined in case it is {may,default}-inline
+//
 define method inlining-candidate?
     (defn :: <abstract-method-definition>)
- => (res :: <boolean>);
+ => potential-inline-function :: false-or(<function-literal>);
   select (defn.method-defn-inline-type)
     #"not-inline" =>
       #f;
@@ -666,7 +663,7 @@ define method inlining-candidate?
     #"may-inline" =>
       #f;
     #"inline", #"inline-only" =>
-      #t;
+      defn.method-defn-inline-function;
   end select;
 end method inlining-candidate?;
 
