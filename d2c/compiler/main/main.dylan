@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.55 1996/02/18 15:00:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.56 1996/02/21 02:53:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -634,6 +634,7 @@ define method incorrect-usage () => ();
 end method incorrect-usage;
 
 define method main (argv0 :: <byte-string>, #rest args) => ();
+  *random-state* := make(<random-state>, seed: 0);
 #if (mindy)
   if (args.size > 0 & args.first = "-autodump")
     if (args.size < 2 | args.size > 3)
