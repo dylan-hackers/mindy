@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/value.c,v 1.3 1994/10/05 21:04:51 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/value.c,v 1.4 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements value cells.
 *
@@ -74,12 +74,7 @@ static int scav_value_cell(struct object *ptr)
 
 static obj_t trans_value_cell(obj_t value_cell)
 {
-    return transport(value_cell, sizeof(struct value_cell));
-}
-
-void scavenge_value_roots(void)
-{
-    scavenge(&obj_ValueCellClass);
+    return transport(value_cell, sizeof(struct value_cell), TRUE);
 }
 
 
@@ -88,6 +83,7 @@ void scavenge_value_roots(void)
 void make_value_classes(void)
 {
     obj_ValueCellClass = make_builtin_class(scav_value_cell, trans_value_cell);
+    add_constant_root(&obj_ValueCellClass);
 }
 
 void init_value_classes(void)

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.15 1996/01/03 02:47:18 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.16 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -51,11 +51,29 @@
 
 struct hash_state {
     obj_t class;
+    boolean valid;
+    int volatility;
 };
+
+#define STATE(obj) obj_ptr(struct hash_state *, obj)
 
 static obj_t obj_HashStateClass = NULL;
 static obj_t permanent_state = NULL;
-static obj_t valid_state = NULL;
+
+obj_t make_hash_state(int volatility)
+{
+    obj_t state = alloc(obj_HashStateClass, sizeof(struct hash_state));
+
+    STATE(state)->valid = TRUE;
+    STATE(state)->volatility = volatility;
+
+    return state;
+}
+
+void invalidate_hash_state(obj_t state)
+{
+    STATE(state)->valid = FALSE;
+}
 
 /* The largest fixnum prime */
 #define REALLY_BIG_PRIME 1073741789
@@ -68,11 +86,7 @@ static void dylan_pointer_hash(struct thread *thread, int nargs)
     assert(nargs == 1);
 
     old_sp[0] = make_fixnum((unsigned long)object % REALLY_BIG_PRIME);
-
-    if (valid_state == obj_False)
-	valid_state = alloc(obj_HashStateClass, 
-			    sizeof(struct hash_state));
-    old_sp[1] = valid_state;
+    old_sp[1] = pointer_hash_state(object);
 
     do_return(thread, old_sp, old_sp);
 }
@@ -104,7 +118,7 @@ static void dylan_float_hash(struct thread *thread, int nargs)
 
 static obj_t dylan_state_valid_p(obj_t state)
 {
-    if (state == permanent_state || state == valid_state)
+    if (STATE(state)->valid)
 	return obj_True;
     else
 	return obj_False;
@@ -126,19 +140,14 @@ static void dylan_merge_hash_codes(obj_t self, struct thread *thread,
     }
     old_sp[0] = make_fixnum(id1 ^ id2);
 
-    if (state1 == permanent_state)
-	old_sp[1] = state2;
-    else if (state2 == permanent_state)
+    if (STATE(state1)->volatility > STATE(state2)->volatility)
 	old_sp[1] = state1;
-    else if (state1 == valid_state)
-	old_sp[1] = state2;
     else
-	old_sp[1] = state1;
+	old_sp[1] = state2;
 
     thread->sp = old_sp + 2;
     do_return(thread, old_sp, old_sp);
 }
-
 
 
 /* Printing routine. */
@@ -147,7 +156,7 @@ static void print_state(obj_t state)
 {
     if (state == permanent_state)
 	printf("{permanent hash state}");
-    else if (state == valid_state)
+    else if (STATE(state)->valid)
 	printf("{valid hash state}");
     else
 	printf("{invalid hash state}");
@@ -163,19 +172,7 @@ static int scav_state(struct object *o)
 
 static obj_t trans_state(obj_t state)
 {
-    return transport(state, sizeof(struct hash_state));
-}
-
-void scavenge_table_roots(void)
-{
-    scavenge(&obj_HashStateClass);
-    scavenge(&permanent_state);
-    valid_state = NULL;
-}    
-
-void table_gc_hook(void)
-{
-    valid_state = obj_False;
+    return transport(state, sizeof(struct hash_state), TRUE);
 }
 
 
@@ -184,6 +181,7 @@ void table_gc_hook(void)
 void make_table_classes(void)
 {
     obj_HashStateClass = make_builtin_class(scav_state, trans_state);
+    add_constant_root(&obj_HashStateClass);
 }
 
 void init_table_classes(void)
@@ -222,8 +220,7 @@ void init_table_functions(void)
 					  obj_HashStateClass),
 				    obj_False, dylan_merge_hash_codes));
 
-    permanent_state = alloc(obj_HashStateClass, sizeof(struct hash_state));
+    permanent_state = make_hash_state(0);
     define_constant("$permanent-hash-state", permanent_state);
-
-    valid_state = obj_False;
+    add_constant_root(&permanent_state);
 }

@@ -23,8 +23,9 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.h,v 1.3 1994/10/05 21:04:39 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.h,v 1.4 1996/02/02 01:52:32 wlott Exp $
 *
 \**********************************************************************/
 
-extern void table_gc_hook(void);
+extern obj_t make_hash_state(int volatility);
+extern void invalidate_hash_state(obj_t state);

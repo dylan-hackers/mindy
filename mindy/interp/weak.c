@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.7 1995/04/19 02:56:51 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.8 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements weak pointers.
 *
@@ -92,6 +92,11 @@ void dylan_weak_pointer_object(obj_t meth, struct thread *thread, obj_t *args)
 
 /* GC routines. */
 
+void weak_pointer_gc_setup(void)
+{
+    WeakPointers = NULL;
+}    
+
 static int scav_weak_pointer(struct object *obj)
 {
     struct weak_pointer *weakptr = (struct weak_pointer *)obj;
@@ -108,12 +113,7 @@ static int scav_weak_pointer(struct object *obj)
 
 static obj_t trans_weak_pointer(obj_t weakptr)
 {
-    return transport(weakptr, sizeof(struct weak_pointer));
-}
-
-void scavenge_weak_roots(void)
-{
-    scavenge(&obj_WeakPointerClass);
+    return transport(weakptr, sizeof(struct weak_pointer), FALSE);
 }
 
 void break_weak_pointers(void)
@@ -121,17 +121,15 @@ void break_weak_pointers(void)
     struct weak_pointer *w, *n;
 
     for (w = WeakPointers; w != NULL; w = n) {
-	if (obj_ptr(struct object *, w->object)->class == ForwardingMarker)
-	    scavenge(&w->object);
-	else {
+	if (object_collected(w->object)) {
 	    w->object = obj_False;
 	    w->broken = TRUE;
 	}
+	else
+	    scavenge(&w->object);
 	n = w->next;
 	w->next = NULL;
     }
-
-    WeakPointers = NULL;
 }
 
 
@@ -141,6 +139,7 @@ void make_weak_classes(void)
 {
     obj_WeakPointerClass
 	= make_builtin_class(scav_weak_pointer, trans_weak_pointer);
+    add_constant_root(&obj_WeakPointerClass);
 }
 
 void init_weak_classes(void)

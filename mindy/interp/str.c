@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.14 1995/05/14 12:29:43 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.15 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements strings.
 *
@@ -287,7 +287,8 @@ static obj_t trans_byte_string(obj_t string)
     return transport(string,
 		     sizeof(struct string)
 		     + obj_ptr(struct string *, string)->len + 1
-		     - sizeof(((struct string *)string)->chars));
+		     - sizeof(((struct string *)string)->chars),
+		     TRUE);
 }
 
 static obj_t trans_unicode_string(obj_t string)
@@ -295,13 +296,8 @@ static obj_t trans_unicode_string(obj_t string)
     return transport(string,
 		     sizeof(struct string) 
 		     + 2 * (obj_ptr(struct string *, string)->len + 1)
-		     - sizeof(((struct string *)string)->chars));
-}
-
-void scavenge_str_roots(void)
-{
-    scavenge(&obj_ByteStringClass);
-    scavenge(&obj_UnicodeStringClass);
+		     - sizeof(((struct string *)string)->chars),
+		     TRUE);
 }
 
 
@@ -313,6 +309,9 @@ void make_str_classes(void)
 					     trans_byte_string);
     obj_UnicodeStringClass = make_builtin_class(scav_unicode_string, 
 						trans_unicode_string);
+
+    add_constant_root(&obj_ByteStringClass);
+    add_constant_root(&obj_UnicodeStringClass);
 }
 
 void init_str_classes(void)

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.20 1995/03/12 16:42:14 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.21 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -1068,12 +1068,7 @@ static int scav_component(struct object *ptr)
 
 static obj_t trans_component(obj_t component)
 {
-    return transport(component, COMPONENT(component)->length);
-}
-
-void scavenge_interp_roots(void)
-{
-    scavenge(&obj_ComponentClass);
+    return transport(component, COMPONENT(component)->length, TRUE);
 }
 
 
@@ -1082,6 +1077,7 @@ void scavenge_interp_roots(void)
 void make_interp_classes(void)
 {
     obj_ComponentClass = make_builtin_class(scav_component, trans_component);
+    add_constant_root(&obj_ComponentClass);
 }
 
 void init_interp_classes(void)

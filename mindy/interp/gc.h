@@ -23,17 +23,23 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.h,v 1.5 1994/11/03 22:19:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.h,v 1.6 1996/02/02 01:52:32 wlott Exp $
 *
 \**********************************************************************/
 
 
-extern obj_t alloc(obj_t class, int bytes);
-extern void shrink(obj_t obj, int new_bytes);
-extern void scavenge(obj_t *addr);
-extern obj_t transport(obj_t obj, int bytes);
+extern void add_constant_root(obj_t *addr);
+extern void add_variable_root(obj_t *addr);
 
-extern void collect_garbage(void);
+extern obj_t alloc(obj_t class, int bytes);
+extern void shrink(obj_t obj, int old_bytes, int new_bytes);
+extern void scavenge(obj_t *addr);
+extern obj_t transport(obj_t obj, int bytes, boolean read_only);
+
+extern void collect_garbage(boolean purify);
+
+extern boolean object_collected(obj_t obj);
+extern obj_t pointer_hash_state(obj_t pointer);
 
 extern boolean TimeToGC;
 

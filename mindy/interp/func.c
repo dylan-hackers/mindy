@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.38 1995/05/13 13:31:37 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.39 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements functions.
 *
@@ -1830,7 +1830,7 @@ static int scav_raw_func(struct object *ptr)
 
 static obj_t trans_raw_func(obj_t func)
 {
-    return transport(func, sizeof(struct function));
+    return transport(func, sizeof(struct function), TRUE);
 }
 
 static int scav_raw_method(struct object *ptr)
@@ -1844,7 +1844,7 @@ static int scav_raw_method(struct object *ptr)
     
 static obj_t trans_raw_method(obj_t method)
 {
-    return transport(method, sizeof(struct method));
+    return transport(method, sizeof(struct method), FALSE);
 }
 
 static int scav_builtin_method(struct object *ptr)
@@ -1858,7 +1858,7 @@ static int scav_builtin_method(struct object *ptr)
     
 static obj_t trans_builtin_method(obj_t method)
 {
-    return transport(method, sizeof(struct builtin_method));
+    return transport(method, sizeof(struct builtin_method), FALSE);
 }
 
 static int scav_byte_method(struct object *ptr)
@@ -1882,8 +1882,9 @@ static obj_t trans_byte_method(obj_t method)
 {
     int nvars = BYTE_METHOD(method)->n_closure_vars;
 
-    return transport(method, sizeof(struct byte_method) 
-		     + sizeof(obj_t)*(nvars - 1));
+    return transport(method,
+		     sizeof(struct byte_method) + sizeof(obj_t)*(nvars - 1),
+		     FALSE);
 }
 
 static int scav_method_info(struct object *ptr)
@@ -1898,7 +1899,7 @@ static int scav_method_info(struct object *ptr)
 
 static obj_t trans_method_info(obj_t info)
 {
-    return transport(info, sizeof(struct method_info));
+    return transport(info, sizeof(struct method_info), TRUE);
 }
 
 static int scav_accessor_method(struct object *ptr)
@@ -1915,7 +1916,7 @@ static int scav_accessor_method(struct object *ptr)
     
 static obj_t trans_accessor_method(obj_t method)
 {
-    return transport(method, sizeof(struct accessor_method));
+    return transport(method, sizeof(struct accessor_method), FALSE);
 }
 
 static int scav_c_function(struct object *ptr)
@@ -1928,7 +1929,7 @@ static int scav_c_function(struct object *ptr)
     
 static obj_t trans_c_function(obj_t method)
 {
-    return transport(method, sizeof(struct c_function));
+    return transport(method, sizeof(struct c_function), FALSE);
 }
 
 static int scav_gf(struct object *ptr)
@@ -1945,7 +1946,7 @@ static int scav_gf(struct object *ptr)
 
 static obj_t trans_gf(obj_t gf)
 {
-    return transport(gf, sizeof(struct gf));
+    return transport(gf, sizeof(struct gf), FALSE);
 }
 
 static int scav_gf_cache(struct object *ptr)
@@ -1965,22 +1966,8 @@ static obj_t trans_gf_cache(obj_t gf_cache)
     return transport(gf_cache, 
 		     (sizeof(struct gf_cache) 
 		      + sizeof(obj_t) 
-		        * (obj_ptr(struct gf_cache *, gf_cache)->size - 1)));
-}
-
-void scavenge_func_roots(void)
-{
-    scavenge(&obj_FunctionClass);
-    scavenge(&obj_RawFunctionClass);
-    scavenge(&obj_MethodClass);
-    scavenge(&obj_RawMethodClass);
-    scavenge(&obj_BuiltinMethodClass);
-    scavenge(&obj_ByteMethodClass);
-    scavenge(&obj_AccessorMethodClass);
-    scavenge(&obj_CFunctionClass);
-    scavenge(&obj_MethodInfoClass);
-    scavenge(&obj_GFClass);
-    scavenge(&obj_GFCacheClass);
+		        * (obj_ptr(struct gf_cache *, gf_cache)->size - 1)),
+		     FALSE);
 }
 
 
@@ -2005,6 +1992,18 @@ void make_func_classes(void)
 	= make_builtin_class(scav_method_info, trans_method_info);
     obj_GFClass = make_builtin_class(scav_gf, trans_gf);
     obj_GFCacheClass = make_builtin_class(scav_gf_cache, trans_gf_cache);
+
+    add_constant_root(&obj_FunctionClass);
+    add_constant_root(&obj_RawFunctionClass);
+    add_constant_root(&obj_MethodClass);
+    add_constant_root(&obj_RawMethodClass);
+    add_constant_root(&obj_BuiltinMethodClass);
+    add_constant_root(&obj_ByteMethodClass);
+    add_constant_root(&obj_AccessorMethodClass);
+    add_constant_root(&obj_CFunctionClass);
+    add_constant_root(&obj_MethodInfoClass);
+    add_constant_root(&obj_GFClass);
+    add_constant_root(&obj_GFCacheClass);
 }
 
 void init_func_classes(void)

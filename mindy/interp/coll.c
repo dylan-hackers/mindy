@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.6 1994/10/05 21:01:28 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.7 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements the collection framework.
 *
@@ -48,22 +48,6 @@ obj_t obj_VectorClass = 0;
 obj_t obj_StringClass = 0;
 
 
-/* GC stuff. */
-
-void scavenge_coll_roots(void)
-{
-    scavenge(&obj_CollClass);
-    scavenge(&obj_ExKeyCollClass);
-    scavenge(&obj_MutCollClass);
-    scavenge(&obj_SeqClass);
-    scavenge(&obj_MutExKeyCollClass);
-    scavenge(&obj_MutSeqClass);
-    scavenge(&obj_ArrayClass);
-    scavenge(&obj_VectorClass);
-    scavenge(&obj_StringClass);
-}
-
-
 /* Init stuff. */
 
 void make_coll_classes(void)
@@ -77,6 +61,16 @@ void make_coll_classes(void)
     obj_ArrayClass = make_abstract_class(FALSE);
     obj_VectorClass = make_abstract_class(FALSE);
     obj_StringClass = make_abstract_class(FALSE);
+
+    add_constant_root(&obj_CollClass);
+    add_constant_root(&obj_ExKeyCollClass);
+    add_constant_root(&obj_MutCollClass);
+    add_constant_root(&obj_SeqClass);
+    add_constant_root(&obj_MutExKeyCollClass);
+    add_constant_root(&obj_MutSeqClass);
+    add_constant_root(&obj_ArrayClass);
+    add_constant_root(&obj_VectorClass);
+    add_constant_root(&obj_StringClass);
 }
 
 void init_coll_classes(void)

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.11 1994/11/28 08:28:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.12 1996/02/02 01:52:32 wlott Exp $
 *
 * This file contains <object>.
 *
@@ -53,19 +53,12 @@ static obj_t dylan_object_address(obj_t object)
 }
 
 
-/* GC stuff. */
-
-void scavenge_obj_roots(void)
-{
-    scavenge(&obj_ObjectClass);
-}
-
-
 /* Init stuff. */
 
 void make_obj_classes(void)
 {
     obj_ObjectClass = make_abstract_class(FALSE);
+    add_constant_root(&obj_ObjectClass);
 }
 
 void init_obj_classes(void)

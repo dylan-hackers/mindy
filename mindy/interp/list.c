@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.8 1994/11/03 22:19:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.9 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements lists.
 *
@@ -265,15 +265,7 @@ static int scav_list(struct object *o)
 
 static obj_t trans_list(obj_t list)
 {
-    return transport(list, sizeof(struct list));
-}
-
-void scavenge_list_roots(void)
-{
-    scavenge(&obj_Nil);
-    scavenge(&obj_ListClass);
-    scavenge(&obj_PairClass);
-    scavenge(&obj_EmptyListClass);
+    return transport(list, sizeof(struct list), FALSE);
 }
 
 
@@ -284,6 +276,9 @@ void make_list_classes(void)
     obj_ListClass = make_abstract_class(TRUE);
     obj_PairClass = make_builtin_class(scav_list, trans_list);
     obj_EmptyListClass = make_builtin_class(scav_list, trans_list);
+    add_constant_root(&obj_ListClass);
+    add_constant_root(&obj_PairClass);
+    add_constant_root(&obj_EmptyListClass);
 }
 
 void init_nil(void)
@@ -291,6 +286,7 @@ void init_nil(void)
     obj_Nil = alloc(obj_EmptyListClass, sizeof(struct list));
     HEAD(obj_Nil) = obj_Nil;
     TAIL(obj_Nil) = obj_Nil;
+    add_constant_root(&obj_Nil);
 }
 
 void init_list_classes(void)

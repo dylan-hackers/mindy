@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.7 1994/10/05 21:02:06 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.8 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements the low level support for exception handlers.
 *
@@ -133,12 +133,7 @@ static int scav_handler(struct object *obj)
 
 static obj_t trans_handler(obj_t handler)
 {
-    return transport(handler, sizeof(struct handler));
-}
-
-void scavenge_handler_roots(void)
-{
-    scavenge(&obj_HandlerClass);
+    return transport(handler, sizeof(struct handler), TRUE);
 }
 
 
@@ -147,6 +142,7 @@ void scavenge_handler_roots(void)
 void make_handler_classes(void)
 {
     obj_HandlerClass = make_builtin_class(scav_handler, trans_handler);
+    add_constant_root(&obj_HandlerClass);
 }
 
 void init_handler_classes(void)

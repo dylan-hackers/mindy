@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.6 1995/07/11 12:39:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.7 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements the booleans, #t and #f.
 *
@@ -78,14 +78,7 @@ static int scav_bool(struct object *bool)
 
 static obj_t trans_bool(obj_t bool)
 {
-    return transport(bool, sizeof(struct bool));
-}
-
-void scavenge_bool_roots(void)
-{
-    scavenge(&obj_True);
-    scavenge(&obj_False);
-    scavenge(&obj_BooleanClass);
+    return transport(bool, sizeof(struct bool), TRUE);
 }
 
 
@@ -98,6 +91,9 @@ void make_bool_classes(void)
 		     sizeof(struct bool));
     obj_False = alloc(make_builtin_class(scav_bool, trans_bool),
 		      sizeof(struct bool));
+    add_constant_root(&obj_BooleanClass);
+    add_constant_root(&obj_True);
+    add_constant_root(&obj_False);
 }
 
 void init_bool_classes(void)

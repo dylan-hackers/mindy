@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.7 1994/10/05 21:04:06 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.8 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements non-local exit.
 *
@@ -259,12 +259,7 @@ static int scav_catch(struct object *o)
 
 static obj_t trans_catch(obj_t catch)
 {
-    return transport(catch, sizeof(struct catch_block));
-}
-
-void scavenge_nlx_roots(void)
-{
-    scavenge(&obj_CatchBlockClass);
+    return transport(catch, sizeof(struct catch_block), FALSE);
 }
 
 
@@ -273,6 +268,7 @@ void scavenge_nlx_roots(void)
 void make_nlx_classes(void)
 {
     obj_CatchBlockClass = make_builtin_class(scav_catch, trans_catch);
+    add_constant_root(&obj_CatchBlockClass);
 }
 
 void init_nlx_classes(void)

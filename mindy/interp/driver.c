@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.21 1995/10/23 23:11:35 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.22 1996/02/02 01:52:32 wlott Exp $
 *
 * Main driver routines for mindy.
 *
@@ -300,7 +300,7 @@ enum pause_reason do_stuff(void)
 	    clear_interrupt_handler();
 
 	    if (TimeToGC)
-		collect_garbage();
+		collect_garbage(FALSE);
 	}
 	else if (all_threads() == NULL)
 	    PauseReason = pause_NothingToRun;
@@ -340,7 +340,7 @@ enum pause_reason single_step(struct thread *thread)
     InInterpreter = FALSE;
     clear_interrupt_handler();
     if (TimeToGC)
-	collect_garbage();
+	collect_garbage(FALSE);
     return PauseReason;
 }
 

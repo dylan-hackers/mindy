@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.45 1996/01/16 20:49:23 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.46 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -660,7 +660,7 @@ static void troff_cmd(obj_t args)
 static void gc_cmd(obj_t args)
 {
     should_be_no_args(args);
-    collect_garbage();
+    collect_garbage(FALSE);
 }
 
 static void error_cmd(obj_t args)
@@ -2529,14 +2529,7 @@ void invoke_debugger(enum pause_reason reason)
 
 void scavenge_debug_roots(void)
 {
-    scavenge(&do_print_func);
-    scavenge(&do_eval_func);
-    scavenge(&cur_source_file);
     scav_frames(TopFrame);
-    if (CurThreadObj)
-	scavenge(&CurThreadObj);
-    if (CurComponent)
-	scavenge(&CurComponent);
 }
 
 
@@ -2544,13 +2537,22 @@ void scavenge_debug_roots(void)
 
 void init_debug_functions(void)
 {
-    cur_source_file = obj_False;
     do_print_func = make_raw_function("debug-print", 1, FALSE, obj_False,
 				      FALSE, obj_Nil, obj_ObjectClass,
 				      do_print_start);
     do_eval_func = make_raw_function("debug-eval", 1, FALSE, obj_False,
 				     FALSE, obj_Nil, obj_ObjectClass,
 				     do_eval_start);
+
+    add_constant_root(&do_print_func);
+    add_constant_root(&do_eval_func);
+
+    cur_source_file = obj_False;
+
+    add_variable_root(&cur_source_file);
+    add_variable_root(&CurThreadObj);
+    add_variable_root(&CurComponent);
+
     debugger_eval_var = find_variable(module_BuiltinStuff,
 				      symbol("debugger-eval"),
 				      FALSE, TRUE);

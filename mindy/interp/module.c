@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.23 1996/01/16 20:40:08 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.24 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -890,7 +890,7 @@ static int scav_unbound(struct object *ptr)
 
 static obj_t trans_unbound(obj_t unbound)
 {
-    return transport(unbound, sizeof(struct object));
+    return transport(unbound, sizeof(struct object), TRUE);
 }
 
 static void scav_use(struct use *use)
@@ -969,8 +969,6 @@ void scavenge_module_roots(void)
 	scav_module(module);
     for (var = Vars; var != NULL; var = var->next)
 	scav_var(var);
-    scavenge(&obj_Unbound);
-    scavenge(&obj_UnboundClass);
 }
 
 
@@ -979,6 +977,7 @@ void scavenge_module_roots(void)
 void make_module_classes(void)
 {
     obj_UnboundClass = make_builtin_class(scav_unbound, trans_unbound);
+    add_constant_root(&obj_UnboundClass);
 }
 
 void init_modules(void)
@@ -1007,6 +1006,7 @@ void init_modules(void)
 	       "module %s internal to library %s", stuff, dylan, obj_False);
 
     obj_Unbound = alloc(obj_UnboundClass, sizeof(struct object));
+    add_constant_root(&obj_Unbound);
 }
 
 void init_module_classes(void)

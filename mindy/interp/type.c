@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.23 1995/07/11 13:06:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.24 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements the type system.
 *
@@ -1237,7 +1237,7 @@ static int scav_simp_type(struct object *o)
 
 static obj_t trans_simp_type(obj_t type)
 {
-    return transport(type, sizeof(struct singleton));
+    return transport(type, sizeof(struct singleton), TRUE);
 }
 
 static int scav_limint(struct object *o)
@@ -1252,7 +1252,7 @@ static int scav_limint(struct object *o)
 
 static obj_t trans_limint(obj_t limint)
 {
-    return transport(limint, sizeof(struct lim_int));
+    return transport(limint, sizeof(struct lim_int), TRUE);
 }
 
 static int scav_noneof(struct object *obj)
@@ -1267,17 +1267,7 @@ static int scav_noneof(struct object *obj)
 
 static obj_t trans_noneof(obj_t noneof)
 {
-    return transport(noneof, sizeof(struct none_of_type));
-}
-
-void scavenge_type_roots(void)
-{
-    scavenge(&obj_TypeClass);
-    scavenge(&obj_SingletonClass);
-    scavenge(&obj_SubclassClass);
-    scavenge(&obj_LimIntClass);
-    scavenge(&obj_UnionClass);
-    scavenge(&obj_NoneOfClass);
+    return transport(noneof, sizeof(struct none_of_type), TRUE);
 }
 
 
@@ -1291,6 +1281,13 @@ void make_type_classes(void)
     obj_LimIntClass = make_builtin_class(scav_limint, trans_limint);
     obj_UnionClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_NoneOfClass = make_builtin_class(scav_noneof, trans_noneof);
+
+    add_constant_root(&obj_TypeClass);
+    add_constant_root(&obj_SingletonClass);
+    add_constant_root(&obj_SubclassClass);
+    add_constant_root(&obj_LimIntClass);
+    add_constant_root(&obj_UnionClass);
+    add_constant_root(&obj_NoneOfClass);
 }
 
 void init_type_classes(void)

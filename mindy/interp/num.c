@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.25 1996/01/11 18:43:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.26 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -127,7 +127,9 @@ static obj_t alloc_bignum(int length)
 
 static void shrink_bignum(obj_t num, int length)
 {
-    shrink(num, sizeof(struct bignum) + (length - 1) * sizeof(digit_t));
+    shrink(num,
+	   sizeof(struct bignum) + (BIGNUM(num)->length - 1) * sizeof(digit_t),
+	   sizeof(struct bignum) + (length - 1) * sizeof(digit_t));
     BIGNUM(num)->length = length;
 }
 
@@ -1916,8 +1918,9 @@ static int scav_bignum(struct object *ptr)
 static obj_t trans_bignum(obj_t sf)
 {
     int length = BIGNUM(sf)->length;
-    return transport(sf, (sizeof(struct bignum)
-			  + (length - 1) * sizeof(digit_t)));
+    return transport(sf,
+		     (sizeof(struct bignum) + (length - 1) * sizeof(digit_t)),
+		     TRUE);
 }
 
 static int scav_ratio(struct object *ptr)
@@ -1932,7 +1935,7 @@ static int scav_ratio(struct object *ptr)
 
 static obj_t trans_ratio(obj_t ratio)
 {
-    return transport(ratio, sizeof(struct ratio));
+    return transport(ratio, sizeof(struct ratio), TRUE);
 }
 
 static int scav_sf(struct object *ptr)
@@ -1942,7 +1945,7 @@ static int scav_sf(struct object *ptr)
 
 static obj_t trans_sf(obj_t sf)
 {
-    return transport(sf, sizeof(struct single_float));
+    return transport(sf, sizeof(struct single_float), TRUE);
 }
 
 static int scav_df(struct object *ptr)
@@ -1952,7 +1955,7 @@ static int scav_df(struct object *ptr)
 
 static obj_t trans_df(obj_t sf)
 {
-    return transport(sf, sizeof(struct double_float));
+    return transport(sf, sizeof(struct double_float), TRUE);
 }
 
 static int scav_xf(struct object *ptr)
@@ -1962,23 +1965,7 @@ static int scav_xf(struct object *ptr)
 
 static obj_t trans_xf(obj_t sf)
 {
-    return transport(sf, sizeof(struct extended_float));
-}
-
-void scavenge_num_roots(void)
-{
-    scavenge(&obj_NumberClass);
-    scavenge(&obj_ComplexClass);
-    scavenge(&obj_RealClass);
-    scavenge(&obj_RationalClass);
-    scavenge(&obj_IntegerClass);
-    scavenge(&obj_FixnumClass);
-    scavenge(&obj_BignumClass);
-    scavenge(&obj_RatioClass);
-    scavenge(&obj_FloatClass);
-    scavenge(&obj_SingleFloatClass);
-    scavenge(&obj_DoubleFloatClass);
-    scavenge(&obj_ExtendedFloatClass);
+    return transport(sf, sizeof(struct extended_float), TRUE);
 }
 
 
@@ -2001,6 +1988,19 @@ void make_num_classes(void)
     obj_SingleFloatClass = make_builtin_class(scav_sf, trans_sf);
     obj_DoubleFloatClass = make_builtin_class(scav_df, trans_df);
     obj_ExtendedFloatClass = make_builtin_class(scav_xf, trans_xf);
+
+    add_constant_root(&obj_NumberClass);
+    add_constant_root(&obj_ComplexClass);
+    add_constant_root(&obj_RealClass);
+    add_constant_root(&obj_RationalClass);
+    add_constant_root(&obj_IntegerClass);
+    add_constant_root(&obj_FixnumClass);
+    add_constant_root(&obj_BignumClass);
+    add_constant_root(&obj_RatioClass);
+    add_constant_root(&obj_FloatClass);
+    add_constant_root(&obj_SingleFloatClass);
+    add_constant_root(&obj_DoubleFloatClass);
+    add_constant_root(&obj_ExtendedFloatClass);
 }
 
 void init_num_classes(void)

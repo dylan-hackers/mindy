@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.h,v 1.3 1994/10/05 21:05:02 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.h,v 1.4 1996/02/02 01:52:32 wlott Exp $
 *
 \**********************************************************************/
 
@@ -40,4 +40,5 @@ struct weak_pointer {
 extern obj_t obj_WeakPointerClass;
 extern obj_t make_weak_pointer(obj_t object);
 
-extern void break_weak_pointers();
+extern void weak_pointer_gc_setup(void);
+extern void break_weak_pointers(void);

@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.39 1995/11/10 01:01:44 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.40 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1869,7 +1869,7 @@ static int scav_defined_class(struct object *ptr)
 
 static obj_t trans_defined_class(obj_t class)
 {
-    return transport(class, sizeof(struct defined_class));
+    return transport(class, sizeof(struct defined_class), FALSE);
 }
 
 static int scav_slot_descr(struct object *ptr)
@@ -1891,7 +1891,7 @@ static int scav_slot_descr(struct object *ptr)
 
 static obj_t trans_slot_descr(obj_t slot)
 {
-    return transport(slot, sizeof(struct slot_descr));
+    return transport(slot, sizeof(struct slot_descr), FALSE);
 }
 
 static int scav_initarg_descr(struct object *ptr)
@@ -1907,7 +1907,7 @@ static int scav_initarg_descr(struct object *ptr)
 
 static obj_t trans_initarg_descr(obj_t initarg)
 {
-    return transport(initarg, sizeof(struct initarg_descr));
+    return transport(initarg, sizeof(struct initarg_descr), FALSE);
 }
 
 static int scav_inherited_descr(struct object *ptr)
@@ -1922,7 +1922,7 @@ static int scav_inherited_descr(struct object *ptr)
 
 static obj_t trans_inherited_descr(obj_t inherited)
 {
-    return transport(inherited, sizeof(struct inherited_descr));
+    return transport(inherited, sizeof(struct inherited_descr), FALSE);
 }
 
 static int scav_postable(struct object *ptr)
@@ -1936,7 +1936,7 @@ static int scav_postable(struct object *ptr)
 
 static obj_t trans_postable(obj_t p)
 {
-    return transport(p, sizeof(struct postable));
+    return transport(p, sizeof(struct postable), FALSE);
 }
 
 static int scav_initializer(struct object *ptr)
@@ -1952,7 +1952,7 @@ static int scav_initializer(struct object *ptr)
 
 static obj_t trans_initializer(obj_t p)
 {
-    return transport(p, sizeof(struct initializer));
+    return transport(p, sizeof(struct initializer), FALSE);
 }
 
 static int scav_instance(struct object *ptr)
@@ -1972,18 +1972,11 @@ static obj_t trans_instance(obj_t instance)
     obj_t class = INST(instance)->class;
     int nslots = DC(class)->instance_length;
 
-    return transport(instance, sizeof(struct instance) + sizeof(obj_t)*(nslots-1));
+    return transport(instance,
+		     sizeof(struct instance) + sizeof(obj_t)*(nslots-1),
+		     FALSE);
 }
 
-void scavenge_instance_roots(void)
-{
-    scavenge(&obj_DefinedClassClass);
-    scavenge(&obj_SlotDescrClass);
-    scavenge(&obj_InitargDescrClass);
-    scavenge(&obj_InheritedDescrClass);
-    scavenge(&obj_PosTableClass);
-    scavenge(&obj_InitializerClass);
-}
 
 /* Init stuff. */
 
@@ -1999,6 +1992,13 @@ void make_instance_classes(void)
     obj_PosTableClass = make_builtin_class(scav_postable, trans_postable);
     obj_InitializerClass =
       make_builtin_class(scav_initializer, trans_initializer);
+
+    add_constant_root(&obj_DefinedClassClass);
+    add_constant_root(&obj_SlotDescrClass);
+    add_constant_root(&obj_InitargDescrClass);
+    add_constant_root(&obj_InheritedDescrClass);
+    add_constant_root(&obj_PosTableClass);
+    add_constant_root(&obj_InitializerClass);
 }
 
 void init_instance_classes(void)

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.6 1995/06/16 02:32:39 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.7 1996/02/02 01:52:32 wlott Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -547,7 +547,8 @@ obj_t c_pointer_field(obj_t pointer, obj_t offset, obj_t cls, obj_t deref)
 	return convert_c_object(cls, (void *)((int)ptr + true_offset), FALSE);
     else if (cls == obj_CharacterClass || cls == obj_BooleanClass)
 	/* byte size object -- dereference as (char *) */
-	return convert_c_object(cls, (void *)*((char *)ptr + true_offset),
+	return convert_c_object(cls,
+				(void *)((long)*((char *)ptr + true_offset)),
 				FALSE);
     else
 	/* pointer size ofject -- dereference as (void **) */
@@ -566,7 +567,7 @@ obj_t c_pointer_field_setter(obj_t value, obj_t /* <c-pointer> */ pointer,
 
     if (cls == obj_CharacterClass || cls == obj_BooleanClass)
 	/* byte size object -- dereference as (char *) */
-	*((char *)ptr + true_offset) = ((char) get_c_object(value));
+	*((char *)ptr + true_offset) = ((char)((long)get_c_object(value)));
     else
 	/* pointer size ofject -- dereference as (void **) */
 	*((void **)((char *)ptr + true_offset)) = get_c_object(value);
@@ -614,7 +615,7 @@ int scav_c_pointer(struct object *obj)
 
 obj_t trans_c_pointer(obj_t cptr)
 {
-    return transport(cptr, sizeof(struct c_pointer));
+    return transport(cptr, sizeof(struct c_pointer), TRUE);
 }
 
 static int scav_foreign_file(struct object *obj)
@@ -626,8 +627,10 @@ static int scav_foreign_file(struct object *obj)
 
 static obj_t trans_foreign_file(obj_t cptr)
 {
-    return transport(cptr, sizeof(struct foreign_file)
-		            + FOREIGN_FILE(cptr)->extra_size);
+    return transport(cptr,
+		     sizeof(struct foreign_file)
+		       + FOREIGN_FILE(cptr)->extra_size,
+		     TRUE);
 }
 
 #ifdef HAVE_LIBDLD
@@ -643,23 +646,16 @@ static obj_t trans_shared_file(obj_t cptr)
     return transport(cptr,
 		     sizeof(struct shared_file)
 		     + ((obj_ptr(struct shared_file *,cptr)->file_count - 1)
-			* sizeof(shl_t)));
+			* sizeof(shl_t)),
+		     TRUE);
 }
 #endif /* HAVE_LIBDLD */
 
 void scavenge_c_roots(void)
 {
-    scavenge(&obj_CPointerClass);
-    scavenge(&obj_ForeignFileClass);
-#ifdef HAVE_LIBDLD
-    scavenge(&obj_SharedFileClass);
-#endif /* HAVE_LIBDLD */
-    scavenge(&obj_ArchivedFileClass);
-    scavenge(&obj_NullPointer);
     if (mindy_dynamic_syms != NULL)
 	/* Let it be scavenged and we'll recreate it at need */
 	mindy_dynamic_syms = NULL;
-    scavenge(&mindy_explicit_syms);
 }
 
 
@@ -678,6 +674,13 @@ void make_c_classes(void)
     obj_SharedFileClass 
 	= make_builtin_class(scav_shared_file, trans_shared_file);
 #endif /* HAVE_LIBDLD */
+
+    add_constant_root(&obj_CPointerClass);
+    add_constant_root(&obj_ForeignFileClass);
+#ifdef HAVE_LIBDLD
+    add_constant_root(&obj_SharedFileClass);
+#endif /* HAVE_LIBDLD */
+    add_constant_root(&obj_ArchivedFileClass);
 }
 
 void init_c_classes(void)
@@ -796,5 +799,7 @@ void init_c_functions(void)
 		  FALSE, obj_False, FALSE,
 		  obj_BooleanClass, c_pointer_equal);
     obj_NullPointer = make_c_pointer(obj_CPointerClass, 0);
+    add_constant_root(&obj_NullPointer);
     define_constant("null-pointer", obj_NullPointer);
+    add_variable_root(&mindy_explicit_syms);
 }

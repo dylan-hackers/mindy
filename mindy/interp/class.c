@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.13 1995/02/14 02:30:00 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.14 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements classes.
 *
@@ -273,10 +273,11 @@ void setup_class_supers(obj_t class, obj_t supers)
 	/* If we inherit from a statically typed pointer class, then we must
 	   be a statically typed pointer class.  We must therefore act like
 	   one */
+	assert(CLASS(class)->class == obj_DefinedClassClass);
 	CLASS(class)->class = obj_StaticTypeClass;
 	CLASS(class)->scavenge = scav_c_pointer;
 	CLASS(class)->transport = trans_c_pointer;
-	shrink(class, sizeof(struct class));
+	shrink(class, sizeof(struct defined_class), sizeof(struct class));
     }
 
     CLASS(class)->superclasses = supers;
@@ -389,13 +390,7 @@ static int scav_class(struct object *o)
 
 static obj_t trans_class(obj_t class)
 {
-    return transport(class, sizeof(struct class));
-}
-
-void scavenge_class_roots(void)
-{
-    scavenge(&obj_ClassClass);
-    scavenge(&obj_StaticTypeClass);
+    return transport(class, sizeof(struct class), FALSE);
 }
 
 
@@ -407,6 +402,8 @@ void make_class_classes(void)
     obj_ClassClass = make_builtin_class(scav_class, trans_class);
     CLASS(obj_ClassClass)->class = obj_ClassClass;
     obj_StaticTypeClass = make_builtin_class(scav_class, trans_class);
+    add_constant_root(&obj_ClassClass);
+    add_constant_root(&obj_StaticTypeClass);
 }
 
 void init_class_classes(void)

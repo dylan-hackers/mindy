@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.11 1995/05/14 12:29:43 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.12 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements characters.
 *
@@ -63,6 +63,7 @@ obj_t int_char(int c)
 	    res = alloc(obj_CharacterClass, sizeof(struct character));
 	obj_ptr(struct character *, res)->unicode_value = c;
 	obj_Characters[c] = res;
+	add_constant_root(obj_Characters + c);
     }
 
     return res;
@@ -136,19 +137,7 @@ static int scav_char(struct object *ptr)
 
 static obj_t trans_char(obj_t c)
 {
-    return transport(c, sizeof(struct character));
-}
-
-void scavenge_char_roots(void)
-{
-    int i;
-
-    scavenge(&obj_CharacterClass);
-    scavenge(&obj_ByteCharacterClass);
-
-    for (i = 0; i < num_characters; i++)
-	if (obj_Characters[i] != NULL)
-	    scavenge(obj_Characters + i);
+    return transport(c, sizeof(struct character), TRUE);
 }
 
 
@@ -160,6 +149,9 @@ void make_char_classes()
     obj_ByteCharacterClass = make_builtin_class(scav_char, trans_char);
     /* Since characters and byte characters actually have identical 
        C structures, they can use the same functions. */
+
+    add_constant_root(&obj_CharacterClass);
+    add_constant_root(&obj_ByteCharacterClass);
 }
 
 void init_char_classes()

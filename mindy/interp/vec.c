@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.14 1995/05/14 12:29:43 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.15 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements vectors.
 *
@@ -289,7 +289,7 @@ static int scav_sovec(struct object *ptr)
 static obj_t trans_sovec(obj_t v)
 {
     int len = SOVEC(v)->length;
-    return transport(v, sizeof(struct sovec) + sizeof(obj_t)*(len-1));
+    return transport(v, sizeof(struct sovec) + sizeof(obj_t)*(len-1), FALSE);
 }
 
 static int scav_bytevec(struct object *ptr)
@@ -301,15 +301,11 @@ static int scav_bytevec(struct object *ptr)
 
 static obj_t trans_bytevec(obj_t v)
 {
-    return transport(v, sizeof(struct bytevec) + BYTEVEC(v)->length - sizeof(((struct bytevec *)v)->contents));
+    return transport(v,
+		     sizeof(struct bytevec) + BYTEVEC(v)->length
+		     - sizeof(((struct bytevec *)v)->contents),
+		     TRUE);
 }
-
-void scavenge_vec_roots(void)
-{
-    scavenge(&obj_SimpleObjectVectorClass);
-    scavenge(&obj_ByteVectorClass);
-}
-
 
 
 /* Initialization stuff. */
@@ -318,6 +314,9 @@ void make_vec_classes(void)
 {
     obj_SimpleObjectVectorClass = make_builtin_class(scav_sovec, trans_sovec);
     obj_ByteVectorClass = make_builtin_class(scav_bytevec, trans_bytevec);
+
+    add_constant_root(&obj_SimpleObjectVectorClass);
+    add_constant_root(&obj_ByteVectorClass);
 }
 
 void init_vec_classes(void)

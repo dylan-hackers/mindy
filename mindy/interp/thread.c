@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.23 1995/09/14 19:24:49 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.24 1996/02/02 01:52:32 wlott Exp $
 *
 * This file implements threads, and the various synchronization
 * primitives.
@@ -674,7 +674,7 @@ static int scav_thread_obj(struct object *o)
 
 static obj_t trans_thread_obj(obj_t t)
 {
-    return transport(t, sizeof(struct thread_obj));
+    return transport(t, sizeof(struct thread_obj), TRUE);
 }
 
 static int scav_lock(struct object *o)
@@ -689,7 +689,7 @@ static int scav_lock(struct object *o)
 
 static obj_t trans_lock(obj_t lock)
 {
-    return transport(lock, sizeof(struct lock));
+    return transport(lock, sizeof(struct lock), TRUE);
 }
 
 static int scav_event(struct object *o)
@@ -704,7 +704,7 @@ static int scav_event(struct object *o)
 
 static obj_t trans_event(obj_t event)
 {
-    return transport(event, sizeof(struct event));
+    return transport(event, sizeof(struct event), TRUE);
 }
 
 static void scav_thread(struct thread *thread)
@@ -728,11 +728,6 @@ void scavenge_thread_roots(void)
 
     for (list = AllThreads; list != NULL; list = list->next)
 	scav_thread(list->thread);
-
-    scavenge(&obj_ThreadClass);
-    scavenge(&obj_LockClass);
-    scavenge(&obj_SpinLockClass);
-    scavenge(&obj_EventClass);
 }
 
 
@@ -744,6 +739,11 @@ void make_thread_classes(void)
     obj_LockClass = make_abstract_class(FALSE);
     obj_SpinLockClass = make_builtin_class(scav_lock, trans_lock);
     obj_EventClass = make_builtin_class(scav_event, trans_event);
+
+    add_constant_root(&obj_ThreadClass);
+    add_constant_root(&obj_LockClass);
+    add_constant_root(&obj_SpinLockClass);
+    add_constant_root(&obj_EventClass);
 }
 
 void init_thread_classes(void)
