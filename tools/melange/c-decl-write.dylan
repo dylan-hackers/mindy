@@ -1035,6 +1035,7 @@ define method write-declaration
 		<integer>, <float> => format-to-string("%=", raw-value);
 		<string> => format-to-string("\"%s\"", raw-value);
 		<token> => raw-value.string-value;
+		<character> => "1"; // for #define FOO\n, suggested by dauclair
 	      end select;
   format(stream, "define constant %s = %s;\n\n", decl.dylan-name, value);
   register-written-name(written-names, decl.dylan-name, decl);
