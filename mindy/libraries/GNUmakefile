@@ -23,12 +23,12 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/Attic/GNUmakefile,v 1.2 1994/06/29 03:34:49 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/Attic/GNUmakefile,v 1.3 1994/09/04 03:32:05 rgs Exp $
 ##
 
 include ../Config
 
-SUBDIRS = dylan streams random coll-ext
+SUBDIRS = dylan streams random coll-ext string-ext
 
 all: ${SUBDIRS}
 
