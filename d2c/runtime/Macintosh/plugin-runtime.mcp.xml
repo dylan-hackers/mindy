@@ -624,24 +624,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -663,16 +645,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level4</VALUE></SETTING>
@@ -726,15 +698,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -1836,24 +1799,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -1875,16 +1820,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -1938,15 +1873,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -2595,24 +2521,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -2634,16 +2542,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -2697,15 +2595,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -3344,24 +3233,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -3383,16 +3254,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -3446,15 +3307,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -4177,24 +4029,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -4216,16 +4050,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -4279,15 +4103,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -4926,24 +4741,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -4965,16 +4762,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -5028,15 +4815,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -5738,24 +5516,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -5777,16 +5537,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -5840,15 +5590,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -6487,24 +6228,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -6526,16 +6249,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -6589,15 +6302,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -7236,24 +6940,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -7275,16 +6961,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -7338,15 +7014,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -8036,24 +7703,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -8075,16 +7724,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -8138,15 +7777,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -8805,24 +8435,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -8844,16 +8456,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -8907,15 +8509,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -9749,24 +9342,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -9788,16 +9363,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -9851,15 +9416,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -10510,24 +10066,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -10549,16 +10087,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -10612,15 +10140,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -10705,16 +10224,6 @@
                 <SETTING><NAME>InterpretDOSAndUnixPaths</NAME><VALUE>false</VALUE></SETTING>
                 <SETTING><NAME>RequireFrameworkStyleIncludes</NAME><VALUE>false</VALUE></SETTING>
                 <SETTING><NAME>UserSearchPaths</NAME>
-                    <SETTING>
-                        <SETTING><NAME>SearchPath</NAME>
-                            <SETTING><NAME>Path</NAME><VALUE>::::common:standard-io:</VALUE></SETTING>
-                            <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                            <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
-                        </SETTING>
-                        <SETTING><NAME>Recursive</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>FrameworkPath</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>HostFlags</NAME><VALUE>All</VALUE></SETTING>
-                    </SETTING>
                     <SETTING>
                         <SETTING><NAME>SearchPath</NAME>
                             <SETTING><NAME>Path</NAME><VALUE>::</VALUE></SETTING>
@@ -11274,24 +10783,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -11313,16 +10804,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -11377,15 +10858,6 @@
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
-
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
                 <SETTING><NAME>MWRez_Language_script</NAME><VALUE>Roman</VALUE></SETTING>
@@ -11399,22 +10871,22 @@
             <FILELIST>
                 <FILE>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>library.dylan</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
+                    <PATH>cw-io.lid</PATH>
+                    <PATHFORMAT>Unix</PATHFORMAT>
                     <FILEKIND>Text</FILEKIND>
                     <FILEFLAGS></FILEFLAGS>
                 </FILE>
                 <FILE>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>standard-io.dylan</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
+                    <PATH>cw-io.dylan</PATH>
+                    <PATHFORMAT>Unix</PATHFORMAT>
                     <FILEKIND>Text</FILEKIND>
                     <FILEFLAGS></FILEFLAGS>
                 </FILE>
                 <FILE>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>standard-io.lid</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
+                    <PATH>cw-io-exports.dylan</PATH>
+                    <PATHFORMAT>Unix</PATHFORMAT>
                     <FILEKIND>Text</FILEKIND>
                     <FILEFLAGS></FILEFLAGS>
                 </FILE>
@@ -11422,18 +10894,18 @@
             <LINKORDER>
                 <FILEREF>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>library.dylan</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
+                    <PATH>cw-io.lid</PATH>
+                    <PATHFORMAT>Unix</PATHFORMAT>
                 </FILEREF>
                 <FILEREF>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>standard-io.dylan</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
+                    <PATH>cw-io.dylan</PATH>
+                    <PATHFORMAT>Unix</PATHFORMAT>
                 </FILEREF>
                 <FILEREF>
                     <PATHTYPE>Name</PATHTYPE>
-                    <PATH>standard-io.lid</PATH>
-                    <PATHFORMAT>MacOS</PATHFORMAT>
+                    <PATH>cw-io-exports.dylan</PATH>
+                    <PATHFORMAT>Unix</PATHFORMAT>
                 </FILEREF>
             </LINKORDER>
             <SUBTARGETLIST>
@@ -12023,24 +11495,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -12062,16 +11516,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -12125,15 +11569,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -12796,24 +12231,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -12835,16 +12252,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -12898,15 +12305,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -13548,24 +12946,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -13587,16 +12967,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -13650,15 +13020,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -14297,24 +13658,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -14336,16 +13679,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -14399,15 +13732,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -15102,24 +14426,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -15141,16 +14447,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -15204,15 +14500,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -15870,24 +15157,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -15909,16 +15178,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level4</VALUE></SETTING>
@@ -15972,15 +15231,6 @@
                     <SETTING><NAME>PathRoot</NAME><VALUE>Project</VALUE></SETTING>
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
-
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
 
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
@@ -16252,6 +15502,9 @@
         <TARGET>
             <NAME>base-file-system</NAME>
             <SETTINGLIST>
+
+                <!-- Settings for "Source Trees" panel -->
+                <SETTING><NAME>UserSourceTrees</NAME><VALUE></VALUE></SETTING>
 
                 <!-- Settings for "Access Paths" panel -->
                 <SETTING><NAME>AlwaysSearchUserPaths</NAME><VALUE>false</VALUE></SETTING>
@@ -16874,7 +16127,6 @@
                 <SETTING><NAME>MWRez_Language_escapecontrolchars</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWRez_Language_prefixname</NAME><VALUE></VALUE></SETTING>
                 <SETTING><NAME>MWRez_Language_filteredtypes</NAME><VALUE>'CODE' 'DATA' 'PICT'</VALUE></SETTING>
-
             </SETTINGLIST>
             <FILELIST>
                 <FILE>
@@ -17655,24 +16907,6 @@
                 <SETTING><NAME>Label</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>Comments</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "Packager Panel" panel -->
-                <SETTING><NAME>MWMacOSPackager_UsePackager</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_FolderToPackage</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreateClassicAlias</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasMethod</NAME><VALUE>UseTargetOutput</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_ClassicAliasPath</NAME>
-                    <SETTING><NAME>Path</NAME><VALUE></VALUE></SETTING>
-                    <SETTING><NAME>PathFormat</NAME><VALUE>MacOS</VALUE></SETTING>
-                    <SETTING><NAME>PathRoot</NAME><VALUE>Absolute</VALUE></SETTING>
-                </SETTING>
-                <SETTING><NAME>MWMacOSPackager_CreatePkgInfo</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgCreatorType</NAME><VALUE>????</VALUE></SETTING>
-                <SETTING><NAME>MWMacOSPackager_PkgFileType</NAME><VALUE>APPL</VALUE></SETTING>
-
                 <!-- Settings for "PPC CodeGen" panel -->
                 <SETTING><NAME>MWCodeGen_PPC_structalignment</NAME><VALUE>PPC_mw</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_tracebacktables</NAME><VALUE>None</VALUE></SETTING>
@@ -17694,16 +16928,6 @@
                 <SETTING><NAME>MWCodeGen_PPC_fpcontract</NAME><VALUE>1</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_genfsel</NAME><VALUE>0</VALUE></SETTING>
                 <SETTING><NAME>MWCodeGen_PPC_orderedfpcmp</NAME><VALUE>0</VALUE></SETTING>
-
-                <!-- Settings for "PPC Disassembler" panel -->
-                <SETTING><NAME>MWDisassembler_PPC_showcode</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_extended</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_mix</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_nohex</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showdata</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showexceptions</NAME><VALUE>1</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_showsym</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWDisassembler_PPC_shownames</NAME><VALUE>1</VALUE></SETTING>
 
                 <!-- Settings for "PPC Global Optimizer" panel -->
                 <SETTING><NAME>GlobalOptimizer_PPC_optimizationlevel</NAME><VALUE>Level0</VALUE></SETTING>
@@ -17758,15 +16982,6 @@
                 </SETTING>
                 <SETTING><NAME>MWProject_PPC_flatrsrcfilename</NAME><VALUE></VALUE></SETTING>
 
-                <!-- Settings for "PPCAsm Panel" panel -->
-                <SETTING><NAME>MWAssembler_PPC_auxheader</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_symmode</NAME><VALUE>Mac</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_dialect</NAME><VALUE>PPC</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_prefixfile</NAME><VALUE></VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_typecheck</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_warnings</NAME><VALUE>0</VALUE></SETTING>
-                <SETTING><NAME>MWAssembler_PPC_casesensitive</NAME><VALUE>0</VALUE></SETTING>
-
                 <!-- Settings for "Rez Compiler" panel -->
                 <SETTING><NAME>MWRez_Language_maxwidth</NAME><VALUE>80</VALUE></SETTING>
                 <SETTING><NAME>MWRez_Language_script</NAME><VALUE>Roman</VALUE></SETTING>
@@ -17805,12 +17020,6 @@
                 </SUBTARGET>
                 <SUBTARGET>
                     <TARGETNAME>base-file-system</TARGETNAME>
-                </SUBTARGET>
-                <SUBTARGET>
-                    <TARGETNAME>io</TARGETNAME>
-                </SUBTARGET>
-                <SUBTARGET>
-                    <TARGETNAME>common-dylan</TARGETNAME>
                 </SUBTARGET>
             </SUBTARGETLIST>
         </TARGET>
@@ -18545,20 +17754,20 @@
             <FILEREF>
                 <TARGETNAME>standard-io</TARGETNAME>
                 <PATHTYPE>Name</PATHTYPE>
-                <PATH>library.dylan</PATH>
-                <PATHFORMAT>MacOS</PATHFORMAT>
+                <PATH>cw-io.lid</PATH>
+                <PATHFORMAT>Unix</PATHFORMAT>
             </FILEREF>
             <FILEREF>
                 <TARGETNAME>standard-io</TARGETNAME>
                 <PATHTYPE>Name</PATHTYPE>
-                <PATH>standard-io.dylan</PATH>
-                <PATHFORMAT>MacOS</PATHFORMAT>
+                <PATH>cw-io.dylan</PATH>
+                <PATHFORMAT>Unix</PATHFORMAT>
             </FILEREF>
             <FILEREF>
                 <TARGETNAME>standard-io</TARGETNAME>
                 <PATHTYPE>Name</PATHTYPE>
-                <PATH>standard-io.lid</PATH>
-                <PATHFORMAT>MacOS</PATHFORMAT>
+                <PATH>cw-io-exports.dylan</PATH>
+                <PATHFORMAT>Unix</PATHFORMAT>
             </FILEREF>
         </GROUP>
         <GROUP><NAME>stream-ext</NAME>
