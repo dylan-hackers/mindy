@@ -29,3 +29,4 @@ solaris_threads.lo
 stubborn.lo
 typd_mlc.lo
 libgc.la
+base_lib
