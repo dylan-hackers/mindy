@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.29 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.30 1995/05/08 15:55:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -100,6 +100,13 @@ end class;
 //
 define class <primitive> (<operation>)
   slot name :: <symbol>, required-init-keyword: name:;
+  slot info :: <primitive-info>;
+end;
+
+define method initialize (prim :: <primitive>, #key) => ();
+  prim.info := primitive-info-or-lose(prim.name);
+  let type = prim.info.primitive-result-type;
+  prim.derived-type := values-type-intersection(type, prim.derived-type);
 end;
 
 
