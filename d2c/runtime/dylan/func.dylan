@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.7 2001/06/29 04:57:58 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.8 2001/12/29 02:38:40 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -784,9 +784,12 @@ define constant general-call
 
 // Generic function dispatch.
 
-// gf-call -- magic.
+// gf-call and gf-call-lookup -- magic.
 //
-// The compiler uses this for the general-entry to all generic functions.
+// The compiler uses gf-call for the general-entry to all generic functions.
+// Most uses will now be inlined to direct calls after doing a gf-call-lookup.
+// These two functions must be kept in sync with the calls to them from
+// compiler/cback/cback.dylan.
 // 
 define function gf-call-lookup (self :: <generic-function>, nargs :: <integer>)
  => (meth :: <method>, next :: <list>);
@@ -843,7 +846,12 @@ define function gf-call-lookup (self :: <generic-function>, nargs :: <integer>)
   end if;
 end function;
 
-define inline function gf-call (self :: <generic-function>, nargs :: <integer>)
+// This now not usually used.  Instead inline C code with the same effect
+// is generated in emit-assignment in compiler/cback/chack.dylan
+//
+define function gf-call (self :: <generic-function>, nargs :: <integer>)
+  // clever bit: gf-call-lookup and the called function reuse the same
+  // arguments on the orig_sp stack
   let (meth, next-info) = gf-call-lookup(self, nargs);
   %%primitive(invoke-generic-entry, meth, next-info, 
               %%primitive(pop-args, %%primitive(extract-args, nargs)));

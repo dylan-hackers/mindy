@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.32 2001/12/11 01:03:18 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.33 2001/12/29 02:38:39 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -2228,7 +2228,7 @@ define method emit-assignment
   spew-pending-defines(file);
 
   let function = call.depends-on.source-exp;
-  let (entry, name)
+  let (entry, name, is-gf-call?)
     = xep-expr-and-name(function, use-generic-entry?, file);
   let func = ref-leaf(*heap-rep*, function, file);
 
@@ -2236,30 +2236,64 @@ define method emit-assignment
     format(stream, "/* %s */\n",
     	   clean-for-comment(format-to-string("%s", name)));
   end;
-  if (results)
-    format(stream, "%s = ", return-top-name);
+
+  if (is-gf-call?)
+    // this is a bit of a hack.  Basically, we're manually inlining the contents
+    // of gf-call().  Must be kept in sync with runtime/dylan/func.dylan
+
+    let dispatch = dylan-defn(#"gf-call-lookup");
+    unless (dispatch)
+      error("Can't find gf-call-lookup -- wrong runtime?");
+    end;
+    let gf-call-lookup = dispatch.ct-value;
+
+    let info = get-info-for(gf-call-lookup, file);
+    let c-name = main-entry-c-name(info, file);
+    let result-rep = info.function-info-result-representation;
+    maybe-emit-prototype(c-name, info, file)
+      & eagerly-reference(gf-call-lookup, file);
+
+    format(stream, "{\n  struct %s L_temp = %s(%s, %s, %s);\n",
+           pick-result-structure(result-rep, file), 
+           c-name, call-top-name, func, count);
+    format(stream, "  heapptr_t L_meth = L_temp.R0;\n");
+    format(stream, "  heapptr_t L_next_info = L_temp.R1;\n  ");
+    if (results)
+      format(stream, "%s = ", return-top-name);
+    end;
+    format(stream, "GENERIC_ENTRY(L_meth)(%s, L_meth, %s, L_next_info);\n}\n",
+           call-top-name, count);
+  else
+    if (results)
+      format(stream, "%s = ", return-top-name);
+    end;
+    format(stream, "%s(%s, %s, %s", entry, call-top-name, func, count);
+    if (next-info)
+      write(stream, ", ");
+      write(stream, next-info);
+    end;
+    format(stream, ");\n");
   end;
-  format(stream, "%s(%s, %s, %s", entry, call-top-name, func, count);
-  if (next-info)
-    write(stream, ", ");
-    write(stream, next-info);
-  end;
-  format(stream, ");\n");
+
   deliver-cluster
     (results, bottom-name, return-top-name,
      call.derived-type.min-values, file);
 end;
 
+define generic xep-expr-and-name
+    (expr, generic-entry? :: <boolean>, file :: <file-state>)
+ => (expr :: false-or(<string>), name :: false-or(<name>), is-gf-call :: <boolean>);
+
 define method xep-expr-and-name
     (func :: <leaf>, generic-entry? :: <boolean>, file :: <file-state>)
-    => (expr :: <string>, name :: false-or(<name>));
+ => (expr :: <string>, name :: false-or(<name>), is-gf-call :: <boolean>);
   spew-pending-defines(file);
   values(stringify(if (generic-entry?)
-		     "GENERIC_ENTRY(";
-		   else
-		     "GENERAL_ENTRY(";
-		   end,
-		   ref-leaf(*heap-rep*, func, file),
+                     "GENERIC_ENTRY(";
+                   else
+                     "GENERAL_ENTRY(";
+                   end,
+                   ref-leaf(*heap-rep*, func, file),
 		   ')'),
 	 #f);
 end;
@@ -2268,7 +2302,7 @@ define function entry-by-slot
     (func :: <function-literal>,
      entry-getter :: <function>,
      file :: <file-state>)
-    => (expr :: <string>, name :: <name>);
+ => (expr :: <string>, name :: <name>);
   let entry = func.entry-getter;
   let entry-info = get-info-for(entry, file);
   let entry-name = main-entry-c-name(entry-info, file);
@@ -2279,7 +2313,7 @@ end;
 define method xep-expr-and-name
     (func :: <function-literal>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: <string>, name :: <name>);
+ => (expr :: <string>, name :: <name>, is-gf-call :: <boolean>);
   if (generic-entry?)
     error("%= doesn't have a generic entry.", func);
   end;
@@ -2289,14 +2323,14 @@ end;
 define method xep-expr-and-name
     (func :: <method-literal>, generic-entry? :: <true>,
      file :: <file-state>)
-    => (expr :: <string>, name :: <name>);
+ => (expr :: <string>, name :: <name>, is-gf-call :: <boolean>);
   entry-by-slot(func, generic-entry, file);
 end;
 
 define method xep-expr-and-name
     (func :: <callback-literal>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: <string>, name :: <name>);
+ => (expr :: <string>, name :: <name>, is-gf-call :: <boolean>);
   if (generic-entry?)
     error("%= doesn't have a generic entry.", func);
   end;
@@ -2307,27 +2341,30 @@ define method xep-expr-and-name
     (func :: <definition-constant-leaf>, generic-entry? :: <boolean>,
      file :: <file-state>,
      #next next-method)
-    => (expr :: <string>, name :: <name>);
+ => (expr :: <string>, name :: <name>, is-gf-call :: <boolean>);
   let defn = func.const-defn;
-  let (expr, name) = xep-expr-and-name(defn, generic-entry?, file);
+  let (expr, name, is-gf?) = xep-expr-and-name(defn, generic-entry?, file);
   values(expr | next-method(),
-	 name | defn.defn-name);
+	 name | defn.defn-name,
+         is-gf?);
 end;
 
 define method xep-expr-and-name
     (func :: <literal-constant>, generic-entry? :: <boolean>,
      file :: <file-state>, #next next-method)
-    => (expr :: <string>, name :: false-or(<name>));
+ => (expr :: <string>, name :: false-or(<name>), is-gf-call :: <boolean>);
   let ctv = func.value;
-  let (expr, name) = xep-expr-and-name(ctv, generic-entry?, file);
+  let (expr, name, is-gf?)
+    = xep-expr-and-name(ctv, generic-entry?, file);
   values(expr | next-method(),
-	 name | ctv.ct-function-name);
+	 name | ctv.ct-function-name,
+         is-gf?);
 end;
 
 define method xep-expr-and-name
     (defn :: <abstract-constant-definition>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<name>));
+ => (expr :: false-or(<string>), name :: false-or(<name>), is-gf-call :: <boolean>);
   let ctv = ct-value(defn);
   if (ctv)
     xep-expr-and-name(ctv, generic-entry?, file);
@@ -2337,7 +2374,7 @@ end;
 define method xep-expr-and-name
     (ctv :: <ct-function>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<name>));
+ => (expr :: false-or(<string>), name :: false-or(<name>), is-gf-call :: <boolean>);
   if (generic-entry?)
     error("%= doesn't have a generic entry.", ctv);
   end;
@@ -2349,7 +2386,7 @@ end;
 define method xep-expr-and-name
     (ctv :: <ct-callback-function>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<name>));
+ => (expr :: false-or(<string>), name :: false-or(<name>), is-gf-call :: <boolean>);
   if (generic-entry?)
     error("%= doesn't have a generic entry.", ctv);
   end;
@@ -2358,7 +2395,7 @@ define method xep-expr-and-name
 end;
 
 define function gf-generic-entry-point(object :: <ct-generic-function>)
-  => entry :: false-or(<ct-entry-point>);
+ => (entry :: false-or(<ct-entry-point>), is-gf-call :: <boolean>);
   let defn = object.ct-function-definition;
   let discriminator = defn.generic-defn-discriminator;
   if (discriminator)
@@ -2366,14 +2403,16 @@ define function gf-generic-entry-point(object :: <ct-generic-function>)
       & make(<ct-entry-point>, for: discriminator, kind: #"general");
   else
     let dispatch = dylan-defn(#"gf-call");
-    dispatch & make(<ct-entry-point>, for: dispatch.ct-value, kind: #"main");
+    dispatch 
+      & values(make(<ct-entry-point>, for: dispatch.ct-value, kind: #"main"),
+               #t);
   end if;
 end function;
 
 define method xep-expr-and-name
     (ctv :: <ct-generic-function>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<name>));
+ => (expr :: false-or(<string>), name :: false-or(<name>), is-gf-call :: <boolean>);
   if (generic-entry?)
     error("%= doesn't have a generic entry.", ctv);
   end;
@@ -2382,7 +2421,7 @@ define method xep-expr-and-name
   if (discriminator)
     xep-expr-and-name(discriminator, #f, file);
   else
-    let entry-point = ctv.gf-generic-entry-point;
+    let (entry-point, is-gf-call?) = ctv.gf-generic-entry-point;
     if (entry-point)
       let entry-point-for = entry-point.ct-entry-point-for;
       let info = get-info-for(entry-point-for, file);
@@ -2394,7 +2433,7 @@ define method xep-expr-and-name
 	  end if;
       maybe-emit-prototype(c-name, info, file)
 	& eagerly-reference(ctv, file);
-      c-name;
+      values(c-name, #f, is-gf-call?);
     end if;
   end if;
 end;
@@ -2402,7 +2441,7 @@ end;
 define method xep-expr-and-name
     (ctv :: <ct-method>, generic-entry? :: <true>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<name>));
+ => (expr :: false-or(<string>), name :: false-or(<name>), is-gf-call :: <boolean>);
   let name = maybe-emit-generic-entry(ctv, file);
   maybe-emit-prototype(name, #"generic", file);
   values(name, ctv.ct-function-name);
