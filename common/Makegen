@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.6 1999/04/11 00:04:26 emk Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.7 1999/04/14 19:31:46 tree Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -21,7 +21,7 @@
 # compatibility with 2.2.0 and port everything to build against these
 # libraries.
 @newer_libraries =
-    ('common-dylan', 'io');
+    ('common-dylan', 'io', 'system', 'file-system');
 
 if ($enable_bootstrap) {
     &compile_subdirs(@libraries_needed_to_bootstrap);
