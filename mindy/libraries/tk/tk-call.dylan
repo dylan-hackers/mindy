@@ -118,7 +118,7 @@ define method value-setter (value :: <object>, var :: <active-variable>)
 	end method;
     let new-value = tk-as(var.cls, value);
     if (var.command & new-value ~= var.internal-value)
-      var.command(new-value)
+      var.command(new-value, var.internal-value)
     end if;
     var.internal-value := new-value;
     let string-value = tk-quote(value);
@@ -228,7 +228,8 @@ define method do-callback (line :: <string>) => ();
 	end if;
 
 	grab-lock(exec-thread-lock);
-	push-last(exec-thread-procs, curry(var.command, new-value));
+	push-last(exec-thread-procs,
+		  curry(var.command, new-value, var.internal-value));
 	signal-event(exec-thread-event);
 	release-lock(exec-thread-lock);
       end if;
