@@ -1,11 +1,11 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.9 1995/12/06 11:46:04 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.10 1995/12/07 01:59:23 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define library Dylan
   export
-    Dylan, Extensions;
+    Dylan, Extensions, Cheap-IO;
 end;
 
 define module Dylan
