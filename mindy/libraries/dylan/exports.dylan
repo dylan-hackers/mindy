@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.59 1995/02/09 18:25:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.60 1995/02/14 02:39:51 rgs Exp $
 
 //======================================================================
 //
@@ -62,7 +62,7 @@ define module Builtin-Stuff
     <unicode-string>, <union>,
     <vector>,
     <weak-pointer>,
-    $permanent-hash-state,
+    $permanent-hash-state, *print-GC-messages*,
     add-method, all-superclasses, applicable-method?, apply,
     apply-curry, as, ash,
     binary-logand, binary-logior, binary-logxor, broadcast-event,
@@ -222,7 +222,7 @@ end Dylan;
 define module Extensions
   use Dylan;
   use Builtin-Stuff,
-    import: {main, exit, on-exit, load,
+    import: {main, exit, on-exit, load, *print-GC-messages*,
 	     $maximum-fixed-integer, $minimum-fixed-integer,
 	     <byte-character>, <byte-vector>,
 	     <boolean>, <true>, <false>,
