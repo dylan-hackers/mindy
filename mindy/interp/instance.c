@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.16 1994/07/11 20:29:39 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.17 1994/07/12 00:42:29 rgs Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1507,6 +1507,9 @@ static int scav_defined_class(struct object *ptr)
     scavenge(&class->all_subclasses);
     scavenge(&class->new_slots);
     scavenge(&class->all_slots);
+    scavenge(&class->new_initargs);
+    scavenge(&class->all_initargs);
+    scavenge(&class->inheriteds);
     scavenge(&class->instance_positions);
     scavenge(&class->instance_layout);
     scavenge(&class->subclass_positions);
@@ -1624,6 +1627,15 @@ static obj_t trans_instance(obj_t instance)
     return transport(instance, sizeof(struct instance) + nslots*sizeof(obj_t));
 }
 
+void scavenge_instance_roots(void)
+{
+    scavenge(&obj_DefinedClassClass);
+    scavenge(&obj_SlotDescrClass);
+    scavenge(&obj_InitargDescrClass);
+    scavenge(&obj_InheritedDescrClass);
+    scavenge(&obj_PosTableClass);
+    scavenge(&obj_InitializerClass);
+}
 
 /* Init stuff. */
 
