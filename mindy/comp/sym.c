@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.2 1994/03/31 10:16:37 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.3 1994/04/04 17:20:49 wlott Exp $
 *
 * This file does whatever.
 *
@@ -129,7 +129,7 @@ struct symbol *gensym(void)
     static int rollover = 10;
     static int digits = 1;
 
-    struct symbol *res = malloc(sizeof(struct symbol) + 1 + digits);
+    struct symbol *res = malloc(sizeof(struct symbol) + 2 + digits);
 
     res->hash = (unsigned long)res;
     res->next = NULL;
