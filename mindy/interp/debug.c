@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.10 1994/04/10 16:24:27 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.11 1994/04/10 23:02:04 wlott Exp $
 *
 * This file does whatever.
 *
@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <setjmp.h>
 #include <string.h>
+#include <sys/param.h>
 #ifdef MACH
 extern int isatty(int fd);
 #endif
@@ -308,6 +309,69 @@ static void validate_thread_and_frame()
 	}
     }
 }
+
+
+/* Source code stuff. */
+
+static obj_t cur_source_file = NULL;
+static FILE *cur_source_stream = NULL;
+static long *line_offsets = NULL;
+static int lines_alloced = 0;
+static int lines_found = 0;
+static char **source_directories = NULL;
+
+static FILE *find_source_line(obj_t file, int line)
+{
+    int c;
+
+    if (file != cur_source_file) {
+	char *name = string_chars(file);
+
+	if (cur_source_stream != NULL) {
+	    fclose(cur_source_stream);
+	    cur_source_stream = NULL;
+	}
+	
+	if (source_directories == NULL || name[0] == '/')
+	    cur_source_stream = fopen(name, "r");
+	else
+	    cur_source_stream = NULL;
+
+	cur_source_file = file;
+	if (line_offsets == NULL) {
+	    lines_alloced = 1000;
+	    line_offsets = malloc(sizeof(long) * lines_alloced);
+	    line_offsets[0] = 0;
+	    line_offsets[1] = 0;
+	}
+	lines_found = 1;
+    }
+
+    if (cur_source_stream == NULL)
+	return NULL;
+
+    if (line > lines_found) {
+	fseek(cur_source_stream, line_offsets[lines_found], 0);
+	while ((c = getc(cur_source_stream)) != EOF) {
+	    if (c == '\n') {
+		lines_found++;
+		if (lines_found > lines_alloced) {
+		    lines_alloced *= 2;
+		    line_offsets = realloc(line_offsets,
+					   sizeof(long) * lines_alloced);
+		}
+		line_offsets[lines_found] = ftell(cur_source_stream);
+		if (lines_found == line)
+		    break;
+	    }
+	}
+    }
+    else
+	fseek(cur_source_stream, line_offsets[line], 0);
+
+    return cur_source_stream;
+}
+
 
 
 /* Stuff to explain the reason why we dropped into the debugger. */
@@ -1417,8 +1481,23 @@ static void maybe_print_frame(void)
 	  && CurFrame->source_file != obj_False
 	  && CurFrame->line != PrevLine) {
 	printf("%s", string_chars(CurFrame->source_file));
-	if (CurFrame->line != 0)
-	    printf(", line %d.\n", CurFrame->line);
+	if (CurFrame->line != 0) {
+	    int line = CurFrame->line;
+	    FILE *source = find_source_line(CurFrame->source_file, line);
+	    if (source) {
+		int c;
+		printf("\n%d\t", line);
+		while ((c = getc(source)) != EOF && c <= ' ')
+		    ;
+		while (c != EOF && c != '\n') {
+		    putchar(c);
+		    c = getc(source);
+		}
+		putchar('\n');
+	    }
+	    else
+		printf(", line %d.\n", line);
+	}
 	else
 	    putchar('\n');
 	PrevLine = CurFrame->line;
@@ -1500,6 +1579,7 @@ void scavenge_debug_roots(void)
 {
     scavenge(&do_print_func);
     scavenge(&do_funcall_func);
+    scavenge(&cur_source_file);
     scav_frames(TopFrame);
 }
 
@@ -1508,6 +1588,7 @@ void scavenge_debug_roots(void)
 
 void init_debug_functions(void)
 {
+    cur_source_file = obj_False;
     do_print_func = make_raw_function("debug-print", 1, FALSE, obj_False,
 				      obj_Nil, obj_ObjectClass,
 				      do_print_start);
