@@ -1,7 +1,4 @@
-
-$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
-$D2CFLAGS = '-L../dylan -L../melange';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+&makegen_include("../common-Makegen");
 
 if ($features{'compiled_for_unix'}) {
     &emit_c_file_rule('unix-fds');
@@ -14,6 +11,6 @@ if ($features{'compiled_for_unix'}) {
 }
 
 &emit_library_rule(
-    $streams_lid_file, '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+    $streams_lid_file, '$(BUILDROOT)/force.timestamp', '', 'compile',
+    'compile-mindy', 'install'
 );
-

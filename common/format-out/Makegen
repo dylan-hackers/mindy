@@ -1,8 +1,8 @@
+&makegen_include("../common-Makegen");
 
-$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
-$D2CFLAGS = '-L../dylan -L../format -L../standard-io -L../streams -L../print -L../melange';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+$D2CFLAGS = $D2CFLAGS . ' -L../streams -L../print -L../format -L../standard-io';
 
 do emit_library_rule(
-    'FormatOut', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+    'FormatOut', '$(BUILDROOT)/force.timestamp', '', 'compile',
+    'compile-mindy', 'install'
 );

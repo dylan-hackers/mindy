@@ -1,7 +1,4 @@
-
-$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
-$D2CFLAGS = '-L../dylan';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+&makegen_include("../common-Makegen");
 
 # Solaris doesn't support the Transcendental library because it
 # doesn't have the sinf family of functions (works like sin, but uses
@@ -10,6 +7,6 @@ $CPPFLAGS = '-I$(SRCROOT)/runtime';
 if (! $features{'compiled_for_solaris'}) {
 	do emit_library_rule(
 	    'Transcendental', '$(BUILDROOT)/force.timestamp', '', 
-	    'compile', 'install'
+	    'compile', 'compile-mindy', 'install'
 	);
 }

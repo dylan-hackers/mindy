@@ -1,15 +1,16 @@
+&makegen_include("../common-Makegen");
 
-$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
-$D2CFLAGS = '-L../dylan -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../coll-ext -L../melange';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+$D2CFLAGS = $D2CFLAGS . ' -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../coll-ext';
 
 # Solaris doesn't support the Time library because it doesn't have the
-# "timezone" variable.
+# "timezone" variable.  And windows is even more clueless.
 #
-if (! $features{'compiled_for_solaris'}) {
+if ((! $features{'compiled_for_solaris'})
+    && (! $features{'compiled_for_win32'})) {
 	&emit_melange_rule('time-intr');
 
 	do emit_library_rule(
-	    'Time', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+	    'Time', '$(BUILDROOT)/force.timestamp', '', 'compile', 
+	    'compile-mindy', 'install'
 	);
 }
