@@ -76,7 +76,7 @@ internal-time-intr.dbc: ${SRCDIR}/internal-time-intr.dylan
 	${MC} ${MINDYFLAGS} -o internal-time-intr.dbc ${SRCDIR}/internal-time-intr.dylan
 
 clean:
-	rm -f ${OBJS} *~ \#* core
+	rm -f ${OBJS} internal-time-lib.dbc *~ \#* core
 
 realclean:
 	rm -f ${OBJS} internal-time-lib.dbc *~ \#* core
