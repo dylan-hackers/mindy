@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/deque.dylan,v 1.1 1998/05/03 19:55:20 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/deque.dylan,v 1.2 1998/11/28 18:55:15 andreas Exp $
 
 //======================================================================
 //
@@ -91,11 +91,11 @@ end class <deque>;
 //
 // These are the main functions to use with deques.
 //
-define generic push (deque :: <deque>, new :: <object>) => new :: <object>;
-define generic pop (deque :: <deque>) => top-val :: <object>;
-define generic push-last 
+define open generic push (deque :: <deque>, new :: <object>) => new :: <object>;
+define open generic pop (deque :: <deque>) => top-val :: <object>;
+define open generic push-last 
     (deque :: <deque>, new :: <object>) => new :: <object>;
-define generic pop-last (deque :: <deque>) => last :: <object>;
+define open generic pop-last (deque :: <deque>) => last :: <object>;
 
 // $deque-fill-default$ -- internal
 //
