@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.17 2003/03/17 11:57:36 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.18 2003/03/27 16:13:50 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -851,10 +851,10 @@ define method compile-library (state :: <lid-mode-state>)
     // or create a dump file for library with undefined variables.
     // Thus, we stick some calls to give-up where it seems useful..
     parse-and-finalize-library(state);
-    if (~ zero?(*errors*)) give-up(); end if;
+    *errors*.zero? | give-up();
     emit-make-prologue(state);
     compile-all-files(state);
-    if (~ zero?(*errors*)) give-up(); end if;
+    *errors*.zero? | give-up();
     build-library-inits(state);
     build-local-heap-file(state);
     if (state.unit-executable | state.unit-embedded?)
@@ -863,8 +863,10 @@ define method compile-library (state :: <lid-mode-state>)
       build-inits-dot-c(state);
     end if;
     if (state.unit-executable)
-      log-target(state.unit-executable);
-      build-executable(state);
+      unless (state.unit-no-makefile)
+	log-target(state.unit-executable);
+	build-executable(state);
+      end;
     else
       unless (state.unit-no-makefile)
 	build-ar-file(state);
