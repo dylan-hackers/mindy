@@ -1,0 +1,25 @@
+
+print <<'EOF';
+
+MC = mindycomp
+MINDYFLAGS = 
+MINDY = mindy
+
+%.dbc: %.dylan
+	$(MC) ${MINDYFLAGS} -lcompiler-cback -o $@ $<
+
+OBJS = \
+	cback-exports.dbc \
+	stackanal.dbc \
+	cback.dbc \
+	primemit.dbc \
+	heap.dbc
+
+cbacklib.dbc: ${OBJS}
+	cat $^ > $@
+
+EOF
+
+push(@compile_dependencies, 'cbacklib.dbc');
+
+push(@files_to_clean, '*.dbc');

@@ -1,0 +1,36 @@
+
+print <<'EOF';
+
+MC = mindycomp
+MINDYFLAGS = -lcompiler-main
+MINDY = mindy
+
+%.dbc: %.dylan
+	$(MC) ${MINDYFLAGS} -o $@ $<
+
+OBJS = \
+	main-exports.dbc \
+	lexer.dbc \
+	init.dbc \
+	main.dbc
+
+LIBS = \
+	../base/baselib.dbc \
+	../front/frontlib.dbc \
+	../parser/parserlib.dbc \
+	../cback/cbacklib.dbc
+
+d2c.dbc: ${LIBS} ${OBJS}
+	cat  $^ > $@
+
+d2c: d2c.dbc
+	echo "#!/usr/local/bin/mindy -x" | cat - $^ > $@
+	chmod +x $@
+
+EOF
+
+push(@compile_dependencies, 'd2c.dbc');
+
+do install ('bin', 'd2c');
+
+push(@files_to_clean, 'd2c', '*.dbc');

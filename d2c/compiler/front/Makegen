@@ -1,0 +1,42 @@
+
+print <<'EOF';
+
+MC = mindycomp
+MINDYFLAGS = 
+MINDY = mindy
+
+%.dbc: %.dylan
+	$(MC) ${MINDYFLAGS} -lcompiler-front -o $@ $<
+
+OBJS = \
+	front-exports.dbc \
+	tlf.dbc \
+	deflibmod.dbc \
+	deffunc.dbc \
+	defconstvar.dbc \
+	defclass.dbc \
+	primitives.dbc \
+	front.dbc \
+	clone.dbc \
+	cheese.dbc \
+	primopt.dbc \
+	trans.dbc \
+	builder.dbc \
+	fer-builder.dbc \
+	fer-convert.dbc \
+	fer-dump.dbc \
+	tlexpr.dbc \
+	fer-od.dbc \
+	misc-dump.dbc \
+	dump.dbc
+
+frontlib.dbc: ${OBJS}
+	cat $^ > $@
+
+EOF
+
+push(@compile_dependencies, 'frontlib.dbc');
+
+do install ('bin', 'front');
+
+push(@files_to_clean, '*.dbc');
