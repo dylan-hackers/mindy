@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.124 2003/04/10 20:26:43 prom Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.125 2003/04/17 19:42:44 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -109,7 +109,12 @@ case $1 in
     i*86-*-solaris*) $2=x86-solaris-gcc ;;
     i*86-*-freebsd2.*) $2=x86-freebsd-aout-gcc ;;
     i*86-*-freebsd*) $2=x86-freebsd-elf-gcc ;;
-    i*86-pc-cygwin*) $2=x86-cygnus-gcc ;;
+    i*86-pc-cygwin*)
+        case `gcc -dumpversion` in
+	     3.2*) $2=x86-linux-gcc32 ;;
+	     *)    $2=x86-linux-gcc ;;
+        esac ;;
+    i*86-pc-mingw32*) $2=x86-mingw-gcc32 ;;
     i*86-pc-none) $2=x86-win32-vc ;;
     i*86-pc-beos) $2=x86-beos-gcc ;;
     powerpc-apple-darwin*) $2=ppc-darwin-egcs ;;
@@ -143,6 +148,11 @@ cygnus_line_hack=""
 if test "$d2c_build" = "x86-cygnus-gcc"; then
   exe_ext=".exe"
   cygnus_line_hack="\$_ =~ s/\r//;"
+else
+  if test "$d2c_build" = "x86-mingw-gcc"; then
+    exe_ext=".exe"
+    cygnus_line_hack="\$_ =~ s/\r//;"
+  fi
 fi
 AC_MSG_RESULT($exe_ext)
 AC_SUBST(exe_ext)
@@ -1027,34 +1037,8 @@ $srcdir/mkinstalldirs mindy tools
 # problems: d2c expects all sources to live in the srcdir (which is a problem
 # in and of itself) and configure tries to create the *.dylan files before
 # we build our buildroot tree causing things to flame out horribly.
-AC_OUTPUT(Defaults \
-	  gwydion-dylan.spec \
-	  mindy/comp/Makefile \
-	  mindy/interp/Makefile \
-	  mindy/compat/Makefile \
-	  mindy/etc/Makefile \
-	  mindy/etc/generate-depends \
-	  mindy/interp/make-init.pl \
-	  tools/shared-misc/gen-makefile \
-	  tools/shared-misc/mk-build-tree \
-	  tools/shared-misc/line-count \
-	  tools/shared-misc/make-dylan-app \
-	  tools/shared-misc/make-dylan-lib \
-	  tools/unix-misc/mk-rcs-links \
-	  doc/Makefile \
-	  doc/dylan.7 \
-	  doc/gwydion.7 \
-	  doc/d2c.1 \
-	  doc/dybug.1 \
-	  doc/mindy.1 \
-	  doc/mindycomp.1 \
-	  doc/mindyexec.1 \
-	  doc/melange.1 \
-	  doc/parsergen.1 \
-	  doc/make-dylan-app.1 \
-	  doc/gobject-tool.1 \
-	  doc/platforms.descr.4, [
-	  ${INSTALL} -m uog+rx $buildroot/tools/shared-misc/mk-build-tree ./
+AC_OUTPUT(Defaults gwydion-dylan.spec mindy/comp/Makefile mindy/interp/Makefile mindy/compat/Makefile mindy/etc/Makefile mindy/etc/generate-depends mindy/interp/make-init.pl tools/shared-misc/gen-makefile tools/shared-misc/mk-build-tree tools/shared-misc/line-count tools/shared-misc/make-dylan-app tools/shared-misc/make-dylan-lib tools/unix-misc/mk-rcs-links doc/Makefile doc/dylan.7 doc/gwydion.7 doc/d2c.1 doc/dybug.1 doc/mindy.1 doc/mindycomp.1 doc/mindyexec.1 doc/melange.1 doc/parsergen.1 doc/make-dylan-app.1 doc/gobject-tool.1 doc/platforms.descr.4,
+	 [${INSTALL} -m uog+rx $buildroot/tools/shared-misc/mk-build-tree ./
 	  ${INSTALL} -m uog+rx $buildroot/tools/shared-misc/gen-makefile ./
 	  (PATH=$buildroot:$PATH; export PATH; perl mk-build-tree -p$srcdir/d2c/compiler/platforms.descr)
 	  touch $buildroot/force.timestamp
