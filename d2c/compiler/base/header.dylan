@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.8 1996/08/07 13:34:24 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.9 1996/08/10 20:03:14 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -141,30 +141,6 @@ end;
 
 // Header parsing.
 
-// alphabetic? -- internal.
-//
-// Return #t if char is an alphabetic (i.e. letter), #f if not.
-//
-define method alphabetic? (char :: <character>)
-  (char >= 'A' & char <= 'Z') | (char >= 'a' & char <= 'z');
-end;
-
-// alphanumeric? -- internal.
-//
-// Return #t if char is an alphanumeric (i.e. letter or number), #f if not.
-//
-define method alphanumeric? (char :: <character>)
-  alphabetic?(char) | (char >= '0' & char <= '9');
-end;
-
-// whitespace? -- internal.
-//
-// Return #t if char is whitespace (space, tab, or form-feed), #f if not.
-//
-define method whitespace? (char :: <character>)
-  char == ' ' | char == '\t' | char == '\f' | char == '\r' | char == '\n';
-end;
-
 // skip-whitespace -- internal.
 //
 // Return the position of the first non-whitespace character at or
@@ -270,16 +246,18 @@ define method scan-value
     method repeat (posn :: <integer>, line :: <integer>,
 		   prefix :: <byte-string>)
       let ws-end = skip-whitespace(contents, posn);
-      let newline = find-newline(contents, ws-end);
+      let newline = find-newline(contents, posn);
+      // Now, if the line has no value (only a keyword), then ws-end > newline
       let value-end = skip-whitespace-backwards(contents, newline);
       let continued?
 	= (newline + 1 < contents.size 
 	     & whitespace?(as(<character>, contents[newline + 1]))
 	     & ~blank-line?(contents, newline + 1));
-      let len = value-end - ws-end + if (continued?) 1 else 0 end;
+      let value-start = min(ws-end, newline, value-end);
+      let len = value-end - value-start + if (continued?) 1 else 0 end;
       let result = make(<byte-string>, size: len + prefix.size);
       copy-bytes(result, 0, prefix, 0, prefix.size);
-      copy-bytes(result, prefix.size, contents, ws-end, len);
+      copy-bytes(result, prefix.size, contents, value-start, len);
       if (continued?)
 	result.last := '\n';
 	repeat(newline + 1, line + 1, result);
@@ -298,7 +276,8 @@ end method;
 // mapping keywords to values.  Also return the line and posn of the
 // start of the body.
 // 
-define method parse-header (source :: <source-file>)
+define method parse-header (source :: <source-file>, 
+			    #key line: init-line = 1, position: init-posn = 0)
      => (header :: <header>,
 	 body-start-line :: <integer>,
 	 body-start-posn :: <integer>);
@@ -309,7 +288,7 @@ define method parse-header (source :: <source-file>)
     method repeat (posn :: <integer>, line :: <integer>)
       if (posn < contents.size)
 	let char = as(<character>, contents[posn]);
-	if (alphabetic?(char))
+	if (char.alpha?)
 	  let (keywrd, key-end) = scan-keyword(contents, posn);
 	  if (keywrd)
 	    let (value, value-end, value-end-line)
@@ -325,6 +304,12 @@ define method parse-header (source :: <source-file>)
 	  else
 	    error("Bogus header keyword on line %d", line);
 	  end;
+	elseif (char == '/' & (posn + 1 < contents.size) 
+		  & as(<character>, contents[posn + 1]) == '/')
+	  // We have a comment line (it must start at column 0).
+	  // Don't treat it as a blank line, or that will end the
+	  // header and move us into the file body.
+	  repeat(1 + find-newline(contents, posn), line + 1);
 	elseif (blank-line?(contents, posn))
 	  values(make(<header>, entries: entries), line + 1, 
 		 1 + find-newline(contents, posn));
@@ -335,7 +320,7 @@ define method parse-header (source :: <source-file>)
 	values(make(<header>, entries: entries), line, posn);
       end;
     end;
-  repeat(0, 1);
+  repeat(init-posn, init-line);
 end method;
 
 // Seals for file header.dylan
