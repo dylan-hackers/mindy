@@ -1,4 +1,4 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.9 1996/10/06 14:09:40 nkramer Exp $ */
+/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.10 1996/10/07 21:48:34 rgs Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,7 +41,8 @@ descriptor_t gdb_result_stack[MAX_RESULTS_COUNT];
 int gdb_stack_stack_index = 0;
 int gdb_stack_index = 0;
 
-extern descriptor_t dylan_literal_3;
+extern descriptor_t dylan_apply_safely_value;
+extern descriptor_t dylan_gdb_integer_value;
 extern descriptor_t dylan_cls_byte_string;
 extern void dylan_gdb_print_object_main();
 
@@ -73,8 +74,7 @@ void int_arg (int arg) {
    stack = gdb_stack_stack[gdb_stack_stack_index]
       = (descriptor_t *) malloc(GDB_STACK_SIZE);
 
-  /* HACK -- wired in name for <integer> proxy */
-  tmp.heapptr = dylan_literal_3.heapptr;
+  tmp.heapptr = dylan_gdb_integer_value.heapptr;
   tmp.dataword.l = arg;
   stack[gdb_stack_index++] = tmp;
 }
@@ -127,8 +127,6 @@ int gdb_invoke_function (descriptor_t fun, int count)
   result_count = result - stack;
   for (i = 0 ; i < result_count; i++)
     gdb_result_stack[i] = stack[i];
-  fflush(stdout);
-  fflush(stderr);
 
   --gdb_stack_stack_index;
   return result_count;
