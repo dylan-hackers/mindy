@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.49 2003/08/15 04:34:43 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.50 2003/09/18 18:51:08 gabor Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -303,7 +303,7 @@ sub read_Defaults_file {
 
     # Tack the subdir onto srcroot.  Note: subdir is empty or ends
     # with a /, hence the chop.
-    
+
     chop($srcdir = $srcroot.'/'.$subdir);
 
     # Likewise for builddir
@@ -323,7 +323,7 @@ sub read_Defaults_file {
         $sysconfdir = $destdir.'/etc';
       }
     }
-    
+
     $srcroot = &convert_path_separator($srcroot);
     $srcdir = &convert_path_separator($srcdir);
     $buildroot = &convert_path_separator($buildroot);
@@ -339,7 +339,7 @@ sub read_Defaults_file {
     $D2C = &convert_path_separator($D2C);
     $MELANGE = &convert_path_separator($MELANGE);
     $PARSERGEN = &convert_path_separator($PARSERGEN);
-            
+
 }
 
 # do_Makegen_file() -- internal
@@ -380,7 +380,7 @@ sub do_Makegen_file {
             push(@clean_commands, "-rm -rf .libs");
         }
     }
-    
+
     push(@GNUmakefile_dependencies, $gen_makefile,
          $defaults, $makegen);
     push(@GNUmakefile_commands,
@@ -598,7 +598,7 @@ sub parse_dylan_header {
         # remember, in Perl "." is any character other than newline.
         # Also, Perl handles all newline hassles by turning win32
         # style CRLFs into LFs (\n's) before it shows us the string.
-	
+
         if ( ($target_name =~ /x86-cygnus-gcc*/) || ($target_name eq 'x86-win32-vc') || ($target_name =~ /x86-mingw32-gcc*/)) {
             $_ =~ s/\r//g;      # Get rid of bogus carriage returns
         }
@@ -813,7 +813,7 @@ sub emit_library_rule {
     local($executable_filename) = $executable . $dot_exe;
     local($shared_library) = $shared && ($lidfile{'shared_library'} ne 'no');
     local($dot_static) = $target_platform{'object_filename_suffix'};
-    
+
     local($d2c_target);
 
     if ($enable_d2c) {
@@ -823,8 +823,8 @@ sub emit_library_rule {
 			if ($&) {				# This was a "something.dylan"
 	            push(@files_to_clean, "$file.c", "$file$dot_obj");
 			} else {
-				# This is a *.o or something that is handled by the
-				# emit_c_file_rule ...
+                # This is a *.o or something that is handled by the
+                # emit_c_file_rule ...
 				next;
 			}
             if ($shared && $static) {
@@ -843,7 +843,7 @@ sub emit_library_rule {
         }
 
         if ($executable) {
-            push(@files_to_clean, $executable_filename, 'heap.c', 'inits.c');
+            push(@files_to_clean, $executable_filename, "$unit_prefix-global-heap.c", "$unit_prefix-global-inits.c");
             if($shared && $static) {
                 push(@files_to_clean, "heap$dot_static", "inits$dot_static");
             }
@@ -859,10 +859,10 @@ sub emit_library_rule {
         }
         else {
             local($foo_lib_du, $libfoo_a);
-            
+
             $foo_lib_du = "$library.lib.du";
             $libfoo_a = "$lib_prefix$unit_prefix-dylan$dot_lib";
-            
+
             push(@files_to_clean, $foo_lib_du, $libfoo_a);
 
             if($shared && $static) {
@@ -870,7 +870,7 @@ sub emit_library_rule {
                     = $target_platform{'library_filename_suffix'};
                 push(@files_to_clean, "$lib_prefix$unit_prefix-dylan$lib_static");
             }
-            
+
             if (grep(/^compile$/, @keywords)) {
                 push(@compile_dependencies, $foo_lib_du);
                 if (grep(/^install$/, @keywords)) {
@@ -878,7 +878,7 @@ sub emit_library_rule {
                     do install_library($libdir, $libfoo_a, $shared_library);
                 }
             }
-            
+
             $d2c_target = $foo_lib_du;
         }
     }
@@ -1120,12 +1120,12 @@ sub install_one_file {
 
     # GNU DESTDIR, not the $destdir variable.
     unless ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
-    	$to_file = "\${DESTDIR}$to_file";
+		$to_file = "\${DESTDIR}$to_file";
 	}
 
     print "\n$to_file: $from_file\n";
     if ( ($host_platform{'default_features'} =~ /compiled-for-win32/i) 
-    	|| ($host_platform{'default_features'} =~ /compiled-for-mingw32/i))
+		|| ($host_platform{'default_features'} =~ /compiled-for-mingw32/i))
     {
         # Host is a win32 platform
         local ($rule) = "\tcopy $from_file $to_file\n\n";
@@ -1227,9 +1227,9 @@ sub install_library {
 
     # Don't generate any install rules unless destdir is set.
     $dest_dir || return;
-	
+
     unless ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
-    	$gnu_dest_dir = "\${DESTDIR}$gnu_dest_dir";
+		$gnu_dest_dir = "\${DESTDIR}$gnu_dest_dir";
     }
 
     print "\n$gnu_dest_dir/$library: $library\n";
