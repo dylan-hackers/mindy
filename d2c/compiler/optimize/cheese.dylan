@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.124 1996/03/13 03:12:15 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.125 1996/03/18 01:48:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -64,6 +64,7 @@ define method optimize-component
 	| try(identify-tail-calls, "finding tail calls")
 	| try(cleanup-control-flow, "cleaning up control flow")
 	| try(propagate-constraints, "propagating constraints")
+	| try(optimistic-type-inference, "optimistic type inference")
 	| (simplify-only & (done := #t))
 	| try(add-type-checks, "adding type checks")
 	| try(replace-placeholders, "replacing placeholders")
@@ -852,7 +853,7 @@ define method maybe-restrict-type
 	      if (instance?(var-info, <values-cluster-info>))
 		values-type-intersection(type, var-info.asserted-type);
 	      else
-		ctype-intersection(defaulted-first-type(type),
+		ctype-intersection(defaulted-type(type, 0),
 				   var-info.asserted-type);
 	      end);
 end;
@@ -869,20 +870,34 @@ define method maybe-restrict-type
   next-method();
 end;
 
-define method defaulted-first-type (ctype :: <ctype>) => res :: <ctype>;
-  ctype;
+
+define generic defaulted-type (ctype :: <values-ctype>, index :: <integer>)
+    => res :: <ctype>;
+
+define method defaulted-type (ctype :: <ctype>, index :: <integer>)
+    => res :: <ctype>;
+  if (index.zero?)
+    ctype;
+  else
+    specifier-type(#"<false>");
+  end if;
 end;
 
-define method defaulted-first-type (ctype :: <values-ctype>) => res :: <ctype>;
+define method defaulted-type
+    (ctype :: <multi-value-ctype>, index :: <integer>)
+    => res :: <ctype>;
   let positionals = ctype.positional-types;
-  if (positionals == #())
-    ctype-union(ctype.rest-value-type, dylan-value(#"<false>"));
-  elseif (zero?(ctype.min-values))
-    ctype-union(positionals[0], dylan-value(#"<false>"));    
+  if (index < positionals.size)
+    let type = positionals[index];
+    if (index < ctype.min-values)
+      type;
+    else
+      ctype-union(type, specifier-type(#"<false>"));
+    end if;
   else
-    positionals[0];
-  end;
-end;
+    ctype-union(ctype.rest-value-type, specifier-type(#"<false>"));
+  end if;
+end method defaulted-type;
 
 define method fixed-number-of-values? (ctype :: <ctype>) => res :: <boolean>;
   #t;
