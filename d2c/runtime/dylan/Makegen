@@ -1,6 +1,6 @@
 
 $D2CFLAGS = '';
-if ($target_name eq "x86-linux") {
+if ($target_name eq "x86-linux" || $target_name eq "x86-freebsd") {
   $D2C = $D2C . ' -F"gcc -g -O2 -I' . "$srcroot/d2c/runtime" .
 	 ' -c %s -o %s" -fnum.c';
 };
