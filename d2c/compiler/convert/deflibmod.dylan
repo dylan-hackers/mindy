@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.15 1996/04/06 07:16:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.16 1996/04/10 16:59:55 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,7 +8,7 @@ copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 
 define class <define-library-tlf> (<top-level-form>, <definition-parse>)
   //
-  constant slot define-library-name :: <symbol>,
+  constant slot define-library-name :: <symbol-token>,
     required-init-keyword: name:;
   //
   constant slot define-library-uses :: <simple-object-vector>,
@@ -20,12 +20,14 @@ end;
 
 define method print-message
     (tlf :: <define-library-tlf>, stream :: <stream>) => ();
-  format(stream, "Define Library %s.", tlf.define-library-name);
+  format(stream, "Define Library %s.", tlf.define-library-name.token-symbol);
 end;
 
 define method process-top-level-form (form :: <define-library-tlf>) => ();
+  note-context(form);
   note-library-definition(form.define-library-name, form.define-library-uses,
 			  form.define-library-exports);
+  end-of-context();
   add!(*Top-Level-Forms*, form);
 end;
 
@@ -51,7 +53,7 @@ add-od-loader(*compiler-dispatcher*, #"define-library-tlf",
 		let exports = load-object-dispatch(state);
 		assert-end-object(state);
 		note-library-definition(name, uses, exports);
-		name;
+		name.token-symbol;
 	      end);
 
 
@@ -59,7 +61,7 @@ add-od-loader(*compiler-dispatcher*, #"define-library-tlf",
 
 define class <define-module-tlf> (<top-level-form>, <definition-parse>)
   //
-  constant slot define-module-name :: <symbol>,
+  constant slot define-module-name :: <symbol-token>,
     required-init-keyword: name:;
   //
   slot define-module-module :: false-or(<module>) = #f,
@@ -77,30 +79,38 @@ end;
 
 define method print-message
     (tlf :: <define-module-tlf>, stream :: <stream>) => ();
-  format(stream, "Define Module %s.", tlf.define-module-name);
+  format(stream, "Define Module %s.", tlf.define-module-name.token-symbol);
 end;
 
 define method process-top-level-form (form :: <define-module-tlf>) => ();
   let name = form.define-module-name;
+  note-context(form);
   note-module-definition(*Current-Library*, name, form.define-module-uses,
 			 form.define-module-exports,
 			 form.define-module-creates);
-  form.define-module-module := find-module(*Current-Library*, name);
+  end-of-context();
+  //
+  // This call to find-module can't fail because note-module-definition
+  // creates the module.
+  form.define-module-module
+    := find-module(*Current-Library*, name.token-symbol);
   add!(*Top-Level-Forms*, form);
 end;
 
 define method finalize-top-level-form (tlf :: <define-module-tlf>) => ();
   let mod = tlf.define-module-module;
-  for (name in tlf.define-module-exports)
+  for (token in tlf.define-module-exports)
+    let name = token.token-symbol;
     let var = find-variable(make(<basic-name>, symbol: name, module: mod));
     unless (var & var.variable-definition)
-      compiler-warning("%s in %s is exported but never defined.", name, mod);
+      compiler-warning-location(token, "%s is never defined.", name);
     end;
   end;
-  for (name in tlf.define-module-creates)
+  for (token in tlf.define-module-creates)
+    let name = token.token-symbol;
     let var = find-variable(make(<basic-name>, symbol: name, module: mod));
     unless (var & var.variable-definition)
-      compiler-warning("%s in %s is created but never defined.", name, mod);
+      compiler-warning-location(token, "%s is never defined.", name);
     end;
   end;
 end;
@@ -119,7 +129,7 @@ end;
 
 add-od-loader(*compiler-dispatcher*, #"define-module-tlf",
 	      method (state :: <load-state>) => res :: <symbol>;
-		let name :: <symbol> = load-object-dispatch(state);
+		let name :: <symbol-token> = load-object-dispatch(state);
 		let uses :: <simple-object-vector>
 		  = load-object-dispatch(state);
 		let exports :: <simple-object-vector>
@@ -129,7 +139,7 @@ add-od-loader(*compiler-dispatcher*, #"define-module-tlf",
 		assert-end-object(state);
 		note-module-definition
 		  (*Current-Library*, name, uses, exports, creates);
-		name;
+		name.token-symbol;
 	      end);
 
 
@@ -199,32 +209,32 @@ define-procedural-expander
        (generator,
 	make-magic-fragment
 	  (make(<use>,
-		name: name.token-symbol,
+		name: name,
 		imports:
-		  if (import == #t)
-		    #t;
+		  if (instance?(import, <all-marker>))
+		    import;
 		  else
-		    remove-duplicates!
-		      (union(map(method (name-or-rename) => res :: <symbol>;
-				   if (instance?(name-or-rename, <renaming>))
-				     name-or-rename.orig-name;
-				   else
-				     name-or-rename.token-symbol;
-				   end if;
-				 end method,
-				 import),
-			     map(orig-name, rename)));
+		    concatenate
+		      (map(method (name-or-rename) => res :: <symbol-token>;
+			     if (instance?(name-or-rename, <renaming>))
+			       name-or-rename.renaming-orig-name;
+			     else
+			       name-or-rename;
+			     end if;
+			   end method,
+			   import),
+		       map(renaming-orig-name, rename));
 		  end if,
-		excludes: map(token-symbol, exclude),
+		excludes: exclude,
 		prefix: prefix,
 		renamings:
-		  if (import == #t)
+		  if (instance?(import, <all-marker>))
 		    rename;
 		  else
 		    concatenate(choose(rcurry(instance?, <renaming>), import),
 				rename);
 		  end if,
-		exports: (export == #t) | map(token-symbol, export)),
+		exports: export),
 	   source-location: generate-token-source-location(generator)));
    end method);
 
@@ -235,8 +245,12 @@ define method is-all? (frag :: <fragment>)
 end method is-all?;
 
 define method is-all? (frag :: <token-fragment>)
-    => res :: <boolean>;
-  frag.fragment-token.token-kind == $true-token;
+    => res :: false-or(<all-marker>);
+  if (frag.fragment-token.token-kind == $true-token)
+    make(<all-marker>);
+  else
+    #f;
+  end if;
 end method is-all?;
 
 
@@ -283,8 +297,8 @@ define-procedural-expander
        (generator,
 	make-magic-fragment
 	  (make(<renaming>,
-		orig-name: extract-name(from-frag).token-symbol,
-		new-name: extract-name(to-frag).token-symbol),
+		orig-name: extract-name(from-frag),
+		new-name: extract-name(to-frag)),
 	   source-location: generate-token-source-location(generator)));
    end method);
 
@@ -300,8 +314,7 @@ define-procedural-expander
        (generator,
 	make-parsed-fragment
 	  (make(<define-module-tlf>,
-		name: name.token-symbol, uses: uses,
-		exports: exports, creates: creates),
+		name: name, uses: uses, exports: exports, creates: creates),
 	   source-location: generate-token-source-location(generator)));
    end method);
 			      
@@ -320,8 +333,7 @@ define-procedural-expander
        (generator,
 	make-parsed-fragment
 	  (make(<define-library-tlf>,
-		name: name.token-symbol, uses: uses,
-		exports: exports),
+		name: name, uses: uses, exports: exports),
 	   source-location: generate-token-source-location(generator)));
    end method);
 			      
@@ -367,12 +379,16 @@ define method process-clause
      exports :: <stretchy-vector>, creates :: <stretchy-vector>)
     => ();
   for (token in clause.export-names)
-    let name = token.token-symbol;
-    unless (member?(name, exports))
-      add!(exports, name);
-    end;
-  end;
-end;
+    block (already-there)
+      for (old in exports)
+	if (old.token-symbol == token.token-symbol)
+	  already-there();
+	end if;
+      end for;
+      add!(exports, token);
+    end block;
+  end for;
+end method process-clause;
 
 define method process-clause
     (clause :: <create-clause>, uses :: <stretchy-vector>,
@@ -380,11 +396,16 @@ define method process-clause
     => ();
   for (token in clause.create-names)
     let name = token.token-symbol;
-    unless (member?(name, creates))
-      add!(creates, name);
-    end;
-  end;
-end;
+    block (already-there)
+      for (old in creates)
+	if (old.token-symbol == token.token-symbol)
+	  already-there();
+	end if;
+      end for;
+      add!(creates, token);
+    end block;
+  end for;
+end method process-clause;
 
 
 add-bootstrap-export(#"module-definer");
