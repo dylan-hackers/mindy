@@ -49,18 +49,33 @@ copyright: see below
 //======================================================================
 
 define constant $default-defines
-  = #["const", "",
+  = #[
+      // When used in the cygwin environment, gcc defines __CYGWIN__
+      // automatically.  We must define it for melange too so that
+      // melange will parse the headers the same way as gcc does.
+      "__CYGWIN__", "1",
+
+      // gcc defines __GNUC__ automatically.  We must define it for melange
+      // too so melange will parse the headers the same way as gcc does.
+      "__GNUC__", "3",
+
+      // cygwin made a goof and uses "__const" in one place instead of "const"
+      // The problem has been reported to them (or more specifically to newlib).
+      "__const", "",
+
+      // It would be nice if cygwin was consistent about usage of declarations,
+      // but of course it's not.
+      "__IMPORT", "",
+
+      // Get rid of the Microsoft-specific cruft such as __declspec(dllimport)
+      // found in some places in the cygwin headers. Again, cygwin uses a 
+      // hodge-podge of declarations.
+      "__cdecl", "",
+      "__declspec", #(#("x"), ""),
+
+      "const", "",
       "volatile", "",
       "__STDC__", "",
-
-      // The following six declarations should be removed someday, as soon as 
-      // we fix a bug in MINDY.
-      //"__GNUC__", "2",
-      //"__GNUC_MINPR__", "7",
-      //"__signed__", "",
-      //"__const", "",
-      //"__CONSTVALUE", "",
-      //"__CONSTVALUE2", "",
 
       // Parameterized macros which remove various GCC extensions from our
       // source code. The last item in the list is the right-hand side of
@@ -82,7 +97,8 @@ define constant $default-defines
       "__unix", "",
       "__i386", "",
       "__linux", "",
-      "__builtin_va_list", "void*"];
+      "__builtin_va_list", "void*"
+     ];
   
 define constant linux-include-directories
   = #["/usr/include"];
