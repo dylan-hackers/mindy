@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/constraint.dylan,v 1.3 1996/04/18 23:00:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/constraint.dylan,v 1.4 1996/05/01 12:30:20 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -41,6 +41,9 @@ define class <renaming> (<object>)
     required-init-keyword: replacement:;
 end class <renaming>;
 
+define sealed domain make (singleton(<renaming>));
+define sealed domain initialize (<renaming>);
+
 // renaming-replacement -- internal.
 //
 // Wrapper accessor on %renaming-replacement that invokes the function if
@@ -70,6 +73,9 @@ define class <renaming-set> (<object>)
   constant slot renaming-set-renamings :: <object-table>
     = make(<object-table>);
 end class <renaming-set>;
+
+define sealed domain make (singleton(<renaming-set>));
+define sealed domain initialize (<renaming-set>);
 
 // add-renaming -- internal.
 //
@@ -366,17 +372,8 @@ define method insert-type-constraint
   build-assignment(builder, policy, source, temp,
 		   make-operation(builder, <truly-the>, list(var),
 				  guaranteed-type: new-type));
-  replace-subregion(component, inside.parent, inside,
-		    combine-regions(builder-result(builder), inside));
+  replace-subregion
+    (component, inside.parent, inside,
+     combine-regions(component, builder-result(builder), inside));
   temp;
 end method insert-type-constraint;
-
-
-// Seals for file constraint.dylan
-
-// <renaming> -- subclass of <object>
-define sealed domain make(singleton(<renaming>));
-define sealed domain initialize(<renaming>);
-// <renaming-set> -- subclass of <object>
-define sealed domain make(singleton(<renaming-set>));
-define sealed domain initialize(<renaming-set>);
