@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.41 1995/11/22 15:40:40 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.42 1995/11/22 16:41:52 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -491,22 +491,24 @@ end;
 //
 define method check-1-arg-congruent
     (mspec :: <values-ctype>, gspec :: <values-ctype>,
+     wot :: <byte-string>,
      meth :: <method-definition>, gf :: <generic-definition>)
     => res :: <boolean>;
   let (val, val-p) = values-subtype?(mspec, gspec);
   case
     ~val-p =>
       compiler-warning
-	("Can't tell if %s is a subtype of %s, so can't tell if method %s is "
+	("Can't tell if %s %s is a subtype of %s, so can't tell if method %s is "
 	   "congruent to GF %s.",
-	 mspec, gspec, meth.defn-name, gf.defn-name);
+	 wot, mspec, gspec, meth.defn-name, gf.defn-name);
       #f;
 
     ~val =>
       compiler-warning
-	("Method %s isn't congruent to GF %s because method type %s isn't a "
-	   "subtype of GF type %s.",
-	 meth.defn-name, gf.defn-name, mspec, gspec);
+	("Method \n  %s \n"
+	 "isn't congruent to GF\n   %s \n"
+	 "because method %s type %s isn't a subtype of GF type %s.",
+	 meth.defn-name, gf.defn-name, wot, mspec, gspec);
       #f;
 
     otherwise => #t;
@@ -533,7 +535,7 @@ define method check-congruence
     win := #f;
   end;
   for (mspec in mspecs, gspec in gspecs)
-    win := check-1-arg-congruent(mspec, gspec, meth, gf) & win;
+    win := check-1-arg-congruent(mspec, gspec, "argument", meth, gf) & win;
   end for;
 
   case
@@ -555,8 +557,9 @@ define method check-congruence
 	  block (found-it)
 	    for (mkey in msig.key-infos)
 	      if (mkey.key-name == gkey-name)
-		win := check-1-arg-congruent (mkey.key-type, gspec, meth, gf)
-		  & win;
+		win := check-1-arg-congruent(mkey.key-type, gspec,
+					     "keyword arg", meth, gf)
+		         & win;
 		found-it();
 	      end;
 	    end for;
@@ -589,7 +592,7 @@ define method check-congruence
       win := #f;
   end;
 
-  win & check-1-arg-congruent(msig.returns, gsig.returns, meth, gf);
+  win & check-1-arg-congruent(msig.returns, gsig.returns, "result", meth, gf);
 end method;
 
 
