@@ -60,7 +60,7 @@ define method get-macro-params
   let paren-count = 0;
   for (token = get-token(state) then get-token(state, expand: #f),
        list = #() then pair(token, list),
-       until (paren-count == 0
+       until: (paren-count == 0
 		& instance?(token, union(<rparen-token>, <comma-token>))))
     select (token by instance?)
       <eof-token>, <error-token> =>
@@ -208,7 +208,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 			  #f;
 		      end block,
 	       dir in include-path,
-	       until stream)
+	       until: stream)
 	  finally
 	    stream | parse-error(state, "File not found: %s", name);
 	  end for;
@@ -323,7 +323,7 @@ define method try-cpp
       //
       local method do-skip(pos, current-stack)
 	      for (i from pos below contents.size,
-		   until contents[i] == '#')
+		   until: contents[i] == '#')
 	      finally
 		if (~try-cpp(state, i))
 		  // We may get false matches -- if so, just move on
@@ -408,7 +408,7 @@ define method try-cpp
 	    parse-error(state, "Encountered #error directive.");
 	  end if;
 	"line", "pragma" =>
-	  for (i from pos below contents.size, until contents[i] == '\n')
+	  for (i from pos below contents.size, until: contents[i] == '\n')
 	  finally
 	    state.position := i;
 	  end for;
