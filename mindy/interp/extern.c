@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.7 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.8 1996/03/07 17:41:49 nkramer Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -784,16 +784,16 @@ void init_c_functions(void)
 		  FALSE, obj_False, FALSE,
 		  obj_ObjectClass, c_pointer_field_setter);
     define_method("as",
-		  list2(obj_StaticTypeClass, obj_CPointerClass), FALSE,
-		  obj_False, FALSE,
+		  list2(singleton(obj_StaticTypeClass), obj_CPointerClass), 
+		  FALSE, obj_False, FALSE,
 		  obj_ObjectClass, c_pointer_as);
     define_method("as",
-		  list2(obj_IntegerClass, obj_CPointerClass), FALSE,
+		  list2(singleton(obj_IntegerClass), obj_CPointerClass), FALSE,
 		  obj_False, FALSE,
 		  obj_ObjectClass, c_ptr_as_int);
     define_method("as",
-		  list2(obj_StaticTypeClass, obj_IntegerClass), FALSE,
-		  obj_False, FALSE,
+		  list2(singleton(obj_StaticTypeClass), obj_IntegerClass), 
+		  FALSE, obj_False, FALSE,
 		  obj_ObjectClass, c_int_as_ptr);
     define_method("=", list2(obj_CPointerClass, obj_CPointerClass),
 		  FALSE, obj_False, FALSE,
