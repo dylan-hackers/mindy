@@ -12,7 +12,9 @@ Gwydion Dylan 2.3.4
   This, combined with the new ability for the runtime to provide
   slot names of instances, allows for Dylan-style introspection of
   C-header information.  Various bugfixes, including --no-binaries
-  for d2c.
+  for d2c. Gwydion Dylan now builds fully on MacOS X, and features a
+  Carbon interface library with several examples including a full GUI
+  application.
 
 
 Gwydion Dylan 2.3.3
