@@ -6,3 +6,6 @@ system-exports.c
 os-constants.c
 operatingsystem-heap.s
 cc-operatingsystem-files.mak
+system-init.c
+system-heap.s
+cc-system-files.mak
