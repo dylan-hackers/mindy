@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.3 1995/12/09 20:16:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.4 1996/01/08 22:15:59 rgs Exp $
 
 //======================================================================
 //
@@ -104,8 +104,7 @@ define sealed class <simple-object-deque> (<deque>)
   sealed slot deque-tail :: false-or(<deque-element>), init-value: #f;
   sealed slot size :: <fixed-integer>,
     setter: deque-size-setter,
-    init-value: 0,
-    init-keyword: #"size";
+    init-value: 0;
 end class <simple-object-deque>;
 
 // initialize -- interface
@@ -119,7 +118,6 @@ end class <simple-object-deque>;
 define method initialize (deque :: <simple-object-deque>,
 			  #key data, size :: <fixed-integer> = 0,
 			       fill = #f)
-  deque.deque-size := size;
   if (data)
     for (element in data)
       push-last(deque, element);
