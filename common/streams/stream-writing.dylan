@@ -37,7 +37,7 @@ define method write-element (stream :: <buffered-stream>, element :: <object>)
  => ();
   block ()
     let buf :: <buffer> = get-output-buffer(stream);
-    buf[buf.buffer-next] := element;
+    buf[buf.buffer-next] := as(<byte>, element);
     buf.buffer-next := buf.buffer-next + 1;
   cleanup
     release-output-buffer(stream);
