@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.7 1996/03/17 00:08:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.8 1996/04/08 08:34:15 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -477,8 +477,8 @@ define macro library-definer
     { ?clause; ... } => { ?clause, ... }
 
   clause:
-    {use ?:name, #key ?import = all, ?exclude = none, ?prefix:token = "", 
-		      ?rename = none, ?export = none }
+    {use ?:name, #key ?import = all, ?exclude = {}, ?prefix:token = "", 
+		      ?rename = {}, ?export = {} }
       => make-use-clause({ ?name }, { ?import }, { ?exclude }, { ?prefix },
 			 { ?rename }, { ?export })
     {export ?names }
@@ -498,11 +498,9 @@ define macro library-definer
     { ?renaming, ... } => { ?renaming, ... }
 
   exclude:
-    { none } => { }
     { { ?names } } => { ?names }
 
   rename:
-    { none } => { }
     { { ?renamings } } => { ?renamings }
 
   renamings:
@@ -513,7 +511,6 @@ define macro library-definer
     { ?from:name => ?to:name } => make-renaming({ ?from }, { ?to })
 
   export:
-    { none } => { }
     { all } => { #t }
     { { ?names } } => { ?names }
 
