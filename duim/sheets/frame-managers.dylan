@@ -135,7 +135,7 @@ end method destroy-frame-manager;
 //--- These are all forward references into 'duim-frames'
 
 // The current application frame in this thread
-define /*thread*/ variable *current-frame* = #f;
+define thread variable *current-frame* = #f;
 
 define inline function current-frame () *current-frame* end;
 
@@ -198,7 +198,7 @@ end method frame-manager-do-frames;
 /// Pane creation
 
 // The current application frame in this thread
-define /*thread*/ variable *current-frame-manager* :: false-or(<frame-manager>) = #f;
+define thread variable *current-frame-manager* :: false-or(<frame-manager>) = #f;
 
 define inline function current-frame-manager () *current-frame-manager* end;
 
@@ -212,7 +212,7 @@ end method make-pane;
 
 //--- If you change this method, change the one in gadgets/gadget-mixins
 define method make
-    (pane-class == <sheet>, //* THIS WILL BE PROBLEMATIC subclass(<sheet>),
+    (pane-class :: subclass(<sheet>),
      #rest pane-options,
      #key port, frame-manager: framem, #all-keys)
  => (pane :: <sheet>)
@@ -537,3 +537,5 @@ define method get-frame-manager-and-owner
     values(framem, find-display(port: _port))
   end
 end method get-frame-manager-and-owner;
+
+

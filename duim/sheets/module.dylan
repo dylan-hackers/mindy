@@ -296,6 +296,7 @@ end module duim-sheets;
 
 define module duim-sheets-internals
   use dylan;
+  use extensions, import:{subclass}; // common-dylan subclass is no good
   use duim-imports;
   use duim-utilities;
   use duim-geometry-internals;
@@ -562,3 +563,5 @@ define module duim-sheets-internals
   //--- Work around the fact that 'port-setter' is overloaded...
   export %port-setter;
 end module duim-sheets-internals;
+
+
