@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.15 2001/07/24 06:30:51 housel Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.16 2001/08/01 15:02:52 dauclair Exp $
 
 //======================================================================
 //
@@ -1874,17 +1874,15 @@ define method load-subobjects-vector
   end if;
 end method;
 
-
 // Load a one-slot object.  The value is returned, and we check that there was
 // in fact only one subobject.
 //
 define /* exported */ method load-sole-subobject (state :: <load-state>)
  => res :: <object>;
   let res = load-object-dispatch(state);
-  assert(load-object-dispatch(state) == $end-object);
+  assert-end-object(state);
   res;
 end method;
-
 
 // Call after reading fixed number of subobjects to eat the end header.
 //
@@ -2241,7 +2239,7 @@ add-od-loader(*default-dispatcher*, #"extern-handle",
     state.od-next := next + ($word-bytes * 3);
     let name = load-object-dispatch(state);
     let hint = load-object-dispatch(state);
-    assert(load-object-dispatch(state) == $end-object);
+    assert-end-object(state);
 
     let ext-unit
       = find-data-unit(name, du-type, location-hint: hint,

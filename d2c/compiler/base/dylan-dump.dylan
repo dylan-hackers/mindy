@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/dylan-dump.dylan,v 1.3 2001/03/28 11:52:54 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/dylan-dump.dylan,v 1.4 2001/08/01 15:02:52 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -175,7 +175,7 @@ add-od-loader(*default-dispatcher*, #"ratio",
     
     let npart = load-object-dispatch(state);
     let dpart = load-object-dispatch(state);
-    assert(load-object-dispatch(state) == $end-object);
+    assert-end-object(state);
     ratio(npart, dpart);
   end method
 );
