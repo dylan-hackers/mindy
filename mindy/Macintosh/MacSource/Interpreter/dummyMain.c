@@ -9,6 +9,8 @@
 
 #include <string.h>
 
+#include<console.h>
+
 /*#define SELF_RUNNER	/* Comment in for self-runner. Use the MacTech MoveData util. */
 
 #define SEARCH_PATH_BUFFER_SIZE	1024
@@ -38,6 +40,7 @@ void DummyMain( void )
 #else
 	int argc;
 	char ** argv;
+	argc = ccommand( &argv );
 #endif
 	BuildLibPath();
 	main( argc, argv );	/* Just call the real main in Mindy. */
