@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.13 1996/03/21 19:15:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.14 1996/03/27 23:53:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -23,33 +23,17 @@ end;
 
 // The <source-location> class.
 
-define abstract class <source-location> (<object>)
+define open abstract class <source-location> (<object>)
 end;
 
 define sealed domain make (singleton(<source-location>));
-define sealed domain initialize (<source-location>);
+
 
 define method make (wot == <source-location>, #key)
     => res :: <source-location>;
   make(<unknown-source-location>);
 end;
 
-
-define open generic source-location-before
-    (source-loc :: <source-location>)
-    => res :: <source-location>;
-
-define open generic source-location-after
-    (source-loc :: <source-location>)
-    => res :: <source-location>;
-
-define open generic source-location-between
-    (left-loc :: <source-location>, right-loc :: <source-location>)
-    => res :: <source-location>;
-
-define open generic source-location-spanning
-    (start-loc :: <source-location>, end-loc :: <source-location>)
-    => res :: <source-location>;
 
 define open generic describe-source-location
     (srcloc :: <source-location>, stream :: <stream>) => ();
@@ -72,39 +56,13 @@ define method make
   *unknown-srcloc* | (*unknown-srcloc* := next-method());
 end method make;
   
-define sealed method source-location-before
-    (srcloc :: <unknown-source-location>)
-    => res :: <source-location>;
-  make(<unknown-source-location>);
-end method source-location-before;
-
-define sealed method source-location-after
-    (srcloc :: <unknown-source-location>)
-    => res :: <source-location>;
-  make(<unknown-source-location>);
-end method source-location-after;
-
-define sealed method source-location-between
-    (left :: <unknown-source-location>, right :: <unknown-source-location>)
-    => res :: <source-location>;
-  make(<unknown-source-location>);
-end method source-location-between;
-
-define sealed method source-location-spanning
-    (start :: <unknown-source-location>, stop :: <unknown-source-location>)
-    => res :: <source-location>;
-  make(<unknown-source-location>);
-end method source-location-spanning;
-
 define sealed method describe-source-location
     (srcloc :: <unknown-source-location>, stream :: <stream>)
     => ();
 end method describe-source-location;
 
-
 add-make-dumper(#"unknown-source-location", *compiler-dispatcher*,
 		<unknown-source-location>, #());
-
 
 
 // getcwd
@@ -395,59 +353,6 @@ define method print-object (sl :: <file-source-location>, stream :: <stream>)
 end;
 
 
-define sealed method source-location-before (srcloc :: <file-source-location>)
-    => res :: <file-source-location>;
-  make(<file-source-location>,
-       source: srcloc.source-file,
-       start-posn: srcloc.start-posn,
-       start-line: srcloc.start-line,
-       start-column: srcloc.start-column,
-       end-posn: srcloc.start-posn,
-       end-line: srcloc.start-line,
-       end-column: srcloc.start-column);
-end method source-location-before;
-
-define sealed method source-location-after (srcloc :: <file-source-location>)
-    => res :: <file-source-location>;
-  make(<file-source-location>,
-       source: srcloc.source-file,
-       start-posn: srcloc.end-posn,
-       start-line: srcloc.end-line,
-       start-column: srcloc.end-column,
-       end-posn: srcloc.end-posn,
-       end-line: srcloc.end-line,
-       end-column: srcloc.end-column);
-end method source-location-after;
-
-define sealed method source-location-between
-    (left :: <file-source-location>, right :: <file-source-location>)
-    => res :: <file-source-location>;
-  assert(left.source-file == right.source-file);
-  make(<file-source-location>,
-       source: left.source-file,
-       start-posn: right.start-posn,
-       start-line: right.start-line,
-       start-column: right.start-column,
-       end-posn: left.end-posn,
-       end-line: left.end-line,
-       end-column: left.end-column);
-end method source-location-between;
-
-define sealed method source-location-spanning
-    (start :: <file-source-location>, stop :: <file-source-location>)
-    => res :: <file-source-location>;
-  assert(start.source-file == stop.source-file);
-  make(<file-source-location>,
-       source: start.source-file,
-       start-posn: start.start-posn,
-       start-line: start.start-line,
-       start-column: start.start-column,
-       end-posn: stop.end-posn,
-       end-line: stop.end-line,
-       end-column: stop.end-column);
-end;
-
-
 define sealed method describe-source-location
     (srcloc :: <file-source-location>, stream :: <stream>)
     => ();
@@ -502,10 +407,11 @@ define sealed method describe-source-location
 			     srcloc.end-posn - srcloc.end-column));
 		 end;
 	     highlight-line(first-line, srcloc.start-column,
-			    start-line.size, stream);
+			    first-line.size, stream);
 	     unless (srcloc.start-line + 1 == srcloc.end-line)
-	       write("  through\n", stream);
+	       write("  through", stream);
 	     end unless;
+	     pprint-newline(#"mandatory", stream);
 	     highlight-line(last-line, 0, srcloc.end-column, stream);
 	   end block;
 	 end if;
