@@ -1,6 +1,6 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.6 1995/08/29 15:23:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.7 1995/10/13 15:08:00 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -42,6 +42,15 @@ define method print-object (sig :: <signature>, stream :: <stream>) => ();
 		returns:, sig.returns);
 end;
 
+add-make-dumper(#"function-signature", *compiler-dispatcher*, <signature>,
+  list(specializers, specializers:, #f,
+       next?, next:, #f,
+       rest-type, rest-type:, #f,
+       key-infos, keys:, #f,
+       returns, returns:, #f)
+);
+
+
 define class <key-info> (<object>)
 
   // name of this keyword arg.
@@ -80,32 +89,9 @@ define method key-needs-supplied?-var (key-info :: <key-info>)
   end;
 end;
 
-
-/* 
-
-sorted-statically-applicable-methods methods operation
-    See what compiler methods are statically applicable to operation.  This
-    basically deals with official Dylan method selection, looking only at the
-    specializers (but if some of them are funny types like direct-instance,
-    that will be taken into consideration.)  Some specializers may be
-    duplicated between builtin methods and other methods.  Builtin methods will
-    be sorted before non-builtin methods having the same specializers.  We
-    return #(), #F if type uncertainty prevented us from determining
-    applicability or sorting.
-
-
-congruent-signatures? gf-sig meth-sig
-    True if a method signature is/might-be congruent to a GF signature.
-
-signatures-equal? sig1 sig2
-    True if two signatures are identical.  Probably not worth hash-consing
-    signatures.  Not an = method because we want to do funny stuff
-    to indicate any confusion or differnce we come across.
-
-legal-signature? signature operation output-type
-    True if a signature is/might-be legal for an operation, assuming that
-    specializers are applicable.  This deals with the possibility that
-    it would be an error to actually call due to illegal keywords, missing
-    keywords or bad key or rest types.
-*/
-
+add-make-dumper(#"function-key-info", *compiler-dispatcher*, <key-info>,
+  list(key-name, key-name:, #f,
+       key-type, type:, #f,
+       required?, required:, #f,
+       key-default, default:, #f)
+);
