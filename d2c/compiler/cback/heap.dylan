@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.59 1996/11/11 13:57:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.60 1996/12/02 14:08:27 ram Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -197,7 +197,7 @@ define method build-global-heap
   format(stream, "\n\n\t%s\t8\n", target.align-directive);
   format(stream, target.export-directive, 
 	 concatenate(target.mangled-name-prefix, "initial_symbols"));
-  format(stream, "%sinitial_symbols:\n", target.mangled-name-prefix);
+  format(stream, "%sinitial_symbols\n", target.mangled-name-prefix);
   spew-reference(state.symbols, *heap-rep*, "Initial Symbols", state);
 end;
 
@@ -237,7 +237,7 @@ define method build-local-heap
 	  // them..
 	  ".stabs \"<unknown>\",100,0,0,Ltext0\n"
 	    ".text\n"
-	    "Ltext0:\n"
+	    "Ltext0\n"
 	    ".stabs \"heapptr_t:t(9,3)=(9,4)=*(9,5)=xsheapobj:\",128,0,6,0\n"
 	    ".stabs \"descriptor:T(9,6)=s8heapptr:(9,3),0,32;dataword:"
 	    "(9,7)=u4l:(0,3),0,32;f:(0,12),0,32;ptr:(5,16),0,32;;,32,32;;\","
@@ -246,7 +246,7 @@ define method build-local-heap
 	else
 	  // ### might be HP specific, I don't know
 	  "\t.stabs \"<unknown>\",100,0,0,L$text0000\n"
-	    "L$text0000:\n"
+	    "L$text0000\n"
 	    "\t.stabs \"heapptr_t:t32=*33=xsheapobj:\",128,0,6,0\n"
 	    "\t.stabs \"descriptor:T34=s8heapptr:32,0,32;dataword:"
 	    "35=u4l:3,0,32;f:12,0,32;ptr:36=*19,0,32;;,32,32;;\",128,0,0,0\n"
@@ -258,7 +258,7 @@ define method build-local-heap
 
   format(stream, target.export-directive, 
 	 concatenate(target.mangled-name-prefix, prefix, "_roots"));
-  format(stream, "%s%s_roots:\n", target.mangled-name-prefix, prefix);
+  format(stream, "%s%s_roots\n", target.mangled-name-prefix, prefix);
   for (root in unit.unit-init-roots, index from 0)
     let name = root.root-name;
     if (root.root-comment)
@@ -269,7 +269,7 @@ define method build-local-heap
     if (name)
       format(stream, target.export-directive, 
 	     concatenate(target.mangled-name-prefix, name));
-      format(stream, "%s%s:\n", target.mangled-name-prefix, name);
+      format(stream, "%s%s\n", target.mangled-name-prefix, name);
       if (target.supports-debugging?)
 	if (target.uses-win32-stabs?)
 	  format(stream, "\t.stabs\t\"%s%s:G(9,8)\",32,0,1,0\n", 
@@ -308,7 +308,7 @@ define method spew-objects-in-queue (state :: <state>) => ();
     let name = stringify(target.mangled-name-prefix, state.heap-base);
     new-line(stream);
     format(stream, target.export-directive, name);
-    format(stream, "%s:\n", name);
+    format(stream, "%s\n", name);
   end;
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
@@ -324,7 +324,7 @@ define method spew-objects-in-queue (state :: <state>) => ();
       unless (member?('+', label))
 	let name = stringify(target.mangled-name-prefix, label);
 	format(stream, target.export-directive, name);
-	format(stream, "%s:\n", name);
+	format(stream, "%s\n", name);
       end unless;
     end for;
 
@@ -455,7 +455,7 @@ end;
 define method spew-reference
     (object :: <ct-value>, rep :: <heap-representation>,
      tag :: <byte-string>, state :: <state>) => ();
-  format(state.stream, "\t%s\t%s\t%s %s%s:\n", state.target.word-directive,
+  format(state.stream, "\t%s\t%s\t%s %s%s\n", state.target.word-directive,
 	 object-name(object, state), state.target.comment-token, 
 	 state.target.mangled-name-prefix, tag);
 end;
@@ -471,7 +471,7 @@ define method spew-reference
     (object :: <ct-entry-point>, rep :: <immediate-representation>,
      tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t%s\t%s\t%s %s%s:\n", state.target.word-directive,
+  format(state.stream, "\t%s\t%s\t%s %s%s\n", state.target.word-directive,
 	 entry-name(object, state), state.target.comment-token, 
 	 state.target.mangled-name-prefix, tag);
 end;
@@ -570,7 +570,13 @@ define method entry-name (object :: <ct-entry-point>, state :: <state>)
     end if;
     heap-object-referenced?(object, state) := #t;
   end unless;
-  name;
+
+   // Really HP/Ux			 
+   if (state.target.import-directive-required?)
+     concatenate("P'", name);
+   else
+     name;
+   end if;
 end;
 	
 
@@ -1200,7 +1206,7 @@ define method spew-function
   apply(spew-instance, func.ct-value-cclass, state,
 	function-name:
 	  make(<literal-string>, value:
-	       format-to-string("%s", func.ct-function-name)),
+	       format-to-string("%s\n", func.ct-function-name)),
 	function-specializers:
 	  make(<literal-simple-object-vector>,
 	       contents: sig.specializers,
