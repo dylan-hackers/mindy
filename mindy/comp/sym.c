@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.4 1994/04/09 14:09:23 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.5 1994/06/02 23:27:11 wlott Exp $
 *
 * This file does whatever.
 *
@@ -20,6 +20,49 @@
 
 #include "mindycomp.h"
 #include "sym.h"
+
+struct symbol *sym_DefineClass1 = NULL;
+struct symbol *sym_DefineClass2 = NULL;
+struct symbol *sym_DefineGeneric = NULL;
+struct symbol *sym_DefineMethod = NULL;
+struct symbol *sym_DefineSlot = NULL;
+struct symbol *sym_Or = NULL;
+struct symbol *sym_Plus = NULL;
+struct symbol *sym_Less = NULL;
+struct symbol *sym_LessEqual = NULL;
+struct symbol *sym_Object = NULL;
+struct symbol *sym_Type = NULL;
+struct symbol *sym_Eq = NULL;
+struct symbol *sym_DylanUser = NULL;
+struct symbol *sym_Apply = NULL;
+struct symbol *sym_Aref = NULL;
+struct symbol *sym_Catch = NULL;
+struct symbol *sym_CheckType = NULL;
+struct symbol *sym_Class = NULL;
+struct symbol *sym_Constant = NULL;
+struct symbol *sym_Do = NULL;
+struct symbol *sym_Element = NULL;
+struct symbol *sym_Error = NULL;
+struct symbol *sym_FindVariable = NULL;
+struct symbol *sym_ForwardIterationProtocol = NULL;
+struct symbol *sym_Getter = NULL;
+struct symbol *sym_InitVariable = NULL;
+struct symbol *sym_Instance = NULL;
+struct symbol *sym_List = NULL;
+struct symbol *sym_MakeNextMethodFunction = NULL;
+struct symbol *sym_MakeSlot = NULL;
+struct symbol *sym_Negative = NULL;
+struct symbol *sym_NegativeP = NULL;
+struct symbol *sym_NextMethod = NULL;
+struct symbol *sym_PopHandler = NULL;
+struct symbol *sym_PushHandler = NULL;
+struct symbol *sym_Setter = NULL;
+struct symbol *sym_Singleton = NULL;
+struct symbol *sym_Subclass = NULL;
+struct symbol *sym_Throw = NULL;
+struct symbol *sym_Uwp = NULL;
+struct symbol *sym_Values = NULL;
+struct symbol *sym_Virtual = NULL;
 
 static struct table {
     int entries;
@@ -164,4 +207,47 @@ static void init_table(struct table *table)
 void init_sym_table(void)
 {
     init_table(&Symbols);
+
+    sym_DefineClass1 = symbol("%define-class-1");
+    sym_DefineClass2 = symbol("%define-class-2");
+    sym_DefineGeneric = symbol("%define-generic");
+    sym_DefineMethod = symbol("%define-method");
+    sym_DefineSlot = symbol("%define-slot");
+    sym_Or = symbol("|");
+    sym_Plus = symbol("+");
+    sym_Less = symbol("<");
+    sym_LessEqual = symbol("<=");
+    sym_Object = symbol("<object>");
+    sym_Type = symbol("<type>");
+    sym_Eq = symbol("==");
+    sym_DylanUser = symbol("Dylan-User");
+    sym_Apply = symbol("apply");
+    sym_Aref = symbol("aref");
+    sym_Catch = symbol("catch");
+    sym_CheckType = symbol("check-type");
+    sym_Class = symbol("class");
+    sym_Constant = symbol("constant");
+    sym_Do = symbol("do");
+    sym_Element = symbol("element");
+    sym_Error = symbol("error");
+    sym_FindVariable = symbol("find-variable");
+    sym_ForwardIterationProtocol = symbol("forward-iteration-protocol");
+    sym_Getter = symbol("getter");
+    sym_InitVariable = symbol("init-variable");
+    sym_Instance = symbol("instance");
+    sym_List = symbol("list");
+    sym_MakeNextMethodFunction = symbol("make-next-method-function");
+    sym_MakeSlot = symbol("make-slot");
+    sym_Negative = symbol("negative");
+    sym_NegativeP = symbol("negative?");
+    sym_NextMethod = symbol("next-method");
+    sym_PopHandler = symbol("pop-handler");
+    sym_PushHandler = symbol("push-handler");
+    sym_Setter = symbol("setter");
+    sym_Singleton = symbol("singleton");
+    sym_Subclass = symbol("subclass");
+    sym_Throw = symbol("throw");
+    sym_Uwp = symbol("uwp");
+    sym_Values = symbol("values");
+    sym_Virtual = symbol("virtual");
 }
