@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.23 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.24 1996/04/13 21:12:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -27,25 +27,26 @@ define abstract class <c-representation>
   slot representation-name :: false-or(<symbol>),
     init-value: #f, init-keyword: name:;
   slot more-general-representation :: false-or(<representation>),
-    setter: #f, init-value: #f, init-keyword: more-general:;
+    init-value: #f, init-keyword: more-general:;
   slot representation-depth :: <integer>;
-  slot representation-to-more-general :: type-union(<byte-string>, one-of(#t, #f)),
+  slot representation-to-more-general
+      :: type-union(<byte-string>, one-of(#t, #f)),
     init-value: #t, init-keyword: to-more-general:;
   slot representation-from-more-general
-    :: type-union(<byte-string>, one-of(#t, #f)),
+      :: type-union(<byte-string>, one-of(#t, #f)),
     init-value: #t, init-keyword: from-more-general:;
-  slot representation-alignment :: <integer>, setter: #f,
+  constant slot representation-alignment :: <integer>,
     required-init-keyword: alignment:;
-  slot representation-size :: <integer>, setter: #f,
+  constant slot representation-size :: <integer>,
     required-init-keyword: size:;
-  slot representation-c-type :: <string>, setter: #f,
+  constant slot representation-c-type :: <string>,
     required-init-keyword: c-type:;
 end;
 
 define method representation-has-bottom-value? (res :: <representation>)
     => res :: <boolean>;
   #t;
-end;
+end method representation-has-bottom-value?;
 
 define method initialize
     (rep :: <c-representation>, #next next-method, #key more-general) => ();
@@ -56,35 +57,36 @@ define method initialize
        else
 	 0;
        end;
-end;
+end method initialize;
 
 define method print-object (rep :: <c-representation>, stream :: <stream>)
     => ();
   pprint-fields(rep, stream, c-type: rep.representation-c-type);
-end;
+end method print-object;
 
 define class <general-representation> (<c-representation>)
   inherited slot representation-to-more-general, init-value: #f;
   inherited slot representation-from-more-general, init-value: #f;
-end;
+end class <general-representation>;
 
 define class <heap-representation> (<c-representation>)
-end;
+end class <heap-representation>;
 
 define class <immediate-representation> (<c-representation>)
-end;
+end class <immediate-representation>;
 
 define method representation-has-bottom-value?
     (res :: <immediate-representation>)
     => res :: <boolean>;
   #f;
-end;
+end method representation-has-bottom-value?;
 
-define class <data-word-representation> (<immediate-representation>)
+define class <c-data-word-representation>
+    (<immediate-representation>, <data-word-representation>)
   slot representation-class :: <cclass>, init-keyword: class:;
   slot representation-data-word-member :: <byte-string>,
     required-init-keyword: data-word-member:;
-end;
+end class <c-data-word-representation>;
 
 
 define variable *general-rep* :: false-or(<c-representation>) = #f;
@@ -108,9 +110,16 @@ define variable *long-double-rep* :: false-or(<c-representation>) = #f;
 
 define method seed-representations () => ();
   local
-    method set-representations(class, speed-rep, space-rep) => ();
-      class.speed-representation := speed-rep;
-      class.space-representation := space-rep;
+    method set-representations
+	(class :: <cclass>, speed-rep :: <c-representation>,
+	 space-rep :: <c-representation>)
+	=> ();
+      unless (class.abstract?)
+	class.direct-speed-representation := speed-rep;
+	class.direct-space-representation := space-rep;
+      end unless;
+      class.general-speed-representation := speed-rep;
+      class.general-space-representation := space-rep;
     end;
   unless (*general-rep*)
     *general-rep*
@@ -144,7 +153,7 @@ define method seed-representations () => ();
   begin
     let fixed-int-cclass = dylan-value(#"<integer>");
     unless (*long-rep*)
-      *long-rep* := make(<data-word-representation>, name: #"long",
+      *long-rep* := make(<c-data-word-representation>, name: #"long",
 			 alignment: $long-alignment, size: $long-size,
 			 more-general: *general-rep*, c-type: "long",
 			 to-more-general: #f,
@@ -153,37 +162,37 @@ define method seed-representations () => ();
       set-representations(fixed-int-cclass, *long-rep*, *long-rep*);
     end;
     unless (*int-rep*)
-      *int-rep* := make(<data-word-representation>, name: #"int",
+      *int-rep* := make(<c-data-word-representation>, name: #"int",
 			alignment: $int-alignment, size: $int-size,
 			more-general: *long-rep*, c-type: "int",
 			class: fixed-int-cclass, data-word-member: "l");
     end;
     unless (*uint-rep*)
-      *uint-rep* := make(<data-word-representation>, name: #"uint",
+      *uint-rep* := make(<c-data-word-representation>, name: #"uint",
 			 alignment: $int-alignment, size: $int-size,
 			 more-general: *long-rep*, c-type: "unsigned int",
 			 class: fixed-int-cclass, data-word-member: "l");
     end;
     unless (*short-rep*)
-      *short-rep* := make(<data-word-representation>, name: #"short",
+      *short-rep* := make(<c-data-word-representation>, name: #"short",
 			  alignment: $short-alignment, size: $short-size,
 			  more-general: *int-rep*, c-type: "short",
 			  class: fixed-int-cclass, data-word-member: "l");
     end;
     unless (*ushort-rep*)
-      *ushort-rep* := make(<data-word-representation>, name: #"ushort",
+      *ushort-rep* := make(<c-data-word-representation>, name: #"ushort",
 			   alignment: $short-alignment, size: $short-size,
 			   more-general: *uint-rep*, c-type: "unsigned short",
 			   class: fixed-int-cclass, data-word-member: "l");
     end;
     unless (*byte-rep*)
-      *byte-rep* := make(<data-word-representation>, name: #"byte",
+      *byte-rep* := make(<c-data-word-representation>, name: #"byte",
 			 alignment: 1, size: 1,
 			 more-general: *short-rep*, c-type: "signed char",
 			 class: fixed-int-cclass, data-word-member: "l");
     end;
     unless (*ubyte-rep*)
-      *ubyte-rep* := make(<data-word-representation>, name: #"ubyte",
+      *ubyte-rep* := make(<c-data-word-representation>, name: #"ubyte",
 			  alignment: 1, size: 1,
 			  more-general: *ushort-rep*, c-type: "unsigned char",
 			  class: fixed-int-cclass, data-word-member: "l");
@@ -192,7 +201,7 @@ define method seed-representations () => ();
   unless (*float-rep*)
     let sf-cclass = dylan-value(#"<single-float>");
     let sf-rep
-      = make(<data-word-representation>, name: #"float",
+      = make(<c-data-word-representation>, name: #"float",
 	     more-general: *general-rep*,
 	     to-more-general: #f, from-more-general: "%s.dataword.f",
 	     alignment: 4, size: 4, c-type: "float",
@@ -211,7 +220,7 @@ define method seed-representations () => ();
 	       alignment: $double-alignment, size: $double-size,
 	       c-type: "double");
 	else
-	  make(<data-word-representation>, name: #"double",
+	  make(<c-data-word-representation>, name: #"double",
 	       more-general: *general-rep*,
 	       to-more-general: #f, from-more-general: "%s.dataword.d",
 	       alignment: $double-alignment, size: $double-size,
@@ -231,7 +240,7 @@ define method seed-representations () => ();
 	       alignment: $long-double-alignment, size: $long-double-size,
 	       c-type: "long double");
 	else
-	  make(<data-word-representation>, name: #"long-double",
+	  make(<c-data-word-representation>, name: #"long-double",
 	       more-general: *general-rep*,
 	       to-more-general: #f, from-more-general: "%s.dataword.x",
 	       alignment: $long-double-alignment, size: $long-double-size,
@@ -242,7 +251,7 @@ define method seed-representations () => ();
   end;
   unless (*ptr-rep*)
     let ptr-cclass = dylan-value(#"<raw-pointer>");
-    *ptr-rep* := make(<data-word-representation>, name: #"ptr",
+    *ptr-rep* := make(<c-data-word-representation>, name: #"ptr",
 		      alignment: $pointer-alignment, size: $pointer-size,
 		      more-general: *general-rep*, c-type: "void *",
 		      to-more-general: #f,
@@ -250,194 +259,155 @@ define method seed-representations () => ();
 		      class: ptr-cclass, data-word-member: "ptr");
     set-representations(ptr-cclass, *ptr-rep*, *ptr-rep*);
   end;
-end;
+end method seed-representations;
 
+
+// Assigning class representations.
 
-define method pick-representation
-    (type :: <ctype>, optimize-for :: one-of(#"speed", #"space"))
-    => rep :: <c-representation>;
-  *general-rep*;
-end;
-
-define method pick-representation
-    (type :: <cclass>, optimize-for == #"speed")
-    => rep :: <c-representation>;
-  speed-representation(type)
-    | begin
-	assign-representations(type);
-	speed-representation(type);
-      end;
-end;
-
-define method pick-representation
-    (type :: <cclass>, optimize-for == #"space")
-    => rep :: <c-representation>;
-  space-representation(type)
-    | begin
-	assign-representations(type);
-	space-representation(type);
-      end;
-end;
-
-define variable *assigning-representations-for* = #();
-
-define method potentially-uses-data-word-rep? (class :: <cclass>)
-    => res :: <boolean>;
-  class.functional?
-    & ~member?(class, *assigning-representations-for*)
-    & class.sealed?
-    & empty?(class.direct-subclasses)
-    & class.all-slot-infos.size == 2;
-end;
-
+define variable *assigning-representations-for* :: <list> = #();
 
 define method assign-representations (class :: <cclass>) => ();
+  assert(class.direct-speed-representation == #f);
+  assert(class.direct-space-representation == #f);
   //
-  // First, check to see if the class is abstract.
-  if (class.abstract?)
+  // If the class is functional, then the representation to use depends on
+  // what is in the class.
+  if (class.functional?)
     //
-    // Currently, abstract classes can only have abstract superclasses, but
-    // check that because we depend on it and it might change.
-    assert(every?(abstract?, class.precedence-list));
+    // Make sure we've computed the layout for the class.  
+    layout-slots-for(class);
     //
-    // The class is indeed abstract.  So we have to pick between the
-    // general rep and the heap rep.  We would rather use the heap rep
-    // but we can only do that if we can determine that no subclasses can
-    // possibly have a data-word rep.
-    let rep
-      = if (class.sealed?)
-	  //
-	  // The class is sealed, so we can check all the subclasses if
-	  // necessary.
-	  //
-	  if (class.all-slot-infos.size > 2)
-	    //
-	    // If there are more than two slots, no subclass can possibly use
-	    // a data word representation.
-	    *heap-rep*;
-	  else
-	    block (return)
-	      for (subclass in class.subclasses)
-		//
-		// Don't bother considering abstract classes.
-		unless (subclass.abstract?)
-		  //
-		  // Check the representation of the subclass.  Note: if the
-		  // slot type of the subclass is this class we will end
-		  // up right back here.  But the subclass will have been
-		  // added to *assigning-reps-for* so the next time though
-		  // it will return *heap-rep*.  Which is what we want to
-		  // see.
-		  let subclass-rep = pick-representation(subclass, #"speed");
-		  if (instance?(subclass-rep, <data-word-representation>)
-			| instance?(subclass-rep, <general-representation>))
-		    return(*general-rep*);
-		  end;
-		end;
-	      end;
-	      //
-	      // We only get here if none of the subclasses wanted a data
-	      // word.  So use the heap representation.
-	      *heap-rep*;
-	    end;
-	  end;
-	else
-	  //
-	  // The class is open, so new classes could be added at any time.
-	  //
-	  select (class.all-slot-infos.size)
-	    1 =>
-	      // Only one slot (%object-class) so any newly added subclass
-	      // might very well pick a data-word representation.
-	      *general-rep*;
-	    2 =>
-	      // Two slots (%object-class and one other).  If that other slot
-	      // can't have a data-word representation, then no subclasses
-	      // can have a data-word representation.  Therefore, we can use
-	      // the heap representation.
-	      //
-	      // But we need to protect against recursion.  This can happen
-	      // two ways: the slot's type involves us directly, or the slot's
-	      // type is another potentially data-word represented class
-	      // that involves us in its slot type.  The second case will
-	      // be handled by the recursion protection below, but the first
-	      // case won't be.  So we have to protect against it here.
-	      //
-	      // Either way, we guess we won't end up needed the general rep.
-	      // This guess might turn out wrong, but if so, we'll fix it up
-	      // during the unwind.
-	      // 
-	      if (member?(class, *assigning-representations-for*))
-		*heap-rep*;
-	      else
-		let old-assigning-reps-for = *assigning-representations-for*;
-		block ()
-		  *assigning-representations-for*
-		    := pair(class, old-assigning-reps-for);
-		  let type = class.all-slot-infos[1].slot-type;
-		  let slot-rep = pick-representation(type, #"speed");
-		  if (instance?(slot-rep, <data-word-representation>)
-			| instance?(slot-rep, <general-representation>))
-		    *general-rep*;
-		  else
-		    *heap-rep*;
-		  end;
-		cleanup
-		  *assigning-representations-for* := old-assigning-reps-for;
-		end;
-	      end;
-	    otherwise =>
-	      *heap-rep*;
-	  end;
-	end;
-    class.speed-representation := rep;
-    class.space-representation := rep;
-
+    // Layout-slots-for will call either use-data-word-representation or
+    // use-general-representation if appropriate.  Therefore, if it finishes
+    // and neither were called, then use a heap representation.
+    unless (class.direct-speed-representation)
+      class.direct-speed-representation := *heap-rep*;
+      class.direct-space-representation := *heap-rep*;    
+    end unless;
   else
     //
-    // The class is concrete.  See if we can use a data-word representation
-    // for it.  If not, then use the heap representation.
-    if (potentially-uses-data-word-rep?(class))
-      let old-assigning-reps-for = *assigning-representations-for*;
-      block ()
-	*assigning-representations-for* := pair(class, old-assigning-reps-for);
-	let type = class.all-slot-infos[1].slot-type;
-	let speed-rep = pick-representation(type, #"speed");
-	if (instance?(speed-rep, <data-word-representation>))
-	  local
-	    method dup-rep (rep :: <data-word-representation>,
-			    more-gen :: <c-representation>,
-			    to-more-gen, from-more-gen)
-	      make(<data-word-representation>,
-		   more-general: more-gen,
-		   to-more-general: to-more-gen,
-		   from-more-general: from-more-gen,
-		   alignment: rep.representation-alignment,
-		   size: rep.representation-size,
-		   c-type: rep.representation-c-type,
-		   class: class,
-		   data-word-member: rep.representation-data-word-member);
-	    end;
-	  class.speed-representation
-	    := dup-rep(speed-rep, *general-rep*, #f,
-		       concatenate("%s.dataword.",
-				   speed-rep.representation-data-word-member));
-	  class.space-representation
-	    := dup-rep(pick-representation(type, #"space"),
-		       class.speed-representation, #t, #t);
-	else
-	  class.speed-representation := *heap-rep*;
-	  class.space-representation := *heap-rep*;    
-	end;
-      cleanup
-	*assigning-representations-for* := old-assigning-reps-for;
-      end;
+    // The class isn't functional, so use the heap representation.
+    class.direct-speed-representation := *heap-rep*;
+    class.direct-space-representation := *heap-rep*;    
+  end if;
+end method assign-representations;
+
+
+define method use-data-word-representation
+    (class :: <cclass>, data-word-type :: <ctype>)
+    => ();
+  unless (class.abstract? | class.direct-speed-representation)
+    local
+      method dup-rep (rep :: <c-data-word-representation>,
+		      more-gen :: <c-representation>,
+		      to-more-gen, from-more-gen)
+	  => new-rep :: <c-data-word-representation>;
+	make(<c-data-word-representation>,
+	     more-general: more-gen,
+	     to-more-general: to-more-gen,
+	     from-more-general: from-more-gen,
+	     alignment: rep.representation-alignment,
+	     size: rep.representation-size,
+	     c-type: rep.representation-c-type,
+	     class: class,
+	     data-word-member: rep.representation-data-word-member);
+      end method dup-rep;
+    let speed-rep = pick-representation(data-word-type, #"speed");
+    class.direct-speed-representation
+      := dup-rep(speed-rep, *general-rep*, #f,
+		 concatenate("%s.dataword.",
+			     speed-rep.representation-data-word-member));
+    let space-rep = pick-representation(data-word-type, #"space");
+    class.direct-space-representation
+      := dup-rep(space-rep, class.direct-speed-representation, #t, #t);
+  end unless;
+end method use-data-word-representation;
+
+
+define method use-general-representation
+    (class :: <cclass>) => ();
+  unless (class.abstract?)
+    class.direct-speed-representation := *general-rep*;
+    class.direct-space-representation := *general-rep*;
+  end unless;
+  error("General representation for direct instances not supported yet.");
+end method use-general-representation;
+
+
+
+// Pick-representation methods.
+  
+define method pick-representation
+    (class :: <cclass>, optimize-for :: one-of(#"speed", #"space"))
+    => rep :: <c-representation>;
+  select (optimize-for)
+    #"speed" =>
+      class.general-speed-representation
+	| (class.general-speed-representation
+	     := general-representation(class, #"speed"));
+    #"space" =>
+      class.general-space-representation
+	| (class.general-space-representation
+	     := general-representation(class, #"space"));
+  end select;
+end method pick-representation;
+
+define method general-representation
+    (class :: <cclass>, optimize-for :: one-of(#"speed", #"space"))
+    => rep :: <c-representation>;
+  //
+  // Check to see if the class is sealed.
+  if (class.sealed?)
+    //
+    // The class is sealed.  We can explicitly look at all of possible
+    // direct classes.
+    let direct-classes = find-direct-classes(class);
+    assert(direct-classes);
+    if (direct-classes.size == 1)
+      //
+      // There is only one possible direct class, so we don't need to
+      // represent any type information.  
+      direct-representation(direct-classes.first, optimize-for);
     else
-      class.speed-representation := *heap-rep*;
-      class.space-representation := *heap-rep*;    
-    end;
-  end;
-end;
+      block (return)
+	for (direct-class in direct-classes)
+	  let direct-rep = direct-representation(direct-class, optimize-for);
+	  if (instance?(direct-rep, <data-word-representation>)
+		| instance?(direct-rep, <general-representation>))
+	    return(*general-rep*);
+	  end if;
+	end for;
+	*heap-rep*;
+      end block;
+    end if;
+  elseif (class.not-functional?)
+    *heap-rep*;
+  else
+    *general-rep*;
+  end if;
+end method general-representation;
+
+define method pick-representation
+    (type :: <direct-instance-ctype>,
+     optimize-for :: one-of(#"speed", #"space"))
+    => rep :: <c-representation>;
+  direct-representation(type.base-class, optimize-for);
+end method pick-representation;
+
+define method direct-representation
+    (class :: <cclass>, optimize-for :: one-of(#"speed", #"space"))
+    => rep :: <c-representation>;
+  unless (class.direct-speed-representation)
+    assign-representations(class);
+  end unless;
+  select (optimize-for)
+    #"speed" =>
+      class.direct-speed-representation;
+    #"space" =>
+      class.direct-space-representation;
+  end select;
+end method direct-representation;
+
 
 define method pick-representation
     (type :: <limited-ctype>, optimize-for :: one-of(#"speed", #"space"))
@@ -456,7 +426,7 @@ define method pick-representation
   else
     let char-rep = pick-representation(type.base-class, optimize-for);
     *byte-char-rep*
-      := make(<data-word-representation>, name: #"byte-char",
+      := make(<c-data-word-representation>, name: #"byte-char",
 	      more-general: char-rep,
 	      alignment: 1, size: 1, c-type: "unsigned char",
 	      class: type.base-class, data-word-member: "l");
@@ -492,12 +462,12 @@ define method pick-representation
 	*uint-rep*;
       else
 	*long-rep*;
-      end;
-    end;
+      end if;
+    end if;
   else
     next-method();
-  end;
-end;
+  end if;
+end method pick-representation;
 
 define method integer-length (int :: <extended-integer>) => res :: <integer>;
   if (negative?(int))
@@ -508,9 +478,9 @@ define method integer-length (int :: <extended-integer>) => res :: <integer>;
 	 until: zero?(int))
     finally
       len;
-    end;
-  end;
-end;
+    end for;
+  end if;
+end method integer-length;
 
 define method pick-representation
     (type :: <union-ctype>, optimize-for :: one-of(#"speed", #"space"))
@@ -567,7 +537,8 @@ end;
 
 define constant $rep-slots
   = list(representation-name, #f, set-name-and-remember,
-	 more-general-representation, more-general:, #f,
+	 more-general-representation, more-general:,
+	   more-general-representation-setter,
 	 representation-to-more-general, to-more-general:, #f,
 	 representation-from-more-general, from-more-general:, #f,
 	 representation-alignment, alignment:, #f,
@@ -584,7 +555,7 @@ add-make-dumper(#"immediate-representation", *compiler-dispatcher*,
 		<immediate-representation>, $rep-slots, load-external: #t);
 
 add-make-dumper(#"data-word-representation", *compiler-dispatcher*,
-		<data-word-representation>,
+		<c-data-word-representation>,
 		concatenate($rep-slots,
 			    list(representation-class, class:,
 				   representation-class-setter,
@@ -601,5 +572,5 @@ define sealed domain make(singleton(<general-representation>));
 define sealed domain make(singleton(<heap-representation>));
 // <immediate-representation> -- subclass of <c-representation>
 define sealed domain make(singleton(<immediate-representation>));
-// <data-word-representation> -- subclass of <immediate-representation>
-define sealed domain make(singleton(<data-word-representation>));
+// <c-data-word-representation> -- subclass of <immediate-representation>
+define sealed domain make(singleton(<c-data-word-representation>));

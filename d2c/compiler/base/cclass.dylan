@@ -1,16 +1,13 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.35 1996/04/06 07:07:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.36 1996/04/13 21:12:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
 // $All-Classes -- internal.
 //
-// Holds all the classes allocated.  We guarantee that superclasses preceed
-// subclasses by added new classes to the end when they are created.  As
-// subclasses have to be created after their superclasses, this means they
-// will be added after also.
+// Holds all the classes allocated.  We can't make any guarantees about 
 //
-define constant $All-Classes = make(<stretchy-vector>);
+define variable *All-Classes* :: <stretchy-vector> = make(<stretchy-vector>);
 
 
 define abstract class <cclass> 
@@ -29,9 +26,9 @@ define abstract class <cclass>
   // Closest primary superclass.
   slot closest-primary-superclass :: <cclass>;
 
-  // True when the class can't be functional.  Not the same thing as
-  // ~functional? because abstract classes can be neither functional? nor
-  // not-functional?.
+  // True when this class can't and none of its subclasses can be functional.
+  // I.e. when the class is concrete and ~functional?, has a writable slot, or
+  // one of its superclasses is not-functional?.
   slot not-functional? :: <boolean>,
     init-keyword: not-functional:, init-value: #f;
 
@@ -62,7 +59,7 @@ define abstract class <cclass>
   // though.)
   slot unique-id :: false-or(<integer>), init-value: #f,
     init-keyword: unique-id:;
-
+  //
   // The range of ids that cover all the subclasses of this class and
   // only the subclasses of this class, if such a range exists.  That
   // range will exist if this class is never mixed in with any other
@@ -71,36 +68,51 @@ define abstract class <cclass>
     init-keyword: subclass-id-range-min:;
   slot subclass-id-range-max :: false-or(<integer>), init-value: #f,
     init-keyword: subclass-id-range-max:;
-
+  //
   // The representation of instances of this class or #f if we haven't
-  // picked them yet.
-  slot speed-representation :: false-or(<representation>),
-    init-value: #f, init-keyword: speed-representation:;
-  slot space-representation :: false-or(<representation>),
-    init-value: #f, init-keyword: space-representation:;
+  // picked them yet.  Also #f if this class is abstract, because we never
+  // pick representations for abstract classes.
+  slot direct-speed-representation :: false-or(<representation>),
+    init-value: #f, init-keyword: direct-speed-representation:;
+  slot direct-space-representation :: false-or(<representation>),
+    init-value: #f, init-keyword: direct-space-representation:;
+  //
+  // A memo of the representation to use for general instances of this class.
+  // Used by pick-representation.
+  slot general-speed-representation :: false-or(<representation>),
+    init-value: #f, init-keyword: general-speed-representation:;
+  slot general-space-representation :: false-or(<representation>),
+    init-value: #f, init-keyword: general-space-representation:;
   //
   // Vector of <slot-info>s for the slots introduced by this class.
-  slot new-slot-infos :: <simple-object-vector>,
+  slot new-slot-infos :: <simple-object-vector> = #[],
     init-keyword: slots:;
   //
   // Vector of all the slots in instances of this class, in no particular
   // order. Filled in when the slot layouts are computed.
-  slot all-slot-infos :: <vector>,
+  slot all-slot-infos :: <vector> = #[],
     init-keyword: all-slot-infos:;
   //
   // Vector of <override-info>s for the overrides introduced by this class.
-  slot override-infos :: <simple-object-vector>,
+  slot override-infos :: <simple-object-vector> = #[],
     init-keyword: overrides:;
+  //
+  // #t if we've computed the layout, #"computing" if we are working on it,
+  // and #f until then.
+  slot layout-computed? :: one-of(#t, #"computing", #f) = #f;
   //
   // Layout of the instance slots.  Filled in when the slot layouts are
   // computed.
   slot instance-slots-layout :: <layout-table>,
     init-keyword: instance-slots-layout:;
   //
-  // The trailing vector slot, if any.  Filled in when the slot layouts are
-  // computed.
-  slot vector-slot :: false-or(<vector-slot-info>),
+  // The trailing vector slot, if any.
+  slot vector-slot :: false-or(<vector-slot-info>) = #f,
     init-keyword: vector-slot:;
+  //
+  // The slot allocated in the data-word, if any.
+  slot data-word-slot :: false-or(<instance-slot-info>) = #f,
+    init-keyword: data-word-slot:;
   //
   // Count of the number of each-subclass slots.
   slot each-subclass-slots-count :: <integer>,
@@ -117,26 +129,26 @@ define method initialize
     => ();
   next-method();
   
-  // Record the class.
-  add!($All-Classes, class);
-
-  // Compute the cpl if it wasn't already handed to us.
-  let supers = class.direct-superclasses;
-  let cpl = (precedence-list
-	       | (class.precedence-list := compute-cpl(class, supers)));
+  // Add this class to *All-Classes*.
+  add!(*All-Classes*, class);
 
   // Add us to all our direct superclasses direct-subclass lists.
+  let supers = class.direct-superclasses;
   for (super in supers)
     if (super.obj-resolved?)
       super.direct-subclasses := pair(class, super.direct-subclasses);
     else
-      request-backpatch(super,
-			method (actual)
-			  actual.direct-subclasses
-			    := pair(class, actual.direct-subclasses);
-			end);
-    end;
-  end;
+      request-backpatch
+	(super,
+	 method (actual)
+	   actual.direct-subclasses := pair(class, actual.direct-subclasses);
+	 end method);
+    end if;
+  end for;
+
+  // Compute the cpl if it wasn't already handed to us.
+  let cpl = (precedence-list
+	       | (class.precedence-list := compute-cpl(class, supers)));
 
   // Add us to all our superclasses subclass lists.
   for (super in cpl)
@@ -265,13 +277,13 @@ define method initialize
 end;
 
 define class <instance-slot-info> (<slot-info>)
-  slot slot-representation :: false-or(<representation>),
-    init-value: #f, init-keyword: slot-representation:;
-  slot slot-positions :: <list>,
-    init-value: #(), init-keyword: slot-positions:;
-  slot slot-initialized?-slot :: false-or(<instance-slot-info>),
-    init-value: #f, init-keyword: slot-initialized?-slot:;
+  constant slot slot-positions :: <position-table> = make(<position-table>);
+  slot slot-representation :: false-or(<representation>) = #f,
+    init-keyword: slot-representation:;
+  slot slot-initialized?-slot :: false-or(<instance-slot-info>) = #f,
+    init-keyword: slot-initialized?-slot:;
 end;
+
 
 define class <vector-slot-info> (<instance-slot-info>)
   slot slot-size-slot :: <instance-slot-info>,
@@ -282,8 +294,7 @@ define class <class-slot-info> (<slot-info>)
 end;
 
 define class <each-subclass-slot-info> (<slot-info>)
-  slot slot-positions :: <list>,
-    init-value: #(), init-keyword: slot-positions:;
+  constant slot slot-positions :: <position-table> = make(<position-table>);
 end;
 
 define class <virtual-slot-info> (<slot-info>)
@@ -503,9 +514,17 @@ end method;
 //
 define method inherit-slots () => ();
   //
-  // This relies on the ordering of classes in $All-Classes.  Specifically,
-  // we need to process superclasses before their subclasses.
-  do(inherit-slots-for, $All-Classes);
+  // The first thing we do is sort *All-Classes* to guarantee that superclasses
+  // preceed their subclasses.
+  *All-Classes*
+    := sort!(*All-Classes*,
+	     test: method (class1 :: <cclass>, class2 :: <cclass>)
+		       => res :: <boolean>;
+		     class1.precedence-list.size < class2.precedence-list.size;
+		   end method);
+  //
+  // Now propagate slots down to each subclass.
+  do(inherit-slots-for, *All-Classes*);
 end;
 
 define method inherit-slots-for (class :: <cclass>) => ();
@@ -549,7 +568,7 @@ end;
 define method reset-slot (slot :: <instance-slot-info>) => ();
   slot.slot-overrides := #();
   slot.slot-representation := #f;
-  slot.slot-positions := #();
+  clear-positions(slot.slot-positions);
   slot.slot-initialized?-slot := #f;
 end;
 
@@ -561,8 +580,8 @@ define method add-slot (slot :: <slot-info>, class :: <cclass>) => ();
     for (other-slot in class.all-slot-infos)
       if (slot.slot-getter == other-slot.slot-getter)
 	compiler-fatal-error
-	  ("Class %= can't combine two different %s slots, "
-	     "one introduced by %= and the other by %=",
+	  ("Class %s can't combine two different %s slots, "
+	     "one introduced by %s and the other by %s",
 	   class, slot.slot-getter.variable-name,
 	   slot.slot-introduced-by, other-slot.slot-introduced-by);
       end;
@@ -577,14 +596,14 @@ end;
 // Override inheritance.
 
 define method inherit-overrides ()
-  for (cclass in $All-Classes)
+  for (cclass in *All-Classes*)
     for (override in cclass.override-infos)
       block (next-override)
 	for (slot in cclass.all-slot-infos)
 	  if (override.override-getter == slot.slot-getter)
 	    if (slot.slot-introduced-by == cclass)
 	      compiler-fatal-error
-		("Class %= can't both introduce and override slot %s",
+		("Class %s can't both introduce and override slot %s",
 		 cclass, slot.slot-getter.variable-name);
 	    end;
 	    if (instance?(slot, <class-slot-info>))
@@ -599,7 +618,7 @@ define method inherit-overrides ()
 	  end;
 	end;
 	compiler-fatal-error
-	  ("Class %= can't override slot %s, because is doesn't "
+	  ("Class %s can't override slot %s, because is doesn't "
 	     "have that slot.",
 	   cclass, override.override-getter.variable-name);
       end;
@@ -623,7 +642,7 @@ define method inherit-overrides ()
 	  end;
 	  unless (active-overrides.tail == #())
 	    compiler-fatal-error
-	      ("Class %= must override slot %s itself to resolve "
+	      ("Class %s must override slot %s itself to resolve "
 		 "the conflict in inheriting overrides from each "
 		 "of %=",
 	       cclass, slot.slot-getter.variable-name,
@@ -704,7 +723,6 @@ define method assign-unique-ids (base :: <integer>) => ();
   grovel(dylan-value(#"<object>"), base);
 end;
 
-
 
 // Layout tables.
 
@@ -774,84 +792,380 @@ define method find-position (layout :: <layout-table>,
   end;
 end;
 
+
 
-// Slot representation assignment.
+// Position tables.
 
-define method assign-slot-representations () => ();
-  for (class in $All-Classes)
-    for (slot in class.new-slot-infos)
-      assign-slot-representation(slot);
-    end;
-    //
-    // Now that all slots have been added, convert them into a simple
-    // object vector.
-    class.all-slot-infos := as(<simple-object-vector>, class.all-slot-infos);
-  end;
-end;
+define class <position-table> (<object>)
+  slot pt-entries :: false-or(<pt-entry>) = #f;
+end class <position-table>;
 
-define method assign-slot-representation (slot :: <instance-slot-info>) => ();
-  let rep = pick-representation(slot.slot-type, #"space");
-  slot.slot-representation := rep;
-  unless (slot-guaranteed-initialized?(slot, slot.slot-introduced-by)
-	    | rep.representation-has-bottom-value?)
-    let class = slot.slot-introduced-by;
-    let init?-slot = make(<instance-slot-info>,
-			  introduced-by: class,
-			  type: dylan-value(#"<boolean>"),
-			  getter: #f,
-			  init-value: make(<literal-false>));
-    slot.slot-initialized?-slot := init?-slot;
-    for (subclass in class.subclasses)
-      add-slot(init?-slot, subclass);
-    end;
-    assign-slot-representation(init?-slot);
-  end;
-end;
+define sealed domain make (singleton(<position-table>));
+define sealed domain initialize (<position-table>);
+
+define method print-object
+    (table :: <position-table>, stream :: <stream>) => ();
+  pprint-logical-block
+    (stream,
+     prefix: "{",
+     body: method (stream)
+	     write-class-name(table, stream);
+	     write(' ', stream);
+	     write-address(table, stream);
+	     write(", ", stream);
+	     pprint-indent(#"block", 2, stream);
+	     pprint-newline(#"linear", stream);
+	     pprint-logical-block
+	       (stream,
+		prefix: "(",
+		body: method (stream)
+			for (entry = table.pt-entries then entry.pt-entry-next,
+			     first? = #t then #f,
+			     while: entry)
+			  unless (first?)
+			    write(' ', stream);
+			    pprint-newline(#"linear", stream);
+			  end unless;
+			  print(entry, stream);
+			end for;
+		      end method,
+		suffix: ")");
+	   end method,
+     suffix: "}");
+end method print-object;
+
+define constant <slot-position>
+  = type-union(<integer>, singleton(#"data-word"));
+
+define class <pt-entry> (<object>)
+  constant slot pt-entry-class :: <cclass>,
+    required-init-keyword: class:;
+  constant slot pt-entry-position :: <slot-position>,
+    required-init-keyword: position:;
+  slot pt-entry-next :: false-or(<pt-entry>),
+    required-init-keyword: next:;
+end class <pt-entry>;
+
+define sealed domain make (singleton(<pt-entry>));
+define sealed domain initialize (<pt-entry>);
+
+define method print-object (entry :: <pt-entry>, stream :: <stream>) => ();
+  pprint-fields(entry, stream,
+		class: entry.pt-entry-class,
+		position: entry.pt-entry-position);
+end method print-object;
+
+// as{singleton(<list>), <position-table>} -- method on imported GF.
+//
+// Convert the position table into a list.  Used by the heap dumper so that
+// we don't have to try dumping position tables.
+define method as (class == <list>, table :: <position-table>)
+    => res :: <list>;
+  for (entry = table.pt-entries then entry.pt-entry-next,
+       result = #()
+	 then pair(pair(entry.pt-entry-class, entry.pt-entry-position),
+		   result),
+       while: entry)
+  finally
+    reverse!(result);
+  end for;
+end method as;
+
+
+// clear-positions{<position-table>} -- internal.
+//
+// Clear a position table.  Only used if someone re-runs part of the compiler
+// from the debugger.
+//
+define method clear-positions (table :: <position-table>) => ();
+  table.pt-entries := #f;
+end method clear-positions;
+
+// add-position -- internal.
+//
+// Add a position to a position-table.
+// 
+define method add-position
+    (table :: <position-table>, class :: <cclass>, position :: <slot-position>)
+    => ();
+  for (entry = table.pt-entries then entry.pt-entry-next,
+       while: entry)
+    if (csubtype?(entry.pt-entry-class, class))
+      error("Attempting to add an entry for %s, but %s (a subclass) "
+	      "is already in the position-table.",
+	    class, entry.pt-entry-class);
+    end if;
+  end for;
+
+  block (return)
+    block (add-it)
+      for (entry = table.pt-entries then entry.pt-entry-next,
+	   while: entry)
+	if (csubtype?(class, entry.pt-entry-class))
+	  if (entry.pt-entry-position == position)
+	    return();
+	  else
+	    add-it();
+	  end if;
+	end if;
+      end for;
+    end block;
+
+    table.pt-entries
+      := make(<pt-entry>, class: class, position: position,
+	      next: table.pt-entries);
+  end block;
+end method add-position;
+
+// get-direct-position -- internal.
+//
+// Return the position for direct instances of class.
+// 
+define method get-direct-position
+    (table :: <position-table>, class :: <cclass>)
+    => position :: false-or(<slot-position>);
+  block (return)
+    for (entry = table.pt-entries then entry.pt-entry-next,
+	 while: entry)
+      if (csubtype?(class, entry.pt-entry-class))
+	return(entry.pt-entry-position);
+      end if;
+    end for;
+    #f;
+  end block;
+end method get-direct-position;
+
+// get-general-position -- internal.
+//
+// Return the position for possibly indirect instances of class, if there is
+// a single such position.  If there isn't, then return #f.
+// 
+define method get-general-position
+    (table :: <position-table>, class :: <cclass>)
+    => offset :: false-or(<slot-position>);
+  block (return)
+    let result = #f;
+    for (entry = table.pt-entries then entry.pt-entry-next,
+	 while: entry)
+      let entry-class = entry.pt-entry-class;
+      if (csubtype?(class, entry-class))
+	// This is the entry for direct instances of this class.
+	let entry-posn = entry.pt-entry-position;
+	if (result & result ~== entry-posn)
+	  // It conflicts with the entries we found for subclasses.
+	  return(#f);
+	else
+	  // We found a valid position.
+	  return(entry-posn);
+	end if;
+      elseif (csubtype?(entry.pt-entry-class, class))
+	// The entry is for a subclass of the class we are interested in.
+	if (result == #f)
+	  // It is the first such subclass we have found, so it by itself
+	  // can't conflict with anything.
+	  result := entry.pt-entry-position;
+	elseif (result ~== entry.pt-entry-position)
+	  // It conflicts with the position we found for some other class.
+	  return(#f);
+	end if;
+      end if;
+    end for;
+    error("No entry for %s in %=", class, table);
+  end block;
+end method get-general-position;
+
+// get-universal-position -- exported.
+//
+// If there is only one position in the table, return it.  Otherwise,
+// return #f.
+// 
+define method get-universal-position
+    (table :: <position-table>)
+    => offset :: false-or(<slot-position>);
+  let entry = table.pt-entries;
+  unless (entry)
+    error("No entries for %=?", table);
+  end unless;
+  if (entry.pt-entry-next)
+    #f;
+  else
+    entry.pt-entry-position;
+  end if;
+end method get-universal-position;
 
 
 
 // Slot layout stuff.
 
 define method layout-instance-slots () => ();
-  do(layout-slots-for, $All-Classes);
-end;
+  do(layout-slots-for, *All-Classes*);
+end method layout-instance-slots;
+
 
 define method layout-slots-for (class :: <cclass>) => ();
-  let supers = class.direct-superclasses;
-  let processed :: <simple-object-vector>
-    = if (empty?(supers))
-	class.instance-slots-layout := make(<layout-table>);
-	class.vector-slot := #f;
-	class.each-subclass-slots-count := 0;
-	#[];
-      else
-	let critical-super = supers.head;
-	let critical-primary = critical-super.closest-primary-superclass;
-	for (super in supers.tail)
-	  let primary = super.closest-primary-superclass;
-	  if (~(primary == critical-primary)
-		& csubtype?(primary, critical-primary))
-	    critical-super := super;
-	    critical-primary := primary;
-	  end;
+  if (class.layout-computed? == #f)
+    //
+    // Note that we are now working on this class.
+    class.layout-computed? := #"computing";
+    //
+    // Make sure all the superclasses have been assigned a layout.
+    for (super in class.direct-superclasses)
+      layout-slots-for(super);
+    end for;
+    //
+    // Pick a representation and add bound? slots for any slot that isn't
+    // guaranteed to be initialized and that the representation doesn't have
+    // a bottom value.
+    for (slot in class.new-slot-infos)
+      let rep = pick-representation(slot.slot-type, #"space");
+      slot.slot-representation := rep;
+      unless (slot-guaranteed-initialized?(slot, slot.slot-introduced-by)
+		| rep.representation-has-bottom-value?)
+	let class = slot.slot-introduced-by;
+	let init?-slot = make(<instance-slot-info>,
+			      introduced-by: class,
+			      type: dylan-value(#"<boolean>"),
+			      getter: #f,
+			      init-value: make(<literal-false>));
+	slot.slot-initialized?-slot := init?-slot;
+	//
+	// We have to add it to all the subclasses ourselves because
+	// inherit-slots has already run.
+	for (subclass in class.subclasses)
+	  add-slot(init?-slot, subclass);
+	end for;
+      end unless;
+    end for;
+    //
+    // Now that all slots have been added, convert them into a simple
+    // object vector.
+    class.all-slot-infos := as(<simple-object-vector>, class.all-slot-infos);
+    //
+    // Are there any superclasses?
+    let supers = class.direct-superclasses;
+    if (empty?(supers))
+      //
+      // No, assign all the slots a location, starting with a virgin layout.
+      class.instance-slots-layout := make(<layout-table>);
+      class.vector-slot := #f;
+      class.data-word-slot := #f;
+      class.each-subclass-slots-count := 0;
+      for (slot in class.all-slot-infos)
+	layout-slot(slot, class);
+      end for;
+    else
+      //
+      // Yes, first inherit the layout of the superclass we get the closest-
+      // primary-superclass from.
+      let critical-super = supers.head;
+      let critical-primary = critical-super.closest-primary-superclass;
+      for (super in supers.tail)
+	let primary = super.closest-primary-superclass;
+	if (~(primary == critical-primary)
+	      & csubtype?(primary, critical-primary))
+	  critical-super := super;
+	  critical-primary := primary;
 	end;
-	class.instance-slots-layout
-	  := copy-layout-table(critical-super.instance-slots-layout);
-	class.vector-slot := critical-super.vector-slot;
-	class.each-subclass-slots-count
-	  := critical-super.each-subclass-slots-count;
-	for (slot in critical-super.all-slot-infos)
-	  inherit-layout(slot, class, critical-super);
-	end;
-	critical-super.all-slot-infos;
       end;
-  //
-  for (slot in class.all-slot-infos)
-    unless (member?(slot, processed))
-      layout-slot(slot, class);
-    end;
-  end;
-end;
+      class.instance-slots-layout
+	:= copy-layout-table(critical-super.instance-slots-layout);
+      class.vector-slot := critical-super.vector-slot;
+      class.data-word-slot := critical-super.data-word-slot;
+      class.each-subclass-slots-count
+	:= critical-super.each-subclass-slots-count;
+      for (slot in critical-super.all-slot-infos)
+	inherit-layout(slot, class, critical-super);
+      end;
+      let processed :: <simple-object-vector> = critical-super.all-slot-infos;
+      //
+      // If the class is functional, we might have a data-word-slot to deal
+      // with.
+      if (class.functional?)
+	//
+	// Have we inherited a data-word-slot?
+	if (class.data-word-slot)
+	  //
+	  // Yes, check to see if we have added any other instance slots.
+	  block (return)
+	    for (slot in class.all-slot-infos)
+	      if (slot ~== class.data-word-slot
+		    & instance?(slot, <instance-slot-info>)
+		    & slot.slot-introduced-by ~== object-ctype())
+		//
+		// Yup, tell the representation stuff that this class needs
+		// the full general representation.
+		use-general-representation(class);
+		return();
+	      end if;
+	    end for;
+	    //
+	    // Nope, tell the representation stuff that this class needs
+	    // a data-word representation.
+	    use-data-word-representation
+	      (class, class.data-word-slot.slot-type);
+	  end block;
+	else
+	  //
+	  // We didn't inherit a data-word, so lets see if we introduce one.
+	  block (return)
+	    let instance-slot = #f;
+	    for (slot in class.all-slot-infos)
+	      if (instance?(slot, <instance-slot-info>)
+		    & slot.slot-introduced-by ~== object-ctype())
+		if (instance-slot)
+		  //
+		  // There are at least two instance slots.  That means no
+		  // data-word for us.
+		  return();
+		end if;
+		instance-slot := slot;
+	      end if;
+	    end for;
+	    //
+	    // Was there a single instance slot.
+	    if (instance-slot)
+	      //
+	      // Assert that we didn't inherit a non-data-word position from
+	      // the critical superclass.  We shouldn't be able to because
+	      // if something kept it out of the data-word in that class,
+	      // that same thing should keep it out of the data-word in this
+	      // class.
+	      assert(~member?(instance-slot, processed));
+	      //
+	      // Can we stick it in the data-word?
+	      if (instance?(instance-slot.slot-representation,
+			    <data-word-representation>))
+		//
+		// Yes!  Record it, and tell the representation stuff that we
+		// want a data-word representation.
+		class.data-word-slot := instance-slot;
+		use-data-word-representation(class, instance-slot.slot-type);
+		//
+		// Assert that the slot is also in the data-word for whoever
+		// introduced it.
+		assert(instance-slot.slot-introduced-by.data-word-slot
+			 == instance-slot);
+	      end if;
+	    end if;
+	  end block;
+	end if;
+      end if;
+      //
+      // Assign a location for all other slots.
+      for (slot in class.all-slot-infos)
+	unless (member?(slot, processed))
+	  layout-slot(slot, class);
+	end unless;
+      end for;
+    end if;
+    //
+    // We are done.
+    class.layout-computed? := #t;
+  elseif (class.layout-computed? == #"computing")
+    error("Someone left %s.layout-computed? as #\"computing\".", class);
+  end if;
+end method layout-slots-for;
+
 
 define method inherit-layout
     (slot :: <slot-info>, class :: <cclass>, super :: <cclass>) => ();
@@ -862,21 +1176,10 @@ define method inherit-layout
     (slot :: type-union(<instance-slot-info>, <each-subclass-slot-info>),
      class :: <cclass>, super :: <cclass>)
     => ();
-  for (remaining = slot.slot-positions then remaining.tail,
-       until: csubtype?(class, remaining.head.head))
-  finally
-    let this-offset = remaining.head.tail;
-    for (remaining = remaining then remaining.tail,
-	 until: csubtype?(super, remaining.head.head))
-    finally
-      let super-offset = remaining.head.tail;
-      unless (this-offset == super-offset)
-	slot.slot-positions := pair(pair(class, super-offset),
-				    slot.slot-positions);
-      end;
-    end
-  end;
-end;
+  add-position(slot.slot-positions, class,
+	       get-direct-position(slot.slot-positions, super));
+end method inherit-layout;
+
 
 define method layout-slot (slot :: <slot-info>, class :: <cclass>) => ();
   // Default method -- do nothing.
@@ -889,11 +1192,15 @@ define method layout-slot (slot :: <instance-slot-info>, class :: <cclass>)
       ("variable length slots must be the last slot in the class.");
   end;
   let rep = slot.slot-representation;
-  let offset = find-position(class.instance-slots-layout,
-			     rep.representation-size,
-			     rep.representation-alignment);
-  slot.slot-positions
-    := add-position-if-necessary(class, offset, slot.slot-positions);
+  let offset
+    = if (slot == class.data-word-slot)
+	#"data-word";
+      else
+	find-position(class.instance-slots-layout,
+		      rep.representation-size,
+		      rep.representation-alignment);
+      end if;
+  add-position(slot.slot-positions, class, offset);
 end;
 
 define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
@@ -906,85 +1213,83 @@ define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
   let rep = slot.slot-representation;
   let offset = find-position(class.instance-slots-layout, 0,
 			     rep.representation-alignment);
-  slot.slot-positions
-    := add-position-if-necessary(class, offset, slot.slot-positions);
+  add-position(slot.slot-positions, class, offset);
 end;
 
 define method layout-slot
     (slot :: <each-subclass-slot-info>, class :: <cclass>)
     => ();
   let posn = class.each-subclass-slots-count;
-  slot.slot-positions
-    := add-position-if-necessary(class, posn, slot.slot-positions);
+  add-position(slot.slot-positions, class, posn);
   class.each-subclass-slots-count := posn + 1;
 end;
 
-define method add-position-if-necessary
-    (class :: <cclass>, offset :: <integer>, positions :: <list>)
-    => res :: <list>;
-  block (return)
-    for (entry :: <pair> in positions)
-      if (csubtype?(class, entry.head))
-	if (offset == entry.tail)
-	  return(positions);
-	else
-	  return(pair(pair(class, offset), positions));
-	end if;
-      end if;
-    end for;
-    pair(pair(class, offset), positions);
-  end block;
-end method add-position-if-necessary;
 
 
 // Compile time determination of slot offsets and other gunk.
 
+// find-slot-offset -- exported.
+//
+// Return the static position that slot occures in general instances of
+// instance-type, or #f if no single such position exists.
+// 
+define generic find-slot-offset
+    (slot :: <instance-slot-info>, instance-type :: <ctype>)
+    => res :: false-or(<slot-position>);
+
 define method find-slot-offset
     (slot :: <instance-slot-info>, instance-type :: <ctype>)
-    => res :: false-or(<integer>);
-  let instance-class
-    = best-idea-of-class(instance-type) | slot.slot-introduced-by;
+    => res :: false-or(<slot-position>);
+  #f;
+end method find-slot-offset;
+
+define method find-slot-offset
+    (slot :: <instance-slot-info>, instance-class :: <cclass>)
+    => res :: false-or(<slot-position>);
   if (csubtype?(instance-class.closest-primary-superclass,
 		slot.slot-introduced-by))
-    block (return)
-      for (element in slot.slot-positions)
-	if (csubtype?(instance-class, element.head))
-	  return(element.tail);
-	end;
-      end;
-      error("%= isn't in %=?", slot, instance-class);
-    end;
+    get-direct-position(slot.slot-positions, instance-class)
+      | error("Can't find position for %= in class %s?", slot, instance-class);
   elseif (instance-class.sealed?)
-    block (return)
-      let guess = #f;
-      for (element in slot.slot-positions)
-	if (csubtype?(instance-class, element.head))
-	  if (guess & guess ~= element.tail)
-	    return(#f);
-	  else
-	    return(element.tail);
-	  end;
-	elseif (csubtype?(element.head, instance-class))
-	  if (guess)
-	    // At different locations in different subclasses.
-	    return(#f);
-	  else
-	    guess := element.tail;
-	  end;
-	end;
-      end;
-      if (guess)
-	guess;
-      else
-	error("%= isn't in %=?", slot, instance-class);
-      end;
-    end;
+    get-general-position(slot.slot-positions, instance-class);
   else
-    // The class isn't sealed and isn't sufficiently primary.
     #f;
-  end;
-end;
-	  
+  end if;
+end method find-slot-offset;
+
+define method find-slot-offset
+    (slot :: <instance-slot-info>, instance-type :: <limited-ctype>)
+    => res :: false-or(<slot-position>);
+  find-slot-offset(slot, instance-type.base-class);
+end method find-slot-offset;
+
+define method find-slot-offset
+    (slot :: <instance-slot-info>, instance-type :: <direct-instance-ctype>)
+    => res :: false-or(<slot-position>);
+  let instance-class = instance-type.base-class;
+  get-direct-position(slot.slot-positions, instance-class)
+    | error("Can't find position for %= in class %s?", slot, instance-class);
+end method find-slot-offset;
+
+define method find-slot-offset
+    (slot :: <instance-slot-info>, instance-type :: <union-ctype>)
+    => res :: false-or(<slot-position>);
+  let mems = instance-type.members;
+  if (empty?(mems))
+    #f;
+  else
+    block (punt)
+      let result = find-slot-offset(slot, mems.head) | punt(#f);
+      for (mem in mems.tail)
+	if (find-slot-offset(slot, mem) ~== result)
+	  punt(#f);
+	end if;
+      end for;
+      result;
+    end block;
+  end if;
+end method find-slot-offset;
+
 
 
 define method slot-guaranteed-initialized?
