@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.15 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.16 1996/05/29 23:03:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -558,7 +558,7 @@ end;
 // 
 define method %instance? (object :: <object>, type :: <direct-instance>)
     => res :: <boolean>;
-  object.object-class == type;
+  object.object-class == type.direct-instance-of;
 end method %instance?;
 
 // %instance?(<object>,<singleton> -- internal gf method.
