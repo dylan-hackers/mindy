@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.31 2002/01/03 16:34:38 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.32 2002/03/24 20:03:12 gabor Exp $
 copyright: see below
 
 
@@ -7,7 +7,7 @@ copyright: see below
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -945,13 +945,61 @@ define method compute-cclass (defn :: <real-class-definition>)
     let keyword-infos = map(compute-keyword, defn.class-defn-keywords);
     // Filter out class allocated slots
     //
-    let class-slot-infos = choose(rcurry(instance?, <class-slot-info>), slot-infos);
+    let class-slot? = rcurry(instance?, <class-slot-info>);
+    let class-slot-infos = choose(class-slot?, slot-infos);
+    // Filter out each-subclass allocated slots
+    //
+    let each-subclass-slot? = rcurry(instance?, <each-subclass-slot-info>);
+    let each-subclass-slot-infos = choose(each-subclass-slot?, slot-infos);
+    //
+    // Superclasses that have indirect slots
+    let superclasses-with-meta = choose(class-metaclass, supers);
+    local method each-subclass-slots? (super :: <defined-cclass>)
+	   => each-subclass-slots? :: <boolean>;
+	    any?(each-subclass-slot?, super.new-slot-infos)
+	      | any?(each-subclass-slots?, super.direct-superclasses)
+	  end;
+    // Superclasses that have each-subclass slots
+    let superclasses-with-esc-meta = choose(each-subclass-slots?,
+					    superclasses-with-meta);
+    let superclasses-with-esc-meta = superclasses-with-esc-meta.remove-duplicates!;
+    local method extract-esc-metas(super-with-esc :: <defined-cclass>)
+	      => esc-metas :: <list>;
+	    let meta = super-with-esc.class-metaclass;
+	    if (any?(class-slot?, super-with-esc.new-slot-infos))
+	      // Peel off metaclass contributing the class slots only
+	      meta.direct-superclasses
+	    else
+	      meta.list
+	    end;
+	  end;
+    // Gather all metaclasses that contribute esc-slots
+    let esc-metas = reduce(concatenate, #(), map(extract-esc-metas, superclasses-with-esc-meta));
+    let esc-metas = esc-metas.remove-duplicates!;
+// needed??    let esc-metas = remove!(esc-metas, class-ctype());
     
     let metaclass
-      = unless (class-slot-infos.empty?)
-    
-	  local method associate(info :: <class-slot-info>)
-		 => associated :: <instance-slot-info>;
+      = unless (class-slot-infos.empty?
+		  & each-subclass-slot-infos.empty?
+		  & esc-metas.empty?)
+
+	// now that we got here, we have to handle 7 cases.
+	// these are detailed in the following table and illustrate
+	// how the CPL for the metaclass should look like (i.e.
+	// how the contributing metaclasses should nest)
+	
+	// class-slots	esc-slots  inherited-esc-slots => CPL
+	// 1.	NO	NO		YES		esc(inh)	// where "esc" won't contribute
+	// 1a.	NO	NO		YES (1 meta)	inh1		// we could reuse it! (not yet implemented)
+	// 2.	NO	YES		NO		esc(<class>)
+	// 3.	NO	YES		YES		esc(inh)
+	// 4.	YES	NO		NO		cls(<class>)
+	// 5.	YES	NO		YES		cls(inh)
+	// 6.	YES	YES		NO		cls(esc(<class>))
+	// 7.	YES	YES		YES		cls(esc(inh))
+
+	  local method associate(info :: <indirect-slot-info>)
+		 => associated :: <meta-slot-info>;
 		  info.associated-meta-slot
 		    := make(<meta-slot-info>,
 			    referred: info,
@@ -962,17 +1010,52 @@ define method compute-cclass (defn :: <real-class-definition>)
 		end method;
 
 	  let associated-infos = map-as(<simple-object-vector>, associate, class-slot-infos);
+	  let associated-esc-infos = map-as(<simple-object-vector>, associate, each-subclass-slot-infos);
 
-	  make(<meta-cclass>,
-	       loading: #f,
-	       name: make(<derived-name>, how: #"class-meta", base: defn.defn-name),
-	       direct-superclasses: list(class-ctype()), // change for each-subclass!
-	       not-functional: #t,
-	       functional: #f,
-	       sealed: #t,
-	       primary: #t, // abstract??? - probably not because no slot layout then?
-	       slots: associated-infos,
-	       metaclass: #f);
+	  let super-metas = if (esc-metas.empty?) class-ctype().list else esc-metas end;
+
+	  let meta-supers :: <list>
+	    = if (~class-slot-infos.empty?
+		    & each-subclass-slot-infos.empty?)
+		// class-meta will be a wrapper below...
+		// cases 4. and 5.
+		super-metas
+	      else
+		// we have introduced each-subclass slots
+		list(make(<meta-cclass>,
+			  loading: #f,
+			  name: make(<derived-name>,
+				     how: #"each-subclass-meta",
+				     base: defn.defn-name),
+			  direct-superclasses: super-metas,
+			  not-functional: #t,
+			  functional: #f,
+			  sealed: #f,
+			  abstract: #t,
+			  primary: #f,
+			  slots: associated-esc-infos,
+			  metaclass: #f))
+	      end;
+
+	  if (class-slot-infos.empty?)
+	    assert(meta-supers.size == 1);
+	    // cases 1., 2. and 3.
+	    meta-supers.first
+	  else
+	    make(<meta-cclass>,
+		 loading: #f,
+		 name: make(<derived-name>,
+			    how: #"class-meta",
+			    base: defn.defn-name),
+		 direct-superclasses: meta-supers,
+		 not-functional: #t,
+		 functional: #f,
+		 sealed: #t,
+		 abstract: #t,
+		 primary: #t,
+		 slots: associated-infos,
+		 metaclass: #f)
+	  end if
 	end unless;
     //
     // Class and init arguments for constructing the class
@@ -1222,7 +1305,7 @@ define method finalize-slot
   end if;
 
   // Fill in the type for meta slot too.
-  if (instance?(info, <class-slot-info>))
+  if (instance?(info, <indirect-slot-info>))
     let meta :: <meta-slot-info> = info.associated-meta-slot;
     meta.slot-type := slot-type;
 /* not yet    
@@ -2648,7 +2731,8 @@ define method build-maker-function-body
 	  // slot.  If the slot is keyword-initializable, add stuff to the
 	  // maker to check for that keyword and change the each-subclass
 	  // slot.
-	  error("Can't deal with each-subclass slots yet.");
+	  //	  error("Can't deal with each-subclass slots yet.");
+	  #f;
 	<class-slot-info> =>
 	  // If the slot is keyword-initializable, add stuff to the maker
 	  // to check for that keyword and change the class slot.
@@ -2880,7 +2964,7 @@ end method slot-accessor-standin;
 
 
 define method slot-accessor-standin // used for spew-object (cback)¥¥¥ relevance???
-    (slot :: <class-slot-info>, kind :: one-of(#"getter", #"setter"))
+    (slot :: <indirect-slot-info>, kind :: one-of(#"getter", #"setter"))
     => standin :: false-or(<ct-function>);
 
 
@@ -2921,6 +3005,151 @@ end method might-be-in-data-word?;
 
 define method build-getter
     (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
+     defn :: <slot-defn>, slot :: <each-subclass-slot-info>)
+    => res :: <method-literal>;
+  let getter-name
+      = make(<derived-name>, how: #"getter",
+     	     base: defn.slot-defn-getter.defn-name);
+  let lexenv = make(<lexenv>, method-name: getter-name);
+  let policy = lexenv.lexenv-policy;
+  let source = make(<source-location>);
+  let cclass = slot.slot-introduced-by;
+  let instance = make-lexical-var(builder, #"object", source, cclass);
+  let index = #f;
+  let type = slot.slot-type;
+  let region = build-function-body
+    (builder, policy, source, #f,
+     getter-name,
+     list(instance),
+     type, #t);
+  let result = make-local-var(builder, #"result", type);
+
+/*  let slot-home
+    = build-slot-home(slot.slot-getter.variable-name,
+		      make-literal-constant(builder, cclass),
+		      builder, policy, source);
+*/
+
+
+
+/* the below is for each-subclass slots!!!´´´*/
+
+  let slot-home
+    = build-slot-home(slot.slot-getter.variable-name,
+		      make-unknown-call
+			(builder,
+			 ref-dylan-defn(builder, policy, source, #"%object-class"),
+			 #f,
+			 list(instance)),
+		      builder, policy, source);
+
+
+
+  let offset = get-universal-position(slot.associated-meta-slot.slot-positions);
+
+  build-assignment
+    (builder, policy, source, result,
+     make-operation
+       (builder, <heap-slot-ref>,
+	list(slot-home, make-literal-constant(builder, offset)),
+	derived-type: type.ctype-extent,
+	slot-info: slot.associated-meta-slot));
+
+
+/*  local
+    method get (offset :: <leaf>, init?-offset :: false-or(<leaf>)) => ();
+      if (init?-offset)
+	let init?-slot = slot.slot-initialized?-slot;
+	let temp = make-local-var(builder, #"initialized?",
+				  boolean-ctype());
+	build-assignment
+	  (builder, policy, source, temp,
+	   make-operation
+	     (builder, <heap-slot-ref>,
+	      list(instance, init?-offset),
+	      derived-type: init?-slot.slot-type.ctype-extent,
+	      slot-info: init?-slot));
+	build-if-body(builder, policy, source, temp);
+	build-else(builder, policy, source);
+	build-assignment
+	  (builder, policy, source, #(),
+	   make-error-operation
+	     (builder, policy, source, #"uninitialized-slot-error",
+	      make-literal-constant(builder, slot), instance));
+	end-body(builder);
+      end;
+      let maybe-data-word? = slot.might-be-in-data-word?;
+      if (maybe-data-word?)
+	assert(~init?-offset);
+	assert(~index);
+	let temp = make-local-var(builder, #"data-word?",
+				  boolean-ctype());
+	build-assignment
+	  (builder, policy, source, temp,
+	   make-unknown-call
+	     (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
+	      list(offset,
+		   make-literal-constant(builder, #"data-word"))));
+	build-if-body(builder, policy, source, temp);
+	build-assignment
+	  (builder, policy, source, result,
+	   make-operation
+	     (builder, <data-word-ref>, list(instance),
+	      derived-type: slot.slot-type.ctype-extent, slot-info: slot));
+	build-else(builder, policy, source);
+      end if;
+      build-assignment
+	(builder, policy, source, result,
+	 make-operation
+	   (builder, <heap-slot-ref>,
+	    if (index)
+	      list(instance, offset, index);
+	    else
+	      list(instance, offset);
+	    end,
+	    derived-type: slot.slot-type.ctype-extent,
+	    slot-info: slot));
+      if (maybe-data-word?)
+	end-body(builder);
+      end if;
+      unless (init?-offset | slot-guaranteed-initialized?(slot, cclass))
+	let temp = make-local-var(builder, #"initialized?", object-ctype());
+	build-assignment(builder, policy, source, temp,
+			 make-operation(builder, <primitive>, list(result),
+					name: #"initialized?"));
+	build-if-body(builder, policy, source, temp);
+	build-else(builder, policy, source);
+	build-assignment
+	  (builder, policy, source, #(),
+	   make-error-operation
+	     (builder, policy, source, #"uninitialized-slot-error",
+	      make-literal-constant(builder, slot), instance));
+	end-body(builder);
+      end;
+    end;*/
+//  build-slot-posn-dispatch(builder, slot, instance, get);
+
+// build-slot-access(from metaclass)!!!
+
+  build-return(builder, policy, source, region, result);
+  end-body(builder);
+  make-function-literal
+    (builder, ctv, #"method", if (ctv) #"global" else #"local" end,
+     make(<signature>,
+	  specializers:
+	    if (index)
+	      list(cclass, specifier-type(#"<integer>"));
+	    else
+	      list(cclass);
+	    end,
+	  returns: type),
+     region);
+end;
+
+
+
+define method build-getter
+    (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
      defn :: <slot-defn>, slot :: <class-slot-info>)
     => res :: <method-literal>;
   let getter-name
@@ -2944,18 +3173,6 @@ define method build-getter
     = build-slot-home(slot.slot-getter.variable-name,
 		      make-literal-constant(builder, cclass),
 		      builder, policy, source);
-
-/* the below is for each-subclass slots!!!¥¥¥
-  let slot-home
-    = build-slot-home(slot.slot-getter.variable-name,
-		      make-unknown-call
-			(builder,
-			 ref-dylan-defn(builder, policy, source, #"%object-class"),
-			 #f,
-			 list(instance)),
-		      builder, policy, source);
-*/
-
 
   let offset = get-universal-position(slot.associated-meta-slot.slot-positions);
 
@@ -3186,6 +3403,84 @@ define method build-setter
     => res :: <method-literal>;
   error("Unsupported slot type: %=", object-class(slot));
 end;
+
+define method build-setter
+    (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
+     defn :: <slot-defn>, slot :: <each-subclass-slot-info>)
+    => res :: <method-literal>;
+  let setter-name
+    = make(<derived-name>, how: #"setter",
+     	   base: defn.slot-defn-setter.defn-name);
+  let lexenv = make(<lexenv>, method-name: setter-name);
+  let policy = lexenv.lexenv-policy;
+  let source = make(<source-location>);
+  let type = slot.slot-type;
+  let new = make-lexical-var(builder, #"new-value", source, type);
+  let cclass = slot.slot-introduced-by;
+  let instance = make-lexical-var(builder, #"object", source, cclass);
+  let index = #f;
+  let region = build-function-body
+    (builder, policy, source, #f,
+     setter-name,
+     list(new, instance),
+     type, #t);
+  let result = make-local-var(builder, #"result", type);
+
+  let slot-home
+    = build-slot-home(slot.slot-getter.variable-name,
+		      make-unknown-call
+			(builder,
+			 ref-dylan-defn(builder, policy, source, #"%object-class"),
+			 #f,
+			 list(instance)),
+		      builder, policy, source);
+
+  let offset = get-universal-position(slot.associated-meta-slot.slot-positions);
+
+  build-assignment(builder, policy, source, #(),
+		   make-operation(builder, <heap-slot-set>,
+				  list(new,
+				       slot-home,
+				       make-literal-constant(builder, offset)),
+				  slot-info: slot.associated-meta-slot));
+
+/*  local
+    method set (offset :: <leaf>, init?-offset :: false-or(<leaf>)) => ();
+      build-assignment(builder, policy, source, #(),
+		       make-operation(builder, <heap-slot-set>,
+				      if (index)
+					list(new, instance, offset, index);
+				      else
+					list(new, instance, offset);
+				      end if,
+				      slot-info: slot));
+      if (init?-offset)
+	let init?-slot = slot.slot-initialized?-slot;
+	let true-leaf = make-literal-constant(builder, #t);
+	let init-op = make-operation
+	  (builder, <heap-slot-set>, list(true-leaf, instance, init?-offset),
+	   slot-info: init?-slot);
+	build-assignment(builder, policy, source, #(), init-op);
+      end;
+    end;
+*/
+
+//  build-slot-posn-dispatch(builder, slot, instance, set);
+  build-return(builder, policy, source, region, new);
+  end-body(builder);
+  make-function-literal
+    (builder, ctv, #"method", if (ctv) #"global" else #"local" end,
+     make(<signature>,
+	  specializers:
+	    if (index)
+	      list(type, cclass, specifier-type(#"<integer>"));
+	    else
+	      list(type, cclass);
+	    end,
+	  returns: type),
+     region);
+end;
+
 
 
 define method build-setter
