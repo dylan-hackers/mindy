@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.56 1995/06/04 22:51:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.57 1995/06/05 21:21:26 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -373,11 +373,14 @@ end;
 
 define method make-function-info
     (class :: <class>, name :: <string>, signature :: <signature>,
-     output-info :: <output-info>)
+     closure-var-types :: <list>, output-info :: <output-info>)
     => res :: <function-info>;
   let argument-reps
-    = if (signature.next? | signature.rest-type | signature.key-infos)
+    = begin
 	let reps = make(<stretchy-vector>);
+	for (type in closure-var-types)
+	  add!(reps, pick-representation(type, #"speed"));
+	end;
 	for (type in signature.specializers)
 	  add!(reps, pick-representation(type, #"speed"));
 	end;
@@ -401,8 +404,6 @@ define method make-function-info
 	  end;
 	end;
 	as(<list>, reps);
-      else
-	map(rcurry(pick-representation, #"speed"), signature.specializers);
       end;
 
   let result-type = signature.returns;
@@ -438,6 +439,24 @@ define method make-info-for
   make-function-info(<function-info>, function.name,
 		     make(<signature>, specializers: function.argument-types,
 			  returns: function.result-type),
+		     #(), output-info);
+end;
+
+define method make-info-for
+    (function :: <lambda>, output-info :: <output-info>)
+    => res :: <function-info>;
+  make-function-info(<function-info>, function.name,
+		     make(<signature>, specializers: function.argument-types,
+			  returns: function.result-type),
+		     for (var = function.environment.closure-vars
+			    then var.closure-next,
+			  results = #()
+			    then pair(var.original-var.derived-type,
+				      results),
+			  while: var)
+		     finally
+		       reverse!(results);
+		     end,
 		     output-info);
 end;
 
@@ -481,6 +500,17 @@ define method compute-function-prototype
   stream.string-output-stream-string;
 end;
 
+define method entry-point-c-name
+    (entry :: <ct-entry-point>, output-info :: <output-info>)
+    => res :: <string>;
+  let info = get-info-for(entry.ct-entry-point-for, output-info);
+  select (entry.ct-entry-point-kind)
+    #"main" => main-entry-name(info, output-info);
+    #"general" => general-entry-name(info, output-info);
+    #"generic" => generic-entry-name(info, output-info);
+  end;
+end;
+
 
 // Constant stuff.
 
@@ -509,7 +539,7 @@ define method make-info-for
     (ctv :: <ct-function>, output-info :: <output-info>)
     => res :: <constant-function-info>;
   make-function-info(<constant-function-info>, ctv.ct-function-name,
-		     ctv.ct-function-signature, output-info);
+		     ctv.ct-function-signature, #(), output-info);
 end;
 
 define class <constant-method-info> (<constant-function-info>)
@@ -528,7 +558,8 @@ define method make-info-for
     (ctv :: <ct-method>, output-info :: <output-info>)
     => res :: <constant-function-info>;
   make-function-info(<constant-method-info>, ctv.ct-function-name,
-		     ctv.ct-function-signature, output-info);
+		     ctv.ct-function-signature,
+		     ctv.ct-method-closure-var-types, output-info);
 end;
 
 
@@ -555,18 +586,23 @@ define method emit-prologue (output-info :: <output-info>) => ();
   format(header, "    } dataword;\n");
   format(header, "} descriptor_t;\n\n");
   format(header, "typedef int boolean;\n");
-  format(header, "#define TRUE 1;\n");
-  format(header, "#define FALSE 0;\n\n");
+  format(header, "#define TRUE 1\n");
+  format(header, "#define FALSE 0\n\n");
   format(header, "#define SLOTADDR(ptr, type, offset) "
 	   "((type *)((char *)ptr + offset))\n");
   format(header, "#define SLOT(ptr, type, offset) "
 	   "(*SLOTADDR(ptr, type, offset))\n\n");
   format(header, "typedef descriptor_t *(*entry_t)();\n");
   format(header, "#define GENERAL_ENTRY(func) \\\n");
-  format(header, "    ((entry_t)SLOT(func, void *, /* ### */ 0))\n");
+  format(header, "    ((entry_t)SLOT(func, void *, %d))\n",
+	 dylan-slot-offset(function-ctype(), #"general-entry"));
   format(header, "#define GENERIC_ENTRY(func) \\\n");
-  format(header, "    ((entry_t)SLOT(func, void *, /* ### */ 0))\n\n");
+  format(header, "    ((entry_t)SLOT(func, void *, %d))\n\n",
+	 dylan-slot-offset(specifier-type(#"<method>"), #"generic-entry"));
   format(header, "extern heapptr_t allocate(int bytes);\n");
+  format(header,
+	 "extern descriptor_t *pad_cluster"
+	   "(descriptor_t *start, descriptor_t *end, int min_values);\n");
   format(header,
 	 "extern descriptor_t *values_sequence"
 	   "(descriptor_t *sp, heapptr_t vector);\n");
@@ -583,9 +619,9 @@ define method emit-prologue (output-info :: <output-info>) => ();
   end;
   format(header, "\nextern descriptor_t roots[];\n\n");
   format(header, "#define obj_True %s.heapptr\n",
-	 new-root(as(<ct-value>, #t), output-info));
+	 c-expr-and-rep(as(<ct-value>, #t), $general-rep, output-info));
   format(header, "#define obj_False %s.heapptr\n\n",
-	 new-root(as(<ct-value>, #f), output-info));
+	 c-expr-and-rep(as(<ct-value>, #f), $general-rep, output-info));
 end;
 
 define method emit-epilogue
@@ -598,6 +634,17 @@ define method emit-epilogue
   write(gstream.string-output-stream-string, bstream);
   write("}\n\n", bstream);
   
+  format(bstream,
+	 "extern descriptor_t *pad_cluster"
+	   "(descriptor_t *start, descriptor_t *end, int min_values)\n{\n");
+  format(gstream, "descriptor_t *ptr = start + min_values;\n\n");
+  format(gstream, "while (end < ptr)\n");
+  format(gstream, "    *end++ = %s;\n",
+	 c-expr-and-rep(as(<ct-value>, #f), $general-rep, output-info));
+  format(gstream, "return end;\n");
+  write(gstream.string-output-stream-string, bstream);
+  write("}\n\n", bstream);
+
   format(bstream,
 	 "descriptor_t *values_sequence"
 	   "(descriptor_t *sp, heapptr_t vector)\n{\n");
@@ -1810,25 +1857,11 @@ define method c-expr-and-rep (lit :: <literal-true>,
   values("TRUE", $boolean-rep);
 end;
 
-define method c-expr-and-rep (lit :: <literal-true>,
-			      rep-hint :: <representation>,
-			      output-info :: <output-info>)
-    => (name :: <string>, rep :: <representation>);
-  values("obj_True", $heap-rep);
-end;
-
 define method c-expr-and-rep (lit :: <literal-false>,
 			      rep-hint == $boolean-rep,
 			      output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
   values("FALSE", $boolean-rep);
-end;
-
-define method c-expr-and-rep (lit :: <literal-false>,
-			      rep-hint :: <representation>,
-			      output-info :: <output-info>)
-    => (name :: <string>, rep :: <representation>);
-  values("obj_False", $heap-rep);
 end;
 
 define method c-expr-and-rep (lit :: <literal-fixed-integer>,
@@ -1950,10 +1983,14 @@ define method c-expr-and-rep (lit :: <literal-character>,
 	 pick-representation(dylan-value(#"<character>"), #"speed"));
 end;
 
-
-
-
-
+define method c-expr-and-rep (ep :: <ct-entry-point>,
+			      rep-hint :: <representation>,
+			      output-info :: <output-info>)
+    => (name :: <string>, rep :: <representation>);
+  values(format-to-string("((void *)%s)",
+			  entry-point-c-name(ep, output-info)),
+	 *ptr-rep*);
+end;
 
 
 define generic emit-copy

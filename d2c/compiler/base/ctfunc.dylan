@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.1 1995/06/04 01:22:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.2 1995/06/05 21:21:26 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -41,8 +41,40 @@ define method ct-value-cclass (ctv :: <ct-generic-function>)
 end;
 
 define class <ct-method> (<ct-function>)
+  slot ct-method-closure-var-types :: <list>,
+    init-value: #(), init-keyword: closure-var-types:;
 end;
 
 define method ct-value-cclass (ctv :: <ct-method>) => res :: <cclass>;
   specifier-type(#"<method>");
 end;
+
+
+define class <ct-entry-point> (<ct-value>, <annotatable>)
+  //
+  // The function this is an entry point for.
+  slot ct-entry-point-for :: <ct-function>,
+    required-init-keyword: for:;
+  //
+  // The kind of entry point.
+  slot ct-entry-point-kind :: one-of(#"main", #"general", #"generic"),
+    required-init-keyword: kind:;
+end;
+
+define method print-object (ctv :: <ct-entry-point>, stream :: <stream>) => ();
+  pprint-fields(ctv, stream,
+		for: ctv.ct-entry-point-for,
+		kind: ctv.ct-entry-point-kind);
+end;
+
+define method print-message
+    (ctv :: <ct-entry-point>, stream :: <stream>) => ();
+  format(stream, "%s entry point for %s",
+	 ctv.ct-entry-point-kind,
+	 ctv.ct-entry-point-for.ct-function-name);
+end;
+
+define method ct-value-cclass (ctv :: <ct-entry-point>) => res :: <cclass>;
+  specifier-type(#"<raw-pointer>");
+end;
+
