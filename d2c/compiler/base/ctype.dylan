@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.23 1995/10/09 22:34:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.24 1995/10/13 15:05:20 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,7 +18,7 @@ define generic ctype-difference(type1 :: <ctype>, type2 :: <ctype>)
 
 
 /// Superclass of multi-value types and regular single types.
-define class <values-ctype> (<object>)
+define abstract class <values-ctype> (<object>)
 end class;
 
 
