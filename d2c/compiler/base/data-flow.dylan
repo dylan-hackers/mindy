@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.3 1995/03/13 19:57:35 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.4 1995/03/24 12:22:22 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -65,6 +65,11 @@ end class;
 // of a dependency: assignments, operations and IF-regions.
 //
 define class <dependent-mixin> (<object>)
+  //
+  // Head of list of dependencies for the expressions that we depend on,
+  // threaded by dependent-next.
+  slot depends-on :: false-or(<dependency>), init-value: #f,
+    init-keyword: depends-on:;
   //
   // Thread running through dependents in the component reoptimize-queue, or
   // #"absent" if this dependent is not currently in the queue (hence is up to
@@ -209,7 +214,7 @@ define abstract class <operation> (<expression>, <dependent-mixin>)
   inherited slot derived-type, init-function: wild-ctype;
   //
   // Head of operand list, threaded by Dependent-Next.
-  slot operands :: false-or(<dependency>), init-value: #f;
+  inherited slot depends-on;
 end class;
 
 
@@ -227,6 +232,10 @@ end class;
 define abstract class <abstract-assignment> 
     (<source-location-mixin>, <dependent-mixin>)
 
+  //
+  // Dependency for the expression generating the assigned value(s).
+  inherited slot depends-on;
+
   // Linked list of variables defined by this operation (results), threaded by
   // DEFINER-NEXT.  If #F, then there are no results, hence any computed result
   // is unused.
@@ -237,12 +246,9 @@ define abstract class <abstract-assignment>
   slot region :: false-or(<simple-region>), init-keyword: region:,
     init-value: #f;
 
-  // Pointers in the doubly linked list of operations in a <flow-node>.
+  // Pointers in the doubly linked list of operations in the Region.
   slot next-op :: false-or(<abstract-assignment>), init-value: #f;
   slot prev-op :: false-or(<abstract-assignment>), init-value: #f;
-  //
-  // The expression generating the assigned value(s).
-  slot expression :: <expression>, required-init-keyword: expression:;
 end;
 
 // The <assignment> object represents a normal assignment to variables based on
