@@ -7,7 +7,7 @@
 bootstrap-stage1:  bootstrap-stage1-stamp
 bootstrap-stage1-stamp:
 	# Following is needed for bootstrapping
-	libtoolize
+	libtoolize --force
 	./configure --with-readline \
 			--prefix=/usr \
 			--enable-mindy-bootstrap \
@@ -61,7 +61,7 @@ build-stamp:
 
 config: config-stamp
 config-stamp:
-	libtoolize
+	libtoolize --force
 	./configure --with-readline \
 			--prefix=/usr \
 			--with-site-dylan-prefix=/usr \

@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.33 2001/03/24 05:11:56 housel Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.34 2001/03/27 05:28:25 brent Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -455,6 +455,11 @@ link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			alpha-linux-gcc
 inherit-from:			gcc linux alpha
+assembler-command:		gcc $(CCFLAGS) -x assembler-with-cpp -c %s -o %s
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+
+platform-name:			sparc-linux-gcc
+inherit-from:			gcc linux sparc
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			MacOS-ppc
