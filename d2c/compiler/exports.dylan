@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.15 1995/01/10 16:24:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.16 1995/02/23 17:10:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -31,7 +31,7 @@ define module utils
   // Stuff defined in utils
   export
     write-class-name, write-address, pprint-fields, dformat, assert,
-    compiler-warning, key-of, list?, pair?;
+    compiler-warning, compiler-error, key-of, list?, pair?;
 end;
 
 define module forwards
@@ -390,6 +390,7 @@ define module ctype
     <direct-instance-ctype>, 
     make-canonical-singleton, singleton-value, type-exp, base-class,
     low-bound, high-bound, element-limit, size-limit, <cclass>, cclass-name,
+    closest-primary-superclass,
     <primitive-cclass>, <defined-cclass>,
     precedence-list, subclasses, sealed?, abstract?, primary?, slot-infos,
     wild-ctype, empty-ctype, object-ctype, function-ctype,
@@ -428,6 +429,9 @@ define module expand
   use ctype;
 
   use forwards, import: {expand}, export: all;
+
+  export
+    make-dylan-name;
 end;
 
 define module parser
@@ -643,6 +647,7 @@ define module define-classes
   use fer-convert;
   use signature-interface;
   use source;
+  use expand;
 end;
 
 define module top-level-expressions
