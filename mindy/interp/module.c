@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.24 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.25 1996/02/23 21:38:17 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -607,6 +607,9 @@ static void complete_module(struct module *module)
     obj_t ptr;
     struct defn *defn;
     struct use *use;
+
+    if (!module->home->completed)
+	complete_library(module->home);
 
     if (module->busy)
 	error("Module %s circularly defined.", module->name);
