@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.12 1996/04/08 11:22:51 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.13 1996/04/18 23:35:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -145,7 +145,9 @@ define inline method forward-iteration-protocol (array :: <unicode-string>)
 	 method (array :: <unicode-string>, state :: <integer>,
 		 limit :: <integer>)
 	     => done? :: <boolean>;
-	   state == limit;
+	   // We use >= instead of == so that the constraint propagation
+	   // stuff can tell that state is < limit if this returns #f.
+	   state >= limit;
 	 end,
 	 method (array :: <unicode-string>, state :: <integer>)
 	     => key :: <integer>;
@@ -238,7 +240,9 @@ define inline method forward-iteration-protocol (array :: <byte-string>)
 	 method (array :: <byte-string>, state :: <integer>,
 		 limit :: <integer>)
 	     => done? :: <boolean>;
-	   state == limit;
+	   // We use >= instead of == so that the constraint propagation
+	   // stuff can tell that state is < limit if this returns #f.
+	   state >= limit;
 	 end,
 	 method (array :: <byte-string>, state :: <integer>)
 	     => key :: <integer>;

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.12 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.13 1996/04/18 23:35:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -143,7 +143,9 @@ define inline method forward-iteration-protocol
 	 method (array :: <simple-object-vector>, state :: <integer>,
 		 limit :: <integer>)
 	     => done? :: <boolean>;
-	   state == limit;
+	   // We use >= instead of == so that the constraint propagation
+	   // stuff can tell that state is < limit if this returns #f.
+	   state >= limit;
 	 end,
 	 method (array :: <simple-object-vector>, state :: <integer>)
 	     => key :: <integer>;
