@@ -4,7 +4,7 @@ synopsis: Everything that relates to finite automaton
           (build-NFA, NFA-to-DFA, sim-DFA)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/finite-automaton.dylan,v 1.3 1996/03/30 02:22:37 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/finite-automaton.dylan,v 1.4 1997/02/13 12:52:29 nkramer Exp $
 
 //======================================================================
 //
@@ -30,6 +30,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/regexp/finite-automaton
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
+
+// ### This code is not currently used.
 
 // -----------------------------------------------------------------
 // build-NFA:
