@@ -1235,7 +1235,11 @@ define method skip-whitespace
 	          skip-comments(i);
 		else
 		  i;
-		end if;
+                end if;
+	      "\\\n" =>
+		skip-comments(i + 2);
+	      "\\\r\n" =>
+		skip-comments(i + 3);
 	      otherwise => 
 	        i;
 	    end select;
@@ -1289,11 +1293,11 @@ end method skip-cpp-whitespace;
 // follows:
 //   [0, 1] and [2, 3] -- start and end of the entire match
 //   [4, 5] -- start and end of character literal contents
-//   [6, 7] -- start and end of string literal contents
-//   [10, 11] -- start and end of integer literal
+//   [8, 9] -- start and end of string literal contents
+//   [13, 14] -- start and end of integer literal
 //
 define constant match-literal
-  = make-regexp-positioner("^('(\\\\?.)+'|"
+  = make-regexp-positioner("^('(([^\\\\']|\\\\.)*)'|"
 			     "\"(([^\\\\\"]|\\\\.)*)\"|"
 			     "((([1-9][0-9]*)|(0[xX][0-9a-fA-F]+)|(0[0-7]*))[lLuU]*))",
 			   byte-characters-only: #t, case-sensitive: #t);
@@ -1309,27 +1313,27 @@ define /* exported */ method get-token
  => (token :: <token>);
   block (return)
     let pos = init-position | state.position;
-
+    
     // If we are recursively including another file, defer to the tokenizer
     // for that file.
     let sub-tokenizer = state.include-tokenizer;
     if (sub-tokenizer)
       let token = get-token(sub-tokenizer, expand: expand,
-			    cpp-line: cpp-line, position: init-position);
+                            cpp-line: cpp-line, position: init-position);
       if (instance?(token, <eof-token>))
-	let macros = sub-tokenizer.cpp-decls;
-	let old-file = sub-tokenizer.file-name;
-	state.include-tokenizer := #f;
-	let ei-token = make(<end-include-token>, position: pos,
-			    generator: state, string: old-file,
-			    value: macros);
-	parse-progress-report(ei-token, "<<< exiting header <<<");
+        let macros = sub-tokenizer.cpp-decls;
+        let old-file = sub-tokenizer.file-name;
+        state.include-tokenizer := #f;
+        let ei-token = make(<end-include-token>, position: pos,
+                            generator: state, string: old-file,
+                            value: macros);
+        parse-progress-report(ei-token, "<<< exiting header <<<");
         return(ei-token);
       else
-	return(token);
+        return(token);
       end if;
     end if;
-
+    
     // If we have old tokens, just pop them from the stack and return them
     if (~state.unget-stack.empty?)
       let stack = state.unget-stack;
@@ -1371,14 +1375,14 @@ define /* exported */ method get-token
     // There are different whitespace conventions for normal input and for
     // preprocessor directives.
     let pos = if (cpp-line)
-		     skip-cpp-whitespace(contents, pos);
-		   else
-		     skip-whitespace(contents, pos);
-		   end if;
+                skip-cpp-whitespace(contents, pos);
+              else
+                skip-whitespace(contents, pos);
+              end if;
     if (pos = contents.size | (cpp-line & contents[pos] == '\n'))
       state.position := pos;
       return(make(<eof-token>, position: pos, generator: state,
-		  string: ""));
+                  string: ""));
     end if;
 
     // Deal with preprocessor lines.  Since these may change the state, we
@@ -1395,8 +1399,8 @@ define /* exported */ method get-token
       try-identifier(state, pos, expand: expand, cpp-line: cpp-line) | try-punctuation(state, pos);
     if (token?) return(token?) end if;
 
-    let (start-index, end-index, dummy1, dummy2, char-start, char-end,
-	 string-start, string-end, dummy3, dummy4, int-start, int-end)
+    let (start-index, end-index, dummy1, dummy2, char-start, char-end, dummy3, dummy4,
+         string-start, string-end, dummy5, dummy6, int-start, int-end)
       = match-literal(contents, start: pos);
 
     if (start-index)
@@ -1404,14 +1408,18 @@ define /* exported */ method get-token
       // for that one and build the appropriate token.
       state.position := end-index;
       let token-type = case
-			 char-start => <character-token>;
+                         char-start => <character-token>;
 			 string-start => <string-literal-token>;
 			 int-start => <integer-token>;
 		       end case;
+      // Some handy debugging code.
+   /* format(*standard-error*, "Literal: `%s` Token type: %=\n",
+             copy-sequence(contents, start: pos, end: end-index),
+             token-type); */
       return(make(token-type, position: pos,
-		  string: string-value(pos, end-index), generator: state));
+                  string: string-value(pos, end-index), generator: state));
     end if;
-
+    
     // None of our searches matched, so we haven't the foggiest what this is.
     parse-error(state, "Major botch in get-token.");
   end block;
