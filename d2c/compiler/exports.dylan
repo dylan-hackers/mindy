@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.98 1995/11/09 16:50:42 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.99 1995/11/09 17:34:56 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -636,6 +636,8 @@ define module c-representation
   use ctype;
   use representation;
   use classes;
+  use od-format;
+  use compile-time-values;
 
   export
     seed-representations,
@@ -649,7 +651,7 @@ define module c-representation
     <data-word-representation>, representation-class,
     representation-data-word-member,
 
-    $general-rep, $heap-rep, $boolean-rep,
+    *general-rep*, *heap-rep*, *boolean-rep*,
     *long-rep*, *int-rep*, *uint-rep*, *short-rep*, *ushort-rep*,
     *byte-rep*, *ubyte-rep*, *ptr-rep*,
     *float-rep*, *double-rep*, *long-double-rep*;
