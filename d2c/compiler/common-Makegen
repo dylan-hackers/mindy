@@ -1,9 +1,9 @@
 $D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
     . '-L../../runtime/dylan -L../../runtime/streams '
-    . '-L../../runtime/standard-io '
+    . '-L../../runtime/standard-io -L../../runtime/stream-ext '
     . '-L../../runtime/print -L../../runtime/format '
     . '-L../../runtime/random -L../../runtime/coll-ext '
     . '-L../../runtime/string-ext -L../../runtime/table-ext '
-    . '-L../../runtime/regexp';
+    . '-L../../runtime/regexp -L../../runtime/melange';
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
