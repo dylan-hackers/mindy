@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.23 1996/04/18 19:05:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.24 1996/05/01 12:26:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -193,58 +193,16 @@ define-primitive-transformer
 define-primitive-transformer
   (#"values-sequence",
    method (component :: <component>, primitive :: <primitive>) => ();
-     for (vec = primitive.depends-on.source-exp
-	    then vec.definer.depends-on.source-exp,
-	  assign = #f then vec.definer,
-	  while: instance?(vec, <ssa-variable>))
-     finally
+     let leaf = primitive.depends-on.source-exp;
+     if (instance?(leaf, <ssa-variable>))
+       let assign = leaf.definer;
+       let vec = assign.depends-on.source-exp;
        if (instance?(vec, <primitive>))
-	 if (vec.primitive-name == #"vector")	 
-	   let builder = make-builder(component);
-	   let policy = assign.policy;
-	   let source = assign.source-location;
-	   let copy-arg
-	     = if (primitive.home-function-region == vec.home-function-region)
-		 method (arg :: <leaf>) => new :: <leaf>;
-		   if (arg.expression-movable?)
-		     arg;
-		   else
-		     let temp
-		       = make-ssa-var(builder,
-				      if (instance?(arg, <abstract-variable>))
-					arg.var-info.debug-name;
-				      else
-					#"temp";
-				      end,
-				      arg.derived-type);
-		     build-assignment(builder, policy, source, temp, arg);
-		     temp;
-		   end;
-		 end;
-	       else
-		 method (arg :: <leaf>) => new :: <leaf>;
-		   if (if (instance?(arg, <ssa-variable>))
-			 instance?(arg.var-info, <lexical-var-info>);
-		       else
-			 arg.expression-movable?;
-		       end)
-		     arg;
-		   else
-		     let temp
-		       = make-lexical-var(builder, 
-					  if (instance?(arg,
-							<abstract-variable>))
-					    arg.var-info.debug-name;
-					  else
-					    #"temp";
-					  end,
-					  assign.source-location,
-					  arg.derived-type);
-		     build-let(builder, policy, source, temp, arg);
-		     temp;
-		   end;
-		 end;
-	       end if;
+	 if (vec.primitive-name == #"vector")
+	   let ref-site = primitive.home-function-region;
+	   local method copy-arg (arg :: <leaf>) => copy :: <leaf>;
+		   maybe-copy(component, arg, assign, ref-site);
+		 end method copy-arg;
 	   for (value-dep = vec.depends-on then value-dep.dependent-next,
 		values = #() then pair(copy-arg(value-dep.source-exp), values),
 		while: value-dep)
@@ -254,14 +212,14 @@ define-primitive-transformer
 		make-operation(make-builder(component), <primitive>,
 			       reverse!(values), name: #"values"));
 	   end;
-	   insert-before(component, assign, builder-result(builder));
 	 elseif (vec.primitive-name == #"canonicalize-results")
 	   let vec-assign = vec.dependents.dependent;
 	   let prim-assign = primitive.dependents.dependent;
 	   if (vec-assign.region == prim-assign.region
 		 & vec-assign.depends-on == vec.dependents)
 	     let nfixed = vec.depends-on.dependent-next.source-exp;
-	     if (instance?(nfixed, <literal-constant>) & nfixed.value = 0)
+	     if (instance?(nfixed, <literal-constant>)
+		   & nfixed.value.literal-value = 0)
 	       block (return)
 		 for (assign = vec-assign.next-op then assign.next-op,
 		      until: assign == prim-assign)
@@ -640,6 +598,18 @@ define-primitive-transformer
        replace-expression(component, primitive.dependents,
 			  make-literal-constant(make-builder(component),
 						as(<ct-value>, #t)));
+     elseif (instance?(arg, <ssa-variable>))
+       let arg-source = arg.definer.depends-on.source-exp;
+       if (instance?(arg-source, <primitive>)
+	     & arg-source.primitive-name == #"make-next-method")
+	 replace-expression
+	   (component, primitive.dependents,
+	    make-operation
+	      (make-builder(component), <primitive>,
+	       list(expand-next-method-if-ref
+		      (component, primitive, arg-source)),
+	       name: #"not"));
+       end if;
      end;
    end);
 			  
@@ -659,12 +629,21 @@ define-primitive-transformer
 						as(<ct-value>, #f)));
      elseif (instance?(arg, <ssa-variable>))
        let arg-source = arg.definer.depends-on.source-exp;
-       if (instance?(arg-source, <primitive>)
-	     & arg-source.primitive-name == #"not")
-	 let source-source = arg-source.depends-on.source-exp;
-	 let op = make-operation(make-builder(component), <primitive>,
-				 list(source-source), name: #"as-boolean");
-	 replace-expression(component, primitive.dependents, op);
+       if (instance?(arg-source, <primitive>))
+	 select (arg-source.primitive-name)
+	   #"not" =>
+	     let source-source = arg-source.depends-on.source-exp;
+	     let op = make-operation(make-builder(component), <primitive>,
+				     list(source-source), name: #"as-boolean");
+	     replace-expression(component, primitive.dependents, op);
+	   #"make-next-method" =>
+	     replace-expression
+	       (component, primitive.dependents,
+		expand-next-method-if-ref
+		  (component, primitive, arg-source));
+	   otherwise =>
+	     begin end;
+	 end select;
        end;
      end;
    end);
