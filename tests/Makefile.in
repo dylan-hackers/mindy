@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.5 1994/11/10 13:35:08 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.6 1995/03/13 21:30:41 nkramer Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -66,17 +66,31 @@ INTERP	=	../interp/mindy
 MINDYFLAGS =
 MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/string-ext:../libraries/streams:../libraries/random:../libraries/print:../libraries/format
 
+# We don't want to run threaded-io-test by default because it is interactive
+#
+OBJS_TO_RUN = dylan-test.dbc string-extensions-test.dbc
+OBJS_TO_BUILD = $(OBJS_TO_RUN) threaded-io-test.dbc asterixes.txt dashes.txt
 
-OBJS = dylan-test.dbc string-extensions-test.dbc
-
-all: ${OBJS}
-	for f in ${OBJS}; do $(MINDYPATH) $(INTERP) -f $$f; done
+all: ${OBJS_TO_BUILD}
+	for f in ${OBJS_TO_RUN}; do $(MINDYPATH) $(INTERP) -f $$f; done
 
 dylan-test.dbc: ${SRCDIR}/dylan-test.dylan
 	${MC} ${MINDYFLAGS} -o dylan-test.dbc ${SRCDIR}/dylan-test.dylan
 
 string-extensions-test.dbc: ${SRCDIR}/string-extensions-test.dylan
 	${MC} ${MINDYFLAGS} -lregression-test -o string-extensions-test.dbc ${SRCDIR}/string-extensions-test.dylan
+
+threaded-io-test.dbc: ${SRCDIR}/threaded-io-test.dylan
+	${MC} ${MINDYFLAGS} -lthreaded-io-test -o threaded-io-test.dbc ${SRCDIR}/threaded-io-test.dylan
+
+# And now, two hacks to make sure "asterixes.txt" and "dashes.txt" are 
+# in the build directory and not the source directory (while still
+# handling the case that build-dir == src-dir)
+#
+asterixes.txt : ${SRCDIR}/asterixes.src
+	cp ${SRCDIR}/asterixes.src ./asterixes.txt
+dashes.txt : ${SRCDIR}/dashes.src
+	cp ${SRCDIR}/dashes.src ./dashes.txt
 
 clean:
 	rm -f ${OBJS} *~ \#* core
