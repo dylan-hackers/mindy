@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.7 1994/06/27 16:32:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.8 1994/08/18 19:51:48 wlott Exp $
 *
 * This file starts everything going.
 *
@@ -43,6 +43,7 @@
 #include "debug.h"
 #include "load.h"
 #include "num.h"
+#include "error.h"
 
 static void invoke_main(struct thread *thread, obj_t *vals)
 {
@@ -83,8 +84,14 @@ void main(int argc, char *argv[])
 				      startup);
 
     while (*++argv != NULL)
-	if (strcmp(*argv, "-f") == 0)
-	    load(*++argv);
+	if (strcmp(*argv, "-f") == 0) {
+	    char *file = *++argv;
+
+	    if (file)
+		load(file);
+	    else
+		error("-f must be followed by a file name to load.");
+	}
 	else
 	    *thread->sp++ = make_string(*argv);
 
