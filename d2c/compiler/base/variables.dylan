@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.20 1996/01/16 12:45:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.21 1996/01/25 00:25:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -9,17 +9,6 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // by the implicit Dylan-User module that gets created in each library.
 //
 define constant $Dylan-User-Uses :: <vector> = #[#"Dylan", #"Extensions"];
-
-
-// *Module-System-Initialized* -- internal.
-//
-// Set to #t once all the magic pre-defines have been made.  Once this
-// happens, module's use chains must be fully established before more
-// variables can be defined in that module.  Until then, defined
-// variables are assumed to be homed in the module they are defined
-// in (i.e. not created elsewhere and imported).
-// 
-define variable *Module-System-Initialized* :: <boolean> = #f;
 
 
 // <library> -- exported.
@@ -94,14 +83,6 @@ define class <module> (<object>)
   // from this module.
   slot exported-variables :: <object-table>,
     init-function: curry(make, <object-table>);
-  //
-  // #t if variables and exported-variables have been populated with
-  // everything imported from the various uses, #f until then.
-  slot completed? :: <boolean>, init-value: #f;
-  //
-  // #t while we are processing the various uses, #f otherwise.  Used
-  // to detect circular use chains.
-  slot busy? :: <boolean>, init-value: #f;
 end;
 
 define method print-object (mod :: <module>, stream :: <stream>) => ();
@@ -383,6 +364,18 @@ define method find-module (lib :: <library>, name :: <symbol>,
   end;
 end method;
 
+// use-module -- exported.
+//
+// Flame out if we can't use the supplied module (because it isn't defined
+// yet).
+//
+define method use-module (mod :: <module>) => ();
+  unless (mod.defined?)
+    compiler-error("Can't use module %s before it is defined.",
+		   mod.module-name);
+  end unless;
+end method use-module;
+
 // find-exported-module -- internal.
 //
 // Find the module in the library, but only if it is exported.
@@ -493,12 +486,9 @@ end;
 // Uses is a sequence of <use> objects, and exports and creates are
 // the names from the exports and creates options.
 //
-// We don't actually do anything with the uses just yet in order to
-// simplify bootstrapping.
-//
 define method note-module-definition
     (lib :: <library>, name :: <symbol>, uses :: <sequence>,
-     exports :: <sequence>, creates :: <sequence>)
+     new-exports :: <sequence>, new-creates :: <sequence>)
     => ();
   let mod = find-module(lib, name, create: #t);
   unless (mod.module-home == lib | name == #"Dylan-User")
@@ -514,13 +504,11 @@ define method note-module-definition
   end;
   //
   // Mark it as defined, and record the uses for later.
-  // 
   mod.defined? := #t;
   mod.used-modules := as(<simple-object-vector>, uses);
   //
   // Make variables for all the names in the export clauses.
-  // 
-  for (name in exports)
+  for (name in new-exports)
     let old = element(mod.variables, name, default: #f);
     if (old)
       mod.exported-variables[name] := old;
@@ -536,8 +524,7 @@ define method note-module-definition
   end;
   //
   // Make variables for all the names in the create clauses.
-  // 
-  for (name in creates)
+  for (name in new-creates)
     let old = element(mod.variables, name, default: #f);
     if (old)
       if (old.exported?)
@@ -561,37 +548,21 @@ define method note-module-definition
       add!(new.accessing-modules, mod);
     end;
   end;
-end;
-
-// complete-module -- exported
-//
-// Called whenever we need the complete variable names for the given
-// module and we don't have them yet.  This is where the use clauses
-// are actually processed.
-// 
-define method complete-module (mod :: <module>) => ();
-  //
-  // First, make sure we arn't already trying to complete this module
-  // and that it has been defined.
-  //
-  if (mod.busy?)
-    compiler-error("Circular module use chain detected at module %s",
-		   mod.module-name);
-  end;
-  unless (mod.defined?)
-    compiler-error("Module %s in library %s has not been defined yet.",
-		   mod.module-name, mod.module-home.library-name);
-  end;
-  mod.busy? := #t;
   //
   // Pull in everything from the uses.
-  //
   for (u in mod.used-modules)
     let used-mod = find-module(mod.module-home, u.name-used);
     unless (used-mod)
       compiler-error("No module %s in library %s",
 		     u.name-used, mod.module-home.library-name);
     end;
+    if (used-mod == mod)
+      compiler-error("Module %s can't use itself.", u.name-used);
+    end if;
+    unless (used-mod.defined?)
+      compiler-error("Attempt to use module %s before it is defined.",
+		     u.name-used);
+    end unless;
 
     local
       method do-import (var :: false-or(<variable>), orig-name :: <symbol>,
@@ -654,19 +625,8 @@ define method complete-module (mod :: <module>) => ();
 
     if (u.imports == #t)
       //
-      // Import everything exported.
-      //
-      unless (used-mod.completed?)
-	//
-	// In order to import all we have to know everything that the
-	// used module is exporting.
-	//
-	complete-module(used-mod);
-      end;
-      //
       // Import all the exported variables, unless compute-new-name
       // tells us it should be skipped.
-      //
       for (orig-name in key-sequence(used-mod.exported-variables))
 	let var = used-mod.exported-variables[orig-name];
 	let new-name = compute-new-name(u, orig-name);
@@ -677,7 +637,6 @@ define method complete-module (mod :: <module>) => ();
     else
       //
       // Import everything listed.
-      //
       for (orig-name in u.imports)
 	let var = find-exported-variable(used-mod, orig-name);
 	let new-name = compute-new-name(u, orig-name);
@@ -685,11 +644,6 @@ define method complete-module (mod :: <module>) => ();
       end;
     end;
   end for;
-  //
-  // Now completed and no longer busy.
-  //
-  mod.completed? := #t;
-  mod.busy? := #f;
 end method;
 	
 // compute-new-name -- internal
@@ -734,10 +688,6 @@ end method;
 // already exist, either create it (if create is true) or return #f
 // (if create is false).
 //
-// We look before bothering to complete the module so that we can
-// magically pre-define some things and be able to find them before we
-// get around to actually defining the module they are in.
-//
 define method find-variable (name :: <basic-name>, #key create: create?)
     => result :: false-or(<variable>);
   let mod = name.name-module;
@@ -745,9 +695,6 @@ define method find-variable (name :: <basic-name>, #key create: create?)
   let var = element(mod.variables, sym, default: #f);
   if (var)
     var;
-  elseif (~mod.completed? & *Module-System-Initialized*)
-    complete-module(mod);
-    find-variable(name, create: create?);
   elseif (create?)
     let new = make(<variable>, name: sym, home: mod);
     mod.variables[sym] := new;
@@ -763,23 +710,14 @@ end method;
 // find-exported-variable -- internal.
 //
 // Return the named variable if it is there and exported, or #f if
-// not.  Again, we don't actually complete the module unless we have
-// to.
+// not.
 // 
 define method find-exported-variable (mod :: <module>, name :: <symbol>)
     => result :: false-or(<variable>);
   unless (mod.defined?)
     compiler-error("Module %s is not defined.", mod.module-name);
   end;
-  let var = element(mod.exported-variables, name, default: #f);
-  if (var)
-    var;
-  elseif (mod.completed?)
-    #f;
-  else
-    complete-module(mod);
-    element(mod.exported-variables, name, default: #f);
-  end;
+  element(mod.exported-variables, name, default: #f);
 end method;
 
 // note-variable-definition -- exported.
@@ -932,14 +870,6 @@ define variable *Current-Module* :: false-or(<module>) = #f;
 define constant $Dylan-Library = find-library(#"Dylan");
 define constant $Dylan-Module
   = find-module($Dylan-Library, #"Dylan-Viscera", create: #t);
-
-// done-initializing-module-system -- exported.
-//
-// Indicate that we are done initializing the module system.
-//
-define method done-initializing-module-system () => ();
-  *Module-System-Initialized* := #t;
-end;
 
 
 // Shorthands
