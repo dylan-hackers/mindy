@@ -226,6 +226,11 @@ define function process-type-list
   // hand.
   let type :: <c-type-specifier> = $c-unknown-type;
   for (specifier in types)
+    // XXX - HACK! Convert typedef declaration to typedef type. We need to
+    // clean this issue up globally. Related to <icky-type-name>?
+    if (instance?(specifier, <c-typedef-declaration>))
+      specifier := specifier.c-typedef-declaration-type;
+    end;
     type := select (specifier by instance?)
 // We are now using the preprocessor to eliminate these tokens before they
 // ever occur.
@@ -235,13 +240,15 @@ define function process-type-list
 //		type;
 	      <char-token> =>
 		select (type)
-		  $c-unknown-type, $c-signed-type => $c-char-type;
+		  $c-unknown-type => $c-char-type;
+		  $c-signed-type => $c-signed-char-type;
 		  $c-unsigned-type => $c-unsigned-char-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <char-token>, got %=", type);
 		end select;
 	      <short-token> =>
 		select (type)
-		  $c-unknown-type, $c-signed-type => $c-short-type;
+		  $c-unknown-type => $c-short-type;
+		  $c-signed-type => $c-signed-short-type;
 		  $c-unsigned-type => $c-unsigned-short-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <short-token>, got %=", type);
 		end select;
@@ -250,34 +257,42 @@ define function process-type-list
 		// recognize it, without actually supporting access.
 		select (type)
 		  $c-long-type => $c-long-long-type;
+		  $c-signed-long-type => $c-signed-long-long-type;
 		  $c-unsigned-long-type => $c-unsigned-long-long-type;
-		  $c-unknown-type, $c-signed-type => $c-long-type;
+		  $c-unknown-type => $c-long-type;
+		  $c-signed-type => $c-signed-long-type;
 		  $c-unsigned-type => $c-unsigned-long-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <long-token>, got %=", type);
 		end select;
 	      <int-token> =>
 		select (type)
-		  $c-unknown-type, $c-signed-type => $c-int-type;
+		  $c-unknown-type => $c-int-type;
+		  $c-signed-type => $c-signed-int-type;
 		  $c-unsigned-type => $c-unsigned-int-type;
-		  $c-long-long-type, $c-unsigned-long-long-type,
-		  $c-long-type, $c-unsigned-long-type,
-		  $c-short-type, $c-unsigned-short-type => type;
+		  $c-long-long-type, $c-signed-long-long-type,
+		  $c-unsigned-long-long-type,
+		  $c-long-type, $c-signed-long-type,
+		  $c-unsigned-long-type,
+		  $c-short-type, $c-signed-short-type,
+		  $c-unsigned-short-type => type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <int-token>, got %=", type);
 		end select;
 	      <signed-token> =>
 		select (type)
 		  $c-unknown-type => $c-signed-type;
-		  $c-long-type => $c-long-type;
-		  $c-char-type => $c-char-type;
-		  $c-short-type => $c-short-type;
+		  // XXX - I don't think these are ANSI. Check.
+		  //$c-long-type => $c-signed-long-type;
+		  //$c-char-type => $c-signed-char-type;
+		  //$c-short-type => $c-signed-short-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <signed-token>, got %=", type);
 		end select;
 	      <unsigned-token> =>
 		select (type)
 		  $c-unknown-type => $c-unsigned-type;
-		  $c-long-type => $c-unsigned-long-type;
-		  $c-char-type => $c-unsigned-char-type;
-		  $c-short-type => $c-unsigned-short-type;
+		  // XXX - I don't think these are ANSI. Check.
+		  //$c-long-type => $c-unsigned-long-type;
+		  //$c-char-type => $c-unsigned-char-type;
+		  //$c-short-type => $c-unsigned-short-type;
 		  otherwise => parse-error(state, "Bad type specifier, expected <unsigned-token>, got %=", type);
 		end select;
 	      <float-token> =>
@@ -307,7 +322,7 @@ define function process-type-list
   select (type)
     $c-unknown-type => parse-error(state, "Bad type specifier (unknown type)");
     $c-unsigned-type => $c-unsigned-int-type;
-    $c-signed-type => $c-int-type;
+    $c-signed-type => $c-signed-int-type;
     otherwise => type;
   end select;
 end function process-type-list;
@@ -468,6 +483,7 @@ define function declare-objects
 	:= add-declaration(state,
 			   make(<c-typedef-declaration>,
 				type: make(<c-typedef-type>,
+					   repository: state.repository,
 					   name: name.value,
 					   type: new-type)));
       parse-progress-report(nameloc, "Processed typedef %s", name.value);
