@@ -1,11 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.4 2000/01/24 04:56:19 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.5 2001/02/08 21:55:15 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -52,7 +52,7 @@ define module builder-interface
     make-definition-constant, make-lexical-var, make-ssa-var, make-local-var,
     make-values-cluster, copy-variable, make-exit-function,
     build-unwind-protect-body, build-function-body, make-function-literal,
-    make-initial-var,
+    make-initial-var, build-slot-home,
 
     build-defn-ref, build-defn-set, ref-dylan-defn,
     make-check-type-operation, make-error-operation,
