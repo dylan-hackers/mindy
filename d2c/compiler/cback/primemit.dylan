@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.6 2000/09/09 20:44:13 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.7 2000/10/20 15:02:15 housel Exp $
 copyright: see below
 
 
@@ -360,20 +360,27 @@ define-primitive-emitter
        if (instance?(defines.var-info, <values-cluster-info>))
 	 let name = new-local(file);
 	 write(file.file-vars-stream,
-	       stringify("descriptor_t ", name, ";\n"));
+	       stringify("descriptor_t ", name, ";"));
+	 new-line(file.file-vars-stream);
 	 write(file.file-guts-stream,
-	       stringify(name, ".heapptr = allocate(", bytes, ");\n",
-			 name, ".dataword.", data-word-member,
-			 " = ", data-word, ";\n"));
+	       stringify(name, ".heapptr = allocate(", bytes, ");"));
+	 new-line(file.file-vars-stream);
+	 write(file.file-guts-stream,
+	       stringify(name, ".dataword.", data-word-member,
+			 " = ", data-word, ";"));
+	 new-line(file.file-guts-stream);
 	 deliver-result(defines, name, *general-rep*, #f, file);
        else
 	 let (name, rep) = c-name-and-rep(defines, file);
 	 assert(rep == *general-rep*);
 
 	 write(file.file-guts-stream,
-	       stringify(name, ".heapptr = allocate(", bytes, ");\n",
-			 name, ".dataword.", data-word-member,
-			 " = ", data-word, ";\n"));
+	       stringify(name, ".heapptr = allocate(", bytes, ");"));
+	 new-line(file.file-guts-stream);
+	 write(file.file-guts-stream,
+	       stringify(name, ".dataword.", data-word-member,
+			 " = ", data-word, ";"));
+	 new-line(file.file-guts-stream);
 	 
 	 deliver-results(defines.definer-next, #[], #f, file);
        end if;

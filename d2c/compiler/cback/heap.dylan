@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.16 2000/07/19 23:58:41 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.17 2000/10/20 15:00:24 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -223,7 +223,7 @@ define method build-local-heap
     if (root.root-comment)
       format(stream, "\n/* %s */\n", root.root-comment.clean-for-comment);
     else
-      write(stream, "\n");
+      new-line(stream);
     end if;
 
     spew-reference(root.root-init-value, *general-rep*,
@@ -233,7 +233,7 @@ define method build-local-heap
     if (name)
       format(stream, "descriptor_t %s =\n", name);
       write(stream, get-string(state.file-guts-stream));
-      write(stream, ";\n\n");
+      format(stream, ";\n\n");
     else
       error("build-local-heap: root %= has no name", root);
     end if;
@@ -255,7 +255,7 @@ end method build-local-heap;
 // 
 define method spew-objects-in-queue (state :: <heap-file-state>) => ();
   let stream = state.file-body-stream;
-  write(stream, "\n/* heap base */\n");
+  format(stream, "\n/* heap base */\n");
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
     let info = get-info-for(object, #f);
@@ -883,11 +883,11 @@ define method spew-object
 	  #"%object-class" =>
 	    spew-reference(class, field.slot-representation, "%object-class",
 			   state);
-	    write(stream, ",\n");
+	    format(stream, ",\n");
 	  #"size" =>
 	    spew-reference(as(<ct-value>, str.size), field.slot-representation,
 			   "size", state);
-	    write(stream, ",\n");
+	    format(stream, ",\n");
 	  #"%element" =>
 	    // The following ugly code should be immensely faster than
 	    // writing a character at a time to a stream.
@@ -938,7 +938,7 @@ define method spew-object
 	    add!($spewed-string-buffer, '"');
 	    if(str.size > 0)
 	      write(stream, as(<byte-string>, $spewed-string-buffer));
-	      write(stream, ",\n");
+	      format(stream, ",\n");
 	    end if;
 	    $spewed-string-buffer.size := $spewed-string-initial-size;
 	end select;

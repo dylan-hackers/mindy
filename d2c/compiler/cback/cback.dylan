@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.14 2000/10/05 04:02:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.15 2000/10/20 14:59:04 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -764,7 +764,7 @@ define method c-name-and-rep (leaf :: <abstract-variable>,
     if (instance?(leaf.var-info, <debug-named-info>))
       format(stream, " /* %s */", leaf.var-info.debug-name.clean-for-comment);
     end;
-    write(stream, "\n");
+    new-line(stream);
     info.backend-var-info-name := name;
   end;
   values(name, info.backend-var-info-rep);
@@ -1272,7 +1272,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, file));
   format(gstream, "return end;\n");
   write(bstream, get-string(gstream));
-  write(bstream, "}\n\n");
+  format(bstream, "}\n\n");
 
   format(bstream,
 	 "descriptor_t *values_sequence"
@@ -1285,7 +1285,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 	 dylan-slot-offset(sov-cclass, #"%element"));
   format(gstream, "return sp + elements;\n");
   write(bstream, get-string(gstream));
-  write(bstream, "}\n\n");
+  format(bstream, "}\n\n");
 
   unless (instance?(*double-rep*, <c-data-word-representation>))
     let cclass = specifier-type(#"<double-float>");
@@ -1300,12 +1300,12 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
     write(bstream, get-string(gstream));
-    write(bstream, "}\n\n");
+    format(bstream, "}\n\n");
 
     format(bstream, "double double_float_value(heapptr_t df)\n{\n");
     format(gstream, "return SLOT(df, double, %d);\n", value-offset);
     write(bstream, get-string(gstream));
-    write(bstream, "}\n\n");
+    format(bstream, "}\n\n");
   end;
 
   unless (instance?(*long-double-rep*, <c-data-word-representation>))
@@ -1321,12 +1321,12 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
     write(bstream, get-string(gstream));
-    write(bstream, "}\n\n");
+    format(bstream, "}\n\n");
 
     format(bstream, "long double extended_float_value(heapptr_t xf)\n{\n");
     format(gstream, "return SLOT(xf, long double, %d);\n", value-offset);
     write(bstream, get-string(gstream));
-    write(bstream, "}\n\n");
+    format(bstream, "}\n\n");
   end;
 end;
 
@@ -1338,7 +1338,7 @@ define method emit-tlf-gunk (tlf :: <define-generic-tlf>, file :: <file-state>)
   format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
   let defn = tlf.tlf-defn;
   emit-definition-gunk(defn, file);
-  write(file.file-body-stream, "\n");
+  new-line(file.file-body-stream);
 
   // If dynamic, force module var to be allocated now.  Otherwise the client
   // libraries will create it on demand, referencing its init-value which is
@@ -1404,7 +1404,7 @@ define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
   // This class was obviously defined in this lib, so it is a local class.
   let defn = tlf.tlf-defn;
   emit-definition-gunk(defn, file);
-  write(file.file-body-stream, "\n");
+  new-line(file.file-body-stream);
   let ctv = defn.ct-value;
   if (ctv)
     if (ctv.sealed?)
@@ -1470,7 +1470,7 @@ define method emit-tlf-gunk
   if (tlf.tlf-rest-defn)
     emit-definition-gunk(tlf.tlf-rest-defn, file);
   end;
-  write(file.file-body-stream, "\n");
+  new-line(file.file-body-stream);
 end;
 
 define method emit-definition-gunk
@@ -1625,7 +1625,7 @@ define method emit-function
 	   "descriptor_t *orig_sp = allocate_stack();\n");
   end if;
   write(stream, get-string(file.file-vars-stream));
-  write(stream, "\n");
+  new-line(stream);
 
   // Actually write out the (already generated) code:
   let overflow = file.file-guts-overflow;
@@ -1636,7 +1636,7 @@ define method emit-function
     overflow.size := 0;
   end unless;
   write(stream, get-string(file.file-guts-stream));
-  write(stream, "}\n\n");
+  format(stream, "}\n\n");
 end;
 
 define method compute-function-prototype
@@ -1811,7 +1811,7 @@ define method emit-region (if-region :: <if-region>, file :: <file-state>)
   /* ### emit-joins(if-region.join-region, file); */
   spew-pending-defines(file);
   indent(stream, -$indentation-step);
-  write(stream, "}\n");
+  format(stream, "}\n");
 
   // We need to detect places where we can use "else if" rather than
   // "else { if" because if we don't, we'll break the parsers on
@@ -1821,7 +1821,7 @@ define method emit-region (if-region :: <if-region>, file :: <file-state>)
   if (clause-is-an-elseif)
     write(stream, "else ");
   else
-    write(stream, "else {\n");
+    format(stream, "else {\n");
     indent(stream, $indentation-step);
   end if;
   
@@ -1831,7 +1831,7 @@ define method emit-region (if-region :: <if-region>, file :: <file-state>)
   spew-pending-defines(file);
   if (~clause-is-an-elseif)
     indent(stream, -$indentation-step);
-    write(stream, "}\n");
+    format(stream, "}\n");
   end if;
 end method emit-region;
 
@@ -1842,13 +1842,13 @@ define method emit-region (region :: <loop-region>,
   /* ### emit-joins(region.join-region, file); */
   spew-pending-defines(file);
   let stream = file.file-guts-stream;
-  write(stream, "while (1) {\n");
+  format(stream, "while (1) {\n");
   indent(stream, $indentation-step);
   emit-region(region.body, file);
   /* ### emit-joins(region.join-region, file); */
   spew-pending-defines(file);
   indent(stream, -$indentation-step);
-  write(stream, "}\n");
+  format(stream, "}\n");
 end;
 
 define method make-info-for
@@ -1957,7 +1957,7 @@ end;
 //    (return :: <return>, result-rep == #(), file :: <file-state>)
 //    => ();
 //  spew-pending-defines(file);
-//  write(file.file-guts-stream, "return;\n");
+//  format(file.file-guts-stream, "return;\n");
 //end;
 
 define method emit-return
@@ -1965,7 +1965,7 @@ define method emit-return
     => ();
   if (result-reps.empty?)
     spew-pending-defines(file);
-    write(file.file-guts-stream, "return;\n");
+    format(file.file-guts-stream, "return;\n");
   else
     let stream = file.file-guts-stream;  
     let temp = new-local(file, modifier: "temp");
@@ -2154,7 +2154,7 @@ define method emit-assignment
     write(stream, ", ");
     write(stream, next-info);
   end;
-  write(stream, ");\n");
+  format(stream, ");\n");
   deliver-cluster
     (results, bottom-name, return-top-name,
      call.derived-type.min-values, file);
