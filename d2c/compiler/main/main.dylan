@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.15 1999/04/10 00:43:01 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.16 1999/04/10 18:30:52 emk Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1259,7 +1259,7 @@ end method parse-option;
 //----------------------------------------------------------------------
 
 define method show-copyright(stream :: <stream>) => ()
-  format(stream, "d2c (Gwydion Dylan) version %s\n",$version);
+  format(stream, "d2c (Gwydion Dylan) %s\n", $version);
   format(stream, "Compiles Dylan source into C, then compiles that.\n");
   format(stream, "Copyright 1994-1997 Carnegie Mellon University\n");
   format(stream, "Copyright 1998,1999 Gwydion Dylan Maintainers\n");
@@ -1297,10 +1297,17 @@ define method show-help(stream :: <stream>) => ()
 "       -f, --cc-overide-file:\n"
 "                          Files which need special C compiler invocation.\n"
 "       --help:            Show this help text.\n"
-"       -v, --version      Show version number.\n"
+"       --version          Show version number.\n"
 	   );
 end method show-help;
 
+define method show-compiler-info(stream :: <stream>) => ()
+  format(stream,
+"_DCI_DYLAN_LID_FORMAT_VERSION=1\n"
+"_DCI_D2C_BOOTSTRAP_COUNTER=1\n"
+"_DCI_D2C_RUNTIME_SUBDIR=%s/runtime/\n",
+	 $version);
+end method;
 
 //----------------------------------------------------------------------
 // Where to find various important files.
@@ -1349,8 +1356,10 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    long-options: #("help"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
-			    long-options: #("version"),
-			    short-options: #("v"));
+			    long-options: #("version"));
+  add-option-parser-by-type(argp,
+			    <simple-option-parser>,
+			    long-options: #("compiler-info"));
   add-option-parser-by-type(argp,
 			    <repeated-parameter-option-parser>,
 			    long-options: #("libdir"),
@@ -1408,11 +1417,15 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   // Handle our informational options.
   if (option-value-by-long-name(argp, "help"))
     show-help(*standard-output*);
-    exit(exit-code: 1);
+    exit(exit-code: 0);
   end if;
   if (option-value-by-long-name(argp, "version"))
     show-copyright(*standard-output*);
-    exit(exit-code: 1);
+    exit(exit-code: 0);
+  end if;
+  if (option-value-by-long-name(argp, "compiler-info"))
+    show-compiler-info(*standard-output*);
+    exit(exit-code: 0);
   end if;
 
   // Get our simple options.
