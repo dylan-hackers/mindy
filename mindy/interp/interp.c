@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.10 1994/04/13 16:44:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.11 1994/04/14 19:19:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -148,57 +148,6 @@ static void op_value_cell_set(int byte, struct thread *thread)
     thread->sp = sp - 2;
 }
 
-static void op_variable_value(int byte, struct thread *thread)
-{
-    obj_t *sp = thread->sp;
-    struct variable *var = obj_rawptr(sp[-1]);
-    obj_t value = var->value;
-    if (value != obj_Unbound)
-	sp[-1] = value;
-    else
-	error("Unbound variable: ~S", var->name);
-}
-
-static void op_variable_function(int byte, struct thread *thread)
-{
-    obj_t *sp = thread->sp;
-    struct variable *var = obj_rawptr(sp[-1]);
-    obj_t value = var->value;
-    switch (var->function) {
-      case func_No:
-	type_error(value, obj_FunctionClass);
-      case func_Yes:
-      case func_Always:
-	break;
-      case func_Maybe:
-	if (instancep(value, obj_FunctionClass)) {
-	    var->function = func_Yes;
-	    break;
-	}
-	else if (value == obj_Unbound)
-	    error("Unbound variable: ~S", var->name);
-	else {
-	    var->function = func_No;
-	    type_error(value, obj_FunctionClass);
-	}
-    }
-    sp[-1] = value;
-}
-
-static void op_set_variable_value(int byte, struct thread *thread)
-{
-    obj_t *sp = thread->sp;
-    struct variable *var = obj_rawptr(sp[-1]);
-    obj_t value = sp[-2];
-
-    if (var->type != obj_False && !instancep(value, var->type))
-	type_error(value, var->type);
-    if (var->function != func_Always)
-	var->function = func_Maybe;
-    var->value = value;
-    thread->sp = sp - 2;
-}
-
 static void op_make_method(int byte, struct thread *thread)
 {
     obj_t *sp = thread->sp;
@@ -296,6 +245,32 @@ static void op_dup(int byte, struct thread *thread)
     thread->sp = sp+1;
     sp[0] = value;
 }
+
+static void op_dot_tail(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t arg = sp[-2];
+    obj_t func = sp[-1];
+    obj_t *old_sp = pop_linkage(thread);
+
+    old_sp[0] = func;
+    old_sp[1] = arg;
+    thread->sp = old_sp + 2;
+
+    invoke(thread, 1);
+}
+
+static void op_dot(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t arg = sp[-2];
+    obj_t func = sp[-1];
+
+    sp[-2] = func;
+    sp[-1] = arg;
+
+    invoke(thread, 1);
+}    
 
 static void push_constant(struct thread *thread, int arg)
 {
@@ -407,6 +382,89 @@ static void op_call(int byte, struct thread *thread)
     int nargs = decode_arg(thread);
     thread->pc++;
     invoke(thread, nargs);
+}
+
+static void push_value(struct thread *thread, int arg)
+{
+    struct variable *var
+	= (struct variable *)COMPONENT(thread->component)->constant[arg];
+    obj_t value = var->value;
+
+    if (value != obj_Unbound)
+	*thread->sp++ = value;
+    else
+	error("Unbound variable: ~S", var->name);
+}
+
+static void op_push_value_immed(int byte, struct thread *thread)
+{
+    push_value(thread, byte & 0xf);
+}
+
+static void op_push_value(int byte, struct thread *thread)
+{
+    push_value(thread, decode_arg(thread));
+}
+
+static void push_function(struct thread *thread, int arg)
+{
+    struct variable *var
+	= (struct variable *)COMPONENT(thread->component)->constant[arg];
+    obj_t value = var->value;
+
+    switch (var->function) {
+      case func_No:
+	type_error(value, obj_FunctionClass);
+      case func_Yes:
+      case func_Always:
+	break;
+      case func_Maybe:
+	if (instancep(value, obj_FunctionClass)) {
+	    var->function = func_Yes;
+	    break;
+	}
+	else if (value == obj_Unbound)
+	    error("Unbound variable: ~S", var->name);
+	else {
+	    var->function = func_No;
+	    type_error(value, obj_FunctionClass);
+	}
+    }
+
+    *thread->sp++ = value;
+}
+
+static void op_push_function_immed(int byte, struct thread *thread)
+{
+    push_function(thread, byte & 0xf);
+}
+
+static void op_push_function(int byte, struct thread *thread)
+{
+    push_function(thread, decode_arg(thread));
+}
+
+static void pop_value(struct thread *thread, int arg)
+{
+    struct variable *var
+	= (struct variable *)COMPONENT(thread->component)->constant[arg];
+    obj_t value = *--thread->sp;
+
+    if (var->type != obj_False && !instancep(value, var->type))
+	type_error(value, var->type);
+    if (var->function != func_Always)
+	var->function = func_Maybe;
+    var->value = value;
+}
+
+static void op_pop_value_immed(int byte, struct thread *thread)
+{
+    pop_value(thread, byte & 0xf);
+}
+
+static void op_pop_value(int byte, struct thread *thread)
+{
+    pop_value(thread, decode_arg(thread));
 }
 
 static void op_plus(int byte, struct thread *thread)
@@ -605,15 +663,6 @@ void interpret_byte(int byte, struct thread *thread)
       case op_VALUE_CELL_SET:
 	op_value_cell_set(byte, thread);
 	break;
-      case op_VARIABLE_VALUE:
-	op_variable_value(byte, thread);
-	break;
-      case op_VARIABLE_FUNCTION:
-	op_variable_function(byte, thread);
-	break;
-      case op_SET_VARIABLE_VALUE:
-	op_set_variable_value(byte, thread);
-	break;
       case op_MAKE_METHOD:
 	op_make_method(byte, thread);
 	break;
@@ -652,6 +701,13 @@ void interpret_byte(int byte, struct thread *thread)
 	break;
       case op_DUP:
 	op_dup(byte, thread);
+	break;
+      case op_DOT_TAIL:
+	op_dot_tail(byte, thread);
+	break;
+      case op_DOT_FOR_SINGLE:
+      case op_DOT_FOR_MANY:
+	op_dot(byte, thread);
 	break;
       case op_PUSH_CONSTANT|0:
       case op_PUSH_CONSTANT|1:
@@ -809,6 +865,66 @@ void interpret_byte(int byte, struct thread *thread)
       case op_CALL_FOR_SINGLE|15:
 	op_call(byte, thread);
 	break;
+      case op_PUSH_VALUE|0:
+      case op_PUSH_VALUE|1:
+      case op_PUSH_VALUE|2:
+      case op_PUSH_VALUE|3:
+      case op_PUSH_VALUE|4:
+      case op_PUSH_VALUE|5:
+      case op_PUSH_VALUE|6:
+      case op_PUSH_VALUE|7:
+      case op_PUSH_VALUE|8:
+      case op_PUSH_VALUE|9:
+      case op_PUSH_VALUE|10:
+      case op_PUSH_VALUE|11:
+      case op_PUSH_VALUE|12:
+      case op_PUSH_VALUE|13:
+      case op_PUSH_VALUE|14:
+	op_push_value_immed(byte, thread);
+	break;
+      case op_PUSH_VALUE|15:
+	op_push_value(byte, thread);
+	break;
+      case op_PUSH_FUNCTION|0:
+      case op_PUSH_FUNCTION|1:
+      case op_PUSH_FUNCTION|2:
+      case op_PUSH_FUNCTION|3:
+      case op_PUSH_FUNCTION|4:
+      case op_PUSH_FUNCTION|5:
+      case op_PUSH_FUNCTION|6:
+      case op_PUSH_FUNCTION|7:
+      case op_PUSH_FUNCTION|8:
+      case op_PUSH_FUNCTION|9:
+      case op_PUSH_FUNCTION|10:
+      case op_PUSH_FUNCTION|11:
+      case op_PUSH_FUNCTION|12:
+      case op_PUSH_FUNCTION|13:
+      case op_PUSH_FUNCTION|14:
+	op_push_function_immed(byte, thread);
+	break;
+      case op_PUSH_FUNCTION|15:
+	op_push_function(byte, thread);
+	break;
+      case op_POP_VALUE|0:
+      case op_POP_VALUE|1:
+      case op_POP_VALUE|2:
+      case op_POP_VALUE|3:
+      case op_POP_VALUE|4:
+      case op_POP_VALUE|5:
+      case op_POP_VALUE|6:
+      case op_POP_VALUE|7:
+      case op_POP_VALUE|8:
+      case op_POP_VALUE|9:
+      case op_POP_VALUE|10:
+      case op_POP_VALUE|11:
+      case op_POP_VALUE|12:
+      case op_POP_VALUE|13:
+      case op_POP_VALUE|14:
+	op_pop_value_immed(byte, thread);
+	break;
+      case op_POP_VALUE|15:
+	op_pop_value(byte, thread);
+	break;
       case op_PLUS:
 	op_plus(byte, thread);
 	break;
@@ -867,14 +983,15 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
     if (opcode == op_BREAKPOINT)
 	opcode = original_byte(thread->component, thread->pc - 1) & 0xf0;
 
-    if (opcode == op_CALL_FOR_SINGLE || opcode >= op_PLUS) {
+    if (opcode == op_CALL_FOR_SINGLE || opcode == op_DOT_FOR_SINGLE
+	  || opcode >= op_PLUS) {
 	if (vals == thread->sp)
 	    *old_sp = obj_False;
 	else if (vals != old_sp)
 	    *old_sp = vals[0];
 	thread->sp = old_sp + 1;
     }
-    else if (opcode == op_CALL_FOR_MANY)
+    else if (opcode == op_CALL_FOR_MANY || opcode == op_DOT_FOR_MANY)
 	canonicalize_values(thread, old_sp, vals);
     else
 	lose("Strange call opcode: 0x%02x", opcode);
