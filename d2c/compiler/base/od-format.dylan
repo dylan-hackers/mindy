@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.13 2001/03/30 13:48:38 bruce Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.14 2001/03/30 17:16:38 andreas Exp $
 
 //======================================================================
 //
@@ -229,7 +229,7 @@ Note that:
 // Note that it is intended that all IDs be registered in this file so that
 // we are sure that IDs are globally unique.
 
-#if (mindy)
+#if (mindy | bootstrap_hack)
 define constant <stretchy-object-vector> = <stretchy-vector>;
 define constant <simple-object-table> = <table>;
 #endif

@@ -1,3 +1,7 @@
 
 &makegen_include('../common-Makegen');
+if ($enable_bootstrap) {
+  $D2CFLAGS = $D2CFLAGS . ' -Dbootstrap_hack ';
+}
+
 &d2c_library('Base', '');
