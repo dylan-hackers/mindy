@@ -5,11 +5,11 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/lisp2dylan/lisp2dylan.dylan,v 1.1 1996/09/19 12:11:34 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/lisp2dylan/lisp2dylan.dylan,v 1.2 1997/01/16 15:32:16 nkramer Exp $
 
 //======================================================================
 //
-// Copyright (c) 1994  Carnegie Mellon University
+// Copyright (c) 1996, 1997  Carnegie Mellon University
 // All rights reserved.
 //
 //======================================================================
