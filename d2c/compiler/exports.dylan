@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.27 1995/04/21 21:56:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.28 1995/04/22 00:41:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -804,6 +804,7 @@ define module cback
   use front;
   use top-level-forms;
   use define-constants-and-variables;
+  use ctype;
 
   export
     <output-info>, output-info-results,
