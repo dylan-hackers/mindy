@@ -1,3 +1,8 @@
 
-do emit_library_rule('Versioner', '$(BUILDROOT)/force.timestamp', '',
-		     'compile', 'install');
+# Solaris doesn't support the Time library, so we can't build
+# Versioner on Solaris.
+#
+if (! $features{'compiled_for_solaris'}) {
+    &emit_library_rule('Versioner', '$(BUILDROOT)/force.timestamp', '',
+	 	       'compile', 'install');
+}
