@@ -124,7 +124,7 @@ end method test-=;
 
 define method test-zero? 
     (name :: <string>, number :: <number>) => ()
-  check-equal(format-to-string("zero?(%d)", number),
+  check-equal(format-to-string("zero?(%=)", number),
               zero?(number),
               integral?(number) & number < 1 & number > -1)
 end method test-zero?;
@@ -136,7 +136,9 @@ end method test-+;
 
 define method test-* 
     (name :: <string>, number :: <number>) => ()
-  check-equal(format-to-string("%d * 1 = %d", number, number),
+  // FIXME: Fun-O seems to print all numbers with %d... patching
+  //        this here for now...
+  check-equal(format-to-string("%= * 1 = %=", number, number),
               number * 1, number)
 end method test-*;
 
@@ -219,14 +221,14 @@ end method test-abs;
 
 define method test-positive?
     (name :: <string>, number :: <real>) => ()
-  check-equal(format-to-string("positive?(%d)", number),
+  check-equal(format-to-string("positive?(%=)", number),
               positive?(number),
               number > 0)
 end method test-positive?;
 
 define method test-negative?
     (name :: <string>, number :: <real>) => ()
-  check-equal(format-to-string("negative?(%d)", number),
+  check-equal(format-to-string("negative?(%=)", number),
               negative?(number),
               number < 0)
 end method test-negative?;
@@ -238,7 +240,7 @@ end method test-integral?;
 
 define method test-negative
     (name :: <string>, number :: <real>) => ()
-  check-equal(format-to-string("negative(negative(%d)) = %d", number, number),
+  check-equal(format-to-string("negative(negative(%=)) = %=", number, number),
               negative(negative(number)),
               number)
 end method test-negative;
@@ -248,14 +250,14 @@ end method test-negative;
 
 define method test-odd?
     (name :: <string>, number :: <integer>) => ()
-  check-equal(format-to-string("odd?(%d)", number),
+  check-equal(format-to-string("odd?(%=)", number),
               odd?(number),
               modulo(number, 2) = 1)
 end method test-odd?;
 
 define method test-even?
     (name :: <string>, number :: <integer>) => ()
-  check-equal(format-to-string("even?(%d)", number),
+  check-equal(format-to-string("even?(%=)", number),
               even?(number),
               modulo(number, 2) = 0)
 end method test-even?;
