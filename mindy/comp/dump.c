@@ -23,13 +23,16 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.15 1994/06/27 16:49:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.16 1994/07/07 07:14:14 wlott Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#ifdef ultrix
+#include <sys/types.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
