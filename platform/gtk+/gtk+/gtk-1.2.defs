@@ -1443,7 +1443,9 @@
 
 ;;; Bin
 
-(define-object GtkBin (GtkContainer))
+(define-object GtkBin (GtkContainer)
+  (fields
+   (GtkWidget child)))
 
 ;;; Event Box
 
@@ -1878,9 +1880,8 @@
 
 ;;; Button
 
-(define-object GtkButton (GtkContainer)
+(define-object GtkButton (GtkBin)
   (fields
-   (GtkWidget child)
 ;  (bool in_button)
 ;  (bool button_down)
    ))
@@ -2633,7 +2634,9 @@
 
 ;; MenuItem
 
-(define-object GtkMenuItem (GtkItem))
+(define-object GtkMenuItem (GtkItem)
+  (fields
+   (GtkWidget submenu)))
 
 (define-func gtk_menu_item_new
   GtkWidget
