@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.13 1995/08/20 17:43:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.14 1995/08/22 00:18:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1360,7 +1360,7 @@ key-parameter-list (<key-token> <comma-token> <all-keys-token>)
 %
 
 key-parameter-list (<key-token> keyword-parameters-comma <all-keys-token>)
-  make(<parameter-list>, keys: %2, all-keys: #t);
+  make(<parameter-list>, keys: as(<simple-object-vector>, %2), all-keys: #t);
 %
 
 key-parameter-list (<all-keys-token>)
