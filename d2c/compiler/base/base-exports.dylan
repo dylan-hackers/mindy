@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.40 2002/10/31 20:59:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.41 2003/03/15 06:23:03 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -97,6 +97,8 @@ define module common
   use Print, export: all;
   use PPrint, export: all;
   use Format, export: all;
+  create
+    *error-output*;
 #if (~mindy)
   create
      *debug-output*;

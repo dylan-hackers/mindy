@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/utils.dylan,v 1.7 2002/12/11 04:46:16 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/utils.dylan,v 1.8 2003/03/15 06:23:03 housel Exp $
 copyright: see below
 
 
@@ -514,6 +514,9 @@ define method pprint-logical-block
 	      suffix: suffix);
 end;
 
+
+define variable *error-output* :: <stream>
+  = make(<flush-happy-stream>, target: *standard-error*);
 
 #if (mindy)
 
