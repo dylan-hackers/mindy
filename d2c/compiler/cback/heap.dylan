@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.55 1996/09/04 16:47:12 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.56 1996/09/15 15:33:32 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -184,17 +184,6 @@ define method build-global-heap
   spew-reference(state.symbols, *heap-rep*, "Initial Symbols", state);
 end;
 
-// This string specifies the "descriptor_t" type in enough detail to
-// allow gdb to work with the objects we define.
-//
-define constant $descriptor-type-string
-  = "\t.stabs \"<unknown>\",100,0,0,L$text0000\n"
-    "L$text0000:\n"
-    "\t.stabs \"heapptr_t:t32=*33=xsheapobj:\",128,0,6,0\n"
-    "\t.stabs \"descriptor:T34=s8heapptr:32,0,32;dataword:"
-       "35=u4l:3,0,32;f:12,0,32;ptr:36=*19,0,32;;,32,32;;\",128,0,0,0\n"
-    "\t.stabs \"descriptor_t:t34\",128,0,14,0\n";
-
 // build-local-heap -- exported.
 //
 // Build a library specific local heap and return the set of objects skipped
@@ -213,6 +202,38 @@ define method build-local-heap
   // Debugging is currently only supported on systems that support
   // stabs (what gdb uses)
   if (target.supports-debugging?)
+    // This string specifies the "descriptor_t" type in enough detail
+    // to allow gdb to work with the objects we define.  We got this
+    // string by looking at the output of "gcc -g -S -c foo.c -o
+    // foo.s", and selectively copying a few key entries.  We changed
+    // the embeded filename to "<unknown>", because we don't really
+    // feel like trying to keep track of where the source code for the
+    // current file can be located.  There's another string somewhere
+    // later in the source code that refers to "G34" or "G(9,6)",
+    // depending on platform.  This is derived from the entry of
+    // descriptor.
+    let $descriptor-type-string
+      = if (target.uses-win32-stabs?)
+	  // Yes, for win32 these directives actually start in column
+	  // 0, although there wouldn't be any harm in indenting
+	  // them..
+	  ".stabs \"<unknown>\",100,0,0,Ltext0\n"
+	    ".text\n"
+	    "Ltext0:\n"
+	    ".stabs \"heapptr_t:t(9,3)=(9,4)=*(9,5)=xsheapobj:\",128,0,6,0\n"
+	    ".stabs \"descriptor:T(9,6)=s8heapptr:(9,3),0,32;dataword:"
+	    "(9,7)=u4l:(0,3),0,32;f:(0,12),0,32;ptr:(5,16),0,32;;,32,32;;\","
+	    "128,0,0,0\n"
+	    ".stabs \"descriptor_t:t(9,8)=(9,6)\",128,0,14,0\n";
+	else
+	  // ### might be HP specific, I don't know
+	  "\t.stabs \"<unknown>\",100,0,0,L$text0000\n"
+	    "L$text0000:\n"
+	    "\t.stabs \"heapptr_t:t32=*33=xsheapobj:\",128,0,6,0\n"
+	    "\t.stabs \"descriptor:T34=s8heapptr:32,0,32;dataword:"
+	    "35=u4l:3,0,32;f:12,0,32;ptr:36=*19,0,32;;,32,32;;\",128,0,0,0\n"
+	    "\t.stabs \"descriptor_t:t34\",128,0,14,0\n";
+	end if;
     format(stream, "%s", $descriptor-type-string);
   end if;
   format(stream, "%s\n\n", target.heap-preamble);
@@ -231,8 +252,17 @@ define method build-local-heap
       format(stream, target.export-directive, 
 	     concatenate(target.mangled-name-prefix, name));
       format(stream, "%s%s:\n", target.mangled-name-prefix, name);
-      format(stream, "\t.stabs\t\"%s%s:G34\",32,0,1,0\n", 
-	     target.mangled-name-prefix, name);
+      if (target.supports-debugging?)
+	if (target.uses-win32-stabs?)
+	  format(stream, "\t.stabs\t\"%s%s:G(9,8)\",32,0,1,0\n", 
+		 target.mangled-name-prefix, name);
+	else
+	  // ### I don't really know if this works for all Unixes, 
+	  // or just HP/UX
+	  format(stream, "\t.stabs\t\"%s%s:G34\",32,0,1,0\n", 
+		 target.mangled-name-prefix, name);
+	end if;
+      end if;
     end if;
     spew-reference(root.root-init-value, *general-rep*,
 		   stringify(prefix, "_roots[", index, ']'),
