@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.7 2001/04/04 09:46:20 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.8 2001/07/06 05:49:56 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -96,7 +96,7 @@ define open generic element-setter
      key :: <object>)
  => (element :: <object>);
 
-define open generic size (object :: <object>) => (res :: <object>);
+define open generic size (object :: <object>) => (res :: false-or(<integer>));
 
 define open generic empty?
     (collection :: <collection>)
