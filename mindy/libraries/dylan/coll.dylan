@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.31 1996/03/07 18:03:49 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.32 1996/03/19 23:49:17 nkramer Exp $
 
 //======================================================================
 //
@@ -29,8 +29,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dyl
 //
 // This file contains the collection support code that isn't built in.
 //
-
-define constant no_default :: <pair> = pair(#f, #f);
 
 
 // Collection routines
@@ -99,7 +97,7 @@ define open generic key-test
 // we must define a default method for all collections.
 //
 define method element(coll :: <collection>, key :: <object>,
-		      #key default = no_default) => obj :: <object>;
+		      #key default = $not-supplied) => obj :: <object>;
   let (init-state, limit, next-state, done?,
        current-key, current-element) = forward-iteration-protocol(coll);
   let test = key-test(coll);
@@ -110,7 +108,7 @@ define method element(coll :: <collection>, key :: <object>,
 	return(current-element(coll, state));
       end if;
     finally
-      if (default == no_default)
+      if (default == $not-supplied)
 	error("No such element in %=: %=", coll, key);
       else 
 	default;
@@ -576,12 +574,12 @@ define open generic subsequence-position
 
 
 define method element(sequence :: <sequence>, key :: <integer>,
-		      #key default = no_default) => elt :: <object>;
+		      #key default = $not-supplied) => elt :: <object>;
   block (return)
     for (this-key from 0, elem in sequence)
       if (this-key == key) return(elem) end if;
     finally
-      if (default == no_default)
+      if (default == $not-supplied)
 	error("No such element in %=: %=", sequence, key);
       else 
 	default;

@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.18 1996/03/07 18:01:28 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.19 1996/03/19 23:49:17 nkramer Exp $
 
 //======================================================================
 //
@@ -384,10 +384,10 @@ end method size-setter;
 // to the desired element and take that as our starting point.
 //
 define method element (deque :: <deque>, key :: <integer>,
-		       #key default = no_default) => elt :: <object>;
+		       #key default = $not-supplied) => elt :: <object>;
   let sz = deque.size;
   if (key < 0 | key >= sz)
-    if (default == no_default) error("No such element in %=: %d", deque, key)
+    if (default == $not-supplied) error("No such element in %=: %d", deque, key)
     else default
     end if;
   elseif (key + key > sz)	// closer to end than start
@@ -808,16 +808,16 @@ end method reverse!;
 
 // last -- public
 //
-// Returns the last element of the duque.  This is more efficient because
+// Returns the last element of the deque.  This is more efficient because
 // the last element of a deque can be accessed directly.
 //
-define method last (deque :: <deque>, #key default = no_default)
+define method last (deque :: <deque>, #key default = $not-supplied)
  => last-elt :: <object>;
   let deque-tail = deque-tail(deque);
   case
     deque-tail =>
       deque-element-data(deque-tail);
-    default == no-default =>
+    default == $not-supplied =>
       error("No such element in %=:  last.", deque);
     otherwise =>
       default;

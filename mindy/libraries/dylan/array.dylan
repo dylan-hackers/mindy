@@ -1,7 +1,7 @@
 module:   dylan
 language: infix-dylan
 author:   Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.8 1996/03/07 18:04:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.9 1996/03/19 23:49:17 nkramer Exp $
 
 //======================================================================
 //
@@ -51,8 +51,6 @@ define open generic dimension (array :: <array>, axis :: <integer>)
     => dimension :: <integer>;
 
 
-define constant no-default = list(#"no-default");
-
 define class <multiD-array> (<array>)
   slot dimensions-slot  :: <simple-object-vector>;  // Sequence of integers
   slot contents-slot    :: <simple-object-vector>;
@@ -62,10 +60,10 @@ end class <multiD-array>;
 // General array methods
 
 define method make (c == <array>, 
-		    #key dimensions: dimensions :: <sequence> = no-default, 
+		    #key dimensions: dimensions :: <sequence> = $not-supplied, 
 		    fill = #f)
  => array :: <array>;
-  if (dimensions == no-default)
+  if (dimensions == $not-supplied)
     error("Need the dimensions or a size for an array");
   elseif (size(dimensions) = 1)
     make(<vector>, fill: fill, size: head(dimensions));
@@ -245,9 +243,9 @@ end method initialize;
 
 
 define method element (array :: <multiD-array>, index :: <integer>,
-		       #key default: default = no-default)
+		       #key default: default = $not-supplied)
   => elt :: <object>;
-  if (default == no-default)
+  if (default == $not-supplied)
     array.contents-slot[index];
   else
     element(array.contents-slot, index, default: default);

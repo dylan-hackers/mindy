@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.16 1996/03/07 17:56:49 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.17 1996/03/19 23:49:17 nkramer Exp $
 
 //======================================================================
 //
@@ -122,15 +122,13 @@ define method dimensions(ssv :: <simple-stretchy-vector>)
 end method dimensions;
 
 
-define constant ssv_no_default = pair(#f, #f);
-
 define method element(ssv :: <simple-stretchy-vector>, key :: <integer>,
-		      #key default = ssv_no_default)
+		      #key default = $not-supplied)
  => elt :: <object>;
   case
     key >= 0 & key < size(ssv) =>
       ssv-data(ssv)[key];
-    default == ssv_no_default =>
+    default == $not-supplied =>
       error("Element %d not in %=", key, ssv);
     otherwise =>
       default;

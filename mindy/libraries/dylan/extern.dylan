@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.8 1996/03/07 18:00:31 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.9 1996/03/19 23:49:17 nkramer Exp $
 
 //======================================================================
 //
@@ -236,8 +236,6 @@ define method content-size
   1;
 end method content-size;
 
-define constant *cstr-no-default* = pair(#f, #f);
-
 define method size (string :: <c-string>)
  => result :: <integer>;
   case
@@ -276,13 +274,13 @@ end method size-setter;
 // should use pointer-value instead.
 //
 define method element
-    (vec :: <c-string>, index :: <integer>, #key default = *cstr-no-default*)
+    (vec :: <c-string>, index :: <integer>, #key default = $not-supplied)
  => (result :: <character>);
   let sz = vec.size;
   case
     index >= 0 & index < sz =>
       pointer-value(vec, index: index);
-    default == *cstr-no-default* =>
+    default == $not-supplied =>
       error("No such element in %=: %=", vec, index);
     otherwise =>
       default;

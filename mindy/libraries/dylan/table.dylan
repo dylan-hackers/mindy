@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.26 1996/03/07 17:55:04 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.27 1996/03/19 23:49:17 nkramer Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -492,13 +492,11 @@ define method find-elt
   end if;
 end method find-elt;
 
-define constant $no-default = pair(#f, #f);
-
 // This function looks redundant at times, but it's necessary in order
 // to avoid race conditions with the garbage collector.
 //
 define method element (ht :: <table>, key :: <object>, 
-		       #key default: default = $no-default )
+		       #key default: default = $not-supplied )
  => elt :: <object>;
   // We don't yet check for outdated hash states, since the element
   // might match anyway, and the lookup is much cheaper than a rehash.
@@ -519,7 +517,7 @@ define method element (ht :: <table>, key :: <object>,
   elseif (~ht.table-hash-state.state-valid? | ~key-state.state-valid?)
     rehash(ht);
     element(ht, key, default: default);
-  elseif (default == $no-default)
+  elseif (default == $not-supplied)
     error("Element not found");
   else 
     default;
@@ -529,7 +527,7 @@ end method element;
 // This is exactly the same code without the garbage collection stuff
 //
 define method element (  ht :: <value-table>, key, 
-		         #key default: default = $no-default )
+		         #key default: default = $not-supplied )
  => elt :: <object>;
   let (key=, key-hash)      = table-protocol(ht);
   let key-id                = key-hash(key);
@@ -539,7 +537,7 @@ define method element (  ht :: <value-table>, key,
   
   if (find-result)
     find-result.entry-elt;
-  elseif (default == $no-default)
+  elseif (default == $not-supplied)
     error ("Element not found");
   else 
     default;

@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.10 1996/03/07 17:58:03 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.11 1996/03/19 23:49:17 nkramer Exp $
 
 //======================================================================
 //
@@ -390,12 +390,12 @@ end method;
 // signalled.
 //
 define method element (range :: <bounded-range>, key :: <integer>,
-                       #key default = no-default)
+                       #key default = $not-supplied)
       => range-element :: <real>;
    case
       (key >= 0) & (key < range.range-size) =>
          range.range-from + (key * range.range-by);
-      (default == no-default) =>
+      (default == $not-supplied) =>
          error ("No such element in %=: %d", range, key);
       otherwise =>
          default;
@@ -403,12 +403,12 @@ define method element (range :: <bounded-range>, key :: <integer>,
 end method;
 //
 define method element (range :: <unbounded-range>, key :: <integer>,
-                       #key default = no-default)
+                       #key default = $not-supplied)
       => range-element :: <real>;
    case
       (key >= 0) =>
          range.range-from + (key * range.range-by);
-      (default == no-default) =>
+      (default == $not-supplied) =>
          error ("No such element in %=: %d", range, key);
       otherwise =>
          default;
@@ -803,7 +803,7 @@ end method;
 // Returns the element at RANGE-SIZE - 1.  Signals an error for
 // unbounded ranges.
 //
-define method last (range :: <bounded-range>, #key default = no-default)
+define method last (range :: <bounded-range>, #key default = $not-supplied)
  => last-elt :: <object>;
    element (range, range.range-size - 1, default: default)
 end method;
