@@ -2,6 +2,7 @@ module: dylan
 
 define class <thread> (<object>)
   slot cur-uwp :: false-or(<unwind-protect>), init-value: #f;
+  slot cur-handler :: false-or(<handler>), init-value: #f;
 end;
 
 seal generic make (singleton(<thread>));
