@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.3 2000/01/24 04:56:33 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.4 2000/10/17 10:33:10 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -192,7 +192,8 @@ end method definition-kind;
 define method make
     (class == <macro-definition>,
      #key module :: <module>, library :: <library>,
-          defmacro :: <define-macro-parse>)
+          defmacro :: <define-macro-parse>,
+          source-location :: <source-location> = defmacro.source-location)
     => defn :: <macro-definition>;
   let rules = defmacro.defmacro-main-rule-set.rule-set-rules;
   let first-rule = rules.first;
@@ -222,6 +223,7 @@ define method make
 		  name: make(<basic-name>,
 			     symbol: name.token-symbol,
 			     module: module),
+		  source-location: source-location,
 		  library: library,
 		  main-rule-set: defmacro.defmacro-main-rule-set,
 		  auxiliary-rule-sets: defmacro.defmacro-auxiliary-rule-sets);
@@ -1574,6 +1576,52 @@ define method generate-new-section (generator :: <expansion-generator>) => ();
 end method generate-new-section;
 
 
+// fix-source-location.
+
+// fix-source-location -- internal.
+//
+// Examine a <expression-parse> if it is a <macro-call-parse> dissect it
+// and reassemble with correct source-location. This allows for some magic
+// too like keeping a stack of expansion locations rooting at the original
+// source. But this is not yet implemented, and should be done in a space-
+// saving manner.
+// We need this because source-location is a constant slot and is filled in
+// at make time with the location of the template.
+// 
+
+define generic fix-source-location (parsed :: <expression-parse>, orig-loc :: <source-location>)
+    => fixed :: <expression-parse>;
+
+define method fix-source-location (parsed :: <expression-parse>, orig-loc :: <source-location>)
+    => fixed :: <expression-parse>;
+
+  parsed
+end;
+
+define method fix-source-location
+    (parsed :: <function-macro-call-parse>, orig-loc :: <source-location>)
+    => fixed :: <expression-parse>;
+
+  make(<function-macro-call-parse>,
+	source-location: orig-loc,
+	word: parsed.macro-call-word,
+	fragment: parsed.macro-call-fragment)
+end;
+// TBI: <statement-parse> with type-union and object-class ?
+
+/* TBI:
+define method fix-source-location
+    (parsed :: <definition-macro-call-parse>, orig-loc :: <source-location>)
+    => fixed :: <expression-parse>;
+
+  make(parsed.object-class,
+	source-location: orig-loc,
+	word: parsed.macro-call-word,
+	fragment: parsed.macro-call-fragment,
+	modifiers: parsed.definition-modifiers)
+end;
+*/
+
 
 // macro-expand.
 
@@ -1585,7 +1633,9 @@ end method generate-new-section;
 // 
 define method macro-expand (form :: <macro-call-parse>)
     => expansion :: <expression-parse>;
-  parse-body(make(<fragment-tokenizer>, fragment: macro-expand-aux(form)));
+
+  fix-source-location(parse-body(make(<fragment-tokenizer>, fragment: macro-expand-aux(form))),
+                      form.source-location);
 end method macro-expand;
 
 // macro-expand-aux -- internal.
@@ -1611,12 +1661,14 @@ define method macro-expand-aux (form :: <macro-call-parse>)
     for (rule in defn.macro-main-rule-set.rule-set-rules)
       let results = match-rule(rule, form, fragment, intermediate-words);
       unless (results == #"failed")
-	let generator = make(<expansion-generator>, call: form,
-			     source:
-			       make(<macro-source>,
-				    description: format-to-string("%s", form),
-				    source-location: form.source-location),
-			     definition: defn);
+	let generator
+	      = make(<expansion-generator>,
+		     call: form,
+		     source:
+		     make(<macro-source>,
+			  description: format-to-string("%s", form),
+			  source-location: form.source-location),
+		     definition: defn);
 	expand-template(generator, rule.rule-template, results, #f);
 	return(generator.generator-fragment);
       end unless;
@@ -1939,7 +1991,7 @@ end method match;
 
 // match{<variable-pattern>}
 //
-// Match an optionally typed varaible.  We use the parser to find the extent
+// Match an optionally typed variable.  We use the parser to find the extent
 // of the variable and then fail if we can't bind the var and type pattern
 // variables to the variable name and type expression.  (Those bindings
 // might fail if someone supplies a strange constraint on them.)
@@ -2235,7 +2287,7 @@ define method extract-constrained-fragment
 	values(#f, #f);
       end if;
 
-    // Parse a body, stoping before any of the intermediate words.
+    // Parse a body, stopping before any of the intermediate words.
     #"body" =>
       let word = find-intermediate-word(fragment, intermediate-words);
       let (body, body-fragment, remaining)
@@ -2248,7 +2300,7 @@ define method extract-constrained-fragment
 	values(#f, #f);
       end if;
 
-    // Parse a case-body, stoping before any of the intermediate words.
+    // Parse a case-body, stopping before any of the intermediate words.
     // Note: parse-case-body returns a fragment, so we don't have to
     // convert it into one.
     #"case-body" =>
@@ -2876,7 +2928,8 @@ define method expand-template
 	      let generator = make(<expansion-generator>,
 				   call: generator.generator-call,
 				   source:
-				     make(<macro-source>, description: desc,
+				     make(<macro-source>,
+					  description: desc,
 					  source-location: srcloc),
 				   definition: generator.generator-macro-defn,
 				   uniquifier: generator.generator-uniquifier);
