@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.14 1995/05/03 07:27:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.15 1995/05/04 04:40:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -67,7 +67,7 @@ define class <slot-defn> (<object>)
   //
   // The init-value expression, or #f if one wasn't supplied.
   slot slot-defn-init-value :: union(<false>, <expression>),
-    init-value: #f, init-keyword: init-value-expr:;
+    init-value: #f, init-keyword: init-value:;
   //
   // The init-function, or #f if there isn't one.
   slot slot-defn-init-function :: union(<expression>, <false>),
@@ -97,8 +97,8 @@ define class <override-defn> (<object>)
     required-init-keyword: getter-name:;
   //
   // The init-value expression, or #f if none.
-  slot override-defn-init-value-expr :: union(<false>, <expression>),
-    init-value: #f, init-keyword: init-value-expr:;
+  slot override-defn-init-value :: union(<false>, <expression>),
+    init-value: #f, init-keyword: init-value:;
   //
   // The init-function expression, or #f if none.
   slot override-defn-init-function :: union(<false>, <expression>),
@@ -148,7 +148,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 	 make(<override-defn>,
 	      getter-name: make(<basic-name>, symbol: #"%object-class",
 				module: $Dylan-Module),
-	      init-value-expr: make(<varref>, id: form.defclass-name)));
+	      init-value: make(<varref>, id: form.defclass-name)));
   end;
   for (option in form.defclass-options)
     select (option.classopt-kind)
@@ -221,13 +221,15 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 	    compiler-error("Can't supply both an init-keyword: and a "
 			     "required-init-keyword:.");
 	    unless (instance?(init-keyword, <literal-ref>)
-		      & instance?(init-keyword.litref-literal, <literal-symbol>))
+		      & instance?(init-keyword.litref-literal,
+				  <literal-symbol>))
 	      compiler-error("Bogus init-keyword: %=", init-keyword);
 	    end;
 	  end;
 	elseif (req-init-keyword)
 	  unless (instance?(req-init-keyword, <literal-ref>)
-		    & instance?(req-init-keyword.litref-literal, <literal-symbol>))
+		    & instance?(req-init-keyword.litref-literal,
+				<literal-symbol>))
 	    compiler-error("Bogus required-init-keyword: %=",
 			   req-init-keyword);
 	  end;
@@ -276,7 +278,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 		    make(<basic-name>,
 			 symbol: option.classopt-name.token-symbol,
 			 module: *Current-Module*),
-		  init-value-expr: init-value,
+		  init-value: init-value,
 		  init-function: init-function));
 
       #"keyword" =>
