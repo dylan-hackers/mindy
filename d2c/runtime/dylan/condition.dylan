@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.4 1995/11/16 03:40:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.5 1995/11/17 02:31:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -106,6 +106,34 @@ seal generic make(singleton(<abort>));
 seal generic initialize(<abort>);
 
 
+// IO abstraction.
+
+// condition-format -- exported from ???
+//
+// Serves as a firewall between the condition system and streams.
+// Report-condition methods should call this routine to do their formatting
+// and streams libraries should define methods on it to pick off their
+// kinds of streams and call their particular format utility.
+// 
+define open generic condition-format
+    (stream :: <object>, control-string :: <string>, #rest arguments) => ();
+
+// condition-format(#"cheap-IO") -- internal.
+//
+// Bootstrap method for condition-format that just calls the cheap-IO format.
+//
+define sealed method condition-format
+    (stream == #"cheap-IO", control-string :: <string>, #rest arguments) => ();
+  apply(format, control-string, arguments);
+end;
+
+// *warning-output* -- exported from ???
+//
+// The ``stream'' to which warnings report when signaled (and not handled).
+//
+define variable *warning-output* :: <object> = #"cheap-IO";
+
+
 // Condition reporting.
 
 // report-condition -- exported from ???.
@@ -117,13 +145,14 @@ seal generic initialize(<abort>);
 define open generic report-condition
     (condition :: <condition>, stream :: <object>) => ();
 
+
 // report-condition(<condition>) -- exported gf method.
 //
 // Default method for all conditions.  Just print the condition object
 // to the stream.
 // 
 define method report-condition (condition :: <condition>, stream) => ();
-  *format-function*(stream, "%=", condition);
+  condition-format(stream, "%=", condition);
 end method report-condition;
 
 // report-condition(<simple-condition>) -- exported gf method.
@@ -133,7 +162,7 @@ end method report-condition;
 // 
 define sealed method report-condition (condition :: <simple-condition>, stream)
     => ();
-  apply(*format-function*, stream,
+  apply(condition-format, stream,
 	condition.condition-format-string,
 	condition.condition-format-arguments);
 end method report-condition;
@@ -144,10 +173,9 @@ end method report-condition;
 //
 define sealed method report-condition (condition :: <type-error>, stream)
     => ();
-  *format-function*(stream,
-		    "%= is not of type %=",
-		    condition.type-error-value,
-		    condition.type-error-expected-type);
+  condition-format(stream, "%= is not of type %=",
+		   condition.type-error-value,
+		   condition.type-error-expected-type);
 end method report-condition;
 
 // report-condition(<sealed-object-error>) -- exported gf method.
@@ -159,7 +187,7 @@ end method report-condition;
 define sealed method report-condition
     (condition :: <sealed-object-error>, stream)
     => ();
-  *format-function*(stream, "%=", condition);
+  condition-format(stream, "%=", condition);
 end method report-condition;
 
 // report-condition(<abort>) -- exported gf method.
@@ -167,7 +195,7 @@ end method report-condition;
 // Just print the supplied description.
 // 
 define sealed method report-condition (condition :: <abort>, stream) => ();
-  *format-function*(stream, "%s", condition.abort-description);
+  condition-format(stream, "%s", condition.abort-description);
 end method report-condition;
 
 
@@ -237,8 +265,10 @@ define method error (cond :: <condition>, #rest noise)
     error("Can only supply format arguments when supplying a format string.");
   end;
   signal(cond);
-  *debugger*(make(<simple-error>,
-		  format-string: "Attempt to return from a call to error"));
+  invoke-debugger(*debugger*,
+		  make(<simple-error>,
+		       format-string:
+			 "Attempt to return from a call to error"));
 end method error;
 
 // error(<string>) -- exported gf method.
@@ -305,6 +335,14 @@ define method type-error (value, type) => res :: <never-returns>;
   error(make(<type-error>, value: value, type: type));
 end method type-error;
 
+// abort -- exported from Dylan
+//
+// Aborts and never returns.
+// 
+define method abort () => res :: <never-returns>;
+  error(make(<abort>));
+end;
+
 
 // Condition handling.
 
@@ -327,7 +365,7 @@ end method default-handler;
 // Invoke the debugger.
 //
 define method default-handler (condition :: <serious-condition>)
-  *debugger*(condition);
+  invoke-debugger(*debugger*, condition);
 end method default-handler;
 
 // default-handler(<warning>) -- exported gf method.
@@ -335,7 +373,7 @@ end method default-handler;
 // Report the warning and then just return nothing.
 // 
 define method default-handler (condition :: <warning>)
-  *format-function*(*debug-output*, "%s\n", condition);
+  condition-format(*warning-output*, "%s\n", condition);
   #f;
 end method default-handler;
 
@@ -464,7 +502,7 @@ define method %break (cond :: <condition>, #rest noise) => res :: <false>;
     error("Can only supply format arguments when supplying a format string.");
   end unless;
   block ()
-    *debugger*(cond);
+    invoke-debugger(*debugger*, cond);
   exception (<simple-restart>,
 	     init-arguments: list(format-string: "Continue from break"))
   end block;
