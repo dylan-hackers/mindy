@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.48 1995/05/03 09:43:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.49 1995/05/04 04:38:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -471,11 +471,16 @@ define module classes
     <defined-cclass>,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
-    slot-type, slot-type-setter, slot-init-value, slot-init-value-setter,
-    slot-init-function, slot-init-function-setter, slot-init-keyword,
-    slot-init-keyword-required?,
+    slot-type, slot-type-setter, slot-getter,
+    slot-init-value, slot-init-value-setter,
+    slot-init-function, slot-init-function-setter,
+    slot-init-keyword, slot-init-keyword-required?,
 
-    inherit-slots, assign-unique-ids, layout-instance-slots;
+    <instance-slot-info>, slot-representation, slot-initialized?-slot,
+    find-slot-offset,
+
+    inherit-slots, assign-unique-ids, assign-slot-representations,
+    layout-instance-slots;
 end;
 
 define module c-representation
@@ -677,6 +682,7 @@ define module front
     <catcher>, exit-function, exit-function-setter, target-region,
     <set>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
+    <slot-access>, slot-info, slot-offset, <slot-ref>, <slot-set>,
     <truly-the>, guaranteed-type,
 
     <constant>, <literal-constant>, value,
@@ -874,6 +880,7 @@ define module cback
   use define-functions;
   use define-constants-and-variables;
   use ctype;
+  use classes;
   use stack-analysis;
 
   export
