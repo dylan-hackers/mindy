@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.79 1995/06/06 17:46:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.80 1995/06/06 19:32:59 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1371,8 +1371,8 @@ define method optimize (component :: <component>, call :: <mv-call>) => ();
     let func = call.depends-on.source-exp;
     if (instance?(func, <exit-function>))
       expand-exit-function(component, call, func, cluster);
-    elseif (instance?(func, <definition-constant-leaf>)
-	      & func.const-defn == dylan-defn(#"values"))
+    elseif (instance?(func, <literal-constant>)
+	      & func.value == dylan-value(#"values"))
       replace-expression(component, call.dependents, cluster);
     end;
   end;
