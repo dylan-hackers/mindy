@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.5 1994/04/09 13:36:15 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.6 1994/04/18 05:43:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -93,7 +93,7 @@ void init_table_functions(void)
     define_constant("object-hash",
 		    make_raw_function("object-hash", 1, FALSE, obj_False,
 				      list2(obj_IntegerClass, obj_ObjectClass),
-				      obj_Nil, dylan_object_hash));
+				      obj_False, dylan_object_hash));
     define_function("state-valid?", list1(obj_ObjectClass), FALSE, obj_False,
 		    obj_BooleanClass, dylan_state_valid_p);
     define_constant("merge-hash-codes",
@@ -103,7 +103,7 @@ void init_table_functions(void)
 				    FALSE,
 				    list1(pair(symbol("ordered"), obj_False)),
 				    list2(obj_IntegerClass, obj_ObjectClass),
-				    obj_Nil, dylan_merge_hash_codes));
+				    obj_False, dylan_merge_hash_codes));
     define_constant("$permanent-hash-state", obj_False);
 
     valid_state = list1(obj_False);
