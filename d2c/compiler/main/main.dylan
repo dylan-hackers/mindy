@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.35 1995/11/14 22:20:38 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.36 1995/11/16 00:16:42 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -240,7 +240,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
   begin
     let ar-name = format-to-string("lib%s.a", unit-prefix);
     system(concatenate("rm -f ", ar-name));
-    let ar-command = format-to-string("ar qc %s%s", ar-name, objects);
+    let ar-command = format-to-string("/bin/ar qc %s%s", ar-name, objects);
     format(*debug-output*, "%s\n", ar-command);
     unless (zero?(system(ar-command)))
       cerror("so what", "ar failed?");
