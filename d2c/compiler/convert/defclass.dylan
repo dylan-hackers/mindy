@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.36 2002/04/12 20:19:34 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.37 2002/04/15 18:07:16 gabor Exp $
 copyright: see below
 
 
@@ -1509,7 +1509,7 @@ define method class-defn-deferred-evaluations-function
 	       end;
 	       // Inherited each-subclass slots w/ non obvious init
 	       // values impose the existence of the deferred-evaluations
-	       // function.
+	       // function. (covered also below) SO THIS IS REDUNDANT??? TODO
 	       for (override-defn in defn.class-defn-overrides)
 		 let info = override-defn.override-defn-info;
 		 if (instance?(info.override-slot, <each-subclass-slot-info>))
@@ -1519,6 +1519,22 @@ define method class-defn-deferred-evaluations-function
 		   end;
 		 end;
 	       end;
+
+
+	       // Any each-subclass slots w/ non obvious init
+	       // values impose the existence of the deferred-evaluations
+	       // function.
+	       for (slot-info in cclass.all-slot-infos)
+		 if (instance?(slot-info, <each-subclass-slot-info>))
+		   if (slot-info.slot-init-value /* == #t е TODO (same as above?) */
+			| slot-info.slot-init-function)
+		     return(#t);
+		   end;
+		   // examine if overriddenееее
+		 end;
+	       end;
+
+
 	       // Also indirect slots with non-ctv init-values/functions
 	       // imply a deferred-evaluations function.
 	       for (slot-defn in defn.class-defn-slots)
@@ -1746,7 +1762,7 @@ define function call-init-function
 // ICE!!!   builder :: <internal-builder>,
    policy :: <policy>,
    source :: <source-location>,
-   init-value-var :: <abstract-variable>, // false-or?е
+   init-value-var :: <abstract-variable>,
    init-function-leaf :: false-or(<leaf>),
    type-var :: false-or(<abstract-variable>))
  => ();
@@ -1803,6 +1819,14 @@ end function call-init-function;
 // build-home-store store a value into the specified slot of its homing instance.
 // currently only handles class slots, but could be extended to instance and each subclass
 // slots too. Also it could handle the init? slots.
+define generic build-home-store
+  (builder :: <fer-builder>,
+   new :: <leaf>,
+   slot-info :: <slot-info>,
+   override-info :: false-or(<override-info>), 
+   policy :: <policy>,
+   source :: <source-location>,
+   #key class-instance :: false-or(<cclass>));
 
 define method build-home-store
   (builder :: <fer-builder>,
@@ -1810,12 +1834,13 @@ define method build-home-store
    slot-info :: <class-slot-info>,
    override-info :: false-or(<override-info>), 
    policy :: <policy>,
-   source :: <source-location>)
+   source :: <source-location>,
+   #key class-instance :: <cclass> = slot-info.slot-introduced-by)
  => ()
   let slot-home
     = build-slot-home
         (slot-info.slot-getter.variable-name,
-	 make-literal-constant(builder, slot-info.slot-introduced-by),
+	 make-literal-constant(builder, class-instance),
 	 builder, policy, source);
   let meta-slot = slot-info.associated-meta-slot;
   assert(~meta-slot.slot-initialized?-slot);
@@ -1835,21 +1860,24 @@ define method build-home-store
    slot-info :: <each-subclass-slot-info>,
    override-info :: false-or(<override-info>), 
    policy :: <policy>,
-   source :: <source-location>)
+   source :: <source-location>,
+   #key class-instance :: <cclass> = override-info & override-info.override-introduced-by
+				     | slot-info.slot-introduced-by)
  => ()
   let slot-home
     = build-slot-home
         (slot-info.slot-getter.variable-name,
-	 make-literal-constant(builder, slot-info.slot-introduced-by),
+	 make-literal-constant(builder, class-instance),
 	 builder, policy, source);
   let meta-slot = slot-info.associated-meta-slot;
   assert(override-info | ~meta-slot.slot-initialized?-slot);
   let meta-instance
-    = if (override-info)
-	override-info.override-introduced-by.class-metaclass;
-      else
-	meta-slot.slot-introduced-by;
-      end;
+    = class-instance & class-instance.class-metaclass
+      | if (override-info)
+	  override-info.override-introduced-by.class-metaclass;
+        else
+	  meta-slot.slot-introduced-by;
+        end;
   let offset = find-slot-offset(meta-slot, meta-instance); // there may be more than one!!еее
   build-assignment
     (builder, policy, source, #(),
@@ -1904,44 +1932,59 @@ define method convert-top-level-form
 	end;
       end;
 
-      local method update-indirect-slot(slot-info, override-info, slot-name, init-value, init-function, type,
-					init-value-var, make-init-value-var, init-function-leaf, type-var) => ();
-	  if (init-value) // later: init-value == #t TODO
-	    //
-	    // Copy over the value into the class instance.
-	    let var = init-value-var | make-init-value-var();
-	    unless (init-value-var)
-	      build-assignment
-		(evals-builder, policy, source, var,
-		 make-unknown-call
-		   (evals-builder,
-		    ref-dylan-defn(evals-builder, policy, source,
-				   if (override-info)
-				     #"override-init-value"
-				   else
-				     #"slot-init-value"
-				   end),
-		    #f,
-		    list(make-literal-constant(evals-builder, override-info | slot-info))));
-	    end unless;
-	    //
-	    // assign to the indirect slot.
-	    // cannot simply use the slot-setter because slot might be constant.
-	    build-home-store(evals-builder, var, slot-info, override-info, policy, source);
-	  elseif (init-function)
-	    //
-	    // Invoke the init function and store the result
-	    // into the class instance.
-	    
-	    let var = make-init-value-var();
-	    call-init-function(init-function, slot-info, override-info,
-			       slot-name, evals-builder, policy, source,
-			       var, init-function-leaf, type-var);
-
-	    // assign to the indirect slot.
-	    // cannot simply use the slot-setter because slot might be constant.
-	    build-home-store(evals-builder, var, slot-info, override-info, policy, source);
-	  end if;
+      local method update-indirect-slot
+	(slot-info :: <indirect-slot-info>,
+	 override-info :: false-or(<override-info>),
+	 slot-name :: <symbol>,
+	 init-value :: type-union(<ct-value>, <boolean>),
+	 init-function :: type-union(<ct-value>, <boolean>),
+	 type :: <ctype>,
+	 init-value-var :: false-or(<initial-variable>),
+	 make-init-value-var :: <function>,
+	 init-function-leaf :: false-or(<leaf>),
+	 type-var :: false-or(<initial-variable>),
+	 #key class-instance :: false-or(<cclass>)/* do I want this???еее */)
+       => ();
+	if (init-value) // later: init-value == #t TODO
+	  //
+	  // Copy over the value into the class instance.
+	  let var = init-value-var | make-init-value-var();
+	  unless (init-value-var)
+	    build-assignment
+	      (evals-builder, policy, source, var,
+	       make-unknown-call
+		 (evals-builder,
+		  ref-dylan-defn(evals-builder, policy, source,
+				 if (override-info)
+				   #"override-init-value"
+				 else
+				   #"slot-init-value"
+				 end),
+		  #f,
+		  list(make-literal-constant(evals-builder, override-info | slot-info))));
+	  end unless;
+	  //
+	  // assign to the indirect slot.
+	  // cannot simply use the slot-setter because slot might be constant.
+	  build-home-store(evals-builder, var,
+			   slot-info, override-info,
+			   policy, source,
+			   class-instance: cclass);
+	elseif (init-function)
+	  //
+	  // Invoke the init function and store the result
+	  // into the class instance.
+	  let var = make-init-value-var();
+	  call-init-function(init-function, slot-info, override-info,
+			     slot-name, evals-builder, policy, source,
+			     var, init-function-leaf, type-var);
+	  // assign to the indirect slot.
+	  // cannot simply use the slot-setter because slot might be constant.
+	  build-home-store(evals-builder, var,
+			   slot-info, override-info,
+			   policy, source,
+			   class-instance: cclass);
+	end if;
       end method update-indirect-slot;
 
       for (slot-defn in defn.class-defn-slots,
@@ -2011,44 +2054,10 @@ define method convert-top-level-form
 	    values(#f, leaf);
 	  end if;
 
-
-	// Now that the <slot-info> contains the proper values,
+	// Now that the <slot-descriptor> contains the proper values,
 	// we can begin to initialize the storage allocated for
 	// indirect slots (if they are not already).
-
 	if (instance?(slot-info, <indirect-slot-info>))
-/*	  if (init-value) // later: init-value == #t TODO
-	    //
-	    // Copy over the value into the class instance.
-	    let var = init-value-var | make-init-value-var();
-	    unless (init-value-var)
-	      build-assignment
-		(evals-builder, policy, source, var,
-		 make-unknown-call
-		   (evals-builder,
-		    ref-dylan-defn(evals-builder, policy, source,
-				   #"slot-init-value"),
-		    #f,
-		    list(make-literal-constant(evals-builder, slot-info))));
-	    end unless;
-	    //
-	    // assign to the indirect slot.
-	    // cannot simply use the slot-setter because slot might be constant.
-	    build-home-store(evals-builder, var, slot-info, policy, source);
-	  elseif (init-function)
-	    //
-	    // Invoke the init function and store the result
-	    // into the class instance.
-	    
-	    let var = make-init-value-var();
-	    call-init-function(init-function, slot-info, #f / * override ее * /,
-			       slot-name, evals-builder, policy, source,
-			       var, init-function-leaf, type-var);
-
-	    // assign to the indirect slot.
-	    // cannot simply use the slot-setter because slot might be constant.
-	    build-home-store(evals-builder, var, slot-info, policy, source);
-	  end if;*/
 	  update-indirect-slot(slot-info, #f, slot-name, init-value, init-function, type,
 			       init-value-var, make-init-value-var, init-function-leaf, type-var);
 	end if;
@@ -2183,54 +2192,65 @@ define method convert-top-level-form
 	    values(#f, leaf);
 	  end if;
 
-
-
-#if (very-old)
-
-	if (init-value == #t | init-function == #t)
-	  let descriptor-leaf
-	    = make-literal-constant(evals-builder, override-info);
-
-	  if (init-value)
-	    let var = make-local-var(evals-builder,
-				     symcat(slot-name, "-override-init-value"),
-				     object-ctype());
-	    fer-convert(evals-builder, override-defn.override-defn-init-value,
-			lexenv, #"assignment", var);
-	    build-assignment
-	      (evals-builder, policy, source, #(),
-	       make-unknown-call
-		 (evals-builder,
-		  ref-dylan-defn(evals-builder, policy, source,
-				 #"override-init-value-setter"),
-		  #f,
-		  list(var, descriptor-leaf)));
-	  else
-	    let leaf
-	      = convert-init-function
-		  (evals-builder, getter,
-		   override-defn.override-defn-init-function,
-		   object-ctype());
-	    build-assignment
-	      (evals-builder, policy, source, #(),
-	       make-unknown-call
-		 (evals-builder,
-		  ref-dylan-defn(evals-builder, policy, source,
-				 #"override-init-function-setter"),
-		  #f,
-		  list(leaf, descriptor-leaf)));
-	  end if;
-	end if;
-#endif
-
 	// now update the each-subclass-slot
 	let slot-info = override-info.override-slot;
 	if (instance?(slot-info, <each-subclass-slot-info>))
 	  update-indirect-slot(slot-info, override-info, slot-name, init-value, init-function, type,
-			       init-value-var, make-init-value-var, init-function-leaf, /* еее type-var */ #f);
+			       init-value-var, make-init-value-var, init-function-leaf,
+			       /* еее type-var */ #f,
+			       	class-instance: cclass);
 	end if;
       end for;
-    end;
+      
+      
+      local method effective-override(slot-info :: <slot-info>)
+       => override :: false-or(<override-info>);
+	block (return)
+	  for (override in cclass.override-infos)
+	    if (override.override-slot == slot-info)
+	      return(#f);
+	    end if;
+	  end for;
+	  for (super in cclass.precedence-list.tail)
+	    for (override in super.override-infos)
+	      if (override.override-slot == slot-info
+		  & (override.override-init-value | override.override-init-function))
+	        return(override);
+	      end;
+	    end for;
+	  end for;
+	end block;
+      end method;
+	
+      
+      // now it remains to initialize all the remaining each subclass slots
+      // that are inherited but not mentioned by override-infos
+      //
+      for (slot-info in cclass.all-slot-infos)
+	if (instance?(slot-info, <each-subclass-slot-info>)
+	    & slot-info.slot-introduced-by ~== cclass)
+	  let override-info = slot-info.effective-override;
+	  // since all deferred evaluations are performed at this point,
+	  // we can assume that slot and override descriptors are properly set up.
+	  let init-value = override-info & override-info.override-init-value
+			   | slot-info.slot-init-value;
+	  let init-function = #f; // for now...ееее
+	  let type = object-ctype(); /// еее as above!!!
+	  let slot-name = slot-info.slot-getter.variable-name;
+	  
+	  local method make-init-value-var() => var :: <initial-variable>;
+		make-local-var(evals-builder, symcat(slot-name, "-init-value"),
+			       type);
+	      end;
+
+	  update-indirect-slot
+	    (slot-info, override-info, slot-name,
+	     init-value, init-function, type,
+	     #f, make-init-value-var, #f, #f,
+	     class-instance: cclass);
+	end if;
+      end for;
+    end begin;
 
     unless (cclass.abstract?)
       if(~empty?(cclass.keyword-infos)
