@@ -62,7 +62,7 @@ $appname: $appname.lid $appname.dylan $appname-exports.dylan
 \td2c $appname.lid
 
 clean:
-\t-rm *.o *.s *.a *.c *.mak *~ $appname
+\t-rm -f *.o *.s *.a *.c *.mak *~ $appname
 EOD
 		 
 sub write_file {
