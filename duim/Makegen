@@ -1,3 +1,11 @@
 &compile_subdirs('utilities', 'geometry', 'dcs', 'sheets', 'graphics',
 		 'extended-geometry', 'layouts', 'commands', 'gadgets',
 		 'frames', 'core');
+
+if($enable_duim eq 'gtk') {
+    &compile_subdirs('panes');
+} 
+
+if($enable_duim eq 'vanilla') {
+    &compile_subdirs('vanilla');
+}
