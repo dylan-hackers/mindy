@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.4 1994/04/09 14:09:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.5 1994/04/18 03:26:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -32,7 +32,7 @@ static struct token *make_token(char *ptr, int len);
 %}
 
 D	[0-9]
-E	E[-+]?{D}+
+E	[esdx][-+]?{D}+
 
 IOC	[!&*+/<=>?|^$%@_]
 OC	[-~]|{IOC}
