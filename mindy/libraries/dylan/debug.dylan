@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.3 1994/04/06 22:53:30 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.4 1994/04/12 20:11:55 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -57,6 +57,24 @@ define method eval-debugger-expr (expr, num-debug-vars)
   end;
 end method;
 
+
+define method debugger-eval (expr)
+  block ()
+    block ()
+      let (#rest results) = eval-debugger-expr(expr, debug-variables.size);
+      values(#t, results);
+    exception (problem :: <error>)
+      puts("invocation failed:\n  ");
+      report-problem(problem);
+      putc('\n');
+      #f;
+    end;
+  exception (<error>)
+    puts("Could not recover from earlier error.\n");
+    #f;
+  end;
+end;
+    
 
 define method eval-and-print (expr, num-debug-vars)
   let (#rest results) = eval-debugger-expr(expr, num-debug-vars);
