@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.17 2001/03/10 06:16:22 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.18 2001/03/15 12:42:39 bruce Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -388,6 +388,7 @@ sub do_Makegen_file {
 
     &emit_rule('compile');
     $destdir && do emit_rule ('install');
+    $destdir && do emit_rule ('uninstall');
     &emit_rule('clean');
     if ($host_platform{'makefiles_can_rebuild_themselves?'}) {
 	print $makefile, ': ', join(' ', eval('@GNUmakefile_dependencies'));
@@ -478,6 +479,9 @@ sub compile_subdir {
     push(@install_commands, 
 	 sprintf($host_platform{'recursive_make_command'}, 
 		 $subdir, "install"));
+    unshift(@uninstall_commands, 
+	 sprintf($host_platform{'recursive_make_command'}, 
+		 $subdir, "uninstall"));
     push(@clean_commands, 
 	 sprintf($host_platform{'recursive_make_command'}, 
 		 $subdir, "clean"));
@@ -1075,6 +1079,7 @@ sub install_one_file {
 	    . "to install your files.");
     }
     push(@install_dependencies, $to_file);
+    push(@uninstall_commands, "rm -f $to_file");
 }
 
 # install($dest_dir, @files) -- exported
