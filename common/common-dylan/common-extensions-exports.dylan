@@ -72,7 +72,8 @@ define module functional-extensions
   use Magic, import: {%element, %element-setter};
   use extensions, exclude: { position, assert };
   use common-extensions, import: { find-element };
-  export without-bounds-checks, find-value, // assert already in common-extensions 
+  export with-bounds-checks, without-bounds-checks,
+    find-value, // assert already in common-extensions 
     with-keywords-removed, dynamic-bind,
     <synchronization>, <exclusive-lock>,
     <semaphore>, <recursive-lock>,

@@ -34,6 +34,16 @@ define macro without-bounds-checks
         ?body}
 end;
 
+define macro with-bounds-checks
+  {with-bounds-checks () ?:body end}
+    => {with-bounds-checks ?body end}
+
+  {with-bounds-checks ?:body end}
+    => {let ?=element = element;
+        let ?=element-setter = element-setter;
+        ?body}
+end;
+
 
 // element-range-error
 // Just throws an error on the sequence. 
