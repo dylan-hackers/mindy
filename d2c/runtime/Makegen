@@ -1,4 +1,4 @@
-if (!$enable_bootstrap) {
+if (!$enable_bootstrap || $enable_mindy_bootstrap) {
     if ($host_name eq $target_name) {
 	do compile_subdirs('c-code',
 			   'gc');
@@ -11,13 +11,6 @@ if (!$enable_bootstrap) {
 
     do install_from_src($includedir, "runtime.h");
 } else {
-    if ($enable_mindy_bootstrap) {
-        do compile_subdirs('c-code',
-                           'gc',
-                           'dylan',
-                           'melange');
-    };
-
     do compile_subdirs('../../common',
                        'random');    
 }
