@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.31 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.32 1996/07/26 01:28:17 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -665,11 +665,13 @@ define /* exported */ open generic merge-ctv-infos (old-info, new-info) => ();
 // by the various add-make-dumpers.
 // 
 define method merge-and-set-info (new-info, ctv :: <ct-value>) => ();
-  let old-info = ctv.info;
-  if (old-info)
-    merge-ctv-infos(old-info, new-info);
-  else
-    ctv.info := new-info;
+  if (new-info)
+    let old-info = ctv.info;
+    if (old-info)
+      merge-ctv-infos(old-info, new-info);
+    else
+      ctv.info := new-info;
+    end if;
   end if;
 end method merge-and-set-info;
 
