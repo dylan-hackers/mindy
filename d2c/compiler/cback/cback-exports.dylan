@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.2 1996/01/27 20:19:17 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.3 1996/02/02 11:19:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -10,6 +10,21 @@ define library compiler-cback
   export cback;
   export heap;
 end library;
+
+
+define module stack-analysis
+  use common;
+  use utils;
+  use flow;
+  use front;
+  use ctype;
+  use signature-interface;
+  use definitions;
+  use compile-time-functions;
+
+  export
+    analize-stack-usage;
+end;
 
 
 define module cback
@@ -44,6 +59,7 @@ define module cback
     entry-point-c-name;
 end;
 
+
 define module heap
   use common;
   use utils;
@@ -65,17 +81,3 @@ define module heap
     build-initial-heap, build-local-heap;
 end;
 
-
-define module stack-analysis
-  use common;
-  use utils;
-  use flow;
-  use front;
-  use ctype;
-  use signature-interface;
-  use definitions;
-  use compile-time-functions;
-
-  export
-    analize-stack-usage;
-end;

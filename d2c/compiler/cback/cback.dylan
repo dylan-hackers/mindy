@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.94 1996/01/30 13:08:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.95 1996/02/02 11:19:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -135,7 +135,7 @@ define constant make-indenting-string-stream
 	    keys);
     end;
 
-define method string-output-stream-string (stream :: <indenting-stream>)
+define method get-string (stream :: <indenting-stream>)
     => res :: <byte-string>;
   stream.is-target.string-output-stream-string;
 end;
@@ -152,7 +152,7 @@ define class <unit-state> (<object>)
   slot unit-next-global :: <integer>, init-value: 0;
   //
   // keeps track of names used already.
-  slot unit-global-table :: <dictionary>,
+  slot unit-global-table :: <table>,
     init-function: method () make(<string-table>) end method;
   //
   // Vector of the initial values for the roots vector.
@@ -212,7 +212,7 @@ define class <file-state> (<object>)
   slot file-next-local :: <integer>, init-value: 0;
   //
   // keeps track of names used already.
-  slot file-local-table :: <dictionary>,
+  slot file-local-table :: <table>,
     init-function: method () make(<string-table>) end method;
 end;
 
@@ -313,6 +313,13 @@ end method c-prefix;
 define method c-prefix (description :: <symbol>) => (result :: <string>);
   as(<byte-string>, description).c-prefix;
 end method c-prefix;
+
+#if (~mindy)
+define method key-exists? (table :: <string-table>, key :: <byte-string>)
+    => res :: <boolean>;
+  element(table, key, default: #f) ~== #f;
+end method key-exists?;
+#end
 
 define method new-local
     (file :: <file-state>,
@@ -781,7 +788,7 @@ define method emit-init-functions
       end for;
     end for;
   end if;
-  stream.string-output-stream-string;
+  get-string(stream);
 end method emit-init-functions;
 
 define method emit-epilogue
@@ -864,7 +871,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
   format(gstream, "    *end++ = %s;\n",
 	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, file));
   format(gstream, "return end;\n");
-  write(gstream.string-output-stream-string, bstream);
+  write(get-string(gstream), bstream);
   write("}\n\n", bstream);
 
   format(bstream,
@@ -877,7 +884,7 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 	   "sizeof(descriptor_t));\n",
 	 dylan-slot-offset(sov-cclass, #"%element"));
   format(gstream, "return sp + elements;\n");
-  write(gstream.string-output-stream-string, bstream);
+  write(get-string(gstream), bstream);
   write("}\n\n", bstream);
 
   unless (instance?(*double-rep*, <data-word-representation>))
@@ -892,12 +899,12 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
-    write(gstream.string-output-stream-string, bstream);
+    write(get-string(gstream), bstream);
     write("}\n\n", bstream);
 
     format(bstream, "double double_float_value(heapptr_t df)\n{\n");
     format(gstream, "return SLOT(df, double, %d);\n", value-offset);
-    write(gstream.string-output-stream-string, bstream);
+    write(get-string(gstream), bstream);
     write("}\n\n", bstream);
   end;
 
@@ -913,12 +920,12 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
-    write(gstream.string-output-stream-string, bstream);
+    write(get-string(gstream), bstream);
     write("}\n\n", bstream);
 
     format(bstream, "long double extended_float_value(heapptr_t xf)\n{\n");
     format(gstream, "return SLOT(xf, long double, %d);\n", value-offset);
-    write(gstream.string-output-stream-string, bstream);
+    write(get-string(gstream), bstream);
     write("}\n\n", bstream);
   end;
 end;
@@ -1054,7 +1061,7 @@ define method emit-function
   format(stream, "/* %s */\n", function.name);
   format(stream, "%s\n{\n",
 	 compute-function-prototype(function, function-info, file));
-  write(file.file-vars-stream.string-output-stream-string, stream);
+  write(get-string(file.file-vars-stream), stream);
   write('\n', stream);
   let overflow = file.file-guts-overflow;
   unless (overflow.empty?)
@@ -1063,7 +1070,7 @@ define method emit-function
     end;
     overflow.size := 0;
   end unless;
-  write(file.file-guts-stream.string-output-stream-string, stream);
+  write(get-string(file.file-guts-stream), stream);
   write("}\n\n", stream);
 end;
 
@@ -2300,12 +2307,10 @@ define method c-expr-and-rep (lit :: <literal-character>,
 	 pick-representation(dylan-value(#"<character>"), #"speed"));
 end;
 
-define method c-expr-and-rep (ep :: <ct-entry-point>,
-			      rep-hint :: <representation>,
-			      file :: <file-state>)
+define method c-expr-and-rep
+    (ep :: <ct-entry-point>, rephint :: <representation>, file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
-  values(stringify("((void *)", entry-point-c-name(ep, file), ')'),
-	 *ptr-rep*);
+  values(stringify("((void *)", ep.entry-point-c-name, ')'), *ptr-rep*);
 end;
 
 
