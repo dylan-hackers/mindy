@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.25 1999/07/16 16:30:50 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.26 1999/07/30 17:24:32 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -480,9 +480,11 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
   format(*debug-output*, "Compiling library %s\n", lib-name);
   let lib = find-library(as(<symbol>, lib-name), create: #t);
   state.unit-lib := lib;
-  state.unit-mprefix
-    := element(state.unit-header, #"unit-prefix", default: #f) 
-    | as-lowercase(lib-name);
+  state.unit-mprefix := as-lowercase(lib-name);
+  if(element(state.unit-header, #"unit-prefix", default: #f))
+    format(*debug-output*, "Warning: unit-prefix header is deprecated, ignoring it.\n");
+  end if;
+
   state.unit-shared?
     := ~state.unit-link-static
        & ~element(state.unit-header, #"executable", default: #f)
