@@ -213,6 +213,10 @@ define method dump (call :: <mv-call>, stream :: <stream>) => ();
   dump-operands(call.depends-on, stream);
 end;
 
+define method dump (op :: <prologue>, stream :: <stream>) => ();
+  write("function arguments", stream);
+end;
+
 define method dump-operands(dep :: false-or(<dependency>), stream :: <stream>)
     => ();
   pprint-logical-block
@@ -281,7 +285,10 @@ define method dump (lambda :: <lambda>, stream :: <stream>) => ();
 	       (stream,
 		prefix: "(",
 		body: method (stream)
-			for (var in lambda.vars, first? = #t then #f)
+			for (var = lambda.prologue.dependents.dependent.defines
+			       then var.definer-next,
+			     first? = #t then #f,
+			     while: var)
 			  unless (first?)
 			    write(", ", stream);
 			    pprint-newline(#"fill", stream);

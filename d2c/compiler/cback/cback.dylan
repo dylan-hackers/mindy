@@ -346,10 +346,11 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
   end;
 
   format(stream, " %s(", name);
-  if (empty?(lambda.vars))
-    write("void", stream);
-  else
-    for (var in lambda.vars, index from 0)
+  let defines = lambda.prologue.dependents.dependent.defines;
+  if (defines)
+    for (var = defines then var.definer-next,
+	 index from 0,
+	 while: var)
       let info = var.info;
       if (info)
 	error("lambda arg already has a backend-info?");
@@ -369,6 +370,8 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
 	format(stream, " /* %s */", debug-name);
       end;
     end;
+  else
+    write("void", stream);
   end;
   write(')', stream);
 
@@ -631,6 +634,12 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       output-info :: <output-info>)
     => ();
   emit-primitive(expr.name, defines, expr, output-info);
+end;
+
+define method emit-assignment (defines :: false-or(<definition-site-variable>),
+			       expr :: <prologue>,
+			       output-info :: <output-info>)
+    => ();
 end;
 
 define method deliver-results (defines :: false-or(<definition-site-variable>),
