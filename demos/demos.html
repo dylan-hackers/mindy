@@ -1,0 +1,87 @@
+<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.1 1994/06/29 00:03:11 wlott Exp $>
+<TITLE>Mindy Demo Programs</TITLE>
+<H1>Mindy Demo Programs</H1>
+<HR>
+<H2>hello-world</H2>
+
+This is the canonical "hello, world" demo.  Type 
+<PRE>
+  mindy -f hello-world.dbc
+</PRE>
+to run it.
+<P>
+<HR>
+<H2>cat</H2>
+
+This program demonstrates the streams library by duplicating the UNIX (tm)
+"cat" utility.
+
+Usage is typical for a unix program.  It may be invoked either with a
+set of files on the command line:
+<PRE>
+  mindy -f cat.dbc file1 file2 ....
+</PRE>
+or with no arguments, in which case it reads from "standard input".  You may
+also specify special filename "-" which will refer to the standard input.
+<P>
+On most Unix systems you should be able to make it into an executable
+script by prepending the the line
+<PRE>
+  #$INSTALL/bin/mindy -f
+</PRE>
+to the compiled "dbc" file (and adding "execute" to the file's protection).  
+You could then simply type 
+<PRE>
+  cat.dbc file1 file2 ....
+</PRE>
+You must, of course, remember to specify the MINDYPATH environment variable so
+that it points to directories containing all of the relevant libraries.  (This
+demo uses only "dylan" and "streams", but the "html2txt" demo also uses 
+"collection-extensions".)
+<P>
+<HR>
+<H2>html2txt</H2>
+
+The "html2txt" program is a filter which converts text in WWWs "HyperText
+Markup Language" into simple formatted text.  Although it is a complete and
+useful application, it is included in this distribution primarily as a
+demonstration of a "real" (albeit small) Dylan (tm) program.  
+<P>
+Usage is similar to "cat" above, except that it does not support the "-" 
+argument.  You may therefore set of files on the command line or use
+standard input by specifying no command line arguments
+<PRE>
+  mindy -f html2txt.dbc file1.html file2.html ....
+  mindy -f cat.dbc file1.html file2.html | mindy -f html2txt.dbc
+</PRE>
+At present, "html2txt" accepts no command line switches, although the 
+behavior may be changed by changing several constant declarations towards 
+the top of the source file.
+<P>
+Useful test cases for this program are the files "demos.html", which was used 
+as the source for "README"; and "$INSTALL/doc/collection-extensions.html", 
+which was used as the source file for the documentation file 
+"$INSTALL/doc/collection-extensions.doc".
+<P>
+The basic translation strategy used by html2txt is to scan the file line by
+line, looking for HTML "tags" and accumulating text that lies between any
+two tags.  For each tag type, there is a set of routines (stored in tables)
+which define the appropriate actions for starting and ending the
+"environment" defined by the tag and for dumping the collected text from
+within that environment as formatted text.  A basic control loop in
+"process-HTML" is responsible for calling the appropriate tag actions.
+This routine may be called recusively by some of the tag actions.
+<P>
+The "interface" between adjacent environments is handled via the "blank"
+parameter which is passed around extensively.  This variable states whether
+a blank line has just been printed.  Thus environments which believe that
+they must be preceded or followed by a blank line can determine whetehr
+they must do anything about it, and we lessen the risk that multiple
+routines will emit blank lines when we only want a maximum of one.
+<P>
+The primary advantage of this organization is that it allows the
+specialized actions for a single tag to be grouped together, and allows new
+tags to be cleanly added.  It benefits greatly from Dylan's ability to
+create anonymous methods and manipulate them as first class data objects,
+as well as from the rich set of available collection types.
+
