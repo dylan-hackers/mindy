@@ -404,7 +404,7 @@ sub install_executable_from_src {
 	    print "\t", '@-mv $@ $@.old', "\n";
 	    print "\t", 'cp -p $< $@', "\n";
 	    print "\t", '@rm -f $@.old', "\n";
-	    print "\t", 'chmod u+x $@', "\n";
+	    print "\t", 'chmod a+x $@', "\n";
 	    print "\n";
 	}
 
