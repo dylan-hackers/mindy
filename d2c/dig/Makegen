@@ -1,10 +1,10 @@
 $D2CFLAGS = $d2c_runtime
     . '-L../../common/streams '
     . '-L../../common/print -L../../common/format '
-    . '-L../runtime/random -L../../common/coll-ext '
+    . '-L../runtime/random -L../../common/collection-extensions '
     . '-L../../common/string-ext -L../runtime/melange '
     . '-L../../common/table-ext -L../../common/standard-io '
-    . '-L../../common/regexp';
+    . '-L../../common/regular-expressions';
 $CPPFLAGS = $CPPFLAGS . ' -I$(SRCDIR)';
 
 # We're not going to worry about whether dig is actually *useful* on

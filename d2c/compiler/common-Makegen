@@ -28,8 +28,8 @@ $D2CFLAGS = $d2c_runtime
     . '-L../../../common/streams '
     . '-L../../../common/standard-io -L../../../common/stream-ext '
     . '-L../../../common/print -L../../../common/format '
-    . '-L../../runtime/random -L../../../common/coll-ext '
+    . '-L../../runtime/random -L../../../common/collection-extensions '
     . '-L../../../common/string-ext -L../../../common/table-ext '
-    . '-L../../../common/regexp -L../../runtime/melange '
+    . '-L../../../common/regular-expressions -L../../runtime/melange '
     . '-L../../runtime/garbage-collection '
-    . '-L../../../common/getopt -L../../../common/file-system-base';
+    . '-L../../../common/getopt -L../../../common/base-file-system';
