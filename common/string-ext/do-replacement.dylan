@@ -5,7 +5,7 @@ synopsis: This implements search and replace facilities, which is
           and substring-search.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/do-replacement.dylan,v 1.2 1996/08/10 20:29:00 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/do-replacement.dylan,v 1.3 1997/02/13 12:52:39 nkramer Exp $
 
 //======================================================================
 //
@@ -38,7 +38,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/do-replaceme
 // backslashes, rather than turn each string into a character every
 // time.
 //
-define method do-replacement 
+define inline function do-replacement 
     (positioner :: <function>, new-substring :: <string>,
      input :: <string>, start :: <integer>, input-end :: false-or(<integer>), 
      count :: false-or(<integer>), expand-backreferences :: <boolean>)
@@ -91,4 +91,4 @@ define method do-replacement
     end while;
   end block;
   concatenate(result-string, copy-sequence(input, start: index));
-end method do-replacement;
+end function do-replacement;
