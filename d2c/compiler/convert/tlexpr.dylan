@@ -1,11 +1,11 @@
 module: top-level-expressions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/tlexpr.dylan,v 1.3 2000/01/24 04:56:15 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/tlexpr.dylan,v 1.4 2001/02/08 22:21:19 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -53,7 +53,10 @@ end;
 
 
 define method process-top-level-form (form :: <expression-parse>) => ();
-  add!(*Top-Level-Forms*, make(<expression-tlf>, expression: form));
+  add!(*Top-Level-Forms*,
+       make(<expression-tlf>,
+	    expression: form,
+	    source-location: form.source-location));
 end;
 
 define method process-top-level-form (form :: <body-parse>) => ();
@@ -85,8 +88,14 @@ define method process-top-level-form (form :: <body-parse>) => ();
     end method process;
   let new-body = process(form.body-parts);
   if (new-body)
-    let expr = make(<body-parse>, parts: new-body);
-    add!(*Top-Level-Forms*, make(<expression-tlf>, expression: expr));
+    let expr
+	= make(<body-parse>,
+	       parts: new-body,
+	       source-location: form.source-location);
+    add!(*Top-Level-Forms*,
+	 make(<expression-tlf>,
+	      expression: expr,
+	      source-location: expr.source-location));
   end;
 end;
 

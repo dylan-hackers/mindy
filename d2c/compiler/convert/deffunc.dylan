@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.7 2001/01/27 18:15:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.8 2001/02/08 22:22:17 gabor Exp $
 copyright: see below
 
 
@@ -7,7 +7,7 @@ copyright: see below
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -68,6 +68,7 @@ define-procedural-expander
 	make-parsed-fragment
 	  (make(<define-generic-parse>,
 		name: extract-name(name-frag),
+		source-location: generator.generator-call.source-location,
 		parameters: parse-parameter-list(make(<fragment-tokenizer>,
 						      fragment: params-frag)),
 		results: parse-variable-list(make(<fragment-tokenizer>,
@@ -100,6 +101,7 @@ define-procedural-expander
 	make-parsed-fragment
 	  (make(<define-sealed-domain-parse>,
 		name: extract-name(name-frag),
+		source-location: generator.generator-call.source-location,
 		type-exprs: map(expression-from-fragment,
 				split-fragment-at-commas(types-frag))),
 	   source-location: generate-token-source-location(generator)));
