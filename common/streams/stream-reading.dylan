@@ -1,7 +1,7 @@
 module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading from streams.
-RCS-header: $Header: /scm/cvs/src/common/streams/stream-reading.dylan,v 1.1 1998/05/03 19:55:04 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/stream-reading.dylan,v 1.2 1999/02/18 20:13:54 andreas Exp $
 copyright: See below.
 
 //======================================================================
@@ -202,7 +202,7 @@ define method read (stream :: <buffered-stream>, n :: <integer>,
       let buf-start :: <buffer-index> = buf.buffer-next;
       let result-stop :: <integer> = result-start + available;
       while (#t)
-	if (result-stop > n)
+	if (result-stop >= n)
 	  // Were almost done. Copy over the last chunk, then break out.
 	  let copy-size = n - result-start;
 	  copy-sequence!(result, result-start,
