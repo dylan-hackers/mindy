@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.17 1996/05/29 23:08:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.18 1996/08/23 14:03:22 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -66,7 +66,8 @@ end;
 // ct-mv-eval(<varref-parse>, <lexenv>) -- exported method.
 //
 // As long as the variable isn't bound in the lexenv, call ct-value on the
-// definition (assuming there is one).
+// definition (assuming there is one).  This is inhibited if the definition is
+// dynamic.
 //
 define method ct-mv-eval
     (expr :: <varref-parse>, lexenv :: false-or(<lexenv>))
@@ -74,7 +75,12 @@ define method ct-mv-eval
   let id = expr.varref-id;
   unless (lexenv & find-binding(lexenv, id))
     let var = find-variable(id-name(id));
-    var & var.variable-definition & ct-value(var.variable-definition);
+    if (var)
+      let def = var.variable-definition;
+      def & ~def.defn-dynamic? & ct-value(def);
+    else
+      #f;
+    end if;
   end;
 end;
 
