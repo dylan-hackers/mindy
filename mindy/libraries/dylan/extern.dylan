@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.5 1995/08/02 18:43:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.6 1995/10/02 19:56:41 rgs Exp $
 
 //======================================================================
 //
@@ -180,12 +180,12 @@ define constant strcmp
 define constant strlen
   = get-c-function("strlen", args: list(<c-string>), result: <integer>);
 
-define method class-for-copy(string :: <c-string>)
+define method class-for-copy (string :: <c-string>)
   <byte-string>;
 end method class-for-copy;
 
-define method make(cls :: limited(<class>, subclass-of: <c-string>),
-		   #next next, #key size: sz = 0, fill = ' ')
+define method make (cls :: limited(<class>, subclass-of: <c-string>),
+		    #next next, #key size: sz = 0, fill = ' ')
   let result = next(cls, element-count: sz + 1);
   let fill-byte = as(<integer>, fill);
   for (i from 0 below sz)
@@ -195,11 +195,11 @@ define method make(cls :: limited(<class>, subclass-of: <c-string>),
   result;
 end method make;
 
-define method forward-iteration-protocol(str :: <c-string>)
+define method forward-iteration-protocol (str :: <c-string>)
   values(0, #f,
 	 method (str, state) state + 1 end method,
 	 method (str, state, limit)
-	   unsigned-byte-at(str, offset: state) == 0;
+	   str = null-pointer | unsigned-byte-at(str, offset: state) == 0;
 	 end method,
 	 method (str, state) state end method,
 	 method (str, state)
@@ -230,13 +230,22 @@ define constant *cstr-no-default* = pair(#f, #f);
 
 define method size (string :: <c-string>)
  => result :: <integer>;
-  strlen(string);
+  case
+    (string = null-pointer) => 0;
+    otherwise => strlen(string);
+  end case;
 end method size;
+
+define method empty? (string :: <c-string>) => (result :: <boolean>);
+  string = null-pointer | unsigned-byte-at(string) = 0;
+end method empty?;
 
 define constant space-byte = as(<integer>, ' ');
 define method size-setter (value :: <integer>, string :: <c-string>)
-  let sz = strlen(string);
+  let sz = string.size;
   case
+    value = null-pointer =>
+      error("Cannot set size of null <c-string>s");
     value == sz =>
       #f;
     value > sz =>
@@ -280,13 +289,23 @@ end method element-setter;
 define method \<
     (str1 :: <c-string>, str2 :: <c-string>)
  => result :: <object>;
-  strcmp(str1, str2) < 0;
+  case
+    (str1.empty?) => ~str2.empty?;
+    (str2.empty?) => #f;
+    otherwise => strcmp(str1, str2) < 0;
+  end case;
 end method \<;
 
 define method \=
     (str1 :: <c-string>, str2 :: <c-string>)
  => result :: <object>;
-  strcmp(str1, str2) == 0;
+  let empty1 = str1.empty?;
+  let empty2 = str2.empty?;
+  case
+    empty1 & empty2 => #t;
+    empty1 | empty2 => #f;
+    otherwise => strcmp(str1, str2) == 0;
+  end case;
 end method \=;
 
 // This is a very common operation, so let's make it fast.
