@@ -5,7 +5,7 @@ synopsis: Implements character tests that are in C's ctype library,
           sanity while stepping through all possible characters)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-type.dylan,v 1.2 1996/07/12 16:38:30 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-type.dylan,v 1.3 1996/10/18 14:58:58 nkramer Exp $
 
 //======================================================================
 //
@@ -34,68 +34,75 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/character-ty
 
 // isalpha
 //
-define method alpha? (c :: <character>) => answer :: <boolean>;
+define function alpha? (c :: <character>) => answer :: <boolean>;
   (c >= 'a' & c <= 'z')  |  (c >= 'A' & c <= 'Z');
-end method alpha?;
+end function alpha?;
+
+// Another name for alpha?.  Why choose between two good names for a
+// function when you can use both?
+//
+define function alphabetic? (c :: <character>) => answer :: <boolean>;
+  c.alpha?
+end function alphabetic?;
 
 // isdigit
 //
-define method digit? (c :: <character>) => answer :: <boolean>;
+define function digit? (c :: <character>) => answer :: <boolean>;
   (c >= '0' & c <= '9');
-end method digit?;
+end function digit?;
 
 // isalnum
 //
-define method alphanumeric? (c :: <character>) => answer :: <boolean>;
+define function alphanumeric? (c :: <character>) => answer :: <boolean>;
   (c >= 'a' & c <= 'z')  |  (c >= 'A' & c <= 'Z')  |  (c >= '0' & c <= '9');
-end method alphanumeric?;
+end function alphanumeric?;
 
 // isspace
 //
-define method whitespace? (c :: <character>) => answer :: <boolean>;
+define function whitespace? (c :: <character>) => answer :: <boolean>;
   select (c)
     ' ', '\t', '\n', '\f', '\r' => #t;       
                         // Space, tab, newline, formfeed, carriage return
     otherwise => #f;
   end select;
-end method whitespace?;
+end function whitespace?;
 
 // isupper
 //
 // This has been moved to %Hash-Tables in order to prevent circular library
 // definitions.
 //
-//define method uppercase? (c :: <character>) => answer :: <boolean>;
+//define function uppercase? (c :: <character>) => answer :: <boolean>;
 //  c >= 'A' & c <= 'Z';
-//end method uppercase?;
+//end function uppercase?;
 
 // islower
 //
-define method lowercase? (c :: <character>) => answer :: <boolean>;
+define function lowercase? (c :: <character>) => answer :: <boolean>;
   c >= 'a' & c <= 'z';
-end method lowercase?;
+end function lowercase?;
 
 // isxdigit
 //
-define method hex-digit? (c :: <character>) => answer :: <boolean>;
+define function hex-digit? (c :: <character>) => answer :: <boolean>;
   (c >= '0' & c <= '9')  |  (c >= 'a' & c <= 'f')  |  (c >= 'A' & c <= 'F');
-end method hex-digit?;
+end function hex-digit?;
 
 // isgraph -- printing character that's not space
 //
-define method graphic? (c :: <character>) => answer :: <boolean>;
+define function graphic? (c :: <character>) => answer :: <boolean>;
   alphanumeric?(c) | punctuation?(c);
-end method graphic?;
+end function graphic?;
 
 // isprint
 //
-define method printable? (c :: <character>) => answer :: <boolean>;
+define function printable? (c :: <character>) => answer :: <boolean>;
   graphic?(c) | whitespace?(c);
-end method printable?;
+end function printable?;
 
 // ispunct
 //
-define method punctuation? (c :: <character>) => answer :: <boolean>;
+define function punctuation? (c :: <character>) => answer :: <boolean>;
   select (c)
     ',', '.', '/', '<', '>', '?', ';', '\'', ':', '"',
     '|', '\\', '[', ']', '{', '}',
@@ -104,21 +111,19 @@ define method punctuation? (c :: <character>) => answer :: <boolean>;
       => #t;
     otherwise => #f;
   end select;
-end method punctuation?;
+end function punctuation?;
 
 // iscntrl
 //
-define method control? (c :: <character>) => answer :: <boolean>;
+define function control? (c :: <character>) => answer :: <boolean>;
   ~ printable?(c);
-end method control?;
+end function control?;
 
 // byte-character? is the only function here that has no C equivalent.
 //
 // As soon as we accept the concept of <byte-character>, we can change
 // this definition.
 //
-define method byte-character? (c :: <character>) => answer :: <boolean>;
+define function byte-character? (c :: <character>) => answer :: <boolean>;
   as(<integer>, c) < 256;
-end method byte-character?;
-
-
+end function byte-character?;
