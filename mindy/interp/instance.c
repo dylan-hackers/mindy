@@ -1,7 +1,6 @@
 /**********************************************************************\
 *
-*  Copyright (c) 1994  Carnegie Mellon University
-*  All rights reserved.
+*  Copyright (c) 1994 Carnegie Mellon University All rights reserved.
 *  
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
@@ -23,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.36 1995/02/24 01:33:58 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.37 1995/04/22 07:46:06 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -40,6 +39,7 @@
 #include "type.h"
 #include "bool.h"
 #include "module.h"
+
 #include "num.h"
 #include "thread.h"
 #include "func.h"
@@ -784,7 +784,8 @@ obj_t make_defined_class(obj_t debug_name, struct library *library)
     DC(res)->all_slots = obj_False;
     DC(res)->new_initargs = obj_False;
     DC(res)->all_initargs = obj_False;
-    DC(res)->inheriteds = obj_False;
+    DC(res)->new_inheriteds = obj_False;
+    DC(res)->all_inheriteds = obj_False;
     DC(res)->instance_positions = obj_False;
     DC(res)->instance_length = 0;
     DC(res)->instance_layout = obj_False;
@@ -1160,7 +1161,31 @@ static void inherit_initargs(obj_t class, obj_t super)
 
 /* Process Inherited Specifications */
 
-static void process_inherited(obj_t class, obj_t inherited)
+static obj_t maybe_add_override(obj_t override, obj_t overrides)
+{
+    obj_t scan;
+    obj_t name = INHD(override)->name;
+
+    for (scan = overrides; scan != obj_Nil; scan = TAIL(scan))
+	if (INHD(HEAD(scan))->name == name)
+	    return overrides;
+
+    return pair(override, overrides);
+}
+
+static obj_t maybe_inherit_inheriteds(obj_t class, obj_t overrides)
+{
+    obj_t scan;
+
+    if (CLASS(class)->class == obj_DefinedClassClass)
+	for (scan = DC(class)->new_inheriteds;
+	     scan != obj_Nil;
+	     scan = TAIL(scan))
+	    overrides = maybe_add_override(HEAD(scan), overrides);
+    return overrides;
+}
+
+static obj_t process_inherited(obj_t class, obj_t inherited, obj_t overrides)
 {
     obj_t slots;
 
@@ -1171,7 +1196,9 @@ static void process_inherited(obj_t class, obj_t inherited)
 	if (SD(slot)->name == INHD(inherited)->name) {
 	    switch (SD(slot)->alloc) {
 	      case alloc_INSTANCE:
+		overrides = pair(inherited, overrides);
 		break;
+
 	      case alloc_SUBCLASS:
 		for (inits = initializers; inits != obj_Nil;
 		     inits = TAIL(inits)) {
@@ -1206,11 +1233,12 @@ static void process_inherited(obj_t class, obj_t inherited)
 	      default:
 		lose("Strange slot allocation.");
 	    }
-	    return;
+	    return overrides;
 	}
     }
     error("Slot %= not inherited from any superclass",
 	  INHD(inherited)->name);
+    return NULL;
 }
 
 
@@ -1220,6 +1248,7 @@ void init_defined_class(obj_t class, obj_t slots,
 			obj_t initargs, obj_t inheriteds)
 {
     obj_t scan;
+    obj_t overrides;
 
     if (object_class(class) != obj_DefinedClassClass) {
 	if (slots != obj_Nil)
@@ -1259,7 +1288,6 @@ void init_defined_class(obj_t class, obj_t slots,
     DC(class)->all_slots = obj_Nil;
     DC(class)->new_initargs = initargs;
     DC(class)->all_initargs = initargs;
-    DC(class)->inheriteds = inheriteds;
 
     compute_lengths(class);
 
@@ -1294,8 +1322,13 @@ void init_defined_class(obj_t class, obj_t slots,
 
     /* Process Inheriteds */
 
+    overrides = obj_Nil;
     for (scan = inheriteds; scan != obj_Nil; scan = TAIL(scan))
-        process_inherited(class, HEAD(scan));
+        overrides = process_inherited(class, HEAD(scan), overrides);
+    DC(class)->new_inheriteds = overrides;
+    for (scan = TAIL(DC(class)->cpl); scan != obj_Nil; scan = TAIL(scan))
+	overrides = maybe_inherit_inheriteds(HEAD(scan), overrides);
+    DC(class)->all_inheriteds = overrides;
 
     scan = initializers;
     initializers = NULL;
@@ -1424,7 +1457,7 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
 	if (!slot_initialized_p) {
 	    obj_t inheriteds;
 
-	    for (inheriteds = DC(class)->inheriteds; inheriteds != obj_Nil;
+	    for (inheriteds = DC(class)->all_inheriteds; inheriteds != obj_Nil;
 		 inheriteds = TAIL(inheriteds)) {
 		obj_t inherited = HEAD(inheriteds);
 		
@@ -1593,7 +1626,7 @@ static void dylan_slot_value(obj_t self, struct thread *thread, obj_t *args)
     obj_t instance = args[1];
     obj_t class = object_class(instance);
     int index;
-    obj_t value;
+    obj_t value = NULL;
 
     if (!instancep(instance, SD(slot)->creator))
 	error("%= is not one of %='s slots", slot, instance);
@@ -1688,7 +1721,7 @@ void describe(obj_t thing)
 	for (slots=DC(class)->all_slots; slots != obj_Nil; slots=TAIL(slots)) {
 	    obj_t slot = HEAD(slots);
 	    int index, dummy;
-	    obj_t value;
+	    obj_t value = NULL;
 
 	    fputs(sym_name(SD(slot)->name), stdout);
 	    switch (SD(slot)->alloc) {
@@ -1745,7 +1778,8 @@ static int scav_defined_class(struct object *ptr)
     scavenge(&class->all_slots);
     scavenge(&class->new_initargs);
     scavenge(&class->all_initargs);
-    scavenge(&class->inheriteds);
+    scavenge(&class->new_inheriteds);
+    scavenge(&class->all_inheriteds);
     scavenge(&class->instance_positions);
     scavenge(&class->instance_layout);
     scavenge(&class->subclass_positions);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.8 1994/11/30 16:18:51 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.9 1995/04/22 07:46:06 wlott Exp $
 *
 \**********************************************************************/
 
@@ -54,7 +54,8 @@ struct defined_class {
     obj_t all_slots;
     obj_t new_initargs;
     obj_t all_initargs;
-    obj_t inheriteds;
+    obj_t new_inheriteds;
+    obj_t all_inheriteds;
 
     obj_t instance_positions;
     int instance_length;
