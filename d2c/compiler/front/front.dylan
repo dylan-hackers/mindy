@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.47 1996/01/11 18:54:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.48 1996/01/14 18:03:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,7 +12,7 @@ assignment
 
 operation
     primitive
-    abstract-call [annotatable] {abstract}
+    abstract-call {abstract}
 	known-call
 	general-call {abstract}
 	    unknown-call
@@ -102,14 +102,15 @@ end class;
 // The <primitive> operation represents some built in primitive operation.
 //
 define class <primitive> (<operation>)
-  slot name :: <symbol>, required-init-keyword: name:;
-  slot info :: <primitive-info>, init-keyword: info:;
+  slot primitive-name :: <symbol>, required-init-keyword: name:;
+  slot primitive-info :: <primitive-info>, init-keyword: info:;
 end;
 
 define method initialize (prim :: <primitive>, #next next-method, #key) => ();
   next-method();
-  prim.info := primitive-info-or-lose(prim.name);
-  let type = prim.info.primitive-result-type;
+  let info = primitive-info-or-lose(prim.primitive-name);
+  prim.primitive-info := info;
+  let type = info.priminfo-result-type;
   prim.derived-type := values-type-intersection(type, prim.derived-type);
 end;
 
@@ -117,7 +118,7 @@ end;
 // The <abstract-call> operation represents any function call.
 // In Operands, the called function is first, followed by the args.
 //
-define abstract class <abstract-call> (<operation>, <annotatable>)
+define abstract class <abstract-call> (<operation>)
 end class;
 
 // A call where the function is known and all hairy argument stuff has been
