@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.10 1994/10/03 14:00:43 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.11 1994/11/03 23:50:57 wlott Exp $
 
 //======================================================================
 //
@@ -72,7 +72,7 @@ end class <deque-element>;
 // be preserved by the deque functions.
 //
 define class <deque> (<stretchy-collection>, <mutable-sequence>)
-  slot size :: <integer>,
+  slot size :: <fixed-integer>,
     setter: deque-size-setter,
     init-value: 0,
     init-keyword: size: ;
@@ -160,7 +160,7 @@ define constant deque_fip_finished_state? =
   end method;
 
 define constant deque_fip_current_key =
-  method (deque :: <deque>, state :: <deque-element>) => <integer>;
+  method (deque :: <deque>, state :: <deque-element>) => <fixed-integer>;
     for (count from -1,
 	 deque_elem = state then prev-deque-element(deque_elem),
 	 while deque_elem)
@@ -350,7 +350,8 @@ end method class-for-copy;
 // is smaller than the size of the deque, elements are popped from the end
 // until the size is N.
 //
-define method size-setter (n :: <integer>, deque :: <deque>) => <integer>;
+define method size-setter (n :: <fixed-integer>, deque :: <deque>)
+    => <fixed-integer>;
   let s = size(deque);
   if (n < s)
     for (i from 0 below s - n) pop-last(deque) end for;
@@ -363,7 +364,7 @@ end method size-setter;
 // Since we can traverse from either end, we check to see which end is closer
 // to the desired element and take that as our starting point.
 //
-define method element (deque :: <deque>, key :: <integer>,
+define method element (deque :: <deque>, key :: <fixed-integer>,
 		       #key default = no_default) => <object>;
   let sz = deque.size;
   if (key < 0 | key >= sz)
@@ -383,7 +384,7 @@ define method element (deque :: <deque>, key :: <integer>,
   end if;
 end method element;
 
-define method element-setter (value, deque :: <deque>, key :: <integer>)
+define method element-setter (value, deque :: <deque>, key :: <fixed-integer>)
   let sz = deque.size;
   if (key < 0)
     error("No such element in %=: %d", deque, key)
@@ -554,7 +555,7 @@ define method remove (deque :: <deque>, value,
 		      #key test = \==, count) => <deque>;
   let count = count | size(deque);
   local method copy(state :: union(singleton(#f), <deque-element>),
-		    count :: <integer>) => <deque>;
+		    count :: <fixed-integer>) => <deque>;
 	  case
 	    ~state =>
 	      make(<deque>);
@@ -581,7 +582,7 @@ define method remove! (deque :: <deque>, value,
 		       #key test = \==, count: count) => <deque>;
   let count = count | size(deque);
   local method scan!(state :: union(singleton(#f), <deque-element>),
-		     count :: <integer>)
+		     count :: <fixed-integer>)
 	  case
 	    count <= 0 | ~state =>
 	      #t;

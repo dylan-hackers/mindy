@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.10 1994/10/18 23:30:06 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.11 1994/11/03 23:51:11 wlott Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -140,16 +140,16 @@ end method merge-hash-states;
 // high, because if you do the table could shrink immediately after it
 // expands.
 //
-define constant default-starting-table-size :: <integer> =  5;
-define constant default-expand-when         :: <integer> = 200;
-define constant default-expand-to           :: <integer> = 300;
-define constant default-shrink-when         :: <integer> = 10;
-define constant default-shrink-to           :: <integer> = 100;
+define constant default-starting-table-size :: <fixed-integer> =  5;
+define constant default-expand-when         :: <fixed-integer> = 200;
+define constant default-expand-to           :: <fixed-integer> = 300;
+define constant default-shrink-when         :: <fixed-integer> = 10;
+define constant default-shrink-to           :: <fixed-integer> = 100;
 
 
 define class <bucket-entry> (<object>)
   slot key-slot                  , required-init-keyword: key:          ;
-  slot hash-id-slot  :: <integer>, required-init-keyword: hash-id:      ;
+  slot hash-id-slot  :: <fixed-integer>, required-init-keyword: hash-id:      ;
   slot hash-state-slot           , required-init-keyword: hash-state:   ;
   slot item-slot                 , required-init-keyword: item:         ;
 end class <bucket-entry>;
@@ -157,14 +157,14 @@ end class <bucket-entry>;
 
 define class <table> (<mutable-explicit-key-collection>,
 		       <stretchy-collection>)
-  slot item-count-slot         :: <integer>;     // Number of keys
+  slot item-count-slot         :: <fixed-integer>;     // Number of keys
   slot bucket-array-slot       :: <vector>;
-  slot bucket-count-slot       :: <integer>;     // size of bucket-array
+  slot bucket-count-slot       :: <fixed-integer>;     // size of bucket-array
   slot bucket-states-slot      :: <vector>;
-  slot expand-when-slot        :: <integer>;
-  slot expand-to-slot          :: <integer>;
-  slot shrink-when-slot        :: <integer>;
-  slot shrink-to-slot          :: <integer>;
+  slot expand-when-slot        :: <fixed-integer>;
+  slot expand-to-slot          :: <fixed-integer>;
+  slot shrink-when-slot        :: <fixed-integer>;
+  slot shrink-to-slot          :: <fixed-integer>;
   slot merged-hash-state-slot  :: <object>;
 end class <table>;
 	  
@@ -188,7 +188,7 @@ define abstract class <value-table> (<table>)
 end class <value-table>;
 
 
-define method make-bucket-entry (key, hash-id :: <integer>, hash-state, item)
+define method make-bucket-entry (key, hash-id :: <fixed-integer>, hash-state, item)
  => entry :: <bucket-entry>;
   make(<bucket-entry>,   
        key:        key, 
@@ -242,7 +242,7 @@ end method key-test;
 // better methods defined. (We can't call object-hash, so what can we do?)
 //
 define method equal-hash (key :: <object>) 
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   values(42, $permanent-hash-state);
 end method equal-hash;
 
@@ -251,67 +251,67 @@ end method equal-hash;
 // functions, and conditions.
 //
 define method equal-hash (key :: <character>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: <integer>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: <float>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   float-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: <symbol>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: <class>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: <function>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: <type>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: singleton (#f))
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: singleton (#t))
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (key :: <condition>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method equal-hash;
 
 
 define method equal-hash (col :: <collection>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   collection-hash(col, equal-hash, equal-hash);
 end method equal-hash;
 
@@ -323,37 +323,37 @@ end method equal-hash;
 // $permanent-hash-state for anything else.
 //
 define method value-hash (key :: <integer>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   object-hash(key);
 end method value-hash;
 
 
 define method value-hash (key :: <float>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   float-hash(key);
 end method value-hash;
 
 
 define method value-hash (key :: <character>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   value-hash(as(<integer>, key));
 end method value-hash;
 
 
 define method value-hash (key :: <symbol>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   string-hash(as(<string>, key));
 end method value-hash;
 
 
 define method value-hash (key :: singleton (#f))
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   values(0, $permanent-hash-state);
 end method value-hash;
 
 
 define method value-hash (key :: singleton (#t))
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   values(1, $permanent-hash-state);
 end method value-hash;
 
@@ -368,7 +368,7 @@ end method value-hash;
 //
 define method collection-hash(col :: <collection>, key-hash :: <function>,
 			      element-hash :: <function>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   let (current-id, current-state) = values(0, $permanent-hash-state);
   for (elt keyed-by key in col)
     let (elt-id, elt-state)           = element-hash(elt);
@@ -395,7 +395,7 @@ end method collection-hash;
 // even though the two collections are =.
 //
 define method sequence-hash(seq :: <sequence>, element-hash :: <function>)
-          => (id :: <integer>, state :: <object>);
+          => (id :: <fixed-integer>, state :: <object>);
   let (current-id, current-state) = values(0, $permanent-hash-state);
   for (elt in seq)
     let (id, state) = element-hash(elt);
@@ -414,7 +414,7 @@ end method sequence-hash;
 // and "does the right thing."
 //
 define method string-hash (s :: <string>)
-    => (id :: <integer>, state :: <object>);
+    => (id :: <fixed-integer>, state :: <object>);
   sequence-hash(s, value-hash);
 end method string-hash;
 
@@ -709,7 +709,7 @@ end method remove-key!;
 // Takes a hashtable and mutates it so that it has a different number of
 // buckets.
 //
-define method resize-table (ht :: <table>, numbuckets :: <integer>);
+define method resize-table (ht :: <table>, numbuckets :: <fixed-integer>);
   let new-array = make(<simple-object-vector>, 
 		       size: numbuckets,
 		       fill: #()   );
@@ -735,7 +735,7 @@ end method resize-table;
 // This version of resize-table doesn't bother updating any of the
 // merged state slots, arrays, etc.
 //
-define method resize-table (ht :: <value-table>, numbuckets :: <integer>)
+define method resize-table (ht :: <value-table>, numbuckets :: <fixed-integer>)
   let new-array = make(<simple-object-vector>, 
 		       size: numbuckets,
 		       fill: #()   );

@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.21 1994/10/03 14:00:37 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.22 1994/11/03 23:50:55 wlott Exp $
 
 //======================================================================
 //
@@ -113,7 +113,7 @@ define method \=(a :: <collection>, b :: <collection>) => <object>;
 end method \=;
 
 
-define method size(collection :: <collection>) => <integer>;
+define method size(collection :: <collection>) => <fixed-integer>;
   for (count from 0, elem in collection)
   finally
     count;
@@ -393,7 +393,7 @@ end method key-sequence;
 
 // Sequence routines.
 
-define method element(sequence :: <sequence>, key :: <integer>,
+define method element(sequence :: <sequence>, key :: <fixed-integer>,
 		      #key default = no_default) => <object>;
   block (return)
     for (this-key from 0, elem in sequence)
@@ -410,7 +410,7 @@ end method element;
 
 
 define method element-setter (new-value, sequence :: <mutable-sequence>,
-			      key :: <integer>)
+			      key :: <fixed-integer>)
   let (init-state, limit, next-state, done?,
        current-key, current-element,
        current-element-setter) = forward-iteration-protocol(sequence);
@@ -666,7 +666,7 @@ define method remove! (sequence :: <mutable-sequence>, value,
        current-element, current-element-setter,
        copy-state) = forward-iteration-protocol(sequence);
   local method replace (dest-state, src-state,
-			replaced :: <integer>, length :: <integer>)
+			replaced :: <fixed-integer>, length :: <fixed-integer>)
 	  case
 	    done?(sequence, src-state, limit) =>
 	      shrink!(sequence, length);

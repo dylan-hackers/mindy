@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.4 1994/06/27 17:10:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.5 1994/11/03 23:51:09 wlott Exp $
 
 //======================================================================
 //
@@ -61,8 +61,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dyl
 //#
 //# Swaps two elements in a vector.
 //#
-define method swap-elements! (vector :: <vector>, key1 :: <integer>,
-			      key2 :: <integer>)
+define method swap-elements! (vector :: <vector>, key1 :: <fixed-integer>,
+			      key2 :: <fixed-integer>)
   let element1 = vector[key1];
   let element2 = vector[key2];
   vector[key1] := element2;

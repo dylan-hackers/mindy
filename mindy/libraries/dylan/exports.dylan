@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.47 1994/10/26 20:18:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.48 1994/11/03 23:51:00 wlott Exp $
 
 //======================================================================
 //
@@ -44,7 +44,8 @@ define module Builtin-Stuff
     <character>, <class>, <collection>, <complex>,
     <defined-class>, <double-float>,
     <empty-list>, <event>, <explicit-key-collection>, <extended-float>,
-    <false>, <float>, <function>,
+    <extended-integer>,
+    <false>, <fixed-integer>, <float>, <function>,
     <generic-function>,
     <integer>,
     <list>, <lock>,
@@ -53,7 +54,7 @@ define module Builtin-Stuff
     <number>,
     <object>,
     <pair>,
-    <rational>, <real>,
+    <ratio>, <rational>, <real>,
     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
     <slot-descriptor>, <spinlock>, <string>, <symbol>,
     <thread>, <true>, <type>,
@@ -66,7 +67,7 @@ define module Builtin-Stuff
     broadcast-event,
     direct-subclasses, direct-superclasses,
     ceiling, ceiling/, class-name, copy-bytes, current-handler, current-thread,
-    do-next-method,
+    denominator, do-next-method,
     element, element-setter, enable-error-system,
     fflush, find-method, float-hash, floor, floor/, format, function-arguments,
     function-name,
@@ -78,7 +79,7 @@ define module Builtin-Stuff
     kill-thread,
     limited, list, locked?, logand, logbit?, logior, lognot, logxor,
     main, make, make-generic-function, merge-hash-codes, method-specializers,
-    negative,
+    negative, numerator,
     object-class, object-hash,
     pair, prin1, print, putc, puts,
     raw-exit, release-lock, remove-method, round, round/,
@@ -134,7 +135,7 @@ define module Dylan
 	     <number>,
 	     <object>,
 	     <pair>,
-	     <rational>, <real>,
+	     <ratio>, <rational>, <real>,
 	     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
 	     <string>, <symbol>,
 	     <type>,
@@ -146,7 +147,7 @@ define module Dylan
 	     backward-iteration-protocol,
 	     direct-subclasses, direct-superclasses,
 	     ceiling, ceiling/,
-	     do,
+	     denominator, do,
 	     element, element-setter, error,
 	     find-method, floor, floor/, forward-iteration-protocol,
 	     function-arguments,
@@ -155,7 +156,7 @@ define module Dylan
 	     initialize, instance?,
 	     limited, list, logand, logbit?, logior, lognot, logxor,
 	     make, merge-hash-codes, method-specializers,
-	     negative, negative?,
+	     negative, negative?, numerator,
 	     object-class, object-hash,
 	     pair,
 	     remove-method, round, round/,
@@ -166,7 +167,7 @@ define module Dylan
 	     values, vector};
   use extras;
   export
-    \>=, \>, \:=, \|, \&,
+    \>=, \>, \:=, \|, \&, \^,
     <abort>,
     <condition>,
     <deque>,
@@ -184,7 +185,7 @@ define module Dylan
     condition-format-string, condition-format-arguments, conjoin,
     copy-sequence, curry,
     default-handler, dimension, dimensions, disjoin, do-handlers,
-    empty?, even?, every?, expt,
+    empty?, even?, every?,
     fill!, find-key, first, first-setter,
     gcd,
     identity, integral?, intersection,
@@ -214,6 +215,7 @@ define module Extensions
     import: {main, exit, on-exit,
 	     <byte-character>, <byte-vector>,
 	     <boolean>, <true>, <false>,
+	     <fixed-integer>, <extended-integer>,
 	     <weak-pointer>, weak-pointer-object},
     export: all;
   use extras,

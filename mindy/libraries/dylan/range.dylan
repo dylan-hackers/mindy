@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.5 1994/08/22 15:24:23 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.6 1994/11/03 23:51:04 wlott Exp $
 
 //======================================================================
 //
@@ -119,7 +119,7 @@ define class <unbounded-range> (<range>) end class;
 // places in the range constructor.  Please use RANGE instead.
 //
 define class <bounded-range> (<range>)
-   slot range-size :: <integer>,
+   slot range-size :: <fixed-integer>,
       required-init-keyword: size:;
 end class;
 
@@ -157,13 +157,19 @@ end class;
 // If valid sizes exists the maximum of 0 and the minimum of the valid
 // sizes is returned.
 //
+define constant <false-or-real> =
+   union (singleton (#f), <real>);
+
+define constant <false-or-fixed> =
+   union (singleton (#f), <fixed-integer>);
+
 define method compute-range-size (r-from :: <real>,
 				  r-by :: <real>,
-				  r-to :: union (singleton (#f), <real>),
-				  r-above :: union (singleton (#f), <real>),
-				  r-below :: union (singleton (#f), <real>),
-				  r-size :: union (singleton (#f), <integer>))
-      => size :: union (singleton (#f), <integer>);
+				  r-to :: <false-or-real>,
+				  r-above :: <false-or-real>,
+				  r-below :: <false-or-real>,
+				  r-size :: <false-or-fixed>)
+      => size :: <false-or-fixed>;
    let to-size = r-to & compute-to-size (r-from, r-by, r-to);
    let above-size = r-above & compute-above-size (r-from, r-by, r-above);
    let below-size = r-below & compute-below-size (r-from, r-by, r-below);
@@ -193,10 +199,10 @@ end method;
 // (The <integer> method is slightly optimized for case where the
 // increment is +1 or -1.)
 //
-define method compute-to-size (start :: <integer>,
-			       increment :: <integer>,
-			       bound :: <integer>)
-      => to-size :: union (singleton (#f), <integer>);
+define method compute-to-size (start :: <fixed-integer>,
+			       increment :: <fixed-integer>,
+			       bound :: <fixed-integer>)
+      => to-size :: <false-or-fixed>;
    select (increment by \=)
       0 =>
 	 #f;
@@ -212,7 +218,7 @@ end method;
 define method compute-to-size (start :: <real>,
 			       increment :: <real>,
 			       bound :: <real>)
-      => to-size :: union (singleton (#f), <integer>);
+      => to-size :: <false-or-fixed>;
    select (increment by \=)
       0 =>
 	 #f;
@@ -236,10 +242,10 @@ end method;
 // returned (no limiting size).  But if START is below ABOVE, 0 is
 // returned.
 //
-define method compute-above-size (start :: <integer>,
-				  increment :: <integer>,
-				  bound :: <integer>)
-      => above-size :: union (singleton (#f), <integer>);
+define method compute-above-size (start :: <fixed-integer>,
+				  increment :: <fixed-integer>,
+				  bound :: <fixed-integer>)
+      => above-size :: <false-or-fixed>;
    if (negative? (increment))
       if (increment = -1)
 	 -(bound - start)
@@ -258,7 +264,7 @@ end method;
 define method compute-above-size (start :: <real>,
 				  increment :: <real>,
 				  bound :: <real>)
-      => above-size :: union (singleton (#f), <integer>);
+      => above-size :: <false-or-fixed>;
    if (negative? (increment))
       ceiling/ (bound - start, increment)
    else
@@ -285,10 +291,10 @@ end method;
 // returned (no limiting size).  But if START is above BELOW, 0 is
 // returned.
 //
-define method compute-below-size (start :: <integer>,
-				  increment :: <integer>,
-				  bound :: <integer>)
-      => below-size :: union (singleton (#f), <integer>);
+define method compute-below-size (start :: <fixed-integer>,
+				  increment :: <fixed-integer>,
+				  bound :: <fixed-integer>)
+      => below-size :: <false-or-fixed>;
    if (positive? (increment))
       if (increment = 1)
 	 bound - start
@@ -307,7 +313,7 @@ end method;
 define method compute-below-size (start :: <real>,
 				  increment :: <real>,
 				  bound :: <real>)
-      => below-size :: union (singleton (#f), <integer>);
+      => below-size :: <false-or-fixed>;
    if (positive? (increment))
       if (increment = 1)
 	 bound - start
@@ -332,7 +338,7 @@ end method;
 //			 (N - FROM) / BY
 //
 define method approximate-range-key (range :: <range>, element :: <real>)
-      => key :: <integer>;
+      => key :: <fixed-integer>;
    round/ (element - range.range-from, range.range-by)
 end method;
 
@@ -355,18 +361,18 @@ end method;
 // bounded range is made.
 //
 define constant range =
-method (#key from: r-from = 0, by: r-by = 1,
-	to: r-to = #f, above: r-above = #f, below: r-below = #f,
-	size: r-size = #f)
-      => new-range :: <range>;
-   let range-size =
-      compute-range-size (r-from, r-by, r-to, r-above, r-below, r-size);
-   if (range-size)
-      make (<bounded-range>, from: r-from, by: r-by, size: range-size);
-   else
-      make (<unbounded-range>, from: r-from, by: r-by);
-   end if;
-end method;
+   method (#key from: r-from = 0, by: r-by = 1,
+	   to: r-to = #f, above: r-above = #f, below: r-below = #f,
+	   size: r-size = #f)
+	 => new-range :: <range>;
+      let range-size =
+	 compute-range-size (r-from, r-by, r-to, r-above, r-below, r-size);
+      if (range-size)
+	 make (<bounded-range>, from: r-from, by: r-by, size: range-size);
+      else
+	 make (<unbounded-range>, from: r-from, by: r-by);
+      end if;
+   end method;
 
 
 // make -- public
@@ -377,7 +383,7 @@ end method;
 // <unbounded-range>.
 //
 define method make (class-to-make == <range>, #rest keys, #all-keys)
-      => <range>;
+      => new-range :: <range>;
    apply (range, keys);
 end method;
 
@@ -389,9 +395,9 @@ end method;
 // bounds of the range, the default is returned or an error is
 // signalled.
 //
-define method element (range :: <bounded-range>, key :: <integer>,
+define method element (range :: <bounded-range>, key :: <fixed-integer>,
                        #key default = no-default)
-      => <real>;
+      => range-element :: <real>;
    case
       (key >= 0) & (key < range.range-size) =>
          range.range-from + (key * range.range-by);
@@ -402,9 +408,9 @@ define method element (range :: <bounded-range>, key :: <integer>,
    end case;
 end method;
 //
-define method element (range :: <unbounded-range>, key :: <integer>,
+define method element (range :: <unbounded-range>, key :: <fixed-integer>,
                        #key default = no-default)
-      => <real>;
+      => range-element :: <real>;
    case
       (key >= 0) =>
          range.range-from + (key * range.range-by);
@@ -444,32 +450,30 @@ end method;
 // forward-iteration-protocol -- public
 // 
 define method forward-iteration-protocol (range :: <bounded-range>)
-      => (initial-state          :: <object>,
-	  limit                  :: <object>,
-	  next-state             :: <function>,
-	  finished-state?        :: <function>,
-	  current-key            :: <function>,
-	  current-element        :: <function>,
-	  current-element-setter :: <function>,
-	  copy-state?            :: <function>);
+      => (initial-state :: <object>, limit :: <object>,
+	  next-state :: <function>, finished-state? :: <function>,
+	  current-key :: <function>, current-element :: <function>,
+	  current-element-setter :: <function>, copy-state? :: <function>);
    let initial-state = 0;
    let limit = range.range-size;
-   local method next-state (r :: <range>, s :: <integer>)
+   local method next-state (r :: <range>, s :: <fixed-integer>)
 	    s + 1
 	 end method;
-   local method finished-state? (r :: <range>, s :: <integer>, l :: <integer>)
+   local method finished-state? (r :: <range>, s :: <fixed-integer>,
+				 l :: <fixed-integer>)
 	    s = l
 	 end method;
-   local method current-key (r :: <range>, s :: <integer>)
+   local method current-key (r :: <range>, s :: <fixed-integer>)
 	    s
 	 end method;
-   local method current-element (r :: <range>, s :: <integer>)
+   local method current-element (r :: <range>, s :: <fixed-integer>)
 	    r[s];
 	 end method;
-   local method current-element-setter (r :: <range>, s :: <integer>, value)
+   local method current-element-setter (r :: <range>, s :: <fixed-integer>,
+					value)
             error ("CURRENT-ELEMENT-SETTER not applicable for <range>");
 	 end method;
-   local method copy-state (r :: <range>, s :: <integer>)
+   local method copy-state (r :: <range>, s :: <fixed-integer>)
 	    s
 	 end method;
    values (initial-state, limit, next-state, finished-state?, current-key,
@@ -483,22 +487,23 @@ define method forward-iteration-protocol (range :: <unbounded-range>)
 	  current-element-setter :: <function>, copy-state? :: <function>);
    let initial-state = 0;
    let limit = #f;
-   local method next-state (r :: <range>, s :: <integer>)
+   local method next-state (r :: <range>, s :: <fixed-integer>)
 	    s + 1
 	 end method;
-   local method finished-state? (r :: <range>, s :: <integer>, l)
+   local method finished-state? (r :: <range>, s :: <fixed-integer>, l)
 	    #f
 	 end method;
-   local method current-key (r :: <range>, s :: <integer>)
+   local method current-key (r :: <range>, s :: <fixed-integer>)
 	    s
 	 end method;
-   local method current-element (r :: <range>, s :: <integer>)
+   local method current-element (r :: <range>, s :: <fixed-integer>)
 	    r[s];
 	 end method;
-   local method current-element-setter (r :: <range>, s :: <integer>, value)
+   local method current-element-setter (r :: <range>, s :: <fixed-integer>, 
+					value)
             error ("CURRENT-ELEMENT-SETTER not applicable for <range>");
 	 end method;
-   local method copy-state (r :: <range>, s :: <integer>)
+   local method copy-state (r :: <range>, s :: <fixed-integer>)
 	    s
 	 end method;
    values (initial-state, limit, next-state, finished-state?, current-key,
@@ -1012,8 +1017,7 @@ end method;
 //
 define method intersection-interval (range1 :: <bounded-range>,
 				     range2 :: <bounded-range>)
-      => (x-from :: union (singleton (#f), <integer>),
-	  x-to :: union (singleton (#f), <integer>));
+      => (x-from :: <false-or-fixed>, x-to :: <false-or-fixed>);
    let from1 = range1.range-from;
    let to1 = range1.last;
    let from2 = range2.range-from;
@@ -1032,8 +1036,7 @@ end method;
 //
 define method intersection-interval (range1 :: <bounded-range>,
 				     range2 :: <unbounded-range>)
-      => (x-from :: union (singleton (#f), <integer>),
-	  x-to :: union (singleton (#f), <integer>));
+      => (x-from :: <false-or-fixed>, x-to :: <false-or-fixed>);
    let from1 = range1.range-from;
    let to1 = range1.last;
    let from2 = range2.range-from;
@@ -1051,8 +1054,7 @@ end method;
 //
 define method intersection-interval (range1 :: <unbounded-range>,
 				     range2 :: <bounded-range>)
-      => (x-from :: union (singleton (#f), <integer>),
-	  x-to :: union (singleton (#f), <integer>));
+      => (x-from :: <false-or-fixed>, x-to :: <false-or-fixed>);
    let from1 = range1.range-from;
    let from2 = range2.range-from;
    let to2 = range2.last;
@@ -1070,8 +1072,7 @@ end method;
 //
 define method intersection-interval (range1 :: <unbounded-range>,
 				     range2 :: <unbounded-range>)
-      => (x-from :: union (singleton (#f), <integer>),
-	  x-to :: union (singleton (#f), <integer>));
+      => (x-from :: <false-or-fixed>, x-to :: <false-or-fixed>);
    let from1 = range1.range-from;
    let from2 = range2.range-from;
    select (range-directions (range1, range2))

@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.7 1994/10/05 21:32:36 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.8 1994/11/03 23:51:02 wlott Exp $
 
 //======================================================================
 //
@@ -32,160 +32,200 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dyla
 
 // Predicates.
 
-define method odd? (x :: <integer>) => <boolean>;
+define method odd? (x :: <integer>)
   logbit?(0, x);
-end method odd?;
+end;
 
-define method even? (x :: <integer>) => <boolean>;
+define method even? (x :: <integer>)
   ~logbit?(0, x);
-end method even?;
+end;
 
-define method zero? (x :: <number>) => <boolean>;
+define method zero? (x :: <number>)
   x = 0;
-end method zero?;
+end;
 
-define method positive? (x :: <real>) => <boolean>;
+define method positive? (x :: <real>)
   x > 0;
-end method positive?;
+end;
 
-define method negative? (x :: <real>) => <boolean>;
+define method negative? (x :: <real>)
   x < 0;
-end method negative?;
+end;
 
-define method integral? (x :: <integer>) => <boolean>;
-  #t;
-end method integral?;
+define method integral? (x :: <integer>)
+  #t
+end;
 
-define method integral? (x :: <number>) => <boolean>;
+define method integral? (x :: <number>)
   #f
-end method integral?;
+end;
 
 
 // Contagion.
 
-define method contagion (x :: <integer>, y :: <single-float>)
-  values(as(<single-float>, x), y);
-end method contagion;
+define method combine-contagion (x :: <fixed-integer>, y :: <extended-integer>)
+  values (as (<extended-integer>, x), y);
+end method;
 
-define method contagion (x :: <single-float>, y :: <integer>)
-  values(x, as(<single-float>, y));
-end method contagion;
+define method combine-contagion (x :: <extended-integer>, y :: <fixed-integer>)
+  values (x, as (<extended-integer>, y));
+end method;
 
-define method contagion (x :: <integer>, y :: <double-float>)
-  values(as(<double-float>, x), y);
-end method contagion;
+define method combine-contagion (x :: <rational>, y :: <single-float>)
+  values (as (<single-float>, x), y);
+end;
 
-define method contagion (x :: <double-float>, y :: <integer>)
-  values(x, as(<double-float>, y));
-end method contagion;
+define method combine-contagion (x :: <single-float>, y :: <rational>)
+  values (x, as (<single-float>, y));
+end;
 
-define method contagion (x :: <single-float>, y :: <double-float>)
-  values(as(<double-float>, x), y);
-end method contagion;
+define method combine-contagion (x :: <rational>, y :: <double-float>)
+  values (as (<double-float>, x), y);
+end;
 
-define method contagion (x :: <double-float>, y :: <single-float>)
-  values(x, as(<double-float>, y));
-end method contagion;
+define method combine-contagion (x :: <double-float>, y :: <rational>)
+  values (x, as (<double-float>, y));
+end;
+
+define method combine-contagion (x :: <rational>, y :: <extended-float>)
+  values (as (<extended-float>, x), y);
+end;
+
+define method combine-contagion (x :: <extended-float>, y :: <rational>)
+  values (x, as (<extended-float>, y));
+end;
+
+define method combine-contagion (x :: <single-float>, y :: <double-float>)
+  values (as (<double-float>, x), y);
+end;
+
+define method combine-contagion (x :: <double-float>, y :: <single-float>)
+  values (x, as (<double-float>, y));
+end;
+
+define method combine-contagion (x :: <single-float>, y :: <extended-float>)
+  values (as (<extended-float>, x), y);
+end;
+
+define method combine-contagion (x :: <extended-float>, y :: <single-float>)
+  values (x, as (<extended-float>, y));
+end;
+
+define method combine-contagion (x :: <double-float>, y :: <extended-float>)
+  values (as (<extended-float>, x), y);
+end;
+
+define method combine-contagion (x :: <extended-float>, y :: <double-float>)
+  values (x, as (<extended-float>, y));
+end;
+
+define method compare-contagion (x :: <real>, y :: <real>)
+   combine-contagion (x, y);
+end method;
 
 
 
 // Additional methods for +, etc.
 
 define method \+ (x :: <number>, y :: <number>)
-  let (x, y) = contagion(x, y);
+  let (x, y) = combine-contagion(x, y);
   x + y;
-end method;
+end;
 
 define method \- (x :: <number>, y :: <number>)
-  let (x, y) = contagion(x, y);
+  let (x, y) = combine-contagion(x, y);
   x - y;
-end method;
+end;
 
 define method \* (x :: <number>, y :: <number>)
-  let (x, y) = contagion(x, y);
+  let (x, y) = combine-contagion(x, y);
   x * y;
-end method;
+end;
 
 define method \/ (x :: <real>, y :: <float>)
-  let (x, y) = contagion(x, y);
+  let (x, y) = combine-contagion(x, y);
   x / y;
-end method;
+end;
 
 define method \/ (x :: <float>, y :: <rational>)
-  let (x, y) = contagion(x, y);
+  let (x, y) = combine-contagion(x, y);
   x / y;
-end method;
+end;
 
-define method truncate (x :: <rational>) => (q :: <integer>, r :: <real>);
-  truncate/(x, 1);
-end method truncate;
+define method truncate (x :: <fixed-integer>)
+      => (q :: <fixed-integer>, r :: <fixed-integer>);
+  truncate/ (x, 1);
+end;
 
-define method floor (x :: <rational>) => (q :: <integer>, r :: <real>);
-  floor/(x, 1);
-end method floor;
+define method floor (x :: <fixed-integer>)
+      => (q :: <fixed-integer>, r :: <fixed-integer>);
+  floor/ (x, 1);
+end;
 
-define method ceiling (x :: <rational>) => (q :: <integer>, r :: <real>);
-  ceiling/(x, 1);
-end method ceiling;
+define method ceiling (x :: <fixed-integer>)
+      => (q :: <fixed-integer>, r :: <fixed-integer>);
+  ceiling/ (x, 1);
+end;
 
-define method round (x :: <rational>) => (q :: <integer>, r :: <real>);
-  round/(x, 1);
-end method round;
+define method round (x :: <fixed-integer>)
+      => (q :: <fixed-integer>, r :: <fixed-integer>);
+  round/ (x, 1);
+end;
 
-define method truncate/ (x :: <float>, y :: <real>)
+define method floor/ (x :: <real>, y :: <real>)
     => (q :: <integer>, r :: <real>);
-  let res = truncate(x / y);
-  values(res, x - res * y);
-end method truncate/;
+  let res = floor (x / y);
+  values (res, x - res * y);
+end;
 
-define method floor/ (x :: <float>, y :: <real>)
+define method ceiling/ (x :: <real>, y :: <real>)
     => (q :: <integer>, r :: <real>);
-  let res = truncate(x / y);
-  values(res, x - res * y);
-end method floor/;
+  let res = ceiling (x / y);
+  values (res, x - res * y);
+end;
 
-define method ceiling/ (x :: <float>, y :: <real>)
+define method round/ (x :: <real>, y :: <real>)
     => (q :: <integer>, r :: <real>);
-  let res = truncate(x / y);
-  values(res, x - res * y);
-end method ceiling/;
+  let res = round (x / y);
+  values (res, x - res * y);
+end;
 
-define method round/ (x :: <float>, y :: <real>)
+define method truncate/ (x :: <real>, y :: <real>)
     => (q :: <integer>, r :: <real>);
-  let res = truncate(x / y);
+  let res = truncate (x / y);
   values(res, x - res * y);
-end method round/;
+end;
 
 define method modulo (x :: <real>, y :: <real>)
   let (quo, rem) = floor/(x, y);
   rem;
-end method modulo;
+end;
 
 define method remainder (x :: <real>, y :: <real>)
   let (quo, rem) = truncate/(x, y);
   rem;
-end method remainder;
-
-define method \< (x :: <real>, y :: <real>)
-  let (x, y) = contagion(x, y);
-  x < y;
-end method;
-
-define method \<= (x :: <rational>, y :: <float>)
-  let (x, y) = contagion(x, y);
-  x <= y;
-end method;
-
-define method \<= (x :: <float>, y :: <real>)
-  let (x, y) = contagion(x, y);
-  x <= y;
-end method;
+end;
 
 define method \= (x :: <real>, y :: <real>)
-  let (x, y) = contagion(x, y);
+  let (x, y) = compare-contagion(x, y);
   x = y;
-end method;
-  
+end;
+
+define method \< (x :: <real>, y :: <real>)
+  let (x, y) = compare-contagion(x, y);
+  x < y;
+end;
+
+define method \<= (x :: <real>, y :: <float>)
+  let (x, y) = compare-contagion(x, y);
+  x <= y;
+end;
+
+define method \<= (x :: <float>, y :: <real>)
+  let (x, y) = compare-contagion(x, y);
+  x <= y;
+end;  
+
 
 
 // Other routines.
@@ -195,25 +235,25 @@ define method abs (real :: <real>)
     -real;
   else
     real;
-  end if;
-end method abs;
+  end;
+end;
 
-define method expt (base :: <number>, power :: <integer>)
+define method \^ (base :: <number>, power :: <integer>)
   case
-    negative?(power)
-      => 1 / expt(base, -power);
-    base == 2
-      => ash(1, power);
-    otherwise
-      for (power = power then ash(power, -1),
-	   total = 1 then if (odd?(power)) base * total else total end,
+    negative? (power) =>
+      1 / (base ^ (- power));
+    base == 2 =>
+      ash (1, power);
+    otherwise =>
+      for (power = power then ash (power, -1),
+	   total = 1 then if (odd? (power)) base * total else total end,
 	   base = base then base * base,
-	   until zero?(power))
+	   until zero? (power))
       finally
 	total;
-      end for;
-  end case;
-end method expt;
+      end;
+  end;
+end;
 
 define method min (x :: <real>, #rest more)
   select (size(more))
@@ -224,10 +264,11 @@ define method min (x :: <real>, #rest more)
     otherwise =>
       for (y in more,
 	   result = x then if (y < result) y else result end)
-      finally result;
-      end for;
+      finally
+	result;
+      end;
   end select;
-end method min;
+end;
 
 define method max (x :: <real>, #rest more)
   select (size(more))
@@ -238,11 +279,10 @@ define method max (x :: <real>, #rest more)
     otherwise =>
       for (y in more,
 	   result = x then if (y > result) y else result end)
-      finally 
-	result;
-      end for;
+      finally result;
+      end;
   end select;
-end method max;
+end;
 
 define method gcd (u :: <integer>, v :: <integer>)
   case
@@ -266,15 +306,14 @@ define method gcd (u :: <integer>, v :: <integer>)
 	      temp := u - v;
 	      if (zero?(temp))
 		return(ash(u, k));
-	      end if;
+	      end;
 	    end if;
 	  end for;
 	end block;
       end for;
   end case;
-end method gcd;
+end gcd;
 
 define method lcm (n :: <integer>, m :: <integer>)
   truncate/(max(n, m), gcd(n, m)) * min(n, m);
-end method lcm;
-
+end;
