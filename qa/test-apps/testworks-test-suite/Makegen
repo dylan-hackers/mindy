@@ -1,0 +1,2 @@
+do emit_library_rule(
+    'testworks-test-suite-app', '$(BUILDROOT)/force.timestamp', '', 'compile');
