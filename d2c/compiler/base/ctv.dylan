@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.16 1995/12/05 03:05:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.17 1995/12/05 22:13:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,6 +22,11 @@ end;
 
 define class <ct-not-supplied-marker>
     (<eql-ct-value>, <identity-preserving-mixin>)
+end;
+
+define method print-message
+    (ctv :: <ct-not-supplied-marker>, stream :: <stream>) => ();
+  write("$not-supplied", stream);
 end;
 
 
