@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.3 1998/12/30 00:35:11 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.4 1999/04/20 04:17:29 emk Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -97,9 +97,9 @@ define method optimize-component
 	| try(environment-analysis, "running environment analysis")
 	| try(build-local-xeps, "building external entries for local funs")
 	| (done := #t);
-    end;
-  end;
-end;
+    end if;
+  end until;
+end method optimize-component;
 
 
 define method reverse-queue
