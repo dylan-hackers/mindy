@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.6 1994/12/15 17:38:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.7 1994/12/15 21:48:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -386,7 +386,7 @@ define module ctype
     <limited-integer-ctype>, <limited-collection-ctype>,
     <direct-instance-ctype>, 
     make-canonical-singleton, singleton-value, type-exp, base-class,
-    low-bound, high-bound, element-limit, size-limit, <cclass>,
+    low-bound, high-bound, element-limit, size-limit, <cclass>, cclass-name,
     <primitive-cclass>, <defined-cclass>,
     precedence-list, subclasses, sealed?, abstract?, primary?, slot-infos,
     wild-ctype, empty-ctype, object-ctype, function-ctype,
@@ -529,7 +529,7 @@ define module front
   use builder-interface;
   use policy;
 
-  export dump-fer;
+  export dump-fer, id;
 end;
 
 define module fer-convert
