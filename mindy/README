@@ -1,11 +1,11 @@
 Mindy is an implementation of a language that is very much like the
-language described in the Dylan(tm) Interim Reference Manual (DIRM).
-The name "Mindy" is derived from "Mindy Is Not Dylan Yet", and as the
-name implies, Mindy is incomplete.  Mindy is incomplete for the
-following reasons:
+language described in the Dylan(tm) Reference Manual (DRM).  The name
+"Mindy" is derived from "Mindy Is Not Dylan Yet", and as the name
+implies, Mindy is incomplete.  Mindy is incomplete for the following
+reasons:
 
-   1] We do not implement everything in the DIRM.
-   2] The DIRM does not specify all that Apple(tm) intends Dylan to be.
+   1] We do not implement everything in the DRM.
+   2] The DRM does not specify all that Apple(tm) intends Dylan to be.
    3] At present there is no validation procedure for Dylan and no
       procedure for licensing the use of the trademarked Dylan name.
 
