@@ -26,7 +26,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.6 2000/10/31 14:24:43 dauclair Exp $
+* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.7 2001/03/24 04:30:07 brent Exp $
 *
 * This file is the lexical analizer.
 *
@@ -77,7 +77,7 @@ EOL	"\n"|"\r"|"\r\n"|"\n\r"
 
 <INITIAL>.			BEGIN(ini); yyless(0);
 
-<ini>#!.*{EOL}			BEGIN(key); warn(line_count, "igoring initial #! interpreter comment\n"); line_count++; 
+<ini>#!.*{EOL}			BEGIN(key); warn(line_count, "ignoring initial #! interpreter comment\n"); line_count++; 
 
 <ini,key>[a-z][-a-z0-9]*:	BEGIN(val); return make_header_key();
 <ini,key>[ \t]*{EOL}		BEGIN(etc); return make_header_end();
