@@ -6194,19 +6194,14 @@ end;
 define method parse
     (files :: <sequence> /* of <string> */, #key defines, verbose)
  => (result :: <parse-state>);
-  let tokenizer
-    = if (files.size == 1)	
-        make(<tokenizer>, source: files.first, defines: defines);
-      else
-        let stream = make(<byte-string-stream>, contents: "",
-                          direction: #"input-output");
-        for (file in files)
-          format(stream, "#include \"%s\"\n", file);
-        end for;
-	stream.stream-position := #"start";
-        make(<tokenizer>, name: "<top-level>", source: stream,
-	     defines: defines);
-      end if;
+  let stream = make(<byte-string-stream>, contents: "",
+                    direction: #"input-output");
+  for (file in files)
+    format(stream, "#include \"%s\"\n", file);
+  end for;
+  stream.stream-position := #"start";
+  let tokenizer = make(<tokenizer>, name: "<top-level>", source: stream,
+                       defines: defines);
 
   let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
   parse-state.verbose := verbose;
