@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.1 1996/02/02 23:19:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.2 1996/02/08 01:36:42 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -52,6 +52,22 @@ define method build-external-entries-for
       := build-xep(component, #t, function, function.signature);
   end;
 end;
+
+
+define class <keyarg-info> (<object>)
+
+  slot keyarg-key-info :: <key-info>,
+    required-init-keyword: key-info:;
+
+  slot keyarg-var :: <abstract-variable>,
+    required-init-keyword: var:;
+
+  slot keyarg-default-bogus? :: <boolean>,
+    required-init-keyword: default-bogus?:;
+
+  slot keyarg-supplied?-var :: false-or(<abstract-variable>),
+    required-init-keyword: supplied?-var:;
+end class <keyarg-info>;
 
 
 define method build-xep
@@ -239,163 +255,175 @@ define method build-xep
   end;
 
   if (signature.key-infos)
-    let key-var = make-local-var(builder, #"key", dylan-value(#"<symbol>"));
-    let val-var = make-local-var(builder, #"value", object-ctype());
-    let key-dispatch-builder = make-builder(builder);
-    let unsupplied-flame-builder = make-builder(builder);
+
+    // The first thing we need to do is make and initialize variables for all
+    // the keyword arguments.
     local
-      method build-next-key (remaining)
-	if (empty?(remaining))
-	  unless (generic-entry? | signature.all-keys?)
-	    build-assignment
-	      (key-dispatch-builder, policy, source, #(),
-	       make-error-operation
-		 (key-dispatch-builder, policy, source,
-		  #"unrecognized-keyword-error", key-var));
-	  end;
-	else
-	  let key-info = remaining.head;
-	  let key = key-info.key-name;
-	  let var = make-local-var(builder, key, key-info.key-type);
-	  let type = key-info.key-type;
-	  let default = key-info.key-default;
-	  let default-bogus?
-	    = default & ~cinstance?(key-info.key-default, type);
-	  let needs-supplied?-var? = key-info.key-needs-supplied?-var;
-	  let supplied?-var
-	    = if (default-bogus? | needs-supplied?-var?)
-		make-local-var(builder,
-			       as(<symbol>,
-				  concatenate(as(<string>, key),
-					      "-supplied?")),
-			       dylan-value(#"<boolean>"));
-	      else
-		#f;
-	      end;
-	  add!(new-args, var);
-	  build-assignment
-	    (builder, policy, source, var,
-	     if (default & ~default-bogus?)
-	       make-literal-constant(builder, default);
-	     else
-	       make(<uninitialized-value>, derived-type: type);
-	     end);
-	  if (supplied?-var)
-	    if (needs-supplied?-var?)
-	      add!(new-args, supplied?-var);
+      method make-keyarg-info (key-info :: <key-info>)
+	  => res :: <keyarg-info>;
+	let key = key-info.key-name;
+	let var = make-local-var(builder, key, key-info.key-type);
+	let type = key-info.key-type;
+	let default = key-info.key-default;
+	let default-bogus?
+	  = default & ~cinstance?(key-info.key-default, type);
+	let needs-supplied?-var? = key-info.key-needs-supplied?-var;
+	let supplied?-var
+	  = if (default-bogus? | needs-supplied?-var?)
+	      make-local-var(builder,
+			     as(<symbol>,
+				concatenate(as(<string>, key),
+					    "-supplied?")),
+			     dylan-value(#"<boolean>"));
+	    else
+	      #f;
 	    end;
-	    build-assignment
-	      (builder, policy, source, supplied?-var,
-	       make-literal-constant(builder, as(<ct-value>, #f)));
+	add!(new-args, var);
+	build-assignment
+	  (builder, policy, source, var,
+	   if (default & ~default-bogus?)
+	     make-literal-constant(builder, default);
+	   else
+	     make(<uninitialized-value>, derived-type: type);
+	   end);
+	if (supplied?-var)
+	  if (needs-supplied?-var?)
+	    add!(new-args, supplied?-var);
 	  end;
-	  let temp = make-local-var(key-dispatch-builder, #"condition",
-				    object-ctype());
 	  build-assignment
-	    (key-dispatch-builder, policy, source, temp,
-	     make-unknown-call
-	       (key-dispatch-builder,
-		ref-dylan-defn(key-dispatch-builder, policy, source, #"=="),
-		#f,
-		list(key-var,
-		     make-literal-constant(key-dispatch-builder,
-					   as(<ct-value>, key)))));
-	  build-if-body(key-dispatch-builder, policy, source, temp);
-	  build-assignment(key-dispatch-builder, policy, source, var, val-var);
-	  if (supplied?-var)
-	    build-assignment
-	      (key-dispatch-builder, policy, source, supplied?-var, 
-	       make-literal-constant(key-dispatch-builder,
-				     as(<ct-value>, #t)));
-	  end;
-	  build-else(key-dispatch-builder, policy, source);
-	  build-next-key(remaining.tail);
-	  end-body(key-dispatch-builder);
-
-	  if (default-bogus?)
-	    build-if-body(unsupplied-flame-builder, policy, source,
-			  supplied?-var);
-	    build-else(unsupplied-flame-builder, policy, source);
-	    build-assignment
-	      (unsupplied-flame-builder, policy, source, #(),
-	       make-error-operation
-		 (unsupplied-flame-builder, policy, source,
-		  #"type-error",
-		  make-literal-constant(unsupplied-flame-builder, default),
-		  make-literal-constant(unsupplied-flame-builder, type)));
-	    end-body(unsupplied-flame-builder);
-	  end;
+	    (builder, policy, source, supplied?-var,
+	     make-literal-constant(builder, as(<ct-value>, #f)));
 	end;
-      end;
+	make(<keyarg-info>, key-info: key-info, var: var,
+	     default-bogus?: default-bogus?, supplied?-var: supplied?-var);
+      end method make-keyarg-info;
+    let keyarg-infos = map(make-keyarg-info, signature.key-infos);
 
-    let index-var = make-local-var(key-dispatch-builder, #"index",
-				   dylan-value(#"<integer>"));
+    let index-var
+      = make-local-var(builder, #"index", dylan-value(#"<integer>"));
     build-assignment
-      (key-dispatch-builder, policy, source, index-var,
+      (builder, policy, source, index-var,
        make-unknown-call
-	 (key-dispatch-builder,
-	  ref-dylan-defn(key-dispatch-builder, policy, source, #"-"),
+	 (builder,
+	  ref-dylan-defn(builder, policy, source, #"-"),
 	  #f,
 	  list(nargs-leaf,
 	       make-literal-constant
-		 (key-dispatch-builder, as(<ct-value>, 2)))));
+		 (builder, as(<ct-value>, 2)))));
 
-    let done-block = build-block-body(key-dispatch-builder, policy, source);
-    build-loop-body(key-dispatch-builder, policy, source);
+    let done-block = build-block-body(builder, policy, source);
+    build-loop-body(builder, policy, source);
 
-    let done-var
-      = make-local-var(key-dispatch-builder, #"done?", object-ctype());
+    let done-var = make-local-var(builder, #"done?", object-ctype());
     build-assignment
-      (key-dispatch-builder, policy, source, done-var,
-       make-unknown-call(key-dispatch-builder,
-			 ref-dylan-defn(key-dispatch-builder, policy, source,
-					#"<"),
+      (builder, policy, source, done-var,
+       make-unknown-call(builder,
+			 ref-dylan-defn(builder, policy, source, #"<"),
 			 #f, list(index-var, wanted-leaf)));
-    build-if-body(key-dispatch-builder, policy, source, done-var);
-    build-exit(key-dispatch-builder, policy, source, done-block);
-    build-else(key-dispatch-builder, policy, source);
+    build-if-body(builder, policy, source, done-var);
+    build-exit(builder, policy, source, done-block);
+    build-else(builder, policy, source);
+    let key-var = make-local-var(builder, #"key", dylan-value(#"<symbol>"));
     begin
-      let op = make-operation(key-dispatch-builder, <primitive>,
-			      list(args-leaf, index-var),
+      let op = make-operation(builder, <primitive>, list(args-leaf, index-var),
 			      name: #"extract-arg");
       if (generic-entry?)
-	let temp = make-local-var(key-dispatch-builder, #"key",
-				  object-ctype());
-	build-assignment(key-dispatch-builder, policy, source, temp, op);
-	op := make-operation(key-dispatch-builder, <truly-the>, list(temp),
+	let temp = make-local-var(builder, #"key", object-ctype());
+	build-assignment(builder, policy, source, temp, op);
+	op := make-operation(builder, <truly-the>, list(temp),
 			     guaranteed-type: dylan-value(#"<symbol>"));
       end;
-      build-assignment(key-dispatch-builder, policy, source, key-var, op);
+      build-assignment(builder, policy, source, key-var, op);
     end;
-    let temp = make-local-var(key-dispatch-builder, #"temp",
-			      dylan-value(#"<integer>"));
+    let temp = make-local-var(builder, #"temp", dylan-value(#"<integer>"));
     build-assignment
-      (key-dispatch-builder, policy, source, temp,
-       make-unknown-call(key-dispatch-builder,
-			 ref-dylan-defn(key-dispatch-builder, policy, source,
-					#"+"),
+      (builder, policy, source, temp,
+       make-unknown-call(builder,
+			 ref-dylan-defn(builder, policy, source, #"+"),
 			 #f,
 			 list(index-var,
-			      make-literal-constant(key-dispatch-builder,
+			      make-literal-constant(builder,
 						    as(<ct-value>, 1)))));
-    build-assignment(key-dispatch-builder, policy, source, val-var,
-		     make-operation(key-dispatch-builder, <primitive>,
-				    list(args-leaf, temp),
-				    name: #"extract-arg"));
-    build-next-key(signature.key-infos);
+    let val-var = make-local-var(builder, #"value", object-ctype());
     build-assignment
-      (key-dispatch-builder, policy, source, index-var,
-       make-unknown-call(key-dispatch-builder,
-			 ref-dylan-defn(key-dispatch-builder, policy, source,
-					#"-"),
+      (builder, policy, source, val-var,
+       make-operation
+	 (builder, <primitive>, list(args-leaf, temp), name: #"extract-arg"));
+
+    local
+      method build-next-key (remaining :: <list>, done :: <list>)
+	if (empty?(remaining))
+	  unless (generic-entry? | signature.all-keys?)
+	    build-assignment
+	      (builder, policy, source, #(),
+	       make-error-operation
+		 (builder, policy, source,
+		  #"unrecognized-keyword-error", key-var));
+	  end;
+	else
+	  let keyarg-info :: <keyarg-info> = remaining.head;
+	  let key-info = keyarg-info.keyarg-key-info;
+	  let key = key-info.key-name;
+	  if (member?(key, done))
+	    build-next-key(remaining.tail, done);
+	  else
+	    let temp = make-local-var(builder, #"condition", object-ctype());
+	    build-assignment
+	      (builder, policy, source, temp,
+	       make-unknown-call
+		 (builder,
+		  ref-dylan-defn(builder, policy, source, #"=="),
+		  #f,
+		  list(key-var,
+		       make-literal-constant(builder, as(<ct-value>, key)))));
+	    build-if-body(builder, policy, source, temp);
+
+	    for (keyarg-info :: <keyarg-info> in remaining)
+	      if (keyarg-info.keyarg-key-info.key-name == key)
+		let var = keyarg-info.keyarg-var;
+		build-assignment(builder, policy, source, var, val-var);
+		let supplied?-var = keyarg-info.keyarg-supplied?-var;
+		if (supplied?-var)
+		  build-assignment
+		    (builder, policy, source, supplied?-var, 
+		     make-literal-constant(builder, as(<ct-value>, #t)));
+		end;
+	      end if;
+	    end for;
+	    build-else(builder, policy, source);
+	    build-next-key(remaining.tail, pair(key, done));
+	    end-body(builder);
+	  end if;
+	end if;
+      end method build-next-key;
+    build-next-key(keyarg-infos, #());
+
+    build-assignment
+      (builder, policy, source, index-var,
+       make-unknown-call(builder,
+			 ref-dylan-defn(builder, policy, source, #"-"),
 			 #f,
 			 list(index-var,
-			      make-literal-constant(key-dispatch-builder,
+			      make-literal-constant(builder,
 						    as(<ct-value>, 2)))));
-    end-body(key-dispatch-builder); // if
-    end-body(key-dispatch-builder); // loop
-    end-body(key-dispatch-builder); // block
-    build-region(builder, builder-result(key-dispatch-builder));
-    build-region(builder, builder-result(unsupplied-flame-builder));
+    end-body(builder); // if
+    end-body(builder); // loop
+    end-body(builder); // block
+
+    for (info in keyarg-infos)
+      if (info.keyarg-default-bogus?)
+	build-if-body(builder, policy, source, info.keyarg-supplied?-var);
+	build-else(builder, policy, source);
+	build-assignment
+	  (builder, policy, source, #(),
+	   make-error-operation
+	     (builder, policy, source,
+	      #"type-error",
+	      make-literal-constant(builder, info.keyarg-key-info.key-default),
+	      make-literal-constant(builder, info.keyarg-key-info.key-type)));
+	end-body(builder);
+      end if;
+    end for;
   end;
 
   build-assignment(builder, policy, source, #(),

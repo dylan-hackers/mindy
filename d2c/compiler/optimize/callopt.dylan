@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.1 1996/02/02 23:19:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.2 1996/02/08 01:36:01 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -595,34 +595,33 @@ define method compare-unknown-call-against-signature
 	    valid? := #f;
 	  elseif (instance?(leaf.value, <literal-symbol>))
 	    let key = leaf.value.literal-value;
-	    block (found-key)
-	      for (keyinfo in sig.key-infos)
-		if (keyinfo.key-name == key)
-		  unless (ctypes-intersect?(val-dep.source-exp.derived-type,
-					    keyinfo.key-type))
-		    compiler-warning("In %s:\n  wrong type for keyword "
-				       "argument %= in call of "
-				       "%s.\n  Wanted %s, but got %s",
-				     call.home-function-region.name,
-				     key,
-				     func-name,
-				     keyinfo.key-type,
-				     val-dep.source-exp.derived-type);
-
-		    bogus? := #t;
-		  end;
-		  found-key();
+	    let found-key? = #f;
+	    for (keyinfo in sig.key-infos)
+	      if (keyinfo.key-name == key)
+		unless (ctypes-intersect?(val-dep.source-exp.derived-type,
+					  keyinfo.key-type))
+		  compiler-warning("In %s:\n  wrong type for keyword "
+				     "argument %= in call of "
+				     "%s.\n  Wanted %s, but got %s",
+				   call.home-function-region.name,
+				   key,
+				   func-name,
+				   keyinfo.key-type,
+				   val-dep.source-exp.derived-type);
+		  
+		  bogus? := #t;
 		end;
-	      end;
-	      unless (sig.all-keys? | call.use-generic-entry?)
-		compiler-warning
-		  ("In %s:\n  invalid keyword (%=) in call of %s",
-		   call.home-function-region.name,
-		   key,
-		   func-name);
-		bogus? := #t;
-	      end;
-	    end;
+		found-key? := #t;
+	      end if;
+	    end for;
+	    unless (found-key? | sig.all-keys? | call.use-generic-entry?)
+	      compiler-warning
+		("In %s:\n  invalid keyword (%=) in call of %s",
+		 call.home-function-region.name,
+		 key,
+		 func-name);
+	      bogus? := #t;
+	    end unless;
 	  else
 	    compiler-warning
 	      ("In %s:\n  bogus keyword (%s) as argument %d in call of %s",
@@ -732,18 +731,15 @@ define method convert-to-known-call
     if (sig.key-infos)
       for (key-dep = arg-dep then key-dep.dependent-next.dependent-next,
 	   while: key-dep)
-	block (next-key)
-	  let key = key-dep.source-exp.value.literal-value;
-	  for (keyinfo in sig.key-infos)
-	    if (keyinfo.key-name == key)
-	      assert-type(component, assign, key-dep.dependent-next,
-			  keyinfo.key-type);
-	      next-key();
-	    end;
-	  end;
-	end;
-      end;
-    end;
+	let key = key-dep.source-exp.value.literal-value;
+	for (keyinfo in sig.key-infos)
+	  if (keyinfo.key-name == key)
+	    assert-type(component, assign, key-dep.dependent-next,
+			keyinfo.key-type);
+	  end if;
+	end for;
+      end for;
+    end if;
     if (sig.rest-type | (sig.next? & sig.key-infos))
       let rest-args = make(<stretchy-vector>);
       for (arg-dep = arg-dep then arg-dep.dependent-next,
