@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.21 2001/03/21 05:38:50 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.22 2001/03/27 04:47:58 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -968,7 +968,7 @@ sub emit_cppasm_file_rule {
     } else {
 	print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     }
-    print "-x assembler-with-cpp";	# Added to provide the "cpp" part
+    print " -x assembler-with-cpp";	# Added to provide the "cpp" part
     print " -c \$(SRCDIR)/$srcfile.s -o $objfile\n\n";
     if ($target_name eq $host_name) {
       push(@compile_dependencies, $objfile);
