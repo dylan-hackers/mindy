@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.18 1994/07/16 23:16:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.19 1994/08/05 11:58:36 dpierce Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -695,6 +695,8 @@ static void do_init_value(struct thread *thread, obj_t *vals)
 	  case initarg_slot_Initializer:
 	  case inherited_Initializer:
 	    slot = INITIALIZER(initializer)->slot;
+	    if (! instancep(value, SD(slot)->type))
+	        error("%= is not of type %=", value, SD(slot)->type);
 	    switch (SD(slot)->alloc) {
 	      case alloc_SUBCLASS:
 		index = find_position(DC(class)->subclass_positions, slot);
@@ -723,6 +725,8 @@ static void do_init_value(struct thread *thread, obj_t *vals)
 	  case initarg_slot_Initializer:
 	  case inherited_Initializer:
 	    slot = INITIALIZER(initializer)->slot;
+	    if (! instancep(value, SD(slot)->type))
+	        error("%= is not of type %=", value, SD(slot)->type);
 	    switch (SD(slot)->alloc) {
 	      case alloc_INSTANCE:
 		index = find_position(DC(class)->instance_positions, slot);
@@ -753,6 +757,8 @@ static void do_init_value(struct thread *thread, obj_t *vals)
       case initarg_slot_Initializer:
       case initarg_Initializer:
 	initarg = INITIALIZER(initializer)->initarg;
+	if (! instancep(value, INTD(initarg)->type))
+	    error("%= is not of type %=", value, INTD(initarg)->type);
 	INTD(initarg)->init_function_or_value = value;
 	INTD(initarg)->init_function_p = FALSE;
 	break;
