@@ -1,4 +1,4 @@
-RCS-Header: $Header: /scm/cvs/src/d2c/compiler/optimize/limopt.dylan,v 1.2 2001/03/17 03:43:34 bruce Exp $
+RCS-Header: $Header: /scm/cvs/src/d2c/compiler/optimize/limopt.dylan,v 1.3 2002/07/13 00:57:21 bruce Exp $
 module: cheese
 Copyright: See below.
 Synopsis: Optimizer support for limited collections.
@@ -81,6 +81,8 @@ define method find-limited-collection-implementation
 	  specifier-type(#"<simple-object-vector>");
 	elem-type == specifier-type(#"<integer>") =>
 	  specifier-type(#"<simple-integer-vector>");
+	elem-type == specifier-type(#"<double-float>") =>
+	  specifier-type(#"<simple-double-vector>");
 	instance?(elem-type, <limited-integer-ctype>) =>
 	  look-up-class-by-limited-integer-type(elem-type, $lsvli-classes);
 	otherwise =>

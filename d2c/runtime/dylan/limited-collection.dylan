@@ -1,4 +1,4 @@
-RCS-Header: $Header: /scm/cvs/src/d2c/runtime/dylan/limited-collection.dylan,v 1.3 2001/06/05 20:46:48 gabor Exp $
+RCS-Header: $Header: /scm/cvs/src/d2c/runtime/dylan/limited-collection.dylan,v 1.4 2002/07/13 00:57:03 bruce Exp $
 Module: dylan-viscera
 Copyright: See below.
 Synopsis: Runtime support for limited collections.
@@ -432,6 +432,10 @@ end method make-limited-collection;
 %limited-simple-vector-class(<simple-integer-vector>, <integer>, 0);
 %limited-simple-vector-setter(<simple-integer-vector>, <integer>, 0);
 %limited-simple-vector-maker(<simple-integer-vector>, <integer>, 0);
+
+%limited-simple-vector-class(<simple-double-vector>, <double-float>, 0.0);
+%limited-simple-vector-setter(<simple-double-vector>, <double-float>, 0.0);
+%limited-simple-vector-maker(<simple-double-vector>, <double-float>, 0.0);
 
 // limited(<simple-vector>, of: ...)
 %limited-simple-vector-class(<limited-simple-vector>, <object>, 0);
