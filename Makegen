@@ -1,44 +1,147 @@
+######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.23 2003/02/04 08:16:10 brent Exp $
+## Copyright (c) 1994  Carnegie Mellon University
+## Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+## All rights reserved.
+## 
+## Use and copying of this software and preparation of derivative
+## works based on this software are permitted, including commercial
+## use, provided that the following conditions are observed:
+## 
+## 1. This copyright notice must be retained in full on any copies
+##    and on appropriate parts of any derivative works.
+## 2. Documentation (paper or online) accompanying any system that
+##    incorporates this software, or any part of it, must acknowledge
+##    the contribution of the Gwydion Project at Carnegie Mellon
+##    University, and the Gwydion Dylan Maintainers.
+## 
+## This software is made available "as is".  Neither the authors nor
+## Carnegie Mellon University make any warranty about the software,
+## its performance, or its conformity to any specification.
+## 
+## Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
+## comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
+## Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 ##
-##  This is the makegen file for the libraries shared between d2c and mindy.
+######################################################################
+##
+##  $Header: /scm/cvs/src/Makegen,v 1.24 2003/02/04 21:20:58 andreas Exp $
+##
+##  This is the makegen file for the entire Dylan tree.
 ##
 
-# the order is significant, since the d2c libraries must be compiled in
-# dependency order. 
+## When bootstrapping stuff is compiled in a different order because the
+## dependencies are different.  Also, when bootstrapping, we suppress actually
+## running d2c.  See the d2c-compile target to actually bootstrap.
 
-# These libraries are needed to compile d2c. They must compile against the
-# runtime that shipped with 2.2.0.
-@pre_melange_libraries_needed_to_bootstrap =
-    ('streams', 'standard-io', 'print', 'format', 'collection-extensions',
-     'table-ext', 'string-ext', 'regular-expressions', 'format-out', 'matrix',
-     'stream-ext', 'transcendental', 'getopt', 'base-file-system');
-    #'internal-time'
-@post_melange_libraries_needed_to_bootstrap =
-    ('time');
-    #'internal-time'
 
-# These libraries have been introduced since 2.2.0. They may not be used by
-# d2c, parsergen or any of the above libraries. Once common-dylan stabilizes,
-# and most users can compile common-dylan programs, we'll drop backwards
-# compatibility with 2.2.0 and port everything to build against these
-# libraries.
-@newer_libraries =
-    ('threads', 'common-dylan', 'io', 'file-system', 'date', 'system', 
-     'locators', 'network');
+## Make force.timestamp if not there yet.
+push(@compile_commands, "\$(MAKE) force.timestamp");
+print <<'EOF';
+force.timestamp:
+	touch force.timestamp
 
-&compile_subdirs(@pre_melange_libraries_needed_to_bootstrap);
-# Parsergen is needed to compile Melange
-push(@compile_commands, 
-   	sprintf($host_platform{'recursive_make_command'},
-       	"../tools/parsergen", ""));
-# Melange is needed to compile the common libraries
-push(@compile_commands,
-    sprintf($host_platform{'recursive_make_command'},
-        "../tools/melange", ""));
-&compile_subdirs(@post_melange_libraries_needed_to_bootstrap);
+EOF
 
-unless ($enable_bootstrap) {
-    &compile_subdirs(@newer_libraries);
+## Always emit a post-bootstrap cleanup rule, just in case we need one.
+print <<EOF;
+.PHONY: bootstrap_clean
+
+bootstrap_clean: clean
+	rm -rf bootstrap_compiler
+	rm -f config.cache
+	\@echo
+	\@echo "Now run $recheck to prepare for normal builds."
+
+EOF
+
+sub message {
+    push(@compile_commands, "\@echo \"$_[0]\"");
 }
 
+if ($features{'compiled_for_unix'}) {
+    &compile_subdirs('doc');
+}
+
+if ($enable_mindy) {
+    &compile_subdirs("mindy");
+}
+if ($enable_bootstrap) {
+    if ($bootstrap_compiler eq "mindy") {
+	print "BYTES_CONSED_BETWEEN_GCS=20000000\n";
+	push(@compile_commands, 
+	     sprintf($host_platform{'recursive_make_command'}, 
+		     "common", "dbc_only"));
+	&compile_subdirs("d2c", "common");
+	push(@compile_commands, 
+	     sprintf($host_platform{'recursive_make_command'}, 
+		     "d2c", "d2c-compile"));
+	&message("Bootstrap complete; now install d2c, remove config.cache,");
+	&message("re-run configure, and make again.");
+    } else {
+	&compile_subdirs("d2c");
+	# XXX - this directory name is confusing
+	push(@compile_commands, 'mkdir bootstrap_compiler');
+	if ($target_name eq 'x86-cygnus-gcc') {
+	     push(@compile_commands, 'cp d2c/compiler/main/d2c.exe bootstrap_compiler');
+	} else {
+	     push(@compile_commands, 'cp d2c/compiler/main/d2c bootstrap_compiler');
+	}
+	push(@compile_commands, 'rm -f config.cache');
+	push(@compile_commands, $recheck);
+	push(@compile_commands, '$(MAKE) clean');
+	push(@compile_commands, '$(MAKE)');
+	&message("Bootstrap complete. After installing, type 'make bootstrap_clean'");
+	&message("to perform a regular build.");
+    }
+}
+else {
+    if ($enable_d2c) {
+	&compile_subdirs("d2c");
+    }
+    &compile_subdirs("common", "tools");
+    &compile_subdirs("tests", "qa");
+    if($enable_duim ne 'no') {
+	&compile_subdirs("duim");
+    }
+    &compile_subdirs("platform");
+}    
+
+push(@install_dependencies, "installdirs");
+
+push(@uninstall_commands, "rm -rf ${DESTDIR}$libdir/elisp");
+push(@uninstall_commands, "rm -rf ${DESTDIR}$libdir");
+push(@uninstall_commands, "rm -rf ${DESTDIR}$sitelibdir");
+push(@uninstall_commands, "rm -rf ${DESTDIR}$datadir/dylan");
+    
+if ($features{'compiled_for_unix'}) {
+    print <<"EOF"
+installdirs:
+	$srcdir/mkinstalldirs \${DESTDIR}$bindir \\
+	   \${DESTDIR}$sitelibdir \\
+	   \${DESTDIR}$libdir \${DESTDIR}$libdir/elisp \\
+	   \${DESTDIR}$includedir \${DESTDIR}$datadir/dylan \\
+           \${DESTDIR}$mandir/man1 \${DESTDIR}$mandir/man4 \\
+           \${DESTDIR}$mandir/man7
+
+EOF
+;
+} elsif ($features{'compiled_for_win32'}) {
+    print <<"EOF"
+installdirs:
+	-mkdir \$(DESTDIR)$bindir
+	-mkdir \$(DESTDIR)$libdir
+	-mkdir \$(DESTDIR)$libdir\\elisp
+	-mkdir \$(DESTDIR)$includedir
+	-mkdir \$(DESTDIR)$sysconfdir
+
+EOF
+;
+} else {
+    &unknown_platform_error();
+}
+
+# Blow away our dep files whenever we make clean.
+# XXX - it might be better to do this when we re-run configure.
+push(@clean_commands,
+     'find . -name \\*.dep -exec rm {} \\; -exec touch {} \\;');
