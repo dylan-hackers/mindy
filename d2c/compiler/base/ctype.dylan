@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.8 1995/04/21 02:35:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.9 1995/04/22 00:44:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1165,10 +1165,15 @@ define constant args-type-op = method
     if (member?(empty-ctype(), res))
       values(empty-ctype(), #t);
     else
-      values(make(<multi-value-ctype>, positional-types: res,
-          	  min-values: min-fun(type1.min-values, type2.min-values),
-		  rest-value-type: rest),
-	     res-exact & rest-exact);
+      let min-values = min-fun(type1.min-values, type2.min-values);
+      if (res.size == 1 & min-values == 1 & rest == empty-ctype())
+	values(res.first, res-exact & rest-exact);
+      else
+	values(make(<multi-value-ctype>, positional-types: res,
+		    min-values: min-fun(type1.min-values, type2.min-values),
+		    rest-value-type: rest),
+	       res-exact & rest-exact);
+      end;
     end;
   end;
 end method;
