@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.31 2002/01/04 15:48:29 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.32 2002/01/07 17:11:47 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -270,9 +270,11 @@ define method spew-reference
      tag :: <byte-string>, state :: <file-state>)
     => ();
   if(rep == *general-rep*)
-    format(state.file-guts-stream, "{ 0, { 0 } }");
+    format(state.file-guts-stream, "{ 0, { 0 } } /* %s */",
+           tag.clean-for-comment);
   else
-    format(state.file-guts-stream, "(%s) 0", rep.representation-c-type);
+    format(state.file-guts-stream, "(%s) 0 /* %s */",
+           rep.representation-c-type, tag.clean-for-comment);
   end if;
 end;
 
@@ -1213,8 +1215,8 @@ define method spew-object
 		  make(<literal-simple-object-vector>,
 		       contents: map(curry(as,<ct-value>), object.row),
 		       sharable: #t),
-		size: as(<ct-value>, object.size-of),
-		alignment: as(<ct-value>, object.alignment-of),
+		size-of: as(<ct-value>, object.size-of),
+		alignment-of: as(<ct-value>, object.alignment-of),
 		referenced-type: object.referenced-type | as(<ct-value>, #f),
 		class-struct-slot-descriptors:
 		  make(<literal-simple-object-vector>,
@@ -1487,7 +1489,7 @@ define function spew-instance
 	    indent(stream, -$indentation-step);
 	    format(stream, "},\n");
 	  end if;
-	else
+        else
 	  spew-reference(init-value, field.slot-representation, name, state);
 	  format(stream, ",\n");
 	end;
