@@ -1,0 +1,17 @@
+&makegen_include("../carbon-Makegen");
+
+$D2CFLAGS = $D2CFLAGS . ' -L../../../d2c/runtime/melange -L../../../common/common-dylan -L../../../common/io -L../carbon -L.';
+
+do emit_library_rule(
+    'carbon-event-handling', '$(BUILDROOT)/force.timestamp', '', 'compile',
+    'no-mindy', 'install'
+);
+
+print <<'EOF';
+
+compile:
+	/Developer/Tools/Rez -a -o $(BUILDDIR)/carbon-event-handling $(BUILDDIR)/carb.r
+	/Developer/Tools/SetFile -c ???? -t APPL $(BUILDDIR)/carbon-event-handling
+
+EOF
+
