@@ -2,7 +2,7 @@ module: format
 author: Robert Stockton (rgs@cs.cmu.edu).
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/format/format-buf.dylan,v 1.5 2003/09/15 16:49:02 housel Exp $
+rcs-header: $Header: /scm/cvs/src/common/format/format-buf.dylan,v 1.6 2003/10/07 22:29:46 housel Exp $
 
 ///======================================================================
 ///
@@ -428,7 +428,7 @@ define method buf-format-integer (arg :: <integer>,
   bd.next-ele := next;
 end method buf-format-integer;
 
-define method format-integer
+define method buf-format-integer
     (arg :: <float>,
      radix :: limited(<integer>, min: 2, max: 36),
      bd :: <buffer-desc>)
