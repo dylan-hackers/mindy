@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.23 1994/10/05 20:55:59 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.24 1995/07/11 12:41:52 wlott Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -546,42 +546,45 @@ static struct expr *make_unary_fn_call(struct expr *fn, struct expr *arg)
     return make_function_call(fn, args);
 }    
 
-struct expr *make_negate(struct expr *expr)
+struct expr *make_negate(int line, struct expr *expr)
 {
-    return make_unary_fn_call(make_varref(id(sym_Negative)), expr);
+    struct id *negative = id(sym_Negative);
+    negative->line = line;
+    return make_unary_fn_call(make_varref(negative), expr);
 }
 
-static struct body *make_literal_body(struct literal *literal)
+struct expr *make_not(int line, struct expr *expr)
 {
-    return add_constituent(make_body(),
-			   make_expr_constituent
-			       (make_literal_ref(literal)));
+    struct id *not = id(sym_Not);
+    not->line = line;
+    return make_unary_fn_call(make_varref(not), expr);
 }
 
-struct expr *make_not(struct expr *expr)
+struct expr *make_singleton(int line, struct expr *expr)
 {
-    return make_if(expr, NULL,
-		   make_else(0, make_literal_body(make_true_literal())));
+    struct id *sing = id(sym_Singleton);
+    sing->line = line;
+    return make_unary_fn_call(make_varref(sing), expr);
 }
 
-struct expr *make_singleton(struct expr *expr)
-{
-    return make_unary_fn_call(make_varref(id(sym_Singleton)), expr);
-}
-
-struct expr *make_aref_or_element(struct expr *expr, struct arglist *args)
+struct expr *make_aref_or_element(int line, struct expr *expr,
+				  struct arglist *args)
 {
     struct argument *collection = make_argument(expr);
+    struct id *func;
 
     collection->next = args->head;
     args->head = collection;
     /* This leaves args->tail wrong, but that doens't matter because */
-    /* because we just pass it directly to make_function_call */
+    /* we just pass it directly to make_function_call */
 
     if (args->head->next != NULL && args->head->next->next == NULL)
-	return make_function_call(make_varref(id(sym_Element)), args);
+	func = id(sym_Element);
     else
-	return make_function_call(make_varref(id(sym_Aref)), args);
+	func = id(sym_Aref);
+
+    func->line = line;
+    return make_function_call(make_varref(func), args);
 }
 
 struct expr *make_function_call(struct expr *expr, struct arglist *args)
@@ -1094,6 +1097,13 @@ struct expr *make_case(struct condition_body *body)
     res->body = body;
 
     return (struct expr *)res;
+}
+
+static struct body *make_literal_body(struct literal *literal)
+{
+    return add_constituent(make_body(),
+                           make_expr_constituent
+                               (make_literal_ref(literal)));
 }
 
 struct expr *make_if(struct expr *cond, struct body *consequent,
