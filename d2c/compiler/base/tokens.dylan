@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.15 1996/03/21 03:01:10 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.16 1996/03/21 19:17:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -362,9 +362,12 @@ define sealed method print-message
     $other-binary-operator-token =>
       format(stream, "binary operator ``%s''", wot.token-symbol);
 
-    $literal-token => write("literal", stream);
-    $string-token => write("string literal", stream);
-    $symbol-token => write("symbol literal", stream);
+    $literal-token =>
+      format(stream, "literal ``%s''", wot.token-literal);
+    $string-token =>
+      format(stream, "string literal ``%s''", wot.token-literal);
+    $symbol-token =>
+      format(stream, "symbol literal ``%s''", wot.token-literal);
 
     $parsed-definition-macro-call-token =>
       write("parsed definition macro call", stream);
