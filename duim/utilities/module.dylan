@@ -36,11 +36,6 @@ define module duim-utilities
   use dylan;
   use duim-imports;
 
-  // Gwydion compatibility
-  // common-dylan
-  use common-dylan, export: all, exclude: { position };
-  use format, export: all;
-
   // Debug support
   export *debug-duim-function*,
          duim-debug-message;

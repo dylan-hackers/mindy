@@ -48,7 +48,6 @@ end module commands;
 // Implementation module
 define module commands-internals
   use common-dylan;
-  use format;
   use commands, export: all;
 
   export command-pattern-string,

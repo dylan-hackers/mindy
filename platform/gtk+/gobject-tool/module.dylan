@@ -8,7 +8,7 @@ define module scheme-read
 end module;
 
 define module defs-file
-  use common-dylan;
+  use common-dylan, exclude: { format-to-string };
   use streams;
   use standard-io;
   use format;
@@ -29,7 +29,7 @@ define module defs-file
 end module;
 
 define module output-melange
-  use common-dylan;
+  use common-dylan, exclude: { format-to-string };
   use streams;
   use format;
   use standard-io;
@@ -39,7 +39,7 @@ define module output-melange
 end module;
 
 define module gobject-tool
-  use common-dylan;
+  use common-dylan, exclude: { format-to-string };
   use Extensions, import: { *warning-output* };
   use parse-arguments;
   use streams;

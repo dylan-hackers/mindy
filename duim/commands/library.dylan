@@ -9,7 +9,6 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library commands
   use common-dylan;
-  use format;
 
   export commands,
 	 commands-internals;

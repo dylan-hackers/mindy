@@ -9,7 +9,6 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library duim-utilities
   use common-dylan;
-  use format;
   use collections;
 
   export duim-utilities;

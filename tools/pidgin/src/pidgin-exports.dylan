@@ -17,7 +17,7 @@ define library pidgin
 end library;
 
 define module pidgin
-  use common-dylan;
+  use common-dylan, exclude: { format-to-string };
   use format-out;
   use dylan;
   use streams;
