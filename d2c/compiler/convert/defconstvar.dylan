@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.32 1996/03/28 00:07:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.33 1996/04/10 16:59:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -63,6 +63,14 @@ define class <constant-definition>
     (<bindings-definition>, <abstract-constant-definition>)
   slot const-defn-tlf :: <define-constant-tlf>;
 end;
+
+// definition-kind{<constant-definition>} -- method on imported GF
+// 
+define method definition-kind
+    (defn :: <constant-definition>) => kind :: <byte-string>;
+  "constant";
+end method definition-kind;
+
 
 // <constant-method-definition>
 //
