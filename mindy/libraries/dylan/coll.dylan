@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.25 1995/04/21 01:45:12 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.26 1995/09/01 17:30:30 ram Exp $
 
 //======================================================================
 //
@@ -260,6 +260,23 @@ define method any?(proc :: <function>, collection :: <collection>,
   end block;
 end method any?;
 
+// Pick off 1-collection list case for efficency.
+define method any?(proc :: <function>, collection :: <list>,
+		    #next next-method, #rest more-collections)
+ => <object>;
+  if (empty?(more-collections))
+    block (punt)
+      for (cur = collection then cur.tail, until: cur == #())
+        let res = proc(cur.head);
+	if (res) punt(res) end;
+      end for;
+      #f;
+    end block;
+  else
+    next-method();
+  end;
+end method;
+
 
 define method every?(proc :: <function>, collection :: <collection>,
 		   #rest more-collections) => <object>;
@@ -287,6 +304,23 @@ define method every?(proc :: <function>, collection :: <collection>,
   end block;
 end method every?;
 
+// Pick off 1-collection list case for efficency.
+define method every?(proc :: <function>, collection :: <list>,
+		    #next next-method, #rest more-collections)
+ => <object>;
+  if (empty?(more-collections))
+    block (punt)
+      for (cur = collection then cur.tail, until: cur == #())
+        unless (proc(cur.head))
+	  punt(#f)
+	end;
+      end for;
+      #t;
+    end block;
+  else
+    next-method();
+  end;
+end method;
 
 define method reduce(proc :: <function>, init-val, collection :: <collection>)
   for (value = init-val then proc(value, elem),
