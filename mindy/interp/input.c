@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.20 1996/08/21 10:06:30 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.21 1997/02/13 13:05:54 nkramer Exp $
 *
 * This file implements getc.
 *
@@ -91,6 +91,16 @@ int mindy_readline(char *prompt, char *buffer, int max_chars)
     if (c == '\n') {
 	buffer[chars_read] = c;
 	chars_read++;
+#ifdef WIN32
+	/* On win32, we handle CRLFs by turning the CR byte into an LF,
+	   and making the string one byte shorter.  (Which works because
+	   the LF will be at the end of the string) */
+	if (chars_read > 1 && buffer[chars_read - 2] == '\r') {
+	    buffer[chars_read - 2] = buffer[chars_read - 1];
+	    buffer[chars_read - 1] = 0;
+	    chars_read--;
+	}
+#endif
     }
     buffer[chars_read] = 0;
     return chars_read;
