@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.17 1995/12/05 22:13:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.18 1995/12/07 14:30:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -101,7 +101,6 @@ end;
 // Literal numbers.
 
 define abstract class <literal-number> (<eql-literal>)
-  slot literal-value :: <number>, required-init-keyword: value:;
 end;
 
 define method \= (x :: <number>, y :: <literal-number>) => res :: <boolean>;
@@ -140,14 +139,21 @@ define abstract class <literal-real> (<literal-number>) end;
 define abstract class <literal-rational> (<literal-real>) end;
 define abstract class <literal-integer> (<literal-rational>) end;
 
-// Literal value is always extended.
-define class <literal-fixed-integer> (<literal-integer>) end;
+define class <literal-fixed-integer> (<literal-integer>)
+  slot literal-value :: <extended-integer>, required-init-keyword: value:;
+end;
 
-define class <literal-extended-integer> (<literal-integer>) end;
-define class <literal-ratio> (<literal-rational>) end;
-define abstract class <literal-float> (<literal-real>) end;
+define class <literal-extended-integer> (<literal-integer>)
+  slot literal-value :: <extended-integer>, required-init-keyword: value:;
+end;
 
-// literal-value is a ratio, not a float.
+define class <literal-ratio> (<literal-rational>)
+  slot literal-value :: <ratio>, required-init-keyword: value:;
+end;
+
+define abstract class <literal-float> (<literal-real>)
+  slot literal-value :: <ratio>, required-init-keyword: value:;
+end;
 define class <literal-single-float> (<literal-float>) end;
 define class <literal-double-float> (<literal-float>) end;
 define class <literal-extended-float> (<literal-float>) end;
@@ -223,7 +229,7 @@ end;
 
 define method print-message (lit :: <literal-ratio>, stream :: <stream>)
     => ();
-  format(stream, "%=", as(<ratio>, lit.literal-value));
+  format(stream, "%=", lit.literal-value);
 end;
 
 define method print-object (lit :: <literal-single-float>, stream :: <stream>)
@@ -262,7 +268,7 @@ define method print-message
 end;
 
 define method as (class == <ct-value>, value :: <fixed-integer>)
-  make(<literal-fixed-integer>, value: value);
+  make(<literal-fixed-integer>, value: as(<extended-integer>, value));
 end;
 
 define method as (class == <ct-value>, value :: <extended-integer>)
@@ -274,15 +280,15 @@ define method as (class == <ct-value>, value :: <ratio>)
 end;
 
 define method as (class == <ct-value>, value :: <single-float>)
-  make(<literal-single-float>, value: value);
+  make(<literal-single-float>, value: as(<ratio>, value));
 end;
 
 define method as (class == <ct-value>, value :: <double-float>)
-  make(<literal-double-float>, value: value);
+  make(<literal-double-float>, value: as(<ratio>, value));
 end;
 
 define method as (class == <ct-value>, value :: <extended-float>)
-  make(<literal-extended-float>, value: value);
+  make(<literal-extended-float>, value: as(<ratio>, value));
 end;
 
 
