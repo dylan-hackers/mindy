@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.8 1994/04/12 22:21:41 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.9 1994/04/18 05:50:44 wlott Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -636,11 +636,11 @@ define method difference(sequence1 :: <sequence>, sequence2 :: <sequence>,
 	 sequence1);
 end method difference;
 
-define method difference(sequence1 :: <sequence>, sequence2 :: <sequence>,
-			 #key test = \==) => <sequence>;
+define method union(sequence1 :: <sequence>, sequence2 :: <sequence>,
+		    #key test = \==) => <sequence>;
   concatenate(sequence1, difference(sequence2, sequence1,
 				    test: method(a, b) test(b,a) end method));
-end method difference;
+end method union;
 
 define method remove-duplicates(sequence :: <sequence>,
 				#key test = \==) => <sequence>;
