@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.42 1995/04/19 13:13:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.43 1995/07/11 13:09:26 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -74,6 +74,7 @@ struct frame_info {
 static jmp_buf BlowOffCmd;
 static struct thread *CurThread = NULL;
 static obj_t CurThreadObj = NULL;
+static obj_t CurComponent = NULL;
 static struct frame_info *CurFrame = NULL, *TopFrame = NULL;
 static int PrevLine = -1;
 static boolean ThreadChanged = FALSE, FrameChanged = FALSE;
@@ -640,23 +641,6 @@ static void quit_cmd(obj_t args)
 {
     should_be_no_args(args);
     exit(0);
-}
-
-static void continue_cmd(obj_t args)
-{
-    struct thread_list *threads;
-
-    should_be_no_args(args);
-    for (threads = all_threads(); threads != NULL; threads = threads->next) {
-	enum thread_status status = threads->thread->status;
-
-	if (status == status_Running || status == status_Waiting) {
-	    Continue = TRUE;
-	    return;
-	}
-    }
-
-    printf("No threads are potentially runnable.\n");
 }
 
 static void tron_cmd(obj_t args)
@@ -1285,6 +1269,133 @@ static void print_cmd(obj_t args)
 }
 
 
+/* Thread commands. */
+
+static struct thread *find_thread(obj_t tag)
+{
+    struct thread_list *threads;
+    int id = -1;
+
+    if (instancep(tag, obj_SymbolClass)) {
+        ;
+    } else if (instancep(tag, obj_FixnumClass)) {
+        id = fixnum_value(tag);
+    } else {
+        printf("Bogus thread identifier: ");
+	print(tag);
+	printf("should be either a symbol or integer.");
+	return NULL;
+    }
+	
+    for (threads = all_threads(); threads != NULL; threads = threads->next) {
+	struct thread *thread = threads->thread;
+	if (THREAD(thread->thread_obj)->debug_name == tag
+	 || thread->id == id)
+	    return thread;
+    }
+
+    printf("No thread named ");
+    print(tag);
+    return NULL;
+}
+    
+
+static void thread_cmd(obj_t args)
+{
+    struct thread_list *threads;
+    struct thread *thread;
+
+    if ( ! any_args(args)) {
+	for (threads=all_threads(); threads != NULL; threads=threads->next) {
+	    if (threads->thread == CurThread)
+		printf("c ");
+	    else
+		printf("  ");
+	    print_thread(threads->thread);
+	}
+    } else {
+        should_be_no_args(rest_args(args));
+        thread = find_thread(arg_value(first_arg(args)));
+	if (thread != NULL)
+	    set_thread(thread);
+    }
+}
+
+static void kill_cmd(obj_t args)
+{
+    struct thread *thread;
+
+    if ( ! any_args(args)) {
+	thread = CurThread;
+	if (thread == NULL) {
+	    printf("No current thread selected.\n");
+	    return;
+	}
+    } else {
+        should_be_no_args(rest_args(args));
+        thread = find_thread(arg_value(first_arg(args)));
+	if (thread == NULL)
+	    return;
+    }
+
+    thread_kill(thread);
+    if (thread == CurThread) {
+	printf("killed the current thread, hence it is no longer current.\n");
+	set_thread(NULL);
+	ThreadChanged = FALSE;
+	FrameChanged = FALSE;
+    }
+}
+    
+static void disable_cmd(obj_t args)
+{
+    struct thread *thread;
+
+    if ( ! any_args(args)) {
+	thread = CurThread;
+	if (thread == NULL) {
+	    printf("No current thread selected.\n");
+	    return;
+	}
+    } else {
+        should_be_no_args(rest_args(args));
+        thread = find_thread(arg_value(first_arg(args)));
+	if (thread == NULL)
+	    return;
+    }
+
+    thread_suspend(thread);
+    print_thread(thread);
+}
+    
+static void enable_cmd(obj_t args)
+{
+    struct thread *thread;
+
+    if ( ! any_args(args)) {
+	thread = CurThread;
+	if (thread == NULL) {
+	    printf("No current thread selected.\n");
+	    return;
+	}
+    } else {
+        should_be_no_args(rest_args(args));
+        thread = find_thread(arg_value(first_arg(args)));
+	if (thread == NULL)
+	    return;
+    }
+
+    if (thread->suspend_count == 0) {
+	format("thread %= isn't suspended\n", arg_value(first_arg(args)));
+	return;
+    }
+
+    while (thread->suspend_count > 0)
+	thread_restart(thread);
+    print_thread(thread);
+}
+    
+
 /* Restart commands. */
 
 static void abort_cmd(obj_t args)
@@ -1471,141 +1582,57 @@ static void return_cmd(obj_t args)
     Continue = TRUE;
 }
     
-
-/* Thread commands. */
-
-static struct thread *find_thread(obj_t tag)
+static void continue_cmd(obj_t args)
 {
     struct thread_list *threads;
-    int id = -1;
 
-    if (instancep(tag, obj_SymbolClass)) {
-        ;
-    } else if (instancep(tag, obj_FixnumClass)) {
-        id = fixnum_value(tag);
-    } else {
-        printf("Bogus thread identifier: ");
-	print(tag);
-	printf("should be either a symbol or integer.");
-	return NULL;
-    }
-	
-    for (threads = all_threads(); threads != NULL; threads = threads->next) {
-	struct thread *thread = threads->thread;
-	if (THREAD(thread->thread_obj)->debug_name == tag
-	 || thread->id == id)
-	    return thread;
-    }
+    should_be_no_args(args);
 
-    printf("No thread named ");
-    print(tag);
-    return NULL;
-}
-    
+    if (CurThread != NULL) {
+	switch (CurThread->status) {
+	  case status_Running:
+	  case status_Waiting:
+	    Continue = TRUE;
+	    return;
 
-static void thread_cmd(obj_t args)
-{
-    struct thread_list *threads;
-    struct thread *thread;
+	  case status_Debuggered:
+	    return_cmd(args);
+	    return;
 
-    if ( ! any_args(args)) {
-	for (threads=all_threads(); threads != NULL; threads=threads->next) {
-	    if (threads->thread == CurThread)
-		printf("c ");
-	    else
-		printf("  ");
-	    print_thread(threads->thread);
+	  case status_Blocked:
+	    break;
+
+	  case status_Suspended:
+	    enable_cmd(args);
+	    Continue = TRUE;
+	    return;
+
+	  default:
+	    lose("Trying to continue when thread->status is strange.");
 	}
-    } else {
-        should_be_no_args(rest_args(args));
-        thread = find_thread(arg_value(first_arg(args)));
-	if (thread != NULL)
-	    set_thread(thread);
     }
-}
 
-static void kill_cmd(obj_t args)
-{
-    struct thread *thread;
-
-    if ( ! any_args(args)) {
-	thread = CurThread;
-	if (thread == NULL) {
-	    printf("No current thread selected.\n");
+    for (threads = all_threads(); threads != NULL; threads=threads->next) {
+	enum thread_status status = threads->thread->status;
+	if (status == status_Running || status == status_Waiting) {
+	    Continue = TRUE;
 	    return;
 	}
-    } else {
-        should_be_no_args(rest_args(args));
-        thread = find_thread(arg_value(first_arg(args)));
-	if (thread == NULL)
-	    return;
     }
 
-    thread_kill(thread);
-    if (thread == CurThread) {
-	printf("killed the current thread, hence it is no longer current.\n");
-	set_thread(NULL);
-	ThreadChanged = FALSE;
-	FrameChanged = FALSE;
-    }
+    if (CurThread)
+	printf("The current thread is blocked waiting for a lock, and no "
+	       "other threads are\nrunnable, hence it is dead-locked.\n");
+    else
+	printf("No threads are potentially runnable.\n");
 }
-    
-static void disable_cmd(obj_t args)
-{
-    struct thread *thread;
 
-    if ( ! any_args(args)) {
-	thread = CurThread;
-	if (thread == NULL) {
-	    printf("No current thread selected.\n");
-	    return;
-	}
-    } else {
-        should_be_no_args(rest_args(args));
-        thread = find_thread(arg_value(first_arg(args)));
-	if (thread == NULL)
-	    return;
-    }
-
-    thread_suspend(thread);
-    print_thread(thread);
-}
-    
-static void enable_cmd(obj_t args)
-{
-    struct thread *thread;
-
-    if ( ! any_args(args)) {
-	thread = CurThread;
-	if (thread == NULL) {
-	    printf("No current thread selected.\n");
-	    return;
-	}
-    } else {
-        should_be_no_args(rest_args(args));
-        thread = find_thread(arg_value(first_arg(args)));
-	if (thread == NULL)
-	    return;
-    }
-
-    if (thread->suspend_count == 0) {
-	format("thread %= isn't suspended\n", arg_value(first_arg(args)));
-	return;
-    }
-
-    while (thread->suspend_count > 0)
-	thread_restart(thread);
-    print_thread(thread);
-}
-    
 
 /* Step/next commands */
 
-static void step_cmd(obj_t args)
+static void do_step_or_next(boolean ignore_calls)
 {
     struct thread *thread = CurThread;
-
-    should_be_no_args(args);
 
     if (thread == NULL) {
 	printf("No current thread.\n");
@@ -1617,12 +1644,35 @@ static void step_cmd(obj_t args)
 	{
 	    enum pause_reason reason;
 	    int prev_line = PrevLine;
+	    obj_t *old_fp = thread->fp;
+	    struct frame_info *top;
+	    int line;
 
-	    do {
+	    CurComponent = thread->component;
+
+	    while (1) {
 		reason = single_step(thread);
-		explain_reason(reason);
-	    } while (reason == pause_NoReason && CurThread == thread
-		     && !FrameChanged && TopFrame->line == prev_line);
+		if (reason != pause_NoReason)
+		    break;
+		if (THREAD(CurThreadObj)->thread == NULL)
+		    break;
+		if (CurThread != thread || thread->fp < old_fp)
+		    break;
+		if (thread->fp == old_fp) {
+		    if (CurComponent != thread->component)
+			break;
+		    top = top_frame(thread);
+		    line = top->line;
+		    free_frames(top);
+		    if (line != prev_line)
+			break;
+		}
+		else
+		    if (!ignore_calls)
+			break;
+	    }
+	    explain_reason(reason);
+	    CurComponent = NULL;
 	}
 	break;
 
@@ -1654,6 +1704,18 @@ static void step_cmd(obj_t args)
 	printf("The current thread is not runnable.\n");
 	return;
     }
+}
+
+static void step_cmd(obj_t args)
+{
+    should_be_no_args(args);
+    do_step_or_next(FALSE);
+}
+
+static void next_cmd(obj_t args)
+{
+    should_be_no_args(args);
+    do_step_or_next(TRUE);
 }
 
 
@@ -2285,13 +2347,14 @@ static struct cmd_entry Cmds[] = {
     {"module",
  "module [module]\tSwitch to given module or list modules in current library.",
 	 module_cmd},
+    {"next", "next\t\tStep the current thread to a different line, skipping calls.", next_cmd},
     {"print", "print expr...\tPrint each expr, ignoring errors.", print_cmd},
     {"restart", "restart [num]\tList or invoke one of the available restarts.",
 	 restart_cmd},
     {"return",
 	 "return\t\tReturn from this call to invoke-debugger (if allowed)",
 	 return_cmd},
-    {"step", "step\t\tStep the current thread one byte-op.", step_cmd},
+    {"step", "step\t\tStep the current thread to a different line.", step_cmd},
     {"thread", "thread [name]\tSwitch to given thread or list all threads.",
 	 thread_cmd},
     {"troff", "troff\t\tTurn function/return tracing off.", troff_cmd},
@@ -2463,6 +2526,8 @@ void scavenge_debug_roots(void)
     scav_frames(TopFrame);
     if (CurThreadObj)
 	scavenge(&CurThreadObj);
+    if (CurComponent)
+	scavenge(&CurComponent);
 }
 
 
