@@ -11,10 +11,13 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.4 1994/04/14 16:21:07 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.5 1994/04/18 21:38:26 wlott Exp $
 //
-//  This file does whatever.
+//  This file contains the support for vectors.
 //
+
+
+//// Iteration protocol.
 
 define constant vector-prev-state =
   begin
@@ -98,6 +101,9 @@ define method backward-iteration-protocol (vec :: <vector>)
 	 vector-current-key, vector-current-element,
 	 vector-current-element-setter, vector-copy-state);
 end;
+
+
+//// Collection routines.
 
 define method \=(vec1 :: <vector>, vec2 :: <vector>)
   let (size1, size2) = values(size(vec1), size(vec2));
@@ -281,3 +287,25 @@ define method fill!(vector :: <vector>, value :: <object>,
     vector[i] := value;
   end for;
 end method fill!;
+
+
+
+//// Array methods.
+
+define method aref (vector :: <vector>, #rest indices)
+  if (indices.size == 1)
+    vector[indices[0]];
+  else
+    error("Invalid number of indices for ~S.  Expected 1, got ~S",
+	  vector, indices.size);
+  end;
+end;
+
+define method aref-setter (new, vector :: <vector>, #rest indices)
+  if (indices.size == 1)
+    vector[indices[0]] := new;
+  else
+    error("Invalid number of indices for ~S.  Expected 1, got ~S",
+	  vector, indices.size);
+  end;
+end;
