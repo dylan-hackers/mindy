@@ -46,3 +46,56 @@ define method get-bindings (window :: <window>) => (result :: <sequence>);
   map(method (event) pair(event, get-binding(window, event)) end method,
       parse-tk-list(call-tk-function("bind ", window), depth: 1));
 end method get-bindings;
+
+// Binding methods for tags
+//
+define method bind (tag :: <string>, event :: <string>, command) => ();
+  put-tk-line("bind ", tag, " ", event, " {", command, "}");
+end method bind;
+
+define method get-binding (tag :: <string>, event) => (result :: <string>);
+  call-tk-function("bind ", tag, " ", event);
+end method get-binding;
+
+define method get-bindings (tag :: <string>) => (result :: <sequence>);
+  map(method (event) pair(event, get-binding(tag, event)) end method,
+      parse-tk-list(call-tk-function("bind ", tag), depth: 1));
+end method get-bindings;
+
+// Two utilities for the new binding call conventions
+
+define method tk-continue () => ();
+  put-tk-line("continue");
+end method tk-continue;
+
+define method tk-break () => ();
+  put-tk-line("break");
+end method tk-break;
+
+// New stuff for the bindtags command
+//
+
+define method binding-call-order (window :: <window>) =>
+    (result :: <sequence>);
+  parse-tk-list(call-tk-function("bindtags ", window), depth: 1);
+end method binding-call-order;
+
+define method binding-call-order-setter (seq :: <sequence>, window :: <window>)
+  => (seq :: <sequence>);
+  let string-seq = map(curry(tk-as, <string>), seq);
+  put-tk-line("bindtags ", window, " { ",
+	      reduce1(method(x,y) concatenate(x, " ", y) end, string-seq),
+	      " } ");
+  seq;
+end method binding-call-order-setter;
+
+define method add-binding-tag
+    (window :: <window>, tag :: <string>, #key position = 1)
+ => (window :: <window>);
+  let bindtags = window.binding-call-order;
+  let front = copy-sequence(bindtags, end: position);
+  let back = copy-sequence(bindtags, start: position);
+  window.binding-call-order := concatenate(front, list(tag), back);
+  window;
+end method add-binding-tag;
+  
