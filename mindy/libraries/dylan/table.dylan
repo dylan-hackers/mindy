@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.19 1995/12/07 15:52:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.20 1995/12/07 16:16:40 wlott Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -158,7 +158,7 @@ define class <bucket-entry> (<object>)
   slot entry-key :: <object>, required-init-keyword: #"key";
   slot entry-elt :: <object>, required-init-keyword: #"item";
   slot entry-hash-id :: <fixed-integer>, required-init-keyword: #"hash-id";
-  slot entry-hash-state :: <hash-state>, required-init-keyword: #"hash-state:";
+  slot entry-hash-state :: <hash-state>, required-init-keyword: #"hash-state";
 end class <bucket-entry>;
 
 define abstract class <table> (<dictionary>)
