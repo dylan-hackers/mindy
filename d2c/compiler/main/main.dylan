@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.54 1996/02/18 14:36:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.55 1996/02/18 15:00:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,8 +22,9 @@ end method import-string;
 define method export-string (string :: <byte-string>)
     => ptr :: <raw-pointer>;
   let len = string.size;
-  let buffer = make(<buffer>, size: len);
+  let buffer = make(<buffer>, size: len + 1);
   copy-bytes(buffer, 0, string, 0, len);
+  buffer[len] := 0;
   buffer-address(buffer);
 end method export-string;
 
