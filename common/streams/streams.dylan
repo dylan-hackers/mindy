@@ -183,7 +183,7 @@ define inline method type-for-file-stream
  => type :: <type>;
   select (element-type)
     <byte>, <byte-character> => <fd-file-stream>;
-    <unicode-character> => <unicode-fd-file-stream>;
+//    <unicode-character> => <unicode-fd-file-stream>;
     otherwise => <fd-file-stream>;
   end select;
 end method;

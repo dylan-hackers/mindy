@@ -3,7 +3,7 @@ author: chiles@cs.cmu.edu
 synopsis: This file implements some extensions to the Gwydion Dylan
           implementation.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/internals.dylan,v 1.3 1996/07/30 19:36:18 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/internals.dylan,v 1.4 1996/07/30 20:58:44 bfw Exp $
 
 //======================================================================
 //
@@ -126,8 +126,8 @@ define method as (result :: singleton(<byte-string>),
 end method;
 
 define method as (result :: singleton(<byte-vector>),
-		  object :: type-union(<byte-string>, <buffer>, 
-				       <unicode-string>))
+		  object :: type-union(<byte-string>, <buffer>)) 
+				       //, <unicode-string>))
  => result :: <byte-vector>;
   let len :: <integer> = object.size;
   let res :: <byte-vector> = make(<byte-vector>, size: len);
@@ -136,8 +136,8 @@ define method as (result :: singleton(<byte-vector>),
 end method;
 
 define method as (result :: singleton(<buffer>),
-		  object :: type-union(<byte-string>, <byte-vector>,
-				       <unicode-string>))
+		  object :: type-union(<byte-string>, <byte-vector>))
+				       //, <unicode-string>))
  => result :: <buffer>;
   let len :: <integer> = object.size;
   let res :: <buffer> = make(<buffer>, size: len);
@@ -145,6 +145,7 @@ define method as (result :: singleton(<buffer>),
   res;
 end method;
 
+/*
 define method as (result :: singleton(<unicode-string>),
 		  object :: type-union(<byte-vector>, <buffer>))
  => result :: <unicode-string>;
@@ -153,6 +154,7 @@ define method as (result :: singleton(<unicode-string>),
   copy-bytes(res, 0, object, 0, len);
   res;
 end method as;
+*/
   
 ///
 /// Utilities.
