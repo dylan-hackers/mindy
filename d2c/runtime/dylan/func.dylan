@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.6 2001/03/30 13:59:19 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.7 2001/06/29 04:57:58 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -788,62 +788,67 @@ define constant general-call
 //
 // The compiler uses this for the general-entry to all generic functions.
 // 
-define constant gf-call
-  = method (self :: <generic-function>, nargs :: <integer>)
-      let specializers = self.function-specializers;
-      let nfixed = specializers.size;
-      if (nfixed ~== nargs)
-        if (self.function-rest? | self.function-keywords)
-	  if (nargs < nfixed)
-	    wrong-number-of-arguments-error(#f, nfixed, nargs);
-	  end;
-	  if (self.function-keywords & odd?(nargs - nfixed))
-	    odd-number-of-keyword/value-arguments-error();
-	  end;
-        else
-	  wrong-number-of-arguments-error(#t, nfixed, nargs);
-	end;
+define function gf-call-lookup (self :: <generic-function>, nargs :: <integer>)
+ => (meth :: <method>, next :: <list>);
+  let specializers = self.function-specializers;
+  let nfixed = specializers.size;
+  if (nfixed ~== nargs)
+    if (self.function-rest? | self.function-keywords)
+      if (nargs < nfixed)
+        wrong-number-of-arguments-error(#f, nfixed, nargs);
       end;
-      let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
-      let (meth, next-info, valid-keywords)
-	= cached-sorted-applicable-methods(self, nfixed, arg-ptr);
-      if (nfixed ~== nargs)
-        case 
-          (valid-keywords == #f) => #t;
-          (valid-keywords == #"all") =>
-            for (index :: <integer> from nfixed below nargs by 2)
-              check-type(%%primitive(extract-arg, arg-ptr, index), <symbol>);
+      if (self.function-keywords & odd?(nargs - nfixed))
+        odd-number-of-keyword/value-arguments-error();
+      end;
+    else
+      wrong-number-of-arguments-error(#t, nfixed, nargs);
+    end;
+  end;
+  let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
+  let (meth, next-info, valid-keywords)
+    = cached-sorted-applicable-methods(self, nfixed, arg-ptr);
+  if (nfixed ~== nargs)
+    case 
+      (valid-keywords == #f) => #t;
+      (valid-keywords == #"all") =>
+        for (index :: <integer> from nfixed below nargs by 2)
+          check-type(%%primitive(extract-arg, arg-ptr, index), <symbol>);
+        end for;
+      otherwise =>
+        check-type(valid-keywords, <simple-object-vector>);
+        for (index :: <integer> from nfixed below nargs by 2)
+          let key :: <symbol> = %%primitive(extract-arg, arg-ptr, index);
+          block (found)
+            for (i :: <integer> from 0 below valid-keywords.size)
+              if (%element(valid-keywords, i) == key) found() end if;
             end for;
-          otherwise =>
-            check-type(valid-keywords, <simple-object-vector>);
-	    for (index :: <integer> from nfixed below nargs by 2)
-	      let key :: <symbol> = %%primitive(extract-arg, arg-ptr, index);
-	      block (found)
-                for (i :: <integer> from 0 below valid-keywords.size)
-                  if (%element(valid-keywords, i) == key) found() end if;
-                end for;
-                error("Unrecognized keyword: %=", key);
-              end block;
-	    end for;
-        end case;
-      end if;
-      if (meth)
-	%%primitive(invoke-generic-entry, meth, next-info,
-		    %%primitive(pop-args, arg-ptr));
-      elseif (next-info.empty?)
-	for (index :: <integer> from 0 below nfixed)
-	  let specializer :: <type> = %element(specializers, index);
-	  let arg = %%primitive(extract-arg, arg-ptr, index);
-	  %check-type(arg, specializer);
-	end;
-	no-applicable-methods-error
-	  (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
-      else
-	// There is no unambiguous "first method"
-	ambiguous-method-error(next-info.first);
-      end if;
-    end method;
-    
+            error("Unrecognized keyword: %=", key);
+          end block;
+        end for;
+    end case;
+  end if;
+  if (meth)
+    values(meth, next-info);
+  elseif (next-info.empty?)
+    for (index :: <integer> from 0 below nfixed)
+      let specializer :: <type> = %element(specializers, index);
+      let arg = %%primitive(extract-arg, arg-ptr, index);
+      %check-type(arg, specializer);
+    end;
+    no-applicable-methods-error
+      (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
+  else
+    // There is no unambiguous "first method"
+    ambiguous-method-error(next-info.first);
+  end if;
+end function;
+
+define inline function gf-call (self :: <generic-function>, nargs :: <integer>)
+  let (meth, next-info) = gf-call-lookup(self, nargs);
+  %%primitive(invoke-generic-entry, meth, next-info, 
+              %%primitive(pop-args, %%primitive(extract-args, nargs)));
+end function;
+
 // gf-call-one-arg -- magic.
 //
 // The compiler uses this for the general-entry to certain simple generic
