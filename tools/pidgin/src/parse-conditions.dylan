@@ -47,16 +47,15 @@ define abstract class <parse-condition> (<condition>)
     required-init-keyword: source-location:;
 end;
 
-define class <format-string-parse-condition> (<format-string-condition>,
-					      <parse-condition>)
+define class <format-string-parse-condition> (<parse-condition>,
+                                              <format-string-condition>)
 end;
 
-define class <simple-parse-error> (<error>,
-				   <format-string-parse-condition>)
+define class <simple-parse-error> (<format-string-parse-condition>, <error>)
 end;
 
-define class <simple-parse-warning> (<warning>,
-				     <format-string-parse-condition>)
+define class <simple-parse-warning> (<format-string-parse-condition>,
+                                     <warning>)
 end;
 
 define class <parse-progress-report> (<format-string-parse-condition>)
@@ -159,10 +158,13 @@ define method report-condition
 			   stream);
   apply(condition-format, stream, parse-condition.condition-format-string,
 	parse-condition.condition-format-arguments);
-  if (instance?(stream, <stream>))
-    force-output(stream);
-  end if;
 end method report-condition;
+
+define method default-handler(condition :: <parse-condition>)
+  report-condition(condition, *warning-output*);
+  condition-format(*warning-output*, "\n");
+  force-output(*warning-output*);
+end method default-handler;
 
 define method default-handler(condition :: <parse-progress-report>)
   if (*show-parse-progress?*)
@@ -171,3 +173,4 @@ define method default-handler(condition :: <parse-progress-report>)
     force-output(*warning-output*);
   end;
 end method default-handler;
+
