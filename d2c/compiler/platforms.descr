@@ -81,6 +81,10 @@
 // libraries; in this case, the extensions are separated by spaces,
 // and the first extension listed will be the default extension.
 //
+// shared-library-filename-siffix: The suffix for shared libraries.
+// If this is set, and the user doesn't specify '-static' on the
+// d2c command line, search for shared version of library first.
+//
 // executable-filename-suffix: The suffix for executable filenames.
 //
 // compile-c-command: A format string that describes how to invoke the
@@ -104,6 +108,10 @@
 // link-library-command: A format string that gives the beginning of
 // the command for linking a library.  Arg1 is the name of the archive
 // (with extension), arg2 is the object files.
+//
+// link-shared-library-command: The same as link-library-command, but
+// for linking shared libraries. d2c won't try to generate a shared
+// library unless this is set.
 //
 // link-executable-command: A format string that gives the beginning
 // of the command for linking an executable file.  Arg1 is the name of
@@ -296,11 +304,13 @@ mangled-name-prefix:
 object-filename-suffix:         .o
 library-filename-prefix:        lib
 library-filename-suffix:        .a
+shared-library-filename-suffix: .so
 executable-filename-suffix:     
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
 assembler-command:              gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
+link-shared-library-command:    gcc -shared -o %s %s
 link-executable-command:        gcc  -o %s %s %s
 link-executable-flags:          -lm
 make-command:                   gmake
