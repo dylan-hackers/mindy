@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.34 1994/06/13 13:03:35 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.35 1994/06/13 13:05:11 nkramer Exp $
 //
 //  This file does whatever.
 //
@@ -81,7 +81,8 @@ define module Builtin-Stuff
   create
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
-    forward-iteration-protocol, backward-iteration-protocol, negative?,
+    forward-iteration-protocol, backward-iteration-protocol, 
+    table-protocol, negative?,
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
     debugger-return, debugger-eval,
@@ -135,7 +136,7 @@ define module Dylan
 	     remove-method, round, round/,
 	     singleton, size, slot-initialized?, sorted-applicable-methods,
 	     subtype?,
-	     tail, tail-setter, truncate, truncate/,
+	     table-protocol, tail, tail-setter, truncate, truncate/,
 	     union,
 	     values, vector};
   export
