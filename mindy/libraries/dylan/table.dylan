@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.16 1995/03/16 19:05:14 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.17 1995/08/28 00:36:57 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -770,6 +770,9 @@ define method rehash (ht :: <table>) => rehashed-ht :: <table>;
 	  // Put it back into the same bucket
 	  remaining.tail := ht.bucket-array-slot[i];
 	  ht.bucket-array-slot[i] := remaining;
+	  ht.bucket-states-slot[i] :=
+	    merge-hash-states(bucket-entry.hash-state-slot,
+			      ht.bucket-states-slot[i]);
 	else  // state is invalid
 	  let (id, state) = key-hash(bucket-entry.key-slot);  
 	  bucket-entry.hash-id-slot    := id;
