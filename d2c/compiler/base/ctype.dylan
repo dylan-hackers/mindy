@@ -1,12 +1,18 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.49 1996/05/08 15:56:31 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.50 1996/05/29 23:31:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 /// Superclass of multi-value types and regular single types.
-define abstract class <values-ctype> (<object>)
+define abstract class <values-ctype> (<identity-preserving-mixin>)
+  //
+  // Memo of the extentional version of this type.
+  slot %ctype-extent :: false-or(<values-ctype>) = #f;
 end class;
+
+define sealed domain make (singleton(<values-ctype>));
+define sealed domain initialize (<values-ctype>);
 
 
 //// Type function memoization:
@@ -29,6 +35,7 @@ define abstract class <ctype> (<values-ctype>)
     init-keyword: type-hash:;
 end class;
 
+define sealed domain make (singleton(<ctype>));
 
 /// Memoization is done in a vector.  Each entry has four elements: the two arg
 /// types, the result type and the result precise flag.  All elements are
@@ -36,14 +43,13 @@ end class;
 /// arguments are always types.)  This memoization is a probablistic cache, not
 /// a complete record of all results ever computed.
 ///
-/// ### vector could be limited to type-union(<ctype>, one-of(#t, #f));
-///
 define class <memo-entry> (<object>)
   slot memo-type1 :: false-or(<ctype>) = #f;
   slot memo-type2 :: false-or(<ctype>) = #f;
   slot memo-value :: type-union(<ctype>, <boolean>) = #f;
   slot memo-precise :: <boolean> = #f;
 end class <memo-entry>;
+
 define sealed domain make(singleton(<memo-entry>));
 define sealed domain initialize(<memo-entry>);
 
@@ -196,6 +202,36 @@ end method;
 define generic find-direct-classes(type :: <ctype>) => res :: false-or(<list>);
 
 
+/// ctype-extent -- exported.
+///
+/// Return a new ctype that describes the set of all values that could be
+/// instances of that type (i.e. the extensional interpretation of the type).
+/// 
+define method ctype-extent (ctype :: <values-ctype>) => res :: <values-ctype>;
+  let extent = ctype.%ctype-extent;
+  if (extent)
+    extent;
+  else
+    let extent = ctype-extent-dispatch(ctype);
+    ctype.%ctype-extent := extent;
+    if (extent.%ctype-extent)
+      assert(extent.%ctype-extent == extent);
+    else
+      extent.%ctype-extent := extent;
+    end if;
+    extent;
+  end if;
+end method ctype-extent;
+
+// ctype-extent-dispatch -- internal.
+//
+// Does the actual work of ctype-extent if we haven't already done it.
+// 
+define generic ctype-extent-dispatch (ctype :: <values-ctype>)
+    => res :: <values-ctype>;
+
+
+
 //// CINSTANCE? -- exported
 //
 define generic cinstance? (ctv :: <ct-value>, ctype :: <ctype>)
@@ -208,76 +244,92 @@ end;
 
 define method cinstance? (ctv :: <eql-ct-value>, ctype :: <ctype>)
     => (result :: <boolean>, precise :: <boolean>);
-  csubtype?(ctv.make-canonical-singleton, ctype);
+  csubtype?(make(<singleton-ctype>, value: ctv), ctype);
 end;
 
 
 //// CSUBTYPE?
 ///
 
-/// Ignoring unknown and union types (which are handled specially), we have the
-/// following cross products:
-///
-/// Singleton with:
-///   singleton -- #f, 'cause == singletons are picked off
-///   limited-int -- #f, 'cause singleton integers don't exist due to
-///     canonicalization.
-///   class -- subtype?(base-class, class)
-///   direct -- singleton.base-class == direct.base-class)
-///   byte-char -- is the singleton a byte-character?
-/// limited integer:
-///   singleton -- #f, 'cause singleton integers don't exist due to
-///     canonicalization.
-///   limited integer -- the base classes are subtype? and the ranges are in
-///     order
-///   class -- subtype?(base-class, class)
-///   direct -- limint.base-class == direct.base-class
-///   byte-char -- #f
-/// class:
-///   singleton -- #f, 'cause #t, #f, and #() don't exist as singletons due to
-///     canonicalization.
-///   limited integer -- #f, 'cause infinate bound limited integers are
-///     canonicalized back to the base class.
-///   class -- check the class precedence list
-///   direct -- #f, 'cause direct-type(leaf-class) => leaf-class
-///   byte-char -- #f
-/// Direct:
-///   singleton -- #f.
-///   limited-int -- #f.
-///   class -- subtype?(base-class, class)
-///   direct -- #f, 'cause == direct classes are picked off.
-///   byte-char -- #f
-/// byte-char:
-///   singleton -- #f.
-///   limited-int -- #f.
-///   class -- subtype?(bchar.base-class, class)
-///   direct -- bchar.base-class == direct.base-class
-///   byte-char -- can't happen, cause == types are picked off.
-///   
-/// Note that for most of the subtype?(limited,other) cases, it just becomes
-/// subtype?(limited.base-class,other).
-///
+// Ignoring unknown and union types (which are handled specially), we have the
+// following cross products:
+//
+// Singleton with:
+//   singleton -- #f, 'cause == singletons are picked off
+//   limited-int -- in range?
+//   byte-char -- is the singleton a byte-character?
+//   subclass -- subtype?(sing.value, subclass.subclass-of)
+//   direct -- singleton.base-class == direct.base-class
+//   class -- subtype?(base-class, class)
+// limited integer:
+//   singleton -- #f, by definition
+//   limited integer -- the base classes are subtype? and the ranges are in
+//     order
+//   byte-char -- #f, 'cause integers and characters are disjoint
+//   subclass -- #f, 'cause integers and classes are disjoint
+//   direct -- limint.base-class == direct.base-class
+//   class -- subtype?(base-class, class)
+// byte-char:
+//   singleton -- #f, by definition
+//   limited-int -- #f, 'cause characters and integers are disjoint
+//   byte-char -- can't happen, cause == types are picked off.
+//   subclass -- #f, 'cause characters and classes are disjoint
+//   direct -- bchar.base-class == direct.base-class
+//   class -- subtype?(bchar.base-class, class)
+// subclass:
+//   singleton -- #f, by definition
+//   limited-int -- #f, 'cause integers and classes are disjoint.
+//   byte-char -- #f, 'cause characters and classes are disjoint
+//   subclass -- subtype?(t1.subclass-of, t2.subclass-of)
+//   direct -- #f, by definition
+//   class -- subtype?(base-class, class);
+// Direct:
+//   singleton -- #f, by definition.
+//   limited-int -- #f, by definition.
+//   byte-char -- #f, by definition.
+//   subclass -- #f, by definition.
+//   direct -- #f, 'cause == direct classes are picked off.
+//   class -- subtype?(base-class, class)
+// class:
+//   singleton -- #f, by definition.
+//   limited integer -- #f, by definition.
+//   byte-char -- #f, by definition.
+//   subclass -- #f, by definition.
+//   direct -- #f, by definition
+//   class -- check the class precedence list
+//   
 
-/// Handle csubtype? for unequal types other than union and unknown.
-/// Result is always precise because any vagueness is in the unknown types.
-///
+// csubtype-dispatch -- internal.
+// 
+// Handle csubtype? for unequal types other than union and unknown.
+// Result is always precise because any vagueness is in the unknown types.
+//
 define sealed generic csubtype-dispatch(type1 :: <ctype>, type2 :: <ctype>)
        => result :: <boolean>;
 
-/// Many cases are false, so make that the default.
+// csubtype-dispatch{<ctype>,<ctype>}
+// 
+// Many cases are false, so make that the default.
+// 
 define method csubtype-dispatch(type1 :: <ctype>, type2 :: <ctype>)
     => result :: <boolean>;
   #f;
 end method;
 
+// $csubtype-memo -- internal.
+//
+// Memo for use in rememering results of csubtype?.
+// 
 define constant $csubtype-memo :: <memo-table> = make-memo2-table();
 
-/// Like subtype?, but works on ctypes, and returns the second value #F if the
-/// relation cannot be determined at compile time (due to unknown types.)
-///
-/// Check if result is memoized; if not, pick off the unknown & union cases
-/// before calling the generic function.
-/// 
+// csubtype? -- exported.
+// 
+// Like subtype?, but works on ctypes, and returns the second value #F if the
+// relation cannot be determined at compile time (due to unknown types.)
+//
+// Check if result is memoized; if not, pick off the unknown & union cases
+// before calling the generic function.
+// 
 define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
        => (result :: <boolean>, precise :: <boolean>);
 
@@ -516,6 +568,30 @@ end method ctype-difference;
 
 //// Union types:
 
+// <union-table> -- internal.
+// 
+// table used for hash-consing union types.  Key is a list of <ctype>s.
+//
+define class <union-table> (<table>)
+end class;
+
+define sealed domain make (singleton(<union-table>));
+define sealed domain initialize (<union-table>);
+
+define method table-protocol(table :: <union-table>)
+    => (test :: <function>, hash :: <function>);
+  values(\=,
+  	 method(key :: <list>)
+	   for(elt :: <ctype> in key,
+	       res :: <integer> = 0 then \+(res, elt.type-hash))
+	   finally values(res, $permanent-hash-state);
+	   end for;
+	 end method);
+end;
+
+define constant $union-table :: <union-table> = make(<union-table>);
+
+
 define generic members (type :: <ctype>) => members :: <list>;
 
 define class <union-ctype> (<ctype>, <ct-value>)
@@ -524,6 +600,25 @@ define class <union-ctype> (<ctype>, <ct-value>)
   // of anything and an unknown type is itself an unknown type.
   slot members :: <list>, setter: #f, required-init-keyword: members:;
 end class;
+
+define sealed domain make (singleton(<union-ctype>));
+
+define method make
+    (class == <union-ctype>, #next next-method, #key members :: <list>)
+    => res :: <union-ctype>;
+  let sorted = sort!(copy-sequence(members),
+		     test: method (x :: <ctype>, y :: <ctype>)
+			       => res :: <boolean>;
+			     x.type-hash < y.type-hash;
+			   end);
+  let found = element($union-table, sorted, default: #f);
+  if (found)
+    found;
+  else
+    $union-table[sorted] := next-method(class, members: sorted);
+  end;
+end method make;
+
 
 define method print-object (union :: <union-ctype>, stream :: <stream>) => ();
   pprint-logical-block
@@ -563,14 +658,35 @@ define method print-message (union :: <union-ctype>, stream :: <stream>) => ();
 end;
 
 // The "members" of any non-union type is a list of the type itself.
+//
 define method members (type :: <ctype>) => result :: <list>;
   list(type);
 end method;
 
 
+// ctype-extent-dispatch{<union-ctype>}
+//
+// Just union the extents of the members.
+// 
+define method ctype-extent-dispatch (type :: <union-ctype>)
+    => res :: <ctype>;
+  reduce(method (result :: <ctype>, member :: <ctype>)
+	     => result :: <ctype>;
+	   ctype-union(result, member.ctype-extent);
+	 end method,
+	 empty-ctype(),
+	 type.members);
+end method ctype-extent-dispatch;
+
+
+// find-direct-classes{<union-ctype>}
+// 
 // Most type ops have a non-generic wrapper that handles unions and unknowns.
 // Not so for find-direct-classes.
-define method find-direct-classes(type :: <union-ctype>)
+//
+// Just accumulate the direct classes of all the members.
+// 
+define method find-direct-classes (type :: <union-ctype>)
     => res :: false-or(<list>);
   let res = #();
   block (done)
@@ -581,62 +697,13 @@ define method find-direct-classes(type :: <union-ctype>)
       else
         done(#f);
       end;
-      finally remove-duplicates(res);
+    finally
+      remove-duplicates(res);
     end;
   end;
 end method;
 
 
-// Eliminate subtypes and adjacent integer types.  Result sorted by hash
-// code for canonical order.  Does not flatten unions or unknown types.
-//
-define constant canonicalize-union = method (types :: <list>) => res :: <list>;
-  let other = #();
-  let ints = #();
-  for (elt in types)
-    if (instance?(elt, <limited-integer-ctype>))
-      // ### This isn't quite correct.  Limited-int-union might return a cclass.
-      ints := limited-int-union(elt, ints);
-    else
-      other := pair(elt, other);
-    end;
-  end for;
-
-  let res = #();
-  let filtered = concatenate(other, ints);
-  for (elt in filtered)
-    // omit from result if already in result or a proper subtype of some other
-    // element.
-    unless (member?(elt, res)
-            | any?(method (x) csubtype?(elt, x) & ~(x == elt) end,
-		   filtered))
-      res := pair(elt, res);
-    end;
-  end for;
-    
-  sort!(res,
-        test: method (x, y)
-        	x.type-hash < y.type-hash
-	      end);
-end method;
-
-
-// table used for hash-consing union types.  Key is a list of <ctype>s.
-define class <union-table> (<table>)
-end class;
-
-define method table-protocol(table :: <union-table>)
-    => (test :: <function>, hash :: <function>);
-  values(\=,
-  	 method(key :: <list>)
-	   for(elt :: <ctype> in key,
-	       res :: <integer> = 0 then \+(res, elt.type-hash))
-	   finally values(res, $permanent-hash-state);
-	   end for;
-	 end method);
-end;
-
-define constant $union-table :: <union-table> = make(<union-table>);
 define constant $union-memo :: <memo-table> = make-memo2-table();
 
 
@@ -646,8 +713,7 @@ define constant $union-memo :: <memo-table> = make-memo2-table();
 /// unless there is no other way to represent the result.
 ///
 /// If no members, the result is the empty type.  If one, it is that type.
-/// Otherwise, check if a union with those members already exists before making
-/// a new union type.
+/// Otherwise, make (or reuse) a union-ctype.
 ///
 define constant ctype-union = method (type1 :: <ctype>, type2 :: <ctype>)
     => value :: <ctype>;
@@ -663,24 +729,37 @@ define constant ctype-union = method (type1 :: <ctype>, type2 :: <ctype>)
       make(<unknown-ctype>, type-exp: type2.type-exp);
 
     otherwise =>
-      local frob(canonical)
-	if (canonical == #())
-	  empty-ctype()
-	elseif (tail(canonical) == #())
-	  head(canonical)
-	else
-	  let found = element($union-table, canonical, default: #f);
-	  if (found)
-	    found
-	  else
-	    $union-table[canonical] := make(<union-ctype>, members: canonical);
-	  end;
-	end;
-      end method;
+      let new-members :: <list> = copy-sequence(type1.members);
+      for (member in type2.members)
+	if (instance?(member, <limited-integer-ctype>))
+	  member := limited-int-union(member, new-members);
+	end if;
+	block (next-member)
+	  for (remaining = new-members then remaining.tail,
+	       prev = #f then remaining,
+	       until: remaining == #())
+	    let other = remaining.head;
+	    if (csubtype?(member, other))
+	      next-member();
+	    elseif (csubtype?(other, member))
+	      if (prev)
+		prev.tail := remaining.tail;
+	      else
+		new-members := remaining.tail;
+	      end if;
+	    end if;
+	  end for;
+	  new-members := pair(member, new-members);
+	end block;
+      end for;
 
-      let res = frob(
-                 canonicalize-union(
- 		  concatenate(type1.members, type2.members)));
+      let res = if (new-members == #())
+		  empty-ctype();
+		elseif (tail(new-members) == #())
+		  head(new-members);
+		else
+		  make(<union-ctype>, members: new-members);
+		end if;
       memo2-enter(type1, type2, res, #t, $union-memo);
       res;
   end;
@@ -695,11 +774,13 @@ end method;
 /// or to any other type.
 ///
 define class <unknown-ctype> (<ctype>)
-
+  //
   // The expression which was of unknown type.  In general, this is only for
   // human context. 
   slot type-exp, init-value: #f, init-keyword: type-exp:;
 end class;
+
+define sealed domain make (singleton(<unknown-ctype>));
 
 define method find-direct-classes(type :: <unknown-ctype>) => res :: <false>;
   ignore(type);
@@ -713,28 +794,62 @@ end;
 
 
 //// Limited types:
-///
-/// The <limited-ctype> abstract class is inherited by various non-class types
-/// where there is a class that is a "tight" supertype of the type.  This
-/// includes singleton and direct-instance types.
-
+//
+// The <limited-ctype> abstract class is inherited by various non-class types
+// where there is a class that is a "tight" supertype of the type.  This
+// includes singleton and direct-instance types.
+//
 define abstract class <limited-ctype> (<ctype>)
   // The most specific class that is a supertype of this type.
   slot base-class :: <cclass>, required-init-keyword: base-class:;
 end class;
 
-/// In general, a limited type is only a subtype of some other type if the limited
-/// class is a subtype of that tpe.
-/// 
-define method csubtype-dispatch(type1 :: <limited-ctype>, type2 :: <ctype>)
-    => result :: <boolean>;
-  csubtype?(type1.base-class, type2);
-end method;
+define sealed domain make (singleton(<limited-ctype>));
 
-define method find-direct-classes(type :: <limited-ctype>)
+// find-direct-classes{<limited-ctype>}
+//
+// Find the direct classes of the base class.
+//
+define method find-direct-classes (type :: <limited-ctype>)
     => res :: false-or(<list>);
   find-direct-classes(type.base-class);
 end;
+
+
+// range types:
+
+/*
+
+define class <range-ctype> (<limited-ctype>)
+  slot ranges :: <simple-object-vector>, required-init-keyword: ranges:;
+end class <range-ctype>;
+
+define sealed domain make (singleton(<range-ctype>));
+
+define class <range-entry> (<object>)
+  constant slot minimum
+      :: type-union(singleton(#"negative-infinity"), <extended-integer>),
+    required-init-keyword: minimum:;
+  constant slot maximum
+      :: type-union(singleton(#"positive-infinity"), <extended-integer>),
+    required-init-keyword: maximum:;
+end class <range-entry>;
+
+define sealed domain make (singleton(<range-entry>));
+define sealed domain initialize (<range-entry>);
+
+
+define method make
+    (class == <range-ctype>, #next next-method,
+     #key minimum :: type-union(one-of(#f, #"negative-infinity"),
+				<extended-integer>),
+          maximum :: type-union(one-of(#f, #"positive-infinity"),
+				<extended-integer>)
+          ranges :: false-or(<simple-object-vector>))
+    => res :: <range-ctype>;
+end method make;
+
+*/
 
 
 /// Limited integer types:
@@ -744,6 +859,9 @@ end;
 
 define class <limited-integer-table> (<table>)
 end;
+
+define sealed domain make (singleton(<limited-integer-table>));
+define sealed domain initialize (<limited-integer-table>);
 
 define method table-protocol (table :: <limited-integer-table>)
     => (test :: <function>, hash :: <function>);
@@ -768,6 +886,8 @@ define class <limited-integer-ctype> (<limited-ctype>, <ct-value>)
   slot high-bound :: false-or(<extended-integer>), 
        required-init-keyword:  high-bound:;
 end class;
+
+define sealed domain make (singleton(<limited-integer-ctype>));
 
 define method make (class == <limited-integer-ctype>, #next next-method,
 		    #key base-class, low-bound, high-bound)
@@ -809,8 +929,8 @@ define method print-object (limint :: <limited-integer-ctype>,
      suffix: "}");
 end;
 
-define method print-message (limint :: <limited-integer-ctype>,
-			     stream :: <stream>)
+define method print-message
+    (limint :: <limited-integer-ctype>, stream :: <stream>)
     => ();
   write("limited(", stream);
   print-message(limint.base-class, stream);
@@ -823,17 +943,36 @@ define method print-message (limint :: <limited-integer-ctype>,
   write(')', stream);
 end;
 
+
+// ctype-extent-dispatch{<limited-integer-ctype>}
+//
+// Find the minimal extent of the limited integer type.
+//
+define method ctype-extent-dispatch
+    (type :: <limited-integer-ctype>)
+    => res :: <ctype>;
+  // ### Should really make integer sets.
+  local
+    method make-set (class :: <cclass>) => res :: <ctype>;
+      make-canonical-limited-integer
+	(class, type.low-bound, type.high-bound);
+    end method make-set;
+  if (type.base-class == specifier-type(#"<general-integer>"))
+    ctype-union(make-set(specifier-type(#"<integer>")),
+		make-set(specifier-type(#"<extended-integer>")));
+  else
+    make-set(type.base-class);
+  end if;
+end method ctype-extent-dispatch;
+
+
 define method make-canonical-limited-integer
     (base-class :: <cclass>,
      low-bound :: false-or(<general-integer>),
      high-bound :: false-or(<general-integer>))
     => res :: <ctype>;
-  if (low-bound)
-    low-bound := as(<extended-integer>, low-bound);
-  end;
-  if (high-bound)
-    high-bound := as(<extended-integer>, high-bound);
-  end;
+  let low-bound = low-bound & as(<extended-integer>, low-bound);
+  let high-bound = high-bound & as(<extended-integer>, high-bound);
   
   if (base-class == specifier-type(#"<integer>"))
     if (~low-bound | low-bound < runtime-$minimum-integer)
@@ -844,17 +983,12 @@ define method make-canonical-limited-integer
     end;
     if (high-bound < low-bound)
       empty-ctype();
-    elseif (low-bound == runtime-$minimum-integer
-	      & high-bound == runtime-$maximum-integer)
-      base-class;
     else
       make(<limited-integer-ctype>, base-class: base-class,
 	   low-bound: low-bound, high-bound: high-bound);
     end;
   else
-    if (~high-bound & ~low-bound)
-      base-class;
-    elseif (high-bound & low-bound & high-bound < low-bound)
+    if (high-bound & low-bound & high-bound < low-bound)
       empty-ctype();
     else
       make(<limited-integer-ctype>, base-class: base-class,
@@ -863,8 +997,11 @@ define method make-canonical-limited-integer
   end;
 end;
 
-/// A limited integer type is a subtype of another if the bounds of type1 are
-/// not wider that type2's (and the base class is a subtype.)
+// csubtype-dispatch{<limited-integer-ctype>,<limited-integer-ctype>}
+//
+// A limited integer type is a subtype of another if the bounds of type1 are
+// not wider that type2's (and the base class is a subtype.)
+//
 define method csubtype-dispatch
     (type1 :: <limited-integer-ctype>, type2 :: <limited-integer-ctype>)
     => result :: <boolean>;
@@ -895,9 +1032,10 @@ define method ctype-intersection-dispatch
   end;
 end;
 
-/// The intersection of two limited integer types is the overlap of the ranges.
-/// We determine this by maximizing the lower bounds and minimizing the upper
-/// bounds, returning that range if non-empty.
+// The intersection of two limited integer types is the overlap of the ranges.
+// We determine this by maximizing the lower bounds and minimizing the upper
+// bounds, returning that range if non-empty.
+//
 define method ctype-intersection-dispatch
     (type1 :: <limited-integer-ctype>, type2 :: <limited-integer-ctype>)
     => (result :: <ctype>, precise :: <true>);
@@ -929,96 +1067,84 @@ define method ctype-intersection-dispatch
 end method;
 
 
-/// Return a new list of limited integer types with Int joined to any of the
-/// types in Others that it intesects.  We don't bother removing the overlapped
-/// type, since it will be removed by the subtype elimination pass later on.
-///
+// Return a new limited integer type with Int joined to any of the
+// types in Others that it intesects.  We don't bother removing the overlapped
+// type, since it will be removed by the subtype elimination pass later on.
+//
 define constant limited-int-union = method 
-    (int :: <limited-integer-ctype>, others :: <list>) => res :: <list>;
+    (int :: <limited-integer-ctype>, others :: <list>)
+    => res :: <limited-integer-ctype>;
 
   // Return true if the two types have overlapping or contiguous ranges.  Value
   // is arbitrary if one is a subtype of the other, which doesn't matter here.
-  local adjacent?(type1, type2)
-    let L1 = type1.low-bound;
-    let H1 = type1.high-bound;
-    let L2 = type2.low-bound;
-    let H2 = type2.high-bound;
-
-    if (L1 = #f | (L2 ~= #f & L1 <= L2))
-      H1 = #f | L2 = #f | L2 <= H1 + 1;
-    else
-      L1 = #f | H2 = #f | L1 <= H2 + 1;
-    end;
-  end method;
+  local method adjacent? (type1, type2)
+	  let L1 = type1.low-bound;
+	  let H1 = type1.high-bound;
+	  let L2 = type2.low-bound;
+	  let H2 = type2.high-bound;
+	  
+	  if (L1 = #f | (L2 ~= #f & L1 <= L2))
+	    H1 = #f | L2 = #f | L2 <= H1 + 1;
+	  else
+	    L1 = #f | H2 = #f | L1 <= H2 + 1;
+	  end;
+	end method;
 
   let LI = int.low-bound;
   let HI = int.high-bound;
   let base = int.base-class;
   
   for (other in others)
-    let LO = other.low-bound;
-    let HO = other.high-bound;
-
-    if (base == other.base-class & adjacent?(int, other))
-      if (LI ~= #f & (LO = #f | LO < LI))
-        LI := LO;
+    if (instance?(other, <limited-integer-ctype>))
+      let LO = other.low-bound;
+      let HO = other.high-bound;
+      
+      if (base == other.base-class & adjacent?(int, other))
+	if (LI ~== #f & (LO == #f | LO < LI))
+	  LI := LO;
+	end;
+	
+	if (HI ~== #f & (HO == #f | HO > HI))
+	  HI := HO;
+	end;
       end;
-
-      if (HI ~= #f & (HO = #f | HO > HI))
-        HI := HO;
-      end;
-    end;
+    end if;
   end for;
 
-  add-new!(others, make-canonical-limited-integer(base, LI, HI));
+  make(<limited-integer-ctype>,
+       base-class: base, low-bound: LI, high-bound: HI);
 end method;
 
 
-//// Direct instance types:
+/// Singleton types:
 
-define class <direct-instance-ctype> (<limited-ctype>, <ct-value>)
-end class;
-
-define method print-object
-    (type :: <direct-instance-ctype>, stream :: <stream>) => ();
-  pprint-fields(type, stream, base-class: type.base-class);
-end;
-
-define method print-message
-    (type :: <direct-instance-ctype>, stream :: <stream>) => ();
-  format(stream, "direct-instances-of(%s)", type.base-class);
-end;
-
-define method csubtype-dispatch
-    (type1 :: <limited-ctype>, type2 :: <direct-instance-ctype>)
-    => result :: <boolean>;
-  type1.base-class == type2.base-class;
-end method csubtype-dispatch;
-
-
-
-//// Singleton types:
-///
-/// We only represents singletons with compile-time constant (non-integer)
-/// values.  Integer values are represented by limited integer types.  Note
-/// that in Dylan the only compile-time constants are literals, so we are that
-/// we are really restricted to float, character, symbol and magic tokens (#t,
-/// #f, #()).  We omit the collection literals (string and list) with no real
-/// loss, since they aren't meaningfully compared with ==.
-
-/// ### we may also want to hack singletons of classes, e.g. for specializers.
-/// singleton-of-class may want to be a seperate type, or maybe we have a magic
-/// compile-time cookie representing the class, or something.
-
+// <singleton-ctype> -- exported.
+//
+// We only represents singletons with eql compile-time constant values.
+//
 define class <singleton-ctype> (<limited-ctype>, <ct-value>)
+
   // The base-class is the direct class of this object, which can be used
   // interchangably with the object when testing this object for class
   // membership.
 
   // The value we represent.
   slot singleton-value :: <eql-ct-value>,
-    required-init-keyword: singleton-value:;
+    required-init-keyword: value:;
 end class;
+
+define sealed domain make (singleton(<singleton-ctype>));
+
+define method make
+    (class == <singleton-ctype>, #next next-method,
+     #key value :: <eql-ct-value>, base-class :: false-or(<cclass>))
+    => res :: <singleton-ctype>;
+  value.ct-value-singleton
+    | (value.ct-value-singleton
+	 := next-method(class, value: value,
+			base-class: base-class | value.ct-value-cclass));
+end method make;
+
 
 define method print-object (sing :: <singleton-ctype>, stream :: <stream>)
     => ();
@@ -1044,55 +1170,60 @@ define method print-message (sing :: <singleton-ctype>, stream :: <stream>)
   format(stream, "singleton(%s)", sing.singleton-value);
 end;
 
-
-//// make-canonical-singleton:
 
-// Return the ctype equivalent to singleton(object), where object is a
-// compile-time value.
-define generic make-canonical-singleton (thing :: <ct-value>, #key)
+// ctype-extent-dispatch{<singleton-ctype>}
+//
+// Check to see if the value is one of the ones we would rather represent
+// as a member of some set of values.
+//
+define method ctype-extent-dispatch (type :: <singleton-ctype>)
     => res :: <ctype>;
+  let value = type.singleton-value;
+  select (value by instance?)
+    /* ### Should really return some kind of set.
+    <literal-integer> =>
+      ###;
+    <literal-extended-integer> =>
+      ###;
+    <literal-character> =>
+      ###;
+    */
+    <literal-general-integer> =>
+      let value = value.literal-value;
+      make-canonical-limited-integer(type.base-class, value, value);
+    otherwise =>
+      type;
+  end select;
+end method ctype-extent-dispatch;
 
-define method make-canonical-singleton (thing :: <ct-value>, #key)
-    => res :: <ctype>;
-  empty-ctype();
+
+// csubtype-dispatch{<singleton-ctype>,<limited-integer-ctype>}
+//
+// A singleton is a subtype of a limited integer if it is the right kind of
+// integer and if it is inside the bounds.
+// 
+define method csubtype-dispatch
+    (type1 :: <singleton-ctype>, type2 :: <limited-integer-ctype>)
+    => res :: <boolean>;
+  if (csubtype?(type1.base-class, type2.base-class))
+    let value :: <extended-integer> = type1.singleton-value.literal-value;
+    (type2.low-bound == #f | type2.low-bound <= value)
+      & (type2.high-bound == #f | type2.high-bound >= value);
+  end if;
+end method csubtype-dispatch;
+
+// csubtype-dispatch{<singleton-ctype>,<byte-character-ctype>}
+//
+// A singleton is a subtype of <byte-character-ctype> iff the singleton is
+// a byte character.
+// 
+define method csubtype-dispatch
+    (type1 :: <singleton-ctype>, type2 :: <byte-character-ctype>)
+    => res :: <boolean>;
+  let val = type1.singleton-value;
+  instance?(val, <literal-character>)
+    & instance?(val.literal-value, <byte-character>);
 end;
-
-define method make-canonical-singleton
-    (thing :: <eql-ct-value>, #key base-class)
-    => res :: <ctype>;
-  thing.ct-value-singleton
-    | (thing.ct-value-singleton
-	 := really-make-canonical-singleton(thing, base-class));
-end;
-
-define generic really-make-canonical-singleton
-    (thing :: <eql-ct-value>, base-class-hint :: false-or(<cclass>))
-    => res :: <ctype>;
-
-define method really-make-canonical-singleton
-    (thing :: <eql-ct-value>, base-class-hint :: false-or(<cclass>))
-    => res :: <ctype>;
-  make(<singleton-ctype>,
-       base-class: base-class-hint | ct-value-cclass(thing),
-       singleton-value: thing);
-end;
-
-define method really-make-canonical-singleton
-    (thing :: <literal-general-integer>, base-class-hint :: false-or(<cclass>))
-    => res :: <ctype>;
-  let value = thing.literal-value;
-  make(<limited-integer-ctype>,
-       base-class: base-class-hint | ct-value-cclass(thing),
-       low-bound: value, high-bound: value);
-end;
-
-define method really-make-canonical-singleton
-    (thing :: type-union(<literal-boolean>, <literal-empty-list>),
-     base-class-hint :: false-or(<cclass>))
-    => res :: <ctype>;
-  base-class-hint | ct-value-cclass(thing);
-end;
-
 
 
 define generic ct-value-cclass (ct-value :: <ct-value>) => res :: <cclass>;
@@ -1179,22 +1310,18 @@ define method ct-value-cclass (object :: <singleton-ctype>) => res :: <cclass>;
   specifier-type(#"<singleton>");
 end;
 
-define method ct-value-cclass (object :: <direct-instance-ctype>)
-    => res :: <cclass>;
-  specifier-type(#"<direct-instance>");
-end;
-
 define method ct-value-cclass (object :: <byte-character-ctype>)
     => res :: <cclass>;
   specifier-type(#"<byte-character-type>");
 end;
-
 
 
 // <byte-character-ctype>
 
 define class <byte-character-ctype> (<limited-ctype>, <ct-value>)
 end;
+
+define sealed domain make (singleton(<byte-character-ctype>));
 
 define variable *byte-character-ctype-memo*
     :: false-or(<byte-character-ctype>)
@@ -1216,13 +1343,17 @@ define method print-message
   write("<byte-character>", stream);
 end;
 
-define method csubtype-dispatch (type1 :: <singleton-ctype>,
-				 type2 :: <byte-character-ctype>)
-    => res :: <boolean>;
-  let val = type1.singleton-value;
-  instance?(val, <literal-character>)
-    & instance?(val.literal-value, <byte-character>);
-end;
+
+// ctype-extent-dispatch{<byte-character-ctype>}
+//
+// Just return the set of all byte characters.
+// 
+define method ctype-extent-dispatch (type :: <byte-character-ctype>)
+    => reult :: <ctype>;
+  // ### Should really be returning a character set.
+  type;
+end method ctype-extent-dispatch;
+
 
 
 //// Multi-values types:
@@ -1279,6 +1410,8 @@ define class <multi-value-ctype> (<values-ctype>)
   // Type of the rest values; empty-ctype if none.
   slot rest-value-type :: <ctype>, required-init-keyword: rest-value-type:;
 end class;
+
+define sealed domain make (singleton(<multi-value-ctype>));
 
 define method print-object (type :: <multi-value-ctype>, stream :: <stream>)
     => ();
@@ -1379,6 +1512,20 @@ define generic rest-value-type (type :: <values-ctype>) => res :: <ctype>;
 define method rest-value-type (type :: <ctype>) => res :: <ctype>;
   empty-ctype();
 end method;
+
+
+// ctype-extent-dispatch{<multi-value-ctype>}
+//
+// Return a multi-value-ctype that contains the extents of each of the
+// component types.
+//
+define method ctype-extent-dispatch (type :: <multi-value-ctype>)
+    => res :: <multi-value-ctype>;
+  make(<multi-value-ctype>,
+       positional-types: map(ctype-extent, type.positional-types),
+       min-values: type.min-values,
+       rest-value-type: type.rest-value-type.ctype-extent);
+end method ctype-extent-dispatch;
 
 
 
@@ -1703,8 +1850,8 @@ define method slow-specifier-type-list
   for (arg in args,
        result = empty-ctype()
 	 then values-type-union(result,
-				make-canonical-singleton
-				  (specifier-ct-value(arg))))
+				make(<singleton-ctype>,
+				     value: specifier-ct-value(arg))))
   finally
     result;
   end;
@@ -1754,25 +1901,3 @@ define method slow-specifier-type-list (sym == #"values", args :: <list>)
   end;
 end;
 
-// Seals for file ctype.dylan
-
-// <union-ctype> -- subclass of <ctype>, <ct-value>
-define sealed domain make(singleton(<union-ctype>));
-// <union-table> -- subclass of <table>
-define sealed domain make(singleton(<union-table>));
-define sealed domain initialize(<union-table>);
-// <unknown-ctype> -- subclass of <ctype>
-define sealed domain make(singleton(<unknown-ctype>));
-// <limited-integer-table> -- subclass of <table>
-define sealed domain make(singleton(<limited-integer-table>));
-define sealed domain initialize(<limited-integer-table>);
-// <limited-integer-ctype> -- subclass of <limited-ctype>, <ct-value>
-define sealed domain make(singleton(<limited-integer-ctype>));
-// <direct-instance-ctype> -- subclass of <limited-ctype>, <ct-value>
-define sealed domain make(singleton(<direct-instance-ctype>));
-// <singleton-ctype> -- subclass of <limited-ctype>, <ct-value>
-define sealed domain make(singleton(<singleton-ctype>));
-// <byte-character-ctype> -- subclass of <limited-ctype>, <ct-value>
-define sealed domain make(singleton(<byte-character-ctype>));
-// <multi-value-ctype> -- subclass of <values-ctype>
-define sealed domain make(singleton(<multi-value-ctype>));

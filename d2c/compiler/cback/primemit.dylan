@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.27 1996/05/01 14:39:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.28 1996/05/29 23:32:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -377,7 +377,9 @@ define-primitive-emitter
        let source-leaf = operation.depends-on.dependent-next.source-exp;
        let source = ref-leaf(source-rep, source-leaf, file);
 
-       let target-rep = pick-representation(class.direct-type, #"speed");
+       let target-rep
+	 = pick-representation
+	     (make(<direct-instance-ctype>, base-class: class), #"speed");
        unless (source-rep == target-rep
 		 | (representation-data-word-member(source-rep)
 		      = representation-data-word-member(target-rep)))
@@ -1648,11 +1650,16 @@ define-primitive-emitter
        => ();
      let vec = operation.depends-on.source-exp;
      let vec-expr = extract-operands(operation, file, *heap-rep*);
-     deliver-result(results,
-		    stringify("((void *)((char *)", vec-expr, " + ",
-			      dylan-slot-offset(vec.derived-type, #"%element"),
-			      "))"),
-		    *ptr-rep*, #f, file);
+     let classes = vec.derived-type.find-direct-classes;
+     assert(classes ~== #f & classes ~== #());
+     let offset = dylan-slot-offset(classes.first, #"%element");
+     for (class in classes.tail)
+       assert(offset == dylan-slot-offset(class, #"%element"));
+     end for;
+     deliver-result
+       (results,
+	stringify("((void *)((char *)", vec-expr, " + ", offset, "))"),
+	*ptr-rep*, #f, file);
    end);
 
 define-primitive-emitter

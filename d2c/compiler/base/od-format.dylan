@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.49 1996/05/08 15:56:31 nkramer Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.50 1996/05/29 23:31:05 wlott Exp $
 
 /*
 
@@ -1596,7 +1596,12 @@ define /* exported */ method load-object-dispatch (state :: <load-state>)
       else
         assert(old == $empty-object);
       end;
-      lidx[id] := res;
+      if (res.obj-resolved?)
+	lidx[id] := res.actual-obj;
+      else
+	request-backpatch(res, method (actual) lidx[id] := actual end);
+	lidx[id] := res;
+      end if;
     end if;
 
   // Normal case, load an entry.
@@ -1804,9 +1809,6 @@ end method;
 // 
 define /* exported */ class <forward-ref> (<object>)
   //
-  // The local ID of the referenced object.
-  slot ref-id :: <integer>, required-init-keyword: ref-id:;
-  //
   // Once resolved, this is the actual object.  Unbound until resolved.
   /* exported */ slot actual-obj :: <object>;
   //
@@ -1849,17 +1851,25 @@ end method;
 // object has returned.)
 //
 define /* exported */ method resolve-forward-ref
-  (ref :: <forward-ref>, value :: <object>)
- => ();
-  if (ref.obj-resolved?)
-    assert(value == ref.actual-obj);
+    (ref :: <forward-ref>, value :: <object>) => ();
+  if (instance?(value, <forward-ref>))
+    if (value.obj-resolved?)
+      resolve-forward-ref(ref, value.actual-obj);
+    else
+      request-backpatch
+	(value, method (actual) resolve-forward-ref(ref, actual) end);
+    end if;
   else
-    ref.actual-obj := value;
-    ref.obj-resolved? := #t;
-    for (x in ref.patchers)
-      x(value);
-    end;
-    ref.patchers := #(); // for GC
+    if (ref.obj-resolved?)
+      assert(value == ref.actual-obj);
+    else
+      ref.actual-obj := value;
+      ref.obj-resolved? := #t;
+      for (x in ref.patchers)
+	x(value);
+      end;
+      ref.patchers := #(); // for GC
+    end if;
   end if;
 end method;
 
@@ -1872,7 +1882,7 @@ define method maybe-forward-ref (unit :: <data-unit>, id :: <integer>)
   let lidx = unit.local-index;
   let thing = lidx[id];
   if (thing == $empty-object)
-    lidx[id] := make(<forward-ref>, ref-id: id);
+    lidx[id] := make(<forward-ref>);
   elseif (thing.obj-resolved?)
     thing.actual-obj;
   else
@@ -2072,9 +2082,17 @@ define /* exported */ method load-external-definition
   assert(state.raw-local-index[id] * $word-bytes
   	   = state.od-next + state.position-offset - $word-bytes);
 
+  local method set-handle (obj :: <identity-preserving-mixin>) => ();
+	  assert(~obj.handle);
+	  obj.handle
+	    := make(<extern-handle>, defining-unit: unit, local-id: id);
+	end method set-handle;
   let res = body(state);
-  assert(~res.handle);
-  res.handle := make(<extern-handle>, defining-unit: unit, local-id: id);
+  if (instance?(res, <forward-ref>))
+    request-backpatch(res, set-handle);
+  else
+    set-handle(res);
+  end if;
   res;
 end method;
 
@@ -2209,35 +2227,69 @@ define method make-loader-guts
   let key-count = info.init-keys.size;
   let vec = load-subobjects-vector(state, size-hint: key-count);
   assert(vec.size == key-count);
+
   let keys = #();
-  let losers = #();
+  let setter-losers = #();
+  let key-losers = #();
+
   for (i :: <integer> from 0 below key-count)
     let key = info.init-keys[i];
     let val = vec[i];
-    if (key & obj-resolved?(val))
-      keys := pair(key, pair(val.actual-obj, keys));
-    elseif (info.setter-funs[i])
-      losers := pair(i, losers);
-    else
-      error("No setter for unresolved slot %s in %s",
-	    info.accessor-funs[i].function-name,
-	    info.obj-name);
-    end;
-  end;
-  let obj = apply(make, info.obj-class, keys);
-
-  for (i :: <integer> in losers)
-    let setter = info.setter-funs[i];
-    let val = vec[i];
-    assert(setter);
     if (obj-resolved?(val))
-      setter(val.actual-obj, obj);
+      if (key)
+	keys := pair(key, pair(val.actual-obj, keys));
+      else
+	setter-losers := pair(i, setter-losers);
+      end if;
     else
-      request-backpatch(val, method (actual) setter(actual, obj) end);
-    end;
-  end;
+      if (info.setter-funs[i])
+	setter-losers := pair(i, setter-losers);
+      else
+	key-losers := pair(i, key-losers);
+      end if;
+    end if;
+  end for;
 
-  obj;
+  local method make-obj () => x :: <object>;
+	  let obj = apply(make, info.obj-class, keys);
+  
+	  for (i :: <integer> in setter-losers)
+	    let setter = info.setter-funs[i];
+	    let val = vec[i];
+	    assert(setter);
+	    if (obj-resolved?(val))
+	      setter(val.actual-obj, obj);
+	    else
+	      request-backpatch(val, method (actual) setter(actual, obj) end);
+	    end;
+	  end;
+	  
+	  obj;
+	end method make-obj;
+
+
+  if (key-losers == #())
+    make-obj();
+  else
+    let unresolved-keys = key-losers.size;
+    let forward = make(<forward-ref>);
+
+    for (i :: <integer> in key-losers)
+      let key = info.init-keys[i];
+      let val = vec[i];
+      request-backpatch
+	(val,
+	 method (actual) => ();
+	   keys := pair(key, pair(actual, keys));
+	   if ((unresolved-keys := unresolved-keys - 1).zero?)
+	     resolve-forward-ref(forward, make-obj());
+	   end if;
+	 end method);
+    end for;
+
+    forward;
+  end if;
+
 end method;
 
 
@@ -2266,7 +2318,7 @@ define /* exported */ method add-make-dumper
     check-type(a, <function>);
     check-type(k, false-or(<symbol>));
     check-type(s, false-or(<function>));
-    assert(key | set);
+    assert(dumper-only | k | s);
     add!(acc, a);
     add!(key, k);
     add!(set, s);
@@ -2288,7 +2340,11 @@ define /* exported */ method add-make-dumper
       = if (load-side-effect)
 	  method (state :: <load-state>) => res :: <object>;
 	    let res = make-loader-guts(state, info);
-	    load-side-effect(res);
+	    if (instance?(res, <forward-ref>))
+	      request-backpatch(res, load-side-effect);
+	    else
+	      load-side-effect(res);
+	    end if;
 	    res;
 	  end;
 	else

@@ -1,117 +1,139 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.16 1996/04/15 18:28:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.17 1996/05/29 23:31:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
 // Non-class types:
 
-
-define method dump-od (obj :: <union-ctype>, buf :: <dump-state>) => ();
-  dump-simple-object(#"union-type", buf, obj.members);
-end method;
-
-add-od-loader(*compiler-dispatcher*, #"union-type",
-  method (state :: <load-state>) => res :: <union-ctype>;
-    reduce(ctype-union, empty-ctype(), load-sole-subobject(state));
-  end method
-);
-
-
-// ### maybe should just drop the type exp, or reduce it to something dumpable.
-//
-define method dump-od (obj :: <unknown-ctype>, buf :: <dump-state>) => ();
-  dump-simple-object(#"unknown-type", buf, obj.type-exp);
-end method;
-
-add-od-loader(*compiler-dispatcher*, #"unknown-type",
-  method (state :: <load-state>) => res :: <unknown-ctype>;
-    make(<unknown-ctype>, type-exp: load-sole-subobject(state));
-  end method
-);
+define method set-or-check-extent
+    (extent :: false-or(<values-ctype>), intent :: <values-ctype>) => ();
+  if (extent)
+    if (intent.%ctype-extent)
+      assert(intent.%ctype-extent == extent);
+    else
+      intent.%ctype-extent := extent;
+    end if;
+  end if;
+end method set-or-check-extent;
 
 
-define method dump-od (obj :: <limited-integer-ctype>, buf :: <dump-state>)
- => ();
-  dump-simple-object(#"limited-integer-type", buf, obj.base-class,
-  		     obj.low-bound, obj.high-bound);
-end method;
+add-make-dumper
+  (#"union-type", *compiler-dispatcher*, <union-ctype>,
+   list(info, #f, #f,
+	%ctype-extent, #f, #f,
+	members, members:, #f),
+   dumper-only: #t);
 
-add-od-loader(*compiler-dispatcher*, #"limited-integer-type",
-  method (state :: <load-state>) => res :: <limited-integer-ctype>;
-    let base = load-object-dispatch(state);
-    let low = load-object-dispatch(state);
-    let high = load-object-dispatch(state);
-    assert-end-object(state);
-    make(<limited-integer-ctype>, base-class: base, low-bound: low,
-         high-bound: high);
-  end method
-);
+add-od-loader
+  (*compiler-dispatcher*, #"union-type",
+   method (state :: <load-state>)
+       => res :: type-union(<union-ctype>, <forward-ref>);
+     let info = load-object-dispatch(state);
+     let extent = load-object-dispatch(state);
+     let members = load-object-dispatch(state);
+     assert-end-object(state);
+     local method make-obj () => res :: <union-ctype>;
+	     let res = make(<union-ctype>, members: map(actual-obj, members));
+	     if (info.obj-resolved?)
+	       merge-and-set-info(info.actual-obj, res);
+	     else
+	       request-backpatch
+		 (info, method (x) merge-and-set-info(x, res) end);
+	     end if;
+	     if (extent.obj-resolved?)
+	       set-or-check-extent(extent.actual-obj, res);
+	     else
+	       request-backpatch
+		 (extent, method (x) set-or-check-extent(x, res) end);
+	     end if;
+	     res;
+	   end method make-obj;
+     let unresolved-members = 0;
+     let forward = make(<forward-ref>);
+     for (member in members)
+       unless (member.obj-resolved?)
+	 unresolved-members := unresolved-members + 1;
+	 request-backpatch
+	   (member,
+	    method (actual) => ();
+	      if ((unresolved-members := unresolved-members - 1).zero?)
+		resolve-forward-ref(forward, make-obj());
+	      end if;
+	    end method);
+       end unless;
+     end for;
+     if (unresolved-members.zero?)
+       make-obj();
+     else
+       forward;
+     end if;
+   end method);
+
+add-make-dumper
+  (#"unknown-type", *compiler-dispatcher*, <unknown-ctype>,
+   list(info, #f, merge-and-set-info,
+	%ctype-extent, #f, set-or-check-extent,
+	//
+	// ### maybe should just drop the type exp, or reduce it to
+	// something dumpable.
+	type-exp, type-exp: #f));
+
+add-make-dumper
+  (#"limited-integer-type", *compiler-dispatcher*, <limited-integer-ctype>,
+   list(info, #f, merge-and-set-info,
+	%ctype-extent, #f, set-or-check-extent,
+	base-class, base-class:, #f,
+	low-bound, low-bound:, #f,
+	high-bound, high-bound:, #f));
+
+add-make-dumper
+  (#"direct-instance-type", *compiler-dispatcher*, <direct-instance-ctype>,
+   list(info, #f, merge-and-set-info,
+	%ctype-extent, #f, set-or-check-extent,
+	base-class, base-class: #f));
+
+add-make-dumper
+  (#"singleton-type", *compiler-dispatcher*, <singleton-ctype>,
+   list(info, #f, merge-and-set-info,
+	%ctype-extent, #f, set-or-check-extent,
+	base-class, base-class:, #f,
+	singleton-value, value:, #f));
+
+add-make-dumper
+  (#"byte-character-type", *compiler-dispatcher*, <byte-character-ctype>,
+   list(info, #f, merge-and-set-info,
+	%ctype-extent, #f, set-or-check-extent,
+	base-class, base-class:, #f));
+
+add-make-dumper
+  (#"multi-value-type", *compiler-dispatcher*, <multi-value-ctype>,
+   list(%ctype-extent, #f, set-or-check-extent,
+	positional-types, positional-types:, #f,
+	min-values, min-values:, #f,
+	rest-value-type, rest-value-type:, #f));
+
+add-make-dumper
+  (#"subclass-type", *compiler-dispatcher*, <subclass-ctype>,
+   list(info, #f, merge-and-set-info,
+	%ctype-extent, #f, set-or-check-extent,
+	base-class, base-class:, #f,
+	subclass-of, of:, #f));
 
 
-define method dump-od (obj :: <direct-instance-ctype>, buf :: <dump-state>)
- => ();
-  dump-simple-object(#"direct-instance-type", buf, obj.base-class);
-end method;
-
-add-od-loader(*compiler-dispatcher*, #"direct-instance-type",
-  method (state :: <load-state>) => res :: <direct-instance-ctype>;
-    direct-type(load-sole-subobject(state), loading?: #t);
-  end method
-);
-
-
-define method dump-od (obj :: <singleton-ctype>, buf :: <dump-state>)
- => ();
-  dump-simple-object(#"singleton-type", buf,
-		     obj.base-class, obj.singleton-value);
-end method;
-
-add-od-loader(*compiler-dispatcher*, #"singleton-type",
-  method (state :: <load-state>) => res :: <singleton-ctype>;
-    let base-class = load-object-dispatch(state);
-    let object = load-object-dispatch(state);
-    assert-end-object(state);
-    make-canonical-singleton(object, base-class: base-class);
-  end method
-);
-
-
-define method dump-od (obj :: <byte-character-ctype>, buf :: <dump-state>)
- => ();
-  dump-simple-object(#"byte-character-type", buf, obj.base-class);
-end method;
-
-add-od-loader(*compiler-dispatcher*, #"byte-character-type",
-  method (state :: <load-state>) => res :: <byte-character-ctype>;
-    make(<byte-character-ctype>, base-class: load-sole-subobject(state));
-  end method
-);
-
-
-define method dump-od (obj :: <multi-value-ctype>, buf :: <dump-state>)
- => ();
-  dump-simple-object(#"multi-value-type", buf, obj.positional-types,
-  		     obj.min-values, obj.rest-value-type);
-end method;
-
-add-od-loader(*compiler-dispatcher*, #"multi-value-type",
-  method (state :: <load-state>) => res :: <multi-value-ctype>;
-    let positional = load-object-dispatch(state);
-    let min-val = load-object-dispatch(state);
-    let rest-type = load-object-dispatch(state);
-    assert-end-object(state);
-    make(<multi-value-ctype>, positional-types: positional,
-         min-values: min-val, rest-value-type: rest-type);
-  end method
-);
+add-make-dumper
+  (#"class-proxy", *compiler-dispatcher*, <proxy>,
+   list(info, #f, merge-and-set-info,
+	proxy-for, for:, #f),
+   load-external: #t);
 
 
 // Classes:
 
 define constant $class-dump-slots =
   list(info, #f, info-setter,
+       %ctype-extent, #f, set-or-check-extent,
        cclass-name, name:, #f,
        direct-superclasses, direct-superclasses:, #f,
        closest-primary-superclass, #f, closest-primary-superclass-setter,
@@ -215,14 +237,4 @@ add-make-dumper(#"defined-class", *compiler-dispatcher*, <defined-cclass>,
 add-make-dumper(#"limited-class", *compiler-dispatcher*, <limited-cclass>,
 		$class-dump-slots, load-external: #t);
 
-
-add-make-dumper(#"subclass-type", *compiler-dispatcher*, <subclass-ctype>,
-		list(base-class, base-class:, #f,
-		     subclass-of, of:, #f));
-
-
-add-make-dumper(#"class-proxy", *compiler-dispatcher*, <proxy>,
-  list(proxy-for, for:, #f),
-  load-external: #t
-);
 

@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.37 1996/05/01 14:23:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.38 1996/05/29 23:29:46 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -136,7 +136,7 @@ define method priminfo-result-type (info :: <primitive-info>)
     => res :: <values-ctype>;
   info.%priminfo-result-type
     | (info.%priminfo-result-type
-	 := specifier-type(info.priminfo-result-type-specifier));
+	 := info.priminfo-result-type-specifier.specifier-type.ctype-extent);
 end;
 
 

@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.56 1996/04/13 21:16:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.57 1996/05/29 23:29:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -231,13 +231,13 @@ end;
 define method initialize
     (op :: <truly-the>, #next next-method, #key guaranteed-type) => ();
   next-method();
-  op.derived-type := guaranteed-type;
+  op.derived-type := guaranteed-type.ctype-extent;
 end;
 
 
 define constant boolean-ctype
     = method () => boolean-ctype :: <ctype>;
-	specifier-type(#"<boolean>");
+	specifier-type(#"<boolean>").ctype-extent;
       end method;
 
 define class <instance?> (<operation>)
@@ -271,13 +271,8 @@ define method initialize
   nlx-info.nlx-throws := op;
 end;
 
-define constant catcher-ctype
-    = method () => catcher-ctype :: <ctype>;
-	specifier-type(#"<catcher>");
-      end method;
-
 define class <make-catcher> (<nlx-operation>)
-  inherited slot derived-type, init-function: catcher-ctype;
+  inherited slot derived-type = specifier-type(#"<catcher>").ctype-extent;
 end;
 
 define method initialize
@@ -366,7 +361,7 @@ end class;
 define abstract class <abstract-function-literal> (<leaf>)
   
   // All function literals are subclasses of <function>.
-  inherited slot derived-type, init-function: function-ctype;
+  inherited slot derived-type = function-ctype().ctype-extent;
   
 end;
 
@@ -497,7 +492,8 @@ define method initialize
   func.prologue
     := make(<prologue>, function: func, depends-on: #f,
 	    // ### The depends-on: shouldn't be needed, but Mindy is broken.
-	    derived-type: make-values-ctype(func.argument-types, #f));
+	    derived-type:
+	      make-values-ctype(func.argument-types, #f).ctype-extent);
 end;
 
 // <lambda>

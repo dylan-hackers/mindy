@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.46 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.47 1996/05/29 23:29:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -305,7 +305,7 @@ define method definition-site-for
     (component :: <component>, var :: <initial-variable>)
     => res :: <initial-definition>;
   make(<initial-definition>, var-info: var.var-info, definition: var,
-       derived-type: var.var-info.asserted-type);
+       derived-type: var.var-info.asserted-type.ctype-extent);
 end;
 
 define method definition-site-for
@@ -458,7 +458,7 @@ end;
 
 define method constant-derived-type (value :: <eql-ct-value>)
     => res :: <ctype>;
-  make-canonical-singleton(value)
+  make(<singleton-ctype>, value: value);
 end;
 
 define method make-literal-constant
@@ -468,7 +468,7 @@ define method make-literal-constant
   element(constants, value, default: #f)
     | (element(constants, value)
 	 := make(<literal-constant>,
-		 derived-type: constant-derived-type(value),
+		 derived-type: value.constant-derived-type.ctype-extent,
 		 value: value));
 end method;
 
@@ -482,7 +482,7 @@ define method make-definition-constant
 	  defn.defn-name);
   end;
   make(<definition-constant-leaf>,
-       derived-type: ct-value-cclass(value), const-defn: defn);
+       derived-type: value.ct-value-cclass.ctype-extent, const-defn: defn);
 end method;
 
 
@@ -491,7 +491,9 @@ define method make-initial-var
      var-info :: <variable-info>)
     => var :: <initial-variable>;
   let comp = builder.component;
-  let var = make(<initial-variable>, derived-type: of-type, var-info: var-info,
+  let var = make(<initial-variable>,
+		 derived-type: of-type.ctype-extent,
+		 var-info: var-info,
 		 next-initial-variable: comp.initial-variables,
 		 component: comp);
   comp.initial-variables := var;
@@ -523,7 +525,7 @@ define method make-ssa-var
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <ctype>)
  => res :: <ssa-variable>;
   make(<ssa-variable>,
-       derived-type: of-type,
+       derived-type: of-type.ctype-extent,
        var-info: make(<local-var-info>, asserted-type: of-type,
        		      debug-name: name));
 end method;
@@ -582,7 +584,7 @@ define method build-function-body
   let region = make(if (lambda?) <lambda> else <fer-function-region> end,
 		    source-location: source, name: name,
 		    argument-types: map(derived-type, arg-vars),
-		    result-type: result-type,
+		    result-type: result-type.ctype-extent,
 		    hidden-references: hidden-references?);
   push-body(builder, region);
   build-let(builder, policy, source, arg-vars, region.prologue);
@@ -626,7 +628,7 @@ define method build-defn-ref
     let temp = make-local-var(builder, #"temp", type);
     build-assignment(builder, policy, source, temp,
 		     make-operation(builder, <module-var-ref>, #(),
-				    derived-type: type,
+				    derived-type: type.ctype-extent,
 				    var: defn));
     temp;
   end;
@@ -640,7 +642,7 @@ define method build-defn-ref
   let temp = make-local-var(builder, #"temp", type);
   build-assignment(builder, policy, source, temp,
 		   make-operation(builder, <module-var-ref>, #(),
-				  derived-type: type,
+				  derived-type: type.ctype-extent,
 				  var: defn));
   temp;
 end method;

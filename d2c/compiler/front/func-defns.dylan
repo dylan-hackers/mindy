@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.7 1996/05/01 12:19:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/func-defns.dylan,v 1.8 1996/05/29 23:29:46 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -187,19 +187,27 @@ define method add-seal
     end;
     let new-seals = list(make(<seal-info>, types: types));
     for (old-seal in defn.generic-defn-seals)
-      select (compare-methods(types, old-seal.seal-types, #f))
-	#"more-specific", #"unordered" =>
-	  // The new seal is more specific than or the same as the old seals,
-	  // so we can ignore the new seal.
+      let all-subtype? = #t;
+      let all-supertype? = #t;
+      for (type1 in types,
+	   type2 in old-seal.seal-types,
+	   all-subtype? = #t then all-subtype? & csubtype?(type1, type2),
+	   all-supertype? = #t then all-supertype? & csubtype?(type2, type1),
+	   while: all-subtype? | all-supertype?)
+      finally
+	if (all-subtype?)
+	  // The new seal is completely enclosed by an existing seal.  Ignore
+	  // the new one.
 	  return();
-	#"less-specific" =>
-	  // The new seal is less specific than the old one, so we can blow off
-	  // the old one.
+	elseif (all-supertype?)
+	  // The new seal completely encloses the old seal.  Ignore the old
+	  // one.
 	  begin end;
-	otherwise =>
+	else
 	  // We need them both.
 	  new-seals := pair(old-seal, new-seals);
-      end select;
+	end if;
+      end for;
     end for;
     defn.generic-defn-seals := new-seals;
   end block;
@@ -401,14 +409,25 @@ define method ct-applicable-methods
     let definitely-applicable = #();
     let maybe-applicable = #();
     for (meth in seal-info.seal-methods | compute-seal-methods(seal-info, gf))
-      select (compare-methods(meth, call-types, #f))
-	#"disjoint" =>
-	  begin end;
-	#"less-specific", #"unordered" =>
+      block (next)
+	let definitely? = #t;
+	for (call-type in call-types,
+	     spec in meth.function-defn-signature.specializers)
+	  let spec-extent = spec.ctype-extent;
+	  unless (csubtype?(call-type, spec-extent))
+	    if (ctypes-intersect?(call-type, spec-extent))
+	      definitely? := #f;
+	    else
+	      next();
+	    end if;
+	  end unless;
+	end for;
+	if (definitely?)
 	  definitely-applicable := pair(meth, definitely-applicable);
-	otherwise =>
+	else
 	  maybe-applicable := pair(meth, maybe-applicable);
-      end select;
+	end if;
+      end block;
     end for;
     values(definitely-applicable, maybe-applicable);
   else
@@ -422,10 +441,14 @@ define method find-seal (gf :: <generic-definition>, call-types :: <list>)
     => res :: false-or(<seal-info>);
   block (return)
     for (seal-info in gf.generic-defn-seals)
-      select (compare-methods(call-types, seal-info.seal-types, #f))
-	#"more-specific", #"unordered" => return(seal-info);
-	otherwise => begin end;
-      end select;
+      block (next)
+	for (call-type in call-types, seal-type in seal-info.seal-types)
+	  unless (csubtype?(call-type, seal-type.ctype-extent))
+	    next();
+	  end unless;
+	end for;
+	return(seal-info);
+      end block;
     end for;
     #f;
   end block;
@@ -436,14 +459,19 @@ define method compute-seal-methods
     (seal-info :: <seal-info>, gf :: <generic-definition>)
     => methods :: <list>;
   let types = seal-info.seal-types;
-  seal-info.seal-methods
-    := choose(method (meth :: <method-definition>)
-		  => res :: <boolean>;
-		if (meth.method-defn-congruent?)
-		  compare-methods(meth, types, #f) ~== #"disjoint";
-		end;
-	      end method,
-	      gf.generic-defn-methods)
+  let methods = #();
+  for (meth in gf.generic-defn-methods)
+    block (next)
+      for (type in types,
+	   spec in meth.function-defn-signature.specializers)
+	unless (ctypes-intersect?(type, spec))
+	  next();
+	end unless;
+      end for;
+      methods := pair(meth, methods);
+    end block;
+  end for;
+  seal-info.seal-methods := methods;
 end method compute-seal-methods;
 
 
@@ -592,25 +620,8 @@ define method compare-methods
      arg-classes :: false-or(<simple-object-vector>))
     => res :: one-of(#"more-specific", #"less-specific", #"unordered",
 		     #"disjoint", #"ambiguous", #"unknown");
-  compare-methods(meth1.function-defn-signature.specializers, 
-		  meth2.function-defn-signature.specializers,
-		  arg-classes);
-end;
-
-define method compare-methods
-    (meth1 :: <method-definition>, specs2 :: <list>,
-     arg-classes :: false-or(<simple-object-vector>))
-    => res :: one-of(#"more-specific", #"less-specific", #"unordered",
-		     #"disjoint", #"ambiguous", #"unknown");
-  compare-methods(meth1.function-defn-signature.specializers, specs2,
-		  arg-classes);
-end;
-
-define method compare-methods
-    (specs1 :: <list>, specs2 :: <list>,
-     arg-classes :: false-or(<simple-object-vector>))
-    => res :: one-of(#"more-specific", #"less-specific", #"unordered",
-		     #"disjoint", #"ambiguous", #"unknown");
+  let specs1 = meth1.function-defn-signature.specializers;
+  let specs2 = meth2.function-defn-signature.specializers;
   block (return)
     let more-specific? = #f;
     let less-specific? = #f;
@@ -730,7 +741,9 @@ define method static-next-method-info
       return(#f);
     end unless;
     
-    let seal-info = find-seal(gf, defn.function-defn-signature.specializers);
+    let call-types = map(ctype-extent,
+			 defn.function-defn-signature.specializers);
+    let seal-info = find-seal(gf, call-types);
     unless (seal-info)
       return(#f);
     end unless;

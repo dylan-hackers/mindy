@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.41 1996/04/16 16:43:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.42 1996/05/29 23:31:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -10,8 +10,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 define variable *All-Classes* :: <stretchy-vector> = make(<stretchy-vector>);
 
 
-define abstract class <cclass> 
-    (<ctype>, <eql-ct-value>, <identity-preserving-mixin>)
+define abstract class <cclass> (<ctype>, <eql-ct-value>)
   //
   // The name, for printing purposes.
   slot cclass-name :: <name>, required-init-keyword: name:;
@@ -38,11 +37,9 @@ define abstract class <cclass>
   slot abstract? :: <boolean>, init-keyword: abstract:, init-value: #f;
   slot primary? :: <boolean>, init-keyword: primary:, init-value: #f;
 
-  // Type describing direct instances of this class.  Either a
-  // <direct-instance-ctype> (if concrete and there are subclasses), the
-  // class itself (if concrete and no subclasses) the empty type
-  // (if abstract), or #f is we haven't decided yet.
-  slot %direct-type :: false-or(<ctype>), init-value: #f;
+  // The direct-instance type for direct instances of this class, or #f
+  // if we haven't made one yet.
+  slot %direct-type :: false-or(<direct-instance-ctype>), init-value: #f;
 
   // The <subclass-ctype> for subclasses of this class, or #f if we haven't
   // allocated it yet.
@@ -126,6 +123,9 @@ define abstract class <cclass>
   slot class-heap-fields :: false-or(<simple-object-vector>),
     init-value: #f;
 end class;
+
+define sealed domain make (singleton(<cclass>));
+define sealed domain initialize (<cclass>);
 
 define method initialize
     (class :: <cclass>, #next next-method,
@@ -251,6 +251,9 @@ define abstract class <slot-info> (<eql-ct-value>, <identity-preserving-mixin>)
   slot slot-overrides :: <list>, init-value: #();
 end;
 
+define sealed domain make (singleton(<slot-info>));
+define sealed domain initialize (<slot-info>);
+
 define method print-message
     (lit :: <slot-info>, stream :: <stream>) => ();
   format(stream, "{<slot-descriptor> for %s introduced by %s}",
@@ -294,22 +297,33 @@ define class <instance-slot-info> (<slot-info>)
     init-keyword: slot-initialized?-slot:;
 end;
 
+define sealed domain make (singleton(<instance-slot-info>));
 
 define class <vector-slot-info> (<instance-slot-info>)
   slot slot-size-slot :: <instance-slot-info>,
     init-keyword: size-slot:;
 end;
 
+define sealed domain make (singleton(<vector-slot-info>));
+
 define class <class-slot-info> (<slot-info>)
 end;
+
+define sealed domain make (singleton(<class-slot-info>));
+define sealed domain initialize (<class-slot-info>);
 
 define class <each-subclass-slot-info> (<slot-info>)
   constant slot slot-positions :: <position-table> = make(<position-table>);
 end;
 
+define sealed domain make (singleton(<each-subclass-slot-info>));
+define sealed domain initialize (<each-subclass-slot-info>);
+
 define class <virtual-slot-info> (<slot-info>)
 end;
 
+define sealed domain make (singleton(<virtual-slot-info>));
+define sealed domain initialize (<virtual-slot-info>);
 
 
 define class <override-info> (<eql-ct-value>, <identity-preserving-mixin>)
@@ -338,6 +352,10 @@ define class <override-info> (<eql-ct-value>, <identity-preserving-mixin>)
     init-value: #f, init-keyword: init-function:;
 end;
 
+define sealed domain make (singleton(<override-info>));
+define sealed domain initialize (<override-info>);
+
+
 define method print-message
     (override :: <override-info>, stream :: <stream>) => ();
   format(stream, "{<override-descriptor> for %s at %s}",
@@ -363,24 +381,23 @@ end;
 
 // Ctype operations.
 
-define method direct-type (class :: <cclass>, #key loading?)
-    => res :: <ctype>;
-  class.%direct-type
-    | (class.%direct-type
-	 := if (class.abstract?)
-	      assert(~loading?);
-	      empty-ctype();
-	    elseif (~loading? & class.sealed? & class.subclasses.tail == #())
-	      class;
-	    else
-	      make(<direct-instance-ctype>, base-class: class);
-	    end);
-end method direct-type;
-
-
+// csubtype-dispatch{<cclass>,<cclass>}
+//
+// Check the class precedence list.
+// 
 define method csubtype-dispatch (type1 :: <cclass>, type2 :: <cclass>)
     => result :: <boolean>;
   member?(type2, type1.precedence-list);
+end method;
+
+// csubtype-dispatch{<limited-ctype>,<cclass>}
+//
+// A limited type is a subtype of a class iff the base class is a subtype
+// of that class.
+// 
+define method csubtype-dispatch(type1 :: <limited-ctype>, type2 :: <cclass>)
+    => result :: <boolean>;
+  csubtype?(type1.base-class, type2);
 end method;
 
 define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
@@ -406,13 +423,43 @@ define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
   end;
 end method;
 
-define method find-direct-classes(type :: <cclass>) => res :: false-or(<list>);
+// find-direct-classes{<cclass>}
+//
+// If the class is sealed, return all of the concrete subclass of it.
+// Otherwise, return #f because we can't tell at compile time what all
+// the possible direct classes are.
+//
+define method find-direct-classes (type :: <cclass>)
+    => res :: false-or(<list>);
   if (type.sealed?)
     choose(complement(abstract?), type.subclasses);
   else
     #f;
   end;
 end method;
+
+
+// ctype-extent-dispatch{<cclass>}
+//
+// If the class is sealed, make a union out of the extents of each possible
+// direct class.  Otherwise, just stick with the class.
+// 
+define method ctype-extent-dispatch (class :: <cclass>)
+    => res :: <ctype>;
+  if (class.sealed?)
+    let result = empty-ctype();
+    for (subclass in class.subclasses)
+      unless (subclass.abstract?)
+	let direct = make(<direct-instance-ctype>, base-class: subclass);
+	result := ctype-union(result, direct.ctype-extent);
+      end unless;
+    end for;
+    result;
+  else
+    class;
+  end if;
+end method ctype-extent-dispatch;
+
 
 
 // Class Precedence List computation
@@ -432,6 +479,10 @@ define class <class-precedence-description> (<object>)
   // Count of times this cpd appeards in some other cpd's after list.
   slot cpd-count :: <integer>, init-value: 0;
 end class;
+
+define sealed domain make (singleton(<class-precedence-description>));
+define sealed domain initialize (<class-precedence-description>);
+
 
 define constant compute-cpl = method (cl, superclasses)
   case
@@ -754,6 +805,9 @@ define class <layout-table> (<object>)
   slot layout-holes :: <list>,
     init-value: #(), init-keyword: holes:;
 end;
+
+define sealed domain make (singleton(<layout-table>));
+define sealed domain initialize (<layout-table>);
 
 define method copy-layout-table (layout :: <layout-table>)
   make(<layout-table>,
@@ -1383,12 +1437,95 @@ define class <defined-cclass> (<cclass>)
   slot class-defn :: <class-definition>, init-keyword: defn:;
 end class;
 
+define sealed domain make (singleton(<defined-cclass>));
+
 
 // Limited mumble classes.
 
-define class <limited-cclass> (<cclass>)
+define abstract class <limited-cclass> (<cclass>)
 end;
 
+define sealed domain make (singleton(<limited-cclass>));
+
+
+
+// Direct instance types.
+
+define class <direct-instance-ctype> (<limited-ctype>, <ct-value>)
+end class;
+
+define sealed domain make (singleton(<direct-instance-ctype>));
+
+define method print-object
+    (type :: <direct-instance-ctype>, stream :: <stream>) => ();
+  pprint-fields(type, stream, base-class: type.base-class);
+end;
+
+define method print-message
+    (type :: <direct-instance-ctype>, stream :: <stream>) => ();
+  format(stream, "direct-instance(%s)", type.base-class);
+end;
+
+define method make
+    (class == <direct-instance-ctype>, #next next-method,
+     #key base-class :: <cclass>)
+    => res :: <direct-instance-ctype>;
+  base-class.%direct-type | (base-class.%direct-type := next-method());
+end method make;
+
+define method ct-value-cclass (object :: <direct-instance-ctype>)
+    => res :: <cclass>;
+  specifier-type(#"<direct-instance>");
+end;
+
+// ctype-extent-dispatch{<direct-instance-ctype>}
+//
+// If the base-class is abstract, then there can be no instances of it.
+// Otherwise, check to see if the class is one of the ones we know the
+// extent of.
+// 
+define method ctype-extent-dispatch (type :: <direct-instance-ctype>)
+    => res :: <ctype>;
+  let class = type.base-class;
+  if (class.abstract?)
+    empty-ctype();
+  else
+    select (class)
+      specifier-type(#"<integer>") =>
+	// ### Should really be making an integer set.
+	make-canonical-limited-integer(class, #f, #f);
+      specifier-type(#"<extended-integer>") =>
+	// ### Should really be making an integer set.
+	make-canonical-limited-integer(class, #f, #f);
+      specifier-type(#"<character>") =>
+	// ### Should really be making a character set.
+	type;
+      specifier-type(#"<false>") =>
+	make(<singleton-ctype>, value: as(<ct-value>, #f), base-class: class);
+      specifier-type(#"<true>") =>
+	make(<singleton-ctype>, value: as(<ct-value>, #t), base-class: class);
+      specifier-type(#"<empty-list>") =>
+	make(<singleton-ctype>, value: as(<ct-value>, #()), base-class: class);
+      otherwise =>
+	type;
+    end select;
+  end if;
+end method ctype-extent-dispatch;
+
+
+// csubtype-dispatch{<limited-ctype>,<direct-instance-ctype>}
+//
+// A limited type is a subtype of a direct-instance-ctype iff the limited-ctype
+// has a single direct class, and it is the direct-instance-ctype's base-class.
+// 
+define method csubtype-dispatch
+    (type1 :: <limited-ctype>, type2 :: <direct-instance-ctype>)
+    => result :: <boolean>;
+  let direct-classes = type1.find-direct-classes;
+  direct-classes
+    & direct-classes.size == 1
+    & direct-classes.first == type2.base-class;
+end method csubtype-dispatch;
 
 
 // Subclass types.
@@ -1402,7 +1539,6 @@ define class <subclass-ctype>
 end class <subclass-ctype>;
 
 define sealed domain make (singleton(<subclass-ctype>));
-define sealed domain initialize (<subclass-ctype>);
 
 define method make (class == <subclass-ctype>, #next next-method,
 		    #key of, base-class)
@@ -1429,6 +1565,26 @@ define method ct-value-cclass (ctv :: <subclass-ctype>)
     => res :: <cclass>;
   specifier-type(#"<subclass>");
 end method ct-value-cclass;
+
+
+// ctype-extent-dispatch{<subclass-ctype>}
+//
+// If the class is sealed, then build a union of singletons for each possible
+// subclass.  Otherwise, just stick with the subclass-ctype.
+// 
+define method ctype-extent-dispatch (type :: <subclass-ctype>)
+    => res :: <ctype>;
+  let class = type.subclass-of;
+  if (class.sealed?)
+    reduce1(ctype-union,
+	    map(method (class :: <cclass>)
+		  make(<singleton-ctype>, value: class);
+		end method,
+		class.subclasses));
+  else
+    type;
+  end if;
+end method ctype-extent-dispatch;
 
 
 define method csubtype-dispatch
@@ -1466,6 +1622,9 @@ define class <proxy> (<ct-value>, <identity-preserving-mixin>)
   slot proxy-for :: <cclass>, required-init-keyword: for:;
 end;
 
+define sealed domain make (singleton(<proxy>));
+define sealed domain initialize (<proxy>);
+
 define constant $proxy-memo = make(<object-table>);
 
 define method make (class == <proxy>, #next next-method, #key for: cclass)
@@ -1481,32 +1640,3 @@ end;
 define method print-message (proxy :: <proxy>, stream :: <stream>) => ();
   format(stream, "proxy for %s", proxy.proxy-for);
 end;
-
-// Seals for file cclass.dylan
-
-// <instance-slot-info> -- subclass of <slot-info>
-define sealed domain make(singleton(<instance-slot-info>));
-// <vector-slot-info> -- subclass of <instance-slot-info>
-define sealed domain make(singleton(<vector-slot-info>));
-// <class-slot-info> -- subclass of <slot-info>
-define sealed domain make(singleton(<class-slot-info>));
-// <each-subclass-slot-info> -- subclass of <slot-info>
-define sealed domain make(singleton(<each-subclass-slot-info>));
-// <virtual-slot-info> -- subclass of <slot-info>
-define sealed domain make(singleton(<virtual-slot-info>));
-// <override-info> -- subclass of <identity-preserving-mixin>
-define sealed domain make(singleton(<override-info>));
-define sealed domain initialize(<override-info>);
-// <class-precedence-description> -- subclass of <object>
-define sealed domain make(singleton(<class-precedence-description>));
-define sealed domain initialize(<class-precedence-description>);
-// <layout-table> -- subclass of <object>
-define sealed domain make(singleton(<layout-table>));
-define sealed domain initialize(<layout-table>);
-// <defined-cclass> -- subclass of <cclass>
-define sealed domain make(singleton(<defined-cclass>));
-// <limited-cclass> -- subclass of <cclass>
-define sealed domain make(singleton(<limited-cclass>));
-// <proxy> -- subclass of <ct-value>, <identity-preserving-mixin>
-define sealed domain make(singleton(<proxy>));
-define sealed domain initialize(<proxy>);

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.41 1996/05/11 17:25:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.42 1996/05/29 23:31:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -223,7 +223,7 @@ define module compile-time-values
     <literal-vector>,
     <literal-simple-object-vector>,
     <literal-string>, concat-strings,
-    *compiler-dispatcher*, merge-ctv-infos;
+    *compiler-dispatcher*, merge-ctv-infos, merge-and-set-info;
 end;
 
 define module source
@@ -485,6 +485,7 @@ define module ctype
   use Random, import: {random-bits};
 
   use utils;
+  use od-format;
   use compile-time-values;
   use names;
   use variables;
@@ -500,17 +501,16 @@ define module ctype
     <unknown-ctype>, type-exp,
     <union-ctype>, members,
     <limited-ctype>, base-class,
-    <singleton-ctype>, make-canonical-singleton, singleton-value,
+    <singleton-ctype>, singleton-value,
     <limited-integer-ctype>, make-canonical-limited-integer,
     low-bound, high-bound,
-    <direct-instance-ctype>,
     <byte-character-ctype>, 
 
     // Operations on types.
     values-subtype?, values-types-intersect?, values-type-intersection,
     values-type-union, cinstance?, csubtype?, ctype-union, ctype-intersection,
     ctype-difference, ctypes-intersect?, ctype-eq?, ctype-neq?, 
-    find-direct-classes,
+    find-direct-classes, ctype-extent,
 
     // Shorthand constructor functions.
     ct-value-cclass, wild-ctype, object-ctype, function-ctype, empty-ctype,
@@ -519,7 +519,10 @@ define module ctype
     <type-specifier>, specifier-type,
 
     // Ctype extension generic functions.
-    csubtype-dispatch, ctype-intersection-dispatch;
+    ctype-extent-dispatch, csubtype-dispatch, ctype-intersection-dispatch,
+
+    // Hooks need by the dumper code.
+    %ctype-extent, %ctype-extent-setter;
 end;
 
 define module transformers
@@ -552,6 +555,7 @@ define module classes
   use common;
 
   use utils;
+  use od-format;
   use errors;
   use names;
   use definitions;
@@ -559,7 +563,6 @@ define module classes
   use compile-time-values;
   use ctype;
   use representation;
-  use od-format;
 
   use forwards, import: {<cclass>}, export: all;
 
@@ -571,7 +574,7 @@ define module classes
     all-slot-infos-setter, new-slot-infos, new-slot-infos-setter,
     override-infos, override-infos-setter, unique-id,
     set-and-record-unique-id, subclass-id-range-min,
-    subclass-id-range-max, direct-type,
+    subclass-id-range-max,
     direct-space-representation, direct-space-representation-setter,
     direct-speed-representation, direct-speed-representation-setter,
     general-space-representation, general-space-representation-setter,
@@ -605,6 +608,7 @@ define module classes
     <layout-table>, layout-length, layout-holes,
 
     <subclass-ctype>, subclass-of,
+    <direct-instance-ctype>,
 
     <proxy>, proxy-for,
 
