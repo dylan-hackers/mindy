@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.41 1995/12/05 22:14:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.42 1995/12/07 00:21:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -747,7 +747,11 @@ define method finalize-slot
     elseif (slot.slot-defn-init-function)
       let init-val = ct-eval(slot.slot-defn-init-function, #f);
       if (init-val)
-	info.slot-init-function := init-val;
+	if (cinstance?(init-val, function-ctype()))
+	  info.slot-init-function := init-val;
+	else
+	  compiler-warning("Invalid init-function: %s", init-val);
+	end;
       end;
     end;
   end;
@@ -910,11 +914,15 @@ define method class-defn-maker-function
 	       if (init-value == #t)
 		 return(#f);
 	       end;
-	       if (slot.slot-init-keyword)
-		 let key = slot.slot-init-keyword;
+	       let key = slot.slot-init-keyword;
+	       if (key)
+		 let type = slot.slot-type;
+		 let required? = ~override & slot.slot-init-keyword-required?;
+		 let default-bogus?
+		   = init-value & ~cinstance?(init-value, type);
 		 let key-info
-		   = make(<key-info>, key-name: key, type: slot.slot-type,
-			  required: slot.slot-init-keyword-required?,
+		   = make(<key-info>, key-name: key, type: type,
+			  required: required? | default-bogus?,
 			  default: init-value);
 		 add!(key-infos, key-info);
 	       end;
@@ -1518,16 +1526,18 @@ define method convert-top-level-form
 		  end;
 		end;
 	      
-	      if (slot.slot-init-keyword)
-		let key = slot.slot-init-keyword;
+	      let key = slot.slot-init-keyword;
+	      if (key)
+		let required? = ~override & slot.slot-init-keyword-required?;
 		let default = ~(init-value == #t) & init-value;
+		let default-bogus? = default & ~cinstance?(default, type);
+		let key-info = make(<key-info>, key-name: key, type: type,
+				    required: required? | default-bogus?,
+				    default: default);
 		let init-value-var
 		  = make-local-var(maker-builder,
 				   symcat(slot-name, "-init-value"),
 				   type);
-		let key-info = make(<key-info>, key-name: key, type: type,
-				    required: slot.slot-init-keyword-required?,
-				    default: default);
 		add!(key-infos, key-info);
 		if (default)
 		  add!(maker-args, init-value-var);
