@@ -335,6 +335,13 @@ define method optimize (component :: <component>, call :: <known-call>) => ();
   maybe-restrict-type(component, call, call.depends-on.source-exp.result-type);
 end;
 
+define method optimize (component :: <component>, call :: <mv-call>) => ();
+  let cluster = call.depends-on.dependent-next.source-exp;
+  if (maybe-expand-cluster(component, cluster))
+    change-call-kind(component, call, <unknown-call>);
+  end;
+end;
+
 
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
@@ -405,7 +412,7 @@ define method maybe-expand-cluster
     let target = cluster-dependency.dependent;
     let assign = cluster.definer;
     let new-defines = #f;
-    let new-depends-on = #f;
+    let new-depends-on = cluster-dependency.dependent-next;
     for (index from return-type.min-values - 1 to 0 by -1)
       let debug-name = as(<symbol>, format-to-string("result%d", index));
       let var-info = make(<local-var-info>, debug-name: debug-name,
@@ -419,7 +426,16 @@ define method maybe-expand-cluster
       new-depends-on := dep;
     end;
     assign.defines := new-defines;
-    target.depends-on := new-depends-on;
+    for (dep = target.depends-on then dep.dependent-next,
+	 prev = #f then dep,
+	 until: dep == cluster-dependency)
+    finally
+      if (prev)
+	prev.dependent-next := new-depends-on;
+      else
+	target.depends-on := new-depends-on;
+      end;
+    end;
     queue-dependent(component, assign);
     #t;
   else
