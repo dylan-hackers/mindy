@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.1 1994/03/24 21:49:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.2 1994/03/27 02:10:31 wlott Exp $
 *
 * This file does whatever.
 *
@@ -19,7 +19,7 @@
 
 #include "mindy.h"
 #include "thread.h"
-#include "interp.h"
+#include "driver.h"
 #include "func.h"
 #include "module.h"
 #include "lexer.h"
@@ -1085,9 +1085,6 @@ static void explain_reason(enum pause_reason reason)
 	CurThread = NULL;
 	ThreadChanged = FALSE;
 	FrameChanged = FALSE;
-	break;
-      case pause_DeadLocked:
-	printf("Nothing is runnable.\n");
 	break;
       case pause_Interrupted:
 	printf("Interrupted\n");
