@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.1 1994/12/12 13:01:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.2 1994/12/13 13:24:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -146,8 +146,7 @@ define class <lexical-var-info> (<variable-info>, <source-location-mixin>)
 end class;
 
 define class <module-var-info> (<variable-info>)
-  keyword asserted-type:, init-function: method () who-knows end;
-  slot var-defn :: <definition>;
+  slot var-defn :: <definition>, required-init-keyword: var-defn:;
 end class;
   
 
