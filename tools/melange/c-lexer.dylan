@@ -200,7 +200,7 @@ define /* exported */ token <identifier-token> :: <name-token> = 4;
 define token <type-name-token>  :: <name-token> = 5;
 // literals
 define /* exported */ token <integer-token> :: <literal-token> = 6;
-define token <character-token> :: <literal-token> = 7;
+define /* exported */ token <character-token> :: <literal-token> = 7;
 define token <string-literal-token> :: <literal-token> = 8;
 define token <cpp-token> :: <literal-token> = 9;
 // A whole bunch of reserved words
@@ -918,22 +918,10 @@ define method initialize (value :: <tokenizer>,
     value.cpp-decls := make(<deque>);
   end if;
 
-  if (defines)
-    // We must be able to initialize the cpp-table with user supplied
-    // additions (or subtractions).  If the supplied value is a
-    // string, we need to create a temporary tokenizer to convert it
-    // to a sequence of tokens.  Like all such sequences of "cpp"
-    // tokens, this one will be in reverse order.
-    for (cpp-value keyed-by key in defines)
-      select (cpp-value by instance?)
-	<integer> =>
-	  value.cpp-table[key] := list(make(<integer-token>,
-					    string: cpp-value.integer-to-string,
-					    generator: value));
-	<string> =>
+  local method parse-define-rhs(cpp-value)
 	  if (cpp-value.empty?)
 	    // Work around bug/misfeature in streams
-	    value.cpp-table[key] := #();
+	    #();
 	  else
 	    let sub-tokenizer
 	      = make(<tokenizer>, contents: cpp-value);
@@ -945,10 +933,36 @@ define method initialize (value :: <tokenizer>,
 		parse-error(value, "Error in cpp defines");
 	      end if;
 	    finally
-	      value.cpp-table[key] := list;
+	      list;
 	    end for;
 	  end if;
-      end select;
+	end method parse-define-rhs;
+
+  if (defines)
+    // We must be able to initialize the cpp-table with user supplied
+    // additions (or subtractions).  If the supplied value is a
+    // string, we need to create a temporary tokenizer to convert it
+    // to a sequence of tokens.  Like all such sequences of "cpp"
+    // tokens, this one will be in reverse order.
+    for (cpp-value keyed-by key in defines)
+      value.cpp-table[key] := 
+	select (cpp-value by instance?)
+	  <integer> =>
+	    list(make(<integer-token>,
+		      string: cpp-value.integer-to-string,
+		      generator: value));
+	  <string> =>
+	    parse-define-rhs(cpp-value);
+	  <list> =>
+	    pair(map(method (param)
+		       let tokenizer = make(<tokenizer>, contents: param);
+		       get-token(tokenizer, expand: #f);
+		       // XXX - Should check for end of stream, but this
+		       // data came from foo-portability.dylan.
+		     end,
+		     head(cpp-value)),
+		 parse-define-rhs(head(tail(cpp-value))));
+	end select;
     end for;
   end if;
 end method initialize;
@@ -1273,13 +1287,13 @@ end method skip-cpp-whitespace;
 // This matcher is used to match various literals.  Marks will be generated as
 // follows:
 //   [0, 1] and [2, 3] -- start and end of the entire match
-//   [3, 4] -- start and end of character literal contents
-//   [5, 6] -- start and end of string literal contents
-//   [7, 8] -- start and end of integer literal
+//   [4, 5] -- start and end of character literal contents
+//   [6, 7] -- start and end of string literal contents
+//   [10, 11] -- start and end of integer literal
 //
 define constant match-literal
   = make-regexp-positioner("^('(\\\\?.)'|"
-			     "\"([^\"]|\\\\\")*\"|"
+			     "\"(([^\\\\\"]|\\\\.)*)\"|"
 			     "((([1-9][0-9]*)|(0[xX][0-9a-fA-F]+)|(0[0-7]*))[lLuU]*))",
 			   byte-characters-only: #t, case-sensitive: #t);
 
@@ -1382,7 +1396,7 @@ define /* exported */ method get-token
     if (token?) return(token?) end if;
 
     let (start-index, end-index, dummy1, dummy2, char-start, char-end,
-	 string-start, string-end, int-start, int-end)
+	 string-start, string-end, dummy3, dummy4, int-start, int-end)
       = match-literal(contents, start: pos);
 
     if (start-index)
@@ -1399,7 +1413,6 @@ define /* exported */ method get-token
     end if;
 
     // None of our searches matched, so we haven't the foggiest what this is.
-    break();
     parse-error(state, "Major botch in get-token.");
   end block;
 end method get-token;

@@ -253,23 +253,23 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
   let generator
     = if (~found)
 	parse-error(state, "Ill formed #include directive.");
-      elseif (angle-end)
+      elseif (angle-start & angle-end)
 	// We've got a '<>' name, so we need to successively try each of the
 	// directories in include-path until we find it.  (Of course, if a
 	// full pathname is specified, we just use that.)
 	let name = copy-sequence(contents, start: angle-start + 1,
 				 end: angle-end - 1);
 	let (full-name, stream) = open-in-include-path(name);
-	// This is inefficient, but simplifies our logic.  We may wish to
-	// adjust later.
-	close(stream);
 	if (full-name)
+	  // This is inefficient, but simplifies our logic.  We may wish to
+	  // adjust later.
+	  close(stream);
 	  state.include-tokenizer
 	    := make(<tokenizer>, name: full-name, parent: state);
 	else
 	  parse-error(state, "File not found: %s", name);
 	end if;
-      else
+      elseif (quote-start & quote-end)
 	// We've got a '""' name, so we should look in the same directory as
 	// the current ".h" file.  (Of course, if a full pathname is
 	// specified, we just use that.)
@@ -305,6 +305,11 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
                                            #endif
 					   name));
 	end if;
+      else
+        parse-error(state, "Fatal error handling #include: %= %= %= %= %= %=",
+                    found, match-end,
+                    angle-start, angle-end,
+                    quote-start, quote-end);
       end if;
   unget-token(generator, make(<begin-include-token>, position: pos,
 			      generator: generator,
@@ -374,13 +379,13 @@ end method cpp-define;
 //			   byte-characters-only: #t, case-sensitive: #t);
 #if (~mindy)
 define multistring-checker preprocessor-match
-  ("define", "undef", "include", "ifdef", "ifndef", "if", "else", "elif",
-   "line", "endif", "error", "pragma");
+  ("define", "undef", "include", "include_next", "ifdef", "ifndef", "if",
+   "else", "elif", "line", "endif", "error", "pragma");
 define multistring-positioner do-skip-matcher("#", "/*");
 #else
 define constant preprocessor-match
-  = make-multistring-checker("define", "undef", "include", "ifdef",
-			     "ifndef", "if", "else", "elif", "line",
+  = make-multistring-checker("define", "undef", "include", "include_next",
+			     "ifdef", "ifndef", "if", "else", "elif", "line",
 			     "endif", "error", "pragma");
 define constant do-skip-matcher
   = make-multistring-positioner("#", "/*");
@@ -551,6 +556,11 @@ define method try-cpp
 	    state.position := i;
 	  end for;
 	"include" =>
+	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
+	    cpp-include(state, pos);
+	  end if;
+	"include_next" =>
+	  signal("Warning: doing the wrong thing with #include_next.");
 	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
 	    cpp-include(state, pos);
 	  end if;

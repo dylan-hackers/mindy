@@ -850,6 +850,11 @@ define constant longlong-type = make(<integer-type-declaration>,
 				     name: "long long",
 				     dylan-name: "<integer>",
 				     size: $long-int-size * 2);
+define constant unsigned-longlong-type = make(<integer-type-declaration>,
+					      accessor: "unsigned-longlong-at",
+					      name: "unsigned long long",
+					      dylan-name: "<integer>",
+					      size: $longlong-int-size);
 define constant char-type = make(<integer-type-declaration>,
 				 accessor: "signed-byte-at",
 				 name: "char",

@@ -77,13 +77,13 @@ define module c-lexer
     <tokenizer>, cpp-table, cpp-decls, <token>, token-id, generator,
     <simple-token>, <reserved-word-token>, <punctuation-token>,
     <literal-token>, <ei-token>, <name-token>, <type-specifier-token>,
-    <identifier-token>, <integer-token>, <struct-token>, <short-token>,
-    <long-token>, <int-token>, <char-token>, <signed-token>, <unsigned-token>,
-    <float-token>, <double-token>, <void-token>, <union-token>, <enum-token>,
-    <minus-token>, <tilde-token>, <bang-token>, <alien-name-token>,
-    <macro-parse-token>, <cpp-parse-token>, string-value, value, parse-error,
-    unget-token, add-typedef, get-token, include-path, check-cpp-expansion,
-    open-in-include-path
+    <identifier-token>, <integer-token>, <character-token>, <struct-token>,
+    <short-token>, <long-token>, <int-token>, <char-token>, <signed-token>,
+    <unsigned-token>, <float-token>, <double-token>, <void-token>,
+    <union-token>, <enum-token>, <minus-token>, <tilde-token>, <bang-token>,
+    <alien-name-token>, <macro-parse-token>, <cpp-parse-token>, string-value,
+    value, parse-error, unget-token, add-typedef, get-token, include-path,
+    check-cpp-expansion, open-in-include-path
 end module c-lexer;
 
 define module portability
@@ -97,6 +97,7 @@ define module portability
     $pointer-size, $function-pointer-size,
     $integer-size, $short-int-size,
     $long-int-size, $char-size,
+    $longlong-int-size,
     $float-size, $double-float-size,
     $long-double-size;
 end module portability;

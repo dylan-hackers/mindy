@@ -57,12 +57,17 @@ define constant $default-defines
 
       // The following six declarations should be removed someday, as soon as 
       // we fix a bug in MINDY.
-      "__GNUC__", "2",
-      "__GNUC_MINPR__", "7",
-      "__signed__", "",
-      "__const", "",
-      "__CONSTVALUE", "",
-      "__CONSTVALUE2", "",
+      //"__GNUC__", "2",
+      //"__GNUC_MINPR__", "7",
+      //"__signed__", "",
+      //"__const", "",
+      //"__CONSTVALUE", "",
+      //"__CONSTVALUE2", "",
+
+      // Parameterized macros which remove various GCC extensions from our
+      // source code. The last item in the list is the right-hand side of
+      // the define; all the items preceding it are named parameters.
+      "__attribute__", #(#("x"), ""), 
 
       "__ELF__", "",
       "unix", "",
@@ -76,7 +81,8 @@ define constant $default-defines
       "__linux", ""];
   
 define constant linux-include-directories
-  = #["/usr/local/include", "/usr/i386-linux/include", "/usr/include"];
+  = #["/usr/local/include", "/usr/i386-linux/include", "/usr/include",
+      "/usr/include/linux"];
 
 for (dir in linux-include-directories)
   push-last(include-path, dir);
@@ -95,6 +101,7 @@ end for;
 define constant $integer-size :: <integer> = 4;
 define constant $short-int-size :: <integer> = 2;
 define constant $long-int-size :: <integer> = 4;
+define constant $longlong-int-size :: <integer> = 8;
 define constant $char-size :: <integer> = 1;
 define constant $float-size :: <integer> = 4;
 define constant $double-float-size :: <integer> = 8;

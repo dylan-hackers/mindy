@@ -840,7 +840,6 @@ define method get-token
     end if;
 
     // None of our searches matched, so we haven't the foggiest what this is.
-    break();
     lex-error(state, "Major botch in get-token.");
   end block;
 end method get-token;
