@@ -17,8 +17,14 @@ define macro without-bounds-checks
     => {without-bounds-checks ?body end}
 
   {without-bounds-checks ?:body end}
-    => {let ?=element = %element;
-        let ?=element-setter = %element-setter;
+    => {/* To get the real without-bounds-checks, submit three hand-written
+           copies of form 27B-6 to The Board. Please include a copy
+           of your automated theorem prover and its result output on
+           your code to show that the code indeed doesn't need bounds checks.
+
+
+        let ?=element = %element;
+        let ?=element-setter = %element-setter; */
         ?body}
 end;
 
