@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.155.2.2 2004/10/17 19:16:52 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.155.2.3 2004/10/17 23:14:45 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -565,7 +565,7 @@ AC_CHECK_FUNCS(getrlimit getrusage)
 #	Look for GTK+, set GTK_CFLAGS and GTK_LIBS
 #--------------------------------------------------------------------
 
-AC_ARG_WITH(gtk, [  --without-gtk           Disable the GTK and GLIB bindings],,with_gtk=yes)
+AC_ARG_WITH(gtk, [  --with-gtk           Enable the GTK and GLIB bindings],,with_gtk=no)
 case $with_gtk in
 no)   HAVE_GTK=no
       ;;
@@ -578,7 +578,7 @@ AC_SUBST(HAVE_GTK)
 #	Look for Carbon, set CARBON_CFLAGS and CARBON_LIBS
 #--------------------------------------------------------------------
 
-AC_ARG_WITH(carbon, [  --without-carbon           Disable the Carbon bindings],,with_carbon=yes)
+AC_ARG_WITH(carbon, [  --with-carbon           Enable the Carbon bindings],,with_carbon=no)
 case $with_carbon in
 no)   HAVE_CARBON=no
       ;;
@@ -1180,10 +1180,3 @@ case $SCENARIO in
 	echo "Unknown build scenario! This is a bug."
 	;;
 esac
-if test "$srcdir" != "$buildroot"; then
-    echo
-    echo "Warning: Your source directory does not appear to be the same as"
-    echo "your build directory. Note that several machine-generated source"
-    echo "files will be created in the source hierarchy instead of"
-    echo "the build hierarchy."
-fi
