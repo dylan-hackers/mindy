@@ -1,6 +1,6 @@
 module: parsergen
 author: William Lott, translated to Dylan by Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.1 1996/09/19 09:48:03 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/parsergen.dylan,v 1.2 1996/09/29 03:53:51 rgs Exp $
 
 // **********************************************************************
 // Copyright (c) 1994, 1996 Carnegie Mellon University, all rights reserved.
@@ -335,7 +335,7 @@ define function compute-token-union-firsts (grammar :: <grammar>) => ();
       (if (union.grammar-symbol-first ~== #())
 	 union.grammar-symbol-first;
        else
-	 let results = #();
+	 let results :: <list> = #();
 	 for (member-name in union.token-union-members)
 	   let member = find-grammar-symbol(grammar, member-name);
 	   select (member by instance?)
@@ -407,7 +407,7 @@ end function compute-firsts;
 //
 define inline function map-items
     (function :: <function>, item-set :: <item-set>) => ();
-  let productions-added = #();
+  let productions-added :: <list> = #();
   local method grovel (production :: <production>, dot-position :: <integer>)
 	  function(production, dot-position);
 	  let right-side = production.production-right-side;
@@ -456,7 +456,7 @@ define function compute-state (grammar :: <grammar>, kernel-items :: <list>)
      | begin
 	 let state = make(<state>, number: grammar.grammar-num-states, 
 			  kernels: item-set);
-	 let gotos = #();
+	 let gotos :: <list> = #();
 	 grammar.grammar-all-states 
 	   := add!(grammar.grammar-all-states, state);
 	 grammar.grammar-num-states := 1 + grammar.grammar-num-states;
@@ -515,7 +515,7 @@ define function compute-initial-lookaheads (grammar :: <grammar>) => ();
   end;
   for (state in grammar.grammar-all-states)
     for (kernel-item in item-set-items(state.state-kernels))
-      let done = #();
+      let done :: <list> = #();
       local 
 	method grovel (item :: <item>, lookahead :: false-or(<token>))
 	 => ();
@@ -702,7 +702,7 @@ end function add-action;
 define function compute-actions (grammar :: <grammar>) => ();
   for (state in grammar.grammar-all-states)
     for (kernel-item in state.state-kernels.item-set-items)
-      let done = #();
+      let done :: <list> = #();
       local
 	method grovel (item :: <item>, lookahead :: <terminal>)
 	  let a-prod = item.item-production;
@@ -787,7 +787,7 @@ end function add-gotos;
 define function compact-gotos (gotos :: <list>) => gotos :: <list>;
   map(method (goto :: <list>) => something :: <pair>;
 	let nonterm = goto.head;
-	let counts = #();
+	let counts :: <list> = #();
 	let most-common = #();
 	let occurrences = 0;
 	for (transition in goto.tail)
@@ -841,7 +841,7 @@ define function compact-gotos (gotos :: <list>) => gotos :: <list>;
 end function compact-gotos;
 
 define function compute-gotos (grammar :: <grammar>) => gotos :: <list>;
-  let gotos = #();
+  let gotos :: <list> = #();
   for (state in grammar.grammar-all-states)
     gotos := add-gotos(gotos, state.state-number, state.state-gotos);
   end for;
@@ -1104,7 +1104,7 @@ define function emit-log-file (grammar :: <grammar>, file :: <stream>) => ();
     print-state(state, "    ", "", file);
     new-line(file);
     begin
-      let actions = #();
+      let actions :: <list> = #();
       for (action in state.state-actions)
 	let entry = assoc(action.tail, actions, test: \=);
 	if (entry)
