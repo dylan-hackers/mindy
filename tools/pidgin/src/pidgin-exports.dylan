@@ -7,6 +7,7 @@ define library pidgin
   use streams;
   use format;
   use standard-io;
+  use string-extensions;
   use parse-arguments;
   use parser-utilities;
   use ansi-c;
@@ -23,6 +24,7 @@ define module pidgin
   use format;
   use standard-io;
   use parse-arguments;
+  use substring-search;
   use parse-conditions;
   use ansi-c;
   use c-parser;
