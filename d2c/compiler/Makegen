@@ -1,16 +1,6 @@
-#if ($features{'compiled_for_win32'}) {
-#	push(@compile_commands, 
-#    	sprintf($host_platform{'recursive_make_command'},
-#             "..\..\tools\parsergen", ""));
-#} else {
-	push(@compile_commands, 
-    	sprintf($host_platform{'recursive_make_command'},
-        	"../../tools/parsergen", ""));
-    # Make sure melange is built before we attempt to build dig
-    push(@compile_commands,
-        sprintf($host_platform{'recursive_make_command'},
-            "../../tools/melange", ""));
-#}
+push(@compile_commands, 
+     sprintf($host_platform{'recursive_make_command'},
+	     "../../tools/parsergen", ""));
 
 &compile_subdirs(
     'base',
