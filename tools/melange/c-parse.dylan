@@ -6055,7 +6055,7 @@ define constant *production-table* = make(<vector>, size: 136);
                         write-element(*standard-error*, '[');
                         force-output(*standard-error*);
                       end if;
-                      push-include-level($state);
+                      push-include-level($state, $r1.string-value);
                   end,
                   temp1);
            end);
@@ -6192,10 +6192,21 @@ end;
 // declarations in the returned parse state.
 //
 define method parse
-    (file :: <string>, #key defines, verbose)
+    (files :: <sequence> /* of <string> */, #key defines, verbose)
  => (result :: <parse-state>);
-  let tokenizer = make(<tokenizer>, source: file,
-		       defines: defines);
+  let tokenizer
+    = if (files.size == 1)	
+        make(<tokenizer>, source: files.first, defines: defines);
+      else
+        let stream = make(<byte-string-stream>, contents: "",
+                          direction: #"input-output");
+        for (file in files)
+          format(stream, "#include \"%s\"\n", file);
+        end for;
+	stream.stream-position := #"start";
+        make(<tokenizer>, name: "<top-level>", source: stream,
+	     defines: defines);
+      end if;
 
   let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
   parse-state.verbose := verbose;

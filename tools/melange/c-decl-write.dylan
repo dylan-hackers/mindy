@@ -675,7 +675,7 @@ define method write-declaration
 	for (count from 1, arg in params)
 	  if (count > 1) write(stream, ", ") end if;
 	  if (instance?(arg, <varargs-declaration>))
-	    write(arg.stream, arg.dylan-name);
+	    write(stream, arg.dylan-name);
 	  elseif (arg.direction == #"in-out" | arg.direction == #"out")
 	    format(stream, "%s-ptr", arg.dylan-name);
 	  else

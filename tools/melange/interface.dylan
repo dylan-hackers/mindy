@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.14 1996/09/28 20:12:32 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.15 1996/10/30 19:24:54 rgs Exp $
 
 //======================================================================
 //
@@ -156,27 +156,37 @@ end method process-mappings;
 //
 define method process-imports
     (options :: <container-options>, find-decl :: <function>)
- => (imports :: <explicit-key-collection>, import-all? :: <boolean>);
+ => (imports :: <table>, import-all? :: <boolean>,
+     file-imports :: <table>);
 
-  let import-list = options.imports;
-  let imports :: <explicit-key-collection> = make(<object-table>);
-  let import-all? :: <boolean> = import-list.empty?;
-    
-  for (elem in import-list)
-    if (instance?(elem, <sequence>))
-      for (import in elem)
-	if (instance?(import, <pair>))
-	  imports[import.head.find-decl] := as(<string>, import.tail);
-	else
-	  imports[import.find-decl] := #t;
-	end if;
-      end for;
+  let imports = make(<table>);
+  for (import in options.global-imports) 
+    if (instance?(import, <pair>))
+      imports[import.head.find-decl] := as(<string>, import.tail);
     else
-      import-all? := #t;
+      imports[import.find-decl] := #t;
     end if;
   end for;
-  do(method (name) imports[name.find-decl] := #f end method, options.exclude);
-  values(imports, import-all?);
+  let import-all? :: <boolean> = (options.global-import-mode ~== #"none");
+    
+  let file-imps = make(<string-table>);
+  for (imp-sequence keyed-by file in options.file-imports)
+    let new-table = (file-imps[file] := make(<table>));
+    for (import in imp-sequence) 
+      if (instance?(import, <pair>))
+	new-table[import.head.find-decl] := as(<string>, import.tail);
+      else
+	new-table[import.find-decl] := #t;
+      end if;
+    end for;
+  end for;
+
+  do(method (name)
+       let decl = find-decl(name);
+       exclude-decl(decl);
+       imports[decl] := #f;
+     end method, options.exclude);
+  values(imports, import-all?, file-imps);
 end method process-imports;
 
 // Given one or more <container-options>s, merge them all together (with
@@ -394,12 +404,16 @@ define variable target-switch :: <symbol> = #"all";
 //
 define method process-parse-state
     (state :: <parse-state>, out-stream :: <stream>, #key verbose) => ();
-  if (~state.include-file)
+  if (~state.include-files)
     error("Missing #include in 'define interface'");
   end if;
-  let (full-name, stream) = open-in-include-path(state.include-file);
-  unless (full-name) error("File not found: %s", state.include-file) end;
-  close(stream); // rgs: This is inefficient -- we should use the open stream.
+  let full-names = make(<vector>, size: state.include-files.size);
+  for (name in state.include-files, index from 0)
+    let (full-name, stream) = open-in-include-path(name);
+    unless (full-name) error("File not found: %s", name) end;
+    close(stream); // This is inefficient -- we should use the open stream
+    full-names[index] := full-name;
+  end for;
   
   let defines = make(<equal-table>);
   for (i from 0 below $default-defines.size by 2)
@@ -413,7 +427,7 @@ define method process-parse-state
   end for;
 
   let c-state
-    = c-parse(full-name, defines: defines, verbose: verbose);
+    = c-parse(full-names, defines: defines, verbose: verbose);
 
   // The ordering of some of the following steps is important.  We must
   // process all of the clauses before doing apply-options so that any
@@ -426,28 +440,33 @@ define method process-parse-state
   process-mappings(state.container-options, find-decl);
   do(rcurry(process-clause, state, c-state), state.clauses);
 
-  let (imports, import-all?) = process-imports(state.container-options,
-					       find-decl);
-  let decls = declaration-closure(c-state, imports, import-all?);
+  let (imports, import-all?, file-imports)
+    = process-imports(state.container-options, find-decl);
+  let decls = declaration-closure(c-state, full-names,
+				  state.container-options.excluded-files,
+				  imports,
+				  file-imports,
+				  state.container-options.global-import-mode,
+				  state.container-options.file-import-modes);
   let (#rest opts) = merge-container-options(state.container-options);
   for (decl in decls) apply(apply-options, decl, opts) end for;
 
   if (target-switch ~= #"all")
     melange-target := target-switch;
-    let load-string = write-file-load(vector(full-name),
+    let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
     write-mindy-includes(state.mindy-include-file, decls);
     do(rcurry(write-declaration, load-string, out-stream), decls);
   else
     write(out-stream, "#if (mindy)\n");
     melange-target := #"mindy";
-    let load-string = write-file-load(vector(full-name),
+    let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
     write-mindy-includes(state.mindy-include-file, decls);
     do(rcurry(write-declaration, load-string, out-stream), decls);
     write(out-stream, "#else\n");
     melange-target := #"d2c";
-    let load-string = write-file-load(vector(full-name),
+    let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
     write-mindy-includes(state.mindy-include-file, decls);
     do(rcurry(write-declaration, load-string, out-stream), decls);

@@ -258,11 +258,14 @@ define class <name-mapper-token> (<reserved-word-token>) end class;
 define class <import-token> (<reserved-word-token>) end class;
 define class <prefix-token> (<reserved-word-token>) end class;
 define class <exclude-token> (<reserved-word-token>) end class;
+define class <exclude-file-token> (<reserved-word-token>) end class;
 define class <rename-token> (<reserved-word-token>) end class;
 define class <mapping-token> (<reserved-word-token>) end class;
 define class <equate-token> (<reserved-word-token>) end class;
 define class <superclass-token> (<reserved-word-token>) end class;
 define class <all-token> (<reserved-word-token>) end class;
+define class <none-token> (<reserved-word-token>) end class;
+define class <all-recursive-token> (<reserved-word-token>) end class;
 define class <function-token> (<reserved-word-token>) end class;
 define class <map-result-token> (<reserved-word-token>) end class;
 define class <equate-result-token> (<reserved-word-token>) end class;
@@ -357,11 +360,14 @@ define constant reserved-words
 	   "import:", <import-token>,
 	   "prefix:", <prefix-token>,
 	   "exclude:", <exclude-token>,
+	   "exclude-file:", <exclude-file-token>,
 	   "rename:", <rename-token>,
 	   "map:", <mapping-token>,
 	   "equate:", <equate-token>,
 	   "superclasses:", <superclass-token>,
 	   "all", <all-token>,
+	   "none", <none-token>,
+	   "all-recursive", <all-recursive-token>,
            "function", <function-token>,
            "map-result:", <map-result-token>,
            "equate-result:", <equate-result-token>,
@@ -671,6 +677,8 @@ define sealed domain make(singleton(<import-token>));
 define sealed domain make(singleton(<prefix-token>));
 // <exclude-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<exclude-token>));
+// <exclude-file-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<exclude-file-token>));
 // <rename-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<rename-token>));
 // <mapping-token> -- subclass of <reserved-word-token>
@@ -681,6 +689,10 @@ define sealed domain make(singleton(<equate-token>));
 define sealed domain make(singleton(<superclass-token>));
 // <all-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<all-token>));
+// <none-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<none-token>));
+// <all-recursive-token> -- subclass of <reserved-word-token>
+define sealed domain make(singleton(<all-recursive-token>));
 // <function-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<function-token>));
 // <map-result-token> -- subclass of <reserved-word-token>

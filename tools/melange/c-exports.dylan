@@ -84,6 +84,7 @@ define module c-parse
   use self-organizing-list;
   use c-lexer;
   use streams;
+  use format;
   use standard-io;
   create
     <parse-state>, <parse-file-state>, <parse-type-state>, <parse-cpp-state>,
@@ -128,7 +129,7 @@ define module c-declarations
     argument-direction-setter, constant-value-setter, getter-setter,
     setter-setter, read-only-setter, sealed-string-setter, excluded?-setter,
     exclude-slots, equate, remap, rename, superclasses-setter, pointer-equiv,
-    dylan-name,
+    dylan-name, exclude-decl,
 
     // "Import declarations phase" 
     declaration-closure, // also calls compute-closure

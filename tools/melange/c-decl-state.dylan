@@ -62,11 +62,57 @@ end class <parse-state>;
 define class <parse-file-state> (<parse-state>) 
   // Declarations is an ordered list of all declarations made withing a single
   // ".h" file.
-  slot declarations :: <deque>;
-  // The following slots are used to change and restore "per-include-file"
-  // slots.  The other slots remain valid across all include files.
-  slot declarations-stack :: <deque>;
+  slot declarations :: <deque> = make(<deque>);
+  slot current-file :: <string> = "<top-level>";
+  slot recursive-files-stack :: <deque> = make(<deque>);
+  // maps a filename into a sequence of files which it recursively includes
+  slot recursive-include-table :: <table> = make(<string-table>);
+  // maps a filename into a sequence of declarations from that file
+  slot recursive-declaration-table :: <table> = make(<string-table>);
 end class;
+
+define method initialize (value :: <parse-file-state>, #key)
+  value.objects := make(<string-table>);
+  value.structs := make(<string-table>);
+  value.pointers := make(<object-table>);
+  value.pointers[void-type] := make(<pointer-declaration>, referent: void-type,
+				    dylan-name: "<machine-pointer>",
+				    equated: #t,
+				    name: "statically-typed-pointer");
+end method initialize;
+
+// Push-include-level informs the <parse-state> that it is now processing a
+// recursive include file and should therefore treat declarations somewhat
+// differently.
+//
+define method push-include-level
+    (state :: <parse-file-state>, file :: <string>)
+ => (state :: <parse-file-state>);
+  let old-file = state.current-file;
+  state.recursive-include-table[old-file] :=
+    pair(file, element(state.recursive-include-table, old-file, default: #()));
+  state.recursive-declaration-table[old-file] := state.declarations;
+  state.declarations :=
+    (element(state.recursive-declaration-table, file, default: #f)
+       | make(<deque>));
+  push(state.recursive-files-stack, old-file);
+  state.current-file := file;
+  state;
+end method push-include-level;
+
+// Pop-include-level informs the <parse-state> that it is finished processing
+// a recursive include file.
+//
+define method pop-include-level
+    (state :: <parse-file-state>) => (state :: <parse-file-state>);
+  if (state.recursive-files-stack.empty?)
+    parse-error(state, "Bad pop-include-level");
+  end if;
+  state.recursive-declaration-table[state.current-file] := state.declarations;
+  state.current-file := pop(state.recursive-files-stack);
+  state.declarations := state.recursive-declaration-table[state.current-file];
+  state;
+end method pop-include-level;
 
 // <parse-value-state> is used for evaluating type names or expressions.  The
 // parse will simply return a value, and thus we don't need any of the
@@ -81,6 +127,20 @@ define class <parse-value-state> (<parse-state>) end class;
 define class <parse-type-state> (<parse-value-state>) end class;
 define class <parse-macro-state> (<parse-value-state>) end class;
 define class <parse-cpp-state> (<parse-value-state>) end class;
+
+define method initialize
+    (value :: <parse-value-state>,
+     #key parent :: type-union(<parse-state>, <false>))
+  if (parent)
+    value.objects := parent.objects;
+    value.structs := parent.structs;
+    value.pointers := parent.pointers;
+  else
+    value.objects := make(<string-table>);
+    value.structs := make(<string-table>);
+    value.pointers := make(<object-table>);
+  end if;
+end method initialize;
 
 //----------------------------------------------------------------------
 
@@ -100,58 +160,9 @@ define method table-protocol (table :: <string-table>)
   values(\=, fast-string-hash);
 end method;
 
-define method initialize (value :: <parse-file-state>, #key)
-  value.objects := make(<string-table>);
-  value.structs := make(<string-table>);
-  value.pointers := make(<object-table>);
-  value.pointers[void-type] := make(<pointer-declaration>, referent: void-type,
-				    dylan-name: "<machine-pointer>",
-				    equated: #t,
-				    name: "statically-typed-pointer");
-  value.declarations := make(<deque>);
-  value.declarations-stack := make(<deque>);
-end method initialize;
-
-define method initialize
-    (value :: <parse-value-state>,
-     #key parent :: type-union(<parse-state>, <false>))
-  if (parent)
-    value.objects := parent.objects;
-    value.structs := parent.structs;
-    value.pointers := parent.pointers;
-  else
-    value.objects := make(<string-table>);
-    value.structs := make(<string-table>);
-    value.pointers := make(<object-table>);
-  end if;
-end method initialize;
-
 //----------------------------------------------------------------------
 // Functions to be called from within c-parse
 //----------------------------------------------------------------------
-
-// Push-include-level informs the <parse-state> that it is now processing a
-// recursive include file and should therefore treat declarations somewhat
-// differently.
-//
-define method push-include-level
-    (state :: <parse-state>) => (state :: <parse-state>);
-  push(state.declarations-stack, state.declarations);
-  state.declarations := make(<deque>);
-  state;
-end method push-include-level;
-
-// Pop-include-level informs the <parse-state> that it is finished processing
-// a recursive include file.
-//
-define method pop-include-level
-    (state :: <parse-state>) => (state :: <parse-state>);
-  if (state.declarations-stack.size == 0)
-    parse-error(state, "Bad pop-include-level");
-  end if;
-  state.declarations := pop(state.declarations-stack);
-  state;
-end method pop-include-level;
 
 // Another method for the "parse-error" generic.  This one accepts a
 // <parse-state> and tries to use it to figure out the error location.
@@ -358,17 +369,17 @@ end method declare-objects;
 // "High level" functions for manipulating the parse state.
 //----------------------------------------------------------------------
 
-// This adds a new declaration to the "declarations" slot.  Push-include-level
-// and Pop-include-level, make sure that any declarations arising from
-// recursive include files will be conveniently misplaced so that
-// "define-interface" module will only see the "top-level" declarations.
+// This adds a new declaration to the "declarations" slot, and label it with
+// the appropriate source file name (taken from the state).
 //
 define method add-declaration
-    (state :: <parse-state>, declaration :: <declaration>)
+    (state :: <parse-file-state>, declaration :: <declaration>)
  => (declaration :: <declaration>);
   push-last(state.declarations, declaration);
   declaration;
 end method add-declaration;
+
+define constant null-table = make(<table>);
 
 // This is the exported routine for determining which declarations to include
 // in Melange's output routine.  It walks through all of the non-excluded top
@@ -377,21 +388,60 @@ end method add-declaration;
 // other declarations are required to have a complete & consistent interface.
 //
 define method declaration-closure
-    (state :: <parse-state>, imports :: <explicit-key-collection>,
-     import-all? :: <boolean>)
+    (state :: <parse-file-state>,
+     files :: <sequence>, excluded-files :: <sequence>,
+     imports :: <table>, file-imports :: <table>,
+     import-mode :: <symbol>, file-import-modes :: <table>)
  => (ordered-decls :: <deque>);
+  let files-processed :: <table> = make(<string-table>);
+  for (file in excluded-files)
+    // By saying that this file has already been processed, we stop it from
+    // being included in a recursive file walk.
+    files-processed[file] := file;
+    for (decl in state.recursive-declaration-table[file])
+      // By saying that each declaration has been processed, we prevent it
+      // from being emitted, even if it is explicitly used by an imported
+      // symbol.
+      decl.declared? := #t;
+    end for;
+  end for;    
   let ordered-decls = make(<deque>);
+  let recursive-files? = (import-mode == #"all-recursive");
+  local method declaration-closure-aux
+	    (decls :: <sequence>, file-import-table :: <table>,
+	     subfiles :: <sequence>) => ();
+	  for (decl in decls)
+	    compute-closure(ordered-decls, decl);
+	    let import = (element(imports, decl, default: #f)
+			    | element(file-import-table, decl, default: #f));
+	    if (instance?(import, <string>)) rename(decl, import) end if;
+	  end for;
+	  for (file in subfiles)
+	    unless (element(files-processed, file, default: #f))
+	      files-processed[file] := file;
+	      let sub = if (recursive-files?)
+			  element(state.recursive-include-table, file,
+				  default: #());
+			else
+			  #();
+			end if;
+	      let decls = if (element(file-import-modes, file, default: #"all")
+				== #"all")
+			    state.recursive-declaration-table[file];
+			  else
+			    element(file-imports, file, default: null-table)
+			      .key-sequence;
+			  end if;
+	      declaration-closure-aux(decls, element(file-imports, file,
+						     default: null-table),
+				      sub);
+	    end unless;
+	  end for;
+	end method declaration-closure-aux;
 
-  // Because we might explicitly import things that are not top-level
-  // declarations, we must look at every item included in "imports" as well as
-  // the list of top-level declarations.
-  for (decl in concatenate(key-sequence(imports), state.declarations))
-    let import = element(imports, decl, default: import-all?);
-    if (import)
-      compute-closure(ordered-decls, decl);
-      if (instance?(import, <string>)) rename(decl, import) end if;
-    end if;
-  end for;
+  let subfiles = if (import-mode == #"none") #() else files end if;
+  declaration-closure-aux(key-sequence(imports), null-table, subfiles);
+			  
   ordered-decls;
 end method declaration-closure;
 

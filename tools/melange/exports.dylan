@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.12 1996/10/06 12:41:18 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.13 1996/10/30 19:24:54 rgs Exp $
 
 //======================================================================
 //
@@ -54,6 +54,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 
 
 define library melange
   use dylan;
+  use table-extensions;
   use string-extensions;
   use collection-extensions;
   use regular-expressions;
@@ -82,31 +83,34 @@ define module int-lexer
     <define-token>, <interface-token>, <end-token>, <include-token>,
     <object-file-token>, <define-macro-token>, <undefine-token>,
     <name-mapper-token>, <import-token>, <prefix-token>, <exclude-token>,
-    <rename-token>, <mapping-token>, <equate-token>, <superclass-token>,
-    <all-token>, <function-token>, <map-result-token>, <equate-result-token>,
+    <exclude-file-token>, <rename-token>, <mapping-token>, <equate-token>,
+    <superclass-token>, <all-token>, <all-recursive-token>, <none-token>,
+    <function-token>, <map-result-token>, <equate-result-token>,
     <ignore-result-token>, <map-argument-token>, <equate-argument-token>,
     <input-argument-token>, <output-argument-token>,
     <input-output-argument-token>, <struct-token>, <union-token>,
-    <pointer-token>,
-    <constant-token>, <variable-token>, <getter-token>, <setter-token>,
-    <read-only-token>, <seal-token>, <seal-functions-token>, <boolean-token>,
-    <sealed-token>, <open-token>, <inline-token>, <value-token>,
-    <literal-token>, <mindy-inc-token>;
+    <pointer-token>, <constant-token>, <variable-token>, <getter-token>,
+    <setter-token>, <read-only-token>, <seal-token>, <seal-functions-token>,
+    <boolean-token>, <sealed-token>, <open-token>, <inline-token>,
+    <value-token>, <literal-token>, <mindy-inc-token>;
 end module int-lexer;
 
 define module int-parse
   use dylan;
   use extensions;
+  use table-extensions;
   use self-organizing-list;
+  use c-lexer, import: {include-path, open-in-include-path};
+  use streams, import: {close};
   use int-lexer;
   export
-    parse, <parse-state>, include-file, object-files, mindy-include-file,
+    parse, <parse-state>, include-files, object-files, mindy-include-file,
     container-options, macro-defines, macro-undefines, clauses,
-    <container-options>, name-mapper, imports, prefix, exclude, rename,
+    <container-options>, name-mapper, global-imports, global-import-mode,
+    file-imports, file-import-modes, prefix, exclude, excluded-files, rename,
     mappings, equates, read-only, seal-string, <clause>, <function-clause>,
-    <struct-clause>, <union-clause>, <pointer-clause>,
-    <constant-clause>, <variable-clause>,
-    name, options, <undefined>, undefined;
+    <struct-clause>, <union-clause>, <pointer-clause>, <constant-clause>,
+    <variable-clause>, name, options, <undefined>, undefined;
 end module int-parse;
 
 define module name-mappers
@@ -120,6 +124,7 @@ define module define-interface
   // From Dylan
   use dylan;
   use extensions;		// required for "main" (as well as key-exists?)
+  use table-extensions;
   use %hash-tables;
 #if (~mindy)
   use System,

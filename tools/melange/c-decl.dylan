@@ -35,7 +35,7 @@ rcs-header: $Header:
 //   <declaration>
 //        operations include mapped-name, remap, dylan-name,
 //        compute-dylan-name, rename, equate, canonical-name, type-name,
-//        compute-closure, find-dylan-name, apply-options
+//        compute-closure, find-dylan-name, apply-options, exclude-decl
 //     <type-declaration>
 //         operations include true-type, pointer-to, c-type-size
 //       <structured-type-declaration>
@@ -258,6 +258,16 @@ define method apply-options
  => ();
   find-dylan-name(decl, map-function, prefix, #(), read-only, sealing);
 end method apply-options;
+
+// Exclude-decl -- exported.
+//
+// By pretending that this declaration has already been processed, we
+// effectively exclude it from the generation process.
+//
+define function exclude-decl (decl :: <declaration>)
+  decl.declared? := #t;
+end function exclude-decl;
+    
 
 //------------------------------------------------------------------------
 // Type declarations

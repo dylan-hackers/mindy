@@ -52,21 +52,6 @@ rcs-header: $Header:
 // that the omnipresence of <eof-token> doesn't screw up the tables.
 //======================================================================
 
-define module int-parse
-  use dylan;
-  use extensions;
-  use self-organizing-list;
-  use int-lexer;
-  export
-    parse, <parse-state>, include-file, object-files, mindy-include-file,
-    container-options, macro-defines, macro-undefines, clauses,
-    <container-options>, name-mapper, imports, prefix, exclude, rename,
-    mappings, equates, read-only, seal-string, <clause>, <function-clause>,
-    <struct-clause>, <union-clause>, <pointer-clause>,
-    <constant-clause>, <variable-clause>,
-    name, options, <undefined>, undefined;
-end module int-parse;
-
 //----------------------------------------------------------------------
 // Simple parser support 
 //----------------------------------------------------------------------
@@ -90,9 +75,14 @@ define constant undefined = make(<undefined>);
 define class <container-options> (<object>)
   slot name-mapper :: type-union(<symbol>, <undefined>), init-value: undefined;
   // each element of imports is either #"all" or an import list
-  slot imports :: <sequence>, init-value: #();
+  slot global-import-mode
+    :: one-of(#"all", #"all-recursive", #"none", #"undecided") = #"undecided";
+  slot global-imports :: <sequence> = make(<stretchy-vector>);
+  slot file-import-modes = make(<string-table>) /* of #"all", #"none" */;
+  slot file-imports = make(<string-table>) /* of <sequence> */;
   slot prefix :: type-union(<string>, <undefined>), init-value: undefined;
-  slot exclude :: <sequence>, init-value: #();
+  constant slot exclude = make(<deque>);
+  constant slot excluded-files = make(<deque>);
   slot rename :: <sequence>, init-value: #();
   slot mappings :: <sequence>, init-value: #();
   slot equates :: <sequence>, init-value: #();
@@ -110,7 +100,7 @@ end class <container-options>;
 //
 define class <parse-state> (<object>)
   slot tokenizer :: <tokenizer>, required-init-keyword: #"tokenizer";
-  slot include-file :: <string?>, init-value: #f;
+  slot include-files :: false-or(<sequence>) = #f;
   slot object-files :: <deque>, init-function: curry(make, <deque>);
   slot mindy-include-file :: <string?>, init-value: #f;
   slot macro-defines :: <deque>, init-function: curry(make, <deque>);
@@ -130,37 +120,79 @@ define method process-container-options
   let result = make(<container-options>);
   let left = #();
   for (item in parsed-clauses)
-    select (item.head)
+    select (item.first)
       #"name-mapper" =>
         if (result.name-mapper ~= undefined)
           error("Multiple name mappers in one #include clause");
         else
-          result.name-mapper := item.tail;
+          result.name-mapper := item.second;
         end if;
       #"import" =>
-        result.imports := pair(item.tail, result.imports);
+	let value = item.second;
+        if (instance?(value, <sequence>))
+          for (import in value)
+            add!(result.global-imports, import);
+          end for;
+	  if (result.global-import-mode == #"undecided")
+            result.global-import-mode := #"none";
+          end if;
+        else
+          result.global-import-mode := value;
+        end if;
+      #"import-file" =>
+        let (file, stream) = open-in-include-path(item.second.value);
+        if (stream)
+          close(stream);
+        else
+          parse-error(item.second, "File does not exist in path.");
+        end if;
+	let value = item.third;
+        if (instance?(value, <sequence>))
+	  let imports = (element(result.file-imports, file, default: #f)
+                          | (result.file-imports[file]
+			       := make(<stretchy-vector>)));
+	  for (import in value)
+	    add!(imports, import);
+          end for;
+	  unless (element(result.file-import-modes, file, default: #f))
+            result.file-import-modes[file] := #"none";
+          end unless;
+        else
+          result.file-import-modes[file] := value;
+        end if;
       #"prefix" =>
         if (result.prefix ~= undefined)
           error("Multiple prefixes in one #include clause");
         else
-          result.prefix := item.tail;
+          result.prefix := item.second;
         end if;
       #"exclude" =>
-        result.exclude := reduce(method(a,b) pair(b,a) end method,
-                                 result.exclude, item.tail);
+        // exclude lists contain tokens
+ 	for (elem in item.second) add!(result.exclude, elem.value) end for;
+      #"exclude-file" =>
+        // exclude lists contain tokens
+	for (elem in item.second) 
+          let (file, stream) = open-in-include-path(elem.value);
+          if (stream)
+	    add!(result.excluded-files, file);
+            close(stream);
+          else
+            parse-error(elem, "File does not exist in path.");
+          end if;
+        end for;
       #"rename" =>
         result.rename := reduce(method(a,b) pair(b,a) end method,
-                                result.rename, item.tail);
+                                result.rename, item.second);
       #"mapping" =>
         result.mappings := reduce(method(a,b) pair(b,a) end method,
-                                  result.mappings, item.tail);
+                                  result.mappings, item.second);
       #"equate" =>
         result.equates := reduce(method(a,b) pair(b,a) end method,
-                      	         result.equates, item.tail);
+                      	         result.equates, item.second);
       #"read-only" =>
-        result.read-only := item.tail;
+        result.read-only := item.second;
       #"seal" =>
-        result.seal-string := item.tail;
+        result.seal-string := item.second;
       otherwise =>
         left := pair(item, left);
     end select;
@@ -212,7 +244,7 @@ define class <reduce> (<action>)
   slot production :: <integer>, required-init-keyword: production:, setter: #f;
 end;
 
-define method \= (action1 :: <reduce>, action2 :: <reduce>)
+define method \= (action1 :: <reduce>, action2 :: <reduce>) => eq? :: <boolean>;
   action1.production == action2.production;
 end;
 
@@ -298,12 +330,28 @@ interface-clause (file-clause)
 %
 
 file-clause (<include-token> <string-literal-token> file-option-list)
-  if ($state.include-file) 
-    parse-error($state.tokenizer,
-                "More than one #include in interface definition.")
+  if ($state.include-files) 
+    parse-error($r1, "More than one #include in interface definition.")
   end if;
-  $state.include-file := $r2.value;
+  $state.include-files := vector($r2.value);
   $state.container-options := process-container-options($r3);
+%
+
+file-clause (<include-token> <lbrace-token> include-file-list <rbrace-token>
+file-option-list)
+  if ($state.include-files) 
+    parse-error($r1, "More than one #include in interface definition.")
+  end if;
+  $state.include-files := as(<simple-object-vector>, $r3);
+  $state.container-options := process-container-options($r5);
+%
+
+include-file-list (<string-literal-token>)
+  make(<stretchy-vector>, size: 1, fill: $r1.value);
+%
+
+include-file-list (include-file-list <comma-token> <string-literal-token>)
+  add!($r1, $r3.value);
 %
 
 file-option-list ()
@@ -321,7 +369,7 @@ file-option (<object-file-token> <string-literal-token>)
 
 file-option (<mindy-inc-token> <string-literal-token>)
   if ($state.mindy-include-file) 
-    parse-error($state.tokenizer,
+    parse-error($r1,
                 "More than one mindy-include-file: in interface definition.")
   end if;
   pair(#"mindy-file", $state.mindy-include-file := $r2.value);
@@ -374,15 +422,32 @@ macro-undefinition (<string-literal-token>)
 %
 
 container-option (<name-mapper-token> <identifier-token>)
-  pair(#"name-mapper", $r2.value);
+  list(#"name-mapper", $r2.value);
 %
 
 container-option (<import-token> <all-token>)
-  pair(#"import", #t);
+  list(#"import", #"all");
+%
+
+container-option (<import-token> <all-recursive-token>)
+  list(#"import", #"all-recursive");
 %
 
 container-option (<import-token> <lbrace-token> import-list <rbrace-token>)
-  pair(#"import", $r3);
+  list(#"import", $r3);
+%
+
+container-option (<import-token> <string-literal-token> <arrow-token>
+                  <all-token>)
+  list(#"import-file", $r2, #"all");
+%
+
+container-option (<import-token> <string-literal-token> <arrow-token> <none-token>)
+  list(#"import-file", $r2, #"none");
+%
+
+container-option (<import-token> <string-literal-token> <arrow-token> <lbrace-token> import-list <rbrace-token>)
+  list(#"import-file", $r2, $r5);
 %
 
 import-list ()
@@ -410,11 +475,11 @@ renaming (<string-literal-token> <arrow-token> <identifier-token>)
 %
 
 container-option (<prefix-token> <string-literal-token>)
-  pair(#"prefix", $r2.value);
+  list(#"prefix", $r2.value);
 %
 
 container-option (<exclude-token> <lbrace-token> exclude-list <rbrace-token>)
-  pair(#"exclude", $r3);
+  list(#"exclude", $r3);
 %
 
 exclude-list ()
@@ -422,15 +487,25 @@ exclude-list ()
 %
 
 exclude-list (exclude-list <comma-token> <string-literal-token>)
-  pair($r3.value, $r1);
+  pair($r3, $r1);
 %
 
 exclude-list (<string-literal-token>)
-  list($r1.value);
+  list($r1);
 %
 
+container-option (<exclude-file-token> <string-literal-token>)
+  list(#"exclude-file", list($r2));
+%
+
+container-option (<exclude-file-token> <lbrace-token> exclude-list
+		  <rbrace-token>)
+  list(#"exclude-file", $r3);
+%
+
+
 container-option (<rename-token> <lbrace-token> renaming-list <rbrace-token>)
-  pair(#"rename", $r3);
+  list(#"rename", $r3);
 %
 
 renaming-list ()
@@ -446,11 +521,11 @@ renaming-list (renaming)
 %
 
 container-option (<mapping-token> <lbrace-token> renaming-list <rbrace-token>)
-  pair(#"mapping", $r3);
+  list(#"mapping", $r3);
 %
 
 container-option (<equate-token> <lbrace-token> renaming-list <rbrace-token>)
-  pair(#"equate", $r3);
+  list(#"equate", $r3);
 %
 
 sealing (<sealed-token>)
@@ -466,11 +541,11 @@ sealing (<inline-token>)
 %
 
 container-option (<seal-functions-token> sealing)
-  pair(#"seal", $r2);
+  list(#"seal", $r2);
 %
 
 container-option (<read-only-token> <boolean-token>)
-  pair(#"read-only", $r2.value);
+  list(#"read-only", $r2.value);
 %
 
 interface-clause (<function-token> <string-literal-token>
