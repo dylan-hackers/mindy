@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.10 1994/05/23 17:59:45 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.11 1994/05/31 18:12:45 nkramer Exp $
 //
 //  This file contains the support for vectors.
 //
@@ -393,7 +393,7 @@ define method aref (vector :: <vector>, #rest indices)
   if (indices.size == 1)
     vector[indices[0]];
   else
-    error("Invalid number of indices for ~S.  Expected 1, got ~S",
+    error("Invalid number of indices for %=.  Expected 1, got %d",
 	  vector, indices.size);
   end;
 end;
@@ -402,7 +402,7 @@ define method aref-setter (new, vector :: <vector>, #rest indices)
   if (indices.size == 1)
     vector[indices[0]] := new;
   else
-    error("Invalid number of indices for ~S.  Expected 1, got ~S",
+    error("Invalid number of indices for %=.  Expected 1, got %d",
 	  vector, indices.size);
   end;
 end;

@@ -13,7 +13,7 @@ author:   Nick Kramer (nkramer@cs.cmu.edu)
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.1 1994/04/19 21:20:40 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.2 1994/05/31 18:12:07 nkramer Exp $
 //
 
 /*
@@ -59,13 +59,13 @@ define method row-major-index (array :: <array>, #rest indices)
   let sum = 0;
 
   if ( size (indices) ~= size (dims) )
-    error ( "Number of indices not equal to rank. Got ~S, wanted ~S indices",
+    error ( "Number of indices not equal to rank. Got %=, wanted %d indices",
 	   indices, size (dims) );
   else
     for (index in indices,
 	 dim   in dims)
       if (index < 0 | index >= dim)
-	error ("Array index out of bounds: ~S in ~S", index, indices);
+	error ("Array index out of bounds: %= in %=", index, indices);
       else
 	sum := (sum * dim) + index;
       end if;

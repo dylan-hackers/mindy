@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.3 1994/04/11 00:25:55 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.4 1994/05/31 18:12:31 nkramer Exp $
 //
 //  This file does whatever.
 //
@@ -73,7 +73,7 @@ define method report-condition (condition :: <simple-condition>)
 end;
 
 define method report-condition (condition :: <type-error>)
-  format("~S is not of type ~S",
+  format("%= is not of type %=",
 	 condition.type-error-value,
 	 condition.type-error-expected-type);
 end;
@@ -166,7 +166,7 @@ define method default-handler (condition :: <warning>)
 end;
 
 define method default-handler (restart :: <restart>)
-  error("No restart handler for ~S", restart);
+  error("No restart handler for %=", restart);
 end;
 
 

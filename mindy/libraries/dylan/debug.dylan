@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.4 1994/04/12 20:11:55 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.5 1994/05/31 18:12:33 nkramer Exp $
 //
 //  This file does whatever.
 //
@@ -48,7 +48,7 @@ define method eval-debugger-expr (expr, num-debug-vars)
 	  debug-variables[var];
 	end;
       exception <error>
-	error("No debug variable $~S", var);
+	error("No debug variable $%=", var);
       end;
     literal: => tail(expr);
     funcall: =>
@@ -86,7 +86,7 @@ define method eval-and-print (expr, num-debug-vars)
       unless (first)
 	puts(", ");
       end;
-      format("$~S=~S", debug-variables.size, result);
+      format("$%==%=", debug-variables.size, result);
       add!(debug-variables, result);
     end;
   end;
@@ -160,7 +160,7 @@ define method debugger-describe-restarts (cond)
 	let type = h.handler-type;
 	if (instance?(type, <class>) & subtype?(type, <restart>))
 	  block ()
-	    format("~S [~S]: ", index, type);
+	    format("%= [%=]: ", index, type);
 	    let description = h.handler-description;
 	    select (description by instance?)
 	      singleton(#f) =>
@@ -259,7 +259,7 @@ define method debugger-restart (cond, index)
     if (zero?(count))
       puts("No active restarts.\n");
     else
-      format("Invalid restart number, should be less than ~S\n", count);
+      format("Invalid restart number, should be less than %d\n", count);
     end if;
     #f;
   exception <error>

@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.3 1994/04/12 21:50:20 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.4 1994/05/31 18:12:35 nkramer Exp $
 //
 // This file contains definitions of classes and functions for the Dylan
 // deque collection class.  The data structure used for deque is a
@@ -354,7 +354,7 @@ define method element(deque :: <deque>, key :: <integer>,
 		      #key default = no_default) => <object>;
   let sz = deque.size;
   if (key < 0 | key >= sz)
-    if (default == no_default) error("No such element in ~S: ~S", deque, key)
+    if (default == no_default) error("No such element in %=: %d", deque, key)
     else default
     end if;
   elseif (key + key > sz)	// closer to end than start
@@ -373,7 +373,7 @@ end method element;
 define method element-setter(value, deque :: <deque>, key :: <integer>)
   let sz = deque.size;
   if (key < 0)
-    error("No such element in ~S: ~S", deque, key)
+    error("No such element in %=: %d", deque, key)
   elseif (key >= sz)
     size(deque) := key + 1;
   end if;
@@ -768,7 +768,7 @@ define method last(deque :: <deque>, #key default = no_default)
     deque-tail =>
       deque-element-data(deque-tail);
     default == no-default =>
-      error("No such element in ~S:  last.", deque);
+      error("No such element in %=:  last.", deque);
     otherwise =>
       default;
   end case;
@@ -783,7 +783,7 @@ define method last-setter(new, deque :: <deque>)
   if (deque-tail)
     deque-element-data(deque-tail) := new;
   else
-    error("No such element in ~S:  last.", deque);
+    error("No such element in %=:  last.", deque);
   end if;
 end method last-setter;
 

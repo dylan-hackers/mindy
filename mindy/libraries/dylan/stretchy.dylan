@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.6 1994/04/12 21:50:25 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.7 1994/05/31 18:12:43 nkramer Exp $
 //
 //  This file implements stretchy-vectors.
 //
@@ -114,7 +114,7 @@ define method element(ssv :: <simple-stretchy-vector>, key :: <integer>,
     key >= 0 & key < size(ssv) =>
       ssv-data(ssv)[key];
     default == ssv_no_default =>
-      error("Element ~S not in ~S", key, ssv);
+      error("Element %d not in %=", key, ssv);
     otherwise =>
       default;
   end case;
@@ -123,7 +123,7 @@ end method element;
 define method element-setter(value, ssv :: <simple-stretchy-vector>,
 			     key :: <integer>)
   if (key < 0)
-    error("Element ~S not in ~S", key, ssv);
+    error("Element %d not in %=", key, ssv);
   else
     if (key >= size(ssv))
       size(ssv) := key + 1;
