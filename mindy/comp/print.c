@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.4 1994/04/08 14:25:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.5 1994/04/09 00:08:15 wlott Exp $
 *
 * This file does whatever.
 *
@@ -207,8 +207,10 @@ static void print_bindings(struct bindings *bindings, int depth)
 {
     printf("%sbind\n", indent(depth));
     print_param_list(bindings->params, depth+1);
-    printf("%sto\n", indent(depth));
-    print_expr(bindings->expr, depth+1);
+    if (bindings->expr) {
+	printf("%sto\n", indent(depth));
+	print_expr(bindings->expr, depth+1);
+    }
 }
 
 static void print_return_type_list(struct return_type_list *l, int depth)
@@ -515,8 +517,8 @@ static void (*ExprPrinters[(int)expr_Kinds])() = {
     print_varref_expr, print_literal_expr, print_call_expr,
     print_method_expr, print_dot_expr, print_body_expr, print_block_expr,
     print_case_expr, print_if_expr, print_for_expr, print_select_expr,
-    print_varset_expr, print_binop_series_expr, print_loop_expr, print_repeat_expr,
-    print_error_expr
+    print_varset_expr, print_binop_series_expr, print_loop_expr,
+    print_repeat_expr, print_error_expr
 };
 
 void print_expr(struct expr *e, int depth)
