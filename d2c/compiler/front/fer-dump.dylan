@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.35 1996/01/14 18:05:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.36 1996/01/27 00:21:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -15,7 +15,7 @@ define method reset-ids () => ();
 end;
 
 define constant <id-able>
-  = type-union(<region>, <expression>, <assignment>);
+  = type-union(<region>, <expression>, <abstract-assignment>);
 
 define method id (thing :: <id-able>) => res :: <integer>;
   let id = element(*id-table*, thing, default: #f);

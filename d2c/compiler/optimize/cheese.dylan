@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.117 1996/01/14 18:05:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.118 1996/01/27 00:21:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -4381,7 +4381,7 @@ end;
 // assignments the same.  The new region's parent slot is updated.
 //
 define generic replace-subregion
-    (component :: <component>, region :: <body-region>, old :: <region>,
+    (component :: <component>, region :: <region>, old :: <region>,
      new :: <region>)
     => ();
 
@@ -4681,7 +4681,7 @@ define method check-dependent
     // Make sure everything we depend on agrees.
     unless (dependency.dependent == dep)
       error("%='s dependency %= claims %= for its dependent",
-	    dep, dependency, dep.dependent);
+	    dep, dependency, dependency.dependent);
     end;
     //
     // Make make sure that source is okay.

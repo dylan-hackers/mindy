@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.17 1996/01/14 18:05:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.18 1996/01/27 00:21:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -238,7 +238,7 @@ define-primitive-transformer
 		   if ((instance?(assign.defines, <abstract-variable>)
 			  & instance?(assign.defines.var-info,
 				      <values-cluster-info>))
-			 | consumes-cluster?(assign.depends-on))
+			 | consumes-cluster?(assign.depends-on.source-exp))
 		     return();
 		   end;
 		 end;

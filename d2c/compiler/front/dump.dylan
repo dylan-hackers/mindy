@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.8 1996/01/12 00:58:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.9 1996/01/27 00:21:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -408,7 +408,7 @@ define method dump (param :: <parameter>, stream :: <dump-state-stream>) => ();
 	       write(' ', stream);
 	       pprint-indent(#"block", 2, stream);
 	       write(":: ", stream);
-	       dump(param.param-type);
+	       dump(param.param-type, stream);
 	     end;
 	   end);
 end;

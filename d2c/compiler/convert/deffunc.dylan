@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.51 1996/01/12 00:58:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.52 1996/01/27 00:21:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -81,7 +81,7 @@ define class <method-definition> (<abstract-method-definition>)
     init-value: #f, init-keyword: congruent:;
 end;
 
-define abstract class <accessor-method-definition> (<method-definition>)
+define class <accessor-method-definition> (<method-definition>)
   slot accessor-method-defn-slot-info :: false-or(<slot-info>),
     required-init-keyword: slot:;
 end;
@@ -349,10 +349,12 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
   end;
 end;
 
-define method make (wot :: limited(<class>, subclass-of: <method-definition>),
-		    #next next-method, #rest keys,
-		    #key base-name, signature, hairy: hairy?,
-		         movable: movable?, flushable: flushable?)
+define method make
+    (class :: one-of(<method-definition>, <accessor-method-definition>,
+		     <getter-method-definition>, <setter-method-definition>),
+     #next next-method, #rest keys,
+     #key base-name, signature, hairy: hairy?,
+          movable: movable?, flushable: flushable?)
     => res :: <method-definition>;
   if (base-name)
     let var = find-variable(base-name);
@@ -360,7 +362,7 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
       = if (var & instance?(var.variable-definition, <generic-definition>))
 	  var.variable-definition;
 	end;
-    apply(next-method, wot,
+    apply(next-method, class,
 	  name: make(<method-name>,
 		     generic-function: base-name,
 		     specializers: signature.specializers),

@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.4 1996/01/14 18:05:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.5 1996/01/27 00:21:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -290,7 +290,7 @@ define method clone-expr
     => clone :: <exit-function>;
   make-exit-function(state.clone-builder,
 		     clone-nlx-info(expr.nlx-info, state),
-		     clone-expr(expr.depends-on.source-exp));
+		     clone-expr(expr.depends-on.source-exp, state));
 end;
 
 

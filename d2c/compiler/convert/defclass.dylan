@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.49 1996/01/12 00:58:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.50 1996/01/27 00:21:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1200,6 +1200,7 @@ define method convert-top-level-form
 		 (evals-builder,
 		  ref-dylan-defn(evals-builder, policy, source,
 				 #"override-init-value-setter"),
+		  #f,
 		  list(var, descriptor-var)));
 	  else
 	    let leaf
@@ -1212,6 +1213,7 @@ define method convert-top-level-form
 		 (evals-builder,
 		  ref-dylan-defn(evals-builder, policy, source,
 				 #"override-init-function-setter"),
+		  #f,
 		  list(leaf, descriptor-var)));
 	  end;
 	end;
@@ -1387,7 +1389,8 @@ define method convert-top-level-form
 			     (init-builder,
 			      ref-dylan-defn(init-builder, policy, source,
 					     #"<"),
-			      #f, list(index, size-leaf)));
+			      #f,
+			      list(index, size-leaf)));
 			build-if-body(init-builder, policy, source, more?);
 			build-assignment
 			  (init-builder, policy, source, #(),
@@ -1401,9 +1404,10 @@ define method convert-top-level-form
 			     (init-builder,
 			      ref-dylan-defn(init-builder, policy, source,
 					     #"+"),
-			      #f, list(index,
-				       make-literal-constant
-					 (init-builder, as(<ct-value>, 1)))));
+			      #f,
+			      list(index,
+				   make-literal-constant
+				     (init-builder, as(<ct-value>, 1)))));
 			build-else(init-builder, policy, source);
 			build-exit(init-builder, policy, source, block-region);
 			end-body(init-builder);
@@ -1678,7 +1682,8 @@ define method convert-top-level-form
 		 make-unknown-call
 		   (tl-builder,
 		    ref-dylan-defn(tl-builder, policy, source, #"+"),
-		    #f, list(base-len, extra)));
+		    #f,
+		    list(base-len, extra)));
 	      var;
 	    else
 	      base-len;

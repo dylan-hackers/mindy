@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.49 1996/01/19 20:16:27 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.50 1996/01/27 00:21:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -166,13 +166,17 @@ end;
 define class <module-var-ref> (<module-var-access>)
 end;
 
+define constant no-values-ctype
+  = method () => no-values-ctype :: <values-ctype>;
+      make-values-ctype(#(), #f);
+    end method;
+
 // A set operation is used to change a global variable.
 // 
 define class <module-var-set> (<module-var-access>)
   //
   // Set operations return nothing.
-  inherited slot derived-type,
-    init-function: curry(make-values-ctype, #(), #f);
+  inherited slot derived-type, init-function: no-values-ctype;
 end;
 
 // A self-tail-call is used to represent the rebinding of the arguments
@@ -181,8 +185,7 @@ end;
 define class <self-tail-call> (<operation>)
   //
   // Self tail calls return nothing.
-  inherited slot derived-type,
-    init-function: curry(make-values-ctype, #(), #f);
+  inherited slot derived-type, init-function: no-values-ctype;
   //
   // The function we are self tail calling.
   slot self-tail-call-of :: <fer-function-region>,
@@ -201,8 +204,7 @@ define class <slot-ref> (<slot-access>)
 end;
 
 define class <slot-set> (<slot-access>)
-  inherited slot derived-type,
-    init-function: curry(make-values-ctype, #(), #f);
+  inherited slot derived-type, init-function: no-values-ctype;
 end;
 
 define class <truly-the> (<operation>)
@@ -216,9 +218,13 @@ define method initialize
 end;
 
 
+define constant boolean-ctype
+    = method () => boolean-ctype :: <ctype>;
+	specifier-type(#"<boolean>");
+      end method;
+
 define class <instance?> (<operation>)
-  inherited slot derived-type,
-    init-function: curry(specifier-type, #"<boolean>");
+  inherited slot derived-type, init-function: boolean-ctype;
   slot type :: <ctype>, required-init-keyword: type:;
 end;
 
@@ -248,9 +254,13 @@ define method initialize
   nlx-info.nlx-throws := op;
 end;
 
+define constant catcher-ctype
+    = method () => catcher-ctype :: <ctype>;
+	specifier-type(#"<catcher>");
+      end method;
+
 define class <make-catcher> (<nlx-operation>)
-  inherited slot derived-type,
-    init-function: curry(specifier-type, #"<catcher>");
+  inherited slot derived-type, init-function: catcher-ctype;
 end;
 
 define method initialize
@@ -260,8 +270,7 @@ define method initialize
 end;
 
 define class <disable-catcher> (<nlx-operation>)
-  inherited slot derived-type,
-    init-function: curry(make-values-ctype, #(), #f);
+  inherited slot derived-type, init-function: no-values-ctype;
   slot disable-catcher-next :: false-or(<disable-catcher>);
 end;
 
