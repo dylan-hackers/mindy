@@ -32,3 +32,5 @@ extern heapptr_t make_extended_float(long double value);
 extern long double extended_float_value(heapptr_t xf);
 
 extern heapptr_t initial_symbols;
+
+extern void not_reached(void);
