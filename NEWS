@@ -1,3 +1,19 @@
+Gwydion Dylan 2.3.4
+  
+  The cygnus port created in 2.3.3 has now been integrated into the
+  build environment (meaning, there's no special incantations needed
+  to compile the cygnus port from a previous revision's port).  The
+  file-system library (previously a group of no-ops with some limited
+  functionality) is now 75% in compilance with the Common-Dylan
+  specification from Functional Objects, inc.  The Time library now
+  works on most platforms (including cygnus and solaris, two platforms
+  previously not supported).  Melange now optionally creates Dylan-
+  style virtual structures that shadow the generated C-style structs.
+  This, combined with the new ability for the runtime to provide
+  slot names of instances, allows for Dylan-style introspection of
+  C-header information.  Various bugfixes, including --no-binaries
+  for d2c.
+
 Gwydion Dylan 2.3.1
 
   This is the first release of the new development branch. Lots of
