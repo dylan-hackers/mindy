@@ -1,13 +1,8 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.46 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.47 1996/04/15 18:25:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
-
-/*
-Todo: 
-  subclass types (unknown or union of singletons if sealed)
-*/
 
 /// Superclass of multi-value types and regular single types.
 define abstract class <values-ctype> (<object>)
@@ -230,7 +225,6 @@ end;
 ///   class -- subtype?(base-class, class)
 ///   direct -- singleton.base-class == direct.base-class)
 ///   byte-char -- is the singleton a byte-character?
-///   heap-instance -- subtype?(base-class, heap-inst)
 /// limited integer:
 ///   singleton -- #f, 'cause singleton integers don't exist due to
 ///     canonicalization.
@@ -239,7 +233,6 @@ end;
 ///   class -- subtype?(base-class, class)
 ///   direct -- limint.base-class == direct.base-class
 ///   byte-char -- #f
-///   heap-instance -- subtype?(base-class, heap-inst)
 /// class:
 ///   singleton -- #f, 'cause #t, #f, and #() don't exist as singletons due to
 ///     canonicalization.
@@ -248,28 +241,18 @@ end;
 ///   class -- check the class precedence list
 ///   direct -- #f, 'cause direct-type(leaf-class) => leaf-class
 ///   byte-char -- #f
-///   heap-instance -- #t if the class is guarenteed to be heap allocated.
 /// Direct:
 ///   singleton -- #f.
 ///   limited-int -- #f.
 ///   class -- subtype?(base-class, class)
 ///   direct -- #f, 'cause == direct classes are picked off.
 ///   byte-char -- #f
-///   heap-instance -- #t iff the base-class is heap allocated.
 /// byte-char:
 ///   singleton -- #f.
 ///   limited-int -- #f.
 ///   class -- subtype?(bchar.base-class, class)
 ///   direct -- bchar.base-class == direct.base-class
 ///   byte-char -- can't happen, cause == types are picked off.
-///   heap-instance -- #t iff the base-class is heap allocated.
-/// heap-instance:
-///   singleton -- #f;
-///   limited-int -- #f;
-///   class -- class == <object>
-///   direct -- #f;
-///   byte-char -- #f;
-///   heap-instance -- can't happen, cause == types are picked off.
 ///   
 /// Note that for most of the subtype?(limited,other) cases, it just becomes
 /// subtype?(limited.base-class,other).
@@ -345,7 +328,6 @@ end method;
 ///   class -- the singleton if subtype?, otherwise empty
 ///   direct -- the singleton if subtype?, otherwise empty
 ///   byte-char -- the singleton if subtype?, otherwise empty
-///   heap-instance -- the singletion if subtype?, otherwise empty
 /// Limited integer with:
 ///   limited-int -- the intersection of the base classes and range.
 ///   class -- the intersection of the base class and the other class, same
@@ -353,7 +335,6 @@ end method;
 ///   direct -- empty, 'cause the direct integer classes are canonicalized into
 ///     themselves.
 ///   byte-char -- empty
-///   heap-instance -- intersection of the base class and the other, same range
 /// Class:
 ///   class -- the subtype class if one is a subtype of the other, the
 ///     intersection of their subtypes if both are sealed, or one at random
@@ -361,18 +342,11 @@ end method;
 ///   direct -- the direct type if it is a subtype of the class, empty
 ///     otherwise
 ///   byte-char -- the byte-char type if it is a subtype of the class
-///   heap-instance -- the class,#t if subtype, empty if the class is
-///     immediate, otherwise class,#f
 /// Direct:
 ///   direct -- the type when they are the same, otherwise empty
 ///   byte-char -- the byte-char type if it is a subtype of the class
-///   heap-instance -- the direct if the class is heap allocated, empty
-///     otherwise
 /// Byte-char:
 ///   byte-char -- won't be called, 'cause the == case is picked off
-///   heap-instance -- empty
-/// heap-instance
-///   heap-instance -- won't be called, 'cause the == case is picked off
 ///
 /// So if we pick off the case where one type is a subtype of the other first,
 /// we have the following cases left:
