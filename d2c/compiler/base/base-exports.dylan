@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.16 1996/02/09 18:05:56 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.17 1996/02/09 20:37:03 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -253,6 +253,7 @@ define module errors
   use utils;
   use source;
   use standard-io;
+  use tokens;
   export
     compiler-warning, *warnings*, compiler-error,
     compiler-warning-location, compiler-error-location,
