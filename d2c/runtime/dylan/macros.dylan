@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.3 1995/11/15 15:36:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.4 1995/11/17 02:32:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -248,7 +248,7 @@ define macro module-definer
     { export ?names ; ... }
       => { %%export ?names; ... }
     { create ?names ; ... }
-      => { %%export ?names; ... }
+      => { %%create ?names; ... }
     { } => { }
   names:
     { ?name } => { ?name }
