@@ -4,4 +4,4 @@ $D2CFLAGS = $D2CFLAGS . ' -L../streams -L../print -L../format'
     . ' -L../standard-io -L../format-out' ;
 
 do emit_library_rule('io', '$(BUILDROOT)/force.timestamp', '',
-		     'compile', 'no-mindy', 'install')
+		     'compile', 'compile-mindy', 'install')

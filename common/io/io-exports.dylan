@@ -21,7 +21,12 @@ end library;
 
 define module redirect-io
   use dylan;
-  use extensions, import: {*warning-output*};
-  use system, import: {*gdb-output*};
+
+#if (d2c)
   use standard-io;
+  use extensions,
+     import: {*warning-output*};
+  use system,
+     import: {*gdb-output*};
+#endif
 end module;
