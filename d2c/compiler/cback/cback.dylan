@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.63 1995/06/07 22:32:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.64 1995/06/08 16:41:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1821,15 +1821,26 @@ define method ref-leaf (target-rep :: <representation>,
 			leaf :: <function-literal>,
 			output-info :: <output-info>)
     => res :: <string>;
-  let ctv = (leaf.ct-function
-	       | (leaf.ct-function
-		    := make(if (instance?(leaf, <method-literal>))
-			      <ct-method>;
-			    else
-			      <ct-function>;
-			    end,
-			    name: leaf.main-entry.name,
-			    signature: leaf.signature)));
+  let ctv = leaf.ct-function;
+  if (ctv == #f)
+    ctv := make(if (instance?(leaf, <method-literal>))
+		  <ct-method>;
+		else
+		  <ct-function>;
+		end,
+		name: leaf.main-entry.name,
+		signature: leaf.signature);
+    let ctv-info = get-info-for(ctv, output-info);
+    ctv-info.function-info-general-entry-name
+      := main-entry-name(get-info-for(leaf.general-entry, output-info),
+			 output-info);
+    if (instance?(leaf, <method-literal>))
+      ctv-info.function-info-generic-entry-name
+	:= main-entry-name(get-info-for(leaf.generic-entry, output-info),
+			   output-info);
+    end;
+    leaf.ct-function := ctv;
+  end;
   let (expr, rep) = c-expr-and-rep(ctv, target-rep, output-info);
   conversion-expr(target-rep, expr, rep, output-info);
 end;
