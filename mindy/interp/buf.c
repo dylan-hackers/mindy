@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.14 1996/06/04 23:22:22 bfw Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.15 1996/06/05 00:52:51 bfw Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -216,4 +216,11 @@ void init_buffer_functions(void)
 		  listn(5, u, obj_FixnumClass, u,
 			obj_FixnumClass, obj_FixnumClass),
 		  FALSE, obj_False, FALSE, u, dylan_memcpy);
+
+    define_method("copy-bytes",
+		  listn(5, obj_UnicodeStringClass, obj_FixnumClass,
+			obj_UnicodeStringClass,
+			obj_FixnumClass, obj_FixnumClass),
+		  FALSE, obj_False, FALSE, u, dylan_memcpy);
+
 }
