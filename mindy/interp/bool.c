@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.5 1994/10/05 20:57:39 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.6 1995/07/11 12:39:17 wlott Exp $
 *
 * This file implements the booleans, #t and #f.
 *
@@ -37,12 +37,23 @@
 #include "class.h"
 #include "obj.h"
 #include "bool.h"
+#include "def.h"
+#include "list.h"
 
 struct bool {
     obj_t class;
 };
 
 obj_t obj_True = 0, obj_False = 0, obj_BooleanClass = 0;
+
+
+static obj_t dylan_not(obj_t thing)
+{
+    if (thing == obj_False)
+	return obj_True;
+    else
+	return obj_False;
+}
 
 
 /* Printer support. */
@@ -98,4 +109,10 @@ void init_bool_classes(void)
     init_builtin_class(obj_ptr(struct bool *, obj_False)->class,
 		       "<false>", obj_BooleanClass, NULL);
     def_printer(obj_ptr(struct bool *, obj_False)->class, print_false);
+}
+
+void init_bool_functions(void)
+{
+    define_function("~", list1(obj_ObjectClass), FALSE, obj_False, FALSE,
+		    obj_BooleanClass, dylan_not);
 }
