@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.25 1996/06/24 20:20:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.26 1996/06/26 14:39:16 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -176,7 +176,7 @@ define module dylan-viscera
     <byte>, <byte-vector>,
     $not-supplied, ignore,
     <format-string-condition>,
-    functional-==,
+    functional-==, key-exists?,
 
     // Cheap IO
     format, print-message, print, write-integer, write,
@@ -189,6 +189,8 @@ define module dylan-viscera
     <buffer>, <buffer-index>, $maximum-buffer-size,
     copy-bytes, buffer-address,
     $Newlines-are-CRLF,
+    system, import-string, export-string, getenv, 
+    exit, no-core-dumps,
 
     // Introspection Stuff
     class-name, function-name,
