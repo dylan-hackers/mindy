@@ -1,7 +1,7 @@
 
 $D2CFLAGS = '';
 if ($target_name eq "x86-linux") {
-  $D2C = $D2C . ' -F"gcc -g -I' . "$srcroot/d2c/runtime" .
+  $D2C = $D2C . ' -F"gcc -g -O2 -I' . "$srcroot/d2c/runtime" .
 	 ' -c %s -o %s" -fnum.c';
 };
 
