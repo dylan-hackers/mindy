@@ -66,7 +66,7 @@ OBJS	=	${LIBOBJS} protected.o
 
 SRCS	=	getcwd.c strerror.c strtod.c strtoul.c waitpid.c \
 		opendir.c strstr.c strtol.c tmpnam.c sigaction.c \
-		protected.c matherr.c memmove.c setsid.c
+		protected.c matherr.c memmove.c setsid.c shl.c
 
 ALLOBJS	=	getcwd.o strerror.o strtod.o strtoul.o waitpid.o \
 		opendir.o strstr.o strtol.o tmpnam.o sigaction.o \
@@ -119,6 +119,9 @@ strerror.o:  ${SRCDIR}/strerror.c ${SRCDIR}/std-c.h ${SRCDIR}/std-os.h
 
 strstr.o:  ${SRCDIR}/strstr.c
 	${CC} -c ${CFLAGS} ${SRCDIR}/strstr.c
+
+shl.o:  ${SRCDIR}/shl.c
+	${CC} -c ${CFLAGS} ${SRCDIR}/shl.c
 
 strtod.o:  ${SRCDIR}/strtod.c ${SRCDIR}/std-c.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/strtod.c
