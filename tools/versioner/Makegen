@@ -1,0 +1,12 @@
+$CPPFLAGS = '-I$(SRCDIR)';
+
+if ($win32) {
+    $binary_name = 'versioner.exe';
+} else {
+    $binary_name = 'versioner';
+} 
+   
+push(@compile_dependencies, $binary_name);
+push(@files_to_clean, $binary_name);
+
+do emit_library_rule('versioner', '$(BUILDROOT)/force.timestamp', '');
