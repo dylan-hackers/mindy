@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/mindy.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/mindy.c,v 1.2 1998/12/17 09:01:48 igor Exp $
 *
 * This file starts everything going.
 *
@@ -80,7 +80,7 @@ static void missing_arg(char *whose)
    again and search it for symbol table stuff */
 char *exec_file_name;
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     struct thread *thread;
     enum pause_reason reason;
@@ -149,6 +149,7 @@ void main(int argc, char *argv[])
 	thread = thread_create(symbol("exit"));
 	*thread->sp++ = var->value;
     }
+    return 0;
 }
 
 /* Try to keep this consistent with comp/mindycomp.c */
