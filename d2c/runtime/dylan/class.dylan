@@ -1,11 +1,11 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.12 1996/02/18 18:35:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.13 1996/03/02 19:21:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define class <class> (<type>)
   //
-  constant slot class-name :: false-or(<symbol>),
+  constant slot class-name :: false-or(<byte-string>),
     init-value: #f, init-keyword: debug-name:;
   //
   constant slot unique-id :: <integer>, init-value: -1;
