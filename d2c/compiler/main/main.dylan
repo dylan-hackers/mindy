@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.94 1996/11/04 19:18:09 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.95 1996/12/02 14:11:24 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -279,24 +279,42 @@ define method process-feature (feature :: <byte-string>) => ();
   end if;
 end method process-feature;
 
+
+// Find the library object file (archive) using the data-unit search path.
+// There might be more than one possible object file suffix, so we try them
+// all, but if we find it under more than one suffix, we error.
+//
 define method find-library-archive
     (unit-name :: <byte-string>, target :: <target-environment>,
      no-binaries :: <boolean>)
  => path :: <byte-string>;
-  let libname = concatenate(target.library-filename-prefix,
-			    unit-name, target.library-filename-suffix);
+  let libname = concatenate(target.library-filename-prefix, unit-name);
+  let suffixes = split-at-whitespace(target.library-filename-suffix);
   if (no-binaries)  // Who knows where the libraries will be when the user 
                     // finally decides to link this?
-    libname;
+    concatenate(libname, suffixes.head);
   else
-    let path = find-file(libname, *data-unit-search-path*);
-    if (path == #f)
-      error("Can't find %s.", libname);
+    let found = #();
+    for (suffix in suffixes)
+      let suffixed = concatenate(libname, suffix);
+      let path = find-file(suffixed, *data-unit-search-path*);
+      if (path)
+        found := pair(path, found);
+      end if;
+    end for;
+    if (empty?(found))
+      error("Can't find object file for library %s.", unit-name);
+    elseif (found.tail ~== #())
+      error("Found more than one type of object file for library %s:\n"
+            "  %=",
+	    unit-name,
+	    found);
     else
-      path;
+      found.head;
     end if;
   end if;
 end method find-library-archive;
+
 
 // save-c-file is #t when we don't want the .c file added to the
 // real-clean target.  Used when the C file is actually source code,
@@ -686,18 +704,21 @@ end method build-local-heap-file;
 
 define method build-ar-file (state :: <main-unit-state>) => ();
   let objects = stream-contents(state.unit-objects-stream);
-  let ar-name = concatenate(state.unit-target.library-filename-prefix,
-			    state.unit-mprefix,
-			    state.unit-target.library-filename-suffix);
+  let target = state.unit-target;
+  let suffix = split-at-whitespace(target.library-filename-suffix).first;
+  let ar-name = concatenate(target.library-filename-prefix,
+  			    state.unit-mprefix,
+			    suffix);
+
   state.unit-objects := objects;
   state.unit-ar-name := ar-name;
   format(state.unit-makefile, "\n%s : %s\n", ar-name, objects);
   format(state.unit-makefile, "\t%s %s\n",
-	 state.unit-target.delete-file-command, ar-name);
+	 target.delete-file-command, ar-name);
   
-  let objects = use-correct-path-separator(objects, state.unit-target);
+  let objects = use-correct-path-separator(objects, target);
 
-  let link-string = format-to-string(state.unit-target.link-library-command, 
+  let link-string = format-to-string(target.link-library-command, 
 				     ar-name, objects);
   format(state.unit-makefile, "\t%s\n", link-string);
 end method;
