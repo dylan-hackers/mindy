@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.5 1995/05/12 12:43:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.6 1995/05/21 00:37:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -821,15 +821,22 @@ end;
 
 // Initilization stuff.
 
+// $Dylan-Library and $Dylan-Module -- exported.
+//
+// The Dylan library and module.
+//
 define constant $Dylan-Library
   = find-library(#"Dylan", create: #t);
-
 define constant $Dylan-Module
   = find-module($Dylan-Library, #"Dylan", create: #t);
 
-define variable *Current-Library* :: <library> = $Dylan-Library;
-
-define variable *Current-Module* :: <module> = $Dylan-Module;
+// *Current-Library* and *Current-Module* -- exported.
+// 
+// The Current Library and Module during a parse, or #f if we arn't parsing
+// at the moment.
+// 
+define variable *Current-Library* :: false-or(<library>) = #f;
+define variable *Current-Module* :: false-or(<module>) = #f;
 
 // done-initializing-module-system -- exported.
 //
