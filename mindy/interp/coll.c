@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.7 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.8 1996/03/07 17:41:03 nkramer Exp $
 *
 * This file implements the collection framework.
 *
@@ -36,6 +36,10 @@
 #include "obj.h"
 #include "gc.h"
 #include "coll.h"
+#include "def.h"
+#include "list.h"
+#include "bool.h"
+#include "sym.h"
 
 obj_t obj_CollClass = 0;
 obj_t obj_ExKeyCollClass = 0;
@@ -89,4 +93,19 @@ void init_coll_classes(void)
     init_builtin_class(obj_ArrayClass, "<array>", obj_MutSeqClass, NULL);
     init_builtin_class(obj_VectorClass, "<vector>", obj_ArrayClass, NULL);
     init_builtin_class(obj_StringClass, "<string>", obj_MutSeqClass, NULL);
+}
+
+void init_coll_functions(void)
+{
+    define_generic_function("element", list2(obj_CollClass, obj_ObjectClass),
+			    FALSE, list1(symbol("default")), FALSE,
+			    list1(obj_ObjectClass), obj_False);
+    define_generic_function("element-setter", 
+			    list3(obj_ObjectClass, obj_CollClass, 
+				  obj_ObjectClass),
+			    FALSE, obj_False, FALSE,
+			    list1(obj_ObjectClass), obj_False);
+    define_generic_function("size", list1(obj_ObjectClass),
+			    FALSE, obj_False, FALSE,
+			    obj_Nil, obj_ObjectClass);
 }
