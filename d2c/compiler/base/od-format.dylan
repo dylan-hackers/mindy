@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.51 1996/07/12 01:08:06 bfw Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.52 1996/07/23 17:25:08 rgs Exp $
 
 /*
 
@@ -1193,6 +1193,45 @@ define sealed domain initialize (<data-unit>);
 //
 define variable *data-units* :: <object-table> = make(<table>);
 
+//------------------------------------------------------------------------
+
+// A substitute for limited(<vector>, type: <integer>).  This will be
+// faster and more space-efficient to use for the local-index &
+// local-map vectors.
+//
+define class <int-vector> (<vector>)
+  sealed slot %element :: <integer>,
+    init-value: 0, init-keyword: fill:,
+    sizer: size, size-init-value: 0, size-init-keyword: size:;
+end class <int-vector>;
+
+define sealed domain make (singleton(<int-vector>));
+define sealed domain initialize (<int-vector>);
+
+define sealed inline method element
+    (vec :: <int-vector>, index :: <integer>,
+     #key default = $not-supplied)
+    => element :: <object>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index);
+  elseif (default == $not-supplied)
+    error("Vector %= does not contain element %d.", vec, index);
+  else
+    default;
+  end;
+end;
+
+define sealed inline method element-setter
+    (new-value :: <integer>, vec :: <int-vector>, index :: <integer>)
+    => new-value :: <integer>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index) := new-value;
+  else
+    error("Vector %= does not contain element %d.", vec, index);
+  end;
+end;
+
+//------------------------------------------------------------------------
 
 define /* exported */ class <load-state> (<object>)
   //
@@ -1237,11 +1276,12 @@ define /* exported */ class <load-state> (<object>)
   // of the labeled objects (or there weren't any.)
   //
   // Word offsets of tagged object in data unit.
-  slot raw-local-index :: <simple-object-vector>,
-    init-value: vector(truncate/($maximum-integer, $word-bytes));
+  slot raw-local-index :: <int-vector>
+    = make(<int-vector>, size: 1,
+	   fill: truncate/($maximum-integer, $word-bytes));
   //
   // Local IDs of the tagged objects, in order that the definitions appear.
-  slot raw-local-map :: <simple-object-vector>, init-value: #[0];
+  slot raw-local-map :: <int-vector> = make(<int-vector>, size: 1, fill: 0);
   //
   // The index in the local-map of the next labeled object to be loaded.
   slot next-labeled :: <integer>, init-value: 0,
@@ -1494,9 +1534,10 @@ define method load-data-unit
 
   // Note that we add a sentinel entry at the end of the local index/map.
   state.raw-local-index
-    := concatenate(rlocal, vector(oa-len - 1));
+    := concatenate-as(<int-vector>, rlocal, vector(oa-len - 1));
   state.raw-local-map
-    := concatenate(load-object-dispatch(state), vector(nlocals));
+    := concatenate-as(<int-vector>, load-object-dispatch(state),
+		      vector(nlocals));
 
   // initializes label-index...
   state.position-offset := state.position-offset;
