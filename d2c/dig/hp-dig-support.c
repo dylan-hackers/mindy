@@ -18,7 +18,14 @@ int master_pty = -1;
 void handle_interrupt (int sig, long code, struct sigcontext *scp)
 {
   signal(sig, handle_interrupt);
-  ioctl(master_pty, TIOCSIGSEND, SIGINT);
+
+  /* None of these seem to work under threads -- the one selected is the one
+  /* which does the least harm there. */
+
+  /*ioctl(master_pty, TIOCSIGSEND, SIGINT);*/
+  /*kill(process_id, sig);*/
+  write(master_pty, "\003", 1);
+
   scp->sc_syscall_action = SIG_RESTART;
   return;
 }
@@ -33,7 +40,8 @@ void handle_interrupt (int sig, long code, struct sigcontext *scp)
 void mutant_fd_exec(char *command, int *toprog, int *fromprog)
 {
   int pty = -1, slave_fd, slave_pid, i;
-  char master[20], *slave;
+  /*char master[20], *slave;*/
+  char master[20], slave[20];
   int forkresult, pgrp;
 
   for (i = 0; pty == -1 && i < 16; i++) {
@@ -46,27 +54,34 @@ void mutant_fd_exec(char *command, int *toprog, int *fromprog)
     return;
   }
   master_pty = pty;
-  slave = ptsname(pty);
+  /* We don't use ptsname because it clashes with the threads library */
+  sprintf(slave, "/dev/pty/t%s", master + 11);
+  slave_fd = open(slave, O_RDWR);
+
 
   if ((forkresult = fork()) != -1) {
       
-    /*        if (forkresult != 0) {*/
     if (forkresult == 0) {
       /* This process is going to exit shortly, so we needn't be too
 	 careful about malloc behavior, nor about the fact that we
 	 destructively modify the command string. */
-      char *p, **args;
+      char *p, *cmd, **args;
       int argcounter = 1;
-      
+      char *fork_args[3];
+      FILE *tstfile;
+
       setsid();
-      for (p = command; *p != 0; p++)
+
+      cmd = (char *)malloc(strlen(command) + 1);
+      strcpy(cmd, command);
+      for (p = cmd; *p != 0; p++)
 	if (*p == ' ') {
 	  argcounter++;
 	  while (*(++p) == ' ');
 	}
-      args = (char **) GC_malloc((argcounter+1) * sizeof(char *));
-      args[0] = command;
-      for (p = command, argcounter = 1; *p != 0; p++) {
+      args = (char **) malloc((argcounter+1) * sizeof(char *));
+      args[0] = cmd;
+      for (p = cmd, argcounter = 1; *p != 0; p++) {
 	if (*p == ' ') {
 	  *p = 0;
 	  while (*(++p) == ' ');
@@ -75,28 +90,35 @@ void mutant_fd_exec(char *command, int *toprog, int *fromprog)
 	}
       }
       args[argcounter] = 0;
-      close(0);
-      open(slave, O_RDONLY);
-      close(1);
-      open(slave, O_WRONLY);
-      close(2);
-      open(slave, O_WRONLY);
+
+      dup2(slave_fd, 0);
+      dup2(slave_fd, 1);
+      dup2(slave_fd, 2);
+
+      /* Hack: By opening a terminal device after doing the setsid, we avoid
+      /* problems with lack of a controlling terminal.  We ought to be able to
+      /* use the result of this open in out dup2 calls, but they don't seem to
+      /* work unless the pty was opend *before* the call to fork.  (This is
+      /* likely a bad interaction with the threads library.)  The one thing
+      /* which can be said in favor of the current scheme is that it seems to
+      /* work.  Don't remove this statement without testing the results. */
+      slave_fd = open(slave, O_RDWR);
 
       execvp(args[0], args);
+      exit(0);
+
       /* If we get here, execvp failed, so shut down as 
              * gracefully as we can 
              */
       exit(1);
     }
 
-    /*	printf("controlling process = %d\n", tcgetpgrp(0));
-	printf("new process group = %d\n", setsid());*/
-    /*    fflush(stdout);*/
-
-    signal(SIGINT, handle_interrupt);
-    /*signal(SIGINT, SIG_IGN);*/
     *toprog = pty;
     *fromprog = pty;
+
+    process_id = forkresult;
+    signal(SIGINT, handle_interrupt);
+    fflush(stdout);
   } else {
     *toprog = -1;
     *fromprog = -1;
