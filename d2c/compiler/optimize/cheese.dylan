@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.88 1995/06/09 16:16:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.89 1995/06/09 19:01:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1078,7 +1078,10 @@ end;
   
 define method find-transformers (defn :: <generic-definition>)
     => res :: <list>;
-  #();
+  choose(method (transformer)
+	   transformer.transformer-specializers == #f;
+	 end,
+	 defn.function-defn-transformers);
 end;
 
 
