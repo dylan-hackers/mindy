@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.38 1996/04/13 21:13:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.39 1996/04/15 18:27:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -603,6 +603,8 @@ define module classes
     override-init-function, override-init-function-setter,
 
     <layout-table>, layout-length, layout-holes,
+
+    <subclass-ctype>, subclass-of,
 
     <proxy>, proxy-for,
 
