@@ -402,7 +402,9 @@ define method spew-instance
 	if (instance?(field, <vector-slot-info>))
 	  let len-ctv = find-init-value(class, field.slot-size-slot, slots);
 	  unless (len-ctv)
-	    error("Length of a variable length instance unspecified?");
+	    compiler-warning("Length of a variable length instance"
+			       " unspecified?");
+	    len-ctv := as(<ct-value>, 0);
 	  end;
 	  unless (instance?(len-ctv, <literal-fixed-integer>))
 	    error("Bogus length: %=", len-ctv);
@@ -445,14 +447,16 @@ define method find-init-value
       if (csubtype?(class, override.override-introduced-by))
 	if (override.override-init-value == #t
 	      | override.override-init-function)
-	  error("Init value for %s in %= not set up.",
-		slot-name, class);
+	  compiler-warning("Init value for %s in %= not set up.",
+			   slot-name, class);
+	  return(#f);
 	end;
 	return(override.override-init-value);
       end;
     end;
     if (slot.slot-init-value == #t | slot.slot-init-function)
-      error("Init value for %s in %= not set up.", slot-name, class);
+      compiler-warning("Init value for %s in %= not set up.",
+		       slot-name, class);
     end;
     slot.slot-init-value;
   end;
