@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.23 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.24 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -367,43 +367,52 @@ define constant gf-call
   = method (self :: <generic-function>, nargs :: <integer>)
       let specializers = self.function-specializers;
       let nfixed = specializers.size;
-      if (self.function-rest? | self.function-keywords)
-	if (nargs < nfixed)
-	  wrong-number-of-arguments-error(#f, nfixed, nargs);
-	end;
-	if (self.function-keywords & odd?(nargs - nfixed))
-	  odd-number-of-keyword/value-arguments-error();
-	end;
-      else
-	if (nargs ~= nfixed)
+      if (nfixed ~== nargs)
+        if (self.function-rest? | self.function-keywords)
+	  if (nargs < nfixed)
+	    wrong-number-of-arguments-error(#f, nfixed, nargs);
+	  end;
+	  if (self.function-keywords & odd?(nargs - nfixed))
+	    odd-number-of-keyword/value-arguments-error();
+	  end;
+        else
 	  wrong-number-of-arguments-error(#t, nfixed, nargs);
 	end;
       end;
       let arg-ptr :: <raw-pointer> = %%primitive(extract-args, nargs);
       let (ordered, ambiguous, valid-keywords)
 	= cached-sorted-applicable-methods(self, nfixed, arg-ptr);
-      if (valid-keywords)
-	for (index :: <integer> from nfixed below nargs by 2)
-	  let key :: <symbol> = %%primitive(extract-arg, arg-ptr, index);
-	  unless (valid-keywords == #"all"
-		    | member?(key,
-			      check-type(valid-keywords,
-					 <simple-object-vector>)))
-	    error("Unrecognized keyword: %=", key);
-	  end unless;
-	end for;
+      if (nargs > nfixed)
+        case 
+          (valid-keywords == #f) => #t;
+          (valid-keywords == #"all") =>
+            for (index :: <integer> from nfixed below nargs by 2)
+              check-type(%%primitive(extract-arg, arg-ptr, index), <symbol>);
+            end for;
+          otherwise =>
+            check-type(valid-keywords, <simple-object-vector>);
+	    for (index :: <integer> from nfixed below nargs by 2)
+	      let key :: <symbol> = %%primitive(extract-arg, arg-ptr, index);
+	      block (found)
+                for (i :: <integer> from 0 below valid-keywords.size)
+                  if (%element(valid-keywords, i) == key) found() end if;
+                end for;
+                error("Unrecognized keyword: %=", key);
+              end block;
+	    end for;
+        end case;
       end if;
-      if (ambiguous == #())
-	if (ordered == #())
+      if (ambiguous.empty?)
+	if (~ordered.empty?)
+	  %%primitive(invoke-generic-entry, ordered.head, ordered.tail,
+		      %%primitive(pop-args, arg-ptr));
+	else
 	  for (index :: <integer> from 0 below nfixed)
 	    let specializer :: <type> = %element(specializers, index);
 	    let arg = %%primitive(extract-arg, arg-ptr, index);
 	    %check-type(arg, specializer);
 	  end;
 	  no-applicable-methods-error();
-	else
-	  %%primitive(invoke-generic-entry, ordered.head, ordered.tail,
-		      %%primitive(pop-args, arg-ptr));
 	end;
       else
 	for (prev :: false-or(<pair>) = #f then remaining,
@@ -569,7 +578,7 @@ end;
 
 define variable *debug-generic-threshold* :: <integer> = -1;
 
-define method cached-sorted-applicable-methods
+define inline method cached-sorted-applicable-methods
     (gf :: <generic-function>, nargs :: <integer>,
      arg-ptr :: <raw-pointer>)
  => (ordered :: <list>, ambiguous :: <list>,
@@ -653,7 +662,12 @@ define method internal-applicable-method?
 		   else
 		     specializer;
 		   end if;
-		 (specializer == <byte-character>) =>
+		 // (specializer == <byte-character>) =>
+		 // The following code works around a bug in the current
+		 // system.  It seems that there is one "<byte-character>"
+		 // constant per library, so the equality test above tends to
+		 // fail.
+		 (instance?(specializer, <byte-character-type>)) =>
 		   <byte-character>;
 		 otherwise => singleton(arg);
 	       end case;
@@ -666,7 +680,7 @@ define method internal-applicable-method?
 	    classes[index]
 	      := if (instance?(specializer, <limited-integer>))
 		   restrict-limited-ints(arg, arg-type, specializer);
-		 elseif (specializer == <byte-character>)
+		 elseif (instance?(specializer, <byte-character-type>))
 		   <non-byte-character>;
 		 elseif (arg-type = <class>)
 		   // This special case is designed to catch "make".
