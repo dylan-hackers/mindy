@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.125 1996/07/12 01:11:07 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.126 1996/07/12 01:49:57 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1721,27 +1721,66 @@ define method emit-region (region :: <compound-region>,
     emit-region(subregion, file);
   end;
 end;
+ 
+define method elseif-able? (region :: <if-region>) => answer :: <boolean>;
+  #t;
+end method elseif-able?;
 
-define method emit-region (region :: <if-region>, file :: <file-state>)
-    => ();
+define method elseif-able? (region :: <compound-region>)
+ => answer :: <boolean>;
+  region.regions.size == 2
+    & instance?(region.regions.first, <simple-region>)
+    & instance?(region.regions.second, <if-region>)
+    & begin
+	let simple = region.regions.first;
+	let if-region = region.regions.second;
+	simple.first-assign ~== #f
+	  & simple.first-assign == simple.last-assign  // only one assignment
+	  & simple.first-assign.defines == if-region.depends-on.source-exp
+	  & simple.first-assign.depends-on.source-exp.c-code-moveable?;
+      end;
+end method elseif-able?;
+
+define method elseif-able? (region :: <region>) => answer :: <boolean>;
+  #f;
+end method elseif-able?;
+
+
+define method emit-region (if-region :: <if-region>, file :: <file-state>)
+ => ();
   let stream = file.file-guts-stream;
-  let cond = ref-leaf(*boolean-rep*, region.depends-on.source-exp, file);
+  let cond = ref-leaf(*boolean-rep*, if-region.depends-on.source-exp, file);
   spew-pending-defines(file);
   format(stream, "if (%s) {\n", cond);
   indent(stream, $indentation-step);
-  emit-region(region.then-region, file);
-  /* ### emit-joins(region.join-region, file); */
+  emit-region(if-region.then-region, file);
+  /* ### emit-joins(if-region.join-region, file); */
   spew-pending-defines(file);
   indent(stream, -$indentation-step);
   write(stream, "}\n");
-  write(stream, "else {\n");
-  indent(stream, $indentation-step);
-  emit-region(region.else-region, file);
-  /* ### emit-joins(region.join-region, file); */
+
+  // We need to detect places where we can use "else if" rather than
+  // "else { if" because if we don't, we'll break the parsers on
+  // crappy C compilers (such as Microsoft Visual C++)
+  let clause-is-an-elseif = if-region.else-region.elseif-able?;
+  
+  if (clause-is-an-elseif)
+    write("else ", stream);
+  else
+    write("else {\n", stream);
+    indent(stream, $indentation-step);
+  end if;
+  
+  emit-region(if-region.else-region, file);
+  /* ### emit-joins(if-region.join-region, file); */
+
   spew-pending-defines(file);
-  indent(stream, -$indentation-step);
-  write(stream, "}\n");
-end;
+  if (~clause-is-an-elseif)
+    indent(stream, -$indentation-step);
+    write("}\n", stream);
+  end if;
+end method emit-region;
+
 
 define method emit-region (region :: <loop-region>,
 			   file :: <file-state>)
@@ -2691,6 +2730,9 @@ define method spew-pending-defines (file :: <file-state>) => ();
   file.file-pending-defines := #f;
 end method spew-pending-defines;
 
+// Make sure abstract-variable-is-inlined? agrees with what this
+// method will do...
+//
 define method ref-leaf
     (target-rep :: <c-representation>, leaf :: <abstract-variable>,
      file :: <file-state>)
