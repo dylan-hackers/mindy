@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.10 2001/02/08 21:59:20 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.11 2001/02/25 20:35:11 gabor Exp $
 copyright: see below
 
 
@@ -505,22 +505,10 @@ define function c-include-emitter
 end;
 
 define-primitive-emitter
-  (#"c-system-include", rcurry(c-include-emitter, "<", ">"));
+  (#"c-system-include", rcurry(c-include-emitter, '<', '>'));
 
 define-primitive-emitter
-  (#"c-include", rcurry(c-include-emitter, "\"", "\"")
-/*   method (defines :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   file :: <file-state>)
-       => ();
-     let include = operation.depends-on.source-exp;
-     unless (instance?(include, <literal-constant>)
-	       & instance?(include.value, <literal-string>))
-       error("file name in c-include isn't a constant string?");
-     end;
-     maybe-emit-include(include.value.literal-value, file);
-     deliver-results(defines, #[], #f, file);
-   end */);
+  (#"c-include", rcurry(c-include-emitter, '"', '"'));
 
 define-primitive-emitter
   (#"c-decl",
