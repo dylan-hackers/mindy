@@ -135,5 +135,6 @@ define module c-declarations
 
     // Miscellaneous
     getter, setter, sealed-string, excluded?,
-    canonical-name,declarations;
+    canonical-name,declarations,
+    melange-target;
 end module c-declarations;

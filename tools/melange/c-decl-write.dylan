@@ -24,6 +24,34 @@ rcs-header: $Header:
 //======================================================================
 
 //------------------------------------------------------------------------
+// Exported variables
+//------------------------------------------------------------------------
+
+// melange-target, which determines what compiler Melange is producing code
+//   for, defaults to Mindy.
+define variable melange-target :: one-of(#"mindy", #"d2c") = #"mindy";
+
+//------------------------------------------------------------------------
+// Mindy/d2c incompatibility fixes
+//------------------------------------------------------------------------
+
+define method subclass-type(type :: <byte-string>) => result :: <byte-string>;
+  select (melange-target)
+    #"mindy" => format-to-string("limited(<class>, subclass-of: %s)", type);
+    #"d2c" => format-to-string("subclass(%s)", type);
+    otherwise => error("This should never happen in subclass-type()");
+  end select;
+end method subclass-type;
+
+define method class-sealing() => result :: <byte-string>;
+  select (melange-target)
+    #"mindy" => "";
+    #"d2c" => "functional";
+    otherwise => error("This should never happen in class-sealing()");
+  end select;
+end method class-sealing;
+
+//------------------------------------------------------------------------
 // Exported function declarations.
 //------------------------------------------------------------------------
 
@@ -39,7 +67,9 @@ define generic write-mindy-includes
 // "find-c-function" call so that the symbols will be found.
 //
 define generic write-file-load
-    (object-file :: type-union(<sequence>, <false>), decls :: <sequence>,
+    (include-files :: <sequence>,
+     object-file :: type-union(<sequence>, <false>),
+     decls :: <sequence>,
      stream :: <stream>)
  => (load-string :: <string>);
 
@@ -158,9 +188,14 @@ define method c-accessor
 		   parameter, offset, equated);
 end method c-accessor;
 
+define constant <non-atomic-types>
+    = type-union(<struct-declaration>, <union-declaration>,
+		 <vector-declaration>);
+define constant <pointer-rep-types>
+    = type-union(<pointer-declaration>, <non-atomic-types>);
+
 define method c-accessor
-    (type :: type-union(<struct-declaration>, <union-declaration>,
-		     <vector-declaration>),
+    (type :: <non-atomic-types>,
      offset :: <string>, parameter :: <string>, equated :: <string>)
  => (result :: <string>);
   // This one is non-intuitive.  When you "dereference" a pointer or a slot
@@ -202,17 +237,14 @@ define method write-c-accessor-method
 	 "    (ptr :: %s) => (result :: %s);\n"
 	 "  %s;\n"
 	 "end method %s;\n\n",
-	 slot-type.sealed-string, slot-name, compound-type.mapped-name,
+	 slot-type.sealed-string, slot-name, compound-type.type-name,
 	 slot-type.mapped-name,
 	 import-value(slot-type, c-accessor(slot-type.type, offset,
-					    export-value(compound-type, "ptr"),
-					    slot-type.type-name)),
+					    "ptr", slot-type.type-name)),
 	 slot-name);
 
   if (~slot-type.read-only
-	& ~instance?(real-type, type-union(<struct-declaration>,
-					<union-declaration>,
-					<vector-declaration>)))
+	& ~instance?(real-type, <non-atomic-types>))
     // Write setter method
     format(stream,
 	   "define %s method %s-setter\n"
@@ -221,12 +253,63 @@ define method write-c-accessor-method
 	   "  value;\n"
 	   "end method %s-setter;\n\n",
 	   slot-type.sealed-string, slot-name, slot-type.mapped-name,
-	   compound-type.mapped-name, slot-type.mapped-name,
+	   compound-type.type-name, slot-type.mapped-name,
 	   c-accessor(slot-type.type, offset,
-		      export-value(compound-type, "ptr"), slot-type.type-name),
+		      "ptr", slot-type.type-name),
 	   export-value(slot-type, "value"), slot-name);
   end if;
 end method write-c-accessor-method;
+
+define method d2c-type-tag
+    (type :: <pointer-rep-types>) => (result :: <byte-string>);
+  "ptr:";
+end method d2c-type-tag;
+
+define method d2c-type-tag
+    (type :: <enum-declaration>) => (result :: <byte-string>);
+  "int:";
+end method d2c-type-tag;
+
+define method d2c-type-tag
+    (t :: <typedef-declaration>) => (result :: <byte-string>);
+  t.type.d2c-type-tag;
+end method d2c-type-tag;
+
+define method d2c-type-tag (type :: <predefined-type-declaration>)
+ => (result :: <byte-string>);
+  select (type)
+    int-type => "int:";
+    unsigned-int-type => "unsigned-int:";
+    short-type => "short:";
+    unsigned-short-type => "unsigned-short:";
+    long-type => "long:";
+    unsigned-long-type => "long:";
+    char-type => "char:";
+    unsigned-char-type => "unsigned-char:";
+    float-type => "float:";
+    double-type => "double:";
+    long-double-type => "long-double:";
+    void-type => "void:";
+    otherwise => error("unknown-type");
+  end select;
+end method d2c-type-tag;
+
+define method d2c-arg
+    (type :: <type-declaration>, expr :: <string>) => (result :: <string>);
+  concatenate(type.d2c-type-tag, " ", expr);
+end method d2c-arg;
+
+define method d2c-arg
+    (type :: <pointer-rep-types>, expr :: <string>)
+ => (result :: <string>);
+  concatenate("ptr: (", expr, ").raw-value");
+end method d2c-arg;
+
+define method d2c-arg
+    (t :: <typedef-declaration>, expr :: <string>)
+ => (result :: <string>);
+  d2c-arg(t.type, expr);
+end method d2c-arg;
 
 //------------------------------------------------------------------------
 // Methods definitions for exported functions
@@ -242,7 +325,8 @@ define method write-declaration
  => ();
   if (~decl.equated?)
     let supers = decl.superclasses | #("<statically-typed-pointer>");
-    format(stream, "define class %s (%s) end;\n\n",
+    format(stream, "define %s class %s (%s) end;\n\n",
+	   class-sealing(),
 	   decl.dylan-name,
 	   as(<byte-string>, apply(join, ", ", supers)));
     local method slot-accessors
@@ -272,10 +356,10 @@ define method write-declaration
     // Finally write out a "content-size" function for use by "make", etc.
     format(stream,
 	   "define method content-size "
-	     "(value :: limited(<class>, subclass-of: %s)) "
+	     "(value :: %s) "
 	     "=> (result :: <integer>);\n"
 	     "  %d;\nend method content-size;\n\n",
-	   decl.dylan-name, decl.c-type-size);
+	   subclass-type(decl.dylan-name), decl.c-type-size);
   end if;
 end method write-declaration;
 
@@ -287,7 +371,8 @@ define method write-declaration
  => ();
   if (~decl.equated?)
     let supers = decl.superclasses | #("<statically-typed-pointer>");
-    format(stream, "define class %s (%s) end;\n\n",
+    format(stream, "define %s class %s (%s) end;\n\n",
+	   class-sealing(),
 	   decl.dylan-name,
 	   as(<byte-string>, apply(join, ", ", supers)));
 
@@ -311,10 +396,10 @@ define method write-declaration
     // Finally write out a "content-size" function for use by "make", etc.
     format(stream,
 	   "define method content-size "
-	     "(value :: limited(<class>, subclass-of: %s)) "
+	     "(value :: %s) "
 	     " => (result :: <integer>);\n  %d;\n"
 	     "end method content-size;\n\n",
-	   decl.dylan-name, decl.c-type-size);
+	   subclass-type(decl.dylan-name), decl.c-type-size);
   end if;
 end method write-declaration;
 
@@ -374,29 +459,41 @@ define method write-declaration
   let raw-name = anonymous-name();
   let real-type = true-type(decl.type);
 
-  // First get the address of the c object...
-  format(stream, "define constant %s = find-c-pointer(\"%s\"%s);\n",
-	 raw-name, decl.simple-name, load-string);
+  if(melange-target = #"mindy")
+    // First get the address of the c object...
+    format(stream, "define constant %s = find-c-pointer(\"%s\"%s);\n",
+	   raw-name, decl.simple-name, load-string);
+  end if;
 
   // Write a getter method (with an empty parameter list)
   format(stream, "define %s method %s () => (result :: %s);\n  %s;\n"
 	   "end method %s;\n\n",
 	 decl.sealed-string, decl.getter, decl.mapped-name,
 	 import-value(decl,
-		      c-accessor(decl.type, 0, raw-name, decl.type-name)),
+		      select (melange-target)
+			#"mindy" => c-accessor(decl.type,
+					       0, raw-name, decl.type-name);
+			#"d2c" => concatenate("c-expr(",
+					      d2c-arg(decl.type,
+						      decl.simple-name),
+					      ")");
+		      end select),
 	 decl.getter);
 
   // Write a setter method
   if (~decl.read-only 
-	& ~instance?(real-type, type-union(<struct-declaration>,
-					<union-declaration>,
-					<vector-declaration>)))
+	& ~instance?(real-type, <non-atomic-types>))
     format(stream,
 	   "define %s method %s (value :: %s) => (result :: %s);\n"
 	     "  %s := %s;\n  value;\nend method %s;\n\n",
 	   decl.sealed-string, decl.setter, decl.type.mapped-name,
 	   decl.mapped-name,
-	   c-accessor(decl.type, 0, raw-name, decl.type-name),
+	   select (melange-target)
+	     #"mindy" => c-accessor(decl.type, 0, raw-name, decl.type-name);
+	     #"d2c" => concatenate("c-expr(",
+				   d2c-arg(decl.type, decl.simple-name),
+				   ")");
+	   end select,
 	   export-value(decl, "value"), decl.setter);
   end if;
 end method write-declaration;
@@ -435,16 +532,18 @@ define method write-declaration
   let (in-params, out-params) = split-parameters(decl.type);
   let params = decl.type.parameters;
 
-  // First get the raw c function ...
-  if (decl.type.result.type == void-type)
-    format(stream, "define constant %s = find-c-function(\"%s\"%s);\n",
-	   raw-name, decl.simple-name, load-string)
-  else
-    format(stream,
-	   "define constant %s\n  = constrain-c-function("
-	     "find-c-function(\"%s\"%s), #(), #t, list(%s));\n",
-	   raw-name, decl.simple-name, load-string,
-	   decl.type.result.type-name);
+  if (melange-target = #"mindy")
+    // First get the raw c function ...
+    if (decl.type.result.type == void-type)
+      format(stream, "define constant %s = find-c-function(\"%s\"%s);\n",
+	     raw-name, decl.simple-name, load-string)
+    else
+      format(stream,
+	     "define constant %s\n  = constrain-c-function("
+	       "find-c-function(\"%s\"%s), #(), #t, list(%s));\n",
+	     raw-name, decl.simple-name, load-string,
+	     decl.type.result.type-name);
+    end if;
   end if;
 
   // ... then create a more robust method as a wrapper.
@@ -480,28 +579,61 @@ define method write-declaration
     end if;
   end for;
 
-  if (decl.type.result.type ~= void-type)
+  let result-type = decl.type.result.type;
+  if (result-type ~= void-type)
     write("  let result-value\n    = ", stream);
   else
     write("  ", stream);
   end if;
 
-  if (~params.empty? & instance?(last(params), <varargs-declaration>))
-    format(stream, "apply(%s, ", raw-name);
-  else
-    format(stream, "%s(", raw-name);
-  end if;
-  for (count from 1, arg in params)
-    if (count > 1) write(", ", stream) end if;
-    if (instance?(arg, <varargs-declaration>))
-      write(arg.dylan-name, stream);
-    elseif (arg.direction == #"in-out" | arg.direction == #"out")
-      format(stream, "%s-ptr", arg.dylan-name);
-    else
-      write(export-value(arg, arg.dylan-name), stream);
-    end if;
-  end for;
+  select(melange-target)
+    #"mindy" =>
+      begin
+	if (~params.empty? & instance?(last(params), <varargs-declaration>))
+	  format(stream, "apply(%s, ", raw-name);
+	else
+	  format(stream, "%s(", raw-name);
+	end if;
+	for (count from 1, arg in params)
+	  if (count > 1) write(", ", stream) end if;
+	  if (instance?(arg, <varargs-declaration>))
+	    write(arg.dylan-name, stream);
+	  elseif (arg.direction == #"in-out" | arg.direction == #"out")
+	    format(stream, "%s-ptr", arg.dylan-name);
+	  else
+	    write(export-value(arg, arg.dylan-name), stream);
+	  end if;
+	end for;
+      end;
+    #"d2c" =>
+      begin
+	if (~params.empty? & instance?(last(params), <varargs-declaration>))
+	  error("Varargs functions not yet handled: %s", decl.simple-name);
+	else
+	  format(stream, "call-out(\"%s\", %s", decl.simple-name,
+		 decl.type.result.type.d2c-type-tag);
+	end if;
+	for (count from 1, arg in params)
+	  write(", ", stream);
+	  if (instance?(arg, <varargs-declaration>))
+	    format(stream, "%s", d2c-arg(arg.type, arg.dylan-name));
+	  elseif (arg.direction == #"in-out" | arg.direction == #"out")
+	    format(stream, "ptr: %s-ptr.raw-value", arg.dylan-name);
+	  else
+	    format(stream, "%s",
+		   d2c-arg(arg.type, export-value(arg, arg.dylan-name)));
+	  end if;
+	end for;
+      end;
+  end select;
   write(");\n", stream);
+
+  if(melange-target = #"d2c")
+    if (instance?(result-type.true-type, <pointer-rep-types>))
+      format(stream, "  let result-value = as(%s, result-value);\n",
+	     result-type.dylan-name);
+    end if;
+  end if;
 
   for (arg in out-params)
     if (instance?(arg, <arg-declaration>))
@@ -558,7 +690,8 @@ define method write-declaration
     let supers = decl.superclasses | list(decl.pointer-equiv.dylan-name,
 					  "<c-vector>");
 					  
-    format(stream, "define class %s (%s) end class;\n\n",
+    format(stream, "define %s class %s (%s) end class;\n\n",
+	   class-sealing(),
 	   decl.dylan-name,
 	   as(<byte-string>, apply(join, ", ", supers)));
     // We will eventually want to declare a size.  However, since the
@@ -634,7 +767,8 @@ define method write-declaration
 
     // First get the raw c function ...
     let supers = decl.superclasses | #("<statically-typed-pointer>");
-    format(stream, "define class %s (%s) end;\n\n",
+    format(stream, "define %s class %s (%s) end;\n\n",
+	   class-sealing(),
 	   decl.dylan-name,
 	   as(<byte-string>, apply(join, ", ", supers)));
     format(stream,
@@ -650,9 +784,7 @@ define method write-declaration
     write(";\nend method pointer-value;\n\n", stream);
 
     // Write setter method, if applicable.
-    unless (instance?(true-type(target-type), type-union(<struct-declaration>,
-					   <union-declaration>,
-					   <vector-declaration>)))
+    unless (instance?(true-type(target-type), <non-atomic-types>))
       format(stream,
 	     "define method pointer-value-setter\n"
 	       "    (value :: %s, ptr :: %s, #key index = 0)\n"
@@ -669,10 +801,10 @@ define method write-declaration
     // Finally write out a "content-size" function for use by "make", etc.
     format(stream,
 	   "define method content-size "
-	     "(value :: limited(<class>, subclass-of: %s)) "
+	     "(value :: %s) "
 	     "=> (result :: <integer>);\n  %d;\n"
 	     "end method content-size;\n\n",
-	   decl.dylan-name, target-type.c-type-size)
+	   subclass-type(decl.dylan-name), target-type.c-type-size)
   end if;
 end method write-declaration;
 
@@ -680,29 +812,50 @@ end method write-declaration;
 // objects are included.  Returns a string which can be included in a
 // "find-c-function" call so that the symbols will be found.
 //
+
+// LAST CALL
 define method write-file-load
-    (object-files :: <sequence>, decls :: <sequence>,
+    (include-files :: <sequence>,
+     object-files :: false-or(<sequence>),
+     decls :: <sequence>,
      stream :: <stream>)
  => (load-string :: <string>);
-  if (~empty?(object-files))
-    let names = map(simple-name,
-		    choose(rcurry(instance?, <value-declaration>), decls));
-    let file-name = anonymous-name();
-    format(stream, "define constant %s\n  = load-object-file(#(", file-name);
-    for (comma = #f then #t, file in object-files)
-      if (comma) write(", ", stream) end if;
-      format(stream, "\"%s\"", file);
-    end for;
-    write("), include: #(", stream);
-    for (comma = #f then #t, name in names)
-      if (comma) write(", ", stream) end if;
-      format(stream, "\"%s\"", name);
-    end for;
-    write("));\n\n", stream);
-    concatenate(", file: ", file-name);
-  else
-    ""
-  end if;
+  select(melange-target)
+    #"mindy" =>
+      begin
+	if (~empty?(object-files))
+	  let names = map(simple-name,
+			  choose(rcurry(instance?, <value-declaration>),
+				 decls));
+	  let file-name = anonymous-name();
+	  format(stream, "define constant %s\n  "
+		         "= load-object-file(#(", file-name);
+	  for (comma = #f then #t, file in object-files)
+	    if (comma) write(", ", stream) end if;
+	    format(stream, "\"%s\"", file);
+	  end for;
+	  write("), include: #(", stream);
+	  for (comma = #f then #t, name in names)
+	    if (comma) write(", ", stream) end if;
+	    format(stream, "\"%s\"", name);
+	  end for;
+	  write("));\n\n", stream);
+	  concatenate(", file: ", file-name);
+	else
+	  ""
+	end if;
+      end;
+    #"d2c" =>
+      begin
+	// Ignore object files, since they will be statically linked into
+	// the d2c compiled binaries.
+	for (file in include-files)
+	  format(stream, "c-include(\"%s\");\n", file);
+	end for;
+	format(stream, "\n");
+	"";
+      end;
+  end select;
 end method write-file-load;
 
 // Writes out a list of symbols which must be defined, in a format compatible
