@@ -2,7 +2,7 @@ module: Matrix
 author: Russ Schaaf (rsbe@cs.cmu.edu)
 synopsis: Matrix and other linear algebra functions
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/matrix/matrix.dylan,v 1.1 1995/11/06 23:51:11 rsbe Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/matrix/matrix.dylan,v 1.2 1996/05/05 21:03:13 rsbe Exp $
  
 //======================================================================
 //
@@ -30,51 +30,39 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/matrix/matrix.dylan,v 1
 //======================================================================
 
 
-// As a future revision, I will make a sub-class of <array> called <matrix>,
-// which (if I can do it right) will only allow 2 dimensional arrays.  I will
-// also include the  apprppriate "as" methods for going between <array> and 
-// <matrix>.  I feel it is important to distinguish between <array> and 
-// <matrix>, because one is used as a data-structure, and the other as a 
-// mathematical object
-//
-
-/*define constant <matrix> = <array>;
-*/
-
 define class <matrix> (<array>)
   slot dimensions :: <sequence>;
   slot components :: <simple-object-vector>;
 end class <matrix>;
 
-
 define constant matrix-no-default = pair(#f, #f);
 
-define method element (matrix :: <matrix>, index :: <integer>,
-		       #key default = matrix-no-default);
+define method element (mat :: <matrix>, index :: <integer>,
+		       #key default = matrix-no-default) => elem :: <number>;
   if (default == matrix-no-default)
-    matrix.components[index];
+    mat.components[index];
   else
-    element(matrix.components, index, default: default);
+    element(mat.components, index, default: default);
   end if;
 end method element;
 
-define method element-setter (new-value, matrix :: <matrix>,
-			      index :: <integer>);
-  matrix.components[index] := new-value;
+define method element-setter (new-value, mat :: <matrix>,
+			      index :: <integer>) => elem :: <number>;
+  mat.components[index] := new-value;
 end method element-setter;
 
-define method initialize (matrix :: <matrix>,
+define method initialize (mat :: <matrix>,
 			  #next next-method,
 			  #key dimensions = #[1,1], fill = 0);
   if (dimensions.size == 2)
-    matrix.dimensions := dimensions;
-    matrix.components := make(<simple-object-vector>,
-			      size: reduce1(\*, dimensions), fill: fill);
+    mat.dimensions := dimensions;
+    mat.components := make(<simple-object-vector>,
+			   size: reduce1(\*, dimensions), fill: fill);
     next-method();
   else
     error("Matrices must have two dimensions, not %S.", dimensions);
   end;
-  matrix;
+  mat;
 end method;
 
 define method shallow-copy (old-matrix :: <matrix>) => new-matrix :: <matrix>;
@@ -84,15 +72,31 @@ define method shallow-copy (old-matrix :: <matrix>) => new-matrix :: <matrix>;
   new-matrix;
 end method shallow-copy;
 
-define method forward-iteration-protocol(matrix :: <matrix>)
-  values( 0, reduce1(\*, matrix.dimensions), 
-          method (matrix, state) state + 1 end,
-          method (matrix, state, limit) state == limit end,
-          method (matrix, state) state end,
-          method (matrix, state) matrix.components[state] end,
-          method (value, matrix, state) matrix.components[state] := value end,
-          method (matrix, state) state end);
+define method forward-iteration-protocol(mat :: <matrix>)
+ => (initial-state :: <number>, limit :: <number>, next-state :: <function>,
+     finished-state? :: <function>, current-key :: <function>,
+     current-element :: <function>, current-element-setter :: <function>,
+     copy-state :: <function>);
+  values( 0, reduce1(\*, mat.dimensions), 
+          method (mat, state) state + 1 end,
+          method (mat, state, limit) state == limit end,
+          method (mat, state) state end,
+          method (mat, state) mat.components[state] end,
+          method (value, mat, state) mat.components[state] := value end,
+          method (mat, state) state end);
 end method forward-iteration-protocol;
+
+define method matrix(#rest row-vectors) => mat :: <matrix>;
+  let row-size = row-vectors[0].size;
+  let mat = make(<matrix>,
+		 dimensions: vector(row-vectors.size, row-size));
+  if (every?(method (x) x.size == row-size; end, row-vectors))
+    mat.components := reduce1(concatenate, row-vectors);
+  else
+    error("All row vectors must have the same size\n");
+  end if;
+  mat;
+end method matrix;
 
 // my/ is used so that integer division will work.  If two integers are
 // divided, a ratio will be returned.
