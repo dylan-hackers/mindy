@@ -126,7 +126,7 @@ define method raw-bits (ctv :: <literal-true>) => res :: <integer>;
 end;
 
 define method raw-bits (ctv :: <literal-false>) => res :: <integer>;
-  1;
+  0;
 end;
 
 define method raw-bits (ctv :: <literal-fixed-integer>) => res :: <integer>;
@@ -223,7 +223,24 @@ end;
 
 define method spew-object
     (object :: <literal-extended-integer>, state :: <state>) => ();
-  spew-instance(specifier-type(#"<extended-integer>"), state);
+  let digits = make(<stretchy-vector>);
+  local
+    method repeat (remainder :: <integer>);
+      let (remainder :: <integer>, digit :: <integer>)
+	= floor/(remainder, 256);
+      add!(digits, make(<literal-fixed-integer>, value: digit));
+      unless (if (logbit?(7, digit))
+		remainder = -1;
+	      else
+		remainder = 0;
+	      end)
+	repeat(remainder);
+      end;
+    end;
+  repeat(object.literal-value);
+  spew-instance(specifier-type(#"<extended-integer>"), state,
+		bignum-size: as(<ct-value>, digits.size),
+		bignum-digit: digits);
 end;
 
 define method spew-object (object :: <literal-ratio>, state :: <state>) => ();
@@ -297,10 +314,20 @@ end;
 
 define method spew-object
     (object :: <limited-integer-ctype>, state :: <state>) => ();
+  local method make-lit (x :: false-or(<integer>))
+	  if (x == #f)
+	    as(<ct-value>, x);
+	  elseif (x < runtime-$minimum-fixed-integer
+		    | x > runtime-$maximum-fixed-integer)
+	    make(<literal-extended-integer>, value: x);
+	  else
+	    make(<literal-fixed-integer>, value: x);
+	  end;
+	end;
   spew-instance(specifier-type(#"<limited-integer>"), state,
 		limited-integer-base-class: object.base-class,
-		limited-integer-minimum: as(<ct-value>, object.low-bound),
-		limited-integer-maximum: as(<ct-value>, object.high-bound));
+		limited-integer-minimum: make-lit(object.low-bound),
+		limited-integer-maximum: make-lit(object.high-bound));
 end;
 
 define method spew-object
@@ -373,7 +400,12 @@ define method spew-object
 			#f;
 		      end;
 		    end;
-		  end);
+		  end,
+		generic-function-methods:
+		  make(<literal-list>,
+		       contents:
+			 remove(map(ct-value, generic-defn-methods(defn)), #f),
+		       sharable: #f));
 end;
 
 define method spew-object (object :: <ct-method>, state :: <state>) => ();
