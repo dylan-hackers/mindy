@@ -219,7 +219,7 @@ end method random-gaussian;
 //
 define method random-exponential (#key lambda = 1, state = *random-state*)
       => random :: <double-float>;
-  - log(random-float(1.0, state: state) / lambda);
+  - log(as(<double-float>, random-float(1.0, state: state)) / lambda);
 end method random-exponential;
 
 
