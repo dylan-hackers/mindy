@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.2 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.3 1996/01/11 18:54:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -164,8 +164,7 @@ define method clone-expr
   make-operation(state.clone-builder, <slot-ref>,
 		 clone-arguments(expr.depends-on, state),
 		 derived-type: expr.derived-type,
-		 slot-info: expr.slot-info,
-		 slot-offset: expr.slot-offset);
+		 slot-info: expr.slot-info);
 end;
 
 define method clone-expr
@@ -173,8 +172,7 @@ define method clone-expr
     => clone :: <slot-set>;
   make-operation(state.clone-builder, <slot-set>,
 		 clone-arguments(expr.depends-on, state),
-		 slot-info: expr.slot-info,
-		 slot-offset: expr.slot-offset);
+		 slot-info: expr.slot-info);
 end;
 
 define method clone-expr

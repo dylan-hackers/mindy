@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.47 1996/01/09 19:45:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.48 1996/01/11 18:54:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1099,77 +1099,72 @@ define method convert-top-level-form
 	end;
 	
 	unless (allocation == #"virtual")
-	  if (defn.class-defn-sealed? | defn.class-defn-primary?)
-	    if (type-var)
-	      local
-		method build-call (name, #rest args)
-		  let temp = make-local-var(evals-builder, name,
-					    object-ctype());
+	  if (type-var)
+	    local
+	      method build-call (name, #rest args)
+		let temp = make-local-var(evals-builder, name, object-ctype());
+		build-assignment
+		  (evals-builder, policy, source, temp,
+		   make-unknown-call
+		     (evals-builder,
+		      ref-dylan-defn(evals-builder, policy, source, name),
+		      #f, as(<list>, args)));
+		temp;
+	      end,
+	      method build-add-method (gf-name, method-leaf)
+		// We don't use method-defn-of, because that is #f if there
+		// is a definition but it isn't a define generic.
+		let gf-var = find-variable(gf-name);
+		let gf-defn = gf-var & gf-var.variable-definition;
+		if (gf-defn)
+		  let gf-leaf = fer-convert-defn-ref(evals-builder, policy,
+						     source, gf-defn);
 		  build-assignment
-		    (evals-builder, policy, source, temp,
+		    (evals-builder, policy, source, #(),
 		     make-unknown-call
 		       (evals-builder,
-			ref-dylan-defn(evals-builder, policy, source, name),
-			#f, as(<list>, args)));
-		  temp;
-		end,
-		method build-add-method (gf-name, method-leaf)
-		  // We don't use method-defn-of, because that is #f if there
-		  // is a definition but it isn't a define generic.
-		  let gf-var = find-variable(gf-name);
-		  let gf-defn = gf-var & gf-var.variable-definition;
-		  if (gf-defn)
-		    let gf-leaf = fer-convert-defn-ref(evals-builder, policy,
-						       source, gf-defn);
-		    build-assignment
-		      (evals-builder, policy, source, #(),
-		       make-unknown-call
-			 (evals-builder,
-			  ref-dylan-defn(evals-builder, policy, source,
-					 #"add-method"),
-			  #f,
-			  list(gf-leaf, method-leaf)));
-		  else
-		    error("No definition for %=, and can't "
-			    "implicitly define it.",
-			  gf-name);
-		  end;
+			ref-dylan-defn(evals-builder, policy, source,
+				       #"add-method"),
+			#f,
+			list(gf-leaf, method-leaf)));
+		else
+		  error("No definition for %=, and can't "
+			  "implicitly define it.",
+			gf-name);
 		end;
+	      end;
 
-	      let results = build-call(#"list", type-var);
-	      let cclass-leaf = make-literal-constant(evals-builder, cclass);
-	      let false-leaf
-		= make-literal-constant(evals-builder, as(<ct-value>, #f));
-	      begin
-		let getter
-		  = build-getter(evals-builder, #f, slot-defn, slot-info);
-		let getter-specializers = build-call(#"list", cclass-leaf);
-		let meth = build-call(#"%make-method", getter-specializers,
-				      results, false-leaf, getter);
-		build-add-method(slot-defn.slot-defn-getter-name, meth);
-	      end;
-	      if (slot-defn.slot-defn-setter)
-		let setter
-		  = build-setter(evals-builder, #f, slot-defn, slot-info);
-		let setter-specializers = build-call(#"list", type-var,
-						     cclass-leaf);
-		let meth = build-call(#"%make-method", setter-specializers,
-				      results, false-leaf, setter);
-		build-add-method(slot-defn.slot-defn-setter-name, meth);
-	      end;
-	    else
-	      build-getter(tl-builder, slot-defn.slot-defn-getter.ct-value,
-			   slot-defn, slot-info);
-	      if (slot-defn.slot-defn-setter)
-		build-setter(tl-builder, slot-defn.slot-defn-setter.ct-value,
-			     slot-defn, slot-info);
-	      end;
+	    let results = build-call(#"list", type-var);
+	    let cclass-leaf = make-literal-constant(evals-builder, cclass);
+	    let false-leaf
+	      = make-literal-constant(evals-builder, as(<ct-value>, #f));
+	    begin
+	      let getter
+		= build-getter(evals-builder, #f, slot-defn, slot-info);
+	      let getter-specializers = build-call(#"list", cclass-leaf);
+	      let meth = build-call(#"%make-method", getter-specializers,
+				    results, false-leaf, getter);
+	      build-add-method(slot-defn.slot-defn-getter-name, meth);
+	    end;
+	    if (slot-defn.slot-defn-setter)
+	      let setter
+		= build-setter(evals-builder, #f, slot-defn, slot-info);
+	      let setter-specializers = build-call(#"list", type-var,
+						   cclass-leaf);
+	      let meth = build-call(#"%make-method", setter-specializers,
+				    results, false-leaf, setter);
+	      build-add-method(slot-defn.slot-defn-setter-name, meth);
 	    end;
 	  else
-	    error("### Can't deal with open free classes yet.");
-	  end;
-	end;
-      end;
+	    build-getter(tl-builder, slot-defn.slot-defn-getter.ct-value,
+			 slot-defn, slot-info);
+	    if (slot-defn.slot-defn-setter)
+	      build-setter(tl-builder, slot-defn.slot-defn-setter.ct-value,
+			   slot-defn, slot-info);
+	    end;
+	  end if;
+	end unless;
+      end for;
 
       for (override-defn in defn.class-defn-overrides,
 	   index from 0)
@@ -1368,6 +1363,9 @@ define method convert-top-level-form
 			    error("Couldn't find the position for %s",
 				  slot.slot-getter.variable-name);
 			  end;
+		      let posn-leaf
+			= make-literal-constant(init-builder,
+						as(<ct-value>, posn));
 		      if (instance?(slot, <vector-slot-info>))
 			// We need to build a loop to initialize every element.
 			let block-region
@@ -1393,10 +1391,10 @@ define method convert-top-level-form
 			build-if-body(init-builder, policy, source, more?);
 			build-assignment
 			  (init-builder, policy, source, #(),
-			   make-operation(init-builder, <slot-set>,
-					  list(leaf, instance-leaf, index),
-					  slot-info: slot,
-					  slot-offset: posn));
+			   make-operation
+			     (init-builder, <slot-set>,
+			      list(leaf, instance-leaf, posn-leaf, index),
+			      slot-info: slot));
 			build-assignment
 			  (init-builder, policy, source, index,
 			   make-unknown-call
@@ -1415,9 +1413,8 @@ define method convert-top-level-form
 			build-assignment
 			  (init-builder, policy, source, #(),
 			   make-operation(init-builder, <slot-set>,
-					  list(leaf, instance-leaf),
-					  slot-info: slot,
-					  slot-offset: posn));
+					  list(leaf, instance-leaf, posn-leaf),
+					  slot-info: slot));
 			if (slot == size-slot)
 			  size-leaf := leaf;
 			end;
@@ -1781,35 +1778,33 @@ define method build-getter
   let source = make(<source-location>);
   let cclass = slot.slot-introduced-by;
   let instance = make-lexical-var(builder, #"object", source, cclass);
-  let (index, args, specializers)
-    = if (instance?(slot, <vector-slot-info>))
-	let fi = specifier-type(#"<fixed-integer>");
-	let index = make-lexical-var(builder, #"index", source, fi);
-	values(index,
-	       list(instance, index),
-	       list(cclass, fi));
-      else
-	values(#f,
-	       list(instance),
-	       list(cclass));
-      end;
+  let index = if (instance?(slot, <vector-slot-info>))
+		make-lexical-var(builder, #"index", source,
+				 specifier-type(#"<fixed-integer>"));
+	      else
+		#f;
+	      end if;
   let type = slot.slot-type;
   let region = build-function-body
     (builder, policy, source, #f,
      format-to-string("Slot Getter %s", defn.slot-defn-getter.defn-name),
-     args, type, #t);
+     if (index)
+       list(instance, index);
+     else
+       list(instance);
+     end,
+     type, #t);
   let result = make-local-var(builder, #"result", type);
   local
-    method get (offset :: <fixed-integer>,
-		init?-offset :: false-or(<fixed-integer>))
+    method get (offset :: <leaf>, init?-offset :: false-or(<leaf>)) => ();
       if (init?-offset)
 	let init?-slot = slot.slot-initialized?-slot;
 	let temp = make-local-var(builder, #"initialized?", object-ctype());
 	build-assignment(builder, policy, source, temp,
-			 make-operation(builder, <slot-ref>, list(instance),
+			 make-operation(builder, <slot-ref>,
+					list(instance, init?-offset),
 					derived-type: init?-slot.slot-type,
-					slot-info: init?-slot,
-					slot-offset: init?-offset));
+					slot-info: init?-slot));
 	build-if-body(builder, policy, source, temp);
 	build-else(builder, policy, source);
 	build-assignment
@@ -1819,9 +1814,14 @@ define method build-getter
 	end-body(builder);
       end;
       build-assignment(builder, policy, source, result,
-		       make-operation(builder, <slot-ref>, args,
+		       make-operation(builder, <slot-ref>,
+				      if (index)
+					list(instance, offset, index);
+				      else
+					list(instance, offset);
+				      end,
 				      derived-type: slot.slot-type,
-				      slot-info: slot, slot-offset: offset));
+				      slot-info: slot));
       unless (init?-offset | slot-guaranteed-initialized?(slot, cclass))
 	let temp = make-local-var(builder, #"initialized?", object-ctype());
 	build-assignment(builder, policy, source, temp,
@@ -1841,7 +1841,14 @@ define method build-getter
   end-body(builder);
   make-function-literal
     (builder, ctv, #t, if (ctv) #"global" else #"local" end,
-     make(<signature>, specializers: specializers, returns: type),
+     make(<signature>,
+	  specializers:
+	    if (index)
+	      list(cclass, specifier-type(#"<fixed-integer>"));
+	    else
+	      list(cclass);
+	    end,
+	  returns: type),
      region);
 end;
 
@@ -1857,35 +1864,39 @@ define method build-setter
   let new = make-lexical-var(builder, #"new-value", source, type);
   let cclass = slot.slot-introduced-by;
   let instance = make-lexical-var(builder, #"object", source, cclass);
-  let (index, args, specializers)
-    = if (instance?(slot, <vector-slot-info>))
-	let fi = specifier-type(#"<fixed-integer>");
-	let index = make-lexical-var(builder, #"index", source, fi);
-	values(index,
-	       list(new, instance, index),
-	       list(type, cclass, fi));
-      else
-	values(#f,
-	       list(new, instance),
-	       list(type, cclass));
-      end;
+  let index = if (instance?(slot, <vector-slot-info>))
+		let fi = specifier-type(#"<fixed-integer>");
+		let index = make-lexical-var(builder, #"index", source, fi);
+		index;
+	      else
+		#f;
+	      end if;
   let region = build-function-body
     (builder, policy, source, #f,
      format-to-string("Slot Setter %s", defn.slot-defn-setter.defn-name),
-     args, type, #t);
+     if (index)
+       list(new, instance, index);
+     else
+       list(new, instance);
+     end,
+     type, #t);
   let result = make-local-var(builder, #"result", type);
   local
-    method set (offset :: <fixed-integer>,
-		init?-offset :: false-or(<fixed-integer>))
+    method set (offset :: <leaf>, init?-offset :: false-or(<leaf>)) => ();
       build-assignment(builder, policy, source, #(),
-		       make-operation(builder, <slot-set>, args,
-				      slot-info: slot, slot-offset: offset));
+		       make-operation(builder, <slot-set>,
+				      if (index)
+					list(new, instance, offset, index);
+				      else
+					list(new, instance, offset);
+				      end if,
+				      slot-info: slot));
       if (init?-offset)
 	let init?-slot = slot.slot-initialized?-slot;
 	let true-leaf = make-literal-constant(builder, make(<literal-true>));
 	let init-op = make-operation
-	  (builder, <slot-set>, list(true-leaf, instance),
-	   slot-info: init?-slot, slot-offset: init?-offset);
+	  (builder, <slot-set>, list(true-leaf, instance, init?-offset),
+	   slot-info: init?-slot);
 	build-assignment(builder, policy, source, #(), init-op);
       end;
     end;
@@ -1894,11 +1905,72 @@ define method build-setter
   end-body(builder);
   make-function-literal
     (builder, ctv, #t, if (ctv) #"global" else #"local" end,
-     make(<signature>, specializers: specializers, returns: type),
+     make(<signature>,
+	  specializers:
+	    if (index)
+	      list(type, cclass, specifier-type(#"<fixed-integer>"));
+	    else
+	      list(type, cclass);
+	    end,
+	  returns: type),
      region);
 end;
 
 define method build-slot-posn-dispatch
+    (builder :: <fer-builder>, slot :: <instance-slot-info>,
+     instance-leaf :: <leaf>, thunk :: <function>)
+    => ();
+  let cclass = slot.slot-introduced-by;
+  if (cclass.sealed? | cclass.primary?)
+    // We don't have to do a runtime slot-position lookup, so make us a static
+    // slot accessor method.
+    let new-thunk
+      = method (offset :: <fixed-integer>,
+		init?-offset :: false-or(<fixed-integer>))
+	    => ();
+	  thunk(make-literal-constant(builder, as(<ct-value>, offset)),
+		init?-offset
+		  & make-literal-constant(builder,
+					  as(<ct-value>, init?-offset)));
+	end method;
+    let positions = slot.slot-positions;
+    let init?-positions
+      = (slot.slot-initialized?-slot
+	   & slot.slot-initialized?-slot.slot-positions);
+    if (positions.tail == #()
+	  & (init?-positions == #f | init?-positions.tail == #()))
+      // The slot only ever shows up at one place.  So just use that one
+      // place.
+      new-thunk(positions.head.tail,
+		init?-positions & init?-positions.head.tail);
+    else
+      // The slot shows up at multiple positions.  This had better only happen
+      // when the class is sealed because we are only supposed to try making
+      // a static posn-dispatch when the class is sealed or primary and if the
+      // class were primary, then there should only be one possible position
+      // for each slot.
+      assert(cclass.sealed?);
+      
+      if (every?(disjoin(abstract?, unique-id), cclass.subclasses))
+	// All the concrete subclasses have unique-id's, so we can compute a
+	// direct mapping from instance.object-class.unique-id to offset.
+	build-unique-id-slot-posn-dispatch
+	  (builder, slot, instance-leaf, new-thunk);
+      else
+	// One or more concrete subclass doesn't have a unique-id so we have
+	// to build an instance? tree.
+	build-instance?-slot-posn-dispatch
+	  (builder, slot, instance-leaf, new-thunk);
+      end if;
+    end if;
+  else
+    // Open non-primary class.
+    build-runtime-slot-posn-dispatch(builder, slot, instance-leaf, thunk);
+  end if;
+end method build-slot-posn-dispatch;
+
+
+define method build-unique-id-slot-posn-dispatch
     (builder :: <fer-builder>, slot :: <instance-slot-info>,
      instance-leaf :: <leaf>, thunk :: <function>)
     => ();
@@ -1907,228 +1979,265 @@ define method build-slot-posn-dispatch
   let cclass = slot.slot-introduced-by;
   let positions = slot.slot-positions;
   let init?-positions
-    = slot.slot-initialized?-slot & slot.slot-initialized?-slot.slot-positions;
-  if (positions.tail == #()
-	& (init?-positions == #f | init?-positions.tail == #()))
-    // The slot only ever shows up at one place.  So just use that one
-    // place.
-    thunk(positions.head.tail,
-	  init?-positions & init?-positions.head.tail);
-  elseif (cclass.sealed?
-	    & every?(method (subclass :: <cclass>)
-		       subclass.abstract? | subclass.unique-id;
-		     end,
-		     cclass.subclasses))
-    // The slot shows up in more than one place, but the class is sealed and
-    // all the concrete subclasses have unique-id's, so we can compute a
-    // direct mapping from instance.object-class.unique-id to offset.
-    local
-      method find-position-for (subclass, posns)
-	block (return)
-	  for (posn in posns)
-	    if (csubtype?(subclass, posn.head))
-	      return(posn.tail);
-	    end;
-	  end;
-	  error("Subclass %= isn't in the position table?", subclass);
-	end;
-      end;
-    let ranges = #();
-    let prev = #f;
-    for (entry in sort!(map(method (subclass)
-			      let id = subclass.unique-id;
-			      vector(id, id,
-				     find-position-for(subclass, positions),
-				     init?-positions
-				       & find-position-for(subclass,
-							   init?-positions));
-			    end,
-			    find-direct-classes(cclass)),
-			test: method (entry1, entry2)
-				entry1[0] < entry2[0];
-			      end))
-      if (prev == #f)
-	ranges := list(entry);
-	prev := ranges;
-      elseif (prev.head[2] == entry[2] & prev.head[3] == entry[3])
-	prev.head[1] := entry[1];
-      else
-	let new = list(entry);
-	prev.tail := new;
-	prev := new;
-      end;
-    finally
-      let ranges = as(<simple-object-vector>, ranges);
-      let less-then = ref-dylan-defn(builder, policy, source, #"<");
-      //
-      // Extract the unique id for this argument.
-      let class-temp = make-local-var(builder, #"class", object-ctype());
-      let obj-class-leaf
-	= ref-dylan-defn(builder, policy, source, #"%object-class");
-      build-assignment(builder, policy, source, class-temp,
-		       make-unknown-call(builder, obj-class-leaf, #f,
-					 list(instance-leaf)));
-      let id-temp = make-local-var(builder, #"id", object-ctype());
-      let unique-id-leaf
-	= ref-dylan-defn(builder, policy, source, #"unique-id");
-      build-assignment(builder, policy, source, id-temp,
-		       make-unknown-call(builder, unique-id-leaf, #f,
-					 list(class-temp)));
-      
-      local
-	method split-range (min, max)
-	  if (min == max)
-	    let entry :: <simple-object-vector> = ranges[min];
-	    thunk(entry[2], entry[3]);
-	  else
-	    let half-way-point = ash(min + max, -1);
-	    let cond-temp = make-local-var(builder, #"cond", object-ctype());
-	    let ctv = as(<ct-value>, ranges[half-way-point][1] + 1);
-	    let bound = make-literal-constant(builder, ctv);
-	    build-assignment
-	      (builder, policy, source, cond-temp,
-	       make-unknown-call(builder, less-then, #f,
-				 list(id-temp, bound)));
-	    build-if-body(builder, policy, source, cond-temp);
-	    split-range(min, half-way-point);
-	    build-else(builder, policy, source);
-	    split-range(half-way-point + 1, max);
-	    end-body(builder);
-	  end;
-	end;
-      split-range(0, ranges.size - 1);
+    = (slot.slot-initialized?-slot
+	 & slot.slot-initialized?-slot.slot-positions);
+  let ranges = #();
+  let prev = #f;
+  for (entry in sort!(map(method (subclass)
+			    let id = subclass.unique-id;
+			    vector(id, id,
+				   find-position-for(subclass, positions),
+				   init?-positions
+				     & find-position-for(subclass,
+							 init?-positions));
+			  end,
+			  find-direct-classes(cclass)),
+		      test: method (entry1, entry2)
+			      entry1[0] < entry2[0];
+			    end))
+    if (prev == #f)
+      ranges := list(entry);
+      prev := ranges;
+    elseif (prev.head[2] == entry[2] & prev.head[3] == entry[3])
+      prev.head[1] := entry[1];
+    else
+      let new = list(entry);
+      prev.tail := new;
+      prev := new;
     end;
-  else
+  finally
+    let ranges = as(<simple-object-vector>, ranges);
+    let less-then = ref-dylan-defn(builder, policy, source, #"<");
+    //
+    // Extract the unique id for this argument.
+    let class-temp = make-local-var(builder, #"class", object-ctype());
+    let obj-class-leaf
+      = ref-dylan-defn(builder, policy, source, #"%object-class");
+    build-assignment(builder, policy, source, class-temp,
+		     make-unknown-call(builder, obj-class-leaf, #f,
+				       list(instance-leaf)));
+    let id-temp = make-local-var(builder, #"id", object-ctype());
+    let unique-id-leaf
+      = ref-dylan-defn(builder, policy, source, #"unique-id");
+    build-assignment(builder, policy, source, id-temp,
+		     make-unknown-call(builder, unique-id-leaf, #f,
+				       list(class-temp)));
     local
-      method split (positions :: <list>, init?-positions :: false-or(<list>))
-	if (empty?(positions) | (init?-positions & empty?(init?-positions)))
-	  error("Ran out of positions?");
-	end;
-	let offset = positions.head.tail;
-	let init?-offset = init?-positions & init?-positions.head.tail;
-	if (every?(method (entry)
-		     entry.tail == offset;
-		   end,
-		   positions.tail)
-	      & (init?-offset == #f
-		   | every?(method (entry)
-			      entry.tail == init?-offset;
-			    end,
-			    init?-positions.tail)))
-	  thunk(offset, init?-offset);
+      method split-range (min, max)
+	if (min == max)
+	  let entry :: <simple-object-vector> = ranges[min];
+	  thunk(entry[2], entry[3]);
 	else
-	  let best-test = #f;
-	  let best-weight = 0;
-	  let best-yes = #f;
-	  let best-yes-init? = #f;
-	  let best-no = #f;
-	  let best-no-init? = #f;
-	  for (entry in positions)
-	    let (weight, yes, yes-init?, no, no-init?)
-	      = try-split(entry.head, positions, init?-positions);
-	    if (weight > best-weight)
-	      best-test := entry.head;
-	      best-weight := weight;
-	      best-yes := yes;
-	      best-yes-init? := yes-init?;
-	      best-no := no;
-	      best-no-init? := no-init?;
-	    end;
-	  end;
+	  let half-way-point = ash(min + max, -1);
 	  let cond-temp = make-local-var(builder, #"cond", object-ctype());
-	  let type-leaf = make-literal-constant(builder, best-test);
-	  let instance?-leaf
-	    = ref-dylan-defn(builder, policy, source, #"instance?");
+	  let ctv = as(<ct-value>, ranges[half-way-point][1] + 1);
+	  let bound = make-literal-constant(builder, ctv);
 	  build-assignment
 	    (builder, policy, source, cond-temp,
-	     make-unknown-call
-	       (builder, instance?-leaf, #f, list(instance-leaf, type-leaf)));
+	     make-unknown-call(builder, less-then, #f,
+			       list(id-temp, bound)));
 	  build-if-body(builder, policy, source, cond-temp);
-	  split(best-yes, best-yes-init?);
+	  split-range(min, half-way-point);
 	  build-else(builder, policy, source);
-	  split(best-no, best-no-init?);
+	  split-range(half-way-point + 1, max);
 	  end-body(builder);
 	end;
       end;
-    split(positions, init?-positions);
+    split-range(0, ranges.size - 1);
   end;
-end;
+end method build-unique-id-slot-posn-dispatch;
+
+define method find-position-for (subclass :: <cclass>, posns :: <list>)
+    => posn :: <fixed-integer>;
+  block (return)
+    for (posn in posns)
+      if (csubtype?(subclass, posn.head))
+	return(posn.tail);
+      end if;
+    end for;
+    error("Subclass %= isn't in the position table?", subclass);
+  end block;
+end method find-position-for;
 
 
-define method try-split
-    (test :: <cclass>, positions :: <list>,
+define method build-instance?-slot-posn-dispatch
+    (builder :: <fer-builder>, slot :: <instance-slot-info>,
+     instance-leaf :: <leaf>, thunk :: <function>)
+    => ();
+  break();
+
+  let policy = $Default-Policy;
+  let source = make(<source-location>);
+  let cclass = slot.slot-introduced-by;
+  let positions = slot.slot-positions;
+  let init?-positions
+    = (slot.slot-initialized?-slot
+	 & slot.slot-initialized?-slot.slot-positions);
+  local
+    method split (classes :: <list>, possible-splits :: <list>)
+	=> ();
+      let best-test = #f;
+      let best-yes-classes = #f;
+      let best-yes-count = #f;
+      let best-no-classes = #f;
+      let best-no-count = #f;
+      let best-weight = 0;
+
+      for (split :: <cclass> in possible-splits)
+	let yes-classes = #();
+	let no-classes = #();
+	for (class in classes)
+	  if (csubtype?(class, split))
+	    yes-classes := pair(class, yes-classes);
+	  else
+	    no-classes := pair(class, no-classes);
+	  end if;
+	end for;
+	let yes-count
+	  = count-distinct-positions(yes-classes, positions, init?-positions);
+	let no-count
+	  = count-distinct-positions(no-classes, positions, init?-positions);
+	let weight = yes-count * no-count;
+	if (weight > best-weight)
+	  best-test := split;
+	  best-yes-classes := yes-classes;
+	  best-yes-count := yes-count;
+	  best-no-classes := no-classes;
+	  best-no-count := no-count;
+	  best-weight := weight;
+	end if;
+      end for;
+
+      let cond-temp = make-local-var(builder, #"cond", object-ctype());
+      let type-leaf = make-literal-constant(builder, best-test);
+      let instance?-leaf
+	= ref-dylan-defn(builder, policy, source, #"instance?");
+      build-assignment
+	(builder, policy, source, cond-temp,
+	 make-unknown-call
+	   (builder, instance?-leaf, #f,
+	    list(instance-leaf, type-leaf)));
+      build-if-body(builder, policy, source, cond-temp);
+
+      if (best-yes-count == 1)
+	let characteristic-class = best-yes-classes.first;
+	thunk(lookup-position(characteristic-class, positions),
+	      lookup-position(characteristic-class, init?-positions));
+      else
+	split(best-yes-classes,
+	      restrict-splits(possible-splits, best-test, #t));
+      end if;
+
+      build-else(builder, policy, source);
+
+      if (best-no-count == 1)
+	let characteristic-class = best-no-classes.first;
+	thunk(lookup-position(characteristic-class, positions),
+	      lookup-position(characteristic-class, init?-positions));
+      else
+	split(best-no-classes,
+	      restrict-splits(possible-splits, best-test, #f));
+      end if;
+
+      end-body(builder);
+    end method split;
+
+  let initial-splits = map(head, positions);
+  if (init?-positions)
+    for (entry in init?-positions)
+      let split :: <cclass> = entry.head;
+      unless (member?(split, initial-splits))
+	initial-splits := pair(split, initial-splits);
+      end unless;
+    end for;
+  end if;
+  split(find-direct-classes(cclass),
+	restrict-splits(initial-splits, cclass, #t));
+end method build-instance?-slot-posn-dispatch;
+
+define method lookup-position (class :: <cclass>, positions :: <list>)
+    => res :: false-or(<fixed-integer>);
+  block (return)
+    for (entry in positions)
+      if (csubtype?(class, entry.head))
+	return(entry.tail);
+      end if;
+    end for;
+    #f;
+  end block;
+end method lookup-position;
+
+define method lookup-position (class :: <cclass>, positions :: <false>)
+    => res :: false-or(<fixed-integer>);
+  #f;
+end method lookup-position;
+
+define method restrict-splits
+    (splits :: <list>, class :: <cclass>, if-yes? :: <boolean>)
+    => res :: <list>;
+  choose(method (split :: <cclass>) => res :: <boolean>;
+	   split ~== class & csubtype?(split, class) == if-yes?;
+	 end method,
+	 splits);
+end method restrict-splits;
+
+define method count-distinct-positions
+    (classes :: <list>, positions :: <list>,
      init?-positions :: false-or(<list>))
-    => (weight :: <fixed-integer>,
-	yes :: <list>, yes-init? :: false-or(<list>),
-	no :: <list>, no-init? :: false-or(<list>));
-  let yes = #();
-  let yes-count = 0;
-  let no = #();
-  let no-count = 0;
+    => res :: <fixed-integer>;
+  let entries = #();
+  for (class in classes)
+    let offset = lookup-position(class, positions);
+    let init?-offset = lookup-position(class, init?-positions);
+    block (next)
+      for (entry :: <pair> in entries)
+	if (entry.head == offset & entry.tail == init?-offset)
+	  next();
+	end if;
+      end for;
+      entries := pair(pair(offset, init?-offset), entries);
+    end block;
+  end for;
+  entries.size;
+end method count-distinct-positions;
+
+
+define method build-runtime-slot-posn-dispatch
+    (builder :: <fer-builder>, slot :: <instance-slot-info>,
+     instance-leaf :: <leaf>, thunk :: <function>)
+    => ();
+  let policy = $Default-Policy;
+  let source = make(<source-location>);
+
+  let class-temp = make-local-var(builder, #"class", object-ctype());
+  let obj-class-leaf
+    = ref-dylan-defn(builder, policy, source, #"%object-class");
+  build-assignment(builder, policy, source, class-temp,
+		   make-unknown-call(builder, obj-class-leaf, #f,
+				     list(instance-leaf)));
 
   local
-    method add-to-what (entry)
-      if (csubtype?(entry.head, test))
-	values(#t, #f);
-      elseif (ctypes-intersect?(entry.head, test))
-	values(#t, #t);
+    method make-offset-var
+	(name :: <symbol>, slot :: false-or(<instance-slot-info>))
+	=> var :: false-or(<abstract-variable>);
+      if (slot)
+	let var = make-local-var(builder, name,
+				 specifier-type(#"<fixed-integer>"));
+	build-assignment
+	  (builder, policy, source, var,
+	   make-unknown-call
+	     (builder,
+	      ref-dylan-defn(builder, policy, source, #"find-slot-offset"),
+	      #f,
+	      list(class-temp, make-literal-constant(builder, slot))));
+	var;
       else
-	values(#f, #t);
-      end;
-    end,
-    method unique-position? (entry, list)
-      block (return)
-	for (already in yes)
-	  if (already.tail == entry.tail)
-	    return(#f);
-	  end;
-	end;
-	#t;
-      end;
-    end;
-
-  for (entry in positions)
-    let (add-to-yes?, add-to-no?) = add-to-what(entry);
-    if (add-to-yes?)
-      if (unique-position?(entry, yes))
-	yes-count := yes-count + 1;
-      end;
-      yes := pair(entry, yes);
-    end;
-    if (add-to-no?)
-      if (unique-position?(entry, no))
-	no-count := no-count + 1;
-      end;
-      no := pair(entry, no);
-    end;
-  end;
-
-  if (init?-positions)
-    let yes-init? = #();
-    let no-init? = #();
-
-    for (entry in init?-positions)
-      let (add-to-yes?, add-to-no?) = add-to-what(entry);
-      if (add-to-yes?)
-	if (unique-position?(entry, yes-init?))
-	  yes-count := yes-count + 1;
-	end;
-	yes-init? := pair(entry, yes-init?);
-      end;
-      if (add-to-no?)
-	if (unique-position?(entry, no-init?))
-	  no-count := no-count + 1;
-	end;
-	no-init? := pair(entry, no-init?);
-      end;
-    end;
-    values(yes-count * no-count, yes, yes-init?, no, no-init?);
-
-  else
-    values(yes-count * no-count, yes, #f, no, #f);
-  end;
-end;
-
+	#f;
+      end if;
+    end method make-offset-var;
+  thunk(make-offset-var(#"offset", slot),
+	make-offset-var(#"init?-offset", slot.slot-initialized?-slot));
+end method build-runtime-slot-posn-dispatch;
 
 
 // Dumping stuff.

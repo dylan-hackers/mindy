@@ -497,8 +497,12 @@ define method spew-object
 		slot-init-keyword:
 		  as(<ct-value>, object.slot-init-keyword),
 		slot-init-keyword-required?:
-		  as(<ct-value>, object.slot-init-keyword-required?));
-end;
+		  as(<ct-value>, object.slot-init-keyword-required?),
+		slot-positions:
+		  if (instance?(object, <instance-slot-info>))
+		    as(<ct-value>, object.slot-positions);
+		  end if);
+end method spew-object;
 
 define method spew-object (object :: <proxy>, state :: <state>) => ();
   spew-reference(object.proxy-for, *heap-rep*, "%object-class", state);

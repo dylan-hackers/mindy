@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.18 1996/01/03 21:36:04 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.19 1996/01/11 18:54:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -636,10 +636,12 @@ define method slot-initialized?-transformer
 	  if (offset)
 	    replace-expression
 	      (component, call.dependents,
-	       make-operation(builder, <slot-ref>, list(instance),
+	       make-operation(builder, <slot-ref>,
+			      list(instance,
+				   make-literal-constant
+				     (builder, as(<ct-value>, offset))),
 			      derived-type: init?-slot.slot-type,
-			      slot-info: init?-slot,
-			      slot-offset: offset));
+			      slot-info: init?-slot));
 	    #t;
 	  else
 	    #f;
@@ -655,9 +657,12 @@ define method slot-initialized?-transformer
 				      slot.slot-type);
 	    build-assignment
 	      (builder, policy, source, temp,
-	       make-operation(builder, <slot-ref>, list(instance),
+	       make-operation(builder, <slot-ref>,
+			      list(instance,
+				   make-literal-constant
+				     (builder, as(<ct-value>, offset))),
 			      derived-type: slot.slot-type,
-			      slot-info: slot, slot-offset: offset));
+			      slot-info: slot));
 	    replace-expression(component, dep,
 			       make-operation(builder, <primitive>, list(temp),
 					      name: #"initialized?"));

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.114 1996/01/09 16:39:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.115 1996/01/11 18:54:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1473,10 +1473,13 @@ define method optimize-slot-ref
       end;
       let temp = make-local-var(builder, #"slot-initialized?", object-ctype());
       build-assignment(builder, policy, source, temp,
-		       make-operation(builder, <slot-ref>, list(instance),
+		       make-operation(builder, <slot-ref>,
+				      list(instance,
+					   make-literal-constant
+					     (builder,
+					      as(<ct-value>, init?-offset))),
 				      derived-type: init?-slot.slot-type,
-				      slot-info: init?-slot,
-				      slot-offset: init?-offset));
+				      slot-info: init?-slot));
       build-if-body(builder, policy, source, temp);
       build-else(builder, policy, source);
       build-assignment
@@ -1488,9 +1491,14 @@ define method optimize-slot-ref
     let value = make-local-var(builder, slot.slot-getter.variable-name,
 			       slot.slot-type);
     build-assignment(builder, policy, source, value,
-		     make-operation(builder, <slot-ref>, args,
+		     make-operation(builder, <slot-ref>,
+				    pair(instance,
+					 pair(make-literal-constant
+						(builder,
+						 as(<ct-value>, offset)),
+					      args.tail)),
 				    derived-type: slot.slot-type,
-				    slot-info: slot, slot-offset: offset));
+				    slot-info: slot));
     unless (init?-slot | guaranteed-initialized?)
       let temp = make-local-var(builder, #"slot-initialized?", object-ctype());
       build-assignment(builder, policy, source, temp,
@@ -1521,9 +1529,13 @@ define method optimize-slot-set
     let new = args.first;
     let builder = make-builder(component);
     let call-assign = call.dependents.dependent;
-    let op = make-operation(builder, <slot-set>, args,
-			    slot-info: slot, slot-offset: offset);
-
+    let op = make-operation(builder, <slot-set>,
+			    pair(args.first,
+				 pair(instance,
+				      pair(make-literal-constant
+					     (builder, as(<ct-value>, offset)),
+					   args.tail.tail))),
+			    slot-info: slot);
     build-assignment(builder, call-assign.policy, call-assign.source-location,
 		     #(), op);
     begin
@@ -1535,9 +1547,12 @@ define method optimize-slot-set
 		  "isn't?");
 	end;
 	let true-leaf = make-literal-constant(builder, make(<literal-true>));
-	let init-op = make-operation
-	  (builder, <slot-set>, list(true-leaf, instance),
-	   slot-info: init?-slot, slot-offset: init?-offset);
+	let init-op = make-operation(builder, <slot-set>,
+				     list(true-leaf, instance,
+					  make-literal-constant
+					    (builder,
+					     as(<ct-value>, init?-offset))),
+				     slot-info: init?-slot);
 	build-assignment(builder, call-assign.policy,
 			 call-assign.source-location, #(), init-op);
       end;

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.88 1995/12/18 05:13:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.89 1996/01/11 18:59:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1805,40 +1805,44 @@ define method emit-assignment
     (results :: false-or(<definition-site-variable>),
      op :: <slot-ref>, file :: <file-state>)
     => ();
-  let offset = op.slot-offset;
-  let instance-leaf = op.depends-on.source-exp;
-  let instance-rep = pick-representation(instance-leaf.derived-type, #"speed");
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
-  let (expr, now-dammit?)
-    = if (~zero?(offset) & instance?(instance-rep, <immediate-representation>))
-	// Extracting the data-word.
-	unless (instance-rep == slot-rep
-		  | (representation-data-word-member(instance-rep)
-		       = representation-data-word-member(slot-rep)))
-	  error("The instance and slot representations don't match in a "
-		  "data-word reference?");
-	end;
-	values(ref-leaf(instance-rep, instance-leaf, file), #f);
+  let expr
+    = if (instance?(slot, <vector-slot-info>))
+	let (instance, offset, index)
+	  = extract-operands(op, file, *heap-rep*, *long-rep*, *long-rep*);
+	let c-type = slot-rep.representation-c-type;
+	stringify("SLOT(", instance, ", ", c-type, ", ",
+		  offset, " + ", index, " * sizeof(", c-type, "))");
       else
-	let instance-expr = ref-leaf(*heap-rep*, instance-leaf, file);
-	let offset-expr
-	  = if (op.depends-on.dependent-next)
-	      let index = ref-leaf(*long-rep*,
-				   op.depends-on.dependent-next.source-exp,
-				   file);
-	      stringify(offset, " + ", index,
-			" * sizeof(", slot-rep.representation-c-type, ')');
-	    else
-	      stringify(offset);
-	    end;
-	spew-pending-defines(file);
-	values(stringify("SLOT(", instance-expr, ", ",
-			 slot-rep.representation-c-type, ", ",
-			 offset-expr, ')'),
-	       ~slot.slot-read-only?);
-      end;
-  deliver-result(results, expr, slot-rep, now-dammit?, file);
+	let instance-leaf = op.depends-on.source-exp;
+	let instance-rep
+	  = pick-representation(instance-leaf.derived-type, #"speed");
+    
+	if (instance?(instance-rep, <immediate-representation>)
+	      & instance?(slot-rep, <immediate-representation>))
+	  // Extracting the data-word.
+	  unless (instance-rep == slot-rep
+		    | (representation-data-word-member(instance-rep)
+			 = representation-data-word-member(slot-rep)))
+	    error("The instance and slot representations don't match in a "
+		    "data-word reference?");
+	  end;
+	  ref-leaf(instance-rep, instance-leaf, file);
+	else
+	  let (instance, offset)
+	    = extract-operands(op, file, *heap-rep*, *long-rep*);
+	  stringify("SLOT(", instance, ", ",
+		    slot-rep.representation-c-type, ", ",
+		    offset, ')');
+	end if;
+      end if;
+  if (slot.slot-read-only?)
+    deliver-result(results, expr, slot-rep, #f, file);
+  else
+    spew-pending-defines(file);
+    deliver-result(results, expr, slot-rep, #t, file);
+  end if;
 end;
 
 define method emit-assignment
@@ -1846,20 +1850,20 @@ define method emit-assignment
      op :: <slot-set>, file :: <file-state>)
     => ();
   let slot = op.slot-info;
-  let offset = op.slot-offset;
   let slot-rep = slot.slot-representation;
   if (instance?(slot, <vector-slot-info>))
-    let (new, instance, index)
-      = extract-operands(op, file, slot-rep, *heap-rep*, *long-rep*);
+    let (new, instance, offset, index)
+      = extract-operands(op, file, slot-rep, *heap-rep*,
+			 *long-rep*, *long-rep*);
     let c-type = slot-rep.representation-c-type;
     format(file.file-guts-stream,
-	   "SLOT(%s, %s, %d + %s * sizeof(%s)) = %s;\n",
+	   "SLOT(%s, %s, %s + %s * sizeof(%s)) = %s;\n",
 	   instance, c-type, offset, index, c-type, new);
   else
-    let (new, instance)
-      = extract-operands(op, file, slot-rep, *heap-rep*);
+    let (new, instance, offset)
+      = extract-operands(op, file, slot-rep, *heap-rep*, *long-rep*);
     format(file.file-guts-stream,
-	   "SLOT(%s, %s, %d) = %s;\n",
+	   "SLOT(%s, %s, %s) = %s;\n",
 	   instance, slot-rep.representation-c-type, offset, new);
   end;
   deliver-results(results, #[], #f, file);

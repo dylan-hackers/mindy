@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.1 1996/01/03 21:44:06 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.2 1996/01/11 18:54:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -134,7 +134,7 @@ define module front
     <prologue>, function, function-setter,
     <module-var-set>, <module-var-ref>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
-    <slot-access>, slot-info, slot-offset, <slot-ref>, <slot-set>,
+    <slot-access>, slot-info, <slot-ref>, <slot-set>,
     <truly-the>, guaranteed-type,
     <instance?>, type,
     nlx-info, <catch>, <throw>, throw-next, throw-next-setter, <make-catcher>,

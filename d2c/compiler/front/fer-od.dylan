@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.6 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.7 1996/01/11 18:54:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -433,8 +433,7 @@ add-make-dumper(#"self-tail-call-operation", *compiler-dispatcher*,
 define constant $slot-access-slots =
   concatenate(
     $operation-slots,
-    list(slot-info, slot-info:, #f,
-         slot-offset, slot-offset:, #f)
+    list(slot-info, slot-info:, #f)
   );
 
 add-make-dumper(#"slot-ref-operation", *compiler-dispatcher*,
