@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.44 1996/03/17 00:31:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.45 1996/03/18 01:46:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -598,18 +598,8 @@ define method make-function-literal
   let leaf = make(if (method?) <method-literal> else <function-literal> end,
 		  visibility: visibility, signature: signature,
 		  ct-function: ctv, main-entry: main-entry);
-  add!(builder.component.all-function-literals, leaf);
-  leaf;
-end;
-
-define method make-function-literal
-    (builder :: <fer-builder>, ctv :: false-or(<ct-function>),
-     method? :: <boolean>, visibility :: <function-visibility>,
-     signature :: <signature>, main-entry :: <lambda>,
-     #next next-method)
-    => res :: <leaf>;
-  let leaf = next-method();
   main-entry.literal := leaf;
+  add!(builder.component.all-function-literals, leaf);
   leaf;
 end;
 
