@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.55 1994/11/22 16:54:23 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.56 1994/11/28 04:20:46 wlott Exp $
 
 //======================================================================
 //
@@ -82,7 +82,7 @@ define module Builtin-Stuff
     list, locked?, logand, logbit?, logior, lognot, logxor,
     main, make, make-generic-function, merge-hash-codes, method-specializers,
     negative, numerator,
-    object-class, object-hash,
+    object-address, object-class, object-hash,
     pair, prin1, print, putc, puts,
     raw-exit, release-lock, remove-method, round, round/,
     signal-event, singleton, singleton-object, size, slot-allocation,
@@ -319,6 +319,8 @@ define module Introspection
 	     slot-allocation, slot-descriptors, slot-getter,
 	     slot-getter-method, slot-name, slot-setter, slot-setter-method,
 	     slot-type, slot-value, slot-value-setter,
+
+	     object-address,
 
 	     singleton-object,
 	     <subclass>, subclass-of,
