@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.28 2000/06/07 09:26:46 robmyers Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.29 2000/10/31 12:54:06 dauclair Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -164,7 +164,9 @@ long-double-size:		8
 
 // Microsoft Windows '95 or NT
 platform-name:                  	win32
-default-features:               	compiled-for-win32 newlines-are-CRLF
+default-features:               	compiled-for-win32
+					newlines-are-CRLF
+					no-time
 link-doesnt-search-for-libs?:   	#t
 delete-file-command:            	del
 compare-file-command:           	cmp -s %s %s
@@ -178,7 +180,7 @@ make-command:                   	nmake /nologo
 
 // Generic Unix (parent class to linux, freebsd, solaris & hpux):
 platform-name:				generic-unix
-default-features:			compiled-for-unix
+default-features:			compiled-for-unix posix-dig
 object-filename-suffix:         	.o
 shared-object-filename-suffix:         	.lo
 library-filename-prefix:        	lib
@@ -197,6 +199,15 @@ makefiles-can-rebuild-themselves?:      #t
 recursive-make-command:         	$(MAKE) -C %s %s
 libtool-command:			libtool
 
+// Cygwin (automake, autoconf, libtool installed)
+// added by Douglas M. Auclair (dauclair@hotmail.com)
+platform-name:				cygnus
+default-features:			compiled-for-cygnus
+					newlines-are-CRLF
+inherit-from:				generic-unix
+make-command:				make
+use-dbclink?:				#t
+executable-filename-suffix:		.exe
 
 // Linux:
 platform-name:				linux
@@ -208,6 +219,7 @@ make-command:                   	make
 platform-name:				freebsd
 inherit-from:				generic-unix
 default-features:			compiled-for-freebsd
+					no-time
 make-command:                   	gmake
 randomize-library-command:      	ranlib %s
 
@@ -435,6 +447,11 @@ inherit-from:			egcs macintosh ppc
 
 platform-name:			ppc-darwin-egcs
 inherit-from:			egcs darwin ppc
+
+// Douglas M. Auclair's cygnus port (dauclair@hotmail.com)
+platform-name:			x86-cygnus-gcc
+inherit-from:			gcc x86 cygnus
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 // Solaris support maintained by Tom Emerson, tree@tiac.net
 // Need to define default-features: below since all three of our
