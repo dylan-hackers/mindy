@@ -1,3 +1,12 @@
+Gwydion Dylan 2.3.9
+
+  Besides the obvious ton of bugfixes, we have now working class and
+  each-subclass slots, a rudimentary network library, greatly improved
+  common-dylan compliance, better performance, increased
+  debuggability, updated documentation and all that. 2.3.9 is probably
+  the last unstable release before 2.4. All we want to do before 2.4
+  is making all the quality assurance tests pass.
+
 Gwydion Dylan 2.3.8
 
   More bug fixes.
