@@ -1,7 +1,7 @@
 module: versioner
 library: versioner
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.6 1996/09/20 16:20:57 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dylan,v 1.7 1996/10/06 12:41:25 nkramer Exp $
 
 // Program that slurps up a whole bunch of rlog outputs, and decides
 // which revisions go together to form a conceptual "version".  The
@@ -17,9 +17,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/versioner/versioner.dyla
 // I instead use my own custom perl script.  Also, we have to use the
 // original rlog, not the rlog I implemented fake-symlinks for.
 
-// This program contains a <date-time>...  We now have a Time library;
-// right now I'm too lazy to update this program to use it.
-
 
 // Constants that seem likely to change
 
@@ -32,14 +29,14 @@ define constant $gwydion-prefix
 
 define constant $rlog-command
   #if (compiled-for-x86-win32)
-     = "/tools/rcs-bin/rlog.exe";
+     = "/gwydion/rcs-bin/rlog.exe";
   #else
        = "rlog";
   #endif
 
 define constant $find-command
   #if (compiled-for-x86-win32)
-     = "perl /tools/bin/unix-find.perl %s -name \"*,v\" -print";
+     = "perl /gwydion/bin/unix-find.perl %s -name \"*,v\" -print";
   #else
      = "find %s -follow -name *,v -print";
   #endif
@@ -50,102 +47,9 @@ define constant $rlog-file-divider :: <byte-string>
   = "=============================================================================";
 
 
-// Date-time stuff
-
-define class <date-time> (<object>)
-  slot year :: <integer>, required-init-keyword: #"year";
-  slot month :: <integer>, required-init-keyword: #"month";
-  slot day :: <integer>, required-init-keyword: #"day";
-  slot hour :: <integer>, required-init-keyword: #"hour";
-  slot minute :: <integer>, required-init-keyword: #"minute";
-  slot sec :: <integer>, required-init-keyword: #"second";
-end class <date-time>;
-
-define sealed domain make (singleton(<date-time>));
-define sealed domain initialize (<date-time>);
-
-define method \< (date1 :: <date-time>, date2 :: <date-time>)
- => answer :: <boolean>;
-  let d1 = vector(date1.year, date1.month, date1.day, 
-		  date1.hour, date1.minute, date1.sec);
-  let d2 = vector(date2.year, date2.month, date2.day, 
-		  date2.hour, date2.minute, date2.sec);
-  block (return)
-    for (number1 in d1, number2 in d2)
-      if (number1 ~== number2)
-	return(number1 < number2);
-      end if;
-    finally
-      #f;
-    end for;
-  end block;
-end method;
-
-define constant $days-in-month :: <vector>
-  = #[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-//    Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
-
-// Doesn't handle leap-years
-//
-define method days-to-month (days :: <integer>)
- => (month :: <integer>, days-left :: <integer>);
-  let month = 0;
-  let days-left = days;
-  while (~ (days-left < $days-in-month[month]))
-    days-left := days-left - $days-in-month[month];
-    month := month + 1;
-  end while;
-  values(month, days-left);
-end method days-to-month;
-
-define inline method month-to-days (month :: <integer>) => days :: <integer>;
-  reduce1(\+, copy-sequence($days-in-month, end: month));
-end method month-to-days;
-
-define inline method \- (date1 :: <date-time>, date2 :: <date-time>)
- => result :: <date-time>;
-  let years = date1.year - date2.year;
-  let days = month-to-days(date1.month) - month-to-days(date2.month)
-               + date1.day - date2.day;
-  let hours = date1.hour - date2.hour;
-  let minutes = date1.minute - date2.minute;
-  let seconds = date1.sec - date2.sec;
-  if (seconds < 0)
-    seconds := seconds + 60;
-    minutes := minutes - 1;
-  end if;
-  if (minutes < 0)
-    minutes := minutes + 60;
-    hours := hours - 1;
-  end if;
-  if (hours < 0)
-    hours := hours + 24;
-    days := days - 1;
-  end if;
-  if (days < 0)
-    days := days + 365;
-    years := years - 1;
-  end if;
-  let (months, real-days) = days-to-month(days);
-  make(<date-time>, year: years, month: months, day: real-days,
-       hour: hours, minute: minutes, second: seconds);
-end method;
-	       
-// RCS format date and time: "yy/mm/dd hh:mm:ss"
-//
-define method parse-date-time (string :: <byte-string>) 
- => date-time :: <date-time>;
-  let (date, time) = split(" ", string);
-  let (y-string, mon-string, d-string) = split("/", date);
-  let (h-string, min-string, s-string) = split(":", time);
-  make(<date-time>, 
-       year: string-to-integer(y-string),
-       month: string-to-integer(mon-string), 
-       day: string-to-integer(d-string),
-       hour: string-to-integer(h-string), 
-       minute: string-to-integer(min-string), 
-       second: string-to-integer(s-string));
-end method parse-date-time;
+// If you don't give the current time zone to encode-time, you'll be
+// screwed when you go to decode it.
+define constant $current-time-zone = get-decoded-time().timezone;
 
 
 // Revision stuff.  Revisions are what RCS deals with.  Versions is
@@ -155,7 +59,7 @@ define class <revision> (<object>)
   slot filename :: <byte-string>, required-init-keyword: #"filename";
   slot author :: <byte-string>, required-init-keyword: #"author";
   slot rev-number :: <integer>, required-init-keyword: #"revision";
-  slot date-time :: <date-time>, required-init-keyword: #"date-time";
+  slot date-time :: <universal-time>, required-init-keyword: #"date-time";
   slot description :: <sequence>, required-init-keyword: #"description";
           // Sequence of strings
 end class <revision>;
@@ -197,6 +101,24 @@ define method rlog-file (file-name :: <byte-string>, stream :: <stream>)
       let second-line = read-line(stream);
       let date-time-string 
 	= copy-sequence(second-line, start: 6, end: 23);
+
+      let decoded-time 
+	= parse-time(make(<string-stream>, contents: date-time-string),
+		     "%y/%m/%d %H:%M:%S");
+      // In order to encode the time, we have to make up a timezone
+      // and somehow force it in there
+      let time = encode-time(make(<decoded-time>, default-from: decoded-time, 
+				  timezone: $current-time-zone));
+// ### Debug by printf...
+//      printe("\nEncoded %= as %d ", date-time-string, time);
+//      printe("\ndecoded-time = %=\n", decoded-time);
+//      format-time(*standard-error*, "(Internally %y/%m/%d %H:%M:%S)\n",
+//		  decoded-time);
+//      force-output(*standard-error*);
+//      format-time(*standard-error*, "Decoded again as %y/%m/%d %H:%M:%S\n",
+//		  decode-time(time, timezone: $current-time-zone));
+//      force-output(*standard-error*);
+
       let (crap, crap2, crap3, crap4, rev-author) = split(" ", second-line);
       let rauthor :: <byte-string> = chop(rev-author);
       let descr = make(<stretchy-vector>);
@@ -205,7 +127,7 @@ define method rlog-file (file-name :: <byte-string>, stream :: <stream>)
 	if (line = $rlog-file-divider)
 	  add!(log, make(<revision>, filename: clean-filename,
 			 author: rauthor,
-			 date-time: parse-date-time(date-time-string),
+			 date-time: time,
 			 revision: string-to-integer(rev),
 			 description: descr));
 	  break();
@@ -214,7 +136,7 @@ define method rlog-file (file-name :: <byte-string>, stream :: <stream>)
       end for;
       add!(log, make(<revision>, filename: clean-filename, 
 		     author: rauthor,
-		     date-time: parse-date-time(date-time-string),
+		     date-time: time,
 		     revision: string-to-integer(rev),
 		     description: descr));
     end while;
@@ -253,7 +175,7 @@ end method partition-by-author;
 // revisions is a sequence of the component revisions
 //
 define class <version> (<object>)
-  slot date-time :: <date-time>, required-init-keyword: #"date-time";
+  slot date-time :: <universal-time>, required-init-keyword: #"date-time";
   slot author :: <byte-string>, required-init-keyword: #"author";
   slot revisions :: <sequence>, required-init-keyword: #"revisions";
 end class <version>;
@@ -261,9 +183,10 @@ end class <version>;
 define sealed domain make (singleton(<version>));
 define sealed domain initialize (<version>);
 
-define constant $magic-time-interval :: <date-time>
-  = make(<date-time>, year: 0, month: 0, 
-	 day: 0, hour: 0, minute: 20, second: 0);
+define constant $magic-time-interval :: <universal-time>
+  = as(<universal-time>, 20 * 60);  // 20 minutes * 60 secs/minute
+// We can't use encode-time because it wants all sorts of irrelevant
+// crap like a day, month, and year.
 
 // sequence of <revision>s to a sequence of <version>s.  These
 // sequences probably aren't the same size; that's the whole point,
@@ -354,10 +277,15 @@ define method print-object (ver :: <version>, stream :: <stream>) => ();
 	  end if;
 	end method compare-by-descr;
   let any-revision = ver.revisions.first;
-  format(stream, "%s at about %d/%d/%d %d:%d\n",
-	 any-revision.author, any-revision.date-time.year,
-	 any-revision.date-time.month, any-revision.date-time.day, 
-	 any-revision.date-time.hour, any-revision.date-time.minute);
+  format(stream, "%s at about ", any-revision.author);
+  
+  // We specify timezone: $current-time-zone because despite what the
+  // documentation may claim, it doesn't actually seem to default to
+  // that.
+  format-time(stream, "%y/%m/%d %H:%M", 
+	      decode-time(any-revision.date-time, 
+			  timezone: $current-time-zone));
+  new-line(stream);
   let sorted-revisions = sort(ver.revisions, test: compare-by-descr);
 
   // This is quite convoluted because we want to output as little as
@@ -447,7 +375,7 @@ end method;
 //
 define method do-versioning
     (filenames :: <sequence>, rlog-stream :: <stream>, 
-     start-date :: <date-time>) 
+     start-date :: <universal-time>) 
  => ();
   printe("Reading input files");
   let unpartitioned-logs = do-all-rlogs(filenames, rlog-stream);
@@ -515,7 +443,7 @@ end function gwydionize;
 
 define method main (ignored :: <byte-string>, #rest argv-sequence)
   let targets = make(<stretchy-vector>);
-  let start-date = parse-date-time("00/00/00 00:00:00");
+  let start-date = as(<universal-time>, 0);  // ### Start-date never fully worked...
   let argv = as(<deque>, argv-sequence);
   while (~argv.empty?)
     let word = pop(argv);
