@@ -1,3 +1,16 @@
+Gwydion Dylan 2.3.6
+
+  The most visible change in 2.3.6 is support for DUIM, a framework
+  for user interfaces.  It's supposed to be portable between
+  platforms, the version we ship is based on GTK+.  Many thanks to
+  Functional Objects, who provided most of their DUIM implementation
+  as Open Source to us.  Be warned, our DUIM is still way beta.
+
+  Other changes include ports to MacOS X and Linux on S/390, a ton of
+  bugfixes too numerous to mention in detail, support for class slots,
+  inlining (non-gf) functions.  Have a look at the ChangeLog for all
+  the gory details.
+
 Gwydion Dylan 2.3.5
 
   Some measurable performance and build-time optimizations have been
