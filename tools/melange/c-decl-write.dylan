@@ -538,7 +538,7 @@ define method write-declaration
 	     "=> (result :: <integer>);\n"
 	     "  %d;\nend method content-size;\n\n",
 	   subclass-type(decl.dylan-name), decl.c-type-size);
-    if(*create-virtual-structs?*)
+    if(*create-virtual-structs?* & decl.members)
       let virt-class :: <string> = concatenate("<virtual-",
 					       copy-sequence(decl.dylan-name,
 							     start: 1));
@@ -586,11 +586,10 @@ define method write-declaration
 
       for(x in decl.coalesced-members)
 	slot-fn(x.dylan-name, x.type.mapped-name, setter?: #f);
-   /*** Right now, I don't want to think about -setter fns
-    *   if(as(<symbol>,copy-sequence(x.type.mapped-name,end: 5)) ~= #"<anon")
-    *     slot-fn(x.dylan-name, x.type.mapped-name, setter?: #t);
-    *      end if;
-    ***/
+  // This was commented out. I don't know why. - Rob Myers.
+  if(as(<symbol>,copy-sequence(x.type.mapped-name,end: 5)) ~= #"<anon")
+  	slot-fn(x.dylan-name, x.type.mapped-name, setter?: #t);
+  end if;
       end for;
     end if;
   end if;
