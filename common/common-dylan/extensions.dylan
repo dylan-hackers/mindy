@@ -1,5 +1,6 @@
 module: common-extensions
 
+
 //=========================================================================
 //  Unsupplied, unfound.
 //=========================================================================
@@ -43,7 +44,6 @@ define function unfound()
 end function unfound;
 
 
-#if (~bootstrap)
 //=========================================================================
 //  Application environment functions.
 //=========================================================================
@@ -81,7 +81,6 @@ define function exit-application (exit-code :: <integer>) => ()
   exit(exit-code: exit-code);
 end;
 
-#endif
 
 //=========================================================================
 //  Ignore & ignorable
@@ -102,14 +101,14 @@ end;
 define constant $digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 define method integer-to-string
-    (integer :: <general-integer>,
+    (integer :: <integer>,
      #key base :: type-union(limited(<integer>, min: 2, max: 36)) = 10,
           size: desired-size :: false-or(<integer>),
           fill :: <character> = '0')
  => (string :: <byte-string>);
   local
     method collect
-        (value :: <general-integer>, digits :: <list>, count :: <integer>)
+        (value :: <integer>, digits :: <list>, count :: <integer>)
      => (digits :: <list>, count :: <integer>);
       let (quotient, remainder) = floor/(value, base);
       let digits = pair($digits[as(<integer>, remainder)], digits);
@@ -123,11 +122,12 @@ define method integer-to-string
   let (digits, count) =
     if (integer < 0)
       // strip off last digit to avoid overflow in $minimum-integer case
-      let (quotient, remainder) = truncate/(integer, base);
+      let (quotient :: <integer>, remainder :: <integer>)
+        = truncate/(integer, base);
       if (zero?(quotient))
-        values(list($digits[- as(<integer>, remainder)]), 1);
+        values(list($digits[- remainder]), 1);
       else
-        collect(- quotient, list($digits[- as(<integer>, remainder)]), 1);
+        collect(- quotient, list($digits[- remainder]), 1);
       end if;
     else
       collect(integer, #(), 0);
@@ -149,7 +149,6 @@ define method integer-to-string
   returned-string;
 end method integer-to-string;
 
-#if (~bootstrap)
 define constant $minimum-normalized-single-significand :: <extended-integer>
   = ash(#e1, float-digits(1.0s0) - 1);
 define constant $minimum-normalized-double-significand :: <extended-integer>
@@ -178,7 +177,7 @@ define method float-to-string
                       $minimum-normalized-extended-significand);
 end method;
 
-define inline-only method float-to-string-aux
+define inline method float-to-string-aux
     (v :: <float>,
      minimum-exponent :: <integer>,
      minimum-normalized-significand :: <extended-integer>)
@@ -333,20 +332,17 @@ define inline-only method float-to-string-aux
   end if;
   as(<byte-string>, s);
 end method;
-#endif
 
 define open generic number-to-string
     (number :: <number>) => (string :: <string>);
 
-define method number-to-string (integer :: <general-integer>) => (string :: <string>);
+define method number-to-string (integer :: <integer>) => (string :: <string>);
   integer-to-string(integer, base: 10);
 end method number-to-string;
 
-#if (~bootstrap)
 define method number-to-string (float :: <float>) => (string :: <string>);
   float-to-string(float);
 end method number-to-string;
-#endif
 
 define method string-to-integer
     (string :: <byte-string>,
@@ -456,7 +452,79 @@ define method string-to-integer
   end block;
 end method string-to-integer;
 
-#if (~bootstrap)
+//=========================================================================
+//  Macros
+//=========================================================================
+//  Miscellaneous macros exported from common-extensions. These are not
+//  available under Mindy.
+//
+//  XXX - table-definer conses excessively. With more macrology, it could
+//  run much faster.
+//  XXX - can the name bound by 'iterate' return?
+
+#if (~mindy)
+
+define macro table-definer
+  { define table ?:name ?eq:token { ?keys-and-values } }
+    => { define constant ?name :: <table> ?eq make(<table>);
+         fill-table!(?name, list(?keys-and-values)); }
+  { define table ?:name :: ?type:expression ?eq:token { ?keys-and-values } }
+    => { define constant ?name :: ?type ?eq make(?type);
+         fill-table!(?name, list(?keys-and-values)); }
+keys-and-values:
+  { ?key:expression => ?value:expression, ... } => { ?key, ?value, ... }
+  { } => { }
+end macro;
+
+define macro iterate
+  { iterate ?:name (?clauses:*) ?:body end }
+    => { %iterate-aux ?name
+	   %iterate-param-helper(?clauses)
+           %iterate-value-helper(?clauses)
+	   ?body
+         end }
+end;
+
+define macro %iterate-aux
+  { %iterate-aux ?:name
+      ?param-clauses:macro
+      ?value-clauses:macro
+      ?:body
+    end }
+    => { local method ?name (?param-clauses)
+                 ?body
+	       end;
+         ?name(?value-clauses) }
+end macro;
+
+define macro %iterate-param-helper
+  { %iterate-param-helper(?clauses) }
+    => { ?clauses }
+clauses:
+  { ?:name :: ?type:*, ... }
+    => { ?name :: ?type, ... }
+  { ?:name :: ?type:* = ?value:*, ... }
+    => { ?name :: ?type, ... }
+  { } => { }
+end;
+
+define macro %iterate-value-helper
+  { %iterate-value-helper(?clauses) }
+    => { ?clauses }
+clauses:
+  { ?:name :: ?type:*, ... }
+    => { #f, ... }
+  { ?:name :: ?type:* = ?value:*, ... }
+    => { ?value, ... }
+  { } => { }
+end;
+
+define macro when
+  { when (?:expression) ?:body end }
+    => { if (?expression) ?body end }
+end macro;
+
+#endif
 define method string-to-float
     (string :: <byte-string>,
      #key _start :: <integer> = 0, 
@@ -699,93 +767,3 @@ define method string-to-float
     integer-part(_start, #f, #e0);
   end if;
 end method;
-#endif
-
-//=========================================================================
-//  Macros
-//=========================================================================
-//  Miscellaneous macros exported from common-extensions. These are not
-//  available under Mindy.
-//
-//  XXX - table-definer conses excessively. With more macrology, it could
-//  run much faster.
-//  XXX - can the name bound by 'iterate' return?
-
-#if (~mindy)
-
-define macro table-definer
-  { define table ?:name ?eq:token { ?keys-and-values } }
-    => { define constant ?name :: <table> ?eq make(<table>);
-         fill-table!(?name, list(?keys-and-values)); }
-  { define table ?:name :: ?type:expression ?eq:token { ?keys-and-values } }
-    => { define constant ?name :: ?type ?eq make(?type);
-         fill-table!(?name, list(?keys-and-values)); }
-keys-and-values:
-  { ?key:expression => ?value:expression, ... } => { ?key, ?value, ... }
-  { } => { }
-end macro;
-
-define macro iterate
-  { iterate ?:name (?clauses:*) ?:body end }
-    => { %iterate-aux ?name
-	   %iterate-param-helper(?clauses)
-           %iterate-value-helper(?clauses)
-	   ?body
-         end }
-end;
-
-define macro %iterate-aux
-  { %iterate-aux ?:name
-      ?param-clauses:macro
-      ?value-clauses:macro
-      ?:body
-    end }
-    => { local method ?name (?param-clauses)
-                 ?body
-	       end;
-         ?name(?value-clauses) }
-end macro;
-
-define macro %iterate-param-helper
-  { %iterate-param-helper(?clauses) }
-    => { ?clauses }
-clauses:
-  { ?:name :: ?type:*, ... }
-    => { ?name :: ?type, ... }
-  { ?:name :: ?type:* = ?value:*, ... }
-    => { ?name :: ?type, ... }
-  { } => { }
-end;
-
-define macro %iterate-value-helper
-  { %iterate-value-helper(?clauses) }
-    => { ?clauses }
-clauses:
-  { ?:name :: ?type:*, ... }
-    => { #f, ... }
-  { ?:name :: ?type:* = ?value:*, ... }
-    => { ?value, ... }
-  { } => { }
-end;
-
-define macro when
-  { when (?:expression) ?:body end }
-    => { if (?expression) ?body end }
-end macro;
-
-#endif
-
-//=========================================================================
-//  Hacks for mindy
-//=========================================================================
-#if (mindy)
-
-define function subclass
-    (cls :: <class>)
- => (subclass :: <type>);
-  limited(<class>, subclass-of: cls);
-end;
-
-define constant <stretchy-object-vector> = <stretchy-vector>;
-
-#endif
