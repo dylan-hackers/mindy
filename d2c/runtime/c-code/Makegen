@@ -1,18 +1,18 @@
 
 if ($win32) {
     if ($win32_gcc) {
-	print "CC = gcc\n";
 	print "LINK = ar qv runtime.lib\n";
-	print "CFLAGS = -g -O4 -finline-functions -DWIN32 -DWIN32_GCC\n";
     } else {
-	print "CC = cl\n";
 	print "LINK = lib /out:runtime.lib\n";
-	print "CFLAGS = -nologo -Ox -DWIN32\n";
     }
+    $CPPFLAGS = '-I$(SRCROOT)/runtime';
+    &emit_c_file_rule('allocate');
+    &emit_c_file_rule('main');
+    &emit_c_file_rule('nlx');
     print <<'EOF';
 
+
 AS = as
-CPPFLAGS = -I$(SRCROOT)/runtime
 
 OBJS = allocate.obj main.obj nlx.obj i386.obj
 
@@ -20,16 +20,11 @@ runtime.lib: $(OBJS)
 	del runtime.lib
 	$(LINK) $(OBJS)
 
-allocate.obj: $(SRCDIR)\allocate.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(SRCDIR)\allocate.c -o allocate.obj
-main.obj: $(SRCDIR)\main.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(SRCDIR)\main.c -o main.obj
-nlx.obj: $(SRCDIR)\nlx.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(SRCDIR)\nlx.c -o nlx.obj
 i386.obj: $(SRCDIR)\i386.s
 	$(AS) $(SRCDIR)\i386.s -o i386.obj
 
 EOF
+
 
     push(@compile_dependencies, 'runtime.lib');
     do install('lib', 'runtime.lib');
