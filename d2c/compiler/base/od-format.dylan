@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.32 1996/02/05 23:26:15 nkramer Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.33 1996/02/06 15:41:10 wlott Exp $
 
 /*
 
@@ -528,6 +528,7 @@ begin
   register-object-id(#"function-macro-definition", #x00CB);
   register-object-id(#"statement-macro-definition", #x00CC);
   register-object-id(#"seal-info", #x00CD);
+  register-object-id(#"seal-generic", #x00CE);
 
   register-object-id(#"backend-var-info", #x00D0);
   // register-object-id(#"function-info", #x00D1);  ### Needed?
@@ -1429,13 +1430,13 @@ define /* exported */ variable *default-dispatcher*
 // (e.g. the raw size.)
 //
 define /* exported */ method add-od-loader
-    (dispatcher :: <dispatcher>, name :: <symbol>, meth :: <method>)
+    (dispatcher :: <dispatcher>, name :: <symbol>, func :: <function>)
  => ();
   let etype = *object-id-registry*[name];
   unless (dispatcher.table[etype] == undefined-entry-type)
     signal("Already an OD loader for etype %=\n", etype);
   end;
-  dispatcher.table[etype] := meth;
+  dispatcher.table[etype] := func;
 end method;
 
 
@@ -2209,7 +2210,7 @@ define class <make-info> (<object>)
     required-init-keyword: obj-class:;
   slot obj-name :: <symbol>,
     required-init-keyword: obj-name:;
-  slot dump-side-effect :: false-or(<method>),
+  slot dump-side-effect :: false-or(<function>),
     required-init-keyword: dump-side-effect:;
 end class;
 
@@ -2303,8 +2304,8 @@ define /* exported */ method add-make-dumper
   (name :: <symbol>, dispatcher :: <dispatcher>,
    obj-class :: <class>, slots :: <list>,
    #key load-external :: <boolean>, dumper-only :: <boolean>,
-        load-side-effect :: false-or(<method>),
-        dump-side-effect :: false-or(<method>))
+        load-side-effect :: false-or(<function>),
+        dump-side-effect :: false-or(<function>))
  => ();
   let acc = make(<stretchy-vector>);
   let key = make(<stretchy-vector>);
