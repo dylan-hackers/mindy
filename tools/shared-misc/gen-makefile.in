@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.37 2003/01/22 22:22:31 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.38 2003/02/02 17:39:11 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1041,17 +1041,17 @@ sub emit_cc_file_rule {
 # files, and the build order is fixed so melange gets built before
 # the libraries needing it.
 sub emit_melange_rule {
-#    local ($basefile, @headers) = @_;
-#    do maybe_emit_d2c_defines();
+    local ($basefile, @headers) = @_;
+    do maybe_emit_d2c_defines();
 
-#    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.intr";
-#    foreach $header (@headers) {
-#       print " \$(SRCDIR)/$header";
-#    }
-#    print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
-#    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan\n\n";
-#    push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
-#    push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
+    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.intr";
+    foreach $header (@headers) {
+       print " \$(SRCDIR)/$header";
+    }
+    print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
+    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan\n\n";
+    push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
+    push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
 }
 
 # emit_parsergen_rule($base_file_name) -- exported
