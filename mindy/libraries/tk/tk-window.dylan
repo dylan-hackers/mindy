@@ -141,30 +141,22 @@ end method window-parent;
 // See description of the generic above.
 //
 define method pack
-    (window :: <window>,
+    (window :: <window>, #rest rest,
      #key fill, in: parent, after, before, side = "left",
           expand = #f, padx, pady, anchor, #all-keys)
  => (window :: <window>);
-  let fill-string = select (fill by \=)
-		      #f => "";
-		      "both" => " fill";
-		      "none" => "";
-		      "x" => " fillx";
-		      "y" => " filly";
-		    end select;
-  let (place-string, place-window)
-    = case
-	parent => values("append ", parent);
-	after => values("after ", after);
-	before => values("before ", before);
-	otherwise => values("append ", window.window-parent);
-      end case;
-  put-tk-line("pack ", place-string, place-window, " ", window,
-	       " {", side, fill-string, 
-	       if (expand) " expand" else "" end,
-	       " ", if (anchor) concatenate("frame ", anchor) else "" end,
-	       " padx ", padx | 0,
-	       " pady ", pady | 0, "}");
+  let parent
+    = if (parent | after | before) parent else window.window-parent end if;
+  put-tk-line("pack ", window,
+	      make-option(#"fill", fill),
+	      make-option(#"in", parent),
+	      make-option(#"after", after),
+	      make-option(#"before", before),
+	      make-option(#"expand", expand),
+	      make-option(#"anchor", anchor),
+	      make-option(#"side", side),
+	      make-option(#"padx", padx),
+	      make-option(#"pady", pady));
   window;
 end method pack;
 
