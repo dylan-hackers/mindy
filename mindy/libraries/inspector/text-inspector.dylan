@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.4 1996/04/07 22:23:46 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.5 1996/04/10 20:40:01 nkramer Exp $
 
 //======================================================================
 //
@@ -33,17 +33,17 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text
 
 define library text-inspector
   use dylan;
-  use inspector-base;
-  use string-extensions;
   use streams;
   use print;
+  use string-extensions;
+  use inspector-base;
 end library text-inspector;
 
 define module text-inspector
   use dylan;
   use extensions;
-  use standard-io, import: { *standard-input* };
   use streams, import: { read-line };
+  use standard-io, import: { *standard-input* };
   use print;
   use character-type;
   use string-conversions;
