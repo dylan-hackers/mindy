@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.22 1996/01/14 18:05:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.23 1996/02/08 01:35:29 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -483,7 +483,7 @@ define method build-instance?
 	(builder, policy, source, res,
 	 make-unknown-call
 	   (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
-	    list(value, make-literal-constant(builder, as(<ct-value>, #f)))));
+	    list(value, make-literal-constant(builder, as(<ct-value>, #t)))));
     elseif (class == specifier-type(#"<empty-list>"))
       build-assignment
 	(builder, policy, source, res,
