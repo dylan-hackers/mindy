@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.103 1995/10/02 01:44:27 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.104 1995/10/05 01:14:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,7 +14,8 @@ define method dont-print-shit () => (); *print-shit* := #f; end;
 
 define variable *optimize-ncalls* = 0;
 
-define method optimize-component (component :: <component>) => ();
+define method optimize-component
+    (component :: <component>, #key simplify-only) => ();
   reverse-queue(component, #f);
   let done = #f;
   until (done)
@@ -60,6 +61,7 @@ define method optimize-component (component :: <component>) => ();
       (*do-sanity-checks* & try(assure-all-done, #f))
 	| try(identify-tail-calls, "finding tail calls")
 	| try(cleanup-control-flow, "cleaning up control flow")
+	| (simplify-only & (done := #t))
 	| try(add-type-checks, "adding type checks")
 	| try(replace-placeholders, "replacing placeholders")
 	| try(environment-analysis, "running environment analysis")
@@ -743,25 +745,39 @@ define method optimize-unknown-call
       change-call-kind(component, call, <error-call>);
 
     #"valid" =>
-      if (defn.method-defn-inline-expansion)
+      let inline-function = defn.method-defn-inline-function;
+      if (inline-function)
 	let old-head = component.reoptimize-queue;
-	let builder = make-builder(component);
-	let lexenv = make(<lexenv>);
-	let new-func
-	  = fer-convert-method(builder, defn.method-defn-inline-expansion,
-			       format-to-string("%s", defn.defn-name), #f,
-			       #"local", lexenv, lexenv);
+	let new-func = clone-function(component, inline-function);
 	reverse-queue(component, old-head);
-	insert-before(component, call.dependents.dependent,
-		      builder-result(builder));
-	let func-dep = call.depends-on;
-	replace-expression(component, func-dep, new-func);
+	replace-expression(component, call.depends-on, new-func);
       elseif (~defn.function-defn-hairy?)
 	convert-to-known-call(component, sig, call);
       end;
 
     #"can't tell" =>
       #f;
+  end;
+end;
+
+define method method-defn-inline-function
+    (defn :: <abstract-method-definition>)
+    => res :: false-or(<function-literal>);
+  if (defn.%method-defn-inline-function == #"not-computed-yet")
+    if (defn.method-defn-inline-expansion & ~defn.function-defn-hairy?)
+      let component = make(<fer-component>);
+      let builder = make-builder(component);
+      let lexenv = make(<lexenv>);
+      let leaf = fer-convert-method(builder, defn.method-defn-inline-expansion,
+				    format-to-string("%s", defn.defn-name),
+				    #f, #"local", lexenv, lexenv);
+      optimize-component(component, simplify-only: #t);
+      defn.%method-defn-inline-function := leaf;
+    else
+      defn.%method-defn-inline-function := #f;
+    end;
+  else
+    defn.%method-defn-inline-function;
   end;
 end;
 
