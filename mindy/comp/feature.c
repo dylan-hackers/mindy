@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/feature.c,v 1.1 1998/05/03 19:55:10 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/feature.c,v 1.2 1998/12/17 11:18:40 igor Exp $
 *
 * This file handles conditional compilation
 *
@@ -124,9 +124,9 @@ static boolean parse_feature_word(void)
     struct symbol *sym;
 
     if (yylval.token->chars[0] == '\\')
-	sym = symbol(yylval.token->chars + 1);
+	sym = symbol((char *)yylval.token->chars + 1);
     else
-	sym = symbol(yylval.token->chars);
+	sym = symbol((char *)yylval.token->chars);
 
     new_token();
 
@@ -159,6 +159,7 @@ static boolean parse_feature_term(void)
 
       default:
 	parse_error();
+        return 0;
     }
 }
 
