@@ -1,15 +1,12 @@
-ocumented: #t
+documented: #t
 module: define-interface
 copyright: see below
-	   This code was produced by the Gwydion Project at Carnegie Mellon
-	   University.  If you are interested in using this code, contact
-	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.29 2003/04/08 22:25:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.30 2003/04/09 17:38:07 gabor Exp $
 
 //======================================================================
 //
-// Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1994, 1995, 1996, 1997  Carnegie Mellon University
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -30,14 +27,6 @@ rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.29 2003/04/0
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 // Also, see http://www.gwydiondylan.org/ for updates and documentation. 
-//
-//======================================================================
-
-//======================================================================
-//
-// Copyright (c) 1994  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
-// All rights reserved.
 //
 //======================================================================
 
@@ -676,7 +665,7 @@ define method show-copyright(stream :: <stream>) => ()
   format(stream, "Melange (Gwydion Dylan)\n");
   format(stream, "Turns C headers into Dylan libraries.\n");
   format(stream, "Copyright 1994-1997 Carnegie Mellon University\n");
-  format(stream, "Copyright 1998 Gwydion Dylan Maintainers\n");
+  format(stream, "Copyright 1998-2003 Gwydion Dylan Maintainers\n");
 end method show-copyright;
 
 define method show-usage(stream :: <stream>) => ()
