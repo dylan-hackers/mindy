@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.11 1996/01/12 02:10:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.12 1996/02/18 18:36:57 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -21,107 +21,7 @@ seal generic initialize (<type>);
 // 
 define generic limited (type :: <type>, #key) => res :: <type>;
 
-// instance? -- exported from Dylan.
-//
-// The compiler automatically converts visible calls to instance? to calls
-// to %instance? (or something better, if possible).  But we still need
-// a definition for instance? for uses in non-visible calls.
-//
-define movable method instance? (object :: <object>, type :: <type>)
-    => res :: <boolean>;
-  %instance?(object, type);
-end;
-
-// %instance? -- internal.
-//
-// DO NOT CALL THIS.  Call instance? instead.  Otherwise you will just succeed
-// in hiding the check from the compiler and keeping it from being able to
-// optimize it at all.
-//
-define movable generic %instance? (object :: <object>, type :: <type>)
-    => res :: <boolean>;
-
-// subtype? -- exported from Dylan.
-// 
-define movable generic subtype? (type1 :: <type>, type2 :: <type>)
-    => res :: <boolean>;
-//
-// We can't tell just by dispatching off of type1 (or some other method would
-// have been applicable).  So try dispatching off of type2.
-//
-define method subtype? (type1 :: <type>, type2 :: <type>)
-    => res :: <boolean>;
-  subtype?-type2-dispatch(type1, type2);
-end;
-
-// subtype?-type2-dispatch -- internal.
-//
-// Used to dispatch off the second type.  Methods on this should have type1
-// just be <type>.  This generic function is necessary to avoid having
-// ambiguous methods.
-// 
-define movable generic subtype?-type2-dispatch
-    (type1 :: <type>, type2 :: <type>)
-    => res :: <boolean>;
-//
-// And if nobody pipes up when dispatching off of type2 then the two types
-// must be unrelated.
-//
-define method subtype?-type2-dispatch (type1 :: <type>, type2 :: <type>)
-    => res :: <boolean>;
-  #f;
-end;
-
 
-// Singletons.
-
-// <singleton> -- exported from Dylan.
-// 
-define class <singleton> (<type>)
-  //
-  // The object this is the singleton type of.
-  slot singleton-object :: <object>, setter: #f,
-    required-init-keyword: object:;
-end;
-
-seal generic make (singleton(<singleton>));
-
-// singleton -- exported from Dylan.
-//
-define inline method singleton (object :: <object>)
-    => res :: <singleton>;
-  make(<singleton>, object: object);
-end;
-
-// one-of -- exported from Extensions.
-//
-define method one-of (#rest things) => res :: <type>;
-  apply(type-union, map(singleton, things));
-end;
-
-// instance? -- exported generic function method.
-//
-// An object is instance? a singleton iff it is (i.e. ==) the singleton's
-// object.
-// 
-define method %instance? (object, type :: <singleton>)
-    => res :: <boolean>;
-  object == type.singleton-object;
-end;
-
-// subtype? -- exported generic function method.
-//
-// A singleton is only subtype? some other type if the singleton's object
-// is instance? the other type.
-// 
-define method subtype? (type1 :: <singleton>, type2 :: <type>)
-    => res :: <boolean>;
-  instance?(type1.singleton-object, type2);
-end;
-
-
-// Unions
-
 // <union> -- internal
 //
 // <union>s are used to represent the union of an arbitrary number of types
@@ -206,13 +106,13 @@ define method merge-type
 	  pair(type, members);
 	else
 	  let member = remaining.head;
-	  if (subtype?(type, member))
+	  if (%subtype?(type, member))
 	    // The type is a subtype of one of the pre-existing members, so we
 	    // don't have to add anything, and there will be nothing to
 	    // remove because we will already have removed any possible
 	    // subtypes.  So just return what we started with.
 	    return(members, singletons);
-	  elseif (subtype?(member, type))
+	  elseif (%subtype?(member, type))
 	    // This pre-existing member is a subtype of the type we are adding.
 	    // So splice it out and keep going.
 	    if (prev)
@@ -309,49 +209,85 @@ define inline method false-or (type :: <type>) => res :: <type>;
   type-union(type, <false>);
 end method false-or;
 
-// instance?(<object>,<union>) -- exported generic function method.
+
+
+// <direct-instance> -- internal.
 //
-// Something is an instance of a union if it is an instance of any of the
-// member types or one of the singletons.
+// A <direct-instance> represents the direct instances of a class.  In other
+// words, anything for which foo.object-class == target-class.
 //
-define method %instance? (object :: <object>, type :: <union>)
-    => res :: <boolean>;
-  block (return)
-    for (member in type.union-members)
-      if (instance?(object, member)) return(#t) end if;
-    finally
-      member?(object, type.union-singletons);
-    end for;
-  end block;
+// Exposed because the constructor is exported.
+// 
+define class <direct-instance> (<type>)
+  //
+  // The class this is the direct instances of.
+  constant slot direct-instance-of :: <class>, required-init-keyword: of:;
+end class <direct-instance>;
+
+seal generic make (singleton(<direct-instance>));
+
+// direct-instance -- exported.
+//
+// Construct and return a direct-instance type for the given class.
+// 
+define inline method direct-instance (of :: <class>)
+    => res :: <direct-instance>;
+  make(<direct-instance>, of: of);
+end method direct-instance;
+
+
+// <subclass> -- internal
+//
+// A <subclass> represents all of the subclasses of a particular class,
+// conceptually the same as:
+//   apply(type-union, map(singleton,all-subclasses(class)))
+// assuming a definition for all-subclasses.  And that no new classes are
+// created after the subclass type is.
+//
+// Exposed because the constructor is exported.
+// 
+define class <subclass> (<type>)
+  //
+  // The class this is the subclasses of.
+  constant slot subclass-of :: <class>, required-init-keyword: of:;
 end;
 
-// subtype?(<union>,<type>) -- exported generic function method.
+seal generic make (singleton(<subclass>));
+
+// subclass -- exported.
 //
-// A union is subtype some other type if all the members are subtype that
-// other type and all the singletons are instances that other type.
+// Construct and return the corresponding subclass type.
 //
-define method subtype? (type1 :: <union>, type2 :: <type>)
-    => res :: <boolean>;
-  every?(method (t) subtype?(t, type2) end, type1.union-members)
-    & every?(method (t) instance?(t, type2) end, type1.union-singletons);
-end;
-  
-// subtype?-type2-dispatch(<type>,<union>) -- exported generic function method
-//
-// A type is a subtype of a union if it is a subtype of any of the member
-// types.  We can ignore the singletons because the only thing that can
-// subtype a singleton type is the same singleton type and the
-// <singleton>,<type> branch is picked off by the singleton code up
-// above.
-// 
-define method subtype?-type2-dispatch (type1 :: <type>, type2 :: <union>)
-    => res :: <boolean>;
-  any?(method (t) subtype?(type1, t) end, type2.union-members);
+define inline method subclass (of :: <class>) => res :: <subclass>;
+  make(<subclass>, of: of);
 end;
 
 
-// Limited integers.
+// <singleton> -- exported from Dylan.
+// 
+define class <singleton> (<type>)
+  //
+  // The object this is the singleton type of.
+  slot singleton-object :: <object>, setter: #f,
+    required-init-keyword: object:;
+end;
 
+seal generic make (singleton(<singleton>));
+
+// singleton -- exported from Dylan.
+//
+define inline method singleton (object :: <object>)
+    => res :: <singleton>;
+  make(<singleton>, object: object);
+end;
+
+// one-of -- exported from Extensions.
+//
+define method one-of (#rest things) => res :: <type>;
+  apply(type-union, map(singleton, things));
+end;
+
+
 // <limited-integer> -- internal
 //
 // <Limited-integer> types are used to represent some subrange of one
@@ -427,116 +363,6 @@ define method limited (class == <integer>, #key min, max)
   end;
 end;
 
-// instance?(<object>,<limited-integer>) -- exported generic function method
-//
-// Only integers are instance? a limited integer, and they have their own
-// method.
-// 
-define method %instance? (object :: <object>, type :: <limited-integer>)
-    => res :: <boolean>;
-  #f;
-end;
-
-// instance?(<general-integer>,<limited-integer>)
-//   -- exported generic function method
-//
-// Make sure the integer is the right kind of integer and that it is in the
-// given range.
-//
-define method %instance?
-    (object :: <general-integer>, type :: <limited-integer>)
-    => res :: <boolean>;
-  if (instance?(object, type.limited-integer-base-class))
-    let min = type.limited-integer-minimum;
-    if (~min | object >= min)
-      let max = type.limited-integer-maximum;
-      ~max | object <= max;
-    else
-      #f;
-    end;
-  else
-    #f;
-  end;
-end;
-
-// The general case is too slow (since it must do generic dispatch), but so is
-// next-method.  Therefore we duplicate the preceding routine *twice* in order
-// to get up to a factor of 20 speedup.
-//
-define method %instance?
-    (object :: <integer>, type :: <limited-integer>)
- => res :: <boolean>;
-  let base-class :: <class> = type.limited-integer-base-class;
-  if (base-class == <integer>)
-    // This is appallingly messy, but until we get a better type inference
-    // mechanism, it seems to be the only way to get a fast enough inner loop.
-    let min = type.limited-integer-minimum;
-    let above-bottom :: <boolean>
-      = if (min)
-	  let min :: <integer> = min;
-	  object >= min;
-	else
-	  #t;
-	end if;
-    if (above-bottom)
-      let max = type.limited-integer-maximum;
-      if (max)
-	let max :: <integer> = max;
-	object <= max;
-      else
-	#t;
-      end if;
-    end if;
-  else
-    if (instance?(object, type.limited-integer-base-class))
-      let min = type.limited-integer-minimum;
-      if (~min | object >= min)
-	let max = type.limited-integer-maximum;
-	~max | object <= max;
-      else
-	#f;
-      end;
-    else
-      #f;
-    end;
-  end;
-end;
-
-// subtype?(<limited-integer>,<type>) -- exported generic function method.
-//
-// Unless one of the other methods steps in, a limited integer is only
-// a subtype of some other type if the integers base class is a subtype
-// of it.
-//
-define method subtype? (type1 :: <limited-integer>, type2 :: <type>)
-    => res :: <boolean>;
-  subtype?(type1.limited-integer-base-class, type2);
-end;
-
-// subtype?(<limited-integer>,<limited-integer>) -- exported gf method
-//
-// One limited integer is a subtype of another limited integer if the
-// base class of the first is a subtype of the base class of the second
-// and if the range of the first is a subrange of the second.
-//
-define method subtype? (type1 :: <limited-integer>, type2 :: <limited-integer>)
-    => res :: <boolean>;
-  if (subtype?(type1.limited-integer-base-class,
-	       type2.limited-integer-base-class))
-    let min1 = type1.limited-integer-minimum;
-    let min2 = type2.limited-integer-minimum;
-    if (~min2 | (min1 & min1 >= min2))
-      let max1 = type1.limited-integer-maximum;
-      let max2 = type2.limited-integer-maximum;
-      ~max2 | (max1 & max1 <= max2);
-    else
-      #f;
-    end;
-  else
-    #f;
-  end;
-end;
-
 // intersect-limited-ints(<limited-integer>,<limited-integer>) -- internal
 //
 // Returns either a new limited integer type containing all elements common to
@@ -593,7 +419,7 @@ define method restrict-limited-ints
     = case
 	(instance?(lim1, <limited-integer>)) =>
 	  values(lim1.limited-integer-minimum, lim1.limited-integer-maximum);
-	(subtype?(lim1, <general-integer>)) =>
+	(%subtype?(lim1, <general-integer>)) =>
 	  values(#f, #f);
 	otherwise =>
 	  error("restrict-limited-ints must be passed two integer types.");
@@ -616,8 +442,6 @@ define method restrict-limited-ints
 end method restrict-limited-ints;
 
 
-// The <byte-character> type.
-
 // <byte-character-type> -- internal.
 //
 // This is the class of the <byte-character> type.
@@ -641,43 +465,7 @@ define constant <byte-character> = make(<byte-character-type>);
 define constant <non-byte-character>
   = restrict-type(<character>, <byte-character>);
 
-// instance? -- exported generic function method.
-//
-// The only instances of <byte-character> are characters that have a character
-// code of less than 256.
-//
-define method %instance? (object, type :: <byte-character-type>)
-    => res :: <boolean>;
-  #f;
-end;
-//
-define method %instance? (object :: <character>, type :: <byte-character-type>)
-    => res :: <boolean>;
-  as(<integer>, object) < 256;
-end;
-
-// subtype? -- exported generic funciton method.
-//
-// In general, <byte-character> is only subtype? some other type if <character>
-// is subtype? that other type.  The one exception is <byte-character> itself.
-//
-// We don't need a subtype?-type2-dispatch method because the only subtypes
-// of <byte-character> are singletons, and they are already delt with.
-//
-define method subtype? (type1 :: <byte-character-type>, type2 :: <type>)
-    => res :: <boolean>;
-  subtype?(<character>, type2);
-end;
-//
-define method subtype?
-    (type1 :: <byte-character-type>, type2 :: <byte-character-type>)
-    => res :: <boolean>;
-  #t;
-end;
-
 
-// Negation-types
-
 // <none-of> -- internal
 //
 // This is a funky sort of special purpose type.  It represents objects which
@@ -715,7 +503,189 @@ define method restrict-type (base :: <type>, exclude :: <type>);
   end if;
 end method restrict-type;
 
-// instance?(<object>,<none-of>) -- exported generic function method.
+
+// instance? -- exported from Dylan.
+// 
+// The compiler automatically converts visible calls to instance? to calls
+// to %instance? (or something better, if possible).  But we still need
+// a definition for instance? for uses in non-visible calls.
+//
+define movable method instance? (object :: <object>, type :: <type>)
+    => res :: <boolean>;
+  %instance?(object, type);
+end;
+
+// %instance? -- internal gf.
+//
+// DO NOT CALL THIS.  Call instance? instead.  Otherwise you will just succeed
+// in hiding the check from the compiler and keeping it from being able to
+// optimize it at all.
+//
+define movable generic %instance? (object :: <object>, type :: <type>)
+    => res :: <boolean>;
+
+
+// %instance?(<object>,<union>) -- internal gf method.
+//
+// Something is an instance of a union if it is an instance of any of the
+// member types or one of the singletons.
+//
+define method %instance? (object :: <object>, type :: <union>)
+    => res :: <boolean>;
+  block (return)
+    for (member in type.union-members)
+      if (instance?(object, member)) return(#t) end if;
+    finally
+      member?(object, type.union-singletons);
+    end for;
+  end block;
+end;
+
+// %instance(<object>,<class>) -- internal gf method.
+//
+// An object is an instance of a class when the object's class is a subtype?
+// of the class.
+// 
+define method %instance? (object :: <object>, class :: <class>)
+    => res :: <boolean>;
+  %subtype?(object.object-class, class);
+end;
+
+// %instance?(<object>,<direct-instance>) -- internal gf method.
+//
+// The object-class must be == the base-class.
+// 
+define method %instance? (object :: <object>, type :: <direct-instance>)
+    => res :: <boolean>;
+  object.object-class == type;
+end method %instance?;
+
+// %instance?(<object>,<singleton> -- internal gf method.
+//
+// An object is instance? a singleton iff it is (i.e. ==) the singleton's
+// object.
+// 
+define method %instance? (object :: <object>, type :: <singleton>)
+    => res :: <boolean>;
+  object == type.singleton-object;
+end;
+
+// %instance?(<object>,<subclass>) -- internal generic function method.
+//
+// Nothing but classes (handled below) are instances of subclass types.
+//
+define method %instance? (object :: <object>, type :: <subclass>)
+    => res :: <boolean>;
+  #f;
+end;
+
+// %instance?(<class>,<subclass>) -- internal generic function method.
+//
+// A class is a instance of a subclass type iff that class is a subtype of
+// of the subclass type's base class.
+//
+define method %instance? (object :: <class>, type :: <subclass>)
+    => res :: <boolean>;
+  %subtype?(object, type.subclass-of);
+end;
+
+// %instance?(<object>,<limited-integer>) -- internal gf method.
+//
+// Only integers are instance? a limited integer, and they have their own
+// method.
+// 
+define method %instance? (object :: <object>, type :: <limited-integer>)
+    => res :: <boolean>;
+  #f;
+end;
+
+// %instance?(<general-integer>,<limited-integer>) -- internal gf method.
+//
+// Make sure the integer is the right kind of integer and that it is in the
+// given range.
+//
+define method %instance?
+    (object :: <general-integer>, type :: <limited-integer>)
+    => res :: <boolean>;
+  if (instance?(object, type.limited-integer-base-class))
+    let min = type.limited-integer-minimum;
+    if (~min | object >= min)
+      let max = type.limited-integer-maximum;
+      ~max | object <= max;
+    else
+      #f;
+    end;
+  else
+    #f;
+  end;
+end;
+
+// %instance?(<integer>,<limited-integer>) -- internal gf method.
+//
+// The general case is too slow (since it must do generic dispatch), but so is
+// next-method.  Therefore we duplicate the preceding routine *twice* in order
+// to get up to a factor of 20 speedup.
+//
+define method %instance?
+    (object :: <integer>, type :: <limited-integer>)
+ => res :: <boolean>;
+  let base-class :: <class> = type.limited-integer-base-class;
+  if (base-class == <integer>)
+    // This is appallingly messy, but until we get a better type inference
+    // mechanism, it seems to be the only way to get a fast enough inner loop.
+    let min = type.limited-integer-minimum;
+    let above-bottom :: <boolean>
+      = if (min)
+	  let min :: <integer> = min;
+	  object >= min;
+	else
+	  #t;
+	end if;
+    if (above-bottom)
+      let max = type.limited-integer-maximum;
+      if (max)
+	let max :: <integer> = max;
+	object <= max;
+      else
+	#t;
+      end if;
+    end if;
+  else
+    if (instance?(object, type.limited-integer-base-class))
+      let min = type.limited-integer-minimum;
+      if (~min | object >= min)
+	let max = type.limited-integer-maximum;
+	~max | object <= max;
+      else
+	#f;
+      end;
+    else
+      #f;
+    end;
+  end;
+end;
+
+// %instance?(<object>,<byte-character-type>) -- internal gf method.
+//
+// The only instances of <byte-character> are characters that have a character
+// code of less than 256.
+//
+define method %instance? (object :: <object>, type :: <byte-character-type>)
+    => res :: <boolean>;
+  #f;
+end;
+
+// %instance?(<character>,<byte-character-type>) -- internal gf method.
+//
+// The only instances of <byte-character> are characters that have a character
+// code of less than 256.
+//
+define method %instance? (object :: <character>, type :: <byte-character-type>)
+    => res :: <boolean>;
+  as(<integer>, object) < 256;
+end;
+
+// %instance?(<object>,<none-of>) -- internal.
 //
 // Something is an instance of a union if it is an instance of any of the
 // member types or one of the singletons.
@@ -733,14 +703,260 @@ define method %instance? (object :: <object>, type :: <none-of>)
   end block;
 end;
 
-// subtype?(<none-of>,<type>) -- exported generic function method.
+
+// subtype? -- exported from Dylan.
+//
+// Returns #t if type1 is a subtype of type2.
+// 
+define movable generic subtype? (type1 :: <type>, type2 :: <type>)
+    => res :: <boolean>;
+
+// subtype?(<type>,<type>) -- exported gf method.
+//
+// Neither type is a union type, so defer to %subtype?.
+//
+define method subtype? (type1 :: <type>, type2 :: <type>)
+    => res :: <boolean>;
+  %subtype?(type1, type2);
+end method subtype?;
+
+// subtype?(<union>,<type>) -- exported gf method.
+//
+// A union is subtype some other type if all the members are subtype that
+// other type and all the singletons are instances that other type.
+//
+define method subtype? (type1 :: <union>, type2 :: <type>)
+    => res :: <boolean>;
+  every?(method (t :: <type>) => res :: <boolean>;
+	   %subtype?(t, type2);
+	 end,
+	 type1.union-members)
+    & every?(method (s :: <object>) => res :: <boolean>;
+	       instance?(s, type2);
+	     end,
+	     type1.union-singletons);
+end method subtype?;
+
+// subtype?(<type>,<union>) -- exported gf method.
+//
+// A type is a subtype of a union if it is a subtype of any of the member
+// types.  We ignore the singletons, the only type that can be subtype? a
+// singleton is the same singleton, which is picked off by the
+// <singleton>,<type> method below.
+// 
+define method subtype? (type1 :: <type>, type2 :: <union>)
+    => res :: <boolean>;
+  any?(method (t :: <type>) => res :: <boolean>;
+	 %subtype?(type1, t)
+       end,
+       type2.union-members);
+end method subtype?;
+
+// subtype?(<singleton>,<type>) -- exported gf method.
+//
+// A singleton is subtype? of a union if it is an instance of any of the
+// union-members or == any of the union-singletons.
+// 
+define method subtype? (type1 :: <singleton>, type2 :: <union>)
+    => res :: <boolean>;
+  let object = type1.singleton-object;
+  any?(method (t :: <type>) => res :: <boolean>;
+	 instance?(object, t);
+       end,
+       type2.union-members)
+    | any?(method (s :: <object>) => res :: <boolean>;
+	     object == s;
+	   end,
+	   type2.union-singletons);
+end method subtype?;
+
+// subtype?(<union>,<union>) -- exported gf method.
+//
+// This method is a conglomeration of the above three methods.  Even if we
+// didn't care about the epsilon additional performance this gets us, we would
+// have to have a method on <union>,<union> to keep the <type>,<union> and
+// <union>,<type> methods from being ambiguous when given two <union>s.
+// 
+define method subtype? (type1 :: <union>, type2 :: <union>)
+    => res :: <boolean>;
+  every?(method (t1 :: <type>) => res :: <boolean>;
+	   any?(method (t2 :: <type>) => res :: <boolean>;
+		  %subtype?(t1, t2)
+		end,
+		type2.union-members);
+	 end,
+	 type1.union-members)
+    & every?(method (s1 :: <object>) => res :: <boolean>;
+	       any?(method (t2 :: <type>) => res :: <boolean>;
+		      instance?(s1, t2);
+		    end,
+		    type2.union-members)
+		 | any?(method (s2 :: <object>) => res :: <boolean>;
+			  s1 == s2;
+			end,
+			type2.union-singletons);
+	     end,
+	     type1.union-singletons);
+end method subtype?;
+
+// %subtype? -- internal.
+//
+// Return #f iff type1 is a subtype of type2.  Neither type will be a union
+// type because subtype? deals with unions and then calls %subtype? to handle
+// all the other kinds of types.
+// 
+define movable generic %subtype? (type1 :: <type>, type2 :: <type>)
+    => res :: <boolean>;
+
+// %subtype?(<type>,<type>) -- internal.
+//
+// By default, a type is not subtype? another type.
+// 
+define method %subtype? (type1 :: <type>, type2 :: <type>)
+    => res :: <boolean>;
+  #f;
+end method %subtype?;
+
+// %subtype(<class>,<class>) -- internal gf method.
+//
+// Class1 is a subtype of class2 when class2 is listed in class1's
+// all-superclasses.  For effeciency, pick off the case where the two
+// classes are == and we cache the result of the last lookup.
+//
+define method %subtype? (class1 :: <class>, class2 :: <class>)
+    => res :: <boolean>;
+  case
+    class1 == class2 =>
+      #t;
+    class1 == class2.subtype-cache =>
+      #t;
+    member?(class2, class1.all-superclasses) =>
+      class2.subtype-cache := class1;
+      #t;
+    otherwise =>
+      #f;
+  end case;
+end;
+
+// %subtype?(<direct-instance>,<type>) -- internal gf method.
+//
+// A direct-instance type is a subtype of some type if the direct-instance's
+// base class is a subclass of that type.
+// 
+define method %subtype? (type1 :: <direct-instance>, type2 :: <type>)
+    => res :: <boolean>;
+  %subtype?(type1.direct-instance-of, type2);
+end method %subtype?;
+
+// %subtype?(<direct-instance>,<direct-instance>) -- internal gf method.
+//
+// A direct-instance type is a subtype of another direct-instance type if the
+// base classes are the same.
+// 
+define method %subtype?
+    (type1 :: <direct-instance>, type2 :: <direct-instance>)
+    => res :: <boolean>;
+  type1.direct-instance-of == type2.direct-instance-of;
+end method %subtype?;
+
+// %subtype? -- internal.
+//
+// A singleton is only subtype? some other type if the singleton's object
+// is instance? the other type.
+// 
+define method %subtype? (type1 :: <singleton>, type2 :: <type>)
+    => res :: <boolean>;
+  instance?(type1.singleton-object, type2);
+end method %subtype?;
+
+// %subtype?(<subclass>,<type>) -- internal gf method.
+//
+// Unless some more specific method is applicable, a subclass type is a subtype
+// of some other type iff the base class's metaclass is a subtype of that
+// other type.  We assume that <class> is the only kind of metaclass in
+// existance, though.
+//
+define inline method %subtype? (type1 :: <subclass>, type2 :: <type>)
+    => res :: <boolean>;
+  %subtype?(<class>, type2);
+end;
+
+// %subtype?(<subclass>,<subclass>) -- internal gf method.
+//
+// One subclass type is a subtype of another subclass type if the first
+// one's root class is a subclass of the second one's root class.
+//
+define method %subtype? (type1 :: <subclass>, type2 :: <subclass>)
+    => res :: <boolean>;
+  %subtype?(type1.subclass-of, type2.subclass-of);
+end;
+
+// %subtype?(<limited-integer>,<type>) -- internal.
+//
+// Unless one of the other methods steps in, a limited integer is only
+// a subtype of some other type if the integers base class is a subtype
+// of it.
+//
+define method %subtype? (type1 :: <limited-integer>, type2 :: <type>)
+    => res :: <boolean>;
+  %subtype?(type1.limited-integer-base-class, type2);
+end;
+
+// %subtype?(<limited-integer>,<limited-integer>) -- internal.
+//
+// One limited integer is a subtype of another limited integer if the
+// base class of the first is a subtype of the base class of the second
+// and if the range of the first is a subrange of the second.
+//
+define method %subtype?
+    (type1 :: <limited-integer>, type2 :: <limited-integer>)
+    => res :: <boolean>;
+  if (%subtype?(type1.limited-integer-base-class,
+		type2.limited-integer-base-class))
+    let min1 = type1.limited-integer-minimum;
+    let min2 = type2.limited-integer-minimum;
+    if (~min2 | (min1 & min1 >= min2))
+      let max1 = type1.limited-integer-maximum;
+      let max2 = type2.limited-integer-maximum;
+      ~max2 | (max1 & max1 <= max2);
+    else
+      #f;
+    end;
+  else
+    #f;
+  end;
+end;
+
+// %subtype?(<byte-character-type>,<type>) -- internal gf method.
+//
+// In general, <byte-character> is only subtype? some other type if <character>
+// is subtype? that other type.
+//
+define method %subtype? (type1 :: <byte-character-type>, type2 :: <type>)
+    => res :: <boolean>;
+  %subtype?(<character>, type2);
+end;
+
+// %subtype?(<byte-character-type>,<byte-character-type>) -- internal gf method
+//
+// <byte-character-type>s are all equivalent, so they are all subtype? each
+// other.
+// 
+define method %subtype?
+    (type1 :: <byte-character-type>, type2 :: <byte-character-type>)
+    => res :: <boolean>;
+  #t;
+end;
+
+// %subtype?(<none-of>,<type>) -- internal gf method.
 //
 // A type negation is subtype some other type if it's base is a subtype.
 // This case is straigtforward, but the (<type>, <none-of>) method is just too
 // hair to implement, so we won't.
 //
-define method subtype? (type1 :: <none-of>, type2 :: <type>)
+define method %subtype? (type1 :: <none-of>, type2 :: <type>)
     => res :: <boolean>;
+  // We don't use %subtype, because the base-type might be a union type.
   subtype?(type1.base-type, type2);
 end;
   
@@ -754,7 +970,12 @@ end;
 define generic overlap? (type1 :: <type>, type2 :: <type>) => res :: <boolean>;
 
 define method overlap? (type1 :: <class>, type2 :: <class>)
- => res :: <boolean>;
+    => res :: <boolean>;
+  //
+  // Note: this would be wrong if we could actually create classes at runtime.
+  // Because then we could create a new subclass that inherited from both
+  // the classes and then create an instance of that new class.  But we can't
+  // make(<class>, ...) yet, so this works.
   local method sub-overlap (cls :: <class>) => res :: <boolean>;
 	   subtype?(cls, type2) | any?(sub-overlap, direct-subclasses(cls));
 	end method sub-overlap;
@@ -765,26 +986,23 @@ define method overlap? (type1 :: <class>, type2 :: <type>) => res :: <boolean>;
   overlap?(type2, type1);
 end method overlap?;
 
-define method overlap?
-    (type1 :: <singleton>, type2 :: <type>) => res :: <boolean>;
+define method overlap? (type1 :: <singleton>, type2 :: <type>)
+    => res :: <boolean>;
   subtype?(type1, type2);
 end method overlap?;
 
-/* ### not absolutly needed
-
 define method overlap? (type1 :: <subclass>, type2 :: <type>)
- => res :: <boolean>;
+    => res :: <boolean>;
   local method check-subclass-instances (class :: <class>) => res :: <boolean>;
 	  instance?(class, type2)
 	    | any?(check-subclass-instances, direct-subclasses(class));
 	end method check-subclass-instances;
   check-subclass-instances(type1.subclass-of);
 end method overlap?;
-*/
 
 define method overlap?
     (type1 :: <limited-integer>, type2 :: <limited-integer>)
- => (res :: <boolean>);
+    => (res :: <boolean>);
   let min1 = type1.limited-integer-minimum;
   let min2 = type2.limited-integer-minimum;
   let max1 = type1.limited-integer-maximum;
@@ -800,12 +1018,12 @@ define method overlap?
 end method overlap?;
 
 define method overlap? (type1 :: <limited-integer>, type2 :: <class>)
- => res :: <boolean>;
+    => res :: <boolean>;
   overlap?(type1.limited-integer-base-class, type2);
 end method overlap?;
 
 define method overlap? (type1 :: <limited-integer>, type2 :: <type>)
- => res :: <boolean>;
+    => res :: <boolean>;
   overlap?(type2, type1);
 end method overlap?;
 
@@ -814,8 +1032,8 @@ define method overlap? (type1 :: <union>, type2 :: <type>) => res :: <boolean>;
     | any?(method (t) instance?(t, type2) end, type1.union-singletons);
 end method overlap?;
 
-define method overlap?
-    (type1 :: <none-of>, type2 :: <type>) => res :: <boolean>;
+define method overlap? (type1 :: <none-of>, type2 :: <type>)
+    => res :: <boolean>;
   overlap?(type1.base-type, type2);
 end method overlap?;
 
