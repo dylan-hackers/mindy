@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.53 1996/02/17 21:25:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.54 1996/02/18 14:36:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -229,7 +229,9 @@ end method extract-directory;
 
 
 define method compile-library
-    (lid-file :: <byte-string>, command-line-features :: <list>) => ();
+    (lid-file :: <byte-string>, command-line-features :: <list>,
+     log-dependencies :: <boolean>)
+    => ();
   let (header, files) = parse-lid(lid-file);
 
   do(process-feature,
@@ -245,7 +247,9 @@ define method compile-library
   let source-path = extract-directory(lid-file);
   for (file in files)
     format(*debug-output*, "Parsing %s\n", file);
-    let (tokenizer, mod) = file-tokenizer(lib, concatenate(source-path, file));
+    let name = concatenate(source-path, file);
+    log-dependency(name);
+    let (tokenizer, mod) = file-tokenizer(lib, name);
     use-module(mod);
     block ()
       *Current-Library* := lib;
@@ -392,8 +396,8 @@ define method compile-library
 
   let objects = string-output-stream-string(objects-stream);
   
+  let ar-name = format-to-string("lib%s.a", unit-prefix);
   begin
-    let ar-name = format-to-string("lib%s.a", unit-prefix);
     system(concatenate("rm -f ", ar-name));
     let ar-command = format-to-string("/bin/ar qc %s%s", ar-name, objects);
     format(*debug-output*, "%s\n", ar-command);
@@ -410,6 +414,8 @@ define method compile-library
 		       linker-options: linker-options);
 
   if (executable)
+    log-target(executable);
+
     begin
       format(*debug-output*, "Emitting Global Heap.\n");
       let heap-stream 
@@ -446,6 +452,8 @@ define method compile-library
     end;
 
     begin
+      
+
       let flags = concatenate($cc-flags, " -L.");
       for (dir in *data-unit-search-path*)
 	flags := concatenate(flags, " -L", dir);
@@ -467,6 +475,7 @@ define method compile-library
     end;
 
   else
+    log-target(ar-name);
 
     format(*debug-output*, "Dumping library summary.\n");
     let dump-buf
@@ -482,6 +491,10 @@ define method compile-library
 
     end-dumping(dump-buf);
   end;
+
+  if (log-dependencies)
+    spew-dependency-log(concatenate(unit-prefix, ".dep"));
+  end if;
 
   format(*debug-output*, "Optimize called %d times.\n", *optimize-ncalls*);
 
@@ -637,6 +650,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     let library-dirs = make(<stretchy-vector>);
     let lid-file = #f;
     let features = #();
+    let log-dependencies = #f;
     for (arg in args)
       if (arg.size >= 1 & arg[0] == '-')
 	if (arg.size >= 2)
@@ -661,6 +675,11 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	      else
 		error("Feature to undefine not supplied with -U.");
 	      end;
+	    'M' =>
+	      if (arg.size > 2)
+		error("Bogus switch: %s", arg);
+	      end if;
+	      log-dependencies := #t;
 	    otherwise =>
 	      error("Bogus switch: %s", arg);
 	  end select;
@@ -679,7 +698,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     unless (lid-file)
       incorrect-usage();
     end;
-    compile-library(lid-file, reverse!(features));
+    compile-library(lid-file, reverse!(features), log-dependencies);
 #if (mindy)
   end if;
 #end
