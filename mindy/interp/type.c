@@ -9,11 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.6 1994/04/10 19:00:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.7 1994/04/18 21:24:29 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
+
+#include <stdio.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -26,6 +28,7 @@
 #include "module.h"
 #include "sym.h"
 #include "error.h"
+#include "print.h"
 #include "def.h"
 
 obj_t obj_TypeClass = 0;
@@ -357,18 +360,7 @@ boolean subtypep(obj_t type1, obj_t type2)
 	}
 	break;
     case id_Union:
-	switch (type2_id) {
-	    /* union x mumble methods */
-	case id_Singleton:
-	case id_Class:
-	case id_SubClass:
-	case id_LimInt:
-	    return union_type_subtypep(type1, type2);
-	    break;
-	case id_Union:
-	    return type_union_subtypep(type1, type2);
-	    break;
-	}
+	return union_type_subtypep(type1, type2);
 	break;
     }
     lose("subtypep dispatch didn't do anything.");
@@ -739,6 +731,42 @@ static obj_t dylan_make_singleton(obj_t class, obj_t object)
 }
 
 
+/* Printing stuff. */
+
+static void print_singleton(obj_t singleton)
+{
+    printf("{singleton ");
+    prin1(obj_ptr(struct singleton *, singleton)->object);
+    putchar('}');
+}
+
+static void print_subclass(obj_t subclass)
+{
+    printf("{subclass of ");
+    prin1(obj_ptr(struct subclass *, subclass)->of);
+    putchar('}');
+}
+
+static void print_limint(obj_t limint)
+{
+    printf("{limited integer ");
+    if (obj_ptr(struct lim_int *, limint)->min != obj_False)
+	printf("%d<=", fixnum_value(obj_ptr(struct lim_int *, limint)->min));
+    putchar('x');
+    if (obj_ptr(struct lim_int *, limint)->max != obj_False)
+	printf("<=%d", fixnum_value(obj_ptr(struct lim_int *, limint)->max));
+    putchar('}');
+}
+
+static void print_union(obj_t union_type)
+{
+    printf("{union ");
+    prin1(obj_ptr(struct union_type *, union_type)->members);
+    putchar('}');
+}
+
+
+
 /* GC stuff. */
 
 static int scav_simp_type(struct object *o)
@@ -790,10 +818,14 @@ void init_type_classes(void)
 {
     init_builtin_class(obj_TypeClass, "<type>", obj_ObjectClass, NULL);
     init_builtin_class(obj_SingletonClass, "<singleton>", obj_TypeClass, NULL);
+    def_printer(obj_SingletonClass, print_singleton);
     init_builtin_class(obj_SubclassClass, "<subclass>", obj_TypeClass, NULL);
+    def_printer(obj_SubclassClass, print_subclass);
     init_builtin_class(obj_LimIntClass, "<limited-integer>",
 		       obj_TypeClass, NULL);
+    def_printer(obj_LimIntClass, print_limint);
     init_builtin_class(obj_UnionClass, "<union>", obj_TypeClass, NULL);
+    def_printer(obj_UnionClass, print_union);
 }
 
 void init_type_functions(void)
