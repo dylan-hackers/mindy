@@ -3,7 +3,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.8 1996/07/30 19:37:50 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/text-inspector.dylan,v 1.9 1996/09/19 12:18:32 nkramer Exp $
 
 //======================================================================
 //
@@ -42,6 +42,7 @@ end library text-inspector;
 define module text-inspector
   use dylan;
   use extensions;
+  use system, import: { add-debug-variable };
   use streams, import: { read-line };
   use standard-io, import: { *standard-input* };
   use print;
@@ -69,6 +70,10 @@ end function display-object-info;
 // Just like display-object-info except it sticks numbers into the
 // display, so the user knows what to type to get a certain sub-object
 //
+// ### A sufficiently bizarre object-info string will screw us up
+// (such as if someone inspected a string containing "#!" or "!#").
+// If they inspect something like that, they'll get what they deserve.
+//
 define function show-object (object :: <object>) => ();
   let count = 0;
   let info = object.object-info;
@@ -79,7 +84,7 @@ define function show-object (object :: <object>) => ();
 	= if (body.related-objects.size < 1)
 	    body.description;
 	  else
-	    let string = substring-replace(body.description, "!#", "");
+	    let string = body.description;
 	    for (subobject in body.related-objects)
 	      count := count + 1;
 	      string 
@@ -89,7 +94,13 @@ define function show-object (object :: <object>) => ();
 						 "] "),
 				     count: 1);
 	    end for;
-	    string;
+	    // We do things in this order for a reason: If we did it
+	    // in the opposite order and we were given the string
+	    // "#!#()!#", we'd shoot ourselves in the foot.  (The
+	    // current arrangement still isn't foolproof, but you see
+	    // #'s at the beginning of a string a lot more often than
+	    // you see them at the end)
+	    substring-replace(string, "!#", "");
 	  end if;
       condition-format(*debug-output*, "    %s\n", descr);
     end for;
@@ -137,6 +148,8 @@ define function show-help () => ();
        "up             Moves up the inspected object stack\n"
        "print          Prints the object,\n"
        "               using the standard print functions\n"
+       "store          Store current object in the next unused debugger\n"
+       "               variable\n"
        "view           Redisplays the current object\n"
        "?, help        Displays this page\n"
        "quit, exit     Quits the object inspector\n");
@@ -176,9 +189,15 @@ define function inspect-one-obj (object :: <object>) => ();
 	  end if;
 	  
 	"print", "p" =>
-	  print(object, *debug-output*, pretty?: #t);
-	  condition-format(*debug-output*, "\n\n");
-	
+	  // One would think that "print(object, *debug-output*,
+	  // pretty?: #t)" would do the job, but one would be wrong.
+	  // If *debug-output* == #"Cheap-IO", we'd be screwed.
+	  let printed-obj = print-to-string(object, pretty?: #t);
+	  condition-format(*debug-output*, "%s\n\n", printed-obj);
+	  
+	"store", "s" =>
+	  add-debug-variable(object);
+
 	"history", "hi" => 
 	  // Add the current object, so that it will print out as well
 	  push(history, object);
