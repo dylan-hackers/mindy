@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.26 1996/06/26 14:39:16 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.27 1996/07/11 16:13:32 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -188,7 +188,6 @@ define module dylan-viscera
     object-address,
     <buffer>, <buffer-index>, $maximum-buffer-size,
     copy-bytes, buffer-address,
-    $Newlines-are-CRLF,
     system, import-string, export-string, getenv, 
     exit, no-core-dumps,
 

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.28 1996/06/26 14:39:16 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.29 1996/07/11 16:13:32 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -180,7 +180,6 @@ define module System
 	     // Object address
 	     object-address,
 
-	     $Newlines-are-CRLF,
 	     system, import-string, export-string, getenv, 
 	     exit, no-core-dumps,
 
