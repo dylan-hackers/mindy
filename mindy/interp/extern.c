@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.5 1995/06/12 01:06:17 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.6 1995/06/16 02:32:39 rgs Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -50,18 +50,7 @@
 #include "str.h"
 #include "print.h"
 #include "coll.h"
-#ifdef hp9000s800
-#include <sys/file.h>
-/*
-#include <stdio.h>
-#include <stdlib.h>
-*/
-#include <a.out.h>
-#include <aouthdr.h>
-#include <filehdr.h>
-#include <syms.h>
-#include <sys/mman.h>
-#include <unistd.h>
+#ifdef HAVE_LIBDLD
 #include <dl.h>
 #endif
 
@@ -85,7 +74,7 @@ obj_t make_c_pointer(obj_t /* <static-pointer-class> */ cls, void *ptr)
 
 /* Dylan routines. */
 
-#ifdef hp9000s800
+#ifdef HAVE_LIBDLD
 
 obj_t obj_SharedFileClass = NULL;
 
@@ -143,6 +132,7 @@ obj_t  load_program_file()
 obj_t  load_program_file()
 {
     error("Cannot do dynamic loading on this architecture");
+    return obj_False;
 }
 
 /* Links the named object files for dynamic loading, reads it in, and returns
@@ -152,21 +142,22 @@ obj_t  load_program_file()
 obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
 {
     error("Cannot do dynamic loading on this architecture");
+    return obj_False;
 }
 
-#endif /* hp9000s800 */
+#endif /* HAVE_LIBDLD */
 
 static void print_foreign_file(obj_t file)
 {
     printf("{<foreign-file> %s}", string_chars(FOREIGN_FILE(file)->file_name));
 }
 
-#ifdef hp9000s800
+#ifdef HAVE_LIBDLD
 static void print_shared_foreign_file(obj_t file)
 {
     printf("{<shared-file> %s}", string_chars(FOREIGN_FILE(file)->file_name));
 }
-#endif /* hp9000s800 */
+#endif /* HAVE_LIBDLD */
 
 static void print_c_pointer(obj_t ptr)
 {
@@ -203,7 +194,7 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
     else if (!instancep(lookup, obj_ForeignFileClass)) {
 	error("Keyword file: is not a <foreign-file>: %=", lookup);
 	return retval;		/* make lint happy */
-#ifdef hp9000s800
+#ifdef HAVE_LIBDLD
     } else if (instancep(lookup, obj_SharedFileClass)) {
 	shl_t *files = obj_ptr(struct shared_file *, lookup)->handles;
 	int file_count = obj_ptr(struct shared_file *, lookup)->file_count;
@@ -248,7 +239,7 @@ obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
     else if (!instancep(lookup, obj_ForeignFileClass)) {
 	error("Keyword file: is not a <foreign-file>: %=", lookup);
 	return retval;		/* make lint happy */
-#ifdef hp9000s800
+#ifdef HAVE_LIBDLD
     } else if (instancep(lookup, obj_SharedFileClass)) {
 	shl_t *files = obj_ptr(struct shared_file *, lookup)->handles;
 	int file_count = obj_ptr(struct shared_file *, lookup)->file_count;
@@ -639,7 +630,7 @@ static obj_t trans_foreign_file(obj_t cptr)
 		            + FOREIGN_FILE(cptr)->extra_size);
 }
 
-#ifdef hp9000s800
+#ifdef HAVE_LIBDLD
 static int scav_shared_file(struct object *obj)
 {
     scavenge(&((struct shared_file *)obj)->file_name);
@@ -654,15 +645,15 @@ static obj_t trans_shared_file(obj_t cptr)
 		     + ((obj_ptr(struct shared_file *,cptr)->file_count - 1)
 			* sizeof(shl_t)));
 }
-#endif /* hp9000s800 */
+#endif /* HAVE_LIBDLD */
 
 void scavenge_c_roots(void)
 {
     scavenge(&obj_CPointerClass);
     scavenge(&obj_ForeignFileClass);
-#ifdef hp9000s800
+#ifdef HAVE_LIBDLD
     scavenge(&obj_SharedFileClass);
-#endif /* hp9000s800 */
+#endif /* HAVE_LIBDLD */
     scavenge(&obj_ArchivedFileClass);
     scavenge(&obj_NullPointer);
     if (mindy_dynamic_syms != NULL)
@@ -683,10 +674,10 @@ void make_c_classes(void)
     obj_ForeignFileClass = make_abstract_class(0);
     obj_ArchivedFileClass
 	= make_builtin_class(scav_foreign_file, trans_foreign_file);
-#ifdef hp9000s800
+#ifdef HAVE_LIBDLD
     obj_SharedFileClass 
 	= make_builtin_class(scav_shared_file, trans_shared_file);
-#endif /* hp9000s800 */
+#endif /* HAVE_LIBDLD */
 }
 
 void init_c_classes(void)
@@ -699,11 +690,11 @@ void init_c_classes(void)
     init_builtin_class(obj_ArchivedFileClass, "<archived-file>",
 		       obj_ForeignFileClass, NULL);
     def_printer(obj_ArchivedFileClass, print_foreign_file);
-#ifdef hp9000s800
+#ifdef HAVE_LIBDLD
     init_builtin_class(obj_SharedFileClass, "<shared-file>",
 		       obj_ForeignFileClass, NULL);
     def_printer(obj_ForeignFileClass, print_shared_foreign_file);
-#endif /* hp9000s800 */
+#endif /* HAVE_LIBDLD */
 }
 
 void init_c_functions(void)
