@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.12 1996/03/19 23:52:13 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.13 1996/04/10 20:45:39 nkramer Exp $
 
 //======================================================================
 //
@@ -118,3 +118,24 @@ define method find-method
 end method find-method;
 
 define constant $not-supplied = pair(#f, #f);
+
+define sealed generic instantiable? (type :: <type>) => answer :: <boolean>;
+
+define method instantiable? (type :: <type>) => answer :: <boolean>;
+  ~empty?(sorted-applicable-methods(make, type));
+end method instantiable?;
+
+define method instantiable? (cls :: <class>) => answer :: <boolean>;
+  #f;
+end method instantiable?;
+
+define method instantiable? (cls :: <defined-class>) => answer :: <boolean>;
+  ~cls.abstract? 
+    | block ()
+	// instantiable if there is an applicable method, and it isn't
+	// the default make method.
+	let methods = sorted-applicable-methods(make, cls);
+	~methods.empty?
+	  & methods.first ~== find-method(make, list(<defined-class>));
+      end block;
+end method instantiable?;
