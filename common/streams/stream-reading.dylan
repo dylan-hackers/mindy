@@ -1,7 +1,7 @@
 module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading from streams.
-RCS-header: $Header: /scm/cvs/src/common/streams/stream-reading.dylan,v 1.3 2000/01/24 04:55:22 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/streams/stream-reading.dylan,v 1.4 2000/12/05 02:45:58 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -88,28 +88,31 @@ end method read-element;
 
 /// unread-element -- Exported.
 ///
+
+// One should avoid using element as a variable name as it
+// conflicts with the call to element() from [] (element-access syntax).
 define open generic unread-element (stream :: <positionable-stream>,
-				    element :: <object>)
- => element :: <object>;
+				    elemnt :: <object>)
+ => the-elemnt :: <object>;
 
 /// This default method on <positionable-stream> is a little shady.
 /// It doesn't catch any errors.
 ///
 define method unread-element (stream :: <positionable-stream>,
-			      element :: <object>)
- => element :: <object>;
+			      elemnt :: <object>)
+ => the-elemnt :: <object>;
   block ()
     lock-stream(stream);
     stream.stream-position := as(<integer>, stream.stream-position) - 1;
-    element;
+    elemnt;
   cleanup
     unlock-stream(stream);
   end block;
 end method unread-element;
 
 define sealed method unread-element (stream :: <simple-sequence-stream>,
-				     element :: <object>)
- => element :: <object>;
+				     elemnt :: <object>)
+ => the-elemnt :: <object>;
   block ()
     lock-stream(stream);
     check-stream-open(stream);
@@ -119,11 +122,11 @@ define sealed method unread-element (stream :: <simple-sequence-stream>,
       error("Stream at initial position: %=", stream);
     end if;
     let new-pos = stream.position - 1;
-    if (stream.contents[new-pos] ~= element)
-      error("~= is not last element read from ~=", element, stream);
+    if (stream.contents[new-pos] ~= elemnt)
+      error("%= is not last element read from %=", elemnt, stream);
     else
       stream.position := new-pos;
-      element;
+      elemnt;
     end if;
   cleanup
     unlock-stream(stream);
@@ -486,15 +489,15 @@ define sealed method stream-input-available?
   end block;
 end method stream-input-available?;
 
-
+
 //// Conveniece functions for reading from streams.
-//// These functions are implemented in terms of the more primitive fucntions
+//// These functions are implemented in terms of the more primitive functions
 //// defined above.
 ////
 
 /// read-to -- Exported.
 ///
-define method read-to (stream :: <stream>, element :: <object>,
+define method read-to (stream :: <stream>, elemnt :: <object>,
 		       #key on-end-of-stream :: <object>
 			      = $not-supplied,
 		            test :: <function> = \==)
@@ -506,7 +509,7 @@ define method read-to (stream :: <stream>, element :: <object>,
   let res :: <list> = as(<list>, first-elt-seq);
   block ()
     for (elt = read-element(stream) then read-element(stream),
-	 until: test(elt, element))
+	 until: test(elt, elemnt))
       res := pair(elt, res);
     end for;
     values(as(res-type, reverse(res)), #t);
@@ -517,7 +520,7 @@ end method read-to;
 
 /// read-through -- Exported.
 ///
-define method read-through (stream :: <stream>, element :: <object>,
+define method read-through (stream :: <stream>, elemnt :: <object>,
 			    #key on-end-of-stream :: <object>
 			           = $not-supplied,
 			         test :: <function> = \==)
@@ -529,7 +532,7 @@ define method read-through (stream :: <stream>, element :: <object>,
   let res :: <list> = as(<list>, first-elt-seq);
   block ()
     for (elt = read-element(stream) then read-element(stream),
-	 until: test(elt, element))
+	 until: test(elt, elemnt))
       res := pair(elt, res);
     finally
       res := pair(elt, res); // Include boundary elt    
@@ -594,11 +597,11 @@ end method read-to-end;
 
 /// skip-through -- Exported.
 ///
-define method skip-through  (stream :: <stream>, element :: <object>,
+define method skip-through  (stream :: <stream>, elemnt :: <object>,
 			     #key test :: <function> = \==)
  => found? :: <boolean>;
   block ()
-    until (test(read-element(stream), element)) end;
+    until (test(read-element(stream), elemnt)) end;
     #t;
   exception (<end-of-stream-error>)
     #f;
