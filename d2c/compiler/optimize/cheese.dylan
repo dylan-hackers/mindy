@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.26 1995/04/27 01:02:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.27 1995/04/27 04:37:00 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -48,6 +48,7 @@ define method optimize-component (component :: <component>) => ();
 	      component.initial-definitions | component.reoptimize-queue;
 	    end;
       (*do-sanity-checks* & try(assure-all-done, #f))
+	| try(identify-tail-calls, "finding tail calls")
 	| try(add-type-checks, "adding type checks")
 	| try(environment-analysis, "running environment analysis")
 	| (done := #t);
@@ -190,7 +191,7 @@ define method optimize
     insert-exit-after(component, assignment, component);
     for (defn = assignment.defines then defn.definer-next,
 	 while: defn)
-      delete-definition(defn);
+      delete-definition(component, defn);
     end;
     assignment.defines := #f;
   else
@@ -628,7 +629,7 @@ define method optimize (component :: <component>, lambda :: <lambda>)
   // If there is exactly one reference and that reference is the function
   // in a local call, let convert the lambda.
   let dependents = lambda.dependents;
-  if (dependents & dependents.source-next == #f)
+  if (dependents & dependents.source-next == #f & lambda.self-tail-calls == #f)
     let dependent = dependents.dependent;
     if (instance?(dependent, <local-call>)
 	  & dependent.depends-on == dependents)
@@ -1052,7 +1053,182 @@ for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
   define-primitive-deriver(name, fixnum-args-two-fixnums-result);
 end;
 
+
+// Tail call identification.
 
+
+define method identify-tail-calls (component :: <component>) => ();
+  for (lambda in component.all-methods)
+    identify-tail-calls-in(component, lambda, lambda.depends-on, lambda.body);
+  end;
+end;
+
+  
+define method identify-tail-calls-in
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), region :: <simple-region>)
+    => ();
+  let assign = region.last-assign;
+  for (result = results then result.dependent-next,
+       defn = assign.defines then defn.definer-next,
+       while: result & defn & ~defn.needs-type-check?
+	 & definition-for?(defn, result.source-exp))
+  finally
+    unless (result | defn)
+      let expr = assign.depends-on.source-exp;
+      if (instance?(expr, union(<known-call>, <local-call>))
+	    & expr.depends-on.source-exp == home)
+	// It's a self tail call.
+	convert-self-tail-call(component, home, expr);
+      end;
+    end;
+  end;
+end;
+
+define method identify-tail-calls-in
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), region :: <compound-region>)
+    => ();
+  identify-tail-calls-in(component, home, results, region.regions.last);
+end;
+
+define method identify-tail-calls-in
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), region :: <empty-region>)
+    => ();
+end;
+
+define method identify-tail-calls-in
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), region :: <if-region>)
+    => ();
+  identify-tail-calls-in(component, home, results, region.then-region);
+  identify-tail-calls-in(component, home, results, region.else-region);
+end;
+  
+define method identify-tail-calls-in
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), region :: <loop-region>)
+    => ();
+end;
+
+define method identify-tail-calls-in
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), region :: <block-region>)
+    => ();
+  for (exit = region.exits then exit.next-exit,
+       while: exit)
+    if (home-lambda(exit) == home)
+      identify-tail-calls-before(component, home, results,
+				 region.parent, region);
+    end;
+  end;
+end;
+
+define method identify-tail-calls-in
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), region :: <exit>)
+    => ();
+end;
+
+
+define generic definition-for?
+    (defn :: <definition-site-variable>, var :: <abstract-variable>)
+    => res :: <boolean>;
+
+define method definition-for?
+    (defn :: <ssa-variable>, var :: <abstract-variable>)
+    => res :: <boolean>;
+  defn == var;
+end;
+
+define method definition-for?
+    (defn :: <initial-definition>, var :: <abstract-variable>)
+    => res :: <boolean>;
+  defn.definition-of == var;
+end;
+
+
+define generic identify-tail-calls-before
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), in :: <region>, before :: <region>)
+    => ();
+
+define method identify-tail-calls-before
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), in :: <region>,
+     before :: <region>)
+    => ();
+  identify-tail-calls-before(component, home, results, in.parent, in);
+end;
+
+define method identify-tail-calls-before
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), in :: <compound-region>,
+     before :: <region>)
+    => ();
+  unless (before == in.regions.last)
+    error("Exit found in the middle of a compound region?");
+  end;
+  identify-tail-calls-in(component, home, results,
+			 in.regions[in.regions.size - 2]);
+end;
+
+define method identify-tail-calls-before
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), in :: <if-region>,
+     before :: <region>)
+    => ();
+end;
+
+define method identify-tail-calls-before
+    (component :: <component>, home :: <lambda>,
+     results :: false-or(<dependency>), in :: <method-region>,
+     before :: <region>)
+    => ();
+end;
+
+
+define method convert-self-tail-call
+    (component :: <component>, func :: <lambda>, call :: <abstract-call>)
+    => ();
+  // Set up the wrapper loop and blocks.
+  unless (func.self-call-block)
+    let builder = make-builder(component);
+    let source = func.source-location;
+    let return-block = build-block-body(builder, $Default-Policy, source);
+    build-loop-body(builder, $Default-Policy, source);
+    func.self-call-block := build-block-body(builder, $Default-Policy, source);
+    build-region(builder, func.body);
+    build-exit(builder, $Default-Policy, source, return-block);
+    end-body(builder); // end of the self call block
+    end-body(builder); // end of the loop
+    end-body(builder); // end of return block
+    replace-subregion(component, func, func.body, builder-result(builder));
+  end;
+  // Change the call into a self-tail-call operation.
+  let op = make(<self-tail-call>, dependents: call.dependents,
+		depends-on: call.depends-on.dependent-next,
+		next-self-tail-call: func.self-tail-calls, of: func);
+  func.self-tail-calls := op;
+  remove-dependency-from-source(component, call.depends-on);
+  for (dep = op.depends-on then dep.dependent-next,
+       while: dep)
+    dep.dependent := op;
+  end;
+  let assign-dep = call.dependents;
+  assign-dep.source-exp := op;
+  assert(~assign-dep.source-next);
+  // Insert the exit to self-call-block after the self-tail-call assignment.
+  let assign = assign-dep.dependent;
+  insert-exit-after(component, assign, func.self-call-block);
+  // Delete the definitions for the assignment.
+  for (defn = assign.defines then defn.definer-next,
+       while: defn)
+    delete-definition(component, defn);
+  end;
+  assign.defines := #f;
+end;
 
 
 // Cheesy type check stuff.
@@ -1240,11 +1416,12 @@ define method find-in-environment
       let prologue = lambda.prologue;
       let assign = prologue.dependents.dependent;
       let copy = make(<ssa-variable>, var-info: var.var-info, definer: assign,
+		      definer-next: assign.defines,
 		      derived-type: var.derived-type);
+      assign.defines := copy;
       lambda.environment.closure-vars
 	:= make(<closure-var>, original: var, copy: copy,
 		next: lambda.environment.closure-vars);
-      assign.defines := copy;
       prologue.derived-type := wild-ctype();
       for (call-dep = lambda.dependents then call-dep.source-next,
 	   while: call-dep)
@@ -1523,8 +1700,8 @@ end;
 // insert-exit-after -- internal.
 //
 // Inserts an exit to the target after the assignment, and deletes everything
-// following it in the control flow.  This is the interface to control-flow
-// deletion.
+// following it in the control flow.  This is the interface to data driven
+// dead code deletion.
 //
 define method insert-exit-after
     (component :: <component>, assignment :: <abstract-assignment>,
