@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.84 1995/08/07 12:24:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.85 1995/08/07 14:04:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -403,6 +403,7 @@ define module lexenv
 
   export
     <lexenv>, lexenv-policy, lexenv-policy-setter,
+    <body-lexenv>, lexenv-handlers, lexenv-handlers-setter,
     <binding>, binding-name, binding-var, binding-type-var,
     add-binding, find-binding;
 end;
