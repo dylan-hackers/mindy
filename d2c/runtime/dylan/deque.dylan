@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.2 1995/12/09 02:47:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.3 1995/12/09 20:16:33 rgs Exp $
 
 //======================================================================
 //
@@ -55,10 +55,11 @@ define open abstract class <deque> (<mutable-sequence>, <stretchy-collection>)
 //  keyword fill:, init-value: #f;
 end class <deque>;
 
-define method make
+define sealed inline method make
     (cls == <deque>, #rest rest, #all-keys) => (res :: <simple-object-deque>) 
   apply(make, <simple-object-deque>, rest);
 end method make;
+
 
 // Note: In the code that follows, the terms "state" and "element" will be
 // used interchangeably to denote <deque-element> objects.  The choice of
@@ -87,6 +88,8 @@ define sealed class <deque-element> (<object>)
   sealed slot prev-deque-element :: false-or(<deque-element>), init-value: #f;
   sealed slot next-deque-element :: false-or(<deque-element>), init-value: #f;
 end class <deque-element>;
+
+seal generic make (singleton(<deque-element>));
 
 // <simple-object-deque> -- public
 //
@@ -127,6 +130,9 @@ define method initialize (deque :: <simple-object-deque>,
     end for;
   end if;
 end method initialize;
+
+seal generic make (singleton(<simple-object-deque>));
+seal generic initialize (<simple-object-deque>);
 
 
 //; Iteration Protocol
