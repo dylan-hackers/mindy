@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.44 1996/04/13 21:22:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.45 1996/04/13 21:36:56 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -883,6 +883,10 @@ end;
 define method spew-object
     (object :: <slot-info>, state :: <state>) => ();
   spew-instance(specifier-type(#"<slot-descriptor>"), state,
+		slot-name:
+		  as(<ct-value>,
+		     object.slot-getter
+		       & as(<byte-string>, variable-name(object.slot-getter))),
 		slot-allocation:
 		  as(<ct-value>,
 		     select (object by instance?)
