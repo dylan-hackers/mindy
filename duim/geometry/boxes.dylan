@@ -59,9 +59,7 @@ define sealed inline method make
   make-bounding-box(left, top, right, bottom)
 end method make;
 
-// Seal the constructors and initializers for all bounding boxes
-//* next lib will barf loading us!     define sealed domain make (subclass(<bounding-box>));
-define sealed domain initialize (<bounding-box>);
+define sealed domain make (subclass(<bounding-box>));
 
 
 /// General bounding boxes
@@ -493,3 +491,5 @@ define inline function box-bottom
   ignore(left, top, right);
   bottom
 end function box-bottom;
+
+
