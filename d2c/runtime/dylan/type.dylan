@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.3 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.4 2000/02/11 00:30:41 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -1320,3 +1320,102 @@ define method overlap? (type1 :: <type>, type2 :: <type>) => res :: <boolean>;
   #f;
 end method overlap?;
 
+////////////////////////////////////////////////////////////////////////////
+// This is a *very* stripped down implementation of limited function
+// types -- right now only functions with a fixed number of arguments and 
+// return values are supported. These are pure subtypes; that is, one
+// type is a subtype of another if every element of the subtype can be
+// type-safely substituted when the other type is required.
+//
+// This means that function arguments specialize contravariantly, and
+// return types specialize covariantly. (This is different from the
+// method selection rules, but that makes sense -- it's a different
+// concept.)
+//
+// TODO: Add support for #key and #rest arguments. #rest is not too bad, 
+//       but correctly adding support for keyword arguments may involve
+//       some fairly involved hacking of <function>, because keyword
+//       arguments don't currently carry their types with them. 
+//
+////////////////////////////////////////////////////////////////////////////
+
+define constant <empty> = type-union();
+
+define class <limited-function> (<limited-type>)
+  slot lf-specializers :: <simple-object-vector>,
+    required-init-keyword: specializers:;
+  slot lf-return-types :: <simple-object-vector>,
+    required-init-keyword: return-types:;
+end class <limited-function>;
+
+define method limited(class == <function>,
+		      #key specializers :: <simple-object-vector>,
+		           return-types :: <simple-object-vector>)
+ => (type :: <limited-function>)
+  make(<limited-function>,
+       specializers: specializers,
+       return-types: return-types,
+       base-class: <function>);
+end method limited;
+
+define function tuple-subtype?(tuple1 :: <simple-object-vector>,
+			       tuple2 :: <simple-object-vector>)
+ => (b :: <boolean>)
+  if (tuple1.size = tuple2.size)
+    block(return)
+      for (type1 :: <type> in tuple1, type2 :: <type> in tuple2)
+	if (~ subtype?(type1, type2))
+	  return(#f);
+	end if;
+      finally
+	#t;
+      end for;
+    end block;
+  else
+    #f
+  end if;
+end function tuple-subtype?;
+
+define method %instance?(function :: <function>, type :: <limited-function>)
+ => (b :: <boolean>)
+  let (n :: <integer>,
+       rest-arg? :: <boolean>,
+       kwd) = function.function-arguments;
+  let (return-types :: <sequence>,
+       return-rest? :: false-or(<type>)) = function.function-return-values;
+  if (rest-arg? | kwd | return-rest?)
+    #f
+  else
+    // Note that the types of the argument specializers must be
+    // supertypes of the <limited-function>, and the types of the
+    // return values must be subtypes of the return types of the
+    // <limited-function>.
+    tuple-subtype?(as(<vector>, type.lf-specializers),
+		   as(<vector>, function.function-specializers))
+      & tuple-subtype?(as(<vector>, return-types),
+		       as(<vector>, type.lf-return-types));
+  end if;
+end method %instance?;
+
+define method %subtype?(type1 :: <limited-function>,
+			type2 :: <limited-function>) => (b :: <boolean>)
+  // Similarly to instance?, the argument types of type1 must be
+  // supertypes of the argument types of type2, and the return types
+  // of type1 must be subtypes of the argument types of type2.
+  //
+  tuple-subtype?(type2.lf-specializers, type1.lf-specializers)
+  & tuple-subtype?(type1.lf-return-types, type2.lf-return-types);
+end method %subtype?;
+
+define method overlap?(type1 :: <limited-function>,
+		       type2 :: <limited-function>) => (b :: <boolean>)
+  // Conceptually, two function types can overlap only if each of their
+  // specializer arguments overlap and each of their return types
+  // overlap. Otherwise there is no "room" for a function that belongs
+  // to both types.
+  //
+  type1.lf-specializers.size = type2.lf-specializers.size
+  & type2.lf-return-types.size = type2.lf-return-types.size
+  & every?(overlap?, type1.lf-specializers, type2.lf-specializers)
+  & every?(overlap?, type1.lf-return-types, type2.lf-return-types)
+end method overlap?;
