@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.h,v 1.1 1994/04/12 19:51:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.h,v 1.2 1994/05/19 22:36:18 wlott Exp $
 *
 * This file does whatever.
 *
@@ -26,5 +26,7 @@ extern void (*original_iep(obj_t self, struct thread *thread,
 			   obj_t *args))(obj_t method);
 
 extern void remove_breakpoint(int id);
+
+extern void list_breakpoints(void);
 
 extern void install_return_breakpoint(struct thread *thread, obj_t *fp);

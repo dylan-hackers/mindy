@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.3 1994/05/05 11:48:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.4 1994/05/19 22:36:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -23,6 +23,8 @@
 #include "driver.h"
 #include "gc.h"
 #include "interp.h"
+#include "bool.h"
+#include "print.h"
 #include "../comp/byteops.h"
 #include "brkpt.h"
 
@@ -167,6 +169,47 @@ void remove_breakpoint(int id)
 }
 
 	
+
+/* Breakpoint listing. */
+
+static void list_breakpoints_aux(struct byte_brkpt_info **byte_prev)
+{
+    struct byte_brkpt_info *byte_info = *byte_prev;
+
+    if (byte_info == NULL) {
+    }
+    else if (WEAK(byte_info->component)->broken) {
+	printf("breakpoint %d garbage collected\n", byte_info->id);
+	*byte_prev = byte_info->next;
+	free(byte_info);
+	list_breakpoints_aux(byte_prev);
+    }
+    else {
+	obj_t component, debug_name;
+
+	list_breakpoints_aux(&byte_info->next);
+
+	printf("%2d  pc %d in ", byte_info->id, byte_info->pc);
+	component = WEAK(byte_info->component)->object;
+	debug_name = COMPONENT(component)->debug_name;
+	if (debug_name != obj_False)
+	    print(debug_name);
+	else
+	    print(component);
+    }
+}
+
+void list_breakpoints(void)
+{
+    if (ByteBreakpoints != NULL) {
+	printf("id  where\n");
+	list_breakpoints_aux(&ByteBreakpoints);
+    }
+    else
+	printf("no breakpoints\n");
+}
+
+
 
 /* GC routines. */
 
