@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.4 1999/01/25 12:09:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.5 1999/02/18 20:21:22 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -632,25 +632,19 @@ end method;
 
 define method calculate-type-inclusion-matrix () => ();
   // find <object>
-  format(*debug-output*, " find <object>\n");
   let root-object = choose (method(x) x.direct-superclasses == #() end method, *all-classes*).first;
   
   // recursion for level calculation
-  format(*debug-output*, " recursion for level calculation\n");
-
   compute-level(root-object);
   
   // calculate inheritance type of the classes
   // plain classes are classes with only one direct superclass and only plain subclasses
   // join classes are classes with multiple direct superclasses and only plain subclasses
   // spine classes are superclasses of join classes
-  format(*debug-output*, " calculate inheritance type of the classes\n");
-
   for (i in *all-classes*)
     unless(i.inheritance-type)
       if(i.direct-superclasses.size > 1)
 	i.inheritance-type := #"join";
-	format(*debug-output*, "  %= is a join type\n", i.cclass-name.name-symbol);
 	do-all-superclasses(i, method(x)
 				   x.inheritance-type := #"spine";
 			       end method);
@@ -686,7 +680,6 @@ define method calculate-type-inclusion-matrix () => ();
 
 
   // store joins in superclasses
-  format(*debug-output*, " store joins in superclasses\n");
   for (x in join-list)
     for(y in x.direct-superclasses)
       y.joins := add!(y.joins, x);
@@ -697,7 +690,6 @@ define method calculate-type-inclusion-matrix () => ();
   let found = #f;
 
   // assign buckets to spine types
-  format(*debug-output*, " assign buckets to spine types\n");
   for (x in rev-level-order(spine-list))
     found := #f;
     block(break)
@@ -730,7 +722,6 @@ define method calculate-type-inclusion-matrix () => ();
   end for;  
 
   // assign non-spine types
-  format(*debug-output*, " assign non-spine types\n");
   for(x in level-order(union(plain-list, join-list)))
     found := #f;
     block(break)
@@ -759,7 +750,6 @@ define method calculate-type-inclusion-matrix () => ();
   let sum = 0;	
 
   // build matrix
-  format(*debug-output*, " build matrix\n");
   for(b in buckets, n from 0)
     sum := sum + b.elements.size;
     for(x in b.elements, c from 1)
@@ -769,15 +759,7 @@ define method calculate-type-inclusion-matrix () => ();
     end for;
   end for;
 
-  format(*debug-output*, "  visited nodes: %=, total nodes: %=, joins: %=, spines: %=, plains: %=\n", sum, *all-classes*.size, join-list.size, spine-list.size, plain-list.size);
-  format(*debug-output*, "  Number of buckets: %=\n", P);
-
-/*
-  format(*debug-output*, "  visited nodes: %=, total nodes: %=\n", sum, *all-classes*.size);
-*/
-
   // fill in matrix fields
-  format(*debug-output*, " fill in matrix fields\n\n   Matrix:\n\n");
   for(x in level-order(*all-classes*))
     for(y in x.direct-subclasses)
       for(i from 0 below P)
@@ -785,23 +767,6 @@ define method calculate-type-inclusion-matrix () => ();
 	  y.row[i] := x.row[i];
 	end if;
       end for;
-    end for;
-    for(i from 0 below P)
-      format(*debug-output*, " %= : ", x.row[i]);
-    end for;
-    format(*debug-output*, " %= (%=, %=) \n", x.cclass-name.name-symbol, x.bucket, x.inheritance-type);
-  end for;
-  format(*debug-output*, "\n");
-
-  let my-csubtype? = method(a, b) => (result :: <boolean>)
-			a.row[b.bucket] = b.row[b.bucket];
-		    end method;
-
-  for(i in *all-classes*)
-    for(j in *all-classes*)
-      if(csubtype?(i, j) ~= my-csubtype?(i, j))
-	format(*debug-output*, "Subtype mismatch, csubtype?(%=, %=) is %=\n", i.cclass-name.name-symbol, j.cclass-name.name-symbol, csubtype?(i, j));
-      end if;
     end for;
   end for;
 
