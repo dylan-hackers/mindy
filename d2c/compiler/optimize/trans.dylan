@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.12 2003/02/19 00:20:25 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.13 2003/02/19 00:23:12 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1224,8 +1224,7 @@ define method apply-transformer
 	  cluster;
 	end;
     let op = make-operation(builder, <mv-call>, list(function, cluster),
-			    use-generic-entry: #f,
-                            ct-source-location: call.ct-source-location);
+			    use-generic-entry: #f);
     insert-before(component, assign, builder-result(builder));
     replace-expression(component, assign.depends-on, op);
     #t;
@@ -1447,8 +1446,7 @@ define method reduce-transformer-aux
     let temp = make-local-var(builder, #"temp", object-ctype());
     build-assignment
       (builder, policy, source, temp,
-       make-unknown-call(builder, proc, #f, list(current-value, element),
-                         ct-source-location: call.ct-source-location));
+       make-unknown-call(builder, proc, #f, list(current-value, element)));
     current-value := temp;
   end;
   insert-before(component, assign, builder-result(builder));
@@ -1489,9 +1487,7 @@ define method do-transformer
 		     make-unknown-call(builder, proc, #f,
 				       map(curry(iteration-current-element,
 						 builder, policy, source),
-					   iteration-vars-vectors,
-                                       ct-source-location: 
-                                         call.ct-source-location)));
+					   iteration-vars-vectors)));
     do(curry(iteration-advance, builder, policy, source),
        iteration-vars-vectors);
     end-body(builder); // loop
