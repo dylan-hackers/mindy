@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.5 1994/04/07 18:34:58 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.6 1994/04/08 18:00:45 wlott Exp $
 *
 * This file does whatever.
 *
@@ -157,8 +157,9 @@ void invoke(struct thread *thread, int nargs)
     }
 
     FUNC(function)->xep(thread, nargs);
-
-    lose("invoke can't return.\n");
+#ifndef sparc
+    go_on();
+#endif
 }
 
 obj_t *push_linkage(struct thread *thread, obj_t *args)
@@ -199,10 +200,8 @@ void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
     if (Tracing)
 	trace_return(old_sp, vals, thread->sp - vals);
 
-    if (thread->pc) {
+    if (thread->pc)
 	do_byte_return(thread, old_sp, vals);
-	lose("do_byte_return can't return\n");
-    }
     else {
 	void (*cont)(struct thread *thread, obj_t *vals)
 	    = (void (*)(struct thread *thread, obj_t *vals))
@@ -216,12 +215,13 @@ void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 		thread->sp = dst;
 	    }
 	    (*cont)(thread, old_sp);
-	    lose("C continuation function 0x%08x exited.",
-		 (unsigned long)cont);
 	}
 	else
 	    lose("Attempt to return, but no continuation established.\n");
     }
+#ifndef sparc
+    go_on();
+#endif
 }
 
 
@@ -813,7 +813,9 @@ static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
 
     fp = push_linkage(thread, args);
     set_byte_continuation(thread, BYTE_METHOD(method)->component);
+#ifndef sparc
     go_on();
+#endif
 }
 
 obj_t make_method_info(boolean restp, obj_t keys, obj_t component,
