@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.20 1996/02/16 03:41:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.21 1996/02/16 18:56:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -439,7 +439,7 @@ define module parse-tree
   use tokens;
   use fragments;
   use od-format;
-  use source, import: { source-location };
+  use source, import: { source-location, <source-location-mixin> };
   use compile-time-values, import: { *compiler-dispatcher* };
 
   export
