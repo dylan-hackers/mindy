@@ -387,7 +387,7 @@ end method;
 //
 define method initialize (value :: <tokenizer>,
 			  #key source, parent, typedefs-from, name,
-			       defines = #(), undefines = #())
+			       defines :: false-or(<table>))
   // We just read the entire file into a string for the tokenizer to use.
   // This simplifies things since we can use regexp searches to find things,
   // even across line boundaries.
@@ -405,7 +405,7 @@ define method initialize (value :: <tokenizer>,
     value.cpp-table := parent.cpp-table;
     value.cpp-decls := make(<deque>);
   else
-    value.cpp-table := shallow-copy(default-cpp-table);
+    value.cpp-table := make(<string-table>);
     value.typedefs := if (typedefs-from)
 			typedefs-from.typedefs;
 		      else
@@ -414,47 +414,41 @@ define method initialize (value :: <tokenizer>,
     value.cpp-decls := make(<deque>);
   end if;
 
-  // We must be able to initialize the cpp-table with user supplied additions
-  // (or subtractions).  If the supplied value is a string, we need to create
-  // a temporary tokenizer to convert it to a sequence of tokens.  Like all
-  // such sequences of "cpp" tokens, this one will be in reverse order.
-  for (elem in defines)
-    let key = elem.head;
-    let cpp-value = elem.tail;
-    select (cpp-value by instance?)
-      <integer> =>
-	value.cpp-table[key] := list(make(<integer-token>,
-					  string: cpp-value.integer-to-string,
-					  generator: value));
-      <string> =>
-	if (cpp-value.empty?)
-	  // Work around bug/misfeature in streams
-	  value.cpp-table[key] := #();
-	else
-	  let sub-tokenizer
-	    = make(<tokenizer>,
-		   source: make(<byte-string-stream>, direction: #"input",
-				contents: cpp-value));
-	  for (list = #() then pair(token, list),
-	       token = get-token(sub-tokenizer, expand: #f)
-		 then get-token(sub-tokenizer, expand: #f),
-	       until: instance?(token, <eof-token>))
-	    if (instance?(token, <error-token>))
-	      parse-error(value, "Error in cpp defines");
-	    end if;
-	  finally
-	    value.cpp-table[key] := list;
-	  end for;
-	end if;
-    end select;
-  end for;
-  for (key in undefines)
-    if (element(value.cpp-table, key, default: #f))
-      remove-key!(value.cpp-table, key);
-    else
-      cerror("Continue", "No such key in %=: %=", value.cpp-table, key);
-    end if;
-  end for;
+  if (defines)
+    // We must be able to initialize the cpp-table with user supplied
+    // additions (or subtractions).  If the supplied value is a
+    // string, we need to create a temporary tokenizer to convert it
+    // to a sequence of tokens.  Like all such sequences of "cpp"
+    // tokens, this one will be in reverse order.
+    for (cpp-value keyed-by key in defines)
+      select (cpp-value by instance?)
+	<integer> =>
+	  value.cpp-table[key] := list(make(<integer-token>,
+					    string: cpp-value.integer-to-string,
+					    generator: value));
+	<string> =>
+	  if (cpp-value.empty?)
+	    // Work around bug/misfeature in streams
+	    value.cpp-table[key] := #();
+	  else
+	    let sub-tokenizer
+	      = make(<tokenizer>,
+		     source: make(<byte-string-stream>, direction: #"input",
+				  contents: cpp-value));
+	    for (list = #() then pair(token, list),
+		 token = get-token(sub-tokenizer, expand: #f)
+		   then get-token(sub-tokenizer, expand: #f),
+		 until: instance?(token, <eof-token>))
+	      if (instance?(token, <error-token>))
+		parse-error(value, "Error in cpp defines");
+	      end if;
+	    finally
+	      value.cpp-table[key] := list;
+	    end for;
+	  end if;
+      end select;
+    end for;
+  end if;
 end method initialize;
 
 // Stores a previously analyzed token for later return

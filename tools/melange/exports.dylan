@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.10 1996/09/15 16:49:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.11 1996/09/28 20:12:32 rgs Exp $
 
 //======================================================================
 //
@@ -120,6 +120,7 @@ define module define-interface
   // From Dylan
   use dylan;
   use extensions;		// required for "main" (as well as key-exists?)
+  use %hash-tables;
 #if (~mindy)
   use System,
      import: {import-string, exit,
@@ -145,5 +146,6 @@ define module define-interface
   use c-declarations,
     rename: {parse => c-parse, <parse-state> => <c-parse-state>};
   use name-mappers;
+  use portability;
 end module define-interface;
 

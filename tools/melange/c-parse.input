@@ -1221,10 +1221,10 @@ end;
 // declarations in the returned parse state.
 //
 define method parse
-    (file :: <string>, #key defines = #(), undefines = #(), verbose)
+    (file :: <string>, #key defines, verbose)
  => (result :: <parse-state>);
   let tokenizer = make(<tokenizer>, source: file,
-		       defines: defines, undefines: undefines);
+		       defines: defines);
 
   let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
   parse-state.verbose := verbose;

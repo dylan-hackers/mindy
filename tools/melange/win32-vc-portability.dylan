@@ -26,12 +26,9 @@ rcs-header: $Header:
 // Microsoft Visual C++ compiler.
 //======================================================================
 
-define constant reserved-words
-  = #["WIN32", "__STDC__"];
-
-for (word in reserved-words)
-  default-cpp-table[word] := #();
-end for;
+define constant $default-defines
+  = #["WIN32", "",
+      "__STDC__, ""];
 
 define constant win32-include-directories
   = #["/msdev/include"];

@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.13 1996/09/26 11:30:53 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.14 1996/09/28 20:12:32 rgs Exp $
 
 //======================================================================
 //
@@ -400,10 +400,20 @@ define method process-parse-state
   let (full-name, stream) = open-in-include-path(state.include-file);
   unless (full-name) error("File not found: %s", state.include-file) end;
   close(stream); // rgs: This is inefficient -- we should use the open stream.
+  
+  let defines = make(<equal-table>);
+  for (i from 0 below $default-defines.size by 2)
+    defines[$default-defines[i]] := $default-defines[i + 1];
+  end for;
+  for (def in state.macro-defines)
+    defines[def.head] := def.tail;
+  end for;
+  for (def in state.macro-undefines)
+    remove-key!(defines, def);
+  end for;
+
   let c-state
-    = c-parse(full-name,
-	      defines: state.macro-defines, undefines: state.macro-undefines,
-	      verbose: verbose);
+    = c-parse(full-name, defines: defines, verbose: verbose);
 
   // The ordering of some of the following steps is important.  We must
   // process all of the clauses before doing apply-options so that any

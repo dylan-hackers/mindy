@@ -22,7 +22,7 @@ define library melange-c
   use streams;
   use standard-io;
   use format;
-  export c-lexer, c-declarations;
+  export c-lexer, c-declarations, portability;
 end library melange-c;
 
 define module c-lexer
@@ -37,7 +37,7 @@ define module c-lexer
   use streams;
   create cpp-parse;
   export
-    default-cpp-table, include-path, open-in-include-path, check-cpp-expansion,
+    include-path, open-in-include-path, check-cpp-expansion,
     <tokenizer>, get-token, unget-token, add-typedef, cpp-table, cpp-decls,
     <token>, value, string-value, generator, parse-error,
     <error-token>, <identifier-token>, <integer-token>, <eof-token>,
@@ -66,13 +66,15 @@ end module c-lexer;
 
 define module portability
   use dylan;
-  use c-lexer, import: {default-cpp-table, include-path};
-  export $enum-size,
-	$pointer-size, $function-pointer-size,
-	$integer-size, $short-int-size,
-	$long-int-size, $char-size,
-	$float-size, $double-float-size,
-	$long-double-size;
+  use c-lexer, import: {include-path};
+  export
+    $default-defines,
+    $enum-size,
+    $pointer-size, $function-pointer-size,
+    $integer-size, $short-int-size,
+    $long-int-size, $char-size,
+    $float-size, $double-float-size,
+    $long-double-size;
 end module portability;
 
 define module c-parse
