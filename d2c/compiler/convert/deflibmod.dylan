@@ -1,24 +1,115 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.4 1995/03/23 22:05:58 wlott Exp $
-copyright: Copyright (c) 1994  Carnegie Mellon University
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.5 1995/11/08 16:44:29 wlott Exp $
+copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
 
-// define library and define module
+
+// Define library.
+
+define class <define-library-tlf> (<top-level-form>)
+  slot define-library-name :: <symbol>, required-init-keyword: name:;
+  slot define-library-uses :: <simple-object-vector>,
+    required-init-keyword: uses:;
+  slot define-library-exports :: <simple-object-vector>,
+    required-init-keyword: exports:;
+end;
+
+define method print-message
+    (tlf :: <define-library-tlf>, stream :: <stream>) => ();
+  format(stream, "Define Library %s.", tlf.define-library-name);
+end;
 
 define method process-top-level-form (form :: <define-library-parse>) => ();
   let (uses, exports, creates) = extract-clauses(form.deflibrary-clauses);
   unless (empty?(creates))
     error("How did any creates get into a define library?");
   end;
-  note-library-definition(form.deflibrary-name.token-symbol, uses, exports);
+  let name = form.deflibrary-name.token-symbol;
+  note-library-definition(name, uses, exports);
+  add!(*Top-Level-Forms*,
+       make(<define-library-tlf>, name: name, uses: uses, exports: exports));
+end;
+
+define method finalize-top-level-form (tlf :: <define-library-tlf>) => ();
+  // Nothing to do.
+end;
+
+define method convert-top-level-form
+    (builder :: <fer-builder>, tlf :: <define-library-tlf>) => ();
+  // Nothing to do.
+end;
+
+define method dump-od (tlf :: <define-library-tlf>, state :: <dump-state>)
+    => ();
+  dump-simple-object(#"define-library-tlf", state, tlf.define-library-name,
+		     tlf.define-library-uses, tlf.define-library-exports);
+end;
+
+add-od-loader(*compiler-dispatcher*, #"define-library-tlf",
+	      method (state :: <load-state>) => res :: <symbol>;
+		let name = load-object-dispatch(state);
+		let uses = load-object-dispatch(state);
+		let exports = load-object-dispatch(state);
+		note-library-definition(name, uses, exports);
+		name;
+	      end);
+
+
+// Define module.
+
+define class <define-module-tlf> (<top-level-form>)
+  slot define-module-name :: <symbol>, required-init-keyword: name:;
+  slot define-module-uses :: <simple-object-vector>,
+    required-init-keyword: uses:;
+  slot define-module-exports :: <simple-object-vector>,
+    required-init-keyword: exports:;
+  slot define-module-creates :: <simple-object-vector>,
+    required-init-keyword: creates:;
+end;
+
+define method print-message
+    (tlf :: <define-module-tlf>, stream :: <stream>) => ();
+  format(stream, "Define Module %s.", tlf.define-module-name);
 end;
 
 define method process-top-level-form (form :: <define-module-parse>) => ();
+  let name = form.defmodule-name.token-symbol;
   let (uses, exports, creates) = extract-clauses(form.defmodule-clauses);
-  note-module-definition(*Current-Library*, form.defmodule-name.token-symbol,
-			 uses, exports, creates);
+  note-module-definition(*Current-Library*, name, uses, exports, creates);
+  add!(*Top-Level-Forms*,
+       make(<define-module-tlf>, name: name, uses: uses, exports: exports,
+	    creates: creates));
 end;
+
+define method finalize-top-level-form (tlf :: <define-module-tlf>) => ();
+  // Nothing to do.
+end;
+
+define method convert-top-level-form
+    (builder :: <fer-builder>, tlf :: <define-module-tlf>) => ();
+  // Nothing to do.
+end;
+
+define method dump-od (tlf :: <define-module-tlf>, state :: <dump-state>)
+    => ();
+  dump-simple-object(#"define-module-tlf", state, tlf.define-module-name,
+		     tlf.define-module-uses, tlf.define-module-exports);
+end;
+
+add-od-loader(*compiler-dispatcher*, #"define-module-tlf",
+	      method (state :: <load-state>) => res :: <symbol>;
+		let name = load-object-dispatch(state);
+		let uses = load-object-dispatch(state);
+		let exports = load-object-dispatch(state);
+		let creates = load-object-dispatch(state);
+		note-module-definition(*Current-Library*, name, uses, exports,
+				       creates);
+		name;
+	      end);
+
+
+// Clause processing utilities.
 
 define method extract-clauses (clauses :: <simple-object-vector>)
     => (uses :: <vector>, exports :: <vector>, creates :: <vector>);
@@ -28,7 +119,9 @@ define method extract-clauses (clauses :: <simple-object-vector>)
   for (clause in clauses)
     process-clause(clause, uses, exports, creates);
   end;
-  values(uses, exports, creates);
+  values(as(<simple-object-vector>, uses),
+	 as(<simple-object-vector>, exports),
+	 as(<simple-object-vector>, creates));
 end;
 
 define method process-clause (clause :: <use-clause>,
