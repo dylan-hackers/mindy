@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.4 1995/11/15 15:36:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.5 1995/11/16 03:38:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -7,7 +7,7 @@ module: dylan-viscera
 define constant $not-supplied :: <list> = list("unsupplied keyword");
 
 
-define constant <does-not-return> :: <type> = type-or();
+define constant <never-returns> :: <type> = type-union();
 
 
 define flushable generic values-sequence (sequence :: <sequence>);
