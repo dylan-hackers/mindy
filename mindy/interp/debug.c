@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.11 1994/04/10 23:02:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.12 1994/04/11 00:24:48 wlott Exp $
 *
 * This file does whatever.
 *
@@ -168,6 +168,8 @@ static void free_frames(struct frame_info *frame)
     while (frame) {
 	next = frame->down;
 	free(frame);
+	if (frame == CurFrame)
+	    CurFrame = NULL;
 	frame = next;
     }
 }
@@ -211,9 +213,12 @@ static void print_frame(struct frame_info *frame, boolean print_line)
 
 static void set_frame(struct frame_info *frame)
 {
+    if (CurFrame == NULL || frame == NULL || CurFrame->fp != frame->fp) {
+	FrameChanged = TRUE;
+	PrevLine = -1;
+    }
+
     CurFrame = frame;
-    PrevLine = -1;
-    FrameChanged = TRUE;
 }
 
 
@@ -302,9 +307,10 @@ static void validate_thread_and_frame()
 	    if (CurThread->fp != TopFrame->fp
 		  || CurThread->component != TopFrame->component
 		  || CurThread->pc != TopFrame->pc) {
-		free_frames(TopFrame);
+		struct frame_info *old_top = TopFrame;
 		TopFrame = top_frame(CurThread);
 		set_frame(TopFrame);
+		free_frames(old_top);
 	    }
 	}
     }
@@ -1093,16 +1099,24 @@ static void describe_restarts(void)
 
 static void maybe_return(struct thread *thread, obj_t *vals)
 {
-    if (vals[0] == obj_False)
-	debugger_cmd_finished(thread, vals);
+    if (vals[0] == obj_False) {
+	thread->sp = vals;
+	thread_pop_escape(thread);
+	thread->sp--;
+	pause(pause_DebuggerCommandFinished);
+    }
     else {
 	obj_t value_vec = vals[1];
 	int len = SOVEC(value_vec)->length;
 	int i;
 	obj_t *old_sp;
+	obj_t keep_going;
 
 	thread->sp = vals;
 	thread_pop_escape(thread);
+
+	keep_going = *--thread->sp;
+
 	thread_buggered(thread);
 
 	old_sp = pop_linkage(thread);
@@ -1114,7 +1128,12 @@ static void maybe_return(struct thread *thread, obj_t *vals)
 
 	restart_other_threads(thread);
 
-	do_return(thread, old_sp, old_sp);
+	if (keep_going != obj_False)
+	    do_return(thread, old_sp, old_sp);
+	else {
+	    do_return_setup(thread, old_sp, old_sp);
+	    pause(pause_DebuggerCommandFinished);
+	}
     }
 }
 
@@ -1191,6 +1210,8 @@ static void return_cmd(void)
 	printf("The current thread did not call invoke-debugger\n");
 	return;
     }
+
+    *thread->sp++ = obj_True;
 
     thread_push_escape(thread);
     set_c_continuation(thread, maybe_return);
@@ -1370,20 +1391,55 @@ static void enable_cmd(void)
 
 static void step_cmd(void)
 {
-    enum pause_reason reason;
+    struct thread *thread = CurThread;
 
-    if (CurThread == NULL) {
+    if (thread == NULL) {
 	printf("No current thread.\n");
 	return;
     }
 
-    if (CurThread->status != status_Running) {
+    switch (thread->status) {
+      case status_Running:
+	{
+	    enum pause_reason reason;
+	    int prev_line = PrevLine;
+
+	    do {
+		reason = single_step(thread);
+		explain_reason(reason);
+	    } while (reason == pause_NoReason && CurThread == thread
+		     && !FrameChanged && TopFrame->line == prev_line);
+	}
+	break;
+
+      case status_Debuggered:
+	if (debugger_return_var == NULL
+	    || debugger_return_var->value == obj_Unbound) {
+	    printf("debugger-return undefined.\n");
+	    return;
+	}
+	else {
+	    obj_t cond = thread->datum;
+
+	    *thread->sp++ = obj_False;
+
+	    thread_push_escape(thread);
+	    set_c_continuation(thread, maybe_return);
+    
+	    suspend_other_threads(thread);
+    
+	    *thread->sp++ = debugger_return_var->value;
+	    *thread->sp++ = cond;
+	    thread_restart(thread);
+	    Continue = TRUE;
+	}
+
+	break;
+
+      default:
 	printf("The current thread is not runnable.\n");
 	return;
     }
-
-    reason = single_step(CurThread);
-    explain_reason(reason);
 }
 
 
