@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.4 1994/04/09 13:36:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.5 1994/04/12 19:46:28 wlott Exp $
 *
 * This file does whatever.
 *
@@ -41,6 +41,7 @@ static obj_t result;
 %%
 
 start:		exprlist			{ result = $1; }
+	|	/* epsilon */			{ result = obj_Nil; }
 ;
 
 exprlist:	expr				{ $$ = list1($1); }
@@ -48,6 +49,8 @@ exprlist:	expr				{ $$ = list1($1); }
 ;
 
 expr:		leaf				{ $$ = $1; }
+	|	expr tok_LPAREN tok_RPAREN
+		    { $$ = list2(symbol("funcall"), $1); }
 	|	expr tok_LPAREN arglist tok_RPAREN
 		    { $$ = pair(symbol("funcall"), pair($1, $3)); }
 ;
@@ -58,8 +61,7 @@ leaf:		tok_DEBUGVAR		{ $$ = pair(symbol("debug-var"), $1); }
 	|	tok_SYMBOL		{ $$ = pair(symbol("variable"),$1); }
 ;
 
-arglist:	/* epsilon */			{ $$ = obj_Nil; }
-	|	expr more_args			{ $$ = pair($1, $2); }
+arglist:	expr more_args			{ $$ = pair($1, $2); }
 	|	tok_KEYWORD expr more_args
 		    { $$ = pair(pair(symbol("literal"),$1),pair($2, $3)); }
 ;
