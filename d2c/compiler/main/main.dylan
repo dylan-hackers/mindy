@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.61 1996/03/24 00:26:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.62 1996/03/24 21:20:35 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -45,7 +45,10 @@ end method system;
 
 #end
 
+define constant $cc-utility = "gcc";   // I don't know if cc would also work
 define constant $cc-flags = getenv("CCFLAGS") | "";
+define constant $ar-utility = "/bin/ar";
+define constant $make-utility = "gmake";  // "make" should also work
 
 
 // Roots registry.
@@ -286,8 +289,6 @@ define method find-source-file
   end block;
 end method find-source-file;
 
-define constant $make-utility = "gmake";  // "make" should also work
-
 define method output-c-file-rule
     (makefile :: <stream>, c-name :: <string>, o-name :: <string>) => ();
   let cc-command
@@ -295,6 +296,36 @@ define method output-c-file-rule
   format(makefile, "%s : %s\n", o-name, c-name);
   format(makefile, "\t%s\n", cc-command);
 end method output-c-file-rule;
+
+// This function compares old-filename to new-filename.  If they are
+// different, or if one doesn't exist (presumably old-filename), then
+// new-filename will be renamed old-filename, and what used to be
+// old-filename will be deleted.  Otherwise, new-filename will be
+// deleted.  This allows us to avoid unnecessary recompilation of .c
+// files.
+//
+define method pick-which-file
+    (old-filename :: <string>, new-filename :: <string>)
+ => (used-new-file :: <boolean>);
+  let cmp-command = format-to-string("cmp -s %s %s", 
+				     old-filename, new-filename);
+  // cmp will return non-zero if they are different, if a file's not
+  // found, or if cmp somehow fails to execute.
+  if (system(cmp-command) ~== 0)
+    let mv-command = format-to-string("mv -f %s %s", 
+				      new-filename, old-filename);
+    if (system(mv-command) ~== 0)
+      cerror("so what", "mv failed?");
+    end if;
+    #t;
+  else
+    let rm-command = format-to-string("rm -f %s", new-filename);
+    if (system(rm-command) ~== 0)
+      cerror("so what", "rm failed?");
+    end if;
+    #f;
+  end if;
+end method pick-which-file;
 
 define method compile-library
     (lid-file :: <byte-string>, command-line-features :: <list>,
@@ -360,17 +391,19 @@ define method compile-library
   let unit = make(<unit-state>, prefix: unit-prefix);
   let objects-stream = make(<byte-string-output-stream>);
   let other-units = map-as(<simple-object-vector>, unit-name, *units*);
+  let all-generated-files = #();
 
   let makefile-name = format-to-string("cc-%s-files.mak", unit-prefix);
-  format(*debug-output*, "Creating %s\n", makefile-name);
-  let makefile = make(<file-stream>, name: makefile-name,
+  let temp-makefile-name = concatenate(makefile-name, "-temp");
+  format(*debug-output*, "Creating %s\n", temp-makefile-name);
+  let makefile = make(<file-stream>, name: temp-makefile-name,
 		      direction: #"output", if-exists: #"overwrite");
   format(makefile, "# Makefile for compiling the .c and .s files\n");
   format(makefile, "# If you want to compile .dylan files, don't use "
 	   "this makefile.\n\n");
-  format(makefile, "CC = gcc\n");
+  format(makefile, "CC = %s\n", $cc-utility);
   format(makefile, "CCFLAGS = %s\n", $cc-flags);
-  format(makefile, "AR = /bin/ar\n\n");
+  format(makefile, "AR = %s\n\n", $ar-utility);
 
   format(makefile, "# We only know the ultimate target when we've finished"
 	   " building the rest\n");
@@ -382,8 +415,9 @@ define method compile-library
       format(*debug-output*, "Processing %s\n", file);
       let base-name = strip-extension(file, ".dylan") | file;
       let c-name = concatenate(base-name, ".c");
+      let temp-c-name = concatenate(c-name, "-temp");
       let body-stream
-	= make(<file-stream>, name: c-name, direction: #"output");
+	= make(<file-stream>, name: temp-c-name, direction: #"output");
       block ()
 	let file = make(<file-state>, unit: unit, body-stream: body-stream);
 	emit-prologue(file, other-units);
@@ -419,8 +453,10 @@ define method compile-library
 	close(body-stream);
       end;
 
+      pick-which-file(c-name, temp-c-name);
       let o-name = concatenate(base-name, ".o");
       output-c-file-rule(makefile, c-name, o-name);
+      all-generated-files := add!(all-generated-files, c-name);
       format(objects-stream, " %s", o-name);
 
     exception (<simple-restart>,
@@ -440,7 +476,9 @@ define method compile-library
 
   begin
     let c-name = concatenate(unit-prefix, "-init.c");
-    let body-stream = make(<file-stream>, name: c-name, direction: #"output");
+    let temp-c-name = concatenate(c-name, "-temp");
+    let body-stream = make(<file-stream>, 
+			   name: temp-c-name, direction: #"output");
     let file = make(<file-state>, unit: unit, body-stream: body-stream);
     emit-prologue(file, other-units);
     if (entry-point)
@@ -449,26 +487,32 @@ define method compile-library
     build-unit-init-function(unit-prefix, init-functions, body-stream);
     close(body-stream);
 
+    pick-which-file(c-name, temp-c-name);
     let o-name = concatenate(unit-prefix, "-init.o");
     output-c-file-rule(makefile, c-name, o-name);
+    all-generated-files := add!(all-generated-files, c-name);
     format(objects-stream, " %s", o-name);
   end;
 
   format(*debug-output*, "Emitting Library Heap.\n");
   let s-name = concatenate(unit-prefix, "-heap.s");
-  let heap-stream = make(<file-stream>, name: s-name, direction: #"output");
+  let temp-s-name = concatenate(s-name, "-temp");
+  let heap-stream = make(<file-stream>, 
+			 name: temp-s-name, direction: #"output");
   let (undumped, extra-labels) = build-local-heap(unit, heap-stream);
   close(heap-stream);
 
-  let o-name = concatenate(unit-prefix, "-heap.o");
   // Even though this isn't a .c file, we call the compiler the same
+  pick-which-file(s-name, temp-s-name);
+  let o-name = concatenate(unit-prefix, "-heap.o");
   output-c-file-rule(makefile, s-name, o-name);
+  all-generated-files := add!(all-generated-files, s-name);
   format(objects-stream, " %s", o-name);
 
   let objects = string-output-stream-string(objects-stream);
   
   let ar-name = format-to-string("lib%s.a", unit-prefix);
-  format(makefile, "%s : %s\n", ar-name, objects);
+  format(makefile, "\n%s : %s\n", ar-name, objects);
   format(makefile, "\t$(AR) qc %s%s\n", ar-name, objects);
 
   let linker-options = element(header, #"linker-options", default: #f);
@@ -530,10 +574,10 @@ define method compile-library
 	end if;
 	unit-libs := concatenate(" -l", unit.unit-name, unit-libs);
       end;
-      format(makefile, "%s : %s %s\n", executable, objects, ar-name);
+      format(makefile, "\n%s : %s %s\n", executable, objects, ar-name);
       format(makefile, "\t$(CC) -z %s -L/lib/pa1.1 -o %s inits.c heap.s %s\n", 
 	     flags, executable, unit-libs);
-      format(makefile, "all-at-end-of-file : %s\n", executable);
+      format(makefile, "\nall-at-end-of-file : %s\n", executable);
     end;
 
   else
@@ -552,7 +596,7 @@ define method compile-library
     dump-queued-methods(dump-buf);
 
     end-dumping(dump-buf);
-    format(makefile, "all-at-end-of-file : %s\n", ar-name);
+    format(makefile, "\nall-at-end-of-file : %s\n", ar-name);
   end;
 
   if (log-dependencies)
@@ -560,6 +604,20 @@ define method compile-library
   end if;
 
   close(makefile);
+  if (pick-which-file(makefile-name, temp-makefile-name) = #t)
+    // If the new makefile is different from the old one, then we need
+    // to recompile all .c and .s files, regardless of whether they
+    // were changed.  So touch them to make them look newer than the
+    // object files.
+    for (filename in all-generated-files)
+      let touch-command = format-to-string("touch %s", filename);
+      format(*debug-output*, "%s\n", touch-command);
+      if (system(touch-command) ~== 0)
+	cerror("so what", "touch failed?");
+      end if;
+    end for;
+  end if;
+
   let make-command = format-to-string("%s -f %s", $make-utility, 
 				      makefile-name);
   format(*debug-output*, "%s\n", make-command);
