@@ -1,5 +1,5 @@
 module:		dylan-user
-rcs-header:	$Header: /scm/cvs/src/common/coll-ext/Attic/library.dylan,v 1.1 1998/05/03 19:55:00 andreas Exp $
+rcs-header:	$Header: /scm/cvs/src/common/coll-ext/Attic/library.dylan,v 1.2 1998/12/30 19:18:32 tc Exp $
 
 //======================================================================
 //
@@ -37,6 +37,7 @@ rcs-header:	$Header: /scm/cvs/src/common/coll-ext/Attic/library.dylan,v 1.1 1998
 define library collection-extensions
   use dylan;
   export heap, self-organizing-list, vector-search, subseq, sequence-diff;
+  export Sequence-Utilities;
 end library collection-extensions;
 
 define module self-organizing-list
@@ -81,3 +82,15 @@ define module sequence-diff
     <script-entry>, <insert-entry>, <delete-entry>, 
     element-count, source-index, dest-index;
 end module sequence-diff;
+
+define module Sequence-Utilities
+  use Dylan;
+  export pair?, null?, list?;
+  export xpair, tabulate, list*, take, drop, last-pair;
+  export reverse-append, unfold, unfold/tail;
+  export foldl, foldr, pair-foldl, pair-foldr;
+  export reduce-l, reduce-r, heads, tails;
+  export concatenate-map, pair-do, choose-map;
+  export partition, assoc, apair, alist-copy, alist-delete;
+  export satisfies, index, find, find-tail, precedes?
+end module Sequence-Utilities;

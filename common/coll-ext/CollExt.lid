@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/common/coll-ext/Attic/CollExt.lid,v 1.1 1998/05/03 19:54:59 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/coll-ext/Attic/CollExt.lid,v 1.2 1998/12/30 19:18:31 tc Exp $
 library: collection-extensions
 unique-id-base: 400
 unit-prefix: collext
@@ -9,3 +9,4 @@ subseq.dylan
 vecsearch.dylan
 sde-vector.dylan
 sequence-diff.dylan
+sequence-utils.dylan
