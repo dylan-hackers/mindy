@@ -19,7 +19,7 @@ define open generic concatenate!
 define method concatenate!
     (sequence :: <sequence>, #rest more-sequences)
  => (result :: <sequence>)
-  apply(concatenate!, sequence, more-sequences);
+  apply(concatenate, sequence, more-sequences);
 end method concatenate!;
 
 
