@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.6 2000/10/17 09:19:45 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.7 2001/01/27 18:15:55 housel Exp $
 copyright: see below
 
 
@@ -337,7 +337,8 @@ define method compute-define-generic-signature
     defn.function-defn-hairy? := #t;
     let ctv = defn.function-defn-ct-value;
     if (ctv ~== #f & ctv ~== #"not-computed-yet")
-      error("noticed that a function was hairy after creating a ct-value.");
+      error("When defining generic %s, noticed that a function was hairy"
+            " after creating a ct-value.", tlf.tlf-defn.defn-name);
     end;
   elseif (defn.generic-defn-sealed?)
     // Fill in the slot so that add-seal's call to function-defn-signature
