@@ -59,8 +59,8 @@ define method do-benchmark
           if (status == #"failed" & debug-failures?())
             break("Benchmark failed: %s", name)
           end if;
-          //record-benchmark(name, status, function, arguments,
-          //                 cpu-time-seconds, cpu-time-microseconds, allocation);
+          record-benchmark(name, status, function, arguments,
+                           cpu-time-seconds, cpu-time-microseconds, allocation);
         end;
         status
     end case;

@@ -331,10 +331,10 @@ define method run-test-application
 		      report-function: report-function,
 		      report-format-function: report-format-function);
       if (profiling?)
-//	format-out("\nTest run took %d.%s seconds, allocating %d byte%s\n",
-//		   cpu-time-seconds,
-//                   integer-to-string(cpu-time-microseconds, size: 6),
-//                   allocation, plural(allocation));
+	format-out("\nTest run took %d.%s seconds, allocating %d byte%s\n",
+		   cpu-time-seconds,
+                   integer-to-string(cpu-time-microseconds, size: 6),
+                   allocation, plural(allocation));
       end if;
       format-out("\n");
     end profiling;
