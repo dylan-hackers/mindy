@@ -113,7 +113,7 @@
 				TypeLibraryName=".\Debug/interp.tlb"/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) $(ProjectDir)..\..\..\interp\mindy.exe"/>
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\..\..\interp\mindy.exe&quot;"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -220,9 +220,9 @@ copy $(ProjectDir)&quot;?extern2.def&quot; $(InputDir)extern2.def
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="c:\Perl\bin\perl.exe $(InputPath) $(InputDir)malloc.inc $(InputDir)..\..\common\time\time.inc
-copy $(ProjectDir)&quot;?extern1.def&quot; $(InputDir)extern1.def
-copy $(ProjectDir)&quot;?extern2.def&quot; $(InputDir)extern2.def
+						CommandLine="c:\Perl\bin\perl.exe &quot;$(InputPath)&quot; &quot;$(InputDir)malloc.inc&quot; &quot;$(InputDir)..\..\common\time\time.inc&quot;
+copy &quot;$(ProjectDir)?extern1.def&quot; &quot;$(InputDir)extern1.def&quot;
+copy &quot;$(ProjectDir)?extern2.def&quot; &quot;$(InputDir)extern2.def&quot;
 "
 						Outputs="extern1.def, extern2.def"/>
 				</FileConfiguration>

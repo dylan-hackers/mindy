@@ -110,7 +110,7 @@
 				TypeLibraryName=".\Debug/random.tlb"/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy random.dbc $(ProjectDir)..\..\..\libraries\random\random-lib.dbc"/>
+				CommandLine="copy random.dbc &quot;$(ProjectDir)..\..\..\libraries\random\random-lib.dbc&quot;"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -141,7 +141,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -lrandom -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -lrandom -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>

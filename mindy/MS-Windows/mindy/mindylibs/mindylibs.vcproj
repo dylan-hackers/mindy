@@ -24,8 +24,8 @@
 				Name="VCMIDLTool"/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="..\..\..\..\tools\win32-misc\dbclink dylan-lib.dbc $(ProjectDir)mindylibs.list
-copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
+				CommandLine="..\..\..\..\tools\win32-misc\dbclink dylan-lib.dbc &quot;$(ProjectDir)mindylibs.list&quot;
+copy dylan-lib.dbc &quot;$(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc&quot;
 "/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
@@ -57,8 +57,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -77,8 +76,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -97,8 +95,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -117,8 +114,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -137,8 +133,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -157,8 +152,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -177,8 +171,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -197,8 +190,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -217,8 +209,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -237,8 +228,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -257,7 +247,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
@@ -277,7 +267,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
@@ -297,7 +287,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
@@ -317,7 +307,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
@@ -337,8 +327,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -357,8 +346,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -377,8 +365,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -397,8 +384,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -417,8 +403,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -437,8 +422,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -457,7 +441,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
@@ -477,7 +461,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
@@ -497,7 +481,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
@@ -517,7 +501,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;
 "
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
@@ -537,8 +521,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -557,8 +540,7 @@ copy dylan-lib.dbc $(ProjectDir)..\..\..\libraries\dylan\dylan-lib.dbc
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Mindy Compiling $(InputPath)"
-					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc $(InputPath)
-"
+					CommandLine="..\..\..\comp\mindycomp -ldylan -o $(InputName).dbc &quot;$(InputPath)&quot;"
 					Outputs="$(InputName).dbc"/>
 			</FileConfiguration>
 			<FileConfiguration

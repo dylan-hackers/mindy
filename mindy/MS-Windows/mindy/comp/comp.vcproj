@@ -113,7 +113,7 @@
 				TypeLibraryName=".\Debug/comp.tlb"/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) $(ProjectDir)..\..\..\comp\mindycomp.exe"/>
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\..\..\comp\mindycomp.exe&quot;"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

@@ -50,7 +50,7 @@
 				TypeLibraryName=".\Debug/dbclink.tlb"/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) $(ProjectDir)..\..\..\..\tools\win32-misc\dbclink.exe"/>
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\..\..\..\tools\win32-misc\dbclink.exe&quot;"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
