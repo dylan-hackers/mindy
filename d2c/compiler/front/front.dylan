@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.41 1995/10/30 13:12:14 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.42 1995/11/09 16:54:39 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -158,7 +158,7 @@ define class <prologue> (<operation>)
   slot function :: <fer-function-region>, required-init-keyword: function:;
 end;
 
-define class <module-var-access> (<operation>)
+define abstract class <module-var-access> (<operation>)
   //
   // The definition for the variable being set.
   slot variable :: <definition>, required-init-keyword: var:;
