@@ -289,7 +289,7 @@ compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
 supports-debugging?:            #f
 path-separator:        		/
-recursive-make-command:         $(MAKE) -C %s
+recursive-make-command:         $(MAKE) -C %s %s
 makefile-name:                  GNUmakefile
 make-supports-phony-targets?:   #t
 makefiles-can-rebuild-themselves?:      #t
