@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.3 1994/11/07 00:46:41 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.4 1994/11/30 16:16:37 rgs Exp $
 *
 * This file does whatever.
 *
@@ -37,7 +37,7 @@ void add_explicit_symbol(char *name, void *address)
 void build_explicit_syms(void)
 {
     struct foreign_file *syms;
-    int extra_size = (extern_sym_count) * sizeof(struct symtab);
+    int extra_size = (extern_sym_count - 1) * sizeof(struct symtab);
 
     mindy_explicit_syms = alloc(obj_ForeignFileClass, 
 				sizeof(struct foreign_file) + extra_size);
