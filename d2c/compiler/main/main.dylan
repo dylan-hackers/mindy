@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.74 2003/03/28 01:00:27 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.75 2003/04/01 21:21:06 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -342,8 +342,6 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let override-files = option-value-by-long-name(argp, "cc-override-file");
   let link-static = option-value-by-long-name(argp, "static");
 
-  // this is broken. we need to walk through $default-dylan-path,
-  // and build an rpath entry for each library we find.
   let link-rpath = option-value-by-long-name(argp, "rpath")
        | format-to-string("%s/lib/dylan/%s/%s/dylan-user",
 			  $dylan-user-dir,
