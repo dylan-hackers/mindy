@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.44 1996/02/15 19:19:46 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.45 1996/03/07 17:46:34 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -2001,9 +2001,9 @@ void init_instance_functions(void)
 		    list2(pair(symbol("init-function"), obj_Unbound),
 			  pair(symbol("init-value"), obj_Unbound)),
 		    FALSE, obj_InheritedDescrClass, make_inherited_descr);
-    define_generic_function("make", list1(obj_ClassClass), 
+    define_generic_function("make", list1(obj_TypeClass), 
 			    FALSE, obj_Nil, TRUE,
-			    obj_Nil, obj_ObjectClass);
+			    list1(obj_ObjectClass), obj_False);
     define_method("make", list1(obj_ClassClass), TRUE, obj_Nil, FALSE,
 		  obj_ObjectClass, dylan_make);
     define_method("make", list1(obj_DefinedClassClass), TRUE, obj_Nil, FALSE,
@@ -2015,8 +2015,13 @@ void init_instance_functions(void)
 		  obj_ObjectClass, dylan_init);
     initialize_gf_variable =
       find_variable(module_BuiltinStuff, symbol("initialize"), FALSE, TRUE);
+
+    define_generic_function("slot-initialized?", 
+			    list2(obj_ObjectClass, obj_GFClass), 
+			    FALSE, obj_Nil, FALSE,
+			    list1(obj_BooleanClass), obj_ObjectClass);
     define_method("slot-initialized?",
-		  list2(obj_ObjectClass, obj_FunctionClass),
+		  list2(obj_ObjectClass, obj_GFClass),
 		  FALSE, obj_Nil, FALSE, obj_BooleanClass,
 		  dylan_slot_initialized_p);
 
