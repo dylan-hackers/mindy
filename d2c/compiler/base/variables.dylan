@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.17 1995/12/07 05:22:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.18 1995/12/15 16:14:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -185,7 +185,7 @@ define class <variable> (<object>)
   slot created? :: <boolean>, init-value: #f, init-keyword: created:;
   //
   // The definition for this variable, or #f if not yet defined.
-  slot variable-definition :: union(<definition>, <false>),
+  slot variable-definition :: false-or(<definition>),
     init-value: #f;
   //
   // List of FER transformers for this variable.  Gets propagated to the defn
@@ -207,7 +207,7 @@ define generic variable-name (var :: <variable>) => name :: <symbol>;
 // variable-definition -- exported.
 //
 define generic variable-definition (var :: <variable>)
-    => defn :: union(<false>, <definition>);
+    => defn :: false-or(<definition>);
 
 // <use> -- exported.
 //
@@ -218,11 +218,11 @@ define class <use> (<object>)
     required-init-keyword: name:;
   //
   // Either a vector of names to import, of #t for all.
-  slot imports :: union(<simple-object-vector>, <true>),
+  slot imports :: type-union(<simple-object-vector>, <true>),
     required-init-keyword: imports:;
   //
   // Either a string prefix or #f if none.
-  slot prefix :: union(<string>, <false>),
+  slot prefix :: false-or(<string>),
     required-init-keyword: prefix:;
   //
   // Vector of names to exclude.  Only non-empty if import is #t.
@@ -234,7 +234,7 @@ define class <use> (<object>)
     required-init-keyword: renamings:;
   //
   // Either a vector of names to re-export, or #t for all.
-  slot exports :: union(<simple-object-vector>, <true>),
+  slot exports :: type-union(<simple-object-vector>, <true>),
     required-init-keyword: exports:;
 end;
 
@@ -357,7 +357,7 @@ end method;
 //
 define method find-module (lib :: <library>, name :: <symbol>,
 			   #key create: create?)
-    => result :: union(<module>, <false>);
+    => result :: false-or(<module>);
   let mod = element(lib.local-modules, name, default: #f);
   if (mod)
     mod;
@@ -388,7 +388,7 @@ end method;
 // Find the module in the library, but only if it is exported.
 //
 define method find-exported-module (lib :: <library>, name :: <symbol>)
-    => result :: union(<module>, <false>);
+    => result :: false-or(<module>);
   unless (lib.defined?)
     load-library(lib);
   end;
@@ -404,7 +404,7 @@ end;
 //
 define method find-in-library-uses (lib :: <library>, name :: <symbol>,
 				    exported-only :: <boolean>)
-    => result :: union(<module>, <false>);
+    => result :: false-or(<module>);
   block (return)
     for (u in lib.used-libraries)
       let orig-name = guess-orig-name(u, name, exported-only);
@@ -429,7 +429,7 @@ end method;
 //
 define method guess-orig-name (u :: <use>, name :: <symbol>,
 			       exported-only :: <boolean>)
-    => result :: union(<symbol>, <false>);
+    => result :: false-or(<symbol>);
   if (~exported-only | u.exports == #t | member?(name, u.exports))
     block (return)
       //
@@ -611,11 +611,11 @@ define method complete-module (mod :: <module>) => ();
 	  if (new-name == orig-name)
 	    compiler-error
 	      ("Importing %s from module %s into module %s clashes.",
-	       new-name, mod.module-name, used-mod.module-name);
+	       new-name, used-mod.module-name, mod.module-name);
 	  else
 	    compiler-error
 	      ("Importing %s from module %s into module %s as %s clashes.",
-	       orig-name, mod.module-name, used-mod.module-name, new-name);
+	       orig-name, used-mod.module-name, mod.module-name, new-name);
 	  end;
 	end;
 	//
@@ -698,7 +698,7 @@ end method;
 // Return #f if it should be excluded.
 //
 define method compute-new-name (u :: <use>, name :: <symbol>)
-    => result :: union(<symbol>, <false>);
+    => result :: false-or(<symbol>);
   block (return)
     //
     // First, check the renamings.
@@ -739,7 +739,7 @@ end method;
 // get around to actually defining the module they are in.
 //
 define method find-variable (name :: <basic-name>, #key create: create?)
-    => result :: union(<variable>, <false>);
+    => result :: false-or(<variable>);
   let mod = name.name-module;
   let sym = name.name-symbol;
   let var = element(mod.variables, sym, default: #f);
@@ -767,7 +767,7 @@ end method;
 // to.
 // 
 define method find-exported-variable (mod :: <module>, name :: <symbol>)
-    => result :: union(<variable>, <false>);
+    => result :: false-or(<variable>);
   unless (mod.defined?)
     compiler-error("Module %s is not defined.", mod.module-name);
   end;
@@ -925,7 +925,7 @@ end;
 // Return the variable for name in the dylan module.
 // 
 define method dylan-var (name :: <symbol>, #key create: create?)
-    => res :: union(<variable>, <false>);
+    => res :: false-or(<variable>);
   find-variable(dylan-name(name), create: create?);
 end;
 
@@ -934,7 +934,7 @@ end;
 // Return the definition for name in the dylan module.
 // 
 define method dylan-defn (name :: <symbol>)
-    => res :: union(<definition>, <false>);
+    => res :: false-or(<definition>);
   let var = dylan-var(name);
   var & var.variable-definition;
 end;
@@ -945,7 +945,7 @@ end;
 // or #f if it isn't defined.
 // 
 define method dylan-value (name :: <symbol>)
-    => res :: union(<false>, <ct-value>);
+    => res :: false-or(<ct-value>);
   let defn = dylan-defn(name);
   defn & defn.ct-value;
 end;
