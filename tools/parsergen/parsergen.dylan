@@ -1,6 +1,6 @@
 module: parsergen
 author: William Lott, translated to Dylan by Nick Kramer
-rcs-header: $Header: /scm/cvs/src/tools/parsergen/parsergen.dylan,v 1.4 2000/01/24 04:59:03 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/parsergen/parsergen.dylan,v 1.5 2000/10/31 13:30:25 dauclair Exp $
 
 //======================================================================
 //
@@ -928,6 +928,9 @@ define function dump-constant (thing :: <object>, ofile :: <stream>) => ();
     type-union(<symbol>, <integer>, <string>) =>
       print(thing, ofile);
   end select;
+#if (compiled-for-cygnus)
+  force-output(ofile); // cygnus dies if the buffer gets too big
+#endif
 end function dump-constant;
 
 define function emit-production
@@ -989,6 +992,9 @@ define function emit-production
   format(ofile, "         end);\n");
   format(ofile, "end method production-%D;\n\n", 
 	 production.production-number);
+#if (compiled-for-cygnus)
+  force-output(ofile);
+#endif
 end function emit-production;
 
 define function encode-actions (actions :: <list>, grammar :: <grammar>)
@@ -1022,24 +1028,13 @@ define function emit-parser
     format(ofile, "define constant $accept-action = 1;\n");
     format(ofile, "define constant $reduce-action = 2;\n");
     format(ofile, "define constant $shift-action = 3;\n\n");
-// This table is completely useless, and places unnecessary constraints on the
-// user, so I'm flushing it.  If this is a problem, complain to me at
-// "rgs@cs.cmu.edu".
-//
-//    format(ofile, 
-//	   "define constant $tokens-table :: <simple-object-vector>\n"
-//	     "  = vector(");
-//    for (i from 0 below num-tokens)
-//      unless (zero?(i))
-//	format(ofile, ",\n           ");
-//      end unless;
-//      format(ofile, "$%S-token", 
-//	     as-uppercase(as(<string>, grammar-symbol-name(tokens[i]))));
-//    end for;
-//    format(ofile, ");\n\n");
   end;
   format(ofile, "define constant $action-table\n"
 	   "  = #[");
+#if (compiled-for-cygnus)
+  force-output(ofile);
+#endif
+
   for (state in grammar.grammar-all-states, index from 0)
     unless (index = state.state-number)
       error("State numbers got out of sync.");
@@ -1108,6 +1103,9 @@ define function emit-parser
        end method, 
        grammar.grammar-entry-points, 
        grammar.grammar-start-states);
+#if (compiled-for-cygnus)
+  force-output(ofile);
+#endif
 end function emit-parser;
 
 
@@ -1182,6 +1180,9 @@ define function emit-log-file (grammar :: <grammar>, file :: <stream>) => ();
       new-line(file);
     end;
   end for;
+#if (compiled-for-cygnus)
+  force-output(file);
+#endif
 end function emit-log-file;
 
 
@@ -1197,6 +1198,9 @@ define function grovel-header (ifile :: <stream>, ofile :: <stream>) => ();
       write-line(ofile, line);
     end while;
   end block;
+#if (compiled-for-cygnus)
+  force-output(ofile);
+#endif
 end function grovel-header;
 
 define function parse-grammar (grammar :: <grammar>, ifile :: <stream>) => ();
@@ -1354,6 +1358,9 @@ define function grovel-trailer (ifile :: <stream>, ofile :: <stream>) => ();
       write-line(ofile, line);
     end while;
   end block;
+#if (compiled-for-cygnus)
+  force-output(ofile);
+#endif
 end function grovel-trailer;
 
 define function grovel-file
