@@ -1,6 +1,6 @@
-module:		Dylan
+module:		Hash-Tables
 Author:		Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.7 1994/06/27 17:10:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.8 1994/08/30 23:07:58 wlott Exp $
 
 //======================================================================
 //
@@ -77,9 +77,6 @@ end method merge-hash-states;
 // implemented in Mindy but not standard).
 
 // define constant $permanent-hash-state = #f;
-//
-// // Define no-default if it isn't already defined somewhere else.
-// define constant no-default = "no-default";
 //
 // define constant magic-hash-constant = #x3fffffff;
 //         // And'ed with hash id's to keep the size under control 
@@ -516,6 +513,8 @@ end method find-elt;
 
 // This function looks redundant at times, but it's necessary in order
 // to avoid race conditions with the garbage collector.
+
+define constant no-default = list("No default");
 
 define method element (  ht :: <table>, key, 
 		         #key default: default = no-default )
