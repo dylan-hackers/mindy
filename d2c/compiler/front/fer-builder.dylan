@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.4 1994/12/13 18:38:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.5 1994/12/16 12:16:05 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -95,9 +95,9 @@ end method;
 // Given an operation and a list of operands, set up the <dependency> objects
 // marking the operands.  The result is returned.
 //
-define method make-operand-dependencies(result, operands);
+define method make-operand-dependencies(result, ops);
   let prev = #f;
-  for (op in operands)
+  for (op in ops)
     let dep = make(<dependency>, source-exp: op, source-next: op.dependents,
     		   dependent: result);
     if (prev)
