@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.21 1995/03/24 12:44:02 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.22 1995/04/12 17:06:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -571,6 +571,8 @@ define module flow
   use source;
   use forwards, import: {<abstract-variable>}, export: all;
   export 
+    <annotatable>, info,
+
     <region>, <linear-region>, <simple-region>, <compound-region>,
     <join-region>, <if-region>, <body-region>, <block-region-mixin>,
     <block-region>, <method-region>, <loop-region>, <exit>,
