@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.24 2001/08/02 07:04:26 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.25 2001/11/09 20:13:16 gabor Exp $
 copyright: see below
 
 
@@ -187,35 +187,35 @@ define class <real-class-definition> (<class-definition>)
 end;
 
 define method defn-type (defn :: <real-class-definition>) => res :: <cclass>;
-  dylan-value(#"<class>");
+  class-ctype();
 end;
 
 define class <local-class-definition> (<real-class-definition>)
   // 
   // Vector of <expression-parse>s for the superclasses.
-  slot class-defn-supers :: <simple-object-vector>,
+  constant slot class-defn-supers :: <simple-object-vector>,
     required-init-keyword: supers:;
   //
   // Several boolean flags, just what the names say.
-  slot class-defn-functional? :: <boolean>,
+  constant slot class-defn-functional? :: <boolean>,
     required-init-keyword: functional:;
-  slot class-defn-sealed? :: <boolean>,
+  constant slot class-defn-sealed? :: <boolean>,
     required-init-keyword: sealed:;
   slot class-defn-abstract? :: <boolean>,
     required-init-keyword: abstract:;
-  slot class-defn-primary? :: <boolean>,
+  constant slot class-defn-primary? :: <boolean>,
     required-init-keyword: primary:;
   //
   // Vector of the slots.
-  slot class-defn-slots :: <simple-object-vector>,
+  constant slot class-defn-slots :: <simple-object-vector>,
     required-init-keyword: slots:;
   //
   // Vector of slot init value overrides.
-  slot class-defn-overrides :: <simple-object-vector>,
+  constant slot class-defn-overrides :: <simple-object-vector>,
     required-init-keyword: overrides:;
   //
   // Vector of init keyword arguments
-  slot class-defn-keywords :: <simple-object-vector>,
+  constant slot class-defn-keywords :: <simple-object-vector>,
     required-init-keyword: keywords:;
 end;  
 
@@ -227,49 +227,49 @@ define /* exported */ class <slot-defn> (<source-location-mixin>)
   // #t if this slot is sealed, #f if not.  This really means that the getter
   // generic function is sealed on this class and the setter (if any) is sealed
   // on object and this class.
-  slot slot-defn-sealed? :: <boolean>,
+  constant slot slot-defn-sealed? :: <boolean>,
     required-init-keyword: sealed:;
   //
   // The allocation of this slot.
-  slot slot-defn-allocation :: <slot-allocation>,
+  constant slot slot-defn-allocation :: <slot-allocation>,
     required-init-keyword: allocation:;
   //
   // The expression to compute the type.
-  slot slot-defn-type :: false-or(<expression-parse>),
+  constant slot slot-defn-type :: false-or(<expression-parse>),
     required-init-keyword: type:;
   //
   // The name of the getter generic function.
-  slot slot-defn-getter-name :: <name>,
+  constant slot slot-defn-getter-name :: <name>,
     required-init-keyword: getter-name:;
   //
   // The getter method.  Filled in when computed.
   slot slot-defn-getter :: <getter-method-definition>;
   //
   // The name of the setter generic function, or #f if there is no setter.
-  slot slot-defn-setter-name :: false-or(<name>),
+  constant slot slot-defn-setter-name :: false-or(<name>),
     required-init-keyword: setter-name:;
   //
   // The setter method.  Filled in when computed.
   slot slot-defn-setter :: false-or(<setter-method-definition>);
   //
   // The init-value expression, or #f if one wasn't supplied.
-  slot slot-defn-init-value :: false-or(<expression-parse>),
+  constant slot slot-defn-init-value :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function, or #f if there isn't one.
-  slot slot-defn-init-function :: false-or(<expression-parse>),
+  constant slot slot-defn-init-function :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-function:;
   //
   // The init-keyword, or #f if there isn't one.
-  slot slot-defn-init-keyword :: false-or(<symbol>),
+  constant slot slot-defn-init-keyword :: false-or(<symbol>),
     init-value: #f, init-keyword: init-keyword:;
   //
   // #t if the init-keyword is required, #f if not.
-  slot slot-defn-init-keyword-required? :: <boolean>,
+  constant slot slot-defn-init-keyword-required? :: <boolean>,
     init-value: #f, init-keyword: init-keyword-required:;
   //
   // The sizer slot defn.
-  slot slot-defn-sizer-defn :: false-or(<slot-defn>),
+  constant slot slot-defn-sizer-defn :: false-or(<slot-defn>),
     init-value: #f, init-keyword: sizer-defn:;
 
   // The slot-info for this slot, or #f if we haven't computed it or don't know
@@ -284,15 +284,15 @@ define class <override-defn> (<object>)
   slot override-defn-class :: <real-class-definition>;
   //
   // The name of the getter.
-  slot override-defn-getter-name :: <name>,
+  constant slot override-defn-getter-name :: <name>,
     required-init-keyword: getter-name:;
   //
   // The init-value expression, or #f if none.
-  slot override-defn-init-value :: false-or(<expression-parse>),
+  constant slot override-defn-init-value :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function expression, or #f if none.
-  slot override-defn-init-function :: false-or(<expression-parse>),
+  constant slot override-defn-init-function :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-function:;
   //
   // The <override-info> for this override, or #f if we haven't computed it
@@ -307,23 +307,23 @@ define class <keyword-defn> (<object>)
   slot keyword-defn-class :: <real-class-definition>;
   //
   // The keyword
-  slot keyword-defn-symbol :: <symbol>,
+  constant slot keyword-defn-symbol :: <symbol>,
     required-init-keyword: symbol:;
   //
   // The init-value expression, or #f if none.
-  slot keyword-defn-init-value :: false-or(<expression-parse>),
+  constant slot keyword-defn-init-value :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-value:;
   //
   // The init-function expression, or #f if none.
-  slot keyword-defn-init-function :: false-or(<expression-parse>),
+  constant slot keyword-defn-init-function :: false-or(<expression-parse>),
     init-value: #f, init-keyword: init-function:;
   //
   // Is this keyword required?
-  slot keyword-defn-required? :: <boolean>, 
+  constant slot keyword-defn-required? :: <boolean>, 
     init-value: #f, init-keyword: required?:;
   // 
   // The type restriction for this keyword, if any.
-  slot keyword-defn-type :: false-or(<expression-parse>),
+  constant slot keyword-defn-type :: false-or(<expression-parse>),
     init-value: #f, init-keyword: type:;
   //
   // The <keyword-info> for this keyword, or #f if we haven't computed it
@@ -338,12 +338,9 @@ define class <maker-function-definition> (<abstract-method-definition>)
     init-keyword: class-defn:;
 end class <maker-function-definition>;
 
-define sealed domain make (singleton(<maker-function-definition>));
-define sealed domain initialize (<maker-function-definition>);
-
 
 define class <init-function-definition> (<abstract-method-definition>)
-  slot init-func-defn-method-parse :: false-or(<method-parse>),
+  constant slot init-func-defn-method-parse :: false-or(<method-parse>),
     init-value: #f, init-keyword: method-parse:;
 end class <init-function-definition>;
 
@@ -967,7 +964,7 @@ define method compute-cclass (defn :: <real-class-definition>)
 	       loading: #f,
 	       name: make(<derived-name>, how: #"class-meta", base: defn.defn-name),
 	       direct-superclasses: list(class-ctype()), // change for each-subclass!
-	       not-functional:#t,
+	       not-functional: #t,
 	       functional: #f,
 	       sealed: #t,
 	       primary: #t, // abstract??? - probably not because no slot layout then?
@@ -1221,6 +1218,13 @@ define method finalize-slot
   if (instance?(info, <class-slot-info>))
     let meta :: <meta-slot-info> = info.associated-meta-slot;
     meta.slot-type := slot-type;
+/* not yet    
+    // We can also reuse non-sideeffecting init-values.
+    // All other cases should be handled via deferred-evaluations.
+    if (info.slot-init-value ~== #t & info.slot-init-value)
+      meta.slot-init-value := info.slot-init-value;
+    end if;
+*/
   end if;
 
   // Define the accessor methods.
@@ -1414,7 +1418,7 @@ define method class-defn-deferred-evaluations-function
 		 end;
 	       end;
 	       // ### inherited each-subclass slots w/ non obvious init
-	       // values impose the existance of the deferred-evaluations
+	       // values impose the existence of the deferred-evaluations
 	       // function.
 	     end)
 	   make(<ct-function>,
@@ -1555,6 +1559,13 @@ define method class-defn-maker-function
 		   end;
 	       if (init-value == #t)
 		 return(#f);
+
+		// add-key-info! could be extended to accept lazy values, i.e.
+		// a thunk (not <ct-function>) that fetches the deferred-eval
+		// value from the slot-info.
+		// this would be useful when init-value is a module variable or
+		// runtime computed constant, where the C location is known.
+
 	       end;
 	       //
 	       // If the slot is keyword initializable, make a key-info for it.
@@ -1906,7 +1917,7 @@ define method convert-top-level-form
     end unless;
 
     //
-    // Finish building the deffered evaluations function.
+    // Finish building the deferred evaluations function.
     let ctv = defn.class-defn-deferred-evaluations-function;
     if (ctv)
       let func-region = build-function-body(tl-builder, policy, source, #f,
@@ -2220,7 +2231,7 @@ define method build-maker-function-body
 
   for (slot in cclass.all-slot-infos, index from 0)
     //
-    // If there isn't a getter, this is a bound? slot.  Bound? slots
+    // If there isn't a getter, this is an init? slot.  init? slots
     // are initialized along with the regular slot.
     // Also, don't need to do anything for virtual slots.
     if (slot.slot-getter & ~instance?(slot, <virtual-slot-info>))
@@ -2386,7 +2397,7 @@ define method build-maker-function-body
 		      build-loop-body(init-builder, policy, source);
 		      let more?
 			= make-local-var(init-builder, #"more?",
-					 specifier-type(#"<boolean>"));
+					 boolean-ctype());
 		      build-assignment
 			(init-builder, policy, source, more?,
 			 make-unknown-call
@@ -2453,7 +2464,7 @@ define method build-maker-function-body
 	      let supplied?-arg
 		= make-local-var(maker-builder,
 				 symcat(key, "-supplied?"),
-				 specifier-type(#"<boolean>"));
+				 boolean-ctype());
 	      if (key-info.key-needs-supplied?-var)
 		add!(maker-args, supplied?-arg);
 	      else
@@ -2517,20 +2528,21 @@ define method build-maker-function-body
 	    end if;
 	  end if;
 	<each-subclass-slot-info> =>
-	  // ### Add stuff to the derived-evaluations function to init the
+	  // ### Add stuff to the deferred-evaluations function to init the
 	  // slot.  If the slot is keyword-initializable, add stuff to the
 	  // maker to check for that keyword and change the each-subclass
 	  // slot.
 	  error("Can't deal with each-subclass slots yet.");
 	<class-slot-info> =>
-	  // ### If the slot is keyword-initializable, add stuff to the maker
+	  // If the slot is keyword-initializable, add stuff to the maker
 	  // to check for that keyword and change the class slot.
-	  
-	  //	еее major reuse of case-legs possible here!
 	  
 	  local
 	    method build-slot-init
-		(slot :: <class-slot-info>, leaf :: <leaf>, inited?-leaf :: <leaf>) => ();
+		(slot :: <class-slot-info>, leaf :: <leaf>, init?-leaf :: <leaf>) => ();
+
+	      let init-builder = maker-builder; // е just a kludge... -- too lazy to rename now.
+	      
 	      if (immediate-rep?) //еее???
 		add!(make-immediate-args, leaf);
 	      else
@@ -2570,7 +2582,7 @@ define method build-maker-function-body
 		      (init-builder, policy, source, #(),
 		       make-operation
 			 (init-builder, <heap-slot-set>,
-			  list(inited?-leaf, slot-home, slot-initialized?-posn-leaf),
+			  list(init?-leaf, slot-home, slot-initialized?-posn-leaf),
 			  slot-info: associated.slot-initialized?-slot));
 		  end if;
 		end if;
@@ -2579,86 +2591,46 @@ define method build-maker-function-body
 
 	  let key = slot.slot-init-keyword;
 	  if (key)
-	    let default = ~(init-value == #t) & init-value;
-	    let key-info = add-key-info!(key, key-infos, slot, type, override, default);
+	    let key-info = add-key-info!(key, key-infos, slot, type, override, #f);
 	    let init-value-var
 	      = make-local-var(maker-builder,
 			       symcat(slot-name, "-init-value"),
 			       type);
-	    if (default)
-	      add!(maker-args, init-value-var);
-	      build-slot-init(slot,
-			      init-value-var,
-			      make-literal-constant(init-builder, #t));
+	    let arg = make-local-var(maker-builder, key, type);
+	    add!(maker-args, arg);
+	    let supplied?-arg
+	      = make-local-var(maker-builder,
+			       symcat(key, "-supplied?"),
+			       boolean-ctype());
+	    if (key-info.key-needs-supplied?-var)
+	      add!(maker-args, supplied?-arg);
 	    else
-	      let arg = make-local-var(maker-builder, key, type);
-	      add!(maker-args, arg);
-	      let supplied?-arg
-		= make-local-var(maker-builder,
-				 symcat(key, "-supplied?"),
-				 specifier-type(#"<boolean>"));
-	      if (key-info.key-needs-supplied?-var)
-		add!(maker-args, supplied?-arg);
-	      else
-		build-assignment
-		  (maker-builder, policy, source, supplied?-arg,
-		   make-operation(maker-builder, <primitive>, list(arg),
-				  name: #"initialized?"));
-	      end;
-	      build-if-body(maker-builder, policy, source, supplied?-arg);
-	      build-assignment(maker-builder, policy, source,
-			       init-value-var, arg);
-	      build-else(maker-builder, policy, source);
-	      if (init-value)
-		extract-init-value(init-value-var);
-	      elseif (init-function)
-		call-init-function(init-value-var);
-	      elseif (slot.slot-init-keyword-required?)
-		build-assignment
-		  (maker-builder, policy, source, #(),
-		   make-error-operation
-		     (maker-builder, policy, source,
-		      #"missing-required-init-keyword-error",
-		      make-literal-constant(maker-builder, key),
-		      make-literal-constant(maker-builder, cclass)));
-	      else
-		build-assignment(maker-builder, policy, source,
-				 init-value-var,
-				 make(<uninitialized-value>,
-				      derived-type: type.ctype-extent));
-	      end;
-	      end-body(maker-builder);
-	      build-slot-init(slot,
-			      init-value-var,
-			      if (init-value | init-function)
-				make-literal-constant(init-builder, #t);
-			      else
-				supplied?-arg;
-			      end);
+	      build-assignment
+		(maker-builder, policy, source, supplied?-arg,
+		 make-operation(maker-builder, <primitive>, list(arg),
+				name: #"initialized?"));
+	    end;
+	    build-if-body(maker-builder, policy, source, supplied?-arg);
+	    build-assignment(maker-builder, policy, source,
+			     init-value-var, arg);
+	    build-slot-init(slot, init-value-var, supplied?-arg);
+/* ### otherwise ICE */	    build-else(maker-builder, policy, source);
+// Error   : Internal compiler error: Expected an instance of {Class <body-region>}, but got {<if-region> [0]}
+// fer-builder.dylan.c line 1557   File: "Archive:generated files:front:fer-builder.dylan.c", line: 1557
+	    /* #line 248 "fer-builder.dylan" */
+	    if (slot.slot-init-keyword-required?)
+	      // build-else(maker-builder, policy, source); /* otherwise ICE */
+	      build-assignment
+		(maker-builder, policy, source, #(),
+		 make-error-operation
+		   (maker-builder, policy, source,
+		    #"missing-required-init-keyword-error",
+		    make-literal-constant(maker-builder, key),
+		    make-literal-constant(maker-builder, cclass)));
 	    end if;
-	  else
-	    if (init-value | init-function)
-	      let init-value-var
-		= make-local-var(maker-builder,
-				 symcat(slot-name, "-init-value"),
-				 type);
-	      if (init-value)
-		extract-init-value(init-value-var);
-	      else
-		call-init-function(init-value-var);
-	      end;
-	      build-slot-init
-		(slot,
-		 init-value-var,
-		 make-literal-constant(init-builder, #t));
-	    else
-	      build-slot-init
-		(slot,
-		 make(<uninitialized-value>, derived-type: type.ctype-extent),
-		 make-literal-constant(init-builder, #f));
-	    end if;
+	    end-body(maker-builder);
 	end if;
-    end select;
+      end select;
     end if;
   end for;
   
@@ -2889,7 +2861,7 @@ define method build-getter
       if (init?-offset)
 	let init?-slot = slot.slot-initialized?-slot;
 	let temp = make-local-var(builder, #"initialized?",
-				  specifier-type(#"<boolean>"));
+				  boolean-ctype());
 	build-assignment
 	  (builder, policy, source, temp,
 	   make-operation
@@ -2911,7 +2883,7 @@ define method build-getter
 	assert(~init?-offset);
 	assert(~index);
 	let temp = make-local-var(builder, #"data-word?",
-				  specifier-type(#"<boolean>"));
+				  boolean-ctype());
 	build-assignment
 	  (builder, policy, source, temp,
 	   make-unknown-call
@@ -3008,8 +2980,7 @@ define method build-getter
     method get (offset :: <leaf>, init?-offset :: false-or(<leaf>)) => ();
       if (init?-offset)
 	let init?-slot = slot.slot-initialized?-slot;
-	let temp = make-local-var(builder, #"initialized?",
-				  specifier-type(#"<boolean>"));
+	let temp = make-local-var(builder, #"initialized?", boolean-ctype());
 	build-assignment
 	  (builder, policy, source, temp,
 	   make-operation
@@ -3030,8 +3001,7 @@ define method build-getter
       if (maybe-data-word?)
 	assert(~init?-offset);
 	assert(~index);
-	let temp = make-local-var(builder, #"data-word?",
-				  specifier-type(#"<boolean>"));
+	let temp = make-local-var(builder, #"data-word?", boolean-ctype());
 	build-assignment
 	  (builder, policy, source, temp,
 	   make-unknown-call
@@ -3753,3 +3723,6 @@ define sealed domain initialize(<override-defn>);
 // <init-function-definition> -- subclass of <abstract-method-definition>
 define sealed domain make(singleton(<init-function-definition>));
 define sealed domain initialize(<init-function-definition>);
+// <maker-function-definition> -- subclass of <abstract-method-definition>
+define sealed domain make (singleton(<maker-function-definition>));
+define sealed domain initialize (<maker-function-definition>);
