@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.2 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.3 1995/11/15 15:36:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -213,8 +213,8 @@ define macro class-definer
     { instance } => { allocation: #"instance" }
     { class } => { allocation: #"class" }
     { each-subclass } => { allocation: #"each-subclass" }
-    { constant } => { allocation: #"constant" }
     { virtual } => { allocation: #"virtual" }
+    { constant ... } => { setter: #f, ... }
     { open ... } => { open: #t, ... }
     { sealed ... } => { sealed: #t, ...}
 end;
