@@ -43,6 +43,45 @@ define module c-support
     application-argv;
 end module c-support;
 
+define module finalization
+  // XXX - Needs definition. No-op stubs OK.
+end module;
+
+define module simple-io
+  use format-out,
+    export: {format-out};
+end module;
+
+define module simple-random
+  // XXX - Needs definition.
+end module;
+
+define module simple-profiling
+  // XXX - Needs definition.
+end module;
+
+define module byte-vector
+  use extensions,
+    export: {<byte>,
+	     <byte-vector>};
+end module;
+
+define module functional-extensions
+  use dylan;
+  use extensions, exclude: { position, assert };
+  use common-extensions, import: { find-element };
+  export without-bounds-checks, find-value, // assert already in common-extensions 
+    with-keywords-removed, dynamic-bind,
+    <synchronization>, <exclusive-lock>,
+    <semaphore>, <recursive-lock>,
+    <read-write-lock>,
+    <lock>, <simple-lock>, with-lock,
+    <thread>, atomic-increment!, current-thread,
+    <notification>, wait-for, release-all,
+    put-property!, get-property, \remove-property!,
+    element-range-error, \profiling;
+end module;
+
 define module common-extensions
   use dylan;
   use system, import: { copy-bytes }, export: { copy-bytes };
@@ -148,46 +187,6 @@ define module common-extensions
     \%iterate-value-helper;
 #endif
 end module;
-
-define module finalization
-  // XXX - Needs definition. No-op stubs OK.
-end module;
-
-define module simple-io
-  use format-out,
-    export: {format-out};
-end module;
-
-define module simple-random
-  // XXX - Needs definition.
-end module;
-
-define module simple-profiling
-  // XXX - Needs definition.
-end module;
-
-define module byte-vector
-  use extensions,
-    export: {<byte>,
-	     <byte-vector>};
-end module;
-
-define module functional-extensions
-  use dylan;
-  use extensions, exclude: { position, assert };
-  use common-extensions, import: { find-element };
-  export without-bounds-checks, find-value, // assert already in common-extensions 
-    with-keywords-removed, dynamic-bind,
-    <synchronization>, <exclusive-lock>,
-    <semaphore>, <recursive-lock>,
-    <read-write-lock>,
-    <lock>, <simple-lock>, with-lock,
-    <thread>, atomic-increment!, current-thread,
-    <notification>, wait-for, release-all,
-    put-property!, get-property, \remove-property!,
-    element-range-error, \profiling;
-end module;
-
 
 /*
   Stream protocol.
