@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.12 2001/03/14 23:34:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.13 2001/05/31 19:42:10 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -495,7 +495,7 @@ end;
 
 define macro function-definer
     { define ?adjectives function ?:name ?rest:* end }
-      => { define constant ?name = method ?rest end }
+      => make-define-constant({ ?name }, { method ?rest end })
 
   adjectives:
     { } => { }
