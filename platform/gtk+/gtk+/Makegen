@@ -9,7 +9,11 @@ print "GOBJECT_TOOL = $buildroot/platform/gtk+/gobject-tool/gobject-tool\n\n";
 &emit_library_rule('glib', '$(BUILDROOT)/force.timestamp', '', 
 	           'compile', 'install');
 
-&emit_library_rule('gdk', 'glib.lib.du', '-L.',
+&emit_library_rule('gdk',
+		   'glib.lib.du'
+		   . ' $(SRCDIR)/gdk-internal-module.dylan'
+		   . ' $(SRCDIR)/gdk-internal.dylan',
+		   '-L.',
 	           'compile', 'install');
 
 print "\$(SRCDIR)/gdk-internal-module.dylan: \$(SRCDIR)/gdk-1.2.defs\n";
@@ -27,7 +31,11 @@ print "\t\t--module gdk-internal \\\n";
 print "\t\tgdk-1.2.defs > gdk-internal.dylan)\n";
 print "\n";
 
-&emit_library_rule('gtk', 'glib.lib.du gdk.lib.du', '-L.',
+&emit_library_rule('gtk',
+		   'glib.lib.du gdk.lib.du'
+		   . ' $(SRCDIR)/gtk-internal-module.dylan'
+		   . ' $(SRCDIR)/gtk-internal.dylan',
+		   '-L.',
 	           'compile', 'install');
 
 print "\$(SRCDIR)/gtk-internal-module.dylan: \$(SRCDIR)/gtk-1.2.defs\n";
