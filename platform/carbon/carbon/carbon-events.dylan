@@ -435,9 +435,15 @@ define constant $typeTabletProximityRec :: <integer> = c-expr(int: "typeTabletPr
 		NewEventHandlerUPP
 */
 
-define method NewEventHandlerUPP( userRoutine )	//  :: <callback-function>
+define method NewEventHandlerUPP( userRoutine ) //:: <callback-function> )
 => ( UPP :: <EventHandlerUPP> )
 	let result = call-out( "NewEventHandlerUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <EventHandlerUPP>, pointer: result );
+end method NewEventHandlerUPP;
+
+define method NewEventHandlerUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <EventHandlerUPP> )
+	let result = call-out( "NewEventHandlerUPP", ptr:, ptr: userRoutine.raw-value );
 	make( <EventHandlerUPP>, pointer: result );
 end method NewEventHandlerUPP;
 
@@ -457,6 +463,13 @@ end method DisposeEventHandlerUPP;
 define method RunApplicationEventLoop() => ()
     call-out( "RunApplicationEventLoop", void: );
 end method RunApplicationEventLoop;
+
+// Run the current event loop
+
+define method RunCurrentEventLoop(inTimeout :: <integer>)
+=> ( result :: <OSStatus> )
+	as( <OSStatus>, call-out( "RunCurrentEventLoop", int:, int: inTimeout) );
+end method RunCurrentEventLoop;
 
 /*
     InstallWindowEventHandler

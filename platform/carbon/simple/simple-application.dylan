@@ -411,8 +411,7 @@ define method application-menu-choice( app :: <simple-application>, menu :: <int
 			/*	// launch Apple Menu item
 				let appleItemName :: <pascal-string> = make( <pascal-string> );
 				GetMenuItemText( GetMenuHandle( menu ), item, appleItemName );
-				let savePort :: <GrafPtr> = make( <GrafPtr> );
-				GetPort( savePort );
+				let savePort :: <GrafPtr> = GetPort();
 				OpenDeskAcc( appleItemName );
 				SetPort( savePort );*/
 			end if;

@@ -255,7 +255,12 @@ end method content-size;
 
 define method bounds(bitmap :: <BitMap>)
 =>(result :: <Rect>)
-  pointer-at( bitmap, class: <Rect>, offset: 6 );	// 68k packing, after a Ptr and an SInt16
+  let r :: <Rect> = make(<Rect>);
+  r.top := signed-short-at(bitmap, offset: 6); // 68k packing, after a Ptr and an SInt16
+  r.left := signed-short-at(bitmap, offset: 8);
+  r.bottom := signed-short-at(bitmap, offset: 10);
+  r.right := signed-short-at(bitmap, offset: 12);
+  r;
 end method bounds;
 
 
@@ -377,10 +382,11 @@ end method SetPort;
 	GetPort
 */
 											
-define method GetPort( port :: <GrafPtr> )
-=> ()
-	call-out( "GetPort", void:, ptr: port.raw-value );
-	values();
+define method GetPort()
+=> ( port :: <GrafPtr> )
+  let temp :: <handle> = make(<Handle>);
+	call-out( "GetPort", void:, ptr: temp.raw-value );
+	pointer-at(temp, class: <GrafPtr>, offset: 0);
 end;
 
 

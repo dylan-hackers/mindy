@@ -168,7 +168,8 @@ define module carbon-events
             GetEventParameter,
             QuitEventLoop, RemoveEventHandler, RemoveEventLoopTimer,
             RunApplicationEventLoop,
-            GetUserFocusWindow, SetUserFocusWindow;
+            GetUserFocusWindow, SetUserFocusWindow,
+            RunCurrentEventLoop;
             
 end module carbon-events
 

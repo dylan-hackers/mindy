@@ -279,8 +279,7 @@ define open generic update( window :: <simple-window>, event :: <EventRecord>  )
 define method update( window :: <simple-window>, event :: <EventRecord>  )
 => ()
 
-	let savePort :: <GrafPtr> = make( <GrafPtr> );
-		GetPort( savePort );
+	let savePort :: <GrafPtr> = GetPort();
 		if( window ~= #f )
 		 	focus( window );
 		 end if;
