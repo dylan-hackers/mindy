@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.12 1996/02/05 01:18:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.13 1996/02/06 15:49:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -202,6 +202,7 @@ define method define-macro (defmacro :: <define-macro-parse>,
 		  name: make(<basic-name>,
 			     symbol: name.token-symbol,
 			     module: *Current-Module*),
+		  library: *Current-Library*,
 		  main-rule-set: defmacro.defmacro-main-rule-set,
 		  auxiliary-rule-sets: defmacro.defmacro-auxiliary-rule-sets);
   find-wildcards(defn);
