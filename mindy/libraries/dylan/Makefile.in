@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/Makefile.in,v 1.6 1995/03/02 19:18:48 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/Makefile.in,v 1.7 1995/03/13 15:45:45 wlott Exp $
 ##
 ##  This is the makefile for the Mindy runtime library, dylan.dbc.
 ##
@@ -101,7 +101,7 @@ cond.dbc: ${SRCDIR}/cond.dylan
 	${MC} ${MINDYFLAGS} -o cond.dbc ${SRCDIR}/cond.dylan
 num.dbc: ${SRCDIR}/num.dylan
 	${MC} ${MINDYFLAGS} -o num.dbc ${SRCDIR}/num.dylan
-ratio.dbc: ${SRCDIR}/num.dylan
+ratio.dbc: ${SRCDIR}/ratio.dylan
 	${MC} ${MINDYFLAGS} -o ratio.dbc ${SRCDIR}/ratio.dylan
 char.dbc: ${SRCDIR}/char.dylan
 	${MC} ${MINDYFLAGS} -o char.dbc ${SRCDIR}/char.dylan
