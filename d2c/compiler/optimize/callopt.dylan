@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.10 1996/04/13 21:35:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.11 1996/05/01 12:39:40 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -36,6 +36,28 @@ define method optimize-unknown-call-leaf
 		function-ctype();
 	      end);
 end;
+
+define method optimize-unknown-call-leaf
+    (component :: <component>, call :: <unknown-call>, func :: <ssa-variable>)
+    => ();
+  let func = func.definer.depends-on.source-exp;
+  if (instance?(func, <primitive>)
+	& func.primitive-name == #"make-next-method")
+    assert(~call.use-generic-entry?);
+    expand-next-method-call-ref
+      (component, call.dependents,
+       listify-dependencies(call.depends-on.dependent-next),
+       func);
+  else
+    // Assert that the function is a function.
+    assert-type(component, call.dependents.dependent, call.depends-on,
+		if (call.use-generic-entry?)
+		  specifier-type(#"<method>");
+		else
+		  function-ctype();
+		end);
+  end;
+end method optimize-unknown-call-leaf;
 
 define method optimize-unknown-call-leaf
     (component :: <component>, call :: <unknown-call>,
@@ -817,16 +839,6 @@ define method change-call-kind
   delete-dependent(component, call);
 end;
 
-define method listify-dependencies (dependencies :: false-or(<dependency>))
-    => res :: <list>;
-  for (res = #() then pair(dep.source-exp, res),
-       dep = dependencies then dep.dependent-next,
-       while: dep)
-  finally
-    reverse!(res);
-  end;
-end;
-
 
 // Known call optimization.
 
@@ -1064,8 +1076,8 @@ end;
 // <mv-call> optimization.
 //
 // If the cluster feeding the mv call has a fixed number of values, then
-// convert the <mv-call> into an <unknown-call>.  Otherwise, if the called
-// function is an exit function, then convert it into a pitcher.
+// convert the <mv-call> into an <unknown-call>.  Otherwise, dispatch of
+// the kind of function.
 // 
 define method optimize (component :: <component>, call :: <mv-call>) => ();
   let cluster
@@ -1078,12 +1090,401 @@ define method optimize (component :: <component>, call :: <mv-call>) => ();
     change-call-kind(component, call, <unknown-call>,
 		     use-generic-entry: call.use-generic-entry?);
   else
-    let func = call.depends-on.source-exp;
-    if (instance?(func, <exit-function>))
-      expand-exit-function(component, call, func, cluster);
-    elseif (instance?(func, <literal-constant>)
-	      & func.value == dylan-value(#"values"))
-      replace-expression(component, call.dependents, cluster);
-    end;
+    optimize-mv-call-leaf
+      (component, call, cluster, call.depends-on.source-exp);
+  end if;
+end method optimize;
+
+
+define generic optimize-mv-call-leaf
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     func :: <leaf>)
+    => ();
+
+define method optimize-mv-call-leaf
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     func :: <leaf>)
+    => ();
+  // Assert that the function is a function.
+  assert-type(component, call.dependents.dependent, call.depends-on,
+	      if (call.use-generic-entry?)
+		specifier-type(#"<method>");
+	      else
+		function-ctype();
+	      end);
+end method optimize-mv-call-leaf;
+
+define method optimize-mv-call-leaf
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     func :: <ssa-variable>)
+    => ();
+  let func = func.definer.depends-on.source-exp;
+  if (instance?(func, <primitive>)
+	& func.primitive-name == #"make-next-method")
+    assert(~call.use-generic-entry?);
+    expand-next-method-call-ref
+      (component, call.dependents, cluster, func);
+  else
+    // Assert that the function is a function.
+    assert-type(component, call.dependents.dependent, call.depends-on,
+		if (call.use-generic-entry?)
+		  specifier-type(#"<method>");
+		else
+		  function-ctype();
+		end);
   end;
+end method optimize-mv-call-leaf;
+
+define method optimize-mv-call-leaf
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     func :: <function-literal>)
+    => ();
+  maybe-restrict-type(component, call, func.main-entry.result-type);
+end method optimize-mv-call-leaf;
+
+define method optimize-mv-call-leaf
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     func :: <definition-constant-leaf>)
+    => ();
+  optimize-mv-call-defn(component, call, cluster, func.const-defn);
 end;
+
+define method optimize-mv-call-leaf
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     func :: <literal-constant>)
+    => ();
+  if (func.value == dylan-value(#"values"))
+    replace-expression(component, call.dependents, cluster);
+  else
+    optimize-mv-call-ctv(component, call, cluster, func.value);
+  end if;
+end method optimize-mv-call-leaf;
+
+define method optimize-mv-call-leaf
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     func :: <exit-function>)
+    => ();
+  expand-exit-function(component, call, func, cluster);
+end method optimize-mv-call-leaf;
+
+
+define generic optimize-mv-call-defn
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     defn :: <definition>)
+    => ();
+
+define method optimize-mv-call-defn
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     defn :: <abstract-constant-definition>)
+    => ();
+  // Assert that the function is a function.
+  assert-type(component, call.dependents.dependent, call.depends-on,
+	      if (call.use-generic-entry?)
+		specifier-type(#"<method>");
+	      else
+		function-ctype();
+	      end);
+end;
+
+define method optimize-mv-call-defn
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     defn :: <function-definition>)
+    => ();
+  maybe-restrict-type(component, call, defn.function-defn-signature.returns);
+end method optimize-mv-call-defn;
+
+define method optimize-mv-call-defn
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     defn :: <generic-definition>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+
+  if (call.use-generic-entry?)
+    error("Trying to pass a generic function next-method information?");
+  end;
+
+  block (return)
+    for (spec in sig.specializers,
+	 index from 0,
+	 arg-types = #()
+	   then pair(defaulted-type(cluster.derived-type, index), arg-types))
+    finally
+      let arg-types = reverse!(arg-types);
+      let (definitely, maybe) = ct-applicable-methods(defn, arg-types);
+      if (definitely == #f)
+	return();
+      end if;
+      
+      let applicable = concatenate(definitely, maybe);
+      
+      if (applicable == #())
+	no-applicable-methods-warning(call, defn, arg-types);
+	return();
+      end if;
+      
+      // Improve the result type based on the actually applicable methods.
+      for (meth in applicable,
+	   result-type = empty-ctype()
+	     then values-type-union(result-type,
+				    meth.function-defn-signature.returns))
+      finally
+	maybe-restrict-type(component, call, result-type);
+      end for;
+      
+      // Blow out of here if applicable isn't a valid set of methods.
+      unless (maybe == #() | (maybe.tail == #() & definitely == #()))
+	return();
+      end unless;
+
+      // Sort the applicable methods.
+      let (ordered, ambiguous) = sort-methods(applicable, #f);
+
+      if (ordered == #f)
+	// We can't tell jack about how to order the methods.  So just change
+	// to a known call of the discriminator if possible.
+	return();
+      end if;
+
+      if (ordered == #())
+	// It's ambiguous which is the most specific method.  So bitch.
+	ambiguous-method-warning(call, defn, ambiguous, arg-types);
+	return();
+      end if;
+    
+      // Change to an mv-call of the most specific method.
+      let builder = make-builder(component);
+      let assign = call.dependents.dependent;
+      let policy = assign.policy;
+      let source = assign.source-location;
+      let new-func = build-defn-ref(builder, policy, source, ordered.head);
+      let next-leaf = make-next-method-info-leaf(builder, ordered, ambiguous);
+      insert-before(component, assign, builder-result(builder));
+      let new-call = make-operation(builder, <mv-call>,
+				    list(new-func, next-leaf, cluster),
+				    use-generic-entry: #t);
+      replace-expression(component, call.dependents, new-call);
+    end for;
+  end block;
+end method optimize-mv-call-defn;
+
+
+define method optimize-mv-call-defn
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     defn :: <abstract-method-definition>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+  //
+  // We do not do any inlining, because as long as it is an mv-call we are
+  // going to have to use the general/generic entry.  So there is nothing to
+  // be gained by inlining (we'll have a full call either way).
+end;
+
+
+define generic optimize-mv-call-ctv
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     ctv :: <ct-value>)
+    => ();
+
+define method optimize-mv-call-ctv
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     ctv :: <ct-value>)
+    => ();
+  // Assert that the function is a function.  It isn't, but this is a handy
+  // way of generating an error message.
+  assert-type(component, call.dependents.dependent, call.depends-on,
+	      if (call.use-generic-entry?)
+		specifier-type(#"<method>");
+	      else
+		function-ctype();
+	      end);
+end method optimize-mv-call-ctv;
+
+define method optimize-mv-call-ctv
+    (component :: <component>, call :: <mv-call>, cluster :: <leaf>,
+     ctv :: <ct-function>)
+    => ();
+  let defn = ctv.ct-function-definition;
+  if (defn)
+    optimize-mv-call-defn(component, call, cluster, defn);
+  else
+    assert(~instance?(ctv, <ct-generic-function>));
+    let sig = ctv.ct-function-signature;
+    maybe-restrict-type(component, call, sig.returns);
+  end;
+end method optimize-mv-call-ctv;
+
+
+// next-method invocation magic.
+
+define method expand-next-method-call-ref
+    (component :: <component>, dep :: <dependency>,
+     new-args :: type-union(<list>, <abstract-variable>),
+     next-method-maker :: <primitive>)
+    => ();
+  let builder = make-builder(component);
+  let assign = dep.dependent;
+  let source = assign.source-location;
+  let policy = assign.policy;
+
+  let next-method-info
+    = maybe-copy(component, next-method-maker.depends-on.source-exp,
+		 next-method-maker, assign.home-function-region);
+
+  let empty?-leaf = make-local-var(builder, #"empty?", object-ctype());
+  build-assignment
+    (builder, policy, source, empty?-leaf,
+     make-operation
+       (builder, <primitive>,
+	list(next-method-info,
+	     make-literal-constant
+	       (builder, as(<ct-value>, #()))),
+	name: #"=="));
+  build-if-body(builder, policy, source, empty?-leaf);
+  build-assignment
+    (builder, policy, source, #(),
+     make-error-operation
+       (builder, policy, source, "No next method."));
+  build-else(builder, policy, source);
+  
+  local
+    method build-nmi-access
+	(rt-getter :: <symbol>, ct-getter :: <function>,
+	 debug-name :: <symbol>, type :: <ctype>)
+	=> leaf :: <leaf>;
+      if (instance?(next-method-info, <literal-constant>))
+	make-literal-constant(builder, next-method-info.value.ct-getter);
+      else
+	let temp = make-local-var(builder, rt-getter, object-ctype());
+	build-assignment
+	  (builder, policy, source, temp,
+	   make-unknown-call
+	     (builder, ref-dylan-defn(builder, policy, source, rt-getter), #f,
+	      list(next-method-info)));
+
+	let var = make-local-var(builder, debug-name, type);
+	build-assignment
+	  (builder, policy, source, var,
+	   make-operation
+	     (builder, <truly-the>, list(temp), guaranteed-type: type));
+
+	var;
+      end if;
+    end method build-nmi-access;
+	
+  let func-leaf
+    = build-nmi-access(#"head", literal-head, #"next",
+		       specifier-type(#(union:, #"<pair>", #"<method>")));
+  let remaining-infos-leaf
+    = build-nmi-access(#"tail", literal-tail, #"remaining-infos",
+		       specifier-type(#"<list>"));
+
+  let ambiguous? = make-local-var(builder, #"ambiguous?", object-ctype());
+  build-assignment
+    (builder, policy, source, ambiguous?,
+     make-operation
+       (builder, <instance?>, list(func-leaf),
+	type: specifier-type(#"<pair>")));
+  build-if-body(builder, policy, source, ambiguous?);
+  let temp = make-local-var(builder, #"temp", specifier-type(#"<pair>"));
+  build-assignment(builder, policy, source, temp, func-leaf);
+  build-assignment
+    (builder, policy, source, #(),
+     make-error-operation
+       (builder, policy, source, #"ambiguous-method-error", temp));
+  build-else(builder, policy, source);
+
+  let op
+    = if (instance?(new-args, <abstract-variable>))
+	//
+	// We are passing a cluster of values.  Is at least on guaranteed?
+	if (new-args.derived-type.min-values == 0)
+	  //
+	  // No.  We have to convert the cluster into a vector and
+	  // check its size before we can tell if we should be using
+	  // the new-args or the orig-args.
+	  let vector = make-local-var(builder, #"new-args", object-ctype());
+	  build-assignment
+	    (builder, policy, source, vector,
+	     make-operation
+	       (builder, <primitive>,
+		list(new-args,
+		     make-literal-constant(builder, as(<ct-value>, 0))),
+		name: #"canonicalize-results"));
+	  let args-empty?-leaf
+	    = make-local-var(builder, #"empty?", object-ctype());
+	  build-assignment
+	    (builder, policy, source, args-empty?-leaf,
+	     make-unknown-call
+	       (builder, ref-dylan-defn(builder, policy, source, #"empty?"),
+		#f, list(vector)));
+
+	  let cluster = make-values-cluster(builder, #"args", wild-ctype());
+
+	  build-if-body(builder, policy, source, args-empty?-leaf);
+
+	  let orig-args
+	    = maybe-copy(component,
+			 next-method-maker.depends-on.dependent-next
+			   .source-exp,
+			 next-method-maker, assign.home-function-region);
+	  build-assignment
+	    (builder, policy, source, cluster,
+	     make-operation(builder, <primitive>, list(orig-args),
+			    name: #"values-sequence"));
+
+	  build-else(builder, policy, source);
+	  
+	  build-assignment
+	    (builder, policy, source, cluster,
+	     make-operation(builder, <primitive>, list(vector),
+			    name: #"values-sequence"));
+	  
+	  end-body(builder);
+
+	  make-operation
+	    (builder, <mv-call>,
+	     list(func-leaf, remaining-infos-leaf, cluster),
+	     use-generic-entry: #t);
+
+	else
+	  //
+	  // We are calling it on a cluster of at least one value.  So use
+	  // the new args.
+	  make-operation
+	    (builder, <mv-call>,
+	     list(func-leaf, remaining-infos-leaf, new-args),
+	     use-generic-entry: #t);
+
+	end if;
+      else
+	//
+	// We are calling it with a fixed number of arguments.
+	if (new-args == #())
+	  let orig-args
+	    = maybe-copy(component,
+			 next-method-maker.depends-on.dependent-next
+			   .source-exp,
+			 next-method-maker, assign.home-function-region);
+	  let cluster = make-values-cluster(builder, #"args", wild-ctype());
+	  build-assignment
+	    (builder, policy, source, cluster,
+	     make-operation(builder, <primitive>, list(orig-args),
+			    name: #"values-sequence"));
+	  make-operation
+	    (builder, <mv-call>,
+	     list(func-leaf, remaining-infos-leaf, cluster),
+	     use-generic-entry: #t);
+	else
+	  make-unknown-call
+	    (builder, func-leaf, remaining-infos-leaf, new-args);
+	end if;
+      end if;
+  
+  end-body(builder); // the ambiguous test.
+  end-body(builder); // the no-next-method test.
+
+  insert-before(component, assign, builder-result(builder));
+  replace-expression(component, dep, op); 
+end method expand-next-method-call-ref;
