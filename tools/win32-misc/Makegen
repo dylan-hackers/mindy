@@ -36,15 +36,12 @@ sub install_perl_scripts {
 sub install_rcs_wrappers {
     local (@names) = @_;
     local ($name);
-    local ($rcsdir) = "$GwydionDir\\rcs-bin";
     foreach $name (@names) {
 	local ($dst) = "\$(DESTDIR)/bin";
-	print "$dst/$name.bat :\n";
+	print "$dst/$name.exe : rcs-wrapper.exe\n";
 	$dst =~ tr|/|\\|;  # translate / to \ for batch files
-	print "\t", 'echo @', 
-	    "perl $GwydionDir\\bin\\rcs-wrapper.perl $rcsdir\\$name.exe", 
-            ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$name.bat\n";
-	push(@install_dependencies, "$dst/$name.bat");
+	print "\tcopy rcs-wrapper.exe $dst\\$name.exe\n";
+	push(@install_dependencies, "$dst/$name.exe");
     }
 }
 
@@ -58,6 +55,16 @@ sub install_backslash_wrapper {
             ' %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$newname.bat\n";
     push(@install_dependencies, "\$(DESTDIR)/bin/$newname.bat");
 }
+
+# rcs-wrapper.  We can't use emit_c_file_rule because they don't build
+# executables.  We don't want to install it, though.  Because we
+# create a copy for each command we're wrapping, we want to use
+# install_rcs_wrappers instead of install().
+print <<EOF;
+rcs-wrapper.exe : \$(SRCDIR)/rcs-wrapper.c
+	cl -nologo -Ox \$(SRCDIR)/rcs-wrapper.c -o rcs-wrapper.exe
+EOF
+push(@compile_dependencies, 'rcs-wrapper.exe');
 
 # Wrapped RCS stuff
 do install_from_src('bin', 'rcs-wrapper.perl');
