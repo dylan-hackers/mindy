@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/Makefile.in,v 1.2 1996/01/16 23:42:45 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/Makefile.in,v 1.3 1996/03/15 04:16:44 rsbe Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
@@ -61,32 +61,28 @@ LIBS	=		@LIBS@
 ## end of configure written portion
 ##
 
-MC	=	mindycomp
+MC	=	../../comp/mindycomp
 
 MINDYFLAGS = -linspector
 
-OBJS = temp.dbc library.dbc inspector.dbc
+OBJS = library.dbc inspector.dbc
 
-main: ${OBJS}
-
-inspector.dbc: ${SRCDIR}/temp.dbc ${SRCDIR}/library.dbc
-	cat ${SRCDIR}/library.dbc ${SRCDIR}/temp.dbc > ${SRCDIR}/inspector.dbc
-##	rm ${SRCDIR}/test.dbc
-##	mv ${SRCDIR}/test.dbc.temp ${SRCDIR}/test.dbc
+inspector-lib.dbc: ${SRCDIR}/temp.dbc ${SRCDIR}/library.dbc
+	cat ${OBJS} > $@
 
 library.dbc: ${SRCDIR}/library.dylan
 	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
-
-temp.dbc: ${SRCDIR}/inspector.dylan
+inspector.dbc: ${SRCDIR}/inspector.dylan
 	${MC} ${MINDYFLAGS} -o temp.dbc ${SRCDIR}/inspector.dylan
 
 clean:
-	rm -f ${SRCDIR}/library.dbc ${SRCDIR}/temp.dbc *~ \#* core
+	rm -f ${OBJS} inspector-lib.dbc *~ \#* core
 
 realclean:
-	rm -f ${OBJS} Makefile *~ \#* core
+	rm -f ${OBJS} inspector-lib.dbc Makefile *~ \#* core
 
-install:
+install: inspector-lib.dbc
+	${INSTALL_DATA} inspector-lib.dbc ${LIBDIR}
 
 
 
