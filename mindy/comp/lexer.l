@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.12 1994/10/05 20:55:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.13 1994/12/16 19:18:01 wlott Exp $
 *
 * This file is the lexical analizer.
 *
@@ -139,11 +139,13 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 <etc>use			is(USE);
 <etc>all			is(ALL);
 
-<etc>"prefix:"			is(PREFIX_OPTION);
-<etc>"import:"			is(IMPORT_OPTION);
-<etc>"exclude:"			is(EXCLUDE_OPTION);
-<etc>"export:"			is(EXPORT_OPTION);
-<etc>"rename:"			is(RENAME_OPTION);
+<etc>"prefix:"			is(PREFIX_KEYWORD);
+<etc>"import:"			is(IMPORT_KEYWORD);
+<etc>"exclude:"			is(EXCLUDE_KEYWORD);
+<etc>"export:"			is(EXPORT_KEYWORD);
+<etc>"rename:"			is(RENAME_KEYWORD);
+<etc>"while:"			is(WHILE_KEYWORD);
+<etc>"until:"			is(UNTIL_KEYWORD);
 
 <etc>"("			is(LPAREN);
 <etc>")"			is(RPAREN);
@@ -186,6 +188,7 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 <etc>{O}			is(BINARY_OPERATOR);
 <etc>{N}			is(SYMBOL);
 <etc>\\{O}			is(SYMBOL);
+<etc>\\{N}			is(SYMBOL);
 <etc>{N}:			is(KEYWORD);
 <etc>#{STR}			is(SYMBOL_LITERAL);
 
