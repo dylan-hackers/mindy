@@ -129,6 +129,8 @@ define module tk
     scroll, get-units, set-units;
   export // <text>s
     xview, yview, line-end, tags, marks;
+  export // <toplevel>s
+    tk-dialog;
   export // <text-index>s
     text-at, line, character;
   export // <text-mark>s
