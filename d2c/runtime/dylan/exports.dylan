@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.6 1995/11/17 02:32:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.7 1995/11/18 11:25:07 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -57,7 +57,7 @@ define module Dylan
 
 	     // Coercing and Copying Objects
 	     identity, values, as, as-uppercase, as-uppercase!,
-	     as-lowercase, as-lowercase!, shallow-copy,
+	     as-lowercase, as-lowercase!, shallow-copy, class-for-copy,
 
 	     // Collection Operations
 	     empty?, size, size-setter, rank, row-major-index,
