@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.9 1994/04/29 06:47:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.10 1994/05/19 22:34:17 wlott Exp $
 *
 * This file does whatever.
 *
@@ -766,7 +766,7 @@ static void process_slot(obj_t class, obj_t slot)
 				   FALSE, make_fixnum(offset),
 				   fast_instance_getter);
 	add_method(SD(slot)->getter, SD(slot)->getter_method);
-	if (SD(slot)->setter) {
+	if (SD(slot)->setter != obj_False) {
 	    SD(slot)->setter_method
 		= make_accessor_method(function_debug_name(SD(slot)->setter),
 				       class, SD(slot)->type,
@@ -788,7 +788,7 @@ static void process_slot(obj_t class, obj_t slot)
 				   FALSE, make_fixnum(offset),
 				   fast_subclass_getter);
 	add_method(SD(slot)->getter, SD(slot)->getter_method);
-	if (SD(slot)->setter) {
+	if (SD(slot)->setter != obj_False) {
 	    SD(slot)->setter_method
 		= make_accessor_method(function_debug_name(SD(slot)->setter),
 				       class, SD(slot)->type, TRUE,
@@ -807,7 +807,7 @@ static void process_slot(obj_t class, obj_t slot)
 				   class, SD(slot)->type,
 				   FALSE, value_cell, class_getter);
 	add_method(SD(slot)->getter, SD(slot)->getter_method);
-	if (SD(slot)->setter) {
+	if (SD(slot)->setter != obj_False) {
 	    SD(slot)->setter_method
 		= make_accessor_method(function_debug_name(SD(slot)->setter),
 				       class, SD(slot)->type,
@@ -1106,7 +1106,9 @@ void init_instance_functions(void)
 {
     define_function("make-slot",
 		    listn(5, obj_ObjectClass, obj_IntegerClass,
-			  obj_FunctionClass, obj_FunctionClass,
+			  obj_FunctionClass,
+			  type_union(obj_FunctionClass,
+				     object_class(obj_False)),
 			  obj_ObjectClass),
 		    FALSE,
 		    listn(4, pair(symbol("init-keyword"), obj_False),
