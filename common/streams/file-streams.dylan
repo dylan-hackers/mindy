@@ -2,7 +2,7 @@ module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dylan,v 1.13 1996/09/04 16:47:37 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/file-streams.dylan,v 1.14 1996/09/28 20:28:06 rgs Exp $
 
 //======================================================================
 //
@@ -163,7 +163,7 @@ define sealed method do-get-input-buffer
       end if;
       let count	= call-fd-function(fd-read, stream.file-descriptor, buf,
 				   buf.buffer-end,
-				   (buf.size - buf.buffer-end));
+				   buf.size);
       let max-avail = avail + count;
       buf.buffer-end := buf.buffer-end + count;
       if (max-avail < bytes)
@@ -220,7 +220,7 @@ define sealed method do-next-input-buffer
       end if;
       let count	= call-fd-function(fd-read, stream.file-descriptor, buf,
 				   buf.buffer-end,
-				   (buf.size - buf.buffer-end));
+				   buf.size);
       let max-avail = avail + count;
       buf.buffer-end := buf.buffer-end + count;
       if (max-avail < bytes)
@@ -278,7 +278,7 @@ define sealed method do-get-output-buffer
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
 	   until: (x = next))
       end;
     end;
@@ -314,7 +314,7 @@ define sealed method do-next-output-buffer
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
 	   until: (x = next))
       end for;
     end if;
@@ -335,7 +335,7 @@ define sealed method do-force-output-buffers (stream :: <fd-stream>) => ();
     let fd = stream.file-descriptor;
     for (x :: <buffer-index>
 	   = call-fd-function(fd-write, fd, buf, 0, next)
-	   then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+	   then (x + call-fd-function(fd-write, fd, buf, x, next)),
 	 until: (x = next))
     end;
   end;
@@ -551,7 +551,7 @@ define sealed method stream-at-end? (stream :: <fd-file-stream>,
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
 	   until: (x = next))
       end;
     end;
@@ -808,7 +808,7 @@ define sealed method do-get-input-buffer
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
 	   until: (x = next))
       end;
     end;
@@ -857,7 +857,7 @@ define sealed method do-next-input-buffer
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
 	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+	     then (x + call-fd-function(fd-write, fd, buf, x, next)),
 	   until: (x = next))
       end;
     end;
