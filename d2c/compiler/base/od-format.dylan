@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.12 2001/03/28 11:52:54 bruce Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.13 2001/03/30 13:48:38 bruce Exp $
 
 //======================================================================
 //
@@ -229,19 +229,25 @@ Note that:
 // Note that it is intended that all IDs be registered in this file so that
 // we are sure that IDs are globally unique.
 
-define constant $object-id-registry :: <object-table>
+#if (mindy)
+define constant <stretchy-object-vector> = <stretchy-vector>;
+define constant <simple-object-table> = <table>;
+#endif
+
+define constant $object-id-registry :: <simple-object-table>
   = make(<object-table>);
-define constant $object-id-registry-inverse :: <stretchy-vector>
+define constant $object-id-registry-inverse :: <stretchy-object-vector>
   = make(<stretchy-vector>, size: 0);
 
 define method register-object-id (name :: <symbol>, id :: <integer>)
  => ();
-  assert(~element($object-id-registry, name, default: #f));
+  let registry :: <simple-object-table> = $object-id-registry;
+  let inverse :: <stretchy-object-vector> = $object-id-registry-inverse;
+  assert(~element(registry, name, default: #f));
   assert(id >= 0);
-  assert(id > $object-id-registry-inverse.size
-	   | $object-id-registry-inverse[id] == #f);
-  $object-id-registry[name] := id;
-  $object-id-registry-inverse[id] := name;
+  assert(id > inverse.size | inverse[id] == #f);
+  registry[name] := id;
+  inverse[id] := name;
 end method;
 
 
@@ -845,7 +851,7 @@ define /* exported */ class <dump-state> (<dump-buffer>)
   // A vector mapping local IDs to their offsets in the buffer.  An entry of #f
   // is created add!'ed when a new ID is created.  The actual dumped local
   // index has to to be adjusted to take the header size into account.
-  slot dump-local-index :: <stretchy-vector> = make(<stretchy-vector>);
+  slot dump-local-index :: <stretchy-object-vector> = make(<stretchy-vector>);
   //
   // Dump buffer used to accumulate the extern-index (and its enclosed
   // extern-handle objects.)
@@ -993,13 +999,14 @@ define method build-local-map (state :: <dump-state>)
  => res :: <simple-object-vector>;
   let lindex = state.dump-local-index;
   let lsize = lindex.size;
-  let res = make(<simple-object-vector>, size: lsize);
+  let res = make(<vector>, size: lsize);
   for (i from 0 below lsize)
     res[i] := pair(lindex[i], i);
   end;
-  res := sort!(res, test: method (x, y) x.head < y.head end);
+  res := sort!(res, test: method (x :: <pair>, y :: <pair>) x.head < y.head end);
   for (i from 0 below lsize)
-    res[i] := res[i].tail;
+    let elem :: <pair> = res[i];
+    res[i] := elem.tail;
   end;
   res;
 end method;
@@ -1241,7 +1248,7 @@ define sealed domain initialize (<data-unit>);
 
 // Table mapping data unit names to a list of pairs (unit-type . data-unit)
 //
-define variable *data-units* :: <object-table> = make(<table>);
+define variable *data-units* :: <simple-object-table> = make(<table>);
 
 //------------------------------------------------------------------------
 
@@ -1854,7 +1861,7 @@ define method load-subobjects-vector
       contents;
     end for;
   else
-    let contents :: <stretchy-vector> = make(<stretchy-vector>);
+    let contents :: <stretchy-object-vector> = make(<stretchy-vector>);
     for (part = load-object-dispatch(state) then load-object-dispatch(state),
 	 i :: <integer> from 0,
 	 until: part == $end-object)
@@ -2289,12 +2296,12 @@ define sealed domain initialize (<make-info>);
 
 // Table mapping classes to <make-info> objects.
 //
-define constant *make-dumpers* :: <object-table> = make(<object-table>);
+define constant *make-dumpers* :: <simple-object-table> = make(<object-table>);
 
 // Keep track of what we've complained about already, so we don't spam
 // the reader with the same warnings
 //
-define constant *classes-I-cant-dump* :: <object-table> = make(<object-table>);
+define constant *classes-I-cant-dump* :: <simple-object-table> = make(<object-table>);
 
 // In order to avoid using add-method (so dump-od can be sealed), we have a
 // default method for dump-od which does its own dispatching based on the
@@ -2442,28 +2449,29 @@ define /* exported */ method add-make-dumper
         load-side-effect :: false-or(<function>),
         dump-side-effect :: false-or(<function>))
  => ();
-  let acc = make(<stretchy-vector>);
-  let key = make(<stretchy-vector>);
-  let set = make(<stretchy-vector>);
-  for (current = slots then current.tail.tail.tail,
-       until: current = #())
-    let a = current.first;
-    let k = current.second;
-    let s = current.third;
-    check-type(a, <function>);
-    check-type(k, false-or(<symbol>));
-    check-type(s, false-or(<function>));
+  let specs = as(<vector>, slots);
+  let length = truncate/(specs.size,  3);
+  assert(length * 3 = specs.size);
+
+  let acc = make(<vector>, size: length);
+  let key = make(<vector>, size: length);
+  let set = make(<vector>, size: length);
+  for (i from 0 below specs.size by 3,
+       j from 0 below length)
+    let a :: <function> = specs[i];
+    let k :: false-or(<symbol>) = specs[i + 1];
+    let s :: false-or(<function>) = specs[i + 2];
     assert(dumper-only | k | s);
-    add!(acc, a);
-    add!(key, k);
-    add!(set, s);
+    acc[j] := a;
+    key[j] := k;
+    set[j] := s;
   end for;
 
   let info =
     make(<make-info>,
-         accessor-funs: as(<simple-object-vector>, acc),
-	 init-keys: as(<simple-object-vector>, key),
-         setter-funs: as(<simple-object-vector>, set),
+         accessor-funs: acc,
+	 init-keys: key,
+         setter-funs: set,
 	 obj-class: obj-class,
 	 obj-name: name,
 	 dump-side-effect: dump-side-effect);
