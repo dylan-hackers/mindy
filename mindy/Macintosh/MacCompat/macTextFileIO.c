@@ -19,18 +19,21 @@
 #include <LowMem.h>
 #include <Processes.h>
 #include <Types.h>
-
+#include <Script.h>
 #include <MacMemory.h>
 
 #include <abort_exit.h>
-#include <fcntl.mac.h>
+#include <fcntl.h>
+#include <path2fss.h>
 
 char * LIBDIR;
 
 
 // defines
 
-#define WRITE_BUFFER_SIZE		128		// Size of the write translation buffer
+#define MINDY_DEBUGGER			1
+
+#define WRITE_BUFFER_SIZE		4096		// Size of the write translation buffer
 #define MAX_FILES				64
 
 #ifndef O_RDWR
@@ -52,6 +55,17 @@ char * LIBDIR;
 #	define FALSE	0
 #endif
 
+#ifdef MINDY_DEBUGGER
+	#include "std-c.h"
+	#include "mindy.h"
+	#include "gc.h"
+	#include "bool.h"
+	#include "class.h"
+	#include "str.h"
+	#include "thread.h"
+	#include "vec.h"
+#endif
+
 // prototypes
 
 int MacOpen( const char *path, int oflag, int mode );
@@ -59,8 +73,11 @@ int MacClose( int fd );
 int MacCreat(const char *path, mode_t mode);
 int MacRead(int fd, char *buf, int count);
 int MacWrite(int fd, const char *buf, int count);
+OSErr ReallyWrite( int fd, Ptr buffer, long * amount );
 int FindUnusedFileStatus( void );
 long OpenApplicationAsFile( void );
+void FileError( int err );
+
 
 // static prototypes
 
@@ -96,7 +113,9 @@ FileStatus __fileIsText[ MAX_FILES ] =
 
 // static globals
 
-static char conversionBuffer[ WRITE_BUFFER_SIZE ];
+static char * conversionBuffer = NULL;
+
+static Boolean gD2c = FALSE;
 
 
 // functions
@@ -105,27 +124,85 @@ static char conversionBuffer[ WRITE_BUFFER_SIZE ];
 // Opens a file and sets the binary flag
 // Ignores the UN*X mode param
 
-int MacOpen( const char *path, int oflag, int mode )
+int MacOpen( const char *path, int flags, int mode )
 {
+	OSErr err;
+	FSSpec fileSpec;
 	int fileStatusRecord;
-	int fd;
+	short fd;
+	char permission;
 	
+	// Open data fork as file?
 	if( strcmp( path, "The Application File            " ) == 0 )	// 0 = equality
 	{
 		return OpenApplicationAsFile();
 	}
 	
-	/*if( oflag & O_CREAT )
-		oflag = O_RDWR | O_CREAT;		// RDWR becasue stream regression buf wrute test fails otherwise*/
+	// Make FSSpec
+	err = __path2fss( path, &fileSpec );
 	
-	fd = open( path, oflag );					// Call MSL open
+	// Set flags
+	if( flags & O_RDONLY )		
+		permission = fsRdPerm; 		
+	else if( (flags & O_WRONLY) || (flags & O_RDWR ) )		
+		permission = fsRdWrPerm; 
+	else
+		permission = fsCurPerm;	
+
+	// open data fork
+	err = FSpOpenDF( &fileSpec, permission, &fd);
 	
-	if( fd >= 0 )									// If opened ok
+	// If there's an error
+	if (err) 
+	{
+		// File not found, but might be creatable
+		if (err == fnfErr && flags & O_CREAT) 
+		{
+			err = FSpCreate( &fileSpec, 'MPS ', 'TEXT', smSystemScript );
+			//if (!err)	//-
+			//	err = FSpTouchFolder( &fileSpec );
+			if (!err || err == dupFNErr )
+				err = FSpOpenDF( &fileSpec, permission, &fd );
+		}
+		else
+		{
+			fd =  -1;
+			goto finally;
+		}
+	}
+	else if (flags & O_EXCL) 
+	{
+		FSClose(fd);
+		fd = -1;
+		goto finally;
+	}
+		
+	// Truncate?	
+	if( flags & O_TRUNC )
+		SetEOF( fd, 0 );
+	
+	
+	// finally
+	
+	finally:
+		
+	if( fd > 0 )									// If opened ok
 	{
 		fileStatusRecord = FindUnusedFileStatus();
 		__fileIsText[ fileStatusRecord ].fileNum = fd;
-		__fileIsText[ fileStatusRecord ].isText = !(oflag & O_BINARY );	// Set flag
+		// hack for .du files
+		if( gD2c && fileSpec.name[ fileSpec.name[ 0 ] ] == 0 )
+			__fileIsText[ fileStatusRecord ].isText = FALSE;
+		else
+			__fileIsText[ fileStatusRecord ].isText = !(flags & O_BINARY );	// Set flag
 	}
+	else
+	{	
+		fd = -1;
+	}
+	
+
+	FileError( err );
 	return fd;										// Return the fd
 }
 
@@ -134,8 +211,12 @@ int MacOpen( const char *path, int oflag, int mode )
 
 int MacClose( int fd )
 {
-	int fileNum = 0;
+	int 	fileNum = 0;
+	short 	vRefNum;
+	long 	filePos;
+	OSErr 	err;
 	
+	// Reset the data structure
 	while( fileNum < MAX_FILES )
 	{
 		if( __fileIsText[ fileNum ].fileNum == fd )
@@ -145,7 +226,25 @@ int MacClose( int fd )
 		fileNum++;
 	}
 	
-	return close( fd );
+	// If it's the console, return OK
+	if ( fd < 3 && fd >= 0 )
+	{
+		return 0;
+	}
+	
+	// Truncate file to current position
+	/*err = GetFPos( fd, &filePos );
+	if( err == noErr )
+		err = SetEOF( fd, filePos );*/
+		
+	// Close the file and flush the volume to make sure EOF gets written	
+	GetVRefNum( fd, &vRefNum );
+	err = FSClose( fd );
+	FlushVol( NULL, vRefNum );
+	
+	// Return some sort of error code
+	FileError( err );
+	return (err == noErr ? 0 : -1 );
 }
 
 // creat
@@ -189,23 +288,19 @@ int MacRead(int fd, char *buf, int count)
 			return -1;
 
 	}
-	param.ioRefNum = fd;										// fd is ioRefNum
-	param.ioBuffer = (char *)buf;
-	param.ioReqCount = count;
-	param.ioPosMode = fsAtMark;
-	param.ioPosOffset = NULL;
 
-	theError = PBReadSync((ParmBlkPtr) &param);					// Try to read
+	readCount = count;
+	
+	theError = FSRead( fd, &readCount, buf );
 
 	if (theError != noErr && theError != eofErr)				// Unexpected theErrorors?
 	{
-		errno = theError;										// Set the errno
-		count = -1;												// Return the error or count
+		FileError( theError );										// Set the errno
+		readCount = -1;											// Return the error or count
 	}	
 	else														// Otherwise
 	{
-		readCount = param.ioActCount;							// Set the count
-		if( FileIsText( fd ) )								// If the file's text
+		if( FileIsText( fd ) )									// If the file's text
 			r2n( buf, readCount );								// Convert it
 	}
 	
@@ -217,10 +312,11 @@ int MacRead(int fd, char *buf, int count)
 
 int MacWrite(int fd, const char *buf, int count)
 {
-	IOParam			param;
+	ParamBlockRec	param;
 	OSErr			theError;
 	int 			totalWritten = 0;							// How much of the buffer is left
-	int				blockSize;
+	long			blockSize;
+	short			vRef;
 
 	if ((fd == 1) || (fd == 2)) 						// If it's 1/stdout or 2/stdtheError
 	{
@@ -241,55 +337,76 @@ int MacWrite(int fd, const char *buf, int count)
 				
 				totalWritten += blockSize;
 			}
-			return count;											// Naughty but what WriteChars.. does anyway
+			
 		} 
 		else
-			return -1;
+			count =  -1;
+		
+		return count;											// Naughty but what WriteChars.. does anyway
 	}
 	
 	if( FileIsText( fd ) )										// If it's a text file it needs translation
 	{
+		if( conversionBuffer == NULL )
+		{
+			conversionBuffer = NewPtr( WRITE_BUFFER_SIZE );
+			if( conversionBuffer == NULL || MemError() )
+			{
+				return -1;
+			}
+		}
+	
 		while( totalWritten < count )							// While there's more to write
 		{
-			if( totalWritten + WRITE_BUFFER_SIZE < count )		// If there's a whole buffer's worth
+			if( count - totalWritten > WRITE_BUFFER_SIZE )		// If there's a whole buffer's worth
 				blockSize = WRITE_BUFFER_SIZE;					// Set the block size to the buffer size
 			else												// Otherwise
 				blockSize = count - totalWritten;				// Set the exact size
 			BlockMove( &( buf[ totalWritten ]), conversionBuffer, blockSize ); // Copy the block to the buffer
 			n2r( conversionBuffer, blockSize );					// Translate newlines
-			param.ioRefNum = fd;								// ioRefNum is fd
-			param.ioBuffer = (char *)conversionBuffer;			// Write from the translated buffer
-			param.ioReqCount = blockSize;						// Write the amount in the buffer
-			param.ioPosMode = fsAtMark;
-			param.ioPosOffset = NULL;
-			param.ioVRefNum = 0;
-
-			theError = PBWriteSync((ParmBlkPtr) &param);		// Try to write
+			
+			theError = ReallyWrite( fd, conversionBuffer, &blockSize );
 
 			if (theError != noErr)								// If there's an error
 			{
-				errno = theError;								// Set the errno
+				FileError( fd );
+				fd = -1;								// Set the errno
 				break;											// And don't try again!
 			}
 			
-			totalWritten += WRITE_BUFFER_SIZE;					// Move along
+			totalWritten += blockSize;					// Move along
 		}
 	}
 	else														// Otherwise, it's a binary file. Don't translate
 	{
-		param.ioRefNum = fd;									// ioRefNum is fd
-		param.ioBuffer = (char *)buf;							// Write direct and untranslated
-		param.ioReqCount = count;								// Write all in one go
-		param.ioPosMode = fsAtMark;
-		param.ioPosOffset = NULL;
-		param.ioVRefNum = 0;
-
-		theError = PBWriteSync((ParmBlkPtr) &param);			// Try to write
-
-		if (theError != noErr)									// If there's an error
-			errno = theError;									// Set the errno
+		totalWritten = count;
+		theError = ReallyWrite( fd, buf, &totalWritten );
 	}
-	return (theError == noErr ? param.ioActCount : -1);			// Return the result
+	finally:
+	return (theError == noErr ? totalWritten : -1);			// Return the result
+}
+
+// ReallyWrite
+
+OSErr ReallyWrite( int fd, Ptr buffer, long * amount )
+{
+	short vRef;
+	OSErr theError;
+	
+	theError = FSWrite( fd, amount, buffer );
+	if (theError != noErr)									// If there's an error
+	{
+		return theError;
+	}
+	
+	GetVRefNum( fd, &vRef );			// get file vRefNum
+	theError = FlushVol( NULL, vRef );
+	if (theError != noErr)									// If there's an error
+	{
+		return theError;
+	}
+
+	return theError;
 }
 
 // select
@@ -405,5 +522,63 @@ long OpenApplicationAsFile( void )
 	{
 		return -1;
 	}
+	
+	if( (spec.name[0] == 3) && (spec.name[1] == 'd') && (spec.name[2] == '2') && (spec.name[3] == 'c') )
+		gD2c = TRUE;
+	else
+		gD2c = FALSE;
+	
 	return (short)fd;
+}
+
+// Error translation
+// From GUSI
+
+void FileError( int err )
+{
+	switch (err) {
+	case noErr:
+		errno = 0;
+		break;
+	case bdNamErr:
+		errno = (ENAMETOOLONG);
+		break;
+	case afpObjectTypeErr:
+		errno = (ENOTDIR);
+		break;
+	case fnfErr:
+	case dirNFErr:
+		errno = (ENOENT);
+		break;
+	case dupFNErr:
+		errno = (EEXIST);
+		break;
+	case dirFulErr:
+	case dskFulErr:
+		errno = (ENOSPC);
+		break;
+	/*case fBsyErr:
+		errno = (EBUSY);
+		break;*/
+	case tmfoErr:
+		errno =  (ENFILE);
+		break;
+	case fLckdErr:
+	case permErr:
+	case afpAccessDenied:
+		errno =  (EACCES);
+		break;
+	case wPrErr:
+	case vLckdErr:
+		errno =  (EROFS);
+		break;
+	case badMovErr:
+		errno =  (EINVAL);
+		break;
+	/*case diffVolErr:
+		errno =  (EXDEV);
+		break;*/
+	default:
+		errno =  (EINVAL);
+	}
 }

@@ -5,7 +5,7 @@
 	#define MACOS				1		/* System 7 & 8, not OS-X. */
 	#define SHLB				1		/* Define if building as a shared library */
 	
-	#define HAVE_LIBDLD			1		/* We can load POwerPC shared libraries only */
+	#define HAVE_LIBDLD			1		/* We can load PowerPC shared libraries only */
 	#define HAVE_LIBDLDELF		1
 	
 	#define VERSION				"2.3.2"
@@ -18,23 +18,15 @@
 
 	#define M_PI				3.14159265358979323846
 	#define M_E					2.7182818284590452354
-	#define USHRT_MAX 			65535U
-	#define USHRT_MIN 			0U
-	#define SHRT_MAX 			32767
-	#define SHRT_MIN 			-32768
-	#define UCHAR_MAX 			255U
-	#define UCHAR_MIN 			0U
-	#define SCHAR_MAX 			127
-	#define SCHAR_MIN 			(-127-1)
 
-	#define INT_MIN				(-2147483647L-1)
-	#define INT_MAX				2147483647L
+	#undef NO_LIMITS_H
 	
 	#define SIZEOF_VOID_P		4					/* 32-bit architecture */
 	
 	#define	bzero(a, b)			memset(a, 0, b)
 	
 	#define CHAR_BIT			8
+	
 
 	#define NO_PWD_H 			1
 	#define NO_SYS_PARAM_H 		1
@@ -57,18 +49,48 @@
 	#define YY_NEVER_INTERACTIVE 		1
 
 	#include<strcasecmp.h>							/* Should just extern it here */
-	#include"sys/errno.h"
+
+
+// Work around various include clashes
+
+// Errnos
+// Synchronized with CW
+
+	#define EPERM				1
+	#define EACCES				2
+	#define EBADF				3
+	#define EDEADLOCK			4
+	#define EMFILE				5
+	#define ENOENT				6
+	#define ENFILE				7
+	#define ENOSPC				8
+	#define EINVAL				9
+	#define EIO				    10
+	#define ENOMEM			    11
+	#define ENOSYS			    12
+// Made up
+	#define EINTR			    13
+	#define EEXIST			    14
+	#define EFBIG				15
+    #define EPIPE				16
+    #define ENAMETOOLONG		17
+    #define EROFS				18
+    #define EISDIR				19
+    #define ENOTDIR				20
+    #define EFAULT				21
+    #define ENXIO				22
 	
-	/* Overkill, I know... */
-	
-	#define O_RDWR			0x0
-	#define O_RDONLY		0x1
-	#define O_WRONLY		0x2
-	#define O_APPEND		0x0100
-	#define O_CREAT			0x0200
-	#define O_EXCL			0x0400
-	#define O_TRUNC			0x0800
-	#define O_NRESOLVE		0x1000
-	#define O_ALIAS			0x2000
-	#define O_RSRC 			0x4000
-	#define O_BINARY		0x8000
+// File Modes
+// Likewise
+
+	#define O_RDWR				0x0		
+	#define O_RDONLY			0x1		
+	#define O_WRONLY			0x2			
+	#define O_APPEND			0x0100		
+	#define O_CREAT				0x0200		
+	#define O_EXCL				0x0400		
+	#define O_TRUNC				0x0800	
+	#define O_NRESOLVE			0x1000		
+	#define O_ALIAS				0x2000		
+	#define O_RSRC 				0x4000		
+	#define O_BINARY			0x8000		
