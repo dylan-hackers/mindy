@@ -512,19 +512,12 @@ define sealed method stream-size (stream :: <fd-file-stream>)
 end method;
 
 define sealed method stream-contents (stream :: <fd-file-stream>,
-				      #key clear-contents? :: <boolean> = #f)
+				      #key clear-contents? :: <boolean> = #t)
  => seq :: <sequence>;
-  let fd = stream.file-descriptor;
-  if ((stream.file-direction == #"input-output")
-	& (stream.file-buffer-last-use == #"output"))
-    let buf :: <buffer> = get-output-buffer(stream);
-    if (buf.buffer-next > 0)
-      force-output-buffers(stream);
-    end if;
-    buf.buffer-next := buf.buffer-end;
-    stream.file-buffer-last-use := #"input";
-  end if;
-  if (stream.file-buffer-last-use == #"input")
+  let fd :: <integer> = stream.file-descriptor;
+  if (stream.file-direction == #"input")
+    error("Stream is an input stream -- %=", stream);
+  elseif (stream.file-direction == #"input-output")
     let buf :: <buffer> = get-input-buffer(stream, wait?: #f);
     let pos :: <integer> = call-fd-function(fd-seek, fd, 0, fd-seek-current);
     let size :: <integer> = call-fd-function(fd-seek, fd, 0, fd-seek-end);
@@ -536,13 +529,24 @@ define sealed method stream-contents (stream :: <fd-file-stream>,
     //
     let res :: <buffer> = make(<buffer>, size: size);
     call-fd-function(fd-read, fd, res, 0, size);
-    call-fd-function(fd-seek, fd, pos, fd-seek-set);
+    if (clear-contents?)
+      // Zero file by closing and then reopening a file of the same name,
+      // truncating the old contents.
+      call-fd-function(fd-close, fd);
+      let (new-fd, err) = fd-open(stream.file-name, 
+				  logior(fd-o_rdwr, fd-o_trunc));
+      if (err) error(make(<syscall-error>, errno: err)) end;
+      stream.file-descriptor := new-fd;
+      buf.buffer-next := buf.buffer-end; // Invalidate buffer.
+    else
+      // Re-set postion to where it was.
+      call-fd-function(fd-seek, fd, pos, fd-seek-set);
+    end if;
     release-input-buffer(stream);
-    as(<byte-vector>, res);
+    as(type-for-sequence(stream.stream-element-type), res);
   else // It's an output only stream, we'll have to open it as an input file
     let buf :: <buffer> = get-output-buffer(stream);
-    let next :: <buffer-index> = buf.buffer-next;
-    if (next > 0)
+    if (buf.buffer-next > 0)
       force-output-buffers(stream);
     end if;
     let temp-fd = fd-open(stream.file-name, fd-o_rdonly);
@@ -551,8 +555,18 @@ define sealed method stream-contents (stream :: <fd-file-stream>,
     let res :: <buffer> = make(<buffer>, size: size);
     call-fd-function(fd-read, temp-fd, res, 0, size);
     call-fd-function(fd-close, temp-fd);
+    if (clear-contents?)
+      // Zero file by closing and then reopening a file of the same name,
+      // truncating the old contents.
+      call-fd-function(fd-close, fd);
+      let (new-fd, err) = fd-open(stream.file-name, 
+				  logior(fd-o_wronly, fd-o_trunc));
+      if (err) error(make(<syscall-error>, errno: err)) end;
+      stream.file-descriptor := new-fd;
+      buf.buffer-next := 0;
+    end if;
     release-output-buffer(stream);
-    as(<byte-vector>, res);
+    as(type-for-sequence(stream.stream-element-type), res);
   end if;
 end method stream-contents;
 
