@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.21 2004/05/15 09:56:51 cpage Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.22 2004/05/24 12:15:39 bruce Exp $
 
 //======================================================================
 //
@@ -521,7 +521,7 @@ cast-expr (<lparen-token> type-name <rparen-token> cast-expr)
     // Handle casting a large unsigned value to a signed integer type.
     if (instance?(%2.true-type, <signed-integer-type-declaration>)
           & result > (2 ^ (8 * %2.type-size-slot - 1) - 1))
-      as(<integer>, result - #e2 ^ (8 * %2.type-size-slot))
+      as(<integer>, result - as(<extended-integer>, 2) ^ (8 * %2.type-size-slot))
     else
       result
     end if
