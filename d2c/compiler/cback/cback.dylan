@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.83 1995/11/20 16:39:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.84 1995/12/07 17:45:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2143,16 +2143,6 @@ define method c-expr-and-rep (lit :: <literal-extended-float>,
 	 pick-representation(dylan-value(#"<extended-float>"), #"speed"));
 end;
 
-define method float-to-string (value :: <float>, digits :: <fixed-integer>)
-    => res :: <string>;
-  float-to-string(as(<ratio>, value), digits);
-end;
-
-define method float-to-string (value :: <integer>, digits :: <fixed-integer>)
-    => res :: <string>;
-  float-to-string(ratio(value, 1), digits);
-end;
-
 define method float-to-string (value :: <ratio>, digits :: <fixed-integer>)
     => res :: <string>;
   if (zero?(value))
@@ -2225,7 +2215,7 @@ define method c-expr-and-rep (lit :: <literal-character>,
 	 elseif (char == '\'' | char == '\\')
 	   format-to-string("'\\%c'", char);
 	 elseif (char <= '~')
-	   format-to-string("'%c'", lit.literal-value);
+	   format-to-string("'%c'", char);
 	 else
 	   format-to-string("%d", as(<integer>, char));
 	 end,
