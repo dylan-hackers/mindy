@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.1 1995/12/07 19:19:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.2 1995/12/11 19:53:37 wlott Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -51,7 +51,7 @@ seal generic make (singleton(<threadsafe-random-state>));
 */
 
 define inline method get-time-of-day () => res :: <fixed-integer>;
-  %%primitive call-out ("time", int:, int: 0);
+  call-out("time", int:, int: 0);
 end;
 
 define method initialize
