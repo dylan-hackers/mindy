@@ -1,21 +1,13 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.41 1996/02/18 18:29:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.42 1996/02/23 15:05:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 /*
 Todo: 
   subclass types (unknown or union of singletons if sealed)
-  difference
 */
-
-///    Return the type that describes all objects that are in Type1 but not in
-/// Type2.  If we can't determine this type, then return #f
-///
-define generic ctype-difference(type1 :: <ctype>, type2 :: <ctype>)
-       => result :: false-or(<ctype>);
-
 
 /// Superclass of multi-value types and regular single types.
 define abstract class <values-ctype> (<object>)
@@ -36,14 +28,10 @@ end class;
 /// <ctype> objects are also hash-consed, which (modulo unknown types)
 /// means that == is type equivalence.
 
-define constant make-type-hash = method ()
-  random-bits();
-end;
-
 
 define abstract class <ctype> (<values-ctype>)
-  slot type-hash :: <integer>, setter: #f, 
-       init-keyword: type-hash:, init-function: make-type-hash;
+  constant slot type-hash :: <integer> = random-bits(),
+    init-keyword: type-hash:;
 end class;
 
 
@@ -69,8 +57,8 @@ define constant make-memo2-table = method ()
 end method;
 
 // some hit rate info, for tuning.
-define variable memo2-hits = 0;
-define variable memo2-probes = 0;
+define variable *memo2-hits* :: <integer> = 0;
+define variable *memo2-probes* :: <integer> = 0;
 
 // See if Type1 & Type2 are memoized in Table.  If so, the two memoized values
 // are returned.  If not, we return #"miss" and #f;
@@ -79,10 +67,10 @@ define constant memo2-lookup = method
     => (value :: type-union(<ctype>, one-of(#f, #t, #"miss")),
         precise :: <boolean>);
 
-  memo2-probes := memo2-probes + 1;
+  *memo2-probes* := *memo2-probes* + 1;
   let base = modulo(type1.type-hash - type2.type-hash, memo2-mask) * 4;
   if (table[base] == type1 & table[base + 1] == type2)
-    memo2-hits := memo2-hits + 1;
+    *memo2-hits* := *memo2-hits* + 1;
     values(table[base + 2], table[base + 3]);
   else
     values(#"miss", #f);
@@ -233,7 +221,7 @@ define method csubtype-dispatch(type1 :: <ctype>, type2 :: <ctype>)
   #f;
 end method;
 
-define variable csubtype-memo = make-memo2-table();
+define constant $csubtype-memo :: <memo-table> = make-memo2-table();
 
 /// Like subtype?, but works on ctypes, and returns the second value #F if the
 /// relation cannot be determined at compile time (due to unknown types.)
@@ -257,7 +245,7 @@ define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
     instance?(type2, <unknown-ctype>) => values(#f, #f);
       
     otherwise =>
-      let (memo-val, memo-win) = memo2-lookup(type1, type2, csubtype-memo);
+      let (memo-val, memo-win) = memo2-lookup(type1, type2, $csubtype-memo);
       if (memo-val == #"miss")
 	let val =
 	  case
@@ -269,7 +257,7 @@ define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
 	      csubtype-dispatch(type1, type2);
 	  end case;
 
-	memo2-enter(type1, type2, val, #t, csubtype-memo);
+	memo2-enter(type1, type2, val, #t, $csubtype-memo);
 	values(val, #t);
       else
 	values(memo-val, memo-win);
@@ -347,7 +335,7 @@ define method ctype-intersection-dispatch(type1 :: <ctype>, type2 :: <ctype>)
 end method;
 
 
-define variable intersection-memo = make-memo2-table();
+define constant $intersection-memo :: <memo-table> = make-memo2-table();
 
 ///    Return as restrictive a type as we can discover that is no more
 /// restrictive than the intersection of Type1 and Type2.  The second value is
@@ -362,7 +350,7 @@ define constant ctype-intersection
 	values(type1, #t);
       else
 	let (memo-val, memo-win) = memo2-lookup(type1, type2,
-						intersection-memo);
+						$intersection-memo);
 	if (memo-val == #"miss")
 	  let (val, win) = 
 	    case
@@ -407,7 +395,7 @@ define constant ctype-intersection
 		values(res-union, win-int);
 	    end case;
 
-	  memo2-enter(type1, type2, val, win, intersection-memo);
+	  memo2-enter(type1, type2, val, win, $intersection-memo);
 	  values(val, win);
 	else
 	  values(memo-val, memo-win);
@@ -437,6 +425,53 @@ define constant ctypes-intersect? = method (type1 :: <ctype>, type2 :: <ctype>)
     end;
   end;
 end method;
+
+
+/// Difference.
+
+
+define constant $difference-memo :: <memo-table> = make-memo2-table();
+
+
+/// Return our best guess at the type that describes all objects that are in
+/// Type1 but not in Type2.  If we can't precisely determine this type, then
+/// return something more inclusive than it, but never more inclusive than
+/// type1.
+///
+define method ctype-difference (type1 :: <ctype>, type2 :: <ctype>)
+    => (result :: <ctype>, precise? :: <boolean>);
+  if (type1 == type2)
+    values(empty-ctype(), #t);
+  else
+    let (memo-val, memo-win) = memo2-lookup(type1, type2, $difference-memo);
+    if (memo-val == #"miss")
+      let (val, win)
+	= block (return)
+	    if (instance?(type1, <unknown-ctype>)
+		  | instance?(type2, <unknown-ctype>))
+	      return(type1, #f);
+	    end if;
+	    let result = empty-ctype();
+	    let precise? = #t;
+	    for (member in type1.members)
+	      unless (csubtype?(member, type2))
+		if (ctypes-intersect?(member, type2))
+		  precise? := #f;
+		end if;
+		result := ctype-union(result, member);
+	      end unless;
+	    end for;
+	    values(result, precise?);
+	  end block;
+      memo2-enter(type1, type2, val, win, $intersection-memo);
+      values(val, win);
+    else
+      values(memo-val, memo-win);
+    end if;
+  end if;
+end method ctype-difference;
+
+
 
 
 //// Union types:
@@ -559,8 +594,8 @@ define method table-protocol(table :: <union-table>)
 	 end method);
 end;
 
-define variable union-table = make(<union-table>);
-define variable union-memo = make-memo2-table();
+define constant $union-table :: <union-table> = make(<union-table>);
+define constant $union-memo :: <memo-table> = make-memo2-table();
 
 
 ///    Find a type which includes both types.  The result is an unknown type if
@@ -575,7 +610,7 @@ define variable union-memo = make-memo2-table();
 define constant ctype-union = method (type1 :: <ctype>, type2 :: <ctype>)
     => value :: <ctype>;
 
-  let (value, precise) = memo2-lookup(type1, type2, union-memo);
+  let (value, precise) = memo2-lookup(type1, type2, $union-memo);
   case 
     ~(value == #"miss") => value;
 
@@ -592,11 +627,11 @@ define constant ctype-union = method (type1 :: <ctype>, type2 :: <ctype>)
 	elseif (tail(canonical) == #())
 	  head(canonical)
 	else
-	  let found = element(union-table, canonical, default: #f);
+	  let found = element($union-table, canonical, default: #f);
 	  if (found)
 	    found
 	  else
-	    union-table[canonical] := make(<union-ctype>, members: canonical);
+	    $union-table[canonical] := make(<union-ctype>, members: canonical);
 	  end;
 	end;
       end method;
@@ -604,7 +639,7 @@ define constant ctype-union = method (type1 :: <ctype>, type2 :: <ctype>)
       let res = frob(
                  canonicalize-union(
  		  concatenate(type1.members, type2.members)));
-      memo2-enter(type1, type2, res, #t, union-memo);
+      memo2-enter(type1, type2, res, #t, $union-memo);
       res;
   end;
 end method;
@@ -1115,7 +1150,9 @@ end;
 define class <byte-character-ctype> (<limited-ctype>, <ct-value>)
 end;
 
-define variable *byte-character-ctype-memo* = #f;
+define variable *byte-character-ctype-memo*
+    :: false-or(<byte-character-ctype>)
+  = #f;
 
 define method make
     (class == <byte-character-ctype>, #next next-method, #key base-class)
@@ -1483,10 +1520,10 @@ end method;
 
 //// Accessors.
 
-define variable *wild-ctype-memo* = #f;
+define variable *wild-ctype-memo* :: false-or(<multi-value-ctype>) = #f;
 
 define constant wild-ctype
-  = method ()
+  = method () => res :: <multi-value-ctype>;
       *wild-ctype-memo*
 	| (*wild-ctype-memo*
 	     := make(<multi-value-ctype>,
@@ -1495,38 +1532,38 @@ define constant wild-ctype
 		     min-values: 0));
     end;
 
-define variable *object-ctype-memo* = #f;
+define variable *object-ctype-memo* :: false-or(<ctype>) = #f;
 
 define constant object-ctype
-  = method ()
+  = method () => res :: <ctype>;
       *object-ctype-memo*
 	| (*object-ctype-memo*
 	     := dylan-value(#"<object>") | error("<object> undefined?"));
     end;
 
-define variable *function-ctype-memo* = #f;
+define variable *function-ctype-memo* :: false-or(<ctype>) = #f;
 
 define constant function-ctype
-  = method ()
+  = method () => res :: <ctype>;
       *function-ctype-memo*
 	| (*function-ctype-memo*
 	     := dylan-value(#"<function>") | error("<function> undefined?"));
     end;
 
-define variable *class-ctype-memo* = #f;
+define variable *class-ctype-memo* :: false-or(<ctype>) = #f;
 
 define constant class-ctype
-  = method ()
+  = method () => res :: <ctype>;
       *class-ctype-memo*
 	| (*class-ctype-memo*
 	     := dylan-value(#"<class>") | error("<class> undefined?"));
     end;
 
-define variable *empty-ctype-memo* = #f;
+define variable *empty-ctype-memo* :: false-or(<ctype>) = #f;
 
 // The empty-type (bottom) is the union of no members.
 define constant empty-ctype
-  = method ()
+    = method () => res :: <ctype>;
       *empty-ctype-memo*
 	| (*empty-ctype-memo* := make(<union-ctype>,
 				      members: #(),
