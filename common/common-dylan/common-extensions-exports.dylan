@@ -4,6 +4,7 @@ define library common-extensions
   use dylan;
   use melange-support;
   use format;
+  use streams;
   use standard-io;
 
   // Only import transcendentals if we have them.
@@ -58,6 +59,7 @@ define module common-extensions
     export: {remove-all-keys!};
   use c-support;
   use format;
+  use streams, import: { new-line, force-output };
   use standard-io;
 
   export

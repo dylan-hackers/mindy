@@ -148,7 +148,9 @@ end;
 define function debug-message
     (format-string, #rest format-arguments)
  => ()
-  format( *standard-error*, format-string, format-arguments );
+  apply(format, *standard-error*, format-string, format-arguments);
+  new-line(*standard-error*);
+  force-output(*standard-error*);
 end function;
 
 #if(mindy)
