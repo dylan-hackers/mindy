@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.102 1996/02/10 03:46:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.103 1996/02/12 20:14:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1616,9 +1616,11 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       leaf :: <definition-constant-leaf>,
 			       file :: <file-state>)
     => ();
-  let info = get-info-for(leaf.const-defn, file);
-  deliver-result(defines, info.backend-var-info-name,
-		  info.backend-var-info-rep, #f, file);
+  let defn = leaf.const-defn;
+  let info = get-info-for(defn, file);
+  let name = info.backend-var-info-name;
+  maybe-emit-prototype(name, defn, file);
+  deliver-result(defines, name, info.backend-var-info-rep, #f, file);
 end;
 
 define method emit-assignment (results :: false-or(<definition-site-variable>),
