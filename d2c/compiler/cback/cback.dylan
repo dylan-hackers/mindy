@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.130 1996/09/04 16:52:24 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.131 1996/10/02 19:18:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1233,10 +1233,12 @@ define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
       maybe-emit-entries(info.slot-init-value, file);
       maybe-emit-entries(info.slot-init-function, file);
     end if;
-    let getter = elem.slot-defn-getter;
-    check-generic-method-xep(getter, file);
-    let setter = elem.slot-defn-setter;
-    if (setter) check-generic-method-xep(setter, file) end if;
+    unless (elem.slot-defn-allocation == #"virtual")
+      let getter = elem.slot-defn-getter;
+      check-generic-method-xep(getter, file);
+      let setter = elem.slot-defn-setter;
+      if (setter) check-generic-method-xep(setter, file) end if;
+    end unless;
   end for;
 end method emit-tlf-gunk;
 
