@@ -38,7 +38,7 @@ extern int errno;			/* global error number */
 #endif
 
 #ifdef macintosh
-#include <errno.h>
+#include <cerrno>
 #endif
 
 #define	EPERM			1		/* Operation not permitted */
