@@ -393,6 +393,11 @@ define method write-declaration
 	   class-sealing(),
 	   decl.dylan-name,
 	   as(<byte-string>, apply(join, ", ", supers)));
+    if (melange-target == #"d2c")
+      format(stream, "define sealed domain make (singleton(%s));\n\n",
+	     decl.dylan-name)
+    end if;
+
     local method slot-accessors
 	      (end-offset :: <integer>, c-slot :: <declaration>)
 	   => (end-offset :: <integer>);
@@ -445,6 +450,10 @@ define method write-declaration
 	   class-sealing(),
 	   decl.dylan-name,
 	   as(<byte-string>, apply(join, ", ", supers)));
+    if (melange-target == #"d2c")
+      format(stream, "define sealed domain make (singleton(%s));\n\n",
+	     decl.dylan-name)
+    end if;
 
     // This may still be an "incomplete type".  If so, we define the class, but
     // don't write any slot accessors.
@@ -699,7 +708,7 @@ define method write-declaration
 
   if(melange-target = #"d2c")
     if (instance?(result-type.true-type, <pointer-rep-types>))
-      format(stream, "  let result-value = as(%s, result-value);\n",
+      format(stream, "  let result-value = make(%s, pointer: result-value);\n",
 	     result-type.dylan-name);
     end if;
   end if;
@@ -763,6 +772,10 @@ define method write-declaration
 	   class-sealing(),
 	   decl.dylan-name,
 	   as(<byte-string>, apply(join, ", ", supers)));
+    if (melange-target == #"d2c")
+      format(stream, "define sealed domain make (singleton(%s));\n\n",
+	     decl.dylan-name)
+    end if;
     // We will eventually want to declare a size.  However, since the
     // declarations sometimes lie about the true size, we must not do so until
     // we have adequate mechanisms for changing the default.
@@ -840,6 +853,10 @@ define method write-declaration
 	   class-sealing(),
 	   decl.dylan-name,
 	   as(<byte-string>, apply(join, ", ", supers)));
+    if (melange-target == #"d2c")
+      format(stream, "define sealed domain make (singleton(%s));\n\n",
+	     decl.dylan-name)
+    end if;
     format(stream,
 	   "define method pointer-value\n"
 	     "    (ptr :: %s, #key index = 0)\n => (result :: %s);\n  ",
