@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.9 2002/12/07 00:49:08 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.10 2002/12/20 19:35:00 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -592,6 +592,11 @@ define method build-ar-file (state :: <lid-mode-state>) => ();
 					    ar-name);
     format(state.unit-makefile, "\t%s\n", randomize-string);
   end if;
+
+  format(state.unit-clean-stream, " %s", state.unit-ar-name);
+  format(state.unit-real-clean-stream, " %s", state.unit-ar-name);
+  format(state.unit-makefile, "\nall-at-end-of-file : %s\n", 
+	 state.unit-ar-name);
 end method;
 
 
@@ -727,8 +732,9 @@ define method build-executable (state :: <lid-mode-state>) => ();
 
   let unit-libs = use-correct-path-separator(unit-libs, state.unit-target);
 
-  // Again, make sure inits.o and heap.o come first XXX old comment
-  let objects = format-to-string("%s %s", state.unit-ar-name, unit-libs);
+  let objects = format-to-string("%s %s", 
+                                 stream-contents(state.unit-objects-stream),
+                                 unit-libs);
 
   // rule to link executable
   format(state.unit-makefile, "\n%s : %s\n", state.unit-executable, objects);
@@ -739,10 +745,8 @@ define method build-executable (state :: <lid-mode-state>) => ();
 		       linker-args);
   format(state.unit-makefile, "\t%s\n", link-string);
 
-  format(state.unit-clean-stream, " %s %s", 
-	 state.unit-ar-name, state.unit-executable);
-  format(state.unit-real-clean-stream, " %s %s", 
-	 state.unit-ar-name, state.unit-executable);
+  format(state.unit-clean-stream, " %s", state.unit-executable);
+  format(state.unit-real-clean-stream, " %s", state.unit-executable);
   format(state.unit-makefile, "\nall-at-end-of-file : %s\n", 
 	 state.unit-executable);
 end method build-executable;
@@ -831,11 +835,11 @@ define method compile-library (state :: <lid-mode-state>)
       build-da-global-heap(state);
       build-inits-dot-c(state);
     end if;
-    build-ar-file(state);
     if (state.unit-executable)
       log-target(state.unit-executable);
       build-executable(state);
     else
+      build-ar-file(state);
       dump-library-summary(state);
     end if;
 
