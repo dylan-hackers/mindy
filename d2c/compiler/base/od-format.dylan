@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.14 1995/11/13 15:14:17 ram Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.15 1995/11/13 15:38:12 ram Exp $
 
 /*
 
@@ -1536,6 +1536,8 @@ end method;
 define class <end-object> (<object>) end;
 define /* exported */ constant $end-object = make(<end-object>);
 
+define constant $load-debug = #t;
+
 
 // Start loading some objects from a load-state.  Dispatches to an appropriate
 // loader method depending on the dispatcher and the entry type.  Returns the
@@ -1588,15 +1590,19 @@ let res =
     select (logand(flags, $odf-etype-mask))
      $odf-object-definition-etype =>
        assert(code < $dispatcher-table-size);
-       let name = find-key(*object-id-registry*, method (x) code = x end);
+//let name = find-key(*object-id-registry*, method (x) code = x end);
 //dformat("Calling loader for %=\n", name);
+if ($load-debug)
        let orig-stack = state.load-stack;
        block ()
-	 state.load-stack := pair(name, orig-stack);
+	 state.load-stack := pair(code, orig-stack);
 	 state.dispatcher.table[code](state);
        cleanup
 	 state.load-stack := orig-stack;
        end;
+else
+       state.dispatcher.table[code](state);
+end if;
 
      $odf-end-entry-etype =>
        $end-object;
