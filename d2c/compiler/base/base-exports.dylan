@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.1 1998/05/03 19:55:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.2 1998/05/11 17:38:19 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -443,12 +443,14 @@ define module platform
     object-filename-suffix,
     library-filename-prefix,
     library-filename-suffix,
+    shared-library-filename-suffix,
     executable-filename-suffix,
 
     compile-c-command,
     default-c-compiler-flags,
     assembler-command,
     link-library-command,
+    link-shared-library-command,
     link-executable-command,
     link-executable-flags,
     make-command,
