@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.29 2002/11/24 13:52:36 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.30 2002/12/02 11:17:43 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -351,6 +351,8 @@ define module magic
 	     slot-name,
 	     slot-type,
 	     slot-type-setter,
+             slot-getter,
+             slot-representation,
 	     slow-functional-==,
 	     throw,
 	     type-error,

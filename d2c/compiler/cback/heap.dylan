@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.36 2002/09/11 11:21:40 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.37 2002/12/02 11:17:43 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -1123,6 +1123,10 @@ define method spew-object
 		  unless (instance?(object.slot-type, <unknown-ctype>))
 		    object.slot-type;
 		  end,
+                slot-getter:
+                  object.slot-getter & 
+                  object.slot-getter.variable-definition &
+                  object.slot-getter.variable-definition.ct-value,
 		slot-init-function:
 		  if (instance?(object.slot-init-function, <ct-value>))
 		    object.slot-init-function;

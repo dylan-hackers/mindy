@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.6 2001/07/07 17:10:45 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/class.dylan,v 1.7 2002/12/02 11:17:43 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -145,10 +145,12 @@ define class <slot-descriptor> (<object>)
   slot slot-deferred-type :: type-union(<false>, <function>),
     required-init-keyword: deferred-type:;
   //
+*/
   // The getter generic function.  Also used to identify the slot.
   constant slot slot-getter :: <generic-function>,
     required-init-keyword: getter:;
   //
+/*
   // The method added to that generic function, or #f if it either hasn't
   // beed added yet or isn't going to be added ('cause of virtual allocation).
   slot slot-getter-method :: type-union(<false>, <method>),
