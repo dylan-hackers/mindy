@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.38 1996/02/16 03:49:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.39 1996/02/16 18:05:32 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -556,12 +556,26 @@ end;
 define generic defer-for-global-heap? (object :: <ct-value>, state :: <state>)
     => defer? :: <boolean>;
 
-// By default, we dump everything now.
-// 
+// If we are building the global heap, we can't go defering anything any
+// further.
+//
 define method defer-for-global-heap?
-    (object :: <ct-value>, state :: <state>)
+    (object :: <ct-value>, state :: <global-state>)
     => defer? :: <boolean>;
   #f;
+end method defer-for-global-heap?;
+
+// By default, we defer anything defined externally.  We do this under the
+// assumption that nobody would have gone out of their way to use external
+// references for some object unless it was critical that there be exactly
+// one copy.  For us to be able to guarantee that there be exactly one copy,
+// we either need to dump it in the heap for the library defining the object
+// or in the global heap.
+// 
+define method defer-for-global-heap?
+    (object :: <ct-value>, state :: <local-state>)
+    => defer? :: <boolean>;
+  object.defined-externally?;
 end method defer-for-global-heap?;
 
 // Symbols, on the other hand, must always be defered so we can correctly
@@ -581,15 +595,6 @@ define method defer-for-global-heap?
     (object :: <ct-open-generic>, state :: <local-state>)
     => defer? :: <boolean>;
   #t;
-end method defer-for-global-heap?;
-
-// Sealed generics only have to be defered if we arn't dumping them where
-// defined.
-//
-define method defer-for-global-heap?
-    (object :: <ct-sealed-generic>, state :: <local-state>)
-    => defer? :: <boolean>;
-  object.defined-externally?;
 end method defer-for-global-heap?;
 
 // Open classes must be defered because they must be populated with any
