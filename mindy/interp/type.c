@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.26 1996/03/19 23:45:12 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.27 1996/03/20 04:54:59 wlott Exp $
 *
 * This file implements the type system.
 *
@@ -1353,4 +1353,6 @@ void init_type_functions(void)
 		    dylan_lim_int_max);
     define_function("union-members", list1(obj_UnionClass), FALSE, obj_False,
 		    FALSE, obj_ListClass, dylan_union_members);
+
+    define_constant("<never-returns>", make_union(obj_Nil));
 }
