@@ -297,9 +297,18 @@ end class <basic-sheet>;
 
 //- Class slots
 define constant <basic-sheet>-%help-contexts = make(<table>, weak: #"key");
-define method %help-contexts( class :: <basic-sheet> ) => ( result :: <table> ) %help-contexts end;
+define method %help-contexts
+    ( class :: <basic-sheet> )
+ => ( result :: <table> )
+  <basic-sheet>-%help-contexts;
+end;
+
 define constant <basic-sheet>-%help-sources = make(<table>, weak: #"key");
-define method %help-sources( class :: <basic-sheet> ) => ( result :: <table> ) %help-contexts end;
+define method %help-sources
+    (class :: <basic-sheet>)
+ => (result :: <table>)
+  <basic-sheet>-%help-sources;
+end;
 
 define method initialize (sheet :: <sheet>, #key parent)
   next-method();
