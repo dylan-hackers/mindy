@@ -2,7 +2,7 @@ module: Dylan-user
 author: Ben Folk-Williams, bfw@cmu.edu and David Watson, dwatson@cmu.edu
 synopsis: The Time library definitions.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.1 1996/07/23 16:03:09 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.2 1996/07/29 18:32:53 dwatson Exp $
  
 //======================================================================
 //
@@ -29,21 +29,23 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.
 //
 //======================================================================
 
-
 define library Time
   use Dylan;
   use String-extensions;
+
   export Time;
   export Time-IO;
 end library Time;
 
-define module Time
+define module time-internal
   use Dylan;
+  use Extern;
   use Extensions;
   use System;
   use Character-type;
 
   export
+    // For the Time module
     // Constants
     $default-time,
     <universal-time>,
@@ -75,16 +77,27 @@ define module Time
     get-decoded-time,
     decode-time,
     encode-time,
-    encodable-time?;
+    encodable-time?,
+
+    // For the Time-IO module
+    string-parse-time,
+    string-format-time;
+end module time-internal;
+
+define module Time
+  use time-internal,
+    import: {$default-time, <universal-time>,
+	     <seconds>, <minutes>, <hours>, <day-of-week>, <day-of-month>,
+	     <month>, <year>, <timezone>,
+	     <decoded-time>, seconds, minutes, hours, day-of-week,
+	     day-of-month, month, year, timezone, daylight-savings-time?,
+	     get-universal-time, get-decoded-time, decode-time,
+	     encode-time, encodable-time?},
+    export: all;
 end module Time;
 
 define module Time-IO
-  use Dylan;
-  use Time;
-  use Extern;
-
-  export
-    // Functions
-    string-parse-time,
-    string-format-time;
+  use time-internal,
+    import: {string-parse-time, string-format-time},
+    export: all;
 end module Time-IO
