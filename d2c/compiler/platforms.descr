@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.52 2002/07/31 20:29:19 brent Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.53 2002/08/07 14:38:23 andreas Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -80,6 +80,7 @@ platform-name:			x86
 inherit-from:			32-bit
 default-features:		compiled-for-x86
 big-endian?:			#f
+long-double-size:		12
 
 // SPARC:
 platform-name:			sparc
@@ -253,6 +254,13 @@ randomize-library-command:      	ranlib %s
 platform-name:				openbsd
 inherit-from:				generic-unix
 default-features:			compiled-for-openbsd
+make-command:                   	gmake
+randomize-library-command:      	ranlib %s
+
+// NetBSD:
+platform-name:				netbsd
+inherit-from:				generic-unix
+default-features:			compiled-for-netbsd
 make-command:                   	gmake
 randomize-library-command:      	ranlib %s
 
@@ -474,10 +482,13 @@ path-separator:        		/
 platform-name:			x86-linux-gcc
 inherit-from:			gcc linux x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
-long-double-size:		12
 
 platform-name:			x86-bsdi-gcc
 inherit-from:			gcc bsdi x86
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+
+platform-name:			x86-netbsd-gcc
+inherit-from:			gcc netbsd x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			x86-beos-gcc
