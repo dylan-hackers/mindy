@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.30 2002/01/23 06:30:40 bruce Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.31 2002/02/19 22:23:40 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -569,7 +569,7 @@ sub parse_dylan_header {
         # Also, Perl handles all newline hassles by turning win32
         # style CRLFs into LFs (\n's) before it shows us the string.
 	
-        if ($target_name eq 'x86-cygnus-gcc') {
+        if ( ($target_name eq 'x86-cygnus-gcc') || ($target_name eq 'x86-win32-vc')) {
             $_ =~ s/\r//g;      # Get rid of bogus carriage returns
         }
 
@@ -623,7 +623,7 @@ sub parse_lid_file {
     while (<LIDFILE>) {
         $lidfile_line = $lidfile_line + 1;
 
-        if ($target_name eq 'x86-cygnus-gcc') {
+        if ( ($target_name eq 'x86-cygnus-gcc') || ($target_name eq 'x86-win32-vc')) {
             $_ =~ s/\r//g;      # Get rid of bogus carriage returns
         }
 
