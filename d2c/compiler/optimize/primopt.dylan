@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.4 2001/06/22 07:28:43 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.5 2001/07/24 06:20:37 housel Exp $
 copyright: see below
 
 
@@ -113,7 +113,7 @@ define-primitive-transformer
      let assign = primitive.dependents.dependent;
      let defns = assign.defines;
      unless (defns & instance?(defns.var-info, <values-cluster-info>))
-       // Assigning to a bunch of discreet variables.  Replace the assignment
+       // Assigning to a bunch of discrete variables.  Replace the assignment
        // with individual assignments for each value.
        let builder = make-builder(component);
        let next-var = #f;
