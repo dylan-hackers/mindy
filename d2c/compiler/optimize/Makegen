@@ -36,7 +36,8 @@ OBJS = \
 	funcopt.dbc \
 	primopt.dbc \
 	trans.dbc \
-	constraint.dbc
+	constraint.dbc \
+	typeinf.dbc
 
 optimizelib.dbc: ${OBJS}
 	cat $^ > $@
