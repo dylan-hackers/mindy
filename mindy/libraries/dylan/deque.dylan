@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.2 1994/03/30 06:07:23 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.3 1994/04/12 21:50:20 rgs Exp $
 //
 // This file contains definitions of classes and functions for the Dylan
 // deque collection class.  The data structure used for deque is a
@@ -58,7 +58,11 @@ end class <deque-element>;
 /// DEQUE-HEAD and DEQUE-TAIL must both be #f.  This invariant must always
 /// be preserved by the deque functions.
 ///
-define class <deque> (<mutable-sequence>)
+define class <deque> (<stretchy-collection>, <mutable-sequence>)
+  slot size :: <integer>,
+    setter: deque-size-setter,
+    init-value: 0,
+    init-keyword: size:;
   slot deque-head, init-value: #f;
   slot deque-tail, init-value: #f;
 end class <deque>;
@@ -98,8 +102,9 @@ define constant $deque-fill-default$ = #f;
 ///
 define method initialize(deque :: <deque>,
 			 #key data, size = 0, fill = $deque-fill-default$)
-  deque-head(deque) := #f;
-  deque-tail(deque) := #f;
+//  deque.deque-head := #f;
+//  deque.deque-tail := #f;
+  deque.deque-size := size;
   if (data)
     for (element in data)
       push-last(deque, element);
@@ -210,6 +215,7 @@ define method drop!(deque :: <deque>, element :: <deque-element>)
       prev-deque-element(next-deque-element(element)) :=
 	 prev-deque-element(element);
   end case;
+  deque.deque-size := size(deque) - 1;
   deque;
 end method drop!;
 
@@ -233,6 +239,7 @@ define method push (deque :: <deque>, new)
       prev-deque-element(deque-head(deque)) := new-element;
       deque-head(deque) := new-element;
   end case;
+  deque.deque-size := size(deque) + 1;
   deque;
 end method push;
 
@@ -247,11 +254,13 @@ define method pop(deque :: <deque>)
       error("POP:  deque empty.");
     deque-head(deque) == deque-tail(deque) =>
       let first-element = deque-head(deque);
+      deque.deque-size := 0;
       deque-head(deque) := #f;
       deque-tail(deque) := #f;
       deque-element-data(first-element);
     otherwise =>
       let first-element = deque-head(deque);
+      deque.deque-size := size(deque) - 1;
       deque-head(deque) := next-deque-element(first-element);
       prev-deque-element(deque-head(deque)) := #f;
       deque-element-data(first-element);
@@ -274,6 +283,7 @@ define method push-last(deque :: <deque>, new)
       next-deque-element(deque-tail(deque)) := new-element;
       deque-tail(deque) := new-element;
   end case;
+  deque.deque-size := size(deque) + 1;
   deque;
 end method push-last;
 
@@ -287,11 +297,13 @@ define method pop-last(deque :: <deque>)
       error("POP-LAST:  deque empty.");
     deque-head(deque) == deque-tail(deque) =>
       let last-element = deque-tail(deque);
+      deque.deque-size := 0;
       deque-head(deque) := #f;
       deque-tail(deque) := #f;
       deque-element-data(last-element);
     otherwise =>
       let last-element = deque-tail(deque);
+      deque.deque-size := size(deque) - 1;
       deque-tail(deque) := prev-deque-element(last-element);
       next-deque-element(deque-tail(deque)) := #f;
       deque-element-data(last-element);
@@ -332,8 +344,52 @@ define method size-setter(n :: <integer>, deque :: <deque>) => <integer>;
   else
     for (i from 0 below n - s) push-last(deque, $deque-fill-default$) end for;
   end if;
-  n;
+  deque.deque-size := n;
 end method size-setter;
+
+/// Since we can traverse from either end, we check to see which end is closer
+/// to the desired element and take that as our starting point.
+///
+define method element(deque :: <deque>, key :: <integer>,
+		      #key default = no_default) => <object>;
+  let sz = deque.size;
+  if (key < 0 | key >= sz)
+    if (default == no_default) error("No such element in ~S: ~S", deque, key)
+    else default
+    end if;
+  elseif (key + key > sz)	// closer to end than start
+    for (cur_key from sz - 1 above key,
+	 state = deque.deque-tail then state.prev-deque-element)
+    finally state.deque-element-data
+    end for;
+  else
+    for (cur_key from 0 below key,
+	 state = deque.deque-head then state.next-deque-element)
+    finally state.deque-element-data
+    end for;
+  end if;
+end method element;
+
+define method element-setter(value, deque :: <deque>, key :: <integer>)
+  let sz = deque.size;
+  if (key < 0)
+    error("No such element in ~S: ~S", deque, key)
+  elseif (key >= sz)
+    size(deque) := key + 1;
+  end if;
+    
+  if (key + key > sz)		// closer to end than start
+    for (cur_key from sz - 1 above key,
+	 state = deque.deque-tail then state.prev-deque-element)
+    finally state.deque-element-data := value;
+    end for;
+  else
+    for (cur_key from 0 below key,
+	 state = deque.deque-head then state.next-deque-element)
+    finally state.deque-element-data := value;
+    end for;
+  end if;
+end method element-setter;
 
 /// map-as -- public
 ///
@@ -407,6 +463,23 @@ define method map-as(cls == <deque>, proc :: <function>,
       next-method();
   end case;
 end map-as;
+
+define method map-into(destination :: <deque>,
+		       proc :: <function>, sequence :: <sequence>,
+		       #next next_method, #rest more_sequences)
+  if (empty?(more_sequences))
+    for (elem in sequence,
+	 state = destination.deque-head then state & state.next-deque-element)
+      if (state) state.deque-element-data := proc(elem)
+      else push-last(destination, proc(elem))
+      end if;
+    end for;
+    destination;
+  else
+    next_method();
+  end if;
+end method map-into;
+
 
 
 //// Sequence Function Methods

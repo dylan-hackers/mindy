@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.6 1994/04/06 17:45:28 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.7 1994/04/12 21:50:04 rgs Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -162,6 +162,7 @@ define method map-into(destination :: <mutable-collection>, proc :: <function>,
     for (key in keys)
       destination[key] := proc(coll[key]);
     end for;
+    destination;
   else
     let keys = intersection(reduce(rcurry(intersection, test: \=),
 				   key-sequence(coll),
@@ -171,8 +172,8 @@ define method map-into(destination :: <mutable-collection>, proc :: <function>,
       destination[key] := apply(proc, coll[key],
 				map(rcurry(element, key), more_collections));
     end for;
+    destination;
   end if;
-  destination;
 end method map-into;
 
 define method any?(proc :: <function>, collection :: <collection>,
@@ -433,14 +434,14 @@ define method map-into(destination :: <mutable-sequence>, proc :: <function>,
 		       sequence :: <sequence>,
 		       #next next-method, #rest more_sequences)
   if (empty?(more_sequences))
-      let (res_init, res_limit, res_next, res_done?, res_key, res_elem,
-	   res_elem-setter) = forward-iteration-protocol(destination);
-      for (element in sequence,
-	   res_state = res_init then res_next(destination, res_state),
-	   until res_done?(destination, res_state, res_limit))
-	res_elem(destination, res_state) := proc(element);
-      end for;
-      destination;
+    let (res_init, res_limit, res_next, res_done?, res_key, res_elem,
+	 res_elem-setter) = forward-iteration-protocol(destination);
+    for (element in sequence,
+	 res_state = res_init then res_next(destination, res_state),
+	 until res_done?(destination, res_state, res_limit))
+      res_elem(destination, res_state) := proc(element);
+    end for;
+    destination;
   else
     next_method();
   end if;
@@ -526,14 +527,17 @@ end method add-new!;
 
 define method remove(sequence :: <sequence>, value,
 		     #key test = \==, count) => <sequence>;
-  let result = make(<deque>);
-  for (elem in sequence)
-    if (count = 0 | ~test(elem, value))
-      push-last(result, elem);
-      if (count) count := count - 1 end if;
-    end if;
+  for (result = #() then if (count = 0)
+			   pair(elem, result);
+			 elseif (~test(elem, value))
+			   if (count) count := count - 1 end if;
+			   pair(elem, result);
+			 else result
+			 end if,
+       elem in sequence)
+  finally
+    as(class-for-copy(sequence), reverse!(result));
   end for;
-  as(class-for-copy(sequence), result);
 end remove;
 
 define method remove!(sequence :: <sequence>, value,
@@ -602,20 +606,22 @@ end method remove!;
 
 define method choose(predicate :: <function>,
 		     sequence :: <sequence>) => <sequence>;
-  let result = make(<deque>);
-  for (elem in sequence)
-    if (predicate(elem)) push-last(result, elem) end if;
+  for (result = #() then if (predicate(elem)) pair(elem, result)
+			 else result
+			 end if,
+       elem in sequence)
+  finally as(class-for-copy(sequence), reverse!(result));
   end for;
-  as(class-for-copy(sequence), result);
 end choose;
 
 define method choose-by(predicate :: <function>, test_seq :: <sequence>,
 			value_seq :: <sequence>) => <sequence>;
-  let result = make(<deque>);
-  for (value_elem in value_seq, test_elem in test_seq)
-    if (predicate(test_elem)) push-last(result, value_elem) end if;
+  for (result = #() then if (predicate(test_elem)) pair(value_elem, result)
+			 else result
+			 end if,
+       value_elem in value_seq, test_elem in test_seq)
+  finally as(class-for-copy(value_seq), reverse!(result));
   end for;
-  as(class-for-copy(sequence), result);
 end method;
 
 define method intersection(sequence1 :: <sequence>, sequence2 :: <sequence>,
@@ -638,13 +644,14 @@ end method difference;
 
 define method remove-duplicates(sequence :: <sequence>,
 				#key test = \==) => <sequence>;
-  let result = make(<deque>);
-  for (element in sequence)
-    if (~member?(element, result, test: method (a, b) test(b, a) end method))
-      push-last(result, element);
-    end if;
+  local method true_test(a, b) test(b, a) end method;
+  for (result = #() then if (~member?(element, result, test: true_test))
+			   pair(element, result);
+			 else result
+			 end if,
+       element in sequence)
+  finally as(class-for-copy(sequence), reverse!(result));
   end for;
-  as(class-for-copy(sequence), result);
 end method remove-duplicates;
 
 define method remove-duplicates!(sequence :: <sequence>,
@@ -808,3 +815,65 @@ define method subsequence-position(big :: <sequence>, pattern :: <sequence>,
 	   pat-copy-state(pattern, pat-init-state), count);
   end if;
 end method subsequence-position;
+
+// Stretchy collections -- se Design Note #27
+define abstract class <stretchy-collection> (<collection>) end class;
+
+define method map-into(destination :: <stretchy-collection>,
+		       proc :: <function>, coll :: <collection>,
+		       #rest more_collections) => <stretchy-collection>;
+  if (~instance?(destination, <mutable-collection>))
+    error("~S is not a mutable collection.", destination);
+  elseif (empty?(more_collections))
+    for (key in key-sequence(destination))
+      destination[key] := proc(coll[key]);
+    end for;
+  else
+    let keys = reduce(rcurry(intersection, test: \=), key-sequence(coll),
+		      map(key-sequence, more_collections));
+    for (key in keys)
+      destination[key] := apply(proc, coll[key],
+				map(rcurry(element, key), more_collections));
+    end for;
+  end if;
+  destination;
+end method map-into;
+
+// We must define this method or the above method will be ambiguous with the
+// "<mutable-sequence>" method.
+define method map-into(destination :: <stretchy-collection>,
+		       proc :: <function>, sequence :: <sequence>,
+		       #rest more_sequences)
+  if (~instance?(destination, <mutable-collection>))
+    error("~S is not a mutable collection.", destination);
+  elseif (empty?(more_sequences))
+    let (res_init, res_limit, res_next, res_done?, res_key, res_elem,
+	 res_elem-setter) = forward-iteration-protocol(destination);
+    let (src_init, src_limit, src_next, src_done?, src_key, src_elem)
+      = forward-iteration-protocol(sequence);
+    for (key from 0,
+	 src_state = src_init then src_next(sequence, src_state),
+	 res_state = res_init then res_next(destination, res_state),
+	 until src_done?(sequence, src_state, src_limit) |
+	   res_done?(destination, res_state, res_limit))
+      res_elem(destination, res_state) := proc(src_elem(sequence, src_state));
+    finally
+      for (key from key,
+	   src_state = src_state then src_next(sequence, src_state),
+	   until src_done?(sequence, src_state, src_limit))
+	destination[key] := proc(src_elem(sequence, src_state));
+      end for;
+    end for;
+    destination;
+  else
+    // Duplicated code from "<collection>" method, to avoid next-method
+    // ambiguity. 
+    let keys = reduce(rcurry(intersection, test: \=), key-sequence(sequence),
+		      map(key-sequence, more_sequences));
+    for (key in keys)
+      destination[key] := apply(proc, sequence[key],
+				map(rcurry(element, key), more_sequences));
+    end for;
+    destination;
+  end if;
+end method map-into;

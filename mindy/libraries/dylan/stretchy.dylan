@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.5 1994/04/07 19:03:44 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.6 1994/04/12 21:50:25 rgs Exp $
 //
 //  This file implements stretchy-vectors.
 //
@@ -19,7 +19,7 @@ module: dylan
 
 //// <stretchy-vector>
 
-define class <stretchy-vector> (<vector>)
+define class <stretchy-vector> (<stretchy-collection>, <vector>)
   //
   // No slots in the abstract class <stretchy-vector>
 end class <stretchy-vector>;
@@ -122,10 +122,13 @@ end method element;
 
 define method element-setter(value, ssv :: <simple-stretchy-vector>,
 			     key :: <integer>)
-  if (key >= 0 & key < size(ssv))
-    ssv-data(ssv)[key] := value;
-  else
+  if (key < 0)
     error("Element ~S not in ~S", key, ssv);
+  else
+    if (key >= size(ssv))
+      size(ssv) := key + 1;
+    end if;
+    ssv-data(ssv)[key] := value;
   end if;
 end method element-setter;
 
@@ -203,3 +206,19 @@ define method remove!(ssv :: <simple-stretchy-vector>, elem,
   end unless;
   ssv;
 end method remove!;
+
+define method map-into(destination :: <stretchy-vector>,
+		       proc :: <function>, sequence :: <sequence>,
+		       #next next_method, #rest more_sequences)
+  if (empty?(more_sequences))
+    let sz = size(sequence);
+    if (sz > size(destination)) size(destination) := sz end if;
+    let data = ssv-data(destination);
+    for (key from 0, elem in sequence)
+      destination[key] := proc(elem);
+    end for;
+    destination;
+  else
+    next_method();
+  end if;
+end method map-into;
