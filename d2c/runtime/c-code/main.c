@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.14 2001/03/29 21:58:10 bruce Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.15 2001/05/31 20:04:24 housel Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -23,14 +23,6 @@ void not_reached(void)
 void real_main(int argc, char *argv[])
 {
     descriptor_t *sp = allocate_stack();
-
-    // Set up some custom gc settings
-    GC_free_space_divisor = 3;  // faster but uses more memory -- make switchable?
-    GC_expand_hp(25*1024*1024); // d2c *always* uses more than 25 MB!
-    GC_use_entire_heap = 0; // [default 0] Uses less mem AND faster
-
-    // this saves a lot of space, but slows d2c by 40%
-    // GC_enable_incremental();
 
     /* Remember our arguments so we can support Harlequin-style
        application-name and application-arguments functions. Once we
