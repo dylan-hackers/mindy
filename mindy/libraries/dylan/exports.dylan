@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.86 1996/02/23 21:55:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.87 1996/03/07 18:00:49 nkramer Exp $
 
 //======================================================================
 //
@@ -56,7 +56,8 @@ define module Builtin-Stuff
     <object>,
     <pair>,
     <ratio>, <rational>, <real>,
-    <sequence>, <simple-object-vector>, <single-float>, <singleton>,
+    <sequence>, <simple-vector>, <simple-object-vector>,
+    <single-float>, <singleton>,
     <slot-descriptor>, <spinlock>, <string>, <subclass>, <symbol>,
     <thread>, <true>, <type>,
     <unicode-string>, <union>,
@@ -94,7 +95,8 @@ define module Builtin-Stuff
     slot-value-setter, sorted-applicable-methods, spawn-thread, state-valid?,
     subclass-of, subtype?, system, symbol-hash,
     tail, tail-setter, truncate, truncate/,
-    union, union-members,
+    // union, 
+    union-members,
     values, vector,
     wait-for-event, weak-pointer-object,
     fd-close, fd-error-string, fd-input-available?, fd-open,
@@ -156,7 +158,8 @@ define module Dylan
 	     <object>,
 	     <pair>,
 	     <ratio>, <rational>, <real>,
-	     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
+	     <sequence>, <simple-vector>, <simple-object-vector>, 
+	     <single-float>, <singleton>,
 	     <string>, <symbol>,
 	     <type>,
 	     <unicode-string>,
@@ -184,7 +187,7 @@ define module Dylan
 	     singleton, size, slot-initialized?, sorted-applicable-methods,
 	     subtype?,
 	     table-protocol, tail, tail-setter, truncate, truncate/,
-	     union,
+//	     union,
 	     values, vector};
   use extras;
   export
@@ -224,6 +227,7 @@ define module Dylan
     subsequence-position,
     third, third-setter, type-error-value,
     type-error-expected-type, type-union,
+    union,
     zero?;
   create
     <object-table>, <table>, object-hash;
