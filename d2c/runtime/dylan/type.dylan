@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.9 2003/03/28 00:30:37 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.10 2003/07/23 15:12:45 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -816,6 +816,14 @@ end;
 define method %instance? (object :: <class>, type :: <subclass>)
     => res :: <boolean>;
   %subtype?(object, type.subclass-of);
+end;
+
+// %instance?(singleton(<byte-character-type>),<subclass>)
+//   -- internal generic function method.
+//
+define method %instance? (object :: <byte-character-type>, type :: <subclass>)
+    => res :: <boolean>;
+  %subtype?(<character>, type.subclass-of);
 end;
 
 // %instance?(<object>,<limited-integer>) -- internal gf method.
