@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.111 2003/01/29 00:24:24 brent Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.112 2003/01/29 21:41:03 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -265,8 +265,8 @@ if test "$D2C" = no; then
 fi
 
 # Does the user explicitly want a bootstrap?
-AC_ARG_ENABLE(d2c-bootstrap,[\
-  --enable-d2c-bootstrap  Force a two-stage d2c bootstrap even if the
+AC_ARG_ENABLE(d2c-bootstrap,
+[  --enable-d2c-bootstrap  Force a two-stage d2c bootstrap even if the
                           bootstrap counts match.  This saves hacking
                           with main.dylan and configure.in every time
                           you want to test some little change in the
@@ -278,8 +278,8 @@ AC_ARG_ENABLE(mindy, [  --disable-mindy         Do not build Mindy])
 enable_mindy=${enable_mindy:-yes}
 
 # Did the user try to enable bootstrapping with Mindy?
-AC_ARG_ENABLE(mindy-bootstrap,[\
-  --enable-mindy-bootstrap
+AC_ARG_ENABLE(mindy-bootstrap,
+[  --enable-mindy-bootstrap
                           Bootstrap d2c with Mindy. This can easily take one
                           or more days, and is normally done only when porting
                           d2c to a new architecture for the first time. Trust
@@ -412,8 +412,8 @@ if test -d "$LOCAL_RUNTIME"; then
 fi
 
 # Process our --with-existing-runtime option.
-AC_ARG_WITH(existing-runtime,[\
-  --with-existing-runtime=RUNTIME_DIRECTORY
+AC_ARG_WITH(existing-runtime,
+[  --with-existing-runtime=RUNTIME_DIRECTORY
                           Look for the d2c runtime libraries in a different
                           place when bootstrapping. Defaults to
                           {prefix}/lib/dylan. This is only applicable when
@@ -465,8 +465,8 @@ You may need to specify the --with-existing-runtime option to configure; see
     ln -s "$existing_runtime_header" "$LOCAL_RUNTIME"
 fi
 
-AC_ARG_WITH(site-dylan,[\
-  --with-site-dylan-prefix=SITE_DYLAN_PREFIX
+AC_ARG_WITH(site-dylan-prefix,
+[  --with-site-dylan-prefix=SITE_DYLAN_PREFIX
                           Use this prefix for the site-local Dylan
                           directory. You might want to set this to
                           /usr/local if you install Gwydion Dylan in
@@ -513,14 +513,13 @@ AC_SUBST(GC_LIBS)
 #	Look for GTK+, set GTK_CFLAGS and GTK_LIBS
 #--------------------------------------------------------------------
 
-AC_ARG_WITH(gtk, [  --with-gtk               Dont compile the GTK and GLIB bindings],,with_gtk=yes)
+AC_ARG_WITH(gtk, [  --without-gtk           Disable the GTK and GLIB bindings],,with_gtk=yes)
 case $with_gtk in
 no)   HAVE_GTK=no
       ;;
 yes)  AM_PATH_GTK(1.2.0,HAVE_GTK=yes,HAVE_GTK=no)
       ;;
 esac
-AC_SUBST(with_gtk)
 AC_SUBST(HAVE_GTK)
 
 #--------------------------------------------------------------------
