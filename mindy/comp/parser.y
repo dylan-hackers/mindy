@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.20 1996/02/13 20:49:22 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.21 1996/02/13 20:53:39 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -1023,7 +1023,10 @@ keyword_parameter:
 		keyword_parameter_default
 	{ $$ = make_keyword_param($1, make_id($2), $3, $4); }
     |	keyword_opt variable_name LPAREN expression RPAREN
-	{ free($3); free($5);
+	{ fprintf(stderr, 
+		  "Warning (line %d): Write keyword defaults as foo: = val,"
+		  " not foo: (val)\n", $1->line);
+	  free($3); free($5);
 	  $$ = make_keyword_param($1, make_id($2), NULL, $4); }
 ;
 
