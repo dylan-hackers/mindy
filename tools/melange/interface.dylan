@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.11 1996/09/15 16:49:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/interface.dylan,v 1.12 1996/09/18 18:59:00 rgs Exp $
 
 //======================================================================
 //
@@ -382,6 +382,8 @@ end method process-clause;
 // High level processing routines for interface definitions
 //----------------------------------------------------------------------
 
+define variable target-switch :: <symbol> = #"all";
+
 // Process-parse-state does all necessary processing for the required
 // "#include" clause and invokes process clause for all other clauses in the
 // interface defintion.
@@ -420,10 +422,27 @@ define method process-parse-state
   let (#rest opts) = merge-container-options(state.container-options);
   for (decl in decls) apply(apply-options, decl, opts) end for;
 
-  let load-string = write-file-load(vector(full-name),
-				    state.object-files, decls, out-stream);
-  write-mindy-includes(state.mindy-include-file, decls);
-  do(rcurry(write-declaration, load-string, out-stream), decls);
+  if (target-switch ~= #"all")
+    melange-target := target-switch;
+    let load-string = write-file-load(vector(full-name),
+				      state.object-files, decls, out-stream);
+    write-mindy-includes(state.mindy-include-file, decls);
+    do(rcurry(write-declaration, load-string, out-stream), decls);
+  else
+    write(out-stream, "#if (mindy)\n");
+    melange-target := #"mindy";
+    let load-string = write-file-load(vector(full-name),
+				      state.object-files, decls, out-stream);
+    write-mindy-includes(state.mindy-include-file, decls);
+    do(rcurry(write-declaration, load-string, out-stream), decls);
+    write(out-stream, "#else\n");
+    melange-target := #"d2c";
+    let load-string = write-file-load(vector(full-name),
+				      state.object-files, decls, out-stream);
+    write-mindy-includes(state.mindy-include-file, decls);
+    do(rcurry(write-declaration, load-string, out-stream), decls);
+    write(out-stream, "#endif\n");
+  end if;
 end method process-parse-state;
   
 // Process-define-interface simply calls the parser in int-parse to decipher
@@ -474,12 +493,12 @@ define method main (program, #rest args)
       // This should allow specification of arbitrary targets, just in case
       //    I get lazy, and forget to add explicit switches for them.  It's
       //    certainly not the preferred way to do this.
-      melange-target := as(<symbol>, copy-sequence(arg, start:2));
+      target-switch := as(<symbol>, copy-sequence(arg, start:2));
     elseif (arg.first == '-')
       select (arg by \=)
-	"-mindy"   => melange-target := #"mindy"; // This is currently the
-	                                          //    default.
-	"-d2c"     => melange-target := #"d2c";
+	// default is #"all"
+	"-mindy"   => target-switch := #"mindy";
+	"-d2c"     => target-switch := #"d2c";
 	otherwise => error("Undefined switch -- \"%s\"", arg);
       end select;
     else
@@ -508,8 +527,10 @@ define method main (program, #rest args)
 	    "  -v\t\tShow progress using '.'s for each declaration and\n"
 	    "\t\t'[]' for recursive includes.\n"
 	    "  -I[directory]\tLook for #included files in this directory\n"
-	    "  -mindy\tGenerate code for Mindy [DEFAULT]\n"
-	    "  -d2c\t\tGenerate code for D2C\n");
+	    "  -Tall\t\tGenerate code for both Mindy and D2C [DEFAULT]\n"
+	    "  -mindy\tOnly generate code for Mindy\n"
+	    "  -d2c\t\tOnly generate code for D2C\n");
+    
     force-output(*standard-error*);
   end if;
 end method main;
