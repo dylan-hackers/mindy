@@ -64,36 +64,73 @@ define method optimize (component :: <component>,
   // By default, do nothing.
 end;
 
+define constant <side-effect-free-expr>
+  = type-or(<ssa-variable>, <constant>, <function-literal>);
 
 define method optimize (component :: <component>,
 			assignment :: <assignment>)
     => ();
   block (return)
-    let source = assignment.depends-on.source-exp;
+    local
+      method trim-unused-definitions (defn, new-tail) => ();
+	if (~defn)
+	  if (new-tail)
+	    new-tail.definer-next := #f;
+	  else
+	    assignment.defines := #f;
+	  end;
+	elseif (~defn.dependents & ~defn.needs-type-check?
+		  & instance?(defn, <ssa-variable>))
+	  trim-unused-definitions(defn.definer-next, new-tail);
+	else
+	  trim-unused-definitions(defn.definer-next, defn);
+	end;
+      end;
+    trim-unused-definitions(assignment.defines, #f);
+
+    let dependency = assignment.depends-on;
+    let source = dependency.source-exp;
     let source-type = source.derived-type;
     let defines = assignment.defines;
-/*
-    if (instance?(source, <ssa-variable>) | instance?(source, <constant>)
-	  | instance?(source, <function-literal>))
+
+    if (instance?(source, <side-effect-free-expr>))
       if (~defines)
-	remove-dependent(source, assignment);
+	remove-dependency(component, dependency);
 	let next = assignment.next-op;
 	let prev = assignment.prev-op;
-	if (next)
-	  next.prev-op := prev;
+	if (next | prev)
+	  if (next)
+	    next.prev-op := prev;
+	  else
+	    assignment.region.last-assign := prev;
+	  end;
+	  if (prev)
+	    prev.next-op := next;
+	  else
+	    assignment.region.first-assign := next;
+	  end;
 	else
-	  assignment.region.last-assign := prev;
-	end;
-	if (prev)
-	  prev.next-op := next;
-	else
-	  assignment.region.prev-assign := next;
+	  let region = assignment.region;
+	  replace-subregion(region.parent, region, make(<empty-region>));
 	end;
 	assignment.region := #f;
+	  
 	return();
+      else
+	maybe-propagate-copy(component, defines, source);
+	let next = defines.definer-next;
+	if (next)
+	  let false =
+	    make-literal-constant(make-builder(component),
+				  make(<literal-false>));
+	  for (var = next then var.definer-next,
+	       while: var)
+	    maybe-propagate-copy(component, var, false);
+	  end;
+	end;
       end;
     end;
-*/
+
     if (defines & instance?(defines.var-info, <values-cluster-info>))
       maybe-restrict-type(component, defines, source-type);
     else
@@ -121,6 +158,76 @@ define method optimize (component :: <component>,
   end;
 end;
 
+define method maybe-propagate-copy (component :: <component>,
+				    var :: <ssa-variable>,
+				    value :: <expression>)
+    => ();
+  // Change all references to this variable to be references to value
+  // instead.
+  let next = #f;
+  for (dep = var.dependents then next,
+       prev = #f then dep,
+       while: dep)
+    next := dep.source-next;
+
+    let dependent = dep.dependent;
+    if (okay-to-propagate?(dependent, value))
+      // Remove the dependency from the source.
+      if (prev)
+	prev.source-next := next;
+      else
+	var.dependents := next;
+      end;
+
+      // Link it into the new value.
+      dep.source-exp := value;
+      dep.source-next := value.dependents;
+      value.dependents := dep;
+
+      // Queue the dependent for reoptimization.
+      queue-dependent(component, dependent);
+    end;
+  end;
+  
+  // If we removed all the uses of var, queue var's defn for reoptimization.
+  unless (var.dependents)
+    queue-dependent(component, var.definer);
+  end;
+end;
+
+define method okay-to-propagate? (dependent :: <dependent-mixin>,
+				  value :: <expression>)
+    => res :: <boolean>;
+  #f;
+end;
+
+define method okay-to-propagate? (dependent :: <assignment>,
+				  value :: <expression>)
+    => res :: <boolean>;
+  #t;
+end;
+
+define method okay-to-propagate? (dependent :: union(<operation>, <if-region>),
+				  value :: <leaf>)
+    => res :: <boolean>;
+  #t;
+end;
+
+define method okay-to-propagate? (dependent :: <lambda>,
+				  value :: <abstract-variable>)
+    => res :: <boolean>;
+  #t;
+end;
+
+
+
+define method maybe-propagate-copy (component :: <component>,
+				    var :: <abstract-variable>,
+				    value :: <expression>)
+    => ();
+end;
+
+
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
   let deriver = element($primitive-type-derivers, primitive.name, default: #f);
@@ -139,6 +246,34 @@ define method optimize (component :: <component>, prologue :: <prologue>)
   end;
   maybe-restrict-type(component, prologue,
 		      make-values-ctype(as(<list>, types), #f));
+end;
+
+define method optimize (component :: <component>, lambda :: <lambda>)
+    => ();
+  let results = lambda.depends-on;
+  if (results)
+    let result = results.source-exp;
+    if (instance?(result.var-info, <values-cluster-info>))
+      let return-type = result.derived-type;
+      if (return-type.min-values == return-type.positional-types.size
+	    & return-type.rest-value-type == empty-ctype())
+
+	let builder = make-builder(component);
+	let num-results = return-type.min-values;
+	let temps = make(<list>, size: num-results);
+	for (remaining = temps then remaining.tail,
+	     until: remaining == #())
+	  remaining.head := make-local-var(builder, #"temp", object-ctype());
+	end;
+	let assign = result.definer;
+	build-assignment(builder, assign.policy, assign.source-location,
+			 temps, result);
+	remove-dependency(component, results);
+	make-operand-dependencies(builder, lambda, temps);
+	insert-after(assign, builder-result(builder));
+      end;
+    end;
+  end;
 end;
 
 
@@ -188,6 +323,7 @@ define method maybe-restrict-type (component :: <component>,
   if (var.needs-type-check?
 	& values-subtype?(type, var.var-info.asserted-type))
     var.needs-type-check? := #f;
+    queue-dependent(component, var.definer);
   end;
   next-method();
 end;
@@ -330,6 +466,51 @@ end;
 
 
 // FER editing stuff.
+
+
+define method remove-dependency
+    (component :: <component>, dependency :: <dependency>) => ();
+
+  // Remove the dependency from the source exp.
+  let source = dependency.source-exp;
+  for (dep = source.dependents then dep.source-next,
+       prev = #f then dep,
+       until: dep == dependency)
+  finally
+    if (prev)
+      prev.source-next := dep.source-next;
+    else
+      source.dependents := dep.source-next;
+    end;
+  end;
+
+  // If there are no more dependents on the source note that the source itself
+  // can maybe go away.
+  unless (source.dependents)
+    maybe-forget-source(component, source);
+  end;
+
+  // Remove the dependency from the dependent.
+  for (dep = dependency.dependent.depends-on then dep.dependent-next,
+       prev = #f then dep,
+       until: dep == dependency)
+    if (prev)
+      prev.dependent-next := dep.dependent-next;
+    else
+      dep.dependent.depends-on := dep.dependent-next;
+    end;
+  end;
+end;
+
+
+define method maybe-forget-source
+    (component :: <component>, var :: <ssa-variable>) => ();
+  queue-dependent(component, var.definer);
+end;
+
+define method maybe-forget-source
+    (component :: <component>, expr :: <expression>) => ();
+end;
 
 
 define method combine-regions
