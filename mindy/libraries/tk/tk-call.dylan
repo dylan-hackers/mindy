@@ -159,7 +159,13 @@ end method tk-as;
 // same time, all accesses to "call-back-table" must be protected via
 // "call-back-lock".
 //
-define constant call-back-table = make(<self-organizing-list>);
+
+// Performance trade-off.  If we are only doing "function-return" callbacks,
+// self-organizing lists are probably more efficient.  Unfortunately, this
+// can cause massive slow-downs if we have many callbacks.  At some point, we
+// should probably use separate tables, but for now, we'll just use tables.
+define constant call-back-table = make(<object-table>);
+
 define constant call-back-lock = make(<lock>);
 define variable call-back-index = 1;
 
