@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.26 1995/05/03 07:18:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.27 1995/05/05 08:50:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -436,30 +436,33 @@ define method build-let
 end method;
 
 
+define method constant-derived-type (value :: <ct-value>)
+    => res :: <ctype>;
+  ct-value-cclass(value);
+end;
+
+define method constant-derived-type (value :: <eql-ct-value>)
+    => res :: <ctype>;
+  make-canonical-singleton(value)
+end;
+
 define method make-literal-constant
     (builder :: <fer-builder>, value :: <ct-value>)
  => res :: <literal-constant>;
-  ignore(builder);
-  make(<literal-constant>, derived-type: ct-value-cclass(value), value: value);
+  let constants = builder.component.constants;
+  element(constants, value, default: #f)
+    | (element(constants, value)
+	 := make(<literal-constant>,
+		 derived-type: constant-derived-type(value),
+		 value: value));
 end method;
-
-define method make-literal-constant
-    (builder :: <fer-builder>, value :: <eql-ct-value>)
- => res :: <literal-constant>;
-  ignore(builder);
-  make(<literal-constant>, derived-type: make-canonical-singleton(value),
-       value: value);
-end method;
-
 
 define method make-definition-leaf
     (builder :: <fer-builder>, defn :: <abstract-constant-definition>)
  => res :: <leaf>;
-  ignore(builder);
   let value = ct-value(defn);
   if (instance?(value, <eql-ct-value>))
-    make(<literal-constant>, derived-type: make-canonical-singleton(value),
-	 value: value);
+    make-literal-constant(builder, value);
   elseif (value)
     make(<definition-constant-leaf>,
 	 derived-type: ct-value-cclass(value), const-defn: defn);
