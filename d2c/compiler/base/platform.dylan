@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.1 1998/05/03 19:55:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.2 1998/05/11 17:28:32 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -93,6 +93,9 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"library-filename-prefix";
   constant /* exported */ slot library-filename-suffix :: <byte-string>,
     required-init-keyword: #"library-filename-suffix";
+  // if this is defined, search for shared libraries
+  constant /* exported */ slot shared-library-filename-suffix :: false-or(<byte-string>) = #f,
+    init-keyword: #"shared-library-filename-suffix";
   constant /* exported */ slot executable-filename-suffix :: <byte-string>,
     required-init-keyword: #"executable-filename-suffix";
 
@@ -104,6 +107,9 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"assembler-command";
   constant /* exported */ slot link-library-command :: <byte-string>,
     required-init-keyword: #"link-library-command";
+  // if this is defined, we can build shared libraries
+  constant /* exported */ slot link-shared-library-command :: false-or(<byte-string>) = #f,
+    init-keyword: #"link-shared-library-command";
   constant /* exported */ slot link-executable-command :: <byte-string>,
     required-init-keyword: #"link-executable-command";
   constant /* exported */ slot link-executable-flags :: <byte-string>,
