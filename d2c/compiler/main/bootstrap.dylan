@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.22 1995/05/26 10:46:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.23 1995/05/26 11:21:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -401,6 +401,10 @@ define open generic %make-next-method-cookie
     => res :: union(<false>, <function>);
 define open generic as (class :: <class>, thing :: <object>)
     => result :: <object>;
+define open generic element
+    (collection :: <collection>, key, #key default) => element;
+define open generic element-setter
+    (new-value, collection :: <collection>, key);
 
 define open generic make-catcher (saved-state :: <raw-pointer>)
     => res :: <catcher>;
