@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.25 1994/10/28 18:53:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.26 1994/11/28 07:54:30 wlott Exp $
 *
 * This file implements the loader.
 *
@@ -263,11 +263,9 @@ static obj_t fop_header(struct load_info *info)
 
     if (major_version < file_MajorVersion)
 	error("Obsolete .dbc file: %s", make_byte_string(info->name));
-    if (major_version > file_MajorVersion)
-	error("Obsolete version of Mindy for %s", 
+    if (major_version > file_MajorVersion | minor_version > file_MinorVersion)
+	error("Obsolete version of Mindy for %s",
 	      make_byte_string(info->name));
-    if (minor_version < file_MinorVersion)
-	error("Obsolete .dbc file: %s", make_byte_string(info->name));
 
     check_size(info, sizeof(short), "short");
     check_size(info, sizeof(int), "int");
@@ -649,6 +647,20 @@ static obj_t fop_builtin_writable_value_cell(struct load_info *info)
 {
     return rawptr_obj(find_variable(module_BuiltinStuff, read_thing(info),
 				    TRUE, TRUE));
+}
+
+static obj_t fop_note_reference(struct load_info *info)
+{
+    int line = read_int(info);
+    obj_t var_obj = read_thing(info);
+    struct variable *var = obj_rawptr(var_obj);
+
+    if (var->ref_file == obj_False) {
+	var->ref_file = info->source_file;
+	var->ref_line = line;
+    }
+
+    return var_obj;
 }
 
 static obj_t read_component(struct load_info *info, int nconst, int nbytes)
@@ -1162,6 +1174,7 @@ void init_loader(void)
     opcodes[fop_WRITABLE_VALUE_CELL] = fop_writable_value_cell;
     opcodes[fop_BUILTIN_VALUE_CELL] = fop_builtin_value_cell;
     opcodes[fop_BUILTIN_WRITABLE_VALUE_CELL] = fop_builtin_writable_value_cell;
+    opcodes[fop_NOTE_REFERENCE] = fop_note_reference;
     opcodes[fop_SHORT_COMPONENT] = fop_short_component;
     opcodes[fop_COMPONENT] = fop_component;
     opcodes[fop_METHOD] = fop_method;
