@@ -91,5 +91,33 @@ To bootstrap d2c, you need several things:
 Once this process has been completed, everything is built from scratch and
 installed normally, using the d2c from step (5).
 
+Choosing a build scenario
+-------------------------
+
+  1) If the user chose --enable-mindy-bootstrap, choose the
+     BOOTSTRAPPING_WITH_MINDY scenario.
+  2) If the user specified --disable-d2c, choose MINDY_BUILD.
+  3) If we just performed a first stage build, choose SECOND_STAGE.
+  4) If d2c is installed in the user's path:
+
+     4a) Compare the bootstrap counters. If a bootstrap is required, choose
+         BOOTSTRAPPING_WITH_D2C.
+     4b) Check to see if we're cross-compiling. If so, choose
+         CROSS_COMPILING and warn the user.
+     4c) Choose REGULAR_BUILD. 
+
+  4) If d2c is not in the user's path, choose MINDY_BUILD.
+
+Known Issues
+------------
+
+  * Bootstrapping with d2c and Mindy isn't the same yet. These two approaches
+    should have far more in common.
+  * We may want to build Melange at the same time as parsergen.
+  * Lots of stuff is still very messy.
+
+In short, everything needs to be ripped apart again and properly
+systematized.
+
 Eric Kidd
-20 March 1999
+10 April 1999
