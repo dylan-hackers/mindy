@@ -1,5 +1,5 @@
 module: cheese
-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/typeinf.dylan,v 1.2 1996/03/20 14:20:57 wlott Exp $
+header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/typeinf.dylan,v 1.3 1996/04/18 17:09:21 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -118,6 +118,17 @@ define method make-initial-guess-expression
   make-initial-guess-dependent(component, call);
   call.guessed-type := empty-ctype();
   reoptimize(component, call);
+end method make-initial-guess-expression;
+
+define method make-initial-guess-expression
+    (component :: <component>, primitive :: <primitive>) => ();
+  if (primitive.primitive-info.priminfo-type-deriver)
+    make-initial-guess-dependent(component, primitive);
+    primitive.guessed-type := empty-ctype();
+    reoptimize(component, primitive);
+  else
+    primitive.guessed-type := primitive.derived-type;
+  end if;
 end method make-initial-guess-expression;
 
 
@@ -240,6 +251,17 @@ define method infer-type
     (component :: <component>, call :: <known-call>) => ();
   fix-type-guess(component, call,
 		 function-result-type(call.depends-on.source-exp));
+end method infer-type;
+
+
+
+define method infer-type
+    (component :: <component>, prim :: <primitive>) => ();
+  let type-deriver = prim.primitive-info.priminfo-type-deriver;
+  if (type-deriver)
+    let arg-types = map(guessed-type, listify-dependencies(prim.depends-on));
+    fix-type-guess(component, prim, type-deriver(prim, arg-types));
+  end if;
 end method infer-type;
 
 
