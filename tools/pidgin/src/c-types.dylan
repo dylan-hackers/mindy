@@ -142,6 +142,10 @@ define method initialize
   end;
 end;
 
+define generic format-tagged-type
+    (type :: <c-tagged-type>, #key multi-line?)
+ => (string :: <string>);
+
 
 //=========================================================================
 //  Structs and Unions
@@ -186,6 +190,44 @@ define class <c-bit-field> (<c-struct-member>)
     required-init-keyword: sign:;
   slot c-bit-field-width :: <integer>,
     required-init-keyword: width:;
+end;
+
+define method format-c-tagged-type
+    (type :: <c-struct-or-union-type>, #key multi-line?)
+ => (string :: <string>)
+  let (prefix, suffix) =
+    if (multi-line?)
+      values("    ", "\n");
+    else
+      values("", " ");
+    end;
+  
+  let result = concatenate(type.c-type-name, " {", suffix);
+  for (member in type.c-type-members)
+    let formatted =
+      select (member by instance?)
+	<c-member-variable> =>
+	  format-c-type(member.c-member-variable-type,
+			decl-name: member.c-member-variable-name);
+	<c-bit-field> =>
+	  let name = member.c-bit-field-name;
+	  let sign = select (member.c-bit-field-sign-specifier)
+		       #"signed" => "signed ";
+		       #"unsigned" => "unsigned ";
+		       #"unspecified" => "";
+		     end;
+	  let width = member.c-bit-field-width;
+	  if (name)
+	    format-to-string("%sint %s : %d", sign, name, width);
+	  else
+	    format-to-string("%sint : %d", sign, width);
+	  end;
+	otherwise =>
+	  error("illegal member %= in %s", member, type.c-type-name);
+      end select;
+    result := concatenate(result, prefix, formatted, ";", suffix);
+  end for;
+  concatenate(result, "}");
 end;
 
 
@@ -276,7 +318,7 @@ define function format-function-parameters
     end case;
   else
     let result = join-strings(", ", map-as(<list>,
-					   format-c-type-declarator,
+					   format-c-type,
 					   type.c-function-parameter-types));
     if (type.c-function-explicit-varargs?)
       concatenate(result, ", ...");
@@ -361,7 +403,7 @@ define constant <c-named-type> =
 //
 //  Oh, yeah--this conses like crazy, so don't expect it to run fast.
 
-define function format-c-type-declarator
+define function format-c-type
     (type :: <c-type>,
      #key decl-name :: false-or(<string>))
  => (decl :: <string>)
@@ -425,7 +467,7 @@ define function format-c-type-declarator
     // Ugh. That was *way* too hard.
     decl;
   end if;
-end function format-c-type-declarator;
+end function format-c-type;
 
 define generic nested-type-list
     (type :: <c-type>)

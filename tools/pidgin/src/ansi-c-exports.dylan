@@ -68,7 +68,8 @@ define module c-types
       c-enum-constant-value;
 
   export
-    format-c-type-declarator;
+    format-c-type,
+    format-c-tagged-type;
 
   export  
     <c-sign-specifier>,
