@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.52 1996/02/16 03:52:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.53 1996/02/17 21:25:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -619,7 +619,7 @@ define method incorrect-usage () => ();
   error("Incorrect usage");
 end method incorrect-usage;
 
-define method main (argv0, #rest args)
+define method main (argv0 :: <byte-string>, #rest args) => ();
 #if (mindy)
   if (args.size > 0 & args.first = "-autodump")
     if (args.size < 2 | args.size > 3)
