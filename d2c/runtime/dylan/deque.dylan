@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.2 1998/11/28 18:53:37 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.3 1999/01/12 19:02:34 andreas Exp $
 
 //======================================================================
 //
@@ -264,7 +264,7 @@ end method drop!;
 // DEQUE-HEAD of the deque.  If the deque is empty, both DEQUE-HEAD and
 // DEQUE-TAIL must be set to the new element.
 //
-define method push (deque :: <simple-object-deque>, new)
+define sealed method push (deque :: <simple-object-deque>, new)
  => (result :: <object>);
   let new-element :: <deque-element> = make(<deque-element>, data: new);
   case
@@ -285,7 +285,7 @@ end method push;
 // Removes the first deque-element and returns its DEQUE-ELEMENT-DATA.  If
 // the deque is empty, an error is signalled.
 //
-define method pop (deque :: <simple-object-deque>) => (result :: <object>);
+define sealed method pop (deque :: <simple-object-deque>) => (result :: <object>);
   case
     empty?(deque) =>
       error("POP:  deque empty.");
@@ -309,7 +309,7 @@ end method pop;
 // Creates a new deque-element and places it at the DEQUE-TAIL of the
 // deque.
 //
-define method push-last (deque :: <simple-object-deque>, new)
+define sealed method push-last (deque :: <simple-object-deque>, new)
  => (result :: <object>);
   let new-element :: <deque-element> = make(<deque-element>, data: new);
   case
@@ -329,7 +329,7 @@ end method push-last;
 //
 // Removes the last deque-element and returns its DEQUE-ELEMENT-DATA.
 //
-define method pop-last (deque :: <simple-object-deque>) =>
+define sealed method pop-last (deque :: <simple-object-deque>) =>
     (result :: <object>);
   case
     empty?(deque) =>
