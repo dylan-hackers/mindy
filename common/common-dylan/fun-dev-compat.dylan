@@ -5,11 +5,32 @@ Copyright:    Gwydion Dylan Maintainers 2000
 License:      GNU Library General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
-// assert
-// Gwydion defines a traditional assert on <boolean> in misc in extentions, 
-// exported from common-dylan.
-// We exclude that version and declare our own here.
+//
+//	Utilities
+//
 
+// without-bounds-checks
+// Note: intentional violation of hygiene required
+
+define macro without-bounds-checks
+  {without-bounds-checks () ?:body end}
+    => {without-bounds-checks ?body end}
+
+  {without-bounds-checks ?:body end}
+    => {let ?=element = %element;
+        let ?=element-setter = %element-setter;
+        ?body}
+end;
+
+define macro with-bounds-checks
+  {with-bounds-checks () ?:body end}
+    => {with-bounds-checks ?body end}
+
+  {with-bounds-checks ?:body end}
+    => {let ?=element = element;
+        let ?=element-setter = element-setter;
+        ?body}
+end;
 
 // find-value
 // simple alias to differently named equivalent d2c method

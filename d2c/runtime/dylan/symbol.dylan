@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/symbol.dylan,v 1.4 2002/10/31 10:17:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/symbol.dylan,v 1.5 2003/06/11 18:17:20 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -91,18 +91,18 @@ define method rehash-symbols (table :: <symbol-table>) => ();
   let new-size = table.cell-count * 2 - 1;
   let new-cells = make(<simple-object-vector>, size: new-size, fill: #f);
 
-  local method iterate* (sym :: false-or(<symbol>)) => ();
+  local method iterate (sym :: false-or(<symbol>)) => ();
 	  if (sym)
 	    let sym :: <symbol> = sym;
 	    let next = sym.symbol-next;
 	    let cell-index = modulo(sym.symbol-hashing, new-size);
 	    sym.symbol-next := new-cells[cell-index];
 	    new-cells[cell-index] := sym;
-	    iterate*(next);
+	    iterate(next);
 	  end if;
-	end method iterate*;
+	end method iterate;
   for (sym-list in table.cells)
-    iterate*(sym-list);
+    iterate(sym-list);
   end for;
   table.cell-count := new-size;
   table.cells := new-cells;
@@ -217,7 +217,7 @@ define constant $symbol-table :: <symbol-table>
 	       end for;
       let table = make(<symbol-table>, size: sz);
       table.sym-count := sz;
-      local method iterate* (symbol :: false-or(<symbol>)) => ();
+      local method iterate (symbol :: false-or(<symbol>)) => ();
 	      if (symbol)
 		let symbol :: <symbol> = symbol;
 		let next = symbol.symbol-next;
@@ -226,10 +226,10 @@ define constant $symbol-table :: <symbol-table>
 		symbol.symbol-hashing := hash;
 		symbol.symbol-next := table.cells[cell-index];
 		table.cells[cell-index] := symbol;
-		iterate*(next);
+		iterate(next);
 	      end if;
-	    end method iterate*;
-      iterate*(%%primitive(initial-symbols));
+	    end method iterate;
+      iterate(%%primitive(initial-symbols));
       table;
     end;
 

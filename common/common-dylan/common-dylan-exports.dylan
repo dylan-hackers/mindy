@@ -35,11 +35,15 @@ end library;
 
 define module functional-extensions
   use dylan;
-  use extensions, exclude: { position };
+  use extensions, exclude: { position }, export: { element-range-error };
+  use Magic, import: {%element, %element-setter};
   use common-extensions, import: { find-element };
   export 
     find-value,
     \profiling;
+  export
+    with-bounds-checks,
+    without-bounds-checks;
 end module;
 
 define module c-support
@@ -87,15 +91,9 @@ define module common-extensions
   use dylan;
   use system, import: { copy-bytes }, export: { copy-bytes };
   use extensions,
-    rename: {on-exit => register-application-exit-function},
+    rename: {$not-supplied => $unsupplied,
+             on-exit => register-application-exit-function},
     export: {$unsupplied,
-             supplied?,
-             unsupplied?,
-             unsupplied,
-             $unfound,
-             found?,
-             unfound?,
-             unfound,
              \assert,
              \debug-assert,
              debug-message,
@@ -127,8 +125,6 @@ define module common-extensions
 	     <object-deque>,
 	     <stretchy-object-vector>,
              <byte-character>,
-             \with-bounds-checks, 
-             \without-bounds-checks,
              element-range-error};
   use %Hash-Tables,
     export: {remove-all-keys!};
@@ -152,6 +148,13 @@ define module common-extensions
 
     /* Unsupplied, unfound */
     //$unsupplied,
+    supplied?,
+    unsupplied?,
+    unsupplied,
+    $unfound,
+    found?,
+    unfound?,
+    unfound,
 
     /* Collections */
     //<object-deque>,
@@ -181,8 +184,6 @@ define module common-extensions
     //ignore,
     ignorable,
 
-    \table-definer,
-
     /* Converting to and from numbers */
     float-to-string,
     integer-to-string,
@@ -197,6 +198,17 @@ define module common-extensions
     exit-application;
     //register-exit-application-function,
 
+#if (~mindy)
+  export
+    \table-definer,
+    \iterate,
+    \when;
+
+  export
+    \%iterate-aux,
+    \%iterate-param-helper,
+    \%iterate-value-helper;
+#endif
 end module;
 
 define module common-dylan

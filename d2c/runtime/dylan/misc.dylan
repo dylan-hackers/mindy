@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.9 2003/04/29 00:29:27 prom Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.10 2003/06/11 18:17:20 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -69,42 +69,7 @@ end;
 // 
 define constant $not-supplied :: <not-supplied-marker>
     = make(<not-supplied-marker>);
-define constant $unsupplied = $not-supplied;
 
-define method unsupplied?( object :: <object> )
-=> ( unsupplied? :: <boolean> )
-    object = $unsupplied;
-end method unsupplied?;
-
-define method supplied?( object :: <object> )
-=> ( unsupplied? :: <boolean> )
-    ~ unsupplied?( object );
-end method supplied?;
-
-define method unsupplied()
-=> ( unsupplied-marker :: <object> )
-    $unsupplied;
-end method unsupplied;
-
-define class <not-found-marker> (<object>)
-end;
-
-define constant $unfound = make(<not-found-marker>);
-
-define function found?( object :: <object> )
-=> ( found? :: <boolean> )
-    ~ unfound?( object );
-end function found?;
-
-define function unfound?( object :: <object> )
-=> ( unfound? :: <boolean> )
-    object = $unfound;
-end function unfound?;
-
-define function unfound()
-=> ( unfound-marker :: <object> )
-    $unfound;
-end function unfound;
 
 // <never-returns> -- exported from Extensions.
 //
@@ -150,43 +115,5 @@ end method general-object-at;
 
 define inline method ignore (#rest noise) => ();
 end method ignore;
-
-define macro without-bounds-checks
-  {without-bounds-checks () ?:body end}
-    => {without-bounds-checks ?body end}
-
-  {without-bounds-checks ?:body end}
-    => {let ?=element = %element;
-        let ?=element-setter = %element-setter;
-        ?body}
-end;
-
-define macro fake-without-bounds-checks
-  {fake-without-bounds-checks () ?:body end}
-    => {fake-without-bounds-checks ?body end}
-
-  {fake-without-bounds-checks ?:body end}
-    => {?body}
-end;
-
-define macro with-bounds-checks
-  {with-bounds-checks () ?:body end}
-    => {with-bounds-checks ?body end}
-
-  {with-bounds-checks ?:body end}
-    => {let ?=element = element;
-        let ?=element-setter = element-setter;
-        ?body}
-end;
-
-// element-range-error
-// Just throws an error on the sequence. 
-// Should declare an <element-range-error> class and instantiate it
-
-define method element-range-error
-    (sequence :: <collection>, index :: <integer>)
- => (res :: <never-returns>);
-  error("range error (element %d of %=)", index, sequence);
-end method;
 
 %%primitive(magic-internal-primitives-placeholder);

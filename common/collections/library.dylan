@@ -9,6 +9,7 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library collections
   use Dylan;
+  use Common-Dylan;
   use table-extensions,
     import: { table-extensions },
     export: all;
@@ -87,8 +88,9 @@ end module table-extensions;
 */
 
 define module collections-internals
-  use Dylan;
+  use Common-Dylan;
   use Extensions;
+  use Functional-Extensions;
   use machine-words;
   use bit-set;
   use bit-vector;

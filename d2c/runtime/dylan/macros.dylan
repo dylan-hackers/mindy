@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.21 2003/03/09 16:41:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.22 2003/06/11 18:17:20 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -175,11 +175,6 @@ define macro unless
       => { if (?expression) else ?body end }
 end;
 
-define macro when
-  { when (?:expression) ?:body end }
-    => { if (?expression) ?body end }
-end macro;
-
 define macro until
     { until (?:expression) ?:body end }
       => { begin
@@ -354,56 +349,6 @@ define macro for-aux2
     { [ ?stuff:* ] } => { ?stuff }
 end;
 
-//=========================================================================
-//  Macros
-//=========================================================================
-//  Miscellaneous macros exported from common-extensions. These are not
-//  available under Mindy.
-//
-
-//  XXX - can the name bound by 'iterate' return?
-define macro iterate
-  { iterate ?:name (?clauses:*) ?:body end }
-    => { %iterate-aux ?name
-	   %iterate-param-helper(?clauses)
-           %iterate-value-helper(?clauses)
-	   ?body
-         end }
-end;
-
-define macro %iterate-aux
-  { %iterate-aux ?:name
-      ?param-clauses:macro
-      ?value-clauses:macro
-      ?:body
-    end }
-    => { local method ?name (?param-clauses)
-                 ?body
-	       end;
-         ?name(?value-clauses) }
-end macro;
-
-define macro %iterate-param-helper
-  { %iterate-param-helper(?clauses) }
-    => { ?clauses }
-clauses:
-  { ?:name :: ?type:*, ... }
-    => { ?name :: ?type, ... }
-  { ?:name :: ?type:* = ?value:*, ... }
-    => { ?name :: ?type, ... }
-  { } => { }
-end;
-
-define macro %iterate-value-helper
-  { %iterate-value-helper(?clauses) }
-    => { ?clauses }
-clauses:
-  { ?:name :: ?type:*, ... }
-    => { #f, ... }
-  { ?:name :: ?type:* = ?value:*, ... }
-    => { ?value, ... }
-  { } => { }
-end;
 
 
 // Function macros.
@@ -727,6 +672,7 @@ define macro define-variable
     { define-variable ( ?:variable-list; ?dummy:name = ?:expression ) }
     => make-define-variable({ ?variable-list }, { ?expression })
 end macro;
+
 
 
 // Call-out related macros.

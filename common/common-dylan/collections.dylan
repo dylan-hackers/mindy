@@ -1,20 +1,5 @@
 module: common-extensions
 
-//  XXX - table-definer conses excessively. With more macrology, it could
-//  run much faster.
-
-define macro table-definer
-  { define table ?:name ?eq:token { ?keys-and-values } }
-    => { define constant ?name :: <table> ?eq make(<table>);
-         fill-table!(?name, list(?keys-and-values)); }
-  { define table ?:name :: ?type:expression ?eq:token { ?keys-and-values } }
-    => { define constant ?name :: ?type ?eq make(?type);
-         fill-table!(?name, list(?keys-and-values)); }
-keys-and-values:
-  { ?key:expression => ?value:expression, ... } => { ?key, ?value, ... }
-  { } => { }
-end macro;
-
 //=========================================================================
 //  position
 //=========================================================================

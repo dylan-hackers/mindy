@@ -1,10 +1,11 @@
 $D2CFLAGS         # added by update-libdirs
     = $d2c_runtime
+    . ' -L../../../../common/threads'
     . ' -L../../../../common/streams'
     . ' -L../../../../common/print'
     . ' -L../../../../common/format'
-    . ' -L../../../../common/standard-io'
     . ' -L../../../../common/table-ext'
+    . ' -L../../../../common/standard-io'
     . ' -L../../../../common/format-out'
     . ' -L../../../../common/transcendental'
     . ' -L../../random'
@@ -12,7 +13,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../../common/string-ext'
     . ' -L../../../../common/regular-expressions'
     . ' -L../../../../common/common-dylan'
-    . ' -L../../../../common/threads'
     . ' -L../../../../qa/testworks'
     . ' -L../../../../qa/testworks-specs';
 $CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
