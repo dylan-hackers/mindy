@@ -40,6 +40,16 @@ define constant $newline-byte :: <integer> = as(<integer>, $newline);
 define constant $return :: <byte-character> = '\r';
 define constant $return-byte :: <integer> = as(<integer>, '\r');
 
+/// $newline-size -- Internal.
+///
+define constant $newline-size :: <integer> = 2;
+
+#else
+
+/// $newline-size -- Internal.
+///
+define constant $newline-size :: <integer> = 1;
+
 #endif
 
 /// read-line -- Exported.
@@ -109,6 +119,9 @@ define method read-line (stream :: <buffered-stream>,
     release-input-buffer(stream);
   end block;
 end method read-line;
+
+define sealed domain read-line(<fd-stream>);
+define sealed domain read-line(<buffered-byte-string-output-stream>);
 
 define sealed method read-line (stream :: <simple-sequence-stream>,
 				#key on-end-of-stream :: <object>
@@ -211,8 +224,6 @@ define open generic write-line (stream :: <stream>, string :: <string>,
 /// The conditional compilation should be tightened; this could easily
 /// be two (much more maintainable) methods.
 ///
-#if (newlines-are-CRLF)
-
 define method write-line (stream :: <buffered-stream>, 
 			  string :: <string>,
 			  #key start :: <integer> = 0,
@@ -224,12 +235,14 @@ define method write-line (stream :: <buffered-stream>,
     let buf-capacity :: <buffer-index> = (buf.buffer-end - buf-start);
     let partial-stop :: <integer> = (start + buf-capacity);
     while (#t)
-      if (partial-stop >= (stop + 2)) // +2 for the newline
+      if (partial-stop >= (stop + $newline-size))
 	let this-copy :: <integer> = (stop - start);
 	copy-sequence!(buf, buf-start, string, start, this-copy);
 	buf.buffer-next := buf-start + this-copy;
-	buf[buf.buffer-next] := $return-byte;
-	buf.buffer-next := buf.buffer-next + 1;
+	#if (newlines-are-CRLF)
+	   buf[buf.buffer-next] := $return-byte;
+	   buf.buffer-next := buf.buffer-next + 1;
+	#endif
 	buf[buf.buffer-next] := $newline-byte;
 	buf.buffer-next := buf.buffer-next + 1;
 	exit-loop();
@@ -248,69 +261,9 @@ define method write-line (stream :: <buffered-stream>,
   end block;
 end method write-line;
 
-define sealed method write-line (stream :: <simple-sequence-stream>,
-				 string :: <string>,
-				 #key start :: <integer> = 0,
-				      end: stop :: <integer> = string.size)
- => ();
-  block ()
-    lock-stream(stream);
-    check-stream-open(stream);
-    check-output-stream(stream);
-    let needed :: <integer> = stop - start + 2; // + 2 for the newline
-    let available :: <integer> = stream.contents.size - stream.position;
-    let new-pos :: <integer> = stream.position + needed;
-    if (needed > available)
-      grow-stream-sequence!(stream, new-pos);
-      stream.stream-end := new-pos;
-    elseif (new-pos > stream.stream-end)
-      stream.stream-end := new-pos;
-    end if;
-    copy-sequence!(stream.contents, stream.position,
-		   string, start,
-		   needed - 2); // The last 2 are the newline
-    stream.contents[new-pos - 2] := as(stream.stream-element-type, $return);
-    stream.contents[new-pos - 1] := as(stream.stream-element-type, $newline);
-    stream.position := new-pos;
-  cleanup
-    unlock-stream(stream);
-  end block;
-end method write-line;
-
-#else
-
-define method write-line (stream :: <buffered-stream>, 
-			  string :: <string>,
-			  #key start :: <integer> = 0,
-			       end: stop :: <integer> = string.size)
- => ();
-  block (exit-loop)
-    let buf :: <buffer> = get-output-buffer(stream);
-    let buf-start :: <buffer-index> = buf.buffer-next;
-    let buf-capacity :: <buffer-index> = (buf.buffer-end - buf-start);
-    let partial-stop :: <integer> = (start + buf-capacity);
-    while (#t)
-      if (partial-stop >= (stop + 1)) // +1 for the newline
-	let this-copy :: <integer> = (stop - start);
-	copy-sequence!(buf, buf-start, string, start, this-copy);
-	buf.buffer-next := buf-start + this-copy;
-	buf[buf.buffer-next] := $newline-byte;
-	buf.buffer-next := buf.buffer-next + 1;
-	exit-loop();
-      else
-	copy-sequence!(buf, buf-start, string, start, buf-capacity);
-	buf.buffer-next := buf.buffer-end;
-	buf := next-output-buffer(stream);
-	buf-capacity := buf.buffer-end - buf.buffer-next;
-	buf-start := buf.buffer-next;
-	start := partial-stop;
-	partial-stop := partial-stop + buf-capacity;
-      end if;
-    end while;
-  cleanup
-    release-output-buffer(stream);
-  end block;
-end method write-line;
+define sealed domain write-line(<fd-stream>, <string>);
+define sealed domain write-line(<buffered-byte-string-output-stream>,
+				<string>);
 
 define sealed method write-line (stream :: <simple-sequence-stream>,
 				 string :: <string>,
@@ -321,7 +274,7 @@ define sealed method write-line (stream :: <simple-sequence-stream>,
     lock-stream(stream);
     check-stream-open(stream);
     check-output-stream(stream);
-    let needed :: <integer> = stop - start + 1; // + 1 for the newline
+    let needed :: <integer> = stop - start + $newline-size;
     let available :: <integer> = stream.contents.size - stream.position;
     let new-pos :: <integer> = stream.position + needed;
     if (needed > available)
@@ -332,15 +285,16 @@ define sealed method write-line (stream :: <simple-sequence-stream>,
     end if;
     copy-sequence!(stream.contents, stream.position,
 		   string, start,
-		   needed - 1); // The last 1 is the newline
+		   needed - $newline-size);
+    #if (newlines-are-CRLF)
+       stream.contents[new-pos - 2] := as(stream.stream-element-type, $return);
+    #endif
     stream.contents[new-pos - 1] := as(stream.stream-element-type, $newline);
     stream.position := new-pos;
   cleanup
     unlock-stream(stream);
   end block;
 end method write-line;
-
-#endif
 
 /// new-line -- Exported.
 ///
