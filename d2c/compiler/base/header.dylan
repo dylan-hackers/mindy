@@ -1,12 +1,12 @@
 module: header
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.7 2001/04/22 07:17:43 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.8 2001/04/24 23:29:03 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -207,28 +207,28 @@ end method skip-whitespace-backwards;
 //
 // Return the position of the next newline at or after posn.
 //
-define method find-newline (contents :: <file-contents>, posn :: <integer>)
+define function find-newline (contents :: <file-contents>, posn :: <integer>)
     => newline :: <integer>;
   if (posn < contents.size)
     let char = as(<character>, contents[posn]);
     // Try to handle DOS-style line endings more intelligently
     if (char == '\r')
       let nxt_posn = posn + 1;
-      if (as(<character>, contents[nxt_posn]) == '\n')
-        nxt_posn;	// DOS style?
+      if (nxt_posn < contents.size
+          & as(<character>, contents[nxt_posn]) == '\n')
+        nxt_posn;	// DOS style...
       else
         posn;		// No? ... then, Mac style.
       end;
-    end;
-    if (char ~== '\n')
-      find-newline(contents, posn + 1);
-    else
+    elseif (char == '\n')
       posn;		// Standard UNIX case
+    else
+      find-newline(contents, posn + 1);
     end;
   else
     posn;
   end;
-end method;
+end function;
 
 // scan-keyword -- internal.
 //
