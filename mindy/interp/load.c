@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.35 1997/04/26 18:28:20 ram Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.36 1997/05/09 22:48:27 ram Exp $
 *
 * This file implements the loader.
 *
@@ -1024,7 +1024,7 @@ void load(char *name)
 
 void load_library(obj_t name)
 {
-    char *load_path = getenv("MINDYPATH");
+    char *load_path = getenv("DYLANPATH");
     char path[MAXPATHLEN];
     char *start, *ptr, *src, *dst;
     int c;
