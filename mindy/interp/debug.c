@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.47 1996/02/26 23:00:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.48 1996/04/22 15:22:41 nkramer Exp $
 *
 * This file implements the debugger.
 *
@@ -87,6 +87,8 @@ static struct variable *debugger_eval_var;
 static struct variable *debugger_flush_var;
 static struct variable *debugger_call_var;
 static struct variable *debugger_print_var;
+static struct variable *debugger_inspect_var;
+static struct variable *debugger_xinspect_var;
 static struct variable *debugger_report_var;
 static struct variable *debugger_abort_var;
 static struct variable *debugger_restarts_var;
@@ -302,6 +304,21 @@ static void debugger_cmd_finished(struct thread *thread, obj_t *vals)
     thread->sp = vals;
     thread_pop_escape(thread);
     restart_other_threads(thread);
+    mindy_pause(pause_DebuggerCommandFinished);
+}
+
+static void kill_me_without_restart(struct thread *thread, obj_t *vals)
+{
+    thread_kill(thread);
+    set_thread(NULL);
+    mindy_pause(pause_DebuggerCommandFinished);
+}
+
+static void debugger_cmd_finished_without_restart(struct thread *thread, 
+						  obj_t *vals)
+{
+    thread->sp = vals;
+    thread_pop_escape(thread);
     mindy_pause(pause_DebuggerCommandFinished);
 }
 
@@ -1206,7 +1223,8 @@ static void do_print_start(struct thread *thread, int nargs)
     do_more_prints(thread, args[0]);
 }
 
-static void call_or_print(struct variable *var, obj_t args)
+static void call_or_print(struct variable *var, obj_t args, 
+			  boolean null_expr_allowed, boolean suspend_others)
 {
     obj_t exprs = args;
     boolean okay = TRUE;
@@ -1219,33 +1237,44 @@ static void call_or_print(struct variable *var, obj_t args)
 	return;
     }
     if (exprs == obj_Nil) {
-	printf("No expression.\n");
-	return;
-    }
+	if (!null_expr_allowed) {
+	    printf("No expression.\n");
+	    return;
+	}
+	simple = FALSE;
+    } else {
+	for (expr = exprs; expr != obj_Nil; expr = rest_args(expr)) {
+	    eval_vars(first_arg(expr), &okay, &simple);
+	}
 
-    for (expr = exprs; expr != obj_Nil; expr = rest_args(expr))
-	eval_vars(first_arg(expr), &okay, &simple);
-
-    if (!okay)
-	return;
-
-    if (simple && (var == NULL || var->value == obj_Unbound)) {
-	for (expr = exprs; expr != obj_Nil; expr = rest_args(expr))
-	    print(arg_value(first_arg(expr)));
-	return;
+	if (!okay)
+	    return;
+	
+	if (simple && (var == NULL || var->value == obj_Unbound)) {
+	    for (expr = exprs; expr != obj_Nil; expr = rest_args(expr))
+		print(arg_value(first_arg(expr)));
+	    return;
+	}
     }
 
     if (CurThread == NULL) {
 	thread = thread_create(var ? var->name : obj_False);
-	set_c_continuation(thread, kill_me);
+	set_c_continuation(thread, 
+			   suspend_others ? kill_me
+			     : kill_me_without_restart);
     }
     else {
 	thread = CurThread;
 	thread_push_escape(thread);
-	set_c_continuation(thread, debugger_cmd_finished);
+	
+	set_c_continuation(thread, 
+			   suspend_others ? debugger_cmd_finished
+			     : debugger_cmd_finished_without_restart);
     }
 
-    suspend_other_threads(thread);
+    if (suspend_others) {
+	suspend_other_threads(thread);
+    }
 
     if (var == NULL || var->value == obj_Unbound)
 	*thread->sp++ = do_print_func;
@@ -1253,19 +1282,31 @@ static void call_or_print(struct variable *var, obj_t args)
 	*thread->sp++ = var->value;
     *thread->sp++ = exprs;
 
-    thread_restart(thread);
+    if (suspend_others) {
+	thread_restart(thread);
+    }
     Continue = TRUE;
 }
 
 
 static void call_cmd(obj_t args)
 {
-    call_or_print(debugger_call_var, args);
+    call_or_print(debugger_call_var, args, FALSE, TRUE);
 }
 
 static void print_cmd(obj_t args)
 {
-    call_or_print(debugger_print_var, args);
+    call_or_print(debugger_print_var, args, FALSE, TRUE);
+}
+
+static void inspect_cmd(obj_t args)
+{
+    call_or_print(debugger_inspect_var, args, TRUE, TRUE);
+}
+
+static void xinspect_cmd(obj_t args)
+{
+    call_or_print(debugger_xinspect_var, args, TRUE, FALSE);
 }
 
 
@@ -2337,6 +2378,9 @@ static struct cmd_entry Cmds[] = {
     {"frame", "frame [num]\tMove to the given frame.", frame_cmd},
     {"gc", "gc\t\tCollect garbage.", gc_cmd},
     {"help", "help [topic]\tDisplay help about some topic.", help_cmd},
+    {"inspect", 
+	 "inspect [expr]\tEvaluate expr and inspect it using the text interface",
+	 inspect_cmd},
     {"kill", "kill thread\tKill the given thread.", kill_cmd},
     {"l", NULL, locals_cmd},
     {"library",
@@ -2360,6 +2404,9 @@ static struct cmd_entry Cmds[] = {
     {"troff", "troff\t\tTurn function/return tracing off.", troff_cmd},
     {"tron", "tron\t\tTurn function/return tracing on.", tron_cmd},
     {"up", "up\t\tMove up one frame.", up_cmd},
+    {"xinspect", 
+	 "xinspect [expr...]\tEvaluate exprs and inspect them using the graphical interface",
+	 xinspect_cmd},
     {"quit", "quit\t\tQuit.", quit_cmd},
     {NULL, NULL, NULL}
 };
@@ -2567,6 +2614,12 @@ void init_debug_functions(void)
     debugger_print_var = find_variable(module_BuiltinStuff,
 				       symbol("debugger-print"),
 				       FALSE, TRUE);
+    debugger_inspect_var = find_variable(module_BuiltinStuff,
+					 symbol("debugger-inspect"),
+					 FALSE, TRUE);
+    debugger_xinspect_var = find_variable(module_BuiltinStuff,
+					  symbol("debugger-xinspect"),
+					  FALSE, TRUE);
     debugger_report_var = find_variable(module_BuiltinStuff,
 					symbol("debugger-report-condition"),
 					FALSE, TRUE);
