@@ -26,6 +26,7 @@ DYLAN_FILES = \
 	dylan/string.dylan \
 	dylan/list.dylan \
 	dylan/misc.dylan \
+	dylan/handler.dylan \
 	dylan/nlx.dylan \
 	dylan/output.dylan \
 	dylan/condition.dylan \
@@ -40,4 +41,4 @@ output.o: output.c
 heap.o: heap.s
 
 output.c heap.s: ../compiler/foo.dbc ${DYLAN_FILES}
-	mindy -f ../compiler/foo.dbc ${DYLAN_FILES}
+	time mindy -f ../compiler/foo.dbc ${DYLAN_FILES}
