@@ -1,10 +1,10 @@
 module: dylan-user
-RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.6 2000/10/21 01:30:48 dauclair Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.7 2001/02/05 22:07:23 gabor Exp $
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -36,8 +36,8 @@ end library melange-support;
 define module melange-support
   use dylan;
   use extensions, export: {subclass};
-  use system, export: {call-out, c-include, c-decl, c-expr, callback-method,
-                       callback-entry};
+  use system, export: {call-out, c-include, c-decl, c-local-decl, c-expr,
+                       callback-method, callback-entry};
 
   use magic;
 
