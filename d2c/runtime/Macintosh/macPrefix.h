@@ -4,9 +4,6 @@
 
 /* For the mac gc */
 
-#define true 1
-#define false 0
-
 //#define SHARED_LIBRARY_BUILD
 
 /* A couple of dylan library functions use this */
@@ -14,7 +11,7 @@
 
 //extern void * GC_malloc( unsigned long size );
 
-#include <fcntl.mac.h>
+#include <fcntl.h>
 
 /* Make sure the boehm GC compiles properly */
 //#define ATOMIC_UNCOLLECTABLE
@@ -23,15 +20,26 @@
 
 /* Boehm GC Configuration*/
 
-#ifdef __MWERKS__
+// #### MrC ####
+#ifdef __MRC__
+// for CodeWarrior Pro with Metrowerks Standard Library (MSL).
+// Using MrC plugin compiler
+#include <ansi_prefix.mac.h>
+#ifndef __STDC__
+#define __STDC__ 1
+#endif
+#endif /* __MRC__ */
 
+
+
+// #### MetroWerks ####
+#ifdef __MWERKS__
 // for CodeWarrior Pro with Metrowerks Standard Library (MSL).
 // #define MSL_USE_PRECOMPILED_HEADERS 0
 #include <ansi_prefix.mac.h>
 #ifndef __STDC__
 #define __STDC__ 0
 #endif
-
 #endif /* __MWERKS__ */
 
 //#define ATOMIC_UNCOLLECTABLE
