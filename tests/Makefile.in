@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.12 1996/07/23 16:08:11 dwatson Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.13 1996/08/07 14:42:36 dwatson Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -68,55 +68,98 @@ MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/ta
 
 # We don't want to run threaded-io-test by default because it is interactive
 #
-OBJS_TO_RUN = dylan-test.dbc string-extensions-test.dbc stream-test-lib.dbc table-ext-test.dbc random-test.dbc matrix-test.dbc coll-ext-test.dbc print-test.dbc format-test.dbc format-out-test.dbc itime-test.dbc time-test.dbc
+OBJS_TO_RUN = dylan-test-lib.dbc string-ext-test-lib.dbc stream-test-lib.dbc table-ext-test-lib.dbc random-test-lib.dbc matrix-test-lib.dbc coll-ext-test-lib.dbc print-test-lib.dbc format-test-lib.dbc format-out-test-lib.dbc itime-test-lib.dbc time-test-lib.dbc
 OBJS_TO_BUILD = $(OBJS_TO_RUN) threaded-io-test.dbc asterixes.txt dashes.txt
 
 all: ${OBJS_TO_BUILD}
 	for f in ${OBJS_TO_RUN}; do $(MINDYPATH) $(INTERP) -f $$f; done
 
-dylan-test.dbc: ${SRCDIR}/dylan-test.dylan
-	${MC} ${MINDYFLAGS} -o dylan-test.dbc ${SRCDIR}/dylan-test.dylan
-
-string-extensions-test.dbc: ${SRCDIR}/string-extensions-test.dylan
-	${MC} ${MINDYFLAGS} -lregression-test -o string-extensions-test.dbc ${SRCDIR}/string-extensions-test.dylan
-
 threaded-io-test.dbc: ${SRCDIR}/threaded-io-test.dylan
 	${MC} ${MINDYFLAGS} -lthreaded-io-test -o threaded-io-test.dbc ${SRCDIR}/threaded-io-test.dylan
 
-stream-test-lib.dbc: stream-test-library.dbc stream-test.dbc
-	cat stream-test-library.dbc stream-test.dbc > $@
-stream-test-library.dbc: ${SRCDIR}/stream-test-library.dylan
-	${MC} ${MINDYFLAGS} -lstream-test -o stream-test-library.dbc ${SRCDIR}/stream-test-library.dylan
+dylan-test-lib.dbc: dylan-test-exports.dbc dylan-test.dbc
+	cat dylan-test-exports.dbc dylan-test.dbc > $@
+dylan-test-exports.dbc: ${SRCDIR}/dylan-test-exports.dylan
+	${MC} ${MINDYFLAGS} -ldylan-test -o dylan-test-exports.dbc ${SRCDIR}/dylan-test-exports.dylan
+dylan-test.dbc: ${SRCDIR}/dylan-test.dylan
+	${MC} ${MINDYFLAGS} -ldylan-test -o dylan-test.dbc ${SRCDIR}/dylan-test.dylan
+
+string-ext-test-lib.dbc: string-ext-test-exports.dbc string-ext-test.dbc
+	cat string-ext-test-exports.dbc string-ext-test.dbc > $@
+string-ext-test-exports.dbc: ${SRCDIR}/string-ext-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lstring-ext-test -o string-ext-test-exports.dbc ${SRCDIR}/string-ext-test-exports.dylan
+string-ext-test.dbc: ${SRCDIR}/string-ext-test.dylan
+	${MC} ${MINDYFLAGS} -lstring-ext-test -o string-ext-test.dbc ${SRCDIR}/string-ext-test.dylan
+
+stream-test-lib.dbc: stream-test-exports.dbc stream-test.dbc
+	cat stream-test-exports.dbc stream-test.dbc > $@
+stream-test-exports.dbc: ${SRCDIR}/stream-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lstream-test -o stream-test-exports.dbc ${SRCDIR}/stream-test-exports.dylan
 stream-test.dbc: ${SRCDIR}/stream-test.dylan
 	${MC} ${MINDYFLAGS} -lstream-test -o stream-test.dbc ${SRCDIR}/stream-test.dylan
 
-format-out-test.dbc: ${SRCDIR}/format-out-test.dylan
-	${MC} ${MINDYFLAGS} -lformat-out-test -o format-out-test.dbc ${SRCDIR}/format-out-test.dylan
-
+table-ext-test-lib.dbc: table-ext-test-exports.dbc table-ext-test.dbc
+	cat table-ext-test-exports.dbc table-ext-test.dbc > $@
+table-ext-test-exports.dbc: ${SRCDIR}/table-ext-test-exports.dylan
+	${MC} ${MINDYFLAGS} -ltable-ext-test -o table-ext-test-exports.dbc ${SRCDIR}/table-ext-test-exports.dylan
 table-ext-test.dbc: ${SRCDIR}/table-ext-test.dylan
 	${MC} ${MINDYFLAGS} -ltable-ext-test -o table-ext-test.dbc ${SRCDIR}/table-ext-test.dylan
 
+random-test-lib.dbc: random-test-exports.dbc random-test.dbc
+	cat random-test-exports.dbc random-test.dbc > $@
+random-test-exports.dbc: ${SRCDIR}/random-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lrandom-test -o random-test-exports.dbc ${SRCDIR}/random-test-exports.dylan
 random-test.dbc: ${SRCDIR}/random-test.dylan
 	${MC} ${MINDYFLAGS} -lrandom-test -o random-test.dbc ${SRCDIR}/random-test.dylan
 
+matrix-test-lib.dbc: matrix-test-exports.dbc matrix-test.dbc
+	cat matrix-test-exports.dbc matrix-test.dbc > $@
+matrix-test-exports.dbc: ${SRCDIR}/matrix-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lmatrix-test -o matrix-test-exports.dbc ${SRCDIR}/matrix-test-exports.dylan
 matrix-test.dbc: ${SRCDIR}/matrix-test.dylan
 	${MC} ${MINDYFLAGS} -lmatrix-test -o matrix-test.dbc ${SRCDIR}/matrix-test.dylan
 
+coll-ext-test-lib.dbc: coll-ext-test-exports.dbc coll-ext-test.dbc
+	cat coll-ext-test-exports.dbc coll-ext-test.dbc > $@
+coll-ext-test-exports.dbc: ${SRCDIR}/coll-ext-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lcoll-ext-test -o coll-ext-test-exports.dbc ${SRCDIR}/coll-ext-test-exports.dylan
 coll-ext-test.dbc: ${SRCDIR}/coll-ext-test.dylan
 	${MC} ${MINDYFLAGS} -lcoll-ext-test -o coll-ext-test.dbc ${SRCDIR}/coll-ext-test.dylan
 
-itime-test.dbc: ${SRCDIR}/itime-test.dylan
-	${MC} ${MINDYFLAGS} -litime-test -o itime-test.dbc ${SRCDIR}/itime-test.dylan
-
-format-test.dbc: ${SRCDIR}/format-test.dylan
-	${MC} ${MINDYFLAGS} -lformat-test -o format-test.dbc ${SRCDIR}/format-test.dylan
-
+print-test-lib.dbc: print-test-exports.dbc print-test.dbc
+	cat print-test-exports.dbc print-test.dbc > $@
+print-test-exports.dbc: ${SRCDIR}/print-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lprint-test -o print-test-exports.dbc ${SRCDIR}/print-test-exports.dylan
 print-test.dbc: ${SRCDIR}/print-test.dylan
 	${MC} ${MINDYFLAGS} -lprint-test -o print-test.dbc ${SRCDIR}/print-test.dylan
 
+format-test-lib.dbc: format-test-exports.dbc format-test.dbc
+	cat format-test-exports.dbc format-test.dbc > $@
+format-test-exports.dbc: ${SRCDIR}/format-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lformat-test -o format-test-exports.dbc ${SRCDIR}/format-test-exports.dylan
+format-test.dbc: ${SRCDIR}/format-test.dylan
+	${MC} ${MINDYFLAGS} -lformat-test -o format-test.dbc ${SRCDIR}/format-test.dylan
+
+format-out-test-lib.dbc: format-out-test-exports.dbc format-out-test.dbc
+	cat format-out-test-exports.dbc format-out-test.dbc > $@
+format-out-test-exports.dbc: ${SRCDIR}/format-out-test-exports.dylan
+	${MC} ${MINDYFLAGS} -lformat-out-test -o format-out-test-exports.dbc ${SRCDIR}/format-out-test-exports.dylan
+format-out-test.dbc: ${SRCDIR}/format-out-test.dylan
+	${MC} ${MINDYFLAGS} -lformat-out-test -o format-out-test.dbc ${SRCDIR}/format-out-test.dylan
+
+itime-test-lib.dbc: itime-test-exports.dbc itime-test.dbc
+	cat itime-test-exports.dbc itime-test.dbc > $@
+itime-test-exports.dbc: ${SRCDIR}/itime-test-exports.dylan
+	${MC} ${MINDYFLAGS} -litime-test -o itime-test-exports.dbc ${SRCDIR}/itime-test-exports.dylan
+itime-test.dbc: ${SRCDIR}/itime-test.dylan
+	${MC} ${MINDYFLAGS} -litime-test -o itime-test.dbc ${SRCDIR}/itime-test.dylan
+
+time-test-lib.dbc: time-test-exports.dbc time-test.dbc
+	cat time-test-exports.dbc time-test.dbc > $@
+time-test-exports.dbc: ${SRCDIR}/time-test-exports.dylan
+	${MC} ${MINDYFLAGS} -ltime-test -o time-test-exports.dbc ${SRCDIR}/time-test-exports.dylan
 time-test.dbc: ${SRCDIR}/time-test.dylan
 	${MC} ${MINDYFLAGS} -ltime-test -o time-test.dbc ${SRCDIR}/time-test.dylan
-
 
 # And now, two hacks to make sure "asterixes.txt" and "dashes.txt" are 
 # in the build directory and not the source directory (while still
