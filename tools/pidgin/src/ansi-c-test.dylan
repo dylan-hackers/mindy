@@ -27,6 +27,19 @@ define function sv (#rest items) => (sv :: <stretchy-vector>)
   result;
 end;
 
+define function dump-type-repository
+    (repository :: <c-type-repository>, #key indent? :: <boolean>)
+ => ()
+  let format-string = if (indent?) "  %s\n" else "%s\n" end;
+  local
+    method dump-entry(type :: <c-type>) => ()
+      format(*standard-output*, format-string, format-c-type(type));
+      force-output(*standard-output*);
+    end;
+  do-c-type-repository-entries(dump-entry, repository);
+end function;
+
+
 //=========================================================================
 //  C Types & Declarations
 //=========================================================================
@@ -151,7 +164,6 @@ define function test-c-types-and-declarations () => ()
 			   name: "v2", type: typedef, extern?: #f));
   print-c-declaration(make(<c-variable-declaration>,
 			   name: "v3", type: enum));
-/*
   print-c-declaration(make(<c-variable-declaration>,
 			   name: "f2", type: func2));
   print-c-declaration(make(<c-variable-declaration>,
@@ -160,7 +172,7 @@ define function test-c-types-and-declarations () => ()
 			   name: "f", type: func));
   print-c-declaration(make(<c-variable-declaration>,
 			   name: "fp", type: func-ptr));
-*/
+
 
   // Defines
   print-c-declaration(make(<c-integer-define>, name: "d1", value: 3));
@@ -170,29 +182,38 @@ define function test-c-types-and-declarations () => ()
 
   // See what we've accumulated.
   test-section-header("Dump of type repository");
-
-  local
-    method dump-entry(type :: <c-type>) => ()
-      format(*standard-output*, "  %s\n", format-c-type(type));
-      force-output(*standard-output*);
-    end;
-  do-c-type-repository-entries(dump-entry, r);
-  
+  dump-type-repository(r);
 end function test-c-types-and-declarations;
 
 
 //=========================================================================
 //  Test C parser
-//  Inputs: type-rep, header name, header-file-finder object
-//  Outputs: c-file object.
 //=========================================================================
+//  XXX - Need to add support for some kind of "header finder object".
 
 define function test-c-parser(args)
   test-section-header("C Parser");
-  let r :: <c-type-repository> = make(<c-type-repository>);
-  /* let c-f :: <c-file> = */ parse-c-file(r, args[0]);
-  
-  // Print out results (c-f & r) ...
+  if (~empty?(args))
+    let repository :: <c-type-repository> = make(<c-type-repository>);
+
+    format(*standard-output*, "Running C parser.\n");
+    force-output(*standard-output*);
+    let c-file :: <c-file> = parse-c-file(repository, args[0]);
+    format(*standard-output*, "Parser finished.\n");
+    force-output(*standard-output*);
+
+    format(*standard-output*, "Ignoring recursively included files.\n");
+    format(*standard-output*, "Contents of top-level file:\n");
+    for (decl in c-file.c-file-declarations)
+      format(*standard-output*, "  %s\n", decl);
+      force-output(*standard-output*);
+    end;
+
+    format(*standard-output*, "Contents of type repository:\n");
+    dump-type-repository(repository, indent?: #t);
+  else
+    format(*standard-output*, "No input supplied; skipping test.\n");
+  end;
 end function test-c-parser;
 
 
@@ -202,7 +223,5 @@ end function test-c-parser;
 
 define method main(appname, #rest args)
   test-c-types-and-declarations();
-  if (~empty?(args))
-    test-c-parser(args);
-  end if;
+  test-c-parser(args);
 end;

@@ -529,12 +529,12 @@ end method declaration-closure;
 
 // Main parser routine:
 define function parse-c-file
-    (rep :: <c-type-repository>, header-filename :: <byte-string>)
- => ()
+    (repository :: <c-type-repository>, filename :: <byte-string>)
+ => (c-file :: <c-file>)
   // use lookup-object to find header
   // make a <c-file> object
 
-  let tokenizer = make(<tokenizer>, name: header-filename);
+  // let tokenizer = make(<tokenizer>, name: header-filename);
 
 //  let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
 //  parse-state.verbose := #t;
@@ -545,8 +545,8 @@ define function parse-c-file
 //  end if;
 //  parse-state;
 
+  make(<c-file>, name: filename);
 end function;
-			       
 
 
 // Seals for file c-parser-interface.dylan
