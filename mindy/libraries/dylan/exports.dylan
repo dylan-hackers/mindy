@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.17 1994/04/12 22:38:00 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.18 1994/04/15 02:32:08 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -53,7 +53,7 @@ define module Builtin-Stuff
     ceiling/, current-handler,
     do-next-method,
     element, element-setter, enable-error-system,
-    floor/, format, function-arguments,
+    find-method, floor/, format, function-arguments,
     generic-function-methods, getc, grab-lock,
     handler-description, handler-function, handler-next, handler-test,
     handler-type, head, head-setter,
@@ -114,7 +114,8 @@ define module Dylan
 	     ceiling/,
 	     do,
 	     element, element-setter, error,
-	     floor/, forward-iteration-protocol, function-arguments,
+	     find-method, floor/, forward-iteration-protocol,
+	     function-arguments,
 	     generic-function-methods,
 	     head, head-setter,
 	     initialize, instance?,
@@ -149,7 +150,7 @@ define module Dylan
     copy-sequence, curry,
     default-handler, denominator, dimensions, disjoin, do-handlers,
     empty?, even?, every?, expt,
-    fill!, find-key, find-method, first, first-setter, floor,
+    fill!, find-key, first, first-setter, floor,
     gcd,
     identity, integral?, intersection,
     key-sequence,
