@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.16 1994/06/03 00:38:29 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.17 1994/06/06 22:26:19 dpierce Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -141,29 +141,34 @@ end method map;
 define method map-as(cls :: <class>, proc :: <function>,
 		     coll :: <collection>, #rest more_collections)
     => <collection>;
-  let test1 = key-test(coll);
-  if (~ every?( method (c) test1 == key-test(c); end, more_collections ))
-    error("Can't map over collections with different key tests");
-  elseif (empty?(more_collections))
-    let result = make(cls, size: size(coll));
-    let (init_state, limit, next_state, done?,
-	 current_key, current_element) = forward-iteration-protocol(coll);
-    for (state = init_state then next_state(coll, state),
-	 until done?(coll, state, limit))
-      result[current_key(coll, state)] := current_element(coll, state);
-    end for;
-    result;
-  else 
-    let keys = reduce(rcurry(intersection, test: test1),
-		      key-sequence(coll),
-		      map(key-sequence, more_collections));
-    let result = make(cls, size: size(keys));
-    for (key in keys)
-      result[key] := apply(proc, coll[key],
-			   map(rcurry(element, key), more_collections));
-    end for;
-    result;
-  end if;
+  let test = key-test (coll);
+  case
+    ~every? (method (c) key-test (c) == test end, more_collections) =>
+      error("Can't map over collections with different key tests");
+    size (coll) == #f
+      & every? (method (s) size (s) == #f end, more_collections) =>
+      error ("MAP-AS not applicable to unbounded collections");
+    empty? (more_collections) =>
+      let result = make (cls, size: size (coll));
+      let (init, limit, next, done?, curkey, curelt)
+        = forward-iteration-protocol (coll);
+      for (state = init then next (coll, state),
+	   until done? (coll, state, limit))
+	result[curkey (coll, state)] := curelt (coll, state);
+      end for;
+      result;
+    otherwise => 
+      let keys = reduce (rcurry (intersection, test: test),
+			 key-sequence (coll),
+			 map (key-sequence, more_collections));
+      let result = make (cls, size: size (keys));
+      for (key in keys)
+	result[key] := apply (proc, element (coll, key),
+			      map (rcurry (element, key),
+				   more_collections));
+      end for;
+      result;
+  end case;
 end method map-as;
 
 // map-into must be given collections with the same key tests, and the
@@ -406,15 +411,19 @@ define method key-test (sequence :: <sequence>) => test :: <function>;
   \==;            // Return the function == (id?)
 end method key-test;
 
-//# This will be a good and a useful thing once we have written ranges.  Till
-//# then, it doesn't do much good.
-// define method key-sequence(sequence :: <sequence>) => <range>;
-//   make(<range>, from: 0, below: size(sequence));
-// end method key-sequence;
+define method key-sequence(sequence :: <sequence>) => <range>;
+  let s = size (sequence);
+  if (s)
+    range (from: 0, below: s);
+  else
+    range (from: 0);
+  end if;
+end method key-sequence;
 
 define constant aux_map_as =
   method (cls :: <class>, proc :: <function>, #rest seqs)
-    let length = apply(min, map(size, seqs));
+    let finite-lengths = choose (identity, map (size, seqs));
+    let length = apply(min, finite-lengths);
     let result = make(cls, size: length);
     let (init, limit, next, done?, key, elem, elem-setter)
       = forward-iteration-protocol(result);
@@ -449,6 +458,9 @@ define method map-as(cls :: <class>, proc :: <function>,
 		     sequence :: <sequence>,
 		     #next next-method, #rest more_sequences)
   case
+    size (sequence) == #f
+      & every? (method (s) size (s) == #f end, more_sequences) =>
+      error ("MAP-AS not applicable to unbounded sequences");
     empty?(more_sequences) =>
       let result = make(cls, size: size(sequence));
       let (res_init, res_limit, res_next, res_done?, res_key, res_elem,
@@ -719,6 +731,10 @@ end method copy-sequence;
 
 define method concatenate-as(cls :: <class>, sequence :: <sequence>,
 			     #rest more_sequences) => <sequence>;
+  if (size (sequence) == #f
+	| any? (method (s) size (s) == #f end, more_sequences))
+    error ("CONCATENATE-AS not applicable to unbounded sequences");
+  end if;
   let length = reduce(method (int, seq) int + size(seq) end method,
 		      size(sequence), more_sequences);
   let result = make(cls, size: length);
