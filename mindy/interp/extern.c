@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.9 1996/03/18 00:29:04 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.10 1996/05/12 22:54:18 nkramer Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -51,7 +51,11 @@
 #include "print.h"
 #include "coll.h"
 #ifdef HAVE_LIBDLD
-#include <dl.h>
+#   ifdef HAVE_LIBDLDELF
+#      include "../compat/shl.h"
+#   else
+#      include <dl.h>
+#   endif
 #endif
 
 obj_t obj_CPointerClass = NULL;	  /* all instances of StaticTypeClass are
