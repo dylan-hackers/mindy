@@ -11,7 +11,6 @@ $srcroot = "@srcdir@";
 $buildroot = "@builddir@";
 $prefix = "@prefix@";
 $destdir = "@exec_prefix@";
-$D2CDIR = $destdir;
 $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";
