@@ -7,7 +7,7 @@
 STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
 	else echo "bootstrap";					\
 	fi)
-VERSION=2.3.6pre2
+VERSION=2.3.9pre2
 MACHINE=$(shell uname -m)
 ifeq ("$(MACHINE)", "sparc64")
 	MACHINE=sparc
@@ -60,9 +60,12 @@ ifeq ("$(STYLE)", "bootstrap")
 endif
 
 	touch bootstrap-stage2-stamp
-	
 
-build: config build-stamp
+autogen-stamp:
+	`pwd`/autogen.sh
+	touch autogen-stamp
+
+build: autogen-stamp config build-stamp
 build-stamp: bootstrap-stage1-stamp bootstrap-stage2-stamp
 ifeq ("$(STYLE)", "normal")
 
@@ -96,7 +99,7 @@ endif
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp install-stamp config-stamp bootstrap-stage1-stamp bootstrap-stage2-stamp
+	rm -f build-stamp install-stamp config-stamp bootstrap-stage1-stamp bootstrap-stage2-stamp autogen-stamp
 	rm -rf `pwd`/bootstrap_compiler
 	rm -rf `pwd`/debian/bootstrap
 	rm -f config.cache

@@ -1,3 +1,14 @@
+gwydion-dylan (2.3.9pre2-1) unstable; urgency=low
+
+  * New upstream sources
+  * Improved limited collections (now more efficient.)
+  * Build corrections and updated Boehm collector code.
+  * Some readline code.
+  * A few optimizations to reduce size of executables (especially
+    DUIM code.)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Thu, 25 Jul 2002 23:00:52 -0700
+
 gwydion-dylan (2.3.8pre1-1) unstable; urgency=low
 
   * Latest upstream.
