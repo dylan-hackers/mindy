@@ -25,7 +25,7 @@ define module carbon-events
 
             // Event Priority
 
-            <EventPriority>,
+//            <EventPriority>,
 
             $kEventPriorityLow, $kEventPriorityStandard, $kEventPriorityHigh,
 
@@ -34,12 +34,12 @@ define module carbon-events
             $kEventAppActivated, $kEventAppDeactivated, $kEventAppQuit, 
             $kEventAppLaunchNotification,
             
-            // kEventClassMouse
+/*            // kEventClassMouse
             
             $kEventClassMouse, $kEventClassKeyboard, $kEventClassTextInput, 
             $kEventClassApplication, $kEventClassEPPC, $kEventClassMenu, $kEventClassWindow, 
             $kEventClassControl, $kEventClassCommand, $kEventClassTablet,
-            
+*/            
             // kEventMenuBeginTracking
             
             $kEventMenuBeginTracking, $kEventMenuEndTracking, $kEventMenuChangeTrackingMode, 
