@@ -227,7 +227,7 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 	  // current file name with the new relative path name.
 	  state.include-tokenizer
 	    := make(<tokenizer>, parent: state,
-		    source: regexp-replace(state.file-name, name, "[^/]*$"));
+		    source: regexp-replace(state.file-name, "[^/]+$", name));
 	end if;
       end if;
   unget-token(generator, make(<begin-include-token>, position: pos,
@@ -294,7 +294,7 @@ end method cpp-define;
 
 define constant preprocessor-match
   = make-regexp-positioner("^#[ \t]*(define|undef|include|ifdef|ifndef|if"
-			     "|else|line|endif|error)\\b",
+			     "|else|line|endif|error|pragma)\\b",
 			   byte-characters-only: #t, case-sensitive: #t);
 
 // Checks to see whether we are looking at a preproccessor directive.  If so,
@@ -407,7 +407,7 @@ define method try-cpp
 	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
 	    parse-error(state, "Encountered #error directive.");
 	  end if;
-	"line" =>
+	"line", "pragma" =>
 	  for (i from pos below contents.size, until contents[i] == '\n')
 	  finally
 	    state.position := i;
