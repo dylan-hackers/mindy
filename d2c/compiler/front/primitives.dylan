@@ -183,6 +183,18 @@ define-primitive
   (#"throw", #(#(union:, #"<catcher>", #"<false>"), #"<function>", cluster:),
    #(union:));
 
+define-primitive
+  (#"c-string", #(#"<string>"), #"<raw-pointer>",
+   pure: #t);
+
+define-primitive
+  (#"call-out",
+   #(#"<string>", #"<symbol>",
+     rest:, #(union:, #"<symbol>", #"<fixed-integer>", #"<raw-pointer>",
+	      #"<single-float>", #"<double-float>", #"<extended-float>")),
+   #(union:, #"<fixed-integer>", #"<raw-pointer>",
+     #"<single-float>", #"<double-float>", #"<extended-float>"));
+
 for (name in #[#"fixnum-=", #"fixnum-<"])
   define-primitive
     (name, #(#"<fixed-integer>", #"<fixed-integer>"), #"<boolean>",
