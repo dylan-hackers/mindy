@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.2 1995/10/13 15:05:55 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.3 1995/10/30 13:09:14 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -145,6 +145,50 @@ add-od-loader(*default-dispatcher*, #"ratio",
     let dpart = load-object-dispatch(state);
     assert(load-object-dispatch(state) == $end-object);
     ratio(npart, dpart);
+  end method
+);
+
+
+// Real inefficient for large exponents, but probably correct.
+//
+define method integer-decode-float
+    (float :: <float>, precision :: <fixed-integer>)
+ => ();
+  let fclass = object-class(float);
+  let lim = as(fclass, ash(1, precision));
+  let two = as(fclass, 2);
+  let exponent = 0;
+  let current = float;
+  if (current >= lim)
+    while (current >= lim)
+      current := current / two;
+      exponent := exponent + 1;
+    end;
+  else
+    while (current < lim)
+      current := current * two;
+      exponent := exponent - 1;
+    end;
+    current := current / two;
+    exponent := exponent + 1;
+  end if;
+  values(as(<extended-integer>, current), exponent);
+end method;
+
+    
+// Float methods:
+
+define method dump-od(obj :: <single-float>, buf :: <dump-buffer>) => ();
+  let (frac, exp) = integer-decode-float(obj);
+  dump-simple-object(#"single-float", buf, frac, exp);
+end method;
+
+add-od-loader(*default-dispatcher*, #"single-float",
+  method (state :: <load-state>) => res :: <single-float>;
+    let frac = load-object-dispatch(state);
+    let exp = load-object-dispatch(state);
+    assert-end-object(state);
+    as(<single-float>, frac) ^ exp;
   end method
 );
 
