@@ -1,6 +1,6 @@
 module: dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.14 1996/03/20 04:57:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.15 1996/03/26 22:37:13 nkramer Exp $
 
 //======================================================================
 //
@@ -35,7 +35,7 @@ define variable *debug-output* = #"cheap-IO";
 define method report-problem (problem)
   block ()
     report-condition(problem, *debug-output*);
-  exception <error>
+  exception (<error>)
     condition-format(*debug-output*,
 			"\nproblem reporting problem... giving up");
   end block;
@@ -62,7 +62,7 @@ define method eval-debugger-expr (expr, num-debug-vars)
 	else
 	  debug-variables[var];
 	end if;
-      exception <error>
+      exception (<error>)
 	error("No debug variable $%=", var);
       end block;
     literal: => tail(expr);
@@ -156,7 +156,7 @@ define method debugger-report-condition (cond)
     end block;
     condition-format(*debug-output*, "\n\n");
     condition-force-output(*debug-output*);
-  exception <error>
+  exception (<error>)
     puts("\nCould not recover from earlier errors.\n\n");
   end block;
 end method debugger-report-condition;
@@ -173,7 +173,7 @@ define method debugger-abort ()
       condition-format(*debug-output*, "\n");
       condition-force-output(*debug-output*);
     end block;
-  exception <error>
+  exception (<error>)
     puts("Could not recover from earlier errors.\n");
   end block;
 end method debugger-abort;
@@ -237,7 +237,7 @@ define method debugger-describe-restarts (cond)
       condition-format(*debug-output*, "\n");
       condition-force-output(*debug-output*);
     end block;
-  exception <error>
+  exception (<error>)
     puts("\nCould not recover from earlier errors.\n");
   end block;
 end method debugger-describe-restarts;
@@ -301,7 +301,7 @@ define method debugger-restart (cond, index)
     end if;
     condition-force-output(*debug-output*);
     #f;
-  exception <error>
+  exception (<error>)
     puts("Could not recover from earlier errors.\n");
     #f;
   end block;
@@ -337,7 +337,7 @@ define method debugger-return (cond)
       condition-force-output(*debug-output*);
       return(#f);
     end block;
-  exception <error>
+  exception (<error>)
     puts("Could not recover from earlier errors.\n");
     #f;
   end block;
