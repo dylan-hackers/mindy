@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.11 1994/11/03 22:19:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.12 1994/11/06 20:01:33 rgs Exp $
 *
 * This file implements vectors.
 *
@@ -130,6 +130,51 @@ static obj_t dylan_vec_make(obj_t class, obj_t size, obj_t fill)
 	*ptr++ = fill;
 
     return res;
+}
+
+static obj_t dylan_sovec_fill(obj_t /* <simple-object-vector> */ vector,
+			      obj_t value, obj_t first, obj_t last)
+{
+    int start = fixnum_value(first), end = fixnum_value(last);
+    int size = SOVEC(vector)->length;
+    obj_t *ptr;
+
+    if (!instancep(first, obj_IntegerClass) || start < 0)
+	error("Bogus start: for fill! %=: %=", vector, first);
+
+    if (last == obj_Unbound)
+	end = size;
+    else if (!instancep(last, obj_IntegerClass) || end > size)
+	error("Bogus end: for fill! %=: %=", vector, last);
+
+    if (start > end)
+	error("Bogus range for fill! %=: %= to %=", vector,
+	      make_fixnum(start), make_fixnum(end));
+    
+    for (ptr = SOVEC(vector)->contents + start; start < end; start++)
+	*ptr++ = value;
+    return vector;
+}
+
+static obj_t dylan_sovec_copy(obj_t /* <simple-object-vector> */ vector,
+			      obj_t first, obj_t last)
+{
+    int start = fixnum_value(first), end = fixnum_value(last);
+    int size = SOVEC(vector)->length;
+
+    if (!instancep(first, obj_IntegerClass) || start < 0)
+	error("Bogus start: for copy-sequence %=: %=", vector, first);
+
+    if (last == obj_Unbound)
+	end = size;
+    else if (!instancep(last, obj_IntegerClass) || end > size)
+	error("Bogus end: for copy-sequence %=: %=", vector, last);
+
+    if (start > end)
+	error("Bogus range for copy-sequence %=: %= to %=", vector,
+	      make_fixnum(start), make_fixnum(end));
+    
+    return make_vector(end - start, SOVEC(vector)->contents + start);
 }
 
 
@@ -319,6 +364,14 @@ void init_vec_functions(void)
     define_method("size", list1(obj_ByteVectorClass),
 		  FALSE, obj_False, FALSE,
 		  obj_FixnumClass, dylan_bytevec_size);
+    define_method("fill!", list2(obj_SimpleObjectVectorClass, obj_ObjectClass),
+		  FALSE, list2(pair(symbol("start"), make_fixnum(0)),
+			       pair(symbol("end"), obj_Unbound)),
+		  FALSE, obj_SimpleObjectVectorClass, dylan_sovec_fill);
+    define_method("copy-sequence", list1(obj_SimpleObjectVectorClass),
+		  FALSE, list2(pair(symbol("start"), make_fixnum(0)),
+			       pair(symbol("end"), obj_Unbound)),
+		  FALSE, obj_SimpleObjectVectorClass, dylan_sovec_copy);
     define_method("make", list1(singleton(obj_ByteVectorClass)), FALSE,
 		  list2(pair(symbol("size"), make_fixnum(0)),
 			pair(symbol("fill"), make_fixnum(0))),
