@@ -42,7 +42,6 @@ define constant $kControlPictureNoTrackProc :: <integer>	= 305; /* Appearance 1.
 define constant $kControlLabelPart :: <integer>			= 1;
 define constant $kControlMenuPart :: <integer>			= 2;
 define constant $kControlTrianglePart :: <integer>		= 4;
-define constant $kControlEditTextPart :: <integer>		= 5;						/* Appearance 1.0 and later*/
 define constant $kControlPicturePart :: <integer>			= 6;							/* Appearance 1.0 and later*/
 define constant $kControlIconPart :: <integer>			= 7;							/* Appearance 1.0 and later*/
 define constant $kControlClockPart :: <integer>			= 8;						/* Appearance 1.0 and later*/
@@ -64,6 +63,8 @@ define constant $kControlClockAMPMPart :: <integer>		= 12;						/* Appearance 1.
 define constant $kControlDataBrowserPart :: <integer>		= 24;							/* CarbonLib 1.0 and later*/
 define constant $kControlDataBrowserDraggedPart :: <integer> = 25;							/* CarbonLib 1.0 and later*/
 define constant $kControlEntireControl :: <integer> = c-expr(int: "kControlEntireControl");
+define constant $kControlNoPart :: <integer> = c-expr(int: "kControlNoPart");
+define constant $kControlEditTextPart :: <integer> = c-expr(int: "kControlEditTextPart");
 
 define constant $kControlKindBevelButton :: <integer> = c-expr(int: "kControlKindBevelButton");
 define constant $kControlKindChasingArrows :: <integer> = c-expr(int: "kControlKindChasingArrows");	
@@ -95,9 +96,13 @@ define constant $kControlKindTabs :: <integer> = c-expr(int: "kControlKindTabs")
 define constant $kControlKindUserPane :: <integer> = c-expr(int: "kControlKindUserPane");	
 define constant $kControlKindWindowHeader :: <integer> = c-expr(int: "kControlKindWindowHeader");
 
-// Data types
+// Tags
 
 define constant $kControlUserPaneDrawProcTag :: <integer> = c-expr(int: "kControlUserPaneDrawProcTag");
+define constant $kControlStaticTextTextTag :: <integer> = c-expr(int: "kControlStaticTextTextTag");
+define constant $kControlEditTextSelectionTag :: <integer> = c-expr(int: "kControlEditTextSelectionTag");
+define constant $kControlEditTextPasswordTag :: <integer> = c-expr(int: "kControlEditTextPasswordTag"); 
+define constant $kControlEditTextTextTag :: <integer> = c-expr(int: "kControlEditTextTextTag");
 
 // etc.
 
@@ -114,6 +119,40 @@ define constant <ControlActionUPP> = <UniversalProcPtr>;
 
 define constant <ControlPartCode> = <SInt16>;
 define constant <ControlFocusPart> = <SInt16>;
+
+define functional class <ControlEditTextSelectionRec*> 
+  (<statically-typed-pointer>)
+end class <ControlEditTextSelectionRec*>;
+
+define method content-size
+  (thing == <ControlEditTextSelectionRec*>)
+=>(result :: <integer>)
+  c-expr(int: "sizeof(ControlEditTextSelectionRec)");
+end method content-size;
+
+define method selStart-value
+  (rec :: <ControlEditTextSelectionRec*>)
+=>(result :: <integer>)
+  signed-short-at(rec, offset: 0);
+end method selStart-value;
+
+define method selEnd-value
+  (rec :: <ControlEditTextSelectionRec*>)
+=>(result :: <integer>)
+  signed-short-at(rec, offset: 0);
+end method selEnd-value;
+
+define method selStart-value-setter
+  (new-value :: <integer>, rec :: <ControlEditTextSelectionRec*>)
+=>(result :: <integer>)
+  signed-short-at(rec, offset: 0) := new-value;
+end method selStart-value-setter;
+
+define method selEnd-value-setter
+  (new-value :: <integer>, rec :: <ControlEditTextSelectionRec*>)
+=>(result :: <integer>)
+  signed-short-at(rec, offset: 0) := new-value;
+end method selEnd-value-setter;
 
 /*
 	DrawControls
@@ -518,6 +557,40 @@ define method SetControlData( inControl :: <ControlHandle>, inPart :: <integer>,
   as(<OSErr>, call-out("SetControlData", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
                         int: inSize, ptr: inData));
 end method SetControlData;
+
+/*
+  GetControlData
+*/
+
+define method GetControlData( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>,
+                        inSize :: <integer>, inData :: <statically-typed-pointer>)
+=> (result :: <OSErr>, outSize :: <integer>)
+  let temp :: <Handle> = make(<Handle>);
+  values(as(<OSErr>, call-out("GetControlData", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
+                        int: inSize, ptr: inData.raw-value, ptr: temp.raw-value)),
+  signed-long-at(temp, offset: 0));	// Yes, signed
+end method GetControlData;
+
+define method GetControlData( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>,
+                        inSize :: <integer>, inData :: <raw-pointer>)
+=> (result :: <OSErr>, outSize :: <integer>)
+  let temp :: <Handle> = make(<Handle>);
+  values(as(<OSErr>, call-out("GetControlData", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
+                        int: inSize, ptr: inData, ptr: temp.raw-value)),
+  signed-long-at(temp, offset: 0));	// Yes, signed
+end method GetControlData;
+
+/*
+  GetControlDataSize
+*/
+
+define method GetControlDataSize( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>)
+=> (result :: <OSErr>, outSize :: <integer>)
+  let temp :: <Handle> = make(<Handle>);
+  values(as(<OSErr>, call-out("GetControlDataSize", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
+                        ptr: temp.raw-value)),
+  signed-long-at(temp, offset: 0));	// Yes, signed
+end method GetControlDataSize;
 
 
 /*

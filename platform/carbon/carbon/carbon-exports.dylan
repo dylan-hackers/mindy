@@ -87,7 +87,7 @@ define module carbon
 						$kEventParamEnabled, $kEventParamDimensions, $kEventParamAvailableBounds, $kEventParamAEEventID, 
 						$kEventParamAEEventClass, $kEventParamCGContextRef, $typeWindowRef, $typeGrafPtr, $typeGWorldPtr, 
 						$typeDragRef, $typeMenuRef, $typeControlRef, $typeCollection, $typeQDRgnHandle, $typeOSStatus, 
-            $typeQDPoint,
+            $typeQDPoint, $typeChar,
 						$typeCGContextRef, $kEventParamMouseLocation, $kEventParamMouseButton, $kEventParamClickCount, 
 						$kEventParamMouseWheelAxis, $kEventParamMouseWheelDelta, $kEventParamMouseDelta, $typeMouseButton, 
 						$typeMouseWheelAxis, $kEventParamKeyCode, $kEventParamKeyMacCharCodes, $kEventParamKeyModifiers, 
@@ -184,7 +184,9 @@ define module carbon
                 $kControlKindScrollBar,	$kControlKindScrollingTextBox,$kControlKindSeparator,
                 $kControlKindSignatureApple, $kControlKindSlider, $kControlKindStaticText,$kControlKindTabs,	
                 $kControlKindUserPane, $kControlKindWindowHeader,
-    $kControlUserPaneDrawProcTag, $kControlEntireControl,
+    $kControlUserPaneDrawProcTag, $kControlStaticTextTextTag,
+    $kControlEditTextSelectionTag, $kControlEditTextPasswordTag, $kControlEditTextTextTag,
+    $kControlNoPart, $kControlEntireControl, $kControlEditTextPart,
     $kControlSupportsEmbedding,
 		<ControlHandle>, <ControlActionUPP>,
 		NewControl, DisposeControl, KillControls,
@@ -195,8 +197,12 @@ define module carbon
                 TrackControl, TestControl,
                 AdvanceKeyboardFocus, ClearKeyboardFocus, GetKeyboardFocus, ReverseKeyboardFocus, SetKeyboardFocus,
 		DrawControls, EmbedControl,
-    IsControlVisible, CreateRootControl, SetControlData, NewControlUserPaneDrawUPP,
+    IsControlVisible, CreateRootControl, SetControlData, GetControlData, GetControlDataSize, 
+    NewControlUserPaneDrawUPP,
     GetBestControlRect, ActivateControl, DeactivateControl,
+    <ControlEditTextSelectionRec*>,
+      selStart-value, selEnd-value, selStart-value-setter, selEnd-value-setter,
+    
     
 // Dialog Manager.
 		<DialogRef>, <ModalFilterUPP>, $uppModalFilterProcInfo,

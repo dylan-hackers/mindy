@@ -317,6 +317,7 @@ define constant $typeQDRgnHandle :: <integer> = c-expr(int: "typeQDRgnHandle");
 define constant $typeQDPoint :: <integer> = c-expr(int: "typeQDPoint");
 define constant $typeOSStatus :: <integer> = c-expr(int: "typeOSStatus");
 define constant $typeCGContextRef :: <integer> = c-expr(int: "typeCGContextRef");
+define constant $typeChar :: <integer> = c-expr(int: "typeChar");
 define constant $kEventParamMouseLocation :: <integer> = c-expr(int: "kEventParamMouseLocation");
 define constant $kEventParamMouseButton :: <integer> = c-expr(int: "kEventParamMouseButton");
 define constant $kEventParamClickCount :: <integer> = c-expr(int: "kEventParamClickCount");
