@@ -2,7 +2,7 @@ module: Print
 author: Gwydion Project
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.5 2002/11/28 13:53:43 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.6 2003/04/24 05:31:13 housel Exp $
 
 
 ///======================================================================
@@ -1445,10 +1445,13 @@ define inline method print-float
     (num :: <float>, class :: <class>, digits :: <integer>,
      marker :: <character>, stream :: <stream>)
     => ();
+  let two = as(class, 2.0);
   if (zero?(num))
     write(stream, "0.0");
     write-element(stream, marker);
     write-element(stream, '0');
+  elseif (num / two = num)      // ###
+    write(stream, "inf");
   else
     if (negative?(num))
       num := -num;
