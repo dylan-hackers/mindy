@@ -27,8 +27,15 @@ rcs-header: $Header:
 //======================================================================
 
 define constant $default-defines
-  = #["WIN32", "",
-      "__STDC__, ""];
+  = #["_MSC_VER", "1020", 
+      "_M_IX86", "400",
+      // The rest of these, I'm not sure the compiler defines, but
+      // they certainly are handy
+      "WIN32", "",
+      "_WIN32", "1", 
+      "__cdecl", "",
+      "__STDC__", "",
+      "_POSIX_", ""];
 
 define constant win32-include-directories
   = #["/msdev/include"];
