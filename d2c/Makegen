@@ -1,4 +1,3 @@
-# Make sure melange is build before we attempt to build dig
 if (!$enable_bootstrap) {
     do compile_subdirs('runtime', 'compiler', 'dig');
 } else {
