@@ -6,6 +6,8 @@ define class <state> (<object>)
   slot next-id :: <fixed-integer>, init-value: 0;
   slot object-queue :: <deque>, init-function: curry(make, <deque>);
   slot object-names :: <table>, init-function: curry(make, <table>);
+  slot symbols :: union(<literal-false>, <literal-symbol>),
+    init-function: curry(make, <literal-false>);
 end;
 
 define method build-initial-heap
@@ -23,6 +25,10 @@ define method build-initial-heap
 	   object, state.object-names[object]);
     spew-object(object, state);
   end;
+  format(stream,
+	 "\n\n\t.align\t8\n\t.export\tinitial_symbols, DATA\n"
+	   "initial_symbols\n");
+  spew-reference(state.symbols, $heap-rep, "Initial Symbols", state);
 end;
 
 
@@ -269,7 +275,9 @@ define method spew-object
     (object :: <literal-symbol>, state :: <state>) => ();
   spew-instance(specifier-type(#"<symbol>"), state,
 		symbol-string:
-		  as(<ct-value>, as(<string>, object.literal-value)));
+		  as(<ct-value>, as(<string>, object.literal-value)),
+		symbol-next: state.symbols);
+  state.symbols := object;
 end;
 
 define method spew-object
