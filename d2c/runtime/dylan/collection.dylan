@@ -127,6 +127,11 @@ define open generic key-test
     => test-function :: <function>;
 
 
+define inline method class-for-copy (coll :: <mutable-collection>)
+    => res :: <class>;
+  coll.object-class;
+end method class-for-copy;
+
 // Collection Methods.
 
 /* ### not absolutly needed
@@ -137,11 +142,6 @@ define method size (collection :: <collection>) => res :: <fixed-integer>;
     result;
   end;
 end method size;
-
-define inline sealed method class-for-copy (coll :: <mutable-collection>)
-    => res :: <class>;
-  coll.object-class;
-end method class-for-copy;
 
 define inline method empty? (coll :: <collection>) => res :: <boolean>;
   let (state, limit, ignore, finished-state?)
@@ -636,7 +636,7 @@ define method sequence-map-into
 	 until: target-finished-state?(target, target-state, target-limit)
 	   | seq-finished-state?(sequence, seq-state, seq-limit))
       target-current-element(target, target-state)
-	:= seq-current-element(sequence, seq-state);
+	:= proc(seq-current-element(sequence, seq-state));
     end;
   else
     let sequences = #();
@@ -741,8 +741,6 @@ define method fill!
   sequence;
 end method fill!;
 
-
-
 /*
 define method key-sequence(sequence :: <sequence>)
     => keys :: <range>;
@@ -759,7 +757,6 @@ define sealed inline method key-test
     (sequence :: <sequence>) => test :: <function>;
   \==;
 end method key-test;
-
 
 define method concatenate (sequence :: <sequence>, #rest more-sequences)
     => new-seq :: <sequence>;
@@ -804,3 +801,77 @@ define inline method third-setter
 end;
 
 */
+
+define method copy-sequence
+    (sequence :: <sequence>, #key start :: <fixed-integer> = 0, end: last)
+ => (result :: <sequence>);
+  let seq-size :: <fixed-integer> = sequence.size;
+  let last :: <fixed-integer> = last | seq-size;
+  case
+    (last > seq-size) => error("End: (%=) out of range.", last);
+    (start < 0) => error("Start: (%=) out of range.", start);
+    (start > last) => error("Start: (%=) > End: (%=).", start, last);
+  end case;
+
+  let sz :: <fixed-integer> = last - start;
+  let result = make(class-for-copy(sequence), size: sz);
+  let (init-state, limit, next-state, done?,
+       current-key, current-element) = forward-iteration-protocol(sequence);
+
+  for (index :: <fixed-integer> from 0 below start,
+       state = init-state then next-state(sequence, state))
+  finally
+    let (res-init, res-limit, res-next, res-done?, res-key,
+	 res-elem, res-elem-setter) = forward-iteration-protocol(result);
+    for (index :: <fixed-integer> from index below last,
+	 state = state then next-state(sequence, state),
+	 res-state = res-init then res-next(result, res-state))
+      res-elem(result, res-state) := current-element(sequence, state);
+    end for;
+  end for;
+  result;
+end method copy-sequence;
+
+define inline method last
+    (seq :: <sequence>, #key default) => value :: <object>;
+  element(seq, seq.size - 1);
+end method last;
+
+define inline method last-setter
+    (new-value :: <object>, seq :: <sequence>) => value :: <object>;
+  element(seq, seq.size - 1) := new-value;
+end method last-setter;
+
+// Experiment -- this is the same source as the general method, but more
+// specific type info.  How will the result differ?
+define method copy-sequence
+    (sequence :: <simple-object-vector>, #key start :: <fixed-integer> = 0, end: last)
+ => (result :: <simple-object-vector>);
+  let seq-size :: <fixed-integer> = sequence.size;
+  let last :: <fixed-integer> = last | seq-size;
+  case
+    (last > seq-size) => error("End: (%=) out of range.", last);
+    (start < 0) => error("Start: (%=) out of range.", start);
+    (start > last) => error("Start: (%=) > End: (%=).", start, last);
+  end case;
+
+  let sz :: <fixed-integer> = last - start;
+  let result-cls :: <class> = class-for-copy(sequence);
+  let result :: result-cls = make(result-cls, size: sz);
+  let (init-state, limit, next-state, done?,
+       current-key, current-element) = forward-iteration-protocol(sequence);
+
+  for (index :: <fixed-integer> from 0 below start,
+       state = init-state then next-state(sequence, state))
+  finally
+    let (res-init, res-limit, res-next, res-done?, res-key,
+	 res-elem, res-elem-setter) = forward-iteration-protocol(result);
+    for (index :: <fixed-integer> from index below last,
+	 state = state then next-state(sequence, state),
+	 res-state = res-init then res-next(result, res-state))
+      res-elem(result, res-state) := current-element(sequence, state);
+    end for;
+  end for;
+  result;
+end method copy-sequence;
+

@@ -19,8 +19,6 @@ define method \< (str1 :: <string>, str2 :: <string>) => res :: <boolean>;
   end;
 end;
 
-/* ### not absolutly needed
-
 define method as-lowercase (str :: <string>)
     => res :: <string>;
   map(as-lowercase, str);
@@ -40,7 +38,6 @@ define method as-uppercase! (str :: <string>)
     => res :: <string>;
   map-into(str, as-uppercase, str);
 end;
-*/
 
 
 // Built-in strings.
@@ -97,3 +94,43 @@ end;
 
 seal generic make (singleton(<byte-string>));
 seal generic initialize (<byte-string>);
+
+define sealed inline method element
+    (vec :: <byte-string>, index :: <fixed-integer>,
+     #key default = $not-supplied)
+    => element :: <byte-character>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index);
+  elseif (default == $not-supplied)
+    element-error(vec, index);
+  else
+    default;
+  end;
+end;
+
+define sealed inline method element-setter
+    (new-value :: <byte-character>, vec :: <byte-string>, index :: <fixed-integer>)
+    => new-value :: <object>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index) := new-value;
+  else
+    element-error(vec, index);
+  end;
+end;
+
+define method copy-sequence
+    (vector :: <byte-string>, #key start :: <fixed-integer> = 0, end: last)
+ => (result :: <byte-string>);
+  let src-sz :: <fixed-integer> = size(vector);
+  let last :: <fixed-integer>
+    = if (last & last < src-sz) last else src-sz end if;
+  let start :: <fixed-integer> = if (start < 0) 0 else start end if;
+  let sz :: <fixed-integer> = last - start;
+
+  let result :: <byte-string> = make(<byte-string>, size: sz);
+  for (from-index :: <fixed-integer> from start below last,
+       to-index :: <fixed-integer> from 0)
+    %element(result, to-index) := %element(vector, from-index);
+  end for;
+  result;
+end method copy-sequence;

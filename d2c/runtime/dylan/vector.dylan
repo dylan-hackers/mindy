@@ -33,6 +33,14 @@ define open generic %element-setter
     (new :: <object>, vec :: <builtin-vector>, index :: <fixed-integer>)
     => res :: <object>;
 
+// By making this a separate non-inline routine, we avoid inlining calls to
+// error, which are annoyingly large.
+//
+define constant element-error
+  = method (coll :: <sequence>, index :: <fixed-integer>) => res :: type-or();
+      error("No element %d in %=", index, coll);
+    end method;
+
 define sealed inline method element
     (vec :: <builtin-vector>, index :: <fixed-integer>,
      #key default = $not-supplied)
@@ -40,7 +48,7 @@ define sealed inline method element
   if (index >= 0 & index < vec.size)
     %element(vec, index);
   elseif (default == $not-supplied)
-    error("No element %d in %=", index, vec);
+    element-error(vec, index);
   else
     default;
   end;
@@ -52,7 +60,7 @@ define sealed inline method element-setter
   if (index >= 0 & index < vec.size)
     %element(vec, index) := new-value;
   else
-    error("No element %d in %=", index, vec);
+    element-error(vec, index);
   end;
 end;
 
@@ -126,3 +134,27 @@ seal generic initialize (<simple-object-vector>);
 define inline method vector (#rest args) => res :: <simple-object-vector>;
   args;
 end;
+
+define sealed inline method element
+    (vec :: <simple-object-vector>, index :: <fixed-integer>,
+     #key default = $not-supplied)
+    => element :: <object>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index);
+  elseif (default == $not-supplied)
+    element-error(vec, index);
+  else
+    default;
+  end;
+end;
+
+define sealed inline method element-setter
+    (new-value :: <object>, vec :: <simple-object-vector>, index :: <fixed-integer>)
+    => new-value :: <object>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index) := new-value;
+  else
+    element-error(vec, index);
+  end;
+end;
+

@@ -5,7 +5,10 @@ define generic \== (x :: <object>, y :: <object>) => answer :: <boolean>;
 
 define sealed method \== (x :: <object>, y :: <object>)
     => answer :: <boolean>;
-  if (x.object-class.class-functional? & y.object-class.class-functional?)
+  let x-class :: <class> = x.object-class;
+  if (~(x-class == y.object-class))
+    #f;
+  elseif (x-class.class-functional?)
     functional-==(x, y);
   else
     %%primitive \== (x, y);
@@ -13,7 +16,7 @@ define sealed method \== (x :: <object>, y :: <object>)
 end;
 
 
-define open generic functional-== (x :: <object>, y :: <object>)
+define sealed generic functional-== (x :: <object>, y :: <object>)
     => answer :: <boolean>;
 
 define method functional-== (x :: <object>, y :: <object>)

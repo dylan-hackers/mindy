@@ -23,7 +23,7 @@ end;
 seal generic functional-== (<character>, <object>);
 seal generic functional-== (<object>, <character>);
 
-define sealed inline method as (class == <character>, code :: <char-code>)
+define sealed inline method as (class == <character>, code :: <fixed-integer>)
     => res :: <character>;
   make(<character>, code: code);
 end;
@@ -43,8 +43,6 @@ seal generic \<= (<character>, <character>);
 seal generic \= (<character>, <character>);
 seal generic \~= (<character>, <character>);
 
-/* ### not absolutly needed
-
 define sealed method as-uppercase (char :: <character>)
     => res :: <character>;
   if ('a' <= char & char <= 'z')
@@ -63,4 +61,3 @@ define sealed method as-lowercase (char :: <character>)
   end;
 end;
 
-*/
