@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.63 1996/03/28 00:07:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.64 1996/04/06 07:11:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -415,24 +415,24 @@ define method process-slot
 
   if (init-value)
     if (init-expr)
-      compiler-error
+      compiler-fatal-error
 	("Can't supply both an init-value: and an init-expression.");
     end if;
     if (init-function)
-      compiler-error
+      compiler-fatal-error
 	("Can't supply both an init-value: and an init-function:.");
     end;
     if (req-init-keyword)
-      compiler-error
+      compiler-fatal-error
 	("Can't supply both an init-value: and a required-init-keyword:.");
     end;
   elseif (init-expr)
     if (init-function)
-      compiler-error
+      compiler-fatal-error
 	("Can't supply both an init-function: and an init-expression.");
     end if;
     if (req-init-keyword)
-      compiler-error
+      compiler-fatal-error
 	("Can't supply both an init-value: and a required-init-keyword:.");
     end;
     if (instance?(init-expr, <literal-ref-parse>))
@@ -446,13 +446,13 @@ define method process-slot
     end if;
   elseif (init-function)
     if (req-init-keyword)
-      compiler-error("Can't supply both an init-function: and a "
+      compiler-fatal-error("Can't supply both an init-function: and a "
 		       "required-init-keyword:.");
     end;
   end;
   if (init-keyword & req-init-keyword)
-    compiler-error("Can't supply both an init-keyword: and a "
-		     "required-init-keyword:.");
+    compiler-fatal-error("Can't supply both an init-keyword: and a "
+			   "required-init-keyword:.");
   end;
 
   let getter-name = make(<basic-name>, symbol: getter,
@@ -466,23 +466,23 @@ define method process-slot
 	  = make(<basic-name>, symbol: sizer, module: *Current-Module*);
 	
 	unless (allocation == #"instance")
-	  compiler-error
+	  compiler-fatal-error
 	    ("Only instance allocation slots can be variable length.");
 	end;
 	
 	if (size-init-value)
 	  if (size-init-function)
-	    compiler-error("Can't have both a size-init-value: and "
-			     "size-init-function:");
+	    compiler-fatal-error("Can't have both a size-init-value: and "
+				   "size-init-function:");
 	  end;
 	elseif (~(size-init-function | req-size-init-keyword))
-	  compiler-error
+	  compiler-fatal-error
 	    ("The Initial size must be supplied somehow.");
 	end;
 	
 	if (size-init-keyword & req-size-init-keyword)
-	  compiler-error("Can't have both a size-init-keyword: and a "
-			   "required-size-init-keyword:");
+	  compiler-fatal-error("Can't have both a size-init-keyword: and a "
+				 "required-size-init-keyword:");
 	end;
 	
 	let slot = make(<slot-defn>,
@@ -507,20 +507,20 @@ define method process-slot
 	slot;
       else
 	if (size-init-value)
-	  compiler-error("Can't supply a size-init-value: without a "
-			   "sizer: generic function");
+	  compiler-fatal-error("Can't supply a size-init-value: without a "
+				 "sizer: generic function");
 	end;
 	if (size-init-function)
-	  compiler-error("Can't supply a size-init-function: without a "
-			   "sizer: generic function");
+	  compiler-fatal-error("Can't supply a size-init-function: without a "
+				 "sizer: generic function");
 	end;
 	if (size-init-keyword)
-	  compiler-error("Can't supply a size-init-keyword: without a "
-			   "sizer: generic function");
+	  compiler-fatal-error("Can't supply a size-init-keyword: without a "
+				 "sizer: generic function");
 	end;
 	if (req-size-init-keyword)
-	  compiler-error("Can't supply a required-size-init-keyword: "
-			   "without a sizer: generic function");
+	  compiler-fatal-error("Can't supply a required-size-init-keyword: "
+				 "without a sizer: generic function");
 	end;
 
 	#f;
@@ -556,16 +556,16 @@ define method process-slot
 
   if (init-value)
     if (init-expr)
-      compiler-error
+      compiler-fatal-error
 	("Can't supply both an init-value: and an init-expression.");
     end if;
     if (init-function)
-      compiler-error
+      compiler-fatal-error
 	("Can't supply both an init-value: and an init-function:.");
     end;
   elseif (init-expr)
     if (init-function)
-      compiler-error
+      compiler-fatal-error
 	("Can't supply both an init-function: and an init-expression.");
     end if;
     if (instance?(init-expr, <literal-ref-parse>))
@@ -606,17 +606,17 @@ define method process-slot
 
   if (required?)
     if (init-value)
-      compiler-error("Can't supply an init-value: for required keyword "
-		       "init arg specs");
+      compiler-fatal-error("Can't supply an init-value: for required keyword "
+			     "init arg specs");
     end;
     if (init-function)
-      compiler-error("Can't supply an init-function: for required "
-		       "keyword init arg specs");
+      compiler-fatal-error("Can't supply an init-function: for required "
+			     "keyword init arg specs");
     end;
   elseif (init-value)
     if (init-function)
-      compiler-error("Can't supply both an init-value: and an "
-		       "init-function: for keyword init arg specs");
+      compiler-fatal-error("Can't supply both an init-value: and an "
+			     "init-function: for keyword init arg specs");
     end;
   end;
   // ### Need to do something with it.
@@ -633,7 +633,8 @@ define method extract-identifier-or-false (fragment :: <token-fragment>)
     $ordinary-define-list-word-token, $quoted-name-token =>
       token;
     otherwise =>
-      compiler-error("Bogus name for setter generic function: %s", token);
+      compiler-fatal-error
+	("Bogus name for setter generic function: %s", token);
   end select;
 end method extract-identifier-or-false;
 
@@ -645,7 +646,8 @@ define method extract-identifier (fragment :: <token-fragment>)
     $ordinary-define-list-word-token, $quoted-name-token =>
       token;
     otherwise =>
-      compiler-error("Bogus name for setter generic function: %s", token);
+      compiler-fatal-error
+	("Bogus name for setter generic function: %s", token);
   end select;
 end method extract-identifier;
 
@@ -1004,7 +1006,7 @@ define method finalize-slot
       if (gf)
 	add-seal(gf, library, specializers, tlf);
       else
-	compiler-error
+	compiler-fatal-error
 	  ("%s doesn't name a generic function, so can't be sealed.",
 	   slot.slot-defn-getter-name);
       end;
@@ -1028,7 +1030,7 @@ define method finalize-slot
 	     if (gf)
 	       add-seal(gf, library, pair(object-ctype(), specializers), tlf);
 	     else
-	       compiler-error
+	       compiler-fatal-error
 		 ("%s doesn't name a generic function, so can't be sealed.",
 		  slot.slot-defn-setter-name);
 	     end;
@@ -1385,7 +1387,7 @@ define method convert-top-level-form
 		      #f, as(<list>, args)));
 		temp;
 	      end,
-	      method build-add-method (gf-name, method-leaf)
+	      method build-add-method (gf-name, method-defn, method-leaf)
 		// We don't use method-defn-of, because that is #f if there
 		// is a definition but it isn't a define generic.
 		let gf-var = find-variable(gf-name);
@@ -1401,10 +1403,13 @@ define method convert-top-level-form
 				       #"add-method"),
 			#f,
 			list(gf-leaf, method-leaf)));
+		  build-defn-set(evals-builder, policy, source, method-defn,
+				 method-leaf);
 		else
-		  error("No definition for %=, and can't "
-			  "implicitly define it.",
-			gf-name);
+		  compiler-fatal-error-location
+		    (tlf,
+		     "No definition for %s, and can't implicitly define it.",
+		     gf-name.name-symbol);
 		end;
 	      end;
 
@@ -1418,7 +1423,8 @@ define method convert-top-level-form
 	      let getter-specializers = build-call(#"list", cclass-leaf);
 	      let meth = build-call(#"%make-method", getter-specializers,
 				    results, false-leaf, getter);
-	      build-add-method(slot-defn.slot-defn-getter-name, meth);
+	      build-add-method(slot-defn.slot-defn-getter-name,
+			       slot-defn.slot-defn-getter, meth);
 	    end;
 	    if (slot-defn.slot-defn-setter)
 	      let setter
@@ -1427,7 +1433,8 @@ define method convert-top-level-form
 						   cclass-leaf);
 	      let meth = build-call(#"%make-method", setter-specializers,
 				    results, false-leaf, setter);
-	      build-add-method(slot-defn.slot-defn-setter-name, meth);
+	      build-add-method(slot-defn.slot-defn-setter-name,
+			       slot-defn.slot-defn-setter, meth);
 	    end;
 	  else
 	    begin
