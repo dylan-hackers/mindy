@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.8 2000/01/24 04:56:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.9 2000/10/17 09:15:27 gabor Exp $
 copyright: see below
 
 
@@ -55,6 +55,7 @@ define-procedural-expander
 	make-parsed-fragment
 	  (make(<define-class-parse>,
 		name: extract-name(name-frag),
+		source-location: generator.generator-call.source-location,
 		superclass-exprs: map(expression-from-fragment,
 				      split-fragment-at-commas(supers-frag)),
 		slots: map(extract-slot, split-fragment-at-commas(slots-frag)),
@@ -80,7 +81,7 @@ end method extract-slot;
 define abstract class <abstract-slot-parse> (<object>)
 end class <abstract-slot-parse>;
 
-define class <slot-parse> (<abstract-slot-parse>)
+define class <slot-parse> (<abstract-slot-parse>, <source-location-mixin>)
   constant slot slot-parse-name :: <identifier-token>,
     required-init-keyword: name:;
   constant slot slot-parse-options :: <simple-object-vector>,
@@ -97,6 +98,7 @@ define-procedural-expander
 	make-magic-fragment
 	  (make(<slot-parse>,
 		name: extract-name(name-frag),
+		source-location: generator.generator-call.source-location,
 		options: parse-property-list(make(<fragment-tokenizer>,
 						  fragment: options-frag))),
 	   source-location: generate-token-source-location(generator)))
@@ -212,7 +214,7 @@ define class <local-class-definition> (<real-class-definition>)
     required-init-keyword: keywords:;
 end;  
 
-define class <slot-defn> (<object>)
+define /* exported */ class <slot-defn> (<source-location-mixin>)
   //
   // The class that introduces this slot.
   slot slot-defn-class :: <real-class-definition>;
@@ -391,6 +393,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 		  name: make(<basic-name>,
 			     symbol: name,
 			     module: *Current-Module*),
+		  source-location: form.source-location,
 		  library: *Current-Library*,
 		  supers: form.defclass-superclass-exprs,
 		  functional: class-functional?,
@@ -598,6 +601,7 @@ define method process-slot
 					uniquifier: make(<uniquifier>))),
 			getter-name: sizer-name,
 			setter-name: #f,
+			source-location: slot.source-location,
 			init-value: size-init-value,
 			init-function: size-init-function,
 			init-keyword:
@@ -643,6 +647,7 @@ define method process-slot
 		  type: type,
 		  getter-name: getter-name,
 		  setter-name: setter-name,
+		  source-location: slot.source-location,
 		  init-value: init-value,
 		  init-function: init-function,
 		  init-keyword: init-keyword | req-init-keyword,
