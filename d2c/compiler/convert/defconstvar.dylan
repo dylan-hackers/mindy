@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.9 2001/12/23 02:35:20 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.10 2002/02/23 04:21:38 andreas Exp $
 copyright: see below
 
 
@@ -436,6 +436,9 @@ define method finalize-top-level-form
   defn.function-defn-signature := signature;
   if (anything-non-constant?)
     defn.function-defn-hairy? := #t;
+    if(defn.function-defn-ct-value == #"not-computed-yet")
+      defn.function-defn-ct-value := #f;
+    end if;
     tlf.tlf-anything-non-constant? := #t;
     if (defn.function-defn-ct-value)
       error("When defining %s, noticed that a function was hairy"
