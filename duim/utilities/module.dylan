@@ -40,12 +40,11 @@ define module duim-utilities
   use common-dylan, export: all, exclude: { position, assert };
   // fun-dev-compat
   export without-bounds-checks, find-value, assert, 
-    with-keywords-removed, unsupplied?, supplied?, dynamic-bind,
+    with-keywords-removed, dynamic-bind,
     <lock>, <simple-lock>, with-lock,
     <thread>, atomic-increment!, current-thread,
     <notification>, wait-for, release-all,
     put-property!, get-property, remove-property!,
-    integer-to-string, float-to-string, string-to-integer,
     true?;
   // format, for format-to-string
   use format, export: all;

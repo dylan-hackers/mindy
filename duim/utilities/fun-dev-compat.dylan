@@ -36,13 +36,6 @@ define macro destructuring-let
 end macro destructuring-let;
 */
 
-
-// <byte-character>
-// simple alias to <character>
-
-define constant <byte-character> = <character>;
-
-
 // without-bounds-checks
 // Do-nothing version
 // We can't tell the collections library to ignore bounds checks 
@@ -138,57 +131,51 @@ define macro with-keywords-removed
 end;
 
 
-// unsupplied?
-
-define method unsupplied?( parameter )
-=> ( result :: <boolean> )
-
-    parameter = $unsupplied;
-
-end method unsupplied?;
-
-
-// supplied?
-
-define method supplied?( parameter )
-=> ( result :: <boolean> )
-
-    parameter ~= $unsupplied;
-
-end method supplied?;
-
-
 // dynamic-bind 
 // shadow the given variables within a block we add
-// FIXME:   Implement properly. Change = to ?equals:token  ?
-
-/*define macro dynamic-bind 
-    { dynamic-bind (?var:expression = ?val:expression)
-        ?:body
-      end }
-     => {   begin
-                let old-value = ?var;
-                block()
-                    ?var := ?val;
-	                ?binding
-	                ?body
-	            cleanup
-	                ?var := old-value;
-	            end
-	        end }
-end macro dynamic-bind;*/
-
-// dummy version
 
 define macro dynamic-bind 
-    { dynamic-bind (?:*)
+    { dynamic-bind (?var:name = ?val:expression)
         ?:body
       end }
-     => {   begin
-	            ?body
-	        end }
+     => { begin
+            let old-value = ?var;
+            block()
+              ?var := ?val;
+              ?body
+            cleanup
+              ?var := old-value;
+            end
+          end }
+    { dynamic-bind (?var:name = ?val:expression, ?others:*)
+        ?:body
+      end }
+     => { begin
+            let old-value = ?var;
+            block()
+              ?var := ?val;
+              dynamic-bind(?others) ?body end;
+            cleanup
+              ?var := old-value;
+            end
+          end }
+    { dynamic-bind(?:name(?arg:expression) ?eq:token ?val:expression)
+        ?:body
+      end }
+     => { ?name ## "-dynamic-binder"(?val,
+                                     method() ?body end,
+                                     ?arg) }
+    { dynamic-bind(?:name(?arg:expression) ?eq:token ?val:expression,?others:*)
+        ?:body
+      end }
+     => { ?name ## "-dynamic-binder"(?val,
+                                     method()
+                                         dynamic-bind(?others)
+                                           ?body
+                                         end;
+                                     end,
+                                     ?arg) }
 end macro dynamic-bind;
-
 
 /*
 	sheets
@@ -316,67 +303,6 @@ define method remove-property!( properties :: <collection>, property :: <object>
     end if;
     
 end method remove-property!;
-
-
-/*
-    Gadgets
-*/
-
-// These should all be exported from the print or format internals through common-dylan
-
-
-// integer-to-string
-
-define method integer-to-string( int :: <integer> )
-=> ( result :: <string> )
-    format-to-string( "%i", int );
-end method integer-to-string;
-
-
-// float-to-string
-
-define method float-to-string( flo :: <float> )
-=> ( result :: <string> )
-    format-to-string( "%f", flo );
-end method float-to-string;
-
-
-// string-to-integer
-
-define method string-to-integer (string :: <sequence>, #key base = 10)
- => int :: <integer>;
-  let number :: <integer> = 0;
-  let sign = if (string[0] == '-')  -1  else  1  end if;
-  let start-index = if (sign = -1)  1  else  0  end if;
-  for (i from start-index below string.size)
-    let digit = select( string[i] )
-				    '0' => 0;
-				    '1' => 1;
-				    '2' => 2;
-				    '3' => 3;
-				    '4' => 4;
-				    '5' => 5;
-				    '6' => 6;
-				    '7' => 7;
-				    '8' => 8;
-				    '9' => 9;
-				    otherwise =>
-				      error("Invalid digit %=", string[i]);
-                end select;
-    if (digit >= base)
-      error("\"%s\" isn't in base %d", string, base);
-    else
-      number := number * base  + digit;
-    end if;
-  end for;
-  number := sign * number;
-  if (number < $minimum-integer | number > $maximum-integer)
-    number;
-  else
-    as(<integer>, number);
-  end if;
-end method string-to-integer;
-
 
 // true?
 
