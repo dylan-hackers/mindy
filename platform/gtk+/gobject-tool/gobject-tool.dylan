@@ -62,6 +62,8 @@ define method main(name, arguments)
           $ppc-linux-platform;
         "x86-freebsd-elf-gcc" =>
           $i386-freebsd-platform;
+        "sparc-solaris-gcc" =>
+          $sparc-solaris-platform;
         otherwise =>
           $generic-platform;
       end;
