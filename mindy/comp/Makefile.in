@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.7 1995/03/13 21:43:09 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Makefile.in,v 1.8 1995/12/10 02:25:36 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -63,11 +63,11 @@ LIBS	=		../compat/libcompat.a @LIBS@
 
 OBJS = mindycomp.o parser-tab.o lexer-tab.o src.o sym.o print.o expand.o \
 	literal.o info.o lose.o lexenv.o envanal.o compile.o header.o \
-	dump.o free.o dup.o
+	dump.o free.o dup.o feature.o
 
 SRCS = mindycomp.c parser-tab.c lexer-tab.c src.c sym.c print.c expand.c \
 	literal.c info.c lose.c lexenv.c envanal.c compile.c header.c \
-	dump.c free.c dup.c
+	dump.c free.c dup.c feature.c
 
 mindycomp: ${OBJS}
 	${CC} ${OBJS} -DVERSION=\""`/bin/date`"\" ${SRCDIR}/version.c ${LIBS} -o ,$@
@@ -123,6 +123,11 @@ expand.o:  ${SRCDIR}/expand.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h 
              ${SRCDIR}/info.h ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/expand.c
 
+feature.o:  ${SRCDIR}/feature.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
+              ${SRCDIR}/feature.h ${SRCDIR}/lexer.h ${SRCDIR}/src.h \
+              ${SRCDIR}/parser-tab.h ${SRCDIR}/sym.h
+	${CC} -c ${CFLAGS} ${SRCDIR}/feature.c
+
 free.o:  ${SRCDIR}/free.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
            ${SRCDIR}/src.h ${SRCDIR}/literal.h ${SRCDIR}/free.h \
            ${SRCDIR}/lose.h
@@ -155,12 +160,14 @@ mindycomp.o:  ${SRCDIR}/mindycomp.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../com
                 ${SRCDIR}/mindycomp.h ${SRCDIR}/parser.h ${SRCDIR}/src.h \
                 ${SRCDIR}/print.h ${SRCDIR}/expand.h ${SRCDIR}/envanal.h \
                 ${SRCDIR}/lexer.h ${SRCDIR}/header.h ${SRCDIR}/sym.h \
-                ${SRCDIR}/info.h ${SRCDIR}/compile.h ${SRCDIR}/dump.h
+                ${SRCDIR}/info.h ${SRCDIR}/compile.h ${SRCDIR}/dump.h \
+                ${SRCDIR}/feature.h ${SRCDIR}/lose.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/mindycomp.c
 
 parser-tab.o:  ${SRCDIR}/parser-tab.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
                  ${SRCDIR}/header.h ${SRCDIR}/parser.h ${SRCDIR}/lexer.h \
-                 ${SRCDIR}/literal.h ${SRCDIR}/src.h ${SRCDIR}/sym.h
+                 ${SRCDIR}/feature.h ${SRCDIR}/literal.h ${SRCDIR}/src.h \
+                 ${SRCDIR}/sym.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/parser-tab.c
 
 print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindycomp.h \
