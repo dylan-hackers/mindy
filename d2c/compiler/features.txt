@@ -1,0 +1,47 @@
+Conditional compilation features that might be present when compiling
+with Gwydion compilers (ie, Mindy or d2c):
+
+mindy
+	Defined when compiling with mindycomp.  There is currently no
+	feature for d2c; most of our code assumes that anything that
+	isn't mindy is d2c.
+
+compiled-for-hppa-hpux
+	Defined when compiling for an HP/UX system running on
+	HP-PARISC hardware.
+
+compiled-for-x86-win32
+	Defined when compiling for an Intel- or Intel-clone-based
+	computer running a Microsoft Win32 operating system (ie,
+	Windows '95 or Windows/NT).
+
+newlines-are-CRLF
+	Defined when compiling for a system whose newline
+	representation is two bytes, a carriage return ('\r')
+	followed by a linefeed ('\f').  Examples of such systems
+	include MS-DOS, Windows '95, Windows/NT, and OS/2.  It should
+	be kept in mind that not every file on a newlines-are-CRLF
+	system will adhere to this convention; some will adhere to
+	the Unix convention of using a single linefeed as the newline
+	character.  For this reason, programs should consider the
+	carriage return an optional part of the newline sequence.
+
+C-compiler-is-GCC
+	Defined when compiling with d2c and the C compiler being used
+	by d2c is the GNU C compiler (gcc).
+
+C-compiler-is-VC
+	Defined when compiling with d2c and the C compiler being used
+	by d2c is Microsoft Visual C++.
+
+
+Placeholder features: These features are never defined because we
+haven't yet implemented the things that these features represent.
+Currently the only placeholder feature is threads.
+
+threads
+	Will be defined whenever multi-threading is a possibility.
+	Users who are writing threadsafe code but are worried about
+	efficiency can generate a threadsafe and a non-threadsafe
+	version of their code by conditionalizing things on this
+	feature.
