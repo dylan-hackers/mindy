@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.5 1994/12/14 20:17:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.6 1994/12/16 11:50:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -274,9 +274,8 @@ define method ct-value (defn :: <class-definition>)
     #"not-computed-yet" =>
       defn.class-defn-cclass := #"computing";
       let res = block (return)
-		  let lexenv = make(<lexenv>);
 		  let supers = map(method (super)
-				     ct-eval(super, lexenv) | return(#f);
+				     ct-eval(super, #f) | return(#f);
 				   end,
 				   defn.class-defn-supers);
 		  make(<defined-cclass>,
@@ -307,7 +306,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
     let slot-type-expr = slot-defn.slot-type-expr;
     let slot-type
       = if (slot-type-expr)
-	  let type = ct-eval(slot-type-expr, make(<lexenv>));
+	  let type = ct-eval(slot-type-expr, #f);
 	  instance?(type, <ctype>) & type;
 	else
 	  object-ctype();

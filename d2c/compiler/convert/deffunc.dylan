@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.5 1994/12/14 20:15:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.6 1994/12/16 11:51:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -228,12 +228,11 @@ define method compute-signature
     (param-list :: <parameter-list>, returns :: <parameter-list>)
     => (signature :: <signature>, anything-non-constant? :: <boolean>);
   let anything-non-constant? = #f;
-  let lexenv = make(<lexenv>);
   local
     method maybe-eval-type (param)
       let type = param.param-type;
       if (type)
-	let ctype = ct-eval(type, lexenv);
+	let ctype = ct-eval(type, #f);
 	select (ctype by instance?)
 	  <false> =>
 	    anything-non-constant? := #t;

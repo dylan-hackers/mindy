@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.4 1994/12/13 18:40:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.5 1994/12/16 11:51:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -126,15 +126,14 @@ end;
 
 define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
   unless (tlf.tlf-finalized?)
-    let lexenv = make(<lexenv>);
-    let (#rest res) = ct-mv-eval(tlf.tlf-bindings.bindings-expression, lexenv);
+    let (#rest res) = ct-mv-eval(tlf.tlf-bindings.bindings-expression, #f);
     let constant? = res.empty? | ~(res[0] == #f);
     for (defn in tlf.tlf-required-defns,
 	 param in tlf.tlf-bindings.bindings-parameter-list
 	   .paramlist-required-vars,
 	 index from 0)
       let type = if (param.param-type)
-		   let ctype = ct-eval(param.param-type, lexenv);
+		   let ctype = ct-eval(param.param-type, #f);
 		   instance?(ctype, <ctype>) & ctype;
 		 else
 		   object-ctype();
