@@ -1,7 +1,8 @@
 	Compilation and installation instructions for Mindy.
 
 Compiling Mindy currently requires the use of an ANSI C compiler.  We
-highly recommend gcc (GNU CC) if it is available.
+highly recommend gcc (GNU CC) if it is available.  If you are using
+gcc, you must use gcc 2.6.0 or later.
 
 To configure Mindy for your system, simply type ``./configure'' and
 wait for configure to figure things out.  When that is done, begin the
@@ -121,3 +122,10 @@ can.
 	gwydion-bugs@cs.cmu.edu
   Please include the operating system version and what compiler you
   used.
+
++ I'm compiling Mindy, and I get this error:
+	ld: driver.o: relocation format botch (symbol type))
+	collect2: ld returned 4 exit status
+
+  You are probably using a version of gcc earlier than 2.6.0.  Get a
+  newer version of gcc, or try a different compiler.
