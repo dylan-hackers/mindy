@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.39 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.40 1995/08/07 14:03:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -229,6 +229,40 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 		 make-literal-constant(builder, make(<literal-false>)));
 end;
 
+define method fer-convert (builder :: <fer-builder>, form :: <let-handler>,
+			   lexenv :: <lexenv>, want :: <result-designator>,
+			   datum :: <result-datum>)
+    => res :: <result>;
+  // First, build the call to push-handler.
+  let policy = lexenv.lexenv-policy;
+  let func = ref-dylan-defn(builder, policy, source, #"push-handler");
+  let args = make(<stretchy-vector>);
+  add!(args,
+       fer-convert(builder, form.handler-type,
+		   make(<lexenv>, inside: lexenv), #"leaf", #"type"));
+  add!(args,
+       fer-convert(builder, form.handler-expression,
+		   make(<lexenv>, inside: lexenv), #"leaf", #"handler"));
+  for (prop in form.handler-plist)
+    add!(args,
+	 make-literal-constant(builder, as(<ct-value>, prop.prop-keyword)));
+    add!(args,
+	 fer-convert(builder, prop.prop-value,
+		     make(<lexenv>, inside: lexenv), #"lead",
+		     prop.prop-keyword));
+  end;
+  build-assignment(builder, policy, source, #(),
+		   make-unknown-call(builder, func, #f, as(<list>, args)));
+
+  // Record the fact that we've added another handler.
+  lexenv.lexenv-handlers := lexenv.lexenv-handlers + 1;
+
+  // Supply #f as the result.
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
+		 make-literal-constant(builder, make(<literal-false>)));
+end;
+
+
 define method fer-convert (builder :: <fer-builder>, form :: <local>,
 			   lexenv :: <lexenv>, want :: <result-designator>,
 			   datum :: <result-datum>)
@@ -431,8 +465,22 @@ define method fer-convert (builder :: <fer-builder>, form :: <begin>,
 			   lexenv :: <lexenv>, want :: <result-designator>,
 			   datum :: <result-datum>)
     => res :: <result>;
-  fer-convert-body(builder, form.begin-body, make(<lexenv>, inside: lexenv),
-		   want, datum);
+  let lexenv = make(<body-lexenv>, inside: lexenv);
+  let result = fer-convert-body(builder, form.begin-body, lexenv, want, datum);
+  finalize-body(builder, lexenv);
+  result;
+end;
+
+define method finalize-body (builder :: <fer-builder>, lexenv :: <body-lexenv>)
+    => ();
+  unless (zero?(lexenv.lexenv-handlers))
+    let policy = lexenv.lexenv-policy;
+    let pop-handler = ref-dylan-defn(builder, policy, source, #"pop-handler");
+    for (i from 0 below lexenv.lexenv-handlers)
+      build-assignment(builder, policy, source, #(),
+		       make-unknown-call(builder, pop-handler, #f, #()));
+    end;
+  end;
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
@@ -647,7 +695,7 @@ define method fer-convert-method
      visibility :: <function-visibility>, specializer-lexenv :: <lexenv>,
      lexenv :: <lexenv>)
     => res :: <leaf>;
-  let lexenv = make(<lexenv>, inside: lexenv);
+  let lexenv = make(<body-lexenv>, inside: lexenv);
 
   local
     method param-type-and-var (param)
@@ -870,12 +918,14 @@ define method fer-convert-method
 			      wild-ctype());
       fer-convert-body(builder, meth.method-body, lexenv,
 		       #"assignment", cluster);
+      finalize-body(builder, lexenv);
       build-return(builder, lexenv.lexenv-policy, source, function-region,
 		   cluster);
     else
       let cluster = make-values-cluster(builder, #"results", wild-ctype());
       fer-convert-body(builder, meth.method-body, lexenv,
 		       #"assignment", cluster);
+      finalize-body(builder, lexenv);
 
       let rest-result
 	= make-local-var(builder, returns.paramlist-rest.token-symbol,
@@ -919,6 +969,7 @@ define method fer-convert-method
   else
     fer-convert-body(builder, meth.method-body, lexenv,
 		     #"assignment", as(<list>, fixed-results));
+    finalize-body(builder, lexenv);
     build-region(builder, builder-result(result-check-builder));
     build-return(builder, lexenv.lexenv-policy, source,
 		 function-region, as(<list>, checked-fixed-results));
