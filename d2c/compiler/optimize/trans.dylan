@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.5 1995/06/07 15:13:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.6 1995/06/09 19:10:26 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -65,7 +65,7 @@ define method extract-args
   end;
 end;
 
-define method find-signature (func :: union(<leaf>, <definition>))
+define method find-signature (func :: <leaf>)
     => res :: <signature>;
   error("Known call of some random leaf?");
 end;
@@ -77,12 +77,12 @@ end;
 
 define method find-signature (func :: <definition-constant-leaf>)
     => res :: <signature>;
-  find-signature(func.const-defn);
+  func.const-defn.function-defn-signature;
 end;
 
-define method find-signature (defn :: <function-definition>)
+define method find-signature (func :: <literal-constant>)
     => res :: <signature>;
-  defn.function-defn-signature;
+  func.value.ct-function-signature;
 end;
 
 
@@ -117,6 +117,123 @@ define method extract-rest-arg (expr :: <literal-constant>)
     #f;
   end;
 end;    
+
+
+// == stuff.
+
+define method ==-transformer
+    (component :: <component>, call :: <known-call>)
+    => did-anything? :: <boolean>;
+  let (okay?, x, y) = extract-args(call, 2, #f, #f, #f);
+  okay? & trivial-==-optimization(component, call, x, y);
+end;
+
+define-transformer(#"==", #f, ==-transformer);
+
+define method object-==-transformer
+    (component :: <component>, call :: <known-call>)
+    => did-anything? :: <boolean>;
+  let (okay?, x, y) = extract-args(call, 2, #f, #f, #f);
+  if (okay?)
+    if (trivial-==-optimization(component, call, x, y))
+      #t;
+    else
+      let x-functional = is-it-functional?(x.derived-type);
+      let y-functional = is-it-functional?(y.derived-type);
+      if (x-functional == #f | y-functional == #f)
+	let builder = make-builder(component);
+	replace-expression
+	  (component, call.dependents,
+	   make-operation(builder, <primitive>, list(x, y),
+			  name: #"=="));
+	#t;
+      elseif (x-functional == #t | y-functional == #t)
+	let builder = make-builder(component);
+	replace-expression
+	  (component, call.dependents,
+	   make-unknown-call
+	     (builder, dylan-defn-leaf(builder, #"functional-=="), #f,
+	      list(x, y)));
+	#t;
+      else
+	#f;
+      end;
+    end;
+  end;
+end;
+
+define generic is-it-functional? (type :: <ctype>)
+    => res :: one-of(#t, #f, #"maybe");
+
+define method is-it-functional? (type :: <unknown-ctype>)
+    => res :: one-of(#t, #f, #"maybe");
+  #"maybe";
+end;
+
+define method is-it-functional? (class :: <cclass>)
+    => res :: one-of(#t, #f, #"maybe");
+  if (class.functional?)
+    #t;
+  elseif (class.not-functional?)
+    #f;
+  else
+    #"maybe";
+  end;
+end;
+
+define method is-it-functional? (type :: <limited-ctype>)
+    => res :: one-of(#t, #f, #"maybe");
+  is-it-functional?(type.base-class);
+end;
+
+define method is-it-functional? (type :: <union-ctype>)
+    => res :: one-of(#t, #f, #"maybe");
+  let members = type.members;
+  if (members == #())
+    #f;
+  else
+    let first-functional? = is-it-functional?(members.head);
+    block (return)
+      for (next-type in members.tail)
+	unless (first-functional? == is-it-functional?(next-type))
+	  return(#"maybe");
+	end;
+      end;
+      first-functional?;
+    end;
+  end;
+end;
+
+define-transformer(#"==", #(#"<object>", #"<object>"), object-==-transformer);
+
+define method trivial-==-optimization
+    (component :: <component>, operation :: <operation>,
+     x :: <leaf>, y :: <leaf>)
+    => did-anything? :: <boolean>;
+  if (x == y)
+    // Same variable or same literal constant.
+    replace-expression(component, operation.dependents,
+		       make-literal-constant(make-builder(component),
+					     as(<ct-value>, #t)));
+    #t;
+  else
+    let x-type = x.derived-type;
+    let y-type = y.derived-type;
+    if (~ctypes-intersect?(x-type, y-type))
+      replace-expression(component, operation.dependents,
+			 make-literal-constant(make-builder(component),
+					       as(<ct-value>, #f)));
+      #t;
+    elseif (instance?(x-type, <singleton-ctype>) & x-type == y-type)
+      replace-expression(component, operation.dependents,
+			 make-literal-constant(make-builder(component),
+					       as(<ct-value>, #t)));
+      #t;
+    else
+      #f;
+    end;
+  end;
+end;
 
 
 define method check-type-transformer
