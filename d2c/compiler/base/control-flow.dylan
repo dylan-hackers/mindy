@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.7 1995/04/24 03:13:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.8 1995/04/25 00:42:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -59,12 +59,12 @@ define class <compound-region> (<linear-region>)
 end class;
 
 define method make (class == <compound-region>,
-		    #next next-method, #key regions)
+		    #next next-method, #rest keys, #key regions)
   let regions = choose(complement(rcurry(instance?, <empty-region>)), regions);
   if (empty?(regions))
     make(<empty-region>);
   else
-    next-method();
+    apply(next-method, class, regions: regions, keys);
   end;
 end;
 
