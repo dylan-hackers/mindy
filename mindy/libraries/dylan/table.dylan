@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.9 1994/10/05 21:32:02 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.10 1994/10/18 23:30:06 nkramer Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -207,20 +207,19 @@ end method make;
 define method initialize (ht :: <table>,
 			  #next next-method,
 			  #key size: size       = default-starting-table-size,
-			  buckets: numbuckets   = default-starting-table-size,
 			  expand-when: expand-when = default-expand-when,
 			  expand-to:   expand-to   = default-expand-to,
 			  shrink-when: shrink-when = default-shrink-when,
 			  shrink-to:   shrink-to   = default-shrink-to);
 
   ht.bucket-array-slot    := make(<simple-object-vector>, 
-				  size: numbuckets,
+				  size: size,
 				  fill: #() );     // filled with empty lists
   ht.bucket-states-slot   := make(<simple-object-vector>,
-				  size: numbuckets,
+				  size: size,
 				  fill: $permanent-hash-state);
   ht.item-count-slot        := 0;
-  ht.bucket-count-slot      := numbuckets;
+  ht.bucket-count-slot      := size;
   ht.expand-when-slot       := expand-when;
   ht.expand-to-slot         := expand-to;
   ht.shrink-when-slot       := shrink-when;
