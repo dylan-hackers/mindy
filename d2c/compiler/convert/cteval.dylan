@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/cteval.dylan,v 1.3 2001/05/26 18:50:17 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/cteval.dylan,v 1.4 2001/07/27 20:15:29 housel Exp $
 copyright: see below
 
 
@@ -462,10 +462,10 @@ define-ct-evaluator(#"^", #(#"<general-integer>", #"<general-integer>"),
 define-ct-evaluator(#"logior", #(rest:, #"<general-integer>"),
 		    curry(ct-eval-rational-function, logior));
 
-define-ct-evaluator(#"logior", #(rest:, #"<general-integer>"),
+define-ct-evaluator(#"logxor", #(rest:, #"<general-integer>"),
 		    curry(ct-eval-rational-function, logxor));
 
-define-ct-evaluator(#"logior", #(rest:, #"<general-integer>"),
+define-ct-evaluator(#"logand", #(rest:, #"<general-integer>"),
 		    curry(ct-eval-rational-function, logand));
 
 define-ct-evaluator(#"lognot", #(#"<general-integer>"),
