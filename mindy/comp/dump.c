@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.6 1994/04/09 14:09:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.7 1994/04/14 19:15:58 wlott Exp $
 *
 * This file does whatever.
 *
@@ -774,7 +774,9 @@ static void dump_method_expr(struct method_expr *expr)
 
 static void dump_dot_expr(struct dot_expr *expr)
 {
-    lose("dot expr made it though expand?");
+    dump_op(fop_DOT_EXPR);
+    dump_expr(expr->arg);
+    dump_expr(expr->func);
 }
 
 static void dump_body_expr(struct body_expr *expr)

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.5 1994/04/10 21:11:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.6 1994/04/14 19:16:12 wlott Exp $
 *
 * This file does whatever.
 *
@@ -161,7 +161,8 @@ static void analize_method_expr(struct method_expr *expr,
 static void analize_dot_expr(struct dot_expr *expr,
 			     struct lexenv *lexenv)
 {
-    lose("dot expression made it though expand?");
+    analize_expr(expr->arg, lexenv);
+    analize_expr(expr->func, lexenv);
 }
 
 static void analize_body_expr(struct body_expr *expr,
