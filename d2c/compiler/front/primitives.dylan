@@ -166,7 +166,7 @@ define-primitive
    side-effect-free: #t);
 
 define-primitive
-  (#"pop-args", #(#"<raw-pointer>"), #(values:));
+  (#"pop-args", #(#"<raw-pointer>"), #(values:, rest:, #"<object>"));
 
 define-primitive
   (#"initialized?", #(#"<object>"), #"<boolean>",

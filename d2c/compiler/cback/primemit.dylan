@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.10 1995/08/27 01:18:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.11 1995/09/05 18:53:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -169,10 +169,15 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
+     let stream = output-info.output-info-guts-stream;
      let args = extract-operands(operation, output-info, *ptr-rep*);
      spew-pending-defines(output-info);
-     format(output-info.output-info-guts-stream, "orig_sp = %s;\n", args);
-     deliver-results(results, #[], #f, output-info);
+     assert(zero?(output-info.output-info-cur-stack-depth));
+     if (results)
+       format(stream, "cluster_0_top = orig_sp;\n");
+     end;
+     format(stream, "orig_sp = %s;\n", args);
+     deliver-cluster(results, "orig_sp", "cluster_0_top", 0, output-info);
    end);
 
 
