@@ -24,6 +24,12 @@ define module c-types
     <c-void-type>,
     <c-numeric-type>,
     <c-integer-type>,
+      c-integer-type-sign-specifier,
+    <c-char-type>,
+    <c-short-type>,
+    <c-int-type>,
+    <c-long-type>,
+    <c-long-long-type>,
     <c-floating-point-type>,
     <c-tagged-type>,
       c-type-tag,
@@ -49,6 +55,7 @@ define module c-types
     format-c-type-declarator;
 
   export  
+    <c-sign-specifier>,
     $c-void-type,
     $c-char-type,
     $c-signed-char-type,

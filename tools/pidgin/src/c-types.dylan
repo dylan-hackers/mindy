@@ -29,7 +29,6 @@ define generic c-type-complete? (type :: <c-type>) => (complete? :: <boolean>);
 define method c-type-complete? (type :: <c-type>) => (complete? :: <boolean>)
   #t;
 end;
-// XXX - define more methods
 
 
 //=========================================================================
@@ -43,8 +42,24 @@ end;
 define abstract class <c-numeric-type> (<c-primitive-type>)
 end;
 
-define class <c-integer-type> (<c-numeric-type>)
-  // XXX - do something with <c-sign-specifier>
+define abstract class <c-integer-type> (<c-numeric-type>)
+  slot c-integer-type-sign-specifier :: <c-sign-specifier>,
+    required-init-keyword: sign:;
+end;
+
+define class <c-char-type> (<c-integer-type>)
+end;
+
+define class <c-short-type> (<c-integer-type>)
+end;
+
+define class <c-int-type> (<c-integer-type>)
+end;
+
+define class <c-long-type> (<c-integer-type>)
+end;
+
+define class <c-long-long-type> (<c-integer-type>)
 end;
 
 define class <c-floating-point-type> (<c-numeric-type>)
@@ -60,35 +75,35 @@ define constant $c-void-type =
 
 // Integers
 define constant $c-char-type =
-  make(<c-integer-type>, name: "char");
+  make(<c-char-type>, name: "char", sign: #"unspecified");
 define constant $c-signed-char-type =
-  make(<c-integer-type>, name: "signed char");
+  make(<c-char-type>, name: "signed char", sign: #"signed");
 define constant $c-unsigned-char-type =
-  make(<c-integer-type>, name: "unsigned char");
+  make(<c-char-type>, name: "unsigned char", sign: #"unsigned");
 define constant $c-short-type =
-  make(<c-integer-type>, name: "short");
+  make(<c-short-type>, name: "short", sign: #"unspecified");
 define constant $c-signed-short-type =
-  make(<c-integer-type>, name: "signed short");
+  make(<c-short-type>, name: "signed short", sign: #"signed");
 define constant $c-unsigned-short-type =
-  make(<c-integer-type>, name: "unsigned short");
+  make(<c-short-type>, name: "unsigned short", sign: #"unsigned");
 define constant $c-int-type =
-  make(<c-integer-type>, name: "int");
+  make(<c-int-type>, name: "int", sign: #"unspecified");
 define constant $c-signed-int-type =
-  make(<c-integer-type>, name: "signed int");
+  make(<c-int-type>, name: "signed int", sign: #"signed");
 define constant $c-unsigned-int-type =
-  make(<c-integer-type>, name: "unsigned int");
+  make(<c-int-type>, name: "unsigned int", sign: #"unsigned");
 define constant $c-long-type =
-  make(<c-integer-type>, name: "long");
+  make(<c-long-type>, name: "long", sign: #"unspecified");
 define constant $c-signed-long-type =
-  make(<c-integer-type>, name: "signed long");
+  make(<c-long-type>, name: "signed long", sign: #"signed");
 define constant $c-unsigned-long-type =
-  make(<c-integer-type>, name: "unsigned long");
+  make(<c-long-type>, name: "unsigned long", sign: #"unsigned");
 define constant $c-long-long-type =
-  make(<c-integer-type>, name: "long long");
+  make(<c-long-long-type>, name: "long long", sign: #"unspecified");
 define constant $c-signed-long-long-type =
-  make(<c-integer-type>, name: "signed long long");
+  make(<c-long-long-type>, name: "signed long long", sign: #"signed");
 define constant $c-unsigned-long-long-type =
-  make(<c-integer-type>, name: "unsigned long long");
+  make(<c-long-long-type>, name: "unsigned long long", sign: #"unsigned");
 
 // Floats
 define constant $c-float-type =
@@ -100,9 +115,11 @@ define constant $c-long-double-type =
 
 
 //=========================================================================
-//  Derived Types
+//  Tagged types
 //=========================================================================
-//  C allows several kinds of derived types.
+//  Tagged types include structs, unions and enums. They have an optional
+//  "tag" that names the type. If this tag is omitted, each struct, etc.,
+//  defines a unique anonymous type.
 
 // XXX - make this thread safe
 define variable *anonymous-tag-counter* = 0;
@@ -125,6 +142,13 @@ define method initialize
   end;
 end;
 
+
+//=========================================================================
+//  Structs and Unions
+//=========================================================================
+//  Structures and unions are essentially identical (in terms of the type
+//  model) except for the handling of bit fields in structs.
+
 define abstract class <c-struct-or-union-type> (<c-tagged-type>)
   slot c-type-members :: false-or(<stretchy-vector>) = make(<stretchy-vector>),
     init-keyword: members:;
@@ -137,10 +161,32 @@ end;
 define class <c-union-type> (<c-struct-or-union-type>)
 end;
 
+define method c-type-complete?
+    (type :: <c-struct-or-union-type>)
+ => (complete? :: <boolean>)
+  type.c-type-members ~= #f;
+end;
+
+
+//=========================================================================
+//  Enums
+//=========================================================================
+//  Enumerations define a number of constant values. By the time an enum
+//  reaches this code, all values should have been computed--we don't
+//  support the "counting" mechanism used by ANSI C.
+
 define class <c-enum-type> (<c-tagged-type>)
   slot c-enum-members :: <stretchy-vector> = make(<stretchy-vector>);
   // XXX - define members
 end;
+
+
+//=========================================================================
+//  Pointer-valued types
+//=========================================================================
+//  According to ANSI C, arrays and pointers are entirely different things.
+//  However, array names will evaluate to a pointer in many cases, so it
+//  makes sense to treat them as similar in our object model.
 
 define class <c-pointer-valued-type> (<c-derived-type>)
   slot c-pointer-referent-type :: <c-type>,
@@ -156,6 +202,18 @@ define class <c-array-type> (<c-pointer-valued-type>)
     init-value: #f;
 end;
 
+define method c-type-complete?
+    (type :: <c-array-type>)
+ => (complete? :: <boolean>)
+  type.c-array-size ~= #f;
+end;
+
+
+//=========================================================================
+//  Function types
+//=========================================================================
+//  Functions have complex derived types.
+
 define class <c-function-type> (<c-derived-type>)
   slot c-function-return-type :: <c-type>,
     required-init-keyword: return-type:;
@@ -163,6 +221,14 @@ define class <c-function-type> (<c-derived-type>)
     required-init-keyword: varargs?:;
   // XXX - ... need to think about this one
 end;
+
+
+//=========================================================================
+//  Typedef types
+//=========================================================================
+//  In C, a typedef is a transparent alias for another type. In our type
+//  model, we attempt to represent typedefs explicitly. If we're careful,
+//  this shouldn't cause any problems.
 
 define class <c-typedef-type> (<c-derived-type>)
   slot c-typedef-name :: <string>,
