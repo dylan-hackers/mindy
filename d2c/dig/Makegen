@@ -8,13 +8,21 @@ $D2CFLAGS = '-L../runtime/c-code -L../runtime/gc '
     . '-L../runtime/regexp';
 $CPPFLAGS = '-I$(SRCROOT)/runtime -I$(SRCDIR)';
 
-push(@compile_dependencies, 'dig');
-push(@files_to_clean, 'dig');
+if ($win32) {
+    $binary_name = 'dig.exe';
+    $dig_lid_file = 'win32-dig';
+    &emit_c_file_rule('win32-dig-support', 'win32-dig-support.h');
+    &emit_melange_rule('win32-dig-c', 'win32-dig-support.h');
+} else {
+    # assumed an HP
+    $binary_name = 'dig';
+    $dig_lid_file = 'hp-dig';
+    &emit_c_file_rule('hp-dig-support', 'hp-dig-support.h');
+    &emit_melange_rule('hp-dig-c', 'hp-dig-support.h');
+} 
+   
+push(@compile_dependencies, $binary_name);
+push(@files_to_clean, $binary_name);
+do install('bin', $binary_name);
 
-print "dig-support.o: dig-support.c dig-support.h\n\t\gcc \$(CFLAGS) -c \$(SRCDIR)/dig-support.c\n";
-
-do emit_library_rule(
-    'dig', '$(BUILDROOT)/force.timestamp dig-support.o',
-    ''
-);
-
+do emit_library_rule($dig_lid_file, '$(BUILDROOT)/force.timestamp', '');
