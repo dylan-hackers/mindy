@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.36 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.37 1995/05/08 15:18:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1059,7 +1059,11 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <primitive>,
 			       output-info :: <output-info>)
     => ();
-  emit-primitive(expr.name, defines, expr, output-info);
+  let emitter = expr.info.primitive-emitter;
+  unless (emitter)
+    error("Unknown primitive: %s", expr.name);
+  end;
+  emitter(defines, expr, output-info);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -1297,48 +1301,7 @@ end;
 
 // Primitives.
 
-define constant $primitive-emitters = make(<object-table>);
-
-define method define-primitive (name :: <symbol>, emitter :: <function>)
-    => ();
-  $primitive-emitters[name] := emitter;
-end;
-
-define method emit-primitive (name :: <symbol>,
-			      defines :: false-or(<definition-site-variable>),
-			      operation :: <primitive>,
-			      output-info :: <output-info>)
-    => ();
-  let emitter = element($primitive-emitters, name,
-			default: default-primitive-emitter);
-  emitter(defines, operation, output-info);
-end;
-
-define method default-primitive-emitter
-    (defines :: false-or(<definition-site-variable>),
-     operation :: <primitive>,
-     output-info :: <output-info>)
-    => ();
-  let stream = output-info.output-info-guts-stream;
-  let ops = make(<stretchy-vector>);
-  for (op = operation.depends-on then op.dependent-next,
-       while: op)
-    add!(ops, ref-leaf($general-rep, op.source-exp, output-info));
-  end;
-  spew-pending-defines(output-info);
-  format(stream, "PRIMITIVE %s(", operation.name);
-  for (op in ops, first? = #t then #f)
-    unless (first?)
-      write(", ", stream);
-    end;
-    write(op, stream);
-  end;
-  write(");\n", stream);
-  deliver-results(defines, #[], #f, output-info);
-end;
-
-
-define-primitive
+define-primitive-emitter
   (#"extract-args",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1349,7 +1312,7 @@ define-primitive
      deliver-results(results, vector(pair(expr, *ptr-rep*)), #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"extract-arg",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1362,7 +1325,7 @@ define-primitive
 		     output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"pop-args",
    method (results :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1375,7 +1338,7 @@ define-primitive
    end);
 
 
-define-primitive
+define-primitive-emitter
   (#"canonicalize-results",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1387,7 +1350,7 @@ define-primitive
 		     output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"values",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1402,7 +1365,7 @@ define-primitive
      deliver-results(defines, results, #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"initialized?",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1416,7 +1379,7 @@ define-primitive
    end);
 
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-=",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1430,7 +1393,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-<",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1444,7 +1407,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-+",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1458,7 +1421,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-*",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1472,7 +1435,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum--",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1486,7 +1449,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-negative",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1498,7 +1461,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-floor/",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1515,7 +1478,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-ceiling/",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1532,7 +1495,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-round/",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1549,7 +1512,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-truncate/",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1566,7 +1529,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-logior",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1580,7 +1543,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-logxor",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1594,7 +1557,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-logand",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1608,7 +1571,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-lognot",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
@@ -1620,7 +1583,7 @@ define-primitive
 		     #f, output-info);
    end);
 
-define-primitive
+define-primitive-emitter
   (#"fixnum-ash",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,

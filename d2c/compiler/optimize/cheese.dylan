@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.53 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.54 1995/05/08 15:18:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -163,6 +163,10 @@ define method side-effect-free? (expr :: <expression>) => res :: <boolean>;
   #f;
 end;
 
+define method side-effect-free? (expr :: <primitive>) => res :: <boolean>;
+  expr.info.primitive-side-effect-free?;
+end;
+
 define method side-effect-free? (expr :: <slot-ref>) => res :: <boolean>;
   #t;
 end;
@@ -189,6 +193,13 @@ end;
 define method pure-single-value-expression? (expr :: <expression>)
     => res :: <boolean>;
   #f;
+end;
+
+define method pure-single-value-expression? (expr :: <primitive>)
+    => res :: <boolean>;
+  expr.info.primitive-pure?
+    & expr.derived-type.fixed-number-of-values?
+    & expr.derived-type.min-values == 1;
 end;
 
 define method pure-single-value-expression? (var :: <leaf>)
@@ -1025,48 +1036,100 @@ end;
 
 // Primitive and other magic operator optimization
 
+
 define method optimize (component :: <component>, primitive :: <primitive>)
     => ();
-  let deriver = element($primitive-type-derivers, primitive.name, default: #f);
-  if (deriver)
-    let type = deriver(component, primitive);
-    maybe-restrict-type(component, primitive, type);
-  end;
-  // ### Should have some general purpose way to transform primitives.
-  if (primitive.name == #"values")
-    let assign = primitive.dependents.dependent;
-    let defns = assign.defines;
-    unless (defns & instance?(defns.var-info, <values-cluster-info>))
-      let builder = make-builder(component);
-      let next-var = #f;
-      for (var = defns then next-var,
-	   val-dep = primitive.depends-on
-	     then val-dep & val-dep.dependent-next,
-	   while: var)
-	next-var := var.definer-next;
-	var.definer-next := #f;
-	build-assignment(builder, assign.policy, assign.source-location, var,
-			 if (val-dep)
-			   val-dep.source-exp;
-			 else
-			   make-literal-constant(builder,
-						 make(<literal-false>));
-			 end);
+  let info = primitive.info;
+
+  let assign = primitive.dependents.dependent;
+  local
+    method assert-arg-types
+	(dep :: false-or(<dependency>), arg-types :: <list>) => ();
+      if (arg-types == #())
+	if (dep)
+	  error("Too many arguments to %%%%primitive %s", primitive.name);
+	end;
+      else
+	let arg-type = arg-types.head;
+	if (arg-type == #"rest")
+	  let arg-type = arg-types.tail.head;
+	  for (dep = dep then dep.dependent-next,
+	       while: dep)
+	    assert-type(component, assign, dep, arg-type);
+	  end;
+	elseif (dep == #f)
+	  error("Not enough arguments to %%%%primitive %s", primitive.name);
+	else
+	  if (arg-type == #"cluster")
+	    let arg = dep.source-exp;
+	    unless (instance?(arg, <abstract-variable>)
+		      & instance?(arg.var-info, <values-cluster-info>))
+	      error("%%%%primitive %s expected a values cluster but got "
+		      "a regular variable.");
+	    end;
+	  else
+	    assert-type(component, assign, dep, arg-type);
+	  end;
+	  assert-arg-types(dep.dependent-next, arg-types.tail);
+	end;
       end;
-      assign.defines := #f;
-      // Insert the spred out assignments.
-      insert-after(component, assign, builder.builder-result);
-      // Nuke the original assignment.
-      delete-and-unlink-assignment(component, assign);
     end;
+  assert-arg-types(primitive.depends-on, info.primitive-arg-types);
+
+  maybe-restrict-type(component, primitive, info.primitive-result-type);
+
+  let transformer = info.primitive-transformer;
+  if (transformer)
+    transformer(component, primitive);
   end;
 end;
 
-define method optimize (component :: <component>, prologue :: <prologue>)
-    => ();
-  maybe-restrict-type(component, prologue,
-		      make-values-ctype(prologue.function.argument-types, #f));
-end;
+define-primitive-transformer
+  (#"values",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let assign = primitive.dependents.dependent;
+     let defns = assign.defines;
+     if (defns & instance?(defns.var-info, <values-cluster-info>))
+       // Assigning to a cluster.  Just compute a values type and propagate
+       // it.
+       for (dep = primitive.depends-on then dep.dependent-next,
+	    types = #() then pair(dep.source-exp.derived-type, types),
+	    while: dep)
+       finally
+	 make-values-ctype(reverse!(types), #f);
+       end;
+     else
+       // Assigning to a bunch of discreet variables.  Replace the assignment
+       // with individual assignments for each value.
+       let builder = make-builder(component);
+       let next-var = #f;
+       for (var = defns then next-var,
+	    val-dep = primitive.depends-on
+	      then val-dep & val-dep.dependent-next,
+	    while: var)
+	 next-var := var.definer-next;
+	 var.definer-next := #f;
+	 build-assignment(builder, assign.policy, assign.source-location, var,
+			  if (val-dep)
+			    val-dep.source-exp;
+			  else
+			    make-literal-constant(builder,
+						  make(<literal-false>));
+			  end);
+       end;
+       assign.defines := #f;
+       // Insert the spred out assignments.
+       insert-after(component, assign, builder.builder-result);
+       // Nuke the original assignment.
+       delete-and-unlink-assignment(component, assign);
+     end;
+   end);
+
+define-primitive-transformer
+  (#"canonicalize-results",
+   method (component :: <component>, primitive :: <primitive>) => ();
+   end);
+
 
 
 // block/exit related optimizations.
@@ -1232,6 +1295,11 @@ define method optimize
   end;
 end;
 
+define method optimize (component :: <component>, prologue :: <prologue>)
+    => ();
+  maybe-restrict-type(component, prologue,
+		      make-values-ctype(prologue.function.argument-types, #f));
+end;
 
 define method optimize (component :: <component>, return :: <return>) => ();
   let results = return.depends-on;
@@ -1698,92 +1766,6 @@ define method fixed-number-of-values?
   ctype.min-values == ctype.positional-types.size
     & ctype.rest-value-type == empty-ctype();
 end;
-
-
-// Type derivers for various primitives.
-
-define constant $primitive-type-derivers = make(<object-table>);
-
-define method define-primitive-deriver
-    (name :: <symbol>, deriver :: <function>)
-    => ();
-  $primitive-type-derivers[name] := deriver;
-end;
-
-
-define method values-type-deriver
-    (component :: <component>, primitive :: <primitive>)
-    => res :: <values-ctype>;
-  for (dep = primitive.depends-on then dep.dependent-next,
-       types = #() then pair(dep.source-exp.derived-type, types),
-       while: dep)
-  finally
-    make-values-ctype(reverse!(types), #f);
-  end;
-end;
-
-define-primitive-deriver(#"values", values-type-deriver);
-
-
-define method boolean-result
-    (component :: <component>, primitive :: <primitive>)
-    => res :: <values-ctype>;
-  dylan-value(#"<boolean>");
-end;
-    
-define-primitive-deriver(#"initialized?", boolean-result);
-
-
-define method fixnum-args-boolean-result
-    (component :: <component>, primitive :: <primitive>)
-    => res :: <values-ctype>;
-  let fixed-int = dylan-value(#"<fixed-integer>");
-  let assign = primitive.dependents.dependent;
-  for (dep = primitive.depends-on then dep.dependent-next,
-       while: dep)
-    assert-type(component, assign, dep, fixed-int);
-  end;
-  dylan-value(#"<boolean>");
-end;
-
-define-primitive-deriver(#"fixnum-=", fixnum-args-boolean-result);
-define-primitive-deriver(#"fixnum-<", fixnum-args-boolean-result);
-
-define method fixnum-args-fixnum-result
-    (component :: <component>, primitive :: <primitive>)
-    => res :: <values-ctype>;
-  let fixed-int = dylan-value(#"<fixed-integer>");
-  let assign = primitive.dependents.dependent;
-  for (dep = primitive.depends-on then dep.dependent-next,
-       while: dep)
-    assert-type(component, assign, dep, fixed-int);
-  end;
-  fixed-int;
-end;
-
-for (name in #[#"fixnum-+", #"fixnum-*", #"fixnum--", #"fixnum-negative",
-		 #"fixnum-logior", #"fixnum-logxor", #"fixnum-logand",
-		 #"fixnum-lognot", #"fixnum-ash"])
-  define-primitive-deriver(name, fixnum-args-fixnum-result);
-end;
-
-define method fixnum-args-two-fixnums-result
-    (component :: <component>, primitive :: <primitive>)
-    => res :: <values-ctype>;
-  let fixed-int = dylan-value(#"<fixed-integer>");
-  let assign = primitive.dependents.dependent;
-  for (dep = primitive.depends-on then dep.dependent-next,
-       while: dep)
-    assert-type(component, assign, dep, fixed-int);
-  end;
-  make-values-ctype(list(fixed-int, fixed-int), #f);
-end;
-
-for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
-		 #"fixnum-truncate/"])
-  define-primitive-deriver(name, fixnum-args-two-fixnums-result);
-end;
-
 
 
 // Call result propagation.
@@ -2447,8 +2429,7 @@ define method find-in-environment
 	  let builder = make-builder(component);
 	  let op = make-operation(builder, <primitive>,
 				  list(function.literal, var-at-ref),
-				  name: #"make-closure",
-				  derived-type: function-ctype());
+				  name: #"make-closure");
 	  let temp = make-local-var(builder, #"closure", function-ctype());
 	  build-assignment(builder, $Default-policy, make(<source-location>),
 			   temp, op);
@@ -2660,8 +2641,7 @@ define method build-xep
 			   else
 			     wanted-leaf;
 			   end),
-		      name: #"extract-args",
-		      derived-type: raw-ptr-type));
+		      name: #"extract-args"));
   else
     if (signature.rest-type == #f & signature.key-infos == #f)
       let op = make-unknown-call
@@ -2680,8 +2660,7 @@ define method build-xep
       end-body(builder);
       build-assignment(builder, policy, source, args-leaf,
 		       make-operation(builder, <primitive>, list(wanted-leaf),
-				      name: #"extract-args",
-				      derived-type: raw-ptr-type));
+				      name: #"extract-args"));
     else
       begin
 	let op = make-unknown-call
@@ -2721,8 +2700,7 @@ define method build-xep
       end;
       build-assignment(builder, policy, source, args-leaf,
 		       make-operation(builder, <primitive>, list(nargs-leaf),
-				      name: #"extract-args",
-				      derived-type: raw-ptr-type));
+				      name: #"extract-args"));
     end;
   end;
 
