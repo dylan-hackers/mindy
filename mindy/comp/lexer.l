@@ -26,7 +26,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.8 2002/01/15 20:59:04 housel Exp $
+* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.9 2003/04/17 17:08:12 brent Exp $
 *
 * This file is the lexical analizer.
 *
@@ -37,6 +37,7 @@
 #include "lexer.h"
 #include "src.h"
 #include "parser-tab.h"
+
 
 extern int isatty();
 extern void warn();
@@ -53,13 +54,13 @@ static int make_header_end(void);
 #define YY_DECL int internal_yylex(void)
 
 %}
-  
+
 %x ini key val etc
 
 D	[0-9]
 E	[esdx][-+]?{D}+
 
-A	[a-z]
+A	[a-zA-Z]
 G	[!&*<=>|^$%@_]
 S	[-+~?/]
 
@@ -68,7 +69,7 @@ ADGS	({A}|{DGS})
 
 N	((({G}{DGS}*)?{A}{ADGS}*)|({D}{DGS}*({A}{DGS}+)*{A}{A}{ADGS}*))
 
-O	":="|"+"|"-"|"*"|"/"|"="|"=="|"<"|">"|"<="|">="|"~="|"~=="|"&"|"|"|"^"
+O	(":="|"+"|"-"|"*"|"/"|"="|"=="|"<"|">"|"<="|">="|"~="|"~=="|"&"|"|"|"^")
 
 STR	\"(([ !#-\[\]-~])|(\\["'\\abefnrt0<]))*\"
 
@@ -79,7 +80,7 @@ EOL	"\n"|"\r"|"\r\n"|"\n\r"
 
 <ini>#!.*{EOL}			BEGIN(key); warn(line_count, "ignoring initial #! interpreter comment\n"); line_count++; 
 
-<ini,key>[a-z][-a-z0-9]*:	BEGIN(val); return make_header_key();
+<ini,key>[a-zA-Z][-a-zA-Z0-9]*:	BEGIN(val); return make_header_key();
 <ini,key>[ \t]*{EOL}		BEGIN(etc); return make_header_end();
 
 <val>.*{EOL}([ \t]+.+{EOL})*	BEGIN(key); return make_header_val();
@@ -181,7 +182,7 @@ EOL	"\n"|"\r"|"\r\n"|"\n\r"
 <etc>"#all-keys"		is(ALL_KEYS);
 
 <etc>[-+]?{D}+			is(INTEGER);
-<etc>#x[0-9a-f]+		is(INTEGER);
+<etc>#x[0-9a-fA-F]+		is(INTEGER);
 <etc>#o[0-7]+			is(INTEGER);
 <etc>#b[01]+			is(INTEGER);
 
@@ -191,7 +192,7 @@ EOL	"\n"|"\r"|"\r\n"|"\n\r"
 
 <etc>'[ -&(-\[\]-~]'		is(CHARACTER);
 <etc>'\\["'\\abefnrt0]'		is(CHARACTER);
-<etc>'\\<[0-9a-f]{1,4}>'	is(CHARACTER);
+<etc>'\\<[0-9a-fA-F]{1,4}>'	is(CHARACTER);
 
 <etc>{STR}			is(STRING);
 
@@ -204,6 +205,7 @@ EOL	"\n"|"\r"|"\r\n"|"\n\r"
 <etc>#{STR}			is(SYMBOL_LITERAL);
 
 <etc>"#if"			is(FEATURE_IF);
+
 <etc>"#elseif"			is(FEATURE_ELSE_IF);
 <etc>"#else"			is(FEATURE_ELSE);
 <etc>"#endif"			is(FEATURE_ENDIF);
