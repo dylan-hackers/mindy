@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.22 1995/10/02 01:50:45 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.23 1995/10/09 22:34:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -879,6 +879,16 @@ end method;
 define class <direct-instance-ctype> (<limited-ctype>)
 end class;
 
+define method print-object
+    (type :: <direct-instance-ctype>, stream :: <stream>) => ();
+  pprint-fields(type, stream, base-class: type.base-class);
+end;
+
+define method print-message
+    (type :: <direct-instance-ctype>, stream :: <stream>) => ();
+  format(stream, "direct-instances-of(%s)", type.base-class);
+end;
+
 
 //// Singleton types:
 ///
@@ -1184,7 +1194,7 @@ end;
 
 define method print-message (type :: <multi-value-ctype>, stream :: <stream>)
     => ();
-  write("{values (", stream);
+  write("values(", stream);
   for (type in type.positional-types,
        count from 0)
     unless (count == 0)
@@ -1202,7 +1212,7 @@ define method print-message (type :: <multi-value-ctype>, stream :: <stream>)
     write("#rest ", stream);
     print-message(type.rest-value-type, stream);
   end;
-  write(")}", stream);
+  write(")", stream);
 end;
 
 // make-values-ctype  --  Exported
