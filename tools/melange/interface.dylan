@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.25 2003/03/05 11:45:37 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.26 2003/03/05 16:20:57 robmyers Exp $
 
 //======================================================================
 //
@@ -571,31 +571,6 @@ define method process-parse-state
   end if;
   write-module-stream(decls, module-stream, module-line);
 end method process-parse-state;
-
-define method write-module-stream
-    (decls :: <collection>, module-stream :: false-or(<stream>),
-     module-line :: false-or(<string>)) => ()
-  if(module-stream & decls.size > 0)
-    format(module-stream, "module: dylan-user\n\n");
-    if(module-line)
-      format(module-stream, "define module %s", module-line)
-    else
-      format(module-stream, "define module foo", module-line)
-    end if;
-    format(module-stream, 
-           "  use dylan;\n"
-           "  use extensions;\n"
-           "  use melange-support;\n"
-           "  export");
-    for(separator = "" then ",", decl in decls)
-			if( ~ decl.equated? )
-	      format(module-stream, concatenate(separator, "\n    %s"),
-	             decl.dylan-name);
-			end if;
-    end for;
-    format(module-stream, ";\nend module;\n");
-  end if;
-end method write-module-stream;
 
 // Process-define-interface simply calls the parser in int-parse to decipher
 // the "define interface" and then call "process-parse-state" to annotate and

@@ -3,7 +3,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.15 2003/03/05 11:45:37 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.16 2003/03/05 16:20:57 robmyers Exp $
 
 //======================================================================
 //
@@ -217,7 +217,7 @@ define module c-declarations
     argument-direction-setter, constant-value-setter, getter-setter,
     setter-setter, read-only-setter, sealed-string-setter, excluded?-setter,
     exclude-slots, equate, remap, rename, superclasses-setter, pointer-equiv,
-    dylan-name, exclude-decl,
+    dylan-name, exclude-decl, 
 
     // "Import declarations phase" 
     declaration-closure, // also calls compute-closure
@@ -230,9 +230,10 @@ define module c-declarations
     <written-name-record>,
     write-declaration, 
     write-file-load, write-mindy-includes,
+		write-module-stream,
 
     // Miscellaneous
-    equated?, getter, setter, sealed-string, excluded?,
+		getter, setter, sealed-string, excluded?,
     declarations,
     melange-target;
 end module c-declarations;

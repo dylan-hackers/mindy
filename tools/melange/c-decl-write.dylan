@@ -1210,3 +1210,37 @@ define method write-mindy-includes
     close(stream);
   end if;
 end method write-mindy-includes;
+
+// Write an export module file
+
+define method write-module-stream
+    (decls :: <collection>, module-stream :: false-or(<stream>),
+     module-line :: false-or(<string>)) => ()
+  if(module-stream & decls.size > 0)
+    format(module-stream, "module: dylan-user\n\n");
+    if(module-line)
+      format(module-stream, "define module %s", module-line)
+    else
+      format(module-stream, "define module foo", module-line)
+    end if;
+    format(module-stream, 
+           "  use dylan;\n"
+           "  use extensions;\n"
+           "  use melange-support;\n"
+           "  export");
+    for(separator = "" then ",", decl in decls)
+			// If a type is created in the module, export it
+			if( ~ decl.equated? )
+	      format(module-stream, concatenate(separator, "\n    %s"),
+	             decl.dylan-name);
+				// Write struct slot accessors, for non-empty structs
+				if( instance?(decl, <struct-declaration>) & decl.coalesced-members)
+					for( x in decl.coalesced-members)
+						format( module-stream, ",\n    %s,\n    %s-setter", x.dylan-name, x.dylan-name );
+					end for;
+				end if;
+			end if;
+    end for;
+    format(module-stream, ";\nend module;\n");
+  end if;
+end method write-module-stream;

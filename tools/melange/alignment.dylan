@@ -129,8 +129,9 @@ define function do-coalesce-members (decl :: <struct-declaration>)
       if (~instance?(composite, <coalesced-bitfields>)
 	    | (composite.bit-size + decl-type.bits-in-field
 		 > $default-alignment * 8))
-	composite := make(<coalesced-bitfields>, name: anonymous-name());
-	result := pair(composite, result);
+		    let name = anonymous-name();
+				composite := make(<coalesced-bitfields>, name: name, dylan-name: name);
+				result := pair(composite, result);
       end if;
       decl-type.composite-field := composite;
       decl-type.start-bit := composite.bit-size;
