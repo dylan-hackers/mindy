@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.5 1994/07/11 20:29:23 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.6 1994/08/22 22:36:48 wlott Exp $
 *
 \**********************************************************************/
 
@@ -34,6 +34,8 @@ enum slot_allocation {
 };
 
 struct library;
+
+extern void describe(obj_t thing);
 
 extern obj_t make_defined_class(obj_t debug_name, struct library *library);
 extern void init_defined_class(obj_t class, obj_t slots,

@@ -23,11 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.22 1994/08/20 20:19:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.23 1994/08/22 22:36:19 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
 \**********************************************************************/
+
+#include <stdio.h>
 
 #include "mindy.h"
 #include "gc.h"
@@ -46,6 +48,7 @@
 #include "error.h"
 #include "driver.h"
 #include "def.h"
+#include "print.h"
 #include "instance.h"
 
 struct defined_class {
@@ -1499,6 +1502,64 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
 
     error("%= doesn't access a slot in %=", getter, instance);    
     return NULL;
+}
+
+
+/* Describe. */
+
+void describe(obj_t thing)
+{
+    obj_t class = object_class(thing);
+    obj_t slots;
+
+    prin1(thing);
+    printf(" is an instance of ");
+    print(class);
+
+    if (object_class(class) == obj_DefinedClassClass) {
+	printf("and has the following slots:\n");
+
+	for (slots=DC(class)->all_slots; slots != obj_Nil; slots=TAIL(slots)) {
+	    obj_t slot = HEAD(slots);
+	    int index;
+	    obj_t value;
+
+	    prin1(SD(slot)->name);
+	    switch (SD(slot)->alloc) {
+	      case alloc_INSTANCE:
+		index = find_position(DC(class)->instance_positions, slot);
+		value = INST(thing)->slots[index];
+		break;
+	      case alloc_SUBCLASS:
+		printf("[each subclass]");
+		index = find_position(DC(class)->subclass_positions, slot);
+		value = INST(thing)->slots[index];
+		break;
+	      case alloc_CLASS:
+		value = value_cell_ref(accessor_method_datum
+				       (SD(slot)->getter_method));
+		printf("[class]");
+		break;
+	      case alloc_CONSTANT:
+		value = accessor_method_datum(SD(slot)->getter_method);
+		printf("[constant]");
+		break;
+	      case alloc_VIRTUAL:
+		printf("[virtual]\n");
+		goto after_value_printing;
+	      default:
+		lose("Strange slot allocation.");
+	    }
+
+	    if (value == obj_Unbound)
+		printf(" is unbound\n");
+	    else {
+		printf(": ");
+		print(value);
+	    }
+	  after_value_printing:
+	}
+    }
 }
 
 
