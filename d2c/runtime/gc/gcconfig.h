@@ -188,7 +188,7 @@
 #   define MACOS
 #   define mach_type_known
 # endif
-# if defined(__MWERKS__) && defined(__powerc)
+# if (defined(__MWERKS__) || defined(__MRC__)) && defined(__powerc)
 #   define POWERPC
 #   define MACOS
 #   define mach_type_known
