@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.63 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.64 1996/03/21 04:46:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -144,13 +144,13 @@ end;
 
 define class <define-sealed-domain-tlf> (<top-level-form>)
   //
-  // The <define-sealed-domain-parse> for the ``define sealed domain''
-  constant slot sealed-domain-parse :: <define-sealed-domain-parse>,
-    required-init-keyword: parse:;
-  //
   // The <name> for the generic function being sealed.
   constant slot sealed-domain-name :: <name>,
     required-init-keyword: name:;
+  //
+  // The type expressions, each an <expression-parse>;
+  constant slot sealed-domain-type-exprs :: <simple-object-vector>,
+    required-init-keyword: type-exprs:;
   //
   // The library doing the seal.
   constant slot sealed-domain-library :: <library>,
@@ -167,9 +167,8 @@ end;
 
 define method print-message
     (tlf :: <define-sealed-domain-tlf>, stream :: <stream>) => ();
-  let parse = tlf.sealed-domain-parse;
-  format(stream, "Define Sealed Domain %s (", parse.sealed-domain-name);
-  for (type in parse.sealed-domain-type-exprs,
+  format(stream, "Define Sealed Domain %s (", tlf.sealed-domain-name);
+  for (type in tlf.sealed-domain-type-exprs,
        first? = #t then #f)
     unless (first?)
       write(", ", stream);
@@ -303,10 +302,10 @@ define method process-top-level-form
     (form :: <define-sealed-domain-parse>) => ();
   add!(*Top-Level-Forms*,
        make(<define-sealed-domain-tlf>,
-	    parse: form,
 	    name: make(<basic-name>,
 		       symbol: form.sealed-domain-name.token-symbol,
 		       module: *Current-Module*),
+	    type-exprs: form.sealed-domain-type-exprs,
 	    source-location: form.source-location,
 	    library: *Current-Library*));
 end;
@@ -413,7 +412,7 @@ define method finalize-top-level-form
 	  end;
 	  type;
 	end method eval-type;
-  let types = map(eval-type, tlf.sealed-domain-parse.sealed-domain-type-exprs);
+  let types = map(eval-type, tlf.sealed-domain-type-exprs);
   tlf.sealed-domain-types := types;
   add-seal(defn, tlf.sealed-domain-library, types, tlf);
 end;
