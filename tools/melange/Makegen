@@ -1,4 +1,15 @@
-&makegen_include("../common-Makegen");
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../common/collection-extensions'
+    . ' -L../../common/table-ext'
+    . ' -L../../common/string-ext'
+    . ' -L../../common/regular-expressions'
+    . ' -L../../common/streams'
+    . ' -L../../common/standard-io'
+    . ' -L../../common/print'
+    . ' -L../../common/format'
+    . ' -L../../common/getopt'
+    . ' -L.';
 
 if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "win32-vc-decl";
@@ -26,20 +37,22 @@ if ($features{'compiled_for_win32'}) {
     &unknown_platform_error();
 };
 
+push(@compile_commands, 
+     sprintf($host_platform{'recursive_make_command'},
+	     "../parsergen", ""));
+
 &emit_parsergen_rule('c-parse');
 
 if ($build_tools_with_d2c) {
   &emit_library_rule
       ($c_decl_lid,
-       '$(BUILDROOT)/force.timestamp',
-       '',
+       '$(BUILDROOT)/force.timestamp', '',
        'compile'
        );
 } else {
   &emit_library_rule
       ($c_decl_lid,
-       '$(BUILDROOT)/force.timestamp',
-       '',
+       '$(BUILDROOT)/force.timestamp', '',
        'no-d2c'
        );
 };
@@ -49,15 +62,13 @@ if ($build_tools_with_d2c) {
 if ($build_tools_with_d2c) {
   &emit_library_rule
       ('melange',
-       '$(BUILDROOT)/force.timestamp melange-c.lib.du',
-       '-L.',
+       '$(BUILDROOT)/force.timestamp melange-c.lib.du', '',
        'compile', 'install'
        );
 } else {
   &emit_library_rule
       ('melange',
-       '$(BUILDROOT)/force.timestamp',
-       '',
+       '$(BUILDROOT)/force.timestamp', '',
        'no-d2c'
        );
   push(@compile_dependencies, 'melange.dbc');

@@ -1,4 +1,13 @@
-&makegen_include("../common-Makegen");
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../common/streams'
+    . ' -L../../common/print'
+    . ' -L../../common/format'
+    . ' -L../../common/collection-extensions'
+    . ' -L../../common/table-ext'
+    . ' -L../../common/string-ext'
+    . ' -L../../common/regular-expressions'
+    . ' -L../../common/standard-io';
 
 &emit_library_rule('Lisp2dylan', '$(BUILDROOT)/force.timestamp', '', 
 		   'compile', 'install');

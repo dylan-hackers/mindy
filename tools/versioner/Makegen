@@ -1,4 +1,15 @@
-&makegen_include("../common-Makegen");
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../common/streams'
+    . ' -L../../common/standard-io'
+    . ' -L../../common/print'
+    . ' -L../../common/format'
+    . ' -L../../common/collection-extensions'
+    . ' -L../../common/table-ext'
+    . ' -L../../common/string-ext'
+    . ' -L../../common/regular-expressions'
+    . ' -L../../common/stream-ext'
+    . ' -L../../common/time';
 
 # Solaris, FreeBSD and win32 don't support the Time library, so we can't build
 # Versioner on Solaris.

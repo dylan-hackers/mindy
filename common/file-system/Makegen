@@ -8,7 +8,18 @@ if ($features{'compiled_for_unix'}) {
     &unknown_platform_error();
 }
 
-$D2CFLAGS = "$D2CFLAGS -L../standard-io -L../format -L../format-out -L../base-file-system -L../regular-expressions -L../streams -L../string-ext -L../table-ext -L../collection-extensions -L../print";
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../collection-extensions'
+    . ' -L../table-ext'
+    . ' -L../string-ext'
+    . ' -L../regular-expressions'
+    . ' -L../streams'
+    . ' -L../print'
+    . ' -L../format'
+    . ' -L../standard-io'
+    . ' -L../format-out'
+    . ' -L../base-file-system';
 
 &emit_library_rule($system_lid_file, '$(BUILDROOT)/force.timestamp', '',
                    'compile', 'no-mindy', 'install');

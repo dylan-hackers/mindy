@@ -1,6 +1,11 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . ' -L../streams -L../print -L../format -L../standard-io';
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../streams'
+    . ' -L../print'
+    . ' -L../format'
+    . ' -L../standard-io';
 
 do emit_library_rule(
     'FormatOut', '$(BUILDROOT)/force.timestamp', '', 'compile',

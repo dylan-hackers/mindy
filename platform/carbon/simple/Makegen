@@ -1,6 +1,11 @@
 &makegen_include("../carbon-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . ' -L../carbon -L.';
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../../common/streams'
+    . ' -L../../../common/print'
+    . ' -L../../../common/format'
+    . ' -L../carbon';
 
 do emit_library_rule(
     'simple', '$(BUILDROOT)/force.timestamp', '', 'compile',

@@ -1,6 +1,8 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . ' -L../streams';
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../streams';
 
 do emit_library_rule(
     'StreamExt', '$(BUILDROOT)/force.timestamp', '', 'compile',

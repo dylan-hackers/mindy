@@ -1,4 +1,10 @@
-&makegen_include("../common-Makegen");
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../common/streams'
+    . ' -L../../common/standard-io'
+    . ' -L../../common/collection-extensions'
+    . ' -L../../common/table-ext'
+    . ' -L../../common/string-ext';
 
 do emit_library_rule(
     'html2txt', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',

@@ -3,7 +3,9 @@ if ($host_platform{'integer_length'} >= 64) {
 }
 $CPPFLAGS = "$CPPFLAGS -I.. ";
 	
-$D2CFLAGS = $d2c_runtime . '-L../../../common/transcendental ';
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../../common/transcendental';
 
 do emit_library_rule(
     'Random', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'

@@ -1,4 +1,6 @@
-&makegen_include("../common-Makegen");
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L.';
 
 do emit_library_rule(
     'fact', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',

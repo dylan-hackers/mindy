@@ -32,12 +32,32 @@ EOF
 close(VERSION);
 
 &makegen_include("../common-Makegen");
-$CPPFLAGS = "$CPPFLAGS -I../../runtime ";
 
-@potential_targets
-    = &d2c_library('Main', 
-		   '-L../base -L../front -L../fer-transform -L../optimize '
-		   . '-L../parser -L../convert -L../cback');
+$CPPFLAGS = "$CPPFLAGS -I../../runtime ";
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../../common/collection-extensions'
+    . ' -L../../../common/table-ext'
+    . ' -L../../../common/string-ext'
+    . ' -L../../../common/transcendental'
+    . ' -L../../runtime/random'
+    . ' -L../../../common/streams'
+    . ' -L../../../common/print'
+    . ' -L../../../common/format'
+    . ' -L../../../common/getopt'
+    . ' -L../../../common/standard-io'
+    . ' -L../../../common/regular-expressions'
+    . ' -L../../../common/base-file-system'
+    . ' -L../base'
+    . ' -L../front'
+    . ' -L../fer-transform'
+    . ' -L../optimize'
+    . ' -L../parser'
+    . ' -L../../../common/stream-ext'
+    . ' -L../convert'
+    . ' -L../cback';
+
+@potential_targets = &d2c_library('Main', '');
 
 &emit_dbc_link_rule
     ('d2c.dbc', 

@@ -1,4 +1,7 @@
-&makegen_include("../common-Makegen");
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../common/streams'
+    . ' -L../../common/standard-io';
 
 do emit_library_rule(
     'stream-demo', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',

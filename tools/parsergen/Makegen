@@ -1,5 +1,15 @@
-&makegen_include("../common-Makegen");
 $CPPFLAGS = "$CPPFLAGS -I../../d2c/runtime ";
+$D2CFLAGS         # added by update-libdirs
+    = $d2c_runtime
+    . ' -L../../common/streams'
+    . ' -L../../common/print'
+    . ' -L../../common/format'
+    . ' -L../../common/standard-io'
+    . ' -L../../common/collection-extensions'
+    . ' -L../../common/table-ext'
+    . ' -L../../common/string-ext'
+    . ' -L../../common/regular-expressions';
+
 if ($build_tools_with_d2c) {
   &emit_library_rule('Parsergen', '$(BUILDROOT)/force.timestamp', '', 
 		     'compile', 'install');
