@@ -64,6 +64,8 @@ Mindy has been successfully built on the following platforms:
 	SGI 		IRIX 4.0.5 	gcc and sgi-cc
 	SGI 		IRIX 5.2 	sgi-cc
 	Sun 		SunOS 4.11	gcc
+	Sun		Solaris		cc
+	???		AIX 4.2		cc
 	PC clone 	Linux 1.2.0     gcc
 
 If you have successfully compiled Mindy on another architecture,
