@@ -13,6 +13,7 @@ define module time-test
   use Time;
   use Time-io;
   use Cheap-io;
-  use Streams, import: {force-output};
+  use Streams, import: {force-output, <buffered-byte-string-output-stream>,
+			<string-stream>, stream-contents};
   use Standard-io;
 end module time-test;
