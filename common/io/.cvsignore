@@ -1,7 +1,0 @@
-*.c *.s *.mak GNUmakefile
-.libs
-io-exports.lo
-redirect-io.lo
-io-init.lo
-io-heap.lo
-libio.la
