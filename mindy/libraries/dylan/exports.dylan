@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.102 1996/09/19 12:16:13 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.103 1996/10/06 13:01:13 nkramer Exp $
 
 //======================================================================
 //
@@ -33,7 +33,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.
 define library Dylan
   export
     Dylan, Extensions, System, File-Descriptors, Threads, Introspection,
-    Namespace-Introspection, Cheap-IO, Extern, Transcendental,
+    Namespace-Introspection, Cheap-IO, Extern, %Transcendental,
     %Hash-Tables;
 end Dylan;
 
@@ -120,7 +120,7 @@ define module Builtin-Stuff
     sin, cos, tan, asin, acos, atan, atan2, 
     sinh, cosh, tanh,
     exp, log, sqrt,
-    $pi, $e,
+    $single-pi, $single-e, $double-pi, $double-e,
     init-keyword, keyword-required?,
     <name>, <namespace>, <module>, <library>, <binding>,
     binding-name, module-name, library-name, name-home,
@@ -411,13 +411,14 @@ define module Extern
     pointer-value-setter;
 end module Extern;
 
-define module Transcendental
+// Used only by the Transcendental library
+define module %Transcendental
   use Dylan;
   use Extensions;
   use Builtin-stuff, 
     import: { sin, cos, tan, asin, acos, atan, atan2, 
 	      sinh, cosh, tanh, // no inverse hyperbolic functions
 	      exp, log, sqrt,
-	      $pi, $e }, 
+	      $single-pi, $single-e, $double-pi, $double-e }, 
     export: all;
-end module Transcendental;
+end module %Transcendental;
