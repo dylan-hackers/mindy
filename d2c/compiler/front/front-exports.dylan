@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.9 2002/03/10 16:15:40 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.10 2002/03/13 05:09:14 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -81,6 +81,20 @@ define module primitives
     define-primitive-transformer,
     define-primitive-emitter;
 end;
+
+
+define module variable-definitions
+  use common;
+
+  use compile-time-values;
+  use ctype;
+  use definitions;
+
+  export
+    <bindings-definition>, defn-type-setter, %defn-init-value,
+    defn-init-value, defn-init-value-setter,
+    <variable-definition>, var-defn-type-defn, var-defn-type-defn-setter;
+end module variable-definitions;
 
 
 define module front
@@ -229,19 +243,6 @@ define module function-definitions
     
 end module function-definitions;
 
-
-define module variable-definitions
-  use common;
-
-  use compile-time-values;
-  use ctype;
-  use definitions;
-
-  export
-    <bindings-definition>, defn-type-setter, %defn-init-value,
-    defn-init-value, defn-init-value-setter,
-    <variable-definition>, var-defn-type-defn, var-defn-type-defn-setter;
-end module variable-definitions;
 
 define module top-level-forms
   use common;
