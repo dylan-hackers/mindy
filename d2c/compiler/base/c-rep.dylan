@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.21 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.22 1996/01/12 00:58:08 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -28,15 +28,15 @@ define abstract class <c-representation>
     init-value: #f, init-keyword: name:;
   slot more-general-representation :: false-or(<representation>),
     setter: #f, init-value: #f, init-keyword: more-general:;
-  slot representation-depth :: <fixed-integer>;
+  slot representation-depth :: <integer>;
   slot representation-to-more-general :: type-union(<byte-string>, one-of(#t, #f)),
     init-value: #t, init-keyword: to-more-general:;
   slot representation-from-more-general
     :: type-union(<byte-string>, one-of(#t, #f)),
     init-value: #t, init-keyword: from-more-general:;
-  slot representation-alignment :: <fixed-integer>, setter: #f,
+  slot representation-alignment :: <integer>, setter: #f,
     required-init-keyword: alignment:;
-  slot representation-size :: <fixed-integer>, setter: #f,
+  slot representation-size :: <integer>, setter: #f,
     required-init-keyword: size:;
   slot representation-c-type :: <string>, setter: #f,
     required-init-keyword: c-type:;
@@ -142,7 +142,7 @@ define method seed-representations () => ();
     set-representations(dylan-value(#"<false>"), *boolean-rep*, space-rep);
   end;
   begin
-    let fixed-int-cclass = dylan-value(#"<fixed-integer>");
+    let fixed-int-cclass = dylan-value(#"<integer>");
     unless (*long-rep*)
       *long-rep* := make(<data-word-representation>, name: #"long",
 			 alignment: $long-alignment, size: $long-size,
@@ -468,7 +468,7 @@ define method pick-representation
     (type :: <limited-integer-ctype>, optimize-for == #"space",
      #next next-method)
     => rep :: <c-representation>;
-  if (type.base-class == dylan-value(#"<fixed-integer>"))
+  if (type.base-class == dylan-value(#"<integer>"))
     let bits = max(integer-length(type.low-bound),
 		   integer-length(type.high-bound));
     if (negative?(type.low-bound))
@@ -499,7 +499,7 @@ define method pick-representation
   end;
 end;
 
-define method integer-length (int :: <integer>) => res :: <integer>;
+define method integer-length (int :: <extended-integer>) => res :: <integer>;
   if (negative?(int))
     integer-length(lognot(int));
   else

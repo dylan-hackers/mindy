@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.32 1996/01/11 18:45:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.33 1996/01/12 00:58:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -60,16 +60,16 @@ define abstract class <cclass>
 
   // The unique id number associated with this class (only if concrete,
   // though.)
-  slot unique-id :: false-or(<fixed-integer>), init-value: #f,
+  slot unique-id :: false-or(<integer>), init-value: #f,
     init-keyword: unique-id:;
 
   // The range of ids that cover all the subclasses of this class and
   // only the subclasses of this class, if such a range exists.  That
   // range will exist if this class is never mixed in with any other
   // class.  And if this class is sealed.
-  slot subclass-id-range-min :: false-or(<fixed-integer>), init-value: #f,
+  slot subclass-id-range-min :: false-or(<integer>), init-value: #f,
     init-keyword: subclass-id-range-min:;
-  slot subclass-id-range-max :: false-or(<fixed-integer>), init-value: #f,
+  slot subclass-id-range-max :: false-or(<integer>), init-value: #f,
     init-keyword: subclass-id-range-max:;
 
   // The representation of instances of this class or #f if we haven't
@@ -103,7 +103,7 @@ define abstract class <cclass>
     init-keyword: vector-slot:;
   //
   // Count of the number of each-subclass slots.
-  slot each-subclass-slots-count :: <fixed-integer>,
+  slot each-subclass-slots-count :: <integer>,
     init-keyword: each-subclass-slots-count:;
   //
   // Used by the heap builder.
@@ -397,7 +397,7 @@ define class <class-precedence-description> (<object>)
   slot cpd-after :: <list>, init-value: #();
   //
   // Count of times this cpd appeards in some other cpd's after list.
-  slot cpd-count :: <fixed-integer>, init-value: 0;
+  slot cpd-count :: <integer>, init-value: 0;
 end class;
 
 define constant compute-cpl = method (cl, superclasses)
@@ -639,7 +639,7 @@ end;
 define constant $class-for-id = make(<object-table>);
 
 define method set-and-record-unique-id
-    (id :: false-or(<fixed-integer>), class :: <cclass>) => ();
+    (id :: false-or(<integer>), class :: <cclass>) => ();
   if (id)
     let clash = element($class-for-id, id, default: #f);
     if (clash)
@@ -652,10 +652,10 @@ define method set-and-record-unique-id
   end;
 end;
 
-define method assign-unique-ids (base :: <fixed-integer>) => ();
+define method assign-unique-ids (base :: <integer>) => ();
   local
-    method grovel (class :: <cclass>, this-id :: <fixed-integer>)
-	=> (next-id :: <fixed-integer>);
+    method grovel (class :: <cclass>, this-id :: <integer>)
+	=> (next-id :: <integer>);
       let next-id = this-id;
       if (class.loaded?)
 	unless (class.sealed?)
@@ -704,7 +704,7 @@ end;
 // Layout tables.
 
 define class <layout-table> (<object>)
-  slot layout-length :: <fixed-integer>,
+  slot layout-length :: <integer>,
     init-value: 0, init-keyword: length:;
   slot layout-holes :: <list>,
     init-value: #(), init-keyword: holes:;
@@ -717,9 +717,9 @@ define method copy-layout-table (layout :: <layout-table>)
 end;
 
 define method find-position (layout :: <layout-table>,
-			     bytes :: <fixed-integer>,
-			     alignment :: <fixed-integer>)
-    => offset :: <fixed-integer>;
+			     bytes :: <integer>,
+			     alignment :: <integer>)
+    => offset :: <integer>;
   block (return)
     for (prev = #f then remaining,
 	 remaining = layout.layout-holes then remaining.tail,
@@ -915,7 +915,7 @@ define method layout-slot
 end;
 
 define method add-position-if-necessary
-    (class :: <cclass>, offset :: <fixed-integer>, positions :: <list>)
+    (class :: <cclass>, offset :: <integer>, positions :: <list>)
     => res :: <list>;
   block (return)
     for (entry :: <pair> in positions)
@@ -936,7 +936,7 @@ end method add-position-if-necessary;
 
 define method find-slot-offset
     (slot :: <instance-slot-info>, instance-type :: <ctype>)
-    => res :: false-or(<fixed-integer>);
+    => res :: false-or(<integer>);
   let instance-class
     = best-idea-of-class(instance-type) | slot.slot-introduced-by;
   if (csubtype?(instance-class.closest-primary-superclass,

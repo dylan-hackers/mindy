@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.26 1996/01/08 21:39:32 rgs Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.27 1996/01/12 00:58:17 wlott Exp $
 
 /*
 
@@ -204,7 +204,7 @@ Note that:
 
 define variable *object-id-registry* = make(<self-organizing-list>);
 
-define method register-object-id (name :: <symbol>, id :: <fixed-integer>)
+define method register-object-id (name :: <symbol>, id :: <integer>)
  => ();
   assert(~element(*object-id-registry*, name, default: #f));
   assert(~find-key(*object-id-registry*, method (x) x = id end));
@@ -710,7 +710,7 @@ define /* exported */ constant $word-bits = 32;
 // Read a word from a buffer at a word-aligned byte offset.
 // 
 define method buffer-word(bbuf :: <buffer>, i :: <buffer-index>)
- => <integer>;
+ => word :: <general-integer>;
   
   let high-end = bbuf[i];
 
@@ -730,22 +730,22 @@ end method;
 // Write a word to a buffer at a word-aligned byte offset.
 // 
 define method buffer-word-setter
-    (new-val :: <integer>, bbuf :: <buffer>, i :: <buffer-index>)
- => <integer>;
+    (new-val :: <general-integer>, bbuf :: <buffer>, i :: <buffer-index>)
+ => res :: <general-integer>;
   // ### big-endian 32 assumption.  Should be a primitive.
   let (rest, byte4) = floor/(new-val, 256);
-  let (rest, byte3) = floor/(as(<fixed-integer>, rest), 256);
+  let (rest, byte3) = floor/(as(<integer>, rest), 256);
   // This assumes that the word is unsigned (i.e. new-val is a positive int)
   let (byte1, byte2) = floor/(rest, 256);
   bbuf[i + 0] := byte1;
   bbuf[i + 1] := byte2;
   bbuf[i + 2] := byte3;
-  bbuf[i + 3] := as(<fixed-integer>, byte4);
+  bbuf[i + 3] := as(<integer>, byte4);
 end method;
 
 define method buffer-word-setter
-    (new-val :: <fixed-integer>, bbuf :: <buffer>, i :: <buffer-index>)
- => <integer>;
+    (new-val :: <integer>, bbuf :: <buffer>, i :: <buffer-index>)
+ => res :: <general-integer>;
   // ### big-endian 32 assumption.  Should be a primitive.
   let (rest, byte4) = floor/(new-val, 256);
   let (rest, byte3) = floor/(rest, 256);
@@ -762,7 +762,7 @@ end method;
 // might conceivably need more than 24 bits for their data part.
 //
 define method dump-header-word
-    (hi :: <fixed-integer>, obj :: <fixed-integer>, buf :: <dump-buffer>) => ();
+    (hi :: <integer>, obj :: <integer>, buf :: <dump-buffer>) => ();
 
   if (buf.buffer-pos == buf.dump-end) grow-dump-buffer(buf, $word-bytes) end;
   let i = buf.buffer-pos;
@@ -786,7 +786,7 @@ end method;
 // and returns the high byte and rest as two values.
 //
 define method buffer-header-word(bbuf :: <buffer>, i :: <buffer-index>) 
- => (hi-byte :: <fixed-integer>, low :: <fixed-integer>);
+ => (hi-byte :: <integer>, low :: <integer>);
   // ### big-endian 32 assumption.  Should be a primitive.
   values(bbuf[i + 0],
 	 bbuf[i + 3] + ash(bbuf[i + 2], 8) + ash(bbuf[i + 1], 16));
@@ -796,7 +796,7 @@ end method;
 // Rounds a byte offset up to the next word boundary.
 // ### assumes 4byte words.
 //
-define method round-to-word(x :: <fixed-integer>) => <fixed-integer>;
+define method round-to-word(x :: <integer>) => <integer>;
   logand(x + 3, -4);
 end method;
 
@@ -818,7 +818,7 @@ define /* exported */ class <dump-buffer> (<object>)
   //
   // Total size of all previously dumped stuff.  This must be added to
   // current-pos to get the actual current file position.
-  slot previous-size :: <fixed-integer>, init-value: 0;
+  slot previous-size :: <integer>, init-value: 0;
 
   //
   // Area where we are currently writing output.
@@ -838,7 +838,7 @@ end class;
 // starting positions.
 //
 define /* exported */ method current-pos (buf :: <dump-buffer>) 
- => res :: <fixed-integer>;
+ => res :: <integer>;
   buf.previous-size + buf.buffer-pos;
 end method;
 
@@ -850,7 +850,7 @@ define /* exported */ class <dump-state> (<dump-buffer>)
   //
   // Name, Type and Where args to begin-dumping.
   slot dump-name :: <data-unit-name>, required-init-keyword: dump-name:;
-  slot dump-type :: <fixed-integer>, required-init-keyword: dump-type:;
+  slot dump-type :: <integer>, required-init-keyword: dump-type:;
   slot dump-where :: false-or(<string>), required-init-keyword: dump-where:;
   //
   // A vector mapping local IDs to their offsets in the buffer.  An entry of #f
@@ -864,7 +864,7 @@ define /* exported */ class <dump-state> (<dump-buffer>)
   slot extern-buf :: <dump-buffer>, init-function: curry(make, <dump-buffer>);
   //
   // Next extern ID to be allocated.
-  slot next-extern-id :: <fixed-integer>, init-value: 0;
+  slot next-extern-id :: <integer>, init-value: 0;
 end class;
 
 
@@ -882,7 +882,7 @@ define /* exported */ generic dump-od (obj :: <object>, buf :: <dump-buffer>)
 // index into the extern-buffer.
 //
 define /* exported */ method begin-dumping
-  (name :: <data-unit-name>, type :: <fixed-integer>,
+  (name :: <data-unit-name>, type :: <integer>,
    #key where :: false-or(<string>))
  => res :: <dump-state>;
   let res = make(<dump-state>, dump-name: name, dump-type: type,
@@ -915,8 +915,8 @@ define constant $rot-mask
 // state.  Use of a large prime increment ensures that the hashed words will be
 // scattered about the data.
 //
-define method compute-unit-hash (state :: <dump-state>) => <integer>;
-
+define method compute-unit-hash (state :: <dump-state>)
+    => hash :: <general-integer>;
   let res = as(<extended-integer>, get-time-of-day());
   let hash-idx = object-hash(state) * $word-bytes;
   for (wot in state.all-dump-buffers)
@@ -936,7 +936,7 @@ end method;
 // Dump the header for the overall data-unit.
 //
 define method dump-unit-header
-    (state :: <dump-state>, buf :: <dump-buffer>, oa-len :: <fixed-integer>)
+    (state :: <dump-state>, buf :: <dump-buffer>, oa-len :: <integer>)
  => ();
   dump-definition-header(#"32bit-data-unit", buf, subobjects: #t,
   		         raw-data: $odf-word-raw-data-format);
@@ -975,7 +975,7 @@ end method;
 // know the size of the header before we can dump it.
 //
 define method compute-header-size (state :: <dump-state>) 
- => (header-size :: <fixed-integer>, oa-size :: <fixed-integer>);
+ => (header-size :: <integer>, oa-size :: <integer>);
   let num-local = state.dump-local-index.size;
   let res = $data-unit-header-size
   	    + ($local-index-size + num-local)
@@ -1076,7 +1076,7 @@ define constant $dump-buffer-maximum-size = #x10000;
 // Note that both the buffer and position may be changed by this operation.
 //
 define method grow-dump-buffer
-  (buf :: <dump-buffer>, min-bytes :: <fixed-integer>)
+  (buf :: <dump-buffer>, min-bytes :: <integer>)
  => ();
   let cur-size = buf.dump-end;
   let new-size = max(cur-size + min-bytes, cur-size * 2);
@@ -1099,7 +1099,8 @@ end method;
 
 // Dump an integer into the buffer as one word.
 //
-define /* exported */ method dump-word(obj :: <integer>, buf :: <dump-buffer>)
+define /* exported */ method dump-word
+    (obj :: <general-integer>, buf :: <dump-buffer>)
  => ();
   if (buf.buffer-pos == buf.dump-end) grow-dump-buffer(buf, $word-bytes) end;
   let start = buf.buffer-pos;
@@ -1112,7 +1113,7 @@ end method;
 // copy-into-buffer! does.
 //
 define /* exported */ method dump-raw-data
-  (obj :: <collection>, bsize :: <fixed-integer>, buf :: <dump-buffer>) 
+  (obj :: <collection>, bsize :: <integer>, buf :: <dump-buffer>) 
  => ();
   dump-word(bsize, buf);
   let rounded-bsize = round-to-word(bsize);
@@ -1145,7 +1146,7 @@ end method;
 // Dump an end-entry for the object that started at start-posn.
 //
 define /* exported */ method dump-end-entry
-  (start-posn :: <fixed-integer>, buf :: <dump-buffer>)
+  (start-posn :: <integer>, buf :: <dump-buffer>)
  => ();
   dump-header-word($odf-end-entry-etype,
                    buf.current-pos - start-posn,
@@ -1174,7 +1175,7 @@ end method;
 // Return a new local object ID.
 // 
 define /* exported */ method new-local-id(buf :: <dump-state>) 
- => res :: <fixed-integer>;
+ => res :: <integer>;
   let lidx = buf.dump-local-index;
   add!(lidx, #f);
   lidx.size - 1;
@@ -1185,8 +1186,8 @@ end method;
 // can be the arg.)
 //
 define /* exported */ method label-next-object
-  (id :: <fixed-integer>, buf :: <dump-state>)
- => <fixed-integer>;
+  (id :: <integer>, buf :: <dump-state>)
+ => <integer>;
   let lidx = buf.dump-local-index;
   assert(id >= 0 & id < lidx.size);
   assert(lidx[id] == #f);
@@ -1197,7 +1198,7 @@ end method;
 // Dump a reference to a local ID (in lieu of an actual object definition.)
 //
 define /* exported */ method dump-local-reference
-  (id :: <fixed-integer>, buf :: <dump-buffer>) => ();
+  (id :: <integer>, buf :: <dump-buffer>) => ();
   dump-header-word($odf-local-reference-etype, id, buf);
 end method;
 
@@ -1214,11 +1215,11 @@ define class <data-unit> (<object>)
   //
   // Stuff pulled out of the data unit header.  Except for the check-hash and
   // unit-type, this is probably gratuitous.
-  slot minor-version :: <fixed-integer>, required-init-keyword: minor-version:;
-  slot platform-characteristics :: <fixed-integer>,
+  slot minor-version :: <integer>, required-init-keyword: minor-version:;
+  slot platform-characteristics :: <integer>,
     required-init-keyword: platform-characteristics:;
-  slot unit-type :: <fixed-integer>, required-init-keyword: unit-type:;
-  slot check-hash :: <integer>, required-init-keyword: check-hash:;
+  slot unit-type :: <integer>, required-init-keyword: unit-type:;
+  slot check-hash :: <general-integer>, required-init-keyword: check-hash:;
   slot location-hint :: false-or(<location-hint>),
     required-init-keyword: location-hint:;
   //
@@ -1252,12 +1253,12 @@ define /* exported */ class <load-state> (<object>)
   /* exported */ slot od-end :: <buffer-index>, required-init-keyword: end:;
   //
   // The total size in bytes of the data unit, from the header.
-  slot overall-length :: <fixed-integer>;
+  slot overall-length :: <integer>;
   //
   // When added to the od-next pointer, this offset yields the byte offset of
   // our current position from the data-unit start.  This must be updated
   // whenever we refill the buffer.
-  slot position-offset :: <fixed-integer>,
+  slot position-offset :: <integer>,
     required-init-keyword: position-offset:,
     setter: %position-offset-setter;
   //
@@ -1265,7 +1266,7 @@ define /* exported */ class <load-state> (<object>)
   // there is no labeled object within the buffer.  Our sentinel also makes the
   // end of the data unit look like a label.  This must be updated whenever the
   // buffer is refilled (when we change position-offset.)
-  slot label-index :: <fixed-integer>;
+  slot label-index :: <integer>;
   //
   // The dispatcher used for this load.
   slot dispatcher :: <dispatcher>, required-init-keyword: dispatcher:;
@@ -1278,13 +1279,13 @@ define /* exported */ class <load-state> (<object>)
   //
   // Word offsets of tagged object in data unit.
   slot raw-local-index :: <simple-object-vector>,
-    init-value: vector(truncate/($maximum-fixed-integer, $word-bytes));
+    init-value: vector(truncate/($maximum-integer, $word-bytes));
   //
   // Local IDs of the tagged objects, in order that the definitions appear.
   slot raw-local-map :: <simple-object-vector>, init-value: #[0];
   //
   // The index in the local-map of the next labeled object to be loaded.
-  slot next-labeled :: <fixed-integer>, init-value: 0,
+  slot next-labeled :: <integer>, init-value: 0,
     setter: %next-labeled-setter;
   //
   // Vector mapping extern IDs in this data unit to the actual in-core
@@ -1301,8 +1302,8 @@ end class;
 // position-offset changes.
 //
 define method position-offset-setter
-    (new-val :: <fixed-integer>, state :: <load-state>)
- => res :: <fixed-integer>;
+    (new-val :: <integer>, state :: <load-state>)
+ => res :: <integer>;
 
   state.label-index
     := (state.raw-local-index[state.raw-local-map[state.next-labeled]]
@@ -1315,8 +1316,8 @@ end method;
 // slot.
 //
 define method next-labeled-setter
-    (new-val :: <fixed-integer>, state :: <load-state>)
- => res :: <fixed-integer>;
+    (new-val :: <integer>, state :: <load-state>)
+ => res :: <integer>;
 
   state.label-index
     := (state.raw-local-index[state.raw-local-map[new-val]]
@@ -1415,10 +1416,10 @@ end;
 //
 define method check-unit-header 
     (state :: <load-state>, name :: <data-unit-name>,
-     expected-type :: <fixed-integer>,
-     expected-hash :: false-or(<integer>),
+     expected-type :: <integer>,
+     expected-hash :: false-or(<general-integer>),
      location-hint :: false-or(<location-hint>))
- => (res :: <data-unit>, oa-len :: <fixed-integer>);
+ => (res :: <data-unit>, oa-len :: <integer>);
   let buffer = state.od-buffer;
   let base = fill-at-least($data-unit-header-size * $word-bytes, state);
 
@@ -1489,8 +1490,8 @@ define constant $empty-object = make(<empty-object>);
 // Load a data unit from a file.
 //
 define method load-data-unit
- (name :: <data-unit-name>, type :: <fixed-integer>,
-  loc :: false-or(<location-hint>), hash :: false-or(<integer>),
+ (name :: <data-unit-name>, type :: <integer>,
+  loc :: false-or(<location-hint>), hash :: false-or(<general-integer>),
   dispatcher :: <dispatcher>)
  => res :: <data-unit>;
 
@@ -1556,9 +1557,9 @@ end;
 // happen.  Also used recursively.
 //
 define /* exported */ method find-data-unit
-  (name :: <data-unit-name>, type :: <fixed-integer>,
+  (name :: <data-unit-name>, type :: <integer>,
    #key location-hint :: false-or(<location-hint>),
-        check-hash: expected-hash :: false-or(<integer>),
+        check-hash: expected-hash :: false-or(<general-integer>),
 	dispatcher :: <dispatcher> = *default-dispatcher*)
  => res :: <data-unit>;
   let types = element(*data-units*, name, default: #());
@@ -1723,7 +1724,7 @@ end method;
 // since there will be enough data in the buffer.
 // 
 define /* exported */ method load-raw-data
-  (res :: <byte-string>, elsize :: <fixed-integer>, state :: <load-state>)
+  (res :: <byte-string>, elsize :: <integer>, state :: <load-state>)
  => nnext :: <buffer-index>;
   let buffer = state.od-buffer;
   let next = state.od-next;
@@ -1763,7 +1764,7 @@ define /* exported */ method load-subobjects-vector
 		   make(<stretchy-vector>);
 		 end if;
   for (part = load-object-dispatch(state) then load-object-dispatch(state),
-       i :: <fixed-integer> from 0,
+       i :: <integer> from 0,
        until: part = $end-object)
     contents[i] := part;
   end for;
@@ -1821,7 +1822,7 @@ end method;
 define /* exported */ class <forward-ref> (<object>)
   //
   // The local ID of the referenced object.
-  slot ref-id :: <fixed-integer>, required-init-keyword: ref-id:;
+  slot ref-id :: <integer>, required-init-keyword: ref-id:;
   //
   // Once resolved, this is the actual object.  Unbound until resolved.
   /* exported */ slot actual-obj :: <object>;
@@ -1881,7 +1882,7 @@ end method;
 // Given a data unit and a local ID, return the referenced object, or a forward
 // reference if it doesn't exist yet.
 //
-define method maybe-forward-ref (unit :: <data-unit>, id :: <fixed-integer>)
+define method maybe-forward-ref (unit :: <data-unit>, id :: <integer>)
  => res :: <object>;
   let lidx = unit.local-index;
   let thing = lidx[id];
@@ -1903,7 +1904,7 @@ end method;
 define abstract class <basic-handle> (<object>)
   //
   // The (local or external) ID in the current dump of this object.
-  slot dump-id :: false-or(<fixed-integer>), init-value: #f,
+  slot dump-id :: false-or(<integer>), init-value: #f,
     init-keyword: dump-id:;
   //
   // <dump-state> for the dump that dump-id is valid in.  Currently only for a
@@ -1922,7 +1923,7 @@ define class <extern-handle> (<basic-handle>)
   slot defining-unit :: <data-unit>, required-init-keyword: defining-unit:;
   //
   // Local ID in the defining unit.
-  slot local-id :: <fixed-integer>, required-init-keyword: local-id:;
+  slot local-id :: <integer>, required-init-keyword: local-id:;
 end class;
 
 

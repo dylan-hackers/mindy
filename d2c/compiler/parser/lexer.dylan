@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.11 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.12 1996/01/12 00:58:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -289,9 +289,9 @@ define method parse-integer-literal (lexer :: <lexer>,
   let int = parse-integer(source-location, radix: radix, start: posn);
 
   if (~extended &
-	(int < runtime-$minimum-fixed-integer
-	   | int > runtime-$maximum-fixed-integer))
-    compiler-warning("%d doesn't fit as a <fixed-integer>, "
+	(int < runtime-$minimum-integer
+	   | int > runtime-$maximum-integer))
+    compiler-warning("%d doesn't fit as a <integer>, "
 		       "using <extended-integer> instead",
 		     int);
     extended := #t;
@@ -302,7 +302,7 @@ define method parse-integer-literal (lexer :: <lexer>,
        literal: make(if (extended)
 		       <literal-extended-integer>;
 		     else
-		       <literal-fixed-integer>;
+		       <literal-integer>;
 		     end,
 		     value: int));
 end;
@@ -505,7 +505,7 @@ define constant $Initial-State$ =
     local
       method add-transition (table :: <simple-object-vector>,
 			     on :: type-union(<integer>, <character>,
-					   <byte-string>),
+					      <byte-string>),
 			     new-state :: <symbol>);
 	//
 	// Make as many entries are necessary to represent the transitions

@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.5 1996/01/10 14:59:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.6 1996/01/12 00:58:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -238,8 +238,8 @@ end method;
 // Extract the value starting at posn and return it.  Additionally,
 // return the posn and line number for the next char after the value.
 //
-define method scan-value (contents :: <file-contents>, start :: <integer>,
-			  start-line :: <integer>)
+define method scan-value
+    (contents :: <file-contents>, start :: <integer>, start-line :: <integer>)
     => (value :: <byte-string>, value-end :: <integer>, end-line :: <integer>);
   local
     method repeat (posn :: <integer>, line :: <integer>,

@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.16 1996/01/10 14:59:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.17 1996/01/12 00:58:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -39,7 +39,7 @@ define method write-address (thing, stream) => ();
   write("0x", stream);
   let address = thing.object-address;
   for (shift from -28 below 1 by 4)
-    let digit = as(<fixed-integer>, logand(ash(address, shift), $digit-mask));
+    let digit = as(<integer>, logand(ash(address, shift), $digit-mask));
     if (digit < 10)
       write(digit + 48, stream);
     else
@@ -79,7 +79,7 @@ end;
 define class <flush-happy-stream> (<stream>)
   slot target :: <stream>, required-init-keyword: target:;
   slot buffer :: <buffer>;
-  slot column :: <fixed-integer>, init-value: 0;
+  slot column :: <integer>, init-value: 0;
 end;
 
 define method stream-extension-get-output-buffer
@@ -276,7 +276,7 @@ define method find-in
 end method;
 
 
-define method size-in(next :: <function>, coll) => <fixed-integer>;
+define method size-in(next :: <function>, coll) => <integer>;
   for (cur = coll then coll.next, len from 0, while: cur)
     finally len;
   end;
@@ -328,7 +328,7 @@ define method key-of
  => res;
   block (done)
     for (els = coll then els.tail,
-         pos :: <fixed-integer> from 0,
+         pos :: <integer> from 0,
          until: els == #())
       if (test(value, els.head))
         done(pos);
@@ -366,18 +366,18 @@ define method stringify (#rest things) => res :: <byte-string>;
 end method stringify;
 
 define method string-length (char :: <byte-character>)
-    => res :: <fixed-integer>;
+    => res :: <integer>;
   1;
 end method string-length;
 
-define method string-length (str :: <byte-string>) => res :: <fixed-integer>;
+define method string-length (str :: <byte-string>) => res :: <integer>;
   str.size;
 end method string-length;
 
-define method string-length (int :: <fixed-integer>) => res :: <fixed-integer>;
+define method string-length (int :: <integer>) => res :: <integer>;
   case
     int < 0 =>
-      if (int == $minimum-fixed-integer)
+      if (int == $minimum-integer)
 	2 + string-length(- truncate/(int, 10));
       else
 	1 + string-length(-int);
@@ -397,26 +397,26 @@ define method string-length (int :: <fixed-integer>) => res :: <fixed-integer>;
 end method string-length;
 
 define method append
-    (res :: <byte-string>, offset :: <fixed-integer>, what :: <byte-character>)
-    => new-offset :: <fixed-integer>;
+    (res :: <byte-string>, offset :: <integer>, what :: <byte-character>)
+    => new-offset :: <integer>;
   res[offset] := what;
   offset + 1;
 end method append;
 
 define method append
-    (res :: <byte-string>, offset :: <fixed-integer>, what :: <byte-string>)
-    => new-offset :: <fixed-integer>;
+    (res :: <byte-string>, offset :: <integer>, what :: <byte-string>)
+    => new-offset :: <integer>;
   let len = what.size;
   copy-bytes(res, offset, what, 0, len);
   offset + len;
 end method append;
 
 define method append
-    (res :: <byte-string>, offset :: <fixed-integer>, what :: <fixed-integer>)
-    => new-offset :: <fixed-integer>;
+    (res :: <byte-string>, offset :: <integer>, what :: <integer>)
+    => new-offset :: <integer>;
   if (what < 0)
     res[offset] := '-';
-    if (what == $minimum-fixed-integer)
+    if (what == $minimum-integer)
       let (rest, low) = truncate/(what, 10);
       let new-offset = append(res, offset + 1, -rest);
       res[new-offset] := as(<character>, low + 48);
@@ -449,8 +449,8 @@ define method append
     res[offset + 3] := as(<character>, low + 48);
     offset + 4;
   else
-    local method repeat (num :: <fixed-integer>)
-	      => new-offset :: <fixed-integer>;
+    local method repeat (num :: <integer>)
+	      => new-offset :: <integer>;
 	    if (num < 10)
 	      res[offset] := as(<character>, num + 48);
 	      offset + 1;

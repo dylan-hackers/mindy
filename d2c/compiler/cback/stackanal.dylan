@@ -2,13 +2,13 @@ module: stack-analysis
 
 
 define class <state> (<object>)
-  slot max-depth :: <fixed-integer>, init-value: 0;
+  slot max-depth :: <integer>, init-value: 0;
   slot block-wants :: <table>, init-function: curry(make, <object-table>);
 end;
 
 
 define method analize-stack-usage (func :: <fer-function-region>)
-    => (max-depth :: <fixed-integer>);
+    => (max-depth :: <integer>);
   let state = make(<state>);
   let want = analize(func.body, #(), state);
   unless (want == #())

@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.22 1996/01/10 14:59:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.23 1996/01/12 00:58:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -142,13 +142,13 @@ end;
 
 define abstract class <literal-real> (<literal-number>) end;
 define abstract class <literal-rational> (<literal-real>) end;
-define abstract class <literal-integer> (<literal-rational>) end;
+define abstract class <literal-general-integer> (<literal-rational>) end;
 
-define class <literal-fixed-integer> (<literal-integer>)
+define class <literal-integer> (<literal-general-integer>)
   slot literal-value :: <extended-integer>, required-init-keyword: value:;
 end;
 
-define class <literal-extended-integer> (<literal-integer>)
+define class <literal-extended-integer> (<literal-general-integer>)
   slot literal-value :: <extended-integer>, required-init-keyword: value:;
 end;
 
@@ -170,9 +170,9 @@ define constant $literal-single-float-memo = make(<table>);
 define constant $literal-double-float-memo = make(<table>);
 define constant $literal-extended-float-memo = make(<table>);
 
-define method make (class == <literal-fixed-integer>, #next next-method,
+define method make (class == <literal-integer>, #next next-method,
 		    #key value)
-    => res :: <literal-fixed-integer>;
+    => res :: <literal-integer>;
   element($literal-fixed-integer-memo, value, default: #f)
     | (element($literal-fixed-integer-memo, value) := next-method());
 end;
@@ -211,13 +211,13 @@ define method make (class == <literal-extended-float>, #next next-method,
     | (element($literal-extended-float-memo, value) := next-method());
 end;
 
-define method print-object (lit :: <literal-fixed-integer>, stream :: <stream>)
+define method print-object (lit :: <literal-integer>, stream :: <stream>)
     => ();
   format(stream, "{literal fixed-integer %d}", lit.literal-value);
 end;
 
 define method print-message
-    (lit :: <literal-fixed-integer>, stream :: <stream>)
+    (lit :: <literal-integer>, stream :: <stream>)
     => ();
   format(stream, "%d", lit.literal-value);
 end;
@@ -278,9 +278,9 @@ define method print-message
   format(stream, "%=", as(<extended-float>, lit.literal-value));
 end;
 
-define method as (class == <ct-value>, value :: <fixed-integer>)
-    => res :: <literal-fixed-integer>;
-  make(<literal-fixed-integer>, value: as(<extended-integer>, value));
+define method as (class == <ct-value>, value :: <integer>)
+    => res :: <literal-integer>;
+  make(<literal-integer>, value: as(<extended-integer>, value));
 end;
 
 define method as (class == <ct-value>, value :: <extended-integer>)
@@ -445,7 +445,7 @@ define method table-protocol (table :: <literal-pair-memo-table>)
 	   key1.head == key2.head
 	     & key1.tail == key2.tail;
 	 end,
-	 method (key) => (id :: <fixed-integer>, state);
+	 method (key) => (id :: <integer>, state);
 	   let (head-id, head-state) = object-hash(key.head);
 	   let (tail-id, tail-state) = object-hash(key.tail);
 	   merge-hash-codes(head-id, head-state, tail-id, tail-state,
@@ -560,7 +560,7 @@ define method shallow-equal (vec1 :: <vector>, vec2 :: <vector>)
 end method shallow-equal;
       
 define method shallow-hash (vec :: <vector>)
- => (id :: <fixed-integer>, state :: <object>);
+ => (id :: <integer>, state :: <object>);
   let (current-id, current-state) = values(0, $permanent-hash-state);
   for (i from 0 below vec.size)
     let (id, state) = object-hash(vec[i]);
@@ -717,7 +717,7 @@ add-od-loader(*compiler-dispatcher*, #"literal-vector",
 // specialized representation.
 //
 define method dump-od
-    (obj :: <literal-fixed-integer>, buf :: <dump-state>) => ();
+    (obj :: <literal-integer>, buf :: <dump-state>) => ();
   dump-simple-object(#"literal-fixed-integer", buf,
 		     obj.info, obj.literal-value);
 end method;
@@ -741,7 +741,7 @@ define method dump-od
 end method;
 
 
-for (x = list(#"literal-fixed-integer", <literal-fixed-integer>,
+for (x = list(#"literal-fixed-integer", <literal-integer>,
 	      #"literal-single-float", <literal-single-float>,
 	      #"literal-double-float", <literal-double-float>,
 	      #"literal-extended-float", <literal-extended-float>)

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.20 1995/12/18 04:05:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.21 1996/01/12 00:58:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -193,7 +193,7 @@ define-primitive-emitter
      let cluster = operation.depends-on.source-exp;
      let nfixed-leaf = operation.depends-on.dependent-next.source-exp;
      let nfixed = if (instance?(nfixed-leaf, <literal-constant>))
-		    as(<fixed-integer>, nfixed-leaf.value.literal-value);
+		    as(<integer>, nfixed-leaf.value.literal-value);
 		  else
 		    error("nfixed arg to %%%%primitive canonicalize-results "
 			    "isn't constant?");

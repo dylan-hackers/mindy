@@ -1,11 +1,11 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.19 1996/01/11 18:54:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.20 1996/01/12 00:58:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
 
 define method extract-args
-    (call :: <known-call>, nfixed :: <fixed-integer>, want-next? :: <boolean>,
+    (call :: <known-call>, nfixed :: <integer>, want-next? :: <boolean>,
      rest? :: <boolean>, keys :: false-or(<list>))
     => (okay? :: <boolean>, #rest arg :: type-union(<leaf>, <list>));
   block (return)
@@ -21,7 +21,7 @@ define method extract-args
     end;
     local
       method decode-fixed-and-on
-	  (remaining :: <fixed-integer>, results :: <list>,
+	  (remaining :: <integer>, results :: <list>,
 	   args :: false-or(<dependency>))
 	  => result :: <list>;
 	if (zero?(remaining))

@@ -162,7 +162,7 @@ define-primitive
    pure: #t);
 
 define-primitive
-  (#"canonicalize-results", #(#"cluster", #"<fixed-integer>"),
+  (#"canonicalize-results", #(#"cluster", #"<integer>"),
    #(values:, rest:, #"<object>"),
    pure: #t);
 
@@ -171,17 +171,17 @@ define-primitive
    side-effect-free: #t);
 
 define-primitive
-  (#"extract-args", #(#"<fixed-integer>"), #"<raw-pointer>",
+  (#"extract-args", #(#"<integer>"), #"<raw-pointer>",
    side-effect-free: #t);
 
 define-primitive
   (#"make-rest-arg",
-   #(#"<raw-pointer>", #"<fixed-integer>", #"<fixed-integer>"),
+   #(#"<raw-pointer>", #"<integer>", #"<integer>"),
    #"<simple-object-vector>",
    side-effect-free: #t);
 
 define-primitive
-  (#"extract-arg", #(#"<raw-pointer>", #"<fixed-integer>"), #"<object>",
+  (#"extract-arg", #(#"<raw-pointer>", #"<integer>"), #"<object>",
    side-effect-free: #t);
 
 define-primitive
@@ -192,7 +192,7 @@ define-primitive
    pure: #t);
 
 define-primitive
-  (#"allocate", #(#"<fixed-integer>"), #"<object>",
+  (#"allocate", #(#"<integer>"), #"<object>",
    pure: #t);
 
 define-primitive
@@ -206,10 +206,10 @@ define-primitive
 define-primitive
   (#"call-out",
    #(#"<string>", #"<symbol>",
-     rest:, #(union:, #"<symbol>", #"<fixed-integer>", #"<raw-pointer>",
+     rest:, #(union:, #"<symbol>", #"<integer>", #"<raw-pointer>",
 	      #"<single-float>", #"<double-float>", #"<extended-float>")),
    #(values:,
-     rest:, #(union:, #"<fixed-integer>", #"<raw-pointer>",
+     rest:, #(union:, #"<integer>", #"<raw-pointer>",
 	      #"<single-float>", #"<double-float>", #"<extended-float>")));
 
 define-primitive
@@ -221,7 +221,7 @@ define-primitive
 define-primitive
   (#"c-expr", #(#"<symbol>", #"<string>"),
    #(values:,
-     rest:, #(union:, #"<fixed-integer>", #"<raw-pointer>",
+     rest:, #(union:, #"<integer>", #"<raw-pointer>",
 	      #"<single-float>", #"<double-float>", #"<extended-float>")));
 
 define-primitive
@@ -255,7 +255,7 @@ define-primitive
 
 for (name in #[#"fixnum-=", #"fixnum-<"])
   define-primitive
-    (name, #(#"<fixed-integer>", #"<fixed-integer>"), #"<boolean>",
+    (name, #(#"<integer>", #"<integer>"), #"<boolean>",
      pure: #t);
 end;
 
@@ -263,26 +263,26 @@ for (name in #[#"fixnum-+", #"fixnum-*", #"fixnum--", #"fixnum-logior",
 		 #"fixnum-logxor", #"fixnum-logand", #"fixnum-shift-left",
 		 #"fixnum-shift-right"])
   define-primitive
-    (name, #(#"<fixed-integer>", #"<fixed-integer>"), #"<fixed-integer>",
+    (name, #(#"<integer>", #"<integer>"), #"<integer>",
      pure: #t);
 end;
 
 for (name in #[#"fixnum-negative", #"fixnum-lognot"])
   define-primitive
-    (name, #(#"<fixed-integer>"), #"<fixed-integer>",
+    (name, #(#"<integer>"), #"<integer>",
      pure: #t);
 end;
   
 define-primitive
-  (#"fixnum-divide", #(#"<fixed-integer>", #"<fixed-integer>"),
-   #(values:, #"<fixed-integer>", #"<fixed-integer>"),
+  (#"fixnum-divide", #(#"<integer>", #"<integer>"),
+   #(values:, #"<integer>", #"<integer>"),
    pure: #t);
 
 
 // Single float operations.
 
 define-primitive
-  (#"fixed-as-single", #(#"<fixed-integer>"), #"<single-float>", pure: #t);
+  (#"fixed-as-single", #(#"<integer>"), #"<single-float>", pure: #t);
    
 define-primitive
   (#"double-as-single", #(#"<double-float>"), #"<single-float>", pure: #t);
@@ -314,7 +314,7 @@ end;
 for (name in #[#"single-floor", #"single-ceiling", #"single-round"])
   define-primitive
     (name, #(#"<single-float>"),
-     #(values:, #"<fixed-integer>", #"<single-float>"),
+     #(values:, #"<integer>", #"<single-float>"),
      pure: #t);
 end;
 
@@ -322,7 +322,7 @@ end;
 // Double float operations.
 
 define-primitive
-  (#"fixed-as-double", #(#"<fixed-integer>"), #"<double-float>", pure: #t);
+  (#"fixed-as-double", #(#"<integer>"), #"<double-float>", pure: #t);
    
 define-primitive
   (#"single-as-double", #(#"<single-float>"), #"<double-float>", pure: #t);
@@ -354,7 +354,7 @@ end;
 for (name in #[#"double-floor", #"double-ceiling", #"double-round"])
   define-primitive
     (name, #(#"<double-float>"),
-     #(values:, #"<fixed-integer>", #"<double-float>"),
+     #(values:, #"<integer>", #"<double-float>"),
      pure: #t);
 end;
 
@@ -362,7 +362,7 @@ end;
 // Extended float operations.
 
 define-primitive
-  (#"fixed-as-extended", #(#"<fixed-integer>"), #"<extended-float>", pure: #t);
+  (#"fixed-as-extended", #(#"<integer>"), #"<extended-float>", pure: #t);
    
 define-primitive
   (#"single-as-extended", #(#"<single-float>"), #"<extended-float>", pure: #t);
@@ -395,7 +395,7 @@ end;
 for (name in #[#"extended-floor", #"extended-ceiling", #"extended-round"])
   define-primitive
     (name, #(#"<extended-float>"),
-     #(values:, #"<fixed-integer>", #"<extended-float>"),
+     #(values:, #"<integer>", #"<extended-float>"),
      pure: #t);
 end;
 
@@ -403,17 +403,17 @@ end;
 // raw pointer operations.
 
 define-primitive
-  (#"make-raw-pointer", #(#"<fixed-integer>"), #"<raw-pointer>", pure: #t);
+  (#"make-raw-pointer", #(#"<integer>"), #"<raw-pointer>", pure: #t);
 
 define-primitive
-  (#"raw-pointer-address", #(#"<raw-pointer>"), #"<fixed-integer>", pure: #t);
+  (#"raw-pointer-address", #(#"<raw-pointer>"), #"<integer>", pure: #t);
 
 define-primitive
-  (#"pointer-+", #(#"<raw-pointer>", #"<fixed-integer>"), #"<raw-pointer>",
+  (#"pointer-+", #(#"<raw-pointer>", #"<integer>"), #"<raw-pointer>",
    pure: #t);
 
 define-primitive
-  (#"pointer--", #(#"<raw-pointer>", #"<raw-pointer>"), #"<fixed-integer>",
+  (#"pointer--", #(#"<raw-pointer>", #"<raw-pointer>"), #"<integer>",
    pure: #t);
 
 define-primitive
@@ -426,16 +426,16 @@ define-primitive
 
 define-primitive
   (#"pointer-deref",
-   #(#"<symbol>", #"<raw-pointer>", #"<fixed-integer>"),
-   #(union:, #"<fixed-integer>", #"<raw-pointer>",
+   #(#"<symbol>", #"<raw-pointer>", #"<integer>"),
+   #(union:, #"<integer>", #"<raw-pointer>",
      #"<single-float>", #"<double-float>", #"<extended-float>"),
    side-effect-free: #t);
 
 define-primitive
   (#"pointer-deref-setter",
-   #(#(union:, #"<fixed-integer>", #"<raw-pointer>",
+   #(#(union:, #"<integer>", #"<raw-pointer>",
        #"<single-float>", #"<double-float>", #"<extended-float>"),
-     #"<symbol>", #"<raw-pointer>", #"<fixed-integer>"),
+     #"<symbol>", #"<raw-pointer>", #"<integer>"),
    #(values:));
 
 define-primitive

@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.13 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.14 1996/01/12 00:58:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -298,7 +298,7 @@ define method ct-eval-rational-function (function :: <function>, #rest args)
     select (arg by instance?)
       <literal-ratio> => any-ratios? := #t;
       <literal-extended-integer> => any-bignums? := #t;
-      <literal-fixed-integer> => #f;
+      <literal-integer> => #f;
       otherwise =>
 	error("ct-eval-ration-function call on non-rational?");
     end select;
@@ -308,7 +308,7 @@ define method ct-eval-rational-function (function :: <function>, #rest args)
        elseif (any-bignums?)
 	 <literal-extended-integer>;
        else
-	 <literal-fixed-integer>;
+	 <literal-integer>;
        end,
        value: apply(function, map(literal-value, args)));
 end;
@@ -350,11 +350,11 @@ define-ct-evaluator
    method (class :: <cclass>, #rest keys)
        => res :: false-or(<ctype>);
      select (class by csubtype?)
-       dylan-value(#"<integer>") =>
+       dylan-value(#"<general-integer>") =>
 	 let (okay, min, max) = ct-keywords(keys, #"min", #"max");
 	 if (okay)
-	   if ((min == #f | instance?(min, <literal-integer>))
-		 & (max == #f | instance?(max, <literal-integer>)))
+	   if ((min == #f | instance?(min, <literal-general-integer>))
+		 & (max == #f | instance?(max, <literal-general-integer>)))
 	     let min = min & min.literal-value;
 	     let max = max & max.literal-value;
 	     make-canonical-limited-integer(class, min, max);
@@ -404,24 +404,24 @@ define-ct-evaluator(#"*", #(#"<rational>", #"<rational>"),
 		    curry(ct-eval-rational-function, \*));
 
 define-ct-evaluator
-  (#"ash", #(#"<integer>", #"<fixed-integer>"),
+  (#"ash", #(#"<general-integer>", #"<integer>"),
    curry(ct-eval-rational-function,
 	 method (x :: <extended-integer>, y :: <extended-integer>)
 	     => res :: <extended-integer>;
-	   ash(x, as(<fixed-integer>, y));
+	   ash(x, as(<integer>, y));
 	 end));
 
-define-ct-evaluator(#"^", #(#"<integer>", #"<integer>"),
+define-ct-evaluator(#"^", #(#"<general-integer>", #"<general-integer>"),
 		    curry(ct-eval-rational-function, \^));
 
-define-ct-evaluator(#"logior", #(rest:, #"<integer>"),
+define-ct-evaluator(#"logior", #(rest:, #"<general-integer>"),
 		    curry(ct-eval-rational-function, logior));
 
-define-ct-evaluator(#"logior", #(rest:, #"<integer>"),
+define-ct-evaluator(#"logior", #(rest:, #"<general-integer>"),
 		    curry(ct-eval-rational-function, logxor));
 
-define-ct-evaluator(#"logior", #(rest:, #"<integer>"),
+define-ct-evaluator(#"logior", #(rest:, #"<general-integer>"),
 		    curry(ct-eval-rational-function, logand));
 
-define-ct-evaluator(#"lognot", #(#"<integer>"),
+define-ct-evaluator(#"lognot", #(#"<general-integer>"),
 		    curry(ct-eval-rational-function, lognot));

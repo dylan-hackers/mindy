@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.38 1996/01/10 14:59:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.39 1996/01/12 00:58:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -42,7 +42,7 @@ end;
 
 
 define abstract class <ctype> (<values-ctype>)
-  slot type-hash :: <fixed-integer>, setter: #f, 
+  slot type-hash :: <integer>, setter: #f, 
        init-keyword: type-hash:, init-function: make-type-hash;
 end class;
 
@@ -552,7 +552,7 @@ define method table-protocol(table :: <union-table>);
   values(\=,
   	 method(key :: <list>)
 	   for(elt :: <ctype> in key,
-	       res :: <fixed-integer> = 0 then \+(res, elt.type-hash))
+	       res :: <integer> = 0 then \+(res, elt.type-hash))
 	   finally values(res, $permanent-hash-state);
 	   end for;
 	 end method);
@@ -746,8 +746,8 @@ end;
 
 define method make-canonical-limited-integer
     (base-class :: <cclass>,
-     low-bound :: false-or(<integer>),
-     high-bound :: false-or(<integer>))
+     low-bound :: false-or(<general-integer>),
+     high-bound :: false-or(<general-integer>))
     => res :: <ctype>;
   if (low-bound)
     low-bound := as(<extended-integer>, low-bound);
@@ -756,17 +756,17 @@ define method make-canonical-limited-integer
     high-bound := as(<extended-integer>, high-bound);
   end;
   
-  if (base-class == specifier-type(#"<fixed-integer>"))
-    if (~low-bound | low-bound < runtime-$minimum-fixed-integer)
-      low-bound := runtime-$minimum-fixed-integer;
+  if (base-class == specifier-type(#"<integer>"))
+    if (~low-bound | low-bound < runtime-$minimum-integer)
+      low-bound := runtime-$minimum-integer;
     end;
-    if (~high-bound | high-bound > runtime-$maximum-fixed-integer)
-      high-bound := runtime-$maximum-fixed-integer;
+    if (~high-bound | high-bound > runtime-$maximum-integer)
+      high-bound := runtime-$maximum-integer;
     end;
     if (high-bound < low-bound)
       empty-ctype();
-    elseif (low-bound == runtime-$minimum-fixed-integer
-	      & high-bound == runtime-$maximum-fixed-integer)
+    elseif (low-bound == runtime-$minimum-integer
+	      & high-bound == runtime-$maximum-integer)
       base-class;
     else
       make(<limited-integer-ctype>, base-class: base-class,
@@ -995,7 +995,7 @@ define method really-make-canonical-singleton
 end;
 
 define method really-make-canonical-singleton
-    (thing :: <literal-integer>, base-class-hint :: false-or(<cclass>))
+    (thing :: <literal-general-integer>, base-class-hint :: false-or(<cclass>))
     => res :: <ctype>;
   let value = thing.literal-value;
   make(<limited-integer-ctype>,
@@ -1054,9 +1054,9 @@ define method ct-value-cclass (object :: <literal-simple-object-vector>)
   specifier-type(#"<simple-object-vector>");
 end method;
 
-define method ct-value-cclass (object :: <literal-fixed-integer>)
+define method ct-value-cclass (object :: <literal-integer>)
     => res :: <cclass>;
-  specifier-type(#"<fixed-integer>");
+  specifier-type(#"<integer>");
 end method;
 
 define method ct-value-cclass (object :: <literal-extended-integer>)
@@ -1184,7 +1184,7 @@ define class <multi-value-ctype> (<values-ctype>)
 
   // The minimum number of values that will ever be returned (<= to
   // positional-types.)
-  slot min-values :: <fixed-integer>, required-init-keyword: min-values:;
+  slot min-values :: <integer>, required-init-keyword: min-values:;
 
   // Type of the rest values; empty-ctype if none.
   slot rest-value-type :: <ctype>, required-init-keyword: rest-value-type:;
@@ -1277,7 +1277,7 @@ define method positional-types(type :: <ctype>) => res :: <list>;
   list(type);
 end method;
 
-define method min-values(type :: <ctype>) => res :: <fixed-integer>;
+define method min-values(type :: <ctype>) => res :: <integer>;
   1;
 end;
 
@@ -1602,8 +1602,8 @@ define method slow-specifier-type-list
   end;
 end;
 
-define method specifier-ct-value (arg :: <fixed-integer>) => res :: <ct-value>;
-  make(<literal-fixed-integer>, value: arg);
+define method specifier-ct-value (arg :: <integer>) => res :: <ct-value>;
+  make(<literal-integer>, value: arg);
 end;
 
 define method specifier-ct-value

@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.21 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.22 1996/01/12 00:58:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -136,7 +136,7 @@ end class;
 define abstract class <leaf> (<expression>)
   //
   // Pseudo-random hash code used to associate operands with operations.
-  // slot leaf-hash :: <fixed-integer>, required-init-keyword: leaf-hash:;
+  // slot leaf-hash :: <integer>, required-init-keyword: leaf-hash:;
 end;
 
 

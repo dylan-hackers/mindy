@@ -1,5 +1,5 @@
 module: lexenv
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.3 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.4 1996/01/12 00:58:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,7 +18,7 @@ define method initialize (lexenv :: <lexenv>, #next next-method, #key inside)
 end;
 
 define class <body-lexenv> (<lexenv>)
-  slot lexenv-handlers :: <fixed-integer>, init-value: 0;
+  slot lexenv-handlers :: <integer>, init-value: 0;
 end;
 
 define class <binding> (<object>)

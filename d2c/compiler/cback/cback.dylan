@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.89 1996/01/11 18:59:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.90 1996/01/12 00:58:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,8 +12,8 @@ define class <indenting-stream> (<stream>)
   slot is-target :: <stream>, required-init-keyword: target:;
   slot is-buffer :: <buffer>, init-function: curry(make, <buffer>);
   slot is-after-newline? :: <boolean>, init-value: #t;
-  slot is-column :: <fixed-integer>, init-value: 0;
-  slot is-indentation :: <fixed-integer>,
+  slot is-column :: <integer>, init-value: 0;
+  slot is-indentation :: <integer>,
     init-value: 0, init-keyword: indentation:;
 end;
 
@@ -122,7 +122,7 @@ define method close (stream :: <indenting-stream>) => ();
   force-output(stream);
 end;
 
-define method indent (stream :: <indenting-stream>, delta :: <fixed-integer>)
+define method indent (stream :: <indenting-stream>, delta :: <integer>)
     => ();
   stream.is-indentation := stream.is-indentation + delta;
 end;
@@ -149,7 +149,7 @@ define class <unit-state> (<object>)
   slot unit-prefix :: <byte-string>, required-init-keyword: prefix:;
   //
   // id number for the next global.
-  slot unit-next-global :: <fixed-integer>, init-value: 0;
+  slot unit-next-global :: <integer>, init-value: 0;
   //
   // keeps track of names used already.
   slot unit-global-table :: <dictionary>,
@@ -188,23 +188,23 @@ define class <file-state> (<object>)
     init-function: curry(make-indenting-string-stream,
 			 indentation: $indentation-step);
   //
-  slot file-next-mv-result-struct :: <fixed-integer>, init-value: 0;
+  slot file-next-mv-result-struct :: <integer>, init-value: 0;
   //
   slot file-local-vars :: <object-table>,
     init-function: curry(make, <object-table>);
   //
   // id number for the next block.
-  slot file-next-block :: <fixed-integer>, init-value: 0;
+  slot file-next-block :: <integer>, init-value: 0;
   //
   // id number for the next local.  Reset at the start of each function.
-  slot file-next-local :: <fixed-integer>, init-value: 0;
+  slot file-next-local :: <integer>, init-value: 0;
   //
   // keeps track of names used already.
   slot file-local-table :: <dictionary>,
     init-function: method () make(<string-table>) end method;
   //
   // C variable holding the current stack top.
-  slot file-cur-stack-depth :: <fixed-integer>,
+  slot file-cur-stack-depth :: <integer>,
     init-value: 0;
 end;
 
@@ -349,7 +349,7 @@ define method new-root (init-value :: false-or(<ct-value>),
   stringify(unit.unit-prefix, "_roots[", index, ']');
 end;
 
-define method cluster-names (depth :: <fixed-integer>)
+define method cluster-names (depth :: <integer>)
     => (bottom-name :: <string>, top-name :: <string>);
   if (zero?(depth))
     values("orig_sp", "cluster_0_top");
@@ -1288,12 +1288,12 @@ define method block-id (region :: <false>) => id :: <false>;
   #f;
 end;
 
-define method block-id (region :: <region>) => id :: false-or(<fixed-integer>);
+define method block-id (region :: <region>) => id :: false-or(<integer>);
   region.parent.block-id;
 end;
 
 define method block-id (region :: <block-region>)
-    => id :: false-or(<fixed-integer>);
+    => id :: false-or(<integer>);
   let parent-id = region.parent.block-id;
   if (~region.exits)
     parent-id;
@@ -1885,7 +1885,7 @@ end;
 define method deliver-cluster
     (defines :: false-or(<definition-site-variable>),
      src-start :: <string>, src-end :: <string>,
-     min-values :: <fixed-integer>, file :: <file-state>)
+     min-values :: <integer>, file :: <file-state>)
     => ();
 
   if (defines)
@@ -2119,20 +2119,20 @@ define method c-expr-and-rep
   values("FALSE", rep-hint);
 end;
 
-define method c-expr-and-rep (lit :: <literal-fixed-integer>,
+define method c-expr-and-rep (lit :: <literal-integer>,
 			      rep-hint :: <representation>,
 			      file :: <file-state>)
     => (name :: <string>, rep :: <representation>);
   let val = lit.literal-value;
   // Can't use stringify, because val is an extended integer.
-  values(if (val == runtime-$minimum-fixed-integer)
+  values(if (val == runtime-$minimum-integer)
 	   // Some compilers (gcc) warn about minimum-fixed-integer.  So we
 	   // print it in hex (assuming 2's compliment).
 	   format-to-string("0x%x", -val);
 	 else
 	   format-to-string("%d", val);
 	 end if,
-	 pick-representation(dylan-value(#"<fixed-integer>"), #"speed"));
+	 pick-representation(dylan-value(#"<integer>"), #"speed"));
 end;
 
 define method c-expr-and-rep (lit :: <literal-single-float>,
@@ -2159,7 +2159,7 @@ define method c-expr-and-rep (lit :: <literal-extended-float>,
 	 pick-representation(dylan-value(#"<extended-float>"), #"speed"));
 end;
 
-define method float-to-string (value :: <ratio>, digits :: <fixed-integer>)
+define method float-to-string (value :: <ratio>, digits :: <integer>)
     => res :: <string>;
   if (zero?(value))
     "0.0";
@@ -2199,7 +2199,7 @@ define method float-to-string (value :: <ratio>, digits :: <fixed-integer>)
 	for (i from 0 below zeros)
 	  write('0', stream);
 	end;
-	write(as(<character>, as(<fixed-integer>, digit) + 48), stream);
+	write(as(<character>, as(<integer>, digit) + 48), stream);
 	zeros := 0;
       end;
       fraction := remainder;

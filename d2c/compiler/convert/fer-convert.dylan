@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.48 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.49 1996/01/12 00:58:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -611,7 +611,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
   let operands = form.primitive-operands;
   let ops = make(<list>, size: operands.size);
   local
-    method repeat (op-ptr :: <list>, index :: <fixed-integer>, types :: <list>)
+    method repeat (op-ptr :: <list>, index :: <integer>, types :: <list>)
       if (op-ptr == #())
 	unless (types == #() | types.head == #"rest")
 	  compiler-error("Too few arguments to %%primitive %s", name);

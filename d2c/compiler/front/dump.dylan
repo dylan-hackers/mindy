@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.7 1995/12/16 02:35:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.8 1996/01/12 00:58:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -77,7 +77,7 @@ define method pprint-newline (kind :: one-of(#"linear", #"miser", #"fill",
 end;
 
 define method pprint-indent (relative-to :: one-of(#"block", #"current"),
-			     n :: <fixed-integer>,
+			     n :: <integer>,
 			     stream :: <dump-state-stream>)
     => ();
   pprint-indent(relative-to, n, stream.target);
@@ -85,8 +85,8 @@ end;
 
 define method pprint-tab (kind :: one-of(#"line", #"section", #"line-relative",
 					 #"section-relative"),
-			  colnum :: <fixed-integer>,
-			  colinc :: <fixed-integer>,
+			  colnum :: <integer>,
+			  colinc :: <integer>,
 			  stream :: <dump-state-stream>)
     => ();
   pprint-tab(kind, colnum, colinc, stream.target);

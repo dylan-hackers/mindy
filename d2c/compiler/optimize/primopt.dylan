@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.15 1995/12/07 17:45:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.16 1996/01/12 00:58:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -95,7 +95,7 @@ define-primitive-transformer
    method (component :: <component>, primitive :: <primitive>) => ();
      let nfixed-leaf = primitive.depends-on.dependent-next.source-exp;
      if (instance?(nfixed-leaf, <literal-constant>))
-       let nfixed = as(<fixed-integer>, nfixed-leaf.value.literal-value);
+       let nfixed = as(<integer>, nfixed-leaf.value.literal-value);
        let cluster = primitive.depends-on.source-exp;
        let type = cluster.derived-type;
        if (fixed-number-of-values?(type))
@@ -372,7 +372,7 @@ define method dylan-type-for-c-type (leaf :: <leaf>) => res :: <values-ctype>;
       select (c-type)
 	#"char", #"short", #"int", #"long",
 	#"unsigned-char", #"unsigned-short", #"unsigned-int" =>
-	  specifier-type(#"<fixed-integer>");
+	  specifier-type(#"<integer>");
 	#"ptr" => specifier-type(#"<raw-pointer>");
 	#"float" => specifier-type(#"<single-float>");
 	#"double" => specifier-type(#"<double-float>");

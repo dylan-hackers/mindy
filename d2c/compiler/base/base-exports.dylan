@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.2 1996/01/04 15:26:10 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.3 1996/01/12 00:58:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -53,16 +53,16 @@ define module params
   use Dylan;
   use Extensions, import: {<extended-integer>};
 
-  export $minimum-fixed-integer, $maximum-fixed-integer;
+  export $minimum-integer, $maximum-integer;
 end;
 
 define module common
   use Dylan, export: all;
   use Extensions,
-    import: {<fixed-integer>, <extended-integer>,
-	     $maximum-fixed-integer, ratio,
+    import: {<general-integer>, <extended-integer>,
+	     $maximum-integer, ratio,
 	     false-or, one-of, <false>, <true>, ignore,
-	     $minimum-fixed-integer, <byte-character>,
+	     $minimum-integer, <byte-character>,
 #if (mindy)
              <boolean>, *debug-output*, main, <dictionary>, key-exists?,
 #end
@@ -203,8 +203,8 @@ define module compile-time-values
     <eql-ct-value>, ct-value-singleton, ct-value-singleton-setter,
     <literal>, literal-value, <eql-literal>,
     <ct-not-supplied-marker>,
-    <literal-number>, <literal-real>, <literal-rational>, <literal-integer>,
-    <literal-fixed-integer>, <literal-extended-integer>, <literal-ratio>,
+    <literal-number>, <literal-real>, <literal-rational>, <literal-general-integer>,
+    <literal-integer>, <literal-extended-integer>, <literal-ratio>,
     <literal-float>, <literal-single-float>, <literal-double-float>,
     <literal-extended-float>, <literal-symbol>, <literal-character>,
     <literal-boolean>, <literal-true>, <literal-false>,

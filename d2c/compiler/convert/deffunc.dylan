@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.50 1996/01/03 21:43:43 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.51 1996/01/12 00:58:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -963,8 +963,8 @@ end;
 
 
 define method count-distinct-specializers
-    (methods :: <list>, arg-posn :: <fixed-integer>)
-    => count :: <fixed-integer>;
+    (methods :: <list>, arg-posn :: <integer>)
+    => count :: <integer>;
   let distinct-specializers = #();
   for (meth in methods)
     let specializer = meth.function-defn-signature.specializers[arg-posn];
@@ -1020,7 +1020,7 @@ define method same-unordered? (list1 :: <list>, list2 :: <list>)
 end;
 
 define method discriminate-on-one-arg
-    (discriminate-on :: <fixed-integer>, method-set :: <method-set>,
+    (discriminate-on :: <integer>, method-set :: <method-set>,
      gf :: <generic-definition>)
     => res :: <simple-object-vector>;
   //

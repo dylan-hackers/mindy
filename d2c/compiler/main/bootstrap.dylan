@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.46 1996/01/11 19:01:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.47 1996/01/12 00:58:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -336,7 +336,7 @@ define class <union> (<type>) end;
 define class <limited-integer> (<type>) end;
 define class <byte-character-type> (<type>) end;
 define class <class> (<type>)
-  slot unique-id :: <fixed-integer>, required-init-keyword: unique-id:;
+  slot unique-id :: <integer>, required-init-keyword: unique-id:;
   slot class-functional? :: <boolean>, init-value: #f;
 end;
 define class <slot-descriptor> (<object>) end;
@@ -345,13 +345,13 @@ define abstract open class <number> (<object>) end;
 define abstract open class <complex> (<number>) end;
 define abstract class <real> (<complex>) end;
 define abstract class <rational> (<real>) end;
-define abstract class <integer> (<rational>) end;
+define abstract class <general-integer> (<rational>) end;
 
-define functional class <fixed-integer> (<integer>)
-  sealed slot value :: <fixed-integer>, init-value: 0;
+define functional class <integer> (<general-integer>)
+  sealed slot value :: <integer>, init-value: 0;
 end;
 
-define class <extended-integer> (<integer>) end;
+define class <extended-integer> (<general-integer>) end;
 
 define abstract class <float> (<real>) end;
 
@@ -404,7 +404,7 @@ define class <pair> (<list>) end;
 
 define constant $max-char-code = #xffff;
 define constant <char-code>
-  = limited(<fixed-integer>, min: 0, max: $max-char-code);
+  = limited(<integer>, min: 0, max: $max-char-code);
 define functional class <character> (<object>)
   sealed slot value :: <char-code>, required-init-keyword: code:;
 end;
@@ -426,7 +426,7 @@ end;
 // Functions that need to be defined.
 
 define open generic find-slot-offset
-    (class :: <class>, slot :: <slot-descriptor>) => res :: <fixed-integer>;
+    (class :: <class>, slot :: <slot-descriptor>) => res :: <integer>;
 
 define open generic %make-method
     (specializers :: <list>, result-types :: <list>,
@@ -447,10 +447,10 @@ define open generic \= (x, y) => res :: <boolean>;
 define open generic \< (x, y) => res :: <boolean>;
 define open generic \+ (x :: <number>, y :: <number>) => res :: <number>;
 define open generic \- (x :: <number>, y :: <number>) => res :: <number>;
-define open generic even? (x :: <integer>) => res :: <boolean>;
-define open generic odd? (x :: <integer>) => res :: <boolean>;
+define open generic even? (x :: <general-integer>) => res :: <boolean>;
+define open generic odd? (x :: <general-integer>) => res :: <boolean>;
 define open generic %closure-ref
-    (closure :: <method>, index :: <fixed-integer>) => res :: <object>;
+    (closure :: <method>, index :: <integer>) => res :: <object>;
 define open generic %make-next-method-cookie
     (next-method-info :: <list>, #rest original-args)
     => res :: type-union(<false>, <function>);
@@ -500,7 +500,7 @@ define method missing-required-init-keyword-error
 end;
 
 define method wrong-number-of-arguments-error
-    (fixed? :: <boolean>, wanted :: <fixed-integer>, got :: <fixed-integer>)
+    (fixed? :: <boolean>, wanted :: <integer>, got :: <integer>)
     => res :: type-union();
   error("Wrong number of arguments.  Wanted %s %d but got %d.",
 	if (fixed?) "exactly" else "at least" end,
@@ -568,10 +568,10 @@ define constant catch
     end;
 
 define constant make-rest-arg
-  = method (arg-ptr :: <raw-pointer>, count :: <fixed-integer>)
+  = method (arg-ptr :: <raw-pointer>, count :: <integer>)
 	=> res :: <simple-object-vector>;
       let res = make(<simple-object-vector>, size: count);
-      for (index :: <fixed-integer> from 0,
+      for (index :: <integer> from 0,
 	   while: index < count)
 	%element(res, index) := %%primitive extract-arg (arg-ptr, index);
       end;
@@ -579,7 +579,7 @@ define constant make-rest-arg
     end;
 
 define method make-closure
-    (func :: <function>, closure-size :: <fixed-integer>)
+    (func :: <function>, closure-size :: <integer>)
     => res :: <raw-closure>;
   make(<closure>,
        general-entry: func.general-entry,
@@ -587,7 +587,7 @@ define method make-closure
 end;
 
 define method make-closure
-    (func :: <method>, closure-size :: <fixed-integer>)
+    (func :: <method>, closure-size :: <integer>)
     => res :: <method-closure>;
   make(<method-closure>,
        general-entry: func.general-entry,
@@ -612,28 +612,28 @@ define sealed inline method \~ (thing :: <object>) => res :: <boolean>;
   %%primitive not (thing);
 end;
 
-define sealed inline method \< (x :: <fixed-integer>, y :: <fixed-integer>)
+define sealed inline method \< (x :: <integer>, y :: <integer>)
     => res :: <boolean>;
   %%primitive fixnum-< (x, y);
 end;
 
-define sealed inline method \== (x :: <fixed-integer>, y :: <fixed-integer>)
+define sealed inline method \== (x :: <integer>, y :: <integer>)
     => res :: <boolean>;
   %%primitive fixnum-= (x, y);
 end;
 
-define sealed inline method \+ (x :: <fixed-integer>, y :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define sealed inline method \+ (x :: <integer>, y :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-+ (x, y);
 end;
 
-define sealed inline method \* (x :: <fixed-integer>, y :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define sealed inline method \* (x :: <integer>, y :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-* (x, y);
 end;
 
-define sealed inline method \- (x :: <fixed-integer>, y :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define sealed inline method \- (x :: <integer>, y :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-- (x, y);
 end;
 

@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.5 1995/11/14 13:28:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.6 1996/01/12 00:58:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -9,7 +9,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 //
 // Currently supported classes:
 //    <list>, <simple-object-vector>, <boolean>, <symbol>,
-//    <byte-string>, <byte-character>, <integer>, <ratio>
+//    <byte-string>, <byte-character>, <general-integer>, <ratio>
 //
 // The <list> and <simple-object-vector> dumpers don't recognize sharing or
 // circularity.
@@ -44,7 +44,7 @@ add-od-loader(*default-dispatcher*, #"false",
 
 // Fixed-integer methods:
 
-define method dump-od(obj :: <fixed-integer>, buf :: <dump-state>)
+define method dump-od(obj :: <integer>, buf :: <dump-state>)
  => ();
   dump-definition-header(#"fixed-integer", buf, 
   			 raw-data: $odf-word-raw-data-format);
@@ -57,7 +57,8 @@ define constant $e1 = as(<extended-integer>, 1);
 
 // Sign-extend a word-integer.
 //
-define method sign-extend (val :: <integer>) => res :: <integer>;
+define method sign-extend (val :: <general-integer>)
+    => res :: <general-integer>;
   let val = as(<extended-integer>, val);
   if (logand(val, ash($e1, $word-bits - 1)) = 0)
     val;
@@ -71,10 +72,10 @@ end method;
 //
 add-od-loader(*default-dispatcher*, #"fixed-integer", 
   method (state :: <load-state>)
-   => res :: <fixed-integer>;
+   => res :: <integer>;
     state.od-next := state.od-next + $word-bytes; // skip count word
     let res =
-      as(<fixed-integer>,
+      as(<integer>,
          sign-extend(buffer-word(state.od-buffer,
        			         fill-at-least($word-bytes, state))));
     state.od-next := state.od-next + $word-bytes; // skip data word
@@ -87,7 +88,7 @@ add-od-loader(*default-dispatcher*, #"fixed-integer",
 
 // Return the number of bits needed to represent N as a signed integer.
 //
-define method integer-length(n :: <integer>) => res :: <fixed-integer>;
+define method integer-length (n :: <general-integer>) => res :: <integer>;
   for (size from 1, x = abs(n) then ash(x, -1), until: zero?(x))
     finally size;
   end;
@@ -154,8 +155,8 @@ add-od-loader(*default-dispatcher*, #"ratio",
 // Real inefficient for large exponents, but probably correct.
 //
 define method integer-decode-float
-    (float :: <float>, precision :: <fixed-integer>)
- => (frac :: <extended-integer>, exp :: <fixed-integer>);
+    (float :: <float>, precision :: <integer>)
+ => (frac :: <extended-integer>, exp :: <integer>);
   let fclass = object-class(float);
   let lim = as(fclass, ash(1, precision));
   let two = as(fclass, 2);

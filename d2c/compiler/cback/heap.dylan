@@ -2,7 +2,7 @@ module: heap
 
 define class <state> (<object>)
   slot stream :: <stream>, required-init-keyword: stream:;
-  slot next-id :: <fixed-integer>, init-value: 0;
+  slot next-id :: <integer>, init-value: 0;
   slot object-queue :: <deque>, init-function: curry(make, <deque>);
   slot symbols :: type-union(<literal-false>, <literal-symbol>),
     init-function: curry(make, <literal-false>);
@@ -137,42 +137,47 @@ end;
 	
 
 
-define generic raw-bits (ctv :: <literal>) => res :: <integer>;
+define generic raw-bits (ctv :: <literal>) => res :: <general-integer>;
 
-define method raw-bits (ctv :: <literal-true>) => res :: <integer>;
+define method raw-bits (ctv :: <literal-true>) => res :: <general-integer>;
   1;
 end;
 
-define method raw-bits (ctv :: <literal-false>) => res :: <integer>;
+define method raw-bits (ctv :: <literal-false>) => res :: <general-integer>;
   0;
 end;
 
-define method raw-bits (ctv :: <literal-fixed-integer>) => res :: <integer>;
+define method raw-bits (ctv :: <literal-integer>)
+    => res :: <general-integer>;
   ctv.literal-value;
 end;
 
-define method raw-bits (ctv :: <literal-single-float>) => res :: <integer>;
+define method raw-bits (ctv :: <literal-single-float>)
+    => res :: <general-integer>;
   raw-bits-for-float(ctv, 24, 127, 8);
 end;
 
-define method raw-bits (ctv :: <literal-double-float>) => res :: <integer>;
+define method raw-bits (ctv :: <literal-double-float>)
+    => res :: <general-integer>;
   raw-bits-for-float(ctv, 53, 1023, 11);
 end;
 
-define method raw-bits (ctv :: <literal-extended-float>) => res :: <integer>;
+define method raw-bits (ctv :: <literal-extended-float>)
+    => res :: <general-integer>;
   // ### gcc doesn't use extended floats for long doubles.
   // raw-bits-for-float(ctv.literal-value, 113, 16383, 15);
   raw-bits-for-float(ctv, 53, 1023, 11);
 end;
 
-define method raw-bits (ctv :: <literal-character>) => res :: <integer>;
+define method raw-bits (ctv :: <literal-character>)
+    => res :: <general-integer>;
   as(<integer>, ctv.literal-value);
 end;
 
 define method raw-bits-for-float
-    (ctv :: <literal-float>, precision :: <fixed-integer>,
-     bias :: <fixed-integer>, exponent-bits :: <fixed-integer>)
-    => res :: <integer>;
+    (ctv :: <literal-float>, precision :: <integer>,
+     bias :: <integer>, exponent-bits :: <integer>)
+    => res :: <general-integer>;
   let num = as(<ratio>, ctv.literal-value);
   if (zero?(num))
     0;
@@ -249,10 +254,10 @@ define method spew-object
   let digits = make(<stretchy-vector>);
   local
     method repeat (remainder :: <extended-integer>);
-      let (remainder :: <extended-integer>, digit :: <integer>)
+      let (remainder :: <extended-integer>, digit :: <general-integer>)
 	= floor/(remainder, 256);
       add!(digits,
-	   make(<literal-fixed-integer>,
+	   make(<literal-integer>,
 		value: as(<extended-integer>, digit)));
       unless (if (logbit?(7, digit))
 		remainder = -1;
@@ -322,7 +327,7 @@ define method spew-object
   for (field in fields)
     select (field by instance?)
       <false> => #f;
-      <fixed-integer> =>
+      <integer> =>
 	format(state.stream, "\t.blockz\t%d\n", field);
       <instance-slot-info> =>
 	select (field.slot-getter.variable-name)
@@ -405,14 +410,14 @@ end;
 
 define method spew-object
     (object :: <limited-integer-ctype>, state :: <state>) => ();
-  local method make-lit (x :: false-or(<integer>))
+  local method make-lit (x :: false-or(<general-integer>))
 	  if (x == #f)
 	    as(<ct-value>, x);
-	  elseif (x < runtime-$minimum-fixed-integer
-		    | x > runtime-$maximum-fixed-integer)
+	  elseif (x < runtime-$minimum-integer
+		    | x > runtime-$maximum-integer)
 	    make(<literal-extended-integer>, value: x);
 	  else
-	    make(<literal-fixed-integer>, value: x);
+	    make(<literal-integer>, value: x);
 	  end;
 	end;
   spew-instance(specifier-type(#"<limited-integer>"), state,
@@ -601,7 +606,7 @@ define method spew-instance
   for (field in get-class-fields(class))
     select (field by instance?)
       <false> => #f;
-      <fixed-integer> =>
+      <integer> =>
 	format(state.stream, "\t.blockz\t%d\n", field);
       <instance-slot-info> =>
 	let init-value = find-init-value(class, field, slots);
@@ -618,10 +623,10 @@ define method spew-instance
 			       " unspecified?");
 	    len-ctv := as(<ct-value>, 0);
 	  end;
-	  unless (instance?(len-ctv, <literal-fixed-integer>))
+	  unless (instance?(len-ctv, <literal-integer>))
 	    error("Bogus length: %=", len-ctv);
 	  end;
-	  let len = as(<fixed-integer>, len-ctv.literal-value);
+	  let len = as(<integer>, len-ctv.literal-value);
 	  if (instance?(init-value, <sequence>))
 	    unless (init-value.size == len)
 	      error("Size mismatch.");

@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.7 1996/01/10 14:59:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.8 1996/01/12 00:58:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -51,7 +51,7 @@ define generic source-location (thing :: <source-location-mixin>)
 define constant $big-buffer-threshold = 64 * 1024;
 
 define class <big-buffer> (<vector>)
-  slot size :: <fixed-integer>, setter: #f,
+  slot size :: <integer>, setter: #f,
     required-init-keyword: size:;
   slot buffers :: <simple-object-vector>,
     required-init-keyword: buffers:;
@@ -75,7 +75,7 @@ end method make;
 define constant $butt-plug = list(#"x");
 
 define method element
-    (vec :: <big-buffer>, index :: <fixed-integer>, #key default = $butt-plug)
+    (vec :: <big-buffer>, index :: <integer>, #key default = $butt-plug)
     => element;
   if (index >= 0 & index < vec.size)
     let (buf, extra) = floor/(index, $big-buffer-threshold);
@@ -88,7 +88,7 @@ define method element
 end method element;
 
 define method element-setter
-    (new :: <byte>, vec :: <big-buffer>, index :: <fixed-integer>)
+    (new :: <byte>, vec :: <big-buffer>, index :: <integer>)
     => new :: <byte>;
   if (index >= 0 & index < vec.size)
     let (buf, extra) = floor/(index, $big-buffer-threshold);
@@ -105,9 +105,9 @@ define method fill-buffer (big-buf :: <big-buffer>, stream :: <stream>) => ();
 end method fill-buffer;
 
 define method copy-bytes
-    (dst :: <byte-string>, dst-offset :: <fixed-integer>,
-     src :: <big-buffer>, src-offset :: <fixed-integer>,
-     count :: <fixed-integer>)
+    (dst :: <byte-string>, dst-offset :: <integer>,
+     src :: <big-buffer>, src-offset :: <integer>,
+     count :: <integer>)
     => ();
   let (start-buf, start-byte) = floor/(src-offset, $big-buffer-threshold);
   let (end-buf, end-byte) = floor/(src-offset + count, $big-buffer-threshold);
@@ -128,7 +128,7 @@ end method copy-bytes;
 
 define constant <file-contents> = type-union(<buffer>, <big-buffer>);
 
-define method make-buffer (size :: <fixed-integer>)
+define method make-buffer (size :: <integer>)
     => res :: <file-contents>;
   if (size > $big-buffer-threshold)
     make(<big-buffer>, size: size);
@@ -141,7 +141,7 @@ end method make-buffer;
 
 define constant <file-contents> = <buffer>;
 
-define inline method make-buffer (size :: <fixed-integer>)
+define inline method make-buffer (size :: <integer>)
     => res :: <file-contents>;
   make(<buffer>, size: size);
 end method make-buffer;

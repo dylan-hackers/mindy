@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.48 1996/01/11 18:54:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.49 1996/01/12 00:58:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -324,7 +324,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 			      type:
 				make(<varref>,
 				     id: make(<name-token>,
-					      symbol: #"<fixed-integer>",
+					      symbol: #"<integer>",
 					      module: $Dylan-Module,
 					      uniquifier: make(<uniquifier>))),
 			      getter-name: sizer-name,
@@ -740,7 +740,7 @@ define method finalize-slot
 
   let specializers
     = if (slot.slot-defn-sizer-defn)
-	list(class-type, specifier-type(#"<fixed-integer>"));
+	list(class-type, specifier-type(#"<integer>"));
       else
 	list(class-type);
       end;
@@ -1372,7 +1372,7 @@ define method convert-top-level-form
 			  = build-block-body(init-builder, policy, source);
 			let index
 			  = make-local-var(init-builder, #"index",
-					   specifier-type(#"<fixed-integer>"));
+					   specifier-type(#"<integer>"));
 			build-assignment
 			  (init-builder, policy, source, index,
 			   make-literal-constant
@@ -1652,7 +1652,7 @@ define method convert-top-level-form
 	  = make-literal-constant(tl-builder, as(<ct-value>, bytes));
 	let len-leaf
 	  = if (vector-slot)
-	      let fi = specifier-type(#"<fixed-integer>");
+	      let fi = specifier-type(#"<integer>");
 	      let elsize
 		= vector-slot.slot-representation.representation-size;
 	      let extra
@@ -1780,7 +1780,7 @@ define method build-getter
   let instance = make-lexical-var(builder, #"object", source, cclass);
   let index = if (instance?(slot, <vector-slot-info>))
 		make-lexical-var(builder, #"index", source,
-				 specifier-type(#"<fixed-integer>"));
+				 specifier-type(#"<integer>"));
 	      else
 		#f;
 	      end if;
@@ -1844,7 +1844,7 @@ define method build-getter
      make(<signature>,
 	  specializers:
 	    if (index)
-	      list(cclass, specifier-type(#"<fixed-integer>"));
+	      list(cclass, specifier-type(#"<integer>"));
 	    else
 	      list(cclass);
 	    end,
@@ -1865,7 +1865,7 @@ define method build-setter
   let cclass = slot.slot-introduced-by;
   let instance = make-lexical-var(builder, #"object", source, cclass);
   let index = if (instance?(slot, <vector-slot-info>))
-		let fi = specifier-type(#"<fixed-integer>");
+		let fi = specifier-type(#"<integer>");
 		let index = make-lexical-var(builder, #"index", source, fi);
 		index;
 	      else
@@ -1908,7 +1908,7 @@ define method build-setter
      make(<signature>,
 	  specializers:
 	    if (index)
-	      list(type, cclass, specifier-type(#"<fixed-integer>"));
+	      list(type, cclass, specifier-type(#"<integer>"));
 	    else
 	      list(type, cclass);
 	    end,
@@ -1925,8 +1925,8 @@ define method build-slot-posn-dispatch
     // We don't have to do a runtime slot-position lookup, so make us a static
     // slot accessor method.
     let new-thunk
-      = method (offset :: <fixed-integer>,
-		init?-offset :: false-or(<fixed-integer>))
+      = method (offset :: <integer>,
+		init?-offset :: false-or(<integer>))
 	    => ();
 	  thunk(make-literal-constant(builder, as(<ct-value>, offset)),
 		init?-offset
@@ -2048,7 +2048,7 @@ define method build-unique-id-slot-posn-dispatch
 end method build-unique-id-slot-posn-dispatch;
 
 define method find-position-for (subclass :: <cclass>, posns :: <list>)
-    => posn :: <fixed-integer>;
+    => posn :: <integer>;
   block (return)
     for (posn in posns)
       if (csubtype?(subclass, posn.head))
@@ -2156,7 +2156,7 @@ define method build-instance?-slot-posn-dispatch
 end method build-instance?-slot-posn-dispatch;
 
 define method lookup-position (class :: <cclass>, positions :: <list>)
-    => res :: false-or(<fixed-integer>);
+    => res :: false-or(<integer>);
   block (return)
     for (entry in positions)
       if (csubtype?(class, entry.head))
@@ -2168,7 +2168,7 @@ define method lookup-position (class :: <cclass>, positions :: <list>)
 end method lookup-position;
 
 define method lookup-position (class :: <cclass>, positions :: <false>)
-    => res :: false-or(<fixed-integer>);
+    => res :: false-or(<integer>);
   #f;
 end method lookup-position;
 
@@ -2184,7 +2184,7 @@ end method restrict-splits;
 define method count-distinct-positions
     (classes :: <list>, positions :: <list>,
      init?-positions :: false-or(<list>))
-    => res :: <fixed-integer>;
+    => res :: <integer>;
   let entries = #();
   for (class in classes)
     let offset = lookup-position(class, positions);
@@ -2222,7 +2222,7 @@ define method build-runtime-slot-posn-dispatch
 	=> var :: false-or(<abstract-variable>);
       if (slot)
 	let var = make-local-var(builder, name,
-				 specifier-type(#"<fixed-integer>"));
+				 specifier-type(#"<integer>"));
 	build-assignment
 	  (builder, policy, source, var,
 	   make-unknown-call

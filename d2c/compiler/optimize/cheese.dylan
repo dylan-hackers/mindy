@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.115 1996/01/11 18:54:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.116 1996/01/12 00:58:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1843,7 +1843,7 @@ end;
 
 define method expand-cluster 
     (component :: <component>, cluster :: <ssa-variable>,
-     number-of-values :: <fixed-integer>, names :: <list>)
+     number-of-values :: <integer>, names :: <list>)
     => ();
   let cluster-dependency = cluster.dependents;
   let target = cluster-dependency.dependent;
@@ -1888,7 +1888,7 @@ end;
 
 define method expand-cluster 
     (component :: <component>, cluster :: <initial-variable>,
-     number-of-values :: <fixed-integer>, names :: <list>)
+     number-of-values :: <integer>, names :: <list>)
     => ();
   let cluster-dependency = cluster.dependents;
   let target = cluster-dependency.dependent;
@@ -3306,7 +3306,7 @@ define method build-xep
 				      end;
 				    end));
   let nargs-leaf = make-local-var(builder, #"nargs", 
-				  dylan-value(#"<fixed-integer>"));
+				  dylan-value(#"<integer>"));
   let next-info-leaf
     = generic-entry? & make-local-var(builder, #"next-method-info",
 				      dylan-value(#"<list>"));
@@ -3554,7 +3554,7 @@ define method build-xep
       end;
 
     let index-var = make-local-var(key-dispatch-builder, #"index",
-				   dylan-value(#"<fixed-integer>"));
+				   dylan-value(#"<integer>"));
     build-assignment
       (key-dispatch-builder, policy, source, index-var,
        make-unknown-call
@@ -3593,7 +3593,7 @@ define method build-xep
       build-assignment(key-dispatch-builder, policy, source, key-var, op);
     end;
     let temp = make-local-var(key-dispatch-builder, #"temp",
-			      dylan-value(#"<fixed-integer>"));
+			      dylan-value(#"<integer>"));
     build-assignment
       (key-dispatch-builder, policy, source, temp,
        make-unknown-call(key-dispatch-builder,

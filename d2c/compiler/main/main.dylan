@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.41 1995/12/10 15:47:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.42 1996/01/12 00:58:52 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -90,7 +90,7 @@ define method parse-lid (lid-file :: <byte-string>)
   let files = make(<stretchy-vector>);
 
   local
-    method repeat (posn :: <fixed-integer>)
+    method repeat (posn :: <integer>)
       if (posn < end-posn)
 	let char = as(<character>, contents[posn]);
 	if (char == '\n')
@@ -107,8 +107,8 @@ define method parse-lid (lid-file :: <byte-string>)
 	end;
       end;
     end,
-    method find-newline (posn :: <fixed-integer>)
-	=> newline :: <fixed-integer>;
+    method find-newline (posn :: <integer>)
+	=> newline :: <integer>;
       if (posn < end-posn)
 	let char = as(<character>, contents[posn]);
 	if (char ~== '\n')
@@ -131,7 +131,7 @@ define method split-at-whitespace (string :: <byte-string>)
     => res :: <list>;
   let size = string.size;
   local
-    method scan (posn :: <fixed-integer>, results :: <list>)
+    method scan (posn :: <integer>, results :: <list>)
 	=> res :: <list>;
       if (posn == size)
 	results;
@@ -141,7 +141,7 @@ define method split-at-whitespace (string :: <byte-string>)
 	copy(posn + 1, posn, results);
       end;
     end method scan,
-    method copy (posn :: <fixed-integer>, start :: <fixed-integer>,
+    method copy (posn :: <integer>, start :: <integer>,
 		 results :: <list>)
 	=> res :: <list>;
       if (posn == size | string[posn] <= ' ')
