@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.10 2002/08/30 02:20:21 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.11 2002/08/30 09:18:34 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>,
             and <value-table>.
 
@@ -124,6 +124,22 @@ define inline method merge-hash-ids
     //
     // In our built-in stuff, the accumulator is always the first argument, so
     // we'll bias (slightly) towards that one
+    //
+    // Merging two items, anything with up to 13 bits of varying is optimally spread
+    // (and 16 bit data is spread to 2^29 distinct hash codes)
+    //
+    // Merging a series of data items (e.g. a string), ASCII characters are well
+    // spread.
+    //
+    // e.g. 7 bit ASCII "abcdef"
+    //
+    // bbbbbb000000000000000000aaaaaaab
+    // cccccc00000000000aaaaaaabbbbbbbc
+    // dddddd0000aaaaaaabbbbbbbcccccccd
+    // eeeXXXaaaabbbbbbbcccccccddddddde  X = mixture
+    // XXXXXXbbbbcccccccdddddddeeeeeXXX
+    // etc...
+    //
     logxor(ash(id1, 7), ash(id1, 7 - *word-bits*),
            ash(id2, -6), ash(id2, *word-bits* - 6));
   else
@@ -225,11 +241,6 @@ define open abstract primary class <table>
 
   // Each bucket is a chained sequence of <table-item>s
   slot buckets :: <entry-vector> = $empty-entry-vector;
-  
-  // these two are used for communication from find-table-element
-  // back to its callers instead of using multiple return values
-  slot cached-bucket-index :: <integer> = 0;
-  slot cached-hash-id :: <integer> = 0;
 end class <table>;
 
 // Uses == (aka id?) as key comparison
@@ -561,188 +572,170 @@ end method \=;
 // remove-key! do) -- and we might eventually try using it to avoid a
 // key-hash next time as well.
 //
-define sealed generic find-table-element (key :: <object>, ht :: <table>)
- => item :: <maybe-table-item>;
 
-define function find-first-candidate(ht :: <table>, key-id :: <integer>)
- => (item :: <maybe-table-item>, prev :: <maybe-table-item>)
-  let bucket-index = modulo(key-id, ht.buckets.size);
-  let chain = ht.buckets[bucket-index];
-  ht.cached-hash-id := key-id;
-  ht.cached-bucket-index := bucket-index;
-  case
-    ~chain => #f;
-    chain.entry-hash-id == key-id => chain;
-    otherwise => find-next-candidate(chain, key-id);
-  end
-end find-first-candidate;
 
-define function find-next-candidate(chain :: <table-item>, key-id :: <integer>)
- => (item :: <maybe-table-item>, prev :: <maybe-table-item>)
-  block (return)
-    for (prev = chain then elem,
-         elem = chain.entry-next then elem.entry-next,
-         while: elem)
-      if (elem.entry-hash-id == key-id)
-        return(elem, prev);
-      end if;
-    end for;
-  end block;
-end find-next-candidate;
+//////////////////////////////// element ///////////////////////////////
 
-define function process-found-candidate
-    (item :: <table-item>, prev :: <maybe-table-item>, ht :: <table>)
- => item :: <table-item>;
-  if (prev)
-    let bucket = ht.cached-bucket-index;
-    let buckets = ht.buckets;
-    prev.entry-next := item.entry-next;
-    item.entry-next := buckets[bucket];
-    buckets[bucket] := item;
+define function find-for-element
+    (start-at :: <maybe-table-item>, ht :: <table>, key-id :: <integer>)
+ => (item :: <maybe-table-item>)
+  let bucket = modulo(key-id, ht.buckets.size);
+  local
+    method try(item)
+      case
+        ~item => #f;
+        item.entry-hash-id == key-id => item;
+        otherwise => try(item.entry-next);
+      end
+    end;
+  try(if (start-at) start-at.entry-next else ht.buckets[bucket] end);
+end find-for-element;
+
+
+define inline sealed method element
+    (ht :: <table>, key, #key default: default = $not-supplied)
+ => (result :: <object>);
+  let (key=, key-hash) = table-protocol(ht);
+  let key-id :: <integer> = key-hash(key, $permanent-hash-state);
+  local
+    method loop(item :: <maybe-table-item>)
+      let item = find-for-element(item, ht, key-id);
+      case
+        ~item    // the if() will collapse at compile-time
+          => if (default == $not-supplied)
+               table-element-not-found-error();
+             else 
+               default;
+             end if;
+        key=(item.entry-key, key)
+          => item.entry-elt;
+        otherwise
+          => loop(item);
+      end case;
+    end;
+
+  loop(#f);
+end method element;
+
+//////////////////////////// element-setter ////////////////////////////
+
+define function find-for-element-setter
+    (start-at :: <maybe-table-item>, ht :: <table>, key-id :: <integer>, key, value)
+ => (item :: <maybe-table-item>)
+  let bucket = modulo(key-id, ht.buckets.size);
+  local
+    method try(item)
+      case
+        ~item =>
+          // insert a new item
+          ht.buckets[bucket]
+            := make(<table-item>, key: key, item: value, hash-id: key-id, 
+                    next: ht.buckets[bucket]);
+          let new-size = ht.table-size + 1;
+          ht.table-size := new-size;
+          if (new-size > ht.upper-resize-trigger)
+            resize-table(ht, new-size);
+          end;
+          #f;
+        item.entry-hash-id == key-id => item;
+        otherwise => try(item.entry-next);
+      end
+    end;
+
+  try(if (start-at) start-at.entry-next else ht.buckets[bucket] end);
+end find-for-element-setter;
+
+
+define inline sealed method element-setter
+    (value, ht :: <table>, key) 
+ => value;
+  let (key=, key-hash) = table-protocol(ht);
+  let key-id :: <integer> = key-hash(key, $permanent-hash-state);
+  local
+    method loop(item :: <maybe-table-item>)
+      let item = find-for-element-setter(item, ht, key-id, key, value);
+      case
+        ~item                     => value;
+        key=(item.entry-key, key) => item.entry-elt := value;
+        otherwise                 => loop(item);
+      end case;
+    end;
+
+  loop(#f);
+end method element-setter;
+
+
+///////////////////////////// remove-key! //////////////////////////////
+//
+// This one is a bit nasty ... when we find an item with the right hash
+// code we take it out immediately.  If it turns out to not be key= then
+// we put it back!!
+
+define function find-for-remove
+    (start-at :: <maybe-table-item>, ht :: <table>, key-id :: <integer>)
+ => (item :: <maybe-table-item>)
+  let bucket = modulo(key-id, ht.buckets.size);
+  local
+    method try(item, prev)
+      case
+        ~item => #f;
+        item.entry-hash-id == key-id => 
+          if (prev)
+            prev.entry-next := item.entry-next;
+          else
+            ht.buckets[bucket] := item.entry-next;
+          end;
+          item;
+        otherwise => try(item.entry-next, item);
+      end
+    end;
+  if (start-at)
+    // shit!  put erroneously deleted item back!
+    local
+      method search(prev)
+        if(prev.entry-next == start-at.entry-next)
+          prev.entry-next := start-at;
+        else
+          search(prev.entry-next);
+        end;
+      end;
+    let prev = ht.buckets[bucket];
+    if (prev)
+      search(prev);
+    else
+      ht.buckets[bucket] := start-at;
+    end;
   end;
-  item;
-end process-found-candidate;
+  try(if (start-at) start-at.entry-next else ht.buckets[bucket] end, start-at);
+end find-for-remove;
 
-// we make a *lot* of these, so it needs to be really tight
-// Don't modify unless you check the generated code to make
-// sure it's *really* better!!!
 
-define macro hash-finder-definer
-  {define hash-finder ?tabletype:name ?keytype:name end} =>
-    {define method find-table-element (key :: ?keytype, ht :: ?tabletype)
-      => item :: <maybe-table-item>;
-       let (key=, key-hash) = table-protocol(ht);
-       let key-id :: <integer> = key-hash(key, $permanent-hash-state);
-       let (item, prev) = find-first-candidate(ht, key-id);
-       block (return)
-         local
-           method loop(item, prev)
-             if (item)
-               let item-key = item.entry-key;
-               if (key=(item-key, key))
-                 return(process-found-candidate(item, prev, ht))
-               end;
-               let (next-item, next-prev) = find-next-candidate(item, key-id);
-               loop(next-item, next-prev);
-             end if
-           end method loop;
-         loop(item, prev);
-       end block;
-     end find-table-element;}
-end macro hash-finder-definer;
+define inline sealed method remove-key! (ht :: <table>, key)
+ => (found :: <boolean>);
+  let (key=, key-hash) = table-protocol(ht);
+  let key-id :: <integer> = key-hash(key, $permanent-hash-state);
+  local
+    method loop(item :: <maybe-table-item>)
+      let item = find-for-element(item, ht, key-id);
+      case
+        ~item                     => #f;
+        key=(item.entry-key, key) => #t;
+        otherwise                 => loop(item);
+      end case;
+    end;
 
-define hash-finder <table> <object> end;
-define hash-finder <table> <integer> end;
-define hash-finder <table> <single-float> end;
-define hash-finder <table> <double-float> end;
-define hash-finder <table> <character> end;
-define hash-finder <table> <symbol> end;
-define hash-finder <table> <byte-string> end;
-define hash-finder <table> <unicode-string> end;
-define hash-finder <table> <class> end;
-define hash-finder <table> <extended-integer> end;
-define hash-finder <table> <ratio> end;
+  loop(#f);
+end method remove-key!;
 
-define hash-finder <simple-object-table> <object> end;
-define hash-finder <simple-object-table> <integer> end;
-define hash-finder <simple-object-table> <single-float> end;
-define hash-finder <simple-object-table> <double-float> end;
-define hash-finder <simple-object-table> <character> end;
-define hash-finder <simple-object-table> <symbol> end;
-define hash-finder <simple-object-table> <byte-string> end;
-define hash-finder <simple-object-table> <unicode-string> end;
-define hash-finder <simple-object-table> <class> end;
-define hash-finder <simple-object-table> <extended-integer> end;
-define hash-finder <simple-object-table> <ratio> end;
 
-define hash-finder <equal-table> <object> end;
-define hash-finder <equal-table> <integer> end;
-define hash-finder <equal-table> <single-float> end;
-define hash-finder <equal-table> <double-float> end;
-define hash-finder <equal-table> <character> end;
-define hash-finder <equal-table> <symbol> end;
-define hash-finder <equal-table> <byte-string> end;
-define hash-finder <equal-table> <unicode-string> end;
-define hash-finder <equal-table> <class> end;
-define hash-finder <equal-table> <extended-integer> end;
-define hash-finder <equal-table> <ratio> end;
+////////////////////////////////////////////////////////////////////////
+
 
 
 define function table-element-not-found-error() => ()
   error("Element not found");
 end;
 
-define function table-element-guts
-    (bucket-entry :: <maybe-table-item>, default :: <object>)
- => value :: <object>;
-  if (bucket-entry)
-    bucket-entry.entry-elt;
-  elseif (default == $not-supplied)
-    table-element-not-found-error();
-  else 
-    default;
-  end if;
-end function table-element-guts;
-
-define inline sealed method element
-    (ht :: <table>, key :: <object>, #key default: default = $not-supplied)
- => (result :: <object>);
-  let bucket-entry = find-table-element(key, ht);
-  table-element-guts(bucket-entry, default);
-end method element;
-
-
-define function table-element-setter-guts
-    (bucket-entry :: <maybe-table-item>,
-     value :: <object>, ht :: <table>, key :: <object>)
- => value :: <object>;
-  let key-id = ht.cached-hash-id;
-  if (~bucket-entry)
-    let bucket-index = ht.cached-bucket-index;
-    ht.buckets[bucket-index]
-      := make(<table-item>, key: key, item: value, hash-id: key-id, 
-              next: ht.buckets[bucket-index]);
-    let new-size = ht.table-size + 1;
-    ht.table-size := new-size;
-    if (new-size > ht.upper-resize-trigger)
-      resize-table(ht, new-size);
-    end;
-  else
-    bucket-entry.entry-key := key;
-    bucket-entry.entry-hash-id := key-id;
-    bucket-entry.entry-elt := value;
-  end if;
-  value;
-end table-element-setter-guts;
-
-
-define inline sealed method element-setter
-    (value :: <object>, ht :: <table>, key :: <object>) 
- => value :: <object>;
-  let bucket-entry = find-table-element(key, ht);
-  table-element-setter-guts(bucket-entry, value, ht, key);
-end method element-setter;
-
-
-define function table-remove-key-guts
-    (ht :: <table>, the-item :: <maybe-table-item>)
- => found :: <boolean>;
-  if (the-item)
-    ht.buckets[ht.cached-bucket-index] := the-item.entry-next;
-    let new-size = ht.table-size - 1;
-    ht.table-size := new-size;
-    if (new-size < ht.lower-resize-trigger)
-      resize-table(ht, new-size);
-    end;
-    #t;
-  end if;
-end table-remove-key-guts;
-
-define inline sealed method remove-key! (ht :: <table>, key)
- => (found :: <boolean>);
-  let the-item = find-table-element(key, ht);
-  table-remove-key-guts(ht, the-item);
-end method remove-key!;
 
 // This list stolen shamelessly from the C++ standard library
 // Both g++ and CodeWarrior use exactly the same list
