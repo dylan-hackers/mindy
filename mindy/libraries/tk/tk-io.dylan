@@ -64,6 +64,15 @@ define method tk-as
   as-lowercase(as(<string>, value));
 end method tk-as;
 
+define method tk-as
+    (cls == <string>, value :: <sequence>) => (result :: <string>);
+  if (instance?(value, <string>))
+    value;
+  else
+    apply(join-tk-args, value);
+  end if;
+end method tk-as;
+
 //======================================================================
 
 // There are probably lots of implementations of this, but this is on the
