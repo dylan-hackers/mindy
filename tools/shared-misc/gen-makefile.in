@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.24 2001/04/20 00:40:05 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.25 2001/04/20 18:28:20 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -90,16 +90,16 @@
 #     $libdir
 #     $includedir
 #     $sysconfdir
-#	  Directories in which we install dylan executables, libraries,
+#         Directories in which we install dylan executables, libraries,
 #         include files and platforms.descr.
-#	  Defaults to $destdir/bin, $destdir/lib/dylan, $destdir/include,
+#         Defaults to $destdir/bin, $destdir/lib/dylan, $destdir/include,
 #         $destdir/etc.
 #     $gen_makefile
-#	  Where to run gen-makefile from for calls from makefiles.
+#         Where to run gen-makefile from for calls from makefiles.
 #     $shared
-#	  True if shared libraries will be built.
+#         True if shared libraries will be built.
 #     $static
-#	  True if static libraries will be built.
+#         True if static libraries will be built.
 #
 # In addition, the d2c Makegens use the following variables:
 #
@@ -157,7 +157,7 @@ if ($ARGV[0] =~ /-p(.*)/) {
     shift(@ARGV);
 } else {
     $platforms_dot_descr = ($ENV{'DYLANDIR'} || '@prefix@') .
-	'/etc/platforms.descr';
+        '/etc/platforms.descr';
 }
 if (@ARGV == 0) {
     push(@ARGV, '.');
@@ -219,12 +219,12 @@ sub find_Defaults_file {
     $buildroot =~ s|^//(\w)/|\1:/|;
 
     until (-e ($defaults = $buildroot . '/Defaults')) {
-	($buildroot =~ /^(.*)\/([^\/]+)$/)
-	    || die("Can't find Defaults and hence can't tell where "
-		   . "the root is.\n");
+        ($buildroot =~ /^(.*)\/([^\/]+)$/)
+            || die("Can't find Defaults and hence can't tell where "
+                   . "the root is.\n");
 
-	$subdir = $2 . '/' . $subdir;
-	$buildroot = $1;
+        $subdir = $2 . '/' . $subdir;
+        $buildroot = $1;
     }
 
     # Save the buildroot.
@@ -251,9 +251,9 @@ sub read_Defaults_file {
     # Extract features from target platform
     local($feature_name);
     for $feature_name (split(/\s+/, $target_platform{'default_features'})) {
-	$compiler_debug_flags = "$compiler_debug_flags -D$feature_name ";
-	$feature_name =~ tr/-A-Z/_a-z/;
-	$features{$feature_name} = 1;
+        $compiler_debug_flags = "$compiler_debug_flags -D$feature_name ";
+        $feature_name =~ tr/-A-Z/_a-z/;
+        $features{$feature_name} = 1;
     }
 
     $target_platform{'platform_name'} =~ /\-(\w+)\-/;
@@ -272,29 +272,29 @@ sub read_Defaults_file {
     $lib_prefix = $target_platform{'library_filename_prefix'};
 
     unless($target_platform{'link_shared_library_command'} ne '') {
-	$shared = 0;
+        $shared = 0;
     }
 
     if ($shared) {
-	$dot_obj = $target_platform{'shared_object_filename_suffix'};
-	($dot_lib) = split(/\s+/,
-			   $target_platform{'shared_library_filename_suffix'});
+        $dot_obj = $target_platform{'shared_object_filename_suffix'};
+        ($dot_lib) = split(/\s+/,
+                           $target_platform{'shared_library_filename_suffix'});
     }
 
     # Check to see if buildroot changed to something else.
     unless ($buildroot eq $orig_buildroot) {
-	### On win32, this code doesn't appear to work correctly in
-	### that it *always* thinks the two are equivalent.  Oh well,
-	### no harm done...
-	local($root_inode) = (stat($buildroot))[1];
-	local($orig_inode) = (stat($orig_buildroot))[1];
-	unless ($root_inode == $orig_inode) {
-	    die("Defaults changed \$buildroot to:\n  $buildroot\n"
-		. "but that is a different directory than:\n"
-		. "  $orig_buildroot\n");
-	}
-	&assert_path_is_absolute($buildroot, "\$buildroot");
-	$defaults = $buildroot . '/Defaults';
+        ### On win32, this code doesn't appear to work correctly in
+        ### that it *always* thinks the two are equivalent.  Oh well,
+        ### no harm done...
+        local($root_inode) = (stat($buildroot))[1];
+        local($orig_inode) = (stat($orig_buildroot))[1];
+        unless ($root_inode == $orig_inode) {
+            die("Defaults changed \$buildroot to:\n  $buildroot\n"
+                . "but that is a different directory than:\n"
+                . "  $orig_buildroot\n");
+        }
+        &assert_path_is_absolute($buildroot, "\$buildroot");
+        $defaults = $buildroot . '/Defaults';
     }
 
     # Make sure they set srcroot.  And set it to an absolute pathname.
@@ -366,7 +366,7 @@ sub do_Makegen_file {
     print "BUILDDIR=$builddir\n";
     print "DESTDIR=\n"; # GNU DESTDIR, not the $destdir variable.
     if ($host_platform{'make_supports_phony_targets?'}) {
-	print "\n.PHONY: default compile install uninstall clean\n\n";
+        print "\n.PHONY: default compile install uninstall clean\n\n";
     }
     print "default: compile\n\n";
 
@@ -375,33 +375,33 @@ sub do_Makegen_file {
     die("Problem loading $makegen:\n  $@\n") if $@;
 
     if (@files_to_clean) {
-	push(@clean_commands, "-rm -f @files_to_clean");
-	if ($shared) {
-	    push(@clean_commands, "-rm -rf .libs");
-	}
+        push(@clean_commands, "-rm -f @files_to_clean");
+        if ($shared) {
+            push(@clean_commands, "-rm -rf .libs");
+        }
     }
     
     push(@GNUmakefile_dependencies, $gen_makefile,
-	 $defaults, $makegen);
+         $defaults, $makegen);
     push(@GNUmakefile_commands,
-	"$gen_makefile -p$platforms_dot_descr .");
+        "$gen_makefile -p$platforms_dot_descr .");
 
     &emit_rule('compile');
     $destdir && do emit_rule ('install');
     $destdir && do emit_rule ('uninstall');
     &emit_rule('clean');
     if ($host_platform{'makefiles_can_rebuild_themselves?'}) {
-	print $makefile, ': ', join(' ', eval('@GNUmakefile_dependencies'));
-	print "\n";
-	foreach $rule (eval('@GNUmakefile_commands')) {
-	    print "\t", $rule, "\n";
-	}
+        print $makefile, ': ', join(' ', eval('@GNUmakefile_dependencies'));
+        print "\n";
+        foreach $rule (eval('@GNUmakefile_commands')) {
+            print "\t", $rule, "\n";
+        }
     print "\n";
     }
 
     &emit_rule('cc_files');
     if ($enable_mindy) {
-	&emit_rule('dbc_only');
+        &emit_rule('dbc_only');
     }
     close(MAKEFILE);
     rename(",$makefile", $makefile);
@@ -426,29 +426,29 @@ sub assert_path_is_absolute {
     # We do a lot of extra work here so we can provide better error
     # messages.
     if ($win32_absolute && $host_platform{'uses_drive_letters?'}) {
-	$ok = 1;
+        $ok = 1;
     } elsif ($unix_absolute && !$host_platform{'uses_drive_letters?'}) {
-	$ok = 1;
+        $ok = 1;
     } elsif ($unix_absolute && $host_platform{'uses_drive_letters?'}) {
-	$ok = 0;
-	$explanation = "(You must include a drive letter)";
+        $ok = 0;
+        $explanation = "(You must include a drive letter)";
     } elsif ($win32_absolute && !$host_platform{'uses_drive_letters?'}) {
-	$ok = 0;
-	$explanation = "(You included a drive letter on a Unix machine?!?)";
+        $ok = 0;
+        $explanation = "(You included a drive letter on a Unix machine?!?)";
     } else {
-	# path is not absolute by anyone's definition, which doesn't
-	# merit further explanation.
-	$ok = 0;
-	$explanation = "";
-    }	
+        # path is not absolute by anyone's definition, which doesn't
+        # merit further explanation.
+        $ok = 0;
+        $explanation = "";
+    }   
 
  $ok = 1;
     if (! $ok) {
-	if ($explanation) {
-	    die "$variable is not absolute:\n  $path\n$explanation\n";
-	} else {
-	    die "$variable is not absolute:\n  $path\n";
-	}
+        if ($explanation) {
+            die "$variable is not absolute:\n  $path\n$explanation\n";
+        } else {
+            die "$variable is not absolute:\n  $path\n";
+        }
     }
 }
 
@@ -462,7 +462,7 @@ sub emit_rule {
 
     print $rule, ': ', join(' ', eval('@'.$rule.'_dependencies')), "\n";
     foreach $rule (eval('@'.$rule.'_commands')) {
-	print "\t", $rule, "\n";
+        print "\t", $rule, "\n";
     }
     print "\n";
 }
@@ -474,23 +474,23 @@ sub emit_rule {
 sub compile_subdir {
     local($subdir) = &convert_path_separator(@_);
     push(@compile_commands, 
-	 sprintf($host_platform{'recursive_make_command'}, 
-		 $subdir, ""));
+         sprintf($host_platform{'recursive_make_command'}, 
+                 $subdir, ""));
     push(@install_commands, 
-	 sprintf($host_platform{'recursive_make_command'}, 
-		 $subdir, "install"));
+         sprintf($host_platform{'recursive_make_command'}, 
+                 $subdir, "install"));
     unshift(@uninstall_commands, 
-	 sprintf($host_platform{'recursive_make_command'}, 
-		 $subdir, "uninstall"));
+         sprintf($host_platform{'recursive_make_command'}, 
+                 $subdir, "uninstall"));
     push(@clean_commands, 
-	 sprintf($host_platform{'recursive_make_command'}, 
-		 $subdir, "clean"));
+         sprintf($host_platform{'recursive_make_command'}, 
+                 $subdir, "clean"));
     push(@cc_files_commands,
-	 sprintf($host_platform{'recursive_make_command'}, 
-		 $subdir, "cc_files"));
+         sprintf($host_platform{'recursive_make_command'}, 
+                 $subdir, "cc_files"));
     push(@dbc_only_commands,
-	 sprintf($host_platform{'recursive_make_command'}, 
-		 $subdir, "dbc_only"));
+         sprintf($host_platform{'recursive_make_command'}, 
+                 $subdir, "dbc_only"));
 }
 
 # maybe_emit_d2c_defines() -- internal
@@ -500,18 +500,18 @@ sub compile_subdir {
 #
 sub maybe_emit_d2c_defines {
     unless ($d2c_defines) {
-	if ($CC) {
-	    print("CC=$CC\n");
-	}
-	if($enable_debug) {
-	    $CFLAGS = $target_platform{'default_c_compiler_debug_flags'};
-	} elsif ($enable_profiling) {
-	    $CFLAGS = $target_platform{'default_c_compiler_profile_flags'};
-	} else {
-	    $CFLAGS = $target_platform{'default_c_compiler_flags'};
-	}
-	$CFLAGS =~ s/-I%s//;
-	print <<EOF;
+        if ($CC) {
+            print("CC=$CC\n");
+        }
+        if($enable_debug) {
+            $CFLAGS = $target_platform{'default_c_compiler_debug_flags'};
+        } elsif ($enable_profiling) {
+            $CFLAGS = $target_platform{'default_c_compiler_profile_flags'};
+        } else {
+            $CFLAGS = $target_platform{'default_c_compiler_flags'};
+        }
+        $CFLAGS =~ s/-I%s//;
+        print <<EOF;
 D2C = $D2C $compiler_debug_flags
 D2CFLAGS = $D2CFLAGS
 CFLAGS = $CFLAGS
@@ -524,20 +524,20 @@ MINDY = $MINDY
 
 EOF
         if ($host_platform{'environment_variables_can_be_exported?'}) {
-	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS) \$(COPTS)\n\n";
-	    if ($LIBTOOL) {
-		print "export LIBTOOL = $LIBTOOL\n\n";
-	    }
-	    if ($DYLANPATH) {
-		print "export DYLANPATH = $DYLANPATH\n\n";
-	    };
-	    if ($DYLANDIR) {
-		print "export DYLANDIR = $DYLANDIR\n\n";
-	    }
-	} else {
-	    print "LIBTOOL = $LIBTOOL\n\n";
-	}
-	$d2c_defines = 1;
+            print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS) \$(COPTS)\n\n";
+            if ($LIBTOOL) {
+                print "export LIBTOOL = $LIBTOOL\n\n";
+            }
+            if ($DYLANPATH) {
+                print "export DYLANPATH = $DYLANPATH\n\n";
+            };
+            if ($DYLANDIR) {
+                print "export DYLANDIR = $DYLANDIR\n\n";
+            }
+        } else {
+            print "LIBTOOL = $LIBTOOL\n\n";
+        }
+        $d2c_defines = 1;
     }
 }
 
@@ -562,37 +562,37 @@ sub parse_dylan_header {
     local($last_keyword); # for multi-line values
 
     while (<LIDFILE>) {
-	$lidfile_line = $lidfile_line + 1;
-	# remember, in Perl "." is any character other than newline.
-	# Also, Perl handles all newline hassles by turning win32
-	# style CRLFs into LFs (\n's) before it shows us the string.
+        $lidfile_line = $lidfile_line + 1;
+        # remember, in Perl "." is any character other than newline.
+        # Also, Perl handles all newline hassles by turning win32
+        # style CRLFs into LFs (\n's) before it shows us the string.
 
         if ($target_name eq 'x86-cygnus-gcc') {
-            $_ =~ s/\r//g;	# Get rid of bogus carriage returns
-	}
+            $_ =~ s/\r//g;      # Get rid of bogus carriage returns
+        }
 
-	if (/^\s*$/) {  # if blank line, break out of loop
-	    $lidfile_hit_eof = 0;
-	    return %contents;
-	} elsif (m|^//.*$|) {
-	    # comment line, ignore
-	} elsif (/^\s+(.*)$/) {
-	    # Continuation line -- part of a multi-line value
-	    $contents{$last_keyword} .= ' ' . $1;
-	} else {
-	    /^([-A-Za-z0-9_!&*<>|^\$\%\@\?]+):\s+(.*)\s+$/
-		|| die "Bad keyword line in $lid_file, line $lidfile_line\n";
-	    local($keyword) = $1;
-	    local($value) = $2;
-	    if ($value eq '#f' | $value eq '#F') {
-		$value = 0;
-	    } elsif ($value eq '#t' | $value eq '#T') {
-		$value = 1;
-	    }
-	    $keyword =~ tr/-A-Z/_a-z/;
-	    $contents{$keyword} = $value;
-	    $last_keyword = $keyword;
-	}
+        if (/^\s*$/) {  # if blank line, break out of loop
+            $lidfile_hit_eof = 0;
+            return %contents;
+        } elsif (m|^//.*$|) {
+            # comment line, ignore
+        } elsif (/^\s+(.*)$/) {
+            # Continuation line -- part of a multi-line value
+            $contents{$last_keyword} .= ' ' . $1;
+        } else {
+            /^([-A-Za-z0-9_!&*<>|^\$\%\@\?]+):\s+(.*)\s+$/
+                || die "Bad keyword line in $lid_file, line $lidfile_line\n";
+            local($keyword) = $1;
+            local($value) = $2;
+            if ($value eq '#f' | $value eq '#F') {
+                $value = 0;
+            } elsif ($value eq '#t' | $value eq '#T') {
+                $value = 1;
+            }
+            $keyword =~ tr/-A-Z/_a-z/;
+            $contents{$keyword} = $value;
+            $last_keyword = $keyword;
+        }
     }
     $lidfile_hit_eof = 1;
     return %contents;
@@ -619,11 +619,11 @@ sub parse_lid_file {
     # a .o in the Lid file is a hack to get a foreign .o put in the archive.
     # Just ignore em, since there should be a seperate C rule to clean, etc.
     while (<LIDFILE>) {
-	$lidfile_line = $lidfile_line + 1;
+        $lidfile_line = $lidfile_line + 1;
         if ($_ !~ m/.*$dot_obj$/ && $_ !~ m/.*$dot_static$/) {
-  	    chop; # kill newline
-	    $contents{'files'} .= " $_";
-	}
+            chop; # kill newline
+            $contents{'files'} .= " $_";
+        }
     }
 
     # replace multiple spaces with single spaces
@@ -654,35 +654,35 @@ sub read_platforms_dot_descr {
     open(LIDFILE, $platforms_dot_descr)
       || die("Can't open $platforms_dot_descr: $!\n");
     while (! $lidfile_hit_eof) {
-	local(%platform) = &parse_dylan_header();
-	local(@keywords) = keys(%platform);
-	if ($#keywords > 0) {
-	    # if a real header, not a blank line or comment block
-	    local($platform_name) = $platform{'platform_name'};
-	    $platform_name =~ tr/-A-Z/_a-z/; # mash to lowercase; - to _
+        local(%platform) = &parse_dylan_header();
+        local(@keywords) = keys(%platform);
+        if ($#keywords > 0) {
+            # if a real header, not a blank line or comment block
+            local($platform_name) = $platform{'platform_name'};
+            $platform_name =~ tr/-A-Z/_a-z/; # mash to lowercase; - to _
 
-	    if ($platform{'inherit_from'}) {
-		local($key);
-		foreach $parent (split(/\s+/, $platform{'inherit_from'})) {
-		    local(%parent_plat) = &get_platform($parent);
-		    local($key);
-		    foreach $key (keys(%parent_plat)) {
-			if (!defined $platform{$key}) {
-			    $platform{$key} = $parent_plat{$key};
-			} elsif ($key eq 'default_features') {
-			    $platform{$key} = 
-				$platform{$key} . " " . $parent_plat{$key};
-			}
-		    }
-		}
-	    }
+            if ($platform{'inherit_from'}) {
+                local($key);
+                foreach $parent (split(/\s+/, $platform{'inherit_from'})) {
+                    local(%parent_plat) = &get_platform($parent);
+                    local($key);
+                    foreach $key (keys(%parent_plat)) {
+                        if (!defined $platform{$key}) {
+                            $platform{$key} = $parent_plat{$key};
+                        } elsif ($key eq 'default_features') {
+                            $platform{$key} = 
+                                $platform{$key} . " " . $parent_plat{$key};
+                        }
+                    }
+                }
+            }
 
-	    # Copy the %platforms array into the appropriate global
-	    local($eval_string) = '%' . 'platform_' . $platform_name 
-		. ' = %' . 'platform';
-	    eval($eval_string);
-	    $all_platforms{$platform_name} = 1;
-	}
+            # Copy the %platforms array into the appropriate global
+            local($eval_string) = '%' . 'platform_' . $platform_name 
+                . ' = %' . 'platform';
+            eval($eval_string);
+            $all_platforms{$platform_name} = 1;
+        }
     }
     close(LIDFILE);
 }
@@ -712,7 +712,7 @@ sub get_platform {
 sub compile_subdirs {
     local($dir);
     foreach $dir (@_) {
-	do compile_subdir($dir);
+        do compile_subdir($dir);
     }
 }
 
@@ -746,7 +746,7 @@ sub compile_subdirs {
 #         addition to the d2c version of the library.)  This flag does not make 
 #         much sense with 'no-mindy'.
 #    'no-d2c'
-#	  Like no-mindy, only suppress emission of d2c rules.
+#         Like no-mindy, only suppress emission of d2c rules.
 #
 # The return value is a two element array.  The first element is the
 # target which would have been used if the 'compile' flag were
@@ -766,9 +766,9 @@ sub emit_library_rule {
     $library =~ tr/A-Z/a-z/;
     local($unit_prefix);
     if($enable_bootstrap && $bootstrap_compiler eq "d2c" && $lid_format_version < 2) {
-	$unit_prefix = $lidfile{'unit_prefix'} || "$library";
+        $unit_prefix = $lidfile{'unit_prefix'} || "$library";
     } else {
-	$unit_prefix = "$library";
+        $unit_prefix = "$library";
     };
     local($executable) = $lidfile{'executable'};
     local($executable_filename) = $executable . $dot_exe;
@@ -778,113 +778,113 @@ sub emit_library_rule {
     local($d2c_target);
 
     if ($enable_d2c) {
-	local($file);
-	for $file (split(' ', $lidfile{'files'})) {
-	    $file =~ s/\.dylan$//;  # chop off ".dylan"
-	    push(@files_to_clean, "$file.c", "$file$dot_obj");
-	    if ($shared && $static) {
-		push(@files_to_clean, "$file$dot_static");
-	    }
-	}
+        local($file);
+        for $file (split(' ', $lidfile{'files'})) {
+            $file =~ s/\.dylan$//;  # chop off ".dylan"
+            push(@files_to_clean, "$file.c", "$file$dot_obj");
+            if ($shared && $static) {
+                push(@files_to_clean, "$file$dot_static");
+            }
+        }
 
-	push(@files_to_clean,
-	     "$unit_prefix-init.c", "$unit_prefix-init$dot_obj");
-	push(@files_to_clean,
-	     "$unit_prefix-heap.c", "$unit_prefix-heap$dot_obj");
+        push(@files_to_clean,
+             "$unit_prefix-init.c", "$unit_prefix-init$dot_obj");
+        push(@files_to_clean,
+             "$unit_prefix-heap.c", "$unit_prefix-heap$dot_obj");
 
-	if($shared && $static) {
-	    push(@files_to_clean, "$unit_prefix-init$dot_static");
-	    push(@files_to_clean, "$unit_prefix-heap$dot_static");
-	}
+        if($shared && $static) {
+            push(@files_to_clean, "$unit_prefix-init$dot_static");
+            push(@files_to_clean, "$unit_prefix-heap$dot_static");
+        }
 
-	if ($executable) {
-	    push(@files_to_clean, $executable_filename, 'heap.c', 'inits.c');
-	    if($shared && $static) {
-	        push(@files_to_clean, "heap$dot_static", "inits$dot_static");
-	    }
-	    push(@files_to_clean, "heap$dot_obj", "inits$dot_obj");
+        if ($executable) {
+            push(@files_to_clean, $executable_filename, 'heap.c', 'inits.c');
+            if($shared && $static) {
+                push(@files_to_clean, "heap$dot_static", "inits$dot_static");
+            }
+            push(@files_to_clean, "heap$dot_obj", "inits$dot_obj");
 
-	    if (grep(/^compile$/, @keywords)) {
-		push(@compile_dependencies, $executable_filename);
-		grep(/^install$/, @keywords)
-		    && do install_executable($bindir, $executable_filename);
-	    }
+            if (grep(/^compile$/, @keywords)) {
+                push(@compile_dependencies, $executable_filename);
+                grep(/^install$/, @keywords)
+                    && do install_executable($bindir, $executable_filename);
+            }
 
-	    $d2c_target = $executable_filename;
-	}
-	else {
-	    local($foo_lib_du, $libfoo_a);
-	    
-	    $foo_lib_du = "$library.lib.du";
-	    $libfoo_a = "$lib_prefix$unit_prefix$dot_lib";
-	    
-	    push(@files_to_clean, $foo_lib_du, $libfoo_a);
+            $d2c_target = $executable_filename;
+        }
+        else {
+            local($foo_lib_du, $libfoo_a);
+            
+            $foo_lib_du = "$library.lib.du";
+            $libfoo_a = "$lib_prefix$unit_prefix$dot_lib";
+            
+            push(@files_to_clean, $foo_lib_du, $libfoo_a);
 
-	    if($shared && $static) {
-		local($lib_static)
-		    = $target_platform{'library_filename_suffix'};
-		push(@files_to_clean, "$lib_prefix$unit_prefix$lib_static");
-	    }
-	    
-	    if (grep(/^compile$/, @keywords)) {
-		push(@compile_dependencies, $foo_lib_du);
-		if (grep(/^install$/, @keywords)) {
-		    do install($libdir, $foo_lib_du);
-		    do install_library($libdir, $libfoo_a, $shared_library);
-		}
-	    }
-	    
-	    $d2c_target = $foo_lib_du;
-	}
+            if($shared && $static) {
+                local($lib_static)
+                    = $target_platform{'library_filename_suffix'};
+                push(@files_to_clean, "$lib_prefix$unit_prefix$lib_static");
+            }
+            
+            if (grep(/^compile$/, @keywords)) {
+                push(@compile_dependencies, $foo_lib_du);
+                if (grep(/^install$/, @keywords)) {
+                    do install($libdir, $foo_lib_du);
+                    do install_library($libdir, $libfoo_a, $shared_library);
+                }
+            }
+            
+            $d2c_target = $foo_lib_du;
+        }
     }
 
     if (! grep(/^no-d2c$/, @keywords) && $enable_d2c) {
-	print "$d2c_target: $srcdir/$lidfilename.lid $extradeps\n";
-	my $profile_flag = $enable_profiling ? "--profile" : "";
-	if ($shared_library) {
-	    print "\t\$(D2C) -M $profile_flag \$(D2CFLAGS) --rpath=$libdir $extraflags ",
-	    	"$srcdir/$lidfilename.lid\n";
-	    if ($static && !$executable) {
-		local ($dot_lib)
-		    = split(/\s+/,
-			    $target_platform{'library_filename_suffix'});
-		print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
-		print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
-		    " $lib_prefix$unit_prefix$dot_lib\n";
-		push(@files_to_clean, " $lib_prefix$unit_prefix$dot_lib");
-	    }
-	} else {
-	    print "\t\$(D2C) -M $profile_flag \$(D2CFLAGS) --static $extraflags ",
-	    	"$srcdir/$lidfilename.lid\n";
-	}
-	local ($make_name) = $host_platform{'make_command'};
-	local($cc_files_cmd) = "$make_name -f cc-" . $unit_prefix
-	    . "-files.mak";
-	push(@cc_files_commands, $cc_files_cmd);
+        print "$d2c_target: $srcdir/$lidfilename.lid $extradeps\n";
+        my $profile_flag = $enable_profiling ? "--profile" : "";
+        if ($shared_library) {
+            print "\t\$(D2C) -M $profile_flag \$(D2CFLAGS) --rpath=$libdir $extraflags ",
+                "$srcdir/$lidfilename.lid\n";
+            if ($static && !$executable) {
+                local ($dot_lib)
+                    = split(/\s+/,
+                            $target_platform{'library_filename_suffix'});
+                print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
+                print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
+                    " $lib_prefix$unit_prefix$dot_lib\n";
+                push(@files_to_clean, " $lib_prefix$unit_prefix$dot_lib");
+            }
+        } else {
+            print "\t\$(D2C) -M $profile_flag \$(D2CFLAGS) --static $extraflags ",
+                "$srcdir/$lidfilename.lid\n";
+        }
+        local ($make_name) = $host_platform{'make_command'};
+        local($cc_files_cmd) = "$make_name -f cc-" . $unit_prefix
+            . "-files.mak";
+        push(@cc_files_commands, $cc_files_cmd);
 
-	print "\ninclude $unit_prefix.dep\n\n";
+        print "\ninclude $unit_prefix.dep\n\n";
 
-	unless (-e "$unit_prefix.dep") {
-	    open(DEP, ">$unit_prefix.dep")
-		|| die("Can't create $unit_prefix.dep: $!\n");
-	    close(DEP);
-	}
+        unless (-e "$unit_prefix.dep") {
+            open(DEP, ">$unit_prefix.dep")
+                || die("Can't create $unit_prefix.dep: $!\n");
+            close(DEP);
+        }
     }
 
     if (! grep(/^no-mindy$/, @keywords) && $enable_mindy) {
-	&emit_mindycomp_library_rule($library, $lidfile{'files'});
+        &emit_mindycomp_library_rule($library, $lidfile{'files'});
     }
     if (grep(/^compile-mindy$/, @keywords) && $enable_mindy) {
-	push(@compile_dependencies, "$library-lib.dbc");
-	grep(/^install$/, @keywords)
-	    && do install($libdir, "$library-lib.dbc");
+        push(@compile_dependencies, "$library-lib.dbc");
+        grep(/^install$/, @keywords)
+            && do install($libdir, "$library-lib.dbc");
     }
     local(@return_val);
     if ($enable_d2c) {
-	push(@return_val, $d2c_target);
+        push(@return_val, $d2c_target);
     }
     if ($enable_mindy) {
-	push(@return_val, "$library-lib.dbc");
+        push(@return_val, "$library-lib.dbc");
     }
     return @return_val;
 }
@@ -902,12 +902,12 @@ sub emit_c_file_rule {
 
     print "$objfile: \$(SRCDIR)/$basefile.c";
     foreach $header (@headers) {
-	print " \$(SRCDIR)/$header";
+        print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-	print "\n\t\$(LIBTOOL) \$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(LIBTOOL) \$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
     } else {
-	print "\n\t\$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
     }
     print " -c \$(SRCDIR)/$basefile.c -o $objfile\n\n";
     if ($target_name eq $host_name) {
@@ -919,8 +919,8 @@ sub emit_c_file_rule {
     push(@files_to_clean, $objfile);
 
     if($static && $shared) {
-	local ($dot_static) = $target_platform{'object_filename_suffix'};
-	push(@files_to_clean, "$basefile$dot_static");
+        local ($dot_static) = $target_platform{'object_filename_suffix'};
+        push(@files_to_clean, "$basefile$dot_static");
     }
 }
 
@@ -936,12 +936,12 @@ sub emit_asm_file_rule {
 
     print "$objfile: \$(SRCDIR)/$srcfile.s";
     foreach $header (@headers) {
-	print " \$(SRCDIR)/$header";
+        print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-	print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     } else {
-	print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     }
     print " -c \$(SRCDIR)/$srcfile.s -o $objfile\n\n";
     if ($target_name eq $host_name) {
@@ -966,14 +966,14 @@ sub emit_cppasm_file_rule {
 
     print "$objfile: \$(SRCDIR)/$srcfile.s";
     foreach $header (@headers) {
-	print " \$(SRCDIR)/$header";
+        print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-	print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     } else {
-	print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     }
-    print " -x assembler-with-cpp";	# Added to provide the "cpp" part
+    print " -x assembler-with-cpp";     # Added to provide the "cpp" part
     print " -c \$(SRCDIR)/$srcfile.s -o $objfile\n\n";
     if ($target_name eq $host_name) {
       push(@compile_dependencies, $objfile);
@@ -998,12 +998,12 @@ sub emit_cc_file_rule {
 
     print "$objfile: \$(SRCDIR)/$basefile.cc";
     foreach $header (@headers) {
-	print " \$(SRCDIR)/$header";
+        print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-	print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+        print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
     } else {
-	print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+        print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
     }
     print "-c \$(SRCDIR)/$basefile.cc -o $objfile\n\n";
     if ($target_name eq $host_name) {
@@ -1029,7 +1029,7 @@ sub emit_melange_rule {
 
 #    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.intr";
 #    foreach $header (@headers) {
-#	print " \$(SRCDIR)/$header";
+#       print " \$(SRCDIR)/$header";
 #    }
 #    print "\n\t\$(MELANGE) -I\$(SRCDIR) ";
 #    print "\$(SRCDIR)/$basefile.intr \$(SRCDIR)/$basefile.dylan\n\n";
@@ -1070,19 +1070,19 @@ sub install_one_file {
 
     print "\n$to_file: $from_file\n";
     if ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
-	# Host is a win32 platform
-	local ($rule) = "\tcopy $from_file $to_file\n\n";
-	$rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
-	print $rule;
+        # Host is a win32 platform
+        local ($rule) = "\tcopy $from_file $to_file\n\n";
+        $rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
+        print $rule;
     } elsif ($host_platform{'default_features'} =~ /compiled-for-unix/i) {
-	if ($executable_permissions) {
-	    print "\t$install_program $from_file $to_file\n\n";
-	} else {
-	    print "\t$install_data $from_file $to_file\n\n";
-	};
+        if ($executable_permissions) {
+            print "\t$install_program $from_file $to_file\n\n";
+        } else {
+            print "\t$install_data $from_file $to_file\n\n";
+        };
     } else {
-	die("The host is neither Unix nor win32, so I don't know how\n"
-	    . "to install your files.");
+        die("The host is neither Unix nor win32, so I don't know how\n"
+            . "to install your files.");
     }
     push(@install_dependencies, $to_file);
     push(@uninstall_commands, "rm -f $to_file");
@@ -1101,8 +1101,8 @@ sub install {
     $destdir || return;
 
     foreach $file (@files) {
-	$dst = "$dest_dir/$file";
-	&install_one_file($file, $dst, 0);
+        $dst = "$dest_dir/$file";
+        &install_one_file($file, $dst, 0);
     }
 }
 
@@ -1118,8 +1118,8 @@ sub install_executable {
     $destdir || return;
 
     foreach $file (@files) {
-	$dst = "$dest_dir/$file";
-	&install_one_file($file, $dst, 1);
+        $dst = "$dest_dir/$file";
+        &install_one_file($file, $dst, 1);
     }
 }
 
@@ -1136,8 +1136,8 @@ sub install_from_src {
     $destdir || return;
 
     foreach $file (@files) {
-	$dst = "$dest_dir/$file";
-	&install_one_file("$srcdir/$file", $dst, 0);
+        $dst = "$dest_dir/$file";
+        &install_one_file("$srcdir/$file", $dst, 0);
     }
 }
 
@@ -1154,8 +1154,8 @@ sub install_executable_from_src {
     $destdir || return;
 
     foreach $file (@files) {
-	$dst = "$dest_dir/$file";
-	&install_one_file("$srcdir/$file", $dst, 1);
+        $dst = "$dest_dir/$file";
+        &install_one_file("$srcdir/$file", $dst, 1);
     }
 }
 
@@ -1205,9 +1205,9 @@ sub emit_dbc_link_rule {
     local($libname, $objects) = @_;
     print "\n$libname: $objects\n";
     if ($host_platform{'use_dbclink?'}) {
-	print "\tdbclink $libname $objects\n\n";
+        print "\tdbclink $libname $objects\n\n";
     } else {
-	print "\tcat $objects > $libname\n\n";
+        print "\tcat $objects > $libname\n\n";
     }
 }
 
@@ -1229,10 +1229,10 @@ sub emit_mindycomp_library_rule {
     $uppercase_libname =~ tr/-a-z/_A-Z/;
     local($file, @sources, @objects);
     foreach $file (split(/\s+/, $lid_sources)) {
-	$file =~ s/\.dylan$//;  # chop off ".dylan"
-	push(@sources, $file); # emit_mindycomp_rule doesn't want ".dylan"
-	push(@objects, "$file.dbc");
-	push(@files_to_clean, "$file.dbc");
+        $file =~ s/\.dylan$//;  # chop off ".dylan"
+        push(@sources, $file); # emit_mindycomp_rule doesn't want ".dylan"
+        push(@objects, "$file.dbc");
+        push(@files_to_clean, "$file.dbc");
     }
     print "DASH_$uppercase_libname = -l$libname\n\n";
     print "$uppercase_libname", "_OBJS = ", join(" ", @objects), "\n\n";
@@ -1241,7 +1241,7 @@ sub emit_mindycomp_library_rule {
 
     local($source);
     foreach $source (@sources) {
-	&emit_mindycomp_rule($source, "\$(DASH_$uppercase_libname)");
+        &emit_mindycomp_rule($source, "\$(DASH_$uppercase_libname)");
     }
     &emit_dbc_link_rule("$libname-lib.dbc", "\$(${uppercase_libname}_OBJS)");
 }
@@ -1273,7 +1273,7 @@ sub makegen_include {
 #
 sub unknown_platform_error {
     die "Unknown CPU type for platform " . $target_name . "\n"
-	. "All known features: " . $target_platform{'default_features'} . "\n";
+        . "All known features: " . $target_platform{'default_features'} . "\n";
 }
 
 # convert_path_separator($path) -- exported
