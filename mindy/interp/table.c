@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.2 1994/03/31 10:19:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.3 1994/04/05 21:58:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -79,7 +79,7 @@ static void dylan_merge_hash_codes(obj_t self, struct thread *thread,
 
 /* GC routines. */
 
-void scavenge_table_roots(void)
+void table_gc_hook(void)
 {
     valid_state = list1(obj_False);
 }
