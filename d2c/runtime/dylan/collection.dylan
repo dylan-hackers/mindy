@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.9 1995/12/09 02:45:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.10 1995/12/09 20:16:33 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -929,9 +929,8 @@ define method fill!
   sequence;
 end method fill!;
 
-/*
-define method key-sequence(sequence :: <sequence>)
-    => keys :: <range>;
+define inline method key-sequence
+    (sequence :: <sequence>) => keys :: <range>;
   let s = size(sequence);
   if (s)
     range(from: 0, below: s);
@@ -939,7 +938,6 @@ define method key-sequence(sequence :: <sequence>)
     range(from: 0);
   end if;
 end method key-sequence;
-*/
 
 define sealed inline method key-test
     (sequence :: <sequence>) => test :: <function>;
