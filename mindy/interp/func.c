@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.12 1994/04/12 16:01:02 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.13 1994/04/12 16:24:46 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1255,12 +1255,26 @@ obj_t add_method(obj_t gf, obj_t method)
 	boolean restp = METHOD(method)->restp;
 	if (!restp) {
 	    obj_t methkeys = METHOD(method)->keywords;
-	    if (methkeys != obj_False)
+	    if (methkeys == obj_False)
 		error("The generic function ~S allows keyword arguments, "
 		      "but the method ~S does not.",
 		      function_debug_name_or_self(gf),
 		      function_debug_name_or_self(method));
-	    /* ### Verify that gfkeys is a subset of methkeys. */
+	    while (gfkeys != obj_Nil) {
+		obj_t gfkey = HEAD(gfkeys);
+		obj_t scan;
+
+		for (scan = methkeys; scan != obj_Nil; scan = TAIL(scan))
+		    if (HEAD(HEAD(scan)) == gfkey)
+			goto okay;
+		error("The generic function ~S accepts the keyword ~S, "
+		      "but the method ~S does not.",
+		      function_debug_name_or_self(gf),
+		      gfkey,
+		      function_debug_name_or_self(method));
+	      okay:
+		gfkeys = TAIL(gfkeys);
+	    }
 	}
     }
     else if (GF(gf)->restp) {
