@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.66 1997/02/10 13:18:08 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.67 1997/02/13 12:52:26 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -233,9 +233,11 @@ define method build-local-heap
     if (name)
       spew-label(state, name, export: #t);
       if (target.supports-debugging?)
-	format(stream, "\t.stabs\t\"%s%s:%s\n",
-	       target.mangled-name-prefix, name,
-	       target.descriptor-reference-string);
+	format(stream, target.descriptor-reference-string, 
+	       target.mangled-name-prefix, name);
+//	format(stream, "\t.stabs\t\"%s%s:%s\n",
+//	       target.mangled-name-prefix, name,
+//	       target.descriptor-reference-string);
       end if;
     end if;
     spew-reference(root.root-init-value, *general-rep*,

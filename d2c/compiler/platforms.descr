@@ -180,19 +180,24 @@
 // assembly files for every symbol that is declared outside that
 // assembly file.
 //
-// descriptor-type-string:
-// This string specifies the "descriptor_t" type in enough detail
-// to allow gdb to work with the objects we define.  We got this
-// string by looking at the output of "gcc -g -S -c foo.c -o
-// foo.s", and selectively copying a few key entries.  We changed
-// the embeded filename to "<unknown>", because we don't really
-// feel like trying to keep track of where the source code for the
-// current file can be located.  This and descriptor-reference-string
-// aren't used unless supports-debugging? is true.
+// descriptor-type-string: This string specifies the "descriptor_t"
+// type in enough detail to allow gdb to work with the objects we
+// define.  We got this string by looking at the output of "gcc -g -S
+// -c foo.c -o foo.s", and selectively copying a few key entries.  We
+// changed the embeded filename to "<unknown>", because we don't
+// really feel like trying to keep track of where the source code for
+// the current file can be located.  This and
+// descriptor-reference-string aren't used unless supports-debugging?
+// is true.
 //
-// descriptor-reference-string:  This string is used to refer to the
-// descriptor entry in descriptor-type-string.  It is derived from
-// the entry of descriptor.
+// descriptor-reference-string: A format string which is used to refer
+// to the descriptor entry in descriptor-type-string.  It is derived
+// from the entry of descriptor.  The first arg to the format string
+// will be the mangled-name-prefix, while the second arg will be the C
+// name of the label for which we are generating debug info.  (Our
+// real motivation for turning decriptor-reference-string into a
+// format string is so that we don't have unbalanced quotes in this
+// file.  Unbalanced quotes makes font-lock do really ugly things...)
 //
 // omit-colon-after-label-declarations?: If #f, puts a colon after
 // label declarations (when you first declare a label, not whenever
@@ -204,7 +209,7 @@
 
 // Microsoft Windows '95 or NT on Intel 80386 or higher
 //
-platform-name:                    x86-win32
+platform-name:                  x86-win32
 default-features:               compiled-for-x86 compiled-for-win32 
                                 newlines-are-CRLF C-compiler-is-VC
 integer-length:			32
@@ -235,7 +240,7 @@ supports-debugging?:            #f
 path-separator:        		\\
 big-endian?:			#f
 descriptor-type-string:         .stabs "<unknown>",100,0,0,Ltext0\n.text\nLtext0:\n.stabs "heapptr_t:t(9,3)=(9,4)=*(9,5)=xsheapobj:",128,0,6,0\n.stabs "descriptor:T(9,6)=s8heapptr:(9,3),0,32;dataword:(9,7)=u4l:(0,3),0,32;f:(0,12),0,32;ptr:(5,16),0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t(9,8)=(9,6)",128,0,14,0\n
-descriptor-reference-string:    G(9,8)",32,0,1,0
+descriptor-reference-string:    \t.stabs\t"%s%s:G(9,8)",32,0,1,0\n
 makefile-name:                  Makefile
 make-supports-phony-targets?:   #f
 recursive-make-command:         cmd /c "cd %s && $(MAKE) /nologo %s"
@@ -246,7 +251,7 @@ use-dbclink?:                           #t
 
 // Another name for x86-win32
 //
-platform-name:                    x86-win32-vc
+platform-name:                  x86-win32-vc
 inherit-from:                   x86-win32
 
 
@@ -330,13 +335,13 @@ link-executable-flags:          -L/lib/pa1.1 -lm /usr/lib/end.o
 supports-debugging?:            #t
 big-endian?:			#t
 descriptor-type-string:         \t.stabs "<unknown>",100,0,0,L$text0000\nL$text0000\n\t.stabs "heapptr_t:t32=*33=xsheapobj:",128,0,6,0\n\t.stabs "descriptor:T34=s8heapptr:32,0,32;dataword:35=u4l:3,0,32;f:12,0,32;ptr:36=*19,0,32;;,32,32;;",128,0,0,0\n\t.stabs "descriptor_t:t34",128,0,14,0\n
-descriptor-reference-string:    G34",32,0,1,0
+descriptor-reference-string:    \t.stabs\t"%s%s:G34",32,0,1,0\n
 omit-colon-after-label-declarations?:  #t
 
 
 // HP/UX on HP PA-RISC processors w/ shared libs, HP CC, no gdb.  Try xdb.
 //
-platform-name:                    hppa-hpux-shared
+platform-name:                  hppa-hpux-shared
 inherit-from:                   hppa-hpux
 default-features:               compiled-for-unix compiled-for-hppa 
                                 compiled-for-hpux C-compiler-is-GCC
@@ -373,4 +378,4 @@ make-command:			make
 supports-debugging?:		#t
 big-endian?:			#f
 descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
-descriptor-reference-string:	G36",32,0,1,0
+descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
