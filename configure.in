@@ -447,6 +447,13 @@ if test "$with_existing_runtime" = yes; then
     with_existing_runtime=no
 fi
 
+AC_ARG_WITH(existing-runtime-header,
+[  --with-existing-runtime-header=PATH_TO_RUNTIME_H
+                                Location of runtime.h file of existing
+                                d2c for bootstrapping purposes.])
+existing_runtime_header=${with_existing_runtime_header:-"$d2c_path/include/runtime.h"}
+
+
 # If we're bootstrapping with d2c, create local links to each runtime file.
 if test $SCENARIO = BOOTSTRAPPING_WITH_D2C; then
     AC_MSG_CHECKING(for existing d2c runtime)
@@ -479,9 +486,8 @@ You may need to specify the --with-existing-runtime option to configure; see
     done
 
 
+
     # Make a link to our runtime.h file.
-    # XXX - We need to allow the user to specify a location for this!
-	existing_runtime_header="$d2c_path/include/runtime.h"
 	if test ! -f "$existing_runtime_header"; then
 	AC_MSG_ERROR([Cannot locate runtime.h for the installed d2c. ($existing_runtime_header)])
 	fi
