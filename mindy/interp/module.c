@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.16 1994/10/05 21:04:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.17 1994/10/20 03:06:31 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -377,9 +377,10 @@ struct library *find_library(obj_t name, boolean createp)
 	struct use *use1 = malloc(sizeof(struct use));
 	struct use *use2 = malloc(sizeof(struct use));
 	obj_t dylan_user = symbol("Dylan-User");
-	struct module *module = make_module(dylan_user, NULL);
+	struct module *module;
 
 	library = make_library(name);
+	module = make_module(dylan_user, library);
 
 	module->defn = defn;
 
@@ -577,7 +578,7 @@ struct module *find_module(struct library *library, obj_t name,
 
     module = entry->datum;
 
-    if (lose_if_imported && module->home != library && module->home != NULL)
+    if (lose_if_imported && module->home != library)
 	error("Can't add code to module %= in library %= because it "
 	      "is imported from library %=",
 	      module->name,
@@ -607,8 +608,9 @@ void define_module(struct library *library, struct defn *defn)
 	module = entry->datum;
 
 	if (module->home != library)
-	    error("Can't define %s in library %=.\n",
-		  entry->origin, library->name);
+	    error("Can't define %s in library %= because its home "
+		    "is library %=.\n",
+		  entry->origin, library->name, module->home->name);
 
 	if (module->defn)
 	    error("Module %= multiply defined.\n", defn->name);
@@ -666,9 +668,13 @@ static void complete_module(struct module *module)
 
     for (use = module->defn->use; use != NULL; use = use->next) {
 	obj_t use_name = use->name;
-	struct library *home = module->home ? module->home : library_Dylan;
-	struct module *used_module = find_module(home, use_name, TRUE, FALSE);
+	struct module *used_module;
 	obj_t imports = obj_Nil;
+
+	if (module->name == symbol("Dylan-User"))
+	    used_module = find_module(library_Dylan, use_name, TRUE, FALSE);
+	else
+	    used_module = find_module(module->home, use_name, TRUE, FALSE);
 
 	if (!used_module->completed)
 	    complete_module(used_module);
@@ -802,8 +808,8 @@ struct var *find_var(struct module *module, obj_t name, boolean writeable,
 	      case var_Variable:
 		break;
 	      default:
-		error("attempt to change constant %= from module %=.",
-		      name, module->name);
+		error("Constant %= in module %= library %= is not changeable.",
+		      name, module->name, module->home->name);
 	    }
 	}
     }
@@ -835,8 +841,8 @@ void define_variable(struct module *module, obj_t name, enum var_kind kind)
 	if (kind == var_Variable)
 	    var->variable.kind = var_Variable;
 	else if (kind != var_Method)
-	    error("attempt to change constant %= from module %=.",
-		  name, module->name);
+	    error("Constant %= in module %= library %= is not changeable.",
+		  name, module->name, module->home->name);
 	break;
       default:
 	if (kind != var_Method)
@@ -850,13 +856,9 @@ void define_variable(struct module *module, obj_t name, enum var_kind kind)
 	    error("variable %= must be defined by a user of module %=\n",
 		  name, module->name);
 	else if (kind!=var_Method && var->variable.home->home!=module->home)
-	    if (module->home)
-		error("variable %= must be defined in library %=, not %=\n",
-		      name, var->variable.home->home->name,
-		      module->home->name);
-	    else
-		error("variable %= must be defined in library %=\n",
-		      name, var->variable.home->home->name);
+	    error("variable %= must be defined in library %=, not %=\n",
+		  name, var->variable.home->home->name,
+		  module->home->name);
     }
     else {
 	if (kind != var_Method && var->variable.home != module)
@@ -903,8 +905,7 @@ void list_modules(struct library *library)
 
 	    printf("%c%c ",
 		   entry->exported ? 'x' : ' ',
-		   (module->home == NULL || module->home == library)
-		     ? ' ' : 'i');
+		   module->home == library ? ' ' : 'i');
 	    prin1(entry->name);
 	    if (module->completed)
 		printf("\n");
@@ -1079,10 +1080,29 @@ void finalize_modules(void)
 	if (!module->completed)
 	    complete_module(module);
 
+    for (var = Vars; var != NULL; var = var->next) {
+	if (var->variable.defined) {
+	    switch (var->variable.kind) {
+	      case var_Assumed:
+		var->variable.kind = var_GenericFunction;
+		break;
+
+	      case var_AssumedWriteable:
+		error("Constant %= in module %= library %= is not changeable.",
+		      var->variable.name, var->variable.home->name,
+		      var->variable.home->home->name);
+		break;
+
+	      default:
+		break;
+	    }
+	}
+    }
+
     for (library = Libraries; library != NULL; library = library->next) {
 	boolean library_printed = FALSE;
 	for (module = Modules; module != NULL; module = module->next) {
-	    if (module->home == NULL || module->home == library) {
+	    if (module->home == library) {
 		boolean module_printed = FALSE;
 		for (var = Vars; var != NULL; var = var->next) {
 		    if (var->variable.home==module && !var->variable.defined) {
