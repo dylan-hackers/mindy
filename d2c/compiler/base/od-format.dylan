@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.45 1996/04/10 16:51:27 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.46 1996/04/13 21:11:32 wlott Exp $
 
 /*
 
@@ -498,8 +498,8 @@ begin
   register-object-id(#"module-var-ref-operation", #x00A8);
   register-object-id(#"module-var-set-operation", #x00A9);
   register-object-id(#"self-tail-call-operation", #x00AA);
-  register-object-id(#"slot-ref-operation", #x00AB);
-  register-object-id(#"slot-set-operation", #x00AC);
+  register-object-id(#"heap-slot-ref-operation", #x00AB);
+  register-object-id(#"heap-slot-set-operation", #x00AC);
   register-object-id(#"literal-constant", #x00AD);
   register-object-id(#"definition-constant-leaf", #x00AE);
   register-object-id(#"uninitialized-value-leaf", #x00AF);
@@ -518,6 +518,7 @@ begin
   register-object-id(#"function-literal", #x00BC);
   register-object-id(#"nlx-info", #x00BD);
   register-object-id(#"make-catcher-operation", #x00BE);
+  register-object-id(#"data-word-ref-operation", #x00BF);
 
   register-object-id(#"generic-definition", #x00C0);
   register-object-id(#"implicit-generic-definition", #x00C1);
