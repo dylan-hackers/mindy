@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.8 2001/01/25 03:50:27 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.9 2001/02/04 22:14:10 gabor Exp $
 copyright: see below
 
 
@@ -521,13 +521,27 @@ define-primitive-emitter
    end);
 
 define-primitive-emitter
+  (#"c-local-decl",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let decl = operation.depends-on.source-exp;
+     unless (instance?(decl, <literal-constant>)
+	       & instance?(decl.value, <literal-string>))
+       error("decl in c-local-decl isn't a constant string?");
+     end;
+     format(file.file-vars-stream, "%s\n",
+	    decl.value.literal-value);
+     deliver-results(defines, #[], #f, file);
+   end);
+
+define-primitive-emitter
   (#"c-expr",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let stream = make(<buffered-byte-string-output-stream>);
-
      let res-dep = operation.depends-on;
      let result-rep = rep-for-c-type(res-dep.source-exp);
 
