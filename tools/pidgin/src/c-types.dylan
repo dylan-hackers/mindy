@@ -266,6 +266,33 @@ define class <c-function-parameter> (<object>)
     required-init-keyword: type:;
 end;
 
+define function format-function-parameters
+    (type :: <c-function-type>, #key parameter-names?)
+ => (parameters :: <string>)
+  if (type.c-function-parameters.empty?)
+    case
+      type.c-function-explicit-void? =>
+	"void";
+      type.c-function-explicit-varargs? =>
+	"...";
+      otherwise =>
+	"";
+    end case;
+  else
+    local method process-arg (arg)
+	    format-c-type-declarator(arg, parameter-names?: parameter-names?);
+	  end;
+    let result = join-strings(", ", map-as(<list>,
+					   process-arg,
+					   type.c-function-parameters));
+    if (type.c-function-explicit-varargs?)
+      concatenate(result, ", ...");
+    else
+      result;
+    end if;
+  end if;
+end;
+
 
 //=========================================================================
 //  Typedef types
@@ -384,12 +411,12 @@ define function format-c-type-declarator
 	  last-was-direct? := #t;
 
 	<c-function-type> =>
-	  let arguments = ""; // XXX - this is wrong
+	  let parameters = format-function-parameters(type);
 	  decl :=
 	    if (last-was-direct?)
-	      concatenate(decl, "(", arguments, ")");
+	      concatenate(decl, "(", parameters, ")");
 	    else
-	      concatenate("(", decl, ")(", arguments, ")");
+	      concatenate("(", decl, ")(", parameters, ")");
 	    end;
 	  last-was-direct? := #t;
 
@@ -428,3 +455,19 @@ define method nested-type-list
  => (nested :: <list>)
   pair(type, nested-type-list(type.c-function-return-type));
 end;
+
+
+//=========================================================================
+//  Utility routines
+//=========================================================================
+//  This function is slow and should live somewhere else.
+
+define function join-strings
+    (joiner :: <string>, strings :: <list>)
+ => (string :: <string>)
+  let result = strings.head;
+  for (string in strings.tail)
+    result := concatenate(result, joiner, string);
+  end;
+  result;
+end function;
