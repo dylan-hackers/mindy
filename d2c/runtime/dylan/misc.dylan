@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.3 2001/03/14 23:34:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.4 2002/03/13 22:54:22 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -6,7 +6,7 @@ module: dylan-viscera
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -37,7 +37,9 @@ module: dylan-viscera
 //
 define function assert (value) => ();
   unless (value)
-    error("Assertion failed.");
+    let err = make(<simple-error>, format-string: "Assertion failed.");
+    invoke-debugger(*debugger*, err);
+    error(err);
   end;
 end function assert;
 
