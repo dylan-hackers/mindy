@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.7 1994/04/28 22:35:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.8 1994/06/11 02:20:15 wlott Exp $
 *
 * This file does whatever.
 *
@@ -73,6 +73,7 @@ end		is(END);
 exception	is(EXCEPTION);
 finally		is(FINALLY);
 for		is(FOR);
+free		is(FREE);
 from		is(FROM);
 generic		is(GENERIC);
 handler		is(HANDLER);
