@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.86 2003/11/06 03:52:51 bruce Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.87 2003/11/06 22:03:44 bruce Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -343,7 +343,7 @@ inherit-from:				generic-unix
 default-features:			compiled-for-darwin
 make-command:                   	gnumake
 randomize-library-command:              ranlib -c %s
-libtool-command:			glibtool
+libtool-command:			glibtool --tag=junk
 
 // IRIX
 platform-name:				irix
