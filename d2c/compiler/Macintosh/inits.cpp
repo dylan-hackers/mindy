@@ -1,5 +1,5 @@
 // File: inits.cpp
-// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.3 2004/04/13 20:57:29 gabor Exp $
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.4 2004/04/14 20:58:50 gabor Exp $
 // Purpose: present the correct interface to be a CW plugin
 // Author: Gabor Greif <gabor@mac.com>
 // Status: This version is is based on the Pro6 CW API, but sorely needs cleanup
@@ -453,4 +453,52 @@ CW_CALLBACK plugin_main(CWPluginContext context)
 	return main_result;
 }
 
+
+extern "C" FSSpec fsSpec(const CWFileSpec& spec);
+
+FSSpec fsSpec(const CWFileSpec& spec)
+{
+	UInt8 path[1024];
+	UInt8* path2;
+	FSSpec res;
+	int len, count;
+
+	FSRefMakePath(
+		&spec.parentDirRef,
+		path + 1,
+		1024 - 1);
+
+	*path = strlen((const char*)path + 1);
+
+	for(path2 = path + *path + 1, count = 0; count < spec.filename.length; ++count, ++path2)
+	{
+		*path2 = spec.filename.unicode[count];
+	}
+
+	*path2 = 0;
+	*path = path2 - path;
+	FSMakeFSSpec(0, 0, path, &res);
+	return res;
+}
+
+
+extern "C" CWFileSpec fileRef(const FSSpec& spec);
+
+CWFileSpec fileRef(const FSSpec& spe)
+{
+	FSSpec spec(spe);
+	int i=0;
+	CWFileSpec ref;
+	memset(&ref, 0, sizeof(ref));
+	ref.filename.length = spec.name[0];
+	for(i=0; i < ref.filename.length; ++i)
+	{
+		ref.filename.unicode[i] = spec.name[i + 1];
+	}
+
+	spec.name[0] = 1;
+	spec.name[1] = ':';
+	FSpMakeFSRef(&spec, &ref.parentDirRef);
+	return ref;
+}
 
