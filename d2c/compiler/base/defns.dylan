@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/defns.dylan,v 1.2 2000/01/24 04:55:59 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/defns.dylan,v 1.3 2001/07/07 17:14:56 housel Exp $
 copyright: see below
 
 
@@ -206,9 +206,11 @@ define method definition-kind
   "class";
 end method definition-kind;
 
-define open generic class-defn-defered-evaluations-function
+define open generic class-defn-deferred-evaluations-function
+    (defn :: <class-definition>) => res :: false-or(<ct-function>);
+
+define open generic class-defn-key-defaulter-function
     (defn :: <class-definition>) => res :: false-or(<ct-function>);
 
 define open generic class-defn-maker-function
     (defn :: <class-definition>) => res :: false-or(<ct-function>);
-

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.28 2001/05/31 02:58:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.29 2001/07/07 17:14:56 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -509,8 +509,8 @@ define module definitions
     <abstract-constant-definition>, <abstract-variable-definition>,
     <implicit-definition>,
     <class-definition>, class-defn-maker-function,
-    class-defn-defered-evaluations-function,
-    
+    class-defn-deferred-evaluations-function,
+    class-defn-key-defaulter-function,
 
     <function-definition>,
     function-defn-signature, function-defn-signature-setter,
