@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.14 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.15 1995/12/18 04:05:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -347,3 +347,116 @@ end;
 define method symcat (#rest things) => res :: <symbol>;
   as(<symbol>, apply(concatenate, "", map(curry(as, <string>), things)));
 end;
+
+
+define method stringify (#rest things) => res :: <byte-string>;
+  let res = for (thing in things,
+		 len = 0 then len + string-length(thing))
+	    finally
+	      make(<byte-string>, size: len);
+	    end for;
+  for (thing in things,
+       offset = 0 then append(res, offset, thing))
+  end for;
+  res;
+end method stringify;
+
+define method string-length (char :: <byte-character>)
+    => res :: <fixed-integer>;
+  1;
+end method string-length;
+
+define method string-length (str :: <byte-string>) => res :: <fixed-integer>;
+  str.size;
+end method string-length;
+
+define method string-length (int :: <fixed-integer>) => res :: <fixed-integer>;
+  case
+    int < 0 =>
+      if (int == $minimum-fixed-integer)
+	2 + string-length(- truncate/(int, 10));
+      else
+	1 + string-length(-int);
+      end if;
+    int < 10 => 1;
+    int < 100 => 2;
+    int < 1000 => 3;
+    int < 10000 => 4;
+    otherwise
+      for (digits from 5,
+	   num = floor/(int, 100000) then floor/(num, 10),
+	   until: zero?(num))
+      finally
+	digits;
+      end for;
+  end case;
+end method string-length;
+
+define method append
+    (res :: <byte-string>, offset :: <fixed-integer>, what :: <byte-character>)
+    => new-offset :: <fixed-integer>;
+  res[offset] := what;
+  offset + 1;
+end method append;
+
+define method append
+    (res :: <byte-string>, offset :: <fixed-integer>, what :: <byte-string>)
+    => new-offset :: <fixed-integer>;
+  let len = what.size;
+  copy-bytes(res, offset, what, 0, len);
+  offset + len;
+end method append;
+
+define method append
+    (res :: <byte-string>, offset :: <fixed-integer>, what :: <fixed-integer>)
+    => new-offset :: <fixed-integer>;
+  if (what < 0)
+    res[offset] := '-';
+    if (what == $minimum-fixed-integer)
+      let (rest, low) = truncate/(what, 10);
+      let new-offset = append(res, offset + 1, -rest);
+      res[new-offset] := as(<character>, low + 48);
+      new-offset + 1;
+    else
+      append(res, offset + 1, -what);
+    end if;
+  elseif (what < 10)
+    res[offset] := as(<character>, what + 48);
+    offset + 1;
+  elseif (what < 100)
+    let (high, low) = floor/(what, 10);
+    res[offset] := as(<character>, high + 48);
+    res[offset + 1] := as(<character>, low + 48);
+    offset + 2;
+  elseif (what < 1000)
+    let (temp, low) = floor/(what, 10);
+    let (high, mid) = floor/(temp, 10);
+    res[offset] := as(<character>, high + 48);
+    res[offset + 1] := as(<character>, mid + 48);
+    res[offset + 2] := as(<character>, low + 48);
+    offset + 3;
+  elseif (what < 10000)
+    let (temp, low) = floor/(what, 10);
+    let (temp, mid-low) = floor/(temp, 10);
+    let (high, mid-high) = floor/(temp, 10);
+    res[offset] := as(<character>, high + 48);
+    res[offset + 1] := as(<character>, mid-high + 48);
+    res[offset + 2] := as(<character>, mid-low + 48);
+    res[offset + 3] := as(<character>, low + 48);
+    offset + 4;
+  else
+    local method repeat (num :: <fixed-integer>)
+	      => new-offset :: <fixed-integer>;
+	    if (num < 10)
+	      res[offset] := as(<character>, num + 48);
+	      offset + 1;
+	    else
+	      let (num, digit) = floor/(num, 10);
+	      let new-offset = repeat(num);
+	      res[new-offset] := as(<character>, digit + 48);
+	      new-offset + 1;
+	    end if;
+	  end method repeat;
+    repeat(what);
+  end if;
+end method append;
