@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.1 1995/05/12 12:31:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.2 1995/05/26 10:49:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -112,6 +112,7 @@ end;
 
 
 
+
 define method apply-transformer
     (component :: <component>, call :: <known-call>)
     => (did-anything? :: <boolean>);
@@ -164,10 +165,10 @@ define method apply-transformer
   end;
 end;
 
-define-transformer(#"apply", apply-transformer);
+define-transformer(#"apply", #f, apply-transformer);
 
 
-
+
 define method list-transformer
     (component :: <component>, call :: <known-call>)
     => (did-anything? :: <boolean>);
@@ -182,4 +183,52 @@ define method list-transformer
   end;
 end;
 
-define-transformer(#"list", list-transformer);
+define-transformer(#"list", #f, list-transformer);
+
+
+
+define method make-transformer
+    (component :: <component>, call :: <known-call>)
+    => (did-anything? :: <boolean>);
+  block (return)
+    local method give-up () return(#f) end;
+    let (cclass-leaf, init-keywords) = extract-args(call, 1, #f, #t, #f);
+    unless (instance?(cclass-leaf, <literal-constant>))
+      give-up();
+    end;
+    let cclass = cclass-leaf.value;
+    if (cclass.abstract?)
+      compiler-warning("Trying to make an instance of an abstract class");
+      give-up();
+    end;
+    maybe-restrict-type(component, call, cclass);
+    unless (instance?(cclass, <defined-cclass>))
+      give-up();
+    end;
+    let defn = cclass.class-defn;
+    unless (defn.class-defn-maker-function)
+      give-up();
+    end;
+    // ### Need to default the keywords.
+    // ### Need to validate the keywords.
+    let builder = make-builder(component);
+    let assign = call.dependents.dependent;
+    let policy = assign.policy;
+    let source = assign.source-location;
+    let instance-var = make-local-var(builder, #"instance", cclass);
+    build-assignment
+      (builder, policy, source, instance-var,
+       make-unknown-call
+	 (builder, defn.class-defn-maker-function, #f, init-keywords));
+    build-assignment
+      (builder, policy, source, #(),
+       make-unknown-call
+	 (builder, dylan-defn-leaf(builder, #"initialize"), #f,
+	  pair(instance-var, init-keywords)));
+    insert-before(component, assign, builder-result(builder));
+    replace-expression(component, assign.depends-on, instance-var);
+    #t;
+  end;
+end;
+
+define-transformer(#"make", #(#"<class>"), make-transformer);
