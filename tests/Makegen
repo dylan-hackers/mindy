@@ -4,13 +4,13 @@ $D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
 do emit_library_rule(
-    'dylan-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+    'dylan-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
 do emit_library_rule(
-    'regexp-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+    'regexp-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
 do emit_library_rule(
-    'stream-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+    'stream-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
 do emit_library_rule(
     'table-ext-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
