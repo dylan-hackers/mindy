@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.6 2000/09/09 21:19:09 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.7 2000/10/20 15:25:12 housel Exp $
 
 //======================================================================
 //
@@ -33,7 +33,7 @@ rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.6 2000/0
 // produced by Melange rather than being explicitly referenced by users.
 //
 
-c-include("../gc/gc.h");
+c-include("gc/gc.h");
 
 // Usage: c-variable-ref(int: "&variable") { := expression }
 //
