@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.127 1996/03/20 01:53:51 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.128 1996/03/20 14:20:34 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -64,7 +64,7 @@ define method optimize-component
 	| try(identify-tail-calls, "finding tail calls")
 	| try(cleanup-control-flow, "cleaning up control flow")
 	| try(propagate-constraints, "propagating constraints")
-	// | try(optimistic-type-inference, "optimistic type inference")
+	| try(optimistic-type-inference, "optimistic type inference")
 	| (simplify-only & (done := #t))
 	| try(add-type-checks, "adding type checks")
 	| try(replace-placeholders, "replacing placeholders")
