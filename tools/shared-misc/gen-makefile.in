@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.16 2001/01/02 17:29:40 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.17 2001/03/10 06:16:22 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -791,6 +791,10 @@ sub emit_library_rule {
 
 	if ($executable) {
 	    push(@files_to_clean, $executable_filename, 'heap.c', 'inits.c');
+	    if($shared && $static) {
+	        push(@files_to_clean, "heap$dot_static", "inits$dot_static");
+	    }
+	    push(@files_to_clean, "heap$dot_obj", "inits$dot_obj");
 
 	    if (grep(/^compile$/, @keywords)) {
 		push(@compile_dependencies, $executable_filename);
@@ -838,6 +842,7 @@ sub emit_library_rule {
 		print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
 		print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
 		    " $lib_prefix$unit_prefix$dot_lib\n";
+		push(@files_to_clean, " $lib_prefix$unit_prefix$dot_lib");
 	    }
 	} else {
 	    print "\t\$(D2C) -M \$(D2CFLAGS) --static $extraflags ",
