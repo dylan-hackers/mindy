@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.4 1996/04/14 13:25:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.5 1996/04/14 19:45:42 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -252,8 +252,8 @@ define module define-classes
   use signature-interface;
   use front,
     import: {<heap-slot-ref>, <data-word-ref>, <heap-slot-set>,
-	     <uninitialized-value>, <primitive>,
-	     <function-literal>, <method-literal>};
+	     <uninitialized-value>, <primitive>, <fer-function-region>,
+	     <function-literal>, <method-literal>, optimize-component};
   use c-representation;
   use function-definitions;
 
