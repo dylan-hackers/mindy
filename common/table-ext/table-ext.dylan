@@ -1,6 +1,6 @@
 module: Table-Extensions
 author: Nick Kramer (nkramer@cs.cmu.edu), David Watson (dwatson@cmu.edu)
-rcs-header: $Header: /scm/cvs/src/common/table-ext/table-ext.dylan,v 1.4 2002/08/30 09:14:41 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/common/table-ext/table-ext.dylan,v 1.5 2004/08/24 07:38:23 bruce Exp $
 
 //======================================================================
 //
@@ -40,7 +40,20 @@ define sealed domain initialize(<string-table>);
 
 define sealed inline method table-protocol (ht :: <string-table>)
  => (key-test :: <function>, key-hash :: <function>);
-  values(\=, string-hash);
+  values(\= , string-hash);
+end method table-protocol;
+
+
+define sealed class <byte-string-table> (<value-table>)
+end class <byte-string-table>;
+
+define sealed domain make(singleton(<byte-string-table>));
+define sealed domain initialize(<byte-string-table>);
+
+define sealed inline method table-protocol (ht :: <byte-string-table>)
+ => (key-test :: <function>, key-hash :: <function>);
+  values(method(a :: <byte-string>, b :: <byte-string>) a = b end,
+         string-hash);
 end method table-protocol;
 
 
@@ -53,6 +66,18 @@ define sealed domain make(singleton(<case-insensitive-string-table>));
 define sealed domain initialize(<case-insensitive-string-table>);
 
 define sealed inline method table-protocol (ht :: <case-insensitive-string-table>)
+ => (key-test :: <function>, key-hash :: <function>);
+  values(case-insensitive-equal, case-insensitive-string-hash);
+end method table-protocol;
+
+
+define sealed class <case-insensitive-byte-string-table> (<value-table>)
+end class <case-insensitive-byte-string-table>;
+
+define sealed domain make(singleton(<case-insensitive-byte-string-table>));
+define sealed domain initialize(<case-insensitive-byte-string-table>);
+
+define sealed inline method table-protocol (ht :: <case-insensitive-byte-string-table>)
  => (key-test :: <function>, key-hash :: <function>);
   values(case-insensitive-equal, case-insensitive-string-hash);
 end method table-protocol;
@@ -84,6 +109,13 @@ define method case-insensitive-string-hash
   string-hash(as-lowercase(s), initial-state);
 end method case-insensitive-string-hash;
 
+define method case-insensitive-string-hash
+    (s :: <byte-string>, initial-state :: <hash-state>)
+ => (id :: <integer>, hash-state :: <hash-state>);
+  string-hash(as-lowercase(s), initial-state);
+end method case-insensitive-string-hash;
+
+
 define method case-insensitive-equal (o1 :: <object>, o2 :: <object>)
  => answer :: <boolean>;
   #f;
@@ -111,6 +143,22 @@ define method case-insensitive-equal (c1 :: <character>, c2 :: <character>)
 end method case-insensitive-equal;
 
 define method case-insensitive-equal (s1 :: <string>, s2 :: <string>)
+ => answer :: <boolean>;
+  if (s1.size ~== s2.size)
+    #f;
+  else
+    block (return)
+      for (c1 in s1, c2 in s2)
+	if (~ case-insensitive-equal(c1, c2))
+	  return(#f);
+	end if;
+      end for;
+      #t;
+    end block;
+  end if;
+end method case-insensitive-equal;
+
+define method case-insensitive-equal (s1 :: <byte-string>, s2 :: <byte-string>)
  => answer :: <boolean>;
   if (s1.size ~== s2.size)
     #f;

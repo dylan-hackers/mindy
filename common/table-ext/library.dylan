@@ -1,7 +1,7 @@
 module: Dylan-User
 author: Nick Kramer (nkramer@cs.cmu.edu), David Watson (dwatson@cmu.edu)
 synopsis: Definition of the Table-Extensions library.
-rcs-header: $Header: /scm/cvs/src/common/table-ext/library.dylan,v 1.2 2000/01/24 04:55:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/table-ext/library.dylan,v 1.3 2004/08/24 07:38:23 bruce Exp $
 
 //======================================================================
 //
@@ -43,8 +43,8 @@ define module Table-Extensions
 	     <equal-table>, equal-hash, <value-table>, value-hash};
   
   export
-    <string-table>,
-    <case-insensitive-string-table>,
+    <string-table>, <byte-string-table>,
+    <case-insensitive-string-table>, <case-insensitive-byte-string-table>,
     values-hash,
     case-insensitive-string-hash,
     case-insensitive-equal;
