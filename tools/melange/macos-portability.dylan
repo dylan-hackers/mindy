@@ -59,7 +59,9 @@ define constant $default-defines
       "__STDC__", "",
       "__APPLE__", "(1)",
       "__ppc__", "(1)",
-      "__BIG_ENDIAN", "(1)"];
+      "__APPLE_CC__", "(1)",
+      "__GNUC__", "(1)",
+      "__BIG_ENDIAN__", "(1)"];
 
 // Set up the search path for .h files
 
