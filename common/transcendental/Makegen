@@ -4,13 +4,13 @@
 # doesn't have the sinf family of functions (works like sin, but uses
 # floats instead of doubles).
 #
-if ($features{'compiled_for_darwin'}){
+if ($features{'compiled_for_darwin'} || $features{'compiled_for_solaris'}) {
    do emit_library_rule(
        'No-float-transcendental', '$(BUILDROOT)/force.timestamp', '', 
        'compile', 'no-mindy', 'install'
    );
 }
-elsif (! $features{'compiled_for_solaris'}) {
+else {
    do emit_library_rule(
        'Transcendental', '$(BUILDROOT)/force.timestamp', '', 
        'compile', 'no-mindy', 'install'
