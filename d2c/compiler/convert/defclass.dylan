@@ -1,9 +1,9 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.1 1994/12/12 13:01:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.2 1994/12/12 21:24:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-define class <class-definition> (<definition>)
+define class <class-definition> (<abstract-constant-definition>)
   //
   // The <cclass> for this class definition, #f if unknown (e.g. non-constant
   // superclasses), #"not-computed-yet" if we haven't computed it yet, or
