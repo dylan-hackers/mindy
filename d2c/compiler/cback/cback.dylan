@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.77 1995/11/09 23:35:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.78 1995/11/12 03:33:34 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -151,6 +151,10 @@ define class <unit-info> (<object>)
   // id number for the next global.
   slot unit-info-next-global :: <fixed-integer>, init-value: 0;
   //
+  //
+  // keeps track of names used already.
+  slot unit-info-global-table :: <dictionary>,
+    init-function: method () make(<string-table>) end method;
   // Vector of the initial values for the roots vector.
   slot unit-info-init-roots :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
@@ -191,6 +195,10 @@ define class <output-info> (<object>)
   // id number for the next local.  Reset at the start of each function.
   slot output-info-next-local :: <fixed-integer>, init-value: 0;
   //
+  // keeps track of names used already.
+  slot output-info-local-table :: <dictionary>,
+    init-function: method () make(<string-table>) end method;
+  //
   // C variable holding the current stack top.
   slot output-info-cur-stack-depth :: <fixed-integer>,
     init-value: 0;
@@ -222,25 +230,105 @@ define method get-info-for (thing :: <annotatable>,
   thing.info | (thing.info := make-info-for(thing, output-info));
 end;
 
-define method new-local (output-info :: <output-info>)
-    => res :: <string>;
-  let num = output-info.output-info-next-local;
-  output-info.output-info-next-local := num + 1;
+define constant c-prefix-transform :: <vector>
+  = begin
+      let map = make(<byte-string>, size: 256);
+      for (i from 0 below 256)
+	map[i] := as(<character>, i);
+      end for;
+      map[as(<integer>, '-')] := '_';
+      map[as(<integer>, '%')] := '_';
+      map[as(<integer>, '*')] := 'O';
+      map[as(<integer>, '/')] := 'O';
+      map[as(<integer>, '+')] := 'O';
+      map[as(<integer>, '~')] := 'O';
+      map[as(<integer>, '$')] := '_';
+      map[as(<integer>, '?')] := 'P';
+      map[as(<integer>, '!')] := 'D';
+      map[as(<integer>, '<')] := 'C';
+      map[as(<integer>, '>')] := 'C';
+      map[as(<integer>, '=')] := 'O';
+      map[as(<integer>, '&')] := 'O';
+      map[as(<integer>, '|')] := 'O';
+      map;
+    end;
 
-  format-to-string("L%d", num);
+define method is-prefix? (short :: <string>, long :: <string>)
+  if (short.size > long.size)
+    #f;
+  else
+    for (i from 0 below short.size, until: short[i] ~= long[i])
+    finally
+      i == short.size;
+    end for;
+  end if;
+end method is-prefix?;
+
+// Return a name suitable for use in a C name.  "Description" is expected to
+// be a descriptive string like "foo{<bar>, <baz>} in module Dylan, library
+// Dylan".
+define method c-prefix (description :: <byte-string>) => (result :: <string>);
+  if (is-prefix?("Define Constant ", description))
+    description := copy-sequence(description, start: 16);
+  end if;
+  if (is-prefix?("Discriminator for ", description))
+    description := copy-sequence(description, start: 18);
+  end if;
+  for (i from 0 below description.size,
+       until: description[i] = ' ' | description[i] = '{')
+  finally
+    let result = make(<byte-string>, size: i);
+    for (j from 0 below i)
+      result[j] := c-prefix-transform[as(<integer>, description[j])];
+    end for;
+    result;
+  end for;
+end method c-prefix;
+
+define method c-prefix (description :: <basic-name>) => (result :: <string>);
+  as(<byte-string>, description.name-symbol).c-prefix;
+end method c-prefix;
+
+define method c-prefix (description :: <symbol>) => (result :: <string>);
+  as(<byte-string>, description).c-prefix;
+end method c-prefix;
+
+define method new-local
+    (output-info :: <output-info>,
+     #key prefix :: <string> = "L_", modifier :: <string> = "anon")
+ => res :: <string>;
+  let result = format-to-string("%s%s", prefix, modifier);
+  if (key-exists?(output-info.output-info-local-table, result))
+    let num = output-info.output-info-next-local;
+    output-info.output-info-next-local := num + 1;
+    new-local(output-info, prefix: prefix,
+	      modifier: format-to-string("%s_%d", modifier, num));
+  else
+    output-info.output-info-local-table[result] := result;
+  end if;
 end;
 
-define method new-global (output-info :: <output-info>)
-    => res :: <string>;
+define method new-global
+    (output-info :: <output-info>,
+     #key prefix :: <string> = "G", modifier :: <string> = "")
+ => res :: <string>;
   let unit-info = output-info.output-info-unit-info;
-  let num = unit-info.unit-info-next-global;
-  unit-info.unit-info-next-global := num + 1;
 
-  format-to-string("%s_G%d", unit-info.unit-info-prefix, num);
-end;
+  let result = format-to-string("%s_%s%s", unit-info.unit-info-prefix,
+				prefix, modifier);
+  if (key-exists?(unit-info.unit-info-global-table, result))
+    let num = unit-info.unit-info-next-global;
+    unit-info.unit-info-next-global := num + 1;
+    new-global(output-info, prefix: prefix,
+	       modifier: format-to-string("%s_%d", modifier, num));
+  else
+    unit-info.unit-info-global-table[result] := result;
+  end if;
+end method new-global;
 
 define method new-root (init-value :: union(<false>, <ct-value>),
-			output-info :: <output-info>)
+			output-info :: <output-info>,
+			#key prefix)
   let unit-info = output-info.output-info-unit-info;
   let roots = unit-info.unit-info-init-roots;
   let index = roots.size;
@@ -322,7 +410,7 @@ define method make-info-for (defn :: <definition>,
 	      *general-rep*;
 	    end;
   if (instance?(rep, <immediate-representation>))
-    let name = new-global(output-info);
+    let name = new-global(output-info, prefix: defn.defn-name.c-prefix);
     make(<backend-var-info>, representation: rep, name: name);
   else
     let name = new-root(if (instance?(defn, <variable-definition>))
@@ -349,7 +437,12 @@ define method c-name-and-rep (leaf :: <abstract-variable>,
   let info = get-info-for(leaf, output-info);
   let name = info.backend-var-info-name;
   unless (name)
-    name := new-local(output-info);
+    if (instance?(leaf.var-info, <debug-named-info>))
+      name := new-local(output-info,
+			modifier: leaf.var-info.debug-name.c-prefix);
+    else
+      name := new-local(output-info);
+    end if;
     let stream = output-info.output-info-vars-stream;
     format(stream, "%s %s;",
 	   info.backend-var-info-rep.representation-c-type, name);
@@ -411,7 +504,9 @@ define method main-entry-name
     (info :: <function-info>, output-info :: <output-info>)
     => res :: <byte-string>;
   info.function-info-main-entry-name
-    | (info.function-info-main-entry-name := new-global(output-info));
+    | (info.function-info-main-entry-name
+	 := new-global(output-info, modifier: "_main",
+		       prefix: info.function-info-name.c-prefix));
 end;
 
 define method make-function-info
@@ -540,7 +635,10 @@ define method general-entry-name
     (info :: <constant-function-info>, output-info :: <output-info>)
     => res :: <byte-string>;
   info.function-info-general-entry-name
-    | (info.function-info-general-entry-name := new-global(output-info));
+    | (info.function-info-general-entry-name
+	 := new-global(output-info, modifier: "_general",
+		       prefix: info.function-info-name.c-prefix));
+
 end;
 
 define method make-info-for
@@ -568,7 +666,9 @@ define method generic-entry-name
     (info :: <constant-method-info>, output-info :: <output-info>)
     => res :: <byte-string>;
   info.function-info-generic-entry-name
-    | (info.function-info-generic-entry-name := new-global(output-info));
+    | (info.function-info-generic-entry-name
+	 := new-global(output-info, modifier: "_generic",
+		       prefix: info.function-info-name.c-prefix));
 end;
 
 define method make-info-for
@@ -857,6 +957,7 @@ define method emit-function
     => ();
   output-info.output-info-next-block := 0;
   output-info.output-info-next-local := 0;
+  output-info.output-info-local-table := make(<string-table>);
   output-info.output-info-cur-stack-depth := 0;
   assert(output-info.output-info-local-vars.size == 0);
 
@@ -1145,7 +1246,7 @@ define method emit-return
     (return :: <return>, result-reps :: <list>, output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;  
-  let temp = new-local(output-info);
+  let temp = new-local(output-info, modifier: "temp");
   let function = return.block-of;
   let function-info = get-info-for(function, output-info);
   let name = pick-result-structure(result-reps, output-info);
@@ -1455,7 +1556,7 @@ define method emit-assignment
 		    func-info.function-info-result-type.min-values,
 		    output-info);
   elseif (instance?(result-rep, <list>))
-    let temp = new-local(output-info);
+    let temp = new-local(output-info, modifier: "temp");
     format(output-info.output-info-vars-stream, "struct %s %s;\n",
 	   pick-result-structure(result-rep, output-info),
 	   temp);
@@ -1617,7 +1718,7 @@ define method emit-assignment
   let stream = output-info.output-info-guts-stream;
   unless (defn.defn-init-value)
     if (rep.representation-has-bottom-value?)
-      let temp = new-local(output-info);
+      let temp = new-local(output-info, modifier: "temp");
       format(output-info.output-info-vars-stream, "%s %s;\n",
 	     rep.representation-c-type, temp);
       format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
@@ -2184,7 +2285,7 @@ define method conversion-expr
   if (target-rep == source-rep)
     source;
   else
-    let temp = new-local(output-info);
+    let temp = new-local(output-info, modifier: "temp");
     format(output-info.output-info-vars-stream, "%s %s;\n",
 	   target-rep.representation-c-type, temp);
     emit-copy(temp, target-rep, source, source-rep, output-info);
