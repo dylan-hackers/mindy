@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.79 1995/06/07 22:37:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.80 1995/06/09 16:15:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1022,6 +1022,7 @@ define module heap
   use common;
   use utils;
   use names;
+  use signature-interface;
   use compile-time-values;
   use variables;
   use representation;
