@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.34 2002/03/24 16:01:57 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.35 2002/04/12 18:40:15 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1154,11 +1154,11 @@ define method spew-object
     (name :: <byte-string>,
      object :: <override-info>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<override-descriptor>"), state,
-		slot-init-value:
+		override-init-value:
 		  if (instance?(object.override-init-value, <ct-value>))
 		    object.override-init-value;
 		  end,
-		slot-init-function:
+		override-init-function:
 		  if (instance?(object.override-init-function, <ct-value>))
 		    object.override-init-function;
 		  end);
