@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.12 1995/10/09 22:29:15 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.13 1995/10/13 15:04:54 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -23,6 +23,15 @@ end;
 define abstract class <literal-boolean> (<eql-literal>) end;
 define class <literal-true> (<literal-boolean>) end;
 define class <literal-false> (<literal-boolean>) end;
+
+define method literal-value (wot :: <literal-true>) => res :: <true>;
+  #t;
+end method;
+
+define method literal-value (wot :: <literal-false>) => res :: <false>;
+  #f;
+end method;
+
 
 define variable *literal-true* = #f;
 define variable *literal-false* = #f;
@@ -435,6 +444,11 @@ end;
 define class <literal-empty-list> (<literal-list>, <eql-literal>)
 end;
 
+define method literal-value (wot :: <literal-empty-list>)
+ => res :: <empty-list>;
+  #();
+end method;
+
 define variable *literal-empty-list* = #f;
 
 define method make (class == <literal-empty-list>, #next next-method, #key)
@@ -553,20 +567,30 @@ end;
 // Dump/load methods:
 
 
-define /* exported */ variable *compiler-dispatcher* = make(<dispatcher>);
+define /* exported */ variable *compiler-dispatcher*
+  = make(<dispatcher>);
 
 
 // The method is inherited by all EQL literals.  It must be overridden for some
 // where the type of the literal-value is ambiguous (e.g. for numbers.)
 //
 define method dump-od (obj :: <eql-literal>, buf :: <dump-state>) => ();
-  dump-simple-object($eql-literal-odf-id, buf, obj.literal-value);
+  dump-simple-object(#"eql-literal", buf, obj.literal-value);
 end method;
 
+/*
+define method dump-od (obj :: <literal-true>, buf :: <dump-state>) => ();
+  dump-simple-object(#"eql-literal", buf, #t);
+end method;
+
+define method dump-od (obj :: <literal-false>, buf :: <dump-state>) => ();
+  dump-simple-object(#"eql-literal", buf, #f);
+end method;
+*/
 
 // Just use AS to reconstruct the literal.
 //
-add-od-loader(*compiler-dispatcher*, $eql-literal-odf-id,
+add-od-loader(*compiler-dispatcher*, #"eql-literal",
   method (state :: <load-state>) => res :: <eql-literal>;
     as(<ct-value>, load-sole-subobject(state));
   end method
@@ -577,11 +601,11 @@ add-od-loader(*compiler-dispatcher*, $eql-literal-odf-id,
 // the internal representation of literals.
 //
 define method dump-od (obj :: <literal-pair>, buf :: <dump-state>) => ();
-  dump-simple-object($literal-pair-odf-id, buf,
+  dump-simple-object(#"literal-pair", buf,
   		     obj.literal-head, obj.literal-tail);
 end method;
 
-add-od-loader(*compiler-dispatcher*, $literal-pair-odf-id,
+add-od-loader(*compiler-dispatcher*, #"literal-pair",
   method (state :: <load-state>) => res :: <literal-pair>;
     let hd = load-object-dispatch(state);
     let tl = load-object-dispatch(state);
@@ -594,10 +618,10 @@ add-od-loader(*compiler-dispatcher*, $literal-pair-odf-id,
 // The default for literal vectors is just like for eql-literals.
 //
 define method dump-od (obj :: <literal-vector>, buf :: <dump-state>) => ();
-  dump-simple-object($literal-vector-odf-id, buf, obj.literal-value);
+  dump-simple-object(#"literal-vector", buf, obj.literal-value);
 end method;
 
-add-od-loader(*compiler-dispatcher*, $literal-vector-odf-id,
+add-od-loader(*compiler-dispatcher*, #"literal-vector",
   method (state :: <load-state>) => res :: <literal-vector>;
     as(<ct-value>, load-sole-subobject(state));
   end method
@@ -609,29 +633,29 @@ add-od-loader(*compiler-dispatcher*, $literal-vector-odf-id,
 //
 define method dump-od
     (obj :: <literal-fixed-integer>, buf :: <dump-state>) => ();
-  dump-simple-object($literal-fixed-integer-odf-id, buf, obj.literal-value);
+  dump-simple-object(#"literal-fixed-integer", buf, obj.literal-value);
 end method;
 
 define method dump-od
     (obj :: <literal-single-float>, buf :: <dump-state>) => ();
-  dump-simple-object($literal-single-float-odf-id, buf, obj.literal-value);
+  dump-simple-object(#"literal-single-float", buf, obj.literal-value);
 end method;
 
 define method dump-od
     (obj :: <literal-double-float>, buf :: <dump-state>) => ();
-  dump-simple-object($literal-double-float-odf-id, buf, obj.literal-value);
+  dump-simple-object(#"literal-double-float", buf, obj.literal-value);
 end method;
 
 define method dump-od
     (obj :: <literal-extended-float>, buf :: <dump-state>) => ();
-  dump-simple-object($literal-extended-float-odf-id, buf, obj.literal-value);
+  dump-simple-object(#"literal-extended-float", buf, obj.literal-value);
 end method;
 
 
-for (x = list($literal-fixed-integer-odf-id, <literal-fixed-integer>,
-	      $literal-single-float-odf-id, <literal-single-float>,
-	      $literal-double-float-odf-id, <literal-double-float>,
-	      $literal-extended-float-odf-id, <literal-extended-float>)
+for (x = list(#"literal-fixed-integer", <literal-fixed-integer>,
+	      #"literal-single-float", <literal-single-float>,
+	      #"literal-double-float", <literal-double-float>,
+	      #"literal-extended-float", <literal-extended-float>)
        then x.tail.tail,
      until: x == #())
 
