@@ -1,13 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.12 1996/06/26 14:52:10 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.13 1996/08/10 20:15:49 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define library compiler-main
   use Dylan;
-#if (~mindy)
   use String-extensions;
-#endif
   use Random;
   use compiler-base;
   use compiler-front;
@@ -16,15 +14,6 @@ define library compiler-main
   use compiler-cback;
   use compiler-convert;
 end;
-
-define module file-system
-  use dylan;
-  use System, import: {system};
-  export
-    delete-file,
-    rename-file,
-    files-identical?;
-end module file-system;
 
 define module main
   use common;
