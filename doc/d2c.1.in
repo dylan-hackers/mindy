@@ -54,6 +54,9 @@ Print out a message describing the available options.
 .BR "\-\-version"
 Print out the version and copyright.
 .TP
+.BI "\-i, \-\-interactive"
+Enter interactive evaluation of Dylan expressions.
+.TP
 .BI "\-L, \-\-libdir" " libdir"
 Specify an extra directory to search for compiled Dylan libraries.
 .TP
