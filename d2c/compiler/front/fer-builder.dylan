@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.10 1995/04/15 18:44:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.11 1995/04/21 02:42:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -73,7 +73,8 @@ define method add-body-assignment(builder, assign) => ();
     = if (instance?(current.head, <simple-region>))
         current.head;
       else
-        let new = make(<simple-region>, source-location: assign.source-location);
+        let new = make(<simple-region>,
+		       source-location: assign.source-location);
 	bstack.head := pair(new, current);
 	new;
       end if;
@@ -95,7 +96,9 @@ end method;
 // Given an operation and a list of operands, set up the <dependency> objects
 // marking the operands.  The result is returned.
 //
-define method make-operand-dependencies(result, ops);
+define method make-operand-dependencies(result :: <dependent-mixin>,
+					ops :: <list>)
+    => res :: <dependent-mixin>;
   let prev = #f;
   for (op in ops)
     let dep = make(<dependency>, source-exp: op, source-next: op.dependents,
@@ -108,9 +111,23 @@ define method make-operand-dependencies(result, ops);
     prev := dep;
     op.dependents := dep;
   end;
+  // ### This shouldn't be necessary, but there is apparently a bug in
+  // Mindy's instance initialization.
+  unless (prev)
+    result.depends-on := #f;
+  end;
   result;
 end method;
 
+define method make-operand-dependencies(result :: <dependent-mixin>,
+					op :: <leaf>)
+    => res :: <dependent-mixin>;
+  let dep = make(<dependency>, source-exp: op, source-next: op.dependents,
+		 dependent: result);
+  result.depends-on := dep;
+  op.dependents := dep;
+  result;
+end;
 
 // Push new entries on region and body stacks (prepare to append to sub-body.)
 //
@@ -179,7 +196,7 @@ define method build-if-body
   push-body(builder,
 	    make-operand-dependencies(make(<if-region>,
 					   source-location: source),
-				      list(predicate-leaf)));
+				      predicate-leaf));
 end method;
 
 
@@ -348,7 +365,15 @@ define method make-literal-constant
     (builder :: <fer-builder>, value :: <ct-value>)
  => res :: <literal-constant>;
   ignore(builder);
-  make(<literal-constant>, value: value);
+  make(<literal-constant>, derived-type: ct-value-cclass(value), value: value);
+end method;
+
+define method make-literal-constant
+    (builder :: <fer-builder>, value :: <eql-ct-value>)
+ => res :: <literal-constant>;
+  ignore(builder);
+  make(<literal-constant>, derived-type: make-canonical-singleton(value),
+       value: value);
 end method;
 
 
@@ -358,14 +383,17 @@ define method make-definition-leaf
   ignore(builder);
   let value = ct-value(defn);
   if (instance?(value, <eql-ct-value>))
-    make(<literal-constant>, value: value);
+    make(<literal-constant>, derived-type: make-canonical-singleton(value),
+	 value: value);
   elseif (value)
-    make(<definition-constant-leaf>, const-defn: defn);
+    make(<definition-constant-leaf>,
+	 derived-type: ct-value-cclass(value), const-defn: defn);
   else
+    let type = defn.defn-type | object-ctype();
     make(<global-variable>,
+	 derived-type: type,
 	 var-info: make(<module-almost-constant-var-info>,
-			var-defn: defn,
-			asserted-type: defn.defn-type | object-ctype()));
+			var-defn: defn, asserted-type: type));
   end;
 end method;
 
@@ -373,13 +401,15 @@ define method make-definition-leaf
     (builder :: <fer-builder>, defn :: <function-definition>)
  => res :: <leaf>;
   ignore(builder);
+  let type = defn.defn-type | function-ctype();
   if (defn.function-defn-hairy?)
     make(<global-variable>,
+	 derived-type: type,
 	 var-info: make(<module-almost-constant-var-info>,
-			var-defn: defn,
-			asserted-type: defn.defn-type | object-ctype()));
+			var-defn: defn, asserted-type: type));
   else
-    make(<definition-constant-leaf>, const-defn: defn);
+    make(<definition-constant-leaf>,
+	 derived-type: type, const-defn: defn);
   end;
 end method;
 
@@ -387,10 +417,11 @@ define method make-definition-leaf
     (builder :: <fer-builder>, defn :: <variable-definition>)
  => res :: <global-variable>;
   ignore(builder);
+  let type = defn.defn-type | object-ctype();
   make(<global-variable>,
+       derived-type: type,
        var-info: make(<module-var-info>,
-		      var-defn: defn,
-		      asserted-type: defn.defn-type | object-ctype()));
+		      var-defn: defn, asserted-type: type));
 end method;
 
 
@@ -400,6 +431,7 @@ define method make-lexical-var
  => res :: <initial-variable>;
   ignore(builder);
   make(<initial-variable>,
+       derived-type: of-type,
        var-info: make(<lexical-var-info>,
 		      debug-name: name,
 		      asserted-type: of-type,
@@ -411,6 +443,7 @@ define method make-local-var
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <ctype>)
  => res :: <initial-variable>;
   make(<initial-variable>,
+       derived-type: of-type,
        var-info: make(<local-var-info>, asserted-type: of-type,
        		      debug-name: name));
 end method;
@@ -420,6 +453,7 @@ define method make-values-cluster
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <values-ctype>)
  => res :: <initial-variable>;
   make(<initial-variable>,
+       derived-type: of-type,
        var-info: make(<values-cluster-info>, asserted-type: of-type,
        		      debug-name: name));
 end method;
@@ -430,7 +464,9 @@ define method copy-variable
  => res :: <initial-variable>;
 
   // ### may need to actually copy var-info...
-  make(<initial-variable>, var-info: var.var-info);
+  make(<initial-variable>,
+       derived-type: var.var-info.asserted-type,
+       var-info: var.var-info);
 end method;
 
 
@@ -442,7 +478,7 @@ define method make-exit-function
   target.exit-function
     | (target.exit-function
          := make(<exit-function>, source-location: target.source-location,
-  		 target-region: target));
+		 derived-type: function-ctype(), target-region: target));
 end;
 
 
@@ -455,12 +491,9 @@ define method build-method-body
      result-vars :: type-or(<leaf>, <list>))
  => res :: <leaf>;
   ignore(policy);
-  let leaf = make(<lambda>, source-location: source, vars: arg-vars,
-		  result: if (list?(result-vars))
-			    result-vars;
-			  else
-			    list(result-vars);
-			  end);
+  let leaf = make(<lambda>, source-location: source,
+		  derived-type: function-ctype(), vars: arg-vars);
+  make-operand-dependencies(leaf, result-vars);
   let comp = builder.component;
   push-body(builder, leaf);
   comp.reanalyze-functions := pair(leaf, comp.reanalyze-functions);
@@ -475,6 +508,7 @@ define method make-hairy-method-literal
   ignore(policy);
   let res
     = make(<hairy-method-literal>,
+	   derived-type: function-ctype(),
 	   signature: signature,
 	   source-location: source,
 	   main-entry: main-entry);
