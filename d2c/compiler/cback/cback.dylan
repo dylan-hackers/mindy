@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.29 2001/10/11 21:48:58 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.30 2001/11/07 21:59:41 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -436,8 +436,8 @@ define method c-name (name :: <derived-name>) => (result :: <byte-string>);
 		#"type-cell" => "_TYPE";
 		#"maker" => "_MAKER";
 		#"key-defaulter" => "_KEYWORD";
-// needed?		#"class-meta" => "_CLASS_META";
-// needed?		#"each-subclass-meta" => "_EACH_META";
+		#"class-meta" => "_CLASS_META";
+		#"each-subclass-meta" => "_EACH_META";
 	      end select);
 end method;
 
@@ -463,6 +463,14 @@ define method c-name-global (name :: <name>) => (result :: <byte-string>);
   let library-name
     = string-to-c-name(as(<string>,
 			  name.name-module.module-home.library-name));
+  concatenate(library-name, "Z", c-name(name));
+end method;
+
+define method c-name-global (name :: <derived-name>) => (result :: <byte-string>);
+  let base-name = name.derived-name-base;
+  let library-name
+    = string-to-c-name(as(<string>,
+			  base-name.name-module.module-home.library-name));
   concatenate(library-name, "Z", c-name(name));
 end method;
 
