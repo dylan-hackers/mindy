@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.1 1998/05/03 19:55:40 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.2 1998/11/28 18:53:37 andreas Exp $
 
 //======================================================================
 //
@@ -72,10 +72,10 @@ end method make;
 //
 // These are the main functions to use with deques.
 //
-define generic push (deque :: <deque>, new) => (new :: <object>);
-define generic pop (deque :: <deque>) => (result :: <object>);
-define generic push-last (deque :: <deque>, new) => (new :: <object>);
-define generic pop-last (deque :: <deque>) => (result :: <object>);
+define open generic push (deque :: <deque>, new) => (new :: <object>);
+define open generic pop (deque :: <deque>) => (result :: <object>);
+define open generic push-last (deque :: <deque>, new) => (new :: <object>);
+define open generic pop-last (deque :: <deque>) => (result :: <object>);
 
 // <deque-element> -- internal
 //
