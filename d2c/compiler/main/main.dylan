@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.29 1995/11/10 15:09:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.30 1995/11/12 21:08:03 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -312,8 +312,14 @@ define method load-library (name :: <symbol>) => ();
 end;
 
 define method main (argv0, #rest args)
-  if (args.size ~== 1)
+  if (args.size == 3 & args.first = "-autodump")
+    // usage: compile -autodump component next-free-object-id-in-hex
+    let component = as(<symbol>, args.second);
+    let next-free-id = string-to-integer(args.third, base: 16);
+    autodump-main(component, next-free-id);
+  elseif (args.size ~== 1)
     error("usage: compile lid-file");
-  end;
-  compile-library(args[0]);
-end;
+  else
+    compile-library(args[0]);
+  end if;
+end method main;
