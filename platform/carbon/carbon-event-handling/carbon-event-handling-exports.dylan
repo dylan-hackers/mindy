@@ -1,6 +1,7 @@
 module: dylan-user
 
 define library carbon-event-handling
+  use dylan; // for system
   use common-dylan;
   use io;
 	use melange-support;
@@ -10,7 +11,7 @@ end library;
 
 define module carbon-event-handling
   use common-dylan;
-  use System;
+  use system;
   use format-out;
 	use melange-support;
 
