@@ -111,6 +111,13 @@ end;
 
 
 
+// Magic debugging primitives.
+
+define-primitive
+  (#"break", #(), #"<false>");
+
+
+
 // Define-primitives for the standard primitives.
 
 define-primitive

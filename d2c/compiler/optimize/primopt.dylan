@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.3 1995/06/06 19:30:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.4 1995/06/07 15:15:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -62,6 +62,18 @@ define method optimize (component :: <component>, primitive :: <primitive>)
     transformer(component, primitive);
   end;
 end;
+
+
+// magic debugging primitives.
+
+define-primitive-transformer
+  (#"break",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     break("Hit break primitive.");
+     replace-expression(component, primitive.dependents,
+			make-literal-constant(make-builder(component),
+					      as(<ct-value>, #f)));
+   end);
 
 
 // Values manipulation primitives.
