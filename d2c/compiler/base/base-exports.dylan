@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.11 1999/04/17 17:45:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.12 1999/05/24 17:00:43 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -788,6 +788,7 @@ define module c-representation
 
     representation-class,
     representation-data-word-member,
+    representation-name,
 
     *general-rep*, *heap-rep*, *boolean-rep*,
     *long-rep*, *int-rep*, *uint-rep*, *short-rep*, *ushort-rep*,
