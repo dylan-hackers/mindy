@@ -1,11 +1,11 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.12 1995/12/09 20:58:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.13 1995/12/11 19:49:11 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define library Dylan
   export
-    Dylan, Extensions, Cheap-IO;
+    Dylan, Extensions, Cheap-IO, System;
 end;
 
 define module Dylan
@@ -162,3 +162,11 @@ define module Cheap-IO
     },
     export: all;
 end;
+
+define module System
+  use Dylan-Viscera,
+    import: { call-out, c-include, c-decl, c-expr },
+    export: all;
+end;
+
+	     

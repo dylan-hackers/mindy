@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.4 1995/11/17 02:32:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.5 1995/12/11 19:49:11 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -265,5 +265,26 @@ end;
 
 define macro variable-definer
     { define variable ?bindings } => { define %%variable ?bindings }
+end;
+
+
+// Call-out related macros.
+
+define macro call-out
+    // Should really match two or more args, but the macro system is broken.
+    { call-out (?args) } => { %%primitive call-out (?args) }
+end;
+
+define macro c-include
+    { c-include (?expr:file) } => { %%primitive c-include (?file) }
+end;
+
+define macro c-decl
+    { c-decl (?expr:file) } => { %%primitive c-decl (?file) }
+end;
+
+define macro c-expr
+    // Should really match exactly two args, but the macro system is broken.
+    { c-expr (?args) } => { %%primitive c-expr (?args) }
 end;
 
