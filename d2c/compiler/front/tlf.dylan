@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.4 1995/11/06 16:52:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.5 1995/11/08 19:55:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -88,3 +88,18 @@ define method extract-properties (where :: <string>,
 	end;
   apply(values, map(find-key, keywords));
 end;
+
+
+// Dump stuff.
+
+define method dump-od
+    (tlf :: <simple-define-tlf>, state :: <dump-state>) => ();
+  dump-simple-object(#"define-binding-tlf", state, tlf.tlf-defn);
+end;
+
+add-od-loader(*compiler-dispatcher*, #"define-binding-tlf",
+	      method (state :: <load-state>) => res :: <definition>;
+		let defn = load-object-dispatch(state);
+		note-variable-definition(defn);
+		defn;
+	      end);
