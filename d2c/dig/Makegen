@@ -4,7 +4,8 @@ $D2CFLAGS = '-L../runtime/c-code -L../runtime/gc '
     . '-L../runtime/print -L../runtime/format '
     . '-L../runtime/random -L../runtime/coll-ext '
     . '-L../runtime/string-ext -L../runtime/melange '
-    . '-L../runtime/table-ext -L../runtime/standard-io';
+    . '-L../runtime/table-ext -L../runtime/standard-io '
+    . '-L../runtime/regexp';
 $CPPFLAGS = '-I$(SRCROOT)/runtime -I$(SRCDIR)';
 
 push(@compile_dependencies, 'dig');
