@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.15 1995/11/13 15:38:12 ram Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.16 1995/11/13 17:57:52 wlott Exp $
 
 /*
 
@@ -508,9 +508,12 @@ register-object-id(#"data-word-representation", #x00DB);
 
 register-object-id(#"define-library-tlf", #x00E0);
 register-object-id(#"define-module-tlf", #x00E1);
-register-object-id(#"define-library/module-use-clause", #x00E2);
-register-object-id(#"define-binding-tlf", #x00E3);
-register-object-id(#"here-be-roots", #x00E4);
+register-object-id(#"define-binding-tlf", #x00E2);
+register-object-id(#"here-be-roots", #x00E3);
+
+register-object-id(#"use", #x00E8);
+register-object-id(#"renaming", #x00E9);
+
 
 // Tokens
 //
