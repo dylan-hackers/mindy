@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.25 1996/03/02 19:01:13 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.26 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -458,13 +458,24 @@ end;
 
 define method is-it-functional? (class :: <cclass>)
     => res :: one-of(#t, #f, #"maybe");
-  if (class.functional?)
-    #t;
-  elseif (class.not-functional?)
-    #f;
+  if (~class.sealed?)
+    if (class.functional?)
+      #t;
+    elseif (class.not-functional?)
+      #f;
+    else
+      #"maybe";
+    end;
   else
-    #"maybe";
-  end;
+    let subs = find-direct-classes(class);
+    if (every?(functional?, subs))
+      #t;
+    elseif (every?(not-functional?, subs))
+      #f;
+    else
+      #"maybe";
+    end if;
+  end if;
 end;
 
 define method is-it-functional? (type :: <limited-ctype>)
