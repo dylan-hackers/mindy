@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.26 1994/06/03 00:17:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.27 1994/06/11 02:21:29 wlott Exp $
 *
 * This file does whatever.
 *
@@ -114,6 +114,7 @@ struct function {
     int required_args;
     boolean restp;
     obj_t keywords;
+    boolean all_keys;
     obj_t result_types;
     obj_t more_results_type;
 };
@@ -121,7 +122,7 @@ struct function {
 #define FUNC(o) obj_ptr(struct function *, o)
 
 obj_t make_raw_function(char *debug_name, int required_args,
-			boolean restp, obj_t keywords,
+			boolean restp, obj_t keywords, boolean all_keys,
 			obj_t result_types, obj_t more_results_type,
 			void xep(struct thread *thread, int nargs))
 {
@@ -132,6 +133,7 @@ obj_t make_raw_function(char *debug_name, int required_args,
     FUNC(res)->required_args = required_args;
     FUNC(res)->restp = restp;
     FUNC(res)->keywords = keywords;
+    FUNC(res)->all_keys = all_keys;
     FUNC(res)->result_types = result_types;
     FUNC(res)->more_results_type = more_results_type;
 
@@ -277,6 +279,7 @@ struct method {
     int required_args;
     boolean restp;
     obj_t keywords;
+    boolean all_keys;
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
@@ -450,14 +453,10 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
 
 static boolean method_accepts_keyword(obj_t method, obj_t keyword)
 {
-    obj_t keywords;
+    obj_t keywords = METHOD(method)->keywords;
 
-    if (METHOD(method)->restp)
-	return TRUE;
-
-    keywords = METHOD(method)->keywords;
-    if (keywords == obj_False)
-	return FALSE;
+    assert(!METHOD(method)->all_keys);
+    assert(keywords != obj_False);
 
     while (keywords != obj_Nil) {
 	if (HEAD(HEAD(keywords)) == keyword)
@@ -473,7 +472,8 @@ static void method_xep(struct thread *thread, int nargs)
     obj_t method = args[-1];
 
     if (applicable_method_p(method, args)) {
-	if (METHOD(method)->keywords != obj_False && !METHOD(method)->restp) {
+	if (METHOD(method)->keywords != obj_False
+	      && !METHOD(method)->all_keys) {
 	    obj_t *ptr = args+METHOD(method)->required_args;
 	    while (ptr < thread->sp) {
 		if (!method_accepts_keyword(method, *ptr)) {
@@ -495,7 +495,7 @@ static void method_xep(struct thread *thread, int nargs)
 }
 
 obj_t make_raw_method(char *debug_name, obj_t specializers, boolean restp,
-		      obj_t keywords, obj_t result_types,
+		      obj_t keywords, boolean all_keys, obj_t result_types,
 		      obj_t more_results_type,
 		      void iep(obj_t self, struct thread *thread, obj_t *args))
 {
@@ -506,6 +506,7 @@ obj_t make_raw_method(char *debug_name, obj_t specializers, boolean restp,
     METHOD(res)->required_args = length(specializers);
     METHOD(res)->restp = restp;
     METHOD(res)->keywords = keywords;
+    METHOD(res)->all_keys = all_keys;
     METHOD(res)->result_types = result_types;
     METHOD(res)->more_results_type = more_results_type;
     METHOD(res)->specializers = specializers;
@@ -621,6 +622,7 @@ struct builtin_method {
     int required_args;
     boolean restp;
     obj_t keywords;
+    boolean all_keys;
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
@@ -832,8 +834,8 @@ static void (*builtin_method_ieps[])(obj_t m, struct thread *t, obj_t *a) = {
 #define MAX_BUILTIN_METHOD_ARGS (sizeof(builtin_method_ieps)/sizeof(builtin_method_ieps[0]))
 
 obj_t make_builtin_method(char *debug_name, obj_t specializers,
-			  boolean restp, obj_t keywords, obj_t result_type,
-			  obj_t (*func)())
+			  boolean restp, obj_t keywords, boolean all_keys,
+			  obj_t result_type, obj_t (*func)())
 {
     obj_t res = alloc(obj_BuiltinMethodClass, sizeof(struct builtin_method));
     int req_args = length(specializers);
@@ -853,6 +855,7 @@ obj_t make_builtin_method(char *debug_name, obj_t specializers,
     BUILTIN_METHOD(res)->required_args = req_args;
     BUILTIN_METHOD(res)->restp = restp;
     BUILTIN_METHOD(res)->keywords = keywords;
+    BUILTIN_METHOD(res)->all_keys = all_keys;
     BUILTIN_METHOD(res)->result_types = list1(result_type);
     BUILTIN_METHOD(res)->more_results_type = obj_False;
     BUILTIN_METHOD(res)->specializers = specializers;
@@ -873,6 +876,7 @@ struct byte_method {
     int required_args;
     boolean restp;
     obj_t keywords;
+    boolean all_keys;
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
@@ -907,13 +911,14 @@ static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
 #endif
 }
 
-obj_t make_method_info(boolean restp, obj_t keys, obj_t component,
-		       int n_closure_vars)
+obj_t make_method_info(boolean restp, obj_t keys, boolean all_keys,
+		       obj_t component, int n_closure_vars)
 {
     obj_t res = alloc(obj_MethodInfoClass, sizeof(struct method_info));
 
     METHOD_INFO(res)->restp = restp;
     METHOD_INFO(res)->keys = keys;
+    METHOD_INFO(res)->all_keys = all_keys;
     METHOD_INFO(res)->component = component;
     METHOD_INFO(res)->n_closure_vars = n_closure_vars;
 
@@ -936,6 +941,7 @@ obj_t make_byte_method(obj_t method_info, obj_t specializers,
     BYTE_METHOD(res)->required_args = length(specializers);
     BYTE_METHOD(res)->restp = METHOD_INFO(method_info)->restp;
     BYTE_METHOD(res)->keywords = METHOD_INFO(method_info)->keys;
+    BYTE_METHOD(res)->all_keys = METHOD_INFO(method_info)->all_keys;
     BYTE_METHOD(res)->result_types = result_types;
     if (more_results_type == obj_True)
 	BYTE_METHOD(res)->more_results_type = obj_ObjectClass;
@@ -962,6 +968,7 @@ struct accessor_method {
     int required_args;
     boolean restp;
     obj_t keywords;
+    boolean all_keys;
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
@@ -984,6 +991,7 @@ obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
     ACCESSOR_METHOD(res)->required_args = setter ? 2 : 1;
     ACCESSOR_METHOD(res)->restp = FALSE;
     ACCESSOR_METHOD(res)->keywords = obj_False;
+    ACCESSOR_METHOD(res)->all_keys = FALSE;
     ACCESSOR_METHOD(res)->result_types = list1(type);
     ACCESSOR_METHOD(res)->more_results_type = obj_False;
     ACCESSOR_METHOD(res)->specializers
@@ -1015,6 +1023,7 @@ struct gf {
     int required_args;
     boolean restp;
     obj_t keywords;
+    boolean all_keys;
     obj_t result_types;
     obj_t more_results_type;
     obj_t methods;
@@ -1160,7 +1169,7 @@ static void gf_xep(struct thread *thread, int nargs)
     methods = sorted_applicable_methods(gf, args);
 
     if (methods != obj_Nil) {
-	if (GF(gf)->keywords != obj_False) {
+	if (GF(gf)->keywords != obj_False && !GF(gf)->all_keys) {
 	    obj_t *ptr = args + GF(gf)->required_args;
 	    while (ptr < thread->sp) {
 		if (!methods_accept_keyword(methods, *ptr)) {
@@ -1185,7 +1194,7 @@ static void gf_xep(struct thread *thread, int nargs)
 }
 
 obj_t make_generic_function(obj_t debug_name, int req_args, 
-			    boolean restp, obj_t keywords,
+			    boolean restp, obj_t keywords, boolean all_keys,
 			    obj_t result_types, obj_t more_results_type)
 {
     obj_t res = alloc(obj_GFClass, sizeof(struct gf));
@@ -1195,6 +1204,7 @@ obj_t make_generic_function(obj_t debug_name, int req_args,
     GF(res)->required_args = req_args;
     GF(res)->restp = restp;
     GF(res)->keywords = keywords;
+    GF(res)->all_keys = all_keys;
     GF(res)->result_types = result_types;
     if (more_results_type == obj_True)
 	GF(res)->more_results_type = obj_ObjectClass;
@@ -1211,20 +1221,25 @@ obj_t make_default_generic_function(obj_t debug_name, obj_t method)
     int reqargs = METHOD(method)->required_args;
     boolean restp = METHOD(method)->restp;
     obj_t keywords = METHOD(method)->keywords;
+    boolean all_keys = METHOD(method)->all_keys;
 
-    return make_generic_function(debug_name, reqargs,
-				 restp || keywords != obj_False,
-				 obj_False, obj_Nil, obj_ObjectClass);
+    if (keywords != obj_False)
+	keywords = obj_Nil;
+
+    return make_generic_function(debug_name, reqargs, restp, keywords,
+				 all_keys, obj_Nil, obj_ObjectClass);
 }
 
 void set_gf_signature(obj_t gf, int req_args, boolean restp, obj_t keys,
-		      obj_t result_types, obj_t more_results_type)
+		      boolean all_keys, obj_t result_types,
+		      obj_t more_results_type)
 {
     obj_t methods = GF(gf)->methods;
 
     GF(gf)->required_args = req_args;
     GF(gf)->restp = restp;
     GF(gf)->keywords = keys;
+    GF(gf)->all_keys = all_keys;
     GF(gf)->result_types = result_types;
     if (more_results_type == obj_True)
 	GF(gf)->more_results_type = obj_ObjectClass;
@@ -1241,6 +1256,11 @@ void set_gf_signature(obj_t gf, int req_args, boolean restp, obj_t keys,
 obj_t generic_function_methods(obj_t gf)
 {
     return GF(gf)->methods;
+}
+
+obj_t generic_function_keywords(obj_t gf)
+{
+    return GF(gf)->keywords;
 }
 
 static obj_t really_add_method(obj_t gf, obj_t method)
@@ -1270,55 +1290,45 @@ obj_t add_method(obj_t gf, obj_t method)
     int i;
 
     if (GF(gf)->required_args != METHOD(method)->required_args)
-	error("The method %= has %d required arguments, but the generic "
-	      "function %= has %d",
-	      function_debug_name_or_self(method),
-	      make_fixnum(METHOD(method)->required_args),
-	      function_debug_name_or_self(gf),
-	      make_fixnum(GF(gf)->required_args));
+	error("%= has %d required arguments, but %= has %d",
+	      method, make_fixnum(METHOD(method)->required_args),
+	      gf, make_fixnum(GF(gf)->required_args));
 
     gfkeys = GF(gf)->keywords;
     if (gfkeys != obj_False) {
 	/* The generic function takes keyword arguments. */
-	boolean restp = METHOD(method)->restp;
-	if (!restp) {
-	    obj_t methkeys = METHOD(method)->keywords;
-	    if (methkeys == obj_False)
-		error("The generic function %= allows keyword arguments, "
-		      "but the method %= does not.",
-		      function_debug_name_or_self(gf),
-		      function_debug_name_or_self(method));
-	    while (gfkeys != obj_Nil) {
-		obj_t gfkey = HEAD(gfkeys);
-		obj_t scan;
+	obj_t methkeys = METHOD(method)->keywords;
 
-		for (scan = methkeys; scan != obj_Nil; scan = TAIL(scan))
-		    if (HEAD(HEAD(scan)) == gfkey)
-			goto okay;
-		error("The generic function %= accepts the keyword %=, "
-		      "but the method %= does not.",
-		      function_debug_name_or_self(gf),
-		      gfkey,
-		      function_debug_name_or_self(method));
-	      okay:
-		gfkeys = TAIL(gfkeys);
-	    }
+	if (methkeys == obj_False)
+	    error("%= allows keyword arguments, but %= does not.", gf, method);
+	while (gfkeys != obj_Nil) {
+	    obj_t gfkey = HEAD(gfkeys);
+	    obj_t scan;
+
+	    for (scan = methkeys; scan != obj_Nil; scan = TAIL(scan))
+		if (HEAD(HEAD(scan)) == gfkey)
+		    goto okay;
+	    error("The keyword %= is mandatory for %=, "
+		  "but %= doesn't accept it.",
+		  gfkey, gf, method);
+	  okay:
+	    gfkeys = TAIL(gfkeys);
 	}
+
+	if (METHOD(method)->all_keys && !GF(gf)->all_keys)
+	    error("%= accepts all keys, but %= does not.", method, gf);
     }
+    else if (METHOD(method)->keywords != obj_False)
+	error("%= allows keyword arguments, but %= does not.", method, gf);
     else if (GF(gf)->restp) {
-	/* The generic function has a #rest argument. */
-	if (!METHOD(method)->restp && METHOD(method)->keywords == obj_False)
-	    /* But the method does not. */
-	    error("Generic function %= allows a variable number of arguments, "
-		  "but method %= does not.",
-		  function_debug_name_or_self(gf),
-		  function_debug_name_or_self(method));
+	if (!METHOD(method)->restp)
+	    error("%= accepts a variable number of arguments, "
+		  "but %= does not.",
+		  gf, method);
     }
-    else if (METHOD(method)->restp || METHOD(method)->keywords != obj_False)
-	error("Method %= allows a variable number of arguments, but generic "
-	      "function %= does not.",
-	      function_debug_name_or_self(method),
-	      function_debug_name_or_self(gf));
+    else if (METHOD(method)->restp)
+	error("%= accepts a variable number of arguments, but %= does not.",
+	      method, gf);
 
     gfscan = GF(gf)->result_types;
     methscan = METHOD(method)->result_types;
@@ -1328,13 +1338,9 @@ obj_t add_method(obj_t gf, obj_t method)
 	obj_t methtype = HEAD(methscan);
 
 	if (!subtypep(methtype, gftype))
-	    error("Result %= is an instance of %= for generic function %=, "
-		  "but is an instance of %= for method %=",
-		  make_fixnum(i),
-		  gftype,
-		  function_debug_name_or_self(gf),
-		  methtype,
-		  function_debug_name_or_self(method));
+	    error("Result %= is an instance of %= for %=, "
+		  "but is an instance of %= for %=",
+		  make_fixnum(i), gftype, gf, methtype, method);
 
 	gfscan = TAIL(gfscan);
 	methscan = TAIL(methscan);
@@ -1348,19 +1354,11 @@ obj_t add_method(obj_t gf, obj_t method)
 	    gfscan = TAIL(gfscan);
 	}
 	if (GF(gf)->more_results_type != obj_False)
-	    error("Generic function %= returns at least %d results, but "
-		  "method %= only returns %d",
-		  function_debug_name_or_self(gf),
-		  make_fixnum(gf_returns),
-		  function_debug_name_or_self(method),
-		  make_fixnum(i));
+	    error("%= returns at least %d results, but %= only returns %d",
+		  gf, make_fixnum(gf_returns), method, make_fixnum(i));
 	else
-	    error("Generic function %= returns exactly %d results, but "
-		  "method %= only returns %d",
-		  function_debug_name_or_self(gf),
-		  make_fixnum(gf_returns),
-		  function_debug_name_or_self(method),
-		  make_fixnum(i));
+	    error("%= returns exactly %d results, but %= only returns %d",
+		  gf, make_fixnum(gf_returns), method, make_fixnum(i));
     }
     if (methscan != obj_Nil) {
 	obj_t gftype = GF(gf)->more_results_type;
@@ -1372,31 +1370,20 @@ obj_t add_method(obj_t gf, obj_t method)
 		meth_returns++;
 	    }
 	    if (METHOD(method)->more_results_type != obj_False)
-		error("Generic function %= returns exactly %d results, but "
-		      "method %= returns at least %d",
-		      function_debug_name_or_self(gf),
-		      make_fixnum(i),
-		      function_debug_name_or_self(method),
-		      make_fixnum(meth_returns));
+		error("%= returns exactly %d results, "
+		      "but %= returns %d or more",
+		      gf, make_fixnum(i), method, make_fixnum(meth_returns));
 	    else
-		error("Generic function %= returns exactly %d results, but "
-		      "method %= returns %d",
-		      function_debug_name_or_self(gf),
-		      make_fixnum(i),
-		      function_debug_name_or_self(method),
-		      make_fixnum(meth_returns));
+		error("%= returns exactly %d results, but %= returns %d",
+		      gf, make_fixnum(i), method, make_fixnum(meth_returns));
 	}
 	while (methscan != obj_Nil) {
 	    obj_t methtype = HEAD(methscan);
 
 	    if (!subtypep(methtype, gftype))
-		error("Result %d is an instance of %= for generic function "
-		      "%=, but is an instance of %= for method %=",
-		      make_fixnum(i),
-		      gftype,
-		      function_debug_name_or_self(gf),
-		      methtype,
-		      function_debug_name_or_self(method));
+		error("Result %d is an instance of %= for %=, "
+		      "but is an instance of %= for %=",
+		      make_fixnum(i), gftype, gf, methtype, method);
 
 	    methscan = TAIL(methscan);
 	    i++;
@@ -1407,27 +1394,30 @@ obj_t add_method(obj_t gf, obj_t method)
 	if (GF(gf)->more_results_type != obj_False) {
 	    if (!subtypep(METHOD(method)->more_results_type,
 			  GF(gf)->more_results_type))
-		error("Results %d and on are instances of %= for generic "
-		      "function %=, but are instances of %= for method %=",
-		      make_fixnum(i),
-		      GF(gf)->more_results_type,
-		      function_debug_name_or_self(gf),
-		      METHOD(method)->more_results_type,
-		      function_debug_name_or_self(method));
+		error("Results %d and on are instances of %= for %=, "
+		      "but are instances of %= for %=",
+		      make_fixnum(i), GF(gf)->more_results_type, gf,
+		      METHOD(method)->more_results_type, method);
 	}
 	else
-	    error("Generic function %= returns exactly %d results, but "
-		  "method %= returns %d or more",
-		  function_debug_name_or_self(gf),
-		  make_fixnum(i),
-		  function_debug_name_or_self(method),
-		  make_fixnum(i));
+	    error("%= returns exactly %d results, but %= returns %d or more",
+		  gf, make_fixnum(i), method, make_fixnum(i));
 
     return really_add_method(gf, method);
 }
 
 
 /* Dylan interface functions. */
+
+static obj_t dylan_make_gf(obj_t debug_name, obj_t required,
+			   obj_t restp, obj_t keywords, obj_t all_keys,
+			   obj_t res_types, obj_t more_res_type)
+{
+    return make_generic_function(debug_name, fixnum_value(required),
+				 restp != obj_False, keywords,
+				 all_keys != obj_False, res_types,
+				 more_res_type);
+}
 
 static void dylan_add_method(obj_t self, struct thread *thread, obj_t *args)
 {
@@ -1453,11 +1443,15 @@ static void dylan_function_arguments(obj_t self, struct thread *thread,
 {
     obj_t *vals = args-1;
     obj_t func = *args;
+    obj_t keywords = FUNC(func)->keywords;
 
     thread->sp = vals + 3;
     vals[0] = make_fixnum(FUNC(func)->required_args);
-    vals[1] = FUNC(func)->restp ? obj_True : obj_False;
-    vals[2] = FUNC(func)->keywords;
+    if (FUNC(func)->restp && keywords == obj_False)
+	vals[1] = obj_True;
+    else
+	vals[1] = obj_False;
+    vals[2] = FUNC(func)->all_keys ? symbol("all") : keywords;
 
     do_return(thread, vals, vals);
 }
@@ -1467,19 +1461,23 @@ static void dylan_method_arguments(obj_t self, struct thread *thread,
 {
     obj_t *vals = args-1;
     obj_t meth = *args;
-    obj_t scan;
+    obj_t keywords = METHOD(meth)->keywords;
 
     thread->sp = vals + 3;
     vals[0] = make_fixnum(METHOD(meth)->required_args);
-    vals[1] = METHOD(meth)->restp ? obj_True : obj_False;
-    scan = METHOD(meth)->keywords;
-    if (scan != obj_False) {
-	obj_t keys = obj_Nil;
-	while (scan != obj_Nil) {
-	    keys = pair(HEAD(HEAD(scan)), keys);
-	    scan = TAIL(scan);
+    if (METHOD(meth)->restp && keywords == obj_False)
+	vals[1] = obj_True;
+    else
+	vals[1] = obj_False;
+    if (METHOD(meth)->all_keys)
+	vals[2] = symbol("all");
+    else if (keywords != obj_False) {
+	obj_t new = obj_Nil;
+	while (keywords != obj_Nil) {
+	    new = pair(HEAD(HEAD(keywords)), new);
+	    keywords = TAIL(keywords);
 	}
-	vals[2] = keys;
+	vals[2] = new;
     }
     else
 	vals[2] = obj_False;
@@ -1808,47 +1806,58 @@ void init_func_classes(void)
 
 void init_func_functions(void)
 {
-    define_generic_function("add-method", 2, FALSE, obj_False,
+    define_function("make-generic-function",
+		    listn(7, obj_ObjectClass, obj_IntegerClass,
+			  obj_ObjectClass,
+			  type_union(object_class(obj_False), obj_ListClass),
+			  obj_ObjectClass, obj_ListClass,
+			  type_union(object_class(obj_False), obj_TypeClass)),
+		    FALSE, obj_False, FALSE,
+		    list1(obj_GFClass), dylan_make_gf);
+    define_generic_function("add-method", 2, FALSE, obj_False, FALSE,
 			    list2(obj_MethodClass,obj_ObjectClass), obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("add-method"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("add-method",list2(obj_GFClass,obj_MethodClass),
-			       FALSE, obj_False,
+			       FALSE, obj_False, FALSE,
 			       list2(obj_MethodClass, obj_ObjectClass),
 			       obj_False, dylan_add_method));
-    define_method("generic-function-methods", list1(obj_GFClass),
-		  FALSE, obj_False, obj_ObjectClass, generic_function_methods);
-    define_method("method-specializers", list1(obj_MethodClass),
-		  FALSE, obj_False, obj_ObjectClass, method_specializers);
-    define_generic_function("function-arguments", 1, FALSE, obj_False,
+    define_method("generic-function-methods", list1(obj_GFClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, generic_function_methods);
+    define_method("generic-function-mandatory-keywords", list1(obj_GFClass),
+		  FALSE, obj_False, FALSE, obj_ObjectClass,
+		  generic_function_keywords);
+    define_method("method-specializers", list1(obj_MethodClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, method_specializers);
+    define_generic_function("function-arguments", 1, FALSE, obj_False, FALSE,
 			    list3(obj_IntegerClass, obj_BooleanClass,
 				  obj_ObjectClass),
 			    obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("function-arguments"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("function-arguments", list1(obj_FunctionClass),
-			       FALSE, obj_False,
+			       FALSE, obj_False, FALSE,
 			       list3(obj_IntegerClass, obj_BooleanClass,
 				     obj_ObjectClass),
 			       obj_False, dylan_function_arguments));
     add_method(find_variable(module_BuiltinStuff, symbol("function-arguments"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("function-arguments", list1(obj_MethodClass),
-			       FALSE, obj_False,
+			       FALSE, obj_False, FALSE,
 			       list3(obj_IntegerClass, obj_BooleanClass,
 				     obj_ObjectClass),
 			       obj_False, dylan_method_arguments));
-    define_method("sorted-applicable-methods", list1(obj_GFClass),
-		  TRUE, obj_False, obj_ObjectClass, dylan_sorted_app_meths);
-    define_method("applicable-method?", list1(obj_MethodClass),
-		  TRUE, obj_False, obj_BooleanClass, dylan_app_meth_p);
-    define_method("find-method", list2(obj_GFClass, obj_ListClass),
-		  FALSE, obj_False, obj_ObjectClass, dylan_find_method);
-    define_method("remove-method", list2(obj_GFClass, obj_MethodClass),
-		  FALSE, obj_False, obj_ObjectClass, dylan_remove_method);
+    define_method("sorted-applicable-methods", list1(obj_GFClass), TRUE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_sorted_app_meths);
+    define_method("applicable-method?", list1(obj_MethodClass), TRUE,
+		  obj_False, FALSE, obj_BooleanClass, dylan_app_meth_p);
+    define_method("find-method", list2(obj_GFClass, obj_ListClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_find_method);
+    define_method("remove-method", list2(obj_GFClass, obj_MethodClass), FALSE,
+		  obj_False, FALSE, obj_ObjectClass, dylan_remove_method);
     define_constant("do-next-method",
 		    make_raw_method("do-next-method",
 				    list2(obj_ObjectClass, obj_ObjectClass),
-				    FALSE, obj_False, obj_Nil, obj_ObjectClass,
-				    dylan_do_next_method));
+				    FALSE, obj_False, FALSE, obj_Nil,
+				    obj_ObjectClass, dylan_do_next_method));
 }
