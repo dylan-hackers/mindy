@@ -8,6 +8,7 @@ do compile_subdirs(
     'format',
     'random',
     'coll-ext',
+    'table-ext',
     'string-ext',
 );
 
