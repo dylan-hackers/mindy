@@ -1,7 +1,7 @@
 /* rcs-wrapper.c */
 
 /* Author: Nick Kramer
-   RCS-header: $Header: /home/housel/work/rcs/gd/src/tools/win32-misc/rcs-wrapper.c,v 1.2 1997/03/04 17:45:25 nkramer Exp $
+   RCS-header: $Header: /home/housel/work/rcs/gd/src/tools/win32-misc/rcs-wrapper.c,v 1.3 1997/03/04 18:46:35 nkramer Exp $
 
    This is a replacement for rcs-wrapper.perl.  I've had to rewrite it
    in C in order to avoid having to play quoting games with the shell
@@ -131,7 +131,7 @@ static char *maybe_quote (char *arg)
     return arg;
 }
 
-static int use_dash_v4 = 1;
+static int use_dash_v4 = 0;
 
 static char *do_fake_symlinks (char *arg)
 {
@@ -173,6 +173,18 @@ static char *convert_one_arg (char *arg)
 
 static int verbose = 0;
 
+/* Last element of argv[] is NULL
+ */
+static int run_program (char *cmd_name, char **argv)
+{
+    int res;
+    /* For some reason, spawnv works but system() doesn't. */
+    res = spawnv(P_WAIT, cmd_name, argv);
+    if (verbose)
+	fprintf(stderr, "[Return value: %d]\n", res);
+    return res;
+}
+
 int main (int argc, char **argv)
 {
     int i, src_index, dest_index;
@@ -186,23 +198,21 @@ int main (int argc, char **argv)
 	new_argv[i] = convert_one_arg(argv[i]);
     }
 
+    /* Create the final argv by adding or subtracting any args necessary. */
+    src_index = dest_index = 1;
     if (argv > 0 && stricmp(argv[1], "-verbose-wrapper") == 0) {
 	verbose = 1;
+	src_index++;
     }
-    
-    /* Create the final argv by adding or subtracting any args necessary. */
-    src_index = (verbose) ? 2 : 1;
     if (use_dash_v4 && !already_a_dash_v4) {
 	third_argv[1] = "-V4";
-	dest_index = 2;
-    } else {
-	dest_index = 1;
+	dest_index++;
     }
     for (; src_index < argc; src_index++, dest_index++) {
 	third_argv[dest_index] = new_argv[src_index];
     }
     third_argv[dest_index] = NULL;
-	    
+
     gwydion_dir = getenv("GWYDIONDIR");
     if (!gwydion_dir) {
 	fprintf(stderr, "GWYDIONDIR not set!\n");
@@ -222,10 +232,10 @@ int main (int argc, char **argv)
     /* ### I hope the return value of spawnv is the return value of
        the child process... */
     if (verbose) {
-	for (i=0; i<dest_index; i++) {
+	for (i=0; third_argv[i] != NULL; i++) {
 	    fprintf(stderr, "[%s] ", third_argv[i]);
 	}
 	fprintf(stderr, "\n");
     }
-    return spawnv(P_WAIT, executable, third_argv);
+    return run_program(executable, third_argv);
 }
