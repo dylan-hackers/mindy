@@ -1,5 +1,5 @@
 module: Dylan-viscera
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/range.dylan,v 1.3 2000/01/24 04:56:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/range.dylan,v 1.4 2003/06/03 02:11:32 housel Exp $
 
 //======================================================================
 //
@@ -429,9 +429,10 @@ end method;
 //
 define sealed method \= (range1 :: <builtin-range>, range2 :: <builtin-range>)
       => equal? :: <boolean>;
-   range1.range-from = range2.range-from
-      & range1.range-by = range2.range-by
-      & range1.size = range2.size;
+  (range1.empty? & range2.empty?)
+    | (range1.range-from = range2.range-from
+         & range1.range-by = range2.range-by
+         & range1.size = range2.size);
 end method;
 
 
@@ -708,9 +709,9 @@ define sealed method copy-sequence
    end if;
 
    case
-      copy-start > r-size =>
+      copy-start >= r-size =>
 	 range (size: 0);
-      copy-end > r-size =>
+      copy-end >= r-size =>
 	 range (from: source[copy-start], by: r-by,
 		size: r-size - copy-start);
       otherwise =>
