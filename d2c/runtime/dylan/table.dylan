@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.9 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/table.dylan,v 1.10 1996/03/20 01:44:03 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -512,14 +512,14 @@ define method string-hash (s :: <byte-string>)
   end for;
 end method string-hash;
 
-define method table-protocol (ht :: <object-table>) 
+define sealed inline method table-protocol (ht :: <object-table>) 
  => (key-test :: <function>, key-hash :: <function>);
   values(\==, object-hash);
 end method table-protocol;
 
 define sealed domain table-protocol (<simple-object-table>);
 
-define sealed method table-protocol (ht :: <equal-table>) 
+define sealed inline method table-protocol (ht :: <equal-table>) 
  => (key-test :: <function>, key-hash :: <function>);
   values(\=, equal-hash);
 end method table-protocol;

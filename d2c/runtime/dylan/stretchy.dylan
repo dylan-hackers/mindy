@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/stretchy.dylan,v 1.3 1996/03/02 19:21:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/stretchy.dylan,v 1.4 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -18,61 +18,28 @@ define sealed inline method make
   make(<stretchy-object-vector>, size: size, fill: fill);
 end method;
 
-define sealed method as
-    (class == <stretchy-vector>, collection :: <collection>)
-    => res :: <stretchy-vector>;
-  let res = make(<stretchy-vector>, size: collection.size);
-  for (index :: <integer> from 0, element in collection)
-    res[index] := element;
-  end;
-  res;
-end;
-
-define inline method as
-    (class == <stretchy-vector>, vector :: <stretchy-vector>)
-    => res :: <stretchy-vector>;
-  vector;
-end;
-
-define method map-into (destination :: <stretchy-vector>,
-			proc :: <function>, sequence :: <sequence>,
-			#next next-method, #rest more-sequences)
-    => res :: <stretchy-vector>;
-  if (empty?(more-sequences))
-    let sz = size(sequence);
-    if (sz > size(destination)) size(destination) := sz end if;
-    let data = ssv-data(destination);
-    for (key from 0, elem in sequence)
-      destination[key] := proc(elem);
-    end for;
-    destination;
-  else
-    next-method();
-  end if;
-end method map-into;
-
 
 // <stretchy-object-vector>
 
-// Invariant:  elements [ssv-fill..ssv-data.size] are always set to
-// #f.  Elements [0..ssv-fill] contain user supplied data.
+// Invariants:
+//   1. ssv-current-size <= ssv-data.size
+//   2. elements [ssv-current-size..ssv-data.size] are always set to #f.  
+//   3. Elements [0..ssv-current-size] contain user supplied data.
 //
 define class <stretchy-object-vector> (<stretchy-vector>)
   //
   // A <simple-object-vector> holding the vector elements.  Obviously
   // at least as long as the stretchy vector.
-  slot ssv-data :: <simple-object-vector>,
-    required-init-keyword: data:;
+  slot ssv-data :: <simple-object-vector> = #[];
   //
   // The current size of the stretchy vector.
-  slot ssv-fill :: <integer>,
-    required-init-keyword: fill:;
+  slot ssv-current-size :: <integer> = 0;
 end class <stretchy-object-vector>;
-  
+define sealed domain make(singleton(<stretchy-object-vector>));
 
-define sealed method make (class == <stretchy-object-vector>,
-			   #next next-method, #key size = 0, fill)
-    => res :: <stretchy-object-vector>;
+define sealed method initialize
+    (object :: <stretchy-object-vector>, #key size :: <integer> = 0, fill)
+ => ();
   let data-size = case
 		    size < 0 =>
 		      error("size: can't be negative.");
@@ -85,23 +52,27 @@ define sealed method make (class == <stretchy-object-vector>,
 		    otherwise =>
 		      ceiling/(size + 1024, 1024) * 1024;
 		  end case;
-  let data = make(<simple-object-vector>, size: data-size);
-  fill!(data, fill, end: data-size);
-  next-method(class, fill: size, data: data);
-end method make;
+  // The "fill:" keyword assures that elements above ssv-current-size
+  // will be #f...
+  let data = make(<simple-object-vector>, size: data-size, fill: #f);
+  // ...and then we manually fill the other elements if necessary.
+  if (fill) fill!(data, fill, end: size) end if;
+  object.ssv-data := data;
+  object.ssv-current-size := size;
+end method initialize;
 
-define inline method size (ssv :: <stretchy-object-vector>)
+define sealed inline method size (ssv :: <stretchy-object-vector>)
     => size :: <integer>;
-  ssv-fill(ssv);
+  ssv.ssv-current-size;
 end method size;
 
 define method size-setter
     (new :: <integer>, ssv :: <stretchy-object-vector>)
     => new :: <integer>;
-  let fill = ssv-fill(ssv);
-  let data = ssv-data(ssv);
-  if (new > fill)
-    let len = size(data);
+  let current = ssv.ssv-current-size;
+  let data = ssv.ssv-data;
+  if (new > current)
+    let len = data.size;
     if (new > len)
       let new-len = if (new < 1024)
 		      for (new-len = 16 then new-len * 2,
@@ -112,64 +83,113 @@ define method size-setter
 		      ceiling/(new + 1024, 1024) * 1024;
 		    end if;
       let new-data = make(<simple-object-vector>, size: new-len);
-      for (index :: <integer> from 0 below fill)
+      for (index :: <integer> from 0 below current)
 	new-data[index] := data[index];
       end for;
-      ssv.ssv-data := fill!(new-data, #f, start: fill);
+      ssv.ssv-data := fill!(new-data, #f, start: current);
     end if;
   else
-    fill!(data, #f, start: new, end: fill);
+    fill!(data, #f, start: new, end: current);
   end if;
-  ssv-fill(ssv) := new;
+  ssv.ssv-current-size := new;
 end method size-setter;
 
 
-define method element
+define sealed inline method element
     (ssv :: <stretchy-object-vector>, key :: <integer>,
      #key default = $not-supplied)
     => result :: <object>;
   case
-    key >= 0 & key < size(ssv) =>
-      ssv-data(ssv)[key];
-    default == $not-supplied =>
+    (key >= 0 & key < ssv.size) =>
+      // Warning: unchecked reference.  However, if we're *sure* we
+      // satisfy the invariants, we're be safe.
+      %element(ssv.ssv-data, key);
+    (default == $not-supplied) =>
       element-error(ssv, key);
     otherwise =>
       default;
   end case;
 end method element;
 
-define method element-setter (value, ssv :: <stretchy-object-vector>,
-			      key :: <integer>)
+define sealed inline method element-setter
+    (value, ssv :: <stretchy-object-vector>, key :: <integer>)
     => value :: <object>;
   if (key < 0)
     element-error(ssv, key);
   else
-    if (key >= size(ssv))
-      size(ssv) := key + 1;
+    if (key >= ssv.size)
+      ssv.size := key + 1;
     end if;
-    ssv-data(ssv)[key] := value;
+    // Warning: unchecked reference.  However, if we're *sure* we
+    // satisfy the invariants, we're be safe.
+    %element(ssv.ssv-data, key) := value;
   end if;
 end method element-setter;
 
+// This method is identical to the one in "array.dylan", except that it
+// is more tightly specialized to a single sealed class.  If you need to 
+// make a general change, you should probably grep for "outlined-iterator" 
+// and change all matching locations.
+//
+define inline method forward-iteration-protocol
+    (array :: <stretchy-object-vector>)
+    => (initial-state :: <integer>,
+	limit :: <integer>,
+	next-state :: <function>,
+	finished-state? :: <function>,
+	current-key :: <function>,
+	current-element :: <function>,
+	current-element-setter :: <function>,
+	copy-state :: <function>);
+  values(0,
+	 array.size,
+	 method (array :: <stretchy-object-vector>, state :: <integer>)
+	     => new-state :: <integer>;
+	   state + 1;
+	 end,
+	 method (array :: <stretchy-object-vector>, state :: <integer>,
+		 limit :: <integer>)
+	     => done? :: <boolean>;
+	   state == limit;
+	 end,
+	 method (array :: <stretchy-object-vector>, state :: <integer>)
+	     => key :: <integer>;
+	   state;
+	 end,
+	 method (array :: <stretchy-object-vector>, state :: <integer>)
+	     => element :: <object>;
+	   element(array, state);
+	 end,
+	 method (new-value :: <object>, array :: <stretchy-object-vector>,
+		 state :: <integer>)
+	     => new-value :: <object>;
+	   element(array, state) := new-value;
+	 end,
+	 method (array :: <stretchy-object-vector>, state :: <integer>)
+	     => state-copy :: <integer>;
+	   state;
+	 end);
+end;
+
 define method add! (ssv :: <stretchy-object-vector>, new-element)
     => ssv :: <stretchy-object-vector>;
-  let data = ssv-data(ssv);
-  let fill = size(ssv);
-  if (fill = size(data))
-    let data-size = if (fill < 1024)
-		      fill * 2;
+  let data = ssv.ssv-data;
+  let current = ssv.size;
+  if (current == data.size)
+    let data-size = if (current < 1024)
+		      current * 2;
 		    else 
-		      fill + 1024;
+		      current + 1024;
 		    end if;
     let new-data = replace-subsequence!(make(<simple-object-vector>,
 					     size: data-size),
-					data, end: fill);
-    ssv-data(ssv) := new-data;
-    new-data[fill] := new-element;
+					data, end: current);
+    ssv.ssv-data := new-data;
+    new-data[current] := new-element;
   else 
-    data[fill] := new-element;
+    data[current] := new-element;
   end if;
-  ssv-fill(ssv) := fill + 1;
+  ssv.ssv-current-size := current + 1;
   ssv;
 end method add!;
 
@@ -178,15 +198,15 @@ define method remove! (ssv :: <stretchy-object-vector>, elem,
 		            count :: false-or(<integer>))
     => ssv :: <stretchy-object-vector>;
   unless (count & (count == 0))
-    let data = ssv-data(ssv);
-    let sz = size(ssv);
+    let data = ssv.ssv-data;
+    let sz = ssv.size;
     local
       method copy (src :: <integer>, dst :: <integer>,
 		   deleted :: <integer>)
 	  => ();
 	case
 	  src == sz =>
-	    ssv-fill(ssv) := sz - deleted;
+	    ssv.ssv-current-size := sz - deleted;
 	  otherwise =>
 	    data[dst] := data[src];
 	    copy(src + 1, dst + 1, deleted);
@@ -196,7 +216,7 @@ define method remove! (ssv :: <stretchy-object-vector>, elem,
 			      deleted :: <integer>)
 	  => ();
 	if (src == sz)
-	  ssv-fill(ssv) := sz - deleted;
+	  ssv.ssv-current-size := sz - deleted;
 	else 
 	  let this-element = data[src];
 	  case
@@ -231,3 +251,41 @@ define method remove! (ssv :: <stretchy-object-vector>, elem,
   end unless;
   ssv;
 end method remove!;
+
+define sealed method as
+    (class == <stretchy-vector>, collection :: <collection>)
+ => (res :: <stretchy-object-vector>);
+  let res = make(<stretchy-object-vector>, size: collection.size);
+  for (index :: <integer> from 0, element in collection)
+    res[index] := element;
+  end;
+  res;
+end;
+
+define inline method as
+    (class == <stretchy-vector>, vector :: <stretchy-vector>)
+ => (res :: <stretchy-vector>);
+  vector;
+end;
+
+define method map-into (destination :: <stretchy-object-vector>,
+			proc :: <function>, sequence :: <sequence>,
+			#next next-method, #rest more-sequences)
+    => res :: <stretchy-vector>;
+  if (empty?(more-sequences))
+    let sz = size(sequence);
+    if (sz == #f)
+      error("Cannot map unbounded sequences into stretchy-vectors.");
+    elseif (sz > size(destination))
+      size(destination) := sz
+    end if;
+    let data = ssv-data(destination);
+    for (key :: <integer> from 0, elem in sequence)
+      destination[key] := proc(elem);
+    end for;
+    destination;
+  else
+    next-method();
+  end if;
+end method map-into;
+
