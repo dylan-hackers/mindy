@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.12 1997/05/12 22:19:26 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.13 1997/05/31 01:16:11 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -54,7 +54,7 @@ define method format (str :: <byte-string>, #rest args) => ();
 	      write-integer(args[next-arg], 16);
 	      scan(index + 1, next-arg + 1);
 	    'c', 'C' =>
-	      write(check-type(args[next-arg], <byte-character>));
+	      puts(check-type(args[next-arg], <byte-character>));
 	      scan(index + 1, next-arg + 1);
 	    's', 'S' =>
 	      print-message(args[next-arg]);
@@ -63,11 +63,11 @@ define method format (str :: <byte-string>, #rest args) => ();
 	      print(args[next-arg]);
 	      scan(index + 1, next-arg + 1);
 	    '%' =>
-	      write('%');
+	      puts('%');
 	      scan(index + 1, next-arg);
 	  end;
 	else
-	  write(char);
+	  puts(char);
 	  scan(index + 1, next-arg);
 	end;
       end;
@@ -80,11 +80,11 @@ end;
 define generic print-message (thing :: <object>) => ();
 
 define method print-message (str :: <byte-string>) => ();
-  write(str);
+  puts(str);
 end;
 
 define method print-message (sym :: <symbol>) => ();
-  write(as(<string>, sym));
+  puts(as(<string>, sym));
 end;
 
 define method print-message (cond :: <condition>) => ();
@@ -100,73 +100,73 @@ define method print (thing :: <object>) => ();
   if (name)
     format("{an instance of %s}", name);
   else
-    write("{an instance of something}");
+    puts("{an instance of something}");
   end if;
 end;
 
 define method print (char :: <character>) => ();
-  write('\'');
+  puts('\'');
   write-maybe-escaping(char, '\'');
-  write('\'');
+  puts('\'');
 end;
 
 define method print (str :: <byte-string>) => ();
-  write('"');
+  puts('"');
   for (char in str)
     write-maybe-escaping(char, '"');
   end;
-  write('"');
+  puts('"');
 end;
 
 define method write-maybe-escaping
     (char :: <character>, quote :: <character>) => ();
   if (char < ' ')
     select (char)
-      '\0' => write("\\0");
-      '\a' => write("\\a");
-      '\b' => write("\\b");
-      '\t' => write("\\t");
-      '\f' => write("\\f");
-      '\r' => write("\\r");
-      '\n' => write("\\n");
-      '\e' => write("\\e");
+      '\0' => puts("\\0");
+      '\a' => puts("\\a");
+      '\b' => puts("\\b");
+      '\t' => puts("\\t");
+      '\f' => puts("\\f");
+      '\r' => puts("\\r");
+      '\n' => puts("\\n");
+      '\e' => puts("\\e");
       otherwise =>
 	format("\\{%x}", as(<integer>, char));
     end;
   elseif (char == quote)
-    write('\\');
-    write(char);
+    puts('\\');
+    puts(char);
   elseif (char <= '~')
-    write(char);
+    puts(char);
   else
     format("\\{%x}", as(<integer>, char));
   end;
 end;
 
 define method print (sym :: <symbol>) => ();
-  write('#');
+  puts('#');
   print(as(<string>, sym));
 end;
 
 define method print (vec :: <simple-object-vector>) => ();
-  write("#[");
+  puts("#[");
   block (return)
     for (count :: <integer> from 0, el in vec, first? = #t then #f)
       unless (first?)
-	write(", ");
+	puts(", ");
       end;
       if (count == 10)
-	write("...");
+	puts("...");
 	return();
       end;
       print(el);
     end;
   end;
-  write(']');
+  puts(']');
 end;
 
 define method print (list :: <list>) => ();
-  write("#(");
+  puts("#(");
   block (return)
     for (count :: <integer> from 0,
 	 list = list then list.tail,
@@ -174,21 +174,21 @@ define method print (list :: <list>) => ();
 	 until: list == #())
       if (instance?(list, <pair>))
 	unless (first?)
-	  write(", ");
+	  puts(", ");
 	end;
 	if (count == 10)
-	  write("...");
+	  puts("...");
 	  return();
 	end;
 	print(list.head);
       else
-	write(" . ");
+	puts(" . ");
 	print(list);
 	return();
       end;
     end;
   end;
-  write(')');
+  puts(')');
 end;
 
 define method print (func :: <function>) => ();
@@ -200,16 +200,16 @@ define method print (class :: <class>) => ();
   if (name)
     format("{the class %s}", name);
   else
-    write("{some random class}");
+    puts("{some random class}");
   end if;
 end;
 
 define method print (true == #t) => ();
-  write("#t");
+  puts("#t");
 end;
 
 define method print (false == #f) => ();
-  write("#f");
+  puts("#f");
 end;
 
 define method print (int :: <integer>) => ();
@@ -217,7 +217,7 @@ define method print (int :: <integer>) => ();
 end;
 
 define method print (int :: <extended-integer>) => ();
-  write("#e");
+  puts("#e");
   write-integer(int, 10);
 end;
 
@@ -234,21 +234,21 @@ define method write-integer (int :: <integer>, radix :: <integer>)
 	repeat(remaining);
       end;
       if (digit < 10)
-	write(digit + as(<integer>, '0'));
+	puts(digit + as(<integer>, '0'));
       else
-	write(digit + as(<integer>, 'a') - 10);
+	puts(digit + as(<integer>, 'a') - 10);
       end;
     end;
   if (negative?(int))
-    write('-');
+    puts('-');
     let (negative-remaining, negative-digit) = truncate/(int, radix);
     unless (zero?(negative-remaining))
       repeat(-negative-remaining);
     end unless;
     if (negative-digit > -10)
-      write(as(<integer>, '0') - negative-digit);
+      puts(as(<integer>, '0') - negative-digit);
     else
-      write(as(<integer>, 'a') - negative-digit - 10);
+      puts(as(<integer>, 'a') - negative-digit - 10);
     end if;
   else
     repeat(int);
@@ -276,31 +276,31 @@ define method write-integer
     end;
   let digits
     = if (negative?(int))
-	write('-');
+	puts('-');
 	repeat(-int, #());
       else
 	repeat(int, #());
       end;
   for (digit :: <integer> in digits)
-    write(digit);
+    puts(digit);
   end;
 end;
 
 
-define generic write (thing :: <object>) => ();
+define generic puts (thing :: <object>) => ();
 
-define inline method write
+define inline method puts
     (int :: limited(<integer>, min: 0, max: 255)) => ();
   call-out("putchar", void:, int: int);
 end;
 
-define inline method write (char :: <byte-character>) => ();
-  write(as(<integer>, char));
+define inline method puts (char :: <byte-character>) => ();
+  puts(as(<integer>, char));
 end;
 
-define method write (str :: <byte-string>) => ();
+define method puts (str :: <byte-string>) => ();
   for (char in str)
-    write(char);
+    puts(char);
   end;
 end;
 

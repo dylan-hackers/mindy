@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.19 1997/05/12 22:19:22 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.20 1997/05/31 01:16:11 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -578,9 +578,9 @@ end method %break;
 // 
 define method lose
     (str :: <byte-string>, #rest args) => res :: <never-returns>;
-  write("internal error: ");
+  puts("internal error: ");
   apply(format, str, args);
-  write('\n');
+  puts('\n');
   call-out("abort", void:);
 end;
 

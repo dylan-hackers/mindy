@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.41 1997/05/12 22:19:21 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.42 1997/05/31 01:16:11 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -185,7 +185,7 @@ define module Cheap-IO
   use Dylan-Viscera,
     import: {
 	     // Cheap-IO stuff.
-	     format, print-message, print, write-integer, write
+	     format, print-message, print, write-integer, puts
 
     },
     export: all;

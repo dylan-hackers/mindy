@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.39 1997/05/12 22:19:32 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.40 1997/05/31 01:16:11 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -203,7 +203,7 @@ define module dylan-viscera
     lsv-data-type, lsv-fill, %main, main,
 
     // Cheap IO
-    format, print-message, print, write-integer, write,
+    format, print-message, print, write-integer, puts,
 
     // System stuff
     \%%primitive,
