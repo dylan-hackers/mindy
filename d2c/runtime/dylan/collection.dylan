@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.6 2000/05/09 20:04:02 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.7 2001/04/04 09:46:20 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -1009,13 +1009,18 @@ end;
 
 define method concatenate-as(type :: <type>, sequence :: <sequence>,
 			     #rest more-sequences) => result :: <sequence>;
-  if (size (sequence) == #f
-	| any? (method (s) size (s) == #f end, more-sequences))
-    error ("CONCATENATE-AS not applicable to unbounded sequences");
-  end if;
-  let length = for (total = 0 then total + seq.size,
+  local
+    method int-size(seq) => size :: <integer>;
+      let sz = seq.size;
+      unless (sz)
+	error ("CONCATENATE-AS not applicable to unbounded sequences");
+      end;
+      sz;
+    end;
+
+  let length = for (total = 0 then total + seq.int-size,
 		    seq in more-sequences)
-	       finally total + sequence.size;
+	       finally total + sequence.int-size;
 	       end for;
 		 
   let result = make(type, size: length);
