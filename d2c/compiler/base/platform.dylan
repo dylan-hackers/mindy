@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.9 1996/09/04 16:47:10 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.10 1996/09/15 15:33:31 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -71,12 +71,19 @@ define sealed class <target-environment> (<object>)
   constant slot path-separator :: <character>,
     required-init-keyword: #"path-separator";
 
+  // The remainder are really just a way for the compiler to know
+  // when it needs to do black magic, but without knowing the
+  // target's name
   constant slot link-doesnt-search-for-libs? :: <boolean> = #f,
     init-keyword: #"link-doesnt-search-for-libs?";
   constant slot import-directive-required? :: <boolean> = #f,
     init-keyword: #"import-directive-required?";
+  // perhaps this next one should be supports-stabs...
   constant slot supports-debugging? :: <boolean> = #f,
     init-keyword: #"supports-debugging?";
+  constant slot uses-win32-stabs? :: <boolean> = #f,
+    init-keyword: #"uses-win32-stabs?";
+  // rather than unix-stabs, which are slightly different
 end class <target-environment>;
 
 define sealed domain make(singleton(<target-environment>));
@@ -143,7 +150,7 @@ define function add-target!
 	#"target-name" =>
 	  keyword-values := add!(keyword-values, as(<symbol>, val));
 	#"link-doesnt-search-for-libs?", #"import-directive-required?", 
-	#"supports-debugging?" =>
+	#"supports-debugging?", #"uses-win32-stabs?" =>
 	  keyword-values := add!(keyword-values, string-to-boolean(val));
 	#"integer-length" =>
 	  keyword-values := add!(keyword-values, string-to-integer(val));
