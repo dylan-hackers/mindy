@@ -9,15 +9,17 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.3 1994/04/10 19:01:12 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.4 1994/04/24 21:41:54 rgs Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
-
+/* If this enumeration changes, you must also update "type.h" */
+#ifndef type_Id_defined
+#define type_Id_defined
 enum type_Id {id_Singleton, id_Class, id_SubClass, id_LimInt, id_Union};
-
+#endif
 
 extern obj_t obj_ClassClass;
 

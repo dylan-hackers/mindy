@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.19 1994/04/23 03:48:01 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.20 1994/04/24 21:41:56 rgs Exp $
 *
 * This file does whatever.
 *
@@ -380,9 +380,9 @@ static boolean
 	   the efficiency by a large margin. */
 	if (!subtypep(arg_class, specializer))
 	    if (instancep(arg, specializer)) {
-		if (object_class(specializer) == obj_LimIntClass)
+		if (obj_ptr(struct type *, specializer)->type_id == id_LimInt)
 		    *(cached_classes - 1) =
-			(object_class(arg_class) == obj_LimIntClass
+			(obj_ptr(struct type *,arg_class)->type_id == id_LimInt
 			 ? intersect_limited_integers(arg_class,specializer)
 			 : specializer);
 		else
@@ -390,7 +390,8 @@ static boolean
 		obj_ptr(struct gf_cache *, cache)->simple = FALSE;
 	    } else {
 		if (overlapp(arg_class, specializer)) {
-		    if (object_class(specializer) == obj_LimIntClass)
+		    if (obj_ptr(struct type *,
+				specializer)->type_id == id_LimInt)
 			*(cached_classes - 1) =
 			    restrict_limited_integers(arg, arg_class,
 						      specializer);
@@ -423,7 +424,7 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
 
 	for (i = 0; i < max; i++, arg++, cache_class++) {
 	    boolean simple_arg = simple ||
-		object_class(*cache_class) == obj_ClassClass;
+		obj_ptr(struct type *, *cache_class)->type_id == id_Class;
 	    if (simple_arg ? *cache_class != object_class(*arg)
 		           : !instancep(*arg, *cache_class))
 		    found = FALSE;
@@ -1117,7 +1118,7 @@ static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
 
 	for (i = 0; i < max; i++, arg++, cache_class++) {
 	    boolean simple_arg = simple ||
-		object_class(*cache_class) == obj_ClassClass;
+		obj_ptr(struct type *, *cache_class)->type_id == id_Class;
 	    if (simple_arg ? *cache_class != object_class(*arg)
 		           : !instancep(*arg, *cache_class))
 		    found = FALSE;

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.10 1994/04/23 03:49:34 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.11 1994/04/24 21:41:28 rgs Exp $
 *
 * This file does whatever.
 *
@@ -32,13 +32,8 @@
 #include "def.h"
 
 obj_t obj_TypeClass = 0;
-obj_t obj_SingletonClass, obj_LimIntClass;
+static obj_t obj_SingletonClass, obj_LimIntClass;
 static obj_t obj_SubclassClass, obj_UnionClass;
-
-struct type {
-    obj_t class;
-    enum type_Id type_id;
-};
 
 struct singleton {
     obj_t class;
@@ -621,7 +616,7 @@ obj_t restrict_limited_integers(obj_t val, obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2, min, max;
 
-    if (object_class(lim1) == obj_LimIntClass) {
+    if (obj_ptr(struct type *, lim1)->type_id == id_LimInt) {
 	min1 = obj_ptr(struct lim_int *, lim1)->min;
 	max1 = obj_ptr(struct lim_int *, lim1)->max;
     } else
