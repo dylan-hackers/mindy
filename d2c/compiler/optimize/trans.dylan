@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.6 2001/07/07 17:18:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.7 2001/07/22 04:44:30 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1301,9 +1301,78 @@ define method make-transformer
     unless (defn.class-defn-maker-function)
       give-up();
     end;
-    // ### Need to default the keywords.
-    // ### Need to validate the keywords.
+
     let builder = make-builder(component);
+
+    if (defn.class-defn-key-defaulter-function)
+      let keyword-infos = cclass.all-keyword-infos;
+
+      if (any?(keyword-init-function, keyword-infos))
+        give-up();
+      end if;
+      
+      let init-leaves :: <object-table> = make(<object-table>);
+      for(keywords-list = init-keywords then keywords-list.tail.tail,
+          count from 1 by 2,
+          until: empty?(keywords-list))
+        let key-leaf = keywords-list.first;
+        
+        if (~instance?(key-leaf, <literal-constant>))
+          unless (ctypes-intersect?(key-leaf.derived-type,
+                                    specifier-type(#"<symbol>")))
+            compiler-error-location
+              (call.dependents.dependent,
+               "Bogus keyword as the %s argument in make of %s",
+               integer-to-english(count + 1, as: #"ordinal"), cclass);
+          end unless;
+          give-up();
+        elseif(instance?(key-leaf.value, <literal-symbol>))
+          let key = key-leaf.value.literal-value;
+          unless(element(init-leaves, key, default: #f))
+            init-leaves[key] := keywords-list.second;
+          end unless;
+        else
+          compiler-error-location
+            (call.dependents.dependent,
+             "Bogus keyword (%s) as the %s argument in make of %s",
+             key-leaf.value, integer-to-english(count + 1, as: #"ordinal"),
+             cclass);
+          give-up();
+        end if;
+      end for;
+
+      for(info in keyword-infos)
+        let key = info.keyword-symbol;
+        let val-leaf = element(init-leaves, key, default: #f);
+        
+        if(val-leaf)
+          unless(ctypes-intersect?(val-leaf.derived-type, info.keyword-type))
+            compiler-error-location
+	      (call.dependents.dependent,
+               "Wrong type for the %s init-key in make of %s;\n"
+                 "  Wanted %s, but got %s",
+               key, cclass, info.keyword-type, val-leaf.derived-type);
+          end;
+        elseif(info.keyword-required?)
+          compiler-error-location
+            (call.dependents.dependent,
+             "Required keyword %s missing in make of %s", key, cclass);
+        elseif(info.keyword-init-value)
+          init-leaves[key]
+            := make-literal-constant(builder, info.keyword-init-value);
+        end if;
+      end for;
+      
+      init-keywords
+        := for(val-leaf keyed-by key in init-leaves,
+               new-init-keywords = #()
+                 then pair(make-literal-constant(builder, key),
+                           pair(val-leaf, new-init-keywords)))
+           finally
+             new-init-keywords;
+           end for;
+    end if;
+
     let assign = call.dependents.dependent;
     let policy = assign.policy;
     let source = assign.source-location;
