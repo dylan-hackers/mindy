@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/time/Attic/Makefile.in,v 1.1 1996/07/23 16:01:48 dwatson Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/time/Attic/Makefile.in,v 1.2 1996/07/29 18:30:49 dwatson Exp $
 ##
 ##  This is the makefile for the Gwydion Time library.
 ##
@@ -68,7 +68,7 @@ MC	= ../../comp/mindycomp
 ##
 MINDYFLAGS = -lTime -DEXTENDED-UNIVERSAL-TIME
 
-OBJS = library.dbc time.dbc time-intr.dbc
+OBJS = library.dbc time.dbc time-intr.dbc time-io.dbc
 
 time-lib.dbc: ${OBJS}
 	cat ${OBJS} > $@
@@ -82,6 +82,8 @@ time-intr.dbc: ${SRCDIR}/time-intr.dylan
 library.dbc: ${SRCDIR}/library.dylan
 	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
 
+time-io.dbc: ${SRCDIR}/time-io.dylan
+	${MC} ${MINDYFLAGS} -o time-io.dbc ${SRCDIR}/time-io.dylan
 clean:
 	rm -f ${OBJS} time-lib.dbc *~ \#* core
 
