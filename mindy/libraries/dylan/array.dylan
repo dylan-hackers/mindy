@@ -1,7 +1,7 @@
 module:   dylan
 language: infix-dylan
 author:   Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.7 1996/01/11 18:43:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.8 1996/03/07 18:04:41 nkramer Exp $
 
 //======================================================================
 //
@@ -31,6 +31,26 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dy
 // This is an array implementation that depends upon vectors being
 // already implemented.
 
+// GFs borrowed from the new compiler
+
+define open generic dimensions (array :: <array>) => dims :: <sequence>;
+
+define open generic rank (array :: <array>) => rank :: <integer>;
+
+define open generic row-major-index
+    (array :: <array>, #rest subscripts) => index :: <integer>;
+
+define open generic aref (array :: <array>, #rest indices)
+    => element :: <object>;
+
+define open generic aref-setter
+    (new-value :: <object>, array :: <array>, #rest indices)
+    => new-value :: <object>;
+
+define open generic dimension (array :: <array>, axis :: <integer>)
+    => dimension :: <integer>;
+
+
 define constant no-default = list(#"no-default");
 
 define class <multiD-array> (<array>)
@@ -41,9 +61,10 @@ end class <multiD-array>;
 
 // General array methods
 
-define method make (c :: singleton (<array>), 
-		    #key dimensions: dimensions :: <sequence> = no-default,
-		    fill: fill = #f);
+define method make (c == <array>, 
+		    #key dimensions: dimensions :: <sequence> = no-default, 
+		    fill = #f)
+ => array :: <array>;
   if (dimensions == no-default)
     error("Need the dimensions or a size for an array");
   elseif (size(dimensions) = 1)
@@ -104,7 +125,7 @@ end method size;
 
 
 define method dimension (array :: <array>, axis :: <integer>) 
-             => dim-of-that-axis :: <integer>;
+ => dim-of-that-axis :: <integer>;
   element(dimensions(array), axis);
 end method dimension;
 
@@ -224,7 +245,8 @@ end method initialize;
 
 
 define method element (array :: <multiD-array>, index :: <integer>,
-		       #key default: default = no-default);
+		       #key default: default = no-default)
+  => elt :: <object>;
   if (default == no-default)
     array.contents-slot[index];
   else
@@ -234,7 +256,8 @@ end method element;
 
 
 define method element-setter (value, array :: <multiD-array>, 
-			      index :: <integer>);
+			      index :: <integer>)
+  => value :: <object>;
   array.contents-slot[index] := value;
 end method element-setter;
 
