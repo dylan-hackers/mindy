@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.34 1995/11/14 15:44:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.35 1995/11/14 22:20:38 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -342,7 +342,7 @@ define method main (argv0, #rest args)
 		       else
 			 #f;
 		       end if;
-    autodump-main(component, next-free-id);
+    autodump(component, next-free-id);
   else
     let library-dirs = make(<stretchy-vector>);
     let lid-file = #f;
