@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.14 1995/11/14 13:42:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.15 1995/11/16 03:45:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,7 +8,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // Sequence of modules (in the Dylan library) that are automatically used
 // by the implicit Dylan-User module that gets created in each library.
 //
-define constant $Dylan-User-Uses :: <vector> = #[#"Dylan"];
+define constant $Dylan-User-Uses :: <vector> = #[#"Dylan", #"Extensions"];
 
 
 // *Module-System-Initialized* -- internal.
