@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.30 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.31 1996/09/15 15:33:29 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -570,13 +570,6 @@ define method dformat(#rest args) => ();
   apply(pretty-format, *debug-output*, args);
 end;
 
-
-define constant assert
-  = method (value) => ();
-      unless (value)
-	error("Assertion failed.");
-      end;
-    end;
 
 define generic key-of
   (value, collection :: <collection>, #key test :: <function>, default)
