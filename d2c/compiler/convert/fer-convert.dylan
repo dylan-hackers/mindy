@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.7 1994/12/16 14:31:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.8 1994/12/16 16:37:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -500,23 +500,25 @@ define method build-general-method
   let paramlist = meth.method-param-list;
   let fixed-vars = make(<stretchy-vector>);
   let specializers = make(<stretchy-vector>);
+  let specializer-leaves = make(<stretchy-vector>);
   let non-const-arg-types? = #f;
   let arg-check-builder = make-builder(builder);
   for (param in paramlist.paramlist-required-vars)
     let (type, type-var) = param-type-and-var(param);
+    add!(specializers, type);
     let name = param.param-name;
     let var = make-lexical-var(builder, name.token-symbol, source, type);
     add-binding(lexenv, name, var, type-var: type-var);
     if (type-var)
       non-const-arg-types? := #t;
-      add!(specializers, type-var);
+      add!(specializer-leaves, type-var);
       let temp = make-lexical-var(builder, name.token-symbol, source, type);
       add!(fixed-vars, temp);
       let op = make-check-type-operation(arg-check-builder, temp, type-var);
       build-assignment(arg-check-builder, specializer-lexenv.lexenv-policy,
 		       source, var, op);
     else
-      add!(specializers, make-literal-constant(builder, type));
+      add!(specializer-leaves, make-literal-constant(builder, type));
       add!(fixed-vars, var);
     end;
   end;
@@ -540,24 +542,31 @@ define method build-general-method
 	  var;
 	end;
       end;
-  let keywords
+  let (keyword-infos, keyword-vars)
     = if (paramlist.paramlist-keys)
 	let infos = make(<stretchy-vector>);
+	let vars = make(<stretchy-vector>);
 	for (param in paramlist.paramlist-keys)
 	  let name = param.param-name;
 	  let (type, type-var) = param-type-and-var(param);
 	  let var = make-lexical-var(builder, name.token-symbol, source, type);
-	  let default = ct-eval(param.param-default, lexenv);
+	  let default = if (param.param-default)
+			  ct-eval(param.param-default, lexenv);
+			else
+			  make(<ct-literal>, value: #f);
+			end;
 	  if (default)
-	    add!(infos, make(<keyword-info>, symbol: param.param-keyword,
-			     var: var, default: default, type: type));
+	    add!(infos, make(<key-info>, key-name: param.param-keyword,
+			     default: default, type: type));
+	    add!(vars, var);
 	  else
 	    let pre-default
 	      = make-lexical-var(builder, name.token-symbol, source,
 				 object-ctype());
-	    add!(infos, make(<keyword-info>, symbol: param.param-keyword,
-			     var: pre-default, type: object-ctype(),
+	    add!(infos, make(<key-info>, key-name: param.param-keyword,
+			     type: object-ctype(),
 			     default: $Unbound-Marker-CT-Value));
+	    add!(vars, pre-default);
 	    let temp = make-local-var(builder, #"temp", object-ctype());
 	    build-assignment
 	      (builder, lexenv.lexenv-policy, source, temp,
@@ -577,33 +586,40 @@ define method build-general-method
 	    end-body(builder);
 	  end;
 	  if (type-var)
+	    let checked = make-lexical-var(builder, name.token-symbol, source,
+					   object-ctype());
 	    build-assignment
-	      (builder, lexenv.lexenv-policy, source, var,
+	      (builder, lexenv.lexenv-policy, source, checked,
 	       make-check-type-operation(builder, var, type-var));
+	    add-binding(lexenv, name, checked, type-var: type-var);
+	  else
+	    add-binding(lexenv, name, var);
 	  end;
-	  add-binding(lexenv, name, var, type-var: type-var);
 	end;
-	as(<list>, infos);
+	values(as(<list>, infos),
+	       as(<list>, vars));
       end;
   
   let returns = meth.method-returns;
   let fixed-results = make(<stretchy-vector>);
   let non-const-result-types? = #f;
   let result-types = make(<stretchy-vector>);
+  let result-type-leaves = make(<stretchy-vector>);
   let result-check-builder = make-builder(builder);
   for (param in returns.paramlist-required-vars)
     let (type, type-var) = param-type-and-var(param);
+    add!(result-types, type);
     let var = make-local-var(builder, param.param-name.token-symbol, type);
     if (type-var)
       non-const-result-types? := #t;
-      add!(result-types, type-var);
+      add!(result-type-leaves, type-var);
       let temp = make-local-var(builder, param.param-name.token-symbol, type);
       let op = make-check-type-operation(result-check-builder, var, type-var);
       build-assignment(result-check-builder, specializer-lexenv.lexenv-policy,
 		       source, temp, op);
       add!(fixed-results, temp);
     else
-      add!(result-types, make-literal-constant(builder, type));
+      add!(result-type-leaves, make-literal-constant(builder, type));
       add!(fixed-results, var);
     end;
   end;
@@ -613,6 +629,16 @@ define method build-general-method
 	make-local-var(builder, returns.paramlist-rest.token-symbol,
 		       object-ctype());
       end;
+
+  let signature
+    = make(<signature>,
+	   specializers: as(<list>, specializers),
+	   next: next-var & #t,
+	   rest-type: rest-var & object-ctype(),
+	   key-infos: keyword-infos & as(<list>, keyword-infos),
+	   all-keys?: paramlist.paramlist-all-keys?,
+	   returns: as(<list>, result-types),
+	   returns-rest-type: rest-result & object-ctype());
 
   let (results, results-temp)
     = if (non-const-result-types?)
@@ -628,8 +654,8 @@ define method build-general-method
       end;
   let method-literal
     = build-hairy-method-body(builder, lexenv.lexenv-policy, source,
-			      fixed-vars, next-var, rest-var,
-			      keywords, results);
+			      signature, fixed-vars, next-var, rest-var,
+			      keyword-vars, results);
   if (non-const-arg-types?)
     build-region(builder, builder-result(arg-check-builder));
   end;
@@ -666,8 +692,8 @@ define method build-general-method
 	temp;
       end;
     build-call(#"%make-method",
-	       list(build-call(#"list", specializers),
-		    build-call(#"list", result-types),
+	       list(build-call(#"list", specializer-leaves),
+		    build-call(#"list", result-type-leaves),
 		    make-literal-constant
 		      (builder,
 		       if (rest-result)
@@ -685,46 +711,15 @@ end;
 
 // build-hairy-method-body.
 
-/*
-
-define class <hairy-method-literal> (<object>)
-  slot hairy-method-required-vars :: <list>,
-    required-init-keyword: required-vars:;
-  slot hairy-method-next-var :: union(<lexical-var>, <false>),
-    required-init-keyword: next-var:;
-  slot hairy-method-rest-var :: union(<lexical-var>, <false>),
-    required-init-keyword: rest-var:;
-  slot hairy-method-keywords :: union(<list>, <false>),
-    required-init-keyword: keywords:;
-  slot hairy-method-main-entry :: <bare-method-literal>,
-    required-init-keyword: main-entry:;
-  slot hairy-method-more-arg-entry :: union(<bare-method-literal>, <false>),
-    init-value: #f;
-  slot hairy-method-general-entry :: union(<bare-method-literal>, <false>),
-    init-value: #f;
-end;
-
-*/
-
-define class <keyword-info> (<object>)
-  slot keyinfo-symbol :: <symbol>,
-    required-init-keyword: symbol:;
-  slot keyinfo-var :: <abstract-variable>,
-    required-init-keyword: var:;
-  slot keyinfo-default :: <ct-value>,
-    required-init-keyword: default:;
-  slot keyinfo-type :: <ctype>,
-    required-init-keyword: type:;
-end;
-
 define generic build-hairy-method-body
     (builder :: <fer-builder>,
      policy :: <policy>,
      source :: <source-location>,
+     signature :: <signature>,
      fixed-vars :: <sequence>,
      next-var :: union(<abstract-variable>, <false>),
      rest-var :: union(<abstract-variable>, <false>),
-     keywords :: union(<sequence>, <false>),
+     keyword-vars :: union(<sequence>, <false>),
      result-vars :: <var-or-vars>)
     => res :: <leaf>;
 
@@ -732,26 +727,26 @@ define method build-hairy-method-body
     (builder :: <fer-builder>,
      policy :: <policy>,
      source :: <source-location>,
+     signature :: <signature>,
      fixed-vars :: <sequence>,
      next-var :: <false>,
      rest-var :: <false>,
-     keywords :: <false>,
+     keyword-vars :: <false>,
      result-vars :: <var-or-vars>)
     => res :: <leaf>;
   build-method-body(builder, policy, source, as(<list>, fixed-vars),
 		    result-vars);
 end;
 
-/*
-
 define method build-hairy-method-body
     (builder :: <fer-builder>,
      policy :: <policy>,
      source :: <source-location>,
+     signature :: <signature>,
      fixed-vars :: <sequence>,
      next-var :: union(<abstract-variable>, <false>),
      rest-var :: union(<abstract-variable>, <false>),
-     keywords :: union(<sequence>, <false>),
+     keyword-vars :: union(<sequence>, <false>),
      result-vars :: <var-or-vars>)
     => res :: <leaf>;
   let vars = map-as(<stretchy-vector>, identity, fixed-vars);
@@ -760,9 +755,18 @@ define method build-hairy-method-body
     let var = make-lexical-var(body-builder, #"next-method-info", source,
 			       object-ctype());
     add!(vars, var);
-    if (keywords & ~rest-var)
+    if (keyword-vars & ~rest-var)
       rest-var := make-lexical-var(body-builder, #"rest", source,
 				   object-ctype());
+      signature
+	:= make(<signature>,
+		specializers: signature.specializers,
+		next: #t,
+		rest-type: object-ctype(),
+		keys: signature.key-infos,
+		all-keys: signature.all-keys?,
+		returns: signature.returns,
+		returns-rest-type: signature.returns-rest-type);
     end;
   end;
   if (rest-var)
@@ -790,22 +794,19 @@ define method build-hairy-method-body
     build-let(body-builder, policy, source, next-var,
 	      make-operation(body-builder, as(<list>, ops)));
   end;
-  if (keywords)
-    for (info in keywords)
-      add!(vars, info.keyinfo-var);
+  if (keyword-vars)
+    for (var in keyword-vars)
+      add!(vars, var);
     end;
   end;
   let method-leaf = build-method-body(builder, policy, source,
 				      as(<list>, vars), result-vars);
   build-region(builder, builder-result(body-builder));
 
-  make(<hairy-method-leaf>,
-       required-vars: as(<list>, fixed-vars),
-       next-var: next-var,
-       rest-var: rest-var,
-       keywords: keywords,
-       main-entry: method-leaf);
+  make-hairy-method-literal(builder, policy, source, signature, method-leaf);
 end;
+
+/*
 
 define method build-hairy-method-more-arg-entry (leaf)
   let vars = make(<stretchy-vector>);
@@ -982,8 +983,13 @@ define method canonicalize-results (builder :: <fer-builder>,
   add!(ops, rest-var);
   let cluster = make-values-cluster(builder, #"temps", wild-ctype());
   let method-leaf
-    = build-hairy-method-body(builder, policy, source, fixed-vars, #f,
-			      rest-var, #f, cluster);
+    = build-hairy-method-body(builder, policy, source,
+			      make(<signature>,
+				   specializers:
+				     make(<list>, size: fixed-results.size),
+				   rest-type: object-ctype()),
+			      fixed-vars, #f, rest-var, #f,
+			      cluster);
   build-assignment(builder, policy, source, cluster,
 		   make-operation(builder, as(<list>, ops)));
   end-body(builder);
