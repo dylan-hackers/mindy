@@ -1,11 +1,11 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.7 2002/03/04 21:48:13 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.8 2002/03/06 23:03:29 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -63,7 +63,7 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
   let lib-name = state.unit-header[#"module"];
   state.unit-name := lib-name;
   format(*debug-output*, "Compiling library %s\n", lib-name);
-  state.unit-lib    := find-library(as(<symbol>, lib-name), create: #t);
+  state.unit-lib := find-library(as(<symbol>, lib-name), create: #t);
 
   // XXX these two look suspicious
   // second one is ok, default is now according to DRM
@@ -237,14 +237,9 @@ define method build-executable (state :: <single-file-mode-state>) => ();
   end if;
 
   local method add-archive (name :: <byte-string>) => ();
-          if (state.unit-no-binaries)
-	    // If cross-compiling use -l -L search mechanism.
-	    dash-small-ells := stringify(" -l", name, dash-small-ells);
-	  else
-	    let archive = find-library-archive(name, state);
-	    unit-libs := stringify(' ', archive, unit-libs);
-	  end if;
-	end method add-archive;
+          let archive = find-library-archive(name, state);
+          unit-libs := stringify(' ', archive, unit-libs);
+        end method add-archive;
 
   // Under Unix, the order of the libraries is significant!  First to
   // be added go at the end of the command line...
@@ -254,7 +249,7 @@ define method build-executable (state :: <single-file-mode-state>) => ();
   for (unit in *units*)
     if (unit.unit-linker-options)
       linker-args
-	:= stringify(' ', unit.unit-linker-options, linker-args);
+        := stringify(' ', unit.unit-linker-options, linker-args);
     end if;
     unless (unit == state.unit-unit-info)
       add-archive(concatenate(unit.unit-name, "-dylan"));
@@ -272,7 +267,7 @@ define method build-executable (state :: <single-file-mode-state>) => ();
                        end if,
                        $runtime-include-dir);
   
-  cc-flags := concatenate(cc-flags, getenv("CCOPTS")|"");
+  let cc-flags = concatenate(cc-flags, getenv("CCOPTS")|"");
 
   let libtool = getenv("LIBTOOL") | state.unit-target.libtool-command;
 
@@ -313,71 +308,6 @@ define method build-executable (state :: <single-file-mode-state>) => ();
 
 end method build-executable;
 
-/*
-
-define method dump-library-summary (state :: <single-file-mode-state>) => ();
-  format(*debug-output*, "Dumping library summary.\n");
-  let dump-buf
-    = begin-dumping(as(<symbol>, state.unit-lib-name),
-    		    $library-summary-unit-type);
-
-  for (tlfs in state.unit-tlf-vectors)
-    for (tlf in tlfs)
-      dump-od(tlf, dump-buf);
-    end;
-  end;
-  dump-od(state.unit-unit-info, dump-buf);
-  dump-queued-methods(dump-buf);
-
-  end-dumping(dump-buf);
-  format(state.unit-makefile, "\nall-at-end-of-file : %s\n",
-  	 state.unit-ar-name);
-  format(state.unit-clean-stream, " %s", state.unit-ar-name);
-  format(state.unit-real-clean-stream, " %s %s.lib.du", state.unit-ar-name, 
-	 as-lowercase(state.unit-lib-name));
-end method;
-
-
-define method do-make (state :: <single-file-mode-state>) => ();
-  let target = state.unit-target;
-  format(state.unit-makefile, "\nclean :\n");
-  format(state.unit-makefile, "\t%s %s\n", target.delete-file-command, 
-	 state.unit-clean-stream.stream-contents);
-  format(state.unit-makefile, "\nrealclean :\n");
-  format(state.unit-makefile, "\t%s %s\n", target.delete-file-command, 
-	 state.unit-real-clean-stream.stream-contents);
-  close(state.unit-makefile);
-
-  if (pick-which-file(state.unit-makefile-name,
-		      state.unit-temp-makefile-name,
-		      target)
-	= #t)
-    // If the new makefile is different from the old one, then we need
-    // to recompile all .c and .s files, regardless of whether they
-    // were changed.  So touch them to make them look newer than the
-    // object files.
-    unless (empty?(state.unit-all-generated-files))
-      let touch-command = "touch";
-      for (filename in state.unit-all-generated-files)
-	touch-command := stringify(touch-command, ' ', filename);
-      end for;
-      format(*debug-output*, "%s\n", touch-command);
-      if (system(touch-command) ~== 0)
-	cerror("so what", "touch failed?");
-      end if;
-    end unless;
-  end if;
-
-  if (~state.unit-no-binaries)
-    let make-string = format-to-string("%s -f %s", target.make-command, 
-				       state.unit-makefile-name);
-    format(*debug-output*, "%s\n", make-string);
-    unless (zero?(system(make-string)))
-      cerror("so what", "gmake failed?");
-    end;
-  end if;
-end method do-make;
-*/
 
 define method compile-library (state :: <single-file-mode-state>)
     => worked? :: <boolean>;
@@ -398,15 +328,8 @@ define method compile-library (state :: <single-file-mode-state>)
     calculate-type-inclusion-matrix(); // Hmmm... move this to program startup time one day
     build-da-global-heap(state);
     build-inits-dot-c(state);
-    build-executable(state);
-/*
-
-    if (state.unit-log-dependencies)
-      spew-dependency-log(concatenate(state.unit-mprefix, ".dep"));
-    end if;
-
-    do-make(state);
-*/
+    state.unit-no-binaries
+      | build-executable(state);
   cleanup
     if(state.unit-stream)
       close(state.unit-stream);
