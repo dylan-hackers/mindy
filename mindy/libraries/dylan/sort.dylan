@@ -11,7 +11,7 @@ module: dylan
 ##
 ######################################################################
 ##
-##  $Header
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.2 1994/03/28 11:44:23 rgs Exp $
 ##
 ##  This file contains definitions for sorting utilities for Dylan
 ##  sequences.

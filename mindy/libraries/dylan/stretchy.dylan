@@ -11,7 +11,7 @@ module: dylan
 ##
 ######################################################################
 ##
-##  $Header
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.2 1994/03/28 11:44:11 rgs Exp $
 ##
 ##  This file implements stretchy-vectors.
 ##
