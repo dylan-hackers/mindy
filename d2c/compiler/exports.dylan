@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.118 1995/12/06 23:29:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.119 1995/12/07 05:22:08 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -328,6 +328,7 @@ define module variables
     note-module-definition,
     <variable>, find-variable, variable-name, variable-definition,
     variable-transformers, variable-transformers-setter,
+    variable-ct-evaluator, variable-ct-evaluator-setter,
     note-variable-definition,
     <use>, <renaming>,
 
