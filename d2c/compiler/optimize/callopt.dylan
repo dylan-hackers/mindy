@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.7 1996/03/17 00:41:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.8 1996/03/28 00:02:09 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -129,30 +129,32 @@ define method optimize-unknown-call-defn
 	 count from 0,
 	 gf-spec in sig.specializers)
       unless (arg-dep)
-	compiler-warning("In %s:\n  not enough arguments in call of %s.\n  "
-			   "Wanted %s %d, but only got %d",
-			 call.home-function-region.name,
-			 defn.defn-name,
-			 if (sig.rest-type | sig.key-infos)
-			   "at least";
-			 else
-			   "exactly";
-			 end,
-			 sig.specializers.size,
-			 count);
+	compiler-warning-location
+	  (call.dependents.dependent,
+	   "Not enough arguments in call of %s.\n"
+	     "  Wanted %s %d, but only got %d.",
+	   defn.defn-name,
+	   if (sig.rest-type | sig.key-infos)
+	     "at least";
+	   else
+	     "exactly";
+	   end,
+	   sig.specializers.size,
+	   count);
 	bogus? := #t;
 	return();
       end;
       let arg-leaf = arg-dep.source-exp;
       let arg-type = arg-leaf.derived-type;
       unless (ctypes-intersect?(arg-type, gf-spec))
-	compiler-warning("In %s:\n  wrong type for argument %d in call of "
-			   "%s.\n  Wanted %s, but got %s",
-			 call.home-function-region.name,
-			 count,
-			 defn.defn-name,
-			 gf-spec,
-			 arg-dep.source-exp.derived-type);
+	compiler-warning-location
+	  (call.dependents.dependent,
+	   "Wrong type for %s argument in call of %s.\n"
+	     "  Wanted %s, but got %s.",
+	   integer-to-english(count + 1, as: #"ordinal"),
+	   defn.defn-name,
+	   gf-spec,
+	   arg-dep.source-exp.derived-type);
 	bogus? := #t;
       end;
       arg-leaves := pair(arg-leaf, arg-leaves);
@@ -164,11 +166,12 @@ define method optimize-unknown-call-defn
 	       have from count,
 	       while: arg-dep)
 	  finally
-	    compiler-warning("In %s:\n  too many arguments in call of %s.\n"
-			       "  Wanted exactly %d, but got %d.",
-			     call.home-function-region.name,
-			     defn.defn-name,
-			     count, have);
+	    compiler-warning-location
+	      (call.dependents.dependent,
+	       "Too many arguments in call of %s.\n"
+		 "  Wanted exactly %d, but got %d.",
+	       defn.defn-name,
+	       count, have);
 	    bogus? := #t;
 	  end;
 	end;
@@ -343,38 +346,39 @@ define method optimize-generic
 	  if (~instance?(key-leaf, <literal-constant>))
 	    unless (ctypes-intersect?(key-leaf.derived-type,
 				      specifier-type(#"<symbol>")))
-	      compiler-warning("In %s:\n  bogus keyword as argument "
-				 "%d in call of %s",
-			       call.home-function-region.name,
-			       index,
-			       defn.defn-name);
+	      compiler-warning-location
+		(call.dependents.dependent,
+		 "Bogus keyword as %s argument in call of %s",
+		 integer-to-english(index + 1, as: #"ordinal"),
+		 defn.defn-name);
 	      bogus? := #t;
 	    end;
 	  elseif (instance?(key-leaf.value, <literal-symbol>))
 	    unless (valid-keys == #"all"
 		      | member?(key-leaf.value.literal-value, valid-keys))
-	      compiler-warning
-		("In %s:\n  invalid keyword (%=) in call of %s",
-		 call.home-function-region.name,
+	      compiler-warning-location
+		(call.dependents.dependent,
+		 "Unrecognized keyword (%s) as %s argument in call of %s",
 		 key-leaf.value.literal-value,
+		 integer-to-english(index + 1, as: #"ordinal"),
 		 defn.defn-name);
 	      bogus? := #t;
 	    end;
 	  else
-	    compiler-warning
-	      ("In %s:\n  bogus keyword (%s) as argument %d in call of %s",
-	       call.home-function-region.name,
+	    compiler-warning-location
+	      (call.dependents.dependent,
+	       "Bogus keyword (%s) as %s argument in call of %s",
 	       key-leaf.value,
-	       index,
+	       integer-to-english(index + 1, as: #"ordinal"),
 	       defn.defn-name);
 	    bogus? := #t;
 	  end;
 
 	  if (remaining.tail == #())
-	    compiler-warning("In %s:\n  odd number of keyword/value arguments "
-			       "in call of %s.",
-			     call.home-function-region.name,
-			     defn.defn-name);
+	    compiler-warning-location
+	      (call.dependents.dependent,
+	       "Odd number of keyword/value arguments in call of %s.",
+	       defn.defn-name);
 	    change-to-error();
 	  end if;
 	end for;
@@ -432,11 +436,11 @@ define method ambiguous-method-warning
   for (meth in ambiguous)
     format(stream, "    %s\n", meth.defn-name);
   end;
-  compiler-warning("In %s:\n  can't pick between\n%s\n  when given "
-		     "arguments of types:\n%s",
-		   call.home-function-region.name,
-		   stream.string-output-stream-string,
-		   arg-types-string);
+  compiler-warning-location
+    (call.dependents.dependent,
+     "Can't pick between\n%s\n  when given arguments of types:\n%s",
+     stream.string-output-stream-string,
+     arg-types-string);
 end;
 
 define method no-applicable-methods-warning
@@ -453,11 +457,11 @@ define method no-applicable-methods-warning
   end;
   write(")", stream);
   let arg-types-string = stream.string-output-stream-string;
-  compiler-warning("In %s:\n  no applicable methods for argument types\n"
-		     "%s\n  in call of %s",
-		   call.home-function-region.name,
-		   arg-types-string,
-		   defn.defn-name);
+  compiler-warning-location
+    (call.dependents.dependent,
+     "No applicable methods for argument types\n%s\n  in call of %s",
+     arg-types-string,
+     defn.defn-name);
 end;
 
 define method make-next-method-info-leaf
@@ -538,28 +542,30 @@ define method compare-unknown-call-against-signature
 	 arg-dep = arguments then arg-dep.dependent-next,
 	 count from 0)
       unless (arg-dep)
-	compiler-warning("In %s:\n  not enough arguments in call of %s.\n  "
-			   "Wanted %s %d, but only got %d",
-			 call.home-function-region.name,
-			 func-name,
-			 if (sig.rest-type | sig.key-infos)
-			   "at least";
-			 else
-			   "exactly";
-			 end,
-			 sig.specializers.size,
-			 count);
+	compiler-warning-location
+	  (call.dependents.dependent,
+	   "Not enough arguments in call of %s.\n"
+	     "  Wanted %s %d, but only got %d",
+	   func-name,
+	   if (sig.rest-type | sig.key-infos)
+	     "at least";
+	   else
+	     "exactly";
+	   end,
+	   sig.specializers.size,
+	   count);
 	bogus? := #t;
 	return();
       end;
       unless (ctypes-intersect?(arg-dep.source-exp.derived-type, spec))
-	compiler-warning("In %s:\n  wrong type for argument %d in call of "
-			   "%s.\n  Wanted %s, but got %s",
-			 call.home-function-region.name,
-			 count,
-			 func-name,
-			 spec,
-			 arg-dep.source-exp.derived-type);
+	compiler-warning-location
+	  (call.dependents.dependent,
+	   "Wrong type for %s argument in call of %s.\n"
+	     "  Wanted %s, but got %s",
+	   integer-to-english(count + 1, as: #"ordinal"),
+	   func-name,
+	   spec,
+	   arg-dep.source-exp.derived-type);
 	bogus? := #t;
       end;
     finally
@@ -570,10 +576,10 @@ define method compare-unknown-call-against-signature
 	     while: key-dep)
 	  let val-dep = key-dep.dependent-next;
 	  unless (val-dep)
-	    compiler-warning("In %s:\n  odd number of keyword/value arguments "
-			       "in call of %s.",
-			     call.home-function-region.name,
-			     func-name);
+	    compiler-warning-location
+	      (call.dependents.dependent,
+	       "Odd number of keyword/value arguments in call of %s.",
+	       func-name);
 	    bogus? := #t;
 	    return();
 	  end;
@@ -581,11 +587,11 @@ define method compare-unknown-call-against-signature
 	  if (~instance?(leaf, <literal-constant>))
 	    unless (ctypes-intersect?(leaf.derived-type,
 				      specifier-type(#"<symbol>")))
-	      compiler-warning("In %s:\n  bogus keyword as argument "
-				 "%d in call of %s",
-			       call.home-function-region.name,
-			       count,
-			       func-name);
+	      compiler-warning-location
+		(call.dependents.dependent,
+		 "Bogus keyword as %s argument in call of %s",
+		 integer-to-english(count + 1, as: #"ordinal"),
+		 func-name);
 	      bogus? := #t;
 	    end;
 	    valid? := #f;
@@ -596,34 +602,34 @@ define method compare-unknown-call-against-signature
 	      if (keyinfo.key-name == key)
 		unless (ctypes-intersect?(val-dep.source-exp.derived-type,
 					  keyinfo.key-type))
-		  compiler-warning("In %s:\n  wrong type for keyword "
-				     "argument %= in call of "
-				     "%s.\n  Wanted %s, but got %s",
-				   call.home-function-region.name,
-				   key,
-				   func-name,
-				   keyinfo.key-type,
-				   val-dep.source-exp.derived-type);
-		  
+		  compiler-warning-location
+		    (call.dependents.dependent,
+		     "Wrong type for keyword argument %s in call of %s.\n"
+		       "  Wanted %s, but got %s",
+		     key,
+		     func-name,
+		     keyinfo.key-type,
+		     val-dep.source-exp.derived-type);
 		  bogus? := #t;
 		end;
 		found-key? := #t;
 	      end if;
 	    end for;
 	    unless (found-key? | sig.all-keys? | call.use-generic-entry?)
-	      compiler-warning
-		("In %s:\n  invalid keyword (%=) in call of %s",
-		 call.home-function-region.name,
+	      compiler-warning-location
+		(call.dependents.dependent,
+		 "Unrecognized keyword (%s) as %s argument in call of %s",
 		 key,
+		 integer-to-english(count + 1, as: #"ordinal"),
 		 func-name);
 	      bogus? := #t;
 	    end unless;
 	  else
-	    compiler-warning
-	      ("In %s:\n  bogus keyword (%s) as argument %d in call of %s",
-	       call.home-function-region.name,
+	    compiler-warning-location
+	      (call.dependents.dependent,
+	       "Bogus keyword (%s) as %s argument in call of %s",
 	       leaf.value,
-	       count,
+	       integer-to-english(count + 1, as: #"ordinal"),
 	       func-name);
 	    bogus? := #t;
 	  end;
@@ -640,9 +646,10 @@ define method compare-unknown-call-against-signature
 		end;
 	      end;
 	      if (keyinfo.required?)
-		compiler-warning
-		  ("In %s: required keyword %= missing in call of %s",
-		   call.home-function-region.name, keyinfo.key-name,
+		compiler-warning-location
+		  (call.dependents.dependent,
+		   "Required keyword %s missing in call of %s",
+		   keyinfo.key-name,
 		   func-name);
 		bogus? := #t;
 	      end;
@@ -655,13 +662,14 @@ define method compare-unknown-call-against-signature
 	     while: arg-dep)
 	  unless (ctypes-intersect?(arg-dep.source-exp.derived-type,
 				    sig.rest-type))
-	    compiler-warning("In %s:\n  wrong type for argument %d in call of "
-			       "%s.\n  Wanted %s, but got %s",
-			     call.home-function-region.name,
-			     count,
-			     func-name,
-			     sig.rest-type,
-			     arg-dep.source-exp.derived-type);
+	    compiler-warning-location
+	      (call.dependents.dependent,
+	       "Wrong type for %s argument in call of %s.\n"
+		 "  Wanted %s, but got %s",
+	       integer-to-english(count + 1, as: #"ordinal"),
+	       func-name,
+	       sig.rest-type,
+	       arg-dep.source-exp.derived-type);
 	    bogus? := #t;
 	  end;
 	end;
@@ -670,11 +678,12 @@ define method compare-unknown-call-against-signature
 	     have from count,
 	     while: arg-dep)
 	finally
-	  compiler-warning("In %s:\n  too many arguments in call of %s.\n"
-			     "  Wanted exactly %d, but got %d.",
-			   call.home-function-region.name,
-			   func-name,
-			   count, have);
+	  compiler-warning-location
+	    (call.dependents.dependent,
+	     "Too many arguments in call of %s.\n"
+	       "  Wanted exactly %d, but got %d.",
+	     func-name,
+	     count, have);
 	  bogus? := #t;
 	end;
       end;
