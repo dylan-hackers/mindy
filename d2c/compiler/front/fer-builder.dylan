@@ -1,12 +1,12 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.3 2000/01/24 04:56:18 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.4 2001/02/08 21:53:06 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -411,8 +411,8 @@ end method;
 // We've kind of deprecated this operation, since we want to support creating
 // operations with make to make load/dump easier.  make-operation is kept
 // around, but just calls make.  Nobody actually dispatches off of the
-// builder, but knowledge of which class to instantiate is explictly passed in,
-// so there is no need for the builder to imply it.
+// builder, but knowledge of which class to instantiate is explicitly passed
+// in, so there is no need for the builder to imply it.
 //  
 define method make-operation
     (builder :: <flow-builder>, class :: <class>, operands :: <list>,
@@ -496,6 +496,12 @@ define method make-literal-constant
 	 := make(<literal-constant>,
 		 derived-type: value.constant-derived-type.ctype-extent,
 		 value: value));
+end method;
+
+define method make-literal-constant
+    (builder :: <fer-builder>, value)
+ => res :: <literal-constant>;
+  make-literal-constant(builder, as(<ct-value>, value));
 end method;
 
 define method make-definition-constant
