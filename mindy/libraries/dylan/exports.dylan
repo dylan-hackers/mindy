@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.33 1994/06/11 16:33:19 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.34 1994/06/13 13:03:35 nkramer Exp $
 //
 //  This file does whatever.
 //
@@ -85,7 +85,8 @@ define module Builtin-Stuff
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
     debugger-return, debugger-eval,
-    on-exit, exit, <equal-table>,
+    on-exit, exit, 
+    <equal-table>, equal-hash, collection-hash,
     <value-table>, sequence-hash, string-hash;
 end Builtin-Stuff;
 
@@ -161,7 +162,7 @@ define module Dylan
     fill!, find-key, first, first-setter,
     gcd,
     identity, integral?, intersection,
-    key-hash, key-sequence, key-test, key=,
+    key-sequence, key-test,
     last, last-setter, lcm,
     map, map-as, map-into, max, member?, min, modulo,
     numerator,
@@ -185,7 +186,8 @@ define module Extensions
 	     format, prin1, print, putc, puts, getc, <byte-vector>,
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object, 
-	     <equal-table>, <value-table>, sequence-hash, string-hash},
+	     <equal-table>, equal-hash, collection-hash, 
+             <value-table>, sequence-hash, string-hash},
     export: all;
   export
     one-of, type-or, ignore;
