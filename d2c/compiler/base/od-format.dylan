@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.5 2000/01/24 04:56:03 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.6 2000/06/30 12:41:21 gabor Exp $
 
 //======================================================================
 //
@@ -1006,10 +1006,25 @@ define method write-dump-buffer (buf :: <dump-buffer>, stream :: <stream>)
   end for;
 end method;
 
+// Create a stream appropriate for dumping.	-- internal
+//	called from end-dumping if no stream supplied
+//
+define function create-dump-stream(state :: <dump-state>) => stream :: <stream>;
+	let fname =
+			state.dump-where
+			| concatenate(as-lowercase(as(<string>, state.dump-name)),
+						".",
+						$unit-type-strings[state.dump-type],
+						".du");
+
+	log-target(fname);
+	make(<file-stream>, locator: fname, direction: #"output");
+end function create-dump-stream;
 
 // Build the index and actually write stuff out.
 //
-define /* exported */ method end-dumping (state :: <dump-state>) => ();
+define /* exported */ method end-dumping (state :: <dump-state>,
+																			#key stream :: <stream> = state.create-dump-stream) => ();
 
   // End the external index object definition.
   dump-end-entry(0, state.extern-buf);
@@ -1034,16 +1049,6 @@ define /* exported */ method end-dumping (state :: <dump-state>) => ();
   dump-word-vector(build-local-map(state), header-buffer,
   		   #"local-object-map");
 
-		   
-  let fname = state.dump-where
-  	      | concatenate(as-lowercase(as(<string>, state.dump-name)),
-	      		    ".",
-	                    $unit-type-strings[state.dump-type],
-			    ".du");
-
-  log-target(fname);
-  let stream = make(<file-stream>, locator: fname, direction: #"output");
-
   write-dump-buffer(header-buffer, stream);
   write-dump-buffer(state.extern-buf, stream);
   write-dump-buffer(state, stream);
@@ -1051,7 +1056,7 @@ define /* exported */ method end-dumping (state :: <dump-state>) => ();
 end method;
 
 
-
+
 // Dumper utilities:
 
 // Largest buffer we'll create.  Works around mindy object size limits, and
