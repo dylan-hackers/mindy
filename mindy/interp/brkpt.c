@@ -9,12 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.2 1994/04/17 17:46:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.3 1994/05/05 11:48:44 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+#include <stdio.h>
 
 #include "mindy.h"
 #include "weak.h"
@@ -48,6 +49,7 @@ static struct byte_brkpt_info *find_byte_breakpoint(obj_t component, int pc)
 
     while ((info = *prev) != NULL) {
 	if (WEAK(info->component)->broken) {
+	    printf("breakpoint %d garbage collected\n", info->id);
 	    *prev = info->next;
 	    free(info);
 	}
@@ -63,17 +65,17 @@ int install_byte_breakpoint(obj_t component, int pc)
 {
     struct byte_brkpt_info *info = find_byte_breakpoint(component, pc);
     int nconst;
-    char *ptr;
+    unsigned char *ptr;
 
     if (info)
 	return info->id;
 
-    ptr = (char *)component + pc;
+    ptr = (unsigned char *)component + pc;
 
     nconst = COMPONENT(component)->n_constants;
-    if (ptr < (char *)(&COMPONENT(component)->constant[nconst]))
+    if (ptr < (unsigned char *)(&COMPONENT(component)->constant[nconst]))
 	return -1;
-    if (ptr > obj_ptr(char *, component)+COMPONENT(component)->length)
+    if (ptr > obj_ptr(unsigned char *, component)+COMPONENT(component)->length)
 	return -1;
 
     info = malloc(sizeof(*info));
@@ -135,22 +137,33 @@ void handle_byte_breakpoint(struct thread *thread)
 void remove_breakpoint(int id)
 {
     struct byte_brkpt_info **byte_prev, *byte_info;
+    boolean removed = FALSE;
 
     byte_prev = &ByteBreakpoints;
     while ((byte_info = *byte_prev) != NULL) {
 	if (WEAK(byte_info->component)->broken) {
+	    if (byte_info->id == id)
+		removed = TRUE;
+	    else
+		printf("breakpoint %d garbage collected\n", byte_info->id);
 	    *byte_prev = byte_info->next;
 	    free(byte_info);
 	}
 	else if (byte_info->id == id) {
-	    char *ptr = (char *)byte_info->component + byte_info->pc;
+	    unsigned char *ptr
+		= (unsigned char *)(WEAK(byte_info->component)->object)
+		    + byte_info->pc;
 	    *ptr = byte_info->orig_byte;
 	    *byte_prev = byte_info->next;
 	    free(byte_info);
+	    removed = TRUE;
 	}
 	else
 	    byte_prev = &byte_info->next;
     }
+
+    if (!removed)
+	printf("No breakpoint %d\n", id);
 }
 
 	
@@ -164,6 +177,7 @@ void scavenge_brkpt_roots(void)
     byte_prev = &ByteBreakpoints;
     while ((byte_info = *byte_prev) != NULL) {
 	if (WEAK(byte_info->component)->broken) {
+	    printf("breakpoint %d garbage collected\n", byte_info->id);
 	    *byte_prev = byte_info->next;
 	    free(byte_info);
 	}
