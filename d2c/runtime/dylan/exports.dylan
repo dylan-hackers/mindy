@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.6 1999/03/26 04:14:45 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.7 1999/04/10 10:05:41 emk Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -137,7 +137,10 @@ define module Dylan
 	     \block, \method,
 
 	     // Function-macro operators.
-	     \:=, \&, \|
+	     \:=, \&, \|,
+
+             // Constants
+             $maximum-integer, $minimum-integer
     },
     export: all;
 end;
