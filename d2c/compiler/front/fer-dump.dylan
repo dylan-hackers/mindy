@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.15 1995/04/26 03:33:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.16 1995/04/28 07:20:08 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -98,8 +98,8 @@ define method dump (region :: <if-region>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     format(stream, "[%d]: IF (", region.id);
-	     dump(region.depends-on.source-exp, stream);
+	     format(stream, "IF[%d] (", region.id);
+	     dump-expr(region.depends-on.source-exp, stream);
 	     write(')', stream);
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
@@ -120,7 +120,7 @@ define method dump (region :: <block-region>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     format(stream, "[%d]: BLOCK", region.id);
+	     format(stream, "BLOCK[%d]", region.id);
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.body, stream);
@@ -134,7 +134,7 @@ define method dump (region :: <loop-region>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     format(stream, "[%d]: LOOP", region.id);
+	     format(stream, "LOOP[%d]", region.id);
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.body, stream);
@@ -145,7 +145,17 @@ define method dump (region :: <loop-region>, stream :: <stream>) => ();
 end;
 
 define method dump (region :: <exit>, stream :: <stream>) => ();
-  format(stream, "[%d]: EXIT [%d]", region.id, region.block-of.id);
+  let target = region.block-of;
+  format(stream, "EXIT[%d] to %s[%d]",
+	 region.id,
+	 if (instance?(target, <component>)) "COMPONENT" else "BLOCK" end,
+	 target.id);
+end;
+
+define method dump (region :: <pitcher>, stream :: <stream>) => ();
+  format(stream, "PITCHER[%d](", region.id);
+  dump-expr(region.depends-on.source-exp, stream);
+  format(stream, ") to BLOCK[%d]", region.block-of.id);
 end;
 
 define method dump (assignment :: <assignment>, stream :: <stream>) => ();
@@ -248,19 +258,9 @@ define method kind (op :: <catcher>) => res :: <string>;
   "CATCHER";
 end;
 
-define method kind (op :: <pitcher>) => res :: <string>;
-  "PITCHER";
-end;
-
 define method dump (op :: <primitive>, stream :: <stream>) => ();
   format(stream, "primitive %s[%d]", op.name, op.id);
   dump-operands(op.depends-on, stream);
-end;
-
-define method dump (op :: <pitcher>, stream :: <stream>) => ();
-  format(stream, "PITCHER[%d]", op.id);
-  dump-operands(op.depends-on, stream);
-  format(stream, " to CATCHER[%d]", op.catcher.id);
 end;
 
 define method dump (op :: <set>, stream :: <stream>) => ();
