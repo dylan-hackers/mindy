@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.67 1995/05/26 15:35:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.68 1995/05/29 02:08:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1480,6 +1480,46 @@ define method dylan-type-for-c-type (leaf :: <leaf>) => res :: <values-ctype>;
 end;
 
 
+define-primitive-transformer
+  (#"as-boolean",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let arg = primitive.depends-on.source-exp;
+     let arg-type = arg.derived-type;
+     let false-type = specifier-type(#"<false>");
+     if (csubtype?(arg.derived-type, specifier-type(#"<boolean>")))
+       replace-expression(component, primitive.dependents, arg);
+     elseif (~ctypes-intersect?(arg-type, false-type))
+       replace-expression(component, primitive.dependents,
+			  make-literal-constant(make-builder(component),
+						as(<ct-value>, #t)));
+     end;
+   end);
+			  
+define-primitive-transformer
+  (#"not",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let arg = primitive.depends-on.source-exp;
+     let arg-type = arg.derived-type;
+     let false-type = specifier-type(#"<false>");
+     if (csubtype?(arg-type, false-type))
+       replace-expression(component, primitive.dependents,
+			  make-literal-constant(make-builder(component),
+						as(<ct-value>, #t)));
+     elseif (~ctypes-intersect?(arg-type, false-type))
+       replace-expression(component, primitive.dependents,
+			  make-literal-constant(make-builder(component),
+						as(<ct-value>, #f)));
+     elseif (instance?(arg, <ssa-variable>))
+       let arg-source = arg.definer.depends-on.source-exp;
+       if (instance?(arg-source, <primitive>) & arg-source.name == #"not")
+	 let source-source = arg-source.depends-on.source-exp;
+	 let op = make-operation(make-builder(component), <primitive>,
+				 list(source-source), name: #"as-boolean");
+	 replace-expression(component, primitive.dependents, op);
+       end;
+     end;
+   end);
+
 define method optimize (component :: <component>, op :: <truly-the>) => ();
   let (intersection, win)
     = ctype-intersection(op.depends-on.source-exp.derived-type,
@@ -1964,7 +2004,8 @@ end;
 
 define method optimize (component :: <component>, if-region :: <if-region>)
     => ();
-  let condition-type = if-region.depends-on.source-exp.derived-type;
+  let condition = if-region.depends-on.source-exp;
+  let condition-type = condition.derived-type;
   let false = dylan-value(#"<false>");
   if (csubtype?(condition-type, false))
     replace-if-with(component, if-region, if-region.else-region);
@@ -1975,6 +2016,15 @@ define method optimize (component :: <component>, if-region :: <if-region>)
   elseif (instance?(if-region.then-region, <empty-region>)
 	    & instance?(if-region.else-region, <empty-region>))
     replace-if-with(component, if-region, make(<empty-region>));
+  elseif (instance?(condition, <ssa-variable>))
+    let cond-source = condition.definer.depends-on.source-exp;
+    if (instance?(cond-source, <primitive>) & cond-source.name == #"not")
+      replace-expression(component, if-region.depends-on,
+			 cond-source.depends-on.source-exp);
+      let then-region = if-region.then-region;
+      if-region.then-region := if-region.else-region;
+      if-region.else-region := then-region;
+    end;
   end;
 end;
 
