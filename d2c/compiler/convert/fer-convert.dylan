@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.30 1995/05/12 15:41:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.31 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -402,22 +402,40 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
 			   lexenv :: <lexenv>, want :: <result-designator>,
 			   datum :: <result-datum>)
     => res :: <result>;
-  let blk = build-block-body(builder, lexenv.lexenv-policy, source);
-  let lexenv = make(<lexenv>, inside: lexenv);
   let name = form.exit-name;
+  let state-type = specifier-type(#"<raw-pointer>");
+  let saved-state-var = make-local-var(builder, #"saved-state", state-type);
+  let policy = lexenv.lexenv-policy;
+  let body-region
+    = build-lambda-body(builder, policy, source,
+			format-to-string("Block %s", name.token-symbol),
+			list(saved-state-var), #"best");
+  let body-sig = make(<signature>, specializers: list(state-type));
+  let body-literal
+    = make-function-literal(builder, #"local", body-sig, body-region);
+  let catcher-var
+    = make-lexical-var(builder, symcat(name.token-symbol, "-catcher"),
+		       source, object-ctype());
+  build-let(builder, policy, source, catcher-var,
+	    make-operation(builder, <fer-primitive>, list(saved-state-var),
+			   name: #"make-catcher"));
+  let lexenv = make(<lexenv>, inside: lexenv);
   let exit = make-lexical-var(builder, name.token-symbol, source,
 			      function-ctype());
   add-binding(lexenv, name, exit);
-  build-let(builder, lexenv.lexenv-policy, source, exit,
-	    make-exit-function(builder, blk));
+  build-let(builder, policy, source, exit,
+	    make-exit-function(builder, catcher-var, body-literal));
   let cluster = make-values-cluster(builder, #"results", wild-ctype());
   fer-convert-body(builder, form.exit-body, lexenv, #"assignment", cluster);
-  build-assignment(builder, lexenv.lexenv-policy, source, #(),
-		   make-operation(builder, <fer-mv-call>, list(exit, cluster),
-				  use-generic-entry: #f));
+  build-assignment
+    (builder, policy, source, #(),
+     make-operation(builder, <fer-primitive>, list(catcher-var),
+		    name: #"disable-catcher"));
+  build-return(builder, policy, source, body-region, cluster);
   end-body(builder);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 blk.catcher);
+		 make-operation(builder, <fer-primitive>, list(body-literal),
+				name: #"catch"));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <if>,

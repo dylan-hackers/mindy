@@ -169,6 +169,20 @@ define-primitive
   (#"make-data-word-instance", #(#"<object>"), #"<object>",
    pure: #t);
 
+define-primitive
+  (#"catch", #(#"<function>"), #(values:, rest:, #"<object>"));
+
+define-primitive
+  (#"make-catcher", #(#(union:, #"<raw-pointer>", #"<false>")),
+   #(union:, #"<catcher>", #"<false>"));
+
+define-primitive
+  (#"disable-catcher", #(#(union:, #"<catcher>", #"<false>")), #(values:));
+
+define-primitive
+  (#"throw", #(#(union:, #"<catcher>", #"<false>"), #"<function>", cluster:),
+   #(union:));
+
 for (name in #[#"fixnum-=", #"fixnum-<"])
   define-primitive
     (name, #(#"<fixed-integer>", #"<fixed-integer>"), #"<boolean>",

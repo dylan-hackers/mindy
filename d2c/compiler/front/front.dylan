@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.33 1995/05/12 15:38:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.34 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -56,9 +56,6 @@ component
 
 block-region
     fer-block-region
-
-exit
-    pitcher
 
 object
     environment [annotatable]
@@ -153,23 +150,6 @@ end;
 // 
 define class <prologue> (<operation>)
   slot function :: <fer-function-region>, required-init-keyword: function:;
-end;
-
-// A catcher is used to receive the values from an exit-function.
-// 
-define class <catcher> (<operation>)
-  //
-  // A catcher depends on nothing.
-  inherited slot depends-on, init-value: #f;
-  //
-  // If there is an exit function that jumps to this block, then this is it.
-  // If false, then all potential exits are explicitly represented by
-  // <exit> regions.
-  slot exit-function :: false-or(<exit-function>), init-value: #f;
-  //
-  // The block-region this catcher is for.
-  slot target-region :: <fer-exit-block-region>,
-    required-init-keyword: target-region:;
 end;
 
 // A set operation is used to change a global variable.
@@ -358,13 +338,10 @@ end class;
 
 // An <exit-function> is a magical function literal that represents
 // the exit-function for a block in situations where a non-local exit is
-// possible.
+// possible.  It also depends-on the catcher and the function being exited
+// from.
 //
-define class <exit-function> (<abstract-function-literal>)
-  //
-  // The region that this exit function exits to.
-  slot catcher :: <catcher>,
-    required-init-keyword: catcher:
+define class <exit-function> (<abstract-function-literal>, <dependent-mixin>)
 end class;
 
 
@@ -458,23 +435,6 @@ end class;
 //
 define abstract class <fer-block-region> (<block-region>)
 end class;
-
-// FER-Exit-Block-Region represents a user-level exit procedure target.
-//
-define class <fer-exit-block-region> (<fer-block-region>)
-  //
-  // The catcher operation for this block.  #f if we haven't created one
-  // yet or if the catcher has been optimized away.
-  slot catcher :: union(<false>, <catcher>), init-value: #f;
-end class;
-
-// <pitcher> -- an exit that throws some values also.
-// 
-define class <pitcher> (<exit>, <dependent-mixin>)
-  //
-  // The type being pitched.
-  slot pitched-type :: <values-ctype>, init-function: wild-ctype;
-end;
 
 // FER-Cleanup-Block-Region represents a block/cleanup clause.  Somehow...
 //

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.43 1995/05/18 13:33:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.44 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -619,20 +619,9 @@ define method emit-region (region :: <block-region>,
     error("A block with no exits still exists?");
   end;
   let stream = output-info.output-info-guts-stream;
-  if (region.catcher)
-    if (region.catcher.exit-function)
-      error("An exit function still exists?");
-    end;
-    format(stream, "if (!setjmp(### jmpbuf)) {\n");
-    indent(stream, $indentation-step);
-  end;
   emit-region(region.body, output-info);
   /* ### emit-joins(region.join-region, output-info); */
   spew-pending-defines(output-info);
-  if (region.catcher)
-    indent(stream, - $indentation-step);
-    format(stream, "}\n");
-  end;
   let half-step = ash($indentation-step, -1);
   indent(stream, - half-step);
   format(stream, "block%d:\n", get-info-for(region, output-info));
@@ -740,28 +729,6 @@ define method emit-return
   format(stream, "return %s;\n", temp);
 end;
 
-
-define method emit-region (pitcher :: <pitcher>, output-info :: <output-info>)
-    => ();
-  spew-pending-defines(output-info);
-  let stream = output-info.output-info-guts-stream;
-  let target = region.block-of;
-  for (region = region.parent then region.parent,
-       until: region == #f | region == target)
-    finally
-    if (region)
-      error("local pitcher left behind?");
-    end;
-    let id = target.block-id;
-    unless (id)
-      error("Pitcher to the component?");
-    end;
-
-    let (bottom-name, top-name)
-      = consume-cluster(pitcher.depends-on.source-exp, output-info);
-    format(stream, "pitch(%s, %s);\n", bottom-name, top-name);
-  end;
-end;
 
 define method block-id (region :: <false>) => id :: <false>;
   #f;
@@ -1114,14 +1081,6 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		      function-info.function-info-argument-representations,
 		      make(<range>, from: 0)),
 		  #f, output-info);
-end;
-
-define method emit-assignment (defines :: false-or(<definition-site-variable>),
-			       expr :: <catcher>,
-			       output-info :: <output-info>)
-    => ();
-  deliver-cluster(defines, "caught_args", "caught_sp",
-		  region.catcher.derived-type, output-info);
 end;
 
 define method emit-assignment

@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.30 1995/05/12 15:38:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.31 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -257,9 +257,9 @@ end method;
 define method build-block-body
     (builder :: <internal-builder>, policy :: <policy>,
      source :: <source-location>)
- => res :: <fer-exit-block-region>;
+ => res :: <block-region>;
   ignore(policy);
-  let res = make(<fer-exit-block-region>, source-location: source);
+  let res = make(<block-region>, source-location: source);
   push-body(builder, res);
   res;
 end method;
@@ -566,17 +566,12 @@ end method;
 // If we've already made an exit function, return it, otherwise make one.
 //
 define method make-exit-function
-    (builder :: <fer-builder>, target :: <fer-exit-block-region>)
+    (builder :: <fer-builder>, catcher :: <abstract-variable>,
+     from :: <function-literal>)
  => res :: <leaf>;
-  let catcher
-    = target.catcher
-        | (target.catcher
-	     := make(<catcher>, source-location: target.source-location,
-		     target-region: target));
-  catcher.exit-function
-    | (catcher.exit-function
-         := make(<exit-function>, source-location: target.source-location,
-		 catcher: catcher));
+  let exit-fun = make(<exit-function>);
+  make-operand-dependencies(builder, exit-fun, list(catcher, from));
+  exit-fun;
 end;
 
 

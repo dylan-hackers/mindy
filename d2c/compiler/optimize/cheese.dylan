@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.60 1995/05/18 13:37:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.61 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -818,15 +818,22 @@ define method optimize-unknown-call
     (component :: <component>, call :: <unknown-call>,
      func :: <exit-function>, inline-expansion :: false-or(<method-parse>))
     => ();
-  // Make a values operation, steeling the args from the call.
-  let args = call.depends-on.dependent-next;
-  let cluster = make(<primitive>, name: #"values", depends-on: args);
-  call.depends-on.dependent-next := #f;
-  for (dep = args then dep.dependent-next,
+  let builder = make-builder(component);
+  let call-dependency = call.dependents;
+  let assign = call-dependency.dependent;
+  let policy = assign.policy;
+  let source = assign.source-location;
+
+  let values = make(<stretchy-vector>);
+  for (dep = call.depends-on.dependent-next then dep.dependent-next,
        while: dep)
-    dep.dependent := cluster;
+    add!(values, dep.source-exp);
   end;
-  reoptimize(component, cluster);
+  let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
+  build-assignment(builder, policy, source, cluster,
+		   make-operation(builder, <primitive>, as(<list>, values),
+				  name: #"values"));
+  insert-before(component, assign, builder-result(builder));
   expand-exit-function(component, call, func, cluster);
 end;
 
@@ -1343,8 +1350,8 @@ end;
 // block/exit related optimizations.
 
 define method expand-exit-function
-    (component :: <component>, call :: <abstract-call>,
-     func :: <exit-function>, cluster :: <expression>)
+    (component :: <component>, call :: <general-call>,
+     func :: <exit-function>, cluster :: <abstract-variable>)
     => ();
   let builder = make-builder(component);
   let call-dependency = call.dependents;
@@ -1352,108 +1359,77 @@ define method expand-exit-function
   let policy = assign.policy;
   let source = assign.source-location;
 
-  unless (instance?(cluster, <abstract-variable>)
-	    & instance?(cluster.var-info, <values-cluster-info>))
-    let temp = make-values-cluster(builder, #"cluster", wild-ctype());
-    build-assignment(builder, policy, source, temp, cluster);
-    cluster := temp;
+  if (call.use-generic-entry?)
+    error("Trying to call the generic entry for an exit function?");
   end;
 
-  insert-before(component, assign, builder-result(builder));
-  insert-pitcher-after(component, assign, func.catcher.target-region, cluster);
-  delete-and-unlink-assignment(component, assign);
+  let catcher = func.depends-on.source-exp;
+  let from = func.depends-on.dependent-next.source-exp;
+
+  let throw
+    = make-operation(builder, <primitive>, list(catcher, from, cluster),
+		     name: #"throw", derived-type: empty-ctype());
+
+  replace-expression(component, assign.depends-on, throw);
 end;
 
+define-primitive-transformer
+  (#"make-catcher",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let state-leaf = primitive.depends-on.source-exp;
+     if (instance?(state-leaf, <uninitialized-value>))
+       replace-expression
+	 (component, primitive.dependents,
+	  make-literal-constant(make-builder(component),
+				as(<ct-value>, #f)));
+     end;
+   end);
 
-define method optimize (component :: <component>, pitcher :: <pitcher>) => ();
-  let type = pitcher.depends-on.source-exp.derived-type;
-  let old-type = pitcher.pitched-type;
-  if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
-    pitcher.pitched-type := type;
-    reoptimize(component, pitcher.block-of.catcher);
-  end;
-end;
+define-primitive-transformer
+  (#"disable-catcher",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let catcher-leaf = primitive.depends-on.source-exp;
+     if (csubtype?(catcher-leaf.derived-type, specifier-type(#"<false>")))
+       replace-expression(component, primitive.dependents, catcher-leaf);
+     end;
+   end);
 
-
-define method optimize (component :: <component>, catcher :: <catcher>)
-    => ();
-  // If there is still an exit function, there isn't much we can do.
-  unless (catcher.exit-function)
-    // Compute the result type of the catcher by unioning all the pitchers.
-    let catcher-home = home-function-region(catcher);
-    let all-local? = #t;
-    let result-type = empty-ctype();
-    for (exit = catcher.target-region.exits then exit.next-exit,
-	 while: exit)
-      if (instance?(exit, <pitcher>))
-	unless (home-function-region(exit) == catcher-home)
-	  all-local? := #f;
-	end;
-	result-type := values-type-union(result-type, exit.pitched-type);
-      end;
-    end;
-    if (all-local?)
-      replace-catcher-and-pitchers(component, catcher);
-    else
-      maybe-restrict-type(component, catcher, result-type);
-    end;
-  end;
-end;
-
-
-define method replace-catcher-and-pitchers
-    (component :: <component>, catcher :: <catcher>) => ();
-  // Okay, we are doing a transfer local to this function.  So where we had:
-  //   pitcher(cluster)
-  //   ...
-  //   vars... := catcher()
-  // we want to convert it into:
-  //   temp := cluster
-  //   exit
-  //   ...
-  //   vars := temp
-
-  // First, fix up the catcher.
-  let builder = make-builder(component);
-
-  let target = catcher.target-region;
-  let catcher-dep = catcher.dependents;
-  let catcher-assign = catcher-dep.dependent;
-  let vars = catcher-assign.defines;
-  let temp = make-values-cluster(builder, #"cluster", wild-ctype());
-
-  // Change the catcher assignment to reference the temp.
-  catcher-dep.source-exp := temp;
-  temp.dependents := catcher-dep;
-  catcher.dependents := #f;
-  reoptimize(component, catcher-assign);
-
-  // Convert the pitchers into assignments and regular exits.
-  for (exit = target.exits then exit.next-exit,
-       while: exit)
-    if (instance?(exit, <pitcher>))
-      // Assign the temp from the args, insert that assignment just before
-      // the pitcher, and then delete the pitcher.
-      build-assignment(builder, $Default-Policy, exit.source-location,
-		       temp, exit.depends-on.source-exp);
-      build-exit(builder, $Default-Policy, exit.source-location, target);
-
-      replace-subregion(component, exit.parent, exit, builder-result(builder));
-
-      delete-dependent(component, exit);
-    end;
-  end;
-
-  // Flush the catcher.
-  delete-dependent(component, catcher);
-  target.catcher := #f;
-
-  // Now if there are no exits, queue the block so it will get deleted.
-  unless (target.exits)
-    reoptimize(component, target);
-  end;
-end;
-
+define-primitive-transformer
+  (#"throw",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let body-function = primitive.depends-on.dependent-next.source-exp;
+     let body-region = body-function.main-entry;
+     if (primitive.home-function-region == body-region)
+       let assign = primitive.dependents.dependent;
+       let builder = make-builder(component);
+       let catcher = primitive.depends-on.source-exp;
+       assert(instance?(catcher, <ssa-variable>));
+       build-assignment
+	 (builder, assign.policy, assign.source-location, #(),
+	  make-operation(builder, <primitive>, list(catcher),
+		    name: #"disable-catcher"));
+       insert-before(component, assign, builder-result(builder));
+       insert-return-before(component, assign, body-region,
+			    primitive.depends-on.dependent-next
+			      .dependent-next.source-exp);
+       //
+       // Check to see if the only remaining dependent of the body-function
+       // is the catch primitive.
+       let dep = body-function.dependents;
+       if (dep & dep.dependent-next == #f
+	     & instance?(dep.dependent, <primitive>)
+	     & dep.dependent.name == #"catch")
+	 //
+	 // Change the catch into a regular call.
+	 replace-expression
+	   (component, dep.dependent.dependents,
+	    make-unknown-call
+	      (builder, body-function, #f,
+	       list(make(<uninitialized-value>,
+			 derived-type: specifier-type(#"<raw-pointer>")))));
+       end;
+     end;
+   end);
 
 define method optimize
     (component :: <component>, region :: <block-region>) => ();
@@ -1779,53 +1755,50 @@ define method let-convert
 
   // Queue the catchers for blocks in the new home that are exited to from
   // the function's body.
-  queue-catchers(component, new-home, new-home.body);
+  queue-throws(component, new-home, new-home.body);
 end;
 
-define method queue-catchers
+define method queue-throws
     (component :: <component>, home :: <fer-function-region>,
      region :: <simple-region>)
     => ();
+  for (assign = region.first-assign then assign.next-op,
+       while: assign)
+    let expr = assign.depends-on.source-exp;
+    if (instance?(expr, <primitive>) & expr.name == #"throw")
+      reoptimize(component, expr);
+    end;
+  end;
 end;
 
-define method queue-catchers
+define method queue-throws
     (component :: <component>, home :: <fer-function-region>,
      region :: <compound-region>)
     => ();
   for (subregion in region.regions)
-    queue-catchers(component, home, subregion);
+    queue-throws(component, home, subregion);
   end;
 end;
 
-define method queue-catchers
+define method queue-throws
     (component :: <component>, home :: <fer-function-region>,
      region :: <if-region>)
     => ();
-  queue-catchers(component, home, region.then-region);
-  queue-catchers(component, home, region.else-region);
+  queue-throws(component, home, region.then-region);
+  queue-throws(component, home, region.else-region);
 end;
 
-define method queue-catchers
+define method queue-throws
     (component :: <component>, home :: <fer-function-region>,
      region :: <body-region>)
     => ();
-  queue-catchers(component, home, region.body);
+  queue-throws(component, home, region.body);
 end;
 
-define method queue-catchers
+define method queue-throws
     (component :: <component>, home :: <fer-function-region>,
      region :: <exit>)
     => ();
-end;
-
-define method queue-catchers
-    (component :: <component>, home :: <fer-function-region>,
-     region :: <pitcher>)
-    => ();
-  let target = region.block-of;
-  if (home-function-region(target) == home)
-    reoptimize(component, target.catcher);
-  end;
 end;
 
 
@@ -2629,6 +2602,8 @@ define method find-in-environment
 	  var-at-ref.dependents := new-dep;
 	  ref-dep.dependent-next := new-dep;
 	  reoptimize(component, ref);
+	elseif (instance?(ref, <primitive>) & ref.name == #"throw")
+	  error("A throw primitive made it through to environment analysis?");
 	else
 	  let builder = make-builder(component);
 	  let op = make-operation(builder, <primitive>,
@@ -3107,23 +3082,6 @@ define method delete-dependent
   delete-queueable(component, dependent);
 end;
 
-define method delete-dependent
-    (component :: <component>, pitcher :: <pitcher>, #next next-method)
-    => ();
-  next-method();
-  for (exit = pitcher.block-of.exits then exit.next-exit,
-       prev = #f then exit,
-       until: exit == pitcher)
-  finally
-    if (prev)
-      prev.next-exit := pitcher.next-exit;
-    else
-      pitcher.block-of.exits := pitcher.next-exit;
-    end;
-  end;
-  reoptimize(component, pitcher.block-of.catcher);
-end;
-
 define method delete-and-unlink-assignment
     (component :: <component>, assignment :: <assignment>) => ();
 
@@ -3259,9 +3217,7 @@ define method dropped-dependent
     (component :: <component>, exit :: <exit-function>) => ();
   // If we dropped the last reference, clear it out.
   unless (exit.dependents)
-    let catcher = exit.catcher;
-    catcher.exit-function := #f;
-    reoptimize(component, catcher);
+    delete-dependent(component, exit);
   end;
 end;
 
@@ -3295,30 +3251,35 @@ define method insert-exit-after
   end;
 end;
 
-define method insert-pitcher-after
+define method insert-return-before
     (component :: <component>, assignment :: <abstract-assignment>,
      target :: <block-region-mixin>, cluster :: <abstract-variable>)
     => ();
-  if (assignment.next-op)
-    let orig-region = assignment.region;
-    let orig-parent = orig-region.parent;
-    let (before, after) = split-after(assignment);
-    replace-subregion(component, orig-parent, orig-region, before);
-    after.parent := #f;
-    delete-stuff-in(component, after);
-  end;
-
-  let exit = make(<pitcher>, block: target, next: target.exits);
+  let exit = make(<return>, block: target, next: target.exits);
   target.exits := exit;
   let dep = make(<dependency>, dependent: exit, source-exp: cluster,
 		 source-next: cluster.dependents);
   cluster.dependents := dep;
   exit.depends-on := dep;
+
   let orig-region = assignment.region;
   let orig-parent = orig-region.parent;
-  let new = combine-regions(orig-region, exit);
-  replace-subregion(component, orig-parent, orig-region, new);
+
+  if (assignment.prev-op)
+    let (before, after) = split-before(assignment);
+    replace-subregion(component, orig-parent, orig-region,
+		      combine-regions(before, exit));
+    after.parent := #f;
+    delete-stuff-in(component, after);
+  else
+    replace-subregion(component, orig-parent, orig-region, exit);
+    orig-region.parent := #f;
+    delete-stuff-in(component, orig-region);
+  end;
   delete-stuff-after(component, exit.parent, exit);
+
+  target.result-type := wild-ctype();
+  reoptimize(component, target);
 end;
 
 
@@ -3406,11 +3367,13 @@ define method delete-stuff-in
        prev = #f then scan,
        until: scan == region)
   finally
-    let next = region.next-exit;
-    if (prev)
-      prev.next-exit := next;
-    else
-      block-region.exits := next;
+    if (scan)
+      let next = region.next-exit;
+      if (prev)
+	prev.next-exit := next;
+      else
+	block-region.exits := next;
+      end;
     end;
   end;
   unless (instance?(block-region, <component>))
@@ -3423,13 +3386,6 @@ define method delete-stuff-in
   delete-dependent(component, return);
   next-method();
 end;
-
-define method delete-stuff-in
-    (component :: <component>, region :: <pitcher>, #next next-method) => ();
-  delete-dependent(component, region);
-  next-method();
-end;
-
 
 
 define method delete-stuff-after
@@ -3505,15 +3461,6 @@ end;
 
 define method doesnt-return? (region :: <block-region>) => res :: <boolean>;
   if (region.exits)
-    #f;
-  else
-    doesnt-return?(region.body);
-  end;
-end;
-
-define method doesnt-return?
-    (region :: <fer-exit-block-region>) => res :: <boolean>;
-  if (region.exits | region.catcher.exit-function)
     #f;
   else
     doesnt-return?(region.body);
@@ -3840,11 +3787,6 @@ define method assure-all-done-region
   assure-all-done-dependent(component, region);
 end;
 
-define method assure-all-done-region
-    (component :: <component>, region :: <pitcher>) => ();
-  assure-all-done-dependent(component, region);
-end;
-
 define method assure-all-done-dependent
     (component :: <component>, dependent :: <dependent-mixin>) => ();
   optimize(component, dependent);
@@ -3859,7 +3801,7 @@ define method assure-all-done-expr
 end;
 
 define method assure-all-done-expr
-    (component :: <component>, op :: <operation>) => ();
+    (component :: <component>, op :: <dependent-mixin>) => ();
   assure-all-done-dependent(component, op);
 end;
 
@@ -3974,16 +3916,6 @@ define method check-sanity (return :: <return>, #next next-method) => ();
 end;
 
 
-define method check-sanity (pitcher :: <pitcher>, #next next-method) => ();
-  //
-  // Check the exit aspects.
-  next-method();
-  //
-  // Check the dependent aspects.
-  check-dependent(pitcher, <abstract-variable>, #t);
-end;
-
-
 define method check-expression (expr :: <expression>) => ();
   //
   // Make sure all the dependents refer to this source.
@@ -4012,6 +3944,16 @@ define method check-expression (op :: <operation>, #next next-method) => ();
   next-method();
   //
   // Check the dependent aspects of an operation.
+  check-dependent(op, <leaf>, #f);
+end;
+
+define method check-expression
+    (op :: <exit-function>, #next next-method) => ();
+  //
+  // Check the expression aspects of the exit-function.
+  next-method();
+  //
+  // Check the dependent aspects of the exit-function.
   check-dependent(op, <leaf>, #f);
 end;
 

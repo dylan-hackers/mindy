@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.62 1995/05/18 13:42:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.63 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -719,7 +719,6 @@ define module front
     <general-call>, use-generic-entry?, <unknown-call>, <mv-call>,
     <primitive>, name,
     <prologue>, function,
-    <catcher>, exit-function, exit-function-setter, target-region,
     <set>, variable,
     <self-tail-call>, self-tail-call-of, next-self-tail-call,
     <slot-access>, slot-info, slot-offset, <slot-ref>, <slot-set>,
@@ -737,7 +736,7 @@ define module front
     <function-literal>, visibility, visibility-setter, <function-visibility>,
     name, signature, main-entry, general-entry, general-entry-setter,
     <method-literal>, generic-entry, generic-entry-setter,
-    <exit-function>, catcher, catcher-setter,
+    <exit-function>,
 
     <fer-function-region>, prologue, argument-types, argument-types-setter,
     result-type, result-type-setter, return-convention,
@@ -746,9 +745,6 @@ define module front
     <lambda>, literal, environment,
 
     all-function-literals, all-lets, all-lets-setter, name,
-
-    <fer-exit-block-region>, catcher,
-    <pitcher>, pitched-type, pitched-type-setter,
 
     <environment>, closure-vars, closure-vars-setter,
     <closure-var>, original-var, copy-var, closure-next, closure-next-setter;
@@ -775,7 +771,7 @@ define module fer-convert
     export: all;
   use front,
     rename: {<primitive> => <fer-primitive>, <mv-call> => <fer-mv-call>},
-    import: {catcher, <function-literal>, <method-literal>, <set>,
+    import: {<function-literal>, <method-literal>, <set>,
 	       <function-visibility>};
   use builder-interface, export: all;
   use ctype;

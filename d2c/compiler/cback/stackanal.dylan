@@ -165,11 +165,6 @@ define method analize
   analize(region.depends-on, #(), state);
 end;
 
-define method analize
-    (region :: <pitcher>, want :: <list>, state :: <state>, #next next-method)
-    => want :: <list>;
-  analize(region.depends-on, next-method(), state);
-end;
 
 
 define method merge-stacks

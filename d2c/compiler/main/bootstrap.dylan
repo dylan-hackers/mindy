@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.16 1995/05/12 13:23:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.17 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -370,6 +370,9 @@ define functional class <raw-pointer> (<object>)
   slot value :: <raw-pointer>, required-init-keyword: value:;
 end;
 
+define class <catcher> (<object>)
+end;
+
 
 // Functions that need to be defined.
 
@@ -397,6 +400,11 @@ define open generic %make-next-method-cookie
     => res :: union(<false>, <function>);
 define open generic as (class :: <class>, thing :: <object>)
     => result :: <object>;
+
+define open generic make-catcher (saved-state :: <raw-pointer>)
+    => res :: <catcher>;
+define open generic disable-catcher (catcher :: <catcher>) => ();
+
 
 define open generic value (x) => value :: <object>;
 define open generic value-setter (x, y) => value;

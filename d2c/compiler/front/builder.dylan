@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.13 1995/05/12 15:35:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.14 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -232,7 +232,8 @@ define generic copy-variable
 // Return an exit function that exits to Block.
 //
 define generic make-exit-function
-    (builder :: <fer-builder>, target :: <block-region>)
+    (builder :: <fer-builder>, catcher :: <abstract-variable>,
+     from :: <function-literal>)
  => res :: <leaf>;
 
 

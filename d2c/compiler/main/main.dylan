@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.14 1995/05/18 13:28:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.15 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -59,6 +59,7 @@ define method compile (#rest files) => res :: <component>;
   do(rcurry(emit-tlf-gunk, output-info), $Top-Level-Forms);
   do(rcurry(emit-function, output-info), component.all-function-regions);
   close(header-stream);
+  close(body-stream);
   component;
 end;
 

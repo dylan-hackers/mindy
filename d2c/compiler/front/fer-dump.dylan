@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.27 1995/05/12 12:40:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.28 1995/05/18 20:07:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -157,12 +157,6 @@ define method dump (region :: <return>, stream :: <stream>) => ();
   dump-operands(region.depends-on, stream);
 end;
 
-define method dump (region :: <pitcher>, stream :: <stream>) => ();
-  format(stream, "PITCHER[%d](", region.id);
-  dump(region.depends-on.source-exp, stream);
-  format(stream, ") to BLOCK[%d]", region.block-of.id);
-end;
-
 define method dump
     (func :: <fer-function-region>, stream :: <stream>) => ();
   pprint-logical-block
@@ -304,10 +298,6 @@ end;
 
 define method kind (op :: <prologue>) => res :: <string>;
   "PROLOGUE";
-end;
-
-define method kind (op :: <catcher>) => res :: <string>;
-  "CATCHER";
 end;
 
 define method kind (op :: <self-tail-call>) => res :: <string>;
