@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.6 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.7 1996/03/22 01:48:09 rgs Exp $
 
 //======================================================================
 //
@@ -422,7 +422,7 @@ define sealed method element
       default
     end if;
   elseif (key + key > deque-size)	// closer to end than start
-    for (cur_key :: <integer> from deque-size - 1 above key,
+    for (cur_key :: <integer> from deque-size - 1 above key by -1,
 	 state :: false-or(<deque-element>) = deque.deque-tail
 	   then state.prev-deque-element)
     finally state.deque-element-data
@@ -447,7 +447,7 @@ define sealed method element-setter
   end if;
     
   if (key + key > sz)		// closer to end than start
-    for (cur_key :: <integer> from sz - 1 above key,
+    for (cur_key :: <integer> from sz - 1 above key by -1,
 	 state :: false-or(<deque-element>) = deque.deque-tail
 	   then state.prev-deque-element)
     finally state.deque-element-data := value;
