@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/builder.dylan,v 1.4 2001/02/08 21:54:32 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/builder.dylan,v 1.5 2001/05/30 21:30:27 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -225,7 +225,7 @@ define generic make-lexical-var
 // compiler debugging use.
 //
 define generic make-local-var
-    (builder :: <fer-builder>, name :: <symbol>, of-type :: <ctype>)
+    (builder :: <fer-builder>, name :: <symbol>, of-type :: type-union(<ctype>, <class>))
  => res :: <initial-variable>;
 
 
@@ -276,7 +276,7 @@ define function build-slot-home
     = make-ssa-var
 	(builder,
 	 symcat(slot-name, #"-home"),
-	 specifier-type(#"<class>"));
+	 class-ctype());
   build-assignment(builder, policy, source, slot-home, from);
   slot-home
 end function;
