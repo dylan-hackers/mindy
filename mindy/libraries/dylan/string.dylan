@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.11 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.12 1996/03/07 17:55:44 nkramer Exp $
 
 //======================================================================
 //
@@ -33,14 +33,17 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.d
 // erroneously applied to things which are already strings.
 //
 define method as (clas == <string>, collection :: <string>)
+ => string :: <string>;
   collection;
 end method as;
 
 define method as (clas == <string>, collection :: <collection>)
+ => string :: <string>;
   as(<byte-string>, collection)
 end as;
 
 define method \< (string1 :: <string>, string2 :: <string>)
+ => answer :: <boolean>;
   block (return)
     let (init, limit, next, done?, key, elem) =
        forward-iteration-protocol(string2);
@@ -59,19 +62,28 @@ define method \< (string1 :: <string>, string2 :: <string>)
   end block
 end \<;
 
+define generic as-uppercase (object :: <object>) => new :: <object>;
+define generic as-lowercase (object :: <object>) => new :: <object>;
+define generic as-uppercase! (object :: <object>) => same :: <object>;
+define generic as-lowercase! (object :: <object>) => same :: <object>;
+
 define method as-lowercase (string :: <string>)
+ => new-string :: <string>;
   map(as-lowercase, string)
 end as-lowercase;
 
 define method as-uppercase (string :: <string>)
+ => new-string :: <string>;
   map(as-uppercase, string)
 end as-uppercase;
 
 define method as-lowercase! (string :: <string>)
+ => string :: <string>;
   map-into(string, as-lowercase, string)
 end as-lowercase!;
 
 define method as-uppercase! (string :: <string>)
+ => string :: <string>;
   map-into(string, as-uppercase, string)
 end as-uppercase!;
 
@@ -80,16 +92,19 @@ end as-uppercase!;
 //
 define method element-setter
     (new, string :: <byte-string>, index :: <integer>)
+ => new :: <object>;
   error(make(<type-error>, value: new, type: <byte-character>));
 end;
 
 define method element-setter 
     (new, string :: <unicode-string>, index :: <integer>)
+ => new :: <object>;
   error(make(<type-error>, value: new, type: <character>));
 end;
 
 define method copy-sequence
     (vector :: <byte-string>, #key start = 0, end: last)
+ => copy :: <byte-string>;
   let src-sz = size(vector);
   let last = if (last & last < src-sz) last else src-sz end if;
   let sz = last - start;
@@ -103,6 +118,7 @@ end method copy-sequence;
 define method concatenate-as
     (cls == <byte-string>, vector :: <byte-string>, #next next-method,
      #rest more_vectors)
+ => new-string :: <byte-string>;
   let vector-count = size(more_vectors);
   case
     vector-count == 0 =>
