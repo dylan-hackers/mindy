@@ -1,17 +1,16 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.3 1995/11/14 13:53:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.4 1995/11/16 03:36:37 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
-define library dylan
+define library Dylan
   export
-    dylan;
+    Dylan;
 end;
 
-define module dylan
-  use dylan-viscera,
-    import: all,
-    export: {
+define module Dylan
+  use Dylan-Viscera,
+    import: {
 	     // Objects
 	     <object>,
 
@@ -113,12 +112,31 @@ define module dylan
 	     \block, \method,
 
 	     // Special Operators
-	     \&, \|, \:=,
-
-	     // Extra shit we are exporting for now.
-	     <fixed-integer>, format, print-message, print, write-integer,
-	     write
-
-    };
+	     \&, \|, \:=
+    },
+    export: all;
 end;
 
+define module Extensions
+  use Dylan-Viscera,
+    import: {
+	     // More types.
+	     <fixed-integer>, <extended-integer>, <byte-character>,
+
+	     // Handy value that everyone wants.
+	     $not-supplied,
+
+	     // Type extensions.
+	     false-or, one-of, <never-returns>,
+
+	     // Cheap-IO stuff.
+	     format, print-message, print, write-integer, write,
+
+	     // Condition extensions.
+	     report-condition,
+
+	     // Debugger Hooks
+	     *format-function*, *debug-output*, *debugger*
+    },
+    export: all;
+end;
