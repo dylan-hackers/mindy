@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.21 1998/12/16 20:51:09 emk Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.22 1998/12/21 18:43:15 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -157,7 +157,7 @@ MC=$builddir/mindy/comp/mindycomp
 DYLANPATH=""
 for dir in coll-ext format format-out internal-time matrix print \
     regexp standard-io stream-ext streams string-ext table-ext time \
-    transcendental
+    transcendental getopt
 do DYLANPATH=${DYLANPATH}":"$builddir/common/$dir
 done
 for dir in random dylan inspector tk;
