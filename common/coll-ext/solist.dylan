@@ -1,5 +1,5 @@
 module: 	self-organizing-list
-rcs-header:	$Header: /home/housel/work/rcs/gd/src/common/coll-ext/solist.dylan,v 1.1 1996/02/17 16:52:45 nkramer Exp $
+rcs-header:	$Header: /home/housel/work/rcs/gd/src/common/coll-ext/solist.dylan,v 1.2 1996/02/17 17:55:30 nkramer Exp $
 author: 	Robert Stockton (rgs@cs.cmu.edu)
 synopsis:	Provides "self-organizing lists".  These explicit key
 		collections provide roughly the semantics of hash tables, but
@@ -55,10 +55,7 @@ synopsis:	Provides "self-organizing lists".  These explicit key
 //======================================================================
 
 
-define constant <dictionary> = <mutable-explicit-key-collection>;
-
-
-define class <self-organizing-list> (<dictionary>)
+define class <self-organizing-list> (<mutable-explicit-key-collection>)
   slot data :: <list>, init-value: #();
   // slot accessor provides method for standard collection op "key-test"
   sealed slot key-test :: <function>, init-value: \==, init-keyword: test:;
@@ -198,5 +195,4 @@ define method remove-key!
   else
     #f;
   end if;
-  table;
 end method remove-key!;
