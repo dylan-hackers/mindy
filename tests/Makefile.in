@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.4 1994/10/26 19:49:34 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.5 1994/11/10 13:35:08 nkramer Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -64,7 +64,7 @@ LIBS	=		@LIBS@
 MC	=	../comp/mindycomp
 INTERP	=	../interp/mindy
 MINDYFLAGS =
-MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/string-ext:../libraries/streams:../libraries/random
+MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/string-ext:../libraries/streams:../libraries/random:../libraries/print:../libraries/format
 
 
 OBJS = dylan-test.dbc string-extensions-test.dbc
