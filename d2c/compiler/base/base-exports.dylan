@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.52 1996/08/23 14:00:12 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.53 1996/09/04 16:47:09 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -125,6 +125,7 @@ define module file-system
      filename-extension,
      base-filename,
      pathless-filename,
+     extensionless-filename,
      
      get-current-directory,
 
@@ -409,33 +410,33 @@ define module target-environment
 
     heap-preamble,
     align-directive,
-    export-directive,               // .import is hardwired
-    word-directive,                 // 32 bits
+    export-directive,
+    word-directive,
     half-word-directive,
     byte-directive,
     comment-token,
     mangled-name-prefix,
 
-    object-filename-suffix,         // => ".o" or ".obj"
-    library-filename-prefix,        // => "lib" or ""
-    library-filename-suffix,        // => ".a" or ".lib"
-    executable-filename-suffix,     // => "" or ".exe"
+    object-filename-suffix,
+    library-filename-prefix,
+    library-filename-suffix,
+    executable-filename-suffix,
 
-    compile-c-command,              // source object
+    compile-c-command,
     default-c-compiler-flags,
-    assembler-command,              // source object
+    assembler-command,
     link-library-command,
     link-executable-command,
     link-executable-flags,
     make-command,
-    delete-file-command,            // filename
-    compare-file-command,           // file1 file2
-    move-file-command,              // old-name new-name
+    delete-file-command,
+    compare-file-command,
+    move-file-command,
+    path-separator,
 
     // The remainder are really just a way for the compiler to know
     // when it needs to do black magic, but without knowing the
     // target's name
-    link-like-a-windows-machine?,
     link-doesnt-search-for-libs?,
     import-directive-required?,
     supports-debugging?;   // perhaps should be supports-stabs...
