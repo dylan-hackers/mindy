@@ -1,21 +1,26 @@
 module: dylan-viscera
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Attic/transcendental.dylan,v 1.4 1996/09/15 15:51:09 nkramer Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/Attic/transcendental.dylan,v 1.5 1996/10/06 14:09:45 nkramer Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
-/// I want to inline these functions, but then we end up with calls to
+// A quick and dirty Transcendental library, implemented by calling
+// out to C.
+
+/// ### I want to inline these functions, but then we end up with calls to
 /// sin & co. in C files that don't have #include <math.h>
 /// Solution?
 
 /// Not quite complete yet:
-/// Probably don't catch all errors at the dylan level.
-/// Need to implement log for arbitrary bases.
-/// Need to deal with extended integers (?)
+/// ### Probably don't catch all errors at the dylan level.
+/// ### Need to implement log for arbitrary bases.
+/// ### Need to deal with extended integers (?)
 
 c-include("math.h");
 
+// We write out pi rather than use C's M_PI because not all C
+// compilers have M_PI.  Similarly for e.
 define constant $double-pi :: <double-float> 
   = as(<double-float>, 3.14159265358979323846);
 define constant $single-pi :: <single-float> = as(<single-float>, $double-pi);
@@ -300,39 +305,43 @@ define sealed method tanh (x :: <double-float>) => y :: <double-float>;
   call-out("tan", double:, double: x);
 end method tanh;
 
-define sealed method asinh (x :: <integer>) => y :: <single-float>;
-  call-out("asinf", float:, float: as(<single-float>, x));
-end method asinh;
+
+// Inverse hyperbolic trig functions are not implemented yet because C
+// doesn't have them, and we haven't yet felt up to writing our own.
 
-define sealed method asinh (x :: <single-float>) => y :: <single-float>;
-  call-out("asinf", float:, float: x);
-end method asinh;
-
-define sealed method asinh (x :: <double-float>) => y :: <double-float>;
-  call-out("asin", double:, double: x);
-end method asinh;
-
-define sealed method acosh (x :: <integer>) => y :: <single-float>;
-  call-out("acosf", float:, float: as(<single-float>, x));
-end method acosh;
-
-define sealed method acosh (x :: <single-float>) => y :: <single-float>;
-  call-out("acosf", float:, float: x);
-end method acosh;
-
-define sealed method acosh (x :: <double-float>) => y :: <double-float>;
-  call-out("acos", double:, double: x);
-end method acosh;
-
-define sealed method atanh (x :: <integer>) => y :: <single-float>;
-  call-out("atanf", float:, float: as(<single-float>, x));
-end method atanh;
-
-define sealed method atanh (x :: <single-float>) => y :: <single-float>;
-  call-out("atanf", float:, float: x);
-end method atanh;
-
-define sealed method atanh (x :: <double-float>) => y :: <double-float>;
-  call-out("atan", double:, double: x);
-end method atanh;
+// define sealed method asinh (x :: <integer>) => y :: <single-float>;
+//   call-out("asinf", float:, float: as(<single-float>, x));
+// end method asinh;
+// 
+// define sealed method asinh (x :: <single-float>) => y :: <single-float>;
+//   call-out("asinf", float:, float: x);
+// end method asinh;
+// 
+// define sealed method asinh (x :: <double-float>) => y :: <double-float>;
+//   call-out("asin", double:, double: x);
+// end method asinh;
+// 
+// define sealed method acosh (x :: <integer>) => y :: <single-float>;
+//   call-out("acosf", float:, float: as(<single-float>, x));
+// end method acosh;
+// 
+// define sealed method acosh (x :: <single-float>) => y :: <single-float>;
+//   call-out("acosf", float:, float: x);
+// end method acosh;
+// 
+// define sealed method acosh (x :: <double-float>) => y :: <double-float>;
+//   call-out("acos", double:, double: x);
+// end method acosh;
+// 
+// define sealed method atanh (x :: <integer>) => y :: <single-float>;
+//   call-out("atanf", float:, float: as(<single-float>, x));
+// end method atanh;
+// 
+// define sealed method atanh (x :: <single-float>) => y :: <single-float>;
+//   call-out("atanf", float:, float: x);
+// end method atanh;
+// 
+// define sealed method atanh (x :: <double-float>) => y :: <double-float>;
+//   call-out("atan", double:, double: x);
+// end method atanh;
 
