@@ -1,5 +1,5 @@
 module: dylan-user
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/exports.dylan,v 1.3 1996/09/15 15:51:10 nkramer Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/exports.dylan,v 1.4 1996/09/28 20:28:06 rgs Exp $
 
 define library melange-support
   use dylan;
@@ -22,5 +22,5 @@ define module melange-support
 
     destroy, pointer-value, pointer-value-setter, content-size,
     structure-size, export-value, import-value, <machine-pointer>,
-    <c-string>, <c-vector>;
+    <c-string>, <c-vector>, <function-pointer>;
 end module melange-support;
