@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.6 1995/12/05 22:11:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/misc.dylan,v 1.7 1995/12/09 02:50:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -30,7 +30,8 @@ define constant <never-returns> :: <type> = type-union();
 define flushable generic values-sequence (sequence :: <sequence>);
 
 define inline method values-sequence (sequence :: <sequence>)
-  values-sequence(as(<simple-object-vector>, sequence));
+  let vec :: <simple-object-vector> = as(<simple-object-vector>, sequence);
+  values-sequence(vec);
 end;
 
 define inline method values-sequence
