@@ -1,5 +1,5 @@
 module: function-definitions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.3 2000/01/24 04:56:19 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.4 2000/10/17 08:45:03 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -36,9 +36,8 @@ end;
 define class <generic-definition> (<function-definition>)
   //
   // #f iff the open adjective wasn't supplied.
-  slot generic-defn-sealed? :: <boolean>, init-keyword: sealed:,
-    init-function:
-      curry(error, "sealed: unsupplied in make of <generic-definition>");
+  slot generic-defn-sealed? :: <boolean> = error("sealed: unsupplied in make of <generic-definition>"),
+    init-keyword: sealed:;
   //
   // All the <method-definition>s defined on this generic function.
   slot generic-defn-methods :: <list>,
