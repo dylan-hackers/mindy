@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.43 2003/02/05 11:01:08 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.44 2003/02/05 20:35:01 gabor Exp $
 copyright: see below
 
 
@@ -3465,12 +3465,20 @@ define method build-getter
      defn :: <slot-defn>, slot :: <instance-slot-info>)
     => res :: <method-literal>;
 
-
-  assert(defn.slot-defn-getter.defn-name == defn.slot-defn-getter-name); // FIXME! can be removed later
+defn.slot-defn-getter.defn-name == defn.slot-defn-getter-name
+|
+(instance?(defn.slot-defn-getter.defn-name, <method-name>)
+   & defn.slot-defn-getter.defn-name.method-name-generic-function == defn.slot-defn-getter-name)
+    | begin
+	compiler-warning("defn.slot-defn-getter.defn-name %=", defn.slot-defn-getter.defn-name);
+	compiler-warning("defn.slot-defn-getter-name %=", defn.slot-defn-getter-name);
+      end;
+//  assert(defn.slot-defn-getter.defn-name == defn.slot-defn-getter-name); // FIXME! can be removed later
 
   let getter-name
       = make(<derived-name>, how: #"getter",
-     	     base: defn.slot-defn-getter-name);
+     	     base: defn.slot-defn-getter.defn-name);
+//     	     base: defn.slot-defn-getter-name);
   let lexenv = make(<lexenv>, method-name: getter-name);
   let policy = lexenv.lexenv-policy;
   let source = defn.source-location;
