@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.7 1994/04/10 19:00:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.8 1994/04/18 03:25:32 wlott Exp $
 *
 * This file does whatever.
 *
@@ -336,8 +336,6 @@ static obj_t fop_single_float(struct load_info *info)
 {
     float f;
 
-    assert(sizeof(f) == 4);
-
     read_ordered_bytes(info, &f, 4);
 
     return make_single(f);
@@ -347,11 +345,18 @@ static obj_t fop_double_float(struct load_info *info)
 {
     double d;
 
-    assert(sizeof(d) == 8);
-
     read_ordered_bytes(info, &d, sizeof(d));
 
     return make_double(d);
+}
+
+static obj_t fop_extended_float(struct load_info *info)
+{
+    long double d;
+
+    read_ordered_bytes(info, &d, sizeof(d));
+
+    return make_extended(d);
 }
 
 static obj_t fop_short_string(struct load_info *info)
@@ -1020,6 +1025,7 @@ void init_loader(void)
     opcodes[fop_CHAR] = fop_char;
     opcodes[fop_SINGLE_FLOAT] = fop_single_float;
     opcodes[fop_DOUBLE_FLOAT] = fop_double_float;
+    opcodes[fop_EXTENDED_FLOAT] = fop_extended_float;
     opcodes[fop_SHORT_STRING] = fop_short_string;
     opcodes[fop_STRING] = fop_string;
     opcodes[fop_SHORT_SYMBOL] = fop_short_symbol;
