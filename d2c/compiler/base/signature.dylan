@@ -1,6 +1,6 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.7 1995/10/13 15:08:00 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.8 1995/11/14 13:39:42 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -47,6 +47,7 @@ add-make-dumper(#"function-signature", *compiler-dispatcher*, <signature>,
        next?, next:, #f,
        rest-type, rest-type:, #f,
        key-infos, keys:, #f,
+       all-keys?, all-keys:, #f,
        returns, returns:, #f)
 );
 
