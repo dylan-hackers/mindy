@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.29 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.30 1995/05/12 15:38:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -582,34 +582,37 @@ end;
 
 // Make the region and add it to the component's all-function-regions.
 //
-define method build-function-body
+define method build-function-body-aux
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     name :: <byte-string>, arg-vars :: <list>)
+     class :: <class>, name :: <byte-string>, arg-vars :: <list>,
+     return-convention :: one-of(#"best", #"cluster"))
  => res :: <fer-function-region>;
   ignore(policy);
-  let region = make(<fer-function-region>,
-		    source-location: source, name: name,
-		    argument-types: map(derived-type, arg-vars));
+  let region = make(class, source-location: source, name: name,
+		    argument-types: map(derived-type, arg-vars),
+		    return-convention: return-convention);
   push-body(builder, region);
   build-let(builder, policy, source, arg-vars, region.prologue);
   add!(builder.component.all-function-regions, region);
   region;
 end method;
 
-// Same thing as build-function-body, except build a <lambda> instead.
-//
+define method build-function-body
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     name :: <byte-string>, arg-vars :: <list>,
+     return-convention :: one-of(#"best", #"cluster"))
+ => res :: <fer-function-region>;
+  build-function-body-aux(builder, policy, source, <fer-function-region>,
+			  name, arg-vars, return-convention);
+end;
+
 define method build-lambda-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     name :: <byte-string>, arg-vars :: <list>)
+     name :: <byte-string>, arg-vars :: <list>,
+     return-convention :: one-of(#"best", #"cluster"))
  => res :: <lambda>;
-  ignore(policy);
-  let region = make(<lambda>,
-		    source-location: source, name: name,
-		    argument-types: map(derived-type, arg-vars));
-  push-body(builder, region);
-  build-let(builder, policy, source, arg-vars, region.prologue);
-  add!(builder.component.all-function-regions, region);
-  region;
+  build-function-body-aux(builder, policy, source, <lambda>,
+			  name, arg-vars, return-convention);
 end method;
 
 

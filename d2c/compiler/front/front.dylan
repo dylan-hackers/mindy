@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.32 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.33 1995/05/12 15:38:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -390,6 +390,13 @@ define class <fer-function-region>
 
   // The result type of this function.
   slot result-type :: <values-ctype>, init-function: wild-ctype;
+
+  // The return convention used by this function-region.  One of:
+  //   best: -- use the best convention possible, based on the result type.
+  //   cluster: -- return an unknown-values cluster irrespective of the
+  //     result type.
+  slot return-convention :: one-of(#"best", #"cluster"),
+    required-init-keyword: return-convention:;
 
   // The block self tail calls should exit to.  #f if we haven't inserted it
   // yet (i.e. haven't found any self tail calls yet).

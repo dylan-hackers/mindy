@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.12 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.13 1995/05/12 15:35:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -146,15 +146,17 @@ end class;
 //
 define generic build-function-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     name :: <byte-string>, arg-vars :: <list>)
+     name :: <byte-string>, arg-vars :: <list>,
+     return-convention :: one-of(#"best", #"cluster"))
  => res :: <fer-function-region>;
 
-// Identical to build-function-body, except builds a lambda instead of a
+// Identical to build-function-body, except builds a <lambda> instead of a
 // straight <fer-function-region>.
 // 
 define generic build-lambda-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     name :: <byte-string>, arg-vars :: <list>)
+     name :: <byte-string>, arg-vars :: <list>,
+     return-convention :: one-of(#"best", #"cluster"))
  => res :: <lambda>;
 
 

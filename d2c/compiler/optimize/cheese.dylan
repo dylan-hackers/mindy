@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.58 1995/05/12 13:18:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.59 1995/05/12 15:38:04 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2799,7 +2799,8 @@ define method build-xep
 				  list(self-leaf, nargs-leaf, next-info-leaf);
 				else
 				  list(self-leaf, nargs-leaf);
-				end);
+				end,
+				#"cluster");
   let new-args = make(<stretchy-vector>);
   if (instance?(main-entry, <lambda>) & main-entry.environment.closure-vars)
     let closure-ref-leaf = dylan-defn-leaf(builder, #"%closure-ref");

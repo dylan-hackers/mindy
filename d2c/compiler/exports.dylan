@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.60 1995/05/12 12:37:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.61 1995/05/12 15:38:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -730,7 +730,7 @@ define module front
     <exit-function>, catcher, catcher-setter,
 
     <fer-function-region>, prologue, argument-types, argument-types-setter,
-    result-type, result-type-setter,
+    result-type, result-type-setter, return-convention,
     self-call-block, self-call-block-setter,
     self-tail-calls, self-tail-calls-setter,
     <lambda>, literal, environment,
