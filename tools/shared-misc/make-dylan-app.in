@@ -1,6 +1,6 @@
 #!@PERL@ -w
 
-use strict;
+# use strict;
 
 unless (@ARGV == 1) {
     print <<EOD;
@@ -10,7 +10,7 @@ EOD
     exit 1;
 }
 
-my $appname = $ARGV[0];
+$appname = $ARGV[0];
 
 mkdir $appname, 0777 or die "Can't create directory $appname: $!";
 chdir $appname or die "Can't chdir to directory $appname: $!";
@@ -25,40 +25,40 @@ $appname.dylan
 EOD
 
 &write_file("$appname-exports.dylan", <<"EOD");
-library: $appname
 module: dylan-user
 
 define library $appname
   use dylan;
-  use streams;
-  use format;
-  use standard-io;
+  use format-out;
+  //use streams;
+  //use standard-io;
+  //use format;
 end library;
 
 define module $appname
   use dylan;
   use extensions;
-  use streams;
-  use format;
-  use standard-io;
+  use format-out;
+  //use streams;
+  //use standard-io;
+  //use format;
 end module;
 EOD
 
 &write_file("$appname.dylan", <<"EOD");
-library: $appname
 module: $appname
+synopsis: 
 author: 
 copyright: 
 
 define method main(appname, #rest arguments)
-  // insert code here ...
-
+  format-out("Hello, world from $appname!\\n");
   exit(exit-code: 0);
 end method main;
 EOD
 
 sub write_file {
-    my ($filename, $contents) = @_;
+    local ($filename, $contents) = @_;
     open(OUTPUT, ">$filename") or die "Can't create $filename: $!";
     print OUTPUT $contents;
     close OUTPUT;
