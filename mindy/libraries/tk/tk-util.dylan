@@ -113,7 +113,7 @@ define method parse-tk-list
      #key depth, start = 0, end: last = string.size, unquote)
  => (result :: <sequence>);
   local method skip-spaces (string, start)
-	  for (i from start below string.size, until string[i] ~= ' ')
+	  for (i from start below string.size, until: string[i] ~= ' ')
 	  finally i;
 	  end for;
 	end method;
@@ -126,7 +126,7 @@ define method parse-tk-list
 	       // only change count if we're not quoted
 	       increment = 1
 		 then if (string[i] == '\\') 1 - increment else 1 end if,
-	       i from start below last, until count == 0)
+	       i from start below last, until: count == 0)
 	  finally
 	    i - 1;		// I is the character after the close brace.
 	  end for;
@@ -134,7 +134,7 @@ define method parse-tk-list
   local method word-break (string, start, last)
 	  for (quoted = #f then (string[i] == '\\'),
 	       i from start below last,
-	       until ~quoted & (string[i] == ' '))
+	       until: ~quoted & (string[i] == ' '))
 	  finally
 	    i;
 	  end for;
@@ -180,7 +180,7 @@ end method parse-tk-list;
 define method tk-input-loop () => ();
   block ()
     for (line = read-tk-line() then read-tk-line(),
-	 while line)
+	 while: line)
       if (empty?(line))
 	write-line(line, *standard-output*);
 	force-output(*standard-output*);
