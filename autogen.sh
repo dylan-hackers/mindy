@@ -67,13 +67,13 @@ test -x "$srcdir/missing" || {
 	echo "or in \${prefix}/share/autoconf."
 }
 
-if test -z "$*"; then
-        echo "I am going to run ./configure with no arguments - if you wish "
-        echo "to pass any to it, please specify them on the $0 command line."
-fi
-
-rm -f config.cache
-$srcdir/configure "$@"
+#if test -z "$*"; then
+#        echo "I am going to run ./configure with no arguments - if you wish "
+#        echo "to pass any to it, please specify them on the $0 command line."
+#fi
+#
+#rm -f config.cache
+#$srcdir/configure "$@"
 
 echo 
-echo "Now type 'make' to compile Gwydion Dylan."
+echo "Now use './configure; make' to build."
