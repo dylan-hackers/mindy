@@ -9,14 +9,14 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/demos/html2txt/Attic/GNUmakefile,v 1.1 1994/06/29 00:05:16 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/demos/html2txt/Attic/GNUmakefile,v 1.2 1994/06/29 00:09:00 wlott Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
 
-include ../Config
+include ../../Config
 
-MC = ../comp/mc
+MC = ../../comp/mc
 MINDYFLAGS = -lhtml
 
 %.dbc: %.dylan
