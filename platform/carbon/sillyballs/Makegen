@@ -13,7 +13,7 @@ do emit_library_rule(
 print <<'EOF';
 
 compile:
-	/Developer/Tools/Rez -a -o $(BUILDDIR)/sillyballs $(BUILDDIR)/carb.r
+	/Developer/Tools/Rez -a -o $(BUILDDIR)/sillyballs $(SRCDIR)/carb.r
 	/Developer/Tools/SetFile -c ???? -t APPL $(BUILDDIR)/sillyballs
 
 EOF
