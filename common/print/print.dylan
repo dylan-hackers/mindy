@@ -2,7 +2,7 @@ module: Print
 author: chiles@cs.cmu.edu
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.2 1996/03/20 05:01:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.3 1996/03/20 17:34:07 wlott Exp $
 
 //======================================================================
 //
@@ -972,18 +972,23 @@ define method print-specializer (type :: <union>, stream :: <stream>)
       members := pair(member, members);
     end if;
   end for;
-  print-union(members, singletons, stream);
+  print-union(as(<simple-object-vector>, members),
+	      as(<simple-object-vector>, singletons),
+	      stream);
 #else
-  print-union(type.union-members, type.union-singletons, stream);
+  print-union(as(<simple-object-vector>, type.union-members),
+	      as(<simple-object-vector>, type.union-singletons),
+	      stream);
 #end
 end method print-specializer;
 
 define method print-union
-    (members :: <sequence>, singletons :: <sequence>, stream :: <stream>)
+    (members :: <simple-object-vector>, singletons :: <simple-object-vector>,
+     stream :: <stream>)
   local
     method print-singletons (stream :: <stream>)
-      if (singletons.tail == #())
-	print-specializer(singleton(singletons.head), stream);
+      if (singletons.size == 1)
+	print-specializer(singleton(singletons.first), stream);
       else
 	pprint-logical-block
 	  (stream,
@@ -1000,8 +1005,8 @@ define method print-union
 	   suffix: ")");
       end if;
     end method print-singletons;
-  if (members == #())
-    if (singletons == #())
+  if (members.empty?)
+    if (singletons.empty?)
       write("{empty type}", stream);
     else
       print-singletons(stream);
@@ -1019,7 +1024,7 @@ define method print-union
 		 end unless;
 		 print-specializer(member, stream);
 	       finally
-		 unless (singletons == #())
+		 unless (singletons.empty?)
 		   unless (first?)
 		     write(", ", stream);
 		     pprint-newline(#"fill", stream);
