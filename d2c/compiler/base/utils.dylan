@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.1 1994/12/12 13:01:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.2 1994/12/16 12:12:06 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -234,6 +234,10 @@ end;
 
 
 // Simple utility functions.
+
+define method dformat(#rest args) => ();
+  apply(format, *debug-output*, args);
+end;
 
 
 define constant assert
