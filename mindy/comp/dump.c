@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.20 1994/11/28 07:15:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.21 1994/11/28 07:56:04 wlott Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
@@ -483,6 +483,11 @@ static void dump_method(struct method *method)
 
 static void dump_varref(struct id *id, boolean written)
 {
+    if (id->line) {
+	dump_op(fop_NOTE_REFERENCE);
+	dump_int(id->line);
+    }
+	
     if (id->internal)
 	if (written)
 	    dump_op(fop_BUILTIN_WRITABLE_VALUE_CELL);
