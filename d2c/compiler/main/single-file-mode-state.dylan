@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.8 2002/03/06 23:03:29 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.9 2002/03/10 12:31:22 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -295,12 +295,12 @@ define method build-executable (state :: <single-file-mode-state>) => ();
                        exec-name,
                        concatenate(objects, dash-small-ells," "),
                        linker-args);
-#if ( libtool )
-  let link-string
-    = substring-replace(link-string-intermediate, "$(LIBTOOL)", libtool);
-#else
-  let link-string = link-string-intermediate;
-#endif
+
+  let link-string = if(libtool)
+                      substring-replace(link-string-intermediate, "$(LIBTOOL)", libtool);
+                    else
+                      link-string-intermediate;
+                    end if;
 
   if (system(link-string) ~== 0)
     cerror("so what", "gcc failed?");
