@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.7 1994/04/12 21:50:04 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.8 1994/04/12 22:21:41 wlott Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -548,7 +548,7 @@ end method remove!;
 define generic size-setter(length, collection);
 
 define method shrink!(sequence :: <sequence>, length) => <sequence>;
-  if (empty?(applicable-method?(size-setter, length, sequence)))
+  if (applicable-method?(size-setter, length, sequence))
     copy-sequence(sequence, end: length);
   else
     size(sequence) := length;
