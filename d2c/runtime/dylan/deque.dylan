@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.1 1995/12/06 21:34:54 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.2 1995/12/09 02:47:21 wlott Exp $
 
 //======================================================================
 //
@@ -354,7 +354,7 @@ end method pop-last;
 // implemented primarily in terms of the iteration protocol.
 //
 // The collection functions that must be implemented (besides the
-// iteration protocol functions) are CLASS-FOR-COPY and MAP-AS.
+// iteration protocol functions) are TYPE-FOR-COPY and MAP-AS.
 // Definitions for these are below.
 
 // size-setter -- public
@@ -396,13 +396,13 @@ define sealed method size-setter
 end method size-setter;
 
 // ### not absolutly needed
-// class-for-copy -- public
+// type-for-copy -- public
 //
 // Return the class for copy of deques (<deque>).
 //
-//define method class-for-copy (deque :: <deque>) :: 
+//define method type-for-copy (deque :: <deque>) :: 
 //  <deque>;
-//end method class-for-copy;
+//end method type-for-copy;
 
 // Since we can traverse from either end, we check to see which end is closer
 // to the desired element and take that as our starting point.

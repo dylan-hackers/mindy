@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/sort.dylan,v 1.1 1995/12/08 22:15:08 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/sort.dylan,v 1.2 1995/12/09 02:47:32 wlott Exp $
 
 //======================================================================
 //
@@ -454,7 +454,7 @@ define method sort!
   let result = if (stable) merge-sort!(vector, test: test);
 	       else quick-sort!(vector, test: test);
 	       end if;
-  as(class-for-copy(sequence), result);
+  as(type-for-copy(sequence), result);
 end method sort!;
 
 // sort -- public
