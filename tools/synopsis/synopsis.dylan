@@ -1,8 +1,13 @@
 module: synopsis
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/synopsis.dylan,v 1.1 1997/01/16 15:32:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/synopsis.dylan,v 1.2 1997/01/16 16:12:17 nkramer Exp $
 
-// Copyright JPRC 1996, all rights reserved.
+//======================================================================
+//
+// Copyright (c) 1997  Carnegie Mellon University
+// All rights reserved.
+//
+//======================================================================
 
 // Creates a synopsis of Dylan source files.  A synopsis is
 // essentially the file without any of the code, just top-level
@@ -18,6 +23,10 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/synopsis.dylan,
 // guide will also likely screw up this program.  However, keep in
 // mind that the Emacs Dylan-mode is also regular-expression based, so
 // if Dylan-mode doesn't choke on it, synopsis probably won't either.
+//
+// Happily, Emacs font-lock for Dylan works almost perfectly on
+// synopsis files, even though none of the define method/define
+// function forms have end method/end functions.
 //
 // Usage: See main() function at bottom of file.
 
