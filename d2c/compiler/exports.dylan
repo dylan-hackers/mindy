@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.86 1995/08/29 15:23:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.87 1995/10/05 01:12:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -756,6 +756,8 @@ define module front
   export
     dump-fer, id, reset-ids,
 
+    clone-function,
+
     <fer-assignment>, policy,
     <let-assignment>, let-next, <set-assignment>,
 
@@ -876,6 +878,7 @@ define module define-functions
     <generic-definition>, generic-defn-discriminator, generic-defn-methods,
     add-seal, ct-add-method, ct-sorted-applicable-methods,
     method-defn-inline-expansion,
+    %method-defn-inline-function, %method-defn-inline-function-setter,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,
     <getter-method-definition>, <setter-method-definition>,
