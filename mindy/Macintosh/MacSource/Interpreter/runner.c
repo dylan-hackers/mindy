@@ -16,22 +16,24 @@
 
 // defines
 
-#define SEARCH_PATH_BUFFER_SIZE	1024
+#define INITIAL_SEARCH_PATH 	":\t:libraries\t"
+#define FOLDER_SEARCH_PATH	"\p:Mindy:libraries\t"	// \t is the separator
 
 
 // Prototypes
 
 extern void main( int argc, char ** argv );
 
-void BuildLibPath( void );
+static void BuildLibPath( void );
+static void FindFolderPath( Handle appendPathTo, int folderType, Str255 pathInFolder );
 
-OSErr	GetFullPath(short vRefNum,
+static OSErr	GetFullPath(short vRefNum,
 					long dirID,
 					StringPtr name,
 					short *fullPathLength,
 					Handle *fullPath);
 
-OSErr	FSpGetFullPath(const FSSpec *spec,
+static OSErr	FSpGetFullPath(const FSSpec *spec,
 					   short *fullPathLength,
 					   Handle *fullPath);
 
@@ -66,56 +68,70 @@ void DummyMain( void )
 
 void BuildLibPath( void )
 {
+	Handle searchPath;
+	
+	// make the search path handle 
+	// and fill it with the initial search path
+	// use strlen neat so as to chop off trailing null!
+	searchPath = NewHandle( strlen( INITIAL_SEARCH_PATH ) );
+	if( (searchPath != NULL) && ( ResError() == noErr ) )
+	{
+		HLock( searchPath );
+			BlockMove( INITIAL_SEARCH_PATH, *searchPath, strlen( INITIAL_SEARCH_PATH  ) );
+		HUnlock( searchPath );
+			
+		// Try to get the application support folder
+		FindFolderPath( searchPath, kApplicationSupportFolderType, FOLDER_SEARCH_PATH );
+		
+		// Try to get the extensions folder
+		FindFolderPath( searchPath, kExtensionFolderType, FOLDER_SEARCH_PATH  );
+		
+		// lock it out of the way, 
+		// null terminate it, overwriting the last \t, making a c string
+		// and set LIBDIR to it
+		HLockHi( searchPath );
+		(*searchPath)[ GetHandleSize( searchPath ) -1 ] = '\0';
+		LIBDIR = *searchPath;
+	}
+}
+
+
+// FindFolderPath
+// appendPathTo must be big enough
+
+void FindFolderPath( Handle appendPathTo, int folderType, Str255  pathInFolder )
+{
 	OSErr err;
 	short vRefNum;
 	long dirID;
+	long appendPathToLength;
 	short pathLength;
 	Handle path;
-
-	LIBDIR = NewPtr( SEARCH_PATH_BUFFER_SIZE );
-	
-	strcpy( LIBDIR, ":\t:libraries" );	// Put the local path
-	
-	path = NewHandle( 512 );
-	if( (path == NULL) || (MemError() != noErr) )
-		return;
 		
 	// Try to get the application support folder
-	err = FindFolder( kOnSystemDisk, kApplicationSupportFolderType, FALSE, &vRefNum, &dirID );
+	err = FindFolder( kOnSystemDisk, folderType, FALSE, &vRefNum, &dirID );
 	if( ! err )
 	{		
 		// Find the mindy:libraries dir and get its full path
-		err = GetFullPath( vRefNum, dirID, "\p:mindy:libraries", &pathLength, &path );
+		// Resize the destination handle to fit,
+		// then copy in the path and the sub-path
+		err = GetFullPath( vRefNum, dirID, "\p", &pathLength, &path );
 		if( ! err )
 		{
-			strcat( LIBDIR, "\t" );
-		
-			(*path)[ pathLength ] = '\0';	// Make a C string
-			
-			HLock( path );
-			strcat( LIBDIR, *path );
-			HUnlock( path );
+			appendPathToLength = GetHandleSize( appendPathTo );
+			SetHandleSize( appendPathTo,  appendPathToLength+ pathLength + pathInFolder[ 0 ] );
+			err = MemError();
+			if( ! err )
+			{
+				HLock( appendPathTo );
+				HLock( path );
+					BlockMove( *path, &((*appendPathTo)[ appendPathToLength ]),  pathLength );
+					BlockMove( &(pathInFolder[ 1 ]), &((*appendPathTo)[ appendPathToLength + pathLength ])  ,  pathInFolder[ 0 ] );
+				HUnlock( path );
+				HLock( appendPathTo );
+			}
 		}
 	}
-	
-	// Try to get the extensions folder
-	err = FindFolder( kOnSystemDisk, kExtensionFolderType, FALSE, &vRefNum, &dirID );
-	if( ! err )
-	{		
-		// Find the mindy:libraries dir and get its full path
-		err = GetFullPath( vRefNum, dirID, "\p:mindy:libraries", &pathLength, &path );
-		if( ! err )
-		{
-			strcat( LIBDIR, "\t" );
-		
-			(*path)[ pathLength ] = '\0';	// Make a C string
-			
-			HLock( path );
-			strcat( LIBDIR, *path );
-			HUnlock( path );
-		}
-	}
-	
 	DisposeHandle( path );
 }
 
