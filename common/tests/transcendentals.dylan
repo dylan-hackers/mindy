@@ -102,12 +102,16 @@ end function-test cos;
 define transcendentals function-test tan ()
   for( i from -12345.33 below 10000 by 1001 )
     let s = sin(i);
+    let ss = sin( as(<single-float>, i) );
     let c = cos(i);
+    let sc = cos( as(<single-float>, i) );
     let tn = s / c;
+    let stn = ss / sc;
+    format-out("tan(%=) = %= vs %=\n", i, stn, tan(as(<single-float>, i)));
     unless (c = 0.0)
       check-true
 	(format-to-string( "tan(%=) = %=", i, tn),
-	 almost-equal( tan(as(<single-float>, i)), tn )
+	 almost-equal( tan(as(<single-float>, i)), stn )
 	   & almost-equal( tan(as(<double-float>, i)), tn )
 	   );
     end unless;
