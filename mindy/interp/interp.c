@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.3 1994/03/27 02:12:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.4 1994/03/28 11:09:54 wlott Exp $
 *
 * This file does whatever.
 *
@@ -291,7 +291,7 @@ static void op_dup(int byte, struct thread *thread)
 static void push_constant(struct thread *thread, int arg)
 {
     *thread->sp++
-	= obj_ptr(struct component *, thread->component)->constant[arg];
+	= COMPONENT(thread->component)->constant[arg];
 }
 
 static void op_push_constant_immed(int byte, struct thread *thread)
@@ -412,12 +412,11 @@ static void interpret_byte(struct thread *thread)
 
 void set_byte_continuation(struct thread *thread, obj_t component)
 {
+    int n_const = COMPONENT(component)->n_constants;
     thread->component = component;
-    thread->pc = (char *)(&obj_ptr(struct component *, component)
-			  ->constant[obj_ptr(struct component *, component)
-				     ->n_constants])
+    thread->pc = (char *)(&COMPONENT(component)->constant[n_const])
 	- (char *)component;
-    thread->sp = thread->fp + decode_int4(thread);
+    thread->sp = thread->fp + COMPONENT(component)->frame_size;
     thread->advance = interpret_byte;
 }
 
@@ -445,18 +444,22 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 
 /* Component allocation. */
 
-obj_t make_component(obj_t debug_name, int nconst, int nbytes)
+obj_t make_component(obj_t debug_name, int frame_size, obj_t source_file,
+		     obj_t debug_info, int nconst, int nbytes)
 {
     int len = sizeof(struct component) + sizeof(obj_t)*nconst + nbytes;
     obj_t res = alloc(obj_ComponentClass, len);
     int i;
 
-    obj_ptr(struct component *, res)->debug_name = debug_name;
-    obj_ptr(struct component *, res)->n_constants = nconst;
-    obj_ptr(struct component *, res)->length = len;
+    COMPONENT(res)->length = len;
+    COMPONENT(res)->debug_name = debug_name;
+    COMPONENT(res)->frame_size = frame_size;
+    COMPONENT(res)->source_file = source_file;
+    COMPONENT(res)->debug_info = debug_info;
+    COMPONENT(res)->n_constants = nconst;
 
     for (i = 0; i < nconst; i++)
-	obj_ptr(struct component *, res)->constant[i] = obj_Unbound;
+	COMPONENT(res)->constant[i] = obj_Unbound;
 
     return res;
 }
@@ -470,6 +473,7 @@ static int scav_component(struct object *ptr)
     int i;
 
     scavenge(&component->debug_name);
+    scavenge(&component->debug_info);
     for (i = 0; i < component->n_constants; i++)
 	scavenge(component->constant + i);
 
@@ -478,8 +482,7 @@ static int scav_component(struct object *ptr)
 
 static obj_t trans_component(obj_t component)
 {
-    return transport(component,
-		     obj_ptr(struct component *, component)->length);
+    return transport(component, COMPONENT(component)->length);
 }
 
 void scavenge_interp_roots(void)
