@@ -224,10 +224,30 @@ define sealed method initialize
     (stream :: <simple-sequence-stream>,
      #next next-method,
      #key contents :: <sequence>, // Default depends on type of stream
-          start :: <integer> = 0,
-          end: stop :: <integer> = contents.size,
+          direction: dir :: one-of(#"input", #"output", #"input-output")
+            = #"input",
+          start :: <integer> = $not-supplied, // = 0,
+          end: stop :: <integer> = $not-supplied, // = contents.size,
      #all-keys)
  => ();
+  // Make sure they didn't try and give us start and stop on an output stream
+  if (start ~== $not-supplied)
+    if (dir ~== #"input") 
+      error("Keyword start: only valid for input-only streams -- %=", stream);
+    end;
+  else
+    start := 0;
+  end;
+  if (stop ~== $not-supplied)
+    if (dir ~== #"input") 
+      error("Keyword stop: only valid for input-only streams -- %=", stream);
+    end;
+  else
+    // For #"input-output" streams, we assume there is valid input in
+    // contents already.
+    stop := if (dir == #"output") 0 else contents.size end;
+  end;
+
   // Do some bounds checking ...
   if (start < 0)
     error("Bounds error in string -- %d.", start);
@@ -239,6 +259,7 @@ define sealed method initialize
     error("Start, %d, must be less than or equal to end, %d.", start, stop);
   end;
   next-method();
+  stream.direction := dir;
   stream.stream-start := start;
   stream.stream-end := stop;
   stream.position := start;
@@ -471,7 +492,7 @@ define sealed method stream-size (stream :: <simple-sequence-stream>)
  => size :: <integer>;
   block ()
     lock-stream(stream);
-    stream.contents.size;
+    stream.stream-end - stream.stream-start;
   cleanup
     unlock-stream(stream);
   end block;
