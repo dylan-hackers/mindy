@@ -1,5 +1,5 @@
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/system.dylan,v 1.2 1998/08/10 15:17:33 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/system.dylan,v 1.3 1998/09/22 15:40:17 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -73,6 +73,22 @@ define method exit (#key exit-code :: <integer> = 0)
  => res :: <never-returns>;
   call-out("exit", void:, int:, exit-code);
 end method exit;
+
+define variable *on-exit-functions* :: <list> = #();
+
+define constant on-exit-handler
+  = callback-method() => ();
+      for(func in *on-exit-functions*)
+        func();
+      end;
+    end;
+
+define method on-exit(function :: <function>)
+  if(empty?(*on-exit-functions*))
+    call-out("atexit", int:, ptr: callback-entry(on-exit-handler));
+  end if;
+  *on-exit-functions* := add(*on-exit-functions*, function);
+end method;
 
 // no-core-dumps
 //

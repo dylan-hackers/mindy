@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.2 1998/09/09 13:40:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.3 1998/09/22 15:40:16 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -215,7 +215,7 @@ define module dylan-viscera
     copy-bytes, buffer-address,
 
     system, import-string, export-string, getenv, 
-    exit, no-core-dumps, get-time-of-day,
+    exit, on-exit, no-core-dumps, get-time-of-day,
 
     // Introspection Stuff
     class-name, function-name,
