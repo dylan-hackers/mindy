@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.12 1994/05/23 17:58:14 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.13 1994/05/25 16:30:43 nkramer Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -32,10 +32,11 @@ define method element(coll :: <collection>, key :: <object>,
 		      #key default = no_default) => <object>;
   let (init_state, limit, next_state, done?,
        current_key, current_element) = forward-iteration-protocol(coll);
+  let test = key-test(coll);
   block (return)
     for (state = init_state then next_state(coll, state),
 	 until done?(coll, state, limit))
-      if (current_key(coll, state) = key)
+      if (test(current_key(coll, state), key))
 	return(current_element(coll, state));
       end if;
     finally
@@ -53,10 +54,11 @@ define method element-setter (new_value, collection :: <mutable-collection>,
   let (init_state, limit, next_state, done?,
        current_key, current_element,
        current_element-setter) = forward-iteration-protocol(collection);
+  let test = key-test(coll);
   block (return)
     for (state = init_state then next_state(collection, state),
 	 until done?(collection, state, limit))
-      if (current_key(collection, state) = key)
+      if (test(current_key(collection, state), key))
 	current_element(collection, state) := new_value;
 	return();
       end if;
