@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.40 1996/02/18 18:33:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.41 1996/03/02 19:01:13 rgs Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -918,38 +918,43 @@ define method spew-object (object :: <proxy>, state :: <state>) => ();
 end;
 
 define method spew-object (object :: <ct-function>, state :: <state>) => ();
-  spew-function(object, state,
-		general-entry:
-		  make(<ct-entry-point>, for: object, kind: #"general"));
+  if (object.has-general-entry?)
+    spew-function(object, state,
+		  general-entry: make(<ct-entry-point>,
+				      for: object, kind: #"general"));
+  else
+    spew-function(object, state);
+  end if;
 end;
 
 define method spew-object
     (object :: <ct-generic-function>, state :: <state>) => ();
   let defn = object.ct-function-definition;
-  spew-function(object, state,
-		general-entry:
-		  begin
-		    let discriminator = defn.generic-defn-discriminator;
-		    if (discriminator)
-		      make(<ct-entry-point>, for: discriminator,
-			   kind: #"general");
-		    else
+  let methods
+    = make(<literal-list>,
+	   contents: remove(map(ct-value, generic-defn-methods(defn)), #f), 
+	   sharable: #f);
+  let discriminator = defn.generic-defn-discriminator;
+  if (discriminator)
+    spew-function(object, state,
+		  general-entry:
+		    (discriminator.has-general-entry?
+		       & make(<ct-entry-point>, for: discriminator,
+			      kind: #"general")));
+  else
+    spew-function(object, state,
+		  general-entry:
+		    begin
 		      let dispatch = dylan-defn(#"gf-call");
 		      if (dispatch)
-			make(<ct-entry-point>,
-			     for: dispatch.ct-value,
+			make(<ct-entry-point>, for: dispatch.ct-value,
 			     kind: #"main");
 		      else
 			#f;
 		      end;
-		    end;
-		  end,
-		generic-function-methods:
-		  make(<literal-list>,
-		       contents:
-			 remove(map(ct-value, generic-defn-methods(defn)),
-				#f), 
-		       sharable: #f));
+		    end,
+		  generic-function-methods: methods);
+  end if;
 end;
 
 // method-general-entry -- internal.
@@ -971,7 +976,8 @@ define method method-general-entry (meth :: <ct-method>)
       #f;
     end;
   else
-    make(<ct-entry-point>, for: meth, kind: #"general");
+    meth.has-general-entry?
+      & make(<ct-entry-point>, for: meth, kind: #"general");
   end if;
 end method method-general-entry;
 
@@ -979,7 +985,8 @@ define method spew-object (object :: <ct-method>, state :: <state>) => ();
   spew-function(object, state,
 		general-entry: method-general-entry(object),
 		generic-entry:
-		  make(<ct-entry-point>, for: object, kind: #"generic"));
+		  (object.has-generic-entry?
+		     & make(<ct-entry-point>, for: object, kind: #"generic")));
 end;
 
 define method spew-object (object :: <ct-accessor-method>, state :: <state>)
@@ -990,7 +997,7 @@ define method spew-object (object :: <ct-accessor-method>, state :: <state>)
 		generic-entry:
 		  if (standin)
 		    make(<ct-entry-point>, for: standin, kind: #"main");
-		  else
+		  elseif (object.has-generic-entry?)
 		    make(<ct-entry-point>, for: object, kind: #"generic");
 		  end,
 		accessor-slot: object.ct-accessor-method-slot-info);
