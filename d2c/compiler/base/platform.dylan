@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.5 1996/08/10 20:07:44 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.6 1996/08/12 14:01:49 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -75,14 +75,9 @@ define method as (cls == <target-environment>, header :: <header>)
   // keyword-values must be some kind of sequence that add! adds
   // elements to the end of
   let keyword-values = make(<stretchy-vector>);
-  // ### Want keyed-by, but don't have it
-  let (state, limit, next, done?, cur-key, cur-elt)
-    = header.forward-iteration-protocol;
-  for (st = state then next(header, st), until: done?(header, st, limit))
-    let val = cur-elt(header, st);
+  for (val keyed-by key in header)
     let val = substring-replace(val, "\\t", "\t");
     let val = substring-replace(val, "\\n", "\n");
-    let key = cur-key(header, st);
     
     add!(keyword-values, key);
     if (key == #"target-name")  // hack--target-name: wants a symbol, 
