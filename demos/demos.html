@@ -1,47 +1,89 @@
-<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.5 1997/05/28 01:28:20 ram Exp $>
-<TITLE>Mindy Demo Programs</TITLE>
-<H1>Mindy Demo Programs</H1>
+<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.6 1997/06/02 13:50:52 ram Exp $>
+<TITLE>Gwydion Dylan Demo Programs</TITLE>
+<H1>Gwydion Dylan Demo Programs</H1>
 
-These demos live in <SAMP><A HREF="">mindy/src/demos</A></SAMP> subdirectories. 
+These demos live in <SAMP><A HREF="">mindy/src/demos</A></SAMP> subdirectories.
+ Note that in addition to the <VAR>foo</VAR><SAMP>.dylan</SAMP> file pointed
+to, there is also a  <VAR>foo</VAR><SAMP>-exports.dylan</SAMP> which sets up
+the module namespace and a <VAR>foo</VAR><SAMP>.lid</SAMP> which is used to
+tell d2c what to compile.
+
+Although with the exception of <SAMP>hello-world</SAMP> these demos are ordered
+alphabetically rather than by complexity, this is a quasi-tutorial in that
+there are various nuggets of wisdom scattered throughout.
+
+<P>
+If you have run
+<SAMP>
+<A HREF="http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/htdocs/tools.html">
+mk-build-tree
+</A>
+</SAMP>
+then there will be makefiles in the demo build directories which will compile
+the demos.  We don't go into too much detail here about how to build these
+demos, see the documentation for 
+<A HREF="http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/maker-out/mindy.htm">mindy</A>
+and
+<A HREF="http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/htdocs/d2c.html">
+d2c</A>
+
 
 <HR>
-<H2><A HREF="hello-world/hello-world.dylan">hello-world</A></H2>
+<H2><A HREF="hello-world/hello-world.dylan" NAME=HW>hello-world</A></H2>
 
 This is the canonical "hello, world" demo.  Type 
 <PRE>
-  mindy -f hello-world.dbc
+  mindycomp -lhello-world hello-world-exports.dylan
+  mindycomp -lhello-world hello-world.dylan
+  mindy -f hello-world-exports.dbc -f hello-world.dbc
 </PRE>
-to run it.
+to run it under mindy or:
+<PRE>
+  d2c hello-world.lid
+  ./hello-world
+</PRE>
+to run it under d2c.
+
 <P>
 <HR>
 <H2><A HREF="cat/cat.dylan">cat</A></H2>
 
-This program demonstrates the streams library by duplicating the UNIX (tm)
-"cat" utility.
+This program demonstrates buffered stream I/O by duplicating the UNIX (tm)
+"cat" utility.  See also 
+<A HREF="stream-demo/stream-demo.dylan">stream-demo</A> for more basic usage.
 
 Usage is typical for a unix program.  It may be invoked either with a
 set of files on the command line:
 <PRE>
-  mindy -f cat.dbc file1 file2 ....
+  mindy -f cat-exports.dbc -f cat.dbc file1 file2 ....
 </PRE>
 or with no arguments, in which case it reads from "standard input".  You may
 also specify special filename "-" which will refer to the standard input.
 <P>
 On most Unix systems you should be able to make it into an executable
-script by prepending the the line
+script by concatenating <SAMP>cat-exports.dbc</SAMP> and <SAMP>cat.dbc</SAMP>
+into say <SAMP>mindy-cat</SAMP>, prepending the the line
 <PRE>
-  #$INSTALL/bin/mindy -f
+  #<VAR>DYLANDIR</VAR>/bin/mindy -f
 </PRE>
-to the compiled "dbc" file (and adding "execute" to the file's protection).  
-You could then simply type 
+and adding "execute" to the file's protection.
+Note that <VAR>DYLANDIR</VAR> must be substituted by you.
+<P>
+You could then simply type:
 <PRE>
-  cat.dbc file1 file2 ....
+  mindy-cat file1 file2 ....
 </PRE>
-You must, of course, remember to specify the MINDYPATH environment variable so
+You must, of course, remember to specify the DYLANDIR environment variable so
 that it points to directories containing all of the relevant libraries.  (This
 demo uses only "dylan" and "streams", but the "html2txt" demo also uses 
 "collection-extensions".)
 <P>
+
+<HR>
+<H2><A HREF="craps/craps.dylan">craps</A></H2>
+Slightly more sophisticated than hello-world, this demo makes use of the
+<CODE>random</CODE> library.
+
 
 <HR>
 <H2><A HREF="diff/diff.dylan">diff</A></H2>
@@ -52,18 +94,26 @@ library.  It mimics the UNIX (tm) "diff" utility.
 <P>
 Usage:
 <PRE>
-  mindy -f diff.dbc file1 file2
+  mindy -f diff-lib.dbc file1 file2
 </PRE>
 <P>
+<SAMP>diff-lib.dbc</SAMP> is created by the 
+<A HREF="http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/htdocs/tools.html">
+Makegen
+</A>
+makefile by contantenating <SAMP>diff-exports.dbc</SAMP> and <SAMP>
+diff.dbc</SAMP>.
+
 Limitations: Diff the stand-alone utility is meant purely as a demo.
 It doesn't support any of the options that a real diff utility does.
 It accepts input only as files; it won't read from standard input.
 The output format of our demo is slightly different from the
 standard Unix diff.
 <P>
-You must, of course, remember to specify the MINDYPATH environment variable so
+You must, of course, remember to specify the DYLANDIR environment variable so
 that it points to directories containing all of the relevant libraries.  (This
 demo uses "dylan", "streams", "format", and "collection-extensions")
+The build procedure is similar to 
 <P>
 
 <HR>
@@ -80,8 +130,8 @@ Usage is similar to "cat" above, except that it does not support the "-"
 argument.  You may therefore set of files on the command line or use
 standard input by specifying no command line arguments
 <PRE>
-  mindy -f html2txt.dbc file1.html file2.html ....
-  mindy -f cat.dbc file1.html file2.html | mindy -f html2txt.dbc
+  mindy -f html2txt-lib.dbc file1.html file2.html ....
+  mindy -f cat-lib.dbc file1.html file2.html | mindy -f html2txt-lib.dbc
 </PRE>
 At present, "html2txt" accepts no command line switches, although the 
 behavior may be changed by changing several constant declarations towards 
@@ -123,6 +173,38 @@ html2txt.dylan.  Find the lines that define "normal-font" and
 Alternately, go down a few lines further and delete the "font:
 normal-font" and "font: bold-font" clauses.
 
+<P>
+<HR>
+<H2><A HREF="library-demo/library-demo.dylan">library-demo</A></H2>
+
+A fairly minimal demo of creating one library (<CODE>fact</CODE>) and having
+another library (<CODE>library-demo</CODE>) use it.  In the
+<SAMP><A HREF="library-demo/library-demo.lid">library-demo.lid</A></SAMP>
+note the use of
+<CODE>Unit-Prefix:</CODE> to prevent the creation of C identifiers with hyphens
+in them and in
+<SAMP><A HREF="library-demo/fact.lid">fact.lid</A></SAMP>
+the use of <CODE>Unique-ID-Base:</CODE> to make sure any exported classes have
+unique IDs (in this case there are none.)
+<P>
+Under Mindy, you can run this as the other demos:
+<PRE>
+  mindy -f library-demo-lib.dbc
+</PRE>
+Note however that <SAMP>library-demo-lib.dbc</SAMP> does <EM>not</EM> include
+the <CODE>Fact</CODE> library.  Instead this is demand-loaded by searching on 
+<SAMP>DYLANPATH</SAMP> for <SAMP>fact-lib.dbc</SAMP> (preferrably) or
+<SAMP>fact.dbc</SAMP>.  Sometimes you can get in trouble if the
+<SAMP>-lib.dbc</SAMP> file doesn't appear in <SAMP>DYLANPATH</SAMP> before some
+other file that happens to use the unsuffixed name.
+
+Under d2c, all used libraries are statically linked into the executable, and
+you just type:
+<PRE>
+  ./library-demo
+</PRE>
+
+<P>
 <HR>
 <H2><A HREF="minesweeper/minesweeper.dylan">minesweeper</A></H2>
 
@@ -130,3 +212,18 @@ This is a quick and dirty imitation of Microsoft's Minesweeper game.
 It has a few improvements--it can do much of the tedious work for you!
 For various reasons, initializing the game board takes forever, but
 play is reasonably quick once everything's set up.
+
+<P>
+<HR>
+<H2><A HREF="stream-demo/stream-demo.dylan">stream-demo</A></H2>
+
+A simple use of streams for both file and terminal I/O.
+
+
+<P ALIGN=CENTER><HR>[ <A
+HREF="http://legend.gwydion.cs.cmu.edu/gwydion">Gwydion home page</A> |
+<A HREF="mailto:gwydion-group@cs.cmu.edu">mail to gwydion-group</A>
+]</P>
+
+</BODY>
+</HTML>
