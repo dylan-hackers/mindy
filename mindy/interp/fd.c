@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.2 1994/03/31 23:00:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.3 1994/04/04 14:46:32 wlott Exp $
 *
 * This file does whatever.
 *
@@ -49,26 +49,43 @@ static void results(struct thread *thread, obj_t *old_sp,
     do_return(thread, old_sp, old_sp);
 }
 
-static void unix_close(obj_t self, struct thread *thread, obj_t *args)
+static void fd_close(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t fd = args[0];
 
     results(thread, args-1, close(fixnum_value(fd)), obj_True);
 }
 
-static void unix_lseek(obj_t self, struct thread *thread, obj_t *args)
+static obj_t fd_error_str(obj_t errno)
 {
-    obj_t fd = args[0];
-    obj_t offset = args[1];
-    obj_t whence = args[2];
-    off_t res;
-
-    res = lseek(fixnum_value(fd), fixnum_value(offset), fixnum_value(whence));
-
-    results(thread, args-1, res, make_fixnum(res));
+    if (fixnum_value(errno) < 0 || fixnum_value(errno) >= sys_nerr)
+	return obj_False;
+    else
+	return make_string(sys_errlist[fixnum_value(errno)]);
 }
 
-static void unix_open(obj_t self, struct thread *thread, obj_t *args)
+static int input_available(int fd)
+{
+    fd_set fds;
+    struct timeval tv;
+    int nfound;
+
+    FD_ZERO(&fds);
+    FD_SET(fd, &fds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    return select(fd+1, &fds, NULL, NULL, &tv);
+}
+
+static void fd_input_available(obj_t self, struct thread *thread, obj_t *args)
+{
+    int fd = fixnum_value(args[0]);
+    int res = input_available(fd);
+
+    results(thread, args-1, res, res ? obj_True : obj_False);
+}
+
+static void fd_open(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t path = args[0];
     obj_t flags = args[1];
@@ -84,27 +101,17 @@ static void maybe_read(struct thread *thread)
 {
     obj_t *fp = thread->fp;
     int fd = fixnum_value(fp[-8]);
-    fd_set fds;
-    struct timeval tv;
     int nfound, res;
     obj_t *old_sp;
 
-    FD_ZERO(&fds);
-    FD_SET(fd, &fds);
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-    nfound = select(fd+1, &fds, NULL, NULL, &tv);
-
-    if (nfound < 0)
-	if (errno != EINTR) {
-	    old_sp = pop_linkage(thread);
-	    thread->sp = old_sp + 2;
-	    old_sp[0] = obj_False;
-	    old_sp[1] = make_fixnum(errno);
-	    do_return(thread, old_sp, old_sp);
-	}
-	else
-	    wait_for_input(thread, fd, maybe_read);
+    nfound = input_available(fd);
+    if (nfound < 0) {
+	old_sp = pop_linkage(thread);
+	thread->sp = old_sp + 2;
+	old_sp[0] = obj_False;
+	old_sp[1] = make_fixnum(errno);
+	do_return(thread, old_sp, old_sp);
+    }
     else if (nfound == 0)
 	wait_for_input(thread, fd, maybe_read);
 
@@ -115,19 +122,35 @@ static void maybe_read(struct thread *thread)
     results(thread, pop_linkage(thread), res, make_fixnum(res));
 }
 
-static void unix_read(obj_t self, struct thread *thread, obj_t *args)
+static void fd_read(obj_t self, struct thread *thread, obj_t *args)
 {
     thread->sp = args + 4;
     push_linkage(thread, args);
     maybe_read(thread);
 }
 
-static obj_t unix_strerror(obj_t errno)
+static void fd_seek(obj_t self, struct thread *thread, obj_t *args)
 {
-    if (fixnum_value(errno) < 0 || fixnum_value(errno) >= sys_nerr)
-	return obj_False;
+    obj_t fd = args[0];
+    obj_t offset = args[1];
+    obj_t whence = args[2];
+    off_t res;
+
+    res = lseek(fixnum_value(fd), fixnum_value(offset), fixnum_value(whence));
+
+    results(thread, args-1, res, make_fixnum(res));
+}
+
+static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
+{
+    int res = fsync(fixnum_value(args[0]));
+
+    if (res < 0 && errno == EINVAL)
+	/* EINVAL means the fd is a socket, not a file descriptor.  We don't */
+	/* care that you can't fsync sockets. */
+	results(thread, args-1, 0, obj_True);
     else
-	return make_string(sys_errlist[fixnum_value(errno)]);
+	results(thread, args-1, res, obj_True);
 }
 
 static void maybe_write(struct thread *thread)
@@ -165,7 +188,7 @@ static void maybe_write(struct thread *thread)
     results(thread, pop_linkage(thread), res, make_fixnum(res));
 }
 
-static void unix_write(obj_t self, struct thread *thread, obj_t *args)
+static void fd_write(obj_t self, struct thread *thread, obj_t *args)
 {
     thread->sp = args + 4;
     push_linkage(thread, args);
@@ -175,42 +198,52 @@ static void unix_write(obj_t self, struct thread *thread, obj_t *args)
 
 /* Init stuff. */
 
-void init_unix_functions(void)
+void init_fd_functions(void)
 {
-    define_constant("unix-close",
-		    make_raw_method("unix-close", list1(obj_IntegerClass),
+    define_constant("fd-close",
+		    make_raw_method("fd-close", list1(obj_IntegerClass),
 				    FALSE, obj_False,
 				    list2(obj_BooleanClass, obj_ObjectClass),
-				    obj_False, unix_close));
-    define_constant("unix-lseek",
-		    make_raw_method("unix-lseek",
-				    list3(obj_IntegerClass, obj_IntegerClass,
-					  obj_IntegerClass),
-				    FALSE, obj_False,
-				    list2(obj_ObjectClass, obj_ObjectClass),
-				    obj_False, unix_lseek));
-    define_constant("unix-open",
-		    make_raw_method("unix-lseek",
+				    obj_False, fd_close));
+    define_method("fd-error-string", list1(obj_IntegerClass), FALSE, obj_False,
+		  list1(obj_ObjectClass), fd_error_str);
+    define_constant("fd-input-available?",
+		    make_raw_method("fd-input-available?",
+				    list1(obj_IntegerClass), FALSE, obj_False,
+				    list2(obj_BooleanClass, obj_ObjectClass),
+				    obj_False, fd_input_available));
+    define_constant("fd-open",
+		    make_raw_method("fd-open",
 				    list3(obj_ByteStringClass,
 					  obj_IntegerClass,
 					  obj_IntegerClass),
 				    FALSE, obj_False,
 				    list2(obj_ObjectClass, obj_ObjectClass),
-				    obj_False, unix_open));
-    define_constant("unix-read",
-		    make_raw_method("unix-read",
+				    obj_False, fd_open));
+    define_constant("fd-read",
+		    make_raw_method("fd-read",
 				    listn(4, obj_IntegerClass, obj_BufferClass,
 					  obj_IntegerClass, obj_IntegerClass),
 				    FALSE, obj_False,
 				    list2(obj_ObjectClass, obj_ObjectClass),
-				    obj_False, unix_read));
-    define_method("unix-strerror", list1(obj_IntegerClass), FALSE, obj_False,
-		  list1(obj_ObjectClass), unix_strerror);
-    define_constant("unix-write",
-		    make_raw_method("unix-lseek",
+				    obj_False, fd_read));
+    define_constant("fd-seek",
+		    make_raw_method("fd-seek",
+				    list3(obj_IntegerClass, obj_IntegerClass,
+					  obj_IntegerClass),
+				    FALSE, obj_False,
+				    list2(obj_ObjectClass, obj_ObjectClass),
+				    obj_False, fd_seek));
+    define_constant("fd-sync-output",
+		    make_raw_method("fd-sync-output",
+				    list1(obj_IntegerClass), FALSE, obj_False,
+				    list2(obj_BooleanClass, obj_ObjectClass),
+				    obj_False, fd_sync_output));
+    define_constant("fd-write",
+		    make_raw_method("fd-write",
 				    listn(4, obj_IntegerClass, obj_BufferClass,
 					  obj_IntegerClass, obj_IntegerClass),
 				    FALSE, obj_False,
 				    list2(obj_ObjectClass, obj_ObjectClass),
-				    obj_False, unix_write));
+				    obj_False, fd_write));
 }
