@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.40 1996/02/06 20:54:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.41 1996/02/18 18:29:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -899,7 +899,7 @@ end method;
 
 //// Direct instance types:
 
-define class <direct-instance-ctype> (<limited-ctype>)
+define class <direct-instance-ctype> (<limited-ctype>, <ct-value>)
 end class;
 
 define method print-object
@@ -1096,6 +1096,11 @@ end;
 
 define method ct-value-cclass (object :: <singleton-ctype>) => res :: <cclass>;
   specifier-type(#"<singleton>");
+end;
+
+define method ct-value-cclass (object :: <direct-instance-ctype>)
+    => res :: <cclass>;
+  specifier-type(#"<direct-instance>");
 end;
 
 define method ct-value-cclass (object :: <byte-character-ctype>)
