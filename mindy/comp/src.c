@@ -1,7 +1,7 @@
 /**********************************************************************\
 *
 *  Copyright (c) 1994  Carnegie Mellon University
-*  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+*  Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 *  All rights reserved.
 *  
 *  Use and copying of this software and preparation of derivative
@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/src.c,v 1.3 2000/01/24 04:58:05 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/src.c,v 1.4 2002/08/27 21:34:18 gabor Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -148,6 +148,8 @@ struct body
       case constituent_HANDLER:
 	body->tail = ((struct binding_constituent *)constituent)->body->tail;
 	((struct binding_constituent *)constituent)->body->tail = NULL;
+	if (constituent->next)
+	  lose("constituent has next when deep-nesting?");
 	break;
       default:
 	body->tail = &constituent->next;

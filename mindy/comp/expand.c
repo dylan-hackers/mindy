@@ -1,7 +1,7 @@
 /**********************************************************************\
 *
 *  Copyright (c) 1994  Carnegie Mellon University
-*  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+*  Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 *  All rights reserved.
 *  
 *  Use and copying of this software and preparation of derivative
@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/expand.c,v 1.4 2000/01/24 04:57:54 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/expand.c,v 1.5 2002/08/27 21:34:18 gabor Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -1231,6 +1231,7 @@ static boolean expand_local_constituent(struct constituent **ptr,
 	struct body *body = make_body();
 	for (; method != NULL; method = method->next_local)
 	    add_method_wrap(body, method);
+	c->next = NULL;
 	add_constituent(body, (struct constituent *)c);
 	*ptr = make_expr_constituent(make_body_expr(body));
 	return TRUE;
