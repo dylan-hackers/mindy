@@ -374,7 +374,6 @@ end class;
 #endif
 
 define sealed domain make (singleton(<fd-file-stream>));
-// Don't need to seal initialize because it is sealed on <fd-stream>.
 
 
 //// Fd File Streams -- Querying and Stream Extension Protocol.
@@ -386,19 +385,31 @@ define sealed domain make (singleton(<fd-file-stream>));
 ///    do-synchronize
 ///
 
+/// Types used in initialize -- Internal.
+///
+define constant <file-direction> 
+  = one-of(#"input", #"output", #"input-output");
+define constant <if-exists-action>
+  = one-of(#f, #"new-version", #"overwrite", #"replace",
+	   #"append", #"truncate", #"signal");
+define constant <if-does-not-exist-action>
+  = one-of(#f, #"signal", #"create");
+// ### d2c can't deal with singleton(<byte>)
+// define constant <file-element-type>
+//   = one-of(<byte>, <byte-character>);
+
+/// initialize
+///
 define sealed method initialize
     (stream :: <fd-file-stream>, #next next-method, #rest rest-args,
      #key locator :: false-or(<byte-string>),
-          direction :: one-of(#"input", #"output", #"input-output")
-            = #"input",
-          if-exists :: one-of(#f, #"new-version", #"overwrite", #"replace",
-			      #"append", #"truncate", #"signal")
+          direction :: <file-direction> = #"input",
+          if-exists :: <if-exists-action>
             = if (direction == #"output") #"replace" else #f end,
-          if-does-not-exist :: one-of(#f, #"signal", #"create")
+          if-does-not-exist :: <if-does-not-exist-action>
             = if (direction == #"input") #"signal" else #"create" end,
-          element-type // :: one-of(<byte>, <byte-character>, <unicode-character>)
-                       // ### The compiler can't deal with singleton(<byte>)
-       = <byte-character>,
+          element-type // :: <file-element-type>
+            = <byte-character>,
           encoding :: one-of(#f, #"ANSI")
             = select (element-type) 
 		(<byte>) => #f;
@@ -406,24 +417,29 @@ define sealed method initialize
 	      end,
           buffer-size :: <buffer-index> = $default-buffer-size)
     => result :: <fd-file-stream>;
+
   if (~ locator)
     error("Must supply a filename when making a <file-stream>.");
   end;
   stream.element-type := element-type;
   if (direction == #"input")
+    // Make an #"input" stream.
     let (fd, err) = fd-open(locator, fd-o_rdonly);
-    if (err)
-      if (err = fd-enoent)
-	select (if-does-not-exist) 
-	  #"signal"
-	    => error(make(<file-does-not-exist-error>, locator: locator));
-	  #"create"
-	    => error("Why would you want to create an empty input file?");
-	end select;
-      else
-	error(make(<syscall-error>, errno: err));
-      end if;
-    end if;
+    select (err)
+      (#f)
+	=> #f; // No error, don't do anything.
+      (fd-enoent)
+	=> select (if-does-not-exist) 
+	     #"signal"
+	       => error(make(<file-does-not-exist-error>, locator: locator));
+	     #"create"
+	       => error("Why would you want to create an empty input file?");
+	   end select;
+      (fd-eacces)
+	=> error(make(<invalid-file-permissions-error>, locator: locator));
+      otherwise
+	=> error(make(<syscall-error>, errno: err));
+    end select;
     stream.file-name := locator;
     stream.file-direction := #"input";
     next-method(stream, fd: fd, direction: #"input", size: buffer-size); 
@@ -447,13 +463,16 @@ define sealed method initialize
 		 => flags;
 	     end;
     let (fd, err) = fd-open(locator, flags);
-    if (err)
-      if (err = fd-eexist) 
-	error(make(<file-exists-error>, locator: locator));
-      else 
-	error(make(<syscall-error>, errno: err));
-      end if;
-    end if;
+    select (err)
+      (#f)
+	=> #f; // No error, don't do anything.
+      (fd-eexist)
+	=> error(make(<file-exists-error>, locator: locator));
+      (fd-eacces)
+	=> error(make(<invalid-file-permissions-error>, locator: locator));
+      otherwise
+	=> error(make(<syscall-error>, errno: err));
+    end select;
     select (if-exists)
       (#"append")
 	=> call-fd-function(fd-seek, fd, 0, fd-seek-end);
@@ -486,18 +505,13 @@ define sealed method close (stream :: <fd-file-stream>, #next next-method,
   end;
 end method;
 
-#if (mindy)
-define inline sealed method stream-element-type (stream :: <fd-file-stream>)
- => type :: one-of(<byte>, <byte-character>, <unicode-character>);
-  stream.element-type;
-end method;
-#else
-// Until d2c can deal with singleton
+/// ### When d2c can deal with singleton(<byte>), this method's return type
+/// should be <file-element-type>
+///
 define inline sealed method stream-element-type (stream :: <fd-file-stream>)
  => type :: <type>;
   stream.element-type;
 end method;
-#endif
 
 define sealed method stream-at-end? (stream :: <fd-file-stream>,
 				     #next next-method)
