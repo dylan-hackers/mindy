@@ -1,12 +1,12 @@
 module: xep-tools
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.4 2002/05/11 16:31:01 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.5 2003/02/05 10:32:08 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -32,7 +32,7 @@ copyright: see below
 
 // External entry construction.
 
-define method build-local-xeps (component :: <component>) => ();
+define function build-local-xeps (component :: <component>) => ();
   for (func in component.all-function-literals)
     if (func.general-entry == #f & func.visibility == #"local")
       block (return)
@@ -51,7 +51,7 @@ define method build-local-xeps (component :: <component>) => ();
 end;
 
 // XXX - Yuck. This depends on the optimizer interface.
-define method build-xep-component
+define function build-xep-component
     (optimizer :: <abstract-optimizer>,
      function :: <ct-function>, generic-entry? :: <boolean>)
  => (entry :: <fer-function-region>, component :: <component>);
@@ -59,9 +59,10 @@ define method build-xep-component
   let entry = build-xep(function, generic-entry?, component);
   optimize-component(optimizer, component);
   values(entry, component);
-end method build-xep-component;
+end function build-xep-component;
 
-define method build-xep-get-ctv (func :: <function-literal>)
+define function build-xep-get-ctv (func :: <function-literal>)
+ => ctv :: <ct-function>;
   func.ct-function
     | (func.ct-function
 	 := make(if (instance?(func, <method-literal>))
@@ -73,7 +74,10 @@ define method build-xep-get-ctv (func :: <function-literal>)
 		 end,
 		 name: func.main-entry.name,
 		 signature: func.signature));
-end method build-xep-get-ctv;
+end function build-xep-get-ctv;
+
+define generic build-external-entries-for
+    (component :: <component>, function :: <function-literal>) => ();
 
 define method build-external-entries-for
     (component :: <component>, function :: <function-literal>) => ();
@@ -116,10 +120,27 @@ define class <keyarg-info> (<object>)
 end class <keyarg-info>;
 
 
+// build-xep -- exported.
+//
+// Build an external entry point for a given function.
+//
+define generic build-xep
+    (function :: type-union(<ct-function>, <function-literal>),
+     generic-entry? :: <boolean>,
+     component :: <component>)
+ => (xep :: <fer-function-region>);
+
 define method build-xep
     (function :: <ct-function>, generic-entry? :: <boolean>,
      component :: <component>)
  => (xep :: <fer-function-region>);
+
+  let defn = function.ct-function-definition;
+  let loc = if (defn) defn.source-location
+	    else
+	      compiler-warning("has no defn: %=", function); //### FIXME
+	      make(<source-location>)
+	    end;
   
   aux-build-xep(make(<literal-constant>, value: function),
 		function.ct-function-signature, component,
@@ -129,7 +150,8 @@ define method build-xep
 		  <ct-callback-function> => #"callback";
 		  <ct-function> => #"function";
 		end,
-		generic-entry?, #f);
+		generic-entry?, #f,
+		loc);
 end method build-xep;
 
 define method build-xep
@@ -137,6 +159,14 @@ define method build-xep
      component :: <component>)
  => xep :: <fer-function-region>;
   let main-entry = function.main-entry;
+
+
+  let ct-func = function.ct-function;
+  ct-func | compiler-warning("has no ct-func: %=", function); //### FIXME
+  let defn = ct-func & ct-func.ct-function-definition;
+  (ct-func & ~defn) & compiler-warning("has no defn: %=, %=", function, ct-func); //### FIXME
+  let loc = if (defn) defn.source-location else make(<source-location>) end;
+
   aux-build-xep(function, function.signature, component, main-entry.name,
 		select(function by instance?)
 		  <method-literal> => #"method";
@@ -144,18 +174,20 @@ define method build-xep
 		  <function-literal> => #"function";
 		end,
 		generic-entry?,
-		main-entry);
+		main-entry,
+		loc);
 end;
 
-define method aux-build-xep
+define function aux-build-xep
     (function :: <expression>, signature :: <signature>,
      component :: <component>, entry-name,
      kind :: one-of(#"function", #"method", #"callback"),
-     generic-entry? :: <boolean>, main-entry :: false-or(<object>))
+     generic-entry? :: <boolean>, main-entry :: false-or(<object>),
+     source :: <source-location>)
  => (xep :: <fer-function-region>);
   let builder = make-builder(component);
   let policy = $Default-Policy;
-  let source = make(<source-location>);
+//  let source = make(<source-location>); // ##
   let closure?
     = instance?(main-entry, <lambda>) & main-entry.environment.closure-vars;
   let self-leaf
@@ -524,7 +556,7 @@ define method aux-build-xep
   xep;
 end;
 
-define method build-callback-xep
+define function build-callback-xep
     (function :: <callback-literal>, component :: <component>)
  => (xep :: <fer-function-region>);
   let main-entry = function.main-entry;
@@ -532,7 +564,7 @@ define method build-callback-xep
   let signature = function.signature;
   let builder = make-builder(component);
   let policy = $Default-Policy;
-  let source = make(<source-location>);
+  let source = make(<source-location>); //### FIXME see build-xep{<function-literal>}
   let closure?
     = instance?(main-entry, <lambda>) & main-entry.environment.closure-vars;
   let self-leaf
@@ -592,7 +624,7 @@ define method build-callback-xep
   build-return(builder, policy, source, xep, cluster);
   end-body(builder);
   xep;
-end method build-callback-xep;
+end function build-callback-xep;
 
 
 
