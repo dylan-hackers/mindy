@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.17 1996/02/08 18:52:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.18 1996/02/09 01:38:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -41,6 +41,7 @@ seal generic initialize (<function>);
 define abstract class <closure> (<function>)
   //
   slot closure-var :: <object>,
+    init-value: #f,
     sizer: closure-size, size-init-value: 0, size-init-keyword: closure-size:;
 end;
 
