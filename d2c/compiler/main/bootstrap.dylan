@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.42 1995/11/15 15:55:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.43 1995/11/16 04:11:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -429,11 +429,11 @@ define open generic %make-method
     => res :: <method>;
 define open generic %make-gf () => res :: <generic-function>;
 define open generic add-method (gf :: <generic-function>, meth :: <method>)
-    => (new :: <method>, old :: union(<method>, <false>));
+    => (new :: <method>, old :: type-union(<method>, <false>));
 define open generic %instance? (value, type :: <type>) => res :: <boolean>;
 define open generic subtype? (type1 :: <type>, type2 :: <type>)
     => res :: <boolean>;
-define open generic error (msg, #rest args) => res :: type-or();
+define open generic error (msg, #rest args) => res :: type-union();
 define open generic make (class :: <class>, #all-keys) => thing;
 define open generic initialize (instance, #all-keys);
 define open generic \== (x, y) => res :: <boolean>;
@@ -448,7 +448,7 @@ define open generic %closure-ref
     (closure :: <method>, index :: <fixed-integer>) => res :: <object>;
 define open generic %make-next-method-cookie
     (next-method-info :: <list>, #rest original-args)
-    => res :: union(<false>, <function>);
+    => res :: type-union(<false>, <function>);
 define open generic as (class :: <class>, thing :: <object>)
     => result :: <object>;
 define open generic element
@@ -461,7 +461,7 @@ define open generic make-catcher (saved-state :: <raw-pointer>)
 define open generic disable-catcher (catcher :: <catcher>) => ();
 define open generic throw
     (catcher :: <catcher>, values :: <simple-object-vector>)
-    => res :: type-or();
+    => res :: type-union();
 define open generic make-exit-function (catcher :: <catcher>)
     => res :: <function>;
 
@@ -480,43 +480,45 @@ define open generic value-setter (x, y) => value;
 
 // Internal errors.
 
-define method uninitialized-slot-error () => res :: type-or();
+define method uninitialized-slot-error () => res :: type-union();
   error("Slot is not initialized.");
 end;
 
 define method missing-required-init-keyword-error
-    (keyword :: <symbol>, class :: <class>) => res :: type-or();
+    (keyword :: <symbol>, class :: <class>) => res :: type-union();
   error("Missing required-init-keyword %= in make of %=", keyword, class);
 end;
 
 define method wrong-number-of-arguments-error
     (fixed? :: <boolean>, wanted :: <fixed-integer>, got :: <fixed-integer>)
-    => res :: type-or();
+    => res :: type-union();
   error("Wrong number of arguments.  Wanted %s %d but got %d.",
 	if (fixed?) "exactly" else "at least" end,
 	wanted, got);
 end;
 
 define method odd-number-of-keyword/value-arguments-error ()
-    => res :: type-or();
+    => res :: type-union();
   error("Odd number of keyword/value arguments.");
 end;
 
-define method unrecognized-keyword-error (key :: <symbol>) => res :: type-or();
+define method unrecognized-keyword-error (key :: <symbol>)
+    => res :: type-union();
   error("Unrecognized keyword: %=.", key);
 end;
 
-define method no-applicable-methods-error () => res :: type-or();
+define method no-applicable-methods-error () => res :: type-union();
   error("No applicable methods.");
 end;
 
-define method ambiguous-method-error (methods :: <list>) => res :: type-or();
+define method ambiguous-method-error (methods :: <list>)
+    => res :: type-union();
   error("It is ambiguous which of these methods is most specific:\n  %s",
 	methods);
 end;
 
 define method type-error (object :: <object>, type :: <type>)
-    => res :: type-or();
+    => res :: type-union();
   error("%= isn't of type %=", object, type);
 end;
 
