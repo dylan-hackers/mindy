@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.13 1996/02/16 16:20:23 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.14 1996/02/19 20:29:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -267,6 +267,10 @@ end;
 define class <for-in-clause> (<for-var-clause>)
   slot for-clause-collection :: <expression>, setter: #f,
     required-init-keyword: collection:;
+  slot for-clause-keyed-by :: false-or(<parameter>), setter: #f,
+    required-init-keyword: keyed-by:;
+  slot for-clause-using :: <expression>, setter: #f,
+    required-init-keyword: using:;
 end;
 
 define class <for-step-clause> (<for-var-clause>)

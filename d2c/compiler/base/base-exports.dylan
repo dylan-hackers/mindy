@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.23 1996/02/18 14:17:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.24 1996/02/19 20:29:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -459,7 +459,8 @@ define module parse-tree
     <create-clause>, create-names,
     <for-clause>, <for-while-clause>, for-clause-condition,
     <for-var-clause>, for-clause-variable,
-    <for-in-clause>, for-clause-collection,
+    <for-in-clause>, for-clause-collection, for-clause-keyed-by,
+    for-clause-using,
     <for-step-clause>, for-clause-init, for-clause-step,
     <for-from-clause>, for-clause-from, for-clause-by, for-clause-kind,
     for-clause-bound,

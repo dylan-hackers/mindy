@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.12 1996/02/07 12:56:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.13 1996/02/19 20:29:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -287,6 +287,9 @@ define method process-for-clause (clause :: <for-in-clause>,
 				  implied-end-tests :: <stretchy-vector>,
 				  lexenv :: false-or(<lexenv>))
   let var = bind-type(clause.for-clause-variable, outer-body, lexenv);
+  let keyed-by
+    = (clause.for-clause-keyed-by
+	 & bind-type(clause.for-clause-keyed-by, outer-body, lexenv));
   let name = var.param-name.token-symbol;
   let (coll-temp, coll-bind)
     = bind-temp(symcat(name, "-coll"),
@@ -302,9 +305,8 @@ define method process-for-clause (clause :: <for-in-clause>,
 		    required: map(curry(make, <parameter>, name:),
 				  vector(state-temp, limit-temp, next-temp,
 					 done-temp, curkey-temp, curel-temp)));
-  let fip = make-dylan-id(#"forward-iteration-protocol");
   let fip-call = make(<funcall>,
-		      function: make(<varref>, id: fip),
+		      function: clause.for-clause-using,
 		      arguments: vector(make(<varref>, id: coll-temp)));
   add!(outer-body,
        make(<let>,
@@ -319,16 +321,32 @@ define method process-for-clause (clause :: <for-in-clause>,
 	    arguments: vector(make(<varref>, id: coll-temp),
 			      make(<varref>, id: state-temp),
 			      make(<varref>, id: limit-temp))));
-  let curel = make(<funcall>,
-		   function: make(<varref>, id: curel-temp),
-		   arguments: vector(make(<varref>, id: coll-temp),
-				     make(<varref>, id: state-temp)));
   add!(inner-body,
        make(<let>,
-	    bindings: make(<bindings>,
-			   parameter-list: make(<parameter-list>,
-						required: vector(var)),
-			   expression: curel)));
+	    bindings:
+	      make(<bindings>,
+		   parameter-list:
+		     make(<parameter-list>, required: vector(var)),
+		   expression:
+		     make(<funcall>,
+			  function: make(<varref>, id: curel-temp),
+			  arguments:
+			    vector(make(<varref>, id: coll-temp),
+				   make(<varref>, id: state-temp))))));
+  if (keyed-by)
+    add!(inner-body,
+	 make(<let>,
+	      bindings:
+		make(<bindings>,
+		     parameter-list:
+		       make(<parameter-list>, required: vector(keyed-by)),
+		     expression:
+		       make(<funcall>,
+			    function: make(<varref>, id: curkey-temp),
+			    arguments:
+			      vector(make(<varref>, id: coll-temp),
+				     make(<varref>, id: state-temp))))));
+  end if;
   add!(step-forms,
        make(<funcall>,
 	    function: make(<varref>, id: next-temp),
