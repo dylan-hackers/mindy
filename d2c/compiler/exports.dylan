@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.12 1994/12/17 02:20:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.13 1994/12/17 14:50:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -300,6 +300,7 @@ define module parse-tree
     <details-pattern>, pattern-sub-pattern,
     <pattern-variable>, patvar-name, patvar-name-setter,
     patvar-constraint, patvar-wildcard?, patvar-wildcard?-setter,
+    patvar-at-end?, patvar-at-end?-setter,
     <property-list-pattern>, plistpat-rest, plistpat-rest-setter,
     plistpat-keys, plistpat-all-keys?,
     <pattern-keyword>, patkey-name, patkey-default, patkey-all?,
