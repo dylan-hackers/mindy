@@ -55,14 +55,8 @@ echo processing...
 
 ( cd $srcdir
   aclocal $ACLOCAL_FLAGS
-  #automake
+  # we just run automake for copying in missing files. Ignore errors.
+  automake --add-missing
   $LIBTOOLIZE --force --copy
   autoheader
   autoconf )
-
-test -x "$srcdir/missing" || {
-    	echo
-    	echo "You need to have a copy of the 'missing' script in $srcdir."
-	echo "You probably already have a copy in \${prefix}/share/automake"
-	echo "or in \${prefix}/share/autoconf."
-}

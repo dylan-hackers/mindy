@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.23 2003/07/16 15:03:36 scotek Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.24 2003/07/19 19:17:54 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -780,7 +780,11 @@ define method build-executable (state :: <lid-mode-state>) => ();
   format(state.unit-makefile, "\n%s : %s\n", 
          state.unit-executable, state.unit-objects);
   let link-string
-    = format-to-string(state.unit-target.link-executable-command,
+    = format-to-string(if(state.unit-link-static)
+                         state.unit-target.link-executable-command
+                       else
+                         state.unit-target.link-shared-executable-command
+                       end,
 		       state.unit-executable,
                        objects,
 		       link-arguments(state));

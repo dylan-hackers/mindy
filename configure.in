@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.140 2003/07/19 15:32:08 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.141 2003/07/19 19:17:54 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -506,6 +506,11 @@ AC_CHECK_LIB(dl, dlopen,[AC_DEFINE(HAVE_LIBDLDELF)
 			 AC_DEFINE(HAVE_LIBDLD)
                          AC_LIBOBJ([shl])
 			 LIBS="-ldl" GC_LIBS="-ldl"])
+AC_CHECK_LIB(pthread, pthread_create,[AC_DEFINE([HAVE_PTHREAD],
+                                                [],
+                                                [pthread library available])
+                                      LIBS="$LIBS -lpthread"
+                                      GC_LIBS="$GC_LIBS -lpthread"])
 
 #--------------------------------------------------------------------
 #	Look for gc, set GC_CFLAGS and GC_LIBS
