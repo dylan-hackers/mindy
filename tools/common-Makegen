@@ -1,0 +1,10 @@
+# Link against the newly compiled libs, not the installed ones.
+
+$D2CFLAGS = '-L../../d2c/runtime/c-code -L../../d2c/runtime/gc '
+    . '-L../../d2c/runtime/dylan -L../../common/streams '
+    . '-L../../common/standard-io -L../../common/stream-ext '
+    . '-L../../common/print -L../../common/format '
+    . '-L../../d2c/runtime/random -L../../common/coll-ext '
+    . '-L../../common/string-ext -L../../common/table-ext '
+    . '-L../../common/regexp -L../../d2c/runtime/melange '
+    . '-L../../common/time';
