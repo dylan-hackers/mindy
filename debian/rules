@@ -3,11 +3,12 @@
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
+export CC=gcc-3.2
 
 STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
 	else echo "bootstrap";					\
 	fi)
-VERSION=2.3.10pre3
+VERSION=2.3.11pre1
 MACHINE=$(shell uname -m)
 ifeq ("$(MACHINE)", "sparc64")
 	MACHINE=sparc
@@ -181,7 +182,7 @@ install-stamp: build-stamp
 	rm -rf `pwd`/debian/gwydion-dylan-dev/share/man/man4
 
 	# Fix screwy permissions in Data Object Stores
-	chmod ago-x `pwd`/debian/tmp/usr/lib/dylan/$(VERSION)/$(MACHINE)-linux-gcc/*.lib.du
+	chmod ago-x `pwd`/debian/tmp/usr/lib/dylan/$(VERSION)/$(MACHINE)-linux-gcc32/*.lib.du
 
 	touch install-stamp
 

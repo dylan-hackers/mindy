@@ -1,3 +1,10 @@
+gwydion-dylan (2.3.11pre1-1) unstable; urgency=low
+
+  * Upstream updates.  Lots of optimizations, bug fixes, etc.
+  * Declare dependency on gcc-3.2 due to optimizer bugs.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Tue, 24 Jun 2003 21:35:02 -0700
+
 gwydion-dylan (2.3.10pre3-3) unstable; urgency=low
 
   * Updated GNU Emacs syntax highlighting.  It should *not* break XEmacs,
