@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.3 1996/01/12 02:11:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.4 1996/02/21 02:40:37 wlott Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -29,18 +29,23 @@ end method integer-length;
 // Inclusive upper bound on the size of fixnum kept in the state (and returned
 // by random-chunk.)  Must be even.
 //
-define constant $random-upper-bound = $maximum-integer - 3;
+// ### We don't actually use $maximum-integer because it is different in
+// Mindy and the new compiler and we want to generate the same sequences
+// of random numbers.  For now.
+// 
+// define constant $random-upper-bound = $maximum-integer - 3;
+define constant $random-upper-bound = ash(1, 30) - 4;
 
 define sealed class <random-state> (<object>)
-  slot state-j :: <integer>, init-value: 24;
-  slot state-k :: <integer>, init-value: 0;
-  slot state-seed :: <simple-object-vector>,
-    init-function: curry(make, <simple-object-vector>, size: $random-max + 1);
+  slot state-j :: <integer> = 24;
+  slot state-k :: <integer> = 0;
+  slot state-seed :: <simple-object-vector>
+    = make(<simple-object-vector>, size: $random-max + 1);
 end class <random-state>;
 
 seal generic make (singleton(<random-state>));
 
-/*
+#if (threads)
 
 define class <threadsafe-random-state> (<random-state>)
   slot mutex :: <spinlock>, init-function: method () make(<spinlock>) end;
@@ -48,7 +53,7 @@ end class <threadsafe-random-state>;
 
 seal generic make (singleton(<threadsafe-random-state>));
 
-*/
+#end
 
 define inline method get-time-of-day () => res :: <integer>;
   call-out("time", int:, int: 0);
@@ -59,8 +64,10 @@ define method initialize
      #key seed :: <integer> = get-time-of-day())
   next-method();
   local method rand1 () => random-number :: <integer>;
-	  seed := modulo(seed * $random-const-a + $random-const-c,
-			 $random-upper-bound + 1);
+	  seed := as(<integer>,
+		     modulo(as(<extended-integer>, seed) * $random-const-a
+			      + $random-const-c,
+			    $random-upper-bound + 1));
 	end method rand1;
   let seed-vec = state.state-seed;
   for (i :: <integer> from 0 to $random-max)
@@ -109,7 +116,7 @@ define method random-chunk (state :: <random-state>)
 	     end;
 end method random-chunk;
 
-/*
+#if (threads)
 define method random-chunk
     (state :: <threadsafe-random-state>, #next next-method)
     => number :: <integer>;
@@ -118,7 +125,7 @@ define method random-chunk
   release-lock(state.mutex);
   res;
 end;
-*/
+#end
 
 
 // Random integers:
