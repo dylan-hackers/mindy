@@ -74,9 +74,17 @@ define method optimize (component :: <component>,
     local
       method trim-unused-definitions (defn, new-tail) => ();
 	if (~defn)
+	  local method flush-definers (var)
+		  if (var)
+		    var.definer := #f;
+		    flush-definers(var.definer-next);
+		  end;
+		end;
 	  if (new-tail)
+	    flush-definers(new-tail.definer-next);
 	    new-tail.definer-next := #f;
 	  else
+	    flush-definers(assignment.defines);
 	    assignment.defines := #f;
 	  end;
 	elseif (~defn.dependents & ~defn.needs-type-check?
@@ -116,16 +124,24 @@ define method optimize (component :: <component>,
 	assignment.region := #f;
 	  
 	return();
+      elseif (instance?(defines.var-info, <values-cluster-info>))
+	if (instance?(source, <ssa-variable>)
+	      & instance?(source.var-info, <values-cluster-info>))
+	  maybe-propagate-copy(component, defines, source);
+	end;
       else
-	maybe-propagate-copy(component, defines, source);
-	let next = defines.definer-next;
-	if (next)
-	  let false =
-	    make-literal-constant(make-builder(component),
-				  make(<literal-false>));
-	  for (var = next then var.definer-next,
-	       while: var)
-	    maybe-propagate-copy(component, var, false);
+	unless (instance?(source, <ssa-variable>)
+		  & instance?(source.var-info, <values-cluster-info>))
+	  maybe-propagate-copy(component, defines, source);
+	  let next = defines.definer-next;
+	  if (next)
+	    let false =
+	      make-literal-constant(make-builder(component),
+				    make(<literal-false>));
+	    for (var = next then var.definer-next,
+		 while: var)
+	      maybe-propagate-copy(component, var, false);
+	    end;
 	  end;
 	end;
       end;
@@ -360,6 +376,19 @@ for (name in #[#"fixnum-+", #"fixnum-*", #"fixnum--", #"fixnum-negative",
   define-primitive-deriver(name, fixnum-result);
 end;
 
+define method two-fixnums-result
+    (component :: <component>, primitive :: <primitive>)
+    => res :: <values-ctype>;
+  let fi = dylan-value(#"<fixed-integer>");
+  make-values-ctype(list(fi, fi), #f);
+end;
+
+for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
+		 #"fixnum-truncate/"])
+  define-primitive-deriver(name, two-fixnums-result);
+end;
+
+
 
 // Cheesy type check stuff.
 
@@ -375,39 +404,42 @@ define method add-type-checks-aux
   let next-assign = #f;
   for (assign = region.first-assign then next-assign,
        while: assign)
+    let builder = #f;
     next-assign := assign.next-op;
-    let next-defn = #f;
-    for (defn = assign.defines then next-defn,
+    for (defn = assign.defines then defn.definer-next,
 	 prev = #f then defn,
 	 while: defn)
-      next-defn := defn.definer-next;
       if (defn.needs-type-check?)
 	// Make a temp to hold the unchecked value.
 	let temp = if (instance?(defn.var-info, <values-cluster-info>))
 		     error("values cluster needs a type check?");
 		   else
 		     make(<ssa-variable>,
+			  definer: assign,
+			  definer-next: defn.definer-next,
 			  var-info: make(<local-var-info>,
 					 debug-name: defn.var-info.debug-name,
 					 asserted-type: object-ctype()));
 		   end;
 	// Link the temp in in place of this definition.
-	temp.definer-next := next-defn;
 	if (prev)
 	  prev.definer-next := temp;
 	else
 	  assign.defines := temp;
 	end;
+	// Make the builder if we haven't already.
+	unless (builder)
+	  builder := make-builder(component);
+	end;
 	// Make the check type operation.
-	let builder = make-builder(component);
 	let asserted-type = defn.var-info.asserted-type;
 	let check = make-check-type-operation(builder, temp,
 					      make-literal-constant
 						(builder, asserted-type));
 	// Assign the type checked value to the real var.
+	defn.definer-next := #f;
 	build-assignment(builder, assign.policy, assign.source-location,
 			 defn, check);
-	insert-after(assign, builder-result(builder));
 	// Seed the derived type of the check-type call.
 	let (checked-type, precise?)
 	  = ctype-intersection(asserted-type,
@@ -420,7 +452,12 @@ define method add-type-checks-aux
 			    end);
 	// Queue the assignment for reoptimization.
 	queue-dependent(component, assign);
+	// Change defn to temp so that the loop steps correctly.
+	defn := temp;
       end;
+    end;
+    if (builder)
+      insert-after(assign, builder-result(builder));
     end;
   end;
 end;
