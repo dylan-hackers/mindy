@@ -1,38 +1,89 @@
-library: get-options
+library: parse-arguments
 module: dylan-user
-author: Jeff Dubrule, Eric Kidd, and Ole Tetlie
-copyright: ???
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.4 1998/10/29 04:12:56 igor Exp $
+author:  Eric Kidd
+copyright: Copyright 1998 Eric Kidd
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt-exports.dylan,v 1.5 1998/12/20 00:25:35 emk Exp $
 
-define library get-options
+//======================================================================
+//
+//  Copyright (c) 1998 Eric Kidd
+//  All rights reserved.
+// 
+//  Use and copying of this software and preparation of derivative
+//  works based on this software are permitted, including commercial
+//  use, provided that the following conditions are observed:
+// 
+//  1. This copyright notice must be retained in full on any copies
+//     and on appropriate parts of any derivative works.
+// 
+//  This software is made available "as is".  Neither the authors nor
+//  Carnegie Mellon University make any warranty about the software,
+//  its performance, or its conformity to any specification.
+// 
+//  Bug reports, questions, comments, and suggestions should be sent by
+//  E-mail to the Internet address "gd-bugs@randomhacks.com".
+//
+//======================================================================
+
+define library parse-arguments
   use dylan;
-  use format-out; //test
-  use streams;
-  use standard-io;
-  export get-options;
+  use table-extensions;
+
+  export
+    parse-arguments,
+    option-parser-protocol;
 end library;
 
-define module get-options
+// Only used when defining new option-parser subclasses.
+define module option-parser-protocol
+  create
+    // <argument-list-parser>
+      get-argument-token,
+      peek-argument-token,
+
+    // <option-parser>
+      short-option-names, short-option-names-setter,
+      long-option-names, long-option-names-setter,
+      option-default-value, option-default-value-setter,
+      option-might-have-parameters?, option-might-have-parameters?-setter,
+      option-value-setter,
+    reset-option-parser,
+    parse-option,
+
+    <argument-token>,
+      token-value,
+    <regular-argument-token>,
+    <short-option-token>,
+      tightly-bound-to-next-token?, // XXX - not implemented fully
+    <long-option-token>,
+    <equals-token>,
+
+    usage-error;
+end module;
+
+// Used by most programs.
+define module parse-arguments
   use dylan;
-  use format-out; //test
-  use streams; //test
-  use standard-io; //test
+  use extensions;
+  use table-extensions;
+  use option-parser-protocol;
+
   export
-    <option-list-parser>,
-    // User methods:
+    <argument-list-parser>,
+      regular-arguments,
     add-option-parser,
-    parse-option-list,
-    find-option-value,
-    <flag-option-parser>,
-
-
-    // <option-parser-list>'s API for <option-parser>'s use
-    get-option-parameter,
-    get-optional-option-parameter,
+    add-option-parser-by-type,
+    parse-arguments,
+    option-parser-by-long-name,
+    option-present?-by-long-name,
+    option-value-by-long-name,
 
     <option-parser>,
-    option-allows-parameters?,
-    option-names,
-    option-value,
-    parse-option
-end module;
+      option-present?,
+      option-value,
+
+    <simple-option-parser>,
+    <parameter-option-parser>,
+    <repeated-parameter-option-parser>,
+    <keyed-option-parser>;
+end module parse-arguments;
