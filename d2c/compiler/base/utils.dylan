@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.18 1996/01/15 12:51:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.19 1996/01/15 22:41:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,13 +33,15 @@ define method write-class-name (thing, stream) => ();
   end;
 end;
 
-define constant $digit-mask = as(<extended-integer>, #xf);
-
 define method write-address (thing, stream) => ();
   write("0x", stream);
+#if (mindy)
+  let address = thing.object-address;
+#else
   let address = as(<integer>, thing.object-address);
+#end
   for (shift from -28 below 1 by 4)
-    let digit = as(<integer>, logand(ash(address, shift), $digit-mask));
+    let digit = as(<integer>, logand(ash(address, shift), #f));
     if (digit < 10)
       write(digit + 48, stream);
     else
