@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.7 1998/09/16 19:41:35 igor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.8 1998/11/06 17:48:13 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -842,7 +842,7 @@ define method build-inits-dot-c (state :: <main-unit-state>) => ();
   write(stream,
 	"void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
   for (unit in *units*)
-    format(stream, "    %s_Library_init(sp);\n", unit.unit-name);
+    format(stream, "    %s_Library_init(sp);\n", string-to-c-name(unit.unit-name));
   end;
   if (entry-function-name)
     format(stream, "    %s(sp, argc, argv);\n", entry-function-name);
@@ -1100,7 +1100,7 @@ define method build-unit-init-function
   // course, on the HP, the linker has separate namespaces for code
   // and data, but most other platforms do not)
   format(stream, "void %s_Library_init(descriptor_t *sp)\n{\n%s}\n",
-	 prefix, init-func-guts);
+	 string-to-c-name(prefix), init-func-guts);
 end;
 
 

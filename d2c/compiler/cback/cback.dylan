@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.5 1998/11/04 16:31:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.6 1998/11/06 17:48:10 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -140,8 +140,8 @@ end;
 define class <unit-state> (<object>)
   //
   // String prefix for this unit.
-  /* exported */ slot unit-prefix :: <byte-string>,
-    required-init-keyword: prefix:;
+  /* exported */ slot unit-prefix :: <byte-string>;
+  //  required-init-keyword: prefix:;
   //
   // keeps track of names used already.
   slot unit-global-table :: <table>,
@@ -158,6 +158,11 @@ define class <unit-state> (<object>)
   /* exported */ slot unit-eagerly-reference :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
 end;
+
+define method initialize(obj :: <unit-state>, #next next-method, #key prefix) => ()
+  next-method();
+  obj.unit-prefix := string-to-c-name(prefix);
+end method initialize;
 
 // <root>  --  Exported
 //
