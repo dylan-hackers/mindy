@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.16 1995/03/27 22:31:47 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.17 1995/04/07 17:53:17 nkramer Exp $
 
 //======================================================================
 //
@@ -209,7 +209,7 @@ define method every?(proc :: <function>, vector :: <vector>,
     block (return)
       let sz = reduce(method(a,b) min(a, size(b)) end method,
 		      size(vector), more_vectors);
-      for (key from 0 below size)
+      for (key from 0 below sz)
 	let result = apply(proc, vector[key],
 			   map(rcurry(element, key), more_vectors));
 	unless (result) return(#f) end unless;
