@@ -70,10 +70,15 @@ define inline method stream-at-end? (stream :: <wrapper-stream>)
   stream-at-end?(stream.inner-stream);
 end method;
 
-define inline method read-element (stream :: <wrapper-stream>,
-				   #key on-end-of-stream :: <object>)
+define inline method read-element
+    (stream :: <wrapper-stream>,
+     #key on-end-of-stream :: <object> = $not-supplied)
  => element-or-eof :: <object>;
-  read-element(stream.inner-stream, on-end-of-stream: on-end-of-stream);
+  if (on-end-of-stream == $not-supplied)
+    read-element(stream.inner-stream);
+  else
+    read-element(stream.inner-stream, on-end-of-stream: on-end-of-stream);
+  end if;
 end method;
 
 // Since GF unread-element is specialized on <positionable-stream>,
@@ -87,16 +92,24 @@ end method;
 //end method;
 
 define inline method peek (stream :: <wrapper-stream>,
-			   #key on-end-of-stream :: <object>)
+			   #key on-end-of-stream :: <object> = $not-supplied)
  => element-of-eof :: <object>;
-  peek(stream.inner-stream, on-end-of-stream: on-end-of-stream);
+  if (on-end-of-stream == $not-supplied)
+    peek(stream.inner-stream);
+  else
+    peek(stream.inner-stream, on-end-of-stream: on-end-of-stream);
+  end if;
 end method;
 
 
 define inline method read (stream :: <wrapper-stream>, n :: <integer>,
-			   #key on-end-of-stream :: <object>)
+			   #key on-end-of-stream :: <object> = $not-supplied)
  => sequence-or-eof :: <object>;
-  read(stream.inner-stream, n, on-end-of-stream: on-end-of-stream);
+  if (on-end-of-stream == $not-supplied)
+    read(stream.inner-stream, n);
+  else
+    read(stream.inner-stream, n, on-end-of-stream: on-end-of-stream);
+  end if;
 end method;
 
 define inline method read-into!
@@ -104,10 +117,14 @@ define inline method read-into!
      n :: <integer>,
      sequence :: <mutable-sequence>,
      #key start ::  <integer> = 0,
-          on-end-of-stream :: <object>)
+          on-end-of-stream :: <object> = $not-supplied)
  => count-or-eof :: <object>;
-  read-into!(stream.inner-stream, n, sequence, start: start,
-	     on-end-of-stream: on-end-of-stream);
+  if (on-end-of-stream == $not-supplied)
+    read-into!(stream.inner-stream, n, sequence, start: start);
+  else
+    read-into!(stream.inner-stream, n, sequence, start: start,
+	       on-end-of-stream: on-end-of-stream);
+  end if;
 end method;
 
 define inline method discard-input (stream :: <wrapper-stream>) => ();
@@ -144,20 +161,28 @@ define inline method discard-output (stream :: <wrapper-stream>) => ();
   discard-output(stream.inner-stream);
 end method;
 
-define inline method read-line (stream :: <wrapper-stream>,
-				#key on-end-of-stream :: <object>)
+define inline method read-line 
+    (stream :: <wrapper-stream>,
+     #key on-end-of-stream :: <object> = $not-supplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
-  read-line(stream.inner-stream, on-end-of-stream: on-end-of-stream);
+  if (on-end-of-stream == $not-supplied)
+    read-line(stream.inner-stream);
+  else
+    read-line(stream.inner-stream, on-end-of-stream: on-end-of-stream);
+  end if;
 end method;
 
-define inline method read-line-into! (stream :: <wrapper-stream>,
-				      string :: <string>,
-				      #key start :: <integer> = 0,
-				           on-end-of-stream :: <object> = #f,
-				           grow? :: <boolean> = #f)
+define inline method read-line-into!
+    (stream :: <wrapper-stream>, string :: <string>,
+     #key start :: <integer> = 0, grow? :: <boolean> = #f,
+     on-end-of-stream :: <object> = $not-supplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
-  read-line-into!(stream.inner-stream, string, start: start,
-		  on-end-of-stream: on-end-of-stream, grow?: grow?);
+  if (on-end-of-stream == $not-supplied)
+      read-line-into!(stream.inner-stream, string, start: start, grow?: grow?);
+  else
+      read-line-into!(stream.inner-stream, string, start: start, grow?: grow?,
+		      on-end-of-stream: on-end-of-stream);
+  end if;
 end method;
 
 define inline method write-line (stream :: <wrapper-stream>, 
