@@ -1,13 +1,13 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.5 2001/03/30 13:57:07 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.6 2001/07/07 08:12:36 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
 //======================================================================
 //
 // Copyright (c) 1994  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -44,10 +44,10 @@ Synopsis:   Implements <table>, <object-table>, <equal-table>,
 define open generic table-protocol (table :: <table>)
     => (key-test :: <function>, key-hash :: <function>);
 
-define open generic value-hash (thing :: <object>, state :: <object>)
+define open generic value-hash (thing :: <object>, state :: <hash-state>)
     => (id :: <integer>, state :: <hash-state>);
 
-define open generic equal-hash (thing :: <object>, state :: <object>)
+define open generic equal-hash (thing :: <object>, state :: <hash-state>)
     => (id :: <integer>, state :: <hash-state>);
 
 
@@ -57,7 +57,7 @@ define open generic equal-hash (thing :: <object>, state :: <object>)
 // -------------------------------------------------------------------
 
 // Later, this will be "false-or(<some-type>)", when we actually have a
-// non-conservative garbage collector.  At the moment, $permanent-hash-state
+// copying garbage collector.  At the moment, $permanent-hash-state
 // is the only possible state.  In this case, we will also have to add new
 // methods on "merge-hash-states", and update "pointer-hash".
 //
@@ -104,20 +104,14 @@ end method merge-hash-states;
 
 define inline method pointer-hash (object :: <object>)
  => (id :: <integer>, state :: <hash-state>);
-  // Translate the address into an integer, and shift away to bits to account
+  // Translate the address into an integer, and shift away two bits to account
   // for word alignment.
   //
-  // If we get a non-moving garbage collector, we will have to return
+  // If we get a copying garbage collector, we will have to return
   // some non-permanent state.
-  //
-  // We compute the hash state first and *then* the hash id.  If we do
-  // it in the more natural order, there could be a GC right after we
-  // compute the hash id, and we'd be returning an outdated hash id
-  // without even knowing it.  (Ok, granted, this can't happen with
-  // our current non-moving GC, but if we ever get a new one...)
-  let state = $permanent-hash-state;
+
   let id = ash(as(<integer>, %%primitive(object-address, object)), -2);
-  values(id, state);
+  values(id, $permanent-hash-state);
 end method pointer-hash;
   
 // This function is slow, but should work reasonably.  Eventually, we probably
@@ -159,7 +153,6 @@ define class <bucket-entry> (<object>)
   slot entry-key :: <object>, required-init-keyword: #"key";
   slot entry-elt :: <object>, required-init-keyword: #"item";
   slot entry-hash-id :: <integer>, required-init-keyword: #"hash-id";
-  slot entry-hash-state :: <hash-state>, required-init-keyword: #"hash-state";
   slot entry-next :: false-or(<bucket-entry>) = #f, init-keyword: #"next";
 end class <bucket-entry>;
 
@@ -219,10 +212,6 @@ define open abstract primary class <table>
   // that the slots are defined -- otherwise it will spend lots of
   // time checking.
   slot buckets :: <entry-vector> = $empty-entry-vector;
-  // the merged states of each of the buckets
-  slot bucket-states :: <simple-object-vector> /* of <hash-state>s */
-    = $empty-simple-object-vector;
-  slot table-hash-state :: <hash-state> = $permanent-hash-state;
 end class <table>;
 
 // Uses == (aka id?) as key comparison
@@ -267,8 +256,6 @@ end method make;
 define method table-init (ht :: <table>, #key size: sz = $starting-table-size)
   let sz = if (sz == 0) 1 else sz end if;
   ht.buckets := make(<entry-vector>, size: sz, fill: #f);
-  ht.bucket-states := make(<simple-object-vector>, 
-			   size: sz, fill: $permanent-hash-state);
 end method table-init;
 
 define method initialize
@@ -281,7 +268,8 @@ define inline method key-test (ht :: <table>) => test :: <function>;
   values(table-protocol(ht));    // drop the second return value
 end method key-test;
 
-define sealed domain key-test (<simple-object-table>);
+define sealed generic object-hash (key :: <object>, initial-state :: <hash-state>)
+ => (id :: <integer>, state :: <hash-state>);
 
 define inline method object-hash (key :: <object>,
 				  initial-state :: <hash-state>)
@@ -294,9 +282,9 @@ end method object-hash;
 //
 define constant $really-big-prime = 1073741789;
 
-define method object-hash (key :: <integer>, initial-state :: <hash-state>)
+define inline method object-hash (key :: <integer>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
-  values(modulo(key, $really-big-prime), initial-state);
+  values(key, initial-state);
 end;
 
 define method object-hash
@@ -334,7 +322,7 @@ end method object-hash;
 // The default method for objects that don't have any 
 // better methods defined. (We can't call object-hash, so what can we do?)
 //
-define method equal-hash (key :: <object>, initial-state :: <hash-state>) 
+define inline method equal-hash (key :: <object>, initial-state :: <hash-state>) 
  => (id :: <integer>, state :: <hash-state>);
   values(42, initial-state);
 end method equal-hash;
@@ -342,58 +330,58 @@ end method equal-hash;
 // Call object-hash for characters, integers, symbols, classes,
 // functions, and conditions.
 //
-define method equal-hash (key :: <character>, initial-state :: <hash-state>)
+define inline method equal-hash (key :: <character>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash
+define inline method equal-hash
     (key :: <general-integer>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (key :: <float>, initial-state :: <hash-state>)
+define inline method equal-hash (key :: <float>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   float-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (key :: <symbol>, initial-state :: <hash-state>)
+define inline method equal-hash (key :: <symbol>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (key :: <class>, initial-state :: <hash-state>)
+define inline method equal-hash (key :: <class>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (key :: <function>, initial-state :: <hash-state>)
+define inline method equal-hash (key :: <function>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (key :: <type>, initial-state :: <hash-state>)
+define inline method equal-hash (key :: <type>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (key :: singleton (#f), initial-state :: <hash-state>)
+define inline method equal-hash (key :: singleton (#f), initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (key :: singleton (#t), initial-state :: <hash-state>)
+define inline method equal-hash (key :: singleton (#t), initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (key :: <condition>, initial-state :: <hash-state>)
+define inline method equal-hash (key :: <condition>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method equal-hash;
 
-define method equal-hash (col :: <collection>, initial-state :: <hash-state>)
+define inline method equal-hash (col :: <collection>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   collection-hash(equal-hash, equal-hash, col, initial-state);
 end method equal-hash;
@@ -403,35 +391,35 @@ end method equal-hash;
 // this file. Trust me, this works in *Mindy*) object-hash in Mindy
 // does not return $permanent-hash-state for anything else.
 //
-define sealed method value-hash
+define inline sealed method value-hash
     (key :: <general-integer>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   object-hash(key, initial-state);
 end method value-hash;
 
-define sealed method value-hash (key :: <float>, initial-state :: <hash-state>)
+define inline sealed method value-hash (key :: <float>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   float-hash(key, initial-state);
 end method value-hash;
 
-define sealed method value-hash
+define inline sealed method value-hash
     (key :: <character>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   value-hash(as(<integer>, key), initial-state);
 end method value-hash;
 
-define sealed method value-hash
+define inline sealed method value-hash
     (key :: <symbol>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   string-hash(as(<string>, key), initial-state);
 end method value-hash;
 
-define sealed method value-hash (key == #f, initial-state :: <hash-state>)
+define inline sealed method value-hash (key == #f, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   values(0, initial-state);
 end method value-hash;
 
-define sealed method value-hash (key == #t, initial-state :: <hash-state>)
+define inline sealed method value-hash (key == #t, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   values(1, initial-state);
 end method value-hash;
@@ -475,7 +463,7 @@ end method collection-hash;
 // but identical key/element pairs won't generate the same hash id,
 // even though the two collections are =.
 //
-define function sequence-hash
+define inline function sequence-hash
     (element-hash :: <function>, seq :: <sequence>,
      initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
@@ -493,8 +481,6 @@ define sealed inline method table-protocol (ht :: <object-table>)
  => (key-test :: <function>, key-hash :: <function>);
   values(\==, object-hash);
 end method table-protocol;
-
-define sealed domain table-protocol (<simple-object-table>);
 
 define sealed inline method table-protocol (ht :: <equal-table>) 
  => (key-test :: <function>, key-hash :: <function>);
@@ -560,10 +546,8 @@ end method find-elt;
 //
 define method table-element
     (ht :: <table>, key :: <object>, key= :: <function>, key-id :: <integer>,
-     key-state :: <hash-state>, default)
+     default)
  => (result :: <object>);
-  // We don't yet check for outdated hash states, since the element
-  // might match anyway, and the lookup is much cheaper than a rehash.
 
   let bucket-index :: <integer> = modulo(key-id, ht.buckets.size);
   let bucket = ht.buckets[bucket-index];
@@ -572,14 +556,6 @@ define method table-element
   if (find-result)
     ht.buckets[bucket-index] := find-result;
     find-result.entry-elt;
-
-  // If our element wasn't found, see if we needed to rehash the
-  // table.  If so, start over.  Even if you check states in the
-  // beginning, you need this test anyway: You'd need to hash the
-  // element and check the table's state at the same time.
-  elseif (~ht.table-hash-state.state-valid? | ~key-state.state-valid?)
-    rehash(ht);
-    element(ht, key, default: default);
   elseif (default == $not-supplied)
     error("Element not found");
   else 
@@ -590,35 +566,10 @@ end method table-element;
 define inline method element
     (ht :: <table>, key :: <object>, #key default: default = $not-supplied )
  => (result :: <object>);
-  // We don't yet check for outdated hash states, since the element
-  // might match anyway, and the lookup is much cheaper than a rehash.
-
   let (key=, key-hash) = table-protocol(ht);
-  let (key-id :: <integer>, key-state :: <hash-state>)
-    = key-hash(key, ht.table-hash-state);
-  table-element(ht, key, key=, key-id, key-state, default);
+  let key-id :: <integer> = key-hash(key, $permanent-hash-state);
+  table-element(ht, key, key=, key-id, default);
 end method element;
-
-// This is essentially the same code without the garbage collection stuff
-//
-//define inline method element
-//    (ht :: <value-table>, key, #key default = $not-supplied)
-// => (result :: <object>);
-//  let (key=, key-hash) = table-protocol(ht);
-//  let key-id :: <integer> = key-hash(key);
-//  let bucket-index :: <integer> = modulo(key-id, ht.buckets.size);
-//  let bucket = ht.buckets[bucket-index];
-//  let find-result = find-elt(bucket, key, key-id, key=);
-//  
-//  if (find-result)
-//    ht.buckets[bucket-index] := find-result;
-//    find-result.entry-elt;
-//  elseif (default == $not-supplied)
-//    error ("Element not found");
-//  else 
-//    default;
-//  end if;
-//end method element;
 
 define sealed domain element (<table>, <object>);
 
@@ -643,88 +594,30 @@ define method maybe-expand-table (ht :: <table>) => ();
   end if;
 end method maybe-expand-table;
 
-// This function looks redundant at times, but it's necessary in order
-// to avoid race conditions with the garbage collector.
-//
 define method element-setter
     (value :: <object>, ht :: <table>, key :: <object>) 
  => value :: <object>;
-  let (key=, key-hash) = table-protocol(ht);
-  let (key-id :: <integer>, key-state :: <hash-state>)
-    = key-hash(key, ht.table-hash-state);
-  let bucket-index :: <integer> = modulo(key-id, ht.buckets.size);
-  let bucket-entry = find-elt(ht.buckets [bucket-index], key, key-id, key=);
-
-     // Check to see if there was a garbage collection in the middle
-     // of this method. If there was, start over.
-
-  if (bucket-entry)
-    // If we found an entry, it doesn't matter whether there was a
-    // garbage collection.  Just update it (and the hash state).
-    ht.buckets[bucket-index] := bucket-entry;
-    bucket-entry.entry-key := key;
-    bucket-entry.entry-hash-id := key-id;
-    bucket-entry.entry-hash-state := key-state;
-    bucket-entry.entry-elt := value;
-    // Update bucket's merged-hash-state
-    ht.bucket-states[bucket-index]
-      := merge-hash-states(key-state, ht.bucket-states[bucket-index]);
-    // Update table's merged hash codes
-    ht.table-hash-state := merge-hash-states(key-state, ht.table-hash-state);
-    value;
-  elseif (~ht.table-hash-state.state-valid? | ~key-state.state-valid?)
-    // Not found, but that *may* be bacause of the invalid state.  Try again.
-    rehash(ht);
-    element-setter(value, ht, key);
-  else
-    // There was no garbage collection (and no match), and we're safe.  (If
-    // there is a garbage collection between now and the the end of
-    // this method, it invalidates the states we're about to write,
-    // but we can just re-compute them on the next lookup)
-    ht.buckets[bucket-index]
-      := make(<bucket-entry>, key: key, item: value, hash-id: key-id, 
-	      hash-state: key-state, next: ht.buckets[bucket-index]);
-    ht.table-size := ht.table-size + 1;
-    maybe-expand-table(ht);
-    // Update bucket's merged-hash-state
-    ht.bucket-states[bucket-index]
-      := merge-hash-states(key-state, ht.bucket-states[bucket-index]);
-    // Update table's merged hash codes
-    ht.table-hash-state := merge-hash-states(key-state, ht.table-hash-state);
-    value;
-  end if;
-end method element-setter;
-
-define sealed domain element-setter (<object>, <simple-object-table>, <object>);
-
-// This is exactly the same code without the garbage collection stuff
-//
-define method element-setter (value :: <object>, ht :: <value-table>, 
-			      key :: <object>) => value :: <object>;
   let (key=, key-hash) = table-protocol(ht);
   let key-id :: <integer> = key-hash(key, $permanent-hash-state);
   let bucket-index :: <integer> = modulo(key-id, ht.buckets.size);
   let bucket-entry = find-elt(ht.buckets [bucket-index], key, key-id, key=);
 
   if (bucket-entry)
-    // Item WAS found
     ht.buckets[bucket-index] := bucket-entry;
     bucket-entry.entry-key := key;
     bucket-entry.entry-hash-id := key-id;
     bucket-entry.entry-elt := value;
+    value;
   else
-    // If item didn't exist, add it
-    bucket-entry
+    ht.buckets[bucket-index]
       := make(<bucket-entry>, key: key, item: value, hash-id: key-id, 
-	      hash-state: $permanent-hash-state,
-	      next: ht.buckets[bucket-index]);
-    ht.buckets[bucket-index] := bucket-entry;
+              next: ht.buckets[bucket-index]);
     ht.table-size := ht.table-size + 1;
-
     maybe-expand-table(ht);
+    value;
   end if;
-  value;
 end method element-setter;
+
 
 define method maybe-shrink-table (ht :: <table>) => ();
   if (ht.size * 100 < (ht.buckets.size * $shrink-when))
@@ -734,19 +627,13 @@ define method maybe-shrink-table (ht :: <table>) => ();
 end method maybe-shrink-table;
 
 define method remove-key! (ht :: <table>, key) => (found :: <boolean>);
-  while (~ht.table-hash-state.state-valid?)
-    rehash(ht);
-  end while;
   let (key=, key-hash) = table-protocol(ht);
-  let (key-id :: <integer>, key-state :: <hash-state>)
-    = key-hash(key, ht.table-hash-state);
+  let key-id :: <integer> = key-hash(key, $permanent-hash-state);
   let bucket-index :: <integer> = modulo (key-id, ht.buckets.size);
   let bucket = ht.buckets[bucket-index];
   let the-item = find-elt(bucket, key, key-id, key=);
 
   if (the-item)
-    // An item with that key was found.  It doesn't matter if the
-    // hash codes are out of date -- this is what we wanted regardless.
     ht.table-size := ht.table-size - 1;
     // Find-elt reorganized the chain so that out desired element is at
     // the front.  Therefore, we simply slip it off, and we've
@@ -754,34 +641,10 @@ define method remove-key! (ht :: <table>, key) => (found :: <boolean>);
     ht.buckets[bucket-index] := the-item.entry-next;
     maybe-shrink-table(ht);
 
-    // We leave all the merged-states as is. rehash will take care of it
-    // if a remove-key! made the merged-state information overly cautious.
-
     #t;
-  elseif (~ht.table-hash-state.state-valid? | ~key-state.state-valid?)
-    // If state not valid, goto beginning for a rehash
-    remove-key!(ht, key);
   end if;
 end method remove-key!;
 
-// This is exactly the same code without the garbage collection stuff
-//
-define method remove-key! (ht :: <value-table>, key) => (found? :: <boolean>);
-  let (key=, key-hash) = table-protocol(ht);
-  let key-id :: <integer> = key-hash(key, $permanent-hash-state);
-  let bucket-index :: <integer> = modulo(key-id, ht.buckets.size);
-  let bucket = ht.buckets[bucket-index];
-
-  let the-item = find-elt(bucket, key, key-id, key=);
-
-  if (the-item)       // An item with that key was found
-    ht.table-size := ht.table-size - 1;
-    ht.buckets[bucket-index] := the-item.entry-next;
-
-    maybe-shrink-table(ht);
-    #t;
-  end if; // had to remove something
-end method remove-key!;
 
 // Modifies collection so that the collection no longer contains any keys
 // or elements (i.e. is empty)
@@ -796,7 +659,6 @@ define method remove-all-keys! (table :: <table>)
  => (table :: <table>);
   table-init(table);
   table.table-size := 0;
-  table.table-hash-state := $permanent-hash-state;
   table;
 end method remove-all-keys!;
 
@@ -805,135 +667,30 @@ end method remove-all-keys!;
 //
 define method resize-table (ht :: <table>, numbuckets :: <integer>);
   let new-array = make(<entry-vector>, size: numbuckets, fill: #f);
-  let new-state-array = make(<simple-object-vector>,
-			     size: numbuckets, fill: $permanent-hash-state);
-  local method iterate (entry :: false-or(<bucket-entry>)) => ();
-	  if (entry)
-	    // eagerly grab this, since	it will be changing
-	    let next-entry = entry.entry-next;
-	    let index :: <integer> = modulo(entry.entry-hash-id, numbuckets);
-	    entry.entry-next := new-array[index];
-	    new-array[index] := entry;
-	    new-state-array[index]
-	      := merge-hash-states(new-state-array[index],
-				   entry.entry-hash-state);
-	    iterate(next-entry);
-	  end if;
-	end method iterate;
+
+  local method iter (entry :: false-or(<bucket-entry>)) => ();
+          if (entry)
+            // eagerly grab this, since	it will be changing
+            let next-entry = entry.entry-next;
+            let index :: <integer> = modulo(entry.entry-hash-id, numbuckets);
+            entry.entry-next := new-array[index];
+            new-array[index] := entry;
+            iter(next-entry);
+          end if;
+        end method iter;
+  
   for (i :: <integer> from 0 below ht.buckets.size)
-    iterate(ht.buckets[i]);
+    iter(ht.buckets[i]);
   end for;
-  ht.buckets := new-array;
-  ht.bucket-states := new-state-array;
-end method resize-table;
-
-// This version of resize-table doesn't bother updating any of the
-// merged state slots, arrays, etc.
-//
-define method resize-table (ht :: <value-table>, numbuckets :: <integer>)
-  let new-array = make(<entry-vector>, 
-		       size: numbuckets,
-		       fill: #f);
-
-  local method iterate (entry :: false-or(<bucket-entry>)) => ();
-	  if (entry)
-	    // eagerly grab this, since	it will be changing
-	    let next-entry = entry.entry-next;
-	    let index :: <integer> = modulo(entry.entry-hash-id, numbuckets);
-	    entry.entry-next := new-array[index];
-	    new-array[index] := entry;
-	    iterate(next-entry);
-	  end if;
-	end method iterate;
-  for (i :: <integer> from 0 below ht.buckets.size)
-    iterate(ht.buckets[i]);
-  end for;
-
   ht.buckets := new-array;
 end method resize-table;
 
 
-// Rehash does its best to bring a table up to date so that all the
-// hash-id's in the table are valid. Rehash makes no guarantees about
-// its success, however, so one should call it inside an until loop
-// to make sure it keeps trying until it succeeds.
-//
-// Rehash wants to get the merged-hash-states to be as accurate as
-// possible without sacraficing too much performance. This might be a
-// good function to tune.
-//
-define method rehash (ht :: <table>) => rehashed-ht :: <table>;
-  let (key=, key-hash) = table-protocol(ht);
-  let deferred-elements :: false-or(<bucket-entry>) = #f;
-
-  for (i :: <integer> from 0 below ht.buckets.size)
-    if (~ht.bucket-states[i].state-valid?)     // rehash bucket
-      ht.bucket-states[i] := $permanent-hash-state;
-      let bucket = ht.buckets[i];
-      ht.buckets[i] := #f;
-      
-      local method iterate (bucket-entry :: false-or(<bucket-entry>)) => ();
-	      if (bucket-entry)
-		let next-entry = bucket-entry.entry-next;
-		if (bucket-entry.entry-hash-state.state-valid?)
-		  // Put it back into the same bucket
-		  bucket-entry.entry-next := ht.buckets[i];
-		  ht.buckets[i] := bucket-entry;
-		  ht.bucket-states[i] :=
-		    merge-hash-states(bucket-entry.entry-hash-state,
-				      ht.bucket-states[i]);
-		else  // state is invalid
-		  let (id, state)
-		    = key-hash(bucket-entry.entry-key, ht.table-hash-state);  
-		  bucket-entry.entry-hash-id := id;
-		  bucket-entry.entry-hash-state := state;
-		  let index = modulo(id, ht.buckets.size);
-		  if (index <= i)
-		    // Put it back into a previously processed bucket
-		    bucket-entry.entry-next := ht.buckets[index];
-		    ht.buckets[index] := bucket-entry;
-		    ht.bucket-states[index] := 
-		      merge-hash-states(state, ht.bucket-states[index]);
-		  else
-		    // Don't install these yet, or we'll just have to
-		    // look at them again.
-		    bucket-entry.entry-next := deferred-elements;
-		    deferred-elements := bucket-entry;
-		  end if;    // If index <= i
-		end if;      // If state-valid? (bucket-entry)
-		iterate(next-entry);
-	      end if;
-	    end method iterate;
-      iterate(bucket);
-    end if;
-  end for;
-
-  // Now we can process everything we put off before.
-  for (deferred :: false-or(<bucket-entry>) = deferred-elements then remaining,
-       remaining = if (deferred-elements) deferred-elements.entry-next end if
-	 then if (remaining) remaining.entry-next end if,
-       while: deferred)
-    let id = deferred.entry-hash-id;
-    let state = deferred.entry-hash-state;
-    let index = modulo(id, ht.buckets.size);
-
-    // Put it back into a previously processed bucket
-    deferred.entry-next := ht.buckets[index];
-    ht.buckets[index] := deferred;
-    ht.bucket-states[index] := merge-hash-states(state, 
-						 ht.bucket-states[index]);
-  end for;    // Finished traversing the deferred elements
-  ht.table-hash-state := reduce(merge-hash-states,
-				$permanent-hash-state,
-				ht.bucket-states);
-  ht;
-end method rehash;
-
-define method size (ht :: <table>) => (result :: <integer>);
+define inline method size (ht :: <table>) => (result :: <integer>);
   ht.table-size;
 end method size;
 
-define method empty? (ht :: <table>) => (result :: <boolean>);
+define inline method empty? (ht :: <table>) => (result :: <boolean>);
   ht.table-size = 0;
 end method empty?;
 
@@ -941,10 +698,38 @@ define class <table-iterator> (<object>)
   slot current :: <integer> = 0, init-keyword: #"current";
   slot entries :: <entry-vector>, required-init-keyword: #"entries";
 end class <table-iterator>;
+
 define sealed domain make(singleton(<table-iterator>));
 define sealed domain initialize(<table-iterator>);
 
-define method forward-iteration-protocol (ht :: <table>)
+define function botched-iteration-error() => ()
+  error("Botched iteration!");
+end;
+
+define function make-initial-iteration-state(ht :: <table>)
+ => (initial-state :: <table-iterator>)
+  let sz :: <integer> = ht.size;
+  let vec = make(<entry-vector>, size: sz);
+  let i :: <integer> = 0;
+  for (from-index :: <integer> from 0 below ht.buckets.size)
+    for (entry :: false-or(<bucket-entry>) = ht.buckets[from-index]
+	   then entry.entry-next,
+	 while: entry)
+      %element(vec, i) := entry;
+      i := i + 1;
+    end for;
+  end for;
+  unless (i == sz)
+    error("Size botch in forward-iteration-protocol(<table>)");
+  end unless;
+  make(<table-iterator>, entries: vec);
+end make-initial-iteration-state;
+
+define function botched-table-iteration-error() => ()
+  error("Botched table iteration!");
+end;
+
+define inline method forward-iteration-protocol (ht :: <table>)
  => (initial-state :: <table-iterator>,
      limit :: <integer>,
      next-state :: <function>,
@@ -953,29 +738,12 @@ define method forward-iteration-protocol (ht :: <table>)
      current-element :: <function>,
      current-element-setter :: <function>,
      copy-state :: <function>);
-  let sz :: <integer> = ht.size;
-  let vec = make(<entry-vector>, size: sz);
-  let i :: <integer> = 0;
-  for (from-index :: <integer> from 0 below ht.buckets.size)
-    for (entry :: false-or(<bucket-entry>) = ht.buckets[from-index]
-	   then entry.entry-next,
-	 while: entry)
-      unless (i < sz)
-	error("Size botch in forward-iteration-protocol(<table>)");
-      end unless;
-      %element(vec, i) := entry;
-      i := i + 1;
-    end for;
-  end for;
-  unless (i == sz)
-    error("Size botch in forward-iteration-protocol(<table>)");
-  end unless;
 
-  values (make(<table-iterator>, entries: vec), sz,
-	  /* next-table-state */
+  values (make-initial-iteration-state(ht), ht.size,
+          /* next-table-state */
 	  method (ht :: <table>, state :: <table-iterator>) 
 	   => (new-state :: <table-iterator>);
-	    state.current := state.current + 1;
+            state.current := state.current + 1;
 	    state;
 	  end method,
 	  /* finished-table-state? */
@@ -984,25 +752,31 @@ define method forward-iteration-protocol (ht :: <table>)
 	  end method,
 	  /* current-table-key */
 	  method (ht :: <table>, state :: <table-iterator>) => key :: <object>;
-	    if (state.current >= state.entries.size)
-	      error("Botched iteration!")
-	    end if;
-	    %element(state.entries, state.current).entry-key;
+            let current-item = state.current;
+            let entry-list = state.entries;
+            if (current-item >= entry-list.size)
+              botched-table-iteration-error();
+            end if;
+	    %element(entry-list, current-item).entry-key;
 	  end method,
 	  /* current-table-element */
 	  method (ht :: <table>, state :: <table-iterator>) => elt :: <object>;
-	    if (state.current >= state.entries.size)
-	      error("Botched iteration!")
-	    end if;
-	    %element(state.entries, state.current).entry-elt;
+            let current-item = state.current;
+            let entry-list = state.entries;
+            if (current-item >= entry-list.size)
+              botched-table-iteration-error();
+            end if;
+	    %element(entry-list, current-item).entry-elt;
 	  end method,
 	  /* current-table-element-setter */
 	  method (value :: <object>, ht :: <table>, state :: <table-iterator>)
 	   => value :: <object>;
-	    if (state.current >= state.entries.size)
-	      error("Botched iteration!")
-	    end if;
-	    %element(state.entries, state.current).entry-elt := value;
+            let current-item = state.current;
+            let entry-list = state.entries;
+            if (current-item >= entry-list.size)
+              botched-table-iteration-error();
+            end if;
+	    %element(entry-list, current-item).entry-elt := value;
 	    value;
 	  end method,
 	  /* copy-table-state*/
