@@ -27,6 +27,12 @@
 #    define LINUX
 # endif
 
+# if defined(__BEOS__)
+#    define I386
+#    define BEOS
+#    define mach_type_known
+# endif
+
 /* Determine the machine type: */
 # if defined(sun) && defined(mc68000)
 #    define M68K
@@ -706,6 +712,13 @@
 #       define DYNAMIC_LOADING
 #	define ELF_CLASS ELFCLASS32
 #   endif
+#   ifdef BEOS
+#       define OS_TYPE "BEOS"
+#       define HEURISTIC2
+	    extern char etext;
+#	    define DATASTART ((ptr_t)(&etext))
+#       define USE_GENERIC_PUSH_REGS
+#   endif
 #   ifdef LINUX
 #	define OS_TYPE "LINUX"
 #       define HEURISTIC1
@@ -1173,7 +1186,8 @@
 # endif
 
 # if defined(HP_PA) || defined(M88K) || defined(POWERPC) \
-     || (defined(I386) && defined(OS2)) || defined(UTS4) || defined(LINT)
+     || (defined(I386) && defined(OS2)) || defined(UTS4) || defined(LINT) \
+     || defined(__BEOS__)
 	/* Use setjmp based hack to mark from callee-save registers. */
 #	define USE_GENERIC_PUSH_REGS
 # endif
