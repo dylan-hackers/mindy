@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.8 1996/02/17 17:54:44 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.9 1996/03/19 23:50:17 nkramer Exp $
 
 //======================================================================
 //
@@ -41,18 +41,6 @@ define constant one-of =
     reduce(type-union, singleton(thing), map(singleton, more-things));
   end;
 
-// false-or -- Exported.
-//
-// False-or takes a type and returns a type that is the union of the argument
-// type and the type singleton(#f).
-// There are two copies of false-or, one for the Dylan module and one for 
-// the rest of the world.
-//
-define constant false-or
-    = method (type :: <type>) => new-type :: <type>;
-	type-union(type, singleton(#f));
-      end;
-
 /// Ignore -- Exported.
 ///
 /// Ignore takes any number of arguments and ignores them.  This is useful
@@ -72,6 +60,9 @@ define constant ignore =
 // If the given key is present in the collection, return #t and the value
 // associated with the key.  Otherwise, return #f and an undefined value.
 //
+// Can't use $not-supplied, because we're passing undefined as an
+// argument to element(), which itself probably uses $not-supplied..
+//
 define constant undefined = pair(#f, #f);
 define constant key-exists? =
   method (coll :: <collection>, key :: <object>)
@@ -79,3 +70,9 @@ define constant key-exists? =
     let value = element(coll, key, default: undefined);
     values(value ~= undefined, value);
   end method;
+
+define constant <byte> = limited(<integer>, min: 0, max: 255);
+
+define method as (cls == <byte>, char :: <character>) => c :: <character>;
+  as(<integer>, char);
+end method as;
