@@ -292,7 +292,7 @@ sub emit_c_file_rule {
     foreach $header (@headers) {
 	print " \$(SRCDIR)/$header";
     }
-    print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+    print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR) ";
     print "-c \$(SRCDIR)/$basefile.c -o $objfile\n\n";
     push(@compile_dependencies, $objfile);
     push(@files_to_clean, $objfile);
@@ -382,6 +382,36 @@ sub install_from_src {
 	push(@install_dependencies, $dst);
     }
 }
+
+# Like install_from_src, except makes sure the file has executable 
+# permissions for everyone (this is not relevant on win32)
+sub install_executable_from_src {
+    local ($subdir, @files) = @_;
+    local ($file, $dst);
+
+    # Don't generate any install rules unless destdir is set.
+    $destdir || return;
+
+    foreach $file (@files) {
+	$dst = "\$(DESTDIR)/$subdir/$file";
+
+	print "$dst: $srcdir/$file\n";
+	if ($win32) {
+	    local ($rule) = "\tcopy $srcdir/$file $dst\n\n";
+	    $rule =~ tr|/|\\|;  # translate / to \ for MS-Windows
+	    print $rule;
+	} else {
+	    print "\t", '@-mv $@ $@.old', "\n";
+	    print "\t", 'cp -p $< $@', "\n";
+	    print "\t", '@rm -f $@.old', "\n";
+	    print "\t", 'chmod u+x $@', "\n";
+	    print "\n";
+	}
+
+	push(@install_dependencies, $dst);
+    }
+}
+
 
 # Your normal compiler Makegen file should simply set $D2CFLAGS and
 # $CPPFLAGS, then call this subroutine, and finally a emit_library_rule
