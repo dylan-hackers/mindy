@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.19 1995/05/03 09:43:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.20 1995/05/04 04:38:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -270,6 +270,30 @@ end;
 define method dump (op :: <set>, stream :: <stream>) => ();
   write("set ", stream);
   dump(op.variable.defn-name, stream);
+  format(stream, "[%d]", op.id);
+  dump-operands(op.depends-on, stream);
+end;
+
+define method dump (op :: <slot-ref>, stream :: <stream>) => ();
+  write("SLOT-REF ", stream);
+  let slot = op.slot-info;
+  if (slot.slot-getter)
+    dump(slot.slot-getter.variable-name, stream);
+  else
+    write("???", stream);
+  end;
+  format(stream, "[%d]", op.id);
+  dump-operands(op.depends-on, stream);
+end;
+
+define method dump (op :: <slot-set>, stream :: <stream>) => ();
+  write("SLOT-SET ", stream);
+  let slot = op.slot-info;
+  if (slot.slot-getter)
+    dump(slot.slot-getter.variable-name, stream);
+  else
+    write("???", stream);
+  end;
   format(stream, "[%d]", op.id);
   dump-operands(op.depends-on, stream);
 end;
