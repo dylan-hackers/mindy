@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.19 1995/06/04 22:54:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.20 1995/06/05 21:04:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -90,7 +90,8 @@ define method compile (#rest files) => ();
   format(*debug-output*, "Emitting Initial Heap.\n");
   let heap-stream 
     = make(<file-stream>, name: "heap.s", direction: #"output");
-  build-initial-heap(output-info.output-info-init-roots, heap-stream);
+  build-initial-heap(output-info.output-info-init-roots, heap-stream,
+		     output-info);
   close(heap-stream);
 end;
 
