@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.30 1996/03/21 00:36:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.31 1996/03/21 04:09:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -208,14 +208,14 @@ top-level-form (expression)
 :type top-level-body <false>
 
 top-level-body (top-level-body-aux)
-  process-top-level-form(make-body(%1));
+  process-top-level-form(make-body(%1, @1));
   #f;
 %
 
 :type top-level-body-semi <false>
 
 top-level-body-semi (top-level-body-aux-semi)
-  process-top-level-form(make-body(%1));
+  process-top-level-form(make-body(%1, @1));
   #f;
 %
 
