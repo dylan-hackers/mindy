@@ -13,6 +13,8 @@ if ($features{'compiled_for_win32'}) {
 } elsif ($features{'compiled_for_freebsd'}
          || $features{'compiled_for_bsdi'}) { # best guess for bsdi
     $c_decl_lid = "freebsd-c-decl";
+} elsif ($features{'compiled_for_netbsd'}) {
+    $c_decl_lid = "netbsd-c-decl";
 } elsif ($features{'compiled_for_openbsd'}) {
     $c_decl_lid = "openbsd-c-decl";
 } elsif ($features{'compiled_for_darwin'}) {
