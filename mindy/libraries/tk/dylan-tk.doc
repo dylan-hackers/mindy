@@ -277,11 +277,11 @@ will be placed somewhere to the right of this widget.  Note that it will not
 necessarily be placed on the parent's absolute left side, because all windows
 which precede this one in the packing order have "first dibs" on prime real
 estate.  Possible values for this option are "left", "right", "top", and
-"bottom".
+"bottom" -- the default is "left".
 
 If you were to execute:
-  let w1 = make(<listbox>, in: *root-window*, side: left);
-  let w2 = make(<text>, before: w1, side: top);
+  let w1 = make(<listbox>, in: *root-window*, side: "left");
+  let w2 = make(<text>, before: w1, side: "top");
   let w3 = make(<scrollbar>, after: w1);
 you would end up with something like:
 
@@ -308,8 +308,7 @@ Each Dylan/Tk widget has a default set of "bindings" which determine how they
 react to X events like button or key presses.  These may be changed or
 extended via the "bind" function.
 
-  function bind
-      (w :: <window>, event :: <string>, command) => (w :: <window>);
+  function bind (window, event :: <string>, command) => (window);
 
 This function specifies an action to be performed when an X event matching
 "event" occurs.  Typically this is a nil-adic Dylan function, but it may also
@@ -333,7 +332,7 @@ bindings for a particular window:
     Returns a complete list of explicit bindings for a window.  Each element
     of the sequence will be a <pair> of event-name and binding.
 
-Active variables
+Active Variables
 ----------------
 
 Some widgets have the ability to take an obsessive interest in the value of
@@ -349,6 +348,11 @@ of the variable's value.  The "value" slot will always contain a value of that
 type, although "value-setter" will accept arbitrary types (especially
 <string>) and attempt to convert them to the given type.
 
+You may also specify a Dylan function to be executed when an active variable's
+value changes (i.e. becomes \~= to the old value).  This method is specified
+via the "command:" keyword to "make".  It will be invoked with the new value
+just before the old value is changed.
+
 Active variables will typically be passed as values of "variable:" or
 "text-variable:" keywords.
 
@@ -358,74 +362,295 @@ The widget types
 Dylan/Tk provides types corresponding to all of the standard Tcl/Tk widgets:
 
  <button>:
+   Options: #"activebackground", #"activeforeground", #"bitmap",
+   #"command", #"disabledforeground", #"font", #"height", #"state", #"text",
+   #"textvariable", #"width".
+
+     function activate (button) => button;
+     function deactivate (button) => button;
+     function invoke (button) => button;
+
  <checkbutton>:
+   Options: #"activebackground", #"activeforeground", #"bitmap", #"command",
+   #"disabledforeground", #"font", #"height", #"offvalue", #"onvalue",
+   #"selector", #"state", #"text", #"textvariable", #"variable", #"width".
+
+     function activate (button) => button;
+     function deactivate (button) => button;
+     function select-value (button) => button;
+     function deselect-value (button) => button;
+     function toggle-value (button) => button;
+
  <menubutton>:
+   Options: #"activebackground", #"activeforeground", #"bitmap",
+   #"disabledforeground", #"font", #"height", #"menu", #"state", #"text",
+   #"textvariable", #"underline", #"width".
+
+     function activate (button) => button;
+     function deactivate (button) => button;
+
  <radiobutton>:
-    Operations include: flash, invoke, activate, deactivate, select-value,
-    deselect-value, toggle-value.
+   Options: #"activebackground", #"activeforeground", #"bitmap", #"command",
+   #"disabledforeground", #"font", #"height", #"selector", #"state", #"text",
+   #"textvariable", #"value", #"variable", #"width".
+
+     function activate (button) => button;
+     function deactivate (button) => button;
+     function select-value (button) => button;
+     function deselect-value (button) => button;
+
  <canvas>:
-    Operations include: xview, yview, focus, focus-setter, scan-mark,
-    scan-dragto, select-item, create-arc, create-bitmap, create-line,
-    create-oval, create-polygon, create-rectangle, create-window, postscript.
+   Options: #"closeenough", #"confine", #"height", #"insertbackground",
+   #"insertborderwidth", #"insertofftime", #"insertontime", #"insertwidth",
+   #"scrollincrement", #"scrollregion", #"selectbackground",
+   #"selectborderwidth", #"selectforeground", #"width", #"yscrollcommand".
+
+     function xview (canvas :: <canvas>, index) => canvas;
+     function yview (canvas :: <canvas>, index) => canvas;
+     function focus (canvas :: <canvas>) => result :: <canvas-item>;
+     function focus-setter (value :: <canvas-item>, canvas :: <canvas>) => ();
+     function scan-mark (window :: <canvas>, #rest coords) => window;
+     function scan-dragto (window :: <canvas>, #rest coords) => window;
+     function select-item (window :: <canvas>, index) => window;
+     function create-arc (canvas, x1, y1, x2, y2, #rest opts) => item;
+     function create-bitmap (canvas, x1, y1, #rest opts) => item;
+     function create-line (canvas, points :: <sequence>, #rest opts) => item;
+     function create-oval (canvas, x1, y1, x2, y2, #rest opts) => item;
+     function create-polygon (canvas, pnts :: <sequence>, #rest opts) => item;
+     function create-rectangle (canvas, x1, y1, x2, y2, #rest opts) => item;
+     function create-text (canvas, x1, y, #rest opts) => item;
+     function create-window (canvas, x1, y1, #rest opts) => item;
+     function postscript (canvas, #rest opts) => result :: <string>;
+
  <entry>:
-    Operations include: icursor, delete, insert, get-all, get-elements,
-    scan-mark, scan-dragto, select-adjust, select-clear, select-from,
-    select-to.
+   Options: #"exportselection", #"font", #"insertbackground",
+   #"insertborderwidth", #"insertofftime", #"insertontime", #"insertwidth",
+   #"scrollcommand", #"selectbackground", #"selectborderwidth",
+   #"selectforeground", #"state", #"textvariable", #"width".
+ 
+     function icursor (entry, index) => entry;
+     function view (entry, index) => entry;
+     function delete (entry, index, #key end: last) => entry;
+     function insert (entry, index, #rest elements) => entry;
+     function get-all (entry) => result :: <string>;
+     function get-elements (entry, index, #key end) => result :: <string>;
+     function scan-mark (entry, #rest coords) => entry;
+     function scan-dragto (entry, #rest coords) => entry;
+     function select-adjust (entry, index) => entry;
+     function select-clear (entry) => entry;
+     function select-from (entry, index) => entry;
+     function select-to (entry, index) => entry;
+
  <frame>:
-    Supports no operations.
+   Options: #"geometry", #"height", #"width".
+
+   Supports no operations.
+
  <label>:
-    Supports no operations.
+   Options: #"bitmap", #"font", #"height", #"text", #"textvariable", #"width".
+ 
+   Supports no operations.
+
  <listbox>:
-    Operations include: size, current-selection, nearest, xview, yview,
-    delete, insert, get-all, get-elements, scan-mark, scan-dragto,
-    select-adjust, select-clear, select-from, select-to.
+   Options: #"exportselection", #"font", #"geometry", #"selectbackground",
+   #"selectborderwidth", #"selectforeground", #"setgrid", #"xscrollcommand",
+   #"yscrollcommand".
+
+     function current-selection(listbox, #rest rest) => indices :: <sequence>;
+     function nearest(listbox, y-coord) => index :: <integer>;
+     function size(listbox) => result :: <integer>;
+     function xview(listbox, index) => listbox;
+     function yview(listbox, index) => listbox;
+     function delete (listbox, index, #key end) => listbox;
+     function insert (listbox, index, #rest elements) => listbox;
+     function get-all (listbox) => result :: <string>;
+     function get-elements (listbox, index, #key end) => result :: <string>;
+     function scan-mark (listbox, #rest coords) => listbox;
+     function scan-dragto (listbox, #rest coords) => listbox;
+     function select-adjust (listbox, index) => listbox;
+     function select-clear (listbox) => listbox;
+     function select-from (listbox, index) => listbox;
+     function select-to (listbox, index) => listbox;
+
  <menu>:
-    Operations include: add-command, add-checkbutton, add-radiobutton,
-    add-cascade, add-separator.
+   Options: #"activebackground", #"activeborderwidth", #"activeforeground",
+   #"disabledforeground", #"font", #"postcommand", #"selector"
+
+     function activate-entry (menu, index) => menu;
+     function delete (menu, index, #key end) => menu;
+     function disable-entry (menu, index) => menu;
+     function enable-entry (menu, index) => menu;
+     function configure-entry (menu, index, #rest options) => menu;
+     function entry-configuration (menu, index) => result :: <sequence>;
+     function invoke-entry (menu, index) => result;
+     function post (menu, x, y) => ();
+     function unpost (menu) => ();
+     function yposition-entry (menu, index) => result :: <integer>;  
+     function add-command (menu, #key state, command, label) => ();
+     function add-checkbutton (menu, #key variable, label) => ();
+     function add-radiobutton (menu, #key variable, value, label) => ();
+     function add-cascade (menu, #key menu, label) => ();
+     function add-separator (menu) => ();
+
+   Note that if you wish to assocaiate a menu with a menubutton, you must
+   create it "in:" that button.
+
  <message>:
-    Supports no operations.
+   Options: #"aspect", #"font", #"justify", #"text", #"textvariable",
+   #"width".
+
+   Supports no operations.
+
  <scale>:
-    Operations include: get-units, set-units.
+   Options: #"activeforeground", #"command", #"font", #"from", #"label",
+   #"length", #"orient", #"showvalue", #"sliderforeground", #"sliderlength",
+   #"state", #"tickinterval", #"to", #"width".
+
+     function get-value (scale) => result :: <integer>;
+     function set-value (scale, value) => scale;
+
  <scrollbar>:
-    Operations include: get-units, set-units.
+   Options: #"activeforeground", #"command", #"orient", #"repeatdelay",
+   #"repeatinterval", #"width".
+
+     function scroll (widget, #key, #all-keys) => scrollbar;
+     function get-units (scrollbar) => (#rest units :: <integer>);
+     function set-units (scrollbar, #rest Units) => scrollbar;
+
+   The "scroll" function exists to reduce the inefficiency inherent in
+   "standard" method of connecting widgets to scrollbars.  This function
+   creates a new scrollbar with the given orientation (i.e. "vertical" or
+   "horizontal") and connects it via lower level mechanisms to the given
+   widget.  All of the applicable creation and packing options for scrollbars
+   are accepted. 
+
  <text>:
-    Operations include: xview, yview, line-end, tags, marks, delete, insert,
-    get-all, get-elements, scan-mark, scan-dragto, select-adjust,
-    select-clear, select-from, select-to.
+   Options: #"exportselection", #"font", #"height", #"insertbackground",
+   #"insertborderwidth", #"insertofftime", #"insertontime", #"insertwidth",
+   #"selectbackground", #"selectborderwidth", #"selectforeground", #"setgrid",
+   #"state", #"textvariable", #"width", #"wrap", #"yscrollcommand".
+
+     function yview (text, index) => text;
+     function delete (text, index, #key end) => text;
+     function insert (text, index, #rest elements) => text;
+     function get-all (text) => result :: <string>;
+     function get-elements (text, index, #key end) => result :: <string>;
+     function scan-mark (text, #rest coords) => text;
+     function scan-dragto (text, #rest coords) => text;
+     function select-adjust (text, index) => text;
+     function select-clear (text) => text;
+     function select-from (text, index) => text;
+     function select-to (text, index) => text;
+   
  <toplevel>:
-    Supports no operations.
+   Options: #"geometry", #"screen".
+
+   Supports no operations. 
 
 These operations will hopefully be described at greater length in future
 editions of this document, but for now you are encouraged to check the Tcl/Tk
 manual for further information.
 
-One particular command exists to reduce the inefficiency inherent in
-"standard" method of connecting widgets to scrollbars.  
-
-  function scroll
-      (widget :: <window>, #rest rest, #key orient = "vertical", #all-keys)
-   => (result :: <scrollbar>)
-
-This function creates a new scrollbar with the given orientation
-(i.e. "vertical" or "horizontal") and connects it via lower level mechanisms
-to the given widget.  All of the applicable creation and packing options for
-scrollbars are accepted.
-
-Text indices, marks, and tags
------------------------------
-
-<< To be completed. >>
+Text indices
+------------
 
 The types <text-index>, <text-mark>, and <text-tag> all represent references
 to the contents of a <text> window.  Functions are provided to let you create
 and manipulate instances of these types.
 
+<Text-index>s represent an "absolute" index within a <text> object.  They have
+two slots -- "line" and "character".  "Make" on <text-index> requires a
+"line:" keyword and accepts an optional "character:" keyword (which defaults
+to 0).  Lines numbers start at 1, while characters start at 0, so you could
+specify the first character of a <text> by calling 
+  make(<text-index>, line: 1, character: 0)
+
+The following functions create and manipulate <text-index>s:
+
+  function text-at (line, character) => (result :: <text-index>);
+  function line-end (line) => (result :: <string>);
+  method as (cls == <text-index>, value :: <string>);
+  method as (cls == <string>, value :: <text-index>);
+
+The "text-at" function provides a convenient shorthand for making
+<text-index>s.  You might, for example replace the above "make" call with
+  text-at(1, 0);
+
+"Line-end" creates a reference to the last character of the named line.
+
+Text marks
+----------
+
+<Text-mark> objects represent more abstract character positions.  It will
+continue to refer to the same character even if other text is added or
+deleted.  They have two slots -- "value" and "name", and are associated with a
+particular <text> widget via the required "make" keyword "in:".
+
+If you make a <text-mark> with the name of a "standard" Tcl/Tk mark, such as
+"end" or "insert", then the new object will pick up the values already
+associated with the Tcl/Tk mark.
+
+The following functions create or manipulate <text-mark>s:
+
+  method as (cls == <string>, object :: <text-mark>) => (result);
+  method as (cls == <text-index>, mark :: <text-mark>) => (result);
+  method marks (text :: <text>) => (result :: <sequence>);
+
+The "marks" function returns a sequence containing all of the marks within a
+given <text>.  This will include both the "standard" Tcl/Tk marks and any that
+you have created.  These will not necessarily be "==" to the original objects.
+
+Text tags
+---------
+
+<Text-tag>s represent attributes which may be associated with 0 or more
+sequences of characters in a specific <text>.  You may specify different
+display properties or event bindings for the characters that have been
+associated with a particular <text-tag>.
+
+<Text-tag>s are created within a particular <text> via "make", which requires
+an "in:" keyword and permits a "name:" keyword.  You may add ranges of
+characters to <text-tag>s via "add-tag" and change the characteristics of
+tagged regions via "configure-tag" or "bind-tag".  A complete list of
+functions upon <text-tag>s follows:
+
+  function add-tag (tag, #key start, end: last) => (tag);
+  function remove-tag (tag, #key start, end: last) => (tag);
+  function configure-tag (tag, #rest options) => (tag);
+  function tag-configuration (tag, index) => (result :: <sequence>);
+  method as (cls == <string>, object :: <text-tag>) => (result);
+  function tags (text :: <text>) => (result :: <sequence>);
+  function bind-tag (tag, event :: <string>, command) => (tag);
+  function delete-tag (tag) => ();
+  function raise-tag (tag, #key past :: <text-tag>) => ();
+  function lower-tag (tag, #key past :: <text-tag>) => ();
+  function next-range (tag, #key start, end) => (result :: false-or(<pair>));
+
 Canvas items
 ------------
-
-<< To be completed. >>
 
 <canvas-item>s represent different graphical entity within a <canvas>.  Each
 "create-shape" function returns a <canvas-item> corresponding to the newly
 created shape.  These may be used to delete, resize, move, or respecify the
 shape.  
+
+The following functions operate upon canvas items:
+
+  function configure-item (item, #rest options) => (item); 
+  function item-configuration (item, index) => (result :: <sequence>);
+  function bind-item (item, event :: <string>, command) => (item);
+  function delete-item (item) => ();
+  function raise-item (item, #key past :: <canvas-item>) => ();
+  function lower-item (item, #key past :: <canvas-item>) => ();
+  function move-item (item, x :: <object>, y :: <object>) => ();
+  function scale-item (item, x-origin, y-origin, x-scale, y-scale) => ();
+  function item-coords (item) => (result :: <sequence>);
+  function item-coords-setter (value :: <sequence>, item) => ();
+  function item-type (item) => (result :: <string>);
+
+Requested Enhancements
+----------------------
+
+ * Allow event bindings to access the window, mouse coords, and character.
+ * Provide a "focus" command.
+
