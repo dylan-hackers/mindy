@@ -138,45 +138,29 @@ define constant empty-table = make(<self-organizing-list>);
 // tokens which we weren't allow to expand to ensure that they never get
 // expanded in any other place. But this should handle the most common
 // problems.
+//
+// XXX - We really don't do macro expansion correctly at all. But our
+// implementation is close, and the ANSI C behavior is very bizarre and
+// subtle. We'll probably want to rewrite this someday, but it works for now.
 
 define constant $maximum-cpp-expansion-depth = 32;
 
-define /* exported */ method check-cpp-expansion
-    (string :: <string>, tokenizer :: <tokenizer>,
+define /* exported */ function check-cpp-expansion
+    (string :: <byte-string>,
+     tokenizer :: <tokenizer>,
      #key parameters: parameter-table = empty-table,
      forbidden-expansions = #(),
      current-depth = 0)
- => (result :: <boolean>);
-  let headless-string 
-    = if (string.first == '#') copy-sequence(string, start: 1) else string end;
-  let token-list :: type-union(<sequence>, <false>)
-    = (element(parameter-table, headless-string, default: #f)
-	 | element(tokenizer.cpp-table, string, default: #f));
+ => (result :: <boolean>)
+  let token-list :: type-union(<sequence>, <false>) =
+    (element(parameter-table, string, default: #f) |
+       element(tokenizer.cpp-table, string, default: #f));
   case
     current-depth >= $maximum-cpp-expansion-depth =>
       parse-error(tokenizer, "Preprocessor macro expansion of ~s too deep",
 		  string);
     member?(string, forbidden-expansions, test: \=) =>
       #f;
-    string.first == '#' =>
-      if (string = "##")
-	// Special case for <pound-pound-token>
-	#f;
-      else
-	if (~token-list)
-	  parse-error(tokenizer, "%s in macro not matched.", string)
-	end if;
-
-	// Concatenate the parameter's string-values, bracketed by double
-	// quotes so that we get a string literal.  We won't do expansion --
-	// hopefully this won't cause problems in "real" code.
-	let reversed-strings = map(string-value, token-list);
-	let quoted = pair("\"", reverse!(pair("\"", reversed-strings)));
-	push(tokenizer.unget-stack,
-	     make(<string-literal-token>, position: tokenizer.position,
-		  generator: tokenizer, string: apply(concatenate, quoted)));
-	#t;
-      end if;
     ~token-list =>
       #f;
     token-list.empty? =>
@@ -203,55 +187,131 @@ define /* exported */ method check-cpp-expansion
 	  params-table[key] := value;
 	end for;
 	let forbidden = pair(string, forbidden-expansions);
-	for (token in token-list.tail)
-	  unless (check-cpp-expansion(token.string-value, tokenizer,
-				      parameters: params-table,
-				      current-depth: current-depth + 1,
-				      forbidden-expansions: forbidden))
-	    // Successful call will have already pushed the expanded tokens
-	    let cls = element(reserved-word-table,
-			      token.string-value, default: #f);
-	    if (cls)
-	      let reserved-word-token = make(cls,
-					     position: tokenizer.position,
-					     string: string-value(token),
-					     generator: tokenizer);
-	      push(tokenizer.unget-stack, reserved-word-token);
-	    else
-	      push(tokenizer.unget-stack, copy-token(token, tokenizer));
-	    end if;
-	  end unless;
-	finally
-	  #t;
-	end for;
+	expand-cpp-tokens(token-list.tail,
+			  tokenizer,
+			  parameters: params-table,
+			  forbidden-expansions: forbidden,
+			  current-depth: current-depth + 1);
+	#t;
       end if;
     otherwise =>
-      // Depends upon the fact that tokens are stored in reverse order in the
-      // stored macro expansion.
-      
       let forbidden = pair(string, forbidden-expansions);
-      for (token in token-list)
-	unless (check-cpp-expansion(token.string-value, tokenizer,
-				    current-depth: current-depth + 1,
-				    forbidden-expansions: forbidden))
-	  // Successful call will have already pushed the expanded tokens
-	  let cls = element(reserved-word-table,
-			    token.string-value, default: #f);
-	  if (cls)
-	    let reserved-word-token = make(cls,
-					   position: tokenizer.position,
-					   string: string-value(token),
-					   generator: tokenizer);
-	    push(tokenizer.unget-stack, reserved-word-token);
-	  else
-	    push(tokenizer.unget-stack, copy-token(token, tokenizer));
-	  end if;
-	end unless;
-      finally
-	#t;
-      end for;
+      expand-cpp-tokens(token-list,
+			tokenizer,
+			forbidden-expansions: forbidden,
+			current-depth: current-depth + 1);
+      #t;
   end case;
-end method check-cpp-expansion;
+end function check-cpp-expansion;
+
+define function partially-expand-cpp-tokens
+    (tokens :: <sequence>,
+     tokenizer :: <tokenizer>,
+     #key parameters: parameter-table :: <self-organizing-list> = empty-table)
+ => (tokens :: <deque>)
+  // Depends upon the fact that tokens are stored in reverse order in the
+  // stored macro expansion. We return the partially expanded tokens in the
+  // same order.
+  let return-tokens = make(<deque>);
+  
+  local
+    method concatenate-tokens (token-1 :: <token>, token-2 :: <token>)
+     => (token-3 :: <token>)
+      lex-identifier(tokenizer,
+		     token-1.position,
+		     concatenate(token-1.string-value,
+				 token-2.string-value),
+		     expand: #f,
+		     cpp-line: #f);
+    end method,
+    method check-stack (current-token :: <token>) => ()
+      if (empty?(return-tokens))
+	parse-error(current-token,
+		    "%= cannot be last token in macro expansion",
+		    current-token.string-value);
+      end if;
+    end method,
+    method expand-parameter (token :: <token>) => (expanded :: <token>)
+      // XXX - should probably check forbidden-expansions
+      let param = element(parameter-table, token.string-value, default: #f);
+      case
+	~param => token;
+	param.size == 1 => param.first;
+	otherwise =>
+	  parse-error(token,
+		      "the expansion of %= was not a single token",
+		      token.string-value);
+      end case;
+    end method;
+
+  // Munge the token list.
+  let concatenate-next? = #f;
+  for (token in tokens)
+    case
+      concatenate-next? =>
+	let previous = expand-parameter(pop-last(return-tokens));
+	let current = expand-parameter(token);
+	push-last(return-tokens, concatenate-tokens(current, previous));
+	concatenate-next? := #f;
+      instance?(token, <pound-token>) =>
+	check-stack(token);
+	// XXX - Just generate a garbage string token for now.
+	push-last(return-tokens,
+		  make(<string-literal-token>,
+		       string: "This isn't the string you're looking for.",
+		       position: pop-last(return-tokens).position,
+		       generator: tokenizer));
+      instance?(token, <pound-pound-token>) =>
+	concatenate-next? := #t;
+	check-stack(token);
+      otherwise =>
+	push-last(return-tokens, token);
+    end case;
+  end for;
+
+  // Make sure we didn't end on '##'.
+  if (concatenate-next?)
+    let offending-token = last(tokens);
+    parse-error(offending-token,
+		"%= cannot be first token in macro expansion",
+		offending-token.string-value);
+  end if;
+  return-tokens;
+end function partially-expand-cpp-tokens;
+
+define function expand-cpp-tokens
+    (tokens :: <sequence>,
+     tokenizer :: <tokenizer>,
+     #key parameters: parameter-table :: <self-organizing-list> = empty-table,
+     forbidden-expansions :: <list>,
+     current-depth :: <integer>)
+ => ()
+  // Depends upon the fact that tokens are stored in reverse order in the
+  // stored macro expansion.
+  // XXX - Figure out if we want to change the order of token storage.
+  let clean-tokens = partially-expand-cpp-tokens(tokens, tokenizer,
+						 parameters: parameter-table);
+  for (token in clean-tokens)
+    unless (check-cpp-expansion(token.string-value, tokenizer,
+				parameters: parameter-table,
+				current-depth: current-depth + 1,
+				forbidden-expansions: forbidden-expansions))
+      // Successful call will have already pushed the expanded tokens
+      let cls = element(reserved-word-table,
+			token.string-value, default: #f);
+      if (cls)
+	let reserved-word-token = make(cls,
+				       position: tokenizer.position,
+				       string: string-value(token),
+				       generator: tokenizer);
+	push(tokenizer.unget-stack, reserved-word-token);
+      else
+	push(tokenizer.unget-stack, copy-token(token, tokenizer));
+      end if;
+    end unless;
+  end for;
+end function expand-cpp-tokens;
+
 
 // open-in-include-path -- exported function.
 //
