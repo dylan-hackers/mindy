@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.20 1995/05/01 06:56:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.21 1995/05/03 05:05:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -240,7 +240,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
 	  form.local-methods);
   for (var in vars, meth in form.local-methods)
     build-let(builder, lexenv.lexenv-policy, source, var,
-	      build-general-method(builder, meth, specializer-lexenv, lexenv));
+	      build-general-method(builder, meth,
+				   specializer-lexenv, lexenv));
   end;
 
   // Supply #f as the result.
@@ -688,6 +689,11 @@ define method build-general-method
       end;
   let (method-literal, method-region)
     = build-hairy-method-body(builder, lexenv.lexenv-policy, source,
+			      if (meth.method-name)
+				as(<string>, meth.method-name.token-symbol);
+			      else
+				"Anonymous Method";
+			      end,
 			      signature, fixed-vars, next-var, rest-var,
 			      keyword-vars);
   if (non-const-arg-types?)
@@ -753,6 +759,7 @@ define generic build-hairy-method-body
     (builder :: <fer-builder>,
      policy :: <policy>,
      source :: <source-location>,
+     name :: <byte-string>,
      signature :: <signature>,
      fixed-vars :: <sequence>,
      next-var :: union(<abstract-variable>, <false>),
@@ -764,13 +771,14 @@ define method build-hairy-method-body
     (builder :: <fer-builder>,
      policy :: <policy>,
      source :: <source-location>,
+     name :: <byte-string>,
      signature :: <signature>,
      fixed-vars :: <sequence>,
      next-var :: <false>,
      rest-var :: <false>,
      keyword-vars :: <false>)
     => (literal :: <method-literal>, region :: <method-region>);
-  let lambda = build-method-body(builder, policy, source,
+  let lambda = build-method-body(builder, policy, source, name,
 				 as(<list>, fixed-vars));
   values(lambda, lambda);
 end;
@@ -779,6 +787,7 @@ define method build-hairy-method-body
     (builder :: <fer-builder>,
      policy :: <policy>,
      source :: <source-location>,
+     name :: <byte-string>,
      signature :: <signature>,
      fixed-vars :: <sequence>,
      next-var :: union(<abstract-variable>, <false>),
@@ -825,7 +834,7 @@ define method build-hairy-method-body
       add!(vars, var);
     end;
   end;
-  let method-leaf = build-method-body(builder, policy, source,
+  let method-leaf = build-method-body(builder, policy, source, name,
 				      as(<list>, vars));
   build-region(builder, builder-result(body-builder));
 
@@ -983,12 +992,12 @@ define method make-check-type-operation (builder :: <fer-builder>,
 		      type-leaf));
 end method;
 
-define method make-error-operation (builder :: <fer-builder>,
-				    msg :: <byte-string>)
+define method make-error-operation
+    (builder :: <fer-builder>, msg :: <byte-string>, #rest args)
     => res :: <operation>;
-  make-operation(builder,
-		 list(dylan-defn-leaf(builder, #"error"),
-		      make-literal-constant(builder,
-					    make(<literal-string>, contents: msg))));
+  let error = dylan-defn-leaf(builder, #"error");
+  let msg = make-literal-constant(builder,
+				  make(<literal-string>, contents: msg));
+  make-operation(builder, concatenate(list(error, msg), args));
 end method;
 
