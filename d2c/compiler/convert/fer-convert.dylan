@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.58 1996/06/24 17:56:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.59 1996/09/04 16:47:15 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -299,7 +299,7 @@ define method fer-convert
 		     build-defn-ref(builder, lexenv.lexenv-policy,
 				    source, defn);
 		   else
-		     compiler-warning-location
+		     compiler-error-location
 		       (source, "Undefined variable: %s", name);
 		     make-error-operation
 		       (builder, lexenv.lexenv-policy, source,
@@ -343,7 +343,7 @@ define method fer-convert
     let var = find-variable(name);
     let defn = var & var.variable-definition;
     if (~defn)
-      compiler-warning-location(id, "Undefined variable: %s", name);
+      compiler-error-location(id, "Undefined variable: %s", name);
       deliver-result
 	(builder, lexenv.lexenv-policy, source, want, datum,
 	 make-error-operation
