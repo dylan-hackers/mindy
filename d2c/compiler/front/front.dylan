@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.38 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.39 1995/08/07 12:23:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -27,6 +27,7 @@ operation
 	slot-ref
 	slot-set
     truly-the
+    instance?
     catch
     throw
     make-catcher
@@ -214,6 +215,13 @@ define method initialize
     (op :: <truly-the>, #next next-method, #key guaranteed-type) => ();
   next-method();
   op.derived-type := guaranteed-type;
+end;
+
+
+define class <instance?> (<operation>)
+  inherited slot derived-type,
+    init-function: curry(specifier-type, #"<boolean>");
+  slot type :: <ctype>, required-init-keyword: type:;
 end;
 
 
