@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.7 1995/05/05 18:53:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.8 1995/05/18 13:35:18 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,7 +20,7 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
 
   // List of the direct superclasses of this class.
   slot direct-superclasses :: <list>,
-       required-init-keyword: direct-superclasses:;
+    required-init-keyword: direct-superclasses:;
 
   // Closest primary superclass.
   slot closest-primary-superclass :: <cclass>;
@@ -78,6 +78,10 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // order. Filled in when the slot layouts are computed.
   slot all-slot-infos :: <vector>;
   //
+  // Vector of <override-info>s for the overrides introduced by this class.
+  slot override-infos :: <simple-object-vector>,
+    required-init-keyword: overrides:;
+  //
   // Layout of the instance slots.  Filled in when the slot layouts are
   // computed.
   slot instance-slots-layout :: <layout-table>;
@@ -86,7 +90,7 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   slot each-subclass-slots-count :: <fixed-integer>;
 end class;
 
-define method initialize (obj :: <cclass>, #key slots)
+define method initialize (obj :: <cclass>, #key slots, overrides)
   // Record the class.
   add!($All-Classes, obj);
 
@@ -128,9 +132,12 @@ define method initialize (obj :: <cclass>, #key slots)
     obj.closest-primary-superclass := closest;
   end;
 
-  // Fill in introduced-by for the slots.
+  // Fill in introduced-by for the slots and overrides.
   for (slot in slots)
     slot.slot-introduced-by := obj;
+  end;
+  for (override in overrides)
+    override.override-introduced-by := obj;
   end;
 end;
 
@@ -153,8 +160,9 @@ define abstract class <slot-info> (<object>)
   slot slot-introduced-by :: <cclass>,
     init-keyword: introduced-by:;
   //
-  // The type of this slot.  Possibly an unknown type.  Possibly not filled in
-  // until later.
+  // The type we've decided to use for this slot.  Either the declared type,
+  // or <object> if we can't figure out what the declared type is at
+  // compile-time.
   slot slot-type :: <ctype>, init-keyword: type:;
   //
   // The getter generic function definition.  Used for slot identity.  If #f,
@@ -167,21 +175,27 @@ define abstract class <slot-info> (<object>)
   slot slot-read-only? :: <boolean>,
     init-value: #f, init-keyword: read-only:;
   //
-  // The init-value, or #f if none.
-  slot slot-init-value :: union(<false>, <ct-value>),
-    init-value: #f, init-keyword: init-value:;
+  // The initial value.  A <ct-value> if we can figure one out, #t if there is
+  // one but we can't tell what it is, and #f if there isn't one.
+  slot slot-init-value :: union(<ct-value>, <boolean>),
+    required-init-keyword: init-value:;
   //
-  // The init-function, or #f if none.
-  slot slot-init-function :: union(<false>, <definition>),
-    init-value: #f, init-keyword: init-function:;
+  // The init-function.  A <ct-value> if we can figure one out, #t if there is
+  // one but we can't tell what it is, and #f if there isn't one.
+  slot slot-init-function :: union(<ct-value>, <boolean>),
+    required-init-keyword: init-function:;
   //
-  // The init-keyword, of #f if none.
-  slot slot-init-keyword :: union(<false>, <literal-symbol>),
-    init-value: #f, init-keyword: init-keyword:;
+  // The init-keyword, or #f if there isn't one.
+  slot slot-init-keyword :: false-or(<symbol>),
+    required-init-keyword: init-keyword:;
   //
-  // #t if the init-keyword is required, #f if not.
+  // True if the init-keyword is required, False if not.
   slot slot-init-keyword-required? :: <boolean>,
-    init-value: #f, init-keyword: init-keyword-required:;
+    required-init-keyword: init-keyword-required:;
+  //
+  // List of all the overrides for this slot.  Filled in when the overrides
+  // for some class are processed.
+  slot slot-overrides :: <list>, init-value: #();
 end;
 
 define method make (class == <slot-info>, #rest keys, #key allocation)
@@ -231,6 +245,35 @@ end;
 
 define class <virtual-slot-info> (<slot-info>)
 end;
+
+
+
+define class <override-info> (<object>)
+  //
+  // The cclass that introduces this override.  Filled in when the cclass that
+  // introduces this override is initialized.
+  slot override-introduced-by :: <cclass>,
+    init-keyword: introduced-by:;
+  //
+  // The getter generic function definition.  Used for slot identity.
+  slot override-getter :: <variable>,
+    required-init-keyword: getter:;
+  //
+  // The slot-info this override is overriding.  Filled in when overrides are
+  // inherited.
+  slot override-slot :: <slot-info>;
+  //
+  // The initial value.  A <ct-value> if we can figure one out, #t if there is
+  // one but we can't tell what it is, and #f if there isn't one.
+  slot override-init-value :: union(<ct-value>, <boolean>),
+    required-init-keyword: init-value:;
+  //
+  // The init-function.  A <ct-value> if we can figure one out, #t if there is
+  // one but we can't tell what it is, and #f if there isn't one.
+  slot override-init-function :: union(<ct-value>, <boolean>),
+    required-init-keyword: init-function:;
+end;
+
 
 
 // Ctype operations.
@@ -440,9 +483,9 @@ define method add-slot (slot :: <slot-info>, class :: <cclass>) => ();
   if (slot.slot-getter)
     for (other-slot in class.all-slot-infos)
       if (slot.slot-getter == other-slot.slot-getter)
-	compiler-error("Class %= can't combine two different %= slots, "
+	compiler-error("Class %= can't combine two different %s slots, "
 			 "one introduced by %= and the other by %=",
-		       class, slot.slot-getter,
+		       class, slot.slot-getter.variable-name,
 		       slot.slot-introduced-by, other-slot.slot-introduced-by);
       end;
     end;
@@ -451,6 +494,70 @@ define method add-slot (slot :: <slot-info>, class :: <cclass>) => ();
   // Add the slot to the all-slot-infos.
   add!(class.all-slot-infos, slot);
 end;
+
+
+// Override inheritance.
+
+define method inherit-overrides ()
+  for (cclass in $All-Classes)
+    for (override in cclass.override-infos)
+      block (next-override)
+	for (slot in cclass.all-slot-infos)
+	  if (override.override-getter == slot.slot-getter)
+	    if (slot.slot-introduced-by == cclass)
+	      compiler-error("Class %= can't both introduce and override "
+			       "slot %s",
+			     cclass, slot.slot-getter.variable-name);
+	    end;
+	    if (instance?(slot, <class-slot-info>))
+	      compiler-error("Can't override class allocation slots");
+	    end;
+	    if (instance?(slot, <constant-slot-info>))
+	      compiler-error("Can't override constant slots");
+	    end;
+	    if (instance?(slot, <virtual-slot-info>))
+	      compiler-error("Can't override virtual slots");
+	    end;
+	    slot.slot-overrides := pair(override, slot.slot-overrides);
+	    override.override-slot := slot;
+	    next-override();
+	  end;
+	end;
+	compiler-error("Class %= can't override slot %s, because is doesn't "
+			 "have that slot.",
+		       cclass, override.override-getter.variable-name);
+      end;
+    end;
+    for (slot in cclass.all-slot-infos)
+      let active-overrides = #();
+      for (override in slot.slot-overrides)
+	if (csubtype?(cclass, override.override-introduced-by))
+	  unless (any?(method (other)
+			 csubtype?(other.override-introduced-by,
+				   override.override-introduced-by);
+		       end,
+		       active-overrides))
+	    active-overrides
+	      := pair(override,
+		      choose(method (other)
+			       ~csubtype?(override.override-introduced-by,
+					  other.override-introduced-by);
+			     end,
+			     active-overrides));
+	  end;
+	  unless (active-overrides.tail == #())
+	    compiler-error("Class %= must override slot %s itself to resolve "
+			     "the conflict in inheriting overrides from each "
+			     "of %=",
+			   cclass, slot.slot-getter.variable-name,
+			   map(override-introduced-by, active-overrides));
+	  end;
+	end;
+      end;
+    end;
+  end;
+end;
+
 
 
 // Unique ID assignment.
@@ -569,7 +676,7 @@ end;
 define method assign-slot-representation (slot :: <instance-slot-info>) => ();
   let rep = pick-representation(slot.slot-type, #"space");
   slot.slot-representation := rep;
-  unless (slot.slot-guaranteed-initialized?
+  unless (slot-guaranteed-initialized?(slot, slot.slot-introduced-by)
 	    | rep.representation-has-bottom-value?)
     let class = slot.slot-introduced-by;
     let init?-slot = make(<instance-slot-info>,
@@ -672,15 +779,7 @@ define method layout-slot
 end;
 
 
-// Compile time determination of slot offsets.
-
-define method slot-guaranteed-initialized? (slot :: <slot-info>)
-    => res :: <boolean>;
-  ~(slot.slot-init-value == #f)
-    | ~(slot.slot-init-function == #f)
-    | slot.slot-init-keyword-required?;
-end;
-    
+// Compile time determination of slot offsets and other gunk.
 
 define method find-slot-offset
     (slot :: <instance-slot-info>, instance-type :: <ctype>)
@@ -729,7 +828,21 @@ end;
 	  
 
 
-
+define method slot-guaranteed-initialized?
+    (slot :: <slot-info>, instance-type :: <ctype>) => res :: <boolean>;
+  if (slot.slot-init-value | slot.slot-init-function
+	| slot.slot-init-keyword-required?)
+    #t;
+  elseif (empty?(slot.slot-overrides))
+    #f;
+  else
+    csubtype?(instance-type,
+	      reduce1(ctype-union,
+		      map(override-introduced-by,
+			  slot.slot-overrides)));
+  end;
+end;
+    
 
 
 define method best-idea-of-class (type :: <cclass>)
