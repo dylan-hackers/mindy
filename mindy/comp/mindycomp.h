@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.2 1994/04/08 14:26:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.3 1994/04/10 21:09:24 wlott Exp $
 *
 * This file does whatever.
 *
@@ -25,6 +25,9 @@ typedef int boolean;
 
 extern char *current_file;
 extern boolean ParseOnly;
+
+extern void error(int line, char *msg, ...);
+extern void warn(int line, char *msg, ...);
 
 extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;
