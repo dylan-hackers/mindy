@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.6 1994/04/10 16:24:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.7 1994/04/10 19:03:44 wlott Exp $
 *
 * This file does whatever.
 *
@@ -38,6 +38,8 @@ struct defined_class {
     obj_t class;
     enum type_Id type_id;
     boolean abstract_p;
+    boolean sealed_p;
+    struct library *library;
     int (*scavenge)(struct object *ptr);
     obj_t (*transport)(obj_t object);
     void (*print)(obj_t object);
@@ -497,7 +499,7 @@ static void do_inits(obj_t inst_or_class, obj_t key_and_value_pairs,
 
 /* Defined classes. */
 
-obj_t make_defined_class(obj_t debug_name)
+obj_t make_defined_class(obj_t debug_name, struct library *library)
 {
     static int scav_instance(struct object *ptr);
     static obj_t trans_instance(obj_t instance);
@@ -506,6 +508,8 @@ obj_t make_defined_class(obj_t debug_name)
 
     init_class_type_stuff(res);
     DC(res)->abstract_p = FALSE;
+    DC(res)->sealed_p = FALSE;
+    DC(res)->library = library;
     DC(res)->scavenge = scav_instance;
     DC(res)->transport = trans_instance;
     DC(res)->print = NULL;
