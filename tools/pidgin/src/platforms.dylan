@@ -54,7 +54,8 @@ define constant $i386-linux-platform =
 	   "__linux__", "",
 	   "__unix", "",
 	   "__i386", "",
-	   "__linux", ""],
+	   "__linux", "",
+	   "__builtin_va_list", "void*"],
        default-include-path:
 	 #["/usr/include",
 	   // XXX - We'll need heavy magic for this eventually.
