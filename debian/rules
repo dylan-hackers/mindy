@@ -76,7 +76,6 @@ ifeq ("$(STYLE)", "normal")
 		./configure --with-readline \
 			--prefix=/usr \
 			--with-site-dylan-prefix=/usr \
-			--with-existing-runtime=/usr/lib/dylan \
 			--with-gnu-ld
 		libtoolize --force
 endif
