@@ -9,17 +9,21 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.5 1994/04/14 19:15:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.6 1994/04/28 04:04:32 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 
+#define dbc_MagicNumber 0x6e789abe
+#define parse_MagicNumber 0x20e97ff6
+
+#define file_MajorVersion 1
+#define file_MinorVersion 0
 
 #define fop_FLAME 0
-#define fop_COMMENT '#'
-#define fop_BYTE_ORDER 1
+#define fop_HEADER 1
 #define fop_STORE 2
 #define fop_SHORT_REF 3
 #define fop_REF 4
