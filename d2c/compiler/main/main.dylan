@@ -1,10 +1,10 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.31 1995/11/13 17:17:18 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.32 1995/11/14 13:30:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
-define constant $cc-flags = "-I.";
+define constant $cc-flags = getenv("CCFLAGS") | "";
 
 
 // Roots registry.
@@ -112,13 +112,14 @@ define method compile-library (lid-file :: <byte-string>) => ();
   let (header, files) = parse-lid(lid-file);
   let lib-name = header[#"library"];
   format(*debug-output*, "Compiling library %s\n", lib-name);
-  let lib = find-library(as(<symbol>, lib-name), create: #t);
+  let lib = find-library(as(<symbol>, lib-name));
   let unit-prefix
     = element(header, #"unit-prefix", default: #f) | as-lowercase(lib-name);
   let tlf-vectors = make(<stretchy-vector>);
   for (file in files)
     format(*debug-output*, "Parsing %s\n", file);
     let (tokenizer, mod) = file-tokenizer(lib, file);
+    complete-module(mod);
     block ()
       *Current-Library* := lib;
       *Current-Module* := mod;
@@ -151,6 +152,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
   let init-functions = make(<stretchy-vector>);
   let unit-info = make(<unit-info>, prefix: unit-prefix);
   let objects-stream = make(<byte-string-output-stream>);
+  let other-units = map-as(<simple-object-vector>, first, *roots*);
   for (file in files, tlfs in tlf-vectors)
     block ()
       format(*debug-output*, "Processing %s\n", file);
@@ -161,7 +163,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
       block ()
 	let output-info
 	= make(<output-info>, unit-info: unit-info, body-stream: body-stream);
-	emit-prologue(output-info);
+	emit-prologue(output-info, other-units);
 
 	for (tlf in tlfs)
 	  let name = format-to-string("%s", tlf);
@@ -217,7 +219,7 @@ define method compile-library (lid-file :: <byte-string>) => ();
     let body-stream = make(<file-stream>, name: c-name, direction: #"output");
     let output-info
       = make(<output-info>, unit-info: unit-info, body-stream: body-stream);
-    emit-prologue(output-info);
+    emit-prologue(output-info, other-units);
     emit-epilogue(init-functions, output-info);
     close(body-stream);
 
@@ -284,11 +286,15 @@ define method compile-library (lid-file :: <byte-string>) => ();
     end;
 
     begin
+      let flags = concatenate($cc-flags, " -L.");
+      for (dir in *data-unit-search-path*)
+	flags := concatenate(flags, " -L", dir);
+      end;
       let command = " -lruntime";
       for (unit in *roots*)
 	command := concatenate(" -l", unit[0], command);
       end;
-      command := concatenate("gcc ", $cc-flags, " -o ", executable,
+      command := concatenate("gcc ", flags, " -o ", executable,
 			     " inits.c heap.s", command);
       format(*debug-output*, "%s\n", command);
       unless (zero?(system(command)))
@@ -303,7 +309,7 @@ end;
 
 define method load-library (name :: <symbol>) => ();
   block ()
-    *Current-Library* := find-library(name, create: #t);
+    *Current-Library* := find-library(name);
     find-data-unit(name, $library-summary-unit-type,
 		   dispatcher: *compiler-dispatcher*);
   cleanup
@@ -312,7 +318,7 @@ define method load-library (name :: <symbol>) => ();
 end;
 
 define method incorrect-usage () => ();
-  format(*standard-error*, "Usage: compile lid-file\n");
+  format(*standard-error*, "Usage: compile [-Ldir ...] lid-file\n");
   format(*standard-error*,
 	 "    or compile -autodump component [next-free-id-in-hex]\n");
   force-output(*standard-error*);
@@ -320,9 +326,7 @@ define method incorrect-usage () => ();
 end method incorrect-usage;
 
 define method main (argv0, #rest args)
-  if (args.size = 0)
-    incorrect-usage();
-  elseif (args.first = "-autodump")
+  if (args.size > 0 & args.first = "-autodump")
     if (args.size < 2 | args.size > 3)
       incorrect-usage();
     end if;
@@ -334,6 +338,31 @@ define method main (argv0, #rest args)
 		       end if;
     autodump-main(component, next-free-id);
   else
-    compile-library(args[0]);
+    let library-dirs = make(<stretchy-vector>);
+    let lid-file = #f;
+    for (arg in args)
+      if (arg.size >= 1 & arg[0] == '-')
+	if (arg.size >= 2 & arg[1] == 'L')
+	  if (arg.size > 2)
+	    add!(library-dirs, copy-sequence(arg, start: 2));
+	  else
+	    error("Directory not supplied with -L.");
+	  end;
+	else
+	  error("Bogus switch: %s", arg);
+	end;
+      else
+	if (lid-file)
+	  error("Multiple LID files: %s and %s", lid-file, arg);
+	else
+	  lid-file := arg;
+	end;
+      end;
+    end;
+    *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
+    unless (lid-file)
+      incorrect-usage();
+    end;
+    compile-library(lid-file);
   end if;
 end method main;
