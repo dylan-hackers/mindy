@@ -1,10 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.14 1996/08/22 18:33:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.15 1996/09/04 16:52:02 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define library compiler-cback
   use Dylan;
+  use stream-extensions;
   use compiler-base;
   use compiler-front;
   use compiler-convert;
@@ -31,6 +32,7 @@ end;
 define module cback
   use system;
   
+  use indenting-streams;
   use c-representation;
   use classes;
   use common;
