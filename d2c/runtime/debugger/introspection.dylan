@@ -39,7 +39,8 @@ define function inspect-at-address(object-address :: <raw-pointer>)
   end block
 end function inspect-at-address;
 
-make(<command>, name: "Inspect", command: inspect);
+make(<command>, name: "Inspect", command: inspect, 
+     summary: "Inspect named C symbol or address.");
 
 define method dump-object(o)
   let oc = o.object-class;

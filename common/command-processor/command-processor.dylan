@@ -31,8 +31,10 @@ end method ring-bell;
 define constant *command-table* = make(<stretchy-vector>);
 
 define class <command> (<object>)
-  slot name, init-keyword: name:;
-  slot command, init-keyword: command:;
+  slot name      :: <string>,       required-init-keyword: name:;
+  slot command   :: <function>,     required-init-keyword: command:;
+  slot summary   :: <string>,       required-init-keyword: summary:;
+  slot full-help :: false-or(<string>) = #f, init-keyword: full-help:;
 end class <command>;
 
 define method make( cmd == <command>, #key, #all-keys) => (res :: <command>)
@@ -41,13 +43,61 @@ define method make( cmd == <command>, #key, #all-keys) => (res :: <command>)
   result;
 end method make;
 
+define function n-spaces(n :: <integer>)
+ => (string-of-n-spaces :: <string>)
+  if(n < 0)
+    ""
+  else
+    make(<string>, size: n, fill: ' ')
+  end if;
+end function n-spaces;
+
+define function find-command-by-prefix(command-name :: <string>)
+  choose(method(x) 
+             case-insensitive-equal(command-name,
+                                    subsequence(x.name, end: command-name.size))
+         end, *command-table*)
+end function find-command-by-prefix;
+
+define function find-command(command-name :: <string>)
+  choose(method(x) case-insensitive-equal(command-name, x.name) end, 
+         *command-table*)
+end function find-command;
+
 make(<command>, 
      name: "Help", 
+     summary:   "You have just found out what this does :).",
+     full-help: 
+       "Without an argument, lists all available commands.  When given\r\n"
+       "an argument, displays help for the command named.\r\n",
      command: method(parameter)
-                  format-out("Help not yet available :).\r\n");
-                  force-output(*standard-output*);
+                  if(parameter.size = 0)
+                    for(c in *command-table*)
+                      format-out("%s%s %s\r\n", 
+                                 c.name,
+                                 n-spaces(20 - c.name.size),
+                                 c.summary);
+                    end for;
+                  else
+                    let commands = find-command-by-prefix(parameter);
+                    if(commands.size = 0)
+                      format-out("This command is not known to the system.\r\n");
+                    else
+                      for(c in commands)
+                        if(c.full-help)
+                          format-out("%s:\r\n%s", c.name, c.full-help)
+                        else
+                          format-out("%s: %s\r\n", 
+                                     c.name, c.summary)
+                        end if;
+                      end for;
+                    end if;
+                  end if;
               end);
-make(<command>, name: "Set Prompt", command: method(x) *prompt* := x end);
+
+make(<command>, name: "Set Prompt", 
+     summary: "Sets the prompt to the argument given.",
+     command: method(x) *prompt* := x end);
 
 define variable *command-line* = "";
 define variable *buffer-pointer* = 0;
@@ -113,7 +163,7 @@ define method delete-char-backwards(c)
 end method delete-char-backwards;
 
 define method complete-command-aux()
-    for(i in *command-table*)
+  for(i in *command-table*)
     if(case-insensitive-equal(*command-line*, 
                               subsequence(i.name, end: *command-line*.size)))
       *command-line* := copy-sequence(i.name);
@@ -177,7 +227,8 @@ define function run-command-processor()
        name: "Exit", 
        command: method(parameter)
                     running := #f;
-                end);
+                end,
+       summary: "Exits the command loop.");
 
   let old-termios = make(<termios>);
   tcgetattr(*standard-input*.file-descriptor, old-termios);
