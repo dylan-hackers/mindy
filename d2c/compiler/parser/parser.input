@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser.input,v 1.4 2000/03/29 15:57:41 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser.input,v 1.5 2000/04/01 12:08:27 andreas Exp $
 copyright: see below
 
 %%
@@ -27,7 +27,7 @@ copyright: see below
 :token COMMA		<token>
 :token DOT		<token>
 :token SEMICOLON	<token>
-:token LEFT-BRACKET	<token>
+:token LEFT-BRACKET	<left-bracket-token>
 :token RIGHT-BRACKET	<token>
 :token LEFT-BRACE	<token>
 :token RIGHT-BRACE	<token>
@@ -928,8 +928,8 @@ operand (operand LEFT-BRACKET arguments-opt RIGHT-BRACKET)
 				       else
 					 #"aref";
 				       end,
-			       module: $Dylan-Module,
-			       uniquifier: make(<uniquifier>))),
+			       module: %2.token-module,
+			       uniquifier: %2.token-uniquifier)),
        arguments: apply(vector, %1, %3));
 %
 
@@ -1542,7 +1542,8 @@ parameter (variable-name DOUBLE-EQUAL expression)
  			    uniquifier: %2.token-uniquifier);
 
   let singleton-varref
-    = make(<varref-parse>, source-location: simplify-source-location(@2),
+    = make(<varref-parse>,
+	   source-location: simplify-source-location(@2),
 	   id: singleton-name);
   let funcall = make(<funcall-parse>,
   		     source-location: source-location-spanning(@2, @3),

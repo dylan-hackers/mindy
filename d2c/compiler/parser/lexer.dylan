@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.4 2000/01/24 04:56:33 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.5 2000/04/01 12:08:26 andreas Exp $
 copyright: see below
 
 
@@ -87,6 +87,19 @@ define method make-double-equal
        module: *Current-Module*);
 end method make-double-equal;
 
+// make-left-bracket -- internal
+//
+// Not an operator or an identifier, but which still needs to care
+// about scope. A special case all by itself. 
+
+define method make-left-bracket
+    (lexer :: <lexer>, source-location :: <file-source-location>)
+ => (res :: <left-bracket-token>)
+  make(<left-bracket-token>,
+       source-location: source-location,
+       kind: $left-bracket-token,
+       module: *Current-Module*)
+end method make-left-bracket;
 
 // make-quoted-name -- internal.
 //
@@ -882,7 +895,7 @@ define constant $Initial-State
 	     pair('=', #"cname-binop")),
        state(#"double-colon", $double-colon-token,
 	     pair('=', #"cname-binop")),
-       state(#"lbracket", $left-bracket-token),
+       state(#"lbracket", make-left-bracket),
        state(#"rbracket", $right-bracket-token),
        state(#"lbrace", $left-brace-token),
        state(#"rbrace", $right-brace-token),

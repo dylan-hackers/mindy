@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.4 2000/03/15 04:13:33 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.5 2000/04/01 12:08:26 andreas Exp $
 copyright: see below
 
 
@@ -176,6 +176,28 @@ define sealed method print-object
 		if (uniq) uniquifier: end, uniq);
 end;
 
+// <left-bracket-token> -- exported
+//
+// The left bracket "[". It gets treated magically in order to make
+// the equivalence of element(foo, bar) == foo[bar] hold in the 
+// presence of lexically-scoped rebindings of element/aref. Ugly, 
+// but that's life. Since the slots of <left-bracket-token>s are
+// the same as <identifier-token>s, there should probably be a mixin
+// class that both of them inherit from. I haven't implemented it
+// yet, though, because I don't have a good name for it yet. :)
+
+define class <left-bracket-token> (<token>)
+  constant slot token-module :: false-or(<module>),
+    init-value: #f,
+    init-keyword: module:;
+  constant slot token-uniquifier :: false-or(<uniquifier>),
+    init-value: #f,
+    init-keyword: uniquifier:;
+end class <left-bracket-token>;
+    
+define sealed domain make (singleton(<left-bracket-token>));
+
+// TBD: print-object method for <left-bracket-token>
 
 // <uniquifier> -- exported.
 //
