@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.7 2003/03/17 23:27:20 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.8 2003/12/22 06:16:03 housel Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -698,8 +698,8 @@ static void (*const preters[0x100])(int byte, struct thread *thread)
     op_push_false,
     op_dup,
     op_dot_tail,
-    op_dot,  // twice!
-    op_dot, // twice!
+    op_dot,  /* twice! */
+    op_dot, /* twice! */
     
     op_flame,
     op_flame,
@@ -726,8 +726,8 @@ static void (*const preters[0x100])(int byte, struct thread *thread)
     SIXTEEN_TIMES(op_push_local),
     SIXTEEN_TIMES(op_pop_local),
     SIXTEEN_TIMES(op_call_tail),
-    SIXTEEN_TIMES(op_call), // twice!
-    SIXTEEN_TIMES(op_call), // twice!
+    SIXTEEN_TIMES(op_call), /* twice! */
+    SIXTEEN_TIMES(op_call), /* twice! */
     SIXTEEN_TIMES(op_push_value),
     SIXTEEN_TIMES(op_push_function),
     SIXTEEN_TIMES(op_pop_value),

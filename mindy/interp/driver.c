@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/driver.c,v 1.5 2000/01/24 04:58:12 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/driver.c,v 1.6 2003/12/22 06:16:02 housel Exp $
 *
 * Main driver routines for mindy.
 *
@@ -299,7 +299,7 @@ enum pause_reason do_stuff(void)
 #ifdef MACOS
 		{
 			EventRecord e;
-			// Weak!!!!
+			/* Weak!!!! */
 			OSEventAvail(0, &e);
 			if( (e.modifiers & controlKey ) && (e.modifiers & cmdKey ) && (e.modifiers & optionKey ) )
 			{

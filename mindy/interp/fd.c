@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.5 2000/10/31 14:37:40 dauclair Exp $
+* $Header: /scm/cvs/src/mindy/interp/fd.c,v 1.6 2003/12/22 06:16:03 housel Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -390,7 +390,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
     oldargs = args - 1;
     thread->sp = args + 1;
 
-	// Mac doesn't support forking or piping
+    /* Mac doesn't support forking or piping */
 
 	oldargs[0] = obj_False;
 	oldargs[1] = obj_False;
