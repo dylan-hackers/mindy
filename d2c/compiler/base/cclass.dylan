@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.37 1996/04/13 23:19:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.38 1996/04/14 19:21:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -249,7 +249,13 @@ end;
 
 define method print-message
     (lit :: <slot-info>, stream :: <stream>) => ();
-  write("{a <slot-descriptor>}", stream);
+  format(stream, "{<slot-descriptor> for %s introduced by %s}",
+	 if (lit.slot-getter)
+	   lit.slot-getter.variable-name;
+	 else
+	   "???";
+	 end if,
+	 lit.slot-introduced-by);
 end;
 
 define method make (class == <slot-info>, #rest keys, #key allocation)
@@ -302,7 +308,7 @@ end;
 
 
 
-define class <override-info> (<identity-preserving-mixin>)
+define class <override-info> (<eql-ct-value>, <identity-preserving-mixin>)
   //
   // The cclass that introduces this override.  Filled in when the cclass that
   // introduces this override is initialized.
@@ -328,6 +334,14 @@ define class <override-info> (<identity-preserving-mixin>)
     init-value: #f, init-keyword: init-function:;
 end;
 
+define method print-message
+    (override :: <override-info>, stream :: <stream>) => ();
+  format(stream, "{<override-descriptor> for %s at %s}",
+	 override.override-getter.variable-name,
+	 override.override-introduced-by);
+end method print-message;
+
+
 
 define method ct-value-cclass (object :: <cclass>) => res :: <cclass>;
   dylan-value(#"<class>");
@@ -335,6 +349,10 @@ end;
 
 define method ct-value-cclass (object :: <slot-info>) => res :: <cclass>;
   dylan-value(#"<slot-descriptor>");
+end;
+
+define method ct-value-cclass (object :: <override-info>) => res :: <cclass>;
+  dylan-value(#"<override-descriptor>");
 end;
 
 
