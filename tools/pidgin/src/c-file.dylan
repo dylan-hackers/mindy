@@ -4,21 +4,18 @@ define class <c-file> (<object>)
   slot c-file-name :: false-or(<byte-string>),
     init-keyword: name:,
     init-value: #f;
-  slot c-file-included-files :: <stretchy-vector>
-    = make(<stretchy-vector>); // contains <c-file>s
-  slot c-file-declarations :: <stretchy-vector>
-    = make(<stretchy-vector>); // contains <c-declaration>s
+  slot c-file-contents :: <stretchy-vector>
+    = make(<stretchy-vector>); // contains <c-file>s and <c-declaration>s
 end class;
 
 define method add-c-declaration!
     (file :: <c-file>, decl :: <c-declaration>)
  => ()
-  add!(file.c-file-declarations, decl);
+  add!(file.c-file-contents, decl);
 end method;
 
 define method add-c-file!
     (file :: <c-file>, subfile :: <c-file>) 
  => ()
-  add!(file.c-file-included-files, subfile);
+  add!(file.c-file-contents, subfile);
 end method;
-
