@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.24 1995/05/05 14:48:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.25 1995/05/05 16:57:57 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -582,8 +582,9 @@ define method build-general-method
 	  var;
 	end;
       end;
-  let (keyword-infos, keyword-vars)
+  let (keyword-defaulting-region, keyword-infos, keyword-vars)
     = if (paramlist.paramlist-keys)
+	let keyword-defaulting-builder = make-builder(builder);
 	let infos = make(<stretchy-vector>);
 	let vars = make(<stretchy-vector>);
 	for (param in paramlist.paramlist-keys)
@@ -600,42 +601,60 @@ define method build-general-method
 			     default: default, type: type));
 	    add!(vars, var);
 	  else
+	    let temp = make-local-var(builder, name.token-symbol, type);
 	    let pre-default
-	      = make-lexical-var(builder, name.token-symbol, source,
-				 object-ctype());
-	    add!(infos, make(<key-info>, key-name: param.param-keyword,
-			     type: object-ctype(),
-			     default: #f));
+	      = make-lexical-var(builder, name.token-symbol, source, type);
+	    let info = make(<key-info>, key-name: param.param-keyword,
+			    type: type, default: #f);
+	    add!(infos, info);
 	    add!(vars, pre-default);
-	    let temp = make-local-var(builder, #"temp", object-ctype());
-	    build-assignment
-	      (builder, lexenv.lexenv-policy, source, temp,
-	       make-unknown-call
-		 (builder,
-		  list(dylan-defn-leaf(builder, #"unbound?"),
-		       pre-default)));
-	    build-if-body(builder, lexenv.lexenv-policy, source, temp);
-	    fer-convert(builder, param.param-default,
+	    let supplied?-var
+	      = make-lexical-var(builder,
+				 as(<symbol>,
+				    format-to-string("%s-supplied?",
+						     name.token-symbol)),
+				 source,
+				 dylan-value(#"<boolean>"));
+	    let rep = pick-representation(type, #"speed");
+	    if (rep.representation-has-bottom-value?)
+	      build-let(keyword-defaulting-builder, lexenv.lexenv-policy,
+			source, supplied?-var,
+			make-operation
+			  (builder, <fer-primitive>, list(pre-default),
+			   name: #"initialized?"));
+	    else
+	      add!(vars, supplied?-var);
+	      info.key-supplied?-var := #t;
+	    end;
+	    build-if-body(keyword-defaulting-builder, lexenv.lexenv-policy,
+			  source, supplied?-var);
+	    build-assignment(keyword-defaulting-builder, lexenv.lexenv-policy,
+			     source, temp, pre-default);
+	    build-else(keyword-defaulting-builder, lexenv.lexenv-policy,
+		       source);
+	    fer-convert(keyword-defaulting-builder, param.param-default,
 			make(<lexenv>, inside: lexenv),
-			#"assignment", var);
-	    build-else(builder, lexenv.lexenv-policy, source);
-	    build-assignment(builder, lexenv.lexenv-policy, source, var,
-			     pre-default);
-	    end-body(builder);
+			#"assignment", temp);
+	    end-body(keyword-defaulting-builder);
+	    build-let(keyword-defaulting-builder, lexenv.lexenv-policy, source,
+		      var, temp);
 	  end;
 	  if (type-var)
 	    let checked = make-lexical-var(builder, name.token-symbol, source,
 					   object-ctype());
 	    build-assignment
-	      (builder, lexenv.lexenv-policy, source, checked,
-	       make-check-type-operation(builder, var, type-var));
+	      (keyword-defaulting-builder, lexenv.lexenv-policy, source,
+	       checked, make-check-type-operation(builder, var, type-var));
 	    add-binding(lexenv, name, checked, type-var: type-var);
 	  else
 	    add-binding(lexenv, name, var);
 	  end;
 	end;
-	values(as(<list>, infos),
+	values(builder-result(keyword-defaulting-builder),
+	       as(<list>, infos),
 	       as(<list>, vars));
+      else
+	values(#f, #f, #f);
       end;
   
   let returns = meth.method-returns;
@@ -703,6 +722,9 @@ define method build-general-method
 			      keyword-vars);
   if (non-const-arg-types?)
     build-region(builder, builder-result(arg-check-builder));
+  end;
+  if (keyword-defaulting-region)
+    build-region(builder, keyword-defaulting-region);
   end;
   fer-convert-body(builder, meth.method-body, lexenv,
 		   #"assignment", results-temp | results);
