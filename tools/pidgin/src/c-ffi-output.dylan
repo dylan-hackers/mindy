@@ -12,8 +12,38 @@ copyright:
 // The eventual goal is to simply call c-output on a <c-file> and watch it
 // recursively call different variations of itself.
 
-// First we'll handle mapping Pidgin types into C-FFI types.
+// We also export 'exported-names', a vector of names which the generated
+// module should probably export.
+define variable exported-names :: <vector> = make(<vector>);
 
+// This helper function registers an exported name and transparently returns it.
+define function register-exported-name
+    (name :: <string>)
+ => (result :: <string>)
+  if (~member?(exported-names, name))
+    exported-names := add(exported-names, name);
+  end if;
+  name;
+end function;
+
+// Just a quick helper function for converting names into more Dylanish identifiers.
+define function output-name
+    (name :: <string>, #key class :: <boolean> = #f, pointer :: <boolean> = #f)
+ => (result :: <string>)
+    name := substring-replace(name, "_", "-");
+  // <>'s for classes.
+  if (class)
+    name := concatenate("<", name);
+    // *'s for pointers.
+    if (pointer)
+      name := concatenate(name, "*");
+    end if;
+    name := concatenate(name, ">");
+  end if;
+  name;
+end function;
+
+// First we'll handle mapping Pidgin types into C-FFI types.
 define method c-output
     (type :: <c-void-type>)
  => (result :: <string>)
@@ -69,15 +99,14 @@ define method c-output
   let header :: <string> = "";
   if (instance?(type.c-typedef-type, <c-tagged-type>))
     tname := type.c-typedef-type.c-type-tag;
-    header := c-output(type.c-typedef-type);
+    // header := c-output(type.c-typedef-type, name: type.c-typedef-name);
   else
     tname := c-output(type.c-typedef-type);
   end if;
-  concatenate(header, "define C-subtype <", type.c-typedef-name, "> (", tname, ")\n  pointer-type-name: ", concatenate("<", type.c-typedef-name, "*>"), ";\nend C-subtype;\n");
+  concatenate(header, "define C-subtype ", register-exported-name(output-name(type.c-typedef-name, class: #t)), " (", tname, ")\n  pointer-type-name: ", register-exported-name(output-name(type.c-typedef-name, class: #t, pointer: #t)), ";\nend C-subtype;\n");
 end method;
 
 // Handle unknown types gracelessly.
-
 define method c-output
     (type :: <c-type>)
  => (result :: <string>)
@@ -89,18 +118,22 @@ end method;
 define method c-output
     (type :: <c-struct-type>)
  => (result :: <string>)
-  let def :: <string> = concatenate("define C-struct <", type.c-type-tag, ">\n");
+  // XXX: This is a bit hacky.
+  if (type.c-type-tag[0] ~= '$')
+    register-exported-name(output-name(type.c-type-tag, class: #t));
+  end if;
+  let def :: <string> = concatenate("define C-struct ", output-name(type.c-type-tag, class: #t), "\n");
   for (counter :: <integer> from 0 to size(type.c-type-members) - 1 )
     if (object-class(type.c-type-members[counter]) = <c-bit-field>)
       def := concatenate(def, "  // <bit-field> not yet supported.\n");
     else
       let t = type.c-type-members[counter].c-member-variable-type;
       if (object-class(t) = <c-typedef-type>)
-        t := concatenate("<", t.c-typedef-name, ">");
+        t := register-exported-name(output-name(t.c-typedef-name, class: #t));
       else
         t := c-output(t);
       end if;
-      def := concatenate(def, "  slot ", type.c-type-members[counter].c-member-variable-name, " :: ", t, ";\n");
+      def := concatenate(def, "  slot ", register-exported-name(output-name(type.c-type-members[counter].c-member-variable-name)), " :: ", t, ";\n");
     end if;
   end for;
   concatenate(def, "end C-struct;\n");
@@ -109,12 +142,12 @@ end method;
 define method c-output
     (type :: <c-union-type>)
  => (result :: <string>)
-  let def :: <string> = concatenate("define C-union <", type.c-type-tag, ">\n");
+  let def :: <string> = concatenate("define C-union ", register-exported-name(output-name(type.c-type-tag, class: #t)), "\n");
   for (counter :: <integer> from 0 to size(type.c-type-members) - 1 )
     if (object-class(type.c-type-members[counter]) = <c-bit-field>)
       def := concatenate(def, "  // <bit-field> not yet supported.\n");
     else
-      def := concatenate(def, "  slot ", type.c-type-members[counter].c-member-variable-name, " :: ", c-output(type.c-type-members[counter].c-member-variable-type), ";\n");
+      def := concatenate(def, "  slot ", register-exported-name(output-name(type.c-type-members[counter].c-member-variable-name)), " :: ", c-output(type.c-type-members[counter].c-member-variable-type), ";\n");
     end if;
   end for;
   concatenate(def, "end C-union;\n");
@@ -147,7 +180,7 @@ define method c-output
   // This variable is used below.
   let pointer :: <boolean> = #f;
   if (object-class(decl.c-variable-type) = <c-function-type>)
-    let def :: <string> = concatenate("define C-function ", decl.c-variable-name, "\n  c-name: \"", decl.c-variable-name, "\";\n");
+    let def :: <string> = concatenate("define C-function ", register-exported-name(output-name(decl.c-variable-name)), "\n  c-name: \"", decl.c-variable-name, "\";\n");
     for (i :: <integer> from 0 to size(decl.c-variable-type.c-function-parameter-types) - 1 )
       // XXX The following bit of code is UGLY and repeated. Can be fixed.
       let ctype = decl.c-variable-type.c-function-parameter-types[i];
@@ -157,9 +190,9 @@ define method c-output
       end if;
       if (object-class(ctype) = <c-typedef-type>)
         if (pointer)
-          ctype := concatenate("<", ctype.c-typedef-name, "*>");
+          ctype := output-name(ctype.c-typedef-name, class: #t, pointer: #t);
         else
-            ctype := concatenate("<", ctype.c-typedef-name, ">");
+            ctype := register-exported-name(output-name(ctype.c-typedef-name, class: #t));
         end if;
       else
         ctype := c-output(ctype);
@@ -174,9 +207,9 @@ define method c-output
     end if;
     if (object-class(ctype) = <c-typedef-type>)
       if (pointer)
-        ctype := concatenate("<", ctype.c-typedef-name, "*>");
+        ctype := output-name(ctype.c-typedef-name, class: #t, pointer: #t);
       else
-        ctype := concatenate("<", ctype.c-typedef-name, ">");
+        ctype := output-name( ctype.c-typedef-name, class: #t);
     end if;
     else
       ctype := c-output(ctype);
@@ -191,9 +224,9 @@ define method c-output
     end if;
     if (object-class(ctype) = <c-typedef-type>)
       if (pointer)
-        ctype := concatenate("<", ctype.c-typedef-name, "*>");
+        ctype := register-exported-name(output-name( ctype.c-typedef-name, class: #t, pointer: #t));
       else
-        ctype := concatenate("<", ctype.c-typedef-name, ">");
+        ctype := output-name(output-name(ctype.c-typedef-name, class: #t));
     end if;
     else
       ctype := c-output(ctype);
@@ -207,19 +240,32 @@ end method;
 define method c-output
     (decl :: <c-integer-define>)
  => (result :: <string>)
-  concatenate("define constant ", decl.c-define-name, " :: <integer> = ", integer-to-string(decl.c-integer-define-value), ";\n");
+  concatenate("define constant ", register-exported-name(output-name(decl.c-define-name)), " :: <integer> = ", integer-to-string(decl.c-integer-define-value), ";\n");
 end method;
 
 define method c-output
     (decl :: <c-string-define>)
  => (result :: <string>)
-  concatenate("define constant ", decl.c-define-name, " :: <string> = ", decl.c-string-define-value, ";\n");
+  concatenate("define constant ", register-exported-name(output-name(decl.c-define-name)), " :: <string> = ", decl.c-string-define-value, ";\n");
 end method;
+
+// Counter so defines aren't equal. Dunno if this is necessary, but...
+define variable counter :: <integer> = 0;
 
 define method c-output
     (decl :: <c-unknown-define>)
  => (result :: <string>)
-  concatenate("define constant ", decl.c-define-name, ";\n");
+  let result :: <string> = concatenate("define constant ", register-exported-name(output-name(decl.c-define-name)), " = ", integer-to-string(counter), ";\n");
+  counter := counter + 1;
+  result;
+end method;
+
+define method c-output
+    (decl :: <c-empty-define>)
+ => (result :: <string>)
+  let result :: <string> = concatenate("define constant ", register-exported-name(output-name(decl.c-define-name)), " = ", integer-to-string(counter), ";\n");
+  counter := counter + 1;
+  result;
 end method;
 
 // Typedefs.
@@ -237,7 +283,6 @@ define method c-output
 end method;
 
 // Handle <c-file> objects.
-
 define method c-output
     (file :: <c-file>)
  => (result :: <string>)

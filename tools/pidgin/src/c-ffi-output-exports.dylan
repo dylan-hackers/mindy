@@ -16,5 +16,6 @@ define module c-ffi-output
   use c-declarations;
   use ansi-c;
 
-  export c-output;
+  export c-output,
+    exported-names;
 end module;

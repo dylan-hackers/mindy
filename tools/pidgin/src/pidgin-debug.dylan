@@ -8,7 +8,7 @@ copyright:
 define variable debug :: <boolean> = #f;
 
 define method debug-print (decl :: <c-declaration>) => ()
-  format(*standard-output*, "%s\nTranslation: %s\n", format-c-declaration(decl), c-output(decl));
+  format(*standard-output*, "%=\n%s\n", decl, format-c-declaration(decl));
   force-output(*standard-output*);
 end;
 
@@ -16,4 +16,3 @@ define method debug-print (decl :: <c-file>) => ()
   format(*standard-output*, "#include %s\nTranslation: %s\n", c-file-name(decl), c-output(decl));
   force-output(*standard-output*);
 end;
-
