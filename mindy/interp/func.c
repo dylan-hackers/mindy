@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.10 1994/04/11 00:21:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.11 1994/04/11 23:31:49 wlott Exp $
 *
 * This file does whatever.
 *
@@ -36,12 +36,16 @@
 #include "def.h"
 #include "func.h"
 
-obj_t obj_FunctionClass = 0;
-static obj_t obj_RawFunctionClass = 0;
-static obj_t obj_MethodClass, obj_ByteMethodClass;
-static obj_t obj_RawMethodClass, obj_BuiltinMethodClass;
-static obj_t obj_AccessorMethodClass;
-static obj_t obj_GFClass, obj_MethodInfoClass, obj_GFCacheClass;
+obj_t obj_FunctionClass = NULL;
+static obj_t obj_RawFunctionClass = NULL;
+obj_t obj_MethodClass = NULL;
+obj_t obj_ByteMethodClass = NULL;
+static obj_t obj_RawMethodClass;
+static obj_t obj_BuiltinMethodClass = NULL;
+static obj_t obj_AccessorMethodClass = NULL;
+static obj_t obj_GFClass = NULL;
+static obj_t obj_MethodInfoClass = NULL;
+static obj_t obj_GFCacheClass = NULL;
 
 
 /* Tracing support. */
@@ -866,6 +870,11 @@ struct byte_method {
 };
 
 #define BYTE_METHOD(o) obj_ptr(struct byte_method *, o)
+
+obj_t byte_method_component(obj_t method)
+{
+    return BYTE_METHOD(method)->component;
+}
 
 static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
 {
