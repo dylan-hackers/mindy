@@ -15,6 +15,9 @@
 #ifdef __FreeBSD__
   #include <sys/time.h>
 #endif
+#ifdef __APPLE__	/* MacOS X */
+	#include <sys/time.h>
+#endif
 #include <sys/wait.h>
 
 #if defined(__BEOS__)
