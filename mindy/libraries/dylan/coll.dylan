@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.2 1994/03/30 06:07:21 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.3 1994/03/30 17:06:14 wlott Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -49,7 +49,7 @@ define method element(coll :: <collection>, key :: <object>,
 end method element;
 
 define method element-setter (new_value, collection :: <mutable-collection>,
-			      key :: <integer>)
+			      key :: <object>)
   let (init_state, limit, next_state, done?,
        current_key, current_element,
        current_element-setter) = forward-iteration-protocol(collection);
