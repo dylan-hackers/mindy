@@ -889,6 +889,7 @@ type-specifier (enum-specifier)
   %1;
 %
 
+;; Look up a typedef declaration.
 type-specifier (<TYPE-NAME-token>)
   @0.objects[%1.value];
 %
@@ -896,6 +897,8 @@ type-specifier (<TYPE-NAME-token>)
 ;; We use NAME here because people sometimes use struct tags as
 ;; typedef names.  This still appears incorrect to me, but we need it to be
 ;; able to parse existing header files.  -- rgs
+;; Struct tags are in a separate namespace according to the most recent
+;; edition of K&R. This seems correct to me.  -- emk
 struct-or-union-specifier (struct-or-union NAME <lcurly-token>
                            struct-declaration-list <rcurly-token>)
   make-struct-type(%2.value, %4, %1, @0);
