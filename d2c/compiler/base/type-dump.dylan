@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.15 1996/04/13 21:09:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.16 1996/04/15 18:28:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -214,6 +214,12 @@ add-make-dumper(#"defined-class", *compiler-dispatcher*, <defined-cclass>,
 
 add-make-dumper(#"limited-class", *compiler-dispatcher*, <limited-cclass>,
 		$class-dump-slots, load-external: #t);
+
+
+add-make-dumper(#"subclass-type", *compiler-dispatcher*, <subclass-ctype>,
+		list(base-class, base-class:, #f,
+		     subclass-of, of:, #f));
+
 
 add-make-dumper(#"class-proxy", *compiler-dispatcher*, <proxy>,
   list(proxy-for, for:, #f),
