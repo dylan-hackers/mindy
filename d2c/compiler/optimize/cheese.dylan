@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.29 1995/04/27 09:27:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.30 1995/04/27 23:03:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1869,18 +1869,8 @@ define method insert-exit-after
     => ();
   let region = assignment.region;
   let region-parent = region.parent;
-  unless (instance?(region-parent, <compound-region>)
-	    & begin
-		let siblings = region-parent.regions;
-		let num-sibs = siblings.size;
-		num-sibs >= 2
-		  & siblings[num-sibs - 2] == region
-		  & begin
-		      let following = siblings[num-sibs - 1];
-		      instance?(following, <exit>)
-			& following.block-of == target;
-		    end;
-	      end)
+  unless (assignment.next-op == #f
+	    & exit-useless?(region-parent, region, target))
     let exit = make(<exit>, block: target, next: target.exits);
     target.exits := exit;
     let (before, after) = split-after(assignment);
@@ -1890,6 +1880,57 @@ define method insert-exit-after
     delete-stuff-in(component, after);
     delete-stuff-after(component, exit.parent, exit);
   end;
+end;
+
+
+define generic exit-useless?
+    (from :: <region>, after :: <region>, target :: <block-region-mixin>)
+    => res :: <boolean>;
+
+define method exit-useless?
+    (from :: <compound-region>, after :: <region>,
+     target :: <block-region-mixin>)
+    => res :: <boolean>;
+  for (regions = from.regions then regions.tail,
+       second-to-last = #f then last,
+       last = #f then regions.head,
+       until: regions == #())
+  finally
+    if (last == after)
+      exit-useless?(from.parent, from, target);
+    elseif (second-to-last == after
+	      & instance?(last, <exit>)
+	      & last.block-of == target)
+      #t;
+    else
+      #f;
+    end;
+  end;
+end;
+
+define method exit-useless?
+    (from :: <if-region>, after :: <region>, target :: <block-region-mixin>)
+    => res :: <boolean>;
+  exit-useless?(from.parent, from, target);
+end;
+
+define method exit-useless?
+    (from :: <loop-region>, after :: <region>, target :: <block-region-mixin>)
+    => res :: <boolean>;
+  #f;
+end;
+
+define method exit-useless?
+    (from :: <block-region>, after :: <region>, target :: <block-region-mixin>)
+    => res :: <boolean>;
+  from == target | exit-useless?(from.parent, from, target);
+end;
+
+define method exit-useless?
+    (from :: <method-region>, after :: <region>,
+     target :: <block-region-mixin>)
+    => res :: <boolean>;
+  #f;
 end;
 
 
@@ -1949,7 +1990,6 @@ define method all-exits-gone
     (component :: <component>, region :: <block-region>) => ();
   let parent = region.parent;
   if (parent)
-    delete-stuff-after(component, parent, region);
     replace-subregion(component, parent, region, region.body);
   end;
 end;
@@ -1958,7 +1998,7 @@ define method all-exits-gone
     (component :: <component>, region :: <fer-exit-block-region>,
      #next next-method)
     => ();
-  unless (region.catcher.exit-function)
+  unless (region.catcher & region.catcher.exit-function)
     next-method();
   end;
 end;
@@ -1967,12 +2007,6 @@ end;
 define method delete-stuff-after
     (component :: <component>, region :: <compound-region>, after :: <region>)
     => ();
-
-  // We have to delete the stuff after this region first, because calling
-  // replace-subregion (which we want to do below) modifies the tree
-  // structure above this node.
-  delete-stuff-after(component, region.parent, region);
-
   for (remaining = region.regions then remaining.tail,
        until: remaining.head == after)
   finally
@@ -1980,9 +2014,12 @@ define method delete-stuff-after
       delete-stuff-in(component, subregion);
     end;
     remaining.tail := #();
-    if (region.regions.size == 1)
-      replace-subregion(component, region.parent, region, region.regions[0]);
-    end;
+  end;
+
+  delete-stuff-after(component, region.parent, region);
+
+  if (region.regions.size == 1)
+    replace-subregion(component, region.parent, region, region.regions[0]);
   end;
 end;
 
@@ -1998,9 +2035,16 @@ define method delete-stuff-after
 end;
 
 define method delete-stuff-after
-    (component :: <component>, region :: <body-region>, after :: <region>)
+    (component :: <component>, region :: <loop-region>, after :: <region>)
     => ();
-  // There is nothing ``after'' a loop or block region in the flow of control.
+  // There is nothing ``after'' a loop region in the flow of control.
+end;
+
+define method delete-stuff-after
+    (component :: <component>, region :: <block-region>, after :: <region>)
+    => ();
+  // There will be at least on exit (or the exit function), so the code
+  // after the block is still reachable.
 end;
 
 define method delete-stuff-after
