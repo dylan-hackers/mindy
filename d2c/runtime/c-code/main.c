@@ -1,4 +1,4 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.13 1996/11/21 19:26:25 rgs Exp $ */
+/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.14 1996/12/05 14:01:57 nkramer Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -149,8 +149,11 @@ gdb_print_genobj (descriptor_t obj)
   dylanZdylan_visceraZgdb_print_object_METH((descriptor_t *)GC_malloc(10000), obj);
 }
 
-/* Most of these win32-only functions will go away as soon as we move
-   from Visual C++ 4.0 to version 4.2. */
+
+/* win32 specific stuff which patches over deficiencies in the Visual
+   C++ runtime.
+   */
+
 #if (defined(WIN32) && !defined(WIN32_GCC))
 
 double rint(double x)
