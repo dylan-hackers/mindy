@@ -119,7 +119,7 @@ end test bug-706;
 //
 define test bug-655 ()
   check-no-errors("limited(<table>, of: foo)",
-                  limited(<table>, of: make(<class>)));
+                  limited(<table>, of: <list>));
 end test bug-655;
 
 define test bug-621 ()
