@@ -872,7 +872,7 @@ end method sheet-child;
 
 
 //--- Kludge so that sheets can be shared among multiple layouts
-define /*thread*/ variable *old-layout* :: false-or(<sheet>) = #f;
+define thread variable *old-layout* :: false-or(<sheet>) = #f;
 
 define method add-child
     (sheet :: <sheet>, child :: <sheet>, #rest keys, #key index) => (sheet :: <sheet>)
@@ -1413,3 +1413,5 @@ define method do-lower-sheet (parent :: <multiple-child-mixin>, sheet :: <sheet>
   remove!(sheet-children(parent), sheet);
   insert-at!(sheet-children(parent), sheet, #"end")
 end method do-lower-sheet;
+
+

@@ -557,7 +557,7 @@ end method draw-image;
 
 // Some mediums can do better than this...
 // Note that the coordinates are unaffected by the medium transformation!
-define /*sideways*/ method clear-box
+define sideways method clear-box
     (medium :: <basic-medium>, left, top, right, bottom) => ()
   dynamic-bind (medium-brush(medium) = medium-background(medium),
 		medium-transform(medium) = $identity-transform)
@@ -755,3 +755,5 @@ define function set-pixels*
  => (record)
   set-pixels(drawable, color, spread-point-sequence(points))
 end function set-pixels*;
+
+

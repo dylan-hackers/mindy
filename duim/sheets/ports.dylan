@@ -13,7 +13,7 @@ define constant <focus-policy>
     = one-of(#"sheet-under-pointer", #"click-to-select");
 
 define constant <event-processor-type>
-    = one-of( #"single", #"n", #"n+1", #"2n");
+    = one-of(#"single", #"n", #"n+1", #"2n");
 
 define protocol <<port-protocol>> ()
   // Making and destroying ports
@@ -113,6 +113,7 @@ define open abstract primary class <basic-port> (<port>)
   /*sealed*/ slot port-properties :: <stretchy-object-vector> = make(<stretchy-vector>);
   /*sealed*/ slot port-displays :: <stretchy-object-vector> = make(<stretchy-vector>);
   // This tells us what policy we use for event processing:
+  //  - #"single" means we only have a single thread for the whole of DUIM
   //  - #"n" means event processing happens in each user thread
   //  - #"n+1" means there's a single event processing thread that
   //    distributes events to each user thread
@@ -122,7 +123,7 @@ define open abstract primary class <basic-port> (<port>)
     init-keyword: event-processor-type:;
   sealed slot port-event-thread = #f;
   /*sealed*/ slot port-frame-managers :: <stretchy-object-vector> = make(<stretchy-vector>);
-  sealed slot port-input-focus :: false-or(<sheet>) = #f,
+  /*sealed*/ slot port-input-focus :: false-or(<sheet>) = #f,
     setter: %input-focus-setter;
   sealed constant slot port-focus-policy :: <focus-policy> = #"sheet-under-pointer",
     init-keyword: focus-policy:;
@@ -485,3 +486,5 @@ define method port-default-text-style
     (_port :: <port>, sheet :: <sheet>) => (text-style :: false-or(<text-style>))
   #f
 end method port-default-text-style;
+
+
