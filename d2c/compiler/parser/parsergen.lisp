@@ -4,7 +4,7 @@
 ;;; Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ;;; 
 (ext:file-comment
-  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.1.1.1 1994/12/19 13:02:46 wlott Exp $")
+  "$Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parsergen.lisp,v 1.2 1996/01/11 16:08:53 wlott Exp $")
 ;;;
 ;;; **********************************************************************
 ;;;
@@ -707,8 +707,11 @@
 
 (defun emit-production (production gotos ofile)
   (let* ((right-side (production-right-side production))
-	 (pops (length right-side)))
-    (format ofile "  method (state-stack, symbol-stack, srcloc-stack)~%")
+	 (pops (length right-side))
+	 (poped-symbol-stack-var "symbol-stack"))
+    #+nil
+    (format ofile "  method (state-stack, symbol-stack, token, recoveringb)~%")
+    (format ofile "  method (state-stack, symbol-stack)~%")
     (format ofile "    // ~S ->~:[ epsilon~;~:*~{ ~S~}~]~%"
 	    (nonterminal-name (production-left-side production))
 	    (mapcar #'(lambda (sym)
@@ -718,54 +721,59 @@
 			  (nonterminal
 			   (nonterminal-name sym))))
 		    right-side))
-    (format ofile "    let popped-state-stack = pop-~D(state-stack);~%" pops)
-    (format ofile "    let state = ")
+    (format ofile "    values(begin~%")
+    (format ofile "             let popped-state-stack = ")
+    (dotimes (i pops)
+      (format ofile "tail("))
+    (format ofile "state-stack")
+    (dotimes (i pops)
+      (format ofile ")"))
+    (format ofile ";~%")
+    (format ofile "             pair(")
     (etypecase gotos
       (integer
        (format ofile "~D" gotos))
       (list
        (format ofile "select (head(popped-state-stack))~%")
        (dolist (goto gotos)
-	 (format ofile "                  ~S => ~S;~%"
+	 (format ofile "                    ~S => ~S;~%"
 		 (car goto) (cadr goto)))
-       (format ofile "                end"))
+       (format ofile "                  end"))
       (vector
        (dump-constant gotos ofile)
        (format ofile "[head(popped-state-stack)]")))
-    (format ofile ";~%")
-    (format ofile "    let (popped-srcloc-stack")
-    (dotimes (i pops)
-      (format ofile ", rhs-~D-srcloc" (- pops i)))
-    (format ofile ") = pop-~D(srcloc-stack);~%" pops)
-    (format ofile "    let srcloc = ")
-    (case pops
-     (1
-      (format ofile "rhs-1-srcloc;~%"))
-     (t
-      (format ofile "compound-source-location(")
-      (dotimes (i pops)
-	(format ofile "~:[, ~;~]rhs-~D-srcloc" (zerop i) (1+ i)))
-      (format ofile ");~%")))
-    (format ofile "    let (popped-symbol-stack")
+    (format ofile ",~%                  popped-state-stack);~%")
+    (format ofile "           end,~%")
+    (format ofile "           begin~%")
     (dotimes (i pops)
       (let* ((grammar-sym (elt right-side (- pops i 1)))
+	     (var (format nil "rhs-~D" (- pops i)))
 	     (type (etypecase grammar-sym
 		     (terminal
 		      (terminal-kind grammar-sym))
 		     (nonterminal
-		      (nonterminal-type grammar-sym)))))
-	(format ofile ", rhs-~D~@[ :: ~A~]" (- pops i) type)))
+		      (nonterminal-type grammar-sym))))
+	     (temp (format nil "temp~D" (- pops i))))
+	(format ofile "             let ~A~@[ :: ~A~] = head(~A);~%"
+		var type poped-symbol-stack-var)
+	(format ofile "             let ~A = tail(~A);~%"
+		temp poped-symbol-stack-var)
+	(setf poped-symbol-stack-var temp)))
     (let* ((left-side (production-left-side production))
 	   (type (nonterminal-type left-side)))
-      (format ofile ") = pop-~D(symbol-stack);~%" pops)
-      (format ofile "    let symbol~@[ :: ~A~]~%" type))
-    (format ofile "      = begin~%")
-    (dolist (form (production-body production))
-      (format ofile "        ~A~%" form))
-    (format ofile "        end;~%")
-    (format ofile "    values(pair(state, popped-state-stack),~%")
-    (format ofile "           pair(symbol, popped-symbol-stack),~%")
-    (format ofile "           pair(srcloc, popped-srcloc-stack));~%")
+      (format ofile "             pair(~@[check-type(~]begin~%" type)
+      (dolist (form (production-body production))
+	(format ofile "                    ~A~%" form))
+      (cond (type
+	     (format ofile "                             end,~%")
+	     (format ofile "                             ~A),~%" type))
+	    (t
+	     (format ofile "                  end,~%"))))
+    (format ofile "                  ~A);~%" poped-symbol-stack-var)
+    #+nil (format ofile "           end,~%")
+    #+nil (format ofile "           token,~%")
+    #+nil (format ofile "           recovering);~%")
+    (format ofile "           end);~%")
     (format ofile "  end;~%"))
   (values))
 
@@ -854,21 +862,40 @@
 		 (let ((line (read-line ifile)))
 		   (when (string= line "%")
 		     (return))
-		   (loop
-		     (let ((precent (position #\% line)))
-		       (unless precent
-			 (return))
-		       (setf line
-			     (concatenate 'string
-					  (subseq line 0 precent)
-					  "rhs-"
-					  (subseq line (1+ precent))))))
-		   (body line)))
+		   (body (expand-precents line))))
 	       (productions `(,lhs ,rhs ,@(body)))))))))
     (values
      (entry-points)
      (types)
      (productions))))
+
+(defun expand-precents (line)
+  (declare (type simple-string line))
+  (let ((end (length line))
+	(escaped nil)
+	(in-string nil))
+    (declare (type fixnum end)
+	     (type (member t nil) escaped in-string))
+    (do ((index 0 (1+ index)))
+	((= index end))
+      (declare (type fixnum index))
+      (let ((char (schar line index)))
+	(cond ((eql char #\%)
+	       (unless in-string
+		 (setf line
+		       (concatenate 'string
+				    (subseq line 0 index)
+				    "rhs-"
+				    (subseq line (1+ index))))
+		 (setf end (length line)))
+	       (setf escaped nil))
+	      ((eql char #\\)
+	       (setf escaped (not escaped)))
+	      ((eql char #\")
+	       (unless escaped
+		 (setf in-string (not in-string)))
+	       (setf escaped nil))))))
+  line)
 
 (defun grovel-trailer (ifile ofile)
   (loop
