@@ -11,14 +11,13 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.8 1994/03/31 22:45:38 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.9 1994/03/31 23:15:58 wlott Exp $
 //
 //  This file does whatever.
 //
 
 define library Dylan
-  export Dylan;
-  export Extensions;
+  export Dylan, Extensions, System;
 end Dylan;
 
 define module Builtin-Stuff
