@@ -11,3 +11,6 @@ extern int application_argc;
 
 /* Copy of argv pointer */
 extern char **application_argv;
+
+/* Return CPU time used */
+extern long *cpu_time(void);
