@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.8 1994/06/11 02:23:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.9 1994/06/16 22:13:39 wlott Exp $
 *
 * This file does whatever.
 *
@@ -29,6 +29,22 @@
 #include "error.h"
 #include "class.h"
 
+static void maybe_copy_methods(obj_t new_gf, obj_t old_gf)
+{
+    obj_t methods;
+
+    if (old_gf == obj_Unbound)
+	return;
+    check_type(new_gf, obj_GFClass);
+
+    methods = generic_function_methods(old_gf);
+
+    while (methods != obj_Nil) {
+	add_method(new_gf, HEAD(methods));
+	methods = TAIL(methods);
+    }
+}
+
 
 /* Stuff to define builtin stuff. */
 
@@ -39,6 +55,7 @@ void define(char *name, obj_t value)
 
     define_variable(module_BuiltinStuff, namesym, var_Variable);
     var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    maybe_copy_methods(value, var->value);
     var->value = value;
     var->function = func_Maybe;
 }
@@ -50,6 +67,7 @@ void define_constant(char *name, obj_t value)
 
     define_variable(module_BuiltinStuff, namesym, var_Constant);
     var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    maybe_copy_methods(value, var->value);
     var->value = value;
     var->function = func_Maybe;
 }
@@ -71,21 +89,12 @@ void define_generic_function(char *name, int req_args, boolean restp,
     struct variable *var;
     obj_t gf = make_generic_function(namesym, req_args, restp, keys, all_keys,
 				     result_types, more_results_type);
-    obj_t methods;
 
     define_variable(module_BuiltinStuff, namesym, var_GenericFunction);
     var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
-    if (var->value != obj_Unbound)
-	methods = generic_function_methods(var->value);
-    else
-	methods = obj_Nil;
+    maybe_copy_methods(gf, var->value);
     var->value = gf;
     var->function = func_Always;
-
-    while (methods != obj_Nil) {
-	add_method(gf, HEAD(methods));
-	methods = TAIL(methods);
-    }
 }
 
 void define_method(char *name, obj_t specializers, boolean restp,
@@ -116,6 +125,7 @@ void define_class(char *name, obj_t value)
 
     define_variable(module_BuiltinStuff, namesym, var_Class);
     var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    maybe_copy_methods(value, var->value);
     var->value = value;
     var->function = func_No;
 }
@@ -127,6 +137,7 @@ static obj_t init_variable(obj_t var_obj, obj_t value, obj_t type)
 {
     struct variable *var = obj_rawptr(var_obj);
 
+    maybe_copy_methods(value, var->value);
     var->value = value;
     var->type = type;
     if (type != obj_False && subtypep(type, obj_FunctionClass))
