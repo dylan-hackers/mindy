@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.12 1995/04/26 05:46:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.13 1995/04/26 06:58:19 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -261,7 +261,7 @@ define method make-info-for (var :: union(<initial-variable>, <ssa-variable>),
   make(<backend-var-info>, representation: rep, name: name);
 end;
 
-define method make-info-for (defn :: <bindings-definition>,
+define method make-info-for (defn :: <definition>,
 			     output-info :: <output-info>)
     => res :: <backend-var-info>;
   let type = defn.defn-type;
@@ -342,7 +342,7 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
   elseif (~result.dependent-next)
     let var = result.source-exp;
     if (instance?(var.var-info, <values-cluster-info>))
-      write("VALUES-CLUSTER", stream);
+      write("### VALUES-CLUSTER", stream);
     else
       let (name, rep) = c-name-and-rep(var, output-info);
       write(rep.representation-c-type, stream);
@@ -480,7 +480,7 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
     if (~result.dependent-next)
       let var = result.source-exp;
       if (instance?(var.var-info, <values-cluster-info>))
-	write("return VALUES-CLUSTER;\n", stream);
+	write("return ### VALUES-CLUSTER;\n", stream);
       else
 	let (name, rep) = c-name-and-rep(var, output-info);
 	format(stream, "return %s;\n", name);
@@ -611,7 +611,53 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
-  write("ASSIGNMENT;\n", stream);
+  if (defines & instance?(defines.var-info, <values-cluster-info>))
+    write("### VALUES-CLUSTER = ???;\n", stream);
+  else
+    write("### [", stream);
+    for (var = defines then var.definer-next,
+	 first? = #t then #f,
+	 while: var)
+      write(", ", stream);
+      let (name, rep) = c-name-and-rep(var, output-info);
+      write(name, stream);
+    end;
+    write("] = ???;\n", stream);
+  end;
+end;
+
+define method emit-assignment (defines :: false-or(<definition-site-variable>),
+			       op :: <operation>,
+			       output-info :: <output-info>)
+    => ();
+  let stream = make(<byte-string-output-stream>);
+  if (defines & instance?(defines.var-info, <values-cluster-info>))
+    write("### VALUES-CLUSTER", stream);
+  else
+    write("### [", stream);
+    for (var = defines then var.definer-next,
+	 first? = #t then #f,
+	 while: var)
+      unless (first?)
+	write(", ", stream);
+      end;
+      let (name, rep) = c-name-and-rep(var, output-info);
+      write(name, stream);
+    end;
+    write(']', stream);
+  end;
+  write(" = ???(", stream);
+  for (dep = op.depends-on then dep.dependent-next,
+       first? = #t then #f,
+       while: dep)
+    unless (first?)
+      write(", ", stream);
+    end;
+    write(ref-leaf($general-rep, dep.source-exp, output-info), stream);
+  end;
+  write(");\n", stream);
+  write(stream.string-output-stream-string,
+	output-info.output-info-guts-stream);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -621,7 +667,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
   if (instance?(var.var-info, <values-cluster-info>))
     let stream = output-info.output-info-guts-stream;
     if (defines & instance?(defines.var-info, <values-cluster-info>))
-      write("VALUES-CLUSTER = VALUES-CLUSTER;\n", stream);
+      write("### VALUES-CLUSTER = VALUES-CLUSTER;\n", stream);
     else
       let count
 	= for (var = defines then var.definer-next,
@@ -631,12 +677,12 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 	    index;
 	  end;
       unless (count <= var.derived-type.min-values)
-	format("pad(VALUES-CLUSTER, %d);\n", count);
+	format("### pad(VALUES-CLUSTER, %d);\n", count);
       end;
       for (var = defines then var.definer-next,
 	   index from 0,
 	   while: var)
-	let source = format-to-string("VALUES-CLUSTER[%d]", index);
+	let source = format-to-string("### VALUES-CLUSTER[%d]", index);
 	deliver-single-result(var, source, $general-rep, output-info);
       end;
     end;
@@ -740,7 +786,7 @@ define method emit-assignment
     deliver-results(results, result-exprs, output-info);
   elseif (instance?(func.depends-on.source-exp.var-info,
 		      <values-cluster-info>))
-    format(output-info.output-info-guts-stream, "VALUES-CLUSTER = %s;\n",
+    format(output-info.output-info-guts-stream, "### VALUES-CLUSTER = %s;\n",
 	   call);
   else
     let (name, rep) = c-name-and-rep(func.depends-on.source-exp, output-info);
@@ -816,7 +862,7 @@ define method deliver-results (defines :: false-or(<definition-site-variable>),
   let stream = output-info.output-info-guts-stream;
   if (defines & instance?(defines.var-info, <values-cluster-info>))
     // ### Make a values cluster.
-    write("VALUES-CLUSTER = [", stream);
+    write("### VALUES-CLUSTER = [", stream);
     for (val in values, first? = #t then #f)
       unless (first?)
 	write(", ", stream);
