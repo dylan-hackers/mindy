@@ -332,6 +332,7 @@ define method spew-object
 		closest-primary-superclass: object.closest-primary-superclass,
 		direct-subclasses:
 		  make(<literal-list>, contents: object.direct-subclasses),
+		class-functional?: as(<ct-value>, object.functional?),
 		class-primary?: as(<ct-value>, object.primary?),
 		class-abstract?: as(<ct-value>, object.abstract?),
 		class-sealed?: as(<ct-value>, object.sealed?),
