@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.6 1996/01/12 00:58:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.7 1996/02/06 15:40:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -157,25 +157,29 @@ add-od-loader(*default-dispatcher*, #"ratio",
 define method integer-decode-float
     (float :: <float>, precision :: <integer>)
  => (frac :: <extended-integer>, exp :: <integer>);
-  let fclass = object-class(float);
-  let lim = as(fclass, ash(1, precision));
-  let two = as(fclass, 2);
-  let exponent = 0;
-  let current = float;
-  if (current >= lim)
-    while (current >= lim)
+  if (zero?(float))
+    values(as(<extended-integer>, 0), 0);
+  else
+    let fclass = object-class(float);
+    let lim = as(fclass, ash(1, precision));
+    let two = as(fclass, 2);
+    let exponent = 0;
+    let current = float;
+    if (current >= lim)
+      while (current >= lim)
+	current := current / two;
+	exponent := exponent + 1;
+      end;
+    else
+      while (current < lim)
+	current := current * two;
+	exponent := exponent - 1;
+      end;
       current := current / two;
       exponent := exponent + 1;
-    end;
-  else
-    while (current < lim)
-      current := current * two;
-      exponent := exponent - 1;
-    end;
-    current := current / two;
-    exponent := exponent + 1;
+    end if;
+    values(as(<extended-integer>, truncate(current)), exponent);
   end if;
-  values(as(<extended-integer>, truncate(current)), exponent);
 end method;
 
     
@@ -191,7 +195,7 @@ add-od-loader(*default-dispatcher*, #"single-float",
     let frac = load-object-dispatch(state);
     let exp = load-object-dispatch(state);
     assert-end-object(state);
-    as(<single-float>, frac) ^ exp;
+    as(<single-float>, frac) * 2.0 ^ exp;
   end method
 );
 
