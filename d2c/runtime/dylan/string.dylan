@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.4 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.5 1995/11/20 17:52:59 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -101,7 +101,7 @@ seal generic initialize (<byte-string>);
 define sealed inline method element
     (vec :: <byte-string>, index :: <fixed-integer>,
      #key default = $not-supplied)
-    => element :: <byte-character>;
+    => element :: <object>; // because of default:
   if (index >= 0 & index < vec.size)
     %element(vec, index);
   elseif (default == $not-supplied)
