@@ -98,7 +98,7 @@ end method event-where;
 
 
 define method event-modifiers ( event :: <EventRecord> )
-=> ( modifiers :: <integer> );
+=> ( modifiers :: <EventModifiers> );
 	unsigned-short-at( event, offset: 14 );
 end method event-modifiers;
 
