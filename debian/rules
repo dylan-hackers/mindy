@@ -107,10 +107,12 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) bootstrap_clean
 
-	chmod 0755 `pwd`/debian/delMakefiles
-	chmod 0755 `pwd`/debian/delStatics
+	chmod 0777 `pwd`/debian/delMakefiles
+	chmod 0777 `pwd`/debian/delStatics
 	`pwd`/debian/delMakefiles `pwd`
 	`pwd`/debian/delStatics `pwd`
+	chmod 0665 `pwd`/debian/delMakefiles
+	chmod 0665 `pwd`/debian/delStatics
 	-rm -f `pwd`/d2c/compiler/main/d2c.dbc
 	-rm -f `pwd`/ltconfig
 	-rm -f `pwd`/ltmain.sh

@@ -1,3 +1,13 @@
+gwydion-dylan (2.3.9pre4-1) unstable; urgency=low
+
+  * Net networking library.
+  * Fixes based on things found during the ICFP competition.
+  * Generated C code now reuses temporaries.
+  * Don't leave executable helper scripts in the source package.  Clean
+    up the source package.  (Closes:Bug#159328)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sat, 21 Sep 2002 21:10:04 -0700
+
 gwydion-dylan (2.3.9pre3-4) unstable; urgency=low
 
   * Corrected without-bounds-checks
@@ -181,7 +191,7 @@ gwydion-dylan (2.3.5-1) unstable; urgency=low
   * Also includes some fixes to allow buildling on the Alpha, PowerPC,
     and SPARC architectures.  (Closes:Bug#89886)
   * Some predicate logic in the Makefile to only bootstrap when needed.
-    Hope it works!  :-)
+    Hope it works$  :-)
   * Make sure configure is present.  (Closes:Bug#91232).
 
  -- Brent A. Fulgham <bfulgham@debian.org>  Fri, 23 Mar 2001 21:09:43 -0800

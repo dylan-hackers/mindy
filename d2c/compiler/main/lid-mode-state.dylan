@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.6 2002/09/20 23:43:50 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.7 2002/10/13 20:11:31 brent Exp $
 copyright: see below
 
 //======================================================================
@@ -76,6 +76,22 @@ define class <lid-mode-state> (<main-unit-state>)
   slot unit-executable :: false-or(<byte-string>);
 end class <lid-mode-state>;
 
+// Internal.  escape-pounds returns the string with any '#' characters
+// converted to an escaped '\#' character combination for use in Makefiles.
+define function escape-pounds (orig :: <string>) => result :: <string>;
+  let result = make(<stretchy-vector>, size: orig.size);
+
+  for (from-index :: <integer> from 0 below orig.size,
+       to-index from 0)
+    if (orig[from-index] == '#')
+       result[to-index] := '\\';
+       to-index := to-index + 1;
+    end if;
+    result[to-index] := orig[from-index];
+  end for;
+  as(<string>, result);
+end function escape-pounds;
+
 define method parse-lid (state :: <lid-mode-state>) => ();
   let source = make(<source-file>, name: state.unit-lid-file);
   let (header, start-line, start-posn) = parse-header(source);
@@ -145,7 +161,7 @@ end method parse-lid;
 // rather than the result of Dylan->C.
 //
 define method output-c-file-rule
-    (state :: <lid-mode-state>, c-name :: <string>, o-name :: <string>,
+    (state :: <lid-mode-state>, raw-c-name :: <string>, raw-o-name :: <string>,
      #key save-c-file = #f)
  => ();
   let cc-command
@@ -157,6 +173,9 @@ define method output-c-file-rule
 	else
 	  state.unit-target.compile-c-command;
 	end if;
+
+  let c-name = escape-pounds(raw-c-name);
+  let o-name = escape-pounds(raw-o-name);
 
   format(state.unit-makefile, "%s : %s\n", o-name, c-name);
   format(state.unit-makefile, "\t%s\n",
@@ -361,7 +380,6 @@ define method emit-make-prologue (state :: <lid-mode-state>) => ();
   state.unit-real-clean-stream := make(<buffered-byte-string-output-stream>);
   format(state.unit-real-clean-stream, " %s", makefile-name);
 end method emit-make-prologue;
-
 
 // Establish various condition handlers while iterating over all of the source
 // files and compiling each of them to an output file.

@@ -4,16 +4,28 @@ if ($features{'compiled_for_win32'}) {
     push(@compile_commands,
         sprintf($host_platform{'recursive_make_command'},
 		    "..\common\tests", ""));
+    push(@clean_commands,
+        sprintf($host_platform{'recursive_make_command'},
+		    "..\common\tests", "clean"));
     push(@compile_commands,
         sprintf($host_platform{'recursive_make_command'},
 		    "..\d2c\runtime\dylan\tests", ""));
+    push(@clean_commands,
+        sprintf($host_platform{'recursive_make_command'},
+		    "..\d2c\runtime\dylan\tests", "clean"));
 } else {
     push(@compile_commands,
          sprintf($host_platform{'recursive_make_command'},
              "../d2c/runtime/dylan/tests", ""));
+    push(@clean_commands,
+         sprintf($host_platform{'recursive_make_command'},
+             "../d2c/runtime/dylan/tests", "clean"));
     push(@compile_commands,
          sprintf($host_platform{'recursive_make_command'},
              "../common/tests", ""));
+    push(@clean_commands,
+         sprintf($host_platform{'recursive_make_command'},
+             "../common/tests", "clean"));
 }
 
 &compile_subdirs("test-suites", "test-apps");
