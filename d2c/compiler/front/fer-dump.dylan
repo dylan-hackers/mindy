@@ -1,5 +1,42 @@
 module: front
 
+
+// Id stuff.
+
+define variable *id-table* = make(<table>);
+define constant $id-vector = make(<stretchy-vector>);
+
+define method reset-ids () => ();
+  *id-table* := make(<table>);
+  $id-vector.size := 0;
+end;
+
+define constant <id-able>
+  = type-or(<region>, <leaf>, <assignment>);
+
+define method id (thing :: <id-able>) => res :: <integer>;
+  let id = element(*id-table*, thing, default: #f);
+  if (id)
+    id;
+  else
+    let id = $id-vector.size;
+    add!($id-vector, thing);
+    element(*id-table*, thing) := id;
+    id;
+  end;
+end;
+
+define method id (id :: <integer>) => res :: <id-able>;
+  unless (id < $id-vector.size)
+    error("Nothing with id %d\n", id);
+  end;
+  $id-vector[id];
+end;
+
+
+
+// Dump-fer itself.
+
 define method dump-fer (thing, #key stream = *debug-output*) => ();
   pprint-logical-block(stream, body: curry(dump, thing));
   write('\n', stream);
@@ -48,7 +85,7 @@ define method dump (region :: <if-region>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     write("IF (", stream);
+	     format(stream, "[%d]: IF (", region.id);
 	     dump(region.if-test, stream);
 	     write(')', stream);
 	     pprint-indent(#"block", 2, stream);
@@ -70,7 +107,7 @@ define method dump (region :: <block-region>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     write("BLOCK ???", stream);
+	     format(stream, "[%d]: BLOCK ???", region.id);
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.body, stream);
@@ -84,7 +121,7 @@ define method dump (region :: <loop-region>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     write("LOOP", stream);
+	     format(stream, "[%d]: LOOP", region.id);
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.body, stream);
@@ -107,15 +144,12 @@ define method dump (assignment :: <assignment>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     pprint-logical-block
-	       (stream,
-		body: method (stream)
-			dump-defines(assignment.defines, stream);
-			write(' ', stream);
-			pprint-indent(#"block", 2, stream);
-			pprint-newline(#"fill", stream);
-			write(":= ", stream);
-		      end);
+	     format(stream, "[%d]: ", assignment.id);
+	     dump-defines(assignment.defines, stream);
+	     write(' ', stream);
+	     pprint-indent(#"block", 2, stream);
+	     pprint-newline(#"fill", stream);
+	     write(":= ", stream);
 	     dump(assignment.expression, stream);
 	     write(';', stream);
 	   end);
@@ -125,6 +159,7 @@ define method dump (assignment :: <join-assignment>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
+	     format(stream, "[%d]: ", assignment.id);
 	     dump-defines(assignment.defines, stream);
 	     write(' ', stream);
 	     pprint-indent(#"block", 2, stream);
@@ -196,6 +231,12 @@ end;
 
 define method dump (var :: <abstract-variable>, stream :: <stream>) => ();
   dump(var.var-info, stream);
+  format(stream, "[%d]", var.id);
+end;
+
+define method dump (var :: <initial-definition>, stream :: <stream>) => ();
+  dump(var.var-info, stream);
+  format(stream, "[%d]", var.definition-of.id);
 end;
 
 define method dump (info :: <debug-named-info>, stream :: <stream>) => ();
@@ -214,24 +255,29 @@ define method dump (leaf :: <literal-constant>, stream :: <stream>) => ();
   dump(leaf.value, stream);
 end;
 
-define method dump (ct-value :: <ct-literal>, stream :: <stream>) => ();
-  print(ct-value.ct-literal-value, stream, level: 1, length: 3);
-end;
-
 define method dump (ct-value :: <ct-value>, stream :: <stream>) => ();
   print(ct-value, stream, level: 1, length: 3);
+end;
+
+define method dump (ct-value :: <cclass>, stream :: <stream>) => ();
+  write(as(<string>, ct-value.cclass-name.name-symbol), stream);
+end;
+
+define method dump (ct-value :: <ct-literal>, stream :: <stream>) => ();
+  print(ct-value.ct-literal-value, stream, level: 1, length: 3);
 end;
 
 define method dump (leaf :: <definition-constant-leaf>, stream :: <stream>)
     => ();
   dump(leaf.const-defn.defn-name, stream);
+  format(stream, "[%d]", leaf.id);
 end;
 
 define method dump (lambda :: <lambda>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     write("METHOD ", stream);
+	     format(stream, "METHOD [%d] ", lambda.id);
 	     pprint-logical-block
 	       (stream,
 		prefix: "(",
