@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.101 1996/02/10 03:28:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.102 1996/02/10 03:46:31 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -383,7 +383,8 @@ define method clean-for-comment
   string;
 end method clean-for-comment;
 //
-define method clean-for-comment (thing :: <object>) => res :: <byte-string>;
+define method clean-for-comment (thing :: <object>, #key)
+    => res :: <byte-string>;
   clean-for-comment(format-to-string("%s", thing), copy?: #f);
 end method clean-for-comment;
 
