@@ -1,10 +1,12 @@
 module: hello-world
-use-libraries: common-dylan, io, gtk-2
-use-modules: common-dylan, format-out, gtk
+use-libraries: dylan, common-dylan, io, gtk-2
+use-modules: common-dylan, system, streams, standard-io, format-out, gtk
 
-define method hello(widget :: <GtkWidget>, data) => ()
+define constant hello = callback-method
+ (widget :: <GtkWidget>, data :: <raw-pointer>) => ();
   format-out ("Hello, world!\n");
-end method hello;
+  force-output(*standard-output*);
+end;
 
 define method delete-event(widget :: <GtkWidget>, event :: <GdkEvent>, data)
   => (deny-deletion? :: <boolean>)
@@ -25,7 +27,7 @@ begin
   gtk-container-set-border-width (as(<GtkContainer>, window), 10);
 
   let button = gtk-button-new-with-label ("Hello, world!");
-//  g-signal-connect (window, "clicked", hello, #f);
+  g-signal-connect (button, "clicked", hello, #f);
 //  g-signal-connect-swapped (button, "clicked", gtk-widget-destroy, window);
 
   gtk-container-add (as(<GtkContainer>, window), button);

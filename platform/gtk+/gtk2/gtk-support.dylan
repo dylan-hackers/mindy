@@ -1,16 +1,17 @@
 module: gtk-support
 
 define function g-signal-connect(instance, detailed-signal, c-handler, data)
-  g-signal-connect-data (as(<gpointer>, instance), detailed-signal, 
-                         c-handler, data,
-                         $null-pointer, as(<GConnectFlags>, 0))
+  g-signal-connect-data (instance, detailed-signal, 
+                         c-handler, as(<gpointer>, data | $null-pointer),
+                         as(<GClosureNotify>, $null-pointer), 0)
 end function g-signal-connect;
 
 define function g-signal-connect-swapped
     (instance, detailed-signal, c-handler, data)
-  g-signal-connect-data (as(<gpointer>, instance), detailed-signal, 
-                         c-handler, data,
-                         $null-pointer, $G-CONNECT-SWAPPED)
+  g-signal-connect-data (instance, detailed-signal, 
+                         c-handler, as(<gpointer>, data | $null-pointer),
+                         as(<GClosureNotify>, $null-pointer), 
+                         $G-CONNECT-SWAPPED)
 end function g-signal-connect-swapped;
 
 define method export-value(cls == <GCallback>, value :: <function>) => (result :: <function-pointer>);

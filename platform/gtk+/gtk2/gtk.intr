@@ -21,7 +21,9 @@ define interface
 
   pointer "char**" => <c-string-vector>,
     superclasses: {<c-vector>};
-
+  function "g_signal_connect_data",
+    equate-argument: { 1 => <GObject>},
+    equate-argument: { 6 => <integer>};
   struct "struct _GtkAccelGroup",
     superclasses: {<GObject>};
   struct "struct _GtkAccelLabel",
