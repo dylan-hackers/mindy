@@ -29,40 +29,51 @@ do install ('bin', $melange_binary);
 print <<'EOF';
 MC = mindycomp
 
-c-exports.dbc: c-exports.dylan
-	$(MC) -lmelange-c c-exports.dylan -o c-exports.dbc
-c-lexer.dbc: c-lexer.dylan
-	$(MC) -lmelange-c c-lexer.dylan -o c-lexer.dbc
-c-lexer-cpp.dbc: c-lexer-cpp.dylan
-	$(MC) -lmelange-c c-lexer-cpp.dylan -o c-lexer-cpp.dbc
-hp-portability.dbc: hp-portability.dylan
-	$(MC) -lmelange-c hp-portability.dylan -o hp-portability.dbc
-c-parse.dbc: c-parse.dylan
-	$(MC) -lmelange-c c-parse.dylan -o c-parse.dbc
-alignment.dbc: alignment.dylan
-	$(MC) -lmelange-c alignment.dylan -o alignment.dbc
-c-decl.dbc: c-decl.dylan
-	$(MC) -lmelange-c c-decl.dylan -o c-decl.dbc
-c-decl-state.dbc: c-decl-state.dylan
-	$(MC) -lmelange-c c-decl-state.dylan -o c-decl-state.dbc
-c-decl-write.dbc: c-decl-write.dylan
-	$(MC) -lmelange-c c-decl-write.dylan -o c-decl-write.dbc
-exports.dbc: exports.dylan
-	$(MC) -lmelange exports.dylan -o exports.dbc
-name-map.dbc: name-map.dylan
-	$(MC) -lmelange name-map.dylan -o name-map.dbc
-int-lexer.dbc: int-lexer.dylan
-	$(MC) -lmelange int-lexer.dylan -o int-lexer.dbc
-int-parse.dbc: int-parse.dylan
-	$(MC) -lmelange int-parse.dylan -o int-parse.dbc
-interface.dbc: interface.dylan
-	$(MC) -lmelange interface.dylan -o interface.dbc
+c-exports.dbc: $(SRCDIR)/c-exports.dylan
+	$(MC) -lmelange-c $(SRCDIR)/c-exports.dylan -o c-exports.dbc
+c-lexer.dbc: $(SRCDIR)/c-lexer.dylan
+	$(MC) -lmelange-c $(SRCDIR)/c-lexer.dylan -o c-lexer.dbc
+c-lexer-cpp.dbc: $(SRCDIR)/c-lexer-cpp.dylan
+	$(MC) -lmelange-c $(SRCDIR)/c-lexer-cpp.dylan -o c-lexer-cpp.dbc
+c-parse.dbc: $(SRCDIR)/c-parse.dylan
+	$(MC) -lmelange-c $(SRCDIR)/c-parse.dylan -o c-parse.dbc
+alignment.dbc: $(SRCDIR)/alignment.dylan
+	$(MC) -lmelange-c $(SRCDIR)/alignment.dylan -o alignment.dbc
+c-decl.dbc: $(SRCDIR)/c-decl.dylan
+	$(MC) -lmelange-c $(SRCDIR)/c-decl.dylan -o c-decl.dbc
+c-decl-state.dbc: $(SRCDIR)/c-decl-state.dylan
+	$(MC) -lmelange-c $(SRCDIR)/c-decl-state.dylan -o c-decl-state.dbc
+c-decl-write.dbc: $(SRCDIR)/c-decl-write.dylan
+	$(MC) -lmelange-c $(SRCDIR)/c-decl-write.dylan -o c-decl-write.dbc
+exports.dbc: $(SRCDIR)/exports.dylan
+	$(MC) -lmelange $(SRCDIR)/exports.dylan -o exports.dbc
+name-map.dbc: $(SRCDIR)/name-map.dylan
+	$(MC) -lmelange $(SRCDIR)/name-map.dylan -o name-map.dbc
+int-lexer.dbc: $(SRCDIR)/int-lexer.dylan
+	$(MC) -lmelange $(SRCDIR)/int-lexer.dylan -o int-lexer.dbc
+int-parse.dbc: $(SRCDIR)/int-parse.dylan
+	$(MC) -lmelange $(SRCDIR)/int-parse.dylan -o int-parse.dbc
+interface.dbc: $(SRCDIR)/interface.dylan
+	$(MC) -lmelange $(SRCDIR)/interface.dylan -o interface.dbc
 
-OBJS = c-exports.dbc c-lexer.dbc c-lexer-cpp.dbc hp-portability.dbc \
+OBJS = c-exports.dbc c-lexer.dbc c-lexer-cpp.dbc win32-vc-portability.dbc \
 	c-parse.dbc alignment.dbc c-decl.dbc c-decl-state.dbc \
 	c-decl-write.dbc exports.dbc name-map.dbc int-lexer.dbc \
 	int-parse.dbc interface.dbc
 
 melange.dbc: $(OBJS)
-	cat $(OBJS) > $@ 
 EOF
+if ($win32) {
+    print <<'EOF';
+	dbclink $@ $(OBJS)
+win32-vc-portability.dbc: $(SRCDIR)/win32-vc-portability.dylan
+	$(MC) -lmelange-c $(SRCDIR)/win32-vc-portability.dylan -o win32-vc-portability.dbc
+EOF
+} else {
+    print <<'EOF';
+	cat $(OBJS) > $@
+hp-portability.dbc: $(SRCDIR)/hp-portability.dylan
+	$(MC) -lmelange-c $(SRCDIR)/hp-portability.dylan -o hp-portability.dbc
+EOF
+}
+
