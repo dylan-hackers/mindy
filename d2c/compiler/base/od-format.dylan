@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.16 1995/11/13 17:57:52 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.17 1995/11/14 13:38:59 wlott Exp $
 
 /*
 
@@ -1187,7 +1187,7 @@ define class <data-unit> (<object>)
     required-init-keyword: platform-characteristics:;
   slot unit-type :: <fixed-integer>, required-init-keyword: unit-type:;
   slot check-hash :: <integer>, required-init-keyword: check-hash:;
-  slot location-hint :: <location-hint>,
+  slot location-hint :: false-or(<location-hint>),
     required-init-keyword: location-hint:;
   //
   // True if this unit has been completely loaded.
@@ -1356,18 +1356,34 @@ define /* exported */ method add-od-loader
 end method;
 
 
+// Searching for a data-unit file
+
+define variable *Data-Unit-Search-Path* :: <sequence> = #[];
+
+
+define method search-for-file
+    (name :: <byte-string>, hint :: false-or(<location-hint>))
+    => (stream :: false-or(<stream>), found-loc :: false-or(<byte-string>));
+  block (return)
+    local
+      method try (path :: <byte-string>) => ();
+	block (punt)
+	  return(make(<file-stream>, name: path, direction: #"input"),
+		 path);
+	exception (<file-not-found>)
+	  #f;
+	end block;
+      end;
+    for (dir in *Data-Unit-Search-Path*)
+      try(concatenate(dir, "/", name));
+    end;
+    hint & try(hint);
+    values(#f, #f);
+  end;
+end;
+
+
 // find-data-unit
-
-// Open File as an input stream or return #F if not found.
-//
-define method maybe-open (name :: <byte-string>) => res :: false-or(<stream>);
-  block (punt)
-    make(<file-stream>, name: name, direction: #"input");
-  exception (<file-not-found>)
-    punt(#f);
-  end block;
-end method;
-
 
 // Check-unit-header parses the data-unit header, checking that all of the
 // appropriate fields match.  We return a new data-unit and the total data
@@ -1377,7 +1393,7 @@ define method check-unit-header
     (state :: <load-state>, name :: <data-unit-name>,
      expected-type :: <fixed-integer>,
      expected-hash :: false-or(<integer>),
-     location-hint :: <location-hint>)
+     location-hint :: false-or(<location-hint>))
  => (res :: <data-unit>, oa-len :: <fixed-integer>);
   let buffer = state.od-buffer;
   let base = fill-at-least($data-unit-header-size * $word-bytes, state);
@@ -1458,12 +1474,12 @@ define method load-data-unit
     = concatenate(as-lowercase(as(<string>, name)), ".",
     		  $unit-type-strings[type], ".du");
 
-  let stream = (loc & maybe-open(loc)) | maybe-open(name-guess);
+  let (stream, found-loc) = search-for-file(name-guess, loc);
   unless (stream)
-    error("Can't open object dump file #=", name-guess);
+    error("Can't open object dump file %=", name-guess);
   end;
 
-dformat("\nLoading %=\n", name-guess);
+//dformat("\nLoading %=\n", name-guess);
   let (buffer, initial-next, buf-end) = get-input-buffer(stream);
   let state = make(<load-state>, stream: stream, buffer: buffer,
   		   next: initial-next, end: buf-end,
@@ -1471,7 +1487,8 @@ dformat("\nLoading %=\n", name-guess);
 		   dispatcher: dispatcher);
 
   let (unit, oa-len)
-    = check-unit-header(state, name, type, hash, loc | name-guess);
+    = check-unit-header(state, name, type, hash,
+			found-loc[0] == '/' & found-loc);
   state.load-unit := unit;
   state.overall-length := oa-len;
   let rlocal = load-object-dispatch(state);
