@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.15 1995/05/04 04:40:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.16 1995/05/04 07:04:54 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -484,12 +484,16 @@ define method compute-cclass (defn :: <class-definition>)
 	 slots: map(method (slot)
 		      let getter-name = slot.slot-defn-getter-name;
 		      //
-		      // Note: we don't pass in anything for the type, init-value,
-		      // or init-function, because we need to compile-time-eval
-		      // those, which we can't do until tlf-finalization time.
+		      // Note: we don't pass in anything for the type,
+		      // init-value, or init-function, because we need to
+		      // compile-time-eval those, which we can't do until
+		      // tlf-finalization time.
 		      let info = make(<slot-info>,
 				      allocation: slot.slot-defn-allocation,
-				      getter: find-variable(getter-name, create: #t),
+				      getter:
+					find-variable(getter-name, create: #t),
+				      read-only:
+					slot.slot-defn-setter-name == #f,
 				      init-keyword:
 					slot.slot-defn-init-keyword,
 				      init-keyword-required:
