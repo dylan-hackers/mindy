@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.24 1994/06/11 17:16:39 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.25 1994/06/13 21:14:05 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -27,6 +27,9 @@ extern int isatty(int fd);
 #define pause buttplug
 #include <unistd.h>
 #undef pause
+#endif
+#ifdef sgi
+#include <stdlib.h>
 #endif
 
 #include "mindy.h"
