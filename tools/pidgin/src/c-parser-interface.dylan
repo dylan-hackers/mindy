@@ -38,11 +38,11 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 //======================================================================
 
 //======================================================================
-// c-decl-state.dylan attempts to encapsulate the interface between low-level
-// parsing and the higher level set of "declarations" derived from that
-// parsing.  This includes declarations for the "parse-state" which is first
-// created and populated by the parser and later updated with user preferences
-// from the interface definition.
+// c-parser-interface.dylan attempts to encapsulate the interface between
+// low-level parsing and the higher level set of "declarations" derived
+// from that parsing.  This includes declarations for the "parse-state"
+// which is first created and populated by the parser and later updated
+// with user preferences from the interface definition.
 //
 // This also includes several functions designed to be called from within the
 // parser in order to create new declarations.  They are defined here because
@@ -95,6 +95,7 @@ define class <parse-file-state> (<parse-state>)
 end class;
 
 define method initialize (value :: <parse-file-state>, #key)
+/*
   value.objects := make(<string-table>);
   value.structs := make(<string-table>);
   value.pointers := make(<object-table>);
@@ -102,6 +103,7 @@ define method initialize (value :: <parse-file-state>, #key)
 				    dylan-name: "<machine-pointer>",
 				    equated: #t,
 				    name: "statically-typed-pointer");
+*/
 end method initialize;
 
 // Push-include-level informs the <parse-state> that it is now processing a
@@ -171,7 +173,7 @@ end method initialize;
 // this application.  The hash function is very fast, but will fail for empty
 // strings.  Luckily, no such strings should show up in C declarations.
 //
-define class <string-table> (<value-table>) end class;
+define class <string-table> (<table>) end class;
 
 define method fast-string-hash (string :: <string>, initial-state :: <object>)
   values(string.size * 256 + as(<integer>, string.first), initial-state);
@@ -199,7 +201,8 @@ end method;
 //
 define method process-type-list
     (types :: <list>, state :: <parse-state>)
- => (result :: <type-declaration>);
+/* => (result :: <type-declaration>);
+
   // This is just an ad-hoc state machine.  It could have been incorporated
   // into the grammar, but since it wasn't, we have to sort out the mess by
   // hand. 
@@ -289,6 +292,7 @@ define method process-type-list
     signed-type => int-type;
     otherwise => type;
   end select;
+*/
 end method process-type-list;
 
 // Deals with the odd idiomatic data structures which result from the LALR
@@ -298,7 +302,9 @@ end method process-type-list;
 // #(#"vector", length . name)
 // #(#"bitfield", bits . name)
 //
-define method process-declarator
+define method process-declarator (#rest foo)
+
+  /*
     (tp :: <type-declaration>, declarator :: <pair>, state :: <parse-state>)
  => (new-type :: <type-declaration>, name :: <object>);
   case 
@@ -380,22 +386,24 @@ define method process-declarator
     otherwise =>
       parse-error(state, "unknown type modifier");
   end case;
+*/
 end method process-declarator;
 
 // This handles the trivial case in which we are down to the bare "name" and
 // are therefore done.
 //
-define method process-declarator
+define method process-declarator (#rest foo) /*
     (type :: <type-declaration>, declarator :: <object>,
      state :: <parse-state>)
  => (new-type :: <type-declaration>, name :: <object>);
   values(type, declarator);
+*/
 end method process-declarator;
 
 // Walks through the "parse tree" for a c declaration and adds the
 // declared names and their types into the state's typedef or object table. 
 //
-define method declare-objects
+define method declare-objects (#rest foo)/*
     (state :: <parse-state>, new-type :: <type-declaration>, names :: <list>,
      is-typedef? :: <boolean>)
  => ();
@@ -434,6 +442,7 @@ define method declare-objects
       end if;
     end if;
   end for;
+*/
 end method declare-objects;
 
 //----------------------------------------------------------------------
@@ -443,11 +452,12 @@ end method declare-objects;
 // This adds a new declaration to the "declarations" slot, and label it with
 // the appropriate source file name (taken from the state).
 //
-define method add-declaration
+define method add-declaration (#rest foo)/*
     (state :: <parse-file-state>, declaration :: <declaration>)
  => (declaration :: <declaration>);
   push-last(state.declarations, declaration);
   declaration;
+*/
 end method add-declaration;
 
 define constant null-table = make(<table>);
@@ -458,7 +468,7 @@ define constant null-table = make(<table>);
 // invokes "compute-closure" (documented in "c-decls.dylan") to determine
 // other declarations are required to have a complete & consistent interface.
 //
-define method declaration-closure
+define method declaration-closure (#rest foo) /*
     (state :: <parse-file-state>,
      files :: <sequence>, excluded-files :: <sequence>,
      imports :: <table>, file-imports :: <table>,
@@ -514,9 +524,32 @@ define method declaration-closure
   declaration-closure-aux(key-sequence(imports), null-table, subfiles);
 			  
   ordered-decls;
+*/
 end method declaration-closure;
 
-// Seals for file c-decl-state.dylan
+// Main parser routine:
+define function parse-header
+    (rep :: <c-type-repository>, header-filename :: <byte-string>)
+ => ()
+  // use lookup-object to find header
+  // make a <c-file> object
+
+  let tokenizer = make(<tokenizer>, name: header-filename);
+
+//  let parse-state = make(<parse-file-state>, tokenizer: tokenizer);
+//  parse-state.verbose := #t;
+
+//  parse-loop(parse-state);
+//  if (tokenizer.cpp-decls)
+//    do(curry(add-cpp-declaration, parse-state), tokenizer.cpp-decls)
+//  end if;
+//  parse-state;
+
+end function;
+			       
+
+
+// Seals for file c-parser-interface.dylan
 
 // <parse-file-state> -- subclass of <parse-state>
 define sealed domain make(singleton(<parse-file-state>));
