@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.13 1996/04/15 18:15:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.14 1996/05/01 14:36:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -318,7 +318,7 @@ end method cerror;
 
 // check-type -- exported from Dylan
 //
-// Verity that object is an instance of type.  If so, return it.  If not,
+// Verify that object is an instance of type.  If so, return it.  If not,
 // signal a type error.
 //
 // check-type is split into two pieces, check-type and %check-type in order
@@ -342,6 +342,21 @@ define inline method %check-type
     type-error(object, type);
   end;
 end;
+
+// check-types -- internal.
+//
+// Verify that all the objects in the vector are instances of type and
+// signal a type-error if not.  Calls to this are inserted by the compiler
+// to type-check #rest result types.
+// 
+define method check-types
+    (objects :: <simple-object-vector>, type :: <type>)
+    => checked :: <simple-object-vector>;
+  for (object in objects)
+    check-type(object, type);
+  end for;
+  objects;
+end method check-types;
 
 // type-error -- internal.
 //
