@@ -1,12 +1,12 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.4 2000/10/17 09:06:44 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.5 2001/02/08 22:28:19 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -323,8 +323,8 @@ end;
 
 define module top-level-expressions
   use common;
-
   use utils;
+  use source;
   use od-format;
   use errors;
   use tokens;
