@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.17 1995/04/25 02:49:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.18 1995/04/25 03:10:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -690,6 +690,37 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
   // Delete the lambda.
   component.all-methods := remove!(component.all-methods, lambda);
 end;
+
+
+// If optimizations.
+
+define method optimize (component :: <component>, if-region :: <if-region>)
+    => ();
+  let condition-type = if-region.depends-on.source-exp.derived-type;
+  let false = dylan-value(#"<false>");
+  if (csubtype?(condition-type, false))
+    replace-if-with(component, if-region, if-region.else-region);
+    delete-stuff-in(component, if-region.then-region);
+  elseif (~ctypes-intersect?(false, condition-type))
+    replace-if-with(component, if-region, if-region.then-region);
+    delete-stuff-in(component, if-region.else-region);
+  elseif (instance?(if-region.then-region, <empty-region>)
+	    & instance?(if-region.else-region, <empty-region>))
+    replace-if-with(component, if-region, make(<empty-region>));
+  end;
+end;
+
+define method replace-if-with
+    (component :: <component>, if-region :: <if-region>, with :: <region>)
+    => ();
+  let builder = make-builder(component);
+  build-assignment(builder, $Default-Policy, if-region.source-location,
+		   #(), if-region.depends-on.source-exp);
+  build-region(builder, with);
+  replace-subregion(component, if-region.parent, if-region,
+		    builder-result(builder));
+end;
+
 
 
 // Type utilities.
