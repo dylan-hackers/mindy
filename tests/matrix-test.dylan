@@ -2,7 +2,7 @@ module: matrix-test
 author: David Watson, Nick Kramer
 synopsis: Test for the matrix library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/matrix-test.dylan,v 1.1 1996/07/18 10:59:57 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/matrix-test.dylan,v 1.2 1996/08/07 14:52:25 dwatson Exp $
 
 //======================================================================
 //
@@ -28,18 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/matrix-test.dylan,v 1.1 
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library matrix-test
-  use Dylan;
-  use Matrix;
-end library matrix-test;
-
-define module matrix-test
-  use Dylan;
-  use Extensions;
-  use Matrix;
-  use Cheap-io;
-end module matrix-test;
 
 define variable has-errors = #f;
 
@@ -162,7 +150,7 @@ define method misc-test () => ();
   run-test(augment-matrix(matrix-a, matrix-a), matrix-b, "augment-matrix");
 end method misc-test;
 
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   format("\nRegression test for the matrix library.\n\n");
   run-several-tests("Arithmetic", arith-test);
   run-several-tests("Linear Algebra", lin-alg-test);
@@ -172,4 +160,5 @@ define method main (argv0 :: <byte-string>, #rest ignored)
   else
     format("All matrix tests pass.\n");
   end if;
+  force-output(*standard-output*);
 end method main;
