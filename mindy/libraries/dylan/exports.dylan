@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.39 1994/08/18 16:40:07 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.40 1994/08/18 18:41:23 wlott Exp $
 
 //======================================================================
 //
@@ -100,10 +100,7 @@ define module Builtin-Stuff
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
     debugger-return, debugger-eval,
-    on-exit, exit, 
-    <equal-table>, equal-hash, collection-hash,
-    <value-table>, value-hash, sequence-hash, string-hash,
-    row-major-index, rank, dimension;
+    on-exit, exit;
 end Builtin-Stuff;
 
 define module Dylan
@@ -148,7 +145,6 @@ define module Dylan
 	     negative, negative?,
 	     object-class, object-hash,
 	     pair,
-	     row-major-index, rank, dimension,
 	     remove-method, round, round/,
 	     singleton, size, slot-initialized?, sorted-applicable-methods,
 	     subtype?,
@@ -174,7 +170,7 @@ define module Dylan
     class-for-copy, complement, compose, concatenate, concatenate-as,
     condition-format-string, condition-format-arguments, conjoin,
     copy-sequence, curry,
-    default-handler, denominator, dimensions, disjoin, do-handlers,
+    default-handler, denominator, dimension, dimensions, disjoin, do-handlers,
     empty?, even?, every?, expt,
     fill!, find-key, first, first-setter,
     gcd,
@@ -185,10 +181,11 @@ define module Dylan
     numerator,
     odd?,
     pop, pop-last, positive?, push, push-last,
-    range, rationalize, rcurry, reduce, reduce1, remainder, remove,
+    range, rank, rationalize, rcurry, reduce, reduce1, remainder, remove,
     remove!, remove-duplicates, remove-duplicates!, remove-key!,
     replace-elements!, replace-subsequence!, restart-query,
     return-allowed?, return-description, return-query, reverse, reverse!,
+    row-major-index,
     second, second-setter, shallow-copy, signal, size-setter, sort, sort!,
     subsequence-position,
     third, third-setter, type-error-value,
@@ -202,12 +199,12 @@ define module Extensions
     import: {main, exit, on-exit,
 	     format, prin1, print, putc, puts, getc, <byte-vector>,
 	     <boolean>, <true>, <false>,
-	     <weak-pointer>, weak-pointer-object, 
-	     <equal-table>, equal-hash, collection-hash, 
-             <value-table>, value-hash, sequence-hash, string-hash},
+	     <weak-pointer>, weak-pointer-object},
     export: all;
   export
-    one-of, type-or, ignore;
+    one-of, type-or, ignore,
+    <equal-table>, equal-hash, collection-hash, 
+    <value-table>, value-hash, sequence-hash, string-hash;
 end Extensions;
 
 define module System
