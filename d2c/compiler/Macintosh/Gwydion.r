@@ -1,5 +1,5 @@
 // File: Gwydion.r
-// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/Gwydion.r,v 1.2 2002/03/16 23:52:28 gabor Exp $
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/Gwydion.r,v 1.3 2002/04/03 23:10:47 gabor Exp $
 // Purpose: define necessary resources for plugin
 // Author: Gabor Greif <gabor@mac.com>
 // Status: This version is based on the Pro6 CW API
@@ -59,7 +59,7 @@ resource 'vers' (2, PluginResName" Prod")
 	DevelopmentVersion,
 	verUS,
 	CodebaseVersion DevelopmentState,
-	"© 2000-2002, Gwydion Dylan maintainers"
+	"© " CopyrightYears ", Gwydion Dylan maintainers"
 };
 
 resource 'Flag' (128, PluginResName) {
