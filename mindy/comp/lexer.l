@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.20 1996/02/23 21:54:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.21 1996/03/08 21:31:45 nkramer Exp $
 *
 * This file is the lexical analizer.
 *
@@ -131,6 +131,7 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 <etc>to				is(TO);
 <etc>unless			is(UNLESS);
 <etc>until			is(UNTIL);
+<etc>using			is(USING);
 <etc>variable			is(VARIABLE);
 <etc>virtual			is(VIRTUAL);
 <etc>while			is(WHILE);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.25 1996/02/23 21:54:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.26 1996/03/08 21:31:45 nkramer Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -1804,6 +1804,7 @@ static void grovel_in_for_clause(struct in_for_clause *clause,
 {
     struct param *var = clause->vars->required_params;
     struct param *keyed_by = var->next;
+    struct param *protocol = clause->protocol;
     struct symbol *coll = gensym();
     struct symbol *state = gensym();
     struct symbol *limit = gensym();
@@ -1828,7 +1829,12 @@ static void grovel_in_for_clause(struct in_for_clause *clause,
     push_param(make_param(id(state), NULL), params);
     args = make_argument_list();
     add_argument(args, make_argument(make_varref(id(coll))));
-    expr = make_varref(id(sym_ForwardIterationProtocol));
+
+    if (clause->protocol)
+	expr = make_varref(protocol->id);
+    else
+	expr = make_varref(id(sym_ForwardIterationProtocol));
+
     bindings = make_bindings(params, make_function_call(expr, args));
     add_constituent(info->outer_body, make_let(bindings));
 

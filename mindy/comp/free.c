@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/free.c,v 1.6 1996/02/23 21:54:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/free.c,v 1.7 1996/03/08 21:31:45 nkramer Exp $
 *
 * This file frees parts of the parse tree.
 *
@@ -43,6 +43,14 @@
 static void free_id(struct id *id)
 {
     free(id);
+}
+
+static void free_param(struct param *param)
+{
+    free_id(param->id);
+    if (param->type)
+	free_expr(param->type);
+    free(param);
 }
 
 static void free_params(struct param_list *params)
@@ -257,6 +265,8 @@ static void free_for_expr(struct for_expr *e)
 	    {
 		struct in_for_clause *c = (struct in_for_clause *)clause;
 		free_expr(c->collection);
+		if (c->protocol) 
+		    free_param(c->protocol);
 		break;
 	    }
 	  case for_FROM:

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.21 1996/02/23 21:54:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.22 1996/03/08 21:31:45 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -443,6 +443,7 @@ struct in_for_clause {
     struct for_clause *next;
     struct param_list *vars;
     struct expr *collection;
+    struct param *protocol;
 };
 
 enum to_kind {
@@ -713,7 +714,7 @@ extern struct for_clause
 				struct expr *then);
 extern struct for_clause
     *make_in_for_clause(struct param *var, struct param *keyed_by,
-			struct expr *collection);
+			struct expr *collection, struct param *protocol);
 extern struct for_clause
     *make_from_for_clause(struct param *var, struct expr *from,
 			  struct to_part *to, struct expr *by);

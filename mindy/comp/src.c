@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.27 1996/02/23 21:54:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.28 1996/03/08 21:31:45 nkramer Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -1380,7 +1380,7 @@ struct for_clause
 
 struct for_clause
     *make_in_for_clause(struct param *var, struct param *keyed_by,
-			struct expr *collection)
+			struct expr *collection, struct param *protocol)
 {
     struct in_for_clause *res = malloc(sizeof(*res));
     struct param_list *vars = make_param_list();
@@ -1393,6 +1393,7 @@ struct for_clause
     res->next = NULL;
     res->vars = vars;
     res->collection = collection;
+    res->protocol = protocol;
 
     return (struct for_clause *)res;
 }
