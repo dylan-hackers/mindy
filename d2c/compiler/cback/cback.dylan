@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.100 1996/02/10 00:45:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.101 1996/02/10 03:28:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -357,29 +357,34 @@ end;
 // we use this routine to clobber all occurances of */ before actually writing
 // the comment.
 // 
-define method clean-for-comment (thing :: <byte-string>)
+define method clean-for-comment
+    (string :: <byte-string>, #key copy? :: <boolean> = #t)
     => res :: <byte-string>;
-  let len = thing.size;
+  let len = string.size;
   unless (len < 2)
-    let previous-is-star? = thing[0] == '*';
+    let previous-is-star? = string[0] == '*';
     for (index :: <integer> from 1 below len)
-      let char = thing[index];
+      let char = string[index];
       if (char == '*')
 	previous-is-star? := #t;
       elseif (previous-is-star?)
 	previous-is-star? := #f;
 	if (char == '/')
-	  thing[index - 1] := 'X';
-	  thing[index] := 'X';
+	  if (copy?)
+	    string := copy-sequence(string);
+	    copy? := #f;
+	  end if;
+	  string[index - 1] := 'X';
+	  string[index] := 'X';
 	end if;
       end if;
     end for;
   end unless;
-  thing;
+  string;
 end method clean-for-comment;
 //
 define method clean-for-comment (thing :: <object>) => res :: <byte-string>;
-  format-to-string("%s", thing).clean-for-comment;
+  clean-for-comment(format-to-string("%s", thing), copy?: #f);
 end method clean-for-comment;
 
 
