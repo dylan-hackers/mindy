@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.10 1995/05/05 14:41:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.11 1995/05/08 11:42:10 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -104,6 +104,8 @@ define variable *ushort-rep* = #f;
 define variable *byte-rep* = #f;
 define variable *ubyte-rep* = #f;
 
+define variable *ptr-rep* = #f;
+
 define method seed-representations () => ();
   local
     method set-representations(class, speed-rep, space-rep) => ();
@@ -192,6 +194,16 @@ define method seed-representations () => ();
 	       c-type: "long double", class: xf-class, data-word-member: "x");
 	end;
     set-representations(xf-class, xf-rep, xf-rep);
+  end;
+  begin
+    let ptr-cclass = dylan-value(#"<raw-pointer>");
+    *ptr-rep* := make(<data-word-representation>,
+		      alignment: $pointer-alignment, size: $pointer-size,
+		      more-general: $general-rep, c-type: "void *",
+		      to-more-general: #f,
+		      from-more-general: "%s.dataword.ptr",
+		      class: ptr-cclass, data-word-member: "ptr");
+    set-representations(ptr-cclass, *ptr-rep*, *ptr-rep*);
   end;
 end;
 
