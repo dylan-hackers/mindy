@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.16 1996/06/05 01:03:59 bfw Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.17 1996/06/07 00:20:53 bfw Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -136,14 +136,46 @@ static obj_t dylan_buffer_element_setter(obj_t val, obj_t buffer, obj_t index)
     return val;
 }
 
-static obj_t dylan_memcpy(obj_t dst, obj_t dst_off, obj_t src, obj_t src_off,
-			  obj_t count)
+static obj_t dylan_vec_vec_memcpy(obj_t dst, obj_t dst_off,
+				  obj_t src, obj_t src_off,
+				  obj_t count)
+{
+    memmove(vector_data(dst) + fixnum_value(dst_off),
+	    vector_data(src) + fixnum_value(src_off),
+	    fixnum_value(count));
+    return dst;
+}
+
+static obj_t dylan_vec_buf_memcpy(obj_t dst, obj_t dst_off,
+				  obj_t src, obj_t src_off,
+				  obj_t count)
+{
+    memmove(vector_data(dst) + fixnum_value(dst_off),
+	    buffer_data(src) + fixnum_value(src_off),
+	    fixnum_value(count));
+    return dst;
+}
+
+static obj_t dylan_buf_vec_memcpy(obj_t dst, obj_t dst_off,
+				  obj_t src, obj_t src_off,
+				  obj_t count)
+{
+    memmove(buffer_data(dst) + fixnum_value(dst_off),
+	    vector_data(src) + fixnum_value(src_off),
+	    fixnum_value(count));
+    return dst;
+}
+
+static obj_t dylan_buf_buf_memcpy(obj_t dst, obj_t dst_off,
+				  obj_t src, obj_t src_off,
+				  obj_t count)
 {
     memmove(buffer_data(dst) + fixnum_value(dst_off),
 	    buffer_data(src) + fixnum_value(src_off),
 	    fixnum_value(count));
     return dst;
 }
+
 
 static obj_t dylan_unicode_memcpy(obj_t dst, obj_t dst_off, obj_t src,
 				  obj_t src_off, obj_t count)
@@ -220,11 +252,26 @@ void init_buffer_functions(void)
 		  FALSE, obj_BufferClass, dylan_buffer_make);
 
     u = type_union(obj_ByteStringClass, obj_ByteVectorClass);
-    u = type_union(u, obj_BufferClass);
+
     define_method("copy-bytes",
 		  listn(5, u, obj_FixnumClass, u,
 			obj_FixnumClass, obj_FixnumClass),
-		  FALSE, obj_False, FALSE, u, dylan_memcpy);
+		  FALSE, obj_False, FALSE, u, dylan_vec_vec_memcpy);
+
+    define_method("copy-bytes",
+		  listn(5, u, obj_FixnumClass, obj_BufferClass,
+			obj_FixnumClass, obj_FixnumClass),
+		  FALSE, obj_False, FALSE, u, dylan_vec_buf_memcpy);
+
+    define_method("copy-bytes",
+		  listn(5, obj_BufferClass, obj_FixnumClass, u,
+			obj_FixnumClass, obj_FixnumClass),
+		  FALSE, obj_False, FALSE, u, dylan_buf_vec_memcpy);
+
+    define_method("copy-bytes",
+		  listn(5, obj_BufferClass, obj_FixnumClass, obj_BufferClass,
+			obj_FixnumClass, obj_FixnumClass),
+		  FALSE, obj_False, FALSE, u, dylan_buf_buf_memcpy);
 
     define_method("copy-bytes",
 		  listn(5, obj_UnicodeStringClass, obj_FixnumClass,
