@@ -7,12 +7,13 @@
 STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
 	else echo "bootstrap";					\
 	fi)
-VERSION=$(shell cat version)
+VERSION=2.3.12pre3
 MACHINE=$(shell uname -m)
 GCCVER=$(shell gcc -dumpversion | sed "s/\([0-9]\.[0-9]\).*/\1/")
 
 ifeq ("$(MACHINE)", "sparc64")
 	MACHINE=sparc
+	GCCVER=gcc
 else
 	ifeq ("$(MACHINE)", "i686")
 		MACHINE=x86
@@ -26,14 +27,31 @@ else
 				GCCVER=gcc
 			endif
 		endif
+	else
+	    ifeq ("$(MACHINE)", "ppc")
+			ifeq ("$(GCCVER)", "3.3")
+				GCCVER=gcc33
+			else
+				ifeq ("$(GCCVER)", "3.2")
+					GCCVER=gcc32
+				else
+					GCCVER=gcc
+				endif
+			endif
+		else
+			GCCVER=gcc
+		endif
 	endif
 endif
+
 bootstrap-stage1:  bootstrap-stage1-stamp
 bootstrap-stage1-stamp:
 	# Following is needed for bootstrapping
 ifeq ("$(STYLE)", "bootstrap")
-		libtoolize --force
 		aclocal
+		-automake-1.7 --add-missing
+		libtoolize --force --copy
+		autoheader
 		autoconf
 		./configure --with-readline \
 				--prefix=/usr \
@@ -41,13 +59,13 @@ ifeq ("$(STYLE)", "bootstrap")
 				--enable-duim=no \
 				--with-gnu-ld \
 				--with-site-dylan-prefix=/usr
-		libtoolize --force
+		libtoolize --force --copy
 		$(MAKE)
 		$(MAKE) DESTDIR=`pwd`/debian/bootstrap install
 		mkdir `pwd`/bootstrap_compiler
 		ln -sf `pwd`/debian/bootstrap/usr/bin/d2c `pwd`/bootstrap_compiler
 
-		rm -f config.cache
+		-rm -f config.cache
 endif
 
 	touch bootstrap-stage1-stamp
@@ -55,6 +73,9 @@ endif
 bootstrap-stage2:	bootstrap-stage2-stamp
 bootstrap-stage2-stamp:  bootstrap-stage1-stamp
 ifeq ("$(STYLE)", "bootstrap")
+		-rm config.cache
+		-automake-1.7 --add-missing
+		libtoolize --force --copy
 		PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
 		    LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib/dylan/$(VERSION)/$(MACHINE)-linux-$(GCCVER):$(LD_LIBRARY_PATH); \
 		    ./configure --with-readline \
@@ -114,10 +135,10 @@ endif
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp install-stamp config-stamp bootstrap-stage1-stamp bootstrap-stage2-stamp autogen-stamp
-	rm -rf `pwd`/bootstrap_compiler
-	rm -rf `pwd`/debian/bootstrap
-	rm -f config.cache
+	-rm -f build-stamp install-stamp config-stamp bootstrap-stage1-stamp bootstrap-stage2-stamp autogen-stamp
+	-rm -rf `pwd`/bootstrap_compiler
+	-rm -rf `pwd`/debian/bootstrap
+	-rm -f config.cache
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) bootstrap_clean

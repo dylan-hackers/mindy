@@ -1,3 +1,57 @@
+gwydion-dylan (1:2.3.12pre3-1) unstable; urgency=low
+
+  * Bugfixes.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Fri, 19 Mar 2004 22:44:01 -0800
+
+gwydion-dylan (1:2.3.11release-6) unstable; urgency=low
+
+  * Correct a problem with single-file-mode under gcc33.
+  * Correct OpenGL build problem.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Tue, 30 Sep 2003 22:08:51 -0700
+
+gwydion-dylan (1:2.3.11release-5) unstable; urgency=low
+
+  * Correction to gcc identification routine for PPC.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Thu, 25 Sep 2003 23:04:56 -0700
+
+gwydion-dylan (1:2.3.11release-4) unstable; urgency=low
+
+  * Another minor tweak to help the autobuilders.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 22 Sep 2003 22:15:40 -0700
+
+gwydion-dylan (1:2.3.11release-3) unstable; urgency=low
+
+  * Swap build-depends ordering to support autobuilders.  (Closes:#211160)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Fri, 19 Sep 2003 07:16:08 -0700
+
+gwydion-dylan (1:2.3.11release-2) unstable; urgency=low
+
+  * Corrections to support autobuilding of other architectures.  Main problem
+    was that only x86 had multiple gcc version requirements (due to a raft
+    of optimizer bugs from the 3.2-3.3 series).
+  * Corrections to support building under 'stable'.
+  * Fix emacsen handling.  (Closes:#210856)
+  * Correct small string handling bug.
+  * Declare dependency on Automake1.7.  New autogen.sh script creates links
+    for any missing "missing" script and so forth.  (Closes:#187925)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 15 Sep 2003 21:43:01 -0700
+
+gwydion-dylan (1:2.3.11release-1) unstable; urgency=low
+
+  * More upstream changes and updates.
+  * Major floating point improvements.
+  * Removed gcc-3.2 build dependency.
+  * Depends on libgc-dev package (rather than libgc6-dev).
+  * Handle various versions of gcc in a cleaner (and more consistent) fashion.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon,  8 Sep 2003 21:59:43 -0700
+
 gwydion-dylan (2.3.11pre1-1) unstable; urgency=low
 
   * Upstream updates.  Lots of optimizations, bug fixes, etc.
@@ -334,6 +388,3 @@ gwydion-dylan (2.3.1-1) unstable; urgency=low
 
  -- Neil Schemenauer <nascheme@enme.ucalgary.ca> Sat, 12 Jun 1999 11:59:49 -0600
 
-Local variables:
-mode: debian-changelog
-End:
