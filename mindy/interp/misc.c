@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.21 1996/03/18 19:10:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.22 1996/06/12 13:13:02 nkramer Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -151,9 +151,10 @@ static obj_t dylan_get_time_of_day (void)
 
 static obj_t dylan_get_local_timezone (void)
 {
-  tzset();
+    extern long timezone;
 
-  return make_fixnum(timezone);
+    tzset();
+    return make_fixnum(timezone);
 }
 
 static obj_t dylan_local_daylight_savings_time (void)
