@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.17 1995/04/25 20:58:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.18 1995/04/25 23:03:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -370,7 +370,6 @@ end method;
 define method make-primitive-operation
     (builder :: <fer-builder>, name :: <symbol>, operands :: <list>)
  => res :: <operation>;
-  ignore(builder);
   make-operand-dependencies(builder, make(<primitive>, name: name), operands);
 end method;
   
@@ -379,10 +378,17 @@ define method make-mv-operation
     (builder :: <fer-builder>, function :: <leaf>,
      cluster :: <abstract-variable>)
  => res :: <operation>;
-  ignore(builder);
   make-operand-dependencies(builder, make(<mv-call>),
 			    list(function, cluster));
 end method;
+
+
+define method make-set-operation
+    (builder :: <fer-builder>, defn :: <bindings-definition>,
+     value :: <leaf>)
+ => res :: <operation>;
+  make-operand-dependencies(builder, make(<set>, var: defn), value);
+end;
 
 
 define method build-let
