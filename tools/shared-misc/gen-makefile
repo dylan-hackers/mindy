@@ -1,0 +1,233 @@
+#!/usr/local/bin/perl
+
+$#ARGV >= 1 && die "Usage: $0 [directory]\n";
+
+$#ARGV >= 0 && (chdir($ARGV[0]) || die "Can't cd to $ARGV[0]: $!\n");
+
+# Find the current directory.
+chop($cwd = `pwd`);
+
+# Set the default defaults.
+
+$D2CDIR = '/afs/cs/project/gwydion/compiler';
+$D2C = '$(D2CDIR)/bin/d2c';
+$D2CFLAGS = '-L$(D2CDIR)/lib';
+$CFLAGS = '-g';
+$CPPFLAGS = '-I$(D2CDIR)/include';
+
+# Find the defaults
+$subdir = '';
+$buildroot = $cwd;
+until (-e ($defaults = $buildroot . '/Defaults')) {
+    ($buildroot =~ /^(.*)\/([^\/]+)$/)
+      || die("Can't find Defaults and hence can't tell where the root is.\n");
+
+    $subdir = $2 . '/' . $subdir;
+    $buildroot = $1;
+}
+
+# Save the buildroot.
+$orig_buildroot = $buildroot;
+
+# Slurp in the defaults.
+do $defaults;
+die("Problem loading $defaults:\n  $@\n") if $@;
+
+# Check to see if buildroot changed to something else.
+unless ($buildroot eq $orig_buildroot) {
+    $root_inode = (stat($buildroot))[1];
+    $orig_inode = (stat($orig_buildroot))[1];
+    unless ($root_inode == $orig_inode) {
+	die("Defaults changed \$buildroot to:\n  $buildroot\nbut that is a different directory than:\n  $orig_buildroot\n");
+    }
+    ($buildroot =~ /^\//)
+	|| die("\$buildroot is not absolute:\n  $buildroot\n");
+    $defaults = $buildroot . '/Defaults';
+}
+
+# Make sure they set srcroot.  And set it to an absolute pathname.
+$srcroot || die('$srcroot not set in Defaults.\n');
+($srcroot =~ /^\//) || die("\$srcroot is not absolute:\n  $srcroot\n");
+
+# Tack the subdir onto srcroot.  Note: subdir is empty or ends with a /, hence
+# the chop.
+chop($srcdir = $srcroot.'/'.$subdir);
+
+# Likewise for builddir
+chop($builddir = $buildroot.'/'.$subdir);
+
+# Find the Makegen file.
+$makegen = $srcdir . '/Makegen';
+(-e $makegen) || die("No $makegen\n");
+
+# Start the makefile.
+open(MAKEFILE, '>,GNUmakefile') || die("Can't open ,GNUmakefile: $!\n");
+select(MAKEFILE);
+
+print "### This makefile is machine generated.  Don't expect any edits to survive.\n\n";
+print "SRCROOT=$srcroot\n";
+print "SRCDIR=$srcdir\n";
+print 'VPATH=$(SRCDIR)' . "\n";
+print "BUILDROOT=$buildroot\n";
+print "BUILDDIR=$builddir\n";
+$destdir && print "DESTDIR=$destdir\n";
+print "\n.PHONY: default compile install clean\n\n";
+print "default: compile\n\n";
+
+# Slurp in the generator.
+do $makegen;
+die("Problem loading $makegen:\n  $@\n") if $@;
+
+if (@files_to_clean) {
+    push(@clean_commands, "-rm -f @files_to_clean");
+}
+
+push(@GNUmakefile_dependencies, $0, $defaults, $makegen);
+push(@GNUmakefile_commands, $0);
+
+do emit_rule ('compile');
+$destdir && do emit_rule ('install');
+do emit_rule ('clean');
+do emit_rule ('GNUmakefile');
+
+close(MAKEFILE);
+rename(',GNUmakefile', 'GNUmakefile');
+
+sub emit_rule {
+    local($rule) = @_;
+
+    print $rule, ': ', join(' ', eval('@'.$rule.'_dependencies')), "\n";
+    foreach $rule (eval('@'.$rule.'_commands')) {
+	print "\t", $rule, "\n";
+    }
+    print "\n";
+}
+
+
+sub compile_subdirs {
+    local($dir);
+    foreach $dir (@_) {
+	do compile_subdir($dir);
+    }
+}
+
+sub compile_subdir {
+    local($subdir) = @_;
+
+    push(@compile_commands, '$(MAKE) -C ' . $subdir);
+    push(@install_commands, '$(MAKE) -C ' . $subdir . ' install');
+    push(@clean_commands, '$(MAKE) -C ' . $subdir . ' clean');
+}
+
+
+sub emit_library_rule {
+    local($lidfile, $extradeps, $extraflags, @keywords) = @_;
+    local($library, $unit_prefix, $executable);
+
+    unless ($d2c_defines) {
+	print <<EOF;
+D2CDIR=$D2CDIR
+D2C=$D2C
+D2CFLAGS=$D2CFLAGS
+CFLAGS=$CFLAGS
+CPPFLAGS=$CPPFLAGS
+
+export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS)
+
+EOF
+	$d2c_defines = 1;
+    }
+
+    open(LIDFILE, $srcdir.'/'.$lidfile.'.lid')
+      || die("Can't open $lidfile.lid: $!\n");
+
+    while (<LIDFILE>) {
+	if (/^library:[ \t]*(.*)$/i) {
+	    $library = $1;
+	}
+	elsif (/^unit-prefix:[ \t]*(.*)$/i) {
+	    $unit_prefix = $1;
+	}
+	elsif (/^executable:[ \t]*(.*)$/i) {
+	    $executable = $1;
+	}
+	elsif (/^$/) {
+	    last;
+	}
+    }
+    $library || die("No library: header in $lidfile.lid.\n");
+    $unit_prefix || ($unit_prefix = "\L$library\E");
+
+    while (<LIDFILE>) {
+	/\n$/ && chop;
+	s/[ \t]*#.*$//;
+	unless (/^$/) {
+	    s/\.dylan$//;
+	    push(@files_to_clean, $_.'.c', $_.'.o');
+	}
+    }
+
+    push(@files_to_clean, "$unit_prefix-init.c", "$unit_prefix-init.o");
+    push(@files_to_clean, "$unit_prefix-heap.s", "$unit_prefix-heap.o");
+
+    if ($executable) {
+	push(@files_to_clean, $executable, 'heap.s', 'inits.c');
+
+	grep(/^compile$/, @keywords)
+	    && push(@compile_dependencies, $executable);
+
+	grep(/^install$/, @keywords)
+	    && do install('bin', $executable);
+
+	print $executable;
+    }
+    else {
+	local($foo_lib_du, $libfoo_a);
+
+	$foo_lib_du = "\L$library\E.lib.du";
+	$libfoo_a = "lib$unit_prefix.a";
+
+	push(@files_to_clean, $foo_lib_du, $libfoo_a);
+
+	grep(/^compile$/, @keywords)
+	    && push(@compile_dependencies, $foo_lib_du, $libfoo_a);
+
+	grep(/^install$/, @keywords)
+	    && do install('lib', $foo_lib_du, $libfoo_a);
+
+	print $foo_lib_du;
+    }
+    print <<EOF;
+: $lidfile.lid $extradeps
+	\$(D2C) -M \$(D2CFLAGS) $extraflags \$<
+
+include $unit_prefix.dep
+
+EOF
+
+    unless (-e "$unit_prefix.dep") {
+	open(DEP, ">$unit_prefix.dep")
+	    || die("Can't create $unit_prefix.dep: $!\n");
+	close(DEP);
+    }
+}
+
+sub install {
+    local ($subdir, @files) = @_;
+    local ($file, $dst);
+
+    # Don't generate any install rules unless destdir is set.
+    $destdir || return;
+
+    foreach $file (@files) {
+	$dst = "\$(DESTDIR)/$subdir/$file";
+
+	print "$dst: $file\n";
+	print "\t", '@-mv $@ $@.old', "\n";
+	print "\t", 'cp -p $< $@', "\n";
+	print "\t", '@rm -f $@.old', "\n";
+	print "\n";
+
+	push(@install_dependencies, $dst);
+    }
+}
