@@ -1,6 +1,8 @@
 /*
+ * Copyright 1988, 1989 Hans-J. Boehm, Alan J. Demers
  * Copyright (c) 1991-1995 by Xerox Corporation.  All rights reserved.
- * Copyright (c) 1996-1997 by Silicon Graphics.  All rights reserved.
+ * Copyright (c) 1996-1999 by Silicon Graphics.  All rights reserved.
+ * Copyright (c) 1999 by Hewlett-Packard Company.  All rights reserved.
  *
  * THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY EXPRESSED
  * OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.
@@ -31,7 +33,7 @@
       /* make sure the former gets defined to be the latter if appropriate. */
 #     include <features.h>
 #     if 2 <= __GLIBC__
-#       if 0 == __GLIBC_MINOR__
+#       if 2 == __GLIBC__ && 0 == __GLIBC_MINOR__
 	  /* glibc 2.1 no longer has sigcontext.h.  But signal.h	*/
 	  /* has the right declaration for glibc 2.1.			*/
 #         include <sigcontext.h>
@@ -54,13 +56,13 @@
 # include <signal.h>
 
 /* Blatantly OS dependent routines, except for those that are related 	*/
-/* dynamic loading.							*/
+/* to dynamic loading.							*/
 
 # if !defined(THREADS) && !defined(STACKBOTTOM) && defined(HEURISTIC2)
 #   define NEED_FIND_LIMIT
 # endif
 
-# if defined(IRIX_THREADS)
+# if defined(IRIX_THREADS) || defined(HPUX_THREADS)
 #   define NEED_FIND_LIMIT
 # endif
 
@@ -72,7 +74,8 @@
 #   define NEED_FIND_LIMIT
 # endif
 
-# if defined(LINUX) && (defined(POWERPC) || defined(SPARC))
+# if defined(LINUX) && \
+     (defined(POWERPC) || defined(SPARC) || defined(ALPHA) || defined(IA64))
 #   define NEED_FIND_LIMIT
 # endif
 
@@ -139,29 +142,21 @@
 # define OPT_PROT_EXEC 0
 #endif
 
-#if defined(LINUX) && defined(POWERPC)
+#if defined(LINUX) && (defined(POWERPC) || defined(SPARC) || defined(ALPHA) \
+    		       || defined(IA64))
+  /* The I386 case can be handled without a search.  The Alpha case	*/
+  /* used to be handled differently as well, but the rules changed	*/
+  /* for recent Linux versions.  This seems to be the easiest way to	*/
+  /* cover all versions.						*/
   ptr_t GC_data_start;
 
-  void GC_init_linuxppc()
+  extern char * GC_copyright[];  /* Any data symbol would do. */
+
+  void GC_init_linux_data_start()
   {
     extern ptr_t GC_find_limit();
-    extern char **_environ;
-	/* This may need to be environ, without the underscore, for	*/
-	/* some versions.						*/
-    GC_data_start = GC_find_limit((ptr_t)&_environ, FALSE);
-  }
-#endif
 
-#if defined(LINUX) && defined(SPARC)
-  ptr_t GC_data_start;
-
-  void GC_init_linuxsparc()
-  {
-    extern ptr_t GC_find_limit();
-    extern char **_environ;
-      /* This may need to be environ, without the underscore, for     */
-      /* some versions.                                               */
-    GC_data_start = GC_find_limit((ptr_t)&_environ, FALSE);
+    GC_data_start = GC_find_limit((ptr_t)GC_copyright, FALSE);
   }
 #endif
 
@@ -362,7 +357,8 @@ word GC_page_size;
   }
 
 # else
-#   if defined(MPROTECT_VDB) || defined(PROC_VDB) || defined(USE_MMAP)
+#   if defined(MPROTECT_VDB) || defined(PROC_VDB) || defined(USE_MMAP) \
+       || defined(USE_MUNMAP)
 	void GC_setpagesize()
 	{
 	    GC_page_size = GETPAGESIZE();
@@ -441,6 +437,24 @@ ptr_t GC_get_stack_base()
 
 ptr_t GC_get_stack_base()
 {
+    struct Process *proc = (struct Process*)SysBase->ThisTask;
+ 
+    /* Reference: Amiga Guru Book Pages: 42,567,574 */
+    if (proc->pr_Task.tc_Node.ln_Type==NT_PROCESS
+        && proc->pr_CLI != NULL) {
+	/* first ULONG is StackSize */
+	/*longPtr = proc->pr_ReturnAddr;
+	size = longPtr[0];*/
+
+	return (char *)proc->pr_ReturnAddr + sizeof(ULONG);
+    } else {
+	return (char *)proc->pr_Task.tc_SPUpper;
+    }
+}
+
+#if 0 /* old version */
+ptr_t GC_get_stack_base()
+{
     extern struct WBStartup *_WBenchMsg;
     extern long __base;
     extern long __stack;
@@ -463,10 +477,9 @@ ptr_t GC_get_stack_base()
     }
     return (ptr_t)(__base + GC_max(size, __stack));
 }
+#endif /* 0 */
 
-# else
-
-
+# else /* !AMIGA, !OS2, ... */
 
 # ifdef NEED_FIND_LIMIT
   /* Some tools to implement HEURISTIC2	*/
@@ -486,9 +499,9 @@ ptr_t GC_get_stack_base()
 	typedef void (*handler)();
 #   endif
 
-#   if defined(SUNOS5SIGS) || defined(IRIX5)
+#   if defined(SUNOS5SIGS) || defined(IRIX5) || defined(OSF1)
 	static struct sigaction old_segv_act;
-#	if defined(_sigargs) /* !Irix6.x */
+#	if defined(_sigargs) || defined(HPUX) /* !Irix6.x */
 	    static struct sigaction old_bus_act;
 #	endif
 #   else
@@ -497,7 +510,7 @@ ptr_t GC_get_stack_base()
     
     void GC_setup_temporary_fault_handler()
     {
-#	if defined(SUNOS5SIGS) || defined(IRIX5)
+#	if defined(SUNOS5SIGS) || defined(IRIX5) || defined(OSF1)
 	  struct sigaction	act;
 
 	  act.sa_handler	= GC_fault_handler;
@@ -516,10 +529,11 @@ ptr_t GC_get_stack_base()
 	        (void) sigaction(SIGSEGV, &act, 0);
 #	  else
 	        (void) sigaction(SIGSEGV, &act, &old_segv_act);
-#		ifdef _sigargs	/* Irix 5.x, not 6.x */
-		    /* Under 5.x, we may get SIGBUS.			*/
-		    /* Pthreads doesn't exist under 5.x, so we don't	*/
-		    /* have to worry in the threads case.		*/
+#		if defined(IRIX5) && defined(_sigargs) /* Irix 5.x, not 6.x */ \
+		   || defined(HPUX)
+		    /* Under Irix 5.x or HP/UX, we may get SIGBUS.	*/
+		    /* Pthreads doesn't exist under Irix 5.x, so we	*/
+		    /* don't have to worry in the threads case.		*/
 		    (void) sigaction(SIGBUS, &act, &old_bus_act);
 #		endif
 #	  endif	/* IRIX_THREADS */
@@ -533,9 +547,10 @@ ptr_t GC_get_stack_base()
     
     void GC_reset_fault_handler()
     {
-#       if defined(SUNOS5SIGS) || defined(IRIX5)
+#       if defined(SUNOS5SIGS) || defined(IRIX5) || defined(OSF1)
 	  (void) sigaction(SIGSEGV, &old_segv_act, 0);
-#	  ifdef _sigargs	/* Irix 5.x, not 6.x */
+#	  if defined(IRIX5) && defined(_sigargs) /* Irix 5.x, not 6.x */ \
+	     || defined(HPUX)
 	      (void) sigaction(SIGBUS, &old_bus_act, 0);
 #	  endif
 #       else
@@ -580,6 +595,40 @@ ptr_t GC_get_stack_base()
     }
 # endif
 
+#ifdef LINUX_STACKBOTTOM
+
+# define STAT_SKIP 27   /* Number of fields preceding startstack	*/
+			/* field in /proc/<pid>/stat			*/
+
+  ptr_t GC_linux_stack_base(void)
+  {
+    char buf[50];
+    FILE *f;
+    char c;
+    word result = 0;
+    int i;
+
+    sprintf(buf, "/proc/%d/stat", getpid());
+    f = fopen(buf, "r");
+    if (NULL == f) ABORT("Couldn't open /proc/<pid>/stat");
+    c = getc(f);
+    /* Skip the required number of fields.  This number is hopefully	*/
+    /* constant across all Linux implementations.			*/
+      for (i = 0; i < STAT_SKIP; ++i) {
+	while (isspace(c)) c = getc(f);
+	while (!isspace(c)) c = getc(f);
+      }
+    while (isspace(c)) c = getc(f);
+    while (isdigit(c)) {
+      result *= 10;
+      result += c - '0';
+      c = getc(f);
+    }
+    if (result < 0x10000000) ABORT("Absurd stack bottom value");
+    return (ptr_t)result;
+  }
+
+#endif /* LINUX_STACKBOTTOM */
 
 ptr_t GC_get_stack_base()
 {
@@ -601,6 +650,9 @@ ptr_t GC_get_stack_base()
 			      & ~STACKBOTTOM_ALIGNMENT_M1);
 #	   endif
 #	endif /* HEURISTIC1 */
+#	ifdef LINUX_STACKBOTTOM
+	   result = GC_linux_stack_base();
+#	endif
 #	ifdef HEURISTIC2
 #	    ifdef STACK_GROWS_DOWN
 		result = GC_find_limit((ptr_t)(&dummy), TRUE);
@@ -851,6 +903,72 @@ void GC_register_data_segments()
 # else
 # ifdef AMIGA
 
+   void GC_register_data_segments()
+   {
+     struct Process	*proc;
+     struct CommandLineInterface *cli;
+     BPTR myseglist;
+     ULONG *data;
+ 
+     int	num;
+
+
+#    ifdef __GNUC__
+        ULONG dataSegSize;
+        GC_bool found_segment = FALSE;
+	extern char __data_size[];
+
+	dataSegSize=__data_size+8;
+	/* Can`t find the Location of __data_size, because
+           it`s possible that is it, inside the segment. */
+
+#     endif
+
+	proc= (struct Process*)SysBase->ThisTask;
+
+	/* Reference: Amiga Guru Book Pages: 538ff,565,573
+		     and XOper.asm */
+	if (proc->pr_Task.tc_Node.ln_Type==NT_PROCESS) {
+	  if (proc->pr_CLI == NULL) {
+	    myseglist = proc->pr_SegList;
+	  } else {
+	    /* ProcLoaded	'Loaded as a command: '*/
+	    cli = BADDR(proc->pr_CLI);
+	    myseglist = cli->cli_Module;
+	  }
+	} else {
+	  ABORT("Not a Process.");
+ 	}
+
+	if (myseglist == NULL) {
+	    ABORT("Arrrgh.. can't find segments, aborting");
+ 	}
+
+	/* xoper hunks Shell Process */
+
+	num=0;
+        for (data = (ULONG *)BADDR(myseglist); data != NULL;
+             data = (ULONG *)BADDR(data[0])) {
+	  if (((ULONG) GC_register_data_segments < (ULONG) &data[1]) ||
+	      ((ULONG) GC_register_data_segments > (ULONG) &data[1] + data[-1])) {
+#             ifdef __GNUC__
+		if (dataSegSize == data[-1]) {
+		  found_segment = TRUE;
+		}
+# 	      endif
+	      GC_add_roots_inner((char *)&data[1],
+				 ((char *)&data[1]) + data[-1], FALSE);
+          }
+          ++num;
+        } /* for */
+# 	ifdef __GNUC__
+	   if (!found_segment) {
+	     ABORT("Can`t find correct Segments.\nSolution: Use an newer version of ixemul.library");
+	   }
+# 	endif
+  }
+
+#if 0 /* old version */
   void GC_register_data_segments()
   {
     extern struct WBStartup *_WBenchMsg;
@@ -892,6 +1010,7 @@ void GC_register_data_segments()
          }
     }
   }
+#endif /* old version */
 
 
 # else
@@ -932,7 +1051,8 @@ int * etext_addr;
 
 void GC_register_data_segments()
 {
-#   if !defined(PCR) && !defined(SRC_M3) && !defined(NEXT) && !defined(MACOS)
+#   if !defined(PCR) && !defined(SRC_M3) && !defined(NEXT) && !defined(MACOS) \
+       && !defined(MACOSX)
 #     if defined(REDIRECT_MALLOC) && defined(SOLARIS_THREADS)
 	/* As of Solaris 2.3, the Solaris threads implementation	*/
 	/* allocates the data structure for the initial thread with	*/
@@ -946,7 +1066,7 @@ void GC_register_data_segments()
 	GC_add_roots_inner(DATASTART, (char *)(DATAEND), FALSE);
 #     endif
 #   endif
-#   if !defined(PCR) && defined(NEXT)
+#   if !defined(PCR) && (defined(NEXT) || defined(MACOSX))
       GC_add_roots_inner(DATASTART, (char *) get_end(), FALSE);
 #   endif
 #   if defined(MACOS)
@@ -1160,6 +1280,95 @@ void GC_win32_free_heap ()
 
 # endif
 
+#ifdef USE_MUNMAP
+
+/* For now, this only works on some Unix-like systems.  If you 	*/
+/* have something else, don't define USE_MUNMAP.		*/
+/* We assume ANSI C to support this feature.			*/
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+
+/* Compute a page aligned starting address for the unmap 	*/
+/* operation on a block of size bytes starting at start.	*/
+/* Return 0 if the block is too small to make this feasible.	*/
+ptr_t GC_unmap_start(ptr_t start, word bytes)
+{
+    ptr_t result = start;
+    /* Round start to next page boundary.       */
+        result += GC_page_size - 1;
+        result = (ptr_t)((word)result & ~(GC_page_size - 1));
+    if (result + GC_page_size > start + bytes) return 0;
+    return result;
+}
+
+/* Compute end address for an unmap operation on the indicated	*/
+/* block.							*/
+ptr_t GC_unmap_end(ptr_t start, word bytes)
+{
+    ptr_t end_addr = start + bytes;
+    end_addr = (ptr_t)((word)end_addr & ~(GC_page_size - 1));
+    return end_addr;
+}
+
+/* We assume that GC_remap is called on exactly the same range	*/
+/* as a previous call to GC_unmap.  It is safe to consistently	*/
+/* round the endpoints in both places.				*/
+void GC_unmap(ptr_t start, word bytes)
+{
+    ptr_t start_addr = GC_unmap_start(start, bytes);
+    ptr_t end_addr = GC_unmap_end(start, bytes);
+    word len = end_addr - start_addr;
+    if (0 == start_addr) return;
+    if (munmap(start_addr, len) != 0) ABORT("munmap failed");
+    GC_unmapped_bytes += len;
+}
+
+
+void GC_remap(ptr_t start, word bytes)
+{
+    static int zero_descr = -1;
+    ptr_t start_addr = GC_unmap_start(start, bytes);
+    ptr_t end_addr = GC_unmap_end(start, bytes);
+    word len = end_addr - start_addr;
+    ptr_t result;
+
+    if (-1 == zero_descr) zero_descr = open("/dev/zero", O_RDWR);
+    if (0 == start_addr) return;
+    result = mmap(start_addr, len, PROT_READ | PROT_WRITE | OPT_PROT_EXEC,
+	          MAP_FIXED | MAP_PRIVATE, zero_descr, 0);
+    if (result != start_addr) {
+	ABORT("mmap remapping failed");
+    }
+    GC_unmapped_bytes -= len;
+}
+
+/* Two adjacent blocks have already been unmapped and are about to	*/
+/* be merged.  Unmap the whole block.  This typically requires		*/
+/* that we unmap a small section in the middle that was not previously	*/
+/* unmapped due to alignment constraints.				*/
+void GC_unmap_gap(ptr_t start1, word bytes1, ptr_t start2, word bytes2)
+{
+    ptr_t start1_addr = GC_unmap_start(start1, bytes1);
+    ptr_t end1_addr = GC_unmap_end(start1, bytes1);
+    ptr_t start2_addr = GC_unmap_start(start2, bytes2);
+    ptr_t end2_addr = GC_unmap_end(start2, bytes2);
+    ptr_t start_addr = end1_addr;
+    ptr_t end_addr = start2_addr;
+    word len;
+    GC_ASSERT(start1 + bytes1 == start2);
+    if (0 == start1_addr) start_addr = GC_unmap_start(start1, bytes1 + bytes2);
+    if (0 == start2_addr) end_addr = GC_unmap_end(start1, bytes1 + bytes2);
+    if (0 == start_addr) return;
+    len = end_addr - start_addr;
+    if (len != 0 && munmap(start_addr, len) != 0) ABORT("munmap failed");
+    GC_unmapped_bytes += len;
+}
+
+#endif /* USE_MUNMAP */
+
 /* Routine for pushing any additional roots.  In THREADS 	*/
 /* environment, this is also responsible for marking from 	*/
 /* thread stacks.  In the SRC_M3 case, it also handles		*/
@@ -1277,7 +1486,7 @@ void GC_default_push_other_roots()
 
 # if defined(SOLARIS_THREADS) || defined(WIN32_THREADS) \
      || defined(IRIX_THREADS) || defined(LINUX_THREADS) \
-     || defined(IRIX_PCR_THREADS)
+     || defined(IRIX_JDK_THREADS) || defined(HPUX_THREADS)
 
 extern void GC_push_all_stacks();
 
@@ -1404,12 +1613,12 @@ struct hblk *h;
 #   include <sys/syscall.h>
 
 #   define PROTECT(addr, len) \
-    	  if (mprotect((caddr_t)(addr), (int)(len), \
+    	  if (mprotect((caddr_t)(addr), (size_t)(len), \
     	      	       PROT_READ | OPT_PROT_EXEC) < 0) { \
     	    ABORT("mprotect failed"); \
     	  }
 #   define UNPROTECT(addr, len) \
-    	  if (mprotect((caddr_t)(addr), (int)(len), \
+    	  if (mprotect((caddr_t)(addr), (size_t)(len), \
     	  	       PROT_WRITE | PROT_READ | OPT_PROT_EXEC ) < 0) { \
     	    ABORT("un-mprotect failed"); \
     	  }
@@ -1438,7 +1647,11 @@ struct hblk *h;
     typedef void (* SIG_PF)();
 #endif
 #if defined(SUNOS5SIGS) || defined(OSF1) || defined(LINUX)
+# ifdef __STDC__
     typedef void (* SIG_PF)(int);
+# else
+    typedef void (* SIG_PF)();
+# endif
 #endif
 #if defined(MSWIN32)
     typedef LPTOP_LEVEL_EXCEPTION_FILTER SIG_PF;
@@ -1450,17 +1663,34 @@ struct hblk *h;
     typedef void (* REAL_SIG_PF)(int, int, struct sigcontext *);
 #endif
 #if defined(SUNOS5SIGS)
-    typedef void (* REAL_SIG_PF)(int, struct siginfo *, void *);
+# ifdef HPUX
+#   define SIGINFO __siginfo
+# else
+#   define SIGINFO siginfo
+# endif
+# ifdef __STDC__
+    typedef void (* REAL_SIG_PF)(int, struct SIGINFO *, void *);
+# else
+    typedef void (* REAL_SIG_PF)();
+# endif
 #endif
 #if defined(LINUX)
 #   include <linux/version.h>
-#   if (LINUX_VERSION_CODE >= 0x20100) && !defined(M68K) || defined(ALPHA)
+#   if (LINUX_VERSION_CODE >= 0x20100) && !defined(M68K) || defined(ALPHA) || defined(IA64)
       typedef struct sigcontext s_c;
 #   else
       typedef struct sigcontext_struct s_c;
 #   endif
+#   if defined(ALPHA) || defined(M68K)
+      typedef void (* REAL_SIG_PF)(int, int, s_c *);
+#   else
+#     if defined(IA64)
+        typedef void (* REAL_SIG_PF)(int, siginfo_t *, s_c *);
+#     else
+        typedef void (* REAL_SIG_PF)(int, s_c);
+#     endif
+#   endif
 #   ifdef ALPHA
-    typedef void (* REAL_SIG_PF)(int, int, s_c *);
     /* Retrieve fault address from sigcontext structure by decoding	*/
     /* instruction.							*/
     char * get_fault_addr(s_c *sc) {
@@ -1472,8 +1702,6 @@ struct hblk *h;
 	faultaddr += (word) (((int)instr << 16) >> 16);
 	return (char *)faultaddr;
     }
-#   else /* !ALPHA */
-    typedef void (* REAL_SIG_PF)(int, s_c);
 #   endif /* !ALPHA */
 # endif
 
@@ -1509,21 +1737,41 @@ SIG_PF GC_old_segv_handler;	/* Also old MSWIN32 ACCESS_VIOLATION filter */
 #   endif
 # endif
 # if defined(LINUX)
-#   ifdef ALPHA
+#   if defined(ALPHA) || defined(M68K)
       void GC_write_fault_handler(int sig, int code, s_c * sc)
 #   else
-      void GC_write_fault_handler(int sig, s_c sc)
+#     if defined(IA64)
+        void GC_write_fault_handler(int sig, siginfo_t * si, s_c * scp)
+#     else
+        void GC_write_fault_handler(int sig, s_c sc)
+#     endif
 #   endif
 #   define SIG_OK (sig == SIGSEGV)
 #   define CODE_OK TRUE
-	/* Empirically c.trapno == 14, but is that useful?      */
-	/* We assume Intel architecture, so alignment		*/
-	/* faults are not possible.				*/
+	/* Empirically c.trapno == 14, on IA32, but is that useful?     */
+	/* Should probably consider alignment issues on other 		*/
+	/* architectures.						*/
 # endif
 # if defined(SUNOS5SIGS)
-    void GC_write_fault_handler(int sig, struct siginfo *scp, void * context)
-#   define SIG_OK (sig == SIGSEGV)
-#   define CODE_OK (scp -> si_code == SEGV_ACCERR)
+#  ifdef __STDC__
+    void GC_write_fault_handler(int sig, struct SIGINFO *scp, void * context)
+#  else
+    void GC_write_fault_handler(sig, scp, context)
+    int sig;
+    struct SIGINFO *scp;
+    void * context;
+#  endif
+#   ifdef HPUX
+#     define SIG_OK (sig == SIGSEGV || sig == SIGBUS)
+#     define CODE_OK (scp -> si_code == SEGV_ACCERR) \
+		     || (scp -> si_code == BUS_ADRERR) \
+		     || (scp -> si_code == BUS_UNKNOWN) \
+		     || (scp -> si_code == SEGV_UNKNOWN) \
+		     || (scp -> si_code == BUS_OBJERR)
+#   else
+#     define SIG_OK (sig == SIGSEGV)
+#     define CODE_OK (scp -> si_code == SEGV_ACCERR)
+#   endif
 # endif
 # if defined(MSWIN32)
     LONG WINAPI GC_write_fault_handler(struct _EXCEPTION_POINTERS *exc_info)
@@ -1575,7 +1823,15 @@ SIG_PF GC_old_segv_handler;	/* Also old MSWIN32 ACCESS_VIOLATION filter */
 #	  ifdef ALPHA
             char * addr = get_fault_addr(sc);
 #	  else
+#	    ifdef IA64
+	      char * addr = si -> si_addr;
+#	    else
+#             if defined(POWERPC)
+                char * addr = (char *) (sc.regs->dar);
+#	      else
 		--> architecture not supported
+#	      endif
+#	    endif
 #	  endif
 #	endif
 #     endif
@@ -1628,10 +1884,14 @@ SIG_PF GC_old_segv_handler;	/* Also old MSWIN32 ACCESS_VIOLATION filter */
 		    return;
 #		endif
 #		if defined (LINUX)
-#		    ifdef ALPHA
+#		    if defined(ALPHA) || defined(M68K)
 		        (*(REAL_SIG_PF)old_handler) (sig, code, sc);
 #		    else 
+#		      if defined(IA64)
+		        (*(REAL_SIG_PF)old_handler) (sig, si, scp);
+#		      else
 		        (*(REAL_SIG_PF)old_handler) (sig, sc);
+#		      endif
 #		    endif
 		    return;
 #		endif
@@ -1699,7 +1959,7 @@ struct hblk *h;
 
 void GC_dirty_init()
 {
-#if defined(SUNOS5SIGS) || defined(IRIX5)
+#if defined(SUNOS5SIGS) || defined(IRIX5) /* || defined(OSF1) */
     struct sigaction	act, oldact;
 #   ifdef IRIX5
     	act.sa_flags	= SA_RESTART;
@@ -1743,7 +2003,7 @@ void GC_dirty_init()
       }
 #   endif
 #   if defined(SUNOS5SIGS) || defined(IRIX5)
-#     if defined(IRIX_THREADS) || defined(IRIX_PCR_THREADS)
+#     if defined(IRIX_THREADS) || defined(IRIX_JDK_THREADS)
       	sigaction(SIGSEGV, 0, &oldact);
       	sigaction(SIGSEGV, &act, 0);
 #     else
@@ -1769,6 +2029,15 @@ void GC_dirty_init()
 	  GC_err_printf0("Replaced other SIGSEGV handler\n");
 #       endif
       }
+#     ifdef HPUX
+      	  sigaction(SIGBUS, &act, &oldact);
+          GC_old_bus_handler = oldact.sa_handler;
+          if (GC_old_segv_handler != SIG_DFL) {
+#           ifdef PRINTSTATS
+	      GC_err_printf0("Replaced other SIGBUS handler\n");
+#           endif
+          }
+#     endif
 #    endif
 #   if defined(MSWIN32)
       GC_old_segv_handler = SetUnhandledExceptionFilter(GC_write_fault_handler);
@@ -2255,52 +2524,36 @@ struct hblk *h;
 #ifdef SAVE_CALL_CHAIN
 /* Fill in the pc and argument information for up to NFRAMES of my	*/
 /* callers.  Ignore my frame and my callers frame.			*/
-# if defined(OPENBSD)
-void GC_save_callers (info) 
-struct callinfo info[NFRAMES];
-{
-  struct frame *frame;
-  struct frame *fp;
-  int nframes = 0;
-  word GC_save_regs_in_stack();
 
-  frame = (struct frame *) GC_save_regs_in_stack ();
-  
-  for (fp = frame -> fr_fp; fp != 0 && nframes < NFRAMES;
-       fp = fp -> fr_fp, nframes++) {
-      register int i;
-      
-      info[nframes].ci_pc = fp->fr_pc;
-      for (i = 0; i < NARGS; i++) {
-	info[nframes].ci_arg[i] = ~(fp->fr_arg[i]);
-      }
-  }
-  if (nframes < NFRAMES) info[nframes].ci_pc = 0;
-}
-# else
-void GC_save_callers (info) 
-struct callinfo info[NFRAMES];
-{
-  struct frame *frame;
-  struct frame *fp;
-  int nframes = 0;
-  word GC_save_regs_in_stack();
-
-  frame = (struct frame *) GC_save_regs_in_stack ();
-  
-  for (fp = frame -> fr_savfp; fp != 0 && nframes < NFRAMES;
-       fp = fp -> fr_savfp, nframes++) {
-      register int i;
-      
-      info[nframes].ci_pc = fp->fr_savpc;
-      for (i = 0; i < NARGS; i++) {
-	info[nframes].ci_arg[i] = ~(fp->fr_arg[i]);
-      }
-  }
-  if (nframes < NFRAMES) info[nframes].ci_pc = 0;
-}
-
+#ifdef OPENBSD
+#  define FR_SAVFP fr_fp
+#  define FR_SAVPC fr_pc
+#else
+#  define FR_SAVFP fr_savfp
+#  define FR_SAVPC fr_savpc
 #endif
+
+void GC_save_callers (info) 
+struct callinfo info[NFRAMES];
+{
+  struct frame *frame;
+  struct frame *fp;
+  int nframes = 0;
+  word GC_save_regs_in_stack();
+
+  frame = (struct frame *) GC_save_regs_in_stack ();
+  
+  for (fp = frame -> FR_SAVFP; fp != 0 && nframes < NFRAMES;
+       fp = fp -> FR_SAVFP, nframes++) {
+      register int i;
+      
+      info[nframes].ci_pc = fp->FR_SAVPC;
+      for (i = 0; i < NARGS; i++) {
+	info[nframes].ci_arg[i] = ~(fp->fr_arg[i]);
+      }
+  }
+  if (nframes < NFRAMES) info[nframes].ci_pc = 0;
+}
 
 #endif /* SAVE_CALL_CHAIN */
 #endif /* SPARC */

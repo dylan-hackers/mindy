@@ -87,6 +87,10 @@ struct obj_kind GC_obj_kinds[MAXOBJKINDS] = {
 #   define INITIAL_MARK_STACK_SIZE (1*HBLKSIZE)
 		/* INITIAL_MARK_STACK_SIZE * sizeof(mse) should be a 	*/
 		/* multiple of HBLKSIZE.				*/
+		/* The incremental collector actually likes a larger	*/
+		/* size, since it want to push all marked dirty objs	*/
+		/* before marking anything new.  Currently we let it	*/
+		/* grow dynamically.					*/
 # endif
 
 /*
@@ -254,7 +258,12 @@ ptr_t cold_gc_frame;
     	    
     	case MS_PUSH_RESCUERS:
     	    if (GC_mark_stack_top
-    	        >= GC_mark_stack + INITIAL_MARK_STACK_SIZE/4) {
+    	        >= GC_mark_stack + GC_mark_stack_size
+		   - INITIAL_MARK_STACK_SIZE/2) {
+		/* Go ahead and mark, even though that might cause us to */
+		/* see more marked dirty objects later on.  Avoid this	 */
+		/* in the future.					 */
+		GC_mark_stack_too_small = TRUE;
     	        GC_mark_from_mark_stack();
     	        return(FALSE);
     	    } else {
@@ -671,6 +680,12 @@ int all;
 # endif
 word p;
 {
+#   ifdef NURSERY
+      if (0 != GC_push_proc) {
+	GC_push_proc(p);
+	return;
+      }
+#   endif
     GC_PUSH_ONE_STACK(p, 0);
 }
 
@@ -681,7 +696,7 @@ word p;
 # endif
 
 /* As above, but argument passed preliminary test. */
-# ifdef PRINT_BLACK_LIST
+# if defined(PRINT_BLACK_LIST) || defined(KEEP_BACK_PTRS)
     void GC_push_one_checked(p, interior_ptrs, source)
     ptr_t source;
 # else
@@ -744,6 +759,7 @@ register GC_bool interior_ptrs;
     } else {
 	if (!mark_bit_from_hdr(hhdr, displ)) {
 	    set_mark_bit_from_hdr(hhdr, displ);
+ 	    GC_STORE_BACK_PTR(source, (ptr_t)r);
 	    PUSH_OBJ((word *)r, hhdr, GC_mark_stack_top,
 	             &(GC_mark_stack[GC_mark_stack_size]));
 	}
@@ -1102,7 +1118,7 @@ struct hblk *h;
 {
     register hdr * hhdr;
     
-    h = GC_next_block(h);
+    h = GC_next_used_block(h);
     if (h == 0) return(0);
     hhdr = HDR(h);
     GC_push_marked(h, hhdr);
@@ -1114,11 +1130,11 @@ struct hblk *h;
 struct hblk * GC_push_next_marked_dirty(h)
 struct hblk *h;
 {
-    register hdr * hhdr = HDR(h);
+    register hdr * hhdr;
     
     if (!GC_dirty_maintained) { ABORT("dirty bits not set up"); }
     for (;;) {
-        h = GC_next_block(h);
+        h = GC_next_used_block(h);
         if (h == 0) return(0);
         hhdr = HDR(h);
 #	ifdef STUBBORN_ALLOC
@@ -1147,7 +1163,7 @@ struct hblk *h;
     register hdr * hhdr = HDR(h);
     
     for (;;) {
-        h = GC_next_block(h);
+        h = GC_next_used_block(h);
         if (h == 0) return(0);
         hhdr = HDR(h);
 	if (hhdr -> hb_obj_kind == UNCOLLECTABLE) break;

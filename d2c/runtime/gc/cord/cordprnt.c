@@ -255,12 +255,13 @@ int CORD_vsprintf(CORD * out, CORD format, va_list args)
             	/* Use standard sprintf to perform conversion */
             	{
             	    register char * buf;
-            	    va_list vsprintf_args = args;
+            	    va_list vsprintf_args; /* = args; */
             	    	/* The above does not appear to be sanctioned	*/
             	    	/* by the ANSI C standard.			*/
             	    int max_size = 0;
             	    int res;
-            	    	
+            	    
+                    __va_copy(vsprintf_args, args);	
             	    if (width == VARIABLE) width = va_arg(args, int);
             	    if (prec == VARIABLE) prec = va_arg(args, int);
             	    if (width != NONE) max_size = width;

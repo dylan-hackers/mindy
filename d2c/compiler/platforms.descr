@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.24 1999/12/08 08:37:08 igor Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.25 2000/01/24 01:33:27 andreas Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -399,6 +399,7 @@ link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			ppc-linux-gcc
 inherit-from:			gcc linux ppc
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
 platform-name:			alpha-linux-gcc
 inherit-from:			gcc linux alpha

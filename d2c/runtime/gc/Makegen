@@ -1,6 +1,8 @@
 $CFLAGS = "-g -O -DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS "
     . "-DNO_EXECUTE_PERMISSION -DSILENT -DLARGE_CONFIG";
 
+
+
 &emit_c_file_rule('allchblk', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
 &emit_c_file_rule('alloc', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h',
 		  'version.h');
@@ -13,7 +15,7 @@ $CFLAGS = "-g -O -DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS "
 &emit_c_file_rule('finalize', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h',
 		  'gc_mark.h');
 &emit_c_file_rule('headers', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
-&emit_c_file_rule('irix_threads', 'gc.h', 'gc_priv.h', 'gcconfig.h',
+&emit_c_file_rule('hpux_irix_threads', 'gc.h', 'gc_priv.h', 'gcconfig.h',
 		  'gc_hdrs.h');
 &emit_c_file_rule('linux_threads', 'gc.h', 'gc_priv.h', 'gcconfig.h',
 		  'gc_hdrs.h');
@@ -22,9 +24,19 @@ $CFLAGS = "-g -O -DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS "
 if ($target_name =~ /^sparc.*-solaris/) {
     &emit_asm_file_rule('mach_dep', 'sparc_mach_dep');
 } elsif ($target_name =~ /^sparc.*-openbsd/) {
-    &emit_asm_file_rule('mach_dep', 'sparc_openbsd_mach_dep');
+    &emit_asm_file_rule('mach_dep', 'sparc_sunos4_mach_dep');
+} elsif ($target_name =~ /^sparc.*-sunos4/) {
+    &emit_asm_file_rule('mach_dep', 'sparc_sunos4_mach_dep');
 } elsif ($target_name =~ /^alpha/) {
     &emit_cppasm_file_rule('mach_dep', 'alpha_mach_dep');
+} elsif ($target_name =~ /^mips-irix/) {
+    &emit_asm_file_rule('mach_dep', 'mips_sgi_mach_dep');
+} elsif ($target_name =~ /^mips-riscos/) {
+    &emit_asm_file_rule('mach_dep', 'mips_ultrix_mach_dep');
+} elsif ($target_name =~ /^mips-ultrix/) {
+    &emit_asm_file_rule('mach_dep', 'mips_ultrix_mach_dep');
+} elsif ($target_name =~ /rs6000/) {
+    &emit_asm_file_rule('mach_dep', 'rs6000_mach_dep');
 } else {
     local ($CFLAGS) = "-g";
     &emit_c_file_rule('mach_dep', 'gc.h', 'gc_priv.h', 'gcconfig.h',
@@ -70,7 +82,7 @@ $objs =
     . " dyn_load$dot_obj"
     . " finalize$dot_obj"
     . " headers$dot_obj"
-    . " irix_threads$dot_obj"
+    . " hpux_irix_threads$dot_obj"
     . " linux_threads$dot_obj"
     . " mach_dep$dot_obj"
     . " malloc$dot_obj"
@@ -90,9 +102,14 @@ $objs =
 
 print "$lib_name: $objs\n";
 print "\trm -f $lib_name\n\t";
+
+if($target_name =~ /^ppc/) {
+    $target_platform{'link_shared_library_command'} = $target_platform{'link_shared_library_command'} . " -static";
+}
+
 if ($shared) {
     printf($target_platform{'link_shared_library_command'}, $lib_name,
-	   $objs, $libdir);
+     $objs, $libdir);
     print "\n";
     if ($static) {
 	local ($dot_lib)

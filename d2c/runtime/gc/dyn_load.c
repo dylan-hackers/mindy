@@ -47,8 +47,7 @@
 #if (defined(DYNAMIC_LOADING) || defined(MSWIN32)) && !defined(PCR)
 #if !defined(SUNOS4) && !defined(SUNOS5DL) && !defined(IRIX5) && \
     !defined(MSWIN32) && !(defined(ALPHA) && defined(OSF1)) && \
-    !defined(HP_PA) && !(defined(LINUX) && defined(__ELF__)) && \
-    !(defined(FREEBSD) && defined(__ELF__)) && \
+    !defined(HPUX) && !(defined(LINUX) && defined(__ELF__)) && \
     !defined(RS6000) && !defined(SCO_ELF)
  --> We only know how to find data segments of dynamic libraries for the
  --> above.  Additional SVR4 variants might not be too
@@ -284,6 +283,9 @@ void GC_register_dynamic_libraries()
 static struct link_map *
 GC_FirstDLOpenedLinkMap()
 {
+#   ifdef __GNUC__
+#     pragma weak _DYNAMIC
+#   endif
     extern ElfW(Dyn) _DYNAMIC[];
     ElfW(Dyn) *dp;
     struct r_debug *r;
@@ -323,76 +325,6 @@ void GC_register_dynamic_libraries()
         
 	e = (ElfW(Ehdr) *) lm->l_addr;
         p = ((ElfW(Phdr) *)(((char *)(e)) + e->e_phoff));
-        offset = ((unsigned long)(lm->l_addr));
-        for( i = 0; i < (int)(e->e_phnum); ((i++),(p++)) ) {
-          switch( p->p_type ) {
-            case PT_LOAD:
-              {
-                if( !(p->p_flags & PF_W) ) break;
-                start = ((char *)(p->p_vaddr)) + offset;
-                GC_add_roots_inner(start, start + p->p_memsz, TRUE);
-              }
-              break;
-            default:
-              break;
-          }
-	}
-    }
-}
-
-#endif
-
-#if defined(FREEBSD) && defined(__ELF__)
-/* Dynamic loading code for Linux running ELF. Somewhat tested on
- * Linux/x86, untested but hopefully should work on Linux/Alpha. 
- * This code was derived from the Solaris/ELF support. Thanks to
- * whatever kind soul wrote that.  - Patrick Bridges */
-
-#include <elf.h>
-#include <link.h>
-
-static struct link_map *
-GC_FirstDLOpenedLinkMap()
-{
-    extern Elf_Dyn _DYNAMIC[];
-    Elf_Dyn *dp;
-    struct r_debug *r;
-    static struct link_map *cachedResult = 0;
-
-    if( _DYNAMIC == 0) {
-        return(0);
-    }
-    if( cachedResult == 0 ) {
-        int tag;
-        for( dp = _DYNAMIC; (tag = dp->d_tag) != 0; dp++ ) {
-            if( tag == DT_DEBUG ) {
-                struct link_map *lm
-                        = ((struct r_debug *)(dp->d_un.d_ptr))->r_map;
-                if( lm != 0 ) cachedResult = lm->l_next; /* might be NIL */
-                break;
-            }
-        }
-    }
-    return cachedResult;
-}
-
-
-void GC_register_dynamic_libraries()
-{
-  struct link_map *lm = GC_FirstDLOpenedLinkMap();
-  
-
-  for (lm = GC_FirstDLOpenedLinkMap();
-       lm != (struct link_map *) 0;  lm = lm->l_next)
-    {
-	Elf_Ehdr * e;
-        Elf_Phdr * p;
-        unsigned long offset;
-        char * start;
-        register int i;
-        
-	e = (Elf_Ehdr *) lm->l_addr;
-        p = (Elf_Phdr *)(((char *)(e)) + e->e_phoff);
         offset = ((unsigned long)(lm->l_addr));
         for( i = 0; i < (int)(e->e_phnum); ((i++),(p++)) ) {
           switch( p->p_type ) {
@@ -726,7 +658,7 @@ void GC_register_dynamic_libraries()
 }
 #endif
 
-#if defined(HP_PA)
+#if defined(HPUX)
 
 #include <errno.h>
 #include <dl.h>
@@ -749,6 +681,11 @@ void GC_register_dynamic_libraries()
 
       /* Check if this is the end of the list or if some error occured */
         if (status != 0) {
+#	 ifdef HPUX_THREADS
+	   /* I've seen errno values of 0.  The man page is not clear	*/
+	   /* as to whether errno should get set on a -1 return.	*/
+	   break;
+#	 else
           if (errno == EINVAL) {
               break; /* Moved past end of shared library list --> finished */
           } else {
@@ -759,6 +696,7 @@ void GC_register_dynamic_libraries()
 	      }
               ABORT("shl_get failed");
           }
+#	 endif
         }
 
 #     ifdef VERBOSE
@@ -781,7 +719,7 @@ void GC_register_dynamic_libraries()
         index++;
     }
 }
-#endif /* HP_PA */
+#endif /* HPUX */
 
 #ifdef RS6000
 #pragma alloca
