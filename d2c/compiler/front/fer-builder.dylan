@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.21 1995/04/27 04:42:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.22 1995/04/30 10:36:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -172,9 +172,36 @@ end method;
 
 
 define method build-region(builder :: <internal-builder>, region :: <region>)
- => ();
+    => ();
   add-body-region(builder, region);
 end method;
+
+define method build-region
+    (builder :: <internal-builder>, region :: <compound-region>)
+    => ();
+  for (region in region.regions)
+    build-region(builder, region);
+  end;
+end method;
+
+define method build-region
+    (builder :: <internal-builder>, region :: <simple-region>)
+    => ();
+  let current = builder.body-stack.head;
+  if (instance?(current, <simple-region>))
+    let cur-last = current.last-assign;
+    let reg-first = region.first-assign;
+    cur-last.next-op := reg-first;
+    reg-first.prev-op := cur-last;
+    current.last-assign := region.last-assign;
+    for (assign = reg-first then assign.next-op,
+	 while: assign)
+      assign.region := current;
+    end;
+  else
+    add-body-region(builder, region);
+  end;
+end;
 
 
 // If "else", pop both bodies, otherwise a body-region with one body.  If the
