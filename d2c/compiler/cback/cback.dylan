@@ -269,7 +269,7 @@ define method make-info-for (defn :: <bindings-definition>,
     = if (instance?(rep, <immediate-representation>))
 	new-global(output-info);
       else
-	new-root(defn.defn-init-value, output-info);
+	new-root(defn.ct-value, output-info);
       end;
   make(<backend-var-info>, representation: rep, name: name);
 end;
@@ -408,7 +408,7 @@ define method emit-tlf-gunk (tlf :: <define-bindings-tlf>,
 	format(stream, "static %s %s",
 	       rep.representation-c-type,
 	       info.backend-var-info-name);
-	let init-value = defn.defn-init-value;
+	let init-value = defn.ct-value;
 	if (init-value)
 	  let (init-value-expr, init-value-rep)
 	    = c-expr-and-rep(init-value, rep, output-info);
@@ -626,7 +626,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       output-info :: <output-info>)
     => ();
   let (name, rep) = c-name-and-rep(expr, output-info);
-  if (~expr.var-info.var-defn.defn-init-value)
+  if (~expr.var-info.var-defn.ct-value)
     let stream = output-info.output-info-guts-stream;
     if (rep.representation-has-bottom-value?)
       let temp = new-local(output-info);
@@ -730,7 +730,7 @@ define method deliver-single-result (var :: <global-variable>,
 				     #next next-method)
     => ();
   next-method();
-  unless (var.var-info.var-defn.defn-init-value)
+  unless (var.var-info.var-defn.ct-value)
     let (target-name, target-rep) = c-name-and-rep(var, output-info);
     unless (target-rep.representation-has-bottom-value?)
       let stream = output-info.output-info-guts-stream;
@@ -780,6 +780,22 @@ define method default-primitive-emitter
   write(");\n", stream);
   deliver-results(defines, #[], output-info);
 end;
+
+define-primitive
+  (#"values",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let results = make(<stretchy-vector>);
+     for (dep = operation.depends-on then dep.dependent-next,
+	  while: dep)
+       let expr = ref-leaf($general-rep, dep.source-exp, output-info);
+       add!(results, pair(expr, $general-rep));
+     end;
+     deliver-results(defines, results, output-info);
+   end);
+
 
 define-primitive
   (#"fixnum-=",
@@ -1048,7 +1064,7 @@ define method ref-leaf (target-rep :: <representation>,
 			output-info :: <output-info>)
     => res :: <string>;
   let (name, rep) = c-name-and-rep(leaf, output-info);
-  if (~leaf.var-info.var-defn.defn-init-value)
+  if (~leaf.var-info.var-defn.ct-value)
     let stream = output-info.output-info-guts-stream;
     if (rep.representation-has-bottom-value?)
       let temp = new-local(output-info);
