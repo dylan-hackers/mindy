@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.20 2001/02/08 22:31:39 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.21 2001/02/25 20:33:58 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -87,13 +87,13 @@ copyright: see below
 define class <heap-file-state> (<file-state>)
   //
   // Layouts we have already spewed struct declarations for.
-  slot file-layouts-exist-for :: <string-table>,
-    init-function: curry(make, <string-table>);
+  constant slot file-layouts-exist-for :: <string-table>
+    = make(<string-table>);
   //
   // The prefix we are pre-pending to each symbol to guarantee uniqueness.
   constant slot id-prefix :: <byte-string> = "L", init-keyword: #"id-prefix";
   //
-  // The id counter used to generate unique names when we arn't dumping the
+  // The id counter used to generate unique names when we aren't dumping the
   // object ourselves (and therefore cannot reference it relative to the
   // heap base).
   slot next-id :: <integer> = 0;
@@ -112,11 +112,11 @@ define class <global-heap-file-state> (<heap-file-state>)
   //
   // When dumping symbols, we chain them together.  This holds the current
   // head of that chain.
-  slot symbols :: type-union(<literal-false>, <literal-symbol>),
-    init-function: curry(make, <literal-false>);
+  slot symbols :: type-union(<literal-false>, <literal-symbol>) = make(<literal-false>);
 end class <global-heap-file-state>;
 
 define sealed domain make(singleton(<global-heap-file-state>));
+define sealed domain initialize(<global-heap-file-state>);
 
 // <local-heap-file-state> -- internal.
 //
@@ -126,16 +126,15 @@ define class <local-heap-file-state> (<heap-file-state>)
   //
   // Holds the objects that have been referenced but are not going to be
   // dumped until the global heap is dumped.
-  slot undumped-objects :: <stretchy-vector>,
-    init-function: curry(make, <stretchy-vector>);
+  slot undumped-objects :: <stretchy-vector> = make(<stretchy-vector>);
   //
   // Holds the extra labels we've had to allocate for externally defined
   // ctvs.
-  slot extra-labels :: <stretchy-vector>,
-    init-function: curry(make, <stretchy-vector>);
+  slot extra-labels :: <stretchy-vector> = make(<stretchy-vector>);
 end class <local-heap-file-state>;
 
 define sealed domain make(singleton(<local-heap-file-state>));
+define sealed domain initialize(<local-heap-file-state>);
 
 // <extra-label> -- internal.
 //
@@ -186,7 +185,7 @@ define method build-global-heap
     (undumped-objects :: <simple-object-vector>,
      state :: <global-heap-file-state>)
     => ();
-  maybe-emit-include("runtime.h", state);
+  maybe-emit-include("runtime.h", state, left: '"', right: '"');
 
   for (obj in undumped-objects)
     object-name(obj, state);
@@ -215,7 +214,7 @@ define method build-local-heap
     (unit :: <unit-state>, state :: <local-heap-file-state>)
  => (undumped :: <simple-object-vector>,
      extra-labels :: <simple-object-vector>);
-  maybe-emit-include("runtime.h", state);
+  maybe-emit-include("runtime.h", state, left: '"', right: '"');
 
   let stream = state.file-body-stream;
   for (root in unit.unit-init-roots, index from 0)
@@ -387,22 +386,23 @@ define method spew-reference
       else
 	values(object, 0);
       end;
-  spew-heap-prototype(object-name(heapptr, state), heapptr, state);
+  let object-name = object-name(heapptr, state);
+  spew-heap-prototype(object-name, heapptr, state);
   select (object by instance?)
     <literal-integer> =>
       format(state.file-guts-stream, "{ (heapptr_t) &%s, { %d } } /* %s */", 
-	     object-name(heapptr, state), dataword, tag.clean-for-comment);
+	     object-name, dataword, tag.clean-for-comment);
     <literal-single-float> =>
       format(state.file-guts-stream, "{ (heapptr_t) &%s, { %d } } /* %s */",
-	     object-name(heapptr, state), single-float-bits(dataword),
+	     object-name, single-float-bits(dataword),
 	     tag.clean-for-comment);
     <literal-character> =>
       format(state.file-guts-stream, "{ (heapptr_t) &%s, { %d } } /* %s */", 
-	     object-name(heapptr, state), as(<integer>, dataword),
+	     object-name, as(<integer>, dataword),
 	     tag.clean-for-comment);
     otherwise =>
       format(state.file-guts-stream, "{ (heapptr_t) &%s, { %= } } /* %s */", 
-	     object-name(heapptr, state), dataword, tag.clean-for-comment);
+	     object-name, dataword, tag.clean-for-comment);
   end select;
 end;
 
@@ -415,9 +415,10 @@ define method spew-reference
     (object :: <proxy>, rep :: <general-representation>,
      tag :: <byte-string>, state :: <heap-file-state>)
     => ();
-  spew-heap-prototype(object-name(object, state), object, state);
+  let object-name = object-name(object, state);
+  spew-heap-prototype(object-name, object, state);
   format(state.file-guts-stream, "{ (heapptr_t) &%s, { 0 } } /* %s */",
-	 object-name(object, state), tag.clean-for-comment);
+	 object-name, tag.clean-for-comment);
 end;
 
 // spew-reference{<ct-value>,<heap-representation>}
@@ -427,9 +428,10 @@ end;
 define method spew-reference
     (object :: <ct-value>, rep :: <heap-representation>,
      tag :: <byte-string>, state :: <heap-file-state>) => ();
-  spew-heap-prototype(object-name(object, state), object, state);
+  let object-name = object-name(object, state);
+  spew-heap-prototype(object-name, object, state);
   format(state.file-guts-stream, "(heapptr_t) &%s /* %s */",
-	 object-name(object, state), tag.clean-for-comment);
+	 object-name, tag.clean-for-comment);
 end;
 
 // spew-reference{<ct-entry-point>,<immediate-representation>}
@@ -464,7 +466,8 @@ define method spew-reference
      tag :: <byte-string>, state :: <heap-file-state>)
     => ();
   let proxy = make(<proxy>, for: object.ct-value-cclass);
-  spew-heap-prototype(object-name(proxy, state), proxy, state);
+  let object-name = object-name(proxy, state);
+  spew-heap-prototype(object-name, proxy, state);
 
   let info = get-info-for(object.ct-entry-point-for, state);
   let name = entry-name(object, state);
@@ -476,7 +479,7 @@ define method spew-reference
   end select;
 
   format(state.file-guts-stream, "{ (heapptr_t) &%s, { %s } }",
-	 object-name(proxy, state), name, tag.clean-for-comment);
+	 object-name, name, tag.clean-for-comment);
 end;
 
 // object-name -- internal.
@@ -522,8 +525,7 @@ define method object-name (object :: <ct-value>, state :: <heap-file-state>)
       end if;
     end if;
   end unless;
-  let name = info.const-info-heap-labels.first;
-  name;
+  info.const-info-heap-labels.first;
 end method object-name;
 
 
@@ -931,7 +933,7 @@ define method spew-object
 		    // this will need to be updated when
 		    // Unicode is fully supported
 		    let substr = format-to-string("\\x%x", logand(code, #xff));
-		    do(method (c) add!($spewed-string-buffer, c) end, substr);
+		    do(curry(add!, $spewed-string-buffer), substr);
 		  end if;
 	      end select;
 	    end for;
