@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.26 1995/06/05 21:06:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.27 1995/06/05 23:20:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -752,8 +752,14 @@ end;
 define method count-distinct-specializers
     (methods :: <list>, arg-posn :: <fixed-integer>)
     => count :: <fixed-integer>;
-  // ### so what if we don't dispatch off the better args first?
-  1;
+  let distinct-specializers = #();
+  for (meth in methods)
+    let specializer = meth.function-defn-signature.specializers[arg-posn];
+    unless (member?(specializer, distinct-specializers))
+      distinct-specializers := pair(specializer, distinct-specializers);
+    end;
+  end;
+  distinct-specializers.size;
 end;
 
 
