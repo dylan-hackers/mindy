@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.15 2001/10/11 21:40:46 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.16 2003/04/02 07:39:10 housel Exp $
 copyright: see below
 
 
@@ -944,13 +944,13 @@ define constant $Initial-State
 	     pair('=', #"double-equal"),
 	     pair('>', #"arrow"),
 	     pair("a-zA-Z", #"symbol"),
-	     pair("0-9!&*<|^$%@_-+~?/", #"leading-graphic")),
+	     pair("-0-9!&*<|^$%@_+~?/", #"leading-graphic")),
        state(#"double-equal", make-double-equal,
 	     pair("a-zA-Z", #"symbol"),
-	     pair("0-9!&*<=>|^$%@_-+~?/", #"leading-graphic")),
+	     pair("-0-9!&*<=>|^$%@_+~?/", #"leading-graphic")),
        state(#"arrow", $arrow-token,
 	     pair("a-zA-Z", #"symbol"),
-	     pair("0-9!&*<=>|^$%@_-+~?/", #"leading-graphic")),
+	     pair("-0-9!&*<=>|^$%@_+~?/", #"leading-graphic")),
        state(#"question", $question-token,
 	     pair('?', #"double-question"),
 	     pair('=', #"question-equal")),
@@ -999,11 +999,11 @@ define constant $Initial-State
        state(#"tilde-equal-equal", make-binary-operator),
        state(#"operator-graphic", make-binary-operator,
 	     pair("a-zA-Z", #"symbol"),
-	     pair("0-9!&*<=>|^$%@_-+~?/", #"leading-graphic")),
+	     pair("-0-9!&*<=>|^$%@_+~?/", #"leading-graphic")),
        state(#"operator-graphic-pre-equal", make-binary-operator,
 	     pair('=', #"operator-graphic"),
 	     pair("a-zA-Z", #"symbol"),
-	     pair("0-9!&*<>|^$%@_-+~?/", #"leading-graphic")),
+	     pair("-0-9!&*<>|^$%@_+~?/", #"leading-graphic")),
        state(#"leading-graphic", #f,
 	     pair("0-9!&*<=>|^$%@_+~?/", #"leading-graphic"),
 	     pair('-', #"leading-graphic"),
