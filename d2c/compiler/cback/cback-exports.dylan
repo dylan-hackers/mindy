@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.7 1996/02/09 03:31:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.8 1996/02/16 03:49:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -38,6 +38,7 @@ define module cback
   use ctype;
   use define-constants-and-variables;
   use define-functions;
+  use define-classes;
   use definitions;
   use forward-defn-classes;
   use flow;
@@ -54,9 +55,12 @@ define module cback
   use variables;
 
   export
-    <unit-state>, unit-init-roots, unit-root-names,
+    <unit-state>, unit-prefix, unit-init-roots, unit-eagerly-reference,
+    <root>, root-name, root-init-value, root-comment,
     <file-state>, 
     emit-prologue, emit-tlf-gunk, emit-component,
+    get-info-for, const-info-heap-labels, const-info-heap-labels-setter,
+    const-info-dumped?, const-info-dumped?-setter,
     entry-point-c-name;
 end;
 
@@ -78,8 +82,9 @@ define module heap
   use define-functions;
   use define-classes;
   use cback;
+  use od-format;
 
   export
-    build-initial-heap, build-local-heap;
+    build-global-heap, build-local-heap;
 end;
 

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.104 1996/02/13 05:38:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.105 1996/02/16 03:49:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -47,11 +47,11 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 //     => (name :: <string>, rep :: <representation>);
 //      Looks up the "info" for the given variable and returns a legal
 //      C variable name and the "representation" of the variable.
-//   get-info-for(thing :: <annotatable>, file :: <file-state>);
+//   get-info-for(thing :: <annotatable>, file :: false-or(<file-state>));
 //      Retrieves the back-end specific info corresponding to "thing".
 //      The type of the result depends entirely upon the type of
 //      "thing", but its name will most likely end in "-info>".
-//   make-info-for(thing :: <annotatable>, file :: <file-state>);
+//   make-info-for(thing :: <annotatable>, file :: false-or(<file-state>));
 //      Actually computes the back-end specific info for an object.
 //      This is an arbitrary computation and the type of the result is
 //      entirely dependent upon the type of "thing".
@@ -249,9 +249,29 @@ define class <unit-state> (<object>)
   // Vector of the initial values for the roots vector.
   slot unit-init-roots :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
-  slot unit-root-names :: <collection>,
+  //
+  // Vector of the ctvs we want to force into the local heap irrespective of
+  // whether or not they are actually referenced.  We do this for things we
+  // are optimistic about being referenced someplace but don't want to have
+  // to wait until the global heap to dump.
+  slot unit-eagerly-reference :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
 end;
+
+define class <root> (<object>)
+  //
+  // The name for this root, or #f if it will be accessed by index.
+  slot root-name :: false-or(<byte-string>),
+    init-value: #f, init-keyword: name:;
+  //
+  // The initial value for this root.
+  slot root-init-value :: false-or(<ct-value>),
+    init-value: #f, init-keyword: init-value:;
+  //
+  // Some comment about what this root entry is used for.
+  slot root-comment :: false-or(<byte-string>),
+    init-value: #f, init-keyword: comment:;
+end class <root>;
 
 define class <file-state> (<object>)
   //
@@ -347,8 +367,8 @@ define generic emit-prototype-for
 // that the returned object will be back-end specific data describing
 // "thing". 
 //
-define method get-info-for (thing :: <annotatable>,
-			    file :: <file-state>)
+define method get-info-for
+    (thing :: <annotatable>, file :: false-or(<file-state>))
     => res :: <object>;
   thing.info | (thing.info := make-info-for(thing, file));
 end;
@@ -533,14 +553,24 @@ end method new-global;
 
 define method new-root
     (init-value :: false-or(<ct-value>), file :: <file-state>,
-     #key prefix :: <string> = "R")
+     #key prefix :: false-or(<byte-string>),
+          comment :: false-or(<byte-string>))
   let unit = file.file-unit;
   let roots = unit.unit-init-roots;
   let index = roots.size;
-  roots[index] := init-value;
-  let name = new-global(file, prefix: prefix);
-  unit.unit-root-names[index] := name;
+  let name = prefix & new-global(file, prefix: prefix);
+  let root = make(<root>, init-value: init-value, name: name,
+		  comment: comment);
+  roots[index] := root;
+  name | stringify(unit.unit-prefix, "_roots[", index, ']');
 end;
+
+
+define method eagerly-reference (ctv :: <ct-value>, file :: <file-state>)
+    => ();
+  add!(file.file-unit.unit-eagerly-reference, ctv);
+end method eagerly-reference;
+
 
 //========================================================================
 // "Cluster" operations
@@ -684,8 +714,7 @@ define method make-info-for
   make(<backend-var-info>, representation: rep, name: #f);
 end;
 
-define method make-info-for (defn :: <definition>,
-			     file :: <file-state>)
+define method make-info-for (defn :: <definition>, file :: <file-state>)
     => res :: <backend-var-info>;
   let type = defn.defn-type;
   let rep = if (type)
@@ -702,7 +731,9 @@ define method make-info-for (defn :: <definition>,
 			else
 			  defn.ct-value;
 			end,
-			file, prefix: defn.defn-name.c-prefix);
+			file,
+			prefix: defn.defn-name.c-prefix,
+			comment: format-to-string("%s", defn.defn-name));
     make(<backend-var-info>, representation: *general-rep*, name: name);
   end;
 end;
@@ -795,7 +826,7 @@ end;
 
 define method make-function-info
     (class :: <class>, name :: <string>, signature :: <signature>,
-     closure-var-types :: <list>, file :: <file-state>)
+     closure-var-types :: <list>)
     => res :: <function-info>;
   let argument-reps
     = begin
@@ -861,7 +892,7 @@ define method make-info-for
   make-function-info(<function-info>, function.name,
 		     make(<signature>, specializers: function.argument-types,
 			  returns: function.result-type),
-		     #(), file);
+		     #());
 end;
 
 define method entry-point-c-name (entry :: <ct-entry-point>)
@@ -885,21 +916,62 @@ end method;
 
 // Constant stuff.
 
-define class <constant-info> (<object>)
+define abstract class <constant-info> (<object>)
+  //
+  // The C ``expression'' for referencing this constant.
   slot const-info-expr :: false-or(<byte-string>),
     init-value: #f, init-keyword: expr:;
+  //
+  // Flag used by the heap dumper to indicate when an object has been queued
+  // for dumping.
+  slot const-info-dumped? :: <boolean>, init-value: #f, init-keyword: dumped:;
+  //
+  // Set of heap labels for this object.  Maintained and used by the
+  // heap dumper.
+  slot const-info-heap-labels :: <simple-object-vector>,
+    init-value: #[], init-keyword: labels:;
 end;
 
 define constant $constant-info-slots
-  = list(const-info-expr, expr:, #f);
+  = list(const-info-expr, expr:, #f,
+	 const-info-dumped?, dumped:, #f,
+	 const-info-heap-labels, labels:, #f);
 
 add-make-dumper(#"constant-info", *compiler-dispatcher*, <constant-info>,
 		$constant-info-slots);
 
-define method make-info-for (ctv :: <ct-value>, file :: <file-state>)
+
+// merge-ctv-infos -- method on imported GF.
+// 
+define method merge-ctv-infos
+    (old-info :: <constant-info>, new-info :: <constant-info>)
+    => ();
+  if (old-info.const-info-dumped?)
+    unless (new-info.const-info-dumped?
+	      | new-info.const-info-heap-labels.empty?)
+      error("Merging infos would drop some labels.");
+    end unless;
+  else
+    if (new-info.const-info-dumped?)
+      old-info.const-info-dumped? := #t;
+      unless (old-info.const-info-heap-labels.empty?)
+	error("Merging infos would drop some labels.");
+      end unless;
+    end if;
+  end if;
+  old-info.const-info-heap-labels
+    := union(old-info.const-info-heap-labels, new-info.const-info-heap-labels,
+	     test: method (str1 :: <byte-string>, str2 :: <byte-string>)
+		     str1 = str2;
+		   end method)
+end method merge-ctv-infos;
+
+
+define method make-info-for (ctv :: <ct-value>, file :: false-or(<file-state>))
     => res :: <constant-info>;
   make(<constant-info>);
 end;
+
 
 define class <constant-function-info> (<constant-info>, <function-info>)
   slot function-info-general-entry-name :: false-or(<byte-string>),
@@ -926,11 +998,11 @@ define method general-entry-name
 end;
 
 define method make-info-for
-    (ctv :: <ct-function>, file :: <file-state>)
+    (ctv :: <ct-function>, file :: false-or(<file-state>))
     => res :: <constant-function-info>;
   make-function-info(<constant-function-info>, ctv.ct-function-name,
 		     ctv.ct-function-signature,
-		     ctv.ct-function-closure-var-types, file);
+		     ctv.ct-function-closure-var-types);
 end;
 
 define class <constant-method-info> (<constant-function-info>)
@@ -956,11 +1028,11 @@ define method generic-entry-name
 end;
 
 define method make-info-for
-    (ctv :: <ct-method>, file :: <file-state>)
+    (ctv :: <ct-method>, file :: false-or(<file-state>))
     => res :: <constant-function-info>;
   make-function-info(<constant-method-info>, ctv.ct-function-name,
 		     ctv.ct-function-signature,
-		     ctv.ct-function-closure-var-types, file);
+		     ctv.ct-function-closure-var-types);
 end;
 
 
@@ -1006,12 +1078,10 @@ end;
 
 // Top level form processors.
 
-define generic emit-tlf-gunk (tlf :: <top-level-form>,
-			      file :: <file-state>)
+define generic emit-tlf-gunk (tlf :: <top-level-form>, file :: <file-state>)
     => ();
 
-define method emit-tlf-gunk (tlf :: <top-level-form>,
-			     file :: <file-state>)
+define method emit-tlf-gunk (tlf :: <top-level-form>, file :: <file-state>)
     => ();
   format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
 end;
@@ -1019,35 +1089,59 @@ end;
 // This method does useful stuff to insure that heap dumping does the
 // right thing for generic functions.
 //
-define method emit-tlf-gunk (tlf :: type-union(<define-generic-tlf>,
-					       <define-implicit-generic-tlf>),
-			     file :: <file-state>)
- => ();
+define method emit-tlf-gunk
+    (tlf :: type-union(<define-generic-tlf>, <define-implicit-generic-tlf>),
+     file :: <file-state>)
+    => ();
   format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
   let defn = tlf.tlf-defn;
   let ctv = defn.ct-value;
   if (instance?(ctv, <ct-sealed-generic>))
-    // This is a sealed generic.  We can avoid having to dump it in
-    // the global heap generation by eagerly adding it as a root now.
-    // This appears to be a win, although it means we'll dump heap
-    // info for functions which may never be called.
-    new-root(ctv, file, prefix: defn.defn-name.c-prefix);
+    //
+    // We dump sealed generic in the local heap instead of the letting them
+    // all accumulate in the global heap.  This trades off a faster global
+    // heap build against potentially dumping generics that are never
+    // referenced, which seems to be a win.
+    eagerly-reference(ctv, file);
   else
-    // Unsealed generics must be written (if the are written) during
-    // the global heap dump.  However, we must give them a name now so
-    // that every library that references them will use the same name.
-    // This forces special case processing in the heap dumper -- see
-    // "object-name".
-    ctv.ct-value-heap-labels := vector(new-global(file));
+    //
     // By adding generic function methods to the heap now, we save
     // effort during the global dump phase.  There is, of course, the
     // possibility of writing heap info for methods which will not be
     // referenced.
-    map(method (a)
-	  new-root(a.ct-value, file, prefix: a.defn-name.c-prefix)
-	end, defn.generic-defn-methods);
+    for (meth in defn.generic-defn-methods)
+      let meth-ctv = meth.ct-value;
+      if (meth-ctv)
+	eagerly-reference(meth-ctv, file);
+      end if;
+    end for;
   end if;
-end;
+end method emit-tlf-gunk;
+
+
+define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
+    => ();
+  format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
+  let ctv = tlf.tlf-defn.ct-value;
+  if (ctv)
+    if (ctv.sealed?)
+      //
+      // By adding sealed classes to the heap now, we save effort duing the
+      // global dump phase.  And this costs us nothing, because all classes
+      // are referenced through the super/subclass links.
+      eagerly-reference(ctv, file);
+    elseif (ctv.primary?)
+      //
+      // We also force the slot infos for open primary classes into the local
+      // heap.  We can because the position table will be static (because no
+      // subclasses can allocate the slot somewhere else).
+      for (slot in ctv.new-slot-infos)
+	eagerly-reference(slot, file);
+      end for;
+    end if;
+  end if;
+end method emit-tlf-gunk;
+
 
 define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 			     file :: <file-state>)
@@ -1124,8 +1218,8 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
   end;
 end;
 
-define method emit-tlf-gunk (tlf :: <define-bindings-tlf>,
-			     file :: <file-state>)
+define method emit-tlf-gunk
+    (tlf :: <define-bindings-tlf>, file :: <file-state>)
     => ();
   format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
   for (defn in tlf.tlf-required-defns)
