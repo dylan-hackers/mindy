@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.33 1995/11/14 15:14:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.34 1995/11/14 15:44:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -143,12 +143,9 @@ define method compile-library (lid-file :: <byte-string>) => ();
   inherit-overrides();
   begin
     let unique-id-base = element(header, #"unique-id-base", default: #f);
-    format(*debug-output*, "assigning unique ids\n");
-    assign-unique-ids(if (unique-id-base)
-			string-to-integer(unique-id-base);
-		      else
-			0;
-		      end);
+    if (unique-id-base)
+      format(*debug-output*, "assigning unique ids\n");
+      assign-unique-ids(string-to-integer(unique-id-base));
     end;
   end;
   format(*debug-output*, "seeding representations\n");
