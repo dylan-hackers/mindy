@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.7 2001/07/09 23:23:32 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.8 2001/12/19 12:04:30 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>,
             and <value-table>.
 
@@ -636,6 +636,8 @@ define hash-finder <table> <symbol> end;
 define hash-finder <table> <byte-string> end;
 define hash-finder <table> <unicode-string> end;
 define hash-finder <table> <class> end;
+define hash-finder <table> <extended-integer> end;
+define hash-finder <table> <ratio> end;
 
 define hash-finder <simple-object-table> <object> end;
 define hash-finder <simple-object-table> <integer> end;
@@ -646,6 +648,8 @@ define hash-finder <simple-object-table> <symbol> end;
 define hash-finder <simple-object-table> <byte-string> end;
 define hash-finder <simple-object-table> <unicode-string> end;
 define hash-finder <simple-object-table> <class> end;
+define hash-finder <simple-object-table> <extended-integer> end;
+define hash-finder <simple-object-table> <ratio> end;
 
 define hash-finder <equal-table> <object> end;
 define hash-finder <equal-table> <integer> end;
@@ -656,6 +660,8 @@ define hash-finder <equal-table> <symbol> end;
 define hash-finder <equal-table> <byte-string> end;
 define hash-finder <equal-table> <unicode-string> end;
 define hash-finder <equal-table> <class> end;
+define hash-finder <equal-table> <extended-integer> end;
+define hash-finder <equal-table> <ratio> end;
 
 
 define function table-element-not-found-error() => ()
