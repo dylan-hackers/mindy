@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.c,v 1.5 1995/02/22 19:44:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.c,v 1.6 1995/07/11 12:18:11 wlott Exp $
 *
 * This file maintains info about builtin/magic functions/names.
 *
@@ -111,8 +111,9 @@ void init_info(void)
     push_binop_info("<", 4, TRUE);
     push_binop_info("<=", 4, TRUE);
     push_binop_info("=", 4, TRUE);
-    push_binop_info("==", 4, TRUE);
     push_binop_info("~=", 4, TRUE);
+    push_binop_info("==", 4, TRUE);
+    push_binop_info("~==", 4, TRUE);
     push_binop_info(">=", 4, TRUE);
     push_binop_info(">", 4, TRUE);
     push_binop_info("+", 5, TRUE);

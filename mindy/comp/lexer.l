@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.14 1995/03/13 21:43:23 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.15 1995/07/11 12:17:48 wlott Exp $
 *
 * This file is the lexical analizer.
 *
@@ -63,7 +63,7 @@ ADGS	({A}|{DGS})
 
 N	((({G}{DGS}*)?{A}{ADGS}*)|({D}{DGS}*({A}{DGS}+)*{A}{A}{ADGS}*))
 
-O	":="|"+"|"-"|"*"|"/"|"="|"=="|"<"|">"|"<="|">="|"~="|"&"|"|"|"^"
+O	":="|"+"|"-"|"*"|"/"|"="|"=="|"<"|">"|"<="|">="|"~="|"~=="|"&"|"|"|"^"
 
 STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 
