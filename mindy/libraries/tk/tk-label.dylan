@@ -37,4 +37,5 @@ define class <label> (<window>) end class;
 
 define-widget(<label>, "label",
 	      #"bitmap", #"font", #"height", #"text", #"textvariable",
-	      #"width");
+	      #"width", #"underline", #"image", #"wraplength",
+	      #"justify");
