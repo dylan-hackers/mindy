@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.83 1995/06/07 19:38:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.84 1995/06/07 22:39:27 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2661,20 +2661,13 @@ define method replace-placeholder
     => ();
   op.nlx-info.nlx-hidden-references? := #t;
   let builder = make-builder(component);
-  let assign = dep.dependent;
-  let catcher = op.depends-on.source-exp;
-  let cluster = op.depends-on.dependent-next.source-exp;
-  let temp = make-local-var(builder, #"values", object-ctype());
-  let zero-leaf = make-literal-constant(builder, as(<ct-value>, 0));
-  build-assignment(builder, assign.policy, assign.source-location, temp,
-		   make-operation(builder, <primitive>,
-				  list(cluster, zero-leaf),
-				  name: #"canonicalize-results"));
-  insert-before(component, assign, builder-result(builder));
-  replace-expression(component, dep,
-		     make-unknown-call
-		       (builder, dylan-defn-leaf(builder, #"throw"), #f,
-			list(op.depends-on.source-exp, temp)));
+  replace-expression
+    (component, dep,
+     make-operation(builder, <mv-call>,
+		    list(dylan-defn-leaf(builder, #"throw"),
+			 op.depends-on.source-exp,
+			 op.depends-on.dependent-next.source-exp),
+		    use-generic-entry: #f));
 end;
 
 
@@ -3413,19 +3406,20 @@ define method delete-and-unlink-assignment
   // Unlink the assignment from region.
   let next = assignment.next-op;
   let prev = assignment.prev-op;
-  if (next | prev)
-    if (next)
-      next.prev-op := prev;
-    else
-      assignment.region.last-assign := prev;
-    end;
-    if (prev)
-      prev.next-op := next;
-    else
-      assignment.region.first-assign := next;
-    end;
+  if (next)
+    next.prev-op := prev;
   else
-    // It was the only assignment in the region, so flush the region.
+    assignment.region.last-assign := prev;
+  end;
+  if (prev)
+    prev.next-op := next;
+  else
+    assignment.region.first-assign := next;
+  end;
+  unless (next | prev)
+    // It was the only assignment in the region, so flush the region.  Note:
+    // this won't actually do anything if the region is the join-region of
+    // some other region.
     let region = assignment.region;
     replace-subregion(component, region.parent, region, make(<empty-region>));
   end;
