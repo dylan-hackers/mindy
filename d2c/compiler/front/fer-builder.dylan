@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.47 1996/05/29 23:29:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.48 1996/08/23 13:58:44 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -477,7 +477,7 @@ define method make-definition-constant
  => res :: <leaf>;
   let value = ct-value(defn);
   unless (value)
-    error("%s doesn't have a ct-value, so it can be represented as a "
+    error("%s doesn't have a ct-value, so it can't be represented as a "
 	    "<definition-constant-leaf>",
 	  defn.defn-name);
   end;
@@ -618,13 +618,13 @@ define method build-defn-ref
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      defn :: <abstract-constant-definition>)
     => res :: <leaf>;
-  let value = ct-value(defn);
+  let value = ~defn.defn-dynamic? & ct-value(defn);
   if (instance?(value, <eql-ct-value>))
     make-literal-constant(builder, value);
   elseif (value)
     make-definition-constant(builder, defn);
   else
-    let type = defn.defn-type | object-ctype();
+    let type = (~defn.defn-dynamic? & defn.defn-type) | object-ctype();
     let temp = make-local-var(builder, #"temp", type);
     build-assignment(builder, policy, source, temp,
 		     make-operation(builder, <module-var-ref>, #(),
@@ -638,7 +638,7 @@ define method build-defn-ref
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      defn :: <abstract-variable-definition>)
  => res :: <leaf>;
-  let type = defn.defn-type | object-ctype();
+  let type = (~defn.defn-dynamic? & defn.defn-type) | object-ctype();
   let temp = make-local-var(builder, #"temp", type);
   build-assignment(builder, policy, source, temp,
 		   make-operation(builder, <module-var-ref>, #(),
