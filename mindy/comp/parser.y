@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.1 1994/03/24 21:48:54 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.2 1994/03/28 11:31:14 wlott Exp $
 *
 * This file does whatever.
 *
@@ -767,7 +767,7 @@ gf_keyword_parameters:
 
 anonymous_method:
 	METHOD method_description END method_opt
-	{ free($1); free($3); $$ = $2; }
+	{ free($3); $$ = set_method_source($1, $2); }
 ;
 
 named_method:
