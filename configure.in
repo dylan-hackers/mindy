@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.9 1995/03/13 22:37:16 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.10 1995/04/04 16:49:30 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -160,8 +160,13 @@ AC_EGREP_HEADER(strerror, string.h, , tcl_ok=0)
 if test $tcl_ok = 0; then
     AC_DEFINE(NO_STRING_H)
 fi
+AC_EGREP_HEADER(setsid, unistd.h, tcl_ok=1, tcl_ok=0)
+if test $tcl_ok = 0; then
+    LIBOBJS="${LIBOBJS-} setsid.o"
+fi
 AC_CHECK_HEADER(sys/time.h, , AC_DEFINE(NO_SYS_TIME_H))
 AC_CHECK_HEADER(sys/wait.h, , AC_DEFINE(NO_SYS_WAIT_H))
+
 
 #--------------------------------------------------------------------
 #	Include sys/select.h if it exists and if it supplies things
@@ -366,6 +371,16 @@ if test $select = 0; then
   echo "and you won't be able to compile without it.  Sorry."
 fi
 
+
+#--------------------------------------------------------------------
+#       Now we read this file to determine which libraries were 
+#       shipped with Mindy.
+#--------------------------------------------------------------------
+
+sinclude(distribution-options)
+AC_SUBST(BUNDLED_LIBRARY_DIRS)dnl
+
+
 #--------------------------------------------------------------------
 #	Finally, output the Makefiles for each part of the
 #	distribution.  As a side effect the necessary directories are
@@ -384,14 +399,7 @@ AC_OUTPUT(Makefile \
 	compat/Makefile \
 	etc/Makefile \
 	libraries/Makefile \
-	libraries/dylan/Makefile \
-	libraries/streams/Makefile \
-	libraries/print/Makefile \
-	libraries/format/Makefile \
-	libraries/coll-ext/Makefile \
-	libraries/random/Makefile \
-	libraries/string-ext/Makefile \
-	libraries/tk/Makefile \
+	BUNDLED_LIBRARY_MAKEFILES \
 	demos/Makefile \
 	demos/hello-world/Makefile \
 	demos/cat/Makefile \
