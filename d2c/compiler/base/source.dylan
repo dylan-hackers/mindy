@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.3 1995/10/30 13:13:20 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.4 1995/11/13 14:55:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -172,7 +172,7 @@ add-od-loader(*compiler-dispatcher*, #"file-source-location",
     let file = load-object-dispatch(state);
     assert-end-object(state);
     make(<file-source-location>,
-         source-file: file,
+         source: file,
          start-posn: s-posn,
 	 start-line: s-line,
 	 start-column: s-column,
