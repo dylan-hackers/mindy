@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.20 1997/05/09 23:11:14 ram Exp $
+# rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/shared-misc/gen-makefile,v 1.21 1997/05/13 02:28:13 ram Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -677,6 +677,8 @@ sub compile_subdirs {
 #         Add libname.dbc to the 'compile' makefile target (possibly in
 #         addition to the d2c version of the library.)  This flag does not make 
 #         much sense with 'no-mindy'.
+#    'no-d2c'
+#	  Like no-mindy, only suppress emission of d2c rules.
 #
 # The return value is a two element array.  The first element is the
 # target which would have been used if the 'compile' flag were
@@ -736,18 +738,23 @@ sub emit_library_rule {
 
 	$d2c_target = $foo_lib_du;
     }
-    print "$d2c_target: $srcdir/$lidfilename.lid $extradeps\n";
-    print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags $srcdir/$lidfilename.lid\n";
-    local ($make_name) = $host_platform{'make_command'};
-    local($cc_files_cmd) = "$make_name -f cc-" . $unit_prefix . "-files.mak";
-    push(@cc_files_commands, $cc_files_cmd);
 
-    print "\ninclude $unit_prefix.dep\n\n";
+    if (! grep(/^no-d2c$/, @keywords)) {
+	print "$d2c_target: $srcdir/$lidfilename.lid $extradeps\n";
+	print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags ",
+	    "$srcdir/$lidfilename.lid\n";
+	local ($make_name) = $host_platform{'make_command'};
+	local($cc_files_cmd) = "$make_name -f cc-" . $unit_prefix
+	    . "-files.mak";
+	push(@cc_files_commands, $cc_files_cmd);
 
-    unless (-e "$unit_prefix.dep") {
-	open(DEP, ">$unit_prefix.dep")
-	    || die("Can't create $unit_prefix.dep: $!\n");
-	close(DEP);
+	print "\ninclude $unit_prefix.dep\n\n";
+
+	unless (-e "$unit_prefix.dep") {
+	    open(DEP, ">$unit_prefix.dep")
+		|| die("Can't create $unit_prefix.dep: $!\n");
+	    close(DEP);
+	}
     }
 
     if (! grep(/^no-mindy$/, @keywords)) {
@@ -1019,7 +1026,7 @@ sub emit_mindycomp_library_rule {
     foreach $source (@sources) {
 	&emit_mindycomp_rule($source, "\$(DASH_$uppercase_libname)");
     }
-    &emit_dbc_link_rule("$libname-lib.dbc", join(' ', @objects));
+    &emit_dbc_link_rule("$libname-lib.dbc", "\$(${uppercase_libname}_OBJS)");
 }
 
 # makegen_include($include_file) -- exported
