@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.30 1999/04/10 00:42:59 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.31 1999/04/10 18:42:46 emk Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -26,6 +26,13 @@ dnl	it.
 AC_INIT(common/format/format.dylan)
 AC_PREREQ(2.12)
 AC_CONFIG_HEADER(config.h)
+
+#--------------------------------------------------------------------
+# This is used in conjuction with the output of 'd2c --compiler-info'
+# to decide when d2c needs a full bootstrap.
+#--------------------------------------------------------------------
+
+CURRENT_BOOTSTRAP_COUNTER=1
 
 #--------------------------------------------------------------------
 # Try to guess the right prefix based on a previous installation.
@@ -105,12 +112,12 @@ AC_SUBST(DYLAN_HOST_OS)
 DYLAN_OS_VERSION="`uname -r`"
 AC_SUBST(DYLAN_OS_VERSION)
 
-#AC_MSG_CHECKING(to see if we're cross-compiling)
-#cross_compiling=no
-#if test "$build" != "$host"; then
-#    cross_compiling=yes
-#fi
-#AC_MSG_RESULT($cross_compiling)
+AC_MSG_CHECKING(to see if we're cross-compiling)
+d2c_cross_compiling=no
+if test "$d2c_build" != "$d2c_host"; then
+    d2c_cross_compiling=yes
+fi
+AC_MSG_RESULT($d2c_cross_compiling)
 
 #AC_MSG_CHECKING(to see if we're building a cross-compiler)
 #cross_compiler=no
@@ -145,15 +152,12 @@ AC_PROG_YACC
 AC_CHECK_TOOL(RANLIB, ranlib, :)
 
 AC_PATH_PROG(EMACS, emacs, no)
-
-if test "$EMACS" = no
-then
+if test "$EMACS" = no; then
 	AC_PATH_PROG(EMACS, xemacs, no)
 fi
 
 #--------------------------------------------------------------------
-# Figure out what to do with Mindy. If we're cross-compiling, we'll
-# skip it entirely.
+# Figure out what to do with Mindy.
 #--------------------------------------------------------------------
 
 # If self compiling, always run mindy out of the build area, since the
@@ -178,65 +182,24 @@ AC_SUBST(MINDY)
 AC_SUBST(MC)
 
 #--------------------------------------------------------------------
-# Figure out what to do with d2c. If we're cross-compiling, we'll
-# need to rewrite this.
-# Do we want to use the installed platforms.descr or the current one?
+# Study our build environment carefully.
 #--------------------------------------------------------------------
 
+# Look for an installed d2c.
 AC_PATH_PROG(D2C, d2c, no)
 
-if test "$D2C" != no; then
-    AC_MSG_CHECKING(how to call d2c)
-    D2C_PREFIX=`echo "$D2C" | sed 's#/bin/.*##'`
-    PREFERED_DESCR="$D2C_PREFIX/etc/platforms.descr"
-    if test -f $PREFERED_DESCR; then
-        D2C="$D2C -p$PREFERED_DESCR"
-	AC_MSG_RESULT($D2C)
-    else
-        if test -f $sysconfdir/platforms.descr; then
-            D2C="$D2C -p$sysconfdir/platforms.descr"
-        else
-            D2C="$D2C -p$srcdir/d2c/compiler/platforms.descr"
-        fi
-	AC_MSG_RESULT($D2C)
-	AC_MSG_WARN(cannot find $PREFERED_DESCR, which would be better)
-    fi
-fi
-
-#--------------------------------------------------------------------
-# Check to see if the user asked us not to build Mindy or d2c.
-#--------------------------------------------------------------------
-
-AC_ARG_ENABLE(mindy, [  --disable-mindy         Don't build Mindy])
-AC_ARG_ENABLE(d2c,   [  --disable-d2c           Don't build d2c])
-
+# Did the user try to disable d2c?
+AC_ARG_ENABLE(d2c,   [  --disable-d2c           Do not build d2c])
+enable_d2c=${enable_d2c:-yes}
 if test "$D2C" = no; then
     enable_d2c=no
 fi
 
-if test "$cross_compiling" = "yes"; then
-    enable_mindy=no
-fi
-
-enable_d2c=${enable_d2c:-yes}
-AC_MSG_CHECKING(whether to build d2c)
-AC_MSG_RESULT($enable_d2c)
-AC_SUBST(enable_d2c)
-
+# Did the user try to disable mindy?
+AC_ARG_ENABLE(mindy, [  --disable-mindy         Do not build Mindy])
 enable_mindy=${enable_mindy:-yes}
-AC_MSG_CHECKING(whether to build mindy)
-AC_MSG_RESULT($enable_mindy)
-AC_SUBST(enable_mindy)
 
-if test "$enable_mindy" = "no" -a "$enable_d2c" = "no" ; then
-    AC_MSG_ERROR([\
-Not intending to build either mindy or d2c. Please check to see if
-your system is supported, or specify fewer --disable-FOO flags.])
-fi
-
-#--------------------------------------------------------------------
-# Check to see if we are bootstrapping with Mindy
-#--------------------------------------------------------------------
+# Did the user try to enable bootstrapping with Mindy?
 AC_ARG_ENABLE(mindy-bootstrap,[\
   --enable-mindy-bootstrap
                           Bootstrap d2c with Mindy. This can easily take one
@@ -244,23 +207,174 @@ AC_ARG_ENABLE(mindy-bootstrap,[\
                           d2c to a new architecture for the first time. Trust
                           us; you want to get precompiled d2c binaries if any
                           are available for your system. See the README.])
+enable_mindy_bootstrap=${enable_mindy_bootstrap:-no}
 
-if test "$D2C" = no; then
-    enable_mindy_bootstrap=${enable_mindy_bootstrap:-no}
-    AC_MSG_CHECKING(whether to bootstrap d2c with Mindy)
-    AC_MSG_RESULT($enable_mindy_bootstrap)
-    AC_SUBST(enable_mindy_bootstrap)
+# If d2c is present, try to ask it some questions.
+if test "$D2C" != no; then
+    _DCI_DYLAN_LID_FORMAT_VERSION=0
+    _DCI_D2C_BOOTSTRAP_COUNTER=0
+    _DCI_D2C_RUNTIME_SUBDIR=
+    if $D2C --compiler-info > "$srcdir/compiler-info" 2> /dev/null; then
+	. "$srcdir/compiler-info"
+    fi
+    rm -f "$srcdir/compiler-info"
 
-    if test $enable_mindy_bootstrap = yes; then
-	enable_mindy=yes
-	enable_d2c=yes
-	D2C="$MINDY -f $builddir/d2c/compiler/main/d2c.dbc -p$srcdir/d2c/compiler/platforms.descr"
+    echo "Found the following Dylan compiler information:"
+    echo "    LID format version:       $_DCI_DYLAN_LID_FORMAT_VERSION"
+    echo "    d2c bootstrap counter:    $_DCI_D2C_BOOTSTRAP_COUNTER"
+    echo "    d2c runtime subdirectory: $_DCI_D2C_RUNTIME_SUBDIR"
+fi
+
+#--------------------------------------------------------------------
+# Determine our "build scenario". See BOOTSTRAP for a description of
+# how this works.
+#--------------------------------------------------------------------
+
+enable_bootstrap=no
+bootstrap_compiler=none
+
+AC_MSG_CHECKING("which build scenario to use")
+if test "$enable_mindy_bootstrap" = yes; then
+    SCENARIO=BOOTSTRAPPING_WITH_MINDY
+    build_tools_with_d2c=no
+    enable_mindy=yes
+    enable_d2c=yes
+    enable_bootstrap=yes
+    bootstrap_compiler=mindy
+    # Set D2C (for use with 'make test', I think).
+    d2c_dbc="$builddir/d2c/compiler/main/d2c.dbc"
+    D2C="$MINDY -f $d2c_dbc -p$srcdir/d2c/compiler/platforms.descr"
+elif test "$enable_d2c" = no; then
+    SCENARIO=MINDY_BUILD
+    build_tools_with_d2c=no
+elif test -x "$builddir/bootstrap_compiler/d2c"; then
+    SCENARIO=SECOND_STAGE
+    build_tools_with_d2c=yes
+    bootstrap_d2c="$builddir/bootstrap_compiler/d2c"
+    D2C="$bootstrap_d2c -p$srcdir/d2c/compiler/platforms.descr"
+elif test "$D2C" != no; then
+    if test $CURRENT_BOOTSTRAP_COUNTER -gt $_DCI_D2C_BOOTSTRAP_COUNTER
+    then
+	SCENARIO=BOOTSTRAPPING_WITH_D2C
+	enable_mindy=no
+        build_tools_with_d2c=yes
+        enable_bootstrap=yes
+        bootstrap_compiler=d2c
+    elif test "$d2c_cross_compiling" = yes; then
+	SCENARIO=CROSS_COMPILING
+        build_tools_with_d2c=yes # XXX - this won't work at all
+	enable_mindy=no
     else
-	AC_MSG_WARN([Cannot build tools requiring d2c; try obtaining a binary
-release for your platform or use the --enable-mindy-bootstrap option.])
+	SCENARIO=REGULAR_BUILD
+        build_tools_with_d2c=yes
     fi
 else
-    enable_mindy_bootstrap=no
+    SCENARIO=MINDY_BUILD
+    build_tools_with_d2c=no
+fi
+AC_MSG_RESULT($SCENARIO)
+
+echo "Using the following build parameters:"
+echo "    Build Mindy:              $enable_mindy"
+echo "    Build d2c:                $enable_d2c"
+echo "    Build tools with d2c:     $build_tools_with_d2c"
+echo "    Cross compiling:          $d2c_cross_compiling"
+echo "    Bootstrapping:            $enable_bootstrap"
+echo "    Bootstrap compiler:       $bootstrap_compiler"
+
+#--------------------------------------------------------------------
+# Sanity-chek our "build scenario". Certain combinations should never
+# appear.
+#--------------------------------------------------------------------
+
+if test "$enable_mindy" = "no" -a "$enable_d2c" = "no" ; then
+    AC_MSG_ERROR([\
+Not intending to build either mindy or d2c. Please check to see if
+your system is supported, or specify fewer --disable-FOO flags.])
+fi
+
+if test "$SCENARIO" != CROSS_COMPILING -a "$d2c_cross_compiling" = yes; then
+    AC_MSG_ERROR([\
+Cannot cross-compile. In particular, cross-compilation is
+incompatible with bootstrapping and Mindy-only builds. You need an up-to-date
+d2c binary installed somewhere in your path. Even then, cross-compilation
+will probably fail. See BOOTSTRAPPING for details.])
+fi
+
+#--------------------------------------------------------------------
+# Record our build parameters.
+#--------------------------------------------------------------------
+
+AC_SUBST(enable_mindy)
+AC_SUBST(enable_d2c)
+AC_SUBST(build_tools_with_d2c)
+AC_SUBST(d2c_cross_compiling)
+AC_SUBST(enable_bootstrap)
+AC_SUBST(bootstrap_compiler)
+
+#--------------------------------------------------------------------
+# If we're bootstrapping with d2c, look for the installed runtime.
+#--------------------------------------------------------------------
+
+# Runtime libraries which must match the compiler used to build d2c.
+RUNTIME_LIBRARIES="libgc.a libruntime.a dylan.lib.du libdylan.a melange-support.lib.du libmelange.a"
+
+# Delete our local runtime directory, if it exists.
+LOCAL_RUNTIME="$builddir"/previous_runtime
+AC_SUBST(LOCAL_RUNTIME)
+if test -e "$LOCAL_RUNTIME"; then
+    rm -rf "$LOCAL_RUNTIME"
+fi
+
+# Process our --with-existing-runtime option.
+AC_ARG_WITH(mindy-bootstrap,[\
+  --with-existing-runtime=RUNTIME_DIRECTORY
+                          Look for the d2c runtime libraries in a different
+                          place when bootstrapping. Defaults to
+                          {prefix}/lib/dylan. This is only applicable when
+			  building in BOOTSTRAPPING_WITH_D2C mode.])
+with_existing_runtime=${with_existing_runtime:-no}
+if test "$with_existing_runtime" = yes; then
+    with_existing_runtime=no
+fi
+
+# If we're bootstrapping with d2c, create local links to each runtime file.
+if test $SCENARIO = BOOTSTRAPPING_WITH_D2C; then
+    AC_MSG_CHECKING(for existing d2c runtime)
+    if test "$with_existing_runtime" = no; then
+        relative_runtime="lib/dylan$_DCI_D2C_RUNTIME_SUBDIR"
+	if test "$prefix" = NONE; then
+	    with_existing_runtime="$ac_default_prefix/$relative_runtime"
+	else	
+	    with_existing_runtime="$prefix/$relative_runtime"
+	fi
+    fi
+    AC_MSG_RESULT($with_existing_runtime)
+
+    # Make a directory to hold the pre-existing runtime.
+    mkdir "$LOCAL_RUNTIME"
+
+    # Make links to our runtime libraries.
+    for f in $RUNTIME_LIBRARIES; do
+	lib="$with_existing_runtime/$f"
+	if test -e $lib; then
+	    ln -s "$lib" "$LOCAL_RUNTIME"
+	else
+	    AC_MSG_ERROR([
+Cannot find $f in $with_existing_runtime.
+You may need to specify the --with-existing-runtime option to configure; see
+'./configure --help' for details.])
+	fi
+    done
+
+    # Make a link to our runtime.h file.
+    # XXX - We need to allow the user to specify a location for this!
+    if test "$prefix" = NONE; then
+	existing_runtime_header="$ac_default_prefix/include/runtime.h"
+    else	
+	existing_runtime_header="$prefix/include/runtime.h"
+    fi
+    ln -s "$existing_runtime_header" "$LOCAL_RUNTIME"
 fi
 
 #====================================================================
@@ -742,3 +856,54 @@ srcdir=$srcdir
 builddir=$builddir
 ])
 
+#--------------------------------------------------------------------
+# Describe compilation scenario
+#--------------------------------------------------------------------
+
+echo
+echo "Build scenario: $SCENARIO"
+echo
+case $SCENARIO in
+    REGULAR_BUILD)
+	echo "Compiling Mindy and d2c. The installed version of d2c will be"
+	echo "used to compile programs written in Dylan."
+	;;
+    SECOND_STAGE)
+	echo "Compiling Mindy and d2c. The recently compiled version of d2c"
+	echo "will be used to compile programs written in Dylan."
+	echo
+	echo "If you've already done a second stage build and installed a"
+	echo "a working copy of d2c, you can try 'rm -r bootstrap_compiler',"
+        echo "'rm config.cache; ./configure'."
+	;;
+    MINDY_BUILD)
+	echo "Compiling Mindy and the standard libraries only--d2c will not"
+        echo "be built. Melange and parsergen will be built but not installed."
+        echo "Most of the other tools will not be built."
+	;;
+    BOOTSTRAPPING_WITH_D2C)
+	echo "The installed version of d2c will be used to bootstrap this"
+	echo "version of d2c. Alternatively, you may want to download"
+	echo "up-to-date binaries for your platform. See the README for"
+        echo "details."
+	;;
+    BOOTSTRAPPING_WITH_MINDY)
+	echo "You have asked to bootstrap the d2c compiler using the Mindy"
+	echo "interpreter. This is a slow, error-prone process. You may want"
+	echo "to try one of the following options instead:"
+	echo
+	echo "  1) Download precompiled d2c binaries. See the README for"
+	echo "     instructions and mirror sites."
+	echo "  2) Re-run configure without the --enable-mindy-bootstrap"
+        echo "     option. This will build the Mindy interpreter using your"
+	echo "     local C compiler and will not try to build d2c."
+	;;
+    CROSS_COMPILING)
+	echo "You're trying to use d2c as a cross-compiler. You may encounter"
+        echo "various problems. If you get it to work, please tell us how"
+	echo "you did it."
+	;;
+    *)
+	echo "Unknown build scenario! This is a bug."
+	;;
+esac
