@@ -272,3 +272,17 @@ end macro;
 define inline method element-range-error (sequence, index)
   error("Range check error!\n");
 end method element-range-error;
+
+
+/// Profiling macro
+//  Do-nothing version
+define macro profiling
+  { profiling
+        (?options:*)
+      ?body:body
+    results
+      ?result-body:body
+    end }
+ => { ?body;
+      ?result-body }
+end macro profiling;
