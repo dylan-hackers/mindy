@@ -238,6 +238,16 @@ define-primitive
 define-primitive
   (#"initial-symbols", #(), #(union:, #"<symbol>", #"<false>"), pure: #t);
 
+define-primitive
+  (#"ref-slot", #(#"<object>", #"<symbol>", #"<integer>"),
+   #"<object>",
+   side-effect-free: #t);
+
+define-primitive
+  (#"set-slot", #(#"<object>", #"<object>", #"<symbol>", #"<integer>"),
+   #(values:));
+
+
 
 // NLX operations.
 
