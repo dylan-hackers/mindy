@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.8 1996/07/12 16:13:55 dwatson Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.9 1996/07/13 20:38:43 bfw Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -68,7 +68,7 @@ MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/ta
 
 # We don't want to run threaded-io-test by default because it is interactive
 #
-OBJS_TO_RUN = dylan-test.dbc string-extensions-test.dbc
+OBJS_TO_RUN = dylan-test.dbc string-extensions-test.dbc stream-test-lib.dbc
 OBJS_TO_BUILD = $(OBJS_TO_RUN) threaded-io-test.dbc asterixes.txt dashes.txt
 
 all: ${OBJS_TO_BUILD}
@@ -82,6 +82,13 @@ string-extensions-test.dbc: ${SRCDIR}/string-extensions-test.dylan
 
 threaded-io-test.dbc: ${SRCDIR}/threaded-io-test.dylan
 	${MC} ${MINDYFLAGS} -lthreaded-io-test -o threaded-io-test.dbc ${SRCDIR}/threaded-io-test.dylan
+
+stream-test-lib.dbc: stream-test-library.dbc stream-test.dbc
+	cat ${SRCDIR}/stream-test-library.dbc ${SRCDIR}/stream-test.dbc > $@
+stream-test-library.dbc: ${SRCDIR}/stream-test-library.dylan
+	${MC} ${MINDYFLAGS} -lstream-test -o stream-test-library.dbc ${SRCDIR}/stream-test-library.dylan
+stream-test.dbc: ${SRCDIR}/stream-test.dylan
+	${MC} ${MINDYFLAGS} -lstream-test -o stream-test.dbc ${SRCDIR}/stream-test.dylan
 
 # And now, two hacks to make sure "asterixes.txt" and "dashes.txt" are 
 # in the build directory and not the source directory (while still
