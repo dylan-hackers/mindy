@@ -9,7 +9,7 @@ synopsis:	Provides a small assortment of specialized operations for
 		collection-extensions)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/substring-search.dylan,v 1.3 1996/11/16 13:15:40 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/substring-search.dylan,v 1.4 1996/11/16 15:07:31 rgs Exp $
 
 //======================================================================
 //
@@ -126,7 +126,7 @@ define sealed method find-substring
 	  let pat-last = pat-sz - 1;
 	  let last-char = pattern[pat-last];
 	  let skip = compiled-pattern;
-	  local method search(index)
+	  local method search (index :: <integer>)
 		  if (index >= big-end)	// past end of big -- it's not here
 		    #f;
 		  else 
@@ -146,8 +146,9 @@ define sealed method find-substring
 		      end for;
 		    else    // last character didn't match, so we can use
 		            // the "skip table" to optimize
-		      search(index + element(skip, as(<integer>, char),
-					     default: pat-sz));
+		      let incr :: <integer>
+			= element(skip, as(<integer>, char), default: pat-sz);
+		      search(index + incr);
 		    end if;
 		  end if;
 		end method;
