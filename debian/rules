@@ -7,10 +7,14 @@
 STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
 	else echo "bootstrap";					\
 	fi)
-VERSION=2.3.10pre1.3
+VERSION=2.3.10pre3
 MACHINE=$(shell uname -m)
 ifeq ("$(MACHINE)", "sparc64")
 	MACHINE=sparc
+else
+	ifeq ("$(MACHINE)", "i686")
+		MACHINE=x86
+	endif
 endif
 
 bootstrap-stage1:  bootstrap-stage1-stamp
@@ -90,8 +94,7 @@ ifeq ("$(STYLE)", "normal")
 		./configure --with-readline \
 			--prefix=/usr \
 			--with-site-dylan-prefix=/usr \
-			--with-gnu-ld \
-			--enable-debug=yes
+			--with-gnu-ld
 		libtoolize --force
 endif
 	

@@ -1,12 +1,62 @@
-gwydion-dylan (2.3.10pre1-3) unstable; urgency=low
+gwydion-dylan (2.3.10pre3-3) unstable; urgency=low
 
-  * Lintian corrections.
-  * Some string comparison improvements.
-  * More compiler hints to build the d2c compiler.
+  * Updated GNU Emacs syntax highlighting.  It should *not* break XEmacs,
+    and to activate you must add the following to your .emacs file:
 
- -- Brent A. Fulgham <bfulgham@debian.org>  Tue,  4 Feb 2003 00:12:43 -0800
+    (defvar dylan-mode-hook
+      (lambda()
+          (progn
+                (dylan-install-font-lock-defaults))))
 
-gwydion-dylan (2.3.10pre1-2) unstable; urgency=low
+  * Moved DUIM to its own package.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sun, 30 Mar 2003 00:07:04 -0800
+
+gwydion-dylan (2.3.10pre3-2) unstable; urgency=low
+
+  * Updates to add 'collections' library.
+  * More complete 'machine-words' module.
+  * New "fixnum-logical-shift-right" primitive.
+  * New "--no-makefile" build mode.
+  * Improved debugging support.
+  * Minor optimizations and compiler improvements.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sat, 29 Mar 2003 00:48:59 -0800
+
+gwydion-dylan (2.3.10pre3-1) unstable; urgency=low
+
+  * New upstream with workarounds for gcc-3.2.2 bugs.  Now builds without
+    requiring debug build.
+  * More cleanups and preparations for the release.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sat,  1 Mar 2003 23:16:09 -0800
+
+gwydion-dylan (2.3.10pre2-1) unstable; urgency=low
+
+  * New upstream, new 'pre2' status.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Tue, 25 Feb 2003 23:12:07 -0800
+
+gwydion-dylan (2.3.10pre1.5-1) unstable; urgency=low
+
+  * New upstream release.
+  * Initial build of runtime evaluator (REPL).  Not complete, but fun
+    to play with.
+  * Enhanced compile-time error reporting.
+  * Further melange enhancements for C-code interfacing.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sun, 16 Feb 2003 20:53:43 -0800
+
+gwydion-dylan (2.3.10pre1.3-1) unstable; urgency=low
+
+  * Minor string comparison optimizations.
+  * Build networking libraries.
+  * Generate better (*slightly* more readable) C code.
+  * Fix lintian errors.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon,  3 Feb 2003 22:31:46 -0800
+
+gwydion-dylan (2.3.10pre1.1-1) unstable; urgency=low
 
   * Use system-provided GC, rather than build-in version.
   * Correct build dependencies for autobuilders.

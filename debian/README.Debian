@@ -26,6 +26,17 @@ make-dylan-app.
 1.  make-dylan-app -d duim-test
 2.  cd into the duim-test directory and type 'make'.
 
+
+You can get rudimentary fontification under GNU Emacs now, by
+adding the following to your .emacs file:
+
+(defvar dylan-mode-hook
+  (lambda()
+      (progn
+            (dylan-install-font-lock-defaults))))
+
+------------------------------------------------------
+
 Enjoy Dylan! :-)
 
 Brent A. Fulgham <bfulgham@debian.org>, Fri, 21 Sep 2001 22:07:09 -0800
