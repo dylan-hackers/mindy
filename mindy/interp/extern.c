@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/extern.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/extern.c,v 1.2 1998/12/17 10:32:15 igor Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -183,7 +183,7 @@ static void print_c_pointer(obj_t ptr)
    callable "<c-function>" object for it. */
 obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
 {
-    char *string = string_chars(symbol);
+    char *string = (char *)string_chars(symbol);
     struct symtab *syms;
     int sym_count, i;
     obj_t retval = obj_False;
@@ -228,7 +228,7 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
    "<c-pointer>" object for it. */
 obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
 {
-    char *string = string_chars(symbol);
+    char *string = (char *)string_chars(symbol);
     struct symtab *syms;
     int sym_count, i;
     obj_t retval = obj_False;
