@@ -12,7 +12,7 @@ define method reset-ids () => ();
 end;
 
 define constant <id-able>
-  = type-or(<region>, <leaf>, <assignment>);
+  = type-or(<region>, <expression>, <assignment>);
 
 define method id (thing :: <id-able>) => res :: <integer>;
   let id = element(*id-table*, thing, default: #f);
@@ -32,6 +32,16 @@ define method id (id :: <integer>) => res :: <id-able>;
   end;
   $id-vector[id];
 end;
+
+
+define method print-object (thing :: <id-able>, stream :: <stream>) => ();
+  write('{', stream);
+  write-class-name(thing, stream);
+  write(" [", stream);
+  print(thing.id, stream);
+  write("]}", stream);
+end;
+
 
 
 
@@ -107,7 +117,7 @@ define method dump (region :: <block-region>, stream :: <stream>) => ();
   pprint-logical-block
     (stream,
      body: method (stream)
-	     format(stream, "[%d]: BLOCK ???", region.id);
+	     format(stream, "[%d]: BLOCK", region.id);
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.body, stream);
@@ -132,7 +142,7 @@ define method dump (region :: <loop-region>, stream :: <stream>) => ();
 end;
 
 define method dump (region :: <exit>, stream :: <stream>) => ();
-  write("EXIT ???", stream);
+  format(stream, "[%d]: EXIT [%d]", region.id, region.block-of.id);
 end;
 
 define method dump (assignment :: <assignment>, stream :: <stream>) => ();
@@ -195,26 +205,34 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
 end;
 
 define method dump (op :: <primitive>, stream :: <stream>) => ();
-  format(stream, "primitive %s", op.name);
+  format(stream, "primitive %s[%d]", op.name, op.id);
   dump-operands(op.depends-on, stream);
 end;
 
 define method dump (call :: <abstract-call>, stream :: <stream>) => ();
-  if (~call.depends-on)
-    write("<call w/ no operands>", stream);
-  else
-    dump(call.depends-on.source-exp, stream);
-    dump-operands(call.depends-on.dependent-next, stream);
-  end;
+  format(stream, "CALL[%d]", call.id);
+  dump-operands(call.depends-on, stream);
 end;
 
 define method dump (call :: <mv-call>, stream :: <stream>) => ();
-  write("mv-call", stream);
+  format(stream, "MV-CALL[%d]", call.id);
   dump-operands(call.depends-on, stream);
 end;
 
 define method dump (op :: <prologue>, stream :: <stream>) => ();
-  write("function arguments", stream);
+  format(stream, "PROLOGUE[%d]", op.id);
+  dump-operands(op.depends-on, stream);
+end;
+
+define method dump (op :: <catcher>, stream :: <stream>) => ();
+  format(stream, "CATCHER[%d]", op.id);
+  dump-operands(op.depends-on, stream);
+end;
+
+define method dump (op :: <pitcher>, stream :: <stream>) => ();
+  format(stream, "PITCHER[%d]", op.id);
+  dump-operands(op.depends-on, stream);
+  format(stream, " to CATCHER[%d]", op.catcher.id);
 end;
 
 define method dump-operands(dep :: false-or(<dependency>), stream :: <stream>)
@@ -230,10 +248,18 @@ define method dump-operands(dep :: false-or(<dependency>), stream :: <stream>)
 		 write(", ", stream);
 		 pprint-newline(#"fill", stream);
 	       end;
-	       dump(dep.source-exp, stream);
+	       dump-expr(dep.source-exp, stream);
 	     end;
 	   end,
      suffix: ")");
+end;
+
+define method dump-expr (expr :: <expression>, stream :: <stream>) => ();
+  dump(expr, stream);
+end;
+
+define method dump-expr (expr :: <lambda>, stream :: <stream>) => ();
+  format(stream, "METHOD[%d] ", lambda.id);
 end;
 
 define method dump (var :: <abstract-variable>, stream :: <stream>) => ();
@@ -330,8 +356,12 @@ define method dump (lambda :: <lambda>, stream :: <stream>) => ();
 	   end);
 end;
 
-define method dump (hairy-method :: <hairy-method-literal>,
-		    stream :: <stream>)
-    => ();
-  format(stream, "HAIRY-METHOD [%d]", hairy-method.id);
+define method dump
+    (hairy-method :: <hairy-method-literal>, stream :: <stream>) => ();
+  format(stream, "HAIRY-METHOD[%d]", hairy-method.id);
+end;
+
+define method dump
+    (exit-function :: <exit-function>, stream :: <stream>) => ();
+  format(stream, "EXIT-FUN[%d]", exit-function.target-region.id);
 end;
