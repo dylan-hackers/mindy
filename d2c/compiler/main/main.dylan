@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.49 1996/02/09 03:35:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.50 1996/02/09 11:45:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -59,7 +59,7 @@ define class <unit-info> (<object>)
     init-function: method () make(<stretchy-vector>) end method,
     init-keyword: #"undumped-objects";
 
-  slot linker-options :: false-or(<byte-string>),
+  slot unit-linker-options :: false-or(<byte-string>),
     init-value: #f, init-keyword: #"linker-options";
 end class <unit-info>;
 
@@ -72,7 +72,8 @@ end;
   
 add-make-dumper(#"unit-info", *compiler-dispatcher*, <unit-info>,
 		list(unit-name, unit-name:, #f,
-		     undumped-objects, undumped-objects:, #f));
+		     undumped-objects, undumped-objects:, #f,
+		     unit-linker-options, linker-options: #f));
 
 
 // Compilation driver.
@@ -446,8 +447,8 @@ define method compile-library
       end;
       let unit-libs = "";
       for (unit in *units*)
-	if (unit.linker-options)
-	  unit-libs := concatenate(" ", unit.linker-options, unit-libs);
+	if (unit.unit-linker-options)
+	  unit-libs := concatenate(" ", unit.unit-linker-options, unit-libs);
 	end if;
 	unit-libs := concatenate(" -l", unit.unit-name, unit-libs);
       end;
