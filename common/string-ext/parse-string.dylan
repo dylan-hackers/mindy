@@ -1,10 +1,10 @@
-module:   parse-string
+module:   %parse-string
 author:   Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: A useful little data structure that's not useful enough to 
           export outside the library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/parse-string.dylan,v 1.2 1996/03/22 23:45:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/parse-string.dylan,v 1.3 1996/08/10 20:28:46 nkramer Exp $
 
 //======================================================================
 //
