@@ -1080,6 +1080,8 @@ define /* exported */ class <load-state> (<object>)
   // dynamic variable.
   /* exported */ slot state-stack :: <list>, init-value: #(),
     /* exported */ setter: state-stack-setter;
+  //
+  slot load-stack :: <list>, init-value: #();
 end class;
 
 
@@ -1359,7 +1361,7 @@ define /* exported */ method load-object-dispatch (state :: <load-state>)
 
   let buffer = state.od-buffer;
   let next = state.od-next;
-dformat("ROD entered, next = %=\n", next);
+//dformat("ROD entered, next = %=\n", next);
 let res =
   // Check if we at a label (or the end.)
   if (next >= state.label-index)
@@ -1401,9 +1403,15 @@ let res =
     select (logand(flags, $odf-etype-mask))
      $odf-object-definition-etype =>
        assert(code < $dispatcher-table-size);
-dformat("Calling loader for %=\n", 
-	find-key(*object-id-registry*, method (x) code = x end));
-       state.dispatcher.table[code](state);
+       let name = find-key(*object-id-registry*, method (x) code = x end);
+//dformat("Calling loader for %=\n", name);
+       let orig-stack = state.load-stack;
+       block ()
+	 state.load-stack := pair(name, orig-stack);
+	 state.dispatcher.table[code](state);
+       cleanup
+	 state.load-stack := orig-stack;
+       end;
 
      $odf-end-entry-etype =>
        $end-object;
@@ -1428,7 +1436,7 @@ dformat("Calling loader for %=\n",
 
     end select;
   end if;
-dformat("ROD returning %=\n", res);
+//dformat("ROD returning %=\n", res);
 res;
 end method;
 
@@ -1931,13 +1939,18 @@ define method make-loader-guts
     (state :: <load-state>, info :: <make-info>)
  => res :: <object>;
   let vec = load-subobjects-vector(state);
+  assert(vec.size == info.init-keys.size);
   let keys = #();
   let losers = #();
   for (val in vec, key in info.init-keys, i from 0)
     if (key & obj-resolved?(val))
       keys := pair(key, pair(val.actual-obj, keys));
-    else
+    elseif (info.setter-funs[i])
       losers := pair(i, losers);
+    else
+      error("No setter for unresolved slot %s in %s",
+	    info.accessor-funs[i].function-name,
+	    info.obj-name);
     end;
   end;
   let obj = apply(make, info.obj-class, keys);
@@ -1967,7 +1980,7 @@ end method;
 define /* exported */ method add-make-dumper
   (name :: <symbol>, dispatcher :: <dispatcher>,
    obj-class :: <class>, slots :: <list>,
-   #key load-external :: <boolean>)
+   #key load-external :: <boolean>, dumper-only :: <boolean>)
  => ();
   let acc = make(<stretchy-vector>);
   let key = make(<stretchy-vector>);
@@ -1997,18 +2010,18 @@ define /* exported */ method add-make-dumper
 
   *make-dumpers*[obj-class] := info;
 
-  add-od-loader(dispatcher, name,
-  		method (state :: <load-state>) => res :: <object>;
-		  if (info.load-external?)
-		    load-external-definition(
-		      state,
-		      method (state) make-loader-guts(state, info) end
-		    );
-		  else
-		    make-loader-guts(state, info);
-		  end;
-		end method
-  );
+  unless (dumper-only)
+    add-od-loader(dispatcher, name,
+		  method (state :: <load-state>) => res :: <object>;
+		    if (info.load-external?)
+		      load-external-definition
+			(state,
+			 method (state) make-loader-guts(state, info) end);
+		    else
+		      make-loader-guts(state, info);
+		    end;
+		  end method);
+  end;
 
 end method;
 
