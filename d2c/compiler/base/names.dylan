@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.7 1995/10/13 15:07:37 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.8 1996/02/09 21:04:19 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -23,7 +23,7 @@ define method print-object (name :: <basic-name>, stream :: <stream>) => ();
 end;
 
 define method print-message (name :: <basic-name>, stream :: <stream>) => ();
-  format(stream, "%s in %s", name.name-symbol, name.name-module);
+  format(stream, "%s", name.name-symbol);
 end;
 
 define method id-name (token :: <identifier-token>) => res :: <basic-name>;
@@ -75,7 +75,7 @@ define method print-message (name :: <method-name>, stream :: <stream>) => ();
     end;
     print-message(spec, stream);
   end;
-  format(stream, "} in %s", gf-name.name-module);
+  format(stream, "}");
 end;
 
 add-make-dumper(#"method-name", *compiler-dispatcher*, <method-name>,
