@@ -1,7 +1,10 @@
 &makegen_include("../common-Makegen");
 &compile_subdirs("tests");
 
-$D2CFLAGS = $D2CFLAGS . ' -L$buildroot/common/common-dylan -L$buildroot/common/threads';
+$D2CFLAGS
+    = $D2CFLAGS
+    . ' -L../../common/common-dylan'
+    . ' -L../../common/threads';
 
 do emit_library_rule(
     'testworks', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install');
