@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.36 1995/04/27 04:41:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.37 1995/04/27 23:09:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -668,7 +668,8 @@ define module front
 
     <abstract-call>, <local-call>, <known-call>,
     <unknown-call>, <error-call>, <mv-call>,
-    <primitive>, name, <prologue>, <catcher>, <pitcher>,
+    <primitive>, name, <prologue>,
+    <catcher>, exit-function, <pitcher>,
     <set>, variable,
     <self-tail-call>, self-tail-call-of,
 
