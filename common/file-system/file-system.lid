@@ -1,5 +1,4 @@
 Library:     file-system
-Unit-prefix: fileSystem
 unique-id-base: 1800
 
 file-system-exports.dylan

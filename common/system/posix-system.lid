@@ -1,5 +1,4 @@
 Library: system
-Unit-prefix: system
 
 system-exports.dylan
 os-constants.dylan
