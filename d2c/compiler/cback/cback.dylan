@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.80 1995/11/15 21:12:37 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.81 1995/11/19 02:40:11 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -846,7 +846,7 @@ define method emit-bindings-definition-gunk
   let rep = info.backend-var-info-rep;
   if (instance?(rep, <immediate-representation>))
     let name = info.backend-var-info-name;
-    format(stream, "static %s %s = ", rep.representation-c-type, name);
+    format(stream, "%s %s = ", rep.representation-c-type, name);
     let init-value = if (instance?(defn, <variable-definition>))
 		       defn.defn-init-value;
 		     else
@@ -860,7 +860,7 @@ define method emit-bindings-definition-gunk
 			     output-info),
 	     defn.defn-name);
     else
-      format(stream, "0;\t/* %s */\nstatic int %s_initialized = FALSE;\n",
+      format(stream, "0;\t/* %s */\nint %s_initialized = FALSE;\n",
 	     defn.defn-name, name);
     end;
     output-info.output-info-prototypes-exist-for[name] := #t;
@@ -879,7 +879,7 @@ define method emit-prototype-for
   let stream = output-info.output-info-body-stream;
   let rep = info.backend-var-info-rep;
   if (instance?(rep, <immediate-representation>))
-    format(stream, "static %s %s;\t/* %s */\n",
+    format(stream, "extern %s %s;\t/* %s */\n",
 	   rep.representation-c-type,
 	   info.backend-var-info-name,
 	   defn.defn-name);
@@ -889,7 +889,7 @@ define method emit-prototype-for
 		       defn.ct-value;
 		     end;
     unless (init-value)
-      format(stream, "static boolean %s_initialized = FALSE;\n",
+      format(stream, "extern boolean %s_initialized;\n",
 	     info.backend-var-info-name);
     end;
     write('\n', stream);
