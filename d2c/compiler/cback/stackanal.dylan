@@ -44,6 +44,20 @@ define method analize
 end;
 
 define method analize
+    (op :: <catch>, want :: <list>, state :: <state>)
+    => want :: <list>;
+  //
+  // Catch always returns a cluster.
+  let new-depth = size(want) + 1;
+  if (new-depth > state.max-depth)
+    state.max-depth := new-depth;
+  end;
+  //
+  // We don't need to scan the operands, because none of them will be clusters.
+  want;
+end;
+
+define method analize
     (op :: <known-call>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
