@@ -191,10 +191,10 @@ define module carbon
                 $kControlKindUserPane, $kControlKindWindowHeader,
     $kControlUserPaneDrawProcTag, $kControlStaticTextTextTag,
     $kControlEditTextSelectionTag, $kControlEditTextPasswordTag, $kControlEditTextTextTag,
-    $kControlListBoxListHandleTag, 
+    $kControlListBoxListHandleTag, $kControlEditTextValidationProcTag, $kControlEditTextKeyFilterTag,
     $kControlNoPart, $kControlEntireControl, $kControlEditTextPart,
     $kControlSupportsEmbedding,
-		<ControlHandle>, <ControlActionUPP>,
+		<ControlHandle>, <ControlActionUPP>, <ControlEditTextValidationUPP>, <ControlKeyFilterUPP>,
 		NewControl, DisposeControl, KillControls,
 		HiliteControl, ShowControl, HideControl, GetControlBounds,
 		GetControlValue, SetControlValue, MoveControl, SizeControl,
@@ -204,7 +204,7 @@ define module carbon
                 AdvanceKeyboardFocus, ClearKeyboardFocus, GetKeyboardFocus, ReverseKeyboardFocus, SetKeyboardFocus,
 		DrawControls, EmbedControl,
     IsControlVisible, CreateRootControl, SetControlData, GetControlData, GetControlDataSize, 
-    NewControlUserPaneDrawUPP,
+    NewControlUserPaneDrawUPP, NewControlEditTextValidationUPP, NewControlKeyFilterUPP,
     GetBestControlRect, ActivateControl, DeactivateControl,
     <ControlEditTextSelectionRec*>,
       selStart-value, selEnd-value, selStart-value-setter, selEnd-value-setter,
@@ -271,6 +271,14 @@ define module carbon
 		$gestaltQuickdrawVersion, $gestaltOriginalQD, $gestalt8BitQD, $gestalt32BitQD,
 		$gestalt32BitQD11, $gestalt32BitQD12, $gestalt32BitQD13, $gestaltAllegroQD,
 		$gestaltSystemVersion,
+    
+// Lists
+
+      <ListRef>, <Cell>,
+      $lDoVAutoscrollBit, $lDoHAutoscrollBit, $lDoVAutoscroll, $lDoHAutoscroll,
+      $lOnlyOneBit, $lExtendDragBit, $lNoDisjointBit, $lNoExtendBit, $lNoRectBit, $lUseSenseBit, $lNoNilHiliteBit, 
+      $lOnlyOne, $lExtendDrag, $lNoDisjoint, $lNoExtend, $lNoRect, $lUseSense, 
+      $lNoNilHilite, $kListDefUserProcType, $kListDefStandardTextType, $kListDefStandardIconType,
     
 // Mac Types
     // Basic Types

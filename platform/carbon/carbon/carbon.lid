@@ -7,6 +7,7 @@ memory.dylan
 files.dylan
 quickdraw.dylan
 quickdraw-text.dylan
+lists.dylan
 gworlds.dylan
 windows.dylan
 menus.dylan

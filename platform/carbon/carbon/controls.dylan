@@ -123,6 +123,8 @@ define constant $kControlEditTextSelectionTag :: <integer> = c-expr(int: "kContr
 define constant $kControlEditTextPasswordTag :: <integer> = c-expr(int: "kControlEditTextPasswordTag"); 
 define constant $kControlEditTextTextTag :: <integer> = c-expr(int: "kControlEditTextTextTag");
 define constant $kControlListBoxListHandleTag :: <integer> = c-expr(int: "kControlListBoxListHandleTag");
+define constant $kControlEditTextValidationProcTag :: <integer> = c-expr(int: "kControlEditTextValidationProcTag");
+define constant $kControlEditTextKeyFilterTag :: <integer> = c-expr(int: "kControlEditTextValidationProcTag");
 // etc.
 
 define constant $kControlSupportsEmbedding :: <integer> = c-expr(int: "kControlSupportsEmbedding");
@@ -135,6 +137,8 @@ define functional class <ControlHandle> ( <Handle> )
 end class <ControlHandle>;
 
 define constant <ControlActionUPP> = <UniversalProcPtr>;
+define constant <ControlEditTextValidationUPP> = <UniversalProcPtr>;
+define constant <ControlKeyFilterUPP> = <UniversalProcPtr>;
 
 define constant <ControlPartCode> = <SInt16>;
 define constant <ControlFocusPart> = <SInt16>;
@@ -628,6 +632,38 @@ define method NewControlUserPaneDrawUPP( userRoutine :: <function-pointer> )	// 
 	make( <UniversalProcPtr>, pointer: result );
 end method NewControlUserPaneDrawUPP;
 
+/*
+		NewControlEditTextValidationUPP
+*/
+
+define method NewControlEditTextValidationUPP( userRoutine ) //:: <callback-function> )
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewControlEditTextValidationUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewControlEditTextValidationUPP;
+
+define method NewControlEditTextValidationUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewControlEditTextValidationUPP", ptr:, ptr: userRoutine.raw-value );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewControlEditTextValidationUPP;
+
+/*
+		NewControlKeyFilterUPP
+*/
+
+define method NewControlKeyFilterUPP( userRoutine ) //:: <callback-function> )
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewControlKeyFilterUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewControlKeyFilterUPP;
+
+define method NewControlKeyFilterUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewControlKeyFilterUPP", ptr:, ptr: userRoutine.raw-value );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewControlKeyFilterUPP;
+
 
 /*
   EmbedControl
@@ -702,3 +738,9 @@ define method GetControlViewSize(inControl :: <ControlHandle>)
 => (value :: <integer>)
   call-out("GetControlViewSize", int:, ptr: inControl.raw-value);
 end method GetControlViewSize;
+
+// Data Browsers
+
+/*
+  We need to be able to create browsers, populate them, track clicks, and get selections
+*/

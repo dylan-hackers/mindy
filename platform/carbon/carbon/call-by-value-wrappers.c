@@ -94,10 +94,58 @@ trackgoaway						(WindowRef 				window,
 }
 
 EXTERN_API_C (ControlPartCode )
-handlecontrolclick					(ControlRef inControl, 
-                                                        Point * inWhere, 
-                                                        EventModifiers inModifiers, 
-                                                        ControlActionUPP inAction)
+handlecontrolclick		(ControlRef inControl, 
+                        Point * inWhere, 
+                        EventModifiers inModifiers, 
+                        ControlActionUPP inAction)
 {
     HandleControlClick( inControl, *inWhere, inModifiers, inAction );
+}
+
+EXTERN_API( ListRef )
+lnew                            (const Rect *           rView,
+                                 const ListBounds *     dataBounds,
+                                 Point     *            cSize,
+                                 short                  theProc,
+                                 WindowRef              theWindow,
+                                 Boolean                drawIt,
+                                 Boolean                hasGrow,
+                                 Boolean                scrollHoriz,
+                                 Boolean                scrollVert)  
+{
+  return LNew(rView, dataBounds, *cSize, theProc, theWindow, drawIt, hasGrow, scrollHoriz, scrollVert);
+}        
+
+EXTERN_API( Boolean )
+lclick               (Point            *     pt,
+                      short                  modifiers,
+                      ListRef             lHandle)
+{
+  return LClick(*pt, modifiers, lHandle);
+}
+
+EXTERN_API( void )
+lgetcell                        (void *                 dataPtr,
+                                 short *                dataLen,
+                                 Cell   *               theCell,
+                                 ListRef             lHandle) 
+{
+  LGetCell(dataPtr, dataLen, *theCell, lHandle);
+}                                 
+
+EXTERN_API( void )
+lsetcell                        (const void *           dataPtr,
+                                 short                  dataLen,
+                                 Cell      *            theCell,
+                                 ListRef             lHandle)
+{
+  LSetCell(dataPtr, dataLen, *theCell, lHandle);
+}
+
+EXTERN_API( void )
+lsetselect                      (Boolean                setIt,
+                                 Cell         *         theCell,
+                                 ListRef             lHandle) 
+{
+  LSetSelect(setIt, *theCell, lHandle);
 }
