@@ -364,8 +364,8 @@ end function process-type-list;
 define constant <icky-type-name> =
   type-union(<identifier-token>,      // A regular type name
 	     <c-typedef-declaration>, // Potential typedef redeclaration
-	     <empty-list>,            // Abstract declarator
-	     <c-typedef-type>);       // XXX - When computing sizeof... !!!
+	     <empty-list>);           // Abstract declarator
+	     // <c-typedef-type>);       // doesn't seem to be required
 
 // Deals with the odd idiomatic data structures which result from the LALR
 // parser generator.  These might take the form of 
