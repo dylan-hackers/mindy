@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.4 2000/01/24 04:55:47 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/common/transcendental/transcendental.dylan,v 1.5 2002/08/04 05:52:08 brent Exp $
 copyright: see below
 
 //======================================================================
@@ -77,6 +77,7 @@ define generic asinh (x :: <real>) => y :: <float>;
 define generic acosh (x :: <real>) => y :: <float>;
 define generic atanh (x :: <real>) => y :: <float>;
 define generic log (x :: <real>, #key base :: <real>) => y :: <float>;
+define generic logn (x :: <real>, b :: <real>) => y :: <float>;
 define generic exp (x :: <real>) => y :: <float>;
 define generic sqrt (x :: <real>) => y :: <float>;
 define generic isqrt (x :: <integer>) => y :: <integer>;
@@ -172,6 +173,25 @@ define sealed method log (x :: <integer>,
     otherwise => call-out("log", float:, float: as(<single-float>, x)) / call-out("log", double:, double: base);
   end select;
 end method log;
+
+// Natural log function, added to support Functional Object's API.
+// 8-3-2002 <bfulgham@debian.org>
+define sealed method logn (x :: <double-float>, b :: <real>)
+ => y :: <double-float>;
+  log(x, base: b);
+end method logn;
+
+define sealed method logn (x :: <single-float>, b :: <real>)
+ => y :: <single-float>;
+  log(x, base: b);
+end method logn;
+
+define sealed method logn (x :: <integer>,  b :: <real>)
+ => y :: <single-float>;
+  log(x, base: b);
+end method logn;
+
+// End natural log methods
 
 define sealed method isqrt (x :: <integer>) => y :: <integer>;
   if (x.negative?) error("%= is negative", x) end;
