@@ -4,20 +4,21 @@
 #include "config.h"
 #include "runtime.h"
 
-#ifdef HAVE_GC_H
-#include <gc.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
-#ifdef HAVE_GC_GC_H
+#if defined(HAVE_GC_H)
+#include <gc.h>
+#elif defined(HAVE_GC_GC_H)
 #include <gc/gc.h>
 #endif
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 
 #define STACK_SIZE (96 * 1024)
@@ -32,7 +33,7 @@ void destroy(void* ptr)
   GC_free(ptr);
 }
 
-#if defined(HAVE_MPROTECT)
+#if defined(HAVE_MPROTECT) && defined(HAVE_GETPAGESIZE)
 void finalize_stack(void *stack, void *boundary)
 {
   mprotect(boundary, getpagesize(), PROT_READ | PROT_WRITE | PROT_EXEC);
