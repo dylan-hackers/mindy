@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.3 1995/11/16 03:38:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.4 1995/12/09 02:49:15 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -31,7 +31,6 @@ define class <pair> (<list>)
 end;
 
 seal generic make (singleton(<pair>));
-seal generic initialize (<pair>);
 
 define inline method head-setter (new, pair :: <pair>) => new;
   pair.%head := new;
@@ -41,7 +40,7 @@ define inline method tail-setter (new, pair :: <pair>) => new;
   pair.%tail := new;
 end;
 
-define sealed inline method forward-iteration-protocol (list :: <list>)
+define inline method forward-iteration-protocol (list :: <list>)
     => (initial-state :: <list>,
 	limit :: <list>,
 	next-state :: <function>,
@@ -89,19 +88,19 @@ define flushable method list (#rest args)
   as(<list>, args);
 end;
 
-define inline sealed method as (class == <list>, list :: <list>)
-    => res :: <list>;
-  list;
-end;
+define method shallow-copy (list :: <list>) => res :: <list>;
+  local method dup-if-pair (object) => res;
+	  if (instance?(object, <pair>))
+	    pair(object.head, dup-if-pair(object.tail));
+	  else
+	    object;
+	  end;
+	end;
+  dup-if-pair(list);
+end method shallow-copy;
 
-define flushable sealed method as
-    (class == <list>, vec :: <simple-object-vector>)
-    => res :: <list>;
-  for (index :: <fixed-integer> from vec.size - 1 to 0 by -1,
-       res = #() then pair(vec[index], res))
-  finally
-    res;
-  end;
+define inline method type-for-copy (object :: <list>) => res :: <type>;
+  <list>;
 end;
 
 define flushable sealed method as
@@ -114,16 +113,31 @@ define flushable sealed method as
   end;
 end;
 
-define sealed inline method empty? (list :: <list>) => res :: <boolean>;
+define inline method as (class == <list>, list :: <list>)
+    => res :: <list>;
+  list;
+end;
+
+define flushable method as
+    (class == <list>, vec :: <simple-object-vector>)
+    => res :: <list>;
+  for (index :: <fixed-integer> from vec.size - 1 to 0 by -1,
+       res = #() then pair(vec[index], res))
+  finally
+    res;
+  end;
+end;
+
+define inline method empty? (list :: <list>) => res :: <boolean>;
   list == #();
 end;
 
-define sealed inline method add! (list :: <list>, element)
+define inline method add! (list :: <list>, element)
     => res :: <pair>;
   pair(element, list);
 end;
 
-define sealed method remove! (list :: <list>, element, #key test = \==, count)
+define method remove! (list :: <list>, element, #key test = \==, count)
     => res :: <list>;
   let prev = #f;
   let removed = 0;
@@ -148,7 +162,7 @@ define sealed method remove! (list :: <list>, element, #key test = \==, count)
   list;
 end;
 
-define sealed method size (list :: <list>)
+define method size (list :: <list>)
     => res :: type-union(<false>, <fixed-integer>);
   if (list == #())
     0;
@@ -171,7 +185,7 @@ define sealed method size (list :: <list>)
   end;
 end;
 
-define flushable sealed method reverse (list :: <list>) => res :: <list>;
+define flushable method reverse (list :: <list>) => res :: <list>;
   for (results = #() then pair(element, results),
        element in list)
   finally
@@ -179,7 +193,7 @@ define flushable sealed method reverse (list :: <list>) => res :: <list>;
   end;
 end;
 
-define sealed method reverse! (list :: <list>) => res :: <list>;
+define method reverse! (list :: <list>) => res :: <list>;
   let temp :: <list> = #();
   for (remaining :: <list> = list then temp,
        results :: <list> = #() then remaining,
@@ -192,7 +206,7 @@ define sealed method reverse! (list :: <list>) => res :: <list>;
 end;
 
 
-define sealed method \= (list1 :: <list>, list2 :: <list>)
+define method \= (list1 :: <list>, list2 :: <list>)
     => res :: <boolean>;
   if (list1 == list2)
     #t;
@@ -224,4 +238,3 @@ define sealed inline method \= (sequence :: <sequence>, list :: <list>)
   list = sequence;
 end;
 
-seal generic member? (<object>, <list>);
