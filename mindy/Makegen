@@ -11,7 +11,7 @@ if ($features{'compiled_for_unix'}) {
     }
     print <<"EOF"
 
-$destdir\\bin\\mindy.exe: $srcdir\\Interpretter\\Release\\Interpretter.exe
+$destdir\\bin\\mindy.exe: $srcdir\\Interpretter\\Release\\Interpreter.exe
 	copy $srcdir\\Interpretter\\Release\\Interpretter.exe $destdir\\bin\\mindy.exe
 
 $destdir\\bin\\mindycomp.exe: $srcdir\\Compiler\\Release\\Mindycomp.exe
