@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.4 2000/01/24 04:56:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.5 2000/10/20 15:23:36 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -78,6 +78,14 @@ define method cheap-format
 	      fputs-internal('%', c-file);
 	      scan(index + 1, next-arg);
 	  end;
+	elseif (char == '\n')
+#if (newlines-are-CRLF)
+          fputs-internal('\r', c-file);
+	  fputs-internal(char, c-file);
+#else
+	  fputs-internal(char, c-file);
+#endif
+	  scan(index + 1, next-arg);
 	else
 	  fputs-internal(char, c-file);
 	  scan(index + 1, next-arg);
