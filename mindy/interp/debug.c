@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.39 1994/11/28 15:02:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.40 1994/11/28 15:48:20 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -779,8 +779,7 @@ static void library_cmd(obj_t args)
 	list_libraries();
 	putchar('\n');
 	if (CurLibrary) {
-	    printf("Current library is ");
-	    print(library_name(CurLibrary));
+	    format("Current library is %s\n", library_name(CurLibrary));
 	}
 	else
 	    printf("No library currently selected\n");
@@ -814,10 +813,8 @@ static void module_cmd(obj_t args)
     if ( ! any_args(args)) {
 	list_modules(CurLibrary);
 	putchar('\n');
-	if (CurModule) {
-	    printf("The current module is ");
-	    print(module_name(CurModule));
-	}
+	if (CurModule)
+	    format("The current module is %s\n", module_name(CurModule));
 	else
 	    printf("No module currently selected.\n");
     } else if (get_symbol(first_arg(args), &sym)

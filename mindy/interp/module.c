@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.19 1994/11/28 08:03:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.20 1994/11/28 15:49:01 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -879,7 +879,7 @@ void list_libraries(void)
     struct library *library;
 
     for (library = Libraries; library != NULL; library = library->next) {
-	prin1(library->name);
+	fputs(sym_name(library->name), stdout);
 	if (library->completed)
 	    printf("\n");
 	else if (library->defn)
@@ -908,7 +908,7 @@ void list_modules(struct library *library)
 	    printf("%c%c ",
 		   entry->exported ? 'x' : ' ',
 		   module->home == library ? ' ' : 'i');
-	    prin1(entry->name);
+	    fputs(sym_name(entry->name), stdout);
 	    if (module->completed)
 		printf("\n");
 	    else if (module->defn)
