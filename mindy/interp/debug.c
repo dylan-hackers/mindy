@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.4 1994/03/28 11:05:23 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.5 1994/03/30 10:55:46 rgs Exp $
 *
 * This file does whatever.
 *
@@ -1406,8 +1406,10 @@ void invoke_debugger(enum pause_reason reason)
 	explain_reason(reason);
     }
 
-    if (!isatty(fileno(stdin)))
+    if (!isatty(fileno(stdin))) {
+	printf("STDIN is not a tty.  Cannot debug.\n");
 	exit(1);
+    }
 
     lex_init();
 
