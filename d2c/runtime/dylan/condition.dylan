@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.14 2003/04/12 19:17:40 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.15 2003/10/18 04:15:33 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -53,11 +53,11 @@ end class <error>;
 // simple-mumble conditions.
 // 
 define abstract open class <format-string-condition> (<condition>)
-
   // The format string.  Exported from Dylan.
   constant slot condition-format-string :: <string>,
-    required-init-keyword: format-string:;
-
+    init-keyword: format-string:,
+    init-value: "";
+  //
   // The format arguments.  Exported from Dylan.
   constant slot condition-format-arguments :: <sequence>,
     init-keyword: format-arguments:,
