@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.1 1994/03/24 21:49:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.2 1994/03/27 02:07:24 wlott Exp $
 *
 * This file does whatever.
 *
@@ -58,3 +58,15 @@ extern void thread_debuggered(struct thread *thread, obj_t condition);
 extern void thread_buggered(struct thread *thread);
 extern void thread_suspend(struct thread *thread);
 extern void thread_restart(struct thread *thread);
+
+extern obj_t make_lock(void);
+extern boolean lock_query(obj_t lock);
+extern void lock_grab(struct thread *thread, obj_t lock,
+		      void advance(struct thread *thread));
+extern void lock_release(obj_t lock);
+
+extern obj_t make_event(void);
+extern void event_wait(struct thread *thread, obj_t event, obj_t lock,
+		       void (*advance)(struct thread *thread));
+extern obj_t event_signal(obj_t event);
+extern obj_t event_broadcast(obj_t event);
