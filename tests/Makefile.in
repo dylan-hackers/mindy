@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.14 1996/08/10 21:42:02 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.15 1996/10/06 13:34:01 nkramer Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -64,11 +64,11 @@ LIBS	=		@LIBS@
 MC	=	../comp/mindycomp
 INTERP	=	../interp/mindy
 MINDYFLAGS = 
-MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix:../libraries/internal-time:../libraries/format-out:../libraries/time:../libraries/regexp
+MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix::../libraries/format-out:../libraries/time:../libraries/regexp
 
 # We don't want to run threaded-io-test by default because it is interactive
 #
-OBJS_TO_RUN = dylan-test-lib.dbc regexp-test-lib.dbc stream-test-lib.dbc table-ext-test-lib.dbc random-test-lib.dbc matrix-test-lib.dbc coll-ext-test-lib.dbc print-test-lib.dbc format-test-lib.dbc format-out-test-lib.dbc itime-test-lib.dbc time-test-lib.dbc
+OBJS_TO_RUN = dylan-test-lib.dbc regexp-test-lib.dbc stream-test-lib.dbc table-ext-test-lib.dbc random-test-lib.dbc matrix-test-lib.dbc coll-ext-test-lib.dbc print-test-lib.dbc format-test-lib.dbc format-out-test-lib.dbc time-test-lib.dbc
 OBJS_TO_BUILD = $(OBJS_TO_RUN) threaded-io-test.dbc asterixes.txt dashes.txt
 
 all: ${OBJS_TO_BUILD}
@@ -147,6 +147,8 @@ format-out-test-exports.dbc: ${SRCDIR}/format-out-test-exports.dylan
 format-out-test.dbc: ${SRCDIR}/format-out-test.dylan
 	${MC} ${MINDYFLAGS} -lformat-out-test -o format-out-test.dbc ${SRCDIR}/format-out-test.dylan
 
+# We no longer need rules for itime-test-lib (since we abandoned the
+# library), but it doesn't hurt to leave this here
 itime-test-lib.dbc: itime-test-exports.dbc itime-test.dbc
 	cat itime-test-exports.dbc itime-test.dbc > $@
 itime-test-exports.dbc: ${SRCDIR}/itime-test-exports.dylan
