@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.96 1995/11/09 13:32:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.97 1995/11/09 14:08:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1139,6 +1139,7 @@ define module cback
   use primitives;
   use compile-time-functions;
   use signature-interface;
+  use od-format;
 
   export
     <unit-info>, unit-info-init-roots,
