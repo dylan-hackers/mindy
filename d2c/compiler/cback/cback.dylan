@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.10 1995/04/25 23:00:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.11 1995/04/26 04:23:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -270,13 +270,13 @@ define method make-info-for (defn :: <bindings-definition>,
 	    else
 	      $general-rep;
 	    end;
-  let name
-    = if (instance?(rep, <immediate-representation>))
-	new-global(output-info);
-      else
-	new-root(defn.ct-value, output-info);
-      end;
-  make(<backend-var-info>, representation: rep, name: name);
+  if (instance?(rep, <immediate-representation>))
+    let name = new-global(output-info);
+    make(<backend-var-info>, representation: rep, name: name);
+  else
+    let name = new-root(defn.ct-value, output-info);
+    make(<backend-var-info>, representation: $general-rep, name: name);
+  end;
 end;
 
 
@@ -404,40 +404,61 @@ end;
 define method emit-tlf-gunk (tlf :: <define-bindings-tlf>,
 			     output-info :: <output-info>)
     => ();
-  local
-    method process-defn (defn :: <bindings-definition>) => ();
-      let info = get-info-for(defn, output-info);
-      let stream = output-info.output-info-header-stream;
-      let rep = info.backend-var-info-rep;
-      if (instance?(rep, <immediate-representation>))
-	format(stream, "static %s %s",
-	       rep.representation-c-type,
-	       info.backend-var-info-name);
-	let init-value = defn.ct-value;
-	if (init-value)
-	  let (init-value-expr, init-value-rep)
-	    = c-expr-and-rep(init-value, rep, output-info);
-	  format(stream, "= %s;\t/* %s */\n",
-		 conversion-expr(rep, init-value-expr, init-value-rep,
-				 output-info),
-		 debug-name-string(defn.defn-name));
-	else
-	  format(stream, ";\t/* %s */\nstatic int %s_initialized = FALSE;\n",
-		 debug-name-string(defn.defn-name),
-		 info.backend-var-info-name);
-	end;
-      else
-	format(stream, "/* %s allocated as %s */\n",
-	       debug-name-string(defn.defn-name),
-	       info.backend-var-info-name);
-      end;
-      if (instance?(defn, <variable-definition>))
-	let type-defn = defn.var-defn-type-defn;
-	type-defn & process-defn(type-defn);
-      end;
+  for (defn in tlf.tlf-required-defns)
+    emit-bindings-definition-gunk(defn, output-info);
+  end;
+  if (tlf.tlf-rest-defn)
+    emit-bindings-definition-gunk(tlf.tlf-rest-defn, output-info);
+  end;
+end;
+
+define method emit-bindings-definition-gunk
+    (defn :: <bindings-definition>, output-info :: <output-info>) => ();
+  let info = get-info-for(defn, output-info);
+  let stream = output-info.output-info-header-stream;
+  let rep = info.backend-var-info-rep;
+  if (instance?(rep, <immediate-representation>))
+    format(stream, "static %s %s",
+	   rep.representation-c-type,
+	   info.backend-var-info-name);
+    let init-value = defn.ct-value;
+    if (init-value)
+      let (init-value-expr, init-value-rep)
+	= c-expr-and-rep(init-value, rep, output-info);
+      format(stream, "= %s;\t/* %s */\n",
+	     conversion-expr(rep, init-value-expr, init-value-rep,
+			     output-info),
+	     debug-name-string(defn.defn-name));
+    else
+      format(stream, ";\t/* %s */\nstatic int %s_initialized = FALSE;\n",
+	     debug-name-string(defn.defn-name),
+	     info.backend-var-info-name);
     end;
-  do(process-defn, tlf.tlf-required-defns);
-  tlf.tlf-rest-defn & process-defn(tlf.tlf-rest-defn);
+  else
+    format(stream, "/* %s allocated as %s */\n",
+	   debug-name-string(defn.defn-name),
+	   info.backend-var-info-name);
+  end;
+end;
+
+define method emit-bindings-definition-gunk
+    (defn :: <variable-definition>, output-info :: <output-info>,
+     #next next-method)
+    => ();
+  next-method();
+  let type-defn = defn.var-defn-type-defn;
+  if (type-defn)
+    emit-bindings-definition-gunk(type-defn, output-info);
+  end;
+end;
+
+define method emit-bindings-definition-gunk
+    (defn :: <constant-definition>, output-info :: <output-info>,
+     #next next-method)
+    => ();
+  unless (instance?(defn.ct-value, <eql-ct-value>))
+    next-method();
+  end;
 end;
 
 
@@ -660,6 +681,17 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
     let (expr, rep) = c-expr-and-rep(expr.value, rep-hint, output-info);
     deliver-results(defines, vector(pair(expr, rep)), output-info);
   end;
+end;
+
+define method emit-assignment (defines :: false-or(<definition-site-variable>),
+			       leaf :: <definition-constant-leaf>,
+			       output-info :: <output-info>)
+    => ();
+  let info = get-info-for(leaf.const-defn, output-info);
+  deliver-results(defines,
+		  vector(pair(info.backend-var-info-name,
+			      info.backend-var-info-rep)),
+		  output-info);
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
@@ -1123,6 +1155,14 @@ define method ref-leaf (target-rep :: <representation>,
   conversion-expr(target-rep, expr, rep, output-info);
 end;
 
+define method ref-leaf (target-rep :: <representation>,
+			leaf :: <definition-constant-leaf>,
+			output-info :: <output-info>)
+    => res :: <string>;
+  let info = get-info-for(leaf.const-defn, output-info);
+  conversion-expr(target-rep, info.backend-var-info-name,
+		  info.backend-var-info-rep, output-info);
+end;
 
 define method c-expr-and-rep (lit :: <ct-value>,
 			      rep-hint :: <representation>,
