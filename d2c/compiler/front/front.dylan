@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.40 1995/10/05 01:13:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.41 1995/10/30 13:12:14 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -332,7 +332,6 @@ define class <local-var-info> (<debug-named-info>)
 end class;
 
 define class <lexical-var-info> (<debug-named-info>, <source-location-mixin>)
-// ??? stuff to handle set & closure vars?
 end class;
 
 
