@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.2 1994/03/25 04:30:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.3 1994/04/08 17:58:40 wlott Exp $
 *
 * This file does whatever.
 *
@@ -210,6 +210,7 @@ static void unwind(struct thread *thread, obj_t catch_block, obj_t *vals)
 	    dst[1] = cleanup;
 	    set_c_continuation(thread, continue_unwind);
 	    invoke(thread, 0);
+	    return;
 	}
 	/* Unlink the catch block we just unwound past. */
 	obj_ptr(struct catch_block *, cur_catch)->thread = NULL;
