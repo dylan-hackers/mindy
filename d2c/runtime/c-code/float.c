@@ -477,7 +477,7 @@ long double (log10l)(long double x)
 #endif
 
 #ifndef HAVE_RINT
-double rint(double x)
+double (rint)(double x)
 {
   /* ### I'm not sure this is entirely correct, but it's certainly
      closer than what we had here before 
@@ -609,119 +609,119 @@ double (log2)(double x)
 #endif
 
 #ifndef HAVE_FABSF
-float fabsf (float x)
+float (fabsf)(float x)
 {
     return (float) fabs(x);
 }
 #endif
 
 #ifndef HAVE_SINF
-float sinf (float x)
+float (sinf)(float x)
 {
   return (float) sin(x);
 }
 #endif
 
 #ifndef HAVE_COSF
-float cosf (float x)
+float (cosf)(float x)
 {
   return (float) cos(x);
 }
 #endif
 
 #ifndef HAVE_TANF
-float tanf (float x)
+float (tanf)(float x)
 {
   return (float) tan(x);
 }
 #endif
 
 #ifndef HAVE_ASINF
-float asinf (float x)
+float (asinf)(float x)
 {
   return (float) asin(x);
 }
 #endif
 
 #ifndef HAVE_ACOSF
-float acosf (float x)
+float (acosf)(float x)
 {
   return (float) acos(x);
 }
 #endif
 
 #ifndef HAVE_ATANF
-float atanf (float x)
+float (atanf)(float x)
 {
   return (float) atan(x);
 }
 #endif
 
 #ifndef HAVE_ATAN2F
-float atan2f (float y, float x)
+float (atan2f)(float y, float x)
 {
   return (float) atan2(y, x);
 }
 #endif
 
 #ifndef HAVE_EXPF
-float expf (float x)
+float (expf)(float x)
 {
   return (float) exp(x);
 }
 #endif
 
 #ifndef HAVE_SQRTF
-float sqrtf (float x)
+float (sqrtf)(float x)
 {
   return (float) sqrt(x);
 }
 #endif
 
 #ifndef HAVE_LOGF
-float logf (float x)
+float (logf)(float x)
 {
   return (float) log(x);
 }
 #endif
 
 #ifndef HAVE_LOG2F
-float log2f (float x)
+float (log2f)(float x)
 {
   return (float) log2(x);
 }
 #endif
 
 #ifndef HAVE_LOG10F
-float log10f (float x)
+float (log10f)(float x)
 {
   return (float) log10(x);
 }
 #endif
 
 #ifndef HAVE_POWF
-float powf (float b, float x)
+float (powf)(float b, float x)
 {
   return (float) pow(b, x);
 }
 #endif
 
 #ifndef HAVE_SINHF
-float sinhf (float x)
+float (sinhf)(float x)
 {
   return (float) sinh(x);
 }
 #endif
 
 #ifndef HAVE_COSHF
-float coshf (float x)
+float (coshf)(float x)
 {
   return (float) cosh(x);
 }
 #endif
 
 #ifndef HAVE_TANHF
-float tanhf (float x)
+float (tanhf)(float x)
 {
   return (float) tanh(x);
 }
