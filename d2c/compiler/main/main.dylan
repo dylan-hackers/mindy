@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.16 1995/05/21 00:38:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.17 1995/05/29 00:42:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -58,7 +58,7 @@ define method compile (#rest files) => res :: <component>;
   end-body(builder);
   format(*debug-output*, "Optimizing\n");
   optimize-component(component);
-  format(*debug-output*, "Emitting C code.\n");
+  format(*debug-output*, "\nEmitting C code.\n");
   let header-stream
     = make(<file-stream>, name: "output.h", direction: #"output");
   let body-stream
@@ -66,10 +66,18 @@ define method compile (#rest files) => res :: <component>;
   let output-info
     = make(<output-info>, header-stream: header-stream,
 	   body-stream: body-stream);
+  emit-prologue(output-info);
+  format(body-stream, "#include \"output.h\"\n\n");
   do(rcurry(emit-tlf-gunk, output-info), $Top-Level-Forms);
   do(rcurry(emit-function, output-info), component.all-function-regions);
+  emit-epilogue(init-function, output-info);
   close(header-stream);
   close(body-stream);
+  format(*debug-output*, "Emitting Initial Heap.\n");
+  let heap-stream 
+    = make(<file-stream>, name: "heap.s", direction: #"output");
+  build-initial-heap(output-info.output-info-init-roots, heap-stream);
+  close(heap-stream);
   component;
 end;
 
