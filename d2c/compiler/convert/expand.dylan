@@ -1,5 +1,5 @@
 module: expanders
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/expand.dylan,v 1.2 1998/09/09 13:40:21 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/expand.dylan,v 1.3 1999/02/25 06:56:49 housel Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -127,6 +127,33 @@ define method extract-boolean (fragment :: <fragment>)
   end if;
 end method extract-boolean;
 
+define method extract-identifier-or-false (fragment :: <token-fragment>)
+    => res :: false-or(<identifier-token>);
+  let token = fragment.fragment-token;
+  select (token.token-kind)
+    $false-token =>
+      #f;
+    $raw-ordinary-word-token, $ordinary-define-body-word-token,
+    $ordinary-define-list-word-token, $quoted-name-token =>
+      token;
+    otherwise =>
+      compiler-fatal-error
+	("invalid identifier: %s", token);
+  end select;
+end method extract-identifier-or-false;
+
+define method extract-identifier (fragment :: <token-fragment>)
+    => res :: false-or(<identifier-token>);
+  let token = fragment.fragment-token;
+  select (token.token-kind)
+    $raw-ordinary-word-token, $ordinary-define-body-word-token,
+    $ordinary-define-list-word-token, $quoted-name-token =>
+      token;
+    otherwise =>
+      compiler-fatal-error
+	("invalid identifier: %s", token);
+  end select;
+end method extract-identifier;
 
 define method extract-properties
     (plist :: <simple-object-vector>, #rest names)
