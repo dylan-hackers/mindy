@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.20 1995/12/07 16:16:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.21 1996/01/02 01:16:01 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -335,7 +335,7 @@ end method value-hash;
 
 define method value-hash (key :: <character>)
  => (id :: <fixed-integer>, state :: <hash-state>);
-  value-hash(as(<integer>, key));
+  object-hash(key);
 end method value-hash;
 
 define method value-hash (key :: <symbol>)
@@ -405,6 +405,21 @@ end method sequence-hash;
 define method string-hash (s :: <string>)
     => (id :: <fixed-integer>, state :: <hash-state>);
   sequence-hash(s, value-hash);
+end method string-hash;
+
+// This string-hash method should have the same semantics as the standard
+// one, but should be much faster.
+//
+define method string-hash (s :: <byte-string>)
+ => (id :: <fixed-integer>, state :: <object>);
+  for (id = 0 then merge-hash-codes(id, $permanent-hash-state,
+				    as(<fixed-integer>, s[i]),
+				    $permanent-hash-state,
+				    ordered: #t),
+       i from 0 below s.size)
+  finally
+    values(id, $permanent-hash-state);
+  end for;
 end method string-hash;
 
 define method table-protocol (ht :: <object-table>) 
