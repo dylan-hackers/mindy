@@ -145,9 +145,9 @@ define function register-written-name
   // it's probably okay.
   if (existing
 	& (name ~= existing.written-name
-	     | ~instance?(decl, <structured-type-declaration>)
-	     | ~instance?(existing.written-declaration,
-			 <structured-type-declaration>)))
+             | ~instance?(decl, <structured-type-declaration>)
+             | ~instance?(existing.written-declaration,
+                          <structured-type-declaration>)))
     // XXX - We should try to extract a source location from each record
     // when printing these error messages. We should also give the C and
     // Dylan forms of each name. But doing so will be a pain.
@@ -432,6 +432,8 @@ define method d2c-type-tag (type :: <predefined-type-declaration>)
     unsigned-short-type => "unsigned-short:";
     long-type => "long:";
     unsigned-long-type => "long:";
+    longlong-type => "long-long:";
+    unsigned-longlong-type => "long-long:";
     char-type => "char:";
     unsigned-char-type => "unsigned-char:";
     float-type => "float:";
