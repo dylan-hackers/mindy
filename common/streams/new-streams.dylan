@@ -28,6 +28,11 @@ copyright: See below.
 //
 //======================================================================
 
+
+//// Right now this file is chopped up with #if's for workarounds to the
+//// current d2c not dealing with singleton. Once it does, the mindy versions
+//// of everything should be used.
+
 //// Constants.
 ////
 
@@ -36,6 +41,12 @@ define constant $default-buffer-size = 4096;
 // Better delete this if we ever actually have a locators library!
 //
 define constant <locator> = <byte-string>;
+
+// Maybe Mindy has this somewhere (?)
+//
+#if (mindy)
+define constant $not-supplied = #"not-supplied-no-siree";
+#endif
 
 // In mindy and d2c <character> is equivalent to unicode character.
 //
@@ -49,6 +60,7 @@ define constant <unicode-character> = <character>;
 ///
 /// All other streams inherit from this class.
 ///
+
 define open abstract class <stream> (<object>)
   slot stream-lock :: <multilock> = make(<multilock>);
   slot outer-stream :: <stream>, init-keyword: outer-stream:;
@@ -56,6 +68,7 @@ end class <stream>;
 
 /// <buffered-stream> -- Exported.
 ///
+
 define open abstract class <buffered-stream> (<stream>)
   // The buffer slot is set to #f when the stream is closed.
   slot buffer :: false-or(<buffer>);
@@ -92,6 +105,7 @@ end class;
 /// This is maintained through every action on a <simple-sequence-stream>:
 /// 0 <= stream-start <= position <= stream-end <= contents.size
 /// 
+#if (mindy)
 define class <simple-sequence-stream> (<sequence-stream>)
   // The contents slot is set to #f when the stream is closed.
   slot contents :: false-or(<sequence>),
@@ -102,6 +116,18 @@ define class <simple-sequence-stream> (<sequence-stream>)
   slot stream-end :: <integer>, init-keyword: end:; // = contents.size
   slot position :: <integer> = 0;
 end class;
+#else
+define class <simple-sequence-stream> (<sequence-stream>)
+  // The contents slot is set to #f when the stream is closed.
+  slot contents :: false-or(<sequence>),
+    required-init-keyword: contents:;
+  slot direction // :: one-of(#"input", #"output", #"input-output")
+    = #"input", init-keyword: direction:;
+  slot stream-start :: <integer> = 0, init-keyword: start:;
+  slot stream-end :: <integer>, init-keyword: end:; // = contents.size
+  slot position :: <integer> = 0;
+end class;
+#endif
 
 /// <byte-string-stream> -- Exported.
 ///
@@ -144,6 +170,7 @@ define inline sealed method type-for-sequence-stream (seq :: <unicode-string>)
   <unicode-string-stream>;
 end method type-for-sequence-stream;
 
+#if (mindy)
 /// type-for-file-stream -- Exported.
 ///
 define open generic type-for-file-stream
@@ -152,13 +179,23 @@ define open generic type-for-file-stream
      encoding :: false-or(<symbol>))
  => type :: <type>;
 
-define inline sealed method type-for-file-stream
+define inline method type-for-file-stream
     (locator :: <byte-string>,
-     element-type :: false-or(singleton(<byte>)),
+     element-type :: one-of(#f, <byte-character>, <byte>),
      encoding :: one-of(#f, #"ANSI", #"ISO-Latin-1"))
  => type :: singleton(<fd-file-stream>);
   <fd-file-stream>;
 end method;
+#else
+// The compiler can't deal with singletons (and thus one-of)
+// Note implicit GF.
+//
+define inline method type-for-file-stream
+    (locator :: <byte-string>, element-type, encoding)
+ => type :: <type>;
+  <fd-file-stream>;
+end method;
+#endif
 
 /// make
 ///
@@ -176,6 +213,7 @@ define inline method make
   apply(make, type-for-sequence-stream(contents), keys);
 end method make;
 
+#if (mindy)
 define inline method make
     (result-class :: singleton(<file-stream>), #rest keys,
      #key locator :: type-union(<locator>, <string>),
@@ -185,6 +223,17 @@ define inline method make
  => result :: <fd-file-stream>;
   apply(make, type-for-file-stream(locator, element-type, encoding), keys);
 end method;
+#else
+define inline method make
+    (result-class :: singleton(<file-stream>), #rest keys,
+     #key locator :: <string>,
+          element-type :: false-or(<type>),
+          encoding :: false-or(<symbol>),
+     #all-keys)
+ => result :: <fd-file-stream>;
+  apply(make, type-for-file-stream(locator, element-type, encoding), keys);
+end method;
+#endif
 
 /// initialize
 ///
@@ -301,6 +350,7 @@ define sealed method stream-element-type (stream :: <simple-sequence-stream>)
   end block
 end method stream-element-type;
 
+#if (mindy)
 define inline sealed method stream-element-type 
     (stream :: <byte-string-stream>)
  => element-type :: singleton(<byte-character>);
@@ -312,6 +362,19 @@ define inline sealed method stream-element-type
  => element-type :: singleton(<unicode-character>);
   <unicode-character>;
 end method stream-element-type;
+#else
+define inline sealed method stream-element-type 
+    (stream :: <byte-string-stream>)
+ => element-type :: <type>;
+  <byte-character>;
+end method stream-element-type;
+
+define inline sealed method stream-element-type
+    (stream :: <unicode-string-stream>)
+ => element-type :: <type>;
+  <unicode-character>;
+end method stream-element-type;
+#endif
 
 /// stream-at-end?
 ///
@@ -553,11 +616,17 @@ define inline sealed method report-condition
 		   cond.incomplete-read-count);
 end method;
 
-
+#if (mindy)
 define class <file-error> (<error>)
   slot file-locator :: type-union(<byte-string>, <locator>),
     required-init-keyword: locator:;
 end class;
+#else
+define class <file-error> (<error>)
+  slot file-locator :: <byte-string>,
+    required-init-keyword: locator:;
+end class;
+#endif
 
 define sealed domain make (singleton(<file-error>));
 define sealed domain initialize (<file-error>);
@@ -615,6 +684,7 @@ end method;
 /// Used by read and read-line for <buffered-stream> to determine
 /// what type of sequence to return.
 ///
+#if (mindy)
 define inline sealed method type-for-sequence
     (element-type :: <type>)
  => type :: singleton(<vector>);
@@ -638,6 +708,19 @@ define inline sealed method type-for-sequence
  => type :: singleton(<unicode-string>);
   <unicode-string>;
 end method;
+#else
+// The compiler can't deal with singleton.
+//
+define inline sealed method type-for-sequence (element-type)
+ => type;
+  select (element-type)
+    <byte> => <byte-vector>;
+    <byte-character> => <byte-string>;
+    <unicode-character> => <unicode-string>;
+    otherwise => <vector>;
+  end select;
+end method;
+#endif
 
 /// check-stream-open -- Internal interface
 /// Makes sure stream is open, signals an error if not.
