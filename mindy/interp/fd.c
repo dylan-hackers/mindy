@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.9 1994/04/29 05:48:27 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.10 1994/04/29 06:41:53 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,17 +21,17 @@
 #include <sys/time.h>
 #include <errno.h>
 #ifdef MACH
-extern void bzero(void *ptr, size_t bytes);
-extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
-		  fd_set *except_fds, struct timeval *timeout);
-extern int open(const void *path, int flags, int mode);
-extern int close(int fd);
-extern int read(int fd, void *ptr, int bytes);
-extern int write(int fd, const void *ptr, int bytes);
-extern off_t lseek(int fd, off_t offset, int whence);
-extern int fsync(int fd);
-#endif
+#define alloca buttplug1
+#define pause buttplug2
+#define execvp buttplug3
+#include <libc.h>
+#undef alloca
+#undef pause
+#undef execvp
+extern int execvp(const char *, char *const []);
+#endif MACH
 #ifdef hpux
+#include <stdlib.h>
 #define pause buttplug
 #include <unistd.h>
 #undef pause
@@ -39,7 +39,7 @@ extern int fsync(int fd);
 /* hpux doesn't define these for some reason. */
 extern int sys_nerr;
 extern char *sys_errlist[];
-#endif
+#endif hpux
 
 #include "mindy.h"
 #include "list.h"
