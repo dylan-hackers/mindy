@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.43 1995/12/09 00:11:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.44 1995/12/13 23:57:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -523,6 +523,14 @@ define method compute-cclass (defn :: <class-definition>)
 			   end;
 		     end,
 		     defn.class-defn-supers);
+    //
+    // Check that we arn't trying to inherit from a sealed class from some
+    // other library.
+    for (super :: <cclass> in supers)
+      if (super.sealed? & super.loaded?)
+	compiler-error("Can't inherit from sealed class %s", super);
+      end if;
+    end for;
     //
     // Check that everything is okay with the abstract adjective.
     if (defn.class-defn-abstract?)
