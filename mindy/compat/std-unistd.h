@@ -12,7 +12,7 @@
  * software for any purpose.  It is provided "as is" without
  * express or implied warranty.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-unistd.h,v 1.1 1994/10/05 20:49:58 nkramer Exp $
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-unistd.h,v 1.2 1995/04/04 16:46:51 nkramer Exp $
  */
 
 #ifndef _UNISTD
@@ -58,6 +58,7 @@ extern long lseek _ANSI_ARGS_((int fd, long offset, int whence));
 extern int pipe _ANSI_ARGS_((int *fildes));
 extern int read _ANSI_ARGS_((int fd, char *buf, size_t size));
 extern int setgid _ANSI_ARGS_((gid_t group));
+extern int setsid _ANSI_ARGS_((void));
 extern int setuid _ANSI_ARGS_((uid_t user));
 extern unsigned sleep _ANSI_ARGS_ ((unsigned seconds));
 extern char *ttyname _ANSI_ARGS_((int fd));
