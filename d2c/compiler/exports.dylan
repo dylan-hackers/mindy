@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.53 1995/05/05 14:47:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.54 1995/05/05 16:57:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -161,7 +161,8 @@ define module signature-interface
     <signature>, specializers, next?, rest-type, key-infos, all-keys?,
     returns,
 
-    <key-info>, key-name, key-type, required?, key-default;
+    <key-info>, key-name, key-type, required?, key-default,
+    key-supplied?-var, key-supplied?-var-setter;
 end;
 
 define module names
@@ -688,6 +689,7 @@ define module front
 
     <constant>, <literal-constant>, value,
     <definition-constant-leaf>, const-defn,
+    <uninitialized-value>,
 
     <debug-named-info>, debug-name,
     <values-cluster-info>, <local-var-info>, <lexical-var-info>,
@@ -737,6 +739,7 @@ define module fer-convert
   use ctype;
   use lexenv, export: all;
   use policy, export: all;
+  use representation;
 
   export
     build-general-method, fer-convert, fer-convert-body,
