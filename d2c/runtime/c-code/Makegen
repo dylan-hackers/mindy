@@ -9,17 +9,19 @@ if ($win32) {
 AS = as
 CC = cl
 CPPFLAGS = -I$(SRCROOT)/runtime
-CFLAGS = /nologo /O2
+CFLAGS = /nologo /O2 /Dwin32
 
-OBJS = allocate.obj nlx.obj i386.obj
+OBJS = allocate.obj main.obj nlx.obj i386.obj
 
 runtime.lib: $(OBJS)
 	lib /out:runtime.lib $(OBJS)
 
 allocate.obj: allocate.c
-	$(CC) -c allocate.c
+	$(CC) $(CFLAGS) -c allocate.c
+main.obj: main.c
+	$(CC) $(CFLAGS) -c main.c
 nlx.obj: nlx.c
-	$(CC) -c nlx.c
+	$(CC) $(CFLAGS) -c nlx.c
 i386.obj: i386.s
 	$(AS) i386.s -o i386.obj
 
