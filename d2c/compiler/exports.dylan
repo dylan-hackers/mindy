@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.111 1995/11/14 15:11:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.112 1995/11/14 22:20:38 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1256,44 +1256,18 @@ end;
 //
 define module autodump
   use common;
-  use utils;
-  use define-classes;
-  use variables;
-  use parser;
-  use format;
-  use lexer;
-  use header;
-  use source;
-  use top-level-forms;
-  use flow, import: { };
-  use builder-interface;
-  use fer-convert;
-  use front, import: { };
-  use dump;
-  use classes, import: { };
-  use c-representation;
-  use cback;
-  use heap;
-  use compile-time-functions;
-  use signature-interface;
-  use ctype;
-  use cheese;
-  use od-format;
-  use parse-tree;
   use introspection;
   use regular-expressions;
   use streams;
-  use tokens;
-  use macros;
-  use fragments;
-  use definitions;
-  use define-functions;
-  use define-constants-and-variables;
-  use top-level-expressions;
   use string-conversions;
   use standard-io;
+
+  use parse-tree;
+  use tokens;
+  use variables;
+
   export 
-    autodump-main;
+    autodump;
 end module autodump;
 
 define module main
