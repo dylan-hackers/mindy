@@ -1,12 +1,12 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deflibmod.dylan,v 1.2 2000/01/24 04:56:13 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deflibmod.dylan,v 1.3 2002/03/10 15:36:25 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -125,14 +125,12 @@ end;
 
 define method finalize-top-level-form (tlf :: <define-module-tlf>) => ();
   let mod = tlf.define-module-module;
-  for (token in tlf.define-module-exports)
-    let name = token.token-symbol;
-    let var = find-variable(make(<basic-name>, symbol: name, module: mod));
-    unless (var & var.variable-definition)
-      compiler-warning-location(token, "%s is never defined.", name);
-    end;
-  end;
-  for (token in tlf.define-module-creates)
+  let deferred-importers = mod & mod.deferred-importers;
+  if (deferred-importers)
+    deferred-importers(mod);
+  end if;
+  for (token in concatenate(tlf.define-module-exports,
+			    tlf.define-module-creates))
     let name = token.token-symbol;
     let var = find-variable(make(<basic-name>, symbol: name, module: mod));
     unless (var & var.variable-definition)
