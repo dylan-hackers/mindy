@@ -1,7 +1,8 @@
 
 		Known Deficiencies in the D2C Compiler.
 
-$Header: /home/housel/work/rcs/gd/src/d2c/compiler/Deficiencies.txt,v 1.1 1996/03/17 00:18:29 wlott Exp $
+$Header: /home/housel/work/rcs/gd/src/d2c/compiler/Deficiencies.txt,v 1.2 1996/04/06 07:32:10 wlott Exp $
+
 
 The special syntax for aref, element, and singleton is supposed to
 look up the name in the context of the operation.  Instead, we always
@@ -26,20 +27,8 @@ the init expressions, but it does not.  In fact, in some cases, it
 will evaluate the type expression each time though the loop.
 
 
-Anything involving the runtime creation of generic functions or
-classes is not supported.  This means that the expressions in all
-generic function signatures and all class superclass lists must
-obviously be compile-time constants.
-
-
-Anything involving runtime calls to add-method is not supported.  This
-means that all the type expressions in define method forms must
-obviously be compile-time constants.
-
-
-Anything involving the runtime computation of method signatures is not
-supported.  This means that all the type expressions in the signatures
-of any anonymous methods (i.e. uses of the ``method'' statement) must
+Anything involving the runtime creation of classes is not supported.
+This means that the expressions in all class superclass lists must
 obviously be compile-time constants.
 
 
