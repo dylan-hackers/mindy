@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.47 2000/05/23 18:28:41 igor Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.48 2000/05/25 16:45:20 robmyers Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -101,7 +101,7 @@ case $1 in
     i*86-pc-cygwin32) $2=x86-win32-gcc ;;
     i*86-pc-none) $2=x86-win32-vc ;;
     i*86-pc-beos) $2=x86-beos-gcc ;;
-    powerpc-apple-macos) $2=ppc-macos-egcs ;;
+    powerpc-apple-darwin*) $2=ppc-darwin-egcs ;;
     *) $2=unknown-unix ;;
 esac])
 
@@ -759,7 +759,7 @@ AC_MSG_RESULT(don't need matherr))
 #	Check for rint()
 #--------------------------------------------------------------------
 
-if test "$d2c_build" = "ppc-macos-egcs"; then
+if test "$d2c_build" = "ppc-darwin-egcs"; then
     LIBS="${LIBS-}"
 else
     LIBS="${LIBS-} -lm"
