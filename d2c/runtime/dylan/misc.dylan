@@ -23,3 +23,4 @@ define inline method values (#rest values)
 end;
 
 
+%%primitive magic-internal-primitives-placeholder ();
