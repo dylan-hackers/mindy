@@ -34,9 +34,9 @@ do emit_library_rule(
 #do emit_library_rule(
 #    'itime-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
 #);
-do emit_library_rule(
-    'getopt-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
-);
+#do emit_library_rule(
+#    'getopt-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+#);
 
 if (! $features{'compiled_for_solaris'}
     && ! $features{'compiled_for_win32'}
