@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.1 1994/03/24 21:48:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.2 1994/03/30 05:59:38 wlott Exp $
 *
 * This file does whatever.
 *
@@ -41,15 +41,17 @@ O	-|~|:=|{ON}
 A0	[a-z0-9]
 S	{ON}?{A0}({A0}|{OC})*
 
+STR	\"(([ !#-\[\]-~])|(\\["\\bfnrt]))*\"
+
 %%
 
 [ \t\f]+	;
 [\n]		line_count++;
 
-#[ \t].*	;
-##.*		;
-"#{"		skip_multi_line_comment();
+"//".*		;
+"/*"		skip_multi_line_comment();
 
+abstract	is(ABSTRACT);
 above		is(ABOVE);
 begin		is(DBEGIN);
 below		is(BELOW);
@@ -58,6 +60,7 @@ by		is(BY);
 case		is(CASE);
 class		is(CLASS);
 cleanup		is(CLEANUP);
+concrete	is(CONCRETE);
 constant	is(CONSTANT);
 define		is(DEFINE);
 else		is(ELSE);
@@ -77,8 +80,12 @@ keyword		is(KEYWORD_RESERVED_WORD);
 let		is(LET);
 local		is(LOCAL);
 method		is(METHOD);
+open		is(OPEN);
 otherwise	is(OTHERWISE);
+primary		is(PRIMARY);
 required	is(REQUIRED);
+seal		is(SEAL);
+sealed		is(SEALED);
 select		is(SELECT);
 slot		is(SLOT);
 subclass	is(SUBCLASS);
@@ -125,6 +132,7 @@ all		is(ALL);
 "#next"		is(NEXT);
 "#rest"		is(REST);
 "#key"		is(KEY);
+"#all-keys"	is(ALL_KEYS);
 
 [-+]?{D}+	is(INTEGER);
 #x[0-9a-f]+	is(INTEGER);
@@ -135,16 +143,16 @@ all		is(ALL);
 [-+]?{D}+\.{D}*{E}?	is(FLOAT);
 [-+]?{D}+{E}		is(FLOAT);
 
-'[ -&(-\[\]-~]'		is(CHARACTER);
-'\\['\\bfnrt]'		is(CHARACTER);
+'[ -&(-\[\]-~]'	is(CHARACTER);
+'\\['\\bfnrt]'	is(CHARACTER);
 
-\"(([ !#-\[\]-~])|(\\["\\bfnrt]))*\"	is(STRING);
+{STR}		is(STRING);
 
-{O}			is(BINARY_OPERATOR);
-{S}			is(SYMBOL);
-`({S}|{O})`		is(SYMBOL);
-{S}:			is(KEYWORD);
-#`({S}|{O})`		is(LITERAL_SYMBOL);
+{O}		is(BINARY_OPERATOR);
+{S}		is(SYMBOL);
+\\{O}		is(SYMBOL);
+{S}:		is(KEYWORD);
+#{STR}		is(SYMBOL_LITERAL);
 
 .		is(BOGUS);
 
@@ -153,26 +161,38 @@ all		is(ALL);
 static void skip_multi_line_comment(void)
 {
     int depth = 1;
-    int c;
-    int saw_sharp;
+    int c, prev = '\0';
     
     while (1) {
 	c = input();
-	if (c == EOF)
+	switch (c) {
+	  case EOF:
 	    return;
-	else if (c == '\n') {
-	    saw_sharp = 0;
+	  case '\n':
 	    line_count++;
-	} if (saw_sharp) {
-	    saw_sharp = 0;
-	    if (c == '}' && --depth == 0)
-		return;
-	    else if (c == '{')
+	    prev = c;
+	    break;
+	  case '/':
+	    if (prev == '*')
+		if (--depth == 0)
+		    return;
+		else
+		    prev = 0;
+	    else
+		prev = c;
+	    break;
+	  case '*':
+	    if (prev == '/') {
 		depth++;
-	    else if (c == '#')
-		saw_sharp = 1;
-	} else if (c == '#')
-		saw_sharp = 1;
+		prev = 0;
+	    }
+	    else
+		prev = c;
+	    break;
+	  default:
+	    prev = c;
+	    break;
+	}
     }
 }
 
