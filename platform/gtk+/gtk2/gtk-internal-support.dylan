@@ -2,6 +2,13 @@ module: gtk-internal-support
 
 c-include("gtk/gtk.h");
 
+define class <value-cell> (<object>)
+  slot value-cell-value, required-init-keyword: value:
+end;
+
+define sealed domain make (singleton(<value-cell>));
+define sealed domain initialize (<value-cell>);
+
 define method export-value(cls == <GCallback>, value :: <function>) => (result :: <function-pointer>);
   make(<function-pointer>, pointer: value.callback-entry); 
 end method export-value;
@@ -18,7 +25,7 @@ end method export-value;
 
 define sealed method import-value(cls == <object>, the-value :: <gpointer>) 
  => (result :: <object>);
-  value(heap-object-at(the-value.raw-value));
+  value-cell-value(heap-object-at(the-value.raw-value));
 end method import-value;
 
 define method make(type :: subclass(<GTypeInstance>), #rest args, 
