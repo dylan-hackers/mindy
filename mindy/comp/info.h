@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.h,v 1.2 1994/04/09 00:26:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.h,v 1.3 1994/04/09 14:09:16 wlott Exp $
 *
 * This file does whatever.
 *
@@ -30,3 +30,5 @@ extern struct binop_info *lookup_binop_info(struct id *id);
 
 extern struct function_info
     *lookup_function_info(struct id *id, boolean createp);
+
+extern void init_info(void);

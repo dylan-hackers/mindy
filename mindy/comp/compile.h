@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.h,v 1.2 1994/03/28 11:32:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.h,v 1.3 1994/04/09 14:09:06 wlott Exp $
 *
 * This file does whatever.
 *
@@ -82,5 +82,6 @@ struct constant {
     } u;
 };
 
-void compile(struct body *program);
+extern void compile(struct body *program);
 
+extern void init_compile(void);

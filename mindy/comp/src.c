@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.8 1994/04/09 00:06:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.9 1994/04/09 14:09:21 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 
 #include "mindycomp.h"
 #include "sym.h"
@@ -299,7 +300,7 @@ struct id *dup_id(struct id *id)
 {
     struct id *res = malloc(sizeof(*res));
 
-    bcopy(id, res, sizeof(*res));
+    memcpy(res, id, sizeof(*res));
     res->line = 0;
 
     return res;

@@ -3,6 +3,8 @@
 #include "mindycomp.h"
 #include "src.h"
 #include "literal.h"
+#include "free.h"
+#include "lose.h"
 #include "dup.h"
 
 
@@ -330,18 +332,7 @@ static struct expr *dup_varset_expr(struct varset_expr *e)
 
 static struct expr *dup_binop_series_expr(struct binop_series_expr *e)
 {
-    struct binop *b, *next;
-
-    lose("###");
-
-    dup_expr(e->first_operand);
-    for (b = e->first_binop; b != NULL; b = next) {
-	dup_id(b->op);
-	dup_expr(b->operand);
-	next = b->next;
-	dup(b);
-    }
-    dup(e);
+    return NULL;
 }
 
 static struct expr *dup_loop_expr(struct loop_expr *e)

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.6 1994/04/08 15:24:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.7 1994/04/09 14:09:04 wlott Exp $
 *
 * This file does whatever.
 *
@@ -27,6 +27,7 @@
 #include "compile.h"
 #include "byteops.h"
 #include "info.h"
+#include "lose.h"
 
 #define BLOCK_SIZE (4*1024)
 
@@ -850,7 +851,7 @@ static void (*ConstituentCompilers[])() = {
     compile_defclass_constituent, compile_expr_constituent,
     compile_local_constituent, compile_handler_constituent,
     compile_let_constituent, compile_tlf_constituent,
-    compile_error_constituent, compile_defmethod_constituent,
+    compile_error_constituent, compile_defmodule_constituent,
     compile_deflibrary_constituent
 };
 

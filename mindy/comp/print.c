@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.5 1994/04/09 00:08:15 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.6 1994/04/09 14:09:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -22,6 +22,7 @@
 #include "sym.h"
 #include "literal.h"
 #include "print.h"
+#include "lose.h"
 
 static char spaces[] = "                                                            ";
 #define indent(x) (spaces+sizeof(spaces)-1-((x)%60))
@@ -424,15 +425,15 @@ static void print_for_expr(struct for_expr *e, int depth)
 		print_expr(c->equal, depth+3);
 		printf("%sthen\n", indent(depth+2));
 		print_expr(c->then, depth+3);
-		break;
 	    }
+	    break;
 	  case for_IN:
 	    {
 		struct in_for_clause *c = (struct in_for_clause *)clause;
 		printf("%sin\n", indent(depth+2));
 		print_expr(c->collection, depth+3);
-		break;
 	    }
+	    break;
 	  case for_FROM:
 	    {
 		struct from_for_clause *c = (struct from_for_clause *)clause;
@@ -449,6 +450,9 @@ static void print_for_expr(struct for_expr *e, int depth)
 		    print_expr(c->by, depth+3);
 		}
 	    }
+	    break;
+	  default:
+	    lose("Bogus for clause kind.");
 	}
     }
     if (e->until) {

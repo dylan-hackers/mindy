@@ -9,14 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.2 1994/04/08 14:26:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.3 1994/04/09 14:09:19 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 
 #include "mindycomp.h"
 #include "parser.h"
@@ -27,6 +27,9 @@
 #include "lexer.h"
 #include "header.h"
 #include "sym.h"
+#include "info.h"
+#include "compile.h"
+#include "dump.h"
 
 struct body *Program = NULL;
 
@@ -69,13 +72,13 @@ static char *make_output_name(char *source, char *new_extension)
     int base_len = extension ? extension - source - 1 : strlen(source);
     char *output = malloc(base_len + strlen(new_extension) + 1);
 
-    bcopy(source, output, base_len);
+    memcpy(output, source, base_len);
     strcpy(output + base_len, new_extension);
 
     return output;
 }
 
-main(int argc, char *argv[])
+void main(int argc, char *argv[])
 {
     boolean print_parse = FALSE;
     boolean print_expanded = FALSE;
@@ -87,7 +90,7 @@ main(int argc, char *argv[])
 
     add_header_handler("module", set_module);
 
-    init_id_tables();
+    init_sym_table();
     init_info();
     init_expand();
     init_compile();

@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.5 1994/04/09 00:23:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.6 1994/04/09 14:09:09 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 
 #include "mindycomp.h"
 #include "src.h"
@@ -25,6 +26,7 @@
 #include "sym.h"
 #include "expand.h"
 #include "info.h"
+#include "lose.h"
 
 static void expand_expr(struct expr **ptr);
 static void expand_body(struct body *body, boolean top_level);
@@ -107,7 +109,6 @@ static void bind_rettypes(struct body *body,
     struct symbol *ctype = symbol("check-type");
     struct symbol *type_class = symbol("<type>");
     struct symbol *object = symbol("<object>");
-    struct expr *expr;
 
     for (r = rettypes->req_types; r != NULL; r = r->next) {
 	if (r->type) {
@@ -402,7 +403,6 @@ static struct body
 static void expand_method_for_compile(struct method *method)
 {
     struct param_list *params = method->params;
-    struct param *p;
     struct keyword_param *k;
     struct body *body = make_body();
 
@@ -1245,6 +1245,7 @@ static boolean expand_tlf_constituent(struct tlf_constituent **ptr,
 static boolean expand_error_constituent(struct constituent **ptr)
 {
     lose("Called expand on a parse tree with errors?");
+    return FALSE;
 }
 
 
@@ -1821,6 +1822,9 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
 
       case to_UNBOUNDED:
 	break;
+
+      default:
+	lose("Bogus to kind in from for clause"); 
     }
 
     /* Advance the count by by */
@@ -2270,6 +2274,7 @@ static boolean expand_repeat_expr(struct repeat_expr **ptr)
 static boolean expand_error_expr(struct expr **ptr)
 {
     lose("Called expand on a parse tree with errors?");
+    return FALSE;
 }
 
 static boolean (*ExpressionExpanders[])() = {
@@ -2294,7 +2299,7 @@ static void expand_expr(struct expr **ptr)
 
 static void expand_body(struct body *body, boolean top_level)
 {
-    struct constituent **prev, *c, *next;
+    struct constituent **prev, *next;
 
     if (body->head == NULL)
 	body->head

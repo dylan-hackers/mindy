@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.3 1994/03/26 00:47:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/envanal.c,v 1.4 1994/04/09 14:09:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,7 +21,7 @@
 #include "src.h"
 #include "lexenv.h"
 #include "envanal.h"
-
+#include "lose.h"
 
 static void analize_expr(struct expr *expr, struct lexenv *lexenv);
 static void analize_body(struct body *body, struct lexenv *lexenv);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.3 1994/04/06 17:49:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.4 1994/04/09 14:09:17 wlott Exp $
 *
 * This file does whatever.
 *
@@ -201,7 +201,7 @@ static struct token *make_token(char *ptr, int len)
     struct token *token = malloc(sizeof(struct token) + len + 1);
 
     token->length = len;
-    bcopy(ptr, token->chars, len);
+    memcpy(token->chars, ptr, len);
     token->line = line_count;
     token->chars[len] = 0;
 

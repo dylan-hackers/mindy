@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.h,v 1.1 1994/03/24 21:49:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.h,v 1.2 1994/04/09 14:09:15 wlott Exp $
 *
 * This file does whatever.
 *
@@ -17,3 +17,5 @@
 
 
 extern void expand(struct body *body);
+
+extern void init_expand(void);

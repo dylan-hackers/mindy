@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.4 1994/04/09 00:08:51 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.5 1994/04/09 14:09:18 wlott Exp $
 *
 * This file does whatever.
 *
@@ -19,6 +19,7 @@
 
 #include "mindycomp.h"
 #include "literal.h"
+#include "lose.h"
 
 struct literal_list {
     struct literal *head;
@@ -208,6 +209,8 @@ void free_literal(struct literal *literal)
 	    free_literal(part);
 	}
 	break;
+      default:
+	lose("Bogus literal kind.");
     }
     free(literal);
 }
@@ -246,10 +249,12 @@ struct literal *dup_literal(struct literal *literal)
       case literal_VECTOR:
 	size = sizeof(struct vector_literal);
 	break;
+      default:
+	lose("Bogus literal kind.");
     }
 
     res = malloc(size);
-    bcopy(literal, res, size);
+    memcpy(res, literal, size);
 
     switch (literal->kind) {
       case literal_LIST:
@@ -262,6 +267,8 @@ struct literal *dup_literal(struct literal *literal)
 	    *prev = dup_literal(l);
 	    prev = &(*prev)->next;
 	}
+	break;
+      default:
 	break;
     }
 

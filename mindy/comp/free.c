@@ -4,6 +4,7 @@
 #include "src.h"
 #include "literal.h"
 #include "free.h"
+#include "lose.h"
 
 
 /* Utilities. */
@@ -234,6 +235,8 @@ static void free_for_expr(struct for_expr *e)
 		if (c->by)
 		    free_expr(c->by);
 	    }
+	  default:
+	    lose("Bogus for clause kind.");
 	}
 	next = clause->next;
 	free(clause);

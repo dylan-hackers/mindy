@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.5 1994/04/08 14:29:05 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.6 1994/04/09 14:09:06 wlott Exp $
 *
 * This file does whatever.
 *
@@ -29,6 +29,7 @@
 #include "dump.h"
 #include "version.h"
 #include "envanal.h"
+#include "lose.h"
 
 static FILE *File = NULL;
 static int table_index = 0;
@@ -48,7 +49,7 @@ inline static void dump_byte(unsigned byte)
 #define dump_op dump_byte
 #define dump_int1 dump_byte
 
-inline static dump_bytes(void *ptr, int bytes)
+inline static void dump_bytes(void *ptr, int bytes)
 {
     int count;
 
@@ -83,7 +84,7 @@ static int dump_store(void)
     return table_index++;
 }
 
-static int dump_ref(int handle)
+static void dump_ref(int handle)
 {
     if (handle < (1<<16)) {
 	dump_op(fop_SHORT_REF);
@@ -261,7 +262,6 @@ static void dump_vector_literal(struct vector_literal *literal)
 {
     struct literal *part;
     int length;
-    int i;
 
     length = 0;
     for (part = literal->first; part != NULL; part = part->next)

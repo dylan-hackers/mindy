@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.3 1994/04/04 17:20:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.4 1994/04/09 14:09:23 wlott Exp $
 *
 * This file does whatever.
 *
@@ -161,7 +161,7 @@ static void init_table(struct table *table)
 	*ptr++ = NULL;
 }
 
-void init_id_tables(void)
+void init_sym_table(void)
 {
     init_table(&Symbols);
 }
