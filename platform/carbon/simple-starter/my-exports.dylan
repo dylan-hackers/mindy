@@ -15,10 +15,12 @@ define module my-simple
 	use extensions;
 	
 	use mac-types;
+        use dialogs;
 	use events;
+        use memory;
 	use quickdraw;
 	use windows;
 	
 	use simple;
 	
-end module my-simple;
+end module my-simple;
