@@ -2,18 +2,22 @@
 
 $exe = shift(@ARGV);
 
-open(FILE, "RCS") || die("Can't find file RCS");
-$rcsdir = <FILE>;
-chop($rcsdir);
-close(FILE);
-
 while ($arg = shift(@ARGV)) {
-    if ($arg =~ /^-/) {
-        push(@NEWARGV, $arg);
-    } else {
-        push(@NEWARGV, $rcsdir . "/" . $arg . ",v");
+    push(@NEWARGV, $arg);
+    if ($arg !~ /^-/) {
+	($path, $file) = ($arg =~ /(.*[\/\\])?([^\/\\]*)/);
+	$rcsdir = $paths{$path};
+	if ($rcsdir) {
+	    push(@NEWARGV, $rcsdir . "/" . $file . ",v");
+	} elsif (open(FILE, "${path}RCS")) {
+	    $rcsdir = <FILE>;
+	    chop($rcsdir);
+	    close(FILE);
+	    push(@NEWARGV, $rcsdir . "/" . $file . ",v");
+	    $paths{$path} = $rcsdir;
+	}
     }
 }
 
-print $exe, " ", join(' ', @NEWARGV), "\n";
 system($exe, " ", join(' ', @NEWARGV));
+
