@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.11 1995/04/26 04:23:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.12 1995/04/26 05:46:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -694,6 +694,61 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 		  output-info);
 end;
 
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>),
+     expr :: <local-call>, output-info :: <output-info>)
+  let stream = make(<byte-string-output-stream>);
+  let func = expr.depends-on.source-exp;
+  let func-info = get-info-for(func, output-info);
+  let name = func-info.lambda-info-main-entry-name;
+  write(name, stream);
+  write('(', stream);
+  for (arg-dep = expr.depends-on.dependent-next then arg-dep.dependent-next,
+       param = func.prologue.dependents.dependent.defines
+	 then param.definer-next,
+       first? = #t then #f,
+       while: arg-dep & param)
+    let (param-name, param-rep) = c-name-and-rep(param, output-info);
+    unless (first?)
+      write(", ", stream);
+    end;
+    write(ref-leaf(param-rep, arg-dep.source-exp, output-info), stream);
+  finally
+    if (arg-dep | param)
+      error("Different number of arguments and parameters in a known call?");
+    end;
+  end;
+  write(')', stream);
+  let call = string-output-stream-string(stream);
+  if (~func.depends-on | ~results)
+    format(output-info.output-info-guts-stream, "%s;\n", call);
+    deliver-results(results, #[], output-info);
+  elseif (func.depends-on.dependent-next)
+    let temp = new-local(output-info);
+    format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
+	   name, temp);
+    format(output-info.output-info-guts-stream, "%s = %s;\n", temp, call);
+    let result-exprs = make(<stretchy-vector>);
+    for (dep = func.depends-on then dep.dependent-next,
+	 index from 0,
+	 while: dep)
+      let (name, rep) = c-name-and-rep(dep.source-exp, output-info);
+      add!(result-exprs,
+	   pair(format-to-string("%s.R%d", temp, index),
+		rep));
+    end;
+    deliver-results(results, result-exprs, output-info);
+  elseif (instance?(func.depends-on.source-exp.var-info,
+		      <values-cluster-info>))
+    format(output-info.output-info-guts-stream, "VALUES-CLUSTER = %s;\n",
+	   call);
+  else
+    let (name, rep) = c-name-and-rep(func.depends-on.source-exp, output-info);
+    deliver-results(results, vector(pair(call, rep)), output-info);
+  end;
+end;
+
+
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <primitive>,
 			       output-info :: <output-info>)
@@ -735,7 +790,7 @@ define method emit-assignment
 end;
 
 define method emit-assignment
-    (pitcher-defines :: false-or(<definition-site-variable>),
+    (defines :: false-or(<definition-site-variable>),
      set :: <set>, output-info :: <output-info>)
     => ();
   let defn = set.variable;
@@ -750,6 +805,7 @@ define method emit-assignment
       format(stream, "%s_initialized = TRUE;\n", target);
     end;
   end;
+  deliver-results(defines, #[], output-info);
 end;
 
 
@@ -1324,11 +1380,15 @@ define method conversion-expr
      source :: <string>, source-rep :: <c-representation>,
      output-info :: <output-info>)
     => res :: <string>;
-  let temp = new-local(output-info);
-  format(output-info.output-info-vars-stream, "%s %s;\n",
-	 target-rep.representation-c-type, temp);
-  emit-copy(temp, target-rep, source, source-rep, output-info);
-  temp;
+  if (target-rep == source-rep)
+    source;
+  else
+    let temp = new-local(output-info);
+    format(output-info.output-info-vars-stream, "%s %s;\n",
+	   target-rep.representation-c-type, temp);
+    emit-copy(temp, target-rep, source, source-rep, output-info);
+    temp;
+  end;
 end;
 
 define method conversion-expr
