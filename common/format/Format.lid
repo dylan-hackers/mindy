@@ -1,5 +1,5 @@
 library: Format
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/Format.lid,v 1.2 1996/07/12 01:13:42 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/Format.lid,v 1.3 1997/05/09 22:19:43 ram Exp $
 
 library.dylan
 format.dylan
