@@ -1,5 +1,5 @@
 module: Dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/range.dylan,v 1.3 1996/01/12 02:10:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/range.dylan,v 1.4 1996/02/12 01:08:35 nkramer Exp $
 
 //======================================================================
 //
@@ -588,7 +588,7 @@ end method;
 // 
 // MEMBER? for must terminate if test is ==, even if the range is unbounded.
 // We can do this test by deterministic arithmetic methods by insuring that
-// the nubmer is between the endpoints of the range and is it is an exact
+// the number is between the endpoints of the range and is it is an exact
 // multiple of "by:" away from "from:".
 //
 define sealed method member?
@@ -602,7 +602,7 @@ define sealed method member?
       let (count, remainder)
 	= floor/(value - range.range-from, range.range-by);
       zero?(remainder) & (count >= 0)
-	& (~instance?(count, <bounded-range>) | count < range.size);
+	& (~instance?(range, <bounded-range>) | count < range.size);
   end case;
 end method member?;
 
