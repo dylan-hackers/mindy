@@ -1,11 +1,14 @@
 module: policy
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/policy.dylan,v 1.1 1994/12/12 13:01:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/policy.dylan,v 1.2 1995/10/30 13:13:03 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 // Captures compilation policy at some particular point.
 //
-define class <policy> (<object>)
+// We don't actually need to preserve identity in dumping, but there's lots of
+// sharing of policy objects that we can exploit.
+//
+define class <policy> (<identity-preserving-mixin>)
   slot speed :: <single-float>, required-init-keyword: speed:;
   slot space :: <single-float>, required-init-keyword: space:;
   slot safety :: <single-float>, required-init-keyword: safety:;
@@ -25,3 +28,12 @@ end;
 define constant $Default-Policy
   = make(<policy>, speed: 1.0, space: 1.0, safety: 1.0, brevity: 1.0,
          debug: 1.0);
+
+
+add-make-dumper(#"compiler-policy", *compiler-dispatcher*, <policy>,
+  list(speed, speed:, #f,
+       space, space:, #f,
+       safety, safety:, #f,
+       brevity, brevity:, #f,
+       debug, debug:, #f)
+);
