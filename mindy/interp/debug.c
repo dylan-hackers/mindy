@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.50 1996/06/11 14:39:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.51 1996/08/21 10:03:21 nkramer Exp $
 *
 * This file implements the debugger.
 *
@@ -766,10 +766,6 @@ static boolean backtrace_punted;
 
 static void punt_backtrace(void)
 {
-#ifdef WIN32
-    extern boolean hit_control_C;
-    hit_control_C = TRUE;
-#endif
     backtrace_punted = TRUE;
 }
 
@@ -2513,10 +2509,6 @@ static void maybe_print_frame(void)
 
 static void blow_off_cmd(void)
 {
-#ifdef WIN32
-    extern boolean hit_control_C;
-    hit_control_C = TRUE;
-#endif
     longjmp(BlowOffCmd, TRUE);
 }
 
