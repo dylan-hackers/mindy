@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.51 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.52 1996/08/05 12:46:21 dwatson Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -575,14 +575,14 @@ define method raw-bits-for-float
 	end;
     let (exponent, fraction)
       = if (num >= 1)
-	  for (exponent from 1,
+	  for (exponent from 0,
 	       fraction = num / 2 then fraction / 2,
 	       while: fraction >= 1)
 	  finally
 	    values(exponent, fraction);
 	  end;
 	else
-	  for (exponent from 0 by -1,
+	  for (exponent from -1 by -1,
 	       fraction = num then fraction * 2,
 	       while: fraction < ratio(1,2))
 	  finally
