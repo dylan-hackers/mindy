@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.3 2001/09/17 16:46:53 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.4 2001/11/08 00:28:40 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -43,7 +43,7 @@ define class <single-file-mode-state> (<main-unit-state>)
   
   slot unit-entry-function :: false-or(<ct-function>), init-value: #f;
   slot unit-unit-info :: <unit-info>;
-  slot unit-c-file = #f;
+  slot unit-c-file :: false-or(<file-state>) = #f;
   slot unit-stream = #f;
 end class <single-file-mode-state>;
 
@@ -147,9 +147,6 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
   layout-instance-slots();
 end method parse-and-finalize-library;
 
-// Establish various condition handlers while iterating over all of the source
-// files and compiling each of them to an output file.
-//
 define method compile-file (state :: <single-file-mode-state>) => ();
   format(*debug-output*, "Processing %s\n", state.unit-source-file);
   let c-name = concatenate(state.unit-name, ".c");
@@ -190,12 +187,13 @@ define method build-local-heap-file (state :: <single-file-mode-state>) => ();
   format(*debug-output*, "Emitting Library Heap.\n");
   let heap-stream = state.unit-stream;
   let prefix = state.unit-cback-unit.unit-prefix;
+/*
   let heap-state = make(<local-heap-file-state>, unit: state.unit-cback-unit,
 			body-stream: heap-stream, // target: state.unit-target,
 			id-prefix: stringify(prefix, "_L"));
-
+*/
   let (undumped, extra-labels) = build-local-heap(state.unit-cback-unit, 
-						  heap-state);
+						  state.unit-c-file);
   let linker-options = element(state.unit-header, #"linker-options", 
 			       default: #f);
   state.unit-unit-info := make(<unit-info>, unit-name: state.unit-mprefix,
@@ -207,10 +205,12 @@ end method build-local-heap-file;
 define method build-da-global-heap (state :: <single-file-mode-state>) => ();
   format(*debug-output*, "Emitting Global Heap.\n");
   let heap-stream = state.unit-stream;
+/*
   let heap-state = make(<global-heap-file-state>, unit: state.unit-cback-unit,
 			body-stream: heap-stream); //, target: state.unit-target);
+*/
   build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
-		    heap-state);
+		    state.unit-c-file);
 end method;
 
 

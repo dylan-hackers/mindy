@@ -1,5 +1,5 @@
-module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.26 2001/11/07 21:58:17 gabor Exp $
+module: cback
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.27 2001/11/08 00:28:39 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -78,63 +78,17 @@ copyright: see below
 
 
 
-// <heap-file-state> -- internal.
-// 
-// A catch-all object to quantify the state of the "heap output" process.
-// Almost every routine in this module accepts a "state" argument and
-// destructively modifies it as necessary to account for its actions.
-//
-define class <heap-file-state> (<file-state>)
-  //
-  // Layouts we have already spewed struct declarations for.
-  constant slot file-layouts-exist-for :: <string-table>
-    = make(<string-table>);
-  //
-  // The prefix we are pre-pending to each symbol to guarantee uniqueness.
-  constant slot id-prefix :: <byte-string> = "L", init-keyword: #"id-prefix";
-  //
-  // The id counter used to generate unique names when we aren't dumping the
-  // object ourselves (and therefore cannot reference it relative to the
-  // heap base).
-  slot next-id :: <integer> = 0;
-  //
-  // A queue of objects that we have decided to dump but haven't gotten
-  // around to dumping yet.  Used as a fifo so that we can use the the
-  // heap-size at the time of queueing as the object offset.
-  constant slot object-queue :: <deque> = make(<deque>);
-end;
-
 // <global-heap-state> -- internal.
 //
 // The additional information needed while dumping the final global heap.
 // 
-define class <global-heap-file-state> (<heap-file-state>)
-  //
-  // When dumping symbols, we chain them together.  This holds the current
-  // head of that chain.
-  slot symbols :: type-union(<literal-false>, <literal-symbol>) = make(<literal-false>);
-end class <global-heap-file-state>;
-
-define sealed domain make(singleton(<global-heap-file-state>));
-define sealed domain initialize(<global-heap-file-state>);
+define constant <global-heap-file-state> = <file-state>;
 
 // <local-heap-file-state> -- internal.
 //
 // The additional information needed while dumping a library local heap.
 // 
-define class <local-heap-file-state> (<heap-file-state>)
-  //
-  // Holds the objects that have been referenced but are not going to be
-  // dumped until the global heap is dumped.
-  constant slot undumped-objects :: <stretchy-vector> = make(<stretchy-vector>);
-  //
-  // Holds the extra labels we've had to allocate for externally defined
-  // ctvs.
-  constant slot extra-labels :: <stretchy-vector> = make(<stretchy-vector>);
-end class <local-heap-file-state>;
-
-define sealed domain make(singleton(<local-heap-file-state>));
-define sealed domain initialize(<local-heap-file-state>);
+define constant <local-heap-file-state>  = <file-state>;
 
 // <extra-label> -- internal.
 //
@@ -193,6 +147,7 @@ define method build-global-heap
     (undumped-objects :: <simple-object-vector>,
      state :: <global-heap-file-state>)
     => ();
+  state.dumping-global-heap? := #t;
   maybe-emit-include("runtime.h", state, left: '"', right: '"');
 
   for (obj in undumped-objects)
@@ -208,6 +163,7 @@ define method build-global-heap
   format(stream, "heapptr_t initial_symbols = ");
   write(stream, get-string(state.file-guts-stream));
   format(stream, ";\n");
+  state.dumping-global-heap? := #t;
 end;
 
 // build-local-heap -- exported.
@@ -260,7 +216,7 @@ end method build-local-heap;
 //
 // Keep spewing objects until we finally drain the spew queue.
 // 
-define method spew-objects-in-queue (state :: <heap-file-state>) => ();
+define method spew-objects-in-queue (state :: <file-state>) => ();
   let stream = state.file-body-stream;
   format(stream, "\n/* heap base */\n");
   until (state.object-queue.empty?)
@@ -301,7 +257,7 @@ end method spew-objects-in-queue;
 
 define generic spew-reference
     (object :: false-or(<ct-value>), rep :: <representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
 
 // spew-reference{<false>,<representation>}
@@ -311,7 +267,7 @@ define generic spew-reference
 // 
 define method spew-reference
     (object :: <false>, rep :: <representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   if(rep == *general-rep*)
     format(state.file-guts-stream, "{ 0, { 0 } }");
@@ -326,21 +282,21 @@ end;
 //
 define method spew-reference
     (object :: <literal-true>, rep :: <immediate-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   format(state.file-guts-stream, "1 /* %s */", tag.clean-for-comment)
 end;
 
 define method spew-reference
     (object :: <literal-false>, rep :: <immediate-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   format(state.file-guts-stream, "0 /* %s */", tag.clean-for-comment)
 end;
 
 define method spew-reference
     (object :: <literal-integer>, rep :: <immediate-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   format(state.file-guts-stream, "%d /* %s */", object.literal-value,
 	 tag.clean-for-comment)
@@ -348,7 +304,7 @@ end;
 
 define method spew-reference
     (object :: <literal-single-float>, rep :: <immediate-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   format(state.file-guts-stream, "%s /* %s */",
 	 float-to-string(object.literal-value, 8), tag.clean-for-comment)
@@ -356,7 +312,7 @@ end;
 
 define method spew-reference
     (object :: <literal-double-float>, rep :: <immediate-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   format(state.file-guts-stream, "%s /* %s */",
 	 float-to-string(object.literal-value, 16), tag.clean-for-comment)
@@ -364,7 +320,7 @@ end;
 
 define method spew-reference
     (object :: <literal-extended-float>, rep :: <immediate-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   format(state.file-guts-stream, "%s /* %s */",
 	 float-to-string(object.literal-value, 35), tag.clean-for-comment)
@@ -372,7 +328,7 @@ end;
 
 define method spew-reference
     (object :: <literal-character>, rep :: <immediate-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   format(state.file-guts-stream, "%d /* %s */",
 	 as(<integer>, object.literal-value), tag)
@@ -384,7 +340,7 @@ end;
 // 
 define method spew-reference
     (object :: <ct-value>, rep :: <general-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   let cclass = object.ct-value-cclass;
   let best-rep = pick-representation(cclass, #"speed");
@@ -421,7 +377,7 @@ end;
 //
 define method spew-reference
     (object :: <proxy>, rep :: <general-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   let object-name = object-name(object, state);
   spew-heap-prototype(object-name, object, state);
@@ -435,7 +391,7 @@ end;
 // 
 define method spew-reference
     (object :: <ct-value>, rep :: <heap-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>) => ();
+     tag :: <byte-string>, state :: <file-state>) => ();
   let object-name = object-name(object, state);
   spew-heap-prototype(object-name, object, state);
   format(state.file-guts-stream, "(heapptr_t) &%s /* %s */",
@@ -451,7 +407,7 @@ end;
 // 
 define method spew-reference
     (object :: <ct-entry-point>, rep :: <immediate-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   let info = get-info-for(object.ct-entry-point-for, state);
   let name = entry-name(object, state);
@@ -471,7 +427,7 @@ end;
 // 
 define method spew-reference
     (object :: <ct-entry-point>, rep :: <general-representation>,
-     tag :: <byte-string>, state :: <heap-file-state>)
+     tag :: <byte-string>, state :: <file-state>)
     => ();
   let proxy = make(<proxy>, for: object.ct-value-cclass);
   let object-name = object-name(proxy, state);
@@ -496,14 +452,14 @@ end;
 // a side effect, it also checks whether the object has been dumped and queues
 // it if not.
 //
-define method object-name (object :: <ct-value>, state :: <heap-file-state>)
+define method object-name (object :: <ct-value>, state :: <file-state>)
     => name :: <string>;
   let info = get-info-for(object, #f);
   unless (info.const-info-dumped?)
     //
     // The object hasn't been dumped.  So check to see if we should dump it
     // now or not.
-    if (defer-for-global-heap?(object, state))
+    if (~state.dumping-global-heap? & defer-for-global-heap?(object, state))
       //
       // Nope, we need to wait for the global heap.  So remember that this
       // object wasn't dumped.
@@ -526,8 +482,8 @@ define method object-name (object :: <ct-value>, state :: <heap-file-state>)
       //
       // If the object is defined externally and we are building a local heap,
       // then we need to record that we want the object to have an extra label.
-      if (instance?(state, <local-heap-file-state>)
-	    & object.defined-externally?)
+      if (~state.dumping-global-heap?
+            & object.defined-externally?)
 	add!(state.extra-labels,
 	     make(<extra-label>, ctv: object, label: label));
       end if;
@@ -594,7 +550,7 @@ end;
 // there isn't diddly we can do about it now.
 // 
 define method entry-name
-    (object :: <ct-entry-point>, state :: <heap-file-state>)
+    (object :: <ct-entry-point>, state :: <file-state>)
  => (name :: <string>);
   let name = object.entry-point-c-name;
   name;
@@ -696,17 +652,19 @@ end;
 // XXX - If we defer anything, we need to generate a unique label for it, too.
 // See 'object-label' above.
 // 
-define generic defer-for-global-heap? (object :: <ct-value>, state :: <heap-file-state>)
+define generic defer-for-global-heap? (object :: <ct-value>, state :: <file-state>)
     => defer? :: <boolean>;
 
 // If we are building the global heap, we can't go defering anything any
 // further.
 //
+/*
 define method defer-for-global-heap?
     (object :: <ct-value>, state :: <global-heap-file-state>)
     => defer? :: <boolean>;
   #f;
 end method defer-for-global-heap?;
+*/
 
 // By default, we defer anything defined externally.  We do this under the
 // assumption that nobody would have gone out of their way to use external
@@ -778,28 +736,28 @@ end method defer-for-global-heap?;
 //------------------------------------------------------------------------
 
 define generic spew-object
-    (name :: <byte-string>, object :: <ct-value>, state :: <heap-file-state>)
+    (name :: <byte-string>, object :: <ct-value>, state :: <file-state>)
  => ();
 
 
 define method spew-object
     (name :: <byte-string>,
      object :: <ct-not-supplied-marker>,
-     state :: <heap-file-state>) => ();
+     state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<not-supplied-marker>"), state);
 end;
 
 define method spew-object
     (name :: <byte-string>,
      object :: <literal-boolean>,
-     state :: <heap-file-state>) => ();
+     state :: <file-state>) => ();
   spew-instance(name, object.ct-value-cclass, state);
 end;
 
 define method spew-object
     (name :: <byte-string>,
      object :: <literal-extended-integer>,
-     state :: <heap-file-state>) => ();
+     state :: <file-state>) => ();
   let digits = make(<stretchy-vector>);
   local
     method repeat (remainder :: <extended-integer>);
@@ -824,7 +782,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <literal-ratio>, state :: <heap-file-state>) => ();
+     object :: <literal-ratio>, state :: <file-state>) => ();
   let num = as(<ratio>, object.literal-value);
   spew-instance(name, object.ct-value-cclass, state,
 		numerator:
@@ -835,13 +793,13 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <literal-float>, state :: <heap-file-state>) => ();
+     object :: <literal-float>, state :: <file-state>) => ();
   spew-instance(name, object.ct-value-cclass, state, value: object);
 end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <literal-symbol>, state :: <heap-file-state>) => ();
+     object :: <literal-symbol>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<symbol>"), state,
 		symbol-string:
 		  as(<ct-value>, as(<string>, object.literal-value)),
@@ -851,7 +809,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <literal-pair>, state :: <heap-file-state>) => ();
+     object :: <literal-pair>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<pair>"), state,
 		head: object.literal-head,
 		tail: object.literal-tail);
@@ -859,7 +817,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <literal-empty-list>, state :: <heap-file-state>) => ();
+     object :: <literal-empty-list>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<empty-list>"), state,
 		head: object, tail: object);
 end;
@@ -867,7 +825,7 @@ end;
 define method spew-object
     (name :: <byte-string>,
      object :: <literal-simple-object-vector>,
-     state :: <heap-file-state>) => ();
+     state :: <file-state>) => ();
   let contents = object.literal-value;
   spew-instance(name, specifier-type(#"<simple-object-vector>"), state,
 		size: as(<ct-value>, contents.size),
@@ -880,7 +838,7 @@ define constant $spewed-string-initial-size :: <integer>
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <literal-string>, state :: <heap-file-state>) => ();
+     object :: <literal-string>, state :: <file-state>) => ();
   let str = object.literal-value;
   let class = specifier-type(#"<byte-string>");
   let fields = get-class-fields(class);
@@ -965,7 +923,7 @@ end method spew-object;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <union-ctype>, state :: <heap-file-state>) => ();
+     object :: <union-ctype>, state :: <file-state>) => ();
   let mems = #();
   let sings = #();
   for (member in object.members)
@@ -986,7 +944,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <limited-integer-ctype>, state :: <heap-file-state>) => ();
+     object :: <limited-integer-ctype>, state :: <file-state>) => ();
   local method make-lit (x :: false-or(<general-integer>))
 	  if (x == #f)
 	    as(<ct-value>, x);
@@ -1009,7 +967,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <limited-collection-ctype>, state :: <heap-file-state>) => ();
+     object :: <limited-collection-ctype>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<limited-collection>"), state,
                 limited-integer-base-class: object.base-class,
 		limited-element-type: object.element-type,
@@ -1025,38 +983,38 @@ end method spew-object;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <singleton-ctype>, state :: <heap-file-state>) => ();
+     object :: <singleton-ctype>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<singleton>"), state,
 		singleton-object: object.singleton-value);
 end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <direct-instance-ctype>, state :: <heap-file-state>) => ();
+     object :: <direct-instance-ctype>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<direct-instance>"), state,
 		direct-instance-of: object.base-class);
 end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <byte-character-ctype>, state :: <heap-file-state>) => ();
+     object :: <byte-character-ctype>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<byte-character-type>"), state);
 end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <subclass-ctype>, state :: <heap-file-state>) => ();
+     object :: <subclass-ctype>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<subclass>"), state,
 		subclass-of: object.subclass-of);
 end;
 
 
-// spew-object{<byte-string>,<defined-cclass>,<heap-file-state>}
+// spew-object{<byte-string>,<defined-cclass>,<file-state>}
 // and helpers.
 //
 define generic spew-class
     (name :: <byte-string>,
-     state :: <heap-file-state>,
+     state :: <file-state>,
      metaclass :: false-or(<meta-cclass>),
      slots :: <simple-object-vector>)
    => ();
@@ -1064,7 +1022,7 @@ define generic spew-class
 // Specific metaclass.
 define method spew-class
     (name :: <byte-string>,
-     state :: <heap-file-state>,
+     state :: <file-state>,
      metaclass :: <meta-cclass>,
      slots :: <simple-object-vector>) => ();
   apply(spew-instance, name, metaclass, state,
@@ -1075,7 +1033,7 @@ end;
 // Standard metaclass.
 define method spew-class
     (name :: <byte-string>,
-     state :: <heap-file-state>,
+     state :: <file-state>,
      metaclass == #f,
      slots :: <simple-object-vector>) => ();
   apply(spew-instance, name, class-ctype(), state, slots);
@@ -1083,7 +1041,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <defined-cclass>, state :: <heap-file-state>) => ();
+     object :: <defined-cclass>, state :: <file-state>) => ();
 
   local method sharable-literal-vector(vec :: <sequence>)
 	  => literal-vector :: <literal-simple-object-vector>;
@@ -1140,12 +1098,12 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <meta-cclass>, state :: <heap-file-state>) => ();
+     object :: <meta-cclass>, state :: <file-state>) => ();
 end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <slot-info>, state :: <heap-file-state>) => ();
+     object :: <slot-info>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<slot-descriptor>"), state,
 		slot-name:
 		  as(<ct-value>,
@@ -1192,7 +1150,7 @@ end method spew-object;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <override-info>, state :: <heap-file-state>) => ();
+     object :: <override-info>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<override-descriptor>"), state,
 		slot-init-value:
 		  if (instance?(object.override-init-value, <ct-value>))
@@ -1206,7 +1164,7 @@ end method spew-object;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <defined-cdclass>, state :: <heap-file-state>) => ();
+     object :: <defined-cdclass>, state :: <file-state>) => ();
   let defn = object.class-defn;
   spew-instance(name, specifier-type(#"<designator-class>"), state,
 		class-name:
@@ -1272,7 +1230,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <struct-slot-info>, state :: <heap-file-state>) => ();
+     object :: <struct-slot-info>, state :: <file-state>) => ();
   spew-instance(name, specifier-type(#"<struct-slot-descriptor>"), state,
 		c-type: object.struct-slot-c-type,
 		offset: as(<ct-value>, object.struct-slot-offset));
@@ -1280,7 +1238,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <proxy>, state :: <heap-file-state>) => ();
+     object :: <proxy>, state :: <file-state>) => ();
   spew-reference(object.proxy-for, *heap-rep*, "%object-class", state);
   format(state.file-body-stream, "heapptr_t %s =\n", name);
   write(state.file-body-stream, get-string(state.file-guts-stream));
@@ -1290,7 +1248,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <ct-function>, state :: <heap-file-state>) => ();
+     object :: <ct-function>, state :: <file-state>) => ();
   if (object.has-general-entry?)
     spew-function(name, object, state,
 		  general-entry: make(<ct-entry-point>,
@@ -1302,7 +1260,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <ct-callback-function>, state :: <heap-file-state>) => ();
+     object :: <ct-callback-function>, state :: <file-state>) => ();
   spew-function(name, object, state,
 		callback-entry: make(<ct-entry-point>,
 				     for: object, kind: #"callback"),
@@ -1361,7 +1319,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <ct-generic-function>, state :: <heap-file-state>) => ();
+     object :: <ct-generic-function>, state :: <file-state>) => ();
   let defn = object.ct-function-definition;
   let discriminator = defn.generic-defn-discriminator;
   apply(spew-function, name, object, state,
@@ -1404,7 +1362,7 @@ end method method-general-entry;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <ct-method>, state :: <heap-file-state>) => ();
+     object :: <ct-method>, state :: <file-state>) => ();
   spew-function(name, object, state,
 		general-entry: method-general-entry(object),
 		generic-entry:
@@ -1414,7 +1372,7 @@ end;
 
 define method spew-object
     (name :: <byte-string>,
-     object :: <ct-accessor-method>, state :: <heap-file-state>)
+     object :: <ct-accessor-method>, state :: <file-state>)
  => ();
   let standin = object.ct-accessor-standin;
   spew-function(name, object, state,
@@ -1434,7 +1392,7 @@ end;
 //
 define method spew-function
     (name :: <byte-string>,
-     func :: <ct-function>, state :: <heap-file-state>, #rest slots) => ();
+     func :: <ct-function>, state :: <file-state>, #rest slots) => ();
   let sig = func.ct-function-signature;
   let returns = sig.returns;
   let positionals = returns.positional-types;
@@ -1479,7 +1437,7 @@ end;
 //
 define function spew-instance
     (name :: <byte-string>,
-     class :: <cclass>, state :: <heap-file-state>, #rest slots) => ();
+     class :: <cclass>, state :: <file-state>, #rest slots) => ();
   let stream = state.file-guts-stream;
   let vector-size = #f;
   for (field in get-class-fields(class))
@@ -1552,7 +1510,7 @@ end;
 // writes out a prototype for the actual literal instead of the root.
 //
 define method spew-heap-prototype
-    (name :: <byte-string>, defn :: <ct-value>, state :: <heap-file-state>)
+    (name :: <byte-string>, defn :: <ct-value>, state :: <file-state>)
  => ();
   unless (element(state.file-prototypes-exist-for, name, default: #f))
     let stream = state.file-body-stream;
@@ -1565,7 +1523,7 @@ define method spew-heap-prototype
 end method;
 
 define method spew-heap-prototype
-    (name :: <byte-string>, defn :: <proxy>, state :: <heap-file-state>)
+    (name :: <byte-string>, defn :: <proxy>, state :: <file-state>)
  => ();
   unless (element(state.file-prototypes-exist-for, name, default: #f))
     let stream = state.file-body-stream;
@@ -1579,7 +1537,7 @@ end method;
 // layout for each distinct vector size.
 //
 define method spew-layout
-    (class :: <cclass>, state :: <heap-file-state>, #key size)
+    (class :: <cclass>, state :: <file-state>, #key size)
  => ();
   let stream = state.file-body-stream;
   let classname = class.cclass-name.c-name-global;

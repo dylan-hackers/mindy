@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.30 2001/11/07 21:59:41 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.31 2001/11/08 00:28:39 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -242,6 +242,54 @@ define class <file-state> (<object>)
   // we save the last <source-location> emitted to the file to avoid multiple
   // identical #line tokens.  Used by maybe-emit-source-location.
   slot file-source-location :: <source-location> = make(<unknown-source-location>);
+
+  // <heap-file-state> -- internal.
+  // 
+  // A catch-all object to quantify the state of the "heap output" process.
+  // Almost every routine in this module accepts a "state" argument and
+  // destructively modifies it as necessary to account for its actions.
+  //
+  //
+  // Layouts we have already spewed struct declarations for.
+  constant slot file-layouts-exist-for :: <string-table>
+    = make(<string-table>);
+  //
+  // The prefix we are pre-pending to each symbol to guarantee uniqueness.
+  constant slot id-prefix :: <byte-string> = "L", init-keyword: #"id-prefix";
+  //
+  // The id counter used to generate unique names when we aren't dumping the
+  // object ourselves (and therefore cannot reference it relative to the
+  // heap base).
+  slot next-id :: <integer> = 0;
+  //
+  // A queue of objects that we have decided to dump but haven't gotten
+  // around to dumping yet.  Used as a fifo so that we can use the the
+  // heap-size at the time of queueing as the object offset.
+  constant slot object-queue :: <deque> = make(<deque>);
+
+  // <global-heap-state> -- internal.
+  //
+  // The additional information needed while dumping the final global heap.
+  // 
+  //
+  // When dumping symbols, we chain them together.  This holds the current
+  // head of that chain.
+  slot symbols :: type-union(<literal-false>, <literal-symbol>) = make(<literal-false>);
+
+  // <local-heap-file-state> -- internal.
+  //
+  // The additional information needed while dumping a library local heap.
+  // 
+  //
+  // Holds the objects that have been referenced but are not going to be
+  // dumped until the global heap is dumped.
+  constant slot undumped-objects :: <stretchy-vector> = make(<stretchy-vector>);
+  //
+  // Holds the extra labels we've had to allocate for externally defined
+  // ctvs.
+  constant slot extra-labels :: <stretchy-vector> = make(<stretchy-vector>);
+
+  slot dumping-global-heap? :: <boolean> = #f;
 end;
 
 

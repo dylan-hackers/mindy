@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.10 2001/03/17 03:43:31 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.11 2001/11/08 00:28:39 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -61,6 +61,7 @@ define module cback
   use c-representation;
   use classes;
   use common;
+  use errors;
   use compile-time-functions;
   use compile-time-values;
   use platform,
@@ -98,9 +99,10 @@ define module cback
     const-info-dumped?, const-info-dumped?-setter,
     entry-point-c-name, *emit-all-function-objects?*,
     c-name, c-name-global, string-to-c-name, clean-for-comment,
-    float-to-string;
+    float-to-string,
+    <global-heap-file-state>, <local-heap-file-state>,
+    build-global-heap, build-local-heap;
 
-  create object-label;
 end;
 
 
@@ -124,8 +126,5 @@ define module heap
   use platform;
   use indenting-streams;
 
-  export
-    <global-heap-file-state>, <local-heap-file-state>,
-    build-global-heap, build-local-heap;
 end;
 
