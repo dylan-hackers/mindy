@@ -1,5 +1,7 @@
-library: test
-executable: test
+library: stream-demo
+executable: stream-demo
+unit-prefix: streamdemo
+entry-point: stream-demo:%main
 
-test-exports.dylan
-test.dylan
+stream-demo-exports.dylan
+stream-demo.dylan

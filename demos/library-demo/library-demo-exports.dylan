@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/library-demo/library-demo-exports.dylan,v 1.4 1997/05/12 22:19:39 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/library-demo/library-demo-exports.dylan,v 1.5 1997/05/31 01:20:15 ram Exp $
 module: dylan-user
 
 //======================================================================
@@ -26,12 +26,12 @@ module: dylan-user
 //
 //======================================================================
 
-define library gobbledygook
+define library library-demo
   use dylan;
   use fact;
 end library;
 
-define module gobbledygook
+define module library-demo
   use dylan;
   use extensions;
   use cheap-io;

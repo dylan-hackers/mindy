@@ -1,6 +1,6 @@
 module: mine-sweeper
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/minesweeper/minesweeper.dylan,v 1.4 1996/07/30 19:37:50 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/minesweeper/minesweeper.dylan,v 1.5 1997/05/31 01:20:15 ram Exp $
 
 //======================================================================
 //
@@ -26,34 +26,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/minesweeper/minesweeper.
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-// This is a quick and dirty imitation of Microsoft's Minesweeper
-// game.  It has a few improvements--it can do much of the tedious
-// work for you!  For various reasons, initializing the game board
-// takes forever, but play is reasonably quick once everything's set
-// up.
-
-define library mine-sweeper
-  use dylan;
-  use tk;
-  use string-extensions;
-  use streams;
-  use standard-io;
-  use format;
-  use random;
-end library mine-sweeper;
-
-define module mine-sweeper
-  use dylan;
-  use extensions;
-  use tk;
-  use tk-extension, import: { tk-quote, call-tk-function };
-  use string-conversions;
-  use streams, import: {force-output};
-  use format;
-  use standard-io;
-  use random;
-end module mine-sweeper;
 
 define class <square> (<object>)
   slot button :: <button>, required-init-keyword: #"button";

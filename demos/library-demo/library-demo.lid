@@ -1,5 +1,6 @@
-library: gobbledygook
-executable: gobbledygook
+library: library-demo
+executable: library-demo
+unit-prefix: libdemo
 
-gobbledygook-exports.dylan
-gobbledygook.dylan
+library-demo-exports.dylan
+library-demo.dylan

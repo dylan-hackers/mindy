@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/craps/craps.dylan,v 1.3 1997/05/12 22:19:38 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/craps/craps.dylan,v 1.4 1997/05/31 01:20:15 ram Exp $
 module: craps
 
 //======================================================================
@@ -54,4 +54,6 @@ define method craps () => ();
   end if;
 end method craps;
 
-craps();
+define method main (foo, #rest stuff);
+  craps();
+end method;

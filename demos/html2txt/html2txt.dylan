@@ -73,38 +73,6 @@ synopsis:	Converts a file in WWW "HyperText Markup Language" into
 // as well as from the rich set of available collection types.
 //======================================================================
 
-// Because the entire application is contained in a single file, it is easiest
-// to define its library and module "inline".  This capability may not be
-// supported by all Dylan implementations, since the "file exchange format" is
-// not terribly well defined at present.
-define library html
-  use dylan;
-  use streams;
-  use standard-io;
-  use collection-extensions;
-  use string-extensions;
-end library html;
-
-define module html
-  use dylan;
-  
-  // A few basic definitions not present in the Dylan spec
-  use extensions, import: {main};
-  
-  // Additional collection classes and operations from "collection-extensions"
-  use subseq;
-  use self-organizing-list;
-
-  // From string-extensions:
-  use substring-search;
-  
-  // I/O support from the "streams" and "standard-io" libraries
-  use streams;
-  use standard-io;
-  
-  export html2text;
-end module html;
-
 // Basic constants
 define constant <strings> = <stretchy-vector>;
 define variable *linelen* :: <integer> = 78;
@@ -286,10 +254,10 @@ define method break-up(tag :: <symbol>, text :: <strings>,
   let full-text = if (text.empty?) "" else apply(concatenate, text) end;
   block ()
     break-up-table[tag](full-text, blank, want-blank);
-  exception (<error>)
-    break-up-table[#"TEXT"](full-text, blank, want-blank);
   cleanup
     size(text) := 0;
+  exception (<error>)
+    break-up-table[#"TEXT"](full-text, blank, want-blank);
   end block;
 end method break-up;
 

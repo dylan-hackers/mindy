@@ -73,44 +73,6 @@ synopsis:	Converts a file in WWW "HyperText Markup Language" into
 // as well as from the rich set of available collection types.
 //======================================================================
 
-// Because the entire application is contained in a single file, it is easiest
-// to define its library and module "inline".  This capability may not be
-// supported by all Dylan implementations, since the "file exchange format" is
-// not terribly well defined at present.
-define library html
-  use dylan;
-  use streams;
-  use standard-io;
-  use collection-extensions;
-  use string-extensions;
-  use tk;
-end library html;
-
-define module html
-  use dylan;
-  
-  // A few basic definitions not present in the Dylan spec
-  use extensions;
-  use threads;
-  
-  // Additional collection classes and operations from "collection-extensions"
-  use subseq;
-  use self-organizing-list;
-
-  // From string-extensions:
-  use substring-search;
-  
-  // I/O support from the "streams" and "standard-io" libraries
-  use streams;
-  use standard-io;
-
-  // And, of course, the nifty new tk/TK library
-  use tk;
-  use tk-extension;
-  
-  export html2text;
-end module html;
-
 define generic html2text(input) => ();
 
 define constant normal-font = "-adobe-courier-medium-r-normal--12*";

@@ -1,5 +1,5 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/stream-demo/stream-demo.dylan,v 1.5 1997/05/12 22:19:37 ram Exp $
-module: test
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/stream-demo/stream-demo.dylan,v 1.6 1997/05/31 01:20:15 ram Exp $
+module: stream-demo
 
 //======================================================================
 //
@@ -49,5 +49,3 @@ define method main (foo, #rest stuff)
   force-output(*standard-output*);
 
 end method;
-
-main("foo");

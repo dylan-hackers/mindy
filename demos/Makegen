@@ -1,15 +1,3 @@
-
-$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../../common/streams -L../../common/standard-io -L../../common/print -L../../common/format -L../runtime/random -L. -L../../common/coll-ext -L../../common/string-ext -L../../common/table-ext -L../runtime/melange';
-
-do emit_library_rule(
-    'craps', '$(BUILDROOT)/force.timestamp', '', 'compile',
-);
-do emit_library_rule(
-    'test', '$(BUILDROOT)/force.timestamp', '', 'compile'
-);
-do emit_library_rule(
-    'fact', '$(BUILDROOT)/force.timestamp', '', 'compile'
-);
-do emit_library_rule(
-    'gobbledygook', '$(BUILDROOT)/force.timestamp', '', 'compile'
-);
+&compile_subdirs("cat", "craps", "diff", "hello-world",
+		 "html2txt", "library-demo",
+		 "minesweeper", "stream-demo", "tk-html2txt");

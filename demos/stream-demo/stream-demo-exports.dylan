@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/stream-demo/stream-demo-exports.dylan,v 1.4 1997/05/12 22:19:39 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/stream-demo/stream-demo-exports.dylan,v 1.5 1997/05/31 01:20:15 ram Exp $
 module: dylan-user
 
 //======================================================================
@@ -26,13 +26,13 @@ module: dylan-user
 //
 //======================================================================
 
-define library test
+define library stream-demo
   use dylan;
   use streams;
   use standard-io;
 end library;
 
-define module test
+define module stream-demo
   use dylan;
   use extensions;
   use streams;
