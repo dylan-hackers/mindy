@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.1 1994/03/24 21:49:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.2 1994/03/25 05:00:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -358,7 +358,7 @@ static void dump_method(struct method *method)
     int nclosure_vars;
     struct closes_over *over;
 
-    if (params->restp)
+    if (params->rest_param)
 	param_info = 1;
     else
 	param_info = 0;
