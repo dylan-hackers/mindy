@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.12 1995/11/20 03:16:36 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.13 1996/01/02 01:16:01 rgs Exp $
 
 //======================================================================
 //
@@ -152,9 +152,8 @@ define method add!(ssv :: <simple-stretchy-vector>, new-element)
 		    else 
 		      fill + 1024;
 		    end if;
-    let new-data = replace-subsequence!(make(<simple-object-vector>,
-					     size: data-size, fill: #f),
-					data, end: fill);
+    let new-data = make(<simple-object-vector>, size: data-size, fill: #f);
+    for (i from 0 below fill) new-data[i] := data[i] end for;
     ssv-data(ssv) := new-data;
     new-data[fill] := new-element;
   else 
