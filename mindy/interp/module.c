@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.22 1994/12/02 06:33:51 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.23 1996/01/16 20:40:08 nkramer Exp $
 *
 * This file implements the module system.
 *
@@ -80,7 +80,10 @@ struct entry {
     obj_t name;
     void *datum;
     boolean exported;
-    obj_t origin;
+    char *template;
+    obj_t p1;
+    obj_t p2;
+    obj_t p3;
 };
 
 struct module {
@@ -212,13 +215,31 @@ static void *table_remove(struct table *table, obj_t symbol)
 
 
 /* Utilities */
-
-static void vmake_entry(struct table *table, obj_t name, void *datum,
-		       boolean exported, char *template, va_list ap1, va_list ap2)
+static char *safe_sym_name( obj_t t)
 {
-    char *ptr;
+    return object_class(t)==obj_SymbolClass ? sym_name(t) : "??";
+}
+
+static obj_t format_entry_origin( struct entry *entry)
+{
     int len;
-    char *origin;
+    obj_t origin;
+
+    len = strlen( entry->template) + 1;
+    len += strlen( safe_sym_name( entry->p1));
+    len += strlen( safe_sym_name( entry->p2));
+    len += strlen( safe_sym_name( entry->p3));
+    origin = alloc_byte_string(len);
+    sprintf( string_chars(origin), 
+	    entry->template, safe_sym_name(entry->p1), 
+	    safe_sym_name(entry->p2), safe_sym_name(entry->p3));
+    return origin;
+}
+
+static void make_entry(struct table *table, obj_t name, void *datum,
+		       boolean exported, char *template, obj_t p1, obj_t p2,
+			obj_t p3)
+{
     struct entry *old_entry = table_lookup(table, name);
     struct entry *entry;
 
@@ -230,88 +251,17 @@ static void vmake_entry(struct table *table, obj_t name, void *datum,
     entry->name = name;
     entry->datum = datum;
     entry->exported = exported;
-
-    len = strlen(template);
-    for (ptr = template; *ptr != '\0'; ptr++) {
-	if (*ptr == '%') {
-	    len--;
-	    switch (*++ptr) {
-	      case '%':
-		break;
-	      case 's':
-		len += strlen(sym_name(va_arg(ap1, obj_t)));
-		break;
-	      default:
-		lose("Bogus thing in origin template: %%%c", *ptr);
-	    }
-	}
-    }
-
-    entry->origin = alloc_byte_string(len);
-    origin = (char *)string_chars(entry->origin);
-
-    for(ptr = template; *ptr != '\0'; ptr++) {
-	if (*ptr == '%') {
-	    switch (*++ptr) {
-	      case '%':
-		*origin++ = '%';
-		break;
-	      case 's':
-		{
-		    char *name = sym_name(va_arg(ap2, obj_t));
-		    while (*name != '\0')
-			*origin++ = *name++;
-		}
-		break;
-	    }
-	}
-	else
-	    *origin++ = *ptr;
-    }
-    *origin = '\0';
+    entry->template = template;
+    entry->p1 = p1;
+    entry->p2 = p2;
+    entry->p3 = p3;
 
     if (old_entry)
-	error("%s clashes with %s", entry->origin, old_entry->origin);
+        error("%s clashes with %s", 
+              format_entry_origin(entry), format_entry_origin(old_entry));
 
     table_add(table, name, entry);
 }
-#if _USING_PROTOTYPES_
-static void make_entry(struct table *table, obj_t name, void *datum,
-		       boolean exported, char *template, ...)
-{
-    va_list ap1, ap2;
-    va_start(ap1, template);
-    va_start(ap2, template);
-    vmake_entry(table, name, datum, exported, template, ap1, ap2);
-    va_end(ap1);
-    va_end(ap2);
-}
-#else
-static void make_entry(va_alist) va_dcl
-{
-    va_list ap1, ap2;
-    struct table *table;
-    obj_t name;
-    void *datum;
-    boolean exported;
-    char *template;
-    va_start(ap1);
-    va_start(ap2);
-    table = va_arg(ap1, struct table *);
-    table = va_arg(ap2, struct table *);
-    name = va_arg(ap1, obj_t);
-    name = va_arg(ap2, obj_t);
-    datum = va_arg(ap1, void *);
-    datum = va_arg(ap2, void *);
-    exported = va_arg(ap1, boolean);
-    exported = va_arg(ap2, boolean);
-    template = va_arg(ap1, char *);
-    template = va_arg(ap2, char *);
-    vmake_entry(table, name, datum, exported, template, ap1, ap2);
-    va_end(ap1);
-    va_end(ap2);
-}
-#endif
 
 static obj_t prepend_prefix(obj_t name, struct use *use)
 {
@@ -412,7 +362,7 @@ struct library *find_library(obj_t name, boolean createp)
 
 	make_entry(library->modules, module->name, module, FALSE,
 		   "module %s implicitly defined in library %s",
-		   module->name, library->name);
+		   module->name, library->name, obj_False);
     }
 
     return library;
@@ -459,7 +409,7 @@ static void complete_library(struct library *library)
 
 	make_entry(library->modules, name, module, TRUE,
 		   "module %s defined in library %s",
-		   name, library->name);
+		   name, library->name, obj_False);
     }
 
     for (use = library->defn->use; use != NULL; use = use->next) {
@@ -607,7 +557,7 @@ void define_module(struct library *library, struct defn *defn)
 	module = make_module(defn->name, library);
 	make_entry(library->modules, defn->name, module, FALSE,
 		   "module %s internal to library %s",
-		   defn->name, library->name);
+		   defn->name, library->name, obj_False);
     }
     else {
 	module = entry->datum;
@@ -615,7 +565,7 @@ void define_module(struct library *library, struct defn *defn)
 	if (module->home != library)
 	    error("Can't define %s in library %s because its home "
 		    "is library %s.\n",
-		  entry->origin, library->name, module->home->name);
+		  format_entry_origin(entry), library->name, module->home->name);
 
 	if (module->defn)
 	    error("Module %s multiply defined.\n", defn->name);
@@ -647,7 +597,7 @@ static void
 	       created
 	       ? "variable %s created in module %s"
 	       : "variable %s defined in module %s",
-	       name, module->name);
+	       name, module->name, obj_False);
 
     var->created = created;
 }
@@ -802,7 +752,7 @@ struct var *find_var(struct module *module, obj_t name, boolean writeable,
 		       writeable ? var_AssumedWriteable : var_Assumed);
 	make_entry(module->variables, name, var, FALSE,
 		   "variable %s internal to module %s",
-		   name, module->name);
+		   name, module->name, obj_False);
     }
     else {
 	var = entry->datum;
@@ -976,7 +926,9 @@ static void scav_table(struct table *table, boolean of_entries)
 	    if (of_entries) {
 		struct entry *entry = bucket->datum;
 		scavenge(&entry->name);
-		scavenge(&entry->origin);
+		scavenge(&entry->p1);
+		scavenge(&entry->p2);
+		scavenge(&entry->p3);
 	    }
 	}
     }
@@ -1052,7 +1004,7 @@ void init_modules(void)
 	
     module_BuiltinStuff = make_module(stuff, library_Dylan);
     make_entry(library_Dylan->modules, stuff, module_BuiltinStuff, FALSE,
-	       "module %s internal to library %s", stuff, dylan);
+	       "module %s internal to library %s", stuff, dylan, obj_False);
 
     obj_Unbound = alloc(obj_UnboundClass, sizeof(struct object));
 }
