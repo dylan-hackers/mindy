@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.7 1995/06/10 12:35:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.8 1995/08/23 01:11:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -405,6 +405,11 @@ define-primitive-transformer
 define method ct-initialized?
     (expr :: <expression>) => res :: one-of(#t, #f, #"can't tell");
   #t;
+end;
+
+define method ct-initialized?
+    (expr :: <prologue>) => res :: one-of(#t, #f, #"can't tell");
+  #"can't tell";
 end;
 
 define method ct-initialized?
