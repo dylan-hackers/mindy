@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.17 1994/07/12 00:42:29 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.18 1994/07/16 23:16:36 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1454,8 +1454,8 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
     int index;
     obj_t value = NULL;
 
-    if (class != obj_DefinedClassClass)
-	error("%= doens't access a slot in %=", getter, instance);
+    if (object_class(class) != obj_DefinedClassClass)
+	error("%= doesn't access a slot in %=", getter, instance);
 
     for (scan = DC(class)->all_slots; scan != obj_Nil; scan = TAIL(scan)) {
 	slot = HEAD(scan);
@@ -1489,7 +1489,7 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
 	}
     }
 
-    error("%= doens't access a slot in %=", getter, instance);    
+    error("%= doesn't access a slot in %=", getter, instance);    
     return NULL;
 }
 
