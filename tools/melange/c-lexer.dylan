@@ -118,7 +118,7 @@ define primary class <tokenizer> (<object>)
   required keyword source:, type: union(<string>, <stream>);
   keyword name:, init-value: #f, type: union(<false>, <string>);
   keyword parent:, init-value: #f, type: union(<false>, <tokenizer>);
-  keyword types-from:, init-value: #f, type: union(<false>, <tokenizer>);
+  keyword typedefs-from:, init-value: #f, type: union(<false>, <tokenizer>);
   slot file-name :: <string>;
   slot contents :: <string>;
   slot position :: <integer>, init-value: 0;
@@ -371,8 +371,20 @@ define class <rcurly-token> (<punctuation-token>) end class;
 //
 define method parse-error (token :: <token>, format :: <string>, #rest args)
  => ();	// never returns
-  apply(error, concatenate("%s:char %d: ", format),
-	token.generator.file-name, token.position | -1, args);
+  let source-string = token.generator.contents;
+  let line-num = 1;
+  let last-CR = -1;
+
+  for (i from 0 below token.position | 0)
+    if (source-string[i] == '\n')
+      line-num := line-num + 1;
+      last-CR := i;
+    end if;
+  end for;
+
+  let char-num = (token.position | 0) - last-CR;
+  apply(error, concatenate("%s:line %d: ", format),
+	token.generator.file-name, line-num, args);
 end method parse-error;
 
 //========================================================================
@@ -403,8 +415,9 @@ end method;
 //
 // If "parent:" is specified then we inherit context sensitivities (i.e.
 // typedefs and #defines) from the parent tokenizer.  Note that changes made
-// to these tables will be reflected in the parent tokenizer.  "Types-from:"
-// is similar, except that we only inherit the typedefs table.
+// to these tables will be reflected in the parent tokenizer.
+// "Typedefs-from:" is similar, except that we only inherit the typedefs
+// table.
 //
 define method initialize (value :: <tokenizer>,
 			  #key source, parent, typedefs-from, name,
@@ -448,19 +461,25 @@ define method initialize (value :: <tokenizer>,
 					  string: cpp-value.integer-to-string,
 					  generator: value));
       <string> =>
-	let sub-tokenizer
-	  = make(<tokenizer>,
-		 source: make(<byte-string-input-stream>, string: cpp-value));
-	for (list = #() then pair(token, list),
-	     token = get-token(sub-tokenizer, expand: #f)
-	       then get-token(sub-tokenizer, expand: #f),
-	     until instance?(token, <eof-token>))
-	  if (instance?(token, <error-token>))
-	    parse-error(value, "Error in cpp defines");
-	  end if;
-	finally
-	  value.cpp-table[key] := list;
-	end for;
+	if (cpp-value.empty?)
+	  // Work around bug/misfeature in streams
+	  value.cpp-table[key] := #();
+	else
+	  let sub-tokenizer
+	    = make(<tokenizer>,
+		   source: make(<byte-string-input-stream>,
+				string: cpp-value));
+	  for (list = #() then pair(token, list),
+	       token = get-token(sub-tokenizer, expand: #f)
+		 then get-token(sub-tokenizer, expand: #f),
+	       until instance?(token, <eof-token>))
+	    if (instance?(token, <error-token>))
+	      parse-error(value, "Error in cpp defines");
+	    end if;
+	  finally
+	    value.cpp-table[key] := list;
+	  end for;
+	end if;
     end select;
   end for;
   for (key in undefines)
@@ -507,8 +526,20 @@ define method parse-error (generator :: <tokenizer>, format :: <string>,
   for (gen = generator then gen.include-tokenizer,
        while gen.include-tokenizer)
   finally 
-    apply(error, concatenate("%s:char %d: ", format),
-	  gen.file-name, generator.position | -1, args);
+    let source-string = gen.contents;
+    let line-num = 1;
+    let last-CR = -1;
+    
+    for (i from 0 below gen.position | 0)
+      if (source-string[i] == '\n')
+	line-num := line-num + 1;
+	last-CR := i;
+      end if;
+    end for;
+
+    let char-num = (gen.position | 0) - last-CR;
+    apply(error, concatenate("%s:line %d: ", format),
+	  gen.file-name, line-num, args);
   end for;
 end method parse-error;
 
@@ -770,7 +801,8 @@ define method get-token
 	// The pound-pound construct is nasty.  We must concatenate two tokens
 	// and then get a new token from the resulting string.  If this isn't
 	// a single token, we just ignore the rest -- "the results are
-	// undefined". 
+	// undefined".
+	pop(stack);		// Get rid of the pound-pound-token
 	let new-string = concatenate(token.string-value,
 				     get-token(state).string-value);
 	let sub-tokenizer
