@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.1 2001/09/12 14:39:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.2 2001/09/17 14:01:14 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -36,8 +36,8 @@ define class <single-file-mode-state> (<main-unit-state>)
   slot unit-lib :: <library>;
 
   slot unit-mprefix :: <byte-string>;
-  slot unit-tlfs :: <stretchy-vector> = make(<stretchy-vector>);
-  slot unit-module;
+  slot unit-tlf-vectors :: <stretchy-vector> = make(<stretchy-vector>);
+  slot unit-modules :: <stretchy-vector> = make(<stretchy-vector>);
   slot unit-cback-unit :: <unit-state>;
   slot unit-other-cback-units :: <simple-object-vector>;
   
@@ -62,15 +62,41 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
   state.unit-name := lib-name;
   format(*debug-output*, "Compiling library %s\n", lib-name);
   state.unit-lib    := find-library(as(<symbol>, lib-name), create: #t);
-  // XXX: next line is broken
-  state.unit-module := find-module(state.unit-lib, as(<symbol>, lib-name), create: #t);
-  state.unit-mprefix := as-lowercase(lib-name);
 
   // XXX these two look suspicious
   // second one is ok, default is now according to DRM
   *defn-dynamic-default* := boolean-header-element(#"dynamic", #f, state);
   *implicitly-define-next-method*
     := boolean-header-element(#"implicitly-define-next-method", #t, state);
+
+  state.unit-mprefix := as-lowercase(lib-name);
+
+  let libmod-declaration = as(<byte-vector>, format-to-string("define library %s\n  use common-dylan;\nend;\n\ndefine module %s\n  use common-dylan;\nend;\n\n", lib-name, lib-name));
+
+  block ()
+    let tokenizer = make(<lexer>, 
+                         source: make(<source-buffer>, 
+                                      buffer: libmod-declaration),
+                         start-line: 0,
+                         start-posn: 0);
+    block ()
+      *Current-Library* := state.unit-lib;
+      *Current-Module*  := find-module(state.unit-lib, as(<symbol>, "dylan-user"));
+      let tlfs = make(<stretchy-vector>);
+      *Top-Level-Forms* := tlfs;
+      add!(state.unit-tlf-vectors, tlfs);
+      add!(state.unit-modules, *Current-Module*);
+      parse-source-record(tokenizer);
+    cleanup
+      *Current-Library* := #f;
+      *Current-Module* := #f;
+    end;
+  exception (<fatal-error-recovery-restart>)
+    format(*debug-output*, "skipping rest of %s\n", state.unit-source-file);
+  end block;
+
+
+  let mod = find-module(state.unit-lib, as(<symbol>, lib-name));
 
   block ()
     format(*debug-output*, "Parsing %s\n", state.unit-source-file);
@@ -80,8 +106,11 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
                          start-posn: start-posn);
     block ()
       *Current-Library* := state.unit-lib;
-      *Current-Module*  := state.unit-module;
-      *Top-Level-Forms* := state.unit-tlfs;
+      *Current-Module*  := mod;
+      let tlfs = make(<stretchy-vector>);
+      *Top-Level-Forms* := tlfs;
+      add!(state.unit-tlf-vectors, tlfs);
+      add!(state.unit-modules, mod);
       parse-source-record(tokenizer);
     cleanup
       *Current-Library* := #f;
@@ -90,11 +119,13 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
   exception (<fatal-error-recovery-restart>)
     format(*debug-output*, "skipping rest of %s\n", state.unit-source-file);
   end block;
-  format(*debug-output*, "Finalizing definitions\n");
-  for (tlf in copy-sequence(state.unit-tlfs))
-    note-context(tlf);
-    finalize-top-level-form(tlf);
-    end-of-context();
+    format(*debug-output*, "Finalizing definitions\n");
+  for(tlfs in state.unit-tlf-vectors)  
+    for (tlf in copy-sequence(tlfs))
+      note-context(tlf);
+      finalize-top-level-form(tlf);
+      end-of-context();
+    end for;
   end for;
   format(*debug-output*, "inheriting slots\n");
   inherit-slots();

@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.6 2001/09/17 11:47:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.7 2001/09/17 14:01:14 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -173,7 +173,7 @@ define method copy-bytes
   end if;
 end method copy-bytes;
 
-define constant <file-contents> = type-union(<buffer>, <big-buffer>);
+define constant <file-contents> = type-union(<buffer>, <big-buffer>, <byte-vector>);
 
 define method make-buffer (size :: <integer>)
     => res :: <file-contents>;
@@ -186,7 +186,7 @@ end method make-buffer;
 
 #else // Not mindy.
 
-define constant <file-contents> = <buffer>;
+define constant <file-contents> = type-union(<buffer>, <byte-vector>);
 
 define inline method make-buffer (size :: <integer>)
     => res :: <file-contents>;
