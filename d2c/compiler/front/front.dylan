@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.14 1995/04/24 03:24:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.15 1995/04/25 21:00:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -155,6 +155,10 @@ define class <catcher> (<operation>)
   // If false, then all potential exits are explicitly represented by
   // <pitcher> and <exit-region> objects.
   slot exit-function :: false-or(<exit-function>), init-value: #f;
+  //
+  // The block-region this catcher is for.
+  slot target-region :: <fer-exit-block-region>,
+    required-init-keyword: target-region:;
 end;
 
 
@@ -328,8 +332,8 @@ end class;
 define class <exit-function> (<function-literal>)
   //
   // The region that this exit function exits to.
-  slot target-region :: <fer-block-region>,
-    required-init-keyword: target-region:
+  slot catcher :: <catcher>,
+    required-init-keyword: catcher:
 end class;
 
 
@@ -362,9 +366,9 @@ end class;
 //
 define class <fer-exit-block-region> (<fer-block-region>)
   //
-  // The catcher operation for this block.
-  slot catcher :: <catcher>,
-    init-function: curry(make, <catcher>);
+  // The catcher operation for this block.  #f if we haven't created one
+  // yet or if the catcher has been optimized away.
+  slot catcher :: union(<false>, <catcher>), init-value: #f;
 end class;
 
 // FER-Cleanup-Block-Region represents a block/cleanup clause.  Somehow...
