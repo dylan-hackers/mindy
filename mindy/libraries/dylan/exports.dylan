@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.12 1994/04/06 17:45:20 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.13 1994/04/06 22:51:33 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -72,8 +72,9 @@ define module Builtin-Stuff
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
     forward-iteration-protocol, backward-iteration-protocol, negative?,
-    debugger-print, debugger-report-condition, debugger-abort,
-    debugger-describe-restarts, debugger-restart, debugger-return;
+    debugger-flush, debugger-call, debugger-print, debugger-report-condition,
+    debugger-abort, debugger-describe-restarts, debugger-restart,
+    debugger-return;
 end Builtin-Stuff;
 
 define module Dylan
@@ -82,7 +83,8 @@ define module Dylan
 	      handler-function, handler-next, handler-test, handler-type,
 	      make-next-method-function, do-next-method, generic-apply,
 	      format, prin1, print, putc, puts, getc, invoke-debugger,
-	      debugger-print, debugger-report-condition, debugger-abort,
+	      debugger-flush, debugger-call, debugger-print,
+	      debugger-report-condition, debugger-abort,
 	      debugger-describe-restarts, debugger-restart, debugger-return,
 	      enable-error-system, apply-curry, state-valid?, <buffer>,
 	      fd-close, fd-error-string, fd-input-available?, fd-open,
@@ -93,7 +95,8 @@ define module Dylan
 	     handler-function, handler-next, handler-test, handler-type,
 	     make-next-method-function, do-next-method, generic-apply,
 	     format, prin1, print, putc, puts, getc, invoke-debugger, 
-	     debugger-print, debugger-report-condition, debugger-abort,
+	     debugger-flush, debugger-call, debugger-print,
+	     debugger-report-condition, debugger-abort,
 	     debugger-describe-restarts, debugger-restart, debugger-return,
 	     enable-error-system, apply-curry, state-valid?);
   export
