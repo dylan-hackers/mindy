@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.18 1995/08/22 14:07:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.19 1995/08/30 18:29:10 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -68,7 +68,7 @@ define constant memo2-bits = 9;
 
 // mask which gives a vector index from a large hash value.  Low zeros align to
 // start of an entry.
-define constant memo2-mask = ash(lognot(ash(-1, memo2-bits)), 2);
+define constant memo2-mask = ash(1, memo2-bits);
 
 define constant make-memo2-table = method ()
   make(<memo-table>, size: ash(4, memo2-bits), fill: #f);
@@ -86,8 +86,7 @@ define constant memo2-lookup = method
         precise :: <boolean>);
 
   memo2-probes := memo2-probes + 1;
-  let base = logand(logxor(type1.type-hash, ash(type2.type-hash, -3)),
-                    memo2-mask);
+  let base = modulo(type1.type-hash - type2.type-hash, memo2-mask) * 4;
   if (table[base] == type1 & table[base + 1] == type2)
     memo2-hits := memo2-hits + 1;
     values(table[base + 2], table[base + 3]);
@@ -100,8 +99,7 @@ define constant memo2-enter = method
    (type1 :: <ctype>, type2 :: <ctype>, result :: union(<ctype>, <boolean>),
     precise :: <boolean>, table :: <memo-table>)
 
-  let base = logand(logxor(type1.type-hash, ash(type2.type-hash, -3)),
-                    memo2-mask);
+  let base = modulo(type1.type-hash - type2.type-hash, memo2-mask) * 4;
   table[base] := type1;
   table[base + 1] := type2;
   table[base + 2] := result;
@@ -239,39 +237,43 @@ define variable csubtype-memo = make-memo2-table();
 define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
        => (result :: <boolean>, precise :: <boolean>);
 
-  let (memo-val, memo-win) = memo2-lookup(type1, type2, csubtype-memo);
-  if (memo-val == #"miss")
-    let (val, win) = 
-      case
-	// Makes unknown types be subtypes of themselves, & eliminates the case
-	// of equal types from later consideration.  Also speeds up a common
-	// case...
-	type1 == type2 => values(#t, #t);
-
-        // the only thing an unknown type is surely a subtype of is <object>
-        instance?(type1, <unknown-ctype>) =>
-	  if (type2 == object-ctype()) values(#t, #t) else values(#f, #f) end;
-
-	// nothing is a definite subtype of an unknown type (except itself.)
-	instance?(type2, <unknown-ctype>) => values(#f, #f);
-
-	// Every member of type1 must be a subtype of some member of type2.
-	otherwise =>
-	  values(every?(method (t1)
-	  		  any?(method (t2)
-				 t1 == t2 | csubtype-dispatch(t1, t2);
-			       end,
-			       type2.members)
-		        end method,
-		        type1.members),
-		#t);
-      end case;
-
-    memo2-enter(type1, type2, val, win, csubtype-memo);
-    values(val, win);
+  if (type1 == type2)
+    values(#t, #t);
   else
-    values(memo-val, memo-win);
-  end;
+    let (memo-val, memo-win) = memo2-lookup(type1, type2, csubtype-memo);
+    if (memo-val == #"miss")
+      let (val, win) = 
+	case
+	  // Makes unknown types be subtypes of themselves, & eliminates the
+	  // case of equal types from later consideration.  Also speeds up a
+	  // common case...
+
+	  // the only thing an unknown type is surely a subtype of is <object>
+	  instance?(type1, <unknown-ctype>) =>
+	    if (type2 == object-ctype()) values(#t,#t) else values(#f, #f) end;
+
+	  // nothing is a definite subtype of an unknown type (except itself.)
+	  instance?(type2, <unknown-ctype>) => values(#f, #f);
+
+	  // Every member of type1 must be a subtype of some member of type2.
+	  otherwise =>
+	    values(every?(method (t1)
+			    any?(method (t2)
+				   t1 == t2 | csubtype-dispatch(t1, t2);
+				 end,
+				 type2.members)
+			  end method,
+			  type1.members),
+		   #t);
+	end case;
+      
+
+      memo2-enter(type1, type2, val, win, csubtype-memo);
+      values(val, win);
+    else
+      values(memo-val, memo-win);
+    end;
+  end if;
 end method;
 
 
@@ -351,61 +353,66 @@ define variable intersection-memo = make-memo2-table();
 /// true if the result is exact.  At worst, we arbitrarily return one of the
 /// arguments as the first value (trying not to return an unknown type).
 ///
-define constant ctype-intersection = method (type1 :: <ctype>, type2 :: <ctype>)
-       => (result :: <ctype>, precise :: <boolean>);
+define constant ctype-intersection
+  = method (type1 :: <ctype>, type2 :: <ctype>)
+     => (result :: <ctype>, precise :: <boolean>);
 
-  let (memo-val, memo-win) = memo2-lookup(type1, type2, intersection-memo);
-  if (memo-val == #"miss")
-    let (val, win) = 
-      case
-        // Makes unknown types intersect with themselves, & eliminates the case
-	// of equal types from later consideration.
-	type1 == type2 => values(type1, #t);
-
-        // If one arg is unknown, return the other and #f.
-        instance?(type1, <unknown-ctype>) => values(type2, #f);
-	instance?(type2, <unknown-ctype>) => values(type1, #f);
+      if (type1 == type2)
+	values(type1, #t);
+      else
+	let (memo-val, memo-win) = memo2-lookup(type1, type2,
+						intersection-memo);
+	if (memo-val == #"miss")
+	  let (val, win) = 
+	    case
+	      // Makes unknown types intersect with themselves, & eliminates
+	      // the case of equal types from later consideration.
+	      // If one arg is unknown, return the other and #f.
+	      instance?(type1, <unknown-ctype>) => values(type2, #f);
+	      instance?(type2, <unknown-ctype>) => values(type1, #f);
 	  
-	// Otherwise, the intersection is the union of the pairwise
-	// intersection of the members.  As described above, we try both
-	// orders. 
-	otherwise =>
-	  let win-int = #t;
-	  let res-union = empty-ctype();
-	  for (mem1 in type1.members)
-	    for (mem2 in type2.members)
-	      // If either is a subtype of the other, include the subtype.
-	      if (csubtype?(mem1, mem2))
-		res-union := ctype-union(res-union, mem1);
-	      elseif (csubtype?(mem2, mem1))
-		res-union := ctype-union(res-union, mem2);
-	      else
-		// Call the intersection dispatch function.
-		let (res12, win12) = ctype-intersection-dispatch(mem1, mem2);
-		if (res12)
-		  unless (win12) win-int := #f end;
-		  res-union := ctype-union(res-union, res12);
-		else
-		  let (res21, win21) = ctype-intersection-dispatch(mem2, mem1);
-		  if (res21)
-		    unless (win21) win-int := #f end;
-		    res-union := ctype-union(res-union, res21);
-		    
-		    // else precisely empty, nothing to union.
-		  end if;
-		end if;
-	      end if;
-	    end for;
-	  end for;
-	  values(res-union, win-int);
-      end case;
+	      // Otherwise, the intersection is the union of the pairwise
+	      // intersection of the members.  As described above, we try both
+	      // orders. 
+	      otherwise =>
+		let win-int = #t;
+		let res-union = empty-ctype();
+		for (mem1 in type1.members)
+		  for (mem2 in type2.members)
+		    // If either is a subtype of the other, include the
+		    // subtype.
+		    if (csubtype?(mem1, mem2))
+		      res-union := ctype-union(res-union, mem1);
+		    elseif (csubtype?(mem2, mem1))
+		      res-union := ctype-union(res-union, mem2);
+		    else
+		      // Call the intersection dispatch function.
+		      let (res12, win12) = ctype-intersection-dispatch(mem1, mem2);
+		      if (res12)
+			unless (win12) win-int := #f end;
+			res-union := ctype-union(res-union, res12);
+		      else
+			let (res21, win21) = ctype-intersection-dispatch(mem2, mem1);
+			if (res21)
+			  unless (win21) win-int := #f end;
+			  res-union := ctype-union(res-union, res21);
+			  
+			  // else precisely empty, nothing to union.
+			end if;
+		      end if;
+		    end if;
+		  end for;
+		end for;
+		values(res-union, win-int);
+	    end case;
 
-    memo2-enter(type1, type2, val, win, intersection-memo);
-    values(val, win);
-  else
-    values(memo-val, memo-win);
-  end;
-end method;
+	  memo2-enter(type1, type2, val, win, intersection-memo);
+	  values(val, win);
+	else
+	  values(memo-val, memo-win);
+	end;
+      end if;
+    end method;
 
 
 /// The first value is true unless the types definitely don't intersect.  The
@@ -544,7 +551,7 @@ define method table-protocol(table :: <union-table>);
   values(\=,
   	 method(key :: <list>)
 	   for(elt :: <ctype> in key,
-	       res :: <fixed-integer> = 0 then logxor(res, elt.type-hash))
+	       res :: <fixed-integer> = 0 then \+(res, elt.type-hash))
 	   finally values(res, $permanent-hash-state);
 	   end for;
 	 end method);
@@ -1213,7 +1220,7 @@ end;
 // make-values-ctype  --  Exported
 //
 // Make a potentially multi-value ctype.  If there is only one value, just
-// return that.
+// return that.  If #rest object, return wild-ctype().
 //
 define constant make-values-ctype = method
   (req :: <list>, rest :: false-or(<ctype>)) => res :: <values-ctype>;
@@ -1221,6 +1228,8 @@ define constant make-values-ctype = method
  let nreq = req.size;
  if (nreq == 1 & ~rest)
    req.first;
+ elseif (nreq == 0 & rest == object-ctype())
+   wild-ctype();
  else
    make(<multi-value-ctype>, positional-types: req, min-values: nreq,
         rest-value-type: rest | empty-ctype());
@@ -1408,7 +1417,9 @@ end;
 define method values-subtype?
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (result :: <boolean>, precise :: <boolean>);
-  if (~values-types-intersect?(type1, type2))
+  if (type2 == wild-ctype())
+    values(#t, #t)
+  elseif (~values-types-intersect?(type1, type2))
     values(#f, #t);
   else
     let types1 = type1.positional-types;
