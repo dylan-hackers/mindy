@@ -17,20 +17,23 @@ define library melange-c
   use dylan;
   use string-extensions;
   use collection-extensions;
-  use streams;
+  use table-extensions;
+  use new-streams;
+  use standard-io;
   use format;
   export c-lexer, c-declarations;
 end library melange-c;
 
 define module c-lexer
   use dylan;
-  use extensions, exclude: {<string-table>};
+  use extensions;
+  use table-extensions, exclude: {<string-table>};
   use self-organizing-list;
   use string-conversions;
   use regular-expressions;
   use substring-search;
   use character-type;
-  use streams;
+  use new-streams;
   create cpp-parse;
   export
     default-cpp-table, include-path,
@@ -76,7 +79,7 @@ define module c-parse
   use extensions;
   use self-organizing-list;
   use c-lexer;
-  use streams;
+  use new-streams;
   use standard-io;
   create
     <parse-state>, <parse-file-state>, <parse-type-state>, <parse-cpp-state>,
@@ -92,9 +95,10 @@ end module c-parse;
 
 define module c-declarations
   use dylan;
-  use extensions, exclude: {format, <string-table>};
+  use extensions, exclude: {format};
+  use table-extensions, exclude: {<string-table>};
   use regular-expressions;
-  use streams;
+  use new-streams;
   use format;
 
   // We completely encapsulate "c-parse" and only pass out the very few 
