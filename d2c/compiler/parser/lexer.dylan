@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.7 1995/05/12 15:40:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.8 1995/06/10 12:35:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -705,17 +705,19 @@ define constant $Initial-State$ =
 			state(#"double-question", <double-question-token>),
 			state(#"backslash", #f,
 			      pair("-+/", #"backslash-done"),
-			      pair('~', #"backslash-pre-equal-done"),
-			      pair(':', #"backslash-pre-equal"),
+			      pair('~', #"backslash-tilde"),
+			      pair(':', #"backslash-colon"),
 			      pair("a-zA-Z", #"backslash-symbol"),
 			      pair("0-9", #"backslash-digit"),
 			      pair("!$%@_", #"backslash-graphic"),
 			      pair("&*^|", #"backslash-graphic-done"),
 			      pair("=<>", #"backslash-graphic-pre-equal")),
 			state(#"backslash-done", make-quoted-name),
-			state(#"backslash-pre-equal-done", make-quoted-name,
+			state(#"backslash-tilde", make-quoted-name,
+			      pair('=', #"backslash-tilde-equal")),
+			state(#"backslash-tilde-equal", make-quoted-name,
 			      pair('=', #"backslash-done")),
-			state(#"backslash-pre-equal", #f,
+			state(#"backslash-colon", #f,
 			      pair('=', #"backslash-done")),
 			state(#"backslash-graphic", #f,
 			      pair("-0-9!&*<=>|^$%@_+~?/",
@@ -742,7 +744,9 @@ define constant $Initial-State$ =
 			      pair("0-9", #"signed-decimal")),
 			state(#"tilde", make-tilde,
 			      pair('=', #"tilde-equal")),
-			state(#"tilde-equal", make-binary-operator),
+			state(#"tilde-equal", make-binary-operator,
+			      pair('=', #"tilde-equal-equal")),
+			state(#"tilde-equal-equal", make-binary-operator),
 			state(#"operator-graphic", make-binary-operator,
 			      pair("a-zA-Z", #"symbol"),
 			      pair("0-9!&*<=>|^$%@_-+~?/",
