@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.13 1995/02/14 02:41:10 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.14 1995/03/12 21:34:06 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -222,7 +222,7 @@ define method initialize (ht :: <table>,
 				  size: size,
 				  fill: $permanent-hash-state);
   ht.item-count-slot        := 0;
-  ht.bucket-count-slot      := size;
+  ht.bucket-count-slot      := if (size = 0) 1 else size end if;
   ht.expand-when-slot       := expand-when;
   ht.expand-to-slot         := expand-to;
   ht.shrink-when-slot       := shrink-when;
