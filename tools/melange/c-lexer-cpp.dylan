@@ -390,12 +390,24 @@ define method try-cpp
 	      do-skip(pos, state.cpp-stack := pair(#"skip", tail(stack)));
 	    end if;
 	  end if;
+	  // For SUN4 headers, kill to end of line
+	  for (i from state.position below contents.size,
+	       until: contents[i] == '\n')
+	  finally
+	    state.position := i;
+	  end for;
 	"endif" =>
 	  let old-stack = state.cpp-stack;
 	  if (empty?(old-stack))
 	    parse-error(state, "Unmatched #endif.");
 	  end if;
 	  state.cpp-stack := tail(old-stack);
+	  // For SUN4 headers, kill to end of line
+	  for (i from state.position below contents.size,
+	       until: contents[i] == '\n')
+	  finally
+	    state.position := i;
+	  end for;
 	"if" =>
 	  let stack = state.cpp-stack;
 	  if ((empty?(stack) | head(stack) == #"accept")
@@ -409,6 +421,7 @@ define method try-cpp
 	    parse-error(state, "Encountered #error directive.");
 	  end if;
 	"line", "pragma" =>
+	  // Kill to end of line
 	  for (i from pos below contents.size, until: contents[i] == '\n')
 	  finally
 	    state.position := i;
