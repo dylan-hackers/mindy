@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.14 1995/12/07 15:51:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.15 1996/01/03 02:47:18 rgs Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -120,8 +120,10 @@ static void dylan_merge_hash_codes(obj_t self, struct thread *thread,
     obj_t ordered = args[4];
     obj_t *old_sp = args-1;
 
-    if (ordered != obj_False)
+    if (ordered != obj_False) {
 	id2 = (id2 << 5) | (id2 >> (sizeof(long)*CHAR_BIT-5));
+	id1 = (id1 >> 2) | (id1 << (sizeof(long)*CHAR_BIT-2));
+    }
     old_sp[0] = make_fixnum(id1 ^ id2);
 
     if (state1 == permanent_state)
