@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.95 1996/12/02 14:11:24 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.96 1997/02/02 17:08:00 dwatson Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1114,6 +1114,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	  #"hppa-hpux";
        #elseif (compiled-for-x86-win32)
 	  #"x86-win32";
+       #elseif (compiled-for-x86-linux)
+          #"x86-linux";
        #else
 	  #"unknown";
        #endif
