@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.4 1995/05/05 14:44:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.5 1995/05/12 12:35:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -351,13 +351,30 @@ define class <literal-pair> (<literal-list>)
   slot literal-tail :: <literal>, required-init-keyword: tail:;
 end;
 
-define constant $literal-pair-memo = make(<equal-table>);
+define class <literal-pair-memo-table> (<table>)
+end;
+
+define method table-protocol (table :: <literal-pair-memo-table>)
+    => (tester :: <function>, hasher :: <function>);
+  values(method (key1, key2) => res :: <boolean>;
+	   key1.head == key2.head
+	     & key1.tail == key2.tail;
+	 end,
+	 method (key) => (id :: <fixed-integer>, state);
+	   let (head-id, head-state) = object-hash(key.head);
+	   let (tail-id, tail-state) = object-hash(key.tail);
+	   merge-hash-codes(head-id, head-state, tail-id, tail-state,
+			    ordered: #t);
+	 end);
+end;
+
+define constant $literal-pair-memo = make(<literal-pair-memo-table>);
 
 define method make (class == <literal-pair>, #next next-method,
 		    #key head, tail)
   let key = pair(head, tail);
   element($literal-pair-memo, key, default: #f)
-    | (element($literal-pair-memo, key) | next-method());
+    | (element($literal-pair-memo, key) := next-method());
 end;
 
 define method as (class == <ct-value>, thing :: <pair>)
@@ -439,6 +456,16 @@ define method make (class == <literal-string>, #next next-method,
 		    #key value)
   element($literal-string-memo, value, default: #f)
     | (element($literal-string-memo, value) := next-method());
+end;
+
+define method print-object (lit :: <literal-string>, stream :: <stream>)
+    => ();
+  format(stream, "{literal string %=}", lit.literal-value);
+end;
+
+define method print-message (lit :: <literal-string>, stream :: <stream>)
+    => ();
+  print(lit.literal-value, stream);
 end;
 
 define method as (class == <ct-value>, string :: <byte-string>)
