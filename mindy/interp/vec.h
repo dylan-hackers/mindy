@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.h,v 1.5 1996/03/07 17:40:09 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.h,v 1.6 1996/06/07 00:22:30 bfw Exp $
 *
 \**********************************************************************/
 
@@ -46,6 +46,8 @@ struct bytevec {
 
 #define SOVEC(o) obj_ptr(struct sovec *, o)
 #define BYTEVEC(o) obj_ptr(struct bytevec *, o)
+
+#define vector_data(vec) (obj_ptr(struct bytevec *, vec)->contents)
 
 extern obj_t make_vector(int length, obj_t *contents);
 extern obj_t make_byte_vector(int length, unsigned char *contents);
