@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.65 2001/03/27 05:28:25 brent Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.66 2001/04/20 00:29:31 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -521,7 +521,13 @@ AC_TRY_LINK([#include <time.h>], [int a = daylight; long b = timezone;],
   [AC_MSG_RESULT(no)
    AC_MSG_CHECKING([whether struct tm has a tm_gmtoff field])
    AC_TRY_COMPILE([#include <time.h>], [struct tm t; long g = t.tm_gmtoff;],
-     [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_TM_GMTOFF)], [AC_MSG_RESULT(no)])])
+     [AC_MSG_RESULT(yes)
+     AC_DEFINE(HAVE_TM_GMTOFF)], 
+     [AC_MSG_RESULT(no)
+     AC_MSG_CHECKING([whether _daylight and _timezone are supported])
+     AC_TRY_LINK([#include <time.h>], [int a = _daylight; long b = _timezone;],
+       [AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_CYGNUS_DAYLIGHT)])])])
 
 #--------------------------------------------------------------------
 #	Find out if sigaction is available.
