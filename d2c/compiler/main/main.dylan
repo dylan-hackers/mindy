@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.18 1999/04/13 05:17:52 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.19 1999/04/20 04:19:31 emk Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -65,8 +65,11 @@ define class <main-unit-state> (<object>)
     slot unit-cback-unit :: <unit-state>;
     slot unit-other-cback-units :: <simple-object-vector>;
 
-    slot unit-cc-flags;
+    // Simplistic flags to control debugging (and someday, optimization).
+    // We only have one of these right now.
     slot unit-debug? :: <boolean>, init-keyword: debug?:, init-value: #f;
+
+    slot unit-cc-flags;
     // Makefile generation streams, etc.
     slot unit-all-generated-files :: <list>, init-value: #();
     slot unit-makefile-name :: <byte-string>;
@@ -1323,11 +1326,28 @@ define method show-help(stream :: <stream>) => ()
 end method show-help;
 
 define method show-compiler-info(stream :: <stream>) => ()
-  format(stream,
-"_DCI_DYLAN_LID_FORMAT_VERSION=1\n"
-"_DCI_D2C_BOOTSTRAP_COUNTER=1\n"
-"_DCI_D2C_RUNTIME_SUBDIR=%s/runtime/\n",
-	 $version);
+  local method p (#rest args)
+	  apply(format, stream, args);
+	end;
+
+  // This output gets read by ./configure.
+  // All output must be of the form "KEY=VALUE". All keys must begin with
+  // "_DCI_" (for "Dylan compiler info") and either "DYLAN" (which designates
+  // a general purpose value) or "D2C" (which should be used for anything
+  // which is necessarily specific to d2c.
+
+  // This value indicates how much of LID we implement correctly.
+  //   0: We only support CMU-style LID files.
+  //   1: We support everything from 0 plus the 'File:' keyword.
+  p("_DCI_DYLAN_LID_FORMAT_VERSION=1\n");
+
+  // Increment this value here (and CURRENT_BOOTSTRAP_COUNTER) in
+  // configure.in to force an automatic bootstrap.
+  p("_DCI_D2C_BOOTSTRAP_COUNTER=1\n");
+
+  // The directory (relative to --prefix) where ./configure can find our
+  // runtime libraries. This is used when bootstrapping.
+  p("_DCI_D2C_RUNTIME_SUBDIR=%s/runtime/\n", $version);
 end method;
 
 //----------------------------------------------------------------------
