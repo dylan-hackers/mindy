@@ -1,5 +1,4 @@
-#!/usr/misc/bin/perl
-# (Outside of cs.cmu.edu, that will probably be /usr/bin/perl)
+#!@PERL@
 
 # Will take the output of gcc -MM -E *.c and massage it so that it 
 # can be plugged right in to a Mindy Makefile.in

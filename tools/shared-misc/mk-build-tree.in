@@ -1,7 +1,7 @@
-#!/usr/bin/perl
+#!@PERL@
 
 # Author: William Lott
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/Attic/mk-build-tree,v 1.2 1998/05/04 22:57:26 emk Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/mk-build-tree.in,v 1.1 1998/05/12 03:11:13 emk Exp $
 
 # Usage:
 #

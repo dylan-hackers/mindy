@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!@PERL@
 
 if ($#ARGV == -1) {
     (-e "RCS") || die("./RCS doesn't exist, so can't guess the RCS dir.\n");
