@@ -3,7 +3,7 @@ author: Ben Folk-Williams, bfw@cmu.edu and
         David Watson, dwatson@cmu.edu
 synopsis: Basic Time functions.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time.dylan,v 1.3 1996/08/14 15:36:38 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/time.dylan,v 1.4 1996/08/14 15:44:06 dwatson Exp $
  
 //======================================================================
 //
@@ -174,8 +174,15 @@ end class <decoded-time>;
 // Constants for use with default-from: keyword.
 
 // This one is internal,
+#if (mindy)
+define constant $null-decoded-time
+  = make(<decoded-time>, seconds: #f, minutes: #f, hours: #f, day-of-week: #f,
+	 day-of-month: #f, month: #f, year: #f, daylight-savings-time?: #f,
+	 timezone: #f);
+#else
 define constant $null-decoded-time
   = make(<decoded-time>, default-from: #f);
+#endif
 
 // This one is exported.
 define constant $default-time
