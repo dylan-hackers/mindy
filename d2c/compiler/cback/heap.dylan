@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.15 2000/07/18 22:19:00 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.16 2000/07/19 23:58:41 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -883,9 +883,11 @@ define method spew-object
 	  #"%object-class" =>
 	    spew-reference(class, field.slot-representation, "%object-class",
 			   state);
+	    write(stream, ",\n");
 	  #"size" =>
 	    spew-reference(as(<ct-value>, str.size), field.slot-representation,
 			   "size", state);
+	    write(stream, ",\n");
 	  #"%element" =>
 	    // The following ugly code should be immensely faster than
 	    // writing a character at a time to a stream.
@@ -936,10 +938,10 @@ define method spew-object
 	    add!($spewed-string-buffer, '"');
 	    if(str.size > 0)
 	      write(stream, as(<byte-string>, $spewed-string-buffer));
+	      write(stream, ",\n");
 	    end if;
 	    $spewed-string-buffer.size := $spewed-string-initial-size;
 	end select;
-	write(stream, ",\n");
     end select;
   end for;
   spew-layout(class, state, size: str.size);
@@ -1414,12 +1416,12 @@ define method spew-instance
 	      end;
 	    end;
 	    indent(stream, -$indentation-step);
-	    format(stream, "}");
+	    format(stream, "},\n");
 	  end if;
 	else
 	  spew-reference(init-value, field.slot-representation, name, state);
+	  format(stream, ",\n");
 	end;
-	format(stream, ",\n");
     end;
   end;
   spew-layout(class, state, size: vector-size);
