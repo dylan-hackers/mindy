@@ -298,7 +298,7 @@ end method extract-keyword;
 define method process-top-level-form
     (form :: <define-class-parse>)
  => ();
-  format(*standard-output*, "define class\n");
+  format(*standard-output*, "define class %s\n", form.defclass-name);
 end method;
 
 
@@ -338,7 +338,7 @@ define-procedural-expander
 define method process-top-level-form
     (form :: <define-constant-parse>)
  => ();
-  format(*standard-output*, "define constant\n");
+  format(*standard-output*, "define constant %=\n", form.defbinding-variables);
 end method;
 
 define class <define-variable-parse> (<define-binding-parse>)
@@ -365,7 +365,7 @@ define-procedural-expander
 define method process-top-level-form
     (form :: <define-variable-parse>)
  => ();
-  format(*standard-output*, "define variable\n");
+  format(*standard-output*, "define variable %=\n", form.defbinding-variables);
 end method;
 
 
@@ -419,7 +419,7 @@ define-procedural-expander
 define method process-top-level-form
     (form :: <define-generic-parse>)
  => ();
-  format(*standard-output*, "define generic\n");
+  format(*standard-output*, "define generic %s\n", form.defgeneric-name);
 end method;
 
 
@@ -489,7 +489,8 @@ define-procedural-expander
 define method process-top-level-form
     (form :: <define-method-parse>)
  => ();
-  format(*standard-output*, "define method\n");
+  format(*standard-output*, "define method %s\n",
+	 form.defmethod-method.method-name);
 end method;
 
 
