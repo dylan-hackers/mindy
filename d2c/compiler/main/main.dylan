@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.30 1995/11/12 21:08:03 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.31 1995/11/13 17:17:18 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -311,14 +311,28 @@ define method load-library (name :: <symbol>) => ();
   end;
 end;
 
+define method incorrect-usage () => ();
+  format(*standard-error*, "Usage: compile lid-file\n");
+  format(*standard-error*,
+	 "    or compile -autodump component [next-free-id-in-hex]\n");
+  force-output(*standard-error*);
+  error("Incorrect usage");
+end method incorrect-usage;
+
 define method main (argv0, #rest args)
-  if (args.size == 3 & args.first = "-autodump")
-    // usage: compile -autodump component next-free-object-id-in-hex
+  if (args.size = 0)
+    incorrect-usage();
+  elseif (args.first = "-autodump")
+    if (args.size < 2 | args.size > 3)
+      incorrect-usage();
+    end if;
     let component = as(<symbol>, args.second);
-    let next-free-id = string-to-integer(args.third, base: 16);
+    let next-free-id = if (args.size = 3) 
+			 string-to-integer(args.third, base: 16);
+		       else
+			 #f;
+		       end if;
     autodump-main(component, next-free-id);
-  elseif (args.size ~== 1)
-    error("usage: compile lid-file");
   else
     compile-library(args[0]);
   end if;
