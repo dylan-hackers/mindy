@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.11 1995/04/21 02:42:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.12 1995/04/21 19:40:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -96,9 +96,17 @@ end method;
 // Given an operation and a list of operands, set up the <dependency> objects
 // marking the operands.  The result is returned.
 //
-define method make-operand-dependencies(result :: <dependent-mixin>,
+define method make-operand-dependencies(builder :: <internal-builder>,
+					result :: <dependent-mixin>,
 					ops :: <list>)
     => res :: <dependent-mixin>;
+
+  // Add this dependent to the reoptimize queue.
+  let component = builder.component;
+  result.queue-next := component.reoptimize-queue;
+  component.reoptimize-queue := result;
+
+  // Build the dependencies.
   let prev = #f;
   for (op in ops)
     let dep = make(<dependency>, source-exp: op, source-next: op.dependents,
@@ -116,16 +124,27 @@ define method make-operand-dependencies(result :: <dependent-mixin>,
   unless (prev)
     result.depends-on := #f;
   end;
+
+  // return the dependent for convenience.
   result;
 end method;
 
-define method make-operand-dependencies(result :: <dependent-mixin>,
+define method make-operand-dependencies(builder :: <internal-builder>,
+					result :: <dependent-mixin>,
 					op :: <leaf>)
     => res :: <dependent-mixin>;
+  // Add this dependent to the reoptimize queue.
+  let component = builder.component;
+  result.queue-next := component.reoptimize-queue;
+  component.reoptimize-queue := result;
+
+  // Build the dependency.
   let dep = make(<dependency>, source-exp: op, source-next: op.dependents,
 		 dependent: result);
   result.depends-on := dep;
   op.dependents := dep;
+
+  // return the dependent for convenience.
   result;
 end;
 
@@ -194,7 +213,8 @@ define method build-if-body
  => ();
   ignore(policy);
   push-body(builder,
-	    make-operand-dependencies(make(<if-region>,
+	    make-operand-dependencies(builder,
+				      make(<if-region>,
 					   source-location: source),
 				      predicate-leaf));
 end method;
@@ -240,11 +260,27 @@ define method build-loop-body
   push-body(builder, make(<loop-region>, source-location: source));
 end method;
 
+define method definition-site-for
+    (component :: <component>, var :: <initial-variable>)
+    => res :: <initial-definition>;
+  let new = make(<initial-definition>, var-info: var.var-info, definition: var,
+		 next-initial-definition: component.initial-definitions);
+  component.initial-definitions := new;
+  new;
+end;
+
+define method definition-site-for
+    (component :: <component>, var :: <ssa-variable>)
+    => res :: <ssa-variable>;
+  var;
+end;
+
 define method build-assignment-aux
     (res :: <assignment>, builder :: <internal-builder>,
      target-vars :: type-or(<leaf>, <list>),
      expr :: <expression>)
 
+  let component = builder.component;
   let dep = make(<dependency>, source-exp: expr,
   		 source-next: expr.dependents,
 		 dependent: res);
@@ -254,8 +290,8 @@ define method build-assignment-aux
   if (list?(target-vars))
     let prev = #f;
     for (var in target-vars)
-      let new = make(<initial-definition>, var-info: var.var-info,
-                     definition: var, definer: res);
+      let new = definition-site-for(component, var);
+      new.definer := res;
       if (prev)
         prev.definer-next := new;
       else
@@ -264,8 +300,9 @@ define method build-assignment-aux
       prev := new;
     end;
   else
-    res.defines := make(<initial-definition>, var-info: target-vars.var-info,
-                        definition: target-vars, definer: res);
+    let new = definition-site-for(component, target-vars);
+    new.definer := res;
+    res.defines := new;
   end;
 
   add-body-assignment(builder, res);
@@ -293,7 +330,8 @@ define method build-join
      source1 :: <leaf>,
      source2 :: <leaf>)
  => ();
-  let exp = make-operand-dependencies(make(<join-operation>),
+  let exp = make-operand-dependencies(builder,
+				      make(<join-operation>),
   				      list(source1, source2));
   let res = make(<join-assignment>, source-location: source, policy: policy,
   		 defines: target-var);
@@ -312,7 +350,7 @@ define method make-operation
     (builder :: <internal-builder>, operands :: <list>)
  => res :: <operation>;
   ignore(builder);
-  make-operand-dependencies(make(<unknown-call>), operands);
+  make-operand-dependencies(builder, make(<unknown-call>), operands);
 end method;
 
 
@@ -337,7 +375,7 @@ define method make-primitive-operation
     (builder :: <fer-builder>, name :: <symbol>, operands :: <list>)
  => res :: <operation>;
   ignore(builder);
-  make-operand-dependencies(make(<primitive>, name: name), operands);
+  make-operand-dependencies(builder, make(<primitive>, name: name), operands);
 end method;
   
 
@@ -345,7 +383,7 @@ define method make-mv-operation
     (builder :: <fer-builder>, operands :: <list>)
  => res :: <operation>;
   ignore(builder);
-  make-operand-dependencies(make(<mv-call>), operands);
+  make-operand-dependencies(builder, make(<mv-call>), operands);
 end method;
 
 
@@ -493,7 +531,7 @@ define method build-method-body
   ignore(policy);
   let leaf = make(<lambda>, source-location: source,
 		  derived-type: function-ctype(), vars: arg-vars);
-  make-operand-dependencies(leaf, result-vars);
+  make-operand-dependencies(builder, leaf, result-vars);
   let comp = builder.component;
   push-body(builder, leaf);
   comp.reanalyze-functions := pair(leaf, comp.reanalyze-functions);
