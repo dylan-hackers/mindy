@@ -1,0 +1,4 @@
+&makegen_include("../common-Makegen");
+
+do emit_library_rule('scribble', '$(BUILDROOT)/force.timestamp', '',
+		     'compile');

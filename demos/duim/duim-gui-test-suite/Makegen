@@ -1,0 +1,4 @@
+&makegen_include("../common-Makegen");
+
+do emit_library_rule('duim-gui-test-suite', '$(BUILDROOT)/force.timestamp', '',
+		     'compile');

@@ -1,0 +1,3 @@
+These DUIM demos, derived from ones distributed with Functional
+Developer, all compile successfully but have problems running using
+the GTK+ DUIM port due to as-yet unimplemented functionality.
