@@ -369,7 +369,7 @@ define method output-melange-clause
      repository :: <c-type-repository>,
      stream :: <stream>)
  => ();
-  format(stream, "define inline-only function %s\n",
+  format(stream, "define function %s\n",
 	 melange-name(func.clause-name));
   format(stream, "    (");
 
