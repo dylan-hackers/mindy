@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.20 2001/06/20 02:05:36 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.21 2001/07/07 17:26:12 housel Exp $
 copyright: see below
 
 
@@ -170,8 +170,13 @@ define class <real-class-definition> (<class-definition>)
     :: type-union(<cclass>, one-of(#f, #"not-computed-yet", #"computing")),
     init-value: #"not-computed-yet", init-keyword: class:;
   //
-  // Defered evaluations function, of #f if there isn't one.
-  slot %class-defn-defered-evaluations-function
+  // Deferred evaluations function, of #f if there isn't one.
+  slot %class-defn-deferred-evaluations-function
+    :: type-union(<ct-function>, one-of(#f, #"not-computed-yet")),
+    init-value: #"not-computed-yet";
+  //
+  // Keyword defaulter function, of #f if there isn't one.
+  slot %class-defn-key-defaulter-function
     :: type-union(<ct-function>, one-of(#f, #"not-computed-yet")),
     init-value: #"not-computed-yet";
   //
@@ -1314,33 +1319,33 @@ end method maybe-define-init-function;
 
 // class-defn-mumble-function accessors.
 
-define method class-defn-defered-evaluations-function
+define method class-defn-deferred-evaluations-function
     (defn :: <real-class-definition>) => res :: false-or(<ct-function>);
-  if (defn.%class-defn-defered-evaluations-function == #"not-computed-yet")
-    error("Internal error: Too late to compile defered evaluation function.");
+  if (defn.%class-defn-deferred-evaluations-function == #"not-computed-yet")
+    error("Internal error: Too late to compile deferred evaluation function.");
   else
-    defn.%class-defn-defered-evaluations-function;
+    defn.%class-defn-deferred-evaluations-function;
   end;
 end;
 
-define method class-defn-defered-evaluations-function
+define method class-defn-deferred-evaluations-function
     (defn :: <local-class-definition>) => res :: false-or(<ct-function>);
-  if (defn.%class-defn-defered-evaluations-function == #"not-computed-yet")
-    defn.%class-defn-defered-evaluations-function
+  if (defn.%class-defn-deferred-evaluations-function == #"not-computed-yet")
+    defn.%class-defn-deferred-evaluations-function
       := if (block (return)
 	       let cclass = ct-value(defn);
 	       unless (cclass)
 		 return(#f);
 	       end;
-	       // If any of our superclasses have a defered evaluations
+	       // If any of our superclasses have a deferred evaluations
 	       // function, we need one.
 	       for (super in cclass.direct-superclasses)
-		 if (super.class-defn.class-defn-defered-evaluations-function)
+		 if (super.class-defn.class-defn-deferred-evaluations-function)
 		   return(#t);
 		 end;
 	       end;
-	       // If any of our slots require some defered evaluations,
-	       // then we need a defered evaluations function.
+	       // If any of our slots require some deferred evaluations,
+	       // then we need a deferred evaluations function.
 	       for (slot-defn in defn.class-defn-slots)
 		 let info = slot-defn.slot-defn-info;
 		 if (instance?(info.slot-type, <unknown-ctype>)
@@ -1358,7 +1363,7 @@ define method class-defn-defered-evaluations-function
 		 end;
 	       end;
 	       // ### inherited each-subclass slots w/ non obvious init
-	       // values impose the existance of the defered-evaluations
+	       // values impose the existance of the deferred-evaluations
 	       // function.
 	     end)
 	   make(<ct-function>,
@@ -1370,9 +1375,49 @@ define method class-defn-defered-evaluations-function
 	   #f;
 	 end;
   else
-    defn.%class-defn-defered-evaluations-function;
+    defn.%class-defn-deferred-evaluations-function;
   end;
 end;
+
+define method class-defn-key-defaulter-function
+    (defn :: <real-class-definition>) => res :: false-or(<ct-function>);
+  if (defn.%class-defn-key-defaulter-function == #"not-computed-yet")
+    error("Internal error: Too late to compile deferred evaluation function.");
+  else
+    defn.%class-defn-key-defaulter-function;
+  end;
+end;
+
+define method class-defn-key-defaulter-function
+    (defn :: <local-class-definition>) => res :: false-or(<ct-function>);
+  if (defn.%class-defn-key-defaulter-function == #"not-computed-yet")
+    let cclass = ct-value(defn);
+    defn.%class-defn-key-defaulter-function
+      := if (cclass
+	       & ~cclass.abstract?
+	       & (~empty?(cclass.keyword-infos)
+		    | any?(method(super)
+			     super.class-defn.class-defn-key-defaulter-function
+			   end, cclass.direct-superclasses)))
+	   make(<ct-function>,
+		name:
+		  make(<derived-name>,
+		       how: #"key-defaulter",
+		       base: defn.defn-name),
+		signature:
+		  make(<signature>,
+		       specializers:
+			 list(specifier-type(#"<simple-object-vector>")),
+		       returns:
+			 specifier-type(#"<simple-object-vector>")));
+	 else
+	   #f;
+	 end;
+  else
+    defn.%class-defn-key-defaulter-function;
+  end;
+end;
+	   
 
 define function add-key-info!
     (key :: <symbol>,
@@ -1464,7 +1509,8 @@ define method class-defn-maker-function
 	       // If the slot is keyword initializable, make a key-info for it.
 	       let key = slot.slot-init-keyword;
 	       if (key)
-		 add-key-info!(key, key-infos, slot, slot.slot-type, override, init-value);
+		 add-key-info!(key, key-infos, slot, slot.slot-type,
+			       override, init-value);
 	       end if;
 	     end unless;
 	   end for;
@@ -1531,7 +1577,7 @@ define method convert-top-level-form
   else
     // The construction of the class object and the initialization of the class
     // variable will be handled by the linker.  We just need to build the
-    // defered-evaluations, key-defaulter, and maker functions.
+    // deferred-evaluations, key-defaulter, and maker functions.
 
     let lexenv = make(<lexenv>, method-name: defn.defn-name);
     let policy = lexenv.lexenv-policy;
@@ -1547,15 +1593,15 @@ define method convert-top-level-form
     let evals-builder = make-builder(tl-builder);
     begin
 
-      // Do the defered evaluations for any of the superclasses that need it.
+      // Do the deferred evaluations for any of the superclasses that need it.
       for (super in cclass.direct-superclasses)
-	if (super.class-defn.class-defn-defered-evaluations-function)
+	if (super.class-defn.class-defn-deferred-evaluations-function)
 	  build-assignment
 	    (evals-builder, policy, source, #(),
 	     make-unknown-call
 	       (evals-builder,
 		ref-dylan-defn(evals-builder, policy, source,
-			       #"maybe-do-defered-evaluations"),
+			       #"maybe-do-deferred-evaluations"),
 		#f,
 		list(make-literal-constant(evals-builder, super))));
 	end;
@@ -1752,10 +1798,34 @@ define method convert-top-level-form
     end;
 
     unless (cclass.abstract?)
-      //
-      // Build the key-defaulter (if concrete)
-      // ### Need to write this.
-
+      if(~empty?(cclass.keyword-infos)
+	   | any?(method(super)
+		      super.class-defn.class-defn-key-defaulter-function
+		  end, cclass.direct-superclasses))
+	//
+	// Build the key-defaulter
+	let (defaulter-region, defaulter-signature)
+	  = build-key-defaulter-function-body(tl-builder, defn);
+	
+	let ctv = defn.class-defn-key-defaulter-function;
+	if(ctv)
+	  make-function-literal(tl-builder, ctv, #"function", #"global",
+				defaulter-signature, defaulter-region);
+	else
+	  let defaulter-leaf
+	    = make-function-literal(tl-builder, #f, #"function", #"local",
+				    defaulter-signature, defaulter-region);
+	  build-assignment
+	    (evals-builder, policy, source, #(),
+	     make-unknown-call
+	       (evals-builder,
+		ref-dylan-defn(evals-builder, policy, source,
+			       #"class-key-defaulter-setter"),
+		#f,
+		list(defaulter-leaf,
+		     make-literal-constant(evals-builder, cclass))));
+	end if;
+      end if;
       //
       // Build the maker.
       let (maker-region, maker-signature)
@@ -1768,7 +1838,7 @@ define method convert-top-level-form
 			      maker-signature, maker-region);
       else
 	// The maker function isn't a compile-time constant, so add code to
-	// the defered evaluations to install it.
+	// the deferred evaluations to install it.
 	let maker-leaf
 	  = make-function-literal(tl-builder, #f, #"function", #"local",
 				  maker-signature, maker-region);
@@ -1784,7 +1854,9 @@ define method convert-top-level-form
       end if;
     end unless;
 
-    let ctv = defn.class-defn-defered-evaluations-function;
+    //
+    // Finish building the deffered evaluations function.
+    let ctv = defn.class-defn-deferred-evaluations-function;
     if (ctv)
       let func-region = build-function-body(tl-builder, policy, source, #f,
 					    ctv.ct-function-name,
@@ -1792,9 +1864,7 @@ define method convert-top-level-form
 					    #t);
       build-region(tl-builder, builder-result(evals-builder));
       
-      // ### install the key-defaulter function here?
-
-      // Return nothing.
+      // It returns nothing.
       build-return(tl-builder, policy, source, func-region, #());
       end-body(tl-builder);
       make-function-literal(tl-builder, ctv, #"function", #"global",
@@ -1823,6 +1893,31 @@ define method make-descriptors-leaf
   var;
 end;
 
+define method build-key-defaulter-function-body
+    (tl-builder :: <fer-builder>, defn :: <class-definition>)
+    => (maker-region :: <fer-function-region>,
+	signature :: <signature>);
+  let key-infos = make(<stretchy-vector>);
+  let defaulter-builder = make-builder(tl-builder);
+  let cclass :: <cclass> = defn.ct-value;
+
+  let policy = $Default-Policy;
+  let source = defn.source-location;
+
+  let sov-type = specifier-type(#"<simple-object-vector>");
+  let arg = make-local-var(defaulter-builder, #"keys", sov-type);
+
+  let defaulter-region
+    = build-function-body(tl-builder, policy, source, #f,
+			  make(<derived-name>, how: #"key-defaulter",
+			       base: defn.defn-name),
+			  list(arg),
+			  sov-type, #t);
+  build-return(tl-builder, policy, source, defaulter-region, arg);
+  end-body(tl-builder);
+  values(defaulter-region,
+	 make(<signature>, specializers: list(sov-type), returns: sov-type));
+end method;
 
 define method build-maker-function-body
     (tl-builder :: <fer-builder>, defn :: <class-definition>)
@@ -3295,8 +3390,10 @@ end;
 define constant $class-definition-slots
   = concatenate($definition-slots,
 		list(class-defn-cclass, class:, #f,
-		     class-defn-defered-evaluations-function, #f,
-		       %class-defn-defered-evaluations-function-setter,
+		     class-defn-deferred-evaluations-function, #f,
+		       %class-defn-deferred-evaluations-function-setter,
+		     class-defn-key-defaulter-function, #f,
+		       %class-defn-key-defaulter-function-setter,
 		     class-defn-maker-function, #f,
 		       %class-defn-maker-function-setter,
 		     class-defn-new-slot-infos, #f,
