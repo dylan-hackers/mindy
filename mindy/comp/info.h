@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.h,v 1.1 1994/03/24 21:49:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.h,v 1.2 1994/04/09 00:26:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -22,7 +22,7 @@ struct binop_info {
 };
 
 struct function_info {
-    void (*srctran)();
+    boolean (*srctran)();
     void (*compile)();
 };
 
