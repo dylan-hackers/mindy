@@ -17,23 +17,23 @@ define constant $hbz 			= truncate/($bob-size, 2);
 
 define method main (argv0 :: <byte-string>, #rest noise)
 
-	local method newBall(wind-rect :: <Rect>)
+	local method newBall(wind-rect :: <Rect*>)
 
-		let ball-color :: <RGBColor> = make(<RGBColor>);
+		let ball-color :: <RGBColor*> = make(<RGBColor*>);
 
 		// 
 		//	Make a random new color for the ball.
 		//
-		ball-color.red   := random(65535);
-		ball-color.green := random(65535);
-		ball-color.blue  := random(65535);
+		ball-color.red-value   := random(65535);
+		ball-color.green-value := random(65535);
+		ball-color.blue-value  := random(65535);
 		
 		
 		RGBForeColor(ball-color);
 		
-		let new-top = truncate/(((random(1000)) * wind-rect.bottom), 1000);
-		let new-left = truncate/(((random(1000)) * wind-rect.right), 1000);
-		let ball-rect :: <Rect> = make( <Rect>, top: new-top, left: new-left, bottom: new-top + $ball-height, right: new-left + $ball-width );
+		let new-top = truncate/(((random(1000)) * wind-rect.bottom-value), 1000);
+		let new-left = truncate/(((random(1000)) * wind-rect.right-value), 1000);
+		let ball-rect :: <Rect*> = make( <Rect*>, top: new-top, left: new-left, bottom: new-top + $ball-height, right: new-left + $ball-width );
 
 		//
 		//	Move pen to the new location, and paint the colored ball.
@@ -44,8 +44,8 @@ define method main (argv0 :: <byte-string>, #rest noise)
 		//
 		//	Move the pen to the middle of the new ball position, for the text
 		//
-		MoveTo(ball-rect.left + $hbw - $bob-size, 
-			ball-rect.top + $hbh + $hbz - 1);
+		MoveTo(ball-rect.left-value + $hbw - $bob-size, 
+			ball-rect.top-value + $hbh + $hbz - 1);
 		
 		//	
 		//	Invert the color and draw the text there.  This won’t look quite right in 1 bit
@@ -64,7 +64,7 @@ define method main (argv0 :: <byte-string>, #rest noise)
     block (return)
 
 		// Define the bounds of the window
-		let window-rect :: <Rect> = make( <Rect>, top: 100, left: 100, bottom: 350, right: 450 );
+		let window-rect :: <Rect*> = make( <Rect*>, top: 100, left: 100, bottom: 350, right: 450 );
 		
 		// Make its name as a pascal string
 		let window-title :: <pascal-string> = as( <pascal-string>, "Click Mouse to Exit." );

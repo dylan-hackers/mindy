@@ -1,4 +1,4 @@
-module: appearance
+module: carbon
 
 c-include( "Carbon.h" );
 

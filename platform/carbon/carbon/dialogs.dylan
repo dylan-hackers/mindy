@@ -1,4 +1,4 @@
-module: dialogs
+module: carbon
 
 /*
 	Dialog Manager
@@ -119,7 +119,7 @@ end method DisposeDialog;
 	IsDialogEvent
 */
 
-define method IsDialogEvent( event :: <EventRecord> )
+define method IsDialogEvent( event :: <EventRecord*> )
 => ( result :: <boolean> )
 	if( call-out( "IsDialogEvent", int:, ptr: event.raw-value ) = 1 ) #t else #f end if;
 end method IsDialogEvent;
@@ -129,7 +129,7 @@ end method IsDialogEvent;
 	DialogSelect
 */
 
-define method DialogSelect( event :: <EventRecord> )
+define method DialogSelect( event :: <EventRecord*> )
 => ( result :: <boolean>, dialog :: <DialogRef>, itemHit :: <integer> )
 
 	let dialog :: <handle> = make( <handle> ); // Mis-use a 4-byte storage space....
@@ -149,11 +149,11 @@ end method DialogSelect;
 */
 
 define method GetDialogItem( theDialog :: <DialogRef>, itemNo :: <integer> )
-=> ( itemType :: <integer>, itemHandle :: <ControlHandle>, itemBounds :: <Rect> )
+=> ( itemType :: <integer>, itemHandle :: <ControlHandle>, itemBounds :: <Rect*> )
 
 	let type :: <Handle> = make( <Handle> );	// Handy 4-byte storage
 	let handle :: <ControlHandle> = make( <ControlHandle> );
-	let bounds :: <Rect> = make( <Rect> );
+	let bounds :: <Rect*> = make( <Rect*> );
 
 	call-out( "GetDialogItem", void:, ptr: theDialog.raw-value, short: itemNo,
 				 ptr: type.raw-value, ptr: handle.raw-value, ptr: bounds.raw-value );
@@ -223,9 +223,9 @@ end method GetDialogWindow;
 */
 
 define method GetDialogPort( dialog :: <DialogRef> )
-=> ( result :: <GrafPtr> )
+=> ( result :: <CGrafPtr> )
     let ptr = call-out( "GetDialogPort", ptr:, ptr: dialog.raw-value );
-    make( <GrafPtr>, pointer: ptr );
+    make( <CGrafPtr>, pointer: ptr );
 end method GetDialogPort;
 
 

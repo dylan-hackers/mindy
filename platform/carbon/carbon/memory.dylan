@@ -1,4 +1,4 @@
-module: memory
+module: carbon
 
 // Memory Manager Routines.
 

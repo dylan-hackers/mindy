@@ -1,4 +1,4 @@
-module: resources
+module: carbon
 
 c-include("Carbon.h");
 

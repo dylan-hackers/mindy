@@ -1,4 +1,4 @@
-module: windows
+module: carbon
 
 /*
 	Mac Window Manager
@@ -230,7 +230,7 @@ end method GetNewWindow;
 */
 
 define method NewWindow(	storage :: <statically-typed-pointer>,
-							bounds :: <Rect>, title :: <pascal-string>, visible :: <boolean>,
+							bounds :: <Rect*>, title :: <pascal-string>, visible :: <boolean>,
 							procID :: <integer>, goAway :: <boolean>, 
 							behind :: <statically-typed-pointer>, refCon :: <integer> )
 => ( result :: <WindowRef> )
@@ -291,7 +291,7 @@ end method DrawGrowIcon;
 	//Actually FindWindowOfClass, so you'll need >= 8.1
 */
 
-define method FindWindow( point :: <Point> )
+define method FindWindow( point :: <Point*> )
 => ( windowPartCode :: <integer>, window :: <WindowRef> )
 
 	//let part :: <integer> = 0;
@@ -309,10 +309,10 @@ end method FindWindow;
 	DragWindow
 */
 
-define method DragWindow( window :: <WindowRef>, startPoint :: <Point> )
+define method DragWindow( window :: <WindowRef>, startPoint :: <Point*> )
 => ()
 	// The third param can only be NULL in Caron / X
-	let r :: <Rect> = make( <Rect>, top: -32000, left: -32000, bottom: 32000, right: 32000 );
+	let r :: <Rect*> = make( <Rect*>, top: -32000, left: -32000, bottom: 32000, right: 32000 );
 	call-out( "dragwindow", void:, ptr: window.raw-value, ptr: startPoint.raw-value, ptr: r.raw-value );
 	
 	values();
@@ -324,7 +324,7 @@ end method;
 	TrackGoAway
 */
 
-define method TrackGoAway( window :: <WindowRef>, startPoint :: <Point> )
+define method TrackGoAway( window :: <WindowRef>, startPoint :: <Point*> )
 => ( result :: <boolean> )
 
 	let result = call-out("trackgoaway", unsigned-char:, ptr: window.raw-value, ptr: startPoint.raw-value );
@@ -338,7 +338,7 @@ end method TrackGoAway;
 	TrackBox
 */
 
-define method TrackBox( window :: <WindowRef>, thePoint :: <Point>, partCode :: <integer> )
+define method TrackBox( window :: <WindowRef>, thePoint :: <Point*>, partCode :: <integer> )
 => ( result :: <boolean> )
 
 	let result = call-out("trackbox", unsigned-char:, ptr: window.raw-value, ptr: thePoint.raw-value, short: partCode );
@@ -364,7 +364,7 @@ end method ZoomWindow;
 	Deviates from Toolbox prototype to avoid <extended-integer> and Hi/LoWord
 */
 
-define method GrowWindow( window :: <WindowRef>, point :: <Point> )
+define method GrowWindow( window :: <WindowRef>, point :: <Point*> )
 => ( width :: <integer>, height :: <integer> )
 	// The third param, bBox, can only be NULL on Carbon or MacOS X
 	let result = call-out( "growwindow", long:, ptr: window.raw-value, ptr: point.raw-value, ptr: $NULL.raw-value );
@@ -387,7 +387,7 @@ end method SizeWindow;
 	InvalWindowRect
 */
 
-define Method InvalWindowRect( window :: <WindowRef>, r :: <Rect> )
+define Method InvalWindowRect( window :: <WindowRef>, r :: <Rect*> )
 => ()
 	call-out( "InvalWindowRect", void:, ptr: window.raw-value, ptr: r.raw-value );
 	values();
@@ -445,10 +445,10 @@ end method SetWindowKind;
 */
 
 define method GetWindowPort( window :: <WindowRef> )
-=> ( result :: <GrafPtr> )
+=> ( result :: <CGrafPtr> )
     let ptr = call-out( "GetWindowPort", ptr:, ptr: window.raw-value );
 
-    make( <GrafPtr>, pointer: ptr );
+    make( <CGrafPtr>, pointer: ptr );
 
 end method GetWindowPort;
 
@@ -467,7 +467,7 @@ end method SetPortWindowPort;
 	GetWindowFromPort()
 */
 
-define method GetWindowFromPort( port :: <GrafPtr> )
+define method GetWindowFromPort( port :: <CGrafPtr> )
 => ( result :: <WindowRef> )
 	make( <WindowRef>, pointer: call-out( "GetWindowFromPort", ptr:, ptr: port.raw-value ) );
 end method GetWindowFromPort;
@@ -477,7 +477,7 @@ end method GetWindowFromPort;
 		CreateNewWindow
 */
 
-define method CreateNewWindow( windowClass :: <integer>, attributes :: <integer>, bounds :: <Rect> )
+define method CreateNewWindow( windowClass :: <integer>, attributes :: <integer>, bounds :: <Rect*> )
 => ( result :: <OSStatus>, outWindow :: <WindowRef> )
 	let temp :: <Handle> = make( <Handle> );
 	let result = call-out( "CreateNewWindow", int:, int: windowClass, int: attributes,
@@ -504,8 +504,8 @@ end method CreateWindowFromResource;
 */
 
 define method GetWindowPortBounds( ref :: <WindowRef> )
-=>( bounds :: <Rect> )
-	let temp :: <Rect> = make( <Rect> );
+=>( bounds :: <Rect*> )
+	let temp :: <Rect*> = make( <Rect*> );
 	call-out( "GetWindowPortBounds", int:, ptr: ref.raw-value, ptr: temp.raw-value );
 	
 	temp;
@@ -516,8 +516,8 @@ end method GetWindowPortBounds;
 		GetWindowBounds
 */
 
-define method GetWindowBounds( window :: <WindowRef>, region :: <integer>, globalBounds :: <Rect> )
-=> ( result :: <OSStatus>, outBounds :: <Rect> )
+define method GetWindowBounds( window :: <WindowRef>, region :: <integer>, globalBounds :: <Rect*> )
+=> ( result :: <OSStatus>, outBounds :: <Rect*> )
 	let temp :: <Handle> = make( <Handle> );
 	let result = call-out( "GetWindowBounds", int:, ptr: window.raw-value, int: region, 
 													ptr: globalBounds.raw-value );
@@ -529,7 +529,7 @@ end method GetWindowBounds;
 		SetWindowBounds
 */
 
-define method SetWindowBounds( window :: <WindowRef>, region :: <integer>, globalBounds :: <Rect> )
+define method SetWindowBounds( window :: <WindowRef>, region :: <integer>, globalBounds :: <Rect*> )
 => ( result :: <OSStatus> )
 	let temp :: <Handle> = make( <Handle> );
 	let result = call-out( "SetWindowBounds", int:, ptr: window.raw-value, int: region, 

@@ -12,11 +12,7 @@ define module sillyballs
 	use extensions;
 	use random;
 	
-	use mac-types;
-	use quickdraw;
-	use events;
-	use memory;
-	use windows;
+	use carbon;
 	
 end module sillyballs;
 

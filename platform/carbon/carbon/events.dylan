@@ -1,4 +1,4 @@
-module: events
+module: carbon
 
 
 /*
@@ -46,11 +46,11 @@ define constant $cmdKeyBit = 8;
 
 
 /*
-	<EventRecord>
+	<EventRecord*>
 */
 
-define functional class <EventRecord> ( <Ptr> ) 
-end class <EventRecord>;
+define functional class <EventRecord*> ( <Ptr> ) 
+end class <EventRecord*>;
 
 /*
     <EventModifiers>
@@ -59,51 +59,51 @@ end class <EventRecord>;
 define constant <EventModifiers> = <integer>;
 
 /*
-	Make sure we allocate the correct size for <EventRecord>
+	Make sure we allocate the correct size for <EventRecord*>
 */
 
-define method content-size( cls == <EventRecord> )
+define method content-size( cls == <EventRecord*> )
 =>( result :: <integer> )
 	16;
 end method content-size;
 
 
 /*
-	<EventRecord> accessors.
+	<EventRecord*> accessors.
 */
 
-define method event-what ( event :: <EventRecord> )
+define method what-value ( event :: <EventRecord*> )
 => ( what :: <integer> );
 	unsigned-short-at(event, offset: 0);
-end method event-what;
+end method what-value;
 
 
-define method event-message ( event :: <EventRecord> )
+define method message-value ( event :: <EventRecord*> )
 => ( message :: <integer> );
 	unsigned-long-at(event, offset: 2 );
-end method event-message;
+end method message-value;
 
 
-define method event-when ( event :: <EventRecord> )
+define method when-value ( event :: <EventRecord*> )
 => ( when :: <integer>);
 	unsigned-long-at(event, offset: 6);
-end method event-when;
+end method when-value;
 
 
-define method event-where ( event :: <EventRecord> )
-=> ( where :: <Point> );
+define method where-value ( event :: <EventRecord*> )
+=> ( where :: <Point*> );
 	// v and h ARE the "wrong" way round in the C struct.
-	make( <Point>, v: signed-short-at( event, offset: 10 ), h: signed-short-at( event, offset: 12 ) ); 
-end method event-where;
+	make( <Point*>, v: signed-short-at( event, offset: 10 ), h: signed-short-at( event, offset: 12 ) ); 
+end method where-value;
 
 
-define method event-modifiers ( event :: <EventRecord> )
+define method modifiers-value ( event :: <EventRecord*> )
 => ( modifiers :: <EventModifiers> );
 	unsigned-short-at( event, offset: 14 );
-end method event-modifiers;
+end method modifiers-value;
 
 
-/*define constant GetNextEvent = get-c-function("GetNextEvent", args: list(<integer>, <EventRecord>),
+/*define constant GetNextEvent = get-c-function("GetNextEvent", args: list(<integer>, <EventRecord*>),
 											result: <boolean>, file: *InterfaceLib*);
 define constant SystemTask = get-c-function("SystemTask", args: #(),
 											result: #(), file: *InterfaceLib*);
@@ -111,7 +111,7 @@ define constant SystemTask = get-c-function("SystemTask", args: #(),
 
 // type-union on mousergn to allow $NULL
 							
-define method WaitNextEvent( eventMask :: <integer>, record :: <EventRecord>, sleep :: <integer>, mouseRgn :: type-union( <RgnHandle>, <Ptr> )  )
+define method WaitNextEvent( eventMask :: <integer>, record :: <EventRecord*>, sleep :: <integer>, mouseRgn :: type-union( <RgnHandle>, <Ptr> )  )
 => ( result :: <boolean> )
 	if ( call-out( 	"WaitNextEvent", unsigned-char:, int: eventMask, ptr: record.raw-value, 
 					unsigned-int: sleep, ptr: mouseRgn.raw-value )  == 1 ) #t else #f end if;
@@ -157,14 +157,14 @@ define constant $kAEOpenDocuments :: <AEEventID> = os-type("odoc");
 define constant $kAEPrintDocuments :: <AEEventID> = os-type("pdoc");
 define constant $kAEQuitApplication :: <AEEventID> = os-type("quit");
 
-define functional class <AppleEvent> (<statically-typed-pointer>)
+define functional class <AppleEvent*> (<statically-typed-pointer>)
 end class;
 
 /*
-	Make sure we allocate the correct size for <AppleEvent>
+	Make sure we allocate the correct size for <AppleEvent*>
 */
 
-define method content-size( cls == <AppleEvent> )
+define method content-size( cls == <AppleEvent*> )
 =>( result :: <integer> )
 	c-expr( int: "sizeof(AppleEvent)" );
 end method content-size;
@@ -177,10 +177,10 @@ define constant $uppAEEventHandlerProcInfo = 4064;
 	AEDesc
 */
 
-define functional class <AEDesc> (<statically-typed-pointer>)
+define functional class <AEDesc*> (<statically-typed-pointer>)
 end class;
 
-define method content-size( cls == <AEDesc> )
+define method content-size( cls == <AEDesc*> )
 =>( result :: <integer> )
 	c-expr( int: "sizeof(AEDesc)" );
 end method content-size;
@@ -190,10 +190,10 @@ end method content-size;
 	AEDescList
 */
 
-define functional class <AEDescList> (<statically-typed-pointer>)
+define functional class <AEDescList*> (<statically-typed-pointer>)
 end class;
 
-define method content-size( cls == <AEDescList> )
+define method content-size( cls == <AEDescList*> )
 =>( result :: <integer> )
 	c-expr( int: "sizeof(AEDescList)" );
 end method content-size;
@@ -207,6 +207,18 @@ end method content-size;
 define method NewAEEventHandlerUPP(procPtr :: <raw-pointer>)	
  => (result :: <AEEventHandlerUPP>);
 	let result-value = call-out("NewAEEventHandlerUPP", ptr:, ptr: procPtr);
+	make(<AEEventHandlerUPP>, pointer: result-value);
+end method NewAEEventHandlerUPP;
+
+define method NewAEEventHandlerUPP(userRoutine :: <function-pointer>)	
+ => (result :: <AEEventHandlerUPP>);
+	let result-value = call-out("NewAEEventHandlerUPP", ptr:, ptr: userRoutine.raw-value);
+	make(<AEEventHandlerUPP>, pointer: result-value);
+end method NewAEEventHandlerUPP;
+
+define method NewAEEventHandlerUPP(userRoutine)	
+ => (result :: <AEEventHandlerUPP>);
+	let result-value = call-out("NewAEEventHandlerUPP", ptr:, ptr: userRoutine.callback-entry);
 	make(<AEEventHandlerUPP>, pointer: result-value);
 end method NewAEEventHandlerUPP;
 
@@ -237,7 +249,7 @@ end method AERemoveEventHandler;
 	AEProcessAppleEvent
 */
 
-define method AEProcessAppleEvent( event :: <EventRecord> )
+define method AEProcessAppleEvent( event :: <EventRecord*> )
 => ( result :: <OSErr> ) 
 	call-out( "AEProcessAppleEvent", int:, ptr: event.raw-value );
 end method AEProcessAppleEvent;
@@ -271,21 +283,21 @@ define method WaitMouseUp()
 end method WaitMouseUp;
 
 
-define method GetMouse( pt :: <Point> )
+define method GetMouse( pt :: <Point*> )
 => ()
 	call-out( "GetMouse", void:, ptr: pt.raw-value );
 	values;
 end method GetMouse;
 
 
-/*define method SystemClick( event :: <EventRecord>, window :: <WindowPtr> )
+/*define method SystemClick( event :: <EventRecord*>, window :: <WindowPtr> )
 => ()
 	call-out( "SystemClick", void:, ptr: event.raw-value, ptr: window.raw-value );
 	values();
 end method SystemClick;
 */
 
-/*define method DIBadMount( point :: <Point>, message :: <integer> )
+/*define method DIBadMount( point :: <Point*>, message :: <integer> )
 => ( result :: <integer> )
 	call-out( "DIBadMount", short:, ptr: point.raw-value, unsigned-int: message );	
 end method DIBadMount;*/

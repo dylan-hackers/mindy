@@ -39,7 +39,7 @@ define variable *window-event-handler-upp* :: false-or( <EventHandlerUPP> ) = #f
 
 define method make-window()
 => ()
-	let bounds :: <Rect> = make( <Rect>, top: 60, left: 10, right: 210, bottom: 160 );
+	let bounds :: <Rect*> = make( <Rect*>, top: 60, left: 10, right: 210, bottom: 160 );
 	
   let (err, window) = 
   	CreateNewWindow( $kDocumentWindowClass, 
@@ -48,17 +48,17 @@ define method make-window()
 
 	// Add the event types individually
 	
-	let list :: <EventTypeSpec> = make( <EventTypeSpec>, eventClass: $kEventClassWindow, eventKind: $kEventWindowDrawContent );
+	let list :: <EventTypeSpec*> = make( <EventTypeSpec*>, eventClass: $kEventClassWindow, eventKind: $kEventWindowDrawContent );
 
 	*window-event-handler-upp* := NewEventHandlerUPP( $window-event-handler-callback );
 	let (err, event-handler) = InstallWindowEventHandler( window, *window-event-handler-upp*, 1, list, $NULL );
 	
-	list.eventClass := $kEventClassWindow;
-	list.eventKind := $kEventWindowBoundsChanged;
+	list.eventClass-value := $kEventClassWindow;
+	list.eventKind-value := $kEventWindowBoundsChanged;
 	AddEventTypesToHandler( event-handler, 1, list );
 	
-	list.eventClass := $kEventClassWindow;
-	list.eventKind := $kEventWindowClose;
+	list.eventClass-value := $kEventClassWindow;
+	list.eventKind-value := $kEventWindowClose;
 	AddEventTypesToHandler( event-handler, 1, list );
 	
 	ShowWindow(window);

@@ -1,4 +1,4 @@
-module: files
+module: carbon
 
 /*
 	c-includes
@@ -21,34 +21,34 @@ define constant $fsWrDenyPerm                = #x20;
   
   
 /*
-	<FSSpec>
+	<FSSpec*>
 */                                 
 
-define functional class <FSSpec> (<statically-typed-pointer>)
-end class <FSSpec>;
+define functional class <FSSpec*> (<statically-typed-pointer>)
+end class <FSSpec*>;
   
   
 /*
-	content-size <FSSpec>
+	content-size <FSSpec*>
 */                                 
 
-define method content-size( class == <FSSpec> )
+define method content-size( class == <FSSpec*> )
 => ( result :: <integer> )
 	70; 	// short, long, Str63
 end method content-size;
   
   
 /*
-	initialize <FSSpec>
+	initialize <FSSpec*>
 */                                 
 
-define method initialize( spec :: <FSSpec>, #key parID :: <integer> = 0, 
+define method initialize( spec :: <FSSpec*>, #key parID :: <integer> = 0, 
 							vRefNum :: <integer> = 0, name :: <pascal-string> = make( <pascal-string> ) )
-=> ( result :: <FSSpec> )
+=> ( result :: <FSSpec*> )
 
-	spec.parID := parID;
-	spec.vRefNum := vRefNum;
-	spec.FSSpec-name := name;
+	spec.parID-value := parID;
+	spec.vRefNum-value := vRefNum;
+	spec.name-value := name;
 
 	spec;
 
@@ -59,74 +59,74 @@ end method initialize;
 	vRefNum
 */                                 
 
-define method vRefNum( spec :: <FSSpec> )
+define method vRefNum-value( spec :: <FSSpec*> )
 => ( result :: <integer> )
 
 	signed-short-at( spec, offset: 0 );
 	
-end method vRefNum;
+end method vRefNum-value;
   
   
 /*
 	vRefNum-setter
 */                                 
 
-define method vRefNum-setter( num :: <integer>, spec :: <FSSpec> )
+define method vRefNum-value-setter( num :: <integer>, spec :: <FSSpec*> )
 => ()
 
 	signed-short-at( spec, offset: 0 ) := num;
 	
-end method vRefNum-setter;
+end method vRefNum-value-setter;
   
   
 /*
 	parID
 */                                 
 
-define method parID( spec :: <FSSpec> )
+define method parID-value( spec :: <FSSpec*> )
 => ( result :: <integer> )
 
 	signed-long-at( spec, offset: 2 );
 	
-end method parID;
+end method parID-value;
   
   
 /*
 	parID-setter
 */                                 
 
-define method parID-setter( id :: <integer>, spec :: <FSSpec> )
+define method parID-value-setter( id :: <integer>, spec :: <FSSpec*> )
 => ( result :: <integer> )
 
 	signed-long-at( spec, offset: 2 ) := id;
 	
-end method parID-setter;
+end method parID-value-setter;
   
   
 /*
-	FSSpec-name
+	name
 */                                 
 
-define method FSSpec-name( spec :: <FSSpec> )
+define method name-value( spec :: <FSSpec*> )
 => ( result :: <string> )
 
-	let sz :: <integer> = unsigned-byte-at( spec.FSSpec-name, offset: 0 );
+	let sz :: <integer> = unsigned-byte-at( spec.name-value, offset: 0 );
 	let result :: <byte-string> = make( <byte-string>, size: sz );
 	
 	for( i from 0 below sz)
-		result[i] := as( <character>, unsigned-byte-at( spec.FSSpec-name, offset: i + 1 ) );
+		result[i] := as( <character>, unsigned-byte-at( spec.name-value, offset: i + 1 ) );
 	end for;
 	
 	result;
 
-end method FSSpec-name;
+end method name-value;
   
   
 /*
-	FSSpec-name-setter
+	name-value-setter
 */                                 
 
-define method FSSpec-name-setter(str :: <string>, spec :: <FSSpec> )
+define method name-value-setter(str :: <string>, spec :: <FSSpec*> )
 => ()
 
 	let sz =  case 
@@ -134,12 +134,12 @@ define method FSSpec-name-setter(str :: <string>, spec :: <FSSpec> )
 				otherwise => 63;
 			end case;
 	for ( i from 1 to sz )
-		unsigned-byte-at( spec.FSSpec-name, offset: i ) := as( <integer>, str[i - 1] );
+		unsigned-byte-at( spec.name-value, offset: i ) := as( <integer>, str[i - 1] );
 	end for;
-	unsigned-byte-at( spec.FSSpec-name, offset: 0 ) := sz;
+	unsigned-byte-at( spec.name-value, offset: 0 ) := sz;
 
 
-end method FSSpec-name-setter;
+end method name-value-setter;
   
 /*
 	<FSRef>
@@ -312,7 +312,7 @@ FSMakeFSSpec                    (short                  vRefNum,
 	FSpOpenDF
 */                                 
 
-define method FSpOpenDF( spec :: <FSSpec>, permission :: <integer> )
+define method FSpOpenDF( spec :: <FSSpec*>, permission :: <integer> )
 => ( result :: <OSErr>, refNum :: <integer> )
 
 	let refPtr = make( <Handle> );
@@ -328,7 +328,7 @@ end method FSpOpenDF;
 	FSpOpenRF
 */                                 
 
-define method FSpOpenRF( spec :: <FSSpec>, permission :: <integer> )
+define method FSpOpenRF( spec :: <FSSpec*>, permission :: <integer> )
 => ( result :: <OSErr>, refNum :: <integer> )
 
 	let refPtr = make( <Handle> );
@@ -344,7 +344,7 @@ end method FSpOpenRF;
 	FSpCreate
 */                                 
 
-define method FSpCreate( spec :: <FSSpec>, creator :: <OSType>, fileType :: <OSType>, scriptTag :: <integer> )
+define method FSpCreate( spec :: <FSSpec*>, creator :: <OSType>, fileType :: <OSType>, scriptTag :: <integer> )
 => ( result :: <OSErr>, vRefNum :: <integer> )
 
 	let dirPtr = make( <Handle> );
@@ -360,7 +360,7 @@ end method FSpCreate;
 	FSpDirCreate
 */                                 
 
-define method FSpDirCreate( spec :: <FSSpec>, scriptTag :: <integer> )
+define method FSpDirCreate( spec :: <FSSpec*>, scriptTag :: <integer> )
 => ( result :: <OSErr>, vRefNum :: <integer> )
 
 	let dirPtr = make( <Handle> );
@@ -376,7 +376,7 @@ end method FSpDirCreate;
 	FSpDelete
 */                                 
 
-define method FSpDelete( spec :: <FSSpec> )
+define method FSpDelete( spec :: <FSSpec*> )
 => ( result :: <OSErr> )
 
 	let result = call-out( "FSpDelete", short:, ptr: spec.raw-value );
@@ -390,7 +390,7 @@ end method FSpDelete;
 	FSpRename
 */                                 
 
-define method FSpRename( spec :: <FSSpec>, newName :: <pascal-string> )
+define method FSpRename( spec :: <FSSpec*>, newName :: <pascal-string> )
 => ( result :: <OSErr> )
 
 	let result = call-out( "FSpRename", short:, ptr: spec.raw-value, ptr: newName.raw-value );
@@ -404,7 +404,7 @@ end method FSpRename;
 	FSpCatMove
 */                                 
 
-define method FSpCatMove( fileRefNum :: <integer>, source :: <FSSpec>, dest :: <FSSpec> )
+define method FSpCatMove( fileRefNum :: <integer>, source :: <FSSpec*>, dest :: <FSSpec*> )
 => ( result :: <OSErr> )
 
 	let result = call-out( "FSpCatMove", short:, ptr: source.raw-value, ptr: dest.raw-value );
@@ -418,7 +418,7 @@ end method FSpCatMove;
 	FSpExchangeFiles
 */                                 
 
-define method FSpExchangeFiles( fileRefNum :: <integer>, source :: <FSSpec>, dest :: <FSSpec> )
+define method FSpExchangeFiles( fileRefNum :: <integer>, source :: <FSSpec*>, dest :: <FSSpec*> )
 => ( result :: <OSErr> )
 
 	let result = call-out( "FSpExchangeFiles", short:, ptr: source.raw-value, ptr: dest.raw-value );
@@ -432,7 +432,7 @@ end method FSpExchangeFiles;
 	FSpMakeFSRef
 */                                 
 
-define method FSpMakeFSRef( fileRefNum :: <integer>, source :: <FSSpec> )
+define method FSpMakeFSRef( fileRefNum :: <integer>, source :: <FSSpec*> )
 => ( result :: <OSErr>, newRef :: <FSRef> )
 
 	let ref = make( <FSRef> );

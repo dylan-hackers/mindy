@@ -1,4 +1,4 @@
-module: menus
+module: carbon
 
 /* 
 	Mac Menu Manager.
@@ -78,9 +78,9 @@ end method HiliteMenu;
 	outside of itself
 */
 
-define method MenuSelect( startPoint :: <Point> )
+define method MenuSelect( start<Point*> :: <Point*> )
 => ( menu :: <integer>, item :: <integer> )
-	let result = call-out("menuselect", int:, ptr: startPoint.raw-value );
+	let result = call-out("menuselect", int:, ptr: start<Point*>.raw-value );
 	floor/(result, 65536);
 end method MenuSelect;
 

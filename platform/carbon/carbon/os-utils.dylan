@@ -1,4 +1,4 @@
-module: os-utils
+module: carbon
 
 /*
 	OSUtils
@@ -14,68 +14,68 @@ c-include("Carbon.h");
 
 
 /*
-	<DateTimeRec>
+	<DateTimeRec*>
 */
 
-define functional class <DateTimeRec> ( <statically-typed-pointer> ) 
-end class <DateTimeRec>;
+define functional class <DateTimeRec*> ( <statically-typed-pointer> ) 
+end class <DateTimeRec*>;
 
 
 /*
 	content-size
-	The size of object a <DateTimeRec> contains
+	The size of object a <DateTimeRec*> contains
 */
 
-define method content-size( cls == <DateTimeRec> )
+define method content-size( cls == <DateTimeRec*> )
 =>( result :: <integer> )
 	14;
 end method content-size;
 
 
 /*
-	<DateTimeRec> Accessors
+	<DateTimeRec*> Accessors
 */
 
-define method year (dateTime :: <DateTimeRec>) => (result :: <integer>);
+define method year-value (dateTime :: <DateTimeRec*>) => (result :: <integer>);
 	signed-short-at(dateTime, offset: 0);
-end method year;
+end method year-value;
 
 
-define method month (dateTime :: <DateTimeRec>) => (result :: <integer>);
+define method month-value (dateTime :: <DateTimeRec*>) => (result :: <integer>);
 	signed-short-at(dateTime, offset: 2);
-end method month;
+end method month-value;
 
 
-define method day (dateTime :: <DateTimeRec>) => (result :: <integer>);
+define method day-value (dateTime :: <DateTimeRec*>) => (result :: <integer>);
 	signed-short-at(dateTime, offset: 4);
-end method day;
+end method day-value;
 
 
-define method hour (dateTime :: <DateTimeRec>) => (result :: <integer>);
+define method hour-value (dateTime :: <DateTimeRec*>) => (result :: <integer>);
 	signed-short-at(dateTime, offset: 6);
-end method hour;
+end method hour-value;
 
 
-define method minute (dateTime :: <DateTimeRec>) => (result :: <integer>);
+define method minute-value (dateTime :: <DateTimeRec*>) => (result :: <integer>);
 	signed-short-at(dateTime, offset: 8);
-end method minute;
+end method minute-value;
 
 
-define method seconds (dateTime :: <DateTimeRec>) => (result :: <integer>);
+define method seconds-value (dateTime :: <DateTimeRec*>) => (result :: <integer>);
 	signed-short-at(dateTime, offset: 10);
-end method seconds;
+end method seconds-value;
 
 
-define method dayOfWeek (dateTime :: <DateTimeRec>) => (result :: <integer>);
+define method dayOfWeek-value (dateTime :: <DateTimeRec*>) => (result :: <integer>);
 	signed-short-at(dateTime, offset: 12);
-end method dayOfWeek;
+end method dayOfWeek-value;
 
 
 /*
 	GetDateTime
 */
 
-define method GetDateTime( rec :: <DateTimeRec> )
+define method GetDateTime( rec :: <DateTimeRec*> )
 => ()
 	call-out( "GetDateTime", void:, ptr: rec.raw-value );
 	values();
@@ -86,7 +86,7 @@ end method;
 	SecondsToDate
 */
 
-define method SecondsToDate( seconds :: <integer>, rec :: <DateTimeRec> )
+define method SecondsToDate( seconds :: <integer>, rec :: <DateTimeRec*> )
 => ()
 	call-out( "SecondsToDate", void:, long: seconds, ptr: rec.raw-value );
 	values();

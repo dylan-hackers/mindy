@@ -1,4 +1,4 @@
-module: quickdraw
+module: carbon
 
 
 /*
@@ -28,14 +28,14 @@ end class <GWorldPtr>;
 	NewGWorld
 */
 
-define method NewGWorld( PixelDepth :: <integer>, boundsRect :: <Rect>, cTable :: <Handle>, /* can be NULL */
+define method NewGWorld( PixelDepth :: <integer>, bounds-rect :: <Rect*>, cTable :: <Handle>, /* can be NULL */
                          aGDevice :: <GDHandle>, /* can be NULL */ flags :: <integer> /* GWorldFlags */ )
 => ( offscreenGWorld :: <GWorldPtr>, err :: <OSErr> )
 
 	let worldPtr = make( <Handle> );
 	
 	let result = call-out(	"NewGWorld", int:, ptr: worldPtr.raw-value, short: PixelDepth,
-							ptr: boundsRect.raw-value, ptr: cTable.raw-value, 
+							ptr: bounds-rect.raw-value, ptr: cTable.raw-value, 
 							ptr: aGDevice.raw-value, int: flags );
 
 	values( pointer-at( worldPtr, offset: 0, class: <GWorldPtr> ), as( <OSErr>, result ) );
@@ -62,14 +62,14 @@ end method DisposeGWorld;
 */
 
 define method GetGWorld()
-=> ( port :: <GrafPtr>, gdh :: <GDHandle> )  
+=> ( port :: <CGrafPtr>, gdh :: <GDHandle> )  
 
 	let port = make( <Handle> );
 	let gdh = make( <Handle> );
 
 	call-out( "GetGWorld", void:, ptr: port.raw-value, ptr: gdh.raw-value );
 	
-	values( pointer-at( port, offset: 0, class: <GrafPtr> ),
+	values( pointer-at( port, offset: 0, class: <CGrafPtr> ),
 			pointer-at( gdh, offset: 0, class: <GDHandle> ) );
 
 end method GetGWorld;
@@ -79,7 +79,7 @@ end method GetGWorld;
 	SetGWorld
 */
 
-define method SetGWorld( port :: <GrafPtr>, gdh :: <GDHandle> )    
+define method SetGWorld( port :: <CGrafPtr>, gdh :: <GDHandle> )    
 => ()
 
 	call-out( "SetGWorld", void:, ptr: port.raw-value, ptr: gdh.raw-value );
@@ -139,7 +139,7 @@ end method UnlockPixels;
 	GetGWorldDevice
 */
 
-define method GetGWorldDevice( offscreenGWorld :: <GWorldPtr> )
+define method GetGWorldDevice( offscreenGWorld /*:: type-union(<GWorldPtr>, <CGrafPtr>, <WindowRef>)*/ )
 => ( result :: <GDHandle> )
 
 	let ptr = call-out( "GetGWorldDevice", ptr:, ptr: offscreenGWorld.raw-value );

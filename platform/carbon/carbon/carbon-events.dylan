@@ -1,4 +1,4 @@
-module: carbon-events
+module: carbon
 
 c-include( "Carbon.h" );
 
@@ -69,64 +69,64 @@ end class;
 // We can sizeof() this
 
 /*
-	<EventTypeSpec>
+	<EventTypeSpec*>
 */
 
-define functional class <EventTypeSpec> (<statically-typed-pointer>)
+define functional class <EventTypeSpec*> (<statically-typed-pointer>)
 end class;
 
 /*
 	content-size
-	The size of object a <EventTypeSpec> contains
+	The size of object a <EventTypeSpec*> contains
 */
 
-define method content-size( cls == <EventTypeSpec> )
+define method content-size( cls == <EventTypeSpec*> )
 =>( result :: <integer> )
 	c-expr( int: "sizeof(EventTypeSpec)" );
 end method content-size;
 
 
 /*
-	Accessors for the eventKind and eventClass components of an <EventTypeSpec>
+	Accessors for the eventKind and eventClass components of an <EventTypeSpec*>
 */
 
-define method eventClass (es :: <EventTypeSpec>) 
+define method eventClass-value (es :: <EventTypeSpec*>) 
 => (eventClass :: <integer>);
 	unsigned-long-at(es, offset: 0);
-end method eventClass;
+end method eventClass-value;
 
 
-define method eventClass-setter (value :: <integer>, es :: <EventTypeSpec>) 
+define method eventClass-value-setter (value :: <integer>, es :: <EventTypeSpec*>) 
 => (value :: <integer>);
 	unsigned-long-at(es, offset: 0) := value;
 	value;
-end method eventClass-setter;
+end method eventClass-value-setter;
 
 
-define method eventKind (es :: <EventTypeSpec>) 
+define method eventKind-value (es :: <EventTypeSpec*>) 
 => (eventKind :: <integer>);
 	unsigned-long-at(es, offset: 4);
-end method eventKind;
+end method eventKind-value;
 
 
-define method eventKind-setter (value :: <integer>, es :: <EventTypeSpec>) 
+define method eventKind-value-setter (value :: <integer>, es :: <EventTypeSpec*>) 
 => (value :: <integer>);
 	unsigned-long-at(es, offset: 4) := value;
 	value;
-end method eventKind-setter;
+end method eventKind-value-setter;
 
 /*
-	initialize <EventTypeSpec>
+	initialize <EventTypeSpec*>
 */
 
-define method initialize( es :: <EventTypeSpec>, 
+define method initialize( es :: <EventTypeSpec*>, 
 													#key eventClass :: <integer> = 0, 
 													eventKind :: <integer> = 0 )
-=> ( result :: <EventTypeSpec> )
+=> ( result :: <EventTypeSpec*> )
 	next-method();
 
-  eventClass( es ) := eventClass;
-  eventKind( es ) := eventKind;
+  es.eventClass-value := eventClass;
+  es.eventKind-value := eventKind;
   
   es;
 end method initialize;
@@ -464,12 +464,22 @@ define method RunApplicationEventLoop() => ()
     call-out( "RunApplicationEventLoop", void: );
 end method RunApplicationEventLoop;
 
-// Run the current event loop
+/*
+    RunCurrentEventLoop
+*/
 
-define method RunCurrentEventLoop(inTimeout :: <integer>)
+define method RunCurrentEventLoop(inTimeout :: <float>)
 => ( result :: <OSStatus> )
-	as( <OSStatus>, call-out( "RunCurrentEventLoop", int:, int: inTimeout) );
+	as( <OSStatus>, call-out( "RunCurrentEventLoop", int:, double: inTimeout) );
 end method RunCurrentEventLoop;
+
+/*
+  QuitApplicationEventLoop
+*/
+
+define method QuitApplicationEventLoop() => ()
+    call-out( "QuitApplicationEventLoop", void: );
+end method QuitApplicationEventLoop;
 
 /*
     InstallWindowEventHandler
@@ -478,7 +488,7 @@ end method RunCurrentEventLoop;
 define method InstallWindowEventHandler( inTarget :: <WindowRef>, 
                                         inHandler :: <EventHandlerUPP>,
                                         inNumTypes :: <integer>, 
-                                        inList :: type-union( <c-vector>, <EventTypeSpec> ), // <EventTypeSpec>,
+                                        inList :: type-union( <c-vector>, <EventTypeSpec*> ), // <EventTypeSpec*>,
                                         inUserData :: <statically-typed-pointer> ) 
 => ( result :: <OSStatus>, outRef :: <EventHandlerRef> )
     let temp :: <handle> = make( <Handle> );
@@ -488,7 +498,7 @@ define method InstallWindowEventHandler( inTarget :: <WindowRef>,
 end method InstallWindowEventHandler;
 
 define method AddEventTypesToHandler( inHandlerRef :: <EventHandlerRef>, inNumTypes :: <integer>,
-                                      inList :: type-union( <c-vector>, <EventTypeSpec> ) ) // <EventTypeSpec*>
+                                      inList :: type-union( <c-vector>, <EventTypeSpec*> ) ) // <EventTypeSpec*>
 =>( result :: <OSStatus> )
   let result = call-out( "AddEventTypesToHandler", int:, ptr: inHandlerRef.raw-value, int: inNumTypes,
                          ptr: inList.raw-value);
@@ -502,10 +512,10 @@ define method CallNextEventHandler( inCallRef :: <EventHandlerCallRef>, inEvent 
 end method CallNextEventHandler;
 
 define method ConvertEventRefToEventRecord( inEvent :: <EventRef> )
-=>( outEvent :: <EventRecord>, result :: <boolean> )
+=>( outEvent :: <EventRecord*>, result :: <boolean> )
   let event-ptr :: <Handle> = make( <Handle> );
   let result = call-out( "ConvertEventRefToEventRecord", int:, ptr: inEvent.raw-value, ptr: event-ptr.raw-value );
-  values( make( <EventRecord>, pointer: event-ptr.raw-value ),
+  values( make( <EventRecord*>, pointer: event-ptr.raw-value ),
           if( result = 0 )
             #f;
           else
@@ -574,7 +584,7 @@ end method GetWindowEventTarget;
 define method InstallEventHandler( inTarget :: <EventTargetRef>,
                                     inHandler :: <EventHandlerUPP>,
                                     inNumTypes :: <integer>,
-                                    inList :: type-union( <c-vector>, <EventTypeSpec> ),// <EventTypeSpec*>,
+                                    inList :: type-union( <c-vector>, <EventTypeSpec*> ),// <EventTypeSpec*>,
                                     inUserData :: <statically-typed-pointer> )
 =>( result :: <OSStatus>, outRef :: <EventHandlerRef> )
   let temp :: <handle> = make( <Handle> );
@@ -620,7 +630,41 @@ define method GetUserFocusWindow()
 	pointer-at( temp, class: <WindowRef>, offset: 0 );
 end method GetUserFocusWindow;
 
-define method  SetUserFocusWindow( inWindow :: <WindowRef> )
+define method SetUserFocusWindow( inWindow :: <WindowRef> )
 => ( result :: <OSStatus> )
 	as( <OSStatus>, call-out( "SetUserFocusWindow", int:, ptr: inWindow.raw-value ) );
 end method SetUserFocusWindow;
+
+// Other Event handling 
+
+define constant $kEventDurationForever = -1.0;
+define constant $kEventDurationNoWait = 0.0;
+
+define method GetEventDispatcherTarget()
+=> ( result :: <EventTargetRef> )
+	make( <EventTargetRef>, pointer: call-out( "GetEventDispatcherTarget", ptr: ) );
+end method GetEventDispatcherTarget;
+
+define method ReceiveNextEvent(inNumTypes :: <integer>, inList :: <statically-typed-pointer>,
+                               inTimeOut :: <float>, inPullEvent :: <boolean> )
+=> ( status :: <OSStatus>, event-ref :: <EventRef> )
+	let temp :: <Handle> = make( <Handle> );
+  let result = call-out( "ReceiveNextEvent", int:, int: inNumTypes, ptr: inList.raw-value, 
+                                              double: inTimeOut,
+                                              int: if(inPullEvent) 1 else 0 end, 
+                                              ptr: temp.raw-value);
+	values(as(<OSStatus>, result), pointer-at( temp, class: <EventRef>, offset: 0 ));
+end method;
+
+define method SendEventToEventTarget( inEvent :: <EventRef>, inTarget :: <EventTargetRef> )
+=> (status :: <OSStatus>)
+	as(<OSStatus>, call-out( "SendEventToEventTarget", int:, ptr: inEvent.raw-value, 
+                            ptr: inTarget.raw-value ) );
+end method SendEventToEventTarget;
+
+define method ReleaseEvent( inEvent :: <EventRef> )
+=> ()
+	call-out( "ReleaseEvent", int:, ptr: inEvent.raw-value );
+end method ReleaseEvent;
+
+

@@ -14,9 +14,5 @@ define module carbon-event-handling
   use format-out;
 	use melange-support;
 
-  use mac-types;
-  use memory;
-  use quickdraw;
-  use windows;
-  use carbon-events; 
+  use carbon;
 end module;

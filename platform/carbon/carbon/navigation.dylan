@@ -1,4 +1,4 @@
-module: navigation
+module: carbon
 
 
 /*
@@ -38,22 +38,22 @@ define constant $kNavDontUseCustomFrame      = #x00008000;                    /*
 
 
 /*
-	<NavDialogOptions>
+	<NavDialogOptions*>
 	
 	Un-implemented fields, excluding resreved fields
 		UInt32                          preferenceKey;    
 		NavMenuItemSpecArrayHandle      popupExtension;  
 */
 
-define functional class <NavDialogOptions>      (<statically-typed-pointer>)
-end class <NavDialogOptions>;
+define functional class <NavDialogOptions*>      (<statically-typed-pointer>)
+end class <NavDialogOptions*>;
 
 
 /*
-	content-size <NavDialogOptions>
+	content-size <NavDialogOptions*>
 */
 
-define method content-size( class == <NavDialogOptions> )
+define method content-size( class == <NavDialogOptions*> )
 => ( result :: <integer> )
 
         c-expr( int:, "sizeof( NavDialogOptions )" );
@@ -66,238 +66,238 @@ end method content-size;
 	version
 */
 
-define method navDialog-version( options :: <NavDialogOptions> )
+define method version-value( options :: <NavDialogOptions*> )
 =>( result :: <integer> )
 
 	unsigned-short-at( options, offset: 0 );
 
-end method navDialog-version;
+end method version-value;
 
 
 /*
-	version-setter
+	version-value-setter
 */
 
-define method navDialog-version-setter( options :: <NavDialogOptions>, value :: <integer> )
+define method version-value-setter( options :: <NavDialogOptions*>, value :: <integer> )
 =>()
 
 	unsigned-short-at( options, offset: 0 ) := value;
 	
 	values();
 
-end method navDialog-version-setter;
+end method version-value-setter;
 
 
 /*
 	dialogOptionFlags
 */
 
-define method dialogOptionFlags( options :: <NavDialogOptions> )
+define method dialogOptionFlags-value( options :: <NavDialogOptions*> )
 =>( result :: <integer> )
 
 	unsigned-long-at( options, offset: 2 );
 
-end method dialogOptionFlags;
+end method dialogOptionFlags-value;
 
 
 /*
-	dialogOptionFlags-setter
+	dialogOptionFlags-value-setter
 */
 
-define method dialogOptionFlags-setter( options :: <NavDialogOptions>, value :: <integer> )
+define method dialogOptionFlags-value-setter( options :: <NavDialogOptions*>, value :: <integer> )
 =>()
 
 	unsigned-long-at( options, offset: 2 ) := value;
 	
 	values();
 
-end method dialogOptionFlags-setter;
+end method dialogOptionFlags-value-setter;
 
 
 /*
-	location
+	location-value
 */
 
-define method navDialog-location( options :: <NavDialogOptions> )
-=>( result :: <point> )
+define method location-value( options :: <NavDialogOptions*> )
+=>( result :: <Point*> )
 
-	make( <Point>,	v: unsigned-short-at( options, offset: 6 ),
+	make( <Point*>,	v: unsigned-short-at( options, offset: 6 ),
 					h: unsigned-short-at( options, offset: 8 ) );
 
-end method navDialog-location;
+end method location-value;
 
 
 /*
-	location-setter
+	location-value-setter
 */
 
-define method navDialog-location-setter( options :: <NavDialogOptions>, value :: <Point> )
+define method location-value-setter( options :: <NavDialogOptions*>, value :: <Point*> )
 =>()
 
-	unsigned-short-at( options, offset: 6 ) := value.point-v;
-	unsigned-short-at( options, offset: 8 ) := value.point-h;
+	unsigned-short-at( options, offset: 6 ) := value.v-value;
+	unsigned-short-at( options, offset: 8 ) := value.h-value;
 	
 	values();
 
-end method navDialog-location-setter;
+end method location-value-setter;
 
 
 /*
 	clientName
 */
 
-define method clientName( options :: <NavDialogOptions> )
+define method clientName-value( options :: <NavDialogOptions*> )
 =>( result :: <pascal-string> )
 
 	pointer-at( options, offset: 10, class: <pascal-string> );
 
-end method clientName;
+end method clientName-value;
 
 
 /*
-	clientName-setter
+	clientName-value-setter
 */
 
-define method clientName-setter( options :: <NavDialogOptions>, value :: <string> )
+define method clientName-value-setter( options :: <NavDialogOptions*>, value :: <string> )
 =>()
 
 	pointer-at( options, offset: 10, class: <pascal-string> ) := value;
 	
 	values();
 
-end method clientName-setter;
+end method clientName-value-setter;
 
 
 /*
 	windowTitle
 */
 
-define method windowTitle( options :: <NavDialogOptions> )
+define method windowTitle-value( options :: <NavDialogOptions*> )
 =>( result :: <pascal-string> )
 
 	pointer-at( options, offset: 266, class: <pascal-string> );
 
-end method windowTitle;
+end method windowTitle-value;
 
 /*
-	windowTitle-setter
+	windowTitle-value-setter
 */
 
-define method windowTitle-setter( options :: <NavDialogOptions>, value :: <string> )
+define method windowTitle-value-setter( options :: <NavDialogOptions*>, value :: <string> )
 =>()
 
 	pointer-at( options, offset: 266, class: <pascal-string> ) := value;
 	
 	values();
 
-end method windowTitle-setter;
+end method windowTitle-value-setter;
 
 
 /*
 	actionButtonLabel
 */
 
-define method actionButtonLabel( options :: <NavDialogOptions> )
+define method actionButtonLabel-value( options :: <NavDialogOptions*> )
 =>( result :: <pascal-string> )
 
 	pointer-at( options, offset: 522, class: <pascal-string> );
 
-end method actionButtonLabel;
+end method actionButtonLabel-value;
 
 /*
-	actionButtonLabel-setter
+	actionButtonLabel-value-setter
 */
 
-define method actionButtonLabel-setter( options :: <NavDialogOptions>, value :: <string> )
+define method actionButtonLabel-value-setter( options :: <NavDialogOptions*>, value :: <string> )
 =>()
 
 	pointer-at( options, offset: 522, class: <pascal-string> ) := value;
 	
 	values();
 
-end method actionButtonLabel-setter;
+end method actionButtonLabel-value-setter;
 
 
 /*
 	cancelButtonLabel
 */
 
-define method cancelButtonLabel( options :: <NavDialogOptions> )
+define method cancelButtonLabel-value( options :: <NavDialogOptions*> )
 =>( result :: <pascal-string> )
 
 	pointer-at( options, offset: 778, class: <pascal-string> );
 
-end method cancelButtonLabel;
+end method cancelButtonLabel-value;
 
 
 /*
-	cancelButtonLabel-setter
+	cancelButtonLabel-value-setter
 */
 
-define method cancelButtonLabel-setter( options :: <NavDialogOptions>, value :: <string> )
+define method cancelButtonLabel-value-setter( options :: <NavDialogOptions*>, value :: <string> )
 =>()
 
 	pointer-at( options, offset: 778, class: <pascal-string> ) := value;
 	
 	values();
 
-end method cancelButtonLabel-setter;
+end method cancelButtonLabel-value-setter;
 
 
 /*
 	savedFileName
 */
 
-define method savedFileName( options :: <NavDialogOptions> )
+define method savedFileName-value( options :: <NavDialogOptions*> )
 =>( result :: <pascal-string> )
 
 	pointer-at( options, offset: 1034, class: <pascal-string> );
 
-end method savedFileName;
+end method savedFileName-value;
 
 
 /*
-	savedFileName-setter
+	savedFileName-value-setter
 */
 
-define method savedFileName-setter( options :: <NavDialogOptions>, value :: <string> )
+define method savedFileName-value-setter( options :: <NavDialogOptions*>, value :: <string> )
 =>()
 
 	pointer-at( options, offset: 1034, class: <pascal-string> ) := value;
 	
 	values();
 
-end method savedFileName-setter;
+end method savedFileName-value-setter;
 
 
 /*
 	message
 */
 
-define method navDialog-message( options :: <NavDialogOptions> )
+define method message-value( options :: <NavDialogOptions*> )
 =>( result :: <pascal-string> )
 
 	pointer-at( options, offset: 1290, class: <pascal-string> );
 
-end method navDialog-message;
+end method message-value;
 
 
 /*
-	message-setter
+	message-value-setter
 */
 
-define method navDialog-message-setter( options :: <NavDialogOptions>, value :: <string> )
+define method message-value-setter( options :: <NavDialogOptions*>, value :: <string> )
 =>()
 
 	pointer-at( options, offset: 1290, class: <pascal-string> ) := value;
 	
 	values();
 
-end method navDialog-message-setter;
+end method message-value-setter;
 
 
 /*
-	<NavReplyRecord>
+	<NavReplyRecord*>
 	
 	Unimplemented fields, excluding reserved fields
 		ScriptCode                      keyScript;             
@@ -305,15 +305,15 @@ end method navDialog-message-setter;
 
 */
 
-define functional class <NavReplyRecord>        (<statically-typed-pointer>)
-end class <NavReplyRecord>;
+define functional class <NavReplyRecord*>        (<statically-typed-pointer>)
+end class <NavReplyRecord*>;
 
 
 /*
-	content-size <NavReplyRecord>
+	content-size <NavReplyRecord*>
 */
 
-define method content-size( class == <NavReplyRecord> )
+define method content-size( class == <NavReplyRecord*> )
 => ( result :: <integer> )
 
         c-expr( int:, "sizeof( NavDialogOptions )" );
@@ -326,155 +326,155 @@ end method content-size;
 */
 
 
-define method navReply-version( record :: <NavReplyRecord> )
+define method version-value( record :: <NavReplyRecord*> )
 =>( result :: <integer> )
 
 	unsigned-short-at( record, offset: 0 );
 
-end method navReply-version;
+end method version-value;
 
 /*
-	version-setter
+	version-value-setter
 */
 
-define method navReply-version-setter( record :: <NavReplyRecord>, value :: <integer> )
+define method version-value-setter( record :: <NavReplyRecord*>, value :: <integer> )
 =>()
 
 	unsigned-short-at( record, offset: 0 ) := value;
 	
 	values();
 
-end method navReply-version-setter;
+end method version-value-setter;
 
 
 /*
 	valid-record
 */
 
-define method validRecord( record :: <NavReplyRecord> )
+define method validRecord-value( record :: <NavReplyRecord*> )
 =>( result :: <integer> )
 
 	unsigned-byte-at( record, offset: 2 );
 
-end method validRecord;
+end method validRecord-value;
 
 
 /*
-	valid-record-setter
+	valid-record-value-setter
 */
 
-define method validRecord-setter( record :: <NavReplyRecord>, value :: <integer> )
+define method validRecord-value-setter( record :: <NavReplyRecord*>, value :: <integer> )
 =>()
 
 	unsigned-byte-at( record, offset: 2 ) := value;
 	
 	values();
 
-end method validRecord-setter;
+end method validRecord-value-setter;
 
 
 /*
 	replacing
 */
 
-define method navReply-replacing( record :: <NavReplyRecord> )
+define method replacing-value( record :: <NavReplyRecord*> )
 =>( result :: <integer> )
 
 	unsigned-byte-at( record, offset: 4 );
 
-end method navReply-replacing;
+end method replacing-value;
 
 /*
 
-	replacing-setter
+	replacing-value-setter
 */
 
-define method navReply-replacing-setter( record :: <NavReplyRecord>, value :: <integer> )
+define method replacing-value-setter( record :: <NavReplyRecord*>, value :: <integer> )
 =>()
 
 	unsigned-byte-at( record, offset: 4 ) := value;
 	
 	values();
 
-end method navReply-replacing-setter;
+end method replacing-value-setter;
 
 
 /*
 	isStationary
 */
 
-define method isStationary( record :: <NavReplyRecord> )
+define method isStationary-value( record :: <NavReplyRecord*> )
 =>( result :: <integer> )
 
 	unsigned-byte-at( record, offset: 6 );
 
-end method isStationary;
+end method isStationary-value;
 
 
 /*
-	isStationary-setter
+	isStationary-value-setter
 */
 
-define method isStationary-setter( record :: <NavReplyRecord>, value :: <integer> )
+define method isStationary-value-setter( record :: <NavReplyRecord*>, value :: <integer> )
 =>()
 
 	unsigned-byte-at( record, offset: 6 ) := value;
 	
 	values();
 
-end method isStationary-setter;
+end method isStationary-value-setter;
 
 
 /*
 	translationNeeded
 */
 
-define method translationNeeded( record :: <NavReplyRecord> )
+define method translationNeeded-value( record :: <NavReplyRecord*> )
 =>( result :: <integer> )
 
 	unsigned-byte-at( record, offset: 8 );
 
-end method translationNeeded;
+end method translationNeeded-value;
 
 
 /*
-	translationNeeded-setter
+	translationNeeded-value-setter
 */
 
-define method translationNeeded-setter( record :: <NavReplyRecord>, value :: <integer> )
+define method translationNeeded-value-setter( record :: <NavReplyRecord*>, value :: <integer> )
 =>()
 
 	unsigned-byte-at( record, offset: 8 ) := value;
 	
 	values();
 
-end method translationNeeded-setter;
+end method translationNeeded-value-setter;
 
 
 /*
 	selection
 */
 
-define method navReply-selection( record :: <NavReplyRecord> )
+define method selection-value( record :: <NavReplyRecord*> )
 =>( result :: <integer> )
 
-	pointer-at( record, offset: 10, class: <AEDEscList> );
+	pointer-at( record, offset: 10, class: <AEDescList*> );
 
-end method navReply-selection;
+end method selection-value;
 
 
 /*
-	selection-setter
+	selection-value-setter
 */
 
-define method navReply-selection-setter( record :: <NavReplyRecord>, value :: <AEDescList> )
+define method selection-value-setter( record :: <NavReplyRecord*>, value :: <AEDescList*> )
 =>()
 
 	pointer-at( record, offset: 10 ) := value;
 	
 	values();
 
-end method navReply-selection-setter;
+end method selection-value-setter;
 
 
 /*
@@ -521,9 +521,9 @@ end method NavLibraryVersion;
 */
 
 define method NavGetDefaultDialogOptions()
-=> ( result :: <OSErr>, options :: <NavDialogOptions> )
+=> ( result :: <OSErr>, options :: <NavDialogOptions*> )
 
-        let options = make( <NavDialogOptions> );
+        let options = make( <NavDialogOptions*> );
 
         let result = call-out( "NavGetDefaultDialogOptions", unsigned-int:, ptr: options.raw-value );
         
@@ -537,8 +537,8 @@ end method NavGetDefaultDialogOptions;
 	
 */	
 	
-define method NavGetFile(	defaultLocation :: <AEDesc>, /* can be NULL */
-							reply :: <NavReplyRecord>,
+define method NavGetFile(	defaultLocation :: <AEDesc*>, /* can be NULL */
+							reply :: <NavReplyRecord*>,
 							dialogOptions :: <integer>,
 							eventProc :: <NavEventUPP>, /* can be NULL */
 							previewProc :: <NavPreviewUPP>, /* can be NULL */
@@ -567,8 +567,8 @@ end method NavGetFile;
 	
 */	
 	
-define method NavPutFile(	defaultLocation :: <AEDesc>, /* can be NULL */
-							reply :: <NavReplyRecord>,
+define method NavPutFile(	defaultLocation :: <AEDesc*>, /* can be NULL */
+							reply :: <NavReplyRecord*>,
 							dialogOptions :: <integer>,
 							eventProc :: <NavEventUPP>, /* can be NULL */
 							fileType :: <OSType>,
@@ -594,8 +594,8 @@ end method NavPutFile;
 	
 */	
 	
-define method NavChooseFile(	defaultLocation :: <AEDesc>, /* can be NULL */
-								reply :: <NavReplyRecord>,
+define method NavChooseFile(	defaultLocation :: <AEDesc*>, /* can be NULL */
+								reply :: <NavReplyRecord*>,
 								dialogOptions :: <integer>,
 								eventProc :: <NavEventUPP>, /* can be NULL */
 								previewProc :: <NavPreviewUPP>, /* can be NULL */
@@ -623,8 +623,8 @@ end method NavChooseFile;
 	
 */	
 	
-define method NavChooseFolder(	defaultLocation :: <AEDesc>, /* can be NULL */
-							reply :: <NavReplyRecord>,
+define method NavChooseFolder(	defaultLocation :: <AEDesc*>, /* can be NULL */
+							reply :: <NavReplyRecord*>,
 							dialogOptions :: <integer>,
 							eventProc :: <NavEventUPP>, /* can be NULL */
 							filterProc :: <NavObjectFilterUpp>, /* can be NULL */
@@ -648,8 +648,8 @@ end method NavChooseFolder;
 	
 */	
 	
-define method NavChooseVolume(	defaultLocation :: <AEDesc>, /* can be NULL */
-							reply :: <NavReplyRecord>,
+define method NavChooseVolume(	defaultLocation :: <AEDesc*>, /* can be NULL */
+							reply :: <NavReplyRecord*>,
 							dialogOptions :: <integer>,
 							eventProc :: <NavEventUPP>, /* can be NULL */
 							filterProc :: <NavObjectFilterUpp>, /* can be NULL */
@@ -673,7 +673,7 @@ end method NavChooseVolume;
 	NavDisposeReply
 */
 
-define method NavDisposeReply( reply :: <NavReplyRecord> )
+define method NavDisposeReply( reply :: <NavReplyRecord*> )
 => ( result :: <OSErr> )
 
 	let result = call-out( "NavDisposeReply", int:, ptr: reply.raw-value );

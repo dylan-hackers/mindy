@@ -1,4 +1,4 @@
-module: sound
+module: carbon
 
 /*
 	Sound Manager

@@ -1,4 +1,4 @@
-module: controls
+module: carbon
 
 /*
 	Mac Control Manager
@@ -125,7 +125,7 @@ end method DrawControls;
 	NewControl
 */
 
-define method NewControl( window :: <WindowRef>, bounds :: <Rect>, title :: <pascal-string>,
+define method NewControl( window :: <WindowRef>, bounds :: <Rect*>, title :: <pascal-string>,
 						 	visible :: <boolean>, initialValue :: <integer>, minimumValue :: <integer>,
 							maximumValue :: <integer>, procID :: <integer>, controlReference :: <integer> )
 => ( result :: <ControlHandle> )
@@ -295,11 +295,11 @@ end method GetControlTitle;
 	DragControl
 */
 
-define method DragControl( control :: <ControlHandle> , start :: <Point>, limitRect :: <Rect>, slopRect :: <Rect>, axis :: <integer>)
+define method DragControl( control :: <ControlHandle> , start :: <Point*>, limit<Rect*> :: <Rect*>, slop<Rect*> :: <Rect*>, axis :: <integer>)
 => ()
 
 	call-out( "dragcontrol", void:, ptr: control.raw-value, ptr: start.raw-value, 
-				ptr: limitRect.raw-value, ptr: slopRect.raw-value, short: axis );
+				ptr: limit<Rect*>.raw-value, ptr: slop<Rect*>.raw-value, short: axis );
 
 	values();
 
@@ -310,7 +310,7 @@ end method DragControl;
 	FindControl
 */
 
-define method FindControl( point :: <Point>, window :: <WindowRef> )
+define method FindControl( point :: <Point*>, window :: <WindowRef> )
 => ( control :: <ControlHandle>, result :: <ControlPartCode> )
 
     let temp = make( <Handle> ); // used as a pointer parameter
@@ -324,7 +324,7 @@ end method FindControl;
 	HandleControlClick
 */
 
-define method HandleControlClick( inControl :: <ControlHandle>, inWhere :: <Point>, 
+define method HandleControlClick( inControl :: <ControlHandle>, inWhere :: <Point*>, 
                                     inModifiers :: <EventModifiers>, inAction :: <ControlActionUPP> )
 => ( result :: <ControlPartCode> )
 
@@ -364,7 +364,7 @@ end method IdleControls;
 	TrackControl
 */
 
-define method TrackControl( control :: <ControlHandle>, point :: <Point>, proc :: <ControlActionUPP> )
+define method TrackControl( control :: <ControlHandle>, point :: <Point*>, proc :: <ControlActionUPP> )
 => ( result :: <integer> )
 
 	call-out( "trackcontrol", short:, ptr: control.raw-value, ptr: point.raw-value, ptr: proc.raw-value );
@@ -375,7 +375,7 @@ end method TrackControl;
 	TestControl
 */
 
-define method TestControl( control :: <ControlHandle>, point :: <Point> )
+define method TestControl( control :: <ControlHandle>, point :: <Point*> )
 => ( result :: <integer> )
 
 	call-out( "testcontrol", short:, ptr: control.raw-value, ptr: point.raw-value );

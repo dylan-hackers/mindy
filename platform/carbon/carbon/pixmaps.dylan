@@ -1,4 +1,4 @@
-module: quickdraw
+module: carbon
 
 define functional class <PixMap>	( <statically-typed-pointer> )
 end class <PixMap>;

@@ -1,5 +1,4 @@
-module: mac-types
-
+module: carbon
 
 /*
 	Basic types

@@ -1,4 +1,4 @@
-module: mac-types
+module: carbon
 
 /*
 	Include the Macintosh Type Declaration Header so we know what a Str255 is.
