@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.7 1995/11/18 11:25:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.8 1995/11/22 14:28:41 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -122,6 +122,7 @@ define module Extensions
     import: {
 	     // More types.
 	     <fixed-integer>, <extended-integer>, <byte-character>,
+	     $maximum-fixed-integer, $minimum-fixed-integer,
 
 	     // Handy value that everyone wants.
 	     $not-supplied,
@@ -136,7 +137,14 @@ define module Extensions
 	     report-condition, condition-format, *warning-output*,
 
 	     // Debugger Hooks
-	     <debugger>, invoke-debugger, *debugger*
+	     <debugger>, invoke-debugger, *debugger*,
+	     <byte>,
+	     <byte-vector>,
+	     <buffer>,
+	     <buffer-index>,
+	     $maximum-buffer-size,
+	     copy-bytes
+
     },
     export: all;
 end;
