@@ -1,8 +1,16 @@
 Module: fer-od
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.1 1995/10/30 13:11:40 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-od.dylan,v 1.2 1995/11/13 15:14:34 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
+
+
+/* 
+front.dylan:define class <fer-function-region>
+
+front.dylan:define class <nlx-info> (<object>)
+
+*/
 
 // Note that the only official starting point (root) for FER dumping is a
 // <function-literal>.  Any other dumpers and loaders expect to be called
@@ -12,61 +20,69 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // <region> along the "wrong" path, we will get a "don't know how to dump"
 // error.
 
-define generic fer-dump-od (obj :: <object>, buf :: <dump-state>) => ();
+define generic fer-dump-od
+ (obj :: <object>, component :: <fer-component>, buf :: <dump-state>)
+ => ();
 
 
 // Utilities:
 
 
-// Convert a depends-on thread back into the leaf-or-list format used by the
+// Convert a depends-on thread back into a list of leaf objects, as used by the
 // builder.
 //
-define method listify-depends (x :: false-or(<dependency>)) 
+define method depends-list (x :: <dependent-mixin>)
  => res :: type-or(<expression>, <list>);
-  if (~x)
+  let dep-on = x.depends-on;
+  if (~dep-on)
     #();
-  elseif (~x.dependent-next)
-    x.source-exp;
   else
-    for (cur = x then x.dependent-next,
-	 res = #() then pair(cur, res),
+    for (cur = dep-on then cur.dependent-next,
+	 res = #() then pair(cur.source-exp, res),
 	 while: cur)
     finally reverse!(res)
     end for;
   end if;
 end method;
 
-
-// We stach the builder we're adding to in the state-stack for the load-state.
-//
-define method builder-of (state :: <load-state>) => res :: <fer-builder>;
-  state.state-stack.head;
-end method;
-
-
 
 // Regions:
+
+
+define method fer-dump-od 
+  (obj :: <empty-region>, component :: <fer-component>, buf :: <dump-state>)
+ => ();
+  ignore(component, obj, buf);
+end method;
+
 
 // For simple regions, call fer-dump-od on each assignment.  Note that there is
 // only one OD object kind for both simple and compound, but we need different
 // dump methods because the subobjects are threaded differently.
 //
-define method fer-dump-od (obj :: <simple-region>, buf :: <dump-state>) => ();
+define method fer-dump-od 
+  (obj :: <simple-region>, component :: <fer-component>, buf :: <dump-state>)
+ => ();
+  ignore(component);
   let start = buf.current-pos;
   dump-definition-header(#"linear-region", buf, subobjects: #t);
   for (assign = obj.first-assign then assign.next-op, while: assign)
-    fer-dump-od(assign, buf);
+    fer-dump-od(assign, component, buf);
   end;
   dump-end-entry(start, buf);
 end method;
 
 // For compound regions, recurse on the subregions.
 //
-define method fer-dump-od (obj :: <compound-region>, buf :: <dump-state>) => ();
+define method fer-dump-od 
+    (obj :: <compound-region>, component :: <fer-component>,
+     buf :: <dump-state>)
+ => ();
+  ignore(component);
   let start = buf.current-pos;
   dump-definition-header(#"linear-region", buf, subobjects: #t);
   for (sub in obj.regions)
-    fer-dump-od(sub, buf);
+    fer-dump-od(sub, component, buf);
   end;
   dump-end-entry(start, buf);
 end method;
@@ -81,19 +97,26 @@ add-od-loader(*compiler-dispatcher*, #"linear-region",
 );
 
 
-// For an IF, dump source, depends-on, then-region, else-region.
+// For an IF, dump component, source, depends-on, then-region, else-region.
 //
 // ### ignoring join region (currently unused)
-define method fer-dump-od (obj :: <if-region>, buf :: <dump-state>) => ();
-  dump-simple-object(#"if-region", buf, obj.source-location,
-  		     obj.depends-on.source-exp,
-		     obj.then-region, obj.else-region);
+define method fer-dump-od 
+    (obj :: <if-region>, component :: <fer-component>, buf :: <dump-state>)
+ => ();
+  let start = buf.current-pos;
+  dump-definition-header(#"if-region", buf, subobjects: #t);
+  dump-od(component, buf);
+  dump-od(obj.source-location, buf);
+  dump-od(obj.depends-on.source-exp, buf);
+  fer-dump-od(obj.then-region, component, buf);
+  fer-dump-od(obj.else-region, component, buf);
+  dump-end-entry(start, buf);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"if-region",
   method (state :: <load-state>)
+    let builder = load-object-dispatch(state);
     let src = load-object-dispatch(state);
-    let builder = state.builder-of;
     build-if-body(builder, $default-policy, src, load-object-dispatch(state));
     load-object-dispatch(state);
     build-else(builder, $default-policy, src);
@@ -104,34 +127,65 @@ add-od-loader(*compiler-dispatcher*, #"if-region",
 );
 
 
-// block: source, body, info.
+// Like dump-simple-object, except that we do fer-dump-od on the last thing (a
+// region.)
 //
-define method fer-dump-od (obj :: <block-region>, buf :: <dump-state>) => ();
-  dump-simple-object(#"block-region", buf, obj.source-location, obj.body,
-  		     obj.info);
+define method dump-simple-region (name, buf, component, #rest stuff)
+ => ();
+  let start = buf.current-pos;
+  dump-definition-header(name, buf, subobjects: #t);
+  dump-od(component, buf);
+  for (i from 0 below stuff.size - 1)
+    dump-od(stuff[i], buf);
+  finally
+    fer-dump-od(stuff[stuff.size - 1], component, buf);
+  end for;
+  dump-end-entry(start, buf);
+end method;
+
+
+// block: component, source, body, info.
+//
+define method fer-dump-od
+    (obj :: <block-region>, component :: <fer-component>, buf :: <dump-state>)
+ => ();
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-region(#"block-region", buf, component, obj.source-location,
+  		       obj.info, obj.body);
+  end if;
+end method;
+
+// If we run into a block region somwhere else, we must have already dumped it.
+//
+define method dump-od (obj :: <block-region>, buf :: <dump-state>) => ();
+  assert(~maybe-dump-reference(obj, buf));
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"block-region",
   method (state :: <load-state>)
-    let builder = state.builder-of;
+    let builder = load-object-dispatch(state);
     build-block-body(builder, $default-policy, load-object-dispatch(state));
+    let dinfo = load-object-dispatch(state);
     load-object-dispatch(state);
     let res = end-body(builder);
-    res.info := load-object-dispatch(state);
+    res.info := dinfo;
     assert-end-object(state);
   end method
 );
 
 
-// loop: source, body
+// loop: component, source, body
 // ### ignoring join region
-define method fer-dump-od (obj :: <loop-region>, buf :: <dump-state>) => ();
-  dump-simple-object(buf, #"loop-region", obj.source-location, obj.body);
+define method fer-dump-od
+    (obj :: <loop-region>, component :: <fer-component>, buf :: <dump-state>)
+ => ();
+  dump-simple-region(#"loop-region", buf, component, obj.source-location,
+		     obj.body);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"loop-region",
   method (state :: <load-state>)
-    let builder = state.builder-of;
+    let builder = load-object-dispatch(state);
     build-loop-body(builder, $default-policy, load-object-dispatch(state));
     load-object-dispatch(state);
     assert-end-object(state);
@@ -140,30 +194,59 @@ add-od-loader(*compiler-dispatcher*, #"loop-region",
 );
 
 
-// exit: source, block-of
-define method fer-dump-od (obj :: <exit>, buf :: <dump-state>) => ();
-  dump-simple-object(buf, #"exit-region", obj.source-location, obj.block-of);
+// exit: component source, block-of
+define method fer-dump-od 
+    (obj :: <exit>, component :: <fer-component>, buf :: <dump-state>) => ();
+  dump-simple-object(#"exit-region", buf, component, obj.source-location,
+  		     obj.block-of);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"exit-region",
   method (state :: <load-state>)
-    build-exit(state.builder-of, $default-policy, load-object-dispatch(state),
+    let builder = load-object-dispatch(state);
+    build-exit(builder, $default-policy, load-object-dispatch(state),
     	       load-object-dispatch(state));
     assert-end-object(state);
   end method
 );
 
 
-// return: source, block-of, depends-on
+// unwind-protect-region: component, source, uwp-region-cleanup-function
+define method fer-dump-od 
+    (obj :: <unwind-protect-region>, component :: <fer-component>,
+     buf :: <dump-state>)
+ => ();
+  dump-simple-region(#"unwind-protect-region", buf, component,
+  		     obj.source-location, obj.uwp-region-cleanup-function,
+		     obj.body);
+end method;
+
+add-od-loader(*compiler-dispatcher*, #"unwind-protect-region",
+  method (state :: <load-state>)
+    let builder = load-object-dispatch(state);
+    build-unwind-protect-body(
+      builder, $default-policy,
+      load-object-dispatch(state),
+      load-object-dispatch(state)
+    );
+    load-object-dispatch(state);
+    assert-end-object(state);
+  end method
+);
+
+
+// return: component, source, block-of, depends-on
 //
-define method fer-dump-od (obj :: <return>, buf :: <dump-state>) => ();
-  dump-simple-object(buf, #"return-region", obj.source-location, obj.block-of,
-  		     listify-depends(obj.depends-on));
+define method fer-dump-od
+    (obj :: <return>, component :: <fer-component>, buf :: <dump-state>) => ();
+  dump-simple-object(#"return-region", buf, component, obj.source-location,
+  		     obj.block-of, obj.depends-list);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"return-region",
   method (state :: <load-state>)
-    build-exit(state.builder-of, $default-policy,
+    let builder = load-object-dispatch(state);
+    build-exit(builder, $default-policy,
     	       load-object-dispatch(state),
     	       load-object-dispatch(state),
 	       load-object-dispatch(state));
@@ -175,7 +258,9 @@ add-od-loader(*compiler-dispatcher*, #"return-region",
 
 // Assignments:
 
-define method fer-dump-od (obj :: <abstract-assignment>, buf :: <dump-state>)
+define method fer-dump-od
+    (obj :: <abstract-assignment>, component :: <fer-component>, 
+     buf :: <dump-state>)
  => ();
   dump-simple-object(
     select (obj by instance?)
@@ -183,6 +268,7 @@ define method fer-dump-od (obj :: <abstract-assignment>, buf :: <dump-state>)
       <let-assignment> => #"let-assignment";
     end select,
     buf,
+    component,
     obj.policy,
     obj.source-location,
     for (def = obj.defines then def.definer-next,
@@ -201,7 +287,7 @@ define method fer-dump-od (obj :: <abstract-assignment>, buf :: <dump-state>)
 	  defs.head;
 	end if;
     end for,
-    listify-depends(obj.depends-on)
+    obj.depends-list.head
   );
 end method;
 
@@ -210,12 +296,13 @@ for (name in #(#"set-assignment", #"let-assignment"),
      buildfn in list(build-assignment, build-let))
   add-od-loader(*compiler-dispatcher*, name,
     method (state :: <load-state>)
+      let builder = load-object-dispatch(state);
       let policy = load-object-dispatch(state);
       let source = load-object-dispatch(state);
       let target-vars = load-object-dispatch(state);
       let source-exp = load-object-dispatch(state);
       assert-end-object(state);
-      buildfn(state.builder-of, policy, source, target-vars, source-exp);
+      buildfn(builder, policy, source, target-vars, source-exp);
     end method
   );
 end for;
@@ -232,18 +319,22 @@ add-make-dumper(#"ssa-variable", *compiler-dispatcher*, <ssa-variable>,
 );
 
 
-// initial-variable: derived-type, var-info
+// initial-variable: component, derived-type, var-info
 //
 define method dump-od (obj :: <initial-variable>, buf :: <dump-state>) => ();
-  dump-simple-object(#"initial-variable", buf, obj.derived-type, obj.var-info);
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-object(#"initial-variable", buf, obj.component-of,
+  		       obj.derived-type, obj.var-info);
+  end if;
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"initial-variable",
   method (state :: <load-state>) => res :: <initial-variable>;
+    let builder = load-object-dispatch(state);
     let dtype = load-object-dispatch(state);
     let info =  load-object-dispatch(state);
     assert-end-object(state);
-    make-initial-var(state.builder-of, dtype, info);
+    make-initial-var(builder, dtype, info);
   end
 );
 
@@ -263,55 +354,239 @@ add-make-dumper(#"lexical-var-info", *compiler-dispatcher*,
   	      list(source-location, source-location:, #f))
 );
 
+
+// Operations:
 
-/* 
-control-flow.dylan:define class <simple-region> (<linear-region>)
-control-flow.dylan:define class <compound-region> (<linear-region>)
-control-flow.dylan:define class <if-region> (<join-region>, <dependent-mixin>)
-control-flow.dylan:define class <block-region>
-control-flow.dylan:define class <loop-region> (<body-region>)
-control-flow.dylan:define class <exit> (<region>)
-control-flow.dylan:define class <return> (<exit>, <dependent-mixin>)
-data-flow.dylan:define class <ssa-variable> (<definition-site-variable>)
-data-flow.dylan:define class <initial-variable> (<multi-definition-variable>)
-front.dylan:define class <values-cluster-info> (<debug-named-info>)
-front.dylan:define class <local-var-info> (<debug-named-info>)
-front.dylan:define class <lexical-var-info> (<debug-named-info>
+define constant $operation-slots =
+  list(derived-type, derived-type:, #f,
+       depends-list, operands:, #f);
 
-front.dylan:define class <let-assignment> (<fer-assignment>)
-front.dylan:define class <set-assignment> (<fer-assignment>)
 
-data-flow.dylan:define class <join-operation> (<operation>)
+add-make-dumper(#"join-operation", *compiler-dispatcher*, <join-operation>,
+		$operation-slots);
 
-front.dylan:define class <primitive> (<operation>)
-front.dylan:define class <unknown-call> (<general-call>)
-front.dylan:define class <mv-call> (<general-call>)
-front.dylan:define class <prologue> (<operation>)
-front.dylan:define class <module-var-access> (<operation>)
-front.dylan:define class <module-var-ref> (<module-var-access>)
-front.dylan:define class <module-var-set> (<module-var-access>)
-front.dylan:define class <self-tail-call> (<operation>)
-front.dylan:define class <slot-ref> (<slot-access>)
-front.dylan:define class <slot-set> (<slot-access>)
-front.dylan:define class <truly-the> (<operation>)
-front.dylan:define class <instance?> (<operation>)
-front.dylan:define class <nlx-operation> (<operation>)
-front.dylan:define class <catch> (<nlx-operation>)
-front.dylan:define class <throw> (<nlx-operation>)
-front.dylan:define class <make-catcher> (<nlx-operation>)
-front.dylan:define class <disable-catcher> (<nlx-operation>)
+add-make-dumper(#"prologue-operation", *compiler-dispatcher*, <prologue>,
+		concatenate($operation-slots,
+			    list(function, function:, function-setter)));
 
-front.dylan:define class <literal-constant> (<constant>)
-front.dylan:define class <definition-constant-leaf> (<constant>)
-front.dylan:define class <uninitialized-value> (<constant>)
+add-make-dumper(#"primitive-operation", *compiler-dispatcher*, <primitive>,
+		concatenate($operation-slots,
+			    list(name, name:, #f,
+				 info, info:, #f)));
 
-front.dylan:define class <method-literal> (<function-literal>)
+define constant $abstract-call-slots =
+  concatenate($operation-slots, list(info, info:, #f));
 
-front.dylan:define class <fer-function-region>
-front.dylan:define class <lambda> (<fer-function-region>)
-front.dylan:define class <fer-component> (<component>)
-front.dylan:define class <unwind-protect-region> (<body-region>)
 
-front.dylan:define class <nlx-info> (<object>)
+add-make-dumper(#"known-call-operation", *compiler-dispatcher*,
+		<known-call>, $abstract-call-slots);
 
-*/
+define constant $general-call-slots =
+  concatenate($operation-slots,
+  	       list(use-generic-entry?, use-generic-entry:, #f));
+
+
+add-make-dumper(#"unknown-call-operation", *compiler-dispatcher*,
+		<unknown-call>, $general-call-slots);
+
+add-make-dumper(#"mv-call-operation", *compiler-dispatcher*,
+		<mv-call>, $general-call-slots);
+
+add-make-dumper(#"error-call-operation", *compiler-dispatcher*,
+		<error-call>, $abstract-call-slots);
+
+
+define constant $module-var-access-slots =
+  concatenate($operation-slots, list(variable, var:, #f));
+
+add-make-dumper(#"module-var-ref-operation", *compiler-dispatcher*,
+		<module-var-ref>, $module-var-access-slots);
+
+add-make-dumper(#"module-var-set-operation", *compiler-dispatcher*,
+		<module-var-set>, $module-var-access-slots);
+
+
+add-make-dumper(#"self-tail-call-operation", *compiler-dispatcher*,
+  <self-tail-call>,
+  concatenate(
+    $operation-slots,
+    list(self-tail-call-of, of:, #f,
+         next-self-tail-call, next-self-tail-call:, #f)
+  )
+);
+
+
+define constant $slot-access-slots =
+  concatenate(
+    $operation-slots,
+    list(slot-info, slot-info:, #f,
+         slot-offset, slot-offset:, #f)
+  );
+
+add-make-dumper(#"slot-ref-operation", *compiler-dispatcher*,
+		<slot-ref>, $slot-access-slots);
+
+add-make-dumper(#"slot-set-operation", *compiler-dispatcher*,
+		<slot-set>, $slot-access-slots);
+
+
+add-make-dumper(#"truly-the-operation", *compiler-dispatcher*,
+  <truly-the>,
+  concatenate(
+    $operation-slots,
+    list(guaranteed-type, guaranteed-type:, #f)
+  )
+);
+
+add-make-dumper(#"instance?-operation", *compiler-dispatcher*,
+  <instance?>,
+  concatenate(
+    $operation-slots,
+    list(type, type:, #f)
+  )
+);
+
+define constant $nlx-operation-slots =
+  concatenate($operation-slots,
+  	      list(nlx-info, nlx-info:, #f));
+
+add-make-dumper(#"catch-operation", *compiler-dispatcher*,
+		<catch>, $nlx-operation-slots);
+
+add-make-dumper(#"throw-operation", *compiler-dispatcher*,
+		<throw>, $nlx-operation-slots);
+
+add-make-dumper(#"make-catcher-operation", *compiler-dispatcher*,
+		<make-catcher>, $nlx-operation-slots);
+
+add-make-dumper(#"disable-catcher-operation", *compiler-dispatcher*,
+		<disable-catcher>, $nlx-operation-slots);
+
+
+define constant $expression-slots = list(derived-type, derived-type:, #f);
+
+add-make-dumper(#"literal-constant", *compiler-dispatcher*,
+		<literal-constant>,
+		concatenate($expression-slots, list(value, value:, #f)));
+
+add-make-dumper(#"definition-constant-leaf", *compiler-dispatcher*,
+		<definition-constant-leaf>,
+		concatenate($expression-slots,
+			    list(const-defn, const-defn:, #f)));
+
+add-make-dumper(#"uninitialized-value-leaf", *compiler-dispatcher*,
+		<uninitialized-value>, #());
+
+add-make-dumper(#"nlx-info", *compiler-dispatcher*, <nlx-info>,
+  list(nlx-hidden-references?, hidden-references:, #f,
+       nlx-catch, catch:, #f,
+       nlx-make-catcher, make-catcher:, #f,
+       nlx-exit-function, exit-function:, #f,
+       nlx-disable-catchers, disable-catchers:, #f,
+       nlx-throws, throws:, #f)
+);
+
+
+// Function literals:
+
+define constant $function-literal-slots =
+  concatenate(
+    $expression-slots,
+    list(visibility, visibility:, #f,
+         signature, signature:, #f,
+	 ct-function, ct-function:, #f,
+	 main-entry, main-entry:, #f,
+	 general-entry, #f, general-entry-setter)
+  );
+
+
+add-make-dumper(#"function-literal", *compiler-dispatcher*, <function-literal>,
+		$function-literal-slots);
+
+add-make-dumper(#"method-literal", *compiler-dispatcher*, <method-literal>,
+  concatenate(
+    $function-literal-slots,
+    list(generic-entry, #f, generic-entry-setter)
+  )
+);
+
+add-make-dumper(#"exit-function-literal", *compiler-dispatcher*,
+  <exit-function>,
+  concatenate(
+    $expression-slots,
+    list(nlx-info, nlx-info:, #f)
+  )
+);
+
+
+// component: source-location, name.
+// 
+define method dump-od (obj :: <fer-component>, buf :: <dump-state>) => ();
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-object(#"fer-component", buf, obj.source-location, obj.name);
+  end if;
+end method;
+
+// A component loads as a builder, providing a convenient way to keep track of
+// which builder/component to use for a given method.
+//
+add-od-loader(*compiler-dispatcher*, #"fer-component", 
+  method (state :: <load-state>) => res :: <fer-builder>;
+    let src = load-object-dispatch(state);
+    let nam = load-object-dispatch(state);
+    assert-end-object(state);
+    make-builder(make(<fer-component>, name: nam, source-location: src));
+  end method
+);
+
+
+// lambda: component, source, name, arg-vars, result-type,
+// hidden-references, body.
+//
+define method dump-od (obj :: <lambda>, buf :: <dump-state>) => ();
+  if (maybe-dump-reference(obj, buf))
+    let start-pos = buf.current-pos;
+    dump-definition-header(#"fer-lambda", buf, subobjects: #t);
+    dump-od(obj.parent, buf);
+    dump-od(obj.source-location, buf);
+    dump-od(obj.name, buf);
+
+    for (def = obj.prologue.dependents.dependent.defines
+	   then def.definer-next,
+	 res = #()
+	   then pair(if (instance?(def, <initial-definition>))
+		       def.definition-of
+		     else
+		       def
+		     end,
+		     res),
+	 until: def == #f)
+    finally dump-od(reverse!(res), buf);
+    end for;
+
+    dump-od(obj.result-type, buf);
+    dump-od(obj.hidden-references?, buf);
+
+    fer-dump-od(obj.body, obj.parent, buf);
+
+    dump-end-entry(start-pos, buf);
+  end if;
+end method;
+
+add-od-loader(*compiler-dispatcher*, #"fer-lambda", 
+  method (state :: <load-state>) => res :: <lambda>;
+    let builder = load-object-dispatch(state);
+    let source = load-object-dispatch(state);
+    let name = load-object-dispatch(state);
+    let arg-vars = load-object-dispatch(state);
+    let result-type = load-object-dispatch(state);
+    let hidden = load-object-dispatch(state);
+    build-function-body(builder, $default-policy, source, #t,
+    			name, arg-vars, result-type, hidden);
+
+    load-object-dispatch(state);
+    assert-end-object(state);
+    end-body(builder);
+    let res = builder-result(builder);
+  end method
+);
