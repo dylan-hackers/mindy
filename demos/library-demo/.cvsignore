@@ -1,1 +1,14 @@
 GNUmakefile
+fact-init.c
+fact.c
+fact-exports.c
+fact-heap.s
+cc-fact-files.mak
+heap.s
+inits.c
+library-demo-exports.c
+library-demo.c
+libdemo-init.c
+libdemo-heap.s
+cc-libdemo-files.mak
+library-demo

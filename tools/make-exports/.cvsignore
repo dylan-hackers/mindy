@@ -1,3 +1,10 @@
 GNUmakefile
 cc-make-exports-files.mak
 cc-mkexports-files.mak
+library.c
+mkexports-init.c
+make-exports.c
+heap.s
+inits.c
+mkexports-heap.s
+make-exports

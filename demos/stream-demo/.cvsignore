@@ -1,1 +1,9 @@
 GNUmakefile
+heap.s
+inits.c
+stream-demo
+stream-demo-exports.c
+stream-demo.c
+streamdemo-init.c
+streamdemo-heap.s
+cc-streamdemo-files.mak

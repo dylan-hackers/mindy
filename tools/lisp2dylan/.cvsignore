@@ -1,2 +1,9 @@
 GNUmakefile
 cc-lisp2dylan-files.mak
+library.c
+lisp2dylan-init.c
+lisp2dylan.c
+heap.s
+inits.c
+lisp2dylan-heap.s
+lisp2dylan

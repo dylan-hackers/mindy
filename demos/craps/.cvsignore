@@ -1,1 +1,9 @@
 GNUmakefile
+craps-init.c
+craps.c
+craps-exports.c
+heap.s
+craps-heap.s
+inits.c
+cc-craps-files.mak
+craps

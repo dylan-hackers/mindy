@@ -1,1 +1,9 @@
 GNUmakefile
+html2txt.c
+heap.s
+inits.c
+html2txt-exports.c
+html-init.c
+html-heap.s
+cc-html-files.mak
+html2txt

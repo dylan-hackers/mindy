@@ -1,2 +1,9 @@
 GNUmakefile
 cc-synopsis-files.mak
+library.c
+synopsis
+synopsis-init.c
+synopsis.c
+heap.s
+inits.c
+synopsis-heap.s

@@ -9,3 +9,5 @@ parsergen-heap.s
 cc-parsergen-files.mak
 parsergen
 .cvsignore
+cc-parsergen-files.mak-temp
+parsergen.c-temp

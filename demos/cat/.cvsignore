@@ -1,1 +1,9 @@
 GNUmakefile
+cat-init.c
+cat.c
+cat
+cat-exports.c
+heap.s
+cat-heap.s
+inits.c
+cc-cat-files.mak
