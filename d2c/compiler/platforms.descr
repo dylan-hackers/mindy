@@ -1,7 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
 
-
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
 // are called, how to run the assembler, and how to run the C
