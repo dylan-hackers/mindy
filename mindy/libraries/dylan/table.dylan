@@ -12,7 +12,7 @@ Author:		Nick Kramer (nkramer@cs.cmu.edu)
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.5 1994/06/13 13:01:31 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.6 1994/06/19 01:22:46 nkramer Exp $
 //
 
 /* -------------------------------------------------------------------
@@ -31,14 +31,14 @@ Author:		Nick Kramer (nkramer@cs.cmu.edu)
 // default method, <equal-table>s also have to worry about garbage
 // collection.
 
-// <value-table>s take a user defined key test and key hash function
-// THAT DOESN'T INVOLVE ADDRESSES. (ie, the key hash involves values,
-// not addresses) The functions must be fully defined on all objects
-// that the user will be placing in the value-table. The key-test
-// defaults to =, but there is no default key-hash. The user must
-// supply a key-hash that always returns $permanent-hash-state. (Note
-// that object-hash returns $permanent-hash-state under many
-// circumstances)
+// <value-table>s are an abstract class who's hash function never
+// involves addresses (ie, always returns $permanent-hash-state). The
+// user defines a subclass of <value-table> and writes a method for
+// table-protocol. This will probably involve writing a new hash
+// function to be used on the hash keys. *Make sure this function does
+// not call object-hash*.
+
+// For a more in depth explanation, see mindy.doc
 
 /* -------------------------------------------------------------------
  * Mindy-specific code
@@ -47,8 +47,6 @@ Author:		Nick Kramer (nkramer@cs.cmu.edu)
 // merge-hash-codes is predefined in Mindy. However, at present
 // merge-hash-states is not. This calls merge-hash-codes and throws
 // away information about the hash ids.
-// Hopefully in the future merge-hash-states will also be predefined
-// in Mindy.
 
 define method merge-hash-states (state1 :: <object>, state2 :: <object>) 
           => merged :: <object>;
@@ -60,6 +58,11 @@ end method merge-hash-states;
 /* -------------------------------------------------------------------
  * Stuff that Mindy takes care of, but other implementations might not:
  * ------------------------------------------------------------------- */
+
+// Also be sure to verify that equal-hash and value-hash work as
+// advertised. They depend on object-hash (which is always defined,
+// but might not behave as Mindy's does) and float-hash (which is
+// implemented in Mindy but not standard).
 
 // define constant $permanent-hash-state = #f;
 //
@@ -184,9 +187,7 @@ end class <equal-table>;
 
 /* ---------------- */
 
-define class <value-table> (<table>)
-  slot key-test-slot :: <function>, init-keyword: key-test: ;
-  slot key-hash-slot :: <function>, required-init-keyword: key-hash: ;
+define abstract class <value-table> (<table>)
 end class <value-table>;
 
 /* ---------------- */
@@ -237,31 +238,11 @@ define method initialize (ht :: <table>,
   next-method ();
 end method initialize;
 
-
-define method initialize (ht :: <value-table>,
-			  #next next-method,
-			  #rest key-value-pairs,
-			  #key key-test: key-test-function = \=,
-			  key-hash: key-hash-function);
-  ht.key-test-slot := key-test-function;
-  ht.key-hash-slot := key-hash-function;
-  apply(next-method, ht, key-value-pairs);
-end method initialize;
-
 /* ---------------- */
 
-define method key-test (ht :: <object-table>) => test :: <function>;
-  \==;
-end method key-test;
-
-
-define method key-test (ht :: <equal-table>) => test :: <function>;
-  \=;
-end method key-test;
-
-
-define method key-test (ht :: <value-table>) => test :: <function>;
-  ht.key-test-slot;
+define method key-test (ht :: <table>) => test :: <function>;
+  let test = table-protocol(ht);    // drop the second return value
+  test;
 end method key-test;
 
 /* ---------------- */
@@ -286,40 +267,54 @@ define method equal-hash (key :: <character>)
   object-hash (key);
 end method equal-hash;
 
+
 define method equal-hash (key :: <integer>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method equal-hash;
+
+
+define method equal-hash (key :: <float>)
+          => (id :: <integer>, state :: <object>);
+  float-hash(key);
+end method equal-hash;
+
 
 define method equal-hash (key :: <symbol>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method equal-hash;
 
+
 define method equal-hash (key :: <class>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method equal-hash;
+
 
 define method equal-hash (key :: <function>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method equal-hash;
 
+
 define method equal-hash (key :: <type>)
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method equal-hash;
+
 
 define method equal-hash (key :: singleton (#f))
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method equal-hash;
 
+
 define method equal-hash (key :: singleton (#t))
           => (id :: <integer>, state :: <object>);
   object-hash (key);
 end method equal-hash;
+
 
 define method equal-hash (key :: <condition>)
           => (id :: <integer>, state :: <object>);
@@ -327,20 +322,53 @@ define method equal-hash (key :: <condition>)
 end method equal-hash;
 
 
-// key-hash for reals. Doesn't look like Mindy has good support for
-// reals.
-
-// define method equal-hash (key :: <real>)
-//           => (id :: <integer>, state :: <object>);
-//   equal-hash (ht, truncate (abs (key)));
-// end method equal-hash;
-
-
-
 define method equal-hash (col :: <collection>)
           => (id :: <integer>, state :: <object>);
   collection-hash(col, equal-hash, equal-hash);
 end method equal-hash;
+
+/* ---------------- */
+
+// Object-hash returns $permanent-hash-state for <fix-num>s, the only
+// type of integer Mindy currently has. (Yes, ignore the "don't call
+// object-hash" warning at the beginning of this file. Trust me, this
+// works in *Mindy*) object-hash in Mindy does not return
+// $permanent-hash-state for anything else.
+
+define method value-hash (key :: <integer>)
+          => (id :: <integer>, state :: <object>);
+  object-hash (key);
+end method value-hash;
+
+
+define method value-hash (key :: <float>)
+          => (id :: <integer>, state :: <object>);
+  float-hash(key);
+end method value-hash;
+
+
+define method value-hash (key :: <character>)
+          => (id :: <integer>, state :: <object>);
+  value-hash(as(<integer>, key));
+end method value-hash;
+
+
+define method value-hash (key :: <symbol>)
+          => (id :: <integer>, state :: <object>);
+  string-hash(as(<string>, key));
+end method value-hash;
+
+
+define method value-hash (key :: singleton (#f))
+          => (id :: <integer>, state :: <object>);
+  values(0, $permanent-hash-state);
+end method value-hash;
+
+
+define method value-hash (key :: singleton (#t))
+          => (id :: <integer>, state :: <object>);
+  values(1, $permanent-hash-state);
+end method value-hash;
 
 /* ---------------- */
 
@@ -412,7 +440,7 @@ end method sequence-hash;
 
 define method string-hash (s :: <string>)
     => (id :: <integer>, state :: <object>);
-  sequence-hash(s, object-hash);
+  sequence-hash(s, value-hash);
 end method string-hash;
 
 /* ---------------- */
@@ -426,12 +454,6 @@ end method table-protocol;
 define method table-protocol(ht :: <equal-table>) 
          => (key-test :: <function>, key-hash :: <function>);
   values(\=, equal-hash);
-end method table-protocol;
-
-
-define method table-protocol(ht :: <value-table>) 
-         => (key-test :: <function>, key-hash :: <function>);
-  values(ht.key-test-slot, ht.key-hash-slot);
 end method table-protocol;
 
 /* ---------------- */
@@ -740,7 +762,34 @@ end method remove-key!;
 // Takes a hashtable and mutates it so that it has a different number of
 // buckets.
 
-define method resize-table (ht :: <table>, numbuckets :: <integer>)
+define method resize-table (ht :: <table>, numbuckets :: <integer>);
+  let new-array = make (<simple-object-vector>, 
+			size: numbuckets,
+			fill: #()   );
+
+  let new-state-array = make (<simple-object-vector>,
+			      size: numbuckets,
+			      fill: $permanent-hash-state   );
+
+  for (bucket in ht.bucket-array-slot)
+    for (entry in bucket)
+      let index = modulo (entry.hash-id-slot, numbuckets);
+      new-array [index] := pair (entry, new-array [index]);
+      new-state-array [index] := merge-hash-states(new-state-array [index],
+						   entry.hash-state-slot);
+    end for;
+  end for;
+
+  ht.bucket-array-slot  := new-array;
+  ht.bucket-states-slot := new-state-array;
+  ht.bucket-count-slot  := numbuckets;
+end method resize-table;
+
+
+// This version of resize-table doesn't bother updating any of the
+// merged state slots, arrays, etc.
+
+define method resize-table (ht :: <value-table>, numbuckets :: <integer>)
   let new-array = make (<simple-object-vector>, 
 			size: numbuckets,
 			fill: #()   );
