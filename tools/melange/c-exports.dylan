@@ -67,7 +67,7 @@ end module c-lexer;
 
 define module portability
   use dylan;
-  use c-lexer, import: {include-path, *handle-//-coments*};
+  use c-lexer, import: {include-path, *handle-//-comments*};
   export
     $default-defines,
     $enum-size,
