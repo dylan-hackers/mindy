@@ -20,12 +20,13 @@ is now maintained by a group of volunteers.
 To install Gwydion Dylan, take a look at the INSTALL file. For more
 information, see the following online resources:
 
-  Current maintainers' website:  http://www.randomhacks.com/dylan/
-  FTP Site:                      
-  FTP Site (mirror):             
-  Bug reports:                   gd-bugs@randomhacks.com
-  Mail to the maintainers:       gd-hackers@randomhacks.com
-  Newsgroup:                     comp.lang.dylan
+  Maintainers' website:    http://www.randomhacks.com/dylan/
+  Gwydion group:           http://legend.gwydion.cs.cmu.edu/gwydion/dylan/
+  FTP Site:                ftp://berlin.ccc.de/pub/gd/
+  FTP Site (mirror):       ftp://ftp.fu-berlin.de/pub/unix/languages/dylan/
+  Bug reports:             gd-bugs@randomhacks.com
+  Mail to the maintainers: gd-hackers@randomhacks.com
+  Newsgroup:               comp.lang.dylan
 
 If you use Gwydion to any extent, you'll want subscribe to gd-hackers so
 you can ask questions and report the inevitable bugs. Send a message to
@@ -34,4 +35,3 @@ majordomo@randomhacks.com with the body "subscribe gd-hackers".
 Be warned: Gwydion is not suitable for production work. Some of the
 omissions and shortcomings are drastic. Use Gwydion only if you're feeling
 daring and wish to experiment with a compiler currently under development.
-
