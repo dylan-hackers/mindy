@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/vector.dylan,v 1.3 2001/03/14 23:34:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/vector.dylan,v 1.4 2003/06/03 02:12:16 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -89,7 +89,7 @@ define inline method row-major-index (vec :: <vector>, #rest indices)
     vector-rank-error(indices);
   end if;
   let index :: <integer> = indices[0];
-  if (index < 0 | index > vec.size)
+  if (index < 0 | index >= vec.size)
     row-major-index-error(index);
   end;
   index;
