@@ -1,0 +1,28 @@
+Building d2c for Macintosh on CodeWarrior.
+
+PROBLEM: Coercion of a variable of a type to the same type.
+SOLUTION: Remove the type cast.
+
+PROBLEM: Illegal initialization of struct with "" or {}.
+SOLUTION: Comment out initialization and add a 256 char dummy variable after the struct to 
+be safe.
+
+PROBLEM: CodeWarrior doesn't allow more than one file of the same name in the same project.
+SOLUTION: Rename the files with their library name as the prefix, or use sub-projects.
+
+PROBLEM: Some files have long names.
+SOLUTION: Use MACOS-9 and a suitable CVS client, rename the file on UN*X/PC, or grab the 
+tarball and decompress with a suitable utility.
+
+PROBLEM: file-locations and version files not present.
+SOLUTION: Use the pre-made ones from the d2c:compiler:Macintosh folder.
+
+PROBLEM: Some files have the same names as MSL files, so the MSL ones are used instead.
+SOLUTION: Use all system search paths, explicitly add the library directories, and make sure
+all d2c folders appear before the MSL folders.
+
+PROBLEM: Not all the files this project needs are obvious.
+SOLUTION: The runtime needs MacTextFileIO.c from mindy:Macintosh:... and mac-fds.c from 
+file-io.
+
+Any other questions to Rob Myers: yarrel@netscape.net/robmyers@mac.com.
