@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.72 1995/10/16 17:54:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.73 1995/11/02 18:14:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -145,9 +145,12 @@ end;
 
 define class <output-info> (<object>)
   //
-  // Stream for the header file.
-  slot output-info-header-stream :: <stream>,
-    required-init-keyword: header-stream:;
+  // Things we have already spewed defns for.
+  slot output-info-prototypes-exist-for :: <string-table>,
+    init-function: curry(make, <string-table>);
+  //
+  slot output-info-result-structures :: <equal-table>,
+    init-function: curry(make, <equal-table>);
   //
   slot output-info-body-stream :: <stream>,
     required-init-keyword: body-stream:;
@@ -184,6 +187,21 @@ end;
 
 
 // Utilities.
+
+define method maybe-emit-prototype
+    (name :: <byte-string>, info :: <object>, output-info :: <output-info>)
+    => ();
+  unless (element(output-info.output-info-prototypes-exist-for, name,
+		  default: #f))
+    emit-prototype-for(name, info, output-info);
+    output-info.output-info-prototypes-exist-for[name] := #t;
+  end;
+end;
+
+define generic emit-prototype-for
+    (name :: <byte-string>, info :: <object>, output-info :: <output-info>)
+    => ();
+
 
 define method get-info-for (thing :: <annotatable>,
 			    output-info :: <output-info>)
@@ -441,46 +459,6 @@ define method make-info-for
 		     #(), output-info);
 end;
 
-define method compute-function-prototype
-    (function :: <fer-function-region>, output-info :: <output-info>)
-    => res :: <byte-string>;
-  let function-info = get-info-for(function, output-info);
-  let c-name = main-entry-name(function-info, output-info);
-  let stream = make(<byte-string-output-stream>);
-  let result-rep = function-info.function-info-result-representation;
-  if (result-rep == #() | result-rep == #"doesn't-return")
-    write("void", stream);
-  elseif (result-rep == #"cluster")
-    write("descriptor_t *", stream);
-  elseif (instance?(result-rep, <pair>))
-    let header = output-info.output-info-header-stream;
-    format(header, "struct %s_results {\n", c-name);
-    for (rep in result-rep, index from 0)
-      format(header, "    %s R%d;\n",
-	     rep.representation-c-type, index);
-    end;
-    format(header, "};\n\n");
-    format(stream, "struct %s_results", c-name);
-  else
-    write(result-rep.representation-c-type, stream);
-  end;
-  format(stream, " %s(descriptor_t *orig_sp", c-name);
-  for (rep in function-info.function-info-argument-representations,
-       index from 0,
-       var = function.prologue.dependents.dependent.defines
-	 then var & var.definer-next)
-    format(stream, ", %s A%d", rep.representation-c-type, index);
-    if (var)
-      let varinfo = var.var-info;
-      if (instance?(varinfo, <debug-named-info>))
-	format(stream, " /* %s */", varinfo.debug-name);
-      end;
-    end;
-  end;
-  write(')', stream);
-  stream.string-output-stream-string;
-end;
-
 define method entry-point-c-name
     (entry :: <ct-entry-point>, output-info :: <output-info>)
     => res :: <string>;
@@ -606,12 +584,15 @@ define generic emit-tlf-gunk (tlf :: <top-level-form>,
 define method emit-tlf-gunk (tlf :: <top-level-form>,
 			     output-info :: <output-info>)
     => ();
+  format(output-info.output-info-body-stream, "/* %s */\n\n", tlf);
 end;
 
 define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 			     output-info :: <output-info>)
     => ();
   let bstream = output-info.output-info-body-stream;
+  format(bstream, "/* %s */\n\n", tlf);
+
   let gstream = output-info.output-info-guts-stream;
 
   format(bstream, "descriptor_t *pad_cluster(descriptor_t *start, "
@@ -684,23 +665,24 @@ end;
 define method emit-tlf-gunk (tlf :: <define-bindings-tlf>,
 			     output-info :: <output-info>)
     => ();
+  format(output-info.output-info-body-stream, "/* %s */\n\n", tlf);
   for (defn in tlf.tlf-required-defns)
     emit-bindings-definition-gunk(defn, output-info);
   end;
   if (tlf.tlf-rest-defn)
     emit-bindings-definition-gunk(tlf.tlf-rest-defn, output-info);
   end;
+  write('\n', output-info.output-info-body-stream);
 end;
 
 define method emit-bindings-definition-gunk
     (defn :: <bindings-definition>, output-info :: <output-info>) => ();
   let info = get-info-for(defn, output-info);
-  let stream = output-info.output-info-header-stream;
+  let stream = output-info.output-info-body-stream;
   let rep = info.backend-var-info-rep;
   if (instance?(rep, <immediate-representation>))
-    format(stream, "static %s %s",
-	   rep.representation-c-type,
-	   info.backend-var-info-name);
+    let name = info.backend-var-info-name;
+    format(stream, "static %s %s = ", rep.representation-c-type, name);
     let init-value = if (instance?(defn, <variable-definition>))
 		       defn.defn-init-value;
 		     else
@@ -709,21 +691,46 @@ define method emit-bindings-definition-gunk
     if (init-value)
       let (init-value-expr, init-value-rep)
 	= c-expr-and-rep(init-value, rep, output-info);
-      format(stream, "= %s;\t/* %s */\n\n",
+      format(stream, "%s;\t/* %s */\n",
 	     conversion-expr(rep, init-value-expr, init-value-rep,
 			     output-info),
 	     defn.defn-name);
     else
-      format(stream, ";\t/* %s */\nstatic int %s_initialized = FALSE;\n\n",
-	     defn.defn-name,
-	     info.backend-var-info-name);
+      format(stream, "0;\t/* %s */\nstatic int %s_initialized = FALSE;\n",
+	     defn.defn-name, name);
     end;
+    output-info.output-info-prototypes-exist-for[name] := #t;
   else
-    format(stream, "/* %s allocated as %s */\n\n",
+    format(stream, "/* %s allocated as %s */\n",
 	   defn.defn-name,
 	   info.backend-var-info-name);
   end;
 end;
+
+define method emit-prototype-for
+    (name :: <byte-string>, defn :: <bindings-definition>,
+     output-info :: <output-info>)
+    => ();
+  let info = get-info-for(defn, output-info);
+  let stream = output-info.output-info-body-stream;
+  let rep = info.backend-var-info-rep;
+  if (instance?(rep, <immediate-representation>))
+    format(stream, "static %s %s;\t/* %s */\n",
+	   rep.representation-c-type,
+	   info.backend-var-info-name,
+	   defn.defn-name);
+    let init-value = if (instance?(defn, <variable-definition>))
+		       defn.defn-init-value;
+		     else
+		       defn.ct-value;
+		     end;
+    unless (init-value)
+      format(stream, "static boolean %s_initialized = FALSE;\n",
+	     info.backend-var-info-name);
+    end;
+    write('\n', stream);
+  end;
+end;  
 
 define method emit-bindings-definition-gunk
     (defn :: <variable-definition>, output-info :: <output-info>,
@@ -795,14 +802,9 @@ define method emit-function
   output-info.output-info-cur-stack-depth := 0;
   assert(output-info.output-info-local-vars.size == 0);
 
-  let prototype = compute-function-prototype(function, output-info);
-
-  format(output-info.output-info-header-stream, "/* %s */\n%s;\n\n",
-	 function.name, prototype);
-
-  let stream = output-info.output-info-body-stream;
-  format(stream, "/* %s */\n", function.name);
-  format(stream, "%s\n{\n", prototype);
+  let function-info = get-info-for(function, output-info);
+  let c-name = main-entry-name(function-info, output-info);
+  output-info.output-info-prototypes-exist-for[c-name] := #t;
 
   let max-depth = analize-stack-usage(function);
   for (i from 0 below max-depth)
@@ -810,9 +812,12 @@ define method emit-function
 	   "descriptor_t *cluster_%d_top;\n",
 	   i);
   end;
-
   emit-region(function.body, output-info);
 
+  let stream = output-info.output-info-body-stream;
+  format(stream, "/* %s */\n", function.name);
+  format(stream, "%s\n{\n",
+	 compute-function-prototype(function, function-info, output-info));
   write(output-info.output-info-vars-stream.string-output-stream-string,
 	stream);
   write('\n', stream);
@@ -821,8 +826,73 @@ define method emit-function
   write("}\n\n", stream);
 end;
 
-define method emit-region (region :: <simple-region>,
-			   output-info :: <output-info>)
+define method compute-function-prototype
+    (function :: false-or(<fer-function-region>),
+     function-info :: <function-info>,
+     output-info :: <output-info>)
+    => res :: <byte-string>;
+  let c-name = main-entry-name(function-info, output-info);
+  let stream = make(<byte-string-output-stream>);
+  let result-rep = function-info.function-info-result-representation;
+  if (result-rep == #() | result-rep == #"doesn't-return")
+    write("void", stream);
+  elseif (result-rep == #"cluster")
+    write("descriptor_t *", stream);
+  elseif (instance?(result-rep, <pair>))
+    format(stream, "struct %s",
+	   pick-result-structure(result-rep, output-info));
+  else
+    write(result-rep.representation-c-type, stream);
+  end;
+  format(stream, " %s(descriptor_t *orig_sp", c-name);
+  for (rep in function-info.function-info-argument-representations,
+       index from 0,
+       var = function & function.prologue.dependents.dependent.defines
+	 then var & var.definer-next)
+    format(stream, ", %s A%d", rep.representation-c-type, index);
+    if (var)
+      let varinfo = var.var-info;
+      if (instance?(varinfo, <debug-named-info>))
+	format(stream, " /* %s */", varinfo.debug-name);
+      end;
+    end;
+  end;
+  write(')', stream);
+  stream.string-output-stream-string;
+end;
+
+define method pick-result-structure
+    (results :: <list>, output-info :: <output-info>) => res :: <byte-string>;
+  let types = map-as(<simple-object-vector>, representation-c-type, results);
+  let table = output-info.output-info-result-structures;
+  let struct = element(table, types, default: #f);
+  if (struct)
+    struct;
+  else
+    let name = new-global(output-info);
+    let stream = output-info.output-info-body-stream;
+    format(stream, "struct %s {\n", name);
+    for (type in types, index from 0)
+      format(stream, "    %s R%d;\n", type, index);
+    end;
+    format(stream, "};\n\n");
+    element(table, types) := name;
+    name;
+  end;
+end;
+
+define method emit-prototype-for
+    (name :: <byte-string>, function-info :: <function-info>,
+     output-info :: <output-info>)
+    => ();
+  format(output-info.output-info-body-stream,
+	 "extern %s;\t/* %s */\n\n",
+	 compute-function-prototype(#f, function-info, output-info),
+	 function-info.function-info-name);
+end;
+
+define method emit-region
+    (region :: <simple-region>, output-info :: <output-info>)
     => ();
   for (assign = region.first-assign then assign.next-op,
        while: assign)
@@ -997,8 +1067,8 @@ define method emit-return
   let temp = new-local(output-info);
   let function = return.block-of;
   let function-info = get-info-for(function, output-info);
-  let name = main-entry-name(function-info, output-info);
-  format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
+  let name = pick-result-structure(result-reps, output-info);
+  format(output-info.output-info-vars-stream, "struct %s %s;\n",
 	 name, temp);
   for (rep in result-reps,
        index from 0,
@@ -1172,7 +1242,9 @@ define method xep-expr-and-name
   end;
   let general-entry = func.general-entry;
   let entry-info = get-info-for(general-entry, output-info);
-  values(main-entry-name(entry-info, output-info), general-entry.name);
+  let entry-name = main-entry-name(entry-info, output-info);
+  maybe-emit-prototype(entry-name, entry-info, output-info);
+  values(entry-name, general-entry.name);
 end;
 
 define method xep-expr-and-name
@@ -1181,7 +1253,9 @@ define method xep-expr-and-name
     => (expr :: <string>, name :: <string>);
   let generic-entry = func.generic-entry;
   let entry-info = get-info-for(generic-entry, output-info);
-  values(main-entry-name(entry-info, output-info), generic-entry.name);
+  let entry-name = main-entry-name(entry-info, output-info);
+  maybe-emit-prototype(entry-name, entry-info, output-info);
+  values(entry-name, generic-entry.name);
 end;
 
 define method xep-expr-and-name
@@ -1225,7 +1299,9 @@ define method xep-expr-and-name
     error("%= doesn't have a generic entry.", ctv);
   end;
   let info = get-info-for(ctv, output-info);
-  values(general-entry-name(info, output-info), ctv.ct-function-name);
+  let name = general-entry-name(info, output-info);
+  maybe-emit-prototype(name, #"general", output-info);
+  values(name, ctv.ct-function-name);
 end;
 
 define method xep-expr-and-name
@@ -1253,7 +1329,9 @@ define method xep-expr-and-name
      output-info :: <output-info>)
     => (expr :: false-or(<string>), name :: false-or(<string>));
   let info = get-info-for(ctv, output-info);
-  values(generic-entry-name(info, output-info), ctv.ct-function-name);
+  let name = generic-entry-name(info, output-info);
+  maybe-emit-prototype(name, #"generic", output-info);
+  values(name, ctv.ct-function-name);
 end;
 
 
@@ -1297,8 +1375,9 @@ define method emit-assignment
 		    output-info);
   elseif (instance?(result-rep, <list>))
     let temp = new-local(output-info);
-    format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
-	   c-name, temp);
+    format(output-info.output-info-vars-stream, "struct %s %s;\n",
+	   pick-result-structure(result-rep, output-info),
+	   temp);
     format(output-info.output-info-guts-stream, "%s = %s;\n", temp, call);
     let result-exprs = make(<vector>, size: result-rep.size);
     for (rep in result-rep,
@@ -1315,13 +1394,16 @@ end;
 define method find-main-entry-info
     (func :: <function-literal>, output-info :: <output-info>)
     => res :: <function-info>;
-  get-info-for(func.main-entry, output-info);
+  let entry = func.main-entry;
+  let info = get-info-for(entry, output-info);
+  maybe-emit-prototype(main-entry-name(info, output-info), info, output-info);
+  info;
 end;
 
 define method find-main-entry-info
     (func :: <definition-constant-leaf>, output-info :: <output-info>)
     => res :: <function-info>;
-  get-info-for(func.const-defn.ct-value, output-info);
+  find-main-entry-info(func.const-defn.ct-value, output-info);
 end;
 
 define method find-main-entry-info
@@ -1335,7 +1417,7 @@ define method find-main-entry-info
     => res :: <function-info>;
   let discriminator = defn.generic-defn-discriminator;
   if (discriminator)
-    get-info-for(discriminator, output-info);
+    find-main-entry-info(discriminator, output-info);
   else
     error("Known call of a generic function without a static discriminator?");
   end;
@@ -1344,13 +1426,15 @@ end;
 define method find-main-entry-info
     (defn :: <abstract-method-definition>, output-info :: <output-info>)
     => res :: <function-info>;
-  get-info-for(defn.ct-value, output-info);
+  find-main-entry-info(defn.ct-value, output-info);
 end;
 
 define method find-main-entry-info
     (ctv :: <ct-function>, output-info :: <output-info>)
     => res :: <function-info>;
-  get-info-for(ctv, output-info);
+  let info = get-info-for(ctv, output-info);
+  maybe-emit-prototype(main-entry-name(info, output-info), info, output-info);
+  info;
 end;
 
 define method find-main-entry-info
@@ -1447,6 +1531,7 @@ define method emit-assignment
   let defn = ref.variable;
   let info = get-info-for(defn, output-info);
   let name = info.backend-var-info-name;
+  maybe-emit-prototype(name, defn, output-info);
   let rep = info.backend-var-info-rep;
   let stream = output-info.output-info-guts-stream;
   unless (defn.defn-init-value)
@@ -1470,6 +1555,7 @@ define method emit-assignment
   let defn = set.variable;
   let info = get-info-for(defn, output-info);
   let target = info.backend-var-info-name;
+  maybe-emit-prototype(target, defn, output-info);
   let rep = info.backend-var-info-rep;
   let source = extract-operands(set, output-info, rep);
   spew-pending-defines(output-info);
