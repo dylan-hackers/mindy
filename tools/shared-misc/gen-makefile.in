@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.12 2000/10/07 00:57:07 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.13 2000/10/31 13:35:15 dauclair Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -199,6 +199,7 @@ sub set_default_defaults {
     $install_data = "cp";
     $install_program = "install";
     $install_library = "install";
+    $compiler_debug_flags = " ";
 }
 
 # find_Defaults_file() -- internal
@@ -250,9 +251,15 @@ sub read_Defaults_file {
     # Extract features from target platform
     local($feature_name);
     for $feature_name (split(/\s+/, $target_platform{'default_features'})) {
+	$compiler_debug_flags = "$compiler_debug_flags -D$feature_name ";
 	$feature_name =~ tr/-A-Z/_a-z/;
 	$features{$feature_name} = 1;
     }
+
+    $target_platform{'platform_name'} =~ /\-(\w+)\-/;
+    $debug_platform_name = $1;
+    $debug_platform_name =~ tr/a-z/A-Z/;
+    $debug_platform_name = "-D__$debug_platform_name" . "__";
 
     # Create some useful shorthands (internal use only)
     $makefile = $host_platform{'makefile_name'};
@@ -493,13 +500,13 @@ sub maybe_emit_d2c_defines {
 	    print("CC=$CC\n");
 	}
 	print <<EOF;
-D2C = $D2C
+D2C = $D2C $compiler_debug_flags
 D2CFLAGS = $D2CFLAGS
 CFLAGS = $CFLAGS
-CPPFLAGS = $CPPFLAGS
+CPPFLAGS = $CPPFLAGS $debug_platform_name
 MELANGE = $MELANGE
 PARSERGEN = $PARSERGEN
-MC = $MC
+MC = $MC $compiler_debug_flags -Dmindy
 MINDY = $MINDY
 
 EOF
