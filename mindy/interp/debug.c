@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.32 1994/08/04 21:05:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.33 1994/08/21 00:42:48 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -712,7 +712,7 @@ static void library_cmd(void)
 	lib = find_library(yylval, FALSE);
 	if (lib) {
 	    CurLibrary = lib;
-	    CurModule = NULL;
+	    CurModule = find_module(lib, symbol("Dylan-User"), FALSE, FALSE);
 	}
 	else {
 	    printf("No library named ");
