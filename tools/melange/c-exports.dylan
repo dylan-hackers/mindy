@@ -4,7 +4,7 @@ copyright: Copyright (C) 1994, 1996, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.6 1998/10/18 20:16:37 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.7 1998/12/17 08:05:04 emk Exp $
 
 //======================================================================
 //
@@ -223,6 +223,7 @@ define module c-declarations
 					    // compute-dylan-name
 
     // "Write declaration phase"
+    <written-name-record>,
     write-declaration, 
     write-file-load, write-mindy-includes,
 

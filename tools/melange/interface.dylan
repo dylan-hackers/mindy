@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.5 1998/10/18 20:16:42 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.6 1998/12/17 08:05:05 emk Exp $
 
 //======================================================================
 //
@@ -520,20 +520,26 @@ define method process-parse-state
     let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
     write-mindy-includes(state.mindy-include-file, decls);
-    do(rcurry(write-declaration, load-string, out-stream), decls);
+    let written-names = make(<written-name-record>);
+    do(rcurry(write-declaration, written-names, load-string, out-stream),
+       decls);
   else
     write(out-stream, "#if (mindy)\n");
     melange-target := #"mindy";
     let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
     write-mindy-includes(state.mindy-include-file, decls);
-    do(rcurry(write-declaration, load-string, out-stream), decls);
+    let written-names = make(<written-name-record>);
+    do(rcurry(write-declaration, written-names, load-string, out-stream),
+       decls);
     write(out-stream, "#else\n");
     melange-target := #"d2c";
     let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
     write-mindy-includes(state.mindy-include-file, decls);
-    do(rcurry(write-declaration, load-string, out-stream), decls);
+    let written-names = make(<written-name-record>);
+    do(rcurry(write-declaration, written-names, load-string, out-stream),
+       decls);
     write(out-stream, "#endif\n");
   end if;
 end method process-parse-state;
