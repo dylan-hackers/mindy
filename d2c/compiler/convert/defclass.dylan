@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.52 1996/02/05 01:20:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.53 1996/02/06 15:46:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -454,6 +454,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 		  name: make(<basic-name>,
 			     symbol: name,
 			     module: *Current-Module*),
+		  library: *Current-Library*,
 		  supers: form.defclass-supers,
 		  functional: class-functional?,
 		  sealed: ~class-open?,
@@ -466,14 +467,18 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
     //
     // Implicity define the accessor generics.
     if (slot.slot-defn-sizer-defn)
-      implicitly-define-generic(slot.slot-defn-getter-name, 2, #f, #f);
+      implicitly-define-generic
+	(*Current-Library*, slot.slot-defn-getter-name, 2, #f, #f);
       if (slot.slot-defn-setter-name)
-	implicitly-define-generic(slot.slot-defn-setter-name, 3, #f, #f);
+	implicitly-define-generic
+	  (*Current-Library*, slot.slot-defn-setter-name, 3, #f, #f);
       end;
     else
-      implicitly-define-generic(slot.slot-defn-getter-name, 1, #f, #f);
+      implicitly-define-generic
+	(*Current-Library*, slot.slot-defn-getter-name, 1, #f, #f);
       if (slot.slot-defn-setter-name)
-	implicitly-define-generic(slot.slot-defn-setter-name, 2, #f, #f);
+	implicitly-define-generic
+	  (*Current-Library*, slot.slot-defn-setter-name, 2, #f, #f);
       end;
     end;
   end;
@@ -770,12 +775,16 @@ define method finalize-slot
   // Define the accessor methods.
   unless (slot.slot-defn-allocation == #"virtual")
     //
+    // Extract the library from the class definition.
+    let library = tlf.tlf-defn.defn-library;
+    //
     // Are the accessor methods hairy?
     let hairy? = ~cclass | instance?(slot-type, <unknown-ctype>);
     //
     slot.slot-defn-getter
       := make(<getter-method-definition>,
 	      base-name: slot.slot-defn-getter-name,
+	      library: library,
 	      signature: make(<signature>,
 			      specializers: specializers,
 			      returns: slot-type),
@@ -783,11 +792,11 @@ define method finalize-slot
 	      slot: info);
     let gf = slot.slot-defn-getter.method-defn-of;
     if (gf)
-      ct-add-method(gf, slot.slot-defn-getter);
+      ct-add-method(tlf, gf, slot.slot-defn-getter);
     end;
     if (slot.slot-defn-sealed?)
       if (gf)
-	add-seal(gf, specializers, tlf);
+	add-seal(gf, library, specializers, tlf);
       else
 	compiler-error
 	  ("%s doesn't name a generic function, so can't be sealed.",
@@ -798,6 +807,7 @@ define method finalize-slot
       := if (slot.slot-defn-setter-name)
 	   let defn = make(<setter-method-definition>,
 			   base-name: slot.slot-defn-setter-name,
+			   library: library,
 			   signature: make(<signature>,
 					   specializers:
 					     pair(slot-type, specializers),
@@ -806,11 +816,11 @@ define method finalize-slot
 			   slot: info);
 	   let gf = defn.method-defn-of;
 	   if (gf)
-	     ct-add-method(gf, defn);
+	     ct-add-method(tlf, gf, defn);
 	   end;
 	   if (slot.slot-defn-sealed?)
 	     if (gf)
-	       add-seal(gf, pair(object-ctype(), specializers), tlf);
+	       add-seal(gf, library, pair(object-ctype(), specializers), tlf);
 	     else
 	       compiler-error
 		 ("%s doesn't name a generic function, so can't be sealed.",
@@ -821,8 +831,8 @@ define method finalize-slot
 	 else
 	   #f;
 	 end;
-  end;
-end;
+  end unless;
+end method finalize-slot;
 
 
 // class-defn-mumble-function accessors.
@@ -2257,18 +2267,31 @@ define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
   let defn = tlf.tlf-defn;
   dump-simple-object(#"define-binding-tlf", state, defn);
   for (slot in defn.class-defn-slots)
+    let sealed? = slot.slot-defn-sealed?;
     let getter = slot.slot-defn-getter;
-    if (getter.method-defn-of
-	  & name-inherited-or-exported?(getter.defn-name))
+    if (getter.method-defn-of & name-inherited-or-exported?(getter.defn-name))
       dump-od(slot.slot-defn-getter, state);
+      if (sealed? & getter.method-defn-of.defn-library ~== defn.defn-library)
+	dump-simple-object(#"seal-generic", state,
+			   getter.method-defn-of,
+			   defn.defn-library,
+			   getter.function-defn-signature.specializers);
+      end if;
     end;
     let setter = slot.slot-defn-setter;
     if (setter & setter.method-defn-of
 	  & name-inherited-or-exported?(setter.defn-name))
       dump-od(setter, state);
-    end;
-  end;
-end;
+      if (sealed? & setter.method-defn-of.defn-library ~== defn.defn-library)
+	dump-simple-object
+	  (#"seal-generic", state, setter.method-defn-of, defn.defn-library,
+	   // We don't use the setter specializers, because the first
+	   // specializer will be the slot type, not <object>.
+	   pair(object-ctype(), getter.function-defn-signature.specializers));
+      end if;
+    end if;
+  end for;
+end method dump-od;
 
 // These methods act like getters/setters on the <real-class-definition>, but
 // really get/set slots in the cclass.  They are used so that we can dump
@@ -2347,8 +2370,9 @@ define constant $class-definition-slots
 		     class-defn-vector-slot, #f,
 		       class-defn-vector-slot-setter));
 
-add-make-dumper(#"class-definition", *compiler-dispatcher*, <real-class-definition>,
-		$class-definition-slots, load-external: #t,
+add-make-dumper(#"class-definition", *compiler-dispatcher*,
+		<real-class-definition>, $class-definition-slots,
+		load-external: #t,
 		load-side-effect:
 		  method (defn :: <real-class-definition>) => ();
 		    let class = defn.class-defn-cclass;
