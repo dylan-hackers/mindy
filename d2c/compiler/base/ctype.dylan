@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.54 1996/08/22 18:31:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.55 1997/01/13 03:12:11 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -257,6 +257,7 @@ end;
 // Singleton with:
 //   singleton -- #f, 'cause == singletons are picked off
 //   limited-int -- in range?
+//   limited-collection -- instance?(sing.value, limited)
 //   byte-char -- is the singleton a byte-character?
 //   subclass -- subtype?(sing.value, subclass.subclass-of)
 //   direct -- singleton.base-class == direct.base-class
@@ -265,13 +266,24 @@ end;
 //   singleton -- #f, by definition
 //   limited integer -- the base classes are subtype? and the ranges are in
 //     order
+//   limited-collection -- #f, 'cause integers and collections are disjoint
 //   byte-char -- #f, 'cause integers and characters are disjoint
 //   subclass -- #f, 'cause integers and classes are disjoint
 //   direct -- limint.base-class == direct.base-class
 //   class -- subtype?(base-class, class)
+// limited-collection:
+//   singleton -- #f, by definition
+//   limited-int -- #f, 'cause integers and collections are disjoint
+//   limited-collection -- the base classes are subtype?, the element types 
+//     are equal, and the sizes are "compatible"
+//   byte-char -- #f, 'cause characters and collections are disjoint
+//   subclass -- #f, 'cause collections and classes are disjoint
+//   direct -- #f, by fiat
+//   class -- subtype?(base-class, class)
 // byte-char:
 //   singleton -- #f, by definition
 //   limited-int -- #f, 'cause characters and integers are disjoint
+//   limited-collection -- #f, 'cause characters and collections are disjoint
 //   byte-char -- can't happen, cause == types are picked off.
 //   subclass -- #f, 'cause characters and classes are disjoint
 //   direct -- bchar.base-class == direct.base-class
@@ -279,6 +291,7 @@ end;
 // subclass:
 //   singleton -- #f, by definition
 //   limited-int -- #f, 'cause integers and classes are disjoint.
+//   limited-collection -- #f, 'cause collections and classes are disjoint
 //   byte-char -- #f, 'cause characters and classes are disjoint
 //   subclass -- subtype?(t1.subclass-of, t2.subclass-of)
 //   direct -- #f, by definition
@@ -286,6 +299,7 @@ end;
 // Direct:
 //   singleton -- #f, by definition.
 //   limited-int -- #f, by definition.
+//   limited-collection -- #f, by definition
 //   byte-char -- #f, by definition.
 //   subclass -- #f, by definition.
 //   direct -- #f, 'cause == direct classes are picked off.
@@ -293,6 +307,7 @@ end;
 // class:
 //   singleton -- #f, by definition.
 //   limited integer -- #f, by definition.
+//   limited-collection -- #f, by definition
 //   byte-char -- #f, by definition.
 //   subclass -- #f, by definition.
 //   direct -- #f, by definition
@@ -1124,6 +1139,190 @@ define constant limited-int-union = method
 end method;
 
 
+/// Limited collection types:
+
+// A limited-collection-table is used to keep track of all the limited collections we
+// have already allocated, so we can reuse them.
+
+define class <limited-collection-table> (<table>)
+end;
+
+define sealed domain make (singleton(<limited-collection-table>));
+define sealed domain initialize (<limited-collection-table>);
+
+define method table-protocol (table :: <limited-collection-table>)
+    => (test :: <function>, hash :: <function>);
+  values(\=,
+	 method (key :: <vector> /* of base, element, size/dimensions */)
+	   let types-id = merge-hash-codes(key.first.type-hash,
+					   $permanent-hash-state,
+					   key.second.type-hash,
+					   $permanent-hash-state,
+					   ordered: #t);
+	   let (size-hash, size-state) = equal-hash(key.third);
+	   merge-hash-codes(types-id, $permanent-hash-state,
+			    size-hash, size-state, ordered: #t);
+	 end);
+end;
+
+define constant $limited-collection-table = make(<limited-collection-table>);
+
+define class <limited-collection-ctype> (<limited-ctype>, <ct-value>)
+  slot element-type :: <ctype>, required-init-keyword: element-type:;
+  slot size-or-dimension :: type-union(<false>, <integer>, <sequence>) = #f,
+       init-keyword: size:;
+end class;
+
+define sealed domain make (singleton(<limited-collection-ctype>));
+
+define method make (class == <limited-collection-ctype>, #next next-method,
+		    #key base-class, element-type, size)
+    => res :: <limited-collection-ctype>;
+  let key = vector(base-class, element-type, size);
+  element($limited-collection-table, key, default: #f)
+    | (element($limited-collection-table, key) := next-method());
+end;
+
+define method print-object (limcol :: <limited-collection-ctype>,
+			    stream :: <stream>)
+    => ();
+  pprint-logical-block
+    (stream,
+     prefix: "{",
+     body: method (stream)
+	     write-class-name(limcol, stream);
+	     write-element(stream, ' ');
+	     pprint-indent(#"block", 2, stream);
+	     pprint-newline(#"linear", stream);
+	     pprint-logical-block
+	       (stream,
+		prefix: "(",
+		body: method (stream)
+			print(limcol.base-class, stream);
+			write(stream, ", ");
+			pprint-newline(#"fill", stream);
+			format(stream, "element-type: %=",
+			       limcol.element-type);
+			if (limcol.size-or-dimension)
+			  write(stream, ", ");
+			  pprint-newline(#"fill", stream);
+			  format(stream, "size/dim: %=",
+				 limcol.size-or-dimension);
+			end;
+		      end,
+		suffix: ")");
+	   end,
+     suffix: "}");
+end;
+
+define method print-message
+    (limcol :: <limited-collection-ctype>, stream :: <stream>)
+    => ();
+  write(stream, "limited(");
+  print-message(limcol.base-class, stream);
+  format(stream, ", of: %s", limcol.element-type);
+  if (limcol.size-or-dimension)
+    format(stream, ", size: %d", limcol.size-or-dimension);
+  end;
+  write-element(stream, ')');
+end;
+
+// ctype-extent-dispatch{<limited-collection-ctype>}
+//
+// Find the minimal extent of the limited collection type.
+//
+define method ctype-extent-dispatch
+    (type :: <limited-collection-ctype>)
+    => res :: <ctype>;
+  local method build-limited(class)
+          make(<limited-collection-ctype>, base-class: class,
+               element-type: type.element-type, size: type.size-or-dimension);
+        end method;
+  let base-extent = ctype-extent(type.base-class);
+  if (instance?(base-extent, <union-ctype>))
+    reduce(method (result :: <ctype>, member :: <ctype>)
+	     => result :: <ctype>;
+ 	     ctype-union(result, build-limited(member));
+	   end method,
+	   empty-ctype(),
+	   base-extent.members);
+  else
+    build-limited(base-extent);
+  end if;
+//  type;
+end method ctype-extent-dispatch;
+
+// csubtype-dispatch{<limited-collection-ctype>,<limited-collection-ctype>}
+//
+// A limited collection type is a subtype of another if the element types are
+// identical and the sizes are compatible (and the base class is a subtype.)
+//
+define method csubtype-dispatch
+    (type1 :: <limited-collection-ctype>, type2 :: <limited-collection-ctype>)
+    => result :: <boolean>;
+  csubtype?(type1.base-class, type2.base-class)
+    & (type1.element-type = type2.element-type)
+    & (~type2.size-or-dimension
+	 | type1.size-or-dimension = type2.size-or-dimension
+	 | (instance?(type2.size-or-dimension, <sequence>)
+	      & (reduce1(\*, type2.size-or-dimension)
+		   = type1.size-or-dimension)));
+end method csubtype-dispatch;
+	 
+define method ctype-intersection-dispatch
+    (type1 :: <limited-collection-ctype>, type2 :: <limited-collection-ctype>)
+    => (result :: <ctype>, precise :: <boolean>);
+  let (base, precise) = ctype-intersection(type1.base-class, type2.base-class);
+  if (base == empty-ctype() | type1.element-type ~= type2.element-type)
+    values(empty-ctype(), precise);
+  elseif (~instance?(base, <cclass>))
+    error("Shouldn't happen.");
+    #f;
+  else
+    let size1 = type1.size-or-dimension;
+    let size2 = type2.size-or-dimension;
+    let new-size = #t;
+    if (~(size1 & size2))
+      new-size := (size1 | size2)
+    elseif (size1 = size2)
+      new-size := size1;
+    elseif (instance?(size2, <sequence>))
+      if (~instance?(size1, <sequence>) & reduce1(\*, size2) = size1)
+	new-size := size1;
+      else
+	new-size := #t;
+      end;
+    elseif (instance?(size1, <sequence>) & reduce1(\*, size1) = size2)
+      new-size := size2;
+    else
+      new-size := #t;
+    end if;
+    if (new-size ~= #t)
+      let result = make(<limited-collection-ctype>, base-class: base,
+			element-type: type1.element-type, size: new-size);
+      values(result, precise);
+    else
+      values(empty-ctype(), precise);
+    end if;
+  end if;
+end;
+
+define method ctype-intersection-dispatch
+    (type1 :: <limited-collection-ctype>, type2 :: <ctype>)
+    => (result :: <ctype>, precise :: <boolean>);
+  let (base, precise) = ctype-intersection(type1.base-class, type2);
+  if (base == empty-ctype())
+    values(empty-ctype(), #f);
+  elseif (instance?(base, <cclass>))
+    values(make(<limited-collection-ctype>, base-class: base,
+		element-type: type1.element-type,
+		size: type1.size-or-dimension), precise);
+  else
+    values(type1, #f);
+  end if;
+end method;
+
+
 /// Singleton types:
 
 // <singleton-ctype> -- exported.
@@ -1220,6 +1419,17 @@ define method csubtype-dispatch
   end if;
 end method csubtype-dispatch;
 
+// csubtype-dispatch{<singleton-ctype>,<limited-collection-ctype>}
+//
+// Without a compile type model of collection's element-type, we cannot
+// determine instance relationships, so just return #f.
+// 
+define method csubtype-dispatch
+    (type1 :: <singleton-ctype>, type2 :: <limited-collection-ctype>)
+    => res :: <boolean>;
+  #f;
+end method csubtype-dispatch;
+
 // csubtype-dispatch{<singleton-ctype>,<byte-character-ctype>}
 //
 // A singleton is a subtype of <byte-character-ctype> iff the singleton is
@@ -1312,6 +1522,11 @@ end;
 define method ct-value-cclass (object :: <limited-integer-ctype>)
     => res :: <cclass>;
   specifier-type(#"<limited-integer>");
+end;
+
+define method ct-value-cclass (object :: <limited-collection-ctype>)
+    => res :: <cclass>;
+  specifier-type(#"<limited-collection>");
 end;
 
 define method ct-value-cclass (object :: <singleton-ctype>) => res :: <cclass>;

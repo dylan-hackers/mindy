@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.18 1996/08/23 14:03:22 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.19 1997/01/13 03:12:11 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -377,6 +377,16 @@ define-ct-evaluator
 	     make-canonical-limited-integer(class, min, max);
 	   end;
 	 end;
+       dylan-value(#"<collection>") =>
+	 let (okay, element-type, size) = ct-keywords(keys, #"of", #"size");
+	 if (okay)
+	   if ((size == #f | instance?(size, <literal-general-integer>))
+		 & (instance?(element-type, <ctype>)))
+	     make(<limited-collection-ctype>, base-class: class,
+		  element-type: element-type,
+		  size: size & as(<integer>, size.literal-value));
+	   end if;
+	 end if;
        otherwise =>
 	 #f;
      end;

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.57 1996/12/05 13:59:57 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.58 1997/01/13 03:12:11 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -593,6 +593,7 @@ define module ctype
     <singleton-ctype>, singleton-value,
     <limited-integer-ctype>, make-canonical-limited-integer,
     low-bound, high-bound,
+    <limited-collection-ctype>, element-type, size-or-dimension,
     <byte-character-ctype>, 
 
     // Operations on types.
