@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.22 1995/05/26 13:13:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.23 1995/06/01 14:35:18 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -275,10 +275,6 @@ define method finalize-top-level-form (tlf :: <seal-generic-tlf>) => ();
 		   tlf.seal-generic-name);
   end;
   let type-exprs = tlf.seal-generic-type-exprs;
-  unless (defn.function-defn-signature.specializers.size == type-exprs.size)
-    compiler-error("Wrong number of types in seal generic for %s",
-		   tlf.seal-generic-name);
-  end;
   add-seal(defn,
 	   map(method (type-expr)
 		 let type = ct-eval(type-expr, #f) | make(<unknown-ctype>);
@@ -746,6 +742,10 @@ define method discriminate-on-one-arg
   //
   let ranges
     = begin
+	let arg-classes = copy-sequence(method-set.arg-classes);
+	arg-classes[discriminate-on] := gf-spec;
+	let method-set = sort-methods(always-applicable, arg-classes,
+				      gf-spec);
 	let possible-direct-classes = find-direct-classes(gf-spec);
 	if (possible-direct-classes)
 	  for (direct-class in possible-direct-classes.tail,
@@ -754,13 +754,9 @@ define method discriminate-on-one-arg
 	       max-id = possible-direct-classes.head.unique-id
 		 then max(max-id, direct-class.unique-id))
 	  finally
-	    list(vector(min-id, max-id, #f));
+	    list(vector(min-id, max-id, method-set));
 	  end;
 	else
-	  let arg-classes = copy-sequence(method-set.arg-classes);
-	  arg-classes[discriminate-on] := gf-spec;
-	  let method-set = sort-methods(always-applicable, arg-classes,
-					gf-spec);
 	  list(vector(0, #f, method-set));
 	end;
       end;
@@ -972,36 +968,34 @@ define method compare-methods
 	 spec2 in meth2.function-defn-signature.specializers)
       //
       // If this is an argument that we are actually sorting by,
-      if (arg-class)
+      if (arg-class & ~(spec1 == spec2))
 	//
 	// If the two specializers are the same, then this argument offers no
 	// ordering.
 	let this-one
-	  = unless (spec1 == spec2)
-	      if (csubtype?(spec1, spec2))
-		#"more-specific";
-	      elseif (csubtype?(spec2, spec1))
-		#"less-specific";
-	      elseif (instance?(spec1, <cclass>) & instance?(spec2, <cclass>))
-		// Neither argument is a subclass of the other.  So we have to
-		// base it on the precedence list of the actual argument class.
-		let cpl = arg-class.precedence-list;
-		block (found)
-		  for (super in cpl)
-		    if (super == spec1)
-		      found(#"more-specific");
-		    elseif (super == spec2)
-		      found(#"less-specific");
-		    end;
-		  finally
-		    error("%= isn't applicable", arg-class);
+	  = if (csubtype?(spec1, spec2))
+	      #"more-specific";
+	    elseif (csubtype?(spec2, spec1))
+	      #"less-specific";
+	    elseif (instance?(spec1, <cclass>) & instance?(spec2, <cclass>))
+	      // Neither argument is a subclass of the other.  So we have to
+	      // base it on the precedence list of the actual argument class.
+	      let cpl = arg-class.precedence-list;
+	      block (found)
+		for (super in cpl)
+		  if (super == spec1)
+		    found(#"more-specific");
+		  elseif (super == spec2)
+		    found(#"less-specific");
 		  end;
+		finally
+		  error("%= isn't applicable", arg-class);
 		end;
-	      else
-		// Neither argument is a subtype of the other and we have a
-		// non-class specializers.  That's ambiguous, folks.
-		return(#"ambiguous");
 	      end;
+	    else
+	      // Neither argument is a subtype of the other and we have a
+	      // non-class specializers.  That's ambiguous, folks.
+	      return(#"ambiguous");
 	    end;
 	unless (result == this-one)
 	  if (result == #"unordered")
