@@ -16,7 +16,7 @@ Author:		Nick Kramer (nkramer@cs.cmu.edu)
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.3 1994/05/25 21:57:07 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.4 1994/06/11 01:17:20 wlott Exp $
 //
 
 /* -------------------------------------------------------------------
@@ -206,7 +206,7 @@ end method make-bucket-entry;
 
 /* ---------------- */
 
-define method make (c :: singleton (<table>), #rest key-value-pairs)
+define method make (c :: singleton (<table>), #rest key-value-pairs, #all-keys)
   apply (make, <object-table>, key-value-pairs);
 end method make;
 
