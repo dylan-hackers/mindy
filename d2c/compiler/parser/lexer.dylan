@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.5 1995/03/04 21:55:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.6 1995/05/05 08:53:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -319,7 +319,7 @@ define method make-string-literal (lexer :: <lexer>,
   make(<string-token>,
        source-location: source-location,
        literal: make(<literal-string>,
-		     contents: decode-string(source-location)));
+		     value: decode-string(source-location)));
 end;
 
 // parse-ratio-literal -- internal.
