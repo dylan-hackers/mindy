@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.80 1995/06/09 16:15:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.81 1995/06/12 17:37:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -870,7 +870,7 @@ define module define-functions
     function-defn-signature-setter, function-defn-hairy?-setter,
     function-defn-ct-value,
     <generic-definition>, generic-defn-discriminator,
-    add-seal, ct-sorted-applicable-methods,
+    add-seal, ct-add-method, ct-sorted-applicable-methods,
     method-defn-inline-expansion,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,
