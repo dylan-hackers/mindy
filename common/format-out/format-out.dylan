@@ -1,7 +1,7 @@
 module: Format-out
 author: David Watson (dwatson@cmu.edu)
 synopsis: The Format-Out library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format-out/format-out.dylan,v 1.2 1996/07/15 18:05:40 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format-out/format-out.dylan,v 1.3 1996/07/18 11:35:31 dwatson Exp $
 
 //======================================================================
 //
@@ -28,7 +28,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format-out/format-out.d
 //
 //======================================================================
 
-define method format-out(control-string :: <byte-string>, #rest args)
+define sealed inline method format-out
+    (control-string :: <byte-string>, #rest args)
  => ();
   apply(format, *standard-output*, control-string, args);
 end method format-out;
