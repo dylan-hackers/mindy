@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.39 1996/04/15 18:29:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.40 1996/04/16 16:38:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1423,6 +1423,12 @@ define method print-message
     (type :: <subclass-ctype>, stream :: <stream>) => ();
   format(stream, "subclass(%s)", type.subclass-of);
 end method print-message;
+
+
+define method ct-value-cclass (ctv :: <subtype-ctype>)
+    => res :: <cclass>;
+  specifier-type(#"<subclass>");
+end method ct-value-cclass;
 
 
 define method csubtype-dispatch
