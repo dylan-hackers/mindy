@@ -430,7 +430,7 @@ gctest_dyn_link: test.o libgc.so
 
 EOF
 
-    push(@compile_dependencies, "libgc.$lib_type");
+    push(@compile_dependencies, "libgc$dot_lib");
 
     do install('lib', "libgc.$lib_type");
 
