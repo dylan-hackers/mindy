@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.50 1996/02/09 11:45:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.51 1996/02/12 02:01:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -453,7 +453,7 @@ define method compile-library
 	unit-libs := concatenate(" -l", unit.unit-name, unit-libs);
       end;
       let command
-	= concatenate("gcc ", flags, " -L/lib/pa1.1 -o ", executable,
+	= concatenate("gcc -z ", flags, " -L/lib/pa1.1 -o ", executable,
 		      " inits.c heap.s", unit-libs);
       format(*debug-output*, "%s\n", command);
       unless (zero?(system(command)))
