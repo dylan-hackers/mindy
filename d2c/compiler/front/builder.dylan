@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.8 1995/05/01 06:48:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.9 1995/05/03 04:52:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -236,7 +236,7 @@ define generic make-exit-function
 //
 define generic build-method-body
     (builder :: <fer-builder>, policy :: <policy>,
-     source :: <source-location>,
+     source :: <source-location>, name :: <byte-string>,
      arg-vars :: <list>)
  => res :: <leaf>;
 
