@@ -85,7 +85,8 @@ BSC32_SBRS= \
 	$(INTDIR)/"sym.sbr" \
 	$(INTDIR)/"version.sbr" \
 	$(INTDIR)/"parser-tab.sbr" \
-	$(INTDIR)/"lexer-tab.sbr"
+	$(INTDIR)/"lexer-tab.sbr" \
+	$(INTDIR)/"sigaction.sbr"
 
 ".\MindyComp.bsc" : $(OUTDIR)  $(BSC32_SBRS)
     $(BSC32) @<<
@@ -119,7 +120,8 @@ LINK32_OBJS= \
 	$(INTDIR)/"sym.obj" \
 	$(INTDIR)/"version.obj" \
 	$(INTDIR)/"parser-tab.obj" \
-	$(INTDIR)/"lexer-tab.obj"
+	$(INTDIR)/"lexer-tab.obj" \
+	$(INTDIR)/"sigaction.obj"
 
 $(OUTDIR)/"MindyComp.exe" : $(OUTDIR)  $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -180,7 +182,8 @@ BSC32_SBRS= \
 	$(INTDIR)/"sym.sbr" \
 	$(INTDIR)/"version.sbr" \
 	$(INTDIR)/"parser-tab.sbr" \
-	$(INTDIR)/"lexer-tab.sbr"
+	$(INTDIR)/"lexer-tab.sbr" \
+	$(INTDIR)/"sigaction.sbr"
 
 $(OUTDIR)/"MindyComp.bsc" : $(OUTDIR)  $(BSC32_SBRS)
     $(BSC32) @<<
@@ -214,7 +217,8 @@ LINK32_OBJS= \
 	$(INTDIR)/"sym.obj" \
 	$(INTDIR)/"version.obj" \
 	$(INTDIR)/"parser-tab.obj" \
-	$(INTDIR)/"lexer-tab.obj"
+	$(INTDIR)/"lexer-tab.obj" \
+	$(INTDIR)/"sigaction.obj"
 
 $(OUTDIR)/"MindyComp.exe" : $(OUTDIR)  $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -243,13 +247,13 @@ $(INTDIR) :
     if not exist $(INTDIR)/nul mkdir $(INTDIR)
 
 # ADD BASE CPP /nologo /W3 /GX /YX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /FR /c
-# ADD CPP /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\"" /c
-CPP_PROJ=/nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c
+CPP_PROJ=/nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c 
+ LIBDIR="\"d:/mindy-13/lib\""  /c 
 CPP_OBJS=.\Released/Objects/Interpreter/
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
@@ -259,6 +263,7 @@ BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o$(OUTDIR)/"Mindy.bsc" 
 BSC32_SBRS= \
 	$(INTDIR)/"rint.sbr" \
+	$(INTDIR)/"sigaction.sbr" \
 	$(INTDIR)/"error.sbr" \
 	$(INTDIR)/"obj.sbr" \
 	$(INTDIR)/"lose.sbr" \
@@ -307,15 +312,15 @@ $(OUTDIR)/"Mindy.bsc" : $(OUTDIR)  $(BSC32_SBRS)
 
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /NOLOGO /SUBSYSTEM:console /MACHINE:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib PSXRTL.LIB PSXDLL.LIB /NOLOGO /SUBSYSTEM:console /MACHINE:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /NOLOGO /SUBSYSTEM:console /MACHINE:I386
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib\
- odbccp32.lib wsock32.lib PSXRTL.LIB PSXDLL.LIB /NOLOGO /SUBSYSTEM:console\
- /INCREMENTAL:no /PDB:$(OUTDIR)/"Mindy.pdb" /MACHINE:I386\
- /OUT:$(OUTDIR)/"Mindy.exe" 
+ odbccp32.lib wsock32.lib /NOLOGO /SUBSYSTEM:console /INCREMENTAL:no\
+ /PDB:$(OUTDIR)/"Mindy.pdb" /MACHINE:I386 /OUT:$(OUTDIR)/"Mindy.exe" 
 DEF_FILE=
 LINK32_OBJS= \
 	$(INTDIR)/"rint.obj" \
+	$(INTDIR)/"sigaction.obj" \
 	$(INTDIR)/"error.obj" \
 	$(INTDIR)/"obj.obj" \
 	$(INTDIR)/"lose.obj" \
@@ -384,13 +389,13 @@ $(INTDIR) :
     if not exist $(INTDIR)/nul mkdir $(INTDIR)
 
 # ADD BASE CPP /nologo /W3 /GX /Zi /YX /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /FR /c
-# ADD CPP /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR /c
+# ADD CPP /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c
 CPP_PROJ=/nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32" /D\
  "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c 
 CPP_OBJS=.\Debug/Objects/Interpreter/
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
@@ -400,6 +405,7 @@ BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o$(OUTDIR)/"Mindy.bsc" 
 BSC32_SBRS= \
 	$(INTDIR)/"rint.sbr" \
+	$(INTDIR)/"sigaction.sbr" \
 	$(INTDIR)/"error.sbr" \
 	$(INTDIR)/"obj.sbr" \
 	$(INTDIR)/"lose.sbr" \
@@ -448,16 +454,16 @@ $(OUTDIR)/"Mindy.bsc" : $(OUTDIR)  $(BSC32_SBRS)
 
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /NOLOGO /SUBSYSTEM:console /DEBUG /MACHINE:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib PSXRTL.LIB PSXDLL.LIB /NOLOGO /SUBSYSTEM:console /DEBUG /MACHINE:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /NOLOGO /SUBSYSTEM:console /DEBUG /MACHINE:I386
 # SUBTRACT LINK32 /PROFILE
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib\
- odbccp32.lib wsock32.lib PSXRTL.LIB PSXDLL.LIB /NOLOGO /SUBSYSTEM:console\
- /INCREMENTAL:yes /PDB:$(OUTDIR)/"Mindy.pdb" /DEBUG /MACHINE:I386\
- /OUT:$(OUTDIR)/"Mindy.exe" 
+ odbccp32.lib wsock32.lib /NOLOGO /SUBSYSTEM:console /INCREMENTAL:yes\
+ /PDB:$(OUTDIR)/"Mindy.pdb" /DEBUG /MACHINE:I386 /OUT:$(OUTDIR)/"Mindy.exe" 
 DEF_FILE=
 LINK32_OBJS= \
 	$(INTDIR)/"rint.obj" \
+	$(INTDIR)/"sigaction.obj" \
 	$(INTDIR)/"error.obj" \
 	$(INTDIR)/"obj.obj" \
 	$(INTDIR)/"lose.obj" \
@@ -552,7 +558,7 @@ $(INTDIR)/"compile.obj" :  $(SOURCE)  $(DEP_COMPI) $(INTDIR)
  "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D "NO_PWD_H" /D\
  "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/ /D /D /D\
   VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""\
-   $(SOURCE) 
+  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Compiler Debug"
 
@@ -1291,12 +1297,12 @@ SOURCE=.\compat\rint.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"rint.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1304,9 +1310,9 @@ $(INTDIR)/"rint.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1353,6 +1359,34 @@ SOURCE=.\compat\tmpnam.c
 SOURCE=.\compat\waitpid.c
 # PROP Exclude_From_Build 1
 # End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\compat\sigaction.c
+
+!IF  "$(CFG)" == "Compiler Release"
+
+$(INTDIR)/"sigaction.obj" :  $(SOURCE)  $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+!ELSEIF  "$(CFG)" == "Compiler Debug"
+
+$(INTDIR)/"sigaction.obj" :  $(SOURCE)  $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+!ELSEIF  "$(CFG)" == "Interpreter Release"
+
+$(INTDIR)/"sigaction.obj" :  $(SOURCE)  $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+!ELSEIF  "$(CFG)" == "Interpreter Debug"
+
+$(INTDIR)/"sigaction.obj" :  $(SOURCE)  $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+!ENDIF 
+
+# End Source File
 # End Group
 ################################################################################
 # Begin Group "Interpreter"
@@ -1373,12 +1407,12 @@ SOURCE=.\interp\error.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"error.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1386,9 +1420,9 @@ $(INTDIR)/"error.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1409,12 +1443,12 @@ SOURCE=.\interp\obj.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"obj.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1422,9 +1456,9 @@ $(INTDIR)/"obj.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1445,12 +1479,12 @@ SOURCE=.\interp\lose.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"lose.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1458,9 +1492,9 @@ $(INTDIR)/"lose.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1481,12 +1515,12 @@ SOURCE=.\interp\table.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"table.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1494,9 +1528,9 @@ $(INTDIR)/"table.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1517,8 +1551,8 @@ SOURCE=.\interp\module.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"module.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
@@ -1530,9 +1564,9 @@ $(INTDIR)/"module.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1575,12 +1609,12 @@ DEP_FD_Ca=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"fd.obj" :  $(SOURCE)  $(DEP_FD_Ca) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1588,9 +1622,9 @@ $(INTDIR)/"fd.obj" :  $(SOURCE)  $(DEP_FD_Ca) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1611,12 +1645,12 @@ SOURCE=.\interp\value.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"value.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1624,9 +1658,9 @@ $(INTDIR)/"value.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1672,12 +1706,12 @@ DEP_FUNC_=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"func.obj" :  $(SOURCE)  $(DEP_FUNC_) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1685,9 +1719,9 @@ $(INTDIR)/"func.obj" :  $(SOURCE)  $(DEP_FUNC_) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1708,12 +1742,12 @@ SOURCE=.\interp\sym.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"sym.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1721,9 +1755,9 @@ $(INTDIR)/"sym.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1744,12 +1778,12 @@ SOURCE=.\interp\char.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"char.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1757,9 +1791,9 @@ $(INTDIR)/"char.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1780,12 +1814,12 @@ SOURCE=.\interp\vec.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"vec.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1793,9 +1827,9 @@ $(INTDIR)/"vec.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1816,12 +1850,12 @@ SOURCE=.\interp\nlx.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"nlx.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1829,9 +1863,9 @@ $(INTDIR)/"nlx.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1852,12 +1886,12 @@ SOURCE=.\interp\def.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"def.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1865,9 +1899,9 @@ $(INTDIR)/"def.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1888,12 +1922,12 @@ SOURCE=.\interp\init.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"init.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1901,9 +1935,9 @@ $(INTDIR)/"init.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1944,12 +1978,12 @@ DEP_INPUT=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"input.obj" :  $(SOURCE)  $(DEP_INPUT) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1957,9 +1991,9 @@ $(INTDIR)/"input.obj" :  $(SOURCE)  $(DEP_INPUT) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -1980,12 +2014,12 @@ SOURCE=.\interp\type.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"type.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -1993,9 +2027,9 @@ $(INTDIR)/"type.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2016,12 +2050,12 @@ SOURCE=.\interp\lexer.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"lexer.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2029,9 +2063,9 @@ $(INTDIR)/"lexer.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2074,12 +2108,12 @@ DEP_BUF_C=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"buf.obj" :  $(SOURCE)  $(DEP_BUF_C) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2087,9 +2121,9 @@ $(INTDIR)/"buf.obj" :  $(SOURCE)  $(DEP_BUF_C) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2110,12 +2144,12 @@ SOURCE=.\interp\bool.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"bool.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2123,9 +2157,9 @@ $(INTDIR)/"bool.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2146,12 +2180,12 @@ SOURCE=.\interp\list.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"list.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2159,9 +2193,9 @@ $(INTDIR)/"list.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2182,12 +2216,12 @@ SOURCE=.\interp\misc.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"misc.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2195,9 +2229,9 @@ $(INTDIR)/"misc.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2218,12 +2252,12 @@ SOURCE=.\interp\extern.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"extern.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2231,9 +2265,9 @@ $(INTDIR)/"extern.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2254,12 +2288,12 @@ SOURCE=.\interp\coll.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"coll.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2267,9 +2301,9 @@ $(INTDIR)/"coll.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2290,12 +2324,12 @@ SOURCE=.\interp\instance.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"instance.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2303,9 +2337,9 @@ $(INTDIR)/"instance.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2326,12 +2360,12 @@ SOURCE=.\interp\handler.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"handler.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2339,9 +2373,9 @@ $(INTDIR)/"handler.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2373,12 +2407,12 @@ DEP_GC_C12=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"gc.obj" :  $(SOURCE)  $(DEP_GC_C12) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2386,9 +2420,9 @@ $(INTDIR)/"gc.obj" :  $(SOURCE)  $(DEP_GC_C12) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2409,12 +2443,12 @@ SOURCE=.\interp\weak.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"weak.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2422,9 +2456,9 @@ $(INTDIR)/"weak.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2445,12 +2479,12 @@ SOURCE=.\interp\print.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"print.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2458,9 +2492,9 @@ $(INTDIR)/"print.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2480,13 +2514,15 @@ SOURCE=".\interp\ext-init.c"
 
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
+# ADD CPP /Od
+
 $(INTDIR)/"ext-init.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2494,9 +2530,9 @@ $(INTDIR)/"ext-init.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2517,12 +2553,12 @@ SOURCE=.\interp\brkpt.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"brkpt.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2530,9 +2566,9 @@ $(INTDIR)/"brkpt.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2572,12 +2608,12 @@ DEP_THREA=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"thread.obj" :  $(SOURCE)  $(DEP_THREA) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2585,9 +2621,9 @@ $(INTDIR)/"thread.obj" :  $(SOURCE)  $(DEP_THREA) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2640,12 +2676,12 @@ DEP_LOAD_=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"load.obj" :  $(SOURCE)  $(DEP_LOAD_) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2653,9 +2689,9 @@ $(INTDIR)/"load.obj" :  $(SOURCE)  $(DEP_LOAD_) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2701,12 +2737,12 @@ DEP_INTER=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"interp.obj" :  $(SOURCE)  $(DEP_INTER) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2714,9 +2750,9 @@ $(INTDIR)/"interp.obj" :  $(SOURCE)  $(DEP_INTER) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2754,12 +2790,12 @@ DEP_DRIVE=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"driver.obj" :  $(SOURCE)  $(DEP_DRIVE) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2767,9 +2803,9 @@ $(INTDIR)/"driver.obj" :  $(SOURCE)  $(DEP_DRIVE) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2790,12 +2826,12 @@ SOURCE=.\interp\num.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"num.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2803,9 +2839,9 @@ $(INTDIR)/"num.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2845,12 +2881,12 @@ DEP_MINDY_=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"mindy.obj" :  $(SOURCE)  $(DEP_MINDY_) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2858,9 +2894,9 @@ $(INTDIR)/"mindy.obj" :  $(SOURCE)  $(DEP_MINDY_) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2881,12 +2917,12 @@ SOURCE=.\interp\str.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"str.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2894,9 +2930,9 @@ $(INTDIR)/"str.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2949,8 +2985,8 @@ DEP_DEBUG=\
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"debug.obj" :  $(SOURCE)  $(DEP_DEBUG) $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
@@ -2962,9 +2998,9 @@ $(INTDIR)/"debug.obj" :  $(SOURCE)  $(DEP_DEBUG) $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -2985,12 +3021,12 @@ SOURCE=.\interp\class.c
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"class.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
  /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -2998,9 +3034,9 @@ $(INTDIR)/"class.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
@@ -3021,12 +3057,12 @@ SOURCE=".\interp\parser-tab.c"
 !ELSEIF  "$(CFG)" == "Interpreter Release"
 
 $(INTDIR)/"parser-tab.obj" :  $(SOURCE)  $(INTDIR)
-   $(CPP) /nologo /MD /W3 /GX /Od /Ob2 /Gy /D "NDEBUG" /D "FAKE_SELECT" /D\
- "WIN32" /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
+   $(CPP) /nologo /MD /W3 /GX /O2 /Ob2 /D "NDEBUG" /D "FAKE_SELECT" /D "WIN32"\
+ /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
  "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
- /D /D /D  VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
- LIBDIR="\"d:/mindy-13/lib\"" /c  $(SOURCE) 
+ /D /D /D VERSION="\"1.3\"" BINDIR="\"d:/mindy-13/bin\""\
+ LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ELSEIF  "$(CFG)" == "Interpreter Debug"
 
@@ -3034,9 +3070,9 @@ $(INTDIR)/"parser-tab.obj" :  $(SOURCE)  $(INTDIR)
    $(CPP) /nologo /MD /W3 /GX /Zi /Od /D "_DEBUG" /D "FAKE_SELECT" /D "WIN32"\
  /D "_CONSOLE" /D "NO_BSTRING_H" /D "USE_DIRENT2_H" /D "NO_UNISTD_H" /D\
  "NO_SYS_TIME_H" /D "NO_SYS_WAIT_H" /D "NO_SIGACTION" /D "NO_FD_SET" /D\
- "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /D VERSION="\"1.3\"" /D\
- BINDIR="\"d:/mindy-13/bin\"" /D LIBDIR="\"d:/mindy-13/lib\"" /FR$(INTDIR)/\
- /Fo$(INTDIR)/ /Fd$(OUTDIR)/"Mindy.pdb" /c  $(SOURCE) 
+ "NO_PWD_H" /D "NO_SYS_PARAM_H" /D "NO_SYS_FILE_H" /FR$(INTDIR)/ /Fo$(INTDIR)/\
+ /Fd$(OUTDIR)/"Mindy.pdb" /D /D /D  VERSION="\"1.3\""\
+ BINDIR="\"d:/mindy-13/bin\"" LIBDIR="\"d:/mindy-13/lib\""  /c  $(SOURCE) 
 
 !ENDIF 
 
