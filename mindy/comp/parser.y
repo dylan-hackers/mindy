@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.26 1996/03/07 17:39:27 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.27 1996/03/08 20:11:04 wlott Exp $
 *
 * This file is the grammar.
 *
@@ -618,16 +618,12 @@ condition_body:
 
 for_header:
 	UNTIL expression
-	{ fprintf(stderr, 
-		  "Warning (line %d): Use UNTIL: instead "
-		  "of UNTIL inside for loop\n", $1->line);
+	{ warn($1->line, "Use UNTIL: instead of UNTIL inside for loop");
 	  free($1); $$ = make_for_header($2); }
     |	UNTIL_KEYWORD expression
 	{ free($1); $$ = make_for_header($2); }
     |	WHILE expression
-	{ fprintf(stderr, 
-		  "Warning (line %d): Use WHILE: instead "
-		  "of WHILE in for loop\n", $1->line);
+	{ warn($1->line, "Use WHILE: instead of WHILE in for loop");
 	  $$ = make_for_header(make_not($1->line, $2)); free($1); 
         }
     |	WHILE_KEYWORD expression
@@ -965,9 +961,7 @@ return_type_list_head:
 
 return_type_element:
 	variable_name 
-        { fprintf(stderr, 
-		  "Warning (line %d): Return value has name but no type\n",
-		  $1->line);
+        { warn($1->line, "Return value has name but no type");
 	  free($1); $$ = NULL; }
     |	variable_name COLON_COLON expression { free($1); free($2); $$ = $3; }
 ;
@@ -1052,9 +1046,9 @@ keyword_parameter:
 		keyword_parameter_default
 	{ $$ = make_keyword_param($1, make_id($2), $3, $4); }
     |	keyword_opt variable_name LPAREN expression RPAREN
-	{ fprintf(stderr, 
-		  "Warning (line %d): Write keyword defaults as foo: = val,"
-		  " not foo: (val)\n", $1->line);
+	{ warn($2->line,
+	       "``foo (val)'' keyword default syntax obsolete.  "
+	       "Use ``foo = val'' instead.");
 	  free($3); free($5);
 	  $$ = make_keyword_param($1, make_id($2), NULL, $4); }
 ;
