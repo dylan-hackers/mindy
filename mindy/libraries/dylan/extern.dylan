@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.9 1996/03/19 23:49:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.10 1996/07/03 15:17:54 rgs Exp $
 
 //======================================================================
 //
@@ -187,7 +187,7 @@ end method type-for-copy;
 define method make
     (cls :: limited(<class>, subclass-of: <c-string>),
      #next next, #key size: sz = 0, fill = ' ')
- => cls :: <class>;
+ => result :: <c-string>;
   let result = next(cls, element-count: sz + 1);
   let fill-byte = as(<integer>, fill);
   for (i from 0 below sz)
