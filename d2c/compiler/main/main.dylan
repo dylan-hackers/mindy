@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.23 1995/11/02 16:51:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.24 1995/11/02 18:14:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -52,7 +52,6 @@ define method compile (#rest files) => ();
   let output-info
     = make(<output-info>, body-stream: body-stream);
   emit-prologue(output-info);
-  format(body-stream, "#include \"output.h\"\n\n");
   for (tlf in $Top-Level-Forms)
     let name = format-to-string("%s", tlf);
     format(*debug-output*, "...Converting %s\n", name);
