@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.22 1995/05/05 08:52:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.23 1995/05/05 09:25:46 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -356,7 +356,7 @@ define method dump (name :: <method-name>, stream :: <stream>) => ();
 	       (stream,
 		prefix: "{",
 		body: method (stream)
-			for (spec in name.method-name-signature.specializers,
+			for (spec in name.method-name-specializers,
 			     first? = #t then #f)
 			  unless (first?)
 			    write(", ", stream);

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.51 1995/05/05 08:50:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.52 1995/05/05 09:25:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -175,7 +175,7 @@ define module names
     <name>,
     <basic-name>, id-name, name-symbol, name-module,
     <type-cell-name>, type-cell-name-base,
-    <method-name>, method-name-generic-function, method-name-signature;
+    <method-name>, method-name-generic-function, method-name-specializers;
 end;
 
 define module definitions

@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.3 1995/05/03 07:14:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.4 1995/05/05 09:25:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -40,12 +40,12 @@ end;
 define class <method-name> (<name>)
   slot method-name-generic-function :: <basic-name>,
     required-init-keyword: generic-function:;
-  slot method-name-signature :: <signature>,
-    required-init-keyword: signature:;
+  slot method-name-specializers :: <sequence>,
+    required-init-keyword: specializers:;
 end;
 
 define method print-object (name :: <method-name>, stream :: <stream>) => ();
   pprint-fields(name, stream,
 		generic-function: name.method-name-generic-function,
-		signature: name.method-name-signature);
+		specializers: name.method-name-specializers);
 end;

@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.13 1995/05/03 07:56:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.14 1995/05/05 09:25:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -238,7 +238,7 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
   let defn = apply(next-method, wot,
 		   name: make(<method-name>,
 			      generic-function: base-name,
-			      signature: signature),
+			      specializers: signature.specializers),
 		   hairy: hairy? | generic-defn == #f
 		     | generic-defn.function-defn-hairy?,
 		   method-of: generic-defn,
