@@ -8,6 +8,7 @@ $D2CFLAGS = $D2CFLAGS . ' -L../streams -L../standard-io -L../print -L../format -
 #
 if ((! $features{'compiled_for_solaris'})
     && (! $features{'compiled_for_win32'})
+    && (! $features{'compiled_for_openbsd'})
     && (! $features{'compiled_for_freebsd'})) {
 	&emit_melange_rule('time-intr');
 
