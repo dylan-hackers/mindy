@@ -40,6 +40,12 @@ end;
 define method analize
     (op :: <operation>, want :: <list>, state :: <state>)
     => want :: <list>;
+  //
+  // Record the stack depth.
+  let depth = size(want);
+  op.info := depth;
+  //
+  // Analize the wants.
   analize(op.depends-on, want, state);
 end;
 
@@ -47,8 +53,12 @@ define method analize
     (op :: <catch>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
+  // Record the stack depth.
+  let depth = size(want);
+  op.info := depth;
+  //
   // Catch always returns a cluster.
-  let new-depth = size(want) + 1;
+  let new-depth = depth + 1;
   if (new-depth > state.max-depth)
     state.max-depth := new-depth;
   end;
@@ -61,11 +71,15 @@ define method analize
     (op :: <known-call>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
+  // Record the stack depth.
+  let depth = size(want);
+  op.info := depth;
+  //
   // We might know that the function is returning some fixed number of values
   // even when it returns a cluster.
   if (op.dependents.dependent.defines
 	& function-returns-cluster?(op.depends-on.source-exp))
-    let new-depth = size(want) + 1;
+    let new-depth = depth + 1;
     if (new-depth > state.max-depth)
       state.max-depth := new-depth;
     end;
@@ -101,12 +115,16 @@ define method analize
     (op :: <abstract-call>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
+  // Record the depth so that we can use it during code generation.
+  let depth = size(want);
+  op.info := depth;
+  //
   // If the result is used,
   if (op.dependents.dependent.defines)
     //
     // Dink the depth because the results really act like clusters
     // even if they arn't.
-    let new-depth = size(want) + 1;
+    let new-depth = depth + 1;
     if (new-depth > state.max-depth)
       state.max-depth := new-depth;
     end;
