@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/tk/Attic/Makefile.in,v 1.2 1995/02/22 18:43:24 rgs Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/tk/Attic/Makefile.in,v 1.3 1995/02/22 18:47:27 rgs Exp $
 ##
 ##  This is the makefile for the Mindy print library, print-lib.dbc.
 ##
@@ -122,5 +122,5 @@ clean:
 realclean:
 	rm -f ${TKOBJS} tk.dbc Makefile *~ \#* core
 
-install: print-lib.dbc
+install: tk.dbc
 	${INSTALL_DATA} tk.dbc ${LIBDIR}
