@@ -200,7 +200,14 @@ define function test-c-type-repositories () => ()
   add-type(make(<c-typedef-type>, name: "foo", type: $c-int-type));
   add-type(make(<c-typedef-type>, name: "bar", type: $c-int-type));
 
-  //let t3 = 
+  let t3 = add-type(make(<c-struct-type>, tag: "baz"));
+  add-type(make(<c-struct-type>, tag: "baz"));
+  let t4 = add-type(make(<c-union-type>, tag: "baz"));
+  let t5 = add-type(make(<c-enum-type>, tag: "baz"));
+
+  let t6 = add-type(make(<c-array-type>, referent: t1, size: 10));  
+  let t7 = add-type(make(<c-array-type>, referent: t1));  
+  add-type(make(<c-array-type>, referent: t1, size: 10));  
 end function test-c-type-repositories;
 
 
