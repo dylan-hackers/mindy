@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.3 1994/12/13 13:27:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.4 1994/12/13 18:37:30 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -155,6 +155,7 @@ define module definitions
 
   create
     <class-definition>,
+    <function-definition>, function-defn-signature, function-defn-hairy?,
     <constant-definition>,
     <variable-definition>, var-defn-type-defn;
 
@@ -319,7 +320,7 @@ define module top-level-forms
 
   export
     <top-level-form>,
-    <define-tlf>, <simple-define-tlf>, tlf-defn,
+    <define-tlf>, <simple-define-tlf>, tlf-defn, tlf-defn-setter,
     $Top-Level-Forms,
 
     process-top-level-form, finalize-top-level-form, convert-top-level-form,
@@ -460,47 +461,6 @@ define module define-libraries-and-modules
   use top-level-forms;
 end;
 
-define module define-functions
-  use common;
-  use utils;
-  use tokens;
-  use names;
-  use definitions;
-  use variables;
-  use parse-tree;
-  use top-level-forms;
-  use compile-time-values;
-  use builder-interface;
-  use signature;
-  use ctype;
-  use compile-time-eval;
-  use lexenv;
-
-  export
-    <function-definition>,
-    <generic-definition>,
-    <method-definition>,
-    <define-generic-tlf>,
-    <define-method-tlf>;
-end;
-
-define module define-classes
-  use common;
-  use utils;
-  use tokens;
-  use names;
-  use definitions;
-  use variables;
-  use lexenv;
-  use parse-tree;
-  use top-level-forms;
-  use compile-time-values;
-  use ctype;
-  use compile-time-eval;
-  use define-functions;
-  use builder-interface;
-end;
-
 define module builder-interface
   create
     <flow-builder>, make-builder, builder-result, end-body, build-region,
@@ -583,14 +543,41 @@ define module fer-convert
   use expand;
   use flow,
     exclude: {<expression>, <assignment>},
-    export: {<leaf>};
-  use builder-interface;
+    export: all;
+  use builder-interface, export: all;
   use ctype;
-  use lexenv;
-  use policy;
+  use lexenv, export: all;
+  use policy, export: all;
 
   export
-    fer-convert, build-hairy-method-body;
+    build-general-method, fer-convert, build-hairy-method-body,
+    canonicalize-results,
+    dylan-defn-leaf, make-check-type-operation, make-error-operation;
+end;
+
+define module define-functions
+  use common;
+  use utils;
+  use tokens;
+  use names;
+  use definitions;
+  use variables;
+  use parse-tree;
+  use top-level-forms;
+  use compile-time-values;
+  use builder-interface;
+  use fer-convert;
+  use signature;
+  use ctype;
+  use compile-time-eval;
+  use lexenv;
+  use source;
+
+  export
+    <generic-definition>,
+    <method-definition>,
+    <define-generic-tlf>,
+    <define-method-tlf>;
 end;
 
 define module define-constants-and-variables
@@ -606,6 +593,25 @@ define module define-constants-and-variables
   use ctype;
   use variables;
   use tokens;
+  use builder-interface;
+  use fer-convert;
+  use source;
+end;
+
+define module define-classes
+  use common;
+  use utils;
+  use tokens;
+  use names;
+  use definitions;
+  use variables;
+  use lexenv;
+  use parse-tree;
+  use top-level-forms;
+  use compile-time-values;
+  use ctype;
+  use compile-time-eval;
+  use define-functions;
   use builder-interface;
   use fer-convert;
 end;
