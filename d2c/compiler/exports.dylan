@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.88 1995/10/09 22:27:46 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.89 1995/10/13 15:02:49 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -50,6 +50,7 @@ define module od-format
   use common;
   use standard-io;
   use utils;
+  use self-organizing-list;
   export
     $odf-header-flag,
     $odf-etype-mask,
@@ -65,46 +66,10 @@ define module od-format
     $odf-64bit-raw-data-format,
     $odf-untranslatable-raw-data-format,
     $odf-word-raw-data-format,
-    $32bit-data-unit-odf-id,
     $od-format-major-version,
     $od-format-minor-version,
     $like-an-hp-platform-characteristics,
     $library-summary-unit-type,
-    $local-index-odf-id,
-    $local-object-map-odf-id,
-    $extern-index-odf-id,
-    $extern-handle-odf-id,
-    $byte-character-odf-id,
-    $byte-string-odf-id,
-    $byte-symbol-odf-id,
-    $unicode-character-odf-id,
-    $unicode-string-odf-id,
-    $unicode-symbol-odf-id,
-    $list-odf-id,
-    $simple-object-vector-odf-id,
-    $list*-odf-id,
-    $true-odf-id,
-    $false-odf-id,
-    $fixed-integer-odf-id,
-    $extended-integer-odf-id,
-    $single-float-odf-id,
-    $double-float-odf-id,
-    $extended-float-odf-id,
-    $ratio-odf-id,
-    $union-type-odf-id,
-    $singleton-type-odf-id,
-    $limited-integer-type-odf-id,
-    $limited-collection-type-odf-id,
-    $multi-value-type-odf-id,
-    $unknown-type-odf-id,
-    $direct-instance-type-odf-id,
-    $eql-literal-odf-id,
-    $literal-pair-odf-id,
-    $literal-fixed-integer-odf-id,
-    $literal-single-float-odf-id,
-    $literal-double-float-odf-id,
-    $literal-extended-float-odf-id,
-    $literal-vector-odf-id,
     $word-bytes,
     $word-bits,
     buffer-word,
@@ -138,13 +103,16 @@ define module od-format
     load-raw-data,
     load-subobjects-vector,
     load-sole-subobject,
+    assert-end-object,
     <forward-ref>,
     actual-obj,
     obj-resolved?,
     request-backpatch,
     <identity-preserving-mixin>,
     maybe-dump-reference,
-    load-external-definition;
+    load-external-definition,
+    add-make-dumper;
+
 end;
 
 define module dylan-dump
@@ -286,6 +254,8 @@ define module names
   use utils;
   use tokens;
   use signature-interface;
+  use od-format;
+  use compile-time-values;
 
   export
     <name>,
@@ -344,6 +314,7 @@ define module variables
     <use>, <renaming>,
 
     done-initializing-module-system,
+    module-home, variable-home,
 
     dylan-var, dylan-defn, dylan-value;
 end;
@@ -595,6 +566,7 @@ define module classes
   use compile-time-values;
   use ctype;
   use representation;
+  use od-format;
 
   use forwards, import: {<cclass>}, export: all;
 
@@ -631,7 +603,20 @@ define module classes
     <proxy>, proxy-for,
 
     inherit-slots, inherit-overrides, assign-unique-ids,
-    assign-slot-representations, layout-instance-slots;
+    assign-slot-representations, layout-instance-slots,
+
+    // For dumper...
+    <limited-cclass>, each-subclass-slots-count;
+end;
+
+define module type-dump
+  use common;
+  use standard-io;
+  use utils;
+  use od-format;
+  use compile-time-values;
+  use ctype;
+  use classes;
 end;
 
 define module c-representation
@@ -670,6 +655,7 @@ define module compile-time-functions
   use definitions;
   use ctype;
   use classes;
+  use od-format;
 
   export
     <ct-function>, ct-function-name, ct-function-signature,
@@ -829,6 +815,7 @@ define module signature
   use ctype;
   use definitions;
   use representation;
+  use od-format;
 end;
 
 define module primitives
@@ -1181,6 +1168,18 @@ define module dump
     dump-parse;
 end;
 
+define module misc-dump
+  use common;
+  use standard-io;
+  use utils;
+  use od-format;
+  use compile-time-values;
+  use ctype;
+  use classes;
+  use variables;
+  use names;
+end;
+
 define module main
   use common;
   use utils;
@@ -1205,4 +1204,5 @@ define module main
   use signature-interface;
   use ctype;
   use cheese;
+  use od-format;
 end;

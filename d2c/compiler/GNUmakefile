@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.19 1995/10/09 22:25:38 ram Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.20 1995/10/13 15:02:49 ram Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -31,6 +31,7 @@ OBJS = exports.dbc \
 	ctype.dbc \
 	rep.dbc \
 	cclass.dbc \
+	type-dump.dbc \
 	c-rep.dbc \
 	transdef.dbc \
 	ctfunc.dbc \
@@ -62,6 +63,7 @@ OBJS = exports.dbc \
 	primemit.dbc \
 	heap.dbc \
 	dump.dbc \
+	misc-dump.dbc \
 	init.dbc \
 	main.dbc
 
