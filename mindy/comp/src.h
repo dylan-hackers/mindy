@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.22 1996/03/08 21:31:45 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.23 1996/03/09 12:01:21 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -596,6 +596,8 @@ extern struct constituent
     *make_define_constant(int line, struct bindings *bindings);
 extern struct constituent
     *make_define_method(flags_t flags, struct method *method);
+extern struct constituent
+    *make_define_function(flags_t flags, struct method *method);
 extern struct constituent
     *make_define_variable(int line, struct bindings *bindings);
 extern struct constituent *make_expr_constituent(struct expr *expr);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.28 1996/03/08 21:31:45 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.29 1996/03/09 12:01:21 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -164,6 +164,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> FOR
 %token <token> FREE
 %token <token> FROM
+%token <token> FUNCTION
 %token <token> GENERIC
 %token <token> HANDLER
 %token <token> IF
@@ -217,7 +218,7 @@ static void pop_yacc_recoveries(int count);
 
 %type <nothing> dylan_file dylan_headers header_list
 %type <nothing> dylan_program block_opt case_opt if_opt for_opt select_opt
-%type <nothing> unless_opt until_opt while_opt class_opt method_opt semi_opt
+%type <nothing> unless_opt until_opt while_opt class_opt function_opt method_opt semi_opt
 %type <nothing> arrow_opt
 %type <token> symbol_opt
 %type <body> body body_opt constituents cleanup_part
@@ -225,7 +226,7 @@ static void pop_yacc_recoveries(int count);
 %type <constituent> constituent defining_form local_declaration
 %type <constituent> class_definition sealed_domain generic_function_definition
 %type <bindings> bindings
-%type <token> variable_name variable_name_opt
+%type <token> variable_name variable_name_opt any_variable_name_except_function any_variable_name_except_function_opt
 %type <param_list> variables gf_parameters
 %type <param_list> more_gf_parameters gf_rest_parameters
 %type <param_list> gf_keyword_parameters_list gf_keyword_parameters_opt
@@ -236,7 +237,7 @@ static void pop_yacc_recoveries(int count);
 %type <keyword_param> keyword_parameter gf_keyword_parameter
 %type <id> next_parameter rest_parameter
 %type <local_methods> local_methods
-%type <method> local_method anonymous_method named_method method_description
+%type <method> local_method anonymous_method named_method method_description named_function
 %type <expr> expression operand leaf statement by_part by_part_opt 
 %type <expr> slot_type_opt return_type_element keyword_parameter_type slot_init_expr_opt
 %type <expr> keyword_parameter_default
@@ -338,6 +339,8 @@ defining_form:
 	{ free($1); free($3); $$ = set_sealed_domain_flags($2, $4); }
     |	DEFINE flags GENERIC generic_function_definition
 	{ free($1); free($3); $$ = set_generic_flags($2, $4); }
+    |	DEFINE flags FUNCTION named_function
+	{ free($1); $$ = make_define_function($3->line, $4); free($3); }
     |	DEFINE flags METHOD named_method
 	{ free($1); free($3); $$ = make_define_method($2, $4); }
     |	DEFINE VARIABLE bindings
@@ -397,6 +400,11 @@ variable:
 ;
 
 variable_name:
+        any_variable_name_except_function
+    |	FUNCTION
+;
+
+any_variable_name_except_function:
 	SYMBOL
     |	ABOVE
     |	ABSTRACT
@@ -917,6 +925,19 @@ anonymous_method:
 	{ free($3); $$ = set_method_source($1, $2); }
 ;
 
+named_function:
+	variable_name method_description END FUNCTION FUNCTION
+	{ struct id *id = make_id($1);
+	  free($3); free($4); verify_symbol(id, $5);
+	  $$ = set_method_name(id, $2);
+	}
+      | variable_name method_description END function_opt any_variable_name_except_function_opt
+	{ struct id *id = make_id($1);
+	  free($3); verify_symbol(id, $5);
+	  $$ = set_method_name(id, $2);
+	}
+;
+
 named_method:
 	variable_name method_description END method_opt variable_name_opt
 	{ struct id *id = make_id($1);
@@ -1255,12 +1276,18 @@ unless_opt:	{ $$ = NULL; } | UNLESS { free($1); $$ = NULL; } ;
 until_opt:	{ $$ = NULL; } | UNTIL { free($1); $$ = NULL; } ;
 while_opt:	{ $$ = NULL; } | WHILE { free($1); $$ = NULL; } ;
 class_opt:	{ $$ = NULL; } | CLASS { free($1); $$ = NULL; } ;
+function_opt:	{ $$ = NULL; } | FUNCTION { free($1); $$ = NULL; } ;
 method_opt:	{ $$ = NULL; } | METHOD { free($1); $$ = NULL; } ;
 semi_opt:	{ $$ = NULL; } | SEMI { free($1); $$ = NULL; } ;
 arrow_opt:	{ $$ = NULL; } | ARROW { free($1); $$ = NULL; } ;
 
 symbol_opt:	{ $$ = NULL; } | SYMBOL { $$ = $1; } ;
 variable_name_opt: { $$ = NULL; } | variable_name { $$ = $1; } ;
+any_variable_name_except_function_opt:
+              /* epsilon */                       { $$ = NULL; } 
+              | any_variable_name_except_function { $$ = $1; } 
+;
+
 by_part_opt:	{ $$ = NULL; } | by_part { $$ = $1; } ;
 else_part_opt:	{ $$ = NULL; } | else_part { $$ = $1; } ;
 final_part_opt:	{ $$ = NULL; } | final_part { $$ = $1; } ;

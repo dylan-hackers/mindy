@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.28 1996/03/08 21:31:45 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.29 1996/03/09 12:01:21 nkramer Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -183,6 +183,25 @@ struct constituent *make_define_method(flags_t flags, struct method *method)
     res->next = NULL;
     res->flags = flags;
     res->method = method;
+    res->tlf = NULL;
+
+    return (struct constituent *)res;
+}
+
+/* Implement "define function foo" as "define constant foo = method ..."
+ */
+struct constituent *make_define_function(flags_t ignored, 
+					 struct method *method)
+{
+    struct param *func_name = make_param(method->name, NULL);
+    struct defconst_constituent *res
+	= malloc(sizeof(struct defconst_constituent));
+
+    res->kind = constituent_DEFCONST;
+    res->next = NULL;
+    res->line = method->line;
+    res->bindings = make_bindings(push_param(func_name, make_param_list()), 
+				  make_method_ref(method));
     res->tlf = NULL;
 
     return (struct constituent *)res;
