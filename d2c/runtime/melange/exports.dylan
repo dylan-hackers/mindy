@@ -1,10 +1,10 @@
 module: dylan-user
-RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.12 2003/01/30 12:17:55 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/runtime/melange/exports.dylan,v 1.12.8.1 2004/10/12 01:37:16 gabor Exp $
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2004  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -43,7 +43,8 @@ define module melange-support
   use magic, exclude: {\without-bounds-checks };
 
   export
-    c-variable-ref, c-variable-ref-setter,
+    c-variable-ref, c-variable-ref-setter, // deprecated for new work, will be removed after gd 2.4
+    c-variable, c-variable-setter, // use these for development
     <statically-typed-pointer>, raw-value, null-pointer,
     signed-byte-at, signed-byte-at-setter,
     unsigned-byte-at, unsigned-byte-at-setter, signed-short-at,

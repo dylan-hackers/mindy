@@ -1,10 +1,10 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.15 2003/04/13 01:00:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.15.8.1 2004/10/12 01:37:16 gabor Exp $
 
 //======================================================================
 //
 // Copyright (c) 1994  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2004  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -33,22 +33,43 @@ rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.15 2003/
 // produced by Melange rather than being explicitly referenced by users.
 //
 
-// Usage: c-variable-ref(int: "&variable") { := expression }
+// Usage: c-variable(int: "&variable") { := expression }
 //
-define macro c-variable-ref
+define macro c-variable
   { c-variable (?result-type:expression, ?:expression) }
     => { pointer-deref(?result-type, c-expr(ptr: ?expression), 0) }
   { c-variable (?result-type:token ?:expression) }
     => { pointer-deref(?result-type, c-expr(ptr: ?expression), 0) }
 end;
 
+define macro c-variable-setter
+  { c-variable-setter (?value:expression, ?result-type:expression, ?:expression) }
+    => { pointer-deref-setter(?value, ?result-type,
+			      c-expr(ptr: ?expression), 0) }
+  { c-variable-setter (?value:expression, ?result-type:token ?:expression) }
+    => { pointer-deref-setter(?value, ?result-type,
+			      c-expr(ptr: ?expression), 0) }
+end;
+
+
+// Usage: c-variable-ref(int: "&variable") { := expression }
+// implementation same as above but this spelling is deprecated
+// and will be wiped from gd 2.6    
+//
+define macro c-variable-ref
+  { c-variable-ref (?result-type:expression, ?:expression) }
+    => { pointer-deref(?result-type, c-expr(ptr: ?expression), 0) }
+  { c-variable-ref (?result-type:token ?:expression) }
+    => { pointer-deref(?result-type, c-expr(ptr: ?expression), 0) }
+end;
+
 define macro c-variable-ref-setter
-  { c-variable (?value:expression, ?result-type:expression, ?:expression) }
+  { c-variable-ref-setter (?value:expression, ?result-type:expression, ?:expression) }
     => { pointer-deref-setter(?value, ?result-type,
-			      c-expr(ptr: ?expression), 0) }
-  { c-variable (?value:expression, ?result-type:token ?:expression) }
+                              c-expr(ptr: ?expression), 0) }
+  { c-variable-ref-setter (?value:expression, ?result-type:token ?:expression) }
     => { pointer-deref-setter(?value, ?result-type,
-			      c-expr(ptr: ?expression), 0) }
+                              c-expr(ptr: ?expression), 0) }
 end;
 
 define open primary functional class <statically-typed-pointer> (<object>)

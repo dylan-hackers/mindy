@@ -8,7 +8,7 @@ copyright: see below
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2004  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -674,7 +674,7 @@ define method write-declaration
 			#"mindy" => c-accessor(decl.type,
 					       0, raw-name, decl.type-name);
 			#"d2c" => concatenate("as(", decl.type-name,
-					      ", c-variable-ref(",
+					      ", c-variable(",
 					      decl.type.d2c-type-tag, " \"&",
 					      decl.simple-name, "\"))");
 		      end select),
@@ -692,7 +692,7 @@ define method write-declaration
 	   decl.mapped-name,
 	   select (melange-target)
 	     #"mindy" => c-accessor(decl.type, 0, raw-name, decl.type-name);
-	     #"d2c" => concatenate("c-variable-ref(",
+	     #"d2c" => concatenate("c-variable(",
 				   decl.type.d2c-type-tag, " \"&",
 				   decl.simple-name, "\")");
 	   end select,
