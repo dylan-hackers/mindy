@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.4 2001/09/01 23:20:46 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.5 2003/10/18 04:24:08 housel Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -180,8 +180,9 @@ define constant $random-fixnum-max :: <integer>
 // return the same kind of integer that arg is.
 // 
 define method random
-    (arg :: <integer>, #key state :: <random-state> = *random-state*) 
+    (arg :: <integer>, #key state, random) 
     => random-number :: <integer>;
+  let state :: <random-state> = state | random | *random-state*;
   if (arg <= $random-fixnum-max)
     remainder(random-chunk(state), arg);
   else
