@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.5 1994/11/03 23:51:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dylan,v 1.6 1995/11/16 13:54:17 nkramer Exp $
 
 //======================================================================
 //
@@ -57,10 +57,10 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/sort.dyl
 
 //// Simple Sorting Algorithms
 
-//# swap-elements! -- internal
-//#
-//# Swaps two elements in a vector.
-//#
+// swap-elements! -- internal
+//
+// Swaps two elements in a vector.
+//
 define method swap-elements! (vector :: <vector>, key1 :: <fixed-integer>,
 			      key2 :: <fixed-integer>)
   let element1 = vector[key1];
@@ -69,21 +69,21 @@ define method swap-elements! (vector :: <vector>, key1 :: <fixed-integer>,
   vector[key2] := element1;
 end method swap-elements!;
 
-//# selection-sort! -- internal
-//#
-//# Selection sort sorts the vector from the beginning to the end.  At any
-//# point the vector is sorted up to a certain position.  From this
-//# position the remainder of the vector is searched for the next largest
-//# element, and this element is moved to the position.  After this has
-//# been done for each position in the vector, the vector is sorted.
-//#
-//# SELECTION-SORT! takes a TEST key to specify the ascending order or
-//# elements, a START key to specify where in the vector to begin the sort,
-//# and an END key to specify where to end the sort.  (As usual in Dylan,
-//# START is an inclusive bound while END is an exclusive bound.)
-//#
-//# Selection sort is NOT stable, but it does sort in place.
-//#
+// selection-sort! -- internal
+//
+// Selection sort sorts the vector from the beginning to the end.  At any
+// point the vector is sorted up to a certain position.  From this
+// position the remainder of the vector is searched for the next largest
+// element, and this element is moved to the position.  After this has
+// been done for each position in the vector, the vector is sorted.
+//
+// SELECTION-SORT! takes a TEST key to specify the ascending order or
+// elements, a START key to specify where in the vector to begin the sort,
+// and an END key to specify where to end the sort.  (As usual in Dylan,
+// START is an inclusive bound while END is an exclusive bound.)
+//
+// Selection sort is NOT stable, but it does sort in place.
+//
 define method selection-sort!(vector :: <vector>,
 			      #key test = \<, start: first = 0,
 			           end: last)
@@ -101,27 +101,27 @@ define method selection-sort!(vector :: <vector>,
   vector;
 end method selection-sort!;
 
-//# selection-sort -- internal
-//#
-//# This version of selection sort does not modify the original vector.  It
-//# calls the destructive version on copy of the vector.
-//#
+// selection-sort -- internal
+//
+// This version of selection sort does not modify the original vector.  It
+// calls the destructive version on copy of the vector.
+//
 define method selection-sort (vector :: <vector>,
 			      #key test = \<, start: first = 0, end: last)
   let sort-vector = copy-sequence(vector, start: first, end: last);
   selection-sort!(sort-vector, test: test);
 end method selection-sort;
 
-//# insertion-sort! -- internal
-//#
-//# Insertion sort also maintains the invariant that the vector is sorted
-//# up to a current position.  The next element after this position is
-//# inserted into the sorted part of the vector, pushing larger elements up
-//# if necessary.
-//#
-//# INSERTION-SORT! accepts the same keys as SELECTION-SORT!  Insertion
-//# sort is stable, and this method sorts the vector in place.
-//#
+// insertion-sort! -- internal
+//
+// Insertion sort also maintains the invariant that the vector is sorted
+// up to a current position.  The next element after this position is
+// inserted into the sorted part of the vector, pushing larger elements up
+// if necessary.
+//
+// INSERTION-SORT! accepts the same keys as SELECTION-SORT!  Insertion
+// sort is stable, and this method sorts the vector in place.
+//
 define method insertion-sort!(vector :: <vector>,
 			      #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
@@ -137,11 +137,11 @@ define method insertion-sort!(vector :: <vector>,
   vector;
 end method insertion-sort!;
 
-//# insertion-sort -- internal
-//#
-//# This version of insertion sort does not modify the original vector.  It
-//# calls the destructive version on copy of the vector.
-//#
+// insertion-sort -- internal
+//
+// This version of insertion sort does not modify the original vector.  It
+// calls the destructive version on copy of the vector.
+//
 define method insertion-sort(vector :: <vector>,
 			     #key test = \<, start: first = 0,
 			          end: last)
@@ -153,44 +153,44 @@ end method insertion-sort;
 
 //// Recursive Sorting Algorithms
 
-//# $small-sort-size$ -- internal
-//#
-//# The simple sorts can be used to sort the small subsequences generated
-//# by the recursive algorithms.  This parameter defines how small the
-//# subsequence should be before the simple sorts are called.  (The simple
-//# sorts can be turned off by setting this to 0.)
-//#
+// $small-sort-size$ -- internal
+//
+// The simple sorts can be used to sort the small subsequences generated
+// by the recursive algorithms.  This parameter defines how small the
+// subsequence should be before the simple sorts are called.  (The simple
+// sorts can be turned off by setting this to 0.)
+//
 define variable $small-sort-size$ = 10;
 
-//# Merge Sort
-//#
-//# Merge sort is a divide-and-conquer algorithm.  It divides the vector in
-//# half and recursively calls merge sort on the halves.  When the calls
-//# return, the halves are sorted, and they are merged together.
-//#
-//# Merge sort is stable.  There is a version that sorts in place, and
-//# modifies the original vector.  This uses a small amount of extra space
-//# in the process (it merges the sorted halves into a new vector and then
-//# copies back to the original).  There is also a version that uses as
-//# much extra space as it needs, and sorts non-destructively.
+// Merge Sort
+//
+// Merge sort is a divide-and-conquer algorithm.  It divides the vector in
+// half and recursively calls merge sort on the halves.  When the calls
+// return, the halves are sorted, and they are merged together.
+//
+// Merge sort is stable.  There is a version that sorts in place, and
+// modifies the original vector.  This uses a small amount of extra space
+// in the process (it merges the sorted halves into a new vector and then
+// copies back to the original).  There is also a version that uses as
+// much extra space as it needs, and sorts non-destructively.
 
-//# merge! -- internal
-//#
-//# This function merges two contiguous sorted subsequences of a vector.
-//# It accepts four keyword arguments in addition to a vector.  TEST
-//# specifies the ascending order for the sort/merge.  START and MIDDLE
-//# give the beginnings of the two subsequences, and END is the end of the
-//# second subsequence.  (Again, START and MIDDLE are inclusive bounds for
-//# the subsequences, and MIDDLE and END are exclusive end bounds.  (The
-//# subsequences must be contiguous in the vector.))
-//#
-//# Again, merging assumes the subsequences are sorted.  Two pointers run
-//# down each subsequence.  The smallest of the two elements is copied to a
-//# merge vector and the pointer for its subsequence is incremented.  This
-//# continues until both pointers reach the end of the subsequences.
-//# Finally the merge vector is copied into the original vector in
-//# position.
-//#
+// merge! -- internal
+//
+// This function merges two contiguous sorted subsequences of a vector.
+// It accepts four keyword arguments in addition to a vector.  TEST
+// specifies the ascending order for the sort/merge.  START and MIDDLE
+// give the beginnings of the two subsequences, and END is the end of the
+// second subsequence.  (Again, START and MIDDLE are inclusive bounds for
+// the subsequences, and MIDDLE and END are exclusive end bounds.  (The
+// subsequences must be contiguous in the vector.))
+//
+// Again, merging assumes the subsequences are sorted.  Two pointers run
+// down each subsequence.  The smallest of the two elements is copied to a
+// merge vector and the pointer for its subsequence is incremented.  This
+// continues until both pointers reach the end of the subsequences.
+// Finally the merge vector is copied into the original vector in
+// position.
+//
 define method merge!(vector :: <vector>,
 		     #key test: test, start: first, middle: middle, end: last)
   let merge-size = last - first;
@@ -219,19 +219,19 @@ define method merge!(vector :: <vector>,
 end method merge!;
 
 
-//# merge-sort! -- internal
-//#
-//# Sorts a vector in place using merge sort.  Computes the middle of the
-//# vector and recursively calls MERGE-SORT! on both halves.  Merges the
-//# halves when both calls return.  If the vector is smaller than
-//# $SMALL-SORT-SIZE$, however, INSERTION-SORT! is used instead.  Recursive
-//# calls to MERGE-SORT! terminate (by doing nothing) when the vector to be
-//# sorted contains only one element (or when insertion sort is used).
-//#
-//# Three keywords are accepted by this function.  The TEST specifies the
-//# ascending order for the sort, and START and END give the bounds of the
-//# subvector to be operated on in VECTOR.
-//#
+// merge-sort! -- internal
+//
+// Sorts a vector in place using merge sort.  Computes the middle of the
+// vector and recursively calls MERGE-SORT! on both halves.  Merges the
+// halves when both calls return.  If the vector is smaller than
+// $SMALL-SORT-SIZE$, however, INSERTION-SORT! is used instead.  Recursive
+// calls to MERGE-SORT! terminate (by doing nothing) when the vector to be
+// sorted contains only one element (or when insertion sort is used).
+//
+// Three keywords are accepted by this function.  The TEST specifies the
+// ascending order for the sort, and START and END give the bounds of the
+// subvector to be operated on in VECTOR.
+//
 define method merge-sort!(vector :: <vector>,
 			  #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
@@ -249,13 +249,13 @@ define method merge-sort!(vector :: <vector>,
   vector;
 end method merge-sort!;
 
-//# merge -- internal
-//#
-//# This non-destructive version of MERGE merges two vectors as does
-//# MERGE!, but the two vectors are given separately.  Also, the merge
-//# vector is simply returned, rather than copied into any of the
-//# arguments.  The TEST key gives the test for ascending order.
-//#
+// merge -- internal
+//
+// This non-destructive version of MERGE merges two vectors as does
+// MERGE!, but the two vectors are given separately.  Also, the merge
+// vector is simply returned, rather than copied into any of the
+// arguments.  The TEST key gives the test for ascending order.
+//
 define method merge(vector1 :: <vector>, vector2 :: <vector>,
 		    #key test = \<)
   let size1 = size(vector1);
@@ -283,19 +283,19 @@ define method merge(vector1 :: <vector>, vector2 :: <vector>,
   merge-vector;
 end method merge;
 
-//# merge-sort -- internal
-//#
-//# This works the same as MERGE-SORT!, except that the recursive calls
-//# terminate by returning a new vector rather than by changing the old.
-//# Thus, the recursion might terminate when the vector to be sorted
-//# contains less than two elements, and a call to COPY-SEQUENCE is
-//# returned; or when the insertion sort kicks in.  The non-destructive
-//# version of insertion sort is used.
-//#
-//# MERGE-SORT still takes the keywords START and END, because the
-//# recursive calls are still made on two halves of the same vector.  (The
-//# halves of the vector are not copied before the calls.)
-//#
+// merge-sort -- internal
+//
+// This works the same as MERGE-SORT!, except that the recursive calls
+// terminate by returning a new vector rather than by changing the old.
+// Thus, the recursion might terminate when the vector to be sorted
+// contains less than two elements, and a call to COPY-SEQUENCE is
+// returned; or when the insertion sort kicks in.  The non-destructive
+// version of insertion sort is used.
+//
+// MERGE-SORT still takes the keywords START and END, because the
+// recursive calls are still made on two halves of the same vector.  (The
+// halves of the vector are not copied before the calls.)
+//
 define method merge-sort(vector :: <vector>,
 			 #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
@@ -313,35 +313,60 @@ define method merge-sort(vector :: <vector>,
   end case;
 end method merge-sort;
 
-//# Quick Sort
-//#
-//# Quick sort is also a divide-and-conquer algorithm.  It partitions the
-//# vector by choosing a pivot, and separating elements smaller than the
-//# pivot from elements larger than the pivot.  Then quick sort is called
-//# recursively on the two subsequences to sort them in place.  When the
-//# recursive calls return, the vector is sorted, because all the elements
-//# in the first subsequence are smaller than those in the second.
-//#
-//# Quick sort sorts in place, destructively, but it is not stable.
+// Quick Sort
+//
+// Quick sort is also a divide-and-conquer algorithm.  It partitions the
+// vector by choosing a pivot, and separating elements smaller than the
+// pivot from elements larger than the pivot.  Then quick sort is called
+// recursively on the two subsequences to sort them in place.  When the
+// recursive calls return, the vector is sorted, because all the elements
+// in the first subsequence are smaller than those in the second.
+//
+// Quick sort sorts in place, destructively, but it is not stable.
 
-//# partition! -- internal
-//#
-//# Partitions a vector and returns the partition position.  The pivot
-//# element is arbitrarily chosen to be the last element.  Pointers are
-//# started at the beginning and end of the vector.  The "small" pointer
-//# moves forward over elements smaller than the pivot element, and stops
-//# at those larger.  The "large" point moves backward over elements larger
-//# than the pivot element, and stops at those smaller.  The two elements
-//# at the places where the pointers stop are swapped.  This continues
-//# until the pointers cross each other.  Then the small pointer is
-//# returned as the partition position.
-//#
-//# PARTITION! takes the usual keyword arguments TEST, START, and END.
-//#
+// median-of-three -- internal
+//
+// Pick the index of the pivot point by picking the index corresponding to
+// median(vec[first], vec[middle], vec[last]).
+//
+define constant median-of-three = method 
+    (vec :: <vector>, first :: <fixed-integer>, last :: <fixed-integer>,
+     less-than :: <function>)
+ => pivot-index :: <fixed-integer>;
+  let middle = truncate/(first + last, 2);
+  if (less-than(vec[first], vec[last]))
+    if (less-than(vec[middle], vec[last]))
+      middle;
+    else 
+      last;
+    end if;
+  else  // vec[last] <= vec[first]
+    if (less-than(vec[middle], vec[first]))
+      middle;
+    else
+      first;
+    end if;
+  end if;
+end method;
+
+// partition! -- internal
+//
+// Partitions a vector and returns the partition position.  The pivot
+// element is chosen by the median-of-three method.  Pointers are
+// started at the beginning and end of the vector.  The "small" pointer
+// moves forward over elements smaller than the pivot element, and stops
+// at those larger.  The "large" point moves backward over elements larger
+// than the pivot element, and stops at those smaller.  The two elements
+// at the places where the pointers stop are swapped.  This continues
+// until the pointers cross each other.  Then the small pointer is
+// returned as the partition position.
+//
+// PARTITION! takes the usual keyword arguments TEST, START, and END.
+//
 define method partition!(vector :: <vector>,
 			 #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
-  let pivot-key = last - 1;
+  let pivot-key = median-of-three(vector, first, last, test);
   let pivot-element = vector[pivot-key];
   let small-key = first;
   let large-key = pivot-key;
@@ -364,17 +389,17 @@ define method partition!(vector :: <vector>,
   small-key;
 end method partition!;
 
-//# quick-sort! -- internal
-//#
-//# Sorts a vector in place using quick sort.  The vector is partitioned by
-//# PARTITION!.  The two subsequences formed by START up to the partition
-//# position and from there to END are sorted recursively.  The recursion
-//# terminates if the vector has less than two elements, and nothing is
-//# done; or if the size of the subvector is small and INSERTION-SORT! is
-//# called on it.
-//#
-//# QUICK-SORT! takes the usual keyword arguments TEST, START, and END.
-//#
+// quick-sort! -- internal
+//
+// Sorts a vector in place using quick sort.  The vector is partitioned by
+// PARTITION!.  The two subsequences formed by START up to the partition
+// position and from there to END are sorted recursively.  The recursion
+// terminates if the vector has less than two elements, and nothing is
+// done; or if the size of the subvector is small and INSERTION-SORT! is
+// called on it.
+//
+// QUICK-SORT! takes the usual keyword arguments TEST, START, and END.
+//
 define method quick-sort!(vector :: <vector>,
 			  #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
@@ -395,17 +420,17 @@ end method quick-sort!;
 //// Sort for Sequences
 
 // sort! -- public
-//#
-//# Returns a sorted sequence, possibly modifying the original.  This is
-//# the default method for sequences.  It accepts two keyword arguments.
-//# The TEST key specifies the ascending order for the sort.  The STABLE
-//# key indicates whether the sort should be a stable sorting algorithm or
-//# whether it does not matter.
-//#
-//# The sequence is sorted by coercing it to a vector, and using the
-//# sorting functions for vectors defined above.  After the vector is
-//# sorted it is coerced to the class for copy of the original sequence.
-//#
+//
+// Returns a sorted sequence, possibly modifying the original.  This is
+// the default method for sequences.  It accepts two keyword arguments.
+// The TEST key specifies the ascending order for the sort.  The STABLE
+// key indicates whether the sort should be a stable sorting algorithm or
+// whether it does not matter.
+//
+// The sequence is sorted by coercing it to a vector, and using the
+// sorting functions for vectors defined above.  After the vector is
+// sorted it is coerced to the class for copy of the original sequence.
+//
 define method sort!(sequence :: <sequence>,
 		    #key test = \<, stable: stable)
   let vector = as(<vector>, sequence);
@@ -415,11 +440,11 @@ define method sort!(sequence :: <sequence>,
   as(class-for-copy(sequence), result);
 end method sort!;
 
-//# sort -- public
-//#
-//# Returns a new sorted sequence from the original sequence.  Calls SORT!
-//# on a copy of the original sequence.
-//#
+// sort -- public
+//
+// Returns a new sorted sequence from the original sequence.  Calls SORT!
+// on a copy of the original sequence.
+//
 define method sort (sequence :: <sequence>,
 		    #key test = \<, stable: stable)
   sort!(copy-sequence(sequence), test: test, stable: stable);
