@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.32 1996/07/12 14:23:11 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.33 1996/07/23 17:25:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -216,6 +216,7 @@ define module magic
 	     %make-next-method-cookie,
 	     %object-class,
 	     ambiguous-method-error,
+	     apply-safely,
 	     catch,
 	     check-types,
 	     class-all-slot-descriptors,
