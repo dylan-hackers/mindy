@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.1 1996/07/22 01:36:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.2 1996/08/02 03:11:32 rgs Exp $
 
 //======================================================================
 //
@@ -30,6 +30,24 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dy
 // d2c generated code.  Many of these are intended to support the code
 // produced by Melange rather than being explicitly referenced by users.
 //
+
+// Usage: c-variable-ref(int: "&variable") { := expression }
+//
+define macro c-variable-ref
+  { c-variable (?result-type:expression, ?:expression) }
+    => { pointer-deref(?result-type, c-expr(ptr: ?expression), 0) }
+  { c-variable (?result-type:token ?:expression) }
+    => { pointer-deref(?result-type, c-expr(ptr: ?expression), 0) }
+end;
+
+define macro c-variable-ref-setter
+  { c-variable (?value:expression, ?result-type:expression, ?:expression) }
+    => { pointer-deref-setter(?value, ?result-type,
+			      c-expr(ptr: ?expression), 0) }
+  { c-variable (?value:expression, ?result-type:token ?:expression) }
+    => { pointer-deref-setter(?value, ?result-type,
+			      c-expr(ptr: ?expression), 0) }
+end;
 
 define open primary functional class <statically-typed-pointer> (<object>)
   slot raw-value :: <raw-pointer>, required-init-keyword: #"pointer";

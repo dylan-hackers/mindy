@@ -7,10 +7,11 @@ end library melange-support;
 
 define module melange-support
   use dylan;
-  use extensions;
+  use extensions, export: {subclass};
   use system, export: {call-out, c-include, c-decl, c-expr};
 
   export
+    c-variable-ref, c-variable-ref-setter,
     <statically-typed-pointer>, raw-value, null-pointer,
     signed-byte-at, signed-byte-at-setter,
     unsigned-byte-at, unsigned-byte-at-setter, signed-short-at,
