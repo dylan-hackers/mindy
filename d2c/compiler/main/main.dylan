@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.13 1999/03/04 18:40:27 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.14 1999/04/09 23:06:50 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1259,7 +1259,7 @@ end method parse-option;
 //----------------------------------------------------------------------
 
 define method show-copyright(stream :: <stream>) => ()
-  format(stream, "d2c (Gwydion Dylan)\n");
+  format(stream, "d2c (Gwydion Dylan) version %s\n",$version);
   format(stream, "Compiles Dylan source into C, then compiles that.\n");
   format(stream, "Copyright 1994-1997 Carnegie Mellon University\n");
   format(stream, "Copyright 1998,1999 Gwydion Dylan Maintainers\n");
@@ -1297,6 +1297,7 @@ define method show-help(stream :: <stream>) => ()
 "       -f, --cc-overide-file:\n"
 "                          Files which need special C compiler invocation.\n"
 "       --help:            Show this help text.\n"
+"       -v, --version      Show version number.\n"
 	   );
 end method show-help;
 
@@ -1347,7 +1348,8 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    long-options: #("help"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
-			    long-options: #("version"));
+			    long-options: #("version"),
+			    short-options: #("v"));
   add-option-parser-by-type(argp,
 			    <repeated-parameter-option-parser>,
 			    long-options: #("libdir"),

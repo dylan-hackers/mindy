@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Main.lid,v 1.1 1998/05/03 19:55:33 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/Main.lid,v 1.2 1999/04/09 23:06:49 andreas Exp $
 library: compiler-main
 unit-prefix: main
 unique-id-base: 12000
@@ -7,4 +7,5 @@ entry-point: main:%main
 
 main-exports.dylan
 file-locations.dylan
+version.dylan
 main.dylan

@@ -1,0 +1,4 @@
+module: main
+rcs-header: $header$
+
+define constant $version = "@version@";
