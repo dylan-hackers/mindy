@@ -1,11 +1,10 @@
-Gwydion Dylan 2.2
+Gwydion Dylan 2.3
 =================
 
-THIS IS A TECHNOLOGY PREVIEW. It still has a number of known bugs, but
-should be suitable for learning Dylan and developing command line
-applications. Development releases are also available through the
-maintainers' website; these offer more features and have a different set of
-bugs.
+THIS IS A DEVELOPMENT VERSION. It emphasizes new features over stability
+and may not work correctly on all systems. You can find a more stable
+"technology preview" at the maintainer's website; this has the version
+number 2.2 and might work better for some purposes.
 
 Gwydion Dylan provides two implementations of the Dylan programming
 language: Mindy and d2c. Mindy is bytecode compiler and interpreter, and
