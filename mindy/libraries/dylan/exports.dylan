@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.23 1994/04/30 15:19:36 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.24 1994/05/01 05:36:36 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -79,7 +79,7 @@ define module Builtin-Stuff
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
     debugger-return, debugger-eval,
-    on-exit, exit;
+    on-exit, exit, <=table>;
 end Builtin-Stuff;
 
 define module Dylan
@@ -137,6 +137,7 @@ define module Dylan
     <condition>,
     <deque>,
     <error>,
+    <object-table>,
     <range>, <restart>,
     <serious-condition>, <simple-error>, <simple-restart>,
     <simple-warning>, <stretchy-collection>, <stretchy-vector>,
@@ -154,7 +155,7 @@ define module Dylan
     fill!, find-key, first, first-setter, floor,
     gcd,
     identity, integral?, intersection,
-    key-sequence,
+    key-hash, key-sequence, key=,
     last, last-setter, lcm,
     map, map-as, map-into, max, member?, min, modulo,
     numerator,
@@ -178,7 +179,7 @@ define module Extensions
     import: (main, exit, on-exit,
 	     format, prin1, print, putc, puts, getc, <byte-vector>,
 	     <boolean>, <true>, <false>,
-	     <weak-pointer>, weak-pointer-object),
+	     <weak-pointer>, weak-pointer-object, <=table>),
     export: all;
 end Extensions;
 
