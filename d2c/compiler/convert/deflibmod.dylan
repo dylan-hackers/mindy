@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.1 1994/12/12 13:01:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.2 1994/12/17 02:24:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -41,7 +41,7 @@ define method process-clause (clause :: <use-clause>,
 	    name: clause.use-name.token-symbol,
 	    imports: extract-names-or-all(clause.use-import, "import"),
 	    prefix: extract-prefix(clause.use-prefix),
-	    excludes: extract-names(clause.use-prefix, "exclude"),
+	    excludes: extract-names(clause.use-exclude, "exclude"),
 	    renamings: extract-renamings(clause.use-rename),
 	    exports: extract-names-or-all(clause.use-export, "export")));
 end;
