@@ -7,7 +7,7 @@
 STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
 	else echo "bootstrap";					\
 	fi)
-VERSION=2.3.11
+VERSION=$(shell cat version)
 MACHINE=$(shell uname -m)
 GCCVER=$(shell gcc -dumpversion | sed "s/\([0-9]\.[0-9]\).*/\1/")
 
