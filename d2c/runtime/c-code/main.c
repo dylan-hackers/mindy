@@ -1,4 +1,4 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.7 1996/08/12 14:00:34 nkramer Exp $ */
+/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.8 1996/09/04 16:47:24 nkramer Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -149,7 +149,7 @@ gdb_print_genobj (descriptor_t obj)
 
 /* Most of these win32-only functions will go away as soon as we move
    from Visual C++ 4.0 to version 4.2. */
-#ifdef win32
+#if (defined(WIN32) && !defined(WIN32_GCC))
 
 double rint(double x)
 {
