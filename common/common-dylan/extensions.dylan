@@ -2,14 +2,6 @@ module: common-extensions
 
 
 //=========================================================================
-//  Streams protocol (will move elsewhere)
-//=========================================================================
-
-define open abstract class <stream> (<object>)
-end class;
-
-
-//=========================================================================
 //  Unsupplied, unfound.
 //=========================================================================
 //  Unique objects which can be used as default values for keywords and
@@ -50,43 +42,6 @@ define function unfound()
 => ( unfound-marker :: <object> )
     $unfound;
 end function unfound;
-
-
-//=========================================================================
-//  Locators
-//=========================================================================
-//  A very abstract interface to locators.
-
-define open abstract class <locator> (<object>)
-end class;
-
-define open generic supports-open-locator?
-    (locator :: <locator>)
- => (supported? :: <boolean>);
-  
-define method supports-open-locator?
-    (locator :: <locator>)
- => (supported? :: <boolean>)
-  #f;                                                                         
-end method;
-
-define open generic open-locator
-    (locator :: <locator>)
- => (stream :: <stream>);
-
-define open generic supports-list-locator?
-    (locator :: <locator>)
- => (supported? :: <boolean>);
-
-define method supports-list-locator?
-    (locator :: <locator>)
- => (supported? :: <boolean>)
-  #f;                                                                         
-end method;
-
-define open generic list-locator
-    (locator :: <locator>)
- => (listing :: <sequence>);
 
 
 //=========================================================================

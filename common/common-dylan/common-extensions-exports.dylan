@@ -109,7 +109,8 @@ define module common-extensions
     export: {<string-table>};
   use c-support;
   use format, export: all;
-  use streams, import: { new-line, force-output };
+  use streams, import: { new-line, force-output, <stream> },
+    export: {<stream>};
   use standard-io;
   use random,
      export: all;
@@ -187,17 +188,3 @@ define module common-extensions
     \%iterate-value-helper;
 #endif
 end module;
-
-/*
-  Stream protocol.
-*/
-
-/*
-  // Locators.
-  export
-    <locator>,
-    supports-open-locator?,
-    open-locator,
-    supports-list-locator?,
-    list-locator;
-*/
