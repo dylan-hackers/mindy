@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.11 1995/04/27 00:53:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.12 1995/04/30 05:55:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -52,6 +52,10 @@ define abstract class <abstract-method-definition> (<function-definition>)
   // it can't me represented as a <method-literal>.  Filled in by fer
   // conversion.
   slot method-defn-leaf :: union(<method-literal>, <false>);
+  //
+  // The <method-parse> if we are to inline this method, #f otherwise.
+  slot method-defn-inline-expansion :: false-or(<method-parse>),
+    init-value: #f, init-keyword: inline-expansion:;
 end;
 
 define method defn-type (defn :: <abstract-method-definition>)
@@ -110,6 +114,9 @@ define class <define-method-tlf> (<simple-define-tlf>)
   // True if the define method is sealed, false if open.
   slot method-tlf-sealed? :: <boolean>, required-init-keyword: sealed:;
   //
+  // True if the define method was declared inline, #f if not.
+  slot method-tlf-inline? :: <boolean>, required-init-keyword: inline:;
+  //
   // The guts of the method being defined.
   slot method-tlf-parse :: <method-parse>, required-init-keyword: parse:;
 end;
@@ -142,9 +149,9 @@ end;
 
 define method process-top-level-form (form :: <define-method-parse>) => ();
   let name = form.defmethod-method.method-name.token-symbol;
-  let (open?, sealed?)
+  let (open?, sealed?, inline?)
     = extract-modifiers("define method", name, form.define-modifiers,
-			#"open", #"sealed");
+			#"open", #"sealed", #"inline");
   if (open? & sealed?)
     error("define method %s can't be both open and sealed", name);
   end;
@@ -155,7 +162,7 @@ define method process-top-level-form (form :: <define-method-parse>) => ();
 			    params.paramlist-rest & ~params.paramlist-keys,
 			    params.paramlist-keys & #t);
   let tlf = make(<define-method-tlf>, base-name: base-name, sealed: ~open?,
-		 parse: parse);
+		 inline: inline?, parse: parse);
   add!($Top-Level-Forms, tlf);
 end;
 
@@ -212,7 +219,10 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
 		       base-name: name,
 		       signature: signature,
 		       hairy: anything-non-constant?,
-		       sealed: tlf.method-tlf-sealed?);
+		       sealed: tlf.method-tlf-sealed?,
+		       inline-expansion: tlf.method-tlf-inline?
+			 & ~anything-non-constant?
+			 & tlf.method-tlf-parse);
 end;
 
 define method make (wot :: limited(<class>, subclass-of: <method-definition>),
