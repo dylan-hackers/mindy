@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.4 2002/04/06 01:29:50 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.5 2002/08/09 20:24:35 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -30,7 +30,8 @@ module: dylan-viscera
 //======================================================================
 
 define functional class <machine-word> (<object>)
-  slot value :: <integer>, required-init-keyword: %value:;
+  slot value :: <integer>,
+    init-value: 0, init-keyword: value:;
 end;
 
 define sealed abstract class <invalid-bit-number> (<error>)
@@ -53,13 +54,13 @@ end;
 define sealed inline method as
     (class == <machine-word>, integer :: <integer>)
  => (machine-word :: <machine-word>);
-  make(<machine-word>, %value: integer);
+  make(<machine-word>, value: integer);
 end method;
 
 define sealed inline method as
     (class == <machine-word>, raw-pointer :: <raw-pointer>)
  => (machine-word :: <machine-word>);
-  make(<machine-word>, %value: %%primitive(raw-pointer-address, raw-pointer));
+  make(<machine-word>, value: %%primitive(raw-pointer-address, raw-pointer));
 end method;
 
 define sealed inline method as
@@ -110,7 +111,6 @@ define sealed inline method \<
   a.value < b;
 end method;
 
-// Added to support Functional Object's Common Dylan
 define inline function valid-bit-number? (bit :: <integer>)
   (0 <= bit) & (bit < $machine-word-size);
 end;
@@ -152,8 +152,6 @@ define sealed inline method negative? (a :: <machine-word>)
  => (res :: <boolean>)
   a < $machine-word-zero
 end method negative?;
-
-// End FO Support
 
 define constant $machine-word-size :: <integer> = $fixed-integer-bits;
 define constant $maximum-signed-machine-word :: <machine-word>
