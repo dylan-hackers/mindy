@@ -64,6 +64,9 @@ on the web at <http://www.gwydiondylan.org/>.
 
 
 %changelog
+* Sun Aug 22 1999 Andreas Bogk <andreas@andreas.org>
+  - add shared libraries to package
+
 * Tue Jun 01 1999 Andreas Bogk <andreas@andreas.org>
   - added site-local directory according to FSSTND
   - changed the Dylan library location to reflect 2.3.1 changes
@@ -191,6 +194,7 @@ fi
 
 # Our libraries.
 /usr/lib/dylan/VERSION/*/*.a
+/usr/lib/dylan/VERSION/*/*.so
 /usr/lib/dylan/VERSION/*/*.du
 
 
