@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.38 1995/10/05 01:12:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.39 1995/10/30 13:11:10 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -471,9 +471,7 @@ define method make-definition-constant
        derived-type: ct-value-cclass(value), const-defn: defn);
 end method;
 
-// make-initial-var -- internal utility used by the various make-mumble-var
-// routines.
-// 
+
 define method make-initial-var
     (builder :: <fer-builder>, of-type :: <values-ctype>,
      var-info :: <variable-info>)
