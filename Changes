@@ -75,6 +75,10 @@ The following are enhancements added since release 1.4:
    Mindycomp now gives warning messages when function return values
    have names but not types.
 
+   Mindy now gives warnings when next-method() is called without #next
+   being declared in the parameter list, because that's required in
+   Mindy.  See mindy.txt for details on this deficiency.
+
    Mindy now gives warnings when a method's return types do not match
    the generic's return types because return types were not specified
    for the method.  This used to be an error.
