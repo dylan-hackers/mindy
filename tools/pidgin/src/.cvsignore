@@ -1,1 +1,4 @@
 ansi-c-test
+*.s
+*.c
+*.mak
