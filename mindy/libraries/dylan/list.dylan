@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.5 1994/06/27 17:10:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.6 1994/11/06 20:10:46 rgs Exp $
 
 //======================================================================
 //
@@ -100,6 +100,16 @@ end method forward-iteration-protocol;
 //// Collection routines.
 
 // Note: size(<list>) is built into Mindy.
+
+define method empty?(list :: <empty-list>)
+  #t;
+end method empty?;
+
+define method empty?(list :: <pair>)
+  #f;
+end method empty?;
+
+/* ---------------- */
 
 define method class-for-copy(list :: <list>) => <class>;
   <list>;
