@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.13 1995/05/26 10:46:04 wlott Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.14 1995/05/29 00:29:09 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -54,6 +54,7 @@ OBJS = exports.dbc \
 	tlexpr.dbc \
 	stackanal.dbc \
 	cback.dbc \
+	heap.dbc \
 	dump.dbc \
 	init.dbc \
 	main.dbc
@@ -64,3 +65,12 @@ foo.dbc: ${OBJS}
 parser.dylan: parser.input
 	cmucl -load do-parsergen
 
+
+CFLAGS = -g
+CC = gcc
+
+test: output.o heap.o
+	${CC} ${CFLAGS} -o test output.o heap.o
+
+output.c heap.s: bootstrap.dylan ack.dylan foo.dbc
+	mindy -f foo.dbc bootstrap.dylan ack.dylan
