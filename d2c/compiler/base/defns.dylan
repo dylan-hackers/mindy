@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.11 1996/02/06 15:40:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.12 1996/02/07 02:22:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,7 +33,7 @@ define constant $definition-slots
 	 defn-library, library:, #f);
 	 
 
-define generic defn-type (defn :: <definition>)
+define open generic defn-type (defn :: <definition>)
     => res :: false-or(<ctype>);
 
 // ct-value -- exported.
@@ -41,7 +41,7 @@ define generic defn-type (defn :: <definition>)
 // Returns the compile-time value for some definition, of #f if that
 // definition doesn't have a compile time value.
 //
-define generic ct-value (defn :: <definition>)
+define open generic ct-value (defn :: <definition>)
     => res :: false-or(<ct-value>);
 
 define method ct-value (defn :: <definition>)
