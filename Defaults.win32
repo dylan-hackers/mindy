@@ -1,6 +1,6 @@
 # This version of Defaults is hand generated for win32.  If you don't
 # intend to build dylan in c:\dylan, you need to change $prefix below.
-# Though in most cases, / and \ are interchangable, there are exceptions, so
+# Though in most cases, \\ and \ are interchangable, there are exceptions, so
 # it's probably best to stick with the slash orientation already in use.
 
 #
@@ -9,23 +9,23 @@
 
 $target_name = 'x86-win32-vc';
 $host_name = 'x86-win32-vc';
-$version = "2.3.9pre3";
-$bootstrap_counter = 20;
+$version = "2.3.9pre4";
+$bootstrap_counter = 23;
 $lid_format_version = "2";
-$prefix="c:/fulgham/projects/gd";
+$prefix="c:\\fulgham\\projects\\gd";
 
-$srcroot = "${prefix}/src";
+$srcroot = "${prefix}\\src";
 $buildroot = "${srcroot}";
-$exec_preix = "c:/dylan";
+$exec_prefix = "c:\\dylan";
 $destdir = "${prefix}";
-$bindir = "${exec_prefix}/bin";
-$libdir = "${exec_prefix}/lib/dylan/${version}/${target_name}";
-$sitelibdir = "${exec_prefix}/lib/dylan/${version}/${target_name}/dylan-user";
-$mandir = "${prefix}/man";
-$datadir = "${prefix}/share";
-$sysconfdir = "${prefix}/etc";
-$includedir = "${prefix}/include";
-$gen_makefile = "${buildroot}/gen-makefile";
+$bindir = "${exec_prefix}\\bin";
+$libdir = "${exec_prefix}\\lib\\dylan\\${version}\\${target_name}";
+$sitelibdir = "${exec_prefix}\\lib\\dylan\\${version}\\${target_name}\\dylan-user";
+$mandir = "${prefix}\\man";
+$datadir = "${prefix}\\share";
+$sysconfdir = "${prefix}\\etc";
+$includedir = "${prefix}\\include";
+$gen_makefile = "${buildroot}\\gen-makefile";
 $enable_debug = "minimum" eq "yes";
 $enable_profiling = "minimum" eq "profiling";
 $enable_mindy = "no" eq "yes";
@@ -33,25 +33,25 @@ $enable_d2c = "yes" eq "yes";
 $build_tools_with_d2c = "yes" eq "yes";
 $cross_compiling = "no" eq "yes";
 $enable_bootstrap = "no" eq "yes";
-$bootstrap_compiler = "d2c";
+$bootstrap_compiler = "none";
 $enable_mindy_bootstrap = $enable_bootstrap && $bootstrap_compiler eq "mindy";
-$recheck = "./configure ";
+$recheck = ".\\configure ";
 $shared = "no" eq "yes";
 $static = "yes" eq "yes";
-$INSTALL = "/usr/bin/install -c";
-$LIBTOOL = '/bin/bash ${srcroot}/libtool';
+#$INSTALL = "c:\\Fulgham\\Programs\\Msys\\bin\\sh \\usr\\bin\\install -c";
+$LIBTOOL = '';
 
-$MC = "$srcroot/mindy/Compiler/release/mindycomp.exe";
-$MINDY = "$srcroot/mindy/Interpretter/release/interpretter.exe";
-$DYLANPATH = ":${srcroot}/common/collection-extensions:${srcroot}/common/format:${srcroot}/common/format-out:${srcroot}/common/internal-time:${srcroot}/common/matrix:${srcroot}/common/print:${srcroot}/common/regular-expressions:${srcroot}/common/standard-io:${srcroot}/common/stream-ext:${srcroot}/common/streams:${srcroot}/common/string-ext:${srcroot}/common/table-ext:${srcroot}/common/time:${srcroot}/common/transcendental:${srcroot}/common/getopt:${srcroot}/mindy/libraries/random:${srcroot}/mindy/libraries/dylan:${srcroot}/mindy/libraries/inspector:${srcroot}/mindy/libraries/tk";
+$MC = "$exec_prefix\\bin\\mindycomp.exe";
+$MINDY = "$exec_prefix\\bin\\interp.exe";
+$DYLANPATH = ";${srcroot}\\common\\collection-extensions;${srcroot}\\common\\format;${srcroot}\\common\\format-out;${srcroot}\\common\\internal-time;${srcroot}\\common\\matrix;${srcroot}\\common\\print;${srcroot}\\common\\regular-expressions;${srcroot}\\common\\standard-io;${srcroot}\\common\\stream-ext;${srcroot}\\common\\streams;${srcroot}\\common\\string-ext;${srcroot}\\common\\table-ext;${srcroot}\\common\\time;${srcroot}\\common\\transcendental;${srcroot}\\common\\getopt;${srcroot}\\mindy\\libraries\\random;${srcroot}\\mindy\\libraries\\dylan;${srcroot}\\mindy\\libraries\\inspector;${srcroot}\\mindy\\libraries\\tk;${srcroot}\\d2c\\runtime\\random";
 $CC = 'cl';
-$D2C = "$srcroot/bootstrap_compiler/d2c -T$target_name -Dcompiled-for-x86 -Dcompiled-for-win32 -Dnewlines-are-CRLF -DC-compiler-is-VC";
+$D2C = "$bindir\\d2c -T$target_name -Dcompiled-for-x86 -Dcompiled-for-win32 -Dnewlines-are-CRLF -DC-compiler-is-VC";
 if ($host_name ne $target_name) {
   $D2C = "$D2C -no-binaries";
 };
 
-$PARSERGEN = "$buildroot/tools/parsergen/parsergen";
-$MELANGE = "$buildroot/tools/melange/melange";
+$PARSERGEN = "$buildroot\\tools\\parsergen\\parsergen";
+$MELANGE = "$buildroot\\tools\\melange\\melange";
 
 unless ($build_tools_with_d2c) {
   $PARSERGEN = "$MINDY -f $PARSERGEN-lib.dbc";
@@ -59,13 +59,13 @@ unless ($build_tools_with_d2c) {
 };
 
 if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
-    $CPPFLAGS = '-I'.$srcroot.'/previous_runtime';
-    $d2c_runtime = '-L'.$buildroot.'/previous_runtime ';
+    $CPPFLAGS = '-I'.$srcroot.'\\previous_runtime';
+    $d2c_runtime = '-L'.$buildroot.'\\previous_runtime ';
 } else {
-    $CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
+    $CPPFLAGS = '-I'.$srcroot.'\\d2c\\runtime';
     @runtime_directories = ('c-code', 'gc', 'dylan', 'melange');
     foreach (@runtime_directories) {
-	$d2c_runtime .= "-L$buildroot/d2c/runtime/$_ ";
+	$d2c_runtime .= "-L$buildroot\\d2c\\runtime\\$_ ";
     }
 }
 
@@ -80,5 +80,5 @@ $machine_name = "i686";
 $os_name = "WIN_NT-5.0";
 $os_variant = "WIN_NT-5.0";
 $os_version = "1.3.12(0.54/3/2)";
-$platform_name = "i686-CYGWIN_NT-5.0";
+$platform_name = "i686-MINGWIN_NT-5.0";
 
