@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.25 2001/08/02 07:09:56 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.26 2001/11/07 21:58:17 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1068,7 +1068,7 @@ define method spew-class
      metaclass :: <meta-cclass>,
      slots :: <simple-object-vector>) => ();
   apply(spew-instance, name, metaclass, state,
-	%object-class: specifier-type(#"<class>"),
+	%object-class: class-ctype(),
 	slots);
 end;
 
@@ -1078,7 +1078,7 @@ define method spew-class
      state :: <heap-file-state>,
      metaclass == #f,
      slots :: <simple-object-vector>) => ();
-  apply(spew-instance, name, specifier-type(#"<class>"), state, slots);
+  apply(spew-instance, name, class-ctype(), state, slots);
 end;
 
 define method spew-object
@@ -1477,7 +1477,7 @@ end;
 // "slots".  Any slot which is not explicitly specified will be filled in with
 // a default value.
 //
-define method spew-instance
+define function spew-instance
     (name :: <byte-string>,
      class :: <cclass>, state :: <heap-file-state>, #rest slots) => ();
   let stream = state.file-guts-stream;
