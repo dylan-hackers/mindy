@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.6 2001/03/30 13:44:27 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/stretchy.dylan,v 1.7 2002/08/25 15:46:11 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -76,6 +76,19 @@ define sealed class <stretchy-object-vector> (<builtin-stretchy-vector>)
   sealed slot ssv-data :: <simple-object-vector> = #[];
 end class <stretchy-object-vector>;
 define sealed domain make(singleton(<stretchy-object-vector>));
+
+define sealed inline method %element(v :: <stretchy-object-vector>,
+                                     i :: <integer>)
+ => (obj :: <object>);
+  %element(v.ssv-data, i);
+end;
+
+define sealed inline method %element-setter(newVal,
+                                            v :: <stretchy-object-vector>,
+                                            i :: <integer>)
+ => (obj :: <object>);
+  %element(v.ssv-data, i) := newVal;
+end;
 
 define sealed method initialize
     (object :: <stretchy-object-vector>, #key size :: <integer> = 0, fill = #f)
