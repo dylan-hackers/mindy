@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.9 2000/08/14 16:58:44 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.10 2001/02/05 02:04:59 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -7,7 +7,7 @@ module: dylan-viscera
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -635,7 +635,11 @@ define macro c-include
 end;
 
 define macro c-decl
-    { c-decl (?file:expression) } => { %%primitive(\c-decl, ?file) }
+    { c-decl (?decl:expression) } => { %%primitive(\c-decl, ?decl) }
+end;
+
+define macro c-local-decl
+    { c-local-decl (?decl:expression) } => { %%primitive(\c-local-decl, ?decl) }
 end;
 
 define macro c-expr
