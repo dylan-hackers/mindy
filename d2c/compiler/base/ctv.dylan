@@ -1,14 +1,9 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.25 1996/01/27 20:10:36 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.26 1996/02/16 03:45:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define abstract class <ct-value> (<annotatable>)
-  // Used by the heap builder -- this sequence will typically be empty
-  // or contain a single element, but certain shared objects (such as
-  // symbols) can accumulate several names.
-  slot ct-value-heap-labels :: <sequence>, init-value: #(),
-    init-keyword: #"heap-labels";
 end;
 
 define abstract class <literal> (<ct-value>)
@@ -33,6 +28,13 @@ define method print-message
     (ctv :: <ct-not-supplied-marker>, stream :: <stream>) => ();
   write("$not-supplied", stream);
 end;
+
+define variable *ct-not-supplied-marker* = #f;
+
+define method make (class == <ct-not-supplied-marker>, #next next-method, #key)
+    => res :: <ct-not-supplied-marker>;
+  *ct-not-supplied-marker* | (*ct-not-supplied-marker* := next-method());
+end method make;
 
 
 
@@ -437,8 +439,11 @@ define method make (class == <literal-list>, #next next-method,
 end;
 
 define class <literal-pair> (<literal-list>)
-  slot literal-head :: <ct-value>, required-init-keyword: head:;
-  slot literal-tail :: <ct-value>, required-init-keyword: tail:;
+  slot literal-sharable? :: <boolean>, init-value: #f, init-keyword: sharable:;
+  slot literal-head :: <ct-value>,
+    required-init-keyword: head:;
+  slot literal-tail :: <ct-value>,
+    required-init-keyword: tail:;
 end;
 
 define class <literal-pair-memo-table> (<table>)
@@ -446,13 +451,14 @@ end;
 
 define method table-protocol (table :: <literal-pair-memo-table>)
     => (tester :: <function>, hasher :: <function>);
-  values(method (key1, key2) => res :: <boolean>;
-	   key1.head == key2.head
-	     & key1.tail == key2.tail;
+  values(method (key1 :: <literal-pair>, key2 :: <literal-pair>)
+	     => res :: <boolean>;
+	   key1.literal-head == key2.literal-head
+	     & key1.literal-tail == key2.literal-tail;
 	 end,
-	 method (key) => (id :: <integer>, state);
-	   let (head-id, head-state) = object-hash(key.head);
-	   let (tail-id, tail-state) = object-hash(key.tail);
+	 method (key :: <literal-pair>) => (id :: <integer>, state);
+	   let (head-id, head-state) = object-hash(key.literal-head);
+	   let (tail-id, tail-state) = object-hash(key.literal-tail);
 	   merge-hash-codes(head-id, head-state, tail-id, tail-state,
 			    ordered: #t);
 	 end);
@@ -464,17 +470,12 @@ define method make (class == <literal-pair>, #next next-method,
 		    #key sharable: sharable?, head, tail)
     => res :: <literal-pair>;
   if (sharable?)
-    let key = pair(head, tail);
+    let key = next-method();
     element($literal-pair-memo, key, default: #f)
-      | (element($literal-pair-memo, key) := next-method());
+      | (element($literal-pair-memo, key) := key);
   else
     next-method();
   end;
-end;
-
-define method initialize
-    (lit :: <literal-pair>, #next next-method, #key sharable) => ();
-  next-method();
 end;
 
 define method print-message (lit :: <literal-pair>, stream :: <stream>) => ();
@@ -489,8 +490,7 @@ define method as (class == <ct-value>, thing :: <pair>)
        tail: as(<ct-value>, thing.tail));
 end;
 
-define class <literal-empty-list>
-    (<literal-list>, <eql-literal>, <identity-preserving-mixin>)
+define class <literal-empty-list> (<literal-list>, <eql-literal>)
 end;
 
 define method literal-value (wot :: <literal-empty-list>)
@@ -540,6 +540,7 @@ define abstract class <literal-vector> (<literal-sequence>)
 end;
 
 define class <literal-simple-object-vector> (<literal-vector>)
+  slot literal-sharable? :: <boolean>, init-value: #f, init-keyword: sharable:;
   slot literal-value :: <simple-object-vector>,
     required-init-keyword: contents:;
 end;
@@ -554,7 +555,9 @@ define method table-protocol (table :: <shallow-equal-table>)
   values(shallow-equal, shallow-hash);
 end method table-protocol;
 
-define method shallow-equal (vec1 :: <vector>, vec2 :: <vector>)
+define method shallow-equal
+    (vec1 :: <simple-object-vector>, vec2 :: <simple-object-vector>)
+    => res :: <boolean>;
   if (vec1.size = vec2.size)
     block (return)
       for (i from 0 below vec1.size)
@@ -565,8 +568,8 @@ define method shallow-equal (vec1 :: <vector>, vec2 :: <vector>)
   end if;
 end method shallow-equal;
       
-define method shallow-hash (vec :: <vector>)
- => (id :: <integer>, state :: <object>);
+define method shallow-hash (vec :: <simple-object-vector>)
+    => (id :: <integer>, state :: <object>);
   let (current-id, current-state) = values(0, $permanent-hash-state);
   for (i from 0 below vec.size)
     let (id, state) = object-hash(vec[i]);
@@ -588,16 +591,10 @@ define method make (class == <literal-simple-object-vector>, #next next-method,
   if (sharable?)
     element($literal-vector-memo, contents, default: #f)
       | (element($literal-vector-memo, contents) :=
-	   next-method(class, contents: contents));
+	   next-method(class, sharable: #t, contents: contents));
   else
-    next-method(class, contents: contents);
+    next-method(class, sharable: #f, contents: contents);
   end;
-end;
-
-define method initialize
-    (lit :: <literal-simple-object-vector>, #next next-method, #key sharable)
-    => ();
-  next-method();
 end;
 
 define method print-message
@@ -660,104 +657,59 @@ define /* exported */ variable *compiler-dispatcher*
   = make(<dispatcher>);
 
 
+define /* exported */ generic merge-ctv-infos (old-info, new-info) => ();
+
+
+
+// merge-and-set-info -- internal.
+//
+// A psuedo slot setter that merges the old and new info if necessary.  Used
+// by the various add-make-dumpers.
+// 
+define method merge-and-set-info (new-info, ctv :: <ct-value>) => ();
+  let old-info = ctv.info;
+  if (old-info)
+    merge-ctv-infos(old-info, new-info);
+  else
+    ctv.info := new-info;
+  end if;
+end method merge-and-set-info;
+
+
+
 add-make-dumper
   (#"not-supplied-marker", *compiler-dispatcher*, <ct-not-supplied-marker>,
-   list(info, #f, info-setter,
-	ct-value-heap-labels, heap-labels:, #f));
+   list(info, #f, merge-and-set-info));
+
 
 // The method is inherited by all EQL literals.  It must be overridden for some
 // where the type of the literal-value is ambiguous (e.g. for numbers.)
 //
 define method dump-od (obj :: <eql-literal>, buf :: <dump-state>) => ();
-  dump-simple-object(#"eql-literal", buf, obj.info, obj.literal-value);
-end method;
-
-// All varieties of sequence literals should also benefit from shared
-// references. 
-//
-define method dump-od
-    (obj :: <literal-sequence>,  buf :: <dump-state>)
- => ();
-  if (maybe-dump-reference(obj, buf))
-    dump-simple-object(#"eql-literal", buf, obj.info, obj.literal-value);
+  if (~instance?(obj, <identity-preserving-mixin>)
+	| maybe-dump-reference(obj, buf))
+    dump-simple-object(#"simple-literal", buf, obj.info, obj.literal-value);
   end if;
 end method;
 
 // Just use AS to reconstruct the literal.
 //
-add-od-loader(*compiler-dispatcher*, #"eql-literal",
+add-od-loader(*compiler-dispatcher*, #"simple-literal",
   method (state :: <load-state>) => res :: <literal>;
     let saved-info = load-object-dispatch(state);
     let value = load-object-dispatch(state);
     assert-end-object(state);
     let res = as(<ct-value>, value);
-    unless (res.info)
-      res.info := saved-info;
-    end;
+    merge-and-set-info(saved-info, res);
     res;
   end method
 );
 
-// Some literals need the heap-labels dumped.
-//
-define method dump-od
-    (obj :: type-union(<literal-boolean>, <literal-symbol>),
-     buf :: <dump-state>)
- => ();
-  if (maybe-dump-reference(obj, buf))
-    dump-simple-object(#"labelled-literal", buf, obj.info,
-		       obj.literal-value, obj.ct-value-heap-labels);
-  end if;
-end method;
-
-define method dump-od
-    (obj :: <literal-empty-list>,  buf :: <dump-state>)
- => ();
-  if (maybe-dump-reference(obj, buf))
-    dump-simple-object(#"labelled-literal", buf, obj.info,
-		       obj.literal-value, obj.ct-value-heap-labels);
-  end if;
-end method;
-
-// Just use AS to reconstruct the literal.
-//
-add-od-loader(*compiler-dispatcher*, #"labelled-literal",
-  method (state :: <load-state>) => res :: <eql-literal>;
-    let saved-info = load-object-dispatch(state);
-    let value = load-object-dispatch(state);
-    let labels = load-object-dispatch(state);
-    assert-end-object(state);
-    let res = as(<ct-value>, value);
-    unless (res.info)
-      res.info := saved-info;
-    end;
-    res.ct-value-heap-labels
-      := union(labels, res.ct-value-heap-labels, test: \=);
-    res;
-  end method
-);
-
-// We represent literal lists via literal-pair entries to more closely match
-// the internal representation of literals.
-//
-define method dump-od (obj :: <literal-pair>, buf :: <dump-state>) => ();
-  if (maybe-dump-reference(obj, buf))
-    dump-simple-object(#"literal-pair", buf,
-		       obj.literal-head, obj.literal-tail);
-  end if;
-end method;
-
-add-od-loader(*compiler-dispatcher*, #"literal-pair",
-  method (state :: <load-state>) => res :: <literal-pair>;
-    let hd = load-object-dispatch(state);
-    let tl = load-object-dispatch(state);
-    assert(load-object-dispatch(state) == $end-object);
-    make(<literal-pair>, head: hd, tail: tl, sharable: #t);
-  end method
-);
 
 // Since all literal numbers are represented as rationals, we need to mark the
-// specialized representation.
+// specialized representation.  Furthermore, we can't use add-make-dumper,
+// because the default dump-od method is shadowed by the eql-literal method
+// above.
 //
 define method dump-od
     (obj :: <literal-integer>, buf :: <dump-state>) => ();
@@ -805,4 +757,28 @@ for (x = list(#"literal-fixed-integer", <literal-integer>,
   );
 
 end for;
+
+
+add-make-dumper
+  (#"literal-pair", *compiler-dispatcher*, <literal-pair>,
+   list(info, #f, merge-and-set-info,
+	literal-sharable?, sharable:, #f,
+	literal-head, head:, #f,
+	literal-tail, tail:, #f));
+
+add-make-dumper
+  (#"literal-vector", *compiler-dispatcher*, <literal-simple-object-vector>,
+   list(info, #f, merge-and-set-info,
+	literal-sharable?, sharable:, #f,
+	literal-value, contents:, #f));
+
+// literal byte strings can be dumped as simple-literals.
+// 
+define method dump-od
+    (obj :: <literal-byte-string>,  buf :: <dump-state>)
+ => ();
+  if (maybe-dump-reference(obj, buf))
+    dump-simple-object(#"simple-literal", buf, obj.info, obj.literal-value);
+  end if;
+end method;
 
