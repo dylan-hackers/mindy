@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.4 1996/02/21 02:40:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.5 1996/03/17 00:15:21 wlott Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -43,7 +43,7 @@ define sealed class <random-state> (<object>)
     = make(<simple-object-vector>, size: $random-max + 1);
 end class <random-state>;
 
-seal generic make (singleton(<random-state>));
+define sealed domain make (singleton(<random-state>));
 
 #if (threads)
 
@@ -51,7 +51,7 @@ define class <threadsafe-random-state> (<random-state>)
   slot mutex :: <spinlock>, init-function: method () make(<spinlock>) end;
 end class <threadsafe-random-state>;
 
-seal generic make (singleton(<threadsafe-random-state>));
+define sealed domain make (singleton(<threadsafe-random-state>));
 
 #end
 
@@ -75,7 +75,7 @@ define method initialize
   end;
 end method initialize;
 		     
-seal generic initialize (<random-state>);
+define sealed domain initialize (<random-state>);
 
 define variable *random-state* :: <random-state> = make(<random-state>);
 
