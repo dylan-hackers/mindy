@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.7 1995/12/09 02:49:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.8 1995/12/09 21:00:04 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -146,6 +146,60 @@ define class <generic-function> (<function>)
 end;
 
 seal generic make(singleton(<generic-function>));
+
+
+// Function information routines.
+
+define inline method generic-function-mandatory-keywords
+    (gf :: <generic-function>)
+    => keywords :: false-or(<simple-object-vector>);
+  gf.function-keywords;
+end method generic-function-mandatory-keywords;
+
+define inline method function-arguments (function :: <function>)
+    => (required :: <fixed-integer>, rest? :: <boolean>,
+	keywords :: type-union(<simple-object-vector>, one-of(#f, #"all")));
+  values(function.function-specializers.size,
+	 function.function-rest?,
+	 if (function.function-all-keys?)
+	   #"all";
+	 else
+	   function.function-keywords;
+	 end);
+end method function-arguments;
+
+define inline method function-return-values (function :: <function>)
+    => (return-value-types :: <simple-object-vector>,
+	rest-return-value :: false-or(<type>));
+  let type = function.function-rest-value;
+  values(function.function-values,
+	 if (subtype?(type, type-union()))
+	   #f;
+	 else
+	   type;
+	 end if);
+end method function-return-values;
+
+
+// Method adding, finding, and removing.
+
+define method add-method
+    (gf :: <generic-function>, new :: <method>)
+    => (new :: <method>, old :: false-or(<method>));
+  error("### runtime add-method not yet implemented.");
+end method add-method;
+
+define method find-method
+    (gf :: <generic-function>, specializers :: <sequence>)
+    => meth :: false-or(<method>);
+  error("### runtime find-method not yet implemented.");
+end method find-method;
+
+define method remove-method
+    (gf :: <generic-function>, meth :: <method>)
+    => meth :: <method>;
+  error("### runtime remove-method not yet implemented.");
+end method remove-method;
 
 
 // Function call related utilities.
@@ -515,14 +569,24 @@ define method compare-methods
 end method compare-methods;
 
 
-define method sorted-applicable-methods
-    (gf :: <generic-function>, #rest args)
-    => res :: <list>;
-  unless (args.size == gf.function-specializers.size)
-    error("Wrong number of arguments to sorted-applicable-methods.");
+
+define method applicable-method?
+    (function :: <function>, #rest sample-arguments)
+    => res :: <boolean>;
+  unless (sample-arguments.size == function.function-specializers.size)
+    error("Wrong number of sample arguments to applicable-method?");
   end;
-  let arg-ptr :: <raw-pointer> = %%primitive extract-args(args.size);
-  cached-sorted-applicable-methods(gf, args.size, arg-ptr);
+  error("### runtime applicable-method? not yet implemented");
+end;
+
+
+define method sorted-applicable-methods
+    (gf :: <generic-function>, #rest sample-arguments)
+    => (sorted :: <list>, unsorted :: <list>);
+  unless (sample-arguments.size == gf.function-specializers.size)
+    error("Wrong number of sample arguments to sorted-applicable-methods.");
+  end;
+  error("### runtime sorted-applicable-methods not yet implemented");
 end;
 
 
