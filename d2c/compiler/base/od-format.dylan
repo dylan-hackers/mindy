@@ -2065,8 +2065,6 @@ define class <make-info> (<object>)
     required-init-keyword: init-keys:;
   slot setter-funs :: <simple-object-vector>,
     required-init-keyword: setter-funs:;
-  slot load-external? :: <boolean>,
-    required-init-keyword: load-external:;
   slot obj-class :: <class>,
     required-init-keyword: obj-class:;
   slot obj-name :: <symbol>,
@@ -2156,7 +2154,8 @@ end method;
 define /* exported */ method add-make-dumper
   (name :: <symbol>, dispatcher :: <dispatcher>,
    obj-class :: <class>, slots :: <list>,
-   #key load-external :: <boolean>, dumper-only :: <boolean>)
+   #key load-external :: <boolean>, dumper-only :: <boolean>,
+        load-side-effect :: false-or(<method>))
  => ();
   let acc = make(<stretchy-vector>);
   let key = make(<stretchy-vector>);
@@ -2180,23 +2179,33 @@ define /* exported */ method add-make-dumper
          accessor-funs: as(<simple-object-vector>, acc),
 	 init-keys: as(<simple-object-vector>, key),
          setter-funs: as(<simple-object-vector>, set),
-	 load-external: load-external,
 	 obj-class: obj-class,
 	 obj-name: name);
 
   *make-dumpers*[obj-class] := info;
 
   unless (dumper-only)
+    let loader
+      = if (load-side-effect)
+	  method (state :: <load-state>) => res :: <object>;
+	    let res = make-loader-guts(state, info);
+	    load-side-effect(res);
+	    res;
+	  end;
+	else
+	  method (state :: <load-state>) => res :: <object>;
+	    make-loader-guts(state, info);
+	  end;
+	end;
+
     add-od-loader(dispatcher, name,
-		  method (state :: <load-state>) => res :: <object>;
-		    if (info.load-external?)
-		      load-external-definition
-			(state,
-			 method (state) make-loader-guts(state, info) end);
-		    else
-		      make-loader-guts(state, info);
+		  if (load-external)
+		    method (state :: <load-state>) => res :: <object>;
+		      load-external-definition(state, loader);
 		    end;
-		  end method);
+		  else
+		    loader;
+		  end);
   end;
 
 end method;
