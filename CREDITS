@@ -36,6 +36,12 @@ D: Grand Exalted Poobah of .cvsignore files, miscellaneous cleanups.
 D: Interstate server repair team.
 D: 64-bit ports of Mindy and d2c (in progress).
 
+N: Gabor Greif
+E: gabor@mac.com
+D: Merciless Czar of microoptimizations.
+D: Class slots, various cleanups, bug fixes.
+D: CodeWarrior Plugin port of d2c.
+
 N: Harlequin, Ltd.
 D: Enormous improvements to Emacs dylan-mode, moral encouragement.
 
