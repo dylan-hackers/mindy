@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.131 1996/10/02 19:18:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.132 1996/10/06 14:09:22 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1007,6 +1007,11 @@ define method emit-prologue
   maybe-emit-include("stdlib.h", file);
   maybe-emit-include("stdio.h", file);
   maybe-emit-include("runtime.h", file);
+
+  // The most important thing math.h includes is a prototype for rint,
+  // although it helps if we ever want to inline functions in the
+  // Transcendental library
+  maybe-emit-include("math.h", file);
 
   let stream = file.file-body-stream;
   for (unit in other-units)
