@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.7 2000/02/11 00:29:24 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.8 2000/05/10 18:31:07 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -91,14 +91,14 @@ define macro block
     { ... exception (?type:expression, #rest ?options:expression)
 	    ?:body }
       => { let handler (?type, ?options)
-	     = method (condition, next-handler)
+	     = method (condition :: ?type, next-handler :: <function>)
 		 do-handler(method () ?body end);
 	       end;
 	    ... }
     { ... exception (?:name :: ?type:expression, #rest ?options:expression)
 	    ?:body }
       => { let handler (?type, ?options)
-	     = method (?name, next-handler)
+	     = method (?name :: ?type, next-handler :: <function>)
 		 do-handler(method () ?body end);
 	       end;
 	    ... }
@@ -494,7 +494,7 @@ define macro domain-definer
 end;
 
 define macro function-definer
-    { define ?adjectives:* function ?:name ?rest:* end }
+    { define ?adjectives function ?:name ?rest:* end }
       => { define constant ?name = method ?rest end }
 
   adjectives:
