@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.30 1995/12/07 14:22:39 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.31 1995/12/13 15:57:35 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -755,7 +755,7 @@ define method make-canonical-limited-integer
     high-bound := as(<extended-integer>, high-bound);
   end;
   
-  if (base-class == dylan-value(#"<fixed-integer>"))
+  if (base-class == specifier-type(#"<fixed-integer>"))
     if (~low-bound | low-bound < runtime-$minimum-fixed-integer)
       low-bound := runtime-$minimum-fixed-integer;
     end;
@@ -1008,89 +1008,89 @@ define generic ct-value-cclass (ct-value :: <ct-value>) => res :: <cclass>;
 
 define method ct-value-cclass (object :: <ct-not-supplied-marker>)
     => res :: <cclass>;
-  dylan-value(#"<not-supplied-marker>");
+  specifier-type(#"<not-supplied-marker>");
 end method;
 
 define method ct-value-cclass (object :: <literal-true>) => res :: <cclass>;
-  dylan-value(#"<true>");
+  specifier-type(#"<true>");
 end method;
 
 define method ct-value-cclass (object :: <literal-false>) => res :: <cclass>;
-  dylan-value(#"<false>");
+  specifier-type(#"<false>");
 end method;
 
 define method ct-value-cclass (object :: <literal-symbol>) => res :: <cclass>;
-  dylan-value(#"<symbol>");
+  specifier-type(#"<symbol>");
 end method;
 
 define method ct-value-cclass (object :: <literal-character>)
     => res :: <cclass>;
-  dylan-value(#"<character>");
+  specifier-type(#"<character>");
 end method;
 
 define method ct-value-cclass (object :: <literal-empty-list>)
     => res :: <cclass>;
-  dylan-value(#"<empty-list>");
+  specifier-type(#"<empty-list>");
 end method;
 
 define method ct-value-cclass (object :: <literal-list>) => res :: <cclass>;
-  dylan-value(#"<pair>");
+  specifier-type(#"<pair>");
 end method;
 
 define method ct-value-cclass (object :: <literal-string>) => res :: <cclass>;
-  dylan-value(#"<byte-string>");
+  specifier-type(#"<byte-string>");
 end method;
 
 define method ct-value-cclass (object :: <literal-simple-object-vector>)
     => res :: <cclass>;
-  dylan-value(#"<simple-object-vector>");
+  specifier-type(#"<simple-object-vector>");
 end method;
 
 define method ct-value-cclass (object :: <literal-fixed-integer>)
     => res :: <cclass>;
-  dylan-value(#"<fixed-integer>");
+  specifier-type(#"<fixed-integer>");
 end method;
 
 define method ct-value-cclass (object :: <literal-extended-integer>)
     => res :: <cclass>;
-  dylan-value(#"<extended-integer>");
+  specifier-type(#"<extended-integer>");
 end method;
 
 define method ct-value-cclass (object :: <literal-ratio>) => res :: <cclass>;
-  dylan-value(#"<ratio>");
+  specifier-type(#"<ratio>");
 end method;
 
 define method ct-value-cclass (object :: <literal-single-float>)
     => res :: <cclass>;
-  dylan-value(#"<single-float>");
+  specifier-type(#"<single-float>");
 end method;
 
 define method ct-value-cclass (object :: <literal-double-float>)
     => res :: <cclass>;
-  dylan-value(#"<double-float>");
+  specifier-type(#"<double-float>");
 end method;
 
 define method ct-value-cclass (object :: <literal-extended-float>)
     => res :: <cclass>;
-  dylan-value(#"<extended-float>");
+  specifier-type(#"<extended-float>");
 end method;
 
 define method ct-value-cclass (object :: <union-ctype>) => res :: <cclass>;
-  dylan-value(#"<union>");
+  specifier-type(#"<union>");
 end;
 
 define method ct-value-cclass (object :: <limited-integer-ctype>)
     => res :: <cclass>;
-  dylan-value(#"<limited-integer>");
+  specifier-type(#"<limited-integer>");
 end;
 
 define method ct-value-cclass (object :: <singleton-ctype>) => res :: <cclass>;
-  dylan-value(#"<singleton>");
+  specifier-type(#"<singleton>");
 end;
 
 define method ct-value-cclass (object :: <byte-character-ctype>)
     => res :: <cclass>;
-  dylan-value(#"<byte-character-type>");
+  specifier-type(#"<byte-character-type>");
 end;
 
 
@@ -1099,7 +1099,7 @@ end;
 
 define class <byte-character-ctype> (<limited-ctype>, <ct-value>)
   keyword base-class:,
-    init-function: curry(dylan-value, #"<character>");
+    init-function: method () specifier-type(#"<character>") end method;
 end;
 
 define variable *byte-character-ctype-memo* = #f;
@@ -1287,7 +1287,7 @@ end method;
 define method first-value(type :: <values-ctype>) => res :: <ctype>;
   let types = type.positional-types;
   if (type == #())
-    ctype-union(type.rest-value-type, dylan-value(#"<false>"));
+    ctype-union(type.rest-value-type, specifier-type(#"<false>"));
   else
     types.head
   end;
@@ -1558,7 +1558,7 @@ end;
 
 define method slow-specifier-type (symbol :: <symbol>)
     => res :: <values-ctype>;
-  dylan-value(symbol);
+  dylan-value(symbol) | error("Type %s is undefined.", symbol);
 end;
 
 define method slow-specifier-type (list :: <list>)
