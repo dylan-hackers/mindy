@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.6 1994/04/25 21:56:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.7 1994/04/28 22:35:28 wlott Exp $
 *
 * This file does whatever.
 *
@@ -34,12 +34,16 @@ static struct token *make_token(char *ptr, int len);
 D	[0-9]
 E	[esdx][-+]?{D}+
 
-IOC	[!&*+/<=>?|^$%@_]
-OC	[-~]|{IOC}
-ON	{IOC}{OC}*
-O	-|~|~=|:=|{ON}
-A0	[a-z0-9]
-S	{ON}?{A0}({A0}|{OC})*
+A	[a-z]
+G	[!&*<=>|^$%@_]
+S	[-+~?/]
+
+DGS	({D}|{G}|{S})
+ADGS	({A}|{DGS})
+
+N	((({G}{DGS}*)?{A}{ADGS}*)|({D}{DGS}*({A}{DGS}+)*{A}{A}{ADGS}*))
+
+O	":="|"+"|"-"|"*"|"/"|"="|"=="|"<"|">"|"<="|">="|"~="|"&"|"|"|"^"
 
 STR	\"(([ !#-\[\]-~])|(\\["\\bfnrt]))*\"
 
@@ -150,9 +154,9 @@ all		is(ALL);
 {STR}		is(STRING);
 
 {O}		is(BINARY_OPERATOR);
-{S}		is(SYMBOL);
+{N}		is(SYMBOL);
 \\{O}		is(SYMBOL);
-{S}:		is(KEYWORD);
+{N}:		is(KEYWORD);
 #{STR}		is(SYMBOL_LITERAL);
 
 .		is(BOGUS);
