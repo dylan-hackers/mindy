@@ -2,7 +2,7 @@ module:     Inspector
 author:     Russell M. Schaaf (rsbe@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/inspector.dylan,v 1.1 1995/11/06 23:48:32 rsbe Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/inspector.dylan,v 1.2 1996/03/15 04:21:36 rsbe Exp $
 
 //======================================================================
 //
@@ -122,13 +122,26 @@ define method display-one-object(object :: <function>,
 				 display-print-level = 1,
 				 display-print-length = 5)
   if (object.function-name)
-    write("function ", display-stream);
-    print(as(<byte-string>, object.function-name), display-stream);
-    write("", display-stream);
+    write(as(<byte-string>, object.object-class.class-name), display-stream);
+    write(" ", display-stream);
+    write(as(<byte-string>, object.function-name), display-stream);
   else
-    write("unnamed function ", display-stream);
-    write(as(<byte-string>, object.object-address), display-stream);
+    write("unnamed ", display-stream);
+    write(as(<byte-string>, object.object-class.class-name), display-stream);
   end if;
+  write("(", display-stream);
+  let (args, rest, kwd) = object.function-arguments;
+  if (args ~= 0)
+    let mthd-specializers = object.function-specializers;
+    display-one-object(mthd-specializers[0],
+		       display-stream: display-stream);
+    for (j from 1 below args)
+      write(", ", display-stream);
+      display-one-object(mthd-specializers[j],
+			 display-stream: display-stream);
+    end for;
+  end if;
+  write(")", display-stream);
 end method display-one-object;
 
 define method display-one-object(object :: <class>,
@@ -212,69 +225,106 @@ define method display-object-info (object :: <function>,
     write-line("", display-stream);
   end if;
 
-// Will not work until Mindy is DRM compliant //
-/*
- * write-line(" Arguments:", display-stream);
- * let (args, rest, kwd) = object.function-arguments;
- * if (args ~= 0)
- *   for (i in object.function-specializers)
- *     write("  ", display-stream);
- *     display-one-object(i, display-stream: display-stream,
- *			 display-print-length: display-print-length,
- *			 display-print-level: display-print-level);
- *     write-line("", display-stream);
- *   end for;
- *   if (rest)
- *     write-line("  #rest", display-stream);
- *   end if;
- * else
- *   if (rest)
- *     write-line("  #rest", display-stream);
- *     else
- *     write-line("  none", display-stream);
- *   end if;
- * end if;
- *
- * write-line(" Keywords:", display-stream);
- * if (kwd.empty?)
- *   write-line("  none", display-stream);
- * else
- *   for (i in kwd)
- *     write-line(as(<byte-string>, i), display-stream);
- *   end for;
- * end if;
- *
- * write-line(" Returns:", display-stream);
- * let (return-types, rest-types) = object.function-return-values;
- * if (~return-types.empty?)
- *   for (i in return-types)
- *     if (instance?(i, <union>))
- *	write-line("  union of types:", display-stream);
- *	for (j in i.union-members)
- *	  write-line("   ", display-stream);
- *	  display-one-object(j, display-stream: display-stream,
- *			 display-print-length: display-print-length,
- *			 display-print-level: display-print-level);
- *	  write-line("", display-stream);
- *	end for;
- *     else
- *	write-line("  ", display-stream);
- *	display-one-object(i, display-stream: display-stream,
- *			 display-print-length: display-print-length,
- *			 display-print-level: display-print-level);
- *	 write-line("", display-stream);
- *     end if;
- *   end for;
- * end if;
- * if (rest-types)
- *   write-line("  #rest: ", display-stream);
- *   write("   ", display-stream);
- *   write-line(as(<byte-string>, rest-types.class-name), display-stream);
- * end if;
- * if (return-types.empty? & ~rest-types)
- *   write-line("  none", display-stream);
- * end if;
- */
+// Didn't work before.  Maybe now we can have some cool function inspection...
+
+  write-line(" Required  Arguments:", display-stream);
+  let (args, rest, kwd) = object.function-arguments;
+  if (args ~= 0)
+    for (i in object.function-specializers)
+      write("  ", display-stream);
+      display-one-object(i, display-stream: display-stream,
+			 display-print-length: display-print-length,
+			 display-print-level: display-print-level);
+      write-line("", display-stream);
+    end for;
+    if (rest)
+      write-line("  #rest", display-stream);
+    end if;
+  else
+    if (rest)
+      write-line("  #rest", display-stream);
+    else
+      write-line("  none", display-stream);
+    end if;
+  end if;
+  
+  write-line(" Keywords:", display-stream);
+  if (~kwd)
+    write-line("  none", display-stream);
+  else
+    if (kwd = #"all")
+      write-line("  all-keys", display-stream);
+    else
+      for (i in kwd)
+	write("  ", display-stream);
+	write(as(<byte-string>, i), display-stream);
+	write-line(":", display-stream);
+      end for;
+    end if;
+  end if;
+  
+  write-line(" Returns:", display-stream);
+  let (return-types, rest-types) = object.function-return-values;
+  if (~return-types.empty?)
+    for (i in return-types)
+      if (instance?(i, <union>))
+	write-line("  union of types:", display-stream);
+	for (j in i.union-members)
+	  write-line("  ", display-stream);
+	  display-one-object(j, display-stream: display-stream,
+			     display-print-length: display-print-length,
+			     display-print-level: display-print-level);
+	end for;
+      else
+	write("  ", display-stream);
+	display-one-object(i, display-stream: display-stream,
+			   display-print-length: display-print-length,
+			   display-print-level: display-print-level);
+	write-line("", display-stream);
+      end if;
+    end for;
+  end if;
+  if (rest-types)
+    write-line("  #rest: ", display-stream);
+    write("   ", display-stream);
+    write-line(as(<byte-string>, rest-types.class-name), display-stream);
+  end if;
+  if (return-types.empty? & ~rest-types)
+    write-line("  none", display-stream);
+  end if;
+
+  // If it's a generic function, display all of the methods.  
+  if (instance?(object, <generic-function>))
+    write(" Methods:", display-stream);
+    let mthds = generic-function-methods(object);
+    if (~mthds.empty?)
+      write-line("", display-stream);
+      for (i in mthds)
+	write("  ", display-stream);
+	if (i.function-name)
+	  write(as(<byte-string>, i.function-name), display-stream);
+	else
+	  write("unnamed method", display-stream);
+	end if;
+	write("(", display-stream);
+	if (args ~= 0)
+	  let mthd-specializers = i.function-specializers;
+	  display-one-object(mthd-specializers[0],
+			     display-stream: display-stream);
+	  for (j from 1 below args)
+	    write(", ", display-stream);
+	    display-one-object(mthd-specializers[j],
+			       display-stream: display-stream);
+	  end for;
+	end if;
+	write-line(")", display-stream);
+      end for;
+    else
+      write-line("  none", display-stream);
+    end if;
+  end if;
+
+  write-line("", display-stream);  
 end method display-object-info;
 
 define method display-object-info (object :: <object>,
@@ -430,105 +480,146 @@ define method object-info (object :: <function>,
 
   let temp-vect = make(<stretchy-vector>);
   temp-vect := add!(temp-vect, object);
+
+  let x = 1;
   
   if (object.function-name)
     if (instance?(object, <generic-function>))
       write("Generic Function ", inspect-stream);
-    else
+    elseif (instance?(object, <method>))
       write("Method ", inspect-stream);
+    else
+      write(as(<byte-string>, object.object-class.class-name), inspect-stream);
+      write(" ", inspect-stream);
     end if;
     print(as(<byte-string>, object.function-name), inspect-stream);
     write-line("", inspect-stream);
   else
     write("Unnamed function ", inspect-stream);
-    print(object.object-address, inspect-stream);
     write-line("", inspect-stream);
   end if;
 
-// Will not work until Mindy is DRM compliant //
-/*
- * let x = 1;
- * write-line(" Arguments:", inspect-stream);
- * let (args, rest, kwd) = object.function-arguments;
- * if (args ~= 0)
- *   for (i in object.function-specializers)
- *     write("  ", inspect-stream);
- *      print(x, inspect-stream);
- *      write("] ", inspect-stream);
- *     display-one-object(i, display-stream: inspect-stream,
- *			 display-print-length: inspect-print-length,
- *			 display-print-level: inspect-print-level);
- *     write-line("", inspect-stream);
- *      temp-vect := add!(temp-vect, i);
- *      x := x + 1;
- *   end for;
- *   if (rest)
- *     write-line("  #rest", inspect-stream);
- *   end if;
- * else
- *   if (rest)
- *     write-line("  #rest", inspect-stream);
- *     else
- *     write-line("  none", inspect-stream);
- *   end if;
- * end if;
- *
- * write-line(" Keywords:", inspect-stream);
- * if (kwd.empty?)
- *   write-line("  none", inspect-stream);
- * else
- *   for (i in kwd)
- *      write("  ", inspect-stream);
- *      print(x, inspect-stream);
- *      write("] ", inspect-stream);
- *     write-line(as(<byte-string>, i), inspect-stream);
- *      temp-vect := add!(temp-vect, i);
- *      x := x + 1;
- *   end for;
- * end if;
- *
- * write-line(" Returns:", inspect-stream);
- * let (return-types, rest-types) = object.function-return-values;
- * if (~return-types.empty?)
- *   for (i in return-types)
- *     if (instance?(i, <union>))
- *	write-line("  union of types:", inspect-stream);
- *	for (j in i.union-members)
- *	  write("   ", inspect-stream);
- *	  print(x, inspect-stream);
- *	  write("] ", inspect-stream);
- *	  display-one-object(j, display-stream: inspect-stream,
- *			 display-print-length: inspect-print-length,
- *			 display-print-level: inspect-print-level);
- *	  write-line("", inspect-stream);
- *	  temp-vect := add!(temp-vect, j);
- *	  x := x + 1;
- *	end for;
- *     else
- *	write("  ", inspect-stream);
- *	 print(x, inspect-stream);
- *	 write("] ", inspect-stream);
- *	display-one-object(i, display-stream: inspect-stream,
- *			 display-print-length: inspect-print-length,
- *			 display-print-level: inspect-print-level);
- *	 write-line("", inspect-stream);
- *	 temp-vect := add!(temp-vect, i);
- *	 x := x + 1;
- *     end if;
- *   end for;
- * end if;
- * if (rest-types)
- *   write-line("  #rest: ", inspect-stream);
- *   write("   ", inspect-stream);
- *    print(x, inspect-stream);
- *    write("] ", inspect-stream);
- *   write-line(as(<byte-string>, rest-types.class-name), inspect-stream);
- *    temp-vect := add!(temp-vect, rest-types);
- * end if;
- * if (return-types.empty? & ~rest-types)
- *   write-line("  none", inspect-stream);
- * end if;
- */
+  write-line(" Required  Arguments:", inspect-stream);
+  let (args, rest, kwd) = object.function-arguments;
+  if (args ~= 0)
+    for (i in object.function-specializers)
+      write("  ", inspect-stream);
+      print(x, inspect-stream);
+      write("] ", inspect-stream);
+      display-one-object(i, display-stream: inspect-stream,
+			 display-print-length: inspect-print-length,
+			 display-print-level: inspect-print-level);
+      write-line("", inspect-stream);
+      temp-vect := add!(temp-vect, i);
+      x := x + 1;
+    end for;
+    if (rest)
+      write-line("  #rest", inspect-stream);
+    end if;
+  else
+    if (rest)
+      write-line("  #rest", inspect-stream);
+    else
+      write-line("  none", inspect-stream);
+    end if;
+  end if;
+  
+  write-line(" Keywords:", inspect-stream);
+  if (~kwd)
+    write-line("  none", inspect-stream);
+  else
+    if (kwd = #"all")
+      write-line("  all-keys", inspect-stream);
+    else
+      for (i in kwd)
+	write("  ", inspect-stream);
+	write(as(<byte-string>, i), inspect-stream);
+	write-line(":", inspect-stream);
+      end for;
+    end if;
+  end if;
+  
+  write-line(" Returns:", inspect-stream);
+  let (return-types, rest-types) = object.function-return-values;
+  if (~return-types.empty?)
+    for (i in return-types)
+      if (instance?(i, <union>))
+	write-line("  union of types:", inspect-stream);
+	for (j in i.union-members)
+	  write("   ", inspect-stream);
+	  print(x, inspect-stream);
+	  write("] ", inspect-stream);
+	  display-one-object(j, display-stream: inspect-stream,
+			     display-print-length: inspect-print-length,
+			     display-print-level: inspect-print-level);
+	  write-line("", inspect-stream);
+	  temp-vect := add!(temp-vect, j);
+	  x := x + 1;
+	end for;
+      else
+	write("  ", inspect-stream);
+	print(x, inspect-stream);
+	write("] ", inspect-stream);
+	display-one-object(i, display-stream: inspect-stream,
+			   display-print-length: inspect-print-length,
+			   display-print-level: inspect-print-level);
+	write-line("", inspect-stream);
+	temp-vect := add!(temp-vect, i);
+	x := x + 1;
+      end if;
+    end for;
+  end if;
+  if (rest-types)
+    write-line("  #rest: ", inspect-stream);
+    write("   ", inspect-stream);
+    print(x, inspect-stream);
+    write("] ", inspect-stream);
+    write-line(as(<byte-string>, rest-types.class-name), inspect-stream);
+    temp-vect := add!(temp-vect, rest-types);
+    x := x + 1;
+  end if;
+  if (return-types.empty? & ~rest-types)
+    write-line("  none", inspect-stream);
+  end if;
+  
+  // If it's a generic function, display all of the methods.  
+  if (instance?(object, <generic-function>))
+    write(" Methods:", inspect-stream);
+    let mthds = generic-function-methods(object);
+    if (~mthds.empty?)
+      write-line("", inspect-stream);
+      for (i in mthds)
+	write("  ", inspect-stream);
+	print(x, inspect-stream);
+	write("] ", inspect-stream);
+	if (i.function-name)
+	  write(as(<byte-string>, i.function-name), inspect-stream);
+	else
+	  write("unnamed method", inspect-stream);
+	end if;
+	write("(", inspect-stream);
+	if (args ~= 0)
+	  let mthd-specializers = i.function-specializers;
+	  display-one-object(mthd-specializers[0],
+			     display-stream: inspect-stream);
+	  for (j from 1 below args)
+	    write(", ", inspect-stream);
+	    display-one-object(mthd-specializers[j],
+			       display-stream: inspect-stream);
+	  end for;
+	end if;
+	write-line(")", inspect-stream);
+	temp-vect := add!(temp-vect, i);
+	x := x + 1;
+      end for;
+    else
+      write-line("  none", inspect-stream);
+    end if;
+  end if;
+  
+  write-line("", inspect-stream);
+
+  temp-vect;
 end method object-info;
 
 define method object-info (item :: <singleton>, #key inspect-stream,
@@ -848,7 +939,7 @@ define method inspect (object :: <object>,
   // Create the vector that will hold the objects that can be inspected.
   let info-vect = make(<stretchy-vector>, size: info-size);
   // Create a deque to hold the previously created objects.
-  let history = make(<deque>);
+  let history :: <deque> = make(<deque>);
   write-line("", inspect-stream);
   // Display info about "object".
   info-vect := object-info(object, inspect-stream: inspect-stream,
@@ -883,7 +974,7 @@ define method inspect (object :: <object>,
 	  if (i < info-vect.size & i ~= 0)
 	    write-line("", inspect-stream);
 	    // Add current object (info-vect[0]) onto the history stack
-	    history := push(history, info-vect[0]);
+	    push(history, info-vect[0]);
 	    // Inspect the ith object in info-vect.
 	    info-vect := object-info(info-vect[i],
 				     inspect-stream: inspect-stream,
@@ -949,7 +1040,7 @@ define method inspect (object :: <object>,
       //
       member?(command.as-lowercase, hist-seq, test: \=) =>
 	// Add the current object, so that it will print out as well
-	history := push(history, info-vect[0]);
+	push(history, info-vect[0]);
 	write-line("", inspect-stream);
 /*      for (i from 0 below history.size)
 */
