@@ -22,7 +22,7 @@ define generic limited (type :: <type>, #key) => res :: <type>;
 //
 define movable method instance? (object :: <object>, type :: <type>)
     => res :: <boolean>;
-  object.object-class.subtype-cache == type | %instance?(object, type);
+  %instance?(object, type);
 end;
 
 // %instance? -- internal.
@@ -311,11 +311,13 @@ end;
 //
 define method %instance? (object :: <object>, type :: <union>)
     => res :: <boolean>;
-  local method object-instance? (type :: <type>) => res :: <boolean>;
-	  instance?(object, type);
-	end method object-instance?;
-  any?(object-instance?, type.union-members)
-    | member?(object, type.union-singletons);
+  block (return)
+    for (member in type.union-members)
+      if (instance?(object, member)) return(#t) end if;
+    finally
+      member?(object, type.union-singletons);
+    end for;
+  end block;
 end;
 
 // subtype?(<union>,<type>) -- exported generic function method.
@@ -325,8 +327,8 @@ end;
 //
 define method subtype? (type1 :: <union>, type2 :: <type>)
     => res :: <boolean>;
-  every?(rcurry(subtype?, type2), type1.union-members)
-    & every?(rcurry(instance?, type2), type1.union-singletons);
+  every?(method (t) subtype?(t, type2) end, type1.union-members)
+    & every?(method (t) instance?(t, type2) end, type1.union-singletons);
 end;
   
 // subtype?-type2-dispatch(<type>,<union>) -- exported generic function method
@@ -339,7 +341,7 @@ end;
 // 
 define method subtype?-type2-dispatch (type1 :: <type>, type2 :: <union>)
     => res :: <boolean>;
-  any?(curry(subtype?, type1), type2.union-members);
+  any?(method (t) subtype?(type1, t) end, type2.union-members);
 end;
 
 
@@ -597,6 +599,14 @@ seal generic make (singleton(<byte-character-type>));
 //
 define constant <byte-character> = make(<byte-character-type>);
 
+// <non-byte-character> -- internal.
+//
+// We need this special-case type to handle generic function caching for
+// character types.
+//
+define constant <non-byte-character>
+  = restrict-type(<character>, <byte-character>);
+
 // instance? -- exported generic function method.
 //
 // The only instances of <byte-character> are characters that have a character
@@ -643,7 +653,8 @@ end;
 //
 define class <none-of> (<type>)
   slot base-type :: <type>, required-init-keyword: #"base";
-  slot excluded-types :: <list>, init-value: #(), init-keyword: #"excluded";
+  slot excluded-types :: <type-vector>,
+    required-init-keyword: #"excluded";
 end;
 
 seal generic make (singleton(<none-of>));
@@ -656,10 +667,17 @@ seal generic make (singleton(<none-of>));
 // 
 define method restrict-type (base :: <type>, exclude :: <type>);
   if (instance?(base, <none-of>))
-    base.excluded-types := pair(exclude, base.excluded-types);
+    let old-excluded = base.excluded-types;
+    let new-excluded = make(<type-vector>, size: old-excluded.size + 1,
+			    fill: exclude);
+    for (i :: <fixed-integer> from 0 below old-excluded.size)
+      new-excluded[i] := old-excluded[i];
+    end for;
+    base.excluded-types := new-excluded;
     base;
   else
-    make(<none-of>, base: base, exclude: list(exclude));
+    make(<none-of>, base: base,
+	 excluded: make(<type-vector>, size: 1, fill: exclude));
   end if;
 end method restrict-type;
 
@@ -670,8 +688,15 @@ end method restrict-type;
 //
 define method %instance? (object :: <object>, type :: <none-of>)
     => res :: <boolean>;
-  instance?(object, type.base-type)
-    & ~any?(curry(instance?, object), type.excluded-types);
+//  instance?(object, type.base-type) &
+//    ~any?(curry(instance?, object), type.excluded-types));
+  block (return)
+    instance?(object, type.base-type)
+      & for (t :: <type> in type.excluded-types)
+	  if (instance?(object, t)) return(#f) end if;
+	finally #t;
+	end for;
+  end block;
 end;
 
 // subtype?(<none-of>,<type>) -- exported generic function method.
@@ -751,8 +776,8 @@ define method overlap? (type1 :: <limited-integer>, type2 :: <type>)
 end method overlap?;
 
 define method overlap? (type1 :: <union>, type2 :: <type>) => res :: <boolean>;
-  any?(rcurry(overlap?, type2), type1.union-members)
-    | any?(rcurry(instance?, type2), type1.union-singletons);
+  any?(method (t) overlap?(t , type2) end, type1.union-members)
+    | any?(method (t) instance?(t, type2) end, type1.union-singletons);
 end method overlap?;
 
 define method overlap?
