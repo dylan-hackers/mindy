@@ -68,11 +68,11 @@ OBJS = library.dbc internal-time-intr.dbc internal-time.dbc
 internal-time-lib.dbc: ${OBJS}
 	cat ${OBJS} > $@
 
-library.dbc: library.dylan
+library.dbc: ${SRCDIR}/library.dylan
 	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
-internal-time.dbc: internal-time.dylan
+internal-time.dbc: ${SRCDIR}/internal-time.dylan
 	${MC} ${MINDYFLAGS} -o internal-time.dbc ${SRCDIR}/internal-time.dylan
-internal-time-intr.dbc: internal-time-intr.dylan
+internal-time-intr.dbc: ${SRCDIR}/internal-time-intr.dylan
 	${MC} ${MINDYFLAGS} -o internal-time-intr.dbc ${SRCDIR}/internal-time-intr.dylan
 
 clean:
