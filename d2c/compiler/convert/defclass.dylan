@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.24 1995/05/29 20:59:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.25 1995/06/01 14:32:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1097,7 +1097,7 @@ define method convert-top-level-form
       end;
 
     for (slot in cclass.all-slot-infos, index from 0)
-      let slot-name = slot.slot-getter.variable-name;
+      let slot-name = slot.slot-getter & slot.slot-getter.variable-name;
       let %maker-slot-descriptor-leaf = #f;
       local
 	method maker-slot-descriptor-leaf ()
