@@ -226,8 +226,10 @@ define sealed method initialize
      #key contents :: <sequence>, // Default depends on type of stream
           direction: dir :: one-of(#"input", #"output", #"input-output")
             = #"input",
-          start :: <integer> = $not-supplied, // = 0,
-          end: stop :: <integer> = $not-supplied, // = contents.size,
+          start :: type-union(singleton($not-supplied), <integer>)
+            = $not-supplied, // = 0,
+          end: stop :: type-union(singleton($not-supplied), <integer>)
+            = $not-supplied, // = contents.size,
      #all-keys)
  => ();
   // Make sure they didn't try and give us start and stop on an output stream
