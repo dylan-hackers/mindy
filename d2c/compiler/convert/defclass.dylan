@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.15 2001/03/17 03:43:31 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.16 2001/04/17 21:29:32 gabor Exp $
 copyright: see below
 
 
@@ -2203,10 +2203,6 @@ define method build-maker-function-body
 	      build-slot-init(slot,
 			      init-value-var,
 			      make-literal-constant(init-builder, #t));
-	      /* typeerr!	еее      
-		build-slot-init(slot.slot-initialized?-slot,
-				make-literal-constant(init-builder, #t));
-		*/
 	    else
 	      let arg = make-local-var(maker-builder, key, type);
 	      add!(maker-args, arg);
@@ -2252,6 +2248,27 @@ define method build-maker-function-body
 			      else
 				supplied?-arg;
 			      end);
+	    end if;
+	  else
+	    if (init-value | init-function)
+	      let init-value-var
+		= make-local-var(maker-builder,
+				 symcat(slot-name, "-init-value"),
+				 type);
+	      if (init-value)
+		extract-init-value(init-value-var);
+	      else
+		call-init-function(init-value-var);
+	      end;
+	      build-slot-init
+		(slot,
+		 init-value-var,
+		 make-literal-constant(init-builder, #t));
+	    else
+	      build-slot-init
+		(slot,
+		 make(<uninitialized-value>, derived-type: type.ctype-extent),
+		 make-literal-constant(init-builder, #f));
 	    end if;
 	end if;
     end select;
