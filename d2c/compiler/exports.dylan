@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.124 1995/12/16 04:22:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.125 1995/12/16 21:16:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -187,11 +187,6 @@ end;
 define module source
   use common;
   use System, import: {copy-bytes};
-#if (mindy)
-  use File-Descriptors,
-    import: {fd-close, fd-read, fd-seek, fd-open,
-	     O_RDONLY, SEEK_SET, SEEK_END};
-#end
   use utils;
   use od-format;
   use compile-time-values;
@@ -200,7 +195,7 @@ define module source
     <source-location>, source-location-span,
     <source-location-mixin>, source-location,
 
-    <source-file>, contents,
+    <source-file>, contents, <file-contents>,
     <file-source-location>, source-file,
     start-posn, start-line, start-column,
     end-posn, end-line, end-column,
