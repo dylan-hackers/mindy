@@ -1,4 +1,5 @@
 Module: od-format
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.14 1995/11/13 15:14:17 ram Exp $
 
 /*
 
@@ -466,6 +467,19 @@ register-object-id(#"definition-constant-leaf", #x00AE);
 register-object-id(#"uninitialized-value-leaf", #x00AF);
 register-object-id(#"method-literal", #x00B0);
 register-object-id(#"exit-function-literal", #x00B1);
+register-object-id(#"fer-lambda", #x00B2);
+register-object-id(#"fer-component", #x00B3);
+register-object-id(#"prologue-operation", #x00B4);
+register-object-id(#"primitive-info", #x00B5);
+register-object-id(#"truly-the-operation", #x00B6);
+register-object-id(#"instance?-operation", #x00B7);
+register-object-id(#"catch-operation", #x00B8);
+register-object-id(#"throw-operation", #x00B9);
+register-object-id(#"disable-catcher-operation", #x00BA);
+register-object-id(#"unwind-protect-region", #x00BB);
+register-object-id(#"function-literal", #x00BC);
+register-object-id(#"nlx-info", #x00BD);
+register-object-id(#"make-catcher-operation", #x00BE);
 
 register-object-id(#"generic-definition", #x00C0);
 register-object-id(#"implicit-generic-definition", #x00C1);
@@ -1881,7 +1895,7 @@ end class;
 // object.
 //
 // Callers that want to use the ref mechanism say this in their dump-od method:
-//   unless (maybe-dump-reference(obj, buf))
+//   when (maybe-dump-reference(obj, buf))
 //     ... actually dump othe object....
 //   end unless;
 //
