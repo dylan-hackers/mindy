@@ -144,15 +144,15 @@
 #    if defined(POWERPC)
         inline static int GC_test_and_set(volatile unsigned int *addr) {
           int oldval;
-          int temp = 1; // locked value
+          int temp = 1; /* locked value */
 
           __asm__ __volatile__(
-               "1:\tlwarx %0,0,%3\n"   // load and reserve
-               "\tcmpwi %0, 0\n"       // if load is
-               "\tbne 2f\n"            //   non-zero, return already set
-               "\tstwcx. %2,0,%1\n"    // else store conditional
-               "\tbne- 1b\n"           // retry if lost reservation
-               "2:\t\n"                // oldval is zero if we set
+               "1:\tlwarx %0,0,%3\n"   /* load and reserve */
+               "\tcmpwi %0, 0\n"       /* if load is */
+               "\tbne 2f\n"            /*   non-zero, return already set */
+               "\tstwcx. %2,0,%1\n"    /* else store conditional */
+               "\tbne- 1b\n"           /* retry if lost reservation */
+               "2:\t\n"                /* oldval is zero if we set */
               : "=&r"(oldval), "=p"(addr)
               : "r"(temp), "1"(addr)
               : "memory");

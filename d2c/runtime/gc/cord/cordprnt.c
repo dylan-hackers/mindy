@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "gc.h"
+#include "../gcconfig.h"
 
 #define CONV_SPEC_LEN 50	/* Maximum length of a single	*/
 				/* conversion specification.	*/
@@ -233,7 +234,7 @@ int CORD_vsprintf(CORD * out, CORD format, va_list args)
 			if (width == NONE && prec == NONE) {
 			    register char c;
 
-			    c = va_arg(args, int);
+			    c = (char)va_arg(args, int);
 			    CORD_ec_append(result, c);
 			    goto done;
 			}
@@ -255,11 +256,18 @@ int CORD_vsprintf(CORD * out, CORD format, va_list args)
             	/* Use standard sprintf to perform conversion */
             	{
             	    register char * buf;
-            	    va_list vsprintf_args = args;
+            	    /*va_list vsprintf_args = args;*/
             	    	/* The above does not appear to be sanctioned	*/
             	    	/* by the ANSI C standard.			*/
+            	    va_list vsprintf_args;
             	    int max_size = 0;
             	    int res;
+
+#ifdef __va_copy
+		    __va_copy(vsprintf_args, args);
+#else
+		    va_copy(vsprintf_args, args);
+#endif
             	    	
             	    if (width == VARIABLE) width = va_arg(args, int);
             	    if (prec == VARIABLE) prec = va_arg(args, int);

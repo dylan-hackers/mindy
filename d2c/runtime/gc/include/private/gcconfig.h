@@ -174,7 +174,7 @@
 #    define IA64
 #    define mach_type_known
 # endif
-# if defined(LINUX) && defined(powerpc)
+# if defined(LINUX) && (defined(powerpc) || defined(__powerpc__))
 #    define POWERPC
 #    define mach_type_known
 # endif
@@ -1550,7 +1550,7 @@
 # if defined(HP_PA) || defined(M88K) || defined(POWERPC) && !defined(MACOSX) \
      || (defined(I386) && defined(OS2)) || defined(UTS4) || defined(LINT) \
      || defined(MSWINCE) || (defined(I386) && defined(__LCC__)) \
-     || defined(__BEOS__)
+     || defined(__BEOS__) || defined(ARM32)
 	/* Use setjmp based hack to mark from callee-save registers. */
 #	define USE_GENERIC_PUSH_REGS
 # endif

@@ -74,8 +74,9 @@ clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp install-stamp config-stamp bootstrap-stage1-stamp bootstrap-stage2-stamp
-	rm -rf `pwd`/boostrap_compiler
+	rm -rf `pwd`/bootstrap_compiler
 	rm -rf `pwd`/debian/bootstrap
+	rm config.cache
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) bootstrap_clean
