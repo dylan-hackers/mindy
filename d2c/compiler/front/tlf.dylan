@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.8 1996/01/31 23:55:41 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.9 1996/02/07 12:57:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -24,7 +24,7 @@ end;
 //
 // Called by the parser whenever it finishes another top-level form.
 //
-define generic process-top-level-form (form :: <constituent>) => ();
+define open generic process-top-level-form (form :: <constituent>) => ();
 
 define method process-top-level-form (form :: <local-declaration>) => ();
   error("Local declarations cannot appear directly at top level.");
@@ -35,11 +35,11 @@ end;
 // Called by the main driver on each top level form in *Top-Level-Forms*
 // after everything has been parsed.
 //
-define generic finalize-top-level-form (tlf :: <top-level-form>) => ();
+define open generic finalize-top-level-form (tlf :: <top-level-form>) => ();
 
 // convert-top-level-form
 //
-define generic convert-top-level-form
+define open generic convert-top-level-form
     (builder :: <fer-builder>, tlf :: <top-level-form>)
     => ();
 
