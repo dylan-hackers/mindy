@@ -14,19 +14,26 @@ distribution. This is because large parts of Gwydion Dylan are written in
 Dylan. (If you only want to install Mindy, you don't need the binary
 distribution. Just pass the option '--disable-d2c' to configure.)
 
+Recent versions of d2c require a preinstalled Boehm-Weiser-Demers garbage
+collection library. (The sources of libgc used to be part of the
+distribution, but we chose to remove it in favor of the real thing.)
+The configure script will provide a download link for libgc. If you
+install it under, say, /usr/lib/libgc.a, provide --with-gc-prefix=/usr
+to make it accessible to the d2c build process.
+
 Once you have binaries installed, grab a source snapshot from the FTP site
 or download one from CVS (see the website mentioned in the README for
 instructions). If you choose to use CVS, you'll need to run 'autogen.sh' in
 the gd/src directory to create the configure script. To build all of
 Gwydion:
 
-  $ ./configure --prefix=/usr/local
+  $ ./configure --prefix=/usr/local --with-gc-prefix=/usr
   $ make
   $ make install
 
 or from CVS:
 
-  $ ./autogen.sh --prefix=/usr/local
+  $ ./autogen.sh --prefix=/usr/local --with-gc-prefix=/usr
   $ make
   $ make install
 
@@ -34,7 +41,7 @@ You can also use a separate build directory:
 
   $ mkdir build
   $ cd build
-  $ /...path to gd.../src/configure --prefix=/usr/local
+  $ /<path-to-gd>/src/configure --prefix=/usr/local --with-gc-prefix=/usr
   $ make
   $ make install
 
