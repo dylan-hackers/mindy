@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.5 2000/01/24 04:56:52 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.6 2000/09/09 21:19:09 gabor Exp $
 
 //======================================================================
 //
@@ -32,6 +32,8 @@ rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.5 2000/0
 // d2c generated code.  Many of these are intended to support the code
 // produced by Melange rather than being explicitly referenced by users.
 //
+
+c-include("../gc/gc.h");
 
 // Usage: c-variable-ref(int: "&variable") { := expression }
 //
@@ -629,7 +631,7 @@ define method element-setter
   pointer-value(vec, index: index) := value;
 end method element-setter;
 
-// For "normal" ponters, the size is "#f", indicating that the size is unknown
+// For "normal" pointers, the size is "#f", indicating that the size is unknown
 // and potentially infinite.  However, subtypes can redefine this to higher
 // values and the iteration protocol will still work.
 //
