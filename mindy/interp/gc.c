@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.25 1996/02/02 12:01:23 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.26 1996/06/11 14:49:17 nkramer Exp $
 *
 * This file is the garbage collector.
 *
@@ -482,7 +482,9 @@ static boolean scavenge_space(struct space *space)
 	space->scan_ptr = ptr;
 
 	block = block->next;
-	ptr = block->base;
+	if (block != NULL) {
+	    ptr = block->base;
+	}
     }
 
     return TRUE;
