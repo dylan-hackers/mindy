@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.65 1995/05/21 03:08:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.66 1995/05/26 10:50:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -229,8 +229,6 @@ define module variables
     note-variable-definition,
     <use>, <renaming>,
 
-    define-transformer,
-
     done-initializing-module-system,
 
     dylan-var, dylan-defn, dylan-value;
@@ -447,6 +445,18 @@ define module ctype
     csubtype-dispatch, ctype-intersection-dispatch;
 end;
 
+define module transformers
+  use common;
+
+  use utils;
+  use variables;
+  use ctype;
+
+  export
+    <transformer>, transformer-name, transformer-specializers,
+    transformer-function, define-transformer;
+end;
+
 define module representation
   use common;
 
@@ -479,7 +489,7 @@ define module classes
     space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
     instance-slots-layout,
-    <defined-cclass>,
+    <defined-cclass>, class-defn,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
     slot-type, slot-type-setter, slot-getter, slot-read-only?,
@@ -806,6 +816,7 @@ define module define-functions
   use signature-interface;
   use ctype;
   use classes;
+  use transformers;
   use compile-time-eval;
   use lexenv;
   use source;
@@ -876,6 +887,9 @@ define module define-classes
 	       <function-literal>, <method-literal>};
   use representation;
   use c-representation;
+
+  export
+    class-defn-maker-function;
 end;
 
 define module top-level-expressions
@@ -904,10 +918,12 @@ define module cheese
   use builder-interface;
   use policy;
   use define-functions;
+  use define-classes;
   use parse-tree, import: {<method-parse>};
   use lexenv;
   use fer-convert;
   use primitives;
+  use transformers;
 end;
 
 define module stack-analysis
