@@ -33,12 +33,15 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 
 define abstract class <buttonlike> (<window>) end class;
 
+// Removed for Tk 4.0
 define method activate (button :: <buttonlike>) => (button :: <buttonlike>);
-  put-tk-line(button, " activate");
+  // put-tk-line(button, " activate");
+  error("Activate no longer works in Tk 4.0.\nUse configure with the state keyword instead");
 end method activate;
 
 define method deactivate (button :: <buttonlike>) => (button :: <buttonlike>);
-  put-tk-line(button, " deactivate");
+  // put-tk-line(button, " deactivate");
+  error("Deactivate no linger works in Tk 4.0.\nUse configure with the state keyword instead");
 end method deactivate;
 
 define class <button> (<buttonlike>) end class;
@@ -46,7 +49,8 @@ define class <button> (<buttonlike>) end class;
 define-widget(<button>, "button",
 	      #"activebackground", #"activeforeground", #"bitmap",
 	      #"command", #"disabledforeground", #"font", #"height",
-	      #"state", #"text", #"textvariable", #"width");
+	      #"state", #"text", #"textvariable", #"width", #"image",
+	      #"justify", #"underline", #"wraplength");
 
 define method flash (button :: <button>) => (button :: <button>);
   put-tk-line(button, " flash");
@@ -78,8 +82,10 @@ end class;
 define-widget(<checkbutton>, "checkbutton",
 	      #"activebackground", #"activeforeground", #"bitmap", #"command",
 	      #"disabledforeground", #"font", #"height", #"offvalue",
-	      #"onvalue", #"selector", #"state", #"text", #"textvariable",
-	      #"variable", #"width");
+	      #"onvalue", #"state", #"text", #"textvariable",
+	      #"variable", #"width", #"selectcolor", #"indicatoron",
+	      #"image", #"justify", #"wraplength", #"selectimage",
+	      #"underline");
 
 define method toggle-value
     (button :: <checkbutton>) => (button :: <checkbutton>);
@@ -94,13 +100,15 @@ end class;
 
 define-widget(<radiobutton>, "radiobutton",
 	      #"activebackground", #"activeforeground", #"bitmap", #"command",
-	      #"disabledforeground", #"font", #"height", #"selector",
-	      #"state", #"text", #"textvariable", #"value", #"variable",
-	      #"width");
+	      #"disabledforeground", #"font", #"height",  #"state", #"text",
+	      #"textvariable", #"value", #"variable", #"width",
+	      #"selectcolor", #"indicatoron", #"image", #"justify",
+	      #"wraplength", #"underline", #"selectimage");
 
 define class <menubutton> (<buttonlike>) end class;
 
 define-widget(<menubutton>, "menubutton",
 	      #"activebackground", #"activeforeground", #"bitmap",
 	      #"disabledforeground", #"font", #"height", #"menu", #"state",
-	      #"text", #"textvariable", #"underline", #"width");
+	      #"text", #"textvariable", #"underline", #"width", #"image",
+	      #"justify", #"wraplength", #"indicatoron");
