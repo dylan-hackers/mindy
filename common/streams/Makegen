@@ -1,10 +1,10 @@
 &makegen_include("../common-Makegen");
 
 if ($features{'compiled_for_unix'}) {
-    &emit_c_file_rule('unix-fds');
+    &emit_c_file_rule('unix-fds') if ($enable_d2c);
     $streams_lid_file = 'unix-streams';
 } elsif ($features{'compiled_for_win32'}) {
-    &emit_c_file_rule('win32-fds');
+    &emit_c_file_rule('win32-fds') if ($enable_d2c);
     $streams_lid_file = 'win32-streams';
 } else {
     &unknown_platform_error();
