@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/string.dylan,v 1.3 2002/12/10 00:36:40 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/string.dylan,v 1.4 2003/02/03 12:32:45 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -312,7 +312,11 @@ end;
 define method \= (str1 :: <byte-string>, str2 :: <byte-string>)
  => (res :: <boolean>);
   block (return)
+    // the obvious shortcuts
+    if (str1 == str2) return(#t) end if;
     if (str1.size ~== str2.size) return(#f) end if;
+    //
+    // char-by-char compare
     for (char1 in str1, char2 in str2)
       if (char1 ~== char2)
 	return(#f);
