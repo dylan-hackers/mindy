@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.2 1998/09/09 13:40:21 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.3 1999/02/25 06:55:27 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -243,8 +243,9 @@ define class <real-define-method-tlf> (<define-method-tlf>)
   // True if the define method is sealed, false if open.
   slot method-tlf-sealed? :: <boolean>, required-init-keyword: sealed:;
   //
-  // True if the define method was declared inline, #f if not.
-  slot method-tlf-inline? :: <boolean>, required-init-keyword: inline:;
+  // Categorization of how strongly the user wants this method inlined
+  slot method-tlf-inline-type :: <inline-type>,
+    required-init-keyword: inline-type:;
   //
   // True if we can drop calls to this function when the results isn't used
   // because there are no side effects.
@@ -362,9 +363,9 @@ end;
 define method process-top-level-form (form :: <define-method-parse>) => ();
   let parse = form.defmethod-method;
   let name = parse.method-name.token-symbol;
-  let (sealed?-frag, inline?-frag, movable?-frag, flushable?-frag)
+  let (sealed?-frag, inline-type-frag, movable?-frag, flushable?-frag)
     = extract-properties(form.defmethod-options,
-			 #"sealed", #"inline", #"movable", #"flushable");
+			 #"sealed", #"inline-type", #"movable", #"flushable");
   let base-name = make(<basic-name>, symbol: name, module: *Current-Module*);
   let params = parse.method-parameters;
   implicitly-define-generic(*Current-Library*, base-name,
@@ -372,7 +373,8 @@ define method process-top-level-form (form :: <define-method-parse>) => ();
 			    params.varlist-rest & ~params.paramlist-keys,
 			    params.paramlist-keys & #t);
   let sealed? = sealed?-frag & extract-boolean(sealed?-frag);
-  let inline? = inline?-frag & extract-boolean(inline?-frag);
+  let inline-type
+    = inline-type-frag & extract-identifier(inline-type-frag).token-symbol;
   let movable? = movable?-frag & extract-boolean(movable?-frag);
   let flushable? = flushable?-frag & extract-boolean(flushable?-frag);
   let tlf = make(<real-define-method-tlf>,
@@ -380,7 +382,7 @@ define method process-top-level-form (form :: <define-method-parse>) => ();
 		 library: *Current-Library*,
 		 source-location: form.source-location,
 		 sealed: sealed?,
-		 inline: inline?,
+		 inline-type: inline-type | #"default-inline",
 		 movable: movable?,
 		 flushable: flushable? | movable?,
 		 parse: parse);
@@ -481,9 +483,11 @@ define method finalize-top-level-form (tlf :: <real-define-method-tlf>)
 		  movable: tlf.method-tlf-movable?,
 		  flushable: tlf.method-tlf-flushable?,
 		  inline-function:
-		    if (tlf.method-tlf-inline? & ~anything-non-constant?)
+		    if (tlf.method-tlf-inline-type ~== #"not-inline"
+			  & ~anything-non-constant?)
 		      rcurry(expand-inline-function, tlf.method-tlf-parse);
-		    end);
+		    end,
+		  inline-type: tlf.method-tlf-inline-type);
   tlf.tlf-defn := defn;
   let gf = defn.method-defn-of;
   if (gf)
@@ -724,39 +728,41 @@ end;
 
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <real-define-method-tlf>) => ();
-  let defn = tlf.tlf-defn;
-  let lexenv = make(<lexenv>, method-name: defn.defn-name);
-  let next-method-info = static-next-method-info(defn);
-  let leaf = fer-convert-method(builder, tlf.method-tlf-parse,
-				defn.defn-name,
-				ct-value(defn), #"global", lexenv, lexenv,
-				next-method-info: next-method-info);
-  if (defn.function-defn-hairy? 
-	| defn.method-defn-of == #f
-	| defn.method-defn-of.function-defn-hairy?)
-    // We don't use method-defn-of, because that is #f if there is a definition
-    // but it isn't a define generic.
-    let gf-name = tlf.method-tlf-base-name;
-    let gf-var = find-variable(gf-name);
-    let gf-defn = gf-var & gf-var.variable-definition;
-    if (gf-defn)
-      let policy = $Default-Policy;
-      let source = tlf.source-location;
-      let gf-leaf = build-defn-ref(builder, policy, source, gf-defn);
-      build-assignment
-	(builder, policy, source, #(),
-	 make-unknown-call
-	   (builder,
-	    ref-dylan-defn(builder, policy, source, #"add-method"), #f,
-	    list(gf-leaf, leaf)));
-      build-defn-set(builder, policy, source, defn, leaf);
-    else
-      let name = tlf.method-tlf-parse.method-name;
-      compiler-fatal-error-location
-        (name, "No definition for %s, and can't implicitly define it.",
-	 name.token-symbol);
-    end;
-  end;
+  unless (tlf.method-tlf-inline-type == #"inline-only")
+    let defn = tlf.tlf-defn;
+    let lexenv = make(<lexenv>, method-name: defn.defn-name);
+    let next-method-info = static-next-method-info(defn);
+    let leaf = fer-convert-method(builder, tlf.method-tlf-parse,
+				  defn.defn-name,
+				  ct-value(defn), #"global", lexenv, lexenv,
+				  next-method-info: next-method-info);
+    if (defn.function-defn-hairy? 
+	  | defn.method-defn-of == #f
+	  | defn.method-defn-of.function-defn-hairy?)
+      // We don't use method-defn-of, because that is #f if there is a
+      // definition but it isn't a define generic.
+      let gf-name = tlf.method-tlf-base-name;
+      let gf-var = find-variable(gf-name);
+      let gf-defn = gf-var & gf-var.variable-definition;
+      if (gf-defn)
+	let policy = $Default-Policy;
+	let source = tlf.source-location;
+	let gf-leaf = build-defn-ref(builder, policy, source, gf-defn);
+	build-assignment
+	  (builder, policy, source, #(),
+	   make-unknown-call
+	     (builder,
+	      ref-dylan-defn(builder, policy, source, #"add-method"), #f,
+	      list(gf-leaf, leaf)));
+	build-defn-set(builder, policy, source, defn, leaf);
+      else
+	let name = tlf.method-tlf-parse.method-name;
+	compiler-fatal-error-location
+	  (name, "No definition for %s, and can't implicitly define it.",
+	   name.token-symbol);
+      end if;
+    end if;
+  end unless;
 end;
 
 define method build-type
