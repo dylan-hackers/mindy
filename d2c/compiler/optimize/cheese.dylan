@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.5 2000/01/24 04:56:25 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.6 2000/10/30 09:02:25 bruce Exp $
 copyright: see below
 
 
@@ -78,6 +78,7 @@ define method optimize-component
 		dformat("\n******** %s\n\n", what);
 	      end;
 	      function(component);
+	      if (*print-shit*) dump-fer(component) end;
 	      let start-over?
 		= component.initial-variables | component.reoptimize-queue;
 	      if (start-over? & *print-shit*)
