@@ -9,6 +9,7 @@
 #      Makefile.in
 #      configure, configure.in, distribution-options
 #      mkinstalldirs, install.sh
+#      INSTALL
 #      compile.exe
 
 while (<>) {
@@ -17,6 +18,7 @@ while (<>) {
 	&& !m|Makefile.in|        && !m|configure|
 	&& !m|configure.in|       && !m|compile.exe|
 	&& !m|mkinstalldirs|      && !m|install.sh|
+	&& !m|INSTALL|
 	&& !m|distribution-options|) {
 	print $_;
     }
