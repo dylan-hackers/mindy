@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.19 1996/04/08 08:28:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.20 1996/04/10 16:56:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -62,81 +62,50 @@ end class <function-macro-definition>;
 define sealed domain make (singleton(<function-macro-definition>));
 
 
-// Syntax table manipulation routines.
+// Definition information query routines.
 
-// check-syntax-table-additions{<macro-definition>} -- method on imported gf
-//
-define method check-syntax-table-additions
-    (table :: <syntax-table>, defn :: <macro-definition>, name :: <symbol>)
-    => ();
-  let (real-name, category) = real-name-and-category(name, defn);
-  if (real-name)
-    unless (category-merge-okay?(table, real-name, category))
-      compiler-fatal-error("Inconsistent syntax for %s", name);
-    end unless;
-  end if;
-end method check-syntax-table-additions;
-
-// make-syntax-table-additions{<macro-definition>} -- method on imported gf
-//
-define method make-syntax-table-additions
-    (table :: <syntax-table>, defn :: <macro-definition>, name :: <symbol>)
-    => ();
-  let (real-name, category) = real-name-and-category(name, defn);
-  if (real-name)
-    merge-category(table, real-name, category);
-  end if;
-end method make-syntax-table-additions;
-
-
-// real-name-and-category -- internal.
-//
-// Return the real name to use based on the name in the macro definition and
-// the syntactic category for that name.
-// 
-define generic real-name-and-category
-    (name :: <symbol>, defn :: <macro-definition>)
-    => (real-name :: false-or(<symbol>), category :: <symbol>);
-
-// real-name-and-category{<define-body-macro-definition>}
+// definition-syntax-info{<define-body-macro-definition>}
+//   -- method on imported GF
 //
 // For body-style define macros, strip off the -definer.
 // 
-define method real-name-and-category
-    (name :: <symbol>, defn :: <define-body-macro-definition>)
+define method definition-syntax-info
+    (defn :: <define-body-macro-definition>, name :: <symbol>)
     => (real-name :: false-or(<symbol>), category :: <symbol>);
   values(sans-definer(name), #"define-body");
-end method real-name-and-category;
+end method definition-syntax-info;
 
-// real-name-and-category{<define-list-macro-definition>}
+// definition-syntax-info{<define-list-macro-definition>}
+//   -- method on imported GF
 //
 // For list-style define macros, strip off the -definer.
 // 
-define method real-name-and-category
-    (name :: <symbol>, defn :: <define-list-macro-definition>)
+define method definition-syntax-info
+    (defn :: <define-list-macro-definition>, name :: <symbol>)
     => (real-name :: false-or(<symbol>), category :: <symbol>);
   values(sans-definer(name), #"define-list");
-end method real-name-and-category;
+end method definition-syntax-info;
 
-// real-name-and-category{<function-macro-definition>}
+// definition-syntax-info{<function-macro-definition>} -- method on imported GF
 //
 // For function macros, use the name as is.
 // 
-define method real-name-and-category
-    (name :: <symbol>, defn :: <function-macro-definition>)
+define method definition-syntax-info
+    (defn :: <function-macro-definition>, name :: <symbol>)
     => (real-name :: <symbol>, category :: <symbol>);
   values(name, #"function");
-end method real-name-and-category;
+end method definition-syntax-info;
 
-// real-name-and-category{<statement-macro-definition>}
+// definition-syntax-info{<statement-macro-definition>}
+//   -- method on imported GF
 //
 // For statement macros, use the name as is.
 // 
-define method real-name-and-category
-    (name :: <symbol>, defn :: <statement-macro-definition>)
+define method definition-syntax-info
+    (defn :: <statement-macro-definition>, name :: <symbol>)
     => (real-name :: <symbol>, category :: <symbol>);
   values(name, #"begin");
-end method real-name-and-category;
+end method definition-syntax-info;
 
 
 // sans-definer -- internal.
@@ -160,6 +129,36 @@ define method sans-definer (name :: <symbol>)
     #f;
   end if;
 end method sans-definer;
+
+
+// definition-kind{<define-body-macro-definition>} -- method on imported GF
+//
+define method definition-kind
+    (defn :: <define-body-macro-definition>) => kind :: <byte-string>;
+  "body-style define macro";
+end method definition-kind;
+
+// definition-kind{<define-list-macro-definition>} -- method on imported GF
+//
+define method definition-kind
+    (defn :: <define-list-macro-definition>) => kind :: <byte-string>;
+  "list-style define macro";
+end method definition-kind;
+
+// definition-kind{<function-macro-definition>} -- method on imported GF
+//
+define method definition-kind
+    (defn :: <function-macro-definition>) => kind :: <byte-string>;
+  "function macro";
+end method definition-kind;
+
+// definition-kind{<statement-macro-definition>} -- method on imported GF
+//
+define method definition-kind
+    (defn :: <statement-macro-definition>) => kind :: <byte-string>;
+  "statement macro";
+end method definition-kind;
+
 
 
 // make(<macro-definition>) -- method on imported GF.
