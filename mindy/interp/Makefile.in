@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.17 2002/05/08 14:42:10 housel Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.18 2003/07/11 03:43:25 housel Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -64,7 +64,6 @@ INSTALL	=		@INSTALL@
 INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
 INSTALL_DATA	=	@INSTALL_DATA@
 
-LIBOBJS =		@LIBOBJS@
 LIBS	=		../compat/libcompat.a @LIBS@
 
 ##

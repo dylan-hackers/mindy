@@ -4,7 +4,6 @@ $CPPFLAGS = "$CPPFLAGS -I../../runtime ";
 $D2CFLAGS         # added by update-libdirs
     = $d2c_runtime
     . ' -L../../../common/collection-extensions'
-    . ' -L../../../common/transcendental'
     . ' -L../../runtime/random'
     . ' -L../../../common/streams'
     . ' -L../../../common/standard-io'

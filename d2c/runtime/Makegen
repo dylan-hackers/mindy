@@ -15,7 +15,6 @@ if (!$enable_bootstrap || $enable_mindy_bootstrap) {
 
     do install_from_src($includedir, "runtime.h");
 } else {
-    do compile_subdirs('../../common/transcendental',
-		       'random',
+    do compile_subdirs('random',
 		       '../../common');
 }

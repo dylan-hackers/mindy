@@ -21,7 +21,8 @@ my %library_dir;		# directory where each library is located
 my %used_from_library;		# libraries used by library
 my %used_from_dir;		# libraries used by directory
 
-my %runtime_libraries = ('dylan' => 1, 'melange-support' => 1);
+my %runtime_libraries = ('dylan' => 1, 'melange-support' => 1,
+			 'transcendental' => 1);
 
 if($#ARGV < 0) {
     &scan_directory(File::Spec->curdir());

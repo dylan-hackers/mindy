@@ -99,6 +99,7 @@ if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
     foreach (@runtime_directories) {
 	$d2c_runtime .= "-L$buildroot/d2c/runtime/$_ ";
     }
+    $d2c_runtime .= "-L$buildroot/common/transcendental";
 }
 
 $GC_CFLAGS = '@GC_CFLAGS@';

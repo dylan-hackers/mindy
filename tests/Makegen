@@ -12,7 +12,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../common/table-ext'
     . ' -L../common/getopt'
     . ' -L../common/matrix'
-    . ' -L../common/transcendental'
     . ' -L../d2c/runtime/random'
     . ' -L../common/string-ext'
     . ' -L../common/regular-expressions'

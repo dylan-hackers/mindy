@@ -39,7 +39,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/collection-extensions'
     . ' -L../../../common/table-ext'
     . ' -L../../../common/string-ext'
-    . ' -L../../../common/transcendental'
     . ' -L../../runtime/random'
     . ' -L../../../common/streams'
     . ' -L../../../common/print'

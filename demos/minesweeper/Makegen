@@ -7,7 +7,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../common/standard-io'
     . ' -L../../common/print'
     . ' -L../../common/format'
-    . ' -L../../common/transcendental'
     . ' -L../../d2c/runtime/random';
 
 do emit_library_rule(

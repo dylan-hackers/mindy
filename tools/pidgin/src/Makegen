@@ -10,11 +10,10 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/collection-extensions'
     . ' -L../../../common/string-ext'
     . ' -L../../../common/regular-expressions'
-    . ' -L../../../common/format-out'
-    . ' -L../../../common/transcendental'
+    . ' -L../../../common/threads'
     . ' -L../../../d2c/runtime/random'
     . ' -L../../../common/common-dylan'
-    . ' -L../../../common/threads'
+    . ' -L../../../common/format-out'
     . ' -L../../../common/io';
 
 &emit_library_rule('parser-utilities', '$(BUILDROOT)/force.timestamp', '', 

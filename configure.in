@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.136 2003/07/02 16:53:45 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.137 2003/07/11 03:43:17 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -48,7 +48,7 @@ AC_SUBST(VERSION)
 # interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=33
+CURRENT_BOOTSTRAP_COUNTER=34
 AC_SUBST(CURRENT_BOOTSTRAP_COUNTER)
 
 #--------------------------------------------------------------------
@@ -415,8 +415,8 @@ AC_SUBST(enable_d2c_bootstrap)
 #--------------------------------------------------------------------
 
 # Runtime libraries which must match the compiler used to build d2c.
-RUNTIME_LIBRARIES="libruntime.a dylan.lib.du melange-support.lib.du"
-EXTRA_RUNTIME_LIBRARIES="libgc.a libdylan.a libdylan-dylan.a llibmelange.a libmelange-support.a libmelange-support-dylan.a"
+RUNTIME_LIBRARIES="libruntime.a dylan.lib.du melange-support.lib.du transcendental.lib.du"
+EXTRA_RUNTIME_LIBRARIES="libgc.a libdylan.a libdylan-dylan.a llibmelange.a libmelange-support.a libmelange-support-dylan.a libtranscendental.a libtranscendental-dylan.a"
 
 # Delete our local runtime directory, if it exists.
 LOCAL_RUNTIME="$buildroot"/previous_runtime
