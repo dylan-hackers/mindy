@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.2 1994/04/11 00:23:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.3 1994/04/11 23:32:23 wlott Exp $
 *
 * This file does whatever.
 *
@@ -17,6 +17,8 @@
 
 
 extern obj_t obj_FunctionClass;
+extern obj_t obj_MethodClass;
+extern obj_t obj_ByteMethodClass;
 
 struct method_info {
     obj_t class;
@@ -49,6 +51,7 @@ extern obj_t make_method_info(boolean rest_p, obj_t keys, obj_t component,
 extern obj_t make_byte_method(obj_t method_info, obj_t specializers,
 			      obj_t result_types, obj_t more_results_type,
 			      obj_t *lexenv);
+extern obj_t byte_method_component(obj_t byte_method);
 
 extern obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
 				  boolean setter, obj_t datum,
@@ -73,12 +76,12 @@ extern obj_t *push_linkage(struct thread *thread, obj_t *args);
 extern void set_c_continuation(struct thread *thread,
 			       void cont(struct thread *thread, obj_t *vals));
 extern obj_t *pop_linkage(struct thread *thread);
-extern void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals);
 #ifdef sparc
-#define void do_return_setup do_return
+#define void do_return do_return_setup
 #else
-extern void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals);
+extern void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals);
 #endif
+extern void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals);
 
 extern obj_t function_debug_name(obj_t func);
 extern obj_t function_debug_name_or_self(obj_t func);
