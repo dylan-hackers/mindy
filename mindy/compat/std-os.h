@@ -40,7 +40,7 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-os.h,v 1.1 1994/10/05 20:48:15 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-os.h,v 1.2 1995/03/12 16:37:27 nkramer Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_OS_H_
@@ -48,9 +48,13 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <pwd.h>
+#ifndef NO_PWD_H
+#   include <pwd.h>
+#endif
 #include <signal.h>
-#include <sys/param.h>
+#ifndef NO_SYS_PARAM_H
+#   include <sys/param.h>
+#endif
 #include <sys/types.h>
 #ifdef USE_DIRENT2_H
 #   include "std-dirent2.h"
@@ -61,7 +65,9 @@
 #	include <dirent.h>
 #   endif
 #endif
-#include <sys/file.h>
+#ifndef NO_SYS_FILE_H
+#   include <sys/file.h>
+#endif
 #include <sys/stat.h>
 #ifndef NO_SYS_TIME_H
 #    include <sys/time.h>
@@ -75,7 +81,12 @@
 #ifndef NO_UNISTD_H
 #   include <unistd.h>
 #else
-#   include "std-unistd.h"
+#	ifdef WIN32
+#	    include <io.h>
+#	    define fsync	_commit
+#	else
+#           include "std-unistd.h"
+#	endif
 #endif
 #undef pause
 
@@ -85,7 +96,9 @@
  * isn't generally declared in a header file anywhere.
  */
 
-extern int errno;
+#ifndef WIN32
+    extern int errno;
+#endif
 
 /*
  * The type of the status returned by wait varies from UNIX system
@@ -284,10 +297,10 @@ extern int errno;
  */
 
 #if 0
-#define open(a,b,c) protect_open(a,b,c)
-#define read(a,b,c) protect_read(a,b,c)
-#define waitpid(a,b,c) protect_waitpid(a,b,c)
-#define write(a,b,c) protect_write(a,b,c)
+#   define open(a,b,c) protect_open(a,b,c)
+#   define read(a,b,c) protect_read(a,b,c)
+#   define waitpid(a,b,c) protect_waitpid(a,b,c)
+#   define write(a,b,c) protect_write(a,b,c)
 #endif
 
 EXTERN int	protect_open _ANSI_ARGS_((char *path, int oflag, int mode));
@@ -300,9 +313,11 @@ EXTERN int	protect_write _ANSI_ARGS_((int fd, VOID *buf, size_t numBytes));
  */
 
 #if defined(_sgi) || defined(__sgi)
-#define environ _environ
+#   define environ _environ
 #endif
-extern char **environ;
+#ifndef WIN32
+    extern char **environ;
+#endif
 
 /*
  * Provide for minimal emulation of POSIX signals.
@@ -310,7 +325,7 @@ extern char **environ;
  * before you start getting excited about using this.
  */
 #ifdef NO_SIGACTION
-#include "std-signal.h"
+#   include "std-signal.h"
 #endif
 
 /*
@@ -321,7 +336,7 @@ extern char **environ;
  * Some systems have a useful sys/select.h.
  */
 #ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
+#   include <sys/select.h>
 #endif
 
 /*
@@ -330,6 +345,14 @@ extern char **environ;
 
 #ifndef OPEN_MAX
 #   define OPEN_MAX 256
+#endif
+
+/* For Windows NT (and '95), we get select functionality from WinSock */
+
+#ifdef WIN32
+#   define _INC_STDARG
+#   undef VOID
+#   include <winsock.h>
 #endif
 
 /*
@@ -376,7 +399,7 @@ extern char **environ;
  */
 
 #ifndef HAVE_SYS_SELECT_H
-#    ifndef SELECT_IN_TIME_H
+#    if !defined(SELECT_IN_TIME_H) && !defined(WIN32)
           extern int select _ANSI_ARGS_((int nfds, SELECT_MASK *readfds,
 			    SELECT_MASK *writefds, SELECT_MASK *exceptfds,
 			    struct timeval *timeout));
@@ -388,9 +411,11 @@ extern char **environ;
  * declaration.
  */
 #if NO_FSYNC
-#define fsync(fd)	0
+#   define fsync(fd)	0
 #else
-extern int fsync();
+#   ifndef WIN32
+        extern int fsync();
+#   endif
 #endif
 
 /*
@@ -404,16 +429,15 @@ extern int fsync();
 */
 
 #if defined(MACH) || defined(__osf__) || defined(ultrix)
-extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
-		  fd_set *except_fds, struct timeval *timeout);
+    extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
+		      fd_set *except_fds, struct timeval *timeout);
 #endif
 
 /* Was #if defined(__osf__) || defined(ultrix)
  */
 #if defined(__osf__)
-extern int fsync(int filedes);
-#include <exc_handling.h>
+    extern int fsync(int filedes);
+#   include <exc_handling.h>
 #endif
-
 
 #endif	/* _STD_OS_H_ */

@@ -9,13 +9,13 @@
 /*
  * configure may not have figured out which to use.
  */
-#if !defined(BSD_SIGNALS) && !defined(USG_SIGNALS)
-#define BSD_SIGNALS	1
+#if !defined(BSD_SIGNALS) && !defined(USG_SIGNALS) && !defined(WIN32)
+#   define BSD_SIGNALS	1
 #endif
 
 #if BSD_SIGNALS
-#define _BSD_SIGNALS	1		/* this is how Irix turns bsd signals on */
-#define _BSD_COMPAT	1
+#   define _BSD_SIGNALS	1		/* this is how Irix turns bsd signals on */
+#   define _BSD_COMPAT	1
 #endif
 
 #include <stdio.h>
@@ -25,18 +25,37 @@
 
 /*
  * these are common to the emulations.
+ * Taken from p. 292, Advanced Programming in the Unix Environment 
+ * (W. Richard Stevens)
  */
-int sigaddset(sigset_t *set, int sig) { return *set |= (1<<(sig-1)); }
-int sigdelset(sigset_t *set, int sig) { return *set &= ~(1<<(sig-1)); }
 int sigemptyset(sigset_t *set) { return *set = 0; }
-int sigfillset(sigset_t *set) { *set = 0xFFFFFFFF; }
-int sigismember(sigset_t *set, int sig) { return (*set & (1<<(sig-1))) != 0; }
+int sigfillset(sigset_t *set) { *set = ~(sigset_t)0; return 0; }
+
+int sigaddset(sigset_t *set, int sig) 
+{ 
+    if (SIGBAD(sig)) { errno = EINVAL; return -1; }
+    *set |= (1<<(sig-1)); 
+    return 0;
+}
+
+int sigdelset(sigset_t *set, int sig) 
+{ 
+    if (SIGBAD(sig)) { errno = EINVAL; return -1; }
+    *set &= ~(1<<(sig-1)); 
+    return 0;
+}
+
+int sigismember(sigset_t *set, int sig)
+{
+    if (SIGBAD(sig)) { errno = EINVAL; return -1; }
+    return (*set & (1<<(sig-1))) != 0; 
+}
 
 #if BSD_SIGNALS
 
-#ifdef hpux
-#define sigvec	sigvector
-#endif
+#   ifdef hpux
+#       define sigvec	sigvector
+#   endif
 
 int sigaction(sig, sa, osa) int sig; struct sigaction *sa, *osa;
 {
@@ -139,6 +158,28 @@ int sigprocmask(int operation, sigset_t *set, sigset_t *oset)
 	sigrelse(sig);
     break;
   }
+  if (oset) *oset = 0;
+  return 0;
+}
+
+#elif WIN32
+
+int sigaction(sig, sa, osa) int sig; struct sigaction *sa, *osa;
+{
+  if (osa)
+    osa->sa_handler = signal(sig, (void(__cdecl*)(int))sa->sa_handler);
+  else
+    signal(sig, (void(__cdecl*)(int))sa->sa_handler);
+  return 0;
+}
+
+int sigsuspend(set) sigset_t *set;
+{
+  return 0;
+}
+
+int sigprocmask(int operation, sigset_t *set, sigset_t *oset)
+{
   if (oset) *oset = 0;
   return 0;
 }

@@ -33,8 +33,8 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.2 1994/11/10 20:23:57 nkramer Exp $ SPRITE (Berkeley)
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.2 1994/11/10 20:23:57 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.3 1995/03/12 16:37:15 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.3 1995/03/12 16:37:15 nkramer Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_C_H_
@@ -86,7 +86,7 @@
  */
 
 #ifndef NULL
-#define NULL 0
+#   define NULL 0
 #endif
 
 /*
@@ -109,14 +109,18 @@
 #   include <stdlib.h>
 #endif
 #ifdef NO_STRING_H
-#include "std-string.h"
+#   include "std-string.h"
 #else
-#include <string.h>
+#	include <string.h>
+#	ifdef WIN32
+#	    define strcasecmp	_stricmp
+#	    define strncasecmp	_memicmp
+#	endif
 #endif
 #if _USING_PROTOTYPES_
-#include <stdarg.h>
+#   include <stdarg.h>
 #else
-#include <varargs.h>
+#   include <varargs.h>
 #endif
 
 /*
@@ -127,7 +131,9 @@
  * up being too many conflicts with slightly-different prototypes.
  */
 
-extern double strtod();
+#ifndef WIN32
+    extern double strtod();
+#endif
 
 /*
  * hpux is claimed not to implement rint(), here's a declaration.
@@ -139,9 +145,9 @@ extern double rint();
  * stdio buffer.  This is sure to break many more times.
  */
 #ifdef USE_LINUX_FBUFEMPTYP
-#define FBUFEMPTYP(fp)        (fp->_IO_read_ptr >= fp->_IO_read_end)
+#   define FBUFEMPTYP(fp)        (fp->_IO_read_ptr >= fp->_IO_read_end)
 #else
-#define FBUFEMPTYP(fp)        (fp->_cnt == 0)
+#   define FBUFEMPTYP(fp)        (fp->_cnt == 0)
 #endif
 
 /*
@@ -149,8 +155,8 @@ extern double rint();
  */
 
 #if ! __GNUC__
-#define inline
-#define __inline__
+#   define inline
+#   define __inline__
 #endif
 
 /*
@@ -158,9 +164,9 @@ extern double rint();
  * not declared.
  */
 #if NO_BSTRING_H
-#include "std-bstring.h"
+#   include "std-bstring.h"
 #else
-#include <bstring.h>
+#   include <bstring.h>
 #endif
 
 #endif	/* _STD_C_H_ */
