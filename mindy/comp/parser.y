@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.30 1996/03/21 17:39:46 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.31 1996/03/26 22:33:55 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -819,8 +819,12 @@ required_opt:
 ;
 
 inherited_spec:
-	INHERITED SLOT variable_name property_list_opt
-	{ free($1); free($2); $$ = make_inherited_spec(make_id($3), $4); }
+	INHERITED SLOT variable_name slot_init_expr_opt property_list_opt
+	{ 	    
+	    int line = $3->line;
+	    free($1); free($2); 
+	    $$ = make_inherited_spec(line, make_id($3), $4, $5); 
+	}
 ;
 
 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.30 1996/03/09 15:24:44 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.31 1996/03/26 22:33:55 nkramer Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -1547,22 +1547,9 @@ struct class_guts *make_class_guts(void)
     return res;
 }
 
-struct slot_spec
-    *make_slot_spec(int line, flags_t flags, enum slot_allocation alloc,
-		    struct id *name, struct expr *type, struct expr *init_expr,
-		    struct plist *plist)
+static struct plist *add_init_expr (int line, struct expr *init_expr, 
+				   struct plist *plist)
 {
-    struct slot_spec *res = malloc(sizeof(struct slot_spec));
-
-    res->line = line;
-    res->flags = flags;
-    res->alloc = alloc;
-    res->name = name;
-    res->type = type;
-    res->getter = NULL;
-    res->setter = NULL;
-    res->next = NULL;
-
     if (init_expr != NULL) {
 	/* If the init-expr is a literal, add it to the property list 
 	   as a init-value:
@@ -1593,8 +1580,25 @@ struct slot_spec
 				 make_method_ref(init_method));
 	}
     }
+    return plist;
+}
 
-    res->plist = plist;
+struct slot_spec
+    *make_slot_spec(int line, flags_t flags, enum slot_allocation alloc,
+		    struct id *name, struct expr *type, struct expr *init_expr,
+		    struct plist *plist)
+{
+    struct slot_spec *res = malloc(sizeof(struct slot_spec));
+
+    res->line = line;
+    res->flags = flags;
+    res->alloc = alloc;
+    res->name = name;
+    res->type = type;
+    res->getter = NULL;
+    res->setter = NULL;
+    res->next = NULL;
+    res->plist = add_init_expr(line, init_expr, plist);
 
     return res;
 }
@@ -1633,14 +1637,15 @@ struct class_guts *add_initarg_spec(struct class_guts *guts,
     return guts;
 }
 
-struct inherited_spec *make_inherited_spec(struct id *name,
+struct inherited_spec *make_inherited_spec(int line, struct id *name,
+					   struct expr *init_expr,
 					   struct plist *plist)
 {
     struct inherited_spec *res = malloc(sizeof(*res));
 
     res->name = name;
-    res->plist = plist;
     res->next = NULL;
+    res->plist = add_init_expr(line, init_expr, plist);
 
     return res;
 }

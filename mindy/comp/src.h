@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.23 1996/03/09 12:01:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.24 1996/03/26 22:33:55 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -744,7 +744,8 @@ extern struct initarg_spec
 extern struct class_guts
     *add_initarg_spec(struct class_guts *guts, struct initarg_spec *spec);
 extern struct inherited_spec
-    *make_inherited_spec(struct id *name, struct plist *plist);
+    *make_inherited_spec(int line, struct id *name, struct expr *init_expr, 
+			 struct plist *plist);
 extern struct class_guts
     *add_inherited_spec(struct class_guts *guts, struct inherited_spec *spec);
 extern struct constituent
