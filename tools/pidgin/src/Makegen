@@ -12,6 +12,7 @@ $D2CFLAGS = $d2c_runtime
     . '-L../../../common/string-ext '
     . '-L../../../common/print '
     . '-L../../../common/table-ext '
+    . '-L../../../d2c/runtime/random '
     . '-L../../../common/transcendental ';
 
 &emit_library_rule('parser-utilities', '$(BUILDROOT)/force.timestamp', '', 
