@@ -8,7 +8,7 @@ Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define module reversi
-  use common-dylan;
+  use common-dylan, exclude: {format-to-string};
   use format;			// exported from functional-dylan
   use format-out;
   use random;			// exported from functional-dylan

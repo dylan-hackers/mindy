@@ -8,7 +8,7 @@ Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define module pente
-  use common-dylan;
+  use common-dylan, exclude: {format-to-string};
   use format;
   use random;
   use operating-system;		// exported from system

@@ -8,7 +8,7 @@ Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define module duim-gui-test-suite
-  use common-dylan;
+  use common-dylan, exclude: {format-to-string};
 /*
   use dylan-extensions,
     import: { debug-name };
