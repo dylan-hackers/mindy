@@ -25,7 +25,7 @@ sub update {
 
 	if ($should_update) {
 	    print "  Updating $localfile\n";
-	    system("c:/tools/rcs-bin/co.exe -q $localfile $rcsfile")
+	    system("$co -q $localfile $rcsfile")
 		&& print "co failed!\n";
 	}
     }
@@ -80,4 +80,5 @@ sub update_directory {
     }
 }
 
+$co = shift(@ARGV);
 &update_directory(".");
