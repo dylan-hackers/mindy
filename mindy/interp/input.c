@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.17 1995/04/16 23:34:28 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.18 1995/04/16 23:37:53 nkramer Exp $
 *
 * This file implements getc.
 *
@@ -41,28 +41,13 @@
 #include "driver.h"
 #include "error.h"
 #include "def.h"
+#include "fd.h"
 
 static void getc_or_wait(struct thread *thread)
 {
-#ifndef FAKE_SELECT
-    if (FBUFEMPTYP(stdin)
-        && !feof(stdin)) {
+    if (FBUFEMPTYP(stdin) && !feof(stdin)) {
 	int fd = fileno(stdin);
-	fd_set fds;
-	struct timeval tv;
-	int nfound;
-
-#   ifdef WIN32
-	fd = _get_osfhandle(fd);
-	assert(fd > 0);
-#   endif
-
-	FD_ZERO(&fds);
-	FD_SET(fd, &fds);
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-
-	nfound = select(fd+1, &fds, NULL, NULL, &tv);
+	int nfound = input_available(fd);
 
 	if (nfound < 0) {
 	    switch (errno) {
@@ -77,7 +62,6 @@ static void getc_or_wait(struct thread *thread)
 	else if (nfound == 0)
 	    wait_for_input(thread, fd, getc_or_wait);
     }
-#endif
 
     {
 	int c = getchar();
