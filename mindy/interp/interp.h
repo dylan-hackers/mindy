@@ -9,12 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.h,v 1.3 1994/03/28 11:10:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.h,v 1.4 1994/04/12 19:48:31 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+
+extern obj_t obj_ComponentClass;
 
 struct component {
     obj_t class;
@@ -33,3 +35,6 @@ extern void set_byte_continuation(struct thread *thread, obj_t component);
 extern void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals);
 extern obj_t make_component(obj_t debug_name, int frame_size, obj_t src_file,
 			    obj_t debug_info, int constants, int bytecode_len);
+
+extern void interpret_byte(int byte, struct thread *thread);
+extern void interpret_next_byte(struct thread *thread);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.8 1994/04/09 13:35:56 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.9 1994/04/12 19:47:44 wlott Exp $
 *
 * This file does whatever.
 *
@@ -31,10 +31,11 @@
 #include "sym.h"
 #include "error.h"
 #include "type.h"
+#include "brkpt.h"
 #include "interp.h"
 #include "../comp/byteops.h"
 
-static obj_t obj_ComponentClass = 0;
+obj_t obj_ComponentClass = 0;
 
 static struct variable *plus_var = NULL;
 static struct variable *minus_var = NULL;
@@ -122,7 +123,7 @@ static void op_flame(int byte, struct thread *thread)
 
 static void op_breakpoint(int byte, struct thread *thread)
 {
-    pause(pause_HitBreakpoint);
+    handle_byte_breakpoint(thread);
 }
 
 static void op_return_single(int byte, struct thread *thread)
@@ -586,10 +587,8 @@ static void op_gt(int byte, struct thread *thread)
     }
 }
 
-static void interpret_byte(struct thread *thread)
+void interpret_byte(int byte, struct thread *thread)
 {
-    int byte = decode_byte(thread);
-
     switch (byte) {
       case op_BREAKPOINT:
 	op_breakpoint(byte, thread);
@@ -842,6 +841,12 @@ static void interpret_byte(struct thread *thread)
     }
 }
 
+void interpret_next_byte(struct thread *thread)
+{
+    interpret_byte(decode_byte(thread), thread);
+}
+
+
 
 /* Entry points into the interpteter. */
 
@@ -852,12 +857,15 @@ void set_byte_continuation(struct thread *thread, obj_t component)
     thread->pc = (char *)(&COMPONENT(component)->constant[n_const])
 	- (char *)component;
     thread->sp = thread->fp + COMPONENT(component)->frame_size;
-    thread->advance = interpret_byte;
+    thread->advance = interpret_next_byte;
 }
 
 void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 {
     int opcode = ((unsigned char *)(thread->component))[thread->pc - 1] & 0xf0;
+
+    if (opcode == op_BREAKPOINT)
+	opcode = original_byte(thread->component, thread->pc - 1) & 0xf0;
 
     if (opcode == op_CALL_FOR_SINGLE || opcode >= op_PLUS) {
 	if (vals == thread->sp)
@@ -871,7 +879,7 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
     else
 	lose("Strange call opcode: 0x%02x", opcode);
 
-    thread->advance = interpret_byte;
+    thread->advance = interpret_next_byte;
 }
 
 
