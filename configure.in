@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.7 1998/07/11 20:07:39 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.8 1998/08/02 20:35:45 emk Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -31,6 +31,12 @@ AC_PREREQ(2.12)
 #--------------------------------------------------------------------
 
 AC_PREFIX_PROGRAM(melange)
+
+#--------------------------------------------------------------------
+# Make srcdir absolute to keep Mindy's build system from choking.
+#--------------------------------------------------------------------
+
+srcdir=`(cd $srcdir; pwd)`
 
 #--------------------------------------------------------------------
 # builddir is the directory in which we run configure.
@@ -145,20 +151,16 @@ AC_SUBST(MINDY)
 AC_SUBST(MC)
 
 #--------------------------------------------------------------------
-# Make srcdir absolute to keep Mindy's build system from choking.
-#--------------------------------------------------------------------
-
-srcdir=`(cd $srcdir; pwd)`
-
-#--------------------------------------------------------------------
 # Figure out what to do with d2c. If we're cross-compiling, we'll
 # need to rewrite this.
+# Do we want to use the installed platforms.descr or the current one?
 #--------------------------------------------------------------------
 
 AC_CHECK_TOOL(D2C, d2c, no)
 
 if test "$D2C" != no; then
-    D2C="$D2C -p$srcdir/d2c/compiler/platforms.descr"
+#    D2C="$D2C -p$srcdir/d2c/compiler/platforms.descr"
+    D2C="$D2C -p$sysconfdir/platforms.descr"
 fi
 
 #--------------------------------------------------------------------
@@ -180,12 +182,10 @@ fi
 enable_d2c=${enable_d2c:-yes}
 AC_MSG_CHECKING(whether to build d2c)
 AC_MSG_RESULT($enable_d2c)
-AC_SUBST(enable_d2c)
 
 enable_mindy=${enable_mindy:-yes}
 AC_MSG_CHECKING(whether to build mindy)
 AC_MSG_RESULT($enable_mindy)
-AC_SUBST(enable_mindy)
 
 if test "$enable_mindy" = "no" -a "$enable_d2c" = "no" ; then
     AC_MSG_ERROR([\
@@ -598,10 +598,12 @@ AC_OUTPUT(Defaults \
 	tools/shared-misc/gen-makefile \
 	tools/shared-misc/mk-build-tree \
 	tools/shared-misc/line-count \
+	tools/shared-misc/make-dylan-app \
 	tools/unix-misc/mk-rcs-links, [
 ${INSTALL} -m uog+rx $builddir/tools/shared-misc/mk-build-tree ./
 ${INSTALL} -m uog+rx $builddir/tools/shared-misc/gen-makefile ./
 (PATH=$builddir:$PATH; export PATH; mk-build-tree -p$srcdir/d2c/compiler/platforms.descr)
+touch $builddir/force.timestamp
 ], [
 srcdir=$srcdir
 builddir=$builddir
