@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.27 1994/10/20 03:06:01 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.28 1994/10/25 20:23:29 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1569,7 +1569,7 @@ static obj_t dylan_slot_type(obj_t slot)
     return SD(slot)->type;
 }
 
-static obj_t dylan_slot_value(obj_t self, struct thread *thread, obj_t *args)
+static void dylan_slot_value(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     obj_t slot = args[0];
@@ -1616,6 +1616,41 @@ static obj_t dylan_slot_value(obj_t self, struct thread *thread, obj_t *args)
     }
 	
     do_return(thread, old_sp, old_sp);
+}
+
+static obj_t dylan_slot_value_setter(obj_t value, obj_t slot, obj_t instance)
+{
+    obj_t class = object_class(instance);
+    int index;
+
+    if (!instancep(instance, SD(slot)->creator))
+	error("%= is not one of %='s slots", slot, instance);
+
+    check_type(value, SD(slot)->type);
+
+    switch (SD(slot)->alloc) {
+      case alloc_INSTANCE:
+	index = find_position(DC(class)->instance_positions, slot);
+	INST(instance)->slots[index] = value;
+	break;
+      case alloc_SUBCLASS:
+	index = find_position(DC(class)->subclass_positions, slot);
+	INST(instance)->slots[index] = value;
+	break;
+      case alloc_CLASS:
+	value_cell_set(accessor_method_datum(SD(slot)->getter_method), value);
+	break;
+      case alloc_CONSTANT:
+	error("constant slots cannot be set.");
+	break;
+      case alloc_VIRTUAL:
+	error("virtual slots cannot be set.");
+	break;
+      default:
+	lose("Strange slot allocation.");
+    }
+
+    return value;
 }
 
 
@@ -1917,6 +1952,18 @@ void init_instance_functions(void)
 		  obj_False, FALSE, obj_ObjectClass, dylan_slot_setter_method);
     define_method("slot-type", list1(obj_SlotDescrClass), FALSE,
 		  obj_False, FALSE, obj_ObjectClass, dylan_slot_type);
-    define_method("slot-value", list2(obj_SlotDescrClass,obj_ObjectClass),
-		  FALSE, obj_False, FALSE, obj_ObjectClass, dylan_slot_value);
+    define_generic_function("slot-value", 2, FALSE, obj_False, FALSE,
+			    list2(obj_ObjectClass, obj_BooleanClass),
+			    obj_False);
+    add_method(find_variable(module_BuiltinStuff, symbol("slot-value"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("slot-value",
+			       list2(obj_SlotDescrClass, obj_ObjectClass),
+			       FALSE, obj_False, FALSE,
+			       list2(obj_ObjectClass, obj_BooleanClass),
+			       obj_False, dylan_slot_value));
+    define_method("slot-value-setter",
+		  list3(obj_ObjectClass, obj_SlotDescrClass,obj_ObjectClass),
+		  FALSE, obj_False, FALSE, obj_ObjectClass,
+		  dylan_slot_value_setter);
 }
