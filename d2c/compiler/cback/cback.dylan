@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.120 1996/05/09 01:30:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.121 1996/05/09 04:40:51 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1958,11 +1958,6 @@ define method emit-assignment
 	values(#f, call.depends-on.dependent-next);
       end;
 
-  let function = call.depends-on.source-exp;
-  let (entry, name)
-    = xep-expr-and-name(function, use-generic-entry?, file);
-  let func = ref-leaf(*heap-rep*, function, file);
-
   let (bottom-name, call-top-name, return-top-name, count)
     = if (arguments & instance?(arguments.source-exp, <abstract-variable>)
 	    & instance?(arguments.source-exp.var-info, <values-cluster-info>))
@@ -1989,6 +1984,11 @@ define method emit-assignment
       end if;
   
   spew-pending-defines(file);
+
+  let function = call.depends-on.source-exp;
+  let (entry, name)
+    = xep-expr-and-name(function, use-generic-entry?, file);
+  let func = ref-leaf(*heap-rep*, function, file);
 
   if (name)
     format(stream, "/* %s */\n", name.clean-for-comment);
