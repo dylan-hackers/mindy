@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.2 1998/09/09 13:40:19 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.3 1999/02/25 06:48:04 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -699,35 +699,6 @@ define method process-slot
 end method process-slot;
 
 
-define method extract-identifier-or-false (fragment :: <token-fragment>)
-    => res :: false-or(<identifier-token>);
-  let token = fragment.fragment-token;
-  select (token.token-kind)
-    $false-token =>
-      #f;
-    $raw-ordinary-word-token, $ordinary-define-body-word-token,
-    $ordinary-define-list-word-token, $quoted-name-token =>
-      token;
-    otherwise =>
-      compiler-fatal-error
-	("invalid identifier: %s", token);
-  end select;
-end method extract-identifier-or-false;
-
-define method extract-identifier (fragment :: <token-fragment>)
-    => res :: false-or(<identifier-token>);
-  let token = fragment.fragment-token;
-  select (token.token-kind)
-    $raw-ordinary-word-token, $ordinary-define-body-word-token,
-    $ordinary-define-list-word-token, $quoted-name-token =>
-      token;
-    otherwise =>
-      compiler-fatal-error
-	("invalid identifier: %s", token);
-  end select;
-end method extract-identifier;
-
-
 
 // CT-Value
 
@@ -1350,6 +1321,7 @@ define method class-defn-maker-function
 		      library: defn.defn-library,
 		      signature: sig,
 		      inline-function: maker-inline-expansion,
+		      inline-type: #"inline",
 		      class-defn: defn);
 	       end if;
 	   //
