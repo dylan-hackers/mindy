@@ -1,41 +1,49 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/debug.dylan,v 1.1 1995/11/16 03:42:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/debug.dylan,v 1.2 1995/11/17 02:31:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
-// We don't actually include a debugger in the Dylan library.  Instead,
-// we define a suite of variables that encapsulate the interface to the
-// debugger.  This way, applications can link in their own debugger that
-// uses their own streams library, etc.
+// <debugger> -- exported from ???
 //
-// For bootstrapping purposes, there are defaults for these variables that
-// supply the null debugger.  It just prints a message and flames out.
+// Abstract superclass of all the different kinds of debuggers.
+//
+define primary abstract open class <debugger> (<object>)
+end class <debugger>;
 
-// *format-function* -- exported from ???
+// invoke-debugger -- exported from ???
 //
-// Called by the condition system when it wants to do format like stuff.
-// The stream argument is either *debug-output* or whatever was passed to
-// report-condition.
-//
-define variable *format-function* :: <function> =
-  method (stream, string :: <string>, #rest arguments) => ();
-    apply(format, string, arguments);
-  end;
-
-// *debug-output* -- exported from ???
-//
-// Passed in as the first argument to *format-function* when we have nothing
-// better to pass in.
-//
-define variable *debug-output* = #f;
+// Called by the condition system on *debugger* and the condition when it
+// wants to invoke the debugger.  And values returned are passed back on out
+// to the original caller of signal when appropriate.
+// 
+define open generic invoke-debugger
+    (debugger :: <debugger>, condition :: <condition>)
+    => (#rest values);
 
 // *debugger* -- exported from ???
 //
-// Invoke the debugger to resolve the supplied condition.  Any values it
-// returns are passed back to whoever invoked the debugger.
+// Value passed in to invoke-debugger when the condition system needs to
+// invoke the debugger.
+// 
+define variable *debugger* :: <debugger> = make(<null-debugger>);
+
+
+// The null debugger.
+
+// <null-debugger> -- internal.
 //
-define variable *debugger* :: <function>
-  = method (condition :: <condition>) => res :: <never-returns>;
-      *format-function*(*debug-output*, "%s\n", condition);
-      %%primitive call-out ("abort", void:);
-    end;
+define class <null-debugger> (<debugger>)
+end class <null-debugger>;
+
+// invoke-debugger(<null-debugger>) -- exported gf method
+//
+// The null debugger doesn't do much: it just prints the condition and then
+// aborts.
+// 
+define sealed method invoke-debugger
+    (debugger :: <null-debugger>, condition :: <condition>)
+    => res :: <never-returns>;
+  format("%s\n", condition);
+  %%primitive c-expr (void: "fflush(stdout)");
+  %%primitive call-out ("abort", void:);
+end;
