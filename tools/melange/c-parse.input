@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.17 2003/04/08 22:25:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.18 2003/04/12 23:36:41 andreas Exp $
 
 //======================================================================
 //
@@ -207,7 +207,7 @@ define constant <source-location> = false-or(<parse-state>);
 :token <xor-assign-token> <reserved-word-token> 
 :token <or-assign-token> <reserved-word-token> 
 ;; A whole bunch of puctuation
-:token <elipsis-token> <punctuation-token> 
+:token <ellipsis-token> <punctuation-token> 
 :token <sizeof-token> <punctuation-token> 
 :token <dec-op-token> <punctuation-token> 
 :token <inc-op-token> <punctuation-token> 
@@ -262,7 +262,7 @@ define constant <source-location> = false-or(<parse-state>);
      <constant-token> <mul-assign-token> <div-assign-token>
      <mod-assign-token> <add-assign-token> <sub-assign-token>
      <left-assign-token> <right-assign-token> <and-assign-token>
-     <xor-assign-token> <or-assign-token> <elipsis-token> <sizeof-token>
+     <xor-assign-token> <or-assign-token> <ellipsis-token> <sizeof-token>
      <dec-op-token> <inc-op-token> <ptr-op-token> <semicolon-token>
      <comma-token> <dot-token> <lparen-token> <rparen-token>
      <lbracket-token> <rbracket-token> <ampersand-token> <star-token>
@@ -1129,7 +1129,7 @@ parameter-identifier-list (identifier-list)
   %1;
 %
 
-Parameter-Identifier-List (Identifier-List <Comma-Token> <ELIPSIS-Token>)
+Parameter-Identifier-List (Identifier-List <Comma-Token> <Ellipsis-Token>)
   pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
 %
 
@@ -1147,7 +1147,7 @@ parameter-type-list (parameter-list)
   %1;
 %
 
-parameter-type-list (Parameter-List <Comma-Token> <ELIPSIS-Token>)
+parameter-type-list (Parameter-List <Comma-Token> <Ellipsis-Token>)
   pair(make(<varargs-declaration>, name: "", type: unknown-type), %1);
 %
 

@@ -3,7 +3,7 @@ author:  Robert Stockton (rgs@cs.cmu.edu)
 synopsis: Encapsulates the lexical conventions of the C language.
           This file also incorporates most of the functionality of CPP.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-lexer-cpp.dylan,v 1.15 2003/04/09 17:52:24 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-lexer-cpp.dylan,v 1.16 2003/04/12 23:36:41 andreas Exp $
 
 //======================================================================
 //
@@ -554,7 +554,13 @@ define method cpp-define (state :: <tokenizer>, pos :: <integer>) => ();
 		  pair(name.value, param-list);
 		otherwise =>
 		  parse-error(state,"Badly formed parameter list in #define.");
-	      end select;
+	      end select;            
+            elseif (instance?(name, <ellipsis-token>))
+              unless (instance?(get-token(state, cpp-line: #t), <rparen-token>))
+                parse-error(state, "Badly formed parameter list in #define,"
+                                   " ellipsis must be last parameter.");
+              end unless;
+
 	    else
 	      parse-error(state, "Badly formed parameter list in #define.");
 	    end if;

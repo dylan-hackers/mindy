@@ -5,7 +5,7 @@ synopsis: Encapsulates the lexical conventions of the C language.  Along with
           c-lexer-cpp.dylan, this file also incorporates most of the
           functionality of CPP.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-lexer.dylan,v 1.13 2003/04/09 17:48:22 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-lexer.dylan,v 1.14 2003/04/12 23:36:41 andreas Exp $
 
 //======================================================================
 //
@@ -232,7 +232,7 @@ define token <and-assign-token> :: <reserved-word-token> = 37;
 define token <xor-assign-token> :: <reserved-word-token> = 38;
 define token <or-assign-token> :: <reserved-word-token> = 39;
 // A whole bunch of puctuation
-define token <elipsis-token> :: <punctuation-token> = 40;
+define token <ellipsis-token> :: <punctuation-token> = 40;
 define token <sizeof-token> :: <punctuation-token> = 41;
 define token <dec-op-token> :: <punctuation-token> = 42;
 define token <inc-op-token> :: <punctuation-token> = 43;
@@ -408,7 +408,7 @@ define class <or-assign-token> (<reserved-word-token>)
   inherited slot token-id = 39;
 end class;
 // A whole bunch of puctuation
-define class <elipsis-token> (<punctuation-token>) 
+define class <ellipsis-token> (<punctuation-token>) 
   inherited slot token-id = 40;
 end class;
 define class <sizeof-token> (<punctuation-token>) 
@@ -1040,7 +1040,7 @@ define constant reserved-words
 	   "register", <register-token>,
 	   "union", <union-token>,
 	   "enum", <enum-token>,
-	   "...", <elipsis-token>,
+	   "...", <ellipsis-token>,
 	   "sizeof", <sizeof-token>,
 //         There's no C dialect where "constant" is a reserved word...
 //	   "constant", <constant-token>,
@@ -1509,8 +1509,8 @@ define sealed domain make(singleton(<and-assign-token>));
 define sealed domain make(singleton(<xor-assign-token>));
 // <or-assign-token> -- subclass of <reserved-word-token>
 define sealed domain make(singleton(<or-assign-token>));
-// <elipsis-token> -- subclass of <punctuation-token>
-define sealed domain make(singleton(<elipsis-token>));
+// <ellipsis-token> -- subclass of <punctuation-token>
+define sealed domain make(singleton(<ellipsis-token>));
 // <sizeof-token> -- subclass of <punctuation-token>
 define sealed domain make(singleton(<sizeof-token>));
 // <dec-op-token> -- subclass of <punctuation-token>
