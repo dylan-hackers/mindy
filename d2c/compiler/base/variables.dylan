@@ -1,11 +1,11 @@
 module: variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.3 2001/02/08 22:00:24 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.4 2002/03/10 15:31:12 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -155,6 +155,10 @@ define abstract class <namespace> (<object>)
   // Hash table mapping symbols to entries for all the names visible in
   // this namespace.  Populated incrementally.
   constant slot entries :: <object-table> = make(<object-table>);
+  //
+  // A function to run at finalization time, that imports all bindings
+  // that could not be looked up when the namespace was noted.
+  slot deferred-importers :: false-or(<function>) = #f;
 end class <namespace>;
 
 
@@ -305,10 +309,26 @@ define method note-namespace-definition
       if (instance?(imports, <all-marker>))
 	//
 	// Import all the exported variables.
-	let srcloc = imports.source-location;
-	for (orig-name in used-namespace.exported-names)
-	  do-import(namespace, used-namespace, orig-name, srcloc, use);
-	end for;
+	local method import-all() => ();
+		let srcloc = imports.source-location;
+		for (orig-name in used-namespace.exported-names)
+		  do-import(namespace, used-namespace, orig-name, srcloc, use);
+		end for;
+	      end;
+	
+	if (used-namespace.exported-names.empty?)
+	  // this is a good indication to retry later...
+	  compiler-warning("deferring import of all bindings from %= into %=\n", used-namespace, namespace);
+	  let importers-so-far = namespace.deferred-importers;
+	  namespace.deferred-importers
+	    := method(ns :: <namespace>) => ();
+		   importers-so-far(ns);
+		   compiler-warning("re-trying import of all bindings from %= into %=\n", used-namespace, namespace);
+		   import-all();
+	       end method;
+	else
+	  import-all();
+	end if;
       else
 	//
 	// Import everything listed.
@@ -355,9 +375,21 @@ define method do-import
 
     let entry = element(from.entries, orig-name, default: #f);
     unless (entry & entry.entry-exported?)
-      compiler-error-location
-	(srcloc, "Can't import %s from %s %s because it isn't exported.",
-	 orig-name, from.namespace-kind, from.namespace-name);
+      // we try to defer the import first...
+      let importers-so-far = into.deferred-importers;
+      if (importers-so-far)
+	compiler-warning("deferring import of %= from %= into %=\n", orig-name, from, into);
+	into.deferred-importers
+	  := method(ns :: <namespace>) => ();
+		 importers-so-far(ns);
+		 compiler-warning("re-trying import of %= from %= into %=\n", orig-name, from, into);
+		 do-import(into, from, orig-name, srcloc, use);
+	     end method;
+      else
+	compiler-error-location
+	  (srcloc, "Can't import %s from %s %s because it isn't exported.",
+	   orig-name, from.namespace-kind, from.namespace-name);
+      end if;
       return();
     end unless;
     let constituent = entry.entry-constituent;
@@ -631,6 +663,8 @@ end method note-library-definition;
 //
 define class <module> (<namespace>, <namespace-constituent>,
 		       <identity-preserving-mixin>)
+  inherited slot deferred-importers
+    = method(module :: <module>) => (); module.deferred-importers := #f end;
   //
   // The library this module lives in.
   constant slot module-home :: <library>, required-init-keyword: home:;
@@ -767,13 +801,13 @@ end method note-module-definition;
 define class <variable> (<namespace-constituent>)
   //
   // The name of the variable, as a symbol.
-  slot variable-name :: <symbol>, required-init-keyword: name:;
+  constant slot variable-name :: <symbol>, required-init-keyword: name:;
   // 
   // The module this variable lives in.  Note: this is not necessarily
   // the same as where it is defined, because the create clause in
   // define module forms creates a variable, but requires it to be
   // defined elsewhere.
-  slot variable-home :: <module>, required-init-keyword: home:;
+  constant slot variable-home :: <module>, required-init-keyword: home:;
   //
   // The definition for this variable, or #f if not yet defined.
   slot variable-definition :: false-or(<definition>),
@@ -1194,7 +1228,9 @@ add-od-loader(*compiler-dispatcher*, #"module",
     let lib = load-object-dispatch(state);
     let mod-name = load-object-dispatch(state);
     assert-end-object(state);
-    find-module(lib, mod-name, create: #t);
+    let mod = find-module(lib, mod-name, create: #t);
+    mod.deferred-importers := #f;
+    mod
   end method
 );
 
