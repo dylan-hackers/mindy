@@ -35,7 +35,9 @@ define frame <$appname-frame> (<simple-frame>)
     make(<menu>, label: "Help", children: vector(frame.about-menu-button));
   pane about-menu-button (frame)
     make(<menu-button>,
-       label: "About...");
+           label: "About...",
+           activate-callback:
+             method(button) start-dialog(make(<about-$appname-dialog>)) end);
 
   status-bar (frame) frame.$appname-status-bar;
   pane $appname-status-bar (frame)
@@ -50,6 +52,14 @@ define frame <$appname-frame> (<simple-frame>)
   keyword title: = "$appname Application";
 end frame;
 
+define frame <about-$appname-dialog> (<dialog-frame>)
+  layout(frame)
+    vertically()
+      make(<label>, label: "$appname Application");
+    end;
+  keyword title: = "About $appname Application";
+  keyword cancel-callback: = #f;
+end frame;
 EOD
 } else {
     $extra = "";
@@ -131,5 +141,4 @@ Usage:
   make-dylan-app -M appname	(keep track of dependencies)
 EOD
     exit 1;
-
 }
