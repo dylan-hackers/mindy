@@ -38,8 +38,9 @@ define method write-element (stream :: <buffered-stream>, element :: <object>)
  => ();
   block ()
     let buf :: <buffer> = get-output-buffer(stream);
-    buf[buf.buffer-next] := as(<byte>, element);
-    buf.buffer-next := buf.buffer-next + 1;
+    let next :: <buffer-index> = buf.buffer-next;
+    buf[next] := as(<byte>, element);
+    buf.buffer-next := next + 1;
   cleanup
     release-output-buffer(stream);
   end block;
@@ -52,8 +53,9 @@ define method write-element (stream :: <buffered-stream>, element :: <object>)
  => ();
   block ()
     let buf :: <buffer> = get-output-buffer(stream);
-    buf[buf.buffer-next] := as(<integer>, element);
-    buf.buffer-next := buf.buffer-next + 1;
+    let next :: <buffer-index> = buf.buffer-next;
+    buf[next] := as(<integer>, element);
+    buf.buffer-next := next + 1;
   cleanup
     release-output-buffer(stream);
   end block;
