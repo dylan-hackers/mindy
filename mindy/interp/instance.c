@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.29 1994/11/03 22:19:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.30 1994/11/06 20:00:30 rgs Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1252,6 +1252,12 @@ void init_defined_class(obj_t class, obj_t slots,
 			obj_t initargs, obj_t inheriteds)
 {
     obj_t scan;
+
+    if (object_class(class) != obj_DefinedClassClass) {
+	if (slots != obj_Nil)
+	    error("Cannot add slots to %= classes", object_class(class));
+	do_initialization(class, obj_Nil, obj_Nil);
+    }
 
     DC(class)->new_slots = slots;
     DC(class)->all_slots = obj_Nil;
