@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.2 1996/08/02 03:11:32 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.3 1996/09/28 20:28:06 rgs Exp $
 
 //======================================================================
 //
@@ -52,6 +52,15 @@ end;
 define open primary functional class <statically-typed-pointer> (<object>)
   slot raw-value :: <raw-pointer>, required-init-keyword: #"pointer";
 end class;
+
+define sealed method functional-==
+    (class :: subclass(<statically-typed-pointer>),
+     arg1 :: <statically-typed-pointer>, arg2 :: <statically-typed-pointer>)
+ => (result :: <boolean>);
+  let int1 :: <integer> = as(<integer>, arg1);
+  let int2 :: <integer> = as(<integer>, arg2);
+  int1 == int2;
+end method functional-==;
 
 // Default make method for pointer values.  You may create a vector by
 // specifying "element-count:" and may adjust the size explicitly by
@@ -110,6 +119,18 @@ define method as
     (cls :: subclass(<statically-typed-pointer>), obj :: <integer>)
  => (result :: <statically-typed-pointer>);
   make(cls, pointer: as(<raw-pointer>, obj));
+end method as;
+
+define sealed method as
+    (class == <integer>, obj :: <statically-typed-pointer>)
+ => (result :: <integer>);
+  as(<integer>, obj.raw-value);
+end method as;
+
+define sealed method as
+    (class == <raw-pointer>, obj :: <statically-typed-pointer>)
+ => (result :: <integer>);
+  obj.raw-value;
 end method as;
 
 define constant null-pointer :: <statically-typed-pointer>
@@ -568,3 +589,13 @@ define method forward-iteration-protocol (vec :: <c-vector>)
 	 method (v, c, s) pointer-value(c, index: s) := v end, // ""-setter
 	 method (c, s) s end); // copy-state
 end method forward-iteration-protocol;
+
+//------------------------------------------------------------------------
+
+// <Function-pointer>s correspond to generic pointers to any function.
+// For the nonce, all function types are equated to this type, so that
+// we don't need to deal with canonicalizing signatures.
+//
+define open functional class <function-pointer>
+    (<statically-typed-pointer>) 
+end class <function-pointe
