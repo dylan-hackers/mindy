@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.13 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.14 1996/03/07 17:58:29 nkramer Exp $
 
 //======================================================================
 //
@@ -32,31 +32,36 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dyla
 
 // Predicates.
 
-define method odd? (x :: <general-integer>)
+define open generic zero? (object :: <object>) => res :: <boolean>;
+define open generic positive? (num :: <object>) => res :: <boolean>;
+define open generic negative? (num :: <object>) => res :: <boolean>;
+define open generic integral? (num :: <object>) => res :: <boolean>;
+
+define method odd? (x :: <general-integer>) => answer :: <boolean>;
   logbit?(0, x);
 end;
 
-define method even? (x :: <general-integer>)
+define method even? (x :: <general-integer>) => answer :: <boolean>;
   ~logbit?(0, x);
 end;
 
-define method zero? (x :: <number>)
+define method zero? (x :: <number>) => answer :: <boolean>;
   x = 0;
 end;
 
-define method positive? (x :: <real>)
+define method positive? (x :: <real>) => answer :: <boolean>;
   x > 0;
 end;
 
-define method negative? (x :: <real>)
+define method negative? (x :: <real>) => answer :: <boolean>;
   x < 0;
 end;
 
-define method integral? (x :: <general-integer>)
+define method integral? (x :: <general-integer>) => answer :: <boolean>;
   #t
 end;
 
-define method integral? (x :: <number>)
+define method integral? (x :: <number>) => answer :: <boolean>;
   #f
 end;
 
@@ -265,22 +270,22 @@ define method binary-logxor (x :: <general-integer>, y :: <general-integer>)
   binary-logxor(x, y);
 end;
 
-define method \= (x :: <real>, y :: <real>)
+define method \= (x :: <real>, y :: <real>) => answer :: <boolean>;
   let (x, y) = compare-contagion(x, y);
   x = y;
 end;
 
-define method \< (x :: <real>, y :: <real>)
+define method \< (x :: <real>, y :: <real>) => answer :: <boolean>;
   let (x, y) = compare-contagion(x, y);
   x < y;
 end;
 
-define method \<= (x :: <real>, y :: <float>)
+define method \<= (x :: <real>, y :: <float>) => answer :: <boolean>;
   let (x, y) = compare-contagion(x, y);
   x <= y;
 end;
 
-define method \<= (x :: <float>, y :: <real>)
+define method \<= (x :: <float>, y :: <real>) => answer :: <boolean>;
   let (x, y) = compare-contagion(x, y);
   x <= y;
 end;  
@@ -290,6 +295,7 @@ end;
 // Other routines.
 
 define method \^ (base :: <number>, power :: <general-integer>)
+ => result :: <number>;
   case
     negative? (power) =>
       1 / (base ^ (- power));
