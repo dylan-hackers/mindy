@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.2 2000/01/24 04:56:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.3 2000/09/09 21:19:57 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -51,7 +51,7 @@ define abstract class <float> (<real>)
 end;
 
 
-// Psuedo-number methods
+// Pseudo-number methods
 
 // These are defined on object because they are useful abstract interfaces.
 
@@ -567,7 +567,7 @@ define method gcd (u :: <integer>, v :: <integer>)
 	// Once we've done the subtract and (conceptual) replace, the
 	// replacement is even (because odd - odd = even) and the
 	// non-replaced one of u or v is still odd.  So our loop
-	// invarent of either u or v being odd is still true.
+	// invariant of either u or v being odd is still true.
 	//
 	for (temp :: <integer> = if (odd?(u)) -v else ash(u, -1) end
 	       then ash(temp, -1))
