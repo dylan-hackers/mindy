@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.17 1994/10/20 03:06:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.18 1994/11/28 07:53:42 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -770,6 +770,8 @@ static struct var *make_var(obj_t name, struct module *home,enum var_kind kind)
     var->variable.value = obj_Unbound;
     var->variable.type = obj_False;
     var->variable.function = func_Maybe;
+    var->variable.ref_file = obj_False;
+    var->variable.ref_line = 0;
 
     return var;
 }
@@ -980,6 +982,7 @@ static void scav_var(struct var *var)
     scavenge(&var->variable.name);
     scavenge(&var->variable.value);
     scavenge(&var->variable.type);
+    scavenge(&var->variable.ref_file);
 }
 
 static void scav_module(struct module *module)
@@ -1121,8 +1124,14 @@ void finalize_modules(void)
 				    sym_name(module->name));
 			    module_printed = TRUE;
 			}
-			fprintf(stderr, "      %s\n",
+			fprintf(stderr, "      %s",
 				sym_name(var->variable.name));
+			if (var->variable.ref_file != obj_False) {
+			    fprintf(stderr, " [%s, line %d]",
+				    string_chars(var->variable.ref_file),
+				    var->variable.ref_line);
+			}
+			
 		    }
 		}
 	    }

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.5 1994/10/05 21:04:03 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.6 1994/11/28 07:54:28 wlott Exp $
 *
 \**********************************************************************/
 
@@ -94,6 +94,8 @@ struct variable {
     obj_t value;
     obj_t type;
     enum { func_Yes, func_No, func_Maybe, func_Always } function;
+    obj_t ref_file;
+    int ref_line;
 };
 
 extern struct variable *find_variable(struct module *module, obj_t name,
