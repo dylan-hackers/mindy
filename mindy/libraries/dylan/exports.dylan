@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.70 1995/09/27 22:48:55 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.71 1995/10/24 00:34:21 nkramer Exp $
 
 //======================================================================
 //
@@ -113,7 +113,7 @@ define module Builtin-Stuff
     sin, cos, tan, asin, acos, atan, atan2, 
     sinh, cosh, tanh,
     exp, log, expt, sqrt,
-    pi;
+    $pi, $e;
   create
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
@@ -229,7 +229,6 @@ define module Extensions
   use Builtin-Stuff,
     import: {main, exit, on-exit, load, *print-GC-messages*,
 	     $maximum-fixed-integer, $minimum-fixed-integer,
-	     get-time-of-day,  
 	     <byte-character>, <byte-vector>,
 	     <boolean>, <true>, <false>,
 	     <fixed-integer>, <extended-integer>,
@@ -248,7 +247,7 @@ end Extensions;
 define module System
   use Dylan;
   use Builtin-Stuff,
-    import: {<buffer>, copy-bytes, $Newlines-Are-CRLF},
+    import: {<buffer>, copy-bytes, $Newlines-Are-CRLF, get-time-of-day},
     export: all;
 end System;
 
@@ -367,11 +366,12 @@ end module Extern;
 
 define module Transcendental
   use Dylan;
+  use Extensions;
   use Builtin-stuff, 
     import: { sin, cos, tan, asin, acos, atan, atan2, 
 	      sinh, cosh, tanh, // no inverse hyperbolic functions
 	      exp, log, expt, sqrt,
-	      pi }, 
+	      $pi, $e }, 
     export: all;
 end module Transcendental;
 
