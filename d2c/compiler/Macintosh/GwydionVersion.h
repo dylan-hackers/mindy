@@ -1,4 +1,5 @@
 // File: GwydionVersion.h
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/GwydionVersion.h,v 1.2 2002/03/16 23:27:18 gabor Exp $
 // Purpose: list necessary #defines for .r (and .cpp)  files
 // Author: Gabor Greif <gabor@mac.com>
 
