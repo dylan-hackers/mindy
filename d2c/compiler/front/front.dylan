@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.15 1995/04/25 21:00:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.16 1995/04/25 23:03:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -21,6 +21,7 @@ operation
     prologue
     catcher
     pitcher
+    set
 
 
 variable-info
@@ -159,6 +160,14 @@ define class <catcher> (<operation>)
   // The block-region this catcher is for.
   slot target-region :: <fer-exit-block-region>,
     required-init-keyword: target-region:;
+end;
+
+define class <set> (<operation>)
+  inherited slot derived-type,
+    init-function: curry(make-values-ctype, #(), #f);
+  //
+  // The definition for the variable being set.
+  slot variable :: <definition>, required-init-keyword: var:;
 end;
 
 
