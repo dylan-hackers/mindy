@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.3 1994/12/17 01:44:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.4 1995/03/02 21:19:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -207,6 +207,7 @@ define method parse-integer (source-location :: <file-source-location>,
 			       = source-location.start-posn,
 			     end: finish :: <integer>
 			       = source-location.end-posn)
+    => res :: <extended-integer>;
   let contents = source-location.source-file.contents;
   local method repeat (posn, result)
 	  if (posn < finish)
@@ -227,48 +228,56 @@ define method parse-integer (source-location :: <file-source-location>,
 	  end;
 	end;
   if (contents[start] == as(<integer>, '-'))
-    -repeat(start + 1, 0);
+    -repeat(start + 1, as(<extended-integer>, 0));
   else
-    repeat(start, 0);
+    repeat(start, as(<extended-integer>, 0));
   end;
 end;
 
-// parse-{binary,octal,decimal,hex}-literal -- all internal.
+// parse-integer-literal -- all internal.
 //
 // Parse an integer and return a <literal-token> holding it.
 // 
-define method parse-binary-literal (lexer :: <lexer>,
-				    source-location :: <file-source-location>)
-  make(<literal-token>,
-       source-location: source-location,
-       literal: parse-integer(source-location,
-			      radix: 2,
-			      start: source-location.start-posn + 2));
-end;
-
-define method parse-octal-literal (lexer :: <lexer>,
-				   source-location :: <file-source-location>)
-  make(<literal-token>,
-       source-location: source-location,
-       literal: parse-integer(source-location,
-			      radix: 8,
-			      start: source-location.start-posn + 2));
-end;
-
-define method parse-decimal-literal (lexer :: <lexer>,
+define method parse-integer-literal (lexer :: <lexer>,
 				     source-location :: <file-source-location>)
-  make(<literal-token>,
-       source-location: source-location,
-       literal: parse-integer(source-location));
-end;
+  let contents = source-location.source-file.contents;
+  let posn = source-location.start-posn;
+  let extended = #f;
+  let radix = 10;
 
-define method parse-hex-literal (lexer :: <lexer>,
-				 source-location :: <file-source-location>)
-  make(<literal-token>,
-       source-location: source-location,
-       literal: parse-integer(source-location,
-			      radix: 16,
-			      start: source-location.start-posn + 2));
+  if (as(<character>, contents[posn]) == '#')
+    posn := posn + 1;
+    let char = as(<character>, contents[posn]);
+    if (char == 'e' | char == 'E')
+      posn := posn + 1;
+      char := as(<character>, contents[posn]);
+      extended := #t;
+    end;
+    if (char == 'b' | char == 'B')
+      posn := posn + 1;
+      radix := 2;
+    elseif (char == 'o' | char == 'O')
+      posn := posn + 1;
+      radix := 8;
+    elseif (char == 'x' | char == 'X')
+      posn := posn + 1;
+      radix := 16;
+    end;
+  end;
+  
+  let int = parse-integer(source-location, radix: radix, start: posn);
+
+  if (~extended)
+    if (int < $minimum-fixed-integer | int > $maximum-fixed-integer)
+      compiler-warning("%d doesn't fit as a <fixed-integer>, "
+			 "using <extended-integer> instead",
+		       int);
+    else
+      int := as(<fixed-integer>, int);
+    end;
+  end;
+
+  make(<literal-token>, source-location: source-location, literal: int);
 end;
 
 // make-character-literal -- internal.
@@ -304,14 +313,116 @@ end;
 // 
 define method parse-ratio-literal (lexer :: <lexer>,
 				   source-location :: <file-source-location>)
-  error("Can't deal with ratios yet.");
+  let slash
+    = block (return)
+	let contents = source-location.source-file.contents;
+	for (posn from source-location.start-posn
+	       below source-location.end-posn)
+	  if (contents[posn] == as(<integer>, '/'))
+	    return(posn);
+	  end;
+	end;
+	error("No / in a ratio?");
+	#f;
+      end;
+  let numerator = parse-integer(source-location, end: slash);
+  let denominator = parse-integer(source-location, start: slash + 1);
+  make(<literal-token>,
+       source-location: source-location,
+       literal: ratio(numerator, denominator));
+end;
+
+define method atof (string :: <byte-string>,
+		    #key class :: <class> = <double-float>,
+		    start :: <integer> = 0,
+		    end: finish :: <integer> = string.size)
+    => res :: <float>;
+  let posn = start;
+  let sign = 1;
+  let mantissa = as(<extended-integer>, 0);
+  let base = as(class, 10);
+  let scale = #f;
+  let exponent-sign = 1;
+  let exponent = 0;
+
+  // Parse the optional sign.
+  if (posn < finish)
+    let char = string[posn];
+    if (char == '-')
+      posn := posn + 1;
+      sign := -1;
+    elseif (char == '+')
+      posn := posn + 1;
+    end;
+  end;
+
+  block (return)
+    block (parse-exponent)
+      // Parse the mantissa.
+      while (posn < finish)
+	let char = string[posn];
+	posn := posn + 1;
+	if (char >= '0' & char <= '9')
+	  let digit = as(<integer>, char) - as(<integer>, '0');
+	  mantissa := mantissa * 10 + digit;
+	  if (scale)
+	    scale := scale + 1;
+	  end;
+	elseif (char == '.')
+	  if (scale)
+	    error("bogus float.");
+	  end;
+	  scale := 0;
+	elseif (char == 'e' | char == 'E')
+	  return();
+	elseif (char == 'd' | char == 'D')
+	  base := as(<double-float>, 10);
+	  return();
+	elseif (char == 's' | char == 'S')
+	  base := as(<single-float>, 10);
+	  return();
+	elseif (char == 'x' | char == 'X')
+	  base := as(<extended-float>, 10);
+	  return();
+	else
+	  error("bogus float.");
+	end;
+      end while;
+      return();
+    end block;
+
+    // Parse the exponent.
+    if (posn < finish)
+      let char = string[posn];
+      if (char == '-')
+	exponent-sign := -1;
+	posn := posn + 1;
+      elseif (char == '+')
+	posn := posn + 1;
+      end;
+
+      while (posn < finish)
+	let char = string[posn];
+	if (char >= '0' & char <= '9')
+	  let digit = as(<integer>, char) - as(<integer>, '0');
+	  exponent := exponent * 10 + digit;
+	else
+	  error("bogus float");
+	end;
+      end while;
+    end if;
+  end block;
+
+  sign * mantissa * base ^ (exponent-sign * exponent - (scale | 0));
 end;
 
 // parse-fp-literal -- internal.
 // 
 define method parse-fp-literal (lexer :: <lexer>,
 				source-location :: <file-source-location>)
-  error("Can't deal with floats yet.");
+  make(<literal-token>,
+       source-location: source-location,
+       literal: atof(extract-string(source-location)));
 end;
 
 
@@ -473,7 +584,8 @@ define constant $Initial-State$ =
 			      pair('"', #"sharp-quote"),
 			      pair("bB", #"sharp-b"),
 			      pair("oO", #"sharp-o"),
-			      pair("xX", #"sharp-x")),
+			      pair("xX", #"sharp-x"),
+			      pair("eE", #"sharp-e")),
 			state(#"sharp-paren", <sharp-paren-token>),
 			state(#"sharp-bracket", <sharp-bracket-token>),
 			state(#"true", <true-token>),
@@ -507,15 +619,25 @@ define constant $Initial-State$ =
 			      pair("\\abefnrt0\"", #"sharp-quote")),
 			state(#"quoted-keyword", make-quoted-keyword),
 			state(#"sharp-b", #f, pair("01", #"binary-integer")),
-			state(#"binary-integer", parse-binary-literal,
+			state(#"binary-integer", parse-integer-literal,
 			      pair("01", #"binary-integer")),
 			state(#"sharp-o", #f, pair("0-7", #"octal-integer")),
-			state(#"octal-integer", parse-octal-literal,
+			state(#"octal-integer", parse-integer-literal,
 			      pair("0-7", #"octal-integer")),
 			state(#"sharp-x", #f,
 			      pair("0-9a-fA-F", #"hex-integer")),
-			state(#"hex-integer", parse-hex-literal,
+			state(#"hex-integer", parse-integer-literal,
 			      pair("0-9a-fA-F", #"hex-integer")),
+			state(#"sharp-e", #f,
+			      pair('-', #"sharp-e-minus"),
+			      pair("0-9", #"extended-integer"),
+			      pair("bB", #"sharp-b"),
+			      pair("oO", #"sharp-o"),
+			      pair("xX", #"sharp-x")),
+			state(#"sharp-e-minus", #f,
+			      pair("0-9", #"extended-integer")),
+			state(#"extended-integer", parse-integer-literal,
+			      pair("0-9", #"extended-integer")),
 			state(#"lparen", <left-paren-token>),
 			state(#"rparen", <right-paren-token>),
 			state(#"comma", <comma-token>),
@@ -646,7 +768,7 @@ define constant $Initial-State$ =
 			state(#"string", make-string-literal),
 			state(#"double-quote-escape", #f,
 			      pair("\\abefnrt0\"", #"double-quote")),
-			state(#"decimal", parse-decimal-literal,
+			state(#"decimal", parse-integer-literal,
 			      pair("0-9", #"decimal"),
 			      pair('/', #"decimal-slash"),
 			      pair('.', #"fp-frac"),
@@ -670,7 +792,7 @@ define constant $Initial-State$ =
 			      pair("a-zA-Z", #"numeric-alpha"),
 			      pair("-!&*<=>|^$%@_+~?/", #"leading-numeric")),
 
-			state(#"signed-decimal", parse-decimal-literal,
+			state(#"signed-decimal", parse-integer-literal,
 			      pair("0-9", #"signed-decimal"),
 			      pair('/', #"signed-decimal-slash"),
 			      pair('.', #"fp-frac")),
