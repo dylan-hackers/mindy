@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.108 1995/12/06 20:39:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.109 1995/12/07 00:22:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -970,11 +970,10 @@ define method compare-unknown-call-against-signature
 		end;
 	      end;
 	      if (keyinfo.required?)
-		compiler-warning("In %s: required keyword %= unsupplied in "
-				   "call of %s",
-				 call.home-function-region.name,
-				 keyinfo.key-name,
-				 func-name);
+		compiler-warning
+		  ("In %s: required keyword %= missing in call of %s",
+		   call.home-function-region.name, keyinfo.key-name,
+		   func-name);
 		bogus? := #t;
 	      end;
 	    end;
@@ -3312,6 +3311,7 @@ define method build-xep
     let key-var = make-local-var(builder, #"key", dylan-value(#"<symbol>"));
     let val-var = make-local-var(builder, #"value", object-ctype());
     let key-dispatch-builder = make-builder(builder);
+    let unsupplied-flame-builder = make-builder(builder);
     local
       method build-next-key (remaining)
 	if (empty?(remaining))
@@ -3326,8 +3326,13 @@ define method build-xep
 	  let key-info = remaining.head;
 	  let key = key-info.key-name;
 	  let var = make-local-var(builder, key, key-info.key-type);
+	  let type = key-info.key-type;
+	  let default = key-info.key-default;
+	  let default-bogus?
+	    = default & ~cinstance?(key-info.key-default, type);
+	  let needs-supplied?-var? = key-info.key-needs-supplied?-var;
 	  let supplied?-var
-	    = if (key-info.key-needs-supplied?-var)
+	    = if (default-bogus? | needs-supplied?-var?)
 		make-local-var(builder,
 			       as(<symbol>,
 				  concatenate(as(<string>, key),
@@ -3339,13 +3344,15 @@ define method build-xep
 	  add!(new-args, var);
 	  build-assignment
 	    (builder, policy, source, var,
-	     if (key-info.key-default)
-	       make-literal-constant(builder, key-info.key-default);
+	     if (default & ~default-bogus?)
+	       make-literal-constant(builder, default);
 	     else
-	       make(<uninitialized-value>, derived-type: key-info.key-type);
+	       make(<uninitialized-value>, derived-type: type);
 	     end);
 	  if (supplied?-var)
-	    add!(new-args, supplied?-var);
+	    if (needs-supplied?-var?)
+	      add!(new-args, supplied?-var);
+	    end;
 	    build-assignment
 	      (builder, policy, source, supplied?-var,
 	       make-literal-constant(builder, as(<ct-value>, #f)));
@@ -3372,6 +3379,20 @@ define method build-xep
 	  build-else(key-dispatch-builder, policy, source);
 	  build-next-key(remaining.tail);
 	  end-body(key-dispatch-builder);
+
+	  if (default-bogus?)
+	    build-if-body(unsupplied-flame-builder, policy, source,
+			  supplied?-var);
+	    build-else(unsupplied-flame-builder, policy, source);
+	    build-assignment
+	      (unsupplied-flame-builder, policy, source, #(),
+	       make-error-operation
+		 (unsupplied-flame-builder, policy, source,
+		  #"type-error",
+		  make-literal-constant(unsupplied-flame-builder, default),
+		  make-literal-constant(unsupplied-flame-builder, type)));
+	    end-body(unsupplied-flame-builder);
+	  end;
 	end;
       end;
 
@@ -3390,15 +3411,15 @@ define method build-xep
     let done-block = build-block-body(key-dispatch-builder, policy, source);
     build-loop-body(key-dispatch-builder, policy, source);
 
-    let more-var
-      = make-local-var(key-dispatch-builder, #"more?", object-ctype());
+    let done-var
+      = make-local-var(key-dispatch-builder, #"done?", object-ctype());
     build-assignment
-      (key-dispatch-builder, policy, source, more-var,
+      (key-dispatch-builder, policy, source, done-var,
        make-unknown-call(key-dispatch-builder,
 			 ref-dylan-defn(key-dispatch-builder, policy, source,
 					#"<"),
 			 #f, list(index-var, wanted-leaf)));
-    build-if-body(key-dispatch-builder, policy, source, more-var);
+    build-if-body(key-dispatch-builder, policy, source, done-var);
     build-exit(key-dispatch-builder, policy, source, done-block);
     build-else(key-dispatch-builder, policy, source);
     begin
@@ -3443,6 +3464,7 @@ define method build-xep
     end-body(key-dispatch-builder); // loop
     end-body(key-dispatch-builder); // block
     build-region(builder, builder-result(key-dispatch-builder));
+    build-region(builder, builder-result(unsupplied-flame-builder));
   end;
 
   build-assignment(builder, policy, source, #(),
