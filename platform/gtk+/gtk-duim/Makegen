@@ -2,6 +2,8 @@ $D2CFLAGS
     = $d2c_runtime
     . "-L../../../common/common-dylan ";
 
+$COPTS = $gtk_cflags;
+
 $duim = "../../../duim";
 
 &emit_library_rule('gtk-duim',
