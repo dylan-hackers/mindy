@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.18 1994/04/21 01:28:30 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.19 1994/04/23 03:48:01 rgs Exp $
 *
 * This file does whatever.
 *
@@ -360,9 +360,9 @@ void invoke_methods(obj_t method, obj_t next_methods,
 }
 
 /* Version of applicable_method_p which does extra work to allow SAM caching 
-   for generic function dispatch.  The "can_cache" argument is carried across
-   several calls to gfd_applicable_method_p and will be set to false if the 
-   method depends upon anything other than the types of the args. */
+   for generic function dispatch.  The "cache" argument is carried across
+   several calls to gfd_applicable_method_p and may be modified to reflect a
+   more restrictive set of types. */
 static boolean
     gfd_applicable_method_p(obj_t method, obj_t *args, obj_t cache)
 {
@@ -374,13 +374,28 @@ static boolean
 	obj_t arg_class = *cached_classes++;
 	obj_t specializer = HEAD(specializers);
 
+	/* arg_class may be either a singleton, a limited_int, or a class.
+	   This stuff has been worked out on a case by case basis.  It could
+	   certainly be made clearer, but this could potentially reduce
+	   the efficiency by a large margin. */
 	if (!subtypep(arg_class, specializer))
 	    if (instancep(arg, specializer)) {
-		*(cached_classes - 1) = singleton(arg);
+		if (object_class(specializer) == obj_LimIntClass)
+		    *(cached_classes - 1) =
+			(object_class(arg_class) == obj_LimIntClass
+			 ? intersect_limited_integers(arg_class,specializer)
+			 : specializer);
+		else
+		    *(cached_classes - 1) = singleton(arg);
 		obj_ptr(struct gf_cache *, cache)->simple = FALSE;
 	    } else {
 		if (overlapp(arg_class, specializer)) {
-		    *(cached_classes - 1) = singleton(arg);
+		    if (object_class(specializer) == obj_LimIntClass)
+			*(cached_classes - 1) =
+			    restrict_limited_integers(arg, arg_class,
+						      specializer);
+		    else
+			*(cached_classes - 1) = singleton(arg);
 		    obj_ptr(struct gf_cache *, cache)->simple = FALSE;
 		}
 		return FALSE;
@@ -400,25 +415,20 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
 
     if (cache != obj_False) {
 	boolean found = TRUE;
-
 	struct gf_cache *c = obj_ptr(struct gf_cache *, cache);
+	register boolean simple = c->simple;
+
 	cache_class = c->cached_classes;
 	arg = args;
 
-	if (c->simple)
-	    for (i = 0; i < max; i++, arg++, cache_class++) {
-		if (*cache_class != object_class(*arg)) {
+	for (i = 0; i < max; i++, arg++, cache_class++) {
+	    boolean simple_arg = simple ||
+		object_class(*cache_class) == obj_ClassClass;
+	    if (simple_arg ? *cache_class != object_class(*arg)
+		           : !instancep(*arg, *cache_class))
 		    found = FALSE;
 		    break;
-		}
-	    }
-	else
-	    for (i = 0; i < max; i++, arg++, cache_class++) {
-		if (!instancep(*arg, *cache_class)) {
-		    found = FALSE;
-		    break;
-		}
-	    }
+	}
 	if (found)
 	    return TRUE;
     }
@@ -1099,25 +1109,21 @@ static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
     for (prev = &true_gf->cache, cache = *prev;
 	 cache != obj_Nil; prev = &TAIL(cache), cache = *prev) {
 	struct gf_cache *cache_elem = obj_ptr(struct gf_cache *, HEAD(cache));
+	register boolean simple = cache_elem->simple;
 	obj_t *cache_class = cache_elem->cached_classes;
 	obj_t *arg = args;
 	int i;
 	boolean found = TRUE;
 
-	if (cache_elem->simple)
-	    for (i = 0; i < max; i++, arg++, cache_class++) {
-		if (*cache_class != object_class(*arg)) {
+	for (i = 0; i < max; i++, arg++, cache_class++) {
+	    boolean simple_arg = simple ||
+		object_class(*cache_class) == obj_ClassClass;
+	    if (simple_arg ? *cache_class != object_class(*arg)
+		           : !instancep(*arg, *cache_class))
 		    found = FALSE;
 		    break;
-		}
-	    }
-	else
-	    for (i = 0; i < max; i++, arg++, cache_class++) {
-		if (!instancep(*arg, *cache_class)) {
-		    found = FALSE;
-		    break;
-		}
-	    }
+	}
+
 	if (found) {
 	    *prev = TAIL(cache);
 	    TAIL(cache) = true_gf->cache;
