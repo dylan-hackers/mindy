@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.36 1997/05/09 22:48:27 ram Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.37 1997/05/21 14:01:25 ram Exp $
 *
 * This file implements the loader.
 *
@@ -61,10 +61,6 @@
 #define BUFFER_SIZE BUFSIZ
 #else
 #define BUFFER_SIZE 4096
-#endif
-
-#ifndef DEFAULT_LOAD_PATH
-#define DEFAULT_LOAD_PATH LIBDIR
 #endif
 
 struct form {
@@ -1026,6 +1022,7 @@ void load_library(obj_t name)
 {
     char *load_path = getenv("DYLANPATH");
     char path[MAXPATHLEN];
+    char default_path[MAXPATHLEN];
     char *start, *ptr, *src, *dst;
     int c;
     obj_t was_loading;
@@ -1033,8 +1030,21 @@ void load_library(obj_t name)
     was_loading = currently_loading;
     currently_loading = name;
 
-    if (load_path == NULL)
-	load_path = DEFAULT_LOAD_PATH;
+    if (load_path == NULL) {
+	/* no load path, compute default_path */
+	char *dylandir = getenv("DYLANDIR");
+	char* next = default_path;
+	*next++ = '.';
+	*next++ = SEPARATOR_CHAR;
+	if (dylandir == NULL)
+	    memcpy(next, LIBDIR, strlen(LIBDIR));
+	else {
+	    memcpy(next, dylandir, strlen(dylandir));
+	    next += strlen(dylandir);
+	    memcpy(next, "/lib/dylan", strlen("/lib/dylan"));
+	}
+	load_path = default_path;
+    }
 
     start = load_path;
     ptr = load_path;
