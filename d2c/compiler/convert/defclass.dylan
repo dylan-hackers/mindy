@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.64 1996/04/06 07:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.65 1996/04/13 21:17:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -724,7 +724,7 @@ define method compute-cclass (defn :: <real-class-definition>)
 	       "because %s %s and is not functional.",
 	     defn.defn-name, super, super,
 	     if (super.abstract?)
-	       "has slots";
+	       "has instance slots";
 	     else
 	       "is concrete";
 	     end if);
@@ -803,6 +803,10 @@ define method compute-cclass (defn :: <real-class-definition>)
 
   unless (bogus?)
     //
+    // Compute the slots and overrides.
+    let slot-infos = map(compute-slot, defn.class-defn-slots);
+    let override-infos = map(compute-override, defn.class-defn-overrides);
+    //
     // Make and return the <cclass>.
     make(<defined-cclass>,
 	 loading: #f,
@@ -814,13 +818,9 @@ define method compute-cclass (defn :: <real-class-definition>)
 	   if (defn.class-defn-functional?)
 	     #f;
 	   elseif (defn.class-defn-abstract?)
-	     if (empty?(supers))
-	       #f;
-	     elseif (~empty?(defn.class-defn-slots))
-	       #t;
-	     else
-	       any?(not-functional?, supers);
-	     end;
+	     ~supers.empty?
+	       & (any?(not-functional?, supers)
+		    | any?(inhibits-functional-classes?, slot-infos));
 	   else
 	     #t;
 	   end,
@@ -828,8 +828,8 @@ define method compute-cclass (defn :: <real-class-definition>)
 	 sealed: defn.class-defn-sealed?,
 	 primary: defn.class-defn-primary?,
 	 abstract: defn.class-defn-abstract?,
-	 slots: map(compute-slot, defn.class-defn-slots),
-	 overrides: map(compute-override, defn.class-defn-overrides));
+	 slots: slot-infos,
+	 overrides: override-infos);
   end unless;
 end method compute-cclass;
 
@@ -880,6 +880,18 @@ define method compute-override
   info;
 end;
 
+define generic inhibits-functional-classes?
+    (slot :: <slot-info>) => res :: <boolean>;
+
+define method inhibits-functional-classes?
+    (slot :: <slot-info>) => res :: <boolean>;
+  #f;
+end method inhibits-functional-classes?;
+
+define method inhibits-functional-classes?
+    (slot :: <instance-slot-info>) => res :: <boolean>;
+  #t;
+end method inhibits-functional-classes?;
 
 
 // Top level form finalization.
@@ -1650,15 +1662,9 @@ define method convert-top-level-form
 			    derived-type: cclass));
 		    else
 		      let posn
-			= block (return)
-			    for (entry in slot.slot-positions)
-			      if (csubtype?(cclass, entry.head))
-				return(entry.tail);
-			      end;
-			    end;
-			    error("Couldn't find the position for %s",
-				  slot.slot-getter.variable-name);
-			  end;
+			= (get-direct-position(slot.slot-positions, cclass)
+			     | error("Couldn't find the position for %s",
+				     slot.slot-getter.variable-name));
 		      let posn-leaf
 			= make-literal-constant(init-builder,
 						as(<ct-value>, posn));
@@ -1689,7 +1695,7 @@ define method convert-top-level-form
 			build-assignment
 			  (init-builder, policy, source, #(),
 			   make-operation
-			     (init-builder, <slot-set>,
+			     (init-builder, <heap-slot-set>,
 			      list(leaf, instance-leaf, posn-leaf, index),
 			      slot-info: slot));
 			build-assignment
@@ -1710,7 +1716,7 @@ define method convert-top-level-form
 		      else
 			build-assignment
 			  (init-builder, policy, source, #(),
-			   make-operation(init-builder, <slot-set>,
+			   make-operation(init-builder, <heap-slot-set>,
 					  list(leaf, instance-leaf, posn-leaf),
 					  slot-info: slot));
 			if (slot == size-slot)
@@ -2098,6 +2104,15 @@ define method slot-accessor-standin
 end method slot-accessor-standin;
 
 
+define method might-be-in-data-word?
+    (slot :: <slot-info>) => res :: <boolean>;
+  //
+  // For a slot to ever be in the data-word, it must be in the data-word of
+  // the class that introduced it.
+  slot.slot-introduced-by.data-word-slot == slot;
+end method might-be-in-data-word?;
+
+
 define method build-getter
     (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
      defn :: <slot-defn>, slot :: <instance-slot-info>)
@@ -2128,9 +2143,10 @@ define method build-getter
     method get (offset :: <leaf>, init?-offset :: false-or(<leaf>)) => ();
       if (init?-offset)
 	let init?-slot = slot.slot-initialized?-slot;
-	let temp = make-local-var(builder, #"initialized?", object-ctype());
+	let temp = make-local-var(builder, #"initialized?",
+				  specifier-type(#"<boolean>"));
 	build-assignment(builder, policy, source, temp,
-			 make-operation(builder, <slot-ref>,
+			 make-operation(builder, <heap-slot-ref>,
 					list(instance, init?-offset),
 					derived-type: init?-slot.slot-type,
 					slot-info: init?-slot));
@@ -2142,8 +2158,28 @@ define method build-getter
 	     (builder, policy, source, #"uninitialized-slot-error"));
 	end-body(builder);
       end;
+      let maybe-data-word? = slot.might-be-in-data-word?;
+      if (maybe-data-word?)
+	assert(~init?-offset);
+	assert(~index);
+	let temp = make-local-var(builder, #"data-word?",
+				  specifier-type(#"<boolean>"));
+	build-assignment
+	  (builder, policy, source, temp,
+	   make-unknown-call
+	     (builder, ref-dylan-defn(builder, policy, source, #"=="), #f,
+	      list(offset,
+		   make-literal-constant
+		     (builder, as(<ct-value>, #"data-word")))));
+	build-if-body(builder, policy, source, temp);
+	build-assignment
+	  (builder, policy, source, result,
+	   make-operation(builder, <data-word-ref>, list(instance),
+			  derived-type: slot.slot-type, slot-info: slot));
+	build-else(builder, policy, source);
+      end if;
       build-assignment(builder, policy, source, result,
-		       make-operation(builder, <slot-ref>,
+		       make-operation(builder, <heap-slot-ref>,
 				      if (index)
 					list(instance, offset, index);
 				      else
@@ -2151,6 +2187,9 @@ define method build-getter
 				      end,
 				      derived-type: slot.slot-type,
 				      slot-info: slot));
+      if (maybe-data-word?)
+	end-body(builder);
+      end if;
       unless (init?-offset | slot-guaranteed-initialized?(slot, cclass))
 	let temp = make-local-var(builder, #"initialized?", object-ctype());
 	build-assignment(builder, policy, source, temp,
@@ -2213,7 +2252,7 @@ define method build-setter
   local
     method set (offset :: <leaf>, init?-offset :: false-or(<leaf>)) => ();
       build-assignment(builder, policy, source, #(),
-		       make-operation(builder, <slot-set>,
+		       make-operation(builder, <heap-slot-set>,
 				      if (index)
 					list(new, instance, offset, index);
 				      else
@@ -2224,7 +2263,7 @@ define method build-setter
 	let init?-slot = slot.slot-initialized?-slot;
 	let true-leaf = make-literal-constant(builder, make(<literal-true>));
 	let init-op = make-operation
-	  (builder, <slot-set>, list(true-leaf, instance, init?-offset),
+	  (builder, <heap-slot-set>, list(true-leaf, instance, init?-offset),
 	   slot-info: init?-slot);
 	build-assignment(builder, policy, source, #(), init-op);
       end;
@@ -2254,24 +2293,22 @@ define method build-slot-posn-dispatch
     // We don't have to do a runtime slot-position lookup, so make us a static
     // slot accessor method.
     let new-thunk
-      = method (offset :: <integer>,
-		init?-offset :: false-or(<integer>))
+      = method (offset :: <slot-position>,
+		init?-offset :: false-or(<slot-position>))
 	    => ();
 	  thunk(make-literal-constant(builder, as(<ct-value>, offset)),
 		init?-offset
 		  & make-literal-constant(builder,
 					  as(<ct-value>, init?-offset)));
 	end method;
-    let positions = slot.slot-positions;
-    let init?-positions
-      = (slot.slot-initialized?-slot
-	   & slot.slot-initialized?-slot.slot-positions);
-    if (positions.tail == #()
-	  & (init?-positions == #f | init?-positions.tail == #()))
+    let position = get-universal-position(slot.slot-positions);
+    let init?-slot = slot.slot-initialized?-slot;
+    let init?-position
+      = (init?-slot & get-universal-position(init?-slot.slot-positions));
+    if (position & (init?-slot == #f | init?-position))
       // The slot only ever shows up at one place.  So just use that one
       // place.
-      new-thunk(positions.head.tail,
-		init?-positions & init?-positions.head.tail);
+      new-thunk(position, init?-position);
     else
       // The slot shows up at multiple positions.  This had better only happen
       // when the class is sealed because we are only supposed to try making
@@ -2315,10 +2352,10 @@ define method build-unique-id-slot-posn-dispatch
   for (entry in sort!(map(method (subclass)
 			    let id = subclass.unique-id;
 			    vector(id, id,
-				   find-position-for(subclass, positions),
+				   get-direct-position(positions, subclass),
 				   init?-positions
-				     & find-position-for(subclass,
-							 init?-positions));
+				     & get-direct-position(init?-positions,
+							   subclass));
 			  end,
 			  find-direct-classes(cclass)),
 		      test: method (entry1, entry2)
@@ -2376,18 +2413,6 @@ define method build-unique-id-slot-posn-dispatch
   end;
 end method build-unique-id-slot-posn-dispatch;
 
-define method find-position-for (subclass :: <cclass>, posns :: <list>)
-    => posn :: <integer>;
-  block (return)
-    for (posn in posns)
-      if (csubtype?(subclass, posn.head))
-	return(posn.tail);
-      end if;
-    end for;
-    error("Subclass %= isn't in the position table?", subclass);
-  end block;
-end method find-position-for;
-
 
 define method build-instance?-slot-posn-dispatch
     (builder :: <fer-builder>, slot :: <instance-slot-info>,
@@ -2398,10 +2423,10 @@ define method build-instance?-slot-posn-dispatch
   let policy = $Default-Policy;
   let source = make(<source-location>);
   let cclass = slot.slot-introduced-by;
-  let positions = slot.slot-positions;
+  let positions = as(<list>, slot.slot-positions);
   let init?-positions
     = (slot.slot-initialized?-slot
-	 & slot.slot-initialized?-slot.slot-positions);
+	 & as(<list>, slot.slot-initialized?-slot.slot-positions));
   local
     method split (classes :: <list>, possible-splits :: <list>)
 	=> ();
@@ -2551,7 +2576,13 @@ define method build-runtime-slot-posn-dispatch
 	=> var :: false-or(<abstract-variable>);
       if (slot)
 	let var = make-local-var(builder, name,
-				 specifier-type(#"<integer>"));
+				 if (slot.might-be-in-data-word?)
+				   specifier-type
+				     (#(union:, #"<integer>",
+					#(singleton:, #"data-word")));
+				 else
+				   specifier-type(#"<integer>");
+				 end if);
 	build-assignment
 	  (builder, policy, source, var,
 	   make-unknown-call
@@ -2677,12 +2708,14 @@ define constant $class-definition-slots
 		       %class-defn-maker-function-setter,
 		     class-defn-new-slot-infos, #f,
 		       class-defn-new-slot-infos-setter,
+    /* ### -- currently recomputed, so we don't really need to dump them.
 		     class-defn-all-slot-infos, #f,
-		       class-defn-all-slot-infos-setter,
+		       class-defn-all-slot-infos-setter, */
 		     class-defn-override-infos, #f,
-		       class-defn-override-infos-setter,
-		     class-defn-vector-slot, #f,
-		       class-defn-vector-slot-setter));
+		       class-defn-override-infos-setter
+    /* ### -- currently recomputed, so we don't really need to dump them.
+		     , class-defn-vector-slot, #f,
+		       class-defn-vector-slot-setter */));
 
 add-make-dumper(#"class-definition", *compiler-dispatcher*,
 		<real-class-definition>, $class-definition-slots,
