@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.10 1995/06/12 17:46:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.11 1995/10/05 01:24:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -257,7 +257,7 @@ define method method-tree-add
       #"unknown" =>
 	compiler-warning
 	  ("Cannot statically determine the relationship between %s and %s.",
-	   child.node-method, meth);
+	   child.node-method.defn-name, meth.defn-name);
 	punt();
     end;
   end;
