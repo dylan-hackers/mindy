@@ -1,4 +1,4 @@
-<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.3 1996/04/22 23:57:09 nkramer Exp $>
+<! $Header: /home/housel/work/rcs/gd/src/demos/demos.html,v 1.4 1996/05/21 22:28:31 nkramer Exp $>
 <TITLE>Mindy Demo Programs</TITLE>
 <H1>Mindy Demo Programs</H1>
 <HR>
@@ -113,6 +113,13 @@ as well as from the rich set of available collection types.
 <H2>html2txt for TK</H2>
 
 This is the same program, only now with a spiffy graphical interface.
+
+<p> If you get the error message 'font
+"-adobe-courier-medium-r-normal--12*" doesn't exist', edit
+html2txt.dylan.  Find the lines that define "normal-font" and
+"bold-font" and substitute a font your machine does have.
+Alternately, go down a few lines further and delete the "font:
+normal-font" and "font: bold-font" clauses.
 
 <HR>
 <H2>minesweper</H2>
