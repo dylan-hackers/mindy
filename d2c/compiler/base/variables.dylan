@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.2 1995/03/04 21:51:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.3 1995/03/23 21:58:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -672,18 +672,19 @@ end method;
 // magically pre-define some things and be able to find them before we
 // get around to actually defining the module they are in.
 //
-define method find-variable (mod :: <module>, name :: <symbol>,
-			     #key create: create?)
+define method find-variable (name :: <basic-name>, #key create: create?)
     => result :: union(<variable>, <false>);
-  let var = element(mod.variables, name, default: #f);
+  let mod = name.name-module;
+  let sym = name.name-symbol;
+  let var = element(mod.variables, sym, default: #f);
   if (var)
     var;
   elseif (~mod.completed? & *Module-System-Initialized*)
     complete-module(mod);
-    find-variable(mod, name, create: create?);
+    find-variable(name, create: create?);
   elseif (create?)
-    let new = make(<variable>, name: name, home: mod);
-    mod.variables[name] := new;
+    let new = make(<variable>, name: sym, home: mod);
+    mod.variables[sym] := new;
     add!(new.accessing-modules, mod);
     new;
   else
@@ -722,9 +723,9 @@ define method note-variable-definition (defn :: <definition>)
   //
   // Get the variable, creating it if necessary.
   //
-  let name = defn.defn-name.name-symbol;
-  let mod = defn.defn-name.name-module;
-  let var = find-variable(mod, name, create: #t);
+  let name = defn.defn-name;
+  let mod = name.name-module;
+  let var = find-variable(defn.defn-name, create: #t);
   //
   // Make sure this module either is or is not the varibles home,
   // depending on whether the variable was in a create define module
@@ -734,12 +735,12 @@ define method note-variable-definition (defn :: <definition>)
     if (var.home == mod)
       error("%s in create clause for module %s, so must be "
 	      "defined elsewhere.",
-	    name, mod.module-name);
+	    name.name-symbol, mod.module-name);
     end;
   else
     unless (var.home == mod)
       error("%s is imported into module %s, so can't be defined locally.",
-	    name, mod.module-name);
+	    name.name-symbol, mod.module-name);
     end;
   end;
   //
@@ -747,7 +748,7 @@ define method note-variable-definition (defn :: <definition>)
   //
   if (var.variable-definition)
     unless (instance?(var.variable-definition, <implicit-definition>))
-      error("%s in module %s multiply defined.", name, mod.module-name);
+      error("%s in module %s multiply defined.", name.name-symbol, mod.module-name);
     end;
   end;
   //
@@ -781,11 +782,9 @@ end;
 // 
 define method note-variable-definition (defn :: <implicit-definition>,
 					#next next-method)
-  let name = defn.defn-name.name-symbol;
-  let mod = defn.defn-name.name-module;
-  let var = find-variable(mod, name, create: #t);
+  let var = find-variable(defn.defn-name, create: #t);
   unless (var.variable-definition)
-    if (var.home == mod | var.created?)
+    if (var.home == defn.defn-name.name-module | var.created?)
       next-method();
     end;
   end;
@@ -819,13 +818,19 @@ end;
 
 // Shorthands
 
+// dylan-name -- ???
+// 
+define method dylan-name (sym :: <symbol>) => res :: <basic-name>;
+  make(<basic-name>, symbol: sym, module: $Dylan-module);
+end;
+
 // dylan-var -- exported.
 //
 // Return the variable for name in the dylan module.
 // 
 define method dylan-var (name :: <symbol>, #key create: create?)
     => res :: union(<variable>, <false>);
-  find-variable($Dylan-Module, name, create: create?);
+  find-variable(dylan-name(name), create: create?);
 end;
 
 // dylan-defn -- exported.
