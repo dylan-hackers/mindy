@@ -120,7 +120,7 @@ define method int-value
     empty?(expansion) =>
       1;
     expansion.size > 1 =>
-      parse-error(value, "Multi-token macro in constant expression.");
+      int-value(parse-macro(value.string-value, state), state);
     otherwise =>
       int-value(head(expansion), state);
   end case;
@@ -6230,19 +6230,20 @@ end;
 // signals an error. 
 //
 define method parse-macro
-    (name :: <string>, old-state :: <parse-file-state>)
+    (name :: <string>, old-state :: <parse-state>)
  => (result :: <object>);
   let old-tokenizer = old-state.tokenizer;
   let tokenizer = make(<tokenizer>, name: name, parent: old-tokenizer,
                        source: make(<byte-string-stream>, contents: " "));
-  for (token in old-tokenizer.cpp-table[name])
-    unget-token(tokenizer, token);
-  end for;
-  unget-token(tokenizer, make(<macro-parse-token>,
-			      generator: tokenizer, string: ""));
-  let parse-state
-    = make(<parse-macro-state>, tokenizer: tokenizer, parent: old-state);
-  parse-loop(parse-state);
+  if (check-cpp-expansion(name, tokenizer))
+    unget-token(tokenizer, make(<macro-parse-token>,
+				generator: tokenizer, string: ""));
+    let parse-state
+      = make(<parse-macro-state>, tokenizer: tokenizer, parent: old-state);
+    parse-loop(parse-state);
+  else
+    error("Macro not defined in 'parse-macro'.");
+  end if;
 end;
 
 // This function evaluates a line of CPP input according to a limited set of C

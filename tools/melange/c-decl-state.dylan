@@ -114,7 +114,7 @@ end method initialize;
 
 define method initialize
     (value :: <parse-value-state>,
-     #key parent :: type-union(<parse-file-state>, <false>))
+     #key parent :: type-union(<parse-state>, <false>))
   if (parent)
     value.objects := parent.objects;
     value.structs := parent.structs;

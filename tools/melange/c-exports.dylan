@@ -37,7 +37,7 @@ define module c-lexer
   use streams;
   create cpp-parse;
   export
-    default-cpp-table, include-path, open-in-include-path,
+    default-cpp-table, include-path, open-in-include-path, check-cpp-expansion,
     <tokenizer>, get-token, unget-token, add-typedef, cpp-table, cpp-decls,
     <token>, value, string-value, generator, parse-error,
     <error-token>, <identifier-token>, <integer-token>, <eof-token>,
