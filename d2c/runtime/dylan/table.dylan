@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.13 2002/09/27 21:10:21 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.14 2002/09/29 07:33:08 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>,
             and <value-table>.
 
@@ -702,7 +702,7 @@ define function find-for-remove
       end;
     ht.table-size := ht.table-size + 1;
     let prev = ht.buckets[bucket];
-    if (prev & prev ~== start-at)
+    if (prev ~== start-at.entry-next)
       search(prev);
     else
       ht.buckets[bucket] := start-at;
