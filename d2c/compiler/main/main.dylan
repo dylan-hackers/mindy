@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.84 1996/08/10 20:16:43 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.85 1996/08/12 14:02:13 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -693,6 +693,9 @@ define method build-inits-dot-c (state :: <main-unit-state>) => ();
     format(stream, "    %s(sp, argc, argv);\n", entry-function-name);
   end if;
   write(stream, "}\n");
+  write(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
+  write(stream, "void main(int argc, char *argv[])\n{\n");
+  write(stream, "    real_main(argc, argv);\n}\n");
   close(stream);
 end method;
 
@@ -722,6 +725,10 @@ define method build-executable (state :: <main-unit-state>) => ();
     end unless;
   end;
 
+  let gc-filename = find-library-archive("gc", state.unit-target, 
+					 state.unit-no-binaries);
+  let runtime-filename = find-library-archive("runtime", state.unit-target, 
+					      state.unit-no-binaries);
   if (state.unit-target.target-name == #"x86-win32")
     format(state.unit-makefile, "\n");
     output-c-file-rule(state.unit-makefile, "inits.c", "inits.obj",
@@ -735,9 +742,10 @@ define method build-executable (state :: <main-unit-state>) => ();
 	   state.unit-executable, state.unit-ar-name, unit-libs);
     format(state.unit-makefile,
 	   "\tlink %s /out:%s %s %s"
-	     " inits.obj heap.obj runtime.lib gc.lib\n", 
+	     " inits.obj heap.obj %s %s\n",
 	   state.unit-target.link-executable-flags,
-	   state.unit-executable, state.unit-ar-name, unit-libs);
+	   state.unit-executable, state.unit-ar-name, unit-libs,
+	   gc-filename, runtime-filename);
     format(state.unit-clean-stream, " %s inits.obj heap.obj %s", 
 	   state.unit-ar-name, state.unit-executable);
     format(state.unit-real-clean-stream,
