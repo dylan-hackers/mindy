@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.2 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.3 1995/11/16 03:38:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -22,7 +22,8 @@ end;
 define class <empty-list> (<list>)
 end;
 
-define sealed method make (class == <empty-list>, #key) => res :: type-or();
+define sealed method make (class == <empty-list>, #key)
+    => res :: <never-returns>;
   error("Can't make new instances of <empty-list>, #() is it.");
 end;
 
@@ -148,7 +149,7 @@ define sealed method remove! (list :: <list>, element, #key test = \==, count)
 end;
 
 define sealed method size (list :: <list>)
-    => res :: union(<false>, <fixed-integer>);
+    => res :: type-union(<false>, <fixed-integer>);
   if (list == #())
     0;
   elseif (list.tail == #())
