@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.75 1995/06/06 11:33:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.76 1995/06/07 15:17:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -684,7 +684,7 @@ define module flow
     next-exit, next-exit-setter, returned-type, returned-type-setter,
     initial-definitions, initial-definitions-setter,
     reoptimize-queue, reoptimize-queue-setter,
-    all-function-regions,
+    add-to-queue, all-function-regions,
 
     <expression>, <dependency>, <queueable-mixin>, <dependent-mixin>,
     <leaf>, <variable-info>, <definition-site-variable>,
@@ -751,7 +751,7 @@ define module front
   use compile-time-functions;
 
   export
-    dump-fer, id, optimize-component,
+    dump-fer, id, reset-ids,
 
     <fer-assignment>, policy,
     <let-assignment>, let-next, <set-assignment>,
@@ -932,7 +932,7 @@ define module define-classes
   use compile-time-functions;
 
   export
-    class-defn-maker-function;
+    class-defn-defered-evaluations-function, class-defn-maker-function;
 end;
 
 define module top-level-expressions
@@ -969,6 +969,9 @@ define module cheese
   use primitives;
   use transformers;
   use compile-time-functions;
+
+  export
+    optimize-component, *optimize-ncalls*;
 end;
 
 define module stack-analysis
@@ -1016,6 +1019,7 @@ end;
 define module heap
   use common;
   use utils;
+  use names;
   use compile-time-values;
   use variables;
   use representation;
@@ -1025,6 +1029,7 @@ define module heap
   use compile-time-functions;
   use definitions;
   use define-functions;
+  use define-classes;
   use cback;
 
   export
@@ -1079,4 +1084,5 @@ define module main
   use compile-time-functions;
   use signature-interface;
   use ctype;
+  use cheese;
 end;
