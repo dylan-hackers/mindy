@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.15 1995/11/20 16:40:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.16 1995/11/20 17:29:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1402,8 +1402,7 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
-				   *ptr-rep*, *long-rep*);
+     let (x, y) = extract-operands(operation, file, *ptr-rep*, *long-rep*);
      deliver-result(results,
 		    format-to-string("((void *)((char *)%s + %s))", x, y),
 		    *ptr-rep*, #f, file);
@@ -1415,8 +1414,7 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
-				   *ptr-rep*, *ptr-rep*);
+     let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
      deliver-result(results,
 		    format-to-string("((char *)%s - (char *)%s)", x, y),
 		    *long-rep*, #f, file);
@@ -1428,8 +1426,7 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
-				   *ptr-rep*, *ptr-rep*);
+     let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
      deliver-result(results,
 		    format-to-string("((char *)%s < (char *)%s)", x, y),
 		    *boolean-rep*, #f, file);
@@ -1441,8 +1438,51 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (x, y) = extract-operands(operation, file,
-				   *ptr-rep*, *ptr-rep*);
+     let (x, y) = extract-operands(operation, file, *ptr-rep*, *ptr-rep*);
      deliver-result(results, format-to-string("(%s == %s)", x, y),
 		    *boolean-rep*, #f, file);
+   end);
+
+define-primitive-emitter
+  (#"pointer-deref",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let type-dep = operation.depends-on;
+     let rep = rep-for-c-type(type-dep.source-exp);
+     let ptr-dep = type-dep.dependent-next;
+     let ptr = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+     let offset-dep = ptr-dep.dependent-next;
+     let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+
+     spew-pending-defines(file);
+     
+     deliver-result(results,
+		    format-to-string("(*(%s *)((char *)%s + %s))",
+				     rep.representation-c-type,
+				     ptr, offset),
+		    rep, #f, file);
+   end);
+
+define-primitive-emitter
+  (#"pointer-deref-setter",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let new-dep = operation.depends-on;
+     let type-dep = new-dep.dependent-next;
+     let rep = rep-for-c-type(type-dep.source-exp);
+     let new = ref-leaf(rep, new-dep.source-exp, file);
+     let ptr-dep = type-dep.dependent-next;
+     let ptr = ref-leaf(*ptr-rep*, ptr-dep.source-exp, file);
+     let offset-dep = ptr-dep.dependent-next;
+     let offset = ref-leaf(*long-rep*, offset-dep.source-exp, file);
+
+     spew-pending-defines(file);
+     format(file.file-guts-stream, "*(%s *)((char *)%s + %s) = %s;\n",
+	    rep.representation-c-type, ptr, offset, new);
+     
+     deliver-results(results, #[], #f, file);
    end);

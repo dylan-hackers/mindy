@@ -208,8 +208,9 @@ define-primitive
    #(#"<string>", #"<symbol>",
      rest:, #(union:, #"<symbol>", #"<fixed-integer>", #"<raw-pointer>",
 	      #"<single-float>", #"<double-float>", #"<extended-float>")),
-   #(union:, #"<fixed-integer>", #"<raw-pointer>",
-     #"<single-float>", #"<double-float>", #"<extended-float>"));
+   #(values:,
+     rest:, #(union:, #"<fixed-integer>", #"<raw-pointer>",
+	      #"<single-float>", #"<double-float>", #"<extended-float>")));
 
 define-primitive
   (#"c-include", #(#"<string>"), #(values:));
@@ -219,8 +220,9 @@ define-primitive
 
 define-primitive
   (#"c-expr", #(#"<symbol>", #"<string>"),
-   #(union:, #"<fixed-integer>", #"<raw-pointer>",
-     #"<single-float>", #"<double-float>", #"<extended-float>"));
+   #(values:,
+     rest:, #(union:, #"<fixed-integer>", #"<raw-pointer>",
+	      #"<single-float>", #"<double-float>", #"<extended-float>")));
 
 define-primitive
   (#"as-boolean", #(#"<object>"), #"<boolean>",
@@ -421,3 +423,18 @@ define-primitive
 define-primitive
   (#"pointer-=", #(#"<raw-pointer>", #"<raw-pointer>"), #"<boolean>",
    pure: #t);
+
+define-primitive
+  (#"pointer-deref",
+   #(#"<symbol>", #"<raw-pointer>", #"<fixed-integer>"),
+   #(union:, #"<fixed-integer>", #"<raw-pointer>",
+     #"<single-float>", #"<double-float>", #"<extended-float>"),
+   side-effect-free: #t);
+
+define-primitive
+  (#"pointer-deref-setter",
+   #(#(union:, #"<fixed-integer>", #"<raw-pointer>",
+       #"<single-float>", #"<double-float>", #"<extended-float>"),
+     #"<symbol>", #"<raw-pointer>", #"<fixed-integer>"),
+   #(values:));
+

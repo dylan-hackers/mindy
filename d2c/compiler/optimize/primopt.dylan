@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.10 1995/11/16 04:11:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.11 1995/11/20 17:29:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -487,3 +487,21 @@ define-primitive-transformer
      end;
    end);
 
+
+// raw pointer
+
+define-primitive-transformer
+  (#"pointer-deref",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let result-dep = primitive.depends-on;
+     let result-type = result-dep.source-exp.dylan-type-for-c-type;
+     maybe-restrict-type(component, primitive, result-type);
+   end);
+
+define-primitive-transformer
+  (#"pointer-deref-setter",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let new-dep = primitive.depends-on;
+     let type = new-dep.dependent-next.source-exp.dylan-type-for-c-type;
+     assert-type(component, primitive.dependents.dependent, new-dep, type);
+   end);
