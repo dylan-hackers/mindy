@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.18 1996/06/20 21:09:40 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.19 1996/06/27 18:00:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -915,7 +915,10 @@ define constant $Initial-State
 	     pair("0-9", #"decimal"),
 	     pair('/', #"decimal-slash"),
 	     pair('.', #"fp-frac"),
-	     pair("eEsSdDxX", #"decimal-e")),
+	     pair("eEsSdDxX", #"decimal-e"),
+	     pair("abcf-rt-wyzABCF-RT-WYZ", #"numeric-alpha"),
+	     pair("!&*<=>|^$%@_+~?", #"leading-numeric"),
+	     pair('-', #"leading-numeric")),
        state(#"decimal-slash", #f,
 	     pair("0-9", #"ratio"),
 	     pair("a-zA-Z", #"numeric-alpha"),
@@ -958,7 +961,7 @@ define constant $Initial-State
        
        state(#"decimal-e", #f,
 	     pair("a-zA-Z", #"symbol"),
-	     pair("[0-9]", #"decimal-exp"),
+	     pair("0-9", #"decimal-exp"),
 	     pair("!&*<=>|^$%@_~?/", #"leading-numeric"),
 	     pair('-', #"decimal-e-sign"),
 	     pair('+', #"decimal-e-sign")),
@@ -966,7 +969,7 @@ define constant $Initial-State
 	     pair("0-9", #"decimal-exp"),
 	     pair("a-zA-Z", #"numeric-alpha"),
 	     pair("!&*<=>|^$%@_+~?/", #"leading-numeric"),
-	     pair("-", #"leading-numeric")),
+	     pair('-', #"leading-numeric")),
        state(#"decimal-e-sign", #f,
 	     pair("0-9", #"decimal-exp"),
 	     pair("a-zA-Z", #"numeric-alpha"),
