@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.15 1996/07/03 17:08:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.16 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -441,23 +441,20 @@ define method optimize-generic
 	  end if;
 	end if;
 	
-	// Change to an unknown call of the most specific method if we know
-	// what that method is.
-	if (ordered)
-	  let builder = make-builder(component);
-	  let assign = call.dependents.dependent;
-	  let policy = assign.policy;
-	  let source = assign.source-location;
-	  let new-func = build-defn-ref(builder, policy, source, ordered.head);
-	  let next-leaf
-	    = make-next-method-info-leaf(builder, ordered, ambiguous);
-	  insert-before(component, assign, builder-result(builder));
-	  let new-call
-	    = (make-unknown-call
-		 (builder, new-func, next-leaf,
-		  listify-dependencies(call.depends-on.dependent-next)));
-	  replace-expression(component, call.dependents, new-call);
-	end if;
+	// Change to an unknown call of the most specific method.
+	let builder = make-builder(component);
+	let assign = call.dependents.dependent;
+	let policy = assign.policy;
+	let source = assign.source-location;
+	let new-func = build-defn-ref(builder, policy, source, ordered.head);
+	let next-leaf
+	  = make-next-method-info-leaf(builder, ordered, ambiguous);
+	insert-before(component, assign, builder-result(builder));
+	let new-call
+	  = (make-unknown-call
+	       (builder, new-func, next-leaf,
+		listify-dependencies(call.depends-on.dependent-next)));
+	replace-expression(component, call.dependents, new-call);
     end select;
   end block;
 end method optimize-generic;
@@ -492,23 +489,23 @@ define method ambiguous-method-warning
     (call :: <abstract-call>, defn :: <generic-definition>,
      ambiguous :: <list>, arg-types :: <list>)
     => ();
-  let stream = make(<byte-string-output-stream>);
-  write("    (", stream);
+  let stream = make(<buffered-byte-string-output-stream>);
+  write(stream, "    (");
   for (arg-type in arg-types, first? = #t then #f)
     unless (first?)
-      write(", ", stream);
+      write(stream, ", ");
     end;
     print-message(arg-type, stream);
   end;
-  write(")", stream);
-  let arg-types-string = stream.string-output-stream-string;
+  write-element(stream, ')');
+  let arg-types-string = stream.stream-contents;
   for (meth in ambiguous)
     format(stream, "    %s\n", meth.defn-name);
   end;
   compiler-error-location
     (call.dependents.dependent,
      "Can't order\n%s\n  when given positional arguments of types:\n%s",
-     stream.string-output-stream-string,
+     stream.stream-contents,
      arg-types-string);
 end;
 
@@ -516,16 +513,16 @@ define method no-applicable-methods-warning
     (call :: <abstract-call>, defn :: <generic-definition>,
      arg-types :: <list>)
     => ();
-  let stream = make(<byte-string-output-stream>);
-  write("    (", stream);
+  let stream = make(<buffered-byte-string-output-stream>);
+  write(stream, "    (");
   for (arg-type in arg-types, first? = #t then #f)
     unless (first?)
-      write(", ", stream);
+      write(stream, ", ");
     end;
     print-message(arg-type, stream);
   end;
-  write(")", stream);
-  let arg-types-string = stream.string-output-stream-string;
+  write-element(stream, ')');
+  let arg-types-string = stream.stream-contents;
   compiler-error-location
     (call.dependents.dependent,
      "No applicable methods for argument types\n%s\n  in call of %s",

@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.12 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.13 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -82,7 +82,7 @@ end;
 
 define method print-message
     (tlf :: <magic-interal-primitives-placeholder>, stream :: <stream>) => ();
-  write("Magic internal primitives.", stream);
+  write(stream, "Magic internal primitives.");
 end;
 
 

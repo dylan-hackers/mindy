@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.29 1996/07/11 16:16:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.30 1996/07/12 01:11:07 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,21 +8,21 @@ define method default-primitive-emitter
     (results :: false-or(<definition-site-variable>),
      operation :: <primitive>, file :: <file-state>)
     => ();
-  let stream = make(<byte-string-output-stream>);
+  let stream = make(<buffered-byte-string-output-stream>);
 
   let use-deliver-result?
     = if (results)
 	if (results.definer-next)
-	  write('[', stream);
+	  write-element(stream, '[');
 	  for (var = results then var.definer-next,
 	       first? = #t then #f,
 	       while: var)
 	    unless (first?)
-	      write(", ", stream);
+	      write(stream, ", ");
 	    end;
-	    write(c-name-and-rep(var, file), stream);
+	    write(stream, c-name-and-rep(var, file));
 	  end;
-	  write("] = ", stream);
+	  write(stream, "] = ");
 	  #f;
 	elseif (instance?(results.var-info, <values-cluster-info>))
 	  let (bottom-name, top-name) = produce-cluster(results, file);
@@ -50,14 +50,14 @@ define method default-primitive-emitter
 	     first? = first? then #f,
 	     while: dep)
 	  unless (first?)
-	    write(", ", stream);
+	    write(stream, ", ");
 	  end;
-	  write(ref-leaf(rep, dep.source-exp, file), stream);
+	  write(stream, ref-leaf(rep, dep.source-exp, file));
 	end;
 	return();
       else
 	unless (first?)
-	  write(", ", stream);
+	  write(stream, ", ");
 	end;
 	if (type == #"cluster")
 	  let (bottom-name, top-name)
@@ -65,13 +65,13 @@ define method default-primitive-emitter
 	  format(stream, "%s...%s", bottom-name, top-name);
 	else
 	  let rep = pick-representation(type, #"speed");
-	  write(ref-leaf(rep, dep.source-exp, file), stream);
+	  write(stream, ref-leaf(rep, dep.source-exp, file));
 	end;
       end;
     end;
   end;
-  write(')', stream);
-  let expr = stream.string-output-stream-string;
+  write-element(stream, ')');
+  let expr = stream.stream-contents;
 
   if (use-deliver-result?)
     let (name, rep) = c-name-and-rep(results, file);
@@ -332,21 +332,21 @@ define-primitive-emitter
      if (defines)
        if (instance?(defines.var-info, <values-cluster-info>))
 	 let name = new-local(file);
-	 write(stringify("descriptor_t ", name, ";\n"),
-	       file.file-vars-stream);
-	 write(stringify(name, ".heapptr = allocate(", bytes, ");\n",
-		       name, ".dataword.", data-word-member,
-		       " = ", data-word, ";\n"),
-	       file.file-guts-stream);
+	 write(file.file-vars-stream,
+	       stringify("descriptor_t ", name, ";\n"));
+	 write(file.file-guts-stream,
+	       stringify(name, ".heapptr = allocate(", bytes, ");\n",
+			 name, ".dataword.", data-word-member,
+			 " = ", data-word, ";\n"));
 	 deliver-result(defines, name, *general-rep*, #f, file);
        else
 	 let (name, rep) = c-name-and-rep(defines, file);
 	 assert(rep == *general-rep*);
 
-	 write(stringify(name, ".heapptr = allocate(", bytes, ");\n",
+	 write(file.file-guts-stream,
+	       stringify(name, ".heapptr = allocate(", bytes, ");\n",
 			 name, ".dataword.", data-word-member,
-			 " = ", data-word, ";\n"),
-	       file.file-guts-stream);
+			 " = ", data-word, ";\n"));
 	 
 	 deliver-results(defines.definer-next, #[], #f, file);
        end if;
@@ -408,7 +408,7 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let stream = make(<byte-string-output-stream>);
+     let stream = make(<buffered-byte-string-output-stream>);
 
      let func-dep = operation.depends-on;
      let func = func-dep.source-exp;
@@ -425,7 +425,7 @@ define-primitive-emitter
        method repeat (dep :: false-or(<dependency>), first? :: <boolean>)
 	 if (dep)
 	   unless (first?)
-	     write(", ", stream);
+	     write(stream, ", ");
 	   end;
 	   let rep = rep-for-c-type(dep.source-exp);
 	   let next = dep.dependent-next;
@@ -437,15 +437,15 @@ define-primitive-emitter
        end;
      repeat(res-dep.dependent-next, #t);
 
-     write(')', stream);
+     write-element(stream, ')');
 
      spew-pending-defines(file);
      if (result-rep)
-       deliver-result(defines, string-output-stream-string(stream),
+       deliver-result(defines, stream-contents(stream),
 		      result-rep, #t, file);
      else
        format(file.file-guts-stream, "%s;\n",
-	      string-output-stream-string(stream));
+	      stream-contents(stream));
        deliver-results(defines, #[], #f, file);
      end;
    end);
@@ -487,7 +487,7 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let stream = make(<byte-string-output-stream>);
+     let stream = make(<buffered-byte-string-output-stream>);
 
      let res-dep = operation.depends-on;
      let result-rep = rep-for-c-type(res-dep.source-exp);
@@ -550,16 +550,16 @@ define-primitive-emitter
      unless (instance?(lit, <literal-string>))
        error("argument to c-string isn't a string?");
      end;
-     let stream = make(<byte-string-output-stream>);
-     write('"', stream);
+     let stream = make(<buffered-byte-string-output-stream>);
+     write-element(stream, '"');
      for (char in lit.literal-value)
        let code = as(<integer>, char);
        if (char < ' ')
 	 select (char)
-	   '\b' => write("\\b", stream);
-	   '\t' => write("\\t", stream);
-	   '\n' => write("\\n", stream);
-	   '\r' => write("\\r", stream);
+	   '\b' => write(stream, "\\b");
+	   '\t' => write(stream, "\\t");
+	   '\n' => write(stream, "\\n");
+	   '\r' => write(stream, "\\r");
 	   otherwise =>
 	     format(stream, "\\0%d%d",
 		    ash(code, -3),
@@ -568,7 +568,7 @@ define-primitive-emitter
        elseif (char == '"' | char == '\\')
 	 format(stream, "\\%c", char);
        elseif (code < 127)
-	 write(char, stream);
+	 write-element(stream, char);
        elseif (code < 256)
 	 format(stream, "\\%d%d%d",
 		ash(code, -6),
@@ -578,8 +578,8 @@ define-primitive-emitter
 	 error("%= can't be represented in a C string.");
        end;
      end;
-     write('"', stream);
-     deliver-result(defines, string-output-stream-string(stream), *ptr-rep*,
+     write-element(stream, '"');
+     deliver-result(defines, stream-contents(stream), *ptr-rep*,
 		    #f, file);
    end);
 
@@ -1673,117 +1673,3 @@ define-primitive-emitter
 		    stringify("((void *)", object, ')'),
 		    *ptr-rep*, #f, file);
    end);
-
-
-// Code moveability
-
-// A list of primitives which can safely be moved around in C code.
-// It is always safe to not list a primitive here.
-//
-define constant $sequence-of-moveable-primitives 
-  = #[#"extract-args",
-      #"merge-clusters",             // Value primitives.
-      #"values",
-      #"allocate",                   // Allocation primitives.
-      #"allocate-with-data-word",
-      #"make-immediate",
-      #"c-string",                   // Foreign code interface primitives.
-      #"as-boolean",                 // Predicate primitives
-      #"not",
-      #"==",
-      #"initialized?",
-      #"initial-symbols",
-      #"ref-slot",                   // Slot access primitives.
-      #"set-slot",
-      #"unwind-stack",               // NLX primitives.
-      #"fixnum-=",                   // Fixnum primitives.
-      #"fixnum-<",
-      #"fixnum-+",
-      #"fixnum-*",
-      #"fixnum--",
-      #"fixnum-negative",
-      #"fixnum-divide",
-      #"fixnum-logior",
-      #"fixnum-logxor",
-      #"fixnum-logand",
-      #"fixnum-lognot",
-      #"fixnum-shift-left",
-      #"fixnum-shift-right",
-      #"fixed-as-single",            // Single float primitives.
-      #"double-as-single",
-      #"extended-as-single",
-      #"single-<",
-      #"single-<=",
-      #"single-=",
-      #"single-==",
-      #"single-~=",
-      #"single-+",
-      #"single-*",
-      #"single--",
-      #"single-/",
-      #"single-abs",
-      #"single-negative",
-      #"single-floor",
-      #"single-ceiling",
-      #"single-round",
-      #"fixed-as-double",            // Double float primitives.
-      #"single-as-double",
-      #"extended-as-double",
-      #"double-<",
-      #"double-<=",
-      #"double-=",
-      #"double-==",
-      #"double-~=",
-      #"double-+",
-      #"double-*",
-      #"double--",
-      #"double-/",
-      #"double-abs",
-      #"double-negative",
-      #"double-floor",
-      #"double-ceiling",
-      #"double-round",
-      #"fixed-as-extended",          // Extended float primitives.
-      #"single-as-extended",
-      #"double-as-extended",
-      #"extended-<",
-      #"extended-<=",
-      #"extended-=",
-      #"extended-==",
-      #"extended-~=",
-      #"extended-+",
-      #"extended-*",
-      #"extended--",
-      #"extended-/",
-      #"extended-abs",
-      #"extended-negative",
-      #"extended-floor",
-      #"extended-ceiling",
-      #"extended-round",
-      #"make-raw-pointer",           // raw pointer operations.
-      #"raw-pointer-address",
-      #"pointer-+",
-      #"pointer--",
-      #"pointer-<",
-      #"pointer-=",
-      #"pointer-deref",
-      #"pointer-deref-setter",
-      #"vector-elements",
-      #"object-address"];
-
-define constant *moveable-primitives-table* 
-  = begin
-      let table = make(<object-table>);
-      for (prim-name in $sequence-of-moveable-primitives)
-	table[prim-name] := #t;
-      end for;
-      table;
-    end;
-
-define method c-code-moveable? (exp :: <expression>) => answer :: <boolean>;
-  #f;
-end method c-code-moveable?;
-
-define method c-code-moveable? (prim :: <primitive>) => answer :: <boolean>;
-  element(*moveable-primitives-table*, prim.primitive-name, default: #f);
-end method c-code-moveable?;

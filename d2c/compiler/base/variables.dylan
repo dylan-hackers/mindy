@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.29 1996/04/10 16:53:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.30 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1011,9 +1011,9 @@ define method find-data-unit
       *Current-Library* := lib;
       *load-depth* := previous-depth + 1;
       unless (zero?(previous-depth))
-	write('\n', *debug-output*);
+	new-line(*debug-output*);
 	for (i from 0 below *load-depth*)
-	  write(' ', *debug-output*);
+	  write-element(*debug-output*, ' ');
 	end for;
       end unless;
       format(*debug-output*, "[Loading library %s...", name);
@@ -1031,9 +1031,9 @@ define method find-data-unit
       end unless;
       res;
     cleanup
-      write(']', *debug-output*);
+      write-element(*debug-output*, ']');
       if (zero?(previous-depth))
-	write('\n', *debug-output*);
+	new-line(*debug-output*);
       end if;
       force-output(*debug-output*);
       *Current-Library* := previous-library;

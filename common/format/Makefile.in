@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/format/Attic/Makefile.in,v 1.1 1996/03/20 00:05:55 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/format/Attic/Makefile.in,v 1.2 1996/07/12 01:13:42 bfw Exp $
 ##
 ##  This is the makefile for the Mindy format library, format-lib.dbc.
 ##
@@ -65,7 +65,7 @@ MC	= ../../comp/mindycomp
 
 MINDYFLAGS = -lFormat
 
-OBJS = library.dbc format.dbc
+OBJS = library.dbc format.dbc format-buf.dbc
 
 all: format-lib.dbc debugger-format.dbc
 
@@ -76,6 +76,8 @@ library.dbc: ${SRCDIR}/library.dylan
 	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
 format.dbc: ${SRCDIR}/format.dylan
 	${MC} ${MINDYFLAGS} -o format.dbc ${SRCDIR}/format.dylan
+format-buf.dbc: ${SRCDIR}/format-buf.dylan
+	${MC} ${MINDYFLAGS} -o format-buf.dbc ${SRCDIR}/format-buf.dylan
 
 debugger-format.dbc: ${SRCDIR}/debugger-format.dylan
 	${MC} -ldebugger-format -o debugger-format.dbc \

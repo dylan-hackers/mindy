@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Print library and modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/library.dylan,v 1.2 1996/03/20 05:04:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/library.dylan,v 1.3 1996/07/12 01:13:42 bfw Exp $
 
 //======================================================================
 //
@@ -38,7 +38,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/library.dylan,v 
 
 define library format
   use dylan;
-  use streams;
+  use new-streams;
   use print,
     export: {print};
   export format;
@@ -51,11 +51,7 @@ define module format
 	     $minimum-integer, <byte-character>,
 	     condition-format, condition-force-output,
 	     report-condition};
-  use streams,
-    import: {<stream>, write, lock-stream, unlock-stream, force-output,
-	     <byte-string-output-stream>, string-output-stream-string,
-	     <byte>, <buffer>, copy-into-buffer!,
-	     get-output-buffer, empty-output-buffer, release-output-buffer};
+  use new-streams;
   use print,
     import: {print};
   export

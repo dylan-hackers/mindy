@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.10 1996/03/17 00:30:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/names.dylan,v 1.11 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -96,7 +96,7 @@ define method print-message (name :: <method-name>, stream :: <stream>) => ();
   for (spec in name.method-name-specializers,
        first? = #t then #f)
     unless (first?)
-      write(", ", stream);
+      write(stream, ", ");
     end;
     print-message(spec, stream);
   end;
@@ -123,7 +123,7 @@ end;
 
 define method print-message
     (name :: <generated-name>, stream :: <stream>) => ();
-  write(name.generated-name-description, stream);
+  write(stream, name.generated-name-description);
 end method print-message;
 
 add-make-dumper

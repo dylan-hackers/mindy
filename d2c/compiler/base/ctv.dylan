@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.30 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.31 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -26,7 +26,7 @@ end;
 
 define method print-message
     (ctv :: <ct-not-supplied-marker>, stream :: <stream>) => ();
-  write("$not-supplied", stream);
+  write(stream, "$not-supplied");
 end;
 
 define variable *ct-not-supplied-marker* = #f;
@@ -77,19 +77,19 @@ define method as (class == <ct-value>, thing == #f) => res :: <literal-false>;
 end;
 
 define method print-object (lit :: <literal-true>, stream :: <stream>) => ();
-  write("{literal #t}", stream);
+  write(stream, "{literal #t}");
 end;
 
 define method print-object (lit :: <literal-false>, stream :: <stream>) => ();
-  write("{literal #f}", stream);
+  write(stream, "{literal #f}");
 end;
 
 define method print-message (lit :: <literal-true>, stream :: <stream>) => ();
-  write("#t", stream);
+  write(stream, "#t");
 end;
 
 define method print-message (lit :: <literal-false>, stream :: <stream>) => ();
-  write("#f", stream);
+  write(stream, "#f");
 end;
 
 define method \= (x :: <true>, y :: <literal-true>) => res :: <boolean>;
@@ -474,7 +474,7 @@ define method make (class == <literal-pair>, #next next-method,
 end;
 
 define method print-message (lit :: <literal-pair>, stream :: <stream>) => ();
-  write("{a <pair>}", stream);
+  write(stream, "{a <pair>}");
 end;
 
 define method as (class == <ct-value>, thing :: <pair>)
@@ -502,7 +502,7 @@ end;
 
 define method print-message (lit :: <literal-empty-list>, stream :: <stream>)
     => ();
-  write("#()", stream);
+  write(stream, "#()");
 end;
 
 define method as (class == <ct-value>, thing :: <empty-list>)
@@ -597,7 +597,7 @@ end;
 
 define method print-message
     (lit :: <literal-simple-object-vector>, stream :: <stream>) => ();
-  write("{a <simple-object-vector>}", stream);
+  write(stream, "{a <simple-object-vector>}");
 end;
 
 define method as (class == <ct-value>, vec :: <simple-object-vector>)

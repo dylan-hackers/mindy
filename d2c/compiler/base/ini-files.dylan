@@ -1,6 +1,6 @@
 module: ini-files
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ini-files.dylan,v 1.1 1996/06/26 16:57:47 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ini-files.dylan,v 1.2 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -147,7 +147,7 @@ define method parse-ini-file
       let line = read-line(stream);
       parse-line(line, line-number);
     end for;
-  exception (<end-of-file>)
+  exception (<end-of-stream-error>)
     #f;      // Catch it and do nothing
   end block;
   close(stream);

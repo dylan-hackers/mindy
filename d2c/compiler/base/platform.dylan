@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.2 1996/07/11 16:15:23 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.3 1996/07/12 01:10:03 bfw Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -10,8 +10,6 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 
 define sealed class <target-environment> (<object>)
   constant slot target-name :: <symbol>, init-keyword: #"target-name";
-
-  slot default-features :: <byte-string>;
 
   slot heap-preamble :: <byte-string>;
   slot align-directive :: <byte-string>; 
@@ -43,8 +41,7 @@ define sealed domain make(singleton(<target-environment>));
 define sealed domain initialize(<target-environment>);
 
 define constant $target-attribute-description 
-    = vector(#"default-features", default-features-setter,
-	     #"heap-preamble", heap-preamble-setter,
+    = vector(#"heap-preamble", heap-preamble-setter,
 	     #"align-directive", align-directive-setter,
 	     #"export-directive", export-directive-setter,
 	     #"word-directive", word-directive-setter,
@@ -72,7 +69,7 @@ define constant $target-attribute-description
 
 define method get-targets (filename :: <byte-string>)
  => targets :: <object-table>;
-  let stream = make(<file-stream>, direction: #"input", name: filename);
+  let stream = make(<file-stream>, direction: #"input", locator: filename);
   local method make-section (section-name :: <symbol>)
 	 => section :: <target-environment>;
 	  make(<target-environment>, target-name: section-name);

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.44 1996/07/11 16:20:10 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.45 1996/07/12 01:10:03 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,7 +8,8 @@ define library compiler-base
   use Collection-Extensions,
     import: {self-organizing-list}, export: all;
   use Random;
-  use Streams, export: all;
+  use New-Streams, export: all;
+  use Standard-IO, export: all;
   use Print, export: all;
   use Format, export: all;
 #if (mindy)
@@ -67,7 +68,7 @@ define module common
 #endif
 	     <equal-table>, <string-table>, equal-hash},
     export: all;
-  use Streams, export: all;
+  use New-Streams, export: all;
   use Print, export: all;
   use PPrint, export: all;
   use Format, export: all;
@@ -752,7 +753,7 @@ define module ini-files
   use extensions;
   use regular-expressions;
   use substring-search;
-  use streams;
+  use new-streams;
   use format;         // format and standard-io are for printing error msgs
   use standard-io;
   export 
@@ -762,13 +763,11 @@ end module ini-files;
 define module target-environment
   use dylan;
   use ini-files;
-  use streams, import: { <file-stream> };
+  use new-streams, import: { <file-stream> };
   export
     get-targets, <target-environment>,
 
     target-name,
-
-    default-features,
 
     heap-preamble,
     align-directive,

@@ -1,5 +1,5 @@
 module: debugger-format
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/debugger-format.dylan,v 1.2 1996/03/20 05:02:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/debugger-format.dylan,v 1.3 1996/07/12 01:13:42 bfw Exp $
 
 //======================================================================
 //
@@ -29,7 +29,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/debugger-format.
 
 define library debugger-format
   use Dylan;
-  use Streams;
+  use New-Streams;
+  use Standard-IO;
   //
   // We use the format library even though we don't reference anything in
   // it to make sure it is loaded.  Otherwise, there won't be a <stream>

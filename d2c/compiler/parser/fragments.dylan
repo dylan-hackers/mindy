@@ -1,5 +1,5 @@
 module: fragments
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.7 1996/03/27 23:57:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.8 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -80,7 +80,7 @@ define sealed method print-object
 	 let stop = frag.fragment-tail.fragment-next;
 	 for (subfrag = frag.fragment-head then subfrag.fragment-next,
 	      until: subfrag == stop)
-	   write(' ', stream);
+	   write-element(stream, ' ');
 	   pprint-newline(#"linear", stream);
 	   print(subfrag, stream);
 	 end for;
@@ -143,7 +143,7 @@ define sealed method print-object
      body:
        method (stream :: <stream>)
 	 write-class-name(frag, stream);
-	 write(' ', stream);
+	 write-element(stream, ' ');
 	 pprint-indent(#"block", 2, stream);
 	 pprint-newline(#"fill", stream);
 	 print-message(frag.fragment-token, stream);
@@ -195,13 +195,13 @@ define sealed method print-object
        method (stream :: <stream>)
 	 pprint-indent(#"block", 2, stream);
 	 write-class-name(fragment, stream);
-	 write(' ', stream);
+	 write-element(stream, ' ');
 	 pprint-newline(#"fill", stream);
 	 print(fragment.fragment-left-token, stream);
-	 write(' ', stream);
+	 write-element(stream, ' ');
 	 pprint-newline(#"fill", stream);
 	 print(fragment.fragment-contents, stream);
-	 write(' ', stream);
+	 write-element(stream, ' ');
 	 pprint-newline(#"fill", stream);
 	 print(fragment.fragment-right-token, stream);
        end method,

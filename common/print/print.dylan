@@ -1,41 +1,46 @@
 module: Print
-author: chiles@cs.cmu.edu
+author: Gwydion Project
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.4 1996/05/08 15:58:08 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.5 1996/07/12 01:12:51 bfw Exp $
 
-//======================================================================
-//
-// Copyright (c) 1994, 1995  Carnegie Mellon University
-// All rights reserved.
-// 
-// Use and copying of this software and preparation of derivative
-// works based on this software are permitted, including commercial
-// use, provided that the following conditions are observed:
-// 
-// 1. This copyright notice must be retained in full on any copies
-//    and on appropriate parts of any derivative works.
-// 2. Documentation (paper or online) accompanying any system that
-//    incorporates this software, or any part of it, must acknowledge
-//    the contribution of the Gwydion Project at Carnegie Mellon
-//    University.
-// 
-// This software is made available "as is".  Neither the authors nor
-// Carnegie Mellon University make any warranty about the software,
-// its performance, or its conformity to any specification.
-// 
-// Bug reports, questions, comments, and suggestions should be sent by
-// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
-//
-//======================================================================
-//
+
+///======================================================================
+///
+/// Copyright (c) 1994  Carnegie Mellon University
+/// All rights reserved.
+/// 
+/// Use and copying of this software and preparation of derivative
+/// works based on this software are permitted, including commercial
+/// use, provided that the following conditions are observed:
+/// 
+/// 1. This copyright notice must be retained in full on any copies
+///    and on appropriate parts of any derivative works.
+/// 2. Documentation (paper or online) accompanying any system that
+///    incorporates this software, or any part of it, must acknowledge
+///    the contribution of the Gwydion Project at Carnegie Mellon
+///    University.
+/// 
+/// This software is made available "as is".  Neither the authors nor
+/// Carnegie Mellon University make any warranty about the software,
+/// its performance, or its conformity to any specification.
+/// 
+/// Bug reports, questions, comments, and suggestions should be sent by
+/// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+///
+///======================================================================
+///
+
+/// This code was modified at Harlequin, Inc. to work with the new Streams
+/// Library designed by Harlequin and CMU.
+///
 
 
 
 /// <print-stream> class.
 ///
 
-/// <print-stream> Class -- Exported.
+/// <print-stream> Class -- Internal.
 ///
 /// These streams hold print state so that the print function can do most
 /// of the work maintaining print state, and the print-object function can
@@ -43,7 +48,9 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.4
 /// slot defaults to the value of a global variable upon creation (see the
 /// comments for the print function).
 ///
-define sealed class <print-stream> (<stream>)
+/// There are two concrete disjoint subclasses of this class.
+///
+define abstract sealed class <print-stream> (<stream>)
   //
   // Print-target holds the real destination of the print-stream.
   slot print-target :: <stream>, required-init-keyword: #"stream";
@@ -89,8 +96,33 @@ define sealed class <print-stream> (<stream>)
   slot circular-next-id :: <integer> = 0;
 end class;
 
-define sealed domain make (singleton(<print-stream>));
-define sealed domain initialize (<print-stream>);
+/// <buffered-print-stream> Class -- Internal.
+///
+/// This is the print-stream we wrap around buffered streams.  We do this
+/// so that people who know they are writing to buffered streams can call
+/// print on them without losing the buffered properties of their stream.
+/// The Buffer Access Protocol is extended to this class at the end of this
+/// file.
+///
+define sealed class <buffered-print-stream> (<print-stream>, <buffered-stream>)
+end class;
+
+define sealed domain make (singleton(<buffered-print-stream>));
+define sealed domain initialize (<buffered-print-stream>);
+
+
+/// <unbuffered-print-stream> Class -- Internal.
+///
+/// This is the print-stream we wrap around unbuffered streams.  Because these
+/// are so inconvenient to extend, we have add methods for every output
+/// operation to pass on the call to the target stream.  All these methods
+/// are at the end of this file.
+///
+define sealed class <unbuffered-print-stream> (<print-stream>)
+end class;
+
+define sealed domain make (singleton(<unbuffered-print-stream>));
+define sealed domain initialize (<unbuffered-print-stream>);
 
 
 
@@ -171,13 +203,13 @@ define constant $digits = "0123456789abcdef";
 /// isolating access to a global vector that lies around across calls to
 /// this function.  There was no profiling to validate this trade-off.
 ///
-/// We have two versions, one for <extended-integer> and one for <integer> so
+/// We have two versions, one for <general-integer> and one for <integer> so
 /// that we don't have to do lots of runtime dispatching.
 /// 
 define sealed method integer-to-string
-    (arg :: <extended-integer>, #key radix :: <integer> = 10)
+    (arg :: <general-integer>, #key radix :: <integer> = 10)
     => res :: <byte-string>;
-  local method repeat (arg :: <extended-integer>, digits :: <list>)
+  local method repeat (arg :: <general-integer>, digits :: <list>)
 	    => res :: <list>;
 	  let (quotient, remainder) = floor/(arg, radix);
 	  let digits = pair($digits[as(<integer>, remainder)], digits);
@@ -315,7 +347,7 @@ define generic print (object, stream :: <stream>,
 
 define constant <boolean-or-not-supplied>
   = type-union(<boolean>, singleton($not-supplied));
-define constant <fixed-integer-false-or-not-supplied>
+define constant <integer-or-false-or-not-supplied>
   = type-union(<integer>, one-of(#f, $not-supplied));
 
 /// Print -- Method for Exported Interface.
@@ -324,9 +356,9 @@ define constant <fixed-integer-false-or-not-supplied>
 /// <print-stream> to hold the values for the requested print operation.
 ///
 define method print (object, stream :: <stream>,
-		     #key level :: <fixed-integer-false-or-not-supplied>
+		     #key level :: <integer-or-false-or-not-supplied>
 		            = $not-supplied,
-		          length :: <fixed-integer-false-or-not-supplied>
+		          length :: <integer-or-false-or-not-supplied>
 		            = $not-supplied,
 		          circle? :: <boolean-or-not-supplied> = $not-supplied,
 		          pretty? :: <boolean-or-not-supplied> = $not-supplied)
@@ -342,7 +374,7 @@ define method print (object, stream :: <stream>,
     // the keyword arguments.  No need to lock this stream because only this
     // thread should have any references to it ... barring extreme user
     // silliness.
-    let p-stream = make(<print-stream>, stream: stream);
+    let p-stream = make-a-print-stream(stream);
     //
     // Set slots with those values supplied by the user.
     if (~ (level == $not-supplied)) p-stream.print-level := level end;
@@ -363,15 +395,35 @@ define method print (object, stream :: <stream>,
   end;
 end method;
 
+
+/// make-a-print-stream -- Internal Interface.
+///
+/// I use this hack so that I don't have to duplicate all the code in the
+/// print method above just to change one argument to the call to 'make'.
+///
+define sealed generic make-a-print-stream (stream :: <stream>)
+    => (result :: <print-stream>);
+///
+define sealed method make-a-print-stream (stream :: <stream>)
+    => (result :: <unbuffered-print-stream>);
+  make(<unbuffered-print-stream>, stream: stream);
+end method;
+///
+define sealed method make-a-print-stream (stream :: <buffered-stream>)
+    => (result :: <buffered-print-stream>);
+  make(<buffered-print-stream>, stream: stream);
+end method;
+
+
 /// Print -- Method for Exported Interface.
 ///
 /// This method must regard the values of the keywords and construct a
 /// <print-stream> to hold the values for the requested print operation.
 ///
 define method print (object, stream :: <print-stream>,
-		     #key level :: <fixed-integer-false-or-not-supplied>
+		     #key level :: <integer-or-false-or-not-supplied>
 		            = $not-supplied,
-			  length :: <fixed-integer-false-or-not-supplied>
+			  length :: <integer-or-false-or-not-supplied>
 		            = $not-supplied,
 		          circle? :: <boolean-or-not-supplied> = $not-supplied,
 		          pretty? :: <boolean-or-not-supplied> = $not-supplied)
@@ -479,7 +531,7 @@ define method maybe-print-object (object, stream :: <print-stream>)
     let requested-level :: false-or(<integer>) = stream.print-level;
     case
       (requested-level & (depth > requested-level)) =>
-	write($print-level-exceeded-string, stream);
+	write(stream, $print-level-exceeded-string);
       (~ stream.print-circle?) =>
 	print-object(object, stream);
       (stream.circular-first-pass?) =>
@@ -515,21 +567,21 @@ define method output-print-reference (ref :: <print-reference>,
     (ref.print-reference-count = 1) =>
       print-object(ref.print-reference-object, stream);
     (~ ref-id) =>
-      write($circular-id-prestring, stream);
-      write(new-print-reference-id(stream, ref), stream);
-      write($circular-id-poststring, stream);
-      write("=", stream);
+      write(stream, $circular-id-prestring);
+      write(stream, new-print-reference-id(stream, ref));
+      write(stream, $circular-id-poststring);
+      write(stream, "=");
       print-object(ref.print-reference-object, stream);
     otherwise =>
-      write($circular-id-prestring, stream);
-      write(ref-id, stream);
-      write($circular-id-poststring, stream);
+      write(stream, $circular-id-prestring);
+      write(stream, ref-id);
+      write(stream, $circular-id-poststring);
   end;
 end method;
 
 
 
-/// Print-object generic and default method.
+/// Print-object generic function and its default method.
 ///
 
 /// print-object -- Exported.
@@ -548,15 +600,27 @@ define method print-object (object :: <object>, stream :: <stream>)
 	     let obj-class = object.object-class;
 	     let name = obj-class.class-name;
 	     if (name)
-	       write(as(<byte-string>, name), stream);
-	       write(" instance", stream);
+	       // This branch will never run at Harlequin.  See class-name
+	       // definition below.
+	       write(stream, as(<byte-string>, name));
+	       write(stream, " instance");
 	     else
-	       write("instance of ", stream);
-	       print-specializer(obj-class, stream);
+	       print(obj-class, stream);
+	       write(stream, " instance");
+	       //write(stream, "instance of ");
+	       //print-specializer(obj-class, stream);
 	     end if;
 	   end method,
      suffix: "}");
 end method;
+
+
+/// class-name -- Interim Kludge.
+///
+//define function class-name (object) // => not :: singleton(#f)
+//  #f;
+//end function;
+
 
 
 /// Print-object <byte-string>, <unicode-string> and <character> methods.
@@ -566,45 +630,45 @@ end method;
 ///
 define sealed method print-object (char :: <character>, stream :: <stream>)
     => ();
-  write('\'', stream);
+  write-element(stream, '\'');
   write-char-maybe-escape(char, '\'', stream);
-  write('\'', stream);
+  write-element(stream, '\'');
 end method print-object;
 
-// write-char-maybe-escape -- internal.
-//
-// Utility routine used for printing characters appropriately escaped.
-// 
+/// write-char-maybe-escape -- Internal.
+///
+/// Utility routine used for printing characters appropriately escaped.
+///
 define method write-char-maybe-escape
     (char :: <character>, quote :: one-of('\'', '"'), stream :: <stream>)
     => ();
   case
     char < ' ' =>
       select (char)
-	'\0' => write("\\0", stream);
-	'\a' => write("\\a", stream);
-	'\b' => write("\\b", stream);
-	'\t' => write("\\t", stream);
-	'\f' => write("\\f", stream);
-	'\r' => write("\\r", stream);
-	'\n' => write("\\n", stream);
-	'\e' => write("\\e", stream);
+	'\0' => write(stream, "\\0");
+	'\a' => write(stream, "\\a");
+	'\b' => write(stream, "\\b");
+	'\t' => write(stream, "\\t");
+	'\f' => write(stream, "\\f");
+	'\r' => write(stream, "\\r");
+	'\n' => write(stream, "\\n");
+	'\e' => write(stream, "\\e");
 	otherwise =>
-	  write("\\<", stream);
-	  write(integer-to-string(as(<integer>, char), radix: 16), stream);
-	  write('>', stream);
+	  write(stream, "\\<");
+	  write(stream, integer-to-string(as(<integer>, char), radix: 16));
+	  write-element(stream, '>');
       end select;
     char == quote =>
-      write('\\', stream);
-      write(char, stream);
+      write-element(stream, '\\');
+      write-element(stream, char);
     char == '\\' =>
-      write("\\\\", stream);
+      write(stream, "\\\\");
     char > '~' =>
-      write("\\<", stream);
-      write(integer-to-string(as(<integer>, char), radix: 16), stream);
-      write('>', stream);
+      write(stream, "\\<");
+      write(stream, integer-to-string(as(<integer>, char), radix: 16));
+      write-element(stream, '>');
     otherwise =>
-      write(char, stream);
+      write-element(stream, char);
   end case;
 end method write-char-maybe-escape;
 
@@ -618,22 +682,22 @@ define sealed method print-object
 end method print-object;
 
 
-// write-string-escaped -- internal.
-//
-// Utility used by <byte-string>, <unicode-string>, and <symbol> print-object
-// methods to print the string with appropriate characters escaped.
-// 
+/// write-string-escaped -- Internal Interface.
+///
+/// Utility used by <byte-string>, <unicode-string>, and <symbol> print-object
+/// methods to print the string with appropriate characters escaped.
+///
 define generic write-string-escaped
     (object :: type-union(<byte-string>, <unicode-string>), stream :: <stream>)
     => ();
 
-// write-string-escaped{<byte-string>}
-//
-// We try to write as much of the string as possible at once in order to
-// keep from having to make lots of extra calls to write.  We scan the
-// string for the next character that required special processing and then
-// write all the skipped over characters in one chunk.
-// 
+/// write-string-escaped -- Method for Internal Interface.
+///
+/// We try to write as much of the string as possible at once in order to
+/// keep from having to make lots of extra calls to write.  We scan the
+/// string for the next character that required special processing and then
+/// write all the skipped over characters in one chunk.
+///
 define method write-string-escaped
     (object :: <byte-string>, stream :: <stream>)
     => ();
@@ -659,7 +723,7 @@ define method write-string-escaped
     method write-guts (from :: <integer>) => ();
       let (next-break, char) = find-next-break(from);
       unless (from == next-break)
-	write(object, stream, start: from, end: next-break);
+	write(stream, object, start: from, end: next-break);
       end unless;
       unless (next-break == len)
 	write-char-maybe-escape(char, '"', stream);
@@ -667,25 +731,26 @@ define method write-string-escaped
       end unless;
     end method write-guts;
 
-  write('"', stream);
+  write-element(stream, '"');
   write-guts(0);
-  write('"', stream);
+  write-element(stream, '"');
 end method write-string-escaped;
 
-// write-string-escaped{<unicode-string>}
-//
-// We can't write chunks of the string at once, so just pay the cost and
-// write each character individually.
-// 
+/// write-string-escaped -- Method for Internal Interface.
+///
+/// We can't write chunks of the string at once, so just pay the cost and
+/// write each character individually.
+///
 define method write-string-escaped
     (object :: <unicode-string>, stream :: <stream>)
     => ();
-  write('"', stream);
+  write-element(stream, '"');
   for (char in object)
     write-char-maybe-escape(char, '"', stream);
   end for;
-  write('"', stream);
+  write-element(stream, '"');
 end method write-string-escaped;
+
 
 
 /// Print-object <list> method.
@@ -712,7 +777,7 @@ define method print-list (object :: <list>, stream :: <stream>) => ();
   block(exit)
     let length :: false-or(<integer>) = stream.print-length;
     if (length & (length <= 0))
-      write("...", stream);
+      write(stream, "...");
     else
       print(object.head, stream);
       let circle? = stream.print-circle?;
@@ -720,21 +785,23 @@ define method print-list (object :: <list>, stream :: <stream>) => ();
       for (remaining = object.tail then remaining.tail,
 	   count = 1 then (count + 1),
 	   until: (remaining == #()))
-	write(", ", stream);
-	pprint-newline(#"fill", stream);
 	case
 	  (~ instance?(remaining, <list>)) =>
 	    // Object was not a proper list, so print dot notation.
-	    write(". ", stream);
+	    write(stream, ". ");
 	    pprint-newline(#"fill", stream);
 	    print(remaining, stream);
 	    exit();
 	  (length & (count >= length)) =>
 	    // We've exceeded print-length for this print request.
-	    write("...", stream);
+	    write(stream, ", ");
+	    pprint-newline(#"fill", stream);
+	    write(stream, "...");
 	    exit();
 	  (~ circle?) =>
 	    // No circular printing, so this is the simple and normal case.
+	    write(stream, ", ");
+	    pprint-newline(#"fill", stream);
 	    print(remaining.head, stream);
 	  (first-pass?) =>
 	    // Get or create the print-reference for the remaining pointer.
@@ -743,6 +810,8 @@ define method print-list (object :: <list>, stream :: <stream>) => ();
 	    ref.print-reference-count := ref-count;
 	    if (ref-count = 1)
 	      // First time through, so keep gathering references.
+	      write(stream, ", ");
+	      pprint-newline(#"fill", stream);
 	      print(remaining.head, stream);
 	    else
 	      // If ref-count is already greater than one, then we've seen
@@ -757,26 +826,28 @@ define method print-list (object :: <list>, stream :: <stream>) => ();
 	      (ref.print-reference-count = 1) =>
 		// Only one reference to the rest of the list, so print the
 		// remaining elements normally.
+		write(stream, ", ");
+		pprint-newline(#"fill", stream);
 		print(remaining.head, stream);
 	      (~ ref-id) =>
 		// Print the tag and its value with dot notation so that
 		// the rest of the list does not appear to be a single
 		// element of the list (that is, a nested list).
-		write(". ", stream);
+		write(stream, ". ");
 		pprint-newline(#"fill", stream);
-		write($circular-id-prestring, stream);
-		write(new-print-reference-id(stream, ref), stream);
-		write($circular-id-poststring, stream);
-		write("=", stream);
+		write(stream, $circular-id-prestring);
+		write(stream, new-print-reference-id(stream, ref));
+		write(stream, $circular-id-poststring);
+		write(stream, "=");
 		print(remaining, stream);
 	      otherwise =>
 		// Print the tag with dot notation.  See previous cases's
 		// comment.
-		write(". ", stream);
+		write(stream, ". ");
 		pprint-newline(#"fill", stream);
-		write($circular-id-prestring, stream);
-		write(ref-id, stream);
-		write($circular-id-poststring, stream);
+		write(stream, $circular-id-prestring);
+		write(stream, ref-id);
+		write(stream, $circular-id-poststring);
 		exit();
 	    end case;
 	end case;
@@ -816,12 +887,12 @@ define sealed method print-object
     (stream,
      prefix: "{",
      body: method (stream)
-	     write("GF", stream);
+	     write(stream, "GF");
 	     let name = function-name(object);
 	     if (name)
-	       write(' ', stream);
+	       write-element(stream, ' ');
 	       pprint-newline(#"fill", stream);
-	       write(as(<byte-string>, name), stream);
+	       write(stream, as(<byte-string>, name));
 	     end;
 	   end,
      suffix: "}");
@@ -833,15 +904,15 @@ define sealed method print-object (object :: <method>, stream :: <stream>)
     (stream,
      prefix: "{",
      body: method (stream)
-	     write("Method", stream);
+	     write(stream, "Method");
 	     let name = function-name(object);
 	     if (name)
-	       write(' ', stream);
+	       write-element(stream, ' ');
 	       pprint-newline(#"fill", stream);
-	       write(as(<byte-string>, name), stream);
+	       write(stream, as(<byte-string>, name));
 	     end;
 	     let specializers = function-specializers(object);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     pprint-newline(#"fill", stream);
 	     pprint-logical-block
 	       (stream,
@@ -862,7 +933,7 @@ end method;
 /// printing stream, so this function is basically good for use in body:
 /// methods passed to pprint-logical-block.
 ///
-/// Do not use this function for collections that may be tail-circular; it
+/// DO NOT use this function for collections that may be tail-circular; it
 /// will not terminate.
 ///
 define method print-items (items :: <collection>, print-fun :: <function>,
@@ -875,18 +946,17 @@ define method print-items (items :: <collection>, print-fun :: <function>,
     for (x in items,
 	 count = 0 then (count + 1))
       if (count ~= 0)
-	write(", ", stream);
+	write(stream, ", ");
 	pprint-newline(#"fill", stream);
       end;
       if (length & (count = length))
-	write("...", stream);
+	write(stream, "...");
 	exit();
       end;
       apply(print-fun, x, stream-for-apply);
     end for;
   end block;
 end method;
-
 
 
 /// Print-specializer generic function and methods.
@@ -906,7 +976,7 @@ define method print-specializer (type :: <class>, stream :: <stream>)
     => ();
   let name = type.class-name;
   if (name)
-    write(as(<byte-string>, name), stream);
+    write(stream, as(<byte-string>, name));
   else
     print(type, stream);
   end if;
@@ -914,24 +984,24 @@ end method;
 
 define method print-specializer (type :: <singleton>, stream :: <stream>)
     => ();
-  write("singleton(", stream);
+  write(stream, "singleton(");
   print(type.singleton-object, stream);
-  write(")", stream);
+  write-element(stream, ')');
 end method;
 
 define method print-specializer (type :: <subclass>, stream :: <stream>)
     => ();
-  write("subclass(", stream);
+  write(stream, "subclass(");
   print-specializer(type.subclass-of, stream);
-  write(")", stream);
+  write-element(stream, ')');
 end method;
 
 #if (~mindy)
 define method print-specializer (type :: <direct-instance>, stream :: <stream>)
     => ();
-  write("direct-instance(", stream);
+  write(stream, "direct-instance(");
   print-specializer(type.direct-instance-of, stream);
-  write(")", stream);
+  write-element(stream, ')');
 end method;
 #endif
 
@@ -939,25 +1009,25 @@ end method;
 define method print-specializer
     (type :: <byte-character-type>, stream :: <stream>)
     => ();
-  write("<byte-character>", stream);
+  write(stream, "<byte-character>");
 end method;
 #endif
 
 define method print-specializer (type :: <limited-integer>, stream :: <stream>)
     => ();
-  write("limited(", stream);
+  write(stream, "limited(");
   print-specializer(type.limited-integer-base-class, stream);
   let min = type.limited-integer-minimum;
   if (min)
-    write(", min: ", stream);
-    write(integer-to-string(min), stream);
+    write(stream, ", min: ");
+    write(stream, integer-to-string(min));
   end if;
   let max = type.limited-integer-maximum;
   if (max)
-    write(", max: ", stream);
-    write(integer-to-string(max), stream);
+    write(stream, ", max: ");
+    write(stream, integer-to-string(max));
   end if;
-  write(')', stream);
+  write-element(stream, ')');
 end method;
 
 define method print-specializer (type :: <union>, stream :: <stream>)
@@ -996,7 +1066,7 @@ define method print-union
 	   body: method (stream :: <stream>) => ();
 		   for (thing in singletons, first? = #t then #f)
 		     unless (first?)
-		       write(", ", stream);
+		       write(stream, ", ");
 		       pprint-newline(#"fill", stream);
 		     end unless;
 		     print(thing, stream);
@@ -1007,7 +1077,7 @@ define method print-union
     end method print-singletons;
   if (members.empty?)
     if (singletons.empty?)
-      write("{empty type}", stream);
+      write(stream, "{empty type}");
     else
       print-singletons(stream);
     end if;
@@ -1019,14 +1089,14 @@ define method print-union
 	       let first? = #t;
 	       for (member in members, first? = #t then #f)
 		 unless (first?)
-		   write(", ", stream);
+		   write(stream, ", ");
 		   pprint-newline(#"fill", stream);
 		 end unless;
 		 print-specializer(member, stream);
 	       finally
 		 unless (singletons.empty?)
 		   unless (first?)
-		     write(", ", stream);
+		     write(stream, ", ");
 		     pprint-newline(#"fill", stream);
 		   end unless;
 		   print-singletons(stream);
@@ -1060,19 +1130,20 @@ define sealed method print-object
      suffix: "}");
 end method print-object;
 
-// For classes, we just print the class name if there is one.
-// 
+/// For classes, we just print the class name if there is one.
+/// 
 define sealed method print-object (object :: <class>, stream :: <stream>)
     => ();
   let name = object.class-name;
   if (name)
-    write("{Class ", stream);
-    write(as(<byte-string>, name), stream);
-    write("}", stream);
+    write(stream, "{Class ");
+    write(stream, as(<byte-string>, name));
+    write(stream, "}");
   else
-    write("{Anonymous Class}", stream);
+    write(stream, "{Anonymous Class}");
   end if;
 end method;
+
 
 
 /// Print-object miscellaneous methods.
@@ -1082,21 +1153,21 @@ end method;
 ///
 define sealed method print-object (object :: singleton(#t), stream :: <stream>)
     => ();
-  write("#t", stream);
+  write(stream, "#t");
 end method;
 
 /// #f.
 ///
 define sealed method print-object (object :: singleton(#f), stream :: <stream>)
     => ();
-  write("#f", stream);
+  write(stream, "#f");
 end method;
 
 /// Symbols.
 ///
 define sealed method print-object (object :: <symbol>, stream :: <stream>)
     => ();
-  write('#', stream);
+  write-element(stream, '#');
   write-string-escaped(as(<string>, object), stream);
 end method;
 
@@ -1105,40 +1176,56 @@ end method;
 define sealed method print-object
     (object :: <integer>, stream :: <stream>)
     => ();
-  write(integer-to-string(object), stream);
+  write(stream, integer-to-string(object));
 end method;
 ///
 define sealed method print-object
-    (object :: <extended-integer>, stream :: <stream>)
+    (object :: <general-integer>, stream :: <stream>)
     => ();
-  write("#e", stream);
-  write(integer-to-string(object), stream);
+  write(stream, "#e");
+  write(stream, integer-to-string(object));
 end method;
 
 /// Ratios.
 ///
 define sealed method print-object (object :: <ratio>, stream :: <stream>)
     => ();
-  write(integer-to-string(object.numerator), stream);
-  write('/', stream);
-  write(integer-to-string(object.denominator), stream);
+  write(stream, integer-to-string(object.numerator));
+  write-element(stream, '/');
+  write(stream, integer-to-string(object.denominator));
 end;
 
 
 /// Float printing.
+///
+
+define sealed method print-object (num :: <single-float>, stream :: <stream>)
+    => ();
+  print-float(num, <single-float>, 7, 's', stream);
+end;
+
+define sealed method print-object (num :: <double-float>, stream :: <stream>)
+    => ();
+  print-float(num, <double-float>, 15, 'd', stream);
+end;
+
+define sealed method print-object (num :: <extended-float>, stream :: <stream>)
+    => ();
+  print-float(num, <extended-float>, 34, 'x', stream);
+end;
 
 define inline method print-float
     (num :: <float>, class :: <class>, digits :: <integer>,
      marker :: <character>, stream :: <stream>)
     => ();
   if (zero?(num))
-    write("0.0", stream);
-    write(marker, stream);
-    write('0', stream);
+    write(stream, "0.0");
+    write-element(stream, marker);
+    write-element(stream, '0');
   else
     if (negative?(num))
       num := -num;
-      write('-', stream);
+      write-element(stream, '-');
     end;
     let one = as(class, 1.0);
     let ten = as(class, 10.0);
@@ -1178,47 +1265,33 @@ define inline method print-float
     end;
     
     if (exponent > digits | exponent < -3)
-      write(chars[0], stream);
-      write('.', stream);
-      write(chars, stream, start: 1, end: max(2, digits - zeros));
-      write(marker, stream);
-      write(integer-to-string(exponent - 1), stream);
+      write-element(stream, chars[0]);
+      write-element(stream, '.');
+      write(stream, chars, start: 1, end: max(2, digits - zeros));
+      write-element(stream, marker);
+      write(stream, integer-to-string(exponent - 1));
     elseif (exponent == digits)
-      write(chars, stream);
-      write(".0", stream);
-      write(marker, stream);
-      write('0', stream);
+      write(stream, chars);
+      write(stream, ".0");
+      write-element(stream, marker);
+      write-element(stream, '0');
     elseif (exponent > 0)
-      write(chars, stream, start: 0, end: exponent);
-      write('.', stream);
-      write(chars, stream, start: exponent, end: max(exponent + 1, digits - zeros));
-      write(marker, stream);
-      write('0', stream);
+      write(stream, chars, start: 0, end: exponent);
+      write-element(stream, '.');
+      write(stream, chars, start: exponent,
+	    end: max(exponent + 1, digits - zeros));
+      write-element(stream, marker);
+      write-element(stream, '0');
     else
-      write("0.", stream);
+      write(stream, "0.");
       for (i from exponent below 0)
-	write('0', stream);
+	write-element(stream, '0');
       end;
-      write(chars, stream, end: digits - zeros);
-      write(marker, stream);
-      write('0', stream);
+      write(stream, chars, end: digits - zeros);
+      write-element(stream, marker);
+      write-element(stream, '0');
     end;
   end;
-end;
-  
-define sealed method print-object (num :: <single-float>, stream :: <stream>)
-    => ();
-  print-float(num, <single-float>, 7, 's', stream);
-end;
-
-define sealed method print-object (num :: <double-float>, stream :: <stream>)
-    => ();
-  print-float(num, <double-float>, 15, 'd', stream);
-end;
-
-define sealed method print-object (num :: <extended-float>, stream :: <stream>)
-    => ();
-  print-float(num, <extended-float>, 34, 'x', stream);
 end;
 
 
@@ -1234,63 +1307,141 @@ define method print-to-string (object, #rest args,
 			            length :: false-or(<integer>),
 			            circle? :: <boolean>, pretty? :: <boolean>)
     => result :: <byte-string>;
-  let s = make(<byte-string-output-stream>);
+  // Assume it is a small amount of printing.
+  let s = make(<byte-string-stream>, contents: make(<byte-string>, size: 200),
+	       direction: #"output");
   apply(print, object, s, args);
-  s.string-output-stream-string;
+  s.stream-contents;
 end method;
 
 
 
-/// Streams protocol extensions for <print-stream>s.
+/// Buffered streams protocol extensions for <buffered-print-stream>s.
 ///
 
-/// These methods may change when pretty printing goes in.  In particular,
-/// getting and releasing the buffer may interact with buffered pretty
-/// printing stuff.
-///
+define constant $bogus-buffer = make(<buffer>, size: 256);
+$bogus-buffer.buffer-end := $bogus-buffer.size;
 
-define constant bogus-buffer = make(<buffer>, size: 256);
-
-define method stream-extension-get-output-buffer (stream :: <print-stream>)
-    => (buffer :: <buffer>, next :: <buffer-index>, size :: <buffer-index>);
+define method do-get-output-buffer (stream :: <buffered-print-stream>,
+				    #key bytes :: <integer> = 1)
+ => (buffer :: <buffer>);
   if ((stream.print-circle?) & (stream.circular-first-pass?))
-    values(bogus-buffer, 0, bogus-buffer.size);
+    $bogus-buffer;
   else
-    stream-extension-get-output-buffer(stream.print-target);
+    get-output-buffer(stream.print-target, bytes: bytes);
   end;
 end method;
 
-define method stream-extension-release-output-buffer
-    (stream :: <print-stream>, next :: <buffer-index>)
+define method do-release-output-buffer (stream :: <buffered-print-stream>)
     => ();
   if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
-    stream-extension-release-output-buffer(stream.print-target, next);
+    release-output-buffer(stream.print-target);
   end;
 end method;
 
-define method stream-extension-empty-output-buffer
-    (stream :: <print-stream>, stop :: <buffer-index>)
+define method do-next-output-buffer (stream :: <buffered-print-stream>,
+				     #key bytes :: <integer> = 1)
+    => (buffer :: <buffer>);
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    next-output-buffer(stream.print-target, bytes: bytes);
+  end;
+end method;
+
+define method do-force-output-buffers (stream :: <buffered-print-stream>)
     => ();
   if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
-    stream-extension-empty-output-buffer(stream.print-target, stop);
+    force-output-buffers(stream.print-target);
   end;
 end method;
 
-define method stream-extension-force-secondary-buffers
-    (stream :: <print-stream>)
+define method do-synchronize (stream :: <buffered-print-stream>)
     => ();
   if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
-    stream-extension-force-secondary-buffers(stream.print-target);
+    synchronize(stream.print-target);
   end;
 end method;
 
-define method stream-extension-synchronize (stream :: <print-stream>)
+
+
+/// Output methods for <buffered-print-stream>s.
+///
+
+define method write-element (stream :: <unbuffered-print-stream>,
+			     ele :: <object>)
     => ();
   if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
-    stream-extension-synchronize(stream.print-target);
+    write-element(stream.print-target, ele);
   end;
 end method;
 
+define method write (stream :: <unbuffered-print-stream>,
+		     seq :: <sequence>,
+		     #key start :: <integer> = 0,
+		          end: stop :: <integer> = seq.size)
+    => ();
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    write(stream.print-target, seq, start: start, end: stop);
+  end;
+end method;
+
+define method force-output (stream :: <unbuffered-print-stream>)
+    => ();
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    force-output(stream.print-target);
+  end;
+end method;
+
+define method synchronize-output (stream :: <unbuffered-print-stream>)
+    => ();
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    synchronize-output(stream.print-target);
+  end;
+end method;
+
+define method discard-output (stream :: <unbuffered-print-stream>)
+    => ();
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    discard-output(stream.print-target);
+  end;
+end method;
+
+define method write-line (stream :: <unbuffered-print-stream>,
+			  string :: <string>,
+			  #key start :: <integer> = 0,
+			       end: stop :: <integer> = string.size)
+    => ();
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    write-line(stream.print-target, string, start: start, end: stop);
+  end;
+end method;
+
+define method new-line (stream :: <unbuffered-print-stream>)
+    => ();
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    new-line(stream.print-target);
+  end;
+end method;
+
+define method stream-open? (stream :: <unbuffered-print-stream>)
+ => (open? :: <boolean>);
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    stream-open?(stream.print-target);
+  end;
+end method;
+
+define method stream-element-type (stream :: <unbuffered-print-stream>)
+ => (elt-type :: <type>);
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    stream-element-type(stream.print-target);
+  end;
+end method;
+
+define method stream-at-end? (stream :: <unbuffered-print-stream>)
+ => at-end? :: <boolean>;
+  if (~ ((stream.print-circle?) & (stream.circular-first-pass?)))
+    stream-at-end?(stream.print-target);
+  end;
+end method;
 
 
 /// Pretty-printer support.
@@ -1303,21 +1454,27 @@ end method;
 
 /// pprint-logical-block -- Method for Exported Interface.
 ///
-/// When pretty printing, we pass the print-target of the <print-stream> to
-/// the recursive call to pprint-logical-block.  This causes
-/// pprint-logical-block to wrap a pretty printing stream around the actual
-/// target.  The body: method of the recursive call then wraps the
-/// <print-stream> around the pretty printing stream, nesting the ultimate
-/// target stream twice.
+/// When we first enter this method, we pass the print-target of the
+/// <print-stream> to the recursive call to pprint-logical-block.  This
+/// causes pprint-logical-block to wrap a pretty printing stream around the
+/// target.  Then, when pprint-logical-block calls the body: method defined
+/// here, the body: method wraps the <print-stream> around the newly created
+/// pretty printing stream, nesting the ultimate target stream twice.  This
+/// allows printing to continue with the print function handling all the
+/// stuff for the user as it is supposed to do, but as output is passed on
+/// to the print-stream's target, it gets pretty print processed before
+/// going onto the ultimate target.
 ///
-/// In the body: method of the recursive call, there is a check to see if
-/// the target is the pretty-stream argument. They are == when the body
-/// function passed to this <print-stream> method contains recursive calls
-/// to pprint-logical-block.  The code works without the if test, but
-/// besides saving a few stores into memory with the assignments, the code
-/// seemed more clear with the if test; that is, it should be more clear to
-/// future maintainers of this code that the method can be reentered on the
-/// same stream and what happens when this method is reentered.
+/// Since the <print-stream> passed into this method is wrapped around the
+/// outside of the pretty printing stream, should some print-object method
+/// call ppring-logical-block, this method executes again.  However, during
+/// this recursive execution, this method invokes pprint-logical-block on
+/// the print-target of <print-stream>, which the pretty printing stream.
+/// That means the value of pretty-stream in our body: method below is == to
+/// print-target of our <print-stream>.  When this is true, we do not need
+/// to do any extra wrapping because we already have the three streams
+/// (print stream, pretty stream, and the target) nested just the way we
+/// want them.
 ///
 define sealed method pprint-logical-block
     (stream :: <print-stream>,
@@ -1350,11 +1507,11 @@ define sealed method pprint-logical-block
 			   suffix: suffix);
     otherwise =>
       if (prefix | per-line-prefix)
-	write(prefix | per-line-prefix, stream);
+	write(stream, prefix | per-line-prefix);
       end;
       body(stream);
       if (suffix)
-	write(suffix, stream);
+	write(stream, suffix);
       end;
   end case;
 end method;
@@ -1370,7 +1527,7 @@ define sealed method pprint-newline
        & stream.print-pretty?) =>
       pprint-newline(kind, stream.print-target);
     (kind == #"mandatory") =>
-      write('\n', stream);
+      new-line(stream);
   end;
 end;
 

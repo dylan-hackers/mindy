@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.15 1996/05/08 15:56:31 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.16 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -151,7 +151,7 @@ end method element-setter;
 
 define method fill-buffer (big-buf :: <big-buffer>, stream :: <stream>) => ();
   for (buf in big-buf.buffers)
-    read-into!(buf, stream);
+    fill-buffer(buf, stream);
   end for;
 end method fill-buffer;
 
@@ -200,7 +200,13 @@ end method make-buffer;
 #endif
 
 define method fill-buffer (buf :: <buffer>, stream :: <stream>) => ();
-  read-into!(buf, stream);
+  block ()
+    read-into!(stream, buf.size, buf);
+  exception (inc-read :: <incomplete-read-error>)
+    copy-into-buffer!(buf, 0, inc-read.incomplete-read-sequence);
+  exception (<end-of-stream-error>)
+    #f;
+  end; 
 end method fill-buffer;
 
 
@@ -274,12 +280,13 @@ end;
 define method contents (source :: <source-file>)
   source.%contents
     | begin
-	let file = make(<file-stream>,
-			name: if (source.directory)
-				stringify(source.directory, source.file-name);
-			      else
-				source.file-name;
-			      end if);
+	let file 
+	  = make(<file-stream>,
+		 locator: if (source.directory)
+			    stringify(source.directory, source.file-name);
+			  else
+			    source.file-name;
+			  end if);
 	block ()
 	  let result = make-buffer(file.stream-size);
 	  fill-buffer(result, file);
@@ -378,7 +385,7 @@ define sealed method describe-source-location
 	   block (return)
 	     let line
 	       = begin
-		   let handler (<file-not-found>)
+		   let handler (<file-does-not-exist-error>)
 		     = method (cond, next-handler) return() end method;
 		   extract-line(srcloc.source-file,
 				srcloc.start-posn - srcloc.start-column);
@@ -397,7 +404,7 @@ define sealed method describe-source-location
 	   block (return)
 	     let (first-line, last-line)
 	       = begin
-		   let handler (<file-not-found>)
+		   let handler (<file-does-not-exist-error>)
 		     = method (cond, next-handler) return() end method;
 		   values(extract-line
 			    (srcloc.source-file,
@@ -409,14 +416,14 @@ define sealed method describe-source-location
 	     highlight-line(first-line, srcloc.start-column,
 			    first-line.size, stream);
 	     unless (srcloc.start-line + 1 == srcloc.end-line)
-	       write("  through", stream);
+	       write(stream, "  through");
 	     end unless;
 	     pprint-newline(#"mandatory", stream);
 	     highlight-line(last-line, 0, srcloc.end-column, stream);
 	   end block;
 	 end if;
        end method);
-  write("  ", stream);
+  write(stream, "  ");
 end method describe-source-location;
 
 
@@ -424,18 +431,18 @@ define method highlight-line
     (line :: <byte-string>, start-char :: <integer>, end-char :: <integer>,
      stream :: <stream>)
     => ();
-  write("    ", stream);
+  write(stream, "    ");
   local method repeat (index :: <integer>, column :: <integer>)
 	  if (index < line.size)
 	    let char = line[index];
 	    if (char == '\t')
 	      let new-column = floor/(column + 8, 8) * 8;
 	      for (column from column below new-column)
-		write(' ', stream);
+		write-element(stream, ' ');
 	      end for;
 	      repeat(index + 1, new-column);
 	    else
-	      write(char, stream);
+	      write-element(stream, char);
 	      repeat(index + 1, column + 1);
 	    end if;
 	  end if;
@@ -446,16 +453,16 @@ define method highlight-line
   if (start-char < end-char)
     let end-column = compute-column(line, end-char);
     for (column from 0 below start-column + 4)
-      write(' ', stream);
+      write-element(stream, ' ');
     end for;
     for (column from start-column below end-column)
-      write('^', stream);
+      write-element(stream, '^');
     end for;
   else
     for (column from 0 below start-column + 3)
-      write(' ', stream);
+      write-element(stream, ' ');
     end for;
-    write("/\\", stream);
+    write(stream, "/\\");
   end if;
   pprint-newline(#"mandatory", stream);
 end method highlight-line;

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.124 1996/07/11 16:16:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.125 1996/07/12 01:11:07 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -32,9 +32,9 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 //   indent(stream :: <indenting-stream>, delta :: <integer>)
 //      Changes the current indentation for stream text.
 //   make-indenting-stream-string(#rest keys)
-//      Wrapper function for "make(<byte-string-output-stream>)"
+//      Wrapper function for "make(<buffered-byte-string-output-stream>)"
 //   get-string(stream :: <indenting-stream>)
-//      Equivalent to "string-output-stream-string".  Only works on
+//      Equivalent to "stream-contents".  Only works on
 //      streams which wrap <string-stream>s.
 //
 //   emit-prototype-for(name :: <byte-string>, info :: <object>,
@@ -87,7 +87,7 @@ define variable *emit-all-function-objects?* = #f;
 
 define constant $indentation-step = 4;
 
-define class <indenting-stream> (<stream>)
+define class <indenting-stream> (<buffered-stream>)
   slot is-target :: <stream>, required-init-keyword: target:;
   slot is-buffer :: <buffer>,
     init-function: curry(make, <buffer>, size: 1024);
@@ -97,9 +97,32 @@ define class <indenting-stream> (<stream>)
     init-value: 0, init-keyword: indentation:;
 end;
 
-define method stream-extension-get-output-buffer (stream :: <indenting-stream>)
-    => (buf :: <buffer>, next :: <buffer-index>, size :: <buffer-index>);
-  values(stream.is-buffer, 0, stream.is-buffer.size);
+define method stream-open? (stream :: <indenting-stream>)
+ => open? :: <boolean>;
+    stream.is-target.stream-open?;
+end method stream-open?;
+
+define method stream-element-type (stream :: <indenting-stream>)
+ => type :: <type>;
+  stream.is-target.stream-element-type;
+end method stream-element-type;
+
+define method stream-at-end? (stream :: <indenting-stream>)
+ => at-end? :: <boolean>;
+  stream.is-target.stream-at-end?;
+end method stream-at-end?;
+
+define method do-get-output-buffer (stream :: <indenting-stream>,
+				    #key bytes :: <integer> = 1)
+ => buf :: <buffer>;
+  let buf :: <buffer> = stream.is-buffer;
+  if (bytes > buf.size)
+    error("Stream's buffer is not large enough to get %d bytes -- %=",
+	  bytes, stream);
+  end;
+  buf.buffer-next := 0;
+  buf.buffer-end := buf.size;
+  buf;
 end;
 
 define constant $tab = as(<integer>, '\t');
@@ -118,8 +141,9 @@ define method indenting-stream-spew-output
     (stream :: <indenting-stream>, stop :: <buffer-index>)
     => ();
   unless (zero?(stop))
-    let (target-buffer, target-next :: <integer>, target-size :: <integer>)
-      = get-output-buffer(stream.is-target);
+    let target-buffer :: <buffer> = get-output-buffer(stream.is-target);
+    let target-next :: <integer> = target-buffer.buffer-next;
+    let target-size :: <integer> = target-buffer.buffer-end;
     let buffer = stream.is-buffer;
     local
       method spew-n-chars (n :: <integer>, char :: <integer>)
@@ -128,15 +152,18 @@ define method indenting-stream-spew-output
 	  for (i :: <integer> from target-next below target-size)
 	    target-buffer[i] := char;
 	  end;
-	  empty-output-buffer(stream.is-target, target-size);
-	  target-next := 0;
+	  target-buffer.buffer-next := target-size;
+	  target-buffer := next-output-buffer(stream.is-target);
+	  // target-buffer may be different
+	  target-next := target-buffer.buffer-next;
+	  target-size := target-buffer.buffer-end;
 	  n := n - available;
-	  available := target-size;
+	  available := target-size - target-next;
 	end;
 	for (i :: <integer> from target-next below target-next + n)
 	  target-buffer[i] := char;
 	finally
-	  target-next := i;
+	  target-buffer.buffer-next := (target-next := i);
 	end;
       end,
       method spew-range (finish :: <integer>, start :: <integer>)
@@ -144,12 +171,15 @@ define method indenting-stream-spew-output
 	let available = target-size - target-next;
 	if (available < n)
 	  copy-bytes(target-buffer, target-next, buffer, start, available);
-	  empty-output-buffer(stream.is-target, target-size);
-	  target-next := 0;
+	  target-buffer.buffer-next := target-size;
+	  target-buffer := next-output-buffer(stream.is-target);
+	  // target-buffer may be different
+	  target-next := target-buffer.buffer-next;
+	  target-size := target-buffer.buffer-end;
 	  spew-range(finish, start + available);
 	else
 	  copy-bytes(target-buffer, target-next, buffer, start, n);
-	  target-next := target-next + n;
+	  target-buffer.buffer-next := (target-next := target-next + n);
 	end if;
       end method spew-range;
     local
@@ -203,36 +233,42 @@ define method indenting-stream-spew-output
 	else
 	  do-text(0, 0, stream.is-column);
 	end if;
-    release-output-buffer(stream.is-target, target-next);
+    release-output-buffer(stream.is-target);
     stream.is-after-newline? := new-after-newline?;
     stream.is-column := new-column;
   end;
 end;
 
-define method stream-extension-release-output-buffer
-    (stream :: <indenting-stream>, next :: <buffer-index>)
-    => ();
-  indenting-stream-spew-output(stream, next);
+define method do-release-output-buffer (stream :: <indenting-stream>)
+ => ();
+  indenting-stream-spew-output(stream, stream.is-buffer.buffer-next);
 end;
 
-define method stream-extension-empty-output-buffer
-    (stream :: <indenting-stream>, stop :: <buffer-index>)
-    => ();
-  indenting-stream-spew-output(stream, stop);
+define method do-next-output-buffer (stream :: <indenting-stream>,
+				     #key bytes :: <integer> = 1)
+ => buf :: <buffer>;
+  let buf :: <buffer> = stream.is-buffer;
+  if (bytes > buf.size)
+    error("Stream's buffer is not large enough to get %d bytes -- %=",
+	  bytes, stream);
+  end;
+  indenting-stream-spew-output(stream, buf.buffer-next);
+  buf.buffer-next := 0;
+  buf.buffer-end := buf.size;
+  buf;
 end;
 
-define method stream-extension-force-secondary-buffers
-    (stream :: <indenting-stream>)
-    => ();
-  force-secondary-buffers(stream.is-target);
+define method do-force-output-buffers (stream :: <indenting-stream>)
+ => ();
+  force-output-buffers(stream.is-target);
 end;  
 
-define method stream-extension-synchronize (stream :: <indenting-stream>)
-    => ();
+define method do-synchronize (stream :: <indenting-stream>)
+ => ();
   synchronize(stream.is-target);
 end;
 
-define method close (stream :: <indenting-stream>) => ();
+define method close (stream :: <indenting-stream>, #all-keys) => ();
   force-output(stream);
 end;
 
@@ -245,13 +281,13 @@ define constant make-indenting-string-stream
   = method (#rest keys)
 	=> res :: <indenting-stream>;
       apply(make, <indenting-stream>,
-	    target: make(<byte-string-output-stream>),
+	    target: make(<buffered-byte-string-output-stream>),
 	    keys);
     end;
 
 define method get-string (stream :: <indenting-stream>)
     => res :: <byte-string>;
-  stream.is-target.string-output-stream-string;
+  stream.is-target.stream-contents;
 end;
 
 
@@ -895,7 +931,7 @@ define method c-name-and-rep (leaf :: <abstract-variable>,
     if (instance?(leaf.var-info, <debug-named-info>))
       format(stream, " /* %s */", leaf.var-info.debug-name.clean-for-comment);
     end;
-    write('\n', stream);
+    new-line(stream);
     info.backend-var-info-name := name;
   end;
   values(name, info.backend-var-info-rep);
@@ -1241,8 +1277,8 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
   format(gstream, "    *end++ = %s;\n",
 	 c-expr-and-rep(as(<ct-value>, #f), *general-rep*, file));
   format(gstream, "return end;\n");
-  write(get-string(gstream), bstream);
-  write("}\n\n", bstream);
+  write(bstream, get-string(gstream));
+  write(bstream, "}\n\n");
 
   format(bstream,
 	 "descriptor_t *values_sequence"
@@ -1254,8 +1290,8 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 	   "sizeof(descriptor_t));\n",
 	 dylan-slot-offset(sov-cclass, #"%element"));
   format(gstream, "return sp + elements;\n");
-  write(get-string(gstream), bstream);
-  write("}\n\n", bstream);
+  write(bstream, get-string(gstream));
+  write(bstream, "}\n\n");
 
   unless (instance?(*double-rep*, <c-data-word-representation>))
     let cclass = specifier-type(#"<double-float>");
@@ -1269,13 +1305,13 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
-    write(get-string(gstream), bstream);
-    write("}\n\n", bstream);
+    write(bstream, get-string(gstream));
+    write(bstream, "}\n\n");
 
     format(bstream, "double double_float_value(heapptr_t df)\n{\n");
     format(gstream, "return SLOT(df, double, %d);\n", value-offset);
-    write(get-string(gstream), bstream);
-    write("}\n\n", bstream);
+    write(bstream, get-string(gstream));
+    write(bstream, "}\n\n");
   end;
 
   unless (instance?(*long-double-rep*, <c-data-word-representation>))
@@ -1290,13 +1326,13 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
     let value-offset = dylan-slot-offset(cclass, #"value");
     format(gstream, "SLOT(res, long double, %d) = value;\n", value-offset);
     format(gstream, "return res;\n");
-    write(get-string(gstream), bstream);
-    write("}\n\n", bstream);
+    write(bstream, get-string(gstream));
+    write(bstream, "}\n\n");
 
     format(bstream, "long double extended_float_value(heapptr_t xf)\n{\n");
     format(gstream, "return SLOT(xf, long double, %d);\n", value-offset);
-    write(get-string(gstream), bstream);
-    write("}\n\n", bstream);
+    write(bstream, get-string(gstream));
+    write(bstream, "}\n\n");
   end;
 end;
 
@@ -1308,7 +1344,7 @@ define method emit-tlf-gunk (tlf :: <define-generic-tlf>, file :: <file-state>)
   format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
   let defn = tlf.tlf-defn;
   emit-definition-gunk(defn, file);
-  write('\n', file.file-body-stream);
+  new-line(file.file-body-stream);
   let ctv = defn.ct-value;
   if (ctv)
     if (*emit-all-function-objects?*)
@@ -1365,7 +1401,7 @@ define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
   // This class was obviously defined in this lib, so it is a local class.
   let defn = tlf.tlf-defn;
   emit-definition-gunk(defn, file);
-  write('\n', file.file-body-stream);
+  new-line(file.file-body-stream);
   let ctv = defn.ct-value;
   if (ctv)
     if (ctv.sealed?)
@@ -1429,7 +1465,7 @@ define method emit-tlf-gunk
   if (tlf.tlf-rest-defn)
     emit-definition-gunk(tlf.tlf-rest-defn, file);
   end;
-  write('\n', file.file-body-stream);
+  new-line(file.file-body-stream);
 end;
 
 define method emit-definition-gunk
@@ -1561,17 +1597,17 @@ define method emit-function
   format(stream, "/* %s */\n", function.name.clean-for-comment);
   format(stream, "%s\n{\n",
 	 compute-function-prototype(function, function-info, file));
-  write(get-string(file.file-vars-stream), stream);
-  write('\n', stream);
+  write(stream, get-string(file.file-vars-stream));
+  new-line(stream);
   let overflow = file.file-guts-overflow;
   unless (overflow.empty?)
     for (string in overflow)
-      write(string, stream);
+      write(stream, string);
     end;
     overflow.size := 0;
   end unless;
-  write(get-string(file.file-guts-stream), stream);
-  write("}\n\n", stream);
+  write(stream, get-string(file.file-guts-stream));
+  write(stream, "}\n\n");
 end;
 
 define method compute-function-prototype
@@ -1580,19 +1616,19 @@ define method compute-function-prototype
      file :: <file-state>)
     => res :: <byte-string>;
   let c-name = main-entry-name(function-info, file);
-  let stream = make(<byte-string-output-stream>);
+  let stream = make(<buffered-byte-string-output-stream>);
   let result-rep = function-info.function-info-result-representation;
   case
-    (result-rep == #"doesn't-return") => write("void", stream);
-    (result-rep == #"cluster") => write("descriptor_t *", stream);
+    (result-rep == #"doesn't-return") => write(stream, "void");
+    (result-rep == #"cluster") => write(stream, "descriptor_t *");
     (instance?(result-rep, <sequence>)) =>
       if (result-rep.empty?)
-	write("void", stream);
+	write(stream, "void");
       else
 	format(stream, "struct %s",
 	       pick-result-structure(result-rep, file));
       end if;
-    otherwise => write(result-rep.representation-c-type, stream);
+    otherwise => write(stream, result-rep.representation-c-type);
   end;
   format(stream, " %s(descriptor_t *orig_sp", c-name);
   for (rep in function-info.function-info-argument-representations,
@@ -1607,8 +1643,8 @@ define method compute-function-prototype
       end;
     end;
   end;
-  write(')', stream);
-  stream.string-output-stream-string;
+  write-element(stream, ')');
+  stream.stream-contents;
 end;
 
 define method pick-result-structure
@@ -1667,13 +1703,13 @@ end;
 define method emit-region
     (region :: <simple-region>, file :: <file-state>)
     => ();
-  let byte-string :: <byte-string-output-stream>
+  let byte-string :: <buffered-byte-string-output-stream>
     = file.file-guts-stream.is-target;
   for (assign = region.first-assign then assign.next-op,
        while: assign)
     emit-assignment(assign.defines, assign.depends-on.source-exp, file);
     if (byte-string.stream-size >= 65536)
-      add!(file.file-guts-overflow, byte-string.string-output-stream-string);
+      add!(file.file-guts-overflow, byte-string.stream-contents);
     end if;
   end;
 end;
@@ -1686,64 +1722,26 @@ define method emit-region (region :: <compound-region>,
   end;
 end;
 
-
-define method elseif-able? (region :: <if-region>) => answer :: <boolean>;
-  #t;
-end method elseif-able?;
-
-define method elseif-able? (region :: <compound-region>)
- => answer :: <boolean>;
-  region.regions.size == 2
-    & instance?(region.regions.first, <simple-region>)
-    & instance?(region.regions.second, <if-region>)
-    & begin
-	let simple = region.regions.first;
-	let if-region = region.regions.second;
-	simple.first-assign ~== #f
-	  & simple.first-assign == simple.last-assign  // only one assignment
-	  & simple.first-assign.defines == if-region.depends-on.source-exp
-	  & simple.first-assign.depends-on.source-exp.c-code-moveable?;
-      end;
-end method elseif-able?;
-
-define method elseif-able? (region :: <region>) => answer :: <boolean>;
-  #f;
-end method elseif-able?;
-
-define method emit-region (if-region :: <if-region>, file :: <file-state>)
- => ();
+define method emit-region (region :: <if-region>, file :: <file-state>)
+    => ();
   let stream = file.file-guts-stream;
-  let cond = ref-leaf(*boolean-rep*, if-region.depends-on.source-exp, file);
+  let cond = ref-leaf(*boolean-rep*, region.depends-on.source-exp, file);
   spew-pending-defines(file);
   format(stream, "if (%s) {\n", cond);
   indent(stream, $indentation-step);
-  emit-region(if-region.then-region, file);
-  /* ### emit-joins(if-region.join-region, file); */
+  emit-region(region.then-region, file);
+  /* ### emit-joins(region.join-region, file); */
   spew-pending-defines(file);
   indent(stream, -$indentation-step);
-  write("}\n", stream);
-
-  // We need to detect places where we can use "else if" rather than
-  // "else { if" because if we don't, we'll break the parsers on
-  // crappy C compilers (such as Microsoft Visual C++)
-  let clause-is-an-elseif = if-region.else-region.elseif-able?;
-
-  if (clause-is-an-elseif)
-    write("else ", stream);
-  else
-    write("else {\n", stream);
-    indent(stream, $indentation-step);
-  end if;
-
-  emit-region(if-region.else-region, file);
-  /* ### emit-joins(if-region.join-region, file); */
+  write(stream, "}\n");
+  write(stream, "else {\n");
+  indent(stream, $indentation-step);
+  emit-region(region.else-region, file);
+  /* ### emit-joins(region.join-region, file); */
   spew-pending-defines(file);
-
-  if (~clause-is-an-elseif)
-    indent(stream, -$indentation-step);
-    write("}\n", stream);
-  end if;
-end method emit-region;
+  indent(stream, -$indentation-step);
+  write(stream, "}\n");
+end;
 
 define method emit-region (region :: <loop-region>,
 			   file :: <file-state>)
@@ -1751,13 +1749,13 @@ define method emit-region (region :: <loop-region>,
   /* ### emit-joins(region.join-region, file); */
   spew-pending-defines(file);
   let stream = file.file-guts-stream;
-  write("while (1) {\n", stream);
+  write(stream, "while (1) {\n");
   indent(stream, $indentation-step);
   emit-region(region.body, file);
   /* ### emit-joins(region.join-region, file); */
   spew-pending-defines(file);
   indent(stream, -$indentation-step);
-  write("}\n", stream);
+  write(stream, "}\n");
 end;
 
 define method make-info-for
@@ -1866,7 +1864,7 @@ end;
 //    (return :: <return>, result-rep == #(), file :: <file-state>)
 //    => ();
 //  spew-pending-defines(file);
-//  write("return;\n", file.file-guts-stream);
+//  write(file.file-guts-stream, "return;\n");
 //end;
 
 define method emit-return
@@ -1874,7 +1872,7 @@ define method emit-return
     => ();
   if (result-reps.empty?)
     spew-pending-defines(file);
-    write("return;\n", file.file-guts-stream);
+    write(file.file-guts-stream, "return;\n");
   else
     let stream = file.file-guts-stream;  
     let temp = new-local(file, modifier: "temp");
@@ -2020,14 +2018,14 @@ define method emit-assignment
 	       stringify(top, " - ", bot));
       else
 	let (args, sp) = cluster-names(call.info);
-	let setup-stream = make(<byte-string-output-stream>);
+	let setup-stream = make(<buffered-byte-string-output-stream>);
 	for (arg-dep = arguments then arg-dep.dependent-next,
 	     count from 0,
 	     while: arg-dep)
 	  format(setup-stream, "%s[%d] = %s;\n", args, count,
 		 ref-leaf(*general-rep*, arg-dep.source-exp, file));
 	finally
-	  write(setup-stream.string-output-stream-string, stream);
+	  write(stream, setup-stream.stream-contents);
 	  values(args,
 		 stringify(args, " + ", count),
 		 sp,
@@ -2050,10 +2048,10 @@ define method emit-assignment
   end;
   format(stream, "%s(%s, %s, %s", entry, call-top-name, func, count);
   if (next-info)
-    write(", ", stream);
-    write(next-info, stream);
+    write(stream, ", ");
+    write(stream, next-info);
   end;
-  write(");\n", stream);
+  write(stream, ");\n");
   deliver-cluster
     (results, bottom-name, return-top-name,
      call.derived-type.min-values, file);
@@ -2179,7 +2177,7 @@ define method emit-assignment
     => ();
   let function = call.depends-on.source-exp;
   let func-info = find-main-entry-info(function, file);
-  let stream = make(<byte-string-output-stream>);
+  let stream = make(<buffered-byte-string-output-stream>);
   let c-name = main-entry-name(func-info, file);
   let (sp, new-sp) = cluster-names(call.info);
   format(stream, "%s(%s", c-name, sp);
@@ -2188,15 +2186,15 @@ define method emit-assignment
     unless (arg-dep)
       error("Not enough arguments in a known call?");
     end;
-      write(", ", stream);
-      write(ref-leaf(rep, arg-dep.source-exp, file), stream);
+      write(stream, ", ");
+      write(stream, ref-leaf(rep, arg-dep.source-exp, file));
   finally
     if (arg-dep)
       error("Too many arguments in a known call?");
     end;
   end;
-  write(')', stream);
-  let call = string-output-stream-string(stream);
+  write-element(stream, ')');
+  let call = stream-contents(stream);
   format(file.file-guts-stream, "/* %s */\n",
 	 func-info.function-info-name.clean-for-comment);
   let result-rep = func-info.function-info-result-representation;
@@ -2693,9 +2691,6 @@ define method spew-pending-defines (file :: <file-state>) => ();
   file.file-pending-defines := #f;
 end method spew-pending-defines;
 
-// Make sure abstract-variable-is-inlined? agrees with what this
-// method will do...
-//
 define method ref-leaf
     (target-rep :: <c-representation>, leaf :: <abstract-variable>,
      file :: <file-state>)
@@ -2943,10 +2938,10 @@ define method float-to-string (value :: <ratio>, digits :: <integer>)
   if (zero?(value))
     "0.0";
   else
-    let stream = make(<byte-string-output-stream>);
+    let stream = make(<buffered-byte-string-output-stream>);
     if (negative?(value))
       value := -value;
-      write('-', stream);
+      write-element(stream, '-');
     end;
     let one = ratio(1, 1);
     let ten = ratio(10, 1);
@@ -2967,7 +2962,7 @@ define method float-to-string (value :: <ratio>, digits :: <integer>)
 	    values(exponent, fraction);
 	  end;
 	end;
-    write("0.", stream);
+    write(stream, "0.");
     let zeros = 0;
     for (count from 0 below digits,
 	 until: zero?(fraction))
@@ -2976,16 +2971,16 @@ define method float-to-string (value :: <ratio>, digits :: <integer>)
 	zeros := zeros + 1;
       else
 	for (i from 0 below zeros)
-	  write('0', stream);
+	  write-element(stream, '0');
 	end;
-	write(as(<character>, as(<integer>, digit) + 48), stream);
+	write-element(stream, as(<character>, as(<integer>, digit) + 48));
 	zeros := 0;
       end;
       fraction := remainder;
     end;
-    write('e', stream);
+    write-element(stream, 'e');
     print(exponent, stream);
-    stream.string-output-stream-string;
+    stream.stream-contents;
   end;
 end;
 

@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.50 1996/06/26 14:47:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.51 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -226,7 +226,7 @@ define method build-local-heap
     if (root.root-comment)
       format(stream, "\n%s %s\n", target.comment-token, root.root-comment);
     else
-      write('\n', stream);
+      new-line(stream);
     end if;
     if (name)
       format(stream, target.export-directive, 
@@ -852,7 +852,7 @@ define method spew-object
 	    end for;
 	    add!($spewed-string-buffer, '"');
 	    add!($spewed-string-buffer, '\n');
-	    write(as(<byte-string>, $spewed-string-buffer), stream);
+	    write(stream, as(<byte-string>, $spewed-string-buffer));
 	    $spewed-string-buffer.size := $spewed-string-initial-size;
 	end select;
     end select;

@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.52 1996/06/24 19:49:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.53 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -626,7 +626,7 @@ define method print-object (union :: <union-ctype>, stream :: <stream>) => ();
      prefix: "{",
      body: method (stream)
 	     write-class-name(union, stream);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"linear", stream);
 	     pprint-logical-block
@@ -635,7 +635,7 @@ define method print-object (union :: <union-ctype>, stream :: <stream>) => ();
 		body: method (stream)
 			for (member in union.members, first? = #t then #f)
 			  unless(first?)
-			    write(", ", stream);
+			    write(stream, ", ");
 			    pprint-newline(#"fill", stream);
 			  end;
 			  print(member, stream);
@@ -647,14 +647,14 @@ define method print-object (union :: <union-ctype>, stream :: <stream>) => ();
 end;
 
 define method print-message (union :: <union-ctype>, stream :: <stream>) => ();
-  write("type-union(", stream);
+  write(stream, "type-union(");
   for (member in union.members, first? = #t then #f)
     unless(first?)
-      write(", ", stream);
+      write(stream, ", ");
     end;
     print-message(member, stream);
   end;
-  write(')', stream);
+  write-element(stream, ')');
 end;
 
 // The "members" of any non-union type is a list of the type itself.
@@ -784,7 +784,7 @@ define sealed domain make (singleton(<unknown-ctype>));
 
 define method print-message (ctype :: <unknown-ctype>, stream :: <stream>)
     => ();
-  write("<unknown>", stream);
+  write(stream, "<unknown>");
 end;
 
 define method find-direct-classes(type :: <unknown-ctype>) => res :: <false>;
@@ -910,7 +910,7 @@ define method print-object (limint :: <limited-integer-ctype>,
      prefix: "{",
      body: method (stream)
 	     write-class-name(limint, stream);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"linear", stream);
 	     pprint-logical-block
@@ -919,12 +919,12 @@ define method print-object (limint :: <limited-integer-ctype>,
 		body: method (stream)
 			print(limint.base-class, stream);
 			if (limint.low-bound)
-			  write(", ", stream);
+			  write(stream, ", ");
 			  pprint-newline(#"fill", stream);
 			  format(stream, "min: %d", limint.low-bound);
 			end;
 			if (limint.high-bound)
-			  write(", ", stream);
+			  write(stream, ", ");
 			  pprint-newline(#"fill", stream);
 			  format(stream, "min: %d", limint.high-bound);
 			end;
@@ -937,7 +937,7 @@ end;
 define method print-message
     (limint :: <limited-integer-ctype>, stream :: <stream>)
     => ();
-  write("limited(", stream);
+  write(stream, "limited(");
   print-message(limint.base-class, stream);
   if (limint.low-bound)
     format(stream, ", min: %d", limint.low-bound);
@@ -945,7 +945,7 @@ define method print-message
   if (limint.high-bound)
     format(stream, ", max: %d", limint.high-bound);
   end;
-  write(')', stream);
+  write-element(stream, ')');
 end;
 
 
@@ -1158,7 +1158,7 @@ define method print-object (sing :: <singleton-ctype>, stream :: <stream>)
      prefix: "{",
      body: method (stream)
 	     write-class-name(sing, stream);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"linear", stream);
 	     pprint-logical-block
@@ -1345,7 +1345,7 @@ end;
 define method print-message
     (type :: <byte-character-ctype>, stream :: <stream>)
     => ();
-  write("<byte-character>", stream);
+  write(stream, "<byte-character>");
 end;
 
 
@@ -1425,7 +1425,7 @@ define method print-object (type :: <multi-value-ctype>, stream :: <stream>)
      prefix: "{",
      body: method (stream)
 	     write-class-name(type, stream);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"linear", stream);
 	     pprint-logical-block
@@ -1435,20 +1435,20 @@ define method print-object (type :: <multi-value-ctype>, stream :: <stream>)
 			for (pos-type in type.positional-types,
 			     count from 0)
 			  unless (count == 0)
-			    write(", ", stream);
+			    write(stream, ", ");
 			    pprint-newline(#"linear", stream);
 			  end;
 			  if (count == type.min-values)
-			    write("#optional ", stream);
+			    write(stream, "#optional ");
 			  end;
 			  print(pos-type, stream);
 			end;
 			unless (type.rest-value-type == empty-ctype())
 			  unless (type.positional-types == #())
-			    write(", ", stream);
+			    write(stream, ", ");
 			    pprint-newline(#"linear", stream);
 			  end;
-			  write("#rest ", stream);
+			  write(stream, "#rest ");
 			  print(type.rest-value-type, stream);
 			end;
 		      end,
@@ -1459,25 +1459,25 @@ end;
 
 define method print-message (type :: <multi-value-ctype>, stream :: <stream>)
     => ();
-  write("values(", stream);
+  write(stream, "values(");
   for (type in type.positional-types,
        count from 0)
     unless (count == 0)
-      write(", ", stream);
+      write(stream, ", ");
     end;
     if (count == type.min-values)
-      write("#optional ", stream);
+      write(stream, "#optional ");
     end;
     print-message(type, stream);
   end;
   unless (type.rest-value-type == empty-ctype())
     unless (type.positional-types == #())
-      write(", ", stream);
+      write(stream, ", ");
     end;
-    write("#rest ", stream);
+    write(stream, "#rest ");
     print-message(type.rest-value-type, stream);
   end;
-  write(")", stream);
+  write(stream, ")");
 end;
 
 // make-values-ctype  --  Exported

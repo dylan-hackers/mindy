@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Print library and modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/library.dylan,v 1.2 1996/05/08 15:58:08 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/library.dylan,v 1.3 1996/07/12 01:12:51 bfw Exp $
 
 //======================================================================
 //
@@ -38,7 +38,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/library.dylan,v 1
 
 define library print
   use dylan;
-  use streams;
+  use new-streams;
   export pprint, print;
 end library;
 
@@ -47,7 +47,7 @@ define module pprint
   use Dylan;
   use Extensions;
   use System;
-  use Streams;
+  use New-Streams;
 
   export
     <pretty-stream>, pprint-logical-block, pprint-newline, pprint-indent,
@@ -83,15 +83,7 @@ end module;
 
 define module print
   use dylan;
-  use streams,
-    import: {<stream>, write, lock-stream, unlock-stream, <buffer>,
-	     <buffer-index>, string-output-stream-string,
-	     <byte-string-output-stream>, <byte>,
-	     stream-extension-get-output-buffer,
-	     stream-extension-release-output-buffer,
-	     stream-extension-empty-output-buffer,
-	     stream-extension-force-secondary-buffers,
-	     stream-extension-synchronize};
+  use new-streams;
   use pprint;
   use internals;
   use extensions,

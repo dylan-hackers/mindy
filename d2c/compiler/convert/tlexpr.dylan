@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.11 1996/04/06 07:16:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.12 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -10,7 +10,7 @@ end;
 
 define method print-message
     (tlf :: <expression-tlf>, stream :: <stream>) => ();
-  write("Top level form.", stream);
+  write(stream, "Top level form.");
 end;
 
 

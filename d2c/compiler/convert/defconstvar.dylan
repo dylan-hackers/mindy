@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.33 1996/04/10 16:59:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.34 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -102,22 +102,22 @@ end;
 
 define method print-message (tlf :: <define-bindings-tlf>, stream :: <stream>)
     => ();
-  write("Define ", stream);
+  write(stream, "Define ");
   select (tlf by instance?)
-    <define-constant-tlf> => write("Constant ", stream);
-    <define-variable-tlf> => write("Variable ", stream);
+    <define-constant-tlf> => write(stream, "Constant ");
+    <define-variable-tlf> => write(stream, "Variable ");
   end;
   for (defn in tlf.tlf-required-defns, first? = #t then #f)
     unless (first?)
-      write(", ", stream);
+      write(stream, ", ");
     end;
     print-message(defn.defn-name, stream);
   finally
     if (tlf.tlf-rest-defn)
       unless (first?)
-	write(", ", stream);
+	write(stream, ", ");
       end;
-      write("#rest ", stream);
+      write(stream, "#rest ");
       print-message(tlf.tlf-rest-defn.defn-name, stream);
     end;
   end;

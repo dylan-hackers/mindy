@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.42 1996/05/29 23:31:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.43 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -199,7 +199,7 @@ define method print-object (cclass :: <cclass>, stream :: <stream>) => ();
 end;
 
 define method print-message (cclass :: <cclass>, stream :: <stream>) => ();
-  write(as(<string>, cclass.cclass-name.name-symbol), stream);
+  write(stream, as(<string>, cclass.cclass-name.name-symbol));
 end;
 
 
@@ -886,9 +886,9 @@ define method print-object
      prefix: "{",
      body: method (stream)
 	     write-class-name(table, stream);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     write-address(table, stream);
-	     write(", ", stream);
+	     write(stream, ", ");
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"linear", stream);
 	     pprint-logical-block
@@ -899,7 +899,7 @@ define method print-object
 			     first? = #t then #f,
 			     while: entry)
 			  unless (first?)
-			    write(' ', stream);
+			    write-element(stream, ' ');
 			    pprint-newline(#"linear", stream);
 			  end unless;
 			  print(entry, stream);

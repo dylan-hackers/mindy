@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.40 1996/05/01 12:16:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.41 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -38,11 +38,11 @@ end;
 
 
 define method print-object (thing :: <id-able>, stream :: <stream>) => ();
-  write('{', stream);
+  write-element(stream, '{');
   write-class-name(thing, stream);
-  write(" [", stream);
+  write(stream, " [");
   print(thing.id, stream);
-  write("]}", stream);
+  write(stream, "]}");
 end;
 
 
@@ -52,15 +52,15 @@ end;
 
 define method dump-fer (thing, #key stream = *debug-output*) => ();
   pprint-logical-block(stream, body: curry(dump, thing));
-  write('\n', stream);
+  new-line(stream);
 end;
 
 define generic dump (thing, stream) => ();
 
 define method dump (thing :: <object>, stream :: <stream>) => ();
-  write("{a ", stream);
+  write(stream, "{a ");
   write-class-name(thing, stream);
-  write('}', stream);
+  write-element(stream, '}');
 end;
 
 define method dump (component :: <component>, stream :: <stream>) => ();
@@ -100,19 +100,19 @@ define method dump (region :: <if-region>, stream :: <stream>) => ();
      body: method (stream)
 	     format(stream, "IF[%d] (", region.id);
 	     dump(region.depends-on.source-exp, stream);
-	     write(')', stream);
+	     write-element(stream, ')');
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.then-region, stream);
 	     pprint-indent(#"block", 0, stream);
 	     pprint-newline(#"mandatory", stream);
-	     write("ELSE", stream);
+	     write(stream, "ELSE");
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.else-region, stream);
 	     pprint-indent(#"block", 0, stream);
 	     pprint-newline(#"mandatory", stream);
-	     write("END", stream);
+	     write(stream, "END");
 	   end);
 end;
 
@@ -123,13 +123,13 @@ define method dump
      body: method (stream)
 	     format(stream, "UWP[%d] (", region.id);
 	     dump(region.uwp-region-cleanup-function, stream);
-	     write(')', stream);
+	     write-element(stream, ')');
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(region.body, stream);
 	     pprint-indent(#"block", 0, stream);
 	     pprint-newline(#"mandatory", stream);
-	     write("END", stream);
+	     write(stream, "END");
 	   end);
 end;
 
@@ -143,7 +143,7 @@ define method dump (region :: <block-region>, stream :: <stream>) => ();
 	     dump(region.body, stream);
 	     pprint-indent(#"block", 0, stream);
 	     pprint-newline(#"mandatory", stream);
-	     write("END", stream);
+	     write(stream, "END");
 	   end);
 end;
 
@@ -157,7 +157,7 @@ define method dump (region :: <loop-region>, stream :: <stream>) => ();
 	     dump(region.body, stream);
 	     pprint-indent(#"block", 0, stream);
 	     pprint-newline(#"mandatory", stream);
-	     write("END", stream);
+	     write(stream, "END");
 	   end);
 end;
 
@@ -185,7 +185,7 @@ define method dump
 	    body:
 	      method (stream)
 		format(stream, "%= [%d]", func.name, func.id);
-		write(' ', stream);
+		write-element(stream, ' ');
 		pprint-indent(#"block", 4, stream);
 		pprint-newline(#"fill", stream);
 		pprint-logical-block
@@ -200,13 +200,13 @@ define method dump
 			      then var & var.definer-next,
 			    first? = #t then #f)
 			 unless (first?)
-			   write(", ", stream);
+			   write(stream, ", ");
 			   pprint-newline(#"fill", stream);
 			 end;
 			 if (var)
 			   dump(var, stream);
 			 else
-			   write("???", stream);
+			   write(stream, "???");
 			 end;
 		       end;
 		     end,
@@ -217,7 +217,7 @@ define method dump
 	 dump(func.body, stream);
 	 pprint-indent(#"block", 0, stream);
 	 pprint-newline(#"mandatory", stream);
-	 write("END", stream);
+	 write(stream, "END");
        end);
 end;
 
@@ -230,12 +230,12 @@ define method dump (assignment :: <assignment>, stream :: <stream>) => ();
 	       format(stream, "let ");
 	     end;
 	     dump-defines(assignment.defines, stream);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"fill", stream);
-	     write(":= ", stream);
+	     write(stream, ":= ");
 	     dump(assignment.depends-on.source-exp, stream);
-	     write(';', stream);
+	     write-element(stream, ';');
 	   end);
 end;
 
@@ -245,12 +245,12 @@ define method dump (assignment :: <join-assignment>, stream :: <stream>) => ();
      body: method (stream)
 	     format(stream, "[%d]: ", assignment.id);
 	     dump-defines(assignment.defines, stream);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"fill", stream);
-	     write("JOIN ", stream);
+	     write(stream, "JOIN ");
 	     dump(assignment.depends-on.source-exp, stream);
-	     write(';', stream);
+	     write-element(stream, ';');
 	   end);
 end;
 
@@ -258,11 +258,11 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
 			    stream :: <stream>)
     => ();
   if (~defines)
-    write("()", stream);
+    write(stream, "()");
   elseif (~defines.definer-next)
     dump(defines, stream);
     if (defines.needs-type-check?)
-      write('*', stream);
+      write-element(stream, '*');
     end if;
   else
     pprint-logical-block
@@ -273,12 +273,12 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
 		    first? = #t then #f,
 		    while: def)
 		 unless (first?)
-		   write(", ", stream);
+		   write(stream, ", ");
 		   pprint-newline(#"fill", stream);
 		 end;
 		 dump(def, stream);
 		 if (def.needs-type-check?)
-		   write('*', stream);
+		   write-element(stream, '*');
 		 end if;
 	       end;
 	     end,
@@ -292,9 +292,9 @@ define method dump (op :: <operation>, stream :: <stream>) => ();
 end;
 
 define method kind (op :: <operation>) => res :: <string>;
-  let stream = make(<byte-string-output-stream>);
+  let stream = make(<buffered-byte-string-output-stream>);
   write-class-name(op, stream);
-  stream.string-output-stream-string;
+  stream.stream-contents;
 end;
 
 define method kind (op :: <known-call>) => res :: <string>;
@@ -335,38 +335,38 @@ define method dump (op :: <primitive>, stream :: <stream>) => ();
 end;
 
 define method dump (op :: <module-var-ref>, stream :: <stream>) => ();
-  write("ref ", stream);
+  write(stream, "ref ");
   dump(op.variable.defn-name, stream);
   format(stream, "[%d]", op.id);
   dump-operands(op.depends-on, stream);
 end;
 
 define method dump (op :: <module-var-set>, stream :: <stream>) => ();
-  write("set ", stream);
+  write(stream, "set ");
   dump(op.variable.defn-name, stream);
   format(stream, "[%d]", op.id);
   dump-operands(op.depends-on, stream);
 end;
 
 define method dump (op :: <slot-ref>, stream :: <stream>) => ();
-  write("SLOT-REF ", stream);
+  write(stream, "SLOT-REF ");
   let slot = op.slot-info;
   if (slot.slot-getter)
-    write(as(<string>, slot.slot-getter.variable-name), stream);
+    write(stream, as(<string>, slot.slot-getter.variable-name));
   else
-    write("???", stream);
+    write(stream, "???");
   end;
   format(stream, "[%d]", op.id);
   dump-operands(op.depends-on, stream);
 end;
 
 define method dump (op :: <heap-slot-set>, stream :: <stream>) => ();
-  write("SLOT-SET ", stream);
+  write(stream, "SLOT-SET ");
   let slot = op.slot-info;
   if (slot.slot-getter)
-    write(as(<string>, slot.slot-getter.variable-name), stream);
+    write(stream, as(<string>, slot.slot-getter.variable-name));
   else
-    write("???", stream);
+    write(stream, "???");
   end;
   format(stream, "[%d]", op.id);
   dump-operands(op.depends-on, stream);
@@ -382,7 +382,7 @@ define method dump-operands(dep :: false-or(<dependency>), stream :: <stream>)
 		  first? = #t then #f,
 		  while: dep)
 	       unless (first?)
-		 write(", ", stream);
+		 write(stream, ", ");
 		 pprint-newline(#"fill", stream);
 	       end;
 	       dump(dep.source-exp, stream);
@@ -402,11 +402,11 @@ define method dump (var :: <initial-definition>, stream :: <stream>) => ();
 end;
 
 define method dump (info :: <debug-named-info>, stream :: <stream>) => ();
-  write(as(<string>, info.debug-name), stream);
+  write(stream, as(<string>, info.debug-name));
 end;
 
 define method dump (name :: <basic-name>, stream :: <stream>) => ();
-  write(as(<string>, name.name-symbol), stream);
+  write(stream, as(<string>, name.name-symbol));
 end;
 
 define method dump (name :: <method-name>, stream :: <stream>) => ();
@@ -421,7 +421,7 @@ define method dump (name :: <method-name>, stream :: <stream>) => ();
 			for (spec in name.method-name-specializers,
 			     first? = #t then #f)
 			  unless (first?)
-			    write(", ", stream);
+			    write(stream, ", ");
 			    pprint-newline(#"fill", stream);
 			  end;
 			  dump(spec, stream);

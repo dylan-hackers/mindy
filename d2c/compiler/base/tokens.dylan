@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.18 1996/05/08 15:56:08 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.19 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -291,46 +291,46 @@ end method print-object;
 define sealed method print-message
     (wot :: <token>, stream :: <stream>) => ();
   select (wot.token-kind)
-    $eof-token => write("EOF", stream);
-    $error-token => write("bogus token", stream);
+    $eof-token => write(stream, "EOF");
+    $error-token => write(stream, "bogus token");
 
-    $left-paren-token => write("left parenthesis", stream);
-    $right-paren-token => write("right parenthesis", stream);
-    $comma-token => write("comma", stream);
-    $dot-token => write("dot", stream);
-    $semicolon-token => write("semicolon", stream);
-    $left-bracket-token => write("left bracket", stream);
-    $right-bracket-token => write("right bracket", stream);
-    $left-brace-token => write("left brace", stream);
-    $right-brace-token => write("right brace", stream);
-    $double-colon-token => write("double colon", stream);
-    $minus-token => write("minus", stream);
-    $equal-token => write("equal", stream);
-    $double-equal-token => write("double equal", stream);
-    $arrow-token => write("arrow", stream);
-    $sharp-paren-token => write("sharp paren", stream);
-    $sharp-bracket-token => write("sharp bracket", stream);
-    $double-sharp-token => write("double sharp", stream);
-    $question-token => write("question mark", stream);
-    $double-question-token => write("double question mark", stream);
-    $question-equal-token => write("question mark equal", stream);
-    $ellipsis-token => write("ellipsis", stream);
+    $left-paren-token => write(stream, "left parenthesis");
+    $right-paren-token => write(stream, "right parenthesis");
+    $comma-token => write(stream, "comma");
+    $dot-token => write(stream, "dot");
+    $semicolon-token => write(stream, "semicolon");
+    $left-bracket-token => write(stream, "left bracket");
+    $right-bracket-token => write(stream, "right bracket");
+    $left-brace-token => write(stream, "left brace");
+    $right-brace-token => write(stream, "right brace");
+    $double-colon-token => write(stream, "double colon");
+    $minus-token => write(stream, "minus");
+    $equal-token => write(stream, "equal");
+    $double-equal-token => write(stream, "double equal");
+    $arrow-token => write(stream, "arrow");
+    $sharp-paren-token => write(stream, "sharp paren");
+    $sharp-bracket-token => write(stream, "sharp bracket");
+    $double-sharp-token => write(stream, "double sharp");
+    $question-token => write(stream, "question mark");
+    $double-question-token => write(stream, "double question mark");
+    $question-equal-token => write(stream, "question mark equal");
+    $ellipsis-token => write(stream, "ellipsis");
 
-    $true-token => write("#t", stream);
-    $false-token => write("#f", stream);
-    $next-token => write("#next", stream);
-    $rest-token => write("#rest", stream);
-    $key-token => write("#key", stream);
-    $all-keys-token => write("#all-keys", stream);
-    $include-token => write("#include", stream);
+    $true-token => write(stream, "#t");
+    $false-token => write(stream, "#f");
+    $next-token => write(stream, "#next");
+    $rest-token => write(stream, "#rest");
+    $key-token => write(stream, "#key");
+    $all-keys-token => write(stream, "#all-keys");
+    $include-token => write(stream, "#include");
 
-    $define-token => write("core word ``define''", stream);
-    $end-token => write("core word ``end''", stream);
-    $handler-token => write("core word ``handler''", stream);
-    $let-token => write("core word ``let''", stream);
-    $local-token => write("core word ``local''", stream);
-    $macro-token => write("core word ``macro''", stream);
-    $otherwise-token => write("core word ``otherwise''", stream);
+    $define-token => write(stream, "core word ``define''");
+    $end-token => write(stream, "core word ``end''");
+    $handler-token => write(stream, "core word ``handler''");
+    $let-token => write(stream, "core word ``let''");
+    $local-token => write(stream, "core word ``local''");
+    $macro-token => write(stream, "core word ``macro''");
+    $otherwise-token => write(stream, "core word ``otherwise''");
 
     $raw-ordinary-word-token =>
       format(stream, "ordinary word ``%s''", wot.token-symbol);
@@ -358,7 +358,7 @@ define sealed method print-message
 	     wot.token-symbol, wot.token-constraint);
 
     $tilde-token =>
-      write("tilde", stream);
+      write(stream, "tilde");
     $other-binary-operator-token =>
       format(stream, "binary operator ``%s''", wot.token-symbol);
 
@@ -370,26 +370,26 @@ define sealed method print-message
       format(stream, "symbol literal ``%s''", wot.token-literal);
 
     $parsed-definition-macro-call-token =>
-      write("parsed definition macro call", stream);
+      write(stream, "parsed definition macro call");
     $parsed-special-definition-token =>
-      write("parsed definition", stream);
+      write(stream, "parsed definition");
     $parsed-local-declaration-token =>
-      write("parsed local declaration", stream);
+      write(stream, "parsed local declaration");
     $parsed-expression-token =>
-      write("parsed expression", stream);
+      write(stream, "parsed expression");
     $parsed-constant-token =>
-      write("parsed-constant", stream);
+      write(stream, "parsed-constant");
     $parsed-macro-call-token =>
-      write("parsed macro call", stream);
+      write(stream, "parsed macro call");
     $parsed-parameter-list-token =>
-      write("parsed parameter list", stream);
+      write(stream, "parsed parameter list");
     $parsed-variable-list-token =>
-      write("parsed variable list", stream);
+      write(stream, "parsed variable list");
 
-    $feature-if-token => write("#if", stream);
-    $feature-elseif-token => write("#elseif", stream);
-    $feature-else-token => write("#else", stream);
-    $feature-endif-token => write("#endif", stream);
+    $feature-if-token => write(stream, "#if");
+    $feature-elseif-token => write(stream, "#elseif");
+    $feature-else-token => write(stream, "#else");
+    $feature-endif-token => write(stream, "#endif");
 
     otherwise =>
       error("Unknown token kind.");

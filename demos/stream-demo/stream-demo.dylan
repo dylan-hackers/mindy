@@ -1,20 +1,20 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/stream-demo/stream-demo.dylan,v 1.3 1996/01/04 15:28:18 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/stream-demo/stream-demo.dylan,v 1.4 1996/07/12 01:12:03 bfw Exp $
 module: test
 
 define method main (foo, #rest stuff)
   
-  write("File to type: ", *standard-output*);
+  write(*standard-output*, "File to type: ");
   force-output(*standard-output*);
   let res = read-line(*standard-input*);
-  write("You said: ", *standard-output*);
-  write-line(res, *standard-output*);
+  write(*standard-output*, "You said: ");
+  write-line(*standard-output*, res);
   force-output(*standard-output*);
-  let stream = make(<file-stream>, name: res, direction: #"input");
+  let stream = make(<file-stream>, locator: res, direction: #"input");
   block (punt)
     for (while: #t)
-      let wot = read-line(stream, signal-eof?: #f);
+      let wot = read-line(stream, on-end-of-stream: #f);
       if (wot)
-        write-line(wot, *standard-output*);
+        write-line(*standard-output*, wot);
       else
         punt();
       end if;

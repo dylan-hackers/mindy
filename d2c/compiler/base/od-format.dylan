@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.50 1996/05/29 23:31:05 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.51 1996/07/12 01:08:06 bfw Exp $
 
 /*
 
@@ -965,7 +965,7 @@ end method;
 define method write-dump-buffer (buf :: <dump-buffer>, stream :: <stream>)
  => ();
   for (wot in buf.all-dump-buffers)
-    write(wot.head, stream, end: wot.tail);
+    write(stream, wot.head, end: wot.tail);
   end for;
 end method;
 
@@ -1005,7 +1005,7 @@ define /* exported */ method end-dumping (state :: <dump-state>) => ();
 			    ".du");
 
   log-target(fname);
-  let stream = make(<file-stream>, name: fname, direction: #"output");
+  let stream = make(<file-stream>, locator: fname, direction: #"output");
 
   write-dump-buffer(header-buffer, stream);
   write-dump-buffer(state.extern-buf, stream);
@@ -1044,7 +1044,7 @@ define method grow-dump-buffer
     buf.dump-end := $dump-buffer-maximum-size;
   else
     let new-buf = make(<buffer>, size: new-size);
-    copy-into-buffer!(buf.dump-buffer, new-buf, 0);
+    copy-into-buffer!(new-buf, 0, buf.dump-buffer);
     buf.dump-buffer := new-buf;
     buf.dump-end := new-size;
   end if;
@@ -1075,7 +1075,7 @@ define /* exported */ method dump-raw-data
     // may change buffer-pos...
     grow-dump-buffer(buf, rounded-bsize)
   end;
-  copy-into-buffer!(obj, buf.dump-buffer, buf.buffer-pos);
+  copy-into-buffer!(buf.dump-buffer, buf.buffer-pos, obj);
   buf.buffer-pos := buf.buffer-pos + rounded-bsize;
 end method;
 
@@ -1204,6 +1204,9 @@ define /* exported */ class <load-state> (<object>)
   //
   // State of the stream buffer, which we hold for the duration of the load.
   /* exported */ slot od-buffer :: <buffer>, required-init-keyword: buffer:;
+  // ### These slots should probably be replaced by the buffer-next
+  //  and buffer-end slots of od-buffer, now that those exist.
+  //  That's a lot of code to change though, so I'm leaving it for now.....
   /* exported */ slot od-next :: <buffer-index>, required-init-keyword: next:,
     /* exported */ setter: od-next-setter ;
   /* exported */ slot od-end :: <buffer-index>, required-init-keyword: end:;
@@ -1353,9 +1356,9 @@ define method search-for-file
     local
       method try (path :: <byte-string>) => ();
 	block (punt)
-	  return(make(<file-stream>, name: path, direction: #"input"),
+	  return(make(<file-stream>, locator: path, direction: #"input"),
 		 path);
-	exception (<file-not-found>)
+	exception (<file-does-not-exist-error>)
 	  #f;
 	end block;
       end;
@@ -1380,10 +1383,10 @@ define method check-unit-header
      expected-hash :: false-or(<word>),
      location-hint :: false-or(<location-hint>))
  => (res :: <data-unit>, oa-len :: <integer>);
-  let buffer = state.od-buffer;
+  let buf = state.od-buffer;
   let base = fill-at-least($data-unit-header-size * $word-bytes, state);
 
-  let (tag, id) = buffer-header-word(buffer, base);
+  let (tag, id) = buffer-header-word(buf, base);
   unless (tag = logior($odf-object-definition-etype,
   		       $odf-subobjects-flag, $odf-word-raw-data-format))
     error("Invalid ODF header on %=", state.od-stream);
@@ -1392,8 +1395,8 @@ define method check-unit-header
     error("Unrecognised entry ID %=.  Bad data?", id);
   end;
 
-  let hsize =	buffer-word(buffer, base + ($word-bytes * 1));
-  let major =	buffer-word(buffer, base + ($word-bytes * 2));
+  let hsize =	buffer-word(buf, base + ($word-bytes * 1));
+  let major =	buffer-word(buf, base + ($word-bytes * 2));
 
   // Check major version now, in case the unit header format changed.
   unless (major = $od-format-major-version)
@@ -1401,11 +1404,11 @@ define method check-unit-header
     	  major, $od-format-major-version);
   end;
 
-  let minor =	buffer-word(buffer, base + ($word-bytes * 3));
-  let oa-len =	buffer-word(buffer, base + ($word-bytes * 4));
-  let platfm =	buffer-word(buffer, base + ($word-bytes * 5));
-  let type =	buffer-word(buffer, base + ($word-bytes * 6));
-  let hash =	buffer-word(buffer, base + ($word-bytes * 7));
+  let minor =	buffer-word(buf, base + ($word-bytes * 3));
+  let oa-len =	buffer-word(buf, base + ($word-bytes * 4));
+  let platfm =	buffer-word(buf, base + ($word-bytes * 5));
+  let type =	buffer-word(buf, base + ($word-bytes * 6));
+  let hash =	buffer-word(buf, base + ($word-bytes * 7));
 
   // Change in header size should be flagged by a new major version, but...
   unless (hsize = $data-unit-header-size - 2)
@@ -1472,8 +1475,11 @@ define method load-data-unit
   log-dependency(found-loc);
 
 //dformat("\nLoading %=\n", name-guess);
-  let (buffer, initial-next, buf-end) = get-input-buffer(stream);
-  let state = make(<load-state>, stream: stream, buffer: buffer,
+  let buf :: false-or(<buffer>) = get-input-buffer(stream);
+  if (~ buf) error(make(<end-of-stream-error>, stream: stream)) end;
+  let initial-next :: <buffer-index> = buf.buffer-next;
+  let buf-end :: <buffer-index> = buf.buffer-end;
+  let state = make(<load-state>, stream: stream, buffer: buf,
   		   next: initial-next, end: buf-end,
 		   position-offset: -initial-next,
 		   dispatcher: dispatcher);
@@ -1508,7 +1514,10 @@ define method load-data-unit
   end block;
   unit.done-loading? := #t;
 
-  release-input-buffer(state.od-stream, state.od-next, state.od-end);
+  buf := state.od-buffer; // in case it got demolished somewhere
+  buf.buffer-next := state.od-next;
+  buf.buffer-end := state.od-end;
+  release-input-buffer(state.od-stream);
   close(state.od-stream);
 
   for (entry in lindex)
@@ -1570,7 +1579,11 @@ define constant $load-debug = #f;
 define /* exported */ method load-object-dispatch (state :: <load-state>)
  => res :: <object>;
 
-  let buffer = state.od-buffer;
+  // ### Shouldn't need this -- temporarily fixing something else
+  // Make sure label-index is initialized...
+  state.position-offset := state.position-offset;
+
+  let buf = state.od-buffer;
   let next = state.od-next;
   // Check if we at a label (or the end.)
   if (next >= state.label-index)
@@ -1611,7 +1624,7 @@ define /* exported */ method load-object-dispatch (state :: <load-state>)
       next := fill-at-least($word-bytes * 2, state);
     end unless;
 
-    let (flags, code) = buffer-header-word(buffer, next);
+    let (flags, code) = buffer-header-word(buf, next);
     state.od-next := next + $word-bytes;
 
     select (ash(flags, $odf-etype-shift))
@@ -1664,31 +1677,37 @@ end method;
 define /* exported */ method fill-at-least
   (nbytes :: <buffer-index>, state :: <load-state>)
  => next :: <buffer-index>;
-
   let next = state.od-next;
   let buf-end = state.od-end;
   let avail = buf-end - next;
   if (avail >= nbytes)
     next;
   else
-    let buffer = state.od-buffer;
+    let buf = state.od-buffer;
     let stream = state.od-stream;
-    assert(nbytes <= buffer.size);
-    unless (next = buf-end)
-      copy-into-buffer!(buffer, buffer, 0, start: next, end: buf-end);
-    end unless;
+    assert(nbytes <= buf.size);
+    if (next == buf-end)
+      // Reflect this fact in buffer-next, buffer-end so that
+      // next-input-buffers sees it...
+      buf.buffer-next := buf.buffer-end;
+    else
+      // Move everything to the front of the buffer, to maximize the
+      // amount we can fit at the end.
+      copy-into-buffer!(buf, 0, buf, start: next, end: buf-end);
+      buf.buffer-next := 0;
+      // ### Setting buffer-end is a no-no. For now, it's the only way
+      // to do what was being done under the old stream spec. It should
+      // work with our implementation of the new streams spec, but it is
+      // not a defined by the spec to do so.
+      buf.buffer-end := avail;
+    end if;
     state.position-offset := state.position-offset + next;
-    for (new-end = fill-input-buffer(stream, avail)
-           then fill-input-buffer(stream, new-end),
-	 prev-end = avail then new-end,
-         until: new-end >= nbytes)
-      if (prev-end = new-end)
-        error("Unexpected end of input on %=", stream);
-      end if;
-      finally
-        state.od-end := new-end;
-	state.od-next := 0;
-    end for;
+    buf := next-input-buffer(stream, bytes: nbytes);
+    if (~ buf) error(make(<end-of-stream-error>, stream: stream)) end;
+    // Update od-next and od-end to reflect the changes we've made in
+    // buffer-next and buffer-end. 
+    state.od-end := buf.buffer-end;
+    state.od-next := (buf.buffer-next := 0);
   end if;
 end method;
 
@@ -1704,7 +1723,7 @@ end method;
 define /* exported */ method load-raw-data
   (res :: <byte-string>, elsize :: <integer>, state :: <load-state>)
  => nnext :: <buffer-index>;
-  let buffer = state.od-buffer;
+  let buf = state.od-buffer;
   let next :: <buffer-index> = state.od-next;
   let buf-end :: <buffer-index> = state.od-end;
   let sofar :: <integer> = 0;
@@ -1712,24 +1731,27 @@ define /* exported */ method load-raw-data
     while (#t)
       let nnext = min(next + (elsize - sofar), buf-end);
       let nsofar = sofar + (nnext - next);
-      copy-from-buffer!(res, buffer, next, start: sofar, end: nsofar);
+      copy-from-buffer!(buf, next, res, start: sofar, end: nsofar);
       sofar := nsofar;
       next := nnext;
       if (sofar = elsize)
         let next = round-to-word(next);
-	state.od-next := next;
+	buf.buffer-next := (state.od-next := next);
         punt(next);
       else
         assert(next = buf-end);
-        buf-end := fill-input-buffer(state.od-stream, 0);
+	buf.buffer-next := buf-end;
+        buf := next-input-buffer(state.od-stream);
+	if (~ buf)
+	  error(make(<end-of-stream-error>, stream: state.od-stream));
+	end;
 	state.position-offset := state.position-offset + next;
-        state.od-end := buf-end;
-	next := 0;
+	state.od-end := (buf-end := buf.buffer-end);
+	next := buf.buffer-next;
       end if;
     end while;
   end block;
 end method;
-
 
 // Utility that loads an object's subobjects into a stretchy-vector.
 //
@@ -1783,12 +1805,12 @@ end method;
 //
 define constant load-word-vector = method (state :: <load-state>) 
  => res :: <simple-object-vector>;
-  let buffer = state.od-buffer;
-  let nwords = buffer-word(buffer, state.od-next);
+  let buf = state.od-buffer;
+  let nwords = buffer-word(buf, state.od-next);
   state.od-next := state.od-next + $word-bytes;
   let res = make(<simple-object-vector>, size: nwords);
   for (i :: <integer> from 0 below nwords)
-    res[i] := buffer-word(buffer, fill-at-least($word-bytes, state));
+    res[i] := buffer-word(buf, fill-at-least($word-bytes, state));
     state.od-next := state.od-next + $word-bytes;
   end for;
   res;
@@ -2118,11 +2140,11 @@ add-od-loader(*default-dispatcher*, #"extern-index",
 add-od-loader(*default-dispatcher*, #"extern-handle", 
   method (state :: <load-state>) => res :: <object>;
     state.od-next := state.od-next + $word-bytes;
-    let buffer = state.od-buffer;
+    let buf = state.od-buffer;
     let next = fill-at-least($word-bytes * 3, state);
-    let hash = buffer-word(buffer, next);
-    let du-type = buffer-word(buffer, next + $word-bytes);
-    let localid = buffer-word(buffer, next + ($word-bytes * 2));
+    let hash = buffer-word(buf, next);
+    let du-type = buffer-word(buf, next + $word-bytes);
+    let localid = buffer-word(buf, next + ($word-bytes * 2));
     state.od-next := next + ($word-bytes * 3);
     let name = load-object-dispatch(state);
     let hint = load-object-dispatch(state);

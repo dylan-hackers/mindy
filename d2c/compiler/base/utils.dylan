@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.29 1996/05/08 15:56:31 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.30 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -39,7 +39,7 @@ define method pretty-format
     end method scan-for-newline,
     method scan-for-end-of-indent (start, posn, arg-index)
       if (posn == length | string[posn] ~== ' ')
-	write(string, stream, start: start, end: posn);
+	write(stream, string, start: start, end: posn);
 	scan-for-newline(posn, posn, arg-index);
       else
 	scan-for-end-of-indent(start, posn + 1, arg-index);
@@ -98,7 +98,7 @@ define method pretty-format
     end,
     method maybe-spew (stream, start, stop)
       unless (start == stop)
-	write(string, stream, start: start, end: stop);
+	write(stream, string, start: start, end: stop);
       end;
     end;
   scan-for-newline(0, 0, 0);
@@ -121,14 +121,14 @@ end method condition-format;
 define method write-class-name (thing, stream) => ();
   let name = thing.object-class.class-name;
   if (name)
-    write(as(<string>, name), stream);
+    write(stream, as(<string>, name));
   else
     print(thing.object-class, stream);
   end;
 end;
 
 define method write-address (thing, stream) => ();
-  write("0x", stream);
+  write(stream, "0x");
 #if (mindy)
   let address = thing.object-address;
 #else
@@ -137,9 +137,9 @@ define method write-address (thing, stream) => ();
   for (shift from -28 below 1 by 4)
     let digit = as(<integer>, logand(ash(address, shift), #xf));
     if (digit < 10)
-      write(digit + 48, stream);
+      write-element(stream, digit + 48);
     else
-      write(digit + 87, stream);
+      write-element(stream, digit + 87);
     end;
   end;
 end;
@@ -150,15 +150,15 @@ define method pprint-fields (thing, stream, #rest fields) => ();
      prefix: "{",
      body: method (stream)
 	     write-class-name(thing, stream);
-	     write(' ', stream);
+	     write-element(stream, ' ');
 	     write-address(thing, stream);
 	     for (i from 0 below fields.size by 2)
 	       if (fields[i])
-		 write(", ", stream);
+		 write(stream, ", ");
 		 pprint-indent(#"block", 2, stream);
 		 pprint-newline(#"linear", stream);
-		 write(as(<string>, fields[i]), stream);
-		 write(": ", stream);
+		 write(stream, as(<string>, fields[i]));
+		 write(stream, ": ");
 		 pprint-indent(#"block", 4, stream);
 		 pprint-newline(#"fill", stream);
 		 print(fields[i + 1], stream);
@@ -331,7 +331,7 @@ end method current-column;
 define method fresh-line (stream :: <stream>) => ();
   let column = stream.current-column;
   unless (column == 0)
-    write('\n', stream);
+    new-line(stream);
   end unless;
 end method fresh-line;
 
@@ -339,18 +339,33 @@ end method fresh-line;
 
 // Flush-happy stream
 
-define class <flush-happy-stream> (<stream>)
-  slot target :: <stream>, required-init-keyword: target:;
+define class <flush-happy-stream> (<buffered-stream>)
+  slot target :: <buffered-stream>, required-init-keyword: target:;
   slot buffer :: <buffer>;
   slot column :: <integer>, init-value: 0;
 end;
 
-define method stream-extension-get-output-buffer
-    (stream :: <flush-happy-stream>)
-    => (buf :: <buffer>, next :: <buffer-index>, size :: <buffer-index>);
-  let (buf, next, size) = get-output-buffer(stream.target);
+define method stream-open? (stream :: <flush-happy-stream>)
+ => open? :: <boolean>;
+    stream.target.stream-open?;
+end method stream-open?;
+
+define method stream-element-type (stream :: <flush-happy-stream>)
+ => type :: <type>;
+  stream.target.stream-element-type;
+end method stream-element-type;
+
+define method stream-at-end? (stream :: <flush-happy-stream>)
+ => at-end? :: <boolean>;
+  stream.target.stream-at-end?;
+end method stream-at-end?;
+
+define method do-get-output-buffer (stream :: <flush-happy-stream>,
+				    #key bytes :: <integer> = 1)
+ => buf :: <buffer>;
+  let buf :: <buffer> = get-output-buffer(stream.target, bytes: bytes);
   stream.buffer := buf;
-  values(buf, next, size);
+  buf;
 end;
 
 define constant $newline = as(<integer>, '\n');
@@ -373,66 +388,89 @@ define method after-last-newline (buf :: <buffer>, stop :: <buffer-index>)
   repeat(stop);
 end;
 
-define method stream-extension-release-output-buffer
-    (stream :: <flush-happy-stream>, next :: <buffer-index>)
-    => ();
-  let buf = stream.buffer;
+define method do-release-output-buffer (stream :: <flush-happy-stream>)
+  => ();
+  let buf :: <buffer> = stream.buffer;
+  let next :: <buffer-index> = buf.buffer-next;
   let after-newline = after-last-newline(buf, next);
   if (after-newline)
-    empty-output-buffer(stream.target, after-newline);
-    force-secondary-buffers(stream.target);
+    buf.buffer-next := after-newline;
+    force-output-buffers(stream.target);
     stream.column := 0;
     let remaining = next - after-newline;
+    // We assume that force-output-buffers didn't demolish the buffer
     unless (zero?(remaining))
       copy-bytes(buf, 0, buf, after-newline, remaining);
     end;
-    release-output-buffer(stream.target, remaining);
-  else
-    release-output-buffer(stream.target, next);
+    buf.buffer-next := remaining;
   end;
+  release-output-buffer(stream.target);
 end;
 
-define method stream-extension-empty-output-buffer
-    (stream :: <flush-happy-stream>,
-     stop :: <buffer-index>)
-    => ();
-  let buf = stream.buffer;
-  let after-newline = after-last-newline(buf, stop);
+define method do-next-output-buffer (stream :: <flush-happy-stream>,
+				    #key bytes :: <integer> = 1)
+ => buf :: <buffer>;
+  let buf :: <buffer> = stream.buffer;
+  let next :: <buffer-index> = buf.buffer-next;
+  let after-newline = after-last-newline(buf, next);
   if (after-newline)
-    empty-output-buffer(stream.target, after-newline);
-    force-secondary-buffers(stream.target);
-    let remaining = stop - after-newline;
-    unless (zero?(remaining))
+    buf.buffer-next := after-newline;
+    force-output-buffers(stream.target);
+    let remaining = next - after-newline;
+    if (zero?(remaining))
+      stream.column := 0;
+    else
       copy-bytes(buf, 0, buf, after-newline, remaining);
-      empty-output-buffer(stream.target, remaining);
+      buf.buffer-next := remaining;
+      force-output-buffers(stream.target);
+      buf := next-output-buffer(stream.target, bytes: bytes);
+      stream.column := buf.buffer-next;
     end;
-    stream.column := remaining;
   else
-    empty-output-buffer(stream.target, stop);
-    stream.column := stream.column + stop;
+    force-output-buffers(stream.target);
+    buf := next-output-buffer(stream.target, bytes: bytes);
+    stream.column := stream.column + buf.buffer-next;
   end;
+  buf;
 end;
 
-define method stream-extension-force-secondary-buffers
-    (stream :: <flush-happy-stream>)
-    => ();
-  force-secondary-buffers(stream.target);
+define method do-force-output-buffers (stream :: <flush-happy-stream>)
+ => ();
+  let buf :: <buffer> = stream.buffer;
+  let next :: <buffer-index> = buf.buffer-next;
+  let after-newline = after-last-newline(buf, next);
+  if (after-newline)
+    buf.buffer-next := after-newline;
+    force-output-buffers(stream.target);
+    let remaining = next - after-newline;
+    if (zero?(remaining))
+      stream.column := 0;
+    else
+      copy-bytes(buf, 0, buf, after-newline, remaining);
+      buf.buffer-next := remaining;
+      force-output-buffers(stream.target);
+      stream.column := buf.buffer-next;
+    end;
+  else
+    force-output-buffers(stream.target);
+    stream.column := stream.column + next;
+  end;
 end;  
 
-define method stream-extension-synchronize (stream :: <flush-happy-stream>)
-    => ();
+define method do-synchronize (stream :: <flush-happy-stream>)
+ => ();
   synchronize(stream.target);
 end;
 
-define method close (stream :: <flush-happy-stream>) => ();
+define method close (stream :: <flush-happy-stream>, #all-keys) => ();
   force-output(stream);
 end;
 
 define method current-column (stream :: <flush-happy-stream>)
     => res :: false-or(<integer>);
-  let (buf, next) = get-output-buffer(stream);
-  let column = stream.column + next;
-  release-output-buffer(stream, next);
+  let buf :: <buffer> = get-output-buffer(stream);
+  let column = stream.column + buf.buffer-next;
+  release-output-buffer(stream);
   column;
 end method current-column;
 
@@ -714,18 +752,18 @@ define method spew-dependency-log (file :: <byte-string>) => ();
   if ($targets.empty?)
     error("No targets in spew-dependencies.");
   end if;
-  let stream = make(<file-stream>, name: file, direction: #"output");
+  let stream = make(<file-stream>, locator: file, direction: #"output");
   for (target in $targets, first? = #t then #f)
     unless (first?)
-      write(' ', stream);
+      write-element(stream, ' ');
     end unless;
-    write(target, stream);
+    write(stream, target);
   end for;
-  write(':', stream);
+  write-element(stream, ':');
   for (dep in $dependencies)
     format(stream, " \\\n\t%s", dep);
   end for;
-  write('\n', stream);
+  new-line(stream);
   close(stream);
 end method spew-dependency-log;
 

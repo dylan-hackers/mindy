@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.13 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.14 1996/07/12 01:08:06 bfw Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -38,7 +38,7 @@ define method print-object (ctv :: <ct-function>, stream :: <stream>) => ();
 end;
 
 define method print-message (ctv :: <ct-function>, stream :: <stream>) => ();
-  write(ctv.ct-function-name, stream);
+  write(stream, ctv.ct-function-name);
 end;
 
 define constant $ct-function-dump-slots =

@@ -2,7 +2,7 @@ module: pprint
 author: wlott@cs.cmu.edu
 synopsis: Most of Dick Water's pretty printer.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/pprint.dylan,v 1.1 1996/03/20 00:02:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/pprint.dylan,v 1.2 1996/07/12 01:12:51 bfw Exp $
 
 //======================================================================
 //
@@ -66,7 +66,7 @@ define constant <position> = <integer>;
 //
 // Stream used for pretty printing.
 // 
-define class <pretty-stream> (<stream>)
+define class <pretty-stream> (<buffered-stream>)
   //
   // The stream where the output is finally going to go.
   constant slot pretty-stream-target :: <stream>,
@@ -78,7 +78,7 @@ define class <pretty-stream> (<stream>)
   //
   // Buffer handed off to the user as part of the stream extension protocol.
   constant slot pretty-stream-user-buffer :: <buffer>
-    = make(<buffer>, size: 1024);
+    = make(<buffer>, size: 1024, end: 1024);
   //
   // Buffer holding pending output.
   slot pretty-stream-buffer :: <byte-string>
@@ -177,51 +177,70 @@ end;
 
 //// Stream extension routines.
 
-define method stream-extension-get-output-buffer (stream :: <pretty-stream>)
-    => (buf :: <buffer>, next :: <buffer-index>, size :: <buffer-index>);
+define method do-get-output-buffer (stream :: <pretty-stream>,
+				    #key bytes :: <integer> = 1)
+ => (buf :: <buffer>);
   if (stream.pretty-stream-closed?)
     error("%= has been closed");
   end;
-  let buf = stream.pretty-stream-user-buffer;
-  values(buf, 0, buf.size);
+  let buf :: <buffer> = stream.pretty-stream-user-buffer;
+  if (bytes > buf.size)
+    error("Stream's buffer not big enough to get %d bytes -- %=",
+	  bytes, stream);
+  end;
+  // We always return an emptied buffer, regardless of the value of bytes.
+  //
+  append-output(stream, buf, 0, buf.buffer-next);
+  buf.buffer-next := 0;
+  buf.buffer-end := buf.size;
+  buf;
 end;
 
-define method stream-extension-release-output-buffer
-    (stream :: <pretty-stream>, next :: <buffer-index>)
-    => ();
+define method do-release-output-buffer (stream :: <pretty-stream>)
+ => ();
   if (stream.pretty-stream-closed?)
     error("%= has been closed");
   end;
-  append-output(stream, stream.pretty-stream-user-buffer, 0, next);
+  let buf :: <buffer> = stream.pretty-stream-user-buffer;
+  append-output(stream, buf, 0, buf.buffer-next);
+  buf.buffer-next := 0;
+  buf.buffer-end := buf.size;
 end;
 
-define method stream-extension-empty-output-buffer (stream :: <pretty-stream>,
-						    stop :: <buffer-index>)
-    => ();
+define method do-next-output-buffer (stream :: <pretty-stream>,
+				     #key bytes :: <integer> = 1)
+ => (buffer :: <buffer>);
   if (stream.pretty-stream-closed?)
     error("%= has been closed");
   end;
-  append-output(stream, stream.pretty-stream-user-buffer, 0, stop);
+  let buf :: <buffer> = stream.pretty-stream-user-buffer;
+  if (bytes > buf.size)
+    error("Stream's buffer not big enough to get %d bytes -- %=",
+	  bytes, stream);
+  end;
+  // We always return an emptied buffer, regardless of the value of bytes.
+  //
+  append-output(stream, buf, 0, buf.buffer-next);
+  buf.buffer-next := 0;
+  buf.buffer-end := buf.size;
+  buf;
 end;
 
-define method stream-extension-force-secondary-buffers
-    (stream :: <pretty-stream>)
-    => ();
+define method do-force-output-buffers (stream :: <pretty-stream>) => ();
   if (stream.pretty-stream-closed?)
     error("%= has been closed");
   end;
   maybe-output(stream, #f);
   unless (zero?(stream.pretty-stream-buffer-fill-pointer))
     let queue = stream.pretty-stream-queue;
-    if (empty?(queue) | queue.first.op-posn > 0)
+   if (empty?(queue) | queue.first.op-posn > 0)
       output-partial-line(stream);
     end;
   end;
   force-output(stream.pretty-stream-target);
 end;  
 
-define method stream-extension-synchronize (stream :: <pretty-stream>)
-    => ();
+define method do-synchronize (stream :: <pretty-stream>) => ();
   if (stream.pretty-stream-closed?)
     error("%= has been closed");
   end;
@@ -235,11 +254,11 @@ define method stream-extension-synchronize (stream :: <pretty-stream>)
   synchronize-output(stream.pretty-stream-target);
 end;
 
-define method close (stream :: <pretty-stream>) => ();
+define method close (stream :: <pretty-stream>, #all-keys) => ();
   unless (stream.pretty-stream-closed?)
     maybe-output(stream, #f);
     expand-tabs(stream, #f);
-    write(stream.pretty-stream-buffer, stream.pretty-stream-target,
+    write(stream.pretty-stream-target, stream.pretty-stream-buffer,
 	  start: 0, end: stream.pretty-stream-buffer-fill-pointer);
     stream.pretty-stream-closed? := #t;
   end;
@@ -253,6 +272,12 @@ end;
 // Copy a bunch of output into the buffer.  If there are any newlines, they
 // get enqueued as ``literal'' conditional newlines.  Everything else is
 // just handed to append-raw-output.
+//
+// NOTE: with the advent of the Streams Library providing a new-line function,
+// we probably should not be turning \n characters into real newlines.  They
+// should just be dumped as is, and if that doesn't work on the native
+// platform, oh well, the user wasn't coding portably.  Having said that, I'm
+// not modifying this code, and we'll see if anyone notices :-).
 // 
 define method append-output
     (stream :: <pretty-stream>, buffer :: <buffer>, start :: <buffer-index>,
@@ -1026,7 +1051,7 @@ define method output-line (stream :: <pretty-stream>, newline :: <newline>)
 	      end;
 	repeat(amount-to-consume);
       end;
-  write(buffer, target, start: 0, end: amount-to-print);
+  write(target, buffer, start: 0, end: amount-to-print);
   let line-number = stream.pretty-stream-line-number + 1;
   //  (when (and *print-lines* (>= line-number *print-lines*))
   //	(write-string " .." target)
@@ -1039,7 +1064,7 @@ define method output-line (stream :: <pretty-stream>, newline :: <newline>)
   //			    :start (- len suffix-length)
   //			    :end len))))
   //	(throw 'line-limit-abbreviation-happened t))
-  write('\n', target);
+  new-line(target);
   stream.pretty-stream-line-number := line-number;
   stream.pretty-stream-buffer-start-column := 0;
   // Copy the per-line-prefix into the output buffer.  This also takes care of
@@ -1093,7 +1118,7 @@ define method output-partial-line (stream :: <pretty-stream>)
   if (zero?(count))
     error("Output-partial-line called when nothing can be output.");
   end;
-  write(buffer, stream.pretty-stream-target, start: 0, end: count);
+  write(stream.pretty-stream-target, buffer, start: 0, end: count);
   stream.pretty-stream-buffer-start-column
     := stream.pretty-stream-buffer-start-column + count;
   copy-bytes(buffer, 0, buffer, count, new-fill-ptr);
@@ -1241,4 +1266,3 @@ define sealed method pprint-tab
   end;
   enqueue-tab(stream, kind, colnum, colinc);
 end;
-

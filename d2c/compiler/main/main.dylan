@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.75 1996/07/11 16:18:02 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.76 1996/07/12 01:11:07 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -247,9 +247,9 @@ define method find-source-file
     local
       method try (name :: <byte-string>, dir :: false-or(<byte-string>)) => ();
 	block ()
-	  close(make(<file-stream>, name: name));
+	  close(make(<file-stream>, locator: name));
 	  return(name, dir);
-	exception (<file-not-found>)
+	exception (<file-does-not-exist-error>)
 	  #f;
 	end block;
       end method try;
@@ -275,9 +275,9 @@ define method find-library-archive
 	method try (dir :: <byte-string>)
 	  let path = stringify(dir, "/", libname);
 	  block ()
-	    close(make(<file-stream>, name: path));
+	    close(make(<file-stream>, locator: path));
 	    return(path);
-	  exception (<file-not-found>)
+	  exception (<file-does-not-exist-error>)
 	    #f;
 	  end block;
 	end method try;
@@ -337,7 +337,6 @@ define method compile-library
 
     let (header, files) = parse-lid(lid-file);
 
-    do(process-feature, split-at-whitespace(target.default-features));
     do(process-feature,
        split-at-whitespace(element(header, #"features", default: "")));
     do(process-feature, command-line-features);
@@ -399,13 +398,14 @@ define method compile-library
     layout-instance-slots();
     let init-functions = make(<stretchy-vector>);
     let unit = make(<unit-state>, prefix: unit-prefix);
+    let objects-stream = make(<buffered-byte-string-output-stream>);
     let other-units = map-as(<simple-object-vector>, unit-name, *units*);
     let all-generated-files = #();
 
     let makefile-name = format-to-string("cc-%s-files.mak", unit-prefix);
     let temp-makefile-name = concatenate(makefile-name, "-temp");
     format(*debug-output*, "Creating %s\n", temp-makefile-name);
-    let makefile = make(<file-stream>, name: temp-makefile-name,
+    let makefile = make(<file-stream>, locator: temp-makefile-name,
 			direction: #"output", if-exists: #"overwrite");
     format(makefile, "# Makefile for compiling the .c and .s files\n");
     format(makefile, "# If you want to compile .dylan files, don't use "
@@ -419,18 +419,6 @@ define method compile-library
 	     "target...\n#\n");
     format(makefile, "all : all-at-end-of-file\n\n");
 
-    // These next three streams gather filenames.  Objects-stream is
-    // simply *.o.  clean-stream is the list of files we will delete
-    // with the "clean" target--all objects plus the library archive
-    // (.a), the library summary (.du), and the executable.
-    // real-clean-stream is everything in clean plus *.c, *.s, and
-    // cc-lib-files.mak.
-    //
-    let objects-stream = make(<byte-string-output-stream>);
-    let clean-stream = make(<byte-string-output-stream>);
-    let real-clean-stream = make(<byte-string-output-stream>);
-    format(real-clean-stream, " %s", makefile-name);
-
     for (file in files, tlfs in tlf-vectors)
       block ()
 	format(*debug-output*, "Processing %s\n", file);
@@ -438,7 +426,7 @@ define method compile-library
 	let c-name = concatenate(base-name, ".c");
 	let temp-c-name = concatenate(c-name, "-temp");
 	let body-stream
-	  = make(<file-stream>, name: temp-c-name, direction: #"output");
+	  = make(<file-stream>, locator: temp-c-name, direction: #"output");
 	block ()
 	  let file = make(<file-state>, unit: unit, body-stream: body-stream);
 	  emit-prologue(file, other-units);
@@ -489,8 +477,6 @@ define method compile-library
 	output-c-file-rule(makefile, c-name, o-name, target);
 	all-generated-files := add!(all-generated-files, c-name);
 	format(objects-stream, " %s", o-name);
-	format(clean-stream, " %s", o-name);
-	format(real-clean-stream, " %s %s", o-name, c-name);
 
       exception (<simple-restart>,
 		   init-arguments:
@@ -517,7 +503,7 @@ define method compile-library
       let c-name = concatenate(unit-prefix, "-init.c");
       let temp-c-name = concatenate(c-name, "-temp");
       let body-stream = make(<file-stream>, 
-			     name: temp-c-name, direction: #"output");
+			     locator: temp-c-name, direction: #"output");
       let file = make(<file-state>, unit: unit, body-stream: body-stream);
       emit-prologue(file, other-units);
       if (entry-point)
@@ -532,15 +518,13 @@ define method compile-library
       output-c-file-rule(makefile, c-name, o-name, target);
       all-generated-files := add!(all-generated-files, c-name);
       format(objects-stream, " %s", o-name);
-      format(clean-stream, " %s", o-name);
-      format(real-clean-stream, " %s %s", o-name, c-name);
     end;
 
     format(*debug-output*, "Emitting Library Heap.\n");
     let s-name = concatenate(unit-prefix, "-heap.s");
     let temp-s-name = concatenate(s-name, "-temp");
     let heap-stream = make(<file-stream>, 
-			   name: temp-s-name, direction: #"output");
+			   locator: temp-s-name, direction: #"output");
     let (undumped, extra-labels) = build-local-heap(unit, heap-stream, 
 						    target);
     close(heap-stream);
@@ -554,10 +538,8 @@ define method compile-library
     format(makefile, "\t%s\n", assemble-string);
     all-generated-files := add!(all-generated-files, s-name);
     format(objects-stream, " %s", o-name);
-    format(clean-stream, " %s", o-name);
-    format(real-clean-stream, " %s %s", o-name, s-name);
 
-    let objects = string-output-stream-string(objects-stream);
+    let objects = stream-contents(objects-stream);
     
     let ar-name = concatenate(target.library-filename-prefix,
 			      unit-prefix, target.library-filename-suffix);
@@ -582,7 +564,7 @@ define method compile-library
       begin
 	format(*debug-output*, "Emitting Global Heap.\n");
 	let heap-stream 
-	  = make(<file-stream>, name: "heap.s", direction: #"output");
+	  = make(<file-stream>, locator: "heap.s", direction: #"output");
 	build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
 			  heap-stream, target);
 	close(heap-stream);
@@ -591,10 +573,10 @@ define method compile-library
       begin
 	format(*debug-output*, "Building inits.c.\n");
 	let stream
-	  = make(<file-stream>, name: "inits.c", direction: #"output");
-	write("#include <runtime.h>\n\n", stream);
-	write("/* This file is machine generated.  Do not edit. */\n\n",
-	      stream);
+	  = make(<file-stream>, locator: "inits.c", direction: #"output");
+	write(stream, "#include <runtime.h>\n\n");
+	write(stream, 
+	      "/* This file is machine generated.  Do not edit. */\n\n");
 	let entry-function-name
 	  = (entry-function
 	       & (make(<ct-entry-point>, for: entry-function, kind: #"main")
@@ -604,15 +586,15 @@ define method compile-library
 		 "extern void %s(descriptor_t *sp, int argc, void *argv);\n\n",
 		 entry-function-name);
 	end if;
-	write("void inits(descriptor_t *sp, int argc, char *argv[])\n{\n",
-	      stream);
+	write(stream,
+	      "void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
 	for (unit in *units*)
 	  format(stream, "    %s_init(sp);\n", unit.unit-name);
 	end;
 	if (entry-function-name)
 	  format(stream, "    %s(sp, argc, argv);\n", entry-function-name);
 	end if;
-	write("}\n", stream);
+	write(stream, "}\n");
 	close(stream);
       end;
 
@@ -651,15 +633,9 @@ define method compile-library
 	  format(makefile, "\n%s : %s%s inits.obj heap.obj\n",
 		 executable, ar-name, unit-libs);
 	  format(makefile,
-		 "\tlink %s /out:%s %s %s"
-		   " inits.obj heap.obj runtime.lib gc.lib\n", 
+		 "\tlink %s /out:%s %s inits.obj heap.obj %s\n", 
 		 target.link-executable-flags,
 		 executable, ar-name, unit-libs);
-	  format(clean-stream, " %s inits.obj heap.obj %s", 
-		 ar-name, executable);
-	  format(real-clean-stream,
-		 " %s inits.c inits.obj heap.s heap.obj %s", 
-		 ar-name, executable);
 	else
 	  format(makefile, "\n%s : %s %s%s\n",
 		 executable, objects, ar-name, unit-libs);
@@ -668,9 +644,6 @@ define method compile-library
 		 target.link-executable-command,
 		 flags, target.link-executable-flags, executable, 
 		 ar-name, linker-args);
-	  format(clean-stream, " %s inits.o heap.o %s", ar-name, executable);
-	  format(real-clean-stream, " %s inits.c inits.o heap.s heap.o %s", 
-		 ar-name, executable);
 	end if;
 	format(makefile, "\nall-at-end-of-file : %s\n", executable);
       end;
@@ -690,21 +663,12 @@ define method compile-library
 
       end-dumping(dump-buf);
       format(makefile, "\nall-at-end-of-file : %s\n", ar-name);
-      format(clean-stream, " %s", ar-name);
-      format(real-clean-stream, " %s %s.lib.du", ar-name, 
-	     as-lowercase(lib-name));
     end;
 
     if (log-dependencies)
       spew-dependency-log(concatenate(unit-prefix, ".dep"));
     end if;
 
-    format(makefile, "\nclean :\n");
-    format(makefile, "\t%s %s\n", target.delete-file-command, 
-	   clean-stream.string-output-stream-string);
-    format(makefile, "\nrealclean :\n");
-    format(makefile, "\t%s %s\n", target.delete-file-command, 
-	   real-clean-stream.string-output-stream-string);
     close(makefile);
     if (pick-which-file(makefile-name, temp-makefile-name, target) = #t)
       // If the new makefile is different from the old one, then we need
@@ -753,7 +717,7 @@ define method emit-init-functions
     (unit-prefix :: <byte-string>, init-functions :: <vector>,
      start :: <integer>, finish :: <integer>, stream :: <stream>)
     => body :: <byte-string>;
-  let string-stream = make(<byte-string-output-stream>);
+  let string-stream = make(<buffered-byte-string-output-stream>);
   if (finish - start <= $max-inits-per-function)
     for (index from start below finish)
       let init-function = init-functions[index];
@@ -780,7 +744,7 @@ define method emit-init-functions
       end for;
     end for;
   end if;
-  string-stream.string-output-stream-string;
+  string-stream.stream-contents;
 end method emit-init-functions;
 
 define method build-unit-init-function
@@ -880,7 +844,7 @@ define method incorrect-usage () => ();
 	 "\t-tfilename\tGet target environment information from \n"
 	   "\t\t\tfilename instead of the default targets.ini\n");
   force-output(*standard-error*);
-  exit(exit-code: 1);
+  error("Incorrect usage");
 end method incorrect-usage;
 
 define method main (argv0 :: <byte-string>, #rest args) => ();
@@ -893,20 +857,10 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let lid-file = #f;
   let features = #();
   let log-dependencies = #f;
-  let target-machine = 
-       #if (hppa-hpux)
-	  #"hppa-hpux";
-       #elseif (i386-win32)
-	  #"i386-win32";
-       #else
-	  #"unknown";
-       #endif
-  let targets-dot-ini = 
-       #if (i386-win32)
-	  "d:/nick/targets.ini";
-       #else
-	  "/afs/cs/project/gwydion/compiler/include/targets.ini";
-       #endif
+  let target-machine = #"hppa-hpux";   // Need some better way than 
+                                       // assuming we always want an 
+                                       // HP compiler...
+  let targets-dot-ini = "/afs/cs/project/gwydion/compiler/include/targets.ini";
   let no-binaries = #f;
   for (arg in args)
     if (arg.size >= 1 & arg[0] == '-')
