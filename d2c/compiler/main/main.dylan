@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.2 1998/05/11 17:37:01 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.3 1998/05/11 19:12:20 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -771,7 +771,16 @@ end method build-local-heap-file;
 define method build-ar-file (state :: <main-unit-state>) => ();
   let objects = stream-contents(state.unit-objects-stream);
   let target = state.unit-target;
-  let suffix = split-at-whitespace(target.library-filename-suffix).first;
+  let build-shared? =   ~state.unit-link-static 
+                      & boolean-header-element(#"shared-library", #f, state)
+                      & target.shared-library-filename-suffix 
+                      & target.link-shared-library-command;
+  let suffix = split-at-whitespace(
+				   if (build-shared?) 
+				     target.library-filename-suffix;
+				   else
+				     target.shared-library-filename-suffix;
+	       end if).first;
   let ar-name = concatenate(target.library-filename-prefix,
   			    state.unit-mprefix,
 			    suffix);
@@ -784,7 +793,12 @@ define method build-ar-file (state :: <main-unit-state>) => ();
   
   let objects = use-correct-path-separator(objects, target);
 
-  let link-string = format-to-string(target.link-library-command, 
+  let link-string = format-to-string(
+				     if (build-shared?)
+				       target.link-library-command;
+				     else
+				       target.link-shared-library-command;
+				     end if, 
 				     ar-name, objects);
   format(state.unit-makefile, "\t%s\n", link-string);
 end method;
