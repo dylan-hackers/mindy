@@ -1,7 +1,7 @@
 module: primitives
 
 
-define class <primitive-info> (<object>)
+define class <primitive-info> (<identity-preserving-mixin>)
   //
   // The name of this primitive.
   slot primitive-name :: <symbol>,
@@ -56,13 +56,22 @@ define method print-object
   pprint-fields(info, stream, name: info.primitive-name);
 end;
 
+
+// Dumping is by name, except that we also dump the arg and result types so
+// that we can eagerly initialize them.
+// 
 define method dump-od (obj :: <primitive-info>, buf :: <dump-buffer>) => ();
-  dump-simple-object(#"primitive-info", buf, obj.primitive-name);
+  dump-simple-object(#"primitive-info", buf, obj.primitive-name,
+		     obj.primitive-arg-types, obj.primitive-result-type);
 end method;
 
 add-od-loader(*compiler-dispatcher*, #"primitive-info",
   method (state :: <load-state>) => res :: <primitive-info>;
-    primitive-info-or-lose(load-sole-subobject(state));
+    let res = primitive-info-or-lose(load-object-dispatch(state));
+    res.%primitive-arg-types := load-object-dispatch(state);
+    res.%primitive-result-type := load-object-dispatch(state);
+    assert-end-object(state);
+    res;
   end method
 );
 
