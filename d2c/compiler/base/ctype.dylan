@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.33 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.34 1995/12/16 02:35:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1458,7 +1458,7 @@ define method values-subtype?
       block (done)
 	for (rem1 = types1 then rem1.tail,
 	     rem2 = types2 then rem2.tail,
-	     until rem1 == #() & rem2 == #())
+	     until: rem1 == #() & rem2 == #())
 	  let t1 = if (rem1 == #()) rest1 else rem1.head end;
 	  let t2 = if (rem2 == #()) rest2 else rem2.head end;
 	  let (res, win-p) = csubtype?(t1, t2);

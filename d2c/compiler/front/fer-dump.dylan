@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.33 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.34 1995/12/16 02:35:49 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -268,7 +268,7 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
        body: method (stream)
 	       for (def = defines then def.definer-next,
 		    first? = #t then #f,
-		    while def)
+		    while: def)
 		 unless (first?)
 		   write(", ", stream);
 		   pprint-newline(#"fill", stream);
@@ -374,7 +374,7 @@ define method dump-operands(dep :: false-or(<dependency>), stream :: <stream>)
      body: method (stream)
 	     for (dep = dep then dep.dependent-next,
 		  first? = #t then #f,
-		  while dep)
+		  while: dep)
 	       unless (first?)
 		 write(", ", stream);
 		 pprint-newline(#"fill", stream);
