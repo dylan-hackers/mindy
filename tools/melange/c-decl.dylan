@@ -530,19 +530,20 @@ define method find-dylan-name
      prefix :: <string>, containers :: <sequence>, read-only :: <boolean>,
      sealing :: <string>)
  => (result :: <string>);
-  // Take care of the contained objects as well.  Some of these may
-  // already have been handled by "container" declarations.
-  let sub-containers = list(decl.simple-name);
-  if (decl.members)
-    for (sub-decl in decl.members)
-      find-dylan-name(sub-decl, mapper, prefix, sub-containers,
-		      read-only, sealing);
-    end for;
-  end if;
-
-  decl.d-name
-    | (decl.d-name := compute-dylan-name(decl, mapper, prefix, containers,
-					 read-only, sealing));
+  unless (decl.d-name)
+    decl.d-name := compute-dylan-name(decl, mapper, prefix, containers,
+                                      read-only, sealing);
+    // Take care of the contained objects as well.  Some of these may
+    // already have been handled by "container" declarations.
+    let sub-containers = list(decl.simple-name);
+    if (decl.members)
+      for (sub-decl in decl.members)
+        find-dylan-name(sub-decl, mapper, prefix, sub-containers,
+                        read-only, sealing);
+      end for;
+    end if;
+  end;
+  decl.d-name;
 end method find-dylan-name;
 
 define method apply-container-options
@@ -1062,6 +1063,7 @@ define method find-dylan-name
  => (result :: <string>);
   if (decl.sealed-string = "") decl.sealed-string := sealing end if;
   if (decl.read-only == #()) decl.read-only := rd-only end if;
+  find-dylan-name(decl.type, mapper, prefix, #(), rd-only, sealing);
   decl.d-name
     | (decl.d-name := compute-dylan-name(decl, mapper, prefix, containers,
 					 rd-only, sealing));
@@ -1076,15 +1078,13 @@ end method compute-dylan-name;
 
 define method find-dylan-name
     (decl :: <variable-declaration>, mapper :: <function>, prefix :: <string>,
-     containers :: <sequence>, rd-only :: <boolean>, sealing :: <string>)
+     containers :: <sequence>, rd-only :: <boolean>, sealing :: <string>,
+     #next next-method)
  => (result :: <string>);
-  if (decl.sealed-string = "") decl.sealed-string := sealing end if;
-  if (decl.read-only == #()) decl.read-only := rd-only end if;
-  decl.d-name
-    | (decl.d-name := compute-dylan-name(decl, mapper, prefix, containers,
-					 rd-only, sealing));
+  next-method();
   decl.getter := decl.getter | decl.d-name;
   decl.setter := decl.setter | concatenate(decl.d-name, "-setter");
+  decl.d-name;
 end method find-dylan-name;
 
 define method compute-closure 
