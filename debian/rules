@@ -7,7 +7,7 @@
 STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
 	else echo "bootstrap";					\
 	fi)
-VERSION=2.3.10pre1
+VERSION=2.3.10pre1.3
 MACHINE=$(shell uname -m)
 ifeq ("$(MACHINE)", "sparc64")
 	MACHINE=sparc
@@ -176,6 +176,9 @@ install-stamp: build-stamp
 	# Make sure we don't have a bunch of extra stuff in Dylan
 	rm -rf `pwd`/debian/gwydion-dylan/share/man/man1/man1
 	rm -rf `pwd`/debian/gwydion-dylan-dev/share/man/man4
+
+	# Fix screwy permissions in Data Object Stores
+	chmod ago-x `pwd`/debian/tmp/usr/lib/dylan/$(VERSION)/$(MACHINE)-linux-gcc/*.lib.du
 
 	touch install-stamp
 

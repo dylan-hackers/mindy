@@ -1,3 +1,11 @@
+gwydion-dylan (2.3.10pre1-3) unstable; urgency=low
+
+  * Lintian corrections.
+  * Some string comparison improvements.
+  * More compiler hints to build the d2c compiler.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Tue,  4 Feb 2003 00:12:43 -0800
+
 gwydion-dylan (2.3.10pre1-2) unstable; urgency=low
 
   * Use system-provided GC, rather than build-in version.

@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.17 2003/02/02 03:50:42 brent Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.18 2003/02/04 08:16:15 brent Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -9,10 +9,13 @@
 
 # These libraries are needed to compile d2c. They must compile against the
 # runtime that shipped with 2.2.0.
-@libraries_needed_to_bootstrap =
+@pre_melange_libraries_needed_to_bootstrap =
     ('streams', 'standard-io', 'print', 'format', 'collection-extensions',
      'table-ext', 'string-ext', 'regular-expressions', 'format-out', 'matrix',
-     'time', 'stream-ext', 'transcendental', 'getopt', 'base-file-system');
+     'stream-ext', 'transcendental', 'getopt', 'base-file-system');
+    #'internal-time'
+@post_melange_libraries_needed_to_bootstrap =
+    ('time');
     #'internal-time'
 
 # These libraries have been introduced since 2.2.0. They may not be used by
@@ -24,9 +27,18 @@
     ('threads', 'common-dylan', 'io', 'file-system', 'date', 'system', 
      'locators', 'network');
 
-if ($enable_bootstrap) {
-    &compile_subdirs(@libraries_needed_to_bootstrap);
-} else {
-    &compile_subdirs(@libraries_needed_to_bootstrap, @newer_libraries);
+&compile_subdirs(@pre_melange_libraries_needed_to_bootstrap);
+# Parsergen is needed to compile Melange
+push(@compile_commands, 
+   	sprintf($host_platform{'recursive_make_command'},
+       	"../../tools/parsergen", ""));
+# Melange is needed to compile the common libraries
+push(@compile_commands,
+    sprintf($host_platform{'recursive_make_command'},
+        "../tools/melange", ""));
+&compile_subdirs(@post_melange_libraries_needed_to_bootstrap);
+
+unless ($enable_bootstrap) {
+    &compile_subdirs(@newer_libraries);
 }
 
