@@ -5,15 +5,12 @@ synopsis: Encapsulates the lexical conventions of the C language.  Along with
           c-lexer-cpp.dylan, this file also incorporates most of the
           functionality of CPP.
 copyright: see below
-	   This code was produced by the Gwydion Project at Carnegie Mellon
-	   University.  If you are interested in using this code, contact
-	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: 
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-lexer.dylan,v 1.13 2003/04/09 17:48:22 gabor Exp $
 
 //======================================================================
 //
-// Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1994, 1995, 1996, 1997  Carnegie Mellon University
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -34,14 +31,6 @@ rcs-header: $Header:
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 // Also, see http://www.gwydiondylan.org/ for updates and documentation. 
-//
-//======================================================================
-
-//======================================================================
-//
-// Copyright (c) 1994  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
-// All rights reserved.
 //
 //======================================================================
 
@@ -1121,16 +1110,23 @@ end for;
 // identified by entries in cpp-table, tokenizer.typedefs, and reserved-word
 // table.
 //
-define method lex-identifier
+define function lex-identifier
     (tokenizer :: <tokenizer>, position :: <integer>, string :: <byte-string>,
      #key expand = #t, cpp-line = #f)
  => (token :: <token>);
   case
-    expand & check-cpp-expansion(string, tokenizer) =>
-      get-token(tokenizer);
+    expand & check-cpp-expansion(string, tokenizer,
+				 forbidden-expansions: if (instance?(expand, <boolean>))
+							 #()
+						       else
+							 expand
+						       end if)
+	=> get-token(tokenizer);
+
     element(tokenizer.typedefs, string, default: #f) =>
       make(<type-name-token>, string: string, position: position,
 	   generator: tokenizer);
+
     otherwise =>
       let default
 	= if (string.first == '#') <cpp-token> else <identifier-token> end if;
@@ -1141,12 +1137,12 @@ define method lex-identifier
 		end if;
       make(cls, position: position, string: string, generator: tokenizer);
   end case;
-end method lex-identifier;
+end function lex-identifier;
 
 // Attempts to match "words" (i.e. identifiers or reserved words).  Returns a
 // token if the match is succesful and #f otherwise.
 //
-define method try-identifier
+define function try-identifier
     (state :: <tokenizer>, position :: <integer>, #key expand = #t, cpp-line = #f)
  => (result :: type-union(<token>, <false>));
   let contents :: <long-byte-string> = state.contents;
@@ -1162,7 +1158,7 @@ define method try-identifier
       lex-identifier(state, position, string-value, expand: expand, cpp-line: cpp-line);
     end for;
   end if;
-end method try-identifier;
+end function try-identifier;
 
 #if (~mindy)
 define multistring-checker match-punctuation
