@@ -1,11 +1,12 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.83 1996/08/07 14:08:58 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.84 1996/08/10 20:16:43 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
-// This should have some reasonable association with cback <unit-state> (but it
-// doesn't.) 
+// This should have some reasonable association with cback
+// <unit-state> (but it doesn't.)
+//
 define class <main-unit-state> (<object>)
     slot unit-lid-file :: <byte-string>, required-init-keyword: lid-file:;
     slot unit-command-line-features :: <list>, 
@@ -48,7 +49,7 @@ define class <main-unit-state> (<object>)
     slot unit-ar-name :: <byte-string>;
 
     // The name of the executable file we generate.
-    slot unit-executable :: <byte-string>;
+    slot unit-executable :: false-or(<byte-string>);
 end class <main-unit-state>;
 
 
@@ -91,9 +92,9 @@ add-make-dumper(#"unit-info", *compiler-dispatcher*, <unit-info>,
 // Compilation driver.
 
 define method file-tokenizer
-    (lib :: <library>, name :: <byte-string>, dir :: false-or(<byte-string>))
+    (lib :: <library>, name :: <byte-string>)
     => (tokenizer :: <tokenizer>, module :: <module>);
-  let source = make(<source-file>, name: name, directory: dir);
+  let source = make(<source-file>, name: name);
   let (header, start-line, start-posn) = parse-header(source);
   values(make(<lexer>,
 	      source: source,
@@ -105,7 +106,7 @@ end;
 
 define method test-lexer (file :: <byte-string>) => ();
   block ()
-    let (tokenizer, module) = file-tokenizer($dylan-library, file, #f);
+    let (tokenizer, module) = file-tokenizer($dylan-library, file);
     block (return)
       *Current-Module* := module;
       while (#t)
@@ -157,7 +158,7 @@ define method test-parse
      #key debug: debug? :: <boolean>)
     => result :: <object>;
   block ()
-    let (tokenizer, module) = file-tokenizer($dylan-library, file, #f);
+    let (tokenizer, module) = file-tokenizer($dylan-library, file);
     let orig-library = *current-library*;
     let orig-module = *current-module*;
     block ()
@@ -174,7 +175,10 @@ define method test-parse
 end method test-parse;
 
 
-
+// ### It seems like there ought to be some way to formulate this in
+// terms of the File-System library, but I don't know what that way
+// would be
+//
 define method strip-extension
     (name :: <byte-string>, extension :: <byte-string>)
     => res :: false-or(<byte-string>);
@@ -208,6 +212,13 @@ define method parse-lid (state :: <main-unit-state>) => ();
 	let char = as(<character>, contents[posn]);
 	if (char == '\n')
 	  repeat(posn + 1);
+#if (newlines-are-CRLF)
+	elseif (char == '\r')
+          // Assume there's a LF following the CR...  (If the file is
+          // a Unix file, you'll see a LF with no CR, but you'll
+          // rarely see a CR without an LF)
+          repeat(posn + 2);
+#endif
 	elseif (char == '#')
 	  repeat(find-newline(posn + 1));
 	else
@@ -224,10 +235,14 @@ define method parse-lid (state :: <main-unit-state>) => ();
 	=> newline :: <integer>;
       if (posn < end-posn)
 	let char = as(<character>, contents[posn]);
-	if (char ~== '\n')
-	  find-newline(posn + 1);
-	else
+	if (char == '\n')
 	  posn;
+#if (newlines-are-CRLF)
+	elseif (char == '\r')
+          posn;
+#endif
+	else
+	  find-newline(posn + 1);
 	end;
       else
 	posn;
@@ -240,7 +255,9 @@ define method parse-lid (state :: <main-unit-state>) => ();
   state.unit-files := files;
 end;
 
-
+// ### Actually, space (' ') is the only kind of whitespace this function
+// recognizes...
+//
 define method split-at-whitespace (string :: <byte-string>)
     => res :: <list>;
   let size = string.size;
@@ -276,39 +293,6 @@ define method process-feature (feature :: <byte-string>) => ();
   end if;
 end method process-feature;
 
-define method extract-directory (path :: <byte-string>)
-    => dir :: <byte-string>;
-  block (return)
-    for (index from path.size - 1 to 0 by -1)
-      if (path[index] == '/')
-	return(copy-sequence(path, end: index + 1));
-      end if;
-    end for;
-    "";
-  end block;
-end method extract-directory;
-
-
-define method find-source-file
-    (file :: <byte-string>, source-path :: <byte-string>)
-    => (name :: <byte-string>, dir :: false-or(<byte-string>));
-  block (return)
-    local
-      method try (name :: <byte-string>, dir :: false-or(<byte-string>)) => ();
-	block ()
-	  close(make(<file-stream>, locator: name));
-	  return(name, dir);
-	exception (<file-does-not-exist-error>)
-	  #f;
-	end block;
-      end method try;
-    try(file, #f);
-    try(concatenate(source-path, file), source-path);
-    compiler-fatal-error("Can't find source file %=.", file);
-  end block;
-end method find-source-file;
-
-
 define method find-library-archive
     (unit-name :: <byte-string>, target :: <target-environment>,
      no-binaries :: <boolean>)
@@ -319,26 +303,14 @@ define method find-library-archive
                     // finally decides to link this?
     libname;
   else
-    block (return)
-      local
-	method try (dir :: <byte-string>)
-	  let path = stringify(dir, "/", libname);
-	  block ()
-	    close(make(<file-stream>, locator: path));
-	    return(path);
-	  exception (<file-does-not-exist-error>)
-	    #f;
-	  end block;
-	end method try;
-      
-      for (dir in *data-unit-search-path*)
-	try(dir);
-      end for;
+    let path = find-file(libname, *data-unit-search-path*);
+    if (path == #f)
       error("Can't find %s.", libname);
-    end block;
+    else
+      path;
+    end if;
   end if;
 end method find-library-archive;
-
 
 define method output-c-file-rule
     (makefile :: <stream>, c-name :: <string>, o-name :: <string>,
@@ -388,14 +360,20 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
       := element(state.unit-header, #"unit-prefix", default: #f) 
            | as-lowercase(lib-name);
 
-    let source-path = extract-directory(state.unit-lid-file);
-
     for (file in state.unit-files)
       block ()
 	format(*debug-output*, "Parsing %s\n", file);
-	let (name, dir) = find-source-file(file, source-path);
-	log-dependency(name);
-	let (tokenizer, mod) = file-tokenizer(state.unit-lib, file, dir);
+	// prefixed-filename is still not (necessarily) an absolute
+	// filename, but it's getting closer
+	// nick-bug
+	let prefixed-filename
+	  = find-file(file, vector(".", state.unit-lid-file.filename-prefix));
+	if (prefixed-filename == #f)
+	  compiler-fatal-error("Can't find source file %=.", file);
+	end if;
+	log-dependency(prefixed-filename);
+	let (tokenizer, mod) = file-tokenizer(state.unit-lib, 
+					      prefixed-filename);
 	block ()
 	  *Current-Library* := state.unit-lib;
 	  *Current-Module* := mod;
@@ -669,7 +647,7 @@ define method build-ar-file (state :: <main-unit-state>) => ();
     format(state.unit-makefile, "\n%s : %s\n", ar-name, objects);
     format(state.unit-makefile, "\t%s %s\n",
     	   state.unit-target.delete-file-command, ar-name);
-    if (state.unit-target.target-name == #"i386-win32")
+    if (state.unit-target.target-name == #"x86-win32")
       format(state.unit-makefile, "\t$(LINK_LIBRARY) /out:%s%s\n",
       	     ar-name, objects);
     else
@@ -744,7 +722,7 @@ define method build-executable (state :: <main-unit-state>) => ();
     end unless;
   end;
 
-  if (state.unit-target.target-name == #"i386-win32")
+  if (state.unit-target.target-name == #"x86-win32")
     format(state.unit-makefile, "\n");
     output-c-file-rule(state.unit-makefile, "inits.c", "inits.obj",
     		       state.unit-target);
@@ -767,7 +745,8 @@ define method build-executable (state :: <main-unit-state>) => ();
 	   state.unit-ar-name, state.unit-executable);
   else
     format(state.unit-makefile, "\n%s : %s %s%s\n",
-	   state.unit-executable, state.unit-objects, state.unit-ar-name, unit-libs);
+	   state.unit-executable, state.unit-objects, state.unit-ar-name, 
+	   unit-libs);
     // MACHINE DEPENDENCY: The reference to "end.o" below only
     // makes sense in the HPUX architecture.  When we have a
     // configuration flag for HPUX, we should conditionalize
@@ -1042,20 +1021,15 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let features = #();
   let log-dependencies = #f;
   let target-machine = 
-       #if (hppa-hpux)
+       #if (compiled-for-hppa-hpux)
 	  #"hppa-hpux";
-       #elseif (i386-win32)
-	  #"i386-win32";
+       #elseif (compiled-for-x86-win32)
+	  #"x86-win32";
        #else
 	  #"unknown";
        #endif
-  let targets-dot-ini = 
-       #if (i386-win32)
-	  "d:/nick/targets.ini";
-       #else
-	  "/afs/cs/project/gwydion/compiler/include/targets.ini";
-       #endif
   let no-binaries = #f;
+  let targets-file = #f;
   for (arg in args)
     if (arg.size >= 1 & arg[0] == '-')
       if (arg.size >= 2)
@@ -1093,7 +1067,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	    end if;
 	  't' =>
 	    if (arg.size > 2)
-	      targets-dot-ini := copy-sequence(arg, start: 2);
+	      targets-file := copy-sequence(arg, start: 2);
 	    else
 	      error("Name of targets description file not supplied with -t.");
 	    end if;
@@ -1128,7 +1102,12 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     incorrect-usage();
   end;
      // bug
-  let possible-targets = get-targets(targets-dot-ini);
+  if (targets-file == #f)
+    targets-file 
+      := find-file("targets.descr", *Data-Unit-Search-Path*)
+           | error("Can't find targets.descr");
+  end if;
+  let possible-targets = get-targets(targets-file);
   if (~key-exists?(possible-targets, target-machine))
     error("Unknown target architecture %=.", target-machine);
   end if;
