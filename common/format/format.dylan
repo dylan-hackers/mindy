@@ -2,7 +2,7 @@ module: format
 author: Gwydion Project
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/format/format.dylan,v 1.2 2000/01/24 04:54:18 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/format/format.dylan,v 1.3 2000/10/20 14:51:59 housel Exp $
 
 ///======================================================================
 ///
@@ -129,7 +129,9 @@ define method format (stream :: <stream>, control-string :: <byte-string>,
     while (start < control-len)
       // Skip to dispatch char.
       for (i = start then (i + 1),
-	   until: ((i == control-len) | (control-string[i] == $dispatch-char)))
+	   until: ((i == control-len)
+		     | (control-string[i] == $dispatch-char)
+		     | (control-string[i] == '\n')))
       finally
 	write(stream, control-string, start: start, end: i);
 	if (i == control-len)
@@ -138,42 +140,47 @@ define method format (stream :: <stream>, control-string :: <byte-string>,
 	  start := i + 1;
 	end;
       end for;
-      // Parse for field within which to pad output.
-      let (field, field-spec-end)
-	= if (char-classes[as(<integer> /***/, control-string[start])] == #"digit")
-	    parse-integer(control-string, start);
-	  end;
-      if (field)
-	// Capture output in string and compute padding.
-	// Assume the output is very small in length.
-	let s = make(<byte-string-stream>,
-		     contents: make(<byte-string>, size: 80),
-		     direction: #"output");
-	if (do-dispatch(control-string[field-spec-end], s,
-			element(args, arg-i, default: #f)))
-	  arg-i := arg-i + 1;
-	end;
-	let output = s.stream-contents;
-	let output-len :: <integer> = output.size;
-	let padding :: <integer> = (abs(field) - output-len);
-	case
-	  (padding < 0) =>
-	    write(stream, output);
-	  (field > 0) =>
-	    write(stream, make(<byte-string>, size: padding, fill: ' '));
-	    write(stream, output);
-	  otherwise =>
-	    write(stream, output);
-	    write(stream, make(<byte-string>, size: padding, fill: ' '));
-	end;
-	start := field-spec-end + 1;  // Add one to skip dispatch char.
+
+      if(control-string[start - 1] == '\n')
+	new-line(stream);
       else
-	if (do-dispatch(control-string[start], stream,
-			element(args, arg-i, default: #f)))
-	  arg-i := arg-i + 1;
+	// Parse for field within which to pad output.
+	let (field, field-spec-end)
+	  = if (char-classes[as(<integer>, control-string[start])] == #"digit")
+	      parse-integer(control-string, start);
+	    end;
+	if (field)
+	  // Capture output in string and compute padding.
+	  // Assume the output is very small in length.
+	  let s = make(<byte-string-stream>,
+		       contents: make(<byte-string>, size: 80),
+		       direction: #"output");
+	  if (do-dispatch(control-string[field-spec-end], s,
+			  element(args, arg-i, default: #f)))
+	    arg-i := arg-i + 1;
+	  end;
+	  let output = s.stream-contents;
+	  let output-len :: <integer> = output.size;
+	  let padding :: <integer> = (abs(field) - output-len);
+	  case
+	    (padding < 0) =>
+	      write(stream, output);
+	    (field > 0) =>
+	      write(stream, make(<byte-string>, size: padding, fill: ' '));
+	      write(stream, output);
+	    otherwise =>
+	      write(stream, output);
+	      write(stream, make(<byte-string>, size: padding, fill: ' '));
+	  end;
+	  start := field-spec-end + 1;  // Add one to skip dispatch char.
+	else
+	  if (do-dispatch(control-string[start], stream,
+			  element(args, arg-i, default: #f)))
+	    arg-i := arg-i + 1;
+	  end;
+	  start := start + 1;  // Add one to skip dispatch char.
 	end;
-	start := start + 1;  // Add one to skip dispatch char.
-      end;
+      end if;
     end while;
   cleanup
     unlock-stream(stream);
