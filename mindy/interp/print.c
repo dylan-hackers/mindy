@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.5 1994/06/11 17:18:20 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.6 1994/06/19 01:17:01 nkramer Exp $
 *
 * This file does whatever.
 *
@@ -120,8 +120,8 @@ int count_format_args(char *fmt)
 	      case '%':
 		break;
 	      default:
-		/* This may need to be a Dylan character, not a C character. */
-		error("Unknown format directive in error msg: %%%c", *ptr);
+		error("Unknown format directive in error msg: %%%c", 
+		      int_char(*ptr));
 	    }
 	}
     }
@@ -197,8 +197,8 @@ void vformat(char *fmt, obj_t *args)
 		putchar('%');
 		break;
 	      default:
-		/* This may need to be a Dylan character, not a C character. */
-		error("Unknown format directive in error msg: %%%c", *fmt);
+		error("Unknown format directive in error msg: %%%c", 
+		      int_char(*fmt));
 	      }
 	}
 	else
