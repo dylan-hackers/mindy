@@ -47,9 +47,28 @@ define module c-types
       c-array-size,
     <c-function-type>,
       c-function-return-type,
+      c-function-parameters,
+      c-function-explicit-varargs?,
+      c-function-explicit-void?,
     <c-typedef-type>,
       c-typedef-name,
       c-typedef-type;
+
+  export
+    <c-struct-member>,
+    <c-member-variable>,
+      c-member-variable-name,
+      c-member-variable-type,
+    <c-bit-field>,
+      c-bit-field-name,
+      c-bit-field-sign-specifier,
+      c-bit-field-width,
+    <c-enum-constant>,
+      c-enum-constant-name,
+      c-enum-constant-value,
+    <c-function-parameter>,
+      c-function-parameter-name,
+      c-function-parameter-type;
 
   export
     format-c-type-declarator;

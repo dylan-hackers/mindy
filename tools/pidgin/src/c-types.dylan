@@ -138,7 +138,7 @@ define method initialize
   unless (type.c-type-tag)
     type.c-type-anonymous-tag := *anonymous-tag-counter*;
     *anonymous-tag-counter* := *anonymous-tag-counter* + 1;
-    type.c-type-tag := format-to-string("$%d", *anonymous-tag-counter*);
+    type.c-type-tag := format-to-string("$%d", type.c-type-anonymous-tag);
   end;
 end;
 
@@ -152,19 +152,40 @@ end;
 define abstract class <c-struct-or-union-type> (<c-tagged-type>)
   slot c-type-members :: false-or(<stretchy-vector>) = make(<stretchy-vector>),
     init-keyword: members:;
-  // XXX - define members
 end;
 
 define class <c-struct-type> (<c-struct-or-union-type>)
+  // elements of c-type-members are of type <c-struct-member>
 end;
 
 define class <c-union-type> (<c-struct-or-union-type>)
+  // elements of c-type-members are of type <c-member-variable>
 end;
 
 define method c-type-complete?
     (type :: <c-struct-or-union-type>)
  => (complete? :: <boolean>)
   type.c-type-members ~= #f;
+end;
+
+define abstract class <c-struct-member> (<object>)
+end;
+
+define class <c-member-variable> (<c-struct-member>)
+  slot c-member-variable-name :: <string>,
+    required-init-keyword: name:;
+  slot c-member-variable-type :: <c-type>,
+    required-init-keyword: type:;
+  // MSVC - Need packing information
+end;
+
+define class <c-bit-field> (<c-struct-member>)
+  slot c-bit-field-name :: false-or(<string>),
+    required-init-keyword: name:;
+  slot c-bit-field-sign-specifier :: <c-sign-specifier>,
+    required-init-keyword: sign:;
+  slot c-bit-field-width :: <integer>,
+    required-init-keyword: width:;
 end;
 
 
@@ -177,7 +198,14 @@ end;
 
 define class <c-enum-type> (<c-tagged-type>)
   slot c-enum-members :: <stretchy-vector> = make(<stretchy-vector>);
-  // XXX - define members
+  // elements of c-enum-members are of type <c-enum-constant>
+end;
+
+define class <c-enum-constant> (<object>)
+  slot c-enum-constant-name :: <string>,
+    required-init-keyword: name:;
+  slot c-enum-constant-value :: <integer>,
+    required-init-keyword: value:;
 end;
 
 
@@ -217,9 +245,25 @@ end;
 define class <c-function-type> (<c-derived-type>)
   slot c-function-return-type :: <c-type>,
     required-init-keyword: return-type:;
-  slot c-function-has-varargs? :: <boolean>,
-    required-init-keyword: varargs?:;
-  // XXX - ... need to think about this one
+  slot c-function-parameters :: <stretchy-vector> = make(<stretchy-vector>);
+  // members of c-function-parameters are of type <c-function-parameter>
+
+  // Record new and old style declarations exactly.
+  slot c-function-explicit-varargs? :: <boolean>,
+    init-keyword: explicit-varargs?:,
+    init-value: #f;
+  slot c-function-explicit-void? :: <boolean>,
+    init-keyword: explicit-void?:,
+    init-value: #f;
+
+  // MSVC - need to handle __stdcall, maybe others.
+end;
+
+define class <c-function-parameter> (<object>)
+  slot c-function-parameter-name :: false-or(<string>),
+    required-init-keyword: name:;
+  slot c-function-parameter-type :: <c-type>,
+    required-init-keyword: type:;
 end;
 
 
