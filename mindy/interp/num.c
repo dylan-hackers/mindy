@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.18 1995/02/08 02:45:01 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.19 1995/03/02 18:05:09 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -1300,7 +1300,8 @@ static obj_t dylan_ei_logbitp(obj_t i, obj_t x)
     int bit = index % DIGIT_BITS;
 
     if (index < 0)
-        error("Can't look at bit %d", index);
+	return obj_False;
+
     if (digit >= BIGNUM(x)->length) {
 	if (SIGN(x))
 	    return obj_True;
