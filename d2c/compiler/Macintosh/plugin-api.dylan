@@ -2,7 +2,7 @@ module: plugin-api
 file: plugin-api.dylan
 author: gabor@mac.com
 synopsis: CW plugin interface.
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/plugin-api.dylan,v 1.2 2004/04/13 23:46:28 gabor Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/plugin-api.dylan,v 1.3 2004/04/14 20:59:39 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -34,6 +34,8 @@ copyright: see below
 c-system-include("Files.h");
 c-system-include("TextUtils.h");
 c-system-include("DropInCompilerLinker.h");
+c-decl("extern FSSpec fsSpec(const CWFileSpec*);");
+c-decl("extern CWFileSpec fileRef(const FSSpec*);");
 
 define macro standard-seals-for
 	{ standard-seals-for(?:name) }
@@ -190,6 +192,30 @@ end class <project-file-info>;
 
 standard-seals-for(<project-file-info>);
 
+
+define macro with-fss
+  { with-fss(?ref:expression => ?spec:expression) ?:body end }
+  =>
+  {
+    c-local-decl("FSSpec " ?spec ";");
+    call-out(?spec " = fsSpec", void:, ptr: c-ptr-expr("&" ?ref));
+    call-out("p2cstrcpy", void:, ptr: c-ptr-expr(?spec ".name"), ptr: c-ptr-expr(?spec ".name"));
+    ?body
+  }
+end;
+
+define macro with-cwspec
+  { with-cwspec(?spec:expression => ?ref:expression) ?:body end }
+  =>
+  {
+    c-local-decl("CWFileSpec " ?ref ";");
+    call-out(?ref " = fileRef", void:, ptr: c-ptr-expr("&" ?spec));
+    ?body
+  }
+end;
+
+
+
 // CW_CALLBACK	CWGetFileInfo(CWPluginContext context, long whichfile, Boolean checkFileLocation, CWProjectFileInfo* fileinfo);
 define function get-file-info(plug :: <plugin-callback>, file-number :: <integer>, check-loc :: <boolean>) => info :: <project-file-info>;
 
@@ -205,12 +231,13 @@ define function get-file-info(plug :: <plugin-callback>, file-number :: <integer
 	c-void-expr("memset(&fileinfo, 0, sizeof(fileinfo))");
 	check(call-out("CWGetFileInfo", int:, ptr: plug.opaque-pointer.raw-value, int: file-number, int: check-loc.as-number, ptr: c-ptr-expr("&fileinfo")));
 
-	check-loc & call-out("p2cstrcpy", void:, ptr: c-ptr-expr("fileinfo.filespec.name"), ptr: c-ptr-expr("fileinfo.filespec.name"));
-
-	let spec = check-loc & make(<file-spec>,
-													vol: c-int-expr("fileinfo.filespec.vRefNum"),
-													dir: c-int-expr("fileinfo.filespec.parID"),
-													name: as(<byte-string>, make(<c-string>, pointer: c-ptr-expr("fileinfo.filespec.name"))));
+	let spec = check-loc
+				& with-fss("fileinfo.filespec" => "spec")
+					make(<file-spec>,
+						vol: c-int-expr("spec.vRefNum"),
+						dir: c-int-expr("spec.parID"),
+						name: as(<byte-string>, make(<c-string>, pointer: c-ptr-expr("spec.name"))))
+				end;
 
 	make(<project-file-info>,
 		spec: spec,
@@ -389,14 +416,18 @@ end class <file-spec>;
 
 standard-seals-for(<file-spec>);
 
+
 //CW_CALLBACK	CWGetProjectFile(CWPluginContext context, CWFileSpec* projectSpec);
 define function get-project-file(plug :: <plugin-callback>) => project-spec :: <file-spec>;
-	c-local-decl("CWFileSpec spec;");
-	check(call-out("CWGetProjectFile", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&spec")));
-	make(<file-spec>,
-		vol: c-int-expr("spec.vRefNum"),
-		dir: c-int-expr("spec.parID"),
-		name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name"))));
+	c-local-decl("CWFileSpec ref;");
+	check(call-out("CWGetProjectFile", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&ref")));
+	
+	with-fss("ref" => "spec")
+	    make(<file-spec>,
+		    vol: c-int-expr("spec.vRefNum"),
+		    dir: c-int-expr("spec.parID"),
+		    name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name"))));
+    end
 end;
 
 //CW_CALLBACK	CWReleaseFileText(CWPluginContext context, const char* text);
@@ -431,9 +462,13 @@ end;
 
 //CW_CALLBACK	CWLockMemHandle(CWPluginContext context, CWMemHandle handle, Boolean moveHi, void** ptr);
 define function lock-mem-handle(plug :: <plugin-callback>, handle :: <mem-handle>, #key move-hi :: <boolean>) => locked :: <machine-pointer>;
-	let stor = call-out("__alloca", ptr:, int: c-int-expr("sizeof(void*)"));
-	check(call-out("CWLockMemHandle", int:, ptr: plug.opaque-pointer.raw-value, ptr: handle.opaque-handle.raw-value, int: 0/*еее*/, ptr: stor));
-	pointer-at(as(<machine-pointer>, stor), class: <machine-pointer>)
+//	let stor = call-out("__alloca", ptr:, int: c-int-expr("sizeof(void*)"));
+	as(<machine-pointer>,
+	   with-c-variable-and-ptr("long", ptr, ptr-ptr)
+	       check(call-out("CWLockMemHandle", int:, ptr: plug.opaque-pointer.raw-value, ptr: handle.opaque-handle.raw-value, int: 0/*еее*/, ptr: ptr-ptr));
+	   end)
+
+//	pointer-at(as(<machine-pointer>, stor), class: <machine-pointer>)
 end;
 
 //CW_CALLBACK	CWGetMemHandleSize(CWPluginContext context, CWMemHandle handle, long* size);
@@ -571,13 +606,15 @@ end function get-main-file-id;
 
 //CW_CALLBACK CWGetMainFileSpec(CWPluginContext context, CWFileSpec* fileSpec);
 define function get-main-file-spec(plug :: <plugin-callback>) => spec :: <file-spec>;
-	c-local-decl("CWFileSpec spec;");
-	check(call-out("CWGetMainFileSpec", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&spec")));
-	c-void-expr("p2cstrcpy((char*)spec.name, spec.name)");
-	make(<file-spec>,
-		vol: c-int-expr("spec.vRefNum"),
-		dir: c-int-expr("spec.parID"),
-		name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name"))));
+	c-local-decl("CWFileSpec ref;");
+	check(call-out("CWGetMainFileSpec", int:, ptr: plug.opaque-pointer.raw-value, ptr: c-ptr-expr("&ref")));
+
+	with-fss("ref" => "spec")
+		make(<file-spec>,
+			vol: c-int-expr("spec.vRefNum"),
+			dir: c-int-expr("spec.parID"),
+			name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name"))));
+	end
 end function get-main-file-spec;
 
 //CW_CALLBACK CWGetMainFileText(CWPluginContext context, const char** text, long* textLength);
@@ -599,11 +636,13 @@ end c-enumeration;
 //CW_CALLBACK	CWReportMessage(CWPluginContext context, const CWMessageRef* msgRef, const char *line1, const char *line2, short errorlevel, long errorNumber);
 define function report-message(plug :: <plugin-callback>, in-file :: <file-spec>.false-or, error-string :: <byte-string>, line-number :: <integer>, error-level :: <integer>, error-number :: <integer>, #key line-2 :: <byte-string> = "") => ();
 	c-zeroed-local("CWMessageRef", "msgRef");
+	c-zeroed-local("FSSpec", "spec");
 
 	if (in-file)
-		call-out("msgRef.sourcefile.vRefNum = ", void:, int: in-file.volume-ref);
-		call-out("msgRef.sourcefile.parID = ", void:, int: in-file.directory-ref);
-		call-out("c2pstrcpy", void:, ptr: c-ptr-expr("&msgRef.sourcefile.name"), ptr: as(<c-string>, in-file.spec-file-name).raw-value);
+		export-fss(in-file, c-ptr-expr("&spec"));
+		with-cwspec("spec" => "ref")
+			call-out("msgRef.sourcefile = *(const CWFileSpec*)", void:, ptr: c-ptr-expr("&ref"));
+		end;
 	end if;
 	
 	call-out("msgRef.linenumber = ", void:, int: line-number);
@@ -679,29 +718,20 @@ define function cw-find-and-load-file
 					ptr: as(<c-string>, file-name).raw-value,
 					ptr: c-ptr-expr("&fileinfo")));
 
-	want-file-spec & call-out("p2cstrcpy", void:, ptr: c-ptr-expr("fileinfo.filespec.name"), ptr: c-ptr-expr("fileinfo.filespec.name"));
+	values(as(<machine-pointer>, c-ptr-expr("(void*)fileinfo.filedata")),
+			c-int-expr("fileinfo.filedatalength"),
+			c-int-expr("fileinfo.filedatatype"),
+			c-int-expr("fileinfo.fileID"),
+			want-file-spec
+			& with-fss("fileinfo.filespec" => "spec")
+				make(<file-spec>,
+						vol: c-int-expr("spec.vRefNum"),
+						dir: c-int-expr("spec.parID"),
+						name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name"))))
+			end,
+			c-int-expr("fileinfo.alreadyincluded") ~== 0,
+			c-int-expr("fileinfo.recordbrowseinfo") ~== 0);
 
-/*	let (	file-data :: <machine-pointer>,			// еее see get-file-info where this workaround is not needed for some reason...
-			file-data-length :: <integer>,
-			file-data-type :: <integer>,
-			file-id :: <integer>,
-			file-spec :: <file-spec>.false-or,
-			already-included :: <boolean>,
-			record-browse-info :: <boolean>)
-		= */
-		
-		values(as(<machine-pointer>, c-ptr-expr("(void*)fileinfo.filedata")),
-				c-int-expr("fileinfo.filedatalength"),
-				c-int-expr("fileinfo.filedatatype"),
-				c-int-expr("fileinfo.fileID"),
-				want-file-spec & make(<file-spec>,
-														vol: c-int-expr("fileinfo.filespec.vRefNum"),
-														dir: c-int-expr("fileinfo.filespec.parID"),
-														name: as(<byte-string>, as(<c-string>, c-ptr-expr("fileinfo.filespec.name")))),
-				c-int-expr("fileinfo.alreadyincluded") ~== 0,
-				c-int-expr("fileinfo.recordbrowseinfo;") ~== 0);
-
-//	values(	file-data, file-data-length, file-data-type, file-id, file-spec, already-included, record-browse-info)
 end function cw-find-and-load-file;
 
 
@@ -756,7 +786,7 @@ define function check-mac-os(plug :: <plugin-callback>, mac-err :: <integer>) =>
 end function check-mac-os;
 
 define function load-file-in-buffer(plug :: <plugin-callback>, spec :: <file-spec>) => filled-buffer :: <buffer>;
-	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("FSSpec", "spec");
 	c-local-decl("short refNum;");
 	c-local-decl("long logEOF;");
 
@@ -848,7 +878,7 @@ define function add-project-entry
 		info :: <cw-new-project-entry-info>.false-or)
 	=> which-file :: <integer>;
 
-	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("FSSpec", "spec");
 	c-zeroed-local("CWNewProjectEntryInfo", "info");
 
 	let (spec-file-name :: <c-string>, group-path :: <c-string>.false-or)
@@ -879,12 +909,14 @@ define function add-project-entry
 			call-out("info.overlay = ", void:, int: $default-link-position);
 		end if;
 		
-		check(call-out("CWAddProjectEntry", int:,
-						ptr: plug.opaque-pointer.raw-value,
-						ptr: c-ptr-expr("&spec"),
-						int: is-generated.as-number,
-						ptr: if (info) c-ptr-expr("&info") else c-ptr-expr("0") end if,
-						ptr: c-ptr-expr("&whichfile")));
+		with-cwspec("spec" => "ref")
+			check(call-out("CWAddProjectEntry", int:,
+							ptr: plug.opaque-pointer.raw-value,
+							ptr: c-ptr-expr("&ref"),
+							int: is-generated.as-number,
+							ptr: if (info) c-ptr-expr("&info") else c-ptr-expr("0") end if,
+							ptr: c-ptr-expr("&whichfile")));
+		end
 	end with-c-variable
 end function add-project-entry;
 
@@ -914,21 +946,20 @@ end function store-plugin-data;
 
 //CW_CALLBACK	CWGetPluginData(CWPluginContext context, long whichfile, CWDataType type, CWMemHandle* prefsdata);
 define function get-plugin-data(plug :: <plugin-callback>, which-file :: <integer>, type :: <integer>) => prefs-data :: <mem-handle>;
-	c-void-expr("{ CWMemHandle prefsdata");
+	c-local-decl("CWMemHandle prefsdata;");
 	check(call-out("CWGetPluginData", int:,
 							ptr: plug.opaque-pointer.raw-value,
 							int: which-file,
 							int: type,
 							ptr: c-ptr-expr("&prefsdata")));
 	let raw-result :: <raw-pointer> = c-ptr-expr("prefsdata");
-	c-void-expr("}");
 
 	make(<mem-handle>, opaque: as(<machine-pointer>, raw-result));
 end function get-plugin-data;
 
 
 define function create-file(contents :: <cw-vector>, spec :: <file-spec>, #key binary? :: <boolean>) => ();
-	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("FSSpec", "spec");
 	c-local-decl("short refNum;");
 	c-local-decl("long count;");
 
@@ -959,7 +990,7 @@ end function create-file;
 define function write-file(contents :: <cw-vector>, spec :: <file-spec>) => mod-date :: <file-time>;
 	let vec-size :: <integer> = contents.size;
 // factor out common stuff -- see also create-file еее
-	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("FSSpec", "spec");
 	c-local-decl("short refNum;");
 	c-local-decl("long count;");
 
@@ -988,7 +1019,7 @@ end function write-file;
 
 // CW_CALLBACK	CWSetModDate(CWPluginContext context, const CWFileSpec* filespec, CWFileTime* moddate, Boolean isGenerated);
 define function set-mod-date(plug :: <plugin-callback>, spec :: <file-spec>, mod-date :: <file-time>, is-generated :: <boolean>) => ();
-	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("FSSpec", "spec");
 	c-local-decl("CWFileTime moddate;");
 
 	let spec-file-name :: <c-string> = as(<c-string>, spec.spec-file-name);
@@ -1002,43 +1033,47 @@ define function set-mod-date(plug :: <plugin-callback>, spec :: <file-spec>, mod
 						b & 1 | 0
 					end;
 	
-	check(call-out("CWSetModDate", int:,
-					ptr: plug.opaque-pointer.raw-value,
-					ptr: c-ptr-expr("&spec"),
-					ptr: c-ptr-expr("&moddate"),
-					int: is-generated.as-number));
-	
+	with-cwspec("spec" => "ref")
+		check(call-out("CWSetModDate", int:,
+						ptr: plug.opaque-pointer.raw-value,
+						ptr: c-ptr-expr("&ref"),
+						ptr: c-ptr-expr("&moddate"),
+						int: is-generated.as-number));
+	end
 //	mod-date	// does the result interest us?е
 
 end function set-mod-date;
 
 // CW_CALLBACK CWPreFileAction(CWPluginContext context, const CWFileSpec *theFile);
 define function pre-file-action(plug :: <plugin-callback>, spec :: <file-spec>) => ();
-	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("FSSpec", "spec");
 	let spec-file-name :: <c-string> = as(<c-string>, spec.spec-file-name);
 	call-out("spec.vRefNum = ", void:, int: spec.volume-ref);
 	call-out("spec.parID = ", void:, int: spec.directory-ref);
 	call-out("c2pstrcpy", void:, ptr: c-ptr-expr("spec.name"), ptr: spec-file-name.raw-value);
 
-	check(call-out("CWPreFileAction", int:,
-					ptr: plug.opaque-pointer.raw-value,
-					ptr: c-ptr-expr("&spec")));
+	with-cwspec("spec" => "ref")
+		check(call-out("CWPreFileAction", int:,
+						ptr: plug.opaque-pointer.raw-value,
+						ptr: c-ptr-expr("&ref")));
+	end
 end function pre-file-action;
 
 
 // CW_CALLBACK CWPostFileAction(CWPluginContext context, const CWFileSpec *theFile);
 define function post-file-action(plug :: <plugin-callback>, spec :: <file-spec>) => ();
-	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("FSSpec", "spec");
 
 	let spec-file-name :: <c-string> = as(<c-string>, spec.spec-file-name);
 	call-out("spec.vRefNum = ", void:, int: spec.volume-ref);
 	call-out("spec.parID = ", void:, int: spec.directory-ref);
 	call-out("c2pstrcpy", void:, ptr: c-ptr-expr("spec.name"), ptr: spec-file-name.raw-value);
 
-	check(call-out("CWPostFileAction", int:,
-					ptr: plug.opaque-pointer.raw-value,
-					ptr: c-ptr-expr("&spec")));
-
+	with-cwspec("spec" => "ref")
+		check(call-out("CWPostFileAction", int:,
+						ptr: plug.opaque-pointer.raw-value,
+						ptr: c-ptr-expr("&ref")));
+	end
 /*	cw-call-out("CWPostFileAction", plug,	еее			--- see below... ICE must be reported
 							ptr: c-ptr-expr("&spec"));	*/
 end function post-file-action;
@@ -1344,25 +1379,25 @@ end;
 
 // CW_CALLBACK CWResolveRelativePath(CWPluginContext context, const CWRelativePath* relativePath, CWFileSpec* fileSpec, Boolean create);
 define function resolve-relative-path(plug :: <plugin-callback>, relative-path :: <machine-pointer>, #key create :: <boolean> = #t) => file-spec :: <file-spec>;
-	c-zeroed-local("CWFileSpec", "spec");
+	c-zeroed-local("CWFileSpec", "ref");
 	check(call-out("CWResolveRelativePath", int:,
 								ptr: plug.opaque-pointer.raw-value,
 								ptr: relative-path.raw-value,
-								ptr: c-ptr-expr("&spec"),
+								ptr: c-ptr-expr("&ref"),
 								int: create & 1 | 0));
 
-	call-out("p2cstrcpy", void:, ptr: c-ptr-expr("spec.name"), ptr: c-ptr-expr("spec.name"));
 
-	make(<file-spec>,
-				vol: c-int-expr("spec.vRefNum"),
-				dir: c-int-expr("spec.parID"),
-				name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name"))))
-
+	with-fss("ref" => "spec")
+		make(<file-spec>,
+					vol: c-int-expr("spec.vRefNum"),
+					dir: c-int-expr("spec.parID"),
+					name: as(<byte-string>, as(<c-string>, c-ptr-expr("spec.name"))))
+	end
 end function resolve-relative-path;
 
 
 define function fill-fs-spec(spec :: <file-spec>, into :: <raw-pointer>, #key extra :: <byte-string> = "") => ();
-	c-local-decl("CWFileSpec* spec");
+	c-local-decl("FSSpec* spec;");
 	let spec-file-name :: <c-string> = as(<c-string>, concatenate(":", spec.spec-file-name, extra));
 	call-out("spec = ", void:, ptr: into);
 	call-out("spec->vRefNum = ", void:, int: spec.volume-ref);
@@ -1371,8 +1406,8 @@ define function fill-fs-spec(spec :: <file-spec>, into :: <raw-pointer>, #key ex
 end function fill-fs-spec;
 
 define function relative-path-from(plug :: <plugin-callback>, root-spec :: <file-spec>, relative-path :: <byte-string>, #key check: check? :: <boolean>) => file-spec :: <file-spec>;
-	c-zeroed-local("CWFileSpec", "spec");
-	c-zeroed-local("CWFileSpec", "dest");
+	c-zeroed-local("FSSpec", "spec");
+	c-zeroed-local("FSSpec", "dest");
 
 	fill-fs-spec(root-spec, c-ptr-expr("&spec"), extra: relative-path);
 	
