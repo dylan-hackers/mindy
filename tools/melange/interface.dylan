@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.16 2003/01/29 19:03:53 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.17 2003/01/29 19:18:28 andreas Exp $
 
 //======================================================================
 //
@@ -588,7 +588,6 @@ define method write-module-stream
            "  use melange-support;\n"
            "  export\n"
            "    %s",
-           "foo", // need to extract module name from intr file
            decls[0].dylan-name);
     for(i from 1 below decls.size)
       format(module-stream, ",\n    %s", decls[i].dylan-name);
