@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.99 1995/08/17 23:40:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.100 1995/08/29 15:23:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1066,7 +1066,7 @@ define method convert-to-known-call
 		end;
 	      end;
 	  add!(new-ops, leaf);
-	  if (keyinfo.key-supplied?-var)
+	  if (keyinfo.key-needs-supplied?-var)
 	    let supplied? = as(<ct-value>, key-dep & #t);
 	    add!(new-ops, make-literal-constant(builder, supplied?));
 	  end;
@@ -3262,7 +3262,7 @@ define method build-xep
 	  let key = key-info.key-name;
 	  let var = make-local-var(builder, key, key-info.key-type);
 	  let supplied?-var
-	    = if (key-info.key-supplied?-var)
+	    = if (key-info.key-needs-supplied?-var)
 		make-local-var(builder,
 			       as(<symbol>,
 				  concatenate(as(<string>, key),

@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.43 1995/08/22 14:08:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.44 1995/08/29 15:23:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -842,7 +842,6 @@ define method fer-convert-method
 			   name: #"initialized?"));
 	    else
 	      add!(vars, supplied?-var);
-	      info.key-supplied?-var := #t;
 	    end;
 	    build-if-body(body-builder, lexenv.lexenv-policy,
 			  source, supplied?-var);

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.85 1995/08/07 14:04:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.86 1995/08/29 15:23:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -167,7 +167,7 @@ define module signature-interface
     returns,
 
     <key-info>, key-name, key-type, required?, key-default,
-    key-supplied?-var, key-supplied?-var-setter;
+    key-needs-supplied?-var;
 end;
 
 define module names
@@ -718,6 +718,7 @@ define module signature
   use utils;
   use ctype;
   use definitions;
+  use representation;
 end;
 
 define module primitives

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.68 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.69 1995/08/29 15:23:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -390,7 +390,7 @@ define method make-function-info
 	if (signature.key-infos)
 	  for (key-info in signature.key-infos)
 	    add!(reps, pick-representation(key-info.key-type, #"speed"));
-	    if (key-info.key-supplied?-var)
+	    if (key-info.key-needs-supplied?-var)
 	      add!(reps,
 		   pick-representation(specifier-type(#"<boolean>"),
 				       #"speed"));
