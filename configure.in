@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.6 1995/03/13 22:04:17 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.7 1995/03/13 22:06:07 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -37,8 +37,6 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_LEX
 AC_PROG_YACC
-# YACC=${YACC-yacc}
-# AC_SUBST(YACC)dnl
 AC_PROG_RANLIB
 
 #--------------------------------------------------------------------
