@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.12 2003/09/30 19:42:45 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.13 2003/10/01 17:17:02 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1046,8 +1046,9 @@ define method make-canonical-limited-integer
     end;
     if (high-bound < low-bound)
       empty-ctype()
-    elseif (high-bound = low-bound)
-      make(<singleton-ctype>, value: as(<ct-value>, as(<integer>, low-bound)))
+//  elseif (high-bound = low-bound)
+//    /* FIXME */
+//    make(<singleton-ctype>, value: as(<ct-value>, as(<integer>, low-bound)))
     else
       make(<limited-integer-ctype>, base-class: base-class,
 	   low-bound: low-bound, high-bound: high-bound)
@@ -1055,8 +1056,9 @@ define method make-canonical-limited-integer
   else
     if (high-bound & low-bound & high-bound < low-bound)
       empty-ctype();
-    elseif (high-bound & low-bound & high-bound = low-bound)
-      make(<singleton-ctype>, value: as(<ct-value>, low-bound))
+//  elseif (high-bound & low-bound & high-bound = low-bound)
+//    /* FIXME */
+//    make(<singleton-ctype>, value: as(<ct-value>, low-bound))
     else
       make(<limited-integer-ctype>, base-class: base-class,
 	   low-bound: low-bound, high-bound: high-bound);
