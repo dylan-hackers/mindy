@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.14 1999/04/09 23:06:50 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.15 1999/04/10 00:43:01 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1323,11 +1323,12 @@ define constant $default-targets-dot-descr
 
 // Library search path.
 define constant $default-dylan-path
-  = concatenate(".:", $dylan-dir, "/lib/dylan/");
+  = concatenate(".:", $dylan-dir, "/lib/dylan/", $version, "/dylan-user:", 
+                      $dylan-dir, "/lib/dylan/", $version, "/runtime");
 
 // Location of runtime.h
 define constant $runtime-include-dir
-  = concatenate($dylan-dir, "/include/");
+  = concatenate($dylan-dir, "/include");
 
 
 //----------------------------------------------------------------------

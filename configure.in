@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.29 1999/04/09 21:26:34 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.30 1999/04/10 00:42:59 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -717,6 +717,7 @@ AC_OUTPUT(Defaults \
 	mindy/etc/Makefile \
 	mindy/etc/generate-depends \
 	mindy/interp/make-init.pl \
+	d2c/compiler/main/version.dylan \
         common/system/os-constants.dylan \
 	tools/shared-misc/gen-makefile \
 	tools/shared-misc/mk-build-tree \
