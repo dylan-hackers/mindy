@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.8 1994/04/09 13:36:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.9 1994/04/12 23:09:51 wlott Exp $
 *
 * This file does whatever.
 *
@@ -40,7 +40,7 @@ static int NextId = 0;
 static struct thread *Current = NULL;
 static struct thread *Runnable = NULL;
 
-static obj_t obj_LockClass, obj_EventClass;
+static obj_t obj_ThreadClass, obj_LockClass, obj_EventClass;
 
 static void remove_from_lock(struct thread *thread);
 static void add_to_lock(struct thread *thread);
@@ -82,6 +82,12 @@ struct thread *thread_pick_next()
 
 /* Utilities. */
 
+static void set_status(struct thread *thread, enum thread_status status)
+{
+    thread->status = status;
+    THREAD(thread->thread_obj)->status = status;
+}
+
 static void suspend_thread(struct thread *thread)
 {
     if (thread == Runnable) {
@@ -116,10 +122,10 @@ static void wakeup_thread(struct thread *thread)
 	    thread->prev = &thread->next;
 	    Runnable = thread;
 	}
-	thread->status = status_Running;
+	set_status(thread, status_Running);
     }
     else
-	thread->status = status_Suspended;
+	set_status(thread, status_Suspended);
 }
 
 static void return_false(struct thread *thread)
@@ -134,9 +140,13 @@ static void return_false(struct thread *thread)
 
 static void stop_thread(struct thread *thread, obj_t *vals)
 {
+    obj_t thread_obj = thread->thread_obj;
+
     assert(Current == thread);
 
     thread_kill(thread);
+
+    THREAD(thread_obj)->status = status_Exited;
 
     pause(pause_PickNewThread);
 }
@@ -156,21 +166,25 @@ static void start_thread(struct thread *thread)
 
 struct thread *thread_create(obj_t debug_name)
 {
+    obj_t thread_obj = alloc(obj_ThreadClass, sizeof(struct thread_obj));
     struct thread_list *list = malloc(sizeof(*list));
     struct thread *thread = malloc(STACK_SIZE);
+
+    THREAD(thread_obj)->thread = thread;
+    THREAD(thread_obj)->debug_name = debug_name;
 
     list->thread = thread;
     list->next = NULL;
     *AllThreadsTail = list;
     AllThreadsTail = &list->next;
 
-    thread->debug_name = debug_name;
+    thread->thread_obj = thread_obj;
     thread->id = NextId++;
     thread->next = NULL;
     thread->prev = NULL;
     thread->suspend_count = 1;
     thread->advance = start_thread;
-    thread->status = status_Suspended;
+    set_status(thread, status_Suspended);
     thread->datum = rawptr_obj(thread+1);
     thread->stack_base = (obj_t *)(thread+1);
     thread->stack_end = (obj_t *)(((void *)thread) + STACK_SIZE);
@@ -229,6 +243,9 @@ void thread_push_escape(struct thread *thread)
       case status_Waiting:
 	remove_from_event(thread);
 	break;
+
+      default:
+	lose("strange thread status.");
     }
 
     *thread->sp++ = thread->datum;
@@ -236,7 +253,7 @@ void thread_push_escape(struct thread *thread)
     *thread->sp++ = rawptr_obj(thread->advance);
 
     thread->advance = start_thread;
-    thread->status = status_Suspended;
+    set_status(thread, status_Suspended);
     thread->suspend_count = 1;
     thread->datum = rawptr_obj(thread->sp);
     set_c_continuation(thread, pop_escape_frame);
@@ -245,7 +262,7 @@ void thread_push_escape(struct thread *thread)
 void thread_pop_escape(struct thread *thread)
 {
     thread->advance = obj_rawptr(*--thread->sp);
-    thread->status = (enum status)fixnum_value(*--thread->sp);
+    set_status(thread, (enum thread_status)fixnum_value(*--thread->sp));
     thread->datum = *--thread->sp;
     
     switch (thread->status) {
@@ -266,8 +283,11 @@ void thread_pop_escape(struct thread *thread)
 	break;
 
       case status_Waiting:
-	thread->status = status_Running;
+	set_status(thread, status_Running);
 	break;
+
+      default:
+	lose("strange thread status.");
     }
 }
 
@@ -291,6 +311,9 @@ void thread_kill(struct thread *thread)
       case status_Waiting:
 	remove_from_event(thread);
 	break;
+
+      default:
+	lose("strange thread status.");
     }
 
     for (prev = &AllThreads; (list = *prev) != NULL; prev = &list->next) {
@@ -308,8 +331,25 @@ void thread_kill(struct thread *thread)
     if (Current == thread)
 	Current = NULL;
 
+    THREAD(thread->thread_obj)->thread = NULL;
+    THREAD(thread->thread_obj)->status = status_Killed;
+
     free(thread);
 }
+
+static obj_t dylan_kill_thread(obj_t thread_obj)
+{
+    struct thread *thread = THREAD(thread)->thread;
+    boolean me = (thread == Current);
+
+    thread_kill(thread);
+
+    if (me)
+	pause(pause_PickNewThread);
+
+    return thread_obj;
+}
+    
 
 
 /* Thread suspending and restarting. */
@@ -319,7 +359,7 @@ void thread_debuggered(struct thread *thread, obj_t condition)
     assert(thread == Current);
 
     suspend_thread(thread);
-    thread->status = status_Debuggered;
+    set_status(thread, status_Debuggered);
     thread->datum = condition;
     pause(pause_DebuggerInvoked);
 }
@@ -330,7 +370,7 @@ void thread_buggered(struct thread *thread)
 	lose("Trying to bugger a thread that wasn't originally Debuggered?");
     else {
 	wakeup_thread(thread);
-	thread->status = status_Running;
+	set_status(thread, status_Running);
 	thread->datum = obj_False;
     }
 }
@@ -339,7 +379,7 @@ void thread_suspend(struct thread *thread)
 {
     if (thread->suspend_count++ == 0 && thread->status == status_Running) {
 	suspend_thread(thread);
-	thread->status = status_Suspended;
+	set_status(thread, status_Suspended);
     }
 }
 
@@ -351,6 +391,7 @@ void thread_restart(struct thread *thread)
 	    wakeup_thread(thread);
     }
 }
+
 
 
 /* Locks */
@@ -397,7 +438,7 @@ void lock_grab(struct thread *thread, obj_t lock,
 	LOCK(lock)->last = &thread->next;
 	thread->next = NULL;
 	thread->prev = NULL;
-	thread->status = status_Blocked;
+	set_status(thread, status_Blocked);
 	thread->datum = lock;
 	thread->advance = advance;
 
@@ -512,7 +553,7 @@ void event_wait(struct thread *thread, obj_t event, obj_t lock,
     EVENT(event)->last = &thread->next;
     thread->prev = NULL;
     thread->next = NULL;
-    thread->status = status_Waiting;
+    set_status(thread, status_Waiting);
     thread->datum = event;
     thread->advance = advance;
 
@@ -592,6 +633,20 @@ static void remove_from_event(struct thread *thread)
 
 /* GC stuff. */
 
+static int scav_thread_obj(struct object *o)
+{
+    struct thread_obj *t = (struct thread_obj *)o;
+
+    scavenge(&t->debug_name);
+
+    return sizeof(struct thread_obj);
+}
+
+static obj_t trans_thread_obj(obj_t t)
+{
+    return transport(t, sizeof(struct thread_obj));
+}
+
 static int scav_lock(struct object *o)
 {
     return sizeof(struct lock);
@@ -616,7 +671,7 @@ static void scav_thread(struct thread *thread)
 {
     obj_t *ptr;
 
-    scavenge(&thread->debug_name);
+    scavenge(&thread->thread_obj);
     scavenge(&thread->datum);
     scavenge(&thread->component);
     scavenge(&thread->cur_catch);
@@ -634,6 +689,7 @@ void scavenge_thread_roots(void)
     for (list = AllThreads; list != NULL; list = list->next)
 	scav_thread(list->thread);
 
+    scavenge(&obj_ThreadClass);
     scavenge(&obj_LockClass);
     scavenge(&obj_EventClass);
 }
@@ -643,12 +699,14 @@ void scavenge_thread_roots(void)
 
 void make_thread_classes(void)
 {
+    obj_ThreadClass = make_builtin_class(scav_thread_obj, trans_thread_obj);
     obj_LockClass = make_builtin_class(scav_lock, trans_lock);
     obj_EventClass = make_builtin_class(scav_event, trans_event);
 }
 
 void init_thread_classes(void)
 {
+    init_builtin_class(obj_ThreadClass, "<thread>", obj_ObjectClass, NULL);
     init_builtin_class(obj_LockClass, "<lock>", obj_ObjectClass, NULL);
     init_builtin_class(obj_EventClass, "<event>", obj_ObjectClass, NULL);
 }
@@ -656,24 +714,25 @@ void init_thread_classes(void)
 void init_thread_functions(void)
 {
     define_function("spawn-thread", list2(obj_ObjectClass, obj_FunctionClass),
-		    FALSE, obj_False, obj_ObjectClass, dylan_spawn_thread);
+		    FALSE, obj_False, obj_ThreadClass, dylan_spawn_thread);
+    define_function("kill-thread", list1(obj_ThreadClass), FALSE, obj_False,
+		    obj_ThreadClass, dylan_kill_thread);
 
     define_method("make", list1(singleton(obj_LockClass)), FALSE, obj_Nil,
 		  obj_LockClass, make_lock);
-    define_function("lock-locked?", list1(obj_LockClass), FALSE, obj_False,
+    define_function("locked?", list1(obj_LockClass), FALSE, obj_False,
 		    obj_BooleanClass, dylan_lock_query);
-    define_function("lock-grab", list1(obj_LockClass), FALSE, obj_False,
+    define_function("grab-lock", list1(obj_LockClass), FALSE, obj_False,
 		    obj_ObjectClass, dylan_lock_grab);
-    define_function("lock-release", list1(obj_LockClass), FALSE, obj_False,
+    define_function("release-lock", list1(obj_LockClass), FALSE, obj_False,
 		    obj_ObjectClass, dylan_lock_release);
 
     define_method("make", list1(singleton(obj_EventClass)), FALSE, obj_Nil,
 		  obj_EventClass, make_event);
-    define_function("event-wait", list2(obj_EventClass, obj_LockClass),
+    define_function("wait-for-event", list2(obj_EventClass, obj_LockClass),
 		    FALSE, obj_False, obj_ObjectClass, dylan_event_wait);
-    define_function("event-signal", list1(obj_EventClass),
+    define_function("signal-event", list1(obj_EventClass),
 		    FALSE, obj_False, obj_ObjectClass, event_signal);
-    define_function("event-broadcast", list1(obj_EventClass),
+    define_function("broadcast-event", list1(obj_EventClass),
 		    FALSE, obj_False, obj_ObjectClass, event_broadcast);
 }
-

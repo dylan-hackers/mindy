@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.2 1994/03/27 02:07:24 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.3 1994/04/12 23:10:29 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,7 +21,9 @@ enum thread_status {
     status_Suspended,
     status_Debuggered,
     status_Blocked,
-    status_Waiting
+    status_Waiting,
+    status_Exited,
+    status_Killed
 };
 
 struct thread_list {
@@ -29,9 +31,18 @@ struct thread_list {
     struct thread_list *next;
 };
 
+struct thread_obj {
+    obj_t class;
+    struct thread *thread;
+    obj_t debug_name;
+    enum thread_status status;
+};
+
+#define THREAD(o) obj_ptr(struct thread_obj *, o)
+
 struct thread {
     int id;
-    obj_t debug_name;
+    obj_t thread_obj;
     struct thread *next, **prev;
     void (*advance)(struct thread *thread);
     enum thread_status status;
