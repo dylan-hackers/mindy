@@ -5,7 +5,8 @@ do compile_subdirs(
     'print',
     'format',
     'random',
-    'coll-ext'
+    'coll-ext',
+    'string-ext',
 );
 
 do install('include', 'runtime.h');
