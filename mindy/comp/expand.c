@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.12 1994/04/25 21:56:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.13 1994/06/02 23:28:51 wlott Exp $
 *
 * This file does whatever.
 *
@@ -109,9 +109,9 @@ static void bind_rettypes(struct body *body,
 {
     struct return_type *r;
     struct arglist *list_args = make_argument_list();
-    struct symbol *ctype = symbol("check-type");
-    struct symbol *type_class = symbol("<type>");
-    struct symbol *object = symbol("<object>");
+    struct symbol *ctype = sym_CheckType;
+    struct symbol *type_class = sym_Type;
+    struct symbol *object = sym_Object;
 
     for (r = rettypes->req_types; r != NULL; r = r->next) {
 	if (r->type) {
@@ -130,7 +130,7 @@ static void bind_rettypes(struct body *body,
 	    add_argument(list_args, make_argument(make_varref(id(object))));
     }
     rettypes->req_types_list
-	= make_function_call(make_varref(id(symbol("list"))), list_args);
+	= make_function_call(make_varref(id(sym_List)), list_args);
 
     if (rettypes->rest_type) {
 	struct arglist *args = make_argument_list();
@@ -195,7 +195,7 @@ static struct argument *make_find_var_arg(struct id *var)
     struct expr *expr;
 
     add_argument(args, make_argument(make_varref(dup_id(var))));
-    expr = make_function_call(make_varref(id(symbol("find-variable"))), args);
+    expr = make_function_call(make_varref(id(sym_FindVariable)), args);
 
     return make_argument(expr);
 }
@@ -209,8 +209,8 @@ static void add_method_wrap(struct body *body, struct method *method)
     struct param *p;
     struct keyword_param *k;
     struct arglist *list_args = make_argument_list();
-    struct symbol *ctype = symbol("check-type");
-    struct symbol *type_class = symbol("<type>");
+    struct symbol *ctype = sym_CheckType;
+    struct symbol *type_class = sym_Type;
 
     if (ParseOnly)
 	lose("Adding method wrap when ParseOnly is true?");
@@ -230,12 +230,12 @@ static void add_method_wrap(struct body *body, struct method *method)
 	    add_argument(list_args, make_argument(expr));
 	}
 	else {
-	    struct expr *expr = make_varref(id(symbol("<object>")));
+	    struct expr *expr = make_varref(id(sym_Object));
 	    add_argument(list_args, make_argument(expr));
 	}
     }
     method->specializers
-	= make_function_call(make_varref(id(symbol("list"))), list_args);
+	= make_function_call(make_varref(id(sym_List)), list_args);
 
     for (k = params->keyword_params; k != NULL; k = k->next) {
 	if (k->type) {
@@ -268,7 +268,7 @@ static void bind_next_param(struct body *body, struct param_list *params)
 
     /* Build the argument list for the call to make-next-method-function */
     args = make_argument_list();
-    expr = make_varref(id(symbol("make-next-method-function")));
+    expr = make_varref(id(sym_MakeNextMethodFunction));
 
     /* If there is a #rest param, we are going to be calling apply */
     if (params->rest_param)
@@ -285,7 +285,7 @@ static void bind_next_param(struct body *body, struct param_list *params)
 	/* Pass the rest param, and call apply. */
 	add_argument(args,
 		     make_argument(make_varref(dup_id(params->rest_param))));
-	expr = make_function_call(make_varref(id(symbol("apply"))), args);
+	expr = make_function_call(make_varref(id(sym_Apply)), args);
     }
     else
 	/* Just call make-next-method-function */
@@ -319,7 +319,7 @@ static void hairy_keyword(struct body *body, struct keyword_param *k)
 	add_argument(args, make_argument(expr));
 	expr = make_literal_ref(make_unbound_literal());
 	add_argument(args, make_argument(expr));
-	expr = make_function_call(make_varref(id(symbol("=="))), args);
+	expr = make_function_call(make_varref(id(sym_Eq)), args);
 	expr = make_if(expr, make_expr_body(k->def),
 		       make_else(0, make_expr_body(make_varref(id(temp)))));
 	k->def = make_literal_ref(make_unbound_literal());
@@ -330,7 +330,7 @@ static void hairy_keyword(struct body *body, struct keyword_param *k)
 	args = make_argument_list();
 	add_argument(args, make_argument(expr));
 	add_argument(args, make_argument(make_varref(id(k->type_temp))));
-	expr = make_function_call(make_varref(id(symbol("check-type"))), args);
+	expr = make_function_call(make_varref(id(sym_CheckType)), args);
 	p->type_temp = k->type_temp;
     }
 
@@ -349,17 +349,17 @@ static struct body
     struct return_type *r;
     struct arglist *values = make_argument_list();
     struct expr *fn;
-    struct symbol *ctype = symbol("check-type");
+    struct symbol *ctype = sym_CheckType;
 
     r = rettypes->req_types;
 
     if (rettypes->rest_temp)
-	add_argument(values, make_argument(make_varref(id(symbol("values")))));
+	add_argument(values, make_argument(make_varref(id(sym_Values))));
     else {
 	if (r == NULL) {
 	    /* No results are returned -- hence it is easy to test their */
 	    /* types. */
-	    struct expr *expr = make_varref(id(symbol("values")));
+	    struct expr *expr = make_varref(id(sym_Values));
 	    add_expr(form, make_function_call(expr, make_argument_list()));
 	    return form;
 	}
@@ -375,7 +375,7 @@ static struct body
 		expr = make_varref(id(ctype));
 	    }
 	    else
-		expr = make_varref(id(symbol("values")));
+		expr = make_varref(id(sym_Values));
 	    add_expr(body, make_function_call(expr, args));
 	    return body;
 	}
@@ -420,16 +420,16 @@ static struct body
 	args = make_argument_list();
 	add_argument(args, make_argument(make_method_ref(method)));
 	add_argument(args, make_argument(make_varref(id(rest_temp))));
-	expr = make_function_call(make_varref(id(symbol("do"))), args);
+	expr = make_function_call(make_varref(id(sym_Do)), args);
 
 	add_expr(body = make_body(), expr);
 	add_expr(body, make_varref(id(rest_temp)));
 
 	add_argument(values, make_argument(make_body_expr(body)));
-	fn = make_varref(id(symbol("apply")));
+	fn = make_varref(id(sym_Apply));
     }
     else
-	fn = make_varref(id(symbol("values")));
+	fn = make_varref(id(sym_Values));
 
     {
 	struct body *body = make_body();
@@ -478,9 +478,9 @@ static struct method *make_initializer(char *kind, struct bindings *bindings)
 {
     struct param_list *params = bindings->params;
     struct param *param;
-    struct symbol *init = symbol("init-variable");
-    struct symbol *ctype = symbol("check-type");
-    struct symbol *type_class = symbol("<type>");
+    struct symbol *init = sym_InitVariable;
+    struct symbol *ctype = sym_CheckType;
+    struct symbol *type_class = sym_Type;
     struct param_list *temps = make_param_list();
     struct param **tail = &temps->required_params;
     struct body *outer_body = make_body();
@@ -786,7 +786,7 @@ static void expand_defmethod_for_compile(struct defmethod_constituent *c)
     struct method *method = c->method;
     char *name = method->name->symbol->name;
     char *debug_name = malloc(strlen(name) + sizeof("Define Method "));
-    struct symbol *defmeth = symbol("%define-method");
+    struct symbol *defmeth = sym_DefineMethod;
     struct body *body;
     struct arglist *args;
     struct expr *expr;
@@ -853,10 +853,10 @@ static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
 		p->type = NULL;
 	    }
 	    else {
-		expr = make_varref(id(symbol("<object>")));
+		expr = make_varref(id(sym_Object));
 		add_argument(list_args, make_argument(expr));
 	    }
-	expr = make_function_call(make_varref(id(symbol("list"))), list_args);
+	expr = make_function_call(make_varref(id(sym_List)), list_args);
 	add_argument(init_args, make_argument(expr));
     }
     
@@ -874,7 +874,7 @@ static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
 	    expr = make_literal_ref(make_symbol_literal(k->keyword));
 	    add_argument(list_args, make_argument(expr));
 	}
-	expr = make_function_call(make_varref(id(symbol("list"))), list_args);
+	expr = make_function_call(make_varref(id(sym_List)), list_args);
 	add_argument(init_args, make_argument(expr));
     }
     else {
@@ -902,7 +902,7 @@ static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
 	c->plist = NULL;
     }
 
-    expr = make_function_call(make_varref(id(symbol("%define-generic"))),
+    expr = make_function_call(make_varref(id(sym_DefineGeneric)),
 			      init_args);
     add_expr(body, expr);
     add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
@@ -965,10 +965,10 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 	add_argument(init_args, make_argument(make_varref(c->name)));
 	for (super = c->supers; super != NULL; super = super->next)
 	    add_argument(list_args, make_argument(super->expr));
-	expr = make_function_call(make_varref(id(symbol("list"))), list_args);
+	expr = make_function_call(make_varref(id(sym_List)), list_args);
 	add_argument(init_args, make_argument(expr));
 
-	expr = make_varref(id(symbol("%define-class-1")));
+	expr = make_varref(id(sym_DefineClass1));
 	add_expr(body, make_function_call(expr, init_args));
 	add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
 
@@ -979,10 +979,10 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 	struct arglist *list_args = make_argument_list();
 	struct arglist *init_args = make_argument_list();
 	struct body *body = make_body();
-	struct symbol *getter = symbol("getter");
-	struct symbol *setter = symbol("setter");
-	struct symbol *make_slot = symbol("make-slot");
-	struct symbol *defslot = symbol("%define-slot");
+	struct symbol *getter = sym_Getter;
+	struct symbol *setter = sym_Setter;
+	struct symbol *make_slot = sym_MakeSlot;
+	struct symbol *defslot = sym_DefineSlot;
 	struct slot_spec *slot;
 	struct expr *expr;
 	
@@ -1089,10 +1089,10 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
 	    add_argument(list_args, make_argument(expr));
 	}
 
-	expr = make_function_call(make_varref(id(symbol("list"))), list_args);
+	expr = make_function_call(make_varref(id(sym_List)), list_args);
 	add_argument(init_args, make_argument(expr));
 
-	expr = make_varref(id(symbol("%define-class-2")));
+	expr = make_varref(id(sym_DefineClass2));
 	add_expr(body, make_function_call(expr, init_args));
 	add_expr(body, make_literal_ref(make_symbol_literal(c->name->symbol)));
 
@@ -1196,7 +1196,7 @@ static boolean expand_handler_constituent(struct constituent **ptr,
 	add_plist_arguments(args, h->plist);
 	h->plist = NULL;
     }
-    add_expr(body, make_function_call(make_varref(id(symbol("push-handler"))),
+    add_expr(body, make_function_call(make_varref(id(sym_PushHandler)),
 				      args));
 
 
@@ -1235,8 +1235,8 @@ static boolean expand_let_constituent(struct constituent **ptr,
 	struct param *p;
 	struct arglist *args;
 	struct expr *expr;
-	struct symbol *check_type = symbol("check-type");
-	struct symbol *type_class = symbol("<type>");
+	struct symbol *check_type = sym_CheckType;
+	struct symbol *type_class = sym_Type;
 
 	for (p = params->required_params; p != NULL; p = p->next)
 	    if (p->type) {
@@ -1375,10 +1375,10 @@ static struct body *make_catch(int line, struct body *body,
 
     /* Make the call to apply */
     args = make_argument_list();
-    add_argument(args, make_argument(make_varref(id(symbol("throw")))));
+    add_argument(args, make_argument(make_varref(id(sym_Throw))));
     add_argument(args, make_argument(make_varref(id(temp))));
     add_argument(args, make_argument(make_varref(id(rest))));
-    expr = make_function_call(make_varref(id(symbol("apply"))), args);
+    expr = make_function_call(make_varref(id(sym_Apply)), args);
 
     /* Make the local method */
     params = set_rest_param(make_param_list(), id(rest));
@@ -1402,7 +1402,7 @@ static struct body *make_catch(int line, struct body *body,
     /* Make the call to catch */
     args = make_argument_list();
     add_argument(args, make_argument(make_method_ref(method)));
-    name = id(symbol("catch"));
+    name = id(sym_Catch);
     name->line = line;
     expr = make_function_call(make_varref(name), args);
 
@@ -1499,7 +1499,7 @@ static struct body *make_handler_case(int line, struct body *block_body,
     args = make_argument_list();
     args = add_argument(args, make_argument(make_varref(id(done))));
     args = add_argument(args, make_argument(make_varref(id(results))));
-    expr = make_function_call(make_varref(id(symbol("apply"))), args);
+    expr = make_function_call(make_varref(id(sym_Apply)), args);
     add_expr(body, expr);
 
     /* make the do-handler block */
@@ -1529,7 +1529,7 @@ static struct body *make_unwind_protect(struct body *body,struct body *cleanup)
 	= add_argument(add_argument(make_argument_list(), body_arg),
 		       cleanup_arg);
     struct expr *expr
-	= make_function_call(make_varref(id(symbol("uwp"))), args);
+	= make_function_call(make_varref(id(sym_Uwp)), args);
 
     return make_expr_body(expr);
 }
@@ -1634,7 +1634,7 @@ static struct expr *expand_case_body(struct condition_body *body)
 	struct arglist *args
 	    = add_argument(make_argument_list(), make_argument(expr));
 
-	return make_function_call(make_varref(id(symbol("error"))), args);
+	return make_function_call(make_varref(id(sym_Error)), args);
     }
 }
 
@@ -1744,13 +1744,9 @@ static void grovel_equal_then_for_clause(struct equal_then_for_clause *clause,
 
 static void add_test(struct expr *test, struct for_info *info)
 {
-    if (info->more_tests) {
-	struct id *and = id(symbol("&"));
-
-	and->internal = FALSE;
+    if (info->more_tests)
 	info->more_tests
-	    = add_binop(info->more_tests, make_binop(id(symbol("&"))), test);
-    }
+	    = add_binop(info->more_tests, make_binop(id(sym_Or)), test);
     else {
 	info->more_tests = make_binop_series();
 	info->first_test = test;
@@ -1786,7 +1782,7 @@ static void grovel_in_for_clause(struct in_for_clause *clause,
     push_param(make_param(id(state), NULL), params);
     args = make_argument_list();
     add_argument(args, make_argument(make_varref(id(coll))));
-    expr = make_varref(id(symbol("forward-iteration-protocol")));
+    expr = make_varref(id(sym_ForwardIterationProtocol));
     bindings = make_bindings(params, make_function_call(expr, args));
     add_constituent(info->outer_body, make_let(bindings));
 
@@ -1868,17 +1864,17 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
 	    add_argument(args, make_argument(make_varref(id(temp))));
 	    add_argument(args, make_argument(make_varref(id(bound))));
 	    when_negative
-		= make_function_call(make_varref(id(symbol("<"))), args);
+		= make_function_call(make_varref(id(sym_Less)), args);
 
 	    args = make_argument_list();
 	    add_argument(args, make_argument(make_varref(id(bound))));
 	    add_argument(args, make_argument(make_varref(id(temp))));
 	    when_positive
-		= make_function_call(make_varref(id(symbol("<"))), args);
+		= make_function_call(make_varref(id(sym_Less)), args);
 
 	    args = make_argument_list();
 	    add_argument(args, make_argument(make_varref(id(by_temp))));
-	    expr = make_function_call(make_varref(id(symbol("negative?"))),
+	    expr = make_function_call(make_varref(id(sym_NegativeP)),
 				      args);
 
 	    add_test(make_if(expr, make_expr_body(when_negative),
@@ -1889,7 +1885,7 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
 	    args = make_argument_list();
 	    add_argument(args, make_argument(make_varref(id(bound))));
 	    add_argument(args, make_argument(make_varref(id(temp))));
-	    add_test(make_function_call(make_varref(id(symbol("<"))), args),
+	    add_test(make_function_call(make_varref(id(sym_Less)), args),
 		     info);
 	}
 	break;
@@ -1898,7 +1894,7 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
 	args = make_argument_list();
 	add_argument(args, make_argument(make_varref(id(temp))));
 	add_argument(args, make_argument(make_varref(id(bound))));
-	add_test(make_function_call(make_varref(id(symbol("<="))), args),
+	add_test(make_function_call(make_varref(id(sym_LessEqual)), args),
 		 info);
 	break;
 
@@ -1906,7 +1902,7 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
 	args = make_argument_list();
 	add_argument(args, make_argument(make_varref(id(bound))));
 	add_argument(args, make_argument(make_varref(id(temp))));
-	add_test(make_function_call(make_varref(id(symbol("<="))), args),
+	add_test(make_function_call(make_varref(id(sym_LessEqual)), args),
 		 info);
 	break;
 
@@ -1921,7 +1917,7 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
     args = make_argument_list();
     add_argument(args, make_argument(make_varref(id(temp))));
     add_argument(args, make_argument(by));
-    expr = make_function_call(make_varref(id(symbol("+"))), args);
+    expr = make_function_call(make_varref(id(sym_Plus)), args);
     add_set(info->step_body, id(temp), expr);
 }
 
@@ -2051,7 +2047,7 @@ static struct expr *expand_select_body(struct condition_body *body,
 	struct arglist *args
 	    = add_argument(make_argument_list(), make_argument(expr));
 
-	return make_function_call(make_varref(id(symbol("error"))), args);
+	return make_function_call(make_varref(id(sym_Error)), args);
     }
 }
 
@@ -2059,7 +2055,7 @@ static boolean expand_select_expr(struct expr **ptr)
 {
     struct select_expr *e = (struct select_expr *)*ptr;
     struct symbol *valtemp = gensym();
-    struct symbol *bytemp = e->by ? gensym() : symbol("==");
+    struct symbol *bytemp = e->by ? gensym() : sym_Eq;
     struct body *body = make_body();
 
     bind_temp(body, id(valtemp), e->expr);
