@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.87 1995/10/05 01:12:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.88 1995/10/09 22:27:46 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -46,6 +46,114 @@ define module utils
     symcat;
 end;
 
+define module od-format
+  use common;
+  use standard-io;
+  use utils;
+  export
+    $odf-header-flag,
+    $odf-etype-mask,
+    $odf-object-definition-etype,
+    $odf-end-entry-etype,
+    $odf-local-reference-etype,
+    $odf-external-reference-etype,
+    $odf-subobjects-flag,
+    $odf-no-raw-data-format,
+    $odf-byte-raw-data-format,
+    $odf-16bit-raw-data-format,
+    $odf-32bit-raw-data-format,
+    $odf-64bit-raw-data-format,
+    $odf-untranslatable-raw-data-format,
+    $odf-word-raw-data-format,
+    $32bit-data-unit-odf-id,
+    $od-format-major-version,
+    $od-format-minor-version,
+    $like-an-hp-platform-characteristics,
+    $library-summary-unit-type,
+    $local-index-odf-id,
+    $local-object-map-odf-id,
+    $extern-index-odf-id,
+    $extern-handle-odf-id,
+    $byte-character-odf-id,
+    $byte-string-odf-id,
+    $byte-symbol-odf-id,
+    $unicode-character-odf-id,
+    $unicode-string-odf-id,
+    $unicode-symbol-odf-id,
+    $list-odf-id,
+    $simple-object-vector-odf-id,
+    $list*-odf-id,
+    $true-odf-id,
+    $false-odf-id,
+    $fixed-integer-odf-id,
+    $extended-integer-odf-id,
+    $single-float-odf-id,
+    $double-float-odf-id,
+    $extended-float-odf-id,
+    $ratio-odf-id,
+    $union-type-odf-id,
+    $singleton-type-odf-id,
+    $limited-integer-type-odf-id,
+    $limited-collection-type-odf-id,
+    $multi-value-type-odf-id,
+    $unknown-type-odf-id,
+    $direct-instance-type-odf-id,
+    $eql-literal-odf-id,
+    $literal-pair-odf-id,
+    $literal-fixed-integer-odf-id,
+    $literal-single-float-odf-id,
+    $literal-double-float-odf-id,
+    $literal-extended-float-odf-id,
+    $literal-vector-odf-id,
+    $word-bytes,
+    $word-bits,
+    buffer-word,
+    <dump-buffer>,
+    current-pos,
+    <dump-state>,
+    dump-od,
+    begin-dumping,
+    end-dumping,
+    dump-word,
+    dump-raw-data,
+    dump-definition-header,
+    dump-end-entry,
+    dump-simple-object,
+    new-local-id,
+    label-next-object,
+    dump-local-reference,
+    <load-state>,
+    od-stream,
+    od-buffer,
+    od-next,
+    od-next-setter,
+    od-end,
+    <dispatcher>,
+    *default-dispatcher*,
+    add-od-loader,
+    find-data-unit,
+    $end-object,
+    load-object-dispatch,
+    fill-at-least,
+    load-raw-data,
+    load-subobjects-vector,
+    load-sole-subobject,
+    <forward-ref>,
+    actual-obj,
+    obj-resolved?,
+    request-backpatch,
+    <identity-preserving-mixin>,
+    maybe-dump-reference,
+    load-external-definition;
+end;
+
+define module dylan-dump
+  use common;
+  use standard-io;
+  use utils;
+  use od-format;
+end;
+
 define module forwards
   create
     <module>,
@@ -90,6 +198,7 @@ define module compile-time-values
 
   use utils;
   use forwards, import: {<ctype>};
+  use od-format;
 
   export
     <ct-value>,
@@ -105,8 +214,9 @@ define module compile-time-values
     <literal-pair>, literal-head, literal-tail,
     <literal-empty-list>,
     <literal-vector>,
-    <literal-simple-object-vector>, literal-contents,
-    <literal-string>;
+    <literal-simple-object-vector>,
+    <literal-string>,
+    *compiler-dispatcher*;
 end;
 
 
