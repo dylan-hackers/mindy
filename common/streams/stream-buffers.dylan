@@ -1,4 +1,4 @@
-module: New-Streams
+module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: Buffered streams, Buffer Access Protocol, Stream Extension Protocol
 copyright: See below.

@@ -3,7 +3,7 @@ author: chiles@cs.cmu.edu
 synopsis: This file implements some extensions to the Gwydion Dylan
           implementation.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/internals.dylan,v 1.2 1996/05/08 15:57:51 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/internals.dylan,v 1.3 1996/07/30 19:36:18 bfw Exp $
 
 //======================================================================
 //
@@ -51,31 +51,109 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/internals.dylan
 ///
 /// As methods.
 ///
+#if (mindy)
 
-/*
-define method as (result :: singleton(<byte>), object :: <byte-character>)
+define inline method as (result :: singleton(<byte-character>),
+			 object :: <byte>)
+ => result :: <byte-character>;
+  as(<character>, object);
+end method as;
+
+define inline method as (result :: singleton(<byte>),
+			 object :: <integer>)
+    => result :: <byte>;
+  if (object < 0 | object > 255)
+    error("%d cannot be converted to a <byte>.", object);
+  end if;
+  object;
+end method;
+
+define inline method as (result :: singleton(<byte>),
+			 object :: <byte-character>)
     => result :: <byte>;
   as(<integer>, object);
 end method;
-*/
 
-define method as (result :: singleton(<byte-string>), object :: <byte-vector>)
-    => result :: <byte-string>;
+#else
+
+/// We use add-method to make d2c happy. If we defined it normally,
+/// it would cause us to loose compile-time selection of any as methods.
+add-method(as,
+	   method (result :: singleton(<byte-character>),
+		   object :: <integer>)
+	    => result :: <byte-character>;
+	     if (object < 0 | object > 255)
+	       error("%d cannot be converted to a <byte-character>.", object);
+	     end if;
+	     as(<character>, object);
+	   end method);
+
+add-method(as,
+	   method (result :: singleton(<byte-character>),
+		   object :: <byte>)
+	    => result :: <byte-character>;
+	     as(<character>, object);
+	   end method);
+
+add-method(as,
+	   method (result :: singleton(<byte>),
+		   object :: <integer>)
+	    => result :: <byte-character>;
+	     if (object < 0 | object > 255)
+	       error("%d cannot be converted to a <byte-character>.", object);
+	     end if;
+	     object;
+	   end method);
+
+add-method(as,
+	   method (result :: singleton(<byte>),
+		   object :: <byte-character>)
+	    => result :: <byte-character>;
+	     as(<integer>, object);
+	   end method);
+
+#endif
+
+/// ### Should these be inlined?
+///
+define method as (result :: singleton(<byte-string>),
+		  object :: type-union(<byte-vector>, <buffer>))
+ => result :: <byte-string>;
   let len :: <integer> = object.size;
   let res :: <byte-string> = make(<byte-string>, size: len);
   copy-bytes(res, 0, object, 0, len);
   res;
 end method;
 
-define method as (result :: singleton(<byte-vector>), object :: <byte-string>)
-    => result :: <byte-vector>;
+define method as (result :: singleton(<byte-vector>),
+		  object :: type-union(<byte-string>, <buffer>, 
+				       <unicode-string>))
+ => result :: <byte-vector>;
   let len :: <integer> = object.size;
   let res :: <byte-vector> = make(<byte-vector>, size: len);
   copy-bytes(res, 0, object, 0, len);
   res;
 end method;
 
+define method as (result :: singleton(<buffer>),
+		  object :: type-union(<byte-string>, <byte-vector>,
+				       <unicode-string>))
+ => result :: <buffer>;
+  let len :: <integer> = object.size;
+  let res :: <buffer> = make(<buffer>, size: len);
+  copy-bytes(res, 0, object, 0, len);
+  res;
+end method;
 
+define method as (result :: singleton(<unicode-string>),
+		  object :: type-union(<byte-vector>, <buffer>))
+ => result :: <unicode-string>;
+  let len :: <integer> = object.size;
+  let res :: <unicode-string> = make(<unicode-string>, size: ceiling/(len, 2));
+  copy-bytes(res, 0, object, 0, len);
+  res;
+end method as;
+  
 ///
 /// Utilities.
 ///

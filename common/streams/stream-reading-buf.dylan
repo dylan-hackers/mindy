@@ -1,4 +1,4 @@
-module: New-Streams
+module: Streams
 author: Ben Folk-Williams
 synopsis: Efficient buffered versions of the reading conveience functions.
 copyright: See below.

@@ -1,4 +1,4 @@
-module: New-Streams
+module: Streams
 author: Ben Folk-Williams, adapted from code by Bill Chiles
 synopsis: <buffered-byte-string-output-stream> -- used inside d2c.
 copyright: Copyright (c) 1996  Carnegie Mellon University

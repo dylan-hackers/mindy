@@ -1,4 +1,4 @@
-module: New-Streams
+module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Writing to streams.
 copyright: See below.

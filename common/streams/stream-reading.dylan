@@ -1,4 +1,4 @@
-module: New-Streams
+module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading from streams.
 copyright: See below.

@@ -1,4 +1,4 @@
-module: New-Streams
+module: Streams
 author: Ben Folk-Williams
 synopsis: Wrapper Streams.
 copyright: See below.

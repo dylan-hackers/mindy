@@ -1,12 +1,11 @@
 module: Dylan-User
-author: chiles@cs.cmu.edu
+author: Bill Chiles, Ben Folk-Williams
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.4 1996/07/11 16:07:53 nkramer Exp $
 
 //======================================================================
 //
-// Copyright (c) 1994  Carnegie Mellon University
+// Copyright (c) 1994, 1996  Carnegie Mellon University
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -28,17 +27,10 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-//
-
-
-///
-/// These definitions go into the Dylan-User module because this is how we
-/// jumpstart a library.
-///
 
 define library streams
   use dylan;
-  export streams, standard-io;
+  export streams;
 end library;
 
 #if (~mindy)
@@ -58,6 +50,7 @@ end library;
       fd-O_EXCL,
       fd-ENOENT,
       fd-EEXIST,
+      fd-EACCES,
       fd-open,
       fd-close,
       fd-read,
@@ -81,7 +74,6 @@ end library;
   end module;
 #endif
 
-
 /// The Internals Module exports everything that is necessary to make the
 /// code in the Streams Module run, but only stuff that is of an internals
 /// nature to a Dylan implementation.
@@ -100,7 +92,9 @@ define module internals
              <never-returns>, ignore},
     export: all;
   use system,
-    import: {<buffer>, <buffer-index>, $maximum-buffer-size, copy-bytes},
+    import: {<buffer>, <buffer-index>, $maximum-buffer-size,
+	     buffer-end, buffer-end-setter, buffer-next, buffer-next-setter,
+	     copy-bytes},
     export: all;
   use threads,
     import: {<multilock>, <semaphore>, grab-lock, release-lock, locked?},
@@ -118,7 +112,7 @@ define module internals
 	     o_rdonly, o_wronly, o_rdwr, o_creat, o_trunc, o_excl,
 
 	     // Open errors.
-	     enoent, eexist},
+	     enoent, eexist, eacces},
     prefix: "fd-",
     export: all;
   use file-descriptors,
@@ -142,93 +136,141 @@ define module streams
   use dylan;
   use internals,
     export: {<byte-vector>, <buffer>, <byte>, <buffer-index>,
-	     $maximum-buffer-size};
+	     $maximum-buffer-size, buffer-end, buffer-end-setter,
+	     buffer-next, buffer-next-setter };
   export
-    //
     // Classes and types.
+    //
     <stream>,
-    <random-access-stream>,
+    <buffered-stream>,
+    <positionable-stream>,
     <file-stream>,
-    <string-input-stream>,
-    <byte-string-input-stream>,
-    <string-output-stream>,
-    <byte-string-output-stream>,
+    <sequence-stream>,
+    <string-stream>,
+    <byte-string-stream>,
+    <unicode-string-stream>,
+
+    <unicode-character>,
+
+    // Creating streams
     //
-    // Conditions.
-    <end-of-file>,
-    <file-not-found>,
-    <file-exists>,
-    //
-    // Stream Extension Protocol.
+    type-for-sequence-stream,
+    type-for-file-stream,
     close,
-    stream-extension-get-input-buffer,
-    stream-extension-release-input-buffer,
-    stream-extension-fill-input-buffer,
-    stream-extension-input-available-at-source?,
-    stream-extension-get-output-buffer,
-    stream-extension-release-output-buffer,
-    stream-extension-empty-output-buffer,
-    stream-extension-force-secondary-buffers,
-    stream-extension-synchronize,
+
+    // Reading
     //
-    // Basic I/O Protocol.
-    read-byte,
-    peek-byte,
-    read-line,
-    input-available?,
-    flush-input,
+    read-element,
+    unread-element,
+    peek,
+    read,
+    read-into!,
+    discard-input,
+    stream-input-available?,
+
+    // Convenience functions for reading.
+    //
+    read-to,
+    read-through,
+    read-to-end,
+    skip-through,
+    
+    // Writing
+    //
+    write-element,
+    write,
     force-output,
     synchronize-output,
+    discard-output,
+
+    // Reading and Writing by lines
     //
-    // Buffer Access Protocol.
-    get-input-buffer,
-    release-input-buffer,
-    fill-input-buffer,
-    input-available-at-source?,
-    get-output-buffer,
-    release-output-buffer,
-    empty-output-buffer,
-    force-secondary-buffers,
-    synchronize,
-    //
-    // Data Extension Protocol.
-    read-as,
-    read-into!,
-    write,
+    read-line,
+    read-line-into!,
     write-line,
+    new-line,
+
+    // Querying
     //
-    // <random-access-stream> protocol.
+    stream-open?,
+    stream-element-type,
+    stream-at-end?,
+    
+    // Postionable Stream Protocol.
+    //
+    <stream-position>,
     stream-position,
     stream-position-setter,
     adjust-stream-position,
     stream-size,
+    stream-contents,
+    
+    // Using File Streams
     //
-    // <string-output-stream> protocol.
-    string-output-stream-string,
-    //
-    // <buffer> protocol.
-    buffer-subsequence,
-    copy-from-buffer!,
-    copy-into-buffer!,
-    //
-    // Conditions operations.
-    end-of-file-stream,
-    file-not-found-filename,
-    file-exists-filename,
-    //
-    // Locking.
+    // with-open-file,
+
+    // Locking
+    // 
     stream-locked?,
     lock-stream,
     unlock-stream,
+    // with-stream-locked,
+    
+    // Buffer Access Protocol.
     //
-    // The following are extensions to the standard Streams Library.
-    <fd-stream>;
-end module;
+    get-input-buffer,
+    release-input-buffer,
+    // with-input-buffer,
+    next-input-buffer,
+    input-available-at-source?,
 
-define module standard-io
-  use dylan;
-  use streams,
-    import: {<fd-stream>};
-  export
-    *standard-input*, *standard-output*, *standard-error*;
-end module
+    get-output-buffer,
+    release-output-buffer,
+    // with-output-buffer,
+    next-output-buffer,
+    force-output-buffers,
+    synchronize,
+
+    buffer-subsequence,
+    copy-into-buffer!,
+    copy-from-buffer!,
+
+    // Stream Extension Protocol.
+    //
+    do-get-input-buffer,
+    do-release-input-buffer,
+    do-next-input-buffer,
+    do-input-available-at-source?,
+
+    do-get-output-buffer,
+    do-release-output-buffer,
+    do-next-output-buffer,
+    do-force-output-buffers,
+    do-synchronize,
+   
+    // Conditions.
+    //
+    <end-of-stream-error>,
+    end-of-stream-stream,
+    <incomplete-read-error>,
+    incomplete-read-sequence,
+    incomplete-read-count,
+    <file-error>,
+    file-locator,
+    <file-exists-error>,
+    <file-does-not-exist-error>,
+    <invalid-file-permissions-error>,
+
+    // Wrapper Stream Protocol.
+    //
+    <wrapper-stream>,
+    inner-stream,
+    inner-stream-setter,
+    outer-stream,
+    outer-stream-setter,
+ 
+    // The following are extensions to the Streams library.
+    //
+    <fd-stream>,
+    <buffered-byte-string-output-stream>;
+end module;

@@ -1,4 +1,4 @@
-module: New-Streams
+module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file implements <file-streams> for the Streams library
 copyright: See below.
