@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.36 1995/11/16 00:16:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.37 1995/11/16 14:33:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -278,12 +278,13 @@ define method compile-library (lid-file :: <byte-string>) => ();
       for (dir in *data-unit-search-path*)
 	flags := concatenate(flags, " -L", dir);
       end;
-      let command = " -lruntime";
+      let unit-libs = "";
       for (unit in *roots*)
-	command := concatenate(" -l", unit[0], command);
+	unit-libs := concatenate(" -l", unit[0], unit-libs);
       end;
-      command := concatenate("gcc ", flags, " -o ", executable,
-			     " inits.c heap.s", command);
+      let command
+	= concatenate("gcc ", flags, " -L/lib/pa1.1 -o ", executable,
+		      " inits.c heap.s", unit-libs, " -lruntime -lm");
       format(*debug-output*, "%s\n", command);
       unless (zero?(system(command)))
 	cerror("so what", "cc failed?");
