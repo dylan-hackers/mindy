@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.2 2000/01/24 04:56:52 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/random/random.dylan,v 1.3 2001/03/14 05:09:38 bruce Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -105,7 +105,7 @@ end method shallow-copy;
 //
 // Number of bits in a random chunk.
 // 
-define constant $random-chunk-length = $random-upper-bound.integer-length;
+define constant $random-chunk-length :: <integer> = $random-upper-bound.integer-length;
 
 // random-chunk  --  Internal
 //
@@ -120,7 +120,9 @@ define method random-chunk (state :: <random-state>)
   let k = state.state-k;
   state.state-j := if (j = 0) $random-max else j - 1 end;
   state.state-k := if (k = 0) $random-max else k - 1 end;
-  let a = ($random-upper-bound - seed[state.state-j]) - seed[state.state-k];
+  let seed_j :: <integer> = seed[state.state-j];
+  let seed_k :: <integer> = seed[state.state-k];
+  let a = ($random-upper-bound - seed_j) - seed_k;
   seed[k] := if (a < 0)
 	       -a;
 	     else
@@ -154,7 +156,7 @@ define constant $random-integer-extra-bits = 10;
 
 // Number of bits returned by random-bits.
 //
-define constant $random-bits-count
+define constant $random-bits-count :: <integer>
   = $random-chunk-length - $random-integer-extra-bits;
 
 // random-bits -- exported
@@ -169,7 +171,7 @@ end method random-bits;
 
 // Largest fixnum we can compute from one chunk of bits.
 //
-define constant $random-fixnum-max 
+define constant $random-fixnum-max :: <integer>
   = ash(1, $random-bits-count) - 1;
 
 // random -- exported
