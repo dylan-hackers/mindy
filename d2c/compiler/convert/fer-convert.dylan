@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.42 1995/08/20 17:43:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.43 1995/08/22 14:08:43 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -766,25 +766,36 @@ define method fer-convert-method
 	add-binding(lexenv, name, var);
 	var;
       elseif (next & paramlist.paramlist-keys)
-	make-lexical-var(builder, #"rest", source, object-ctype());
+	make-lexical-var(builder, #"rest", source,
+			 specifier-type(#"<simple-object-vector>"));
       end;
   if (next)
     let var = make-lexical-var(builder, next.token-symbol, source,
 			       object-ctype());
-    let cookie-args = concatenate(list(next-info-var),
-				  as(<list>, vars),
-				  if (rest-var)
-				    list(rest-var);
-				  else
-				    #();
-				  end);
+    let cookie-args = make(<stretchy-vector>);
+    if (rest-var)
+      add!(cookie-args,
+	   ref-dylan-defn(builder, lexenv.lexenv-policy, source,
+			  #"%make-next-method-cookie"));
+    end;
+    add!(cookie-args, next-info-var);
+    for (var in vars)
+      add!(cookie-args, var);
+    end;
+    if (rest-var)
+      add!(cookie-args, rest-var);
+    end;
     build-let
       (body-builder, lexenv.lexenv-policy, source, var,
        make-unknown-call
 	 (builder,
 	  ref-dylan-defn(builder, lexenv.lexenv-policy, source,
-			  #"%make-next-method-cookie"),
-	  #f, cookie-args));
+			 if (rest-var)
+			   #"apply";
+			 else
+			   #"%make-next-method-cookie";
+			 end),
+	  #f, as(<list>, cookie-args)));
     add!(vars, next-info-var);
     add-binding(lexenv, next, var);
   end;
