@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.8 2001/03/17 03:43:34 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.9 2001/05/15 21:49:22 gabor Exp $
 copyright: see below
 
 
@@ -820,10 +820,65 @@ define method optimize (component :: <component>, op :: <throw>) => ();
        make-operation(builder, <disable-catcher>,
 		      list(op.depends-on.source-exp),
 		      nlx-info: nlx-info));
-    for (region = op.dependents.dependent.region
-	   then region.parent,
+    let op-region = assign.region;
+    let balance :: <integer> = 0;
+
+    local method walk-assigns-back(region :: <simple-region>, last-assign :: <abstract-assignment>)
+     => n :: <integer>;
+      let n :: <integer> = 0;
+      for (ass = last-assign then ass.prev-op,
+	   while: ass)
+	let call = ass.depends-on.source-exp;
+	if (instance?(call, <known-call>))
+	  let head-leaf = call.depends-on.source-exp;
+	  let policy = $Default-Policy;
+	  let source = region.source-location;
+	  if (instance?(head-leaf, <definition-constant-leaf>)
+	      & head-leaf.const-defn == ref-dylan-defn(builder, policy, source, #"push-handler").const-defn)
+	    n := n + 1;
+	  elseif (instance?(head-leaf, <definition-constant-leaf>)
+		  & head-leaf.const-defn == ref-dylan-defn(builder, policy, source, #"pop-handler").const-defn)
+	    n := n - 1;
+	  end if;
+	end if;
+      end for;
+      n;
+    end method,
+    method walk-simple-regions(region :: <compound-region>, inner :: <region>)
+     => n :: <integer>;
+      let n :: <integer> = balance;
+      for (remaining = region.regions then remaining.tail,
+	   until: remaining.head == inner)
+	if (instance?(remaining.head, <simple-region>))
+	  n := n + walk-assigns-back(remaining.head, remaining.head.last-assign);
+	end if;
+      end for;
+      n;
+    end method,
+    method insert-pops(region :: <region>, n :: <integer>) => ();
+      if (n > 0)
+	balance := 0;
+	let policy = $Default-Policy;
+	let source = region.source-location;
+	let pop-handler = ref-dylan-defn(builder, policy, source, #"pop-handler");
+	build-assignment(builder, policy, source, #(),
+			 make-unknown-call(builder, pop-handler, #f, #()));
+	insert-pops(region, n - 1);
+      elseif (n < 0)
+	balance := balance + n;
+      end if;
+    end method;
+
+    let inner-region = #f;
+    for (region = op-region then region.parent,
 	 until: region == body-region)
-      if (instance?(region, <unwind-protect-region>))
+      if (instance?(region, <compound-region>))
+	if (inner-region)
+	  insert-pops(region, walk-simple-regions(region, inner-region));
+	end if;
+      elseif (instance?(region, <simple-region>))
+	insert-pops(region, walk-assigns-back(region, if (region == op-region) assign.prev-op else region.last-assign end));
+      elseif (instance?(region, <unwind-protect-region>))
 	let policy = $Default-Policy;
 	let source = region.source-location;
 	build-assignment
@@ -836,8 +891,9 @@ define method optimize (component :: <component>, op :: <throw>) => ();
 	  (builder, policy, source, #(),
 	   make-unknown-call
 	     (builder, region.uwp-region-cleanup-function, #f, #()));
-      end;
-    end;
+      end if;
+      inner-region := region;
+    end for;
     insert-before(component, assign, builder-result(builder));
     insert-return-before(component, assign, body-region,
 			 op.depends-on.dependent-next.source-exp);
