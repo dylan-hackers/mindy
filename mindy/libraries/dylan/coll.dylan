@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.11 1994/05/11 02:13:43 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.12 1994/05/23 17:58:14 nkramer Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -86,7 +86,12 @@ end method as;
 // Note: This function depends upon a definition of \= for sequences, which
 // will be supplied later in this file.
 define method \=(a :: <collection>, b :: <collection>) => <object>;
-  key-sequence(a) = key-sequence(b) & every?(\=, a, b);
+  let a-test = key-test(a);
+  let b-test = key-test(b);
+  
+  a-test == b-test
+    & key-sequence(a) = key-sequence(b) 
+    & every?(a-test, a, b);
 end method \=;
 
 define method size(collection :: <collection>) => <integer>;
@@ -109,10 +114,13 @@ end method empty?;
 // protocol being defined for "rest args" (i.e. vectors).
 define method do(proc :: <function>, collection :: <collection>,
 		 #rest more_collections)
-  if (empty?(more_collections))
+  let test1 = key-test(collection);
+  if (~ every?( method (c) test1 == key-test(c); end, more_collections ))
+    error("Can't do over collections with different key tests");
+  elseif (empty?(more_collections))
     for (elem in collection) proc(elem) end for;
   else
-    let keys = reduce(rcurry(intersection, test: \=),
+    let keys = reduce(rcurry(intersection, test: test1),
 		      key-sequence(collection),
 		      map(key-sequence, more_collections));
     for (key in keys)
@@ -128,10 +136,17 @@ define method map(proc :: <function>, collection :: <collection>,
 	more_collections);
 end method map;
 
+// map-as must be given collections with the same key tests, but the
+// output collection apparently doesn't have to have the same key test
+// as its inputs.
+
 define method map-as(cls :: <class>, proc :: <function>,
 		     coll :: <collection>, #rest more_collections)
     => <collection>;
-  if (empty?(more_collections))
+  let test1 = key-test(coll);
+  if (~ every?( method (c) test1 == key-test(c); end, more_collections ))
+    error("Can't map over collections with different key tests");
+  elseif (empty?(more_collections))
     let result = make(cls, size: size(coll));
     let (init_state, limit, next_state, done?,
 	 current_key, current_element) = forward-iteration-protocol(coll);
@@ -141,7 +156,7 @@ define method map-as(cls :: <class>, proc :: <function>,
     end for;
     result;
   else 
-    let keys = reduce(rcurry(intersection, test: \=),
+    let keys = reduce(rcurry(intersection, test: test1),
 		      key-sequence(coll),
 		      map(key-sequence, more_collections));
     let result = make(cls, size: size(keys));
@@ -153,21 +168,29 @@ define method map-as(cls :: <class>, proc :: <function>,
   end if;
 end method map-as;
 
+// map-into must be given collections with the same key tests, and the
+// destination must have the same key test as the sources.
+
 define method map-into(destination :: <mutable-collection>, proc :: <function>,
 		       coll :: <collection>, #rest more_collections)
     => <collection>;
-  if (empty?(more_collections))
+  let test1 = key-test(coll);
+  if (~ every?( method (c) test1 == key-test(c); end, more_collections ))
+    error("Can't map over collections with different key tests");
+  elseif (~ (test1 == key-test(destination)))
+    error("Can't map into a collection with a different key test than its sources.");
+  elseif (empty?(more_collections))
     let keys = intersection(key-sequence(coll), key-sequence(destination),
-			    test: \=);
+			    test: test1);
     for (key in keys)
       destination[key] := proc(coll[key]);
     end for;
     destination;
   else
-    let keys = intersection(reduce(rcurry(intersection, test: \=),
+    let keys = intersection(reduce(rcurry(intersection, test: test1),
 				   key-sequence(coll),
 				   map(key-sequence, more_collections)),
-			    key-sequence(destination), test: \=);
+			    key-sequence(destination), test: test1);
     for (key in keys)
       destination[key] := apply(proc, coll[key],
 				map(rcurry(element, key), more_collections));
@@ -178,6 +201,11 @@ end method map-into;
 
 define method any?(proc :: <function>, collection :: <collection>,
 		   #rest more_collections) => <object>;
+  let test1 = key-test(collection);
+  if (~ every?( method (c) test1 == key-test(c); end, more_collections ))
+    error("Can't do collection alignment over collections with different key tests");
+  end if;
+
   block (return)
     if (empty?(more_collections))
       for (elem in collection)
@@ -185,7 +213,7 @@ define method any?(proc :: <function>, collection :: <collection>,
 	if (result) return(result) end if;
       end for;
     else 
-      let keys = reduce(rcurry(intersection, test: \=),
+      let keys = reduce(rcurry(intersection, test: test1),
 			key-sequence(collection),
 			map(key-sequence, more_collections));
       for (key in keys)
@@ -200,13 +228,18 @@ end method any?;
 
 define method every?(proc :: <function>, collection :: <collection>,
 		   #rest more_collections) => <object>;
+  let test1 = key-test(collection);
+  if (~ every?( method (c) test1 == key-test(c); end, more_collections ))
+    error("Can't do collection alignment over collections with different key tests");
+  end if;
+
   block (return)
     if (empty?(more_collections))
       for (elem in collection)
 	unless (proc(elem)) return(#f) end unless;
       end for;
     else
-      let keys = reduce(rcurry(intersection, test: \=),
+      let keys = reduce(rcurry(intersection, test: test1),
 			key-sequence(collection),
 			map(key-sequence, more_collections));
       for (key in keys)
@@ -372,7 +405,7 @@ define method \=(a :: <sequence>, b :: <sequence>) => <object>;
 end method \=;
 
 define method key-test (sequence :: <sequence>) => test :: <function>;
-  \==;            // Return the function ==
+  \==;            // Return the function == (id?)
 end method key-test;
 
 //# This will be a good and a useful thing once we have written ranges.  Till
@@ -826,14 +859,19 @@ define abstract class <stretchy-collection> (<collection>) end class;
 define method map-into(destination :: <stretchy-collection>,
 		       proc :: <function>, coll :: <collection>,
 		       #rest more_collections) => <stretchy-collection>;
+  let test1 = key-test(collection);
   if (~instance?(destination, <mutable-collection>))
     error("~S is not a mutable collection.", destination);
+  elseif (~ every?( method (c) test1 == key-test(c); end, more_collections ))
+    error("Can't map over collections with a different key tests");
+  elseif (~ (test1 == key-test(destination)))
+    error("Can't map into a collection with a different key test than its sources.");
   elseif (empty?(more_collections))
     for (key in key-sequence(destination))
       destination[key] := proc(coll[key]);
     end for;
   else
-    let keys = reduce(rcurry(intersection, test: \=), key-sequence(coll),
+    let keys = reduce(rcurry(intersection, test: test1), key-sequence(coll),
 		      map(key-sequence, more_collections));
     for (key in keys)
       destination[key] := apply(proc, coll[key],
@@ -848,8 +886,13 @@ end method map-into;
 define method map-into(destination :: <stretchy-collection>,
 		       proc :: <function>, sequence :: <sequence>,
 		       #rest more_sequences)
+  let test1 = key-test(collection);
   if (~instance?(destination, <mutable-collection>))
     error("~S is not a mutable collection.", destination);
+  elseif (~ every?( method (c) test1 == key-test(c); end, more_collections ))
+    error("Can't map over collections with a different key tests");
+  elseif (~ (test1 == key-test(destination)))
+    error("Can't map into a collection with a different key test than its sources.");
   elseif (empty?(more_sequences))
     let (res_init, res_limit, res_next, res_done?, res_key, res_elem,
 	 res_elem-setter) = forward-iteration-protocol(destination);
@@ -872,7 +915,7 @@ define method map-into(destination :: <stretchy-collection>,
   else
     // Duplicated code from "<collection>" method, to avoid next-method
     // ambiguity. 
-    let keys = reduce(rcurry(intersection, test: \=), key-sequence(sequence),
+    let keys = reduce(rcurry(intersection, test: test1), key-sequence(sequence),
 		      map(key-sequence, more_sequences));
     for (key in keys)
       destination[key] := apply(proc, sequence[key],
