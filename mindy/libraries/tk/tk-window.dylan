@@ -67,13 +67,13 @@ define generic define-widget
 // Configure accepts pretty much the same options as initialize, and uses them
 // to change the state of the object.
 //
-define generic configure (widget :: <window>, #all-keys);
+define generic configure (widget :: <object>, #all-keys);
 
 // Returns a complete list of options for the given widget.  Each option
 // consists of a sequence of the switch name, rdb name, rdb class, default,
 // and value.
 //
-define generic configuration (widget :: <window>) => (result :: <sequence>);
+define generic configuration (widget :: <object>) => (result :: <sequence>);
 
 // Make sure that a window is displayed on the screen.  *root-window* is
 // unmapped initially, so nothing will appear until you call
@@ -95,6 +95,11 @@ define generic destroy-window (window :: <window>) => ();
 //
 define generic pack
     (window :: <window>, #all-keys) => (window :: <window>);
+
+// Removes a window from the packer's knowledge -- (i.e. unmaps it.)
+//
+define generic unpack
+    (window :: <window>) => (window :: <window>);
 
 // Returns a sequence of strings corresponding to all of the keywords in
 // "options" which are members of "window-options" or which correspond to the
@@ -162,6 +167,11 @@ define method pack
 	       " pady ", pady | 0, "}");
   window;
 end method pack;
+
+define method unpack (window :: <window>) => (window :: <window>);
+  put-tk-line("pack forget ", window);
+  window;
+end method unpack;
 
 //==========================================================================
 //			      <Window> creation
