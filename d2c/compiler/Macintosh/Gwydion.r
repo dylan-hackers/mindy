@@ -1,5 +1,5 @@
 // File: Gwydion.r
-// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/Gwydion.r,v 1.3 2002/04/03 23:10:47 gabor Exp $
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/Gwydion.r,v 1.4 2004/04/13 20:48:47 gabor Exp $
 // Purpose: define necessary resources for plugin
 // Author: Gabor Greif <gabor@mac.com>
 // Status: This version is based on the Pro6 CW API
@@ -35,9 +35,11 @@
 #include "CWPlugins.r"
 #include "GwydionVersion.h"
 
+#undef reserved
+
 #define PluginFileName "Gwydion Dylan PPC"
 #define PluginResName PluginFileName
-#define VERSION10API 10
+#define VERSION11API 11
 
 
 resource 'vers' (1, PluginResName" Vers")
@@ -62,9 +64,166 @@ resource 'vers' (2, PluginResName" Prod")
 	"© " CopyrightYears ", Gwydion Dylan maintainers"
 };
 
+/*
+type 'Flag'(128) {
+	// resource version
+	integer	= 2;
+	
+	switch 
+	{
+	case Compiler:
+		key literal	longint = 'Comp';
+		
+		// earliest supported API version
+		integer		earliestCompatibleVersion;
+		
+		// 1: compiler generates code ?
+		boolean		doesntGenerateCode, generatesCode;
+		// 2: compiler generates resources ?
+		boolean		doesntGenerateResources, generatesResources;
+		// 3: compiler supports preprocessing ?
+		boolean		cantPreprocess, canPreprocess;
+		// 4: compiler supports precompiling ?
+		boolean		cantPrecompile, canPrecompile;
+		// 5: this is for Metrowerks Pascal only
+		boolean		isntPascal, isPascal;
+		// 6: this is for library importers only
+		boolean		cantImport, canImport;
+		// 7: does the plugin handle the reqCompDisassemble request?
+		boolean		cantDisassemble, canDisassemble;
+		// 8: keep the compiler resident except on context switches?
+		boolean		isntPersistent, isPersistent;
+		// 9: allow multiple project files with the same name
+		boolean		dontAllowDuplicateFileNames, allowDuplicateFileNames;
+		// 10: the compiler can be used with multiple targets
+		boolean		isntMultipleTargetAware, isMultipleTargetAware;
+		// 11: the compiler can be run in an MP thread
+		boolean		isntMultiprocessingAware, isMultiprocessingAware;
+		// 12: the compiler uses per-target storage
+		boolean		doesntUseTargetStorage, usesTargetStorage;
+		// 13: the compiler generates compiler-specific browser symbols
+		boolean		doesntHaveCompSpecificBrSymbols, hasCompSpecificBrSymbols;
+		// 14: reload the compiler for every compile
+		boolean		dontAlwaysReload, alwaysReload;
+		// 15: should we make build started request to linker?
+		boolean		doesntWantBuildStartedRequest, wantsBuildStartedRequest;
+		// 16: should we make target build started request to linker?
+		boolean		doesntWantTargetBuildStartedRequest, wantsTargetBuildStartedRequest;
+		// 17: should we make sub-project build started request to linker?
+		boolean		doesntWantSubprojectBuildStartedRequest, wantsSubprojectBuildStartedRequest;
+		// 18: should we make file list build started request to linker?
+		boolean		doesntWantFileListBuildStartedRequest, wantsFileListBuildStartedRequest;
+		// 19: compiler supports reentrant requests
+		boolean		isntReentrant, isReentrant;
+		boolean		reserved;	// 20
+		boolean		reserved;	// 21
+		boolean		reserved;	// 22
+		boolean		reserved;	// 23
+		boolean		reserved;	// 24
+		boolean		reserved;	// 25
+		boolean		reserved;	// 26
+		boolean		reserved;	// 27
+		boolean		reserved;	// 28
+		boolean		reserved;	// 29
+		boolean		reserved;	// 30
+		boolean		reserved;	// 31
+		boolean		reserved;	// 32
+		
+		// language type
+		literal longint	CPPLanguage		= 'c++ ', 
+						PascalLanguage	= 'pasc', 
+						RezLanguage		= 'rez ', 
+						JavaLanguage	= 'java', 
+						UnknownLanguage	= '????';
+		// latest API version supported by the compiler
+		integer		newestAPIVersion = 10;
+		integer		reserved;
+		integer		reserved;
+	};
+};*/
+
+type 'Flag' (128) {
+	// resource version
+	integer	= 3;
+	
+	switch 
+	{
+	case Compiler:
+		key literal	longint = 'Comp';
+		
+		// earliest supported API version
+		integer		earliestCompatibleVersion;
+		
+		// 1: compiler generates code ?
+		boolean		doesntGenerateCode, generatesCode;
+		// 2: compiler generates resources ?
+		boolean		doesntGenerateResources, generatesResources;
+		// 3: compiler supports preprocessing ?
+		boolean		cantPreprocess, canPreprocess;
+		// 4: compiler supports precompiling ?
+		boolean		cantPrecompile, canPrecompile;
+		// 5: this is for Metrowerks Pascal only
+		boolean		isntPascal, isPascal;
+		// 6: this is for library importers only
+		boolean		cantImport, canImport;
+		// 7: does the plugin handle the reqCompDisassemble request?
+		boolean		cantDisassemble, canDisassemble;
+		// 8: keep the compiler resident except on context switches?
+		boolean		isntPersistent, isPersistent;
+		// 9: allow multiple project files with the same name
+		boolean		dontAllowDuplicateFileNames, allowDuplicateFileNames;
+		// 10: the compiler can be used with multiple targets
+		boolean		isntMultipleTargetAware, isMultipleTargetAware;
+		// 11: the compiler can be run in an MP thread
+		boolean		isntMultiprocessingAware, isMultiprocessingAware;
+		// 12: the compiler uses per-target storage
+		boolean		doesntUseTargetStorage, usesTargetStorage;
+		// 13: the compiler generates compiler-specific browser symbols
+		boolean		doesntHaveCompSpecificBrSymbols, hasCompSpecificBrSymbols;
+		// 14: reload the compiler for every compile
+		boolean		dontAlwaysReload, alwaysReload;
+		// 15: should we make build started request to linker?
+		boolean		doesntWantBuildStartedRequest, wantsBuildStartedRequest;
+		// 16: should we make target build started request to linker?
+		boolean		doesntWantTargetBuildStartedRequest, wantsTargetBuildStartedRequest;
+		// 17: should we make sub-project build started request to linker?
+		boolean		doesntWantSubprojectBuildStartedRequest, wantsSubprojectBuildStartedRequest;
+		// 18: should we make file list build started request to linker?
+		boolean		doesntWantFileListBuildStartedRequest, wantsFileListBuildStartedRequest;
+		// 19: compiler supports reentrant requests
+		boolean		isntReentrant, isReentrant;
+		boolean		reserved;	// 20
+		boolean		reserved;	// 21
+		boolean		reserved;	// 22
+		boolean		reserved;	// 23
+		boolean		reserved;	// 24
+		boolean		reserved;	// 25
+		boolean		reserved;	// 26
+		boolean		reserved;	// 27
+		boolean		reserved;	// 28
+		boolean		reserved;	// 29
+		boolean		reserved;	// 30
+		boolean		reserved;	// 31
+		boolean		reserved;	// 32
+		
+		// language type
+		literal longint	CPPLanguage		= 'c++ ', 
+						PascalLanguage	= 'pasc', 
+						RezLanguage		= 'rez ', 
+						JavaLanguage	= 'java', 
+						UnknownLanguage	= '????';
+		// latest API version supported by the compiler
+		integer		newestAPIVersion = 13;
+		integer		reserved;
+		integer		reserved;
+		
+	};
+};
+
+
 resource 'Flag' (128, PluginResName) {
 	Compiler {
-		VERSION10API,
+		13,//VERSION11API,
 		generatesCode,
 		doesntGenerateResources,
 		cantPreprocess,
