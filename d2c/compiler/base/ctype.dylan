@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.25 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.26 1995/12/05 03:05:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -985,6 +985,11 @@ end;
 
 
 define generic ct-value-cclass (ct-value :: <ct-value>) => res :: <cclass>;
+
+define method ct-value-cclass (object :: <ct-not-supplied-marker>)
+    => res :: <cclass>;
+  dylan-value(#"<not-supplied-marker>");
+end method;
 
 define method ct-value-cclass (object :: <literal-true>) => res :: <cclass>;
   dylan-value(#"<true>");

@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.15 1995/11/12 21:06:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.16 1995/12/05 03:05:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,6 +16,14 @@ end;
 
 define abstract class <eql-literal> (<literal>, <eql-ct-value>)
 end;
+
+
+// not-supplied marker.
+
+define class <ct-not-supplied-marker>
+    (<eql-ct-value>, <identity-preserving-mixin>)
+end;
+
 
 
 // Literal booleans.
@@ -569,6 +577,11 @@ end;
 
 define /* exported */ variable *compiler-dispatcher*
   = make(<dispatcher>);
+
+
+add-make-dumper
+  (#"not-supplied-marker", *compiler-dispatcher*, <ct-not-supplied-marker>,
+   list(info, #f, info-setter));
 
 
 // The method is inherited by all EQL literals.  It must be overridden for some

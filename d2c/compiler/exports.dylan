@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.116 1995/12/01 16:53:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.117 1995/12/05 03:05:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -147,6 +147,7 @@ define module compile-time-values
     <ct-value>,
     <eql-ct-value>, ct-value-singleton, ct-value-singleton-setter,
     <literal>, literal-value, <eql-literal>,
+    <ct-not-supplied-marker>,
     <literal-number>, <literal-real>, <literal-rational>, <literal-integer>,
     <literal-fixed-integer>, <literal-extended-integer>, <literal-ratio>,
     <literal-float>, <literal-single-float>, <literal-double-float>,

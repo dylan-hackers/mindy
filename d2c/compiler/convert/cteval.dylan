@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.10 1995/12/04 16:43:53 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.11 1995/12/05 03:05:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -256,6 +256,10 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 	    dylan-value(#"<byte-character-type>") =>
 	      if (ct-keywords(args, 1))
 		make(<byte-character-ctype>);
+	      end;
+	    dylan-value(#"<not-supplied-marker>") =>
+	      if (ct-keywords(args, 1))
+		make(<ct-not-supplied-marker>);
 	      end;
 	    otherwise =>
 	      #f;
