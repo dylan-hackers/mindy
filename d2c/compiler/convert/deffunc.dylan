@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.67 1996/05/01 12:43:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.68 1996/05/01 14:24:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -461,7 +461,7 @@ define method compute-signature
     => (signature :: <signature>, anything-non-constant? :: <boolean>);
   let anything-non-constant? = #f;
   local
-    method maybe-eval-type (param)
+    method maybe-eval-type (param :: <parameter>)
       let type = param.param-type;
       if (type)
 	let ctype = ct-eval(type, #f);
@@ -502,11 +502,11 @@ define method compute-signature
 		       & map-as(<list>, make-key-info,
 				parameters.paramlist-keys)),
 	      all-keys: parameters.paramlist-all-keys?,
-
 	      returns:
-	        make-values-ctype(map-as(<list>, maybe-eval-type,
-			                 returns.varlist-fixed),
-				  returns.varlist-rest & object-ctype())),
+		make-values-ctype
+		  (map-as(<list>, maybe-eval-type, returns.varlist-fixed),
+		   returns.varlist-rest
+		     & maybe-eval-type(returns.varlist-rest))),
 	 anything-non-constant?);
 end;
 
