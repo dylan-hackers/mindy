@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.23 1995/05/26 11:21:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.24 1995/05/29 00:48:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -429,30 +429,36 @@ define constant catch
       thunk(saved-state);
     end;
 
-define inline method vector (#rest things) => res :: <simple-object-vector>;
+define sealed inline method vector (#rest things)
+    => res :: <simple-object-vector>;
   things;
 end;
 
-define movable method list (#rest things) => res :: <list>;
+define sealed movable method list (#rest things) => res :: <list>;
   as(<list>, things);
 end;
 
-define inline method \< (x :: <fixed-integer>, y :: <fixed-integer>)
+define sealed inline method \< (x :: <fixed-integer>, y :: <fixed-integer>)
     => res :: <boolean>;
   %%primitive fixnum-< (x, y);
 end;
 
-define inline method \== (x :: <fixed-integer>, y :: <fixed-integer>)
+define sealed inline method \== (x :: <fixed-integer>, y :: <fixed-integer>)
     => res :: <boolean>;
   %%primitive fixnum-= (x, y);
 end;
 
-define inline method \+ (x :: <fixed-integer>, y :: <fixed-integer>)
+define sealed inline method \+ (x :: <fixed-integer>, y :: <fixed-integer>)
     => res :: <fixed-integer>;
   %%primitive fixnum-+ (x, y);
 end;
 
-define inline method \- (x :: <fixed-integer>, y :: <fixed-integer>)
+define sealed inline method \* (x :: <fixed-integer>, y :: <fixed-integer>)
+    => res :: <fixed-integer>;
+  %%primitive fixnum-* (x, y);
+end;
+
+define sealed inline method \- (x :: <fixed-integer>, y :: <fixed-integer>)
     => res :: <fixed-integer>;
   %%primitive fixnum-- (x, y);
 end;
@@ -462,6 +468,8 @@ end;
 // Extra dreck.
 
 define generic values-sequence (sequence :: <sequence>);
+
+seal generic values-sequence (<sequence>);
 
 define inline method values-sequence (sequence :: <sequence>)
   values-sequence(as(<simple-object-vector>, sequence));
