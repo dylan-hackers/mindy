@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.18 1995/04/25 03:10:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.19 1995/04/25 18:25:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -597,7 +597,7 @@ define method expand-cluster
     let var = make(<initial-variable>, var-info: var-info);
     let defns = map(method (assign, next-define)
 		      let defn = make(<initial-definition>, var-info: var-info,
-				      definition-of: var, definer: assign,
+				      definition: var, definer: assign,
 				      definer-next: next-define,
 				      next-initial-definition:
 					component.initial-definitions);
@@ -625,6 +625,7 @@ define method expand-cluster
     end;
   end;
   for (assign in assigns)
+    queue-dependent(component, assign);
     let assign-source = assign.depends-on.source-exp;
     if (instance?(assign-source, <primitive>)
 	  & assign-source.name == #"values")
@@ -774,6 +775,18 @@ define method maybe-restrict-type
   let old-type = expr.derived-type;
   if (~values-subtype?(old-type, type) & values-subtype?(type, old-type))
     expr.derived-type := type;
+    if (instance?(expr, <initial-definition>))
+      let var = expr.definition-of;
+      if (instance?(var, <initial-variable>))
+	let var-type = empty-ctype();
+	for (defn in var.definitions,
+	     var-type = empty-ctype()
+	       then ctype-union(var-type, defn.derived-type))
+	finally
+	  maybe-restrict-type(component, var, var-type);
+	end;
+      end;
+    end;
     queue-dependents(component, expr);
   end;
 end;
