@@ -126,6 +126,7 @@ define module c-declarations
       c-variable-extern?,
     <c-define>,
       c-define-name,
+    <c-empty-define>,
     <c-integer-define>,
       c-integer-define-value,
     <c-string-define>,

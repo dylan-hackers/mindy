@@ -13,10 +13,13 @@ define class <c-identifier-table> (<table>)
 end class;
 
 define function c-identifier-hash
-    (string :: <string>, initial-state :: <object>)
+    (string :: <byte-string>, initial-state :: <object>)
   // XXX - What are the return types of a hash function?
-  assert(string.size > 0);
-  values(string.size * 256 + as(<integer>, string[0]), initial-state);
+  // assert(string.size > 0);
+  values(string.size * 256 +
+	   as(<integer>, string[0]) +
+	   as(<integer>, string[ash(string.size, -1)]),
+	 initial-state);
 end function;
 
 define method table-protocol

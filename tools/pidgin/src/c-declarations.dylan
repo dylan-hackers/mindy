@@ -26,11 +26,11 @@ end class;
 
 define generic c-declaration-name
     (decl :: <c-declaration>)
- => (name :: <string>);
+ => (name :: <byte-string>);
 
 define generic format-c-declaration
     (decl :: <c-declaration>, #key multi-line? :: <boolean>)
- => (formatted :: <string>);
+ => (formatted :: <byte-string>);
 
 
 //=========================================================================
@@ -54,13 +54,13 @@ end;
 
 define method c-declaration-name
     (decl :: <c-tagged-type-declaration>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   decl.c-tagged-type-declaration-type.c-type-name;
 end;
 
 define method format-c-declaration
     (decl :: <c-tagged-type-declaration>, #key multi-line? :: <boolean>)
- => (formatted :: <string>)
+ => (formatted :: <byte-string>)
   concatenate(format-c-tagged-type(decl.c-tagged-type-declaration-type,
 				   multi-line?: multi-line?),
 	      ";");
@@ -80,13 +80,13 @@ end;
 
 define method c-declaration-name
     (decl :: <c-typedef-declaration>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   decl.c-typedef-declaration-type.c-typedef-name;
 end;
 
 define method format-c-declaration
     (decl :: <c-typedef-declaration>, #key multi-line? :: <boolean>)
- => (formatted :: <string>)
+ => (formatted :: <byte-string>)
   concatenate("typedef ",
 	      format-c-type(decl.c-typedef-declaration-type.c-typedef-type,
 			    decl-name: decl.c-declaration-name),
@@ -101,7 +101,7 @@ end;
 //  of "non-type", top-level declaration.
 
 define class <c-variable-declaration> (<c-declaration>)
-  slot c-variable-name :: <string>,
+  slot c-variable-name :: <byte-string>,
     required-init-keyword: name:;
   slot c-variable-type :: <c-type>,
     required-init-keyword: type:;
@@ -112,13 +112,13 @@ end;
 
 define method c-declaration-name
     (decl :: <c-variable-declaration>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   decl.c-variable-name;
 end;
 
 define method format-c-declaration
     (decl :: <c-variable-declaration>, #key multi-line? :: <boolean>)
- => (formatted :: <string>)
+ => (formatted :: <byte-string>)
   concatenate(if (decl.c-variable-extern?) "extern " else "static " end,
 	      format-c-type(decl.c-variable-type,
 			    decl-name: decl.c-variable-name),
@@ -140,26 +140,41 @@ end;
 //  together with other declarations.
 
 define abstract class <c-define> (<c-declaration>)
-  slot c-define-name :: <string>,
+  slot c-define-name :: <byte-string>,
     required-init-keyword: name:;
 end;
 
 define method c-declaration-name
     (decl :: <c-define>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   decl.c-define-name;
 end;
 
 define method format-c-declaration
     (decl :: <c-define>, #key multi-line? :: <boolean>)
- => (formatted :: <string>)
-  concatenate("/* #define ", decl.c-define-name, " ",
+ => (formatted :: <byte-string>)
+  concatenate("/* #define ", decl.c-define-name,
 	      format-c-define-value(decl), " */");
 end;
 
 define generic format-c-define-value
     (decl :: <c-define>)
- => (formatted :: <string>);
+ => (formatted :: <byte-string>);
+
+
+//=========================================================================
+//  Empty #define
+//=========================================================================
+//  A definition of the form '#define FOO' with no value.
+
+define class <c-empty-define> (<c-define>)
+end;
+
+define method format-c-define-value
+    (decl :: <c-empty-define>)
+ => (formatted :: <byte-string>)
+  " ";
+end;
 
 
 //=========================================================================
@@ -174,8 +189,8 @@ end;
 
 define method format-c-define-value
     (decl :: <c-integer-define>)
- => (formatted :: <string>)
-  format-to-string("%d", decl.c-integer-define-value);
+ => (formatted :: <byte-string>)
+  format-to-string("%d ", decl.c-integer-define-value);
 end;
 
 
@@ -185,14 +200,14 @@ end;
 //  A constant string.
 
 define class <c-string-define> (<c-define>)
-  slot c-string-define-value :: <string>,
+  slot c-string-define-value :: <byte-string>,
     required-init-keyword: value:;
 end;
 
 define method format-c-define-value
     (decl :: <c-string-define>)
- => (formatted :: <string>)
-  concatenate("\"", decl.c-string-define-value, "\"");
+ => (formatted :: <byte-string>)
+  concatenate("\"", decl.c-string-define-value, "\" ");
 end;
 
 
@@ -211,8 +226,8 @@ end;
 
 define method format-c-define-value
     (decl :: <c-type-alias-define>)
- => (formatted :: <string>)
-  format-c-type(decl.c-type-alias-define-type);
+ => (formatted :: <byte-string>)
+  concatenate(format-c-type(decl.c-type-alias-define-type), " ");
 end;
 
 
@@ -226,6 +241,6 @@ end;
 
 define method format-c-define-value
     (decl :: <c-unknown-define>)
- => (formatted :: <string>)
-  "...";
+ => (formatted :: <byte-string>)
+  "... ";
 end;

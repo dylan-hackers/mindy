@@ -17,7 +17,7 @@ define abstract class <c-type> (<object>)
 end class;
 
 define abstract class <c-primitive-type> (<c-type>)
-  slot c-primitive-type-name :: <string>,
+  slot c-primitive-type-name :: <byte-string>,
     required-init-keyword: name:;
 end class;
 
@@ -136,7 +136,7 @@ define constant $c-long-double-type =
 define variable *anonymous-tag-counter* = 0;
 
 define abstract class <c-tagged-type> (<c-derived-type>)
-  slot c-type-tag :: false-or(<string>),
+  slot c-type-tag :: false-or(<byte-string>),
     init-keyword: tag:,
     init-value: #f;
   slot c-type-anonymous-tag :: false-or(<integer>),
@@ -155,7 +155,7 @@ end;
 
 define generic format-tagged-type
     (type :: <c-tagged-type>, #key multi-line?)
- => (string :: <string>);
+ => (string :: <byte-string>);
 
 
 //=========================================================================
@@ -190,7 +190,7 @@ define abstract class <c-struct-member> (<object>)
 end;
 
 define class <c-member-variable> (<c-struct-member>)
-  slot c-member-variable-name :: <string>,
+  slot c-member-variable-name :: <byte-string>,
     required-init-keyword: name:;
   slot c-member-variable-type :: <c-type>,
     required-init-keyword: type:;
@@ -198,7 +198,7 @@ define class <c-member-variable> (<c-struct-member>)
 end;
 
 define class <c-bit-field> (<c-struct-member>)
-  slot c-bit-field-name :: false-or(<string>),
+  slot c-bit-field-name :: false-or(<byte-string>),
     init-keyword: name:,
     init-value: #f;
   slot c-bit-field-sign-specifier :: <c-sign-specifier>,
@@ -210,7 +210,7 @@ end;
 
 define method format-c-tagged-type
     (type :: <c-struct-or-union-type>, #key multi-line?)
- => (string :: <string>)
+ => (string :: <byte-string>)
   let (prefix, suffix) =
     if (multi-line?)
       values("    ", "\n");
@@ -218,32 +218,36 @@ define method format-c-tagged-type
       values("", " ");
     end;
   
-  let result = concatenate(type.c-type-name, " {", suffix);
-  for (member in type.c-type-members)
-    let formatted =
-      select (member by instance?)
-	<c-member-variable> =>
-	  format-c-type(member.c-member-variable-type,
-			decl-name: member.c-member-variable-name);
-	<c-bit-field> =>
-	  let name = member.c-bit-field-name;
-	  let sign = select (member.c-bit-field-sign-specifier)
-		       #"signed" => "signed ";
-		       #"unsigned" => "unsigned ";
-		       #"unspecified" => "";
-		     end;
-	  let width = member.c-bit-field-width;
-	  if (name)
-	    format-to-string("%sint %s : %d", sign, name, width);
-	  else
-	    format-to-string("%sint : %d", sign, width);
-	  end;
-	otherwise =>
-	  error("illegal member %= in %s", member, type.c-type-name);
-      end select;
-    result := concatenate(result, prefix, formatted, ";", suffix);
-  end for;
-  concatenate(result, "}");
+  if (type.c-type-complete?)
+    let result = concatenate(type.c-type-name, " {", suffix);
+    for (member in type.c-type-members)
+      let formatted =
+	select (member by instance?)
+	  <c-member-variable> =>
+	    format-c-type(member.c-member-variable-type,
+			  decl-name: member.c-member-variable-name);
+	  <c-bit-field> =>
+	    let name = member.c-bit-field-name;
+	    let sign = select (member.c-bit-field-sign-specifier)
+			 #"signed" => "signed ";
+			 #"unsigned" => "unsigned ";
+			 #"unspecified" => "";
+		       end;
+	    let width = member.c-bit-field-width;
+	    if (name)
+	      format-to-string("%sint %s : %d", sign, name, width);
+	    else
+	      format-to-string("%sint : %d", sign, width);
+	    end;
+	  otherwise =>
+	    error("illegal member %= in %s", member, type.c-type-name);
+	end select;
+      result := concatenate(result, prefix, formatted, ";", suffix);
+    end for;
+    concatenate(result, "}");
+  else
+    type.c-type-name;
+  end if;
 end;
 
 
@@ -261,7 +265,7 @@ define class <c-enum-type> (<c-tagged-type>)
 end;
 
 define class <c-enum-constant> (<object>)
-  slot c-enum-constant-name :: <string>,
+  slot c-enum-constant-name :: <byte-string>,
     required-init-keyword: name:;
   slot c-enum-constant-value :: <integer>,
     required-init-keyword: value:;
@@ -269,7 +273,7 @@ end;
 
 define method format-c-tagged-type
     (type :: <c-enum-type>, #key multi-line?)
- => (string :: <string>)
+ => (string :: <byte-string>)
   let (prefix, suffix) =
     if (multi-line?)
       values("    ", "\n");
@@ -352,7 +356,7 @@ end;
 
 define function format-function-parameters
     (type :: <c-function-type>)
- => (parameters :: <string>)
+ => (parameters :: <byte-string>)
   if (type.c-function-parameter-types.empty?)
     case
       type.c-function-explicit-void? =>
@@ -383,7 +387,7 @@ end;
 //  this shouldn't cause any problems.
 
 define class <c-typedef-type> (<c-derived-type>)
-  slot c-typedef-name :: <string>,
+  slot c-typedef-name :: <byte-string>,
     required-init-keyword: name:;
   slot c-typedef-type :: <c-type>,
     required-init-keyword: type:;
@@ -398,7 +402,7 @@ end;
 
 define generic c-type-name
     (type :: <c-type>)
- => (name :: false-or(<string>));
+ => (name :: false-or(<byte-string>));
 
 define method c-type-name
     (type :: <c-type>)
@@ -408,31 +412,31 @@ end;
 
 define method c-type-name
     (type :: <c-primitive-type>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   type.c-primitive-type-name;
 end;
 
 define method c-type-name
     (type :: <c-struct-type>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   concatenate("struct ", type.c-type-tag);
 end;
 
 define method c-type-name
     (type :: <c-union-type>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   concatenate("union ", type.c-type-tag);
 end;
 
 define method c-type-name
     (type :: <c-enum-type>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   concatenate("enum ", type.c-type-tag);
 end;
 
 define method c-type-name
     (type :: <c-typedef-type>)
- => (name :: <string>)
+ => (name :: <byte-string>)
   type.c-typedef-name;
 end;
 
@@ -451,8 +455,8 @@ define constant <c-named-type> =
 
 define function format-c-type
     (type :: <c-type>,
-     #key decl-name :: false-or(<string>))
- => (decl :: <string>)
+     #key decl-name :: false-or(<byte-string>))
+ => (decl :: <byte-string>)
   let type-name = c-type-name(type);
   if (type-name)
     // Short-circuit the common cases for performance.
@@ -544,8 +548,8 @@ end;
 //  This function is slow and should live somewhere else.
 
 define function join-strings
-    (joiner :: <string>, strings :: <list>)
- => (string :: <string>)
+    (joiner :: <byte-string>, strings :: <list>)
+ => (string :: <byte-string>)
   let result = strings.head;
   for (string in strings.tail)
     result := concatenate(result, joiner, string);
