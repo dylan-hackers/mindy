@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.3 1994/03/26 07:45:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.4 1994/03/27 02:08:08 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,9 +21,12 @@
 #include "class.h"
 #include "thread.h"
 #include "obj.h"
-#include "interp.h"
+#include "driver.h"
 #include "func.h"
 #include "num.h"
+#include "list.h"
+#include "def.h"
+#include "type.h"
 
 #define STACK_SIZE (1*1024*1024)
 
@@ -63,14 +66,14 @@ void thread_set_current(struct thread *thread)
 
 struct thread *thread_pick_next()
 {
-    if ((Current = Runnable) != NULL) {
-	Runnable = Runnable->next;
-	return Current;
-    }
-    else if (AllThreads != NULL)
-	pause(pause_DeadLocked);
-    else
-	pause(pause_NothingToRun);
+    struct thread *thread = Runnable;
+
+    if (thread)
+	Runnable = thread->next;
+
+    Current = thread;
+
+    return thread;
 }
 
 
@@ -118,8 +121,11 @@ static void wakeup_thread(struct thread *thread)
 
 static void return_false(struct thread *thread)
 {
-    obj_t *old_sp = thread->sp++;
+    obj_t *old_sp = pop_linkage(thread);
+
     *old_sp = obj_False;
+    thread->sp = old_sp + 1;
+
     do_return(thread, old_sp, old_sp);
 }
 
@@ -183,6 +189,18 @@ struct thread *thread_create(obj_t debug_name)
 
     return thread;
 }
+
+static obj_t dylan_spawn_thread(obj_t debug_name, obj_t func)
+{
+    struct thread *thread = thread_create(debug_name);
+
+    *thread->sp++ = func;
+
+    thread_restart(thread);
+
+    return obj_False;
+}
+
 
 
 /* Pushing escape frames. */
@@ -350,49 +368,34 @@ struct lock {
 
 #define LOCK(o) obj_ptr(struct lock *, o)
 
-static void dylan_make_lock(struct thread *thread, int nargs)
+obj_t make_lock(void)
 {
     obj_t res = alloc(obj_LockClass, sizeof(struct lock));
-    obj_t *old_sp = thread->sp - 1;
-
-    assert(nargs == 0);
 
     LOCK(res)->locked = FALSE;
     LOCK(res)->waiting = NULL;
     LOCK(res)->last = &LOCK(res)->waiting;
 
-    *old_sp = res;
-
-    do_return(thread, old_sp, old_sp);
+    return res;
 }
 
-static void dylan_query_lock(struct thread *thread, int nargs)
+boolean lock_query(obj_t lock)
 {
-    obj_t *args = thread->sp - 1;
-    obj_t lock = args[0];
-    obj_t *old_sp = args-1;
+    return LOCK(lock)->locked;
+}
 
-    assert(nargs == 1);
-
-    if (LOCK(lock)->locked)
-	*old_sp = obj_True;
+static obj_t dylan_lock_query(obj_t lock)
+{
+    if (lock_query(lock))
+	return obj_True;
     else
-	*old_sp = obj_False;
-
-    thread->sp = old_sp + 1;
-
-    do_return(thread, old_sp, old_sp);
+	return obj_False;
 }
 
-static void dylan_grab_lock(struct thread *thread, int nargs)
+void lock_grab(struct thread *thread, obj_t lock,
+	       void advance(struct thread *thread))
 {
-    obj_t *args = thread->sp - 1;
-    obj_t lock = args[0];
-
-    assert(nargs == 1);
-
     if (LOCK(lock)->locked) {
-	push_linkage(thread, args);
 	suspend_thread(thread);
 	*LOCK(lock)->last = thread;
 	LOCK(lock)->last = &thread->next;
@@ -400,17 +403,22 @@ static void dylan_grab_lock(struct thread *thread, int nargs)
 	thread->prev = NULL;
 	thread->status = status_Blocked;
 	thread->datum = lock;
+	thread->advance = advance;
 
-	go_on();
+	pause(pause_PickNewThread);
     }
     else {
 	LOCK(lock)->locked = TRUE;
-	thread->sp = args - 1;
-	return_false(thread);
+	advance(thread);
     }
 }
 
-static void release_lock(obj_t lock)
+static obj_t dylan_lock_grab(obj_t lock)
+{
+    lock_grab(Current, lock, return_false);
+}
+
+void lock_release(obj_t lock)
 {
     struct thread *waiting = LOCK(lock)->waiting;
 
@@ -422,27 +430,19 @@ static void release_lock(obj_t lock)
 	    LOCK(lock)->last = &LOCK(lock)->waiting;
 	wakeup_thread(waiting);
 	waiting->datum = obj_False;
-	waiting->sp = pop_linkage(waiting);
-	waiting->advance = return_false;
     }
     else
 	LOCK(lock)->locked = FALSE;
 }
 
-static void dylan_release_lock(struct thread *thread, int nargs)
+static obj_t dylan_lock_release(obj_t lock)
 {
-    obj_t *args = thread->sp - 1;
-    obj_t lock = args[0];
-
-    assert(nargs == 1);
-
-    if (!LOCK(lock)->locked) {
-	push_linkage(thread, args);
+    if (!LOCK(lock)->locked)
 	error("~S is already unlocked.", lock);
-    }
-    release_lock(lock);
-    thread->sp = args - 1;
-    return_false(thread);
+
+    lock_release(lock);
+
+    return obj_False;
 }
 
 static void remove_from_lock(struct thread *thread)
@@ -478,10 +478,7 @@ static void add_to_lock(struct thread *thread)
     }
     else {
 	LOCK(lock)->locked = TRUE;
-
 	thread->datum = obj_False;
-	thread->sp = pop_linkage(thread);
-	thread->advance = return_false;
     }
 }
 
@@ -496,32 +493,20 @@ struct event {
 
 #define EVENT(o) obj_ptr(struct event *, o)
 
-static void dylan_make_event(struct thread *thread, int nargs)
+obj_t make_event(void)
 {
     obj_t res = alloc(obj_EventClass, sizeof(struct event));
-    obj_t *old_sp = thread->sp - 1;
-
-    assert(nargs == 0);
-
+    
     EVENT(res)->waiting = NULL;
     EVENT(res)->last = &EVENT(res)->waiting;
 
-    *old_sp = res;
-
-    do_return(thread, old_sp, old_sp);
+    return res;
 }
 
-static void dylan_event_wait(struct thread *thread, int nargs)
+void event_wait(struct thread *thread, obj_t event, obj_t lock,
+		void (*advance)(struct thread *thread))
 {
-    obj_t *args = thread->sp - 2;
-    obj_t event = args[0];
-    obj_t lock = args[1];
-
-    assert(nargs == 2);
-
-    push_linkage(thread, args);
-
-    if (!LOCK(lock)->locked)
+    if (lock != obj_False && !LOCK(lock)->locked)
 	error("~S is already unlocked.", lock);
 
     suspend_thread(thread);
@@ -531,19 +516,22 @@ static void dylan_event_wait(struct thread *thread, int nargs)
     thread->next = NULL;
     thread->status = status_Waiting;
     thread->datum = event;
+    thread->advance = advance;
 
-    release_lock(lock);
+    if (lock != obj_False)
+	lock_release(lock);
 
-    go_on();
+    pause(pause_PickNewThread);
+}    
+
+static obj_t dylan_event_wait(obj_t event, obj_t lock)
+{
+    event_wait(Current, event, lock, return_false);
 }
 
-static void dylan_event_signal(struct thread *thread, int nargs)
+obj_t event_signal(obj_t event)
 {
-    obj_t *args = thread->sp - 1;
-    obj_t event = args[0];
     struct thread *waiting;
-
-    assert(nargs == 1);
 
     waiting = EVENT(event)->waiting;
 
@@ -555,22 +543,15 @@ static void dylan_event_signal(struct thread *thread, int nargs)
 	    EVENT(event)->last = &EVENT(event)->waiting;
 	wakeup_thread(waiting);
 	waiting->datum = obj_False;
-	waiting->sp = pop_linkage(waiting);
-	waiting->advance = return_false;
     }
 
-    thread->sp = args - 1;
-    return_false(thread);
+    return obj_False;
 }
-    
-static void dylan_event_broadcast(struct thread *thread, int nargs)
+
+obj_t event_broadcast(obj_t event)
 {
-    obj_t *args = thread->sp - 1;
-    obj_t event = args[0];
     struct thread *waiting;
-
-    assert(nargs == 1);
-
+    
     waiting = EVENT(event)->waiting;
 
     while (waiting != NULL) {
@@ -578,16 +559,13 @@ static void dylan_event_broadcast(struct thread *thread, int nargs)
 
 	wakeup_thread(waiting);
 	waiting->datum = obj_False;
-	waiting->sp = pop_linkage(waiting);
-	waiting->advance = return_false;
 
 	waiting = next;
     }
     EVENT(event)->waiting = NULL;
     EVENT(event)->last = &EVENT(event)->waiting;
 
-    thread->sp = args - 1;
-    return_false(thread);
+    return obj_False;
 }
 
 static void remove_from_event(struct thread *thread)
@@ -606,8 +584,6 @@ static void remove_from_event(struct thread *thread)
 	    if (thread->next == NULL)
 		EVENT(event)->last = prev;
 	    thread->datum = obj_False;
-	    thread->sp = pop_linkage(thread);
-	    thread->advance = return_false;
 	    return;
 	}
     }
@@ -676,3 +652,28 @@ void init_thread_classes(void)
     init_builtin_class(obj_LockClass, "<lock>", obj_ObjectClass, NULL);
     init_builtin_class(obj_EventClass, "<event>", obj_ObjectClass, NULL);
 }
+
+void init_thread_functions(void)
+{
+    define_function("spawn-thread", list2(obj_ObjectClass, obj_FunctionClass),
+		    FALSE, obj_False, obj_ObjectClass, dylan_spawn_thread);
+
+    define_method("make", list1(singleton(obj_LockClass)), FALSE, obj_Nil,
+		  obj_LockClass, make_lock);
+    define_function("lock-query", list1(obj_LockClass), FALSE, obj_False,
+		    obj_BooleanClass, dylan_lock_query);
+    define_function("lock-grab", list1(obj_LockClass), FALSE, obj_False,
+		    obj_ObjectClass, dylan_lock_grab);
+    define_function("lock-release", list1(obj_LockClass), FALSE, obj_False,
+		    obj_ObjectClass, dylan_lock_release);
+
+    define_method("make", list1(singleton(obj_EventClass)), FALSE, obj_Nil,
+		  obj_EventClass, make_event);
+    define_function("event-wait", list2(obj_EventClass, obj_LockClass),
+		    FALSE, obj_False, obj_ObjectClass, dylan_event_wait);
+    define_function("event-signal", list1(obj_EventClass),
+		    FALSE, obj_False, obj_ObjectClass, event_signal);
+    define_function("event-broadcast", list1(obj_EventClass),
+		    FALSE, obj_False, obj_ObjectClass, event_broadcast);
+}
+
