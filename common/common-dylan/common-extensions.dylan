@@ -106,7 +106,7 @@ end method difference;
 
 define open generic position
     (sequence :: <sequence>, target,
-     #key test :: <function>,
+     #key predicate :: <function>,
           skip :: <integer>,
           //---*** For compatibility: remove this eventually
           count)
@@ -114,7 +114,7 @@ define open generic position
 
 define method position
     (sequence :: <sequence>, target, 
-     #key test :: <function> = \==, 
+     #key predicate :: <function> = \==, 
           skip :: <integer> = 0,
           count)
  => (position :: false-or(<integer>))
@@ -123,7 +123,7 @@ define method position
   end;
   block (return)
     for (index :: <integer> from 0, item in sequence)
-      let matched? = test(target, item);
+      let matched? = predicate(item, target);
       if (matched?)
         if (skip = 0)
 	  return(index);
@@ -137,7 +137,7 @@ end method position;
 // Copy-down method for simple object vectors...
 define sealed method position
     (sequence :: <simple-object-vector>, target, 
-     #key test :: <function> = \==, 
+     #key predicate :: <function> = \==, 
           skip :: <integer> = 0,
           count)
  => (position :: false-or(<integer>))
@@ -146,7 +146,7 @@ define sealed method position
   end;
   block (return)
     for (index :: <integer> from 0, item in sequence)
-      let matched? = test(target, item);
+      let matched? = predicate(item, target);
       if (matched?)
         if (skip = 0)
 	  return(index);
