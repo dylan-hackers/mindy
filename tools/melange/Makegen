@@ -8,6 +8,8 @@ if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "solaris-c-decl";
 } elsif ($features{'compiled_for_linux'}) {
     $c_decl_lid = "linux-c-decl";
+} elsif ($features{'compiled_for_freebsd'}) {
+    $c_decl_lid = "freebsd-c-decl";
 } else {
     &uknown_platform_error();
 };
@@ -21,6 +23,13 @@ if ($stage2) {
        '',
        'compile'
        );
+} else {
+  &emit_library_rule
+      ($c_decl_lid,
+       '$(BUILDROOT)/force.timestamp',
+       '',
+       'no-d2c'
+       );
 };
 
 &emit_parsergen_rule('int-parse');
@@ -31,6 +40,13 @@ if ($stage2) {
        '$(BUILDROOT)/force.timestamp melange-c.lib.du',
        '-L.',
        'compile', 'install'
+       );
+} else {
+  &emit_library_rule
+      ('melange',
+       '$(BUILDROOT)/force.timestamp',
+       '',
+       'no-d2c'
        );
 };
 
