@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.6 1995/04/21 02:27:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.7 1995/04/21 02:35:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -299,9 +299,11 @@ define class <generic-function> (<function>) end;
 define class <symbol> (<object>) end;
 
 define class <type> (<object>) end;
-define class <class> (<type>) end;
 define class <singleton> (<type>) end;
+define class <union> (<type>) end;
+define class <limited-integer> (<type>) end;
 define class <byte-character-type> (<type>) end;
+define class <class> (<type>) end;
 
 define abstract open class <number> (<object>) end;
 define abstract open class <complex> (<number>) end;
