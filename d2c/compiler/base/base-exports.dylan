@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.10 1996/02/05 01:15:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.11 1996/02/05 23:26:15 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -126,6 +126,7 @@ define module od-format
     $odf-local-reference-etype,
     $odf-external-reference-etype,
     $odf-subobjects-flag,
+    $odf-raw-format-mask,
     $odf-no-raw-data-format,
     $odf-byte-raw-data-format,
     $odf-16bit-raw-data-format,
@@ -180,6 +181,7 @@ define module od-format
     maybe-dump-reference,
     load-external-definition,
     add-make-dumper,
+    invert-registry,
     *Data-Unit-Search-Path*;
 
 end;

@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.31 1996/02/05 23:12:05 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.32 1996/02/05 23:26:15 nkramer Exp $
 
 /*
 
@@ -129,7 +129,7 @@ The Raw-Format field in an object-definition header encodes information needed
 to byte/word format translation, and in the degenerate case, indicates there is
 no raw data at all.  These format codes are defined:
 */
-define constant $odf-raw-format-mask	     = #b00001111;
+define /* exported */ constant $odf-raw-format-mask = #b00001111;
 define /* exported */ constant $odf-no-raw-data-format = 0;
 define /* exported */ constant $odf-byte-raw-data-format = 1;
 define /* exported */ constant $odf-16bit-raw-data-format = 2;
@@ -138,7 +138,7 @@ define /* exported */ constant $odf-64bit-raw-data-format = 4;
 define /* exported */ constant $odf-untranslatable-raw-data-format = 5;
 
 // 32 or 64 as appropriate, used for "words" in format pseudo-objects.
-define /* exported */ constant $odf-word-raw-data-format = 0; 
+define /* exported */ constant $odf-word-raw-data-format = 6; 
 /*
 
 Examples:
@@ -2360,3 +2360,16 @@ define /* exported */ method add-make-dumper
 
 end method;
 
+// This function is used by the dump file profiler
+//
+define method invert-registry () => inverted-registery :: <vector>;
+  let registry = *object-id-registry*;
+  let vec = make(<vector>, size: // $dispatcher-table-size);
+		   4000);
+  let keys = key-sequence(registry);
+  for (key in keys)
+    let id = registry[key];
+    vec[id] := key;
+  end for;
+  vec;
+end method invert-registry;
