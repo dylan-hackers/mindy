@@ -2,6 +2,7 @@ do compile_subdirs(
     'c-code',
     'gc',
     'dylan',
+    'melange',
     'streams',
     'standard-io',
     'print',
@@ -12,9 +13,9 @@ do compile_subdirs(
     'string-ext',
     'regexp',
     'format-out',
-    'melange',
     'matrix',
     'time',
+    'stream-ext'
 );
 
 do install_from_src('include', "runtime.h");
