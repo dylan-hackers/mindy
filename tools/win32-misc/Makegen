@@ -53,3 +53,13 @@ do install_from_src('bin', 'dytc.bat');
 do install_from_src('bin', 'find-unrcsed-files.perl');
 do install_from_src('bin', 'module-tool.perl');
 do install_from_src('bin', 'shadows.perl');
+
+# Can't use emit_c_file_rule because they don't build executables
+print <<EOF;
+
+dbclink.exe : \$(SRCDIR)/dbclink.c
+	cl -nologo -Ox \$(SRCDIR)/dbclink.c -o dbclink.exe
+
+EOF
+do install ('bin', 'dbclink.exe');
+push(@compile_dependencies, 'dbclink.exe');
