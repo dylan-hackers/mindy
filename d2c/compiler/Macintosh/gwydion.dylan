@@ -1,5 +1,5 @@
 module: warrior
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion.dylan,v 1.2.2.2 2004/10/09 02:13:26 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion.dylan,v 1.2.2.3 2004/10/09 07:00:13 gabor Exp $
 file: gwydion.dylan
 author: gabor@mac.com
 status: really need some cleanup first.
@@ -463,6 +463,7 @@ define function compile-lid-file(plug :: <plugin-callback>, text :: <byte-string
 	block ()
 		*current-target* := apply(make, <platform>, $platform-table);
 		define-platform-constants(*current-target*);
+		define-bootstrap-module();
 
 		let (lid-header, files :: <stretchy-vector>) = parse-lid-file(plug, text);
 		if(element(lid-header, #"unit-prefix", default: #f))
@@ -1217,7 +1218,6 @@ define function plugin-entry(arg :: <machine-pointer>) => result :: <integer>;
 		select (cb.get-plugin-request)
 		$cw-req-initialize =>
 				*random-state* := make(<random-state>, seed: 0);	// needed??
-				define-bootstrap-module();
 				$cw-no-error.return;
 
 		$cw-req-compile =>

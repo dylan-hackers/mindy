@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion-exports.dylan,v 1.2 2002/06/14 13:53:57 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion-exports.dylan,v 1.2.10.1 2004/10/09 07:00:13 gabor Exp $
 file: gwydion-exports.dylan
 author: gabor@mac.com
 status: still much of experimental
@@ -205,6 +205,7 @@ define module warrior
   use character-type, import: {whitespace?};
   
   use platform;
+  use platform-constants;
   use source;
   use header;
   use utils, import: {stringify};
