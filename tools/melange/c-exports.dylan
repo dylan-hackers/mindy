@@ -3,7 +3,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.10 2000/10/30 08:51:33 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.11 2002/08/21 20:05:57 andreas Exp $
 
 //======================================================================
 //
@@ -186,6 +186,7 @@ define module c-declarations
   use regular-expressions;
   use streams;
   use format;
+  use standard-io;
 
   // We completely encapsulate "c-parse" and only pass out the very few 
   // objects that will be needed by "define-interface".  Note that the 

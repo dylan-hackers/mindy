@@ -1037,8 +1037,10 @@ define method write-declaration
 		<token> => raw-value.string-value;
 		<character> => "1"; // for #define FOO\n, suggested by dauclair
 	      end select;
-  format(stream, "define constant %s = %s;\n\n", decl.dylan-name, value);
-  register-written-name(written-names, decl.dylan-name, decl);
+  unless(decl.dylan-name = value)
+    format(stream, "define constant %s = %s;\n\n", decl.dylan-name, value);
+    register-written-name(written-names, decl.dylan-name, decl);
+  end unless;
 end method write-declaration;
 
 // For pointers, we need "dereference" and "content-size" functions.  This is

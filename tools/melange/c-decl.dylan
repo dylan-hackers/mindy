@@ -68,8 +68,8 @@ rcs-header: $Header:
 //       <structured-type-declaration>
 //            operations include find-slot, exclude-slots, make-struct-type,
 //            members, apply-container-options
-//         <struct-type-declaration>
-//         <union-type-declaration>
+//         <struct-declaration>
+//         <union-declaration>
 //         <enum-declaration>
 //       <pointer-declaration>
 //            operations include referent, pointer-to
