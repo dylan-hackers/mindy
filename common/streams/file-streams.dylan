@@ -396,7 +396,7 @@ define constant <if-does-not-exist-action>
   = one-of(#f, #"signal", #"create");
 // ### d2c can't deal with singleton(<byte>)
 // define constant <file-element-type>
-//   = one-of(<byte>, <byte-character>);
+//   = one-of(<byte>, <byte-character>, <unicode-character>);
 
 /// initialize
 ///
@@ -410,10 +410,12 @@ define sealed method initialize
             = if (direction == #"input") #"signal" else #"create" end,
           element-type // :: <file-element-type>
             = <byte-character>,
-          encoding :: one-of(#f, #"ANSI")
+          encoding :: one-of(#f, #"ANSI", #"big-endian")
             = select (element-type) 
 		(<byte>) => #f;
 		(<byte-character>) => #"ANSI";
+		(<unicode-character>) => #"big-endian"; // ?
+		otherwise => error("Unknown element-type");
 	      end,
           buffer-size :: <buffer-index> = $default-buffer-size)
     => result :: <fd-file-stream>;

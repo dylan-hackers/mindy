@@ -169,7 +169,7 @@ define open generic type-for-file-stream
 define inline method type-for-file-stream
     (locator :: <byte-string>,
      element-type :: one-of(#f, <byte-character>, <byte>),
-     encoding :: one-of(#f, #"ANSI", #"ISO-Latin-1"))
+     encoding :: one-of(#f, #"ANSI"))
  => type :: singleton(<fd-file-stream>);
   <fd-file-stream>;
 end method;
@@ -179,9 +179,13 @@ end method;
 define inline method type-for-file-stream
     (locator :: <byte-string>, 
      element-type :: false-or(<type>),
-     encoding :: one-of(#f, #"ANSI", #"ISO-Latin-1"))
+     encoding :: one-of(#f, #"ANSI", #"big-endian"))
  => type :: <type>;
-  <fd-file-stream>;
+  select (element-type)
+    <byte>, <byte-character> => <fd-file-stream>;
+    <unicode-character> => <unicode-fd-file-stream>;
+    otherwise => <fd-file-stream>;
+  end select;
 end method;
 #endif
 
@@ -207,7 +211,7 @@ define inline method make
           element-type :: false-or(<type>),
           encoding :: false-or(<symbol>),
      #all-keys)
- => result :: <fd-file-stream>;
+ => result :: <file-stream>;
   apply(make, type-for-file-stream(locator, element-type, encoding), keys);
 end method;
 
@@ -811,52 +815,19 @@ define sealed method copy-sequence!
   end for;
 end method;
 
+define constant <byte-sequence> = type-union(<buffer>,
+					     <byte-vector>,
+					     <byte-string>, 
+					     <unicode-string>);
+
 define inline sealed method copy-sequence!
-    (dest :: type-union(<buffer>, <byte-vector>, <byte-string>),
+    (dest :: <byte-sequence>,
      dest-start :: <integer>, 
-     source :: type-union(<buffer>, <byte-vector>, <byte-string>),
+     source :: <byte-sequence>,
      source-start :: <integer>, 
      length :: <integer>)
  => ();
   copy-bytes(dest, dest-start, source, source-start, length);
-end method;
-
-define inline sealed method copy-sequence!
-    (dest :: <unicode-string>,
-     dest-start :: <integer>, 
-     source :: <unicode-string>,
-     source-start :: <integer>, 
-     length :: <integer>)
- => ();
-  copy-bytes(dest, dest-start, source, source-start, length);
-end method;
-
-define inline sealed method copy-sequence!
-    (dest :: <unicode-string>,
-     dest-start :: <integer>, 
-     source :: type-union(<buffer>, <byte-vector>, <byte-string>),
-     source-start :: <integer>, 
-     length :: <integer>)
- => ();
-  copy-bytes(dest, dest-start,
-	     as(<unicode-string>, source),
-	     source-start, 
-	     length);
-end method;
-
-/// This method will only work if the source <unicode-string> contains
-/// only legal <byte>s, i.e. no <unicode-character> over 255.
-///
-define inline sealed method copy-sequence!
-    (dest :: type-union(<buffer>, <byte-vector>, <byte-string>),
-     dest-start :: <integer>, 
-     source :: <unicode-string>,
-     source-start :: <integer>, 
-     length :: <integer>)
- => ();
-  copy-bytes(dest, dest-start, 
-	     as(<byte-vector>, source),
-	     source-start, length);
 end method;
 
 //// Output stream registration and forcing output upon Application exit.
