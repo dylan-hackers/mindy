@@ -73,7 +73,7 @@ end module int-parse;
 
 // Designates an "optional" string.
 //
-define constant <string?> = union(<string>, <false>);
+define constant <string?> = type-union(<string>, <false>);
 
 // Undefined values are useful for values that may need to be defaulted.  This
 // is superious do simply filling in the default value at the start, since it
@@ -88,16 +88,16 @@ define constant undefined = make(<undefined>);
 // option" in the Creole/Melange specs.
 //
 define class <container-options> (<object>)
-  slot name-mapper :: union(<symbol>, <undefined>), init-value: undefined;
+  slot name-mapper :: type-union(<symbol>, <undefined>), init-value: undefined;
   // each element of imports is either #"all" or an import list
   slot imports :: <sequence>, init-value: #();
-  slot prefix :: union(<string>, <undefined>), init-value: undefined;
+  slot prefix :: type-union(<string>, <undefined>), init-value: undefined;
   slot exclude :: <sequence>, init-value: #();
   slot rename :: <sequence>, init-value: #();
   slot mappings :: <sequence>, init-value: #();
   slot equates :: <sequence>, init-value: #();
-  slot read-only :: union(<boolean>, <undefined>), init-value: undefined;
-  slot seal-string :: union(<string>, <undefined>), init-value: undefined;
+  slot read-only :: type-union(<boolean>, <undefined>), init-value: undefined;
+  slot seal-string :: type-union(<string>, <undefined>), init-value: undefined;
 end class <container-options>;
 
 // This structure contains the tokenizer which defines the input to the
@@ -204,7 +204,7 @@ define class <shift> (<action>)
   slot state :: <integer>, required-init-keyword: state:, setter: #f;
 end;
 
-define method \= (action1 :: <shift>, action2 :: <shift>)
+define method \= (action1 :: <shift>, action2 :: <shift>) => eq? :: <boolean>;
   action1.state == action2.state;
 end;
 
@@ -213,6 +213,7 @@ define class <reduce> (<action>)
 end;
 
 define method \= (action1 :: <reduce>, action2 :: <reduce>)
+ => eq? :: <boolean>;
   action1.production == action2.production;
 end;
 
@@ -220,6 +221,7 @@ define class <accept> (<action>)
 end;
 
 define method \= (action1 :: <accept>, action2 :: <accept>)
+ => eq? :: <boolean>;
   #t;
 end;
 

@@ -170,7 +170,7 @@ define class <shift> (<action>)
   slot state :: <integer>, required-init-keyword: state:, setter: #f;
 end;
 
-define method \= (action1 :: <shift>, action2 :: <shift>)
+define method \= (action1 :: <shift>, action2 :: <shift>) => eq? :: <boolean>;
   action1.state == action2.state;
 end;
 
@@ -179,6 +179,7 @@ define class <reduce> (<action>)
 end;
 
 define method \= (action1 :: <reduce>, action2 :: <reduce>)
+ => eq? :: <boolean>;
   action1.production == action2.production;
 end;
 
@@ -186,6 +187,7 @@ define class <accept> (<action>)
 end;
 
 define method \= (action1 :: <accept>, action2 :: <accept>)
+ => eq? :: <boolean>;
   #t;
 end;
 

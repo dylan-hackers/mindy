@@ -475,7 +475,7 @@ define constant match-ID
 //
 define method try-identifier
     (state :: <tokenizer>, position :: <integer>)
- => (result :: union(<token>, <false>));
+ => (result :: type-union(<token>, <false>));
   let contents :: <string> = state.contents;
 
   let (start-index, end-index)
@@ -497,7 +497,7 @@ define constant match-punctuation
 // and #f otherwise.
 //
 define method try-punctuation (state :: <tokenizer>, position :: <integer>)
- => result :: union(<token>, <false>);
+ => result :: type-union(<token>, <false>);
   let contents :: <string> = state.contents;
 
   if (punctuation?(contents[position]))

@@ -176,9 +176,11 @@ end;
 
 define sealed generic string-value (token :: <token>) => (result :: <string>);
 define sealed generic value (token :: <token>) => (result :: <object>);
+//define sealed generic parse-error
+//    (token :: type-union(<token>,<tokenizer>), format :: <string>, #rest args)
+// => ();				// never returns
 define sealed generic parse-error
-    (token :: <token>, format :: <string>, #rest args)
- => ();				// never returns
+    (token :: <object>, format :: <string>, #rest args) => (); // never returns
 
 // Literal tokens (and those not otherwise modified) evaluate to themselves.
 //
@@ -405,6 +407,7 @@ define method fast-string-hash (string :: <string>)
 end method fast-string-hash;
 
 define method table-protocol (table :: <string-table>)
+ => (equal :: <function>, hash :: <function>);
   values(\=, fast-string-hash);
 end method;
 

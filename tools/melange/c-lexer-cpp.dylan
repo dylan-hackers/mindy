@@ -61,7 +61,7 @@ define method get-macro-params
   for (token = get-token(state) then get-token(state, expand: #f),
        list = #() then pair(token, list),
        until: (paren-count == 0
-		& instance?(token, union(<rparen-token>, <comma-token>))))
+		& instance?(token, type-union(<rparen-token>, <comma-token>))))
     select (token by instance?)
       <eof-token>, <error-token> =>
 	parse-error(state, "Badly formed macro use.");
@@ -109,7 +109,7 @@ define method check-cpp-expansion
  => (result :: <boolean>);
   let headless-string 
     = if (string.first == '#') copy-sequence(string, start: 1) else string end;
-  let token-list :: union(<sequence>, <false>)
+  let token-list :: type-union(<sequence>, <false>)
     = (element(parameter-table, headless-string, default: #f)
 	 | element(tokenizer.cpp-table, string, default: #f));
   case

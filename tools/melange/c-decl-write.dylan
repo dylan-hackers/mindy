@@ -32,14 +32,14 @@ rcs-header: $Header:
 // static linking of libraries.
 //
 define generic write-mindy-includes
-    (file :: union(<string>, <false>), decls :: <sequence>) => ();
+    (file :: type-union(<string>, <false>), decls :: <sequence>) => ();
 
 // Writes out appropriate code to load object file and insure that all desired
 // objects are included.  Returns a string which can be included in a
 // "find-c-function" call so that the symbols will be found.
 //
 define generic write-file-load
-    (object-file :: union(<string>, <false>), decls :: <sequence>,
+    (object-file :: type-union(<sequence>, <false>), decls :: <sequence>,
      stream :: <stream>)
  => (load-string :: <string>);
 
@@ -52,8 +52,8 @@ define generic write-file-load
 // Most of the code in this file goes to support this single operations.
 //
 define generic write-declaration
-    (decl :: <struct-declaration>, load-string :: <string>, stream :: <stream>)
- => ();
+    (decl :: <declaration>, load-string :: <string>,
+     stream :: <stream>) => ();
 
 //------------------------------------------------------------------------
 // Support code
@@ -70,7 +70,7 @@ define generic write-declaration
 // useful for accessing a slot of a larger structure.
 //
 define generic c-accessor
-    (type :: <type-declaration>, offset :: union(<integer>, <string>),
+    (type :: <type-declaration>, offset :: type-union(<integer>, <string>),
      parameter :: <string>, equated :: <string>)
  => (result :: <string>);
 
@@ -150,7 +150,7 @@ define method c-accessor
 end method c-accessor;
 
 define method c-accessor
-    (type :: union(<pointer-declaration>, <function-type-declaration>),
+    (type :: type-union(<pointer-declaration>, <function-type-declaration>),
      offset :: <string>, parameter :: <string>,
      equated :: <string>)
  => (result :: <string>);
@@ -705,7 +705,7 @@ end method write-file-load;
 // static linking of libraries.
 //
 define method write-mindy-includes
-    (file :: union(<string>, <false>), decls :: <sequence>) => ();
+    (file :: type-union(<string>, <false>), decls :: <sequence>) => ();
   if (file)
     let stream = make(<file-stream>, name: file, direction: #"output");
     for (decl in decls)
