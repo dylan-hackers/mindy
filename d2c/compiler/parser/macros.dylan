@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.4 2000/10/17 10:33:10 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.5 2000/12/31 18:17:48 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -2382,7 +2382,7 @@ define method match
      results :: <pattern-binding-set>)
   block (return)
     //
-    // First, parse a pattern list and puke if the whole thing doesn't parse.
+    // First, parse a property list and puke if the whole thing doesn't parse.
     let plist
       = block ()
 	  parse-property-list(make(<fragment-tokenizer>, fragment: fragment));
