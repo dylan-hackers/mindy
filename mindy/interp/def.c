@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.3 1994/04/09 13:35:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.4 1994/04/18 05:40:35 wlott Exp $
 *
 * This file does whatever.
 *
@@ -26,6 +26,7 @@
 #include "def.h"
 #include "type.h"
 #include "instance.h"
+#include "error.h"
 
 
 /* Stuff to define builtin stuff. */
@@ -143,13 +144,17 @@ static obj_t defmethod(obj_t var_obj, obj_t method)
 {
     struct variable *var = obj_rawptr(var_obj);
     obj_t gf = var->value;
+    obj_t old;
 
     if (gf == obj_Unbound) {
 	gf = make_default_generic_function(var->name, method);
 	var->value = gf;
 	var->function = func_Always;
     }
-    add_method(gf, method);
+    old = add_method(gf, method);
+
+    if (old != obj_False)
+	error("Definition of ~S clashes with ~S", method, old);
 
     return var->name;
 }
@@ -195,13 +200,14 @@ static obj_t defslot(obj_t getter, obj_t setter)
 	var = obj_rawptr(setter);
 	if (var->value == obj_Unbound)
 	    var->value = make_generic_function(var->name, 2, FALSE, obj_False,
-					       obj_ObjectClass, obj_Nil);
+					       list1(obj_ObjectClass),
+					       obj_False);
     }
 
     var = obj_rawptr(getter);
     if (var->value == obj_Unbound)
 	var->value = make_generic_function(var->name, 1, FALSE, obj_False,
-					   obj_ObjectClass, obj_Nil);
+					   list1(obj_ObjectClass), obj_False);
 
     return var->name;
 }
