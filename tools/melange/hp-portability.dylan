@@ -28,6 +28,12 @@ rcs-header: $Header:
 define module portability
   use dylan;
   use c-lexer, import: {default-cpp-table, include-path};
+  export $enum-size,
+	$pointer-size, $function-pointer-size,
+	$integer-size, $short-int-size,
+	$long-int-size, $char-size,
+	$float-size, $double-float-size,
+	$long-double-size;
 end module portability;
 
 define constant reserved-words
@@ -47,3 +53,14 @@ define constant hp-include-directories
 for (dir in hp-include-directories)
   push-last(include-path, dir);
 end for;
+
+define constant $integer-size :: <integer> = 4;
+define constant $short-int-size :: <integer> = 2;
+define constant $long-int-size :: <integer> = 4;
+define constant $char-size :: <integer> = 1;
+define constant $float-size :: <integer> = 4;
+define constant $double-float-size :: <integer> = 8;
+define constant $long-double-size :: <integer> = 16;
+define constant $enum-size :: <integer> = $integer-size;
+define constant $pointer-size :: <integer> = 4;
+define constant $function-pointer-size :: <integer> = $pointer-size;
