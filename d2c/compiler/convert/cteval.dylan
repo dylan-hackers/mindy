@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/cteval.dylan,v 1.2 2000/01/24 04:56:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/cteval.dylan,v 1.3 2001/05/26 18:50:17 gabor Exp $
 copyright: see below
 
 
@@ -99,13 +99,11 @@ define method ct-mv-eval
     (expr :: <varref-parse>, lexenv :: false-or(<lexenv>))
     => res :: false-or(<ct-value>);
   let id = expr.varref-id;
-  unless (lexenv & find-binding(lexenv, id))
+  unless (lexenv & local-binding?(lexenv, id))
     let var = find-variable(id-name(id));
     if (var)
       let def = var.variable-definition;
       def & ~def.defn-dynamic? & ct-value(def);
-    else
-      #f;
     end if;
   end;
 end;
@@ -208,9 +206,7 @@ define method ct-mv-eval-funcall
     (function :: <identifier-token>, args :: <simple-object-vector>,
      lexenv :: false-or(<lexenv>))
     => (#rest results :: false-or(<ct-value>));
-  if (lexenv & find-binding(lexenv, function))
-    #f;
-  else
+  unless (lexenv & local-binding?(lexenv, function))
     let var = find-variable(id-name(function));
     if (var)
       let evaluator = var.variable-ct-evaluator;
@@ -223,13 +219,9 @@ define method ct-mv-eval-funcall
 			 args);
 	  apply(evaluator, args);
 	end block;
-      else
-	#f;
       end if;
-    else
-      #f;
     end if;
-  end if;
+  end unless;
 end method ct-mv-eval-funcall;
 
 
