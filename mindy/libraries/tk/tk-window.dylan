@@ -102,7 +102,7 @@ define generic unpack
 // If any other keywords are specified, an error is signalled.
 //
 define generic std-options
-    (window-options :: <sequence>, accept-pack-options :: <boolean>,
+    (window-options :: <collection>, accept-pack-options :: <boolean>,
      options :: <sequence>)
  => (result :: <sequence>);
 
@@ -171,6 +171,14 @@ define variable pack-options :: <sequence>
   = #[#"pack", #"name",
 	#"after", #"anchor", #"before", #"expand", #"fill", #"in",
 	#"padx", #"pady", #"side"];
+define variable pack-options-table :: <dictionary>
+  = block ()
+      let result = make(<object-table>);
+      for (option in pack-options)
+	result[option] := option;
+      end for;
+      result;
+    end block;
 
 // See description of the generic above
 //
@@ -178,13 +186,24 @@ define method define-widget
     (cls :: limited(<class>, subclass-of: <window>), tk-command :: <string>,
      #rest options) => ();
   tk-command-table[cls] := tk-command;
-  options-table[cls] := options;
+  options-table[cls] := make(<object-table>);
+  for (option in options)
+    options-table[cls][option] := option;
+  end for;
 end method define-widget;
+
+define method valid-option? (key :: <symbol>, options :: <dictionary>)
+  element(options, key, default: #f);
+end method valid-option?;
+
+define method valid-option? (key :: <symbol>, options :: <sequence>)
+  member?(key, options);
+end method valid-option?;
 
 // See description of the generic above.
 //
 define method std-options
-    (window-options :: <sequence>, accept-pack-options :: <boolean>,
+    (window-options :: <collection>, accept-pack-options :: <boolean>,
      options :: <sequence>) => (result :: <sequence>);
   let result :: <sequence> = make(<list>);
   for (key-index from 0 below size(options) by 2,
@@ -192,9 +211,9 @@ define method std-options
     let key = options[key-index];
     let value = options[value-index];
     case
-      member?(key, window-options) =>
+      valid-option?(key, window-options) =>
 	result := add!(result, make-option(key, value));
-      accept-pack-options & member?(key, pack-options) =>
+      accept-pack-options & valid-option?(key, pack-options-table) =>
 	#t;
       otherwise =>
 	select (key)
