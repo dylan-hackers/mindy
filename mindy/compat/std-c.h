@@ -33,8 +33,8 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.1 1998/05/03 19:55:18 andreas Exp $ SPRITE (Berkeley)
- * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.1 1998/05/03 19:55:18 andreas Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.2 1998/08/10 15:12:27 housel Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-c.h,v 1.2 1998/08/10 15:12:27 housel Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_C_H_
@@ -147,7 +147,11 @@ extern double rint();
 #ifdef USE_LINUX_FBUFEMPTYP
 #   define FBUFEMPTYP(fp)        (fp->_IO_read_ptr >= fp->_IO_read_end)
 #else
-#   define FBUFEMPTYP(fp)        (fp->_cnt == 0)
+#   ifdef USE_BSD_FBUFEMPTYP
+#       define FBUFEMPTYP(fp)    (fp->_r <= 0)
+#   else
+#       define FBUFEMPTYP(fp)    (fp->_cnt == 0)
+#   endif
 #endif
 
 /*
