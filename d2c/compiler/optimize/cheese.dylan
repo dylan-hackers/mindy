@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.63 1995/05/18 22:11:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.64 1995/05/21 03:07:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1332,6 +1332,62 @@ define method consumes-cluster? (expr :: <operation>)
   end;
 end;
 
+
+define-primitive-transformer
+  (#"call-out",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let func-dep = primitive.depends-on;
+     begin
+       let func = func-dep.source-exp;
+       unless (instance?(func, <literal-constant>)
+		 & instance?(func.value, <literal-string>))
+	 compiler-error("The function in call-out isn't a constant string.");
+       end;
+     end;
+     let result-dep = func-dep.dependent-next;
+     begin
+       let result-type = result-dep.source-exp.dylan-type-for-c-type;
+       maybe-restrict-type(component, primitive, result-type);
+     end;
+     let assign = primitive.dependents.dependent;
+     local
+       method repeat (dep :: false-or(<dependency>))
+	 if (dep)
+	   let type = dep.source-exp.dylan-type-for-c-type;
+	   let next = dep.dependent-next;
+	   if (next)
+	     assert-type(component, assign, next, type);
+	     repeat(next.dependent-next);
+	   else
+	     compiler-error("Type spec with no argument in call-out");
+	   end;
+	 end;
+       end;
+     repeat(result-dep.dependent-next);
+   end);
+
+define method dylan-type-for-c-type (leaf :: <leaf>) => res :: <values-ctype>;
+  if (instance?(leaf, <literal-constant>))
+    let ct-value = leaf.value;
+    if (instance?(ct-value, <literal-symbol>))
+      let c-type = ct-value.literal-value;
+      select (c-type)
+	#"char", #"short", #"int", #"long",
+	#"unsigned-char", #"unsigned-short", #"unsigned-int" =>
+	  specifier-type(#"<fixed-integer>");
+	#"ptr" => specifier-type(#"<raw-pointer>");
+	#"float" => specifier-type(#"<single-float>");
+	#"double" => specifier-type(#"<double-float>");
+	#"long-double" => specifier-type(#"<extended-float>");
+	#"void" => make-values-ctype(#(), #f);
+      end;
+    else
+      object-ctype();
+    end;
+  else
+    object-ctype();
+  end;
+end;
 
 
 define method optimize (component :: <component>, op :: <truly-the>) => ();
