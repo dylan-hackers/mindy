@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.1 1994/03/24 21:49:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.2 1994/03/28 01:24:46 wlott Exp $
 *
 * This file does whatever.
 *
@@ -346,6 +346,150 @@ static int find_position(obj_t pt, obj_t slot)
 }
 
 
+/* Slot descriptors. */
+
+static obj_t make_slot_descriptor(obj_t debug_name, obj_t allocation,
+				  obj_t getter, obj_t setter, obj_t type,
+				  obj_t init_keyword, obj_t req_init_keyword,
+				  obj_t init_function, obj_t init_value)
+{
+    obj_t res = alloc(obj_SlotDescrClass, sizeof(struct slot_descr));
+
+    SD(res)->debug_name = debug_name;
+    SD(res)->alloc = (enum slot_allocation)fixnum_value(allocation);
+    SD(res)->creator = obj_False;
+    if (init_function != obj_Unbound) {
+	if (init_value != obj_Unbound)
+	    error("Can't specify both an init-function: and an init-value:");
+	SD(res)->init_function_or_value = init_function;
+	SD(res)->init_function_p = TRUE;
+    }
+    else {
+	SD(res)->init_function_or_value = init_value;
+	SD(res)->init_function_p = FALSE;
+    }
+    if (req_init_keyword != obj_False) {
+	if (init_function != obj_Unbound)
+	    error("Can't mix required-init-keyword: and init-function:");
+	if (init_value != obj_Unbound)
+	    error("Can't mix required-init-keyword: and init-value:");
+	if (init_keyword != obj_False)
+	    error("Can't mix required-init-keyword: and init-keyword:");
+	SD(res)->init_keyword = req_init_keyword;
+	SD(res)->keyword_required = TRUE;
+    }
+    else {
+	SD(res)->init_keyword = init_keyword;
+	SD(res)->keyword_required = FALSE;
+    }
+    SD(res)->getter = getter;
+    SD(res)->getter_method = obj_False;
+    SD(res)->setter = setter;
+    SD(res)->setter_method = obj_False;
+    if (type == obj_False)
+	SD(res)->type = obj_ObjectClass;
+    else
+	SD(res)->type = type;
+    SD(res)->desired_offset = -1;
+    SD(res)->ever_missed = FALSE;
+
+    return res;
+}
+
+
+/* Stuff to run init functions. */
+
+static struct variable *initialize_var = NULL;
+
+static void do_finish_inits(struct thread *thread, obj_t *vals)
+{
+    obj_t inst_or_class = vals[-3];
+    obj_t *old_sp = pop_linkage(thread);
+
+    *old_sp = inst_or_class;
+    thread->sp = old_sp + 1;
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void do_next_init(struct thread *thread, obj_t *vals);
+
+static void do_init_functions(struct thread *thread, obj_t init_functions)
+{
+    obj_t *sp = thread->sp;
+    obj_t slot;
+
+    if (init_functions == obj_Nil) {
+	obj_t inst_or_class = sp[-3];
+	obj_t key_val_pairs = sp[-2];
+	int len = key_val_pairs==obj_False ? 0 : SOVEC(key_val_pairs)->length;
+	int i;
+
+	*sp++ = initialize_var->value;
+	*sp++ = inst_or_class;
+	for (i = 0; i < len; i++)
+	    *sp++ = SOVEC(key_val_pairs)->contents[i];
+	thread->sp = sp;
+
+	set_c_continuation(thread, do_finish_inits);
+	invoke(thread, len+1);
+    }
+
+    slot = HEAD(init_functions);
+    sp[-1] = init_functions;
+    thread->sp = sp+1;
+    sp[0] = SD(slot)->init_function_or_value;
+    set_c_continuation(thread, do_next_init);
+    invoke(thread, 0);
+}
+
+static void do_next_init(struct thread *thread, obj_t *vals)
+{
+    obj_t inst_or_class = vals[-3];
+    obj_t init_functions = vals[-1];
+    obj_t slot = HEAD(init_functions);
+    obj_t value, class;
+    int index;
+
+    if (thread->sp == vals)
+	value = obj_False;
+    else {
+	value = vals[0];
+	thread->sp = vals;
+    }
+
+    switch (SD(slot)->alloc) {
+      case alloc_INSTANCE:
+	class = INST(inst_or_class)->class;
+	index = find_position(DC(class)->instance_positions, slot);
+	INST(inst_or_class)->slots[index] = value;
+	break;
+      case alloc_SUBCLASS:
+	index = find_position(DC(inst_or_class)->subclass_positions, slot);
+	SOVEC(DC(inst_or_class)->subclass_slots)->contents[index] = value;
+	break;
+      case alloc_CLASS:
+	value_cell_set(accessor_method_datum(SD(slot)->getter_method), value);
+	break;
+      default:
+	lose("Tried to use an init-function: with a strange kind of slot.");
+    }
+
+    do_init_functions(thread, TAIL(init_functions));
+}
+
+static void do_inits(obj_t inst_or_class, obj_t key_and_value_pairs,
+		     obj_t init_functions)
+{
+    struct thread *thread = thread_current();
+    obj_t *sp = thread->sp += 3;
+
+    sp[-3] = inst_or_class;
+    sp[-2] = key_and_value_pairs;
+    do_init_functions(thread, init_functions);
+}
+
+
 /* Defined classes. */
 
 obj_t make_defined_class(obj_t debug_name)
@@ -435,7 +579,7 @@ static obj_t compute_lengths(obj_t class)
 	DC(class)->subclass_slots = slots;
 	layout = make_vector(subclass_length, NULL);
 	DC(class)->subclass_layout = layout;
-	for (i = 0; i < instance_length; i++) {
+	for (i = 0; i < subclass_length; i++) {
 	    SOVEC(layout)->contents[i] = obj_False;
 	    SOVEC(slots)->contents[i] = obj_Unbound;
 	}
@@ -512,6 +656,7 @@ static void add_slot(obj_t class, obj_t new_slot, boolean inherited)
 static obj_t classes_processed;
 static obj_t displaced_instance_slots;
 static obj_t displaced_subclass_slots;
+static obj_t init_functions;
 
 static void inherit_slots(obj_t class, obj_t super)
 {
@@ -555,8 +700,7 @@ static void inherit_slots(obj_t class, obj_t super)
 	    else {
 		SOVEC(DC(class)->subclass_layout)->contents[offset] = new_slot;
 		if (SD(new_slot)->init_function_p)
-		    lose("### Can't hack init-function: for subclass "
-			 "allocation slots yet.");
+		    init_functions = pair(new_slot, init_functions);
 		SOVEC(DC(class)->subclass_slots)->contents[offset]
 		    = SD(new_slot)->init_function_or_value;
 	    }
@@ -626,8 +770,7 @@ static void process_slot(obj_t class, obj_t slot)
       case alloc_SUBCLASS:
 	SOVEC(DC(class)->subclass_layout)->contents[offset] = slot;
 	if (SD(slot)->init_function_p)
-	    lose("### Can't hack init-function: for subclass allocation "
-		 "slots yet.");
+	    init_functions = pair(slot, init_functions);
 	SOVEC(DC(class)->subclass_slots)->contents[offset]
 	    = SD(slot)->init_function_or_value;
 	SD(slot)->getter_method
@@ -648,8 +791,7 @@ static void process_slot(obj_t class, obj_t slot)
 
       case alloc_CLASS:
 	if (SD(slot)->init_function_p)
-	    lose("### Can't hack init-function: for class allocation "
-		 "slots yet.");
+	    init_functions = pair(slot, init_functions);
 	value_cell = make_value_cell(SD(slot)->init_function_or_value);
 	SD(slot)->getter_method
 	    = make_accessor_method(function_debug_name(SD(slot)->getter),
@@ -696,6 +838,8 @@ void init_defined_class(obj_t class, obj_t superclasses, obj_t slots)
     classes_processed = obj_Nil;
     displaced_instance_slots = obj_Nil;
     displaced_subclass_slots = obj_Nil;
+    init_functions = obj_Nil;
+
     for (scan = superclasses; scan != obj_Nil; scan = TAIL(scan))
 	inherit_slots(class, HEAD(scan));
 
@@ -712,63 +856,14 @@ void init_defined_class(obj_t class, obj_t superclasses, obj_t slots)
 
     for (scan = slots; scan != obj_Nil; scan = TAIL(scan))
 	process_slot(class, HEAD(scan));
+
+    scan = init_functions;
+    init_functions = NULL;
+    do_inits(class, obj_False, scan);
 }
     
 
-/* Slot descriptors. */
-
-static obj_t make_slot_descriptor(obj_t debug_name, obj_t allocation,
-				  obj_t getter, obj_t setter, obj_t type,
-				  obj_t init_keyword, obj_t req_init_keyword,
-				  obj_t init_function, obj_t init_value)
-{
-    obj_t res = alloc(obj_SlotDescrClass, sizeof(struct slot_descr));
-
-    SD(res)->debug_name = debug_name;
-    SD(res)->alloc = (enum slot_allocation)fixnum_value(allocation);
-    SD(res)->creator = obj_False;
-    if (init_function != obj_Unbound) {
-	if (init_value != obj_Unbound)
-	    error("Can't specify both an init-function: and an init-value:");
-	SD(res)->init_function_or_value = init_function;
-	SD(res)->init_function_p = TRUE;
-    }
-    else {
-	SD(res)->init_function_or_value = init_value;
-	SD(res)->init_function_p = FALSE;
-    }
-    if (req_init_keyword != obj_False) {
-	if (init_function != obj_Unbound)
-	    error("Can't mix required-init-keyword: and init-function:");
-	if (init_value != obj_Unbound)
-	    error("Can't mix required-init-keyword: and init-value:");
-	if (init_keyword != obj_False)
-	    error("Can't mix required-init-keyword: and init-keyword:");
-	SD(res)->init_keyword = req_init_keyword;
-	SD(res)->keyword_required = TRUE;
-    }
-    else {
-	SD(res)->init_keyword = init_keyword;
-	SD(res)->keyword_required = FALSE;
-    }
-    SD(res)->getter = getter;
-    SD(res)->getter_method = obj_False;
-    SD(res)->setter = setter;
-    SD(res)->setter_method = obj_False;
-    if (type == obj_False)
-	SD(res)->type = obj_ObjectClass;
-    else
-	SD(res)->type = type;
-    SD(res)->desired_offset = -1;
-    SD(res)->ever_missed = FALSE;
-
-    return res;
-}
-
-
 /* Make and initialize. */
-
-static struct variable *initialize_var = NULL;
 
 static obj_t dylan_make(obj_t class, obj_t key_and_value_pairs)
 {
@@ -776,104 +871,63 @@ static obj_t dylan_make(obj_t class, obj_t key_and_value_pairs)
 	  class);
 }
 
-static void do_finish_make(struct thread *thread, obj_t *vals)
-{
-    obj_t instance = vals[-4];
-    obj_t *old_sp = pop_linkage(thread);
-
-    *old_sp = instance;
-    thread->sp = old_sp + 1;
-
-    do_return(thread, old_sp, old_sp);
-}
-
-static void do_next_init(struct thread *thread, obj_t *vals);
-
-static void do_init_functions(struct thread *thread, obj_t instance,
-			      obj_t init_functions)
-{
-    obj_t *sp = thread->sp;
-    obj_t init_fun;
-
-    if (init_functions == obj_Nil) {
-	obj_t key_val_pairs = sp[-3];
-	int len = SOVEC(key_val_pairs)->length;
-	int i;
-
-	*sp++ = initialize_var->value;
-	*sp++ = instance;
-	for (i = 0; i < len; i++)
-	    *sp++ = SOVEC(key_val_pairs)->contents[i];
-	thread->sp = sp;
-
-	set_c_continuation(thread, do_finish_make);
-	invoke(thread, len+1);
-    }
-
-    init_fun = HEAD(init_functions);
-    sp[-2] = TAIL(init_functions);
-    sp[-1] = TAIL(init_fun);
-    thread->sp = sp+1;
-    sp[0] = HEAD(init_fun);
-    set_c_continuation(thread, do_next_init);
-    invoke(thread, 0);
-}
-
-static void do_next_init(struct thread *thread, obj_t *vals)
-{
-    obj_t instance = vals[-4];
-    int index = fixnum_value(vals[-1]);
-
-    if (thread->sp == vals)
-	INST(instance)->slots[index] = obj_False;
-    else {
-	INST(instance)->slots[index] = vals[0];
-	thread->sp = vals;
-    }
-
-    do_init_functions(thread, instance, vals[-2]);
-}
-
 static obj_t dylan_make_instance(obj_t class, obj_t key_and_value_pairs)
 {
     int nslots = DC(class)->instance_length;
     obj_t res = alloc(class, sizeof(struct instance) + nslots*sizeof(obj_t));
     int nkeys = SOVEC(key_and_value_pairs)->length;
-    int i, j;
+    int index;
     obj_t init_functions = obj_Nil;
+    obj_t slots;
 
-    for (i = 0; i < nslots; i++) {
-	obj_t slot = SOVEC(DC(class)->instance_layout)->contents[i];
+    /* ### Need to compute the defaulted set of key_and_value_pairs. */
+
+    for (slots = DC(class)->all_slots; slots != obj_Nil; slots = TAIL(slots)) {
+	obj_t slot = HEAD(slots);
 	obj_t keyword = SD(slot)->init_keyword;
+	obj_t value = obj_Unbound;
+
 	if (keyword != obj_False) {
-	    for (j = 0; j < nkeys; j += 2) {
-		if (SOVEC(key_and_value_pairs)->contents[j] == keyword) {
-		    INST(res)->slots[i]
-			= SOVEC(key_and_value_pairs)->contents[j+1];
-		    goto next_slot;
+	    for (index = 0; index < nkeys; index += 2) {
+		if (SOVEC(key_and_value_pairs)->contents[index] == keyword) {
+		    value = SOVEC(key_and_value_pairs)->contents[index+1];
+		    break;
 		}
 	    }
-	    if (SD(slot)->keyword_required)
+	    if (SD(slot)->keyword_required && value == obj_Unbound)
 		error("Missing required init-keyword ~S", keyword);
 	}
-	if (SD(slot)->init_function_p)
-	    init_functions
-		= pair(pair(SD(slot)->init_function_or_value, make_fixnum(i)),
-		       init_functions);
-	else
-	    INST(res)->slots[i] = SD(slot)->init_function_or_value;
-      next_slot:
+	switch (SD(slot)->alloc) {
+	  case alloc_INSTANCE:
+	    if (value == obj_Unbound)
+		if (SD(slot)->init_function_p)
+		    init_functions = pair(slot, init_functions);
+		else
+		    value = SD(slot)->init_function_or_value;
+	    index = find_position(DC(class)->instance_positions, slot);
+	    INST(res)->slots[index] = value;
+	    break;
+	  case alloc_SUBCLASS:
+	    if (value != obj_Unbound) {
+		index = find_position(DC(class)->subclass_positions, slot);
+		SOVEC(DC(class)->subclass_slots)->contents[index] = value;
+	    }
+	    break;
+	  case alloc_CLASS:
+	    if (value != obj_Unbound) {
+		obj_t cell = accessor_method_datum(SD(slot)->getter_method);
+		value_cell_set(cell, value);
+	    }
+	    break;
+	  default:
+	    if (value != obj_Unbound)
+		lose("Tried to use an init-keyword: with a strange kind "
+		     "of slot.");
+	    break;
+	}
     }
 
-    {
-	struct thread *thread = thread_current();
-	obj_t *sp = thread->sp;
-
-	thread->sp = sp + 4;
-	sp[0] = res;
-	sp[1] = key_and_value_pairs;
-	do_init_functions(thread, res, init_functions);
-    }
+    do_inits(res, key_and_value_pairs, init_functions);
 }
 
 static obj_t dylan_init(obj_t object, obj_t key_val_pairs)
