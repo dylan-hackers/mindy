@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.20 1995/11/16 02:56:12 ram Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.21 1995/11/20 03:20:00 rgs Exp $
 
 /*
 
@@ -695,20 +695,21 @@ define /* exported */ constant $word-bits = 32;
 
 // Read a word from a buffer at a word-aligned byte offset.
 // 
-define /* exported */ method buffer-word(bbuf :: <buffer>, i :: <buffer-index>)
+define method buffer-word(bbuf :: <buffer>, i :: <buffer-index>)
  => <integer>;
+  
+  let high-end = bbuf[i];
 
   // ### big-endian 32 assumption.  Should be a primitive.
   // ### for mindy, return extended if too big to be fixed...
-  logior(bbuf[i + 3],
-         ash(bbuf[i + 2], 8),
-         ash(bbuf[i + 1], 16),
-	 if (zero?(bbuf[i]))
-	   0
-	 else
-	   ash(as(<extended-integer>, bbuf[i]), 24)
-	 end if
-	 );
+  bbuf[i + 3] + ash(bbuf[i + 2], 8) + ash(bbuf[i + 1], 16)
+    + if (high-end.zero?)
+	0;
+      elseif (high-end < 64)
+	ash(high-end, 24);
+      else
+	ash(as(<extended-integer>, high-end), 24);
+      end if;
 end method;
 
 
@@ -717,12 +718,15 @@ end method;
 define method buffer-word-setter
     (new-val :: <integer>, bbuf :: <buffer>, i :: <buffer-index>)
  => <integer>;
-
   // ### big-endian 32 assumption.  Should be a primitive.
-  bbuf[i + 0] := as(<fixed-integer>, ash(new-val, -24));
-  bbuf[i + 1] := as(<fixed-integer>, logand(ash(new-val, -16), #xFF));
-  bbuf[i + 2] := as(<fixed-integer>, logand(ash(new-val, -8), #xFF));
-  bbuf[i + 3] := as(<fixed-integer>, logand(new-val, #xFF));
+  let (rest, byte4) = floor/(new-val, 256);
+  let (rest, byte3) = floor/(rest, 256);
+  // This assumes that the word is unsigned (i.e. new-val is a positive int)
+  let (byte1, byte2) = floor/(rest, 256);
+  bbuf[i + 0] := byte1;
+  bbuf[i + 1] := byte2;
+  bbuf[i + 2] := byte3;
+  bbuf[i + 3] := byte4;
 end method;
 
 
@@ -738,10 +742,14 @@ define method dump-header-word
 
   let bbuf = buf.dump-buffer;
   // ### big-endian 32 assumption.  Should be a primitive.
+  let (rest, byte4) = floor/(obj, 256);
+  let (rest, byte3) = floor/(rest, 256);
+  // This assumes that the word is unsigned (i.e. new-val is a positive int)
+  let (byte1, byte2) = floor/(rest, 256);
   bbuf[i + 0] := hi;
-  bbuf[i + 1] := ash(obj, -16);
-  bbuf[i + 2] := logand(ash(obj, -8), #xFF);
-  bbuf[i + 3] := logand(obj, #xFF);
+  bbuf[i + 1] := byte2;
+  bbuf[i + 2] := byte3;
+  bbuf[i + 3] := byte4;
 
   buf.buffer-pos := i + $word-bytes;
 end method;
@@ -754,9 +762,7 @@ define method buffer-header-word(bbuf :: <buffer>, i :: <buffer-index>)
  => (hi-byte :: <fixed-integer>, low :: <fixed-integer>);
   // ### big-endian 32 assumption.  Should be a primitive.
   values(bbuf[i + 0],
-	 logior(bbuf[i + 3],
-		ash(bbuf[i + 2], 8),
-		ash(bbuf[i + 1], 16)));
+	 bbuf[i + 3] + ash(bbuf[i + 2], 8) + ash(bbuf[i + 1], 16));
 end method;
 
 
