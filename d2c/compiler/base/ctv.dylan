@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.8 1995/05/29 20:57:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.9 1995/06/01 14:30:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -261,7 +261,7 @@ end;
 
 // Literal symbols.
 
-define class <literal-symbol> (<literal>)
+define class <literal-symbol> (<eql-literal>)
   slot literal-value :: <symbol>, required-init-keyword: value:;
 end;
 
@@ -297,7 +297,7 @@ end;
 
 // Literal characters.
 
-define class <literal-character> (<literal>)
+define class <literal-character> (<eql-literal>)
   slot literal-value :: <character>, required-init-keyword: value:;
 end;
 
