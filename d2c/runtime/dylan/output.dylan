@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.6 2001/03/17 03:43:36 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/output.dylan,v 1.7 2002/10/31 16:05:51 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -28,6 +28,8 @@ module: dylan-viscera
 // Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 //
 //======================================================================
+
+c-system-include("stdio.h");
 
 // XXX - We export this, instead of cheap-format, for reasons of backwards
 // compatibility. Somebody should find out what Harlequin does, and fix
@@ -382,6 +384,7 @@ define inline method fputs-internal
     (int :: limited(<integer>, min: 0, max: 255),
      c-file :: <raw-pointer>)
  => ()
+  c-system-include("stdio.h");
   call-out("fputc", int:, int: int, ptr: c-file);
 end;
 
