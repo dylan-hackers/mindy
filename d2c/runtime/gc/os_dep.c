@@ -1039,7 +1039,7 @@ void GC_register_data_segments()
           		     (ptr_t)LMGetCurrentA5(), FALSE);
 	  /* MATTHEW: Handle Far Globals */          		     
 #         if __option(far_data)
-      /* Far globals follow he QD globals: */
+      /* Far globals follow the QD globals: */
 	  GC_add_roots_inner((ptr_t)LMGetCurrentA5(),
           		     (ptr_t)GC_MacGetDataEnd(), FALSE);
 #         endif
@@ -1048,7 +1048,11 @@ void GC_register_data_segments()
 	  GC_add_roots_inner((ptr_t)&__data_start__,
 	  		     (ptr_t)&__data_end__, FALSE);
 #       endif /* __POWERPC__ */
-#     endif /* __MWERKS__ */
+#     elif defined(__MRC__) /* __MRC__ */
+	  extern char __data_start__[], __data_end__[]; // assuming MW Linker for now...
+	  GC_add_roots_inner((ptr_t)&__data_start__,
+			     (ptr_t)&__data_end__, FALSE);
+#     endif /* __MWERKS__, __MRC__ */
 #   endif /* !THINK_C */
     }
 #   endif /* MACOS */

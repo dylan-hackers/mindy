@@ -209,7 +209,7 @@
 #   define MACOS
 #   define mach_type_known
 # endif
-# if defined(__MWERKS__) && defined(__powerc)
+# if (defined(__MWERKS__) || defined(__MRC__)) && defined(__powerc)
 #   define POWERPC
 #   define MACOS
 #   define mach_type_known
@@ -836,6 +836,13 @@
 #       define DYNAMIC_LOADING
 #	define ELF_CLASS ELFCLASS32
 #   endif
+#   ifdef BEOS
+#       define OS_TYPE "BEOS"
+#       define HEURISTIC2
+          extern char etext;
+#         define DATASTART ((ptr_t)(&etext))
+#       define USE_GENERIC_PUSH_REGS
+#   endif
 #   ifdef LINUX
 #	define OS_TYPE "LINUX"
 #       define LINUX_STACKBOTTOM
@@ -964,6 +971,9 @@
 #	define OS_TYPE "FREEBSD"
 #	define MPROTECT_VDB
 #	define FREEBSD_STACKBOTTOM
+#       ifdef __ELF__
+#           define DYNAMIC_LOADING
+#       endif
 #   endif
 #   ifdef NETBSD
 #	define OS_TYPE "NETBSD"
@@ -1539,7 +1549,8 @@
 
 # if defined(HP_PA) || defined(M88K) || defined(POWERPC) && !defined(MACOSX) \
      || (defined(I386) && defined(OS2)) || defined(UTS4) || defined(LINT) \
-     || defined(MSWINCE) || (defined(I386) && defined(__LCC__))
+     || defined(MSWINCE) || (defined(I386) && defined(__LCC__)) \
+     || defined(__BEOS__)
 	/* Use setjmp based hack to mark from callee-save registers. */
 #	define USE_GENERIC_PUSH_REGS
 # endif
