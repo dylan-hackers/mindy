@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.9 1995/05/26 10:46:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.10 1995/05/29 00:37:07 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -914,4 +914,8 @@ end;
 
 define method print-object (proxy :: <proxy>, stream :: <stream>) => ();
   pprint-fields(proxy, stream, for: proxy.proxy-for);
+end;
+
+define method print-message (proxy :: <proxy>, stream :: <stream>) => ();
+  format(stream, "proxy for %s", proxy.proxy-for);
 end;
