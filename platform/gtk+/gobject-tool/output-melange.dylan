@@ -645,10 +645,11 @@ define method output-melange-exports-clause
      mod :: <defs-module>,
      stream :: <stream>)
  => ();
-  format(stream, "  export %s;\n", type-name(clause));
+  format(stream, "  export %s", type-name(clause));
   for(choice in clause.enum-choices)
-    format(stream, "  export $%s;\n", melange-name(choice[1]));
+    format(stream, ",\n         $%s", melange-name(choice[1]));
   end for;
+  format(stream, ";\n");
 end method;
 
 define method output-melange-exports-clause
@@ -656,10 +657,11 @@ define method output-melange-exports-clause
      mod :: <defs-module>,
      stream :: <stream>)
  => ();
-  format(stream, "  export %s;\n", type-name(clause));
+  format(stream, "  export %s", type-name(clause));
   for(choice in clause.flags-choices)
-    format(stream, "  export $%s;\n", melange-name(choice[1]));
+    format(stream, ",\n         $%s", melange-name(choice[1]));
   end for;
+  format(stream, ";\n");
 end method;
 
 define method output-melange-exports-clause
@@ -667,7 +669,7 @@ define method output-melange-exports-clause
      mod :: <defs-module>,
      stream :: <stream>)
  => ();
-  format(stream, "  export %s;\n", type-name(clause));
+  format(stream, "  export %s", type-name(clause));
   for(field in clause.composite-fields)
     let field-name = melange-name(field[1]);
     unless(any?(method(mod :: <defs-module>)
@@ -677,14 +679,15 @@ define method output-melange-exports-clause
              | element(mod.defs-module-written, field[1], default: #f))
       if(instance?(field[0], <list>)
            & (field[0][0] == #"include" | field[0][0] == #"fvec"))
-        format(stream, "  export %s-value;\n", field-name);
+        format(stream, ",\n         %s-value", field-name);
       else
-        format(stream, "  export %s-value, %s-value-setter;\n",
+        format(stream, ",\n         %s-value, %s-value-setter",
                field-name, field-name);
       end if;
       mod.defs-module-written[field[1]] := #t;
     end unless;
   end for;
+  format(stream, ";\n");
 end method;
 
 define method output-melange-exports-clause
