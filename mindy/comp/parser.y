@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.21 1996/02/13 20:53:39 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.22 1996/02/13 23:21:20 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -236,7 +236,7 @@ static void pop_yacc_recoveries(int count);
 %type <local_methods> local_methods
 %type <method> local_method anonymous_method named_method method_description
 %type <expr> expression operand leaf statement by_part by_part_opt 
-%type <expr> slot_type_opt return_type_element keyword_parameter_type
+%type <expr> slot_type_opt return_type_element keyword_parameter_type slot_init_expr_opt
 %type <expr> keyword_parameter_default
 %type <binop_series> binop_series
 %type <binop> binop
@@ -763,12 +763,24 @@ class_guts:
 ;
 
 slot_spec:
-	flags allocation SLOT variable_name slot_type_opt property_list_opt
+	flags allocation SLOT variable_name slot_type_opt 
+		slot_init_expr_opt property_list_opt
 	{
 	    int line = $3->line;
 	    free($3);
-	    $$ = make_slot_spec(line, $1, $2, $4 ? make_id($4) : NULL, $5, $6);
+	    $$ = make_slot_spec(line, $1, $2, $4 ? make_id($4) : NULL, 
+				$5, $6, $7);
 	}
+;
+
+slot_init_expr_opt:
+	/* epsilon */ { $$ = NULL; }
+    |	EQUAL expression { free($1); $$ = $2; }
+;
+
+slot_type_opt:
+	/* epsilon */ { $$ = NULL; }
+    |	COLON_COLON operand { free($1); $$ = $2; }
 ;
 
 initarg_spec:
@@ -794,11 +806,6 @@ allocation:
     |	EACH_SUBCLASS { free($1); $$ = alloc_EACH_SUBCLASS; }
     |	CONSTANT { free($1); $$ = alloc_CONSTANT; }
     |	VIRTUAL { free($1); $$ = alloc_VIRTUAL; }
-;
-
-slot_type_opt:
-	/* epsilon */ { $$ = NULL; }
-    |	COLON_COLON expression { free($1); $$ = $2; }
 ;
 
 property_list_opt:

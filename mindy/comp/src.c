@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.25 1995/12/04 20:43:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.26 1996/02/13 23:21:20 nkramer Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -1529,7 +1529,8 @@ struct class_guts *make_class_guts(void)
 
 struct slot_spec
     *make_slot_spec(int line, flags_t flags, enum slot_allocation alloc,
-		    struct id *name, struct expr *type, struct plist *plist)
+		    struct id *name, struct expr *type, struct expr *init_expr,
+		    struct plist *plist)
 {
     struct slot_spec *res = malloc(sizeof(struct slot_spec));
 
@@ -1538,10 +1539,30 @@ struct slot_spec
     res->alloc = alloc;
     res->name = name;
     res->type = type;
-    res->plist = plist;
     res->getter = NULL;
     res->setter = NULL;
     res->next = NULL;
+
+    if (init_expr != NULL) {
+	/* For the init-expr, we create an init-function and stick it into 
+	   the property list.  To do that, we need to create all sorts 
+	   of parse-tree stuff out of thin air, which ain't pretty.
+	   */
+	struct body *init_expr_body
+	    = add_constituent(make_body(), make_expr_constituent(init_expr));
+	struct method *init_method
+	    = make_method_description(make_param_list(), NULL, init_expr_body);
+	struct token *init_method_token;
+
+	init_method->line = line;
+	init_method_token = make_token("init-function:", 14);
+	init_method_token->line = line;
+	plist = add_property(plist ? plist : make_property_list(),
+				  init_method_token,
+				  make_method_ref(init_method));
+    }
+
+    res->plist = plist;
 
     return res;
 }

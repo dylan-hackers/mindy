@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.18 1996/02/13 19:42:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.19 1996/02/13 23:21:20 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -722,7 +722,8 @@ extern struct superclass_list
 extern struct class_guts *make_class_guts(void);
 extern struct slot_spec
     *make_slot_spec(int line, flags_t flags, enum slot_allocation alloc,
-		    struct id *name, struct expr *type, struct plist *plist);
+		    struct id *name, struct expr *type, struct expr *init_expr,
+		    struct plist *plist);
 extern struct class_guts
     *add_slot_spec(struct class_guts *guts, struct slot_spec *spec);
 extern struct initarg_spec
