@@ -331,7 +331,7 @@ define method framework-include( filename :: <string> )
 			let file-name :: <string> = 
 				copy-sequence( filename, start: slash-position + 1 );
 			let full-path :: <string> =
-				concatenate!( framework-path, file-name );
+				concatenate( framework-path, file-name );
 			block()
       			values(full-path, 
       				make(<file-stream>, locator: full-path, 
