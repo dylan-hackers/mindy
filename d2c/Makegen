@@ -1,5 +1,31 @@
-do compile_subdirs(
-    'compiler',
-    'runtime',
-    'tests'
-);
+
+if ($stage2) {
+    do compile_subdirs('runtime', 'tests', 'compiler');
+}
+else {
+    do compile_subdirs('compiler', 'runtime', 'tests');
+    print <<'EOF';
+.PHONY: d2c-compile d2c-install
+
+d2c-compile:
+	$(MAKE) -C compiler d2c-compile
+
+d2c-install:
+	$(MAKE) -C compiler d2c-install
+
+EOF
+}
+
+print <<'EOF';
+.PHONY: force
+
+force:
+	touch force.timestamp
+
+EOF
+
+unless (-e "force.timestamp") {
+    open(FILE, ">force.timestamp")
+	|| die("Can't create force.timestamp: $!\n");
+    close(FILE);
+}
