@@ -127,7 +127,7 @@ define inline method write (stream :: <wrapper-stream>, sequence :: <sequence>,
 			    #key start :: <integer> = 0,
 			         end: stop :: <integer> = sequence.size)
  => ();
-  write-element(stream.inner-stream, sequence, start: start, end: stop);
+  write(stream.inner-stream, sequence, start: start, end: stop);
 end method;
 
 define inline method force-output (stream :: <wrapper-stream>) => ();
