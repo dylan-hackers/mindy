@@ -1,5 +1,5 @@
 // File: inits.cpp
-// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.5 2004/04/15 23:51:43 gabor Exp $
+// RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/inits.cpp,v 1.6 2004/04/16 03:05:34 gabor Exp $
 // Purpose: present the correct interface to be a CW plugin
 // Author: Gabor Greif <gabor@mac.com>
 // Status: This version is is based on the Pro6 CW API, but sorely needs cleanup
@@ -352,7 +352,7 @@ enum { macOSXversion = 10 << 8 };
 const bool qStackProfiling(false), qGuardPage(qStackProfiling);
 
 CW_CALLBACK plugin_main(CWPluginContext context)
-{//Debugger();
+{
 	GC_stackbottom = (char*)&context;
 	GC_quiet = true;
 	unsigned long	freeStack;
@@ -454,66 +454,46 @@ CW_CALLBACK plugin_main(CWPluginContext context)
 }
 
 
-extern "C" FSSpec fsSpec(const CWFileSpec& spec);
+extern "C" FSSpec fsSpec(const CWFileSpec&, OSErr&);
 
-FSSpec fsSpec(const CWFileSpec& ref)
+FSSpec fsSpec(const CWFileSpec& ref, OSErr& err)
 {
-   FSRef newRef;
+    FSRef newRef;
 
-  FSMakeFSRefUnicode(&ref.parentDirRef,
-  ref.filename.length,
-  ref.filename.unicode,
-  kTextEncodingUnknown,
-  &newRef);
-  
-  
-	FSSpec spec;
+    err = FSMakeFSRefUnicode(&ref.parentDirRef,
+                             ref.filename.length,
+                             ref.filename.unicode,
+                             kTextEncodingUnknown,
+                             &newRef);
 
-FSGetCatalogInfo(&newRef, kFSCatInfoNone, NULL, NULL, &spec, NULL);
-return spec;
+    FSSpec spec;
+    memset(&spec, 0, sizeof(spec));
 
-/*
-	UInt8 path[1024];
-	UInt8* path2;
-	FSSpec res;
-	int len, count;
+    if (err)
+        return spec;
 
-	FSRefMakePath(
-		&spec.parentDirRef,
-		path + 1,
-		1024 - 1);
-
-	*path = strlen((const char*)path + 1);
-
-	for(path2 = path + *path + 1, count = 0; count < spec.filename.length; ++count, ++path2)
-	{
-		*path2 = spec.filename.unicode[count];
-	}
-
-	*path2 = 0;
-	*path = path2 - path;
-	FSMakeFSSpec(0, 0, path, &res);
-	return res;*/
+    err = FSGetCatalogInfo(&newRef, kFSCatInfoNone, NULL, NULL, &spec, NULL);
+    return spec;
 }
 
 
-extern "C" CWFileSpec fileRef(const FSSpec& spec);
+extern "C" CWFileSpec fileRef(const FSSpec&, OSErr&);
 
-CWFileSpec fileRef(const FSSpec& spe)
+CWFileSpec fileRef(const FSSpec& spe, OSErr& err)
 {
-	FSSpec spec(spe);
-	int i=0;
-	CWFileSpec ref;
-	memset(&ref, 0, sizeof(ref));
-	ref.filename.length = spec.name[0];
-	for(i=0; i < ref.filename.length; ++i)
-	{
-		ref.filename.unicode[i] = spec.name[i + 1];
-	}
+    FSSpec spec(spe);
+    CWFileSpec ref;
 
-	spec.name[0] = 1;
-	spec.name[1] = ':';
-	FSpMakeFSRef(&spec, &ref.parentDirRef);
-	return ref;
+    memset(&ref, 0, sizeof(ref));
+    ref.filename.length = spec.name[0];
+    for (int i(0); i < ref.filename.length; ++i)
+    {
+        ref.filename.unicode[i] = spec.name[i + 1];
+    }
+
+    spec.name[0] = 1;
+    spec.name[1] = ':';
+    err = FSpMakeFSRef(&spec, &ref.parentDirRef);
+    return ref;
 }
 
