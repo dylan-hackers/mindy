@@ -36,7 +36,7 @@ EOF
     print "\n\nd2c-install: \$(DESTDIR)/bin/$d2c_binary\n\n";
 }
 
-do d2c_library("compiler-main", "main", "main-exports main");
+do d2c_library("compiler-main", "main", "main-exports file-locations main");
 
 do emit_library_rule(
     'Main', '$(BUILDROOT)/force.timestamp',
