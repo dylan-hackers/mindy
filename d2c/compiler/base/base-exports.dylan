@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.21 1996/02/16 18:56:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.22 1996/02/17 21:26:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -63,14 +63,11 @@ define module common
 	     false-or, one-of, <false>, <true>, ignore,
 	     $minimum-integer, <byte-character>,
 #if (mindy)
-             <boolean>, *debug-output*, main, <dictionary>, key-exists?,
+             *debug-output*, main, key-exists?,
 #else
              <ratio>, numerator, denominator,
 #end
 	     <equal-table>, <string-table>, equal-hash},
-#if (mindy)
-    rename: {type-or => type-union},
-#end
     export: all;
   use Streams, export: all;
   use Print, export: all;
