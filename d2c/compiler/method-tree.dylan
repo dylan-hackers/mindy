@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.1 1995/01/06 21:21:47 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.2 1995/01/10 13:57:22 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -90,7 +90,7 @@ end;
 //    Helper function of compare-specializers.  Index is the index of the arg
 // position we are comparing, for context to assume-disjoint.
 //
-define constant compare-one-specializer = method
+define method compare-one-specializer
     (spec1 :: <ctype>, spec2 :: <ctype>,
      gf :: false-or(<definition>), index :: <fixed-integer>)
  => res :: method-precedences;
@@ -109,7 +109,7 @@ define constant compare-one-specializer = method
 
     gf & assume-disjoint(spec1, spec2, gf, index) => #"disjoint";
       
-    otherwise => "unknown";
+    otherwise => #"unknown";
   end;
 end method;
 
@@ -121,7 +121,7 @@ end method;
 // assume that currently disjoint classes remain disjoint.  The signatures will
 // have the same number of specializers because they are congruent.
 //
-define constant compare-specializers = method
+define method compare-specializers
     (specs1 :: <list>, specs2 :: <list>,
      gf :: false-or(<definition>))
  => res :: method-precedences;
@@ -180,12 +180,12 @@ define class <seal-info> (<object>)
   //
   // Next-method tree describing the static sorting of methods that intersect
   // with this seal.
-  slot method-tree :: <list>;
+  slot method-tree :: <list>, init-value: #();
   //
   // A list of all the known methods that may intersect with this seal but are
   // not in the method-tree.  Methods can end up here because they can't be
   // statically ordered or because a specializer is unknown.
-  slot hairy-methods :: <list>;
+  slot hairy-methods :: <list>, init-value: #();
 end class;
 
 
@@ -217,7 +217,7 @@ define method canonicalize-1-seal
     end;
 
     let res = #();
-    for (info in gf.generic-defn-seal-info)
+    for (info in gf.%generic-defn-seal-info)
       let cur-seal = info.seal-types;
       select (compare-specializers(new, cur-seal, gf))
         #"unordered", #">", #"ambiguous", #"unknown" => done();
@@ -226,7 +226,7 @@ define method canonicalize-1-seal
       end;
     end for;
 
-    gf.generic-defn-seal-info
+    gf.%generic-defn-seal-info
       := pair(make(<seal-info>, seal-types: new, generic-function: gf), res);
   end block;
 end method;
@@ -242,16 +242,16 @@ define method methods-to-seals
  => ();
 
   let cur-seal = seal-info.seal-types;
-  let gf = cur-seal.generic-function;
+  let gf = seal-info.generic-function;
   for (meth in meths)
     select (compare-specializers(get-specializers(meth), cur-seal, gf))
       #"unordered", #">", #"<" =>
-        cur-seal.method-tree := pair(meth, cur-seal.method-tree);
+        seal-info.method-tree := pair(meth, seal-info.method-tree);
 
       #"disjoint" => begin end;
 
       #"ambiguous", #"unknown" =>
-        cur-seal.hairy-methods := pair(meth, cur-seal.hairy-methods);
+        seal-info.hairy-methods := pair(meth, seal-info.hairy-methods);
     end;
   end;
 end method;
@@ -260,6 +260,15 @@ end method;
 // This function takes a method tree and a method and tries to return a new
 // method tree.  If the method can't be added, then we call the "punt" function.
 // GF is the generic function for context to compare-specializers.
+//
+// What we do is compare the added method to each method at this level in the
+// tree.  If some child is less specific than the method, then we recurse
+// on that (necessarily unique) child.  If all sibs are disjoint, we introduce
+// We introduce a new leaf.  If some children are more specific, then the
+// method becomes the parent of those nodes.
+//
+// In all cases, disjoint children remain sibs of the newly introduced (or
+// augmented) subtree.
 //
 define method method-tree-add(mt, meth, gf, punt);
   let meth-spec = get-specializers(meth);
@@ -293,11 +302,17 @@ define method method-tree-add(mt, meth, gf, punt);
   end;
 
   let new-child
-    = if (less)
-        assert(empty?(greater));
-	method-tree-add(less, meth, gf, punt);
-      else
-        pair(meth, greater);
+    = case
+        less =>
+	  assert(empty?(greater));
+	  if (instance?(less, <pair>))
+	    method-tree-add(less, meth, gf, punt);
+	  else
+	    list(less, meth);
+	  end;
+
+	empty?(greater) => meth;
+        otherwise => pair(meth, greater);
       end;
 
   pair(mt.head, pair(new-child, disjoint));
@@ -447,8 +462,10 @@ define method check-gf-congruence(gf :: <generic-definition>) => res :: <list>;
 end method;
 
 
+// Do various stuff to finalize analysis of the method set for a GF.  This is
+// triggered on demand off of GENERIC-DEFN-SEAL-INFO.
+//
 define method grovel-gf-stuff (gf :: <generic-definition>) => ();
-
   let meths = check-gf-congruence(gf);
   let seals = #();
   if (gf.generic-defn-sealed?)
@@ -459,15 +476,25 @@ define method grovel-gf-stuff (gf :: <generic-definition>) => ();
       seals := pair(meth.function-defn-signature.specializers, seals);
     end;
   end;
-  
-  let seal-info = #();
+
+  gf.%generic-defn-seal-info := #();
   for (cur-seal in seals)
-    seal-info := canonicalize-1-seal(cur-seal, seal-info, gf);
+    canonicalize-1-seal(cur-seal, gf);
   end;
 
-  for (cur-seal in seal-info)
+  for (cur-seal in gf.%generic-defn-seal-info)
     methods-to-seals(cur-seal, meths);
     build-method-tree(cur-seal);
   end;
-end;
+end method;
 
+
+// Create seal-info if not already created.
+//
+define method generic-defn-seal-info (gf :: <generic-definition>) 
+ => res :: <list>;
+  unless (slot-initialized?(gf, %generic-defn-seal-info))
+    grovel-gf-stuff(gf);
+  end;
+  gf.%generic-defn-seal-info;
+end method;
