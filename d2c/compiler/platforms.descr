@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.34 2001/03/27 05:28:25 brent Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.35 2001/06/22 04:46:12 dauclair Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -221,6 +221,14 @@ inherit-from:				generic-unix
 default-features:			compiled-for-linux
 make-command:                   	make
 
+// BSDI:
+// added by Douglas M. Auclair (doug@cotilliongroup.com) for his web-server
+// hosting OS
+platform-name:				bsdi
+inherit-from:				generic-unix
+default-features:			compiled-for-bsdi
+make-command:                   	make
+
 // FreeBSD:
 platform-name:				freebsd
 inherit-from:				generic-unix
@@ -436,6 +444,10 @@ platform-name:			x86-linux-gcc
 inherit-from:			gcc linux x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 
+platform-name:			x86-bsdi-gcc
+inherit-from:			gcc bsdi x86
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+
 platform-name:			x86-beos-gcc
 inherit-from:			beos-gcc beos x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
@@ -471,7 +483,7 @@ inherit-from:			egcs macintosh ppc
 platform-name:			ppc-darwin-egcs
 inherit-from:			egcs darwin ppc
 
-// Douglas M. Auclair's cygnus port (dauclair@hotmail.com)
+// Douglas M. Auclair's cygnus port (doug@cotilliongroup.com)
 platform-name:			x86-cygnus-gcc
 inherit-from:			gcc x86 cygnus
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
@@ -505,11 +517,6 @@ default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
 //   members use them, we can't be too sure...
 platform-name:			x86-win32-vc
 inherit-from:			vc win32 x86
-
-platform-name:			x86-win32-gcc
-inherit-from:			gcc win32 x86
-default-c-compiler-flags:       -g -O4 -finline-functions -I%s -I. -DWIN32 -DWIN32_GCC
-default-c-compiler-debug-flags: -g -O4 -fno-inline-functions -I%s -I. -DWIN32 -DWIN32_GCC
 
 platform-name:				hppa-hpux-gcc
 inherit-from:				gcc hpux hppa
