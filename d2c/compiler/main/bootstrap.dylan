@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.21 1995/05/21 03:04:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.22 1995/05/26 10:46:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -385,7 +385,8 @@ define open generic add-method (gf :: <generic-function>, meth :: <method>)
     => (new :: <method>, old :: union(<method>, <false>));
 define open generic check-type (value, type :: <type>) => value;
 define open generic error (msg, #rest args) => res :: type-or();
-define open generic make (class :: <class>, #key) => thing;
+define open generic make (class :: <class>, #all-keys) => thing;
+define open generic initialize (instance, #all-keys);
 define open generic \== (x, y) => res :: <boolean>;
 define open generic \= (x, y) => res :: <boolean>;
 define open generic \< (x, y) => res :: <boolean>;
