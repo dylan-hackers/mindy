@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.4 1998/11/11 15:54:21 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.5 1999/01/18 22:24:03 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -234,6 +234,7 @@ define module dylan-viscera
     // Variables magically referenced by the compiler which we need to hang
     // around even though they aren't otherwise overtly exported.
     %check-type,
+    %element,
     %element-setter,
     %instance?,
     %make-method,
