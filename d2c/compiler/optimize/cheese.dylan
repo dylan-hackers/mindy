@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.98 1995/08/08 02:22:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.99 1995/08/17 23:40:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2812,8 +2812,10 @@ define method find-in-environment
       function.argument-types
 	:= pair(var.derived-type, function.argument-types);
       prologue.derived-type := wild-ctype();
-      for (ref-dep = function.literal.dependents then ref-dep.source-next,
+      let next-dep = #f;
+      for (ref-dep = function.literal.dependents then next-dep,
 	   while: ref-dep)
+	next-dep := ref-dep.source-next;
 	let ref = ref-dep.dependent;
 	let var-at-ref
 	  = find-in-environment(component, home-function-region(ref),
