@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/compile.c,v 1.3 2000/01/24 04:57:45 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/compile.c,v 1.4 2001/09/24 06:29:17 brent Exp $
 *
 * This file generates sequences of byte-ops for each method.
 *
@@ -45,7 +45,11 @@
 #include "info.h"
 #include "lose.h"
 
+#if defined (__arch64__)
+#define BLOCK_SIZE (8*1024)
+#else
 #define BLOCK_SIZE (4*1024)
+#endif
 
 #define TAIL -1
 #define FUNC -2
