@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.14 1996/02/01 00:01:34 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.15 1996/02/09 04:09:07 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -162,7 +162,11 @@ define %%module dylan-viscera
     find-slot-offset,
     functional-==,
     general-call,
+    general-rep-getter,
+    general-rep-setter,
     gf-call,
+    heap-rep-getter,
+    heap-rep-setter,
     make-catcher,
     make-closure,
     make-exit-function,
