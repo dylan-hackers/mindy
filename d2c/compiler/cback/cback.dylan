@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.32 1995/05/04 09:24:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.33 1995/05/05 14:41:52 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1099,10 +1099,11 @@ define method emit-assignment
   let slot = op.slot-info;
   let slot-rep = slot.slot-representation;
   let (expr, now-dammit?)
-    = if (~zero?(offset) & instance?(instance-rep, <data-word-representation>))
+    = if (~zero?(offset) & instance?(instance-rep, <immediate-representation>))
 	// Extracting the data-word.
-	unless (representation-data-word-member(instance-rep)
-		  = representation-data-word-member(slot-rep))
+	unless (instance-rep == slot-rep
+		  | (representation-data-word-member(instance-rep)
+		       = representation-data-word-member(slot-rep)))
 	  error("The instance and slot representations don't match in a "
 		  "data-word reference?");
 	end;
