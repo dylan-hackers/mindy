@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.11 1994/06/27 16:31:55 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.12 1994/07/12 00:42:17 rgs Exp $
 *
 * This file is the garbage collector.
 *
@@ -43,6 +43,7 @@ extern void scavenge_bool_roots(void);
 extern void scavenge_class_roots(void);
 extern void scavenge_coll_roots(void);
 extern void scavenge_func_roots(void);
+extern void scavenge_instance_roots(void);
 extern void scavenge_interp_roots(void);
 extern void scavenge_list_roots(void);
 extern void scavenge_num_roots(void);
@@ -283,6 +284,7 @@ void collect_garbage(void)
     scavenge_class_roots();
     scavenge_coll_roots();
     scavenge_func_roots();
+    scavenge_instance_roots();
     scavenge_interp_roots();
     scavenge_list_roots();
     scavenge_num_roots();
