@@ -2,15 +2,25 @@
 
 # use strict;
 
-unless (@ARGV == 1) {
+unless ((@ARGV == 1) || ((@ARGV == 2) && ($ARGV[0] eq "-d"))) {
     print <<EOD;
 Usage:
   make-dylan-app appname
+  make-dylan-app -d appname	(for duim support)
 EOD
     exit 1;
 }
 
-$appname = $ARGV[0];
+if (@ARGV == 2)
+{
+	$appname = $ARGV[1];
+	$extra = "use duim;";
+	$hello_line = 'contain(make(<push-button>, label:"Hello, world"))';
+} else {
+	$appname = $ARGV[0];
+	$extra = "";
+	$hello_line = 'format-out("Hello, world!\\n")';
+}
 
 mkdir $appname, 0777 or die "Can't create directory $appname: $!";
 chdir $appname or die "Can't chdir to directory $appname: $!";
@@ -28,11 +38,13 @@ module: dylan-user
 define library $appname
   use common-dylan;
   use io;
+  $extra
 end library;
 
 define module $appname
   use common-dylan;
   use format-out;
+  $extra
 end module;
 EOD
 
@@ -43,7 +55,7 @@ author:
 copyright: 
 
 define function main(name, arguments)
-  format-out("Hello, world!\\n");
+  $hello_line;
   exit-application(0);
 end function main;
 
