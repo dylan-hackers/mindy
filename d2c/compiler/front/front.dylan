@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.18 1995/04/27 04:42:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.19 1995/04/28 07:19:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,7 +20,6 @@ operation
 	mv-call
     prologue
     catcher
-    pitcher
     set
     self-tail-call
 
@@ -49,6 +48,9 @@ component
 
 block-region
     fer-block-region
+
+exit
+    pitcher
 
 object
     environment [annotatable]
@@ -139,26 +141,14 @@ end class;
 define class <prologue> (<operation>)
 end;
 
-// Used by blocks/exits to pass up the values.
-define class <pitcher> (<operation>)
-  inherited slot derived-type,
-    init-function: curry(make-values-ctype, #(), #f);
-  slot pitched-type :: <values-ctype>,
-    init-function: wild-ctype;
-  slot catcher :: <catcher>, required-init-keyword: catcher:;
-  slot pitcher-next :: union(<false>, <pitcher>), required-init-keyword: next:;
-end;
-
 define class <catcher> (<operation>)
-  inherited slot depends-on, init-value: #f;
   //
-  // The pitchers that are throwing to this catcher, threaded though
-  // pitcher-next.
-  slot pitchers :: union(<false>, <pitcher>), init-value: #f;
+  // A catcher depends on nothing.
+  inherited slot depends-on, init-value: #f;
   //
   // If there is an exit function that jumps to this block, then this is it.
   // If false, then all potential exits are explicitly represented by
-  // <pitcher> and <exit-region> objects.
+  // <exit> regions.
   slot exit-function :: false-or(<exit-function>), init-value: #f;
   //
   // The block-region this catcher is for.
@@ -404,6 +394,14 @@ define class <fer-exit-block-region> (<fer-block-region>)
   // yet or if the catcher has been optimized away.
   slot catcher :: union(<false>, <catcher>), init-value: #f;
 end class;
+
+// <pitcher> -- an exit that throws some values also.
+// 
+define class <pitcher> (<exit>, <dependent-mixin>)
+  //
+  // The type being pitched.
+  slot pitched-type :: <values-ctype>, init-function: wild-ctype;
+end;
 
 // FER-Cleanup-Block-Region represents a block/cleanup clause.  Somehow...
 //
