@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/make-exports/make-exports.dylan,v 1.1 1997/01/16 15:32:28 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/make-exports/make-exports.dylan,v 1.2 1997/01/16 16:09:04 nkramer Exp $
 
 //======================================================================
 //
@@ -17,10 +17,10 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/make-exports/make-export
 // Inspired by Rob MacLachlan's /* exported */ convention, this tool
 // will grep through source code and create module export entry for
 // each identifier that the author wants exported.
-
+//
 // Command line usage:
 //    make-exports library.input file1.dylan file2.dylan ...
-
+//
 // The way you use it is, in the source code any name you want
 // exported, you stick the string "/* exported */" into the name
 // definition, as if /* exported */ were a flag.  (The spaces inside
@@ -56,10 +56,12 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/make-exports/make-export
 // so don't sweat it) Any time there is a page break (^L) in the
 // source file, make-exports will insert a blank line in the exports
 // list.
+//
+// ### Currently, there's no easy way to export a slot setter.  You
+// can either do a define generic and export that, or manually list it
+// in the exports file yourself.
 
 
-
-// ### No easy way to export a slot setter
 
 // regexp-substrings -- internal
 //
