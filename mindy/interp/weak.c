@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.1 1994/04/09 13:33:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.2 1994/04/09 15:39:31 wlott Exp $
 *
 * This file does whatever.
 *
@@ -26,6 +26,7 @@
 #include "def.h"
 #include "sym.h"
 #include "module.h"
+#include "error.h"
 #include "weak.h"
 
 
@@ -49,7 +50,12 @@ obj_t make_weak_pointer(obj_t object)
 
 obj_t dylan_make_weak_pointer(obj_t class, obj_t object)
 {
-    return make_weak_pointer(object);
+    if (object == obj_Unbound) {
+	error("Must supply the object when making weak pointers.");
+	return NULL;
+    }
+    else
+	return make_weak_pointer(object);
 }
 
 obj_t dylan_weak_pointer_object(obj_t weakptr)
