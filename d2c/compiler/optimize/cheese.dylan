@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.39 1995/04/30 05:56:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.40 1995/04/30 10:38:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1010,7 +1010,6 @@ define method replace-catcher-and-pitchers
 end;
 
 
-
 
 // Function optimization
 
@@ -1560,6 +1559,7 @@ for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
 		 #"fixnum-truncate/"])
   define-primitive-deriver(name, fixnum-args-two-fixnums-result);
 end;
+
 
 
 // Tail call identification.
@@ -2249,20 +2249,22 @@ define method insert-exit-after
     (component :: <component>, assignment :: <abstract-assignment>,
      target :: <block-region-mixin>)
     => ();
-  let region = assignment.region;
-  let region-parent = region.parent;
-  let (before, after) = split-after(assignment);
-  if (exit-useless?(region-parent, region, target))
-    replace-subregion(component, region-parent, region, before);
+  if (assignment.next-op)
+    let orig-region = assignment.region;
+    let orig-parent = orig-region.parent;
+    let (before, after) = split-after(assignment);
+    replace-subregion(component, orig-parent, orig-region, before);
     after.parent := #f;
     delete-stuff-in(component, after);
-  else
+  end;
+
+  let orig-region = assignment.region;
+  let orig-parent = orig-region.parent;
+  unless (exit-useless?(orig-parent, orig-region, target))
     let exit = make(<exit>, block: target, next: target.exits);
     target.exits := exit;
-    let new = combine-regions(before, exit);
-    replace-subregion(component, region-parent, region, new);
-    after.parent := #f;
-    delete-stuff-in(component, after);
+    let new = combine-regions(orig-region, exit);
+    replace-subregion(component, orig-parent, orig-region, new);
     delete-stuff-after(component, exit.parent, exit);
   end;
 end;
@@ -2271,19 +2273,25 @@ define method insert-pitcher-after
     (component :: <component>, assignment :: <abstract-assignment>,
      target :: <block-region-mixin>, cluster :: <abstract-variable>)
     => ();
-  let region = assignment.region;
-  let region-parent = region.parent;
-  let (before, after) = split-after(assignment);
+  if (assignment.next-op)
+    let orig-region = assignment.region;
+    let orig-parent = orig-region.parent;
+    let (before, after) = split-after(assignment);
+    replace-subregion(component, orig-parent, orig-region, before);
+    after.parent := #f;
+    delete-stuff-in(component, after);
+  end;
+
   let exit = make(<pitcher>, block: target, next: target.exits);
   target.exits := exit;
   let dep = make(<dependency>, dependent: exit, source-exp: cluster,
 		 source-next: cluster.dependents);
   cluster.dependents := dep;
   exit.depends-on := dep;
-  let new = combine-regions(before, exit);
-  replace-subregion(component, region-parent, region, new);
-  after.parent := #f;
-  delete-stuff-in(component, after);
+  let orig-region = assignment.region;
+  let orig-parent = orig-region.parent;
+  let new = combine-regions(orig-region, exit);
+  replace-subregion(component, orig-parent, orig-region, new);
   delete-stuff-after(component, exit.parent, exit);
 end;
 
@@ -2303,12 +2311,10 @@ define method exit-useless?
   finally
     if (last == after)
       exit-useless?(from.parent, from, target);
-    elseif (second-to-last == after
-	      & instance?(last, <exit>)
-	      & last.block-of == target)
-      #t;
     else
-      #f;
+      second-to-last == after
+	& instance?(last, <exit>)
+	& last.block-of == target;
     end;
   end;
 end;
@@ -2522,93 +2528,41 @@ end;
 // first subregion to see if it exits or not (i.e. whether the second subregion
 // is actually reachable.
 // 
-define generic combine-regions
-    (first :: <region>, second :: <region>) => res :: <region>;
-
-define method combine-regions
-    (first :: <region>, second :: <region>) => res :: <region>;
-  let merged = combine-regions-aux(first, second);
-  if (merged)
-    merged;
-  else
-    let compound = make(<compound-region>, regions: list(first, second));
-    first.parent := second.parent := compound;
-    compound;
-  end;
-end;
-
-define method combine-regions
-    (first :: <region>, second :: <compound-region>) => res :: <region>;
-  if (instance?(second, <empty-region>))
-    first;
-  else
-    let regions = second.regions;
-    let merged = combine-regions-aux(first, regions.head);
-    if (merged)
-      regions.head := merged;
-      merged.parent := second;
-    else
-      second.regions := pair(first, regions);
-      first.parent := second;
-    end;
-    second;
-  end;
-end;
-
-define method combine-regions
-    (first :: <compound-region>, second :: <region>) => res :: <region>;
-  if (instance?(first, <empty-region>))
-    second;
-  else
-    for (scan = first.regions.tail then scan.tail,
-	 prev = first.regions then scan,
-	 until: scan == #())
-    finally
-      let merged = combine-regions-aux(prev.head, second);
-      if (merged)
-	prev.head := merged;
-	merged.parent := first;
+define method combine-regions (#rest stuff) => res :: <region>;
+  let results = #();
+  local
+    method grovel (region)
+      if (instance?(region, <compound-region>))
+	for (subregion in region.regions)
+	  grovel(subregion);
+	end;
+      elseif (instance?(region, <simple-region>)
+		& instance?(results.head, <simple-region>))
+	results.head := merge-simple-regions(results.head, region);
       else
-	prev.tail := list(second);
-	second.parent := first;
+	results := pair(region, results);
       end;
     end;
-    first;
+  for (region in stuff)
+    grovel(region);
   end;
-end;
-
-define method combine-regions
-    (first :: <compound-region>, second :: <compound-region>)
-    => res :: <region>;
-  if (instance?(first, <empty-region>))
-    second;
-  elseif (instance?(second, <empty-region>))
-    first;
+  if (results == #())
+    make(<empty-region>);
+  elseif (results.tail == #())
+    results.head;
   else
-    for (scan = first.regions.tail then scan.tail,
-	 prev = first.regions then scan,
-	 until: scan == #())
-    finally
-      let merged = combine-regions-aux(prev.head, second.regions.head);
-      if (merged)
-	prev.head := merged;
-	merged.parent := first;
-	prev.tail := second.regions.tail;
-      else
-	prev.tail := second.regions;
-      end;
-      for (region in prev.tail)
-	region.parent := first;
-      end;
+    let results = reverse!(results);
+    let new = make(<compound-region>, regions: results);
+    for (region in results)
+      region.parent := new;
     end;
-    first;
+    new;
   end;
 end;
 
-
-define method combine-regions-aux
+define method merge-simple-regions
     (first :: <simple-region>, second :: <simple-region>)
-    => res :: false-or(<simple-region>);
+    => res :: <simple-region>;
   let last-of-first = first.last-assign;
   let first-of-second = second.first-assign;
 
@@ -2623,12 +2577,6 @@ define method combine-regions-aux
   end;
 
   first;
-end;
-
-define method combine-regions-aux
-    (first :: <region>, second :: <region>)
-    => res :: false-or(<simple-region>);
-  #f;
 end;
 
 // split-after - internal
@@ -2807,25 +2755,17 @@ define method replace-subregion
     if (scan == #())
       error("Replacing unknown region");
     end;
-    let before-splice
+    let regions
       = if (prev)
-	  prev.tail := #();
-	  region;
+	  prev.tail := pair(new, scan.tail);
+	  region.regions;
 	else
-	  make(<empty-region>);
+	  pair(new, scan.tail);
 	end;
 
-    let after-splice = make(<compound-region>, regions: scan.tail);
-    for (sub-region in after-splice.regions)
-      sub-region.parent := after-splice;
-    end;
-
     let parent = region.parent;
-    let combo = combine-regions(before-splice,
-				combine-regions(new, after-splice));
-    unless (combo == region)
-      replace-subregion(component, parent, region, combo);
-    end;
+    let combo = apply(combine-regions, regions);
+    replace-subregion(component, parent, region, combo);
   end;
 end;
 
