@@ -1,6 +1,12 @@
 module: classes
 
-
+// $All-Classes -- internal.
+//
+// Holds all the classes allocated.  We guarantee that superclasses preceed
+// subclasses by added new classes to the end when they are created.  As
+// subclasses have to be created after their superclasses, this means they
+// will be added after also.
+//
 define constant $All-Classes = make(<stretchy-vector>);
 
 
@@ -38,6 +44,13 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // List of all known subclasses (including this class and indirect
   // subclasses).  If sealed, then this is all of 'em.
   slot subclasses :: <list>, init-value: #();
+  //
+  // The representation of instances of this class or #f if we haven't
+  // picked them yet.
+  slot speed-representation :: union(<false>, <representation>),
+    init-value: #f;
+  slot space-representation :: union(<false>, <representation>),
+    init-value: #f;
   //
   // Vector of <slot-info>s for the slots introduced by this class.
   slot new-slot-infos :: <simple-object-vector>,
@@ -338,6 +351,73 @@ define constant slow-compute-cpl = method (cl, superclasses)
 end method;
 
 
+// Slot inheritance.
+
+// inherit-slots -- exported.
+//
+// Populate each class with complete slot information by inhereting whatever
+// is necessary.
+//
+define method inherit-slots () => ();
+  //
+  // This relies on the ordering of classes in $All-Classes.  Specifically,
+  // we need to process superclasses before their subclasses.
+  do(inherit-slots-for, $All-Classes);
+end;
+
+define method inherit-slots-for (class :: <cclass>) => ();
+  let processed = #();
+  let supers = class.direct-superclasses;
+  if (empty?(supers))
+    class.all-slot-infos := make(<stretchy-vector>, size: 0);
+  else
+    let first-super = supers.first;
+    processed := first-super.precedence-list;
+    class.all-slot-infos :=
+      map-as(<stretchy-vector>, identity, first-super.all-slot-infos);
+  end;
+  local
+    method process (super)
+      unless (member?(super, processed))
+	//
+	// Mark this super as processed.
+	processed := pair(super, processed);
+	//
+	// Process the super's superclasses.
+	do(process, super.direct-superclasses);
+	//
+	// Inherit the slots.
+	for (slot in super.new-slot-infos)
+	  add-slot(slot, class);
+	end;
+      end;
+    end;
+  do(process, supers);
+  for (slot in class.new-slot-infos)
+    add-slot(slot, class);
+  end;
+end;
+
+define method add-slot (slot :: <slot-info>, class :: <cclass>) => ();
+  //
+  // Make sure the slot doesn't clash with some other slot with the same
+  // getter.
+  if (slot.slot-getter)
+    for (other-slot in class.all-slot-infos)
+      if (slot.slot-getter == other-slot.slot-getter)
+	compiler-error("Class %= can't combine two different %= slots, "
+			 "one introduced by %= and the other by %=",
+		       class, slot.slot-getter,
+		       slot.slot-introduced-by, other-slot.slot-introduced-by);
+      end;
+    end;
+  end;
+  //
+  // Add the slot to the all-slot-infos.
+  add!(class.all-slot-infos, slot);
+end;
+
+
 // Layout tables.
 
 define class <layout-table> (<object>)
@@ -405,70 +485,43 @@ end;
 // Slot layout stuff.
 
 define method layout-instance-slots () => ();
-  do(layout-instance-slots-of, $All-Classes);
+  do(layout-slots-for, $All-Classes);
 end;
 
-define method layout-instance-slots-of (class :: <cclass>) => ();
-  let processed = #();
+define method layout-slots-for (class :: <cclass>) => ();
+  //
+  // Start with a duplicate of the layout of the first superclass.
   let supers = class.direct-superclasses;
   if (empty?(supers))
-    class.all-slot-infos := make(<stretchy-vector>, size: 0);
     class.instance-slots-layout := make(<layout-table>);
     class.each-subclass-slots-count := 0;
   else
     let first-super = supers.first;
-    processed := first-super.precedence-list;
-    class.all-slot-infos := as(<stretchy-vector>, first-super.all-slot-infos);
     class.instance-slots-layout
       := copy-layout-table(first-super.instance-slots-layout);
     class.each-subclass-slots-count := first-super.each-subclass-slots-count;
   end;
-  local
-    method process (super)
-      unless (member?(super, processed))
-	//
-	// Mark this super as processed.
-	processed := pair(super, processed);
-	//
-	// Process the super's super classes.
-	do(process, super.direct-superclasses);
-	//
-	// Inherit the slots.
-	for (slot in super.new-slot-infos)
-	  add-slot(slot, class);
-	end;
-      end;
-    end;
-  do(process, supers);
-  for (slot in class.new-slot-infos)
-    add-slot(slot, class);
+  //
+  // We only want to layout the slots that are already added to the class.
+  // If laying out any of these slots causes more slots to be added (e.g.
+  // unbound? slots) whoever adds them will also lay them out.
+  let slots = class.all-slot-infos;
+  let orig-len = slots.size;
+  for (index from 0 below orig-len)
+    layout-slot(slots[index], class);
   end;
+  //
+  // Now that all slots have been added and layed out, convert them into
+  // a simple object vector.
   class.all-slot-infos := as(<simple-object-vector>, class.all-slot-infos);
 end;
 
-define method add-slot (slot :: <slot-info>, class :: <cclass>) => ();
-  //
-  // Make sure the slot doesn't clash with some other slot with the same
-  // getter.
-  if (slot.slot-getter)
-    for (other-slot in class.all-slot-infos)
-      if (slot.slot-getter == other-slot.slot-getter)
-	compiler-error("Class %= can't combine two different %= slots, "
-			 "one introduced by %= and the other by %=",
-		       class, slot.slot-getter,
-		       slot.slot-introduced-by, other-slot.slot-introduced-by);
-      end;
-    end;
-  end;
-  //
-  // Add the slot to the all-slot-infos.
-  add!(class.all-slot-infos, slot);
+define method layout-slot (slot :: <slot-info>, class :: <cclass>) => ();
+  // Default method -- do nothing.
 end;
 
-define method add-slot (slot :: <instance-slot-info>, class :: <cclass>,
-			#next next-method)
+define method layout-slot (slot :: <instance-slot-info>, class :: <cclass>)
     => ();
-  next-method();
   unless (slot.slot-representation)
     let rep = pick-representation(slot.slot-type, #"space");
     slot.slot-representation := rep;
@@ -486,6 +539,7 @@ define method add-slot (slot :: <instance-slot-info>, class :: <cclass>,
   end;
   if (slot.slot-initialized?-slot)
     add-slot(slot.slot-initialized?-slot, class);
+    layout-slot(slot.slot-initialized?-slot, class);
   end;
   let rep = slot.slot-representation;
   let offset = find-position(class.instance-slots-layout,
@@ -494,10 +548,9 @@ define method add-slot (slot :: <instance-slot-info>, class :: <cclass>,
   slot.slot-positions := pair(pair(class, offset), slot.slot-positions);
 end;
 
-define method add-slot (slot :: <each-subclass-slot-info>, class :: <cclass>,
-			#next next-method)
+define method layout-slot
+    (slot :: <each-subclass-slot-info>, class :: <cclass>)
     => ();
-  next-method();
   let posn = class.each-subclass-slots-count;
   slot.slot-positions := pair(pair(class, posn), slot.slot-positions);
   class.each-subclass-slots-count := posn + 1;

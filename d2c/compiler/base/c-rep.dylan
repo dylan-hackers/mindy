@@ -1,4 +1,23 @@
-module: representation
+module: c-representation
+
+define constant $byte-bits = 8;
+
+define constant $pointer-alignment = 4;
+define constant $pointer-size = 4;
+define constant $short-alignment = 2;
+define constant $short-size = 2;
+define constant $int-alignment = 2;
+define constant $int-size = 2;
+define constant $long-alignment = 4;
+define constant $long-size = 4;
+define constant $single-alignment = 4;
+define constant $single-size = 4;
+define constant $double-alignment = 8;
+define constant $double-size = 8;
+define constant $long-double-alignment = 8;
+define constant $long-double-size = 8;
+
+define constant $data-word-size = max($pointer-size, $long-size);
 
 define class <c-representation> (<representation>)
   slot more-general-representation :: union(<false>, <representation>),
@@ -14,7 +33,9 @@ define class <c-representation> (<representation>)
     required-init-keyword: c-type:;
 end;
 
-define method initialize (rep :: <c-representation>, #key more-general)
+define method initialize (rep :: <c-representation>, #next next-method,
+			  #key more-general)
+  next-method();
   rep.representation-depth
     := if (more-general)
 	 more-general.representation-depth + 1;
@@ -28,61 +49,118 @@ define method print-object (rep :: <c-representation>, stream :: <stream>)
   pprint-fields(rep, stream, c-type: rep.representation-c-type);
 end;
 
+define class <general-representation> (<c-representation>)
+end;
+
+define class <data-word-representation> (<c-representation>)
+  slot representation-class :: <cclass>, required-init-keyword: class:;
+  slot representation-data-word-member :: <byte-string>,
+    required-init-keyword: data-word-member:;
+end;
+
+
 define constant $general-rep
-  = make(<c-representation>, alignment: 4, size: 8, has-bottom-value: #t,
-	 c-type: "descriptor_t");
+  = make(<general-representation>,
+	 alignment: $pointer-alignment, size: $pointer-size + $data-word-size,
+	 has-bottom-value: #t, c-type: "descriptor_t");
 define constant $heap-rep
-  = make(<c-representation>, alignment: 4, size: 4, has-bottom-value: #t,
+  = make(<c-representation>,
+	 alignment: $pointer-alignment, size: $pointer-size,
+	 has-bottom-value: #t,
 	 more-general: $general-rep, c-type: "heap_ptr_t");
 
-define constant $extended-rep
-  = make(<c-representation>, alignment: 8, size: 8, more-general: $heap-rep,
-	 c-type: "long double");
-define constant $double-rep
-  = make(<c-representation>, alignment: 8, size: 8, more-general: $heap-rep,
-	 c-type: "double");
-define constant $single-rep
-  = make(<c-representation>, alignment: 4, size: 4, more-general: $general-rep,
-	 c-type: "float");
+define variable *long-rep* = #f;
+define variable *int-rep* = #f;
+define variable *uint-rep* = #f;
+define variable *short-rep* = #f;
+define variable *ushort-rep* = #f;
+define variable *byte-rep* = #f;
+define variable *ubyte-rep* = #f;
 
-define constant $long-rep
-  = make(<c-representation>, alignment: 4, size: 4, more-general: $general-rep,
-	 c-type: "long");
-define constant $int-rep
-  = make(<c-representation>, alignment: 4, size: 4, more-general: $long-rep,
-	 c-type: "int");
-define constant $uint-rep
-  = make(<c-representation>, alignment: 4, size: 4, more-general: $long-rep,
-	 c-type: "unsigned int");
-define constant $short-rep
-  = make(<c-representation>, alignment: 2, size: 2, more-general: $int-rep,
-	 c-type: "short");
-define constant $ushort-rep
-  = make(<c-representation>, alignment: 2, size: 2, more-general: $uint-rep,
-	 c-type: "unsigned short");
-define constant $byte-rep
-  = make(<c-representation>, alignment: 1, size: 1, more-general: $short-rep,
-	 c-type: "signed char");
-define constant $ubyte-rep
-  = make(<c-representation>, alignment: 1, size: 1, more-general: $ushort-rep,
-	 c-type: "unsigned char");
+define method seed-representations () => ();
+  local
+    method set-representations(class, speed-rep, space-rep) => ();
+      class.speed-representation := speed-rep;
+      class.space-representation := space-rep;
+    end;
+  set-representations(dylan-value(#"<object>"), $general-rep, $general-rep);
+  set-representations(dylan-value(#"<functional-object>"),
+		      $general-rep, $general-rep);
+  set-representations(dylan-value(#"<boolean>"),
+		      make(<c-representation>, more-general: $heap-rep,
+			   alignment: $int-alignment, size: $int-size,
+			   c-type: "int"),
+		      make(<c-representation>, more-general: $heap-rep,
+			   alignment: 1, size: 1,
+			   c-type: "char"));
+  begin
+    let fixed-int-cclass = dylan-value(#"<fixed-integer>");
+    *long-rep* := make(<data-word-representation>,
+		       alignment: $long-alignment, size: $long-size,
+		       more-general: $general-rep, c-type: "long",
+		       class: fixed-int-cclass, data-word-member: "l");
+    *int-rep* := make(<data-word-representation>,
+		      alignment: $int-alignment, size: $int-size,
+		      more-general: *long-rep*, c-type: "int",
+		      class: fixed-int-cclass, data-word-member: "l");
+    *uint-rep* := make(<data-word-representation>,
+		       alignment: $int-alignment, size: $int-size,
+		       more-general: *long-rep*, c-type: "unsigned int",
+		       class: fixed-int-cclass, data-word-member: "l");
+    *short-rep* := make(<data-word-representation>,
+			alignment: $short-alignment, size: $short-size,
+			more-general: *int-rep*, c-type: "short",
+			class: fixed-int-cclass, data-word-member: "l");
+    *ushort-rep* := make(<data-word-representation>,
+			 alignment: $short-alignment, size: $short-size,
+			 more-general: *uint-rep*, c-type: "unsigned short",
+			 class: fixed-int-cclass, data-word-member: "l");
+    *byte-rep* := make(<data-word-representation>, alignment: 1, size: 1,
+		       more-general: *short-rep*, c-type: "signed char",
+		       class: fixed-int-cclass, data-word-member: "l");
+    *ubyte-rep* := make(<data-word-representation>, alignment: 1, size: 1,
+			more-general: *ushort-rep*, c-type: "unsigned char",
+			class: fixed-int-cclass, data-word-member: "l");
+    set-representations(fixed-int-cclass, *long-rep*, *long-rep*);
+  end;
+  begin
+    let sf-cclass = dylan-value(#"<single-float>");
+    let sf-rep
+      = make(<data-word-representation>, more-general: $general-rep,
+	     alignment: 4, size: 4, c-type: "float",
+	     class: sf-cclass, data-word-member: "f");
+    set-representations(sf-cclass, sf-rep, sf-rep);
+  end;
+  begin
+    let df-class = dylan-value(#"<double-float>");
+    let df-rep
+      = if ($double-size > $data-word-size)
+	  make(<c-representation>, more-general: $heap-rep,
+	       alignment: $double-alignment, size: $double-size,
+	       c-type: "double");
+	else
+	  make(<data-word-representation>, more-general: $general-rep,
+	       alignment: $double-alignment, size: $double-size,
+	       c-type: "double", class: df-class, data-word-member: "d");
+	end;
+    set-representations(df-class, df-rep, df-rep);
+  end;
+  begin
+    let xf-class = dylan-value(#"<double-float>");
+    let xf-rep
+      = if ($double-size > $data-word-size)
+	  make(<c-representation>, more-general: $heap-rep,
+	       alignment: $double-alignment, size: $double-size,
+	       c-type: "double");
+	else
+	  make(<data-word-representation>, more-general: $general-rep,
+	       alignment: $long-double-alignment, size: $long-double-size,
+	       c-type: "long double", class: xf-class, data-word-member: "x");
+	end;
+    set-representations(xf-class, xf-rep, xf-rep);
+  end;
+end;
 
-define constant $char-space-rep
-  = make(<c-representation>, alignment: 2, size: 2, more-general: $general-rep,
-	 c-type: "unsigned short");
-define constant $byte-char-space-rep
-  = make(<c-representation>, alignment: 1, size: 1,
-	 more-general: $char-space-rep, c-type: "unsigned char");
-define constant $char-speed-rep
-  = make(<c-representation>, alignment: 4, size: 4, more-general: $general-rep,
-	 c-type: "unsigned int");
-
-define constant $boolean-space-rep
-  = make(<c-representation>, alignment: 1, size: 1, more-general: $heap-rep,
-	 c-type: "char");
-define constant $boolean-speed-rep
-  = make(<c-representation>, alignment: 4, size: 4, more-general: $heap-rep,
-	 c-type: "int");
 
 define method pick-representation
     (type :: <ctype>, optimize-for :: one-of(#"speed", #"space"))
@@ -91,30 +169,66 @@ define method pick-representation
 end;
 
 define method pick-representation
-    (type :: <cclass>, optimize-for :: one-of(#"speed", #"space"))
+    (type :: <cclass>, optimize-for == #"speed")
     => rep :: <c-representation>;
-  if (type == dylan-value(#"<fixed-integer>"))
-    $long-rep;
-  elseif (type == dylan-value(#"<single-float>"))
-    $single-rep;
-  elseif (type == dylan-value(#"<double-float>"))
-    $double-rep;
-  elseif (type == dylan-value(#"<extended-float>"))
-    $extended-rep;
-  elseif (type == dylan-value(#"<boolean>"))
-    select (optimize-for)
-      #"speed" => $boolean-speed-rep;
-      #"space" => $boolean-space-rep;
+  speed-representation(type)
+    | begin
+	assign-representations(type);
+	speed-representation(type);
+      end;
+end;
+
+define method pick-representation
+    (type :: <cclass>, optimize-for == #"space")
+    => rep :: <c-representation>;
+  space-representation(type)
+    | begin
+	assign-representations(type);
+	space-representation(type);
+      end;
+end;
+
+define variable *assigning-representations-for* = #();
+
+define method assign-representations (class :: <cclass>) => ();
+  //
+  // First, fill in a heap representation.  But to do that, we need to
+  // determine if a data-word is possible.
+  if (class.functional?
+	& ~member?(class, *assigning-representations-for*)
+	& class.sealed?
+	& size(class.subclasses) == 1
+	& size(class.all-slot-infos) == 2)
+    let old-assigning-reps-for = *assigning-representations-for*;
+    block ()
+      *assigning-representations-for* := pair(class, old-assigning-reps-for);
+      let type = class.all-slot-infos[1].slot-type;
+      let speed-rep = pick-representation(type, #"speed");
+      if (instance?(speed-rep, <data-word-representation>))
+	local
+	  method dup-rep (rep :: <data-word-representation>)
+	    make(<data-word-representation>,
+		 more-general: $general-rep,
+		 alignment: rep.representation-alignment,
+		 size: rep.representation-size,
+		 has-bottom-value: rep.representation-has-bottom-value?,
+		 c-type: rep.representation-c-type,
+		 class: class,
+		 data-word-member: rep.representation-data-word-member);
+	  end;
+	class.speed-representation := dup-rep(speed-rep);
+	class.space-representation
+	  := dup-rep(pick-representation(type, #"space"));
+      else
+	class.speed-representation := $heap-rep;
+	class.space-representation := $heap-rep;    
+      end;
+    cleanup
+      *assigning-representations-for* := old-assigning-reps-for;
     end;
-  elseif (type == dylan-value(#"<character>"))
-    select (optimize-for)
-      #"speed" => $char-speed-rep;
-      #"space" => $char-space-rep;
-    end;
-  elseif (#f /* ### no data word */)
-    $heap-rep;
   else
-    $general-rep;
+    class.speed-representation := $heap-rep;
+    class.space-representation := $heap-rep;    
   end;
 end;
 
@@ -124,15 +238,23 @@ define method pick-representation
   pick-representation(type.base-class, optimize-for);
 end;
 
+
+define variable *byte-char-rep* = #f;
+
 define method pick-representation
     (type :: <byte-character-ctype>, optimize-for == #"space")
     => rep :: <c-representation>;
-  $byte-char-space-rep;
+  if (*byte-char-rep*)
+    *byte-char-rep*;
+  else
+    let char-rep = pick-representation(type.base-class, optimize-for);
+    *byte-char-rep*
+      := make(<data-word-representation>, more-general: char-rep,
+	      alignment: 1, size: 1, c-type: "char", class: type.base-class,
+	      data-word-member: "l");
+  end;
 end;
 
-define constant $byte-bits = 8;
-define constant $short-bits = 16;
-define constant $int-bits = 32;
 
 define method pick-representation
     (type :: <limited-integer-ctype>, optimize-for == #"space",
@@ -142,24 +264,26 @@ define method pick-representation
     let bits = max(integer-length(type.low-bound),
 		   integer-length(type.high-bound));
     if (negative?(type.low-bound))
-      if (bits < $byte-bits)
-	$byte-rep;
-      elseif (bits < $short-bits)
-	$short-rep;
-      elseif (bits < $int-bits)
-	$int-rep;
+      let bytes = ceiling/(bits + 1, $byte-bits);
+      if (bytes <= 1)
+	*byte-rep*;
+      elseif (bytes <= $short-size)
+	*short-rep*;
+      elseif (bytes <= $int-size)
+	*int-rep*;
       else
-	$long-rep;
+	*long-rep*;
       end;
     else
-      if (bits <= $byte-bits)
-	$ubyte-rep;
-      elseif (bits <= $short-bits)
-	$ushort-rep;
-      elseif (bits <= $int-bits)
-	$uint-rep;
+      let bytes = ceiling/(bits, $byte-bits);
+      if (bytes <= 1)
+	*ubyte-rep*;
+      elseif (bytes <= $short-size)
+	*ushort-rep*;
+      elseif (bytes <= $int-size)
+	*uint-rep*;
       else
-	$long-rep;
+	*long-rep*;
       end;
     end;
   else
@@ -195,12 +319,11 @@ end;
 define method merge-representations
     (rep1 :: <c-representation>, rep2 :: <c-representation>)
     => res :: <c-representation>;
-  until (rep1 == rep2)
-    if (rep1.representation-depth > rep2.representation-depth)
-      rep1 := rep1.more-general-representation;
-    else
-      rep2 := rep2.more-general-representation;
-    end;
+  if (rep1 == rep2)
+    rep1;
+  elseif (rep1.representation-depth > rep2.representation-depth)
+    merge-representations(rep1.more-general-representation, rep2);
+  else
+    merge-representations(rep1, rep2.more-general-representation);
   end;
-  rep1;
 end;
