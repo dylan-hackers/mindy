@@ -1,5 +1,5 @@
 module:      operating-system
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.3 1999/04/09 16:15:03 tree Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.4 1999/04/10 21:08:28 tree Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
 copyright:   Copyright 1999 Thomas R. Emerson
@@ -9,19 +9,20 @@ synopsis:    Implementation of Harlequin Dylan 1.2 operating-system library
 /*
    Copyright (C) 1999 Thomas R. Emerson
 
-   This program is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; either version 2
-   of the License, or (at your option) any later version.
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Library General Public
+   License as published by the Free Software Foundation; either
+   version 2 of the License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+   You should have received a copy of the GNU Library General Public
+   License along with this library; if not, write to the
+   Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA  02111-1307, USA.
 
    Bug reports, questions, comments, and suggestions should be sent by
    E-mail to the Internet address "gwydion-bugs@randomhacks.com".
@@ -112,9 +113,9 @@ define function split(character :: <character>, string :: <byte-string>)
   result;
 end;
 
-define function tokenize-environment-variable(variable :: <byte-string>, #key separator = ':')
+define function tokenize-environment-variable(variable :: <byte-string>)
  => (components :: <vector>)
-  split(separator, variable);
+  split(':', variable);
 end function;
 
 define function exit-application(code :: <integer>) => ()
