@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.39 1996/02/21 02:43:46 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.40 1996/03/08 05:30:10 rgs Exp $
 
 /*
 
@@ -1552,7 +1552,7 @@ end method;
 
 
 define class <empty-object> (<object>) end;
-define constant $empty-object = make(<empty-object>);
+define constant $empty-object :: <empty-object> = make(<empty-object>);
 
 
 // Load a data unit from a file.
@@ -1655,7 +1655,8 @@ end method;
 // The $end-object, used to mark loading an end header.
 //
 define class <end-object> (<object>) end;
-define /* exported */ constant $end-object = make(<end-object>);
+define /* exported */ constant $end-object :: <end-object>
+  = make(<end-object>);
 
 define constant $load-debug = #f;
 
@@ -1797,9 +1798,9 @@ define /* exported */ method load-raw-data
   (res :: <byte-string>, elsize :: <integer>, state :: <load-state>)
  => nnext :: <buffer-index>;
   let buffer = state.od-buffer;
-  let next = state.od-next;
-  let buf-end = state.od-end;
-  let sofar = 0;
+  let next :: <buffer-index> = state.od-next;
+  let buf-end :: <buffer-index> = state.od-end;
+  let sofar :: <integer> = 0;
   block (punt)
     while (#t)
       let nnext = min(next + (elsize - sofar), buf-end);
@@ -1825,22 +1826,30 @@ end method;
 
 // Utility that loads an object's subobjects into a stretchy-vector.
 //
-define /* exported */ method load-subobjects-vector
-    (state :: <load-state>, #key size-hint)
- => (res :: <vector>);
-  let contents = if (size-hint)
-		   make(<simple-object-vector>, size: size-hint);
-		 else
-		   make(<stretchy-vector>);
-		 end if;
-  for (part = load-object-dispatch(state) then load-object-dispatch(state),
-       i :: <integer> from 0,
-       until: part = $end-object)
-    contents[i] := part;
-  finally
-    if (size-hint) assert(i = size-hint) end if;
-  end for;
-  contents;
+define method load-subobjects-vector
+    (state :: <load-state>, #key size-hint :: false-or(<integer>))
+ => (res :: <simple-object-vector>);
+  if (size-hint)
+    let contents :: <simple-object-vector>
+      = make(<simple-object-vector>, size: size-hint);
+    for (part = load-object-dispatch(state) then load-object-dispatch(state),
+	 i :: <integer> from 0,
+	 until: part == $end-object)
+      contents[i] := part;
+    finally
+      assert(i == size-hint);
+      contents;
+    end for;
+  else
+    let contents :: <stretchy-vector> = make(<stretchy-vector>);
+    for (part = load-object-dispatch(state) then load-object-dispatch(state),
+	 i :: <integer> from 0,
+	 until: part == $end-object)
+      contents[i] := part;
+    finally
+      as(<simple-object-vector>, contents);
+    end for;
+  end if;
 end method;
 
 
@@ -1850,7 +1859,7 @@ end method;
 define /* exported */ method load-sole-subobject (state :: <load-state>)
  => res :: <object>;
   let res = load-object-dispatch(state);
-  assert(load-object-dispatch(state) = $end-object);
+  assert(load-object-dispatch(state) == $end-object);
   res;
 end method;
 
@@ -2171,7 +2180,7 @@ add-od-loader(*default-dispatcher*, #"local-object-map",
 
 add-od-loader(*default-dispatcher*, #"extern-index",
   method (state :: <load-state>)
-    as(<simple-object-vector>, load-subobjects-vector(state));
+    load-subobjects-vector(state);
   end method
 );
 
@@ -2292,7 +2301,7 @@ define method make-loader-guts
   assert(vec.size == key-count);
   let keys = #();
   let losers = #();
-  for (i from 0 below key-count)
+  for (i :: <integer> from 0 below key-count)
     let key = info.init-keys[i];
     let val = vec[i];
     if (key & obj-resolved?(val))
@@ -2307,7 +2316,7 @@ define method make-loader-guts
   end;
   let obj = apply(make, info.obj-class, keys);
 
-  for (i in losers)
+  for (i :: <integer> in losers)
     let setter = info.setter-funs[i];
     let val = vec[i];
     assert(setter);
