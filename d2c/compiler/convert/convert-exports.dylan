@@ -1,0 +1,299 @@
+module: dylan-user
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.1 1996/03/17 00:57:25 wlott Exp $
+copyright: Copyright (c) 1996  Carnegie Mellon University
+	   All rights reserved.
+
+
+define library compiler-convert
+  use Dylan;
+  use compiler-base;
+  use compiler-front;
+  use compiler-parser;
+
+  export
+    define-classes;
+end library compiler-convert;
+
+
+define module lexenv
+  use common;
+
+  use utils;
+  use policy;
+  use flow, import: {<abstract-variable>};
+
+  use tokens;
+
+  export
+    <lexenv>, lexenv-policy, lexenv-policy-setter,
+    <body-lexenv>, lexenv-handlers, lexenv-handlers-setter,
+    <binding>, binding-name, binding-var, binding-type-var,
+    add-binding, find-binding;
+end;
+
+
+define module compile-time-eval
+  use common;
+
+  use utils;
+  use names;
+  use variables;
+  use definitions;
+  use compile-time-values;
+  use ctype;
+  use classes;
+
+  use tokens;
+  use parse-tree;
+  use macros;
+
+  use lexenv;
+
+  export
+    ct-eval, ct-mv-eval;
+end;
+
+
+define module expanders
+  use common;
+  use utils;
+  use source;
+  use errors;
+  use tokens;
+  // use definitions;
+  use variables;
+  use compile-time-values;
+
+  use fragments;
+  use parse-tree;
+  use parser;
+  use macros;
+
+  use compile-time-eval;
+
+  export
+    split-fragment-at-commas, expression-from-fragment,
+    extract-name, extract-boolean, extract-properties,
+    make-magic-fragment;
+
+end module expanders;
+
+
+define module fer-convert
+  use common;
+
+  use utils;
+  use source;
+  use errors;
+  use tokens;
+  use names;
+  use compile-time-values;
+  use compile-time-functions;
+  use ctype;
+  use signature-interface;
+  use definitions;
+  use variables;
+  use representation;
+  use policy, export: all;
+  use flow, export: all;
+
+  use parse-tree;
+  use macros;
+
+  use front,
+    import: {<primitive>, <function-literal>, <method-literal>,
+	       <module-var-ref>, <module-var-set>,
+	       <function-visibility>, <catch>, <disable-catcher>,
+	       <make-catcher>};
+  use builder-interface, export: all;
+  use primitives,
+    import: {primitive-info-or-lose, priminfo-arg-types};
+  use variable-definitions;
+
+  use lexenv, export: all;
+  use compile-time-eval;
+
+  export
+    fer-convert-method, fer-convert;
+end;
+
+
+define module define-macros
+  use common;
+  use utils;
+  use errors;
+  use tokens;
+  use definitions;
+  use variables;
+
+  use parse-tree;
+  use parser;
+  use macros;
+
+  use builder-interface;
+
+  use top-level-forms;
+
+end module define-macros;
+
+
+define module define-libraries-and-modules
+  use common;
+  use utils;
+  use errors;
+  use names;
+  use compile-time-values;
+  use tokens;
+  use parse-tree;
+  use variables;
+  use top-level-forms;
+  use od-format;
+  use builder-interface, import: {<fer-builder>};
+  use fragments;
+  use macros;
+  use expanders;
+  use parser;
+end;
+
+
+define module define-functions
+  use common;
+
+  use utils;
+  use od-format;
+  use source;
+  use errors;
+  use tokens;
+  use names;
+  use definitions;
+  use variables;
+  use compile-time-values;
+  use compile-time-functions;
+  use ctype;
+  use classes;
+  use transformers;
+  use signature-interface;
+
+  use fragments;
+  use parse-tree;
+  use parser;
+  use macros;
+
+  use builder-interface;
+  use function-definitions;
+  use front,
+    import: {<function-literal>, <method-literal>, <truly-the>, <mv-call>,
+	     optimize-component};
+  use top-level-forms;
+
+  use expanders;
+  use lexenv;
+  use compile-time-eval;
+  use fer-convert;
+
+  export
+    compute-signature,
+    implicitly-define-generic;
+end;
+
+define module define-constants-and-variables
+  use common;
+  use utils;
+  use od-format;
+  use source;
+  use errors;
+  use compile-time-values;
+  use names;
+  use definitions;
+  use ctype;
+  use variables;
+  use tokens;
+  use compile-time-functions;
+
+  use builder-interface;
+  use front, import: {<method-literal>, <primitive>};
+  use function-definitions;
+  use variable-definitions;
+  use top-level-forms;
+
+  use fragments;
+  use parse-tree;
+  use parser;
+  use macros;
+
+  use lexenv;
+  use compile-time-eval;
+  use expanders;
+  use fer-convert;
+  use define-functions;
+
+  export
+    expand-until-method-ref;
+end;
+
+define module define-classes
+  use common;
+  use utils;
+  use source;
+  use errors;
+  use compile-time-values;
+  use tokens;
+  use names;
+  use definitions;
+  use variables;
+  use ctype;
+  use classes;
+  use compile-time-functions;
+  use od-format;
+  use representation;
+
+  use top-level-forms;
+  use builder-interface;
+  use signature-interface;
+  use front,
+    import: {<slot-ref>, <slot-set>, <uninitialized-value>, <primitive>,
+	       <function-literal>, <method-literal>};
+  use c-representation;
+  use function-definitions;
+
+  use fragments;
+  use parse-tree;
+  use parser;
+  use macros;
+
+  use lexenv;
+  use compile-time-eval;
+  use expanders;
+  use fer-convert;
+  use define-constants-and-variables;
+  use define-functions;
+
+  export
+    class-defn-overrides, class-defn-slots,
+
+    override-defn-info,
+
+    slot-defn-info, slot-defn-getter, slot-defn-setter;
+    
+end;
+
+define module top-level-expressions
+  use common;
+
+  use utils;
+  use od-format;
+  use errors;
+  use tokens;
+
+  use builder-interface;
+  use top-level-forms;
+
+  use parse-tree;
+  use parser;
+  use macros;
+
+  use lexenv;
+  use fer-convert;
+end;
+
+
