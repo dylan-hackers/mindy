@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/Attic/xep.dylan,v 1.1 2000/06/11 21:20:36 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/Attic/xep.dylan,v 1.2 2000/06/11 22:38:19 emk Exp $
 copyright: see below
 
 
@@ -50,14 +50,18 @@ define method build-local-xeps (component :: <component>) => ();
   end for;
 end;
 
-define method build-xep-component
-    (function :: <ct-function>, generic-entry? :: <boolean>)
+// XXX - This needs to live in cback. Move it when we refactor.
+// Alternatively, we could keep all the xep code together and put it in a
+// new module in this library. Or we might even want this to live here. Hmm.
+define function build-xep-component
+    (optimizer :: <abstract-optimizer>,
+     function :: <ct-function>, generic-entry? :: <boolean>)
  => (entry :: <fer-function-region>, component :: <component>);
   let component = make(<fer-component>);
   let entry = build-xep(function, generic-entry?, component);
-  optimize-component(component);
+  optimize-component(optimizer, component);
   values(entry, component);
-end method build-xep-component;
+end function build-xep-component;
 
 define method build-xep-get-ctv (func :: <function-literal>)
   func.ct-function

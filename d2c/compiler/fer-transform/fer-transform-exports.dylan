@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.1 2000/06/11 21:20:36 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.2 2000/06/11 22:38:19 emk Exp $
 copyright: see below
 
 
@@ -41,33 +41,6 @@ define library compiler-fer-transform
     null-optimizer;
 end library compiler-fer-transform;
 
-define module fer-transform
-  use common;
-  use utils;
-  use errors;
-  use compile-time-values;
-  use platform,
-    import: {*current-target*, platform-integer-length};
-  use names;
-  use definitions;
-  use variables, exclude: {<renaming>};
-  use flow;
-  use front;
-  use ctype;
-  use classes;
-  use signature-interface;
-  use source;
-  use builder-interface;
-  use policy;
-  use primitives;
-  use transformers;
-  use compile-time-functions;
-  use function-definitions;
-
-  export
-    build-local-xeps;
-end module fer-transform;
-
 define module abstract-optimizer
   use common;
   use flow, import: {<component>};
@@ -79,6 +52,38 @@ define module abstract-optimizer
     optimize-component,
     maybe-dump-fer;
 end module abstract-optimizer;
+
+define module fer-transform
+  use common;
+  use utils;
+  use errors;
+  use compile-time-values;
+  use platform,
+    import: {*current-target*, platform-integer-length};
+  use names;
+  use definitions;
+  use variables, exclude: {<renaming>};
+  use flow;
+  use front, exclude: {build-xep-component, optimize-component};
+  use ctype;
+  use classes;
+  use signature-interface;
+  use source;
+  use builder-interface;
+  use policy;
+  use primitives;
+  use transformers;
+  use compile-time-functions;
+  use function-definitions;
+
+  // XXX - For use by build-xep-component only. This will go away when
+  // build-xep-component moves into cback.
+  use abstract-optimizer;
+
+  export
+    build-local-xeps,
+    build-xep-component;
+end module fer-transform;
 
 define module null-optimizer
   use common;
