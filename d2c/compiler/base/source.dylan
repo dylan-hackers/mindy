@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.16 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.17 1996/08/10 20:02:15 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -63,36 +63,6 @@ end method describe-source-location;
 
 add-make-dumper(#"unknown-source-location", *compiler-dispatcher*,
 		<unknown-source-location>, #());
-
-
-// getcwd
-
-#if (~mindy)
-
-define method getcwd () => cwd :: <byte-string>;
-  let buffer = make(<buffer>, size: 1024);
-  if (zero?(call-out("getcwd", #"long",
-		     #"ptr", buffer-address(buffer),
-		     #"int", 1024)))
-    error("Can't get the current directory.");
-  else
-    let len = block (return)
-		for (index :: <integer> from 0 below 1024)
-		  if (buffer[index].zero?)
-		    return(index);
-		  end if;
-		end for;
-		error("Can't get the current directory.");
-	      end block;
-    let result = make(<byte-string>, size: len);
-    for (index :: <integer> from 0 below len)
-      result[index] := as(<character>, buffer[index]);
-    end for;
-    result;
-  end if;
-end method getcwd;
-
-#endif
 
 
 // Source files.
@@ -217,15 +187,8 @@ end method fill-buffer;
 define class <source-file> (<identity-preserving-mixin>)
   //
   // The name for this source file.
-  constant slot file-name :: <byte-string>,
-    required-init-keyword: name:;
-  //
-  // The directory for this source file.  The make method defaults it to
-  // the current directory and makes sure that it is absolute and ends in
-  // a slash.  Unless the file-name is absolute, in which case the directory
-  // is #f.
-  constant slot directory :: false-or(<byte-string>) = #f,
-    init-keyword: directory:;
+  constant slot full-file-name :: <byte-string>, 
+    required-init-keyword: #"name";
   //
   // The contents, or #f if we haven't read them in yet.
   slot %contents :: false-or(<file-contents>) = #f;
@@ -234,36 +197,9 @@ end;
 define sealed domain make (singleton(<source-file>));
 define sealed domain initialize (<source-file>);
 
-define method make
-    (class == <source-file>, #next next-method,
-     #key name :: <byte-string>, directory :: false-or(<byte-string>))
-    => res :: <source-file>;
-  if (name.first == '/')
-    if (directory)
-      error("Can't supply a directory when suppling an absolute pathname.");
-    end if;
-    next-method(class, name: name);
-  else
-    let absolute
-      = if (directory & directory.size > 0 & directory.first == '/')
-	  directory;
-	else
-	  let cwd = getcwd();
-	  if (directory)
-	    stringify(cwd, '/', directory);
-	  else
-	    cwd;
-	  end if;
-	end if;
-    next-method(class, name: name,
-		directory:
-		  if (absolute.last == '/')
-		    absolute;
-		  else
-		    stringify(absolute, '/');
-		  end if);
-  end if;
-end method make;
+define function file-name (source-file :: <source-file>) => name :: <string>;
+  source-file.full-file-name.pathless-filename;
+end function file-name;
 
 define method print-object (sf :: <source-file>, stream :: <stream>) => ();
   pprint-fields(sf, stream, name: sf.file-name);
@@ -280,13 +216,7 @@ end;
 define method contents (source :: <source-file>)
   source.%contents
     | begin
-	let file 
-	  = make(<file-stream>,
-		 locator: if (source.directory)
-			    stringify(source.directory, source.file-name);
-			  else
-			    source.file-name;
-			  end if);
+	let file = make(<file-stream>, locator: source.full-file-name);
 	block ()
 	  let result = make-buffer(file.stream-size);
 	  fill-buffer(result, file);
@@ -314,8 +244,7 @@ end method extract-line;
 
 
 add-make-dumper(#"source-file", *compiler-dispatcher*, <source-file>,
-		list(file-name, name:, #f,
-		     directory, directory: #f));
+		list(full-file-name, name:, #f));
 
 
 
