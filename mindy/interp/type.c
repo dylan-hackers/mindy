@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.5 1994/04/10 16:24:37 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.6 1994/04/10 19:00:21 wlott Exp $
 *
 * This file does whatever.
 *
@@ -779,7 +779,7 @@ void scavenge_type_roots(void)
 
 void make_type_classes(void)
 {
-    obj_TypeClass = make_abstract_class();
+    obj_TypeClass = make_abstract_class(TRUE);
     obj_SingletonClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_SubclassClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_LimIntClass = make_builtin_class(scav_limint, trans_limint);

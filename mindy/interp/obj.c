@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.3 1994/04/09 13:36:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.4 1994/04/10 19:00:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -48,7 +48,7 @@ void scavenge_obj_roots(void)
 
 void make_obj_classes(void)
 {
-    obj_ObjectClass = make_abstract_class();
+    obj_ObjectClass = make_abstract_class(FALSE);
 }
 
 void init_obj_classes(void)

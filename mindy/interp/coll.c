@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.2 1994/04/09 13:35:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.3 1994/04/10 19:00:16 wlott Exp $
 *
 * This file does whatever.
 *
@@ -52,15 +52,15 @@ void scavenge_coll_roots(void)
 
 void make_coll_classes(void)
 {
-    obj_CollClass = make_abstract_class();
-    obj_ExKeyCollClass = make_abstract_class();
-    obj_MutCollClass = make_abstract_class();
-    obj_SeqClass = make_abstract_class();
-    obj_MutExKeyCollClass = make_abstract_class();
-    obj_MutSeqClass = make_abstract_class();
-    obj_ArrayClass = make_abstract_class();
-    obj_VectorClass = make_abstract_class();
-    obj_StringClass = make_abstract_class();
+    obj_CollClass = make_abstract_class(FALSE);
+    obj_ExKeyCollClass = make_abstract_class(FALSE);
+    obj_MutCollClass = make_abstract_class(FALSE);
+    obj_SeqClass = make_abstract_class(FALSE);
+    obj_MutExKeyCollClass = make_abstract_class(FALSE);
+    obj_MutSeqClass = make_abstract_class(FALSE);
+    obj_ArrayClass = make_abstract_class(FALSE);
+    obj_VectorClass = make_abstract_class(FALSE);
+    obj_StringClass = make_abstract_class(FALSE);
 }
 
 void init_coll_classes(void)

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.3 1994/04/09 13:36:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.4 1994/04/10 19:00:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -611,14 +611,14 @@ void scavenge_num_roots(void)
 
 void make_num_classes(void)
 {
-    obj_NumberClass = make_abstract_class();
-    obj_ComplexClass = make_abstract_class();
-    obj_RealClass = make_abstract_class();
-    obj_RationalClass = make_abstract_class();
+    obj_NumberClass = make_abstract_class(FALSE);
+    obj_ComplexClass = make_abstract_class(TRUE);
+    obj_RealClass = make_abstract_class(TRUE);
+    obj_RationalClass = make_abstract_class(TRUE);
     /* <integer> isn't really abstract, but there arn't heap instances */
     /* of it either. */
-    obj_IntegerClass = make_abstract_class();
-    obj_FloatClass = make_abstract_class();
+    obj_IntegerClass = make_abstract_class(TRUE);
+    obj_FloatClass = make_abstract_class(TRUE);
     obj_SingleFloatClass = make_builtin_class(scav_sf, trans_sf);
     obj_DoubleFloatClass = make_builtin_class(scav_df, trans_df);
     obj_ExtendedFloatClass = make_builtin_class(scav_xf, trans_xf);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.2 1994/04/09 13:35:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.3 1994/04/10 19:00:10 wlott Exp $
 *
 * This file does whatever.
 *
@@ -68,7 +68,7 @@ void scavenge_bool_roots(void)
 
 void make_bool_classes(void)
 {
-    obj_BooleanClass = make_abstract_class();
+    obj_BooleanClass = make_abstract_class(TRUE);
     obj_True = alloc(make_builtin_class(scav_bool, trans_bool),
 		     sizeof(struct bool));
     obj_False = alloc(make_builtin_class(scav_bool, trans_bool),

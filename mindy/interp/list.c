@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.3 1994/04/10 16:24:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.4 1994/04/10 19:00:18 wlott Exp $
 *
 * This file does whatever.
 *
@@ -244,7 +244,7 @@ void scavenge_list_roots(void)
 
 void make_list_classes(void)
 {
-    obj_ListClass = make_abstract_class();
+    obj_ListClass = make_abstract_class(TRUE);
     obj_PairClass = make_builtin_class(scav_list, trans_list);
     obj_EmptyListClass = make_builtin_class(scav_list, trans_list);
 }
