@@ -1,0 +1,36 @@
+&makegen_include("../cocoa-Makegen");
+
+# $D2CFLAGS = $D2CFLAGS . ' -L../../../d2c/runtime/melange -L.';
+
+
+print <<EOF;
+default: compile
+
+export CCFLAGS = -ObjC -Wno-long-double -no-cpp-precomp
+
+flat-cocoa.h:
+	\$(CC) -traditional-cpp -dD -E -Wno-four-char-constants -arch ppc -Wp,-lang-objc -P \\
+		-o flat-cocoa.h \\
+		-I/System/Library/Frameworks/AppKit.framework/Headers \\
+		/System/Library/Frameworks/AppKit.framework/Headers/AppKit.h
+        
+cocoa-wrappers.dylan:
+	$srcroot/platform/cocoa/tools/i2d --module cocoa-wrappers -header AppKit/Appkit.h flat-cocoa.h
+	
+cocoa-exports.dylan:
+	\$(MAKE) -C $buildroot/tools/make-exports
+	$buildroot/tools/make-exports/make-exports $srcdir/cocoa-exports.input $srcdir/cocoa-basics.dylan cocoa-wrappers.dylan
+
+cocoa-wrappers-continued.dylan: cocoa-wrappers.dylan
+
+EOF
+
+&emit_library_rule(
+    'cocoa', '$(BUILDROOT)/force.timestamp flat-cocoa.h cocoa-wrappers.dylan cocoa-wrappers-continued.dylan cocoa-exports.dylan', '', 'compile',
+    'no-mindy', 'install'
+);
+
+push(@files_to_clean, "flat-cocoa.h");
+push(@files_to_clean, "cocoa-wrappers.dylan");
+push(@files_to_clean, "cocoa-wrappers-continued.dylan.dylan");
+push(@files_to_clean, "cocoa-exports.dylan");
