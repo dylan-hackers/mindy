@@ -37,6 +37,19 @@ rcs-header: $Header:
 //       Fix handling of CPP '#include "foo"'
 //       Allow CPP '#pragma'
 //       Fix handling of CPP foo##bar
+//   b1.2: (10/25/95)
+//     Improved protability handling:
+//       portable size constants
+//       multiple alignment models
+//     Improved vector handling:
+//       vector operations now only apply to subclasses of <c-vector>
+//       added "pointer" clause to interface declaration.
+//       <c-strings> now have more correct (and documented) behavior
+//     Bug fixes:
+//       Fixed various routines to work if "members" is #f.
+//       Fixed handling of equated typedefs.
+//       Fixed bug in explit-ony? keyword for mapped-name.
+//       Fixed handling of types which are mapped to themselves.
 //======================================================================
 
 define library melange
