@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.104 1995/10/05 01:14:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.105 1995/10/05 14:12:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -4222,7 +4222,6 @@ define method assure-all-done-region
     (component :: <component>, region :: <simple-region>) => ();
   for (assign = region.first-assign then assign.next-op,
        while: assign)
-    assure-all-done-expr(component, assign.depends-on.source-exp);
     assure-all-done-dependent(component, assign);
   end;
 end;
@@ -4247,6 +4246,12 @@ define method assure-all-done-region
 end;
 
 define method assure-all-done-region
+    (component :: <component>, region :: <block-region>) => ();
+  assure-all-done-queueable(component, region);
+  assure-all-done-region(component, region.body);
+end;
+
+define method assure-all-done-region
     (component :: <component>, region :: <exit>) => ();
 end;
 
@@ -4255,24 +4260,27 @@ define method assure-all-done-region
   assure-all-done-dependent(component, region);
 end;
 
-define method assure-all-done-dependent
-    (component :: <component>, dependent :: <dependent-mixin>) => ();
-  optimize(component, dependent);
+define method assure-all-done-queueable
+    (component :: <component>, queueable :: <queueable-mixin>) => ();
+  optimize(component, queueable);
   if (component.initial-variables | component.reoptimize-queue)
-    error("optimizing %= did something, but we thought we were done.",
-	  dependent);
+    cerror("so what?",
+	   "optimizing %= did something, but we thought we were done.",
+	   queueable);
   end;
 end;
 
-define method assure-all-done-expr
-    (component :: <component>, expr :: <expression>) => ();
+define method assure-all-done-dependent
+    (component :: <component>, dependent :: <dependent-mixin>) => ();
+  assure-all-done-queueable(component, dependent);
+  for (dep = dependent.depends-on then dep.dependent-next,
+       while: dep)
+    let expr = dep.source-exp;
+    if (instance?(expr, <dependent-mixin>))
+      assure-all-done-dependent(component, expr);
+    end;
+  end;
 end;
-
-define method assure-all-done-expr
-    (component :: <component>, op :: <dependent-mixin>) => ();
-  assure-all-done-dependent(component, op);
-end;
-
 
 
 define method check-sanity (component :: <component>) => ();
