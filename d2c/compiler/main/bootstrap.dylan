@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.3 1994/12/17 02:27:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.4 1995/03/04 21:42:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -198,6 +198,7 @@ define macro class-definer
     { primary ... } => { primary ... }
     { abstract ... } => { abstract ... }
     { concrete ... } => { concrete ... }
+    { functional ... } => { functional ... }
   supers:
     { ?expr } => { ?expr }
     { ?expr, ... } => { ?expr, ... }
@@ -291,6 +292,7 @@ define class <symbol> (<object>) end;
 define class <type> (<object>) end;
 define class <class> (<type>) end;
 define class <singleton> (<type>) end;
+define class <byte-character-type> (<type>) end;
 
 define abstract open class <number> (<object>) end;
 define abstract open class <complex> (<number>) end;
@@ -326,7 +328,7 @@ define class <empty-list> (<list>) end;
 define class <pair> (<list>) end;
 
 define class <character> (<object>) end;
-define class <byte-character> (<character>) end;
+define constant <byte-character> = make(<byte-character-type>);
 
 
 // Functions that need to be defined.
