@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.36 1996/02/09 03:58:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.37 1996/02/13 17:56:39 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -7,19 +7,28 @@ copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 // Almost every routine in this module accepts a "state" argument and
 // destructively modifies it as necessary to account for its actions.
 //
-define class <state> (<object>)
+define abstract class <state> (<object>)
   slot stream :: <stream>, required-init-keyword: stream:;
   slot id-prefix :: <byte-string>, init-keyword: #"id-prefix", init-value: "L";
   slot next-id :: <integer>, init-value: 0;
   slot object-queue :: <deque>, init-function: curry(make, <deque>);
+end;
+
+define class <global-state> (<state>)
   slot symbols :: type-union(<literal-false>, <literal-symbol>),
     init-function: curry(make, <literal-false>);
-end;
+end class <global-state>;
 
 define class <local-state> (<state>)
   slot undumped-objects :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
 end class <local-state>;
+
+define method queue-for-global-heap
+    (object :: <ct-value>, state :: <local-state>) => ();
+  add!(state.undumped-objects, object);
+end method queue-for-global-heap;
+
 
 // heap-object-referenced?, heap-object-dumped? -- Utility functions for heap
 // dumping.
@@ -54,7 +63,7 @@ end method heap-object-dumped?-setter;
 define method build-initial-heap
     (undumped-objects :: <vector>, stream :: <stream>)
     => ();
-  let state = make(<state>, stream: stream);
+  let state = make(<global-state>, stream: stream);
   format(stream, "\t.data\n\t.align\t8\n");
 
   for (obj in undumped-objects)
@@ -392,23 +401,25 @@ define method spew-labels (object :: <ct-value>, state :: <state>);
 end method spew-labels;
 
 define method spew-object
-    (object :: <ct-not-supplied-marker>, state :: <state>) => ();
-  if (instance?(state, <local-state>))
-    state.undumped-objects := add!(state.undumped-objects, object);
-  else
-    spew-labels(object, state);
-    spew-instance(specifier-type(#"<not-supplied-marker>"), state);
-  end if;
+    (object :: <ct-not-supplied-marker>, state :: <local-state>) => ();
+  queue-for-global-heap(object, state);
 end;
 
 define method spew-object
-    (object :: <literal-boolean>, state :: <state>) => ();
-  if (instance?(state, <local-state>))
-    state.undumped-objects := add!(state.undumped-objects, object);
-  else
-    spew-labels(object, state);
-    spew-instance(object.ct-value-cclass, state);
-  end if;
+    (object :: <ct-not-supplied-marker>, state :: <global-state>) => ();
+  spew-labels(object, state);
+  spew-instance(specifier-type(#"<not-supplied-marker>"), state);
+end;
+
+define method spew-object
+    (object :: <literal-boolean>, state :: <local-state>) => ();
+  queue-for-global-heap(object, state);
+end;
+
+define method spew-object
+    (object :: <literal-boolean>, state :: <global-state>) => ();
+  spew-labels(object, state);
+  spew-instance(object.ct-value-cclass, state);
 end;
 
 define method spew-object
@@ -452,17 +463,18 @@ define method spew-object (object :: <literal-float>, state :: <state>) => ();
 end;
 
 define method spew-object
-    (object :: <literal-symbol>, state :: <state>) => ();
-  if (instance?(state, <local-state>))
-    state.undumped-objects := add!(state.undumped-objects, object);
-  else
-    spew-labels(object, state);
-    spew-instance(specifier-type(#"<symbol>"), state,
-		  symbol-string:
-		    as(<ct-value>, as(<string>, object.literal-value)),
-		  symbol-next: state.symbols);
-    state.symbols := object;
-  end if;
+    (object :: <literal-symbol>, state :: <local-state>) => ();
+  queue-for-global-heap(object, state);
+end;
+
+define method spew-object
+    (object :: <literal-symbol>, state :: <global-state>) => ();
+  spew-labels(object, state);
+  spew-instance(specifier-type(#"<symbol>"), state,
+		symbol-string:
+		  as(<ct-value>, as(<string>, object.literal-value)),
+		symbol-next: state.symbols);
+  state.symbols := object;
 end;
 
 define method spew-object
@@ -474,14 +486,15 @@ define method spew-object
 end;
 
 define method spew-object
-    (object :: <literal-empty-list>, state :: <state>) => ();
-  if (instance?(state, <local-state>))
-    state.undumped-objects := add!(state.undumped-objects, object);
-  else
-    spew-labels(object, state);
-    spew-instance(specifier-type(#"<empty-list>"), state,
-		  head: object, tail: object);
-  end if;
+    (object :: <literal-empty-list>, state :: <local-state>) => ();
+  queue-for-global-heap(object, state);
+end;
+
+define method spew-object
+    (object :: <literal-empty-list>, state :: <global-state>) => ();
+  spew-labels(object, state);
+  spew-instance(specifier-type(#"<empty-list>"), state,
+		head: object, tail: object);
 end;
 
 define method spew-object
@@ -620,6 +633,16 @@ define method spew-object
 end;
 
 define method spew-object
+    (object :: <defined-cclass>, state :: <local-state>, #next next-method)
+    => ();
+  if (object.sealed?)
+    next-method();
+  else
+    queue-for-global-heap(object, state);
+  end if;
+end method spew-object;
+
+define method spew-object
     (object :: <defined-cclass>, state :: <state>) => ();
   spew-labels(object, state);
   let defn = object.class-defn;
@@ -659,6 +682,15 @@ define method spew-object
 		       contents: object.all-slot-infos,
 		       sharable: #t));
 end;
+
+define method spew-object
+    (object :: <slot-info>, state :: <local-state>, #next next-method) => ();
+  if (object.slot-introduced-by.sealed?)
+    next-method();
+  else
+    queue-for-global-heap(object, state);
+  end if;
+end method spew-object;
 
 define method spew-object
     (object :: <slot-info>, state :: <state>) => ();
@@ -711,7 +743,7 @@ end;
 //
 define method spew-object
     (object :: <ct-open-generic>, state :: <local-state>) => ();
-  state.undumped-objects := add!(state.undumped-objects, object);
+  queue-for-global-heap(object, state);
 end;
 
 define method spew-object
