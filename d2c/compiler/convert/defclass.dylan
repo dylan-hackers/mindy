@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.12 1995/04/14 03:02:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.13 1995/04/26 05:56:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -592,7 +592,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 	   slot: info);
       if (slot.slot-defn-setter-name)
 	make(<setter-method-definition>,
-	     base-name: slot.slot-defn-getter-name,
+	     base-name: slot.slot-defn-setter-name,
 	     signature: make(<signature>,
 			     specializers: list(slot-type, class-type),
 			     rest-type: #f,
