@@ -32,31 +32,59 @@ our future Gwydion/Dylan compiler or the performance attainable in
 Dylan from experience using Mindy.  It's not designed to be fast.
 
 Mindy consists of two C programs, a compiler that produces byte-codes
-and a byte-code interpreter.  Currently, building Mindy requires an
-ANSI C compiler and a ''make'' utility.  If you wish to recompile the
-lexer or parser (they come pre-compiled to portable C), you will need
-GNU's Flex and Bison, respectively.  They can be obtained from
+and a byte-code interpreter.  The Mindy release also includes some
+rough documentation, various libraries (Streams, Format, Print,
+Collection-extensions, String-extensions, and Random-numbers), some
+Dylan demos, and a Dylan mode for Gnu-emacs.
+
+There are two versions of Mindy developed by CMU, the Unix version and
+the Windows/NT version.  Mindy for Unix has been tested extensively
+under MACH on the DECstation and HP-UX on HP 700's.  We have built and
+run Mindy, but not tested it extensivly, under Irix, Linux, SunOS,
+AIX, Solaris, and Ultrix.  Mindy for Unix does not work on the Alpha.
+Installing Mindy for Unix requires an ANSI C compiler and a ''make''
+utility.  If you wish to recompile the lexer or parser (they come
+pre-compiled to portable C), you will need GNU's Flex and Bison,
+respectively.  They can be obtained from
    prep.ai.mit.edu  in the directory pub/gnu
 
-We have built and tested Mindy under MACH on the DECstation and HP-UX
-on HP 700's.  We have built and run Mindy, but not tested it
-extensivly, under Irix, Linux, SunOS, AIX, Solaris, Ultrix, and
-Windows/NT.
-
-The Mindy release also includes some rough documentation, various
-libraries (Streams, Format, Print, Collection-extensions,
-String-extensions, and Random-numbers), and a Dylan mode for
-Gnu-emacs.
+Mindy for Windows/NT is distributed in binary form.  Source code is
+available by downloading the Unix version of Mindy.  Mindy/NT runs
+under Windows/NT v. 3.5 or later, and requires a file system that
+supports long file names (ie HPFS and NTFS, but not FAT).  Mindy/NT
+requires tar and GNU Zip (gzip) to unpackage.  To run tar you will
+need tar.exe and win32gnu.dll.  To run gzip, get gnubin.tar and use
+tar.exe to unpackage it.  Install the GNU utilities contained in
+gnubin.tar (gzip is one of these utilities).  These files are
+available via anonymous FTP in the same directory as mindyNT.tar.gz.
+Recompiling Mindy for Windows/NT requires Microsoft Visual C++ 2.0 and
+a ``make'' utility.
 
 You can get Mindy from our public WWW page:
    http://legend.gwydion.cs.cmu.edu:8001/gwydion/
-You can also get Mindy by anonymous ftp from legend.gwydion.cs.cmu.edu
-in the following file:
-   /afs/cs.cmu.edu/project/gwydion/release/mindy.tar.gz
+You can also get Mindy by anonymous ftp from
+legend.gwydion.cs.cmu.edu in the following files:
+   /afs/cs.cmu.edu/project/gwydion/release/mindy.tar.gz    (Unix version)
+   /afs/cs.cmu.edu/project/gwydion/release/mindyNT.tar.gz  (Windows/NT version)
 
 You must cd in one command line to the directory containing
 mindy.tar.gz due to security measures at CMU.  Questions, comments,
 and suggestions should go to "gwydion-bugs@cs.cmu.edu"
+
+Third parties independently maintain ports for the Macintosh and for
+OS/2, and may or may not reflect the latest CMU release.  Questions
+about these programs should go to their maintainers, not to the
+Gwydion Project.
+
+Mindy for the Macintosh is maintained by Patrick Beard
+(beard@apple.com), and is available via anonymous ftp from ftp.bdt.com
+in the directory
+	/home/beard/
+
+Mindy for OS/2 is maintained by Patrick Premont
+(premont@cs.utoronto.ca), and is available via anonymous ftp from
+hobbes.nmsu.edu in the directory
+	/os2/unix/
 
 NOTE: MINDY IS MADE AVAILABLE WITHOUT CHARGE ON AN "AS-IS" BASIS.
 NEITHER THE AUTHORS NOR CARNEGIE MELLON UNIVERSITY OFFER ANY WARRANTY
