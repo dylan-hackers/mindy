@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.130 2003/06/03 01:31:13 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.131 2003/06/12 15:09:31 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -540,6 +540,12 @@ AC_SUBST(GC_LIBS)
 #--------------------------------------------------------------------
 AC_CHECK_HEADERS(unistd.h sys/mman.h)
 AC_CHECK_FUNCS(mprotect getpagesize)
+
+#--------------------------------------------------------------------
+#	Look for getrlimit, getrusage
+#--------------------------------------------------------------------
+AC_CHECK_HEADERS(sys/time.h sys/resource.h)
+AC_CHECK_FUNCS(getrlimit getrusage)
 
 #--------------------------------------------------------------------
 #	Look for GTK+, set GTK_CFLAGS and GTK_LIBS

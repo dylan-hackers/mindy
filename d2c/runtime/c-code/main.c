@@ -1,9 +1,12 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.22 2003/05/25 15:14:26 housel Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.23 2003/06/12 15:09:32 housel Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "runtime.h"
 #include <math.h>
+#include <time.h>
+
+#include "config.h"
+#include "runtime.h"
 
 int application_argc;
 char **application_argv;
@@ -155,12 +158,18 @@ void gdb_print_genobj (descriptor_t obj)
 }
 
 
-#if !defined(WIN32) && !defined(GD_PLATFORM_BEOS) && !defined(GD_PLATFORM_MACOS) && !defined(GD_PLATFORM_CYGNUS)
 
-#include <sys/types.h>
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
+#endif
 
+#if HAVE_GETRLIMIT
 void no_core_dumps(void)
 {
   struct rlimit lim;
@@ -168,12 +177,39 @@ void no_core_dumps(void)
   lim.rlim_cur = 0;
   setrlimit(RLIMIT_CORE, &lim);
 }
-#endif
-
-#if defined(GD_PLATFORM_BEOS) || defined(GD_PLATFORM_MACOS) || defined(GD_PLATFORM_CYGNUS)
+#else
 void no_core_dumps(void)
 {
-/* these platforms don't core nicely, if at all */
+  /* other platforms don't core nicely, if at all */
 }
 #endif
 
+#ifdef HAVE_GETRUSAGE
+long *cpu_time(void)
+{
+  long *retval = allocate(2 * sizeof(long));
+  struct rusage ru;
+  if(getrusage(RUSAGE_SELF, &ru) == 0) {
+    retval[0]
+      = ru.ru_utime.tv_sec + ru.ru_stime.tv_sec
+      + (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1000000L;
+    retval[1] = (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) % 1000000L;
+  } else {
+    retval[0] = retval[1] = 0;
+  }
+  return retval;
+}
+#else
+long *cpu_time(void)
+{
+  long *retval = allocate(2 * sizeof(long));
+  clock_t runtime = clock();
+  if(runtime >= 0) {
+    retval[0] = (runtime / CLOCKS_PER_SEC);
+    retval[1] = (runtime % CLOCKS_PER_SEC) * 1000000L / CLOCKS_PER_SEC;
+  } else {
+    retval[0] = retval[1] = 0;
+  }
+  return retval;
+}
+#endif
