@@ -4,7 +4,7 @@ synopsis:   Test out the thread features of Mindy by getting I/O on
             multiple streams.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.4 1996/05/11 21:45:50 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.5 1996/06/11 14:48:56 nkramer Exp $
 
 //======================================================================
 //
@@ -67,6 +67,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v
 define library Threaded-io-test
   use dylan;
   use streams;
+  use format;
 end library Threaded-io-test;
 
 define module threaded-io-test
@@ -75,6 +76,7 @@ define module threaded-io-test
   use threads;
   use streams;
   use standard-io;
+  use format;
 end module threaded-io-test;
 
 define method echo-input (stream :: <stream>) => ();
@@ -103,6 +105,7 @@ define method main (argv0, #rest ignored)
   let asterix-thread = spawn-thread("Asterixes", asterixes);
   let dash-thread = spawn-thread("Dashes", dashes);
   echo-input(*standard-input*);
+  format(*standard-output*, "\nDone\n");
   kill-thread(asterix-thread);
   kill-thread(dash-thread);
 end method main;
