@@ -118,6 +118,20 @@ define-primitive
    pure: #t);
 
 define-primitive
+  (#"values-sequence", #(#"<simple-object-vector>"),
+   #(values:, rest:, #"<object>"),
+   side-effect-free: #t);
+
+define-primitive
+  (#"merge-clusters", #(#"cluster", #"cluster"),
+   #(values:, rest:, #"<object>"),
+   side-effect-free: #t);
+
+define-primitive
+  (#"vector", #(rest:, #"<object>"), #"<simple-object-vector>",
+   pure: #t);
+
+define-primitive
   (#"canonicalize-results", #(#"cluster", #"<fixed-integer>"),
    #(values:, rest:, #"<object>"),
    pure: #t);
