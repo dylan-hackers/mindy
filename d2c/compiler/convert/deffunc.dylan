@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.52 1996/01/27 00:21:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.53 1996/01/27 20:24:12 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -588,7 +588,8 @@ define method ct-value (defn :: <generic-definition>)
 	   make(<ct-generic-function>,
 		name: format-to-string("%s", defn.defn-name),
 		signature: sig,
-		definition: defn);
+		definition: defn,
+		sealed?: defn.generic-defn-sealed?);
 	 end;
   else
     ctv;
