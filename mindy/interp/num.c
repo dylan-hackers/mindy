@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/num.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/num.c,v 1.2 1998/12/17 09:29:57 igor Exp $
 *
 * This file implements numbers.
 *
@@ -47,6 +47,9 @@
 #include "print.h"
 #include "module.h"
 #include "sym.h"
+
+/* define the following to dump_bignum at useful intervals */
+#undef DEBUG_BIGNUM
 
 obj_t obj_NumberClass = 0;
 obj_t obj_ComplexClass = 0;
@@ -177,6 +180,7 @@ long bignum_value(obj_t bignum)
     return res;
 }
 
+#ifdef DEBUG_BIGNUM
 static void dump_bignum(obj_t bignum, int length)
 {
     digit_t *digits = BIGNUM(bignum)->digits;
@@ -187,6 +191,7 @@ static void dump_bignum(obj_t bignum, int length)
     }
     printf("(%d)", length);
 }
+#endif
 
 static obj_t extend_bignum(obj_t bignum, int length)
 {
@@ -218,9 +223,9 @@ static void normalize_bignum(obj_t bignum, int length)
     digit_t *digits = BIGNUM(bignum)->digits;
     digit_t *ptr = digits + length - 1;
     int useless = (*ptr & SIGN_MASK) ? DIGIT_MASK : 0;
-/*
+#ifdef DEBUG_BIGNUM
     printf("normalizing "); dump_bignum(bignum, length);
-*/
+#endif
     while (ptr > digits && *ptr == useless)
 	ptr--;
 
@@ -228,9 +233,9 @@ static void normalize_bignum(obj_t bignum, int length)
 	shrink_bignum(bignum, ptr - digits + 1);
     else
 	shrink_bignum(bignum, ptr - digits + 2);
-/*
+#ifdef DEBUG_BIGNUM
     printf(" is "); dump_bignum(bignum, BIGNUM(bignum)->length); printf("\n");
-*/
+#endif
 }
 
 int compare_bignums(obj_t x, obj_t y)
@@ -313,11 +318,11 @@ obj_t add_bignums(obj_t x, obj_t y)
     }
     result[length - 1] = (pad1 + pad2 + carry) & DIGIT_MASK;
     normalize_bignum(res, length);
-/*
+#ifdef DEBUG_BIGNUM
     printf("adding "); dump_bignum(x, BIGNUM(x)->length);
     printf(" and "); dump_bignum(y, BIGNUM(y)->length);
     printf(" is "); dump_bignum(res, BIGNUM(res)->length); printf("\n");
-*/
+#endif
     return res;
 
 }
@@ -361,11 +366,11 @@ obj_t subtract_bignums(obj_t x, obj_t y)
     }
     result[length - 1] = (pad1 - pad2 - borrow) & DIGIT_MASK;
     normalize_bignum(res, length);
-/*
+#ifdef DEBUG_BIGNUM
     printf("subracting "); dump_bignum(x, BIGNUM(x)->length);
     printf(" and "); dump_bignum(y, BIGNUM(y)->length);
     printf(" is "); dump_bignum(res, BIGNUM(res)->length); printf("\n");
-*/
+#endif
     return res;
 }
 
@@ -387,10 +392,10 @@ obj_t negate_bignum(obj_t x)
     }
     result[length - 1] = (0 - pad - borrow) & DIGIT_MASK;
     normalize_bignum(res, length);
-/*
+#ifdef DEBUG_BIGNUM
     printf("negating "); dump_bignum(x, BIGNUM(x)->length);
     printf(" is "); dump_bignum(res, BIGNUM(res)->length); printf("\n");
-*/
+#endif
     return res;
 }
 
@@ -438,11 +443,11 @@ obj_t multiply_bignums(obj_t x, obj_t y)
 	}
     }
     normalize_bignum(res, length);
-/*
+#ifdef DEBUG_BIGNUM
     printf("multiplying "); dump_bignum(x, BIGNUM(x)->length);
     printf(" and "); dump_bignum(y, BIGNUM(y)->length);
     printf(" is "); dump_bignum(res, BIGNUM(res)->length); printf("\n");
-*/
+#endif
     return res;
 }
 
@@ -519,11 +524,11 @@ static obj_t bignum_shift_right(obj_t bignum, int shift)
 		    | (pad & high_mask);
 	}
 	normalize_bignum(res, length);
-	/*
+#ifdef DEBUG_BIGNUM
 	   printf("shifting "); dump_bignum(bignum, BIGNUM(bignum)->length);
 	   printf(" by (%d, %d) is ", ndigits, nbits);
 	   dump_bignum(res, BIGNUM(res)->length); printf("\n");
-	   */
+#endif
 	return res;
     }
 }
@@ -605,11 +610,11 @@ static void divide(obj_t *quotient, obj_t *remainder,
     int len1, len2, length;
     int shift = division_shift(divisor);
     int i, j;
-/*
+#ifdef DEBUG_BIGNUM
     x = dividend; y = divisor;
     printf("dividing "); dump_bignum(x, BIGNUM(x)->length);
     printf(" by "); dump_bignum(y, BIGNUM(y)->length); printf("\n");
-*/
+#endif
     x = bignum_shift_left(dividend, shift);
     y = bignum_shift_left(divisor, shift);
     x = extend_bignum(x, BIGNUM(x)->length + 1);
@@ -657,9 +662,9 @@ static void divide(obj_t *quotient, obj_t *remainder,
 	    value = digits1[i + len2] + carry;
 	    digits1[i + len2] = value & DIGIT_MASK;
 	}
-/*
+#ifdef DEBUG_BIGNUM
 	printf("remainder is "); dump_bignum(x, BIGNUM(x)->length); printf("\n");
-*/
+#endif
 	result[i] = guess;
     }
     normalize_bignum(x, len1);
