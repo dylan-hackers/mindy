@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.1 1995/10/09 22:26:11 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.2 1995/10/13 15:05:55 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,10 +18,10 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // Boolean methods:
 
 define method dump-od(obj == #t, buf :: <dump-state>) => ();
-  dump-definition-header($true-odf-id, buf);
+  dump-definition-header(#"true", buf);
 end method;
 
-add-od-loader(*default-dispatcher*, $true-odf-id, 
+add-od-loader(*default-dispatcher*, #"true", 
   method (state :: <load-state>)
    => res :: <boolean>;
     #t;
@@ -29,10 +29,10 @@ add-od-loader(*default-dispatcher*, $true-odf-id,
 );
 
 define method dump-od(obj == #f, buf :: <dump-state>) => ();
-  dump-definition-header($false-odf-id, buf);
+  dump-definition-header(#"false", buf);
 end method;
 
-add-od-loader(*default-dispatcher*, $false-odf-id, 
+add-od-loader(*default-dispatcher*, #"false", 
   method (state :: <load-state>)
    => res :: <boolean>;
     #f;
@@ -44,7 +44,7 @@ add-od-loader(*default-dispatcher*, $false-odf-id,
 
 define method dump-od(obj :: <fixed-integer>, buf :: <dump-state>)
  => ();
-  dump-definition-header($fixed-integer-odf-id, buf, 
+  dump-definition-header(#"fixed-integer", buf, 
   			 raw-data: $odf-word-raw-data-format);
   dump-word(1, buf);
   dump-word(obj, buf);
@@ -67,7 +67,7 @@ end method;
 
 // Load a signed fixed integer.
 //
-add-od-loader(*default-dispatcher*, $fixed-integer-odf-id, 
+add-od-loader(*default-dispatcher*, #"fixed-integer", 
   method (state :: <load-state>)
    => res :: <fixed-integer>;
     state.od-next := state.od-next + $word-bytes; // skip count word
@@ -95,7 +95,7 @@ define constant $word-mask = lognot(ash(-$e1, $word-bits));
 
 define method dump-od(obj :: <extended-integer>, buf :: <dump-state>)
  => ();
-  dump-definition-header($extended-integer-odf-id, buf, 
+  dump-definition-header(#"extended-integer", buf, 
   			 raw-data: $odf-word-raw-data-format);
   let len = ceiling/(integer-length(obj), $word-bits);
   dump-word(len, buf);
@@ -104,7 +104,7 @@ define method dump-od(obj :: <extended-integer>, buf :: <dump-state>)
   end;
 end method;
 
-add-od-loader(*default-dispatcher*, $extended-integer-odf-id, 
+add-od-loader(*default-dispatcher*, #"extended-integer", 
   method (state :: <load-state>)
    => res :: <extended-integer>;
     let buffer = state.od-buffer;
@@ -132,13 +132,13 @@ add-od-loader(*default-dispatcher*, $extended-integer-odf-id,
 
 define method dump-od(obj :: <ratio>, buf :: <dump-state>) => ();
   let start-posn = buf.current-pos;
-  dump-definition-header($ratio-odf-id, buf, subobjects: #t);
+  dump-definition-header(#"ratio", buf, subobjects: #t);
   dump-od(obj.numerator, buf);
   dump-od(obj.denominator, buf);
   dump-end-entry(start-posn, buf);
 end method;
 
-add-od-loader(*default-dispatcher*, $ratio-odf-id, 
+add-od-loader(*default-dispatcher*, #"ratio", 
   method (state :: <load-state>) => res :: <ratio>;
     
     let npart = load-object-dispatch(state);
@@ -155,12 +155,12 @@ add-od-loader(*default-dispatcher*, $ratio-odf-id,
 // ### Too bad about EQness.
 // 
 define method dump-od(obj :: <byte-string>, buf :: <dump-buffer>) => ();
-  dump-definition-header($byte-string-odf-id, buf,
+  dump-definition-header(#"byte-string", buf,
   			 raw-data: $odf-byte-raw-data-format);
   dump-raw-data(obj, obj.size, buf);
 end method;
 
-add-od-loader(*default-dispatcher*, $byte-string-odf-id, 
+add-od-loader(*default-dispatcher*, #"byte-string", 
   method (state :: <load-state>)
    => res :: <byte-string>;
     let next = state.od-next;
@@ -179,13 +179,13 @@ add-od-loader(*default-dispatcher*, $byte-string-odf-id,
 // dumping.  This is o.k., because symbol semantics preserve EQ'ness.
 //
 define method dump-od(obj :: <symbol>, buf :: <dump-buffer>) => ();
-  dump-definition-header($byte-symbol-odf-id, buf,
+  dump-definition-header(#"byte-symbol", buf,
   			 raw-data: $odf-byte-raw-data-format);
   let lval = as(<byte-string>, obj);
   dump-raw-data(lval, lval.size, buf);
 end method;
 
-add-od-loader(*default-dispatcher*, $byte-symbol-odf-id, 
+add-od-loader(*default-dispatcher*, #"byte-symbol", 
   method (state :: <load-state>) => res :: <symbol>;
     let next = state.od-next;
     let bsize = buffer-word(state.od-buffer, next);
@@ -203,13 +203,13 @@ add-od-loader(*default-dispatcher*, $byte-symbol-odf-id,
 
 define method dump-od(obj :: <byte-character>, buf :: <dump-state>)
  => ();
-  dump-definition-header($byte-character-odf-id, buf,
+  dump-definition-header(#"byte-character", buf,
   			 raw-data: $odf-byte-raw-data-format);
   let lval = make(<byte-string>, size: 1, fill: obj);
   dump-raw-data(lval, 1, buf);
 end method;
 
-add-od-loader(*default-dispatcher*, $byte-character-odf-id, 
+add-od-loader(*default-dispatcher*, #"byte-character", 
   method (state :: <load-state>) => res :: <byte-character>;
     let res = make(<byte-string>, size: 1);
     state.od-next := state.od-next + $word-bytes; // skip count
@@ -232,7 +232,7 @@ define method dump-od(obj :: <list>, buf :: <dump-state>) => ();
       end for;
  
   let start-pos = buf.current-pos;
-  dump-definition-header(if (improper) $list*-odf-id else $list-odf-id end,
+  dump-definition-header(if (improper) #"list*" else #"list" end,
   		 	 buf, subobjects: #t);
   
   for (el = obj then el.tail, while: instance?(el, <pair>))
@@ -248,11 +248,32 @@ define method dump-od(obj :: <list>, buf :: <dump-state>) => ();
 end method;
 
 
-// To load a list, get the subobjects and convert to a list.
+// Look at the head of a pair, and if it is a forward reference, request
+// backpatching.  Also, if the forward reference has already been resolved, we
+// eagerly backpatch.
+// 
+define method head-maybe-backpatch (pair :: <pair>) => ();
+  let x = pair.head;
+  if (x.obj-resolved?)
+    pair.head := x.actual-obj;
+  else
+    request-backpatch(x, method (actual) pair.head := actual end);
+  end;
+end method;
+
+
+// To load a list, get the subobjects and convert to a list, possibly
+// backpatching.
 //
-add-od-loader(*default-dispatcher*, $list-odf-id, 
+add-od-loader(*default-dispatcher*, #"list", 
   method (state :: <load-state>) => res :: <list>;
-    as(<list>, load-subobjects-vector(state));
+    let contents = load-subobjects-vector(state);
+    let res = #();
+    for (i from contents.size - 1 to 0 by -1)
+      res := pair(contents[i], res);
+      head-maybe-backpatch(res);
+      finally res;
+    end;
   end method
 );
 
@@ -260,12 +281,22 @@ add-od-loader(*default-dispatcher*, $list-odf-id,
 // To load an improper list, get subobjects and build list in reverse order,
 // starting with tail.
 //
-add-od-loader(*default-dispatcher*, $list*-odf-id, 
+add-od-loader(*default-dispatcher*, #"list*", 
   method (state :: <load-state>) => res :: <list>;
     let contents = load-subobjects-vector(state);
     let last-idx = contents.size - 1;
-    for (i from last-idx - 1 to 0, 
-         res = contents[last-idx] then pair(contents[i], res))
+    let last-pair = pair(contents[last-idx - 1], contents[last-idx]);
+    head-maybe-backpatch(last-pair);
+    let x = last-pair.tail;
+    if (x.obj-resolved?)
+      last-pair.tail := x.actual-obj;
+    else
+      request-backpatch(x, method (actual) last-pair.tail := actual end);
+    end;
+    
+    for (i from last-idx - 2 to 0 by -1, 
+         res = last-pair then pair(contents[i], res))
+      head-maybe-backpatch(res);
       finally res;
     end;
   end method
@@ -281,7 +312,7 @@ define method dump-od
   (obj :: <simple-object-vector>, buf :: <dump-state>)
  => ();
   let start-pos = buf.current-pos;
-  dump-definition-header($simple-object-vector-odf-id, buf, subobjects: #t);
+  dump-definition-header(#"simple-object-vector", buf, subobjects: #t);
   for (el in obj)
     dump-od(el, buf);
   end;
@@ -291,8 +322,20 @@ end method;
 
 // Get subobjects and convert to a simple object vector.
 //
-add-od-loader(*default-dispatcher*, $simple-object-vector-odf-id, 
+add-od-loader(*default-dispatcher*, #"simple-object-vector", 
   method (state :: <load-state>) => res :: <simple-object-vector>;
-    as(<simple-object-vector>, load-subobjects-vector(state));
+    let contents = load-subobjects-vector(state);
+    let rsize = contents.size;
+    let res = make(<simple-object-vector>, size: rsize);
+    for (i from 0 below rsize)
+      let el = contents[i];
+      if (el.obj-resolved?)
+        res[i] := el.actual-obj;
+      else
+        res[i] := el;
+	request-backpatch(el, method (actual) res[i] := actual end);
+      end;
+    end;
+    res;
   end method
 );
