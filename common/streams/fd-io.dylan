@@ -2,7 +2,7 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.5 1996/08/10 20:20:29 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/fd-io.dylan,v 1.6 1996/09/04 16:47:36 nkramer Exp $
 
 //======================================================================
 //
@@ -144,15 +144,9 @@ end method;
 define inline method fd-open
     (name :: <byte-string>, flags :: <integer>)
  => (fd :: false-or(<integer>), errno :: false-or(<integer>));
-  let real-flags =
-#if (newlines-are-CRLF)
-     logior(flags, c-expr(int:, "O_BINARY"));
-#else
-     flags;
-#endif
-  let res = call-out("open", int:,
+  let res = call-out("fd_open", int:,
 		     ptr: string->c-string(name),
-		     int: real-flags,
+		     int: flags,
 		     int: #o666);
   results(res, res);
 end method;
@@ -160,7 +154,7 @@ end method;
 
 define inline method fd-close (fd :: <integer>)
  => (success :: <boolean>, errno :: false-or(<integer>));
-  let res = call-out("close", int:, int: fd);
+  let res = call-out("fd_close", int:, int: fd);
   results(res, #t);
 end method;
 
@@ -169,7 +163,8 @@ define inline method fd-read
     (fd :: <integer>, buf :: <buffer>, start :: <integer>,
      buf-end :: <integer>)
  => (nbytes :: false-or(<integer>), errno :: false-or(<integer>));
-  let res = call-out("read", int:, int: fd, ptr: buffer-address(buf) + start,
+  let res = call-out("fd_read", int:, int: fd, 
+		     ptr: buffer-address(buf) + start,
 		     int: buf-end - start);
   results(res, res);
 end method;
@@ -196,12 +191,13 @@ end method;
 
 define method fd-input-available? (fd :: <integer>)
  => (available :: <boolean>, errno :: false-or(<integer>));
-  values(#t, #f); // ### hack
+  let res = call-out("fd_input_available", int:, int: fd);
+  values(res ~== 0, #f); // ### errno ignored
 end method;
 
 define method fd-sync-output (fd :: <integer>)
  => (success :: <boolean>, errno :: false-or(<integer>));
-  values(#t, #f); // ### hack
+  values(#t, #f); // ### completely bogus
 end method;
 
 define method fd-error-string (num :: <integer>) 
