@@ -198,7 +198,7 @@ fi
 
 # Our libraries.
 /usr/lib/dylan/@VERSION@/*/*.a
-/usr/lib/dylan/@VERSION@/*/*.so
+/usr/lib/dylan/@VERSION@/*/*.so*
 /usr/lib/dylan/@VERSION@/*/*.du
 
 
