@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.4 1994/04/09 13:35:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.5 1994/04/09 15:38:53 wlott Exp $
 *
 * This file does whatever.
 *
@@ -35,6 +35,7 @@ static int yy_input(char *buf, int max_size);
 static obj_t token_as_address(void);
 static obj_t token_as_string(void);
 static obj_t token_as_symbol(void);
+static obj_t token_as_keyword(void);
 
 %}
 
@@ -55,7 +56,7 @@ IDENTIFIER	[-!$%&*+/0-9<=>?@A-Z^_a-z~]+
 -?{DIGIT}+	yylval = make_fixnum(atoi(yytext)); return tok_LITERAL;
 \"[^"\\]*(\\.[^"\\])*\"	yylval = token_as_string(); return tok_LITERAL;
 {IDENTIFIER}		yylval = token_as_symbol(); return tok_SYMBOL;
-{IDENTIFIER}:		yylval = token_as_symbol(); return tok_KEYWORD;
+{IDENTIFIER}:		yylval = token_as_keyword(); return tok_KEYWORD;
 ,			return tok_COMMA;
 [ \t\n]+		;
 .			return tok_ERROR;
@@ -169,6 +170,16 @@ static obj_t token_as_symbol(void)
 
     memcpy(buffer, yytext, yyleng);
     buffer[yyleng] = '\0';
+
+    return symbol(buffer);
+}
+
+static obj_t token_as_keyword(void)
+{
+    char buffer[256];
+
+    memcpy(buffer, yytext, yyleng-1);
+    buffer[yyleng-1] = '\0';
 
     return symbol(buffer);
 }
