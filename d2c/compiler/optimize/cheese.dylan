@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.112 1996/01/04 17:46:53 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.113 1996/01/05 11:32:14 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2612,7 +2612,7 @@ define method cleanup-control-flow-aux
     // problems with the iteration in <compound-region> above.
     #f;
   end;
-  #f;
+  #t;
 end;
 
 define method cleanup-control-flow-aux
