@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.107 1995/11/13 11:08:17 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.108 1995/12/06 20:39:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -360,13 +360,16 @@ define method optimize
     else
       // We are extracting some number of values out of a cluster.  Expand
       // the cluster into that number of variables.
-      for (nvals from 0, defn = defines then defn.definer-next, while: defn)
+      for (nvals from 0,
+	   defn = defines then defn.definer-next,
+	   names = #() then pair(defn.var-info.debug-name, names),
+	   while: defn)
       finally
 	let builder = make-builder(component);
 	let op = make-operation(builder, <primitive>, list(source),
 				name: #"values");
 	replace-expression(component, dependency, op);
-	expand-cluster(component, source, nvals);
+	expand-cluster(component, source, nvals, names);
       end;
     end;
 
@@ -375,14 +378,16 @@ define method optimize
     // We are defining a cluster.  Propagate the type on though.
     maybe-restrict-type(component, defines, source-type);
 
-  else
+  elseif (defines & defines.definer-next == #f & expression-movable?(source)
+	    & maybe-propagate-copy(component, defines, source))
+    //
+    // We are defining a single variable, and we could copy-propagate it
+    // out of existance.  So nuke the assignment.
+    delete-and-unlink-assignment(component, assignment);
 
-    // We are defining some fixed number of variables.
-    if (defines & defines.definer-next == #f & expression-movable?(source))
-      // But we don't have to do it right here, so propagate the value to
-      // dependents of whatever we define.
-      maybe-propagate-copy(component, defines, source);
-    end;
+  else
+    //
+    // We are defining a fixed number of variables.
 
     // Propagate type information to the defined variables.
     for (var = defines then var.definer-next,
@@ -440,14 +445,14 @@ end;
 
 define method maybe-propagate-copy
     (component :: <component>, var :: <ssa-variable>, value :: <leaf>)
-    => did-anything? :: <boolean>;
+    => no-longer-needed? :: <boolean>;
   unless (var.needs-type-check?)
     // Change all references to this variable to be references to value
     // instead.
     while (var.dependents)
       replace-expression(component, var.dependents, value)
     end;
-    // Return that we did something.
+    // Return that we nuked 'em all.
     #t;
   end;
 end;
@@ -455,22 +460,23 @@ end;
 define method maybe-propagate-copy
     (component :: <component>, var :: <ssa-variable>, value :: <ssa-variable>,
      #next next-method)
-    => did-anything? :: <boolean>;
-  if (instance?(var.definer, <let-assignment>)
-	& ~instance?(value.definer, <let-assignment>)
-	& block (return)
-	    let binding-home = var.definer.home-function-region;
-	    for (dep = var.dependents then dep.source-next,
-		 while: dep)
-	      if (dep.dependent.home-function-region ~== binding-home)
-		return(#t);
-	      end;
-	    finally
-	      #f;
-	    end;
-	  end)
-    // There are non local references to this variable, so we have to keep it.
-    #f;
+    => no-longer-needed? :: <boolean>;
+  if (instance?(var.var-info, <lexical-var-info>)
+	& ~instance?(value.var-info, <lexical-var-info>))
+    // We can't just blindly replace references to var with references to value
+    // because they might be in a different function, and value can't be
+    // closed over.  So we only replace the references that are homed in
+    // value.definer.home.
+    let home = value.definer.home-function-region;
+    let next = #f;
+    for (dep = var.dependents then next,
+	 while: dep)
+      next := dep.source-next;
+      if (dep.dependent.home-function-region == home)
+	replace-expression(component, dep, value);
+      end;
+    end;
+    var.dependents == #f;
   else
     next-method();
   end;
@@ -479,7 +485,7 @@ end;
 define method maybe-propagate-copy
     (component :: <component>, var :: <abstract-variable>,
      value :: <expression>)
-    => did-anything? :: <boolean>;
+    => no-longer-needed? :: <boolean>;
   #f;
 end;
 
@@ -1678,7 +1684,7 @@ define method maybe-expand-cluster
       error("Trying to expand a cluster that is referenced "
 	      "in more than one place?");
     end;
-    expand-cluster(component, cluster, cluster.derived-type.min-values);
+    expand-cluster(component, cluster, cluster.derived-type.min-values, #());
     #t;
   else
     #f;
@@ -1687,15 +1693,20 @@ end;
 
 define method expand-cluster 
     (component :: <component>, cluster :: <ssa-variable>,
-     number-of-values :: <fixed-integer>)
+     number-of-values :: <fixed-integer>, names :: <list>)
     => ();
   let cluster-dependency = cluster.dependents;
   let target = cluster-dependency.dependent;
   let assign = cluster.definer;
   let new-defines = #f;
   let new-depends-on = cluster-dependency.dependent-next;
-  for (index from number-of-values - 1 to 0 by -1)
-    let debug-name = as(<symbol>, format-to-string("result%d", index));
+  for (index from number-of-values - 1 to 0 by -1,
+       names = names then names.tail)
+    let debug-name = if (names == #())
+		       as(<symbol>, format-to-string("result%d", index));
+		     else
+		       names.head;
+		     end;
     let var-info = make(<local-var-info>, debug-name: debug-name,
 			asserted-type: object-ctype());
     let var = make(<ssa-variable>, var-info: var-info,
@@ -1727,15 +1738,20 @@ end;
 
 define method expand-cluster 
     (component :: <component>, cluster :: <initial-variable>,
-     number-of-values :: <fixed-integer>)
+     number-of-values :: <fixed-integer>, names :: <list>)
     => ();
   let cluster-dependency = cluster.dependents;
   let target = cluster-dependency.dependent;
   let assigns = map(definer, cluster.definitions);
   let new-defines = make(<list>, size: cluster.definitions.size, fill: #f);
   let new-depends-on = cluster-dependency.dependent-next;
-  for (index from number-of-values - 1 to 0 by -1)
-    let debug-name = as(<symbol>, format-to-string("result%d", index));
+  for (index from number-of-values - 1 to 0 by -1,
+       names = names then names.tail)
+    let debug-name = if (names == #())
+		       as(<symbol>, format-to-string("result%d", index));
+		     else
+		       names.head;
+		     end;
     let var-info = make(<local-var-info>, debug-name: debug-name,
 			asserted-type: object-ctype());
     let var = make(<initial-variable>, var-info: var-info,
@@ -1802,11 +1818,19 @@ define method let-convert
     = begin
 	let temps = make(<stretchy-vector>);
 	for (dep = call.depends-on.dependent-next then dep.dependent-next,
-	     arg-type in function.argument-types)
+	     arg-type in function.argument-types,
+	     arg = function.prologue.dependents.dependent.defines
+	       then arg & arg.definer-next,
+	     index from 0)
 	  unless (dep)
 	    error("Wrong number of argument in let-convert?");
 	  end;
-	  let temp = make-local-var(builder, #"arg", arg-type);
+	  let debug-name = if (arg)
+			     arg.var-info.debug-name;
+			   else
+			     as(<symbol>, format-to-string("arg%d", index));
+			   end;
+	  let temp = make-local-var(builder, debug-name, arg-type);
 	  add!(temps, temp);
 	  build-assignment(builder, call-policy, call-source,
 			   temp, dep.source-exp);
@@ -1919,6 +1943,9 @@ define method queue-throws
     => ();
   for (assign = region.first-assign then assign.next-op,
        while: assign)
+    if (instance?(assign, <let-assignment>))
+      reoptimize(component, assign);
+    end;
     let expr = assign.depends-on.source-exp;
     if (instance?(expr, <throw>))
       reoptimize(component, expr);
@@ -2044,31 +2071,35 @@ end;
 define method maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>)
     => ();
-  let old-type = expr.derived-type;
-  if (old-type == wild-ctype() 
-      | (~values-subtype?(old-type, type) & values-subtype?(type, old-type)))
-    expr.derived-type := type;
-    if (instance?(expr, <initial-definition>))
-      let var = expr.definition-of;
-      if (instance?(var, <initial-variable>))
-	block (return)
-	  let var-type = empty-ctype();
-	  for (defn in var.definitions)
-	    let (res, win) = values-type-union(var-type, defn.derived-type);
-	    if (win)
-	      var-type := res;
-	    else
-	      return();
-	    end;
-	  finally
-	    maybe-restrict-type(component, var, var-type);
-	  end;
-	end;
-      end;
-    end;
-    queue-dependents(component, expr);
-  end;
-end;
+  unless (type == wild-ctype())
+    let old-type = expr.derived-type;
+    if (old-type == wild-ctype() 
+	  | (~values-subtype?(old-type, type)
+	       & values-subtype?(type, old-type)))
+      expr.derived-type := type;
+      if (instance?(expr, <initial-definition>))
+	let var = expr.definition-of;
+	if (instance?(var, <initial-variable>))
+	  block (return)
+	    let var-type = empty-ctype();
+	    for (defn in var.definitions)
+	      let (res, win) = values-type-union(var-type, defn.derived-type);
+	      if (win)
+		var-type := res;
+	      else
+		return();
+	      end;
+	    finally
+	      maybe-restrict-type(component, var, var-type);
+	    end for;
+	  end block;
+	end if;
+      end if;
+      queue-dependents(component, expr);
+    end if;
+  end unless;
+end method maybe-restrict-type;
+
 
 define method maybe-restrict-type
     (component :: <component>, var :: <abstract-variable>,
@@ -2761,6 +2792,7 @@ define method environment-analysis (component :: <component>) => ();
 	next := var.definer-next;
 	maybe-close-over(component, var, home);
       end;
+      reoptimize(component, l);
     end;
   end;
 end;
