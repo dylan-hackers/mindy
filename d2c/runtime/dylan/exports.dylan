@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.14 2001/02/05 02:03:31 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.15 2001/02/21 04:16:42 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -137,8 +137,11 @@ define module Dylan
 	     \if, \unless, \case, \select, \while, \until, \for, \begin,
 	     \block, \method,
 
-	     // Function-macro operators.
+	     // Function-macro operators
 	     \:=, \&, \|,
+    
+	     // Hashing function essentials
+	     $permanent-hash-state,
 
              // Constants
              $maximum-integer, $minimum-integer
@@ -169,10 +172,10 @@ define module Extensions
 	     report-condition, condition-format,
 	     condition-force-output, *warning-output*,
 
-	     // Debugger Hooks
+	     // Debugger hooks.
 	     <debugger>, invoke-debugger, *debugger*,
 
-	     // Collection operations
+	     // Collection operations.
 	     difference,
 
 	     // Byte vector stuff.
@@ -206,7 +209,7 @@ define module System
 	     \call-out, \c-include, \c-decl, \c-local-decl, \c-expr,
 	     \callback-method, callback-entry,
 
-	     // Designator-class (C-FFI) stuff
+	     // Designator-class (C-FFI) stuff.
 	     <designator-class>, designator-class-definer,
 	     size-of, alignment-of, referenced-type,
 
@@ -219,7 +222,7 @@ define module System
 	     system, import-string, export-string, getenv, 
 	     no-core-dumps, get-time-of-day,
 
-	     // Buffers
+	     // Buffers.
 	     <buffer>, <buffer-index>, $maximum-buffer-size,
 	     buffer-next, buffer-next-setter, buffer-end, buffer-end-setter,
 	     copy-bytes, buffer-address},

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.13 2001/02/05 02:00:41 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.14 2001/02/21 04:16:35 gabor Exp $
 copyright: see below
 module: bootstrap
 
@@ -181,8 +181,11 @@ define module dylan-viscera
     \if, \unless, \case, \select, \while, \until, \for, \begin,
     \block, \method,
 
-    // Function-macro operators.
+    // Function-macro operators
     \:=, \&, \|,
+    
+    // Hashing function essentials
+    $permanent-hash-state,
 
     // Extensions
     <general-integer>, <extended-integer>,
