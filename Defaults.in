@@ -65,9 +65,10 @@ $MINDY = '@MINDY@';
 $DYLANPATH = @DYLANPATH@;
 $CC = '@CC@';
 if ($enable_debug) {
-  $CFLAGS = '-g -O4 -finline-functions';
+  $CFLAGS = '-g -O';
 } else {
-  $CFLAGS = '-O4 -finline-functions';
+  #BGH -- use -pg for profiling, remove -g if you don't want debugging
+  $CFLAGS = '-O3 -g -fomit-frame-pointer';
 }
 
 if ($build_tools_with_d2c) {
