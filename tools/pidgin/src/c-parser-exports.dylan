@@ -82,8 +82,7 @@ define module c-parser-engine
     make-struct-type, c-type-size,
     add-cpp-declaration, unknown-type, <declaration>, <arg-declaration>,
     <varargs-declaration>, <enum-slot-declaration>, constant-value,
-    <integer-type-declaration>, canonical-name, true-type, make-enum-slot,
-    referent;
+    <integer-type-declaration>, canonical-name, true-type, make-enum-slot;
 
   export
     parse, parse-type, parse-macro;
@@ -99,7 +98,7 @@ define module c-parser
   use parse-conditions;
   use ansi-c;
   use c-lexer;
-  use c-parser-engine, rename: {referent => fake-referent};
+  use c-parser-engine;
 
   export
     parse-c-file;
