@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.5 2000/01/27 22:55:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.6 2000/10/17 09:19:45 gabor Exp $
 copyright: see below
 
 
@@ -160,6 +160,7 @@ define-procedural-expander
 	make-parsed-fragment
 	  (make(<define-method-parse>,
 		method: method-parse,
+		source-location: generator.generator-call.source-location,
 		options: parse-property-list(make(<fragment-tokenizer>,
 						  fragment: options-frag))),
 	   source-location: generate-token-source-location(generator)));
@@ -1070,7 +1071,7 @@ define method build-discriminator-tree
 				       list(class-temp)));
     let less-then = ref-dylan-defn(builder, policy, source, #"<");
     //
-    // Recursivly build an if tree based on that division of the methods.
+    // Recursively build an if tree based on that division of the methods.
     local
       method split-range (min, max)
 	if (min == max)
