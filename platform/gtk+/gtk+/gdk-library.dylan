@@ -3,6 +3,7 @@ Copyright: Copyright 2001 Peter S. Housel
 License: GNU Lesser General Public License
 
 define library gdk
+  use Dylan;
   use Common-Dylan;
   use Melange-support;
   use glib;

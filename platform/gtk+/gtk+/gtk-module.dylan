@@ -4,7 +4,6 @@ License: GNU Lesser General Public License
 
 define module gtk
   use Dylan;
-  use System, import: { <raw-pointer> }, export: all;
   use Melange-support,
     exclude: { null-pointer },
     export: { <C-string>,
@@ -13,6 +12,9 @@ define module gtk
               pointer-value-setter,
               callback-method };
 
+  use System, 
+    import: { pointer-deref, pointer-deref-setter, <raw-pointer> }, 
+    export: all;
   use glib;
   use gdk, export: all;
   use gtk-extra, export: all;
