@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.122 1996/06/20 21:09:40 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.123 1996/06/26 14:46:40 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1180,6 +1180,7 @@ define method emit-prologue
     (file :: <file-state>, other-units :: <simple-object-vector>)
     => ();
   maybe-emit-include("stdlib.h", file);
+  maybe-emit-include("stdio.h", file);
   maybe-emit-include("runtime.h", file);
 
   let stream = file.file-body-stream;
