@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/GNUmakefile,v 1.6 1994/05/03 12:09:21 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/Attic/GNUmakefile,v 1.7 1994/05/25 12:34:16 wlott Exp $
 ##
 ##  This is the makefile for the Mindy runtime library, dylan.dbc.
 ##
@@ -24,7 +24,7 @@ MINDYFLAGS = -lDylan
 
 OBJS = exports.dbc cmp.dbc coll.dbc array.dbc vec.dbc string.dbc list.dbc \
 	deque.dbc stretchy.dbc table.dbc sort.dbc cond.dbc num.dbc char.dbc \
-	func.dbc misc.dbc debug.dbc exit.dbc
+	func.dbc misc.dbc debug.dbc exit.dbc ext.dbc
 
 dylan.dbc: ${OBJS}
 	cat ${OBJS} > $@
