@@ -93,7 +93,7 @@ define module new-internals
   use system,
     import: {<buffer>, <buffer-index>, $maximum-buffer-size,
 	     buffer-end, buffer-end-setter, buffer-next, buffer-next-setter,
-	     copy-bytes, $Newlines-are-CRLF},
+	     copy-bytes},
     export: all;
   use threads,
     import: {<multilock>, <semaphore>, grab-lock, release-lock, locked?},

@@ -28,14 +28,20 @@ copyright: See below.
 //
 //======================================================================
 
+//// Each of these functions has two versions, depending on newlines-are-CRLF.
+//// Edits should (probably) be done to both.
+////
+
 /// $newline -- Internal.
 ///
 define constant $newline :: <byte-character> = '\n';
 define constant $newline-byte :: <integer> = as(<integer>, $newline);
 
-#if ($newlines-are-CRLF)
+#if (newlines-are-CRLF)
+
 define constant $return :: <byte-character> = '\r';
 define constant $return-byte :: <integer> = as(<integer>, '\r');
+
 #endif
 
 /// read-line -- Exported.
@@ -44,7 +50,7 @@ define open generic read-line (stream :: <stream>,
 			       #key on-end-of-stream :: <object>)
  => (string-or-eof :: <object>, newline? :: <boolean>);
 
-#if ($newlines-are-CRLF)
+#if (newlines-are-CRLF)
 
 define method read-line (stream :: <buffered-stream>,
 			 #key on-end-of-stream :: <object> = $not-supplied)
@@ -237,7 +243,7 @@ define open generic read-line-into! (stream :: <stream>, string :: <string>,
 				         grow? :: <boolean>)
  => (string-or-eof :: <object>, newline? :: <boolean>);
 
-#if ($newlines-are-CRLF)
+#if (newlines-are-CRLF)
 
 define method read-line-into! (stream :: <buffered-stream>,
 			       string :: <string>,
@@ -476,7 +482,7 @@ define open generic write-line (stream :: <stream>, string :: <string>,
 			             end: stop :: <integer>)
  => ();
 
-#if ($newlines-are-CRLF)
+#if (newlines-are-CRLF)
 
 define method write-line (stream :: <buffered-stream>, 
 			  string :: <string>,
@@ -611,16 +617,17 @@ end method write-line;
 ///
 define open generic new-line (stream :: <stream>) => ();
 
-#if ($newlines-are-CRLF)
+#if (newlines-are-CRLF)
 
-define method new-line (stream :: <stream>) => ();
+define inline  method new-line (stream :: <stream>) => ();
+  // Could make this a bit more efficient for <buffered-stream>s.
   write-element(stream, as(stream.stream-element-type, $return));
   write-element(stream, as(stream.stream-element-type, $newline));
 end method new-line;
 
 #else
 
-define method new-line (stream :: <stream>) => ();
+define inline method new-line (stream :: <stream>) => ();
   write-element(stream, as(stream.stream-element-type, $newline));
 end method new-line;
 
