@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.12 1996/01/12 00:58:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.13 1996/01/12 14:03:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -680,10 +680,10 @@ define constant $Initial-State$ =
 			state(#"sharp-e-minus", #f,
 			      pair("0-9", #"extended-integer")),
 			state(#"sharp-el", #f, pair("sS", #"sharp-els")),
-			state(#"sharp-els", #f, pair("eE", #"sharp-els")),
+			state(#"sharp-els", #f, pair("eE", #"sharp-else")),
 			state(#"sharp-else", <feature-else-token>,
-			      pair("iI", #"sharp-els")),
-			state(#"sharp-elsei", #f, pair("fF", #"sharp-els")),
+			      pair("iI", #"sharp-elsei")),
+			state(#"sharp-elsei", #f, pair("fF", #"sharp-elseif")),
 			state(#"sharp-elseif", <feature-else-if-token>),
 			state(#"sharp-en", #f, pair("dD", #"sharp-end")),
 			state(#"sharp-end", <feature-end-token>),
