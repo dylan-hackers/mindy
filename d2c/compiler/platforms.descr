@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.64 2003/02/27 12:08:35 robmyers Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.65 2003/03/01 20:04:03 andreas Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -406,7 +406,7 @@ platform-name:			gcc
 default-features:		C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 compile-c-for-shared-command:   $(LIBTOOL) --mode=compile gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer
+default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
 default-c-compiler-debug-flags:	-I. -I%s -gstabs1 -O -fno-inline-functions
 default-c-compiler-profile-flags:	-I. -I%s -pg -gstabs1 -O -fno-inline-functions
 assembler-command:		gcc $(CCFLAGS) -c %s -o %s
@@ -420,11 +420,16 @@ path-separator:        		/
 supports-asm-stabs-hack?:	#t
 
 // FIXME:  Temporary measure until gcc-3.0 is the default
+//
+// Beware: some versions of gcc 3 have an optimizer bug,
+// which requires -fno-strict-aliasing be active. Might be
+// fixed as of 3.2.3, or not.
+//
 platform-name:                 gcc30
 default-features:              C-compiler-is-GCC
 compile-c-command:              gcc-3.0 $(CCFLAGS) -c %s -o %s
 compile-c-for-shared-command:   $(LIBTOOL) --mode=compile gcc-3.0 $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:      -I. -I%s -O2 -fomit-frame-pointer
+default-c-compiler-flags:      -I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
 default-c-compiler-debug-flags:        -I. -I%s -g -O -fno-inline-functions
 default-c-compiler-profile-flags:      -I. -I%s -pg -g -O -fno-inline-functions
 assembler-command:             gcc-3.0 $(CCFLAGS) -c %s -o %s
@@ -439,7 +444,7 @@ platform-name:			  gcc32
 default-features:		  C-compiler-is-GCC
 compile-c-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
 compile-c-for-shared-command:	  $(LIBTOOL) --mode=compile gcc-3.2 $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:	  -I. -I%s -O2 -fomit-frame-pointer
+default-c-compiler-flags:	  -I. -I%s -O2 -fomit-frame-pointer  -fno-strict-aliasing
 default-c-compiler-debug-flags:	  -I. -I%s -g -O -fno-inline-functions
 default-c-compiler-profile-flags: -I. -I%s -pg -g -O -fno-inline-functions
 assembler-command:		  gcc-3.2 $(CCFLAGS) -c %s -o %s
