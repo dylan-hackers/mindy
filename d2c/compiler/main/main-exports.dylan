@@ -1,10 +1,13 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.2 1996/01/31 23:59:47 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.3 1996/02/02 23:18:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define library compiler-main
   use Dylan;
+#if (~mindy)
+  use String-extensions;
+#end
   use compiler-base;
   use compiler-front;
   use compiler-parser;
@@ -13,7 +16,6 @@ end;
 
 define module lexer
   use common;
-  use System, import: {};
 
   use utils;
   use source;
@@ -41,10 +43,13 @@ end;
 define module main
   use common;
 #if (mindy)
-  use System, import: {system, copy-bytes, getenv};
+  use System, import: {system, copy-bytes, getenv, collect-garbage};
 #else
-  use System, import: {copy-bytes};
+  use System,
+     import: {copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
+	      pointer-deref};
 #end
+  use string-conversions, import: {string-to-integer};
 
   use utils;
   use define-classes;
@@ -72,9 +77,9 @@ define module main
   use cheese;
   use od-format;
 #if (mindy)
-  use string-conversions;
   use autodump;
 #end
   use standard-io;
   use tokens;
+  use names;
 end;
