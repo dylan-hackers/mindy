@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.14 1994/04/08 17:22:47 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.15 1994/04/09 15:42:53 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -44,9 +44,11 @@ define module Builtin-Stuff
     <true>, <type>,
     <unicode-string>,
     <vector>,
+    <weak-pointer>,
     $permanent-hash-state,
     add-method, all-superclasses, applicable-method?, apply,
     apply-curry, as, ash,
+    broken?,
     direct-subclasses, direct-superclasses,
     ceiling/, current-handler,
     do-next-method,
@@ -59,7 +61,7 @@ define module Builtin-Stuff
     limited, list, logand, logbit?, logior, lognot, logxor,
     main, make, merge-hash-codes, method-specializers,
     negative,
-    object-class, object-hash,
+    object, object-class, object-hash,
     pair, prin1, print, putc, puts,
     remove-method, round/,
     singleton, size, slot-initialized?, sorted-applicable-methods,
@@ -89,7 +91,8 @@ define module Dylan
 	      debugger-describe-restarts, debugger-restart, debugger-return,
 	      enable-error-system, apply-curry, state-valid?, <buffer>,
 	      fd-close, fd-error-string, fd-input-available?, fd-open,
-	      fd-read, fd-seek, fd-sync-output, fd-write),
+	      fd-read, fd-seek, fd-sync-output, fd-write,
+	      <weak-pointer>, broken?, object),
     export: all;
   use Builtin-Stuff,
     import: (main, type-error, current-handler, handler-description,
@@ -146,7 +149,8 @@ define module Extensions
   use Dylan;
   use Builtin-Stuff,
     import: (main, format, prin1, print, putc, puts, getc,
-	     <boolean>, <true>, <false>),
+	     <boolean>, <true>, <false>,
+	     <weak-pointer>, broken?, object),
     export: all;
 end Extensions;
 
