@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/sort.dylan,v 1.2 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/sort.dylan,v 1.3 2002/12/11 14:38:41 bruce Exp $
 
 //======================================================================
 //
@@ -63,58 +63,16 @@ rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/sort.dylan,v 1.2 2000/01/24 
 //
 // Swaps two elements in a vector.
 //
-define method swap-elements! (vector :: <simple-object-vector>, key1 :: <integer>,
-			      key2 :: <integer>)
+define inline method swap-elements! (vector :: <vector>,
+                                     key1 :: <integer>,
+                                     key2 :: <integer>)
+ => ();
   let element1 = vector[key1];
   let element2 = vector[key2];
   vector[key1] := element2;
   vector[key2] := element1;
 end method swap-elements!;
 
-// selection-sort! -- internal
-//
-// Selection sort sorts the vector from the beginning to the end.  At any
-// point the vector is sorted up to a certain position.  From this
-// position the remainder of the vector is searched for the next largest
-// element, and this element is moved to the position.  After this has
-// been done for each position in the vector, the vector is sorted.
-//
-// SELECTION-SORT! takes a TEST key to specify the ascending order or
-// elements, a START key to specify where in the vector to begin the sort,
-// and an END key to specify where to end the sort.  (As usual in Dylan,
-// START is an inclusive bound while END is an exclusive bound.)
-//
-// Selection sort is NOT stable, but it does sort in place.
-//
-define method selection-sort!
-    (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <integer> = 0,
-          end: last :: <integer> = vector.size)
-  for (current-key :: <integer> from first below last)
-    for (search-key :: <integer> from current-key + 1 below last,
-	 select-key :: <integer> = current-key
-	   then if (test(vector[search-key], vector[select-key])) search-key
-		else select-key
-		end if)
-    finally
-      swap-elements!(vector, current-key, select-key)
-    end for;
-  end for;
-  vector;
-end method selection-sort!;
-
-// selection-sort -- internal
-//
-// This version of selection sort does not modify the original vector.  It
-// calls the destructive version on copy of the vector.
-//
-define method selection-sort
-    (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <integer> = 0,
-          end: last :: <integer> = vector.size)
-  let sort-vector = copy-sequence(vector, start: first, end: last);
-  selection-sort!(sort-vector, test: test);
-end method selection-sort;
 
 // insertion-sort! -- internal
 //
@@ -128,8 +86,10 @@ end method selection-sort;
 //
 define method insertion-sort!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <integer> = 0,
-     end: last :: <integer> = vector.size)
+     test :: <function>,
+     first :: <integer>,
+     last :: <integer>)
+ => ();
   for (current-key :: <integer> from first + 1 below last)
     let current-element = vector[current-key];
     for (insert-key :: <integer> from current-key - 1 to first by -1,
@@ -139,21 +99,7 @@ define method insertion-sort!
       vector[insert-key + 1] := current-element;
     end for;
   end for;
-  vector;
 end method insertion-sort!;
-
-// insertion-sort -- internal
-//
-// This version of insertion sort does not modify the original vector.  It
-// calls the destructive version on copy of the vector.
-//
-define method insertion-sort
-    (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <integer> = 0,
-     end: last :: <integer> = vector.size)
-  let sort-vector = copy-sequence(vector, start: first, end: last);
-  insertion-sort!(sort-vector, test: test);
-end method insertion-sort;
 
 
 
@@ -166,7 +112,7 @@ end method insertion-sort;
 // subsequence should be before the simple sorts are called.  (The simple
 // sorts can be turned off by setting this to 0.)
 //
-define variable $small-sort-size$ :: <integer> = 10;
+define constant $small-sort-size$ :: <integer> = 15;
 
 // Merge Sort
 //
@@ -199,9 +145,14 @@ define variable $small-sort-size$ :: <integer> = 10;
 //
 define method merge!
     (vector :: <simple-object-vector>,
-     #key test: test :: <function>, start: first :: <integer>,
-          middle: middle :: <integer>, end: last :: <integer>)
+     test :: <function>,
+     first :: <integer>,
+     middle :: <integer>,
+     last :: <integer>)
+ => ();
   let merge-size :: <integer> = last - first;
+
+  // BGH -- this does not need to cons!!  Can merge in-place.  Later.
   let merge-vector = make(<simple-object-vector>, size: merge-size);
   let start-key :: <integer> = first;
   let middle-key :: <integer> = middle;
@@ -241,89 +192,24 @@ end method merge!;
 // ascending order for the sort, and START and END give the bounds of the
 // subvector to be operated on in VECTOR.
 //
+//
+// Caution: merge-sort! leaves the vector not *quite* sorted, to be
+// cleaned up afterwards by insertion-sort!
+
 define method merge-sort!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <integer> = 0,
-          end: last :: <integer> = vector.size)
-  let (div, mod) = floor/(last - first, 2);
-  let middle :: <integer> = first + div;
-  case
-    (last - first) < $small-sort-size$ =>
-      insertion-sort!(vector, test: test, start: first, end: last);
-    (last - first) > 1 =>
-      merge-sort!(vector, test: test, start: first, end: middle);
-      merge-sort!(vector, test: test, start: middle, end: last);
-      merge!(vector, start: first, middle: middle, end: last, test: test);
-    otherwise => #f;
-  end case;
-  vector;
+     test :: <function>,
+     first :: <integer>,
+     last :: <integer>)
+ => ();
+  if ((last - first) > $small-sort-size$)
+    let middle :: <integer> = ash(first + last, -1);
+    merge-sort!(vector, test, first, middle);
+    merge-sort!(vector, test, middle, last);
+    merge!(vector, test, first, middle, last);
+  end if;
 end method merge-sort!;
 
-// merge -- internal
-//
-// This non-destructive version of MERGE merges two vectors as does
-// MERGE!, but the two vectors are given separately.  Also, the merge
-// vector is simply returned, rather than copied into any of the
-// arguments.  The TEST key gives the test for ascending order.
-//
-define method merge
-    (vector1 :: <simple-object-vector>, vector2 :: <simple-object-vector>,
-     #key test :: <function> = \<)
-  let size1 :: <integer> = size(vector1);
-  let size2 :: <integer> = size(vector2);
-  let merge-size :: <integer> = size1 + size2;
-  let merge-vector = make(<simple-object-vector>, size: merge-size);
-  let key1 :: <integer> = 0;
-  let key2 :: <integer> = 0;
-  for (merge-key :: <integer> from 0 below merge-size)
-    case
-      key1 >= size1 =>
-	merge-vector[merge-key] := vector2[key2];
-	key2 := key2 + 1;
-      key2 >= size2 =>
-	merge-vector[merge-key] := vector1[key1];
-        key1 := key1 + 1;
-      test(vector2[key2], vector1[key1]) =>
-	merge-vector[merge-key] := vector2[key2];
-	key2 := key2 + 1;
-      otherwise =>
-	merge-vector[merge-key] := vector1[key1];
-	key1 := key1 + 1;
-    end case;
-  end for;
-  merge-vector;
-end method merge;
-
-// merge-sort -- internal
-//
-// This works the same as MERGE-SORT!, except that the recursive calls
-// terminate by returning a new vector rather than by changing the old.
-// Thus, the recursion might terminate when the vector to be sorted
-// contains less than two elements, and a call to COPY-SEQUENCE is
-// returned; or when the insertion sort kicks in.  The non-destructive
-// version of insertion sort is used.
-//
-// MERGE-SORT still takes the keywords START and END, because the
-// recursive calls are still made on two halves of the same vector.  (The
-// halves of the vector are not copied before the calls.)
-//
-define method merge-sort
-    (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <integer> = 0,
-          end: last :: <integer> = vector.size)
-  let (div, mod) = floor/(last - first, 2);
-  let middle :: <integer> = first + div;
-  case
-    (last - first) < $small-sort-size$ =>
-      insertion-sort(vector, test: test, start: first, end: last);
-    (last - first) > 1 =>
-      merge(merge-sort(vector, test: test, start: first, end: middle),
-	    merge-sort(vector, test: test, start: middle, end: last),
-	    test: test);
-    otherwise =>
-      copy-sequence(vector, start: first, end: last);
-  end case;
-end method merge-sort;
 
 // Quick Sort
 //
@@ -342,28 +228,36 @@ end method merge-sort;
 // median(vec[first], vec[middle], vec[last - 1]).  Note: In accordance with
 // convention, "last" is an exclusive bound.
 //
-define constant median-of-three = method 
-    (vec :: <simple-object-vector>, first :: <integer>,
-     last :: <integer>, less-than :: <function>)
- => pivot-index :: <integer>;
-  let first-elem = vec[first];
-  let last-elem = vec[last - 1];
-  let middle :: <integer> = truncate/(first + last, 2);
-  let middle-elem = vec[middle];
-  if (less-than(first-elem, last-elem))
-    if (less-than(middle-elem, last-elem))
-      middle;
-    else 
-      last;
-    end if;
-  else  // last-elem <= first-elem
-    if (less-than(middle-elem, first-elem))
-      middle;
+define inline method median-of-three
+    (vec :: <simple-object-vector>,
+     first :: <integer>,
+     last :: <integer>,
+     less-than :: <function>)
+ => (pivot-index :: <integer>);
+  let left = vec[first];
+  let right = vec[last - 1];
+  let middle :: <integer> = ash(first + last, -1);
+  let mid = vec[middle];
+
+  if (less-than(left, mid))
+    if (less-than(mid, right))
+      middle
+    elseif (less-than(left, right))
+      last
     else
-      first;
-    end if;
-  end if;
-end method;
+      first
+    end
+  else
+    if (less-than(left, right))
+      first
+    elseif (less-than(mid, right))
+      last
+    else
+      middle
+    end
+  end;
+end method median-of-three;
+
 
 // partition! -- internal
 //
@@ -377,12 +271,12 @@ end method;
 // until the pointers cross each other.  Then the small pointer is
 // returned as the partition position.
 //
-// PARTITION! takes the usual keyword arguments TEST, START, and END.
-//
-define method partition!
+define inline method partition!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <integer> = 0,
-          end: last :: <integer> = vector.size)
+     test :: <function>,
+     first :: <integer>,
+     last :: <integer>)
+ => (middle :: <integer>);
   let pivot-key = median-of-three(vector, first, last - 1, test);
   let pivot-element = vector[pivot-key];
   let small-key :: <integer> = first;
@@ -415,22 +309,52 @@ end method partition!;
 // done; or if the size of the subvector is small and INSERTION-SORT! is
 // called on it.
 //
-// QUICK-SORT! takes the usual keyword arguments TEST, START, and END.
+// Caution: quick-sort! leaves the vector not *quite* sorted, to be
+// cleaned up afterwards by insertion-sort!
 //
+// The depth-charge saves us from O(N^2) worse-case behaviour.  Median-of-3
+// pivoting makes it statistically unlikely, depth-charge prevents it
+// entirely by punting to a GUARANTEED O(N.log(N)) method while we've still
+// only done O(N.log(N)) work ourselves.  Traditionally you use heapsort,
+// but mergesort will do, since we have it already.
+
+define function qsort-depth-allowed(i :: <integer>)
+ => (depth :: <integer>);
+  for (d from 0,
+       n = i then ash(n, -1),
+       while: n > 0)
+  finally
+    // 95/5 split on average before bailing
+    16 * d;
+  end;
+end function qsort-depth-allowed;
+
+
 define method quick-sort!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <integer> = 0,
-          end: last :: <integer> = vector.size)
-  case
-    (last - first) < $small-sort-size$ =>
-      insertion-sort!(vector, test: test, start: first, end: last);
-    (last - first) > 1 =>
-      let middle = partition!(vector, test: test, start: first, end: last);
-      quick-sort!(vector, test: test, start: first, end: middle);
-      quick-sort!(vector, test: test, start: middle, end: last);
-    otherwise => #f;
-  end case;
-  vector;
+     test :: <function>,
+     first :: <integer>,
+     last :: <integer>,
+     depth-charge :: <integer>)
+ => ();
+  block (return)
+    while ((last - first) > $small-sort-size$)
+      if (depth-charge > 0)
+        depth-charge := depth-charge - 1;
+        let middle = partition!(vector, test, first, last);
+        if ((middle - first) < (last - middle))
+          quick-sort!(vector, test, first, middle, depth-charge);
+          first := middle + 1;
+        else
+          quick-sort!(vector, test, middle + 1, last, depth-charge);
+          last := middle;
+        end;
+      else
+        merge-sort!(vector, test, first, last);
+        return();
+      end;
+    end while;
+  end block;
 end method quick-sort!;
 
 
@@ -454,11 +378,49 @@ define method sort!
      stable)
  => (new-seq :: <sequence>);
   let vector = as(<simple-object-vector>, sequence);
-  let result = if (stable) merge-sort!(vector, test: test);
-	       else quick-sort!(vector, test: test);
-	       end if;
-  as(type-for-copy(sequence), result);
+  let sz = vector.size;
+  if (stable)
+    merge-sort!(vector, test, 0, sz);
+  else
+    quick-sort!(vector, test, 0, sz, sz.qsort-depth-allowed);
+  end if;
+  insertion-sort!(vector, test, 0, sz);
+  as(type-for-copy(sequence), vector);
 end method sort!;
+
+
+define method sort!
+    (vector :: <simple-object-vector>, #key test :: <function> = \<,
+     stable)
+ => (vector :: <simple-object-vector>);
+  let sz = vector.size;
+  if (stable)
+    merge-sort!(vector, test, 0, sz);
+  else
+    quick-sort!(vector, test, 0, sz, sz.qsort-depth-allowed);
+  end if;
+  insertion-sort!(vector, test, 0, sz);
+  vector;
+end method sort!;
+
+
+define method sort!
+    (vector :: <stretchy-object-vector>, #key test :: <function> = \<,
+     stable)
+ => (vector :: <stretchy-object-vector>);
+  // just sort the contained <simple-object-vector>!
+  // NB sort to size of stretchy NOT size of ssv-data, because of
+  // unused elements
+  let sz = vector.size;
+  if (stable)
+    merge-sort!(vector.ssv-data, test, 0, sz);
+  else
+    quick-sort!(vector.ssv-data, test, 0, sz, sz.qsort-depth-allowed);
+  end if;
+  insertion-sort!(vector.ssv-data, test, 0, sz);
+  vector;
+end method sort!;
+
 
 // sort -- public
 //
