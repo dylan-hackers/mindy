@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.9 2003/02/17 17:36:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.10 2003/04/11 16:23:57 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -333,8 +333,11 @@ end method;
 define method definition-site-for
     (component :: <component>, var :: <initial-variable>)
     => res :: <initial-definition>;
+  let asserted = var.var-info.asserted-type.ctype-extent;
+  let trivial = asserted = object-ctype();
   make(<initial-definition>, var-info: var.var-info, definition: var,
-       derived-type: var.var-info.asserted-type.ctype-extent);
+       derived-type: asserted,
+       needs-type-check: ~trivial);
 end;
 
 define method definition-site-for
