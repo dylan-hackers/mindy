@@ -4,7 +4,7 @@ synopsis:   Test out the thread features of Mindy by getting I/O on
             multiple streams.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.1 1995/03/13 21:30:55 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v 1.2 1995/05/13 12:51:41 nkramer Exp $
 
 //======================================================================
 //
@@ -53,10 +53,12 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/threaded-io-test.dylan,v
 
 // Sample output:
 //
-// -*-*-*-*-*-*-*A-*A-A*-*-*-*-*-*-*-A-A-A*-*-*-*-*-*-
+// -*-*-*-*-*-*-*A-*A-A*-*-*-*-*-*-*\n-A-A-A*\n-*-*-*-*-*-
 //               ^^^^^^             ^
 //   Here I quickly typed in       Here I hit return
 //   three A's
+
+//   (\n will be replaced by a newline character)
 
 // If the output is not appearing continuously, it means that Mindy
 // has blocked on one of the input streams (probably
