@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.153 2004/05/18 11:19:26 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.154 2004/07/21 23:17:39 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -339,7 +339,13 @@ if test "$D2C" = no -a "$enable_d2c=yes"; then
 fi
 
 AC_MSG_CHECKING("which build scenario to use")
-if test "$enable_mindy_bootstrap" = yes; then
+if test -x "$buildroot/bootstrap_compiler/d2c"; then
+    SCENARIO=SECOND_STAGE
+    build_tools_with_d2c=yes
+    enable_mindy_bootstrap=no
+    bootstrap_d2c="$buildroot/bootstrap_compiler/d2c"
+    D2C="$bootstrap_d2c -p$srcdir/d2c/compiler/platforms.descr"
+elif test "$enable_mindy_bootstrap" = yes; then
     SCENARIO=BOOTSTRAPPING_WITH_MINDY
     build_tools_with_d2c=no
     enable_mindy=yes
@@ -352,11 +358,6 @@ if test "$enable_mindy_bootstrap" = yes; then
 elif test "$enable_d2c" = no; then
     SCENARIO=MINDY_BUILD
     build_tools_with_d2c=no
-elif test -x "$buildroot/bootstrap_compiler/d2c"; then
-    SCENARIO=SECOND_STAGE
-    build_tools_with_d2c=yes
-    bootstrap_d2c="$buildroot/bootstrap_compiler/d2c"
-    D2C="$bootstrap_d2c -p$srcdir/d2c/compiler/platforms.descr"
 elif test "$D2C" != no; then
     if test $CURRENT_BOOTSTRAP_COUNTER -ne $_DCI_D2C_BOOTSTRAP_COUNTER \
 	-o "$enable_d2c_bootstrap" = yes
