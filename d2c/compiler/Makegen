@@ -1,3 +1,4 @@
+
 do compile_subdirs(
     'base',
     'front',
@@ -5,3 +6,18 @@ do compile_subdirs(
     'cback',
     'main'
 );
+
+$stage2 || print <<'EOF';
+.PHONY: d2c-compile
+
+d2c-compile: compile
+	$(MAKE) -C base d2c-compile
+	$(MAKE) -C front d2c-compile
+	$(MAKE) -C parser d2c-compile
+	$(MAKE) -C cback d2c-compile
+	$(MAKE) -C main d2c-compile
+
+d2c-install:
+	$(MAKE) -C main d2c-install
+
+EOF

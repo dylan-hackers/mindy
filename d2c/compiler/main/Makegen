@@ -1,12 +1,29 @@
 
-print <<'EOF';
+$D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
+    . '-L../../runtime/dylan -L../../runtime/streams '
+    . '-L../../runtime/print -L../../runtime/format '
+    . '-L../../runtime/random -L../../runtime/coll-ext '
+    . '-L../../runtime/string-ext';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
+
+if ($stage2) {
+    push(@compile_dependencies, 'd2c');
+    do install ('bin', 'd2c');
+    push(@files_to_clean, 'd2c', 'parse-dump.dylan', 'token-dump.dylan');
+}
+else {
+    push(@compile_dependencies, 'd2c.dbc');
+    do install ('lib', 'd2c.dbc');
+    push(@files_to_clean, '*.dbc', 'parse-dump.dylan', 'token-dump.dylan');
+    $D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
+    print <<'EOF';
 
 MC = mindycomp
-MINDYFLAGS =
+MINDYFLAGS = -lcompiler-main
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -lcompiler-main -o $@ $<
+	$(MC) ${MINDYFLAGS} -o $@ $<
 
 
 # Autodump divides object files into two types: Normal ones, and 
@@ -32,10 +49,6 @@ LIBS = \
 d2c.dbc: ${LIBS} ${OBJS}
 	cat  $^ > $@
 
-d2c: d2c.dbc
-	echo "#!/usr/local/bin/mindy -x" | cat - $^ > $@
-	chmod +x $@
-
 parse-dump.dylan: ../base/parse-tree.dylan autodump.dylan
 	${MAKE} autodumper.dbc
 	${MINDY} -f autodumper.dbc -autodump parse-tree
@@ -47,10 +60,18 @@ token-dump.dylan: ../base/tokens.dylan autodump.dylan
 autodumper.dbc: ${LIBS} ${NORMAL_OBJS}
 	cat $^ > $@
 
+$(DESTDIR)/bin/d2c: d2c
+	@-mv $@ $@.old
+	cp -p $< $@
+	@rm -f $@.old
+
+d2c-install: $(DESTDIR)/bin/d2c
+
 EOF
+}
 
-push(@compile_dependencies, 'd2c.dbc');
+do emit_library_rule(
+    'Main', '$(BUILDROOT)/force.timestamp',
+    '-L../base -L../front -L../parser -L../cback'
+);
 
-do install ('bin', 'd2c');
-
-push(@files_to_clean, 'd2c', '*.dbc', 'parse-dump.dylan', 'token-dump.dylan');

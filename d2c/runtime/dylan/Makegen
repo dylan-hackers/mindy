@@ -1,6 +1,8 @@
+
+$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
+$D2CFLAGS = '';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
+
 do emit_library_rule(
-    'Dylan',
-    '',
-    '',
-    'compile', 'install'
+    'Dylan', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );

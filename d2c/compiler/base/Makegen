@@ -1,12 +1,30 @@
 
-print <<'EOF';
+$D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
+    . '-L../../runtime/dylan -L../../runtime/streams '
+    . '-L../../runtime/print -L../../runtime/format '
+    . '-L../../runtime/random -L../../runtime/coll-ext '
+    . '-L../../runtime/string-ext';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
+
+if ($stage2) {
+    push(@compile_dependencies, 'compiler-base.lib.du libbase.a');
+}
+else {
+    push(@compile_dependencies, 'baselib.dbc');
+    push(@files_to_clean, '*.dbc');
+    $D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
+    print <<'EOF';
+
+.PHONY: d2c-compile
+
+d2c-compile: compiler-base.lib.du libbase.a
 
 MC = mindycomp
-MINDYFLAGS = 
+MINDYFLAGS = -lcompiler-base
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -lcompiler-base -o $@ $<
+	$(MC) ${MINDYFLAGS} -o $@ $<
 
 OBJS = \
 	base-exports.dbc \
@@ -43,7 +61,9 @@ baselib.dbc: ${OBJS}
 	cat $^ > $@
 
 EOF
+}
 
-push(@compile_dependencies, 'baselib.dbc');
+do emit_library_rule(
+    'Base', '$(BUILDROOT)/force.timestamp', ''
+);
 
-push(@files_to_clean, '*.dbc');

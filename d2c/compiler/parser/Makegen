@@ -1,5 +1,23 @@
 
-print <<'EOF';
+$D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
+    . '-L../../runtime/dylan -L../../runtime/streams '
+    . '-L../../runtime/print -L../../runtime/format '
+    . '-L../../runtime/random -L../../runtime/coll-ext '
+    . '-L../../runtime/string-ext';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
+
+if ($stage2) {
+    push(@compile_dependencies, 'compiler-parser.lib.du libparser.a');
+}
+else {
+    push(@compile_dependencies, 'parserlib.dbc');
+    push(@files_to_clean, '*.dbc', 'parser.dylan');
+    $D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
+    print <<'EOF';
+
+.PHONY: d2c-compile
+
+d2c-compile: compiler-parser.lib.du libparser.a
 
 MC = mindycomp
 MINDYFLAGS = 
@@ -17,11 +35,14 @@ OBJS = \
 parserlib.dbc: ${OBJS}
 	cat $^ > $@
 
+EOF
+}
+
+do emit_library_rule(
+    'Parser', '$(BUILDROOT)/force.timestamp', '-L../base -L../front'
+);
+
+print <<'EOF';
 parser.dylan: parsergen.lisp parser.input do-parsergen.lisp
 	cmucl $(word 1, $^) $(word 2, $^) -load $(word 3, $^)
-
 EOF
-
-push(@compile_dependencies, 'parserlib.dbc');
-
-push(@files_to_clean, '*.dbc', 'parser.dylan');

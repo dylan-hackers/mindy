@@ -1,27 +1,20 @@
 
-do emit_library_rule(
-    'craps',
-    '../runtime/dylan/dylan.lib.du ../runtime/random/random.lib.du',
-    '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/random',
-    'compile', 'install'
-);
+$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
+$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/streams -L../runtime/print -L../runtime/format -L../runtime/random -L.';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
 
 do emit_library_rule(
-    'test',
-    '../runtime/dylan/dylan.lib.du ../runtime/streams/streams.lib.du',
-    '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime/streams',
-    'compile'
+    'craps', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );
-
 do emit_library_rule(
-    'gobbledygook',
-    '../runtime/dylan/dylan.lib.du fact.lib.du',
-    '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L.',
-    'compile'
+    'test', '$(BUILDROOT)/force.timestamp', '', 'compile'
 );
-
 do emit_library_rule(
-    'fact',
-    '../runtime/dylan/dylan.lib.du',
-    '-L../runtime/dylan'
+    'gobbledygook', '$(BUILDROOT)/force.timestamp', '', 'compile'
+);
+do emit_library_rule(
+    'format-test', '$(BUILDROOT)/force.timestamp', '', 'compile'
+);
+do emit_library_rule(
+    'fact', '$(BUILDROOT)/force.timestamp', ''
 );
