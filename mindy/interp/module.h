@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.3 1994/06/27 16:32:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.4 1994/08/30 23:20:51 wlott Exp $
 *
 \**********************************************************************/
 
@@ -89,6 +89,7 @@ extern void define_variable(struct module *module, obj_t name,
 struct variable {
     obj_t name;
     struct module *home;
+    boolean defined;
     enum var_kind kind;
     obj_t value;
     obj_t type;
