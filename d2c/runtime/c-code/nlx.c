@@ -1,36 +1,34 @@
 #include <stdlib.h>
-
 #include <runtime.h>
+#include <setjmp.h>
 
-#include "internals.h"
+/*
+$header$
 
-struct catch_info {
-    descriptor_t *(*fn)(descriptor_t *sp, void *state, heapptr_t body_func);
-    descriptor_t *sp;
-    heapptr_t body_func;
-};
+Changes:
 
-static long catch_aux(struct machine_state *state, void *arg)
-{
-    struct catch_info *info = arg;
+- portable version using setjmp/jongjmp (andreas)
 
-    return (long)(info->fn(info->sp, state, info->body_func));
-}
+*/
 
 descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, void *state,
 					heapptr_t body_func),
 		    descriptor_t *sp, heapptr_t body_func)
 {
-    struct catch_info info;
+    volatile jmp_buf state;
+    volatile int rc;
 
-    info.fn = fn;
-    info.sp = sp;
-    info.body_func = body_func;
-
-    return (descriptor_t *)save_state(catch_aux, &info);
+    if(rc = setjmp(state)) { /* This _is_ an assignment */
+      /* longjmp was called, return stack_top */
+      return (descriptor_t *)rc;    
+    } else {
+      /* first pass */
+      return (descriptor_t *)(fn(sp, state, body_func));
+    }
 }
 
 void throw(void *state, descriptor_t *stack_top)
 {
-    restore_state(state, (long)stack_top);
+    longjmp(state, (long)stack_top);
+    /*    restore_state(state, (long)stack_top); */
 }

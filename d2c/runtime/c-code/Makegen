@@ -3,39 +3,12 @@
 &emit_c_file_rule('main');
 &emit_c_file_rule('nlx');
 
-$assembler_command = $target_platform{'assembler_command'};
-
-if ($features{'compiled_for_linux'} && $features{'compiled_for_x86'}) {
-    # Linux and win32 have different name mangling conventions, so we
-    # can't use the same cpu-specific file.
-    $cpu_specific = 'linux-ix86';
-} elsif ($features{'compiled_for_win32'} && $features{'compiled_for_x86'}) {
-    $cpu_specific = 'i386';
-} elsif ($features{'compiled_for_hppa'}) {
-    $cpu_specific = 'hppa';
-# always use cc on HP, since some versions of gas choke on hppa.s
-    $assembler_command = 'cc $(CCFLAGS) -c %s -o %s';
-} elsif ($features{'compiled_for_sparc'}) {
-    $cpu_specific = 'sparc';
-} else {
-    &unknown_platform_error();
-}
-
 $lib_name = "$lib_prefix" . "runtime$dot_lib";
 
-# These next lines works because Perl uses the same format directives
-# (%s) that Dylan does.
-print "$cpu_specific$dot_obj : \$(SRCDIR)/$cpu_specific.s\n";
-print "\t";
-printf($assembler_command,
-       "\$(SRCDIR)/$cpu_specific.s", "$cpu_specific$dot_obj");
-print "\n";
-
-print "$lib_name: allocate$dot_obj main$dot_obj nlx$dot_obj ",
-    "$cpu_specific$dot_obj\n";
+print "$lib_name: allocate$dot_obj main$dot_obj nlx$dot_obj\n";
 print "\t";
 printf($target_platform{'link_library_command'}, $lib_name,
-       "allocate$dot_obj main$dot_obj nlx$dot_obj $cpu_specific$dot_obj");
+       "allocate$dot_obj main$dot_obj nlx$dot_obj");
 print "\n";
 
 push(@compile_dependencies, $lib_name);
