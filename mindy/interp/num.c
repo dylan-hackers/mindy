@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.4 1994/04/10 19:00:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.5 1994/04/18 03:24:39 wlott Exp $
 *
 * This file does whatever.
 *
@@ -108,16 +108,36 @@ static void print_sf(obj_t sf)
     printf("%#g", single_value(sf));
 }
 
+static void change_exponent_marker(char *ptr, int marker)
+{
+    while (*ptr != '\0' && *ptr != 'e' && *ptr != 'E')
+	ptr++;
+    if (*ptr == '\0') {
+	ptr[0] = marker;
+	ptr[1] = '0';
+	ptr[2] = '\0';
+    }
+    else
+	ptr[0] = marker;
+}
+
 static void print_df(obj_t df)
 {
-    printf("%#g", double_value(df));
+    char buffer[64];
+
+    sprintf(buffer, "%#g", double_value(df));
+    change_exponent_marker(buffer, 'd');
+    printf("%s", buffer);
 }
 
 static void print_xf(obj_t xf)
 {
-    printf("%#Lg", extended_value(xf));
-}
+    char buffer[64];
 
+    sprintf(buffer, "%#g", (double)extended_value(xf));
+    change_exponent_marker(buffer, 'x');
+    printf("%s", buffer);
+}
 
 
 /* Dylan routines. */
