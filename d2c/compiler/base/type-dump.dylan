@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.12 1996/02/08 12:30:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.13 1996/02/08 23:54:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -124,8 +124,8 @@ define constant $class-dump-slots =
        unique-id, #f, set-and-record-unique-id,
        subclass-id-range-min, subclass-id-range-min:, #f,
        subclass-id-range-max, subclass-id-range-max:, #f,
-       speed-representation, speed-representation:, #f,
-       space-representation, space-representation:, #f,
+       speed-representation,speed-representation:,speed-representation-setter,
+       space-representation,space-representation:,space-representation-setter,
        each-subclass-slots-count, each-subclass-slots-count:, #f,
        ct-value-heap-labels, heap-labels:, #f);
 
