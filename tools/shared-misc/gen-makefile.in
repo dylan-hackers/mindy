@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.34 2002/08/01 00:58:17 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.35 2002/09/20 23:51:16 brent Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1083,7 +1083,9 @@ sub install_one_file {
     local ($from_file, $to_file, $executable_permissions) = @_;
 
     # GNU DESTDIR, not the $destdir variable.
-    $to_file = "\${DESTDIR}$to_file";
+    unless ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
+    	$to_file = "\${DESTDIR}$to_file";
+	}
 
     print "\n$to_file: $from_file\n";
     if ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
@@ -1183,13 +1185,18 @@ sub install_executable_from_src {
 #
 sub install_library {
     local ($dest_dir, $library, $shared_library) = @_;
+	my ($gnu_dest_dir) = $dest_dir;
 
     # Don't generate any install rules unless destdir is set.
     $dest_dir || return;
+	
+    unless ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
+    	$gnu_dest_file = "\${DESTDIR}$gnu_dest_dir";
+	}
 
-    print "\n\${DESTDIR}$dest_dir/$library: $library\n";
-    print "\t$install_library $library \${DESTDIR}$dest_dir/$library\n\n";
-    push(@install_dependencies, "\${DESTDIR}$dest_dir/$library");
+    print "\n\$gnu_dest_dir/$library: $library\n";
+    print "\t$install_library $library \$gnu_dest_dir/$library\n\n";
+    push(@install_dependencies, "\$gnu_dest_dir/$library");
 }
 
 

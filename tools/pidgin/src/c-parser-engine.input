@@ -277,9 +277,9 @@ define constant <source-location> = false-or(<parse-state>);
 
 
 ;; This causes Windows some grief
-file (EOF)
-  %1;
-%
+;;file (EOF)
+;;  %1;
+;;%
 
 file (file1 EOF)
   %1;
