@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.6 2001/12/23 04:16:32 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.7 2002/08/24 14:38:07 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -510,7 +510,7 @@ end;
 //
 // For a bignum to be even, the first digit must be even.
 //
-define inline method even? (a :: <extended-integer>)
+define inline sealed method even? (a :: <extended-integer>)
     => res :: <boolean>;
   bignum-digit(a, 0).value.even?;
 end;

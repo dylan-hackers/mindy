@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.6 2002/04/06 01:29:50 brent Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.7 2002/08/24 14:38:07 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -204,13 +204,17 @@ end;
 
 // Integer methods.
 
-//define sealed generic odd? (a :: <general-integer>) => res :: <boolean>;
-define inline method odd? (a :: <general-integer>) => res :: <boolean>;
+// odd? always punts through to even?
+define inline sealed method odd? (a :: <general-integer>) => res :: <boolean>;
   ~even?(a);
 end;
 
-//define sealed generic even? (a :: <general-integer>) => res :: <boolean>;
-// No default method for even?.
+// even? has an implementation here for <integer>, and in bignum.dylan for
+// <extended-integer>
+define inline sealed method even? (a :: <integer>) => res :: <boolean>;
+  zero?(logand(a, 1));
+end;
+
 
 define inline method integral? (a :: <general-integer>) => res :: <boolean>;
   #t;
@@ -327,10 +331,6 @@ end;
 define inline method \< (a :: <integer>, b :: <integer>)
     => res :: <boolean>;
   %%primitive(fixnum-<, a, b);
-end;
-
-define inline method even? (a :: <integer>) => res :: <boolean>;
-  zero?(logand(a, 1));
 end;
 
 define inline method \+ (a :: <integer>, b :: <integer>)
