@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.23 1996/06/11 14:41:17 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.24 1996/08/21 10:04:06 nkramer Exp $
 *
 * Main driver routines for mindy.
 *
@@ -153,9 +153,9 @@ static void check_fds(boolean block)
     do {
     	for (fd = 0; fd < NumFds; fd++) {
 	    if (FD_ISSET(fd, &Readers.fds) && input_available(fd)) {
-		event_broadcast(Readers.events[fd]);
-		FD_CLR(fd, &Readers.fds);
-		block = 0;
+	        event_broadcast(Readers.events[fd]);
+	        FD_CLR(fd, &Readers.fds);
+	        block = 0;
 	    }
 	    if (FD_ISSET(fd, &Writers.fds) && output_writable(fd)) {
 		event_broadcast(Writers.events[fd]);
@@ -226,11 +226,6 @@ static void wait_for_fd(struct thread *thread, int fd, struct waiters *waiters,
 {
     obj_t event;
 
-#ifdef WIN32
-    fd = _get_osfhandle(fd);
-    assert(fd > 0);
-#endif
-
     FD_SET(fd, &waiters->fds);
 
     if (NumFds <= fd)
@@ -262,10 +257,6 @@ void wait_for_output(struct thread *thread, int fd,
 
 static void set_pause_interrupted(void)
 {
-#ifdef WIN32
-    extern boolean hit_control_C;
-    hit_control_C = TRUE;
-#endif
     PauseReason = pause_Interrupted;
 }
 
