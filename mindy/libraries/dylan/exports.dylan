@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.91 1996/03/20 04:56:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.92 1996/04/10 20:44:57 nkramer Exp $
 
 //======================================================================
 //
@@ -33,7 +33,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.
 define library Dylan
   export
     Dylan, Extensions, System, File-Descriptors, Threads, Introspection,
-    Cheap-IO, Extern, Transcendental;
+    Namespace-Introspection, Cheap-IO, Extern, Transcendental;
 end Dylan;
 
 define module Builtin-Stuff
@@ -83,7 +83,7 @@ define module Builtin-Stuff
     kill-thread,
     limited, limited-integer-base-class, limited-integer-minimum,
     limited-integer-maximum,
-    list, load, local-daylight-savings-time?,
+    list, load, load-library, local-daylight-savings-time?,
     locked?, logand, logbit?, logior, lognot, logxor,
     main, make, make-generic-function, make-ratio, merge-hash-codes,
     function-specializers, function-return-values,
@@ -119,7 +119,12 @@ define module Builtin-Stuff
     sinh, cosh, tanh,
     exp, log, sqrt,
     $pi, $e,
-    init-keyword, keyword-required?;
+    init-keyword, keyword-required?,
+    <name>, <namespace>, <module>, <library>, <binding>,
+    binding-name, module-name, library-name, name-home,
+    resolve-name, exported-names, visible-names, 
+    binding-value, binding-type, binding-kind,
+    get-all-libraries, get-all-modules;
   create
     %define-sealed-domain,
     aref, aref-setter, do, error, type-error,
@@ -138,7 +143,7 @@ define module extras
     *debug-output*, *warning-output*,
     <format-string-condition>, report-condition,
     condition-format, condition-force-output,
-    ratio, $not-supplied, false-or;
+    ratio, $not-supplied, false-or, instantiable?;
 end;
 
 
@@ -240,7 +245,7 @@ end Dylan;
 define module Extensions
   use Dylan;
   use Builtin-Stuff,
-    import: {main, exit, on-exit, load, *print-GC-messages*,
+    import: {main, exit, on-exit, load, load-library, *print-GC-messages*,
 	     $maximum-integer, $minimum-integer,
 	     <never-returns>,
 	     <byte-character>, <byte-vector>,
@@ -249,7 +254,7 @@ define module Extensions
 	     <ratio>, numerator, denominator,
 	     <weak-pointer>, weak-pointer-object},
     export: all;
-  use extras,
+  use extras, exclude: { instantiable? },
     export: all;
   create
     <equal-table>, equal-hash, collection-hash, 
@@ -356,8 +361,18 @@ define module Introspection
 	     limited-integer-minimum, limited-integer-maximum,
 	     <union>, union-members},
     export: all;
+  use extras, import: { instantiable? }, export: all;
 end;
 
+define module Namespace-Introspection
+  use Builtin-Stuff,
+    import: {<name>, <namespace>, <module>, <library>, <binding>,
+	     binding-name, module-name, library-name, name-home,
+	     resolve-name, exported-names, visible-names, 
+	     binding-value,  binding-type, binding-kind,
+	     get-all-libraries, get-all-modules},
+    export: all;
+end module Namespace-Introspection;
 
 define module Cheap-IO
   use Builtin-Stuff,
