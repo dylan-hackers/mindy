@@ -1,0 +1,16 @@
+module: main
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.1 1996/08/22 11:47:45 nkramer Exp $
+copyright: Copyright (c) 1994  Carnegie Mellon University
+	   All rights reserved.
+
+// Where to find various important files.  (So far the only important
+// file is targets.descr)
+
+define constant $default-targets-dot-descr
+#if (compiled-for-x86-win32)
+  = "c:/gwydion/etc/targets.descr";
+#elseif (compiled-for-hppa-hpux)
+  = "/afs/cs/project/gwydion/compiler/etc/targets.descr";
+#else
+  = #f;  // no default
+#endif
