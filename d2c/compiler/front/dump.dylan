@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.2 1994/12/13 13:26:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.3 1994/12/15 17:38:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -413,7 +413,7 @@ define method dump (param :: <parameter>, stream :: <dump-state-stream>) => ();
 	   end);
 end;
 
-define method dump (token :: <word-token>, stream :: <dump-state-stream>)
+define method dump (token :: <core-word-token>, stream :: <dump-state-stream>)
     => ();
   write(as(<string>, token.token-symbol), stream);
 end;
