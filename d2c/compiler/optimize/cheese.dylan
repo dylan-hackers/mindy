@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.95 1995/06/15 15:01:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.96 1995/07/12 15:02:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -3516,6 +3516,12 @@ define method delete-definition
   unless (empty?(var.definitions))
     var.next-initial-variable := component.initial-variables;
     component.initial-variables := var;
+    for (type = empty-ctype()
+	   then values-type-union(type, other-defn.derived-type),
+	 other-defn in var.definitions)
+    finally
+      maybe-restrict-type(component, var, type);
+    end;
   end;
 end;
 
