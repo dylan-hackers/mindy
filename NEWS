@@ -1,0 +1,19 @@
+Gwydion Dylan 2.1 1998-09-16
+
+  This month's snapshot includes a LinuxPPC port by Andreas Bogk, new
+  Solaris binaries from Ole Tetlie, C-to-Dylan callback support by Peter
+  Housel and a vastly improved Emacs dylan-mode courtesy of Harlequin, Ltd
+  (and others). Peter Housel has also worked extensively on cleaning up and
+  adding to the documentation.
+ 
+Gwydion Dylan 2.1 1998-08-17
+
+  The current release has been prepared by a group of volunteers. It
+  includes improved FreeBSD support and a better build system. It can also
+  parse most of the standard Linux C headers and automatically generate
+  Dylan interfaces.
+
+Older Releases
+
+  See ONEWS.html for more information about 1.6 and earlier. No release
+  info is currently available for Gwydion Dylan	2.0.
