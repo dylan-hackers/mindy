@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.1 1994/03/24 21:49:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.2 1994/03/28 11:32:20 wlott Exp $
 *
 * This file does whatever.
 *
@@ -32,6 +32,7 @@ struct literal *make_true_literal(void)
 
     res->kind = literal_TRUE;
     res->next = NULL;
+    res->line = 0;
 
     return res;
 }
@@ -42,6 +43,7 @@ struct literal *make_false_literal(void)
 
     res->kind = literal_FALSE;
     res->next = NULL;
+    res->line = 0;
 
     return res;
 }
@@ -52,6 +54,7 @@ struct literal *make_unbound_literal(void)
 
     res->kind = literal_UNBOUND;
     res->next = NULL;
+    res->line = 0;
 
     return res;
 }
@@ -63,6 +66,7 @@ struct literal *make_string_literal(char *str)
 
     res->kind = literal_STRING;
     res->next = NULL;
+    res->line = 0;
     res->length = len;
 
     strcpy(res->chars, str);
@@ -76,6 +80,7 @@ struct literal *make_character_literal(int c)
 
     res->kind = literal_CHARACTER;
     res->next = NULL;
+    res->line = 0;
     res->value = c;
 
     return (struct literal *)res;
@@ -87,6 +92,7 @@ struct literal *make_integer_literal(long value)
 
     res->kind = literal_INTEGER;
     res->next = NULL;
+    res->line = 0;
     res->value = value;
 
     return (struct literal *)res;
@@ -98,6 +104,7 @@ struct literal *make_float_literal(double value)
 
     res->kind = literal_FLOAT;
     res->next = NULL;
+    res->line = 0;
     res->value = value;
 
     return (struct literal *)res;
@@ -109,6 +116,7 @@ struct literal *make_symbol_literal(struct symbol *sym)
 
     res->kind = literal_SYMBOL;
     res->next = NULL;
+    res->line = 0;
     res->symbol = sym;
 
     return (struct literal *)res;
@@ -120,6 +128,7 @@ struct literal *make_keyword_literal(struct keyword *key)
 
     res->kind = literal_KEYWORD;
     res->next = NULL;
+    res->line = 0;
     res->keyword = key;
 
     return (struct literal *)res;
@@ -132,6 +141,7 @@ struct literal
 
     res->kind = literal_LIST;
     res->next = NULL;
+    res->line = 0;
     if (tail != NULL && tail->kind == literal_LIST) {
 	*guts->tail = ((struct list_literal *)tail)->first;
 	free(tail);
@@ -157,6 +167,7 @@ struct literal *make_vector_literal(struct literal_list *guts)
 
     res->kind = literal_VECTOR;
     res->next = NULL;
+    res->line = 0;
     res->first = guts->head;
 
     free(guts);
