@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.10 1996/07/13 20:46:53 bfw Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.11 1996/07/18 10:56:43 dwatson Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -63,12 +63,12 @@ LIBS	=		@LIBS@
 
 MC	=	../comp/mindycomp
 INTERP	=	../interp/mindy
-MINDYFLAGS =
-MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/streams:../libraries/random:../libraries/print:../libraries/format
+MINDYFLAGS = 
+MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/standard-io:../libraries/streams:../libraries/random:../libraries/print:../libraries/format:../libraries/matrix:../libraries/internal-time:../libraries/format-out
 
 # We don't want to run threaded-io-test by default because it is interactive
 #
-OBJS_TO_RUN = dylan-test.dbc string-extensions-test.dbc stream-test-lib.dbc
+OBJS_TO_RUN = dylan-test.dbc string-extensions-test.dbc stream-test-lib.dbc table-ext-test.dbc random-test.dbc matrix-test.dbc coll-ext-test.dbc print-test.dbc format-test.dbc format-out-test.dbc itime-test.dbc
 OBJS_TO_BUILD = $(OBJS_TO_RUN) threaded-io-test.dbc asterixes.txt dashes.txt
 
 all: ${OBJS_TO_BUILD}
@@ -89,6 +89,30 @@ stream-test-library.dbc: ${SRCDIR}/stream-test-library.dylan
 	${MC} ${MINDYFLAGS} -lstream-test -o stream-test-library.dbc ${SRCDIR}/stream-test-library.dylan
 stream-test.dbc: ${SRCDIR}/stream-test.dylan
 	${MC} ${MINDYFLAGS} -lstream-test -o stream-test.dbc ${SRCDIR}/stream-test.dylan
+
+format-out-test.dbc: ${SRCDIR}/format-out-test.dylan
+	${MC} ${MINDYFLAGS} -lformat-out-test -o format-out-test.dbc ${SRCDIR}/format-out-test.dylan
+
+table-ext-test.dbc: ${SRCDIR}/table-ext-test.dylan
+	${MC} ${MINDYFLAGS} -ltable-ext-test -o table-ext-test.dbc ${SRCDIR}/table-ext-test.dylan
+
+random-test.dbc: ${SRCDIR}/random-test.dylan
+	${MC} ${MINDYFLAGS} -lrandom-test -o random-test.dbc ${SRCDIR}/random-test.dylan
+
+matrix-test.dbc: ${SRCDIR}/matrix-test.dylan
+	${MC} ${MINDYFLAGS} -lmatrix-test -o matrix-test.dbc ${SRCDIR}/matrix-test.dylan
+
+coll-ext-test.dbc: ${SRCDIR}/coll-ext-test.dylan
+	${MC} ${MINDYFLAGS} -lcoll-ext-test -o coll-ext-test.dbc ${SRCDIR}/coll-ext-test.dylan
+
+itime-test.dbc: ${SRCDIR}/itime-test.dylan
+	${MC} ${MINDYFLAGS} -litime-test -o itime-test.dbc ${SRCDIR}/itime-test.dylan
+
+format-test.dbc: ${SRCDIR}/format-test.dylan
+	${MC} ${MINDYFLAGS} -lformat-test -o format-test.dbc ${SRCDIR}/format-test.dylan
+
+print-test.dbc: ${SRCDIR}/print-test.dylan
+	${MC} ${MINDYFLAGS} -lprint-test -o print-test.dbc ${SRCDIR}/print-test.dylan
 
 # And now, two hacks to make sure "asterixes.txt" and "dashes.txt" are 
 # in the build directory and not the source directory (while still
