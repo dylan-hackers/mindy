@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.16 1995/06/07 22:37:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.17 1995/10/30 13:08:04 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -79,7 +79,7 @@ end;
 // Subclasses of <join-region> describe control flow that have branches
 // or joins.
 //
-define class <join-region> (<region>)
+define abstract class <join-region> (<region>)
   //
   // Region containing join-assignments for this region.
   slot join-region :: <simple-region>;
@@ -106,13 +106,14 @@ end class;
 // A join-region that contains only one "body" region (no branching, only
 // joins.)
 //
-define class <body-region> (<join-region>)
+define abstract class <body-region> (<join-region>)
   slot body :: <region>, init-keyword: body:;
 end;
 
 // Inherited by things that can have exits to them (blocks and components.)
 //
-define class <block-region-mixin> (<region>)
+define abstract class <block-region-mixin> 
+    (<region>, <identity-preserving-mixin>)
   //
   // Chain of all the exits to this block, threaded though exit-next.
   slot exits :: false-or(<exit>), init-value: #f;
@@ -131,7 +132,7 @@ end;
 // The exits to a <function-region> must all be <return>s, and in fact
 // indicate the return values.
 //
-define class <function-region> (<block-region>)
+define abstract class <function-region> (<block-region>)
 end;
 
 // A <loop-region> repeats execution of the body indefinitely (terminate by
