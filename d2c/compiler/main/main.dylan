@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.56 1996/02/21 02:53:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.57 1996/02/22 17:51:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -229,6 +229,23 @@ define method extract-directory (path :: <byte-string>)
 end method extract-directory;
 
 
+define method find-source-file
+    (file :: <byte-string>, source-path :: <byte-string>)
+    => name :: <byte-string>;
+  local method try (name :: <byte-string>) => res :: false-or(<byte-string>);
+	  block ()
+	    close(make(<file-stream>, name: name));
+	    name;
+	  exception (<file-not-found>)
+	    #f;
+	  end block;
+	end method try;
+  try(file)
+    | try(concatenate(source-path, file))
+    | error("Can't find source file %=.", file);
+end method find-source-file;
+
+
 define method compile-library
     (lid-file :: <byte-string>, command-line-features :: <list>,
      log-dependencies :: <boolean>)
@@ -248,7 +265,7 @@ define method compile-library
   let source-path = extract-directory(lid-file);
   for (file in files)
     format(*debug-output*, "Parsing %s\n", file);
-    let name = concatenate(source-path, file);
+    let name = find-source-file(file, source-path);
     log-dependency(name);
     let (tokenizer, mod) = file-tokenizer(lib, name);
     use-module(mod);
@@ -627,8 +644,10 @@ end;
 
 define method incorrect-usage () => ();
   format(*standard-error*, "Usage: compile [-Ldir ...] lid-file\n");
+#if (mindy)
   format(*standard-error*,
 	 "    or compile -autodump component [next-free-id-in-hex]\n");
+#end
   force-output(*standard-error*);
   error("Incorrect usage");
 end method incorrect-usage;
