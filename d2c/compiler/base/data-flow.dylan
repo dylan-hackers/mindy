@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.22 1996/01/12 00:58:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.23 1996/01/14 18:01:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,7 +16,7 @@ expression
 		initial-definition
 	    multi-definition-variable {abstract}
 	        initial-variable
-    operation [dependent-mixin] {abstract}
+    operation [dependent-mixin, annotatable] {abstract}
         join-operation
 
 variable-info {abstract}
@@ -230,7 +230,8 @@ end class;
 // calls.  An <operation> bundles an operator with a particular set of <leaf>
 // operands.
 //
-define abstract class <operation> (<expression>, <dependent-mixin>)
+define abstract class <operation>
+    (<expression>, <dependent-mixin>, <annotatable>)
   inherited slot derived-type, init-function: wild-ctype;
   //
   // Head of operand list, threaded by Dependent-Next.
