@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.1 1994/12/12 13:01:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.2 1994/12/16 12:14:39 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -93,8 +93,8 @@ define class <dependency> (<object>)
   // Thread running through all incoming edges at a given Dependent object.
   // This list is ordered according to the needs of the dependent (e.g. the
   // argument ordering in an <operation>.)
-  slot dependent-next ::  false-or(<dependency>), init-value: #f,
-    init-keyword: source-next:;
+  slot dependent-next :: false-or(<dependency>), init-value: #f,
+    init-keyword: dependent-next:;
 end class;
 
 
