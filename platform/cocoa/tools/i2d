@@ -1,0 +1,1511 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Getopt::Long;
+
+######################################################################
+# i2d
+# Cocoa Objective-C header to Dylan translator
+# Rob Myers rob@robmyers.org
+#
+# i2d is designed to parse most of the Cocoa headers once they have 
+# been flattened to a single file. 
+# i2d is not a general purpose Objective-C parser. It does not parse 
+# structs, class data members, or pointer typedefs. It only matches the
+# forms of declarations found in Cocoa. If any new forms are added or
+# old ones changed, i2d's regexpes will need editing. i2d is therefore
+# very fragile and will require extensive maintenance as Cocoa grows.
+#
+# Enums, primitive typedefs, interface declarations and most method
+# declarations are handled automatically.
+# Methods that use primitive pointers or use varargs are not handled.
+# Structs must be defined by the programmer.
+# Pointer typedefs are resolved automatically if the type ends in Ptr.
+# Pass and return by value are handled automatically. 
+# 
+######################################################################
+
+######################################################################
+# TODO
+#
+######################################################################
+# Make Protocol classes abstract
+
+
+######################################################################
+# Globals
+######################################################################
+			
+my $numMethods = 0;
+my $moduleName;
+my $headerFile;
+
+
+######################################################################
+# Type mapping
+#
+# We support primitives, void/char pointers, structs by value or 
+# pointer, and object pointers. We treat id<Protocol> as Protocol*,
+# where Protocol* would be a pointer to an instance of a class that
+# adopts the protocol.
+#
+######################################################################
+
+my %types;
+$types{'void*'} = 'pointer';
+$types{'char'} = 'char';
+$types{'unsigned char'} = 'unsigned char';
+$types{'short'} = 'short';
+$types{'unsigned short'} = 'unsigned short';
+$types{'int'} = 'long';
+$types{'unsigned'} = 'long';
+$types{'unsigned int'} = 'long';
+$types{'long'} = 'long';
+$types{'long int'} = 'long';
+$types{'unsigned long'} = 'long';
+$types{'long long'} = 'long long';
+$types{'unsigned long long'} = 'long long';
+$types{'float'} = 'float';
+$types{'double'} = 'double';
+$types{'char*'} = 'charPTR';
+# ANSI Types
+$types{'int8_t'} = 'char';
+$types{'uint8_t'} = 'unsigned char';
+$types{'int16_t'} = 'short';
+$types{'uint16_t'} = 'unsigned short';
+$types{'int32_t'} = 'long';
+$types{'uint32_t'} = 'long';
+$types{'int64_t'} = 'long long';
+$types{'uint64_t'} = 'long long';
+$types{'SInt32'} = 'long';
+$types{'UInt32'} = 'long';
+$types{'UTF32Char'} = 'long';
+# Mac Toolbox Types
+$types{'OSErr'} = 'short';
+$types{'OSType'} = 'long';
+$types{'DescType'} = 'long';
+$types{'AEReturnID'} = 'short';
+$types{'AETransactionID'} = 'long';
+$types{'AEEventClass'} = 'long';
+$types{'AEEventID'} = 'long';
+$types{'AEArrayType'} = 'char';
+$types{'AEKeyword'} = 'long';
+$types{'AEDataStorage'} = 'pointer';
+# FIXME: Note repetition of struct and struct * types.
+$types{'AEDesc'} = 'struct';
+$types{'AEKeyDesc'} = 'struct';
+$types{'AppleEvent'} = 'struct';
+$types{'AEDesc*'} = 'instance';
+$types{'AEKeyDesc*'} = 'instance';
+$types{'AppleEvent*'} = 'instance';
+# Objective-C Types
+$types{'id'} = 'id';
+$types{'Class'} = 'Class';
+$types{'SEL'} = 'SEL';
+$types{'IMP'} = 'IMP';
+$types{'BOOL'} = 'BOOL';
+# Cocoa Types
+$types{'unichar'} = 'unsigned short'; 
+# FIXME: Note repetition of struct and struct * types.
+$types{'NSAffineTransformStruct'} = 'struct';
+$types{'NSDecimal'} = 'struct';
+$types{'NSModalSession'} = 'instance';	# Typedef'd struct pointer
+$types{'NSPoint'} = 'struct';
+$types{'NSRange'} = 'struct';
+$types{'NSRect'} = 'struct';
+$types{'NSSize'} = 'struct';
+$types{'NSZone'} = 'struct';
+$types{'NSRequestUserAttentionType'} = 'enum'; # Defined inside an object
+$types{'NSAffineTransformStruct*'} = 'instance';
+$types{'NSDecimal*'} = 'instance';
+$types{'NSPoint*'} = 'instance';
+$types{'NSRange*'} = 'instance';
+$types{'NSRect*'} = 'instance';
+$types{'NSSize*'} = 'instance';
+$types{'NSZone*'} = 'instance';
+$types{'NSTypesetter'} = 'instance';
+# Dylan types
+$types{'object*'} = 'instance';
+# Also enum, struct, object and interface types
+
+
+# Melange symbols
+my %symbols;
+$symbols{'pointer'} = 'ptr:';
+$symbols{'char'} = 'char:';
+$symbols{'unsigned char'} = 'unsigned-char:';
+$symbols{'short'} = 'short:';
+$symbols{'unsigned short'} = 'unsigned-short:';
+$symbols{'long'} = 'long:';
+$symbols{'long long'} = 'long-long:';
+$symbols{'float'} = 'float:';
+$symbols{'double'} = 'double:';
+$symbols{'long double'} = 'long-double:';
+$symbols{'enum'} = 'int:';
+$symbols{'instance'} = 'ptr:';
+$symbols{'protocol'} = 'ptr:';
+$symbols{'charPTR'} = 'ptr:';
+# Objective-C Types
+$symbols{'id'} = 'ptr:';
+$symbols{'Class'} = 'ptr:';
+$symbols{'SEL'} = 'ptr:';
+$symbols{'IMP'} = 'ptr:';
+$symbols{'BOOL'} = 'char:';
+# Dylan types
+$symbols{'instance'} = 'ptr:';
+
+
+# Classes
+my %classes;
+$classes{'pointer'} = '<statically-typed-pointer>';
+$classes{'char'} = '<character>';
+$classes{'unsigned char'} = '<character>';
+$classes{'short'} = '<integer>';
+$classes{'unsigned short'} = '<integer>';
+$classes{'long'} = '<integer>';
+$classes{'long long'} = '<double-integer>';
+$classes{'float'} = '<float>';
+$classes{'double'} = '<double-float>';
+$classes{'long double'} = '<long-double-float>';
+$classes{'charPTR'} = '<c-string>';
+# Objective-C Types
+$classes{'id'} = '<id>';
+$classes{'Class'} = '<Objective-C-Class>';
+$classes{'SEL'} = '<SEL>';
+$classes{'IMP'} = '<IMP>';
+$classes{'BOOL'} = '<boolean>';
+# Dylan types
+$classes{'instance'} = '<object>';
+
+# Name mapping
+my %names;
+$names{'terminate:'} = 'terminate1:';
+$names{'copy:'} = 'copy1:';
+$names{'endEditing:'} = 'endEditing1:';
+$names{'stop:'} = 'stop1:';
+$names{'hide:'} = 'hide1:';
+$names{'unhide:'} = 'unhide1:';
+$names{'drawKnob:'} = 'drawKnob1:';
+$names{'noteFileSystemChanged:'} = 'noteFileSystemChanged1:';
+$names{'hideOtherApplications:'} = 'hideOtherApplications1:';
+$names{'open:'} = 'open1:';
+$names{'close:'} = 'close1:';
+$names{'setNeedsDisplay:'} = 'setNeedsDisplay1:';
+$names{'titleWidth:'} = 'titleWidth1:';
+$names{'defaultLineHeightForFont:'} = 'defaultLineHeightForFont1:';
+
+
+# Methods to explicitly avoid
+my %avoid;
+$avoid{'availableStringEncodings'} = 1;
+#$avoid{'copy'} = 1;
+#$avoid{'mutableCopy'} = 1;
+#$avoid{'copyWithZone'} = 1;
+#$avoid{'mutableCopyWithZone'} = 1;
+$avoid{'elementAtIndex'} = 1; #TODO Fix multi-line parsing!!!!!
+$avoid{'setMode'} = 1; # method argument type <id> isn't a subtype of GF type <integer>
+
+
+# Get the melange parameter symbol for a type
+# Note: This should never be called for structs passed by value
+# Parameters:	$type	- The C/Objective-C type 
+# Returns:		$symbol	- The melange symbol
+
+sub symbol_for_type
+{
+	my $type = shift( @_ );
+	if( is_primitive( $type ) )
+	{
+		return $symbols{ $types{ $type } };
+	}
+	else
+	{
+		return 'ptr:';
+	}
+}
+
+
+# Print the melange parameter symbol for a type
+# Parameters:	$type		- The Objective-C type
+
+sub print_symbol_for_type
+{
+	print symbol_for_type( shift( @_ ) );
+}
+
+
+# Get the Dylan class for a type
+# Parameters:	$type	- The C/Objective-C type 
+# Return:		$class	- The Dylan class
+
+sub class_for_type
+{
+	my $type = shift( @_ );
+	my $class;
+    # Try to get the type
+	my $typeOfType = $types{ $type };
+	
+	# Make a name for objects, removing the *
+	if( ! defined( $typeOfType ) )
+	{
+		die "Undefined type for $type";
+	}
+	if( ($typeOfType cmp 'instance') == 0 )
+	{
+		
+        my $objectType = $type;
+        # Strip stars on non-typedef'd pointers
+        if( index( $objectType, '*') != -1 )  
+        {
+        	$objectType = substr( $objectType, 0, -1 );
+        }
+		$class = "<$objectType>";
+	}
+	elsif(	(($typeOfType cmp 'class') == 0) || 
+			(($typeOfType cmp 'protocol') == 0) || 
+			(($typeOfType cmp 'struct') == 0) || 
+			(($typeOfType cmp 'enum') == 0) )
+    {
+		$class = "<$type>";
+    }
+    else
+	{
+		# Get the name for primitives
+		$class = $classes{ $typeOfType };
+		# Or just fail and use id
+		if( ! defined( $class ) )
+		{
+			$class = '<id>';
+		}
+	}
+        
+	return $class;
+}
+
+
+# Print the Dylan class for a type
+# Parameters:	@_		- The class
+
+sub print_class_for_type
+{
+    print class_for_type( shift( @_ ) );
+}
+
+
+# Make sure the method doesn't include anything we can't parse
+# FIXME: Catch primitive and primitive typedef pointers during parsing,
+#        just catch real nasties like ... and , here.
+# Parameters:	$line	- The Objective-C method signature to check 
+
+sub should_parse_method
+{
+	my $line = shift( @_ );
+	if( $line =~ m/^(\+|-)/ )
+	{
+		# Disallow C-style parameter lists, varargs, long longs and primitive pointers
+		if( $line =~ m/(CFRunLoopRef|Boolean|BOOL\s*\*|id\s*\*|uint8_t\s*\*|short\s*\*|int\s*\*|long\s*\*|float\s*\*|double\s*\*|unsigned[^)]*\*|long long \s*\*|unichar\s*\*|NSGlyph\s*\*|NSWindowDepth\s*\*|NSPointArray|NSOpenGLPixelFormatAttribute\s*\*|\(\*\)|va_list|,|\.\.\.|\*\*)/ )
+		{
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+
+# Decide whether the method has a void return. 
+# This does NOT catch void * returns.
+# Parameters:	$return_type	- The Objective-C return type
+# Returns:		1 = void, 0 = not
+
+sub void_return
+{
+	my $return_type = shift( @_ );
+	if( $return_type =~ m/(oneway\s+)?void(?!(\s*\*))/ )
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+
+# Check whether a protocol list includes the name of the class
+# Parameters:	$name		- The class name
+#				@protocols	- The protocol list
+# Returns:		1 = does, 0 = doesn't
+
+sub protocols_contain_class_name
+{
+	my $name = shift( @_ );
+	my @protocols = @_;
+	foreach my $protocol (@protocols)
+	{
+		if( ($name cmp $protocol) == 0 )
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
+# Check whether the type is a raw struct (not a struct pointer)
+# Parameters:	$candidate	- Maybe a struct
+# Returns:		1 = is, 0 = isn't
+
+sub is_struct
+{
+	my $candidate = shift( @_ );
+	my $type = $types{ $candidate };
+	if( defined( $type ) && (($type cmp 'struct') == 0) )
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+
+# Check whether the type is a pointer
+# Parameters:	$candidate	- Maybe a pointer
+# Returns:		1 = is, 0 = isn't
+
+sub is_pointer
+{
+	my $candidate = shift( @_ );
+	my $type = $types{ $candidate };
+	if( defined( $type ) && 
+		((($type cmp 'pointer') == 0) || 
+		(($type cmp 'instance') == 0) ||
+		(($candidate cmp 'id') == 0)  ||
+		(($candidate cmp 'SEL') == 0) ||
+		(($candidate cmp 'IMP') == 0)) )	# Class?
+	{
+		return 1;
+	}
+	else
+	{
+		if( index( $candidate, '*') != -1 )
+		{
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+}
+
+
+# Check whether we're trying to pass a primitive by value
+# Check for structs by
+# Cocoa also defines NS*Pointer and NS*Array types, which are
+# obviously treated as pointers rather than values.
+# Parameters:	$type	- The type
+# Returns:		1 = not pointer, 0 = pointer
+
+sub is_primitive
+{
+	my $type = shift( @_ );
+	if( $type =~ m/([^*]+\*|NS\w+Pointer|NS\w+Array)/ )
+	{
+		return 0;
+	}
+	elsif( is_struct( $type ) )
+	{	
+		return 0;
+	}
+	
+	return 1;
+}
+
+
+# Canonicalize the type, removing const, 
+# removing spaces between obejct names and *, 
+# converting constrained ids to protocols,
+# and converting 'Pointer' to '*'.
+# After this, the type will be a primitive, struct, object * or
+# protocol *. Note this means that we have to change protocol * back
+# to id<protocol> later.
+# Parameters:	$type	- The type
+# Returns:		$type	- The canonicalized type
+
+sub canonicalize_type
+{
+	my $type = shift( @_ );
+        
+	# Objective-C allows you to default to id
+	if( (! defined( $type )) || (($type cmp '') == 0) )
+	{
+		return 'id';
+	}
+	else
+	{
+                # Strip trailing spaces
+                $type =~ s/\s*$//;
+        
+		# If it's an id constrained to a protocol
+		if( $type =~ m/(id\s*<([^>]+|)>)/ )
+		{
+			# Change it to the protocol
+			$type = "$2Protocol";
+		}
+		else
+		{
+			# Strip const
+			$type =~ s/(const\s+)?(.*)/$2/;
+			# Strip space between name and *
+			if( $type =~ m/.*\*/ )
+			{
+				$type =~ s/(\w+)\s+\*/$1\*/;
+			}
+			# Convert NS...Pointer to NS...*
+			if( $type =~ m/NS\w+Pointer/ )
+			{
+				$type =~ s/(NS\w+)Pointer/$1\*/;
+			}
+		}
+	}
+	
+	return $type;
+}
+
+
+# Strip the pointer star from a type
+# Used when we convert a canonicalized constrained id back
+# Parameters:	$type	- The type, possibly with a * at the end
+# Returns:		$type	- The type, definitely without the *
+
+sub strip_star
+{
+	my $type = shift( @_ );
+	if( $type =~ m/[^*]+\*/ )
+	{
+		$type =~ s/(\w+).+/$1/;
+	}
+	return $type;
+}
+
+# Map Objective-C names that might clash with each other.
+# Parameter:	$name - The name.
+# Returns:		$mappedName - The mapped name, may be the same.
+
+sub map_name
+{
+	my $name = shift( @_ );
+	my $mappedName = $names{ $name };
+	if( ! defined( $mappedName ) )
+	{
+		$mappedName = $name;
+	}
+	
+	return $mappedName
+}
+
+
+# Make sure the method isn't on the list of methods to not wrap
+# Parameter:	$methodName - The name.
+# Returns:		1 for aboid, 0 for OK.
+
+sub should_avoid_method
+{
+	my $methodName = shift( @_ );
+	if( defined( $avoid{ $methodName } ) )
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+######################################################################
+# Method wrapper writing
+######################################################################
+
+# Check to see if any of the parameters are structs by value
+# Parameters: 	@_ - The types
+
+sub params_contain_struct
+{
+	my $types = shift( @_ );
+	foreach my $type ( @{$types} )
+	{
+		if( is_struct( $type ) )
+		{
+			return 1;
+		}
+	}
+	
+	return 0;
+}
+
+# Pass the Objective-C value as a named message parameter
+# Parameters:	$name	- The message parameter name (e.g. toObject:)
+#				$type	- The Objective-C type
+#				$index	- Its index
+
+sub write_param_pass
+{
+	my ( $type, $index ) = @_;
+	
+	# We may have a single name no value method
+	# OPTIMIZE THIS OUT HIGHER UP
+	if( defined( $type ) == 1 )
+	{	
+		# Separate the parameters. We've always already written one
+		print ', ';
+		
+		# Print the melange symbol for the type
+		print_symbol_for_type( $type );
+		
+		# For <booleans>
+		if( (class_for_type( $type ) cmp '<boolean>') == 0 )
+		{
+			print " if( param$index ) 1 else 0 end";
+		}
+		# For objects
+		elsif( (is_pointer( $type ) == 1) || (is_struct( $type ) == 1))
+		{	
+			# Pass the parameter
+			print " param$index.raw-value";
+		}
+		# For primitives
+		else
+		{
+			# Pass the parameter
+			print " param$index";
+		}
+	}
+}
+
+# Write a message call
+# You must have set up the Objective-C locals passed as parameters
+# before calling this
+# Parameters:	$classMethod	- Whether this is a class (1) or instance (0) method
+#				$class			- The Objective-C class this method is declared on
+#				$result			- The Objective-C type of the return (may be void).	
+#				$methodName		- The Objective-C method name.
+#				$names			- The parameter names
+#				$types			- The Objective-C parameter types.
+
+sub write_message
+{
+	my ( $classMethod, $class, $result, $methodName, $names, $types ) = @_;
+
+	write_message_send( $classMethod, $class, $result, $methodName, $names, $types );
+	write_message_return( $classMethod, $class, $result );
+}
+
+# Set up the return and call a message
+# Parameters:	$classMethod	- Whether this is a class (1) or instance (0) method
+#				$class			- The Objective-C class this method is declared on
+#				$result			- The Objective-C type of the return (may be void).
+#				$names			- The parameter names
+#				$types			- The Objective-C parameter types.
+
+sub write_message_send
+{
+	my ( $classMethod, $class, $result, $names, $types ) = @_;
+
+	# Handle implicit id return
+	if( ! defined( $result ) )
+	{
+		$result = 'id';
+	}
+	
+	# Get the target of the message
+	print "\tlet target :: <id> = ";
+	my $target;
+	if( $classMethod == 1 )
+	{
+		print "self.objc-class;\n";
+	}
+	else
+	{
+		print "self;\n";
+	}
+		
+	# Return void
+	if( void_return( $result ) )
+	{
+		print "\tcall-out( ";
+		if( params_contain_struct( $types ) )
+		{
+			print '"' . method_name( $names ) . '_by_reference"';
+		}
+		else
+		{
+			print "\"objc_msgSend\"";
+		}
+		print ', void:, ptr: target.raw-value, ptr: selector';
+	}
+	# Return struct by value
+	elsif( is_struct( $result ) )
+	{
+		# If the method returns a struct by value, set up the return for this
+		print "\tlet result :: ";
+		print_class_for_type( $result );
+		print ' = make( ';
+		print_class_for_type( $result );
+		print " );\n";
+		print "\tcall-out( ";
+		if( params_contain_struct( $types ) )
+		{
+			print '"' . method_name( $names ) . '_by_reference"';
+		}
+		else
+		{
+			print "\"objc_msgSend_stret\"";
+		}
+		print ', void:, ptr: result.raw-value, ptr: target.raw-value, ptr: selector';
+	}
+	# Return non-pointer types
+	#elsif( is_primitive( $result ) )
+	#{
+	#	# If the method returns an int, float, char * set up the return for this
+	#	my $primitiveClass = class_for_type( $result );
+	#	if( ! defined( $primitiveClass ) )
+	#	{
+	#		die "Can't get class for $result in write_message_setup";
+	#	}
+	#	my $primitiveSymbol = symbol_for_type( $result );
+	#	if( ! defined( $primitiveSymbol ) )
+	#	{
+	#		die "Can't get symbol for $result in write_message_setup";
+	#	}
+	#	print "\tlet result :: $primitiveClass = call-out( ";
+	#	if( params_contain_struct( $types ) )
+	#	{
+	#		print method_name( $names ) . '_by_reference';
+	#	}
+	#	else
+	#	{
+	#		print "\"objc_msgSend\"";
+	#	}
+	#	print ", $primitiveSymbol, ptr: target.raw-value, ptr: selector";
+	#}
+	# Primitives, pointers and ids
+	else
+	{
+		print "\tlet result-id :: <raw-pointer> = call-out( ";
+		if( params_contain_struct( $types ) )
+		{
+			print '"' . method_name( $names ) . '_by_reference"';
+		}
+		else
+		{
+			print "\"objc_msgSend\"";
+		}
+		print ', ptr:, ptr: target.raw-value, ptr: selector';
+	}
+	
+	# Write each parameter, dereferencing if needed
+	my $index = 0;
+	foreach my $type (@{$types})
+	{
+		write_param_pass( ${$types}[ $index ], $index );
+		$index = $index + 1;
+	}
+
+	# End the call
+	print " );\n";
+}	
+	
+	
+# Write the return (or nothing) for a message
+# Parameters:	$classMethod	- Whether this is a class method.
+#		$self		- The type of self.
+#		$result		- The Objective-C type of the return (may be void).	
+
+sub write_message_return	
+{	
+	my( $classMethod, $self, $result ) = @_;
+	
+	# If the return is void
+	if( void_return( $result ) )
+	{
+		# Do nothing
+	}
+	# If it's a BOOL
+	#elsif( ($result cmp 'BOOL') == 0 )
+	#{
+	#	# Make sure memory is cleaned up properly	
+	#	# Convert the char 1 or 0 to a <boolean>/<BOOL>
+	#	print "\tif( result-id == 1 ) #t else #f end;\n";
+	#}
+	# If it's a primitive
+	elsif( is_primitive( $result ) )
+	{
+		# Return the single value
+		#print "\tresult;\n";
+		# Convince C to put an id into a primtive (a reinterpret_cast in C++)
+		#print "\tc-expr( ";
+		#print_symbol_for_type( $result );
+		#print " \"*($result *)& result\" );\n";
+		# Convert the id to the correct type
+                if( ( $result cmp 'id' ) == 0   )
+                {
+                    if( $classMethod )
+                    {
+                        print "\t make( self, pointer: result-id );\n";
+                    }
+                    else
+                    {
+                        print "\t make( object-class( self ), pointer: result-id );\n"
+                    }
+                }
+                else
+                {
+                    print "\t as( ";
+                    print_class_for_type( $result );
+                    print ", result-id );\n";
+                }
+	}
+	# If we're dealing with returning a struct by value
+	elsif( is_struct( $result ) )
+	{
+		# Return the single, already created, value
+		print "\tresult;\n";
+	}
+	# If it's a pointer or id
+	else
+	{
+		my $class = class_for_type( $result );
+		# Make a Dylan object to receive the result
+		print "\tlet result :: $class = make( $class, pointer: result-id );\n";
+		# Return the single value
+		print "\tresult;\n";
+	}
+}
+
+
+# Write the parameter list for the Dylan method wrapper
+# Parameters:	$classMethod	- Is this a class method?
+#				$target			- The Objective-C target class type
+#				$paramNames		- A reference to an array of
+#									the Objective-C parameter names.
+#				$paramType		- A reference to an array of
+#									the Objective-C parameter types.
+
+sub write_method_wrapper_params
+{
+	my ( $classMethod, $target, $paramNames, $paramTypes) = @_;
+
+	# Our first parameter is always the target of the message
+	# Note for class methods we must handle subclasses as well
+	print '   ( self ';
+	if( $classMethod )
+	{
+		print ':: subclass( ';
+		print_class_for_type( $target );
+		print ' )';
+        }
+	else
+	{
+		print ':: ';
+		print_class_for_type( $target );
+	}
+	# If we have any more parameters
+	if( defined( ${$paramTypes}[ 0 ] ) )
+	{
+		# The rest are keys.
+		#FIXME What do we do for multiple keys of the same name?
+		my $paramCount = @{$paramTypes};
+		# If we have parameters
+		if( index( ${$paramNames}[ 0 ], ':') != -1 )
+		{
+			#print ', #key';
+			for( my $i = 0; $i < $paramCount; $i = $i + 1 )
+			{
+				print ", param$i :: ";
+				print_class_for_type( ${$paramTypes}[$i] );
+				#if( $i != $paramCount - 1 )
+				#{
+				#	print ',';
+				#}
+			}
+		}
+	}
+	print " )\n";
+}
+
+
+# Write the return declaration for the Dylan method wrapper
+# Parameters:	$result		- The Objective-C return type.
+#								May be 'void'.
+
+sub write_method_wrapper_return
+{
+	my $result = shift( @_ );
+	# Write a void or single-value return
+	if( void_return( $result ) )
+	{
+		print "=> ()";
+	}
+	else
+	{
+		print '=> ( result :: ';
+		print_class_for_type( $result );
+		print ")";
+	}
+}
+
+
+# Write the Dylan method wrapper for the Objective-C method
+# Parameters:	$classMethod- Whether this is a class method
+#				$target		- The Objective-C class the method is on
+#				$result		- The Objective-C return type
+#				$paramNames	- A reference to an array of
+#									the Objective-C parameter names.
+#				$paramType	- A reference to an array of
+#									the Objective-C parameter types.
+
+sub write_method_wrapper
+{
+	my ( $classMethod, $target, $result, $paramNames, $paramTypes ) = @_;
+	
+	# Fix struct returns for next release
+	# See /usr/include/objc/runtime.h . We must define __cplusplus at some point.
+	if( ! is_struct( $result ) )
+	{
+		# Get a Dylan method name by stripping the colon of the first part of the method name
+		#my $methodName = method_name( $paramNames );
+		#${$paramNames}[ 0 ];
+		
+		# Get the method name and make sure we want to write a wrapper for it
+		my $methodName = method_name( $paramNames );
+		if( should_avoid_method( $methodName ) )
+		{
+			return;
+		}
+		
+		#Get the selector and 
+		#my $selectorName = join( '', @{$paramNames} );
+		#print"define constant \$$methodName-selector :: <raw-pointer> = c-expr( \"sel_getUid(\\\"$selectorName\\\")\");\n\n";
+		
+		# Write the Dylan wrapper for the Objective-C method
+		print "define /\*exported\*/ method $methodName\n";
+		write_method_wrapper_params( $classMethod, $target, $paramNames, $paramTypes );
+		write_method_wrapper_return( $result );
+		print"\n";
+		
+		# Get the selector
+		my $selectorName = join( '', @{$paramNames} );
+		print "\tlet selector :: <raw-pointer> = c-expr( ptr: \"(void*)sel_getUid(\\\"$selectorName\\\")\");\n";
+	
+		
+		# Write by reference wrapper if method takes structs by value
+		if( params_contain_struct( $paramTypes ) )
+		{
+			write_by_reference_wrapper( $methodName, $result, $paramTypes );
+		}
+		write_message(  $classMethod, $target, $result, $paramNames, $paramTypes  );
+		print "end method $methodName;\n\n";
+	}
+}
+
+
+# Write the Dylan GF wrapper for the Objective-C method
+# Parameters:	$classMethod- Whether this is a class method
+#				$target		- The Objective-C class the method is on
+#				$result		- The Objective-C return type
+#				$paramNames		- A reference to an array of
+#									the Objective-C parameter names.
+#				$paramType		- A reference to an array of
+#									the Objective-C parameter types.
+
+# List of generics we've written
+my %generics;
+
+sub write_gf
+{
+	my ( $classMethod, $target, $result, $paramNames, $paramTypes ) = @_;
+	# Get a Dylan method name by stripping the colon of the first part of the method name
+	my $methodName = method_name( $paramNames );
+	if( ! defined( $generics{ $methodName } ) )
+	{
+		# Write the Dylan wrapper for the Objective-C method
+		print "define /\*exported\*/ open generic $methodName\n";
+		# Make the generic's first parameter (the target) loose so we don't clash with methods
+		write_method_wrapper_params( $classMethod, 'object*', $paramNames, $paramTypes );
+		# make the return loose
+		# NO: Default to #rest x :: <object> to allow any or no return
+		#write_method_wrapper_return( 'object*' );
+		print ";\n\n";
+		$generics{ $methodName } = 1;
+	}
+}
+
+
+# Write a by-reference for an Objective-C method that takes structs by value
+# NOTE: This uses local functions and so is incredibly gcc-specific, 
+# even g++ won't take it.
+# NOTE: We return id and let the Dylan wrappers cast it to the correct type
+# Parameters:	$methodName	- The (Dylan) method name.
+#				$result		- The Objective-C return type
+#				$types		- A reference to an array of
+#									the Objective-C parameter types.
+
+sub write_by_reference_wrapper
+{
+	my ( $methodName, $result, $types ) = @_;
+	
+	# Start writing the expr
+	# This is void even if we have a return value because we are just inlining the code
+	print "c-expr( void: \"";
+	
+	# Print the header
+	# Catch returning structures by value
+	if( is_struct( $result ) )
+	{
+		print 'void ';
+		print $methodName . '_by_reference ( void * structure, id target, SEL selector '
+	}
+	# Other returns, including void
+	else
+	{
+		#print "$result ";
+		print 'id ';
+		print $methodName . '_by_reference ( id target, SEL selector '
+	}
+	
+	# Print the parameters, making structs pointers
+	my $paramCount = 0;
+	foreach my $type ( @{$types} )
+	{
+		print ', ';
+		# Strip "Protocol" from protocol and make constrained id
+		if( ($types{ $type} cmp 'protocol') == 0 )
+		{
+			print 'id <';
+			print substr( $type, 0, -8 );
+			print '>';
+		}
+		else
+		{
+			print $type;
+			if( is_struct( $type ) )
+			{
+				print ' *';
+			}
+		}
+		print " param$paramCount";
+		$paramCount = $paramCount + 1;
+	}
+	print ' ) { ';
+	           
+	# Print the message send, handling struct returns and void returns
+	# Struct return
+	if( is_struct( $result ) )
+	{
+		print 'objc_msgSend_stret( structure, (id)target, selector';
+	}
+	else
+	{
+		# Non-void return
+		#if( void_return( $result ) == 0 )
+		#{
+		#	# Type-cast the id to the return type
+		#	print "return ($result)";
+		#}
+		print 'return objc_msgSend( target, selector';
+	}
+	
+	# Pass the parameters, dereferencing structs
+	$paramCount = 0;
+	foreach my $type ( @{$types} )
+	{
+		print ', '; 
+		if( is_struct( $type ) )
+		{
+			print '*';
+		}
+		print "param$paramCount";
+		$paramCount = $paramCount + 1;
+	}
+	
+	# Finish the function and c-expr body
+	
+	print " ); }\" );\n";
+}
+
+
+# Convert the method name from Objective-C to Dylan
+# Parameters:	$paramNames		- The parameter names.
+# Return:		$methodName		- The Dylanized method name
+
+sub method_name
+{
+	my $paramNames = shift( @_ );
+	
+	my $methodName = "";
+	foreach my $namelet (@{$paramNames})
+	{
+		$methodName = $methodName . $namelet;
+	}
+            
+	# Avoid repeat defines and other nasties
+	$methodName = map_name( $methodName );
+	
+	# Dylanize the name
+	$methodName =~ tr/://d;
+	
+	return $methodName;
+}
+
+
+######################################################################
+# Class wrapper writing
+######################################################################
+
+
+# Write a simple Dylan class for an Objective-C class
+# with single inheritance 
+# Parameters:	$className	- The Objective-C class name
+#				$superName	- The Objective-C superclass name
+
+sub write_class_wrapper
+{
+	my ($className, @supers ) = @_;
+	print "define /\*exported\*/ functional class <$className> ( ";
+	for( my $i = 0; $i < @supers; $i = $i + 1 )
+	{
+		print "<$supers[$i]>";
+		if( $i != @supers - 1 )
+		{
+			print ', ';
+		}
+	}
+	print " ) end class;\n";
+}
+
+######################################################################
+# Method parsing
+######################################################################
+
+# Parse an Objective-C method declaration
+# Parameters:		$line	- The line with the method declaration on
+# Returns:			$classMethod	- Whether this is a class method
+#					$returnType		- The Objective-C return type
+#					$paramNames		- A reference to an array of
+#										the Objective-C parameter names.
+#					$paramType		- A reference to an array of
+#										the Objective-C parameter types.
+# Note: If the method couldn't be parsed, $returnType will be ''
+
+sub parse_method
+{
+	my $line = shift( @_ );
+	my @names;
+	my @types;
+	my $returnType = '';
+	my $classMethod = 0;
+		
+	# Handle the occasional, evil, multi-line function def.
+	while( $line =~ m/.*\;/ != 1)
+	{
+		my $nextLine = <>;
+		$line = $line . $nextLine;
+	}
+		
+	# If the method looks like we can handle it, parse it
+	if( should_parse_method( $line ) )
+	{	
+		$line =~ m/(\+|-)\s*(\(([^\)]+)\))?\s*(.+)/;
+		$line = $4;
+		if( ( $1 cmp '' ) != 0 )
+		{
+			if( ($1 cmp '+') == 0 )
+			{
+				$classMethod = 1;
+			}
+			$returnType = canonicalize_type( $3 );
+			# Catch simple methods
+			if( $line =~ m/^\s*(\w+);/ )
+			{
+				my $name = $1;
+				push( @names, $name )
+				#push( $types, '' );
+			}
+			# Catch parameterized methods
+			else
+			{
+				while( $line =~ m/(\w+:)(\s*\(([^)]+)\))?/g )
+				{
+					my $name = $1;
+					my $type = canonicalize_type( $3 );
+					push( @names, $name );
+					push( @types, $type );
+				}
+			}
+		}
+	}
+	return $classMethod, $returnType, \@names, \@types;
+}
+
+######################################################################
+# Enum parsing
+######################################################################
+
+sub parse_enum
+{
+	# Single-line enum
+	if( $_ =~ m/\benum\b[^;]+;/ )
+	{
+		# Split up the string into individual enums
+		$_ =~ m/({([^\}]+)\})/;
+		my @enums = split( /,/, $1 );
+		# Make sure they're Cocoa enums
+		if( $enums[ 0 ] =~ m/NS\w+/ )
+		{
+			my $i = 0;
+			foreach my $enum ( @enums )
+			{
+				$enum =~ s/^\W*(\w+).*$/$1/;
+				print "define /*exported*/ constant \$$enum :: <integer> = c-expr( int: \"$enum\");\n";
+			}
+			# If the enum is named
+			if( $_ =~ m/\b(\w+)\s*;/ )
+			{
+				finish_writing_enum( $1, \@enums );
+			}
+		}
+	}
+	else
+	{
+		# Multi-line enum
+		my @enums;
+		# Parse each line
+		while( <INFILE> )
+		{
+			# The enum ends with the enum typedef name
+			if( $_ =~ /}\s*(NS\w+);/ )
+			{
+				my $name = $1;
+				finish_writing_enum( $name, \@enums );
+				return;
+			}
+			# A value in the enum
+			elsif( $_ =~ /\s+(NS\w+)\s+/ )
+			{
+				my $enum = $1;
+				print "define /*exported*/ constant \$$enum :: <integer> = c-expr( int: \"$enum\");\n";
+				push( @enums, $enum );
+			}
+			# The enum just ends
+			elsif( $_ =~ /\};/ )
+			{
+				return;	
+			}
+		}
+	}
+}
+
+# Write the typedef (if any) and add the type to the symbol and class lists
+# Parameters:	$name		- The enum typedef name.
+#				$enums		- A reference to an array of Objective-C enum names.
+
+sub finish_writing_enum
+{
+	my ( $name, $enums ) = @_;
+	if( @{$enums} > 0 )
+	{
+		print "define /*exported*/ constant <$name> :: <type> = one-of(";
+		for( my $i = 0; $i < @{$enums}; $i = $i + 1 )
+		{
+			print " \$${$enums}[$i]";
+			if( $i != @{$enums} - 1 )
+			{
+				print ',';
+			}
+		}
+		print ");\n\n";
+	}
+	$types{$name} = 'enum';
+	return;
+}
+
+
+######################################################################
+# Typedef parsing
+######################################################################
+
+# Parse a primitive typedef
+
+sub parse_typedef
+{
+	if( $_ =~ m/^\s*typedef\s+(unsigned|unsigned short|short|unsigned int|int|unsigned long|long)\s+(NS\w+)/ )
+	{
+		my $baseType = $1;
+		my $definedType = $2;
+		print "define /*exported*/ constant <$definedType> :: <type> = <integer>;\n\n";	
+		$types{ $definedType } = $types{ $baseType };	
+
+	}elsif( $_ =~ m/^typedef\s+(float|double)\s+(NS\w+)/ )
+	{
+		my $baseType = $1;
+		my $definedType = $2;
+		print "define /*exported*/ constant <$definedType> :: <type> = <float>;\n\n";
+		$types{ $definedType } = $types{ $baseType };	
+	}
+}
+
+
+######################################################################
+# Interface parsing
+######################################################################
+
+# Parse methods following an interface declaration
+# Parameters:	$class	- The class name
+
+sub parse_methods
+{
+	my ( $class ) = shift( @_ );
+	while( <INFILE> )
+	{	
+		if( $_ =~ /^\@end/ )
+		{
+			return;
+		}
+		my ($classMethod, $returnType, $names, $types) = parse_method( $_ );
+		if( $returnType )
+		{
+			write_method_wrapper( $classMethod, $class, $returnType, $names, $types );
+			$numMethods = $numMethods + 1;
+			#TODO: This will wrap round for ridiculously large files: make it scale OK
+			unless( $numMethods % 3000 )
+			{
+				close( OUTFILE );
+   				my $outputFile = "$moduleName-continued.dylan";
+    			open( OUTFILE, '>', $outputFile ) or die "Can't open $outputFile: $!\n";
+    			select( OUTFILE );
+   				print_header( $moduleName, $headerFile );
+			}
+		}
+	}
+}
+
+# Parse methods following a protocol declaration
+# Parameters:	$class	- The class name
+
+sub parse_protocol_methods
+{
+	my ( $class ) = shift( @_ );
+	while( <INFILE> )
+	{	
+		if( $_ =~ /^\@end/ )
+		{
+			return;
+		}
+		my ($classMethod, $returnType, $names, $types) = parse_method( $_ );
+		if( $returnType )
+		{
+			write_gf( $classMethod, $class, $returnType, $names, $types );
+		}
+	}
+}
+
+# Break down a protocol list and return it (or nothing)
+# Parameters:	$protocolList	- A comma-delimited string of protocols
+# Returns:		@protocols		- The protocols or nothing
+
+sub parse_protocols
+{
+	my $protocolList = shift( @_ );
+	my @protocols;
+	if( defined( $protocolList ) )
+	{
+		@protocols = split( /, /, $protocolList );
+	}
+	return map( $_ . "Protocol", @protocols );
+}
+
+sub parse_class_declarations
+{
+	my @classes = split( /, /, shift( @_ ) );
+	foreach my $class (@classes)
+	{
+                $types{ $class } = 'class';
+		$types{ "$class*" } = 'instance';
+	}
+}
+
+
+######################################################################
+# Parse a file
+######################################################################
+
+sub parse_file
+{
+    my $inputFile  = shift( @_ );
+    open( INFILE, '<', $inputFile ) or die "Can't open $inputFile: $!\n";
+    while( <INFILE> )
+    {
+    	my $name;
+    	my $category;
+    	my $super;
+    	my @protocols;
+    	# Check for @class
+    	if( $_ =~ m/^\@class\s+([^;]+);/ )
+    	{
+    		parse_class_declarations( $1 );
+    	}
+    	# Check for formal protocol
+    	if( $_ =~ m/^\@protocol\s+(\w+)\s*(<([^>]+)>)?/ )
+    	{
+    		$name = "$1Protocol";  
+			@protocols = parse_protocols( $3 );
+			# make sure we derive from an Objective-C type
+			if( @protocols == 0 )
+			{
+				   $protocols[ 0 ] = 'id';
+			}
+			write_class_wrapper( $name, @protocols );
+			$types{ $name } = 'protocol';
+			parse_methods( $name );
+    	}
+    	# Check for categories/informal protocols
+    	elsif( $_ =~ m/^\@interface\s+(\w+)\s*\((\w+)\)(\s*<([^>]+)>)?/ )
+    	{
+    		$name = $1;
+    		$category = $2;
+    		@protocols = parse_protocols( $4 );
+    		parse_methods( $name );
+    	}
+    	# Check for subclasses
+		elsif( $_ =~ m/^\@interface\s+(\w+)\s*:\s*(\w+)(\s*<([^>]+)>)?/ )
+		{
+			$name = $1;
+			$super = $2;
+			@protocols = parse_protocols( $4 );
+			# Make sure we don't include a Protocol with the same name
+    		#if( ! protocols_contain_class_name( $name, @protocols ) )
+    		#{
+                        write_class_wrapper( $name, $super, @protocols );
+                        $types{ $name } = 'class';
+                        $types{ "$name*" } = 'instance';
+			#}
+			parse_methods( $name );
+		}
+    	# Check for base classes
+    	elsif( $_ =~ m/^\@interface\s+(\w+)(\s*\<([^>]+)\>)?/ )
+    	{	
+    		$name = $1;
+    		@protocols = parse_protocols( $3 );
+    		# NSObject is declared as an object with no super
+    		# and a category with the same name as itself.
+    		# So we treat it as a special case
+    		#if( ! protocols_contain_class_name( $name, @protocols ) )
+    		#{
+                write_class_wrapper( $name, @protocols );
+                $types{ $name } = 'class';
+                $types{ "$name*" } = 'instance';
+    		#}
+    		parse_methods( $name );
+    	}
+        # Check for enums
+        elsif( $_ =~ m/\benum[^{]+\{/ )
+        {
+			parse_enum();
+        }
+        # Check for primitive Typedefs
+        elsif( $_ =~ m/^\s*typedef\s+/ )
+        {
+			parse_typedef();
+        }
+        elsif( $_ =~ /@(interface|protocol)/ )
+        {
+			die( "----->Can't parse:\n\t$_\n" );
+        }
+    	
+    }
+    close( INFILE );
+} 
+
+######################################################################
+# Main
+######################################################################
+
+# Colon means arg is optional, = is required, s is string
+GetOptions( 'module=s' => \$moduleName,
+			'header=s' => \$headerFile  );
+
+if ($#ARGV == 0) { #&& (-d $ARGV[0])) {
+    my $inputFile = $ARGV[0];
+    my $outputFile = "$moduleName.dylan";
+    open( OUTFILE, '>', $outputFile ) or die "Can't open $outputFile: $!\n";
+    select( OUTFILE );
+    
+    print_header( $moduleName, $headerFile );
+    parse_file( $inputFile );
+    
+    close( OUTFILE );
+}
+else 
+{
+	test();
+	#die "You must specify a single input file for processing.\n";
+}
+
+sub print_header
+{
+	my ( $moduleName, $headerFile ) = @_;
+	# Write the Dylan file header
+    print "module: $moduleName\n\nc-expr( void: \"#undef true\" );\nc-expr( void: \"#undef false\" );\n\n";
+    print "\nc-system-include( \"$headerFile\" );\n\n";
+}
+
+
+######################################################################
+# Testing
+######################################################################
+
+# Test this code
+
+sub test
+{
+	print "Testing.\n";
+	#my $test = "hello";
+	#$test =~ tr/l//d;
+	#print "$test\n";
+	$types{'NSString*'} = 'instance';
+	my ($classMethod, $returnType, $names, $types) = parse_method("");
+	write_method_wrapper( $classMethod, "NSPoint*", $returnType, $names, $types );
+	#write_param_assign( "NSObject*", 1 );
+	#write_param_pass( "initFromObj:", 1 );
+	#print "\n";
+	#write_message_call( "void", "target", "message:", "parameters:" );
+	#write_message_call( "ptr", "NSString", "alloc" );
+	#write_message_wrapper( "NSString", "NSString *", "alloc" );
+	#write_message_wrapper( "NSString *", "void", "doSomething:", "id", "with:", "NSString*", "andThis:", "unsigned int" );
+   #     print void_return( '- (oneway void)release;' );
+	#parse_method( '+ (id)stringWithCString:(const char *)bytes;' );
+	#parse_method( '- (id)initWithCString:(const char *)bytes;' );
+	#parse_method( '- (const char *)cString;' );
+	#parse_method( '- (id)performSelector:(SEL)aSelector withObject:(id)object1' );
+	#parse_method( '- (id)performSelector:(SEL)aSelector withObject:(id)object1 withObject:(id <NSObject>)object2;' );
+	#parse_method( '- doSomething:(SEL)aSelector withObject: object1 withObject:(id <NSObject>)object2;' );
+	#print is_primitive( 'void' );
+	#print is_primitive( 'void *' );
+	#print is_primitive( 'void    *' );
+	#print is_primitive( 'void* ' );
+	#print is_primitive( 'oneway void' );
+	#print protocols_contain_class_name( 'NSObject', 'NSObject' );
+	#print protocols_contain_class_name( 'NSObject', 'Wimble' );
+	#print protocols_contain_class_name( 'NSObject', 'NSObject', 'Wimble' );
+	#print protocols_contain_class_name( 'NSObject', 'Wimble', 'NSObject' );
+	print "Finished tests.\n";
+}

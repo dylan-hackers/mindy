@@ -1,0 +1,89 @@
+module: dylan-user
+
+define library cocoa
+	use dylan, import: { system };
+	use common-dylan;
+	use melange-support;
+	
+	export cocoa;
+end library cocoa;
+
+define module objective-c
+	use common-dylan, exclude: { <class>, size, size-setter };
+	use melange-support;
+
+	export
+	
+		//Types
+		<BOOL>, <Class>, <Protocol>, <id>, <SEL>, <IMP>,
+		
+		// Values
+		$YES, $NO, 
+		$nil	// nil and Nil
+		
+	;	
+end module objective-c;
+
+define module cocoa-basics
+	use common-dylan, exclude: { <class>, size, size-setter };
+	use melange-support;
+	use objective-c;
+
+	export
+	
+		// Utilitlies
+		\with-autorelease,
+	
+		// Mac Toolbox
+		<OSErr>, <OSType>, <DescType>, <AEReturnID>, <AETransactionID>,
+		<AEEventClass>, <AEEventID>, <AEArrayType>, <AEKeyword>,
+		<AEDataStorage>, 
+		
+		<AEDesc>, descriptorType, descriptorType-setter,
+			dataHandle, dataHandle-setter,
+		<AEKeyDesc>, descKey, descKey-setter,
+			descContent, descContent-setter,	
+		<AppleEvent>, descriptorType, descriptorType-setter, 
+			dataHandle, dataHandle-setter,
+		
+		// Cocoa
+		<unichar>,
+		<NSPointArray>, <NSRectArray>,
+		
+		<NSRequestUserAttentionType>, $NSCriticalRequest, 
+			$NSInformationalRequest, 
+		
+		<NSAffineTransformStruct>, m11, m11-setter, m12, m12-setter, 
+			m21, m21-setter, m22, m22-setter, tX, tX-setter, tY, tY-setter,
+		<NSTypesetter>, <NSDecimal>, <NSModalSession>,
+		<NSPoint>, x, x-setter, y, y-setter,
+		<NSSize>, width, width-setter, height, height-setter, 
+		<NSRect>, origin, origin-setter, size, size-setter,
+		<NSRange>, location, location-setter, length, length-setter,
+		<NSZone>
+	;
+end module cocoa-basics;
+
+define module cocoa-wrappers
+	use system, import: { c-expr, <raw-pointer> };
+	use common-dylan, exclude: { <class>, size, size-setter };
+	use melange-support;
+	use objective-c;
+	use cocoa-basics;
+	export
+		/* exports for cocoa-wrappers */;
+end module cocoa-wrappers;
+
+define module cocoa
+	use system, import: { c-expr, <raw-pointer> };
+	use common-dylan, exclude: { <class>, size, size-setter };
+	use melange-support;
+	use objective-c, 
+		rename: { <Class> => <Objective-C-Class> },
+		export: all;
+	use cocoa-basics, export: all;
+	use cocoa-wrappers, 
+		rename: { <Class> => <Objective-C-Class>,
+				size => NSsize, size-setter => NSsize-setter },
+		export: all;
+end module cocoa;
