@@ -1,6 +1,6 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = '-L../table-ext -L../streams -L../format ' . $D2CFLAGS;
+$D2CFLAGS = '-L../table-ext -L../streams -L../format -L../print ' . $D2CFLAGS;
 
 &emit_library_rule(
     'getopt', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',
