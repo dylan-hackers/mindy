@@ -1,0 +1,135 @@
+		The Mindy Stream Extensions Library
+		
+------------
+This document describes the stream-extensions library for the Mindy Dylan
+environment.  Many functions in the library are specified more completly in
+the Harlequin streams library proposal.  The functions not documented in
+the Harlequin document are described here in detail.
+
+------------
+
+Stream-Extension Functions:
+---------------------------
+
+read-to								[Function]
+
+  Arguments
+    stream :: <stream>
+    element :: <object>
+    #key on-end-of-stream = #"no-default-given"
+    test = \==
+  Values
+    result-sequence
+    found? :: <boolean>
+  Description
+    This function reads in elements from stream until the test function
+    applied to the read-in byte and element returns true.  All of the 
+    read-in elements up to but not including the final element are returned
+    in result-sequence.  If the end of the stream is encountered, and
+    on-end-of-stream = #"no-default-given" then an error is signalled;
+    otherwise the value of on-end-of-stream is returned, along with the
+    value #f.
+	
+  This function works as documented in the Harlequin Streams document, with
+  the following exceptions:
+		
+    If the end of stream is not encountered, result-sequence will 
+    be a <byte-vector>.
+
+    The errors wich could be signalled are <end-of-stream-error> 
+    and <incomplete-read-error>, as described in the Harlequin streams
+    document, not <end-of-file>, as is currently implemented.
+		
+
+read-through							[Function]
+
+  Arguments
+    stream :: <stream>
+    element :: <object>
+    #key on-end-of-stream = #"no-default-given"
+    test = \==
+  Values
+    result-sequence
+    found? :: <boolean>
+  Description
+    This function is just like read-to, except it includes the byte
+    that matches element.
+		
+read-to-end							[Function]
+
+  Arguments
+    stream :: <stream>
+  Values
+    result-sequence :: <byte-vector>
+  Description
+    Read-to-end will read all elements from stream until <end-of-file>
+    is encountered, and return these elements as a <byte-vector>
+		
+skip-through							[Function]
+
+  Arguments
+    stream :: <stream>
+    element
+    #key test = \==
+  Values
+    found? :: <boolean>
+  Description
+    Skip-through will position the "stream pointer" so the next character
+    read will be the first character after one which matches element via test.
+    e.g.
+	stream = "This is a test..."
+	element = "e"
+	skip-through(stream, element)
+	read-byte(stream) => "s"
+    If a byte is found which satisfies test, found? will be #t, otherwise
+    if the end-of-file is encountered before finding a matching byte,
+    found? will be #f.
+		
+new-line							[Function]
+
+  Arguments
+    stream :: <stream>
+    #key lines = 1
+  Values
+    none
+  Description
+    New-line will output the specified number of new-lines to stream
+
+read-as-list							[Function]
+
+  Arguments
+    stream :: <stream>
+    #key delimiters = #['\n']
+    delimiter-test = \==
+    until = #f
+    until-test = \==
+  Values
+    vector-list :: <list>
+  Description
+    read-as-list will read the elements of stream up through the until: 
+    element, and using the delimiter sequence, it will break the stream 
+    up into a list of <byte-vector>s.  For example, if the stream 
+    my-stream contained the following: 
+      Roger Corman 
+      Ed Wood 
+      Stephen Speilberg 
+    then read-as-list(my-stream, delimiters: #['\n', ' '], until: 'l') 
+    would produce #("Roger", "Corman", "Ed", "Wood", "Stephen", "Spei")
+		
+read-line-into!							[Function]
+
+  Arguments
+    input-stream :: <stream>
+    string :: <string>
+    #key start = 0
+    on-end-of-stream = #"no-default-given"
+    grow? = #t
+  Values
+    none
+  Description
+    read-line-into! will read a line from stream into string, destructively
+    modifying string in the process.  The first element read in from stream
+    will be positioned at start in the string.  If grow? is true, string will
+    be resized to fit the line, otherwise if the line is too long, an error
+    will be signaled.
+
