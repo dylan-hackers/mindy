@@ -9,12 +9,14 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.8 1994/04/04 14:45:56 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.9 1994/04/04 17:52:33 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
 
 include ../Config
+
+CPPFLAGS = -I.
 
 OBJS = bool.o class.o coll.o debug.o def.o error.o func.o gc.o init.o \
 	interp.o list.o lose.o mindy.o misc.o module.o nlx.o num.o \
@@ -41,7 +43,7 @@ clean:
 
 
 depend: ${SRCS}
-	$(CC) -MM -E ${CFLAGS} ${CPPFLAGS} $^ > ,depends
+	$(CC) -MM -E ${CPPFLAGS} $^ > ,depends
 	mv ,depends Depends
 
 ifndef IGNORE_DEPENDS

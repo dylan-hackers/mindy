@@ -9,13 +9,14 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.3 1994/03/31 10:14:48 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.4 1994/04/04 17:51:32 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
 
 include ../Config
 
+CPPFLAGS = -I.
 LFLAGS = -i
 LDLIBS = -lfl
 
@@ -47,7 +48,7 @@ clean:
 	rm -f ${OBJS} version.o parser.tab.c parser.tab.h lexer.c mc Depends
 
 depend: ${SRCS}
-	$(CC) -MM -E ${CFLAGS} ${CPPFLAGS} $^ > ,depends
+	$(CC) -MM -E ${CPPFLAGS} $^ > ,depends
 	mv ,depends Depends
 
 
