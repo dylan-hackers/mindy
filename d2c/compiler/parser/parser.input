@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.4 1994/12/17 01:42:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.5 1994/12/17 02:32:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -343,7 +343,7 @@ classopt (<name-token> <name-token> property-list-opt)
 %
 
 classopt (<name-token> <keyword-token> property-list-opt)
-  make(<classopt>, thing: %1.token-symbol, name: %2, plist: %3);
+  make(<classopt>, kind: %1.token-symbol, name: %2, plist: %3);
 %
 
 :type generic-function-definition <define-generic-parse>
@@ -499,14 +499,14 @@ type (operand)
   %1;
 %
 
-:type condition <expression>
+:type condition <pair>
 
 condition (type)
   pair(%1, #[]);
 %
 
 condition (<left-paren-token> type property-list <right-paren-token>)
-  pair(%2, %4);
+  pair(%2, %3);
 %
 
 :type handler <expression>
