@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.92 2004/05/23 08:38:03 bruce Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.92.2.1 2004/10/17 19:17:02 andreas Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -667,18 +667,14 @@ long-double-alignment:	4
 platform-name:			x86-cygnus-gcc
 inherit-from:			gcc x86 cygnus
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
+long-long-alignment:		8
+double-alignment:		8
 
 platform-name:			x86-cygnus-gcc32
 inherit-from:			x86-gcc32 cygnus
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 long-long-alignment:		4
 double-alignment:		4
-
-platform-name:			x86-cygnus-gcc33
-inherit-from:			x86-gcc33 cygnus
-link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
-long-long-alignment:		8
-double-alignment:		8
 
 // Mingwin Port
 platform-name:			x86-mingw32-gcc32
