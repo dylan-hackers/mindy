@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.19 1996/01/15 22:41:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.20 1996/01/15 23:09:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -41,7 +41,7 @@ define method write-address (thing, stream) => ();
   let address = as(<integer>, thing.object-address);
 #end
   for (shift from -28 below 1 by 4)
-    let digit = as(<integer>, logand(ash(address, shift), #f));
+    let digit = as(<integer>, logand(ash(address, shift), #xf));
     if (digit < 10)
       write(digit + 48, stream);
     else
