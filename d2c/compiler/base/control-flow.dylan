@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.9 1995/04/27 09:22:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.10 1995/05/01 06:49:38 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -115,14 +115,16 @@ end;
 // A <block-region> wraps code which can exit to its endpoint.  The phi
 // function joins the values arriving at the endpoint.
 //
-define class <block-region> (<body-region>, <block-region-mixin>)
+define class <block-region>
+    (<body-region>, <block-region-mixin>, <queueable-mixin>)
 end;
 
 // A <method-region>'s Parent slot is the <component>, but conceptually it can
 // have multiple parent regions (call sites).  The phi function joins the
-// values coming from the different callers.
+// values coming from the different callers.  The exits to a <method-region>
+// must all be <return>s, and in fact indicate the return values.
 //
-define class <method-region> (<body-region>)
+define class <method-region> (<block-region>)
 end;
 
 // A <loop-region> repeats execution of the body indefinitely (terminate by
@@ -143,6 +145,12 @@ define class <exit> (<region>)
 end;
 
 
+// A <return> is a special kind of exit that passes values.
+// 
+define class <return> (<exit>, <dependent-mixin>)
+  slot returned-type :: <values-ctype>, init-function: wild-ctype;
+end;
+
 // Represents all the stuff we're currently compiling.  This is also a
 // pseudo-block, in that it can have exits to it (representing expressions that
 // unwind.)
@@ -155,8 +163,8 @@ define class <component> (<block-region-mixin>)
   slot initial-definitions :: false-or(<initial-definition>),
     init-value: #f;
   //
-  // Queue of dependencies that need to be updated (threaded by queue-next.)
-  slot reoptimize-queue :: false-or(<dependent-mixin>), init-value: #f;
+  // Queue of things that need to be updated (threaded by queue-next.)
+  slot reoptimize-queue :: false-or(<queueable-mixin>), init-value: #f;
   //
   // List of all methods.
   slot all-methods :: <list>, init-value: #();
