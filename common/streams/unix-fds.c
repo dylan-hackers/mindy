@@ -104,3 +104,8 @@ void fd_exec(char *command, int *toprog, int *fromprog)
         *fromprog = -1;
     }
 }
+
+
+void streams_fd_init (void) {
+    /* Does nothing */
+}
