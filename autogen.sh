@@ -11,6 +11,6 @@ if test -z "$*"; then
         echo "to pass any to it, please specify them on the $0 command line."
 fi
 
-rm -f config.cache
+rm -rf config.cache autom4te-*.cache
 $srcdir/configure "$@"
 
