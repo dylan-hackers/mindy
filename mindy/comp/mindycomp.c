@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.5 1994/04/10 21:09:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.6 1994/04/28 04:04:12 wlott Exp $
 *
 * This file does whatever.
 *
@@ -271,7 +271,7 @@ void main(int argc, char *argv[])
 	exit(1);
     }
 
-    dump_setup_output(source_name, file, ParseOnly ? "parse" : "compilation");
+    dump_setup_output(source_name, file);
 
     /* Generate code. */
     if (ParseOnly)

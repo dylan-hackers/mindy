@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.h,v 1.3 1994/04/20 00:23:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.h,v 1.4 1994/04/28 04:03:43 wlott Exp $
 *
 * This file does whatever.
 *
@@ -17,7 +17,7 @@
 
 
 
-extern void dump_setup_output(char *source, FILE *file, char *what);
+extern void dump_setup_output(char *source, FILE *file);
 extern void dump_top_level_form(struct component *tlf);
 extern void dump_defmethod(struct id *name, struct component *tlf);
 extern void dump_defgeneric(struct id *name, struct component *tlf);
