@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.56 1994/11/28 04:20:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.57 1994/11/28 15:38:18 wlott Exp $
 
 //======================================================================
 //
@@ -65,7 +65,7 @@ define module Builtin-Stuff
     $permanent-hash-state,
     add-method, all-superclasses, applicable-method?, apply,
     apply-curry, as, ash,
-    broadcast-event,
+    binary-logand, binary-logior, binary-logxor, broadcast-event,
     direct-subclasses, direct-superclasses,
     ceiling, ceiling/, class-name, copy-bytes, current-handler, current-thread,
     denominator, do-next-method,
