@@ -85,8 +85,7 @@ define constant $default-defines
       "__linux", ""];
   
 define constant linux-include-directories
-  = #["/usr/local/include", "/usr/i386-linux/include", "/usr/include",
-      "/usr/include/linux"];
+  = #["/usr/include"];
 
 for (dir in linux-include-directories)
   push-last(include-path, dir);
