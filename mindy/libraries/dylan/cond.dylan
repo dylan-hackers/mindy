@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.16 1996/03/20 04:58:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.17 1996/04/24 10:41:55 wlott Exp $
 
 //======================================================================
 //
@@ -101,11 +101,51 @@ define open generic condition-format
 
 // condition-format(#"cheap-IO") -- internal.
 //
-// Bootstrap method for condition-format that just calls the cheap-IO format.
+// Bootstrap method for condition-format that just calls the cheap-IO format
+// to handle everything except %s on condition objects, which are handled
+// directly.
 //
 define sealed method condition-format
-    (stream == #"cheap-IO", control-string :: <string>, #rest arguments) => ();
-  apply(format, control-string, arguments);
+    (stream == #"cheap-IO", control-string :: <string>, #rest arguments)
+    => ();
+  let length = control-string.size;
+  local
+    method scan (str-start, str-index, args-start, args-index)
+      if (str-index < length)
+	let char = control-string[str-index];
+	if (char == '%')
+	  let next-char = control-string[str-index + 1];
+	  if (next-char == '%')
+	    scan(str-start, str-index + 2, args-start, args-index);
+	  elseif (next-char == 's' | next-char == 'S')
+	    let next-arg = arguments[args-index];
+	    if (instance?(next-arg, <condition>))
+	      apply(format,
+		    copy-sequence
+		      (control-string, start: str-start, end: str-index),
+		    copy-sequence
+		      (arguments, start: args-start, end: args-index));
+	      report-condition(next-arg, stream);
+	      let next-str-index = str-index + 2;
+	      let next-args-index = args-index + 1;
+	      scan(next-str-index, next-str-index,
+		   next-args-index, next-args-index);
+	    else
+	      scan(str-start, str-index + 2, args-start, args-index + 1);
+	    end if;
+	  else
+	    scan(str-start, str-index + 2, args-start, args-index + 1);
+	  end if;
+	else
+	  scan(str-start, str-index + 1, args-start, args-index);
+	end if;
+      else
+	apply(format,
+	      copy-sequence(control-string, start: str-start),
+	      copy-sequence(arguments, start: args-start));
+      end if;
+    end method scan;
+  scan(0, 0, 0, 0);
 end;
 
 // condition-force-output
