@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.13 1994/06/02 23:27:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.14 1994/06/27 15:55:54 wlott Exp $
 *
 * This file does whatever.
 *
@@ -892,6 +892,7 @@ static struct component *compile_method(struct method *method)
     struct component *component = malloc(sizeof(struct component));
     struct binding *binding;
     struct scope_info *scope = make_scope();
+    struct closes_over *over;
 
     component->debug_name = method->debug_name;
     component->frame_size = method->frame_size;
@@ -911,6 +912,11 @@ static struct component *compile_method(struct method *method)
     component->end = NULL;
 
     set_line(component, method->line);
+
+    for (over = method->closes_over; over != NULL; over = over->next) {
+	binding = over->binding;
+	add_var_info(scope, binding->id, binding->set, TRUE, over->offset);
+    }
 
     for (binding = method->lexenv->bindings;
 	 binding != NULL && binding->home == method;
