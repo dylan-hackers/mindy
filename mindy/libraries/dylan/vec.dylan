@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.5 1994/04/18 21:38:26 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.6 1994/04/19 21:20:06 wlott Exp $
 //
 //  This file contains the support for vectors.
 //
@@ -309,3 +309,11 @@ define method aref-setter (new, vector :: <vector>, #rest indices)
 	  vector, indices.size);
   end;
 end;
+
+define method size (v :: <vector>) => size :: <integer>;
+  error("The array method for size must be overridden by vectors.");
+end;
+
+define method dimensions (v :: <vector>) => dimensions :: <sequence>;
+  vector (size (v));
+end method dimensions;
