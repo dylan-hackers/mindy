@@ -1,22 +1,27 @@
+
 	Compilation and installation instructions for Mindy.
 
-Compiling Mindy currently requires the use of an ANSI C compiler.
+Compiling Mindy currently requires the use of an ANSI C compiler.  We
+highly recommend gcc if it is available.
 
-To configure mindy for your system, simply type ``./configure''
-and wait for configure to figure things out.
+To configure mindy for your system, simply type ``./configure'' and
+wait for configure to figure things out.  When that is done, begin the
+compilation by typing ``make'' (or ``gmake'' if you have GNU make).
+After Mindy has been compiled, type ``make install'' to install it.
 
-The default installation path for executables is /usr/local/bin,
-for the libraries is /usr/local/lib/mindy.  You can change the
-prefix for these paths from /usr/local to whatever by typing
-``configure --prefix=whatever''. 
+The default installation path for executables is /usr/local/bin; for
+libraries it is /usr/local/lib/mindy.  You can change the prefix for
+these paths from /usr/local to whatever by typing
+``configure --prefix=whatever''.  (It is not a good idea to specify the 
+path name using a tilda (~) because tilda has a special meaning only 
+in csh, while make uses sh)
 
 If you want to build mindy in one-place while the sources are
 kept in another-place, then type ``cd one-place;
 another-place/configure --srcdir=another-place'' and configure will
 construct the appropriate directory tree and Makefiles.
 
-Other options may be specified to configure with environment
-variables: 
+Other options may be specified to make on the command line:
 
 	CC	specifies the c compiler to use
 	CCOPTS	specifies options to pass to the c compiler
@@ -24,14 +29,38 @@ variables:
 	LEX	specifies the lexer generator
 	LFLAGS	specifies the flags passed to LEX
 
-Once you have run configure, you should be able to compile and install
-everything by just saying ``make install'' at the top level directory.
-If you just want to compile everything without installing it, just say
-``make.'' 
+The default C compiler options (CCOPTS) are ``-g -O4
+-finline-functions -Wall'' if you are using gcc, ``-g -O'' otherwise.
+If you are not using gcc, we *highly* recommend you read the man page
+for your compiler and supply the flags that ask for the maximum
+optimization.  (Note that on many compilers, -g, "generate debugging
+information", and -O, "optimize", are mutually exclusive.  If you have
+to choose between the two, take optimization over debugging
+information.)
 
-The default C compiler options are ``CCOPTS=-g''.  If you're using gcc,
-you might try ``CCOPTS="-O4 -finline-functions make -e''.
+You can clean up any previously made object files and executables 
+with ``make clean''.
 
-You can clean up any previously made objects with ``make clean''.
+Here's what a sample installation might look like:
+	./configure --srcdir=/usr/bob/mindy/src --prefix=/usr/bob/mindy
+	make CCOPTS="-g -O3"
+	make install
+	
+Mindy has been successfully built on the following platforms:
+	Hardware	OS		Compiler
+	--------	--		--------
+	HP Apollo	HPUX		gcc
+	DEC pmax 	Mach		gcc
+	DEC pmax	Ultrix		gcc
+	SGI 		IRIX 4.0.5 	gcc and sgi-cc
+	SGI 		IRIX 5.2 	sgi-cc
+	Sun 		SunOS 4.1	gcc
+	PC clone 	Linux
 
+If you have successfully compiled Mindy on another architecture,
+please send mail to
+	gwydion-bugs@cs.cmu.edu
+and we will add that architecture to the list.  Please include the
+operating system version and what compiler you used.  If changes were
+required, please send diffs as well.
 
