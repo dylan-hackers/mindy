@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.53 1996/01/27 20:24:12 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.54 1996/01/31 23:52:21 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1513,7 +1513,8 @@ end;
 define method dump-od
     (tlf :: <define-method-tlf>, state :: <dump-state>) => ();
   let defn = tlf.tlf-defn;
-  if (defn.method-defn-of)
+  if (defn.method-defn-of
+      & name-inherited-or-exported?(defn.defn-name))
     dump-od(defn, state);
   end;
 end;
@@ -1522,6 +1523,7 @@ define method dump-od
     (tlf :: <seal-generic-tlf>, state :: <dump-state>) => ();
   // Do nothing because all the seals are dumped as part of the generic.
 end;
+
 
 define constant $function-definition-slots
   = concatenate($definition-slots,
@@ -1539,13 +1541,42 @@ define constant $generic-definition-slots
 		     generic-defn-discriminator, discriminator:,
 		       %generic-defn-discriminator-setter));
 
+// List of method definitions that we saw in a GF and that we need to make sure
+// are dumped.
+//
+define variable *queued-methods* = #();
+
+// Make sure that all of the method definitions get dumped too.  If some of
+// them came from elsewhere it doesn't matter, we'll just have a gratuitous
+// external reference.
+// 
+define constant dump-them-methods = method
+    (x :: <generic-definition>, buf :: <dump-buffer>)
+ => ();
+  ignore(buf);
+  for (meth in x.generic-defn-methods)
+    *queued-methods* := pair(meth, *queued-methods*);
+  end;
+// dformat("Queuing %=\n", x);
+end method;
+
+define /* exported */ method dump-queued-methods (buf :: <dump-buffer>)
+  for (meth in *queued-methods*)
+    dump-od(meth, buf);
+  end;
+  *queued-methods* := #();
+end;
+
 add-make-dumper(#"generic-definition", *compiler-dispatcher*,
 		<generic-definition>, $generic-definition-slots,
-		load-external: #t);
+		load-external: #t,
+		dump-side-effect: dump-them-methods);
 
 add-make-dumper(#"implicit-generic-definition", *compiler-dispatcher*,
 		<implicit-generic-definition>, $generic-definition-slots,
-		load-external: #t);
+		load-external: #t,
+		dump-side-effect: dump-them-methods);
+
 
 add-make-dumper(#"seal-info", *compiler-dispatcher*, <seal-info>,
 		list(seal-types, types:, #f));
@@ -1562,11 +1593,16 @@ define method set-method-defn-of
     ct-add-method(gf, meth);
   end;
 end;
-
+/*
+define constant hackola = method (x, y)
+  dformat("Dumping defn for method on %=\n",
+  	  x.defn-name.method-name-generic-function.name-symbol);
+end method;
+*/
 define constant $method-definition-slots
   = concatenate($abstract-method-definition-slots,
 		list(method-defn-of, #f, set-method-defn-of,
-		     method-defn-congruent?, congruent:, #f));
+		       method-defn-congruent?, congruent:, #f));
 
 add-make-dumper(#"method-definition", *compiler-dispatcher*,
 		<method-definition>, $method-definition-slots,
