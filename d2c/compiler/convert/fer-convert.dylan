@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.53 1996/03/21 04:13:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.54 1996/03/28 00:05:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -119,8 +119,9 @@ define method fer-convert
   let rest-temp
     = if (rest)
 	if (rest.param-type)
-	  compiler-error-location
-	    (form, "let #rest variables can't have types");
+	  compiler-warning-location
+	    (rest.param-type,
+	     "let #rest variables can't have types -- ignoring");
 	end;
 	make-local-var(builder, rest.param-name.token-symbol, object-ctype());
       end;
@@ -298,8 +299,8 @@ define method fer-convert
 		     build-defn-ref(builder, lexenv.lexenv-policy,
 				    source, defn);
 		   else
-		     compiler-warning-location(form, "Undefined variable: %s",
-		     			       name);
+		     compiler-warning-location
+		       (source, "Undefined variable: %s", name);
 		     make-error-operation
 		       (builder, lexenv.lexenv-policy, source,
 			"Undefined variable: %s",
@@ -353,7 +354,7 @@ define method fer-convert
 	       as(<ct-value>, format-to-string("%s", name)))));
     elseif (~instance?(defn, <variable-definition>))
       compiler-warning-location
-	(id, "Attept to assign constant module variable: %s", name);
+	(form, "Attept to assign constant module variable: %s", name);
       deliver-result
 	(builder, lexenv.lexenv-policy, source, want, datum,
 	 make-error-operation
@@ -697,7 +698,9 @@ define method fer-convert-method
   let rest-var
     = if (rest)
 	if (rest.param-type)
-	  compiler-error-location(meth, "#rest parameters can't have a type");
+	  compiler-warning-location
+	    (rest.param-type,
+	     "#rest parameters can't have a type -- ignoring");
 	end;
 	let name = rest.param-name;
 	let var = make-lexical-var(builder, name.token-symbol, source,
