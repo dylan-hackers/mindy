@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.34 1996/07/26 19:45:05 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.35 1996/08/14 15:52:10 dwatson Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -187,7 +187,7 @@ define module System
 	     object-address,
 
 	     system, import-string, export-string, getenv, 
-	     exit, no-core-dumps,
+	     exit, no-core-dumps, get-time-of-day,
 
 	     // Buffers
 	     <buffer>, <buffer-index>, $maximum-buffer-size,
