@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.4 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.5 2001/03/30 13:57:07 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -249,13 +249,13 @@ define sealed domain initialize (<equal-table>);
 define open abstract class <value-table> (<table>)
 end class <value-table>;
 
-define sealed method make 
+define sealed inline method make 
     (c == <table>, #rest key-value-pairs, #key, #all-keys)
  =>  table :: <simple-object-table>;
   apply(make, <simple-object-table>, key-value-pairs);
 end method make;
 
-define sealed method make 
+define sealed inline method make 
     (c == <object-table>, #rest key-value-pairs, #key, #all-keys)
  =>  table :: <simple-object-table>;
   apply(make, <simple-object-table>, key-value-pairs);
@@ -694,6 +694,8 @@ define method element-setter
     value;
   end if;
 end method element-setter;
+
+define sealed domain element-setter (<object>, <simple-object-table>, <object>);
 
 // This is exactly the same code without the garbage collection stuff
 //
