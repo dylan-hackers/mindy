@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.11 1996/02/08 12:32:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.12 1996/02/18 18:35:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -412,27 +412,6 @@ define method slot-initialized?
 end;
 
 
-// Type system methods.
-
-define method %instance? (object, class :: <class>)
-    => res :: <boolean>;
-  subtype?(object.object-class, class);
-end;
-
-define method subtype? (class1 :: <class>, class2 :: <class>)
-    => res :: <boolean>;
-  case
-    class1 == class2.subtype-cache =>
-      #t;
-    member?(class2, class1.all-superclasses) =>
-      class2.subtype-cache := class1;
-      #t;
-    otherwise =>
-      #f;
-  end case;
-end;
-
-
 // Layout stuff.
 
 /*
@@ -525,86 +504,3 @@ define inline method initialize (instance :: <object>, #all-keys) => ();
 end;
 
 
-
-// Subclass types.
-
-/* ### not absolutly needed
-
-// <subclass> -- internal
-//
-// A <subclass> represents all of the subclasses of a particular class,
-// conceptually the same as:
-//   apply(type-union, map(singleton,all-subclasses(class)))
-// assuming a definition for all-subclasses.
-//
-// Exposed because the constructor is exported.
-// 
-define class <subclass> (<type>)
-  //
-  // The class this is the subclasses of.
-  slot subclass-of :: <class>, required-init-keyword: of:;
-end;
-
-seal generic make (singleton(<subclass>));
-
-// limited(<class>,...) -- exported generic function method.
-//
-// If they want all the subclasses of <object> then return <class>.  If they
-// want all the subclasses on some sealed class, then find them all.
-// Otherwise, make a <subclass> type.
-//
-define method limited (class == <class>, #key subclass-of)
-    => res :: <type>;
-  if (subclass-of == <object>)
-    <class>;
-  elseif (class.class-sealed?)
-    apply(type-union, singleton(class),
-	  map(curry(limited, <class>, subclass-of:),
-	      class.direct-subclasses));
-  else
-    make(<subclass>, of: subclass-of);
-  end;
-end;
-
-// instance?(<object>,<subclass>) -- exported generic function method.
-//
-// Nothing but classes (handled below) are instances of subclass types.
-//
-define method %instance? (object, type :: <subclass>)
-    => res :: <boolean>;
-  #f;
-end;
-
-// instance?(<class>,<subclass>) -- exported generic function method.
-//
-// A class is a instance of a subclass type iff that class is a subtype of
-// of the subclass type's base class.
-//
-define method %instance? (object :: <class>, type :: <subclass>)
-    => res :: <boolean>;
-  subtype?(object, type.subclass-of);
-end;
-
-// subtype? -- exported generic function method
-//
-// Unless some more specific method is applicable, a subclass type is a subtype
-// of some other type iff the base class's metaclass is a subtype of that
-// other type.  We assume that <class> is the only kind of class in existance,
-// though.
-//
-define method subtype? (type1 :: <subclass>, type2 :: <type>)
-    => res :: <boolean>;
-  subtype?(<class>, type2);
-end;
-
-// subtype?(<subclass>,<subclass>) -- exported generic function method.
-//
-// One subclass type is a subtype of another subclass type if the first
-// one's root class is a subclass of the second one's root class.
-//
-define method subtype? (type1 :: <subclass>, type2 :: <subclass>)
-    => res :: <boolean>;
-  subtype?(type1.subclass-of, type2.subclass-of);
-end;
-
-*/
