@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.23 1996/02/14 16:40:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.24 1996/02/17 17:32:51 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -168,6 +168,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> IF
 %token <token> IN
 %token <token> INHERITED
+%token <token> INLINE
 %token <token> INSTANCE
 %token <token> KEYED_BY
 %token <token> KEYWORD_RESERVED_WORD
@@ -352,6 +353,7 @@ flags:
     |	flags CONCRETE { free($2); $$ = $1 | flag_CONCRETE; }
     |	flags PRIMARY { free($2); $$ = $1 | flag_PRIMARY; }
     |	flags FREE { free($2); $$ = $1 | flag_FREE; }
+    |   flags INLINE { free($2); $$ = $1; /* ignore inline directive */ }
 ;	
 
 local_declaration:
@@ -404,6 +406,7 @@ variable_name:
     |	FROM
     |	IN
     |	INHERITED
+    |   INLINE
     |	INSTANCE
     |	KEYED_BY
     |	KEYWORD_RESERVED_WORD
