@@ -639,7 +639,7 @@ add-tag(#["IMG"],
 add-tag(#["PRE"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>) => (result :: <boolean>);
-		    unless(blank) write-element(*standard-output*, '\n') end;
+		    unless(blank) new-line(*standard-output*) end;
 		    let first = sfind(text, curry(\~=, '\n'));
 		    let last = rsfind(text,
 				      complement(rcurry(member?, "\n ")));
@@ -741,7 +741,7 @@ add-tag(#["DD"],
 add-tag(#["H1"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write-element(*standard-output*, '\n') end;
+		    unless(blank) new-line(*standard-output*) end;
 		    let first = sfind(text, curry(\~=, ' ')); 
 		    let Text-Size = size(text);
 		    let Find-Break = 
@@ -781,7 +781,7 @@ add-tag(#["H1"],
 add-tag(#["H2"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write-element(*standard-output*, '\n') end;
+		    unless(blank) new-line(*standard-output*) end;
 		    let first = sfind(text, curry(\~=, ' ')); 
 		    let Text-Size = size(text);
 		    let Find-Break = 
@@ -812,7 +812,7 @@ add-tag(#["H2"],
 		      write-line(*standard-output*, '-' * Max-Length);
 		      #f;
 		    else
-		      write-element(*standard-output*, '\n');
+		      new-line(*standard-output*);
 		      #t
 		    end if;
 		  end method);
@@ -820,7 +820,7 @@ add-tag(#["H2"],
 add-tag(#["H3", "H4", "H5", "H6"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write-element(*standard-output*, '\n') end;
+		    unless(blank) new-line(*standard-output*) end;
 		    block ()
 		      push(margins, *margin*);
 		      *margin* := 0;
