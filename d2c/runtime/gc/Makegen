@@ -283,7 +283,7 @@ libgc.sl: $(OBJS) dyn_load.o
 EOF
 
       print <<"EOF";
-	./if_not_there on_sparc_sunos5 $lib_linker libgc.$lib_type \$(OBJS) dyn_load.o
+	./if_not_there on_sparc_sunos5 $lib_linker libgc$dot_lib \$(OBJS) dyn_load.o
 EOF
     print <<'EOF';
 	./if_not_there on_sparc_sunos5 $(RANLIB) libgc.a || cat /dev/null
@@ -432,9 +432,9 @@ EOF
 
     push(@compile_dependencies, "libgc$dot_lib");
 
-    do install('lib', "libgc.$lib_type");
+    do install('lib', "libgc$dot_lib");
 
-    push(@files_to_clean, '$(OBJS)', "libgc.$lib_type", 'gctest',
+    push(@files_to_clean, '$(OBJS)', "libgc$dot_lib", 'gctest',
 	 'gctest_dyn_link', 
 	 'test_cpp', 'setjmp_test', 'mon.out', 'gmon.out', 'a.out', 'core',
 	 'if_not_there', 'if_mach', '$(CORD_OBJS)', 'cord/cordtest', 
