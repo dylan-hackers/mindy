@@ -1,4 +1,4 @@
-RCS-Header: $Header: /scm/cvs/src/d2c/runtime/dylan/limited-collection.dylan,v 1.2 2001/03/17 03:43:35 bruce Exp $
+RCS-Header: $Header: /scm/cvs/src/d2c/runtime/dylan/limited-collection.dylan,v 1.3 2001/06/05 20:46:48 gabor Exp $
 Module: dylan-viscera
 Copyright: See below.
 Synopsis: Runtime support for limited collections.
@@ -206,7 +206,7 @@ end method make-limited-collection;
 // a constant folder to get the element-type.
 define method element-setter
     (new-value :: <object>, collection :: <limited-object-table>,
-     key :: <object>)
+     key :: <object>, #next next-method)
  => (element :: <object>)
   check-type(new-value,
 	     collection.%limited-collection-type.limited-element-type);
