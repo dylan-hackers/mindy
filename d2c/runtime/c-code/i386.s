@@ -15,16 +15,20 @@ _save_state:
         pushl   %esi
         pushl   %edi
 
-        pushl   12(%ebp)
-        call    8(%ebp)
+	movl	%esp, %eax
+        pushl   12(%ebp)	# Get info argument + push on stack
+	pushl	%eax		# it gets the machine state argument 
+				# + pushs on stack
+        call    8(%ebp)         # 8(%ebp) is the function pointer
 
-        leal    4(%esp), %esp
+        leal    8(%esp), %esp
 
 restore_state:
         popl    %edi
         popl    %esi
         popl    %ebx
-        leave
+	popl	%ebp
+	#	        leave
         ret
 
 .globl  _restore_state
