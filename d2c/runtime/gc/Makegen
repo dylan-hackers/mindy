@@ -105,6 +105,11 @@ if ($shared) {
 } else {
     printf($target_platform{'link_library_command'}, $lib_name, $objs);
     print "\n";
+    if($target_platform{'randomize_library_command'}) {
+	print "\t";
+        printf($target_platform{'randomize_library_command'}, $lib_name);
+        print "\n";
+    }
 }
 
 push(@compile_dependencies, $lib_name);
