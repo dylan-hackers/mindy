@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/fer-edit.dylan,v 1.4 2001/10/19 00:13:21 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/fer-edit.dylan,v 1.5 2003/02/01 16:56:57 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -54,7 +54,7 @@ define function insert-after
   fer-insert-after(component, assign, insert, reoptimize);
 end;
 
-define function remove-dependency-from-source
+define inline function remove-dependency-from-source
     (component :: <component>, dependency :: <dependency>) => ();
   fer-remove-dependency-from-source(component, dependency, reoptimize);
 end;

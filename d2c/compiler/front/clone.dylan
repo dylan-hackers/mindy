@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.6 2003/02/01 13:56:02 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.7 2003/02/01 16:56:55 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -45,15 +45,23 @@ define class <clone-state> (<object>)
   //
   // Hash table mapping original things to new things.
   constant slot cloned-stuff :: <object-table> = make(<object-table>);
+  //
+  // A function to compute the new source-location of a FER feature.
+  // It will be called with arguments (original-location, clone-state)
+  constant slot relocator :: <function>,
+    required-init-keyword: relocator:;
 end;
 
 
 // clone-function -- exported.
 //
 define method clone-function
-    (component :: <fer-component>, function :: <function-literal>)
+    (component :: <fer-component>, function :: <function-literal>,
+     #key location-transformer :: <function> = method(loc, #rest ignore) loc end)
     => clone :: <function-literal>;
-  let state = make(<clone-state>, builder: make-builder(component));
+  let state = make(<clone-state>,
+		   builder: make-builder(component),
+		   relocator: location-transformer);
   state.cloned-stuff[function.main-entry.parent] := component;
   clone-expr(function, state);
 end;
@@ -278,6 +286,12 @@ define method clone-expr
 		 nlx-info: clone-nlx-info(expr.nlx-info, state));
 end;
 
+define inline function relocate
+    (orig-location :: <source-location>, state :: <clone-state>)
+ => new-location :: <source-location>;
+  state.relocator(orig-location, state)
+end;
+
 define method clone-expr
     (function :: <function-literal>, state :: <clone-state>)
     => clone :: type-union(<function-literal>, <uninitialized-value>);
@@ -293,7 +307,7 @@ define method clone-expr
 		else
 		  <fer-function-region>;
 		end,
-		source-location: orig-region.source-location,
+		source-location: relocate(orig-region.source-location, state),
 		name: orig-region.name,
 		argument-types: orig-region.argument-types,
 		result-type: orig-region.result-type,
@@ -365,12 +379,12 @@ define method clone-region
        while: assign)
     select (assign by instance?)
       <let-assignment> =>
-	build-let(state.clone-builder, assign.policy, assign.source-location,
+	build-let(state.clone-builder, assign.policy, relocate(assign.source-location, state),
 		  clone-defines(assign.defines, state),
 		  clone-expr(assign.depends-on.source-exp, state));
       <set-assignment> =>
 	build-assignment(state.clone-builder, assign.policy,
-			 assign.source-location,
+			 relocate(assign.source-location, state),
 			 clone-defines(assign.defines, state),
 			 clone-expr(assign.depends-on.source-exp, state));
     end;
@@ -410,10 +424,10 @@ end;
 
 define method clone-region
     (region :: <if-region>, state :: <clone-state>) => ();
-  build-if-body(state.clone-builder, $Default-Policy, region.source-location,
+  build-if-body(state.clone-builder, $Default-Policy, relocate(region.source-location, state),
 		clone-expr(region.depends-on.source-exp, state));
   clone-region(region.then-region, state);
-  build-else(state.clone-builder, $Default-Policy, region.source-location);
+  build-else(state.clone-builder, $Default-Policy, relocate(region.source-location, state));
   clone-region(region.else-region, state);
   end-body(state.clone-builder);
 end;
@@ -421,7 +435,7 @@ end;
 define method clone-region
     (region :: <block-region>, state :: <clone-state>) => ();
   let clone = build-block-body(state.clone-builder, $Default-Policy,
-			       region.source-location);
+			       relocate(region.source-location, state));
   state.cloned-stuff[region] := clone;
   clone-region(region.body, state);
   end-body(state.clone-builder);
@@ -430,20 +444,20 @@ end;
 define method clone-region
     (region :: <loop-region>, state :: <clone-state>) => ();
   build-loop-body(state.clone-builder, $Default-Policy,
-		  region.source-location);
+		  relocate(region.source-location, state));
   clone-region(region.body, state);
   end-body(state.clone-builder);
 end;
 
 define method clone-region
     (region :: <exit>, state :: <clone-state>) => ();
-  build-exit(state.clone-builder, $Default-Policy, region.source-location,
+  build-exit(state.clone-builder, $Default-Policy, relocate(region.source-location, state),
 	     state.cloned-stuff[region.block-of]);
 end;
 
 define method clone-region
     (region :: <return>, state :: <clone-state>) => ();
-  build-return(state.clone-builder, $Default-Policy, region.source-location,
+  build-return(state.clone-builder, $Default-Policy, relocate(region.source-location, state),
 	       state.cloned-stuff[region.block-of],
 	       clone-arguments(region.depends-on, state));
 end;
@@ -451,7 +465,7 @@ end;
 define method clone-region
     (region :: <unwind-protect-region>, state :: <clone-state>) => ();
   build-unwind-protect-body
-    (state.clone-builder, $Default-Policy, region.source-location,
+    (state.clone-builder, $Default-Policy, relocate(region.source-location, state),
      clone-expr(region.uwp-region-cleanup-function, state));
   clone-region(region.body, state);
   end-body(state.clone-builder);
