@@ -1,5 +1,5 @@
 
-do compile_subdirs(
+&compile_subdirs(
     'base',
     'front',
     'optimize',
@@ -9,7 +9,7 @@ do compile_subdirs(
     'main'
 );
 
-do install_from_src('etc', "targets.descr");
+&install_from_src('etc', "platforms.descr");
 
 $stage2 || print <<'EOF';
 .PHONY: d2c-compile
