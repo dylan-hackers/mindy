@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.16 1995/11/20 17:29:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.17 1995/12/04 17:15:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1485,4 +1485,20 @@ define-primitive-emitter
 	    rep.representation-c-type, ptr, offset, new);
      
      deliver-results(results, #[], #f, file);
+   end);
+
+define-primitive-emitter
+  (#"vector-elements",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let vec = operation.depends-on.source-exp;
+     let vec-expr = extract-operands(operation, file, *heap-rep*);
+     deliver-result(results,
+		    format-to-string("((void *)((char *)%s + %d))",
+				     vec-expr,
+				     dylan-slot-offset(vec.derived-type,
+						       #"%element")),
+		    *ptr-rep*, #f, file);
    end);

@@ -438,3 +438,6 @@ define-primitive
      #"<symbol>", #"<raw-pointer>", #"<fixed-integer>"),
    #(values:));
 
+define-primitive
+  (#"vector-elements", #(#"<builtin-vector>"), #"<raw-pointer>",
+   pure: #t);
