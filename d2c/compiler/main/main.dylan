@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.26 1999/07/30 17:24:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.27 1999/08/12 11:40:43 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -816,7 +816,7 @@ define method build-local-heap-file (state :: <main-unit-state>) => ();
 			 locator: temp-c-name, direction: #"output");
   let prefix = state.unit-cback-unit.unit-prefix;
   let heap-state = make(<local-heap-file-state>, unit: state.unit-cback-unit,
-			body-stream: heap-stream, target: state.unit-target,
+			body-stream: heap-stream, // target: state.unit-target,
 			id-prefix: stringify(prefix, "_L"));
 
   let (undumped, extra-labels) = build-local-heap(state.unit-cback-unit, 
@@ -886,7 +886,7 @@ define method build-da-global-heap (state :: <main-unit-state>) => ();
   let heap-stream 
     = make(<file-stream>, locator: "heap.c", direction: #"output");
   let heap-state = make(<global-heap-file-state>, unit: state.unit-cback-unit,
-			body-stream: heap-stream, target: state.unit-target);
+			body-stream: heap-stream); //, target: state.unit-target);
   build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
 		    heap-state);
   close(heap-stream);
@@ -1165,7 +1165,7 @@ define method build-unit-init-function
     (prefix :: <byte-string>, init-functions :: <vector>,
      stream :: <stream>)
     => ();
-  let init-func-guts = emit-init-functions(prefix, init-functions,
+  let init-func-guts = emit-init-functions(string-to-c-name(prefix), init-functions,
 					   0, init-functions.size, stream);
   // The function this generated used to be called simply "%s_init",
   // but that conflicted with the heap object of the same name.  (Of
