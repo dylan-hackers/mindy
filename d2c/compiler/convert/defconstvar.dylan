@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.9 1995/04/21 02:37:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.10 1995/04/25 23:02:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -240,14 +240,14 @@ define method convert-top-level-form
 			    #"assignment", type);
 		if (instance?(defn, <variable-definition>))
 		  let type-defn = defn.var-defn-type-defn;
-		  build-assignment(builder, policy, source,
-				   make-definition-leaf(builder, type-defn),
-				   type);
+		  build-assignment
+		    (builder, policy, source, #(),
+		     make-set-operation(builder, type-defn, type));
 		end;
 		make-check-type-operation(init-builder, temp, type);
 	      end;
-	  build-assignment(init-builder, policy, source,
-			   make-definition-leaf(init-builder, defn), checked);
+	  build-assignment(init-builder, policy, source, #(),
+			   make-set-operation(init-builder, defn, checked));
 	end;
 	temp;
       end;
@@ -262,6 +262,8 @@ define method convert-top-level-form
       fer-convert(builder, bindings.bindings-expression, lexenv,
 		  #"assignment", cluster);
       canonicalize-results(builder, policy, source, cluster, vars, rest-temp);
+      build-assignment(init-builder, policy, source, #(),
+		       make-set-operation(init-builder, rest-defn, rest-temp));
     else
       fer-convert(builder, bindings.bindings-expression, lexenv,
 		  #"assignment", vars);

@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.16 1995/04/24 03:20:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.17 1995/04/25 23:03:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -339,9 +339,9 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
     let id = place.varref-id;
     let binding = find-binding(lexenv, id);
     block (return)
-      let (leaf, type-leaf)
+      let (leaf, type-leaf, defn)
 	= if (binding)
-	    values(binding.binding-var, binding.binding-type-var);
+	    values(binding.binding-var, binding.binding-type-var, #f);
 	  else
 	    let var = find-variable(id-name(id));
 	    let defn = var & var.variable-definition;
@@ -352,7 +352,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
 	    elseif (instance?(defn, <variable-definition>))
 	      let type-defn = defn.var-defn-type-defn;
 	      values(make-definition-leaf(builder, defn),
-		     type-defn & make-definition-leaf(builder, type-defn));
+		     type-defn & make-definition-leaf(builder, type-defn),
+		     defn);
 	    else
 	      return(deliver-result
 		       (builder, lexenv.lexenv-policy, source, want, datum,
@@ -368,14 +369,15 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
 	let checked = make-local-var(builder, #"checked", object-ctype());
 	build-assignment(builder, lexenv.lexenv-policy, source, checked,
 			 make-check-type-operation(builder, temp, type-leaf));
-	build-assignment(builder, lexenv.lexenv-policy, source, leaf, checked);
-	deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		       checked);
-      else
-	build-assignment(builder, lexenv.lexenv-policy, source, leaf, temp);
-	deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		       temp);
+	temp := checked;
       end;
+      if (binding)
+	build-assignment(builder, lexenv.lexenv-policy, source, leaf, temp);
+      else
+	build-assignment(builder, lexenv.lexenv-policy, source, #(),
+			 make-set-operation(builder, defn, temp));
+      end;
+      deliver-result(builder, lexenv.lexenv-policy, source, want, datum, temp);
     end;
   end;
 end;

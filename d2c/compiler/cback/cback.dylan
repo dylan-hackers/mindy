@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.9 1995/04/25 02:49:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.10 1995/04/25 23:00:25 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -702,6 +702,26 @@ define method emit-assignment
   end;
 end;
 
+define method emit-assignment
+    (pitcher-defines :: false-or(<definition-site-variable>),
+     set :: <set>, output-info :: <output-info>)
+    => ();
+  let defn = set.variable;
+  let info = get-info-for(defn, output-info);
+  let target = info.backend-var-info-name;
+  let rep = info.backend-var-info-rep;
+  let source = extract-operands(set, output-info, rep);
+  emit-copy(target, rep, source, rep, output-info);
+  unless (defn.ct-value)
+    unless (rep.representation-has-bottom-value?)
+      let stream = output-info.output-info-guts-stream;
+      format(stream, "%s_initialized = TRUE;\n", target);
+    end;
+  end;
+end;
+
+
+
 define method deliver-results (defines :: false-or(<definition-site-variable>),
 			       values :: <vector>,
 			       output-info :: <output-info>)
@@ -752,22 +772,6 @@ define method deliver-single-result (var :: <initial-definition>,
 				     output-info :: <output-info>)
     => ();
   deliver-single-result(var.definition-of, source, source-rep, output-info);
-end;
-
-define method deliver-single-result (var :: <global-variable>,
-				     source :: <string>,
-				     source-rep :: <representation>,
-				     output-info :: <output-info>,
-				     #next next-method)
-    => ();
-  next-method();
-  unless (var.var-info.var-defn.ct-value)
-    let (target-name, target-rep) = c-name-and-rep(var, output-info);
-    unless (target-rep.representation-has-bottom-value?)
-      let stream = output-info.output-info-guts-stream;
-      format(stream, "%s_initialized = TRUE;\n", target-name);
-    end;
-  end;
 end;
 
 
