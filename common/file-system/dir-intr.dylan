@@ -3,8 +3,12 @@ module: dir-commands
 // To create dir-intr.dylan, execute the following line:
 // melange -v --d2c -I/usr/include --shadow-structs dir-intr.intr dir-intr.dylan
 
+#if (compiled-for-win32)
+c-include("sys/stat.h");
+#else
 c-include("/usr/include/sys/stat.h");
 c-include("/usr/include/dirent.h");
+#endif
 
 define functional class <anonymous-9> (<statically-typed-pointer>) end;
 
