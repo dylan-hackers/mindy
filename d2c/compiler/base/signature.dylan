@@ -1,6 +1,6 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.8 1995/11/14 13:39:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.9 1995/12/06 23:29:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -60,10 +60,11 @@ define class <key-info> (<object>)
   // type restriction.
   slot key-type :: <ctype>, required-init-keyword: type:;
 
-  // true if a required keyword.
-  // ??? if this means anything, it means the non-strictly-Dylan
-  // concept of keywords that are effictively required, e.g. due to an
-  // error-default.  Or a required-init-keyword on a make method?
+  // True if a required keyword.  Keywords can be required in two different
+  // ways: if the default is known to not be of the correct type or a 
+  // required-init-keyword: in a slot decl.  Note: this is an advisory flag
+  // only.  Calls that are missing the keyword will still be generated.
+  // But the compiler can use this flag to decide to report a warning.
   slot required? :: <boolean>,
     init-value: #f, init-keyword: required:;
 
