@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/boolean.dylan,v 1.5 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/boolean.dylan,v 1.6 1996/03/21 03:26:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -24,7 +24,7 @@ end;
 // Don't allow anyone to make another #t.  That would be bad.
 // 
 define sealed method make (class == <true>, #key) => res :: <never-returns>;
-  error("Can't make new instances of <true>, #t is it.");
+  error("Poems are made by fools like me, but only God can make #t.");
 end;
 
 // <false> -- exported from Extensions.
