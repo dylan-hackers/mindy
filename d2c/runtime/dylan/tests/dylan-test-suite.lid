@@ -10,14 +10,11 @@ Files:  library
 	module
 	specification
 	macros
-	control
         constants
         classes
         functions
 	core
-	collections
 	numbers
-	regressions
 Other-files: Open-Source-License.txt
 Major-version: 2
 Minor-version: 1

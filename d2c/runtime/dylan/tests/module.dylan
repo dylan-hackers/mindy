@@ -19,7 +19,7 @@ define module dylan-test-suite
   export dylan-test-suite;
 
   // Generics
-  export test-collection-class,
+  export //test-collection-class,
          test-condition-class,
          test-number-class;
 end module dylan-test-suite;

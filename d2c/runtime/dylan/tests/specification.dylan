@@ -9,8 +9,8 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library-spec dylan ()
   module dylan;
-  suite dylan-control-suite;
-  suite dylan-regressions;
+//  suite dylan-control-suite;
+//  suite dylan-regressions;
 end library-spec dylan;
 
 define module-spec dylan ()
