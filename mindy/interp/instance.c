@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.14 1994/06/27 16:32:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.15 1994/07/08 16:18:14 rgs Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -327,7 +327,7 @@ static void note_position(obj_t table, obj_t slot, int index)
 	    set_method_iep(SD(slot)->getter_method, slow_instance_getter);
 	    set_accessor_method_datum(SD(slot)->getter_method, slot);
 	    if (SD(slot)->setter_method != obj_False) {
-		set_method_iep(SD(slot)->getter_method, slow_instance_setter);
+		set_method_iep(SD(slot)->setter_method, slow_instance_setter);
 		set_accessor_method_datum(SD(slot)->setter_method, slot);
 	    }
 	    break;
@@ -336,7 +336,7 @@ static void note_position(obj_t table, obj_t slot, int index)
 	    set_method_iep(SD(slot)->getter_method, slow_subclass_getter);
 	    set_accessor_method_datum(SD(slot)->getter_method, slot);
 	    if (SD(slot)->setter_method != obj_False) {
-		set_method_iep(SD(slot)->getter_method, slow_subclass_setter);
+		set_method_iep(SD(slot)->setter_method, slow_subclass_setter);
 		set_accessor_method_datum(SD(slot)->setter_method, slot);
 	    }
 	    break;
