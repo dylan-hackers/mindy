@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.1 1996/04/07 17:20:27 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/x-inspector.dylan,v 1.2 1996/04/07 18:37:59 nkramer Exp $
 
 //======================================================================
 //
@@ -75,28 +75,56 @@ end method do-component;
 
 define method xinspect (obj :: <object>) => ();
   let window = make(<toplevel>);
+  call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
+  let window-title = tk-quote(concatenate("Inspect ", short-string(obj)));
+  call-tk-function("wm title ", tk-as(<string>, window),
+		   " \"", window-title, "\"");
   let info = obj.object-info;
   for (attrib in info)
     make(<label>, text: attrib.attrib-header, in: window, 
 	 side: "top", anchor: "w");
-    let frame = make(<frame>, anchor: "w", side: "top", in: window);
-    // padding
-    make(<frame>, relief: "sunken", 
-	 width: 50, fill: "y", anchor: "w", side: "left", in: frame);
-    let descr-frame = make(<frame>, side: "right", in: frame);
-    for (component in attrib.attrib-body)
-      do-component(component, descr-frame);
-    end for;
+    if (attrib.attrib-body.size > 5 
+	  & every?(method (component)
+		     component.related-objects.size == 1;
+		   end method,
+		   attrib.attrib-body))
+      let frame = make(<frame>, anchor: "w", side: "top", 
+		       in: window, expand: #t, fill: "both");
+      make(<frame>, relief: "sunken",
+	   width: 50, fill: "y", anchor: "w", side: "left", in: frame);
+      let listbox = make(<listbox>, relief: "sunken", in: frame, side: "left",
+			 expand: #t, fill: "both");
+      scroll(listbox, orient: "vertical", fill: "y",
+	     in: frame, side: "left", relief: "sunken");
+      apply(insert, listbox, 0, map(stripped-description, attrib.attrib-body));
+      bind(listbox, "<Double-Button-1>",
+	   method ()
+	     let index = listbox.current-selection.first;
+	     let component = attrib.attrib-body[index];
+	     xinspect(component.related-objects.first);
+	   end method);
+    else
+      let frame = make(<frame>, anchor: "w", side: "top", in: window);
+      // padding
+      make(<frame>, relief: "sunken",
+	   width: 50, fill: "y", anchor: "w", side: "left", in: frame);
+      let descr-frame = make(<frame>, side: "right", in: frame, 
+			     expand: #t, fill: "both");
+      for (component in attrib.attrib-body)
+	do-component(component, descr-frame);
+      end for;
+    end if;
   end for;
   let button-frame = make(<frame>, side: "top", in: window);
   make(<button>, text: "Close", command: method () destroy-window(window) end,
        relief: "raised", side: "left", anchor: "w", in: button-frame);
   make(<button>, text: "Quit", command: exit,
        relief: "raised", side: "left", anchor: "w", in: button-frame);
-  call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
 end method xinspect;
 
+/*
 define method main (prog-name :: <byte-string>, #rest args)
   xinspect(xinspect);
 //  map-window(*root-window*);
 end method main;
+*/
