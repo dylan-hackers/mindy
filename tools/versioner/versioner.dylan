@@ -420,6 +420,7 @@ end method print-object;
 
 define method print-versions (versions :: <sequence>) => ();
   *default-pretty?* := #t;
+  *default-line-length* := 78; // defaults to 80
   for (ver in versions)
     printf("================\n%=", ver);  
     // print-object for versions outputs a newline
@@ -470,7 +471,7 @@ end method do-versioning;
 
 define method show-usage () => ();
   printe("Usage:\n");
-  printe("    versioner {mindy|compiler|libraries|tools|-dir dir}+\n");
+  printe("    versioner {all|mindy|compiler|libraries|tools|-dir dir}+\n");
   exit(exit-code: 1);
 end method show-usage;
 
@@ -519,6 +520,12 @@ define method main (ignored :: <byte-string>, #rest argv-sequence)
   while (~argv.empty?)
     let word = pop(argv);
     select (word by \=)
+      "all" =>
+	add!(targets, gwydionize("mindy/rcs"));
+	add!(targets, gwydionize("libraries/old-mindy-rcs"));
+	add!(targets, gwydionize("compiler/rcs"));
+	add!(targets, gwydionize("libraries/old-compiler-rcs"));
+	add!(targets, gwydionize("tools/rcs"));
       "mindy" => 
 	add!(targets, gwydionize("mindy/rcs"));
 	add!(targets, gwydionize("libraries/old-mindy-rcs"));
