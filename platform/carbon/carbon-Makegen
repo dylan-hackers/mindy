@@ -1,0 +1,7 @@
+# common makegen stuff for the "carbon" libraries under d2c.
+# each makegen should &makegen_include("../carbon-Makegen"), and also
+# add any of the other common libraries they use to D2CFLAGS.
+
+$D2CFLAGS = $d2c_runtime;
+$CPPFLAGS = '-I$(SRCROOT)/d2c/runtime -I/System/Library/Frameworks/Carbon.framework/Headers -DALLOW_OLD_CARBON_EVENT_HANDLERS=0 -DALLOW_OLD_CREATE_FOO_CONTROL_PARAMETERS=0 -DCARBON_ON_MACH_O=1 -DALLOW_OLD_BLOCKING_APIS=0 -DALLOW_OLD_EVENT_LOOP_APIS=1';
+
