@@ -1,5 +1,5 @@
 module: warrior
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion.dylan,v 1.2 2004/04/13 23:45:19 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion.dylan,v 1.2.2.1 2004/10/07 20:33:49 gabor Exp $
 file: gwydion.dylan
 author: gabor@mac.com
 status: really need some cleanup first.
@@ -78,6 +78,30 @@ define constant $platform-table
 		single-size:,							4,
 		double-size:,							8,
 		long-double-size:,						8,
+
+long-long-size:, 8,
+
+pointer-alignment:, 4,
+integer-alignment:, 4,
+short-alignment:, 2,
+long-alignment:, 4,
+long-long-alignment:, 4,
+single-alignment:, 4,
+double-alignment:, 4,
+long-double-alignment:, 4,
+
+single-mantissa-digits:, 24,
+double-mantissa-digits:, 53,
+long-double-mantissa-digits:, 53,
+minimum-single-float-exponent:, -125,
+maximum-single-float-exponent:, 128,
+minimum-double-float-exponent:, -1021,
+maximum-double-float-exponent:, 1024,
+minimum-long-double-float-exponent:, -1021,
+maximum-long-double-float-exponent:, 1024,
+
+make-jobs-flag:, "",
+
 		big-endian?:,							#t,
 		compile-c-command:,						"",
 		default-c-compiler-flags:,				"",
