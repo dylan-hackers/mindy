@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.12 1995/05/18 13:31:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.13 1995/05/21 03:04:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -106,6 +106,10 @@ define variable *ubyte-rep* = #f;
 
 define variable *ptr-rep* = #f;
 
+define variable *float-rep* = #f;
+define variable *double-rep* = #f;
+define variable *long-double-rep* = #f;
+
 define method seed-representations () => ();
   local
     method set-representations(class, speed-rep, space-rep) => ();
@@ -160,6 +164,7 @@ define method seed-representations () => ();
 	     alignment: 4, size: 4, c-type: "float",
 	     class: sf-cclass, data-word-member: "f");
     set-representations(sf-cclass, sf-rep, sf-rep);
+    *float-rep* := sf-rep;
   end;
   begin
     let df-class = dylan-value(#"<double-float>");
@@ -177,6 +182,7 @@ define method seed-representations () => ();
 	       c-type: "double", class: df-class, data-word-member: "d");
 	end;
     set-representations(df-class, df-rep, df-rep);
+    *double-rep* := df-rep;
   end;
   begin
     let xf-class = dylan-value(#"<extended-float>");
@@ -194,6 +200,7 @@ define method seed-representations () => ();
 	       c-type: "long double", class: xf-class, data-word-member: "x");
 	end;
     set-representations(xf-class, xf-rep, xf-rep);
+    *long-double-rep* := xf-rep;
   end;
   begin
     let ptr-cclass = dylan-value(#"<raw-pointer>");
