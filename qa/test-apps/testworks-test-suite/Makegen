@@ -1,7 +1,5 @@
 &makegen_include("../../common-Makegen");
 
-$D2C = '$(BUILDROOT)/d2c/compiler/main/d2c';
-
 $D2CFLAGS         # added by update-libdirs
     = $d2c_runtime
     . ' -L../../../common/streams'
@@ -19,6 +17,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/threads'
     . ' -L../../testworks'
     . ' -L../../testworks/tests';
+
 $CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
 
 do emit_library_rule(
