@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.19 1994/04/28 19:25:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.20 1994/05/05 11:52:17 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1506,46 +1506,67 @@ static int find_pc_for_line(obj_t component, int line)
     return -1;
 }
 
-static void install_breakpoint(obj_t func, obj_t line)
+static void install_breakpoint(obj_t func, obj_t thing, int line)
 {
-    if (!instancep(func, obj_FunctionClass)) {
-	prin1(func);
-	printf(" isn't a function\n");
-    }
-    else if (!instancep(func, obj_ByteMethodClass)) {
-	prin1(func);
-	printf(" isn't a byte method.\n");
-    }
-    else if (!obj_is_fixnum(line)) {
-	printf("bogus line number: ");
-	print(line);
-    }
-    else {
-	obj_t component = byte_method_component(func);
-
-	if (COMPONENT(component)->debug_info == obj_False) {
+    if (instancep(thing, obj_ComponentClass)) {
+	if (line == -1)
+	    printf("Can't install function-start breakpoints directly into "
+		   "components.\n");
+	else if (COMPONENT(thing)->debug_info == obj_False) {
 	    prin1(func);
 	    printf(" has no debug-info.\n");
 	}
 	else {
-	    int pc = find_pc_for_line(component, fixnum_value(line));
+	    int pc = find_pc_for_line(thing, line);
 
 	    if (pc < -1) {
 		prin1(func);
-		printf(" does not span line number %ld\n", fixnum_value(line));
+		printf(" does not span line number %ld\n", line);
 	    }
 	    else {
-		int id = install_byte_breakpoint(component, pc);
+		int id = install_byte_breakpoint(thing, pc);
 		
 		if (id < 0)
 		    printf("couldn't install breakpoint in ");
 		else
 		    printf("breakpoint %d installed in ", id);
 		prin1(func);
-		printf(" at line %ld (pc %d)\n", fixnum_value(line), pc);
+		printf(" at line %ld (pc %d)\n", line, pc);
 	    }
 	}
     }
+    else if (!instancep(thing, obj_FunctionClass)) {
+	prin1(thing);
+	printf(" isn't a function or component\n");
+    }
+    else if (line == -1) {
+	printf("Can't install function start breakpoints.");
+    }
+    else if (!instancep(thing, obj_ByteMethodClass)) {
+	prin1(thing);
+	printf(" isn't a byte method.\n");
+    }
+    else
+	install_breakpoint(func, byte_method_component(thing), line);
+}
+
+static void breakpoint_cont(struct thread *thread, obj_t *vals)
+{
+    obj_t *old_sp;
+    obj_t okay = vals[0];
+    int line = fixnum_value(thread->fp[0]);
+
+    if (okay != obj_False) {
+	obj_t results = vals[1];
+	obj_t thing = obj_False;
+
+	if (SOVEC(results)->length != 0)
+	    thing = SOVEC(results)->contents[0];
+
+	install_breakpoint(thing, thing, line);
+    }
+    old_sp = pop_linkage(thread);
+    do_return(thread, old_sp, old_sp);
 }
 
 static void breakpoint_cmd(void)
@@ -1556,29 +1577,80 @@ static void breakpoint_cmd(void)
 	printf("Invalid function expression.\n");
     else if (exprs == obj_Nil)
 	printf("Can't list breakpoints yet.\n");
-    else if (TAIL(exprs) == obj_Nil)
-	printf("Can't set function-start breakpoints yet.\n");
-    else if (TAIL(TAIL(exprs)) == obj_Nil) {
+    else {
 	boolean okay = TRUE;
-	boolean simple = TRUE;
+	boolean func_simple = TRUE;
+	obj_t line;
 
-	eval_vars(HEAD(exprs), &okay, &simple);
-	eval_vars(HEAD(TAIL(exprs)), &okay, &simple);
+	eval_vars(HEAD(exprs), &okay, &func_simple);
 
 	if (!okay)
 	    return;
 
-	if (simple)
-	    install_breakpoint(TAIL(HEAD(exprs)),
-			       TAIL(HEAD(TAIL(exprs))));
+	if (TAIL(exprs) == obj_Nil)
+	    line = make_fixnum(-1);
+	else if (TAIL(TAIL(exprs)) == obj_Nil) {
+	    boolean line_simple = TRUE;
+
+	    eval_vars(HEAD(TAIL(exprs)), &okay, &line_simple);
+
+	    if (!okay)
+		return;
+
+	    line = TAIL(HEAD(TAIL(exprs)));
+	    if (!line_simple || !obj_is_fixnum(line)) {
+		printf("Bogus line number.\n");
+		return;
+	    }
+	}
 	else {
-	    /* ### */
-	    printf("Can't install breakpoints in functions we have to "
-		   "eval first yet.\n");
+	    printf("Too many arguments to breakpoint.\n");
+	    return;
+	}
+
+	if (func_simple) {
+	    obj_t func = TAIL(HEAD(exprs));
+	    install_breakpoint(func, func, fixnum_value(line));
+	}
+	else if (debugger_eval_var == NULL
+		 || debugger_eval_var->value == obj_Unbound)
+	    printf("Can't eval expressions without debugger-eval "
+		   "being defined.\n");
+	else {
+	    struct thread *thread = CurThread;
+
+	    if (thread == NULL) {
+		thread = thread_create(make_string("eval for disassemble"));
+		set_c_continuation(thread, kill_me);
+	    }
+	    else {
+		thread_push_escape(thread);
+		set_c_continuation(thread, debugger_cmd_finished);
+	    }
+
+	    suspend_other_threads(thread);
+
+	    *thread->sp++ = obj_False;
+	    push_linkage(thread, thread->sp);
+	    set_c_continuation(thread, breakpoint_cont);
+	    *thread->sp++ = line;
+	    thread->datum = obj_rawptr(thread->sp);
+	    *thread->sp++ = debugger_eval_var->value;
+	    *thread->sp++ = HEAD(exprs);
+
+	    thread_restart(thread);
+
+	    Continue = TRUE;
 	}
     }
+}
+
+static void delete_cmd(void)
+{
+    if (yylex() != tok_LITERAL || !obj_is_fixnum(yylval))
+	printf("Bogus breakpoint id\n");
     else
-	printf("Too many arguments to breakpoint.\n");
+	remove_breakpoint(fixnum_value(yylval));
 }
 
 
@@ -1933,11 +2005,12 @@ static struct cmd_entry Cmds[] = {
     {"call", "call expr...\tCall each expr, printing the results.", call_cmd},
     {"continue", "continue\tContinue execution.", continue_cmd},
     {"d", NULL, down_cmd},
-    {"down", "down\t\tMove down one frame.", down_cmd},
+    {"delete", "delete id\tDelete the given breakpoint.", delete_cmd},
     {"disable", "disable thread\tSuspend the given thread.", disable_cmd},
     {"disassemble",
 	 "disassemble\tDisassemble the component for the current frame",
 	 disassemble_cmd},
+    {"down", "down\t\tMove down one frame.", down_cmd},
     {"enable", "enable thread\tRestart the given thread.", enable_cmd},
     {"error",
 "error\t\tRedisplay the error that caused this thread to enter the debugger.",
