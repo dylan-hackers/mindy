@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.1 1996/01/03 21:46:09 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.2 1996/01/27 20:19:17 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -39,6 +39,7 @@ define module cback
   export
     <unit-state>, unit-init-roots,
     <file-state>, 
+    <unit-info>, unit-name, undumped-objects,
     emit-prologue, emit-tlf-gunk, emit-component, emit-epilogue,
     entry-point-c-name;
 end;
@@ -61,7 +62,7 @@ define module heap
   use cback;
 
   export
-    build-initial-heap;
+    build-initial-heap, build-local-heap;
 end;
 
 
