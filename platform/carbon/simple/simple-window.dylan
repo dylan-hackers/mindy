@@ -413,6 +413,17 @@ define open generic window-menu-choice( win :: <simple-window>, menu :: <integer
 define method  window-menu-choice(  win :: <simple-window>, menu :: <integer>, item :: <integer> )
 => ( result :: <boolean> )
 
-	#f
+    let handled = #f;
 
+    if( menu = $FileMenuID )
+        if(item = 1)	// Close window
+            if( win.closeable )
+                close-window( win );
+            end if;
+            handled := #t;
+        end if;
+    end if;
+
+    handled;
+    
 end method window-menu-choice;
