@@ -529,10 +529,25 @@ define method update-mirror-attributes
   next-method();
   let widget = mirror.mirror-widget;
   let selected? = gadget-value(gadget);
-  with-disabled-event-handler (widget, #"clicked")
-    gtk-toggle-button-set-active
-      (widget, if (selected?) $true else $false end)
-  end
+  let new-active = if (selected?) $true else $false end;
+  unless(new-active = GTK-TOGGLE-BUTTON(widget).active-value)
+    GTK-TOGGLE-BUTTON(widget).active-value := new-active;
+    let new-state
+      = if(GTK-BUTTON(widget).in-button-value = $false)
+          if(new-active)
+            $GTK-STATE-ACTIVE
+          else
+            $GTK-STATE-NORMAL
+          end if;
+        else
+          $GTK-STATE-PRELIGHT
+        end if;
+    unless(GTK-WIDGET(widget).state-value = new-state)
+      gtk-widget-set-state(GTK-WIDGET(widget), new-state);
+    end unless;
+    gtk-toggle-button-toggled(GTK-TOGGLE-BUTTON(widget));
+    gtk-widget-queue-draw(GTK-WIDGET(widget));
+  end unless;
 end method update-mirror-attributes;
 
 define sealed method note-gadget-value-changed
