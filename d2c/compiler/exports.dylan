@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.1 1994/12/12 13:01:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.2 1994/12/12 21:21:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -135,7 +135,8 @@ define module names
   export
     <name>,
     <basic-name>, name-symbol, name-module,
-    <type-cell-name>, type-cell-name-base;
+    <type-cell-name>, type-cell-name-base,
+    <method-name>, method-name-generic-function, method-name-signature;
 end;
 
 define module definitions
@@ -148,6 +149,7 @@ define module definitions
   export
     <definition>, defn-name,
     check-syntax-table-additions, make-syntax-table-additions,
+    <abstract-constant-definition>,
     <implicit-definition>;
 
   create
@@ -467,6 +469,10 @@ define module define-functions
   use top-level-forms;
   use compile-time-values;
   use builder-interface;
+  use signature;
+  use ctype;
+  use compile-time-eval;
+  use lexenv;
 
   export
     <function-definition>,
