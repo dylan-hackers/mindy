@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.2 1994/03/28 11:31:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.3 1994/03/30 05:55:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -77,6 +77,7 @@ static void pop_yacc_recoveries(int count);
     struct inherited_spec *inherited_spec;
     enum slot_allocation slot_allocation;
     struct gf_suffix *gf_suffix;
+    flags_t flags;
 
     struct defnamespace_constituent *defnamespace_constituent;
     struct variable_names *variable_names;
@@ -90,13 +91,13 @@ static void pop_yacc_recoveries(int count);
 %token <token> BOGUS
 %token <token> SYMBOL
 %token <token> KEYWORD
+%token <token> SYMBOL_LITERAL
 %token <token> SHARP_T
 %token <token> SHARP_F
 %token <token> STRING
 %token <token> CHARACTER
 %token <token> INTEGER
 %token <token> FLOAT
-%token <token> LITERAL_SYMBOL
 %token <token> BINARY_OPERATOR
 %token <token> LPAREN
 %token <token> RPAREN
@@ -118,7 +119,9 @@ static void pop_yacc_recoveries(int count);
 %token <token> NEXT
 %token <token> REST
 %token <token> KEY
+%token <token> ALL_KEYS
 %token <token> ABOVE
+%token <token> ABSTRACT
 %token <token> DBEGIN
 %token <token> BELOW
 %token <token> BLOCK
@@ -126,6 +129,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> CASE
 %token <token> CLASS
 %token <token> CLEANUP
+%token <token> CONCRETE
 %token <token> CONSTANT
 %token <token> DEFINE
 %token <token> ELSE
@@ -145,8 +149,12 @@ static void pop_yacc_recoveries(int count);
 %token <token> LET
 %token <token> LOCAL
 %token <token> METHOD
+%token <token> OPEN
 %token <token> OTHERWISE
+%token <token> PRIMARY
 %token <token> REQUIRED
+%token <token> SEAL
+%token <token> SEALED
 %token <token> SELECT
 %token <token> SLOT
 %token <token> SUBCLASS
@@ -172,7 +180,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> EXCLUDE_OPTION
 %token <token> EXPORT_OPTION
 %token <token> RENAME_OPTION
-%type  <token> keyword
+%type  <token> keyword keyword_opt
 
 %type <nothing> dylan_program block_opt case_opt if_opt for_opt select_opt
 %type <nothing> unless_opt until_opt while_opt class_opt method_opt semi_opt
@@ -189,20 +197,21 @@ static void pop_yacc_recoveries(int count);
 %type <param_list> more_parameters next_parameters rest_parameters
 %type <param_list> keyword_parameters_opt keyword_parameters
 %type <param> variable positional_parameter
-%type <keyword_param> keyword_parameter
+%type <keyword_param> keyword_parameter gf_keyword_parameter
 %type <id> next_parameter rest_parameter
 %type <local_methods> local_methods
 %type <method> local_method anonymous_method named_method method_description
 %type <expr> expression operand leaf statement by_part by_part_opt 
-%type <expr> slot_type_opt
+%type <expr> slot_type_opt return_type_element keyword_parameter_type
+%type <expr> keyword_parameter_default
 %type <binop_series> binop_series
 %type <binop> binop
 %type <arglist> arguments_opt arguments
 %type <argument> argument
 %type <plist> property_list_opt property_list
-%type <return_type_list> return_type_list return_type
-%type <literal> constant concat_string bare_literal dotted_list
-%type <literal_list> bare_literals_opt bare_literals
+%type <return_type_list> return_type return_type_list return_type_list_head
+%type <literal> constant concat_string literal dotted_list
+%type <literal_list> literals_opt literals
 %type <block_epilog> block_epilog block_epilog_opt
 %type <condition_body> condition_body complete_condition_clauses
 %type <for_header> for_header
@@ -220,6 +229,7 @@ static void pop_yacc_recoveries(int count);
 %type <inherited_spec> inherited_spec
 %type <slot_allocation> allocation
 %type <gf_suffix> gf_suffix
+%type <flags> flags 
 
 %type <constituent> module_definition library_definition 
 %type <defnamespace_constituent> module_clauses_opt module_clauses
@@ -267,14 +277,14 @@ constituent:
 ;
 
 defining_form:
-	DEFINE CLASS class_definition
-	{ free($1); free($2); $$ = $3; }
+	DEFINE flags CLASS class_definition
+	{ free($1); free($3); $$ = set_class_flags($2, $4); }
     |	DEFINE CONSTANT bindings
 	{ free($1); free($2); $$ = make_define_constant($3); }
-    |	DEFINE GENERIC generic_function_definition
-	{ free($1); free($2); $$ = $3; }
-    |	DEFINE METHOD named_method
-	{ free($1); free($2); $$ = make_define_method($3); }
+    |	DEFINE flags GENERIC generic_function_definition
+	{ free($1); free($3); $$ = set_generic_flags($2, $4); }
+    |	DEFINE flags METHOD named_method
+	{ free($1); free($3); $$ = make_define_method($2, $4); }
     |	DEFINE VARIABLE bindings
 	{ free($1); free($2); $$ = make_define_variable($3); }
     |	DEFINE MODULE module_definition
@@ -282,6 +292,15 @@ defining_form:
     |	DEFINE LIBRARY library_definition
 	{ free($1); free($2); $$ = $3; }
 ;
+
+flags:
+	/* epsilon */ { $$ = 0; }
+    |	flags SEALED { free($2); $$ = $1 | flag_SEALED; }
+    |	flags OPEN { free($2); $$ = $1 | flag_OPEN; }
+    |	flags ABSTRACT { free($2); $$ = $1 | flag_ABSTRACT; }
+    |	flags CONCRETE { free($2); $$ = $1 | flag_CONCRETE; }
+    |	flags PRIMARY { free($2); $$ = $1 | flag_PRIMARY; }
+;	
 
 local_declaration:
 	LET bindings
@@ -299,8 +318,8 @@ local_declaration:
 ;
 
 bindings:
-	variables EQUAL expression
-	{ free($2); $$ = make_bindings($1, $3); }
+	variable EQUAL expression
+	{ free($2); $$ = make_bindings(push_param($1,make_param_list()), $3); }
     |	LPAREN variables RPAREN EQUAL expression
 	{ free($1); free($3); free($4); $$ = make_bindings($2, $5); }
 ;
@@ -396,30 +415,6 @@ argument:
 	{ $$ = make_keyword_argument($1, $2); }
 ;
 
-property_list_opt:
-	/* epsilon */ { $$ = make_property_list(); }
-    |	property_list { $$ = $1; }
-;
-
-property_list:
-	COMMA keyword expression
-	{ free($1); $$ = add_property(make_property_list(), $2, $3); }
-    |	property_list COMMA keyword expression
-	{ free($2); $$ = add_property($1, $3, $4); }
-;
-
-return_type_list:
-	REST expression
-	{ free($1); $$ = make_return_type_list($2); }
-    |	expression COMMA expression
-	{ free($2);
-	  $$ = push_return_type($1,
-		   push_return_type($3, make_return_type_list(NULL)));
-	}
-    |	expression COMMA return_type_list
-	{ free($2); $$ = push_return_type($1, $3); }
-;
-
 constant:
 	SHARP_T { $$ = parse_true_token($1); }
     |	SHARP_F { $$ = parse_false_token($1); }
@@ -427,12 +422,12 @@ constant:
     |	CHARACTER { $$ = parse_character_token($1); }
     |	INTEGER { $$ = parse_integer_token($1); }
     |	FLOAT { $$ = parse_float_token($1); }
-    |	LITERAL_SYMBOL { $$ = parse_symbol_token($1); }
+    |	SYMBOL_LITERAL { $$ = parse_keyword_token($1); }
     |	SHARP_PAREN dotted_list RPAREN
 	{ free($1); free($3); $$ = $2; }
-    |	SHARP_PAREN bare_literals_opt RPAREN
+    |	SHARP_PAREN literals_opt RPAREN
 	{ free($1); free($3); $$ = make_list_literal($2); }
-    |	SHARP_BRACKET bare_literals_opt RBRACKET
+    |	SHARP_BRACKET literals_opt RBRACKET
 	{ free($1); free($3); $$ = make_vector_literal($2); }
 ;
 
@@ -441,32 +436,25 @@ concat_string:
     |	concat_string STRING	{ $$ = concat_string_token($1, $2); }
 
 dotted_list:
-	bare_literals DOT bare_literal
+	literals DOT literal
 	{ free($2); $$ = make_dotted_list_literal($1, $3); }
 ;
 
-bare_literals_opt:
+literals_opt:
 	/* epsilon */
 	{ $$ = make_literal_list(); }
-    |	bare_literals
+    |	literals
 	{ $$ = $1; }
 ;
 
-bare_literals:
-	bare_literal { $$ = add_literal(make_literal_list(), $1); }
-    |	bare_literals COMMA bare_literal 
+literals:
+	literal { $$ = add_literal(make_literal_list(), $1); }
+    |	literals COMMA literal
 	{ free($2); $$ = add_literal($1, $3); }
 ;
 
-bare_literal:
-	LPAREN dotted_list RPAREN
-	{ free($1); free($3); $$ = $2; }
-    |	LPAREN bare_literals_opt RPAREN
-	{ free($1); free($3); $$ = make_list_literal($2); }
-    |	LBRACKET bare_literals_opt RBRACKET
-	{ free($1); free($3); $$ = make_vector_literal($2); }
-    |	constant { $$ = $1; }
-    |	SYMBOL { $$ = parse_symbol_token($1); }
+literal:
+	constant { $$ = $1; }
     |	keyword { $$ = parse_keyword_token($1); }
 ;
 
@@ -604,7 +592,11 @@ condition_clause:
 
 for_clause:
 	variable EQUAL expression THEN expression
-	{ free($2); free($4); $$ = make_equal_then_for_clause($1, $3, $5); }
+	{ free($2); free($4);
+	$$=make_equal_then_for_clause(push_param($1,make_param_list()),$3,$5);}
+    |	LPAREN variables RPAREN EQUAL expression THEN expression
+	{ free($1); free($3); free($4); free($6);
+	  $$ = make_equal_then_for_clause($2, $5, $7); }
     |	variable IN expression 
 	{ free($2); $$ = make_in_for_clause($1, $3); }
     |	variable FROM expression to_part_opt by_part_opt
@@ -667,9 +659,9 @@ class_guts:
 ;
 
 slot_spec:
-	allocation SLOT symbol_opt slot_type_opt property_list_opt
-	{ free($2);
-	  $$ = make_slot_spec($1, $3 ? make_id($3) : NULL, $4, $5);
+	flags allocation SLOT symbol_opt slot_type_opt property_list_opt
+	{ free($3);
+	  $$ = make_slot_spec($1, $2, $4 ? make_id($4) : NULL, $5, $6);
 	}
 ;
 
@@ -703,6 +695,18 @@ slot_type_opt:
     |	COLON_COLON expression { free($1); $$ = $2; }
 ;
 
+property_list_opt:
+	/* epsilon */ { $$ = make_property_list(); }
+    |	property_list { $$ = $1; }
+;
+
+property_list:
+	COMMA keyword expression
+	{ free($1); $$ = add_property(make_property_list(), $2, $3); }
+    |	property_list COMMA keyword expression
+	{ free($2); $$ = add_property($1, $3, $4); }
+;
+
 generic_function_definition:
 	SYMBOL LPAREN gf_parameters RPAREN gf_suffix
 	{ free($2); free($4);
@@ -713,29 +717,28 @@ generic_function_definition:
 gf_suffix:
 	property_list_opt
 	{ $$ = make_gf_suffix(NULL, $1); }
-    |	COLON_COLON expression property_list_opt
+    |	ARROW return_type_element property_list_opt
 	{ free($1);
-	  $$ = make_gf_suffix(push_return_type($2,
-				make_return_type_list(NULL)), $3);
+	  $$ = make_gf_suffix(add_return_type(make_return_type_list(NULL),
+					      $2),
+			      $3);
 	}
-    |	COLON_COLON LPAREN return_type_list RPAREN property_list_opt
+    |	ARROW LPAREN return_type_list RPAREN property_list_opt
 	{ free($1); free($2); free($4); $$ = make_gf_suffix($3, $5); }
-    |	COLON_COLON return_type_list
-	{ free($1); $$ = make_gf_suffix($2, NULL); }
 ;
 
 gf_parameters:
 	/* epsilon */ { $$ = make_param_list(); }
-    |	SYMBOL more_gf_parameters
-	{ $$ = push_param(make_param(make_id($1), NULL), $2); }
+    |	positional_parameter more_gf_parameters
+	{ $$ = push_param($1, $2); }
     |	gf_rest_parameters { $$ = $1; }
 ;
 
 more_gf_parameters:
 	/* epsilon */
 	{ $$ = make_param_list(); }
-    |	COMMA SYMBOL more_gf_parameters
-	{ free($1); $$ = push_param(make_param(make_id($2), NULL), $3); }
+    |	COMMA positional_parameter more_gf_parameters
+	{ free($1); $$ = push_param($2, $3); }
     |	COMMA gf_rest_parameters
 	{ free($1); $$ = $2; }
 ;
@@ -755,14 +758,15 @@ gf_keyword_parameters_opt:
 ;
 
 gf_keyword_parameters:
-	keyword
-	{ $$ = add_keyword_param(allow_keywords(make_param_list()),
-			         make_keyword_param($1, NULL, NULL));
-	}
-    |	gf_keyword_parameters COMMA keyword
-	{ free($2);
-	  $$ = add_keyword_param($1, make_keyword_param($3, NULL, NULL));
-	}
+	gf_keyword_parameter
+	{ $$ = add_keyword_param(allow_keywords(make_param_list()), $1); }
+    |	gf_keyword_parameters COMMA gf_keyword_parameter
+	{ free($2); $$ = add_keyword_param($1, $3); }
+;
+
+gf_keyword_parameter:
+	keyword keyword_parameter_type
+	{ $$ = make_keyword_param($1, NULL, $2, NULL); }
 ;
 
 anonymous_method:
@@ -787,19 +791,40 @@ method_description:
 	{ free($1); free($3);
 	  $$ = make_method_description($2, $4, make_body());
 	}
-    |	LPAREN parameters RPAREN body_opt
+    |	LPAREN parameters RPAREN semi_opt body_opt
 	{ free($1); free($3);
-	  $$ = make_method_description($2, NULL, $4);
+	  $$ = make_method_description($2, NULL, $5);
 	}
 ;
 
 return_type:
-	COLON_COLON expression
-	{ free($1); $$ = push_return_type($2, make_return_type_list(NULL)); }
-    |	COLON_COLON return_type_list
+	ARROW return_type_list
 	{ free($1); $$ = $2; }
-    |	COLON_COLON LPAREN return_type_list RPAREN
+    |	ARROW LPAREN return_type_list RPAREN
 	{ free($1); free($2); free($4); $$ = $3; }
+;
+
+return_type_list:
+	/* epsilon */
+	{ $$ = make_return_type_list(NULL); }
+    |	REST return_type_element
+	{ free($1); $$ = make_return_type_list($2); }
+    |	return_type_list_head
+	{ $$ = $1; }
+    |	return_type_list_head COMMA REST return_type_element
+	{ free($2); free($3); $$ = set_return_type_rest_type($1, $4); }
+;
+
+return_type_list_head:
+	return_type_element
+	{ $$ = add_return_type(make_return_type_list(NULL), $1); }
+    |	return_type_list_head COMMA return_type_element
+	{ free($2); $$ = add_return_type($1, $3); }
+;
+
+return_type_element:
+	SYMBOL { free($1); $$ = NULL; }
+    |	SYMBOL COLON_COLON expression { free($1); free($2); $$ = $3; }
 ;
 
 parameters:
@@ -865,12 +890,23 @@ keyword_parameters:
 ;
 
 keyword_parameter:
-	keyword SYMBOL
-	{ $$ = make_keyword_param($1, make_id($2), NULL); }
-    |	keyword SYMBOL LPAREN expression RPAREN
-	{ free($3); free($5);
-	  $$ = make_keyword_param($1, make_id($2), $4);
-	}
+	keyword_opt SYMBOL keyword_parameter_type keyword_parameter_default
+	{ $$ = make_keyword_param($1, make_id($2), $3, $4); }
+;
+
+keyword_opt:
+	/* epsilon */ { $$ = NULL; }
+    |	keyword { $$ = $1; }
+;	
+
+keyword_parameter_type:
+	/* epsilon */ { $$ = NULL; }
+    |	COLON_COLON operand { free($1); $$ = $2; }
+;
+
+keyword_parameter_default:
+	/* epsilon */ { $$ = NULL; }
+    |	EQUAL expression { free($1); $$ = $2; }
 ;
 
 module_definition:
