@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/fer-edit.dylan,v 1.2 2000/01/24 04:56:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/fer-edit.dylan,v 1.3 2001/10/14 18:54:48 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -31,10 +31,40 @@ copyright: see below
 
 // Routines to edit FER.
 
+define function delete-dependent
+    (component :: <component>, dependent :: <dependent-mixin>) => ();
+  fer-delete-dependent(component, dependent, reoptimize);
+end;
+
+define function replace-subregion
+    (component :: <component>, region :: <region>, old :: <region>,
+     new :: <region>)
+    => ();
+  fer-replace-subregion(component, region, old, new, reoptimize);
+end;
+
+define function combine-regions
+    (component :: <component>, #rest stuff /* :: <region> */) => res :: <region>;
+  apply(fer-combine-regions, component, reoptimize, stuff);
+//  apply(fer-combine-regions, reoptimize /*<-->*/, component, stuff);
+// GGR: \apply should detect type mismatch in this case!!!
+end;
+
+define function insert-after
+    (component :: <component>, assign :: <abstract-assignment>,
+     insert :: <region>) => ();
+  fer-insert-after(component, assign, insert, reoptimize);
+end;
+
+define function remove-dependency-from-source
+    (component :: <component>, dependency :: <dependency>) => ();
+  fer-remove-dependency-from-source(component, dependency, reoptimize);
+end;
+
 
 // Deletion routines
 
-define method delete-dependent
+/* define method delete-dependent
     (component :: <component>, dependent :: <dependent-mixin>) => ();
   //
   // Remove our dependency from whatever we depend on.
@@ -94,7 +124,7 @@ define method delete-dependent
     reoptimize(component, nlx-info.nlx-catch);
   end;
   next-method();
-end;
+end; */
 
 define method delete-and-unlink-assignment
     (component :: <component>, assignment :: <assignment>) => ();
@@ -166,7 +196,7 @@ define method delete-definition
 end;
 
 
-define method remove-dependency-from-source
+/* define method remove-dependency-from-source
     (component :: <component>, dependency :: <dependency>) => ();
   let source = dependency.source-exp;
   for (dep = source.dependents then dep.source-next,
@@ -251,7 +281,7 @@ define method dropped-dependent
       reoptimize(component, nlx-info.nlx-catch);
     end;
   end;
-end;
+end; */
 
 // insert-exit-after -- internal.
 //
@@ -621,7 +651,7 @@ define method replace-expression
 end;
 
 
-// combine-regions -- internal.
+/* // combine-regions -- internal.
 //
 // Takes two subtrees of FER and combines them into one subtree.  The result
 // is interally consistent (i.e. the two input regions will have their
@@ -732,7 +762,7 @@ define method split-after (assign :: <abstract-assignment>)
   else
     values(region, make(<empty-region>));
   end;
-end;
+end; */
 
 
 // split-before -- internal
@@ -752,7 +782,7 @@ define method split-before (assign :: <abstract-assignment>)
   end;
 end;
 
-
+/* 
 // insert-after -- internal
 //
 // Insert the region immediate after the assignment.  All appropriate parent
@@ -795,7 +825,7 @@ define method insert-after
     (component :: <component>, assign :: <abstract-assignment>,
      insert :: <empty-region>)
     => ();
-end;
+end; */
 
 
 // insert-before -- internal
@@ -870,6 +900,7 @@ define method insert-before
 end;
 
 
+/*
 // replace-subregion -- internal
 //
 // Replace region's child old with new.  This is NOT a deletion.  None of the
@@ -935,7 +966,7 @@ define method replace-subregion
     replace-subregion(component, parent, region, combo);
   end;
 end;
-
+*/
 
 
 // extract-stuff-after

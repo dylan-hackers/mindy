@@ -1,12 +1,12 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.4 2001/03/17 03:43:34 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.5 2001/10/14 18:53:36 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -34,6 +34,7 @@ define library compiler-optimize
   use Dylan;
   use compiler-base;
   use compiler-front;
+  use compiler-fer-transform;
 
   export
     cheese;
@@ -52,6 +53,16 @@ define module cheese
   use variables, exclude: {<renaming>};
   use flow;
   use front;
+  use fer-transform,
+    rename:
+    {
+      replace-subregion => fer-replace-subregion,
+      combine-regions => fer-combine-regions,
+      delete-dependent => fer-delete-dependent,
+      insert-after => fer-insert-after,
+      remove-dependency-from-source => fer-remove-dependency-from-source,
+      maybe-restrict-type => fer-maybe-restrict-type
+    };
   use ctype;
   use classes;
   use signature-interface;

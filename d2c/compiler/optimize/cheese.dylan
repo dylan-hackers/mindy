@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.10 2001/10/11 21:54:12 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.11 2001/10/14 18:56:48 gabor Exp $
 copyright: see below
 
 
@@ -240,7 +240,7 @@ define method queue-dependents
   end;
 end;
 
-define method delete-queueable
+/* define method delete-queueable
     (component :: <component>, queueable :: <queueable-mixin>) => ();
   //
   // If we are queued for reoptimization, belay that.
@@ -257,7 +257,7 @@ define method delete-queueable
     end;
   end;
   queueable.queue-next := #"deleted";
-end;
+end;*/
 
 
 // Assignment optimization.
@@ -293,7 +293,7 @@ end;
 
 
 
-define method expression-movable? (expr :: <expression>)
+/* define method expression-movable? (expr :: <expression>)
     => res :: <boolean>;
   #f;
 end;
@@ -306,9 +306,9 @@ end method expression-movable?;
 define method expression-movable? (expr :: <known-call>)
     => res :: <boolean>;
   function-movable?(expr.depends-on.source-exp);
-end method expression-movable?;
+end method expression-movable?; */
 
-define method function-movable? (leaf :: <leaf>) => res :: <boolean>;
+/* define method function-movable? (leaf :: <leaf>) => res :: <boolean>;
   #f;
 end;
 
@@ -346,7 +346,7 @@ end;
 define method expression-movable? (var :: <initial-variable>)
     => res :: <boolean>;
   #f;
-end;
+end; */
 
 
 define method trim-unneeded-defines
@@ -649,7 +649,7 @@ define method maybe-propagate-copy
 end method maybe-propagate-copy;
 
 
-
+/* next candidate for refactoring, see in fer-transform */
 define method maybe-expand-cluster
     (component :: <component>, cluster :: <abstract-variable>)
     => did-anything? :: <boolean>;
@@ -954,7 +954,7 @@ define method optimize (component :: <component>, if-region :: <if-region>)
 	      (component, if-region.depends-on,
 	       maybe-copy(component, cond-source.depends-on.source-exp,
 			  condition.definer, if-region.home-function-region));
-	    let then-region = if-region.then-region;
+	    let then-region = if-region.then-region; //CAVE! GGR use swap-regions GF
 	    if-region.then-region := if-region.else-region;
 	    if-region.else-region := then-region;
 
@@ -964,7 +964,7 @@ define method optimize (component :: <component>, if-region :: <if-region>)
 	    replace-expression
 	      (component, if-region.depends-on,
 	       expand-next-method-if-ref(component, if-region, cond-source));
-	    let then-region = if-region.then-region;
+	    let then-region = if-region.then-region; //CAVE! GGR use swap-regions GF
 	    if-region.then-region := if-region.else-region;
 	    if-region.else-region := then-region;
 
@@ -1072,7 +1072,13 @@ define method assert-type
   end;
 end;
 
-define method maybe-restrict-type
+define function maybe-restrict-type
+    (component :: <component>, expr :: <expression>, type :: <values-ctype>)
+    => ();
+  fer-maybe-restrict-type(component, expr, type, reoptimize, queue-dependents);
+end;
+
+/* define method maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>)
     => ();
   unless (type == wild-ctype())
@@ -1129,10 +1135,10 @@ define method maybe-restrict-type
     reoptimize(component, var.definer);
   end;
   next-method();
-end;
+end; */
 
 
-define generic defaulted-type (ctype :: <values-ctype>, index :: <integer>)
+/* define generic defaulted-type (ctype :: <values-ctype>, index :: <integer>)
     => res :: <ctype>;
 
 define method defaulted-type (ctype :: <ctype>, index :: <integer>)
@@ -1169,7 +1175,7 @@ define method fixed-number-of-values?
     (ctype :: <values-ctype>) => res :: <boolean>;
   ctype.min-values == ctype.positional-types.size
     & ctype.rest-value-type == empty-ctype();
-end;
+end; */
 
 
 // Control flow cleanup stuff.
