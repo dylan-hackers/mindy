@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.5 1994/05/31 18:11:17 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.6 1994/06/11 02:23:50 wlott Exp $
 *
 * This file does whatever.
 *
@@ -265,44 +265,45 @@ void init_vec_classes(void)
 void init_vec_functions(void)
 {
     define_constant("vector",
-		    make_raw_function("vector", 0, TRUE, obj_False,
+		    make_raw_function("vector", 0, TRUE, obj_False, FALSE,
 				      list1(obj_SimpleObjectVectorClass),
 				      obj_False, dylan_vector));
     define_method("element",
 		    list2(obj_SimpleObjectVectorClass, obj_IntegerClass),
-		    FALSE, list1(pair(symbol("default"), obj_Unbound)),
+		    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
 		    obj_ObjectClass, dylan_sovec_element);
     define_method("element-setter",
 		  list3(obj_ObjectClass,
 			obj_SimpleObjectVectorClass,
 			obj_IntegerClass),
-		  FALSE, obj_False,
+		  FALSE, obj_False, FALSE,
 		  obj_ObjectClass, dylan_sovec_element_setter);
     define_method("size", list1(obj_SimpleObjectVectorClass),
-		  FALSE, obj_False, obj_IntegerClass, dylan_sovec_size);
+		  FALSE, obj_False, FALSE, obj_IntegerClass, dylan_sovec_size);
     define_method("make", list1(singleton(obj_VectorClass)), FALSE,
 		  list2(pair(symbol("size"), make_fixnum(0)),
 			pair(symbol("fill"), obj_False)),
-		  obj_SimpleObjectVectorClass, dylan_vec_make);
+		  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
     define_method("make", list1(singleton(obj_SimpleObjectVectorClass)), FALSE,
 		  list2(pair(symbol("size"), make_fixnum(0)),
 			pair(symbol("fill"), obj_False)),
-		  obj_SimpleObjectVectorClass, dylan_vec_make);
+		  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
 
     define_method("element",
-		    list2(obj_ByteVectorClass, obj_IntegerClass),
-		    FALSE, list1(pair(symbol("default"), obj_Unbound)),
-		    obj_IntegerClass, dylan_bytevec_element);
+		  list2(obj_ByteVectorClass, obj_IntegerClass),
+		  FALSE, list1(pair(symbol("default"), obj_Unbound)),
+		  FALSE, obj_IntegerClass, dylan_bytevec_element);
     define_method("element-setter",
 		  list3(obj_IntegerClass,
 			obj_ByteVectorClass,
 			obj_IntegerClass),
-		  FALSE, obj_False,
+		  FALSE, obj_False, FALSE,
 		  obj_IntegerClass, dylan_bytevec_element_setter);
     define_method("size", list1(obj_ByteVectorClass),
-		  FALSE, obj_False, obj_IntegerClass, dylan_bytevec_size);
+		  FALSE, obj_False, FALSE,
+		  obj_IntegerClass, dylan_bytevec_size);
     define_method("make", list1(singleton(obj_ByteVectorClass)), FALSE,
 		  list2(pair(symbol("size"), make_fixnum(0)),
 			pair(symbol("fill"), make_fixnum(0))),
-		  obj_ByteVectorClass, dylan_byte_vec_make);
+		  FALSE, obj_ByteVectorClass, dylan_byte_vec_make);
 }

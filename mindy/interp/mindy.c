@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.5 1994/04/30 15:17:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.6 1994/06/11 02:23:38 wlott Exp $
 *
 * This file does whatever.
 *
@@ -64,7 +64,7 @@ void main(int argc, char *argv[])
     init();
 
     thread = thread_create(symbol("main"));
-    *thread->sp++ = make_raw_function("startup", 0, TRUE, obj_False,
+    *thread->sp++ = make_raw_function("startup", 0, TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
 				      startup);
 

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.5 1994/04/17 17:43:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.6 1994/06/11 02:23:42 wlott Exp $
 *
 * This file does whatever.
 *
@@ -54,6 +54,6 @@ void init_obj_classes(void)
 
 void init_obj_functions(void)
 {
-    define_function("object-class", list1(obj_ObjectClass),
-		    FALSE, obj_False, obj_ClassClass, dylan_object_class);
+    define_function("object-class", list1(obj_ObjectClass), FALSE, obj_False,
+		    FALSE, obj_ClassClass, dylan_object_class);
 }

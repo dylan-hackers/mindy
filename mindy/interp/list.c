@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.4 1994/04/10 19:00:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.5 1994/06/11 02:23:35 wlott Exp $
 *
 * This file does whatever.
 *
@@ -268,18 +268,20 @@ void init_list_classes(void)
 void init_list_functions(void)
 {
     define_function("pair", list2(obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_False, obj_PairClass, pair);
+		    FALSE, obj_False, FALSE, obj_PairClass, pair);
     define_function("head", list1(obj_ListClass),
-		    FALSE, obj_False, obj_ObjectClass, dylan_head);
+		    FALSE, obj_False, FALSE, obj_ObjectClass, dylan_head);
     define_function("head-setter", list2(obj_ObjectClass, obj_ListClass),
-		    FALSE, obj_False, obj_ObjectClass, dylan_head_setter);
+		    FALSE, obj_False, FALSE, obj_ObjectClass,
+		    dylan_head_setter);
     define_function("tail", list1(obj_ListClass),
-		    FALSE, obj_False, obj_ObjectClass, dylan_tail);
+		    FALSE, obj_False, FALSE, obj_ObjectClass, dylan_tail);
     define_function("tail-setter", list2(obj_ObjectClass, obj_ListClass),
-		    FALSE, obj_False, obj_ObjectClass, dylan_tail_setter);
+		    FALSE, obj_False, FALSE, obj_ObjectClass,
+		    dylan_tail_setter);
     define_constant("list",
-		    make_raw_function("list", 0, TRUE, obj_False,
+		    make_raw_function("list", 0, TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass, dylan_list));
-    define_method("size", list1(obj_ListClass), FALSE, obj_False,
+    define_method("size", list1(obj_ListClass), FALSE, obj_False, FALSE,
 		  obj_IntegerClass, dylan_list_size);
 }

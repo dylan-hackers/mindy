@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.22 1994/06/09 16:30:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.23 1994/06/11 02:23:19 wlott Exp $
 *
 * This file does whatever.
 *
@@ -2230,10 +2230,10 @@ void init_debug_functions(void)
 {
     cur_source_file = obj_False;
     do_print_func = make_raw_function("debug-print", 1, FALSE, obj_False,
-				      obj_Nil, obj_ObjectClass,
+				      FALSE, obj_Nil, obj_ObjectClass,
 				      do_print_start);
     do_eval_func = make_raw_function("debug-eval", 1, FALSE, obj_False,
-				     obj_Nil, obj_ObjectClass,
+				     FALSE, obj_Nil, obj_ObjectClass,
 				     do_eval_start);
     debugger_eval_var = find_variable(module_BuiltinStuff,
 				      symbol("debugger-eval"),

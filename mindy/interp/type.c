@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.14 1994/05/31 18:11:10 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.15 1994/06/11 02:23:48 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1009,22 +1009,22 @@ void init_type_classes(void)
 
 void init_type_functions(void)
 {
-    define_function("instance?", list2(obj_ObjectClass, obj_TypeClass),
-		    FALSE, obj_False, obj_BooleanClass, dylan_instancep);
-    define_function("subtype?", list2(obj_TypeClass, obj_TypeClass),
-		    FALSE, obj_False, obj_BooleanClass, dylan_subtypep);
-    define_function("singleton", list1(obj_ObjectClass),
-		    FALSE, obj_False, obj_SingletonClass, singleton);
+    define_function("instance?", list2(obj_ObjectClass, obj_TypeClass), FALSE,
+		    obj_False, FALSE, obj_BooleanClass, dylan_instancep);
+    define_function("subtype?", list2(obj_TypeClass, obj_TypeClass), FALSE,
+		    obj_False, FALSE, obj_BooleanClass, dylan_subtypep);
+    define_function("singleton", list1(obj_ObjectClass), FALSE,
+		    obj_False, FALSE, obj_SingletonClass, singleton);
     define_method("make", list1(singleton(obj_SingletonClass)), FALSE,
-		  list1(pair(symbol("object"), obj_Unbound)),
+		  list1(pair(symbol("object"), obj_Unbound)), FALSE,
 		  obj_TypeClass, dylan_make_singleton);
     define_method("union", list2(obj_TypeClass, obj_TypeClass), FALSE,
-		  obj_Nil, obj_TypeClass, type_union);
+		  obj_Nil, FALSE, obj_TypeClass, type_union);
     define_method("limited", list1(singleton(obj_IntegerClass)), FALSE,
 		  list2(pair(symbol("min"), obj_False),
 			pair(symbol("max"), obj_False)),
-		  obj_TypeClass, dylan_limited_integer);
+		  FALSE, obj_TypeClass, dylan_limited_integer);
     define_method("limited", list1(singleton(obj_ClassClass)), FALSE,
 		  list1(pair(symbol("subclass-of"), obj_Unbound)),
-		  obj_TypeClass, dylan_limited_class);
+		  FALSE, obj_TypeClass, dylan_limited_class);
 }

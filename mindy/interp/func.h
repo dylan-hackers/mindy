@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.6 1994/04/26 15:26:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.h,v 1.7 1994/06/11 02:23:31 wlott Exp $
 *
 * This file does whatever.
 *
@@ -25,6 +25,7 @@ struct method_info {
     obj_t class;
     boolean restp;
     obj_t keys;
+    boolean all_keys;
     obj_t component;
     int n_closure_vars;
 };
@@ -32,12 +33,12 @@ struct method_info {
 #define METHOD_INFO(o) obj_ptr(struct method_info *, o)
 
 extern obj_t make_raw_function(char *debug_name, int required_args,
-			       boolean restp, obj_t keywords,
+			       boolean restp, obj_t keywords, boolean all_keys,
 			       obj_t result_types, obj_t more_results_type,
 			       void xep(struct thread *thread, int nargs));
 
 extern obj_t make_raw_method(char *debug_name, obj_t specializers,
-			     boolean restp, obj_t keywords,
+			     boolean restp, obj_t keywords, boolean all_keys,
 			     obj_t result_types, obj_t more_results_type,
 			     void iep(obj_t self, struct thread *thread,
 				      obj_t *args));
@@ -45,10 +46,10 @@ extern void set_method_iep(obj_t method,
 			   void iep(obj_t self, struct thread *thread,
 				    obj_t *args));
 extern obj_t make_builtin_method(char *debug_name, obj_t specializers,
-				 boolean restp, obj_t keywords,
+				 boolean restp, obj_t keys, boolean all_keys,
 				 obj_t result_type, obj_t func());
-extern obj_t make_method_info(boolean rest_p, obj_t keys, obj_t component,
-			      int n_closure_vars);
+extern obj_t make_method_info(boolean rest_p, obj_t keys, boolean all_keys,
+			      obj_t component, int n_closure_vars);
 extern obj_t make_byte_method(obj_t method_info, obj_t specializers,
 			      obj_t result_types, obj_t more_results_type,
 			      obj_t *lexenv);
@@ -62,11 +63,11 @@ extern obj_t accessor_method_datum(obj_t method);
 extern void set_accessor_method_datum(obj_t method, obj_t datum);
 
 extern obj_t make_generic_function(obj_t debug_name, int required_args,
-				   boolean restp, obj_t keywords,
+				   boolean restp, obj_t keys, boolean all_keys,
 				   obj_t result_types,obj_t more_results_type);
 extern obj_t make_default_generic_function(obj_t debug_name, obj_t method);
 extern void set_gf_signature(obj_t gf, int req_args, boolean restp,
-			     obj_t keywords, obj_t result_types,
+			     obj_t keys, boolean all_keys, obj_t result_types,
 			     obj_t more_results_type);
 
 extern obj_t generic_function_methods(obj_t gf);

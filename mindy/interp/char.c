@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.4 1994/05/31 18:09:05 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.5 1994/06/11 02:23:17 wlott Exp $
 *
 * This file does whatever.
 *
@@ -123,7 +123,7 @@ void init_char_classes()
 void init_char_functions()
 {
     define_method("as", list2(singleton(obj_CharacterClass), obj_IntegerClass),
-		  FALSE, obj_False, obj_CharacterClass, int_as_char);
+		  FALSE, obj_False, FALSE, obj_CharacterClass, int_as_char);
     define_method("as", list2(singleton(obj_IntegerClass), obj_CharacterClass),
-		  FALSE, obj_False, obj_IntegerClass, char_as_int);
+		  FALSE, obj_False, FALSE, obj_IntegerClass, char_as_int);
 }

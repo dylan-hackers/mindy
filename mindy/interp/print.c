@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.3 1994/05/31 18:11:05 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.4 1994/06/11 02:23:42 wlott Exp $
 *
 * This file does whatever.
 *
@@ -257,15 +257,15 @@ static void dylan_format(struct thread *thread, int nargs)
 
 void init_print_functions(void)
 {
-    define_function("print", list1(obj_ObjectClass), FALSE, obj_False,
+    define_function("print", list1(obj_ObjectClass), FALSE, obj_False, FALSE,
 		    obj_ObjectClass, dylan_print);
-    define_function("prin1", list1(obj_ObjectClass), FALSE, obj_False,
+    define_function("prin1", list1(obj_ObjectClass), FALSE, obj_False, FALSE,
 		    obj_ObjectClass, dylan_prin1);
-    define_function("putc", list1(obj_CharacterClass), FALSE, obj_False,
+    define_function("putc", list1(obj_CharacterClass), FALSE, obj_False, FALSE,
 		    obj_CharacterClass, dylan_putc);
     define_function("puts", list1(obj_ByteStringClass), FALSE, obj_False,
-		    obj_ByteStringClass, dylan_puts);
+		    FALSE, obj_ByteStringClass, dylan_puts);
     define_constant("format",
-		    make_raw_function("format", 1, TRUE, obj_False, obj_Nil,
-				      obj_False, dylan_format));
+		    make_raw_function("format", 1, TRUE, obj_False, FALSE,
+				      obj_Nil, obj_False, dylan_format));
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.3 1994/04/15 14:55:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/weak.c,v 1.4 1994/06/11 02:23:51 wlott Exp $
 *
 * This file does whatever.
 *
@@ -135,14 +135,14 @@ void init_weak_functions(void)
 {
     define_method("make", list1(singleton(obj_WeakPointerClass)), FALSE,
 		  list1(pair(symbol("object"), obj_Unbound)),
-		  obj_WeakPointerClass, dylan_make_weak_pointer);
-    define_generic_function("weak-pointer-object", 1, FALSE, obj_False,
+		  FALSE, obj_WeakPointerClass, dylan_make_weak_pointer);
+    define_generic_function("weak-pointer-object", 1, FALSE, obj_False, FALSE,
 			    list2(obj_ObjectClass, obj_BooleanClass),
 			    obj_False);
     add_method(find_variable(module_BuiltinStuff,symbol("weak-pointer-object"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("weak-pointer-object",
 			       list1(obj_WeakPointerClass), FALSE, obj_False,
-			       list2(obj_ObjectClass, obj_BooleanClass),
+			       FALSE, list2(obj_ObjectClass, obj_BooleanClass),
 			       obj_False, dylan_weak_pointer_object));
 }

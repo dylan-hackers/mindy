@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.5 1994/05/31 18:09:13 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.6 1994/06/11 02:23:18 wlott Exp $
 *
 * This file does whatever.
 *
@@ -359,9 +359,9 @@ void init_class_classes(void)
 void init_class_functions(void)
 {
     define_method("all-superclasses", list1(obj_ClassClass), FALSE, obj_False,
-		  obj_ObjectClass, all_superclasses);
+		  FALSE, obj_ObjectClass, all_superclasses);
     define_method("direct-superclasses", list1(obj_ClassClass), FALSE,
-		  obj_False, obj_ObjectClass, direct_superclasses);
+		  obj_False, FALSE, obj_ObjectClass, direct_superclasses);
     define_method("direct-subclasses", list1(obj_ClassClass), FALSE,
-		  obj_False, obj_ObjectClass, direct_subclasses);
+		  obj_False, FALSE, obj_ObjectClass, direct_subclasses);
 }

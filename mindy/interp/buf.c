@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.4 1994/05/31 18:08:12 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.5 1994/06/11 02:23:16 wlott Exp $
 *
 * This file does whatever.
 *
@@ -133,22 +133,22 @@ void init_buffer_functions(void)
     obj_t u;
 
     define_method("element", list2(obj_BufferClass, obj_IntegerClass),
-		  FALSE, list1(pair(symbol("default"), obj_Unbound)),
+		  FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
 		  obj_IntegerClass, dylan_buffer_element);
     define_method("element-setter",
 		  list3(obj_IntegerClass, obj_BufferClass, obj_IntegerClass),
-		  FALSE, obj_False, obj_ObjectClass,
+		  FALSE, obj_False, FALSE, obj_ObjectClass,
 		  dylan_buffer_element_setter);
-    define_method("size", list1(obj_BufferClass), FALSE, obj_False,
+    define_method("size", list1(obj_BufferClass), FALSE, obj_False, FALSE,
 		  obj_IntegerClass, dylan_buffer_size);
     define_method("make", list1(singleton(obj_BufferClass)), FALSE,
 		  list1(pair(symbol("size"), make_fixnum(4096))),
-		  obj_BufferClass, dylan_buffer_make);
+		  FALSE, obj_BufferClass, dylan_buffer_make);
 
     u = type_union(obj_ByteStringClass, obj_ByteVectorClass);
     u = type_union(u, obj_BufferClass);
     define_method("copy-bytes",
 		  listn(5, u, obj_IntegerClass, u, obj_IntegerClass,
 			obj_IntegerClass),
-		  FALSE, obj_False, u, dylan_memcpy);
+		  FALSE, obj_False, FALSE, u, dylan_memcpy);
 }

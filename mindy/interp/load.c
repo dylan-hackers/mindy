@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.12 1994/05/31 18:10:20 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.13 1994/06/11 02:23:37 wlott Exp $
 *
 * This file does whatever.
 *
@@ -679,7 +679,9 @@ static obj_t fop_component(struct load_info *info)
 static obj_t read_method(struct load_info *info, int param_info,
 			 int nclosure_vars)
 {
-    int nkeys = (param_info>>1)-1;
+    boolean restp = param_info & 1;
+    boolean all_keys = param_info & 2;
+    int nkeys = (param_info>>2)-1;
     obj_t keys;
 
     if (nkeys == -1)
@@ -697,7 +699,7 @@ static obj_t read_method(struct load_info *info, int param_info,
 	*prev = obj_Nil;
     }
 
-    return make_method_info(param_info & 1, keys, read_thing(info),
+    return make_method_info(restp, keys, all_keys, read_thing(info),
 			    nclosure_vars);
 }
 
@@ -744,7 +746,8 @@ static obj_t fop_source_file(struct load_info *info)
 
 static obj_t make_top_level_method(obj_t component)
 {
-    obj_t method_info = make_method_info(FALSE, obj_False, component, 0);
+    obj_t method_info = make_method_info(FALSE, obj_False, FALSE,
+					 component, 0);
     return make_byte_method(method_info, obj_Nil, obj_Nil, obj_ObjectClass,
 			    NULL);
 }
@@ -1057,7 +1060,7 @@ static void do_first_init(struct thread *thread, int nargs)
 
 void load_do_inits(struct thread *thread)
 {
-    *thread->sp++ = make_raw_function("init", 0, FALSE, obj_False,
+    *thread->sp++ = make_raw_function("init", 0, FALSE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
 				      do_first_init);
     invoke(thread, 0);

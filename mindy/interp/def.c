@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.7 1994/05/31 18:09:16 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.8 1994/06/11 02:23:22 wlott Exp $
 *
 * This file does whatever.
 *
@@ -55,21 +55,21 @@ void define_constant(char *name, obj_t value)
 }
 
 void define_function(char *name, obj_t specializers, boolean restp,
-		     obj_t keywords, obj_t result_type,
+		     obj_t keywords, boolean all_keys, obj_t result_type,
 		     obj_t (*func)())
 {
     define_constant(name,
-		    make_builtin_method(name, specializers, restp,
-					keywords, result_type, func));
+		    make_builtin_method(name, specializers, restp, keywords,
+					all_keys, result_type, func));
 }
 
 void define_generic_function(char *name, int req_args, boolean restp,
-			     obj_t keywords, obj_t result_types,
+			     obj_t keys, boolean all_keys, obj_t result_types,
 			     obj_t more_results_type)
 {
     obj_t namesym = symbol(name);
     struct variable *var;
-    obj_t gf = make_generic_function(namesym, req_args, restp, keywords,
+    obj_t gf = make_generic_function(namesym, req_args, restp, keys, all_keys,
 				     result_types, more_results_type);
     obj_t methods;
 
@@ -89,12 +89,12 @@ void define_generic_function(char *name, int req_args, boolean restp,
 }
 
 void define_method(char *name, obj_t specializers, boolean restp,
-		   obj_t keywords, obj_t result_type,
+		   obj_t keywords, boolean all_keys, obj_t result_type,
 		   obj_t (*func)())
 {
     obj_t namesym = symbol(name);
     obj_t method = make_builtin_method(name, specializers, restp,
-				       keywords, result_type, func);
+				       keywords, all_keys, result_type, func);
     struct variable *var;
     obj_t gf;
 
@@ -102,9 +102,7 @@ void define_method(char *name, obj_t specializers, boolean restp,
     var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
     gf = var->value;
     if (gf == obj_Unbound) {
-	gf = make_generic_function(namesym, length(specializers),
-				   restp || keywords != obj_False,
-				   obj_False, obj_Nil, obj_ObjectClass);
+	gf = make_default_generic_function(namesym, method);
 	var->value = gf;
 	var->function = func_Always;
     }
@@ -161,7 +159,7 @@ static obj_t defmethod(obj_t var_obj, obj_t method)
 }
 
 static obj_t defgeneric(obj_t var_obj, obj_t signature, obj_t restp,
-			obj_t keywords, obj_t result_types,
+			obj_t keywords, obj_t all_keys, obj_t result_types,
 			obj_t more_results_type)
 {
     struct variable *var = obj_rawptr(var_obj);
@@ -173,12 +171,14 @@ static obj_t defgeneric(obj_t var_obj, obj_t signature, obj_t restp,
     if (gf == obj_Unbound) {
 	var->value = make_generic_function(var->name, length(signature),
 					   restp != obj_False, keywords,
-					   result_types, more_results_type);
+					   all_keys != obj_False, result_types,
+					   more_results_type);
 	var->function = func_Always;
     }
     else
 	set_gf_signature(gf, length(signature), restp != obj_False, keywords,
-			 result_types, more_results_type);
+			 all_keys != obj_False, result_types,
+			 more_results_type);
 
     return var->name;
 }
@@ -206,14 +206,15 @@ static obj_t defslot(obj_t getter, obj_t setter)
 	var = obj_rawptr(setter);
 	if (var->value == obj_Unbound)
 	    var->value = make_generic_function(var->name, 2, FALSE, obj_False,
-					       list1(obj_ObjectClass),
+					       FALSE, list1(obj_ObjectClass),
 					       obj_False);
     }
 
     var = obj_rawptr(getter);
     if (var->value == obj_Unbound)
 	var->value = make_generic_function(var->name, 1, FALSE, obj_False,
-					   list1(obj_ObjectClass), obj_False);
+					   FALSE, list1(obj_ObjectClass),
+					   obj_False);
 
     return var->name;
 }
@@ -225,19 +226,20 @@ void init_def_functions(void)
 {
     define_function("init-variable",
 		    list3(obj_ObjectClass, obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_False, obj_ObjectClass, init_variable);
+		    FALSE, obj_False, FALSE, obj_ObjectClass, init_variable);
     define_function("%define-method", list2(obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_False, obj_ObjectClass, defmethod);
+		    FALSE, obj_False, FALSE, obj_ObjectClass, defmethod);
     define_function("%define-generic",
-		    listn(6, obj_ObjectClass, obj_ObjectClass, obj_ObjectClass,
-			  obj_ObjectClass, obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_Nil, obj_ObjectClass, defgeneric);
+		    listn(7, obj_ObjectClass, obj_ObjectClass, obj_ObjectClass,
+			  obj_ObjectClass, obj_ObjectClass, obj_ObjectClass,
+			  obj_ObjectClass),
+		    FALSE, obj_Nil, FALSE, obj_ObjectClass, defgeneric);
     define_function("%define-class-1",
 		    list2(obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_False, obj_ObjectClass, defclass1);
+		    FALSE, obj_False, FALSE, obj_ObjectClass, defclass1);
     define_function("%define-class-2",
 		    list2(obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_False, obj_ObjectClass, defclass2);
+		    FALSE, obj_False, FALSE, obj_ObjectClass, defclass2);
     define_function("%define-slot", list2(obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_False, obj_ObjectClass, defslot);
+		    FALSE, obj_False, FALSE, obj_ObjectClass, defslot);
 }

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.4 1994/04/09 13:36:05 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.5 1994/06/11 02:23:39 wlott Exp $
 *
 * This file does whatever.
 *
@@ -268,12 +268,12 @@ void init_nlx_classes(void)
 void init_nlx_functions(void)
 {
     define_constant("uwp",
-		    make_raw_function("uwp", 2, FALSE, obj_False,
+		    make_raw_function("uwp", 2, FALSE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass, uwp));
     define_constant("catch",
-		    make_raw_function("catch", 1, FALSE, obj_False,
+		    make_raw_function("catch", 1, FALSE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass, catch));
     define_constant("throw",
-		    make_raw_function("throw", 1, TRUE, obj_False,
+		    make_raw_function("throw", 1, TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass, throw));
 }

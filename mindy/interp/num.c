@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.9 1994/06/03 00:35:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.10 1994/06/11 02:23:40 wlott Exp $
 *
 * This file does whatever.
 *
@@ -809,190 +809,205 @@ void init_num_functions(void)
     obj_t df_sing = singleton(obj_DoubleFloatClass);
     obj_t xf_sing = singleton(obj_ExtendedFloatClass);
 
-    define_function("==", two_objs, FALSE, obj_False, obj_BooleanClass,
+    define_function("==", two_objs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		    dylan_idp);
-    define_method("=", two_objs, FALSE, obj_False, obj_BooleanClass,
+    define_method("=", two_objs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_idp);
 
-    define_generic_function("truncate/", 2, FALSE, obj_False,
+    define_generic_function("truncate/", 2, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("truncate", 1, FALSE, obj_False,
+    define_generic_function("truncate", 1, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("floor/", 2, FALSE, obj_False,
+    define_generic_function("floor/", 2, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("floor", 1, FALSE, obj_False,
+    define_generic_function("floor", 1, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("ceiling/", 2, FALSE, obj_False,
+    define_generic_function("ceiling/", 2, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("ceiling", 1, FALSE, obj_False,
+    define_generic_function("ceiling", 1, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("round/", 2, FALSE, obj_False,
+    define_generic_function("round/", 2, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
-    define_generic_function("round", 1, FALSE, obj_False,
+    define_generic_function("round", 1, FALSE, obj_False, FALSE,
 			    int_and_real, obj_False);
 
-    define_method("negative", list1(obj_IntegerClass), FALSE, obj_False,
+    define_method("negative", list1(obj_IntegerClass), FALSE, obj_False, FALSE,
 		  obj_IntegerClass, dylan_int_negative);
-    define_method("+", two_ints, FALSE, obj_False, obj_IntegerClass,
+    define_method("+", two_ints, FALSE, obj_False, FALSE, obj_IntegerClass,
 		  dylan_int_int_plus);
-    define_method("-", two_ints, FALSE, obj_False, obj_IntegerClass,
+    define_method("-", two_ints, FALSE, obj_False, FALSE, obj_IntegerClass,
 		  dylan_int_int_minus);
-    define_method("*", two_ints, FALSE, obj_False, obj_IntegerClass,
+    define_method("*", two_ints, FALSE, obj_False, FALSE, obj_IntegerClass,
 		  dylan_int_int_times);
     add_method(find_variable(module_BuiltinStuff, symbol("truncate/"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("truncate/", two_ints, FALSE, obj_False,
+	       make_raw_method("truncate/", two_ints, FALSE, obj_False, FALSE,
 			       two_ints, obj_False, dylan_int_int_trunc));
     add_method(find_variable(module_BuiltinStuff, symbol("floor/"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("floor/", two_ints, FALSE, obj_False,
+	       make_raw_method("floor/", two_ints, FALSE, obj_False, FALSE,
 			       two_ints, obj_False, dylan_int_int_floor));
     add_method(find_variable(module_BuiltinStuff, symbol("ceiling/"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("ceiling/", two_ints, FALSE, obj_False,
+	       make_raw_method("ceiling/", two_ints, FALSE, obj_False, FALSE,
 			       two_ints, obj_False, dylan_int_int_ceil));
     add_method(find_variable(module_BuiltinStuff, symbol("round/"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("round/", two_ints, FALSE, obj_False,
+	       make_raw_method("round/", two_ints, FALSE, obj_False, FALSE,
 			       two_ints, obj_False, dylan_int_int_round));
-    define_method("<", two_ints,
-		  FALSE, obj_False, obj_BooleanClass, dylan_int_int_less);
-    define_method("=", two_ints,
-		  FALSE, obj_False, obj_BooleanClass, dylan_int_int_equal);
-    define_function("ash", two_ints,
-		    FALSE, obj_False, obj_IntegerClass, dylan_ash);
-    define_function("logand", two_ints,
-		    FALSE, obj_False, obj_IntegerClass, dylan_logand);
-    define_function("logbit?", two_ints,
-		    FALSE, obj_False, obj_BooleanClass, dylan_logbitp);
-    define_function("logior", two_ints,
-		    FALSE, obj_False, obj_IntegerClass, dylan_logior);
-    define_function("lognot", list1(obj_IntegerClass), FALSE, obj_False,
+    define_method("<", two_ints, FALSE, obj_False, FALSE,
+		  obj_BooleanClass, dylan_int_int_less);
+    define_method("=", two_ints, FALSE, obj_False, FALSE,
+		  obj_BooleanClass, dylan_int_int_equal);
+    define_function("ash", two_ints, FALSE, obj_False, FALSE,
+		    obj_IntegerClass, dylan_ash);
+    define_function("logand", two_ints, FALSE, obj_False, FALSE,
+		    obj_IntegerClass, dylan_logand);
+    define_function("logbit?", two_ints, FALSE, obj_False, FALSE,
+		    obj_BooleanClass, dylan_logbitp);
+    define_function("logior", two_ints, FALSE, obj_False, FALSE,
+		    obj_IntegerClass, dylan_logior);
+    define_function("lognot", list1(obj_IntegerClass), FALSE, obj_False, FALSE,
 		    obj_IntegerClass, dylan_lognot);
-    define_function("logxor", two_ints,
-		    FALSE, obj_False, obj_IntegerClass, dylan_logxor);
+    define_function("logxor", two_ints, FALSE, obj_False, FALSE,
+		    obj_IntegerClass, dylan_logxor);
 
-    define_method("negative", sf, FALSE, obj_False,
+    define_method("negative", sf, FALSE, obj_False, FALSE,
 		  obj_SingleFloatClass, dylan_sf_negative);
-    define_method("+", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
+    define_method("+", two_sfs, FALSE, obj_False, FALSE, obj_SingleFloatClass,
 		  dylan_sf_sf_plus);
-    define_method("-", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
+    define_method("-", two_sfs, FALSE, obj_False, FALSE, obj_SingleFloatClass,
 		  dylan_sf_sf_minus);
-    define_method("*", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
+    define_method("*", two_sfs, FALSE, obj_False, FALSE, obj_SingleFloatClass,
 		  dylan_sf_sf_times);
-    define_method("/", two_sfs, FALSE, obj_False, obj_SingleFloatClass,
+    define_method("/", two_sfs, FALSE, obj_False, FALSE, obj_SingleFloatClass,
 		  dylan_sf_sf_divide);
     add_method(find_variable(module_BuiltinStuff, symbol("truncate"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("truncate", sf, FALSE, obj_False,
+	       make_raw_method("truncate", sf, FALSE, obj_False, FALSE,
 			       int_and_sf, obj_False, dylan_sf_sf_trunc));
     add_method(find_variable(module_BuiltinStuff, symbol("floor"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("floor", sf, FALSE, obj_False,
+	       make_raw_method("floor", sf, FALSE, obj_False, FALSE,
 			       int_and_sf, obj_False, dylan_sf_sf_floor));
     add_method(find_variable(module_BuiltinStuff, symbol("ceiling"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("ceiling", sf, FALSE, obj_False,
+	       make_raw_method("ceiling", sf, FALSE, obj_False, FALSE,
 			       int_and_sf, obj_False, dylan_sf_sf_ceil));
     add_method(find_variable(module_BuiltinStuff, symbol("round"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("round", sf, FALSE, obj_False,
+	       make_raw_method("round", sf, FALSE, obj_False, FALSE,
 			       int_and_sf, obj_False, dylan_sf_sf_round));
-    define_method("<", two_sfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("<", two_sfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_sf_sf_less);
-    define_method("<=", two_sfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("<=", two_sfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_sf_sf_less_or_eql);
-    define_method("=", two_sfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("=", two_sfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_sf_sf_equal);
-    define_method("~=", two_sfs,FALSE, obj_False, obj_BooleanClass,
+    define_method("~=", two_sfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_sf_sf_not_equal);
     
-    define_method("negative", df, FALSE, obj_False,
+    define_method("negative", df, FALSE, obj_False, FALSE,
 		  obj_DoubleFloatClass, dylan_df_negative);
-    define_method("+", two_dfs, FALSE, obj_False, obj_DoubleFloatClass,
+    define_method("+", two_dfs, FALSE, obj_False, FALSE, obj_DoubleFloatClass,
 		  dylan_df_df_plus);
-    define_method("-", two_dfs, FALSE, obj_False, obj_DoubleFloatClass,
+    define_method("-", two_dfs, FALSE, obj_False, FALSE, obj_DoubleFloatClass,
 		  dylan_df_df_minus);
-    define_method("*", two_dfs, FALSE, obj_False, obj_DoubleFloatClass,
+    define_method("*", two_dfs, FALSE, obj_False, FALSE, obj_DoubleFloatClass,
 		  dylan_df_df_times);
-    define_method("/", two_dfs, FALSE, obj_False, obj_DoubleFloatClass,
+    define_method("/", two_dfs, FALSE, obj_False, FALSE, obj_DoubleFloatClass,
 		  dylan_df_df_divide);
     add_method(find_variable(module_BuiltinStuff, symbol("truncate"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("truncate", df, FALSE, obj_False,
+	       make_raw_method("truncate", df, FALSE, obj_False, FALSE,
 			       int_and_df, obj_False, dylan_df_df_trunc));
     add_method(find_variable(module_BuiltinStuff, symbol("floor"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("floor", df, FALSE, obj_False,
+	       make_raw_method("floor", df, FALSE, obj_False, FALSE,
 			       int_and_df, obj_False, dylan_df_df_floor));
     add_method(find_variable(module_BuiltinStuff, symbol("ceiling"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("ceiling", df, FALSE, obj_False,
+	       make_raw_method("ceiling", df, FALSE, obj_False, FALSE,
 			       int_and_df, obj_False, dylan_df_df_ceil));
     add_method(find_variable(module_BuiltinStuff, symbol("round"),
 			     FALSE, FALSE)->value,
-	       make_raw_method("round", df, FALSE, obj_False,
+	       make_raw_method("round", df, FALSE, obj_False, FALSE,
 			       int_and_df, obj_False, dylan_df_df_round));
-    define_method("<", two_dfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("<", two_dfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_df_df_less);
-    define_method("<=", two_dfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("<=", two_dfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_df_df_less_or_eql);
-    define_method("=", two_dfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("=", two_dfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_df_df_equal);
-    define_method("~=", two_dfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("~=", two_dfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_df_df_not_equal);
 
     define_method("negative", list1(obj_ExtendedFloatClass), FALSE, obj_False,
-		  obj_ExtendedFloatClass, dylan_xf_negative);
-    define_method("+", two_xfs, FALSE, obj_False, obj_ExtendedFloatClass,
-		  dylan_xf_xf_plus);
-    define_method("-", two_xfs, FALSE, obj_False, obj_ExtendedFloatClass,
-		  dylan_xf_xf_minus);
-    define_method("*", two_xfs, FALSE, obj_False, obj_ExtendedFloatClass,
-		  dylan_xf_xf_times);
-    define_method("/", two_xfs, FALSE, obj_False, obj_ExtendedFloatClass,
-		  dylan_xf_xf_divide);
-    define_method("<", two_xfs, FALSE, obj_False, obj_BooleanClass,
+		  FALSE, obj_ExtendedFloatClass, dylan_xf_negative);
+    define_method("+", two_xfs, FALSE, obj_False, FALSE,
+		  obj_ExtendedFloatClass, dylan_xf_xf_plus);
+    define_method("-", two_xfs, FALSE, obj_False, FALSE,
+		  obj_ExtendedFloatClass, dylan_xf_xf_minus);
+    define_method("*", two_xfs, FALSE, obj_False, FALSE,
+		  obj_ExtendedFloatClass, dylan_xf_xf_times);
+    define_method("/", two_xfs, FALSE, obj_False, FALSE,
+		  obj_ExtendedFloatClass, dylan_xf_xf_divide);
+    define_method("<", two_xfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_xf_xf_less);
-    define_method("<=", two_xfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("<=", two_xfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_xf_xf_less_or_eql);
-    define_method("=", two_xfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("=", two_xfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_xf_xf_equal);
-    define_method("~=", two_xfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("~=", two_xfs, FALSE, obj_False, FALSE, obj_BooleanClass,
 		  dylan_xf_xf_not_equal);
     
     define_method("as", list2(int_sing, obj_IntegerClass),
-		  FALSE, obj_False, obj_IntegerClass, dylan_as_identity);
+		  FALSE, obj_False, FALSE, obj_IntegerClass,
+		  dylan_as_identity);
     define_method("as", list2(float_sing, obj_IntegerClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_int_as_sf);
+		  FALSE, obj_False, FALSE, obj_SingleFloatClass,
+		  dylan_int_as_sf);
     define_method("as", list2(sf_sing, obj_IntegerClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_int_as_sf);
+		  FALSE, obj_False, FALSE, obj_SingleFloatClass,
+		  dylan_int_as_sf);
     define_method("as", list2(df_sing, obj_IntegerClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_int_as_df);
+		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
+		  dylan_int_as_df);
     define_method("as", list2(xf_sing, obj_IntegerClass),
-		  FALSE, obj_False, obj_ExtendedFloatClass, dylan_int_as_xf);
+		  FALSE, obj_False, FALSE, obj_ExtendedFloatClass,
+		  dylan_int_as_xf);
 
     define_method("as", list2(float_sing, obj_FloatClass),
-		  FALSE, obj_False, obj_FloatClass, dylan_as_identity);
+		  FALSE, obj_False, FALSE, obj_FloatClass,
+		  dylan_as_identity);
 
     define_method("as", list2(sf_sing, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_as_identity);
+		  FALSE, obj_False, FALSE, obj_SingleFloatClass,
+		  dylan_as_identity);
     define_method("as", list2(df_sing, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_sf_as_df);
+		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
+		  dylan_sf_as_df);
     define_method("as", list2(xf_sing, obj_SingleFloatClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_sf_as_xf);
+		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
+		  dylan_sf_as_xf);
 
     define_method("as", list2(sf_sing, obj_DoubleFloatClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_df_as_sf);
+		  FALSE, obj_False, FALSE, obj_SingleFloatClass,
+		  dylan_df_as_sf);
     define_method("as", list2(df_sing, obj_DoubleFloatClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_as_identity);
+		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
+		  dylan_as_identity);
     define_method("as", list2(xf_sing, obj_DoubleFloatClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_df_as_xf);
+		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
+		  dylan_df_as_xf);
 
     define_method("as", list2(sf_sing, obj_ExtendedFloatClass),
-		  FALSE, obj_False, obj_SingleFloatClass, dylan_xf_as_sf);
+		  FALSE, obj_False, FALSE, obj_SingleFloatClass,
+		  dylan_xf_as_sf);
     define_method("as", list2(df_sing, obj_ExtendedFloatClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_xf_as_df);
+		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
+		  dylan_xf_as_df);
     define_method("as", list2(xf_sing, obj_ExtendedFloatClass),
-		  FALSE, obj_False, obj_DoubleFloatClass, dylan_as_identity);
+		  FALSE, obj_False, FALSE, obj_DoubleFloatClass,
+		  dylan_as_identity);
 }

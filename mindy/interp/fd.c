@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.11 1994/05/25 12:31:40 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.12 1994/06/11 02:23:29 wlott Exp $
 *
 * This file does whatever.
 *
@@ -295,53 +295,55 @@ void init_fd_functions(void)
 {
     define_constant("fd-close",
 		    make_raw_method("fd-close", list1(obj_IntegerClass),
-				    FALSE, obj_False,
+				    FALSE, obj_False, FALSE,
 				    list2(obj_BooleanClass, obj_ObjectClass),
 				    obj_False, fd_close));
     define_method("fd-error-string", list1(obj_IntegerClass), FALSE, obj_False,
-		  obj_ObjectClass, fd_error_str);
+		  FALSE, obj_ObjectClass, fd_error_str);
     define_constant("fd-input-available?",
 		    make_raw_method("fd-input-available?",
-				    list1(obj_IntegerClass), FALSE, obj_False,
+				    list1(obj_IntegerClass),
+				    FALSE, obj_False, FALSE,
 				    list2(obj_BooleanClass, obj_ObjectClass),
 				    obj_False, fd_input_available));
     define_constant("fd-open",
 		    make_raw_method("fd-open",
 				    list2(obj_ByteStringClass,
 					  obj_IntegerClass),
-				    FALSE, obj_False,
+				    FALSE, obj_False, FALSE,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_open));
     define_constant("fd-read",
 		    make_raw_method("fd-read",
 				    listn(4, obj_IntegerClass, obj_BufferClass,
 					  obj_IntegerClass, obj_IntegerClass),
-				    FALSE, obj_False,
+				    FALSE, obj_False, FALSE,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_read));
     define_constant("fd-seek",
 		    make_raw_method("fd-seek",
 				    list3(obj_IntegerClass, obj_IntegerClass,
 					  obj_IntegerClass),
-				    FALSE, obj_False,
+				    FALSE, obj_False, FALSE,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_seek));
     define_constant("fd-sync-output",
 		    make_raw_method("fd-sync-output",
-				    list1(obj_IntegerClass), FALSE, obj_False,
+				    list1(obj_IntegerClass),
+				    FALSE, obj_False, FALSE,
 				    list2(obj_BooleanClass, obj_ObjectClass),
 				    obj_False, fd_sync_output));
     define_constant("fd-write",
 		    make_raw_method("fd-write",
 				    listn(4, obj_IntegerClass, obj_BufferClass,
 					  obj_IntegerClass, obj_IntegerClass),
-				    FALSE, obj_False,
+				    FALSE, obj_False, FALSE,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_write));
     define_constant("fd-exec",
 		    make_raw_method("fd-exec",
 				    list1(obj_ByteStringClass),
-				    FALSE, obj_False,
+				    FALSE, obj_False, FALSE,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, fd_exec));
 

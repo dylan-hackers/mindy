@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.7 1994/04/29 06:47:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.8 1994/06/11 02:23:32 wlott Exp $
 *
 * This file does whatever.
 *
@@ -94,6 +94,6 @@ static obj_t dylan_getc(void)
 
 void init_input_functions(void)
 {
-    define_function("getc", obj_Nil, FALSE, obj_False, obj_CharacterClass,
-		    dylan_getc);
+    define_function("getc", obj_Nil, FALSE, obj_False, FALSE,
+		    obj_CharacterClass, dylan_getc);
 }

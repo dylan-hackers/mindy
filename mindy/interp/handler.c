@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.3 1994/04/18 05:42:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.4 1994/06/11 02:23:31 wlott Exp $
 *
 * This file does whatever.
 *
@@ -147,22 +147,22 @@ void init_handler_functions(void)
 				    list2(pair(symbol("test"), obj_False),
 					  pair(symbol("description"),
 					       obj_False)),
-				    obj_Nil, obj_False, push_handler));
+				    FALSE, obj_Nil, obj_False, push_handler));
     define_constant("current-handler",
 		    make_raw_function("current-handler", 0, FALSE, obj_False,
-				      list1(obj_HandlerClass), obj_False,
-				      current_handler));
+				      FALSE, list1(obj_HandlerClass),
+				      obj_False, current_handler));
     define_function("handler-type", list1(obj_HandlerClass), FALSE, obj_False,
-		    obj_ObjectClass, handler_type);
+		    FALSE, obj_ObjectClass, handler_type);
     define_function("handler-function", list1(obj_HandlerClass), FALSE,
-		    obj_False, obj_ObjectClass, handler_function);
+		    obj_False, FALSE, obj_ObjectClass, handler_function);
     define_function("handler-test", list1(obj_HandlerClass), FALSE, obj_False,
-		    obj_ObjectClass, handler_test);
+		    FALSE, obj_ObjectClass, handler_test);
     define_function("handler-description", list1(obj_HandlerClass), FALSE,
-		    obj_False, obj_ObjectClass, handler_descr);
+		    obj_False, FALSE, obj_ObjectClass, handler_descr);
     define_function("handler-next", list1(obj_HandlerClass), FALSE, obj_False,
-		    obj_ObjectClass, handler_next);
+		    FALSE, obj_ObjectClass, handler_next);
     define_constant("pop-handler",
 		    make_raw_function("pop-handler", 0, FALSE, obj_False,
-				      obj_Nil, obj_False, pop_handler));
+				      FALSE, obj_Nil, obj_False, pop_handler));
 }

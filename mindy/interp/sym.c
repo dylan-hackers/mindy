@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.3 1994/04/09 13:36:15 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.4 1994/06/11 02:23:46 wlott Exp $
 *
 * This file does whatever.
 *
@@ -254,7 +254,8 @@ void init_sym_classes(void)
 void init_sym_functions(void)
 {
     define_method("as", list2(singleton(obj_SymbolClass), obj_ByteStringClass),
-		  FALSE, obj_False, obj_SymbolClass, string_as_symbol);
+		  FALSE, obj_False, FALSE, obj_SymbolClass, string_as_symbol);
     define_method("as", list2(singleton(obj_StringClass), obj_SymbolClass),
-		  FALSE, obj_False, obj_ByteStringClass, symbol_as_string);
+		  FALSE, obj_False, FALSE, obj_ByteStringClass,
+		  symbol_as_string);
 }

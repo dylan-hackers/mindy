@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.6 1994/04/30 15:18:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.7 1994/06/11 02:23:39 wlott Exp $
 *
 * This file does whatever.
 *
@@ -127,20 +127,20 @@ static void dylan_invoke_debugger(struct thread *thread, int nargs)
 
 void init_misc_functions(void)
 {
-    define_generic_function("main", 0, TRUE, obj_False,
+    define_generic_function("main", 0, TRUE, obj_False, FALSE,
 			    obj_Nil, obj_ObjectClass);
     define_function("raw-exit", list1(obj_IntegerClass), FALSE, obj_False,
-		    obj_ObjectClass, dylan_exit);
+		    FALSE, obj_ObjectClass, dylan_exit);
     define_constant("invoke-debugger",
 		    make_raw_function("invoke-debugger", 1, FALSE, obj_False,
-				      obj_Nil, obj_ObjectClass,
+				      FALSE, obj_Nil, obj_ObjectClass,
 				      dylan_invoke_debugger));
     define_constant("values",
-		    make_raw_function("values", 0, TRUE, obj_False,
+		    make_raw_function("values", 0, TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
 				      dylan_values));
     define_constant("apply",
-		    make_raw_function("apply", 2, TRUE, obj_False,
+		    make_raw_function("apply", 2, TRUE, obj_False, FALSE,
 				      obj_Nil, obj_ObjectClass,
 				      dylan_apply));
     generic_apply_var = find_variable(module_BuiltinStuff,
@@ -148,6 +148,6 @@ void init_misc_functions(void)
 				      FALSE, TRUE);
     define_constant("apply-curry",
 		    make_raw_function("apply-curry", 3, FALSE, obj_False,
-				      obj_Nil, obj_ObjectClass,
+				      FALSE, obj_Nil, obj_ObjectClass,
 				      dylan_apply_curry));
 }

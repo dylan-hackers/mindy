@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.14 1994/06/09 16:32:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.15 1994/06/11 02:23:47 wlott Exp $
 *
 * This file does whatever.
 *
@@ -736,29 +736,30 @@ void init_thread_classes(void)
 void init_thread_functions(void)
 {
     define_function("spawn-thread", list2(obj_ObjectClass, obj_FunctionClass),
-		    FALSE, obj_False, obj_ThreadClass, dylan_spawn_thread);
-    define_function("current-thread", obj_Nil, FALSE, obj_False,
+		    FALSE, obj_False, FALSE, obj_ThreadClass,
+		    dylan_spawn_thread);
+    define_function("current-thread", obj_Nil, FALSE, obj_False, FALSE,
 		    obj_ThreadClass, dylan_current_thread);
     define_function("kill-thread", list1(obj_ThreadClass), FALSE, obj_False,
-		    obj_ThreadClass, dylan_kill_thread);
+		    FALSE, obj_ThreadClass, dylan_kill_thread);
 
     define_method("make", list1(singleton(obj_LockClass)), FALSE, obj_Nil,
-		  obj_SpinLockClass, make_lock);
+		  FALSE, obj_SpinLockClass, make_lock);
     define_method("make", list1(singleton(obj_SpinLockClass)), FALSE, obj_Nil,
-		  obj_SpinLockClass, make_lock);
+		  FALSE, obj_SpinLockClass, make_lock);
     define_method("locked?", list1(obj_SpinLockClass), FALSE, obj_False,
-		  obj_BooleanClass, dylan_lock_query);
+		  FALSE, obj_BooleanClass, dylan_lock_query);
     define_method("grab-lock", list1(obj_SpinLockClass), FALSE, obj_False,
-		  obj_ObjectClass, dylan_lock_grab);
+		  FALSE, obj_ObjectClass, dylan_lock_grab);
     define_method("release-lock", list1(obj_SpinLockClass), FALSE, obj_False,
-		  obj_ObjectClass, dylan_lock_release);
+		  FALSE, obj_ObjectClass, dylan_lock_release);
 
     define_method("make", list1(singleton(obj_EventClass)), FALSE, obj_Nil,
-		  obj_EventClass, make_event);
+		  FALSE, obj_EventClass, make_event);
     define_method("wait-for-event", list2(obj_EventClass, obj_SpinLockClass),
-		  FALSE, obj_False, obj_ObjectClass, dylan_event_wait);
+		  FALSE, obj_False, FALSE, obj_ObjectClass, dylan_event_wait);
     define_method("signal-event", list1(obj_EventClass),
-		  FALSE, obj_False, obj_ObjectClass, event_signal);
+		  FALSE, obj_False, FALSE, obj_ObjectClass, event_signal);
     define_method("broadcast-event", list1(obj_EventClass),
-		  FALSE, obj_False, obj_ObjectClass, event_broadcast);
+		  FALSE, obj_False, FALSE, obj_ObjectClass, event_broadcast);
 }

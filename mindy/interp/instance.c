@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.11 1994/05/31 18:09:26 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.12 1994/06/11 02:23:33 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1115,17 +1115,21 @@ void init_instance_functions(void)
 			  pair(symbol("required-init-keyword"), obj_False),
 			  pair(symbol("init-function"), obj_Unbound),
 			  pair(symbol("init-value"), obj_Unbound)),
-		    obj_SlotDescrClass, make_slot_descriptor);
-    define_method("make", list1(obj_ClassClass), TRUE, obj_Nil,
+		    FALSE, obj_SlotDescrClass, make_slot_descriptor);
+    define_generic_function("make", 1, FALSE, obj_Nil, TRUE,
+			    obj_Nil, obj_ObjectClass);
+    define_method("make", list1(obj_ClassClass), TRUE, obj_Nil, FALSE,
 		  obj_ObjectClass, dylan_make);
-    define_method("make", list1(obj_DefinedClassClass), TRUE, obj_Nil,
+    define_method("make", list1(obj_DefinedClassClass), TRUE, obj_Nil, FALSE,
 		  obj_ObjectClass, dylan_make_instance);
-    define_method("initialize", list1(obj_ObjectClass), TRUE, obj_Nil,
+    define_generic_function("initialize", 1, FALSE, obj_Nil, TRUE,
+			    obj_Nil, obj_ObjectClass);
+    define_method("initialize", list1(obj_ObjectClass), TRUE, obj_Nil, FALSE,
 		  obj_ObjectClass, dylan_init);
     initialize_var = find_variable(module_BuiltinStuff, symbol("initialize"),
 				   FALSE, TRUE);
-    define_function("slot-initialized?",
-		    list2(obj_ObjectClass, obj_FunctionClass),
-		    FALSE, obj_Nil, obj_BooleanClass,
-		    dylan_slot_initialized_p);
+    define_method("slot-initialized?",
+		  list2(obj_ObjectClass, obj_FunctionClass),
+		  FALSE, obj_Nil, FALSE, obj_BooleanClass,
+		  dylan_slot_initialized_p);
 }

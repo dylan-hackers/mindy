@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.4 1994/05/31 18:09:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.5 1994/06/11 02:23:24 wlott Exp $
 *
 * This file does whatever.
 *
@@ -110,7 +110,7 @@ static obj_t enable_error_system(void)
 
 void init_error_functions(void)
 {
-    define_function("enable-error-system", obj_Nil, FALSE, obj_False,
+    define_function("enable-error-system", obj_Nil, FALSE, obj_False, FALSE,
 		    obj_ObjectClass, enable_error_system);
     error_var = find_variable(module_BuiltinStuff, symbol("error"),
 			      FALSE, TRUE);
