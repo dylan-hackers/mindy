@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.20 1995/05/04 04:38:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.21 1995/05/04 07:03:01 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -278,7 +278,7 @@ define method dump (op :: <slot-ref>, stream :: <stream>) => ();
   write("SLOT-REF ", stream);
   let slot = op.slot-info;
   if (slot.slot-getter)
-    dump(slot.slot-getter.variable-name, stream);
+    write(as(<string>, slot.slot-getter.variable-name), stream);
   else
     write("???", stream);
   end;
@@ -290,7 +290,7 @@ define method dump (op :: <slot-set>, stream :: <stream>) => ();
   write("SLOT-SET ", stream);
   let slot = op.slot-info;
   if (slot.slot-getter)
-    dump(slot.slot-getter.variable-name, stream);
+    write(as(<string>, slot.slot-getter.variable-name), stream);
   else
     write("???", stream);
   end;
