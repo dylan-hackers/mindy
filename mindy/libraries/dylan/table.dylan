@@ -1,6 +1,10 @@
 module:		Dylan
 Author:		Nick Kramer (nkramer@cs.cmu.edu)
 
+// Status: key-test, key= not worked in for <value-table>.
+//         <value-table> has no working default key-hash because
+//            <equal-table> has all the good stuff.
+
 //////////////////////////////////////////////////////////////////////
 //
 //  Copyright (C) 1994, Carnegie Mellon University
@@ -12,17 +16,33 @@ Author:		Nick Kramer (nkramer@cs.cmu.edu)
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.2 1994/05/23 17:56:52 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.3 1994/05/25 21:57:07 nkramer Exp $
 //
 
 /* -------------------------------------------------------------------
  *
- *  Implements <table>, <equal-table>, and <object-table>
+ *  Implements <table>, <object-table>, <equal-table>, and <value-table>.
  *
  * ------------------------------------------------------------------- */
 
 // Author's note: "ht" is my abbreviation for "hashtable", and is used
 // as a parameter quite frequently.
+
+// <object-table>s are as defined in the book, operating on pointers and
+// using == as a comparator.
+
+// <equal-table>s use = as a key test, but since = uses == as a
+// default method, <equal-table>s also have to worry about garbage
+// collection.
+
+// <value-table>s take a user defined key test and key hash function
+// THAT DOESN'T INVOLVE ADDRESSES. (ie, the key hash involves values,
+// not addresses) The functions must be fully defined on all objects
+// that the user will be placing in the value-table. The key-test
+// defaults to =, but there is no default key-hash. The user must
+// supply a key-hash that always returns $permanent-hash-state. (Note
+// that object-hash returns $permanent-hash-state under many
+// circumstances)
 
 /* -------------------------------------------------------------------
  * Mindy-specific code
@@ -168,6 +188,13 @@ end class <equal-table>;
 
 /* ---------------- */
 
+define class <value-table> (<table>)
+  slot key-test-slot :: <function>, init-keyword: key-test: ;
+  slot key-hash-slot :: <function>, required-init-keyword: key-hash: ;
+end class <value-table>;
+
+/* ---------------- */
+
 define method make-bucket-entry (key, hash-id :: <integer>, hash-state, item)
           => entry :: <bucket-entry>;
   make (<bucket-entry>,   
@@ -213,6 +240,17 @@ define method initialize (ht :: <table>,
   next-method ();
 end method initialize;
 
+
+define method initialize (ht :: <value-table>,
+			  #next next-method,
+			  #rest key-value-pairs,
+			  #key key-test: key-test-function = \=,
+			  key-hash: key-hash-function);
+  ht.key-test-slot := key-test-function;
+  ht.key-hash-slot := key-hash-function;
+  apply(next-method, ht, key-value-pairs);
+end method initialize;
+
 /* ---------------- */
 
 // key-test returns id? (==) on object-tables, and equal (=) on
@@ -225,6 +263,11 @@ end method key-test;
 
 define method key-test (ht :: <equal-table>) => test :: <function>;
   \=;
+end method key-test;
+
+
+define method key-test (ht :: <value-table>) => test :: <function>;
+  ht.key-test-slot;
 end method key-test;
 
 /* ---------------- */
@@ -365,6 +408,17 @@ define method key-hash (ht :: <equal-table>, col :: <collection>)
   values (current-id, current-state);
 end method key-hash;
 
+
+// "key-hash" for <value-table> turns around and calls the user
+// supplied hash function.
+
+define method key-hash (ht :: <value-table>, key :: <object>)
+          => (id :: <integer>, state :: <object>);
+  let id = ht.key-hash-slot(ht, key);  // explicitly ignore the state,
+				       // if any
+  values(id, $permanent-hash-state);
+end method key-hash;
+
 /* ---------------- */
 
 define method key= (ht :: <equal-table>, key1, key2)
@@ -374,6 +428,11 @@ end method key=;
 
 define method key= (ht :: <object-table>, key1, key2)
   key1 == key2;
+end method key=;
+
+
+define method key= (ht :: <value-table>, key1, key2)
+  ht.key-test-slot(key1, key2);
 end method key=;
 
 /* ---------------- */
@@ -424,14 +483,37 @@ define method element (  ht :: <table>, key,
     element (ht, key, default: default);
        
     // Else, there was no garbage collection, and we're safe.
-  elseif ( find-result = #f )
-       if (default == no-default)
-	 error ("Element not found");
-       else 
-	 default;
-       end if;
-  else
-       find-result.item-slot;
+  elseif ( find-result )
+    find-result.item-slot;
+  elseif (default == no-default)
+    error ("Element not found");
+  else 
+    default;
+  end if;
+end method element;
+
+
+// This is exactly the same code without the garbage collection stuff
+
+define method element (  ht :: <value-table>, key, 
+		         #key default: default = no-default )
+  let key-id                = key-hash (ht, key);
+  let bucket-index          = modulo (key-id, ht.bucket-count-slot);
+  let bucket                = ht.bucket-array-slot [bucket-index];
+	
+  let test = method (entry :: <bucket-entry>)
+	       (entry.hash-id-slot = key-id)
+		 & key= (ht, entry.key-slot, key);
+	     end method;
+
+  let find-result = find-elt (bucket, test);
+  
+  if ( find-result )
+    find-result.item-slot;
+  elseif (default == no-default)
+    error ("Element not found");
+  else 
+    default;
   end if;
 end method element;
 
@@ -505,6 +587,42 @@ define method element-setter (value, ht :: <table>, key)
   end if;
 end method element-setter;
 
+
+// This is exactly the same code without the garbage collection stuff
+
+define method element-setter (value, ht :: <value-table>, key)
+  let key-id              = key-hash (ht, key);
+  let bucket-index        = modulo (key-id, ht.bucket-count-slot);
+  
+  let test-method         = method (existing-item :: <bucket-entry>)
+			      (existing-item.hash-id-slot = key-id)
+				& (existing-item.key-slot   = key);
+			    end method;
+
+  let bucket-entry        = find-elt (ht.bucket-array-slot [bucket-index],
+				      test-method);
+
+  if (bucket-entry = #f)             // If item didn't exist, add it
+    bucket-entry := make-bucket-entry (key, key-id,
+				       $permanent-hash-state, 
+				       value);
+    
+    ht.bucket-array-slot [bucket-index] := 
+           pair (bucket-entry, ht.bucket-array-slot [bucket-index]);
+    ht.item-count-slot := ht.item-count-slot + 1;
+
+    if (size (ht) * 100 > (ht.bucket-count-slot * ht.expand-when-slot))
+      resize-table (ht, truncate/ (size(ht) * ht.expand-to-slot, 100) + 1);
+    end if;
+  else     // Item WAS found
+    bucket-entry.key-slot        := key;
+    bucket-entry.hash-id-slot    := key-id;
+    bucket-entry.item-slot       := value;
+  end if;
+
+  value;
+end method element-setter;
+
 /* ---------------- */
 
 define method remove-key! (ht :: <table>, key) => new-ht :: <table>;
@@ -549,6 +667,37 @@ define method remove-key! (ht :: <table>, key) => new-ht :: <table>;
 
     ht;
   end if;   // states valid?
+end method remove-key!;
+
+
+// This is exactly the same code without the garbage collection stuff
+
+define method remove-key! (ht :: <value-table>, key) => new-ht :: <table>;
+  let key-id                = key-hash (ht, key);
+  let bucket-index          = modulo (key-id, ht.bucket-count-slot);
+  let bucket                = ht.bucket-array-slot [bucket-index];
+
+  let test = method (existing-item :: <bucket-entry>)
+	       (existing-item.hash-id-slot = key-id)
+		 & key= (ht, existing-item.key-slot, key);
+	     end method;
+
+  let the-item = find-elt (bucket, test);
+
+  if (the-item ~= #f)       // An item with that key was found
+    ht.item-count-slot := ht.item-count-slot - 1;
+
+           // Between find-elt and remove!, this traverses the bucket
+           // twice. It could be improved.
+
+    ht.bucket-array-slot [bucket-index] := remove! (bucket, the-item);
+
+    if (size (ht) * 100 < (ht.bucket-count-slot * ht.shrink-when-slot))
+      resize-table (ht, truncate/ (size(ht) * ht.shrink-to-slot, 100) + 1);
+    end if;
+  end if; // had to remove something
+
+  ht;
 end method remove-key!;
 
 /* ---------------- */
@@ -922,7 +1071,7 @@ end method make-table-state;
 
 /* ---------------- */
 
-// The new iteration protocol.
+// The iteration protocol.
 
 define method forward-iteration-protocol (ht :: <table>)
 
@@ -935,3 +1084,42 @@ define method forward-iteration-protocol (ht :: <table>)
 	  current-table-element-setter,
 	  copy-table-state);
 end method forward-iteration-protocol;
+
+/* ---------------- */
+
+// Functions useful for people trying to build their own key hashes.
+
+
+// This is similar to a key-hash, except that it hashes things with
+// ordered: #t and ignores the sequence keys. USE WITH CAUTION: This
+// isn't a proper key-hash because two collections of different types
+// but identical key/element pairs won't generate the same hash id,
+// even though the two collections are =.
+
+// It also takes a function "element-hash" as a parameter, which it
+// applies to all elements of the sequence.
+
+define method sequence-hash (seq :: <sequence>, element-hash :: <function>)
+          => (id :: <integer>, state :: <object>);
+  let (current-id, current-state) = values (0, $permanent-hash-state);
+
+  for (elt in seq)
+    let (id, state) = element-hash (elt);
+
+    let (captured-id, captured-state) = merge-hash-codes (current-id, 
+							  current-state, 
+							  id, state,
+							  ordered: #t);
+
+    current-id    := captured-id;
+    current-state := captured-state;
+  end for;
+
+  values (current-id, current-state);
+end method sequence-hash;
+
+/* ---------------- */
+
+define method string-hash (s :: <string>)
+    => (id :: <integer>, state :: <object>);
+  sequence-hash(s, object-hash);
