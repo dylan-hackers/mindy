@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.14 1995/05/05 09:25:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.15 1995/05/05 14:47:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -343,11 +343,13 @@ end;
 
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-method-tlf>) => ();
-  let lexenv = make(<lexenv>);
-  let leaf = build-general-method(builder, tlf.method-tlf-parse,
-				  lexenv, lexenv);
-  let literal-method? = instance?(leaf, <method-literal>);
   let defn = tlf.tlf-defn;
+  let lexenv = make(<lexenv>);
+  let leaf = build-general-method
+    (builder, tlf.method-tlf-parse,
+     format-to-string("Define Method %s", defn.defn-name),
+     lexenv, lexenv);
+  let literal-method? = instance?(leaf, <method-literal>);
   defn.method-defn-leaf := literal-method? & leaf;
   if (defn.function-defn-hairy? | ~literal-method?)
     // We don't use method-defn-of, because that is #f if there is a definition

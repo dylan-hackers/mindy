@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.15 1995/05/05 08:49:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.16 1995/05/05 14:46:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -350,11 +350,14 @@ define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-constant-method-tlf>,
      #next next-method)
     => ();
+  let defn = tlf.tlf-required-defns[0];
   let lexenv = make(<lexenv>);
   let meth = tlf.tlf-bindings.bindings-expression.method-ref-method;
-  let leaf = build-general-method(builder, meth, lexenv, lexenv);
+  let leaf = build-general-method
+    (builder, meth,
+     format-to-string("Define Constant %s", defn.defn-name),
+     lexenv, lexenv);
   let literal-method? = instance?(leaf, <method-literal>);
-  let defn = tlf.tlf-required-defns[0];
   defn.method-defn-leaf := literal-method? & leaf;
   if (defn.function-defn-hairy? | ~literal-method?)
     let source = make(<source-location>);
