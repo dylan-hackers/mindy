@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.8 1998/12/30 00:40:12 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.9 1999/10/10 17:20:03 robmyers Exp $
 
 //======================================================================
 //
@@ -578,14 +578,14 @@ define class <better-debugger> (<debugger>)
 end class <better-debugger>;
 
 define method invoke-debugger
-    (debugger :: <better-debugger>, condition :: <condition>)
- => res :: <never-returns>;
-  //fresh-line(*warning-output*);
-  condition-format(*warning-output*, "%s\n", condition);
-  force-output(*warning-output*);
-  call-out("abort", void:);
+     (debugger :: <better-debugger>, condition :: <condition>)
+  => res :: <never-returns>;
+   //fresh-line(*warning-output*);
+   condition-format(*warning-output*, "%s\n", condition);
+   force-output(*warning-output*);
+   call-out("abort", void:);
 end method invoke-debugger;
-
+ 
 *warning-output* := *standard-error*;
 *debugger* := make(<better-debugger>);
 
@@ -715,7 +715,11 @@ define method main (program, #rest args)
   for (dir in include-dirs)
     push(include-path, dir);
   end for;
-  push(include-path, "./");
+  #if (MacOS)
+  	push(include-path, "");
+  #else
+  	push(include-path, ".");
+  #endif
 
   // Handle regular arguments.
   let in-file = #f;

@@ -258,6 +258,14 @@ end method check-cpp-expansion;
 define /* exported */ function open-in-include-path
     (name :: <string>)
  => (full-name :: false-or(<string>), stream :: false-or(<stream>));
+ 
+ 	#if (MacOS)
+ 		// Convert UNIX paths to Mac paths
+ 		name := regexp-replace( name, "\\.\\./", "::" );
+ 		name := regexp-replace( name, "\\./", ":" ); 
+ 		name := regexp-replace( name, "/", ":" );
+ 	#endif
+ 
   if (first(name) == '/')
     block ()
       values(name, make(<file-stream>, locator: name, direction: #"input"));
@@ -270,7 +278,15 @@ define /* exported */ function open-in-include-path
     block (return)
       for (dir in include-path)
 	block ()
-	  let full-name = concatenate(dir, "/", name);
+	  #if (MacOS)
+	  	let full-name = if( (dir ~= "") & (dir ~= ":") )
+	  						concatenate(dir, ":", name);
+	  					else
+	  						name;
+	  					end if;
+	  #else
+	  	let full-name = concatenate(dir, "/", name);
+	  #endif
 	  let stream = make(<file-stream>, locator: full-name,
 			    direction: #"input");
 	  return(full-name, stream);
@@ -344,8 +360,12 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 					   #if (compiled-for-x86-win32)
 					     "[^\\\\/]+$", 
 				           #else
-					     "[^/]+$", 
-                                           #endif
+				           	#if (MacOS)
+				           		"[^:]+$", 
+				           	#else
+					     		"[^/]+$", 
+					     	#endif
+                       #endif
 					   name));
 	end if;
       else
