@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.21 1994/11/29 06:43:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.22 1994/12/02 06:33:51 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -347,6 +347,21 @@ static boolean exported(obj_t name, struct use *use)
     return use->export == obj_True || memq(name, use->export);
 }
 
+static void add_use(struct defn *defn, obj_t name)
+{
+    struct use *use = malloc(sizeof(struct use));    
+
+    use->name = name;
+    use->import = obj_True;
+    use->prefix = obj_False;
+    use->exclude = obj_Nil;
+    use->rename = obj_Nil;
+    use->export = obj_Nil;
+    use->next = defn->use;
+
+    defn->use = use;
+}
+
 
 /* Libraries. */
 
@@ -374,8 +389,6 @@ struct library *find_library(obj_t name, boolean createp)
 
     if (library == NULL && createp) {
 	struct defn *defn = malloc(sizeof(struct defn));
-	struct use *use1 = malloc(sizeof(struct use));
-	struct use *use2 = malloc(sizeof(struct use));
 	obj_t dylan_user = symbol("Dylan-User");
 	struct module *module;
 
@@ -385,25 +398,17 @@ struct library *find_library(obj_t name, boolean createp)
 	module->defn = defn;
 
 	defn->name = dylan_user;
-	defn->use = use1;
+	defn->use = NULL;
 	defn->exports = obj_Nil;
 	defn->creates = obj_Nil;
 
-	use1->name = symbol("Dylan");
-	use1->import = obj_True;
-	use1->prefix = obj_False;
-	use1->exclude = obj_Nil;
-	use1->rename = obj_Nil;
-	use1->export = obj_Nil;
-	use1->next = use2;
-
-	use2->name = symbol("Extensions");
-	use2->import = obj_True;
-	use2->prefix = obj_False;
-	use2->exclude = obj_Nil;
-	use2->rename = obj_Nil;
-	use2->export = obj_Nil;
-	use2->next = NULL;
+	add_use(defn, symbol("Introspection"));
+	add_use(defn, symbol("Threads"));
+	add_use(defn, symbol("File-Descriptors"));
+	add_use(defn, symbol("Cheap-IO"));
+	add_use(defn, symbol("System"));
+	add_use(defn, symbol("Extensions"));
+	add_use(defn, symbol("Dylan"));
 
 	make_entry(library->modules, module->name, module, FALSE,
 		   "module %s implicitly defined in library %s",
@@ -1038,16 +1043,10 @@ void init_modules(void)
 	struct defn *defn = malloc(sizeof(*defn));
 	struct use *use = malloc(sizeof(*use));
 	defn->name = symbol("Dylan-User");
-	defn->use = use;
+	defn->use = NULL;
 	defn->exports = obj_Nil;
 	defn->creates = NULL;
-	use->name = dylan;
-	use->import = obj_True;
-	use->prefix = obj_False;
-	use->exclude = obj_Nil;
-	use->rename = obj_Nil;
-	use->export = obj_Nil;
-	use->next = NULL;
+	add_use(defn, dylan);
 	define_library(defn);
     }
 	
