@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.9 2001/03/30 14:03:22 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.10 2001/03/30 15:40:49 bruce Exp $
 copyright: see below
 
 
@@ -336,7 +336,7 @@ define method parse-integer
           end: finish :: <integer> = source-location.end-posn)
     => res :: <extended-integer>;
   let contents = source-location.source-file.contents;
-  local method repeat (posn, result)
+  local method repeat (posn :: <integer>, result)
 	  if (posn < finish)
 	    let digit = contents[posn];
 	    if (as(<integer>, '0') <= digit & digit <= as(<integer>, '9'))
@@ -497,7 +497,7 @@ define method atof (string :: <byte-string>,
   let posn = start;
   let sign = 1;
   let mantissa = as(<extended-integer>, 0);
-  let scale = #f;
+  let scale :: false-or(<integer>) = #f;
   let exponent-sign = 1;
   let exponent = 0;
 
@@ -1179,9 +1179,9 @@ define sealed domain make (singleton(<conditional-state>));
 define sealed domain initialize (<conditional-state>);
 
 
-define method active? (state == #f) => res :: <boolean>;
-  #t;
-end method active?;
+define method is-active? (state :: false-or(<conditional-state>)) => res :: <boolean>;
+  ~state | state.active?;
+end method is-active?;
 
 
 define method parse-error (token :: <token>) => ();
@@ -1473,7 +1473,8 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
   // Save the current token's end position so that the next token
   // starts here.
   //
-  lexer.posn := result-end;
+  let known-result-end :: <integer> = result-end;
+  lexer.posn := known-result-end;
   //
   // Make a source location for the current token.
   // 
@@ -1483,9 +1484,9 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	   start-posn: result-start,
 	   start-line: lexer.line,
 	   start-column: result-start - lexer.line-start,
-	   end-posn: result-end,
+	   end-posn: known-result-end,
 	   end-line: lexer.line,
-	   end-column: result-end - lexer.line-start);
+	   end-column: known-result-end - lexer.line-start);
   //
   // And finally, make and return the actual token.
   // 
@@ -1509,7 +1510,7 @@ define method get-token (lexer :: <lexer>)
       // consuming any more stuff from the source.
       // 
       let result = lexer.pushed-tokens.head;
-      lexer.pushed-tokens = lexer.pushed-tokens.tail;
+      lexer.pushed-tokens := lexer.pushed-tokens.tail;
       return(result, result.head, result.tail);
     end if;
     //
@@ -1520,7 +1521,7 @@ define method get-token (lexer :: <lexer>)
 	$feature-if-token =>
 	  let cond = parse-conditional(lexer);
 	  lexer.conditional-state
-	    := if (lexer.conditional-state.active?)
+	    := if (lexer.conditional-state.is-active?)
 		 make(<conditional-state>, active: cond, do-else: ~cond,
 		      old-state: lexer.conditional-state);
 	       else
@@ -1560,7 +1561,7 @@ define method get-token (lexer :: <lexer>)
 	  end if;
 	  
 	otherwise =>
-	  if (lexer.conditional-state.active?)
+	  if (lexer.conditional-state.is-active?)
 	    return(token, token.source-location);
 	  end if;
       end select;
