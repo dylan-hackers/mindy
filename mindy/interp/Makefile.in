@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.1 1998/05/03 19:55:18 andreas Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.2 1998/05/13 02:35:49 emk Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -87,8 +87,8 @@ ${SRCDIR}/parser-tab.c: ${SRCDIR}/parser.y
 	mv y.tab.c ${SRCDIR}/parser-tab.c
 	mv y.tab.h ${SRCDIR}/parser-tab.h
 
-${SRCDIR}/extern1.def ${SRCDIR}/extern2.def: $(EXTERN-INCLUDES) ${SRCDIR}/make-init.pl
-	$(PERL) ${SRCDIR}/make-init.pl $(EXTERN-INCLUDES)
+${SRCDIR}/extern1.def ${SRCDIR}/extern2.def: $(EXTERN-INCLUDES) make-init.pl
+	$(PERL) make-init.pl $(EXTERN-INCLUDES)
 	mv ,extern1.def ${SRCDIR}/extern1.def
 	mv ,extern2.def ${SRCDIR}/extern2.def
 
