@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.27 2003/12/02 16:14:34 brent Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.28 2003/12/05 08:14:32 brent Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -78,12 +78,17 @@ void string_arg (char *arg) {
     stack = gdb_stack_stack[gdb_stack_stack_index]
       = (descriptor_t *) malloc(GDB_STACK_SIZE);
   len = strlen(arg);
+  if (*(arg + len) != 0) {
+	  /* provide space for a null-terminator */
+	  len++;
+  }
 
   dylan_str = (void **)
     GC_malloc(sizeof(struct heapobj *) + sizeof(long) + len);
   dylan_str[0] = (void *)(&dylanZdylan_visceraZCLS_byte_string_HEAP);
   dylan_str[1] = (void *)len;
   strncpy((char *)(&dylan_str[2]), arg, len);
+  *((char*)(&dylan_str[2]) + len) = 0;
 
   tmp.heapptr = (struct heapobj *)dylan_str;
   tmp.dataword.l = 0;
