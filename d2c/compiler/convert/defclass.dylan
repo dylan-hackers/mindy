@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.60 1996/03/17 00:56:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.61 1996/03/20 19:15:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -370,7 +370,7 @@ define method process-slot
 		 if (setter-frag & extract-identifier-or-false(setter-frag))
 		   compiler-warning("Instance allocation slots in "
 				      "functional classes can't "
-				      "have a setter");
+				      "have a setter.");
 		 end;
 		 #f;
 	       elseif (setter-frag)
@@ -657,66 +657,76 @@ end;
 
 define method compute-cclass (defn :: <real-class-definition>)
     => res :: false-or(<cclass>);
-  block (return)
-    //
-    // Mark that we are trying to compute this class.
-    defn.class-defn-cclass := #"computing";
-    //
-    // Evaluate the superclasses, giving up if any are unknown.
-    let supers = map(method (super)
-		       ct-eval(super, #f)
-			 | begin
-			     compiler-warning("Non-constant superclass");
-			     return(#f);
-			   end;
-		     end,
-		     defn.class-defn-supers);
-    //
-    // Check that we arn't trying to inherit from a sealed class from some
-    // other library.
-    for (super :: <cclass> in supers)
+  //
+  // Mark that we are trying to compute this class.
+  defn.class-defn-cclass := #"computing";
+  //
+  // Evaluate the superclasses, and check them for validity.
+  let super-exprs = defn.class-defn-supers;
+  let nsupers = super-exprs.size;
+  let supers = make(<simple-object-vector>, size: nsupers);
+  let closest-super = #f;
+  let closest-primary = #f;
+  let bogus? = #f;
+  for (index from 0 below nsupers)
+    let super-expr = super-exprs[index];
+    let super = ct-eval(super-expr, #f);
+    if (instance?(super, <cclass>))
+      //
+      // Store the superclass.
+      supers[index] := super;
+      //
+      // Make sure we arn't trying to inherit from a sealed class.
       if (super.sealed? & super.loaded?)
-	compiler-error("Can't inherit from sealed class %s", super);
+	compiler-warning-location
+	  (super-expr.source-location,
+	   "%s can't inherit from %s because %s is sealed.",
+	   defn.defn-name, super, super);
+	bogus? := #t;
       end if;
-    end for;
-    //
-    // Check that everything is okay with the abstract adjective.
-    if (defn.class-defn-abstract?)
-      for (super in supers)
-	unless (super.abstract?)
-	  compiler-warning("Abstract class %s can't inherit from non-abstract "
-			     "class %s -- ignoring abstract abjective.",
-			   defn.defn-name, super);
-	  defn.class-defn-abstract? := #f;
-	end unless;
-      end for;
-    end if;
-    //
-    // Check that everything is okay with the functional adjective.
-    if (defn.class-defn-functional?)
       //
-      // Make sure we arn't trying to inherit from anything we can't.
-      if (any?(not-functional?, supers))
-	compiler-warning("Functional classes can only inherit from other "
-			   "functional classes and abstract classes without "
-			   "any slots");
-	return(#f);
-      end;
-    else
+      // Check that everything is okay with the abstract adjective.
+      if (defn.class-defn-abstract? & ~super.abstract?)
+	compiler-warning-location
+	  (super-expr.source-location,
+	   "abstract class %s can't inherit from %s because "
+	     "%s is concrete -- ignoring abstract abjective.",
+	   defn.defn-name, super, super);
+	defn.class-defn-abstract? := #f;
+      end if;
       //
-      // It isn't a functional class, so make sure we arn't trying to inherit
-      // from a functional class.
-      if (any?(functional?, supers))
-	compiler-warning("Functional classes can only be inherited from by "
-			   "other functional classes.");
-	return(#f);
-      end;
-    end;
-    //
-    // Check to make sure we don't try mixing two incompatible primary classes.
-    let closest-super = #f;
-    let closest-primary = #f;
-    for (super in supers)
+      // Check that everything is okay with the functional adjective.
+      if (defn.class-defn-functional?)
+	//
+	// Make sure we arn't trying to inherit from anything we can't.
+	if (super.not-functional?)
+	  compiler-warning-location
+	    (super-expr.source-location,
+	     "functional class %s can't inherit from %s "
+	       "because %s %s and is not functional.",
+	     defn.defn-name, super, super,
+	     if (super.abstract?)
+	       "has slots";
+	     else
+	       "is concrete";
+	     end if);
+	  bogus? := #t;
+	end if;
+      else
+	//
+	// It isn't a functional class, so make sure we arn't trying to
+	// inherit from a functional class.
+	if (super.functional?)
+	  compiler-warning-location
+	    (super-expr.source-location,
+	     "class %s can't inherit from %s because %s is functional.",
+	     defn.defn-name, super, super);
+	  bogus? := #t;
+	end if;
+      end if;
+      //
+      // Check to see if this superclass's closest-primary-superclass
+      // is closer than any of the others so far.
       let other-primary = super.closest-primary-superclass;
       if (~closest-primary | csubtype?(other-primary, closest-primary))
 	closest-super := super;
@@ -731,17 +741,49 @@ define method compute-cclass (defn :: <real-class-definition>)
 				   super.cclass-name.name-symbol);
 		end;
 	      end;
-	compiler-warning("Can't mix ~s and ~s because they are both primary",
-			 describe(closest-primary, closest-super),
-			 describe(other-primary, super));
-	return(#f);
-      end;
-    end;
-    if (closest-primary == #f)
-      unless (defn == dylan-defn(#"<object>"))
-	error("<object> isn't being inherited or isn't primary?");
-      end;
-    end;
+	compiler-warning-location
+	  (super-expr.source-location,
+	   "%s can't inherit from %s and %s because they are both primary "
+	     "and neither is a subclass of the other.",
+	   defn.defn-name,
+	   describe(closest-primary, closest-super),
+	   describe(other-primary, super));
+	bogus? := #t;
+      end if;
+    else
+      //
+      // The superclass isn't a <class>.  So complain.
+      if (super)
+	compiler-warning-location
+	  (super-expr.source-location,
+	   "%s superclass of %s is not a class: %s.",
+	   integer-to-english(index + 1, as: #"ordinal"),
+	   defn.defn-name, super);
+      else
+	compiler-warning-location
+	  (super-expr.source-location,
+	   "%s superclass of %s is not obviously a constant.",
+	   integer-to-english(index + 1, as: #"ordinal"),
+	   defn.defn-name);
+      end if;
+      bogus? := #t;
+    end if;
+  end for;
+
+  if (defn == dylan-defn(#"<object>"))
+    unless (nsupers.zero?)
+      error("<object> has superclasses?");
+    end unless;
+  else
+    if (nsupers.zero?)
+      compiler-warning("%s has no superclasses.", defn.defn-name);
+      bogus? := #t;
+    elseif (closest-primary == #f & ~bogus?)
+      error("<object> isn't being inherited or isn't primary?");
+    end if;
+  end if;
+
+  unless (bogus?)
     //
     // Make and return the <cclass>.
     make(<defined-cclass>,
@@ -770,8 +812,8 @@ define method compute-cclass (defn :: <real-class-definition>)
 	 abstract: defn.class-defn-abstract?,
 	 slots: map(compute-slot, defn.class-defn-slots),
 	 overrides: map(compute-override, defn.class-defn-overrides));
-  end;
-end;
+  end unless;
+end method compute-cclass;
 
 define method compute-slot (slot :: <slot-defn>) => info :: <slot-info>;
   let getter-name = slot.slot-defn-getter-name;
@@ -870,7 +912,7 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 end;
 
 define method finalize-slot
-    (slot :: <slot-defn>, cclass :: <cclass>, class-type :: <ctype>,
+    (slot :: <slot-defn>, cclass :: false-or(<cclass>), class-type :: <ctype>,
      tlf :: <define-class-tlf>)
     => ();
   //
@@ -992,7 +1034,7 @@ define method maybe-define-init-function
     if (cinstance?(init-val, function-ctype()))
       values(init-val, #f);
     else
-      compiler-warning("Invalid init-function: %s", init-val);
+      compiler-warning-location(expr, "Invalid init-function: %s.", init-val);
       values(#f, #f);
     end if;
   else
