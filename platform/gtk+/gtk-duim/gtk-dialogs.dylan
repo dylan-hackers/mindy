@@ -26,52 +26,22 @@ define sealed domain initialize (<dialog-mirror>);
 
 ignore(mirror-registered-dialogs);
 
-/*---*** Not yet implemented!
-define sealed method make-top-level-window
-    (frame :: <dialog-frame>, sheet :: <gtk-top-level-sheet-mixin>,
-     resource-id == #f)
- => (handle :: <HWND>, resource :: singleton(#f),
-     mirror-class :: <class>, mirror-initargs)
-  let (left, top, right, bottom) = sheet-native-edges(sheet);
-  let title = frame-title(frame);
-  let x = frame-geometry(frame)[0];
-  let y = frame-geometry(frame)[1];
+define sealed method make-top-level-mirror
+    (sheet :: <top-level-sheet>, frame :: <dialog-frame>)
+ => (mirror :: <top-level-mirror>)
+  let widget = GTK-WINDOW(gtk-window-new($GTK-WINDOW-DIALOG));
   let owner = frame-owner(frame);
-  let owner-top-level = owner & top-level-sheet(owner);
-  let owner-handle
-    = if (owner-top-level & sheet-mapped?(owner-top-level))
-	window-handle(owner-top-level)
-      else
-	$NULL-HWND
-      end;
-  let (style, extended-style) = frame-window-styles(frame);
-  //--- Call compute-default-foreground/background/text-style to
-  //--- figure out what characteristics the mirror should have
-  let handle :: <HWND>
-    = CreateWindowEx
-        (extended-style,
-	 $dialog-class-name,		// See RegisterClass call
-	 title | "",			// Text for window title bar
-	 style,
-	 x | $CW-USEDEFAULT,		// x position
-	 y | $CW-USEDEFAULT,		// y position
-	 right - left,			// width
-	 bottom - top,			// height
-	 owner-handle,			// dialog's owner
-	 $null-hMenu,			// Use the window class menu
-	 application-instance-handle(),
-	 $NULL-VOID);			// No data in our WM_CREATE
-  check-result("CreateWindow (dialog)", handle);
-  values(handle, #f, <dialog-mirror>, vector(owner:, owner))
-end method make-top-level-window;
-*/
+  make(<dialog-mirror>,
+       widget: widget,
+       sheet:  sheet,
+       owner: owner)
+end method make-top-level-mirror;
 
 define sealed method cancel-frame
     (dialog :: <dialog-frame>) => (handled? :: <boolean>)
   let button = dialog-cancel-button(dialog);
   when (button & gadget-enabled?(button))
-    ignoring("cancel-frame");
-    // handle-gadget-activation(button)
+    handle-gadget-activation(button)
   end
 end method cancel-frame;
 
@@ -152,12 +122,13 @@ end method compute-dialog-position;
 
 /// Piggy-back on the default dialogs from gadget-panes for now
 
-define sealed method frame-wrapper
-    (framem :: <gtk-frame-manager>, dialog :: <dialog-frame>,
+define method top-level-layout-child
+    (framem :: <gtk-frame-manager>, 
+     dialog :: <dialog-frame>,
      layout :: false-or(<sheet>))
- => (sheet :: false-or(<sheet>))
-  default-dialog-frame-wrapper(framem, dialog, layout)
-end method frame-wrapper;
+ => (layout :: false-or(<sheet>))
+  default-dialog-frame-wrapper(framem, dialog, layout);
+end method top-level-layout-child;
 
 define sealed method update-frame-layout
     (framem :: <gtk-frame-manager>, frame :: <dialog-frame>) => ()
@@ -251,174 +222,8 @@ define sealed method do-cancel-dialog
 end method do-cancel-dialog;
 
 
-/*---*** Use fake dialogs for now...
-/// Utilities for the built-in dialogs
-
-define sealed method dialog-owner-handle
-    (owner :: <sheet>) => (handle :: <HWND>)
-  window-handle(owner)
-end method dialog-owner-handle;
-
-define sealed method dialog-owner-handle
-    (owner :: <display>) => (handle :: <HWND>)
-  $NULL-HWND
-end method dialog-owner-handle;
-
-
-/// Notify user
-
-define sealed method do-notify-user
-    (framem :: <gtk-frame-manager>, owner :: <sheet>,
-     message :: <string>, style :: <notification-style>,
-     #key title :: false-or(<string>), documentation :: false-or(<string>), name, 
-	  exit-style :: false-or(<notification-exit-style>) = #f,
-     #all-keys)
- => (ok? :: <boolean>, exit-type)
-  let _port     = port(owner);
-  let x-display = _port.%display;
-  let parent-widget = mirror-widget(sheet-mirror(owner));
-  let (visual, colormap, depth) = xt/widget-visual-specs(parent-widget);
-  let title
-    = title | select (style)
-		#"information"   => "Note";
-		#"question"      => "Note";
-		#"warning"       => "Warning";
-		#"error"         => "Error";
-		#"serious-error" => "Error";
-		#"fatal-error"   => "Error";
-	      end;
-  let dialog-type
-    = select (style)
-	#"information"   => $XmDIALOG-INFORMATION;
-	#"question"      => $XmDIALOG-QUESTION;
-	#"warning"       => $XmDIALOG-WARNING;
-	#"error"         => $XmDIALOG-ERROR;
-	#"serious-error" => $XmDIALOG-ERROR;
-	#"fatal-error"   => $XmDIALOG-ERROR;
-      end;
-  let exit-style
-    = exit-style | if (style == #"question") #"yes-no" else #"ok" end;
-  let modality
-    = select (style)
-	#"serious-error" => xm/$XmDIALOG-FULL-APPLICATION-MODAL;
-	#"fatal-error"   => xm/$XmDIALOG-SYSTEM-MODAL;
-	otherwise        => xm/$XmDIALOG-APPLICATION-MODAL;
-      end;
-  let shell-resources
-    = vector(visual:, visual,
-	     colormap:, colormap,
-	     depth:, depth);
-  let resources
-    = vector(dialog-type:, dialog-type,
-	     dialog-style:, modality,
-	     dialog-title:, title, 
-	     message-string:, message,
-	     default-position:, #f);
-  select (exit-style)
-    #"ok"            =>
-      resources
-	:= concatenate!(resources, vector(ok-label-string:,     "OK",
-					  default-button-type:, xm/$XmDIALOG-OK-BUTTON));
-    #"ok-cancel"     =>
-      resources
-	:= concatenate!(resources, vector(ok-label-string:,     "OK",
-					  cancel-label-string:, "Cancel",
-					  default-button-type:, xm/$XmDIALOG-OK-BUTTON));
-    #"yes-no"        =>
-      resources
-	:= concatenate!(resources, vector(ok-label-string:,     "Yes",
-					  cancel-label-string:, "No",
-					  default-button-type:, xm/$XmDIALOG-OK-BUTTON));
-    #"yes-no-cancel" =>
-      resources
-	:= concatenate!(resources, vector(ok-label-string:,     "Yes",
-					  cancel-label-string:, "No",
-					  default-button-type:, xm/$XmDIALOG-OK-BUTTON));
-  end;
-  let (x, y)
-    = begin
-	let (x, y) = sheet-size(owner);
-	let (x, y) = values(floor/(x, 2), floor/(y, 2));
-	with-device-coordinates (sheet-device-transform(owner), x, y)
-	  values(x, y)
-	end
-      end;
-  let shell  = #f;
-  let dialog = #f;
-  let result = #f;
-  let client-data  = #f;
-  block ()
-    local method waiter () result end method,
-	  method setter (value) result := value end method;
-    shell  := xt/XtCreatePopupShell("NotifyUserShell", xm/<dialog-shell>, parent-widget,
-				   resources: shell-resources);
-    dialog := xm/XmCreateMessageBox(shell, "NotifyUser",
-				    resources: resources);
-    client-data := make(<callback-client-data>,
-			owner-widget: parent-widget,
-			x-display: x-display,
-			pointer-x: x,
-			pointer-y: y,
-			setter: setter);
-    xt/XtAddCallback(dialog, "okCallback", notifier-button-press-callback, client-data);
-    if (exit-style == #"question")
-      xt/XtUnmanageChild(xm/XmMessageBoxGetChild(dialog, xm/$XmDIALOG-CANCEL-BUTTON))
-    else
-      xt/XtAddCallback(dialog, "cancelCallback", notifier-button-press-callback, client-data)
-    end;
-    xt/XtUnmanageChild(xm/XmMessageBoxGetChild(dialog, xm/$XmDIALOG-HELP-BUTTON))
-    xt/XtAddCallback(dialog, "mapCallback", notifier-map-callback, client-data);
-    xm/XmAddWmProtocolCallback(xt/XtParent(dialog), "wmDeleteWindow", notifier-delete-window-callback, setter);
-    xt/XtManageChild(dialog);
-    //---*** CLIM does this: '(mp:process-wait "Waiting for CLIM:NOTIFY-USER" #'waiter)'
-    select (result)
-      #"yes"    => values(#t, #"yes");
-      #"no"     => values(#f, #"no");
-      #"ok"     => values(#t, #"ok");
-      #"cancel" => values(#f, #"cancel");
-      otherwise => error("Unexpected return code %= from MessageBox", result);
-    end;
-  cleanup
-    when (dialog)
-      x/XSync(x-display, #f);
-      xt/XtUnmanageChild(dialog);
-      xt/XtDestroyWidget(shell)
-    end;
-  end
-end method do-notify-user;
-
-define xm/xm-callback-function notifier-button-press-callback
-    (widget, client-data :: <callback-client-data>, call-data :: xm/<XmPushButtonCallbackStruct>)
-  ignore(widget);
-  client-data.%setter(call-data.xm/reason-value)
-end xm/xm-callback-function notifier-button-press-callback;
-
-define xm/xm-callback-function notifier-delete-window-callback
-    (widget, value-setter, call-data)
-  ignore(widget, call-data);
-  value-setter(#"cancel")
-end xm/xm-callback-function notifier-delete-window-callback;
-
-define xm/xm-callback-function notifier-map-callback
-    (widget, client-data :: <callback-client-data>, call-data)
-  ignore(call-data);
-  let owner-widget = client-data.%owner-widget;
-  let lx = client-data.%x;
-  let ly = client-data.%y;
-  let (width, height) = xt/XtGetValues(widget, #"width", #"height");
-  let (rx, ry) = xt/XtTranslateCoords(owner-widget, lx, ly);
-  let (rwidth, rheight)
-    = values(x/XWidthOfScreen(xt/XtScreen(widget)), x/XHeightOfScreen(xt/XtScreen(widget)));
-  rx := rx - round/(width, 2);
-  ry := ry - round/(height, 2);
-  xt/XtSetValues(widget,
-		 x: max(0, min(rx, rwidth  - width)),
-		 y: max(0, min(ry, rheight - height)))
-end xm/xm-callback-function notifier-map-callback;
-
-
 /// Choose file
-
+/*---
 define sealed method do-choose-file
     (framem :: <gtk-frame-manager>, owner :: <sheet>, 
      direction :: one-of(#"input", #"output"),
