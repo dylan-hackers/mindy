@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.5 1995/03/23 22:17:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.6 1995/04/21 02:27:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -284,6 +284,10 @@ define primary abstract open %%class <object> ()
   slot %object-class, type: <class>, setter: #f
 end;
 
+define abstract open class <functional-object> (<object>)
+end;
+
+
 define abstract class <boolean> (<object>) end;
 define class <true> (<boolean>) end;
 define class <false> (<boolean>) end;
@@ -304,12 +308,26 @@ define abstract open class <complex> (<number>) end;
 define abstract class <real> (<complex>) end;
 define abstract class <rational> (<real>) end;
 define abstract class <integer> (<rational>) end;
-define class <fixed-integer> (<integer>) end;
+
+define functional class <fixed-integer> (<integer>)
+  slot value :: <fixed-integer>, init-value: 0;
+end;
+
 define class <extended-integer> (<integer>) end;
+
 define abstract class <float> (<real>) end;
-define class <single-float> (<float>) end;
-define class <double-float> (<float>) end;
-define class <extended-float> (<float>) end;
+
+define functional class <single-float> (<float>)
+  slot value :: <single-float>, init-value: 0.0s0;
+end;
+
+define functional class <double-float> (<float>)
+  slot value :: <double-float>, init-value: 0.0d0;
+end;
+
+define functional class <extended-float> (<float>)
+  slot value :: <extended-float>, init-value: 0.0x0;
+end;
 
 define abstract open class <collection> (<object>) end;
 define abstract open class <explicit-key-collection> (<collection>) end;
@@ -332,7 +350,13 @@ define abstract class <list> (<mutable-sequence>) end;
 define class <empty-list> (<list>) end;
 define class <pair> (<list>) end;
 
-define class <character> (<object>) end;
+define constant $max-char-code = #xffff;
+define constant <char-code>
+  = limited(<fixed-integer>, min: 0, max: $max-char-code);
+define functional class <character> (<object>)
+  slot value :: <char-code>, required-init-keyword: code:;
+end;
+
 define constant <byte-character> = make(<byte-character-type>);
 
 
