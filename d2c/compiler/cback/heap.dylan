@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.7 1999/03/02 13:48:58 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.8 1999/03/02 20:36:37 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1347,7 +1347,7 @@ define method spew-function
   apply(spew-instance, func.ct-value-cclass, state,
 	function-name:
 	  make(<literal-string>, value:
-	       format-to-string("%s\n", func.ct-function-name)),
+	       format-to-string("%s", func.ct-function-name)),
 	function-specializers:
 	  make(<literal-simple-object-vector>,
 	       contents: sig.specializers,
