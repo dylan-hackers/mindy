@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.24 1996/02/19 20:29:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.25 1996/02/21 02:42:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -347,7 +347,8 @@ define module names
     <name>,
     <basic-name>, id-name, name-symbol, name-module,
     <type-cell-name>, type-cell-name-base,
-    <method-name>, method-name-generic-function, method-name-specializers;
+    <method-name>, method-name-generic-function, method-name-specializers,
+    <generated-name>, generated-name-description;
 end;
 
 define module definitions
@@ -451,7 +452,6 @@ define module parse-tree
     <keyword-parameter>, param-keyword, param-default,
     <method-parse>, method-name, method-name-setter, method-param-list,
     method-returns, method-body,
-    <case-clause>, case-label, case-body, case-body-setter,
     <property-set>, property-set-members,
     <use-clause>, use-name, use-import, use-exclude, use-prefix, use-rename,
     use-export,
