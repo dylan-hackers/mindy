@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.3 1994/03/26 00:47:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.4 1994/03/28 11:30:38 wlott Exp $
 *
 * This file does whatever.
 *
@@ -268,6 +268,7 @@ struct id *id(struct symbol *symbol)
 
     res->symbol = symbol;
     res->internal = TRUE;
+    res->line = 0;
 
     return res;
 }
@@ -277,6 +278,7 @@ struct id *dup_id(struct id *id)
     struct id *res = malloc(sizeof(*res));
 
     bcopy(id, res, sizeof(*res));
+    res->line = 0;
 
     return res;
 }
@@ -293,6 +295,7 @@ struct id *make_id(struct token *token)
 
     res = id(symbol(ptr));
     res->internal = FALSE;
+    res->line = token->line;
 
     free(token);
 
@@ -665,20 +668,26 @@ struct return_type_list *push_return_type(struct expr *type,
 
 struct literal *parse_true_token(struct token *token)
 {
+    struct literal *res = make_true_literal();
+    res->line = token->line;
     free(token);
-    return make_true_literal();
+    return res;
 }
 
 struct literal *parse_false_token(struct token *token)
 {
+    struct literal *res = make_false_literal();
+    res->line = token->line;
     free(token);
-    return make_false_literal();
+    return res;
 }
 
 struct literal *parse_unbound_token(struct token *token)
 {
+    struct literal *res = make_unbound_literal();
+    res->line = token->line;
     free(token);
-    return make_unbound_literal();
+    return res;
 }
 
 static int escape_char(int c)
@@ -713,6 +722,7 @@ struct literal *parse_string_token(struct token *token)
 
     res->kind = literal_STRING;
     res->next = NULL;
+    res->line = token->line;
     res->length = length;
 
     src = token->chars + 1;
@@ -746,6 +756,7 @@ struct literal
 
     res->kind = literal_STRING;
     res->next = NULL;
+    res->line = old_literal->line;
 
     strncpy(res->chars, old_string, old_length);
     src = token->chars + 1;
@@ -769,13 +780,17 @@ struct literal
 struct literal *parse_character_token(struct token *token)
 {
     int c = token->chars[1];
+    struct literal *res;
 
     if (c == '\\')
 	c = escape_char(token->chars[2]);
 
+    res = make_character_literal(c);
+    res->line = token->line;
+
     free(token);
 
-    return make_character_literal(c);
+    return res;
 }
 
 struct literal *parse_integer_token(struct token *token)
@@ -784,6 +799,7 @@ struct literal *parse_integer_token(struct token *token)
     int count, radix;
     boolean negative;
     char *ptr;
+    struct literal *res;
 
     value = 0;
     count = token->length;
@@ -828,15 +844,19 @@ struct literal *parse_integer_token(struct token *token)
 	    value = value * radix + digit;
     }
 
+    res = make_integer_literal(value);
+    res->line = token->line;
+
     free(token);
 
-    return make_integer_literal(value);
+    return res;
 }
 
 struct literal *parse_float_token(struct token *token)
 {
     /* ### Need to actually parse the float. */
     struct literal *res = make_float_literal(0.0);
+    res->line = token->line;
 
     free(token);
 
@@ -863,6 +883,7 @@ struct literal *parse_symbol_token(struct token *token)
     }
 
     res = make_symbol_literal(symbol(ptr));
+    res->line = token->line;
 
     free(token);
 
@@ -881,6 +902,7 @@ struct literal *parse_keyword_token(struct token *token)
     ptr[token->length-1] = '\0';
 
     res = make_keyword_literal(keyword(ptr));
+    res->line = token->line;
 
     free(token);
 
@@ -1426,9 +1448,17 @@ struct gf_suffix
     return res;
 }
 
+struct method *set_method_source(struct token *source, struct method *method)
+{
+    method->line = source->line;
+
+    return method;
+}
+
 struct method *set_method_name(struct id *name, struct method *method)
 {
     method->name = name;
+    method->line = name->line;
     method->debug_name = make_symbol_literal(name->symbol);
 
     return method;
@@ -1442,6 +1472,7 @@ struct method
     struct method *res = malloc(sizeof(struct method));
 
     res->name = NULL;
+    res->line = 0;
     res->debug_name = NULL;
     res->top_level = FALSE;
     res->component = NULL;
