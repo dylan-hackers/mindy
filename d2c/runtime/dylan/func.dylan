@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.16 1996/01/12 02:10:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.17 1996/02/08 18:52:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -36,6 +36,8 @@ end;
 seal generic make (singleton(<function>));
 seal generic initialize (<function>);
 
+
+
 define abstract class <closure> (<function>)
   //
   slot closure-var :: <object>,
@@ -44,10 +46,14 @@ end;
 
 seal generic make(singleton(<closure>));
 
+
+
 define class <raw-function> (<function>)
 end;
 
 seal generic make(singleton(<raw-function>));
+
+
 
 define class <raw-closure> (<raw-function>, <closure>)
 end;
@@ -69,6 +75,8 @@ define method make-closure
        closure-size: closure-size);
 end;
 
+
+
 define class <method> (<function>)
   //
   // The generic-function entry point for this method.
@@ -77,6 +85,19 @@ define class <method> (<function>)
 end;
 
 seal generic make(singleton(<method>));
+
+
+
+define class <accessor-method> (<method>)
+  //
+  // The <slot-descriptor> this is the acccessor of.
+  slot accessor-slot :: <slot-descriptor>,
+    required-init-keyword: slot:;
+end class <accessor-method>;
+
+seal generic make(singleton(<accessor-method>));
+
+
 
 define class <method-closure> (<method>, <closure>)
 end;
@@ -98,6 +119,8 @@ define method make-closure
        generic-entry: func.generic-entry,
        closure-size: closure-size);
 end;
+
+
 
 define class <type-vector> (<simple-vector>)
   sealed slot %element :: <type>,
@@ -262,14 +285,12 @@ define method verify-keywords
   for (index :: <integer> from 0 below args.size by 2)
     let key :: <symbol> = args[index];
     unless (member?(key, valid-keywords))
-      error("Unrecognized keyword: %=", key);
+      unrecognized-keyword-error(key);
     end;
   end for;
 end method verify-keywords;
 
 
-// Function application and invocation.
-
 // apply -- exported.
 //
 // Call the function with the arguments.  The last element of arguments is
@@ -285,7 +306,62 @@ define method apply (function :: <function>, #rest arguments)
 	    values-sequence(arguments[len-1]));
 end;
 
+
+// General entry for methods.
 
+// general-call -- magic.
+//
+// The compiler uses this as the general entry for methods that it thinks will
+// not need a general entry.  It works, but is slower than a custom built
+// general entry.
+// 
+define constant general-call
+  = method (self :: <method>, nargs :: <integer>)
+      let specializers = self.function-specializers;
+      let nfixed = specializers.size;
+      let keywords = self.function-keywords;
+      if (self.function-rest? | keywords)
+	if (nargs < nfixed)
+	  wrong-number-of-arguments-error(#f, nfixed, nargs);
+	end;
+	if (keywords & odd?(nargs - nfixed))
+	  odd-number-of-keyword/value-arguments-error();
+	end;
+      else
+	if (nargs ~= nfixed)
+	  wrong-number-of-arguments-error(#t, nfixed, nargs);
+	end;
+      end;
+      let arg-ptr :: <raw-pointer> = %%primitive extract-args(nargs);
+      for (index :: <integer> from 0,
+	   specializer :: <type> in specializers)
+	check-type(%%primitive extract-arg (arg-ptr, index), specializer);
+      end for;
+      if (keywords)
+	if (self.function-all-keys?)
+	  for (index :: <integer> from nfixed below nargs by 2)
+	    check-type(%%primitive extract-arg (arg-ptr, index), <symbol>);
+	  end for;
+	else
+	  for (index :: <integer> from nfixed below nargs by 2)
+	    let key :: <symbol> = %%primitive extract-arg (arg-ptr, index);
+	    unless (member?(key, keywords))
+	      unrecognized-keyword-error(key);
+	    end unless;
+	  end for;
+	end if;
+      end if;
+      %%primitive invoke-generic-entry
+	(self, #(), %%primitive pop-args(arg-ptr));
+    end method;
+
+
+// Generic function dispatch.
+
+// gf-call -- magic.
+//
+// The compiler uses this for the general-entry to all generic functions.
+// 
 define constant gf-call
   = method (self :: <generic-function>, nargs :: <integer>)
       let specializers = self.function-specializers;
@@ -661,7 +737,68 @@ define method compare-methods
   end block;
 end method compare-methods;
 
+
+// Accessor methods.
 
+define constant general-rep-getter
+  = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
+      // We don't specify a return type because we want to use the
+      // unknown-values convention.
+      let arg-ptr :: <raw-pointer> = %%primitive extract-args(1);
+      let instance = %%primitive extract-arg(arg-ptr, 0);
+      %%primitive pop-args(arg-ptr);
+      let posn = find-slot-offset(instance.object-class, self.accessor-slot);
+      let result = %%primitive ref-slot(instance, #"general", posn);
+      unless (%%primitive initialized? (result))
+	uninitialized-slot-error();
+      end unless;
+      result;
+    end;
+
+define constant general-rep-setter
+  = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
+      // We don't specify a return type because we want to use the
+      // unknown-values convention.
+      let arg-ptr :: <raw-pointer> = %%primitive extract-args(1);
+      let new-value = %%primitive extract-arg(arg-ptr, 0);
+      let instance = %%primitive extract-arg(arg-ptr, 1);
+      %%primitive pop-args(arg-ptr);
+      let posn = find-slot-offset(instance.object-class, self.accessor-slot);
+      %%primitive set-slot(new-value, instance, #"general", posn);
+      new-value;
+    end;
+
+
+define constant heap-rep-getter
+  = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
+      // We don't specify a return type because we want to use the
+      // unknown-values convention.
+      let arg-ptr :: <raw-pointer> = %%primitive extract-args(1);
+      let instance = %%primitive extract-arg(arg-ptr, 0);
+      %%primitive pop-args(arg-ptr);
+      let posn = find-slot-offset(instance.object-class, self.accessor-slot);
+      let result = %%primitive ref-slot(instance, #"heap", posn);
+      unless (%%primitive initialized? (result))
+	uninitialized-slot-error();
+      end unless;
+      result;
+    end;
+
+define constant heap-rep-setter
+  = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
+      // We don't specify a return type because we want to use the
+      // unknown-values convention.
+      let arg-ptr :: <raw-pointer> = %%primitive extract-args(1);
+      let new-value = %%primitive extract-arg(arg-ptr, 0);
+      let instance = %%primitive extract-arg(arg-ptr, 1);
+      %%primitive pop-args(arg-ptr);
+      let posn = find-slot-offset(instance.object-class, self.accessor-slot);
+      %%primitive set-slot(new-value, instance, #"heap", posn);
+      new-value;
+    end;
+
+
+// Applicability predicates.
 
 define method applicable-method?
     (function :: <function>, #rest sample-arguments)
