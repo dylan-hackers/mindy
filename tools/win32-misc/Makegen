@@ -1,42 +1,52 @@
 
+sub install_one_perl_script {
+    local ($name) = @_;
+    local ($dst) = "\$(DESTDIR)/bin";
+    print "$dst/$name.bat :\n";
+    $dst =~ tr|/|\\|;  # translate / to \ for batch files
+    print "\t", 'echo @perl ', "$dst\\$name", 
+        '.perl %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> $dst\\$name.bat\n";
+    do install_from_src('bin', "$name.perl");
+}
+
+sub install_perl_scripts {
+    local (@names) = @_;
+    local ($name);
+    foreach $name (@names) {
+	install_one_perl_script($name);
+    }
+}
+
+# Assumes the rcs binaries are in $(DESTDIR)/rcs-bin, and 
+# rcs-wrapper in $(DESTDIR)/bin/rcs-wrapper.perl
+sub install_with_rcs_wrapper {
+    local ($name) = @_;
+    print "\$(DESTDIR)/bin/$name.bat :\n";
+    print "\t", 'echo @perl $(DESTDIR)\\bin\\rcs-wrapper.perl ',
+        '$(DESTDIR)\\rcs-bin\\', $name, 
+        '.exe %1 %2 %3 %4 %5 %6 %7 %8 %9 ', "> \$(DESTDIR)\\bin\\$name.bat\n";
+    do install_from_src('bin', "$name.perl");
+}
+
 # Wrapped RCS stuff
 do install_from_src('bin', 'rcs-wrapper.perl');
-do install_from_src('bin', 'ci.bat');
-do install_from_src('bin', 'co.bat');
-do install_from_src('bin', 'rcs.bat');
-do install_from_src('bin', 'rcsdiff.bat');
-do install_from_src('bin', 'rlog.bat');
 
-# Custom utils with wrappers
+do install_with_rcs_wrapper('ci');
+do install_with_rcs_wrapper('co');
+do install_with_rcs_wrapper('rcs');
+do install_with_rcs_wrapper('rcsdiff');
+do install_with_rcs_wrapper('rlog');
+
+# Wrapped normally, except the .perl file isn't named the same as the 
+# .bat file
 do install_from_src('bin', 'autoconf.perl');
 do install_from_src('bin', 'configure.bat');
 
-do install_from_src('bin', 'find-dylan-files.bat');
-do install_from_src('bin', 'find-dylan-files.perl');
-
-do install_from_src('bin', 'mass-ci.bat');
-do install_from_src('bin', 'mass-ci.perl');
-
-do install_from_src('bin', 'mass-diff.bat');
-do install_from_src('bin', 'mass-diff.perl');
-
-do install_from_src('bin', 'mk-build-tree.bat');
-do install_from_src('bin', 'mk-build-tree.perl');
-
-do install_from_src('bin', 'mk-rcs-links.bat');
-do install_from_src('bin', 'mk-rcs-links.perl');
-
-do install_from_src('bin', 'rcsupdate.bat');
-do install_from_src('bin', 'rcsupdate.perl');
-
-do install_from_src('bin', 'tree-diff.bat');
-do install_from_src('bin', 'tree-diff.perl');
-
-do install_from_src('bin', 'unix-find.bat');
-do install_from_src('bin', 'unix-find.perl');
-
-do install_from_src('bin', 'which.bat');
-do install_from_src('bin', 'which.perl');
+# Custom utils with wrappers
+do install_perl_scripts('configure.bat', 'find-dylan-files', 'mass-ci', 
+			'mass-diff', 
+			'mk-build-tree', 'mk-rcs-links', 'rcsupdate', 
+			'tree-diff', 'unix-find', 'which');
 
 do install_from_src('bin', 'gen-makefile.bat');
 # gen-makefile.perl is in shared-misc
