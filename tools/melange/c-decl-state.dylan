@@ -108,6 +108,7 @@ define method initialize (value :: <parse-file-state>, #key)
 				    dylan-name: "<machine-pointer>",
 				    equated: #t,
 				    name: "statically-typed-pointer");
+  exclude-decl(value.pointers[void-type]);
 end method initialize;
 
 // table that chains the elements of a sequence as key
