@@ -292,13 +292,21 @@ define method GC-get-heap-size
   values(result-value);
 end method GC-get-heap-size;
 
-define method GC-get-bytes-since-gc
+define method GC-get-free-bytes
     ()
  => (result :: <size-t>);
   let result-value
-    = call-out("GC_get_bytes_since_gc", long:);
+    = call-out("GC_get_free_bytes", long:);
   values(result-value);
-end method GC-get-bytes-since-gc;
+end method GC-get-free-bytes;
+
+define method GC-get-total-bytes
+    ()
+ => (result :: <size-t>);
+  let result-value
+    = call-out("GC_get_total_bytes", long:);
+  values(result-value);
+end method GC-get-total-bytes;
 
 define method GC-enable-incremental
     ()

@@ -31,6 +31,7 @@ define module garbage-collection
     GC-debug-register-displacement, GC-gcollect,
     // GC-stop-func, GC-stop-func-setter,
     GC-try-to-collect, GC-get-heap-size,
+    GC-get-free-bytes, GC-get-total-bytes,
     GC-get-bytes-since-gc, GC-enable-incremental,
     GC-collect-a-little, GC-malloc-ignore-off-page,
     GC-malloc-atomic-ignore-off-page,
