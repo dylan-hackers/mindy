@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.18 1996/06/07 00:51:39 bfw Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.19 1996/11/13 02:47:33 wlott Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -74,38 +74,50 @@ static obj_t dylan_buffer_make(obj_t class, obj_t size, obj_t next, obj_t end)
 	  + max(len - sizeof(((struct buffer *)res)->data),
 		sizeof(((struct buffer *)res)->data)));
 
-    obj_ptr(struct buffer *, res)->length = len;
-    obj_ptr(struct buffer *, res)->buffer_next = start;
-    obj_ptr(struct buffer *, res)->buffer_end = stop;
+    BUF(res)->length = len;
+    BUF(res)->buffer_next = start;
+    BUF(res)->buffer_end = stop;
 
     return res;
 }
 
 static obj_t dylan_buffer_size(obj_t buffer)
 {
-    return make_fixnum(obj_ptr(struct buffer *, buffer)->length);
+    return make_fixnum(BUF(buffer)->length);
 }
 
 static obj_t dylan_buffer_next(obj_t buffer)
 {
-    return make_fixnum(obj_ptr(struct buffer *, buffer)->buffer_next);
+    return make_fixnum(BUF(buffer)->buffer_next);
 }
 
 static obj_t dylan_buffer_next_setter(obj_t val, obj_t buffer)
 {
-    obj_ptr(struct buffer *, buffer)->buffer_next = fixnum_value(val);
+    long new = fixnum_value(val);
+
+    if (new < 0 || new > BUF(buffer)->length)
+	error("Invalid value for buffer-next: %d.  Must be between 0 and %d inclusive.",
+	     val, make_fixnum(BUF(buffer)->length));
+
+    BUF(buffer)->buffer_next = new;
 
     return val;
 }
 
 static obj_t dylan_buffer_end(obj_t buffer)
 {
-    return make_fixnum(obj_ptr(struct buffer *, buffer)->buffer_end);
+    return make_fixnum(BUF(buffer)->buffer_end);
 }
 
 static obj_t dylan_buffer_end_setter(obj_t val, obj_t buffer)
 {
-    obj_ptr(struct buffer *, buffer)->buffer_end = fixnum_value(val);
+    long new = fixnum_value(val);
+
+    if (new < 0 || new > BUF(buffer)->length)
+	error("Invalid value for buffer-end: %d.  Must be between 0 and %d inclusive.",
+	     val, make_fixnum(BUF(buffer)->length));
+
+    BUF(buffer)->buffer_end = new;
 
     return val;
 }
@@ -114,7 +126,7 @@ static obj_t dylan_buffer_element(obj_t buffer, obj_t index, obj_t def)
 {
     int i = fixnum_value(index);
 
-    if (0 <= i && i < obj_ptr(struct buffer *, buffer)->length)
+    if (0 <= i && i < BUF(buffer)->length)
 	return make_fixnum(buffer_data(buffer)[i]);
     else if (def != obj_Unbound)
 	return def;
@@ -128,7 +140,7 @@ static obj_t dylan_buffer_element_setter(obj_t val, obj_t buffer, obj_t index)
 {
     int i = fixnum_value(index);
 
-    if (0 <= i && i < obj_ptr(struct buffer *, buffer)->length)
+    if (0 <= i && i < BUF(buffer)->length)
 	buffer_data(buffer)[i] = fixnum_value(val);
     else
 	error("No element %= in %=", index, buffer);
@@ -201,9 +213,8 @@ static obj_t trans_buffer(obj_t buffer)
 {
     return transport(buffer,
 		     sizeof(struct buffer)
-		     + max(obj_ptr(struct buffer *, buffer)->length
-			   - sizeof(((struct buffer *)buffer)->data),
-			   sizeof(((struct buffer *)buffer)->data)),
+		     + max(BUF(buffer)->length - sizeof(BUF(buffer)->data),
+			   sizeof(BUF(buffer)->data)),
 		     TRUE);
 }
 
