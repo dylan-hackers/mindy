@@ -1,5 +1,5 @@
 module: misc-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/misc-dump.dylan,v 1.3 1995/11/13 17:59:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/misc-dump.dylan,v 1.4 1995/11/14 13:38:36 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -34,8 +34,7 @@ add-od-loader(*compiler-dispatcher*, #"module",
     let lib-name = load-object-dispatch(state);
     let mod-name = load-object-dispatch(state);
     assert-end-object(state);
-    find-module(find-library(lib-name, create: #t), mod-name,
-		create: #t);
+    find-module(find-library(lib-name), mod-name, create: #t);
   end method
 );
 
