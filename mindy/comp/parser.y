@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.22 1996/02/13 23:21:20 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.23 1996/02/14 16:40:19 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -263,7 +263,7 @@ static void pop_yacc_recoveries(int count);
 %type <inherited_spec> inherited_spec
 %type <slot_allocation> allocation
 %type <gf_suffix> gf_suffix
-%type <flags> flags 
+%type <flags> flags slot_adjectives
 %type <else_part> else_part else_part_opt
 
 %type <constituent> module_definition library_definition 
@@ -763,7 +763,7 @@ class_guts:
 ;
 
 slot_spec:
-	flags allocation SLOT variable_name slot_type_opt 
+	slot_adjectives allocation SLOT variable_name slot_type_opt 
 		slot_init_expr_opt property_list_opt
 	{
 	    int line = $3->line;
@@ -772,6 +772,12 @@ slot_spec:
 				$5, $6, $7);
 	}
 ;
+
+slot_adjectives:
+	/* epsilon */ { $$ = 0; }
+    |	flags SEALED { free($2); $$ = $1 | flag_SEALED; }
+    |	flags CONSTANT { free($2); $$ = $1 | flag_CONSTANT; }
+;	
 
 slot_init_expr_opt:
 	/* epsilon */ { $$ = NULL; }
@@ -804,7 +810,6 @@ allocation:
     |	INSTANCE { free($1); $$ = alloc_INSTANCE; }
     |	CLASS { free($1); $$ = alloc_CLASS; }
     |	EACH_SUBCLASS { free($1); $$ = alloc_EACH_SUBCLASS; }
-    |	CONSTANT { free($1); $$ = alloc_CONSTANT; }
     |	VIRTUAL { free($1); $$ = alloc_VIRTUAL; }
 ;
 

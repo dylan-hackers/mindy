@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.23 1996/02/13 19:42:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.24 1996/02/14 16:40:19 nkramer Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
@@ -1023,9 +1023,6 @@ static void dump_defclass_constituent(struct defclass_constituent *c)
 	    break;
 	  case alloc_EACH_SUBCLASS:
 	    dump_symbol(sym_Each_Subclass);
-	    break;
-	  case alloc_CONSTANT:
-	    dump_symbol(sym_Constant);
 	    break;
 	  case alloc_VIRTUAL:
 	    dump_symbol(sym_Virtual);

@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.42 1996/02/14 00:23:43 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.43 1996/02/14 16:38:51 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -304,17 +304,6 @@ static void class_setter(obj_t method, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-static void constant_getter(obj_t method, struct thread *thread, obj_t *args)
-{
-    obj_t value = accessor_method_datum(method);
-    obj_t *old_sp = args-1;
-
-    *old_sp = value;
-    thread->sp = args;
-    do_return(thread, old_sp, old_sp);
-}
-
-
 
 /* Position tables. */
 
@@ -390,14 +379,6 @@ static obj_t make_slot_descriptor(obj_t name, obj_t allocation,
     SD(res)->name = name;
     SD(res)->alloc = alloc;
     SD(res)->creator = obj_False;
-    if (alloc == alloc_CONSTANT) {
-	if (init_value == obj_Unbound)
-	    error("CONSTANT slots must have an init-value:");
-	if (req_init_keyword != obj_False)
-	    error("Can't use required-init-keyword: in constant slots.");
-	if (init_keyword != obj_False)
-	    error("Can't use init-keyword: in constant slots.");
-    }
     if (init_function != obj_Unbound) {
 	if (init_value != obj_Unbound)
 	    error("Can't specify both an init-function: and an init-value:");
@@ -821,7 +802,6 @@ static void compute_lengths(obj_t class)
 		    each_subclass_length++;
 		    break;
 		  case alloc_CLASS:
-		  case alloc_CONSTANT:
 		  case alloc_VIRTUAL:
 		    break;
 		  default:
@@ -841,7 +821,6 @@ static void compute_lengths(obj_t class)
 	    SD(slot)->desired_offset = each_subclass_length++;
 	    break;
 	  case alloc_CLASS:
-	  case alloc_CONSTANT:
 	  case alloc_VIRTUAL:
 	    break;
 	  default:
@@ -988,7 +967,6 @@ static void inherit_slots(obj_t class, obj_t super)
 	    break;
 
 	  case alloc_CLASS:
-	  case alloc_CONSTANT:
 	  case alloc_VIRTUAL:
 	    /* We don't need to do anything to inherit these. */
 	    break;
@@ -1082,15 +1060,6 @@ static void process_slot(obj_t class, obj_t slot)
 				       TRUE, value_cell, class_setter);
 	    add_method(SD(slot)->setter, SD(slot)->setter_method);
 	}
-	break;
-
-      case alloc_CONSTANT:
-	SD(slot)->getter_method
-	    = make_accessor_method(function_debug_name(SD(slot)->getter),
-				   class, SD(slot)->type,
-				   FALSE, SD(slot)->init_function_or_value,
-				   constant_getter);
-	add_method(SD(slot)->getter, SD(slot)->getter_method);
 	break;
 
       case alloc_VIRTUAL:
@@ -1229,11 +1198,6 @@ static obj_t process_inherited(obj_t class, obj_t inherited, obj_t overrides)
 	    if (INHD(inherited)->init_function_or_value != obj_Unbound)
 		error("Can't init inherited class slot %=",
 		      INHD(inherited)->name);
-	    break;
-	  case alloc_CONSTANT:
-	    if (INHD(inherited)->init_function_or_value != obj_Unbound)
-		error("Can't init inherited constant slot %=",
-		  INHD(inherited)->name);
 	    break;
 	  case alloc_VIRTUAL:
 	    if (INHD(inherited)->init_function_or_value != obj_Unbound)
@@ -1610,9 +1574,6 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
 		value = value_cell_ref(accessor_method_datum
 				       (SD(slot)->getter_method));
 		break;
-	      case alloc_CONSTANT:
-		value = accessor_method_datum(SD(slot)->getter_method);
-		break;
 	      case alloc_VIRTUAL:
 		value = obj_False;
 		break;
@@ -1657,8 +1618,6 @@ static obj_t dylan_slot_alloc(obj_t slot)
 	return symbol("class");
       case alloc_EACH_SUBCLASS:
 	return symbol("each-subclass");
-      case alloc_CONSTANT:
-	return symbol("constant");
       case alloc_VIRTUAL:
 	return symbol("virtual");
       default:
@@ -1717,9 +1676,6 @@ static void dylan_slot_value(obj_t self, struct thread *thread, obj_t *args)
 	value = value_cell_ref(accessor_method_datum
 			       (SD(slot)->getter_method));
 	break;
-      case alloc_CONSTANT:
-	value = accessor_method_datum(SD(slot)->getter_method);
-	break;
       case alloc_VIRTUAL:
 	value = obj_Unbound;
 	break;
@@ -1762,9 +1718,6 @@ static obj_t dylan_slot_value_setter(obj_t value, obj_t slot, obj_t instance)
 	break;
       case alloc_CLASS:
 	value_cell_set(accessor_method_datum(SD(slot)->getter_method), value);
-	break;
-      case alloc_CONSTANT:
-	error("constant slots cannot be set.");
 	break;
       case alloc_VIRTUAL:
 	error("virtual slots cannot be set.");
@@ -1821,10 +1774,6 @@ void describe(obj_t thing)
 		value = value_cell_ref(accessor_method_datum
 				       (SD(slot)->getter_method));
 		printf("[class]");
-		break;
-	      case alloc_CONSTANT:
-		value = accessor_method_datum(SD(slot)->getter_method);
-		printf("[constant]");
 		break;
 	      case alloc_VIRTUAL:
 		printf("[virtual]\n");

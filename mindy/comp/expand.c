@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.23 1996/02/14 00:24:23 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.24 1996/02/14 16:40:19 nkramer Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -930,7 +930,9 @@ static void expand_slots(struct body *body,
 	boolean default_setter = TRUE;
 	
 	/* Extract the setter name, if there is one */
-	if (slot->plist) {
+	if (slot->flags & flag_CONSTANT) {
+	    default_setter = FALSE;
+	} else if (slot->plist) {
 	    struct property *prop, **prev;
 	    prev = &slot->plist->head;
 	    while ((prop = *prev) != NULL) {

@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.12 1996/02/14 00:23:43 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.13 1996/02/14 16:38:51 nkramer Exp $
 *
 \**********************************************************************/
 
 
 enum slot_allocation {
-    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS, alloc_CONSTANT,
+    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS, 
     alloc_VIRTUAL, alloc_Kinds
 };
 

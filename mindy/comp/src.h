@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.19 1996/02/13 23:21:20 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.20 1996/02/14 16:40:19 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -36,6 +36,7 @@ typedef unsigned int flags_t;
 #define flag_CONCRETE 8
 #define flag_PRIMARY 16
 #define flag_FREE 32
+#define flag_CONSTANT 64
 
 struct body {
     struct constituent *head;
@@ -456,7 +457,7 @@ struct superclass {
 };
 
 enum slot_allocation {
-    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS, alloc_CONSTANT,
+    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS, 
     alloc_VIRTUAL, alloc_Kinds
 };
 

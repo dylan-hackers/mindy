@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.11 1996/02/13 19:42:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.12 1996/02/14 16:40:19 nkramer Exp $
 *
 * This file implements symbols.
 *
@@ -54,7 +54,6 @@ struct symbol *sym_Aref = NULL;
 struct symbol *sym_Catch = NULL;
 struct symbol *sym_CheckType = NULL;
 struct symbol *sym_Class = NULL;
-struct symbol *sym_Constant = NULL;
 struct symbol *sym_Do = NULL;
 struct symbol *sym_Element = NULL;
 struct symbol *sym_Error = NULL;
@@ -244,7 +243,6 @@ void init_sym_table(void)
     sym_Catch = symbol("catch");
     sym_CheckType = symbol("check-type");
     sym_Class = symbol("class");
-    sym_Constant = symbol("constant");
     sym_Do = symbol("do");
     sym_Element = symbol("element");
     sym_Error = symbol("error");

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.9 1996/02/13 19:42:01 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.10 1996/02/14 16:40:19 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -58,7 +58,6 @@ extern struct symbol *sym_Aref;
 extern struct symbol *sym_Catch;
 extern struct symbol *sym_CheckType;
 extern struct symbol *sym_Class;
-extern struct symbol *sym_Constant;
 extern struct symbol *sym_Do;
 extern struct symbol *sym_Each_Subclass;
 extern struct symbol *sym_Element;
