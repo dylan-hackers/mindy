@@ -353,9 +353,11 @@ define method parse-error (token :: <token>, format :: <string>, #rest args)
 end method parse-error;
 
 //========================================================================
-// "Simple" operations on tokenizers
+// Support type -- <long-byte-string> and <string-table>
 //========================================================================
 
+// <string-table> -- private class.
+//
 // We attempt to optimize hashing of identifiers by using a specialized table
 // type.  The given hash functions is very fast and should be sufficient for
 // "typical" data.  Note that it will fail catastrophically for null strings,
@@ -363,15 +365,169 @@ end method parse-error;
 //
 define class <string-table> (<value-table>) end class;
 
-define method fast-string-hash (string :: <string>)
+// fst-string-hash -- private function.
+//
+define function fst-string-hash (string :: <string>)
   values(string.size * 256 + as(<integer>, string.first),
 	 $permanent-hash-state);
-end method fast-string-hash;
+end function fst-string-hash;
 
+// table-protocol -- method on imported generic.
+//
 define method table-protocol (table :: <string-table>)
  => (equal :: <function>, hash :: <function>);
-  values(\=, fast-string-hash);
+  values(\=, fst-string-hash);
 end method;
+
+// <long-byte-string> -- private class.
+//
+// This class represents arbitrary length strings of <byte-character>.  We
+// introduce it because Mindy cannot support <byte-string>s above a certain
+// length.  It is also an interesting test for built in assumptions concerning
+// strings.
+//
+define sealed class <long-byte-string> (<string>, <vector>)
+  sealed slot size :: <integer> = 0, init-keyword: #"size";
+  slot components :: <simple-object-vector> /* of <byte-string> */ = #[];
+end class <long-byte-string>;
+
+// $long-string-component-size -- private constant.
+//
+// The size of each substring in a <long-byte-string>
+//
+define constant $long-string-component-size = 16384;
+
+define sealed inline method initialize
+    (value :: <long-byte-string>, #key fill = ' ')
+  if (value.size > 0)
+    let (max-component, final-size)
+      = floor/(value.size, $long-string-component-size);
+    value.components := make(<simple-object-vector>, size: max-component + 1);
+    for (i from 0 below max-component)
+      value.components[i] := make(<byte-string>,
+				  size: $long-string-component-size,
+				  fill: fill);
+    end for;
+    value.components[max-component]
+      := make(<byte-string>, size: final-size, fill: fill);
+  end if;
+end method initialize;
+
+// type-for-copy -- method on imported generic.
+//
+// We copy <long-byte-string>s as <byte-string>s because we will want to pass
+// pieces of the string out to restrictive functions such as "write" and
+// "format".  Ideally, these should not be so narrow-minded.
+//
+define sealed inline method type-for-copy 
+    (string :: <long-byte-string>) => (result :: <type>);
+  <byte-string>;
+end method type-for-copy;
+  
+// copy-sequence -- method on imported generic.
+//
+// Relying on the "standard" definition of copy-sequence makes melange run 20
+// times slower.  It's worth spending a few lines on a 20-fold speedup.
+//
+define sealed method copy-sequence
+    (vector :: <long-byte-string>, #key start :: <integer> = 0, end: last)
+ => (result :: <byte-string>);
+  let last :: <integer> = last | size(vector);
+  let sz :: <integer> = last - start;
+  let (start-component, start-index)
+    = floor/(start, $long-string-component-size);
+  if (start-index + sz < $long-string-component-size)
+    let subseq :: <byte-string> = vector.components[start-component];
+    copy-sequence(subseq, start: start-index, end: start-index + sz);
+  else
+    let result :: <byte-string> = make(<byte-string>, size: sz);
+    for (from-index :: <integer> from start below last,
+	 to-index :: <integer> from 0)
+      element(result, to-index) := element(vector, from-index);
+    end for;
+    result;
+  end if;
+end method copy-sequence;
+
+define sealed inline method element
+    (string :: <long-byte-string>, key :: <integer>,
+     #key default = $not-supplied)
+ => (result :: <byte-character>);
+  if (key >= 0 & key < string.size)
+    let (component, index) = floor/(key, $long-string-component-size);
+    let substr :: <byte-string> =  string.components[component];
+    substr[index];
+  elseif (default == $not-supplied)
+    error("No such element in %=: %=", string, key);
+  else
+    default;
+  end if;
+end method element;
+
+define sealed inline method element-setter
+    (value :: <byte-character>, string :: <long-byte-string>, key :: <integer>)
+ => (value :: <byte-character>);
+   if (key >= 0 & key < string.size)
+    let (component, index) = floor/(key, $long-string-component-size);
+    let substr :: <byte-string> =  string.components[component];
+    substr[index] := value;
+   else
+     error("No such element in %=: %=", string, key);
+   end if;
+end method element-setter;
+
+// forward-iteration-protocol -- method on imported generic.
+//
+// This method is identical to the one in "array.dylan", except that it
+// is more tightly specialized to a single sealed class.  If you need to 
+// make a general change, you should probably grep for "outlined-iterator" 
+// and change all matching locations.
+//
+define inline method forward-iteration-protocol
+    (array :: <long-byte-string>)
+    => (initial-state :: <integer>,
+	limit :: <integer>,
+	next-state :: <function>,
+	finished-state? :: <function>,
+	current-key :: <function>,
+	current-element :: <function>,
+	current-element-setter :: <function>,
+	copy-state :: <function>);
+  values(0,
+	 array.size,
+	 method (array :: <long-byte-string>, state :: <integer>)
+	     => new-state :: <integer>;
+	   state + 1;
+	 end,
+	 method (array :: <long-byte-string>, state :: <integer>,
+		 limit :: <integer>)
+	     => done? :: <boolean>;
+	   // We use >= instead of == so that the constraint propagation
+	   // stuff can tell that state is < limit if this returns #f.
+	   state >= limit;
+	 end,
+	 method (array :: <long-byte-string>, state :: <integer>)
+	     => key :: <integer>;
+	   state;
+	 end,
+	 method (array :: <long-byte-string>, state :: <integer>)
+	     => element :: <object>;
+	   element(array, state);
+	 end,
+	 method (new-value :: <object>, array :: <long-byte-string>,
+		 state :: <integer>)
+	     => new-value :: <object>;
+	   element(array, state) := new-value;
+	 end,
+	 method (array :: <long-byte-string>, state :: <integer>)
+	     => state-copy :: <integer>;
+	   state;
+	 end);
+end;
+
+//========================================================================
+// "Simple" operations on tokenizers
+//========================================================================
 
 // Tokenizers can be created in a number of ways.  It must be passed a
 // "source", but this may be either a file name or a stream.  The "name:"
@@ -393,13 +549,25 @@ define method initialize (value :: <tokenizer>,
   // even across line boundaries.
   let source-stream
     = if (instance?(source, <string>))
+	let source = as(<byte-string>, source);	// make(<file-stream>) is picky
 	value.file-name := name | source;
 	make(<file-stream>, locator: source, direction: #"input");
       else
 	value.file-name := name | "<unknown-file>";
 	source;
       end if;
-  value.contents := as(<string>, read-to-end(source-stream));
+  let components = make(<stretchy-vector>);
+  block ()
+    while (#t)
+      add!(components, read(source-stream, $long-string-component-size));
+    end;
+  exception (err :: <incomplete-read-error>)
+    add!(components, err.incomplete-read-sequence);
+  exception (err :: <end-of-stream-error>)
+    #t;
+  end block;
+  value.contents := apply(concatenate-as, <long-byte-string>, components);
+
   if (parent)
     value.typedefs := (typedefs-from | parent).typedefs;
     value.cpp-table := parent.cpp-table;
