@@ -48,42 +48,17 @@
 	#define YY_ALWAYS_INTERACTIVE 		0
 	#define YY_NEVER_INTERACTIVE 		1
 
+
 	#include<strcasecmp.h>							/* Should just extern it here */
+	
+	#define TRUE 1
+	#define FALSE 0
 
-
-// Work around various include clashes
-
-// Errnos
-// Synchronized with CW
-
-	#define EPERM				1
-	#define EACCES				2
-	#define EBADF				3
-	#define EDEADLOCK			4
-	#define EMFILE				5
-	#define ENOENT				6
-	#define ENFILE				7
-	#define ENOSPC				8
-	#define EINVAL				9
-	#define EIO				    10
-	#define ENOMEM			    11
-	#define ENOSYS			    12
-// Made up
-	#define EINTR			    13
-	#define EEXIST			    14
-	#define EFBIG				15
-    #define EPIPE				16
-    #define ENAMETOOLONG		17
-    #define EROFS				18
-    #define EISDIR				19
-    #define ENOTDIR				20
-    #define EFAULT				21
-    #define ENXIO				22
 	
 // File Modes
 // Likewise
 
-	#define O_RDWR				0x0		
+	/*#define O_RDWR				0x0		
 	#define O_RDONLY			0x1		
 	#define O_WRONLY			0x2			
 	#define O_APPEND			0x0100		
@@ -93,4 +68,4 @@
 	#define O_NRESOLVE			0x1000		
 	#define O_ALIAS				0x2000		
 	#define O_RSRC 				0x4000		
-	#define O_BINARY			0x8000		
+	#define O_BINARY			0x8000	*/	
