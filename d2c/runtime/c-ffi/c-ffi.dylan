@@ -92,6 +92,7 @@ define open generic pointer-value-address
     (pointer :: <C-statically-typed-pointer>, #key index)
  => (offset-pointer :: <C-statically-typed-pointer>);
 
+/* XXX
 define inline method element
     (pointer :: <C-statically-typed-pointer>, index :: <integer>)
  => (value :: <object>)
@@ -104,6 +105,7 @@ define inline method element-setter
  => (new-value :: <object>)
   pointer-value(pointer, index: index) := new-value;
 end method element-setter;
+*/
 
 define inline method \=
     (p1 :: <C-pointer>, p2 :: <C-pointer>)
@@ -126,15 +128,15 @@ define sealed inline function C-char-at
      #key byte-index :: <integer> = 0, scaled-index :: <integer> = 0)
  => (result :: <machine-word>);
   pointer-deref(char:, ptr.pointer-address, 
-		byte-index + scaled-index * size-of(<C-char>));
+		byte-index + scaled-index);
 end function C-char-at;
 
 define sealed inline function C-char-at-setter
     (new :: <machine-word>, ptr :: <C-pointer>,
      #key byte-index :: <integer> = 0, scaled-index :: <integer> = 0)
  => (result :: <machine-word>);
-  pointer-deref(char:, ptr.pointer-address.machine-word-value,
-		byte-index + scaled-index * size-of(<C-char>)) := new;
+  pointer-deref(char:, ptr.pointer-address,
+		byte-index + scaled-index) := new;
 end function C-char-at-setter;
 
 //=========================================================================
@@ -259,24 +261,27 @@ end;
 define sealed inline method make
     (class :: subclass(<C-pointer>),
      #next next-method,
-     #key allocator = malloc, element-count = 1, extra-bytes = 0, address,
+     #key allocator = #f /* XXX malloc */, element-count = 1,
+          extra-bytes = 0, address,
      #all-keys)
  => (pointer :: <C-pointer>)
   if (address)
     next-method(class, %address: address);
   else
+/* XXX
     let memory :: <machine-word> =
       allocator(size-of(class.referenced-type) * element-count + extra-bytes);
     next-method(class, %address: memory);
+*/
   end if;
 end method;
 
 define open generic destroy
-    (pointer :: <C-pointer>, #key de-allocator = free)
+    (pointer :: <C-pointer>, #key de-allocator = #f /* XXX free */)
  => ();
 
 define method destroy
-    (pointer :: <C-pointer>, #key de-allocator = free)
+    (pointer :: <C-pointer>, #key de-allocator = #f /* XXX free */)
  => ();
   de-allocator(pointer.pointer-address);
 end method destroy;
