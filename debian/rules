@@ -13,13 +13,13 @@ bootstrap-stage1-stamp:
 	# Following is needed for bootstrapping
 ifeq ("$(STYLE)", "bootstrap")
 		libtoolize --force
-		aclocal
 		autoconf
 		./configure --with-readline \
 				--prefix=/usr \
 				--enable-mindy-bootstrap \
 				--with-gnu-ld \
 				--with-site-dylan-prefix=/usr
+		libtoolize --force
 		$(MAKE)
 		$(MAKE) DESTDIR=`pwd`/debian/bootstrap install
 		mkdir `pwd`/bootstrap_compiler
@@ -73,13 +73,12 @@ config: config-stamp
 config-stamp:
 ifeq ("$(STYLE)", "normal")
 		libtoolize --force
-		aclocal
-		autoconf
 		./configure --with-readline \
 			--prefix=/usr \
 			--with-site-dylan-prefix=/usr \
 			--with-existing-runtime=/usr/lib/dylan \
 			--with-gnu-ld
+		libtoolize --force
 endif
 	
 	touch config-stamp
@@ -99,11 +98,11 @@ clean:
 	chmod 0755 `pwd`/debian/delStatics
 	`pwd`/debian/delMakefiles `pwd`
 	`pwd`/debian/delStatics `pwd`
-	rm -f `pwd`/d2c/compiler/main/d2c.dbc
-	rm -f `pwd`/ltconfig
-	rm -f `pwd`/ltmain.sh
-	rm -f `pwd`/config.guess
-	rm -f `pwd`/config.sub
+	-rm -f `pwd`/d2c/compiler/main/d2c.dbc
+	-rm -f `pwd`/ltconfig
+	-rm -f `pwd`/ltmain.sh
+	-rm -f `pwd`/config.guess
+	-rm -f `pwd`/config.sub
 
 	dh_clean
 

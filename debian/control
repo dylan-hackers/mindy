@@ -3,6 +3,7 @@ Section: devel
 Priority: optional
 Maintainer: Brent A. Fulgham <bfulgham@debian.org>
 Standards-Version: 3.5.4.0
+Build-Depends: sharutils, perl-base, perl5, debhelper, libtool
 
 Package: gwydion-dylan
 Architecture: any

@@ -1,11 +1,22 @@
-gwydion-dylan (2.3.5final-2) unstable; urgency=low
+gwydion-dylan (2.3.6pre1cvs07242001-1) unstable; urgency=low
 
-  * Correct problem with search directories (basically, move back to "real"
-    Gwydion directory setup.
-  * Correct libtoolize --force use, running aclocal in between runs of
-    libtoolize and autoconf (Closes:Bug#101436)
+  * New release, with lots of new features and some optimizations
+    and bug-fixes identified during the ICFP2001 contest.
+  * Better name, correct mindy package to include its own libraries.
 
- -- Brent A. Fulgham <bfulgham@debian.org>  Sun, 24 Jun 2001 17:39:06 -0700
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sun, 29 Jul 2001 19:57:01 -0700
+
+gwydion-dylan (2.3.5release-2) unstable; urgency=low
+
+  * Added some needed build-depends.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 16 Jul 2001 19:52:06 -0700
+
+gwydion-dylan (2.3.5release-1) unstable; urgency=low
+
+  * Rebuilt with better directory structure.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Wed, 27 Jun 2001 20:41:06 -0700
 
 gwydion-dylan (2.3.5final-1) unstable; urgency=low
 
