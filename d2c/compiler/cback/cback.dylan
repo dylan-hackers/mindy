@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.105 1996/02/16 03:49:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.106 1996/02/16 18:27:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1083,71 +1083,14 @@ define generic emit-tlf-gunk (tlf :: <top-level-form>, file :: <file-state>)
 
 define method emit-tlf-gunk (tlf :: <top-level-form>, file :: <file-state>)
     => ();
-  format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
+  format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
 end;
-
-// This method does useful stuff to insure that heap dumping does the
-// right thing for generic functions.
-//
-define method emit-tlf-gunk
-    (tlf :: type-union(<define-generic-tlf>, <define-implicit-generic-tlf>),
-     file :: <file-state>)
-    => ();
-  format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
-  let defn = tlf.tlf-defn;
-  let ctv = defn.ct-value;
-  if (instance?(ctv, <ct-sealed-generic>))
-    //
-    // We dump sealed generic in the local heap instead of the letting them
-    // all accumulate in the global heap.  This trades off a faster global
-    // heap build against potentially dumping generics that are never
-    // referenced, which seems to be a win.
-    eagerly-reference(ctv, file);
-  else
-    //
-    // By adding generic function methods to the heap now, we save
-    // effort during the global dump phase.  There is, of course, the
-    // possibility of writing heap info for methods which will not be
-    // referenced.
-    for (meth in defn.generic-defn-methods)
-      let meth-ctv = meth.ct-value;
-      if (meth-ctv)
-	eagerly-reference(meth-ctv, file);
-      end if;
-    end for;
-  end if;
-end method emit-tlf-gunk;
-
-
-define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
-    => ();
-  format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
-  let ctv = tlf.tlf-defn.ct-value;
-  if (ctv)
-    if (ctv.sealed?)
-      //
-      // By adding sealed classes to the heap now, we save effort duing the
-      // global dump phase.  And this costs us nothing, because all classes
-      // are referenced through the super/subclass links.
-      eagerly-reference(ctv, file);
-    elseif (ctv.primary?)
-      //
-      // We also force the slot infos for open primary classes into the local
-      // heap.  We can because the position table will be static (because no
-      // subclasses can allocate the slot somewhere else).
-      for (slot in ctv.new-slot-infos)
-	eagerly-reference(slot, file);
-      end for;
-    end if;
-  end if;
-end method emit-tlf-gunk;
-
 
 define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
 			     file :: <file-state>)
     => ();
   let bstream = file.file-body-stream;
-  format(bstream, "/* %s */\n\n", tlf.clean-for-comment);
+  format(bstream, "\n/* %s */\n\n", tlf.clean-for-comment);
 
   let gstream = file.file-guts-stream;
 
@@ -1218,21 +1161,91 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
   end;
 end;
 
+// This method does useful stuff to insure that heap dumping does the
+// right thing for generic functions.
+//
+define method emit-tlf-gunk
+    (tlf :: type-union(<define-generic-tlf>, <define-implicit-generic-tlf>),
+     file :: <file-state>)
+    => ();
+  format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
+  let defn = tlf.tlf-defn;
+  emit-definition-gunk(defn, file);
+  write('\n', file.file-body-stream);
+  let ctv = defn.ct-value;
+  if (ctv)
+    if (defn.generic-defn-sealed?)
+      //
+      // We dump sealed generic in the local heap instead of the letting them
+      // all accumulate in the global heap.  This trades off a faster global
+      // heap build against potentially dumping generics that are never
+      // referenced, which seems to be a win.
+      eagerly-reference(ctv, file);
+    end if;
+  end if;
+end method emit-tlf-gunk;
+
+define method emit-tlf-gunk
+    (tlf :: <define-method-tlf>, file :: <file-state>)
+    => ();
+  format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
+  let defn = tlf.tlf-defn;
+  let gf = defn.method-defn-of;
+  if (gf & ~gf.generic-defn-sealed?)
+    let ctv = defn.ct-value;
+    if (ctv)
+      //
+      // By adding generic function methods to the heap now, we save
+      // effort during the global dump phase.  There is, of course, the
+      // possibility of writing heap info for methods which will not be
+      // referenced.
+      eagerly-reference(ctv, file);
+    end if;
+  end if;
+end method emit-tlf-gunk;
+      
+define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
+    => ();
+  format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
+  let defn = tlf.tlf-defn;
+  emit-definition-gunk(defn, file);
+  write('\n', file.file-body-stream);
+  let ctv = defn.ct-value;
+  if (ctv)
+    if (ctv.sealed?)
+      //
+      // By adding sealed classes to the heap now, we save effort duing the
+      // global dump phase.  And this costs us nothing, because all classes
+      // are referenced through the super/subclass links.
+      eagerly-reference(ctv, file);
+    elseif (ctv.primary?)
+      //
+      // We also force the slot infos for open primary classes into the local
+      // heap.  We can because the position table will be static (because no
+      // subclasses can allocate the slot somewhere else).
+      for (slot in ctv.new-slot-infos)
+	eagerly-reference(slot, file);
+      end for;
+    end if;
+  end if;
+end method emit-tlf-gunk;
+
+
 define method emit-tlf-gunk
     (tlf :: <define-bindings-tlf>, file :: <file-state>)
     => ();
-  format(file.file-body-stream, "/* %s */\n\n", tlf.clean-for-comment);
+  format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
   for (defn in tlf.tlf-required-defns)
-    emit-bindings-definition-gunk(defn, file);
+    emit-definition-gunk(defn, file);
   end;
   if (tlf.tlf-rest-defn)
-    emit-bindings-definition-gunk(tlf.tlf-rest-defn, file);
+    emit-definition-gunk(tlf.tlf-rest-defn, file);
   end;
   write('\n', file.file-body-stream);
 end;
 
-define method emit-bindings-definition-gunk
-    (defn :: <bindings-definition>, file :: <file-state>) => ();
+define method emit-definition-gunk
+    (defn :: <definition>, file :: <file-state>) => ();
   let info = get-info-for(defn, file);
   let stream = file.file-body-stream;
   let rep = info.backend-var-info-rep;
@@ -1263,22 +1276,26 @@ define method emit-bindings-definition-gunk
   end;
 end;
 
-define method emit-bindings-definition-gunk
-    (defn :: <variable-definition>, file :: <file-state>,
-     #next next-method)
+define method emit-definition-gunk
+    (defn :: <variable-definition>, file :: <file-state>, #next next-method)
     => ();
   next-method();
   let type-defn = defn.var-defn-type-defn;
   if (type-defn)
-    emit-bindings-definition-gunk(type-defn, file);
+    emit-definition-gunk(type-defn, file);
   end;
 end;
 
-define method emit-bindings-definition-gunk
-    (defn :: <constant-definition>, file :: <file-state>,
+define method emit-definition-gunk
+    (defn :: <abstract-constant-definition>, file :: <file-state>,
      #next next-method)
     => ();
-  unless (instance?(defn.ct-value, <eql-ct-value>))
+  let ctv = defn.ct-value;
+  if (instance?(ctv, <eql-ct-value>))
+    format(file.file-body-stream, "/* %s is %s */\n",
+	   defn.defn-name.clean-for-comment,
+	   ctv.clean-for-comment);
+  else
     next-method();
   end;
 end;
