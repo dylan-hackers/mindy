@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.73 1995/11/02 18:14:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.74 1995/11/06 17:04:38 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -143,7 +143,24 @@ end;
 
 // Output file state
 
+define class <unit-info> (<object>)
+  //
+  // String prefix for this unit.
+  slot unit-info-prefix :: <byte-string>, required-init-keyword: prefix:;
+  //
+  // id number for the next global.
+  slot unit-info-next-global :: <fixed-integer>, init-value: 0;
+  //
+  // Vector of the initial values for the roots vector.
+  slot unit-info-init-roots :: <stretchy-vector>,
+    init-function: curry(make, <stretchy-vector>);
+end;
+
 define class <output-info> (<object>)
+  //
+  // The unit info for this output info.
+  slot output-info-unit-info :: <unit-info>,
+    required-init-keyword: unit-info:;
   //
   // Things we have already spewed defns for.
   slot output-info-prototypes-exist-for :: <string-table>,
@@ -163,6 +180,8 @@ define class <output-info> (<object>)
     init-function: curry(make-indenting-string-stream,
 			 indentation: $indentation-step);
   //
+  slot output-info-next-mv-result-struct :: <fixed-integer>, init-value: 0;
+  //
   slot output-info-local-vars :: <object-table>,
     init-function: curry(make, <object-table>);
   //
@@ -172,17 +191,11 @@ define class <output-info> (<object>)
   // id number for the next local.  Reset at the start of each function.
   slot output-info-next-local :: <fixed-integer>, init-value: 0;
   //
-  // id number for the next global.
-  slot output-info-next-global :: <fixed-integer>, init-value: 0;
-  //
-  // Vector of the initial values for the roots vector.
-  slot output-info-init-roots :: <stretchy-vector>,
-    init-function: curry(make, <stretchy-vector>);
-  //
   // C variable holding the current stack top.
   slot output-info-cur-stack-depth :: <fixed-integer>,
     init-value: 0;
 end;
+
 
 
 
@@ -219,19 +232,21 @@ end;
 
 define method new-global (output-info :: <output-info>)
     => res :: <string>;
-  let num = output-info.output-info-next-global;
-  output-info.output-info-next-global := num + 1;
+  let unit-info = output-info.output-info-unit-info;
+  let num = unit-info.unit-info-next-global;
+  unit-info.unit-info-next-global := num + 1;
 
-  format-to-string("G%d", num);
+  format-to-string("%s_G%d", unit-info.unit-info-prefix, num);
 end;
 
 define method new-root (init-value :: union(<false>, <ct-value>),
 			output-info :: <output-info>)
-  let roots = output-info.output-info-init-roots;
+  let unit-info = output-info.output-info-unit-info;
+  let roots = unit-info.unit-info-init-roots;
   let index = roots.size;
   add!(roots, init-value);
 
-  format-to-string("roots[%d]", index);
+  format-to-string("%s_roots[%d]", unit-info.unit-info-prefix, index);
 end;
 
 define method cluster-names (depth :: <fixed-integer>)
@@ -531,7 +546,8 @@ define method emit-prologue (output-info :: <output-info>) => ();
 
   format(stream, "#include <runtime.h>\n\n");
 
-  format(stream, "extern descriptor_t roots[];\n\n");
+  format(stream, "extern descriptor_t %s_roots[];\n\n",
+	 output-info.output-info-unit-info.unit-info-prefix);
   format(stream, "#define obj_True %s.heapptr\n",
 	 c-expr-and-rep(as(<ct-value>, #t), $general-rep, output-info));
   format(stream, "#define obj_False %s.heapptr\n\n",
@@ -549,13 +565,13 @@ define method emit-epilogue
   let bstream = output-info.output-info-body-stream;
   let gstream = output-info.output-info-guts-stream;
 
-  format(bstream, "void main(int argc, char *argv[])\n{\n");
-  format(gstream, "descriptor_t *sp = malloc(64*1024);\n\n");
+  format(bstream, "void %s_init(descriptor_t *sp)\n{\n",
+	 output-info.output-info-unit-info.unit-info-prefix);
   for (init-function in init-functions)
     let main-entry = init-function.main-entry;
     let func-info = get-info-for(main-entry, output-info);
     format(gstream, "/* %s */\n", main-entry.name);
-    format(gstream, "%s(sp);\n", main-entry-name(func-info, output-info));
+    format(gstream, "%s(sp);\n\n", main-entry-name(func-info, output-info));
     write(gstream.string-output-stream-string, bstream);
   end;
   write("}\n", bstream);
@@ -869,7 +885,9 @@ define method pick-result-structure
   if (struct)
     struct;
   else
-    let name = new-global(output-info);
+    let id = output-info.output-info-next-mv-result-struct;
+    output-info.output-info-next-mv-result-struct := id + 1;
+    let name = format-to-string("mv_result_%d", id);
     let stream = output-info.output-info-body-stream;
     format(stream, "struct %s {\n", name);
     for (type in types, index from 0)
@@ -889,6 +907,27 @@ define method emit-prototype-for
 	 "extern %s;\t/* %s */\n\n",
 	 compute-function-prototype(#f, function-info, output-info),
 	 function-info.function-info-name);
+end;
+
+define method emit-prototype-for
+    (name :: <byte-string>, function-info == #"general",
+     output-info :: <output-info>)
+    => ();
+  format(output-info.output-info-body-stream,
+	 "extern descriptor_t * %s(descriptor_t *orig_sp, "
+	   "heapptr_t A0 /* self */, long A1 /* nargs */);\n\n",
+	 name);
+end;
+
+define method emit-prototype-for
+    (name :: <byte-string>, function-info == #"generic",
+     output-info :: <output-info>)
+    => ();
+  format(output-info.output-info-body-stream,
+	 "extern descriptor_t * %s(descriptor_t *orig_sp, "
+	   "heapptr_t A0 /* self */, long A1 /* nargs */, "
+	   "heapptr_t A2 /* next-info */);\n\n",
+	 name);
 end;
 
 define method emit-region
