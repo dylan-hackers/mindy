@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.11 1994/04/11 23:31:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.12 1994/04/12 16:01:02 rgs Exp $
 *
 * This file does whatever.
 *
@@ -1039,7 +1039,7 @@ static obj_t
 		boolean more_specific = TRUE;
 
 		for (scan = ambiguous; scan != obj_Nil; scan = TAIL(scan)) {
-		    switch (compare_methods(methods, HEAD(scan), args)) {
+		    switch (compare_methods(method, HEAD(scan), args)) {
 		      case method_MoreSpecific:
 			break;
 		      case method_Ambiguous:
