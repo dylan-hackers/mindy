@@ -314,7 +314,7 @@ end;
 
 // Type system methods.
 
-define method instance? (object, class :: <class>)
+define method %instance? (object, class :: <class>)
     => res :: <boolean>;
   subtype?(object.object-class, class);
 end;
@@ -404,6 +404,8 @@ end;
 
 // Subclass types.
 
+/* ### not absolutly needed
+
 // <subclass> -- internal
 //
 // A <subclass> represents all of the subclasses of a particular class,
@@ -444,7 +446,7 @@ end;
 //
 // Nothing but classes (handled below) are instances of subclass types.
 //
-define method instance? (object, type :: <subclass>)
+define method %instance? (object, type :: <subclass>)
     => res :: <boolean>;
   #f;
 end;
@@ -454,7 +456,7 @@ end;
 // A class is a instance of a subclass type iff that class is a subtype of
 // of the subclass type's base class.
 //
-define method instance? (object :: <class>, type :: <subclass>)
+define method %instance? (object :: <class>, type :: <subclass>)
     => res :: <boolean>;
   subtype?(object, type.subclass-of);
 end;
@@ -480,3 +482,5 @@ define method subtype? (type1 :: <subclass>, type2 :: <subclass>)
     => res :: <boolean>;
   subtype?(type1.subclass-of, type2.subclass-of);
 end;
+
+*/
