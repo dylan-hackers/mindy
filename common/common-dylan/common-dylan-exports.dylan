@@ -8,7 +8,6 @@ define library common-dylan
   use melange-support;
   use format;
   use streams;
-  use standard-io;
   use table-extensions;
   use format-out;
   use random;
@@ -72,6 +71,12 @@ define module simple-profiling
   // XXX - Needs definition.
 end module;
 
+define module simple-debugging
+  use Extensions,
+    import: { \assert, \debug-assert, debug-message },
+    export: all;
+end module;
+
 define module byte-vector
   use extensions,
     export: {<byte>,
@@ -93,6 +98,7 @@ define module common-extensions
              unfound,
              \assert,
              \debug-assert,
+             debug-message,
              integer-length,
              decode-float,
              scale-float,
@@ -130,10 +136,9 @@ define module common-extensions
     export: {<string-table>};
   use transcendentals, import: { logn };
   use c-support;
-  use format, export: all;
-  use streams, import: { new-line, force-output, <stream> },
+  use format, export: { format-to-string };
+  use streams, import: { <stream> },
     export: {<stream>};
-  use standard-io;
   use random,
      export: all;
   use regular-expressions,
@@ -165,7 +170,7 @@ define module common-extensions
     condition-to-string,
 
     /* Debugging */
-    debug-message,
+    //debug-message,
 
     /* Types */
     //false-or,

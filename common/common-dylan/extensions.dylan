@@ -53,19 +53,6 @@ end;
 
 
 //=========================================================================
-//  Debugging & assertions
-//=========================================================================
-//  Some of this may move to simple-debugging.
-
-define function debug-message
-    (format-string, #rest format-arguments)
- => ()
-  apply(format, *standard-error*, format-string, format-arguments);
-  new-line(*standard-error*);
-  force-output(*standard-error*);
-end function;
-
-//=========================================================================
 //  Ignore & ignorable
 //=========================================================================
 //  Control compiler warnings about unused variables.
