@@ -1,12 +1,75 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.96 1996/02/05 13:31:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.97 1996/02/09 01:37:43 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
+
+//======================================================================
+//
+// Types:
+//   <indenting-stream>
+//      Wrapper stream which outputs indented text with conversions of
+//      spaces into tabs.  Keywords include "target:" and "indentation:".
+//      Operations include "indent" and "make-indenting-stream-string".
+//   <unit-state>
+//      Encapsulates state for object-code generation.  Covers all
+//      object files for a single compilation unit.  Keywords include
+//      "prefix:".  Operations include "unit-prefix", "new-global", and
+//      "new-root".
+//   <file-state>
+//      Encapsulates per-object-file state.  Keywords include "unit:".
+//      Operations include "file-unit".  It is also passed as a
+//      mutable parameter to most "emit-" functions.
+//   <unit-info>
+//      Holds information about a given compilation unit which should
+//      be preserved in the libarary dump file.  Keywords (and
+//      operations) include "unit-name" and "undumped-objects".
+//   <backend-var-info>
+//      Encapsulates info about either variables or <definition>s.
+//      Holds a representation and an optional name.
+// Functions:
+//   indent(stream :: <indenting-stream>, delta :: <integer>)
+//      Changes the current indentation for stream text.
+//   make-indenting-stream-string(#rest keys)
+//   emit-prototype-for(name :: <byte-string>, info :: <object>,
+//                      file :: <file-state>)  => ();
+//      Writes an "extern" declaration which will provide the C
+//      compiler with enough information to use an object defined in a
+//      different file.  "Info" may be as vague as #"generic" or may
+//      be a specific object or declaration.
+//   emit-tlf-gunk(tlf :: <top-level-form>, file :: <file-state>) => ();
+//      Writes arbitrary information about a given top-level-form.
+//      This may be just a comment, or it may be a set of concrete
+//      declarations.  "Emit-tlf-gunk" also sometimes produces
+//      side-effects upon the current <file-state> -- i.e. adding a
+//      new "root".
+//   emit-copy(target :: <string>, target-rep :: <representation>,
+//             source :: <string>, source-rep :: <representation>,
+//             file :: <file-state>) => ();
+//      Writes out whatever code is necessary to copy "target"s data
+//      into "source".
+//   c-name-and-rep(leaf :: <abstract-variable>, file :: <file-state>)
+//     => (name :: <string>, rep :: <representation>);
+//      Looks up the "info" for the given variable and returns a legal
+//      C variable name and the "representation" of the variable.
+//   get-info-for(thing :: <annotatable>, file :: <file-state>);
+//      Retrieves the back-end specific info corresponding to "thing".
+//      The type of the result depends entirely upon the type of
+//      "thing", but its name will most likely end in "-info>".
+//   make-info-for(thing :: <annotatable>, file :: <file-state>);
+//      Actually computes the back-end specific info for an object.
+//      This is an arbitrary computation and the type of the result is
+//      entirely dependent upon the type of "thing".
 
 define constant $indentation-step = 4;
 
 
-// Indenting streams.
+//========================================================================
+//   <indenting-stream>
+//
+//   Wrapper stream which outputs indented text with conversions of
+//   spaces into tabs.  Keywords include "target:" and "indentation:".
+//   Operations include "indent" and "make-indenting-stream-string".
+//========================================================================
 
 define class <indenting-stream> (<stream>)
   slot is-target :: <stream>, required-init-keyword: target:;
@@ -26,12 +89,21 @@ define constant $tab = as(<integer>, '\t');
 define constant $space = as(<integer>, ' ');
 define constant $newline = as(<integer>, '\n');
 
+// This routine does the real work for indenting streams.  Whenever a
+// buffer is released, it copies "normal" text from the wrapper's
+// buffer to the wrapped stream's buffer.  However, at the same time,
+// it looks for tabs, spaces, and newlines and does magical things
+// with them.  Tabs are (perhaps temporarily) converted into spaces,
+// spaces are inserted after newlines to produce indentation, and
+// "initial" spaces are converted into tabs.
+//
 define method indenting-stream-spew-output
     (stream :: <indenting-stream>, stop :: <buffer-index>)
     => ();
   unless (zero?(stop))
     let (target-buffer, target-next, target-size)
       = get-output-buffer(stream.is-target);
+    let buffer = stream.is-buffer;
     local
       method spew-n-chars (n, char)
 	let available = target-size - target-next;
@@ -50,48 +122,73 @@ define method indenting-stream-spew-output
 	  target-next := i;
 	end;
       end,
-      method spew-char (char)
-	if (target-next == target-size)
+      method spew-range (finish, start)
+	let n = finish - start;
+	let available = target-size - target-next;
+	if (available < n)
+	  copy-bytes(target-buffer, target-next, buffer, start, available);
 	  empty-output-buffer(stream.is-target, target-size);
 	  target-next := 0;
-	end;
-	target-buffer[target-next] := char;
-	target-next := target-next + 1;
-      end;
-    let buffer = stream.is-buffer;
-    let column = stream.is-column;
-    let after-newline? = stream.is-after-newline?;
-    for (i from 0 below stop)
-      let char = buffer[i];
-      if (char == $newline)
-	spew-char(char);
-	column := 0;
-	after-newline? := #t;
-      elseif (char == $space)
-	unless (after-newline?)
-	  spew-char(char);
-	end;
-	column := column + 1;
-      elseif (char == $tab)
-	let old-column = column;
-	column := ceiling/(column + 1, 8) * 8;
-	unless (after-newline?)
-	  spew-n-chars(column - old-column, $space);
-	end;
-      else
-	if (after-newline?)
-	  let (tabs, spaces) = floor/(stream.is-indentation + column, 8);
-	  spew-n-chars(tabs, $tab);
-	  spew-n-chars(spaces, $space);
-	  after-newline? := #f;
-	end;
-	spew-char(char);
-	column := column + 1;
-      end;
-    end;
+	  spew-range(finish, start + available);
+	else
+	  copy-bytes(target-buffer, target-next, buffer, start, n);
+	  target-next := target-next + n;
+	end if;
+      end method spew-range;
+    local
+      method do-indentation (index :: <integer>, col :: <integer>)
+// Return type declarations screw up tail calls
+//       => (after-newline :: <boolean>, column :: <integer>);
+	if (index == stop)
+	  values(#t, col);
+	else
+	  let char :: <integer> = buffer[index];
+	  if (char == $newline)
+	    spew-range(index + 1, index);
+	    do-indentation(index + 1, col);
+	  elseif (char == $tab)
+	    do-indentation(index + 1, col + 8 - modulo(col, 8));
+	  elseif (char == $space)
+	    do-indentation(index + 1, col + 1);
+	  else
+	    let (tabs, space) = floor/(stream.is-indentation + col, 8);
+	    spew-n-chars(tabs, $tab);
+	    spew-n-chars(space, $space);
+	    do-text(index, index, col);
+	  end if;
+	end if;
+      end method do-indentation,
+      method do-text (index :: <integer>, start-index :: <integer>,
+		      col :: <integer>)
+// Return type declarations screw up tail calls
+//       => (after-newline :: <boolean>, column :: <integer>);
+	if (index == stop)
+	  spew-range(index, start-index);
+	  values(#f, col);
+	else
+	  let char :: <integer> = buffer[index];
+	  if (char == $tab)
+	    spew-range(index, start-index);
+	    let spaces = 8 - modulo(col, 8);
+	    spew-n-chars($space, spaces);
+	    do-text(index + 1, index + 1, col + spaces);
+	  elseif (char = $newline)
+	    spew-range(index + 1, start-index);
+	    do-indentation(index + 1, 0);
+	  else
+	    do-text(index + 1, start-index, col + 1);
+	  end if;
+	end if;
+      end method do-text;
+    let (new-after-newline?, new-column)
+      = if (stream.is-after-newline?)
+	  do-indentation(0, stream.is-column);
+	else
+	  do-text(0, 0, stream.is-column);
+	end if;
     release-output-buffer(stream.is-target, target-next);
-    stream.is-after-newline? := after-newline?;
-    stream.is-column := column;
+    stream.is-after-newline? := new-after-newline?;
+    stream.is-column := new-column;
   end;
 end;
 
@@ -148,15 +245,14 @@ define class <unit-state> (<object>)
   // String prefix for this unit.
   slot unit-prefix :: <byte-string>, required-init-keyword: prefix:;
   //
-  // id number for the next global.
-  slot unit-next-global :: <integer>, init-value: 0;
-  //
   // keeps track of names used already.
   slot unit-global-table :: <table>,
     init-function: method () make(<string-table>) end method;
   //
   // Vector of the initial values for the roots vector.
   slot unit-init-roots :: <stretchy-vector>,
+    init-function: curry(make, <stretchy-vector>);
+  slot unit-root-names :: <collection>,
     init-function: curry(make, <stretchy-vector>);
 end;
 
@@ -208,9 +304,6 @@ define class <file-state> (<object>)
   // id number for the next block.
   slot file-next-block :: <integer>, init-value: 0;
   //
-  // id number for the next local.  Reset at the start of each function.
-  slot file-next-local :: <integer>, init-value: 0;
-  //
   // keeps track of names used already.
   slot file-local-table :: <table>,
     init-function: method () make(<string-table>) end method;
@@ -219,8 +312,18 @@ end;
 
 
 
+//========================================================================
 // Utilities.
+//
+// The "Maybe-" functions in this section all check to see whether the
+// named operations have already been performed (for this file), and
+// do them if they have not.  Thus, after the call, you may depend
+// upon the operation having been performed at some time.
+//========================================================================
 
+// Include a given ".h" file, which is expected to be in your include
+// search path (as specified in CPATH or via -I switches.
+//
 define method maybe-emit-include
     (name :: <byte-string>, file :: <file-state>)
   unless (element(file.file-includes-exist-for, name, default: #f))
@@ -229,6 +332,10 @@ define method maybe-emit-include
   end;
 end;
 
+// Write out a C prototye for an object with the given name.  More
+// information about the object will be provided by the "info"
+// parameter.  The exact behavior depends upon "info"s type.
+//
 define method maybe-emit-prototype
     (name :: <byte-string>, info :: <object>, file :: <file-state>)
     => ();
@@ -239,17 +346,29 @@ define method maybe-emit-prototype
   end;
 end;
 
+// See maybe-emit-prototype.
+//
 define generic emit-prototype-for
     (name :: <byte-string>, info :: <object>, file :: <file-state>)
     => ();
 
 
+// Returns a "<...-info>" object for the given "thing".  Since there is no
+// consistent structure to "<...-info>" objects, it is difficult to
+// know precisely what you will be getting.  The unifying concept is
+// that the returned object will be back-end specific data describing
+// "thing". 
+//
 define method get-info-for (thing :: <annotatable>,
 			    file :: <file-state>)
     => res :: <object>;
   thing.info | (thing.info := make-info-for(thing, file));
 end;
 
+// This form defines a vector which maps from characters in dylan
+// names to characters in C names.  This is necessary because C's name
+// syntax is much more restrictive than Dylan's.
+//
 define constant c-prefix-transform :: <vector>
   = begin
       let map = make(<byte-string>, size: 256);
@@ -271,9 +390,13 @@ define constant c-prefix-transform :: <vector>
       map[as(<integer>, '&')] := 'O';
       map[as(<integer>, '|')] := 'O';
       map[as(<integer>, '^')] := 'O';
+      map[as(<integer>, ' ')] := '_';
       map;
     end;
 
+// This function should be in a standard library.  It simply checks to
+// see if the "long" string starts with the "short" one.
+//
 define method is-prefix? (short :: <string>, long :: <string>)
   if (short.size > long.size)
     #f;
@@ -285,29 +408,52 @@ define method is-prefix? (short :: <string>, long :: <string>)
   end if;
 end method is-prefix?;
 
-// Return a name suitable for use in a C name.  "Description" is expected to
-// be a descriptive string like "foo{<bar>, <baz>} in module Dylan, library
-// Dylan".
+//========================================================================
+
+// Return a strings suitable for use in a C name, based upon
+// "description".  "Description" should be some sort of abstract name
+// -- a string, symbol, <name>, etc.
+//
+define generic c-prefix (description :: <object>) => (result :: <string>);
+
+// "Description" is expected to be a descriptive string like
+// "foo{<bar>, <baz>} in module Dylan, library Dylan", but may be
+// something as simple as just "foo".
+//
 define method c-prefix (description :: <byte-string>) => (result :: <string>);
-  if (is-prefix?("Define Constant ", description))
-    description := copy-sequence(description, start: 16);
-  end if;
-  if (is-prefix?("Discriminator for ", description))
-    description := copy-sequence(description, start: 18);
-  end if;
-  for (i from 0 below description.size,
-       until: description[i] = ' ' | description[i] = '{')
-  finally
-    let result = make(<byte-string>, size: i);
-    for (j from 0 below i)
-      result[j] := c-prefix-transform[as(<integer>, description[j])];
+  if (description.empty?)
+    description;
+  else
+    let start = case
+		  (is-prefix?("Define Constant ", description)) => 16;
+		  (is-prefix?("Discriminator for ", description)) => 18;
+		  otherwise => 0;
+		end case;
+    for (i from start below description.size,
+	 until: description[i] = ' ' | description[i] = '{')
+    finally
+      let (first, last, offset, result)
+	= if (i > start & description[start] = '<' & description[i - 1] = '>')
+	    values(start + 1, i - 1, 4, 
+		   map-into(make(<byte-string>, size: i - start + 2),
+			    identity, "cls_"));
+	  else
+	    values(start, i, 0, make(<byte-string>, size: i - start));
+	  end if;
+      for (j from offset, i from first below last)
+	result[j] := c-prefix-transform[as(<integer>, description[i])];
+      end for;
+      result;
     end for;
-    result;
-  end for;
+  end if;
 end method c-prefix;
 
 define method c-prefix (description :: <basic-name>) => (result :: <string>);
   as(<byte-string>, description.name-symbol).c-prefix;
+end method c-prefix;
+
+define method c-prefix (description :: <method-name>) => (result :: <string>);
+  description.method-name-generic-function.c-prefix;
 end method c-prefix;
 
 define method c-prefix (description :: <symbol>) => (result :: <string>);
@@ -326,13 +472,12 @@ define method new-local
      #key prefix :: <string> = "L_", modifier :: <string> = "anon")
  => res :: <string>;
   let result = stringify(prefix, modifier);
-  if (key-exists?(file.file-local-table, result))
-    let num = file.file-next-local;
-    file.file-next-local := num + 1;
-    new-local(file, prefix: prefix,
-	      modifier: stringify(modifier, '_', num));
+  let num = element(file.file-local-table, result, default: 0) + 1;
+  file.file-local-table[result] := num;
+  if (num == 1)
+    result;
   else
-    file.file-local-table[result] := result;
+    new-local(file, prefix: result, modifier: stringify('_', num));
   end if;
 end;
 
@@ -343,26 +488,33 @@ define method new-global
   let unit = file.file-unit;
 
   let result = stringify(unit.unit-prefix, '_', prefix, modifier);
-  if (key-exists?(unit.unit-global-table, result))
-    let num = unit.unit-next-global;
-    unit.unit-next-global := num + 1;
-    new-global(file, prefix: prefix,
-	       modifier: stringify(modifier, '_', num));
-  else
-    unit.unit-global-table[result] := result;
+  let num = element(unit.unit-global-table, result, default: 0) + 1;
+  unit.unit-global-table[result] := num;
+  if (num == 1)
+    result;
+  else 
+    new-global(file, prefix: prefix, modifier: stringify(modifier, '_', num));
   end if;
 end method new-global;
 
-define method new-root (init-value :: false-or(<ct-value>),
-			file :: <file-state>,
-			#key prefix)
+define method new-root
+    (init-value :: false-or(<ct-value>), file :: <file-state>,
+     #key prefix :: <string> = "R")
   let unit = file.file-unit;
   let roots = unit.unit-init-roots;
   let index = roots.size;
-  add!(roots, init-value);
-
-  stringify(unit.unit-prefix, "_roots[", index, ']');
+  roots[index] := init-value;
+  let name = new-global(file, prefix: prefix);
+  unit.unit-root-names[index] := name;
 end;
+
+//========================================================================
+// "Cluster" operations
+//
+// Produce pairs of names ("bottom" and "top") for "clusters"
+// associated with certain definitions.  These clusters typically
+// correspond to #rest arguments or #rest return values.
+//========================================================================
 
 define method cluster-names (depth :: <integer>)
     => (bottom-name :: <string>, top-name :: <string>);
@@ -395,6 +547,29 @@ end;
 
 // definition stuff.
 
+//========================================================================
+// Emit- functions
+//
+// Emit functions write some sort of information corresponding to the
+// given object to the "current object file" (derived from the given
+// <file-state>").
+//
+// Emit-prototype-for
+//   Writes an "extern" declaration which will provide the C compiler with
+//   enough information to use an object defined in a different file.
+// Emit-tlf-gunk
+//   Writes arbitrary information about a given top-level-form.  This
+//   may be just a comment, or it may be a set of concrete
+//   declarations.  "Emit-tlf-gunk" also sometimes produces
+//   side-effects upon the current <file-state> -- i.e. adding a new
+//   "root".
+//========================================================================
+
+// We need prototypes for things with "immediate" representations or
+// for associated intialization variables.  Handling of specific
+// prototypes is simply handed off to "format" (i.e. "print-message").
+// "Name" is ignored.
+//
 define method emit-prototype-for
     (name :: <byte-string>, defn :: <definition>, file :: <file-state>)
     => ();
@@ -406,12 +581,37 @@ define method emit-prototype-for
 	   rep.representation-c-type,
 	   info.backend-var-info-name,
 	   defn.defn-name);
+  else
+    // We must have a user meaningful-name, so make sure it's
+    // declared.
+    format(stream, "extern descriptor_t %s;\t/* %s */\n\n",
+	   info.backend-var-info-name, defn.defn-name);
   end if;
   unless (rep.representation-has-bottom-value?
 	    | defn.defn-guaranteed-initialized?)
     format(stream, "extern boolean %s_initialized;\n\n",
 	   info.backend-var-info-name);
   end;
+end;  
+
+// We don't know what sort of object we're working with, but we can
+// presume that the given name is meaningful.  This general case must
+// be overridden for some classes -- especially functions.
+//
+define method emit-prototype-for
+    (name :: <byte-string>, defn :: <object>, file :: <file-state>)
+    => ();
+  let stream = file.file-body-stream;
+  format(stream, "extern descriptor_t %s;\t/* %s */\n\n",
+	 name, defn);
+end;  
+
+define method emit-prototype-for
+    (name :: <byte-string>, defn :: <class-definition>, file :: <file-state>)
+    => ();
+  let stream = file.file-body-stream;
+  format(stream, "extern descriptor_t %s;\t/* %s */\n\n",
+	 name, defn.defn-name);
 end;  
 
 define method defn-guaranteed-initialized? (defn :: <definition>)
@@ -427,6 +627,8 @@ end method defn-guaranteed-initialized?;
 
 // variable stuff.
 
+// Encapsulates the back-end specific info for a <variable> or <definition>.
+//
 define class <backend-var-info> (<object>)
   slot backend-var-info-rep :: <representation>,
     required-init-keyword: representation:;
@@ -438,10 +640,11 @@ add-make-dumper(#"backend-var-info", *compiler-dispatcher*, <backend-var-info>,
 		list(backend-var-info-rep, representation:, #f,
 		     backend-var-info-name, name:, #f));
 
-define method make-info-for (var :: type-union(<initial-variable>, <ssa-variable>),
-			     // ### Should really only be ssa-variable.
-			     file :: <file-state>)
-    => res :: <backend-var-info>;
+define method make-info-for
+    (var :: type-union(<initial-variable>, <ssa-variable>),
+     // ### Should really only be ssa-variable.
+     file :: <file-state>)
+ => res :: <backend-var-info>;
   let varinfo = var.var-info;
   let rep = pick-representation(var.derived-type, #"speed");
   make(<backend-var-info>, representation: rep, name: #f);
@@ -465,7 +668,7 @@ define method make-info-for (defn :: <definition>,
 			else
 			  defn.ct-value;
 			end,
-			file);
+			file, prefix: defn.defn-name.c-prefix);
     make(<backend-var-info>, representation: *general-rep*, name: name);
   end;
 end;
@@ -794,7 +997,7 @@ define method emit-tlf-gunk (tlf :: type-union(<define-generic-tlf>,
     // the global heap generation by eagerly adding it as a root now.
     // This appears to be a win, although it means we'll dump heap
     // info for functions which may never be called.
-    new-root(ctv, file);
+    new-root(ctv, file, prefix: defn.defn-name.c-prefix);
   else
     // Unsealed generics must be written (if the are written) during
     // the global heap dump.  However, we must give them a name now so
@@ -806,7 +1009,9 @@ define method emit-tlf-gunk (tlf :: type-union(<define-generic-tlf>,
     // effort during the global dump phase.  There is, of course, the
     // possibility of writing heap info for methods which will not be
     // referenced.
-    map(method (a) new-root(a.ct-value, file) end, defn.generic-defn-methods);
+    map(method (a)
+	  new-root(a.ct-value, file, prefix: a.defn-name.c-prefix)
+	end, defn.generic-defn-methods);
   end if;
 end;
 
@@ -996,7 +1201,6 @@ define method emit-function
     (function :: <fer-function-region>, file :: <file-state>)
     => ();
   file.file-next-block := 0;
-  file.file-next-local := 0;
   file.file-local-table := make(<string-table>);
   assert(file.file-local-vars.size == 0);
 
@@ -2075,6 +2279,8 @@ define method ref-leaf (target-rep :: <representation>,
 			file :: <file-state>)
     => res :: <string>;
   let info = get-info-for(leaf.const-defn, file);
+  let name = info.backend-var-info-name;
+  maybe-emit-prototype(name, leaf.const-defn, file);
   conversion-expr(target-rep, info.backend-var-info-name,
 		  info.backend-var-info-rep, file);
 end;
@@ -2118,14 +2324,74 @@ define method ref-leaf (target-rep :: <representation>,
   end;
 end;
 
-define method c-expr-and-rep (lit :: <ct-value>,
-			      rep-hint :: <representation>,
-			      file :: <file-state>)
-    => (name :: <string>, rep :: <representation>);
+define method aux-c-expr-and-rep
+    (lit :: <ct-value>, file :: <file-state>, prefix :: <string>,
+     defn :: <object>)
+ => (name :: <string>, rep :: <representation>);
   let info = get-info-for(lit, file);
-  values(info.const-info-expr
-	   | (info.const-info-expr := new-root(lit, file)),
-	 *general-rep*);
+  let name
+    = (info.const-info-expr
+	 | (info.const-info-expr := new-root(lit, file, prefix: prefix)));
+  maybe-emit-prototype(name, defn, file);
+  values(name, *general-rep*);
+end;
+
+define method c-expr-and-rep
+    (lit :: <ct-value>, rep-hint :: <representation>, file :: <file-state>)
+ => (name :: <string>, rep :: <representation>);
+  aux-c-expr-and-rep(lit, file, "literal", lit);
+end;
+
+define method c-expr-and-rep
+    (lit :: <ct-function>, rep-hint :: <representation>,
+     file :: <file-state>)
+ => (name :: <string>, rep :: <representation>);
+  aux-c-expr-and-rep(lit, file, lit.ct-function-name.c-prefix, lit);
+end;
+
+define method c-expr-and-rep
+    (lit :: <literal-false>, rep-hint :: <representation>,
+     file :: <file-state>)
+ => (name :: <string>, rep :: <representation>);
+  aux-c-expr-and-rep(lit, file, "false", lit);
+end;
+
+define method c-expr-and-rep
+    (lit :: <literal-true>, rep-hint :: <representation>,
+     file :: <file-state>)
+ => (name :: <string>, rep :: <representation>);
+  aux-c-expr-and-rep(lit, file, "true", lit);
+end;
+
+define method c-expr-and-rep
+    (lit :: <literal-empty-list>, rep-hint :: <representation>,
+     file :: <file-state>)
+ => (name :: <string>, rep :: <representation>);
+  aux-c-expr-and-rep(lit, file, "empty_list", lit);
+end;
+
+define method c-expr-and-rep
+    (lit :: <literal-symbol>, rep-hint :: <representation>,
+     file :: <file-state>)
+ => (name :: <string>, rep :: <representation>);
+  aux-c-expr-and-rep
+    (lit, file, concatenate("sym_", as(<string>, lit.literal-value).c-prefix),
+     lit);
+end;
+
+define method c-expr-and-rep
+    (lit :: <literal-string>, rep-hint :: <representation>,
+     file :: <file-state>)
+ => (name :: <string>, rep :: <representation>);
+  aux-c-expr-and-rep(lit, file, "str", lit);
+end;
+
+define method c-expr-and-rep
+    (class :: <defined-cclass>, rep-hint :: <representation>,
+     file :: <file-state>)
+ => (name :: <string>, rep :: <representation>);
+  aux-c-expr-and-rep(class, file, class.cclass-name.c-prefix,
+		     class.class-defn);
 end;
 
 define method c-expr-and-rep
