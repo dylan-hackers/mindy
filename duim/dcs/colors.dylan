@@ -23,15 +23,11 @@ end protocol <<color-protocol>>;
 
 /// RGB <-> IHS conversions
 
-define constant $ihs-rgb-c1 :: <single-float>
-  = as(<single-float>, 0.4082483);	// sqrt(1/6)
-define constant $ihs-rgb-c2 :: <single-float>
-  = as(<single-float>, 0.7071068);	// sqrt(1/2)
-define constant $ihs-rgb-c3 :: <single-float>
-  = as(<single-float>, 0.5773503);	// sqrt(1/3)
+define constant $ihs-rgb-c1 :: <single-float> = 0.4082483;	// sqrt(1/6)
+define constant $ihs-rgb-c2 :: <single-float> = 0.7071068;	// sqrt(1/2)
+define constant $ihs-rgb-c3 :: <single-float> = 0.5773503;	// sqrt(1/3)
 
-define constant $sqrt3      :: <single-float>
-  = as(<single-float>, 1.732051);	// sqrt(3)
+define constant $sqrt3      :: <single-float> = 1.732051;	// sqrt(3)
 
 define function ihs->rgb
     (intensity :: <single-float>, hue :: <single-float>, saturation :: <single-float>)
@@ -73,7 +69,7 @@ end function rgb->ihs;
 define inline function rgb->luminosity
     (r :: <single-float>, g :: <single-float>, b :: <single-float>)
  => (luminosity :: <single-float>)
-  as(<single-float>, 0.299 * r + 0.587 * g + 0.114 * b);
+  0.299 * r + 0.587 * g + 0.114 * b
 end function rgb->luminosity;
 
 
@@ -86,8 +82,8 @@ define sealed class <rgb-color> (<color>)
     required-init-keyword: green:;
   sealed constant slot %blue :: <single-float>,
     required-init-keyword: blue:;
-  sealed constant slot color-opacity :: <single-float>
-    = as(<single-float>, 1.0), init-keyword: opacity:;
+  sealed constant slot color-opacity :: <single-float> = 1.0,
+    init-keyword: opacity:;
 end class <rgb-color>;
 
 define method \=

@@ -156,8 +156,8 @@ define sideways method make-scaling-transform
     $identity-transform
   else
     make(<general-transform>,
-         mxx: mx, mxy: as( <single-float>, 0.0),
-         myx: as( <single-float>, 0.0), myy: my,
+         mxx: mx, mxy: 0.0,
+         myx: 0.0, myy: my,
          tx: (1.0 - mx) * as(<single-float>, origin-x),
          ty: (1.0 - my) * as(<single-float>, origin-y))
   end
@@ -338,12 +338,12 @@ define method compose-transforms
     (tr1 :: <general-transform>, tr2 :: <general-transform>)
  => (transform :: <transform>)
   make-transform-1
-    (as( <single-float>, tr1.%mxx * tr2.%mxx + tr1.%mxy * tr2.%myx ),
-     as( <single-float>, tr1.%mxx * tr2.%mxy + tr1.%mxy * tr2.%myy ),
-     as( <single-float>, tr1.%myx * tr2.%mxx + tr1.%myy * tr2.%myx ),
-     as( <single-float>, tr1.%myx * tr2.%mxy + tr1.%myy * tr2.%myy ),
-     as( <single-float>, tr1.%tx + tr1.%mxx * tr2.%tx + tr1.%mxy * tr2.%ty ),
-     as( <single-float>, tr1.%ty + tr1.%myx * tr2.%tx + tr1.%myy * tr2.%ty ))
+    (tr1.%mxx * tr2.%mxx + tr1.%mxy * tr2.%myx,
+     tr1.%mxx * tr2.%mxy + tr1.%mxy * tr2.%myy,
+     tr1.%myx * tr2.%mxx + tr1.%myy * tr2.%myx,
+     tr1.%myx * tr2.%mxy + tr1.%myy * tr2.%myy,
+     tr1.%tx + tr1.%mxx * tr2.%tx + tr1.%mxy * tr2.%ty,
+     tr1.%ty + tr1.%myx * tr2.%tx + tr1.%myy * tr2.%ty)
 end method compose-transforms;
 
 define method compose-transforms
@@ -414,15 +414,11 @@ define sideways method compose-scaling-with-transform
     // NB: the translations can be integers or single floats here
     if (origin)
       make-transform-1
-        (as( <single-float>, mx ), 
-         as( <single-float>, 0.0 ), 
-         as( <single-float>, 0.0 ), 
-         as( <single-float>, my ),
-         as( <single-float>, tx + (1.0 - mx) * as(<single-float>, point-x(origin)) ),
-         as( <single-float>, ty + (1.0 - my) * as(<single-float>, point-y(origin)) ))
+        (mx, 0.0, 0.0, my,
+         tx + (1.0 - mx) * as(<single-float>, point-x(origin)),
+         ty + (1.0 - my) * as(<single-float>, point-y(origin)))
     else
-      make-transform-1(as( <single-float>, mx), as( <single-float>, 0.0),
-               as( <single-float>, 0.0 ), as( <single-float>, my ),
+      make-transform-1(mx, 0.0, 0.0, my,
 		       as(<single-float>, tx), as(<single-float>, ty))
     end
   end
