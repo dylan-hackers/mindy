@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.3 1994/11/04 14:13:17 chiles Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.4 1994/11/06 20:10:24 rgs Exp $
 
 //======================================================================
 //
@@ -77,3 +77,15 @@ define constant ignore =
     noise;
     #f;
   end;
+
+// Key-exists -- Exported
+//
+// If the given key is present in the collection, return #t and the value
+// associated with the key.  Otherwise, return #f and an undefined value.
+//
+define constant key-exists? =
+  method (coll :: <collection>, key :: <object>)
+   => (result :: <boolean>, value :: <object>);
+    let value = element(coll, key, default: undefined);
+    values(value ~= undefined, value);
+  end method;
