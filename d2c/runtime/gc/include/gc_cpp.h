@@ -211,6 +211,11 @@ inline void* operator new(
     classes derived from "gc_cleanup" or containing members derived
     from "gc_cleanup". */
 
+ inline void operator delete(void* obj)
+ {
+    GC_FREE(obj);
+ };
+
 #ifdef GC_OPERATOR_NEW_ARRAY
 
 #ifdef _MSC_VER
@@ -225,20 +230,10 @@ inline void* operator new(
     return GC_MALLOC_UNCOLLECTABLE( size );
  }
 
- inline void operator delete[](void* obj)
- {
-    GC_FREE(obj);
- };
-
  inline void* operator new( size_t size)
  {
     return GC_MALLOC_UNCOLLECTABLE( size);
  };   
-
- inline void operator delete(void* obj)
- {
-    GC_FREE(obj);
- };
 
 
 // This new operator is used by VC++ in case of Debug builds !
@@ -263,6 +258,11 @@ inline void* operator new[](
     void* clientData = 0 );
     /*
     The operator new for arrays, identical to the above. */
+
+ inline void operator delete[](void* obj)
+ {
+    GC_FREE(obj);
+ };
 
 #endif /* GC_OPERATOR_NEW_ARRAY */
 
