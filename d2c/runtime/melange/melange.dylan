@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.13 2003/01/29 22:31:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.14 2003/04/09 03:21:59 housel Exp $
 
 //======================================================================
 //
@@ -233,15 +233,15 @@ end method longlong-at-setter;
 
 define sealed inline method unsigned-longlong-at
     (ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
- => (result :: <integer>);
-  error("accesses to 'unsigned long long' data not currently supported");
+ => (result :: <double-integer>);
+  pointer-deref(long-long:, ptr.raw-value, offset);
 end method unsigned-longlong-at;
 
 define sealed inline method unsigned-longlong-at-setter
     (new :: <integer>,
      ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
- => (result :: <integer>);
-  error("accesses to 'unsigned long long' data not currently supported");
+ => (result :: <double-integer>);
+  pointer-deref(long-long:, ptr.raw-value, offset) := new;
 end method unsigned-longlong-at-setter;
 
 define sealed inline method float-at
