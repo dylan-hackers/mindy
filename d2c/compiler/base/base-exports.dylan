@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.15 1996/02/08 19:18:54 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.16 1996/02/09 18:05:56 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -237,6 +237,7 @@ define module source
   export
     <source-location>, source-location-span,
     <source-location-mixin>, source-location,
+    <unknown-source-location>,
 
     <source-file>, contents, <file-contents>,
     <file-source-location>, source-file,
@@ -254,7 +255,8 @@ define module errors
   use standard-io;
   export
     compiler-warning, *warnings*, compiler-error,
-    compiler-warning-location, compiler-error-location;
+    compiler-warning-location, compiler-error-location,
+    extract-source;
 end module;
 
 define module header
