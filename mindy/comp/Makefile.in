@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.1 1998/05/03 19:55:11 andreas Exp $
+##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.2 1998/08/31 14:29:22 andreas Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -77,6 +77,8 @@ ${SRCDIR}/parser-tab.c: ${SRCDIR}/parser.y
 	${YACC} -d ${SRCDIR}/parser.y
 	mv y.tab.c ${SRCDIR}/parser-tab.c
 	mv y.tab.h ${SRCDIR}/parser-tab.h
+
+${SRCDIR}/parser-tab.h: ${SRCDIR}/parser-tab.c
 
 ${SRCDIR}/lexer-tab.c: ${SRCDIR}/lexer.l
 	${LEX} -t ${LFLAGS} ${SRCDIR}/lexer.l > ${SRCDIR}/lexer-tab.c
