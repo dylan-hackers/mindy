@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.57 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.58 1995/05/12 13:18:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -167,6 +167,15 @@ define method side-effect-free? (expr :: <primitive>) => res :: <boolean>;
   expr.info.primitive-side-effect-free?;
 end;
 
+define method side-effect-free? (expr :: <known-call>) => res :: <boolean>;
+  let func = expr.depends-on.source-exp;
+  if (instance?(func, <definition-constant-leaf>))
+    let defn = func.const-defn;
+    instance?(defn, <function-definition>)
+      & defn.function-defn-flushable?;
+  end;
+end;
+
 define method side-effect-free? (expr :: <slot-ref>) => res :: <boolean>;
   #t;
 end;
@@ -197,9 +206,23 @@ end;
 
 define method pure-single-value-expression? (expr :: <primitive>)
     => res :: <boolean>;
-  expr.info.primitive-pure?
-    & expr.derived-type.fixed-number-of-values?
-    & expr.derived-type.min-values == 1;
+  if (expr.info.primitive-pure?)
+    let type = expr.derived-type;
+    type.min-values == 1 & type.fixed-number-of-values?;
+  end;
+end;
+
+define method pure-single-value-expression? (expr :: <known-call>)
+    => res :: <boolean>;
+  let type = expr.derived-type;
+  if (type.min-values == 1 & type.fixed-number-of-values?)
+    let func = expr.depends-on.source-exp;
+    if (instance?(func, <definition-constant-leaf>))
+      let defn = func.const-defn;
+      instance?(defn, <function-definition>)
+	& defn.function-defn-movable?;
+    end;
+  end;
 end;
 
 define method pure-single-value-expression? (var :: <leaf>)
@@ -369,76 +392,30 @@ define method optimize
   end;
 end;
 
-define method maybe-propagate-copy (component :: <component>,
-				    var :: <ssa-variable>,
-				    value :: <expression>)
+define method maybe-propagate-copy
+    (component :: <component>, var :: <ssa-variable>, value :: <leaf>)
     => ();
   unless (var.needs-type-check?)
     // Change all references to this variable to be references to value
     // instead.
     let next = #f;
-    let prev = #f;
     for (dep = var.dependents then next,
 	 while: dep)
+      // Save next, 'cause it gets changed.
       next := dep.source-next;
-
-      let dependent = dep.dependent;
-      if (okay-to-propagate?(dependent, value))
-	// Remove the dependency from the source.
-	if (prev)
-	  prev.source-next := next;
-	else
-	  var.dependents := next;
-	end;
-
-	// Link it into the new value.
-	dep.source-exp := value;
-	dep.source-next := value.dependents;
-	value.dependents := dep;
-
-	// Queue the dependent for reoptimization.
-	reoptimize(component, dependent);
-      else
-	prev := dep;
-      end;
+      // Swing that dependent over to the new value.
+      replace-expression(component, dep, value)
     end;
     
-    // If we removed all the uses of var, queue var's defn for reoptimization.
-    unless (var.dependents)
-      reoptimize(component, var.definer);
-    end;
+    // Queue the vars definer assignment, because the var is now unused.
+    reoptimize(component, var.definer);
   end;
 end;
 
-define method okay-to-propagate?
-    (dependent :: <dependent-mixin>, value :: <expression>)
-    => res :: <boolean>;
-  #f;
-end;
 
-define method okay-to-propagate?
-    (dependent :: <dependent-mixin>, value :: <leaf>) => res :: <boolean>;
-  #t;
-end;
-
-define method okay-to-propagate?
-    (dependent :: <assignment>, value :: <expression>) => res :: <boolean>;
-  #t;
-end;
-
-// This method is only necessary to keep the previous two from being
-// ambiguous.
-//
-define method okay-to-propagate?
-    (dependent :: <assignment>, value :: <leaf>) => res :: <boolean>;
-  #t;
-end;
-
-
-
-define method maybe-propagate-copy (component :: <component>,
-				    var :: <abstract-variable>,
-				    value :: <expression>)
+define method maybe-propagate-copy
+    (component :: <component>, var :: <abstract-variable>,
+     value :: <expression>)
     => ();
 end;
 
@@ -644,8 +621,8 @@ define method optimize-unknown-call
 	  let rest-temp = make-local-var(builder, #"rest", object-ctype());
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, rest-temp,
-	     make-unknown-call(builder, dylan-defn-leaf(builder, #"vector"),
-			       #f, as(<list>, rest-args)));
+	     make-operation(builder, <primitive>, as(<list>, rest-args),
+			    name: #"vector"));
 	  add!(new-ops, rest-temp);
 	end;
 	if (sig.key-infos)
@@ -747,9 +724,15 @@ define method optimize-unknown-call
       arg-leaves := pair(arg-leaf, arg-leaves);
       arg-types := pair(arg-type, arg-types);
     finally
-      if (arg-dep & ~sig.key-infos & ~sig.rest-type)
-	compiler-warning("Too many arguments.");
-	bogus? := #t;
+      if (arg-dep)
+	unless (sig.key-infos | sig.rest-type)
+	  compiler-warning("Too many arguments.");
+	  bogus? := #t;
+	end;
+	for (arg-dep = arg-dep then arg-dep.dependent-next,
+	     while: arg-dep)
+	  arg-leaves := pair(arg-dep.source-exp, arg-leaves);
+	end;
       end;
     end;
   end;
@@ -770,11 +753,15 @@ define method optimize-unknown-call
       let new-func = make-definition-leaf(builder, meths.head);
       let next-leaf = make-local-var(builder, #"next-method-info",
 				     object-ctype());
-      build-assignment
-	(builder, policy, source, next-leaf,
-	 make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
-			   map(curry(make-definition-leaf, builder),
-			       meths.tail)));
+      let op
+	= if (empty?(meths.tail))
+	    make-literal-constant(builder, as(<ct-value>, #()));
+	  else
+	    make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
+			      map(curry(make-definition-leaf, builder),
+				  meths.tail));
+	  end;
+      build-assignment(builder, policy, source, next-leaf, op);
       let new-call = make-unknown-call(builder, new-func, next-leaf,
 				       reverse!(arg-leaves));
       insert-before(component, call, builder-result(builder));
@@ -850,9 +837,44 @@ define method optimize
   unless (func-dep)
     error("No function in a call?");
   end;
-  // Dispatch of the thing we are calling.
-  optimize-known-call(component, call, func-dep.source-exp);
+  let func = func-dep.source-exp;
+  block (return)
+    for (transformer in find-transformers(func))
+      if (transformer(component, call))
+	return();
+      end;
+    end;
+    // Dispatch of the thing we are calling.
+    optimize-known-call(component, call, func);
+  end;
 end;
+
+define method find-transformers (func :: union(<leaf>, <definition>))
+    => res :: <list>;
+  #();
+end;
+
+define method find-transformers (func :: <definition-constant-leaf>)
+    => res :: <list>;
+  find-transformers(func.const-defn);
+end;
+
+define method find-transformers (defn :: <function-definition>)
+    => res :: <list>;
+  defn.function-defn-transformers;
+end;
+  
+define method find-transformers (defn :: <method-definition>)
+    => res :: <list>;
+  let gf = defn.method-defn-of;
+  if (gf)
+    concatenate(defn.function-defn-transformers,
+		gf.function-defn-transformers);
+  else
+    defn.function-defn-transformers;
+  end;
+end;
+
 
 define method optimize-known-call
     (component :: <component>, call :: <known-call>,
@@ -1063,6 +1085,9 @@ define method optimize (component :: <component>, call :: <mv-call>) => ();
     let func = call.depends-on.source-exp;
     if (instance?(func, <exit-function>))
       expand-exit-function(component, call, func, cluster);
+    elseif (instance?(func, <definition-constant-leaf>)
+	      & func.const-defn == dylan-defn(#"values"))
+      replace-expression(component, call.dependents, cluster);
     end;
   end;
 end;
@@ -1181,8 +1206,8 @@ define-primitive-transformer
 	   = if (nfixed < type.min-values)
 	       let fixed = copy-sequence(temps, end: nfixed);
 	       let rest = copy-sequence(temps, start: nfixed);
-	       let op = make-unknown-call
-		 (builder, dylan-defn-leaf(builder, #"vector"), #f, rest);
+	       let op = make-operation(builder, <primitive>, rest,
+				       name: #"vector");
 	       let rest-temp
 		 = make-local-var(builder, #"temp", object-ctype());
 	       build-assignment(builder, orig-assign.policy,
@@ -1229,6 +1254,74 @@ define-primitive-transformer
        end;
      end;
    end);
+
+define-primitive-transformer
+  (#"values-sequence",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     for (vec = primitive.depends-on.source-exp
+	    then vec.definer.depends-on.source-exp,
+	  while: instance?(vec, <ssa-variable>))
+     finally
+       if (instance?(vec, <primitive>))
+	 if (vec.name == #"vector")	 
+	   for (value-dep = vec.depends-on then value-dep.dependent-next,
+		values = #() then pair(value-dep.source-exp, values),
+		while: value-dep)
+	   finally
+	     replace-expression
+	       (component, primitive.dependents,
+		make-operation(make-builder(component), <primitive>,
+			       reverse!(values), name: #"values"));
+	   end;
+	 elseif (vec.name == #"canonicalize-results")
+	   let vec-assign = vec.dependents.dependent;
+	   let prim-assign = primitive.dependents.dependent;
+	   if (vec-assign.region == prim-assign.region
+		 & vec-assign.depends-on == vec.dependents)
+	     let nfixed = vec.depends-on.dependent-next.source-exp;
+	     if (instance?(nfixed, <literal-constant>) & nfixed.value = 0)
+	       block (return)
+		 for (assign = vec-assign.next-op then assign.next-op,
+		      until: assign == prim-assign)
+		   if ((instance?(assign.defines, <abstract-variable>)
+			  & instance?(assign.defines.var-info,
+				      <values-cluster-info>))
+			 | consumes-cluster?(assign.depends-on))
+		     return();
+		   end;
+		 end;
+		 replace-expression(component, prim-assign.depends-on,
+				    vec.depends-on.source-exp);
+	       end;
+	     end;
+	   end;
+	 end;
+       end;
+     end;
+   end);
+
+define method consumes-cluster? (expr :: <leaf>) => res :: <boolean>;
+  #f;
+end;
+
+define method consumes-cluster? (expr :: <abstract-variable>)
+    => res :: <boolean>;
+  instance?(expr.var-info, <values-cluster-info>);
+end;
+
+define method consumes-cluster? (expr :: <operation>)
+    => res :: <boolean>;
+  block (return)
+    for (dep = expr.depends-on then dep.dependent-next,
+	 while: dep)
+      if (consumes-cluster?(dep.source-exp))
+	return(#t);
+      end;
+    end;
+    #f;
+  end;
+end;
+
 
 
 define method optimize (component :: <component>, op :: <truly-the>) => ();
@@ -2767,7 +2860,7 @@ define method build-xep
 		       make-operation(builder, <primitive>, list(wanted-leaf),
 				      name: #"extract-args"));
     else
-      begin
+      unless (empty?(arg-types))
 	let op = make-unknown-call
 	  (builder, dylan-defn-leaf(builder, #"<"), #f,
 	   list(nargs-leaf, wanted-leaf));
@@ -3116,7 +3209,7 @@ end;
 define method dropped-dependent
     (component :: <component>, op :: <operation>) => ();
   if (op.dependents)
-    error("%= had more than one dependent?");
+    error("%= had more than one dependent?", op);
   end;
   delete-dependent(component, op);
 end;
