@@ -4,13 +4,13 @@ $D2CFLAGS = '-L../dylan -L../melange';
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
 if ($win32_gcc) {
-    emit_c_file_rule('unix-fds');
+    &emit_c_file_rule('unix-fds');
     $streams_lid_file = 'win32-gcc-streams';
 } elsif ($win32) {
-    emit_c_file_rule('win32-fds');
+    &emit_c_file_rule('win32-fds');
     $streams_lid_file = 'win32-streams';
 } else {
-    emit_c_file_rule('unix-fds');
+    &emit_c_file_rule('unix-fds');
     $streams_lid_file = 'unix-streams';
 }
 
