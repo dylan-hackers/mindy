@@ -1,13 +1,7 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.40 1995/11/13 23:11:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.41 1995/11/14 13:27:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
-
-// Have to use the define %%module internal form because define module
-// hasn't been defined yet.
-//
-define %%module dylan-viscera
-end;
 
 
 // Statement macros.
@@ -271,6 +265,18 @@ end;
 
 define macro variable-definer
     { define variable ?bindings } => { define %%variable ?bindings }
+end;
+
+
+// Dylan library and module, just for completeness.
+
+define library dylan
+  export dylan;
+end;
+
+define module dylan
+  use dylan-viscera,
+    export: all;
 end;
 
 
