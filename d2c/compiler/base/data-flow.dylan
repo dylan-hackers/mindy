@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.4 1995/03/24 12:22:22 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.5 1995/04/12 17:06:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,9 +8,12 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 
 /*
 
+object
+    annotatable {mixin}
+
 expression
     leaf {abstract}
-        abstract-variable {abstract}
+        abstract-variable [annotatable] {abstract}
 	    definition-site-variable {abstract}
 	        ssa-variable
 		initial-definition
@@ -30,6 +33,12 @@ abstract-assignment [source-location-mixin, dependent-mixin] {abstract}
     join-assignment
 
 */
+
+// Defines the Info slot used for back-end annotation.
+//
+define class <annotatable> (<object>)
+  slot info, init-value: #f;
+end class;
 
 
 // Expressions:
@@ -136,7 +145,7 @@ end;
 // aspects.  This also makes it trivial to preserve the semantic aspects when
 // creating a copy of a variable during SSA conversion.
 //
-define abstract class <abstract-variable> (<leaf>)
+define abstract class <abstract-variable> (<leaf>, <annotatable>)
   slot var-info :: <variable-info>, required-init-keyword: var-info:;
 end class;
 
