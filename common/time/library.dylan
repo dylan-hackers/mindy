@@ -2,7 +2,7 @@ module: Dylan-user
 author: Ben Folk-Williams, bfw@cmu.edu and David Watson, dwatson@cmu.edu
 synopsis: The Time library definitions.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.2 1996/07/29 18:32:53 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.3 1996/08/14 15:35:04 dwatson Exp $
  
 //======================================================================
 //
@@ -32,6 +32,9 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.
 define library Time
   use Dylan;
   use String-extensions;
+#if (~mindy)
+  use Melange-support;
+#endif
 
   export Time;
   export Time-IO;
@@ -39,7 +42,11 @@ end library Time;
 
 define module time-internal
   use Dylan;
+#if (mindy)
   use Extern;
+#else
+  use Melange-support;
+#endif
   use Extensions;
   use System;
   use Character-type;
