@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.12 1995/04/26 09:47:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.13 1995/04/29 04:04:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -328,7 +328,10 @@ define method convert-top-level-form
       let cluster = make-values-cluster(builder, #"cluster", wild-ctype());
       fer-convert(builder, bindings.bindings-expression, lexenv,
 		  #"assignment", cluster);
-      canonicalize-results(builder, policy, source, cluster, vars, rest-temp);
+      build-assignment
+	(builder, policy, source, concatenate(vars, list(rest-temp)),
+	 make-primitive-operation
+	   (builder, #"canonicalize-results", list(cluster)));
       build-assignment(init-builder, policy, source, #(),
 		       make-set-operation(init-builder, rest-defn, rest-temp));
     else
