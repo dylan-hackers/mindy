@@ -83,7 +83,7 @@ display-object-info						     [Function]
 		Singleton of class <fixed-integer>
 		  Value: 1
 		  
-	If the object is a union of types, each type in the union will be listed
+	If the object is a union, each type in the union will be listed
 	
 		Union of types
 		  singleton (#[2,3,4])
@@ -96,7 +96,19 @@ display-object-info						     [Function]
 		or
 		Method "my-method"
 		or
-		Unnamed Function #e0247653867
+		Unnamed Function
+		 Required  Arguments:
+		  <string>
+		  <list>
+		  <integer>
+		 Keywords:
+		  none
+		 Returns:
+		  <integer>
+		 Methods:
+		  unnamed method(<byte-string>, <pair>, <integer>)
+		  myfun2(<string>, <pair>, <byte>)
+		  my-func(<string>, <list>, <integer>)
 		
 	Comments on the output format:
 
@@ -117,16 +129,14 @@ display-object-info						     [Function]
 	information about these types, display-object-info must be called 
 	explicitly on each of these.
 
-	If any of the types that display-object-info prints is a <limited-integer> 
-	subtype, it will describe the type in as much detail as possible.  For 
-	example, all of these are possible outputs
+	If any of the types that display-object-info prints is a
+	<limited-integer> subtype, it will describe the type in as much
+	detail as possible.  For example, all of these are possible outputs
 		<limited-integer> (-1 <= x <= 1)
 		<limited-integer> (-1 <= x)
 		<limited-integer> (x <= 1)
 		<limited-integer>
-		
-	The display-object-info method on function will become more useful once 
-	Mindy becomes DRM compliant.
+
 	
 inspect								     [Function]
 
@@ -169,10 +179,10 @@ inspect								     [Function]
 		   .
 		   .
 		   
-	Also, when viewing a slot whose specializer is <union>, inspecting the slot 
-	will inspect the current value, rather than the union.  To inspect the union, 
-	inspect that slot in the type of the class which contains the slot. (This will 
-	be shown in an example)
+	Also, when viewing a slot whose specializer is <union>, inspecting the
+	slot will inspect the current value, rather than the union.  To
+	inspect the union, inspect that slot in the type of the class which
+	contains the slot. (This will be shown in an example, see below)
 
 	Apart from these changes, the output format of inspect follows as
 	closely as possible that of display-object-info.
