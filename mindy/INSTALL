@@ -64,7 +64,10 @@ Mindy has been successfully built on the following platforms:
 	SGI 		IRIX 4.0.5 	gcc and sgi-cc
 	SGI 		IRIX 5.2 	sgi-cc
 	Sun 		SunOS 4.11	gcc
-	PC clone 	Linux           gcc
+	PC clone 	Linux 1.2.0     gcc
+	PC clone        Windows/NT 3.5  Visual C++ 2.0 (*)
+
+(*) Mindy/NT is a separate distribution
 
 If you have successfully compiled Mindy on another architecture,
 please send mail to
@@ -75,7 +78,7 @@ required, please send diffs as well.
 
 Mindy can *not* be built out of the box on the DEC Alpha.  If you
 would like to port Mindy to the Alpha or any other architecture where
-Mindy does not easily compile for, send mail to
+Mindy does not easily compile, send mail to
 gwydion-bugs@cs.cmu.edu and we will try to provide as much help as we
 can.
 
@@ -126,5 +129,5 @@ can.
 	ld: driver.o: relocation format botch (symbol type))
 	collect2: ld returned 4 exit status
 
-  There is a bug in some versions of gcc for the Sun.  Try compiling
+  There is a bug in some versions of gcc for the Sun.  Try recompiling
   driver.o with a different compiler or with optimizations off.
