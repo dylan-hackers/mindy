@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.5 1994/03/30 12:20:39 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.6 1994/03/30 17:06:49 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -45,6 +45,7 @@ define module Builtin-Stuff
     <type>,
     <unicode-string>,
     <vector>,
+    $permanent-state,
     add-method, all-superclasses, applicable-method?, apply,
     apply-curry, as, ash,
     direct-subclasses, direct-superclasses,
@@ -57,9 +58,9 @@ define module Builtin-Stuff
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
     limited, list, logand, logbit?, logior, lognot, logxor,
-    main, make, method-specializers,
+    main, make, merge-hash-codes, method-specializers,
     negative,
-    object-class,
+    object-class, object-hash,
     pair, prin1, print, putc, puts,
     remove-method, round/,
     singleton, size, slot-initialized?,
@@ -82,7 +83,7 @@ define module Dylan
 	      format, prin1, print, putc, puts, getc, invoke-debugger,
 	      debugger-print, debugger-report-condition, debugger-abort,
 	      debugger-describe-restarts, debugger-restart, debugger-return,
-	      enable-error-system, apply-curry),
+	      enable-error-system, apply-curry, state-valid?),
     export: all;
   use Builtin-Stuff,
     import: (main, type-error, current-handler, handler-description,
@@ -91,7 +92,7 @@ define module Dylan
 	     format, prin1, print, putc, puts, getc, invoke-debugger, 
 	     debugger-print, debugger-report-condition, debugger-abort,
 	     debugger-describe-restarts, debugger-restart, debugger-return,
-	     enable-error-system, apply-curry);
+	     enable-error-system, apply-curry, state-valid?);
   export
     \>=, \>, \:=, \|, \&,
     <abort>,
