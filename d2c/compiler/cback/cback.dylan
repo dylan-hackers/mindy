@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.21 1995/04/28 15:40:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.22 1995/04/29 01:03:13 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -582,7 +582,15 @@ end;
 define method emit-region (region :: <block-region>,
 			   output-info :: <output-info>)
     => ();
+  unless (region.exits)
+    error("A block with no exits still exists?");
+  end;
   let stream = output-info.output-info-guts-stream;
+  let id = region.block-id;
+  let sp-temp = format-to-string("block%d_sp", id);
+  format(output-info.output-info-vars-stream, "%s %s;\n",
+	 $cluster-rep.representation-c-type, sp-temp);
+  format(stream, "block%d_sp = sp;\n", id);
   if (region.catcher)
     if (region.catcher.exit-function)
       error("An exit function still exists?");
@@ -595,14 +603,14 @@ define method emit-region (region :: <block-region>,
   spew-pending-defines(output-info);
   if (region.catcher)
     indent(stream, - $indentation-step);
-    format(stream, "}\nelse {\n    ### Catcher results\n}\n");
+    format(stream, "}\n");
+    deliver-cluster(region.catcher.dependents.dependent.defines,
+		    sp-temp, region.catcher.derived-type, output-info);
   end;
-  if (region.exits)
-    let half-step = ash($indentation-step, -1);
-    indent(stream, - half-step);
-    format(stream, "block%d:\n", region.block-id);
-    indent(stream, half-step);
-  end;
+  let half-step = ash($indentation-step, -1);
+  indent(stream, - half-step);
+  format(stream, "block%d:\n", id);
+  indent(stream, half-step);
 end;
 
 define method emit-region (region :: <exit>, output-info :: <output-info>)
@@ -614,15 +622,14 @@ define method emit-region (region :: <exit>, output-info :: <output-info>)
   for (region = region.parent then region.parent,
        until: region == #f | region == target)
     finally
-    if (region)
-      let id = target.block-id;
-      if (id)
-	format(stream, "goto block%d;\n", id);
-      else
-	format(stream, "abort();\n");
-      end;
-    else
+    unless (region)
       error("Non-local raw exit?");
+    end;
+    let id = target.block-id;
+    if (id)
+      format(stream, "sp = block%d_sp;\ngoto block%d;\n", id, id);
+    else
+      format(stream, "abort();\n");
     end;
   end;
 end;
@@ -630,9 +637,24 @@ end;
 define method emit-region (pitcher :: <pitcher>, output-info :: <output-info>)
     => ();
   spew-pending-defines(output-info);
-  format(output-info.output-info-guts-stream, "pitch(%s);\n",
-	 ref-leaf($cluster-rep, pitcher.depends-on.source-exp, output-info));
-  deliver-results(defines, #[], output-info);
+  let stream = output-info.output-info-guts-stream;
+  let target = region.block-of;
+  for (region = region.parent then region.parent,
+       until: region == #f | region == target)
+    finally
+    unless (region)
+      error("Non-local raw exit?");
+    end;
+    let id = target.block-id;
+    unless (id)
+      error("Pitcher to the component?");
+    end;
+
+    let cluster = pitcher.depends-on.source-exp;
+    format(stream, "sp = setup_for_pitch(block%d_sp, %s, sp);\n",
+	   id, ref-leaf($cluster-rep, cluster, output-info));
+    format(stream, "goto block%d;\n", id);
+  end;
 end;
 
 define method block-id (region :: <false>) => id :: <false>;
@@ -654,6 +676,7 @@ define method block-id (region :: <block-region>)
     0;
   end;
 end;
+
 
 
 // Assignments.
