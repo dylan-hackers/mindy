@@ -1,7 +1,7 @@
 do makegen_include('../common-Makegen');
 
 do d2c_library("compiler-base", "base", 
-               "base-exports params utils file-system od-format dylan-dump"
+               "base-exports utils file-system od-format dylan-dump"
                . " ctv source tokens errors header names defns variables"
                . " policy ctype rep cclass type-dump c-rep transdef"
                . " ctfunc data-flow control-flow signature"

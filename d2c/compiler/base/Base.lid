@@ -1,10 +1,9 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Base.lid,v 1.6 1996/08/10 20:05:38 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Base.lid,v 1.7 1996/08/22 18:28:55 wlott Exp $
 library: compiler-base
 unit-prefix: base
 unique-id-base: 10000
 
 base-exports.dylan
-params.dylan
 utils.dylan
 file-system.dylan
 od-format.dylan
