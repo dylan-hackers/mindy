@@ -19,3 +19,4 @@ gwydion-dylan.spec
 config.guess
 config.sub
 previous_runtime
+bootstrap_compiler
