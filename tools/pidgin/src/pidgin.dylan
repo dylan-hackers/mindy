@@ -11,6 +11,20 @@ define method help () => ()
   format(*standard-error*, "-l, --library <library>: Set library name for resulting interface\n");
 end method;
 
+// Is this defined somewhere else?
+// Returns a string representing a filename when given a path.
+define method filename
+    (path :: <string>)
+ => (name :: <string>)
+  let lastpathsep :: <integer> = 0;
+  for (counter :: <integer> from 0 to size(path) - 1 )
+    if (as(<character>, path[counter]) = path-separator)
+      lastpathsep := counter;
+    end if;
+  end for;
+  as(<string>, subsequence(path, start: lastpathsep + 1, end: size(path)));
+end method;
+
 define function pidgin(name, arguments)
   if (empty?(arguments))
     help();
@@ -44,10 +58,10 @@ define function pidgin(name, arguments)
     let module = option-value-by-long-name(argp, "module");
     let library = option-value-by-long-name(argp, "library");
     if (~module)
-      module := substring-replace(argp.regular-arguments[0], ".h", "");
+      module := substring-replace(filename(argp.regular-arguments[0]), ".h", "");
     end if;
     if (~library)
-      library := substring-replace(argp.regular-arguments[0], ".h", "");
+      library := substring-replace(filename(argp.regular-arguments[0]), ".h", "");
     end if;
     let repository :: <c-type-repository> = make(<c-type-repository>);
     let c-file :: <c-file> = parse-c-file(repository,

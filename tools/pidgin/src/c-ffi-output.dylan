@@ -52,33 +52,28 @@ end method;
 
 // Handle pointer types.
 
-/*
 define method c-output
     (type :: <c-pointer-type>)
  => (result :: <string>)
-  let vtype :: <c-type> = type.c-pointer-referent-type;
-  if (vtype = <c-integer-type>)
-    "<C-int*>";
-  elseif (vtype = <c-long-type>)
-    "<C-long*>";
-  elseif (vtype = <c-floating-point-type>)
-    "<C-float*>";
-  elseif (vtype = <c-short-type>)
-    "<C-short*>";
-  elseif (vtype = <c-char-type>)
-    "<C-char*>";
-  else
-    "Unknown type";
-  end if;
-end method;
-*/
-
-define method c-output
-    (type :: <c-pointer-type>)
- => (result :: <string>)
-  // XXX: I can't believe I'm releasing code that does this!!! This just screams "Fix me or die!" = doesn't work for <c-type> it seems, so we'll mangle strings.
+  // XXX This can probably be done in a more dignified manner. :)
   let result = c-output(type.c-pointer-referent-type);
   result := substring-replace(result, ">", "*>");
+end method;
+
+// Typedefs.
+
+define method c-output
+    (type :: <c-typedef-type>)
+ => (result :: <string>)
+  let tname :: <string> = "";
+  let header :: <string> = "";
+  if (instance?(type.c-typedef-type, <c-tagged-type>))
+    tname := type.c-typedef-type.c-type-tag;
+    header := c-output(type.c-typedef-type);
+  else
+    tname := c-output(type.c-typedef-type);
+  end if;
+  concatenate(header, "define C-mapped-subtype <", type.c-typedef-name, "> (", tname, ")\n  pointer-type-name: ", concatenate("<", type.c-typedef-name, "*>"), ";\nend C-subtype;\n");
 end method;
 
 // Handle unknown types gracelessly.
@@ -96,7 +91,7 @@ define method c-output
  => (result :: <string>)
   let def :: <string> = concatenate("define C-struct <", type.c-type-tag, ">\n");
   for (counter :: <integer> from 0 to size(type.c-type-members) - 1 )
-    if (type.c-type-members[counter] = <c-bit-field>)
+    if (object-class(type.c-type-members[counter]) = <c-bit-field>)
       def := concatenate(def, "  // <bit-field> not yet supported.\n");
     else
       def := concatenate(def, "  slot ", type.c-type-members[counter].c-member-variable-name, " :: ", c-output(type.c-type-members[counter].c-member-variable-type), ";\n");
@@ -110,7 +105,7 @@ define method c-output
  => (result :: <string>)
   let def :: <string> = concatenate("define C-union <", type.c-type-tag, ">\n");
   for (counter :: <integer> from 0 to size(type.c-type-members) - 1 )
-    if (type.c-type-members[counter] = <c-bit-field>)
+    if (object-class(type.c-type-members[counter]) = <c-bit-field>)
       def := concatenate(def, "  // <bit-field> not yet supported.\n");
     else
       def := concatenate(def, "  slot ", type.c-type-members[counter].c-member-variable-name, " :: ", c-output(type.c-type-members[counter].c-member-variable-type), ";\n");
@@ -125,14 +120,16 @@ end method;
 
 // Structs and unions.
 
-/*
 define method c-output
     (decl :: <c-tagged-type-declaration>)
  => (result :: <string>)
   // In this case, c-output has already been defined.
+if (object-class(decl.c-tagged-type-declaration-type) ~= <c-enum-type>)
   c-output(decl.c-tagged-type-declaration-type);
+  else
+    "// Unknown declaration.";
+  end if;
 end method;
-*/
 
 // Variable declarations.
 
@@ -140,15 +137,62 @@ define method c-output
     (decl :: <c-variable-declaration>)
  => (result :: <string>)
   // Since most items are variables, we act differently based on the variable's type.
+  // XXX This one's a mess, folks! It screams "Optimize me!"
+  // This variable is used below.
+  let pointer :: <boolean> = #f;
   if (object-class(decl.c-variable-type) = <c-function-type>)
     let def :: <string> = concatenate("define C-function ", decl.c-variable-name, "\n  c-name: \"", decl.c-variable-name, "\";\n");
     for (i :: <integer> from 0 to size(decl.c-variable-type.c-function-parameter-types) - 1 )
-      def := concatenate(def, "  parameter arg", integer-to-string(i), " :: ", c-output(decl.c-variable-type.c-function-parameter-types[i]), ";\n");
+      // XXX The following bit of code is UGLY and repeated. Can be fixed.
+      let ctype = decl.c-variable-type.c-function-parameter-types[i];
+      if ((object-class(ctype) = <c-pointer-type>) & (object-class(ctype.c-pointer-referent-type) = <c-typedef-type>))
+        ctype := ctype.c-pointer-referent-type;
+       pointer := #t;
+      end if;
+      if (object-class(ctype) = <c-typedef-type>)
+        if (pointer)
+          ctype := concatenate("<", ctype.c-typedef-name, "*>");
+        else
+            ctype := concatenate("<", ctype.c-typedef-name, ">");
+        end if;
+      else
+        ctype := c-output(ctype);
+      end if;
+      def := concatenate(def, "  parameter arg", integer-to-string(i), " :: ", ctype, ";\n");
+      pointer := #f;
     end for;
-    def := concatenate(def, "  result res :: ", c-output(decl.c-variable-type.c-function-return-type), ";\n");
+    let ctype = decl.c-variable-type.c-function-return-type;
+    if ((object-class(ctype) = <c-pointer-type>) & (object-class(ctype.c-pointer-referent-type) = <c-typedef-type>))
+      ctype := ctype.c-pointer-referent-type;
+     pointer := #t;
+    end if;
+    if (object-class(ctype) = <c-typedef-type>)
+      if (pointer)
+        ctype := concatenate("<", ctype.c-typedef-name, "*>");
+      else
+        ctype := concatenate("<", ctype.c-typedef-name, ">");
+    end if;
+    else
+      ctype := c-output(ctype);
+    end if;
+    def := concatenate(def, "  result res :: ", ctype, ";\n");
     def := concatenate(def, "end C-function;\n");
   else
-    concatenate("define C-variable ", decl.c-variable-name, " :: ", c-output(decl.c-variable-type), "\n  c-name: ", decl.c-variable-name, ";\nend C-variable;\n");
+    let ctype = decl.c-variable-type;
+    if ((object-class(ctype) = <c-pointer-type>) & (object-class(ctype.c-pointer-referent-type) = <c-typedef-type>))
+      ctype := ctype.c-pointer-referent-type;
+     pointer := #t;
+    end if;
+    if (object-class(ctype) = <c-typedef-type>)
+      if (pointer)
+        ctype := concatenate("<", ctype.c-typedef-name, "*>");
+      else
+        ctype := concatenate("<", ctype.c-typedef-name, ">");
+    end if;
+    else
+      ctype := c-output(ctype);
+    end if;
+    concatenate("define C-variable ", decl.c-variable-name, " :: ", ctype, "\n  c-name: ", decl.c-variable-name, ";\nend C-variable;\n");
   end if;
 end method;
 
@@ -170,6 +214,13 @@ define method c-output
     (decl :: <c-unknown-define>)
  => (result :: <string>)
   concatenate("define constant ", decl.c-define-name, ";\n");
+end method;
+
+// Typedefs.
+define method c-output
+    (decl :: <c-typedef-declaration>)
+  // Here again, everything is done at a lower level.
+  c-output(decl.c-typedef-declaration-type);
 end method;
 
 // Handle unknown declarations.

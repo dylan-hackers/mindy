@@ -2,6 +2,7 @@ module: dylan-user
 
 define library pidgin
   use common-dylan;
+  use collection-extensions;
   use io;
   use dylan;
   use streams;
@@ -25,6 +26,7 @@ define module pidgin
   use standard-io;
   use parse-arguments;
   use substring-search;
+  use subseq;
   use parse-conditions;
   use ansi-c;
   use c-parser;

@@ -18,3 +18,6 @@ define method construct-include-path
     extra-include-directories: extra-includes,
     extra-user-include-directories: #());
 end method;
+
+// Is this defined somewhere else?
+define constant path-separator :: <character> = '/';
