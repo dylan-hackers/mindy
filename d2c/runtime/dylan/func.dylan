@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.11 1995/12/16 04:24:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.12 1995/12/16 15:31:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -307,7 +307,7 @@ define constant gf-call
 	= cached-sorted-applicable-methods(self, nfixed, arg-ptr);
       if (valid-keywords)
 	for (index :: <fixed-integer> from nfixed below nargs by 2)
-	  let key :: <symbol> = %%primitive extract-args(nargs);
+	  let key :: <symbol> = %%primitive extract-arg (arg-ptr, index);
 	  unless (valid-keywords == #"all" | member?(key, valid-keywords))
 	    error("Unrecognized keyword: %=", key);
 	  end unless;
