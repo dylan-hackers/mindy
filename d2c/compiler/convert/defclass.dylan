@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.71 1996/11/04 19:18:13 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.72 1997/02/04 14:39:21 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -807,7 +807,7 @@ define method compute-cclass (defn :: <real-class-definition>)
 		if (primary == super)
 		  as(<string>, primary.cclass-name.name-symbol);
 		else
-		  format-to-string("~s (inherited via ~s)",
+		  format-to-string("%s (inherited via %s)",
 				   primary.cclass-name.name-symbol,
 				   super.cclass-name.name-symbol);
 		end;
