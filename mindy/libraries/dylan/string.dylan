@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.3 1994/04/18 05:51:26 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.4 1994/04/18 21:36:28 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -55,3 +55,8 @@ define method as-uppercase! (string :: <string>)
   map-into(string, as-uppercase, string)
 end as-uppercase!;
 
+
+
+define method element-setter (new, string :: <byte-string>, index :: <integer>)
+  error(make(<type-error>, value: new, type: <character>));
+end;
