@@ -1598,8 +1598,7 @@ define method parse
      files :: <sequence> /* of <string> */,
      #key defines,
      verbose,
-     user-include-path :: <sequence>,
-     system-include-path :: <sequence>)
+     include-path :: <c-include-path>)
  => (result :: <parse-state>);
   let stream = make(<byte-string-stream>, contents: "",
                     direction: #"input-output");
@@ -1611,8 +1610,7 @@ define method parse
 		       name: "<top-level>",
 		       defines: defines,
 		       contents: stream.stream-contents,
-		       user-include-path: user-include-path,
-		       system-include-path: system-include-path);
+		       include-path: include-path);
 
   let parse-state = make(<parse-file-state>,
 			 repository: repository,

@@ -204,7 +204,16 @@ define function test-c-parser(args)
 	     "usage: ansi-c-test [[-Iincludedir...] file]\n");
       exit(exit-code: 1);
     end unless;
-    let include-path = option-value-by-long-name(argp, "includedir");
+    let extra-includes = option-value-by-long-name(argp, "includedir");
+
+    format(*standard-output*, "Constructing include path.\n");
+    force-output(*standard-output*);
+    let include-path =
+      make(<gcc-include-path>,
+	   standard-include-directories:
+	     $i386-linux-platform.c-platform-default-include-path,
+	   extra-include-directories: extra-includes,
+	   extra-user-include-directories: #());
 
     format(*standard-output*, "Running C parser.\n");
     let repository :: <c-type-repository> = make(<c-type-repository>);

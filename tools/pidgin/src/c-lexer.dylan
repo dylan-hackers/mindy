@@ -49,8 +49,8 @@ rcs-header: $Header:
 // c-lexer.dylan handles basic lexing, while c-lexer-cpp.dylan contains most
 // of the support for macro preprocessing.
 //
-// The module exports two major classes -- <tokenizer> and <token> -- along
-// with assorted operations, subclasses, and constants.
+// The module exports three major classes -- <c-include-path>, <tokenizer>
+// and <token> -- along  with assorted operations, subclasses, and constants.
 //
 //   <tokenizer>
 //      Given some input source, produces a stream of tokens.  Tokenizers 
@@ -118,12 +118,8 @@ define /* exported */ primary class <tokenizer> (<object>)
   /* exported */ slot cpp-decls :: type-union(<deque>, <false>) = #f;
   slot include-tokenizer :: false-or(<tokenizer>) = #f;
   slot typedefs :: <table>;
-
-  // Places to look for included files.
-  slot user-include-path :: false-or(<sequence>) = #f,
-    init-keyword: user-include-path:;
-  slot system-include-path :: false-or(<sequence>) = #f,
-    init-keyword: system-include-path:;
+  slot include-path :: false-or(<c-include-path>) = #f,
+    init-keyword: include-path:;
 end class <tokenizer>;
 
 //======================================================================
@@ -915,8 +911,7 @@ define method initialize (value :: <tokenizer>,
     value.typedefs := (typedefs-from | parent).typedefs;
     value.cpp-table := parent.cpp-table;
     value.cpp-decls := make(<deque>);
-    value.user-include-path := parent.user-include-path;
-    value.system-include-path := parent.system-include-path;
+    value.include-path := parent.include-path;
   else
     value.cpp-table := make(<string-table>);
     value.typedefs := if (typedefs-from)

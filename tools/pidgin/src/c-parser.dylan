@@ -550,7 +550,7 @@ end method add-declaration;
 // Main parser routine:
 define function parse-c-file
     (repository :: <c-type-repository>, filename :: <string>,
-     #key platform :: <c-platform>, include-path: includes :: <sequence>)
+     #key platform :: <c-platform>, include-path :: <c-include-path>)
  => (c-file :: <c-file>)
   // XXX - We ignore typedefs and structs already in the repository.
   // We should probably either (1) honor them or (2) create and return
@@ -569,10 +569,7 @@ define function parse-c-file
   let state = parse(repository,
 		    list(filename),
 		    defines: defines,
-		    user-include-path: #(),
-		    system-include-path:
-		      concatenate(includes,
-				  platform.c-platform-default-include-path));
+		    include-path: include-path);
   state.hackish-output-list;
 end function;
 
