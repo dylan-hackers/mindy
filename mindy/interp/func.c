@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.43 1996/02/26 23:00:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.44 1996/03/07 17:42:57 nkramer Exp $
 *
 * This file implements functions.
 *
@@ -1516,6 +1516,7 @@ obj_t add_method(obj_t gf, obj_t method)
     obj_t gfkeys;
     obj_t gfscan, methscan;
     int i;
+    boolean warned_about_method = FALSE;
 
     if (GF(gf)->required_args != METHOD(method)->required_args)
 	error("%= has %d required arguments, but %= has %d",
@@ -1591,6 +1592,7 @@ obj_t add_method(obj_t gf, obj_t method)
 	methscan = TAIL(methscan);
 	i++;
     }
+    i--;   /* Since the counter increments even on the last loop, undo that */
 
     if (gfscan != obj_Nil) {
 	int gf_returns = i;
@@ -1598,12 +1600,18 @@ obj_t add_method(obj_t gf, obj_t method)
 	    gf_returns++;
 	    gfscan = TAIL(gfscan);
 	}
-	if (GF(gf)->more_results_type != obj_False)
+	if (METHOD(method)->more_results_type == obj_ObjectClass
+	    && METHOD(method)->result_types == obj_Nil) {
+	    warned_about_method = TRUE;
+	    format("WARNING: %= returns #rest <object>, but %= returns %=.\n",
+		   method, gf, GF(gf)->result_types);
+	} else if (GF(gf)->more_results_type != obj_False) {
 	    error("%= returns at least %d results, but %= only returns %d",
 		  gf, make_fixnum(gf_returns), method, make_fixnum(i));
-	else
+	} else {
 	    error("%= returns exactly %d results, but %= only returns %d",
 		  gf, make_fixnum(gf_returns), method, make_fixnum(i));
+	}
     }
     if (methscan != obj_Nil) {
 	obj_t gftype = GF(gf)->more_results_type;
@@ -1614,13 +1622,18 @@ obj_t add_method(obj_t gf, obj_t method)
 		methscan = TAIL(methscan);
 		meth_returns++;
 	    }
-	    if (METHOD(method)->more_results_type != obj_False)
-		error("%= returns exactly %d results, "
-		      "but %= returns %d or more",
-		      gf, make_fixnum(i), method, make_fixnum(meth_returns));
-	    else
+	    if (METHOD(method)->more_results_type != obj_False) {
+		if (!warned_about_method) {
+		    warned_about_method = TRUE;
+		    error("%= returns exactly %d results, "
+			  "but %= returns %d or more",
+			  gf, make_fixnum(i), 
+			  method, make_fixnum(meth_returns));
+		}
+	    } else {
 		error("%= returns exactly %d results, but %= returns %d",
 		      gf, make_fixnum(i), method, make_fixnum(meth_returns));
+	    }
 	}
 	while (methscan != obj_Nil) {
 	    obj_t methtype = HEAD(methscan);
@@ -1634,18 +1647,24 @@ obj_t add_method(obj_t gf, obj_t method)
 	}
     }
 
-    if (METHOD(method)->more_results_type != obj_False)
+    if (METHOD(method)->more_results_type != obj_False) {
 	if (GF(gf)->more_results_type != obj_False) {
 	    if (!subtypep(METHOD(method)->more_results_type,
-			  GF(gf)->more_results_type))
+			  GF(gf)->more_results_type)) {
 		error("Results %d and on are instances of %= for %=, "
 		      "but are instances of %= for %=",
 		      make_fixnum(i), GF(gf)->more_results_type, gf,
 		      METHOD(method)->more_results_type, method);
+	    }
+	} else {
+	    if (!warned_about_method) {
+		warned_about_method = TRUE;
+		error("%= returns exactly %d results, "
+		      "but %= returns %d or more",
+		      gf, make_fixnum(i), method, make_fixnum(i));
+	    }
 	}
-	else
-	    error("%= returns exactly %d results, but %= returns %d or more",
-		  gf, make_fixnum(i), method, make_fixnum(i));
+    }
 
     return really_add_method(gf, method);
 }
