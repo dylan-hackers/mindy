@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.41 2001/10/30 09:55:39 david Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.42 2001/10/30 09:59:46 david Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -508,7 +508,7 @@ default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
 platform-name:			mips-irix-gcc
 inherit-from:			gcc irix mips
 default-features:               compiled-for-irix compiled-for-mips C-compiler-is-GCC
-link-shared-library-command:    $(LIBTOOL) cc -n32 -o %s %s -rpath %s
+link-shared-library-command:    $(LIBTOOL) cc -n32 -Wl,-woff,85 -o %s %s -rpath %s
 
 // This is untested. 
 platform-name:			sparc-openbsd-gcc
