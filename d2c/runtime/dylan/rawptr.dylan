@@ -1,4 +1,7 @@
-module: dylan
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/rawptr.dylan,v 1.2 1995/11/13 23:09:07 wlott Exp $
+copyright: Copyright (c) 1995  Carnegie Mellon University
+	   All rights reserved.
+module: dylan-viscera
 
 define functional class <raw-pointer> (<object>)
   slot value :: <raw-pointer>, required-init-keyword: value:;
