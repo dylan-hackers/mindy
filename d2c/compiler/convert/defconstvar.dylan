@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.1 1994/12/12 13:01:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.2 1994/12/12 21:24:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,7 +22,8 @@ define abstract class <bindings-definition> (<definition>)
   slot defn-init-value :: union(<false>, <ct-value>), init-keyword: value:;
 end;
 
-define class <constant-definition> (<bindings-definition>)
+define class <constant-definition>
+    (<bindings-definition>, <abstract-constant-definition>)
 end;
 
 define class <variable-definition> (<bindings-definition>)
