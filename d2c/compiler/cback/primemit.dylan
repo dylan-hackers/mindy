@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.25 1996/04/06 07:21:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.26 1996/04/14 13:42:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -295,30 +295,105 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let bytes = extract-operands(operation, file, *long-rep*);
+     let class = operation.depends-on.source-exp.value;
+     assert(class.data-word-slot == #f);
+
+     let bytes-leaf = operation.depends-on.dependent-next.source-exp;
+     let bytes = ref-leaf(*long-rep*, bytes-leaf, file);
+
      deliver-result(defines, stringify("allocate(", bytes, ')'),
 		    *heap-rep*, #f, file);
    end);
 
 define-primitive-emitter
-  (#"make-data-word-instance",
+  (#"allocate-with-data-word",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let cclass = operation.derived-type;
-     let target-rep = pick-representation(cclass, #"speed");
-     let source-rep
-       = pick-representation(cclass.all-slot-infos[1].slot-type, #"speed");
-     unless (source-rep == target-rep
-	       | (representation-data-word-member(source-rep)
-		    = representation-data-word-member(target-rep)))
-       error("The instance and slot representations don't match in a "
-	       "data-word reference?");
-     end;
-     let source = extract-operands(operation, file, source-rep);
-     deliver-result(defines, source, target-rep, #f, file);
+     let class = operation.depends-on.source-exp.value;
+     let slot-rep = class.data-word-slot.slot-representation;
+     let data-word-member = slot-rep.representation-data-word-member;
+
+     let bytes-leaf = operation.depends-on.dependent-next.source-exp;
+     let bytes = ref-leaf(*long-rep*, bytes-leaf, file);
+
+     let data-word-leaf
+       = operation.depends-on.dependent-next.dependent-next.source-exp;
+     let data-word-rep
+       = pick-representation(data-word-leaf.derived-type, #"speed");
+     let data-word
+       = ref-leaf(data-word-rep, data-word-leaf, file);
+
+     assert(data-word-member = data-word-rep.representation-data-word-member);
+
+     if (defines)
+       if (instance?(defines.var-info, <values-cluster-info>))
+	 let name = new-local(file);
+	 write(stringify("descriptor_t ", name, ";\n"),
+	       file.file-vars-stream);
+	 write(stringify(name, ".heapptr = allocate(", bytes, ");\n",
+		       name, ".dataword.", data-word-member,
+		       " = ", data-word, ";\n"),
+	       file.file-guts-stream);
+	 deliver-result(defines, name, *general-rep*, #f, file);
+       else
+	 let (name, rep) = c-name-and-rep(defines, file);
+	 assert(rep == *general-rep*);
+
+	 write(stringify(name, ".heapptr = allocate(", bytes, ");\n",
+			 name, ".dataword.", data-word-member,
+			 " = ", data-word, ";\n"),
+	       file.file-guts-stream);
+	 
+	 deliver-results(defines.definer-next, #[], #f, file);
+       end if;
+     end if;
    end);
+
+define-primitive-emitter
+  (#"make-immediate",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let class :: <cclass> = operation.depends-on.source-exp.value;
+
+     let immediate-slot = #f;
+     for (slot in class.all-slot-infos)
+       if (instance?(slot, <instance-slot-info>)
+	     & slot.slot-introduced-by ~== object-ctype())
+	 if (immediate-slot)
+	   error("Trying to make an immediate with multiple instance slots?");
+	 end;
+	 immediate-slot := slot;
+       end if;
+     end for;
+
+     if (immediate-slot)
+       let source-rep = immediate-slot.slot-representation;
+       let source-leaf = operation.depends-on.dependent-next.source-exp;
+       let source = ref-leaf(source-rep, source-leaf, file);
+
+       let target-rep = pick-representation(class.direct-type, #"speed");
+       unless (source-rep == target-rep
+		 | (representation-data-word-member(source-rep)
+		      = representation-data-word-member(target-rep)))
+	 error("The instance and slot representations don't match in "
+		 "make-immediate of %s",
+	       class);
+       end;
+
+       deliver-result(defines, source, target-rep, #f, file);
+     elseif (class == specifier-type(#"<true>"))
+       deliver-result(defines, "1", *boolean-rep*, #f, file);
+     elseif (class == specifier-type(#"<false>"))
+       deliver-result(defines, "0", *boolean-rep*, #f, file);
+     else
+       error("Don't know how to make the immediate representation of %s",
+	     class);
+     end if;
+   end method);
 
 
 // Foreign code interface primitives.
