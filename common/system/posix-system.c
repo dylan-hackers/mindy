@@ -22,7 +22,7 @@
    E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
 
-/* $Header: /scm/cvs/src/common/system/Attic/posix-system.c,v 1.4 2002/03/06 21:05:27 brent Exp $ */
+/* $Header: /scm/cvs/src/common/system/Attic/posix-system.c,v 1.5 2002/03/08 01:16:01 brent Exp $ */
 
 #ifdef WIN32
 #else
@@ -59,22 +59,29 @@ extern char **environ;
 */
 int primary_group_name(unsigned char *outBuf, long bufLen)
 {
-    struct group *gpptr;
+#ifdef WIN32
+	typedef struct group
+	{
+		char* gr_name;
+	};
+#endif
+	struct group *gpptr;
 
     if ((outBuf == NULL) || (bufLen <= 0))
         return 1;
 
 #ifdef WIN32
-	strncpy((char *) outBuf, "NOT IMPLEMENTED", bufLen - 1);
-	outBuf[bufLen - 1] = '\0';
-	return 0;
+	if (1) {
+		struct group fake;
+		gpptr = &fake;
+		fake.gr_name = "ROOT";
 #else
     if ((gpptr = getgrgid(getgid())) != NULL) {
+#endif
         strncpy((char *) outBuf, gpptr->gr_name, bufLen - 1);
         outBuf[bufLen - 1] = '\0';
         return 0;
     }
-#endif
     return 1;
 }
 
