@@ -132,6 +132,22 @@ define constant $kControlFontSmallSystemFont :: <integer> = c-expr(int: "kContro
 define constant $kControlFontSmallBoldSystemFont :: <integer> = c-expr(int: "kControlFontSmallBoldSystemFont");
 define constant $kControlFontViewSystemFont :: <integer> = c-expr(int: "kControlFontViewSystemFont");
 
+// Content
+
+define constant $kControlContentTextOnly :: <integer> = c-expr(int: "kControlContentTextOnly");
+
+// Sort Order
+
+define constant $kDataBrowserOrderUndefined :: <integer>    = 0;    /* Not currently supported */
+define constant $kDataBrowserOrderIncreasing :: <integer>   = 1;
+define constant $kDataBrowserOrderDecreasing :: <integer>   = 2;
+
+define constant $kDataBrowserListViewDefaultColumnFlags :: <integer> = c-expr(int: "kDataBrowserListViewDefaultColumnFlags");
+define constant $kControlUseFontMask :: <integer> = c-expr(int: "kControlUseFontMask");
+define constant $kControlUseJustMask :: <integer> = c-expr(int: "kControlUseJustMask");
+
+define constant $errDataBrowserPropertyNotSupported :: <integer> = c-expr(int: "errDataBrowserPropertyNotSupported");
+
 /*
 	types
 */
@@ -144,6 +160,9 @@ define constant <ControlRef> = <ControlHandle>;
 define constant <ControlActionUPP> = <UniversalProcPtr>;
 define constant <ControlEditTextValidationUPP> = <UniversalProcPtr>;
 define constant <ControlKeyFilterUPP> = <UniversalProcPtr>;
+define constant <DataBrowserItemDataUPP> = <UniversalProcPtr>;
+define constant <DataBrowserItemNotificationUPP> = <UniversalProcPtr>;
+define constant <DataBrowserItemCompareUPP> = <UniversalProcPtr>;
 
 define constant <ControlPartCode> = <SInt16>;
 define constant <ControlFocusPart> = <SInt16>;
@@ -687,6 +706,56 @@ define method NewControlActionUPP( userRoutine :: <function-pointer> )	//  :: <c
 end method NewControlActionUPP;
 
 
+/*
+		NewDataBrowserItemDataUPP
+*/
+
+define method NewDataBrowserItemDataUPP( userRoutine ) //:: <callback-function> )
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewDataBrowserItemDataUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewDataBrowserItemDataUPP;
+
+define method NewDataBrowserItemDataUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewDataBrowserItemDataUPP", ptr:, ptr: userRoutine.raw-value );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewDataBrowserItemDataUPP;
+
+
+/*
+		NewDataBrowserItemNotificationUPP
+*/
+
+define method NewDataBrowserItemNotificationUPP( userRoutine ) //:: <callback-function> )
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewDataBrowserItemNotificationUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewDataBrowserItemNotificationUPP;
+
+define method NewDataBrowserItemNotificationUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewDataBrowserItemNotificationUPP", ptr:, ptr: userRoutine.raw-value );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewDataBrowserItemNotificationUPP;
+
+/*
+		NewDataBrowserItemCompareUPP
+*/
+
+define method NewDataBrowserItemCompareUPP( userRoutine ) //:: <callback-function> )
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewDataBrowserItemCompareUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewDataBrowserItemCompareUPP;
+
+define method NewDataBrowserItemCompareUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewDataBrowserItemCompareUPP", ptr:, ptr: userRoutine.raw-value );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewDataBrowserItemCompareUPP;
+
+
 
 /*
   EmbedControl
@@ -839,13 +908,15 @@ end method content-size;
 define method propertyDesc-value
     (desc :: <DataBrowserListViewColumnDesc*>)
  => (result :: <DataBrowserTableViewColumnDesc*>)    
-  make(<DataBrowserTableViewColumnDesc*>, pointer: desc.raw-value);
+  make(<DataBrowserTableViewColumnDesc*>, 
+  	pointer: desc.raw-value + c-expr(int: "fldoff(DataBrowserListViewColumnDesc, propertyDesc)"));
 end method propertyDesc-value;
 
 define method headerBtnDesc-value
     (desc :: <DataBrowserListViewColumnDesc*>)
  => (result :: <DataBrowserListViewHeaderDesc*>)    
-  make(<DataBrowserListViewHeaderDesc*>, pointer: desc.raw-value + 4);
+  make(<DataBrowserListViewHeaderDesc*>, 
+  	pointer: desc.raw-value + c-expr(int: "fldoff(DataBrowserListViewColumnDesc, headerBtnDesc)"));
 end method headerBtnDesc-value;
 
 define functional class <DataBrowserPropertyDesc*>
@@ -861,37 +932,43 @@ end method content-size;
 define method propertyID-value
     (desc :: <DataBrowserPropertyDesc*>)
  => (result :: <integer>)    
-  signed-long-at(desc, offset: 0);
+  signed-long-at(desc, 
+  	offset: c-expr(int: "fldoff(DataBrowserPropertyDesc, propertyID)"));
 end method propertyID-value;
 
 define method propertyType-value
     (desc :: <DataBrowserPropertyDesc*>)
  => (result :: <integer>)    
-  signed-long-at(desc, offset: 4);
+  signed-long-at(desc, 
+  	offset: c-expr(int: "fldoff(DataBrowserPropertyDesc, propertyType)"));
 end method propertyType-value;
 
 define method propertyFlags-value
     (desc :: <DataBrowserPropertyDesc*>)
  => (result :: <integer>)    
-  signed-long-at(desc, offset: 8);
+  signed-long-at(desc, 
+  	offset: c-expr(int: "fldoff(DataBrowserPropertyDesc, propertyFlags)"));
 end method propertyFlags-value;
 
 define method propertyID-value-setter
     (value :: <integer>, desc :: <DataBrowserPropertyDesc*>)
  => (result :: <integer>)    
-  signed-long-at(desc, offset: 0) := value;
+  signed-long-at(desc, 
+  	offset: c-expr(int: "fldoff(DataBrowserPropertyDesc, propertyID)")) := value;
 end method propertyID-value-setter;
 
 define method propertyType-value-setter
     (value :: <integer>, desc :: <DataBrowserPropertyDesc*>)
  => (result :: <integer>)    
-  signed-long-at(desc, offset: 4) := value;
+  signed-long-at(desc, 
+  	offset: c-expr(int: "fldoff(DataBrowserPropertyDesc, propertyType)")) := value;
 end method propertyType-value-setter;
 
 define method propertyFlags-value-setter
     (value :: <integer>, desc :: <DataBrowserPropertyDesc*>)
  => (result :: <integer>)    
-  signed-long-at(desc, offset: 8) := value;
+  signed-long-at(desc, 
+  	offset: c-expr(int: "fldoff(DataBrowserPropertyDesc, propertyFlags)")) := value;
 end method propertyFlags-value-setter;
 
 define constant <DataBrowserTableViewColumnDesc*> = <DataBrowserPropertyDesc*>;
@@ -911,14 +988,31 @@ end method content-size;
 define method contentType-value
     (target :: <ControlButtonContentInfo*>)
  => (result :: <integer>)
-  signed-short-at(target, offset: 0);
+  signed-short-at(target, 
+  	offset: c-expr(int: "fldoff(ControlButtonContentInfo, contentType)"));
 end method contentType-value;
 
 define method contentType-value-setter
     (value :: <integer>, target :: <ControlButtonContentInfo*>)
  => (result :: <integer>)
-  signed-short-at(target, offset: 0) := value;
+  signed-short-at(target, 
+  	offset: c-expr(int: "fldoff(ControlButtonContentInfo, contentType)")) := value;
 end method contentType-value-setter;
+
+/*
+typedef SInt16                          ControlContentType;
+struct ControlButtonContentInfo {
+  ControlContentType  contentType;
+  union {
+    SInt16              resID;
+    CIconHandle         cIconHandle;
+    Handle              iconSuite;
+    IconRef             iconRef;
+    PicHandle           picture;
+    Handle              ICONHandle;
+  }                       u;
+};
+*/
 
 define functional class <ControlFontStyleRec*>
     (<statically-typed-pointer>)
@@ -1049,13 +1143,15 @@ end method content-size;
 define method version-value
     (target :: <DataBrowserListViewHeaderDesc*>)
  => (result :: <integer>)
-  signed-short-at(target, offset: 0);
+  signed-short-at(target, 
+  	offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, version)"));
 end method version-value;
 
 define method version-value-setter
     (value :: <integer>, target :: <DataBrowserListViewHeaderDesc*>)
  => (result :: <integer>)
-  signed-short-at(target, offset: 0) := value;
+  signed-short-at(target, 
+  	offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, version)")) := value;
 end method version-value-setter;
 
 define method minimumWidth-value
@@ -1109,13 +1205,13 @@ end method titleString-value-setter;
 define method initialOrder-value
     (target :: <DataBrowserListViewHeaderDesc*>)
  => (result :: <integer>)
-  signed-long-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, initialOrder)"));
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, initialOrder)"));
 end method initialOrder-value;
 
 define method initialOrder-value-setter
     (value :: <integer>, target :: <DataBrowserListViewHeaderDesc*>)
  => (result :: <integer>)
-  signed-long-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, initialOrder)")) := value;
+  unsigned-short-at(target, offset: c-expr(int: "fldoff(DataBrowserListViewHeaderDesc, initialOrder)")) := value;
 end method initialOrder-value-setter;
 
 define method btnFontStyle-value
@@ -1186,31 +1282,67 @@ define functional class <DataBrowserCallbacks*>
     (<statically-typed-pointer>)
 end class <DataBrowserCallbacks*>;
 
+define method content-size
+  (thing == <DataBrowserCallbacks*>)
+=>(result :: <integer>)
+  c-expr(int: "sizeof(DataBrowserCallbacks)");
+end method content-size;
+
 define method version-value-setter
     (version :: <integer>, callbacks :: <DataBrowserCallbacks*>)
  => (version :: <integer>)
   unsigned-long-at(callbacks, offset: 0) := version;
 end method version-value-setter;
 
-define method clientDataCallback-value-setter
-    (version :: <integer>, callbacks :: <DataBrowserCallbacks*>)
- => (version :: <integer>)
-  unsigned-long-at(callbacks, offset: 4) := version;
-end method clientDataCallback-value-setter;
+define method u-value
+    (callbacks :: <DataBrowserCallbacks*>)
+ => (u :: <DataBrowserCallbacks-u*>)
+  make(<DataBrowserCallbacks-u*>, pointer: callbacks.raw-value + 4);
+end method u-value;
 
-define constant <DataBrowserItemDataUPP> = <UniversalProcPtr>;
+define functional class <DataBrowserCallbacks-u*>
+    (<statically-typed-pointer>)
+end class <DataBrowserCallbacks-u*>;
 
-define method NewDataBrowserItemDataUPP( userRoutine ) //:: <callback-function> )
-=> ( UPP :: <UniversalProcPtr> )
-	let result = call-out( "NewDataBrowserItemDataUPP", ptr:, ptr: userRoutine.callback-entry );
-	make( <UniversalProcPtr>, pointer: result );
-end method NewDataBrowserItemDataUPP;
+define method content-size
+  (thing == <DataBrowserCallbacks-u*>)
+=>(result :: <integer>)
+  c-expr(int: "sizeof(DataBrowserCallbacks)") - 4;
+end method content-size;
 
-define method NewDataBrowserItemDataUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
-=> ( UPP :: <UniversalProcPtr> )
-	let result = call-out( "NewDataBrowserItemDataUPP", ptr:, ptr: userRoutine.raw-value );
-	make( <UniversalProcPtr>, pointer: result );
-end method NewDataBrowserItemDataUPP;
+define method v1-value
+    (callbacks :: <DataBrowserCallbacks-u*>)
+ => (v1 :: <DataBrowserCallbacks-u-v1*>)
+  make(<DataBrowserCallbacks-u-v1*>, pointer: callbacks.raw-value);
+end method v1-value;
+
+define functional class <DataBrowserCallbacks-u-v1*>
+    (<statically-typed-pointer>)
+end class <DataBrowserCallbacks-u-v1*>;
+
+define method content-size
+  (thing == <DataBrowserCallbacks-u-v1*>)
+=>(result :: <integer>)
+  content-size(<DataBrowserCallbacks-u*>);
+end method content-size;
+
+define method itemDataCallback-value-setter
+    (callback :: <DataBrowserItemDataUPP>, callbacks :: <DataBrowserCallbacks-u-v1*>)
+ => (callback :: <DataBrowserItemDataUPP>)
+  pointer-at(callbacks, offset: 0) := callback;
+end method itemDataCallback-value-setter;
+
+define method itemCompareCallback-value-setter
+    (callback :: <DataBrowserItemCompareUPP>, callbacks :: <DataBrowserCallbacks-u-v1*>)
+ => (callback :: <DataBrowserItemCompareUPP>)
+  pointer-at(callbacks, offset: 4) := callback;
+end method itemCompareCallback-value-setter;
+
+define method itemNotificationCallback-value-setter
+    (callback :: <DataBrowserItemCompareUPP>, callbacks :: <DataBrowserCallbacks-u-v1*>)
+ => (callback :: <DataBrowserItemCompareUPP>)
+  pointer-at(callbacks, offset: 8) := callback;
+end method itemNotificationCallback-value-setter;
 
 define constant $kDataBrowserLatestCallbacks = c-expr(int: "kDataBrowserLatestCallbacks");
         
@@ -1227,4 +1359,14 @@ define method SetDataBrowserCallbacks
           ptr: callbacks.raw-value));
 end method SetDataBrowserCallbacks;       
 
+define functional class <DataBrowserItemDataRef>
+		(<statically-typed-pointer>)
+end class <DataBrowserItemDataRef>;
 
+define method SetDataBrowserItemDataText
+		(itemData :: <DataBrowserItemDataRef>, theData :: <CFStringRef>)
+ => (status :: <OSStatus>)
+ 	as(<OSStatus>, call-out("SetDataBrowserItemDataText", int:, ptr: itemData.raw-value, ptr: theData.raw-value))
+ end method SetDataBrowserItemDataText;
+
+// Tabs
