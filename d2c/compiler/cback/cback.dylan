@@ -346,11 +346,12 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
     let header = output-info.output-info-header-stream;
     format(header, "struct %s_results {\n", name);
     indent(header, $indentation-step);
-    for (dep = result then dependent-next,
+    for (dep = result then dep.dependent-next,
+	 index from 0,
 	 while: dep)
       let var = dep.source-exp;
       let (name, rep) = c-name-and-rep(var, output-info);
-      format(header, "%s %s;\n", name, rep.representation-c-type);
+      format(header, "%s R%d;\n", rep.representation-c-type, index);
     end;
     indent(header, -$indentation-step);
     format(header, "};\n");
@@ -463,10 +464,12 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
       let temp = new-local(output-info);
       format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
 	     info.lambda-info-main-entry-name, temp);
-      for (dep = result then dep.dependent-next)
+      for (dep = result then dep.dependent-next,
+	   index from 0,
+	   while: dep)
 	let var = dep.source-exp;
 	let (name, rep) = c-name-and-rep(var, output-info);
-	emit-copy(format-to-string("%s.%s", temp, name), rep, name, rep,
+	emit-copy(format-to-string("%s.R%d", temp, index), rep, name, rep,
 		  output-info);
       end;
       format(stream, "return %s;\n", temp);
