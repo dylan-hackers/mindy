@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.21 1995/06/07 15:13:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.22 1995/06/12 17:38:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,7 +33,7 @@ define method compile (#rest files) => ();
     end;
   end;
   format(*debug-output*, "Finalizing definitions\n");
-  do(finalize-top-level-form, $Top-Level-Forms);
+  do(finalize-top-level-form, copy-sequence($Top-Level-Forms));
   format(*debug-output*, "inheriting slots\n");
   inherit-slots();
   format(*debug-output*, "inheriting overrides\n");
