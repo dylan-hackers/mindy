@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.7 1994/04/10 21:11:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.8 1994/04/10 21:52:06 wlott Exp $
 *
 * This file does whatever.
 *
@@ -79,9 +79,12 @@ static void expand_param_list(struct param_list *params)
     for (p = params->required_params; p != NULL; p = p->next)
 	if (p->type)
 	    expand_expr(&p->type);
-    for (k = params->keyword_params; k != NULL; k = k->next)
+    for (k = params->keyword_params; k != NULL; k = k->next) {
+	if (k->type)
+	    expand_expr(&k->type);
 	if (k->def)
 	    expand_expr(&k->def);
+    }
 }
 
 static void expand_bindings(struct bindings *bindings)
@@ -203,6 +206,7 @@ static void add_method_wrap(struct body *body, struct method *method)
 {
     struct param_list *params = method->params;
     struct param *p;
+    struct keyword_param *k;
     struct arglist *list_args = make_argument_list();
     struct symbol *ctype = symbol("check-type");
     struct symbol *type_class = symbol("<type>");
@@ -231,6 +235,20 @@ static void add_method_wrap(struct body *body, struct method *method)
     }
     method->specializers
 	= make_function_call(make_varref(id(symbol("list"))), list_args);
+
+    for (k = params->keyword_params; k != NULL; k = k->next) {
+	if (k->type) {
+	    struct arglist *args = make_argument_list();
+	    struct expr *expr;
+
+	    k->type_temp = gensym();
+	    add_argument(args, make_argument(k->type));
+	    add_argument(args, make_argument(make_varref(id(type_class))));
+	    expr = make_function_call(make_varref(id(ctype)), args);
+	    bind_temp(body, id(k->type_temp), expr);
+	    k->type = NULL;
+	}
+    }
 
     if (method->rettypes)
 	bind_rettypes(body, method->rettypes);
@@ -279,25 +297,39 @@ static void bind_next_param(struct body *body, struct param_list *params)
     params->next_param = id(temp);
 }
 
-static void hairy_keyword_default(struct body *body, struct keyword_param *k)
+static void hairy_keyword(struct body *body, struct keyword_param *k)
 {
     struct symbol *temp = gensym();
     struct arglist *args;
-    struct expr *expr;
+    struct expr *expr = make_varref(id(temp));
+    struct param *p = make_param(k->id, NULL);
 
-    /* Bind the original id to:
-     *   if (temp == #unbound) default-expression else temp end
-     */
-    args = make_argument_list();
-    add_argument(args, make_argument(make_varref(id(temp))));
-    add_argument(args,make_argument(make_literal_ref(make_unbound_literal())));
-    expr = make_function_call(make_varref(id(symbol("=="))), args);
-    expr = make_if(expr, make_expr_body(k->def),
-		   make_expr_body(make_varref(id(temp))));
-    bind_temp(body, k->id, expr);
+    if (k->def) {
+	/* Bind the original id to:
+	 *   if (temp == #unbound) default-expression else temp end
+	 */
+	args = make_argument_list();
+	add_argument(args, make_argument(expr));
+	expr = make_literal_ref(make_unbound_literal());
+	add_argument(args, make_argument(expr));
+	expr = make_function_call(make_varref(id(symbol("=="))), args);
+	expr = make_if(expr, make_expr_body(k->def),
+		       make_expr_body(make_varref(id(temp))));
+	k->def = make_literal_ref(make_unbound_literal());
+    }
+
+    if (k->type_temp) {
+	/* Wrap it with a call to check-type if it is typed. */
+	args = make_argument_list();
+	add_argument(args, make_argument(expr));
+	add_argument(args, make_argument(make_varref(id(k->type_temp))));
+	expr = make_function_call(make_varref(id(symbol("check-type"))), args);
+	p->type_temp = k->type_temp;
+    }
+
+    bind_param(body, p, expr);
     
-    /* Change the default to #unbound, and the keyword id to temp */
-    k->def = make_literal_ref(make_unbound_literal());
+    /* Change the keyword id to the temp. */
     k->id = id(temp);
 }
 
@@ -410,8 +442,8 @@ static void expand_method_for_compile(struct method *method)
 	bind_next_param(body, method->params);
 
     for (k = params->keyword_params; k != NULL; k = k->next)
-	if (k->def && k->def->kind != expr_LITERAL)
-	    hairy_keyword_default(body, k);
+	if ((k->def && k->def->kind != expr_LITERAL) || k->type_temp)
+	    hairy_keyword(body, k);
 
     expand_param_list(params);
 
