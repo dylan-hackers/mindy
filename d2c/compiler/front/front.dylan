@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.44 1995/11/12 12:27:15 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.45 1995/11/14 14:18:23 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -103,7 +103,7 @@ end class;
 //
 define class <primitive> (<operation>)
   slot name :: <symbol>, required-init-keyword: name:;
-  slot info :: <primitive-info>;
+  slot info :: <primitive-info>, init-keyword: info:;
 end;
 
 define method initialize (prim :: <primitive>, #next next-method, #key) => ();
@@ -495,7 +495,7 @@ define class <fer-component> (<component>, <identity-preserving-mixin>)
   slot all-lets :: false-or(<let-assignment>), init-value: #f;
 
   // String that is some sort of name for the code in this component.
-  slot name :: <byte-string>, init-value: "<unknown>";
+  slot name :: <byte-string>, init-value: "<unknown>", init-keyword: name:;
 
   // Table mapping <ct-value>s to <literal-constant>s.
   slot constants :: <object-table>,
