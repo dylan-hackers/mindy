@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.8 1994/04/20 02:37:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.9 1994/06/11 17:18:40 hallgren Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 
 #include "mindy.h"
 #include "class.h"
@@ -142,10 +143,10 @@ obj_t alloc(obj_t class, int bytes)
 
 #if CHECKGC
     if (class != ptr_obj(NULL)
-	  && (unsigned int)obj_ptr(struct class *, class)->class == 0xfacefeed)
+	  && *obj_ptr(int *, class) == 0xfacefeed)
 	lose("Tried to allocate a class that wasn't scavenged.");
 
-    ptr = raw_alloc(bytes + 8);
+    ptr = raw_alloc(bytes + sizeof(int)*2);
     ptr[0] = 0xbeadbabe;
     ptr[1] = bytes;
 
@@ -196,10 +197,10 @@ obj_t transport(obj_t obj, int bytes)
 	lose("Someone told transport that %d byte object was %d bytes.",
 	     ptr[1], bytes);
 
-    new = raw_alloc(bytes + 8);
+    new = raw_alloc(bytes + sizeof(int)*2);
     new_obj = ptr_obj(new + 2);
 
-    memcpy(new, ptr, bytes + 8);
+    memcpy(new, ptr, bytes + sizeof(int)*2);
 #else
     new = raw_alloc(bytes);
     new_obj = ptr_obj(new);
@@ -229,7 +230,7 @@ static void scavenge_newspace(void)
 		unsigned int *header = ptr;
 		if (header[0] != 0xbeadbabe)
 		    lose("Scavenge_newspace found a bogus object.");
-		ptr += 8;
+		ptr += sizeof(int)*2;
 #endif
 		scavenge((obj_t *)ptr);
 		class = *(obj_t *)ptr;
