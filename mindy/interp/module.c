@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.12 1994/07/26 18:33:45 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.13 1994/08/21 00:43:25 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -870,10 +870,10 @@ void list_modules(struct library *library)
 	    struct entry *entry = bucket->datum;
 	    struct module *module = entry->datum;
 
-	    if (entry->exported)
-		printf("x ");
-	    else
-		printf("  ");
+	    printf("%c%c ",
+		   entry->exported ? 'x' : ' ',
+		   (module->home == NULL || module->home == library)
+		     ? ' ' : 'i');
 	    prin1(entry->name);
 	    if (module->completed)
 		printf("\n");
