@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.49 1995/05/05 09:24:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.50 1995/05/05 14:43:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -495,7 +495,8 @@ define method optimize-unknown-call
 	let builder = make-builder(component);
 	let lexenv = make(<lexenv>);
 	let new-func
-	  = build-general-method(builder, inline-expansion, lexenv, lexenv);
+	  = build-general-method(builder, inline-expansion, #f,
+				 lexenv, lexenv);
 	insert-before(component, call.dependents.dependent,
 		      builder-result(builder));
 	let func-dep = call.depends-on;
@@ -624,7 +625,7 @@ define method optimize-unknown-call
     if (inline-expansion)
       let lexenv = make(<lexenv>);
       let new-func
-	= build-general-method(builder, inline-expansion, lexenv, lexenv);
+	= build-general-method(builder, inline-expansion, #f, lexenv, lexenv);
       insert-before(component, call.dependents.dependent,
 		    builder-result(builder));
       let func-dep = call.depends-on;
