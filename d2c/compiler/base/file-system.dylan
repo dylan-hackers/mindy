@@ -1,6 +1,6 @@
 module: File-system
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/file-system.dylan,v 1.3 1996/09/04 16:47:11 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/file-system.dylan,v 1.4 1996/09/05 10:29:23 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -108,19 +108,13 @@ define function end-of-prefix (filename :: <filename>)
 	return(index);
       end if;
     end for;
-    -1;
+    0;
   end block;
 end function end-of-prefix;
 
 define function filename-prefix (filename :: <filename>)
  => prefix :: <filename>;
-  let end-pos = filename.end-of-prefix;
-  if (end-pos == -1)
-    "";   // copy-sequence chokes if end-pos == -1.  Perhaps it
-          // shouldn't, but that's what it does
-  else
-    copy-sequence(filename, end: end-pos);
-  end if;
+  copy-sequence(filename, end: filename.end-of-prefix);
 end function filename-prefix;
 
 // Internal.  filename.size if a dot is not found.
