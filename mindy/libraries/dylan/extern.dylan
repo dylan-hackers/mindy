@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.2 1995/02/14 02:43:25 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.3 1995/03/27 22:31:47 rgs Exp $
 
 //======================================================================
 //
@@ -56,6 +56,9 @@ end method get-c-function;
 // These will be used by "make" and "destroy".
 //
 define constant malloc = get-c-function("malloc", args: list(<integer>),
+					result: <statically-typed-pointer>);
+define constant calloc = get-c-function("calloc",
+					args: list(<integer>, <integer>),
 					result: <statically-typed-pointer>);
 define constant c-free = get-c-function("free",
 					args: list(<statically-typed-pointer>),
@@ -116,9 +119,11 @@ end method import-value;
 //
 define method make
     (cls :: limited(<class>, subclass-of: <statically-typed-pointer>),
+     #rest rest,
      #key extra-bytes :: <integer> = 0,
           pointer,
-          element-count :: <integer> = 1)
+          element-count :: <integer> = 1,
+     #all-keys)
  => (result :: <statically-typed-pointer>);
   if (pointer)
     select (pointer by instance?)
@@ -133,10 +138,13 @@ define method make
       error("Bad element-count: in make: %=", element-count);
     end if;
 
-    let ptr = malloc((content-size(cls) + extra-bytes) * element-count);
-    if (ptr == null-pointer) error("Make failed to allocate memory.") end if;
+    let ptr = as(cls,
+		 calloc((content-size(cls) + extra-bytes), element-count));
+    if (ptr = null-pointer) error("Make failed to allocate memory.") end if;
 
-    as(cls, ptr);
+    apply(initialize, ptr, rest);
+
+    ptr;
   end if;
 end method make;
 
@@ -151,7 +159,7 @@ define class <machine-pointer> (<statically-typed-pointer>) end class;
 // <C-string> corresponds to C's native "char *" type.  We provide basic
 // functions to that it obeys the protocol of <string>.
 //
-define class <c-string> (<statically-typed-pointer>, <string>) 
+define class <c-string> (<string>, <statically-typed-pointer>) 
 end class <c-string>;
 
 // We come up with an ambiguity in this special case, so define a method which
@@ -175,8 +183,9 @@ define method class-for-copy(string :: <c-string>)
   <byte-string>;
 end method class-for-copy;
 
-define method make(cls == <c-string>, #key size: sz = 0, fill = ' ')
-  let result = as(<c-string>, malloc(sz + 1));
+define method make(cls :: limited(<class>, subclass-of: <c-string>),
+		   #next next, #key size: sz = 0, fill = ' ')
+  let result = next(cls, element-count: sz + 1);
   let fill-byte = as(<integer>, fill);
   for (i from 0 below sz)
     unsigned-byte-at(result, offset: i) := fill-byte;
@@ -211,6 +220,29 @@ define method size (string :: <c-string>)
  => result :: <integer>;
   strlen(string);
 end method size;
+
+// This is a very common operation, so let's make it fast.
+//
+define method as (cls == <c-string>, str :: <byte-string>)
+  let sz = str.size;
+  let result = as(<c-string>, malloc(sz + 1));
+  for (i from 0 below sz)
+    unsigned-byte-at(result, offset: i) := as(<integer>, str[i]);
+  end for;
+  unsigned-byte-at(result, offset: sz) := 0;
+  result;
+end method as;
+
+// This is a very common operation, so let's make it fast.
+//
+define method as (cls == <byte-string>, str :: <c-string>)
+  let sz = str.size;
+  let result = make(<string>, size: sz);
+  for (i from 0 below sz)
+    result[i] := as(<character>, unsigned-byte-at(str, offset: i));
+  end for;
+  result;
+end method as;
 
 define method export-value (cls == <integer>, value :: <boolean>)
  => (result :: <integer>);
