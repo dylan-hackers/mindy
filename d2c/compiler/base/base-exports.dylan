@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.8 1996/01/31 23:57:32 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.9 1996/02/02 23:10:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -71,8 +71,6 @@ define module common
 	     <equal-table>, <string-table>, equal-hash},
 #if (mindy)
     rename: {type-or => type-union},
-#else
-    rename: {*warning-output* => *debug-output*},
 #end
     export: all;
   use Streams, export: all;
@@ -80,6 +78,10 @@ define module common
   use PPrint, export: all;
   use Format, export: all;
   use Params, prefix: "runtime-", export: all;
+#if (~mindy)
+  create
+     *debug-output*;
+#end
 end;
 
 define module utils
@@ -314,18 +316,6 @@ define module signature-interface
 
     <key-info>, key-name, key-type, required?, key-default,
     key-needs-supplied?-var;
-end;
-
-
-define module signature
-  use signature-interface;
-  use compile-time-values;
-  use common;
-  use utils;
-  use ctype;
-  use definitions;
-  use representation;
-  use od-format;
 end;
 
 
@@ -818,6 +808,18 @@ define module flow
     prev-op-setter;
 
 end;
+
+define module signature
+  use signature-interface;
+  use compile-time-values;
+  use common;
+  use utils;
+  use ctype;
+  use definitions;
+  use representation;
+  use od-format;
+end;
+
 
 #if (mindy)
 // Part of the compiler library
