@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.3 1994/04/06 17:45:27 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.4 1994/04/14 16:22:44 rgs Exp $
 //
 //  This file does whatever.
 //
@@ -20,17 +20,25 @@ module: Dylan
 // Default methods for non-primitive compares.
 
 define method \<= (x :: <object>, y :: <object>)
-  ~(x > y);
+  ~(y < x);
 end;
 
 define method \~= (x :: <object>, y :: <object>)
   ~(x = y);
 end;
 
-define method \>= (x :: <object>, y :: <object>)
-  y <= x;
-end;
+define constant \>= =
+  begin
+    local method \>= (x :: <object>, y :: <object>)
+	    ~(x < y);
+	  end;
+    \>=;
+  end;
 
-define method \> (x :: <object>, y :: <object>)
-  y < x;
-end;
+define constant \> =
+  begin
+    local method \> (x :: <object>, y :: <object>)
+	    y < x;
+	  end;
+    \>;
+  end;
