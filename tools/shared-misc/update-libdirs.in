@@ -21,7 +21,7 @@ my %library_dir;		# directory where each library is located
 my %used_from_library;		# libraries used by library
 my %used_from_dir;		# libraries used by directory
 
-my %runtime_libraries = ('dylan' => 1, 'melange-support' => 1, 'random' => 1);
+my %runtime_libraries = ('dylan' => 1, 'melange-support' => 1);
 
 if($#ARGV < 0) {
     &scan_directory(File::Spec->curdir());
@@ -166,7 +166,6 @@ sub scan_dylan_user {
 	my $deflibrary = &dylan_token(\*SOURCE);
 	$deflibrary =~ y/A-Z/a-z/;
 	if($deflibrary ne $library) {
-	    print STDERR "($deflibrary)($library)\n";
 	    print STDERR $source, ": did not expect ";
 	    print STDERR "define library $deflibrary ";
 	    print STDERR "in library $library\n";
