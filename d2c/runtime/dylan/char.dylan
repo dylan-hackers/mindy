@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/char.dylan,v 1.2 2000/01/24 04:56:43 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/char.dylan,v 1.3 2003/09/30 16:30:26 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -89,6 +89,11 @@ end;
 // Convert the character into an integer.
 // 
 define sealed inline method as (class == <integer>, char :: <character>)
+    => res :: <integer>;
+  char.value;
+end;
+
+define sealed inline method as (type :: <limited-integer>, char :: <character>)
     => res :: <integer>;
   char.value;
 end;
