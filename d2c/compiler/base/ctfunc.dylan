@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.4 1995/06/07 18:46:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.5 1995/06/10 15:58:58 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -34,7 +34,7 @@ define method print-message (ctv :: <ct-function>, stream :: <stream>) => ();
 end;
 
 define method ct-value-cclass (ctv :: <ct-function>) => res :: <cclass>;
-  specifier-type(#"<function>");
+  specifier-type(#"<raw-function>");
 end;
 
 define class <ct-generic-function> (<ct-function>, <eql-ct-value>)
