@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.4 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.5 1995/11/16 03:36:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -426,15 +426,9 @@ define open generic intersection
     (seq1 :: <sequence>, seq2 :: <sequence>, #key test)
     => new-seq :: <sequence>;
 
-// Horrible pun by Apple: this function is both a sequence operation AND
-// a type-system operation.  Hence the absurd arg types.  We don't make the
-// test keyword mandatory because it isn't meaningful for the type system
-// variant.
-// 
 define open generic union
-    (seq1 :: union(<type>, <sequence>), seq2 :: union(<type>, <sequence>),
-     #key)
-    => new-seq :: union(<type>, <sequence>);
+    (seq1 :: <sequence>, seq2 :: <sequence>, #key)
+    => new-seq :: <sequence>;
 
 define open generic remove-duplicates
     (seq :: <sequence>, #key test)
