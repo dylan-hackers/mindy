@@ -1,11 +1,11 @@
 Module: flow
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/data-flow.dylan,v 1.3 2000/01/24 04:55:59 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/data-flow.dylan,v 1.4 2002/04/28 20:42:12 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -175,12 +175,14 @@ end;
 // creating a copy of a variable during SSA conversion.
 //
 define abstract class <abstract-variable> (<leaf>, <annotatable>)
-  slot var-info :: <variable-info>, required-init-keyword: var-info:;
+  constant slot var-info :: <variable-info>,
+    required-init-keyword: var-info:;
 end class;
 
 define open abstract primary class <variable-info>
     (<identity-preserving-mixin>)
-  slot asserted-type :: <values-ctype>, required-init-keyword: asserted-type:;
+  constant slot asserted-type :: <values-ctype>,
+    required-init-keyword: asserted-type:;
 end class;
 
 
@@ -211,12 +213,12 @@ end class;
 // The <initial-definition> and <multi-definition-variable> leaves conspire to
 // represent variables with multiple definitions.
 
-// <initial-definition> represents a definition site of a mutiply assigned
+// <initial-definition> represents a definition site of a multiply assigned
 // variable.  Its dependents slot is always #f, since the definition-of var
 // has all of the read references.
 //
 define class <initial-definition> (<definition-site-variable>)
-  slot definition-of :: <multi-definition-variable>,
+  constant slot definition-of :: <multi-definition-variable>,
     required-init-keyword: definition:;
 end;
 
@@ -245,7 +247,7 @@ end;
 define class <initial-variable> (<multi-definition-variable>)
   //
   // The component that this variable is on.
-  slot component-of :: <component>, required-init-keyword: component:;
+  constant slot component-of :: <component>, required-init-keyword: component:;
   //
   // Thread through all initial vars in the component.
   slot next-initial-variable :: false-or(<initial-variable>),
@@ -276,7 +278,7 @@ end class;
 
 // Assignments:
 //
-//    An assignment represents a concrete step in program executation.
+// An assignment represents a concrete step in program execution.
 // Assignments appear in sequence and pair expressions with target variables.
 //
 define open abstract primary class <abstract-assignment> 
