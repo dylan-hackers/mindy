@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.24 1996/05/01 12:26:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.25 1996/05/11 14:47:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -453,15 +453,15 @@ define-primitive-type-deriver
    end method);
 
 define generic type-adding-constant
-    (ctype :: <ctype>, constant :: <general-integer>) => res :: <ctype>;
+    (ctype :: <ctype>, constant :: <extended-integer>) => res :: <ctype>;
 
 define method type-adding-constant
-    (ctype :: <ctype>, constant :: <general-integer>) => res :: <ctype>;
+    (ctype :: <ctype>, constant :: <extended-integer>) => res :: <ctype>;
   ctype;
 end method type-adding-constant;
 
 define method type-adding-constant
-    (ctype :: <limited-integer-ctype>, constant :: <general-integer>)
+    (ctype :: <limited-integer-ctype>, constant :: <extended-integer>)
     => res :: <ctype>;
   //
   // Instead of computing a precise result, we assume that we are going
@@ -498,9 +498,9 @@ define-primitive-transformer
    method (component :: <component>, primitive :: <primitive>) => ();
      let x = primitive.depends-on.source-exp;
      let y = primitive.depends-on.dependent-next.source-exp;
-     if (instance?(x, <literal-constant>) & x.value.literal-value == 0)
+     if (instance?(x, <literal-constant>) & x.value.literal-value = 0)
        replace-expression(component, primitive.dependents, y);
-     elseif (instance?(y, <literal-constant>) & y.value.literal-value == 0)
+     elseif (instance?(y, <literal-constant>) & y.value.literal-value = 0)
        replace-expression(component, primitive.dependents, x);
      end if;
    end method);
@@ -510,13 +510,68 @@ define-primitive-transformer
    method (component :: <component>, primitive :: <primitive>) => ();
      let x = primitive.depends-on.source-exp;
      let y = primitive.depends-on.dependent-next.source-exp;
-     if (instance?(x, <literal-constant>) & x.value.literal-value == 0)
+     if (instance?(x, <literal-constant>) & x.value.literal-value = 0)
        replace-expression
 	 (component, primitive.dependents,
 	  make-operation
 	    (make-builder(component), <primitive>, list(y),
 	     name: #"fixnum-negative"));
-     elseif (instance?(y, <literal-constant>) & y.value.literal-value == 0)
+     elseif (instance?(y, <literal-constant>) & y.value.literal-value = 0)
+       replace-expression(component, primitive.dependents, x);
+     end if;
+   end method);
+
+
+define-primitive-transformer
+  (#"fixnum-logior",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let x = primitive.depends-on.source-exp;
+     let y = primitive.depends-on.dependent-next.source-exp;
+     if ((instance?(x, <literal-constant>) & x.value.literal-value = 0)
+	   | (instance?(y, <literal-constant>) & y.value.literal-value = -1))
+       replace-expression(component, primitive.dependents, y);
+     elseif ((instance?(x, <literal-constant>) & x.value.literal-value = -1)
+	       | (instance?(y, <literal-constant>)
+		    & y.value.literal-value = 0))
+       replace-expression(component, primitive.dependents, x);
+     end if;
+   end method);
+
+define-primitive-transformer
+  (#"fixnum-logxor",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let x = primitive.depends-on.source-exp;
+     let y = primitive.depends-on.dependent-next.source-exp;
+     if (instance?(x, <literal-constant>) & x.value.literal-value = 0)
+       replace-expression(component, primitive.dependents, y);
+     elseif (instance?(x, <literal-constant>) & x.value.literal-value = -1)
+       replace-expression
+	 (component, primitive.dependents,
+	  make-operation
+	    (make-builder(component), <primitive>, list(y),
+	     name: #"fixnum-lognot"));
+     elseif (instance?(y, <literal-constant>) & y.value.literal-value = 0)
+       replace-expression(component, primitive.dependents, x);
+     elseif (instance?(y, <literal-constant>) & y.value.literal-value = -1)
+       replace-expression
+	 (component, primitive.dependents,
+	  make-operation
+	    (make-builder(component), <primitive>, list(x),
+	     name: #"fixnum-lognot"));
+     end if;
+   end method);
+
+define-primitive-transformer
+  (#"fixnum-logand",
+   method (component :: <component>, primitive :: <primitive>) => ();
+     let x = primitive.depends-on.source-exp;
+     let y = primitive.depends-on.dependent-next.source-exp;
+     if ((instance?(x, <literal-constant>) & x.value.literal-value = -1)
+	   | (instance?(y, <literal-constant>) & y.value.literal-value = 0))
+       replace-expression(component, primitive.dependents, y);
+     elseif ((instance?(x, <literal-constant>) & x.value.literal-value = 0)
+	       | (instance?(y, <literal-constant>)
+		    & y.value.literal-value = -1))
        replace-expression(component, primitive.dependents, x);
      end if;
    end method);
