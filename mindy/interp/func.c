@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.8 1994/04/10 18:50:29 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.9 1994/04/10 18:59:16 wlott Exp $
 *
 * This file does whatever.
 *
@@ -387,7 +387,6 @@ static boolean
 
 static boolean applicable_method_p(obj_t method, obj_t *args)
 {
-    obj_t specializers = METHOD(method)->specializers;
     obj_t cache = METHOD(method)->class_cache;
     int max = METHOD(method)->required_args;
     boolean can_cache = TRUE;
@@ -1585,9 +1584,9 @@ void scavenge_func_roots(void)
 
 void make_func_classes(void)
 {
-    obj_FunctionClass = make_abstract_class();
+    obj_FunctionClass = make_abstract_class(TRUE);
     obj_RawFunctionClass = make_builtin_class(scav_raw_func, trans_raw_func);
-    obj_MethodClass = make_abstract_class();
+    obj_MethodClass = make_abstract_class(TRUE);
     obj_RawMethodClass
 	= make_builtin_class(scav_raw_method, trans_raw_method);
     obj_BuiltinMethodClass
