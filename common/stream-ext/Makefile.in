@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/stream-ext/Attic/Makefile.in,v 1.3 1996/09/04 16:47:33 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/stream-ext/Attic/Makefile.in,v 1.4 1996/09/06 13:49:56 nkramer Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
@@ -91,10 +91,4 @@ realclean:
 	rm -f ${OBJS} stream-extensions-lib.dbc Makefile *~ \#* core
 
 install: stream-extensions-lib.dbc
-	${INSTALL-DATA} stream-extensions-lib.dbc ${LIBDIR}
-
-
-
-
-
-
+	${INSTALL_DATA} stream-extensions-lib.dbc ${LIBDIR}
