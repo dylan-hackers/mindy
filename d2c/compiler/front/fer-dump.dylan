@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.18 1995/05/03 07:23:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.19 1995/05/03 09:43:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -229,15 +229,9 @@ define method dump (op :: <operation>, stream :: <stream>) => ();
 end;
 
 define method kind (op :: <operation>) => res :: <string>;
-  "???";
-end;
-
-define method kind (op :: <abstract-call>) => res :: <string>;
-  "CALL";
-end;
-
-define method kind (op :: <local-call>) => res :: <string>;
-  "LOCAL-CALL";
+  let stream = make(<byte-string-output-stream>);
+  write-class-name(op, stream);
+  stream.string-output-stream-string;
 end;
 
 define method kind (op :: <known-call>) => res :: <string>;
