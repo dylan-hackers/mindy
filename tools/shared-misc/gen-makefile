@@ -1,5 +1,15 @@
 #!/usr/local/bin/perl
 
+# absolute on win32 means drive letter also
+sub dir_is_absolute {
+    local ($dir) = @_;
+    if ($win32) {
+	return ($srcroot =~ /^\w:\//);
+    } else {
+	return ($srcroot =~ /^\//);
+    }
+}
+
 $#ARGV >= 1 && die "Usage: $0 [directory]\n";
 $#ARGV >= 0 && (chdir($ARGV[0]) || die "Can't cd to $ARGV[0]: $!\n");
 
@@ -71,14 +81,17 @@ unless ($buildroot eq $orig_buildroot) {
     unless ($root_inode == $orig_inode) {
 	die("Defaults changed \$buildroot to:\n  $buildroot\nbut that is a different directory than:\n  $orig_buildroot\n");
     }
-    ($buildroot =~ /^\//)
-	|| die("\$buildroot is not absolute:\n  $buildroot\n");
+    &dir_is_absolute($buildroot)
+	|| die("\$buildroot is not absolute:\n  $buildroot\n"
+	       . "(you must include the drive letter on win32 systems)\n");
     $defaults = $buildroot . '/Defaults';
 }
 
 # Make sure they set srcroot.  And set it to an absolute pathname.
 $srcroot || die('$srcroot not set in Defaults.\n');
-($srcroot =~ /^(\w:)?\//) || die("\$srcroot is not absolute:\n  $srcroot\n");
+&dir_is_absolute($srcroot) 
+    || die("\$srcroot is not absolute:\n  $srcroot\n"
+	   . "(you must include the drive letter on win32 systems\n");
 
 # Tack the subdir onto srcroot.  Note: subdir is empty or ends with a /, hence
 # the chop.
