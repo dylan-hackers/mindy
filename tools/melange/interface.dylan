@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.15 2003/01/28 21:49:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.16 2003/01/29 19:03:53 andreas Exp $
 
 //======================================================================
 //
@@ -61,6 +61,9 @@ rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.15 2003/01/2
 //
 define constant match-define = make-substring-positioner("define");
 
+define constant match-module = make-substring-positioner("module: ");
+define constant match-newline = make-substring-positioner("\n");
+
 // Check to see whether the specified "long" (sub-)string begins with the
 // short string.  This routine should probably be in string-extensions
 // somewhere, but it isn't yet.
@@ -99,10 +102,21 @@ end method count-whitespace;
 // the interesting work.
 //
 define method process-interface-file
-    (in-file :: <string>, out-stream :: <stream>, #key verbose, structs) => ();
+    (in-file :: <string>, out-stream :: <stream>, 
+     #key verbose, structs, module-stream :: false-or(<stream>)) => ();
   let in-stream = make(<file-stream>, locator: in-file);
   let input-string = read-to-end(in-stream);
   let sz = input-string.size;
+  let module-line-start = match-module(input-string);
+  let module-line-end = match-newline(input-string, start: module-line-start);
+
+  let module-line 
+    = module-line-start 
+    & module-line-end 
+    & copy-sequence(input-string, 
+                    start: module-line-start + 8, 
+                    end: module-line-end + 1);
+
   
   local method try-define (position :: <integer>) => ();
 	  let new-position = match-define(input-string, start: position);
@@ -117,7 +131,9 @@ define method process-interface-file
 	      let newer-position
 		= process-define-interface(in-file, input-string,
 					   new-position, out-stream,
-					   verbose: verbose, structs: structs);
+					   verbose: verbose, structs: structs,
+                                           module-stream: module-stream,
+                                           module-line: module-line);
 	      if (newer-position < sz) try-define(newer-position) end if;
 	    else
 	      write(out-stream, input-string, start: new-position,
@@ -475,7 +491,9 @@ define variable target-switch :: <symbol> = #"all";
 // write-declaration for final processing.
 //
 define method process-parse-state
-    (state :: <parse-state>, out-stream :: <stream>, #key verbose, structs)
+    (state :: <parse-state>, out-stream :: <stream>, 
+     #key verbose, structs, module-stream :: false-or(<stream>),
+     module-line)
  => ();
   if (~state.include-files)
     error("Missing #include in 'define interface'");
@@ -551,7 +569,33 @@ define method process-parse-state
        decls);
     format(out-stream, "#endif\n");
   end if;
+  write-module-stream(decls, module-stream, module-line);
 end method process-parse-state;
+
+define method write-module-stream
+    (decls :: <collection>, module-stream :: false-or(<stream>),
+     module-line :: false-or(<string>)) => ()
+  if(module-stream & decls.size > 0)
+    format(module-stream, "module: dylan-user\n\n");
+    if(module-line)
+      format(module-stream, "define module %s", module-line)
+    else
+      format(module-stream, "define module foo", module-line)
+    end if;
+    format(module-stream, 
+           "  use dylan;\n"
+           "  use extensions;\n"
+           "  use melange-support;\n"
+           "  export\n"
+           "    %s",
+           "foo", // need to extract module name from intr file
+           decls[0].dylan-name);
+    for(i from 1 below decls.size)
+      format(module-stream, ",\n    %s", decls[i].dylan-name);
+    end for;
+    format(module-stream, ";\nend module;\n");
+  end if;
+end method write-module-stream;
 
 // Process-define-interface simply calls the parser in int-parse to decipher
 // the "define interface" and then call "process-parse-state" to annotate and
@@ -561,14 +605,18 @@ end method process-parse-state;
 define method process-define-interface
     (file-name :: <string>, string :: <string>, start :: <integer>,
      out-stream :: <stream>,
-     #key verbose, structs)
+     #key verbose, structs, module-stream :: false-or(<stream>),
+     module-line)
  => (end-position :: <integer>);
   let tokenizer = make(<tokenizer>, source-string: string,
 		       source-file: file-name, start: start);
   let state = make(<parse-state>, tokenizer: tokenizer);
   // If there is a problem with the parse, it will simply signal an error
   parse(state);
-  process-parse-state(state, out-stream, verbose: verbose, structs: structs);
+  process-parse-state(state, out-stream, 
+                      verbose: verbose, structs: structs, 
+                      module-stream: module-stream,
+                      module-line: module-line);
   // The tokenizer will be set at the next token after the "define
   // interface".  We can't just call tokenizer.position since there may have
   // been an "unget-token" call.
@@ -684,6 +732,10 @@ define method main (program, #rest args)
 			    long-options: #("target"),
 			    short-options: #("T"));
   add-option-parser-by-type(*argp*,
+			    <parameter-option-parser>,
+			    long-options: #("module-file"),
+			    short-options: #("m"));
+  add-option-parser-by-type(*argp*,
 			    <repeated-parameter-option-parser>,
 			    long-options: #("includedir"),
 			    short-options: #("I"));
@@ -711,6 +763,7 @@ define method main (program, #rest args)
   let d2c? = option-value-by-long-name(*argp*, "d2c");
   let mindy? = option-value-by-long-name(*argp*, "mindy");
   let target = option-value-by-long-name(*argp*, "target");
+  let module-file = option-value-by-long-name(*argp*, "module-file");
   let include-dirs = option-value-by-long-name(*argp*, "includedir");
   let regular-args = regular-arguments(*argp*);
   let structs? = option-value-by-long-name(*argp*, "shadow-structs");
@@ -764,9 +817,15 @@ define method main (program, #rest args)
       show-usage-and-exit();
   end select;
 
+  let module-stream = module-file & make(<file-stream>,
+                                         locator: module-file,
+                                         direction: #"output");
+
+
   // Do our real work.
   process-interface-file(in-file, out-file | *standard-output*,
-			 verbose: verbose?, structs: structs?);
+			 verbose: verbose?, structs: structs?, 
+                         module-stream: module-stream);
   exit(exit-code: 0);  // ### seems to be necessary, even though I'd
                        // think all Dylan programs would exit with
                        // exit code 0 if they never called exit() at
