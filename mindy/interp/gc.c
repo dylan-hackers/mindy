@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.12 1994/07/12 00:42:17 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.13 1994/07/26 00:39:52 wlott Exp $
 *
 * This file is the garbage collector.
 *
@@ -101,6 +101,9 @@ static int bytes_in_use(void)
 void *raw_alloc(int bytes)
 {
     void *result;
+
+    if (bytes < 0)
+	lose("Can't allocate a negative number of bytes: %d", bytes);
 
     /* round bytes up to the next dual-word boundy. */
     bytes = (bytes + 7) & ~7;
