@@ -4,6 +4,7 @@ define library ansi-c
   use dylan;
   use format;
   use parser-utilities;
+  use table-extensions;
 
   export
     c-types,
@@ -14,6 +15,7 @@ end library;
 define module outside-dependencies
   use dylan, export: all;
   use extensions, export: all;
+  use table-extensions, export: all;
   use format,
     import: {format-to-string},
     export: all;
@@ -103,7 +105,6 @@ define module c-types
 
   // From c-type-repository.dylan
   export
-    <c-identifier-table>,
     <c-type-repository>,
     do-c-type-repository-entries;
 end module;

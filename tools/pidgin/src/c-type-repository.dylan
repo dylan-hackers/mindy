@@ -1,35 +1,6 @@
 Module: c-types
 
 //=========================================================================
-//  C Identifier Tables
-//=========================================================================
-//  Based on <string-table> from CMU Melange, presumably written by a
-//  member of the Gwydion Group.
-//
-//  The hash function is fast, but only works on non-empty strings. String
-//  comparisons are case-insensitive.
-
-define class <c-identifier-table> (<table>)
-end class;
-
-define function c-identifier-hash
-    (string :: <byte-string>, initial-state :: <object>)
-  // XXX - What are the return types of a hash function?
-  // assert(string.size > 0);
-  values(string.size * 256 +
-	   as(<integer>, string[0]) +
-	   as(<integer>, string[ash(string.size, -1)]),
-	 initial-state);
-end function;
-
-define method table-protocol
-    (table :: <c-identifier-table>)
- => (equal :: <function>, hash :: <function>);
-  values(\=, c-identifier-hash);
-end method;
-
-
-//=========================================================================
 //  C Type Repository
 //=========================================================================
 //  Every C type implicity defines an infinite number of additional types.
@@ -50,22 +21,22 @@ define class <c-type-repository> (<object>)
     make(<object-table>);
 
   // We look up typedefs by name.
-  slot c-typedef-types :: <c-identifier-table> =
-    make(<c-identifier-table>);
+  slot c-typedef-types :: <string-table> =
+    make(<string-table>);
 
   // We look up structs, unions and enums by tag name.
-  slot c-struct-types :: <c-identifier-table> =
-    make(<c-identifier-table>);
-  slot c-union-types :: <c-identifier-table> =
-    make(<c-identifier-table>);
-  slot c-enum-types :: <c-identifier-table> =
-    make(<c-identifier-table>);
+  slot c-struct-types :: <string-table> =
+    make(<string-table>);
+  slot c-union-types :: <string-table> =
+    make(<string-table>);
+  slot c-enum-types :: <string-table> =
+    make(<string-table>);
 
   // For all other types, we format an abstract declarator and hash it
   // as though it were an identifier. This is slow, but it should handle
   // anything, no matter how weird.
-  slot c-other-types :: <c-identifier-table> =
-    make(<c-identifier-table>);
+  slot c-other-types :: <string-table> =
+    make(<string-table>);
 end;
 
 

@@ -190,31 +190,6 @@ define method initialize
 end method initialize;
 
 //----------------------------------------------------------------------
-
-// <String-table> is highly optimized for the sort of string lookups we get in
-// this application.  The hash function is very fast, but will fail for empty
-// strings.  Luckily, no such strings should show up in C declarations.
-//
-// We now hash on the middle character as well as the first. Many huge
-// headers prefix thousands of definitions with the same character, with
-// very predictable results.
-//
-define class <string-table> (<table>) end class;
-
-define method fast-string-hash (string :: <byte-string>,
-				initial-state :: <object>)
-  values(string.size * 256 +
-	   as(<integer>, string[0]) +
-	   as(<integer>, string[ash(string.size, -1)]),
-	 initial-state);
-end method fast-string-hash;
-
-define method table-protocol (table :: <string-table>)
-	=> (equal :: <function>, hash :: <function>);
-  values(\=, fast-string-hash);
-end method;
-
-//----------------------------------------------------------------------
 // Functions to be called from within c-parse
 //----------------------------------------------------------------------
 
@@ -373,6 +348,8 @@ define constant <icky-type-name> =
 // #(#"function", args . name) or
 // #(#"vector", length . name) or
 // #(#"bitfield", bits . name)
+//
+// XXX bitfields seem to be unimplemented.
 //
 // The 'args' field for functions may be:
 //   #($c-void-type)         Explicit void.

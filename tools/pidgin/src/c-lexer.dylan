@@ -681,34 +681,6 @@ define method source-location (token :: <token>)
        line-position: char-num);
 end method;
 
-//========================================================================
-// Support type -- <long-byte-string> and <string-table>
-//========================================================================
-
-// <string-table> -- private class.
-//
-// We attempt to optimize hashing of identifiers by using a specialized table
-// type.  The given hash functions is very fast and should be sufficient for
-// "typical" data.  Note that it will fail catastrophically for null strings,
-// but these should never appear in these tables.
-//
-define class <string-table> (<value-table>) end class;
-
-// fst-string-hash -- private function.
-//
-define function fst-string-hash
-    (string :: <byte-string>, initial-state :: <object>)
-  values(string.size * 256 + as(<integer>, string.first), initial-state);
-end function fst-string-hash;
-
-// table-protocol -- method on imported generic.
-//
-define method table-protocol (table :: <string-table>)
- => (equal :: <function>, hash :: <function>);
-  values(\=, fst-string-hash);
-end method;
-
-
 // $long-string-component-size -- private constant.
 //
 // The size of each substring in a <long-byte-string>.  Useful even if we use

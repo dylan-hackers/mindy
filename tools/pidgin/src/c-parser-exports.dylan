@@ -27,7 +27,7 @@ define module c-lexer
   use streams;
 
   // Gwydion Libraries
-  use table-extensions, exclude: {<string-table>};
+  use table-extensions;
   use self-organizing-list;
   use string-conversions;
   use regular-expressions;
@@ -95,6 +95,7 @@ define module c-parser
   // Standard Dylan
   use dylan;
   use extensions;
+  use table-extensions;
 
   // Included with Pidgin
   use source-locations;
