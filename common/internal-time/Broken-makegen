@@ -1,0 +1,8 @@
+
+$stage2 || ($D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc');
+$D2CFLAGS = '-L../dylan';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
+
+do emit_library_rule(
+    'internal-time', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+);
