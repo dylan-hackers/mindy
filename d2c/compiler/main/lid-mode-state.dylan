@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.10 2002/12/20 19:35:00 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.11 2002/12/20 23:24:46 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -585,6 +585,21 @@ define method build-ar-file (state :: <lid-mode-state>) => ();
 				       ar-name, objects);
 		    end;
 
+  if(state.unit-embedded?)
+    if(state.unit-shared?)
+      link-string := concatenate(link-string, link-arguments(state));
+    else
+      let link-string-file = make(<file-stream>,
+                                  locator: 
+                                    concatenate(target.library-filename-prefix,
+                                                state.unit-mprefix,
+                                                "-dylan.lnk"),
+                                  direction: #"output");
+      format(link-string-file, "%s", link-arguments(state));
+      close(link-string-file);
+    end if;
+  end if;
+
   format(state.unit-makefile, "\t%s\n", link-string);
   
   if (target.randomize-library-command & ~state.unit-shared?)
@@ -646,13 +661,8 @@ define method build-inits-dot-c (state :: <lid-mode-state>) => ();
 	   "extern void %s(descriptor_t *sp, int argc, void *argv);\n\n",
 	   entry-function-name);
   end if;
-  if(state.unit-embedded?)
   format(stream,
-	 "void inits()\n{\n    descriptor_t *sp = allocate(64*1024);\n\n");
-  else    
-    format(stream,
-	 "void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
-  end if;
+         "void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
   for (unit in *units*)
     format(stream, "    %s_Library_init(sp);\n", string-to-c-name(unit.unit-name));
   end;
@@ -679,7 +689,8 @@ define method build-inits-dot-c (state :: <lid-mode-state>) => ();
    := add!(state.unit-all-generated-files, c-name);
 end method;
 
-define method build-executable (state :: <lid-mode-state>) => ();
+define method link-arguments (state :: <lid-mode-state>) 
+ => (arguments :: <string>)
   let target = state.unit-target;
   let unit-libs = "";
   let dash-small-ells = "";
@@ -732,17 +743,22 @@ define method build-executable (state :: <lid-mode-state>) => ();
 
   let unit-libs = use-correct-path-separator(unit-libs, state.unit-target);
 
-  let objects = format-to-string("%s %s", 
-                                 stream-contents(state.unit-objects-stream),
-                                 unit-libs);
+  concatenate(unit-libs, dash-cap-ells, dash-small-ells, " ", linker-args)
+end method link-arguments;
+
+define method build-executable (state :: <lid-mode-state>) => ();
+  let target = state.unit-target;
+  let objects = stream-contents(state.unit-objects-stream);
+  state.unit-objects := objects;
 
   // rule to link executable
-  format(state.unit-makefile, "\n%s : %s\n", state.unit-executable, objects);
+  format(state.unit-makefile, "\n%s : %s\n", 
+         state.unit-executable, state.unit-objects);
   let link-string
     = format-to-string(state.unit-target.link-executable-command,
 		       state.unit-executable,
-		       concatenate(objects, dash-cap-ells, dash-small-ells," "),
-		       linker-args);
+                       objects,
+		       link-arguments(state));
   format(state.unit-makefile, "\t%s\n", link-string);
 
   format(state.unit-clean-stream, " %s", state.unit-executable);
