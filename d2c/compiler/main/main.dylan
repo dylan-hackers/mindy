@@ -1,11 +1,11 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.47 2001/03/30 16:16:08 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.48 2001/05/26 18:46:21 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -64,6 +64,7 @@ define class <main-unit-state> (<object>)
   // unit-prefix already a <unit-state> accessor
   slot unit-mprefix :: <byte-string>;
   slot unit-tlf-vectors :: <stretchy-vector> = make(<stretchy-vector>);
+  slot unit-modules :: <stretchy-vector> = make(<stretchy-vector>);
   slot unit-init-functions :: <stretchy-vector> = make(<stretchy-vector>);
   slot unit-cback-unit :: <unit-state>;
   slot unit-other-cback-units :: <simple-object-vector>;
@@ -265,7 +266,7 @@ define method parse-lid (state :: <main-unit-state>) => ();
 	  repeat(posn + 1);
 	elseif (char == '/' & (posn + 1 < contents.size) 
 		  & as(<character>, contents[posn + 1]) == '/')
-	  repeat(find-newline(posn + 1));
+	  repeat(find-newline(contents, posn + 1));
 	else
 	  let name-end = find-end-of-word(posn);
 	  let len = name-end - posn;
@@ -276,19 +277,6 @@ define method parse-lid (state :: <main-unit-state>) => ();
 	end;
       end;
     end,
-    method find-newline (posn :: <integer>)
-     => newline :: <integer>;
-      if (posn < end-posn)
-	let char = as(<character>, contents[posn]);
-	if (char == '\n')
-	  posn;
-	else
-	  find-newline(posn + 1);
-	end;
-      else
-	posn;
-      end;
-    end method,
 
     // find-end-of-word returns the position of the first character
     // after the word, where "end of word" is defined as whitespace.
@@ -591,6 +579,7 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
 	  let tlfs = make(<stretchy-vector>);
 	  *Top-Level-Forms* := tlfs;
 	  add!(state.unit-tlf-vectors, tlfs);
+	  add!(state.unit-modules, mod);
 	  parse-source-record(tokenizer);
 	cleanup
 	  *Current-Library* := #f;
@@ -754,7 +743,9 @@ end method compile-1-tlf;
 // files and compiling each of them to an output file.
 //
 define method compile-all-files (state :: <main-unit-state>) => ();
-  for (file in state.unit-files, tlfs in state.unit-tlf-vectors)
+  for (file in state.unit-files,
+       tlfs in state.unit-tlf-vectors,
+       module in state.unit-modules)
     let extension = file.filename-extension;
     if (extension = state.unit-target.object-filename-suffix)
       if (state.unit-shared?)
@@ -781,6 +772,7 @@ define method compile-all-files (state :: <main-unit-state>) => ();
 	let body-stream
 	  = make(<file-stream>, locator: temp-c-name, direction: #"output");
 	block ()
+	  *Current-Module* := module;
 	  let file = make(<file-state>, unit: state.unit-cback-unit,
 			  body-stream: body-stream);
 	  emit-prologue(file, state.unit-other-cback-units);
@@ -796,6 +788,7 @@ define method compile-all-files (state :: <main-unit-state>) => ();
 	cleanup
 	  close(body-stream);
 	  fresh-line(*debug-output*);
+	  *Current-Module* := #f;
 	end block;
 
 	pick-which-file(c-name, temp-c-name, state.unit-target);
@@ -1400,7 +1393,7 @@ define method show-copyright(stream :: <stream>) => ()
   format(stream, "d2c (Gwydion Dylan) %s\n", $version);
   format(stream, "Compiles Dylan source into C, then compiles that.\n");
   format(stream, "Copyright 1994-1997 Carnegie Mellon University\n");
-  format(stream, "Copyright 1998-2000 Gwydion Dylan Maintainers\n");
+  format(stream, "Copyright 1998-2001 Gwydion Dylan Maintainers\n");
 end method show-copyright;
 
 define method show-usage(stream :: <stream>) => ()
