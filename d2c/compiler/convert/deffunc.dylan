@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.4 1994/12/13 18:40:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.5 1994/12/14 20:15:31 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -26,7 +26,7 @@ define class <generic-definition> (<function-definition>)
   // #f iff the open adjective wasn't supplied.
   slot generic-defn-sealed? :: <boolean>, required-init-keyword: sealed:;
   //
-  // All the <method-definition>s defined on this generic function.
+  // All the <abstract-method-definition>s defined on this generic function.
   slot generic-defn-methods :: <list>,
     init-value: #();
 end;
@@ -38,8 +38,8 @@ end;
 define class <implicit-generic-definition>
     (<generic-definition>, <implicit-definition>)
   //
-  // Implicit generic definitions are not sealed.
-  keyword sealed:, init-value: #f;
+  // Implicit generic definitions are sealed.
+  keyword sealed:, init-value: #t;
 end;
 
 define abstract class <abstract-method-definition> (<function-definition>)
@@ -51,6 +51,9 @@ define method defn-type (defn :: <abstract-method-definition>)
 end;
 
 define class <method-definition> (<abstract-method-definition>)
+  //
+  // #f iff the open adjective wasn't supplied.
+  slot method-defn-sealed? :: <boolean>, required-init-keyword: sealed:;
   //
   // The generic function this method is part of, or #f if the base-name is
   // undefined or not a generic function.
@@ -73,6 +76,12 @@ define class <define-generic-tlf> (<simple-define-tlf>)
     required-init-keyword: returns:;
 end;
 
+define class <define-implicit-generic-tlf> (<simple-define-tlf>)
+  //
+  // Make the definition required.
+  required keyword defn:;
+end;
+
 define class <define-method-tlf> (<simple-define-tlf>)
   //
   // The name being defined.  Note: this isn't the name of the method, it is
@@ -85,13 +94,10 @@ define class <define-method-tlf> (<simple-define-tlf>)
   // The guts of the method being defined.
   slot method-tlf-parse :: <method-parse>, required-init-keyword: parse:;
   //
-  // The implicit generic function definition, if there is one.  Made if there
-  // is any chance it will be needed at parse time, and then cleared out if
-  // it turns out to be redundent at defn finalization time.
-  slot method-tlf-implicit-defn
-    :: union(<implicit-generic-definition>, <false>),
-    required-init-keyword: implicit-defn:;
+  // The leaf for this method after we've converted it.  #f until then.
+  slot method-tlf-leaf :: union(<leaf>, <false>), init-value: #f;
 end;
+
 
 
 // process-top-level-form
@@ -109,7 +115,7 @@ define method process-top-level-form (form :: <define-generic-parse>) => ();
 		  name: make(<basic-name>,
 			     symbol: name,
 			     module: *Current-Module*),
-		  sealed: sealed?);
+		  sealed: ~open?);
   note-variable-definition(defn);
   add!($Top-Level-Forms,
        make(<define-generic-tlf>,
@@ -126,17 +132,38 @@ define method process-top-level-form (form :: <define-method-parse>) => ();
   if (open? & sealed?)
     error("define method %s can't be both open and sealed", name);
   end;
-  let var = find-variable(*Current-Module*, name);
   let base-name = make(<basic-name>, symbol: name, module: *Current-Module*);
-  let implicit-defn
-    = unless (var & var.variable-definition)
-	let defn = make(<implicit-generic-definition>, name: base-name);
-	note-variable-definition(defn);
-	defn;
-      end;
-  add!($Top-Level-Forms,
-       make(<define-method-tlf>, base-name: base-name, sealed: ~open?,
-	    parse: form.defmethod-method, implicit-defn: implicit-defn));
+  let parse = form.defmethod-method;
+  let params = parse.method-param-list;
+  implicitly-define-generic(base-name, params.paramlist-required-vars.size,
+			    params.paramlist-rest & ~params.paramlist-keys,
+			    params.paramlist-keys & #t);
+  let tlf = make(<define-method-tlf>, base-name: base-name, sealed: ~open?,
+		 parse: parse);
+  add!($Top-Level-Forms, tlf);
+end;
+
+define method implicitly-define-generic
+    (name :: <basic-name>, num-required :: <integer>,
+     variable-args? :: <boolean>, keyword-args? :: <boolean>)
+    => ();
+  let var = find-variable(name.name-module, name.name-symbol);
+  unless (var & var.variable-definition)
+    let defn
+      = make(<implicit-generic-definition>,
+	     name: name,
+	     signature:
+	       make(<signature>,
+		    specializers:
+		      make(<list>, size: num-required, fill: object-ctype()),
+		    rest-type: variable-args? & object-ctype(),
+		    keys: keyword-args? & #(),
+		    all-keys: #f,
+		    returns: #(),
+		    returns-rest-type: object-ctype()));
+    note-variable-definition(defn);
+    add!($Top-Level-Forms, make(<define-implicit-generic-tlf>, defn: defn));
+  end;
 end;
 
 
@@ -155,45 +182,46 @@ define method finalize-top-level-form (tlf :: <define-generic-tlf>) => ();
   end;
 end;
 
-define method finalize-top-level-form (tlf :: <define-method-tlf>) => ();
+define method finalize-top-level-form (tlf :: <define-implicit-generic-tlf>)
+    => ();
+  // Nothing to finalize.
+end;
+
+define method finalize-top-level-form (tlf :: <define-method-tlf>)
+    => ();
   let name = tlf.method-tlf-base-name;
-  let var = find-variable(name.name-module, name.name-symbol);
+  let (signature, anything-non-constant?)
+    = compute-signature(tlf.method-tlf-parse.method-param-list,
+			tlf.method-tlf-parse.method-returns);
+  tlf.tlf-defn := make(<method-definition>,
+		       base-name: name,
+		       signature: signature,
+		       hairy: anything-non-constant?,
+		       sealed: tlf.method-tlf-sealed?);
+end;
+
+define method make (wot :: limited(<class>, subclass-of: <method-definition>),
+		    #next next-method, #rest keys,
+		    #key base-name, signature, hairy: hairy?)
+    => res :: <method-definition>;
+  let var = find-variable(base-name.name-module, base-name.name-symbol);
   let generic-defn
     = if (var & instance?(var.variable-definition, <generic-definition>))
 	var.variable-definition;
       end;
-  let (signature, anything-non-constant?)
-    = compute-signature(tlf.method-tlf-parse.method-param-list,
-			tlf.method-tlf-parse.method-returns);
-  let defn = make(<method-definition>,
-		  name: make(<method-name>,
-			     generic-function: name,
-			     signature: signature),
-		  signature: signature,
-		  hairy: (anything-non-constant? | generic-defn == #f
-			    | generic-defn.function-defn-hairy?),
-		  method-of: generic-defn);
-  tlf.tlf-defn := defn;
+  let defn = apply(next-method, wot,
+		   name: make(<method-name>,
+			      generic-function: base-name,
+			      signature: signature),
+		   hairy: hairy? | generic-defn == #f
+		     | generic-defn.function-defn-hairy?,
+		   method-of: generic-defn,
+		   keys);
   if (generic-defn)
     generic-defn.generic-defn-methods
       := pair(defn, generic-defn.generic-defn-methods);
-    if (tlf.method-tlf-implicit-defn == generic-defn)
-      generic-defn.function-defn-signature
-	:= make(<signature>,
-		specializers: map(method (spec) object-ctype() end,
-				  signature.specializers),
-		rest-type:
-		  signature.rest-type & ~signature.key-infos & object-ctype(),
-		keys: signature.key-infos & #(),
-		all-keys: #f,
-		returns: #(),
-		returns-rest-type: object-ctype());
-    else
-      tlf.method-tlf-implicit-defn := #f;
-    end;
-  else
-    tlf.method-tlf-implicit-defn := #f;
   end;
+  defn;
 end;
 
 define method compute-signature
@@ -247,6 +275,16 @@ define method convert-top-level-form
   convert-generic-definition(builder, tlf.tlf-defn);
 end;
 
+define method convert-top-level-form
+    (builder :: <fer-builder>, tlf :: <define-implicit-generic-tlf>) => ();
+  let defn = tlf.tlf-defn;
+  let name = defn.defn-name;
+  let var = find-variable(name.name-module, name.name-symbol);
+  if (var & var.variable-definition == defn)
+    convert-generic-definition(builder, tlf.tlf-defn);
+  end;
+end;
+
 define method convert-generic-definition
     (builder :: <fer-builder>, defn :: <generic-definition>) => ();
   if (defn.function-defn-hairy?)
@@ -264,17 +302,17 @@ end;
 
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-method-tlf>) => ();
-  if (tlf.method-tlf-implicit-defn)
-    convert-generic-definition(builder, tlf.method-tlf-implicit-defn);
-  end;
   let lexenv = make(<lexenv>);
   let method-literal = build-general-method(builder, tlf.method-tlf-parse,
 					    lexenv, lexenv);
+  tlf.method-tlf-leaf := method-literal;
   let defn = tlf.tlf-defn;
   if (defn.function-defn-hairy?)
+    // We don't use method-defn-of, because that is #f if there is a definition
+    // but it isn't a define generic.
     let gf-name = tlf.method-tlf-base-name;
     let gf-var = find-variable(gf-name.name-module, gf-name.name-symbol);
-    let gf-defn = gf-var & variable-definition(gf-var);
+    let gf-defn = gf-var & gf-var.variable-definition;
     if (gf-defn)
       let policy = $Default-Policy;
       let source = make(<source-location>);
@@ -286,8 +324,7 @@ define method convert-top-level-form
 		 make-definition-leaf(builder, gf-defn),
 		 method-literal)));
     else
-      error("No definition for generic function %=, and can't implicitly "
-	      "define it.",
+      error("No definition for %=, and can't implicitly define it.",
 	    gf-name);
     end;
   end;
