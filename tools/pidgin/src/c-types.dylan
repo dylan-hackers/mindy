@@ -245,8 +245,11 @@ end;
 define class <c-function-type> (<c-derived-type>)
   slot c-function-return-type :: <c-type>,
     required-init-keyword: return-type:;
-  slot c-function-parameters :: <stretchy-vector> = make(<stretchy-vector>);
-  // members of c-function-parameters are of type <c-function-parameter>
+  slot c-function-parameter-types :: <stretchy-vector> =
+    make(<stretchy-vector>);
+  // members of c-function-parameter-types are of type <c-type>
+  // XXX - need to think about parameter names. They're not part of the
+  // function type but sometimes we need them.
 
   // Record new and old style declarations exactly.
   slot c-function-explicit-varargs? :: <boolean>,
@@ -259,17 +262,10 @@ define class <c-function-type> (<c-derived-type>)
   // MSVC - need to handle __stdcall, maybe others.
 end;
 
-define class <c-function-parameter> (<object>)
-  slot c-function-parameter-name :: false-or(<string>),
-    required-init-keyword: name:;
-  slot c-function-parameter-type :: <c-type>,
-    required-init-keyword: type:;
-end;
-
 define function format-function-parameters
-    (type :: <c-function-type>, #key parameter-names?)
+    (type :: <c-function-type>)
  => (parameters :: <string>)
-  if (type.c-function-parameters.empty?)
+  if (type.c-function-parameter-types.empty?)
     case
       type.c-function-explicit-void? =>
 	"void";
@@ -279,12 +275,9 @@ define function format-function-parameters
 	"";
     end case;
   else
-    local method process-arg (arg)
-	    format-c-type-declarator(arg, parameter-names?: parameter-names?);
-	  end;
     let result = join-strings(", ", map-as(<list>,
-					   process-arg,
-					   type.c-function-parameters));
+					   format-c-type-declarator,
+					   type.c-function-parameter-types));
     if (type.c-function-explicit-varargs?)
       concatenate(result, ", ...");
     else
@@ -370,7 +363,7 @@ define constant <c-named-type> =
 
 define function format-c-type-declarator
     (type :: <c-type>,
-     #key decl-name :: false-or(<string>), parameter-names? :: <boolean>)
+     #key decl-name :: false-or(<string>))
  => (decl :: <string>)
   let type-name = c-type-name(type);
   if (type-name)

@@ -54,9 +54,9 @@ define method main(appname, #rest args)
 		    explicit-varargs?: #t));
 
   local method build-argument-list (f :: <c-function-type>)
-	  add!(f.c-function-parameters, $c-int-type);
-	  add!(f.c-function-parameters, $c-char-type);
-	  add!(f.c-function-parameters, $c-long-long-type);
+	  add!(f.c-function-parameter-types, $c-int-type);
+	  add!(f.c-function-parameter-types, $c-char-type);
+	  add!(f.c-function-parameter-types, $c-long-long-type);
 	end;
   let func2 = make(<c-function-type>,
 		   return-type: $c-void-type);
