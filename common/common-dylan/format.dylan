@@ -187,7 +187,7 @@ define method print-unique-name
     <boolean>      => print-string(buffer, if (object) "#t" else "#f" end);
     <integer>      => print-string(buffer, integer-to-string(object));
     <float>        => print-string(buffer, float-to-string(object));
-  //<machine-word> => print-string(buffer, machine-word-to-string(object));
+    <machine-word> => print-string(buffer, machine-word-to-string(object));
     <method>       => print-method(buffer, object);
     otherwise      => print-basic-name(buffer, object: object);
   end
@@ -241,6 +241,58 @@ define method print-unique-name
   print-unique-name(buffer, singleton-object(singleton));
   print-string(buffer, "}")
 end method print-unique-name;
+
+
+/// Machine-word/string conversion
+
+define function machine-word-to-string
+    (mw :: <machine-word>, #key prefix :: false-or(<string>) = "#x")
+ => (string :: <string>)
+  let halfword-size = ash($machine-word-size, -1);
+  let digits-per-halfword = ash(halfword-size, -2);
+  let high 
+    = as(<integer>, u%shift-right(mw, halfword-size));
+  let low 
+    = as(<integer>, u%shift-right(u%shift-left(mw, halfword-size),
+                                  halfword-size));
+  concatenate-as(<string>,
+		 prefix | "",
+		 integer-to-string(high, base: 16, size: digits-per-halfword),
+		 integer-to-string(low, base: 16, size: digits-per-halfword))
+end function machine-word-to-string;
+
+define function string-to-machine-word
+    (str :: <string>, 
+     #key start         :: <integer> = 0, 
+          default = $unsupplied,
+          end: stop     :: false-or(<integer>))
+ => (n :: <machine-word>, next-key :: <integer>)
+  let string-length :: <integer> = size(str);
+  unless (start >= 0 & start < string-length)
+    user-assertion-error("Start: %d is out of range [0, %d] for string %s",
+                         start, string-length, str);
+  end;
+  if (stop)
+    unless (stop >= start & stop <= string-length)
+      user-assertion-error("Stop: %d is out of range [0, %d] for string %s.", 
+                           stop, string-length, str);
+    end;
+  else
+    stop := size(str)
+  end;
+  while (start < stop & member?(str[start], #(' ', '\n', '\r', '\f', '\t')))
+    start := start + 1
+  end;
+  // Remove common prefixes (#x, 0x) ...
+  if ((start < stop - 2)
+	&((str[start] = '#' & str[start + 1] = 'x')
+	    | (str[start] = '0' & str[start + 1] = 'x')))
+    start := start + 2
+  end;
+  let (value, next-key)
+    = string-to-integer(str, start: start, end: stop, base: 16);
+  values(as(<machine-word>, value), next-key)
+end function string-to-machine-word;
 
 
 /// Condition/string conversion

@@ -147,6 +147,8 @@ define module common-extensions
     split,
     fill-table!,
     find-element,
+    machine-word-to-string,
+    string-to-machine-word,
     condition-to-string,
     format-to-string;
 
@@ -285,6 +287,7 @@ define module common-dylan-internals
   use magic, import: { %element, %element-setter };
   use cheap-io, import: { puts => write-console };
   use introspection, rename: { subclass-of => subclass-class };
+  use machine-words;
   use melange-support;
   use c-support;
   use simple-io;
