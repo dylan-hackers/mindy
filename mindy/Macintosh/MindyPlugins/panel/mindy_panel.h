@@ -52,12 +52,20 @@ enum {
 	kMindySettingsVersion = 0x0100
 };
 
+enum {
+	kMindyModeApplication = 1,
+	kMindyModeLibrary = 2
+};
+
 struct MindySettings {
-	short		version;			/* version # of settings data	*/
-	Boolean		warnings;			/* generate warnings.			*/
-	Boolean		verbose;			/* verbose mode					*/
+	short		version;			/* version # of settings data.	*/
+	short		mode;				/* compilation mode.			*/
+	Boolean		dumpTrees;			/* dump parse trees.			*/
+	Boolean		noWarnings;			/* no warnings.					*/
+	Str32Field	library;			/* name of the library			*/
 	Str32Field	output;				/* name of the output file		*/
 };
+
 
 typedef struct MindySettings MindySettings, **MindySettingsHandle;
 
