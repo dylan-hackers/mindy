@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.35 1995/04/28 15:42:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.36 1995/04/29 02:45:20 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -224,6 +224,13 @@ define method optimize
       // the cluster into that number of variables.
       for (nvals from 0, defn = defines then defn.definer-next, while: defn)
       finally
+	let builder = make-builder(component);
+	let op = make-primitive-operation(builder, #"values", list(source));
+	remove-dependency-from-source(component, dependency);
+	dependency.source-exp := op;
+	dependency.source-next := op.dependents;
+	op.dependents := dependency;
+	queue-dependent(component, assignment);
 	expand-cluster(component, source, nvals);
       end;
     end;
@@ -2763,7 +2770,7 @@ define method check-sanity (reg :: <simple-region>) => ();
     end;
     //
     // Check the dependent aspect of this assignment.
-    check-dependent(assign);
+    check-dependent(assign, <expression>, #t);
   end;
 end;
 
@@ -2784,7 +2791,7 @@ end;
 define method check-sanity (region :: <if-region>) => ();
   //
   // Check the dependent aspects.
-  check-dependent(region);
+  check-dependent(region, <leaf>, #t);
   //
   // Check to make sure the subregion's parent links are correct.
   unless (region.then-region.parent == region)
@@ -2815,7 +2822,7 @@ define method check-sanity (lambda :: <lambda>) => ();
   check-expression(lambda);
   //
   // Check the dependent aspects of the lambda.
-  check-dependent(lambda);
+  check-dependent(lambda, <abstract-variable>, #f);
   //
   // Check the lambda's body.
   unless (lambda.body.parent == lambda)
@@ -2835,6 +2842,15 @@ define method check-sanity (exit :: <exit>) => ();
 	    exit, exit.block-of);
     end;
   end;
+end;
+
+define method check-sanity (pitcher :: <pitcher>, #next next-method) => ();
+  //
+  // Check the exit aspects.
+  next-method();
+  //
+  // Check the dependent aspects.
+  check-dependent(pitcher, <abstract-variable>, #t);
 end;
 
 
@@ -2866,10 +2882,21 @@ define method check-expression (op :: <operation>, #next next-method) => ();
   next-method();
   //
   // Check the dependent aspects of an operation.
-  check-dependent(op);
+  check-dependent(op, <leaf>, #f);
 end;
 
-define method check-dependent (dep :: <dependent-mixin>) => ();
+define method check-dependent
+    (dep :: <dependent-mixin>, expr-kind :: <class>, one-only? :: <boolean>)
+    => ();
+  if (one-only?)
+    unless (dep.depends-on)
+      error("%= doesn't depend on anything.");
+    end;
+    if (dep.depends-on.dependent-next)
+      error("%= depends on more than one thing.", dep);
+    end;
+  end;
+
   for (dependency = dep.depends-on then dependency.dependent-next,
        while: dependency)
     //
@@ -2880,6 +2907,10 @@ define method check-dependent (dep :: <dependent-mixin>) => ();
     end;
     //
     // Make make sure that source is okay.
+    unless (instance?(dependency.source-exp, expr-kind))
+      error("%='s dependency %= isn't a %=",
+	    dep, dependency.source-exp, expr-kind);
+    end;
     check-expression(dependency.source-exp);
     //
     // Make sure that source lists us as a dependent.
