@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 #
 # install - install a program, script, or datafile
@@ -8,6 +8,9 @@
 #
 # This script is compatible with the BSD install script, but was written
 # from scratch.
+#
+# ``-e'' flag added by the Gwydion group to make this script usable in
+# makefiles.
 #
 
 
