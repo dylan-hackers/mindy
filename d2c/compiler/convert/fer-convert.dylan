@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.32 1995/05/18 21:02:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.33 1995/06/01 14:39:54 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -321,12 +321,18 @@ define method fer-convert (builder :: <fer-builder>, form :: <varref>,
 		 if (binding)
 		   binding.binding-var;
 		 else
-		   let var = find-variable(id-name(id));
+		   let name = id-name(id);
+		   let var = find-variable(name);
 		   let defn = var & var.variable-definition;
 		   if (defn)
 		     make-definition-leaf(builder, defn);
 		   else
-		     make-error-operation(builder, "Undefined variable");
+		     compiler-warning("Undefined variable: %s", name);
+		     make-error-operation
+		       (builder, "Undefined variable: %s",
+			make-literal-constant
+			  (builder,
+			   as(<ct-value>, format-to-string("%s", name))));
 		   end;
 		 end);
 end;
@@ -350,23 +356,34 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
 	= if (binding)
 	    values(binding.binding-var, binding.binding-type-var, #f);
 	  else
-	    let var = find-variable(id-name(id));
+	    let name = id-name(id);
+	    let var = find-variable(name);
 	    let defn = var & var.variable-definition;
 	    if (~defn)
+	      compiler-warning("Undefined variable: %s", name);
 	      return(deliver-result
 		       (builder, lexenv.lexenv-policy, source, want, datum,
-			make-error-operation(builder, "Undefined variable")));
+			make-error-operation
+			  (builder, "Undefined variable: %s",
+			   make-literal-constant
+			     (builder,
+			      as(<ct-value>, format-to-string("%s", name))))));
 	    elseif (instance?(defn, <variable-definition>))
 	      let type-defn = defn.var-defn-type-defn;
 	      values(make-definition-leaf(builder, defn),
 		     type-defn & make-definition-leaf(builder, type-defn),
 		     defn);
 	    else
+	      compiler-warning("Attept to assign constant module variable: %s",
+			       name);
 	      return(deliver-result
 		       (builder, lexenv.lexenv-policy, source, want, datum,
 			make-error-operation
 			  (builder,
-			   "Can't assign constant module varaibles")));
+			   "Can't assign constant module varaible: %s",
+			   make-literal-constant
+			     (builder,
+			      as(<ct-value>, format-to-string("%s", name))))));
 	    end;
 	  end;
       let temp = fer-convert(builder, form.assignment-value,
