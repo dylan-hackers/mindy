@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.16 1995/06/07 15:22:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.17 1995/06/09 16:12:11 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -741,10 +741,13 @@ define method layout-slots-for (class :: <cclass>) => ();
 	#[];
       else
 	let critical-super = supers.head;
+	let critical-primary = critical-super.closest-primary-superclass;
 	for (super in supers.tail)
-	  if (csubtype?(super.closest-primary-superclass,
-			critical-super.closest-primary-superclass))
+	  let primary = super.closest-primary-superclass;
+	  if (~(primary == critical-primary)
+		& csubtype?(primary, critical-primary))
 	    critical-super := super;
+	    critical-primary := primary;
 	  end;
 	end;
 	class.instance-slots-layout
