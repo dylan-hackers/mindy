@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.10 1994/06/11 16:32:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.11 1994/06/27 15:56:23 wlott Exp $
 *
 * This file does whatever.
 *
@@ -786,8 +786,10 @@ gf_keyword_parameters:
 ;
 
 gf_keyword_parameter:
-	keyword keyword_parameter_type
-	{ $$ = make_keyword_param($1, NULL, $2, NULL); }
+	keyword symbol_opt keyword_parameter_type
+	{ $$ = make_keyword_param($1, $2 ? make_id($2) : NULL, $3, NULL); }
+    |	SYMBOL keyword_parameter_type
+	{ $$ = make_keyword_param(NULL, make_id($1), $2, NULL); }
 ;
 
 anonymous_method:
