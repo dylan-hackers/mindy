@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.1 1996/01/03 21:30:42 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.2 1996/01/04 15:26:10 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -62,6 +62,7 @@ define module common
     import: {<fixed-integer>, <extended-integer>,
 	     $maximum-fixed-integer, ratio,
 	     false-or, one-of, <false>, <true>, ignore,
+	     $minimum-fixed-integer, <byte-character>,
 #if (mindy)
              <boolean>, *debug-output*, main, <dictionary>, key-exists?,
 #end
@@ -80,7 +81,6 @@ end;
 define module utils
   use common;
   use standard-io;
-  use extensions, import: {$minimum-fixed-integer};
 #if (mindy)
   use Introspection, import: {object-address, class-name};
   use System, import: {copy-bytes};
