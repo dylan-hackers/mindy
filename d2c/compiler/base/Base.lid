@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Base.lid,v 1.2 1996/01/04 15:22:10 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Base.lid,v 1.3 1996/02/09 17:07:12 wlott Exp $
 library: compiler-base
 unit-prefix: base
 unique-id-base: 10000
@@ -10,6 +10,7 @@ od-format.dylan
 dylan-dump.dylan
 ctv.dylan
 source.dylan
+errors.dylan
 header.dylan
 tokens.dylan
 names.dylan
