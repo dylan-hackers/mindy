@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.7 2000/01/24 04:56:46 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/deque.dylan,v 1.8 2004/07/26 07:35:23 bruce Exp $
 
 //======================================================================
 //
@@ -63,6 +63,9 @@ define sealed inline method make
   apply(make, <simple-object-deque>, rest);
 end method make;
 
+define sealed domain make(singleton(<deque>));
+define sealed domain initialize(<deque>);
+
 
 // Note: In the code that follows, the terms "state" and "element" will be
 // used interchangeably to denote <deque-element> objects.  The choice of
@@ -86,13 +89,16 @@ define open generic pop-last (deque :: <deque>) => (result :: <object>);
 // prvious and next deque elements.  If there is no PREV-DEQUE-ELEMENT or
 // NEXT-DEQUE-ELEMENT, the marker #f should be used in these slots.
 //
+
 define sealed class <deque-element> (<object>)
-  sealed slot deque-element-data, required-init-keyword: #"data" ;
+  sealed slot deque-element-data, required-init-keyword: data: ;
   sealed slot prev-deque-element :: false-or(<deque-element>), init-value: #f;
   sealed slot next-deque-element :: false-or(<deque-element>), init-value: #f;
 end class <deque-element>;
 
 define sealed domain make (singleton(<deque-element>));
+define sealed domain initialize(<deque-element>);
+
 
 // <simple-object-deque> -- public
 //
@@ -118,9 +124,9 @@ end class <simple-object-deque>;
 // elements should be.  I added another key DATA which gives the entire
 // contents to the new deque in a sequence.
 //
-define method initialize (deque :: <simple-object-deque>,
-			  #key data, size :: <integer> = 0,
-			       fill = #f)
+define inline method initialize (deque :: <simple-object-deque>,
+                                 #key data, size :: <integer> = 0,
+                                 fill = #f)
   if (data)
     for (element in data)
       push-last(deque, element);
@@ -155,34 +161,39 @@ define sealed inline method forward-iteration-protocol
      current-element :: <function>,
      current-element-setter :: <function>,
      copy-state :: <function>);
-  values(deque-head(deque), #f,
+  values(deque.deque-head, #f,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
-	   next-deque-element(state);
+          => (next-state :: false-or(<deque-element>));
+	   state.next-deque-element;
 	 end method,
-	 method (deque :: <simple-object-deque>, state, limit)
+         method (deque :: <simple-object-deque>, state, limit)
+          => (finished? :: <boolean>);
 	   ~state;
 	 end method,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
-	  => (result :: <integer>) ;
+          => (current-key :: <integer>);
 	   for (count from -1,
-		deque_elem = state then prev-deque-element(deque_elem),
+		deque_elem = state then deque_elem.prev-deque-element,
 		while: deque_elem)
 	   finally
 	     count;
 	   end for;
 	 end method,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
-	   deque-element-data(state);
+          => (current-element :: <object>);
+           state.deque-element-data;
 	 end method,
 	 method (value, deque :: <simple-object-deque>,
-		 state :: <deque-element>)
-	   deque-element-data(state) := value;
+                 state :: <deque-element>)
+          => (new-element :: <object>);
+           state.deque-element-data := value;
 	 end method,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
 	  => (result :: <deque-element>);
-	   state;
+           state;
 	 end method);
 end method forward-iteration-protocol;
+
 
 define sealed inline method backward-iteration-protocol
     (deque :: <simple-object-deque>)
@@ -194,28 +205,32 @@ define sealed inline method backward-iteration-protocol
      current-element :: <function>,
      current-element-setter :: <function>,
      copy-state :: <function>);
-  values(deque-tail(deque), #f,
+  values(deque.deque-tail, #f,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
-	   prev-deque-element(state);
+          => (next-state :: false-or(<deque-element>));
+	   state.prev-deque-element;
 	 end method,
 	 method (deque :: <simple-object-deque>, state, limit)
+          => (finished? :: <boolean>);
 	   ~state;
 	 end method,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
-	  => (result :: <integer>) ;
+	  => (current-key :: <integer>);
 	   for (count from -1,
-		deque_elem = state then prev-deque-element(deque_elem),
-		while: deque_elem)
+                deque_elem = state then deque_elem.prev-deque-element,
+                while: deque_elem)
 	   finally
 	     count;
 	   end for;
 	 end method,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
-	   deque-element-data(state);
+          => (current-element :: <object>);
+           state.deque-element-data;
 	 end method,
 	 method (value, deque :: <simple-object-deque>,
 		 state :: <deque-element>)
-	   deque-element-data(state) := value;
+          => (current-element :: <object>);
+           state.deque-element-data := value;
 	 end method,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
 	  => (result :: <deque-element>);
@@ -234,6 +249,7 @@ end method backward-iteration-protocol;
 //
 define method drop! (deque :: <simple-object-deque>,
 		     element :: <deque-element>)
+ => (deque :: <simple-object-deque>);
   case
     element == deque-head(deque) & element == deque-tail(deque) =>
       // Zero or one elements in deque
@@ -379,20 +395,20 @@ define sealed method size-setter
     (n == s) => #f;
     (n == 0) => deque.deque-head := deque.deque-tail := #f;
     (n > s) =>
-      for (i :: <integer> from 0 below n - s)
+      for (i from 0 below n - s)
 	push-last(deque, #f)
       end for;
     (n + n < s) =>		// closer to front
-      for (i :: <integer> from 0 below n - 1,
-	   state :: false-or(<deque-element>) = deque.deque-head
+      for (i from 0 below n - 1,
+	   state = deque.deque-head
 	     then state.next-deque-element)
       finally
 	state.next-deque-element := #f;
 	deque.deque-tail := state;
       end for;
     otherwise =>		// closer to back
-      for (i :: <integer> from n below s,
-	   state :: false-or(<deque-element>) = deque.deque-tail
+      for (i from n below s,
+	   state = deque.deque-tail
 	     then state.prev-deque-element)
       finally
 	state.next-deque-element := #f;
@@ -407,9 +423,15 @@ end method size-setter;
 //
 // Return the class for copy of deques (<deque>).
 //
-//define method type-for-copy (deque :: <deque>) :: 
-//  <deque>;
-//end method type-for-copy;
+define inline method type-for-copy (deque :: <deque>) 
+ => type :: <type>;
+  <simple-object-deque>;
+end method type-for-copy;
+
+define inline method type-for-copy (deque :: <simple-object-deque>) 
+ => type :: <type>;
+  <simple-object-deque>;
+end method type-for-copy;
 
 // Since we can traverse from either end, we check to see which end is closer
 // to the desired element and take that as our starting point.
@@ -475,6 +497,12 @@ define sealed inline method add! (deque :: <deque>, new)
   deque;
 end method add!;
 
+define sealed inline method add! (deque :: <simple-object-deque>, new)
+ => (result :: <simple-object-deque>);
+  push(deque, new);
+  deque;
+end method add!;
+
 // remove! -- public
 //
 // Remove up to COUNT copies of VALUE from the deque.  If COUNT is not
@@ -487,9 +515,9 @@ end method add!;
 define method remove! (deque :: <simple-object-deque>, value,
 		       #key test = \==, count: count)
  => (result :: <simple-object-deque>);
-  let count = count | size(deque);
+  let count :: <integer> = count | size(deque);
   local method scan!(state :: false-or(<deque-element>),
-		     count :: <integer>)
+		     count :: <integer>) => ();
 	  case
 	    count <= 0 | ~state =>
 	      #t;
@@ -509,7 +537,7 @@ end method remove!;
 // Returns the last element of the duque.  This is more efficient because
 // the last element of a deque can be accessed directly.
 //
-define sealed method last
+define sealed inline method last
     (deque :: <simple-object-deque>, #key default = $not-supplied)
  => (result :: <object>);
   let deque-tail = deque-tail(deque);
@@ -527,6 +555,66 @@ define sealed inline method empty? (deque :: <simple-object-deque>)
  => (result :: <boolean>);
   deque.size == 0;
 end method empty?;
+
+
+// reverse -- public
+//
+// Creates a new deque which is the reversal of DEQUE.  Uses FOR-EACH to
+// push each element onto the RESULT deque.  Since PUSH is used, the
+// resulting deque is backwards.
+//
+define method reverse (deque :: <deque>)
+ => (result :: <simple-object-deque>);
+  let result = make(<deque>);
+  for (element in deque) push(result, element) end;
+  result;
+end method reverse;
+
+define method reverse (deque :: <simple-object-deque>)
+ => (result :: <simple-object-deque>);
+  let result = make(<simple-object-deque>);
+  for (element in deque) push(result, element) end;
+  result;
+end method reverse;
+
+
+// reverse! -- public
+//
+// Reverses DEQUE destructively.  Uses a FOR loop to run down the deque.
+// Each element's NEXT-DEQUE-ELEMENT and PREV-DEQUE-ELEMENT pointers are
+// swapped.  Finally, the DEQUE-HEAD and DEQUE-TAIL of the deque are
+// swapped.  This reverses the deque using the original deque elements.
+//
+define sealed method reverse! (deque :: <simple-object-deque>)
+ => (result :: <simple-object-deque>);
+  for (state = deque-head(deque) then prev-deque-element(state),
+       while: state)
+    let (prev, next) = values(prev-deque-element(state),
+			      next-deque-element(state));
+    prev-deque-element(state) := next;
+    next-deque-element(state) := prev;
+  end for;
+  let (head, tail) = values(deque-head(deque), deque-tail(deque));
+  deque-head(deque) := tail;
+  deque-tail(deque) := head;
+  deque;
+end method reverse!;
+
+// last-setter -- Set last element of deque.
+//
+// Corresponding efficient implementation for the setter of LAST.
+//
+define method last-setter(new, deque :: <simple-object-deque>)
+ => (new :: <object>);
+  let deque-tail = deque-tail(deque);
+  if (deque-tail)
+    deque-element-data(deque-tail) := new;
+  else
+    error("No such element in %=:  last.", deque);
+  end if;
+  new;
+end method last-setter;
+
 
 // ### not absolutly needed -- (to end of file)
 // // map-as -- public
@@ -834,50 +922,3 @@ end method empty?;
 // // replace-subsequence! -- public
 // //
 // // Uses the default method.
-// 
-// // reverse -- public
-// //
-// // Creates a new deque which is the reversal of DEQUE.  Uses FOR-EACH to
-// // push each element onto the RESULT deque.  Since PUSH is used, the
-// // resulting deque is backwards.
-// //
-// define method reverse (deque :: <deque>) => (result :: <deque>);
-//   let result = make(<deque>);
-//   for (element in deque) push(result, element) end for;
-//   result;
-// end method reverse;
-// 
-// // reverse! -- public
-// //
-// // Reverses DEQUE destructively.  Uses a FOR loop to run down the deque.
-// // Each element's NEXT-DEQUE-ELEMENT and PREV-DEQUE-ELEMENT pointers are
-// // swapped.  Finally, the DEQUE-HEAD and DEQUE-TAIL of the deque are
-// // swapped.  This reverses the deque using the original deque elements.
-// //
-// define method reverse! (deque :: <deque>) => (result :: <deque>);
-//   for (state = deque-head(deque) then prev-deque-element(state),
-//        while: state)
-//     let (prev, next) = values(prev-deque-element(state),
-// 			      next-deque-element(state));
-//     prev-deque-element(state) := next;
-//     next-deque-element(state) := prev;
-//   end for;
-//   let (head, tail) = values(deque-head(deque), deque-tail(deque));
-//   deque-head(deque) := tail;
-//   deque-tail(deque) := head;
-//   deque;
-// end method reverse!;
-//
-// // last-setter -- Set last element of deque.
-// //
-// // Corresponding efficient implementation for the setter of LAST.
-// //
-// define method last-setter(new, deque :: <deque>)
-//   let deque-tail = deque-tail(deque);
-//   if (deque-tail)
-//     deque-element-data(deque-tail) := new;
-//   else
-//     error("No such element in %=:  last.", deque);
-//   end if;
-// end method last-setter;
-// 
