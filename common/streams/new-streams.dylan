@@ -42,11 +42,10 @@ define constant $default-buffer-size = 4096;
 //
 define constant <locator> = <byte-string>;
 
-// Maybe Mindy has this somewhere (?)
+// $not-supplied -- Internal.
+// Used with on-end-of-stream keyword.
 //
-#if (mindy)
 define constant $not-supplied = #"not-supplied-no-siree";
-#endif
 
 // In mindy and d2c <character> is equivalent to unicode character.
 //
