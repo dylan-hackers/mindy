@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.9 1994/04/17 17:47:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.10 1994/06/11 22:21:47 hallgren Exp $
 *
 * Main driver routines for mindy.
 *
@@ -25,6 +25,12 @@
 extern void bzero(void *ptr, size_t bytes);
 extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
 		  fd_set *except_fds, struct timeval *timeout);
+#endif
+#ifdef __osf__
+extern void bzero(char *string, int length);
+extern int select(int nfds, fd_set *readfds, fd_set *writefds,
+		  fd_set *exceptfds, struct timeval *timeout);
+#include <exc_handling.h>
 #endif
 
 #include "mindy.h"
