@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.32 1996/07/21 15:44:27 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.33 1996/08/21 10:07:08 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -45,9 +45,398 @@
 #include "def.h"
 #include "fd.h"
 
+/* And now, some large pieces of OS-dependent stuff. */
+
 #ifdef WIN32
+#include <io.h>
+
+/* Here, we kluge around the fact that Windows/NT for non-sockets won't 
+   tell you if there's input available or not on a file descriptor.  To
+   get around this, we spawn a thread for each fd whose job is to try to
+   read from the thread.  When the "read 0 bytes" returns, we know there
+   is input available.
+
+   Assumes file descriptors are allocated more or less consecutively.
+   (We simply keep an array from 0 to 99, and assume all our file 
+   descriptors will fall in there)  Also assumes there is never more than 
+   one "real" thread trying to read from an fd at any one time.  (Or for
+   that matter, reading an fd while at the same time calling 
+   input_available on the same fd from another thread)
+
+   Currently, input_checker updates its answer after every read.  
+   Another approach would be for input_available to ask input_checker
+   to update its answer.  This second approach depends upon the idea that
+   it is always safe to safe "no input available" so long as if it's false
+   we don't give that answer forever.  This second approach may be more
+   appropriate if calls to input_available are rare, but that's not the
+   case in Mindy.
+ */
+
+#define MAX_FDS 100
+static boolean input_available_array[MAX_FDS]; /* no mutex protecting this */
+static HANDLE fd_threads[MAX_FDS]; /* thread handles */
+static HANDLE update_input_available[MAX_FDS]; /* handles to events */
+static HANDLE input_available_is_updated[MAX_FDS]; /* handles to events */
+
+/* checks for input.  Although it seems like there should be a simpler
+   way, this does a full producer/consumer thing with mindy_read.
+ */
+static DWORD input_checker (LPDWORD param)
+{
+    int fd = (int) param;  /* so what if we cast a pointer to an int? */
+    HANDLE handle = (HANDLE) _get_osfhandle(fd);
+    char small_buffer;  /* Ignore the contents of the next two vars */
+    int bytes_read;
+    for (;;) {
+	boolean read_result;
+	/* Wait until someone invalidates our last answer */
+        WaitForSingleObject(update_input_available[fd], INFINITE);
+	/* read 0 bytes, block if not available */
+	read_result = ReadFile(handle, &small_buffer,
+			       0, &bytes_read, NULL);
+	if (!read_result) {
+	    /* For easier debugging, find out what error */
+	    DWORD the_error = GetLastError();
+	    lose("Read error on fd %d", fd);
+	}
+	input_available_array[fd] = TRUE;
+        SetEvent(input_available_is_updated[fd]);
+    }
+    lose("This is not supposed to be reached!");
+    return 0;
+}
+
+static void setup_input_checker (int fd)
+{
+    DWORD thread_id;
+    if (fd >= MAX_FDS)
+	lose("%d is too high a file descriptor number for us.", fd);
+    update_input_available[fd] = CreateEvent(NULL,  /* default security */
+					    FALSE, /* auto-reset */
+					    TRUE,  /* init value true */
+					    NULL); /* unnamed */
+    input_available_is_updated[fd] 
+	= CreateEvent(NULL,  /* default security */
+		      FALSE, /* auto-reset */
+		      FALSE,  /* init value false */
+		      NULL); /* unnamed */
+    fd_threads[fd]
+	= CreateThread(NULL, 0, /* default security + stack size */
+		       (LPTHREAD_START_ROUTINE) input_checker, 
+		       (VOID *) fd, /* param */
+		       0,  /* default creation flags */
+		       &thread_id);
+    if (fd_threads[fd] == NULL) 
+	lose("Can't create input_checker thread for fd %d", fd);
+}
+    
+static void stop_input_checker (int fd)
+{
+    TerminateThread(fd_threads[fd], 0);  
+    /* 0 is the thread return value -- any value will do */
+    CloseHandle(update_input_available[fd]);
+    CloseHandle(input_available_is_updated[fd]);
+}
+
+static int mindy_open (const char *filename, int flags, int mode)
+{
+    int fd = open(filename, flags | O_BINARY, mode);
+    if (fd != -1)
+	setup_input_checker(fd);
+    return fd;
+}
+
+static int mindy_close (int fd)
+{
+    int res = close(fd);
+    if (!res)
+	stop_input_checker(fd);
+    return res;
+}
+
+/* We don't need to synchronize with anything because the only way a 
+   false positive can be generated (input_available_array[fd] == TRUE 
+   when that really isn't the case) is when someone reads all the
+   input without setting input_available_array[fd] to FALSE.  But
+   that would mean someone's running this function in parallel
+   with mindy_read, which we said isn't allowed.
+ */
+int input_available (int fd)
+{
+    return input_available_array[fd];
+}
+
+/* Like read(), except it informs check_input.
+   Mindy internally uses this for reading from stdin for debugger stuff.
+   Won't work if check_input thread isn't running.
+   Loading .dbc files bypasses this, because psuedo-threading isn't
+   necessary there.
+ */
+int mindy_read (int fd, char *buffer, int max_chars)
+{
+    int	res;
+    /* We wait for check_input to finish because if we don't,
+       we can't safely reset anything. */
+    WaitForSingleObject(input_available_is_updated[fd], INFINITE);
+    input_available_array[fd] = FALSE;
+    res = read(fd, buffer, max_chars);
+    SetEvent(update_input_available[fd]);
+    return res;
+}
+
+static void win32_inits (void)
+{
+    setup_input_checker(0);  /* standard input */
+}
+
+/* And now, it's time for fd_exec -- create a child process whose input 
+   comes from us and whose output goes to us.
+
+   This version of fd_exec is based on Emacs 19.31 ntproc.c
+
+   prepare_standard_handles and reset_standard_handles are ripped straight 
+   out of Emacs.  You give it two file descriptors, it sticks them
+   into stdin and stdout, and puts the old values of them into
+   handles[].  (The original Emacs version also did stderr.  We don't need
+   stderr...)
+
+   Original Emacs comment:
+
+   The following two routines are used to manipulate stdin, stdout, and
+   stderr of our child processes.
+
+   Assuming that in, out, and err are *not* inheritable, we make them
+   stdin, stdout, and stderr of the child as follows:
+
+   - Save the parent's current standard handles.
+   - Set the std handles to inheritable duplicates of the ones being passed in.
+     (Note that _get_osfhandle() is an io.h procedure that retrieves the
+     NT file handle for a crt file descriptor.)
+   - Spawn the child, which inherits in, out, and err as stdin,
+     stdout, and stderr. (see Spawnve)
+   - Close the std handles passed to the child.
+   - Reset the parent's standard handles to the saved handles.
+     (see reset_standard_handles)
+   We assume that the caller closes in, out, and err after calling us.  
+*/
+
+static void prepare_standard_handles (int in, int out, HANDLE handles[2])
+{
+  HANDLE parent;
+  HANDLE newstdin, newstdout;
+
+  parent = GetCurrentProcess ();
+
+  handles[0] = GetStdHandle (STD_INPUT_HANDLE);
+  handles[1] = GetStdHandle (STD_OUTPUT_HANDLE);
+
+  /* make inheritable copies of the new handles */
+  if (!DuplicateHandle (parent, 
+		       (HANDLE) _get_osfhandle (in),
+		       parent,
+		       &newstdin, 
+		       0, 
+		       TRUE, 
+		       DUPLICATE_SAME_ACCESS))
+    lose("Duplicating input handle for child");
+  
+  if (!DuplicateHandle (parent,
+		       (HANDLE) _get_osfhandle (out),
+		       parent,
+		       &newstdout,
+		       0,
+		       TRUE,
+		       DUPLICATE_SAME_ACCESS))
+    lose("Duplicating output handle for child");
+  
+  /* and store them as our std handles */
+  if (!SetStdHandle (STD_INPUT_HANDLE, newstdin))
+    lose("Changing stdin handle");
+  
+  if (!SetStdHandle (STD_OUTPUT_HANDLE, newstdout))
+    lose("Changing stdout handle");
+}
+
+static void reset_standard_handles (HANDLE handles[2])
+{
+  /* close the duplicated handles passed to the child */
+  CloseHandle(GetStdHandle(STD_INPUT_HANDLE));
+  CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
+
+  /* now restore parent's saved std handles */
+  SetStdHandle(STD_INPUT_HANDLE, handles[0]);
+  SetStdHandle(STD_OUTPUT_HANDLE, handles[1]);
+}
+
+static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
+{
+    int inpipes[2], outpipes[2];
+    obj_t *oldargs;
+
+    oldargs = args - 1;
+    thread->sp = args + 1;
+
+    {
+        /* This code is a combination of the Unix version of this code
+	 * and code in the Win32 Programmer's Reference volume 2, 
+	 * pages 40-45, and code in Emacs.
+         */
+	PROCESS_INFORMATION piProcInfo;
+	STARTUPINFO siStartInfo;
+	SECURITY_ATTRIBUTES saAttr;
+	HANDLE old_handles[2];
+	const int pipe_size = 2000;
+        char *command_line = (char *) string_chars(args[0]);
+
+	/* printf("Starting fd_exec\n"); */
+	siStartInfo.cb = sizeof(STARTUPINFO);
+	siStartInfo.lpReserved = NULL;
+	siStartInfo.lpReserved2 = NULL;
+	siStartInfo.cbReserved2 = 0;
+	siStartInfo.lpDesktop = NULL;
+        /* more siStartInfo in a bit */
+
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+
+	/* And now, file handle black magic */
+
+	/* Create new file handles--in binary mode.
+	   _pipe returns the read then the write handle. */
+        _pipe(inpipes, pipe_size, O_BINARY);
+        _pipe(outpipes, pipe_size, O_BINARY);
+
+	/* Set up things so the new process will use the file handles we 
+	   just made */
+	prepare_standard_handles(inpipes[0], outpipes[1], old_handles);
+	siStartInfo.dwFlags = STARTF_USESTDHANDLES;
+	siStartInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+	siStartInfo.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	/* nothing funny with stderr, but we still have to initialize 
+	   the field */
+	siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+
+	if (! CreateProcess(NULL, command_line, NULL, NULL, TRUE, 0,
+	                    NULL, NULL, &siStartInfo, &piProcInfo)) {
+	    oldargs[0] = obj_False;
+	    oldargs[1] = obj_False;
+	} else {
+	    oldargs[0] = make_fixnum(inpipes[1]);  /* fd we can write to */
+	    oldargs[1] = make_fixnum(outpipes[0]); /* fd we can read from */
+	    setup_input_checker(outpipes[0]);
+	}
+
+	/* Restore the original stdin and stdout */
+	reset_standard_handles(old_handles);
+	/* Close unnecessary fd's--the ones the child uses */
+	close(inpipes[0]);
+	close(outpipes[1]);
+    } 
+    do_return(thread, oldargs, oldargs);
+}
+
+#else
+/* Not WIN32 -- it's assumed this means Unix */
+
+static int mindy_open (const char *filename, int flags, int mode)
+{
+    return open(filename, flags, mode);
+}
+
+static int mindy_close (int fd)
+{
+    return close(fd);
+}
+
+int input_available(int fd)
+{
+    fd_set fds;
+    struct timeval tv;
+    FD_ZERO(&fds);
+    FD_SET(fd, &fds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    return select(fd+1, &fds, NULL, NULL, &tv);
+}
+
+int mindy_read (int fd, char *buffer, int max_chars)
+{
+    return read(fd, buffer, max_chars);
+}
+
+static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
+{
+    int inpipes[2], outpipes[2], forkresult;
+    obj_t *oldargs;
+
+    oldargs = args - 1;
+    thread->sp = args + 1;
+
+    if (pipe(inpipes) >= 0 && pipe(outpipes) >= 0 &&
+	(forkresult = fork()) != -1)
+    {
+	if (forkresult == 0) {
+	    /* This process is going to exit shortly, so we needn't be too
+	       careful about malloc behavior, nor about the fact that we
+	       destructively modify the command string. */
+	    char *command = (char *)string_chars(args[0]);
+	    char *p, **args;
+	    int argcounter = 1;
+
+	    for (p = command; *p != 0; p++)
+		if (*p == ' ') {
+		    argcounter++;
+		    while (*(++p) == ' ');
+		}
+	    args = (char **) calloc(argcounter+1, sizeof(char *));
+	    args[0] = command;
+	    for (p = command, argcounter = 1; *p != 0; p++) {
+		if (*p == ' ') {
+		    *p = 0;
+		    while (*(++p) == ' ');
+		    if (*p != 0)
+			args[argcounter++] = p;
+		}
+	    }
+	    args[argcounter] = 0;
+	    close(0);
+	    dup(inpipes[0]);
+	    close(inpipes[0]);
+	    close(inpipes[1]);
+	    close(1);
+	    dup(outpipes[1]);
+	    close(outpipes[0]);
+	    close(outpipes[1]);
+
+	    /* Put the child in its own session so that signals don't hit it */
+	    setsid();
+	    
+	    execvp(args[0], args);
+	    /* If we get here, execvp failed, so shut down as 
+	     * gracefully as we can 
+	     */
+	    exit(1);
+	}
+	close(inpipes[0]);
+	close(outpipes[1]);
+	
+	oldargs[0] = make_fixnum(inpipes[1]);
+	oldargs[1] = make_fixnum(outpipes[0]);
+    } else {
+	oldargs[0] = obj_False;
+	oldargs[1] = obj_False;
+    }
+    do_return(thread, oldargs, oldargs);
+}
+#endif
+/* End Unix-specific */
+/* End OS-specific stuff */
+
+#if 0
 static CRITICAL_SECTION stdin_buffer_mutex;  /* protects stdin_buffer and
-						chars_in_stdin_buffer */
+				                chars_in_stdin_buffer */
 #define stdin_buffer_size 1000
 static char stdin_buffer[stdin_buffer_size];
 static char *stdin_buffer_start = &(stdin_buffer[0]);
@@ -164,39 +553,12 @@ static void fd_close(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t fd = args[0];
 
-    results(thread, args-1, close(fixnum_value(fd)), obj_True);
+    results(thread, args-1, mindy_close(fixnum_value(fd)), obj_True);
 }
 
 static obj_t fd_error_str(obj_t xerrno)
 {
   return make_byte_string(strerror(fixnum_value(xerrno)));
-}
-
-int input_available(int fd)
-{
-    fd_set fds;
-    struct timeval tv;
-
-    FD_ZERO(&fds);
-    FD_SET(fd, &fds);
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-#ifdef WIN32
-    if (isatty(fd)) {
-	return stdin_input_available();
-    } else {
-        int select_result = select(fd+1, &fds, NULL, NULL, &tv);
-	if (select_result < 0) {
-	    /* fd is a file rather than a socket, so there must
-	       be input available */
-            return 1;
-	} else {
-	    return select_result;
-	}
-    }
-#else
-    return select(fd+1, &fds, NULL, NULL, &tv);
-#endif        
 }
 
 static void fd_input_available(obj_t self, struct thread *thread, obj_t *args)
@@ -213,7 +575,8 @@ static void fd_open(obj_t self, struct thread *thread, obj_t *args)
     obj_t flags = args[1];
     int res;
 
-    res = open((char *)string_chars(path), fixnum_value(flags), 0666);
+    res = mindy_open((char *)string_chars(path), fixnum_value(flags),
+	             0666);
 
     results(thread, args-1, res, make_fixnum(res));
 }
@@ -236,15 +599,9 @@ static void maybe_read(struct thread *thread)
     else if (nfound == 0)
 	wait_for_input(thread, fd, maybe_read);
     else {
-#if WIN32
-        if (isatty(fd)) 
-	    res = read_stdin(buffer_data(fp[-8]) + fixnum_value(fp[-7]),
-			     fixnum_value(fp[-6]));
-        else 
-#endif
-	res = read(fd,
-		   buffer_data(fp[-8]) + fixnum_value(fp[-7]),
-		   fixnum_value(fp[-6]));
+	res = mindy_read(fd,
+		         buffer_data(fp[-8]) + fixnum_value(fp[-7]),
+		         fixnum_value(fp[-6]));
 	
 	results(thread, pop_linkage(thread), res, make_fixnum(res));
     }
@@ -351,139 +708,6 @@ static void fd_write(obj_t self, struct thread *thread, obj_t *args)
     thread->sp = args + 4;
     push_linkage(thread, args);
     maybe_write(thread);
-}
-
-
-/* Function to run an arbitrary program, returning file descriptors for the
-   program's stdin and stdout. */
-static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
-{
-    int inpipes[2], outpipes[2], forkresult;
-    obj_t *oldargs;
-
-    oldargs = args - 1;
-    thread->sp = args + 1;
-
-#if 0
-    /* This NT code doesn't work because it locks up on the first
-     * call to dup().
-     */
-    {
-        /* This code is a combination of the Unix version of this code
-	 * and code in the Win32 Programmer's Reference volume 2, 
-	 * pages 40-45 
-         */
-	PROCESS_INFORMATION piProcInfo;
-	STARTUPINFO siStartInfo;
-	SECURITY_ATTRIBUTES saAttr;
-	const int pipe_size = 2000;
-        int old_stdin, old_stdout;
-        char *command_line = (char *) string_chars(args[0]);
-
-	//printf("Starting fd_exec\n");
-	siStartInfo.cb = sizeof(STARTUPINFO);
-	siStartInfo.lpReserved = NULL;
-	siStartInfo.lpReserved2 = NULL;
-	siStartInfo.cbReserved2 = 0;
-	siStartInfo.lpDesktop = NULL;
-	siStartInfo.dwFlags = 0;
-
-	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-	saAttr.bInheritHandle = TRUE;
-	saAttr.lpSecurityDescriptor = NULL;
-
-	/* Set up child's redirected stdin and stdout */
-        old_stdin = dup(0);
-	old_stdout = dup(1);
-	//printf("Duplicated some fd's\n");
-        _pipe(inpipes, pipe_size, O_TEXT);   /* open in text mode */
-        _pipe(outpipes, pipe_size, O_TEXT);
-	close(0);	      
-	close(1);
-	dup2(inpipes[0], 0);
-	dup2(outpipes[1], 1);
-
-	//printf("About to create process\n");
-	if (! CreateProcess(NULL, command_line, NULL, NULL, TRUE, 0,
-	                    NULL, NULL, &siStartInfo, &piProcInfo)) {
-	    oldargs[0] = obj_False;
-	    oldargs[1] = obj_False;
-	} else {
-	    oldargs[0] = make_fixnum(inpipes[1]);
-	    oldargs[1] = make_fixnum(outpipes[0]);
-	}
-	/* Restore the original stdin and stdout */
-	//printf("Process created\n");
-	close(0);
-	close(1);
-	dup2(old_stdin, 0);
-	dup2(old_stdout, 1);
-	close(old_stdin);
-	close(old_stdout);
-    } 
-#endif
-
-#ifdef WIN32
-    oldargs[0] = obj_False;
-    oldargs[1] = obj_False;
-#else
-    if (pipe(inpipes) >= 0 && pipe(outpipes) >= 0 &&
-	(forkresult = fork()) != -1)
-    {
-	if (forkresult == 0) {
-	    /* This process is going to exit shortly, so we needn't be too
-	       careful about malloc behavior, nor about the fact that we
-	       destructively modify the command string. */
-	    char *command = (char *)string_chars(args[0]);
-	    char *p, **args;
-	    int argcounter = 1;
-
-	    for (p = command; *p != 0; p++)
-		if (*p == ' ') {
-		    argcounter++;
-		    while (*(++p) == ' ');
-		}
-	    args = (char **) calloc(argcounter+1, sizeof(char *));
-	    args[0] = command;
-	    for (p = command, argcounter = 1; *p != 0; p++) {
-		if (*p == ' ') {
-		    *p = 0;
-		    while (*(++p) == ' ');
-		    if (*p != 0)
-			args[argcounter++] = p;
-		}
-	    }
-	    args[argcounter] = 0;
-	    close(0);
-	    dup(inpipes[0]);
-	    close(inpipes[0]);
-	    close(inpipes[1]);
-	    close(1);
-	    dup(outpipes[1]);
-	    close(outpipes[0]);
-	    close(outpipes[1]);
-
-	    /* Put the child in its own session so that signals don't hit it */
-	    setsid();
-	    
-	    execvp(args[0], args);
-	    /* If we get here, execvp failed, so shut down as 
-	     * gracefully as we can 
-	     */
-	    exit(1);
-	}
-	close(inpipes[0]);
-	close(outpipes[1]);
-	
-	oldargs[0] = make_fixnum(inpipes[1]);
-	oldargs[1] = make_fixnum(outpipes[0]);
-    } else {
-	oldargs[0] = obj_False;
-	oldargs[1] = obj_False;
-    }
-#endif
-
-    do_return(thread, oldargs, oldargs);
 }
 
 
@@ -993,6 +1217,11 @@ void init_fd_functions(void)
 #endif
 
 #ifdef WIN32
+    win32_inits();
+#endif
+
+#if 0
+#ifdef WIN32
     if (isatty(0)) {   /* If stdin is a tty and not redirected */
     	stdin_buffer_empty     = CreateEvent(NULL, TRUE, TRUE, NULL);
 	stdin_buffer_not_empty = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -1010,5 +1239,6 @@ void init_fd_functions(void)
 	}
 
     }
+#endif
 #endif
 }
