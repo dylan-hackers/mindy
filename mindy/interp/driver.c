@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.4 1994/03/31 10:06:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.5 1994/04/08 14:36:13 wlott Exp $
 *
 * Main driver routines for mindy.
 *
@@ -37,23 +37,27 @@ static enum pause_reason PauseReason;
 /* SIGINT handling. */
 
 static void (*InterruptHandler)(void) = NULL;
+static boolean InterruptPending = FALSE;
 
 static void sigint_handler()
 {
-    InterruptHandler();
+    if (InterruptHandler)
+	InterruptHandler();
+    else
+	InterruptPending = TRUE;
 }
 
 void set_interrupt_handler(void (*handler)(void))
 {
-    unsigned oldmask = sigblock(0);
-
     InterruptHandler = handler;
-    sigsetmask(oldmask & ~sigmask(SIGINT));
+    if (InterruptPending) {
+	InterruptPending = FALSE;
+	handler();
+    }
 }
 
 void clear_interrupt_handler(void)
 {
-    sigblock(sigmask(SIGINT));
     InterruptHandler = NULL;
 }
 
@@ -281,8 +285,6 @@ void init_driver()
     init_waiters(&Readers);
     init_waiters(&Writers);
     NumFds = 0;
-
-    sigblock(sigmask(SIGINT));
 
     sv.sv_handler = sigint_handler;
     sv.sv_mask = 0;
