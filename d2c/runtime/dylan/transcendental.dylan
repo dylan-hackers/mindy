@@ -37,7 +37,7 @@ define generic isqrt (x :: <integer>) => y :: <integer>;
 // The generic \^ already exists. (see num.dylan)
 
 // Already have method on \^ for <real>, <integer>
-
+/*
 define inline method \^ (b :: <integer>, x :: <real>)
  => y :: <single-float>;
   call-out("powf", float:, float: as(<single-float>, b), float: x);
@@ -52,6 +52,7 @@ define inline method \^ (b :: <double-float>, x :: <real>)
  => y :: <double-float>;
   call-out("pow", double:, double: b, double: x);
 end method;
+*/
 
 define inline method log (x :: <double-float>,
 			  #key base :: <real> = $double-e)
