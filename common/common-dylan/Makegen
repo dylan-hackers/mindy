@@ -13,11 +13,9 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../collection-extensions'
     . ' -L../string-ext'
     . ' -L../regular-expressions'
-    . ' -L.'
     . ' -L../threads';
-$D2C = $D2C . " -fc-support.c -F'$LIBTOOL $CC $CFLAGS -I$srcdir $CPPFLAGS -c %s -o %s'";
 
-do emit_library_rule ('common-extensions', '$(BUILDROOT)/force.timestamp', '',
-		      'compile', 'no-mindy', 'install');
+$CPPFLAGS .= " -I$srcdir";
+
 do emit_library_rule ('common-dylan', '$(BUILDROOT)/force.timestamp', '',
 		      'compile', 'no-mindy', 'install');
