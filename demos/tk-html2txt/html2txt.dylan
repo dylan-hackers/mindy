@@ -607,7 +607,7 @@ define method process-HTML(Tag :: <symbol>, Out-Text :: <strings>,
 	let End-Tag =
 	  for (index = sfind(Current-Text, curry(\==, '>'), start: Start-Tag)
 		 then sfind(Current-Text, curry(\==, '>'), start: Start-Tag),
-	       until index)
+	       until: index)
 	    Current-Text := concatenate(Current-Text, " ", read-line(File));
 	  finally index;
 	  end for;
@@ -651,7 +651,7 @@ define method process-HTML(Tag :: <symbol>, Out-Text :: <strings>,
 			end if;
       end if;
     end while;
-  exception <end-of-file>
+  exception (<end-of-file>)
     // End of file processing.  Dump accumulated text and then exit.
     let blank = break-up(Tag, Out-Text, blank, #f);
     values("", blank);
@@ -682,7 +682,7 @@ define method html2text(fd :: <stream>) => ();
 
   block ()
     process-HTML(#"TEXT", make(<strings>), "", fd, #t);
-  exception <abort>
+  exception (<abort>)
     #f;
   cleanup
     force-output(*window-stream*);
