@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.38 1995/08/07 14:05:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.39 1995/11/09 23:43:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -210,10 +210,10 @@ define macro class-definer
       => { keyword ?key, required: #t, ?options; ... }
     { keyword ?key, #rest ?options; ... }
       => { keyword ?key, ?options; ... }
-    { ?slot-modifiers slot ?name, #rest ?options; ... }
-      => { slot ?name, ?slot-modifiers, ?options; ... }
     { ?slot-modifiers slot ?name :: ?type, #rest ?options; ... }
       => { slot ?name, type: ?type, ?slot-modifiers, ?options; ... }
+    { ?slot-modifiers slot ?name, #rest ?options; ... }
+      => { slot ?name, ?slot-modifiers, ?options; ... }
   slot-modifiers:
     { } => { }
     { instance } => { allocation: #"instance" }
@@ -533,7 +533,7 @@ end;
 
 define method instance?
     (object :: <object>, type :: <type>) => object :: <object>;
-  %instance(object, type);
+  %instance?(object, type);
 end;
 
 define method make (class :: <class>, #rest keys, #all-keys) => res;
@@ -649,3 +649,8 @@ define generic apply (function :: <function>, #rest arguments);
 define method apply (function :: <function>, #rest arguments)
   error("Apply wasn't inlined?");
 end;
+
+
+// Might as well.
+
+%%primitive magic-internal-primitives-placeholder ();
