@@ -41,7 +41,7 @@ define method maybe-convert-to-ssa (defn :: <initial-definition>) => ();
 	assign.defines := ssa;
       end;
     end;
-    for (dep = var.dependents then dep.dependent-next,
+    for (dep = var.dependents then dep.source-next,
 	 while: dep)
       if (dep.source-exp == var)
 	dep.source-exp := ssa;
@@ -127,6 +127,16 @@ define method optimize (component :: <component>, primitive :: <primitive>)
   end;
 end;
 
+define method optimize (component :: <component>, prologue :: <prologue>)
+    => ();
+  let types = make(<stretchy-vector>);
+  for (var = prologue.dependents.dependent.defines then var.definer-next,
+       while: var)
+    add!(types, var.var-info.asserted-type);
+  end;
+  maybe-restrict-type(component, prologue,
+		      make-values-ctype(as(<list>, types), #f));
+end;
 
 
 // Type utilities.
