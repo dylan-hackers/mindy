@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.18 1996/09/19 14:16:28 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.19 1996/11/04 19:18:11 ram Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -585,7 +585,7 @@ end method assert-function-type;
 
 define method maybe-change-to-known-or-error-call
     (component :: <component>, call :: <general-call>, sig :: <signature>,
-     func-name :: type-union(<name>, <string>),
+     func-name :: <name>,
      inline-function :: false-or(<function-literal>),
      hairy? :: <boolean>)
     => ();
@@ -614,12 +614,12 @@ end;
 
 define generic compare-call-against-signature
     (call :: <general-call>, sig :: <signature>, check-keywords? :: <boolean>,
-     func-name :: type-union(<name>, <string>))
+     func-name :: <name>)
     => res :: one-of(#"bogus", #"valid", #"can't tell");  
 
 define method compare-call-against-signature
     (call :: <unknown-call>, sig :: <signature>, check-keywords? :: <boolean>,
-     func-name :: type-union(<name>, <string>))
+     func-name :: <name>)
     => res :: one-of(#"bogus", #"valid", #"can't tell");
 
   // Find the next-method-info and arguments.
@@ -799,7 +799,7 @@ end method compare-call-against-signature;
 
 define method compare-call-against-signature
     (call :: <mv-call>, sig :: <signature>, check-keywords? :: <boolean>,
-     func-name :: type-union(<name>, <string>))
+     func-name :: <name>)
     => res :: one-of(#"bogus", #"valid", #"can't tell");
 
   block (return)

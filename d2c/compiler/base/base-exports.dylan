@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.55 1996/10/06 14:09:19 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.56 1996/11/04 19:18:00 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -475,13 +475,16 @@ define module names
   use signature-interface;
   use od-format;
   use compile-time-values;
+  use source;
 
   export
     <name>,
     <basic-name>, id-name, name-symbol, name-module,
-    <type-cell-name>, type-cell-name-base,
+    <derived-name>, derived-name-base, derived-name-how,
+    <internal-name>, internal-name-symbol, internal-name-base,
+    <anonymous-name>, anonymous-name-location,
     <method-name>, method-name-generic-function, method-name-specializers,
-    <generated-name>, generated-name-description,
+    name-unique?,
 
     load-basic-name;
 end;
@@ -756,6 +759,7 @@ define module compile-time-functions
   use ctype;
   use classes;
   use od-format;
+  use names;
   use forwards, import: {<ct-function>}, export: all;
 
   export

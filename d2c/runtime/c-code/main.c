@@ -1,4 +1,4 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.11 1996/11/04 11:53:22 nkramer Exp $ */
+/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.12 1996/11/04 19:18:20 ram Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -45,10 +45,10 @@ descriptor_t gdb_result_stack[MAX_RESULTS_COUNT];
 int gdb_stack_stack_index = 0;
 int gdb_stack_index = 0;
 
-extern descriptor_t dylan_apply_safely_value;
-extern descriptor_t dylan_gdb_integer_value;
-extern descriptor_t dylan_cls_byte_string;
-extern void dylan_gdb_print_object_main();
+/* extern descriptor_t dylan_apply_safely_value; not used? */ 
+extern descriptor_t dylan_dylan_viscera_gdb_integer_value;
+extern descriptor_t dylan_dylan_viscera_CLS_byte_string;
+extern void dylan_dylan_viscera_gdb_print_object_METH();
 
 void string_arg (char *arg) {
   descriptor_t tmp;
@@ -61,7 +61,7 @@ void string_arg (char *arg) {
 
   dylan_str = (void **)
     GC_malloc(sizeof(struct heapobj *) + sizeof(long) + strlen(arg));
-  dylan_str[0] = (void *)(dylan_cls_byte_string.heapptr);
+  dylan_str[0] = (void *)(dylan_dylan_viscera_CLS_byte_string.heapptr);
   dylan_str[1] = (void *)strlen(arg);
   strcpy((char *)(&dylan_str[2]), arg);
 
@@ -78,7 +78,7 @@ void int_arg (int arg) {
    stack = gdb_stack_stack[gdb_stack_stack_index]
       = (descriptor_t *) malloc(GDB_STACK_SIZE);
 
-  tmp.heapptr = dylan_gdb_integer_value.heapptr;
+  tmp.heapptr = dylan_dylan_viscera_gdb_integer_value.heapptr;
   tmp.dataword.l = arg;
   stack[gdb_stack_index++] = tmp;
 }
@@ -141,12 +141,12 @@ gdb_print_heapobj (struct heapobj *obj)
   descriptor_t tmp;
   tmp.heapptr = obj;
   tmp.dataword.l = 0;
-  dylan_gdb_print_object_main((descriptor_t *)GC_malloc(10000), tmp);
+  dylan_dylan_viscera_gdb_print_object_METH((descriptor_t *)GC_malloc(10000), tmp);
 }
 
 gdb_print_genobj (descriptor_t obj)
 {
-  dylan_gdb_print_object_main((descriptor_t *)GC_malloc(10000), obj);
+  dylan_dylan_viscera_gdb_print_object_METH((descriptor_t *)GC_malloc(10000), obj);
 }
 
 /* Most of these win32-only functions will go away as soon as we move

@@ -1,20 +1,34 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.132 1996/10/06 14:09:22 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.133 1996/11/04 19:18:01 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
-// Important notes:
-//   The only "emit-" functions which may be called in general without
-//   unintended side-effects are emit-component and emit-tlf gunk.
-//   All others are at least somewhat magical and should not be trusted.
+// External interfaces:
+//
+//  The primary external interfaces used by "main" are: emit-component
+// emit-tlf-gunk and emit-prologue.  A few classes and accessors are also
+// exported, mostly for the benefit of the heap builder.
+//
+//   emit-tlf-gunk (tlf :: <top-level-form>, file :: <file-state>) => ();
+//      Basically, this converts Dylan "declarations" (definitions) into C
+//      declarations.  Actually, it writes arbitrary information about a given
+//      top-level-form.  This may be just a comment, or it may be a set of
+//      concrete declarations.  "Emit-tlf-gunk" also sometimes produces
+//      side-effects upon the current <file-state> -- i.e. adding a new "root".
+//
+//   emit-component (component :: <fer-component>, file :: <file-state>) => ();
+//      Deal with translating executable Dylan into C procedures.  Many of the
+//      functions compiled are compiler generated functions such as "entry
+//      points", "makers", etc.
+//
 
-//======================================================================
+// Notes about internal interfaces:
 //
 // Types:
 //   <unit-state>
 //      Encapsulates state for object-code generation.  Covers all
 //      object files for a single compilation unit.  Keywords include
-//      "prefix:".  Operations include "unit-prefix", "new-global", and
+//      "prefix:".  Operations include "unit-prefix", "new-c-global", and
 //      "new-root".
 //   <file-state>
 //      Encapsulates per-object-file state.  Keywords include "unit:".
@@ -23,7 +37,13 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 //   <backend-var-info>
 //      Encapsulates info about either variables or <definition>s.
 //      Holds a representation and an optional name.
+//
 // Functions:
+//   Emit- functions
+//      Emit functions write some sort of information corresponding to the
+//      given object to the "current object file" (derived from the given
+//      <file-state>").  As noted above, emit-tlf-gunk and emit-component are
+//      exported.  All others are internal and may have obscure side effects.
 //   make-indenting-stream-string(#rest keys)
 //      Wrapper function for "make(<buffered-byte-string-output-stream>)"
 //   get-string(stream :: <indenting-stream>)
@@ -37,11 +57,8 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 //      different file.  "Info" may be as vague as #"generic" or may
 //      be a specific object or declaration.
 //   emit-tlf-gunk(tlf :: <top-level-form>, file :: <file-state>) => ();
-//      Writes arbitrary information about a given top-level-form.
-//      This may be just a comment, or it may be a set of concrete
-//      declarations.  "Emit-tlf-gunk" also sometimes produces
-//      side-effects upon the current <file-state> -- i.e. adding a
-//      new "root".
+//	This is generic, and there are many methods defined (for just about
+//      every kind of top-level form.)
 //   emit-copy(target :: <string>, target-rep :: <c-representation>,
 //             source :: <string>, source-rep :: <c-representation>,
 //             file :: <file-state>) => ();
@@ -69,8 +86,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 define variable *emit-all-function-objects?* = #f;
 
 
-//========================================================================
-//   <indenting-stream> convenience functions
+// <indenting-stream> convenience functions
 //========================================================================
 
 define constant $indentation-step = 4;
@@ -91,39 +107,49 @@ end;
 
 // Output file state
 
+// <unit-state>  --  Exported
+//
+// Various state related to a compilation unit.  Most slots are exported &
+// shared with the heap builder and main.
+//
 define class <unit-state> (<object>)
   //
   // String prefix for this unit.
-  slot unit-prefix :: <byte-string>, required-init-keyword: prefix:;
+  /* exported */ slot unit-prefix :: <byte-string>,
+    required-init-keyword: prefix:;
   //
   // keeps track of names used already.
   slot unit-global-table :: <table>,
     init-function: method () make(<string-table>) end method;
   //
   // Vector of the initial values for the roots vector.
-  slot unit-init-roots :: <stretchy-vector>,
+  /* exported */ slot unit-init-roots :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
   //
   // Vector of the ctvs we want to force into the local heap irrespective of
   // whether or not they are actually referenced.  We do this for things we
   // are optimistic about being referenced someplace but don't want to have
   // to wait until the global heap to dump.
-  slot unit-eagerly-reference :: <stretchy-vector>,
+  /* exported */ slot unit-eagerly-reference :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
 end;
 
+// <root>  --  Exported
+//
+//  Used as an interface to the heap builder describing each root of the heap.
+//
 define class <root> (<object>)
   //
   // The name for this root, or #f if it will be accessed by index.
-  slot root-name :: false-or(<byte-string>),
+  /* exported */ slot root-name :: false-or(<byte-string>),
     init-value: #f, init-keyword: name:;
   //
   // The initial value for this root.
-  slot root-init-value :: false-or(<ct-value>),
+  /* exported */ slot root-init-value :: false-or(<ct-value>),
     init-value: #f, init-keyword: init-value:;
   //
   // Some comment about what this root entry is used for.
-  slot root-comment :: false-or(<byte-string>),
+  /* exported */ slot root-comment :: false-or(<byte-string>),
     init-value: #f, init-keyword: comment:;
 end class <root>;
 
@@ -141,47 +167,59 @@ define class <file-state> (<object>)
   slot file-prototypes-exist-for :: <string-table>,
     init-function: curry(make, <string-table>);
   //
+  // Maps from vectors of C type name strings to the name of an already-defined
+  // structure type which can be used to return those multiple values.
   slot file-result-structures :: <equal-table>,
     init-function: curry(make, <equal-table>);
   //
+  // Used to uniquely name the structure types that we generate.
+  slot file-next-mv-result-struct :: <integer>, init-value: 0;
+  //
+  // The actual underlying output stream where all the output goes eventually.
   slot file-body-stream :: <stream>,
     required-init-keyword: body-stream:;
   //
+  // These two streams seperately collect the local variable declarations and
+  // the function body so that we can emit variable declarations on the fly
+  // during code generation.
   slot file-vars-stream :: <stream>,
     init-function: curry(make-indenting-string-stream,
 			 indentation: $indentation-step);
-  //
   slot file-guts-stream :: <stream>,
     init-function: curry(make-indenting-string-stream,
 			 indentation: $indentation-step);
   //
+  // Whenever the guts stream buffer exceeds 64K, we push the contents here and
+  // empty the stream.  In addition to being more efficient, this avoids object
+  // size limitations in Mindy.
   slot file-guts-overflow :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>, size: 0);
-  //
-  slot file-next-mv-result-struct :: <integer>, init-value: 0;
   //
   // Chain of <pending-define>s.
   slot file-pending-defines :: false-or(<pending-define>),
     init-value: #f;
   //
-  // id number for the next block.
+  // id number for the next block.  This is used as a C label marking the end
+  // of the block.  Zeroed at the start of each function.
   slot file-next-block :: <integer>, init-value: 0;
   //
-  // keeps track of names used already.
+  // keeps track of names used already.  This is cleared whenever we start
+  // emitting a new function.
   slot file-local-table :: <table>,
     init-function: method () make(<string-table>) end method;
-  // we keep track of all the xeps we've deferred, and dump them when
-  // we know it's safe;
+  //
+  // we keep track of the components for all the xeps that we lazily generated
+  // and dump them after the referencing component has compiled, since we are
+  // in the middle of generating code when we discover that we need them.
   slot file-deferred-xeps :: <sequence> = make(<deque>);
 end;
 
 
 
 
-//========================================================================
 // Utilities.
 //
-// The "Maybe-" functions in this section all check to see whether the
+// The "Maybe-" functions all check to see whether the
 // named operations have already been performed (for this file), and
 // do them if they have not.  Thus, after the call, you may depend
 // upon the operation having been performed at some time.
@@ -198,100 +236,6 @@ define method maybe-emit-include
   end;
 end;
 
-define method maybe-emit-generic-entry
-    (ctv :: <ct-method>, file :: <file-state>) => (name :: <string>);
-  let info = get-info-for(ctv, file);
-  let name = generic-entry-name(info, file);
-  if (~ctv.has-generic-entry?)
-    let (entry, component) = build-xep-component(ctv, #t);
-    let entry-info = get-info-for(entry, file);
-    // We've already allocated a meaningful name for this entry, so
-    // we want copy it into the entry's info.
-    entry-info.function-info-main-entry-name := name;
-    ctv.has-generic-entry? := #t;
-    push-last(file.file-deferred-xeps, component);
-  end if;
-  name;
-end method maybe-emit-generic-entry;
-
-define method maybe-emit-general-entry
-    (ctv :: <ct-function>, file :: <file-state>) => (name :: <string>);
-  let info = get-info-for(ctv, file);
-  let name = general-entry-name(info, file);
-  if (~ctv.has-general-entry?)
-    let (entry, component) = build-xep-component(ctv, #f);
-    let entry-info = get-info-for(entry, file);
-    // We've already allocated a meaningful name for this entry, so
-    // we want copy it into the entry's info.
-    entry-info.function-info-main-entry-name := name;
-    ctv.has-general-entry? := #t;
-    push-last(file.file-deferred-xeps, component);
-  end if;
-  name;
-end method maybe-emit-general-entry;
-
-// This function is used for cases in which we might have references
-// to constant functions and don't know how they might be called.  It
-// will create all the entries which might be required.
-//
-define generic maybe-emit-entries
-    (ctv :: <object>, file :: <file-state>) => ();
-
-define method maybe-emit-entries
-    (ctv :: <object>, file :: <file-state>) => ();
-  #f;
-end method maybe-emit-entries;
-
-define method maybe-emit-entries
-    (ctv :: <ct-function>, file :: <file-state>) => ();
-  maybe-emit-general-entry(ctv, file);
-end method maybe-emit-entries;
-
-define method maybe-emit-entries
-    (ctv :: <ct-generic-function>, file :: <file-state>) => ();
-  let defn = ctv.ct-function-definition;
-  // Open generics will already have all relevant entries.
-  if (defn & defn.generic-defn-sealed?)
-    let disc = defn.generic-defn-discriminator;
-    if (disc)
-      maybe-emit-general-entry(disc, file);
-    else
-      map(method (m) maybe-emit-entries(m.ct-value, file) end,
-	  defn.generic-defn-methods);
-    end if;
-  end if;
-end method maybe-emit-entries;
-
-define method maybe-emit-entries
-    (ctv :: <ct-method>, file :: <file-state>) => ();
-  maybe-emit-generic-entry(ctv, file);
-  // There is special "trampoline" code which renders general methods
-  // unnecessary for some methods.  Only generate it if needed.
-  if (~ctv.ct-method-hidden?)
-    maybe-emit-general-entry(ctv, file);
-  end if;
-end method maybe-emit-entries;
-
-// Write out a C prototye for an object with the given name.  More
-// information about the object will be provided by the "info"
-// parameter.  The exact behavior depends upon "info"s type.
-//
-define method maybe-emit-prototype
-    (name :: <byte-string>, info :: <object>, file :: <file-state>)
-    => ();
-  unless (element(file.file-prototypes-exist-for, name,
-		  default: #f))
-    emit-prototype-for(name, info, file);
-    file.file-prototypes-exist-for[name] := #t;
-  end;
-end;
-
-// See maybe-emit-prototype.
-//
-define generic emit-prototype-for
-    (name :: <byte-string>, info :: <object>, file :: <file-state>)
-    => ();
-
 
 // Returns a "<...-info>" object for the given "thing".  Since there is no
 // consistent structure to "<...-info>" objects, it is difficult to
@@ -304,6 +248,9 @@ define method get-info-for
     => res :: <object>;
   thing.info | (thing.info := make-info-for(thing, file));
 end;
+
+
+// C character set translation:
 
 // Lots of places we emit ``useful'' information inside comments.  But if the
 // useful information contains a ``*/'' it will confuse the C compiler.  So
@@ -342,163 +289,188 @@ define method clean-for-comment (thing :: <object>, #key)
 end method clean-for-comment;
 
 
-// This form defines a vector which maps from characters in dylan
-// names to characters in C names.  This is necessary because C's name
-// syntax is much more restrictive than Dylan's.
+// $c-name-transform is a vector which maps from the Dylan to C character
+// set.  If the value is #f, there is no mapping (the character is illegal in
+// all Dylan names, including operator names.)  This is an information-
+// preserving, invertible transformation.
 //
-define constant c-prefix-transform :: <vector>
+define constant $c-name-transform :: <vector>
   = begin
-      let map = make(<byte-string>, size: 256, fill: 'X');
+      let map = make(<simple-object-vector>, size: 256, fill: #f);
+      for (i from 0 below 256)
+        map[i] := format-to-string("X%x", i);
+      end for;
       local
 	method fill-range
 	    (start :: <character>, stop :: <character>, xform :: <function>)
 	    => ();
 	  for (i from as(<integer>, start) to as(<integer>, stop))
-	    map[i] := xform(as(<character>, i));
+	    map[i] := make(<byte-string>, size: 1,
+	    		   fill: xform(as(<character>, i)));
 	  end for;
 	end method fill-range;
-      map[as(<integer>, ' ')] := '_';
-      map[as(<integer>, '!')] := 'D';
-      map[as(<integer>, '$')] := '_';
-      map[as(<integer>, '%')] := '_';
-      map[as(<integer>, '&')] := 'O';
-      map[as(<integer>, '*')] := 'O';
-      map[as(<integer>, '+')] := 'O';
-      map[as(<integer>, '-')] := '_';
-      map[as(<integer>, '/')] := 'O';
+      map[as(<integer>, ' ')] := "BLANK";
+      map[as(<integer>, '!')] := "D";
+      map[as(<integer>, '$')] := "C";
+      map[as(<integer>, '%')] := "PCT";
+      map[as(<integer>, '&')] := "AND";
+      map[as(<integer>, '*')] := "V";
+      map[as(<integer>, '+')] := "PLUS";
+      map[as(<integer>, '-')] := "_";
+      map[as(<integer>, '/')] := "SLASH";
       fill-range('0', '9', identity);
-      map[as(<integer>, '<')] := 'O';
-      map[as(<integer>, '=')] := 'O';
-      map[as(<integer>, '>')] := 'O';
-      map[as(<integer>, '?')] := 'P';
+      map[as(<integer>, '<')] := "LESS";
+      map[as(<integer>, '=')] := "EQUAL";
+      map[as(<integer>, '>')] := "GREATER";
+      map[as(<integer>, '?')] := "QUERY";
       fill-range('A', 'Z', as-lowercase);
-      map[as(<integer>, '^')] := 'O';
-      map[as(<integer>, '_')] := '_';
+      map[as(<integer>, '^')] := "RAISE";
+      map[as(<integer>, '_')] := "X_";
       fill-range('a', 'z', identity);
-      map[as(<integer>, '|')] := 'O';
-      map[as(<integer>, '~')] := 'O';
+      map[as(<integer>, '|')] := "OR";
+      map[as(<integer>, '~')] := "NOT";
       map;
     end;
 
-// This function should be in a standard library.  It simply checks to
-// see if the "long" string starts with the "short" one.
+
+// Map a string of legal dylan identifier characters into legal C name
+// characters using the $c-name-transform.
 //
-define method is-prefix? (short :: <string>, long :: <string>)
-  if (short.size > long.size)
-    #f;
+define function string-to-c-name (str :: <byte-string>) 
+ => res :: <byte-string>;
+  let res = make(<byte-string>, size: str.size);
+  let res-idx = 0;
+  for (ch in str)
+    let mapping = $c-name-transform[as(<integer>, ch)];
+    if (mapping.size == 1)
+      res[res-idx] := mapping[0];
+      res-idx := res-idx + 1;
+    else
+      res := concatenate(copy-sequence(res, end: res-idx), mapping,
+      			 copy-sequence(res, start: res-idx + 1));
+      res-idx := res-idx + mapping.size;
+    end if;
+  end for;
+  res;
+end function;
+
+
+// Based upon a <name> object, compute a string suitable for use as a C
+// variable name,
+//
+define generic c-name (name :: <name>) => (result :: <byte-string>);
+
+define method c-name (name :: <basic-name>) => (result :: <byte-string>);
+  let mod-name = string-to-c-name(as(<string>, name.name-module.module-name));
+  let def-name = as(<string>, name.name-symbol);
+
+  // deal with <class> convention.
+  let lastidx = def-name.size - 1;
+  if (def-name[0] == '<' & def-name[lastidx] == '>')
+    concatenate
+      (mod-name, "_CLS_",
+       string-to-c-name(copy-sequence(def-name, start: 1, end: lastidx)));
   else
-    for (i from 0 below short.size, until: short[i] ~= long[i])
-    finally
-      i == short.size;
-    end for;
+    concatenate(mod-name, "_", string-to-c-name(def-name));
   end if;
-end method is-prefix?;
+end method c-name;
 
-//========================================================================
 
-// Return a string suitable for use in a C name, based upon
-// "description".  "Description" should be some sort of abstract name
-// -- a string, symbol, <name>, etc.
-//
-define generic c-prefix (description :: <object>) => (result :: <string>);
+define method c-name (name :: <method-name>) => (result :: <byte-string>);
+  concatenate(name.method-name-generic-function.c-name, "_METH");
+end method c-name;
 
-// "Description" is expected to be a descriptive string like
-// "foo{<bar>, <baz>} in module Dylan, library Dylan", but may be
-// something as simple as just "foo".
-//
-define method c-prefix (description :: <byte-string>) => (result :: <string>);
-  if (description.empty?)
-    description;
+define method c-name (name :: <derived-name>) => (result :: <byte-string>);
+  concatenate(name.derived-name-base.c-name,
+	      select (name.derived-name-how)
+		#"general-entry" => "_GENERAL";
+		#"generic-entry" => "_GENERIC";
+		#"discriminator" => "_DISCRIM";
+		#"deferred-evaluation" => "_DEFER";
+		#"init-function" => "_INIT";
+		#"setter" => "_SETTER";
+		#"getter" => "_GETTER";
+		#"type-cell" => "_TYPE";
+		#"maker" => "_MAKER";
+	      end select);
+end method;
+
+define method c-name (name :: <internal-name>) => res :: <byte-string>;
+  concatenate(name.internal-name-base.c-name, "_INT_",
+  	      string-to-c-name(as(<string>, name.internal-name-symbol)));
+end method;
+
+// really shouldn't be any unknown source locations here, but we'll get to that
+// later... 
+define method c-name (name :: <anonymous-name>) => res :: <byte-string>;
+  let loc = name.anonymous-name-location;
+  if (instance?(loc, <file-source-location>))
+    format-to-string("LINE_%d", loc.start-line);
   else
-    let start = case
-		  (is-prefix?("Define Constant ", description)) => 16;
-		  (is-prefix?("Discriminator for ", description)) => 18;
-		  (is-prefix?("Generic entry for ", description)) => 18;
-		  (is-prefix?("General entry for ", description)) => 18;
-		  otherwise => 0;
-		end case;
-    for (i :: <integer> from start below description.size,
-	 until: description[i] == ' ' | description[i] == '{')
-    finally
-      let (first, last, offset, result)
-	= if (i > start & description[start] == '<' & description[i - 1] == '>')
-	    values(start + 1, i - 1, 4, 
-		   map-into(make(<byte-string>, size: i - start + 2),
-			    identity, "cls_"));
-	  else
-	    values(start, i, 0, make(<byte-string>, size: i - start));
-	  end if;
-      for (j :: <integer> from offset, i :: <integer> from first below last)
-	result[j] := c-prefix-transform[as(<integer>, description[i])];
-      end for;
-      result;
-    end for;
-  end if;
-end method c-prefix;
+    "UNKNOWN";
+  end;
+end method;
 
-define method c-prefix (description :: <basic-name>) => (result :: <string>);
-  as(<byte-string>, description.name-symbol).c-prefix;
-end method c-prefix;
-
-define method c-prefix (description :: <method-name>) => (result :: <string>);
-  description.method-name-generic-function.c-prefix;
-end method c-prefix;
-
-define method c-prefix (description :: <symbol>) => (result :: <string>);
-  as(<byte-string>, description).c-prefix;
-end method c-prefix;
-
-//========================================================================
+
 // New-{scope}
 //
 // The new-.... routines all allocate new identifiers which are
-// guranteed to be unique in the given scope.  The "prefix" and
+// guranteed to be unique in the given scope.  The "name" and
 // "modifier" keywords may be used to provide more meaningful names,
 // but their usage is idiosyncratic.
 //========================================================================
 
 define method new-local
     (file :: <file-state>,
-     #key prefix :: <string> = "L_", modifier :: <string> = "anon")
+     #key name :: <string> = "L_", modifier :: <string> = "anon")
  => res :: <string>;
-  let result = stringify(prefix, modifier);
+  let result = stringify(name, modifier);
   let num = element(file.file-local-table, result, default: 0) + 1;
   file.file-local-table[result] := num;
   if (num == 1)
     result;
   else
-    new-local(file, prefix: result, modifier: stringify('_', num));
+    new-local(file, name: result, modifier: stringify('_', num));
   end if;
 end;
 
-define method new-global
-    (file :: <file-state>,
-     #key prefix :: <string> = "G", modifier :: <string> = "")
+// If the name is unique? then no _number is used, and the 
+// name must be unique without any such suffix.  Name can be #f if there is no
+// <name> object, but you then must supply a modifier.
+//
+define method new-c-global
+    (name :: false-or(<name>), file :: <file-state>, 
+     #key modifier :: <string> = "")
  => res :: <string>;
   let unit = file.file-unit;
-
-  let result = stringify(unit.unit-prefix, '_', prefix, modifier);
+  let da-name = if (name) name.c-name else "" end;
+  let result = stringify(unit.unit-prefix, '_', da-name, modifier);
   let num = element(unit.unit-global-table, result, default: 0) + 1;
   unit.unit-global-table[result] := num;
   if (num == 1)
     result;
-  else 
-    new-global(file, prefix: prefix, modifier: stringify(modifier, '_', num));
+  else
+    if (name & name.name-unique?)
+      error("%S should have been unique, but it wasn't.", result);
+    end if;
+    new-c-global(name, file, modifier: stringify(modifier, '_', num));
   end if;
-end method new-global;
+end method new-c-global;
 
+
+// Add a new root description and return the root index.
+//
 define method new-root
-    (init-value :: false-or(<ct-value>), file :: <file-state>,
-     #key prefix :: false-or(<byte-string>),
-          comment :: false-or(<byte-string>))
+    (init-value :: false-or(<ct-value>), name :: <byte-string>,
+     file :: <file-state>, #key comment :: false-or(<byte-string>))
+ => res :: <integer>;
   let unit = file.file-unit;
   let roots = unit.unit-init-roots;
   let index = roots.size;
-  let name = prefix & new-global(file, prefix: prefix);
   let root = make(<root>, init-value: init-value, name: name,
 		  comment: comment);
   roots[index] := root;
-  name | stringify(unit.unit-prefix, "_roots[", index, ']');
+  index;
 end;
 
 
@@ -508,7 +480,7 @@ define method eagerly-reference (ctv :: <ct-value>, file :: <file-state>)
 end method eagerly-reference;
 
 
-//========================================================================
+
 // "Cluster" operations
 //
 // Produce pairs of names ("bottom" and "top") for "clusters"
@@ -545,25 +517,30 @@ define method produce-cluster
 end;
 
 
-// definition stuff.
+// Emitting prototypes
 
-//========================================================================
-// Emit- functions
+// Write out a C prototye for an object with the given name.  More
+// information about the object will be provided by the "info"
+// parameter.  The exact behavior depends upon "info"s type.
 //
-// Emit functions write some sort of information corresponding to the
-// given object to the "current object file" (derived from the given
-// <file-state>").
-//
+define method maybe-emit-prototype
+    (name :: <byte-string>, info :: <object>, file :: <file-state>)
+    => ();
+  unless (element(file.file-prototypes-exist-for, name,
+		  default: #f))
+    emit-prototype-for(name, info, file);
+    file.file-prototypes-exist-for[name] := #t;
+  end;
+end;
+
 // Emit-prototype-for
 //   Writes an "extern" declaration which will provide the C compiler with
 //   enough information to use an object defined in a different file.
-// Emit-tlf-gunk
-//   Writes arbitrary information about a given top-level-form.  This
-//   may be just a comment, or it may be a set of concrete
-//   declarations.  "Emit-tlf-gunk" also sometimes produces
-//   side-effects upon the current <file-state> -- i.e. adding a new
-//   "root".
-//========================================================================
+//
+define generic emit-prototype-for
+    (name :: <byte-string>, info :: <object>, file :: <file-state>);
+
+
 
 // We need prototypes for things with "immediate" representations or
 // for associated intialization variables.  Handling of specific
@@ -614,6 +591,10 @@ define method emit-prototype-for
 	 name, defn.defn-name.clean-for-comment);
 end;  
 
+
+// Definitions and variables
+
+
 define method defn-guaranteed-initialized? (defn :: <definition>)
     => res :: <boolean>;
   defn.ct-value ~== #f;
@@ -624,8 +605,6 @@ define method defn-guaranteed-initialized? (defn :: <variable-definition>)
 end method defn-guaranteed-initialized?;
 
 
-
-// variable stuff.
 
 // Encapsulates the back-end specific info for a <variable> or <definition>.
 //
@@ -667,19 +646,19 @@ define method make-info-for (defn :: <definition>, file :: <file-state>)
 	    else
 	      *general-rep*;
 	    end;
+  let da-c-name = new-c-global(defn.defn-name, file);
   if (instance?(rep, <immediate-representation>))
-    let name = new-global(file, prefix: defn.defn-name.c-prefix);
-    make(<backend-var-info>, representation: rep, name: name);
+    make(<backend-var-info>, representation: rep, name: da-c-name);
   else
-    let name = new-root(if (instance?(defn, <variable-definition>))
-			  defn.defn-init-value;
-			else
-			  defn.ct-value;
-			end,
-			file,
-			prefix: defn.defn-name.c-prefix,
-			comment: format-to-string("%s", defn.defn-name));
-    make(<backend-var-info>, representation: *general-rep*, name: name);
+    new-root(if (instance?(defn, <variable-definition>))
+	       defn.defn-init-value;
+	     else
+	       defn.ct-value;
+	     end,
+	     da-c-name, 
+	     file,
+	     comment: format-to-string("%s", defn.defn-name));
+    make(<backend-var-info>, representation: *general-rep*, name: da-c-name);
   end;
 end;
 
@@ -692,6 +671,7 @@ define method get-info-for (leaf :: <initial-definition>,
     => res :: <backend-var-info>;
   get-info-for(leaf.definition-of, file);
 end;
+
 
 // Returns a legal C variable name and the "representation" of the
 // variable.
@@ -709,8 +689,8 @@ define method c-name-and-rep (leaf :: <abstract-variable>,
   let name = info.backend-var-info-name;
   unless (name)
     if (instance?(leaf.var-info, <debug-named-info>))
-      name := new-local(file,
-			modifier: leaf.var-info.debug-name.c-prefix);
+      let dname = string-to-c-name(as(<string>, leaf.var-info.debug-name));
+      name := new-local(file, modifier: dname);
     else
       name := new-local(file);
     end if;
@@ -725,6 +705,7 @@ define method c-name-and-rep (leaf :: <abstract-variable>,
   end;
   values(name, info.backend-var-info-rep);
 end;
+
 
 // Shortcut method for retrieving the (previously computed) representation 
 // for a variable.
@@ -746,12 +727,12 @@ end;
 define class <function-info> (<object>)
   //
   // The name of the function-region this is the function info for.
-  slot function-info-name :: <string>,
+  slot function-info-name :: <name>,
     required-init-keyword: name:;
   //
   // The C name of the function corresponding to this function-region.
-  slot function-info-main-entry-name :: false-or(<byte-string>),
-    init-value: #f, init-keyword: main-entry-name:;
+  slot function-info-main-entry-c-name :: false-or(<byte-string>),
+    init-value: #f, init-keyword: main-entry-c-name:;
   //
   // Sequence of the representations for the arguments.
   slot function-info-argument-representations :: <simple-object-vector>,
@@ -773,22 +754,30 @@ end;
 
 define constant $function-info-slots
   = list(function-info-name, name:, #f,
-	 function-info-main-entry-name, main-entry-name:, #f,
+	 function-info-main-entry-c-name, main-entry-c-name:, #f,
 	 function-info-argument-representations, argument-reps:, #f,
 	 function-info-result-representation, result-rep:, #f,
 	 function-info-result-type, result-type:, #f);
 
-define method main-entry-name
+// If the function name is unique, then we suffix with _FUN so that a constant
+// method definition can a value distinct from the underlying main entry.
+//
+define method main-entry-c-name
     (info :: <function-info>, file :: <file-state>)
     => res :: <byte-string>;
-  info.function-info-main-entry-name
-    | (info.function-info-main-entry-name
-	 := new-global(file, modifier: "_main",
-		       prefix: info.function-info-name.c-prefix));
+  let name-obj = info.function-info-name;
+  info.function-info-main-entry-c-name
+    | (info.function-info-main-entry-c-name
+	 := new-c-global(name-obj, file,
+	 		 modifier: if (name-unique?(name-obj))
+			 	     "_FUN";
+				   else
+				     "";
+				   end));
 end;
 
 define method make-function-info
-    (class :: <class>, name :: <string>, signature :: <signature>,
+    (class :: <class>, name :: <name>, signature :: <signature>,
      closure-var-types :: <sequence>)
     => res :: <function-info>;
   let argument-reps
@@ -858,6 +847,12 @@ define method make-info-for
 		     #[]);
 end;
 
+// entry-point-c-name  --  Exported
+//
+// Used by the heap builder to get its hands on a raw pointer to an entry point.
+// The function must have already been named, since its definition must have
+// been emitted by the time the heap builder runs.
+//
 define method entry-point-c-name (entry :: <ct-entry-point>)
     => res :: <string>;
   let info = entry.ct-entry-point-for.info;
@@ -866,9 +861,9 @@ define method entry-point-c-name (entry :: <ct-entry-point>)
   end unless;
   let name
     = select (entry.ct-entry-point-kind)
-	#"main" => info.function-info-main-entry-name;
-	#"general" => info.function-info-general-entry-name;
-	#"generic" => info.function-info-generic-entry-name;
+	#"main" => info.function-info-main-entry-c-name;
+	#"general" => info.function-info-general-entry-c-name;
+	#"generic" => info.function-info-generic-entry-c-name;
       end select;
   unless (name)
     error("Too late to be picking a name for %=", entry);
@@ -877,7 +872,91 @@ define method entry-point-c-name (entry :: <ct-entry-point>)
 end method;
 
 
-// Constant stuff.
+// maybe-emit-entries
+//
+//  We lazily build entry points (and generate code) so that we can avoid
+// compiling entry points that aren't actually used.
+//
+
+// This function is used for cases in which we might have references
+// to constant functions and don't know how they might be called.  It
+// will create all the entries which might be required.
+//
+define generic maybe-emit-entries
+    (ctv :: <object>, file :: <file-state>) => ();
+
+
+define method maybe-emit-generic-entry
+    (ctv :: <ct-method>, file :: <file-state>) => (name :: <string>);
+  let info = get-info-for(ctv, file);
+  let name = generic-entry-c-name(info, file);
+  if (~ctv.has-generic-entry?)
+    let (entry, component) = build-xep-component(ctv, #t);
+    let entry-info = get-info-for(entry, file);
+    // We've already allocated a meaningful name for this entry, so
+    // we want copy it into the entry's info.
+    entry-info.function-info-main-entry-c-name := name;
+    ctv.has-generic-entry? := #t;
+    push-last(file.file-deferred-xeps, component);
+  end if;
+  name;
+end method maybe-emit-generic-entry;
+
+define method maybe-emit-general-entry
+    (ctv :: <ct-function>, file :: <file-state>) => (name :: <string>);
+  let info = get-info-for(ctv, file);
+  let name = general-entry-c-name(info, file);
+  if (~ctv.has-general-entry?)
+    let (entry, component) = build-xep-component(ctv, #f);
+    let entry-info = get-info-for(entry, file);
+    // We've already allocated a meaningful name for this entry, so
+    // we want copy it into the entry's info.
+    entry-info.function-info-main-entry-c-name := name;
+    ctv.has-general-entry? := #t;
+    push-last(file.file-deferred-xeps, component);
+  end if;
+  name;
+end method maybe-emit-general-entry;
+
+
+define method maybe-emit-entries
+    (ctv :: <object>, file :: <file-state>) => ();
+  #f;
+end method maybe-emit-entries;
+
+define method maybe-emit-entries
+    (ctv :: <ct-function>, file :: <file-state>) => ();
+  maybe-emit-general-entry(ctv, file);
+end method maybe-emit-entries;
+
+define method maybe-emit-entries
+    (ctv :: <ct-generic-function>, file :: <file-state>) => ();
+  let defn = ctv.ct-function-definition;
+  // Open generics will already have all relevant entries.
+  if (defn & defn.generic-defn-sealed?)
+    let disc = defn.generic-defn-discriminator;
+    if (disc)
+      maybe-emit-general-entry(disc, file);
+    else
+      map(method (m) maybe-emit-entries(m.ct-value, file) end,
+	  defn.generic-defn-methods);
+    end if;
+  end if;
+end method maybe-emit-entries;
+
+define method maybe-emit-entries
+    (ctv :: <ct-method>, file :: <file-state>) => ();
+  maybe-emit-generic-entry(ctv, file);
+  // A method is hidden if it can only be called via its associated GF.  A
+  // general entry is only needed if the function could somehow become visible
+  // as a "bare" method.
+  if (~ctv.ct-method-hidden?)
+    maybe-emit-general-entry(ctv, file);
+  end if;
+end method maybe-emit-entries;
+
+
+// Constant and constant-function info
 
 define class <constant-info> (<object>)
   //
@@ -937,27 +1016,26 @@ end;
 
 
 define class <constant-function-info> (<constant-info>, <function-info>)
-  slot function-info-general-entry-name :: false-or(<byte-string>),
-    init-value: #f, init-keyword: general-entry-name:;
+  slot function-info-general-entry-c-name :: false-or(<byte-string>),
+    init-value: #f, init-keyword: general-entry-c-name:;
 end;
 
 define constant $constant-function-info-slots
   = concatenate($constant-info-slots,
 		$function-info-slots,
-		list(function-info-general-entry-name, general-entry-name:,
+		list(function-info-general-entry-c-name, general-entry-c-name:,
 		     #f));
 
 add-make-dumper(#"constant-function-info", *compiler-dispatcher*,
 		<constant-function-info>, $constant-function-info-slots);
 
-define method general-entry-name
+define method general-entry-c-name
     (info :: <constant-function-info>, file :: <file-state>)
     => res :: <byte-string>;
-  info.function-info-general-entry-name
-    | (info.function-info-general-entry-name
-	 := new-global(file, modifier: "_general",
-		       prefix: info.function-info-name.c-prefix));
-
+  info.function-info-general-entry-c-name
+    | (info.function-info-general-entry-c-name
+	 := new-c-global(info.function-info-name, file,
+	 		 modifier: "_GENERAL"));
 end;
 
 define method make-info-for
@@ -969,25 +1047,24 @@ define method make-info-for
 end;
 
 define class <constant-method-info> (<constant-function-info>)
-  slot function-info-generic-entry-name :: false-or(<byte-string>),
-    init-value: #f, init-keyword: generic-entry-name:;
+  slot function-info-generic-entry-c-name :: false-or(<byte-string>),
+    init-value: #f, init-keyword: generic-entry-c-name:;
 end;
 
 define constant $constant-method-info-slots
   = concatenate($constant-function-info-slots,
-		list(function-info-generic-entry-name, generic-entry-name:,
+		list(function-info-generic-entry-c-name, generic-entry-c-name:,
 		     #f));
 
 add-make-dumper(#"constant-method-info", *compiler-dispatcher*,
 		<constant-method-info>, $constant-method-info-slots);
 
-define method generic-entry-name
+define method generic-entry-c-name
     (info :: <constant-method-info>, file :: <file-state>)
     => res :: <byte-string>;
-  info.function-info-generic-entry-name
-    | (info.function-info-generic-entry-name
-	 := new-global(file, modifier: "_generic",
-		       prefix: info.function-info-name.c-prefix));
+  info.function-info-generic-entry-c-name
+    | (info.function-info-generic-entry-c-name
+	 := new-c-global(info.function-info-name, file, modifier: "_GENERIC"));
 end;
 
 define method make-info-for
@@ -999,7 +1076,7 @@ define method make-info-for
 end;
 
 
-// Prologue and epilogue stuff.
+// File prologue and epilogue
 
 define method emit-prologue
     (file :: <file-state>, other-units :: <simple-object-vector>)
@@ -1007,11 +1084,11 @@ define method emit-prologue
   maybe-emit-include("stdlib.h", file);
   maybe-emit-include("stdio.h", file);
   maybe-emit-include("runtime.h", file);
-
-  // The most important thing math.h includes is a prototype for rint,
-  // although it helps if we ever want to inline functions in the
-  // Transcendental library
-  maybe-emit-include("math.h", file);
+ 
+   // The most important thing math.h includes is a prototype for rint,
+   // although it helps if we ever want to inline functions in the
+   // Transcendental library
+   maybe-emit-include("math.h", file);
 
   let stream = file.file-body-stream;
   for (unit in other-units)
@@ -1045,8 +1122,17 @@ define method dylan-slot-offset (cclass :: <cclass>, slot-name :: <symbol>)
 end;
 
 
-// Top level form processors.
+// emit-tlf-gunk  --  exported
+//
+// Top level form processing
 
+// Emit-tlf-gunk
+//   Writes arbitrary information about a given top-level-form.  This
+//   may be just a comment, or it may be a set of concrete
+//   declarations.  "Emit-tlf-gunk" also sometimes produces
+//   side-effects upon the current <file-state> -- i.e. adding a new
+//   "root".
+//
 define generic emit-tlf-gunk (tlf :: <top-level-form>, file :: <file-state>)
     => ();
 
@@ -1321,43 +1407,49 @@ define method emit-definition-gunk
 end;
 
 
-// Emitting Components.
+// emit-component  --  exported interface
 
 define method emit-component
     (component :: <fer-component>, file :: <file-state>) => ();
+
+  // Do pre-pass over all function literals, allocating c-names for the entry
+  // points that have already been created.  Later similar stuff is done on the
+  // fly when we lazily introduce new entry points.
   for (func-lit in component.all-function-literals)
     let ctv = func-lit.ct-function;
     if (ctv)
       let ctv-info = get-info-for(ctv, file);
       begin
-	let main-entry = func-lit.main-entry;
-	if (main-entry.info)
-	  error("%= is already annotated?", main-entry);
+        // make info for the main entry be the same as info for the
+        // ct-function.
+	let m-entry = func-lit.main-entry;
+	if (m-entry.info)
+	  error("%= is already annotated?", m-entry);
 	end;
-	main-entry.info := ctv-info;
+	m-entry.info := ctv-info;
       end;
       if (func-lit.general-entry)
 	let gen-info = get-info-for(func-lit.general-entry, file);
-	if (gen-info.function-info-main-entry-name)
+	if (gen-info.function-info-main-entry-c-name)
 	  error("%= already has a name?", func-lit.general-entry);
 	end;
-	gen-info.function-info-main-entry-name
-	  := general-entry-name(ctv-info, file);
+	gen-info.function-info-main-entry-c-name
+	  := general-entry-c-name(ctv-info, file);
       end;
       if (instance?(func-lit, <method-literal>) & func-lit.generic-entry)
 	let gen-info = get-info-for(func-lit.generic-entry, file);
-	if (gen-info.function-info-main-entry-name)
+	if (gen-info.function-info-main-entry-c-name)
 	  error("%= already has a name?", func-lit.general-entry);
 	end;
-	gen-info.function-info-main-entry-name
-	  := generic-entry-name(ctv-info, file);
+	gen-info.function-info-main-entry-c-name
+	  := generic-entry-c-name(ctv-info, file);
       end;
     end;
   end;
 
   do(rcurry(emit-function, file), component.all-function-regions);
 
-  // Either emit-tlf-gunk or emit-component may have ended up adding
+  // Either emit-tlf-gunk or emit-component may have ended up
   // creating new components to hold required xeps.  Since we're
   // between things, this is an excellent time to spew them.
   // Eventually, we'll run out and stop iterating.
@@ -1368,7 +1460,10 @@ end;
 
 
 
-// Control flow emitters
+// Function region emitters:
+//
+// These functions deal emitting function regions, which includes the C
+// function definition and prototype.
 
 define method emit-function
     (function :: <fer-function-region>, file :: <file-state>)
@@ -1378,7 +1473,7 @@ define method emit-function
   assert(file.file-pending-defines == #f);
 
   let function-info = get-info-for(function, file);
-  let c-name = main-entry-name(function-info, file);
+  let c-name = main-entry-c-name(function-info, file);
   file.file-prototypes-exist-for[c-name] := #t;
 
   let max-depth = analyze-stack-usage(function);
@@ -1411,7 +1506,7 @@ define method compute-function-prototype
      function-info :: <function-info>,
      file :: <file-state>)
     => res :: <byte-string>;
-  let c-name = main-entry-name(function-info, file);
+  let c-name = main-entry-c-name(function-info, file);
   let stream = make(<buffered-byte-string-output-stream>);
   let result-rep = function-info.function-info-result-representation;
   case
@@ -1496,6 +1591,10 @@ define method emit-prototype-for
 	 name);
 end;
 
+
+// Non-function region emitters
+
+// 
 define method emit-region
     (region :: <simple-region>, file :: <file-state>)
     => ();
@@ -1825,6 +1924,9 @@ define method emit-assignment (results :: false-or(<definition-site-variable>),
   end;
 end;
 
+
+// Function calls:
+
 define method emit-assignment
     (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
      file :: <file-state>)
@@ -1876,7 +1978,8 @@ define method emit-assignment
   let func = ref-leaf(*heap-rep*, function, file);
 
   if (name)
-    format(stream, "/* %s */\n", name.clean-for-comment);
+    format(stream, "/* %s */\n",
+    	   clean-for-comment(format-to-string("%s", name)));
   end;
   if (results)
     format(stream, "%s = ", return-top-name);
@@ -1894,7 +1997,7 @@ end;
 
 define method xep-expr-and-name
     (func :: <leaf>, generic-entry? :: <boolean>, file :: <file-state>)
-    => (expr :: <string>, name :: false-or(<string>));
+    => (expr :: <string>, name :: false-or(<name>));
   spew-pending-defines(file);
   values(stringify(if (generic-entry?)
 		     "GENERIC_ENTRY(";
@@ -1909,13 +2012,13 @@ end;
 define method xep-expr-and-name
     (func :: <function-literal>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: <string>, name :: <string>);
+    => (expr :: <string>, name :: <name>);
   if (generic-entry?)
     error("%= doesn't have a generic entry.", func);
   end;
   let general-entry = func.general-entry;
   let entry-info = get-info-for(general-entry, file);
-  let entry-name = main-entry-name(entry-info, file);
+  let entry-name = main-entry-c-name(entry-info, file);
   maybe-emit-prototype(entry-name, entry-info, file);
   values(entry-name, general-entry.name);
 end;
@@ -1923,10 +2026,10 @@ end;
 define method xep-expr-and-name
     (func :: <method-literal>, generic-entry? :: <true>,
      file :: <file-state>)
-    => (expr :: <string>, name :: <string>);
+    => (expr :: <string>, name :: <name>);
   let generic-entry = func.generic-entry;
   let entry-info = get-info-for(generic-entry, file);
-  let entry-name = main-entry-name(entry-info, file);
+  let entry-name = main-entry-c-name(entry-info, file);
   maybe-emit-prototype(entry-name, entry-info, file);
   values(entry-name, generic-entry.name);
 end;
@@ -1935,17 +2038,17 @@ define method xep-expr-and-name
     (func :: <definition-constant-leaf>, generic-entry? :: <boolean>,
      file :: <file-state>,
      #next next-method)
-    => (expr :: <string>, name :: <string>);
+    => (expr :: <string>, name :: <name>);
   let defn = func.const-defn;
   let (expr, name) = xep-expr-and-name(defn, generic-entry?, file);
   values(expr | next-method(),
-	 name | format-to-string("%s", defn.defn-name));
+	 name | defn.defn-name);
 end;
 
 define method xep-expr-and-name
     (func :: <literal-constant>, generic-entry? :: <boolean>,
      file :: <file-state>, #next next-method)
-    => (expr :: false-or(<string>), name :: false-or(<string>));
+    => (expr :: false-or(<string>), name :: false-or(<name>));
   let ctv = func.value;
   let (expr, name) = xep-expr-and-name(ctv, generic-entry?, file);
   values(expr | next-method(),
@@ -1955,7 +2058,7 @@ end;
 define method xep-expr-and-name
     (defn :: <abstract-constant-definition>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<string>));
+    => (expr :: false-or(<string>), name :: false-or(<name>));
   let ctv = ct-value(defn);
   if (ctv)
     xep-expr-and-name(ctv, generic-entry?, file);
@@ -1967,7 +2070,7 @@ end;
 define method xep-expr-and-name
     (ctv :: <ct-function>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<string>));
+    => (expr :: false-or(<string>), name :: false-or(<name>));
   if (generic-entry?)
     error("%= doesn't have a generic entry.", ctv);
   end;
@@ -1979,7 +2082,7 @@ end;
 define method xep-expr-and-name
     (ctv :: <ct-generic-function>, generic-entry? :: <boolean>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<string>));
+    => (expr :: false-or(<string>), name :: false-or(<name>));
   if (generic-entry?)
     error("%= doesn't have a generic entry.", ctv);
   end;
@@ -1999,12 +2102,15 @@ end;
 define method xep-expr-and-name
     (ctv :: <ct-method>, generic-entry? :: <true>,
      file :: <file-state>)
-    => (expr :: false-or(<string>), name :: false-or(<string>));
+    => (expr :: false-or(<string>), name :: false-or(<name>));
   let name = maybe-emit-generic-entry(ctv, file);
   maybe-emit-prototype(name, #"generic", file);
   values(name, ctv.ct-function-name);
 end;
 
+
+
+// Known calls:
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>), call :: <known-call>,
@@ -2013,7 +2119,7 @@ define method emit-assignment
   let function = call.depends-on.source-exp;
   let func-info = find-main-entry-info(function, file);
   let stream = make(<buffered-byte-string-output-stream>);
-  let c-name = main-entry-name(func-info, file);
+  let c-name = main-entry-c-name(func-info, file);
   let (sp, new-sp) = cluster-names(call.info);
   format(stream, "%s(%s", c-name, sp);
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
@@ -2073,7 +2179,7 @@ define method find-main-entry-info
     => res :: <function-info>;
   let entry = func.main-entry;
   let info = get-info-for(entry, file);
-  maybe-emit-prototype(main-entry-name(info, file), info, file);
+  maybe-emit-prototype(main-entry-c-name(info, file), info, file);
   info;
 end;
 
@@ -2110,7 +2216,7 @@ define method find-main-entry-info
     (ctv :: <ct-function>, file :: <file-state>)
     => res :: <function-info>;
   let info = get-info-for(ctv, file);
-  maybe-emit-prototype(main-entry-name(info, file), info, file);
+  maybe-emit-prototype(main-entry-c-name(info, file), info, file);
   info;
 end;
 
@@ -2120,6 +2226,9 @@ define method find-main-entry-info
   find-main-entry-info(ctv.ct-function-definition, file);
 end;
 
+
+
+// Primitive calls:
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <primitive>,
@@ -2144,7 +2253,7 @@ define method emit-assignment
   assert(instance?(catch-defn, <abstract-method-definition>));
   let catch-info = find-main-entry-info(catch-defn, file);
   format(stream, "catch(%s, %s, %s);\n",
-	 main-entry-name(catch-info, file), values, func);
+	 main-entry-c-name(catch-info, file), values, func);
   if (defines)
     deliver-cluster(defines, values, sp, 0, file);
   end;
@@ -2347,6 +2456,9 @@ define method emit-assignment
 end;
 
 
+
+// Deliver-results utility:
+
 define method deliver-cluster
     (defines :: false-or(<definition-site-variable>),
      src-start :: <string>, src-end :: <string>,
@@ -2483,7 +2595,11 @@ define method deliver-single-result
 end;
 
 
-// Value manipulation utilities.
+// Pending defines:
+//
+// Used by deliver-result to queue up moves in order to allow generation of
+// nested C expressions instead of always generating an explicit temporary for
+// each intermediate result.
 
 define class <pending-define> (<object>)
   constant slot pending-var :: <abstract-variable>,
@@ -2525,6 +2641,9 @@ define method spew-pending-defines (file :: <file-state>) => ();
   end for;
   file.file-pending-defines := #f;
 end method spew-pending-defines;
+
+
+// ref-leaf
 
 // Make sure abstract-variable-is-inlined? agrees with what this
 // method will do...
@@ -2590,15 +2709,15 @@ define method ref-leaf (target-rep :: <c-representation>,
 		name: leaf.main-entry.name,
 		signature: leaf.signature);
     let ctv-info = get-info-for(ctv, file);
-    ctv-info.function-info-main-entry-name
-      := main-entry-name(get-info-for(leaf.main-entry, file), file);
+    ctv-info.function-info-main-entry-c-name
+      := main-entry-c-name(get-info-for(leaf.main-entry, file), file);
     if (leaf.general-entry)
-      ctv-info.function-info-general-entry-name
-	:= main-entry-name(get-info-for(leaf.general-entry, file), file);
+      ctv-info.function-info-general-entry-c-name
+	:= main-entry-c-name(get-info-for(leaf.general-entry, file), file);
     end if;
     if (instance?(leaf, <method-literal>) & leaf.generic-entry)
-      ctv-info.function-info-generic-entry-name
-	:= main-entry-name(get-info-for(leaf.generic-entry, file), file);
+      ctv-info.function-info-generic-entry-c-name
+	:= main-entry-c-name(get-info-for(leaf.generic-entry, file), file);
     end;
     leaf.ct-function := ctv;
   end;
@@ -2617,22 +2736,39 @@ define method ref-leaf (target-rep :: <c-representation>,
   end;
 end;
 
+
+// c-expr-and-rep  --- emitting literals
+
+
+// Emit a reference to a constant which must be referenced via the roots (not
+// as a C literal.)  name and modifier are passed through to
+// new-root.  Lit is the init-value, and defn is some thingie used to indicate
+// whether we've prototyped this thing yet or not.
+//
+// Putting things in the roots in done lazily because we don't know if we we
+// will be able to represent as a C literal or constant until now.
+//
 define method aux-c-expr-and-rep
-    (lit :: <ct-value>, file :: <file-state>, prefix :: <string>,
-     defn :: <object>)
+    (lit :: <ct-value>, file :: <file-state>,
+     #key name :: false-or(<name>), modifier :: <byte-string> = "",
+	  defn :: <object> = lit)
  => (name :: <string>, rep :: <c-representation>);
   let info = get-info-for(lit, file);
-  let name
-    = (info.const-info-expr
-	 | (info.const-info-expr := new-root(lit, file, prefix: prefix)));
-  maybe-emit-prototype(name, defn, file);
-  values(name, *general-rep*);
-end;
+  let c-name = info.const-info-expr;
+  unless (c-name)
+    c-name := new-c-global(name, file, modifier: modifier);
+    info.const-info-expr := c-name;
+    new-root(lit, c-name, file);
+  end unless;
+  maybe-emit-prototype(c-name, defn, file);
+  values(c-name, *general-rep*);
+end method aux-c-expr-and-rep;
+
 
 define method c-expr-and-rep
     (lit :: <ct-value>, rep-hint :: <c-representation>, file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
-  aux-c-expr-and-rep(lit, file, "literal", lit);
+  aux-c-expr-and-rep(lit, file, modifier: "literal");
 end;
 
 define method c-expr-and-rep
@@ -2640,21 +2776,22 @@ define method c-expr-and-rep
      file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
   maybe-emit-entries(lit, file);
-  aux-c-expr-and-rep(lit, file, lit.ct-function-name.c-prefix, lit);
+  let fname = lit.ct-function-name;
+  aux-c-expr-and-rep(lit, file, name: fname);
 end;
 
 define method c-expr-and-rep
     (lit :: <literal-false>, rep-hint :: <c-representation>,
      file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
-  aux-c-expr-and-rep(lit, file, "false", lit);
+ aux-c-expr-and-rep(lit, file, modifier: "false");
 end;
 
 define method c-expr-and-rep
     (lit :: <literal-true>, rep-hint :: <c-representation>,
      file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
-  aux-c-expr-and-rep(lit, file, "true", lit);
+  aux-c-expr-and-rep(lit, file, modifier: "true");
 end;
 
 define method c-expr-and-rep
@@ -2669,14 +2806,14 @@ define method c-expr-and-rep
        while: instance?(elem, <literal-pair>))
     maybe-emit-entries(elem.literal-head, file);
   end for;
-  aux-c-expr-and-rep(lit, file, "literal", lit);
+  aux-c-expr-and-rep(lit, file, modifier: "literal");
 end method c-expr-and-rep;
 
 define method c-expr-and-rep
     (lit :: <literal-empty-list>, rep-hint :: <c-representation>,
      file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
-  aux-c-expr-and-rep(lit, file, "empty_list", lit);
+  aux-c-expr-and-rep(lit, file, modifier: "empty_list");
 end;
 
 define method c-expr-and-rep
@@ -2684,23 +2821,25 @@ define method c-expr-and-rep
      file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
   aux-c-expr-and-rep
-    (lit, file, concatenate("sym_", as(<string>, lit.literal-value).c-prefix),
-     lit);
+    (lit, file,
+     modifier:
+       concatenate("SYM_",
+	 string-to-c-name(as(<string>, lit.literal-value))));
 end;
 
 define method c-expr-and-rep
     (lit :: <literal-string>, rep-hint :: <c-representation>,
      file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
-  aux-c-expr-and-rep(lit, file, "str", lit);
+  aux-c-expr-and-rep(lit, file, modifier: "str");
 end;
 
 define method c-expr-and-rep
     (class :: <defined-cclass>, rep-hint :: <c-representation>,
      file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
-  aux-c-expr-and-rep(class, file, class.cclass-name.c-prefix,
-		     class.class-defn);
+  aux-c-expr-and-rep(class, file, name: class.cclass-name,
+  		     defn: class.class-defn);
 end;
 
 define method c-expr-and-rep
@@ -2856,11 +2995,13 @@ define method c-expr-and-rep
     (ep :: <ct-entry-point>, rephint :: <c-representation>, file :: <file-state>)
     => (name :: <string>, rep :: <c-representation>);
   let info = get-info-for(ep.ct-entry-point-for, file);
-  let name = main-entry-name(info, file);
+  let name = main-entry-c-name(info, file);
   maybe-emit-prototype(name, info, file);
   values(stringify("((void *)", name, ')'), *ptr-rep*);
 end;
 
+
+// Emit-copy
 
 define generic emit-copy
     (target :: <string>, target-rep :: <c-representation>,
@@ -2914,6 +3055,9 @@ define method emit-copy
 end;
 
 
+
+// conversion-expr
+
 define method conversion-expr
     (target-rep :: <general-representation>,
      source :: <string>, source-rep :: <c-representation>,
@@ -2959,6 +3103,7 @@ define method conversion-expr
   end;
 end;
 
+
 // Seals for file cback.dylan
 
 // <unit-state> -- subclass of <object>

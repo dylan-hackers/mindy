@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.34 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.35 1996/11/04 19:18:15 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -299,7 +299,8 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 	if (instance?(defn, <variable-definition>))
 	  defn.var-defn-type-defn
 	    := make(<constant-definition>,
-		    name: make(<type-cell-name>, base: defn.defn-name),
+		    name: make(<derived-name>, how: #"type-cell",
+		    	       base: defn.defn-name),
 		    library: defn.defn-library,
 		    type: dylan-value(#"<type>"),
 		    value: #f);
@@ -351,7 +352,7 @@ end;
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-bindings-tlf>) => ();
   if (tlf.tlf-anything-non-constant?)
-    let lexenv = make(<lexenv>);
+    let lexenv = lexenv-for-tlf(tlf);
     let policy = $Default-Policy;
     let source = make(<source-location>);
     let init-builder = make-builder(builder);
@@ -412,10 +413,9 @@ define method convert-top-level-form
      #next next-method)
     => ();
   let defn = tlf.tlf-required-defns[0];
-  let lexenv = make(<lexenv>);
+  let lexenv = lexenv-for-tlf(tlf);
   let meth = tlf.tlf-expression.method-ref-method;
-  let name = format-to-string("%s", defn.defn-name);
-  let leaf = fer-convert-method(builder, meth, name, defn.ct-value, #"global",
+  let leaf = fer-convert-method(builder, meth, defn.defn-name, defn.ct-value, #"global",
 				lexenv, lexenv);
   if (defn.function-defn-hairy?)
     let source = make(<source-location>);

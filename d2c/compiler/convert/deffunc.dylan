@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.72 1996/09/12 20:36:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.73 1996/11/04 19:18:16 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -540,7 +540,7 @@ define method ct-value (defn :: <generic-definition>)
     defn.function-defn-ct-value
       := unless (defn.function-defn-hairy?)
 	   make(<ct-generic-function>,
-		name: format-to-string("%s", defn.defn-name),
+		name: defn.defn-name,
 		signature: sig,
 		definition: defn,
 		sealed?: defn.generic-defn-sealed?);
@@ -557,7 +557,7 @@ define method ct-value (defn :: <abstract-method-definition>)
     defn.function-defn-ct-value
       := unless (defn.function-defn-hairy?)
 	   make(<ct-method>,
-		name: format-to-string("%s", defn.defn-name),
+		name: defn.defn-name,
 		signature: defn.function-defn-signature,
 		definition: defn,
 		hidden: instance?(defn, <method-definition>));
@@ -574,7 +574,7 @@ define method ct-value (defn :: <accessor-method-definition>)
     defn.function-defn-ct-value
       := unless (defn.function-defn-hairy?)
 	   make(<ct-accessor-method>,
-		name: format-to-string("%s", defn.defn-name),
+		name: defn.defn-name,
 		signature: defn.function-defn-signature,
 		definition: defn,
 		hidden: #t,
@@ -592,10 +592,10 @@ define method expand-inline-function
     (defn :: <abstract-method-definition>, meth :: <method-parse>)
     => res :: false-or(<function-literal>);
   unless (defn.function-defn-hairy?)
-    let name = format-to-string("%s", defn.defn-name);
+    let name = defn.defn-name;
     let component = make(<fer-component>);
     let builder = make-builder(component);
-    let lexenv = make(<lexenv>);
+    let lexenv = make(<lexenv>, method-name: name);
     let next-method-info
       = (instance?(defn, <method-definition>)
 	   & static-next-method-info(defn));
@@ -700,10 +700,10 @@ end;
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <real-define-method-tlf>) => ();
   let defn = tlf.tlf-defn;
-  let lexenv = make(<lexenv>);
+  let lexenv = make(<lexenv>, method-name: defn.defn-name);
   let next-method-info = static-next-method-info(defn);
   let leaf = fer-convert-method(builder, tlf.method-tlf-parse,
-				format-to-string("%s", defn.defn-name),
+				defn.defn-name,
 				ct-value(defn), #"global", lexenv, lexenv,
 				next-method-info: next-method-info);
   if (defn.function-defn-hairy? 
@@ -744,7 +744,10 @@ define method build-type
       make-literal-constant(builder, ctv);
     else
       let var = make-local-var(builder, #"temp", specifier-type(#"<type>"));
-      fer-convert(builder, expr, make(<lexenv>), #"assignment", var);
+      fer-convert(builder, expr, 
+		  make(<lexenv>,
+		       method-name: make(<anonymous-name>, location: source)),
+		  #"assignment", var);
       var;
     end if;
   else
@@ -791,7 +794,8 @@ define method generic-defn-discriminator (gf :: <generic-definition>)
       := if (discriminator-possible?(gf) & gf.generic-defn-methods.size > 1)
 	   let sig = gf.function-defn-signature;
 	   make(<ct-function>,
-		name: format-to-string("Discriminator for %s", gf.defn-name),
+		name: make(<derived-name>, how: #"discriminator",
+			   base: gf.defn-name),
 		signature:
 		  if (sig.key-infos)
 		    make(<signature>,

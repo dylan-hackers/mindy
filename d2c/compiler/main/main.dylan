@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.93 1996/10/18 14:58:22 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.94 1996/11/04 19:18:09 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -535,18 +535,21 @@ define method compile-1-tlf
   let builder = make-builder(component);
   convert-top-level-form(builder, tlf);
   let inits = builder-result(builder);
+  let name-obj = make(<anonymous-name>, location: tlf.source-location);
   unless (instance?(inits, <empty-region>))
     let result-type = make-values-ctype(#(), #f);
     let source = make(<source-location>);
     let init-function
-      = build-function-body(builder, $Default-Policy, source, #f,
-			    name, #(), result-type, #t);
+      = build-function-body
+          (builder, $Default-Policy, source, #f,
+	   name-obj,
+	   #(), result-type, #t);
     build-region(builder, inits);
     build-return
       (builder, $Default-Policy, source, init-function, #());
     end-body(builder);
     let sig = make(<signature>, specializers: #(), returns: result-type);
-    let ctv = make(<ct-function>, name: name, signature: sig);
+    let ctv = make(<ct-function>, name: name-obj, signature: sig);
     make-function-literal(builder, ctv, #f, #"global", sig, init-function);
     add!(state.unit-init-functions, ctv);
   end;
@@ -1013,13 +1016,19 @@ define method build-command-line-entry
   let source = make(<source-location>);
   let policy = $Default-Policy;
   let name = "Command Line Entry";
+  let name-obj
+    = make(<basic-name>, module: $dylan-module, symbol: #"command-line-entry");
+
   let int-type = specifier-type(#"<integer>");
   let rawptr-type = specifier-type(#"<raw-pointer>");
   let result-type = make-values-ctype(#(), #f);
   let argc = make-local-var(builder, #"argc", int-type);
   let argv = make-local-var(builder, #"argv", rawptr-type);
-  let func = build-function-body(builder, policy, source, #f, name,
-				 list(argc, argv), result-type, #t);
+  let func
+    = build-function-body
+        (builder, policy, source, #f,
+	 name-obj, list(argc, argv), result-type, #t); 
+
   let user-func = build-defn-ref(builder, policy, source, defn);
   // ### Should really spread the arguments out, but I'm lazy.
   build-assignment(builder, policy, source, #(),
@@ -1029,7 +1038,7 @@ define method build-command-line-entry
   end-body(builder);
   let sig = make(<signature>, specializers: list(int-type, rawptr-type),
 		 returns: result-type);
-  let ctv = make(<ct-function>, name: name, signature: sig);
+  let ctv = make(<ct-function>, name: name-obj, signature: sig);
   make-function-literal(builder, ctv, #f, #"global", sig, func);
   optimize-component(component);
   emit-component(component, file);

@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.59 1996/09/04 16:47:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.60 1996/11/04 19:18:17 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -244,6 +244,12 @@ define method fer-convert
 		 make-literal-constant(builder, make(<literal-false>)));
 end;
 
+// Coerce a token to a <basic-name>
+define function token-basic-name (tok :: <token>) => res :: <basic-name>;
+  make(<basic-name>, symbol: tok.token-symbol,
+       module: tok.token-module);
+end function;
+
 
 define method fer-convert
     (builder :: <fer-builder>, form :: <local-parse>, lexenv :: <lexenv>,
@@ -263,8 +269,11 @@ define method fer-convert
 	  form.local-methods);
   for (var in vars, meth in form.local-methods)
     build-let(builder, lexenv.lexenv-policy, source, var,
-	      fer-convert-method(builder, meth, #f, #f, #"local",
-				 specializer-lexenv, lexenv));
+	      fer-convert-method
+	        (builder, meth,
+		 make(<internal-name>, symbol: meth.method-name.token-symbol,
+		      base: lexenv.lexenv-method-name),
+		 #f, #"local", specializer-lexenv, lexenv));
   end;
 
   // Supply #f as the result.
@@ -471,10 +480,11 @@ define method fer-convert
   let saved-state-var = make-local-var(builder, #"saved-state", state-type);
   let policy = lexenv.lexenv-policy;
   let body-region
-    = build-function-body(builder, policy, source, #t,
-			  format-to-string("Block Body for %s",
-					   name.token-symbol),
-			  list(saved-state-var), wild-ctype(), #f);
+    = build-function-body
+        (builder, policy, source, #t,
+	 make(<internal-name>, symbol: name.token-symbol,
+	      base: lexenv.lexenv-method-name),
+	 list(saved-state-var), wild-ctype(), #f);
   let body-sig = make(<signature>, specializers: list(state-type));
   let body-literal
     = make-function-literal(builder, #f, #f, #"local", body-sig, body-region);
@@ -537,8 +547,10 @@ define method fer-convert
   let source = form.source-location;
   let temp = make-local-var(builder, #"method", function-ctype());
   build-assignment(builder, lexenv.lexenv-policy, source, temp,
-		   fer-convert-method(builder, form.method-ref-method, #f, #f,
-				      #"local", lexenv, lexenv));
+		   fer-convert-method(builder, form.method-ref-method,
+		   		      make(<internal-name>, symbol: #"method",
+				      	   base: lexenv.lexenv-method-name),
+				      #f, #"local", lexenv, lexenv));
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum, temp);
 end;
 
@@ -598,9 +610,11 @@ define method fer-convert
   let policy = lexenv.lexenv-policy;
   let cleanup-builder = make-builder(builder);
   let cleanup-region
-    = build-function-body(cleanup-builder, policy, source, #t,
-			  "Unwind-Protect Cleanup", #(),
-			  make-values-ctype(#(), #f), #f);
+    = build-function-body
+        (cleanup-builder, policy, source, #t,
+	  make(<internal-name>, symbol: #"Block-Cleanup",
+	       base: lexenv.lexenv-method-name),
+	  #(), make-values-ctype(#(), #f), #f);
   let cleanup-literal
     = make-function-literal(cleanup-builder, #f, #f, #"local",
 			    make(<signature>, specializers: #(),
@@ -638,9 +652,11 @@ end;
 
 // Method conversion.
 
+// fer-convert-method  --  Exported
+//
 define method fer-convert-method
     (builder :: <fer-builder>, meth :: <method-parse>,
-     name :: false-or(<string>), ctv :: false-or(<ct-function>),
+     name :: <name>, ctv :: false-or(<ct-function>),
      visibility :: <function-visibility>, specializer-lexenv :: <lexenv>,
      lexenv :: <lexenv>,
      #key next-method-info :: false-or(<list>))
@@ -908,13 +924,6 @@ define method fer-convert-method
 	end;
       end;
 
-  let name = if (name)
-	       name;
-	     elseif (meth.method-name)
-	       as(<string>, meth.method-name.token-symbol);
-	     else
-	       "Anonymous Method";
-	     end;
   let vars = as(<list>, vars);
   let result-type = make-values-ctype(as(<list>, result-types), rest-type);
   let lambda?

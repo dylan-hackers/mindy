@@ -1,11 +1,12 @@
 module: lexenv
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.6 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.7 1996/11/04 19:18:19 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define class <lexenv> (<object>)
   slot lexenv-bindings :: <list>, init-value: #();
   slot lexenv-policy :: <policy>, init-value: $Default-Policy;
+  slot lexenv-method-name :: <name>, init-keyword: method-name:;
 end;
 
 define method initialize (lexenv :: <lexenv>, #next next-method, #key inside)
@@ -14,8 +15,21 @@ define method initialize (lexenv :: <lexenv>, #next next-method, #key inside)
   if (inside)
     lexenv.lexenv-bindings := inside.lexenv-bindings;
     lexenv.lexenv-policy := inside.lexenv-policy;
+    lexenv.lexenv-method-name := inside.lexenv-method-name;
   end;
 end;
+
+// lexenv-for-tlf  --  Exported
+//
+// Shorthand function.
+// Make a new empty lexenv, initializing its "method name" to an anonymous name
+// derived from the TLF's source location.
+//
+define function lexenv-for-tlf (tlf :: <top-level-form>) => res :: <lexenv>;
+  make(<lexenv>,
+       method-name: make(<anonymous-name>, location: tlf.source-location));
+end function;
+
 
 define class <body-lexenv> (<lexenv>)
   slot lexenv-handlers :: <integer>, init-value: 0;

@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.70 1996/05/29 23:08:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.71 1996/11/04 19:18:13 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1162,9 +1162,8 @@ define method maybe-define-init-function
 		  new-signature);
 	  end if;
 	  let name
-	    = make(<generated-name>,
-		   description:
-		     format-to-string("Init Function for %s", getter-name));
+	    = make(<derived-name>, how: #"init-function", 
+	    	   base: getter-name);
 	  let init-func-defn
 	    = make(<init-function-definition>, name: name,
 		   library: tlf.tlf-defn.defn-library,
@@ -1223,8 +1222,8 @@ define method class-defn-defered-evaluations-function
 	       // function.
 	     end)
 	   make(<ct-function>,
-		name: format-to-string("Defered evaluations for %s",
-				       defn.defn-name),
+		name: make(<derived-name>, how: #"deferred-evaluation",
+			   base: defn.defn-name),
 		signature: make(<signature>, specializers: #(),
 				returns: make-values-ctype(#(), #f)));
 	 else
@@ -1309,7 +1308,7 @@ define method class-defn-maker-function
 	   //
 	   // Okay, we can make a ctv for the maker function.  First,
 	   // compute some values we will need.
-	   let name = format-to-string("Maker for %s", defn.defn-name);
+	   let name = make(<derived-name>, how: #"maker", base: defn.defn-name);
 	   let sig = make(<signature>, specializers: #(),
 			  keys: as(<list>, key-infos), all-keys: #t,
 			  returns: make(<direct-instance-ctype>,
@@ -1321,7 +1320,7 @@ define method class-defn-maker-function
 	   let maker-defn
 	     = if (instance?(instance-rep, <immediate-representation>))
 		 make(<maker-function-definition>,
-		      name: make(<generated-name>, description: name),
+		      name: name,
 		      source-location: defn.source-location,
 		      library: defn.defn-library,
 		      signature: sig,
@@ -1370,13 +1369,13 @@ define method convert-top-level-form
     // variable will be handled by the linker.  We just need to build the
     // defered-evaluations, key-defaulter, and maker functions.
 
-    let lexenv = make(<lexenv>);
+    let lexenv = make(<lexenv>, method-name: defn.defn-name);
     let policy = lexenv.lexenv-policy;
     let source = defn.source-location;
     
     for (init-func-defn in tlf.tlf-init-function-defns)
       let meth = init-func-defn.init-func-defn-method-parse;
-      let name = init-func-defn.defn-name.generated-name-description;
+      let name = init-func-defn.defn-name;
       fer-convert-method(tl-builder, meth, name, init-func-defn.ct-value,
 			 #"global", lexenv, lexenv);
     end for;
@@ -1401,14 +1400,16 @@ define method convert-top-level-form
       for (slot-defn in defn.class-defn-slots,
 	   index from 0)
 	let slot-info = slot-defn.slot-defn-info;
-	let slot-name = slot-info.slot-getter.variable-name;
+	let getter = slot-info.slot-getter;
+ 	let slot-name = slot-info.slot-getter.variable-name;
 
 	let slot-type = slot-info.slot-type;
 	let (type, type-var)
 	  = if (instance?(slot-type, <unknown-ctype>))
 	      let type-expr = slot-defn.slot-defn-type;
 	      let var
-		= make-local-var(evals-builder, symcat(slot-name, "-type"),
+		= make-local-var(evals-builder,
+				 symcat(slot-name, "-type"),
 				 specifier-type(#"<type>"));
 	      fer-convert(evals-builder, type-expr, lexenv,
 			  #"assignment", var);
@@ -1445,7 +1446,7 @@ define method convert-top-level-form
 		#f,
 		list(var, make-literal-constant(evals-builder, slot-info))));
 	elseif (init-function == #t)
-	  let leaf = convert-init-function(evals-builder, slot-name,
+	  let leaf = convert-init-function(evals-builder, slot-info.slot-getter,
 					   slot-defn.slot-defn-init-function);
 	  build-assignment
 	    (evals-builder, policy, source, #(),
@@ -1545,7 +1546,8 @@ define method convert-top-level-form
       for (override-defn in defn.class-defn-overrides,
 	   index from 0)
 	let override-info = override-defn.override-defn-info;
-	let slot-name = override-info.override-getter.variable-name;
+	let getter = override-info.override-getter;
+	let slot-name = getter.variable-name;
 	let init-value = override-info.override-init-value;
 	let init-function = override-info.override-init-function;
 
@@ -1569,7 +1571,7 @@ define method convert-top-level-form
 		  list(var, descriptor-leaf)));
 	  else
 	    let leaf
-	      = convert-init-function(evals-builder, slot-name,
+	      = convert-init-function(evals-builder, getter,
 				      override-defn
 					.override-defn-init-function);
 	    build-assignment
@@ -2016,7 +2018,7 @@ define method build-maker-function-body
     end select;
   end for;
   
-  let name = format-to-string("Maker for %s", defn.defn-name);
+  let name = make(<derived-name>, how: #"maker", base: defn.defn-name);
   let maker-region
     = build-function-body(tl-builder, policy, source, #f, name,
 			  as(<list>, maker-args), cclass, #t);
@@ -2090,19 +2092,24 @@ end method build-maker-function-body;
 
 
 define method convert-init-function
-    (builder :: <fer-builder>, slot-name :: <symbol>,
+    (builder :: <fer-builder>, getter :: <variable>,
      init-function :: <expression-parse>)
     => res :: <leaf>;
-  let lexenv = make(<lexenv>);
+  let slot-name = getter.variable-name;
+  let fun-name = make(<derived-name>,
+  		      base: make(<basic-name>, symbol: slot-name,
+		      		 module: getter.variable-home),
+		      how: #"init-function");
+  let lexenv = make(<lexenv>, method-name: fun-name);
   let policy = lexenv.lexenv-policy;
   let source = make(<source-location>);
   let var = make-lexical-var(builder, symcat(slot-name, "-init-function"),
 			     source, function-ctype());
   fer-convert(builder, init-function, lexenv, #"let", var);
+
   let func-region
     = build-function-body(builder, policy, source, #t,
-			  concatenate("Init Function for ",
-				      as(<string>, slot-name)), #(),
+    			  fun-name, #(),
 			  object-ctype(), #f);
   let temp = make-local-var(builder, #"result", object-ctype());
   build-assignment(builder, policy, source, temp,
@@ -2157,7 +2164,10 @@ define method build-getter
     (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
      defn :: <slot-defn>, slot :: <instance-slot-info>)
     => res :: <method-literal>;
-  let lexenv = make(<lexenv>);
+  let getter-name
+      = make(<derived-name>, how: #"getter",
+     	     base: defn.slot-defn-getter.defn-name);
+  let lexenv = make(<lexenv>, method-name: getter-name);
   let policy = lexenv.lexenv-policy;
   let source = make(<source-location>);
   let cclass = slot.slot-introduced-by;
@@ -2171,7 +2181,7 @@ define method build-getter
   let type = slot.slot-type;
   let region = build-function-body
     (builder, policy, source, #f,
-     format-to-string("Slot Getter %s", defn.slot-defn-getter.defn-name),
+     getter-name,
      if (index)
        list(instance, index);
      else
@@ -2271,8 +2281,11 @@ define method build-setter
     (builder :: <fer-builder>, ctv :: false-or(<ct-method>),
      defn :: <slot-defn>, slot :: <instance-slot-info>)
     => res :: <method-literal>;
+  let setter-name
+    = make(<derived-name>, how: #"setter",
+     	   base: defn.slot-defn-setter.defn-name);
   let init?-slot = slot.slot-initialized?-slot;
-  let lexenv = make(<lexenv>);
+  let lexenv = make(<lexenv>, method-name: setter-name);
   let policy = lexenv.lexenv-policy;
   let source = make(<source-location>);
   let type = slot.slot-type;
@@ -2288,7 +2301,7 @@ define method build-setter
 	      end if;
   let region = build-function-body
     (builder, policy, source, #f,
-     format-to-string("Slot Setter %s", defn.slot-defn-setter.defn-name),
+     setter-name,
      if (index)
        list(new, instance, index);
      else

@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.54 1996/08/10 20:07:08 nkramer Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.55 1996/11/04 19:17:58 ram Exp $
 
 /*
 
@@ -462,12 +462,13 @@ begin
 
   // Names, modules, & the like
   register-object-id(#"basic-name", #x0088);
-  register-object-id(#"type-cell-name", #x0089);
+  register-object-id(#"anonymous-name", #x0089);
   register-object-id(#"method-name", #x008A);
-  register-object-id(#"generated-name", #x008B);
+  register-object-id(#"internal-name", #x008B); 
   register-object-id(#"module-variable", #x008C);
   register-object-id(#"module", #x008D);
   register-object-id(#"library", #x008E);
+  register-object-id(#"derived-name", #x008F);
 
   // FER:
   register-object-id(#"compiler-policy", #x0090);

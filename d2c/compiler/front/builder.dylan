@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.22 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.23 1996/11/04 19:15:25 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -150,7 +150,7 @@ define generic build-unwind-protect-body
 //
 define generic build-function-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     lambda? :: <boolean>, name :: <byte-string>, arg-vars :: <list>,
+     lambda? :: <boolean>, name :: <name>, arg-vars :: <list>,
      result-type :: <values-ctype>, hidden-references? :: <boolean>)
  => res :: <fer-function-region>;
 

@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.48 1996/08/23 13:58:44 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.49 1996/11/04 19:17:56 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -577,7 +577,7 @@ end;
 //
 define method build-function-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
-     lambda? :: <boolean>, name :: <byte-string>, arg-vars :: <list>,
+     lambda? :: <boolean>, name :: <name>, arg-vars :: <list>,
      result-type :: <values-ctype>, hidden-references? :: <boolean>)
  => res :: <fer-function-region>;
   ignore(policy);

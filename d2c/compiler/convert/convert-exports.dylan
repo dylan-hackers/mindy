@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.7 1996/10/02 19:20:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.8 1996/11/04 19:18:20 ram Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -21,14 +21,17 @@ define module lexenv
   use utils;
   use policy;
   use flow, import: {<abstract-variable>};
-
+  use names;
   use tokens;
+  use source;
+  use top-level-forms;
 
   export
     <lexenv>, lexenv-policy, lexenv-policy-setter,
     <body-lexenv>, lexenv-handlers, lexenv-handlers-setter,
+    lexenv-method-name, lexenv-method-name-setter,
     <binding>, binding-name, binding-var, binding-type-var,
-    add-binding, find-binding;
+    add-binding, find-binding, lexenv-for-tlf;
 end;
 
 

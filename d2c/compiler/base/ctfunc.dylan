@@ -1,14 +1,20 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.14 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.15 1996/11/04 19:17:57 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
+// A ct-function is a kind of compile-time value used to represent a function.
+// ct-functions contain various linkage-related information needed to call the
+// function, but don't reference the FER for the function (e.g. the
+// <function-literal>.)  This information is used both by the backend and by
+// the heap builder.
+//
 define abstract class <ct-function> 
     (<ct-value>, <annotatable>, <identity-preserving-mixin>)
   //
-  // Some string useful for describing this function.  Used only for printing
-  // and error messages.
-  slot ct-function-name :: <string>,
+  // <name> object describing what this function is used for.  Used for
+  // debugging, to generate the C name, etc.
+  slot ct-function-name :: <name>,
     required-init-keyword: name:;
   //
   // The signature for this function.
@@ -38,7 +44,7 @@ define method print-object (ctv :: <ct-function>, stream :: <stream>) => ();
 end;
 
 define method print-message (ctv :: <ct-function>, stream :: <stream>) => ();
-  write(stream, ctv.ct-function-name);
+  print-message(ctv.ct-function-name, stream);
 end;
 
 define constant $ct-function-dump-slots =
@@ -148,6 +154,11 @@ add-make-dumper
 
 
 
+// A <ct-entry-point> is a way that we can get our hands on the <raw-pointer>
+// for particular entry-point functions (as opposed to actually referencing the
+// function object.)  Among other things, this is used to describe the initial
+// contents of the function object.
+//
 define class <ct-entry-point> (<ct-value>, <identity-preserving-mixin>)
   //
   // The function this is an entry point for.

@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.57 1996/05/29 23:29:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.58 1996/11/04 19:17:55 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -451,8 +451,8 @@ end;
 define class <fer-function-region>
     (<function-region>, <queueable-mixin>, <annotatable>)
 
-  // Some random descriptive string describing this function.
-  slot name :: <byte-string>, init-value: "<unknown>", init-keyword: name:;
+  // Name describing where this function came from, or #f if unknown.
+  slot name :: false-or(<name>), init-value: #f, init-keyword: name:;
 
   // The prologue operation for this function.  The results of the prologue
   // are the arguments to the function.

@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.56 1996/09/15 15:33:32 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.57 1996/11/04 19:18:06 ram Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1147,7 +1147,8 @@ define method spew-function
   let min-values = returns.min-values;
   apply(spew-instance, func.ct-value-cclass, state,
 	function-name:
-	  make(<literal-string>, value: func.ct-function-name),
+	  make(<literal-string>, value:
+	       format-to-string("%s", func.ct-function-name)),
 	function-specializers:
 	  make(<literal-simple-object-vector>,
 	       contents: sig.specializers,

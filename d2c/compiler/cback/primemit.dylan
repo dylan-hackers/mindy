@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.33 1996/08/23 17:09:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.34 1996/11/04 19:18:07 ram Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -166,7 +166,7 @@ define-primitive-emitter
      let mra-defn = dylan-defn(#"make-rest-arg");
      let mra-info = find-main-entry-info(mra-defn, file);
      let expr
-       = stringify(main-entry-name(mra-info, file), '(', cur-top,
+       = stringify(main-entry-c-name(mra-info, file), '(', cur-top,
 		   ", (descriptor_t *)", args, " + ", nfixed, ", ",
 		   nargs, " - ", nfixed, ')');
      deliver-result(defines, expr, *heap-rep*, #t, file);
@@ -220,7 +220,8 @@ define-primitive-emitter
      let mra-defn = dylan-defn(#"make-rest-arg");
      let mra-info = find-main-entry-info(mra-defn, file);
      results[nfixed]
-       := pair(stringify(main-entry-name(mra-info, file), '(', top-name, ", ",
+       := pair(stringify(main-entry-c-name(mra-info, file), '(',
+       			 top-name, ", ",
 			 bottom-name, " + ", nfixed, ", ",
 			 top-name, " - ", bottom-name, " - ", nfixed, ')'),
 	       *heap-rep*);

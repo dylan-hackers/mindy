@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.12 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.13 1996/11/04 19:18:19 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -70,7 +70,7 @@ end;
 
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <expression-tlf>) => ();
-  fer-convert(builder, tlf.tlf-expression, make(<lexenv>), #"nothing", #f);
+  fer-convert(builder, tlf.tlf-expression, lexenv-for-tlf(tlf), #"nothing", #f);
 end;
 
 define method dump-od (tlf :: <expression-tlf>, state :: <dump-state>)

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.5 1996/05/29 23:12:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.6 1996/11/04 19:18:12 ram Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -129,9 +129,13 @@ define method aux-build-xep
   let next-info-leaf
     = generic-entry? & make-local-var(builder, #"next-method-info",
 				      dylan-value(#"<list>"));
-  let name = format-to-string("%s entry for %s",
-			      if (generic-entry?) "Generic" else "General" end,
-			      entry-name);
+  let name = make(<derived-name>,
+  		  how: if (generic-entry?)
+		         #"generic-entry"
+		       else
+		         #"general-entry"
+		       end,
+		  base: entry-name);
   let xep = build-function-body(builder, policy, source, #f, name,
 				if (generic-entry?)
 				  list(self-leaf, nargs-leaf, next-info-leaf);
