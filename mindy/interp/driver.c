@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/driver.c,v 1.3 1998/11/06 17:46:31 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/driver.c,v 1.4 1999/11/07 13:58:58 robmyers Exp $
 *
 * Main driver routines for mindy.
 *
@@ -50,6 +50,9 @@
 #   include "interp.h"
 #endif
 #include "fd.h"
+#ifdef MACOS
+#	include <Events.h>
+#endif
 
 static boolean InInterpreter = FALSE;
 static jmp_buf Catcher;
@@ -291,6 +294,17 @@ enum pause_reason do_stuff(void)
 		    thread->advance(thread);
 #endif
 		}
+#ifdef MACOS
+		{
+			EventRecord e;
+			// Weak!!!!
+			OSEventAvail(0, &e);
+			if( (e.modifiers & controlKey ) && (e.modifiers & cmdKey ) && (e.modifiers & optionKey ) )
+			{
+				set_pause_interrupted();
+			}
+		}
+#endif
 	    InInterpreter = FALSE;
 	    clear_interrupt_handler();
 
