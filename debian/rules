@@ -109,14 +109,10 @@ install-stamp: build-stamp
 	mv `pwd`/debian/tmp/usr/man/* `pwd`/debian/tmp/usr/share/man
 
 	# Now, copy some manpages
-	cp `pwd`/debian/dybug.1 `pwd`/debian/tmp/usr/share/man/man1
 	cp `pwd`/debian/gen-makefile.1 `pwd`/debian/tmp/usr/share/man/man1
 	cp `pwd`/debian/make-dylan-lib.1 `pwd`/debian/tmp/usr/share/man/man1
 	cp `pwd`/debian/mk-build-tree.1 `pwd`/debian/tmp/usr/share/man/man1
 	cp `pwd`/debian/line-count.1 `pwd`/debian/tmp/usr/share/man/man1
-	cp `pwd`/debian/parsergen.1 `pwd`/debian/tmp/usr/share/man/man1
-	cp `pwd`/debian/mindycomp.1 `pwd`/debian/tmp/usr/share/man/man1
-	cp `pwd`/debian/mindyexec.1 `pwd`/debian/tmp/usr/share/man/man1
 
 	# Get rid of non-Debian directories and stuff
 	rm -rf `pwd`/debian/tmp/usr/man
