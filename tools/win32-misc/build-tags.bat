@@ -1,0 +1,3 @@
+find-dylan-files /compiler/src | etags -l none -r "/define \(\(sealed\|open\|abstract\|concrete\|primary\|free\|inline\|movable\|flushable\|functional\) \)*\(method\|generic\|function\|class\|variable\|constant\) \([-$*=?!<>a-zA-Z0-9_]+\)/" -r "/[ \t]*\(\(virtual\|constant\|sealed\|instance\|class\|each-subclass\) \)*slot \([-$*=?!<>a-zA-Z0-9_]+\)/" -
+@rem
+@rem find-dylan-files . | etags -l none -r "/define \(\(sealed\|open\|abstract\|concrete\|primary\|free\|inline\|movable\|flushable\) \)*\(method\|generic\|function\|class\|variable\|constant\) [-$*=?!<>a-zA-Z0-9_]+/" -r "/[ \t]*\(\(virtual\|constant\|instance\|class\|each-subclass\) \)*slot [-$*=?!<>a-zA-Z0-9_]+/" -
