@@ -13,6 +13,7 @@ $prefix = "@prefix@";
 $destdir = $exec_prefix = "@exec_prefix@";
 $bindir = "@bindir@";
 $libdir = "@libdir@/dylan";
+$mandir = "@mandir@";
 $sysconfdir = "@sysconfdir@";
 $includedir = "@includedir@";
 $gen_makefile = "$buildroot/gen-makefile";
