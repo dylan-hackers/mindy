@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.41 1995/11/14 13:27:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.42 1995/11/15 15:55:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -213,10 +213,10 @@ define macro class-definer
     { instance } => { allocation: #"instance" }
     { class } => { allocation: #"class" }
     { each-subclass } => { allocation: #"each-subclass" }
-    { constant } => { allocation: #"constant" }
     { virtual } => { allocation: #"virtual" }
     { open ... } => { open: #t, ... }
     { sealed ... } => { sealed: #t, ...}
+    { constant ... } => { setter: #f, ... }
 end;
 
 define macro constant-definer
