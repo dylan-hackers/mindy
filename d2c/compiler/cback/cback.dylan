@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.47 1995/05/21 03:06:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.48 1995/05/24 19:30:15 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2031,7 +2031,7 @@ define method c-expr-and-rep (lit :: <literal-single-float>,
 			      rep-hint :: <immediate-representation>,
 			      output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
-  values(format-to-string("%=", lit.literal-value),
+  values(float-to-string(lit.literal-value, 8),
 	 pick-representation(dylan-value(#"<single-float>"), #"speed"));
 end;
 
@@ -2039,7 +2039,7 @@ define method c-expr-and-rep (lit :: <literal-double-float>,
 			      rep-hint :: <immediate-representation>,
 			      output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
-  values(format-to-string("%=", lit.literal-value),
+  values(float-to-string(lit.literal-value, 16),
 	 pick-representation(dylan-value(#"<double-float>"), #"speed"));
 end;
 
@@ -2047,9 +2047,71 @@ define method c-expr-and-rep (lit :: <literal-extended-float>,
 			      rep-hint :: <immediate-representation>,
 			      output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
-  values(format-to-string("%=", lit.literal-value),
+  values(float-to-string(lit.literal-value, 35),
 	 pick-representation(dylan-value(#"<extended-float>"), #"speed"));
 end;
+
+define method float-to-string (value :: <float>, digits :: <fixed-integer>)
+    => res :: <string>;
+  float-to-string(as(<ratio>, value), digits);
+end;
+
+define method float-to-string (value :: <integer>, digits :: <fixed-integer>)
+    => res :: <string>;
+  float-to-string(ratio(value, 1), digits);
+end;
+
+define method float-to-string (value :: <ratio>, digits :: <fixed-integer>)
+    => res :: <string>;
+  if (zero?(value))
+    "0.0";
+  else
+    let stream = make(<byte-string-output-stream>);
+    if (negative?(value))
+      value := -value;
+      write('-', stream);
+    end;
+    let one = ratio(1, 1);
+    let ten = ratio(10, 1);
+    let one-tenth = one / ten;
+    let (exponent, fraction)
+      = if (value >= one)
+	  for (exponent from 1,
+	       fraction = value / ten then fraction / ten,
+	       while: fraction >= one)
+	  finally
+	    values(exponent, fraction);
+	  end;
+	else
+	  for (exponent from 0 by -1,
+	       fraction = value then fraction * ten,
+	       while: fraction < one-tenth)
+	  finally
+	    values(exponent, fraction);
+	  end;
+	end;
+    write("0.", stream);
+    let zeros = 0;
+    for (count from 0 below digits,
+	 until: zero?(fraction))
+      let (digit, remainder) = floor(fraction * ten);
+      if (zero?(digit))
+	zeros := zeros + 1;
+      else
+	for (i from 0 below zeros)
+	  write('0', stream);
+	end;
+	write(as(<character>, as(<fixed-integer>, digit) + 48), stream);
+	zeros := 0;
+      end;
+      fraction := remainder;
+    end;
+    write('e', stream);
+    print(exponent, stream);
+    stream.string-output-stream-string;
+  end;
+end;
+
 
 define method c-expr-and-rep (lit :: <literal-character>,
 			      rep-hint :: <representation>,
