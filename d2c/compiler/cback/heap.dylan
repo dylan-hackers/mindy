@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.60 1996/12/02 14:08:27 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.61 1996/12/03 23:27:51 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -321,11 +321,13 @@ define method spew-objects-in-queue (state :: <state>) => ();
       error("Trying to spew %=, but it doesn't have any labels.", object);
     end if;
     for (label in labels)
-      unless (member?('+', label))
+      if (member?('+', label))
+	format(stream, "%s %s\n", target.comment-token, label);
+      else
 	let name = stringify(target.mangled-name-prefix, label);
 	format(stream, target.export-directive, name);
 	format(stream, "%s\n", name);
-      end unless;
+      end if;
     end for;
 
     spew-object(object, state);
