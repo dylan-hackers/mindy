@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.56 2001/07/28 05:28:53 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.57 2001/09/02 08:11:33 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -919,6 +919,7 @@ define method build-ar-file (state :: <main-unit-state>) => ();
 				   end if).first;
   let ar-name = concatenate(target.library-filename-prefix,
   			    state.unit-mprefix,
+                            "-dylan",
 			    suffix);
 
   state.unit-objects := objects;
@@ -1055,7 +1056,7 @@ define method build-executable (state :: <main-unit-state>) => ();
 	:= stringify(' ', unit.unit-linker-options, linker-args);
     end if;
     unless (unit == state.unit-unit-info)
-      add-archive(unit.unit-name);
+      add-archive(concatenate(unit.unit-name, "-dylan"));
     end unless;
   end;
 

@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.27 2001/06/29 03:08:39 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.28 2001/09/02 08:11:33 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -823,14 +823,14 @@ sub emit_library_rule {
             local($foo_lib_du, $libfoo_a);
             
             $foo_lib_du = "$library.lib.du";
-            $libfoo_a = "$lib_prefix$unit_prefix$dot_lib";
+            $libfoo_a = "$lib_prefix$unit_prefix-dylan$dot_lib";
             
             push(@files_to_clean, $foo_lib_du, $libfoo_a);
 
             if($shared && $static) {
                 local($lib_static)
                     = $target_platform{'library_filename_suffix'};
-                push(@files_to_clean, "$lib_prefix$unit_prefix$lib_static");
+                push(@files_to_clean, "$lib_prefix$unit_prefix-dylan$lib_static");
             }
             
             if (grep(/^compile$/, @keywords)) {
@@ -855,10 +855,10 @@ sub emit_library_rule {
                 local ($dot_lib)
                     = split(/\s+/,
                             $target_platform{'library_filename_suffix'});
-                print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
-                print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
-                    " $lib_prefix$unit_prefix$dot_lib\n";
-                push(@files_to_clean, " $lib_prefix$unit_prefix$dot_lib");
+                print "\trm -f $lib_prefix$unit_prefix-dylan$dot_lib\n";
+                print "\tln -s .libs/$lib_prefix$unit_prefix-dylan$dot_lib",
+                    " $lib_prefix$unit_prefix-dylan$dot_lib\n";
+                push(@files_to_clean, " $lib_prefix$unit_prefix-dylan$dot_lib");
             }
         } else {
             print "\t\$(D2C) -M $profile_flag \$(D2CFLAGS) --static $extraflags ",

@@ -66,6 +66,7 @@ $MC = '@MC@';
 $MINDY = '@MINDY@';
 $DYLANPATH = @DYLANPATH@;
 $CC = '@CC@';
+$EXTRA_INCLUDE_DIR = '@EXTRA_INCLUDE_DIR@';
 #if ($enable_debug) {
 #  $CFLAGS = '-g -O';
 #} else {

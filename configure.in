@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.78 2001/07/30 20:42:48 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.79 2001/09/02 08:11:32 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -44,11 +44,11 @@ AC_SUBST(VERSION)
 #--------------------------------------------------------------------
 # This is used in conjuction with the output of 'd2c --compiler-info'
 # to decide when d2c needs a full bootstrap.  Increment the value here
-# AND in d2c/compiler/main/main.dylan whenever the dump format or the
+# whenever the dump format or the
 # interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=14
+CURRENT_BOOTSTRAP_COUNTER=16
 AC_SUBST(CURRENT_BOOTSTRAP_COUNTER)
 
 #--------------------------------------------------------------------
@@ -396,8 +396,8 @@ AC_SUBST(enable_d2c_bootstrap)
 #--------------------------------------------------------------------
 
 # Runtime libraries which must match the compiler used to build d2c.
-RUNTIME_LIBRARIES="libgc.a libruntime.a dylan.lib.du libdylan.a melange-support.lib.du"
-EXTRA_RUNTIME_LIBRARIES="libmelange.a libmelange-support.a"
+RUNTIME_LIBRARIES="libgc.a libruntime.a dylan.lib.du melange-support.lib.du"
+EXTRA_RUNTIME_LIBRARIES="libdylan.a libdylan-dylan.a llibmelange.a libmelange-support.a libmelange-support-dylan.a"
 
 # Delete our local runtime directory, if it exists.
 LOCAL_RUNTIME="$builddir"/previous_runtime
@@ -530,9 +530,11 @@ if test $CC = gcc; then
     else
  	CCOPTS="-O4"
     fi
+    EXTRA_INCLUDE_DIR=`gcc --print-file-name=include`
 else CCOPTS="-g -O"
 fi
 AC_SUBST(CCOPTS)
+AC_SUBST(EXTRA_INCLUDE_DIR)
 
 #--------------------------------------------------------------------
 #	Establish the default options for lex
