@@ -21,7 +21,7 @@ foreach $name (@keys) {
 	print out1 "}\n\nvoid init$counter()\n{\n";
     }
     ($name2 = $name) =~ s/\(\)$//;
-    print out1 "    add_explicit_symbol(\"$name2\", &$name2);\n";
+    print out1 "    add_explicit_symbol(\"$name2\", (void *)&$name2);\n";
 }
 print out1 "}\n\n";
 close(out1);
