@@ -57,6 +57,14 @@ define method main(appname, #rest arguments)
 end method main;
 EOD
 
+&write_file("Makefile", <<"EOD");
+$appname: $appname.lid $appname.dylan $appname-exports.dylan
+\td2c $appname.lid
+
+clean:
+\t-rm *.o *.s *.a *.c *.mak *~ $appname
+EOD
+		 
 sub write_file {
     local ($filename, $contents) = @_;
     open(OUTPUT, ">$filename") or die "Can't create $filename: $!";
