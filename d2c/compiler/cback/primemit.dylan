@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.3 1995/06/06 11:32:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.4 1995/06/06 19:30:19 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -209,22 +209,31 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
-     let cluster1 = operation.depends-on.source-exp;
-     let cluster2 = operation.depends-on.dependent-next.source-exp;
-     let (cluster2-bottom, cluster2-top)
-       = consume-cluster(cluster2, output-info);
-     let (cluster1-bottom, cluster1-top)
-       = consume-cluster(cluster1, output-info);
-     unless (cluster1-top = cluster2-bottom)
-       error("Merging two clusters that arn't adjacent?");
+     local
+       method repeat (dep :: false-or(<dependency>))
+	   => (bottom-name, top-name, values-count);
+	 if (dep)
+	   let (next-bottom, next-top, values-count)
+	     = repeat(dep.dependent-next);
+	   let cluster = dep.source-exp;
+	   let (my-bottom, my-top) = consume-cluster(cluster, output-info);
+	   unless (next-bottom == #f | my-top = next-bottom)
+	     error("Merging two clusters that arn't adjacent?");
+	   end;
+	   values(my-bottom, next-top | my-top,
+		  values-count + cluster.derived-type.min-values);
+	 else
+	   values(#f, #f, 0);
+	 end;
+       end;
+     let (bottom-name, top-name, values-count)
+       = repeat(operation.depends-on);
+     if (bottom-name)
+       deliver-cluster(defines, bottom-name, top-name, values-count,
+		       output-info);
+     else
+       deliver-results(defines, #[], #f, output-info);
      end;
-     let min-values
-       = cluster1.derived-type.min-values + cluster2.derived-type.min-values;
-     deliver-cluster(defines, cluster1-bottom, cluster2-top,
-		     make-values-ctype(make(<list>, size: min-values,
-					    fill: object-ctype()),
-				       object-ctype()),
-		     output-info);
    end);
 
 define-primitive-emitter
@@ -238,7 +247,7 @@ define-primitive-emitter
        = cluster-names(output-info.output-info-cur-stack-depth);
      format(output-info.output-info-guts-stream,
 	    "%s = values_sequence(%s, %s);\n", new-sp, cur-sp, vec);
-     deliver-cluster(defines, cur-sp, new-sp, wild-ctype(), output-info);
+     deliver-cluster(defines, cur-sp, new-sp, 0, output-info);
    end);
 
 define-primitive-emitter

@@ -123,7 +123,7 @@ define-primitive
    side-effect-free: #t);
 
 define-primitive
-  (#"merge-clusters", #(#"cluster", #"cluster"),
+  (#"merge-clusters", #(rest:, #"cluster"),
    #(values:, rest:, #"<object>"),
    side-effect-free: #t);
 
