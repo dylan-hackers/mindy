@@ -37,5 +37,5 @@ define module stream-test
   use dylan;
   use extensions;
   use new-streams;
-  use cheap-io;
+  use cheap-io, import: {format};
 end module stream-test;

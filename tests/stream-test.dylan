@@ -57,7 +57,8 @@ define method run-test (input, expected-result, test-name :: <string>)
 end method run-test;
 
 define method write-test ();
-  let s = make(<byte-string-stream>, direction: #"output");
+  let s = make(<byte-string-stream>, contents: make(<byte-string>),
+	       direction: #"output");
   write(s, "foo");
   run-test(s.stream-contents, "foo", "write test");
   new-line(s);
@@ -110,14 +111,15 @@ define method buffered-write-test ();
 end method buffered-write-test;
 
 define method buffered-read-test ();
-  let s = make(<file-stream>, direction: #"input-output",
-	       locator: ".delete.me~");
+  let s1 = make(<file-stream>, direction: #"output", locator: ".delete.me~");
   // Included ~ in the file name so that 'make clean' will zap it.
 
-  write(s, "Hi Joe.");
-  new-line(s);
-  write(s, "Foo");
-  s.stream-position := #"start";
+  write(s1, "Hi Joe.");
+  new-line(s1);
+  write(s1, "Foo");
+  // s1.stream-position := #"start";
+  close(s1);
+  let s = make(<file-stream>, direction: #"input", locator: ".delete.me~");
   // The rest is identical to read-test. Make edits to both.
   run-test(read-line(s), "Hi Joe.", "read-line test");
   run-test(peek(s), 'F', " peek test");
@@ -126,7 +128,9 @@ define method buffered-read-test ();
   close(s);
 end method buffered-read-test;
 
+#if (mindy)
 define method main (argv0 :: <byte-string>, #rest ignored)
+#endif
   format("\nRegression test for the streams library.\n\n");
   run-several-tests("Writing", write-test);
   run-several-tests("Reading", read-test);
@@ -137,5 +141,6 @@ define method main (argv0 :: <byte-string>, #rest ignored)
   else
     format("All streams tests pass.\n");
   end if;
+#if (mindy)
 end method main;
-
+#endif
