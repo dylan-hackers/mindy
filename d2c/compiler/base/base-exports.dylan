@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.45 1996/07/12 01:10:03 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.46 1996/07/12 01:23:02 bfw Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -766,8 +766,8 @@ define module target-environment
   use new-streams, import: { <file-stream> };
   export
     get-targets, <target-environment>,
-
     target-name,
+    default-features,
 
     heap-preamble,
     align-directive,
