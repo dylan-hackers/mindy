@@ -1,17 +1,11 @@
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/system.dylan,v 1.1 1996/06/26 14:39:16 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/system.dylan,v 1.2 1996/07/11 16:13:32 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 // Some of the functions that go in the System module.  Much of the
 // code was moved from the d2c Main module.
-
-// $Newlines-are-CRLF -- exported from System.
-//
-// Change this if we ever port the compiler to a Microsoft OS like NT
-//
-define constant $Newlines-are-CRLF = #f;
 
 define method import-string (ptr :: <raw-pointer>)
  => string :: <byte-string>;
@@ -60,9 +54,14 @@ end method exit;
 // Sets the current limit for core dumps to 0.  Keeps us from dumping 32+ meg
 // core files when we hit an error.
 //
+// On Windows machines, this does nothing because windows machines
+// don't dump core.
+//
 define method no-core-dumps () => ();
-  let buf = make(<buffer>, size: 8);
-  call-out("getrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
-  pointer-deref(#"int", buf.buffer-address, 0) := 0;
-  call-out("setrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
+  #if (~i386-win32)
+    let buf = make(<buffer>, size: 8);
+    call-out("getrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
+    pointer-deref(#"int", buf.buffer-address, 0) := 0;
+    call-out("setrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
+  #endif
 end method no-core-dumps;
