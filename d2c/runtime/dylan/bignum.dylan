@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.3 2001/12/19 12:37:25 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.4 2001/12/21 22:36:12 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -322,17 +322,20 @@ end;
 define method as (class == <extended-integer>, num :: <integer>)
     => res :: <extended-integer>;
   //
-  // To convert a fixed integer into an extended integer, we make an extended
-  // integer large enough to hold the longest possible fixnum, fill it with
-  // digits extracted from the fixnum, and then normalize it.
-  //
-  let len = ceiling/($fixed-integer-bits, $digit-bits);
-  let res = make-bignum(len);
-  for (index :: <integer> from 0 below len,
-       num :: <integer> = num then ash(num, -$digit-bits))
-    bignum-digit(res, index) := make-digit(num);
-  end;
-  normalize-bignum(res, len);
+  // To convert a fixed integer into an extended integer, we recurse to
+  // find how many digits we need, create a bignum, and then fill it in
+  // on the way back out of the recursion.
+  let sign = ash(num, 1 - $fixed-integer-bits);
+  local method loop(n :: <integer>, len :: <integer>)
+          let res = if (ash(n, 1 - $digit-bits) = sign)
+                      make-bignum(len + 1);
+                    else
+                      loop(ash(n, -$digit-bits), len + 1);
+                    end;
+          bignum-digit(res, len) := make-digit(n);
+          res;
+        end;
+  loop(num, 0);
 end;
 
 define method as (class == <integer>, num :: <extended-integer>)
