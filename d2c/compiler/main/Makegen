@@ -2,17 +2,26 @@
 print <<'EOF';
 
 MC = mindycomp
-MINDYFLAGS = -lcompiler-main
+MINDYFLAGS =
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -o $@ $<
+	$(MC) ${MINDYFLAGS} -lcompiler-main -o $@ $<
 
-OBJS = \
+
+# Autodump divides object files into two types: Normal ones, and 
+# ones derived from autodumped Dylan code.
+#
+NORMAL_OBJS = \
 	main-exports.dbc \
 	lexer.dbc \
 	init.dbc \
+	autodump.dbc \
 	main.dbc
+
+AUTODUMPED_OBJS = parse-dump.dbc token-dump.dbc
+
+OBJS = ${NORMAL_OBJS} ${AUTODUMPED_OBJS}
 
 LIBS = \
 	../base/baselib.dbc \
@@ -27,10 +36,34 @@ d2c: d2c.dbc
 	echo "#!/usr/local/bin/mindy -x" | cat - $^ > $@
 	chmod +x $@
 
+
+parse-dump.dylan: ../base/parse-tree.dylan autodump.dylan
+	${MAKE} autodumper.dbc
+	${MINDY} -f autodumper.dbc -autodump parse-tree
+
+token-dump.dylan: ../base/tokens.dylan autodump.dylan
+	${MAKE} autodumper.dbc
+	${MINDY} -f autodumper.dbc -autodump tokens
+
+
+# autodump stuff is in the base library, even though we compile
+# them here.
+parse-dump.dbc: parse-dump.dylan
+	${MC} ${MINDYFLAGS} -lcompiler-base parse-dump.dylan
+
+token-dump.dbc: token-dump.dylan
+	${MC} ${MINDYFLAGS} -lcompiler-base token-dump.dylan
+
+autodump.dbc: autodump.dylan
+	${MC} ${MINDYFLAGS} -lcompiler-base autodump.dylan
+
+autodumper.dbc: ${LIBS} ${NORMAL_OBJS}
+	cat $^ > $@
+
 EOF
 
 push(@compile_dependencies, 'd2c.dbc');
 
 do install ('bin', 'd2c');
 
-push(@files_to_clean, 'd2c', '*.dbc');
+push(@files_to_clean, 'd2c', '*.dbc', 'parse-dump.dylan', 'token-dump.dylan');
