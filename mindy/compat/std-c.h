@@ -33,8 +33,8 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.1 1994/10/05 20:46:26 nkramer Exp $ SPRITE (Berkeley)
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.1 1994/10/05 20:46:26 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.2 1994/11/10 20:23:57 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-c.h,v 1.2 1994/11/10 20:23:57 nkramer Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_C_H_
@@ -97,6 +97,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #ifdef NO_LIMITS_H
 #   include "std-limits.h"
 #else
