@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.8 1996/01/11 18:43:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.9 1996/02/17 15:10:57 nkramer Exp $
 
 //======================================================================
 //
@@ -32,6 +32,23 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dyl
 define method identity (x)
   x;
 end;
+
+// false-or -- Exported.
+//
+// False-or takes a type and returns a type that is the union of the argument
+// type and the type singleton(#f).
+// There are two copies of false-or, one for the Dylan module and one for 
+// the rest of the world.
+//
+define constant false-or
+    = method (type :: <type>) => new-type :: <type>;
+	binary-type-union(type, singleton(#f));
+      end;
+
+define constant type-union =
+  method (type :: <type>, #rest more-types) => result :: <type>;
+    reduce(binary-type-union, type, more-types);
+  end;
 
 define method as (c :: <class>, thing)
   if (instance?(thing, c))
