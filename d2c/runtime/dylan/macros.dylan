@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.11 2001/02/26 20:18:15 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.12 2001/03/14 23:34:30 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -157,7 +157,7 @@ define macro select
     { ?:expression }
       => { let target = ?expression; let compare :: <function> = \== }
   case-body:
-    { } => { error("select error: %= does not match any of the keys", target) }
+    { } => { select-error(target) }
     { otherwise ?:body } => { ?body }
     { (?keys:*) => ?:body ; ... } => { if (?keys) ?body else ... end }
     { ?keys:* => ?:body ; ... } => { if (?keys) ?body else ... end }

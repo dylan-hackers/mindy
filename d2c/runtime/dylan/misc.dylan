@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.2 2000/01/24 04:56:48 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.3 2001/03/14 23:34:30 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -40,6 +40,7 @@ define function assert (value) => ();
     error("Assertion failed.");
   end;
 end function assert;
+
 
 // <not-supplied-marker> -- internal.
 //

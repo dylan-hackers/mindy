@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/vector.dylan,v 1.2 2000/01/24 04:56:49 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/vector.dylan,v 1.3 2001/03/14 23:34:30 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -52,6 +52,29 @@ define sealed inline method as
   vector;
 end;
 
+
+// out of line error functions, to minimize calling code size
+// element-error is actually used throughout the runtime library
+
+define constant element-error = method (coll :: <sequence>, index :: <integer>)
+ => res :: <never-returns>;
+  error("No element %d in %=", index, coll);
+end method;
+
+define constant row-major-index-error = method (index :: <integer>)
+ => res :: <never-returns>;
+  error("Vector index out of bounds: %=", index);
+end method;
+
+define constant vector-rank-error = method (indices)
+ => res :: <never-returns>;
+  error("Number of indices not equal to rank. Got %=, wanted one index",
+	indices);
+end method;
+
+
+
+
 define inline method dimensions (vec :: <vector>) => res :: <sequence>;
   vector(vec.size);
 end;
@@ -63,24 +86,14 @@ end;
 define inline method row-major-index (vec :: <vector>, #rest indices)
     => index :: <integer>;
   if (indices.size ~== 1)
-    error("Number of indices not equal to rank. Got %=, wanted one index",
-	  indices);
+    vector-rank-error(indices);
   end if;
   let index :: <integer> = indices[0];
   if (index < 0 | index > vec.size)
-    error("Vector index out of bounds: %=", index);
+    row-major-index-error(index);
   end;
   index;
 end;
-
-
-// ???
-
-define constant element-error
-  = method (coll :: <sequence>, index :: <integer>)
-	=> res :: <never-returns>;
-      error("No element %d in %=", index, coll);
-    end method;
 
 
 // <simple-vector>s

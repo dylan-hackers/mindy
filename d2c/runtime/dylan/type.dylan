@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.5 2001/03/12 18:40:08 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.6 2001/03/14 23:34:30 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -588,10 +588,15 @@ define sealed inline method limited
   make(<limited-collection>, base-class: class, of: of);
 end method limited;
 
+define constant size&dimensions-error =
+  method () => res :: <never-returns>;
+    error("limited(<array>, ...) can't specify both size and dimensions");
+  end;
+
 define sealed inline method limited
     (class == <array>, #key of, size, dimensions) => (result :: <type>);
   if (size & dimensions)
-    error("limited(<array>, ...) can't specify both size and dimensions");
+    size&dimensions-error();
   end if;
   make(<limited-collection>, base-class: class, of: of, size: size,
        dimensions: dimensions);

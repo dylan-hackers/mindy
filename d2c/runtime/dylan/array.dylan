@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/array.dylan,v 1.2 2000/01/24 04:56:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/array.dylan,v 1.3 2001/03/14 23:34:29 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -91,6 +91,26 @@ define open generic dimension (array :: <array>, axis :: <integer>)
     => dimension :: <integer>;
 
 
+define constant rank-error =
+  method (indices, n :: <integer>)
+   => res :: <never-returns>;
+    error("Number of indices not equal to rank. Got %=, wanted %d indices",
+	  indices, n);
+  end;
+
+define constant index-error =
+  method(index :: <integer>, indices)
+   => res :: <never-returns>;
+      error("Array index out of bounds: %= in %=", index, indices);
+  end;
+
+define constant axis-error =
+  method (array :: <simple-object-array>, axis :: <integer>)
+   => res :: <never-returns>;
+    error("Invalid axis in %=: %=", array, axis);
+  end;
+
+
 // Default methods.
 
 // This method is duplicated in several places, except that the duplicates
@@ -190,14 +210,13 @@ define method row-major-index (array :: <array>, #rest indices)
     => index :: <integer>;
   let dims = dimensions(array);
   if (size(indices) ~== size(dims))
-    error("Number of indices not equal to rank. Got %=, wanted %d indices",
-	  indices, size(dims));
+    rank-error(indices, size(dims));
   else
     for (index :: <integer> in indices,
 	 dim :: <integer>   in dims,
 	 sum :: <integer> = 0 then (sum * dim) + index)
       if (index < 0 | index >= dim)
-	error("Array index out of bounds: %= in %=", index, indices);
+	index-error(index, indices);
       end if;
     finally
       sum;
@@ -265,15 +284,14 @@ define method row-major-index
     (array :: <simple-object-array>, #rest indices)
     => index :: <integer>;
   if (indices.size ~== array.rank)
-    error("Number of indices not equal to rank. Got %=, wanted %d indices",
-	  indices, array.rank);
+    rank-error(indices, array.rank);
   else
     let sum :: <integer> = 0;
     for (i :: <integer> from 0,
 	 index :: <integer> in indices)
       let dim = %dimension(array, i);
       if (index < 0 | index >= dim)
-	error("Array index out of bounds: %= in %=", index, indices);
+	index-error(index, indices);
       end if;
       sum := sum * dim + index;
     end for;
@@ -307,11 +325,12 @@ end;
 //
 // Just check that the axis is in bounds and then extract the dimension.
 //
+
 define inline method dimension
     (array :: <simple-object-array>, axis :: <integer>)
     => res :: <integer>;
   if (axis < 0 | axis >= array.rank)
-    error("Invalid axis in %=: %=", array, axis);
+    axis-error(array, axis);
   end;
   %dimension(array, axis);
 end;

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.3 2000/09/09 21:19:57 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.4 2001/03/14 23:34:30 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -430,11 +430,17 @@ end method round/;
 //
 // Divide a by b, rounding towards zero.
 //
+
+define constant divide-by-zero-error =
+  method () => res :: <never-returns>;
+    error("Division by zero.");
+  end;
+
 define inline method truncate/
     (a :: <integer>, b :: <integer>)
     => (quo :: <integer>, rem :: <integer>);
   if (zero?(b))
-    error("Division by zero.");
+    divide-by-zero-error();
   else
     %%primitive(fixnum-divide, a, b);
   end;
