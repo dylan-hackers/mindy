@@ -1,13 +1,13 @@
 module: warrior
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion.dylan,v 1.1 2002/03/16 20:35:20 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion.dylan,v 1.2 2004/04/13 23:45:19 gabor Exp $
 file: gwydion.dylan
 author: gabor@mac.com
-status: reaaly need some cleanup first.
+status: really need some cleanup first.
 copyright: see below
 
 //======================================================================
 //
-// Copyright (c) 2000, 2001, 2002  Gwydion Dylan Maintainers
+// Copyright (c) 2000 - 2004  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
