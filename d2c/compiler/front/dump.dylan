@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.1 1994/12/12 13:01:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.2 1994/12/13 13:26:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -459,3 +459,8 @@ define method dump (frag :: <fragment>, stream :: <dump-state-stream>)
      suffix: "}");
 end;
 
+
+define method dump-parse (thing, #key stream = *debug-output*) => ();
+  dump(thing, stream);
+  write('\n', stream);
+end;
