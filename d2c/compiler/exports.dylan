@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.28 1995/04/22 00:41:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.29 1995/04/23 02:59:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -672,7 +672,7 @@ define module front
     <values-cluster-info>, <local-var-info>, <lexical-var-info>,
     <module-var-info>, var-defn, <module-almost-constant-var-info>,
 
-    <function-literal>, <method-literal>, <lambda>, prologue,
+    <function-literal>, <method-literal>, <lambda>, prologue, result-type,
     <hairy-method-literal>;
     
 end;
