@@ -48,7 +48,7 @@ synopsis:	Converts a file in WWW "HyperText Markup Language" into
 //   #!BINDIR/mindy -f
 // to the compiled "dbc" file.  You must, of course, remember to specify the
 // MINDYPATH environment variable so that it points to the libraries "dylan",
-// "streams", and "collection-extensions".
+// "streams", "collection-extensions", and "string-extensions".
 //
 // The basic translation strategy used by html2txt is to scan the file line by
 // line, looking for HTML "tags" and accumulating text that lies between any
@@ -81,6 +81,7 @@ define library html
   use dylan;
   use streams;
   use collection-extensions;
+  use string-extensions;
 end library html;
 
 define module html
@@ -92,7 +93,9 @@ define module html
   // Additional collection classes and operations from "collection-extensions"
   use subseq;
   use solist;
-  use string-search;
+
+  // From string-extensions:
+  use substring-search;
   
   // I/O support from the "streams" library
   use streams;
@@ -147,11 +150,11 @@ define method sfind(seq :: <sequence>, pred?,
   block (return)
     let last = if (last) min(last, size(seq)) else size(seq) end if;
     for (i :: <integer> from start below last)
-      if (pred?(seq[i])) return(i)  end if
+      if (pred?(seq[i])) return(i)  end if;
     finally 
-      fail
-    end for
-  end block 
+      fail;
+    end for;
+  end block;
 end method sfind;
 
 // Like sfind, but goes backward from the end (or from before end:).
@@ -161,11 +164,11 @@ define method rsfind(seq :: <sequence>, pred?,
   block (return)  
     let last = if (last) min(last, size(seq)) else size(seq) end if;
     for (i from last - 1 to start by -1) 
-      if (pred?(seq[i])) return(i)  end if
+      if (pred?(seq[i])) return(i)  end if;
     finally 
-      fail 
-    end for
-  end block 
+      fail;
+    end for;
+  end block;
 end method rsfind;
 
 // The notation "'!' * 5" is a good way to create a string of repeated
@@ -208,10 +211,14 @@ define constant add-text-table :: <tag-table> = make(<tag-table>);
 // critical path, so it is worth optimizing these by pre-computing the search
 // tables.  For more details, look at the "string-search" module in
 // "extensions". 
-define constant tab-comp = compile-substring("\t");
-define constant lt-comp = compile-substring("&lt;");
-define constant gt-comp = compile-substring("&gt;");
-define constant amp-comp = compile-substring("&amp;");
+define constant tab-to-space
+  = make-substring-replacer("\t", replace-with: " ");
+define constant convert-lt
+  = make-substring-replacer("&lt;", replace-with: "<");
+define constant convert-gt
+  = make-substring-replacer("&gt;", replace-with: ">");
+define constant convert-amp
+  = make-substring-replacer("&amp;", replace-with: "&");
 
 // Accumulates text within a single tag environment.  The appropriate tag
 // action routine is called to transform the given text.  This may be
@@ -225,15 +232,11 @@ define method add-text(tag :: <symbol>, text :: <strings>,
     as(<byte-string>, new-text);
   let Tab-Free :: <string> =
     if (Pre-Count = 0)
-      replace-substring(new-text, "\t", " ",compiled: tab-comp);
+      tab-to-space(new-text);
     else
       new-text;
     end if;
-  let AMP :: <string> =
-    replace-substring(replace-substring(replace-substring(Tab-Free, "&gt;",">",
-							  compiled: gt-comp),
-					"&lt;", "<", compiled: lt-comp),
-		      "&amp;", "&", compiled: amp-comp);
+  let AMP :: <string> = convert-amp(convert-lt(convert-gt(Tab-Free)));
   
   let new-text = element(add-text-table, tag, default: identity)(AMP);
   
