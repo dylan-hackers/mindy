@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/driver.c,v 1.2 1998/09/30 17:45:16 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/driver.c,v 1.3 1998/11/06 17:46:31 andreas Exp $
 *
 * Main driver routines for mindy.
 *
@@ -55,6 +55,7 @@ static boolean InInterpreter = FALSE;
 static jmp_buf Catcher;
 static enum pause_reason PauseReason;
 
+#define OPS_PER_TIME_SLICE 100
 
 
 /* signal handling. */
@@ -262,6 +263,7 @@ static void set_pause_interrupted(void)
 enum pause_reason do_stuff(void)
 {
     struct thread *thread;
+    volatile int timer;
     volatile boolean do_select = TRUE;
 
     assert (!InInterpreter);
@@ -274,10 +276,12 @@ enum pause_reason do_stuff(void)
 	PauseReason = pause_NoReason;
 	thread = thread_pick_next();
 	if (thread) {
+	    timer = OPS_PER_TIME_SLICE;
 	    InInterpreter = TRUE;
 	    set_interrupt_handler(set_pause_interrupted);
 	    _setjmp(Catcher);
 	    if (PauseReason == pause_NoReason)
+		while (timer-- > 0) {
 #if SLOW_FUNCTION_POINTERS
 		    if (thread->advance)
 			thread->advance(thread);
@@ -286,6 +290,7 @@ enum pause_reason do_stuff(void)
 #else
 		    thread->advance(thread);
 #endif
+		}
 	    InInterpreter = FALSE;
 	    clear_interrupt_handler();
 
