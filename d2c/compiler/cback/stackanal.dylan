@@ -1,5 +1,5 @@
 module: stack-analysis
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/stackanal.dylan,v 1.16 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/stackanal.dylan,v 1.17 1996/05/09 01:30:58 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -163,16 +163,7 @@ define method analyze
     end;
   end;
   // 
-  // Don't need to scan the depends-on, because we can't depend-on any
-  // clusters.
-  want;
-end;
-
-define method analyze
-    (op :: <mv-call>, want :: <list>, state :: <state>)
-    => want :: <list>;
-  // We don't need to worry about dinking the depth if the result is a cluster
-  // because there will be a cluster in the arguments.
+  // Scan the arguments, because some calls (mv and some error) take clusters.
   analyze(op.depends-on, want, state);
 end;
 

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.119 1996/05/08 15:56:53 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.120 1996/05/09 01:30:58 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1941,14 +1941,14 @@ define method emit-assignment (results :: false-or(<definition-site-variable>),
 end;
 
 define method emit-assignment
-    (results :: false-or(<definition-site-variable>),
-     call :: type-union(<unknown-call>, <error-call>),
+    (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
      file :: <file-state>)
     => ();
-  let setup-stream = make(<byte-string-output-stream>);
-  let function = call.depends-on.source-exp;
+  let stream = file.file-guts-stream;
+
   let use-generic-entry?
-    = instance?(call, <unknown-call>) & call.use-generic-entry?;
+    = instance?(call, <general-call>) & call.use-generic-entry?;
+
   let (next-info, arguments)
     = if (use-generic-entry?)
 	let dep = call.depends-on.dependent-next;
@@ -1957,34 +1957,54 @@ define method emit-assignment
       else
 	values(#f, call.depends-on.dependent-next);
       end;
-  let (args, sp) = cluster-names(call.info);
-  for (arg-dep = arguments then arg-dep.dependent-next,
-       count from 0,
-       while: arg-dep)
-    format(setup-stream, "%s[%d] = %s;\n", args, count,
-	   ref-leaf(*general-rep*, arg-dep.source-exp, file));
-  finally
-    let (entry, name)
-      = xep-expr-and-name(function, use-generic-entry?, file);
-    let func = ref-leaf(*heap-rep*, function, file);
-    spew-pending-defines(file);
-    let stream = file.file-guts-stream;
-    write(setup-stream.string-output-stream-string, stream);
-    if (name)
-      format(stream, "/* %s */\n", name.clean-for-comment);
-    end;
-    if (results)
-      format(stream, "%s = ", sp);
-    end;
-    format(stream, "%s(%s + %d, %s, %d", entry, args, count, func, count);
-    if (next-info)
-      write(", ", stream);
-      write(next-info, stream);
-    end;
-    write(");\n", stream);
-    deliver-cluster(results, args, sp, call.derived-type.min-values,
-		    file);
+
+  let function = call.depends-on.source-exp;
+  let (entry, name)
+    = xep-expr-and-name(function, use-generic-entry?, file);
+  let func = ref-leaf(*heap-rep*, function, file);
+
+  let (bottom-name, call-top-name, return-top-name, count)
+    = if (arguments & instance?(arguments.source-exp, <abstract-variable>)
+	    & instance?(arguments.source-exp.var-info, <values-cluster-info>))
+	let (bot, top) = consume-cluster(arguments.source-exp, file);
+	values(bot,
+	       top,
+	       top,
+	       stringify(top, " - ", bot));
+      else
+	let (args, sp) = cluster-names(call.info);
+	let setup-stream = make(<byte-string-output-stream>);
+	for (arg-dep = arguments then arg-dep.dependent-next,
+	     count from 0,
+	     while: arg-dep)
+	  format(setup-stream, "%s[%d] = %s;\n", args, count,
+		 ref-leaf(*general-rep*, arg-dep.source-exp, file));
+	finally
+	  write(setup-stream.string-output-stream-string, stream);
+	  values(args,
+		 stringify(args, " + ", count),
+		 sp,
+		 stringify(count));
+	end for;
+      end if;
+  
+  spew-pending-defines(file);
+
+  if (name)
+    format(stream, "/* %s */\n", name.clean-for-comment);
   end;
+  if (results)
+    format(stream, "%s = ", return-top-name);
+  end;
+  format(stream, "%s(%s, %s, %s", entry, call-top-name, func, count);
+  if (next-info)
+    write(", ", stream);
+    write(next-info, stream);
+  end;
+  write(");\n", stream);
+  deliver-cluster
+    (results, bottom-name, return-top-name,
+     call.derived-type.min-values, file);
 end;
 
 define method xep-expr-and-name
@@ -2215,43 +2235,6 @@ define method find-main-entry-info
   find-main-entry-info(ctv.ct-function-definition, file);
 end;
 
-
-define method emit-assignment
-    (results :: false-or(<definition-site-variable>), call :: <mv-call>, 
-     file :: <file-state>)
-    => ();
-  let stream = file.file-guts-stream;
-  let function = call.depends-on.source-exp;
-  let use-generic-entry? = call.use-generic-entry?;
-  let (next-info, cluster)
-    = if (use-generic-entry?)
-	let dep = call.depends-on.dependent-next;
-	values(ref-leaf(*heap-rep*, dep.source-exp, file),
-	       dep.dependent-next.source-exp);
-      else
-	values(#f, call.depends-on.dependent-next.source-exp);
-      end;
-  let (entry, name)
-    = xep-expr-and-name(function, use-generic-entry?, file);
-  let func = ref-leaf(*heap-rep*, function, file);
-  spew-pending-defines(file);
-  let (bottom-name, top-name) = consume-cluster(cluster, file);
-  if (name)
-    format(stream, "/* %s */\n", name.clean-for-comment);
-  end;
-  if (results)
-    format(stream, "%s = ", top-name);
-  end;
-  format(stream, "%s(%s, %s, %s - %s",
-	 entry, top-name, func, top-name, bottom-name);
-  if (next-info)
-    write(", ", stream);
-    write(next-info, stream);
-  end;
-  write(");\n", stream);
-  deliver-cluster(results, bottom-name, top-name, call.derived-type.min-values,
-		  file);
-end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <primitive>,
