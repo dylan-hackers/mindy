@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.11 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.12 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -164,6 +164,25 @@ define inline method forward-iteration-protocol
 	 end);
 end;
 
+define sealed inline method fill!
+    (vec :: <simple-vector>, value :: <object>,
+     #key start :: <integer> = 0, end: end-index :: <integer> = vec.size)
+ => (vec :: <simple-vector>);
+  for (index :: <integer> from start below end-index)
+    vec[index] := value;
+  end for;
+  vec;
+end method fill!;
+
+define sealed inline method as
+    (class == <simple-object-vector>, vector :: <simple-object-vector>)
+    => res :: <simple-object-vector>;
+  vector;
+end;
+
+// Perhaps this should be inlined eventually, but at present it
+// tickles a bug in stack analysis
+//
 define sealed method as
     (class == <simple-object-vector>, collection :: <collection>)
     => res :: <simple-object-vector>;
@@ -174,18 +193,30 @@ define sealed method as
   res;
 end method as;
 
-define inline method as
-    (class == <simple-object-vector>, vector :: <simple-object-vector>)
+// This method looks to be unduly specific, but the compiler will
+// generate this case whenever you "apply" a function to a list
+//
+define sealed method as
+    (class == <simple-object-vector>, collection :: <list>)
     => res :: <simple-object-vector>;
-  vector;
+  let res = make(<simple-object-vector>, size: collection.size);
+  for (index :: <integer> from 0, element in collection)
+    res[index] := element;
+  end;
+  res;
+end method as;
+
+// This method looks to be unduly specific, but the compiler will
+// generate this case whenever you "apply" a function to a strechy vector
+//
+define sealed method as
+    (class == <simple-object-vector>, collection :: <stretchy-object-vector>)
+ => (res :: <simple-object-vector>);
+  let sz = collection.size;
+  let res = make(<simple-object-vector>, size: sz);
+  for (index :: <integer> from 0 below sz)
+    res[index] := collection[index];
+  end;
+  res;
 end;
 
-define sealed inline method fill!
-    (vec :: <simple-vector>, value :: <object>,
-     #key start :: <integer> = 0, end: end-index :: <integer> = vec.size)
- => (vec :: <simple-vector>);
-  for (index :: <integer> from start below end-index)
-    vec[index] := value;
-  end for;
-  vec;
-end method fill!;
