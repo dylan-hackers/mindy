@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.9 1994/11/03 22:19:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.10 1994/11/06 19:58:38 rgs Exp $
 *
 * This file implements characters.
 *
@@ -102,6 +102,14 @@ static obj_t char_as_fixnum(obj_t class, obj_t c)
     return make_fixnum(char_int(c));
 }
 
+static obj_t char_less(obj_t /* <character> */ c1, obj_t /* <character> */ c2)
+{
+    if (char_int(c1) < char_int(c2))
+	return obj_True;
+    else
+	return obj_False;
+}
+
 
 /* Printing stuff. */
 
@@ -177,4 +185,6 @@ void init_char_functions()
 		  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
     define_method("as", list2(singleton(obj_FixnumClass), obj_CharacterClass),
 		  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
+    define_method("<", list2(obj_CharacterClass, obj_CharacterClass),
+		  FALSE, obj_False, FALSE, obj_BooleanClass, char_less);
 }
