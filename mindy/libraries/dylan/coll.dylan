@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.13 1994/05/25 16:30:43 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.14 1994/06/01 13:10:22 rgs Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -71,17 +71,13 @@ define method shallow-copy(collection :: <collection>) => <collection>;
   map(identity, collection);
 end method shallow-copy;
 
-define method as(cls :: <class>, collection :: <collection>,
-		 #next next-method) => <object>;
+define method as(cls :: limited(<class>, subclass-of: <collection>),
+		 coll :: <collection>, #next next-method) => <object>;
   case
-    ~subtype?(cls, <collection>) =>
-      if (next-method) next-method();
-      else error("Cannot convert ~S to ~S", collection, cls);
-      end if;
-    instance?(collection, cls) =>
-      collection;
+    instance?(coll, cls) =>
+      coll;
     otherwise =>
-      map-as(cls, identity, collection);
+      map-as(cls, identity, coll);
   end case;
 end method as;
 
