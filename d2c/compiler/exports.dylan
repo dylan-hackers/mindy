@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.31 1995/04/25 23:04:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.32 1995/04/26 03:31:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -675,9 +675,13 @@ define module front
     <module-var-info>, var-defn, <module-almost-constant-var-info>,
 
     <function-literal>, <method-literal>, <lambda>, prologue, result-type,
+    environment,
     <hairy-method-literal>,
 
-    <fer-exit-block-region>, catcher;
+    <fer-exit-block-region>, catcher,
+
+    <environment>, closure-vars,
+    <closure-var>, original-var, copy-var, closure-next;
     
 end;
 
