@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.126 1996/03/18 18:44:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.127 1996/03/20 01:53:51 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,7 +12,7 @@ define variable *print-shit* = #f;
 define method print-shit () => (); *print-shit* := #t; end;
 define method dont-print-shit () => (); *print-shit* := #f; end;
 
-define variable *optimize-ncalls* = 0;
+define variable *optimize-ncalls* :: <integer> = 0;
 
 // Note: the simplify-only: keyword is used only during inline
 // expansions.  It is not useful in any other situation.
