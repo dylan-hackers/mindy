@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.17 1996/05/29 23:31:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.18 1996/07/18 15:03:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -73,8 +73,7 @@ add-od-loader
 
 add-make-dumper
   (#"unknown-type", *compiler-dispatcher*, <unknown-ctype>,
-   list(info, #f, merge-and-set-info,
-	%ctype-extent, #f, set-or-check-extent,
+   list(%ctype-extent, #f, set-or-check-extent,
 	//
 	// ### maybe should just drop the type exp, or reduce it to
 	// something dumpable.
