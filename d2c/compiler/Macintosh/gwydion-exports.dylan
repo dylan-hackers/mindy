@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion-exports.dylan,v 1.1 2002/03/16 20:35:07 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion-exports.dylan,v 1.2 2002/06/14 13:53:57 gabor Exp $
 file: gwydion-exports.dylan
 author: gabor@mac.com
 status: still much of experimental
@@ -54,7 +54,7 @@ end library;
 define module plugin-api
   use dylan;
   use melange-support;
-  use system, import: {<raw-pointer>, buffer-address};
+  use system, import: {c-system-include /* can be rmoved */, <raw-pointer>, buffer-address};
   use extensions;
   use streams;
   use heap;	// hack!еее
@@ -159,6 +159,7 @@ end module;
 define module symbol-browser
   use dylan, exclude: {direct-superclasses, direct-subclasses};
   use melange-support;
+  use system, import: {c-system-include}; // can be rmoved
   use format, import: {format-to-string};
   use extensions;
   use tokens;
@@ -191,7 +192,8 @@ define module warrior
   use streams;
   use extensions;	// For Main, false-or
   use melange-support;
-  use system, import: {c-include, c-expr, call-out, <buffer>, copy-bytes, buffer-address};
+  use system, import: {c-system-include /* can be rmoved */, c-expr, call-out, <buffer>,
+		       copy-bytes, buffer-address};
   use format;
   use standard-io;
   use format-out;
