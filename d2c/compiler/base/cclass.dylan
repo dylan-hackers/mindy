@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.8 1995/05/18 13:35:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.9 1995/05/26 10:46:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -887,6 +887,9 @@ end;
 // Defined classes.
 
 define class <defined-cclass> (<cclass>)
+  //
+  // The <class-definition> that installed this class.
+  slot class-defn :: <class-definition>, required-init-keyword: defn:;
 end class;
 
 
