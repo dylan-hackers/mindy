@@ -28,17 +28,15 @@ copyright: See below.
 //
 //======================================================================
 
-//// Each of these functions has two versions, depending on newlines-are-CRLF.
-//// Edits should (probably) be done to both.
-////
-
-/// $newline -- Internal.
+/// $newline, $newline-byte -- Internal.
 ///
 define constant $newline :: <byte-character> = '\n';
 define constant $newline-byte :: <integer> = as(<integer>, $newline);
 
 #if (newlines-are-CRLF)
 
+/// $return, $return-byte -- Internal.
+///
 define constant $return :: <byte-character> = '\r';
 define constant $return-byte :: <integer> = as(<integer>, '\r');
 
@@ -50,14 +48,12 @@ define open generic read-line (stream :: <stream>,
 			       #key on-end-of-stream :: <object>)
  => (string-or-eof :: <object>, newline? :: <boolean>);
 
-#if (newlines-are-CRLF)
-
 define method read-line (stream :: <buffered-stream>,
 			 #key on-end-of-stream :: <object> = $not-supplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   block (exit-loop)
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
-    if (~buf)
+    if (~ buf)
       // Hit eos right away.
       if (on-end-of-stream ~== $not-supplied)
 	values(on-end-of-stream, #f);
@@ -65,6 +61,8 @@ define method read-line (stream :: <buffered-stream>,
 	error(make(<end-of-stream-error>, stream: stream));
       end if;
     else
+      let buf-next :: <buffer-index> = buf.buffer-next;
+      let buf-end :: <buffer-index> = buf.buffer-end;
       let res-type :: <type> = type-for-sequence(stream.stream-element-type);
       let res :: res-type = make(res-type);
       let collect = method (string :: res-type, buf :: <buffer>,
@@ -78,16 +76,28 @@ define method read-line (stream :: <buffered-stream>,
 		      res;
 		    end;
       while (#t)
-	for (i :: <integer> from buf.buffer-next + 1 below buf.buffer-end,
-	     until: ((buf[i] == $newline-byte) & (buf[i - 1] == $return-byte)))
+	for (i :: <integer> from buf-next below buf-end,
+	     until: (buf[i] == $newline-byte))
 	finally
-	  if (i == buf.buffer-end)
-	    res := collect(res, buf, buf.buffer-next, buf.buffer-end);
-	    buf.buffer-next := buf.buffer-end;
+	  #if (newlines-are-CRLF)	  
+	     let CR-pos :: <buffer-index> = i - 1;
+	     let line-end
+	       = if ((CR-pos >= buf-next) & (buf[CR-pos] == $return-byte))
+		   CR-pos;
+		 else
+		   i;
+		 end;
+	     res := collect(res, buf, buf-next, line-end);
+	  #else
+	     res := collect(res, buf, buf-next, i);
+	  #endif
+	  if (i == buf-end)
+	    buf.buffer-next := buf-end;
 	    buf := next-input-buffer(stream);
-	    if (~buf) exit-loop(res, #f) end;
+	    if (~ buf) exit-loop(res, #f) end;
+	    buf-end := buf.buffer-end;
+	    buf-next := buf.buffer-next;
 	  else
-	    res := collect(res, buf, buf.buffer-next, i - 1);
 	    // We don't return the newline, but we do consume it.
 	    buf.buffer-next := i + 1;
 	    exit-loop(res, #t);
@@ -116,110 +126,26 @@ define sealed method read-line (stream :: <simple-sequence-stream>,
       end if;
     else
       let newline = as(stream.stream-element-type, $newline);
-      let return = as(stream.stream-element-type, $return);
       for (i from (stream.position + 1) below stream.stream-end,
-	   until: ((stream.contents[i] = newline)
-		     & stream.contents[i - 1] = return))
+	   until: (stream.contents[i] == newline))
       finally
-	if (i = stream.stream-end)	
-	  let num-elts :: <integer> = i - stream.position;
-	  let res = make(type-for-copy(stream.contents), size: num-elts);
-	  copy-sequence!(res, 0,
-			 stream.contents, stream.position,
-			 num-elts);
-	  stream.position := stream.stream-end;
-	  values(res, #f);
-	else
-	  let num-elts :: <integer> = i - stream.position - 1; // -1 for the CR
-	  let res = make(type-for-copy(stream.contents), size: num-elts);
-	  copy-sequence!(res, 0,
-			 stream.contents, stream.position,
-			 num-elts);
-	  stream.position := i + 1;
-	  values(res, #t);
-	end if;
-      end for;
-    end if;
-  cleanup
-    unlock-stream(stream);
-  end block;
-end method read-line;
-
-#else
-
-define method read-line (stream :: <buffered-stream>,
-			 #key on-end-of-stream :: <object> = $not-supplied)
- => (string-or-eof :: <object>, newline? :: <boolean>);
-  block (exit-loop)
-    let buf :: false-or(<buffer>) = get-input-buffer(stream);
-    if (~buf)
-      // Hit eos right away.
-      if (on-end-of-stream ~== $not-supplied)
-	values(on-end-of-stream, #f);
-      else
-	error(make(<end-of-stream-error>, stream: stream));
-      end if;
-    else
-      let res-type :: <type> = type-for-sequence(stream.stream-element-type);
-      let res :: res-type = make(res-type);
-      let collect = method (string :: res-type, buf :: <buffer>,
-			    start :: <buffer-index>, stop :: <buffer-index>)
-		     => result :: res-type;
-		      let str-len = string.size;
-		      let buf-len = (stop - start);
-		      let res = make(res-type, size: (str-len + buf-len));
-		      copy-sequence!(res, 0, string, 0, str-len);
-		      copy-sequence!(res, str-len, buf, start, buf-len);
-		      res;
-		    end;
-      while (#t)
-	for (i :: <integer> from buf.buffer-next below buf.buffer-end,
-	     until: (buf[i] == $newline-byte))
-	finally
-	  if (i == buf.buffer-end)
-	    res := collect(res, buf, buf.buffer-next, buf.buffer-end);
-	    buf.buffer-next := buf.buffer-end;
-	    buf := next-input-buffer(stream);
-	    if (~buf) exit-loop(res, #f) end;
-	  else
-	    res := collect(res, buf, buf.buffer-next, i);
-	    // We don't return the newline, but we do consume it.
-	    buf.buffer-next := i + 1;
-	    exit-loop(res, #t);
-	  end;
-	end for; 
-      end while;
-    end if;
-  cleanup
-    release-input-buffer(stream);
-  end block;
-end method read-line;
-
-define sealed method read-line (stream :: <simple-sequence-stream>,
-				#key on-end-of-stream :: <object> 
-				       = $not-supplied)
- => (string-or-eof :: <object>, newline? :: <boolean>);
-  block ()
-    lock-stream(stream);
-    check-stream-open(stream);
-    check-input-stream(stream);
-    if (stream.position == stream.stream-end)
-      if (on-end-of-stream ~== $not-supplied)
-	values(on-end-of-stream, #f);
-      else
-	error(make(<end-of-stream-error>, stream: stream));
-      end if;
-    else
-      for (i from stream.position below stream.stream-end,
-	   until: stream.contents[i] = as(stream.stream-element-type,
-					  $newline))
-      finally
-	let num-elts :: <integer> = i - stream.position;
-	let res = make(type-for-copy(stream.contents), size: num-elts);
-	copy-sequence!(res, 0,
-		       stream.contents, stream.position,
-		       num-elts);
-	if (i = stream.stream-end)
+	#if (newlines-are-CRLF)	  
+	   let return = as(stream.stream-element-type, $return);
+	   let CR-pos :: <integer> = i - 1;
+	   let line-size
+	     = if ((CR-pos >= stream.position)
+		     & (stream.contents[CR-pos] == return))
+		 CR-pos - stream.position;
+	       else
+		 i - stream.position;
+	       end;
+	#else
+	   let line-size = i - stream.position;
+	#endif
+	let res-type :: <type> = type-for-copy(stream.contents);
+	let res :: res-type = make(res-type, size: line-size);
+	copy-sequence!(res, 0, stream.contents, stream.position, line-size);
+	if (i == stream.stream-end)	
 	  stream.position := stream.stream-end;
 	  values(res, #f);
 	else
@@ -232,8 +158,6 @@ define sealed method read-line (stream :: <simple-sequence-stream>,
     unlock-stream(stream);
   end block;
 end method read-line;
-
-#endif
 
 /// read-line-into! -- Exported.
 ///
@@ -243,237 +167,38 @@ define open generic read-line-into! (stream :: <stream>, string :: <string>,
 				         grow? :: <boolean>)
  => (string-or-eof :: <object>, newline? :: <boolean>);
 
-#if (newlines-are-CRLF)
-
-define method read-line-into! (stream :: <buffered-stream>,
-			       string :: <string>,
-			       #key start :: <integer> = 0,
-			            on-end-of-stream :: <object>
-				      = $not-supplied,
-			            grow? :: <boolean> = #f)
+/// I wrote slightly more efficient versions of this, which read directly
+/// into string. They turned out to be a pain in the ass to maintain
+/// though. (You need 4 versions, <buffered-stream>,<simple-sequence-stream>
+/// cross newlines-are-CRLF.) They're in RCS rev 1.3, if there's a need...
+///
+define method read-line-into! (stream :: <stream>, string :: <string>,
+                               #key start = 0,
+			            on-end-of-stream = $not-supplied,
+			            grow? = #f)
  => (string-or-eof :: <object>, newline? :: <boolean>);
-  block (exit-loop)
-    let buf :: false-or(<buffer>) = get-input-buffer(stream);
-    if (~buf)
-      if (on-end-of-stream ~== $not-supplied)
-	values(on-end-of-stream, #f);
+  block(exit)
+    let (one-line, newline?)
+      = read-line(stream, on-end-of-stream: on-end-of-stream);
+    if (grow?)
+      exit(replace-subsequence!(string, one-line, start: start), newline?);
+    else
+      if (one-line.size > string.size - start)
+	error("Supplied string not large enough to hold next line from stream %=",
+	       stream);
       else
-	error(make(<end-of-stream-error>, stream: stream));
+        exit(replace-subsequence!(string, one-line, start: start,
+                                  end: start + one-line.size),
+	     newline?);
       end if;
     end if;
-    let str-next :: <integer> = start;
-    let str-end :: <integer> = string.size;
-    while (#t)
-      for (i :: <integer> from (buf.buffer-next + 1) below buf.buffer-end,
-	   until: ((buf[i] == $newline-byte) & (buf[i - 1] == $return-byte)))
-      finally
-	let num-elts :: <integer> = if (i == buf.buffer-end)
-				      i - buf.buffer-next;
-				    else
-				      // the last 1 is the return-byte
-				      i - buf.buffer-next - 1;
-				    end if;
-	let str-size :: <integer> = str-next + num-elts;
-	if (str-size > str-end)
-	  if (grow?)
-	    if (instance?(string, <stretchy-collection>))
-	      string.size := str-size;
-	    else
-	      string := make(type-for-copy(string), size: str-size);
-	    end if;
-	  else
-	    error("String %= not large enough to hold next line from stream %=", string, stream);
-	  end if;
-	end if;
-	copy-sequence!(string, str-next, buf, buf.buffer-next, num-elts);
-	if (i == buf.buffer-end)
-	  buf.buffer-next := buf.buffer-end;
-	  buf := next-input-buffer(stream);
-	  if (~buf)
-	    exit-loop(string, #f);
-	  end if;
-	  str-next := str-size;
-	else
-	  buf.buffer-next := buf.buffer-next + num-elts + 2; // +2 for newline
-	  exit-loop(string, #t);
-	end if;
-      end for;
-    end while;
-  cleanup
-    release-input-buffer(stream);
   end block;
 end method read-line-into!;
 
-/// This dies if string cannot hold {stream.stream-element-type}s
-///
-define sealed method read-line-into! (stream :: <simple-sequence-stream>,
-				      string :: <string>,
-				      #key start :: <integer> = 0,
-				           on-end-of-stream :: <object>
-					     = $not-supplied,
-				           grow? :: <boolean> = #f)
- => (string-or-eof :: <object>, newline? :: <boolean>);
-  block ()
-    lock-stream(stream);
-    check-stream-open(stream);
-    check-input-stream(stream);
-    if (stream.position == stream.stream-end)
-      if (on-end-of-stream ~== $not-supplied)
-	values(on-end-of-stream, #f);
-      else
-	error(make(<end-of-stream-error>, stream: stream));
-      end if;
-    else
-      let newline = as(stream.stream-element-type, $newline);
-      let return = as(stream.stream-element-type, $return);
-      for (i from (stream.position + 1) below stream.stream-end,
-	   until: ((stream.contents[i] = newline)
-		     & stream.contents[i - 1] = return))
-      finally
-	let num-elts :: <integer> = if (i == stream.stream-end)
-				      i - stream.position;
-				    else
-				      i - stream.position - 1;
-				    end if;
-	let str-size :: <integer> = start + num-elts;
-	if (str-size > string.size)
-	  if (grow?)
-	    if (instance?(string, <stretchy-collection>))
-	      string.size := str-size;
-	    else
-	      string := make(type-for-copy(string), size: str-size);
-	    end if;
-	  else
-	    error("String %= not large enough to hold next line from stream %=", string, stream);
-	  end if;
-	end if;
-	copy-sequence!(string, start,
-		       stream.contents, stream.position,
-		       num-elts);
-	if (i = stream.stream-end)	
-	  stream.position := stream.stream-end;
-	  values(string, #f);
-	else
-	  stream.position := i + 1;
-	  values(string, #t);
-	end if;
-      end for;
-    end if;    
-  cleanup
-    unlock-stream(stream);
-  end block;
-end method read-line-into!;
-
-#else
-
-define method read-line-into! (stream :: <buffered-stream>,
-			       string :: <string>,
-			       #key start :: <integer> = 0,
-			            on-end-of-stream :: <object>
-				      = $not-supplied,
-			            grow? :: <boolean> = #f)
- => (string-or-eof :: <object>, newline? :: <boolean>);
-  block (exit-loop)
-    let buf :: false-or(<buffer>) = get-input-buffer(stream);
-    if (~buf)
-      if (on-end-of-stream ~== $not-supplied)
-	values(on-end-of-stream, #f);
-      else
-	error(make(<end-of-stream-error>, stream: stream));
-      end if;
-    end if;
-    let str-next :: <integer> = start;
-    let str-end :: <integer> = string.size;
-    while (#t)
-      for (i :: <integer> from buf.buffer-next below buf.buffer-end,
-	   until: (buf[i] == $newline-byte))
-      finally
-	let num-elts :: <integer> = i - buf.buffer-next;
-	let str-size :: <integer> = str-next + num-elts;
-	if (str-size > str-end)
-	  if (grow?)
-	    if (instance?(string, <stretchy-collection>))
-	      string.size := str-size;
-	    else
-	      string := make(type-for-copy(string), size: str-size);
-	    end if;
-	  else
-	    error("String %= not large enough to hold next line from stream %=", string, stream);
-	  end if;
-	end if;
-	copy-sequence!(string, str-next, buf, buf.buffer-next, num-elts);
-	if (i == buf.buffer-end)
-	  buf.buffer-next := buf.buffer-end;
-	  buf := next-input-buffer(stream);
-	  if (~buf)
-	    exit-loop(string, #f);
-	  end if;
-	  str-next := str-size;
-	else
-	  buf.buffer-next := buf.buffer-next + num-elts + 1;
-	  exit-loop(string, #t);
-	end if;
-      end for;
-    end while;
-  cleanup
-    release-input-buffer(stream);
-  end block;
-end method read-line-into!;
-
-/// This dies if string cannot hold {stream.stream-element-type}s
-///
-define sealed method read-line-into! (stream :: <simple-sequence-stream>,
-				      string :: <string>,
-				      #key start :: <integer> = 0,
-				           on-end-of-stream :: <object>
-					     = $not-supplied,
-				           grow? :: <boolean> = #f)
- => (string-or-eof :: <object>, newline? :: <boolean>);
-  block ()
-    lock-stream(stream);
-    check-stream-open(stream);
-    check-input-stream(stream);
-    if (stream.position == stream.stream-end)
-      if (on-end-of-stream ~== $not-supplied)
-	values(on-end-of-stream, #f);
-      else
-	error(make(<end-of-stream-error>, stream: stream));
-      end if;
-    else
-      for (i from stream.position below stream.stream-end,
-	   until: stream.contents[i] = $newline)
-      finally
-	let num-elts :: <integer> = i - stream.position;
-	let str-size :: <integer> = start + num-elts;
-	if (str-size > string.size)
-	  if (grow?)
-	    if (instance?(string, <stretchy-collection>))
-	      string.size := str-size;
-	    else
-	      string := make(type-for-copy(string), size: str-size);
-	    end if;
-	  else
-	    error("String %= not large enough to hold next line from stream %=", string, stream);
-	  end if;
-	end if;
-	copy-sequence!(string, start,
-		       stream.contents, stream.position,
-		       num-elts);
-	if (i = stream.stream-end)
-	  stream.position := stream.stream-end;
-	  values(string, #f);
-	else
-	  stream.position := i + 1;
-	  values(string, #t);
-	end if;
-      end for;
-    end if;    
-  cleanup
-    unlock-stream(stream);
-  end block;
-end method read-line-into!;
-
-#endif
+define sealed domain read-line-into!(<fd-stream>, <string>);
+define sealed domain read-line-into!(<simple-sequence-stream>, <string>);
+define sealed domain read-line-into!(<buffered-byte-string-output-stream>,
+				     <string>);
 
 /// write-line -- Exported.
 ///
@@ -482,6 +207,9 @@ define open generic write-line (stream :: <stream>, string :: <string>,
 			             end: stop :: <integer>)
  => ();
 
+/// The conditional compilation should be tightened; this could easily
+/// be two (much more maintainable) methods.
+///
 #if (newlines-are-CRLF)
 
 define method write-line (stream :: <buffered-stream>, 
@@ -491,8 +219,8 @@ define method write-line (stream :: <buffered-stream>,
  => ();
   block (exit-loop)
     let buf :: <buffer> = get-output-buffer(stream);
-    let buf-capacity :: <buffer-index> = (buf.buffer-end - buf.buffer-next);
     let buf-start :: <buffer-index> = buf.buffer-next;
+    let buf-capacity :: <buffer-index> = (buf.buffer-end - buf-start);
     let partial-stop :: <integer> = (start + buf-capacity);
     while (#t)
       if (partial-stop >= (stop + 2)) // +2 for the newline
@@ -557,8 +285,8 @@ define method write-line (stream :: <buffered-stream>,
  => ();
   block (exit-loop)
     let buf :: <buffer> = get-output-buffer(stream);
-    let buf-capacity :: <buffer-index> = (buf.buffer-end - buf.buffer-next);
     let buf-start :: <buffer-index> = buf.buffer-next;
+    let buf-capacity :: <buffer-index> = (buf.buffer-end - buf-start);
     let partial-stop :: <integer> = (start + buf-capacity);
     while (#t)
       if (partial-stop >= (stop + 1)) // +1 for the newline
@@ -619,19 +347,49 @@ define open generic new-line (stream :: <stream>) => ();
 
 #if (newlines-are-CRLF)
 
-define inline  method new-line (stream :: <stream>) => ();
-  // Could make this a bit more efficient for <buffered-stream>s.
-  write-element(stream, as(stream.stream-element-type, $return));
-  write-element(stream, as(stream.stream-element-type, $newline));
+define method new-line (stream :: <buffered-stream>) => ();
+  let buf = get-output-buffer(stream, bytes: 2);
+  let buf-next = buf.buffer-next;
+  buf[buf-next] := $return-byte;
+  buf[buf-next + 1] := $newline-byte;
+  buf.buffer-next := buf-next + 2;
+  release-output-buffer(stream);
+end method new-line;
+
+define sealed method new-line (stream :: <simple-sequence-stream>) => ();
+  block ()
+    lock-stream(stream);
+    check-stream-open(stream);
+    check-output-stream(stream);
+    if (stream.stream-end >= (stream.contents.size - 1))
+      grow-stream-sequence!(stream, 
+			    stream.contents.size + $default-grow-amount);
+    end if;
+    let pos :: <integer> = stream.position;
+    stream.contents[pos] := as(stream.stream-element-type($return));
+    stream.contents[pos + 1] := as(stream.stream-element-type($newline));
+    stream.position := pos + 2;
+    if (stream.stream-end < stream.position) 
+      stream.stream-end := stream.position;
+    end if;
+  cleanup
+    unlock-stream(stream);
+  end block;  
 end method new-line;
 
 #else
 
-define inline method new-line (stream :: <stream>) => ();
+define inline method new-line (stream :: <buffered-stream>)
+ => ();
+  write-element(stream, $newline-byte);
+end method new-line;
+
+define sealed inline method new-line (stream :: <simple-sequence-stream>)
+ => ();
   write-element(stream, as(stream.stream-element-type, $newline));
 end method new-line;
 
 #endif
 
-define sealed domain new-line (<simple-sequence-stream>);
-define sealed domain new-line (<fd-file-stream>);
+define sealed domain new-line (<fd-stream>);
+define sealed domain new-line (<buffered-byte-string-output-stream>);
