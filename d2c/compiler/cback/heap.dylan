@@ -152,17 +152,17 @@ define method raw-bits (ctv :: <literal-fixed-integer>) => res :: <integer>;
 end;
 
 define method raw-bits (ctv :: <literal-single-float>) => res :: <integer>;
-  raw-bits-for-float(ctv.literal-value, 24, 127, 8);
+  raw-bits-for-float(ctv, 24, 127, 8);
 end;
 
 define method raw-bits (ctv :: <literal-double-float>) => res :: <integer>;
-  raw-bits-for-float(ctv.literal-value, 53, 1023, 11);
+  raw-bits-for-float(ctv, 53, 1023, 11);
 end;
 
 define method raw-bits (ctv :: <literal-extended-float>) => res :: <integer>;
   // ### gcc doesn't use extended floats for long doubles.
   // raw-bits-for-float(ctv.literal-value, 113, 16383, 15);
-  raw-bits-for-float(ctv.literal-value, 53, 1023, 11);
+  raw-bits-for-float(ctv, 53, 1023, 11);
 end;
 
 define method raw-bits (ctv :: <literal-character>) => res :: <integer>;
@@ -233,6 +233,11 @@ end;
 
 define generic spew-object (object :: <ct-value>, state :: <state>) => ();
 
+
+define method spew-object
+    (object :: <ct-not-supplied-marker>, state :: <state>) => ();
+  spew-instance(specifier-type(#"<not-supplied-marker>"), state);
+end;
 
 define method spew-object
     (object :: <literal-boolean>, state :: <state>) => ();
@@ -389,7 +394,44 @@ define method spew-object
 		  defn.class-defn-defered-evaluations-function
 		  | as(<ct-value>, #f),
 		class-maker: defn.class-defn-maker-function
-		  | as(<ct-value>, #f));
+		  | as(<ct-value>, #f),
+		class-new-slot-descriptors:
+		  make(<literal-simple-object-vector>,
+		       contents: object.new-slot-infos,
+		       sharable: #t),
+		class-all-slot-descriptors:
+		  make(<literal-simple-object-vector>,
+		       contents: object.all-slot-infos,
+		       sharable: #t));
+end;
+
+define method spew-object
+    (object :: <slot-info>, state :: <state>) => ();
+  spew-instance(specifier-type(#"<slot-descriptor>"), state,
+		slot-allocation:
+		  as(<ct-value>,
+		     select (object by instance?)
+		       <instance-slot-info> => #"instance";
+		       <class-slot-info> => #"class";
+		       <each-subclass-slot-info> => #"each-subclass";
+		       <virtual-slot-info> => #"virtual";
+		     end),
+		slot-type:
+		  unless (instance?(object.slot-type, <unknown-ctype>))
+		    object.slot-type;
+		  end,
+		slot-init-function:
+		  if (instance?(object.slot-init-function, <ct-value>))
+		    object.slot-init-function;
+		  end,
+		slot-init-value:
+		  if (instance?(object.slot-init-value, <ct-value>))
+		    object.slot-init-value;
+		  end,
+		slot-init-keyword:
+		  as(<ct-value>, object.slot-init-keyword),
+		slot-init-keyword-required?:
+		  as(<ct-value>, object.slot-init-keyword-required?));
 end;
 
 define method spew-object (object :: <proxy>, state :: <state>) => ();
@@ -563,7 +605,10 @@ define method find-init-value
     if (getter)
       for (index from 0 below slots.size by 2)
 	if (slots[index] == slot-name)
-	  return(slots[index + 1]);
+	  let val = slots[index + 1];
+	  if (val)
+	    return(val);
+	  end;
 	end;
       end;
     end;
