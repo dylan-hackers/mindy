@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.10 2000/01/24 04:54:14 andreas Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.11 2000/09/09 05:44:24 housel Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -86,8 +86,8 @@ if ($enable_bootstrap) {
 	push(@compile_commands, $recheck);
 	push(@compile_commands, '$(MAKE) clean');
 	push(@compile_commands, '$(MAKE)');
-	&message("Bootstrap complete. Type 'make bootstrap_clean' to perform");
-	&message("a regular build.");
+	&message("Bootstrap complete. After installing, type 'make bootstrap_clean'");
+	&message("to perform a regular build.");
     }
 }
 else {
