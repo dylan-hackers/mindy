@@ -209,12 +209,7 @@ define-primitive
   (#"unwind-stack", #(#"<raw-pointer>"), #(values:));
 
 define-primitive
-  (#"restore-state", #(#"<raw-pointer>", #"<simple-object-vector>"),
-   #(union:));
-
-define-primitive
-  (#"%restore-state", #(#"<raw-pointer>", #"cluster"),
-   #(union:));
+  (#"throw", #(#"<raw-pointer>", #"cluster"), #(union:));
 
 
 // Fixnum operations.
