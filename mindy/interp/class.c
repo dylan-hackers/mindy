@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.12 1994/11/30 16:16:06 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.13 1995/02/14 02:30:00 rgs Exp $
 *
 * This file implements classes.
 *
@@ -255,7 +255,7 @@ static obj_t compute_cpl(obj_t class, obj_t superclasses)
 void setup_class_supers(obj_t class, obj_t supers)
 {
     obj_t cpl, scan;
-    boolean some_static = FALSE, all_static = TRUE;
+    boolean some_static = FALSE;
 
     for (scan = supers; scan != obj_Nil; scan = TAIL(scan)) {
 	obj_t super = HEAD(scan);
@@ -265,22 +265,14 @@ void setup_class_supers(obj_t class, obj_t supers)
 	if (CLASS(super)->superclasses == obj_False
 	      || CLASS(super)->superclasses == NULL)
 	    error("Attempt to use %= before it is initialized", super);
-	    
 	if (object_class(super) == obj_StaticTypeClass)
 	    some_static = TRUE;
-	else if (object_class(super) == obj_DefinedClassClass)
-	    all_static = all_static && (DC(super)->all_slots == obj_Nil);
-	else
-	    all_static = all_static && CLASS(super)->abstract_p;
     }
     
     if (some_static) {
 	/* If we inherit from a statically typed pointer class, then we must
 	   be a statically typed pointer class.  We must therefore act like
 	   one */
-	if (!all_static)
-	    error("Can't mix normal classes with "
-		  "statically typed pointer classes in %=", class);
 	CLASS(class)->class = obj_StaticTypeClass;
 	CLASS(class)->scavenge = scav_c_pointer;
 	CLASS(class)->transport = trans_c_pointer;

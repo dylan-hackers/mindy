@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.34 1994/12/10 00:21:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.35 1995/02/14 02:32:47 rgs Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1224,6 +1224,35 @@ void init_defined_class(obj_t class, obj_t slots,
     if (object_class(class) != obj_DefinedClassClass) {
 	if (slots != obj_Nil)
 	    error("Cannot add slots to %= classes", object_class(class));
+	if (object_class(class) == obj_StaticTypeClass)
+	    /* Statically typed pointers have special requirements.  This
+	       isn't the best place for this, but it must be done after all
+	       superclasses have been fully initialized, so this is what
+	       works */
+	    for (scan = CLASS(class)->superclasses;
+		 scan != obj_Nil; scan = TAIL(scan))
+	    {
+		obj_t super = HEAD(scan);
+	    
+		if (object_class(super) == obj_StaticTypeClass)
+		    continue;
+
+		if (object_class(super) == obj_DefinedClassClass) {
+		    if (DC(super)->all_slots == obj_False) {
+			printf("Hi mom!\n");
+			inherit_slots(super, super);
+			if (DC(super)->all_slots == obj_False)
+			    printf("Screwed again!\n");
+		    }
+		    if (DC(super)->all_slots != obj_Nil)
+			error("Can't mix normal class %= with "
+			      "statically typed pointer classes in %=",
+			      super, class);
+		} else if (!CLASS(super)->abstract_p)
+		    error("Can't mix normal class %= with "
+			  "statically typed pointer classes in %=",
+			  super, class);
+	    }
 	do_initialization(class, obj_Nil, obj_Nil);
     }
 
