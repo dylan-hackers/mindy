@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.19 1995/12/15 19:36:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.20 1996/01/16 12:45:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -869,20 +869,50 @@ end;
 // Loading stuff.
 
 define method load-library (lib :: <library>) => ();
-  let previous-library = *Current-Library*;
-  block ()
-    *Current-Library* := lib;
-    let name = lib.library-name;
-    format(*debug-output*, "Loading library %s\n", name);
-    find-data-unit(name, $library-summary-unit-type,
-		   dispatcher: *compiler-dispatcher*);
-    unless (lib.defined?)
-      compiler-error("Loaded library %s but it wasn't ever defined.", name);
-    end;
-  cleanup
-    *Current-Library* := previous-library;
-  end;
+  find-data-unit(lib.library-name, $library-summary-unit-type,
+		 dispatcher: *compiler-dispatcher*);
 end;
+
+define variable *load-depth* :: <integer> = 0;
+
+define method find-data-unit
+    (name :: <symbol>, type == $library-summary-unit-type,
+     #next next-method, #key)
+    => res :: <object>;
+  let lib = find-library(name);
+  if (lib.defined?)
+    next-method();
+  else
+    let previous-library = *Current-Library*;
+    let previous-depth = *load-depth*;
+    block ()
+      *Current-Library* := lib;
+      *load-depth* := previous-depth + 1;
+      unless (zero?(previous-depth))
+	write('\n', *debug-output*);
+	for (i from 0 below *load-depth*)
+	  write(' ', *debug-output*);
+	end for;
+      end unless;
+      format(*debug-output*, "[Loading library %s...", name);
+      force-output(*debug-output*);
+      let res = next-method();
+      unless (lib.defined?)
+	compiler-error("Loaded library %s but it wasn't ever defined.", name);
+      end unless;
+      write(']', *debug-output*);
+      if (zero?(previous-depth))
+	write('\n', *debug-output*);
+      end if;
+      force-output(*debug-output*);
+      res;
+    cleanup
+      *Current-Library* := previous-library;
+      *load-depth* := previous-depth;
+    end block;
+  end if;
+end method find-data-unit;
+
 
 
 // Initilization stuff.
