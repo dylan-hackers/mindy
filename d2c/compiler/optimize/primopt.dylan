@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.28 1996/08/22 18:32:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.29 1996/08/23 17:11:10 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -687,6 +687,7 @@ define method dylan-type-for-c-type (leaf :: <leaf>) => res :: <values-ctype>;
 	#"float" => specifier-type(#"<single-float>");
 	#"double" => specifier-type(#"<double-float>");
 	#"long-double" => specifier-type(#"<extended-float>");
+	#"object" => object-ctype();
 	#"void" => make-values-ctype(#(), #f);
       end;
     else

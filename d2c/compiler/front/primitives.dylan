@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.39 1996/06/27 02:09:53 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.40 1996/08/23 17:11:33 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -254,12 +254,8 @@ define-primitive
 
 define-primitive
   (#"call-out",
-   #(#"<string>", #"<symbol>",
-     rest:, #(union:, #"<symbol>", #"<integer>", #"<raw-pointer>",
-	      #"<single-float>", #"<double-float>", #"<extended-float>")),
-   #(values:,
-     rest:, #(union:, #"<integer>", #"<raw-pointer>",
-	      #"<single-float>", #"<double-float>", #"<extended-float>")));
+   #(#"<string>", #"<symbol>", rest:, #"<object>"),
+   #(values:, rest:, #"<object>"));
 
 define-primitive
   (#"c-include", #(#"<string>"), #(values:));
@@ -269,9 +265,7 @@ define-primitive
 
 define-primitive
   (#"c-expr", #(#"<symbol>", #"<string>"),
-   #(values:,
-     rest:, #(union:, #"<integer>", #"<raw-pointer>",
-	      #"<single-float>", #"<double-float>", #"<extended-float>")));
+   #(values:, rest:, #"<object>"));
 
 define-primitive
   (#"as-boolean", #(#"<object>"), #"<boolean>",
@@ -490,15 +484,12 @@ define-primitive
 define-primitive
   (#"pointer-deref",
    #(#"<symbol>", #"<raw-pointer>", #"<integer>"),
-   #(union:, #"<integer>", #"<raw-pointer>",
-     #"<single-float>", #"<double-float>", #"<extended-float>"),
+   #"<object>",
    side-effect-free: #t);
 
 define-primitive
   (#"pointer-deref-setter",
-   #(#(union:, #"<integer>", #"<raw-pointer>",
-       #"<single-float>", #"<double-float>", #"<extended-float>"),
-     #"<symbol>", #"<raw-pointer>", #"<integer>"),
+   #(#"<object>", #"<symbol>", #"<raw-pointer>", #"<integer>"),
    #(values:));
 
 define-primitive
