@@ -1,15 +1,19 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.22 1995/11/12 21:08:03 nkramer Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.23 1995/11/13 17:17:18 nkramer Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
 
 MC = mindycomp
 MINDYFLAGS = -lcompiler
+MINDY = mindy
 
 %.dbc: %.dylan
 	$(MC) ${MINDYFLAGS} -o $@ $$PWD/$<
 
-OBJS = exports.dbc \
+# Autodump divides object files into two types: Normal ones, and 
+# ones derived from autodumped Dylan code.
+#
+NORMAL_OBJS = exports.dbc \
 	set-module.dbc \
 	params.dbc \
 	utils.dbc \
@@ -67,9 +71,11 @@ OBJS = exports.dbc \
 	misc-dump.dbc \
 	init.dbc \
 	autodump.dbc \
-	parse-dump.dbc \
-	token-dump.dbc \
 	main.dbc
+
+AUTODUMPED_OBJS = parse-dump.dbc token-dump.dbc
+
+OBJS = ${NORMAL_OBJS} ${AUTODUMPED_OBJS}
 
 foo.dbc: ${OBJS}
 	cat ${OBJS} > $@
@@ -77,6 +83,15 @@ foo.dbc: ${OBJS}
 parser.dylan: parser.input
 	cmucl -load do-parsergen
 
+parse-dump.dylan: parse-tree.dylan autodump.dylan
+	rm -f autodumper.dbc
+	cat ${NORMAL_OBJS} > autodumper.dbc
+	${MINDY} -f autodumper.dbc -autodump parse-tree
+
+token-dump.dylan: tokens.dylan autodump.dylan
+	rm -f autodumper.dbc
+	cat ${NORMAL_OBJS} > autodumper.dbc
+	${MINDY} -f autodumper.dbc -autodump tokens
 
 CFLAGS = -g
 CC = gcc
