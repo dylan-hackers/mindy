@@ -5,46 +5,49 @@ $D2CFLAGS = $d2c_runtime . '-p$(SRCROOT)/d2c/compiler/platforms.descr -L../commo
 
 $shared = 0;
 
+if($enable_d2c) { $deps = $D2C; }
+else { $deps = ''; }
+
 do emit_library_rule(
-    'dylan-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'dylan-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'regexp-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'regexp-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'stream-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'stream-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'table-ext-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'table-ext-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'random-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'random-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'matrix-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'matrix-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'coll-ext-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'coll-ext-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'print-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'print-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'format-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'format-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 do emit_library_rule(
-    'format-out-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'format-out-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 #do emit_library_rule(
-#    'itime-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+#    'itime-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 #);
 do emit_library_rule(
-    'getopt-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+    'getopt-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 
 unless ($features{'no_time'}) { 
 	do emit_library_rule(
-	    'time-test', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy'
+	    'time-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 	);
 }
 
