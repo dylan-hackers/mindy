@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.11 1994/11/03 22:19:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.12 1994/11/29 06:43:07 wlott Exp $
 *
 * This file implements strings.
 *
@@ -163,16 +163,12 @@ static obj_t dylan_byte_str_make(obj_t class, obj_t size, obj_t fill)
     unsigned char *ptr;
     int fill_char;
 
-    if (!instancep(size, obj_FixnumClass))
-	error("Bogus size: for make %=: %=", class, size);
-    len = fixnum_value(size);
+    len = fixnum_value(check_type(size, obj_FixnumClass));
 
     if (len < 0)
 	error("Bogus size: for make %=: %=", class, size);
 
-    if (!instancep(fill, obj_ByteCharacterClass))
-	error("Bogus fill: for make %=: %=", class, fill);
-    fill_char = char_int(fill);
+    fill_char = char_int(check_type(fill, obj_ByteCharacterClass));
 
     res = alloc_byte_string(len);
 
@@ -191,16 +187,12 @@ static obj_t dylan_unicode_str_make(obj_t class, obj_t size, obj_t fill)
     int i;
     int fill_char;
 
-    if (!instancep(size, obj_FixnumClass))
-	error("Bogus size: for make %=: %=", class, size);
-    len = fixnum_value(size);
+    len = fixnum_value(check_type(size, obj_FixnumClass));
 
     if (len < 0)
 	error("Bogus size: for make %=: %=", class, size);
 
-    if (!instancep(fill, obj_CharacterClass))
-	error("Bogus fill: for make %=: %=", class, fill);
-    fill_char = char_int(fill);
+    fill_char = char_int(check_type(fill, obj_CharacterClass));
 
     res = alloc_unicode_string(len);
 

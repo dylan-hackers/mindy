@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.18 1994/10/05 21:02:28 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.19 1994/11/29 06:43:03 wlott Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -409,7 +409,7 @@ static void push_value(struct thread *thread, int arg)
     if (value != obj_Unbound)
 	*thread->sp++ = value;
     else
-	error("Unbound variable: %=", var->name);
+	error("Unbound variable: %s", var->name);
 }
 
 static void op_push_value_immed(int byte, struct thread *thread)
@@ -440,7 +440,7 @@ static void push_function(struct thread *thread, int arg)
 	    break;
 	}
 	else if (value == obj_Unbound)
-	    error("Unbound variable: %=", var->name);
+	    error("Unbound variable: %s", var->name);
 	else {
 	    var->function = func_No;
 	    type_error(value, obj_FunctionClass);

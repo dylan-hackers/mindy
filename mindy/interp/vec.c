@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.12 1994/11/06 20:01:33 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.13 1994/11/29 06:43:09 wlott Exp $
 *
 * This file implements vectors.
 *
@@ -116,9 +116,7 @@ static obj_t dylan_vec_make(obj_t class, obj_t size, obj_t fill)
     int len;
     obj_t *ptr;
 
-    if (!instancep(size, obj_FixnumClass))
-	error("Bogus size: for make %=: %=", class, size);
-    len = fixnum_value(size);
+    len = fixnum_value(check_type(size, obj_FixnumClass));
 
     if (len < 0)
 	error("Bogus size: for make %=: %=", class, size);
@@ -135,20 +133,24 @@ static obj_t dylan_vec_make(obj_t class, obj_t size, obj_t fill)
 static obj_t dylan_sovec_fill(obj_t /* <simple-object-vector> */ vector,
 			      obj_t value, obj_t first, obj_t last)
 {
-    int start = fixnum_value(first), end = fixnum_value(last);
+    int start = fixnum_value(check_type(first, obj_FixnumClass));
+    int end;
     int size = SOVEC(vector)->length;
     obj_t *ptr;
 
-    if (!instancep(first, obj_IntegerClass) || start < 0)
+    if (start < 0)
 	error("Bogus start: for fill! %=: %=", vector, first);
 
     if (last == obj_Unbound)
 	end = size;
-    else if (!instancep(last, obj_IntegerClass) || end > size)
-	error("Bogus end: for fill! %=: %=", vector, last);
+    else {
+	end = fixnum_value(check_type(last, obj_FixnumClass));
+	if (end > size)
+	    error("Bogus end: for fill! %=: %=", vector, last);
+    }
 
     if (start > end)
-	error("Bogus range for fill! %=: %= to %=", vector,
+	error("Bogus range for fill! %=: %d to %d", vector,
 	      make_fixnum(start), make_fixnum(end));
     
     for (ptr = SOVEC(vector)->contents + start; start < end; start++)
@@ -159,21 +161,26 @@ static obj_t dylan_sovec_fill(obj_t /* <simple-object-vector> */ vector,
 static obj_t dylan_sovec_copy(obj_t /* <simple-object-vector> */ vector,
 			      obj_t first, obj_t last)
 {
-    int start = fixnum_value(first), end = fixnum_value(last);
+    int start = fixnum_value(check_type(first, obj_FixnumClass));
+    int end;
     int size = SOVEC(vector)->length;
+    obj_t *ptr;
 
-    if (!instancep(first, obj_IntegerClass) || start < 0)
+    if (start < 0)
 	error("Bogus start: for copy-sequence %=: %=", vector, first);
 
     if (last == obj_Unbound)
 	end = size;
-    else if (!instancep(last, obj_IntegerClass) || end > size)
-	error("Bogus end: for copy-sequence %=: %=", vector, last);
+    else {
+	end = fixnum_value(check_type(last, obj_FixnumClass));
+	if (end > size)
+	    error("Bogus end: for copy-sequence %=: %=", vector, last);
+    }
 
     if (start > end)
-	error("Bogus range for copy-sequence %=: %= to %=", vector,
+	error("Bogus range for copy-sequence %=: %d to %d", vector,
 	      make_fixnum(start), make_fixnum(end));
-    
+
     return make_vector(end - start, SOVEC(vector)->contents + start);
 }
 
@@ -230,19 +237,19 @@ static obj_t dylan_bytevec_size(obj_t bytevec)
 static obj_t dylan_byte_vec_make(obj_t class, obj_t size, obj_t fill)
 {
     obj_t res;
-    int len;
+    int len, byte;
 
-    if (!obj_is_fixnum(size) || fixnum_value(size) < 0)
-	error("Bogus size: for make %=: %=", class, size);
-    len = fixnum_value(size);
+    len = fixnum_value(check_type(size, obj_FixnumClass));
+    if (len < 0)
+	error("Bogus size: for make %=: %d", class, size);
 
-    if (!obj_is_fixnum(fill) || fixnum_value(fill) < 0
-	  || fixnum_value(fill) > 255)
-	error("Bogus fill: for make %=: %=", class, fill);
+    byte = fixnum_value(check_type(fill, obj_FixnumClass));
+    if (byte < 0 || byte > 255)
+	error("Bogus fill: for make %=: %d", class, fill);
 
     res = make_byte_vector(len, NULL);
 
-    memset(BYTEVEC(res)->contents, fixnum_value(fill), len);
+    memset(BYTEVEC(res)->contents, byte, len);
 
     return res;
 }

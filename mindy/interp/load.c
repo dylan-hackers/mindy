@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.26 1994/11/28 07:54:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.27 1994/11/29 06:43:04 wlott Exp $
 *
 * This file implements the loader.
 *
@@ -247,7 +247,7 @@ static void check_size(struct load_info *info, int desired, char *what)
     int bytes = read_byte(info);
 
     if (bytes != desired)
-	error("Wrong sized %s in %s: should be %= but is %=",
+	error("Wrong sized %s in %s: should be %d but is %d",
 	      make_byte_string(what), make_byte_string(info->name),
 	      make_fixnum(desired), make_fixnum(bytes));
 }
@@ -800,7 +800,7 @@ static obj_t fop_define_class(struct load_info *info)
     var = find_variable(info->module, name, FALSE, TRUE);
 
     if (var->value != obj_Unbound)
-	error("Can't both define class and define method %=", name);
+	error("Can't both define class and define method %s", name);
 
     var->value = make_defined_class(name, info->library);
 
@@ -1043,7 +1043,7 @@ void load_library(obj_t name)
 	ptr++;
     } while (c != '\0');
 
-    error("Can't find library %=", name);
+    error("Can't find library %s", name);
 }
 
 
