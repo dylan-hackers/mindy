@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.44 1996/03/18 14:47:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.45 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -43,17 +43,66 @@ end class;
 ///
 /// ### vector could be limited to type-union(<ctype>, one-of(#t, #f));
 ///
+define class <memo-entry> (<object>)
+  slot memo-type1 :: false-or(<ctype>) = #f;
+  slot memo-type2 :: false-or(<ctype>) = #f;
+  slot memo-value :: type-union(<ctype>, <boolean>) = #f;
+  slot memo-precise :: <boolean> = #f;
+end class <memo-entry>;
+define sealed domain make(singleton(<memo-entry>));
+define sealed domain initialize(<memo-entry>);
+
+define constant $null-memo-entry :: <memo-entry> = make(<memo-entry>);
+
+#if (mindy)
+
 define constant <memo-table> = <simple-object-vector>;
+
+#else
+
+define sealed class <memo-table> (<vector>)
+  sealed slot %element :: <memo-entry>,
+    init-value: type-union(), init-keyword: fill:,
+    sizer: size, size-init-value: 0, size-init-keyword: size:;
+end class <memo-table>;
+
+define sealed domain make (singleton(<memo-table>));
+define sealed domain initialize (<memo-table>);
+
+define sealed inline method element
+    (vec :: <memo-table>, index :: <integer>, #key default = $not-supplied)
+ => (element :: <memo-entry>);
+  if (index >= 0 & index < vec.size)
+    %element(vec, index);
+  elseif (default == $not-supplied)
+    error("Undefined element: %s[%s]", vec, index);
+  else
+    default;
+  end;
+end;
+
+define sealed inline method element-setter
+    (new-value :: <memo-entry>, vec :: <memo-table>, index :: <integer>)
+    => new-value :: <memo-entry>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index) := new-value;
+  else
+    error("Undefined element: %s[%s]", vec, index);
+  end;
+end;
+
+#end
 
 /// log2 of the the number of entries in the table.
 define constant memo2-bits = 9;
 
 // mask which gives a vector index from a large hash value.  Low zeros align to
 // start of an entry.
-define constant memo2-mask = ash(1, memo2-bits);
+define constant memo2-size = ash(1, memo2-bits);
+define constant memo2-mask = memo2-size - 1;
 
 define constant make-memo2-table = method ()
-  make(<memo-table>, size: ash(4, memo2-bits), fill: #f);
+  make(<memo-table>, size: memo2-size, fill: $null-memo-entry);
 end method;
 
 // some hit rate info, for tuning.
@@ -64,28 +113,42 @@ define variable *memo2-probes* :: <integer> = 0;
 // are returned.  If not, we return #"miss" and #f;
 define constant memo2-lookup = method
    (type1 :: <ctype>, type2 :: <ctype>, table :: <memo-table>)
-    => (value :: type-union(<ctype>, one-of(#f, #t, #"miss")),
+    => (value :: type-union(<ctype>, <boolean>, singleton(#"miss")),
         precise :: <boolean>);
 
   *memo2-probes* := *memo2-probes* + 1;
-  let base = modulo(type1.type-hash - type2.type-hash, memo2-mask) * 4;
-  if (table[base] == type1 & table[base + 1] == type2)
+#if (mindy)
+  let base = modulo(type1.type-hash - type2.type-hash, memo2-size);
+#else
+  let base = logand(type1.type-hash - type2.type-hash, memo2-mask);
+#end
+  let entry :: <memo-entry> = table[base];
+  if (entry.memo-type1 == type1 & entry.memo-type2 == type2)
     *memo2-hits* := *memo2-hits* + 1;
-    values(table[base + 2], table[base + 3]);
+    values(entry.memo-value, entry.memo-precise);
   else
     values(#"miss", #f);
   end;
 end method;
 
 define constant memo2-enter = method
-   (type1 :: <ctype>, type2 :: <ctype>, result :: type-union(<ctype>, <boolean>),
+   (type1 :: <ctype>, type2 :: <ctype>,
+    result :: type-union(<ctype>, <boolean>),
     precise :: <boolean>, table :: <memo-table>)
-
-  let base = modulo(type1.type-hash - type2.type-hash, memo2-mask) * 4;
-  table[base] := type1;
-  table[base + 1] := type2;
-  table[base + 2] := result;
-  table[base + 3] := precise;
+#if (mindy)  
+  let base = modulo(type1.type-hash - type2.type-hash, memo2-size);
+#else
+  let base = logand(type1.type-hash - type2.type-hash, memo2-mask);
+#end
+  let entry :: <memo-entry> = table[base];
+  if (entry == $null-memo-entry)
+    entry := make(<memo-entry>);
+    table[base] := entry;
+  end if;
+  entry.memo-type1 := type1;
+  entry.memo-type2 := type2;
+  entry.memo-value := result;
+  entry.memo-precise := precise;
 end method;
  
 
