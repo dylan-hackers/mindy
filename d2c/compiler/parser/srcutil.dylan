@@ -1,5 +1,5 @@
 Module: source-utilities
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/srcutil.dylan,v 1.3 2001/09/17 11:47:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/srcutil.dylan,v 1.4 2003/02/16 15:55:41 andreas Exp $
 copyright: see below
 
 
@@ -162,7 +162,6 @@ define sealed method describe-source-location
 	   (srcloc.macro-srcloc-source.source-location, stream);
        end method);
 end method describe-source-location;
-
 
 
 // source-location-before -- exported.
