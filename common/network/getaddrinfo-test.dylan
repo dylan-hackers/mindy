@@ -2,8 +2,6 @@ module: getaddrinfo-test
 use-libraries: common-dylan, io, network, melange-support
 use-modules: common-dylan, common-extensions, format, format-out, standard-io, network-internal, melange-support, byte-vector, print, introspection
 
-define constant $null-pointer = as(<statically-typed-pointer>, 0);
-
 define class <network-address> (<object>)
   slot data :: <byte-vector>, required-init-keyword: data:;
 end class <network-address>;
