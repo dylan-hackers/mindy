@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.13 1995/05/18 20:07:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.14 1995/06/07 15:23:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -172,3 +172,10 @@ define class <component> (<block-region-mixin>)
   slot all-function-regions :: <stretchy-vector>,
     init-function: curry(make, <stretchy-vector>);
 end;
+
+define method add-to-queue
+    (component :: <component>, queueable :: <queueable-mixin>) => ();
+  queueable.queue-next := component.reoptimize-queue;
+  component.reoptimize-queue := queueable;
+end;
+
