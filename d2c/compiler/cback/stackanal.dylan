@@ -104,6 +104,14 @@ define method analize
 end;
 
 define method analize
+    (op :: <mv-call>, want :: <list>, state :: <state>)
+    => want :: <list>;
+  // We don't need to worry about dinking the depth if the result is a cluster
+  // because there will be a cluster in the arguments.
+  analize(op.depends-on, want, state);
+end;
+
+define method analize
     (op :: <abstract-variable>, want :: <list>, state :: <state>)
     => want :: <list>;
   if (instance?(op.var-info, <values-cluster-info>))
