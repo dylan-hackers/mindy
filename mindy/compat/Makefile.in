@@ -85,7 +85,7 @@ clean:
 realclean:
 	rm -f ${OBJS} libcompat.a Makefile *~ \#* core
 	
-install:
+install: libcompat.a
 
 # It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
