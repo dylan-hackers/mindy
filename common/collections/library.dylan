@@ -9,9 +9,6 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define library collections
   use Dylan;
-  use common-dylan,
-    import: { byte-vector },
-    export: all;
   use table-extensions,
     import: { table-extensions },
     export: all;
@@ -93,7 +90,6 @@ define module collections-internals
   use Dylan;
   use Extensions;
   use machine-words;
-  use byte-vector;
   use bit-set;
   use bit-vector;
   use collectors;
