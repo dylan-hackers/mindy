@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.1 1994/03/24 21:49:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.2 1994/03/25 02:34:03 wlott Exp $
 *
 * This file does whatever.
 *
@@ -399,7 +399,9 @@ static void op_call_immed(int byte, struct thread *thread)
 
 static void op_call(int byte, struct thread *thread)
 {
-    invoke(thread, decode_arg(thread));
+    int nargs = decode_arg(thread);
+    thread->pc++;
+    invoke(thread, nargs);
 }
 
 static void interpret_byte(struct thread *thread)
@@ -480,7 +482,7 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 	    *old_sp = vals[0];
 	thread->sp = old_sp + 1;
     }
-    else if (opcode = op_CALL_FOR_MANY)
+    else if (opcode == op_CALL_FOR_MANY)
 	canonicalize_values(thread, old_sp, vals);
     else
 	lose("Strange call opcode: 0x~02x", opcode);

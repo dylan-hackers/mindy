@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.1 1994/03/24 21:49:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.2 1994/03/25 02:35:28 wlott Exp $
 *
 * This file does whatever.
 *
@@ -98,6 +98,23 @@ static void emit_op_and_arg(struct component *component, int op, unsigned arg)
 	    emit_byte(component, 0xff);
 	    emit_4bytes(component, arg);
 	}
+    }
+}
+
+static void emit_call_op_and_arg(struct component *component,
+				 int op, unsigned arg)
+{
+    if (arg < 0xf)
+	emit_byte(component, op|arg);
+    else {
+	emit_byte(component, op|0xf);
+	if (arg < 0xff)
+	    emit_byte(component, arg);
+	else {
+	    emit_byte(component, 0xff);
+	    emit_4bytes(component, arg);
+	}
+	emit_byte(component, op);
     }
 }
 
@@ -375,13 +392,13 @@ static void compile_call(struct call_expr *expr,
     if (want == TAIL)
 	emit_op_and_arg(component, op_CALL_TAIL, nargs);
     else if (want == FUNC) {
-	emit_op_and_arg(component, op_CALL_FOR_SINGLE, nargs);
+	emit_call_op_and_arg(component, op_CALL_FOR_SINGLE, nargs);
 	emit_op(component, op_CHECK_TYPE_FUNCTION);
     }
     else if (want == SINGLE)
-	emit_op_and_arg(component, op_CALL_FOR_SINGLE, nargs);
+	emit_call_op_and_arg(component, op_CALL_FOR_SINGLE, nargs);
     else {
-	emit_op_and_arg(component, op_CALL_FOR_MANY, nargs);
+	emit_call_op_and_arg(component, op_CALL_FOR_MANY, nargs);
 	emit_wants(component, want);
     }
 }
@@ -668,7 +685,7 @@ static void compile_handler_constituent(struct handler_constituent *c,
 			find_variable(component, id(symbol("pop-handler")),
 				      FALSE));
 	emit_op(component, op_VARIABLE_FUNCTION);
-	emit_op_and_arg(component, op_CALL_FOR_MANY, 0);
+	emit_call_op_and_arg(component, op_CALL_FOR_MANY, 0);
 	emit_wants(component, make_want(0, FALSE));
     }
 }
