@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.38 2000/10/21 00:49:52 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.39 2000/10/21 01:36:02 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -238,7 +238,7 @@ define method parse-lid (state :: <main-unit-state>) => ();
   let source = make(<source-file>, name: state.unit-lid-file);
   let (header, start-line, start-posn) = parse-header(source);
 
-  // We support to types of lid files: old "Gwydion LID" and new
+  // We support two types of lid files: old "Gwydion LID" and new
   // "official LID". The Gwydion format had a series of file names after
   // the header; the new format has a 'Files:' keyword in the header. We
   // grab the keyword value, transform the filenames in a vaguely appropriate
@@ -246,10 +246,15 @@ define method parse-lid (state :: <main-unit-state>) => ();
   // formats. See translate-abstract-filename for details of the new format.
   let contents = source.contents;
   let end-posn = contents.size;
+
+  // Common-Dylan header-file style
   let files = map-as(<stretchy-vector>,
 		     translate-abstract-filename,
 		     split-at-whitespace(element(header, #"files",
 						 default: "")));
+
+  let ofiles = split-at-whitespace(element(header, #"c-object-files",
+					   default: ""));
 
   local
     method repeat (posn :: <integer>)
@@ -303,7 +308,7 @@ define method parse-lid (state :: <main-unit-state>) => ();
   repeat(start-posn);
 
   state.unit-header := header;
-  state.unit-files := files;
+  state.unit-files := concatenate(files, ofiles);
 end method parse-lid;
 // Considers anything with an ASCII value less than 32 (' ') to be
 // whitespace.  This includes control characters as well as what we
