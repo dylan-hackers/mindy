@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.11 1994/11/28 04:55:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.12 1994/11/30 16:16:06 rgs Exp $
 *
 * This file implements classes.
 *
@@ -43,6 +43,7 @@
 #include "print.h"
 #include "class.h"
 #include "extern.h"
+#include "instance.h"
 
 obj_t obj_ClassClass = 0;
 obj_t obj_StaticTypeClass = NULL; /* type of static pointer classes */
@@ -267,6 +268,8 @@ void setup_class_supers(obj_t class, obj_t supers)
 	    
 	if (object_class(super) == obj_StaticTypeClass)
 	    some_static = TRUE;
+	else if (object_class(super) == obj_DefinedClassClass)
+	    all_static = all_static && (DC(super)->all_slots == obj_Nil);
 	else
 	    all_static = all_static && CLASS(super)->abstract_p;
     }
