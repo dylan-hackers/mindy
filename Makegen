@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.19 2002/02/25 19:45:15 brent Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.20 2002/02/28 14:58:43 andreas Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -99,8 +99,8 @@ else {
     if ($enable_d2c) {
 	&compile_subdirs("d2c");
     }
-    &compile_subdirs("tests");
     &compile_subdirs("common", "tools");
+    &compile_subdirs("tests");
     if($enable_duim ne 'no') {
 	&compile_subdirs("duim");
     }
