@@ -30,6 +30,7 @@ MINDY = mindy
 OBJS = \
 	parser-exports.dbc \
 	tokenize.dbc \
+	srcutil.dbc \
 	lexer.dbc \
 	fragments.dbc \
 	parse-tree.dbc \
