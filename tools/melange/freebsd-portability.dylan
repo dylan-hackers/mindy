@@ -64,6 +64,14 @@ define constant $default-defines
 //    "__CONSTVALUE", "",
 //    "__CONSTVALUE2", "",
 
+      // Parameterized macros which remove various GCC extensions from our
+      // source code. The last item in the list is the right-hand side of
+      // the define; all the items preceding it are named parameters.
+      "__attribute__", #(#("x"), ""), 
+      "__signed__", "", 
+      "__inline__", "",
+
+
       "unix", "",
       "i386", "",
       "__FreeBSD__", "2",
