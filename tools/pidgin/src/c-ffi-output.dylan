@@ -192,7 +192,7 @@ define method c-output
         if (pointer)
           ctype := output-name(ctype.c-typedef-name, class: #t, pointer: #t);
         else
-            ctype := register-exported-name(output-name(ctype.c-typedef-name, class: #t));
+            ctype := output-name(ctype.c-typedef-name, class: #t);
         end if;
       else
         ctype := c-output(ctype);
@@ -249,23 +249,18 @@ define method c-output
   concatenate("define constant ", register-exported-name(output-name(decl.c-define-name)), " :: <string> = ", decl.c-string-define-value, ";\n");
 end method;
 
-// Counter so defines aren't equal. Dunno if this is necessary, but...
-define variable counter :: <integer> = 0;
-
 define method c-output
     (decl :: <c-unknown-define>)
  => (result :: <string>)
-  let result :: <string> = concatenate("define constant ", register-exported-name(output-name(decl.c-define-name)), " = ", integer-to-string(counter), ";\n");
-  counter := counter + 1;
-  result;
+  // Ignore this.
+  "";
 end method;
 
 define method c-output
     (decl :: <c-empty-define>)
  => (result :: <string>)
-  let result :: <string> = concatenate("define constant ", register-exported-name(output-name(decl.c-define-name)), " = ", integer-to-string(counter), ";\n");
-  counter := counter + 1;
-  result;
+  // Ignore this.
+  "";
 end method;
 
 // Typedefs.
