@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.8 1998/08/02 20:35:45 emk Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.9 1998/08/07 19:10:17 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -62,29 +62,42 @@ fi
 AC_CANONICAL_SYSTEM		# Find the system type
 AC_ARG_PROGRAM			# Provide support for name prefixes
 
-function map_system () {
-    case $target in
-        *pc-linux-gnu) echo x86-linux ;;
-        hppa*-hp-hpux*) echo hppa-hpux ;;
-        sparc*-solaris*) echo sparc-solaris ;;
-        i*86-pc-cygwin32) echo x86-win32-gcc ;;
-        i*86-pc-none) echo x86-win32-vc ;;
-        *) echo unknown-unix ;;
-    esac
-}
-
 AC_MSG_CHECKING(d2c build system type)
-d2c_build=`map_system $build`
+case $build in
+    *pc-linux-gnu) d2c_build=x86-linux ;;
+    hppa*-hp-hpux*) d2c_build=hppa-hpux ;;
+    sparc*-solaris*) d2c_build=sparc-solaris ;;
+    i*86-*-freebsd*) d2c_build=x86-freebsd ;;
+    i*86-pc-cygwin32) d2c_build=x86-win32-gcc ;;
+    i*86-pc-none) echo d2c_build=x86-win32-vc ;;
+    *) d2c_build=unknown-unix ;;
+esac
 AC_MSG_RESULT($d2c_build)
 AC_SUBST(d2c_build)
 
 AC_MSG_CHECKING(d2c host system type)
-d2c_host=`map_system $host`
+case $host in
+    *pc-linux-gnu) d2c_host=x86-linux ;;
+    hppa*-hp-hpux*) d2c_host=hppa-hpux ;;
+    sparc*-solaris*) d2c_host=sparc-solaris ;;
+    i*86-*-freebsd*) d2c_host=x86-freebsd ;;
+    i*86-pc-cygwin32) d2c_host=x86-win32-gcc ;;
+    i*86-pc-none) echo d2c_host=x86-win32-vc ;;
+    *) d2c_host=unknown-unix ;;
+esac
 AC_MSG_RESULT($d2c_host)
 AC_SUBST(d2c_host)
 
 AC_MSG_CHECKING(d2c target system type)
-d2c_target=`map_system $target`
+case $target in
+    *pc-linux-gnu) d2c_target=x86-linux ;;
+    hppa*-hp-hpux*) d2c_target=hppa-hpux ;;
+    sparc*-solaris*) d2c_target=sparc-solaris ;;
+    i*86-*-freebsd*) d2c_target=x86-freebsd ;;
+    i*86-pc-cygwin32) d2c_target=x86-win32-gcc ;;
+    i*86-pc-none) echo d2c_target=x86-win32-vc ;;
+    *) d2c_target=unknown-unix ;;
+esac
 AC_MSG_RESULT($d2c_target)
 AC_SUBST(d2c_target)
 
