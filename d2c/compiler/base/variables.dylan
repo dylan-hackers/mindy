@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.21 1996/01/25 00:25:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.22 1996/01/27 20:10:36 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,7 +49,7 @@ define generic library-name (lib :: <library>) => name :: <symbol>;
 
 // <module> -- exported.
 //
-define class <module> (<object>)
+define class <module> (<identity-preserving-mixin>)
   //
   // The name of this module, as a symbol.
   slot module-name :: <symbol>, required-init-keyword: name:;
