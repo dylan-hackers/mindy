@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.50 1996/01/14 18:05:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.51 1996/02/09 20:39:44 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -152,7 +152,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
   let rest-temp
     = if (rest)
 	if (rest.param-type)
-	  compiler-error("let #rest variables can't have types");
+	  compiler-error-location(form, "let #rest variables can't have types");
 	end;
 	make-local-var(builder, rest.param-name.token-symbol, object-ctype());
       end;
@@ -370,7 +370,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <varref>,
 		     fer-convert-defn-ref(builder, lexenv.lexenv-policy,
 					  source, defn);
 		   else
-		     compiler-warning("Undefined variable: %s", name);
+		     compiler-warning-location(form, "Undefined variable: %s",
+		     			       name);
 		     make-error-operation
 		       (builder, lexenv.lexenv-policy, source,
 			"Undefined variable: %s",
@@ -420,7 +421,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
       let var = find-variable(name);
       let defn = var & var.variable-definition;
       if (~defn)
-	compiler-warning("Undefined variable: %s", name);
+	compiler-warning-location(place, "Undefined variable: %s", name);
 	deliver-result
 	  (builder, lexenv.lexenv-policy, source, want, datum,
 	   make-error-operation
@@ -430,8 +431,9 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
 		(builder,
 		 as(<ct-value>, format-to-string("%s", name)))));
       elseif (~instance?(defn, <variable-definition>))
-	compiler-warning("Attept to assign constant module variable: %s",
-			 name);
+	compiler-warning-location(
+	  place, "Attept to assign constant module variable: %s",
+	  name);
 	deliver-result
 	  (builder, lexenv.lexenv-policy, source, want, datum,
 	   make-error-operation
@@ -614,10 +616,12 @@ define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
     method repeat (op-ptr :: <list>, index :: <integer>, types :: <list>)
       if (op-ptr == #())
 	unless (types == #() | types.head == #"rest")
-	  compiler-error("Too few arguments to %%primitive %s", name);
+	  compiler-error-location(
+	    form, "Too few arguments to %%primitive %s", name);
 	end;
       elseif (types == #())
-	compiler-error("Too many arguments to %%primitive %s", name);
+	compiler-error-location(
+	  form, "Too many arguments to %%primitive %s", name);
       else
 	let (type, remaining-types)
 	  = if (types.head == #"rest")
@@ -757,7 +761,7 @@ define method fer-convert-method
   let rest-var
     = if (rest)
 	if (rest.param-type)
-	  compiler-error("#rest parameters can't have a type");
+	  compiler-error-location(meth, "#rest parameters can't have a type");
 	end;
 	let name = rest.param-name;
 	let var = make-lexical-var(builder, name.token-symbol, source,
