@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.18 2001/02/08 22:27:39 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.19 2001/02/25 19:40:45 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -279,7 +279,7 @@ end;
 
 // Lots of places we emit ``useful'' information inside comments.  But if the
 // useful information contains a ``*/'' it will confuse the C compiler.  So
-// we use this routine to clobber all occurences of */ before actually writing
+// we use this routine to clobber all occurrences of */ before actually writing
 // the comment. We also clobber ``/*'' because some C compilers warn about nested
 // comments if they encounter it.
 // 
@@ -589,11 +589,11 @@ end;
 
 // Emitting prototypes
 
-// Write out a C prototye for an object with the given name.  More
+// Write out a C prototype for an object with the given name.  More
 // information about the object will be provided by the "info"
 // parameter.  The exact behavior depends upon "info"s type.
 //
-define method maybe-emit-prototype
+define function maybe-emit-prototype
     (name :: <byte-string>, info :: <object>, file :: <file-state>)
     => ();
   unless (element(file.file-prototypes-exist-for, name,
@@ -840,7 +840,7 @@ define constant $function-info-slots
 	 function-info-result-type, result-type:, #f);
 
 // If the function name is unique, then we suffix with _FUN so that a constant
-// method definition can a value distinct from the underlying main entry.
+// method definition can be a value distinct from the underlying main entry.
 //
 define method main-entry-c-name
     (info :: <function-info>, file :: <file-state>)
@@ -937,7 +937,7 @@ define method entry-point-c-name (entry :: <ct-entry-point>)
     => res :: <string>;
   let info = entry.ct-entry-point-for.info;
   unless (info)
-    error("Too late to be making an info for %=", entry.ct-entry-point-for);
+    error("Too late for making an info for %=", entry.ct-entry-point-for);
   end unless;
   let name
     = select (entry.ct-entry-point-kind)
@@ -947,7 +947,7 @@ define method entry-point-c-name (entry :: <ct-entry-point>)
 	#"callback" => info.function-info-callback-entry-c-name;
       end select;
   unless (name)
-    error("Too late to be picking a name for %=", entry);
+    error("Too late for picking a name for %=", entry);
   end unless;
   name;
 end method;
