@@ -416,7 +416,8 @@ define method process-parse-state
   let (#rest opts) = merge-container-options(state.container-options);
   for (decl in decls) apply(apply-options, decl, opts) end for;
 
-  let load-string = write-file-load(state.object-files, decls, out-stream);
+  let load-string = write-file-load(vector(state.include-file),
+				    state.object-files, decls, out-stream);
   write-mindy-includes(state.mindy-include-file, decls);
   do(rcurry(write-declaration, load-string, out-stream), decls);
 end method process-parse-state;
@@ -466,8 +467,18 @@ define method main (program, #rest args)
       verbose := #t;
     elseif (is-prefix?("-I", arg))
       push-last(include-path, copy-sequence(arg, start: 2));
+    elseif (is-prefix?("-T", arg))
+      // This should allow specification of arbitrary targets, just in case
+      //    I get lazy, and forget to add explicit switches for them.  It's
+      //    certainly not the preferred way to do this.
+      melange-target := as(<symbol>, copy-sequence(arg, start:2));
     elseif (arg.first == '-')
-      error("Undefined switch -- \"%s\"", arg);
+      select (arg by \=)
+	"-mindy"   => melange-target := #"mindy"; // This is currently the
+	                                          //    default.
+	"-d2c"     => melange-target := #"d2c";
+	otherwise => error("Undefined switch -- \"%s\"", arg);
+      end select;
     else
       case
 	in-file & out-file =>
