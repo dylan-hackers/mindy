@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.14 2003/01/29 14:39:25 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.15 2003/10/01 18:05:18 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -340,7 +340,11 @@ define method build-executable (state :: <single-file-mode-state>) => ();
   let exec-name = concatenate(state.unit-name, state.unit-target.executable-filename-suffix);
 
   let link-string-intermediate
-    = format-to-string(state.unit-target.link-executable-command,
+    = format-to-string(if(state.unit-link-static)
+                         state.unit-target.link-executable-command
+                       else
+                         state.unit-target.link-shared-executable-command
+                       end,
                        exec-name,
                        concatenate(objects, dash-small-ells," "),
                        linker-args);
