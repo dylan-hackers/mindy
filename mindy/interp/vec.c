@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.16 1996/02/26 23:00:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.17 1996/03/07 17:44:01 nkramer Exp $
 *
 * This file implements vectors.
 *
@@ -52,6 +52,7 @@
 
 /* Simple object vectors. */
 
+obj_t obj_SimpleVectorClass = NULL;
 obj_t obj_SimpleObjectVectorClass = NULL;
 
 obj_t make_vector(int length, obj_t *contents)
@@ -312,6 +313,7 @@ static obj_t trans_bytevec(obj_t v)
 
 void make_vec_classes(void)
 {
+    obj_SimpleVectorClass = make_abstract_class(TRUE);
     obj_SimpleObjectVectorClass = make_builtin_class(scav_sovec, trans_sovec);
     obj_ByteVectorClass = make_builtin_class(scav_bytevec, trans_bytevec);
 
@@ -321,8 +323,10 @@ void make_vec_classes(void)
 
 void init_vec_classes(void)
 {
-    init_builtin_class(obj_SimpleObjectVectorClass, "<simple-object-vector>",
+    init_builtin_class(obj_SimpleVectorClass, "<simple-vector>",
 		       obj_VectorClass, NULL);
+    init_builtin_class(obj_SimpleObjectVectorClass, "<simple-object-vector>",
+		       obj_SimpleVectorClass, NULL);
     def_printer(obj_SimpleObjectVectorClass, print_sovec);
     init_builtin_class(obj_ByteVectorClass, "<byte-vector>",
 		       obj_VectorClass, NULL);
@@ -349,6 +353,10 @@ void init_vec_functions(void)
 		  FALSE, obj_False, FALSE, obj_FixnumClass,
 		  dylan_sovec_size);
     define_method("make", list1(singleton(obj_VectorClass)), FALSE,
+		  list2(pair(symbol("size"), make_fixnum(0)),
+			pair(symbol("fill"), obj_False)),
+		  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
+    define_method("make", list1(singleton(obj_SimpleVectorClass)), FALSE,
 		  list2(pair(symbol("size"), make_fixnum(0)),
 			pair(symbol("fill"), obj_False)),
 		  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
