@@ -251,9 +251,6 @@ define transcendentals function-test exp ()
 end function-test exp;
 
 define transcendentals function-test logn ()
-/*
- * TODO:  We don't have a logn
- *
   for( b = 1.414 then b * 3, while: b < 100 )
     for(val = sqrt(b) then val * sqrt(b),
 	res = .5 then res + .5,
@@ -264,7 +261,6 @@ define transcendentals function-test logn ()
 	 );
     end for;
   end for;
- */
 end function-test logn;
 
 define transcendentals function-test \^ ()
