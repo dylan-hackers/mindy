@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.10 1994/11/10 20:22:19 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.11 1994/11/28 07:16:16 wlott Exp $
 *
 * This file is the main driver.
 *
@@ -49,7 +49,6 @@ struct body *Program = NULL;
 
 struct symbol *LibraryName = NULL;
 struct symbol *ModuleName = NULL;
-boolean ParseOnly = FALSE;
 boolean GiveWarnings = TRUE;
 
 char *current_file = "<stdin>";
@@ -126,8 +125,7 @@ void warn(va_alist) va_dcl
 static void usage(void)
 {
     fprintf(stderr, "usage: mindycomp [-d[p][e]] [-l library-name] "
-	    "[-o object-name] [-p] source-name\n");
-    fprintf(stderr, "or:    mindycomp -x source-name [args ...]\n");
+	    "[-o object-name] source-name\n");
     exit(1);
 }
 
@@ -140,21 +138,9 @@ static void set_module(char *value)
     ModuleName = symbol(value);
 }
 
-static int case_insensitive_equal (const char *s1, const char *s2)
-{
-    char *p1=s1;
-    char *p2=s2;
-    for ( ; *p1 != 0 && *p2 != 0; p1++, p2++) {
-	if (toupper(*p1) != toupper(*p2)) {
-	    return 0;
-	}
-    }
-    return (*p1 == *p2);
-}
-
 static void set_library(char *value)
 {
-    if (LibraryName && !case_insensitive_equal(LibraryName->name, value)) {
+    if (LibraryName && strcasecmp(LibraryName->name, value)) {
 	fprintf(stderr,
 		"Library name specified on the command line differs from\n"
 		"the library name specified in the file.\n");
@@ -272,18 +258,6 @@ void main(int argc, char *argv[])
 		    LibraryName = symbol(*argv);
 		break;
 
-	      case 'p':
-		if (ParseOnly) {
-		    fprintf(stderr, "-p can only be used once.\n");
-		    usage();
-		}
-		if (arg[2] != '\0') {
-		    fprintf(stderr, "noise after -p switch: %s\n", arg+2);
-		    usage();
-		}
-		ParseOnly = TRUE;
-		break;
-
 	      case 'q':
 		GiveWarnings = FALSE;
 		break;
@@ -335,16 +309,13 @@ void main(int argc, char *argv[])
 	exit(1);
 
     /* Run environment analysis */
-    if (!ParseOnly)
-	environment_analysis(Program);
+    environment_analysis(Program);
 
     if (nerrors != 0)
 	exit(1);
 
     if (output_name == NULL)
-	output_name = make_output_name(source_name,
-				       ParseOnly ? ".parse" : ".dbc");
-
+	output_name = make_output_name(source_name, ".dbc");
 
     if (strcmp(output_name, "-") == 0)
         file = stdout;
@@ -359,10 +330,7 @@ void main(int argc, char *argv[])
     dump_setup_output(source_name, file);
 
     /* Generate code. */
-    if (ParseOnly)
-	dump_program(Program);
-    else
-	compile(Program);
+    compile(Program);
 
     dump_finalize_output();
 
