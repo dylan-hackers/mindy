@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.36 1996/04/13 21:12:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.37 1996/04/13 23:19:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1022,11 +1022,14 @@ define method layout-slots-for (class :: <cclass>) => ();
       unless (slot-guaranteed-initialized?(slot, slot.slot-introduced-by)
 		| rep.representation-has-bottom-value?)
 	let class = slot.slot-introduced-by;
+	let boolean-ctype = specifier-type(#"<boolean>");
 	let init?-slot = make(<instance-slot-info>,
 			      introduced-by: class,
-			      type: dylan-value(#"<boolean>"),
+			      type: boolean-ctype,
 			      getter: #f,
-			      init-value: make(<literal-false>));
+			      init-value: make(<literal-false>),
+			      slot-representation:
+				pick-representation(boolean-ctype, #"space"));
 	slot.slot-initialized?-slot := init?-slot;
 	//
 	// We have to add it to all the subclasses ourselves because
