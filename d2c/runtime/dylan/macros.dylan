@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.4 1999/03/26 04:14:46 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.5 1999/04/16 14:35:28 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -429,6 +429,9 @@ define macro class-definer
       => make-init-arg({?key}, {?init-arg-options})
     { required keyword ?key:token, #rest ?init-arg-options }
       => make-init-arg({?key}, {required: #t, ?init-arg-options})
+
+    { keyword ?key:token ?equals:token ?:expression, #rest ?init-arg-options }
+      => make-init-arg({?key}, {init-expr: ?expression, ?init-arg-options})
 
   inherited-options:
     { #rest ?all:*, 
