@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.5 1994/12/16 12:16:05 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.6 1994/12/16 16:37:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -445,3 +445,15 @@ define method build-method-body
   push-body(builder, leaf);
   leaf;
 end method;
+
+
+define method make-hairy-method-literal
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     signature :: <signature>, main-entry :: <leaf>)
+ => res :: <leaf>;
+  ignore(policy);
+  make(<hairy-method-literal>,
+       signature: signature,
+       source-location: source,
+       main-entry: main-entry);
+end;
