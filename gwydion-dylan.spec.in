@@ -13,7 +13,7 @@
 Name: gwydion-dylan
 Summary: CMU's Gwydion Dylan development tools
 Version: @VERSION@
-Release: 1.libc@LIBC_VERSION@
+Release: 1
 Copyright: X-style
 Group: Development/Languages/Dylan
 Source0: ftp://berlin.ccc.de/pub/gd/src/gd-@VERSION@.tar.gz
