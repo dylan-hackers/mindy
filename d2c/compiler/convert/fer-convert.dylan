@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.13 1995/03/04 21:54:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.14 1995/03/23 22:04:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -296,7 +296,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <dot>,
     let arg-leaf = fer-convert(builder, form.dot-operand,
 			       make(<lexenv>, inside: lexenv),
 			       #"leaf", #"argument");
-    let fun-leaf = fer-convert(builder, make(<varref>, name: form.dot-name),
+    let fun-leaf = fer-convert(builder, make(<varref>, id: form.dot-name),
 			       make(<lexenv>, inside: lexenv),
 			       #"leaf", #"function");
     deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
@@ -308,14 +308,13 @@ define method fer-convert (builder :: <fer-builder>, form :: <varref>,
 			   lexenv :: <lexenv>, want :: <result-designator>,
 			   datum :: <result-datum>)
     => res :: <result>;
-  let name = form.varref-name;
-  let binding = find-binding(lexenv, name);
+  let id = form.varref-id;
+  let binding = find-binding(lexenv, id);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 if (binding)
 		   binding.binding-var;
 		 else
-		   let var = find-variable(name.token-module,
-					   name.token-symbol);
+		   let var = find-variable(id-name(id));
 		   let defn = var & var.variable-definition;
 		   if (defn)
 		     make-definition-leaf(builder, defn);
@@ -337,14 +336,14 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
     unless (instance?(place, <varref>))
       error("Assignment to complex place didn't get expanded away?");
     end;
-    let name = place.varref-name;
-    let binding = find-binding(lexenv, name);
+    let id = place.varref-id;
+    let binding = find-binding(lexenv, id);
     block (return)
       let (leaf, type-leaf)
 	= if (binding)
 	    values(binding.binding-var, binding.binding-type-var);
 	  else
-	    let var = find-variable(name.token-module, name.token-symbol);
+	    let var = find-variable(id-name(id));
 	    let defn = var & var.variable-definition;
 	    if (~defn)
 	      return(deliver-result
