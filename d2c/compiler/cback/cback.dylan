@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.135 1996/12/02 14:07:39 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.136 1997/02/04 14:39:02 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2885,7 +2885,7 @@ define method c-expr-and-rep (lit :: <literal-integer>,
   let val = lit.literal-value;
   // Can't use stringify, because val is an extended integer.
   values(if (val == ash(as(<extended-integer>, -1),
-			*current-target*.target-integer-length - 1))
+			*current-target*.platform-integer-length - 1))
 	   // Some compilers (gcc) warn about minimum-fixed-integer.  So we
 	   // print it in hex (assuming 2's compliment).
 	   format-to-string("0x%x", -val);
