@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Print library and modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/library.dylan,v 1.1 1996/03/20 00:05:55 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/library.dylan,v 1.2 1996/03/20 05:04:31 wlott Exp $
 
 //======================================================================
 //
@@ -49,12 +49,10 @@ define module format
   use extensions,
     import: {false-or, <general-integer>, <extended-integer>,
 	     $minimum-integer, <byte-character>,
-#if (mindy)
-	     condition-format, 
-#end
+	     condition-format, condition-force-output,
 	     report-condition};
   use streams,
-    import: {<stream>, write, lock-stream, unlock-stream,
+    import: {<stream>, write, lock-stream, unlock-stream, force-output,
 	     <byte-string-output-stream>, string-output-stream-string,
 	     <byte>, <buffer>, copy-into-buffer!,
 	     get-output-buffer, empty-output-buffer, release-output-buffer};
