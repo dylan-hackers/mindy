@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.8 2001/07/24 06:24:13 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.9 2001/07/27 20:55:37 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -305,8 +305,8 @@ define method generic-==-transformer
     end for;
     if (~x-disjoint? & y-disjoint?)
       // If only one of the two arguments is disjoint from all the special
-      // types we know about, we want to put that arugment first.  Doing so
-      // will allow method selection to pick the <object>,<object> method.
+      // types we know about, we want to put that argument first.  Doing so
+      // will allow method selection to pick the <object>, <object> method.
       // We don't just switch to that method ourselves, in case this code
       // becomes inconsistent with the set of methods on \==.
       replace-expression
@@ -403,7 +403,7 @@ define method replace-==-with-instance?-then-==
   let source = assign.source-location;
   let policy = assign.policy;
 
-  let boolean-ctype = specifier-type(#"<boolean>");
+  let boolean-ctype = boolean-ctype();
   let result-temp = make-local-var(builder, #"result", boolean-ctype);
   let instance?-temp = make-local-var(builder, #"temp", boolean-ctype);
   build-assignment
@@ -567,7 +567,7 @@ define method replace-with-functional-==
   let type = make(<direct-instance-ctype>, base-class: class);
   let need-instance? = ~csubtype?(y.derived-type, type);
 
-  let boolean-ctype = specifier-type(#"<boolean>");
+  let boolean-ctype = boolean-ctype();
   let result-temp = make-local-var(builder, #"result", boolean-ctype);
 
   let typed
@@ -611,7 +611,7 @@ end method replace-with-functional-==;
 
 // check-type
 //
-// We transforms calls of check-type where the type is a compile-time constant
+// We transform calls of check-type where the type is a compile-time constant
 // into assignments with a type assertion so the other parts of the compiler
 // can more easily identify the type restriction.
 // 
@@ -633,11 +633,7 @@ define method check-type-transformer
       insert-before(component, assign, builder-result(builder));
       replace-expression(component, dep, checked);
       #t;
-    else
-      #f;
     end;
-  else
-    #f;
   end;
 end;
 //
@@ -738,7 +734,7 @@ define method build-instance?
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      value :: <leaf>, type :: <union-ctype>)
     => res :: <expression>;
-  let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+  let res = make-local-var(builder, #"temp", boolean-ctype());
   local
     method repeat (remaining :: <list>)
       if (remaining == #())
@@ -748,7 +744,7 @@ define method build-instance?
 	let member-type = remaining.head;
 	if (ctypes-intersect?(value.derived-type, member-type))
 	  let temp = make-local-var(builder, #"temp",
-				    specifier-type(#"<boolean>"));
+				    boolean-ctype());
 	  build-assignment(builder, policy, source, temp,
 			   build-instance?(builder, policy, source, value,
 					   member-type));
@@ -782,11 +778,11 @@ define method build-instance?
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      value :: <leaf>, type :: <byte-character-ctype>)
     => res :: <expression>;
-  let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+  let res = make-local-var(builder, #"temp", boolean-ctype());
   let char-ctype = specifier-type(#"<character>");
   let guaranteed-character? = csubtype?(value.derived-type, char-ctype);
   unless (guaranteed-character?)
-    let temp = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+    let temp = make-local-var(builder, #"temp", boolean-ctype());
     build-assignment(builder, policy, source, temp,
 		     build-instance?(builder, policy, source,
 				     value, char-ctype));
@@ -824,7 +820,7 @@ define method build-instance?
      value :: <leaf>, class :: <cclass>, #next next-method)
     => res :: <expression>;
   if (class.sealed?)
-    let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+    let res = make-local-var(builder, #"temp", boolean-ctype());
     if (class == specifier-type(#"<false>"))
       build-assignment
 	(builder, policy, source, res,
@@ -891,7 +887,7 @@ define method build-instance?
 	end;
 	if (test-min?)
 	  let temp = make-local-var(builder, #"temp",
-				    specifier-type(#"<boolean>"));
+				    boolean-ctype());
 	  build-assignment
 	    (builder, policy, source, temp,
 	     make-unknown-call
@@ -907,7 +903,7 @@ define method build-instance?
 	end;
 	if (test-max?)
 	  let temp = make-local-var(builder, #"temp",
-				    specifier-type(#"<boolean>"));
+				    boolean-ctype());
 	  build-assignment
 	    (builder, policy, source, temp,
 	     make-unknown-call
@@ -941,7 +937,7 @@ define method build-instance?
 			 make-literal-constant(builder, remaining.head))));
 	    else
 	      let temp = make-local-var(builder, #"temp",
-					specifier-type(#"<boolean>"));
+					boolean-ctype());
 	      build-assignment
 		(builder, policy, source, temp,
 		 make-unknown-call
@@ -1047,18 +1043,18 @@ define method build-instance?
 	    (builder, ref-dylan-defn(builder, policy, source, #"subtype?"), #f,
 	     list(value, make-literal-constant(builder, type.subclass-of)));
 	end method build-subtype-call;
-  let class-ctype = specifier-type(#"<class>");
+  let class-ctype = class-ctype();
   if (csubtype?(value.derived-type, class-ctype))
     build-subtype-call();
   else
-    let temp = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+    let temp = make-local-var(builder, #"temp", boolean-ctype());
     build-assignment
       (builder, policy, source, temp,
        build-instance?(builder, policy, source, value, class-ctype));
     if (csubtype?(ctype-intersection(value.derived-type, class-ctype), type))
       temp;
     else
-      let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+      let res = make-local-var(builder, #"temp", boolean-ctype());
       build-if-body(builder, policy, source, temp);
       build-assignment(builder, policy, source, res, build-subtype-call());
       build-else(builder, policy, source);
@@ -1510,21 +1506,21 @@ define-transformer(#"do", #(#"<function>", #"<sequence>"), do-transformer);
 // Utilities for building iterators.
 
 define class <iteration-vars> (<object>)
-  slot iteration-collection-var :: <leaf>,
+  constant slot iteration-collection-var :: <leaf>,
     required-init-keyword: collection-var:;
-  slot iteration-state-var :: <leaf>,
+  constant slot iteration-state-var :: <leaf>,
     required-init-keyword: state-var:;
-  slot iteration-limit-var :: <leaf>,
+  constant slot iteration-limit-var :: <leaf>,
     required-init-keyword: limit-var:;
-  slot iteration-next-state-func :: <leaf>,
+  constant slot iteration-next-state-func :: <leaf>,
     required-init-keyword: next-state-func:;
-  slot iteration-finished?-func :: <leaf>,
+  constant slot iteration-finished?-func :: <leaf>,
     required-init-keyword: finished?-func:;
-  slot iteration-current-key-func :: <leaf>,
+  constant slot iteration-current-key-func :: <leaf>,
     required-init-keyword: current-key-func:;
-  slot iteration-current-element-func :: <leaf>,
+  constant slot iteration-current-element-func :: <leaf>,
     required-init-keyword: current-element-func:;
-  slot iteration-current-element-setter-func :: <leaf>,
+  constant slot iteration-current-element-setter-func :: <leaf>,
     required-init-keyword: current-element-setter-func:;
 end;
 
