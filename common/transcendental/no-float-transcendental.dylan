@@ -1,7 +1,7 @@
 module: Transcendental
 author: Ben Folk-Williams
 synopsis: Transcendentals.
-RCS-header: $Header: /scm/cvs/src/common/transcendental/Attic/no-float-transcendental.dylan,v 1.1 2000/07/18 13:26:01 robmyers Exp $
+RCS-header: $Header: /scm/cvs/src/common/transcendental/Attic/no-float-transcendental.dylan,v 1.2 2000/07/18 15:15:50 robmyers Exp $
 copyright: see below
 
 //======================================================================
@@ -228,14 +228,13 @@ end method atan2;
 define sealed method atan2 (y :: <single-float>, x :: <integer>)
  => z :: <single-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
-  call-out("atan2f", float:, float: y, float: as(<single-float>, x));
+  as(<single-float>, call-out("atan2", double:, double: y, double: as(<double-float>, x)) );
 end method atan2;
 
 define sealed method atan2 (y :: <integer>, x :: <single-float>)
  => z :: <single-float>;
   if (y.zero? & x.zero?) error("Both args are zero") end;
-  call-out("atan2f", float:, float: as(<single-float>, y),
-	   float: x);
+  as(<single-float>, call-out("atan2", double:, double: y, double: as(<double-float>, x)) );
 end method atan2;
 
 define sealed method atan2 (y :: <integer>, x :: <double-float>)
@@ -282,11 +281,11 @@ define sealed method cosh (x :: <double-float>) => y :: <double-float>;
 end method cosh;
 
 define sealed method tanh (x :: <integer>) => y :: <single-float>;
-  call-out("tanf", float:, float: as(<single-float>, x));
+  as( <single-float>, call-out("tan", double:, double: as(<double-float>, x)) );
 end method tanh;
 
 define sealed method tanh (x :: <single-float>) => y :: <single-float>;
-  call-out("tanf", float:, float: x);
+  as( <single-float>, call-out("tan", double:, double: as(<double-float>, x)) );
 end method tanh;
 
 define sealed method tanh (x :: <double-float>) => y :: <double-float>;
