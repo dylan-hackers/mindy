@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.3 1994/12/16 14:28:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.4 1994/12/17 02:12:47 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -131,7 +131,8 @@ end;
 define generic expand-assignment (place :: <expression>, value :: <expression>)
     => res :: union(<false>, <simple-object-vector>);
 
-define method make-setter (place :: <name-token>) => setter :: <name-token>;
+define method make-setter (place :: <identifier-token>)
+    => setter :: <name-token>;
   make(<name-token>,
        symbol: symcat(place.token-symbol, "-setter"),
        module: place.token-module,
