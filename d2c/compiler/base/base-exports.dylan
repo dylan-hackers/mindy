@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.30 1996/03/18 14:47:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.31 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -55,7 +55,7 @@ define module common
     import: {<general-integer>, <extended-integer>,
 	     $maximum-integer, ratio,
 	     false-or, one-of, <false>, <true>, ignore,
-	     $minimum-integer, <byte-character>,
+	     $minimum-integer, <byte-character>, $not-supplied,
 #if (mindy)
              *debug-output*, main, key-exists?,
 #else
