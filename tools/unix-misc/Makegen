@@ -1,12 +1,16 @@
 
 do install_executable_from_src('bin', 'mk-rcs-links');
 
-# Can't use emit_c_file_rule because they don't build executables
-print <<EOF;
+# rcsupdate seems to be quite HP-specific.
+#
+if ($features{'compiled_for_hpux'}) {
+	# Can't use emit_c_file_rule because they don't build executables
+	print <<EOF;
 
 rcsupdate : \$(SRCDIR)/rcsupdate.c
 	gcc \$(SRCDIR)/rcsupdate.c -o rcsupdate
 
 EOF
-do install ('bin', 'rcsupdate');
-push(@compile_dependencies, 'rcsupdate');
+	do install ('bin', 'rcsupdate');
+	push(@compile_dependencies, 'rcsupdate');
+}
