@@ -46,10 +46,16 @@ define constant cos-values
   = vector( 1.0d0, sq3/2d0, sq2/2d0, .5d0, 0.d0 );
 
 define constant $epsilon = 0.000000001;
+define constant $single-epsilon = 0.000001;
 
 define method almost-equal
     ( x :: <real>, y :: <real> ) => (result :: <boolean>)
   abs( x - y ) <  $epsilon
+end method almost-equal;
+
+define method almost-equal
+    ( x :: <single-float>, y :: <single-float> ) => (result :: <boolean>)
+  abs( x - y) <   $single-epsilon;
 end method almost-equal;
 
 
@@ -107,7 +113,6 @@ define transcendentals function-test tan ()
     let sc = cos( as(<single-float>, i) );
     let tn = s / c;
     let stn = ss / sc;
-    format-out("tan(%=) = %= vs %=\n", i, stn, tan(as(<single-float>, i)));
     unless (c = 0.0)
       check-true
 	(format-to-string( "tan(%=) = %=", i, tn),
