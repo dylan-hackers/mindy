@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.4 2001/02/25 19:44:35 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.5 2001/05/26 18:52:44 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -322,6 +322,9 @@ define method fer-convert
   let id = form.varref-id;
   let source = id.source-location;
   let binding = find-binding(lexenv, id);
+  if (instance?(binding, <top-level-binding>))
+  	binding := #f;	// GGR: quick hack!!!
+  end;
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 if (binding)
 		   binding.binding-var;
@@ -350,72 +353,63 @@ define method fer-convert
     => res :: <result>;
   let id = form.varset-id;
   let source = id.source-location;
+  let policy = lexenv.lexenv-policy;
   let binding = find-binding(lexenv, id);
+  let name = id-name(id);
   if (binding)
-    let temp = fer-convert(builder, form.varset-value,
-			   make(<lexenv>, inside: lexenv),
-			   #"leaf", #"new-value");
-    let checked
-      = if (binding.binding-type-var)
-	  let checked
-	    = make-local-var(builder, #"checked-new-value", object-ctype());
-	  build-assignment(builder, lexenv.lexenv-policy, source, checked,
-			   make-check-type-operation
-			     (builder, lexenv.lexenv-policy, source,
-			      temp, binding.binding-type-var));
-	  checked;
-	else
-	  temp;
-	end;
-    build-assignment(builder, lexenv.lexenv-policy, source,
-		     binding.binding-var, checked);
-    deliver-result(builder, lexenv.lexenv-policy, source,
-		   want, datum, checked);
-  else
-    let name = id-name(id);
-    let var = find-variable(name);
-    let defn = var & var.variable-definition;
-    if (~defn)
-      compiler-error-location(id, "Undefined variable: %s", name);
-      deliver-result
-	(builder, lexenv.lexenv-policy, source, want, datum,
-	 make-error-operation
-	   (builder, lexenv.lexenv-policy, source,
-	    "Undefined variable: %s",
-	    make-literal-constant
-	      (builder, format-to-string("%s", name))));
-    elseif (~instance?(defn, <variable-definition>))
-      compiler-warning-location
-	(form, "Attept to assign constant module variable: %s", name);
-      deliver-result
-	(builder, lexenv.lexenv-policy, source, want, datum,
-	 make-error-operation
-	   (builder, lexenv.lexenv-policy, source,
-	    "Can't assign constant module variable: %s",
-	    make-literal-constant
-	      (builder, format-to-string("%s", name))));
-    else
+    local method convert-and-check(hint, acquire-type :: <function>)
       let temp = fer-convert(builder, form.varset-value,
 			     make(<lexenv>, inside: lexenv),
 			     #"leaf", #"new-value");
-      let checked
-	= if (defn.var-defn-type-defn)
-	    let checked = make-local-var(builder, #"checked-new-value",
-					 object-ctype());
-	    build-assignment
-	      (builder, lexenv.lexenv-policy, source, checked,
-	       make-check-type-operation
-		 (builder, lexenv.lexenv-policy, source, temp,
-		  build-defn-ref(builder, lexenv.lexenv-policy, source,
-				 defn.var-defn-type-defn)));
-	    checked;
-	  else
-	    temp;
-	  end;
-      build-defn-set(builder, lexenv.lexenv-policy, source, defn, checked);
-      deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		     checked);
+      if (hint)
+	let checked
+	  = make-local-var(builder, #"checked-new-value", object-ctype());
+	build-assignment
+	  (builder, policy, source, checked,
+	   make-check-type-operation
+	     (builder, policy, source, temp,
+	      acquire-type(hint)));
+	checked;
+      else
+	temp;
+      end;
+    end method;
+    if (instance?(binding, <top-level-binding>))
+      let defn = binding.binding-var.variable-definition;
+      if (instance?(defn, <variable-definition>))
+	let checked
+	  = convert-and-check(defn.var-defn-type-defn,
+				/* suspicious! */curry(build-defn-ref, builder, policy, source));
+	build-defn-set(builder, policy, source, defn, checked);
+	deliver-result(builder, policy, source, want, datum,
+		       checked);
+      else
+	compiler-warning-location
+	  (form, "Attempt to assign constant module variable: %s", name);
+	deliver-result
+	  (builder, policy, source, want, datum,
+	   make-error-operation
+	     (builder, policy, source,
+	      "Can't assign constant module variable: %s",
+	      make-literal-constant
+		(builder, format-to-string("%s", name))));
+      end if;
+    else
+      let checked = convert-and-check(binding.binding-type-var, identity);
+      build-assignment(builder, policy, source,
+		       binding.binding-var, checked);
+      deliver-result(builder, policy, source,
+		     want, datum, checked);
     end if;
+  else
+    compiler-error-location(id, "Undefined variable: %s", name);
+    deliver-result
+      (builder, policy, source, want, datum,
+       make-error-operation
+	 (builder, policy, source,
+	  "Undefined variable: %s",
+	  make-literal-constant
+	    (builder, format-to-string("%s", name))));
   end if;
 end method fer-convert;
 
