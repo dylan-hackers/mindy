@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.8 1999/11/12 21:21:55 robmyers Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.9 2000/01/18 21:49:17 andreas Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -231,10 +231,9 @@ float sqrtf (float x)
   return (float) sqrt(x);
 }
 
-/* Man, is this broken...  */
 double log2 (double x)
 {
-  return 0;
+  return log(x)/log(2);
 }
 
 #endif
