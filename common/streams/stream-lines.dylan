@@ -221,9 +221,6 @@ define open generic write-line (stream :: <stream>, string :: <string>,
 			             end: stop :: <integer>)
  => ();
 
-/// The conditional compilation should be tightened; this could easily
-/// be two (much more maintainable) methods.
-///
 define method write-line (stream :: <buffered-stream>, 
 			  string :: <string>,
 			  #key start :: <integer> = 0,
