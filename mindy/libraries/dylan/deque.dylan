@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.4 1994/05/31 18:12:35 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.5 1994/06/03 00:39:02 wlott Exp $
 //
 // This file contains definitions of classes and functions for the Dylan
 // deque collection class.  The data structure used for deque is a
@@ -168,7 +168,7 @@ define constant deque_fip_current_element-setter =
   
 define constant deque_fip_copy_state =
   method (deque :: <deque>, state :: <deque-element>) => <deque-element>;
-    deque-element-data(state) := value;
+    state;
   end method;
   
 define method forward-iteration-protocol(deque :: <deque>)
