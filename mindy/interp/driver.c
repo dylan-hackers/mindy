@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.7 1994/04/10 16:24:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.8 1994/04/11 00:23:58 wlott Exp $
 *
 * Main driver routines for mindy.
 *
@@ -240,9 +240,11 @@ enum pause_reason single_step(struct thread *thread)
     thread_set_current(thread);
     InInterpreter = TRUE;
     PauseReason = pause_NoReason;
+    set_interrupt_handler(set_pause_interrupted);
     if (_setjmp(Catcher) == 0)
 	thread->advance(thread);
     InInterpreter = FALSE;
+    clear_interrupt_handler();
     if (TimeToGC)
 	collect_garbage();
     return PauseReason;
@@ -256,7 +258,9 @@ void go_on(void)
 
 void pause(enum pause_reason reason)
 {
-    PauseReason = reason;
+    clear_interrupt_handler();
+    if (reason != pause_NoReason)
+	PauseReason = reason;
     go_on();
 }
 
