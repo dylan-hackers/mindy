@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.9 1995/03/23 22:06:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.10 1995/04/26 09:47:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -26,7 +26,7 @@ define class <generic-definition> (<function-definition>)
   // #f iff the open adjective wasn't supplied.
   slot generic-defn-sealed? :: <boolean>, required-init-keyword: sealed:;
   //
-  // All the <abstract-method-definition>s defined on this generic function.
+  // All the <method-definition>s defined on this generic function.
   slot generic-defn-methods :: <list>,
     init-value: #();
   //
@@ -47,6 +47,11 @@ define class <implicit-generic-definition>
 end;
 
 define abstract class <abstract-method-definition> (<function-definition>)
+  //
+  // The leaf for this method, of #f if it is sufficiently hairy that
+  // it can't me represented as a <method-literal>.  Filled in by fer
+  // conversion.
+  slot method-defn-leaf :: union(<method-literal>, <false>);
 end;
 
 define method defn-type (defn :: <abstract-method-definition>)
@@ -107,9 +112,6 @@ define class <define-method-tlf> (<simple-define-tlf>)
   //
   // The guts of the method being defined.
   slot method-tlf-parse :: <method-parse>, required-init-keyword: parse:;
-  //
-  // The leaf for this method after we've converted it.  #f until then.
-  slot method-tlf-leaf :: union(<leaf>, <false>), init-value: #f;
 end;
 
 
@@ -326,11 +328,12 @@ end;
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-method-tlf>) => ();
   let lexenv = make(<lexenv>);
-  let method-literal = build-general-method(builder, tlf.method-tlf-parse,
-					    lexenv, lexenv);
-  tlf.method-tlf-leaf := method-literal;
+  let leaf = build-general-method(builder, tlf.method-tlf-parse,
+				  lexenv, lexenv);
+  let literal-method? = instance?(leaf, <method-literal>);
   let defn = tlf.tlf-defn;
-  if (defn.function-defn-hairy?)
+  defn.method-defn-leaf := literal-method? & leaf;
+  if (defn.function-defn-hairy? | ~literal-method?)
     // We don't use method-defn-of, because that is #f if there is a definition
     // but it isn't a define generic.
     let gf-name = tlf.method-tlf-base-name;
@@ -345,7 +348,7 @@ define method convert-top-level-form
 	   (builder,
 	    list(dylan-defn-leaf(builder, #"add-method"),
 		 make-definition-leaf(builder, gf-defn),
-		 method-literal)));
+		 leaf)));
     else
       error("No definition for %=, and can't implicitly define it.",
 	    gf-name);

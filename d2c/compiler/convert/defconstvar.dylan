@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.11 1995/04/26 07:03:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.12 1995/04/26 09:47:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -30,6 +30,20 @@ define class <constant-definition>
     init-value: #f;
 end;
 
+// <constant-method-definition>
+//
+// For use with ``define constant foo = method ... end''
+// 
+define class <constant-method-definition>
+    (<abstract-method-definition>,
+     // We explicitly list function-definition to make sure it shows up in
+     // the CPL before constant-definition so that we pick up fn-defns
+     // version of defn-type instead of the slot.
+     <function-definition>,
+     <constant-definition>)
+  inherited slot defn-init-value, init-value: #f;
+end;
+
 define class <variable-definition> (<bindings-definition>)
   //
   // The <constant-definition> for the type if the type isn't a compile-time
@@ -48,7 +62,7 @@ define abstract class <define-bindings-tlf> (<define-tlf>)
     required-init-keyword: required-defns:;
   slot tlf-rest-defn :: union(<false>, <bindings-definition>),
     required-init-keyword: rest-defn:;
-  slot tlf-finalized? :: one-of(#t, #f, #"finalizing"),
+  slot tlf-finalized? :: <boolean>,
     init-value: #f;
   slot tlf-anything-non-constant? :: <boolean>,
     init-value: #f;
@@ -79,6 +93,9 @@ define method initialize (tlf :: <define-constant-tlf>, #key)
   end;
 end;
 
+define class <define-constant-method-tlf> (<define-constant-tlf>)
+end;
+
 define class <define-variable-tlf> (<define-bindings-tlf>)
 end;
 
@@ -87,8 +104,43 @@ end;
 // Process-top-level-form methods
 
 define method process-top-level-form (form :: <define-constant-parse>) => ();
-  process-aux(form.defconst-bindings, <define-constant-tlf>,
-	      <constant-definition>);
+  let bindings = form.defconst-bindings;
+  let param-list = bindings.bindings-parameter-list;
+  if (param-list.paramlist-required-vars.size == 1
+	& param-list.paramlist-required-vars[0].param-type == #f
+	& param-list.paramlist-rest == #f
+	& begin
+	    let method-ref
+	      = expand-until-method-ref(bindings.bindings-expression);
+	    method-ref & (bindings.bindings-expression := method-ref);
+	  end)
+    process-aux(bindings, <define-constant-method-tlf>,
+		<constant-method-definition>)
+  else
+    process-aux(bindings, <define-constant-tlf>, <constant-definition>);
+  end;
+end;
+
+define method expand-until-method-ref (expr :: <expression>)
+    => res :: union(<false>, <method-ref>);
+  #f;
+end;
+
+define method expand-until-method-ref (expr :: <method-ref>)
+    => res :: union(<false>, <method-ref>);
+  expr;
+end;
+
+define method expand-until-method-ref (expr :: <begin>)
+    => res :: union(<false>, <method-ref>);
+  let body = expr.begin-body;
+  body.size == 1 & expand-until-method-ref(body[0]);
+end;
+
+define method expand-until-method-ref (expr :: <macro-statement>)
+    => res :: union(<false>, <method-ref>);
+  let expansion = expand(expr, #f);
+  expansion & expansion.size == 1 & expand-until-method-ref(expansion[0]);
 end;
 
 define method process-top-level-form (form :: <define-variable-parse>) => ();
@@ -207,9 +259,24 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 	  tlf.tlf-rest-defn.defn-init-value := #f;
 	end;
       else
-	tlf.tlf-rest-defn.defn-init-value := make(<literal-vector>, contents: #[]);
+	tlf.tlf-rest-defn.defn-init-value
+	  := make(<literal-vector>, contents: #[]);
       end;
     end;
+  end;
+end;
+
+define method finalize-top-level-form
+    (tlf :: <define-constant-method-tlf>) => ();
+  tlf.tlf-finalized? := #t;
+  let meth = tlf.tlf-bindings.bindings-expression.method-ref-method;
+  let (signature, anything-non-constant?)
+    = compute-signature(meth.method-param-list, meth.method-returns);
+  let defn = tlf.tlf-required-defns[0];
+  defn.function-defn-signature := signature;
+  if (anything-non-constant?)
+    defn.function-defn-hairy? := #t;
+    tlf.tlf-anything-non-constant? := #t;
   end;
 end;
 
@@ -269,5 +336,22 @@ define method convert-top-level-form
 		  #"assignment", vars);
     end;
     build-region(builder, builder-result(init-builder));
+  end;
+end;
+
+define method convert-top-level-form
+    (builder :: <fer-builder>, tlf :: <define-constant-method-tlf>,
+     #next next-method)
+    => ();
+  let lexenv = make(<lexenv>);
+  let meth = tlf.tlf-bindings.bindings-expression.method-ref-method;
+  let leaf = build-general-method(builder, meth, lexenv, lexenv);
+  let literal-method? = instance?(leaf, <method-literal>);
+  let defn = tlf.tlf-required-defns[0];
+  defn.method-defn-leaf := literal-method? & leaf;
+  if (defn.function-defn-hairy? | ~literal-method?)
+    let source = make(<source-location>);
+    build-assignment(builder, lexenv.lexenv-policy, source, #(),
+		     make-set-operation(builder, defn, leaf));
   end;
 end;
