@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.6 1995/12/16 21:18:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.7 1996/01/10 14:59:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -10,6 +10,7 @@ define abstract class <source-location> (<object>)
 end;
 
 define method make (wot == <source-location>, #key)
+    => res :: <source-location>;
   make(<unknown-source-location>);
 end;
 

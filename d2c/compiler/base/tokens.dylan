@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.8 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.9 1996/01/10 14:59:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -111,6 +111,7 @@ define abstract class <name-token> (<word-token>)
 end;
 
 define method make (c == <name-token>, #rest keys, #all-keys)
+    => res :: <name-token>;
   apply(make, <simple-name-token>, keys);
 end;
 
@@ -127,6 +128,7 @@ define abstract class <define-word-token> (<word-token>)
 end;
 
 define method make (c == <define-word-token>, #rest keys, #all-keys)
+    => res :: <define-word-token>;
   apply(make, <define-word-and-name-token>, keys);
 end;
 
@@ -134,6 +136,7 @@ define abstract class <define-bindings-word-token> (<word-token>)
 end;
 
 define method make (c == <define-bindings-word-token>, #rest keys, #all-keys)
+    => res :: <define-bindings-word-token>;
   apply(make, <define-bindings-word-and-name-token>, keys);
 end;
 
@@ -272,6 +275,7 @@ define abstract class <binary-operator-token> (<operator-token>)
 end;
 
 define method make (wot == <binary-operator-token>, #rest keys, #key)
+    => res :: <binary-operator-token>;
   apply(make, <simple-binary-operator-token>, keys);
 end;
 

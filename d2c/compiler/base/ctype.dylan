@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.37 1996/01/09 17:07:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.38 1996/01/10 14:59:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -341,7 +341,7 @@ define sealed generic ctype-intersection-dispatch
      => (result :: false-or(<ctype>), precise :: <boolean>);
 
 /// indicates try swapping args, or if that failed, the result is empty.
-define method ctype-intersection-dispatch(type1, type2)
+define method ctype-intersection-dispatch(type1 :: <ctype>, type2 :: <ctype>)
      => (result :: false-or(<ctype>), precise :: <boolean>);
   values(#f, #t);
 end method;
@@ -692,6 +692,7 @@ end class;
 
 define method make (class == <limited-integer-ctype>, #next next-method,
 		    #key base-class, low-bound, high-bound)
+    => res :: <limited-integer-ctype>;
   let key = vector(base-class, low-bound, high-bound);
   element($limited-integer-table, key, default: #f)
     | (element($limited-integer-table, key) := next-method());
@@ -1111,6 +1112,7 @@ define variable *byte-character-ctype-memo* = #f;
 
 define method make
     (class == <byte-character-ctype>, #next next-method, #key base-class)
+    => res :: <byte-character-ctype>;
   *byte-character-ctype-memo*
     | (*byte-character-ctype-memo*
 	 := next-method(class,

@@ -1,7 +1,9 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.15 1995/12/18 04:05:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.16 1996/01/10 14:59:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
+
+#if (mindy)
 
 remove-method(print-object,
 	      find-method(print-object,
@@ -16,6 +18,8 @@ define method print-object (object, stream :: <stream>) => ();
 end;
 
 *default-pretty?* := #t;
+
+#end
 
 
 // printing utilities.
@@ -243,7 +247,7 @@ end;
 
 // Defines the Info slot used for back-end annotation.
 //
-define class <annotatable> (<object>)
+define abstract open class <annotatable> (<object>)
   slot info, init-value: #f, init-keyword: info:;
 end class;
 

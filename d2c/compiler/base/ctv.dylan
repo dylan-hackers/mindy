@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.21 1996/01/08 21:39:32 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.22 1996/01/10 14:59:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -53,10 +53,12 @@ define variable *literal-true* = #f;
 define variable *literal-false* = #f;
 
 define method make (wot == <literal-true>, #next next-method, #key)
+    => res :: <literal-true>;
   *literal-true* | (*literal-true* := next-method());
 end;
 
 define method make (wot == <literal-false>, #next next-method, #key)
+    => res :: <literal-false>;
   *literal-false* | (*literal-false* := next-method());
 end;
 
@@ -170,35 +172,41 @@ define constant $literal-extended-float-memo = make(<table>);
 
 define method make (class == <literal-fixed-integer>, #next next-method,
 		    #key value)
+    => res :: <literal-fixed-integer>;
   element($literal-fixed-integer-memo, value, default: #f)
     | (element($literal-fixed-integer-memo, value) := next-method());
 end;
 
 define method make (class == <literal-extended-integer>, #next next-method,
 		    #key value)
+    => res :: <literal-extended-integer>;
   element($literal-extended-integer-memo, value, default: #f)
     | (element($literal-extended-integer-memo, value) := next-method());
 end;
 
 define method make (class == <literal-ratio>, #next next-method, #key value)
+    => res :: <literal-ratio>;
   element($literal-ratio-memo, value, default: #f)
     | (element($literal-ratio-memo, value) := next-method());
 end;
 
 define method make (class == <literal-single-float>, #next next-method,
 		    #key value)
+    => res :: <literal-single-float>;
   element($literal-single-float-memo, value, default: #f)
     | (element($literal-single-float-memo, value) := next-method());
 end;
 
 define method make (class == <literal-double-float>, #next next-method,
 		    #key value)
+    => res :: <literal-double-float>;
   element($literal-double-float-memo, value, default: #f)
     | (element($literal-double-float-memo, value) := next-method());
 end;
 
 define method make (class == <literal-extended-float>, #next next-method,
 		    #key value)
+    => res :: <literal-extended-float>;
   element($literal-extended-float-memo, value, default: #f)
     | (element($literal-extended-float-memo, value) := next-method());
 end;
@@ -271,26 +279,32 @@ define method print-message
 end;
 
 define method as (class == <ct-value>, value :: <fixed-integer>)
+    => res :: <literal-fixed-integer>;
   make(<literal-fixed-integer>, value: as(<extended-integer>, value));
 end;
 
 define method as (class == <ct-value>, value :: <extended-integer>)
+    => res :: <literal-extended-integer>;
   make(<literal-extended-integer>, value: value);
 end;
 
 define method as (class == <ct-value>, value :: <ratio>)
+    => res :: <literal-ratio>;
   make(<literal-ratio>, value: value);
 end;
 
 define method as (class == <ct-value>, value :: <single-float>)
+    => res :: <literal-single-float>;
   make(<literal-single-float>, value: as(<ratio>, value));
 end;
 
 define method as (class == <ct-value>, value :: <double-float>)
+    => res :: <literal-double-float>;
   make(<literal-double-float>, value: as(<ratio>, value));
 end;
 
 define method as (class == <ct-value>, value :: <extended-float>)
+    => res :: <literal-extended-float>;
   make(<literal-extended-float>, value: as(<ratio>, value));
 end;
 
@@ -307,6 +321,7 @@ end class;
 define constant $literal-symbol-memo = make(<table>);
 
 define method make (class == <literal-symbol>, #next next-method, #key value)
+    => res :: <literal-symbol>;
   element($literal-symbol-memo, value, default: #f)
     | (element($literal-symbol-memo, value) 
          := make(<literal-byte-symbol>, value: value))
@@ -323,6 +338,7 @@ define method print-message (lit :: <literal-symbol>, stream :: <stream>)
 end;
 
 define method as (class == <ct-value>, sym :: <symbol>)
+    => res :: <ct-value>;
   make(<literal-symbol>, value: sym);
 end;
 
@@ -348,6 +364,7 @@ define constant $literal-character-memo = make(<table>);
 
 define method make (class == <literal-character>, #next next-method,
 		    #key value)
+    => res :: <literal-character>;
   element($literal-character-memo, value, default: #f)
     | (element($literal-character-memo, value) 
          := make(<literal-byte-character>, value: value))
@@ -364,6 +381,7 @@ define method print-message (lit :: <literal-character>, stream :: <stream>)
 end;
 
 define method as (class == <ct-value>, char :: <character>)
+    => res :: <ct-value>;
   make(<literal-character>, value: char);
 end;
 
@@ -398,6 +416,7 @@ end;
 
 define method make (class == <literal-list>, #next next-method,
 		    #key sharable: sharable?, contents, tail)
+    => res :: <literal-list>;
   local
     method repeat (index)
       if (index == contents.size)
@@ -438,6 +457,7 @@ define constant $literal-pair-memo = make(<literal-pair-memo-table>);
 
 define method make (class == <literal-pair>, #next next-method,
 		    #key sharable: sharable?, head, tail)
+    => res :: <literal-pair>;
   if (sharable?)
     let key = pair(head, tail);
     element($literal-pair-memo, key, default: #f)
@@ -457,6 +477,7 @@ define method print-message (lit :: <literal-pair>, stream :: <stream>) => ();
 end;
 
 define method as (class == <ct-value>, thing :: <pair>)
+    => res :: <ct-value>;
   make(<literal-pair>,
        sharable: #t,
        head: as(<ct-value>, thing.head),
@@ -474,6 +495,7 @@ end method;
 define variable *literal-empty-list* = #f;
 
 define method make (class == <literal-empty-list>, #next next-method, #key)
+    => res :: <literal-empty-list>;
   *literal-empty-list* | (*literal-empty-list* := next-method());
 end;
 
@@ -483,6 +505,7 @@ define method print-message (lit :: <literal-empty-list>, stream :: <stream>)
 end;
 
 define method as (class == <ct-value>, thing :: <empty-list>)
+    => res :: <ct-value>;
   make(<literal-empty-list>);
 end;
 
@@ -553,6 +576,7 @@ define constant $literal-vector-memo = make(<shallow-equal-table>);
 
 define method make (class == <literal-simple-object-vector>, #next next-method,
 		    #key sharable: sharable?, contents)
+    => res :: <literal-simple-object-vector>;
   do(rcurry(check-type, <ct-value>), contents);
   let contents = as(<simple-object-vector>, contents);
   if (sharable?)
@@ -576,6 +600,7 @@ define method print-message
 end;
 
 define method as (class == <ct-value>, vec :: <simple-object-vector>)
+    => res :: <ct-value>;
   make(<literal-simple-object-vector>,
        sharable: #t,
        contents: map(curry(as, <ct-value>), vec));
@@ -592,6 +617,7 @@ define constant $literal-string-memo = make(<string-table>);
 
 define method make (class == <literal-string>, #next next-method,
 		    #key value)
+    => res :: <literal-string>;
   element($literal-string-memo, value, default: #f)
     | (element($literal-string-memo, value)
         := make(<literal-byte-string>, value: value));
@@ -608,6 +634,7 @@ define method print-message (lit :: <literal-string>, stream :: <stream>)
 end;
 
 define method as (class == <ct-value>, string :: <byte-string>)
+    => res :: <ct-value>;
   make(<literal-string>, value: string);
 end;
 

@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.30 1995/12/18 17:27:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.31 1996/01/10 14:59:26 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1044,6 +1044,7 @@ end;
 define constant $proxy-memo = make(<object-table>);
 
 define method make (class == <proxy>, #next next-method, #key for: cclass)
+    => res :: <proxy>;
   element($proxy-memo, cclass, default: #f)
     | (element($proxy-memo, cclass) := next-method());
 end;

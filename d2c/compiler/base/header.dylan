@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.4 1995/12/16 21:17:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.5 1996/01/10 14:59:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -52,6 +52,10 @@ end;
 // anything flames out.
 //
 define method forward-iteration-protocol (header :: <header>)
+    => (initial-state :: false-or(<header-entry>), done-state :: <false>,
+	next-state :: <function>, finished-state? :: <function>,
+	current-key :: <function>, current-element :: <function>,
+	current-element-setter :: <function>, copy-state :: <function>);
   local
     method header-fip-next (header :: <header>, state :: <header-entry>)
      => next-state :: false-or(<header-entry>);
