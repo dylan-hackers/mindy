@@ -56,16 +56,14 @@ define method main(name, arguments)
 
   let platform-name = option-value-by-long-name(arg-parser, "platform");
   let platform
-    = select(platform-name by \=)
-        "x86-linux-gcc",
-        "x86-linux-gcc32",
-        "x86-linux-gcc33" =>
+    = select(platform-name by regexp-position)
+        "^x86-linux-gcc" =>
           $i386-linux-platform;
-        "ppc-linux-gcc" =>
+        "^ppc-linux-gcc" =>
           $ppc-linux-platform;
-        "x86-freebsd-elf-gcc" =>
+        "^x86-freebsd-elf-gcc" =>
           $i386-freebsd-platform;
-        "sparc-solaris-gcc" =>
+        "^sparc-solaris-gcc" =>
           $sparc-solaris-platform;
         otherwise =>
           $generic-platform;

@@ -11,4 +11,5 @@ define library gobject-tool
   use format-out;
   use ansi-c;
   use c-parser;
+  use regular-expressions;
 end library;
