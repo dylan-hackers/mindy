@@ -2,7 +2,7 @@ module: Streams
 author: chiles@cs.cmu.edu
 synopsis: This file implements streams for the Gwydion implementation of Dylan.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/streams.dylan,v 1.1 1996/03/19 23:58:28 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/streams.dylan,v 1.2 1996/03/20 05:00:44 wlott Exp $
 
 //======================================================================
 //
@@ -35,9 +35,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/streams.dylan,v
 ////
 
 define constant $default-buffer-size = 4096;
-#if (mindy)
-  define constant <never-returns> = <object>;
-#end
 
 
 //// Some classes (including conditions).
