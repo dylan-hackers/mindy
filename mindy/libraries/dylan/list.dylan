@@ -11,10 +11,32 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.2 1994/03/30 06:07:26 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/list.dylan,v 1.3 1994/04/13 17:09:06 wlott Exp $
 //
 //  This file does whatever.
 //
+
+
+
+//// Construction.
+
+define method make(cls == <list>, #rest keys,
+		   #key size = 0, fill = #f) => <list>;
+  let result = for (i from 0 below size,
+		    list = #() then pair(fill, list))
+	       finally
+		 list;
+	       end for;
+  apply(initialize, result, keys);
+  result;
+end method make;
+
+
+// Note: list(...) is built into Mindy.
+
+
+
+//// Iteration protocol.
 
 define constant list_fip_next_state =
   method (list :: <list>, state :: <list>) => <list>;
@@ -61,17 +83,282 @@ define method forward-iteration-protocol (list :: <list>)
 	 list_fip_current_element-setter, list_fip_copy_state);
 end method forward-iteration-protocol;
 
-define method make(cls == <list>, #rest keys,
-		   #key size = 0, fill = #f) => <list>;
-  let result = for (i from 0 below size,
-		    list = #() then pair(fill, list))
-	       finally
-		 list;
-	       end for;
-  apply(initialize, result, keys);
-  result;
-end method make;
+
+//// Collection routines.
+
+// Note: size(<list>) is built into Mindy.
 
 define method class-for-copy(list :: <list>) => <class>;
   <list>;
 end method class-for-copy;
+
+/* ---------------- */
+
+// member? returns #f if the object couldn't be found, and the object
+// that satisfies test if it could. member? also works correctly on
+// circular lists.
+
+define method member? (value, l :: <list>, #key test: test = \==) 
+                 => found-or-false;
+  let done        = #f;
+  let result      = #f;
+  let lapped-slow = #f;                // Has fast lapped slow?
+
+  for (slow = l        then tail (slow),
+       fast = tail (l) then if (lapped-slow) fast;
+			    else tail (tail (fast))
+			    end if,
+       until done | slow == #() )
+
+    if (test (value, head (slow)))
+      done   := #t;
+      result := head (slow);
+    elseif (fast == slow)
+      done   := lapped-slow;    // Since fast goes twice the speed,
+	                        // need to give slow a chance to
+	                        // catch up.
+      lapped-slow := #t;
+    end if;
+  end for;
+
+  result;
+end method member?;
+
+/* ---------------- */
+
+define method map (proc :: <function>, 
+		   collection :: <empty-list>, 
+		   #rest more)
+  #();
+end method map;
+
+/* ---------------- */
+
+define method map-as (a_class :: singleton (<list>), proc :: <function>,
+		      l :: <list>, #next next-method, #rest more-lists)
+
+  if (every? (rcurry ( instance?, <list> ), more-lists))
+    for (l          = l          then tail (l),
+	 more-lists = more-lists then map (tail, more-lists),
+	 result     = #()        then pair (apply (proc, head (l),
+						   map (head, more-lists)),
+					    result),
+	 until ( l == #() ) | any? (rcurry (\==, #()), more-lists))
+    finally
+      reverse! (result);
+    end for;
+
+  else
+    next-method ();
+  end if;
+end method map-as;
+
+/* ---------------- */
+
+define method any?   (proc :: <function>, l :: <empty-list>, #rest more)
+  #f;
+end method any?;
+
+/* ---------------- */
+
+define method every? (proc :: <function>, l :: <empty-list>, #rest more)
+  #t;
+end method every?;
+
+
+//// Sequence routines.
+
+define method add  (l :: <list>, new)
+  apply (list, new, l);
+end method add;
+
+/* ---------------- */
+
+define method add! (l :: <list>, new)
+  pair (new, l);
+end method add!;
+
+/* ---------------- */
+
+define method remove  (l :: <list>, value, #key test: test = \==,
+		       count: count)
+  let result    = #();
+  let remaining = l;
+
+  until ( remaining == #() )
+    if ( (count ~= 0) & test (head (remaining), value) )
+      remaining := tail (remaining);
+      count     := count & (count - 1);         // False if undefined,
+			                        // count - 1 otherwise
+    else
+      result    := pair (head (remaining), result);
+      remaining := tail (remaining);
+    end if;
+  end until;
+
+  reverse! (result);
+end method remove;
+      
+/* ---------------- */
+
+define method remove! (l :: <list>, value, #key test: test = \==,
+		       count: count)
+  let result    = l;
+  let prev      = #f;
+  let remaining = l;
+
+  until ( remaining == #() )
+    if (count = 0 | ~ (test (head (remaining), value)))
+      prev      := remaining;
+      remaining := tail (remaining);
+    elseif (prev)
+      tail (prev) := tail (remaining);
+      remaining   := tail (remaining);
+      count       := count & (count - 1);
+    else
+      result      := tail (remaining);
+      prev        := #f;
+      remaining   := tail (remaining);
+      count       := count & (count - 1);
+    end if;
+  end until;
+
+  result;
+end method remove!;
+
+/* ---------------- */
+
+// If there are duplicates, this returns the LAST identical element,
+// and not the first like the example on page 107 would indicate.
+
+define method remove-duplicates  ( l :: <list>, #key test: test = \== )
+  let result    = #();
+  let prev      = #f;
+  let remaining = l;
+
+  until ( remaining == #() )
+    if (member? (head (remaining), tail (remaining), test: test))
+      remaining   := tail (remaining);
+    elseif (prev)
+      let next = list (head (remaining));
+      tail (prev) := next;
+      prev        := next;
+      remaining   := tail (remaining);
+    else
+      let new = list (head (remaining));
+      result      := new;
+      prev        := new;
+      remaining   := tail (remaining);
+    end if;
+  end until;
+
+  result;
+end method remove-duplicates;
+
+/* ---------------- */
+
+define method remove-duplicates! ( l :: <list>, #key test: test = \== )
+  let result    = l;
+  let prev      = #f;
+  let remaining = l;
+  
+  until ( remaining == #() )
+    if ( ~ member? (head (remaining), tail (remaining), test: test))
+      prev        := remaining;
+      remaining   := tail (remaining);
+    elseif (prev)
+      tail (prev) := tail (remaining);
+      remaining   := tail (remaining);
+    else
+      result      := tail (remaining);
+      prev        := #f;
+      remaining   := tail (remaining);
+    end if;
+  end until;
+
+  result;
+end method remove-duplicates!;
+
+/* ---------------- */
+
+define method replace-subsequence! (l :: <list>, seq :: <sequence>,
+				    #key start: start = 0, end: stop)
+  let result = pair (#f, l);
+  let prev   = result;
+
+  for (i from 1 to start)
+    prev := tail (prev);
+  end for;
+
+  if (~ stop)
+    stop := start + size (seq);
+  end if;
+
+  let after-hole = for (after-hole = tail (prev) then tail (after-hole),
+			index = start then index + 1,
+			until index = stop)
+		   finally after-hole;
+		   end for;
+
+  for (elt in seq)
+    let next = pair (elt, #f);
+    tail (prev) := next;
+    prev        := next;
+  end for;
+  
+  tail (prev) := after-hole;
+  tail (result);
+end method replace-subsequence!;
+
+/* ---------------- */
+
+define method reverse  (l :: <list>)
+  let result = #();
+  let remaining = l;
+
+  until ( remaining == #() )
+    result := pair (head (remaining), result);
+    remaining := tail (remaining);
+  end until;
+
+  result;
+end method reverse;
+
+/* ---------------- */
+
+define method reverse! (l :: <list>)
+  let result    = #();
+  let remaining = l;
+
+  until ( remaining == #() )
+    let t = tail (remaining);
+    tail (remaining) := result;
+    result           := remaining;
+    remaining        := t;
+  end until;
+
+  result;
+end method reverse!;
+
+
+//// =
+
+// We have to define a method on <list>/<list>, because = is defined to
+// work on dotted lists, and the sequence version of = will try calling
+// every?, which will flame out on dotted lists.
+
+// Will be called when you compare an <empty-list> to a <pair>
+// or vice versa.
+define method \= (a :: <list>, b :: <list>)
+  #f;
+end method \=;
+
+
+define method \= (a :: <empty-list>, b :: <empty-list>)
+  #t;
+end method \=;
+
+
+define method \= (a :: <pair>, b :: <pair>)
+  ( head (a) = head (b) )  &  ( tail (a) = tail (b) );
+end method \=;
