@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.10 1996/02/02 01:51:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.11 1996/03/07 17:44:16 nkramer Exp $
 *
 * This file implements symbols.
 *
@@ -255,6 +255,9 @@ void init_sym_classes(void)
 
 void init_sym_functions(void)
 {
+    define_generic_function("as", list2(obj_TypeClass, obj_ObjectClass),
+			    FALSE, obj_False, FALSE,
+			    list1(obj_ObjectClass), obj_False);
     define_method("as", list2(singleton(obj_SymbolClass), obj_ByteStringClass),
 		  FALSE, obj_False, FALSE, obj_SymbolClass, string_as_symbol);
     define_method("as", list2(singleton(obj_StringClass), obj_SymbolClass),
