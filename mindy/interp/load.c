@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.37 1997/05/21 14:01:25 ram Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.38 1997/05/31 01:13:34 ram Exp $
 *
 * This file implements the loader.
 *
@@ -1036,13 +1036,17 @@ void load_library(obj_t name)
 	char* next = default_path;
 	*next++ = '.';
 	*next++ = SEPARATOR_CHAR;
-	if (dylandir == NULL)
+	if (dylandir == NULL) {
 	    memcpy(next, LIBDIR, strlen(LIBDIR));
+	    next += strlen(LIBDIR);
+	}
 	else {
 	    memcpy(next, dylandir, strlen(dylandir));
 	    next += strlen(dylandir);
 	    memcpy(next, "/lib/dylan", strlen("/lib/dylan"));
+	    next += strlen("/lib/dylan");
 	}
+	*next = '\0';
 	load_path = default_path;
     }
 
