@@ -1,38 +1,15 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.10 1996/02/08 19:18:54 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.11 1996/03/20 19:24:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
-
-
-// The <source-location> class.
-
-define abstract class <source-location> (<object>)
-end;
-
-define method make (wot == <source-location>, #key)
-    => res :: <source-location>;
-  make(<unknown-source-location>);
-end;
-
-define class <unknown-source-location> (<source-location>)
-end;
-
-add-make-dumper(#"unknown-source-location", *compiler-dispatcher*,
-		<unknown-source-location>, #());
-
-
-define generic source-location-span (start-loc :: <source-location>,
-				     end-loc :: <source-location>)
-    => res :: <source-location>;
 
 
 // The <source-location-mixin> class.
 
 define open abstract class <source-location-mixin> (<object>)
-  slot source-location :: <source-location>,
-    setter: #f,
-    init-keyword: source-location:,
-    init-function: curry(make, <unknown-source-location>);
+  constant slot source-location :: <source-location>
+      = make(<unknown-source-location>),
+    init-keyword: source-location:;
 end;
 
 // source-location -- exported.
@@ -41,7 +18,106 @@ end;
 // unknown.
 // 
 define generic source-location (thing :: <source-location-mixin>)
- => res :: <source-location>;
+    => res :: <source-location>;
+
+
+
+// The <source-location> class.
+
+define abstract class <source-location> (<object>)
+end;
+
+define sealed domain make (singleton(<source-location>));
+define sealed domain initialize (<source-location>);
+
+define method make (wot == <source-location>, #key)
+    => res :: <source-location>;
+  make(<unknown-source-location>);
+end;
+
+
+define open generic source-location-before
+    (source-loc :: <source-location>)
+    => res :: <source-location>;
+
+define open generic source-location-between
+    (left-loc :: <source-location>, right-loc :: <source-location>)
+    => res :: <source-location>;
+
+define open generic source-location-spanning
+    (start-loc :: <source-location>, end-loc :: <source-location>)
+    => res :: <source-location>;
+
+define open generic describe-source-location
+    (srcloc :: <source-location>, stream :: <stream>) => ();
+
+
+
+// Unknown source locations.
+
+define class <unknown-source-location> (<source-location>)
+end;
+
+define sealed domain make (singleton(<unknown-source-location>));
+define sealed domain initialize (<unknown-source-location>);
+
+define sealed method source-location-before
+    (srcloc :: <unknown-source-location>)
+    => res :: <source-location>;
+  make(<unknown-source-location>);
+end method source-location-before;
+
+define sealed method source-location-between
+    (left :: <unknown-source-location>, right :: <unknown-source-location>)
+    => res :: <source-location>;
+  make(<unknown-source-location>);
+end method source-location-between;
+
+define sealed method source-location-spanning
+    (start :: <unknown-source-location>, stop :: <unknown-source-location>)
+    => res :: <source-location>;
+  make(<unknown-source-location>);
+end method source-location-spanning;
+
+define sealed method describe-source-location
+    (srcloc :: <unknown-source-location>, stream :: <stream>)
+    => ();
+end method describe-source-location;
+
+
+add-make-dumper(#"unknown-source-location", *compiler-dispatcher*,
+		<unknown-source-location>, #());
+
+
+
+// getcwd
+
+#if (~mindy)
+
+define method getcwd () => cwd :: <byte-string>;
+  let buffer = make(<buffer>, size: 1024);
+  if (zero?(call-out("getcwd", #"long",
+		     #"ptr", buffer-address(buffer),
+		     #"int", 1024)))
+    error("Can't get the current directory.");
+  else
+    let len = block (return)
+		for (index :: <integer> from 0 below 1024)
+		  if (buffer[index].zero?)
+		    return(index);
+		  end if;
+		end for;
+		error("Can't get the current directory.");
+	      end block;
+    let result = make(<byte-string>, size: len);
+    for (index :: <integer> from 0 below len)
+      result[index] := as(<character>, buffer[index]);
+    end for;
+    result;
+  end if;
+end method getcwd;
+
+#end
 
 
 // Source files.
@@ -76,7 +152,7 @@ define constant $butt-plug = list(#"x");
 
 define method element
     (vec :: <big-buffer>, index :: <integer>, #key default = $butt-plug)
-    => element;
+    => element :: <object>;
   if (index >= 0 & index < vec.size)
     let (buf, extra) = floor/(index, $big-buffer-threshold);
     vec.buffers[buf][extra];
@@ -153,52 +229,55 @@ define method fill-buffer (buf :: <buffer>, stream :: <stream>) => ();
 end method fill-buffer;
 
 
+// <source-file> -- exported.
+// 
 // preserve identity for space sharing...
+//
 define class <source-file> (<identity-preserving-mixin>)
-  slot file-name :: <string>, required-init-keyword: name:;
-  slot %contents :: false-or(<file-contents>), init-value: #f;
+  //
+  // The name for this source file.
+  constant slot file-name :: <byte-string>,
+    required-init-keyword: name:;
+  //
+  // The directory for this source file.  The make method defaults it to
+  // the current directory and makes sure that it is absolute and ends in
+  // a slash.
+  constant slot directory :: <byte-string>,
+    required-init-keyword: directory:;
+  //
+  // The contents, or #f if we haven't read them in yet.
+  slot %contents :: false-or(<file-contents>) = #f;
 end;
+
+define sealed domain make (singleton(<source-file>));
+define sealed domain initialize (<source-file>);
+
+define method make
+    (class == <source-file>, #next next-method,
+     #key name :: <byte-string>, directory :: false-or(<byte-string>))
+    => res :: <source-file>;
+  let absolute
+    = if (directory & directory.size > 0 & directory.first == '/')
+	directory;
+      else
+	let cwd = getcwd();
+	if (directory)
+	  stringify(cwd, '/', directory);
+	else
+	  cwd;
+	end if;
+      end if;
+  next-method(class, name: name,
+	      directory:
+		if (absolute.last == '/')
+		  absolute;
+		else
+		  stringify(absolute, '/');
+		end if);
+end method make;
 
 define method print-object (sf :: <source-file>, stream :: <stream>) => ();
   pprint-fields(sf, stream, name: sf.file-name);
-end;
-
-add-make-dumper(#"source-file", *compiler-dispatcher*, <source-file>,
-		list(file-name, name:, #f));
-
-
-define class <file-source-location> (<source-location>)
-  slot source-file :: <source-file>, required-init-keyword: source:;
-  slot start-posn :: <integer>, required-init-keyword: start-posn:;
-  slot start-line :: <integer>, required-init-keyword: start-line:;
-  slot start-column :: <integer>, required-init-keyword: start-column:;
-  slot end-posn :: <integer>, required-init-keyword: end-posn:;
-  slot end-line :: <integer>, required-init-keyword: end-line:;
-  slot end-column :: <integer>, required-init-keyword: end-column:;
-end;
-
-define method print-object (sl :: <file-source-location>, stream :: <stream>)
-    => ();
-  pprint-fields(sl, stream,
-		source-file: sl.source-file,
-		start-line: sl.start-line,
-		start-column: sl.start-column,
-		end-line: sl.end-line,
-		end-column: sl.end-column);
-end;
-
-define method source-location-span (start :: <file-source-location>,
-				    stop :: <file-source-location>)
-    => res :: <file-source-location>;
-  assert(start.source-file == stop.source-file);
-  make(<file-source-location>,
-       source: start.source-file,
-       start-posn: start.start-posn,
-       start-line: start.start-line,
-       start-column: start.start-column,
-       end-posn: stop.end-posn,
-       end-line: stop.end-line,
-       end-column: stop.end-column);
 end;
 
 // contents -- exported
@@ -212,7 +291,9 @@ end;
 define method contents (source :: <source-file>)
   source.%contents
     | begin
-	let file = make(<file-stream>, name: source.file-name);
+	let file = make(<file-stream>,
+			name: stringify(source.directory, '/',
+					source.file-name));
 	block ()
 	  let result = make-buffer(file.stream-size);
 	  fill-buffer(result, file);
@@ -223,22 +304,252 @@ define method contents (source :: <source-file>)
       end;
 end method contents;
 
+
+define method extract-line
+    (source :: <source-file>, line-start :: <integer>) => res :: <byte-string>;
+  let contents = source.contents;
+  for (index from line-start below contents.size,
+       until: contents[index] == as(<integer>, '\n'))
+  finally
+    let len = index - line-start;
+    let result = make(<byte-string>, size: len);
+    copy-bytes(result, 0, contents, line-start, len);
+    result;
+  end for;
+end method extract-line;
+
+
+
+add-make-dumper(#"source-file", *compiler-dispatcher*, <source-file>,
+		list(file-name, name:, #f,
+		     directory, directory: #f));
+
+
+
+// file source locations.
+
+
+define class <file-source-location> (<source-location>)
+  
+  constant slot source-file :: <source-file>,
+    required-init-keyword: source:;
+  
+  constant slot start-posn :: <integer>,
+    required-init-keyword: start-posn:;
+  
+  constant slot start-line :: <integer>,
+    required-init-keyword: start-line:;
+  
+  constant slot start-column :: <integer>,
+    required-init-keyword: start-column:;
+  
+  constant slot end-posn :: <integer>,
+    required-init-keyword: end-posn:;
+  
+  constant slot end-line :: <integer>,
+    required-init-keyword: end-line:;
+  
+  constant slot end-column :: <integer>,
+    required-init-keyword: end-column:;
+end;
+
+define sealed domain make (singleton(<file-source-location>));
+define sealed domain initialize (<file-source-location>);
+
+define method print-object (sl :: <file-source-location>, stream :: <stream>)
+    => ();
+  pprint-fields(sl, stream,
+		source-file: sl.source-file,
+		start-line: sl.start-line,
+		start-column: sl.start-column,
+		end-line: sl.end-line,
+		end-column: sl.end-column);
+end;
+
+
+define sealed method source-location-before (srcloc :: <file-source-location>)
+    => res :: <file-source-location>;
+  make(<file-source-location>,
+       source: srcloc.source-file,
+       start-posn: srcloc.start-posn,
+       start-line: srcloc.start-line,
+       start-column: srcloc.start-column,
+       end-posn: srcloc.start-posn,
+       end-line: srcloc.start-line,
+       end-column: srcloc.start-column);
+end method source-location-before;
+
+define sealed method source-location-between
+    (left :: <file-source-location>, right :: <file-source-location>)
+    => res :: <file-source-location>;
+  assert(left.source-file == right.source-file);
+  make(<file-source-location>,
+       source: left.source-file,
+       start-posn: right.start-posn,
+       start-line: right.start-line,
+       start-column: right.start-column,
+       end-posn: left.end-posn,
+       end-line: left.end-line,
+       end-column: left.end-column);
+end method source-location-between;
+
+define sealed method source-location-spanning
+    (start :: <file-source-location>, stop :: <file-source-location>)
+    => res :: <file-source-location>;
+  assert(start.source-file == stop.source-file);
+  make(<file-source-location>,
+       source: start.source-file,
+       start-posn: start.start-posn,
+       start-line: start.start-line,
+       start-column: start.start-column,
+       end-posn: stop.end-posn,
+       end-line: stop.end-line,
+       end-column: stop.end-column);
+end;
+
+
+define sealed method describe-source-location
+    (srcloc :: <file-source-location>, stream :: <stream>)
+    => ();
+  pprint-logical-block
+    (stream,
+     body:
+       method (stream :: <stream>)
+	 if (srcloc.end-line <= srcloc.start-line)
+	   if (srcloc.end-column <= srcloc.start-column)
+	     format(stream, "\"%s\", line %d, before character %d:",
+		    srcloc.source-file.file-name, srcloc.start-line,
+		    srcloc.start-column + 1);
+	   elseif (srcloc.end-column == srcloc.start-column + 1)
+	     format(stream, "\"%s\", line %d, character %d:",
+		    srcloc.source-file.file-name, srcloc.start-line,
+		    srcloc.start-column + 1);
+	   else
+	     format(stream, "\"%s\", line %d, characters %d through %d:",
+		    srcloc.source-file.file-name, srcloc.start-line,
+		    srcloc.start-column + 1, srcloc.end-column);
+	   end if;
+	   pprint-newline(#"mandatory", stream);
+	   block (return)
+	     let line
+	       = begin
+		   let handler (<file-not-found>)
+		     = method (cond, next-handler) return() end method;
+		   extract-line(srcloc.source-file,
+				srcloc.start-posn - srcloc.start-column);
+		 end;
+	     highlight-line(line, srcloc.start-column, srcloc.end-column,
+			    stream);
+	   end block;
+	 else
+	   format(stream,
+		  "\"%s\", line %d, character %d through "
+		    "line %d, character %d:",
+		  srcloc.source-file.file-name, srcloc.start-line,
+		  srcloc.start-column + 1, srcloc.end-line,
+		  srcloc.end-column);
+	   pprint-newline(#"mandatory", stream);
+	   block (return)
+	     let (first-line, last-line)
+	       = begin
+		   let handler (<file-not-found>)
+		     = method (cond, next-handler) return() end method;
+		   values(extract-line
+			    (srcloc.source-file,
+			     srcloc.start-posn - srcloc.start-column),
+			  extract-line
+			    (srcloc.source-file,
+			     srcloc.end-posn - srcloc.end-column));
+		 end;
+	     highlight-line(first-line, srcloc.start-column,
+			    start-line.size, stream);
+	     unless (srcloc.start-line + 1 == srcloc.end-line)
+	       write("  through\n", stream);
+	     end unless;
+	     highlight-line(last-line, 0, srcloc.end-column, stream);
+	   end block;
+	 end if;
+       end method);
+  write("  ", stream);
+end method describe-source-location;
+
+
+define method highlight-line
+    (line :: <byte-string>, start-char :: <integer>, end-char :: <integer>,
+     stream :: <stream>)
+    => ();
+  write("    ", stream);
+  local method repeat (index :: <integer>, column :: <integer>)
+	  if (index < line.size)
+	    let char = line[index];
+	    if (char == '\t')
+	      let new-column = floor/(column + 8, 8) * 8;
+	      for (column from column below new-column)
+		write(' ', stream);
+	      end for;
+	      repeat(index + 1, new-column);
+	    else
+	      write(char, stream);
+	      repeat(index + 1, column + 1);
+	    end if;
+	  end if;
+	end method repeat;
+  repeat(0, 0);
+  pprint-newline(#"mandatory", stream);
+  let start-column = compute-column(line, start-char);
+  if (start-char < end-char)
+    let end-column = compute-column(line, end-char);
+    for (column from 0 below start-column + 4)
+      write(' ', stream);
+    end for;
+    for (column from start-column below end-column)
+      write('^', stream);
+    end for;
+  else
+    for (column from 0 below start-column + 3)
+      write(' ', stream);
+    end for;
+    write("/\\", stream);
+  end if;
+  pprint-newline(#"mandatory", stream);
+end method highlight-line;
+
+
+define method compute-column (line :: <byte-string>, target :: <integer>)
+  for (i from 0 below target,
+       column = 0
+	 then if (line[i] == '\t')
+		floor/(column + 8, 8) * 8;
+	      else
+		column + 1;
+	      end if)
+  finally
+    column;
+  end for;
+end method compute-column;
+
+
 // extract-string -- exported.
 //
 // Extracts the text behind the source location and returns it as a string.
 // Does no processing of the input.  The start: and end: keywords can
 // be used to adjust exactly where to start and end the string.
 // 
-define method extract-string (source-location :: <file-source-location>,
-			      #key start :: <integer>
-				= source-location.start-posn,
-			      end: finish :: <integer>
-				= source-location.end-posn)
+define method extract-string
+    (source-location :: <file-source-location>,
+     #key start :: <integer> = source-location.start-posn,
+          end: finish :: <integer> = source-location.end-posn)
   let len = finish - start;
-  let result = make(<string>, size: len);
-  copy-bytes(result, 0, source-location.source-file.contents, start, len);
-  result;
+  if (len.positive?)
+    let result = make(<string>, size: len);
+    copy-bytes(result, 0, source-location.source-file.contents, start, len);
+    result;
+  else
+    "";
+  end if;
 end;
+
+
 
 define constant $source-file-location-words = 6;
 
