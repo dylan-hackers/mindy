@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.5 1995/01/09 17:35:24 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.6 1995/02/23 17:10:47 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -260,6 +260,10 @@ define constant compiler-warning = method (#rest args) => ();
   format(*debug-output*, "\n");
 end;
 
+define constant compiler-error
+  = method (#rest args) => ();
+      apply(error, args);
+    end;
 
 define generic key-of
   (value, collection :: <collection>, #key test :: <function>, default)
