@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.41 1996/02/17 17:53:48 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.42 1996/02/17 21:15:46 wlott Exp $
 *
 * This file implements functions.
 *
@@ -1866,6 +1866,7 @@ static void scav_func(struct function *func)
     scavenge(&func->keywords);
     scavenge(&func->result_types);
     scavenge(&func->more_results_type);
+    scavenge(&func->specializers);
 }
 
 static int scav_raw_func(struct object *ptr)
@@ -1883,7 +1884,6 @@ static obj_t trans_raw_func(obj_t func)
 static int scav_raw_method(struct object *ptr)
 {
     scav_func((struct function *)ptr);
-    scavenge(&((struct method *)ptr)->specializers);
     scavenge(&((struct method *)ptr)->class_cache);
 
     return sizeof(struct method);
@@ -1897,7 +1897,6 @@ static obj_t trans_raw_method(obj_t method)
 static int scav_builtin_method(struct object *ptr)
 {
     scav_func((struct function *)ptr);
-    scavenge(&((struct builtin_method *)ptr)->specializers);
     scavenge(&((struct builtin_method *)ptr)->class_cache);
 
     return sizeof(struct builtin_method);
@@ -1914,7 +1913,6 @@ static int scav_byte_method(struct object *ptr)
     int i;
 
     scav_func((struct function *)ptr);
-    scavenge(&method->specializers);
     scavenge(&method->class_cache);
     scavenge(&method->component);
 
@@ -1954,7 +1952,6 @@ static int scav_accessor_method(struct object *ptr)
     struct accessor_method *method = (struct accessor_method *)ptr;
 
     scav_func((struct function *)ptr);
-    scavenge(&method->specializers);
     scavenge(&method->class_cache);
     scavenge(&method->datum);
 
@@ -1969,7 +1966,6 @@ static obj_t trans_accessor_method(obj_t method)
 static int scav_c_function(struct object *ptr)
 {
     scav_func((struct function *)ptr);
-    scavenge(&((struct c_function *)ptr)->specializers);
 
     return sizeof(struct c_function);
 }
