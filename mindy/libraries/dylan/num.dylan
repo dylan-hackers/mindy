@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.9 1994/11/28 15:38:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.10 1995/11/20 01:46:55 rgs Exp $
 
 //======================================================================
 //
@@ -315,15 +315,33 @@ define method abs (real :: <real>)
 end;
 
 define method logior (#rest integers)
-  reduce(binary-logior, 0, integers);
+  if (integers.size == 2)
+    // The binary case is really the only one that needs to be optimized,
+    // since it is one of the easiest, and by far the most common.
+    binary-logior(integers.first, integers.second);
+  else
+    reduce(binary-logior, 0, integers);
+  end if;
 end;
 
 define method logxor (#rest integers)
-  reduce(binary-logxor, 0, integers);
+  if (integers.size == 2)
+    // The binary case is really the only one that needs to be optimized,
+    // since it is one of the easiest, and by far the most common.
+    binary-logxor(integers.first, integers.second);
+  else
+    reduce(binary-logxor, 0, integers);
+  end if;
 end;
 
 define method logand (#rest integers)
-  reduce(binary-logand, -1, integers);
+  if (integers.size == 2)
+    // The binary case is really the only one that needs to be optimized,
+    // since it is one of the easiest, and by far the most common.
+    binary-logand(integers.first, integers.second);
+  else
+    reduce(binary-logand, -1, integers);
+  end if;
 end;
 
 define method lcm (n :: <integer>, m :: <integer>)
