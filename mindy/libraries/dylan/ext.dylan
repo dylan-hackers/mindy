@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.4 1994/11/06 20:10:24 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.5 1994/11/07 01:16:51 rgs Exp $
 
 //======================================================================
 //
@@ -83,6 +83,7 @@ define constant ignore =
 // If the given key is present in the collection, return #t and the value
 // associated with the key.  Otherwise, return #f and an undefined value.
 //
+define constant undefined = pair(#f, #f);
 define constant key-exists? =
   method (coll :: <collection>, key :: <object>)
    => (result :: <boolean>, value :: <object>);
