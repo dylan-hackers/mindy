@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.6 1994/11/28 07:54:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.h,v 1.7 1996/04/10 20:44:01 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -91,6 +91,7 @@ struct variable {
     struct module *home;
     boolean defined;
     enum var_kind kind;
+    obj_t binding;
     obj_t value;
     obj_t type;
     enum { func_Yes, func_No, func_Maybe, func_Always } function;

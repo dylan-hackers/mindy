@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.25 1996/02/23 21:38:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.26 1996/04/10 20:44:01 nkramer Exp $
 *
 * This file implements the module system.
 *
@@ -51,6 +51,16 @@
 obj_t obj_Unbound = NULL;
 static obj_t obj_UnboundClass = NULL;
 
+obj_t obj_NameClass = NULL;
+obj_t obj_NamespaceClass = NULL;
+obj_t obj_LibraryClass = NULL;
+obj_t obj_ModuleClass = NULL;
+obj_t obj_BindingClass = NULL;
+
+#define BINDING(o) obj_ptr(struct binding *, o)
+#define MODULE(o) obj_ptr(struct dylan_module *, o)
+#define LIBRARY(o) obj_ptr(struct dylan_library *, o)
+
 static boolean InitializingVars = TRUE;
 
 struct bucket {
@@ -68,6 +78,7 @@ struct table {
 
 struct library {
     obj_t name;
+    obj_t dylan_library;
     struct defn *defn;
     struct table *modules;
     boolean loading;
@@ -88,6 +99,7 @@ struct entry {
 
 struct module {
     obj_t name;
+    obj_t dylan_module;
     struct library *home;
     struct defn *defn;
     struct table *variables;
@@ -100,6 +112,21 @@ struct var {
     boolean created;
     struct var *next;
     struct variable variable;
+};
+
+struct dylan_library {
+    obj_t class;
+    struct library *library;
+};
+
+struct dylan_module {
+    obj_t class;
+    struct module *module;
+};
+
+struct binding {
+    obj_t class;
+    struct variable *variable;
 };
 
 static struct table *LibraryTable = NULL;
@@ -140,6 +167,24 @@ static void *table_lookup(struct table *table, obj_t symbol)
 	    return bucket->datum;
     return NULL;
 }
+
+/* Returns a list of all the symbols used as keys in the table
+ */
+static obj_t get_all_keys(struct table *table)
+{
+    int length = table->length;
+    int i;
+    obj_t res = obj_Nil;
+
+    for (i = 0; i < length; i++) {
+	struct bucket *bucket;
+
+	for (bucket = table->table[i]; bucket != NULL; bucket = bucket->next) {
+	    res = pair(bucket->symbol, res);
+	}
+    }
+    return res;
+}    
 
 static void rehash_table(struct table *table)
 {
@@ -320,6 +365,7 @@ static struct library *make_library(obj_t name)
     struct library *library = malloc(sizeof(struct library));
 
     library->name = name;
+    library->dylan_library = NULL;
     library->defn = NULL;
     library->modules = make_table();
     library->completed = FALSE;
@@ -500,6 +546,7 @@ static struct module *make_module(obj_t name, struct library *home)
     struct module *module = malloc(sizeof(struct module));
 
     module->name = name;
+    module->dylan_module = NULL;
     module->home = home;
     module->defn = NULL;
     module->variables = make_table();
@@ -725,6 +772,7 @@ static struct var *make_var(obj_t name, struct module *home,enum var_kind kind)
     var->variable.home = home;
     var->variable.defined = FALSE;
     var->variable.kind = kind;
+    var->variable.binding = NULL;
     var->variable.value = obj_Unbound;
     var->variable.type = obj_False;
     var->variable.function = func_Maybe;
@@ -884,7 +932,236 @@ obj_t module_name(struct module *module)
 
 
 
+/* Dylan interface */
+
+static obj_t make_binding(struct variable *variable)
+{
+    if (variable->binding == NULL) {
+	variable->binding = alloc(obj_BindingClass, sizeof(struct binding));
+	BINDING(variable->binding)->variable = variable;
+    }
+    return variable->binding;
+}
+
+static obj_t make_dylan_module(struct module *module)
+{
+    if (module->dylan_module == NULL) {
+	module->dylan_module = alloc(obj_ModuleClass, 
+				     sizeof(struct dylan_module));
+	MODULE(module->dylan_module)->module = module;
+    }
+    return module->dylan_module;
+}
+
+static obj_t make_dylan_library(struct library *library)
+{
+    if (library->dylan_library == NULL) {
+	library->dylan_library = alloc(obj_LibraryClass, 
+				     sizeof(struct dylan_library));
+	LIBRARY(library->dylan_library)->library = library;
+    }
+    return library->dylan_library;
+}
+
+static obj_t dylan_resolve_name_in_module(obj_t name, obj_t module)
+{
+    /* name is symbol */
+    struct variable *variable 
+	= find_variable(MODULE(module)->module, name, FALSE, FALSE);
+    if (variable == NULL) {
+	return obj_False;
+    } else {
+	return make_binding(variable);
+    }
+}
+
+static obj_t dylan_resolve_name_in_library(obj_t name, obj_t library)
+{
+    /* name is symbol */
+    struct module *module
+	= find_module(LIBRARY(library)->library, name, FALSE, FALSE);
+    if (module == NULL) {
+	return obj_False;
+    } else {
+	return make_dylan_module(module);
+    }
+}
+
+static obj_t dylan_binding_value(obj_t binding)
+{
+    switch (BINDING(binding)->variable->kind) {
+      case var_Assumed: case var_AssumedWriteable: 
+	error("Binding %= is undefined, and so has no value", binding);
+	return obj_False;  /* stop compiler warning */
+      default:
+	return BINDING(binding)->variable->value;
+    }
+}
+
+/* return the type constraint on the binding, if any
+ */
+static obj_t dylan_binding_type(obj_t binding)
+{
+    return BINDING(binding)->variable->type;
+}
+
+static obj_t dylan_binding_kind(obj_t binding)
+{
+    switch (BINDING(binding)->variable->kind) {
+      case var_Assumed: case var_AssumedWriteable: return symbol("undefined");
+      case var_Constant: return symbol("constant");
+      case var_Variable: return symbol("variable");
+      case var_Class: return symbol("class");
+      case var_GenericFunction: return symbol("generic-function");
+      case var_Method: return symbol("method");
+      default: 
+	lose("Unknown kind of binding");
+	return symbol("unknown");  /* Should never be reached, but suppresses
+				      a compiler warning.. */
+    }
+}
+
+static obj_t dylan_visible_bindings(obj_t module)
+{
+    return get_all_keys(MODULE(module)->module->variables);
+}
+
+static obj_t dylan_visible_modules(obj_t library)
+{
+    return get_all_keys(LIBRARY(library)->library->modules);
+}
+
+static obj_t dylan_exported_bindings(obj_t module)
+{
+    return MODULE(module)->module->defn->exports;
+}
+
+static obj_t dylan_exported_modules(obj_t library)
+{
+    return LIBRARY(library)->library->defn->exports;
+}
+
+static obj_t dylan_get_all_libraries(void)
+{
+    struct library *library;
+    obj_t result = obj_Nil;
+
+    for (library = Libraries; library != NULL; library = library->next) {
+	result = pair(make_dylan_library(library), result);
+    }
+    return result;
+}
+
+static obj_t dylan_get_all_modules(void)
+{
+    struct module *module;
+    obj_t result = obj_Nil;
+
+    for (module = Modules; module != NULL; module = module->next) {
+	result = pair(make_dylan_module(module), result);
+    }
+    return result;
+}
+
+static obj_t dylan_name_home_for_bindings(obj_t binding)
+{
+    return BINDING(binding)->variable->home->dylan_module;
+}
+
+static obj_t dylan_name_home_for_modules(obj_t module)
+{
+    return MODULE(module)->module->home->dylan_library;
+}
+
+static obj_t dylan_binding_name(obj_t binding)
+{
+    return BINDING(binding)->variable->name;
+}
+
+static obj_t dylan_module_name(obj_t module)
+{
+    return MODULE(module)->module->name;
+}
+
+static obj_t dylan_library_name(obj_t library)
+{
+    return LIBRARY(library)->library->name;
+}
+
+#if 0
+/* A list of lists of lists... of symbols.  You'll have to flatten the
+ * result to get anything useful out of this.  
+ */
+static obj_t all_exported_bindings (struct module *module)
+{
+    struct use *use;
+    obj_t result = obj_Nil;
+
+    for (use = module->defn->use; use != NULL; use = use->next) {
+	if (use->export == obj_True) {
+	    if (use->import == obj_True) {
+		obj_t use_name = use->name;
+		struct module *used_module;
+
+		if (module->name == symbol("Dylan-User")) {
+		    used_module = find_module(library_Dylan, use_name, 
+					      TRUE, FALSE);
+		} else {
+		    used_module = find_module(module->home, use_name, 
+					      TRUE, FALSE);
+		}
+		result = pair(all_exported_bindings(used_module), result);
+	    } else {
+		/* Not correct -- use->imports are not local names */
+		result = pair(use->import, result);
+	    }
+	} else {
+	    result = pair(use->export, result);
+	}
+    }
+    return result;
+}
+#endif
+
+static obj_t dylan_all_exported_bindings(obj_t dylan_module)
+{
+    return all_exported_bindings(MODULE(dylan_module)->module);
+}
+
+
+
 /* GC stuff. */
+
+static int scav_binding(struct object *o)
+{
+    return sizeof(struct binding);
+}
+
+static obj_t trans_binding(obj_t binding)
+{
+    return transport(binding, sizeof(struct binding), TRUE);
+}
+
+static int scav_dylan_module(struct object *o)
+{
+    return sizeof(struct dylan_module);
+}
+
+static obj_t trans_dylan_module(obj_t module)
+{
+    return transport(module, sizeof(struct dylan_module), TRUE);
+}
+
+static int scav_dylan_library(struct object *o)
+{
+    return sizeof(struct dylan_library);
+}
+
+static obj_t trans_dylan_library(obj_t library)
+{
+    return transport(library, sizeof(struct dylan_library), TRUE);
+}
+
 
 static int scav_unbound(struct object *ptr)
 {
@@ -940,6 +1217,9 @@ static void scav_table(struct table *table, boolean of_entries)
 static void scav_var(struct var *var)
 {
     scavenge(&var->variable.name);
+    if (var->variable.binding != NULL) {
+	scavenge(&var->variable.binding);
+    }
     scavenge(&var->variable.value);
     scavenge(&var->variable.type);
     scavenge(&var->variable.ref_file);
@@ -948,6 +1228,9 @@ static void scav_var(struct var *var)
 static void scav_module(struct module *module)
 {
     scavenge(&module->name);
+    if (module->dylan_module != NULL) {
+	scavenge(&module->dylan_module);
+    }
     scav_defn(module->defn);
     scav_table(module->variables, TRUE);
 }
@@ -955,6 +1238,9 @@ static void scav_module(struct module *module)
 static void scav_library(struct library *library)
 {
     scavenge(&library->name);
+    if (library->dylan_library != NULL) {
+	scavenge(&library->dylan_library);
+    }
     scav_defn(library->defn);
     scav_table(library->modules, TRUE);
 }
@@ -980,7 +1266,20 @@ void scavenge_module_roots(void)
 void make_module_classes(void)
 {
     obj_UnboundClass = make_builtin_class(scav_unbound, trans_unbound);
+    obj_NameClass = make_abstract_class(TRUE);
+    obj_NamespaceClass = make_abstract_class(TRUE);
+    obj_LibraryClass
+	= make_builtin_class(scav_dylan_library, trans_dylan_library);
+    obj_ModuleClass
+	= make_builtin_class(scav_dylan_module, trans_dylan_module);
+    obj_BindingClass
+	= make_builtin_class(scav_binding, trans_binding);
     add_constant_root(&obj_UnboundClass);
+    add_constant_root(&obj_NameClass);
+    add_constant_root(&obj_NamespaceClass);
+    add_constant_root(&obj_LibraryClass);
+    add_constant_root(&obj_ModuleClass);
+    add_constant_root(&obj_BindingClass);
 }
 
 void init_modules(void)
@@ -1016,6 +1315,16 @@ void init_module_classes(void)
 {
     init_builtin_class(obj_UnboundClass, "<unbound-marker>",
 		       obj_ObjectClass, NULL);
+    init_builtin_class(obj_NameClass, "<name>",
+		       obj_ObjectClass, NULL);
+    init_builtin_class(obj_NamespaceClass, "<namespace>",
+		       obj_ObjectClass, NULL);
+    init_builtin_class(obj_LibraryClass, "<library>",
+		       obj_NamespaceClass, NULL);
+    init_builtin_class(obj_ModuleClass, "<module>",
+		       obj_NameClass, obj_NamespaceClass, NULL);
+    init_builtin_class(obj_BindingClass, "<binding>",
+		       obj_NameClass, NULL);
 }
 
 void done_initializing_vars(void)
@@ -1091,4 +1400,73 @@ void finalize_modules(void)
 	    }
 	}
     }
+}
+
+void init_module_functions (void)
+{
+    obj_t false_or_binding
+	= type_union(obj_BindingClass, singleton(obj_False));
+    obj_t false_or_module
+	= type_union(obj_ModuleClass, singleton(obj_False));
+    obj_t false_or_name
+	= type_union(obj_NameClass, singleton(obj_False));
+
+    define_function("binding-value", list1(obj_BindingClass), FALSE, obj_Nil,
+		    FALSE, list1(obj_ObjectClass), dylan_binding_value);
+    define_function("binding-type", list1(obj_BindingClass), FALSE, obj_Nil,
+		    FALSE, list1(obj_ObjectClass), dylan_binding_type);
+    define_function("binding-kind", list1(obj_BindingClass), FALSE, obj_Nil,
+		    FALSE, list1(obj_SymbolClass), dylan_binding_kind);
+    define_function("get-all-libraries", obj_Nil, FALSE, obj_Nil,
+		    FALSE, list1(obj_ListClass), dylan_get_all_libraries);
+    define_function("get-all-modules", obj_Nil, FALSE, obj_Nil,
+		    FALSE, list1(obj_ListClass), dylan_get_all_modules);
+
+    define_function("binding-name", list1(obj_BindingClass), FALSE, obj_Nil,
+		    FALSE, list1(obj_SymbolClass), dylan_binding_name);
+    define_function("module-name", list1(obj_ModuleClass), FALSE, obj_Nil,
+		    FALSE, list1(obj_SymbolClass), dylan_module_name);
+    define_function("library-name", list1(obj_LibraryClass), FALSE, obj_Nil,
+		    FALSE, list1(obj_SymbolClass), dylan_library_name);
+
+    define_generic_function("resolve-name", 
+			    list2(obj_SymbolClass, obj_NamespaceClass),
+			    FALSE, obj_False, FALSE, list1(false_or_name),
+			    obj_False);
+    define_method("resolve-name", list2(obj_SymbolClass, obj_ModuleClass),
+		   FALSE, obj_False, FALSE, false_or_binding,
+		  dylan_resolve_name_in_module);
+    define_method("resolve-name", list2(obj_SymbolClass, obj_LibraryClass),
+		   FALSE, obj_False, FALSE, false_or_module,
+		  dylan_resolve_name_in_library);
+
+    define_generic_function("exported-names", list1(obj_NamespaceClass),
+			    FALSE, obj_False, FALSE, list1(obj_ListClass), 
+			    obj_False);
+    define_method("exported-names", list1(obj_ModuleClass),
+		  FALSE, obj_False, FALSE, obj_ListClass,
+		  dylan_exported_bindings);
+    define_method("exported-names", list1(obj_LibraryClass),
+		  FALSE, obj_False, FALSE, obj_ListClass,
+		  dylan_exported_modules);
+    
+    define_generic_function("visible-names", list1(obj_NamespaceClass),
+			    FALSE, obj_False, FALSE, list1(obj_ListClass), 
+			    obj_False);
+    define_method("visible-names", list1(obj_ModuleClass),
+		  FALSE, obj_False, FALSE, obj_ListClass,
+		  dylan_visible_bindings);
+    define_method("visible-names", list1(obj_LibraryClass),
+		  FALSE, obj_False, FALSE, obj_ListClass,
+		  dylan_visible_modules);
+    
+    define_generic_function("name-home", list1(obj_NameClass),
+			    FALSE, obj_False, FALSE, 
+			    list1(obj_NamespaceClass), obj_False);
+    define_method("name-home", list1(obj_BindingClass),
+		  FALSE, obj_False, FALSE, obj_ModuleClass,
+		  dylan_name_home_for_bindings);
+    define_method("name-home", list1(obj_ModuleClass),
+		  FALSE, obj_False, FALSE, obj_LibraryClass,
+		  dylan_name_home_for_modules);
 }
