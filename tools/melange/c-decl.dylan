@@ -348,15 +348,20 @@ end method true-type;
 
 define abstract class <structured-type-declaration> (<type-declaration>) 
   slot members :: type-union(<sequence>, <false>), init-value: #f;
-  slot anonymous? :: <boolean>, required-init-keyword: #"anonymous?";
-end class <structured-type-declaration>;
-
-define class <struct-declaration>
-    (<new-static-pointer>, <structured-type-declaration>)
   // This slot (initialized lazily by "do-coalesce-members" stores an
   // alternate version of the "members" sequence in which adjacent
   // bitfields are combined into a <coalesced-bitfields> pseudo-slot.
-  slot coalesced-members :: false-or(<sequence>) = #f;
+  slot %coalesced-members :: false-or(<sequence>) = #f;
+  slot anonymous? :: <boolean>, required-init-keyword: #"anonymous?";
+end class <structured-type-declaration>;
+
+define method coalesced-members(decl :: <structured-type-declaration>)
+ => (members :: <sequence>)
+  decl.%coalesced-members | do-coalesce-members(decl)
+end;
+
+define class <struct-declaration>
+    (<new-static-pointer>, <structured-type-declaration>)
 end class;
 
 define class <union-declaration>

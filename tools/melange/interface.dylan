@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.28 2003/03/16 08:24:30 brent Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.29 2003/04/08 22:25:54 andreas Exp $
 
 //======================================================================
 //
@@ -131,7 +131,7 @@ define method process-interface-file
 	      let newer-position
 		= process-define-interface(in-file, input-string,
 					   new-position, out-stream,
-					   verbose: verbose, structs: structs,
+					   verbose: verbose,
                                            module-stream: module-stream,
                                            module-line: module-line);
 	      if (newer-position < sz) try-define(newer-position) end if;
@@ -518,7 +518,7 @@ define method process-parse-state
   end for;
 
   let c-state
-    = c-parse(full-names, defines: defines, verbose: verbose, structs: structs);
+    = c-parse(full-names, defines: defines, verbose: verbose);
 
   // The ordering of some of the following steps is important.  We must
   // process all of the clauses before doing apply-options so that any
@@ -608,7 +608,7 @@ end method write-module-stream;
 define method process-define-interface
     (file-name :: <string>, string :: <string>, start :: <integer>,
      out-stream :: <stream>,
-     #key verbose, structs, module-stream :: false-or(<stream>),
+     #key verbose, module-stream :: false-or(<stream>),
      module-line)
  => (end-position :: <integer>);
   let tokenizer = make(<tokenizer>, source-string: string,
@@ -617,7 +617,7 @@ define method process-define-interface
   // If there is a problem with the parse, it will simply signal an error
   parse(state);
   process-parse-state(state, out-stream, 
-                      verbose: verbose, structs: structs, 
+                      verbose: verbose,
                       module-stream: module-stream,
                       module-line: module-line);
   // The tokenizer will be set at the next token after the "define
@@ -682,7 +682,7 @@ end method show-copyright;
 define method show-usage(stream :: <stream>) => ()
   format(stream,
 "Usage:\n\n"
-"melange [-v] [--mindy|--d2c] [--shadow-structs] -Iincdir... infile [outfile]\n");
+"melange [-v] [--mindy|--d2c] -Iincdir... infile [outfile]\n");
 end method show-usage;
 
 define method show-usage-and-exit() => ()
@@ -698,8 +698,7 @@ define method show-help(stream :: <stream>) => ()
 "       -v, --verbose:    Print progress messages while parsing.\n"
 "       --mindy:          Generate output for use only with Mindy.\n"
 "       --d2c:            Generate output for use only with d2c.\n"
-"       -I, --includedir: Extra directories to search for C headers.\n"
-"       --shadow-structs: shadow C-style structs with virtual Dylan-style types\n");
+"       -I, --includedir: Extra directories to search for C headers.\n");
 end method show-help;
 
 
@@ -748,9 +747,6 @@ define method main (program, #rest args)
 			    long-options: #("includedir"),
 			    short-options: #("I"));
   add-option-parser-by-type(*argp*,
-			    <simple-option-parser>,
-			    long-options: #("shadow-structs"));
-  add-option-parser-by-type(*argp*,
 			    <repeated-parameter-option-parser>,
 			    long-options: #("framework"));
   
@@ -777,7 +773,6 @@ define method main (program, #rest args)
   let module-file = option-value-by-long-name(*argp*, "module-file");
   let include-dirs = option-value-by-long-name(*argp*, "includedir");
   let regular-args = regular-arguments(*argp*);
-  let structs? = option-value-by-long-name(*argp*, "shadow-structs");
   let framework-dirs = option-value-by-long-name( *argp*, "framework" );
 
   // Handle --verbose.
@@ -844,7 +839,7 @@ define method main (program, #rest args)
 
   // Do our real work.
   process-interface-file(in-file, out-file | *standard-output*,
-			 verbose: verbose?, structs: structs?, 
+			 verbose: verbose?,
                          module-stream: module-stream);
   exit(exit-code: 0);  // ### seems to be necessary, even though I'd
                        // think all Dylan programs would exit with

@@ -120,7 +120,8 @@ end method unix-type-alignment;
 // alignments than (for example) packing into individual bytes.  More
 // study will be required to determine what different compilers do.
 //
-define function do-coalesce-members (decl :: <struct-declaration>)
+define function do-coalesce-members (decl :: <structured-type-declaration>)
+ => (members :: <sequence>)
   let result :: <list> = #();
   for (member :: <declaration> in decl.members)
     let decl-type = member.type;
@@ -154,16 +155,15 @@ define function do-coalesce-members (decl :: <struct-declaration>)
       result := pair(member, result);
     end if;
   end for;
-  decl.coalesced-members := reverse!(result);
+  decl.%coalesced-members := reverse!(result);
 end function do-coalesce-members;
 
 define method unix-type-alignment (decl :: <struct-declaration>)
   => size :: <integer>;
   if (decl.members)
-    let members = decl.coalesced-members | do-coalesce-members(decl);
     reduce(method (al :: <integer>, member)
 	     max(al, unix-type-alignment(member.type)) end method,
-	   1, members);
+	   1, decl.coalesced-members);
   else
     1;
   end if;
@@ -235,11 +235,10 @@ end method unix-type-size;
 define method unix-type-size (decl :: <struct-declaration>)
  => size :: <integer>;
   if (decl.members)
-    let members = decl.coalesced-members | do-coalesce-members(decl);
     let base-size =
       reduce(method (sz :: <integer>, member)
 	       aligned-slot-position(sz, member.type); end method,
-	     0, members);
+	     0, decl.coalesced-members);
     let align = unix-type-alignment(decl);
     let rem = remainder(base-size, align);
     if (rem = 0)

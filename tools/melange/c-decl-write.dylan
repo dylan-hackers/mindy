@@ -320,11 +320,12 @@ end method c-accessor;
 // vectors.) 
 //
 define method write-c-accessor-method
-    (compound-type :: <type-declaration>, slot-name :: <string>,
+    (compound-type :: <type-declaration>,
      slot-type :: <slot-declaration>, offset :: <integer>,
      written-names :: <written-name-record>, stream :: <stream>)
  => ();
   let real-type = true-type(slot-type.type);
+  let slot-name = slot-type.dylan-name;
   // Write getter method
   unless(real-type.abstract-type?)
     format(stream,
@@ -359,7 +360,7 @@ define method write-c-accessor-method
   end unless;
 end method write-c-accessor-method;
 
-// write-c-bitfield-methods -- internal
+// write-c-accessor-method -- internal
 //
 // This writes a series of accessor methods for the various bitfields
 // which are stored in a single <coalesced-bitfields> pseudo-slot.  It
@@ -370,8 +371,8 @@ end method write-c-accessor-method;
 //
 // No attempt has (yet) been made to optimize bitfield access.
 //
-define method write-c-bitfield-methods
-    (compound-type :: <struct-declaration>, 
+define method write-c-accessor-method
+    (compound-type :: <structured-type-declaration>, 
      glob-type :: <coalesced-bitfields>, offset :: <integer>,
      written-names :: <written-name-record>, stream :: <stream>)
  => ();
@@ -424,7 +425,7 @@ define method write-c-bitfield-methods
       end if;
     end unless;
   end for;
-end method write-c-bitfield-methods;
+end method write-c-accessor-method;
 
 define method d2c-type-tag
     (type :: <pointer-rep-types>)
@@ -508,27 +509,18 @@ define method write-declaration
     local method slot-accessors
 	      (end-offset :: <integer>, c-slot :: <declaration>)
 	   => (end-offset :: <integer>);
-	    let slot-type = c-slot.type;
 	    let (end-offset, start-offset)
-	      = aligned-slot-position(end-offset, slot-type);
-	    case
-	      (instance?(c-slot, <coalesced-bitfields>)) =>
-		write-c-bitfield-methods(decl, c-slot, start-offset,
-					 written-names, stream);
-	      (c-slot.excluded?) => #f;
-	      otherwise =>
-		write-c-accessor-method(decl, c-slot.dylan-name, c-slot,
-					start-offset, written-names, stream);
-	    end case;
+	      = aligned-slot-position(end-offset, c-slot.type);
+            unless(c-slot.excluded?)
+              write-c-accessor-method(decl, c-slot,
+                                      start-offset, written-names, stream);
+            end unless;
 	    end-offset;
 	  end method slot-accessors;
 
     // This may still be an "incomplete type".  If so, we define the class,
     // but don't write any slot accessors.
-    if (decl.members)
-      reduce(slot-accessors, 0,
-	     decl.coalesced-members | do-coalesce-members(decl));
-    end if;
+    decl.members & reduce(slot-accessors, 0, decl.coalesced-members);
 
     format(stream,
 	   "define method pointer-value (value :: %s, #key index = 0) "
@@ -543,67 +535,7 @@ define method write-declaration
 	     "=> (result :: <integer>);\n"
 	     "  %d;\nend method content-size;\n\n",
 	   subclass-type(decl.dylan-name), decl.c-type-size);
-    if(*create-virtual-structs?* & decl.members)
-      let virt-class :: <string> = concatenate("<virtual-",
-					       copy-sequence(decl.dylan-name,
-							     start: 1));
-      local method struct-slot-name(big :: <string>) => (ans :: <string>);
-	copy-sequence(big,
-		      start: find-key(big, method(char) char = '$' end) + 1);
-      end;
-
-      format(stream, 
-	     "define class %s (<object>)\n  slot c-type :: %s,"
-             " required-init-keyword: c-type:;\n",
-	     virt-class,
-	     decl.dylan-name);
-      for(x in decl.coalesced-members)
-	format(stream,"  constant virtual slot %s :: %s;\n",
-	       // read-only virtual?
-	       struct-slot-name(x.dylan-name),
-	       x.type.mapped-name);
-      end for;
-      format(stream, "end class %s;\n\n", virt-class);
-      local method slot-fn(name :: <string>, kind :: <string>, #key setter?)
-	let fn-name :: <string> = concatenate(name,
-					      if(setter?) "-setter"
-					      else ""
-					      end if);
-	format(stream,
-	       concatenate("define method %s (",
-			   if(setter?) concatenate("value :: ", kind, ", ")
-			   else ""
-			   end if,
-			   "struct :: %s)\n => (ans :: %s);\n  %s(",
-			   if(setter?) "value, " else "" end if,
-			   "struct.c-type)\nend method %s;\n\n"),
-	       struct-slot-name(fn-name),
-	       virt-class,
-	       kind,
-	       fn-name,
-	       struct-slot-name(fn-name));
-   		 	 register-written-name(written-names, struct-slot-name(fn-name), decl);
-      end;
-
-      format(stream, "define method c-struct-size(of == %s)\n"
-	       " => (ans :: <integer>);\n  content-size(%s)\n"
-	       "end method c-struct-size;\n\n",
-	     virt-class, decl.dylan-name);
-
-      for(x in decl.coalesced-members)
-				let real-type = true-type(x.type);
-				// abstract types don't have accessors
-			  unless(real-type.abstract-type?)
-					slot-fn(x.dylan-name, x.type.mapped-name, setter?: #f);
-				  // Anonymous types don't have setters, nor do read-only or struct ones
-				  if((as(<symbol>,copy-sequence(x.type.mapped-name,end: 5)) ~= #"<anon")&
-						//FIXME: x.type.read-only gives an error
-						(/*~x.type.read-only &*/ ~instance?(real-type, <non-atomic-types>)))
-				  	slot-fn(x.dylan-name, x.type.mapped-name, setter?: #t);
-				  end if;
-				end unless;
-      end for;
-    end if;
+    
   end if;
 end method write-declaration;
 
@@ -631,8 +563,7 @@ define method write-declaration
     if (decl.members)
       for (c-slot in decl.members)
 	if (~c-slot.excluded?)
-	  let name = c-slot.dylan-name;
-	  write-c-accessor-method(decl, name, c-slot, 0, written-names,
+	  write-c-accessor-method(decl, c-slot, 0, written-names,
 				  stream);
 	end if;
       end for;
