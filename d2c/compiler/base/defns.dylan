@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.2 1994/12/12 21:22:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.3 1994/12/13 13:21:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,6 +20,9 @@ end;
 define method print-object (defn :: <definition>, stream :: <stream>) => ();
   pprint-fields(defn, stream, name: defn.defn-name);
 end;
+
+define generic defn-type (defn :: <definition>)
+    => res :: union(<false>, <ctype>);
 
 
 define abstract class <implicit-definition> (<definition>)
