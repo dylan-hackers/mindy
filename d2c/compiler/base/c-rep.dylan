@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.6 1995/04/26 11:57:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.7 1995/04/28 07:21:21 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -80,6 +80,11 @@ define class <data-word-representation> (<immediate-representation>)
     required-init-keyword: data-word-member:;
 end;
 
+define constant $cluster-rep
+  = make(<c-representation>,
+	 alignment: $pointer-alignment, size: $pointer-size,
+	 c-type: "descriptor_t *", more-general: #f,
+	 to-more-general: #f, from-more-general: #f);
 
 define constant $general-rep
   = make(<general-representation>,
