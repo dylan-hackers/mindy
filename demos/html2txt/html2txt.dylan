@@ -88,7 +88,7 @@ define module html
   use dylan;
   
   // A few basic definitions not present in the Dylan spec
-  use extensions, import: {<boolean>, main};
+  use extensions, import: {main};
   
   // Additional collection classes and operations from "collection-extensions"
   use subseq;
@@ -379,7 +379,7 @@ define method process-HTML(Tag :: <symbol>, Out-Text :: <strings>,
 	let End-Tag =
 	  for (index = sfind(Current-Text, curry(\==, '>'), start: Start-Tag)
 		 then sfind(Current-Text, curry(\==, '>'), start: Start-Tag),
-	       until index)
+	       until: index)
 	    Current-Text := concatenate(Current-Text, " ", read-line(File));
 	  finally index;
 	  end for;
@@ -450,7 +450,7 @@ end method html2text;
 // "process-HTML".  Note that we had to import the generic function "main"
 // from module "extensions" in library "dylan".  This interface is Mindy
 // specific. 
-define method main (argv0, #rest args) => ();
+define method main (argv0 :: <byte-string>, #rest args) => ();
   if (empty?(args))
     html2text(#t);
   else
