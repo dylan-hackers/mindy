@@ -2,7 +2,7 @@ module: parse-arguments
 synopsis: Parse command-line options.
 authors: Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.9 1998/12/20 23:54:38 emk Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.10 1998/12/22 08:43:01 emk Exp $
 
 //======================================================================
 //
@@ -309,21 +309,25 @@ define function tokenize-args
 	token(<long-option-token>, copy-sequence(arg, start: 2));
 	
       (arg.size > 0 & arg[0] = '-') =>
-	if (arg.size = 1) usage-error() end;
-	block (done)
-	  for (i from 1 below arg.size)
-	    let opt = make(<string>, size: 1, fill: arg[i]);
-	    token(<short-option-token>, opt);
-	    let opt-parser = element(parser.option-short-name-map,
-				     opt, default: #f);
-	    if (opt-parser & opt-parser.option-might-have-parameters?
-		  & i + 1 < arg.size)
-	      token(<regular-argument-token>,
-		    copy-sequence(arg, start: i + 1));
-	      done();
-	    end if;
-	  end for;
-	end block;
+	if (arg.size = 1)
+	  // Probably a fake filename representing stdin ('cat -')
+	  token(<regular-argument-token>, "-");
+	else
+	  block (done)
+	    for (i from 1 below arg.size)
+	      let opt = make(<string>, size: 1, fill: arg[i]);
+	      token(<short-option-token>, opt);
+	      let opt-parser = element(parser.option-short-name-map,
+				       opt, default: #f);
+	      if (opt-parser & opt-parser.option-might-have-parameters?
+		    & i + 1 < arg.size)
+		token(<regular-argument-token>,
+		      copy-sequence(arg, start: i + 1));
+		done();
+	      end if;
+	    end for;
+	  end block;
+	end if;
 	
       otherwise =>
 	token(<regular-argument-token>, arg);
