@@ -3,7 +3,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
 synopsis: A regression test for the string-extensions library.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.9 1996/02/17 17:56:21 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/regexp-test.dylan,v 1.10 1996/04/06 18:29:36 nkramer Exp $
 
 //======================================================================
 //
@@ -277,9 +277,14 @@ define method positioner-test ();
 	      #[0, 25, 17, 19]);
   test-regexp("\\bthe rain (in){1,5} spain$", "the rain inininininin spain",
 	      #f);
-  test-regexp("((a*)|(b*))*c", "aaabbabbacbork", 
-	      #[0, 10, 8, 9, 8, 9, 6, 8]);
-                   // The real test is whether or not this terminates
+  block ()
+    test-regexp("((a*)|(b*))*c", "aaabbabbacbork", 
+		#[0, 10, 8, 9, 8, 9, 6, 8]);
+    format("Failed! %s terminated, but it should have signaled an error!\n",
+	   "((a*)|(b*))*c");
+  exception (<illegal-regexp>)
+    #f;  // This is what it should do
+  end block;
   test-regexp("a*", "aaaaa", #[0, 5]);
   test-regexp("a*", "a", #[0, 1]);
   test-regexp("a*", "", #[0, 0]);
