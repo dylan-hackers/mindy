@@ -1,6 +1,10 @@
-Gwydion Dylan 2.4.0RC1 (2004-08-28)
+Gwydion Dylan 2.4.0 (2004-10-23)
 
-  This section needs to be written.
+  Because the bulk of our recent development effort has been put into
+  the 2.5 development branch, work on this branch has focused on
+  stabilization in the form of bug and compatibility fixes.  Changes
+  include improvements in the robustness of the melange tool, and an
+  update of the Macintosh CodeWarrior plugin.
 
 Gwydion Dylan 2.3.11 (2003-07-28)
 
