@@ -13,6 +13,8 @@ do compile_subdirs(
     'regexp',
     'format-out',
     'melange',
+    'matrix',
+    'time',
 );
 
 do install('include', 'runtime.h');
