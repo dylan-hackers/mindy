@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.1 1994/12/12 13:01:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.2 1994/12/17 02:13:42 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -750,7 +750,16 @@ define method print-object (sing :: <singleton-ctype>, stream :: <stream>)
   pprint-fields(sing, stream, value: sing.singleton-value);
 end;
 
-define method csubtype-dispatch(type1 :: <singleton-ctype>, type2)
+define method csubtype-dispatch(type1 :: <singleton-ctype>, type2 :: <ctype>)
+    => result :: <boolean>;
+  csubtype?(type1.base-class, type2);
+end method;
+
+// The method is only necessary because which of the previous method and
+// the <limited-ctype>,<cclass> method is applicable is ambiguous when
+// given a singleton and a class.
+//
+define method csubtype-dispatch(type1 :: <singleton-ctype>, type2 :: <cclass>)
     => result :: <boolean>;
   csubtype?(type1.base-class, type2);
 end method;
@@ -934,7 +943,7 @@ define method csubtype-dispatch
 end method;
 
 define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
-    => result :: <ctype>, precise :: <boolean>;
+    => (result :: <ctype>, precise :: <boolean>);
   case
     subclass?(type1, type2) => values(type1, #t);
     subclass?(type2, type1) => values(type2, #t);
@@ -950,7 +959,7 @@ end method;
 
 define method ctype-intersection-dispatch
     (type1 :: <cclass>, type2 :: <limited-ctype>)
-    => result :: <ctype>, precise :: <true>;
+    => (result :: <ctype>, precise :: <true>);
   values(if (subclass?(type2.base-class, type1)) type2 else empty-ctype() end,
          #t);
 end;
@@ -979,7 +988,7 @@ end;
 define method make-canonical-singleton (thing :: <eql-ct-value>)
     => res :: <ctype>;
   thing.ct-value-singleton
-    | thing.ct-value-singleton := really-make-canonical-singleton(thing);
+    | (thing.ct-value-singleton := really-make-canonical-singleton(thing));
 end;
 
 define method really-make-canonical-singleton (thing :: <cclass>)
@@ -1242,7 +1251,7 @@ end method;
 ///
 define constant values-types-intersect? = method
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
-    => result :: <boolean>, precise :: <boolean>;
+    => (result :: <boolean>, precise :: <boolean>);
 
   case
     type1 == empty-ctype() | type2 == empty-ctype() => values(#t, #t);
@@ -1264,7 +1273,7 @@ end method;
 ///
 define constant values-subtype? = method
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
-    => result :: <boolean>, precise :: <boolean>;
+    => (result :: <boolean>, precise :: <boolean>);
 
   case
     instance?(type1, <ctype>) & instance?(type2, <ctype>) =>
@@ -1283,8 +1292,8 @@ define constant values-subtype? = method
 	block (done)
 	  for (t1 in types1, t2 in types2)
 	    let (res, win-p) = csubtype?(t1, t2);
-	    unless (win-p) done(values(#f, #f)) end;
-	    unless (res) done(values(#f, #t)) end;
+	    unless (win-p) done(#f, #f) end;
+	    unless (res) done(#f, #t) end;
 	  end for;
 	  csubtype?(rest1, rest2);
 	end block;
@@ -1300,11 +1309,11 @@ define variable *wild-ctype-memo* = #f;
 define constant wild-ctype
   = method ()
       *wild-ctype-memo*
-	| *wild-ctype-memo*
-	    := make(<multi-value-ctype>,
-		    positional-types: #(),
-		    rest-type: object-ctype(),
-		    min-values: 0);
+	| (*wild-ctype-memo*
+	     := make(<multi-value-ctype>,
+		     positional-types: #(),
+		     rest-type: object-ctype(),
+		     min-values: 0));
     end;
 
 define variable *object-ctype-memo* = #f;
@@ -1340,7 +1349,7 @@ define variable *empty-ctype-memo* = #f;
 define constant empty-ctype
   = method ()
       *empty-ctype-memo*
-	| *empty-ctype-memo* := make(<union-ctype>,
-				     members: #(),
-				     type-hash: 0);
+	| (*empty-ctype-memo* := make(<union-ctype>,
+				      members: #(),
+				      type-hash: 0));
     end;
