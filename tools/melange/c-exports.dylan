@@ -48,7 +48,7 @@ define module c-lexer
   use multistring-match;
   create cpp-parse;
   export
-    *handle-//-comments*,
+    *handle-c++-comments*,
     <tokenizer>, cpp-table, cpp-decls, <token>, token-id, generator,
     <simple-token>, <reserved-word-token>, <punctuation-token>,
     <literal-token>, <ei-token>, <name-token>, <type-specifier-token>,
@@ -63,7 +63,7 @@ end module c-lexer;
 
 define module portability
   use dylan;
-  use c-lexer, import: {include-path, *handle-//-comments*};
+  use c-lexer, import: {include-path, *handle-c++-comments*};
   use system, import: {getenv};  // win32 only
   use regular-expressions;       // win32 only			  
   export

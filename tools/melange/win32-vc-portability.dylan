@@ -55,7 +55,7 @@ begin
 end;
 
 
-*handle-//-comments* := #t;
+*handle-c++-comments* := #t;
 
 
 // These constants should be moved here in the future.  Until the module
