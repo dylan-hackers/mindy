@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.22 2003/02/18 13:11:13 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.23 2003/02/18 15:15:07 andreas Exp $
 
 //======================================================================
 //
@@ -529,7 +529,7 @@ define method process-parse-state
 
   let find-decl = protect(rcurry(parse-type, c-state));
   process-mappings(state.container-options, find-decl);
-  do(rcurry(process-clause, state, c-state), state.clauses);
+  do(protect(rcurry(process-clause, state, c-state)), state.clauses);
 
   let (imports, import-all?, file-imports)
     = process-imports(state.container-options, find-decl);
