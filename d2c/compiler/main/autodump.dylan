@@ -100,7 +100,7 @@ define method autodump (module-name :: <string>, file-name :: <string>,
 
   for (cls in classes)
     let name = as(<byte-string>, cls.class-name);
-    format(*standard-output*, "register-object-id(#\"%s\", #x%4x);\n", 
+    format(*standard-output*, "register-object-id(#\"%s\", #x%x);\n", 
 	   copy-sequence(name, start: 1, end: name.size - 1), next-free-id);
     next-free-id := next-free-id + 1;
   end for;
