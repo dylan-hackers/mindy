@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.9 1994/04/12 23:09:51 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.10 1994/04/13 16:50:45 wlott Exp $
 *
 * This file does whatever.
 *
@@ -339,7 +339,7 @@ void thread_kill(struct thread *thread)
 
 static obj_t dylan_kill_thread(obj_t thread_obj)
 {
-    struct thread *thread = THREAD(thread)->thread;
+    struct thread *thread = THREAD(thread_obj)->thread;
     boolean me = (thread == Current);
 
     thread_kill(thread);
