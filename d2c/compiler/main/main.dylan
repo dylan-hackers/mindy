@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.73 2003/03/05 17:14:14 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.74 2003/03/28 01:00:27 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -420,6 +420,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   		       
   *Data-Unit-Search-Path* := as(<simple-object-vector>, library-dirs);
 
+#if(~mindy)
   if (option-value-by-long-name(argp, "interactive"))
     let finished? = #f;
     while(~ finished?)
@@ -440,6 +441,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     end while;
     exit();
   end if;
+#endif
   let lid-file = args[0];
 
   let state
