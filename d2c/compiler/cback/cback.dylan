@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.59 1995/06/06 01:18:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.60 1995/06/06 11:34:38 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -579,6 +579,7 @@ define method emit-prologue (output-info :: <output-info>) => ();
   format(header, "    } dataword;\n");
   format(header, "} descriptor_t;\n\n");
   format(header, "typedef int boolean;\n");
+  format(header, "typedef char bool;\n");
   format(header, "#define TRUE 1\n");
   format(header, "#define FALSE 0\n\n");
   format(header, "#define SLOTADDR(ptr, type, offset) "
@@ -627,9 +628,9 @@ define method emit-epilogue
   write(gstream.string-output-stream-string, bstream);
   write("}\n\n", bstream);
   
-  format(bstream,
-	 "extern descriptor_t *pad_cluster"
-	   "(descriptor_t *start, descriptor_t *end, int min_values)\n{\n");
+  format(bstream, "descriptor_t *pad_cluster(descriptor_t *start, "
+	   "descriptor_t *end,\n");
+  format(bstream, "                          int min_values)\n{\n");
   format(gstream, "descriptor_t *ptr = start + min_values;\n\n");
   format(gstream, "while (end < ptr)\n");
   format(gstream, "    *end++ = %s;\n",
@@ -1115,7 +1116,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
       let temp = new-local(output-info);
       format(output-info.output-info-vars-stream, "%s %s;\n",
 	     rep.representation-c-type, temp);
-      format(stream, "if ((%s = %s) == NULL) abort();\n", temp, name);
+      format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
       name := temp;
     else
       format(stream, "if (!%s_initialized) abort();\n", name);
@@ -1384,7 +1385,7 @@ end;
 define method find-main-entry-info
     (func :: <literal-constant>, output-info :: <output-info>)
     => res :: <function-info>;
-  get-info-for(func.value, output-info);
+  find-main-entry-info(func.value, output-info);
 end;
 
 define method find-main-entry-info
@@ -1402,6 +1403,18 @@ define method find-main-entry-info
     (defn :: <abstract-method-definition>, output-info :: <output-info>)
     => res :: <function-info>;
   get-info-for(defn.ct-value, output-info);
+end;
+
+define method find-main-entry-info
+    (ctv :: <ct-function>, output-info :: <output-info>)
+    => res :: <function-info>;
+  get-info-for(ctv, output-info);
+end;
+
+define method find-main-entry-info
+    (ctv :: <ct-generic-function>, output-info :: <output-info>)
+    => res :: <function-info>;
+  find-main-entry-info(ctv.ct-function-definition, output-info);
 end;
 
 
@@ -1778,7 +1791,7 @@ define method ref-leaf (target-rep :: <representation>,
       let temp = new-local(output-info);
       format(output-info.output-info-vars-stream, "%s %s;\n",
 	     rep.representation-c-type, temp);
-      format(stream, "if ((%s = %s) == NULL) abort();\n", temp, name);
+      format(stream, "if ((%s = %s).heapptr == NULL) abort();\n", temp, name);
       name := temp;
     else
       format(stream, "if (!%s_initialized) abort();\n", name);
@@ -1955,23 +1968,25 @@ define method c-expr-and-rep (lit :: <literal-character>,
 			      rep-hint :: <representation>,
 			      output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
-  let code = as(<integer>, lit.literal-value);
-  values(if (code == 0)
+  let char = lit.literal-value;
+  values(if (char == '\0')
 	   "'\\0'";
-	 elseif (code == 8)
+	 elseif (char == '\b')
 	   "'\\b'";
-	 elseif (code == 9)
+	 elseif (char == '\t')
 	   "'\\t'";
-	 elseif (code == 10)
+	 elseif (char == '\n')
 	   "'\\n'";
-	 elseif (code == 13)
+	 elseif (char == '\r')
 	   "'\\r'";
-	 elseif (code < 32)
-	   format-to-string("'\\%o'", code);
-	 elseif (code <= 126)
+	 elseif (char < ' ')
+	   format-to-string("'\\%o'", as(<integer>, char));
+	 elseif (char == '\'' | char == '\\')
+	   format-to-string("'\\%c'", char);
+	 elseif (char <= '~')
 	   format-to-string("'%c'", lit.literal-value);
 	 else
-	   format-to-string("%d", code);
+	   format-to-string("%d", as(<integer>, char));
 	 end,
 	 pick-representation(dylan-value(#"<character>"), #"speed"));
 end;
