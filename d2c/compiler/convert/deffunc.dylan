@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.25 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.26 1995/06/05 21:06:18 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -622,30 +622,27 @@ define method build-discriminator-tree
     build-assignment(builder, policy, source, results,
 		     make-error-operation(builder, "No applicable methods."));
   elseif (empty?(remaining-discriminations))
-    let ordered = map(curry(make-definition-leaf, builder),
-		      method-set.ordered-methods);
-    let ambig = map(curry(make-definition-leaf, builder),
-		    method-set.ambiguous-methods);
-    let ambig-leaf
-      = if (~empty?(ambig))
-	  let var = make-local-var(builder, #"ambiguous", object-ctype());
-	  build-assignment
-	    (builder, policy, source, var,
-	     make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
-			       ambig));
-	  var;
-	end;
+    let ordered = method-set.ordered-methods;
+    let ordered-ctvs = map(ct-value, ordered.tail);
+    assert(every?(identity, ordered-ctvs));
+    let ambig-ctvs = map(ct-value, method-set.ambiguous-methods);
+    assert(every?(identity, ambig-ctvs));
     if (~empty?(ordered))
-      let func = ordered.head;
-      let next-leaf = make-local-var(builder, #"next-methods", object-ctype());
-      build-assignment
-	(builder, policy, source, next-leaf,
-	 make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
-			   if (ambig-leaf)
-			     concatenate(ordered.tail, list(ambig-leaf));
-			   else
-			     ordered.tail;
-			   end));
+      let func-leaf = make-definition-leaf(builder, ordered.head);
+      let ambig-lit = unless (empty?(ambig-ctvs))
+			make(<literal-pair>,
+			     head: make(<literal-list>,
+					contents: ambig-ctvs,
+					sharable: #t),
+			     tail: make(<literal-empty-list>),
+			     sharable: #t);
+		      end;
+      let next-leaf
+	= make-literal-constant(builder,
+				make(<literal-list>,
+				     contents: ordered-ctvs,
+				     tail: ambig-lit,
+				     sharable: #t));
       if (rest?)
 	let apply-leaf = dylan-defn-leaf(builder, #"apply");
 	let values-leaf = dylan-defn-leaf(builder, #"values");
@@ -656,17 +653,23 @@ define method build-discriminator-tree
 			     pair(values-leaf, arg-vars)));
 	build-assignment
 	  (builder, policy, source, results,
-	   make-operation(builder, <mv-call>, list(func, next-leaf, cluster),
+	   make-operation(builder, <mv-call>,
+			  list(func-leaf, next-leaf, cluster),
 			  use-generic-entry: #t));
       else
 	build-assignment(builder, policy, source, results,
-			 make-unknown-call(builder, func, next-leaf,
+			 make-unknown-call(builder, func-leaf, next-leaf,
 					   arg-vars));
       end;
-    elseif (ambig-leaf)
-      let op = make-error-operation
-	(builder, "Ambiguous method: %s", ambig-leaf);
-      build-assignment(builder, policy, source, results, op);
+    elseif (~empty?(ambig-ctvs))
+      build-assignment
+	(builder, policy, source, results,
+	 make-error-operation
+	   (builder, "Ambiguous method: %s",
+	    make-literal-constant(builder,
+				  make(<literal-list>,
+				       contents: ambig-ctvs,
+				       sharable: #t))));
     else
       error("Where did all the methods go?");
     end;
