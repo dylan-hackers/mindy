@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.6 1995/12/09 21:09:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.7 1996/01/08 22:15:59 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -59,7 +59,7 @@ define constant element-error
 
 // <simple-vector>s
 
-define abstract class <simple-vector> (<vector>)
+define sealed abstract class <simple-vector> (<vector>)
 end;
 
 define inline sealed method make
@@ -83,7 +83,7 @@ end;
 
 // <simple-object-vector>s
 
-define inline method vector (#rest args) => res :: <simple-object-vector>;
+define  inline method vector (#rest args) => res :: <simple-object-vector>;
   args;
 end;
 
@@ -95,7 +95,7 @@ end;
 
 seal generic make (singleton(<simple-object-vector>));
 
-define inline method element
+define sealed inline method element
     (vec :: <simple-object-vector>, index :: <fixed-integer>,
      #key default = $not-supplied)
     => element :: <object>;
@@ -108,7 +108,7 @@ define inline method element
   end;
 end;
 
-define inline method element-setter
+define sealed inline method element-setter
     (new-value :: <object>, vec :: <simple-object-vector>,
      index :: <fixed-integer>)
     => new-value :: <object>;
