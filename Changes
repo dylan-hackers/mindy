@@ -2,6 +2,25 @@ Mindy 1.5 Change Log
 
 The following are enhancements added since release 1.4:
 
+   Added $not-supplied to the Extensions module.  See mindy.txt for
+   details.
+
+   Added <byte> to the Extensions module.  See mindy.txt for details.
+
+   Added <buffer-index> and $maximum-buffer-size to System module.
+   See mindy.txt for details.
+
+   *format-function* and *force-output-function* have been replaced by
+   condition-format.  See mindy.txt for details.
+
+   Object printing in the Print library is now generally more terse,
+   but still within the spec laid out in print.txt.
+
+   Limited-integer-class is now limited-integer-base-class,
+   limited-integer-min is now limited-integer-minimum, and
+   limited-integer-max is now limited-integer-maximum.  See mindy.txt
+   for details.
+
    Mindy is now compliant with most of the DRM; previous versions of
    Mindy were based on the older DIRM.  See mindy.txt for Mindy's
    deficiencies with respect to the DRM.
@@ -39,7 +58,7 @@ The following are enhancements added since release 1.4:
    used inside a for loop (you should use "while:" or "until:"), or
    when the "foo: (default)" keyword default syntax is used.
 
-   Mindycomp now gives warning messages when function return types
+   Mindycomp now gives warning messages when function return values
    have names but not types.
 
    Mindy now gives warnings when a method's return types do not match
@@ -48,6 +67,10 @@ The following are enhancements added since release 1.4:
 
    The function type-or in the Extensions module of the Dylan library
    has been removed.  Use type-union instead.
+
+   Since the Dylan language no longer has ratios, all ratio stuff
+   (<ratio>, ratio, numerator, denominator) has been moved to the
+   Extensions library.  See mindy.txt for details.
 
    The class <dictionary> in the Extensions module of the Dylan
    library has been removed.  Use <mutable-explicit-key-collection>
@@ -86,6 +109,8 @@ The following are bug fixes since release 1.4:
    Mindy now drops to the debugger when asked to allocate an
    excessively large object, rather than dumping core.
 
+   "Subclass" slots are now "each-subclass" slots.
+
    In the Regular-expressions module of the String-Extensions library,
    the split() function will now remove empty items correctly in all
    cases.
@@ -93,6 +118,8 @@ The following are bug fixes since release 1.4:
    Fill! now returns a value of the correct type.
 
    Only release the buffer if we still hold it.
+
+   The Mindy documentation now documents <string-table>.
 
 
 The following are enhancements added since release 1.3:
