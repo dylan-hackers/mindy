@@ -4,6 +4,6 @@ define library gtk-2
   use common-dylan;
   use melange-support;
 
-  export gtk-internal;
+  export gtk;
 end library gtk-2;
 
