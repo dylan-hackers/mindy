@@ -196,28 +196,17 @@ define-primitive
 // NLX operations.
 
 define-primitive
-  (#"catch", #(#"<function>"), #(values:, rest:, #"<object>"));
-
-define-primitive
-  (#"make-catcher", #(#(union:, #"<raw-pointer>", #"<false>")),
-   #(union:, #"<catcher>", #"<false>"));
-
-define-primitive
-  (#"disable-catcher", #(#(union:, #"<catcher>", #"<false>")), #(values:));
-
-define-primitive
-  (#"throw", #(#(union:, #"<catcher>", #"<false>"), #"<function>", cluster:),
-   #(union:));
-
-define-primitive
   (#"current-sp", #(), #"<raw-pointer>", pure: #t);
 
 define-primitive
   (#"unwind-stack", #(#"<raw-pointer>"), #(values:));
 
 define-primitive
-  (#"restore-state",
-   #(#"<raw-pointer>", #"<simple-object-vector>"),
+  (#"restore-state", #(#"<raw-pointer>", #"<simple-object-vector>"),
+   #(union:));
+
+define-primitive
+  (#"%restore-state", #(#"<raw-pointer>", #"cluster"),
    #(union:));
 
 
