@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.45 2003/02/18 13:23:16 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.46 2003/02/19 23:29:57 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1898,6 +1898,8 @@ define method emit-function
 	   "descriptor_t *cluster_%d_top;\n",
 	   i);
   end;
+
+  maybe-emit-source-location(function.source-location, file);
   emit-region(function.body, file);
 
   let stream = file.file-body-stream;
