@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.31 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.32 1995/12/13 23:59:55 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -76,7 +76,7 @@ end;
 define method dump (region :: <simple-region>, stream :: <stream>) => ();
   for (assign = region.first-assign then assign.next-op,
        first? = #t then #f,
-       while assign)
+       while: assign)
     unless (first?)
       pprint-newline(#"mandatory", stream);
     end;
