@@ -48,18 +48,17 @@ end method heap-object-dumped?-setter;
 // entire program is compiled, and writes data for every heap object in every
 // library. 
 //
-define method build-initial-heap (roots :: <vector>, stream :: <stream>)
+define method build-initial-heap
+    (undumped-objects :: <vector>, stream :: <stream>)
     => ();
   let state = make(<state>, stream: stream);
   format(stream, "\t.data\n\t.align\t8\n");
 
-  for (unit in roots)
-    for (obj in unit.undumped-objects)
-      if (~obj.heap-object-dumped?)
-	spew-object(obj, state);
-	obj.heap-object-dumped? := #t;
-      end if;
-    end for;
+  for (obj in undumped-objects)
+    if (~obj.heap-object-dumped?)
+      spew-object(obj, state);
+      obj.heap-object-dumped? := #t;
+    end if;
   end for;
 
   until (state.object-queue.empty?)
