@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.11 1996/09/28 20:12:32 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/melange/exports.dylan,v 1.12 1996/10/06 12:41:18 nkramer Exp $
 
 //======================================================================
 //
@@ -123,7 +123,7 @@ define module define-interface
   use %hash-tables;
 #if (~mindy)
   use System,
-     import: {import-string, exit,
+     import: {import-string,
 	      copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
 	      pointer-deref};
 #endif

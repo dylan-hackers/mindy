@@ -12,11 +12,11 @@ define library versioner
   use regular-expressions;
   use table-extensions;
   use stream-extensions;
+  use time;
 end library versioner;
 
 define module versioner
   use dylan;
-  use system; // delete me
   use extensions;
   use streams;
   use standard-io;
@@ -29,11 +29,12 @@ define module versioner
   use table-extensions;
   use piped-exec;
   use concatenated-streams;
-#if (mindy)
+  use time;
+  use time-io;
   use Extensions, import: {exit};
-#else
+#if (~mindy)
   use System,
-     import: {exit, pointer-deref, c-expr, <raw-pointer>, import-string};
+     import: {pointer-deref, c-expr, <raw-pointer>, import-string};
 #endif
 end module versioner;
 
