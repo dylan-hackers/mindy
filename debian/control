@@ -2,20 +2,20 @@ Source: gwydion-dylan
 Section: devel
 Priority: optional
 Maintainer: Brent A. Fulgham <bfulgham@debian.org>
-Standards-Version: 3.2.1.0
+Standards-Version: 3.5.4.0
 
 Package: gwydion-dylan
 Architecture: any
 Depends: gcc, ${shlibs:Depends}
+Recommends: gwydion-dylan-dev
 Suggests: mindy
-Description: A Dylan-to-C batch compiler.
- CMU's Gwydion Dylan provides d2c, a Dylan-to-C batch compiler. It produces
- fairly efficient output but requires strange incantations to compile even
- simple programs. Tools for interfacing with C are included. (The Mindy
- bytecode interpreter is available as a separate package.) If you're really
- excited about writing Dylan programs for Linux--and don't mind the
- inconveniences of d2c--these are the tools to use. If you prefer a mature
- development environment, try another language.
+Description: The Gwydion Dylan Runtime Environment
+ This package contains the libraries and other files needed to
+ run programs compiled with the Gwydion Dylan compiler (d2c).
+ .
+ At some point in the (hopefully near) future, this package will
+ contain the Gwydion Dylan Listener, which will allow interactive
+ exploration of the language.
  .
  For more infomration, see the Gwydion Dylan maintainers' web page at
  <http://www.gwydiondylan.org/>.
@@ -24,11 +24,19 @@ Package: gwydion-dylan-dev
 Architecture: any
 Depends: gwydion-dylan, ${shlibs:Depends}
 Suggests: mindy
-Description: Tools used for recompiling Gwydion Dylan.
- These tools are required to recompile d2c. They include a LISP to Dylan
- translator, a parser generator, and various tools for maintaining the
- build tree. This package also contains a few general-purpose development
- utilities written in Dylan.
+Description: Gwydion Dylan Development Tools
+ CMU's Gwydion Dylan provides d2c, a Dylan-to-C batch compiler. It produces
+ fairly efficient output but requires strange incantations to compile even
+ simple programs. Tools for interfacing with C are included. (The Mindy
+ bytecode interpreter is available as a separate package.) If you're really
+ excited about writing Dylan programs for Linux--and don't mind the
+ inconveniences of d2c--these are the tools to use. If you prefer a mature
+ development environment, try another language.
+ .
+ This package contains the tools necessary to recompile d2c. They 
+ include a LISP to Dylan translator, a parser generator, and various
+ tools for maintaining the build tree. This package also contains a 
+ few general-purpose development utilities written in Dylan.
 
 Package: mindy
 Architecture: any

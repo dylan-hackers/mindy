@@ -1,3 +1,42 @@
+gwydion-dylan (2.3.5final-2) unstable; urgency=low
+
+  * Correct problem with search directories (basically, move back to "real"
+    Gwydion directory setup.
+  * Correct libtoolize --force use, running aclocal in between runs of
+    libtoolize and autoconf (Closes:Bug#101436)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sun, 24 Jun 2001 17:39:06 -0700
+
+gwydion-dylan (2.3.5final-1) unstable; urgency=low
+
+  * Minor shuffling to correct some package dependency problems.
+    'gwydion-dylan'     = The Runtime
+    'gwydion-dylan-dev' = The compiler and tools
+    'mindy'             = The interpreter
+    (Closes:Bug#95871)
+  * Fix to a minor bug in Mindy that caused it to fail if the
+    path to the Dylan runtime was not specified as a command-line
+    parameter.
+  * The real release!
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 21 May 2001 19:52:32 -0700
+
+gwydion-dylan (2.3.5-3) unstable; urgency=low
+
+  * A bunch of minor fixes for DOS-style line endings so 'd2c' doesn't
+    crash if someone sends you a file edited under DOS.
+  * Really and Truly 2.3.5 Finally!
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sat, 21 Apr 2001 16:46:13 -0700
+
+gwydion-dylan (2.3.5-2) unstable; urgency=low
+
+  * The almost-but-not-quite 2.3.5 version.  Now with a fix for
+    slot initializations, some string optimizations, and more
+    bug fixes.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Tue, 17 Apr 2001 18:01:31 -0700
+
 gwydion-dylan (2.3.5-1) unstable; urgency=low
 
   * This is really 2.3.5pre2 -- Now with class slots, and New Boehm GC.

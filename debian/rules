@@ -13,6 +13,7 @@ bootstrap-stage1-stamp:
 	# Following is needed for bootstrapping
 ifeq ("$(STYLE)", "bootstrap")
 		libtoolize --force
+		aclocal
 		autoconf
 		./configure --with-readline \
 				--prefix=/usr \
@@ -72,6 +73,8 @@ config: config-stamp
 config-stamp:
 ifeq ("$(STYLE)", "normal")
 		libtoolize --force
+		aclocal
+		autoconf
 		./configure --with-readline \
 			--prefix=/usr \
 			--with-site-dylan-prefix=/usr \
@@ -117,6 +120,7 @@ install-stamp: build-stamp
 	$(MAKE) DESTDIR=`pwd`/debian/tmp install
 
 	# First, put everything in FSSTD-compliant places
+	mkdir -p `pwd`/debian/tmp/etc/gwydion-dylan  # Temporary until we move files
 	mv `pwd`/debian/tmp/usr/etc/platforms.descr `pwd`/debian/tmp/etc/gwydion-dylan/platforms.descr
 	rm -rf `pwd`/debian/tmp/usr/etc
 	mv `pwd`/debian/tmp/usr/man/* `pwd`/debian/tmp/usr/share/man
@@ -150,19 +154,13 @@ install-stamp: build-stamp
 	rm -f `pwd`/debian/mindy/usr/share/man/man1/gen*
 	rm -f `pwd`/debian/mindy/usr/share/man/man1/line*
 
-	# Make sure we don't have a bunch of extra stuff in Extras
-	rm -rf `pwd`/debian/gwydion-dylan-dev/share/man/man4
+	# Make sure we don't have a bunch of extra stuff in Dev
 	rm -rf `pwd`/debian/gwydion-dylan-dev/share/man/man7
-	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/d2c*
-	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/dybug*
-	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/make*
-	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/mk*
 	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/mindy*
 
 	# Make sure we don't have a bunch of extra stuff in Dylan
-	rm -rf `pwd`/debian/gwydion-dylan/share/man/man1/parsergen*
-	rm -f `pwd`/debian/gwydion-dylan/share/man/man1/mindy*
-	rm -f `pwd`/debian/gwydion-dylan/share/man/man1/line*
+	rm -rf `pwd`/debian/gwydion-dylan/share/man/man1/man1
+	rm -rf `pwd`/debian/gwydion-dylan-dev/share/man/man4
 
 	touch install-stamp
 
