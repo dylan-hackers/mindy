@@ -80,8 +80,8 @@ $MELANGE_DIR = "$buildroot/tools/melange";
 $MELANGE = "$MELANGE_DIR/melange";
 
 if (!$build_tools_with_d2c) {
-    $PARSERGEN = "$MINDY -f $PARSERGEN_target";
-    $MELANGE = "$MINDY -f $MELANGE_target";
+    $PARSERGEN = "$MINDY -f $PARSERGEN-lib.dbc";
+    $MELANGE = "$MINDY -f $MELANGE.dbc";
 };
 
 if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
