@@ -26,7 +26,9 @@ rcs-header: $Header:
 //======================================================================
 
 define constant $default-defines
-  = #["hppa", "",
+  = #["const", "",
+      "volatile", "",
+      "hppa", "",
       "hp9000s800", "",
       "__hp9000s800", "",
       "hp9k8", "",
