@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.9 1994/03/31 23:15:58 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.10 1994/04/04 14:48:59 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -65,11 +65,12 @@ define module Builtin-Stuff
     singleton, size, slot-initialized?, sorted-applicable-methods,
     state-valid?, subtype?,
     tail, tail-setter, truncate/,
-    union, unix-close, unix-lseek, unix-open, unix-read, unix-strerror,
-    unix-write,
+    union, fd-close, fd-error-string, fd-input-available?, fd-open,
+    fd-read, fd-seek, fd-sync-output, fd-write,
     values, vector;
   create
-    do, error, type-error, make-next-method-function, generic-apply,
+    aref, aref-setter, do, error, type-error,
+    make-next-method-function, generic-apply,
     forward-iteration-protocol, backward-iteration-protocol, negative?,
     debugger-print, debugger-report-condition, debugger-abort,
     debugger-describe-restarts, debugger-restart, debugger-return;
@@ -84,8 +85,8 @@ define module Dylan
 	      debugger-print, debugger-report-condition, debugger-abort,
 	      debugger-describe-restarts, debugger-restart, debugger-return,
 	      enable-error-system, apply-curry, state-valid?, <buffer>,
-	      unix-close, unix-lseek, unix-open, unix-read, unix-strerror,
-	      unix-write),
+	      fd-close, fd-error-string, fd-input-available?, fd-open,
+	      fd-read, fd-seek, fd-sync-output, fd-write),
     export: all;
   use Builtin-Stuff,
     import: (main, type-error, current-handler, handler-description,
@@ -106,9 +107,8 @@ define module Dylan
     <simple-warning>, <stretchy-vector>,
     <table>, <type-error>,
     <warning>,
-    abort, abs, add, add!, add-new, add-new!, always, any?, aref,
-    aref-setter, as-lowercase, as-lowercase!, as-uppercase,
-    as-uppercase!,
+    abort, abs, add, add!, add-new, add-new!, always, any?, as-lowercase,
+    as-lowercase!, as-uppercase, as-uppercase!,
     break,
     ceiling, cerror, check-type, choose, choose-by,
     class-for-copy, complement, compose, concatenate, concatenate-as,
@@ -147,8 +147,8 @@ end Extensions;
 define module System
   use Dylan;
   use Builtin-Stuff,
-    import: (<buffer>, unix-close, unix-lseek, unix-open, unix-read,
-	     unix-strerror, unix-write),
+    import: (<buffer>, fd-close, fd-error-string, fd-input-available?,
+	     fd-open, fd-read, fd-seek, fd-sync-output, fd-write),
     export: all;
 end System;
 
