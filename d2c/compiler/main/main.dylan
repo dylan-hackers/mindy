@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.18 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.19 1995/06/04 22:54:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -58,7 +58,7 @@ define method compile (#rest files) => ();
   format(body-stream, "#include \"output.h\"\n\n");
   for (tlf in $Top-Level-Forms)
     let name = format-to-string("%s", tlf);
-    format(*debug-output*, "Converting %s\n", name);
+    format(*debug-output*, "...Converting %s\n", name);
     let component = make(<fer-component>);
     let builder = make-builder(component);
     convert-top-level-form(builder, tlf);
@@ -78,9 +78,9 @@ define method compile (#rest files) => ();
 	   make-function-literal(builder, ctv, #f, #"global", sig,
 				 init-function));
     end;
-    format(*debug-output*, "Optimizing %s\n", name);
+    format(*debug-output*, "...Optimizing %s\n", name);
     optimize-component(component);
-    format(*debug-output*, "Emitting C code for %s.\n", name);
+    format(*debug-output*, "...Emitting %s\n", name);
     emit-tlf-gunk(tlf, output-info);
     emit-component(component, output-info);
   end;
