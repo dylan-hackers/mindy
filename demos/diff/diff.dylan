@@ -10,6 +10,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 define library diff
   use dylan;
   use streams;
+  use standard-io;
   use format;
   use collection-extensions;
 end library diff;
@@ -29,11 +30,11 @@ end module diff-program;
 define constant <script> = <sequence>;
 
 define method slurp-file (filename :: <string>) => lines :: <sequence>;
-  let stream = make(<file-stream>, name: filename, direction: #"input");
+  let stream = make(<file-stream>, locator: filename, direction: #"input");
   let lines = make(<stretchy-vector>);
   for (i from 0, 
-       line = read-line(stream, signal-eof?: #f) 
-	 then read-line(stream, signal-eof?: #f),
+       line = read-line(stream, on-end-of-stream: #f) 
+	 then read-line(stream, on-end-of-stream: #f),
        while: line ~= #f)
       lines[i] := line;
   end for;
