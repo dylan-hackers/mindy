@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.8 2000/05/10 18:31:07 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/macros.dylan,v 1.9 2000/08/14 16:58:44 robmyers Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -506,6 +506,7 @@ define macro function-definer
     { inline-only ... } => { }
     { movable ... } => { }
     { flushable ... } => { }
+    { sideways ... } => { }
 end;
 
 define macro generic-definer
@@ -518,6 +519,7 @@ define macro generic-definer
     { open ... } => { sealed: #f, ... }
     { movable ... } => { movable: #t, ... }
     { flushable ... } => { flushable: #t, ... }
+    { sideways ... } => { ... }
 
   rest:
     { => ?:variable, #key } => { ?variable; }
@@ -548,6 +550,7 @@ define macro method-definer
     { inline-only ... } => { inline-type: inline-only, ... }
     { movable ... } => { movable: #t, ... }
     { flushable ... } => { flushable: #t, ... }
+    { sideways ... } => { ... }
 end;
 
 define macro library-definer
@@ -599,10 +602,14 @@ define macro library-definer
 end;
 
 define macro variable-definer
-    { define variable ?:variable = ?:expression }
+    { define ?adjectives variable ?:variable = ?:expression }
       => { define-variable ( ?variable; dummy = ?expression ) }
-    { define variable ( ?:variable-list ) ?eq:token ?:expression }
+    { define ?adjectives variable ( ?:variable-list ) ?eq:token ?:expression }
       => { define-variable ( ?variable-list; dummy ?eq ?expression ) }
+
+  adjectives:
+    { } => { }
+    { thread } => { }
 end macro;
 
 define macro define-variable
