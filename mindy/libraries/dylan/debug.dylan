@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.5 1994/05/31 18:12:33 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.6 1994/06/11 15:57:50 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -98,7 +98,7 @@ define method debugger-call (exprs)
   for (expr in exprs)
     block ()
       eval-and-print(expr, num-debug-vars);
-    exception (<abort>, description: "Blow off call")
+    exception (<abort>, init-arguments: list(description: "Blow off call"))
       #f;
     end;
   end;
@@ -161,15 +161,7 @@ define method debugger-describe-restarts (cond)
 	if (instance?(type, <class>) & subtype?(type, <restart>))
 	  block ()
 	    format("%= [%=]: ", index, type);
-	    let description = h.handler-description;
-	    select (description by instance?)
-	      singleton(#f) =>
-		puts("Random restart.");
-	      <function> =>
-		description(#f);
-	      <byte-string> =>
-		puts(description);
-	    end;
+	    report-condition(apply(make, type, h.handler-init-args));
 	  exception (problem :: <error>)
 	    puts("\nproblem describing restart:\n  ");
 	    report-problem(problem);
@@ -197,9 +189,9 @@ define method debugger-describe-restarts (cond)
 	    <byte-string> =>
 	      puts(":\n  ");
 	      puts(description);
-	    <function> =>
+	    <restart> =>
 	      puts(":\n  ");
-	      description(#f);
+	      report-condition(description);
 	  end;
 	exception (problem :: <error>)
 	  puts("\nproblem describing return convention:\n  ");
@@ -226,7 +218,7 @@ define method debugger-restart (cond, index)
       if (instance?(type, <class>) & subtype?(type, <restart>))
 	if (count == index)
 	  block ()
-	    let restart = make(type);
+	    let restart = apply(make, type, h.handler-init-args);
 	    restart-query(restart);
 	    unless (~test | test(h))
 	      puts("The restart handler refused to handle the restart.\n");
