@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.29 2001/12/01 13:57:14 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.30 2001/12/10 22:25:04 gabor Exp $
 copyright: see below
 
 
@@ -1807,15 +1807,18 @@ define method convert-top-level-form
 	    end;
 
 	let allocation = slot-defn.slot-defn-allocation;
+	
+	local method make-init-value-var() => var :: <initial-variable>;
+		make-local-var(evals-builder, symcat(slot-name, "-init-value"),
+			       type);
+	      end;
 
 	let init-value = slot-info.slot-init-value;
 	let init-function = slot-info.slot-init-function;
 
 	let (init-value-var, init-function-leaf) =
 	  if (init-value == #t)
-	    let var = make-local-var(evals-builder,
-				     symcat(slot-name, "-init-value"),
-				     type);
+	    let var = make-init-value-var();
 	    fer-convert(evals-builder, slot-defn.slot-defn-init-value,
 			lexenv, #"assignment", var);
 	    build-assignment
@@ -1829,7 +1832,8 @@ define method convert-top-level-form
 	    var;
 	  elseif (init-function == #t)
 	    let leaf = convert-init-function(evals-builder, slot-info.slot-getter,
-					     slot-defn.slot-defn-init-function);
+					     slot-defn.slot-defn-init-function,
+					     type);
 	    build-assignment
 	      (evals-builder, policy, source, #(),
 	       make-unknown-call
@@ -1851,10 +1855,7 @@ define method convert-top-level-form
 	  if (init-value) // later: init-value == #t TODO
 	    //
 	    // Copy over the value into the class instance.
-	    let var = init-value-var
-		      | make-local-var(evals-builder, // use local method? ее
-				       symcat(slot-name, "-init-value"),
-				       type);
+	    let var = init-value-var | make-init-value-var();
 	    unless (init-value-var)
 	      build-assignment
 		(evals-builder, policy, source, var,
@@ -1874,11 +1875,7 @@ define method convert-top-level-form
 	    // Invoke the init function and store the result
 	    // into the class instance.
 	    
-	    let var
-	      = make-local-var(evals-builder, // use local method? ее
-			       symcat(slot-name, "-init-value"),
-			       type);
-	    
+	    let var = make-init-value-var();
 	    call-init-function(init-function, slot-info, #f /* override ее */,
 			       slot-name, evals-builder, policy, source,
 			       var, init-function-leaf, type-var);
@@ -2004,7 +2001,8 @@ define method convert-top-level-form
 	    let leaf
 	      = convert-init-function
 		  (evals-builder, getter,
-		   override-defn.override-defn-init-function);
+		   override-defn.override-defn-init-function,
+		   object-ctype());
 	    build-assignment
 	      (evals-builder, policy, source, #(),
 	       make-unknown-call
@@ -2811,9 +2809,11 @@ define method build-maker-function-body
 end method build-maker-function-body;
 
 
-define method convert-init-function
-    (builder :: <fer-builder>, getter :: <variable>,
-     init-function :: <expression-parse>)
+define function convert-init-function
+    (builder :: <fer-builder>,
+     getter :: <variable>,
+     init-function :: <expression-parse>,
+     result-type :: <ctype>)
     => res :: <leaf>;
   let slot-name = getter.variable-name;
   let fun-name = make(<derived-name>,
@@ -2830,8 +2830,8 @@ define method convert-init-function
   let func-region
     = build-function-body(builder, policy, source, #t,
     			  fun-name, #(),
-			  object-ctype(), #f);
-  let temp = make-local-var(builder, #"result", object-ctype());
+			  result-type, #f);
+  let temp = make-local-var(builder, #"result", result-type);
   build-assignment(builder, policy, source, temp,
 		   make-unknown-call(builder, var, #f, #()));
   build-return(builder, policy, source, func-region, temp);
