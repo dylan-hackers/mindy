@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.33 1994/08/21 00:42:48 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.34 1994/08/22 22:31:08 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -67,6 +67,7 @@ extern int isatty(int fd);
 #include "error.h"
 #include "gc.h"
 #include "brkpt.h"
+#include "instance.h"
 #include "../comp/byteops.h"
 
 struct library *CurLibrary = NULL;
@@ -2049,6 +2050,79 @@ static void disassemble_cmd(void)
 }
 
 
+/* Describe command. */
+
+static void describe_cont(struct thread *thread, obj_t *vals)
+{
+    obj_t *old_sp;
+    obj_t okay = vals[0];
+
+    if (okay != obj_False) {
+	obj_t results = vals[1];
+	if (SOVEC(results)->length == 0)
+	    describe(obj_False);
+	else
+	    describe(SOVEC(results)->contents[0]);
+    }
+    old_sp = pop_linkage(thread);
+    do_return(thread, old_sp, old_sp);
+}
+
+static void describe_cmd(void)
+{
+    obj_t exprs = parse_exprs();
+
+    if (exprs == obj_False)
+	printf("Invalid expression.\n");
+    else if (exprs == obj_Nil)
+	printf("Describe what?\n");
+    else if (TAIL(exprs) != obj_Nil)
+	printf("too many things to describe, one at most.\n");
+    else {
+	boolean okay = TRUE;
+	boolean simple = TRUE;
+
+	eval_vars(HEAD(exprs), &okay, &simple);
+
+	if (!okay)
+	    return;
+
+	if (simple)
+	    describe(TAIL(HEAD(exprs)));
+	else if (debugger_eval_var == NULL
+		 || debugger_eval_var->value == obj_Unbound)
+	    printf("Can't eval expressions without debugger-eval "
+		   "being defined.\n");
+	else {
+	    struct thread *thread = CurThread;
+
+	    if (thread == NULL) {
+		thread = thread_create(make_string("eval for disassemble"));
+		set_c_continuation(thread, kill_me);
+	    }
+	    else {
+		thread_push_escape(thread);
+		set_c_continuation(thread, debugger_cmd_finished);
+	    }
+
+	    suspend_other_threads(thread);
+
+	    *thread->sp++ = obj_False;
+	    push_linkage(thread, thread->sp);
+	    set_c_continuation(thread, describe_cont);
+	    thread->datum = obj_rawptr(thread->sp);
+	    *thread->sp++ = debugger_eval_var->value;
+	    *thread->sp++ = HEAD(exprs);
+
+	    thread_restart(thread);
+
+	    Continue = TRUE;
+	}
+    }
+}
+
+
+
 /* Command table. */
 
 static struct cmd_entry Cmds[] = {
@@ -2063,6 +2137,7 @@ static struct cmd_entry Cmds[] = {
     {"continue", "continue\tContinue execution.", continue_cmd},
     {"d", NULL, down_cmd},
     {"delete", "delete id\tDelete the given breakpoint.", delete_cmd},
+    {"describe", "describe inst\tDescribe the slots instance.", describe_cmd},
     {"disable", "disable thread\tSuspend the given thread.", disable_cmd},
     {"disassemble",
 	 "disassemble\tDisassemble the component for the current frame",
