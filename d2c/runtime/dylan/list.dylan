@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.7 1996/02/12 11:33:50 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.8 1996/03/08 05:22:35 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -10,8 +10,9 @@ define abstract class <list> (<mutable-sequence>)
     required-init-keyword: tail:;
 end;
 
-define sealed method make (class == <list>, #key size = 0, fill = #f)
-    => res :: <list>;
+define sealed method make
+    (class == <list>, #key size :: <integer> = 0, fill = #f)
+ => (res :: <list>);
   for (i :: <integer> from 0 below size,
        result = #() then pair(fill, result))
   finally
