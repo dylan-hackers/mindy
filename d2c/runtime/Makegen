@@ -17,4 +17,4 @@ do compile_subdirs(
     'time',
 );
 
-do install('include', 'runtime.h');
+do install_from_src('include', "runtime.h");
