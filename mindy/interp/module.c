@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.18 1994/11/28 07:53:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.19 1994/11/28 08:03:39 wlott Exp $
 *
 * This file implements the module system.
 *
@@ -1131,7 +1131,7 @@ void finalize_modules(void)
 				    string_chars(var->variable.ref_file),
 				    var->variable.ref_line);
 			}
-			
+			fprintf(stderr, "\n");
 		    }
 		}
 	    }
