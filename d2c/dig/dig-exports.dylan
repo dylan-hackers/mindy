@@ -2,7 +2,7 @@ module: dylan-user
 
 define library d2c-gnu
   use dylan;
-  use new-streams;
+  use streams;
   use standard-io;
   use format;
 #if (~mindy)
@@ -16,7 +16,7 @@ define module d2c-gnu
   use dylan;
   use extensions;		// for "subclass"
   use system;
-  use new-streams;
+  use streams;
   use format;
   use standard-io;
 #if (~mindy)
