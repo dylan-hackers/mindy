@@ -50,7 +50,7 @@ unless ($features{'no_time'}) {
 
 print <<"EOF"
 
-DYLANPATH=../common/transcendental:../mindy/libraries/dylan:../common/coll-ext:../common/table-ext:../common/string-ext:../common/standard-io:../common/streams:../mindy/libraries/random:../common/print:../common/format:../common/matrix::../common/format-out:../common/time:../common/regexp:../common/getopt
+DYLANPATH=../common/transcendental:../mindy/libraries/dylan:../common/collection-extensions:../common/table-ext:../common/string-ext:../common/standard-io:../common/streams:../mindy/libraries/random:../common/print:../common/format:../common/matrix::../common/format-out:../common/time:../common/regular-expressions:../common/getopt
 
 EOF
 ;
