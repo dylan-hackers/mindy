@@ -150,11 +150,11 @@ define method tautology(arg == #"numbers")
     (4 / 2 = 2)
       | signal("4 / 2 is not 2!\n");
     // No applicable methods for / with arguments #[4, 2]
-    format("rationalize(1,2) is %=\n", rationalize(1,2));
+//    format("rationalize(1,2) is %=\n", rationalize(1,2));
     // Unbound variable: rationalize
-    format("numerator(rationalize(1,2)) is %=\n", numerator(rationalize(1,2)));
+//    format("numerator(rationalize(1,2)) is %=\n", numerator(rationalize(1,2)));
     // Unbound variable: numerator
-    format("denominator(rationalize(1,2)) is %=\n", denominator(rationalize(1,2)));
+//    format("denominator(rationalize(1,2)) is %=\n", denominator(rationalize(1,2)));
     // Unbound variable: denominator
   end;
 end method;
