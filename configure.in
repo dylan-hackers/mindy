@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.19 1997/05/09 22:36:06 ram Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.20 1997/05/10 05:06:20 ram Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -553,7 +553,7 @@ dnl AC_SUBST(BUNDLED_LIBRARY_DIRS)dnl
 # Autoconf only seems to create one directory level at a time, so we need to
 # create mindy (which contains no makefile.in)
 #
-$srcdir/mkinstalldirs mindy
+$srcdir/mkinstalldirs mindy mindy/demos
 AC_OUTPUT(Defaults \
 	mindy/comp/Makefile \
 	mindy/interp/Makefile \
