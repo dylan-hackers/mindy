@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.19 2001/03/30 14:00:02 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.20 2001/05/17 16:24:32 robmyers Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -208,7 +208,7 @@ define module System
 	     \callback-method, \callback-entry,
 
 	     // Designator-class (C-FFI) stuff.
-	     <designator-class>, designator-class-definer,
+	     <designator-class>, \designator-class-definer,
 	     size-of, alignment-of, referenced-type,
 
 	     // Nasty debugging hooks.
