@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.5 1994/12/14 20:18:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.6 1994/12/15 17:38:56 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -80,11 +80,13 @@ define module tokens
   use forwards, import: {<module>};
 
   export
-    <token>, <eof-token>, <error-token>, <word-token>,
-    <identifier-token>, <name-token>, <simple-name-token>,
-    <quoted-name-token>, <begin-word-token>, <define-word-token>,
-    <define-bindings-word-token>, <constrained-name-token>,
-    <begin-token>, <bind-exit-token>, <class-token>, <cleanup-token>,
+
+    <token>, <eof-token>, <error-token>, <symbol-token>,
+    <identifier-token>, <word-token>, <name-token>,
+    <simple-name-token>, <quoted-name-token>, <begin-word-token>,
+    <define-word-token>, <define-bindings-word-token>,
+    <constrained-name-token>, <core-word-token>, <begin-token>,
+    <bind-exit-token>, <class-token>, <cleanup-token>,
     <constant-token>, <create-token>, <define-token>, <else-token>,
     <end-token>, <export-token>, <finally-token>, <for-token>,
     <from-token>, <generic-token>, <handler-token>, <if-token>,
@@ -93,7 +95,8 @@ define module tokens
     <otherwise-token>, <set-token>, <use-token>, <uwp-token>,
     <variable-token>, <while-token>, <keyword-token>,
     <abstract-literal-token>, <literal-token>, <string-token>,
-    <operator-token>, <binary-operator-token>, <unary-operator-token>,
+    <operator-token>, <binary-operator-token>,
+    <simple-binary-operator-token>, <unary-operator-token>,
     <punctuation-token>, <left-paren-token>, <right-paren-token>,
     <comma-token>, <dot-token>, <semicolon-token>,
     <left-bracket-token>, <right-bracket-token>, <left-brace-token>,
