@@ -9,12 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.2 1994/04/09 13:35:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.3 1994/04/10 16:24:26 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+#include <stdio.h>
 #include <stdarg.h>
 
 #include "mindy.h"
@@ -133,7 +134,7 @@ static struct cpd *compute_cpd(obj_t class, obj_t supers)
     cpd->class = class;
     cpd->supers = NULL;
     cpd->after = NULL;
-    cpd->count = NULL;
+    cpd->count = 0;
     push_cpd(cpd, &cpds);
     class_count++;
 

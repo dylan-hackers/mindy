@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.5 1994/04/09 13:35:54 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.6 1994/04/10 16:24:31 wlott Exp $
 *
 * This file does whatever.
 *
@@ -952,7 +952,7 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
     obj_t class = object_class(instance);
     obj_t scan, slot;
     int index;
-    obj_t value;
+    obj_t value = NULL;
 
     if (class != obj_DefinedClassClass)
 	error("~S doens't access a slot in ~S", getter, instance);

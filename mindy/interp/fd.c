@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.6 1994/04/09 13:35:51 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.7 1994/04/10 16:24:29 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <errno.h>
@@ -31,7 +32,10 @@ extern off_t lseek(int fd, off_t offset, int whence);
 extern int fsync(int fd);
 #endif
 #ifdef hpux
+#define pause buttplug
 #include <unistd.h>
+#undef pause
+#include <fcntl.h>
 /* hpux doesn't define these for some reason. */
 extern int sys_nerr;
 extern char *sys_errlist[];
@@ -90,7 +94,11 @@ static int input_available(int fd)
     FD_SET(fd, &fds);
     tv.tv_sec = 0;
     tv.tv_usec = 0;
+#ifdef hpux
+    return select(fd+1, (int *)&fds, NULL, NULL, &tv);
+#else
     return select(fd+1, &fds, NULL, NULL, &tv);
+#endif
 }
 
 static void fd_input_available(obj_t self, struct thread *thread, obj_t *args)
@@ -183,7 +191,11 @@ static void maybe_write(struct thread *thread)
     FD_SET(fd, &fds);
     tv.tv_sec = 0;
     tv.tv_usec = 0;
+#ifdef hpux
+    nfound = select(fd+1, NULL, (int *)&fds, NULL, &tv);
+#else
     nfound = select(fd+1, NULL, &fds, NULL, &tv);
+#endif
 
     if (nfound < 0)
 	if (errno != EINTR) {

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.5 1994/04/09 13:35:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.6 1994/04/10 16:24:33 wlott Exp $
 *
 * This file does whatever.
 *
@@ -27,7 +27,9 @@ extern int read(int fd, void *ptr, int bytes);
 extern int access(const void *path, int flags);
 #endif
 #ifdef hpux
+#define pause buttplug
 #include <unistd.h>
+#undef pause
 #endif
 
 #include "mindy.h"

@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.5 1994/04/09 13:35:54 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.6 1994/04/10 16:24:30 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/errno.h>
@@ -47,7 +48,11 @@ static void getc_or_wait(struct thread *thread)
 	FD_SET(fd, &fds);
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
+#ifdef hpux
+	nfound = select(fd+1, (int *)&fds, NULL, NULL, &tv);
+#else
 	nfound = select(fd+1, &fds, NULL, NULL, &tv);
+#endif
 
 	if (nfound < 0) {
 	    switch (errno) {

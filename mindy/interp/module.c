@@ -9,12 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.3 1994/04/09 13:36:01 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.4 1994/04/10 16:24:36 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 

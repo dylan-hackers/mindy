@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.9 1994/04/09 13:35:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.10 1994/04/10 16:24:27 wlott Exp $
 *
 * This file does whatever.
 *
@@ -20,8 +20,11 @@
 #include <string.h>
 #ifdef MACH
 extern int isatty(int fd);
-#else
+#endif
+#ifdef hpux
+#define pause buttplug
 #include <unistd.h>
+#undef pause
 #endif
 
 #include "mindy.h"

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.6 1994/04/09 13:35:50 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.7 1994/04/10 16:24:28 wlott Exp $
 *
 * Main driver routines for mindy.
 *
@@ -100,7 +100,11 @@ static void check_fds(boolean block)
 	tvp = &tv;
     }
 
+#ifdef hpux
+    nfound = select(NumFds, (int *)&readfds, (int *)&writefds, NULL, tvp);
+#else
     nfound = select(NumFds, &readfds, &writefds, NULL, tvp);
+#endif
 
     if (nfound < 0) {
 	switch (errno) {
@@ -187,7 +191,7 @@ enum pause_reason do_stuff(void)
 {
     struct thread *thread;
     volatile int timer;
-    boolean do_select = TRUE;
+    volatile boolean do_select = TRUE;
 
     assert (!InInterpreter);
 

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.4 1994/04/09 13:36:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.5 1994/04/10 16:24:37 wlott Exp $
 *
 * This file does whatever.
 *
@@ -144,6 +144,8 @@ boolean instancep(obj_t thing, obj_t type)
 	return union_instancep(thing, type);
 	break;
     }
+    lose("instancep dispatch didn't do anything.");
+    return FALSE;
 }
 
 
