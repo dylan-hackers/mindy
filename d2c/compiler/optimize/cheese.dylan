@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.41 1995/05/01 06:56:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.42 1995/05/01 08:47:02 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,6 +49,7 @@ define method optimize-component (component :: <component>) => ();
 	    end;
       (*do-sanity-checks* & try(assure-all-done, #f))
 	| try(identify-tail-calls, "finding tail calls")
+	| try(cleanup-control-flow, "cleaning up control flow")
 	| try(add-type-checks, "adding type checks")
 	| try(environment-analysis, "running environment analysis")
 	| (done := #t);
@@ -268,7 +269,7 @@ define method optimize
       end;
     end;
 
-  elseif (instance?(defines & defines.var-info, <values-cluster-info>))
+  elseif (defines & instance?(defines.var-info, <values-cluster-info>))
     //
     // We are defining a cluster.  Propagate the type on though.
     maybe-restrict-type(component, defines, source-type);
@@ -1855,6 +1856,105 @@ define method convert-self-tail-call
   reoptimize(component, assign);
   reoptimize(component, op);
 end;
+
+
+// Control flow cleanup stuff.
+
+define method cleanup-control-flow (component :: <component>) => ();
+  for (lambda in component.all-methods)
+    if (cleanup-control-flow-aux(component, lambda.body) == #f)
+      error("control flow drops off the end of %=?", lambda);
+    end;
+  end;
+end;
+
+define method cleanup-control-flow-aux
+    (component :: <component>, region :: <simple-region>)
+    => terminating-exit :: union(<exit>, <boolean>);
+  #f;
+end;
+
+define method cleanup-control-flow-aux
+    (component :: <component>, region :: <compound-region>)
+    => terminating-exit :: union(<exit>, <boolean>);
+  block (return)
+    for (remaining = region.regions then remaining.tail,
+	 until: remaining == #())
+      let terminating-exit
+	= cleanup-control-flow-aux(component, remaining.head);
+      if (terminating-exit)
+	unless (remaining.tail == #())
+	  for (subregion in remaining.tail)
+	    delete-stuff-in(component, subregion);
+	  end;
+	  remaining.tail := #();
+	  if (region.regions.tail == #())
+	    replace-subregion(component, region.parent, region,
+			      region.regions.head);
+	  end;
+	end;
+	return(terminating-exit);
+      end;
+    end;
+    #f;
+  end;
+end;
+
+define method cleanup-control-flow-aux
+    (component :: <component>, region :: <if-region>)
+    => terminating-exit :: union(<exit>, <boolean>);
+  let then-terminating-exit
+    = cleanup-control-flow-aux(component, region.then-region);
+  let else-terminating-exit
+    = cleanup-control-flow-aux(component, region.else-region);
+  if (then-terminating-exit & else-terminating-exit)
+    for (then-target-ancestor = then-terminating-exit.block-of
+	   then then-target-ancestor.parent,
+	 else-target-ancestor = else-terminating-exit.block-of
+	   then else-target-ancestor.parent,
+	 while: then-target-ancestor & else-target-ancestor)
+    finally
+      if (then-target-ancestor == #f)
+	else-terminating-exit;
+      else
+	then-terminating-exit;
+      end;
+    end;
+  else
+    #f;
+  end;
+end;
+
+define method cleanup-control-flow-aux
+    (component :: <component>, region :: <loop-region>)
+    => terminating-exit :: union(<exit>, <boolean>);
+  if (cleanup-control-flow-aux(component, region.body))
+    // ### Hm.  Should flush this region, but that will cause all sorts of
+    // problems with the iteration in <compound-region> above.
+    #f;
+  end;
+  #t;
+end;
+
+define method cleanup-control-flow-aux
+    (component :: <component>, region :: <block-region>)
+    => terminating-exit :: union(<exit>, <boolean>);
+  let terminating-exit = cleanup-control-flow-aux(component, region.body);
+  if (instance?(terminating-exit, <exit>)
+	& terminating-exit.block-of == region)
+    delete-stuff-in(component, terminating-exit);
+    replace-subregion(component, terminating-exit.parent, terminating-exit,
+		      make(<empty-region>));
+  end;
+  #f;
+end;
+
+define method cleanup-control-flow-aux
+    (component :: <component>, region :: <exit>)
+    => terminating-exit :: union(<exit>, <boolean>);
+  region;
+end;
+
 
 
 // Cheesy type check stuff.
