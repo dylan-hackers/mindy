@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.5 1994/04/10 21:09:02 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.6 1994/04/10 21:58:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1116,8 +1116,12 @@ static boolean verify_symbol_aux(struct id *id, struct token *token)
 {
     if (token) {
 	int line = token->line;
+	char *ptr = token->chars;
 
-	if (strcasecmp(id->symbol->name, token->chars)) {
+	if (*ptr == '\\')
+	    ptr++;
+
+	if (strcasecmp(id->symbol->name, ptr)) {
 	    error(line, "mismatched name, ``%s'' isn't ``%s''",
 		  token->chars, id->symbol->name);
 	    free(token);
