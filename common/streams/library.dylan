@@ -2,7 +2,7 @@ module: Dylan-User
 author: Bill Chiles, Ben Folk-Williams
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/library.dylan,v 1.6 2001/12/23 06:00:39 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/streams/library.dylan,v 1.7 2002/01/15 20:58:02 housel Exp $
 
 //======================================================================
 //
@@ -114,7 +114,7 @@ define module internals
 	     seek_end => fd-seek-end,
 
 	     // Open values for flags argument
-	     o_rdonly, o_wronly, o_rdwr, o_creat, o_trunc, o_excl,
+	     o_rdonly, o_wronly, o_rdwr, o_creat, o_trunc, o_excl, o_append,
 
 	     // Open errors.
 	     enoent, eexist, eacces},
