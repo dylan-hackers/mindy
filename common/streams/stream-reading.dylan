@@ -56,6 +56,9 @@ define method read-element (stream :: <buffered-stream>,
   end block;
 end method read-element;
 
+define sealed domain read-element(<fd-stream>);
+define sealed domain read-element(<buffered-byte-string-output-stream>);
+
 define sealed method read-element (stream :: <simple-sequence-stream>,
 				   #key on-end-of-stream :: <object>
 				     = $not-supplied)
@@ -149,6 +152,9 @@ define method peek (stream :: <buffered-stream>,
   end block;
 end method peek;
 
+define sealed domain peek(<fd-stream>);
+define sealed domain peek(<buffered-byte-string-output-stream>);
+
 define sealed method peek (stream :: <simple-sequence-stream>,
 			   #key on-end-of-stream :: <object> = $not-supplied)
  => element-or-eof :: <object>;
@@ -235,6 +241,9 @@ define method read (stream :: <buffered-stream>, n :: <integer>,
     release-input-buffer(stream);
   end;
 end method read;
+
+define sealed domain read(<fd-stream>, <integer>);
+define sealed domain read(<buffered-byte-string-output-stream>, <integer>);
 
 define sealed method read (stream :: <simple-sequence-stream>, n :: <integer>,
 			   #key on-end-of-stream :: <object> = $not-supplied)
@@ -352,6 +361,10 @@ define method read-into!
   end block;
 end method read-into!;
 
+define sealed domain read-into!(<fd-stream>, <integer>, <mutable-sequence>);
+define sealed domain read-into!
+  (<buffered-byte-string-output-stream>, <integer>, <mutable-sequence>);
+
 define sealed method read-into!
     (stream :: <simple-sequence-stream>,
      n :: <integer>,
@@ -420,6 +433,9 @@ define method discard-input (stream :: <buffered-stream>) => ();
   end block;
 end method discard-input;
 
+define sealed domain discard-input(<fd-stream>);
+define sealed domain discard-input(<buffered-byte-string-output-stream>);
+
 define sealed method discard-input (stream :: <simple-sequence-stream>) => ();
   block ()
     lock-stream(stream);
@@ -450,6 +466,10 @@ define method stream-input-available? (stream :: <buffered-stream>)
   end block;
 end method stream-input-available?;
 
+define sealed domain stream-input-available?(<fd-stream>);
+define sealed domain stream-input-available?
+  (<buffered-byte-string-output-stream>);
+
 define sealed method stream-input-available?
     (stream :: <simple-sequence-stream>)
  => input-avaiable? :: <boolean>;
@@ -471,10 +491,10 @@ end method stream-input-available?;
 
 /// read-to -- Exported.
 ///
-define sealed method read-to (stream :: <stream>, element :: <object>,
-			      #key on-end-of-stream :: <object>
-				     = $not-supplied,
-			           test :: <function> = \==)
+define method read-to (stream :: <stream>, element :: <object>,
+		       #key on-end-of-stream :: <object>
+			      = $not-supplied,
+		            test :: <function> = \==)
  => (sequence-or-eof :: <object>, found? :: <boolean>);
   // Call read with n = 1 just to see what type of sequence we want.
   let first-elt-seq = read(stream, 1, on-end-of-stream: on-end-of-stream);
@@ -494,10 +514,10 @@ end method read-to;
 
 /// read-through -- Exported.
 ///
-define sealed method read-through (stream :: <stream>, element :: <object>,
-				   #key on-end-of-stream :: <object>
-				          = $not-supplied,
-				        test :: <function> = \==)
+define method read-through (stream :: <stream>, element :: <object>,
+			    #key on-end-of-stream :: <object>
+			           = $not-supplied,
+			         test :: <function> = \==)
  => (sequence-or-eof :: <object>, found? :: <boolean>);
   // Call read with n = 1 just to see what type of sequence we want.
   let first-elt-seq = read(stream, 1, on-end-of-stream: on-end-of-stream);
@@ -530,7 +550,7 @@ end method read-through;
 /// because it can't read n elements at once, though there may be n elements
 /// in the stream.
 /// 
-define sealed method read-to-end (stream :: <stream>)
+define method read-to-end (stream :: <stream>)
  => sequence :: <sequence>;
   block (exit-loop)
     let get-next-chunk = method (exit-val)
@@ -551,7 +571,7 @@ end method read-to-end;
 */
 /// (clean version)
 ///
-define sealed method read-to-end (stream :: <stream>)
+define method read-to-end (stream :: <stream>)
  => sequence :: <sequence>;
   // Call read with n = 1 just to see what type of sequence we want.
   let first-elt-seq = read(stream, 1, on-end-of-stream: #"eos");
@@ -571,8 +591,8 @@ end method read-to-end;
 
 /// skip-through -- Exported.
 ///
-define sealed method skip-through  (stream :: <stream>, element :: <object>,
-				    #key test :: <function> = \==)
+define method skip-through  (stream :: <stream>, element :: <object>,
+			     #key test :: <function> = \==)
  => found? :: <boolean>;
   block ()
     until (test(read-element(stream), element)) end;

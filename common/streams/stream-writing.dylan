@@ -33,22 +33,6 @@ copyright: See below.
 define open generic write-element (stream :: <stream>, element :: <object>)
  => ();
 
-#if (mindy)
-define method write-element (stream :: <buffered-stream>, element :: <object>)
- => ();
-  block ()
-    let buf :: <buffer> = get-output-buffer(stream);
-    let next :: <buffer-index> = buf.buffer-next;
-    buf[next] := as(<byte>, element);
-    buf.buffer-next := next + 1;
-  cleanup
-    release-output-buffer(stream);
-  end block;
-end method write-element;
-#else
-// The compiler doesn't have as(<byte>,...), since it can't handle
-// singleton(<byte>)
-//
 define method write-element (stream :: <buffered-stream>, element :: <object>)
  => ();
   block ()
@@ -60,7 +44,10 @@ define method write-element (stream :: <buffered-stream>, element :: <object>)
     release-output-buffer(stream);
   end block;
 end method write-element;
-#endif
+
+define sealed domain write-element(<fd-stream>, <object>);
+define sealed domain write-element(<buffered-byte-string-output-stream>,
+				   <object>);
 
 define sealed method write-element (stream :: <simple-sequence-stream>,
 				    element :: <object>)
@@ -120,6 +107,9 @@ define method write (stream :: <buffered-stream>, sequence :: <sequence>,
   end block;
 end method write;
 
+define sealed domain write(<fd-stream>, <sequence>);
+define sealed domain write(<buffered-byte-string-output-stream>, <sequence>);
+
 define sealed method write (stream :: <simple-sequence-stream>,
 			    sequence :: <sequence>,
 			    #key start :: <integer> = 0,
@@ -160,6 +150,9 @@ define method force-output (stream :: <buffered-stream>) => ();
   end block;
 end method force-output;
 
+define sealed domain force-output(<fd-stream>);
+define sealed domain force-output(<buffered-byte-string-output-stream>);
+
 define inline sealed method force-output (stream :: <simple-sequence-stream>)
  => ();
 end method force-output;
@@ -179,6 +172,9 @@ define method synchronize-output (stream :: <buffered-stream>) => ();
     release-output-buffer(stream);
   end block;
 end method synchronize-output;
+
+define sealed domain synchronize-output(<fd-stream>);
+define sealed domain synchronize-output(<buffered-byte-string-output-stream>);
 
 define inline sealed method synchronize-output
     (stream :: <simple-sequence-stream>)
@@ -200,6 +196,9 @@ define method discard-output (stream :: <buffered-stream>) => ();
     release-output-buffer(stream);
   end block
 end method discard-output;
+
+define sealed domain discard-output(<fd-stream>);
+define sealed domain discard-output(<buffered-byte-string-output-stream>);
 
 define sealed method discard-output (stream :: <simple-sequence-stream>) => ();
   block ()
