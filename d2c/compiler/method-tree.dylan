@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.6 1995/05/29 22:47:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.7 1995/06/01 14:40:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -289,11 +289,12 @@ define method method-tree-add(mt, meth, gf, punt);
 	less := child;
 
       #"unordered" =>
-        compiler-warning("### Multiply defined method: %=", meth);
+        compiler-warning("### Multiply defined method: %s", meth.defn-name);
 	punt();
 
       #"ambiguous" =>
-        compiler-warning("### Ambiguous methods: %= %=", meth, child);
+        compiler-warning("### Ambiguous methods: %s %s",
+			 meth.defn-name, child.defn-name);
 	punt();
 
       #"unknown" =>
@@ -347,20 +348,16 @@ define method check-1-arg-congruent(mspec, gspec, meth, gf)
   case
     ~val-p =>
       compiler-warning
-	("Can't tell if %= is a subtype of %=,\n"
-	"so can't tell if method is congruent to GF:"
-	 "\n  %=\n  %=",
-	 mspec, gspec, meth, gf);
+	("Can't tell if %s is a subtype of %s, so can't tell if method %s is "
+	   "congruent to GF %s.",
+	 mspec, gspec, meth.defn-name, gf.defn-name);
       #f;
 
     ~val =>
       compiler-warning
-	("Method isn't congruent to GF because method type:\n"
-	 "  %=\n"
-	 "isn't a subtype of GF type:\n"
-	 "  %=\n"
-	 "  %=\n  %=",
-	 mspec, gspec, meth, gf);
+	("Method %s isn't congruent to GF %s because method type %s isn't a "
+	   "subtype of GF type %s.",
+	 meth.defn-name, gf.defn-name, mspec, gspec);
       #f;
 
     otherwise => #t;
@@ -383,9 +380,8 @@ define method check-gf-congruence(gf :: <generic-definition>) => res :: <list>;
     let mspecs = msig.specializers;
     unless (size(mspecs) = size(gspecs))
       compiler-warning
-        ("Method has different number of required arguments than GF:"
-	 "\n  %=\n  %=",
-	 meth, gf);
+        ("Method %s has different number of required arguments than GF %s.",
+	 meth.defn-name, gf.defn-name);
       win := #f;
     end;
     for (mspec in mspecs, gspec in gspecs)
@@ -396,15 +392,13 @@ define method check-gf-congruence(gf :: <generic-definition>) => res :: <list>;
       gsig.key-infos =>
         if (~msig.key-infos)
 	  compiler-warning
-	    ("GF accepts keywords but method doesn't:\n"
-	     "\n  %=\n  %=",
-	     gf, meth);
+	    ("GF %s accepts keywords but method %s doesn't.",
+	     gf.defn-name, meth.defn-name);
 	  win := #f;
 	elseif (msig.all-keys? & ~gsig.all-keys?)
 	  compiler-warning
-	    ("Method accepts all keys but GF doesn't:\n"
-	     "\n  %=\n  %=",
-	     meth, gf);
+	    ("Method %s accepts all keys but GF %s doesn't.",
+	     meth.defn-name, gf.defn-name);
 	  win := #f;
 	else
 	  for (gkey in gsig.key-infos)
@@ -420,9 +414,9 @@ define method check-gf-congruence(gf :: <generic-definition>) => res :: <list>;
 	      end for;
 		  
 	      compiler-warning
-		("GF Mandatory keyword arg %= is not accepted by method:"
-		 "\n  %=\n  %=",
-		 gkey-name, meth, gf);
+		("GF %s mandatory keyword arg %= is not accepted by "
+		   "method %s.",
+		 gf.defn-name, gkey-name, meth.defn-name);
 	      win := #f;
 	    end block;
 	  end for;
@@ -430,23 +424,20 @@ define method check-gf-congruence(gf :: <generic-definition>) => res :: <list>;
 
       msig.key-infos =>
 	compiler-warning
-	  ("Method accepts keywords but GF doesn't:\n"
-	   "\n  %=\n  %=",
-	   meth, gf);
+	  ("Method %s accepts keywords but GF %s doesn't.",
+	   meth.defn-name, gf.defn-name);
 	win := #f;
 
       gsig.rest-type & ~msig.rest-type =>
         compiler-warning
-	  ("GF accepts variable arguments, but method does not:\n"
-	   "\n  %=\n  %=",
-	   gf, meth);
+	  ("GF %s accepts variable arguments, but method %s doesn't.",
+	   gf.defn-name, meth.defn-name);
 	win := #f;
 
       ~gsig.rest-type & msig.rest-type =>
         compiler-warning
-	  ("Method accepts variable arguments, but GF does not:\n"
-	   "\n  %=\n  %=",
-	   meth, gf);
+	  ("Method %s accepts variable arguments, but GF %s doesn't.",
+	   meth.defn-name, gf.defn-name);
 	win := #f;
       
       ~check-1-arg-congruent(msig.returns, gsig.returns, meth, gf) =>
@@ -552,38 +543,33 @@ define method ct-sorted-applicable-methods
       end;
     end;
 
-    let seals = generic-defn-seal-info(gf);
-    let candidate-seal = #f;
-    block (found)
-      for (child in seals)
-	select (compare-specializers(child.seal-types, call-types, #f))
-	  #"disjoint" => #f;
-	  #"<", "unordered" =>
-	    candidate-seal := child;
-	    found();
-	  otherwise =>
-	    if (candidate-seal)
-	      return(#f);
-	    else
-	      candidate-seal := child;
-	    end;
-	end;
-      end;
-    end;
-    unless (candidate-seal)
-      return(#f);
-    end;
-    
-    for (hairy in candidate-seal.hairy-methods)
-      let hairy-specs = hairy.function-defn-signature.specializers;
-      unless (compare-specializers(hairy-specs, call-types, #f) == #"disjoint")
-	return(#f);
-      end;
-    end;
+    for (child in generic-defn-seal-info(gf))
+      select (compare-specializers(child.seal-types, call-types, #f))
+	#"disjoint" =>
+	  // We are disjoint from this seal -- ignore it.
+	  #f;
 
-    // Okay, we have a candidate seal.  Now grovel it finding the most
-    // specific potentially applicable method.
-    find-applicable(candidate-seal.method-tree, #(), call-types);
+	#"<", "unordered" =>
+	  //
+	  // Make sure we don't intersect any of the hairy methods.
+	  for (hairy in child.hairy-methods)
+	    let hairy-specs = hairy.function-defn-signature.specializers;
+	    unless (compare-specializers(hairy-specs, call-types, #f)
+		      == #"disjoint")
+	      return(#f);
+	    end;
+	  end;
+
+	  // Okay, we have a candidate seal.  Now grovel it finding the most
+	  // specific potentially applicable method.
+	  return(find-applicable(child.method-tree, #(), call-types));
+
+	otherwise =>
+	  //
+	  // We overlap this seal so we have to bail.
+	  return(#f);
+      end;
+    end;
   end;
 end;
 
@@ -591,8 +577,8 @@ end;
 define method find-applicable (mt :: <list>, nexts :: <list>, types :: <list>)
     => res :: false-or(<list>);
   block (punt)
+    let intersects-with = #f;
     block (found)
-      let intersects-with = #f;
       for (sub in mt.tail)
 	select (compare-specializers(get-specializers(sub), types, #f))
 	  #"disjoint" =>
@@ -609,17 +595,16 @@ define method find-applicable (mt :: <list>, nexts :: <list>, types :: <list>)
 	    end;
 	end;
       end;
-      if (intersects-with)
-	find-applicable(intersects-with,
-			if (mt.head)
-			  pair(mt.head, nexts);
-			else
-			  nexts;
-			end,
-			types);
-      else
-	nexts;
-      end;
+    end;
+    let nexts = if (mt.head)
+		  pair(mt.head, nexts);
+		else
+		  nexts;
+		end;
+    if (intersects-with)
+      find-applicable(intersects-with, nexts, types);
+    else
+      nexts;
     end;
   end;
 end;
