@@ -3,7 +3,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.16 2003/03/05 16:20:57 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.17 2003/03/06 19:35:11 robmyers Exp $
 
 //======================================================================
 //
@@ -228,9 +228,9 @@ define module c-declarations
 
     // "Write declaration phase"
     <written-name-record>,
+		written-names,
     write-declaration, 
     write-file-load, write-mindy-includes,
-		write-module-stream,
 
     // Miscellaneous
 		getter, setter, sealed-string, excluded?,

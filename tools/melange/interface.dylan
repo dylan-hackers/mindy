@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.26 2003/03/05 16:20:57 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.27 2003/03/06 19:35:11 robmyers Exp $
 
 //======================================================================
 //
@@ -540,14 +540,15 @@ define method process-parse-state
 				  state.container-options.global-import-mode,
 				  state.container-options.file-import-modes);
   let (#rest opts) = merge-container-options(state.container-options);
-  for (decl in decls) apply(apply-options, decl, opts) end for;
-
+  for (decl in decls) 
+		apply(apply-options, decl, opts) 
+	end for;
+  let written-names = make(<written-name-record>);
   if (target-switch ~= #"all")
     melange-target := target-switch;
     let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
     write-mindy-includes(state.mindy-include-file, decls);
-    let written-names = make(<written-name-record>);
     do(rcurry(write-declaration, written-names, load-string, out-stream),
        decls);
   else
@@ -564,13 +565,40 @@ define method process-parse-state
     let load-string = write-file-load(full-names,
 				      state.object-files, decls, out-stream);
     write-mindy-includes(state.mindy-include-file, decls);
-    let written-names = make(<written-name-record>);
     do(rcurry(write-declaration, written-names, load-string, out-stream),
        decls);
     format(out-stream, "#endif\n");
   end if;
-  write-module-stream(decls, module-stream, module-line);
+  write-module-stream(written-names, module-stream, module-line);
 end method process-parse-state;
+
+// Write an export module file
+
+define method write-module-stream
+    (written-name-record :: <written-name-record>, module-stream :: false-or(<stream>),
+     module-line :: false-or(<string>)) => ()
+	let names :: <sequence> = written-names( written-name-record );
+  if(module-stream & names.size > 0)
+    format(module-stream, "module: dylan-user\n\n");
+    if(module-line)
+      format(module-stream, "define module %s", module-line)
+    else
+      format(module-stream, "define module foo", module-line)
+    end if;
+    format(module-stream, 
+           "  use dylan;\n"
+           "  use extensions;\n"
+           "  use melange-support;\n"
+           "  export");
+		// The names are returned in hash order, so we sort them before writing them
+		names := sort!( names, test: method( a, b ) as(<string>, a) < as(<string>, b) end );
+    for(separator = "" then ",", name in names)
+			// If a type is created in the module, export it
+	      format(module-stream, concatenate(separator, "\n    %s"), name);
+    end for;
+    format(module-stream, ";\nend module;\n");
+  end if;
+end method write-module-stream;
 
 // Process-define-interface simply calls the parser in int-parse to decipher
 // the "define interface" and then call "process-parse-state" to annotate and

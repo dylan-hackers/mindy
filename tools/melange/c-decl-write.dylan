@@ -123,6 +123,11 @@ define class <written-name-record> (<object>)
     = make(<table>);
 end class <written-name-record>;
 
+define method written-names( record :: <written-name-record> )
+=> ( names :: <collection> )
+	key-sequence( record.written-name-table );
+end method written-names;
+
 define class <written-declaration> (<object>)
   constant slot written-declaration :: <declaration>,
     required-init-keyword: declaration:;
@@ -577,6 +582,7 @@ define method write-declaration
 	       kind,
 	       fn-name,
 	       struct-slot-name(fn-name));
+   		 	 register-written-name(written-names, struct-slot-name(fn-name), decl);
       end;
 
       format(stream, "define method c-struct-size(of == %s)\n"
@@ -585,11 +591,17 @@ define method write-declaration
 	     virt-class, decl.dylan-name);
 
       for(x in decl.coalesced-members)
-	slot-fn(x.dylan-name, x.type.mapped-name, setter?: #f);
-  // This was commented out. I don't know why. - Rob Myers.
-  if(as(<symbol>,copy-sequence(x.type.mapped-name,end: 5)) ~= #"<anon")
-  	slot-fn(x.dylan-name, x.type.mapped-name, setter?: #t);
-  end if;
+				let real-type = true-type(x.type);
+				// abstract types don't have accessors
+			  unless(real-type.abstract-type?)
+					slot-fn(x.dylan-name, x.type.mapped-name, setter?: #f);
+				  // Anonymous types don't have setters, nor do read-only or struct ones
+				  if((as(<symbol>,copy-sequence(x.type.mapped-name,end: 5)) ~= #"<anon")&
+						//FIXME: x.type.read-only gives an error
+						(/*~x.type.read-only &*/ ~instance?(real-type, <non-atomic-types>)))
+				  	slot-fn(x.dylan-name, x.type.mapped-name, setter?: #t);
+				  end if;
+				end unless;
       end for;
     end if;
   end if;
@@ -1210,37 +1222,3 @@ define method write-mindy-includes
     close(stream);
   end if;
 end method write-mindy-includes;
-
-// Write an export module file
-
-define method write-module-stream
-    (decls :: <collection>, module-stream :: false-or(<stream>),
-     module-line :: false-or(<string>)) => ()
-  if(module-stream & decls.size > 0)
-    format(module-stream, "module: dylan-user\n\n");
-    if(module-line)
-      format(module-stream, "define module %s", module-line)
-    else
-      format(module-stream, "define module foo", module-line)
-    end if;
-    format(module-stream, 
-           "  use dylan;\n"
-           "  use extensions;\n"
-           "  use melange-support;\n"
-           "  export");
-    for(separator = "" then ",", decl in decls)
-			// If a type is created in the module, export it
-			if( ~ decl.equated? )
-	      format(module-stream, concatenate(separator, "\n    %s"),
-	             decl.dylan-name);
-				// Write struct slot accessors, for non-empty structs
-				if( instance?(decl, <struct-declaration>) & decl.coalesced-members)
-					for( x in decl.coalesced-members)
-						format( module-stream, ",\n    %s,\n    %s-setter", x.dylan-name, x.dylan-name );
-					end for;
-				end if;
-			end if;
-    end for;
-    format(module-stream, ";\nend module;\n");
-  end if;
-end method write-module-stream;
