@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.4 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.5 1995/11/16 03:35:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -69,12 +69,12 @@ define class <class> (<type>)
   slot class-all-slots :: <simple-object-vector>;
   //
   // Layout of instance allocation slots.  #f until computed.
-  slot class-instance-layout :: union(<false>, <layout>),
+  slot class-instance-layout :: type-union(<false>, <layout>),
     init-value: #f;
   //
   // Layout of each-subclass allocation slots.  #f until computed or if there
   // are no each-subclass slots.
-  slot class-each-subclass-layout :: union(<false>, <layout>),
+  slot class-each-subclass-layout :: type-union(<false>, <layout>),
     init-value: #f;
   //
   // Vector of each-subclass allocation slots.  Filled in when the layout
@@ -100,11 +100,11 @@ define class <slot-descriptor> (<object>)
     required-init-keyword: allocation:;
   //
   // The type of the slot, or #f it is deferred.
-  slot slot-type :: union(<false>, <type>),
+  slot slot-type :: type-union(<false>, <type>),
     required-init-keyword: type:;
   //
   // The function to compute the type when deferred.
-  slot slot-deferred-type :: union(<false>, <function>),
+  slot slot-deferred-type :: type-union(<false>, <function>),
     required-init-keyword: deferred-type:;
   //
   // The getter generic function.  Also used to identify the slot.
@@ -113,25 +113,25 @@ define class <slot-descriptor> (<object>)
   //
   // The method added to that generic function, or #f if it either hasn't
   // beed added yet or isn't going to be added ('cause of virtual allocation).
-  slot slot-getter-method :: union(<false>, <method>),
+  slot slot-getter-method :: type-union(<false>, <method>),
     init-value: #f;
   //
   // the setter generic function, or #f if there isn't one.
-  slot slot-setter :: union(<false>, <generic-function>), setter: #f,
+  slot slot-setter :: type-union(<false>, <generic-function>), setter: #f,
     init-value: #f;
   //
   // The method added to the setter generic function if one had been added.
-  slot slot-setter-method :: union(<false>, <method>),
+  slot slot-setter-method :: type-union(<false>, <method>),
     init-value: #f;
   //
   // The function to compute the initial value, or #f if it starts out life
   // unbound.  Note: the init-value: keyword is converted into a function
   // so we don't have to tell them apart.
-  slot slot-init-function :: union(<false>, <function>),
+  slot slot-init-function :: type-union(<false>, <function>),
     init-value: #f;
   //
   // The init keyword, if there is one.
-  slot slot-init-keyword :: union(<false>, <symbol>),
+  slot slot-init-keyword :: type-union(<false>, <symbol>),
     init-value: #f;
   //
   // #t if the init-keyword is required, #f if not.
@@ -141,13 +141,13 @@ end;
 
 define method initialize
     (slot :: <slot-descriptor>,
-     #key setter :: union(<false>, <generic-function>),
-     type :: union(<false>, <type>),
-     deferred-type :: union(<false>, <function>),
+     #key setter :: type-union(<false>, <generic-function>),
+     type :: type-union(<false>, <type>),
+     deferred-type :: type-union(<false>, <function>),
      init-value = $not-supplied,
-     init-function :: union(<false>, <function>),
-     init-keyword :: union(<false>, <symbol>),
-     required-init-keyword :: union(<false>, <symbol>),
+     init-function :: type-union(<false>, <function>),
+     init-keyword :: type-union(<false>, <symbol>),
+     required-init-keyword :: type-union(<false>, <symbol>),
      allocation :: <slot-allocation> = #"instance")
     => res :: <slot-descriptor>;
 
@@ -175,7 +175,8 @@ define method initialize
 end;
 
 define method make (class == <class>,
-		    #key superclasses :: union(<class>, <sequence>) = <object>,
+		    #key superclasses :: type-union(<class>, <sequence>)
+		           = <object>,
 		         slots :: <sequence> = #())
   let slots = map-as(<simple-object-vector>,
 		     curry(apply, make, <slot-descriptor>),
@@ -422,7 +423,7 @@ end;
 //
 // A <subclass> represents all of the subclasses of a particular class,
 // conceptually the same as:
-//   apply(type-or, map(singleton,all-subclasses(class)))
+//   apply(type-union, map(singleton,all-subclasses(class)))
 // assuming a definition for all-subclasses.
 //
 // Exposed because the constructor is exported.
@@ -446,7 +447,7 @@ define method limited (class == <class>, #key subclass-of)
   if (subclass-of == <object>)
     <class>;
   elseif (class.class-sealed?)
-    apply(type-or, singleton(class),
+    apply(type-union, singleton(class),
 	  map(curry(limited, <class>, subclass-of:),
 	      class.direct-subclasses));
   else

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.3 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.4 1995/11/16 03:40:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -40,7 +40,8 @@ define open generic %element-setter
 // error, which are annoyingly large.
 //
 define constant element-error
-  = method (coll :: <sequence>, index :: <fixed-integer>) => res :: type-or();
+  = method (coll :: <sequence>, index :: <fixed-integer>)
+	=> res :: <never-returns>;
       error("No element %d in %=", index, coll);
     end method;
 
@@ -83,11 +84,11 @@ define variable *limited-vectors* = #();
 define class <limited-vector-info> (<object>)
   slot lvi-type :: <type>,
     required-init-keyword: type:;
-  slot lvi-size :: union(<false>, <fixed-integer>),
+  slot lvi-size :: type-union(<false>, <fixed-integer>),
     required-init-keyword: size:;
   slot lvi-class :: <class>,
     required-init-keyword: class:;
-  slot lvi-next :: union(<limited-vector-info>, <false>),
+  slot lvi-next :: type-union(<limited-vector-info>, <false>),
     required-init-keyword: next:;
 end;
 

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.5 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.6 1995/11/16 03:37:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -16,7 +16,7 @@ define abstract class <function> (<object>)
   slot function-rest? :: <boolean>,
     required-init-keyword: rest?:;
   //
-  slot function-keywords :: union(<simple-object-vector>, <false>),
+  slot function-keywords :: type-union(<simple-object-vector>, <false>),
     required-init-keyword: keywords:;
   //
   slot function-all-keys? :: <boolean>,
@@ -95,7 +95,7 @@ end;
 
 define class <type-vector> (<builtin-vector>)
   sealed slot %element :: <type>,
-    init-value: type-or(), init-keyword: fill:,
+    init-value: type-union(), init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
 end class <type-vector>;
 
@@ -108,7 +108,7 @@ define class <gf-cache> (<object>)
   slot cached-ambiguous :: <list>, init-value: #();
   slot cached-classes :: <type-vector>,
     required-init-keyword: #"classes";
-  slot next :: union(<false>, <gf-cache>), init-value: #f;
+  slot next :: type-union(<false>, <gf-cache>), init-value: #f;
   slot call-count :: <fixed-integer>, init-value: 1;
 end class <gf-cache>;
 
@@ -119,7 +119,7 @@ define class <generic-function> (<function>)
   //
   slot generic-function-methods :: <list>,
     required-init-keyword: methods:;
-  slot method-cache :: union(<false>, <gf-cache>), init-value: #f;
+  slot method-cache :: type-union(<false>, <gf-cache>), init-value: #f;
 end;
 
 seal generic make(singleton(<generic-function>));
@@ -329,8 +329,8 @@ define method cached-sorted-applicable-methods
      arg-ptr :: <raw-pointer>)
  => (ordered :: <list>, ambiguous :: <list>);
   block (return)
-    for (prev :: union(<false>, <gf-cache>) = #f then cache,
-	 cache :: union(<false>, <gf-cache>) = gf.method-cache
+    for (prev :: type-union(<false>, <gf-cache>) = #f then cache,
+	 cache :: type-union(<false>, <gf-cache>) = gf.method-cache
 	   then cache.next,
 	 until: cache == #f)
       block (no-match)
@@ -507,7 +507,7 @@ end;
 
 define method %make-next-method-cookie
     (next-method-info :: <list>, #rest original-args)
-    => res :: union(<false>, <function>);
+    => res :: type-union(<false>, <function>);
   if (next-method-info == #())
     #f;
   elseif (instance?(next-method-info.head, <pair>))

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/value-cell.dylan,v 1.2 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/value-cell.dylan,v 1.3 1995/11/16 03:40:17 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -11,12 +11,12 @@ end;
 define class <limited-value-cell-info> (<object>)
   slot lvci-type :: <type>, required-init-keyword: type:;
   slot lvci-class :: <class>, required-init-keyword: class:;
-  slot lvci-next :: union(<limited-value-cell-info>, <false>),
+  slot lvci-next :: type-union(<limited-value-cell-info>, <false>),
     required-init-keyword: next:;
 end;
 
 define variable *limited-value-cells*
-  :: union(<limited-value-cell-info>, <false>)
+  :: type-union(<limited-value-cell-info>, <false>)
   = #f;
 
 define method limited (class == <value-cell>, #key type :: <type>)
