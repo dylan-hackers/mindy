@@ -1,0 +1,6 @@
+
+$D2CFLAGS = '-L../dylan -L../melange';
+
+do emit_library_rule(
+    'garbage-collection', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+);
