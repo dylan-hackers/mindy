@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.1 1994/03/24 21:49:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.2 1994/03/25 05:57:25 wlott Exp $
 *
 * This file does whatever.
 *
@@ -948,6 +948,7 @@ static void scav_var(struct var *var)
 {
     scavenge(&var->variable.name);
     scavenge(&var->variable.value);
+    scavenge(&var->variable.type);
 }
 
 static void scav_module(struct module *module)
