@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.54 1994/11/21 17:17:27 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.55 1994/11/22 16:54:23 nkramer Exp $
 
 //======================================================================
 //
@@ -205,7 +205,7 @@ define module Dylan
     odd?,
     pop, pop-last, positive?, push, push-last,
     range, rank, rcurry, reduce, reduce1, remainder, remove,
-    remove!, remove-duplicates, remove-duplicates!, remove-key!,
+    remove!, remove-duplicates, remove-duplicates!,
     replace-elements!, replace-subsequence!, restart-query,
     return-allowed?, return-description, return-query, reverse, reverse!,
     row-major-index,
@@ -216,7 +216,7 @@ define module Dylan
     zero?;
   create
     /* <ratio>, rationalize, numerator, denominator, */
-    <object-table>, <table>;
+    <object-table>, <table>, remove-key!;
 end Dylan;
 
 define module Extensions
@@ -232,11 +232,10 @@ define module Extensions
   use extras,
     export: all;
   create
-    <hashtable>,
     <equal-table>, equal-hash, collection-hash, 
     <value-table>, value-hash, sequence-hash, string-hash;
   export
-    one-of, type-or, false-or, ignore, key-exists?;
+    one-of, type-or, false-or, ignore, key-exists?, <dictionary>;
 end Extensions;
 
 define module System
