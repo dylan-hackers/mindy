@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.55 1995/06/04 17:05:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.56 1995/06/04 22:51:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1408,6 +1408,26 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
     => ();
   let emitter = expr.info.primitive-emitter | default-primitive-emitter;
   emitter(defines, expr, output-info);
+end;
+
+define method emit-assignment
+    (defines :: false-or(<definition-site-variable>), expr :: <catch>,
+     output-info :: <output-info>)
+    => ();
+  let func = extract-operands(expr, output-info, $heap-rep);
+  let (values, sp) = cluster-names(output-info.output-info-cur-stack-depth);
+  let stream = output-info.output-info-guts-stream;
+  if (defines)
+    format(stream, "%s = ", sp);
+  end;
+  let catch-defn = dylan-defn(#"catch");
+  assert(instance?(catch-defn, <abstract-method-definition>));
+  let catch-info = find-main-entry-info(catch-defn, output-info);
+  format(stream, "save_state(%s, %s, %s);\n",
+	 main-entry-name(catch-info, output-info), values, func);
+  if (defines)
+    deliver-cluster(defines, values, sp, wild-ctype(), output-info);
+  end;
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.1 1995/06/04 21:37:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.2 1995/06/04 22:52:15 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -471,28 +471,6 @@ define-primitive-emitter
 
 
 // NLX primitives.
-
-define-primitive-emitter
-  (#"catch",
-   method (defines :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   output-info :: <output-info>)
-       => ();
-     let func = extract-operands(operation, output-info, $heap-rep);
-     let (values, sp) = cluster-names(output-info.output-info-cur-stack-depth);
-     let stream = output-info.output-info-guts-stream;
-     if (defines)
-       format(stream, "%s = ", sp);
-     end;
-     let catch-defn = dylan-defn(#"catch");
-     assert(instance?(catch-defn, <abstract-method-definition>));
-     let catch-info = find-main-entry-info(catch-defn, output-info);
-     format(stream, "save_state(%s, %s, %s);\n",
-	    main-entry-name(catch-info, output-info), values, func);
-     if (defines)
-       deliver-cluster(defines, values, sp, wild-ctype(), output-info);
-     end;
-   end);
 
 define-primitive-emitter
   (#"current-sp",
