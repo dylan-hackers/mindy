@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.22 1996/03/07 17:54:19 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.23 1996/03/08 23:39:31 wlott Exp $
 
 //======================================================================
 //
@@ -438,6 +438,7 @@ define method fill!(vector :: <vector>, value :: <object>,
   for (i from first below last)
     vector[i] := value;
   end for;
+  vector;
 end method fill!;
 
 define method copy-sequence(vector :: <vector>, #key start = 0, end: last)
