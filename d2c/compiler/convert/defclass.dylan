@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.21 1995/05/18 13:41:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.22 1995/05/26 10:48:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -479,6 +479,7 @@ define method compute-cclass (defn :: <class-definition>)
     // Make and return the <cclass>.
     make(<defined-cclass>,
 	 name: defn.defn-name,
+	 defn: defn,
 	 direct-superclasses: as(<list>, supers),
 	 not-functional:
 	   // Do we proclude functional subclasses?
