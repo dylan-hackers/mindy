@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.87 1996/08/22 18:34:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.88 1996/08/23 14:01:24 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -341,6 +341,28 @@ define method pick-which-file
     #t;
   end if;
 end method pick-which-file;
+
+
+// Look up a header element with a boolean default.  If specified, the option
+// must be "yes" or "no".
+//
+define function boolean-header-element 
+    (name :: <symbol>, default :: <boolean>, state :: <main-unit-state>) 
+ => res :: <boolean>;
+  let found = element(state.unit-header, #"dynamic", default: #f);
+  if (found)
+    select (as-uppercase(found) by \=)
+      "yes" => #t;
+      "no" => #f;
+      otherwise => 
+          compiler-error("Dynamic: header option is %s, not \"yes\" or \"no\".",
+	  		 found);
+    end select;
+  else
+    default;
+  end if;
+end function;
+
      
 define method parse-and-finalize-library (state :: <main-unit-state>) => ();
     parse-lid(state);
@@ -359,6 +381,8 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
     state.unit-mprefix
       := element(state.unit-header, #"unit-prefix", default: #f) 
            | as-lowercase(lib-name);
+
+    *defn-dynamic-default* := boolean-header-element(#"dynamic", #f, state);
 
     for (file in state.unit-files)
       block ()
