@@ -1,4 +1,99 @@
-Mindy 1.4 Change Log
+Mindy 1.5 Change Log
+
+The following are enhancements added since release 1.4:
+
+   Mindy is now compliant with most of the DRM; previous versions of
+   Mindy were based on the older DIRM.  See mindy.txt for Mindy's
+   deficiencies with respect to the DRM.
+
+   The function collect-garbage has been added to the System module of
+   the Dylan library.  This function can also do a purifying garbage
+   collection; see mindy.txt for details.
+
+   Mindy now supports conditional compilation; see mindy.txt for
+   details.
+
+   Added a new defining form, "define function".  See mindy.txt for
+   details.
+
+   For loops now support the "using" option for using iteration
+   protocols other than the forward-iteration-protocol.  See mindy.txt
+   for details.
+
+   Mindy now supports a different integer model.  In brief, the
+   following renaming has been done:
+	<integer>              => <general-integer>
+	<fixed-integer>        => <integer>
+	$minimum-fixed-integer => $minimum-integer
+	$maximum-fixed-integer => $maximum-integer
+   See mindy.txt for details.
+
+   The function abstract?, which tells you if a class is an abstract
+   class, has been added to the Introspections module of the Dylan
+   library.
+
+   Mindy will now return an exit status of 1 if the debugger "quit"
+   command was used to exit the interpretter.
+
+   Mindycomp now gives warning messages when "while" or "until" are
+   used inside a for loop (you should use "while:" or "until:"), or
+   when the "foo: (default)" keyword default syntax is used.
+
+   Mindycomp now gives warning messages when function return types
+   have names but not types.
+
+   Mindy now gives warnings when a method's return types do not match
+   the generic's return types because return types were not specified
+   for the method.  This used to be an error.
+
+   The function type-or in the Extensions module of the Dylan library
+   has been removed.  Use type-union instead.
+
+   The class <dictionary> in the Extensions module of the Dylan
+   library has been removed.  Use <mutable-explicit-key-collection>
+   instead.
+
+   The variable *random-state* is now exported from the Random
+   library.  See random.txt for details.
+
+   In the Regular-expressions module of the String-Extensions library,
+   the join() function now only works on byte strings.
+
+   Added the Inspector library, which contains code for interactively
+   examining Dylan objects.  See inspector.txt for details.
+
+   Added the Matrix library, which contains standard matrix
+   manipulations like matrix multiply and gaussian elimination.  See
+   matrix.txt for details.
+   
+
+The following are bug fixes since release 1.4:
+
+   Abstract classes may no longer be intantiated with the default make
+   method.
+
+   <object-table>s now work when given <extended-integer>s or <ratio>s
+   for keys.
+
+   Find-method() now accepts any type of <sequence> as an argument,
+   not just <list>.
+
+   Sort() now handles pathological cases better.
+
+   Fixed a bug in ash where it would try to allocate extended integers
+   of a negative length.
+
+   Mindy now drops to the debugger when asked to allocate an
+   excessively large object, rather than dumping core.
+
+   In the Regular-expressions module of the String-Extensions library,
+   the split() function will now remove empty items correctly in all
+   cases.
+
+   Fill! now returns a value of the correct type.
+
+   Only release the buffer if we still hold it.
+
 
 The following are enhancements added since release 1.3:
 
