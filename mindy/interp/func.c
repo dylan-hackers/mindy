@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.7 1994/04/09 13:35:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.8 1994/04/10 18:50:29 rgs Exp $
 *
 * This file does whatever.
 *
@@ -50,7 +50,7 @@ boolean Tracing = FALSE;
 
 static void trace_call(obj_t function, obj_t *args, int nargs)
 {
-    printf("> 0x%08x: ", (unsigned long)(args-1));
+    printf("> 0x%08lx: ", (unsigned long)(args-1));
     prin1(function_debug_name_or_self(function));
     printf("(");
     if (nargs > 0) {
@@ -78,6 +78,28 @@ static void trace_return(obj_t *old_sp, obj_t *vals, int nvals)
 
 
 /* Functions in general. */
+
+struct gf_cache {
+    obj_t class;
+    obj_t cached_result;
+    int size;
+    obj_t cached_classes[0];
+};
+
+obj_t make_gf_cache(int req_args, obj_t cached_result)
+{
+    obj_t res = alloc(obj_GFCacheClass, (sizeof(struct gf_cache) +
+					 req_args * sizeof(obj_t)));
+    struct gf_cache *gfc = obj_ptr(struct gf_cache *, res);
+    int i;
+
+    gfc->cached_result = cached_result;
+    gfc->size = req_args;
+    for (i = 0; i < req_args; i++)
+	gfc->cached_classes[i] = obj_Nil;
+
+    return res;
+}
 
 struct function {
     obj_t class;
@@ -244,6 +266,7 @@ struct method {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
+    obj_t class_cache;			/* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
 };
 
@@ -322,24 +345,12 @@ void invoke_methods(obj_t method, obj_t next_methods,
 	really_invoke_methods(method, next_methods, thread, nargs);
 }
 
-boolean applicable_method_p(obj_t method, obj_t *args)
-{
-    obj_t specializers = METHOD(method)->specializers;
-
-    while (specializers != obj_Nil) {
-	if (!instancep(*args++, HEAD(specializers)))
-	    return FALSE;
-	specializers = TAIL(specializers);
-    }
-
-    return TRUE;
-}
-
 /* Version of applicable_method_p which does extra work to allow SAM caching 
    for generic function dispatch.  The "can_cache" argument is carried across
    several calls to gfd_applicable_method_p and will be set to false if the 
    method depends upon anything other than the types of the args. */
-boolean gfd_applicable_method_p(obj_t method, obj_t *args, boolean *can_cache)
+static boolean
+    gfd_applicable_method_p(obj_t method, obj_t *args, boolean *can_cache)
 {
     obj_t specializers = METHOD(method)->specializers;
     boolean l_can_cache = *can_cache;
@@ -372,6 +383,48 @@ boolean gfd_applicable_method_p(obj_t method, obj_t *args, boolean *can_cache)
     else
 	*can_cache = l_can_cache && any_class_only;
     return applicable;
+}
+
+static boolean applicable_method_p(obj_t method, obj_t *args)
+{
+    obj_t specializers = METHOD(method)->specializers;
+    obj_t cache = METHOD(method)->class_cache;
+    int max = METHOD(method)->required_args;
+    boolean can_cache = TRUE;
+
+    if (cache != obj_False) {
+	obj_t *cache_class = obj_ptr(struct gf_cache *, cache)->cached_classes;
+	obj_t *arg = args;
+	int i;
+	boolean found = TRUE;
+
+	for (i = 0; i < max; i++, arg++, cache_class++) {
+	    if (*cache_class != object_class(*arg)) {
+		found = FALSE;
+		break;
+	    }
+	}
+	if (found)
+	    return TRUE;
+    }
+
+    /* It wasn't in the cache.... */
+    if (gfd_applicable_method_p(method, args, &can_cache)) {
+	if (can_cache) {
+	    int i;
+	    obj_t cache_elem =
+		(cache == obj_False) ? make_gf_cache(max, obj_False) : cache;
+	    obj_t *cache_class = obj_ptr(struct gf_cache *,
+					 cache_elem)->cached_classes;
+	    obj_t *arg = args;
+	    
+	    for (i = 0; i < max; i++, arg++, cache_class++)
+		*cache_class = object_class(*arg);
+	    METHOD(method)->class_cache = cache_elem;
+	}
+	return TRUE;
+    } else
+	return FALSE;
 }
 
 static boolean method_accepts_keyword(obj_t method, obj_t keyword)
@@ -435,6 +488,7 @@ obj_t make_raw_method(char *debug_name, obj_t specializers, boolean restp,
     METHOD(res)->result_types = result_types;
     METHOD(res)->more_results_type = more_results_type;
     METHOD(res)->specializers = specializers;
+    METHOD(res)->class_cache = obj_False;
     METHOD(res)->iep = iep;
 
     return res;
@@ -549,6 +603,7 @@ struct builtin_method {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
+    obj_t class_cache;			/* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
     obj_t (*func)();
 };
@@ -780,6 +835,7 @@ obj_t make_builtin_method(char *debug_name, obj_t specializers,
     BUILTIN_METHOD(res)->result_types = list1(result_type);
     BUILTIN_METHOD(res)->more_results_type = obj_False;
     BUILTIN_METHOD(res)->specializers = specializers;
+    BUILTIN_METHOD(res)->class_cache = obj_False;
     BUILTIN_METHOD(res)->iep = builtin_method_ieps[num_args];
     BUILTIN_METHOD(res)->func = func;
 
@@ -799,6 +855,7 @@ struct byte_method {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
+    obj_t class_cache;			/* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
     obj_t component;
     int n_closure_vars;
@@ -856,6 +913,7 @@ obj_t make_byte_method(obj_t method_info, obj_t specializers,
     BYTE_METHOD(res)->result_types = result_types;
     BYTE_METHOD(res)->more_results_type = more_results_type;
     BYTE_METHOD(res)->specializers = specializers;
+    BYTE_METHOD(res)->class_cache = obj_False;
     BYTE_METHOD(res)->iep = byte_method_iep;
     BYTE_METHOD(res)->component = component;
     BYTE_METHOD(res)->n_closure_vars = n_closure_vars;
@@ -878,6 +936,7 @@ struct accessor_method {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
+    obj_t class_cache;			/* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
     obj_t datum;
 };
@@ -900,6 +959,7 @@ obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
     ACCESSOR_METHOD(res)->more_results_type = obj_False;
     ACCESSOR_METHOD(res)->specializers
 	= setter ? list2(type, class) : list1(class);
+    ACCESSOR_METHOD(res)->class_cache = obj_False;
     ACCESSOR_METHOD(res)->iep = iep;
     ACCESSOR_METHOD(res)->datum = datum;
 
@@ -918,28 +978,6 @@ void set_accessor_method_datum(obj_t method, obj_t datum)
 
 
 /* Generic functions. */
-
-struct gf_cache {
-    obj_t class;
-    obj_t cached_result;
-    int size;
-    obj_t cached_classes[0];
-};
-
-obj_t make_gf_cache(int req_args, obj_t cached_result)
-{
-    obj_t res = alloc(obj_GFCacheClass, (sizeof(struct gf_cache) +
-					 req_args * sizeof(obj_t)));
-    struct gf_cache *gfc = obj_ptr(struct gf_cache *, res);
-    int i;
-
-    gfc->cached_result = cached_result;
-    gfc->size = req_args;
-    for (i = 0; i < req_args; i++)
-	gfc->cached_classes[i] = obj_Nil;
-
-    return res;
-}
 
 struct gf {
     obj_t class;
@@ -1416,6 +1454,7 @@ static int scav_raw_method(struct object *ptr)
 {
     scav_func((struct function *)ptr);
     scavenge(&((struct method *)ptr)->specializers);
+    scavenge(&((struct method *)ptr)->class_cache);
 
     return sizeof(struct method);
 }
@@ -1429,6 +1468,7 @@ static int scav_builtin_method(struct object *ptr)
 {
     scav_func((struct function *)ptr);
     scavenge(&((struct builtin_method *)ptr)->specializers);
+    scavenge(&((struct builtin_method *)ptr)->class_cache);
 
     return sizeof(struct builtin_method);
 }
@@ -1445,6 +1485,7 @@ static int scav_byte_method(struct object *ptr)
 
     scav_func((struct function *)ptr);
     scavenge(&method->specializers);
+    scavenge(&method->class_cache);
     scavenge(&method->component);
 
     for (i = 0; i < method->n_closure_vars; i++)
@@ -1481,6 +1522,7 @@ static int scav_accessor_method(struct object *ptr)
 
     scav_func((struct function *)ptr);
     scavenge(&method->specializers);
+    scavenge(&method->class_cache);
     scavenge(&method->datum);
 
     return sizeof(struct accessor_method);
