@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.12 1994/11/03 22:19:24 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.13 1994/11/06 20:00:45 rgs Exp $
 *
 * This file starts everything going.
 *
@@ -76,6 +76,8 @@ static void missing_arg(char *whose)
     exit(1);
 }
   
+char *exec_file_name;
+
 void main(int argc, char *argv[])
 {
     struct thread *thread;
@@ -92,6 +94,7 @@ void main(int argc, char *argv[])
 				      obj_Nil, obj_ObjectClass,
 				      startup);
 
+    exec_file_name = argv[0];
     while (*++argv != NULL) {
 	if (strcmp(*argv, "-f") == 0) {
 	    if (*++argv == NULL)

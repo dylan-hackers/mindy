@@ -23,9 +23,11 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.5 1994/10/05 21:03:58 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.6 1994/11/06 20:01:03 rgs Exp $
 *
 \**********************************************************************/
+
+extern char *exec_file_name;
 
 typedef struct _object *obj_t;
 
