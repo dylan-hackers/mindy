@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/nlx.dylan,v 1.3 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/nlx.dylan,v 1.4 1995/11/16 03:38:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -70,7 +70,7 @@ define constant catch
     end;
 
 define method throw (catcher :: <catcher>, values :: <simple-object-vector>)
-    => res :: type-or();
+    => res :: <never-returns>;
   if (catcher.disabled)
     error("Can't exit to a block that has already been exited from.");
   end;
