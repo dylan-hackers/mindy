@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.43 1994/10/18 00:30:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.44 1994/10/18 00:49:51 wlott Exp $
 
 //======================================================================
 //
@@ -40,7 +40,7 @@ define module Builtin-Stuff
     <array>,
     <boolean>, <buffer>, <byte-character>, <byte-string>, <byte-vector>,
     <character>, <class>, <collection>, <complex>,
-    <double-float>,
+    <defined-class>, <double-float>,
     <empty-list>, <event>, <explicit-key-collection>, <extended-float>,
     <false>, <float>, <function>,
     <generic-function>,
@@ -53,7 +53,7 @@ define module Builtin-Stuff
     <pair>,
     <rational>, <real>,
     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
-    <spinlock>, <string>, <symbol>,
+    <slot-descriptor>, <spinlock>, <string>, <symbol>,
     <thread>, <true>, <type>,
     <unicode-string>,
     <vector>,
@@ -288,7 +288,8 @@ end;
 
 define module Introspection
   use Builtin-Stuff,
-    import: {class-name, function-name,
+    import: {<defined-class>, <slot-descriptor>,
+	     class-name, function-name,
 	     slot-allocation, slot-descriptors, slot-getter,
 	     slot-getter-method, slot-name, slot-setter, slot-setter-method,
 	     slot-type, slot-value},
