@@ -49,19 +49,22 @@ rcs-header: $Header:
 // of different sorts of numbers.
 //
 // This particular implementation of module portability corresponds to
-// the compilation environment for a System 8 Macintosh using MW CW
+// the compilation environment for a MacOS X Macintosh using the BSD layer.
 //======================================================================
 
 define constant $default-defines
   = #["const", "",
       "volatile", "", 
       "__cdecl", "",
-      "__STDC__", ""];
+      "__STDC__", "",
+      "__APPLE__", "(1)",
+      "__ppc__", "(1)",
+      "__BIG_ENDIAN", "(1)"];
 
 // Set up the search path for .h files
 
 define constant macos-include-directories
-  = #[""];
+  = #["/usr/include"];
 
 for (dir in macos-include-directories)
   push-last(include-path, dir);
