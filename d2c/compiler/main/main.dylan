@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.19 1999/04/20 04:19:31 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.20 1999/04/20 16:49:33 emk Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -33,63 +33,63 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 // <unit-state> (but it doesn't.)
 //
 define class <main-unit-state> (<object>)
-    slot unit-lid-file :: <byte-string>, required-init-keyword: lid-file:;
-    slot unit-command-line-features :: <list>, 
-         required-init-keyword: command-line-features:;
-    slot unit-target :: <platform>,
-         required-init-keyword: target:;
-    slot unit-log-dependencies :: <boolean>, 
-         required-init-keyword: log-dependencies:;
-    slot unit-no-binaries :: <boolean>,
-         required-init-keyword: no-binaries:;
-    slot unit-link-static :: <boolean>,
-         required-init-keyword: link-static:;
-
-    // A facility for hacking around C compiler bugs by using a different
-    // command for particular C compilations.  cc-override is a format string
-    // used instead of the normal platform compile-c-command.  It is used
-    // whenever compiling one of the files in the override-files list.
-    slot unit-cc-override :: false-or(<string>),
-         required-init-keyword: cc-override:;
-    slot unit-override-files :: <list>,
-         required-init-keyword: override-files:;
-
-    slot unit-header :: <header>;
-    slot unit-files :: <stretchy-vector>;
-    slot unit-lib-name :: <byte-string>;
-    slot unit-lib :: <library>;
-    // unit-prefix already a <unit-state> accessor
-    slot unit-mprefix :: <byte-string>;
-    slot unit-tlf-vectors :: <stretchy-vector> = make(<stretchy-vector>);
-    slot unit-init-functions :: <stretchy-vector> = make(<stretchy-vector>);
-    slot unit-cback-unit :: <unit-state>;
-    slot unit-other-cback-units :: <simple-object-vector>;
-
-    // Simplistic flags to control debugging (and someday, optimization).
-    // We only have one of these right now.
-    slot unit-debug? :: <boolean>, init-keyword: debug?:, init-value: #f;
-
-    slot unit-cc-flags;
-    // Makefile generation streams, etc.
-    slot unit-all-generated-files :: <list>, init-value: #();
-    slot unit-makefile-name :: <byte-string>;
-    slot unit-temp-makefile-name :: <byte-string>;
-    slot unit-makefile :: <file-stream>;
-    slot unit-objects-stream :: <buffered-byte-string-output-stream>;
-    slot unit-clean-stream :: <buffered-byte-string-output-stream>;
-    slot unit-real-clean-stream :: <buffered-byte-string-output-stream>;
-
-    slot unit-entry-function :: false-or(<ct-function>), init-value: #f;
-    slot unit-unit-info :: <unit-info>;
-
-    // All names of the .o files we generated in a string.
-    slot unit-objects :: <byte-string>;
-
-    // The name of the .ar file we generated.
-    slot unit-ar-name :: <byte-string>;
-
-    // The name of the executable file we generate.
-    slot unit-executable :: false-or(<byte-string>);
+  slot unit-lid-file :: <byte-string>, required-init-keyword: lid-file:;
+  slot unit-command-line-features :: <list>, 
+    required-init-keyword: command-line-features:;
+  slot unit-target :: <platform>,
+    required-init-keyword: target:;
+  slot unit-log-dependencies :: <boolean>, 
+    required-init-keyword: log-dependencies:;
+  slot unit-no-binaries :: <boolean>,
+    required-init-keyword: no-binaries:;
+  slot unit-link-static :: <boolean>,
+    required-init-keyword: link-static:;
+  
+  // A facility for hacking around C compiler bugs by using a different
+  // command for particular C compilations.  cc-override is a format string
+  // used instead of the normal platform compile-c-command.  It is used
+  // whenever compiling one of the files in the override-files list.
+  slot unit-cc-override :: false-or(<string>),
+    required-init-keyword: cc-override:;
+  slot unit-override-files :: <list>,
+    required-init-keyword: override-files:;
+  
+  slot unit-header :: <header>;
+  slot unit-files :: <stretchy-vector>;
+  slot unit-lib-name :: <byte-string>;
+  slot unit-lib :: <library>;
+  // unit-prefix already a <unit-state> accessor
+  slot unit-mprefix :: <byte-string>;
+  slot unit-tlf-vectors :: <stretchy-vector> = make(<stretchy-vector>);
+  slot unit-init-functions :: <stretchy-vector> = make(<stretchy-vector>);
+  slot unit-cback-unit :: <unit-state>;
+  slot unit-other-cback-units :: <simple-object-vector>;
+  
+  // Simplistic flags to control debugging (and someday, optimization).
+  // We only have one of these right now.
+  slot unit-debug? :: <boolean>, init-keyword: debug?:, init-value: #f;
+  
+  slot unit-cc-flags;
+  // Makefile generation streams, etc.
+  slot unit-all-generated-files :: <list>, init-value: #();
+  slot unit-makefile-name :: <byte-string>;
+  slot unit-temp-makefile-name :: <byte-string>;
+  slot unit-makefile :: <file-stream>;
+  slot unit-objects-stream :: <buffered-byte-string-output-stream>;
+  slot unit-clean-stream :: <buffered-byte-string-output-stream>;
+  slot unit-real-clean-stream :: <buffered-byte-string-output-stream>;
+  
+  slot unit-entry-function :: false-or(<ct-function>), init-value: #f;
+  slot unit-unit-info :: <unit-info>;
+  
+  // All names of the .o files we generated in a string.
+  slot unit-objects :: <byte-string>;
+  
+  // The name of the .ar file we generated.
+  slot unit-ar-name :: <byte-string>;
+  
+  // The name of the executable file we generate.
+  slot unit-executable :: false-or(<byte-string>);
 end class <main-unit-state>;
 
 
@@ -98,16 +98,15 @@ end class <main-unit-state>;
 // Information which needs to go into the library dump file.
 //
 define class <unit-info> (<object>)
-
   slot unit-name :: <byte-string>,
     required-init-keyword: #"unit-name";
-
+  
   slot undumped-objects :: <simple-object-vector>,
     required-init-keyword: #"undumped-objects";
-
+  
   slot extra-labels :: <simple-object-vector>,
     required-init-keyword: #"extra-labels";
-
+  
   slot unit-linker-options :: false-or(<byte-string>),
     init-value: #f, init-keyword: #"linker-options";
 end class <unit-info>;
