@@ -23,12 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/version.c,v 1.3 1994/10/05 20:56:14 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/version.c,v 1.4 1996/05/26 22:20:02 nkramer Exp $
 *
 * This file contains the version.
 *
 \**********************************************************************/
 
+#include "mindycomp.h"
 #include "version.h"
 
 char Version[] = VERSION;
