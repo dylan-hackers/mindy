@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.24 1995/04/30 04:30:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.25 1995/04/30 13:40:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -798,12 +798,18 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 end;
 
 define method emit-assignment
-    (results :: false-or(<definition-site-variable>),
-     call :: union(<unknown-call>, <error-call>),
+    (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
      output-info :: <output-info>)
     => ();
+  emit-call(results, call, call.depends-on.source-exp, output-info);
+end;
+
+define method emit-call
+    (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
+     function :: <leaf>, output-info :: <output-info>)
+    => ();
   let setup-stream = make(<byte-string-output-stream>);
-  let func = ref-leaf($heap-rep, call.depends-on.source-exp, output-info);
+  let func = ref-leaf($heap-rep, function, output-info);
   
   let (args, sp) = cluster-names(output-info.output-info-cur-stack-depth);
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
@@ -821,6 +827,60 @@ define method emit-assignment
     else
       format(stream, "CALL(%s, %s, %d);\n", func, args, count);
     end;
+  end;
+end;
+
+define method emit-call
+    (results :: false-or(<definition-site-variable>), call :: <abstract-call>,
+     function :: <lambda>, output-info :: <output-info>)
+    => ();
+  let func-info = get-info-for(function, output-info);
+  let stream = make(<byte-string-output-stream>);
+  let name = func-info.lambda-info-main-entry-name;
+  let (sp, new-sp) = cluster-names(output-info.output-info-cur-stack-depth);
+  format(stream, "%s(%s", name, sp);
+  for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
+       param = function.prologue.dependents.dependent.defines
+	 then param.definer-next,
+       while: arg-dep & param)
+    let param-rep = variable-representation(param, output-info);
+    write(", ", stream);
+    write(ref-leaf(param-rep, arg-dep.source-exp, output-info), stream);
+  finally
+    if (arg-dep | param)
+      error("Different number of arguments and parameters in a known call?");
+    end;
+  end;
+  write(')', stream);
+  let call = string-output-stream-string(stream);
+  spew-pending-defines(output-info);
+  if (~function.depends-on | ~results)
+    format(output-info.output-info-guts-stream, "%s;\n", call);
+    deliver-results(results, #[], output-info);
+  elseif (function.depends-on.dependent-next)
+    let temp = new-local(output-info);
+    format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
+	   name, temp);
+    format(output-info.output-info-guts-stream, "%s = %s;\n", temp, call);
+    let result-exprs = make(<stretchy-vector>);
+    for (dep = function.depends-on then dep.dependent-next,
+	 index from 0,
+	 while: dep)
+      let rep = variable-representation(dep.source-exp, output-info);
+      add!(result-exprs,
+	   pair(format-to-string("%s.R%d", temp, index),
+		rep));
+    end;
+    deliver-results(results, result-exprs, output-info);
+  elseif (instance?(function.depends-on.source-exp.var-info,
+		      <values-cluster-info>))
+    format(output-info.output-info-guts-stream, "%s = %s;\n", new-sp, call);
+    deliver-cluster(results, #f, sp, new-sp, function.result-type,
+		    output-info);
+  else
+    let rep = variable-representation(function.depends-on.source-exp,
+				      output-info);
+    deliver-results(results, vector(pair(call, rep)), output-info);
   end;
 end;
 
@@ -843,59 +903,6 @@ define method emit-assignment
     format(output-info.output-info-guts-stream,
 	   "CALL(%s, %s, %s - %s);\n",
 	   func, bottom-name, top-name, bottom-name);
-  end;
-end;
-
-define method emit-assignment
-    (results :: false-or(<definition-site-variable>),
-     expr :: union(<known-call>, <local-call>), output-info :: <output-info>)
-    => ();
-  let func = expr.depends-on.source-exp;
-  let func-info = get-info-for(func, output-info);
-  let stream = make(<byte-string-output-stream>);
-  let name = func-info.lambda-info-main-entry-name;
-  let (sp, new-sp) = cluster-names(output-info.output-info-cur-stack-depth);
-  format(stream, "%s(%s", name, sp);
-  for (arg-dep = expr.depends-on.dependent-next then arg-dep.dependent-next,
-       param = func.prologue.dependents.dependent.defines
-	 then param.definer-next,
-       while: arg-dep & param)
-    let param-rep = variable-representation(param, output-info);
-    write(", ", stream);
-    write(ref-leaf(param-rep, arg-dep.source-exp, output-info), stream);
-  finally
-    if (arg-dep | param)
-      error("Different number of arguments and parameters in a known call?");
-    end;
-  end;
-  write(')', stream);
-  let call = string-output-stream-string(stream);
-  spew-pending-defines(output-info);
-  if (~func.depends-on | ~results)
-    format(output-info.output-info-guts-stream, "%s;\n", call);
-    deliver-results(results, #[], output-info);
-  elseif (func.depends-on.dependent-next)
-    let temp = new-local(output-info);
-    format(output-info.output-info-vars-stream, "struct %s_results %s;\n",
-	   name, temp);
-    format(output-info.output-info-guts-stream, "%s = %s;\n", temp, call);
-    let result-exprs = make(<stretchy-vector>);
-    for (dep = func.depends-on then dep.dependent-next,
-	 index from 0,
-	 while: dep)
-      let rep = variable-representation(dep.source-exp, output-info);
-      add!(result-exprs,
-	   pair(format-to-string("%s.R%d", temp, index),
-		rep));
-    end;
-    deliver-results(results, result-exprs, output-info);
-  elseif (instance?(func.depends-on.source-exp.var-info,
-		      <values-cluster-info>))
-    format(output-info.output-info-guts-stream, "%s = %s;\n", new-sp, call);
-    deliver-cluster(results, #f, sp, new-sp, func.result-type, output-info);
-  else
-    let rep = variable-representation(func.depends-on.source-exp, output-info);
-    deliver-results(results, vector(pair(call, rep)), output-info);
   end;
 end;
 
