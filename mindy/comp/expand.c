@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.21 1994/11/28 07:16:02 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.22 1994/12/17 01:23:22 wlott Exp $
 *
 * This file does source-to-source expansions.
 *
@@ -2433,10 +2433,13 @@ static boolean srctran_call_assignment(struct expr **ptr)
     struct argument *value = args->next;
     struct body *body;
     struct symbol *temp;
+    struct id *var;
 
     if (comb->func->kind != expr_VARREF)
 	return FALSE;
-    change_to_setter(((struct varref_expr *)comb->func)->var);
+    var = ((struct varref_expr *)comb->func)->var;
+    change_to_setter(var);
+    comb->info = lookup_function_info(var, FALSE);
 
     temp = gensym();
     body = make_body();
