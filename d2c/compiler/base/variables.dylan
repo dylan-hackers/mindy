@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.1 1994/12/12 13:01:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.2 1995/03/04 21:51:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -819,13 +819,33 @@ end;
 
 // Shorthands
 
+// dylan-var -- exported.
+//
+// Return the variable for name in the dylan module.
+// 
 define method dylan-var (name :: <symbol>, #key create: create?)
     => res :: union(<variable>, <false>);
   find-variable($Dylan-Module, name, create: create?);
 end;
 
+// dylan-defn -- exported.
+//
+// Return the definition for name in the dylan module.
+// 
 define method dylan-defn (name :: <symbol>)
     => res :: union(<definition>, <false>);
   let var = dylan-var(name);
   var & var.variable-definition;
 end;
+
+// dylan-value -- exported.
+//
+// Returns the compile-time value for the given name in the dylan module,
+// or #f if it isn't defined.
+// 
+define method dylan-value (name :: <symbol>)
+    => res :: union(<false>, <ct-value>);
+  let defn = dylan-defn(name);
+  defn & defn.ct-value;
+end;
+
