@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.15 1996/06/05 00:52:51 bfw Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.16 1996/06/05 01:03:59 bfw Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -145,6 +145,15 @@ static obj_t dylan_memcpy(obj_t dst, obj_t dst_off, obj_t src, obj_t src_off,
     return dst;
 }
 
+static obj_t dylan_unicode_memcpy(obj_t dst, obj_t dst_off, obj_t src,
+				  obj_t src_off, obj_t count)
+{
+    memmove(buffer_data(dst) + 2*fixnum_value(dst_off),
+	    buffer_data(src) + 2*fixnum_value(src_off),
+	    2*fixnum_value(count));
+    return dst;
+}
+
 
 /* GC stuff. */
 
@@ -221,6 +230,6 @@ void init_buffer_functions(void)
 		  listn(5, obj_UnicodeStringClass, obj_FixnumClass,
 			obj_UnicodeStringClass,
 			obj_FixnumClass, obj_FixnumClass),
-		  FALSE, obj_False, FALSE, u, dylan_memcpy);
+		  FALSE, obj_False, FALSE, u, dylan_unicode_memcpy);
 
 }
