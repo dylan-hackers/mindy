@@ -1,6 +1,6 @@
 module: Table-Extensions
 author: Nick Kramer (nkramer@cs.cmu.edu), David Watson (dwatson@cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/table-ext/table-ext.dylan,v 1.1 1996/07/12 16:04:31 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/table-ext/table-ext.dylan,v 1.2 1996/10/02 10:55:26 nkramer Exp $
 
 //======================================================================
 //
@@ -27,6 +27,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/table-ext/table-ext.dyl
 //
 //======================================================================
 
+
 // A value table whose keys are strings.
 //
 define class <string-table> (<value-table>)
@@ -37,6 +38,18 @@ define method table-protocol (ht :: <string-table>)
   values(\=, string-hash);
 end method table-protocol;
 
+
+// A value table whose keys are strings, compared without regard to case.
+//
+define class <case-insensitive-string-table> (<value-table>)
+end class <case-insensitive-string-table>;
+
+define method table-protocol (ht :: <case-insensitive-string-table>)
+ => (key-test :: <function>, key-hash :: <function>);
+  values(case-insensitive-equal, case-insensitive-string-hash);
+end method table-protocol;
+
+
 // This function hashes each object in the #rest arguments using
 // elt-hash-function, merging the resulting hash codes in order.
 //
@@ -52,23 +65,6 @@ define function values-hash (elt-hash-function :: <function>, #rest args)
   end for;
   values(current-id, current-state);
 end function values-hash;
-
-// This method implements remove-all-keys! by repeated calls to remove-key!
-//
-define method remove-all-keys! (coll :: <mutable-explicit-key-collection>)
- => (coll :: <mutable-explicit-key-collection>);
-#if (~mindy)
-  let (state, limit, next, done?, cur-key, cur-elem)
-    = forward-iteration-protocol(coll);
-  for (st = state then next(coll, st), until: done?(coll, st, limit))
-    let key = cur-key(coll, st);
-#else
-  for (elt keyed-by key in coll)
-#endif
-    remove-key!(coll, key);
-  end for;
-  coll;
-end method remove-all-keys!;
 
 // This function produces hash codes for strings using the equality test
 // case-insensitive-equal.
@@ -119,3 +115,21 @@ define method case-insensitive-equal (s1 :: <string>, s2 :: <string>)
     end block;
   end if;
 end method case-insensitive-equal;
+
+
+// This method implements remove-all-keys! by repeated calls to remove-key!
+//
+define method remove-all-keys! (coll :: <mutable-explicit-key-collection>)
+ => (coll :: <mutable-explicit-key-collection>);
+#if (~mindy)
+  let (state, limit, next, done?, cur-key, cur-elem)
+    = forward-iteration-protocol(coll);
+  for (st = state then next(coll, st), until: done?(coll, st, limit))
+    let key = cur-key(coll, st);
+#else
+  for (elt keyed-by key in coll)
+#endif
+    remove-key!(coll, key);
+  end for;
+  coll;
+end method remove-all-keys!;
