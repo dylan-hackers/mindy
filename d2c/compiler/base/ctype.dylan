@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.20 1995/09/28 19:39:27 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.21 1995/10/02 01:44:27 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -231,43 +231,37 @@ define variable csubtype-memo = make-memo2-table();
 define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
        => (result :: <boolean>, precise :: <boolean>);
 
-  if (type1 == type2)
-    values(#t, #t);
-  else
-    let (memo-val, memo-win) = memo2-lookup(type1, type2, csubtype-memo);
-    if (memo-val == #"miss")
-      let (val, win) = 
-	case
-	  // Makes unknown types be subtypes of themselves, & eliminates the
-	  // case of equal types from later consideration.  Also speeds up a
-	  // common case...
-
-	  // the only thing an unknown type is surely a subtype of is <object>
-	  instance?(type1, <unknown-ctype>) =>
-	    if (type2 == object-ctype()) values(#t,#t) else values(#f, #f) end;
-
-	  // nothing is a definite subtype of an unknown type (except itself.)
-	  instance?(type2, <unknown-ctype>) => values(#f, #f);
-
-	  // Every member of type1 must be a subtype of some member of type2.
-	  otherwise =>
-	    values(every?(method (t1)
-			    any?(method (t2)
-				   t1 == t2 | csubtype-dispatch(t1, t2);
-				 end,
-				 type2.members)
-			  end method,
-			  type1.members),
-		   #t);
-	end case;
+  case
+    // Makes unknown types be subtypes of themselves, & eliminates the case of
+    // equal types from later consideration.  Also speeds up a common case...
+    (type1 == type2) => values(#t, #t);
+    
+    // the only thing an unknown type is surely a subtype of is <object>
+    instance?(type1, <unknown-ctype>) =>
+      if (type2 == object-ctype()) values(#t,#t) else values(#f, #f) end;
       
+    // nothing is a definite subtype of an unknown type (except itself.)
+    instance?(type2, <unknown-ctype>) => values(#f, #f);
+      
+    otherwise =>
+      let (memo-val, memo-win) = memo2-lookup(type1, type2, csubtype-memo);
+      if (memo-val == #"miss")
+	let val =
+	  case
+	    instance?(type1, <union-ctype>) =>
+	      every?(method(t1) csubtype?(t1, type2) end, type1.members);
+	    instance?(type2, <union-ctype>) =>
+	      any?(method(t2) csubtype?(type1, t2) end, type2.members);
+	    otherwise =>
+	      csubtype-dispatch(type1, type2);
+	  end case;
 
-      memo2-enter(type1, type2, val, win, csubtype-memo);
-      values(val, win);
-    else
-      values(memo-val, memo-win);
-    end;
-  end if;
+	memo2-enter(type1, type2, val, win, csubtype-memo);
+	values(val, #t);
+      else
+	values(memo-val, memo-win);
+      end;
+  end case;
 end method;
 
 
