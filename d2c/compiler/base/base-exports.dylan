@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.12 1996/02/06 15:39:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.13 1996/02/08 02:24:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,10 +14,6 @@ define library compiler-base
 #if (mindy)
   use Debugger-Format;
   use String-extensions, export: all;
-#end
-  
-#if (mindy)
-  export autodump;
 #end
   
   export c-representation;
@@ -506,7 +502,8 @@ define module parse-tree
     <literal-pattern>, pattern-literal, <otherwise-pattern>, <arrow-pattern>,
     <details-pattern>, pattern-sub-pattern,
     <pattern-variable>, patvar-name, patvar-name-setter,
-    patvar-constraint, patvar-wildcard?, patvar-wildcard?-setter,
+    patvar-constraint, patvar-constraint-setter,
+    patvar-wildcard?, patvar-wildcard?-setter,
     patvar-at-end?, patvar-at-end?-setter,
     <property-list-pattern>, plistpat-rest, plistpat-rest-setter,
     plistpat-keys, plistpat-all-keys?,
@@ -824,25 +821,4 @@ define module signature
   use representation;
   use od-format;
 end;
-
-
-#if (mindy)
-// Part of the compiler library
-//
-define module autodump
-  use common;
-  use introspection;
-  use regular-expressions;
-  use streams;
-  use string-conversions;
-  use standard-io;
-
-  use parse-tree;
-  use tokens;
-  use variables;
-
-  export 
-    autodump;
-end module autodump;
-#end
 
