@@ -1,4 +1,4 @@
-Module: c-type-repositories
+Module: c-types
 
 //=========================================================================
 //  C Identifier Tables

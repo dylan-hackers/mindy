@@ -100,6 +100,14 @@ define module c-types
     $c-float-type,
     $c-double-type,
     $c-long-double-type;
+
+  // From c-type-repository.dylan
+  export
+    <c-identifier-table>,
+    <c-type-repository>,
+    find-canonical-c-type,
+    find-canonical-pointer-to-c-type,
+    do-c-type-repository-entries;
 end module;
 
 define module c-declarations
@@ -132,20 +140,7 @@ define module c-declarations
     format-c-declaration;
 end;
 
-define module c-type-repositories
-  use outside-dependencies;
-  use c-types;
-
-  export
-    <c-identifier-table>,
-    <c-type-repository>,
-    find-canonical-c-type,
-    find-canonical-pointer-to-c-type,
-    do-c-type-repository-entries;
-end;
-
 define module ansi-c
   use c-types, export: all;
   use c-declarations, export: all;
-  use c-type-repositories, export: all;
 end;
