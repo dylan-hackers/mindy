@@ -92,7 +92,7 @@ define module html
   
   // Additional collection classes and operations from "collection-extensions"
   use subseq;
-  use solist;
+  use self-organizing-list;
 
   // From string-extensions:
   use substring-search;
@@ -126,7 +126,7 @@ define variable counter :: <integer> = 0;
 // they are completely interchangeable, you can try switching the definition
 // here to swap in the "standard" table support instead.
 
-define constant <tag-table> = <so-list>;
+define constant <tag-table> = <self-organizing-list>;
 // define constant <tag-table> = <object-table>;
 
 
