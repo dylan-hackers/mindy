@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.59 1996/02/19 20:24:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.60 1996/02/21 17:03:15 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -200,22 +200,27 @@ define method process-top-level-form (form :: <define-generic-parse>) => ();
     = extract-modifiers("define generic", name, form.define-modifiers,
 			#"open", #"sealed", #"movable", #"flushable");
   if (open? & sealed?)
-    error("define generic %s can't be both open and sealed", name);
+    compiler-error-location(
+      form,
+      "define generic %s can't be both open and sealed",
+      name);
   end;
   extract-properties("define generic", form.defgen-plist);
   let defn = make(<generic-definition>,
 		  name: make(<basic-name>,
 			     symbol: name,
 			     module: *Current-Module*),
+		  source-location: form.source-location,
 		  library: *Current-Library*,
 		  sealed: ~open?,
 		  movable: movable?,
 		  flushable: flushable? | movable?);
   note-variable-definition(defn);
   let tlf = make(<define-generic-tlf>,
-	    defn: defn,
-	    param-list: form.defgen-param-list,
-	    returns: form.defgen-returns);
+	         defn: defn,
+		 source-location: defn.source-location,
+		 param-list: form.defgen-param-list,
+		 returns: form.defgen-returns);
   defn.function-defn-signature := curry(compute-define-generic-signature, tlf);
   add!(*Top-Level-Forms*, tlf);
 end;
@@ -245,6 +250,7 @@ define method process-top-level-form (form :: <seal-generic-parse>) => ();
 	    name: make(<basic-name>,
 		       symbol: form.sealgen-name.token-symbol,
 		       module: *Current-Module*),
+	    source-location: form.source-location,
 	    library: *Current-Library*,
 	    type-exprs: form.sealgen-type-exprs));
 end;
@@ -263,6 +269,7 @@ define method process-top-level-form (form :: <define-method-parse>) => ();
 			    params.paramlist-keys & #t);
   let tlf = make(<define-method-tlf>,
 		 base-name: base-name, library: *Current-Library*,
+		 source-location: form.source-location,
 		 sealed: sealed?, inline: inline?, movable: movable?,
 		 flushable: flushable? | movable?,
 		 parse: parse);
@@ -308,17 +315,21 @@ define method finalize-top-level-form (tlf :: <seal-generic-tlf>) => ();
   let var = find-variable(tlf.seal-generic-name);
   let defn = var & var.variable-definition;
   unless (instance?(defn, <generic-definition>))
-    compiler-error("%s doesn't name a generic function, so can't be sealed.",
-		   tlf.seal-generic-name);
+    compiler-error-location(
+      tlf,
+      "%s doesn't name a generic function, so can't be sealed.",
+      tlf.seal-generic-name);
   end;
   tlf.seal-generic-defn := defn;
   local method eval-type (type-expr :: <expression>)
 	    => type :: <ctype>;
 	  let type = ct-eval(type-expr, #f) | make(<unknown-ctype>);
 	  unless (instance?(type, <ctype>))
-	    compiler-error
-	      ("Parameter in seal generic of %s isn't a type:\n  %s",
-	       tlf.seal-generic-name, type);
+	    compiler-error-location(
+	      tlf,
+	      "Parameter in seal generic of %s isn't a type:\n  %s",
+	      tlf.seal-generic-name,
+	      type);
 	  end;
 	  type;
 	end method eval-type;
@@ -349,6 +360,7 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
 			tlf.method-tlf-parse.method-returns);
   let defn = make(<method-definition>,
 		  base-name: name,
+		  source-location: tlf.source-location,
 		  library: tlf.method-tlf-library,
 		  signature: signature,
 		  hairy: anything-non-constant?,
@@ -366,7 +378,7 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
     if (gf)
       add-seal(gf, tlf.method-tlf-library, signature.specializers, tlf);
     else
-      error("%s doesn't name a generic function", name);
+      compiler-error-location(tlf, "%s doesn't name a generic function", name);
     end;
   end;
 end;
@@ -475,15 +487,20 @@ define method check-1-arg-congruent
   let (val, val-p) = values-subtype?(mspec, gspec);
   case
     ~val-p =>
-      compiler-warning
-	("Can't tell if %s %s is a subtype of %s, so can't tell if method %s is "
-	   "congruent to GF %s.",
+      compiler-warning-location
+	(meth,
+	 "Can't tell if %s %s is a subtype of %s,\n"
+	 "so can't tell if method:\n"
+	 "  %s\n"
+	 "is congruent to GF\n"
+	 "  %s",
 	 wot, mspec, gspec, meth.defn-name, gf.defn-name);
       #f;
 
     ~val =>
-      compiler-warning
-	("Method \n  %s \n"
+      compiler-warning-location
+	(meth,
+	 "Method \n  %s \n"
 	 "isn't congruent to GF\n   %s \n"
 	 "because method %s type %s isn't a subtype of GF type %s.",
 	 meth.defn-name, gf.defn-name, wot, mspec, gspec);
@@ -507,8 +524,9 @@ define method check-congruence
 
   let mspecs = msig.specializers;
   unless (size(mspecs) = size(gspecs))
-    compiler-warning
-      ("Method %s has different number of required arguments than GF %s.",
+    compiler-warning-location
+      (meth,
+       "Method %s has different number of required arguments than GF %s.",
        meth.defn-name, gf.defn-name);
     win := #f;
   end;
@@ -519,8 +537,9 @@ define method check-congruence
   case
     gsig.key-infos =>
       if (~msig.key-infos)
-	compiler-warning
-	  ("GF %s accepts keywords but method %s doesn't.",
+	compiler-warning-location
+	  (gf,
+	   "GF %s accepts keywords but method %s doesn't.",
 	   gf.defn-name, meth.defn-name);
 	win := #f;
       elseif (~msig.all-keys?)
@@ -537,9 +556,9 @@ define method check-congruence
 	      end;
 	    end for;
 	    
-	    compiler-warning
-	      ("GF %s mandatory keyword arg %= is not accepted by "
-		 "method %s.",
+	    compiler-warning-location
+	      (gf,
+	       "GF %s mandatory keyword arg %= is not accepted by method %s.",
 	       gf.defn-name, gkey-name, meth.defn-name);
 	    win := #f;
 	  end block;
@@ -547,20 +566,23 @@ define method check-congruence
       end if;
 
     msig.key-infos =>
-      compiler-warning
-	("Method %s accepts keywords but GF %s doesn't.",
+      compiler-warning-location
+	(meth,
+	 "Method %s accepts keywords but GF %s doesn't.",
 	 meth.defn-name, gf.defn-name);
       win := #f;
 
     gsig.rest-type & ~msig.rest-type =>
-      compiler-warning
-	("GF %s accepts variable arguments, but method %s doesn't.",
+      compiler-warning-location
+	(meth,
+	 "GF %s accepts variable arguments, but method %s doesn't.",
 	 gf.defn-name, meth.defn-name);
       win := #f;
 
     ~gsig.rest-type & msig.rest-type =>
-      compiler-warning
-	("Method %s accepts variable arguments, but GF %s doesn't.",
+      compiler-warning-location
+	(meth,
+	 "Method %s accepts variable arguments, but GF %s doesn't.",
 	 meth.defn-name, gf.defn-name);
       win := #f;
   end;
@@ -575,8 +597,9 @@ define method ct-add-method
     => ();
   if (gf.generic-defn-sealed?
 	& gf.defn-library ~== meth.defn-library)
-    compiler-warning
-      ("In %s: library %s can't define methods on sealed generic %s.",
+    compiler-warning-location
+      (meth,
+       "In %s: library %s can't define methods on sealed generic %s.",
        tlf | "something", meth.defn-library.library-name, gf.defn-name);
     meth.function-defn-hairy? := #t;
   else
@@ -585,8 +608,9 @@ define method ct-add-method
     block (return)
       for (old-meth in old-methods)
 	if (meth-specs = old-meth.function-defn-signature.specializers)
-	  compiler-warning
-	    ("%s is multiply defined -- ignoring extra definition.",
+	  compiler-warning-location
+	    (meth,
+	     "%s is multiply defined -- ignoring extra definition.",
 	     meth.defn-name);
 	  return();
 	end;
@@ -752,9 +776,10 @@ define method convert-top-level-form
 	    ref-dylan-defn(builder, policy, source, #"add-method"), #f,
 	    list(gf-leaf, leaf)));
     else
-      compiler-error("In %s:\n  no definition for %=, and can't implicitly "
-		       "define it.",
-		     tlf, gf-name);
+      compiler-error-location
+        (tlf,
+	 "In %s:\n  no definition for %=, and can't implicitly define it.",
+	 tlf, gf-name);
     end;
   end;
 end;
@@ -1255,8 +1280,9 @@ define method add-seal
   block (return)
     let specs = defn.function-defn-signature.specializers;
     if (specs.size ~== types.size)
-      compiler-warning("Wrong number of types in seal, wanted %d but got %d",
-		       specs.size, types.size);
+      compiler-warning-location
+        (tlf, "Wrong number of types in seal, wanted %d but got %d",
+	 specs.size, types.size);
       return();
     end if;
     let bogus? = #f;
@@ -1440,9 +1466,11 @@ define method sort-methods
 	      end;
 	      done-with-method();
 	    #"unknown" =>
-	      compiler-warning("Can't statically determine the ordering of %s "
-				 "and %s and both are applicable.",
-			       meth.defn-name, other.defn-name);
+	      compiler-warning-location
+	        (meth,
+		 "Can't statically determine the ordering of %s "
+		 "and %s and both are applicable.",
+		 meth.defn-name, other.defn-name);
 	      return(#f, #f);
 	  end;
 	finally
@@ -1466,9 +1494,11 @@ define method sort-methods
 	      #"ambiguous" =>
 		ambiguous-with := pair(remaining.head, ambiguous-with);
 	      #"unknown" =>
-		compiler-warning("Can't statically determine the ordering of "
-				   "%s and %s and both are applicable.",
-				 meth.defn-name, remaining.head.defn-name);
+		compiler-warning-location
+		  (meth,
+		   "Can't statically determine the ordering of "
+		   "%s and %s and both are applicable.",
+		   meth.defn-name, remaining.head.defn-name);
 		return(#f, #f);
 	    end;
 	  end;
