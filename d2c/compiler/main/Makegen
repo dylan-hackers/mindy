@@ -31,6 +31,7 @@ MINDY = mindy
 
 OBJS = \
 	main-exports.dbc \
+	file-system.dbc \
 	main.dbc
 
 LIBS = \
