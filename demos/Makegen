@@ -4,7 +4,7 @@ $D2CFLAGS = '-L../runtime/c-code -L../runtime/gc -L../runtime/dylan -L../runtime
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
 do emit_library_rule(
-    'craps', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+    'craps', '$(BUILDROOT)/force.timestamp', '', 'compile',
 );
 do emit_library_rule(
     'test', '$(BUILDROOT)/force.timestamp', '', 'compile'
