@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.16 1995/07/11 12:40:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.17 1995/12/10 02:25:53 wlott Exp $
 *
 * This file is the lexical analizer.
 *
@@ -47,6 +47,8 @@ static int make_header_key(void);
 static int make_header_val(void);
 static int make_header_end(void);
   
+#define YY_DECL int internal_yylex(void)
+
 %}
   
 %x ini key val etc
@@ -192,6 +194,11 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 <etc>\\~			is(SYMBOL);
 <etc>{N}:			is(KEYWORD);
 <etc>#{STR}			is(SYMBOL_LITERAL);
+
+<etc>"#if"			is(FEATURE_IF);
+<etc>"#elseif"			is(FEATURE_ELSE_IF);
+<etc>"#else"			is(FEATURE_ELSE);
+<etc>"#end"			is(FEATURE_END);
 
 <ini,key,val,etc>.		is(BOGUS);
 

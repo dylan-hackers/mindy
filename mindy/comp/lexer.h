@@ -23,12 +23,12 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.h,v 1.5 1995/09/14 19:32:26 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.h,v 1.6 1995/12/10 02:25:53 wlott Exp $
 *
 \**********************************************************************/
 
 
-extern int yylex(void);
+extern int internal_yylex(void);
 extern FILE *yyin;
 
 struct token {

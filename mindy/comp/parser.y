@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.17 1995/07/11 12:41:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.18 1995/12/10 02:25:53 wlott Exp $
 *
 * This file is the grammar.
 *
@@ -36,6 +36,7 @@
 #include "header.h"
 #include "parser.h"
 #include "lexer.h"
+#include "feature.h"
 #include "literal.h"
 #include "src.h"
 #include "sym.h"
@@ -205,7 +206,12 @@ static void pop_yacc_recoveries(int count);
 %token <token> RENAME_KEYWORD
 %token <token> UNTIL_KEYWORD
 %token <token> WHILE_KEYWORD
-%type  <token> keyword keyword_opt
+
+/* Used by the lexer for conditional compilation. */
+%token <token> FEATURE_IF
+%token <token> FEATURE_ELSE_IF
+%token <token> FEATURE_ELSE
+%token <token> FEATURE_END
 
 %type <nothing> dylan_file dylan_headers header_list
 %type <nothing> dylan_program block_opt case_opt if_opt for_opt select_opt
@@ -272,6 +278,7 @@ static void pop_yacc_recoveries(int count);
 %type <renamings> rename_specs
 %type <import_option> imports imports_opt
 %type <variable_names> variable_name_set variable_names
+%type <token> keyword keyword_opt
 
 %%
 

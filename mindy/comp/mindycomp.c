@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.13 1995/09/12 00:10:49 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.14 1995/12/10 02:25:53 wlott Exp $
 *
 * This file is the main driver.
 *
@@ -44,6 +44,8 @@
 #include "info.h"
 #include "compile.h"
 #include "dump.h"
+#include "feature.h"
+#include "lose.h"
 
 struct body *Program = NULL;
 
@@ -125,7 +127,7 @@ void warn(va_alist) va_dcl
 static void usage(void)
 {
     fprintf(stderr, "usage: mindycomp [-d[p][e]] [-l library-name] "
-	    "[-o object-name] source-name\n");
+	    "[-o object-name] [-Dfeature] [-Ufeature] source-name\n");
     exit(1);
 }
 
@@ -195,6 +197,7 @@ void main(int argc, char *argv[])
     add_header_handler(NULL, end_of_headers);
 
     init_sym_table();
+    init_feature();
     init_info();
     init_expand();
     init_compile();
@@ -260,6 +263,30 @@ void main(int argc, char *argv[])
 
 	      case 'q':
 		GiveWarnings = FALSE;
+		break;
+
+	      case 'D':
+		if (arg[2] != '\0')
+		    add_feature(symbol(arg + 2));
+		else if (*++argv == NULL) {
+		    fprintf(stderr,
+			    "-D must be followed by the feature to define.\n");
+		    usage();
+		}
+		else
+		    add_feature(symbol(*argv));
+		break;
+
+	      case 'U':
+		if (arg[2] != '\0')
+		    remove_feature(symbol(arg + 2));
+		else if (*++argv == NULL) {
+		    fprintf(stderr, "-U must be followed by the feature "
+			    "to undefine.\n");
+		    usage();
+		}
+		else
+		    remove_feature(symbol(*argv));
 		break;
 
 	      default:
