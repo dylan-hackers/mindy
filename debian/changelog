@@ -1,3 +1,36 @@
+gwydion-dylan (2.3.6pre1cvs09102001-2) unstable; urgency=low
+
+  * Add build dependency for libgtk1.2-dev.  (Closes:Bug#107775)
+  * Add build dependency for automake. (Closes:Bug#112107)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Wed, 12 Sep 2001 15:11:37 -0700
+
+gwydion-dylan (2.3.6pre1cvs09102001-1) unstable; urgency=low
+
+  * Current CVS.
+  * DUIM/GTK+ stuff should now work.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Mon, 10 Sep 2001 22:31:31 -0700
+
+gwydion-dylan (2.3.6pre1cvs08012001-2) unstable; urgency=low
+
+  * Another update, this time with semi-working gtk bindings.
+  * Updated to newer Boehm GC, which should build cleanly on
+    more architectures.
+  * Added build dependency on libgtk1.2-dev.  (Closes:Bug#107775)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Fri, 24 Aug 2001 22:54:46 -0700
+
+gwydion-dylan (2.3.6pre1cvs08012001-1) unstable; urgency=low
+
+  * New release.  Incorporates updates to the garbage collector,
+    fixes for c-parser, updates to the ffi interface, and the
+    underpinings for a soon-to-come DUIM (graphical toolkit
+    based on GTK).
+  * Updated build-depends and run aclocal.  (Closes:Bug#107272)
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Wed,  1 Aug 2001 21:38:46 -0700
+
 gwydion-dylan (2.3.6pre1cvs07242001-1) unstable; urgency=low
 
   * New release, with lots of new features and some optimizations

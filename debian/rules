@@ -13,10 +13,12 @@ bootstrap-stage1-stamp:
 	# Following is needed for bootstrapping
 ifeq ("$(STYLE)", "bootstrap")
 		libtoolize --force
+		aclocal
 		autoconf
 		./configure --with-readline \
 				--prefix=/usr \
 				--enable-mindy-bootstrap \
+				--enable-duim=no \
 				--with-gnu-ld \
 				--with-site-dylan-prefix=/usr
 		libtoolize --force
@@ -37,6 +39,7 @@ ifeq ("$(STYLE)", "bootstrap")
 		    LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib:$(LD_LIBRARY_PATH); \
 		    ./configure --with-readline \
 				--prefix=/usr \
+				--enable-duim=no \
 				--with-site-dylan-prefix=/usr \
 				--with-gnu-ld \
 				--with-existing-runtime=`pwd`/debian/bootstrap/usr/lib/dylan
@@ -59,6 +62,7 @@ build-stamp: bootstrap-stage1-stamp bootstrap-stage2-stamp
 ifeq ("$(STYLE)", "normal")
 
 		dh_testdir
+		aclocal
 		autoconf
 
 		# Add here commands to compile the package.
