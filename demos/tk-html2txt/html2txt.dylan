@@ -121,8 +121,8 @@ define constant text-window
   = make(<text>, in: text-frame, relief: "sunken", font: normal-font,
 	 fill: "both", side: "right", expand: #t);
 define constant end-mark = make(<text-mark>, in: text-window, name: "end");
-define constant bold-tag = make(<text-tag>, in: text-window, 
-				font: H1-font);
+define constant bold-tag = make(<text-tag>, font: H1-font, 
+				in: text-window);
 
 // This will eliminate the text window's built-in tendency to encourage text
 // editing and entry.  It's probably best to simply consider it black magic
