@@ -9,3 +9,12 @@ $CPPFLAGS = $CPPFLAGS . ' -I$(SRCDIR) -I$(top_builddir)';
 
 do emit_library_rule('Time', '$(BUILDROOT)/force.timestamp', '', 'compile', 
 		     'compile-mindy', 'install');
+
+# Win32 has to be different at every possible opportunity
+if ($features{'compiled_for_win32'}) {
+	`sed "s/\\.o /\\.obj /" Time.lid > Time.lid.mod`;
+	die "Couldn't convert Time.lid" if $?;
+	`mv Time.lid.mod Time.lid`;
+	die "Couldn't move Time.lid back" if $?;
+}
+	
