@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.23 1995/04/14 02:57:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.24 1995/04/21 02:52:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -195,6 +195,7 @@ define module definitions
   create
     <class-definition>,
     <function-definition>, function-defn-signature, function-defn-hairy?,
+    <bindings-definition>, defn-init-value,
     <constant-definition>,
     <variable-definition>, var-defn-type-defn;
 
@@ -426,7 +427,7 @@ define module ctype
     find-direct-classes,
 
     // Shorthand constructor functions.
-    wild-ctype, object-ctype, function-ctype, empty-ctype,
+    ct-value-cclass, wild-ctype, object-ctype, function-ctype, empty-ctype,
 
     // Ctype extension generic functions.
     csubtype-dispatch, ctype-intersection-dispatch;
@@ -482,7 +483,18 @@ define module c-representation
   use classes;
 
   export
-    seed-representations;
+    seed-representations,
+
+    <c-representation>, more-general-representation, representation-depth,
+    representation-to-more-general, representation-from-more-general,
+    representation-c-type,
+
+    <general-representation>, <immediate-representation>,
+
+    <data-word-representation>, representation-class,
+    representation-data-word-member,
+
+    $general-rep, $heap-rep, $boolean-rep, *long-rep*;
 end;
 
 define module compile-time-eval
@@ -585,7 +597,7 @@ define module flow
   use source;
   use forwards, import: {<abstract-variable>}, export: all;
   export 
-    <annotatable>, info,
+    <annotatable>, info, info-setter,
 
     <region>, <linear-region>, <simple-region>, <compound-region>,
     <join-region>, <if-region>, <body-region>, <block-region-mixin>,
@@ -596,9 +608,9 @@ define module flow
     last-assign-setter, regions, regions-setter, join-region,
     join-region-setter, then-region,
     then-region-setter, else-region, else-region-setter, body, body-setter,
-    exits, exits-setter, block-of,
-    block-of-setter, all-methods,
-    all-methods-setter,
+    exits, exits-setter, block-of, block-of-setter,
+    reoptimize-queue, reoptimize-queue-setter,
+    all-methods, all-methods-setter,
 
     <expression>, <dependency>, <dependent-mixin>, <leaf>, <variable-info>,
     <definition-site-variable>, <ssa-variable>, <initial-definition>,
@@ -644,7 +656,22 @@ define module front
   use builder-interface;
   use policy;
 
-  export dump-fer, id;
+  export
+    dump-fer, id,
+    convert-to-ssa, derive-types,
+
+    <primitive>, name,
+
+    <constant>, <literal-constant>, value,
+    <definition-constant-leaf>, const-defn,
+
+    <debug-named-info>, debug-name,
+    <values-cluster-info>, <local-var-info>, <lexical-var-info>,
+    <module-var-info>, var-defn, <module-almost-constant-var-info>,
+
+    <function-literal>, <method-literal>, <lambda>, vars,
+    <hairy-method-literal>;
+    
 end;
 
 define module fer-convert
@@ -671,8 +698,8 @@ define module fer-convert
   use policy, export: all;
 
   export
-    build-general-method, fer-convert, build-hairy-method-body,
-    canonicalize-results,
+    build-general-method, fer-convert, fer-convert-body,
+    build-hairy-method-body, canonicalize-results,
     dylan-defn-leaf, make-check-type-operation, make-error-operation;
 end;
 
@@ -722,6 +749,9 @@ define module define-constants-and-variables
   use builder-interface;
   use fer-convert;
   use source;
+
+  export
+    <define-bindings-tlf>, tlf-required-defns, tlf-rest-defn;
 end;
 
 define module define-classes
@@ -755,6 +785,26 @@ define module top-level-expressions
   use builder-interface;
   use fer-convert;
   use expand;
+end;
+
+define module cback
+  use common;
+  use Standard-IO;
+  use utils;
+  use compile-time-values;
+  use names;
+  use variables;
+  use definitions;
+  use representation;
+  use c-representation;
+  use flow;
+  use front;
+  use top-level-forms;
+  use define-constants-and-variables;
+
+  export
+    <output-info>, output-info-results,
+    emit-tlf-gunk, emit-lambda, emit-region;
 end;
 
 define module init
@@ -800,4 +850,5 @@ define module main
   use dump;
   use classes;
   use c-representation;
+  use cback;
 end;
