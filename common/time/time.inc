@@ -1,4 +1,3 @@
+daylight
 strftime()
 timezone
-strptime()
-daylight
