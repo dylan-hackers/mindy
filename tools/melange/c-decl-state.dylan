@@ -280,13 +280,14 @@ define method process-declarator
 	process-declarator(tp, tail(declarator), state);
       end for;
     (declarator.head == #"bitfield") =>
-      if (instance?(tp, <integer-type-declaration>))
+      if (instance?(tp.true-type, <integer-type-declaration>))
 	let decl = make(<bitfield-declaration>, bits: second(declarator),
 			base: tp, name: anonymous-name(),
 			dylan-name: "<integer>");
 	process-declarator(decl, declarator.tail.tail, state);
       else
-	parse-error(state, "Bit-fields must be of integer types");
+	parse-error(state, "Bit-fields must be of an integral type.  "
+		      "This is of type %=.", tp);
       end if;
     (declarator.head == #"vector") =>
       let length = second(declarator);
@@ -319,7 +320,7 @@ define method process-declarator
       process-declarator(new-type, declarator.tail.tail, state);
     otherwise =>
       parse-error(state, "unknown type modifier");
-    end case;
+  end case;
 end method process-declarator;
 
 // This handles the trivial case in which we are down to the bare "name" and
