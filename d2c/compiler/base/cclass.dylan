@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.19 2002/01/19 19:18:54 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.20 2002/03/20 20:55:47 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -303,7 +303,7 @@ define method print-object (cclass :: <cclass>, stream :: <stream>) => ();
 end;
 
 define method print-message (cclass :: <cclass>, stream :: <stream>) => ();
-  write(stream, as(<string>, cclass.cclass-name.name-symbol));
+  print-message(cclass.cclass-name, stream);
 end;
 
 
