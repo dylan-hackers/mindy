@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/sort.dylan,v 1.3 1995/12/09 20:16:33 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/sort.dylan,v 1.4 1996/01/12 02:10:53 wlott Exp $
 
 //======================================================================
 //
@@ -61,8 +61,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/sort.dylan,v
 //
 // Swaps two elements in a vector.
 //
-define method swap-elements! (vector :: <simple-object-vector>, key1 :: <fixed-integer>,
-			      key2 :: <fixed-integer>)
+define method swap-elements! (vector :: <simple-object-vector>, key1 :: <integer>,
+			      key2 :: <integer>)
   let element1 = vector[key1];
   let element2 = vector[key2];
   vector[key1] := element2;
@@ -86,11 +86,11 @@ end method swap-elements!;
 //
 define method selection-sort!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <fixed-integer> = 0,
-          end: last :: <fixed-integer> = vector.size)
-  for (current-key :: <fixed-integer> from first below last)
-    for (search-key :: <fixed-integer> from current-key + 1 below last,
-	 select-key :: <fixed-integer> = current-key
+     #key test :: <function> = \<, start: first :: <integer> = 0,
+          end: last :: <integer> = vector.size)
+  for (current-key :: <integer> from first below last)
+    for (search-key :: <integer> from current-key + 1 below last,
+	 select-key :: <integer> = current-key
 	   then if (test(vector[search-key], vector[select-key])) search-key
 		else select-key
 		end if)
@@ -108,8 +108,8 @@ end method selection-sort!;
 //
 define method selection-sort
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <fixed-integer> = 0,
-          end: last :: <fixed-integer> = vector.size)
+     #key test :: <function> = \<, start: first :: <integer> = 0,
+          end: last :: <integer> = vector.size)
   let sort-vector = copy-sequence(vector, start: first, end: last);
   selection-sort!(sort-vector, test: test);
 end method selection-sort;
@@ -126,11 +126,11 @@ end method selection-sort;
 //
 define method insertion-sort!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <fixed-integer> = 0,
-     end: last :: <fixed-integer> = vector.size)
-  for (current-key :: <fixed-integer> from first + 1 below last)
+     #key test :: <function> = \<, start: first :: <integer> = 0,
+     end: last :: <integer> = vector.size)
+  for (current-key :: <integer> from first + 1 below last)
     let current-element = vector[current-key];
-    for (insert-key :: <fixed-integer> from current-key - 1 to first by -1,
+    for (insert-key :: <integer> from current-key - 1 to first by -1,
 	 while: test(current-element, vector[insert-key]))
       vector[insert-key + 1] := vector[insert-key];
     finally
@@ -147,8 +147,8 @@ end method insertion-sort!;
 //
 define method insertion-sort
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <fixed-integer> = 0,
-     end: last :: <fixed-integer> = vector.size)
+     #key test :: <function> = \<, start: first :: <integer> = 0,
+     end: last :: <integer> = vector.size)
   let sort-vector = copy-sequence(vector, start: first, end: last);
   insertion-sort!(sort-vector, test: test);
 end method insertion-sort;
@@ -164,7 +164,7 @@ end method insertion-sort;
 // subsequence should be before the simple sorts are called.  (The simple
 // sorts can be turned off by setting this to 0.)
 //
-define variable $small-sort-size$ :: <fixed-integer> = 10;
+define variable $small-sort-size$ :: <integer> = 10;
 
 // Merge Sort
 //
@@ -197,13 +197,13 @@ define variable $small-sort-size$ :: <fixed-integer> = 10;
 //
 define method merge!
     (vector :: <simple-object-vector>,
-     #key test: test :: <function>, start: first :: <fixed-integer>,
-          middle: middle :: <fixed-integer>, end: last :: <fixed-integer>)
-  let merge-size :: <fixed-integer> = last - first;
+     #key test: test :: <function>, start: first :: <integer>,
+          middle: middle :: <integer>, end: last :: <integer>)
+  let merge-size :: <integer> = last - first;
   let merge-vector = make(<simple-object-vector>, size: merge-size);
-  let start-key :: <fixed-integer> = first;
-  let middle-key :: <fixed-integer> = middle;
-  for (merge-key :: <fixed-integer> from 0 below merge-size)
+  let start-key :: <integer> = first;
+  let middle-key :: <integer> = middle;
+  for (merge-key :: <integer> from 0 below merge-size)
     case
       start-key >= middle =>
 	merge-vector[merge-key] := vector[middle-key];
@@ -219,8 +219,8 @@ define method merge!
         start-key := start-key + 1;
     end case;
   end for;
-  for (merge-key :: <fixed-integer> from 0 below merge-size,
-       copy-key :: <fixed-integer> from first)
+  for (merge-key :: <integer> from 0 below merge-size,
+       copy-key :: <integer> from first)
     vector[copy-key] := merge-vector[merge-key]
   end for;
 end method merge!;
@@ -241,10 +241,10 @@ end method merge!;
 //
 define method merge-sort!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <fixed-integer> = 0,
-          end: last :: <fixed-integer> = vector.size)
+     #key test :: <function> = \<, start: first :: <integer> = 0,
+          end: last :: <integer> = vector.size)
   let (div, mod) = floor/(last - first, 2);
-  let middle :: <fixed-integer> = first + div;
+  let middle :: <integer> = first + div;
   case
     (last - first) < $small-sort-size$ =>
       insertion-sort!(vector, test: test, start: first, end: last);
@@ -267,13 +267,13 @@ end method merge-sort!;
 define method merge
     (vector1 :: <simple-object-vector>, vector2 :: <simple-object-vector>,
      #key test :: <function> = \<)
-  let size1 :: <fixed-integer> = size(vector1);
-  let size2 :: <fixed-integer> = size(vector2);
-  let merge-size :: <fixed-integer> = size1 + size2;
+  let size1 :: <integer> = size(vector1);
+  let size2 :: <integer> = size(vector2);
+  let merge-size :: <integer> = size1 + size2;
   let merge-vector = make(<simple-object-vector>, size: merge-size);
-  let key1 :: <fixed-integer> = 0;
-  let key2 :: <fixed-integer> = 0;
-  for (merge-key :: <fixed-integer> from 0 below merge-size)
+  let key1 :: <integer> = 0;
+  let key2 :: <integer> = 0;
+  for (merge-key :: <integer> from 0 below merge-size)
     case
       key1 >= size1 =>
 	merge-vector[merge-key] := vector2[key2];
@@ -307,10 +307,10 @@ end method merge;
 //
 define method merge-sort
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <fixed-integer> = 0,
-          end: last :: <fixed-integer> = vector.size)
+     #key test :: <function> = \<, start: first :: <integer> = 0,
+          end: last :: <integer> = vector.size)
   let (div, mod) = floor/(last - first, 2);
-  let middle :: <fixed-integer> = first + div;
+  let middle :: <integer> = first + div;
   case
     (last - first) < $small-sort-size$ =>
       insertion-sort(vector, test: test, start: first, end: last);
@@ -341,12 +341,12 @@ end method merge-sort;
 // convention, "last" is an exclusive bound.
 //
 define constant median-of-three = method 
-    (vec :: <simple-object-vector>, first :: <fixed-integer>,
-     last :: <fixed-integer>, less-than :: <function>)
- => pivot-index :: <fixed-integer>;
+    (vec :: <simple-object-vector>, first :: <integer>,
+     last :: <integer>, less-than :: <function>)
+ => pivot-index :: <integer>;
   let first-elem = vec[first];
   let last-elem = vec[last - 1];
-  let middle :: <fixed-integer> = truncate/(first + last, 2);
+  let middle :: <integer> = truncate/(first + last, 2);
   let middle-elem = vec[middle];
   if (less-than(first-elem, last-elem))
     if (less-than(middle-elem, last-elem))
@@ -379,12 +379,12 @@ end method;
 //
 define method partition!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <fixed-integer> = 0,
-          end: last :: <fixed-integer> = vector.size)
+     #key test :: <function> = \<, start: first :: <integer> = 0,
+          end: last :: <integer> = vector.size)
   let pivot-key = median-of-three(vector, first, last - 1, test);
   let pivot-element = vector[pivot-key];
-  let small-key :: <fixed-integer> = first;
-  let large-key :: <fixed-integer> = last - 1;
+  let small-key :: <integer> = first;
+  let large-key :: <integer> = last - 1;
   block (break-while)
     while (#t)
       while (test(vector[small-key], pivot-element))
@@ -417,8 +417,8 @@ end method partition!;
 //
 define method quick-sort!
     (vector :: <simple-object-vector>,
-     #key test :: <function> = \<, start: first :: <fixed-integer> = 0,
-          end: last :: <fixed-integer> = vector.size)
+     #key test :: <function> = \<, start: first :: <integer> = 0,
+          end: last :: <integer> = vector.size)
   case
     (last - first) < $small-sort-size$ =>
       insertion-sort!(vector, test: test, start: first, end: last);

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.9 1996/01/11 19:06:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.10 1996/01/12 02:10:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -8,7 +8,7 @@ define class <class> (<type>)
   constant slot class-name :: false-or(<symbol>),
     init-value: #f, init-keyword: debug-name:;
   //
-  constant slot unique-id :: <fixed-integer>, init-value: -1;
+  constant slot unique-id :: <integer>, init-value: -1;
   //
   // The direct superclasses.
   constant slot direct-superclasses :: <simple-object-vector>,
@@ -157,7 +157,7 @@ define class <slot-descriptor> (<object>)
   // having to do the subtype? tests that checking slot-positions directly
   // entails.
   slot slot-positions-cache
-    :: type-union(<position-cache-node>, <false>, <fixed-integer>),
+    :: type-union(<position-cache-node>, <false>, <integer>),
     init-value: #f;
 end;
 
@@ -205,7 +205,7 @@ define class <position-cache-node> (<object>)
     required-init-keyword: class:;
   //
   // The offset this slot shows up at in the above class.
-  constant slot cache-offset :: <fixed-integer>,
+  constant slot cache-offset :: <integer>,
     required-init-keyword: offset:;
   //
   // The next node in the position cache.
@@ -245,7 +245,7 @@ define class <cpd> (<object>)
   slot cpd-class :: <class>, required-init-keyword: class:;
   slot cpd-supers :: <list>, init-value: #();
   slot cpd-after :: <list>, init-value: #();
-  slot cpd-count :: <fixed-integer>, init-value: 0;
+  slot cpd-count :: <integer>, init-value: 0;
 end;
 
 define method compute-cpl (class :: <class>, supers :: <list>)
@@ -290,7 +290,7 @@ define method slow-compute-cpl (class :: <class>, supers :: <list>)
     end;
   let candidates = list(compute-cpd(class, supers));
   let rcpl = #();
-  for (count :: <fixed-integer> from 0 below class-count)
+  for (count :: <integer> from 0 below class-count)
     let candidate
       = if (candidates == #())
 	  error("Inconsistent CPL");
@@ -364,10 +364,10 @@ end;
 // determine where a slot is located.
 // 
 define method find-slot-offset (class :: <class>, slot :: <slot-descriptor>)
-    => offset :: <fixed-integer>;
+    => offset :: <integer>;
   block (return)
     let cache = slot.slot-positions-cache;
-    if (instance?(cache, <fixed-integer>))
+    if (instance?(cache, <integer>))
       return(cache);
     end if;
     for (prev :: false-or(<position-cache-node>) = #f then node,
@@ -388,7 +388,7 @@ define method find-slot-offset (class :: <class>, slot :: <slot-descriptor>)
     end if;
     for (entry :: <list> in positions)
       if (subtype?(class, check-type(<class>, entry.head)))
-	let offset :: <fixed-integer> = entry.tail;
+	let offset :: <integer> = entry.tail;
 	let node = make(<position-cache-node>, class: class, offset: offset,
 			next: slot.slot-positions-cache);
 	slot.slot-positions-cache := node;

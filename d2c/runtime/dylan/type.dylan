@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.10 1995/12/16 04:25:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.11 1996/01/12 02:10:57 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -363,17 +363,18 @@ end;
 define class <limited-integer> (<type>)
   slot limited-integer-base-class :: <class>, setter: #f,
     required-init-keyword: base-class:;
-  slot limited-integer-minimum :: false-or(<integer>), setter: #f,
+  slot limited-integer-minimum :: false-or(<general-integer>), setter: #f,
     required-init-keyword: min:;
-  slot limited-integer-maximum :: false-or(<integer>), setter: #f,
+  slot limited-integer-maximum :: false-or(<general-integer>), setter: #f,
     required-init-keyword: max:;
 end;
 
 seal generic make (singleton(<limited-integer>));
 
-// limited(<integer>,...), limited(<extended-integer>) -- exported gf methods
+// limited(<general-integer>,...), limited(<extended-integer>)
+//   -- exported gf methods
 //
-define method limited (class :: one-of(<integer>, <extended-integer>),
+define method limited (class :: one-of(<general-integer>, <extended-integer>),
 		       #key min, max)
     => res :: <type>;
   if (max & min & max < min)
@@ -385,35 +386,35 @@ define method limited (class :: one-of(<integer>, <extended-integer>),
   end;
 end;
 
-// limited(<fixed-integer>,...) -- exported generic function method.
+// limited(<integer>,...) -- exported generic function method.
 //
-define method limited (class == <fixed-integer>, #key min, max)
+define method limited (class == <integer>, #key min, max)
     => res :: <type>;
   block (return)
     // Convert the min into a fixed-integer if possible.
     let min = select (min by instance?)
-		<false> => $minimum-fixed-integer;
-		<fixed-integer> => min;
+		<false> => $minimum-integer;
+		<integer> => min;
 		<extended-integer> =>
-		  if (min > $maximum-fixed-integer)
+		  if (min > $maximum-integer)
 		    return(type-union());
-		  elseif (min <= $minimum-fixed-integer)
-		    $minimum-fixed-integer;
+		  elseif (min <= $minimum-integer)
+		    $minimum-integer;
 		  else
-		    as(<fixed-integer>, min);
+		    as(<integer>, min);
 		  end;
 	      end;
     // Likewise for the max.
     let max = select (max by instance?)
-		<false> => $maximum-fixed-integer;
-		<fixed-integer> => max;
+		<false> => $maximum-integer;
+		<integer> => max;
 		<extended-integer> =>
-		  if (max < $minimum-fixed-integer)
+		  if (max < $minimum-integer)
 		    return(type-union());
-		  elseif (max >= $maximum-fixed-integer)
-		    $maximum-fixed-integer;
+		  elseif (max >= $maximum-integer)
+		    $maximum-integer;
 		  else
-		    as(<fixed-integer>, max);
+		    as(<integer>, max);
 		  end;
 	      end;
     if (max < min)
@@ -421,7 +422,7 @@ define method limited (class == <fixed-integer>, #key min, max)
       type-union();
     else
       // Otherwise, make the limited integer.
-      make(<limited-integer>, base-class: <fixed-integer>, min: min, max: max);
+      make(<limited-integer>, base-class: <integer>, min: min, max: max);
     end;
   end;
 end;
@@ -436,12 +437,14 @@ define method %instance? (object :: <object>, type :: <limited-integer>)
   #f;
 end;
 
-// instance?(<integer>,<limited-integer>) -- exported generic function method
+// instance?(<general-integer>,<limited-integer>)
+//   -- exported generic function method
 //
 // Make sure the integer is the right kind of integer and that it is in the
 // given range.
 //
-define method %instance? (object :: <integer>, type :: <limited-integer>)
+define method %instance?
+    (object :: <general-integer>, type :: <limited-integer>)
     => res :: <boolean>;
   if (instance?(object, type.limited-integer-base-class))
     let min = type.limited-integer-minimum;
@@ -461,16 +464,16 @@ end;
 // to get up to a factor of 20 speedup.
 //
 define method %instance?
-    (object :: <fixed-integer>, type :: <limited-integer>)
+    (object :: <integer>, type :: <limited-integer>)
  => res :: <boolean>;
   let base-class :: <class> = type.limited-integer-base-class;
-  if (base-class == <fixed-integer>)
+  if (base-class == <integer>)
     // This is appallingly messy, but until we get a better type inference
     // mechanism, it seems to be the only way to get a fast enough inner loop.
     let min = type.limited-integer-minimum;
     let above-bottom :: <boolean>
       = if (min)
-	  let min :: <fixed-integer> = min;
+	  let min :: <integer> = min;
 	  object >= min;
 	else
 	  #t;
@@ -478,7 +481,7 @@ define method %instance?
     if (above-bottom)
       let max = type.limited-integer-maximum;
       if (max)
-	let max :: <fixed-integer> = max;
+	let max :: <integer> = max;
 	object <= max;
       else
 	#t;
@@ -547,8 +550,8 @@ define method intersect-limited-ints
     let base2 = lim2.limited-integer-base-class;
     let base = case
 		 (base1 == base2) => base1;
-		 (base1 == <integer>) => base2;
-		 (base2 == <integer>) => base1;
+		 (base1 == <general-integer>) => base2;
+		 (base2 == <general-integer>) => base1;
 		 otherwise => return(#f);
 	       end case;
 
@@ -580,17 +583,17 @@ end method intersect-limited-ints;
 //
 // Return a new limited integer type containing the portion of lim1 which
 // contains value but contains no instances of lim2.  Lim1 may be either an
-// "<integer>" class or a limited integer type.  We require, as a
+// "<general-integer>" class or a limited integer type.  We require, as a
 // precondition, that value not be an instance of lim2.
 //
 define method restrict-limited-ints
-    (value :: <integer>, lim1 :: <type>, lim2 :: <limited-integer>)
+    (value :: <general-integer>, lim1 :: <type>, lim2 :: <limited-integer>)
  => (res :: <limited-integer>);
   let (min1, max1)
     = case
 	(instance?(lim1, <limited-integer>)) =>
 	  values(lim1.limited-integer-minimum, lim1.limited-integer-maximum);
-	(subtype?(lim1, <integer>)) =>
+	(subtype?(lim1, <general-integer>)) =>
 	  values(#f, #f);
 	otherwise =>
 	  error("restrict-limited-ints must be passed two integer types.");
@@ -650,7 +653,7 @@ end;
 //
 define method %instance? (object :: <character>, type :: <byte-character-type>)
     => res :: <boolean>;
-  as(<fixed-integer>, object) < 256;
+  as(<integer>, object) < 256;
 end;
 
 // subtype? -- exported generic funciton method.
@@ -701,7 +704,7 @@ define method restrict-type (base :: <type>, exclude :: <type>);
     let old-excluded = base.excluded-types;
     let new-excluded = make(<type-vector>, size: old-excluded.size + 1,
 			    fill: exclude);
-    for (i :: <fixed-integer> from 0 below old-excluded.size)
+    for (i :: <integer> from 0 below old-excluded.size)
       new-excluded[i] := old-excluded[i];
     end for;
     base.excluded-types := new-excluded;

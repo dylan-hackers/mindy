@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.15 1996/01/08 22:15:59 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.16 1996/01/12 02:10:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -55,7 +55,7 @@ end;
 seal generic make(singleton(<raw-closure>));
 
 define method make-closure
-    (func :: <function>, closure-size :: <fixed-integer>)
+    (func :: <function>, closure-size :: <integer>)
     => res :: <raw-closure>;
   make(<raw-closure>,
        function-name: func.function-name,
@@ -84,7 +84,7 @@ end;
 seal generic make(singleton(<method-closure>));
 
 define method make-closure
-    (func :: <method>, closure-size :: <fixed-integer>)
+    (func :: <method>, closure-size :: <integer>)
     => res :: <method-closure>;
   make(<method-closure>,
        function-name: func.function-name,
@@ -109,7 +109,7 @@ seal generic make (singleton(<type-vector>));
 seal generic initialize (<type-vector>);
 
 define sealed inline method element
-    (vec :: <type-vector>, index :: <fixed-integer>,
+    (vec :: <type-vector>, index :: <integer>,
      #key default = $not-supplied)
     => element :: <object>;
   if (index >= 0 & index < vec.size)
@@ -122,7 +122,7 @@ define sealed inline method element
 end;
 
 define sealed inline method element-setter
-    (new-value :: <type>, vec :: <type-vector>, index :: <fixed-integer>)
+    (new-value :: <type>, vec :: <type-vector>, index :: <integer>)
     => new-value :: <type>;
   if (index >= 0 & index < vec.size)
     %element(vec, index) := new-value;
@@ -141,7 +141,7 @@ define class <gf-cache> (<object>)
   slot cached-classes :: <type-vector>,
     required-init-keyword: #"classes";
   slot next :: type-union(<false>, <gf-cache>), init-value: #f;
-  slot call-count :: <fixed-integer>, init-value: 1;
+  slot call-count :: <integer>, init-value: 1;
 end class <gf-cache>;
 
 seal generic make(singleton(<gf-cache>));
@@ -166,7 +166,7 @@ define inline method generic-function-mandatory-keywords
 end method generic-function-mandatory-keywords;
 
 define inline method function-arguments (function :: <function>)
-    => (required :: <fixed-integer>, rest? :: <boolean>,
+    => (required :: <integer>, rest? :: <boolean>,
 	keywords :: type-union(<simple-object-vector>, one-of(#f, #"all")));
   values(function.function-specializers.size,
 	 function.function-rest?,
@@ -219,13 +219,13 @@ end method remove-method;
 // convert a block of values on the values stack into a rest arg.
 //
 define constant make-rest-arg
-  = method (arg-ptr :: <raw-pointer>, count :: <fixed-integer>)
+  = method (arg-ptr :: <raw-pointer>, count :: <integer>)
 	=> res :: <simple-object-vector>;
       if (count == 0)
 	#[];
       else
 	let res = make(<simple-object-vector>, size: count);
-	for (index :: <fixed-integer> from 0 below count)
+	for (index :: <integer> from 0 below count)
 	  %element(res, index) := %%primitive extract-arg (arg-ptr, index);
 	end;
 	res;
@@ -251,7 +251,7 @@ define generic verify-keywords
 define method verify-keywords
     (args :: <simple-object-vector>, valid-keywords == #"all")
     => ();
-  for (index :: <fixed-integer> from 0 below args.size by 2)
+  for (index :: <integer> from 0 below args.size by 2)
     check-type(args[index], <symbol>);
   end for;
 end method verify-keywords;
@@ -259,7 +259,7 @@ end method verify-keywords;
 define method verify-keywords
     (args :: <simple-object-vector>, valid-keywords :: <simple-object-vector>)
     => ();
-  for (index :: <fixed-integer> from 0 below args.size by 2)
+  for (index :: <integer> from 0 below args.size by 2)
     let key :: <symbol> = args[index];
     unless (member?(key, valid-keywords))
       error("Unrecognized keyword: %=", key);
@@ -287,7 +287,7 @@ end;
 
 
 define constant gf-call
-  = method (self :: <generic-function>, nargs :: <fixed-integer>)
+  = method (self :: <generic-function>, nargs :: <integer>)
       let specializers = self.function-specializers;
       let nfixed = specializers.size;
       if (self.function-rest? | self.function-keywords)
@@ -306,7 +306,7 @@ define constant gf-call
       let (ordered, ambiguous, valid-keywords)
 	= cached-sorted-applicable-methods(self, nfixed, arg-ptr);
       if (valid-keywords)
-	for (index :: <fixed-integer> from nfixed below nargs by 2)
+	for (index :: <integer> from nfixed below nargs by 2)
 	  let key :: <symbol> = %%primitive extract-arg (arg-ptr, index);
 	  unless (valid-keywords == #"all"
 		    | member?(key,
@@ -318,7 +318,7 @@ define constant gf-call
       end if;
       if (ambiguous == #())
 	if (ordered == #())
-	  for (index :: <fixed-integer> from 0 below nfixed)
+	  for (index :: <integer> from 0 below nfixed)
 	    let specializer :: <type> = %element(specializers, index);
 	    let arg = %%primitive extract-arg(arg-ptr, index);
 	    %check-type(arg, specializer);
@@ -345,7 +345,7 @@ define constant gf-call
     end;
     
 define method internal-sorted-applicable-methods
-    (gf :: <generic-function>, nargs :: <fixed-integer>,
+    (gf :: <generic-function>, nargs :: <integer>,
      arg-ptr :: <raw-pointer>)
     => (ordered :: <list>, ambiguous :: <list>,
 	valid-keywords
@@ -354,7 +354,7 @@ define method internal-sorted-applicable-methods
   // We have to use low-level stuff here.  It would be bad to do a full
   // generic function call at this point.
   let cache-classes = make(<type-vector>, size: nargs);
-  for (i :: <fixed-integer> from 0 below nargs)
+  for (i :: <integer> from 0 below nargs)
     %element(cache-classes, i)
       := (%%primitive extract-arg(arg-ptr, i)).object-class;
   end for;
@@ -477,7 +477,7 @@ define method internal-sorted-applicable-methods
     = if (instance?(valid-keywords, <list>))
 	let vec = make(<simple-object-vector>,
 		       size: check-type(valid-keywords, <list>).size);
-	for (index :: <fixed-integer> from 0,
+	for (index :: <integer> from 0,
 	     keyword in check-type(valid-keywords, <list>))
 	  vec[index] := keyword;
 	end for;
@@ -490,10 +490,10 @@ define method internal-sorted-applicable-methods
   values(ordered, ambiguous, valid-keywords);
 end;
 
-define variable *debug-generic-threshold* :: <fixed-integer> = -1;
+define variable *debug-generic-threshold* :: <integer> = -1;
 
 define method cached-sorted-applicable-methods
-    (gf :: <generic-function>, nargs :: <fixed-integer>,
+    (gf :: <generic-function>, nargs :: <integer>,
      arg-ptr :: <raw-pointer>)
  => (ordered :: <list>, ambiguous :: <list>,
      valid-keywords :: type-union(<simple-object-vector>, one-of(#f, #"all")));
@@ -507,13 +507,13 @@ define method cached-sorted-applicable-methods
 
 	let classes :: <type-vector> = cache.cached-classes;
 	if (cache.simple)
-	  for (index :: <fixed-integer> from 0 below nargs)
+	  for (index :: <integer> from 0 below nargs)
 	    let type :: <type> = %element(classes, index);
 	    let arg = %%primitive extract-arg(arg-ptr, index);
 	    unless (type == arg.object-class) no-match() end unless;
 	  end for;
 	else
-	  for (index :: <fixed-integer> from 0 below nargs)
+	  for (index :: <integer> from 0 below nargs)
 	    let type :: <type> = %element(classes, index);
 	    let arg = %%primitive extract-arg(arg-ptr, index);
 	    unless (type == arg.object-class
@@ -554,7 +554,7 @@ define method internal-applicable-method?
   block (return)
     let classes :: <type-vector> = cache.cached-classes;
     for (specializer :: <type> in meth.function-specializers,
-	 index :: <fixed-integer> from 0)
+	 index :: <integer> from 0)
       let arg-type = classes[index];
       let arg :: <object> = %%primitive extract-arg(arg-ptr, index);
 
@@ -613,7 +613,7 @@ define method compare-methods
     let result = #"identical";
     let specializers1 = meth1.function-specializers;
     let specializers2 = meth2.function-specializers;
-    for (index :: <fixed-integer> from 0 below specializers1.size)
+    for (index :: <integer> from 0 below specializers1.size)
       let spec1 = specializers1[index];
       let spec2 = specializers2[index];
       if (subtype?(spec1, spec2))

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.7 1995/12/15 05:32:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.8 1996/01/12 02:10:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -546,7 +546,7 @@ define method missing-required-init-keyword-error
 end;
 
 define method wrong-number-of-arguments-error
-    (fixed? :: <boolean>, wanted :: <fixed-integer>, got :: <fixed-integer>)
+    (fixed? :: <boolean>, wanted :: <integer>, got :: <integer>)
     => res :: <never-returns>;
   error("Wrong number of arguments.  Wanted %s %d but got %d.",
 	if (fixed?) "exactly" else "at least" end,

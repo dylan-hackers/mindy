@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/ratio.dylan,v 1.4 1995/12/09 21:03:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/ratio.dylan,v 1.5 1996/01/12 02:10:51 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -18,7 +18,7 @@ end;
 
 define sealed inline method make
     (class == <ratio>, #next next-method,
-     #key numerator :: <integer>, denominator :: <integer>)
+     #key numerator :: <general-integer>, denominator :: <general-integer>)
     => res :: <ratio>;
   //
   // Convert them to extended integers.
@@ -48,14 +48,15 @@ end;
 
 seal generic initialize (<ratio>);
 
-define inline method ratio (num :: <integer>, denom :: <integer>)
+define inline method ratio
+    (num :: <general-integer>, denom :: <general-integer>)
     => res :: <ratio>;
   make(<ratio>, numerator: num, denominator: denom);
 end;
 
 seal generic as (singleton(<ratio>), <complex>);
 
-define inline method as (class == <ratio>, num :: <integer>)
+define inline method as (class == <ratio>, num :: <general-integer>)
     => res :: <ratio>;
   ratio(num, 1);
 end;
@@ -202,17 +203,17 @@ end;
 // to be pulled apart and thrown away.  And we also avoid a bunch of spurious
 // multiplies by 1.
 
-define inline method \= (a :: <ratio>, b :: <integer>)
+define inline method \= (a :: <ratio>, b :: <general-integer>)
     => res :: <boolean>;
   a.numerator = b & a.denominator = 1;
 end;
 
-define inline method \= (a :: <integer>, b :: <ratio>)
+define inline method \= (a :: <general-integer>, b :: <ratio>)
     => res :: <boolean>;
   a = b.numerator & 1 = b.denominator;
 end;
 
-define inline method \< (a :: <ratio>, b :: <integer>)
+define inline method \< (a :: <ratio>, b :: <general-integer>)
     => res :: <boolean>;
   // Start with:
   //   a_n/a_d < b
@@ -221,7 +222,7 @@ define inline method \< (a :: <ratio>, b :: <integer>)
   a.numerator < b * a.denominator;
 end;
 
-define inline method \< (a :: <integer>, b :: <ratio>)
+define inline method \< (a :: <general-integer>, b :: <ratio>)
     => res :: <boolean>;
   // Start with:
   //   a < b_n/b_d
@@ -230,7 +231,7 @@ define inline method \< (a :: <integer>, b :: <ratio>)
   a * b.denominator < b.numerator;
 end;
 
-define inline method \+ (a :: <integer>, b :: <ratio>)
+define inline method \+ (a :: <general-integer>, b :: <ratio>)
     => res :: <ratio>;
   // Start with:
   //   a + b_n/b_d
@@ -239,7 +240,7 @@ define inline method \+ (a :: <integer>, b :: <ratio>)
   ratio(a * b.denominator + b.numerator, b.denominator);
 end;
 
-define inline method \+ (a :: <ratio>, b :: <integer>)
+define inline method \+ (a :: <ratio>, b :: <general-integer>)
     => res :: <ratio>;
   // Start with:
   //   a_n/a_d + b
@@ -248,17 +249,17 @@ define inline method \+ (a :: <ratio>, b :: <integer>)
   ratio(a.numerator + b * a.denominator, a.denominator);
 end;
 
-define inline method \* (a :: <integer>, b :: <ratio>)
+define inline method \* (a :: <general-integer>, b :: <ratio>)
     => res :: <ratio>;
   ratio(a * b.numerator, b.denominator);
 end;
 
-define inline method \* (a :: <ratio>, b :: <integer>)
+define inline method \* (a :: <ratio>, b :: <general-integer>)
     => res :: <ratio>;
   ratio(a.numerator * b, a.denominator);
 end;
 
-define inline method \- (a :: <integer>, b :: <ratio>)
+define inline method \- (a :: <general-integer>, b :: <ratio>)
     => res :: <ratio>;
   // Start with:
   //   a - b_n/b_d
@@ -267,7 +268,7 @@ define inline method \- (a :: <integer>, b :: <ratio>)
   ratio(a * b.denominator - b.numerator, b.denominator);
 end;
 
-define inline method \- (a :: <ratio>, b :: <integer>)
+define inline method \- (a :: <ratio>, b :: <general-integer>)
     => res :: <ratio>;
   // Start with:
   //   a_n/a_d - b
@@ -276,7 +277,7 @@ define inline method \- (a :: <ratio>, b :: <integer>)
   ratio(a.numerator - b * a.denominator, a.denominator);
 end;
 
-define inline method \/ (a :: <integer>, b :: <ratio>)
+define inline method \/ (a :: <general-integer>, b :: <ratio>)
     => res :: <ratio>;
   // Start with:
   //   a / b_n/b_d
@@ -287,7 +288,7 @@ define inline method \/ (a :: <integer>, b :: <ratio>)
   ratio(a * b.denominator, b.numerator);
 end;
 
-define inline method \/ (a :: <ratio>, b :: <integer>)
+define inline method \/ (a :: <ratio>, b :: <general-integer>)
     => res :: <ratio>;
   // Start with:
   //   a_n/a_d / b

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.12 1995/12/11 20:58:46 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.13 1996/01/12 02:10:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -134,9 +134,9 @@ end method type-for-copy;
 
 // Collection Methods.
 
-define method size (collection :: <collection>) => res :: <fixed-integer>;
+define method size (collection :: <collection>) => res :: <integer>;
   for (element in collection,
-       result :: <fixed-integer> from 0)
+       result :: <integer> from 0)
   finally
     result;
   end;
@@ -399,7 +399,7 @@ define method key-sequence (collection :: <collection>)
   let (init-state, limit, next-state, done?, current-key, current-element)
     = forward-iteration-protocol(collection);
   let result = make(<vector>, size: size(collection));
-  for (index :: <fixed-integer> from 0,
+  for (index :: <integer> from 0,
        state = init-state then next-state(collection, state),
        until: done?(collection, state, limit))
     result[index] := current-key(collection, state);
@@ -523,7 +523,7 @@ define open generic last-setter
 
 define open generic subsequence-position
     (big :: <sequence>, pattern :: <sequence>, #key test, count)
- => (index :: false-or(<fixed-integer>));
+ => (index :: false-or(<integer>));
 
 
 // Sequence methods
@@ -654,8 +654,8 @@ end method remove-duplicates!;
 
 define method replace-subsequence!
     (sequence :: <sequence>, insert-sequence :: <sequence>,
-     #key start: first :: <fixed-integer> = 0,
-          end: last :: <fixed-integer> = sequence.size)
+     #key start: first :: <integer> = 0,
+          end: last :: <integer> = sequence.size)
  => (sequence :: <sequence>);
   concatenate(copy-sequence(sequence, start: 0, end: first), insert-sequence,
 	      copy-sequence(sequence, start: last));
@@ -664,7 +664,7 @@ end method replace-subsequence!;
 define method subsequence-position
     (big :: <sequence>, pattern :: <sequence>,
      #key test :: <function> = \==, count :: <integer> = 1)
- => (result :: false-or(<fixed-integer>));
+ => (result :: false-or(<integer>));
   if (empty?(pattern))
     0
   else
@@ -721,7 +721,7 @@ define method do
     let next-states = #();
     let finished-state?s = #();
     let current-elements = #();
-    for (index :: <fixed-integer> from more-collections.size - 1 to 0 by -1)
+    for (index :: <integer> from more-collections.size - 1 to 0 by -1)
       let this-sequence = more-collections[index];
       let (state, limit, next-state, finished-state?, ignore, current-element)
 	= forward-iteration-protocol(this-sequence);
@@ -839,7 +839,7 @@ define method sequence-map-into
     let next-states = #();
     let finished-state?s = #();
     let current-elements = #();
-    for (index :: <fixed-integer> from more-sequences.size - 1 to 0 by -1)
+    for (index :: <integer> from more-sequences.size - 1 to 0 by -1)
       let this-sequence = more-sequences[index];
       let (state, limit, next-state, finished-state?, ignore, current-element)
 	= forward-iteration-protocol(this-sequence);
@@ -890,7 +890,7 @@ define method find-key
     = forward-iteration-protocol(sequence);
   block (return)
     for (elem in sequence,
-	 key :: <fixed-integer> from 0)
+	 key :: <integer> from 0)
       if (proc(elem))
 	if (skip & skip > 0)
 	  skip := skip - 1;
@@ -907,20 +907,20 @@ end method find-key;
 
 define method fill!
     (sequence :: <mutable-sequence>, value :: <object>,
-     #key start: first :: <fixed-integer> = 0,
-          end: last :: false-or(<fixed-integer>))
+     #key start: first :: <integer> = 0,
+          end: last :: false-or(<integer>))
  => (sequence :: <mutable-sequence>);
     
   let (init-state, limit, next-state, done?,
        current-key, current-element,
        current-element-setter) = forward-iteration-protocol(sequence);
   for (state = init-state then next-state(sequence, state),
-       index :: <fixed-integer> from 0 below first,
+       index :: <integer> from 0 below first,
        until: done?(sequence, state, limit))
   finally
     if (last)
       for (state = state then next-state(sequence, state),
-	   index :: <fixed-integer> from index below last,
+	   index :: <integer> from index below last,
 	   until: done?(sequence, state, limit))
 	current-element(sequence, state) := value;
       end for;
@@ -1019,27 +1019,27 @@ define inline method third-setter
 end;
 
 define method copy-sequence
-    (sequence :: <sequence>, #key start :: <fixed-integer> = 0, end: last)
+    (sequence :: <sequence>, #key start :: <integer> = 0, end: last)
  => (result :: <sequence>);
-  let seq-size :: <fixed-integer> = sequence.size;
-  let last :: <fixed-integer> = last | seq-size;
+  let seq-size :: <integer> = sequence.size;
+  let last :: <integer> = last | seq-size;
   case
     (last > seq-size) => error("End: (%=) out of range.", last);
     (start < 0) => error("Start: (%=) out of range.", start);
     (start > last) => error("Start: (%=) > End: (%=).", start, last);
   end case;
 
-  let sz :: <fixed-integer> = last - start;
+  let sz :: <integer> = last - start;
   let result = make(type-for-copy(sequence), size: sz);
   let (init-state, limit, next-state, done?,
        current-key, current-element) = forward-iteration-protocol(sequence);
 
-  for (index :: <fixed-integer> from 0 below start,
+  for (index :: <integer> from 0 below start,
        state = init-state then next-state(sequence, state))
   finally
     let (res-init, res-limit, res-next, res-done?, res-key,
 	 res-elem, res-elem-setter) = forward-iteration-protocol(result);
-    for (index :: <fixed-integer> from index below last,
+    for (index :: <integer> from index below last,
 	 state = state then next-state(sequence, state),
 	 res-state = res-init then res-next(result, res-state))
       res-elem(result, res-state) := current-element(sequence, state);

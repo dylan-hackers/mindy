@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.4 1996/01/08 22:15:59 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.5 1996/01/12 02:10:46 wlott Exp $
 
 //======================================================================
 //
@@ -102,7 +102,7 @@ seal generic make (singleton(<deque-element>));
 define sealed class <simple-object-deque> (<deque>)
   sealed slot deque-head :: false-or(<deque-element>), init-value: #f;
   sealed slot deque-tail :: false-or(<deque-element>), init-value: #f;
-  sealed slot size :: <fixed-integer>,
+  sealed slot size :: <integer>,
     setter: deque-size-setter,
     init-value: 0;
 end class <simple-object-deque>;
@@ -116,14 +116,14 @@ end class <simple-object-deque>;
 // contents to the new deque in a sequence.
 //
 define method initialize (deque :: <simple-object-deque>,
-			  #key data, size :: <fixed-integer> = 0,
+			  #key data, size :: <integer> = 0,
 			       fill = #f)
   if (data)
     for (element in data)
       push-last(deque, element);
     end for;
   else
-    for (s :: <fixed-integer> from 0 below size)
+    for (s :: <integer> from 0 below size)
       push-last(deque, fill);
     end for;
   end if;
@@ -160,7 +160,7 @@ define sealed inline method forward-iteration-protocol
 	   ~state;
 	 end method,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
-	  => (result :: <fixed-integer>) ;
+	  => (result :: <integer>) ;
 	   for (count from -1,
 		deque_elem = state then prev-deque-element(deque_elem),
 		while: deque_elem)
@@ -199,7 +199,7 @@ define sealed inline method backward-iteration-protocol
 	   ~state;
 	 end method,
 	 method (deque :: <simple-object-deque>, state :: <deque-element>)
-	  => (result :: <fixed-integer>) ;
+	  => (result :: <integer>) ;
 	   for (count from -1,
 		deque_elem = state then prev-deque-element(deque_elem),
 		while: deque_elem)
@@ -369,18 +369,18 @@ end method pop-last;
 // until the size is N.
 //
 define sealed method size-setter
-    (n :: <fixed-integer>, deque :: <simple-object-deque>)
- => (result :: <fixed-integer>);
+    (n :: <integer>, deque :: <simple-object-deque>)
+ => (result :: <integer>);
   let s = size(deque);
   case
     (n == s) => #f;
     (n == 0) => deque.deque-head := deque.deque-tail := #f;
     (n > s) =>
-      for (i :: <fixed-integer> from 0 below n - s)
+      for (i :: <integer> from 0 below n - s)
 	push-last(deque, #f)
       end for;
     (n + n < s) =>		// closer to front
-      for (i :: <fixed-integer> from 0 below n - 1,
+      for (i :: <integer> from 0 below n - 1,
 	   state :: false-or(<deque-element>) = deque.deque-head
 	     then state.next-deque-element)
       finally
@@ -388,7 +388,7 @@ define sealed method size-setter
 	deque.deque-tail := state;
       end for;
     otherwise =>		// closer to back
-      for (i :: <fixed-integer> from n below s,
+      for (i :: <integer> from n below s,
 	   state :: false-or(<deque-element>) = deque.deque-tail
 	     then state.prev-deque-element)
       finally
@@ -412,9 +412,9 @@ end method size-setter;
 // to the desired element and take that as our starting point.
 //
 define sealed method element
-    (deque :: <simple-object-deque>, key :: <fixed-integer>,
+    (deque :: <simple-object-deque>, key :: <integer>,
      #key default = $not-supplied) => (result :: <object>);
-  let deque-size :: <fixed-integer> = deque.size;
+  let deque-size :: <integer> = deque.size;
   if (key < 0 | key >= deque-size)
     if (default == $not-supplied)
       error("No such element in %=: %d", deque, key)
@@ -422,13 +422,13 @@ define sealed method element
       default
     end if;
   elseif (key + key > deque-size)	// closer to end than start
-    for (cur_key :: <fixed-integer> from deque-size - 1 above key,
+    for (cur_key :: <integer> from deque-size - 1 above key,
 	 state :: false-or(<deque-element>) = deque.deque-tail
 	   then state.prev-deque-element)
     finally state.deque-element-data
     end for;
   else
-    for (cur_key :: <fixed-integer> from 0 below key,
+    for (cur_key :: <integer> from 0 below key,
 	 state :: false-or(<deque-element>) = deque.deque-head
 	   then state.next-deque-element)
     finally state.deque-element-data
@@ -437,9 +437,9 @@ define sealed method element
 end method element;
 
 define sealed method element-setter
-    (value, deque :: <simple-object-deque>, key :: <fixed-integer>)
+    (value, deque :: <simple-object-deque>, key :: <integer>)
  => (result :: <object>);
-  let sz :: <fixed-integer> = deque.size;
+  let sz :: <integer> = deque.size;
   if (key < 0)
     error("No such element in %=: %d", deque, key)
   elseif (key >= sz)
@@ -447,13 +447,13 @@ define sealed method element-setter
   end if;
     
   if (key + key > sz)		// closer to end than start
-    for (cur_key :: <fixed-integer> from sz - 1 above key,
+    for (cur_key :: <integer> from sz - 1 above key,
 	 state :: false-or(<deque-element>) = deque.deque-tail
 	   then state.prev-deque-element)
     finally state.deque-element-data := value;
     end for;
   else
-    for (cur_key :: <fixed-integer> from 0 below key,
+    for (cur_key :: <integer> from 0 below key,
 	 state :: false-or(<deque-element>) = deque.deque-head
 	   then state.next-deque-element)
     finally state.deque-element-data := value;
@@ -485,7 +485,7 @@ define method remove! (deque :: <simple-object-deque>, value,
  => (result :: <simple-object-deque>);
   let count = count | size(deque);
   local method scan!(state :: false-or(<deque-element>),
-		     count :: <fixed-integer>)
+		     count :: <integer>)
 	  case
 	    count <= 0 | ~state =>
 	      #t;
@@ -667,7 +667,7 @@ end method empty?;
 // 		      #key test = \==, count) => (result :: <deque>);
 //   let count = count | size(deque);
 //   local method copy(state :: false-or(<deque-element>),
-// 		    count :: <fixed-integer>) => (result :: <deque>);
+// 		    count :: <integer>) => (result :: <deque>);
 // 	  case
 // 	    ~state =>
 // 	      make(<deque>);

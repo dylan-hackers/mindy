@@ -1,7 +1,7 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/craps/craps.dylan,v 1.1 1995/12/07 18:57:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/demos/craps/craps.dylan,v 1.2 1996/01/12 02:13:13 wlott Exp $
 module: craps
 
-define method d6 () => res :: <fixed-integer>;
+define method d6 () => res :: <integer>;
   random(6) + 1;
 end;
 

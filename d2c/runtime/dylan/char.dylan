@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/char.dylan,v 1.4 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/char.dylan,v 1.5 1996/01/12 02:10:42 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -6,7 +6,7 @@ module: dylan-viscera
 define constant $max-char-code = #xffff;
 
 define constant <char-code>
-  = limited(<fixed-integer>, min: 0, max: $max-char-code);
+  = limited(<integer>, min: 0, max: $max-char-code);
 
 define functional class <character> (<object>)
   slot value :: <char-code>, required-init-keyword: code:;
@@ -26,14 +26,13 @@ end;
 seal generic functional-== (<character>, <object>);
 seal generic functional-== (<object>, <character>);
 
-define sealed inline method as (class == <character>, code :: <fixed-integer>)
+define sealed inline method as (class == <character>, code :: <integer>)
     => res :: <character>;
   make(<character>, code: code);
 end;
 
-define sealed inline method as (class :: one-of(<integer>, <fixed-integer>),
-				char :: <character>)
-    => res :: <fixed-integer>;
+define sealed inline method as (class == <integer>, char :: <character>)
+    => res :: <integer>;
   char.value;
 end;
 

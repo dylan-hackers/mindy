@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/stretchy.dylan,v 1.1 1995/12/09 02:53:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/stretchy.dylan,v 1.2 1996/01/12 02:10:54 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -22,7 +22,7 @@ define sealed method as
     (class == <stretchy-vector>, collection :: <collection>)
     => res :: <stretchy-vector>;
   let res = make(<stretchy-vector>, size: collection.size);
-  for (index :: <fixed-integer> from 0, element in collection)
+  for (index :: <integer> from 0, element in collection)
     res[index] := element;
   end;
   res;
@@ -62,7 +62,7 @@ define class <stretchy-object-vector> (<stretchy-vector>)
     required-init-keyword: data:;
   //
   // The current size of the stretchy vector.
-  slot ssv-fill :: <fixed-integer>,
+  slot ssv-fill :: <integer>,
     required-init-keyword: fill:;
 end class <stretchy-object-vector>;
   
@@ -88,13 +88,13 @@ define sealed method make (class == <stretchy-object-vector>,
 end method make;
 
 define inline method size (ssv :: <stretchy-object-vector>)
-    => size :: <fixed-integer>;
+    => size :: <integer>;
   ssv-fill(ssv);
 end method size;
 
 define method size-setter
-    (new :: <fixed-integer>, ssv :: <stretchy-object-vector>)
-    => new :: <fixed-integer>;
+    (new :: <integer>, ssv :: <stretchy-object-vector>)
+    => new :: <integer>;
   let fill = ssv-fill(ssv);
   let data = ssv-data(ssv);
   if (new > fill)
@@ -123,7 +123,7 @@ end method size-setter;
 
 
 define method element
-    (ssv :: <stretchy-object-vector>, key :: <fixed-integer>,
+    (ssv :: <stretchy-object-vector>, key :: <integer>,
      #key default = $not-supplied)
     => result :: <object>;
   case
@@ -137,7 +137,7 @@ define method element
 end method element;
 
 define method element-setter (value, ssv :: <stretchy-object-vector>,
-			      key :: <fixed-integer>)
+			      key :: <integer>)
     => value :: <object>;
   if (key < 0)
     element-error(ssv, key);
@@ -173,14 +173,14 @@ end method add!;
 
 define method remove! (ssv :: <stretchy-object-vector>, elem,
 		       #key test :: false-or(<function>) = \==,
-		            count :: false-or(<fixed-integer>))
+		            count :: false-or(<integer>))
     => ssv :: <stretchy-object-vector>;
   unless (count & (count == 0))
     let data = ssv-data(ssv);
     let sz = size(ssv);
     local
-      method copy (src :: <fixed-integer>, dst :: <fixed-integer>,
-		   deleted :: <fixed-integer>)
+      method copy (src :: <integer>, dst :: <integer>,
+		   deleted :: <integer>)
 	  => ();
 	case
 	  src == sz =>
@@ -190,8 +190,8 @@ define method remove! (ssv :: <stretchy-object-vector>, elem,
 	    copy(src + 1, dst + 1, deleted);
 	end case;
       end method copy,
-      method search-and-copy (src :: <fixed-integer>, dst :: <fixed-integer>,
-			      deleted :: <fixed-integer>)
+      method search-and-copy (src :: <integer>, dst :: <integer>,
+			      deleted :: <integer>)
 	  => ();
 	if (src == sz)
 	  ssv-fill(ssv) := sz - deleted;
@@ -211,7 +211,7 @@ define method remove! (ssv :: <stretchy-object-vector>, elem,
 	  end case;
 	end if;
       end method search-and-copy,
-      method search (src :: <fixed-integer>) => ();
+      method search (src :: <integer>) => ();
 	unless (src == sz)
 	  let this-element = data[src];
 	  if (test(this-element, elem))

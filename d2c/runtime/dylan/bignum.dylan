@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.5 1995/12/09 20:39:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bignum.dylan,v 1.6 1996/01/12 02:10:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -14,7 +14,7 @@ define constant $digit-mask = lognot(ash(-1, $digit-bits));
 define functional class <digit> (<object>)
   //
   // The value of this digit.
-  slot value :: limited(<fixed-integer>, min: 0, max: $digit-mask),
+  slot value :: limited(<integer>, min: 0, max: $digit-mask),
     required-init-keyword: value:;
 end;
 
@@ -38,7 +38,7 @@ seal generic \~= (<digit>, <digit>);
 //
 // Make a digit from the low bits of a fixed integer.
 // 
-define inline method make-digit (num :: <fixed-integer>)
+define inline method make-digit (num :: <integer>)
     => res :: <digit>;
   make(<digit>, value: logand(num, $digit-mask));
 end;
@@ -48,7 +48,7 @@ end;
 // Make a fixed integer from a sign extended digit.
 //
 define inline method as-signed (digit :: <digit>)
-    => res :: <fixed-integer>;
+    => res :: <integer>;
   if (digit-sign-bit-set?(digit))
     logior(ash(-1, $digit-bits), digit.value);
   else
@@ -61,7 +61,7 @@ end;
 // Make a fixed integer from a digit treating it as an unsigned quantity.
 //
 define inline method as-unsigned (digit :: <digit>)
-    => res :: <fixed-integer>;
+    => res :: <integer>;
   digit.value;
 end;
 
@@ -114,8 +114,8 @@ define constant $no-carry = 0;
 // out.
 //
 define inline method digit-add
-    (digit1 :: <digit>, digit2 :: <digit>, carry :: <fixed-integer>)
-    => (res :: <digit>, carry :: <fixed-integer>);
+    (digit1 :: <digit>, digit2 :: <digit>, carry :: <integer>)
+    => (res :: <digit>, carry :: <integer>);
   let sum = digit1.value + digit2.value + carry;
   values(make-digit(sum),
 	 ash(sum, - $digit-bits));
@@ -133,8 +133,8 @@ define constant $no-borrow = 0;
 // and a borrow out.
 //
 define inline method digit-subtract
-    (digit1 :: <digit>, digit2 :: <digit>, borrow :: <fixed-integer>)
-    => (res :: <digit>, borrow :: <fixed-integer>);
+    (digit1 :: <digit>, digit2 :: <digit>, borrow :: <integer>)
+    => (res :: <digit>, borrow :: <integer>);
   let sum = digit1.value - digit2.value - borrow;
   values(make-digit(sum),
 	 logand(ash(sum, - $digit-bits), 1));
@@ -156,7 +156,7 @@ end;
 // Shift high up by shift digits, taking the new bits from the top of low.
 // 
 define inline method digit-shift
-    (high :: <digit>, low :: <digit>, shift :: <fixed-integer>)
+    (high :: <digit>, low :: <digit>, shift :: <integer>)
     => res :: <digit>;
   make-digit(logior(ash(low.value, shift - $digit-bits),
 		    ash(high.value, shift)));
@@ -200,7 +200,7 @@ end;
 //
 // A bignum.
 // 
-define class <extended-integer> (<integer>)
+define class <extended-integer> (<general-integer>)
   //
   // A bignum is just a vector of digits.  We require a fill instead of
   // supplying an init-value because we can't supply an obviously constant
@@ -217,7 +217,7 @@ seal generic initialize (<extended-integer>);
 //
 // Shorthand constructor function.
 // 
-define inline method make-bignum (size :: <fixed-integer>)
+define inline method make-bignum (size :: <integer>)
     => res :: <extended-integer>;
   make(<extended-integer>, size: size, fill: make-digit(0));
 end;
@@ -228,14 +228,14 @@ end;
 // is guarenteed that new-size will be less than or equal to the current size.
 //
 define method shrink-bignum
-    (num :: <extended-integer>, new-size :: <fixed-integer>)
+    (num :: <extended-integer>, new-size :: <integer>)
     => new :: <extended-integer>;
   // %%primitive shrink-bignum (num, new-size);
   if (new-size == num.bignum-size)
     num;
   else
     let new = make-bignum(new-size);
-    for (index :: <fixed-integer> from 0 below new-size)
+    for (index :: <integer> from 0 below new-size)
       bignum-digit(new, index) := bignum-digit(num, index);
     end;
     new;
@@ -250,10 +250,10 @@ end;
 // one digit.
 //
 define method normalized-length (num :: <extended-integer>,
-				 len :: <fixed-integer>)
-    => res-len :: <fixed-integer>;
+				 len :: <integer>)
+    => res-len :: <integer>;
   if (len > 1)
-    for (index :: <fixed-integer> from len - 2 to 0 by -1,
+    for (index :: <integer> from len - 2 to 0 by -1,
 	 prev-digit :: <digit> = bignum-digit(num, len - 1)
 	   then bignum-digit(num, index),
 	 while: sign-extend-digit(bignum-digit(num, index)) == prev-digit)
@@ -272,7 +272,7 @@ end;
 // originally passed.
 //
 define inline method normalize-bignum (num :: <extended-integer>,
-				       len :: <fixed-integer>)
+				       len :: <integer>)
     => res :: <extended-integer>;
   shrink-bignum(num, normalized-length(num, len));
 end;
@@ -290,7 +290,7 @@ define inline method as
   num;
 end;
 
-define method as (class == <extended-integer>, num :: <fixed-integer>)
+define method as (class == <extended-integer>, num :: <integer>)
     => res :: <extended-integer>;
   //
   // To convert a fixed integer into an extended integer, we make an extended
@@ -299,27 +299,27 @@ define method as (class == <extended-integer>, num :: <fixed-integer>)
   //
   let len = ceiling/($fixed-integer-bits, $digit-bits);
   let res = make-bignum(len);
-  for (index :: <fixed-integer> from 0 below len,
-       num :: <fixed-integer> = num then ash(num, -$digit-bits))
+  for (index :: <integer> from 0 below len,
+       num :: <integer> = num then ash(num, -$digit-bits))
     bignum-digit(res, index) := make-digit(num);
   end;
   normalize-bignum(res, len);
 end;
 
-define method as (class == <fixed-integer>, num :: <extended-integer>)
-    => res :: <fixed-integer>;
+define method as (class == <integer>, num :: <extended-integer>)
+    => res :: <integer>;
   //
   // To convert an extended integer into a fixnum, we just combine the digits
   // by shifting and logior-ing.  We use as-signed on the most significant
   // digit because that is the digit that has the sign bit in it.
   //
-  if (num < $minimum-fixed-integer
-	| num > $maximum-fixed-integer)
-    error("%= can't be represented as a <fixed-integer>", num);
+  if (num < $minimum-integer
+	| num > $maximum-integer)
+    error("%= can't be represented as a <integer>", num);
   end;
   let len = bignum-size(num);
   local
-    method repeat (index :: <fixed-integer>, result :: <fixed-integer>)
+    method repeat (index :: <integer>, result :: <integer>)
       if (negative?(index))
 	result;
       else
@@ -378,7 +378,7 @@ define inline method bignum-as-float
     => res :: <float>;
   let len = bignum-size(num);
   local
-    method repeat (index :: <fixed-integer>, result :: <float>)
+    method repeat (index :: <integer>, result :: <float>)
       if (negative?(index))
 	result;
       else
@@ -399,7 +399,7 @@ define method \== (num1 :: <extended-integer>, num2 :: <extended-integer>)
   let len2 = bignum-size(num2);
   if (len1 == len2)
     block (return)
-      for (posn :: <fixed-integer> from len1 - 1 to 0 by -1)
+      for (posn :: <integer> from len1 - 1 to 0 by -1)
 	let digit1 = bignum-digit(num1, posn);
 	let digit2 = bignum-digit(num2, posn);
 	unless (digit1 == digit2)
@@ -432,7 +432,7 @@ define method \< (num1 :: <extended-integer>, num2 :: <extended-integer>)
   if (num1-neg == num2-neg)
     if (len1 == len2)
       block (return)
-	for (posn :: <fixed-integer> from len1 - 1 to 0 by -1)
+	for (posn :: <integer> from len1 - 1 to 0 by -1)
 	  let digit1 = bignum-digit(num1, posn);
 	  let digit2 = bignum-digit(num2, posn);
 	  if (digit1 < digit2)
@@ -513,7 +513,7 @@ define method \+ (a :: <extended-integer>, b :: <extended-integer>)
   let carry-in = $no-carry;
   let shorter-digit = make-digit(0);
   let longer-digit = make-digit(0);
-  for (index :: <fixed-integer> from 0 below shorter-len)
+  for (index :: <integer> from 0 below shorter-len)
     shorter-digit := bignum-digit(shorter, index);
     longer-digit := bignum-digit(longer, index);
     let (digit, carry-out) = digit-add(shorter-digit, longer-digit, carry-in);
@@ -521,7 +521,7 @@ define method \+ (a :: <extended-integer>, b :: <extended-integer>)
     carry-in := carry-out;
   end;
   let shorter-sign = sign-extend-digit(shorter-digit);
-  for (index :: <fixed-integer> from shorter-len below longer-len)
+  for (index :: <integer> from shorter-len below longer-len)
     longer-digit := bignum-digit(longer, index);
     let (digit, carry-out) = digit-add(shorter-sign, longer-digit, carry-in);
     bignum-digit(res, index) := digit;
@@ -541,7 +541,7 @@ define method \* (a :: <extended-integer>, b :: <extended-integer>)
   let b-len = bignum-size(b);
   let res-len = a-len + b-len;
   let res = make-bignum(res-len);
-  for (index :: <fixed-integer> from 0 below res-len)
+  for (index :: <integer> from 0 below res-len)
     bignum-digit(res, index) := make-digit(0);
   end;
   local
@@ -556,23 +556,23 @@ define method \* (a :: <extended-integer>, b :: <extended-integer>)
       high;
     end;
   let a-digit = make-digit(0);
-  for (a-index :: <fixed-integer> from 0 below a-len)
+  for (a-index :: <integer> from 0 below a-len)
     a-digit := bignum-digit(a, a-index);
     let b-digit = make-digit(0);
     let carry = make-digit(0);
-    for (b-index :: <fixed-integer> from 0 below b-len)
+    for (b-index :: <integer> from 0 below b-len)
       b-digit := bignum-digit(b, b-index);
       carry := mult-and-add(a-digit, b-digit, a-index + b-index, carry);
     end;
     let b-sign = sign-extend-digit(b-digit);
-    for (b-index :: <fixed-integer> from b-len below res-len - a-index)
+    for (b-index :: <integer> from b-len below res-len - a-index)
       carry := mult-and-add(a-digit, b-sign, a-index + b-index, carry);
     end;
   end;
   let a-sign = sign-extend-digit(a-digit);
-  for (a-index :: <fixed-integer> from a-len below res-len)
+  for (a-index :: <integer> from a-len below res-len)
     let carry = make-digit(0);
-    for (b-index :: <fixed-integer> from 0 below res-len - a-index)
+    for (b-index :: <integer> from 0 below res-len - a-index)
       let b-digit = bignum-digit(b, b-index);
       carry := mult-and-add(a-sign, b-digit, a-index + b-index, carry);
     end;
@@ -592,7 +592,7 @@ define method \- (a :: <extended-integer>, b :: <extended-integer>)
     let borrow-in = $no-borrow;
     let a-digit = make-digit(0);
     let b-digit = make-digit(0);
-    for (index :: <fixed-integer> from 0 below a-len)
+    for (index :: <integer> from 0 below a-len)
       a-digit := bignum-digit(a, index);
       b-digit := bignum-digit(b, index);
       let (digit, borrow-out) = digit-subtract(a-digit, b-digit, borrow-in);
@@ -600,7 +600,7 @@ define method \- (a :: <extended-integer>, b :: <extended-integer>)
       borrow-in := borrow-out;
     end;
     let a-sign = sign-extend-digit(a-digit);
-    for (index :: <fixed-integer> from a-len below b-len)
+    for (index :: <integer> from a-len below b-len)
       b-digit := bignum-digit(b, index);
       let (digit, borrow-out) = digit-subtract(a-sign, b-digit, borrow-in);
       bignum-digit(res, index) := digit;
@@ -614,7 +614,7 @@ define method \- (a :: <extended-integer>, b :: <extended-integer>)
     let borrow-in = $no-borrow;
     let a-digit = make-digit(0);
     let b-digit = make-digit(0);
-    for (index :: <fixed-integer> from 0 below b-len)
+    for (index :: <integer> from 0 below b-len)
       a-digit := bignum-digit(a, index);
       b-digit := bignum-digit(b, index);
       let (digit, borrow-out) = digit-subtract(a-digit, b-digit, borrow-in);
@@ -622,7 +622,7 @@ define method \- (a :: <extended-integer>, b :: <extended-integer>)
       borrow-in := borrow-out;
     end;
     let b-sign = sign-extend-digit(b-digit);
-    for (index :: <fixed-integer> from b-len below a-len)
+    for (index :: <integer> from b-len below a-len)
       a-digit := bignum-digit(a, index);
       let (digit, borrow-out) = digit-subtract(a-digit, b-sign, borrow-in);
       bignum-digit(res, index) := digit;
@@ -643,7 +643,7 @@ define method negative (num :: <extended-integer>)
   let res = make-bignum(len + 1);
   let borrow-in = $no-borrow;
   let digit = make-digit(0);
-  for (index :: <fixed-integer> from 0 below len)
+  for (index :: <integer> from 0 below len)
     digit := bignum-digit(num, index);
     let (res-digit, borrow-out)
       = digit-subtract(make-digit(0), digit, borrow-in);
@@ -663,7 +663,7 @@ define method divide-by-digit (num :: <extended-integer>, digit :: <digit>)
   let len = num.bignum-size;
   let quo = make-bignum(len);
   let rem = make-digit(0);
-  for (index :: <fixed-integer> from len - 1 to 0 by -1)
+  for (index :: <integer> from len - 1 to 0 by -1)
     let (quo-digit, new-rem)
       = digit-divide(rem, bignum-digit(num, index), digit);
     bignum-digit(quo, index) := quo-digit;
@@ -675,11 +675,11 @@ define method divide-by-digit (num :: <extended-integer>, digit :: <digit>)
 end;
 
 define method divisor-shift (num :: <extended-integer>)
-    => res :: <fixed-integer>;
-  for (top-digit :: <fixed-integer>
+    => res :: <integer>;
+  for (top-digit :: <integer>
 	 = as-signed(bignum-digit(num, num.bignum-size - 1))
 	 then ash(top-digit, -1),
-       count :: <fixed-integer> from 1,
+       count :: <integer> from 1,
        until: top-digit == 0)
   finally
     $digit-bits - count;
@@ -719,12 +719,12 @@ define method division-guess (x1 :: <digit>, x2 :: <digit>, x3 :: <digit>,
 end;
 
 define method shift-for-division
-    (x :: <extended-integer>, shift :: <fixed-integer>)
+    (x :: <extended-integer>, shift :: <integer>)
     => res :: <extended-integer>;
   let len = x.bignum-size;
   if (zero?(shift))
     let res = make-bignum(len + 1);
-    for (index :: <fixed-integer> from 0 below len)
+    for (index :: <integer> from 0 below len)
       bignum-digit(res, index) := bignum-digit(x, index);
     end;
     bignum-digit(res, len) := make-digit(0);
@@ -732,7 +732,7 @@ define method shift-for-division
   else
     let res = make-bignum(len + 2);
     let prev-digit = make-digit(0);
-    for (index :: <fixed-integer> from 0 below len)
+    for (index :: <integer> from 0 below len)
       let next-digit = bignum-digit(x, index);
       bignum-digit(res, index) := digit-shift(next-digit, prev-digit, shift);
       prev-digit := next-digit;
@@ -765,7 +765,7 @@ define method bignum-divide (x :: <extended-integer>, y :: <extended-integer>)
     let length = x-len - y-len;
     let quo = make-bignum(length);
 
-    for (i :: <fixed-integer> from length - 1 to 0 by -1)
+    for (i :: <integer> from length - 1 to 0 by -1)
       let x1 = bignum-digit(x, i + y-len);
       let x2 = bignum-digit(x, i + y-len - 1);
       let x3 = bignum-digit(x, i + y-len - 2);
@@ -775,7 +775,7 @@ define method bignum-divide (x :: <extended-integer>, y :: <extended-integer>)
 
       let carry = make-digit(0);
       let borrow = $no-borrow;
-      for (j :: <fixed-integer> from 0 below y-len)
+      for (j :: <integer> from 0 below y-len)
 	let (low, high) = digit-multiply(bignum-digit(y, j), guess);
 	let (digit, sum-carry) = digit-add(low, carry, $no-carry);
 	carry := digit-add(high, make-digit(0), sum-carry);
@@ -790,7 +790,7 @@ define method bignum-divide (x :: <extended-integer>, y :: <extended-integer>)
       if (digit.digit-sign-bit-set?)
 	guess := digit-subtract(guess, make-digit(1), $no-borrow);
 	let carry-in = $no-carry;
-	for (j :: <fixed-integer> from 0 below y-len)
+	for (j :: <integer> from 0 below y-len)
 	  let (digit, carry-out)
 	    = digit-add(bignum-digit(x, i + j),
 			bignum-digit(y, j),
@@ -870,9 +870,9 @@ define method \^ (base :: <complex>, power :: <extended-integer>)
   else
     let len = power.bignum-size;
     let total = as(object-class(base), 1);
-    for (digit-index :: <fixed-integer> from 0 below len)
+    for (digit-index :: <integer> from 0 below len)
       let digit = as-signed(bignum-digit(power, digit-index));
-      for (bit-index :: <fixed-integer> from 0 below $digit-bits)
+      for (bit-index :: <integer> from 0 below $digit-bits)
 	if (logbit?(bit-index, digit))
 	  total := base * total;
 	end;
@@ -929,7 +929,7 @@ define method copy-bignum (x :: <extended-integer>)
     => res :: <extended-integer>;
   let len = x.bignum-size;
   let res = make-bignum(len);
-  for (index :: <fixed-integer> from 0 below len)
+  for (index :: <integer> from 0 below len)
     bignum-digit(res, index) := bignum-digit(x, index);
   end;
   res;
@@ -941,14 +941,14 @@ end;
 // bits shifted.  X is guaranteed to be positive, so we don't have to worry
 // about sign extending it or trying to shift 0 until it becomes odd.
 // 
-define method shift-until-odd (x :: <extended-integer>, len :: <fixed-integer>)
-    => (new-len :: <fixed-integer>, shift :: <fixed-integer>);
-  let digits = for (index :: <fixed-integer> from 0 below len,
+define method shift-until-odd (x :: <extended-integer>, len :: <integer>)
+    => (new-len :: <integer>, shift :: <integer>);
+  let digits = for (index :: <integer> from 0 below len,
 		    while: bignum-digit(x, index) == make-digit(0))
 	       finally
 		 index;
 	       end;
-  let bits = for (index :: <fixed-integer> from 0,
+  let bits = for (index :: <integer> from 0,
 		  digit = bignum-digit(x, digits)
 		    then digit-shift(make-digit(0), digit, $digit-bits - 1),
 		  while: even?(as-signed(digit)))
@@ -960,7 +960,7 @@ define method shift-until-odd (x :: <extended-integer>, len :: <fixed-integer>)
       values(len, 0);
     else
       let new-len = len - digits;
-      for (index :: <fixed-integer> from 0 below new-len)
+      for (index :: <integer> from 0 below new-len)
 	bignum-digit(x, index) := bignum-digit(x, index + digits);
       end;
       values(new-len, digits * $digit-bits);
@@ -968,7 +968,7 @@ define method shift-until-odd (x :: <extended-integer>, len :: <fixed-integer>)
   else
     let new-len = len - digits;
     let prev-digit = bignum-digit(x, 0);
-    for (index :: <fixed-integer> from 1 below new-len)
+    for (index :: <integer> from 1 below new-len)
       let next-digit = bignum-digit(x, index);
       bignum-digit(x, index - 1)
 	:= digit-shift(next-digit, prev-digit, $digit-bits - bits);
@@ -985,12 +985,12 @@ end;
 // Do a three-way compare of x and y (which are guaranteed to be positive).
 // 
 define method three-way-compare
-    (x :: <extended-integer>, x-len :: <fixed-integer>,
-     y :: <extended-integer>, y-len :: <fixed-integer>)
+    (x :: <extended-integer>, x-len :: <integer>,
+     y :: <extended-integer>, y-len :: <integer>)
     => res :: one-of(#"less", #"equal", #"greater");
   if (x-len == y-len)
     block (return)
-      for (index :: <fixed-integer> from x-len - 1 to 0 by -1)
+      for (index :: <integer> from x-len - 1 to 0 by -1)
 	let x-digit = bignum-digit(x, index);
 	let y-digit = bignum-digit(y, index);
 	if (x-digit < y-digit)
@@ -1016,12 +1016,12 @@ end;
 // negative.
 //
 define method subtract-in-place (larger :: <extended-integer>,
-				 larger-len :: <fixed-integer>,
+				 larger-len :: <integer>,
 				 smaller :: <extended-integer>,
-				 smaller-len :: <fixed-integer>)
-    => res-len :: <fixed-integer>;
+				 smaller-len :: <integer>)
+    => res-len :: <integer>;
   let borrow-in = $no-borrow;
-  for (index :: <fixed-integer> from 0 below smaller-len)
+  for (index :: <integer> from 0 below smaller-len)
     let larger-digit = bignum-digit(larger, index);
     let smaller-digit = bignum-digit(smaller, index);
     let (digit, borrow-out)
@@ -1029,7 +1029,7 @@ define method subtract-in-place (larger :: <extended-integer>,
     bignum-digit(larger, index) := digit;
     borrow-in := borrow-out;
   end;
-  for (index :: <fixed-integer> from smaller-len below larger-len)
+  for (index :: <integer> from smaller-len below larger-len)
     let larger-digit = bignum-digit(larger, index);
     let (digit, borrow-out)
       = digit-subtract(larger-digit, make-digit(0), borrow-in);
@@ -1055,7 +1055,7 @@ define method binary-logior (a :: <extended-integer>, b :: <extended-integer>)
       end;
   if (negative?(shorter))
     let res = make-bignum(shorter-len);
-    for (index :: <fixed-integer> from 0 below shorter-len)
+    for (index :: <integer> from 0 below shorter-len)
       bignum-digit(res, index)
 	:= digit-logior(bignum-digit(longer, index),
 			bignum-digit(shorter, index));
@@ -1063,12 +1063,12 @@ define method binary-logior (a :: <extended-integer>, b :: <extended-integer>)
     normalize-bignum(res, shorter-len);
   else
     let res = make-bignum(longer-len);
-    for (index :: <fixed-integer> from 0 below shorter-len)
+    for (index :: <integer> from 0 below shorter-len)
       bignum-digit(res, index)
 	:= digit-logior(bignum-digit(longer, index),
 			bignum-digit(shorter, index));
     end;
-    for (index :: <fixed-integer> from shorter-len below longer-len)
+    for (index :: <integer> from shorter-len below longer-len)
       bignum-digit(res, index) := bignum-digit(longer, index);
     end;
     normalize-bignum(res, longer-len);
@@ -1086,14 +1086,14 @@ define method binary-logxor (a :: <extended-integer>, b :: <extended-integer>)
 	values(b, b-len, a, a-len);
       end;
   let res = make-bignum(longer-len);
-  for (index :: <fixed-integer> from 0 below shorter-len)
+  for (index :: <integer> from 0 below shorter-len)
     bignum-digit(res, index)
       := digit-logxor(bignum-digit(longer, index),
 		      bignum-digit(shorter, index));
   end;
   let shorter-sign
     = sign-extend-digit(bignum-digit(shorter, shorter-len - 1));
-  for (index :: <fixed-integer> from shorter-len below longer-len)
+  for (index :: <integer> from shorter-len below longer-len)
     bignum-digit(res, index)
       := digit-logxor(bignum-digit(longer, index), shorter-sign);
   end;
@@ -1112,18 +1112,18 @@ define method binary-logand (a :: <extended-integer>, b :: <extended-integer>)
       end;
   if (negative?(shorter))
     let res = make-bignum(longer-len);
-    for (index :: <fixed-integer> from 0 below shorter-len)
+    for (index :: <integer> from 0 below shorter-len)
       bignum-digit(res, index)
 	:= digit-logand(bignum-digit(longer, index),
 			bignum-digit(shorter, index));
     end;
-    for (index :: <fixed-integer> from shorter-len below longer-len)
+    for (index :: <integer> from shorter-len below longer-len)
       bignum-digit(res, index) := bignum-digit(longer, index);
     end;
     normalize-bignum(res, longer-len);
   else
     let res = make-bignum(shorter-len);
-    for (index :: <fixed-integer> from 0 below shorter-len)
+    for (index :: <integer> from 0 below shorter-len)
       bignum-digit(res, index)
 	:= digit-logand(bignum-digit(longer, index),
 			bignum-digit(shorter, index));
@@ -1136,7 +1136,7 @@ define method lognot (num :: <extended-integer>)
     => res :: <extended-integer>;
   let len = num.bignum-size;
   let res = make-bignum(len);
-  for (index :: <fixed-integer> from 0 below len)
+  for (index :: <integer> from 0 below len)
     bignum-digit(res, index) := digit-lognot(bignum-digit(num, index));
   end;
   // We don't have to normalize it, because we can assume that num started
@@ -1144,7 +1144,7 @@ define method lognot (num :: <extended-integer>)
   res;
 end;
 
-define method logbit? (index :: <fixed-integer>, num :: <extended-integer>)
+define method logbit? (index :: <integer>, num :: <extended-integer>)
     => res :: <boolean>;
   let (digit-index, bit-index) = floor/(index, $digit-bits);
   if (digit-index >= 0 & digit-index < num.bignum-size)
@@ -1158,7 +1158,7 @@ end;
 
 // Shifting.
 
-define method ash (num :: <extended-integer>, shift :: <fixed-integer>)
+define method ash (num :: <extended-integer>, shift :: <integer>)
     => res :: <extended-integer>;
   if (zero?(shift))
     num;
@@ -1170,14 +1170,14 @@ define method ash (num :: <extended-integer>, shift :: <fixed-integer>)
       if (positive?(res-len))
 	let res = make-bignum(len + digits);
 	if (negative?(digits))
-	  for (index :: <fixed-integer> from 0 below len + digits)
+	  for (index :: <integer> from 0 below len + digits)
 	    bignum-digit(res, index) := bignum-digit(num, index - digits);
 	  end;
 	else
-	  for (index :: <fixed-integer> from 0 below digits)
+	  for (index :: <integer> from 0 below digits)
 	    bignum-digit(res, index) := make-digit(0);
 	  end;
-	  for (index :: <fixed-integer> from 0 below len)
+	  for (index :: <integer> from 0 below len)
 	    bignum-digit(res, index + digits) := bignum-digit(num, index);
 	  end;
 	end;
@@ -1195,7 +1195,7 @@ define method ash (num :: <extended-integer>, shift :: <fixed-integer>)
 	let res = make-bignum(res-len);
 	if (negative?(digits))
 	  let prev-digit = bignum-digit(num, -1 - digits);
-	  for (index :: <fixed-integer> from 0 below len + digits)
+	  for (index :: <integer> from 0 below len + digits)
 	    let next-digit = bignum-digit(num, index - digits);
 	    bignum-digit(res, index)
 	      := digit-shift(next-digit, prev-digit, bits);
@@ -1204,11 +1204,11 @@ define method ash (num :: <extended-integer>, shift :: <fixed-integer>)
 	  bignum-digit(res, len + digits)
 	    := digit-shift(sign-extend-digit(prev-digit), prev-digit, bits);
 	else
-	  for (index :: <fixed-integer> from 0 below digits)
+	  for (index :: <integer> from 0 below digits)
 	    bignum-digit(res, index) := make-digit(0);
 	  end;
 	  let prev-digit = make-digit(0);
-	  for (index :: <fixed-integer> from 0 below len)
+	  for (index :: <integer> from 0 below len)
 	    let next-digit = bignum-digit(num, index);
 	    bignum-digit(res, index + digits)
 	      := digit-shift(next-digit, prev-digit, bits);
@@ -1230,12 +1230,12 @@ end;
 
 // Contagion methods.
 
-define inline method \= (num1 :: <extended-integer>, num2 :: <fixed-integer>)
+define inline method \= (num1 :: <extended-integer>, num2 :: <integer>)
     => res :: <boolean>;
   num1 == as(<extended-integer>, num2);
 end;
 
-define inline method \= (num1 :: <fixed-integer>, num2 :: <extended-integer>)
+define inline method \= (num1 :: <integer>, num2 :: <extended-integer>)
     => res :: <boolean>;
   as(<extended-integer>, num1) == num2;
 end;
@@ -1270,12 +1270,12 @@ define inline method \= (num1 :: <extended-float>, num2 :: <extended-integer>)
   num1 = as(<extended-float>, num2);
 end;
 
-define inline method \< (num1 :: <extended-integer>, num2 :: <fixed-integer>)
+define inline method \< (num1 :: <extended-integer>, num2 :: <integer>)
     => res :: <boolean>;
   num1 < as(<extended-integer>, num2);
 end;
 
-define inline method \< (num1 :: <fixed-integer>, num2 :: <extended-integer>)
+define inline method \< (num1 :: <integer>, num2 :: <extended-integer>)
     => res :: <boolean>;
   as(<extended-integer>, num1) < num2;
 end;
@@ -1370,12 +1370,12 @@ define inline method \~= (a :: <extended-float>, b :: <extended-integer>)
   a ~= as(<extended-float>, b);
 end;
 
-define inline method \+ (a :: <extended-integer>, b :: <fixed-integer>)
+define inline method \+ (a :: <extended-integer>, b :: <integer>)
     => res :: <extended-integer>;
   a + as(<extended-integer>, b);
 end;
 
-define inline method \+ (a :: <fixed-integer>, b :: <extended-integer>)
+define inline method \+ (a :: <integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   as(<extended-integer>, a) + b;
 end;
@@ -1410,12 +1410,12 @@ define inline method \+ (a :: <extended-float>, b :: <extended-integer>)
   a + as(<extended-float>, b);
 end;
 
-define inline method \* (a :: <extended-integer>, b :: <fixed-integer>)
+define inline method \* (a :: <extended-integer>, b :: <integer>)
     => res :: <extended-integer>;
   a * as(<extended-integer>, b);
 end;
 
-define inline method \* (a :: <fixed-integer>, b :: <extended-integer>)
+define inline method \* (a :: <integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   as(<extended-integer>, a) * b;
 end;
@@ -1450,12 +1450,12 @@ define inline method \* (a :: <extended-float>, b :: <extended-integer>)
   a * as(<extended-float>, b);
 end;
 
-define inline method \- (a :: <extended-integer>, b :: <fixed-integer>)
+define inline method \- (a :: <extended-integer>, b :: <integer>)
     => res :: <extended-integer>;
   a - as(<extended-integer>, b);
 end;
 
-define inline method \- (a :: <fixed-integer>, b :: <extended-integer>)
+define inline method \- (a :: <integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   as(<extended-integer>, a) - b;
 end;
@@ -1520,78 +1520,78 @@ define inline method \/ (a :: <extended-float>, b :: <extended-integer>)
   a / as(<extended-float>, b);
 end;
 
-define inline method floor/ (a :: <extended-integer>, b :: <fixed-integer>)
+define inline method floor/ (a :: <extended-integer>, b :: <integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   floor/(a, as(<extended-integer>, b));
 end;
 
-define inline method floor/ (a :: <fixed-integer>, b :: <extended-integer>)
+define inline method floor/ (a :: <integer>, b :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   floor/(as(<extended-integer>, a), b);
 end;
 
-define inline method ceiling/ (a :: <extended-integer>, b :: <fixed-integer>)
+define inline method ceiling/ (a :: <extended-integer>, b :: <integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   ceiling/(a, as(<extended-integer>, b));
 end;
 
-define inline method ceiling/ (a :: <fixed-integer>, b :: <extended-integer>)
+define inline method ceiling/ (a :: <integer>, b :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   ceiling/(as(<extended-integer>, a), b);
 end;
 
-define inline method round/ (a :: <extended-integer>, b :: <fixed-integer>)
+define inline method round/ (a :: <extended-integer>, b :: <integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   round/(a, as(<extended-integer>, b));
 end;
 
-define inline method round/ (a :: <fixed-integer>, b :: <extended-integer>)
+define inline method round/ (a :: <integer>, b :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   round/(as(<extended-integer>, a), b);
 end;
 
-define inline method truncate/ (a :: <extended-integer>, b :: <fixed-integer>)
+define inline method truncate/ (a :: <extended-integer>, b :: <integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   truncate/(a, as(<extended-integer>, b));
 end;
 
-define inline method truncate/ (a :: <fixed-integer>, b :: <extended-integer>)
+define inline method truncate/ (a :: <integer>, b :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   truncate/(as(<extended-integer>, a), b);
 end;
 
 define inline method binary-logior
-    (a :: <extended-integer>, b :: <fixed-integer>)
+    (a :: <extended-integer>, b :: <integer>)
     => res :: <extended-integer>;
   binary-logior(a, as(<extended-integer>, b));
 end;
 
 define inline method binary-logior
-    (a :: <fixed-integer>, b :: <extended-integer>)
+    (a :: <integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   binary-logior(as(<extended-integer>, a), b);
 end;
 
 define inline method binary-logxor
-    (a :: <extended-integer>, b :: <fixed-integer>)
+    (a :: <extended-integer>, b :: <integer>)
     => res :: <extended-integer>;
   binary-logxor(a, as(<extended-integer>, b));
 end;
 
 define inline method binary-logxor
-    (a :: <fixed-integer>, b :: <extended-integer>)
+    (a :: <integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   binary-logxor(as(<extended-integer>, a), b);
 end;
 
 define inline method binary-logand
-    (a :: <extended-integer>, b :: <fixed-integer>)
+    (a :: <extended-integer>, b :: <integer>)
     => res :: <extended-integer>;
   binary-logand(a, as(<extended-integer>, b));
 end;
 
 define inline method binary-logand
-    (a :: <fixed-integer>, b :: <extended-integer>)
+    (a :: <integer>, b :: <extended-integer>)
     => res :: <extended-integer>;
   binary-logand(as(<extended-integer>, a), b);
 end;

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.5 1996/01/08 22:15:59 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/list.dylan,v 1.6 1996/01/12 02:10:48 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -12,7 +12,7 @@ end;
 
 define sealed method make (class == <list>, #key size = 0, fill = #f)
     => res :: <list>;
-  for (i :: <fixed-integer> from 0 below size,
+  for (i :: <integer> from 0 below size,
        result = #() then pair(fill, result))
   finally
     result;
@@ -59,7 +59,7 @@ define inline method forward-iteration-protocol (list :: <list>)
 	 end,
 	 method (list :: <list>, state :: <pair>)
 	   block (return)
-	     for (key :: <fixed-integer> from 0,
+	     for (key :: <integer> from 0,
 		  pair :: <pair> = list then pair.tail,
 		  until: pair == state)
 	     finally
@@ -79,10 +79,10 @@ define inline method forward-iteration-protocol (list :: <list>)
 end;
 
 define sealed method element
-    (list :: <list>, index :: <fixed-integer>, #key default = $not-supplied)
+    (list :: <list>, index :: <integer>, #key default = $not-supplied)
  => (element :: <object>);
   // This method should work on unbounded lists.
-  local method find-element (l :: <list>, index :: <fixed-integer>)
+  local method find-element (l :: <list>, index :: <integer>)
 	 => (found? :: <boolean>, value);
 	  if (l == #())
 	    values(#f, #f);
@@ -104,13 +104,13 @@ define sealed method element
 end method element;
 
 define sealed method element-setter
-    (element :: <object>, list :: <list>, index :: <fixed-integer>)
+    (element :: <object>, list :: <list>, index :: <integer>)
  => (element :: <object>);
   if (index < 0 | list == #())
     element-error(list, index);
   else
     for (l :: <list> = list then l.tail,
-	 i :: <fixed-integer> from 0 below index)
+	 i :: <integer> from 0 below index)
       if (l == #()) element-error(list, index) end if;
     finally
       l.head := element;
@@ -161,7 +161,7 @@ end;
 define flushable method as
     (class == <list>, vec :: <simple-object-vector>)
     => res :: <list>;
-  for (index :: <fixed-integer> from vec.size - 1 to 0 by -1,
+  for (index :: <integer> from vec.size - 1 to 0 by -1,
        res = #() then pair(vec[index], res))
   finally
     res;
@@ -203,7 +203,7 @@ define method remove! (list :: <list>, element, #key test = \==, count)
 end;
 
 define method size (list :: <list>)
-    => res :: type-union(<false>, <fixed-integer>);
+    => res :: type-union(<false>, <integer>);
   if (list == #())
     0;
   elseif (list.tail == #())

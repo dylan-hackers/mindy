@@ -1,19 +1,19 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.6 1995/12/15 14:06:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/symbol.dylan,v 1.7 1996/01/12 02:10:55 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define class <symbol> (<object>)
   slot symbol-string :: <string>, setter: #f, required-init-keyword: string:;
-  slot symbol-hashing :: <fixed-integer>, init-value: 0;
+  slot symbol-hashing :: <integer>, init-value: 0;
   slot symbol-next :: false-or(<symbol>), init-value: #f;
 end;
 
 define class <symbol-table> (<object>)
-  slot sym-count :: <fixed-integer>, init-value: 0;
-  slot cell-count :: <fixed-integer>, required-init-keyword: #"size";
+  slot sym-count :: <integer>, init-value: 0;
+  slot cell-count :: <integer>, required-init-keyword: #"size";
   slot cells :: <simple-object-vector>;
-  slot resize-threshold :: <fixed-integer>, init-value: 0;
+  slot resize-threshold :: <integer>, init-value: 0;
 end class <symbol-table>;
 
 define method initialize
@@ -24,10 +24,10 @@ define method initialize
 end method initialize;
 
 define method symbol-hash
-    (str :: <byte-string>) => (result :: <fixed-integer>);
-  for (hash :: <fixed-integer> = 0
+    (str :: <byte-string>) => (result :: <integer>);
+  for (hash :: <integer> = 0
 	 then abs(logxor(logior(ash(hash, 5), ash(hash, -27)),
-			 logior(as(<fixed-integer>, char), #x20))),
+			 logior(as(<integer>, char), #x20))),
        char in str)
   finally
     hash;
@@ -73,7 +73,7 @@ end method rehash-symbols;
 define variable $symbol-table :: <symbol-table>
   = begin
       let sz = for (sym = %%primitive initial-symbols () then sym.symbol-next,
-		    count :: <fixed-integer> from 0,
+		    count :: <integer> from 0,
 		    until: sym == #f)
 	       finally count;
 	       end for;
@@ -99,8 +99,8 @@ define sealed method make
     (class == <symbol>, #next next-method, #key string :: <string>)
  => (res :: <symbol>);
 //  let string :: <byte-string> = as(<byte-string>, string);
-  let hash :: <fixed-integer> = symbol-hash(string);
-  let cell-index :: <fixed-integer> = modulo(hash, $symbol-table.cell-count);
+  let hash :: <integer> = symbol-hash(string);
+  let cell-index :: <integer> = modulo(hash, $symbol-table.cell-count);
 
   block (return)
     for (sym = $symbol-table.cells[cell-index]

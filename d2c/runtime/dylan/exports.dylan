@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.15 1995/12/15 05:32:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.16 1996/01/12 02:10:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -122,8 +122,8 @@ define module Extensions
   use Dylan-Viscera,
     import: {
 	     // More integers.
-	     <fixed-integer>, <extended-integer>,
-	     $maximum-fixed-integer, $minimum-fixed-integer,
+	     <general-integer>, <extended-integer>,
+	     $maximum-integer, $minimum-integer,
 
 	     // Ratios.
 	     <ratio>, ratio, numerator, denominator,

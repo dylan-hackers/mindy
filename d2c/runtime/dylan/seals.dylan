@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/seals.dylan,v 1.1 1995/12/09 02:52:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/seals.dylan,v 1.2 1996/01/12 02:10:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -25,7 +25,7 @@ seal generic rank (<builtin-array>);
 seal generic row-major-index (<builtin-array>);
 seal generic aref (<builtin-array>);
 seal generic aref-setter (<object>, <builtin-array>);
-seal generic dimension (<builtin-array>, <fixed-integer>);
+seal generic dimension (<builtin-array>, <integer>);
 seal generic dimensions (<builtin-array>);
 
 define constant <builtin-mutable-sequence>
@@ -40,7 +40,7 @@ define constant <builtin-mutable-collection>
   = type-union(<builtin-mutable-sequence>);
 
 seal generic element-setter
-  (<object>, <builtin-mutable-collection>, <fixed-integer>);
+  (<object>, <builtin-mutable-collection>, <integer>);
 seal generic replace-elements!
   (<builtin-mutable-collection>, <function>, <function>);
 seal generic fill! (<builtin-mutable-collection>, <object>);
@@ -72,7 +72,7 @@ seal generic subsequence-position (<builtin-sequence>, <builtin-sequence>);
 define constant <builtin-stretchy-collection>
   = type-union(<stretchy-object-vector>, <simple-object-deque>);
 
-seal generic size-setter (<fixed-integer>, <builtin-stretchy-collection>);
+seal generic size-setter (<integer>, <builtin-stretchy-collection>);
 
 define constant <builtin-collection>
   = type-union(<builtin-sequence>);
@@ -80,7 +80,7 @@ define constant <builtin-collection>
 seal generic initialize (<builtin-collection>);
 seal generic shallow-copy (<builtin-collection>);
 seal generic type-for-copy (<builtin-collection>);
-seal generic element (<builtin-collection>, <fixed-integer>);
+seal generic element (<builtin-collection>, <integer>);
 seal generic key-sequence (<builtin-collection>);
 seal generic reduce (<function>, <object>, <builtin-collection>);
 seal generic reduce1 (<function>, <builtin-collection>);

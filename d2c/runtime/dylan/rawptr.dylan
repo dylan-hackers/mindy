@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/rawptr.dylan,v 1.4 1995/12/14 00:12:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/rawptr.dylan,v 1.5 1996/01/12 02:10:52 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -25,14 +25,13 @@ seal generic functional-== (<raw-pointer>, <object>);
 seal generic functional-== (<object>, <raw-pointer>);
 
 define sealed inline method as
-    (class == <raw-pointer>, address :: <fixed-integer>)
+    (class == <raw-pointer>, address :: <integer>)
     => res :: <raw-pointer>;
   %%primitive make-raw-pointer (address);
 end;
 
-define sealed inline method as
-    (class :: one-of(<integer>, <fixed-integer>), ptr :: <raw-pointer>)
-    => res :: <fixed-integer>;
+define sealed inline method as (class == <integer>, ptr :: <raw-pointer>)
+    => res :: <integer>;
   %%primitive raw-pointer-address (ptr);
 end;
 
@@ -63,18 +62,18 @@ end;
 seal generic \~= (<raw-pointer>, <raw-pointer>);
 seal generic \<= (<raw-pointer>, <raw-pointer>);
 
-define sealed inline method \+ (ptr :: <raw-pointer>, bytes :: <fixed-integer>)
+define sealed inline method \+ (ptr :: <raw-pointer>, bytes :: <integer>)
     => res :: <raw-pointer>;
   %%primitive pointer-+ (ptr, bytes);
 end;
 
-define sealed inline method \+ (bytes :: <fixed-integer>, ptr :: <raw-pointer>)
+define sealed inline method \+ (bytes :: <integer>, ptr :: <raw-pointer>)
     => res :: <raw-pointer>;
   %%primitive pointer-+ (ptr, bytes);
 end;
 
 define sealed inline method \- (ptr1 :: <raw-pointer>, ptr2 :: <raw-pointer>)
-    => res :: <fixed-integer>;
+    => res :: <integer>;
   %%primitive pointer-- (ptr1, ptr2);
 end;
 

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.7 1995/12/14 00:13:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.8 1996/01/12 02:10:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -6,7 +6,7 @@ module: dylan-viscera
 define method format (str :: <byte-string>, #rest args) => ();
   let finis = str.size;
   local
-    method scan (index :: <fixed-integer>, next-arg :: <fixed-integer>)
+    method scan (index :: <integer>, next-arg :: <integer>)
       unless (index == finis)
 	let char = str[index];
 	if (char == '%')
@@ -126,7 +126,7 @@ end;
 define method print (vec :: <simple-object-vector>) => ();
   write("#[");
   block (return)
-    for (count :: <fixed-integer> from 0, el in vec, first? = #t then #f)
+    for (count :: <integer> from 0, el in vec, first? = #t then #f)
       unless (first?)
 	write(", ");
       end;
@@ -143,7 +143,7 @@ end;
 define method print (list :: <list>) => ();
   write("#(");
   block (return)
-    for (count :: <fixed-integer> from 0,
+    for (count :: <integer> from 0,
 	 list = list then list.tail,
 	 first? = #t then #f,
 	 until: list == #())
@@ -187,7 +187,7 @@ define method print (false == #f) => ();
   write("#f");
 end;
 
-define method print (int :: <fixed-integer>) => ();
+define method print (int :: <integer>) => ();
   write-integer(int, 10);
 end;
 
@@ -197,13 +197,13 @@ define method print (int :: <extended-integer>) => ();
 end;
 
 
-define generic write-integer (int :: <integer>, radix :: <fixed-integer>)
+define generic write-integer (int :: <general-integer>, radix :: <integer>)
     => ();
 
-define method write-integer (int :: <fixed-integer>, radix :: <fixed-integer>)
+define method write-integer (int :: <integer>, radix :: <integer>)
     => ();
   local
-    method repeat (int :: <fixed-integer>)
+    method repeat (int :: <integer>)
       let (remaining, digit) = floor/(int, radix);
       unless (zero?(remaining))
 	repeat(remaining);
@@ -223,11 +223,11 @@ define method write-integer (int :: <fixed-integer>, radix :: <fixed-integer>)
 end;
 
 define method write-integer
-    (int :: <extended-integer>, radix :: <fixed-integer>) => ();
+    (int :: <extended-integer>, radix :: <integer>) => ();
   local
     method repeat (int :: <extended-integer>, digits :: <list>)
       let (remaining, digit) = floor/(int, radix);
-      let digit = as(<fixed-integer>, digit);
+      let digit = as(<integer>, digit);
       let digits
 	= pair(if (digit < 10)
 		 digit + as(<integer>, '0');
@@ -248,7 +248,7 @@ define method write-integer
       else
 	repeat(int, #());
       end;
-  for (digit :: <fixed-integer> in digits)
+  for (digit :: <integer> in digits)
     write(digit);
   end;
 end;
@@ -257,7 +257,7 @@ end;
 define generic write (thing :: <object>) => ();
 
 define inline method write
-    (int :: limited(<fixed-integer>, min: 0, max: 255)) => ();
+    (int :: limited(<integer>, min: 0, max: 255)) => ();
   %%primitive call-out ("putchar", void:, int: int);
 end;
 

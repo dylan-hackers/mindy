@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.12 1995/12/15 05:32:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.13 1996/01/12 02:10:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -25,8 +25,6 @@ define %%module dylan-viscera
     <number>, <complex>, <real>,
     <float>, <single-float>, <double-float>, <extended-float>,
     <rational>, <integer>,
-    $maximum-fixed-integer, $minimum-fixed-integer,
-
 
     // Collections
     <collection>, <explicit-key-collection>, <sequence>,
@@ -112,8 +110,8 @@ define %%module dylan-viscera
     \&, \|, \:=,
 
     // Extensions
-    <fixed-integer>, <extended-integer>,
-    $maximum-fixed-integer, $minimum-fixed-integer,
+    <general-integer>, <extended-integer>,
+    $maximum-integer, $minimum-integer,
     <ratio>, ratio, numerator, denominator,
     <byte-character>, <true>, <false>,
     <equal-table>, equal-hash, 

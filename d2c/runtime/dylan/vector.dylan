@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.7 1996/01/08 22:15:59 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.8 1996/01/12 02:10:57 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -30,17 +30,17 @@ define inline method dimensions (vec :: <vector>) => res :: <sequence>;
   vector(vec.size);
 end;
 
-define inline method rank (vec :: <vector>) => res :: <fixed-integer>;
+define inline method rank (vec :: <vector>) => res :: <integer>;
   1;
 end;
 
 define inline method row-major-index (vec :: <vector>, #rest indices)
-    => index :: <fixed-integer>;
+    => index :: <integer>;
   if (indices.size ~== 1)
     error("Number of indices not equal to rank. Got %=, wanted one index",
 	  indices);
   end if;
-  let index :: <fixed-integer> = indices[0];
+  let index :: <integer> = indices[0];
   if (index < 0 | index > vec.size)
     error("Vector index out of bounds: %=", index);
   end;
@@ -51,7 +51,7 @@ end;
 // ???
 
 define constant element-error
-  = method (coll :: <sequence>, index :: <fixed-integer>)
+  = method (coll :: <sequence>, index :: <integer>)
 	=> res :: <never-returns>;
       error("No element %d in %=", index, coll);
     end method;
@@ -96,7 +96,7 @@ end;
 seal generic make (singleton(<simple-object-vector>));
 
 define sealed inline method element
-    (vec :: <simple-object-vector>, index :: <fixed-integer>,
+    (vec :: <simple-object-vector>, index :: <integer>,
      #key default = $not-supplied)
     => element :: <object>;
   if (index >= 0 & index < vec.size)
@@ -110,7 +110,7 @@ end;
 
 define sealed inline method element-setter
     (new-value :: <object>, vec :: <simple-object-vector>,
-     index :: <fixed-integer>)
+     index :: <integer>)
     => new-value :: <object>;
   if (index >= 0 & index < vec.size)
     %element(vec, index) := new-value;
@@ -123,7 +123,7 @@ define sealed method as
     (class == <simple-object-vector>, collection :: <collection>)
     => res :: <simple-object-vector>;
   let res = make(<simple-object-vector>, size: collection.size);
-  for (index :: <fixed-integer> from 0, element in collection)
+  for (index :: <integer> from 0, element in collection)
     res[index] := element;
   end;
   res;

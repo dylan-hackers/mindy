@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.7 1995/12/09 21:09:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.8 1996/01/12 02:10:54 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -74,7 +74,7 @@ seal generic make (singleton(<unicode-string>));
 define sealed method as (class == <unicode-string>, collection :: <collection>)
     => res :: <unicode-string>;
   let res = make(<unicode-string>, size: collection.size);
-  for (index :: <fixed-integer> from 0, element in collection)
+  for (index :: <integer> from 0, element in collection)
     res[index] := element;
   end;
   res;
@@ -86,7 +86,7 @@ define inline method as (class == <unicode-string>, string :: <unicode-string>)
 end;
 
 define inline method element
-    (vec :: <unicode-string>, index :: <fixed-integer>,
+    (vec :: <unicode-string>, index :: <integer>,
      #key default = $not-supplied)
     => element :: <object>; // because of default:
   if (index >= 0 & index < vec.size)
@@ -100,7 +100,7 @@ end;
 
 define inline method element-setter
     (new-value :: <character>, vec :: <unicode-string>,
-     index :: <fixed-integer>)
+     index :: <integer>)
     => new-value :: <character>;
   if (index >= 0 & index < vec.size)
     %element(vec, index) := new-value;
@@ -124,7 +124,7 @@ seal generic make (singleton(<byte-string>));
 define sealed method as (class == <byte-string>, collection :: <collection>)
     => res :: <byte-string>;
   let res = make(<byte-string>, size: collection.size);
-  for (index :: <fixed-integer> from 0, element in collection)
+  for (index :: <integer> from 0, element in collection)
     res[index] := element;
   end;
   res;
@@ -136,7 +136,7 @@ define inline method as (class == <byte-string>, string :: <byte-string>)
 end;
 
 define inline method element
-    (vec :: <byte-string>, index :: <fixed-integer>,
+    (vec :: <byte-string>, index :: <integer>,
      #key default = $not-supplied)
     => element :: <object>; // because of default:
   if (index >= 0 & index < vec.size)
@@ -150,7 +150,7 @@ end;
 
 define inline method element-setter
     (new-value :: <byte-character>, vec :: <byte-string>,
-     index :: <fixed-integer>)
+     index :: <integer>)
     => new-value :: <byte-character>;
   if (index >= 0 & index < vec.size)
     %element(vec, index) := new-value;
@@ -160,17 +160,17 @@ define inline method element-setter
 end;
 
 define method copy-sequence
-    (vector :: <byte-string>, #key start :: <fixed-integer> = 0, end: last)
+    (vector :: <byte-string>, #key start :: <integer> = 0, end: last)
  => (result :: <byte-string>);
-  let src-sz :: <fixed-integer> = size(vector);
-  let last :: <fixed-integer>
+  let src-sz :: <integer> = size(vector);
+  let last :: <integer>
     = if (last & last < src-sz) last else src-sz end if;
-  let start :: <fixed-integer> = if (start < 0) 0 else start end if;
-  let sz :: <fixed-integer> = last - start;
+  let start :: <integer> = if (start < 0) 0 else start end if;
+  let sz :: <integer> = last - start;
 
   let result :: <byte-string> = make(<byte-string>, size: sz);
-  for (from-index :: <fixed-integer> from start below last,
-       to-index :: <fixed-integer> from 0)
+  for (from-index :: <integer> from start below last,
+       to-index :: <integer> from 0)
     %element(result, to-index) := %element(vector, from-index);
   end for;
   result;

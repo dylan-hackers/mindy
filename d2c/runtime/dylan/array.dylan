@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/array.dylan,v 1.4 1995/12/09 02:44:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/array.dylan,v 1.5 1996/01/12 02:10:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -17,19 +17,19 @@ end;
 define sealed method make
     (class == <array>, #key fill, dimensions :: <sequence>)
     => res :: <array>;
-  let rank :: <fixed-integer> = dimensions.size;
+  let rank :: <integer> = dimensions.size;
   if (rank == 1)
     make(<simple-object-vector>, size: dimensions.first, fill: fill);
   else
-    for (size :: <fixed-integer> = 1 then size * dimension,
-	 dimension :: <fixed-integer> in dimensions)
+    for (size :: <integer> = 1 then size * dimension,
+	 dimension :: <integer> in dimensions)
     finally
       let result = make(<simple-object-array>,
 			data-vector: make(<simple-object-vector>,
 					  size: size, fill: fill),
 			rank: rank);
-      for (index :: <fixed-integer> from 0,
-	   dimension :: <fixed-integer> in dimensions)
+      for (index :: <integer> from 0,
+	   dimension :: <integer> in dimensions)
 	%dimension(result, index) := dimension;
       end;
       result;
@@ -49,10 +49,10 @@ end;
 
 define open generic dimensions (array :: <array>) => dims :: <sequence>;
 
-define open generic rank (array :: <array>) => rank :: <fixed-integer>;
+define open generic rank (array :: <array>) => rank :: <integer>;
 
 define open generic row-major-index
-    (array :: <array>, #rest subscripts) => index :: <fixed-integer>;
+    (array :: <array>, #rest subscripts) => index :: <integer>;
 
 define open generic aref (array :: <array>, #rest indices)
     => element :: <object>;
@@ -61,15 +61,15 @@ define open generic aref-setter
     (new-value :: <object>, array :: <array>, #rest indices)
     => new-value :: <object>;
 
-define open generic dimension (array :: <array>, axis :: <fixed-integer>)
-    => dimension :: <fixed-integer>;
+define open generic dimension (array :: <array>, axis :: <integer>)
+    => dimension :: <integer>;
 
 
 // Default methods.
 
 define inline method forward-iteration-protocol (array :: <array>)
-    => (initial-state :: <fixed-integer>,
-	limit :: <fixed-integer>,
+    => (initial-state :: <integer>,
+	limit :: <integer>,
 	next-state :: <function>,
 	finished-state? :: <function>,
 	current-key :: <function>,
@@ -78,37 +78,37 @@ define inline method forward-iteration-protocol (array :: <array>)
 	copy-state :: <function>);
   values(0,
 	 array.size,
-	 method (array :: <array>, state :: <fixed-integer>)
-	     => new-state :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>)
+	     => new-state :: <integer>;
 	   state + 1;
 	 end,
-	 method (array :: <array>, state :: <fixed-integer>,
-		 limit :: <fixed-integer>)
+	 method (array :: <array>, state :: <integer>,
+		 limit :: <integer>)
 	     => done? :: <boolean>;
 	   state == limit;
 	 end,
-	 method (array :: <array>, state :: <fixed-integer>)
-	     => key :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>)
+	     => key :: <integer>;
 	   state;
 	 end,
-	 method (array :: <array>, state :: <fixed-integer>)
+	 method (array :: <array>, state :: <integer>)
 	     => element :: <object>;
 	   element(array, state);
 	 end,
 	 method (new-value :: <object>, array :: <array>,
-		 state :: <fixed-integer>)
+		 state :: <integer>)
 	     => new-value :: <object>;
 	   element(array, state) := new-value;
 	 end,
-	 method (array :: <array>, state :: <fixed-integer>)
-	     => state-copy :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>)
+	     => state-copy :: <integer>;
 	   state;
 	 end);
 end;
 
 define inline method backward-iteration-protocol (array :: <array>)
-    => (initial-state :: <fixed-integer>,
-	limit :: <fixed-integer>,
+    => (initial-state :: <integer>,
+	limit :: <integer>,
 	next-state :: <function>,
 	finished-state? :: <function>,
 	current-key :: <function>,
@@ -117,52 +117,52 @@ define inline method backward-iteration-protocol (array :: <array>)
 	copy-state :: <function>);
   values(array.size - 1,
 	 -1,
-	 method (array :: <array>, state :: <fixed-integer>)
-	     => next-state :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>)
+	     => next-state :: <integer>;
 	   state - 1;
 	 end,
-	 method (array :: <array>, state :: <fixed-integer>,
-		 limit :: <fixed-integer>)
+	 method (array :: <array>, state :: <integer>,
+		 limit :: <integer>)
 	     => done :: <boolean>;
 	   state == limit;
 	 end,
-	 method (array :: <array>, state :: <fixed-integer>)
-	     => key :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>)
+	     => key :: <integer>;
 	   state;
 	 end,
-	 method (array :: <array>, state :: <fixed-integer>)
+	 method (array :: <array>, state :: <integer>)
 	     => element :: <object>;
 	   element(array, state);
 	 end,
 	 method (new-value :: <object>, array :: <array>,
-		 state :: <fixed-integer>)
+		 state :: <integer>)
 	     => new-value :: <object>;
 	   element(array, state) := new-value;
 	 end,
-	 method (array :: <array>, state :: <fixed-integer>)
-	     => state-copy :: <fixed-integer>;
+	 method (array :: <array>, state :: <integer>)
+	     => state-copy :: <integer>;
 	   state;
 	 end);
 end;
 
-define inline method size (array :: <array>) => size :: <fixed-integer>;
+define inline method size (array :: <array>) => size :: <integer>;
   reduce(\*, 1, array.dimensions);
 end;
 
-define inline method rank (array :: <array>) => rank :: <fixed-integer>;
+define inline method rank (array :: <array>) => rank :: <integer>;
   array.dimensions.size;
 end;
 
 define method row-major-index (array :: <array>, #rest indices)
-    => index :: <fixed-integer>;
+    => index :: <integer>;
   let dims = dimensions(array);
   if (size(indices) ~== size(dims))
     error("Number of indices not equal to rank. Got %=, wanted %d indices",
 	  indices, size(dims));
   else
-    for (index :: <fixed-integer> in indices,
-	 dim :: <fixed-integer>   in dims,
-	 sum :: <fixed-integer> = 0 then (sum * dim) + index)
+    for (index :: <integer> in indices,
+	 dim :: <integer>   in dims,
+	 sum :: <integer> = 0 then (sum * dim) + index)
       if (index < 0 | index >= dim)
 	error("Array index out of bounds: %= in %=", index, indices);
       end if;
@@ -183,8 +183,8 @@ define inline method aref-setter
   element(array, apply(row-major-index, array, indices)) := new-value;
 end;
 
-define inline method dimension (array :: <array>, axis :: <fixed-integer>)
-    => dimension :: <fixed-integer>;
+define inline method dimension (array :: <array>, axis :: <integer>)
+    => dimension :: <integer>;
   array.dimensions[axis];
 end;
 
@@ -203,7 +203,7 @@ end;
 define class <simple-object-array> (<array>)
   slot data-vector :: <simple-object-vector>,
     required-init-keyword: data-vector:;
-  slot %dimension :: <fixed-integer>,
+  slot %dimension :: <integer>,
     init-value: 0, sizer: rank, required-size-init-keyword: rank:;
 end;
 
@@ -217,7 +217,7 @@ define method dimensions (array :: <simple-object-array>)
     => dims :: <simple-object-vector>;
   let rank = array.rank;
   let dims = make(<simple-object-vector>, size: rank);
-  for (index :: <fixed-integer> from 0 below rank)
+  for (index :: <integer> from 0 below rank)
     dims[index] := %dimension(array, index);
   end;
   dims;
@@ -230,14 +230,14 @@ end;
 //
 define method row-major-index
     (array :: <simple-object-array>, #rest indices)
-    => index :: <fixed-integer>;
+    => index :: <integer>;
   if (indices.size ~== array.rank)
     error("Number of indices not equal to rank. Got %=, wanted %d indices",
 	  indices, array.rank);
   else
-    let sum :: <fixed-integer> = 0;
-    for (i :: <fixed-integer> from 0,
-	 index :: <fixed-integer> in indices)
+    let sum :: <integer> = 0;
+    for (i :: <integer> from 0,
+	 index :: <integer> in indices)
       let dim = %dimension(array, i);
       if (index < 0 | index >= dim)
 	error("Array index out of bounds: %= in %=", index, indices);
@@ -275,8 +275,8 @@ end;
 // Just check that the axis is in bounds and then extract the dimension.
 //
 define inline method dimension
-    (array :: <simple-object-array>, axis :: <fixed-integer>)
-    => res :: <fixed-integer>;
+    (array :: <simple-object-array>, axis :: <integer>)
+    => res :: <integer>;
   if (axis < 0 | axis >= array.rank)
     error("Invalid axis in %=: %=", array, axis);
   end;
@@ -289,7 +289,7 @@ end;
 // calling element on the data vector will do that for us.
 //
 define inline method element
-    (array :: <simple-object-array>, index :: <fixed-integer>,
+    (array :: <simple-object-array>, index :: <integer>,
      #key default = $not-supplied)
     => res :: <object>;
   // We rely on the <simple-object-vector> element method using $not-supplied
@@ -304,7 +304,7 @@ end;
 //
 define inline method element-setter
     (new-value :: <object>, array :: <simple-object-array>,
-     index :: <fixed-integer>)
+     index :: <integer>)
     => new-value :: <object>;
   array.data-vector[index] := new-value;
 end;
@@ -319,7 +319,7 @@ define method shallow-copy (array :: <simple-object-array>)
   let rank = array.rank;
   let res = make(<simple-object-array>, rank: rank,
 		 data-vector: shallow-copy(array.data-vector));
-  for (index :: <fixed-integer> from 0 below rank)
+  for (index :: <integer> from 0 below rank)
     %dimension(res, index) := %dimension(array, index);
   end;
   res;

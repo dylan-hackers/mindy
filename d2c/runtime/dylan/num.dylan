@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.6 1995/12/09 21:01:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.7 1996/01/12 02:10:49 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -18,7 +18,7 @@ end;
 define abstract class <rational> (<real>)
 end;
 
-define abstract class <integer> (<rational>)
+define abstract class <general-integer> (<rational>)
 end;
 
 define abstract class <float> (<real>)
@@ -104,49 +104,49 @@ define sealed inline method negative (num :: <real>) => res :: <real>;
 end;
 
 define sealed generic floor (num :: <real>)
-    => (quo :: <integer>, rem :: <real>);
+    => (quo :: <general-integer>, rem :: <real>);
 
 define sealed generic ceiling (num :: <real>)
-    => (quo :: <integer>, rem :: <real>);
+    => (quo :: <general-integer>, rem :: <real>);
 
 define sealed generic round (num :: <real>)
-    => (quo :: <integer>, rem :: <real>);
+    => (quo :: <general-integer>, rem :: <real>);
 
 define sealed generic truncate (num :: <real>)
-    => (quo :: <integer>, rem :: <real>);
+    => (quo :: <general-integer>, rem :: <real>);
 
 define sealed generic floor/ (a :: <real>, b :: <real>)
-    => (quo :: <integer>, rem :: <real>);
+    => (quo :: <general-integer>, rem :: <real>);
 
 define inline method floor/ (a :: <real>, b :: <real>)
-    => (quo :: <fixed-integer>, rem :: <real>);
+    => (quo :: <integer>, rem :: <real>);
   let quo = floor(a / b);
   values(quo, a - quo * b);
 end;
 
 define sealed generic ceiling/ (a :: <real>, b :: <real>)
-    => (quo :: <integer>, rem :: <real>);
+    => (quo :: <general-integer>, rem :: <real>);
 
 define inline method ceiling/ (a :: <real>, b :: <real>)
-    => (quo :: <fixed-integer>, rem :: <real>);
+    => (quo :: <integer>, rem :: <real>);
   let quo = ceiling(a / b);
   values(quo, a - quo * b);
 end;
 
 define sealed generic round/ (a :: <real>, b :: <real>)
-    => (quo :: <integer>, rem :: <real>);
+    => (quo :: <general-integer>, rem :: <real>);
 
 define inline method round/ (a :: <real>, b :: <real>)
-    => (quo :: <fixed-integer>, rem :: <real>);
+    => (quo :: <integer>, rem :: <real>);
   let quo = round(a / b);
   values(quo, a - quo * b);
 end;
 
 define sealed generic truncate/ (a :: <real>, b :: <real>)
-    => (quo :: <integer>, rem :: <real>);
+    => (quo :: <general-integer>, rem :: <real>);
 
 define inline method truncate/ (a :: <real>, b :: <real>)
-    => (quo :: <fixed-integer>, rem :: <real>);
+    => (quo :: <integer>, rem :: <real>);
   let quo = truncate(a / b);
   values(quo, a - quo * b);
 end;
@@ -181,120 +181,124 @@ end;
 
 // Integer methods.
 
-define sealed generic odd? (a :: <integer>) => res :: <boolean>;
+define sealed generic odd? (a :: <general-integer>) => res :: <boolean>;
 
-define inline method odd? (a :: <integer>) => res :: <boolean>;
+define inline method odd? (a :: <general-integer>) => res :: <boolean>;
   ~even?(a);
 end;
 
-define sealed generic even? (a :: <integer>) => res :: <boolean>;
+define sealed generic even? (a :: <general-integer>) => res :: <boolean>;
 
 // No default method for even?.
 
-define inline method integral? (a :: <integer>) => res :: <boolean>;
+define inline method integral? (a :: <general-integer>) => res :: <boolean>;
   #t;
 end;
 
-define inline method floor (a :: <integer>)
-    => (quo :: <integer>, rem :: <integer>);
+define inline method floor (a :: <general-integer>)
+    => (quo :: <general-integer>, rem :: <general-integer>);
   values(a, 0);
 end;
 
-define inline method ceiling (a :: <integer>)
-    => (quo :: <integer>, rem :: <integer>);
+define inline method ceiling (a :: <general-integer>)
+    => (quo :: <general-integer>, rem :: <general-integer>);
   values(a, 0);
 end;
 
-define inline method round (a :: <integer>)
-    => (quo :: <integer>, rem :: <integer>);
+define inline method round (a :: <general-integer>)
+    => (quo :: <general-integer>, rem :: <general-integer>);
   values(a, 0);
 end;
 
-define inline method truncate (a :: <integer>)
-    => (quo :: <integer>, rem :: <integer>);
+define inline method truncate (a :: <general-integer>)
+    => (quo :: <general-integer>, rem :: <general-integer>);
   values(a, 0);
 end;
 
 define inline method logior (#rest integers)
-    => res :: <integer>;
+    => res :: <general-integer>;
   reduce(binary-logior, 0, integers);
 end;
 
-define sealed generic binary-logior (x :: <integer>, y :: <integer>)
-    => res :: <integer>;
+define sealed generic binary-logior
+    (x :: <general-integer>, y :: <general-integer>)
+    => res :: <general-integer>;
 
 define inline method logxor (#rest integers)
-    => res :: <integer>;
+    => res :: <general-integer>;
   reduce(binary-logxor, 0, integers);
 end;
 
-define sealed generic binary-logxor (x :: <integer>, y :: <integer>)
-    => res :: <integer>;
+define sealed generic binary-logxor
+    (x :: <general-integer>, y :: <general-integer>)
+    => res :: <general-integer>;
 
 define inline method logand (#rest integers)
-    => res :: <integer>;
+    => res :: <general-integer>;
   reduce(binary-logand, -1, integers);
 end;
 
-define sealed generic binary-logand (x :: <integer>, y :: <integer>)
-    => res :: <integer>;
+define sealed generic binary-logand
+    (x :: <general-integer>, y :: <general-integer>)
+    => res :: <general-integer>;
 
-define sealed generic lognot (x :: <integer>) => res :: <integer>;
+define sealed generic lognot (x :: <general-integer>)
+    => res :: <general-integer>;
 
-define sealed generic logbit? (index :: <fixed-integer>, int :: <integer>)
+define sealed generic logbit? (index :: <integer>, int :: <general-integer>)
     => res :: <boolean>;
 
-define sealed generic ash (int :: <integer>, count :: <fixed-integer>)
-    => res :: <integer>;
+define sealed generic ash (int :: <general-integer>, count :: <integer>)
+    => res :: <general-integer>;
 
-define sealed generic lcm (x :: <integer>, y :: <integer>)
-    => res :: <integer>;
+define sealed generic lcm (x :: <general-integer>, y :: <general-integer>)
+    => res :: <general-integer>;
 
-define method lcm (x :: <integer>, y :: <integer>)
-    => res :: <integer>;
+define method lcm (x :: <general-integer>, y :: <general-integer>)
+    => res :: <general-integer>;
   truncate/(max(x, y), gcd(x, y)) * min(x, y);
 end;
 
-define sealed generic gcd (x :: <integer>, y :: <integer>)
-    => res :: <integer>;
+define sealed generic gcd (x :: <general-integer>, y :: <general-integer>)
+    => res :: <general-integer>;
 
 
 // Fixed Integers.
 
-define functional class <fixed-integer> (<integer>)
-  slot value :: <fixed-integer>, init-value: 0;
+define functional class <integer> (<general-integer>)
+  slot value :: <integer>, init-value: 0;
 end;
 
-define sealed method make (class == <fixed-integer>, #key)
+define sealed method make (class == <integer>, #key)
     => res :: <never-returns>;
-  error("Can't make instances of <fixed-integer>, they just are.");
+  error("Can't make instances of <integer>, they just are.");
 end;
 
-// $fixed-integer-bits, $minimum-fixed-integer and $maximum-fixed-integer.
+// $fixed-integer-bits, $minimum-integer and $maximum-integer.
 //
 // Note the clever way we compute the second two of these that doesn't
 // overflow.  Tricky, huh?
 // 
 define constant $fixed-integer-bits = 32;
-define constant $minimum-fixed-integer :: <fixed-integer>
+define constant $minimum-integer :: <integer>
   = ash(-1, $fixed-integer-bits - 1);
-define constant $maximum-fixed-integer :: <fixed-integer>
-  = lognot($minimum-fixed-integer);
+define constant $maximum-integer :: <integer>
+  = lognot($minimum-integer);
 
-seal generic as (singleton(<fixed-integer>), <complex>);
+seal generic as (singleton(<integer>), <complex>);
 
-define inline method \== (a :: <fixed-integer>, b :: <fixed-integer>)
+define inline method \== (a :: <integer>, b :: <integer>)
     => res :: <boolean>;
   %%primitive fixnum-= (a, b);
 end;
 
-define inline method \== (a :: <fixed-integer>, b :: <object>)
+define inline method \== (a :: <integer>, b :: <object>)
     => res :: <boolean>;
   #f;
 end;
 
 /* Damn ambiguity rules.
-define inline method \== (a :: <object>, b :: <fixed-integer>)
+define inline method \== (a :: <object>, b :: <integer>)
     => res :: <boolean>;
   #f;
 end;
@@ -304,45 +308,45 @@ end;
 // but it doesn't yet.
 //
 define sealed inline method functional-==
-    (a :: <fixed-integer>, b :: <fixed-integer>)
+    (a :: <integer>, b :: <integer>)
     => res :: <boolean>;
   a.value == b.value;
 end;
 
-seal generic functional-== (<fixed-integer>, <object>);
-seal generic functional-== (<object>, <fixed-integer>);
+seal generic functional-== (<integer>, <object>);
+seal generic functional-== (<object>, <integer>);
 
-define inline method \< (a :: <fixed-integer>, b :: <fixed-integer>)
+define inline method \< (a :: <integer>, b :: <integer>)
     => res :: <boolean>;
   %%primitive fixnum-< (a, b);
 end;
 
-define inline method even? (a :: <fixed-integer>) => res :: <boolean>;
+define inline method even? (a :: <integer>) => res :: <boolean>;
   zero?(logand(a, 1));
 end;
 
-define inline method \+ (a :: <fixed-integer>, b :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method \+ (a :: <integer>, b :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-+ (a, b);
 end;
 
-define inline method \* (a :: <fixed-integer>, b :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method \* (a :: <integer>, b :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-* (a, b);
 end;
 
-define inline method \- (a :: <fixed-integer>, b :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method \- (a :: <integer>, b :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-- (a, b);
 end;
 
-define inline method negative (a :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method negative (a :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-negative (a);
 end;
 
-define method floor/ (a :: <fixed-integer>, b :: <fixed-integer>)
-    => (quo :: <fixed-integer>, rem :: <fixed-integer>);
+define method floor/ (a :: <integer>, b :: <integer>)
+    => (quo :: <integer>, rem :: <integer>);
   if (zero?(b))
     error("Division by zero.");
   else
@@ -356,8 +360,8 @@ define method floor/ (a :: <fixed-integer>, b :: <fixed-integer>)
   end;
 end;
 
-define method ceiling/ (a :: <fixed-integer>, b :: <fixed-integer>)
-    => (quo :: <fixed-integer>, rem :: <fixed-integer>);
+define method ceiling/ (a :: <integer>, b :: <integer>)
+    => (quo :: <integer>, rem :: <integer>);
   if (zero?(b))
     error("Division by zero.");
   else
@@ -371,8 +375,8 @@ define method ceiling/ (a :: <fixed-integer>, b :: <fixed-integer>)
   end;
 end;
 
-define method round/ (a :: <fixed-integer>, b :: <fixed-integer>)
-    => (quo :: <fixed-integer>, rem :: <fixed-integer>);
+define method round/ (a :: <integer>, b :: <integer>)
+    => (quo :: <integer>, rem :: <integer>);
   if (zero?(b))
     error("Division by zero.");
   else
@@ -403,8 +407,8 @@ define method round/ (a :: <fixed-integer>, b :: <fixed-integer>)
 end;
 
 define method truncate/
-    (a :: <fixed-integer>, b :: <fixed-integer>)
-    => (quo :: <fixed-integer>, rem :: <fixed-integer>);
+    (a :: <integer>, b :: <integer>)
+    => (quo :: <integer>, rem :: <integer>);
   if (zero?(b))
     error("Division by zero.");
   else
@@ -418,11 +422,11 @@ define method truncate/
   end;
 end;
 
-define method \^ (base :: <complex>, power :: <fixed-integer>)
+define method \^ (base :: <complex>, power :: <integer>)
     => res :: <number>;
   case
     negative?(power) =>
-      if (power == $minimum-fixed-integer)
+      if (power == $minimum-integer)
 	1 / base ^ -(as(<extended-integer>, power));
       else
 	1 / base ^ -power;
@@ -432,7 +436,7 @@ define method \^ (base :: <complex>, power :: <fixed-integer>)
     base == #e2 =>
       ash(#e1, power);
     otherwise =>
-      for (power :: <fixed-integer> = power then ash(power, -1),
+      for (power :: <integer> = power then ash(power, -1),
 	   total = as(object-class(base), 1)
 	     then if (odd?(power)) base * total else total end,
 	   base = base then base * base,
@@ -443,34 +447,34 @@ define method \^ (base :: <complex>, power :: <fixed-integer>)
   end;
 end;
 
-define inline method binary-logior (a :: <fixed-integer>, b :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method binary-logior (a :: <integer>, b :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-logior (a, b);
 end;
 
-define inline method binary-logxor (a :: <fixed-integer>, b :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method binary-logxor (a :: <integer>, b :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-logxor (a, b);
 end;
 
-define inline method binary-logand (a :: <fixed-integer>, b :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method binary-logand (a :: <integer>, b :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-logand (a, b);
 end;
 
-define inline method lognot (a :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method lognot (a :: <integer>)
+    => res :: <integer>;
   %%primitive fixnum-lognot (a);
 end;
 
 define inline method logbit?
-    (index :: <fixed-integer>, integer :: <fixed-integer>)
+    (index :: <integer>, integer :: <integer>)
     => res :: <boolean>;
   odd?(ash(integer, -index));
 end;
 
-define inline method ash (integer :: <fixed-integer>, count :: <fixed-integer>)
-    => res :: <fixed-integer>;
+define inline method ash (integer :: <integer>, count :: <integer>)
+    => res :: <integer>;
   if (negative?(count))
     %%primitive fixnum-shift-right (integer, -count);
   else
@@ -489,7 +493,7 @@ end;
 // Rob says that this came from Knuth, so if you want to actually
 // understand it, check there.
 //
-define method gcd (u :: <fixed-integer>, v :: <fixed-integer>)
+define method gcd (u :: <integer>, v :: <integer>)
     => res :: <integer>;
   if (u == 0)
     v;
@@ -507,9 +511,9 @@ define method gcd (u :: <fixed-integer>, v :: <fixed-integer>)
     // odd?(v) except that it is a bit faster because it only involves
     // one test.
     //
-    for (factors-of-two :: <fixed-integer> from 0,
-	 u :: <fixed-integer> = u then ash(u, -1),
-	 v :: <fixed-integer> = v then ash(v, -1),
+    for (factors-of-two :: <integer> from 0,
+	 u :: <integer> = u then ash(u, -1),
+	 v :: <integer> = v then ash(v, -1),
 	 until: odd?(logior(u, v)))
     finally
       // 
@@ -519,8 +523,8 @@ define method gcd (u :: <fixed-integer>, v :: <fixed-integer>)
       // $most-neg-fi is even, hence we can shift it down one then
       // negate it.
       //
-      let u :: <fixed-integer> = abs(if (odd?(u)) u else ash(u, -1) end);
-      let v :: <fixed-integer> = abs(if (odd?(v)) v else ash(v, -1) end);
+      let u :: <integer> = abs(if (odd?(u)) u else ash(u, -1) end);
+      let v :: <integer> = abs(if (odd?(v)) v else ash(v, -1) end);
       //
       block (return)
 	//
@@ -547,7 +551,7 @@ define method gcd (u :: <fixed-integer>, v :: <fixed-integer>)
 	// non-replaced one of u or v is still odd.  So our loop
 	// invarent of either u or v being odd is still true.
 	//
-	for (temp :: <fixed-integer> = if (odd?(u)) -v else ash(u, -1) end
+	for (temp :: <integer> = if (odd?(u)) -v else ash(u, -1) end
 	       then ash(temp, -1))
 	  if (odd?(temp))
 	    if (positive?(temp))
@@ -599,7 +603,7 @@ end;
 
 seal generic as (singleton(<single-float>), <complex>);
 
-define inline method as (class == <single-float>, num :: <fixed-integer>)
+define inline method as (class == <single-float>, num :: <integer>)
     => res :: <single-float>;
   %%primitive fixed-as-single (num);
 end;
@@ -653,12 +657,12 @@ define inline method \= (a :: <single-float>, b :: <single-float>)
   %%primitive single-= (a, b);
 end;
 
-define inline method \= (a :: <single-float>, b :: <fixed-integer>)
+define inline method \= (a :: <single-float>, b :: <integer>)
     => res :: <boolean>;
   a = as(<single-float>, b);
 end;
 
-define inline method \= (a :: <fixed-integer>, b :: <single-float>)
+define inline method \= (a :: <integer>, b :: <single-float>)
     => res :: <boolean>;
   as(<single-float>, a) = b;
 end;
@@ -668,12 +672,12 @@ define inline method \< (a :: <single-float>, b :: <single-float>)
   %%primitive single-< (a, b);
 end;
 
-define inline method \< (a :: <single-float>, b :: <fixed-integer>)
+define inline method \< (a :: <single-float>, b :: <integer>)
     => res :: <boolean>;
   a < as(<single-float>, b);
 end;
 
-define inline method \< (a :: <fixed-integer>, b :: <single-float>)
+define inline method \< (a :: <integer>, b :: <single-float>)
     => res :: <boolean>;
   as(<single-float>, a) < b;
 end;
@@ -683,12 +687,12 @@ define inline method \<= (a :: <single-float>, b :: <single-float>)
   %%primitive single-<= (a, b);
 end;
 
-define inline method \<= (a :: <single-float>, b :: <fixed-integer>)
+define inline method \<= (a :: <single-float>, b :: <integer>)
     => res :: <boolean>;
   a <= as(<single-float>, b);
 end;
 
-define inline method \<= (a :: <fixed-integer>, b :: <single-float>)
+define inline method \<= (a :: <integer>, b :: <single-float>)
     => res :: <boolean>;
   as(<single-float>, a) <= b;
 end;
@@ -698,12 +702,12 @@ define inline method \~= (a :: <single-float>, b :: <single-float>)
   %%primitive single-~= (a, b);
 end;
 
-define inline method \~= (a :: <single-float>, b :: <fixed-integer>)
+define inline method \~= (a :: <single-float>, b :: <integer>)
     => res :: <boolean>;
   a ~= as(<single-float>, b);
 end;
 
-define inline method \~= (a :: <fixed-integer>, b :: <single-float>)
+define inline method \~= (a :: <integer>, b :: <single-float>)
     => res :: <boolean>;
   as(<single-float>, a) ~= b;
 end;
@@ -713,12 +717,12 @@ define inline method \+ (a :: <single-float>, b :: <single-float>)
   %%primitive single-+ (a, b);
 end;
 
-define inline method \+ (a :: <single-float>, b :: <fixed-integer>)
+define inline method \+ (a :: <single-float>, b :: <integer>)
     => res :: <single-float>;
   a + as(<single-float>, b);
 end;
 
-define inline method \+ (a :: <fixed-integer>, b :: <single-float>)
+define inline method \+ (a :: <integer>, b :: <single-float>)
     => res :: <single-float>;
   as(<single-float>, a) + b;
 end;
@@ -728,12 +732,12 @@ define inline method \* (a :: <single-float>, b :: <single-float>)
   %%primitive single-* (a, b);
 end;
 
-define inline method \* (a :: <single-float>, b :: <fixed-integer>)
+define inline method \* (a :: <single-float>, b :: <integer>)
     => res :: <single-float>;
   a * as(<single-float>, b);
 end;
 
-define inline method \* (a :: <fixed-integer>, b :: <single-float>)
+define inline method \* (a :: <integer>, b :: <single-float>)
     => res :: <single-float>;
   as(<single-float>, a) * b;
 end;
@@ -743,12 +747,12 @@ define inline method \- (a :: <single-float>, b :: <single-float>)
   %%primitive single-- (a, b);
 end;
 
-define inline method \- (a :: <single-float>, b :: <fixed-integer>)
+define inline method \- (a :: <single-float>, b :: <integer>)
     => res :: <single-float>;
   a - as(<single-float>, b);
 end;
 
-define inline method \- (a :: <fixed-integer>, b :: <single-float>)
+define inline method \- (a :: <integer>, b :: <single-float>)
     => res :: <single-float>;
   as(<single-float>, a) - b;
 end;
@@ -758,12 +762,12 @@ define inline method \/ (a :: <single-float>, b :: <single-float>)
   %%primitive single-/ (a, b);
 end;
 
-define inline method \/ (a :: <single-float>, b :: <fixed-integer>)
+define inline method \/ (a :: <single-float>, b :: <integer>)
     => res :: <single-float>;
   a / as(<single-float>, b);
 end;
 
-define inline method \/ (a :: <fixed-integer>, b :: <single-float>)
+define inline method \/ (a :: <integer>, b :: <single-float>)
     => res :: <single-float>;
   as(<single-float>, a) / b;
 end;
@@ -775,25 +779,25 @@ define inline method negative (a :: <single-float>)
 end;
 
 define inline method floor (a :: <single-float>)
-    => (quo :: <fixed-integer>, rem :: <single-float>);
+    => (quo :: <integer>, rem :: <single-float>);
   let quo = %%primitive single-floor (a);
   values(quo, a - quo);
 end;
 
 define inline method ceiling (a :: <single-float>)
-    => (quo :: <fixed-integer>, rem :: <single-float>);
+    => (quo :: <integer>, rem :: <single-float>);
   let quo = %%primitive single-ceiling (a);
   values(quo, a - quo);
 end;
 
 define inline method round (a :: <single-float>)
-    => (quo :: <fixed-integer>, rem :: <single-float>);
+    => (quo :: <integer>, rem :: <single-float>);
   let quo = %%primitive single-round (a);
   values(quo, a - quo);
 end;
 
 define inline method truncate (a :: <single-float>)
-    => (quo :: <fixed-integer>, rem :: <single-float>);
+    => (quo :: <integer>, rem :: <single-float>);
   let quo = if (negative?(a))
 	      %%primitive single-ceiling (a);
 	    else
@@ -821,7 +825,7 @@ end;
 
 seal generic as (singleton(<double-float>), <complex>);
 
-define inline method as (class == <double-float>, num :: <fixed-integer>)
+define inline method as (class == <double-float>, num :: <integer>)
     => res :: <double-float>;
   %%primitive fixed-as-double (num);
 end;
@@ -875,12 +879,12 @@ define inline method \= (a :: <double-float>, b :: <double-float>)
   %%primitive double-= (a, b);
 end;
 
-define inline method \= (a :: <double-float>, b :: <fixed-integer>)
+define inline method \= (a :: <double-float>, b :: <integer>)
     => res :: <boolean>;
   a = as(<double-float>, b);
 end;
 
-define inline method \= (a :: <fixed-integer>, b :: <double-float>)
+define inline method \= (a :: <integer>, b :: <double-float>)
     => res :: <boolean>;
   as(<double-float>, a) = b;
 end;
@@ -900,12 +904,12 @@ define inline method \< (a :: <double-float>, b :: <double-float>)
   %%primitive double-< (a, b);
 end;
 
-define inline method \< (a :: <double-float>, b :: <fixed-integer>)
+define inline method \< (a :: <double-float>, b :: <integer>)
     => res :: <boolean>;
   a < as(<double-float>, b);
 end;
 
-define inline method \< (a :: <fixed-integer>, b :: <double-float>)
+define inline method \< (a :: <integer>, b :: <double-float>)
     => res :: <boolean>;
   as(<double-float>, a) < b;
 end;
@@ -925,12 +929,12 @@ define inline method \<= (a :: <double-float>, b :: <double-float>)
   %%primitive double-<= (a, b);
 end;
 
-define inline method \<= (a :: <double-float>, b :: <fixed-integer>)
+define inline method \<= (a :: <double-float>, b :: <integer>)
     => res :: <boolean>;
   a <= as(<double-float>, b);
 end;
 
-define inline method \<= (a :: <fixed-integer>, b :: <double-float>)
+define inline method \<= (a :: <integer>, b :: <double-float>)
     => res :: <boolean>;
   as(<double-float>, a) <= b;
 end;
@@ -950,12 +954,12 @@ define inline method \~= (a :: <double-float>, b :: <double-float>)
   %%primitive double-~= (a, b);
 end;
 
-define inline method \~= (a :: <double-float>, b :: <fixed-integer>)
+define inline method \~= (a :: <double-float>, b :: <integer>)
     => res :: <boolean>;
   a ~= as(<double-float>, b);
 end;
 
-define inline method \~= (a :: <fixed-integer>, b :: <double-float>)
+define inline method \~= (a :: <integer>, b :: <double-float>)
     => res :: <boolean>;
   as(<double-float>, a) ~= b;
 end;
@@ -975,12 +979,12 @@ define inline method \+ (a :: <double-float>, b :: <double-float>)
   %%primitive double-+ (a, b);
 end;
 
-define inline method \+ (a :: <double-float>, b :: <fixed-integer>)
+define inline method \+ (a :: <double-float>, b :: <integer>)
     => res :: <double-float>;
   a + as(<double-float>, b);
 end;
 
-define inline method \+ (a :: <fixed-integer>, b :: <double-float>)
+define inline method \+ (a :: <integer>, b :: <double-float>)
     => res :: <double-float>;
   as(<double-float>, a) + b;
 end;
@@ -1000,12 +1004,12 @@ define inline method \* (a :: <double-float>, b :: <double-float>)
   %%primitive double-* (a, b);
 end;
 
-define inline method \* (a :: <double-float>, b :: <fixed-integer>)
+define inline method \* (a :: <double-float>, b :: <integer>)
     => res :: <double-float>;
   a * as(<double-float>, b);
 end;
 
-define inline method \* (a :: <fixed-integer>, b :: <double-float>)
+define inline method \* (a :: <integer>, b :: <double-float>)
     => res :: <double-float>;
   as(<double-float>, a) * b;
 end;
@@ -1025,12 +1029,12 @@ define inline method \- (a :: <double-float>, b :: <double-float>)
   %%primitive double-- (a, b);
 end;
 
-define inline method \- (a :: <double-float>, b :: <fixed-integer>)
+define inline method \- (a :: <double-float>, b :: <integer>)
     => res :: <double-float>;
   a - as(<double-float>, b);
 end;
 
-define inline method \- (a :: <fixed-integer>, b :: <double-float>)
+define inline method \- (a :: <integer>, b :: <double-float>)
     => res :: <double-float>;
   as(<double-float>, a) - b;
 end;
@@ -1050,12 +1054,12 @@ define inline method \/ (a :: <double-float>, b :: <double-float>)
   %%primitive double-/ (a, b);
 end;
 
-define inline method \/ (a :: <double-float>, b :: <fixed-integer>)
+define inline method \/ (a :: <double-float>, b :: <integer>)
     => res :: <double-float>;
   a / as(<double-float>, b);
 end;
 
-define inline method \/ (a :: <fixed-integer>, b :: <double-float>)
+define inline method \/ (a :: <integer>, b :: <double-float>)
     => res :: <double-float>;
   as(<double-float>, a) / b;
 end;
@@ -1076,25 +1080,25 @@ define inline method negative (a :: <double-float>)
 end;
 
 define inline method floor (a :: <double-float>)
-    => (quo :: <fixed-integer>, rem :: <double-float>);
+    => (quo :: <integer>, rem :: <double-float>);
   let quo = %%primitive double-floor (a);
   values(quo, a - quo);
 end;
 
 define inline method ceiling (a :: <double-float>)
-    => (quo :: <fixed-integer>, rem :: <double-float>);
+    => (quo :: <integer>, rem :: <double-float>);
   let quo = %%primitive double-ceiling (a);
   values(quo, a - quo);
 end;
 
 define inline method round (a :: <double-float>)
-    => (quo :: <fixed-integer>, rem :: <double-float>);
+    => (quo :: <integer>, rem :: <double-float>);
   let quo = %%primitive double-round (a);
   values(quo, a - quo);
 end;
 
 define inline method truncate (a :: <double-float>)
-    => (quo :: <fixed-integer>, rem :: <double-float>);
+    => (quo :: <integer>, rem :: <double-float>);
   let quo = if (negative?(a))
 	      %%primitive double-ceiling (a);
 	    else
@@ -1122,7 +1126,7 @@ end;
 
 seal generic as (singleton(<extended-float>), <complex>);
 
-define inline method as (class == <extended-float>, num :: <fixed-integer>)
+define inline method as (class == <extended-float>, num :: <integer>)
     => res :: <extended-float>;
   %%primitive fixed-as-extended (num);
 end;
@@ -1176,12 +1180,12 @@ define inline method \= (a :: <extended-float>, b :: <extended-float>)
   %%primitive extended-= (a, b);
 end;
 
-define inline method \= (a :: <extended-float>, b :: <fixed-integer>)
+define inline method \= (a :: <extended-float>, b :: <integer>)
     => res :: <boolean>;
   a = as(<extended-float>, b);
 end;
 
-define inline method \= (a :: <fixed-integer>, b :: <extended-float>)
+define inline method \= (a :: <integer>, b :: <extended-float>)
     => res :: <boolean>;
   as(<extended-float>, a) = b;
 end;
@@ -1211,12 +1215,12 @@ define inline method \< (a :: <extended-float>, b :: <extended-float>)
   %%primitive extended-< (a, b);
 end;
 
-define inline method \< (a :: <extended-float>, b :: <fixed-integer>)
+define inline method \< (a :: <extended-float>, b :: <integer>)
     => res :: <boolean>;
   a < as(<extended-float>, b);
 end;
 
-define inline method \< (a :: <fixed-integer>, b :: <extended-float>)
+define inline method \< (a :: <integer>, b :: <extended-float>)
     => res :: <boolean>;
   as(<extended-float>, a) < b;
 end;
@@ -1246,12 +1250,12 @@ define inline method \<= (a :: <extended-float>, b :: <extended-float>)
   %%primitive extended-<= (a, b);
 end;
 
-define inline method \<= (a :: <extended-float>, b :: <fixed-integer>)
+define inline method \<= (a :: <extended-float>, b :: <integer>)
     => res :: <boolean>;
   a <= as(<extended-float>, b);
 end;
 
-define inline method \<= (a :: <fixed-integer>, b :: <extended-float>)
+define inline method \<= (a :: <integer>, b :: <extended-float>)
     => res :: <boolean>;
   as(<extended-float>, a) <= b;
 end;
@@ -1281,12 +1285,12 @@ define inline method \~= (a :: <extended-float>, b :: <extended-float>)
   %%primitive extended-~= (a, b);
 end;
 
-define inline method \~= (a :: <extended-float>, b :: <fixed-integer>)
+define inline method \~= (a :: <extended-float>, b :: <integer>)
     => res :: <boolean>;
   a ~= as(<extended-float>, b);
 end;
 
-define inline method \~= (a :: <fixed-integer>, b :: <extended-float>)
+define inline method \~= (a :: <integer>, b :: <extended-float>)
     => res :: <boolean>;
   as(<extended-float>, a) ~= b;
 end;
@@ -1316,12 +1320,12 @@ define inline method \+ (a :: <extended-float>, b :: <extended-float>)
   %%primitive extended-+ (a, b);
 end;
 
-define inline method \+ (a :: <extended-float>, b :: <fixed-integer>)
+define inline method \+ (a :: <extended-float>, b :: <integer>)
     => res :: <extended-float>;
   a + as(<extended-float>, b);
 end;
 
-define inline method \+ (a :: <fixed-integer>, b :: <extended-float>)
+define inline method \+ (a :: <integer>, b :: <extended-float>)
     => res :: <extended-float>;
   as(<extended-float>, a) + b;
 end;
@@ -1351,12 +1355,12 @@ define inline method \* (a :: <extended-float>, b :: <extended-float>)
   %%primitive extended-* (a, b);
 end;
 
-define inline method \* (a :: <extended-float>, b :: <fixed-integer>)
+define inline method \* (a :: <extended-float>, b :: <integer>)
     => res :: <extended-float>;
   a * as(<extended-float>, b);
 end;
 
-define inline method \* (a :: <fixed-integer>, b :: <extended-float>)
+define inline method \* (a :: <integer>, b :: <extended-float>)
     => res :: <extended-float>;
   as(<extended-float>, a) * b;
 end;
@@ -1386,12 +1390,12 @@ define inline method \- (a :: <extended-float>, b :: <extended-float>)
   %%primitive extended-- (a, b);
 end;
 
-define inline method \- (a :: <extended-float>, b :: <fixed-integer>)
+define inline method \- (a :: <extended-float>, b :: <integer>)
     => res :: <extended-float>;
   a - as(<extended-float>, b);
 end;
 
-define inline method \- (a :: <fixed-integer>, b :: <extended-float>)
+define inline method \- (a :: <integer>, b :: <extended-float>)
     => res :: <extended-float>;
   as(<extended-float>, a) - b;
 end;
@@ -1421,12 +1425,12 @@ define inline method \/ (a :: <extended-float>, b :: <extended-float>)
   %%primitive extended-/ (a, b);
 end;
 
-define inline method \/ (a :: <extended-float>, b :: <fixed-integer>)
+define inline method \/ (a :: <extended-float>, b :: <integer>)
     => res :: <extended-float>;
   a / as(<extended-float>, b);
 end;
 
-define inline method \/ (a :: <fixed-integer>, b :: <extended-float>)
+define inline method \/ (a :: <integer>, b :: <extended-float>)
     => res :: <extended-float>;
   as(<extended-float>, a) / b;
 end;
@@ -1457,25 +1461,25 @@ define inline method negative (a :: <extended-float>)
 end;
 
 define inline method floor (a :: <extended-float>)
-    => (quo :: <fixed-integer>, rem :: <extended-float>);
+    => (quo :: <integer>, rem :: <extended-float>);
   let quo = %%primitive extended-floor (a);
   values(quo, a - quo);
 end;
 
 define inline method ceiling (a :: <extended-float>)
-    => (quo :: <fixed-integer>, rem :: <extended-float>);
+    => (quo :: <integer>, rem :: <extended-float>);
   let quo = %%primitive extended-ceiling (a);
   values(quo, a - quo);
 end;
 
 define inline method round (a :: <extended-float>)
-    => (quo :: <fixed-integer>, rem :: <extended-float>);
+    => (quo :: <integer>, rem :: <extended-float>);
   let quo = %%primitive extended-round (a);
   values(quo, a - quo);
 end;
 
 define inline method truncate (a :: <extended-float>)
-    => (quo :: <fixed-integer>, rem :: <extended-float>);
+    => (quo :: <integer>, rem :: <extended-float>);
   let quo = if (negative?(a))
 	      %%primitive extended-ceiling (a);
 	    else

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.2 1995/12/11 19:53:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.3 1996/01/12 02:11:02 wlott Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -16,10 +16,10 @@ define constant $random-const-c = 101010101;
 define constant $random-max = 54;
 
 define method integer-length
-    (int :: <fixed-integer>) => n-bits :: <fixed-integer>;
+    (int :: <integer>) => n-bits :: <integer>;
   let num = if (int < 0) -int else int + 1 end;
-  for (count :: <fixed-integer> from 1,
-       n :: <fixed-integer> = num then ash(n, -1),
+  for (count :: <integer> from 1,
+       n :: <integer> = num then ash(n, -1),
        while: n > 0)
   finally
     count;
@@ -29,11 +29,11 @@ end method integer-length;
 // Inclusive upper bound on the size of fixnum kept in the state (and returned
 // by random-chunk.)  Must be even.
 //
-define constant $random-upper-bound = $maximum-fixed-integer - 3;
+define constant $random-upper-bound = $maximum-integer - 3;
 
 define sealed class <random-state> (<object>)
-  slot state-j :: <fixed-integer>, init-value: 24;
-  slot state-k :: <fixed-integer>, init-value: 0;
+  slot state-j :: <integer>, init-value: 24;
+  slot state-k :: <integer>, init-value: 0;
   slot state-seed :: <simple-object-vector>,
     init-function: curry(make, <simple-object-vector>, size: $random-max + 1);
 end class <random-state>;
@@ -50,20 +50,20 @@ seal generic make (singleton(<threadsafe-random-state>));
 
 */
 
-define inline method get-time-of-day () => res :: <fixed-integer>;
+define inline method get-time-of-day () => res :: <integer>;
   call-out("time", int:, int: 0);
 end;
 
 define method initialize
     (state :: <random-state>, #next next-method, 
-     #key seed :: <fixed-integer> = get-time-of-day())
+     #key seed :: <integer> = get-time-of-day())
   next-method();
   local method rand1 () => random-number :: <integer>;
 	  seed := modulo(seed * $random-const-a + $random-const-c,
 			 $random-upper-bound + 1);
 	end method rand1;
   let seed-vec = state.state-seed;
-  for (i :: <fixed-integer> from 0 to $random-max)
+  for (i :: <integer> from 0 to $random-max)
     seed-vec[i] := rand1();
   end;
 end method initialize;
@@ -95,7 +95,7 @@ define constant $random-chunk-length = $random-upper-bound.integer-length;
 // even positive fixnum.  State is the random state to use.
 //
 define method random-chunk (state :: <random-state>)
-    => number :: <fixed-integer>;
+    => number :: <integer>;
   let seed = state.state-seed;
   let j = state.state-j;
   let k = state.state-k;
@@ -112,7 +112,7 @@ end method random-chunk;
 /*
 define method random-chunk
     (state :: <threadsafe-random-state>, #next next-method)
-    => number :: <fixed-integer>;
+    => number :: <integer>;
   grab-lock(state.mutex);
   let res = next-method();
   release-lock(state.mutex);
@@ -143,7 +143,7 @@ define constant $random-bits-count
 // Quickly return a random integer with $random-bits-count random bits.
 //
 define method random-bits (#key state :: <random-state> = *random-state*) 
-    => bits :: <fixed-integer>;
+    => bits :: <integer>;
   ash(random-chunk(*random-state*), - $random-integer-extra-bits);
 end method random-bits;
 
@@ -159,8 +159,8 @@ define constant $random-fixnum-max
 // return the same kind of integer that arg is.
 // 
 define method random
-    (arg :: <fixed-integer>, #key state :: <random-state> = *random-state*) 
-    => random-number :: <fixed-integer>;
+    (arg :: <integer>, #key state :: <random-state> = *random-state*) 
+    => random-number :: <integer>;
   if (arg <= $random-fixnum-max)
     remainder(random-chunk(state), arg);
   else
@@ -168,12 +168,12 @@ define method random
     for (bits :: <extended-integer>
 	   = as(<extended-integer>, random-chunk(state))
 	   then logxor(ash(bits, shift), random-chunk(state)),
-	 count :: <fixed-integer>
+	 count :: <integer>
 	   = arg.integer-length + $random-integer-extra-bits - shift
 	   then count - shift,
 	 until: count < 0)
     finally
-      as(<fixed-integer>, remainder(bits, arg));
+      as(<integer>, remainder(bits, arg));
     end for;
   end if;
 end method random;
@@ -279,7 +279,8 @@ end method random-exponential;
 // square root of r.
 //
 define method chi-square 
-    (generator :: <function>, r :: <integer>) => chi-square :: <number>;
+    (generator :: <function>, r :: <general-integer>)
+    => chi-square :: <number>;
   let N = 10 * r;
   let f = as(<double-float>, N) / as(<double-float>, r);
   let freq = make(<vector>, size: r, fill: 0);
