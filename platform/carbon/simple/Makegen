@@ -1,0 +1,9 @@
+&makegen_include("../carbon-Makegen");
+
+$D2CFLAGS = $D2CFLAGS . ' -L../carbon -L.';
+
+do emit_library_rule(
+    'simple', '$(BUILDROOT)/force.timestamp', '', 'compile',
+    'no-mindy', 'install'
+);
+

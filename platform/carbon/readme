@@ -1,0 +1,28 @@
+*d2c Macintosh Toolbox Libraries.
+
+*Carbon Library.
+
+This is the Carbon APIs library for d2c on MacOS 9 and MacOS X.
+
+It is a substantially modified version of Patrick Beard's original Mindy Toolbox library, with additions by Gareth Baker and Rob Myers.
+
+*SillyBalls.
+
+This is a slightly revised version of Gareth Baker's Mindy port of Apple DTS's SillyBalls application demo for d2c.
+
+*simple.
+
+This is a simple object-oriented application framework for Carbon.
+It is based on MOOF and PowerPlant, and is a work in progress.
+See the comments in the code for what documentation there is.
+Future versions will fix bugs and add support for Apple Events.
+Known bugs (to be fixed for the next release):
+    Opening the window console confuses the window location code.
+Deficiencies:
+    Menu enabling/disabling.
+    Apple events.
+Please report bugs to the gd-hackers list.
+
+*simple-starter.
+
+This is a simple starter application for simple. It opens 3 windows which draw their contents, respond to clicks and can be dragged, resized, closed, etc.

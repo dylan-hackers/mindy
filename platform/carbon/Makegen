@@ -1,0 +1,4 @@
+##
+##  This is the makegen file for the carbon library and projects.
+
+&compile_subdirs('carbon', 'sillyballs', 'simple', 'simple-starter');

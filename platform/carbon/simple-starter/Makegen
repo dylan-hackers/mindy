@@ -1,0 +1,18 @@
+&makegen_include("../carbon-Makegen");
+
+$D2CFLAGS = $D2CFLAGS . ' -L../carbon -L../simple -L.';
+
+do emit_library_rule(
+    'my-simple', '$(BUILDROOT)/force.timestamp', '', 'compile',
+    'no-mindy', 'install'
+);
+
+print <<'EOF';
+    
+compile:
+	/System/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple $(BUILDDIR)/../simple/simple-resources.r
+	/System/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple $(BUILDDIR)/my-resources.r
+
+EOF
+
+
