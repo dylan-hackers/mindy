@@ -1,6 +1,6 @@
 Module: front
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.1 1994/12/12 13:01:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.2 1994/12/16 16:33:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -12,20 +12,28 @@ define class <signature> (<object>)
   // List of <ctype>s representing the specializers for required arguments.
   slot specializers :: <list>, required-init-keyword: specializers:;
 
+  // True if there was a #next.
+  slot next? :: <boolean>,
+    init-value: #f, init-keyword: next:;
+
   // If no #rest args, #f, otherwise the rest arg type.
-  slot rest-type :: false-or(<ctype>), required-init-keyword: rest-type:;
+  slot rest-type :: false-or(<ctype>),
+    init-value: #f, init-keyword: rest-type:;
 
   // List of <key-info>s describing the specified keyword args.  #f if #key was
   // not specified.
-  slot key-infos :: false-or(<list>), required-init-keyword: keys:;
-  slot all-keys? :: <boolean>, required-init-keyword: all-keys:;
+  slot key-infos :: false-or(<list>),
+    init-value: #f, init-keyword: keys:;
+  slot all-keys? :: <boolean>,
+    init-value: #f, init-keyword: all-keys:;
 
   // list of <ctype>s reprepsenting the required result types.
-  slot returns :: <list>, required-init-keyword: returns:;
+  slot returns :: <list>,
+    init-value: #(), init-keyword: returns:;
 
   // If no #rest in returns, #f, otherwise the rest values type.
   slot returns-rest-type :: false-or(<ctype>),
-    required-init-keyword: returns-rest-type:;
+    init-function: object-ctype, init-keyword: returns-rest-type:;
 
 end;
 
@@ -54,14 +62,17 @@ define class <key-info> (<object>)
   // error-default.  Or a required-init-keyword on a make method?
   slot required? :: <boolean>, init-value: #f;
 
-  // ??? may want to wedge info about constant defaults in here.
+  // The default, if it is a compile-time constant.  Otherwise, #f.
+  slot key-default :: union(<false>, <ct-value>),
+    init-value: #f, init-keyword: default:;
 end;
 
 define method print-object (key :: <key-info>, stream :: <stream>) => ();
   pprint-fields(key, stream,
 		name: key.key-name,
 		type: key.key-type,
-		required: key.required?);
+		required: key.required?,
+		default: key.key-default);
 end;
 
 /* 
