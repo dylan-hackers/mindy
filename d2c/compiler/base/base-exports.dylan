@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.28 1996/03/17 00:30:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.29 1996/03/18 01:44:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -674,6 +674,7 @@ define module flow
     then-region-setter, else-region, else-region-setter, body, body-setter,
     exits, exits-setter, block-of, block-of-setter,
     next-exit, next-exit-setter, returned-type, returned-type-setter,
+    guessed-returned-type, guessed-returned-type-setter,
     initial-variables, initial-variables-setter,
     reoptimize-queue, reoptimize-queue-setter,
     add-to-queue, all-function-regions,
@@ -685,16 +686,16 @@ define module flow
     <join-operation>, <abstract-assignment>, <assignment>,
     <join-assignment>,
 
-    dependents, derived-type, source-exp, source-next, dependent,
-    dependent-next, var-info, asserted-type, definer, definer-next,
-    needs-type-check?, queue-next, definition-of, definitions,
-    next-initial-variable, next-initial-variable-setter,
+    dependents, derived-type, guessed-type, source-exp, source-next,
+    dependent, dependent-next, var-info, asserted-type, definer,
+    definer-next, needs-type-check?, queue-next, definition-of,
+    definitions, next-initial-variable, next-initial-variable-setter,
     defines, region, next-op, prev-op, depends-on, component-of,
 
-    dependents-setter, derived-type-setter, source-exp-setter,
-    source-next-setter, dependent-setter, dependent-next-setter,
-    var-info-setter, asserted-type-setter, definer-setter, definer-next-setter,
-    needs-type-check?-setter,
+    dependents-setter, derived-type-setter, guessed-type-setter,
+    source-exp-setter, source-next-setter, dependent-setter,
+    dependent-next-setter, var-info-setter, asserted-type-setter,
+    definer-setter, definer-next-setter, needs-type-check?-setter,
     queue-next-setter, definition-of-setter, definitions-setter,
     defines-setter, region-setter, next-op-setter, depends-on-setter,
     prev-op-setter;
