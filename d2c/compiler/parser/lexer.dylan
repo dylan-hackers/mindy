@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.17 1996/05/08 15:55:03 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.18 1996/06/20 21:09:40 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1223,13 +1223,13 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
   // and then when the state machine jams, we just use that latest
   // accepting state's result.
   // 
-  let contents = lexer.source.contents;
-  let length = contents.size;
+  let contents :: <file-contents> = lexer.source.contents;
+  let length :: <integer> = contents.size;
   let result-kind = #f;
-  let result-start = lexer.posn;
-  let result-end = #f;
+  let result-start :: <integer> = lexer.posn;
+  let result-end :: false-or(<integer>) = #f;
   local
-    method repeat (state, posn)
+    method repeat (state, posn :: <integer>)
       if (state.result)
 	//
 	// It is an accepting state, so record the result and where
@@ -1243,7 +1243,7 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
       // 
       if (posn < length)
 	let table = state.transitions;
-	let char = contents[posn];
+	let char :: <byte> = contents[posn];
 	let new-state = table & char < 128 & table[char];
 	if (new-state)
 	  repeat(new-state, posn + 1);
@@ -1275,7 +1275,7 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	    lexer.line := lexer.line + 1;
 	    lexer.line-start := result-end;
 	  #"end-of-line-comment" =>
-	    for (i from result-end below length,
+	    for (i :: <integer> from result-end below length,
 		 until: (contents[i] == as(<integer>, '\n')))
 	    finally
 	      result-end := i;
