@@ -1,5 +1,6 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Base.lid,v 1.3 1999/07/30 17:25:17 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Base.lid,v 1.4 1999/08/24 19:50:05 andreas Exp $
 library: compiler-base
+unit-prefix: base
 unique-id-base: 10000
 shared-library: no
 

@@ -129,7 +129,7 @@ fi
 cd src/
 # If our source tarball came out of CVS, make a configure script.
 if [ ! -f configure ]; then
-  autoconf
+./autogen.sh --prefix=/usr --with-site-dylan-prefix=/usr/local
 fi
 # This does the wrong thing if d2c isn't in PATH.
 ./configure --prefix=/usr --with-site-dylan-prefix=/usr/local
