@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.12 1994/11/22 16:55:22 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.13 1995/02/14 02:41:10 rgs Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -144,7 +144,7 @@ end method merge-hash-states;
 // high, because if you do the table could shrink immediately after it
 // expands.
 //
-define constant default-starting-table-size :: <fixed-integer> =  5;
+define constant default-starting-table-size :: <fixed-integer> =  13;
 define constant default-expand-when         :: <fixed-integer> = 200;
 define constant default-expand-to           :: <fixed-integer> = 300;
 define constant default-shrink-when         :: <fixed-integer> = 10;
@@ -460,15 +460,15 @@ end method \=;
 // Returns the first element of the list that satisfies
 // test.  Internal use only.
 //
-define method find-elt (list :: <list>, test :: <function>,
-			#key default: default = #f )
+define method find-elt (list :: <list>, key, key-id, key=)
   if (empty?(list))
-    default;
+    #f;
   else
-    if (test(head(list)))
-      head(list);
+    let elem = head(list);
+    if ((elem.hash-id-slot = key-id) & key=(elem.key-slot, key))
+      elem;
     else
-      find-elt( tail (list), test, default: default);
+      find-elt( tail (list), key, key-id, key=);
     end if;
   end if;
 end method find-elt;
@@ -481,30 +481,24 @@ define constant no-default = list("No default");
 //
 define method element (  ht :: <table>, key, 
 		         #key default: default = no-default )
-  until (state-valid?(ht.merged-hash-state-slot))
-    rehash(ht);
-  end until;
+  // We don't yet check for out of date data, since the element might match
+  // anyway, and the lookup is much cheaper than a rehash.
 
   let (key=, key-hash)      = table-protocol(ht);
   let (key-id, key-state)   = key-hash(key);
   let bucket-index          = modulo(key-id, ht.bucket-count-slot);
   let bucket                = ht.bucket-array-slot[bucket-index];
-  let test = method (entry :: <bucket-entry>)
-	       (entry.hash-id-slot = key-id)
-		 & key=(entry.key-slot, key);
-	     end method;
-  let find-result = find-elt(bucket, test);
+  let find-result           = find-elt(bucket, key, key-id, key=);
   
-     // Check to see if there was a garbage collection in the middle
-     // of this method. If there was, start over.
-  
-  if (~ state-valid?(ht.merged-hash-state-slot)
-      | ~ state-valid?(key-state) )
-    element(ht, key, default: default);
-       
-    // Else, there was no garbage collection, and we're safe.
-  elseif (find-result)
+  if (find-result)
     find-result.item-slot;
+
+  // Check to see if there was a garbage collection in the middle
+  // of this method. If there was, start over.
+  elseif (~ state-valid?(ht.merged-hash-state-slot)
+      | ~ state-valid?(key-state) )
+    rehash(ht);
+    element(ht, key, default: default);
   elseif (default == no-default)
     error("Element not found");
   else 
@@ -521,11 +515,7 @@ define method element (  ht :: <value-table>, key,
   let key-id                = key-hash(key);
   let bucket-index          = modulo(key-id, ht.bucket-count-slot);
   let bucket                = ht.bucket-array-slot[bucket-index];
-  let test = method (entry :: <bucket-entry>)
-	       (entry.hash-id-slot = key-id)
-		 & key=(entry.key-slot, key);
-	     end method;
-  let find-result = find-elt(bucket, test);
+  let find-result           = find-elt(bucket, key, key-id, key=);
   
   if (find-result)
     find-result.item-slot;
@@ -537,30 +527,33 @@ define method element (  ht :: <value-table>, key,
 end method element;
 
 
+define method find-new-size (target :: <integer>) => (result :: <integer>);
+  for (num from if (even?(target)) target + 1 else target end if by 2,
+       until (modulo(num, 3) > 0 & modulo(num, 5) > 0 & modulo(num, 7) > 0
+		& modulo(num, 11) > 0))
+  finally
+    num;
+  end for;
+end method find-new-size;
+
 // This function looks redundant at times, but it's necessary in order
 // to avoid race conditions with the garbage collector.
 //
 define method element-setter (value :: <object>, ht :: <table>, 
 			      key :: <object>) => value :: <object>;
-  until (state-valid? (ht.merged-hash-state-slot))
-    rehash (ht);
-  end until;
 
   let (key=, key-hash)    = table-protocol(ht);
   let (key-id, key-state) = key-hash(key);
   let bucket-index        = modulo(key-id, ht.bucket-count-slot);
-  let test-method         = method (existing-item :: <bucket-entry>)
-			      (existing-item.hash-id-slot = key-id)
-				& key=(existing-item.key-slot, key);
-			    end method;
   let bucket-entry        = find-elt(ht.bucket-array-slot [bucket-index],
-				     test-method);
+				     key, key-id, key=);
 
      // Check to see if there was a garbage collection in the middle
      // of this method. If there was, start over.
 
   if (~ state-valid?(ht.merged-hash-state-slot)
       | ~ state-valid?(key-state) )
+    rehash(ht);
     element-setter(value, ht, key);
        
              // Else, there was no garbage collection, and we're safe.
@@ -579,7 +572,8 @@ define method element-setter (value :: <object>, ht :: <table>,
       ht.item-count-slot := ht.item-count-slot + 1;
 
       if (size(ht) * 100 > (ht.bucket-count-slot * ht.expand-when-slot))
-	resize-table(ht, truncate/(size(ht) * ht.expand-to-slot, 100) + 1);
+	let target = truncate/(ht.bucket-count-slot * ht.expand-to-slot, 100);
+	resize-table(ht, find-new-size(target));
       end if;
     else     // Item WAS found
       bucket-entry.key-slot        := key;
@@ -609,12 +603,8 @@ define method element-setter (value :: <object>, ht :: <value-table>,
   let (key=, key-hash)    = table-protocol(ht);
   let key-id              = key-hash(key);
   let bucket-index        = modulo(key-id, ht.bucket-count-slot);
-  let test-method         = method (existing-item :: <bucket-entry>)
-			      (existing-item.hash-id-slot = key-id)
-				& key=(existing-item.key-slot, key);
-			    end method;
   let bucket-entry        = find-elt(ht.bucket-array-slot [bucket-index],
-				     test-method);
+				     key, key-id, key=);
 
   if (bucket-entry = #f)             // If item didn't exist, add it
     bucket-entry := make-bucket-entry(key, key-id,
@@ -626,7 +616,8 @@ define method element-setter (value :: <object>, ht :: <value-table>,
     ht.item-count-slot := ht.item-count-slot + 1;
 
     if (size(ht) * 100 > (ht.bucket-count-slot * ht.expand-when-slot))
-      resize-table(ht, truncate/ (size(ht) * ht.expand-to-slot, 100) + 1);
+      let target = truncate/(ht.bucket-count-slot * ht.expand-to-slot, 100);
+      resize-table(ht, find-new-size(target));
     end if;
   else     // Item WAS found
     bucket-entry.key-slot        := key;
@@ -646,11 +637,7 @@ define method remove-key! (ht :: <table>, key) => new-ht :: <table>;
   let (key-id, key-state)   = key-hash(key);
   let bucket-index          = modulo (key-id, ht.bucket-count-slot);
   let bucket                = ht.bucket-array-slot[bucket-index];
-  let test = method (existing-item :: <bucket-entry>)
-	       (existing-item.hash-id-slot = key-id)
-		 & key= (existing-item.key-slot, key);
-	     end method;
-  let the-item = find-elt(bucket, test);
+  let the-item = find-elt(bucket, key, key-id, key=);
 
   if (~state-valid?(ht.merged-hash-state-slot)
       | ~state-valid?(key-state))
@@ -667,7 +654,9 @@ define method remove-key! (ht :: <table>, key) => new-ht :: <table>;
 	ht.bucket-array-slot[bucket-index] := remove!(bucket, the-item);
 
         if (size (ht) * 100 < (ht.bucket-count-slot * ht.shrink-when-slot))
-	  resize-table(ht, truncate/ (size(ht) * ht.shrink-to-slot, 100) + 1);
+	  let target = truncate/(ht.bucket-count-slot * ht.shrink-to-slot,
+				 100);
+	  resize-table(ht, find-new-size(target));
 	end if;
 
       // We leave all the merged-states as is. rehash will take care of it
@@ -687,11 +676,7 @@ define method remove-key! (ht :: <value-table>, key) => new-ht :: <table>;
   let bucket-index          = modulo(key-id, ht.bucket-count-slot);
   let bucket                = ht.bucket-array-slot[bucket-index];
 
-  let test = method (existing-item :: <bucket-entry>)
-	       (existing-item.hash-id-slot = key-id)
-		 & key=(existing-item.key-slot, key);
-	     end method;
-  let the-item = find-elt(bucket, test);
+  let the-item = find-elt(bucket, key, key-id, key=);
 
   if (the-item ~= #f)       // An item with that key was found
     ht.item-count-slot := ht.item-count-slot - 1;
@@ -702,7 +687,8 @@ define method remove-key! (ht :: <value-table>, key) => new-ht :: <table>;
     ht.bucket-array-slot[bucket-index] := remove!(bucket, the-item);
 
     if (size(ht) * 100 < (ht.bucket-count-slot * ht.shrink-when-slot))
-      resize-table(ht, truncate/(size(ht) * ht.shrink-to-slot, 100) + 1);
+      let target = truncate/(ht.bucket-count-slot * ht.shrink-to-slot, 100);
+      resize-table(ht, find-new-size(target));
     end if;
   end if; // had to remove something
   ht;
@@ -766,56 +752,64 @@ end method resize-table;
 //
 define method rehash (ht :: <table>) => rehashed-ht :: <table>;
   let (key=, key-hash)  =  table-protocol(ht);
+  let deferred-elements = #();
 
   for (i from 0 below ht.bucket-count-slot)
     if (~ state-valid?(ht.bucket-states-slot[i]))     // rehash bucket
       ht.bucket-states-slot[i] := $permanent-hash-state;
 
       let bucket    = ht.bucket-array-slot[i];
-      let prev      = #f;
-      let remaining = bucket;
+      ht.bucket-array-slot[i] := #();
       
-             // This until is just like remove!, except that it
-	     // rehashes things
-      until (remaining == #())
+      for (remaining = bucket then next,
+	   next = bucket.tail then next.tail, // depends on #().tail == #()
+	   until remaining == #())
 	let bucket-entry = head(remaining);
-	let index        = i;
 
 	if (state-valid?(bucket-entry.hash-state-slot))
-	  prev        := remaining;
-	  remaining   := tail(remaining);
-
+	  // Put it back into the same bucket
+	  remaining.tail := ht.bucket-array-slot[i];
+	  ht.bucket-array-slot[i] := remaining;
 	else  // state is invalid
 	  let (id, state) = key-hash(bucket-entry.key-slot);  
 	  bucket-entry.hash-id-slot    := id;
 	  bucket-entry.hash-state-slot := state;
-	  index := modulo(id, ht.bucket-count-slot);
-	  if (index = i)          // Keep its place in the list
-	    prev := remaining;
-	    remaining := tail(remaining);
-	  else                    // Move entry
-	    ht.bucket-array-slot [index] := 
-	         pair(bucket-entry, ht.bucket-array-slot [index]);
+	  let index = modulo(id, ht.bucket-count-slot);
 
-	          // Now remove it from old bucket
-	    if (prev)
-	      tail(prev) := tail(remaining);
-	      remaining   := tail(remaining);
-	    else
-	      bucket      := tail(remaining);
-	      prev        := #f;
-	      remaining   := tail(remaining);
-	    end if;  // If prev
-	  end if;    // If index = i
+	  if (index <= i)
+	    // Put it back into a previously processed bucket
+	    remaining.tail := ht.bucket-array-slot[index];
+	    ht.bucket-array-slot[index] := remaining;
+	    ht.bucket-states-slot[index] := 
+	      merge-hash-states(state, ht.bucket-states-slot[index]);
+	  else
+	    // Don't install these yet, or we'll just have to look at them
+	    // again.
+	    remaining.tail := deferred-elements;
+	    deferred-elements := remaining;
+	  end if;    // If index <= i
 	end if;      // If state-valid? (bucket-entry)
-
-	ht.bucket-array-slot[i] := bucket;
-	ht.bucket-states-slot[index] := 
-	          merge-hash-states(bucket-entry.hash-state-slot,
-				     ht.bucket-states-slot[index]);
-      end until;    // Finished traversing the bucket
+      end for;    // Finished traversing the bucket
     end if;         // state-valid? (bucket-id-slots)
   end for;
+
+  // Now we can process everything we put off before.
+  for (remaining = deferred-elements then next,
+       next = deferred-elements.tail then next.tail, //  #().tail == #()
+       until remaining == #())
+    let bucket-entry = head(remaining);
+
+    let id = bucket-entry.hash-id-slot;
+    let state = bucket-entry.hash-state-slot;
+    let index = modulo(id, ht.bucket-count-slot);
+
+    // Put it back into a previously processed bucket
+    remaining.tail := ht.bucket-array-slot[index];
+    ht.bucket-array-slot[index] := remaining;
+    ht.bucket-states-slot[index] := 
+      merge-hash-states(state, ht.bucket-states-slot[index]);
+  end for;    // Finished traversing the deferred elements
+
   ht.merged-hash-state-slot := reduce(merge-hash-states,
 				      $permanent-hash-state,
 				      ht.bucket-states-slot);
@@ -846,217 +840,87 @@ end method empty?;
 // This is the iteration state, not a hash-state
 //
 define class <ntable-state> (<object>)
-  slot elements-touched-slot,         init-keyword: elements-touched:      ;
-
-  slot array-state-slot,              init-keyword: array-state:           ;
-  slot array-limit-slot,              init-keyword: array-limit:           ;
-  slot array-next-state-slot,         init-keyword: array-next-state:      ;
-  slot array-finished-state?-slot,    init-keyword: array-finished-state?: ;
-  slot array-current-key-slot,        init-keyword: array-current-key:     ;
-  slot array-current-element-slot,    init-keyword: array-current-element: ;
-  slot array-current-element-setter-slot,   
-                          init-keyword: array-current-element-setter:      ;
-  slot array-copy-state-slot,         init-keyword: array-copy-state:      ;
-
-  slot bucket-state-slot,             init-keyword: bucket-state:          ;
-  slot bucket-limit-slot,             init-keyword: bucket-limit:          ;
-  slot bucket-next-state-slot,        init-keyword: bucket-next-state:     ;
-  slot bucket-finished-state?-slot,   init-keyword: bucket-finished-state?:;
-  slot bucket-current-key-slot,       init-keyword: bucket-current-key:    ;
-  slot bucket-current-element-slot,   init-keyword: bucket-current-element:;
-  slot bucket-current-element-setter-slot,       
-                           init-keyword: bucket-current-element-setter:    ;
-  slot bucket-copy-state-slot,        init-keyword: bucket-copy-state:     ;
+  slot elements-touched-slot, init-keyword: elements-touched: ;
+  slot bucket-index :: <fixed-integer>, init-keyword: #"index";
+  slot bucket-cell :: <list>, init-keyword: #"cell";
 end class <ntable-state>;
 
 
-define method finished-table-state? (ht :: <table>,
-				     state :: <ntable-state>,
-				     limit)
-  state.elements-touched-slot >= ht.item-count-slot;
-end method finished-table-state?;
+define constant finished-table-state?
+  = method (ht :: <table>,
+	    state :: <ntable-state>,
+	    limit)
+      state.elements-touched-slot >= ht.item-count-slot;
+    end method;
 
 
-define method next-table-state (ht    :: <table>,
-			       state :: <ntable-state>) 
-               => new-state :: <ntable-state>;
-  state.elements-touched-slot := state.elements-touched-slot + 1;
-  if (~finished-table-state?(ht, state, #f))
-    let bucket = state.array-current-element-slot(ht.bucket-array-slot,
-						  state.array-state-slot);
-    state.bucket-state-slot := 
-                state.bucket-next-state-slot(bucket, state.bucket-state-slot);
-    if (state.bucket-finished-state?-slot(bucket,
-					  state.bucket-state-slot,
-					  state.bucket-limit-slot))
-      // Then move on to the next bucket
-      state.array-state-slot := 
-	state.array-next-state-slot(ht.bucket-array-slot,
-				    state.array-state-slot);
-
-      bucket := state.array-current-element-slot(ht.bucket-array-slot,
-						 state.array-state-slot);
-      while (empty?(bucket))
-	state.array-state-slot := 
-	             state.array-next-state-slot(ht.bucket-array-slot,
-						 state.array-state-slot);
-	bucket := state.array-current-element-slot(ht.bucket-array-slot,
-						   state.array-state-slot);
-      end while;
-      let (next-bucket-initial-state,
-	   next-bucket-limit,
-	   next-bucket-next-state,
-	   next-bucket-finished-state?,
-	   next-bucket-current-key,
-	   next-bucket-current-element,
-	   next-bucket-current-element-setter,
-	   next-bucket-copy-state) = 
-                      forward-iteration-protocol(bucket);
-      state.bucket-state-slot                  := next-bucket-initial-state;
-      state.bucket-limit-slot                  := next-bucket-limit;
-      state.bucket-next-state-slot             := next-bucket-next-state;
-      state.bucket-finished-state?-slot        := next-bucket-finished-state?;
-      state.bucket-current-key-slot            := next-bucket-current-key;
-      state.bucket-current-element-slot        := next-bucket-current-element;
-      state.bucket-current-element-setter-slot :=
-                            next-bucket-current-element-setter;
-      state.bucket-copy-state-slot             := next-bucket-copy-state;    
-    end if;           // End of things to do if bucket ran dry
-  end if;             // End of more objects left in hash table?
-  state;            // Return the new and improved state object
-end method next-table-state;
+define constant next-table-state
+  = method (ht    :: <table>,
+	    state :: <ntable-state>) 
+     => new-state :: <ntable-state>;
+      state.elements-touched-slot := state.elements-touched-slot + 1;
+      if (~finished-table-state?(ht, state, #f))
+	let new-cell = state.bucket-cell.tail;
+	if (new-cell == #())
+	  for (i from state.bucket-index + 1,
+	       until ht.bucket-array-slot[i] ~= #())
+	  finally
+	    state.bucket-index := i;
+	    state.bucket-cell := ht.bucket-array-slot[i];
+	  end for;
+	else
+	  state.bucket-cell := new-cell;
+	end if;
+      end if;             // End of more objects left in hash table?
+      state;            // Return the new and improved state object
+    end method;
 
 
 define method get-bucket-entry (ht :: <table>, state :: <ntable-state>)
                   => entry :: <bucket-entry>;
-  let bucket = state.array-current-element-slot(ht.bucket-array-slot,
-						state.array-state-slot);
-  state.bucket-current-element-slot(bucket, state.bucket-state-slot);
+  state.bucket-cell.head;
 end method get-bucket-entry;
 
 
-define method current-table-key (ht :: <table>, state :: <ntable-state>)
-  let bucket-entry = get-bucket-entry(ht, state);
-  bucket-entry.key-slot;
-end method current-table-key;
+define constant current-table-key
+  = method (ht :: <table>, state :: <ntable-state>)
+      let bucket-entry = get-bucket-entry(ht, state);
+      bucket-entry.key-slot;
+    end method;
 
 
-define method current-table-element (ht :: <table>, state :: <ntable-state>)
-  let bucket-entry = get-bucket-entry(ht, state);
-  bucket-entry.item-slot;
-end method current-table-element;
+define constant current-table-element
+  = method (ht :: <table>, state :: <ntable-state>)
+      let bucket-entry = get-bucket-entry(ht, state);
+      bucket-entry.item-slot;
+    end method;
 
 
-define method current-table-element-setter (value,
-					   ht    :: <table>,
-					   state :: <ntable-state>)
-         // This argument order isn't mentioned anywhere I can find,
-         // but seems to be what is expected
+define constant current-table-element-setter
+  = method (value,
+	    ht    :: <table>,
+	    state :: <ntable-state>)
+      // This argument order isn't mentioned anywhere I can find,
+      // but seems to be what is expected
 
-  let bucket = state.array-current-element-slot(ht.bucket-array-slot,
-						state.array-state-slot);
-  let new-bucket-entry = get-bucket-entry(ht, state);
-  new-bucket-entry.item-slot := value;
-  state.bucket-current-element-setter-slot(new-bucket-entry,
-					   bucket,
-					   state.bucket-state-slot);
-  value;
-end method current-table-element-setter;
+      let new-bucket-entry = get-bucket-entry(ht, state);
+      new-bucket-entry.item-slot := value;
+      value;
+    end method;
 
 
-define method copy-table-state (ht :: <table>, old-state :: <ntable-state>)
-  let bucket    = old-state.array-current-element-slot(ht.bucket-array-slot,
-						  old-state.array-state-slot);
-  let new-state = make(<ntable-state>);
-  new-state.array-state-slot  :=
-    old-state.array-copy-state-slot(ht.bucket-array-slot,
-				    old-state.array-state-slot);
-  new-state.bucket-state-slot := 
-    old-state.bucket-copy-state-slot(bucket, old-state.bucket-state-slot);
-
-  new-state.array-next-state-slot      := old-state.array-next-state-slot;
-  new-state.array-copy-state-slot      := old-state.array-copy-state-slot;
-  new-state.array-current-key-slot     := old-state.array-current-key-slot;
-  new-state.array-finished-state?-slot :=
-             old-state.array-finished-state?-slot;
-  new-state.array-current-element-slot := 
-             old-state.array-current-element-slot;
-  new-state.array-current-element-setter-slot :=
-             old-state.array-current-element-setter-slot;
-
-  new-state.bucket-next-state-slot      := old-state.bucket-next-state-slot;
-  new-state.bucket-copy-state-slot      := old-state.bucket-copy-state-slot;
-  new-state.bucket-current-key-slot     := old-state.bucket-current-key-slot;
-  new-state.bucket-finished-state?-slot :=
-             old-state.bucket-finished-state?-slot;
-  new-state.bucket-current-element-slot := 
-             old-state.bucket-current-element-slot;
-  new-state.bucket-current-element-setter-slot :=
-             old-state.bucket-current-element-setter-slot;
-
-  new-state;
-end method copy-table-state;
+define constant copy-table-state
+  = method (ht :: <table>, old-state :: <ntable-state>)
+      make(<ntable-state>, elements-touched: old-state.elements-touched-slot,
+	   index: old-state.bucket-index, cell: old-state.bucket-cell);
+    end method;
 
 
 define method make-table-state (ht :: <table>) 
                => table-state :: <ntable-state>;
-  let (array-initial-state,
-       array-limit,
-       array-next-state,
-       array-finished-state?,
-       array-current-key,
-       array-current-element,
-       array-current-element-setter,
-       array-copy-state) = forward-iteration-protocol(ht.bucket-array-slot);
-  let init-state = make(<ntable-state>);
-
-  init-state.elements-touched-slot :=             0;
-
-  init-state.array-state-slot :=                  array-initial-state;
-  init-state.array-limit-slot :=                  array-limit;
-  init-state.array-next-state-slot :=             array-next-state;
-  init-state.array-finished-state?-slot :=        array-finished-state?;
-  init-state.array-current-key-slot :=            array-current-key;
-  init-state.array-current-element-slot :=        array-current-element;
-  init-state.array-current-element-setter-slot := array-current-element-setter;
-  init-state.array-copy-state-slot :=             array-copy-state;
-
-  if (ht.item-count-slot > 0)
-    let bucket = init-state.array-current-element-slot (ht.bucket-array-slot,
-			  	                init-state.array-state-slot);
-
-    while (empty?(bucket))             // Find first non-empty bucket
-      init-state.array-state-slot := 
-	init-state.array-next-state-slot (ht.bucket-array-slot,
-					  init-state.array-state-slot);
-      bucket := init-state.array-current-element-slot (ht.bucket-array-slot,
-						init-state.array-state-slot);
-    end while;
-
-          // In the case that the hash table is empty, the bucket states
-          // are neither initialized nor needed.
-
-    let (first-bucket-initial-state,
-	 first-bucket-limit,
-	 first-bucket-next-state,
-	 first-bucket-finished-state?,
-	 first-bucket-current-key,
-	 first-bucket-current-element,
-	 first-bucket-current-element-setter,
-	 first-bucket-copy-state) = 
-                    forward-iteration-protocol(bucket);
-
-    init-state.bucket-state-slot :=              first-bucket-initial-state;
-    init-state.bucket-limit-slot :=              first-bucket-limit;
-    init-state.bucket-next-state-slot :=         first-bucket-next-state;
-    init-state.bucket-finished-state?-slot :=    first-bucket-finished-state?;
-    init-state.bucket-current-key-slot :=        first-bucket-current-key;
-    init-state.bucket-current-element-slot :=    first-bucket-current-element;
-    init-state.bucket-current-element-setter-slot := 
-                                         first-bucket-current-element-setter;
-    init-state.bucket-copy-state-slot :=         first-bucket-copy-state;
-  end if;
-  init-state;                        // Return value
+  let result = make(<ntable-state>, elements-touched: -1,
+		    index: -1, cell: #()); // Depend on tail(#()) == #()
+  next-table-state(ht, result);
 end method make-table-state;
 
 
