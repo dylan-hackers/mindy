@@ -1,9 +1,9 @@
 module: lisp-read
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/lisp-read.dylan,v 1.1 1996/09/19 09:48:03 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/parsergen/lisp-read.dylan,v 1.2 1996/09/19 12:13:27 nkramer Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
-// ### This file is almost identical to lisp2dylan/lisp-read.dylan,
+// ### This file is almost identical to the top of lisp2dylan.dylan,
 // but not quite.  The main difference is that the other version was
 // kluged to handle comments (by spewing them to stdout as we read
 // them), and the other version doesn't include the lisp-read()
