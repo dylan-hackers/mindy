@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.39 1995/08/07 12:23:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.40 1995/10/05 01:13:38 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -533,9 +533,9 @@ end;
 
 define class <nlx-info> (<object>)
   slot nlx-hidden-references? :: <boolean>, init-value: #f;
-  slot nlx-catch :: false-or(<catch>);
-  slot nlx-make-catcher :: false-or(<make-catcher>);
-  slot nlx-exit-function :: false-or(<exit-function>);
+  slot nlx-catch :: false-or(<catch>), init-value: #f;
+  slot nlx-make-catcher :: false-or(<make-catcher>), init-value: #f;
+  slot nlx-exit-function :: false-or(<exit-function>), init-value: #f;
   slot nlx-disable-catchers :: false-or(<disable-catcher>), init-value: #f;
   slot nlx-throws :: false-or(<throw>), init-value: #f;
 end;
