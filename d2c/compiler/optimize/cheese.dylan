@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.43 1995/05/01 11:49:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.44 1995/05/02 16:35:25 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2555,7 +2555,9 @@ define method delete-stuff-in
       block-region.exits := next;
     end;
   end;
-  reoptimize(component, block-region);
+  unless (instance?(block-region, <component>))
+    reoptimize(component, block-region);
+  end;
 end;
 
 define method delete-stuff-in
