@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.37 1996/04/10 16:49:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.38 1996/04/13 21:13:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -538,12 +538,14 @@ define module representation
   use common;
 
   use utils;
-  use variables;
   use ctype;
+  use forwards, import: {<cclass>};
 
   export
-    <representation>, pick-representation, representation-alignment,
-    representation-size, representation-has-bottom-value?;
+    <representation>, <data-word-representation>,
+    pick-representation, representation-alignment, representation-size,
+    representation-has-bottom-value?,
+    use-data-word-representation, use-general-representation;
 end;
 
 define module classes
@@ -569,10 +571,14 @@ define module classes
     all-slot-infos-setter, new-slot-infos, new-slot-infos-setter,
     override-infos, override-infos-setter, unique-id,
     set-and-record-unique-id, subclass-id-range-min,
-    subclass-id-range-max, direct-type, space-representation,
-    space-representation-setter, speed-representation,
-    speed-representation-setter, instance-slots-layout, vector-slot,
-    vector-slot-setter, class-heap-fields, class-heap-fields-setter,
+    subclass-id-range-max, direct-type,
+    direct-space-representation, direct-space-representation-setter,
+    direct-speed-representation, direct-speed-representation-setter,
+    general-space-representation, general-space-representation-setter,
+    general-speed-representation, general-speed-representation-setter,
+    instance-slots-layout, vector-slot,
+    vector-slot-setter, data-word-slot,
+    class-heap-fields, class-heap-fields-setter,
     <defined-cclass>, class-defn, class-defn-setter,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
@@ -580,6 +586,9 @@ define module classes
     slot-guaranteed-initialized?, slot-init-value, slot-init-value-setter,
     slot-init-function, slot-init-function-setter, slot-init-keyword,
     slot-init-keyword-required?, slot-overrides,
+
+    <position-table>, get-direct-position, get-general-position,
+    get-universal-position, <slot-position>,
 
     <instance-slot-info>, slot-representation, slot-initialized?-slot,
     slot-positions, find-slot-offset, best-idea-of-class,
@@ -598,7 +607,7 @@ define module classes
     <proxy>, proxy-for,
 
     inherit-slots, inherit-overrides, assign-unique-ids,
-    assign-slot-representations, layout-instance-slots,
+    layout-instance-slots, layout-slots-for,
 
     // For dumper...
     <limited-cclass>, each-subclass-slots-count;
@@ -635,8 +644,9 @@ define module c-representation
     <general-representation>,
     <heap-representation>,
     <immediate-representation>,
+    <c-data-word-representation>,
 
-    <data-word-representation>, representation-class,
+    representation-class,
     representation-data-word-member,
 
     *general-rep*, *heap-rep*, *boolean-rep*,
