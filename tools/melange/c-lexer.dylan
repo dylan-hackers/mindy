@@ -68,7 +68,7 @@ rcs-header: $Header:
 
 define module c-lexer
   use dylan;
-  use extensions;
+  use extensions, exclude: {<string-table>};
   use self-organizing-list;
   use string-conversions;
   use regular-expressions;
@@ -589,7 +589,7 @@ define constant reserved-words
 // above
 //
 define constant reserved-word-table =
-  make(<string-table>, buckets: truncate/(reserved-words.size, 2));
+  make(<string-table>, size: truncate/(reserved-words.size, 2));
 
 // Do the actual initialization of reserved-word-table at load time.
 //
