@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.37 1995/08/07 12:25:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.38 1995/08/07 14:05:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -461,6 +461,12 @@ define open generic make-exit-function (catcher :: <catcher>)
 
 define open generic push-unwind-protect (cleanup-function :: <function>) => ();
 define open generic pop-unwind-protect () => ();
+
+define open generic push-handler
+    (type :: <type>, func :: <function>,
+     #key test :: false-or(<function>), init-arguments :: <sequence> = #())
+    => ();
+define open generic pop-handler () => ();
 
 define open generic value (x) => value :: <object>;
 define open generic value-setter (x, y) => value;
