@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.21 1994/05/19 22:34:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.22 1994/06/09 16:30:46 wlott Exp $
 *
 * This file does whatever.
 *
@@ -291,6 +291,7 @@ static void debugger_cmd_finished(struct thread *thread, obj_t *vals)
 {
     thread->sp = vals;
     thread_pop_escape(thread);
+    restart_other_threads(thread);
     pause(pause_DebuggerCommandFinished);
 }
 
