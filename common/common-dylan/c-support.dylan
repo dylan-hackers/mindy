@@ -41,7 +41,7 @@ define sealed method application-argv-internal-setter (value :: <anonymous-1>) =
 end method application-argv-internal-setter;
 
 #else
-c-include(".//prototypes.h");
+c-include("./prototypes.h");
 
 define sealed method application-argc () => (result :: <integer>);
   as(<integer>, c-variable-ref(int: "&application_argc"));
