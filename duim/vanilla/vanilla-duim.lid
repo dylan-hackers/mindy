@@ -12,6 +12,7 @@ Files:     library
            vanilla-port
            vanilla-display
            vanilla-graphics
+           vanilla-font
            vanilla-medium
            vanilla-mirror
            vanilla-pixmaps
