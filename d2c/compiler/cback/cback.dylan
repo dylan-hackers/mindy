@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.27 1995/05/01 11:49:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.28 1995/05/02 03:57:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -162,6 +162,9 @@ define class <output-info> (<object>)
   //
   slot output-info-local-vars :: <object-table>,
     init-function: curry(make, <object-table>);
+  //
+  // id number for the next block.
+  slot output-info-next-block :: <fixed-integer>, init-value: 0;
   //
   // id number for the next local.  Reset at the start of each function.
   slot output-info-next-local :: <fixed-integer>, init-value: 0;
@@ -534,6 +537,7 @@ end;
 
 define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
     => ();
+  output-info.output-info-next-block := 0;
   output-info.output-info-next-local := 0;
   output-info.output-info-cur-stack-depth := 0;
   assert(output-info.output-info-local-vars.size == 0);
@@ -616,6 +620,13 @@ define method emit-region (region :: <loop-region>,
   write("}\n", stream);
 end;
 
+define method make-info-for
+    (block-region :: <block-region>, output-info :: <output-info>) => res;
+  let id = output-info.output-info-next-block;
+  output-info.output-info-next-block := id + 1;
+  id;
+end;
+
 define method emit-region (region :: <block-region>,
 			   output-info :: <output-info>)
     => ();
@@ -623,7 +634,6 @@ define method emit-region (region :: <block-region>,
     error("A block with no exits still exists?");
   end;
   let stream = output-info.output-info-guts-stream;
-  let id = region.block-id;
   if (region.catcher)
     if (region.catcher.exit-function)
       error("An exit function still exists?");
@@ -640,7 +650,7 @@ define method emit-region (region :: <block-region>,
   end;
   let half-step = ash($indentation-step, -1);
   indent(stream, - half-step);
-  format(stream, "block%d:\n", id);
+  format(stream, "block%d:\n", get-info-for(region, output-info));
   indent(stream, half-step);
 end;
 
@@ -656,12 +666,11 @@ define method emit-region (region :: <exit>, output-info :: <output-info>)
     unless (region)
       error("Non-local raw exit?");
     end;
-    let id = target.block-id;
-    if (id)
-      format(stream, "goto block%d;\n", id);
-    else
-      format(stream, "abort();\n");
-    end;
+  end;
+  if (instance?(target, <block-region>))
+    format(stream, "goto block%d;\n", get-info-for(target, output-info));
+  else
+    format(stream, "abort();\n");
   end;
 end;
 
