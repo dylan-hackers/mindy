@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.30 2001/12/10 22:25:04 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.31 2002/01/03 16:34:38 housel Exp $
 copyright: see below
 
 
@@ -793,7 +793,11 @@ define method ct-value (defn :: <real-class-definition>)
     => res :: false-or(<cclass>);
   select (defn.class-defn-cclass)
     #"not-computed-yet" =>
-      defn.class-defn-cclass := compute-cclass(defn);
+      defn.class-defn-cclass := #"computing";
+      let (class, init-args) = compute-cclass(defn);
+      if(class)
+        defn.class-defn-cclass := apply(make, class, init-args);
+      end if;
     #"computing" =>
       compiler-error-location
 	(defn,
@@ -806,10 +810,7 @@ define method ct-value (defn :: <real-class-definition>)
 end;
 
 define method compute-cclass (defn :: <real-class-definition>)
-    => res :: false-or(<cclass>);
-  //
-  // Mark that we are trying to compute this class.
-  defn.class-defn-cclass := #"computing";
+    => (cclass-class :: false-or(<class>), init-args :: <sequence>);
   //
   // Evaluate the superclasses, and check them for validity.
   let super-exprs = defn.class-defn-supers;
@@ -934,7 +935,9 @@ define method compute-cclass (defn :: <real-class-definition>)
     end if;
   end if;
 
-  unless (bogus?)
+  if(bogus?)
+    values(#f, #());
+  else
     //
     // Compute the slots and overrides.
     let slot-infos = map(compute-slot, defn.class-defn-slots);
@@ -972,32 +975,32 @@ define method compute-cclass (defn :: <real-class-definition>)
 	       metaclass: #f);
 	end unless;
     //
-    // Make and return the <cclass>.
-    make(<defined-cclass>,
-	 loading: #f,
-	 name: defn.defn-name,
-	 defn: defn,
-	 direct-superclasses: as(<list>, supers),
-	 not-functional:
-	   // Do we proclude functional subclasses?
-	   if (defn.class-defn-functional?)
-	     #f;
-	   elseif (defn.class-defn-abstract?)
-	     ~supers.empty?
-	       & (any?(not-functional?, supers)
-		    | any?(inhibits-functional-classes?, slot-infos));
-	   else
-	     #t;
-	   end,
-	 functional: defn.class-defn-functional?,
-	 sealed: defn.class-defn-sealed?,
-	 primary: defn.class-defn-primary?,
-	 abstract: defn.class-defn-abstract?,
-	 slots: slot-infos,
-	 overrides: override-infos,
-	 keywords: keyword-infos,
-	 metaclass: metaclass);
-  end unless;
+    // Class and init arguments for constructing the class
+    values(<defined-cclass>,
+           list(loading: #f,
+                name: defn.defn-name,
+                defn: defn,
+                direct-superclasses: as(<list>, supers),
+                not-functional:
+                  // Do we proclude functional subclasses?
+                  if (defn.class-defn-functional?)
+                    #f;
+                  elseif (defn.class-defn-abstract?)
+                    ~supers.empty?
+                      & (any?(not-functional?, supers)
+                           | any?(inhibits-functional-classes?, slot-infos));
+                  else
+                    #t;
+                  end,
+                functional: defn.class-defn-functional?,
+                sealed: defn.class-defn-sealed?,
+                primary: defn.class-defn-primary?,
+                abstract: defn.class-defn-abstract?,
+                slots: slot-infos,
+                overrides: override-infos,
+                keywords: keyword-infos,
+                metaclass: metaclass));
+  end if;
 end method compute-cclass;
 
 define method compute-slot (slot :: <slot-defn>) => info :: <slot-info>;
@@ -1084,7 +1087,11 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
   // Compute the cclass if it hasn't been computed yet.
   let cclass :: false-or(<cclass>)
     = if (defn.class-defn-cclass == #"not-computed-yet")
-	defn.class-defn-cclass := compute-cclass(defn);
+        defn.class-defn-cclass := #"computing";
+        let (class, init-args) = compute-cclass(defn);
+        if(class)
+          defn.class-defn-cclass := apply(make, class, init-args);
+        end if;
       else
 	defn.class-defn-cclass;
       end;

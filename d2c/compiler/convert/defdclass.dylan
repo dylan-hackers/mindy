@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.5 2001/09/21 06:13:18 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.6 2002/01/03 16:34:38 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -244,7 +244,7 @@ define method process-top-level-form
   for (slot in slots)
     slot.slot-defn-class := defn;
     //
-    // Implicity define the accessor generics.
+    // Implicitly define the accessor generics.
     if (slot.slot-defn-sizer-defn)
       implicitly-define-generic
 	(*Current-Library*, slot.slot-defn-getter-name, 2, #f, #f);
@@ -339,25 +339,19 @@ end class;
 define method compute-cclass
     (defn :: <real-designator-class-definition>,
      #next next-method)
-    => res :: false-or(<cclass>);
-  let cclass = next-method();
+    => (cclass-class :: false-or(<class>), init-args :: <sequence>);
+  let (cclass-class, init-args) = next-method();
 
-  make(<defined-cdclass>,
-       loading: #f,
-       name: defn.defn-name,
-       defn: defn,
-       direct-superclasses: cclass.direct-superclasses,
-       not-functional: cclass.not-functional?,
-       functional: cclass.functional?,
-       sealed: cclass.sealed?,
-       primary: cclass.primary?,
-       abstract: cclass.abstract?,
-       slots: cclass.new-slot-infos,
-       overrides: cclass.override-infos,
-       keywords: cclass.keyword-infos,
-       metaclass: cclass.class-metaclass,
-       pointer-type-superclass:
-         ct-eval(defn.class-defn-pointer-type-superclass, #f));
+  if(cclass-class)
+    values(<defined-cdclass>,
+           apply(list,
+                 pointer-type-superclass:
+                   defn.class-defn-pointer-type-superclass
+                     & ct-eval(defn.class-defn-pointer-type-superclass, #f),
+                 init-args));
+  else
+    values(#f, #());
+  end if;
 end method;
 
 define method class-defn-struct-slot-infos
