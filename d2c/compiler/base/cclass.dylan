@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.20 2002/03/20 20:55:47 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.21 2002/03/24 19:59:53 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -73,7 +73,7 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
     init-value: #t, init-keyword: loading:;
 
   // List of the direct superclasses of this class.
-  slot direct-superclasses :: <list>,
+  constant slot direct-superclasses :: <list>,
     required-init-keyword: direct-superclasses:;
 
   // Closest primary superclass.
@@ -175,10 +175,6 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // The slot allocated in the data-word, if any.
   slot data-word-slot :: false-or(<instance-slot-info>) = #f,
     init-keyword: data-word-slot:;
-  //
-  // Count of the number of each-subclass slots.
-  slot each-subclass-slots-count :: <integer>,
-    init-keyword: each-subclass-slots-count:;
   //
   // Used by the heap builder.
   slot class-heap-fields :: false-or(<simple-object-vector>),
@@ -310,7 +306,7 @@ end;
 define constant <slot-allocation>
   = one-of(#"instance", #"class", #"each-subclass", #"virtual");
 
-// Determines the layout of <cclass> objects that contain class allocated slots
+// Determines the layout of <cclass> objects that contain indirect slots
 define class <meta-cclass>(<cclass>)
 end;
 
@@ -417,15 +413,20 @@ end;
 
 define sealed domain make (singleton(<vector-slot-info>));
 
-define class <class-slot-info> (<slot-info>)
+define abstract class <indirect-slot-info> (<slot-info>)
   slot associated-meta-slot :: <meta-slot-info>;
+end;
+
+define sealed domain make (singleton(<indirect-slot-info>));
+define sealed domain initialize (<indirect-slot-info>);
+
+define class <class-slot-info> (<indirect-slot-info>)
 end;
 
 define sealed domain make (singleton(<class-slot-info>));
 define sealed domain initialize (<class-slot-info>);
 
-define class <each-subclass-slot-info> (<slot-info>)
-  constant slot slot-positions :: <position-table> = make(<position-table>);
+define class <each-subclass-slot-info> (<indirect-slot-info>)
 end;
 
 define sealed domain make (singleton(<each-subclass-slot-info>));
@@ -442,7 +443,7 @@ define sealed domain initialize (<virtual-slot-info>);
 // with a class allocated slot.
 //
 define class <meta-slot-info>(<instance-slot-info>)
-  constant slot referred-slot-info :: <class-slot-info>,
+  constant slot referred-slot-info :: <indirect-slot-info>,
     required-init-keyword: referred:;
 end;
 
@@ -1579,7 +1580,6 @@ define method layout-slots-for (class :: <cclass>) => ();
       class.instance-slots-layout := make(<layout-table>);
       class.vector-slot := #f;
       class.data-word-slot := #f;
-      class.each-subclass-slots-count := 0;
       for (slot in class.all-slot-infos)
 	layout-slot(slot, class);
       end for;
@@ -1601,8 +1601,6 @@ define method layout-slots-for (class :: <cclass>) => ();
 	:= copy-layout-table(critical-super.instance-slots-layout);
       class.vector-slot := critical-super.vector-slot;
       class.data-word-slot := critical-super.data-word-slot;
-      class.each-subclass-slots-count
-	:= critical-super.each-subclass-slots-count;
       for (slot in critical-super.all-slot-infos)
 	inherit-layout(slot, class, critical-super);
       end;
@@ -1704,8 +1702,9 @@ define method inherit-layout
 end;
 
 define method inherit-layout
-    (slot :: type-union(<instance-slot-info>, <each-subclass-slot-info>),
-     class :: <cclass>, super :: <cclass>)
+    (slot :: <instance-slot-info>,
+     class :: <cclass>,
+     super :: <cclass>)
     => ();
   add-position(slot.slot-positions, class,
 	       get-direct-position(slot.slot-positions, super));
@@ -1745,14 +1744,6 @@ define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
   let offset = find-position(class.instance-slots-layout, 0,
 			     rep.representation-alignment);
   add-position(slot.slot-positions, class, offset);
-end;
-
-define method layout-slot
-    (slot :: <each-subclass-slot-info>, class :: <cclass>)
-    => ();
-  let posn = class.each-subclass-slots-count;
-  add-position(slot.slot-positions, class, posn);
-  class.each-subclass-slots-count := posn + 1;
 end;
 
 
