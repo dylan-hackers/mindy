@@ -208,7 +208,7 @@ define function install-named-handlers
       end
     end
   end;
-  gtk-widget-set-events(widget,
+  gtk-widget-add-events(widget,
 			logior($GDK-EXPOSURE-MASK,
 			       $GDK-LEAVE-NOTIFY-MASK,
 			       if (member?(#"motion", handlers))
