@@ -1,98 +1,146 @@
-module: target-environment
+module: platform
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.11 1996/12/05 14:00:34 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.12 1997/02/04 14:39:01 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
-// This file defines stuff for reading in compiler target information
+// This file defines stuff for reading in compiler platform information
 // from disk and presenting it to the rest of the program in a
 // reasonable way.
 
-// If you add a slot, make sure you update the make method to keep the
-// target inheritence working right
+// <platform> -- exported
 //
-define sealed class <target-environment> (<object>)
-  // target-name is for internal use only
-  constant slot target-name :: <symbol>, required-init-keyword: #"target-name";
+// Information about a specific platform.  Our definition of
+// "platform" includes instruction set architecture, the operating
+// system, and compilation tools like a C compiler and a make utility.
+//
+// Descriptions of all the slots can be found in ../platforms.descr.
+//
+// Not all info in platforms.descr is actually used by the compiler.
+// Some of it is there for mk-build-tree/gen-makefile.  In those
+// cases, we define slots in <platform> for that info, but we don't
+// export it from this module.  (We have to come up with a way for the
+// keywords to be acceptable to the class, and this seems like as good
+// a way as any)
+//
+define sealed /* exported */ class <platform> (<object>)
+  // platform-name is for internal use only.  The reason is, if you
+  // conditionalize something based on the platform-name, then nobody
+  // can create new platforms which inherit from the original platform.
+  // For instance, someone writes
+  //
+  //    if (platform.platform-name == #"x86-win32")
+  //      do whatever;
+  //    end if;
+  //
+  // Then the platform x86-win32-vc, which is supposed to be another
+  // name for x86-win32, wouldn't behave the same as x86-win32.
+  //
+  constant slot platform-name :: <symbol>, 
+    required-init-keyword: #"platform-name";
 
-  constant slot default-features :: <byte-string>,
+  constant /* exported */ slot default-features :: <byte-string>,
     required-init-keyword: #"default-features";
 
-  constant slot target-integer-length :: <integer>,
+  constant /* exported */ slot platform-integer-length :: <integer>,
     required-init-keyword: #"integer-length";
 
-  constant slot heap-preamble :: <byte-string>,
+  constant /* exported */ slot heap-preamble :: <byte-string>,
     required-init-keyword: #"heap-preamble";
-  constant slot align-directive :: <byte-string>, 
+  constant /* exported */ slot align-directive :: <byte-string>, 
     required-init-keyword: #"align-directive";
-  constant slot export-directive :: <byte-string>,
+  constant /* exported */ slot export-directive :: <byte-string>,
     required-init-keyword: #"export-directive";
-  constant slot word-directive :: <byte-string>,
+  constant /* exported */ slot word-directive :: <byte-string>,
     required-init-keyword: #"word-directive";
-  constant slot half-word-directive :: <byte-string>,
+  constant /* exported */ slot half-word-directive :: <byte-string>,
     required-init-keyword: #"half-word-directive";
-  constant slot byte-directive :: <byte-string>, 
+  constant /* exported */ slot byte-directive :: <byte-string>, 
     required-init-keyword: #"byte-directive";
-  constant slot comment-token :: <byte-string>,
+  constant /* exported */ slot comment-token :: <byte-string>,
     required-init-keyword: #"comment-token";
-  constant slot mangled-name-prefix :: <byte-string>,
+  constant /* exported */ slot mangled-name-prefix :: <byte-string>,
     required-init-keyword: #"mangled-name-prefix";
 
-  constant slot object-filename-suffix :: <byte-string>,
+  constant /* exported */ slot object-filename-suffix :: <byte-string>,
     required-init-keyword: #"object-filename-suffix";
-  constant slot library-filename-prefix :: <byte-string>,
+  constant /* exported */ slot library-filename-prefix :: <byte-string>,
     required-init-keyword: #"library-filename-prefix";
-  constant slot library-filename-suffix :: <byte-string>,
+  constant /* exported */ slot library-filename-suffix :: <byte-string>,
     required-init-keyword: #"library-filename-suffix";
-  constant slot executable-filename-suffix :: <byte-string>,
+  constant /* exported */ slot executable-filename-suffix :: <byte-string>,
     required-init-keyword: #"executable-filename-suffix";
 
-  constant slot compile-c-command :: <byte-string>,
+  constant /* exported */ slot compile-c-command :: <byte-string>,
     required-init-keyword: #"compile-c-command";
-  constant slot default-c-compiler-flags :: <byte-string>,
+  constant /* exported */ slot default-c-compiler-flags :: <byte-string>,
     required-init-keyword: #"default-c-compiler-flags";
-  constant slot assembler-command :: <byte-string>,
+  constant /* exported */ slot assembler-command :: <byte-string>,
     required-init-keyword: #"assembler-command";
-  constant slot link-library-command :: <byte-string>,
+  constant /* exported */ slot link-library-command :: <byte-string>,
     required-init-keyword: #"link-library-command";
-  constant slot link-executable-command :: <byte-string>,
+  constant /* exported */ slot link-executable-command :: <byte-string>,
     required-init-keyword: #"link-executable-command";
-  constant slot link-executable-flags :: <byte-string>,
+  constant /* exported */ slot link-executable-flags :: <byte-string>,
     required-init-keyword: #"link-executable-flags";
-  constant slot make-command :: <byte-string>,
+  constant /* exported */ slot make-command :: <byte-string>,
     required-init-keyword: #"make-command";
-  constant slot delete-file-command :: <byte-string>,
+  constant /* exported */ slot delete-file-command :: <byte-string>,
     required-init-keyword: #"delete-file-command";
-  constant slot compare-file-command :: <byte-string>,
+  constant /* exported */ slot compare-file-command :: <byte-string>,
     required-init-keyword: #"compare-file-command";
-  constant slot move-file-command :: <byte-string>,
+  constant /* exported */ slot move-file-command :: <byte-string>,
     required-init-keyword: #"move-file-command";
 
-  constant slot path-separator :: <character>,
+  constant /* exported */ slot path-separator :: <character>,
     required-init-keyword: #"path-separator";
 
-  // The remainder are really just a way for the compiler to know
-  // when it needs to do black magic, but without knowing the
-  // target's name
-  constant slot link-doesnt-search-for-libs? :: <boolean> = #f,
+  // The next bunch of slots are unexported, because only
+  // mk-build-tree/gen-makefile needs them.  They are required
+  // keywords because gen-makefile doesn't do optional keywords.
+  constant slot makefile-name :: <byte-string>, 
+    required-init-keyword: #"makefile-name";
+  constant slot make-supports-phony-targets? :: <boolean>, 
+    required-init-keyword: #"make-supports-phony-targets?";
+  constant slot recursive-make-command :: <byte-string>, 
+    required-init-keyword: #"recursive-make-command";
+  constant slot makefiles-can-rebuild-themselves? :: <boolean>,
+    required-init-keyword: #"makefiles-can-rebuild-themselves?";
+  constant slot uses-drive-letters? :: <boolean>, 
+    required-init-keyword: #"uses-drive-letters?";
+  constant slot environment-variables-can-be-exported? :: <boolean>,
+    required-init-keyword: #"environment-variables-can-be-exported?";
+  constant slot use-dbclink? :: <boolean>,
+    required-init-keyword: #"use-dbclink?";
+
+  // The remaining slots are really just a way for the compiler to
+  // know when it needs to do black magic, but without knowing the
+  // platform's name.
+  constant /* exported */ slot link-doesnt-search-for-libs? :: <boolean> = #f,
     init-keyword: #"link-doesnt-search-for-libs?";
-  constant slot import-directive-required? :: <boolean> = #f,
+  constant /* exported */ slot import-directive-required? :: <boolean> = #f,
     init-keyword: #"import-directive-required?";
   // perhaps this next one should be supports-stabs...
-  constant slot supports-debugging? :: <boolean> = #f,
+  constant /* exported */ slot supports-debugging? :: <boolean> = #f,
     init-keyword: #"supports-debugging?";
 
-  constant slot uses-win32-stabs? :: <boolean> = #f,
+  // unix-stabs are slightly different than win32 stabs.
+  constant /* exported */ slot uses-win32-stabs? :: <boolean> = #f,
     init-keyword: #"uses-win32-stabs?";
-  // rather than unix-stabs, which are slightly different
 
-  constant slot omit-colon-after-label-declarations? :: <boolean> = #f,
+  constant /* exported */ slot omit-colon-after-label-declarations? 
+      :: <boolean> = #f,
     init-keyword: #"omit-colon-after-label-declarations?";
-end class <target-environment>;
+end class <platform>;
 
-define sealed domain make(singleton(<target-environment>));
-define sealed domain initialize(<target-environment>);
+define sealed domain make(singleton(<platform>));
+define sealed domain initialize(<platform>);
 
+// string-to-boolean -- internal
+//
+// Converts a string into a boolean.  Signals an error if the string
+// doesn't represent a Dylan boolean literal.
+//
 define function string-to-boolean (string :: <string>) => bool :: <boolean>;
   block (return)
     if (string.size == 2 & string.first == '#')
@@ -107,6 +155,11 @@ define function string-to-boolean (string :: <string>) => bool :: <boolean>;
   end block;
 end function string-to-boolean;
 
+// string-to-character -- internal
+//
+// Takes a string, converts it into a character.  Signals an error if
+// the string is not size 1.
+//
 define function string-to-character (string :: <string>)
  => char :: <character>;
   if (string.size ~== 1)
@@ -117,13 +170,21 @@ define function string-to-character (string :: <string>)
   end if;
 end function string-to-character;
 
-// Construct a sequence of keyword/values, and pass it to make().  Not
-// only will this work, it will even catch duplicate and missing
-// keywords (although the error message might not be readily
-// understood by the most casual observer)
+// add-platform! -- internal
 //
-define function add-target!
-    (header :: <header>, targets-table :: <object-table>,
+// Given a header (which describes a single platform), construct a
+// sequence of keyword/values, and pass it to make().  Not only will
+// this work, it will even catch duplicate and missing keywords
+// (although the error message might not be readily understood by the
+// most casual observer)
+//
+// defaults-table is used to implement platform inheritance.
+// Conceptually it contains exactly the same data as the platforms
+// table, but the platforms-table stores <platform>s, while the
+// defaults-table stores sequences of keyword/value pairs.
+//
+define function add-platform!
+    (header :: <header>, platforms-table :: <object-table>,
      defaults-table :: <object-table>)
  => ();
   // keyword-values must be some kind of sequence that add! adds
@@ -144,18 +205,20 @@ define function add-target!
       // "inherit-from" line
       from := element(defaults-table, as(<symbol>, val), default: #f);
       if (from == #f)
-	error("Target tries to inherit from %s, which isn't any "
-		"target I know of", val);
+	error("Platform tries to inherit from %s, which isn't any "
+		"platform I know of", val);
       end if;
     else
       // Do a select here to do conversions for the slot's type (and a
       // few other hacks)
       select (key)
-	#"target-name" =>
+	#"platform-name" =>
 	  keyword-values := add!(keyword-values, as(<symbol>, val));
-	#"link-doesnt-search-for-libs?", #"import-directive-required?", 
-	#"supports-debugging?", #"uses-win32-stabs?", 
-	#"omit-colon-after-label-declarations?" =>
+	#"make-supports-phony-targets?", #"makefiles-can-rebuild-themselves?",
+	#"uses-drive-letters?", #"environment-variables-can-be-exported?",
+	#"use-dbclink?", #"link-doesnt-search-for-libs?",
+	#"import-directive-required?", #"supports-debugging?",
+	#"uses-win32-stabs?", #"omit-colon-after-label-declarations?" =>
 	  keyword-values := add!(keyword-values, string-to-boolean(val));
 	#"integer-length" =>
 	  keyword-values := add!(keyword-values, string-to-integer(val));
@@ -168,23 +231,28 @@ define function add-target!
     end if;
   end for;
   keyword-values := concatenate(keyword-values, from);  // inherit!
-  let target = apply(make, <target-environment>, keyword-values);
-  if (key-exists?(targets-table, target.target-name))
-    error("Redefinition of target %s", target.target-name);
+  let platform = apply(make, <platform>, keyword-values);
+  if (key-exists?(platforms-table, platform.platform-name))
+    error("Redefinition of platform %s", platform.platform-name);
   end if;
-  targets-table[target.target-name] := target;
-  defaults-table[target.target-name] := keyword-values;
-end function add-target!;
+  platforms-table[platform.platform-name] := platform;
+  defaults-table[platform.platform-name] := keyword-values;
+end function add-platform!;
 
-define method get-targets (filename :: <byte-string>)
- => targets :: <object-table>;
+// get-platforms -- exported
+//
+// Reads the platform information out of the specified file.  Returns
+// a table mapping platform names (as symbols) to <platform>s.
+//
+define /* exported */ function get-platforms (filename :: <byte-string>)
+ => platforms :: <object-table>;
   let source = make(<source-file>, name: filename);
   let result = make(<object-table>);
   let state = make(<object-table>);
 
   local 
     method repeat (old-line :: <integer>, old-posn :: <integer>)
-     => targets :: <object-table>;
+     => platforms :: <object-table>;
       if (old-posn >= source.contents.size)
 	result;
       else
@@ -193,15 +261,22 @@ define method get-targets (filename :: <byte-string>)
 	if (~ header.empty?)
 	  // The "if" is so we can allow header blocks which are nothing
 	  // but comments
-	  add-target!(header, result, state);
+	  add-platform!(header, result, state);
 	end if;
 	repeat(line, posn);
       end if;
     end method repeat;
 
   repeat(1, 0);
-end method get-targets;
+end function get-platforms;
 
-
-
-define variable *current-target* :: false-or(<target-environment>) = #f;
+// *current-target* -- exported
+//
+// The platform the compiler is generating code for.  A few different
+// places in the compiler need this information, and it'll be a heck
+// of a pain trying to propagate this information to them via
+// parameter passing.  So we make it a global...  I'm not sure we need
+// to define it in this particular library, but both cback and
+// optimize need it, and I can't think of a better place.
+//
+define /* exported */ variable *current-target* :: false-or(<platform>) = #f;
