@@ -1,55 +1,63 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.2 1996/02/08 01:36:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.3 1996/03/02 19:01:13 rgs Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
 
 // External entry construction.
 
-define method build-external-entries (component :: <component>) => ();
-  for (function in component.all-function-literals)
-    if (function.general-entry == #f)
-      maybe-build-external-entries-for(component, function);
-    end;
-  end;
-end;
-
-define method maybe-build-external-entries-for
-    (component :: <component>, func :: <function-literal>) => ();
-  select(func.visibility)
-    #"global" =>
-      build-external-entries-for(component, func);
-    #"local" =>
+define method build-local-xeps (component :: <component>) => ();
+  for (func in component.all-function-literals)
+    if (func.general-entry == #f & func.visibility == #"local")
       block (return)
 	for (dep = func.dependents then dep.source-next,
 	     while: dep)
 	  let dependent = dep.dependent;
-	  unless (instance?(dependent, <known-call>)
-		    & dependent.depends-on == dep)
+	  if (~instance?(dependent, <known-call>)
+		    | dependent.depends-on ~== dep)
 	    build-external-entries-for(component, func);
 	    return();
-	  end;
-	end;
-      end;
-  end;
+	  end if;
+	end for;
+      end block;
+    end if;
+  end for;
 end;
+
+define method build-xep-component
+    (function :: <ct-function>, generic-entry? :: <boolean>)
+ => (entry :: <fer-function-region>, component :: <component>);
+  let component = make(<fer-component>);
+  let entry = build-xep(function, generic-entry?, component);
+  optimize-component(component);
+  values(entry, component);
+end method build-xep-component;
+
+define method build-xep-get-ctv (func :: <function-literal>)
+  func.ct-function
+    | (func.ct-function
+	 := make(if (instance?(func, <method-literal>))
+		   <ct-method>;
+		 else
+		   <ct-function>;
+		 end,
+		 name: func.main-entry.name,
+		 signature: func.signature));
+end method build-xep-get-ctv;
 
 define method build-external-entries-for
     (component :: <component>, function :: <function-literal>) => ();
-  function.general-entry
-    := build-xep(component, #f, function, function.signature);
+  function.general-entry := build-xep(function, #f, component);
+  build-xep-get-ctv(function).has-general-entry? := #t;
 end;
 
 define method build-external-entries-for
     (component :: <component>, function :: <method-literal>) => ();
-  let ctv = function.ct-function;
-  unless (ctv & ctv.ct-method-hidden?)
-    function.general-entry
-      := build-xep(component, #f, function, function.signature);
-  end;
+  function.general-entry := build-xep(function, #f, component);
+  build-xep-get-ctv(function).has-general-entry? := #t;
   unless (function.generic-entry)
-    function.generic-entry
-      := build-xep(component, #t, function, function.signature);
+    build-xep-get-ctv(function).has-generic-entry? := #t;
+    function.generic-entry := build-xep(function, #t, component);
   end;
 end;
 
@@ -71,10 +79,31 @@ end class <keyarg-info>;
 
 
 define method build-xep
-    (component :: <component>, generic-entry? :: <boolean>,
-     function :: <function-literal>, signature :: <signature>)
-    => xep :: <fer-function-region>;
+    (function :: <ct-function>, generic-entry? :: <boolean>,
+     component :: <component>)
+ => (xep :: <fer-function-region>);
+  
+  aux-build-xep(make(<literal-constant>, value: function),
+		function.ct-function-signature, component,
+		function.ct-function-name, instance?(function, <ct-method>),
+		generic-entry?, #f);
+end method build-xep;
+
+define method build-xep
+    (function :: <function-literal>, generic-entry? :: <boolean>,
+     component :: <component>)
+ => xep :: <fer-function-region>;
   let main-entry = function.main-entry;
+  aux-build-xep(function, function.signature, component, main-entry.name,
+		instance?(function, <method-literal>), generic-entry?,
+		main-entry);
+end;
+
+define method aux-build-xep
+    (function :: <expression>, signature :: <signature>,
+     component :: <component>, entry-name, method? :: <boolean>,
+     generic-entry? :: <boolean>, main-entry :: false-or(<object>))
+ => (xep :: <fer-function-region>);
   let builder = make-builder(component);
   let policy = $Default-Policy;
   let source = make(<source-location>);
@@ -82,7 +111,7 @@ define method build-xep
     = instance?(main-entry, <lambda>) & main-entry.environment.closure-vars;
   let self-leaf
     = make-local-var(builder, #"self",
-		     specifier-type(if (instance?(function, <method-literal>))
+		     specifier-type(if (method?)
 				      if (closure?)
 					#"<method-closure>";
 				      else
@@ -102,7 +131,7 @@ define method build-xep
 				      dylan-value(#"<list>"));
   let name = format-to-string("%s entry for %s",
 			      if (generic-entry?) "Generic" else "General" end,
-			      main-entry.name);
+			      entry-name);
   let xep = build-function-body(builder, policy, source, #f, name,
 				if (generic-entry?)
 				  list(self-leaf, nargs-leaf, next-info-leaf);
@@ -430,9 +459,9 @@ define method build-xep
 		   make-operation(builder, <primitive>, list(args-leaf),
 				  name: #"pop-args"));
   let cluster = make-values-cluster(builder, #"results", wild-ctype());
+  let ops = pair(function, as(<list>, new-args));
   build-assignment(builder, policy, source, cluster,
-		   make-operation(builder, <known-call>,
-				  pair(function, as(<list>, new-args))));
+		   make-operation(builder, <known-call>, ops));
   build-return(builder, policy, source, xep, cluster);
   end-body(builder);
 
