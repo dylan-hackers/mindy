@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.38 1995/05/08 17:04:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.39 1995/05/08 17:17:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -147,10 +147,10 @@ define class <output-info> (<object>)
   //
   // Stream for the header file.
   slot output-info-header-stream :: <stream>,
-    init-function: make-indenting-string-stream;
+    required-init-keyword: header-stream:;
   //
   slot output-info-body-stream :: <stream>,
-    init-function: make-indenting-string-stream;
+    required-init-keyword: body-stream:;
   //
   slot output-info-vars-stream :: <stream>,
     init-function: curry(make-indenting-string-stream,
@@ -185,19 +185,6 @@ define class <output-info> (<object>)
     init-value: 0;
 end;
 
-
-define method output-info-results (output-info :: <output-info>) => ();
-  let s = *standard-output*;
-  write("/**** Header: */\n", s);
-  write(output-info.output-info-header-stream.string-output-stream-string, s);
-  write("/**** Body: */\n", s);
-  write(output-info.output-info-body-stream.string-output-stream-string, s);
-  write("/**** Vars: */\n", s);
-  write(output-info.output-info-vars-stream.string-output-stream-string, s);
-  write("/**** Guts: */\n", s);
-  write(output-info.output-info-guts-stream.string-output-stream-string, s);
-  force-output(s);
-end;
 
 
 // Utilities.
@@ -394,17 +381,15 @@ define method make-info-for
 	  else
 	    let header = output-info.output-info-header-stream;
 	    format(header, "struct %s_results {\n", name);
-	    indent(header, $indentation-step);
 	    let reps
 	      = map(method (type, index)
 		      let rep = pick-representation(type, #"speed");
-		      format(header, "%s R%d;\n",
+		      format(header, "    %s R%d;\n",
 			     rep.representation-c-type, index);
 		      rep;
 		    end,
 		    positionals,
 		    make(<range>, from: 0));
-	    indent(header, -$indentation-step);
 	    format(header, "};\n\n");
 	    format(stream, "struct %s_results", name);
 	    reps;
