@@ -6,7 +6,7 @@
 
 $lib_name = "$lib_prefix" . "runtime$dot_lib";
 
-print "$lib_name: allocate$dot_obj main$dot_obj nlx$dot_obj\n";
+print "$lib_name: allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj\n";
 print "\t";
 printf($target_platform{'link_library_command'}, $lib_name,
        "allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj");
