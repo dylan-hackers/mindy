@@ -40,7 +40,7 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /scm/cvs/src/mindy/compat/std-os.h,v 1.3 1999/09/15 10:58:35 bruce Exp $ SPRITE (Berkeley)
+ * $Header: /scm/cvs/src/mindy/compat/std-os.h,v 1.4 2002/03/03 07:58:09 brent Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_OS_H_
@@ -170,15 +170,17 @@
  */
 
 #ifdef NO_GETTOD
-#   include <sys/times.h>
-#   include <sys/param.h>
-#   ifndef CLK_TCK
-#       ifdef HZ
-#           define CLK_TCK HZ
-#       else
-#           define CLK_TCK 60
-#       endif
-#   endif
+#	ifndef WIN32
+#		include <sys/times.h>
+#		include <sys/param.h>
+#		ifndef CLK_TCK
+#			ifdef HZ
+#				define CLK_TCK HZ
+#			else
+#				define CLK_TCK 60
+#			endif
+#		endif
+#	endif
 #endif
 
 /*

@@ -2,6 +2,8 @@
 
 if ($features{'compiled_for_unix'}) {
     $system_lid_file = 'file-system';
+} elsif ($features{'compiled_for_win32'}) {
+	$system_lid_file = 'file-system';
 } else {
     &unknown_platform_error();
 }
