@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.3 1994/03/28 11:31:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.4 1994/03/31 10:16:30 wlott Exp $
 *
 * This file does whatever.
 *
@@ -127,17 +127,6 @@ static void dump_integer(long value)
     }
 }
 
-static void dump_keyword(struct keyword *keyword)
-{
-    if (keyword->handle != -1)
-	dump_ref(keyword->handle);
-    else {
-	keyword->handle = implicit_store();
-	dump_string_guts(fop_SHORT_KEYWORD, fop_KEYWORD, keyword->name,
-			 strlen(keyword->name));
-    }
-}
-
 static void dump_symbol(struct symbol *symbol)
 {
     if (symbol->handle != -1)
@@ -151,11 +140,6 @@ static void dump_symbol(struct symbol *symbol)
 
 
 /* Literal dumping. */
-
-static void dump_keyword_literal(struct keyword_literal *literal)
-{
-    dump_keyword(literal->keyword);
-}
 
 static void dump_symbol_literal(struct symbol_literal *literal)
 {
@@ -305,7 +289,7 @@ static void dump_unbound_literal(struct literal *literal)
 }
 
 static void (*LiteralDumpers[(int)literal_Kinds])() = {
-    dump_keyword_literal, dump_symbol_literal, dump_integer_literal,
+    dump_symbol_literal, dump_integer_literal,
     dump_float_literal, dump_character_literal, dump_string_literal,
     dump_list_literal, dump_vector_literal, dump_true_literal,
     dump_false_literal, dump_unbound_literal
@@ -447,7 +431,7 @@ static void dump_method(struct method *method)
 
     for (k = params->keyword_params; k != NULL; k = k->next) {
 	struct literal_expr *def = (struct literal_expr *)k->def;
-	dump_keyword(k->keyword);
+	dump_symbol(k->keyword);
 	if (def) {
 	    if (def->kind != expr_LITERAL)
 		lose("non-literal keyword default made it though expand?");

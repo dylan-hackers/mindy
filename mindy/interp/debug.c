@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.5 1994/03/30 10:55:46 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.6 1994/03/31 10:19:04 wlott Exp $
 *
 * This file does whatever.
 *
@@ -671,10 +671,10 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 {
     obj_t kind = HEAD(expr);
 
-    if (kind == keyword("literal")) {
+    if (kind == symbol("literal")) {
 	/* Don't have to do anything for literals. */
     }
-    else if (kind == keyword("variable")) {
+    else if (kind == symbol("variable")) {
 	/* Variable reference. */
 	obj_t name = TAIL(expr);
 	if (CurFrame != NULL && CurFrame->locals != obj_False) {
@@ -698,7 +698,7 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 			    value = CurFrame->fp[offset];
 			if (indirect)
 			    value = value_cell_ref(value);
-			HEAD(expr) = keyword("literal");
+			HEAD(expr) = symbol("literal");
 			TAIL(expr) = value;
 			return;
 		    }
@@ -729,13 +729,13 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 		    *okay = FALSE;
 		}
 		else {
-		    HEAD(expr) = keyword("literal");
+		    HEAD(expr) = symbol("literal");
 		    TAIL(expr) = value;
 		}
 	    }
 	}
     }
-    else if (kind == keyword("funcall")) {
+    else if (kind == symbol("funcall")) {
 	obj_t args;
 
 	for (args = TAIL(expr); args != obj_Nil; args = TAIL(args))
@@ -773,11 +773,11 @@ static void do_funcall(struct thread *thread, obj_t args, int nargs)
 	obj_t arg = HEAD(args);
 	obj_t kind = HEAD(arg);
 
-	if (kind == keyword("literal")) {
+	if (kind == symbol("literal")) {
 	    *thread->sp++ = TAIL(arg);
 	    nargs++;
 	}
-	else if (kind == keyword("funcall")) {
+	else if (kind == symbol("funcall")) {
 	    *thread->sp++ = TAIL(args);
 	    *thread->sp++ = make_fixnum(nargs+1);
 	    *thread->sp++ = do_funcall_func;
@@ -836,10 +836,10 @@ static void do_more_prints(struct thread *thread, obj_t exprs)
 	obj_t expr = HEAD(exprs);
 	obj_t kind = HEAD(expr);
 
-	if (kind == keyword("literal")) {
+	if (kind == symbol("literal")) {
 	    print(TAIL(expr));
 	}
-	else if (kind == keyword("funcall")) {
+	else if (kind == symbol("funcall")) {
 	    *thread->sp++ = TAIL(exprs);
 	    *thread->sp++ = do_funcall_func;
 	    *thread->sp++ = TAIL(expr);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.1 1994/03/30 17:05:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.2 1994/03/31 10:19:11 wlott Exp $
 *
 * This file does whatever.
 *
@@ -100,7 +100,7 @@ void init_table_functions(void)
 				    listn(4, obj_IntegerClass, obj_ObjectClass,
 					  obj_IntegerClass, obj_ObjectClass),
 				    FALSE,
-				    list1(pair(keyword("ordered"), obj_False)),
+				    list1(pair(symbol("ordered"), obj_False)),
 				    list2(obj_IntegerClass, obj_ObjectClass),
 				    obj_Nil, dylan_merge_hash_codes));
     define_constant("$permanent-hash-state", obj_False);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.3 1994/03/30 17:07:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.4 1994/03/31 10:19:07 wlott Exp $
 *
 * This file does whatever.
 *
@@ -367,18 +367,6 @@ static obj_t fop_short_symbol(struct load_info *info)
 static obj_t fop_symbol(struct load_info *info)
 {
     return store(info, symbol(string_chars(fop_string(info))),
-		 next_handle(info));
-}
-
-static obj_t fop_short_keyword(struct load_info *info)
-{
-    return store(info, keyword(string_chars(fop_short_string(info))),
-		 next_handle(info));
-}
-
-static obj_t fop_keyword(struct load_info *info)
-{
-    return store(info, keyword(string_chars(fop_string(info))),
 		 next_handle(info));
 }
 
@@ -1019,8 +1007,6 @@ void init_loader(void)
     opcodes[fop_STRING] = fop_string;
     opcodes[fop_SHORT_SYMBOL] = fop_short_symbol;
     opcodes[fop_SYMBOL] = fop_symbol;
-    opcodes[fop_SHORT_KEYWORD] = fop_short_keyword;
-    opcodes[fop_KEYWORD] = fop_keyword;
     opcodes[fop_NIL] = fop_nil;
     opcodes[fop_LIST1] = fop_list1;
     opcodes[fop_LIST2] = fop_list2;

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.2 1994/03/28 11:32:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.3 1994/03/31 10:16:58 wlott Exp $
 *
 * This file does whatever.
 *
@@ -118,18 +118,6 @@ struct literal *make_symbol_literal(struct symbol *sym)
     res->next = NULL;
     res->line = 0;
     res->symbol = sym;
-
-    return (struct literal *)res;
-}
-
-struct literal *make_keyword_literal(struct keyword *key)
-{
-    struct keyword_literal *res = malloc(sizeof(struct keyword_literal));
-
-    res->kind = literal_KEYWORD;
-    res->next = NULL;
-    res->line = 0;
-    res->keyword = key;
 
     return (struct literal *)res;
 }

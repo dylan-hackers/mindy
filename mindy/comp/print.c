@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.2 1994/03/30 05:57:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.3 1994/03/31 10:16:33 wlott Exp $
 *
 * This file does whatever.
 *
@@ -47,11 +47,6 @@ static void print_plist(struct plist *plist, int depth)
 
 
 /* Literal printing. */
-
-static void print_keyword_literal(struct keyword_literal *l, int depth)
-{
-    printf("%skeyword %s:\n", indent(depth), l->keyword->name);
-}
 
 static void print_symbol_literal(struct symbol_literal *l, int depth)
 {
@@ -151,7 +146,7 @@ static void print_unbound_literal(struct literal *l, int depth)
 }
 
 static void (*LiteralPrinters[(int)literal_Kinds])() = {
-    print_keyword_literal, print_symbol_literal, print_integer_literal,
+    print_symbol_literal, print_integer_literal,
     print_float_literal, print_character_literal, print_string_literal,
     print_list_literal, print_vector_literal, print_true_literal,
     print_false_literal, print_unbound_literal

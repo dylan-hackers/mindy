@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.1 1994/03/24 21:49:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.2 1994/03/31 10:19:07 wlott Exp $
 *
 * This file does whatever.
 *
@@ -201,6 +201,6 @@ static obj_t token_as_keyword(void)
     bcopy(yytext, buffer, yyleng-1);
     buffer[yyleng-1] = '\0';
 
-    return keyword(buffer);
+    return symbol(buffer);
 }
 

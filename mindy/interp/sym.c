@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.1 1994/03/24 21:49:40 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.2 1994/03/31 10:19:10 wlott Exp $
 *
 * This file does whatever.
 *
@@ -27,7 +27,6 @@
 #include "sym.h"
 
 obj_t obj_SymbolClass = NULL;
-obj_t obj_KeywordClass = NULL;
 
 struct symbol {
     obj_t class;
@@ -42,7 +41,7 @@ static struct symtable {
     int threshold;
     int length;
     obj_t *table;
-} Symbols, Keywords;
+} Symbols;
 
 static unsigned hash_name(char *name)
 {
@@ -144,11 +143,6 @@ obj_t symbol(char *name)
     return intern(name, &Symbols);
 }
 
-obj_t keyword(char *name)
-{
-    return intern(name, &Keywords);
-}
-
 char *sym_name(obj_t sym)
 {
     obj_t string = obj_ptr(struct symbol *, sym)->name;
@@ -175,22 +169,12 @@ static obj_t symbol_as_string(obj_t class, obj_t symbol)
     return obj_ptr(struct symbol *, symbol)->name;
 }
 
-static obj_t string_as_keyword(obj_t class, obj_t string)
-{
-    return keyword(obj_ptr(struct string *, string)->chars);
-}
-
 
 /* Printing. */
 
 static void print_symbol(obj_t symbol)
 {
     printf("%s", sym_name(symbol));
-}
-
-static void print_keyword(obj_t symbol)
-{
-    printf("%s:", sym_name(symbol));
 }
 
 
@@ -226,8 +210,6 @@ void scavenge_symbol_roots(void)
 {
     scavenge(&obj_SymbolClass);
     scav_table(&Symbols);
-    scavenge(&obj_KeywordClass);
-    scav_table(&Keywords);
 }
 
 
@@ -236,7 +218,6 @@ void scavenge_symbol_roots(void)
 void make_sym_classes(void)
 {
     obj_SymbolClass = make_builtin_class(scav_sym, trans_sym);
-    obj_KeywordClass = make_builtin_class(scav_sym, trans_sym);
 }
 
 static void init_table(struct symtable *table, obj_t class)
@@ -257,25 +238,18 @@ static void init_table(struct symtable *table, obj_t class)
 void init_symbol_tables(void)
 {
     init_table(&Symbols, obj_SymbolClass);
-    init_table(&Keywords, obj_KeywordClass);
 }
 
 void init_sym_classes(void)
 {
     init_builtin_class(obj_SymbolClass, "<symbol>", obj_ObjectClass, NULL);
     def_printer(obj_SymbolClass, print_symbol);
-    init_builtin_class(obj_KeywordClass, "<keyword>", obj_ObjectClass, NULL);
-    def_printer(obj_KeywordClass, print_keyword);
 }
 
 void init_sym_functions(void)
 {
     define_method("as", list2(singleton(obj_SymbolClass), obj_ByteStringClass),
 		  FALSE, obj_False, obj_SymbolClass, string_as_symbol);
-    define_method("as", list2(singleton(obj_KeywordClass),obj_ByteStringClass),
-		  FALSE, obj_False, obj_KeywordClass, string_as_keyword);
     define_method("as", list2(singleton(obj_StringClass), obj_SymbolClass),
-		  FALSE, obj_False, obj_ByteStringClass, symbol_as_string);
-    define_method("as", list2(singleton(obj_StringClass), obj_KeywordClass),
 		  FALSE, obj_False, obj_ByteStringClass, symbol_as_string);
 }

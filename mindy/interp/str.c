@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.1 1994/03/24 21:49:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.2 1994/03/31 10:19:09 wlott Exp $
 *
 * This file does whatever.
 *
@@ -169,7 +169,7 @@ void init_str_functions(void)
 {
     define_method("element",
 		    list2(obj_ByteStringClass, obj_IntegerClass),
-		    FALSE, list1(pair(keyword("default"), obj_Unbound)),
+		    FALSE, list1(pair(symbol("default"), obj_Unbound)),
 		    obj_CharacterClass, dylan_str_element);
     define_method("element-setter",
 		  list3(obj_CharacterClass,
@@ -180,11 +180,11 @@ void init_str_functions(void)
     define_method("size", list1(obj_ByteStringClass),
 		  FALSE, obj_False, obj_IntegerClass, dylan_str_size);
     define_method("make", list1(singleton(obj_StringClass)), FALSE,
-		  list2(pair(keyword("size"), make_fixnum(0)),
-			pair(keyword("fill"), int_char('\0'))),
+		  list2(pair(symbol("size"), make_fixnum(0)),
+			pair(symbol("fill"), int_char('\0'))),
 		  obj_ByteStringClass, dylan_str_make);
     define_method("make", list1(singleton(obj_ByteStringClass)), FALSE,
-		  list2(pair(keyword("size"), make_fixnum(0)),
-			pair(keyword("fill"), int_char('\0'))),
+		  list2(pair(symbol("size"), make_fixnum(0)),
+			pair(symbol("fill"), int_char('\0'))),
 		  obj_ByteStringClass, dylan_str_make);
 }

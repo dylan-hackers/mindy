@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.1 1994/03/24 21:49:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.2 1994/03/31 10:19:14 wlott Exp $
 *
 * This file does whatever.
 *
@@ -172,7 +172,7 @@ void init_vec_functions(void)
 				      obj_False, dylan_vector));
     define_method("element",
 		    list2(obj_SimpleObjectVectorClass, obj_IntegerClass),
-		    FALSE, list1(pair(keyword("default"), obj_Unbound)),
+		    FALSE, list1(pair(symbol("default"), obj_Unbound)),
 		    obj_ObjectClass, dylan_sovec_element);
     define_method("element-setter",
 		  list3(obj_ObjectClass,
@@ -183,11 +183,11 @@ void init_vec_functions(void)
     define_method("size", list1(obj_SimpleObjectVectorClass),
 		  FALSE, obj_False, obj_IntegerClass, dylan_sovec_size);
     define_method("make", list1(singleton(obj_VectorClass)), FALSE,
-		  list2(pair(keyword("size"), make_fixnum(0)),
-			pair(keyword("fill"), obj_False)),
+		  list2(pair(symbol("size"), make_fixnum(0)),
+			pair(symbol("fill"), obj_False)),
 		  obj_SimpleObjectVectorClass, dylan_vec_make);
     define_method("make", list1(singleton(obj_SimpleObjectVectorClass)), FALSE,
-		  list2(pair(keyword("size"), make_fixnum(0)),
-			pair(keyword("fill"), obj_False)),
+		  list2(pair(symbol("size"), make_fixnum(0)),
+			pair(symbol("fill"), obj_False)),
 		  obj_SimpleObjectVectorClass, dylan_vec_make);
 }

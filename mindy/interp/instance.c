@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.2 1994/03/28 01:24:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.3 1994/03/31 10:19:05 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1096,10 +1096,10 @@ void init_instance_functions(void)
 			  obj_FunctionClass, obj_FunctionClass,
 			  obj_ObjectClass),
 		    FALSE,
-		    listn(4, pair(keyword("init-keyword"), obj_False),
-			  pair(keyword("required-init-keyword"), obj_False),
-			  pair(keyword("init-function"), obj_Unbound),
-			  pair(keyword("init-value"), obj_Unbound)),
+		    listn(4, pair(symbol("init-keyword"), obj_False),
+			  pair(symbol("required-init-keyword"), obj_False),
+			  pair(symbol("init-function"), obj_Unbound),
+			  pair(symbol("init-value"), obj_Unbound)),
 		    obj_SlotDescrClass, make_slot_descriptor);
     define_method("make", list1(obj_ClassClass), TRUE, obj_Nil,
 		  obj_ObjectClass, dylan_make);

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.5 1994/03/30 06:03:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.6 1994/03/31 10:16:34 wlott Exp $
 *
 * This file does whatever.
 *
@@ -384,11 +384,11 @@ struct keyword_param
     if (key) {
 	/* The keyword token has a trailing : */
 	key->chars[key->length-1] = '\0';
-	res->keyword = keyword(key->chars);
+	res->keyword = symbol(key->chars);
 	free(key);
     }
     else
-	res->keyword = keyword(sym->symbol->name);
+	res->keyword = sym->symbol;
 
     res->id = sym;
     res->type = type;
@@ -633,7 +633,7 @@ struct plist
     /* The keyword token has a trailing : */
     key->chars[key->length-1] = '\0';
 
-    prop->keyword = keyword(key->chars);
+    prop->keyword = symbol(key->chars);
     prop->expr = expr;
     prop->next = NULL;
 
@@ -912,7 +912,7 @@ struct literal *parse_keyword_token(struct token *token)
     if (*ptr == '#')
 	ptr += 2;
 
-    res = make_keyword_literal(keyword(ptr));
+    res = make_symbol_literal(symbol(ptr));
     res->line = token->line;
 
     free(token);
@@ -1400,7 +1400,7 @@ struct keyword_spec
     key->chars[key->length-1] = '\0';
 
     res->required = required;
-    res->keyword = keyword(key->chars);
+    res->keyword = symbol(key->chars);
     res->plist = plist;
 
     return res;

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.2 1994/03/30 06:04:14 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.3 1994/03/31 10:16:31 wlott Exp $
 *
 * This file does whatever.
 *
@@ -128,7 +128,7 @@ static void add_plist_arguments(struct arglist *args, struct plist *plist)
     struct property *prop, *next;
 
     for (prop = plist->head; prop != NULL; prop = next) {
-	struct literal *key = make_keyword_literal(prop->keyword);
+	struct literal *key = make_symbol_literal(prop->keyword);
 	add_argument(args, make_argument(make_literal_ref(key)));
 	add_argument(args, make_argument(prop->expr));
 	next = prop->next;
@@ -735,7 +735,7 @@ static void expand_defgeneric_constituent(struct defgeneric_constituent **ptr,
 	struct keyword_param *k;
 
 	for (k = c->params->keyword_params; k != NULL; k = k->next) {
-	    expr = make_literal_ref(make_keyword_literal(k->keyword));
+	    expr = make_literal_ref(make_symbol_literal(k->keyword));
 	    add_argument(list_args, make_argument(expr));
 	}
 	expr = make_function_call(make_varref(id(symbol("list"))), list_args);
@@ -806,8 +806,8 @@ static void expand_defclass_constituent(struct defclass_constituent **ptr,
     {
 	struct arglist *list_args = make_argument_list();
 	struct slot_spec *slot;
-	struct keyword *getter = keyword("getter");
-	struct keyword *setter = keyword("setter");
+	struct symbol *getter = symbol("getter");
+	struct symbol *setter = symbol("setter");
 	struct symbol *make_slot = symbol("make-slot");
 	struct symbol *defslot = symbol("%define-slot");
 	

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.1 1994/03/24 21:49:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.2 1994/03/31 10:19:05 wlott Exp $
 *
 * This file does whatever.
 *
@@ -144,8 +144,8 @@ void init_handler_functions(void)
 		    make_raw_method("push-handler",
 				    list2(obj_TypeClass, obj_FunctionClass),
 				    FALSE,
-				    list2(pair(keyword("test"), obj_False),
-					  pair(keyword("description"),
+				    list2(pair(symbol("test"), obj_False),
+					  pair(symbol("description"),
 					       obj_False)),
 				    obj_Nil, obj_False, push_handler));
     define_constant("current-handler",

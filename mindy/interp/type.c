@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.1 1994/03/24 21:49:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.2 1994/03/31 10:19:14 wlott Exp $
 *
 * This file does whatever.
 *
@@ -727,15 +727,15 @@ void init_type_functions(void)
     define_function("singleton", list1(obj_ObjectClass),
 		    FALSE, obj_False, obj_SingletonClass, singleton);
     define_method("make", list1(singleton(obj_SingletonClass)), FALSE,
-		  list1(pair(keyword("object"), obj_Unbound)),
+		  list1(pair(symbol("object"), obj_Unbound)),
 		  obj_TypeClass, dylan_make_singleton);
     define_method("union", list2(obj_TypeClass, obj_TypeClass), FALSE,
 		  obj_Nil, obj_TypeClass, type_union);
     define_method("limited", list1(singleton(obj_IntegerClass)), FALSE,
-		  list2(pair(keyword("min"), obj_False),
-			pair(keyword("max"), obj_False)),
+		  list2(pair(symbol("min"), obj_False),
+			pair(symbol("max"), obj_False)),
 		  obj_TypeClass, dylan_limited_integer);
     define_method("limited", list1(singleton(obj_ClassClass)), FALSE,
-		  list1(pair(keyword("subclass-of"), obj_Unbound)),
+		  list1(pair(symbol("subclass-of"), obj_Unbound)),
 		  obj_TypeClass, dylan_limited_class);
 }

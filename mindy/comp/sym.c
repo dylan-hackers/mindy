@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.1 1994/03/24 21:48:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.2 1994/03/31 10:16:37 wlott Exp $
 *
 * This file does whatever.
 *
@@ -21,19 +21,12 @@
 #include "mindycomp.h"
 #include "sym.h"
 
-struct id {
-    unsigned hash;
-    struct id *next;
-    int handle;
-    unsigned char name[0];
-};
-
 static struct table {
     int entries;
     int threshold;
     int length;
-    struct id **table;
-} Symbols, Keywords;
+    struct symbol **table;
+} Symbols;
 
 static unsigned hash_name(char *name)
 {
@@ -69,8 +62,8 @@ static boolean same_name(char *name1, char *name2)
 static void rehash_table(struct table *table)
 {
     int new_length;
-    struct id **new_table;
-    struct id **ptr;
+    struct symbol **new_table;
+    struct symbol **ptr;
     int i;
 
     if (table->length < 1024)
@@ -78,7 +71,7 @@ static void rehash_table(struct table *table)
     else
 	new_length = table->length + 1024;
 
-    new_table = malloc(sizeof(struct id *) * new_length);
+    new_table = malloc(sizeof(struct symbol *) * new_length);
 
     ptr = new_table;
     for (i = 0; i < new_length; i++)
@@ -86,7 +79,7 @@ static void rehash_table(struct table *table)
 
     ptr = table->table;
     for (i = 0; i < table->length; i++) {
-	struct id *id, *next;
+	struct symbol *id, *next;
 	for (id = *ptr++; id != NULL; id = next) {
 	    int index = id->hash % new_length;
 	    next = id->next;
@@ -101,17 +94,17 @@ static void rehash_table(struct table *table)
     table->threshold = (new_length * 3) / 2;
 }
 
-static struct id *intern(char *name, struct table *table)
+static struct symbol *intern(char *name, struct table *table)
 {
     unsigned hash = hash_name(name);
     int index = hash % table->length;
-    struct id *id;
+    struct symbol *id;
 
     for (id = table->table[index]; id != NULL; id = id->next)
 	if (id->hash == hash && same_name(name, id->name))
 	    return id;
 
-    id = malloc(sizeof(struct id) + strlen(name) + 1);
+    id = malloc(sizeof(struct symbol) + strlen(name) + 1);
     id->hash = hash;
     id->next = table->table[index];
     id->handle = -1;
@@ -127,12 +120,7 @@ static struct id *intern(char *name, struct table *table)
 
 struct symbol *symbol(char *name)
 {
-    return (struct symbol *)intern(name, &Symbols);
-}
-
-struct keyword *keyword(char *name)
-{
-    return (struct keyword *)intern(name, &Keywords);
+    return intern(name, &Symbols);
 }
 
 struct symbol *gensym(void)
@@ -161,13 +149,13 @@ struct symbol *gensym(void)
 
 static void init_table(struct table *table)
 {
-    struct id **ptr;
+    struct symbol **ptr;
     int i;
 
     table->entries = 0;
     table->threshold = 96;
     table->length = 64;
-    table->table = (struct id **)malloc(sizeof(struct id *)*64);
+    table->table = (struct symbol **)malloc(sizeof(struct symbol *)*64);
     ptr = table->table;
     for (i = 0; i < 64; i++)
 	*ptr++ = NULL;
@@ -176,5 +164,4 @@ static void init_table(struct table *table)
 void init_id_tables(void)
 {
     init_table(&Symbols);
-    init_table(&Keywords);
 }

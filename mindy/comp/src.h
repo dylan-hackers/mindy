@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.5 1994/03/30 06:01:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.6 1994/03/31 10:16:36 wlott Exp $
 *
 * This file does whatever.
 *
@@ -294,7 +294,7 @@ struct param {
 };
 
 struct keyword_param {
-    struct keyword *keyword;
+    struct symbol *keyword;
     struct id *id;
     struct expr *type;
     struct symbol *type_temp;
@@ -348,7 +348,7 @@ struct plist {
 };
 
 struct property {
-    struct keyword *keyword;
+    struct symbol *keyword;
     struct expr *expr;
     struct property *next;
 };
@@ -452,7 +452,7 @@ struct slot_spec {
 
 struct keyword_spec {
     boolean required;
-    struct keyword *keyword;
+    struct symbol *keyword;
     struct plist *plist;
     struct keyword_spec *next;
 };

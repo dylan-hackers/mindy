@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.2 1994/03/28 11:31:00 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/fileops.h,v 1.3 1994/03/31 10:16:32 wlott Exp $
 *
 * This file does whatever.
 *
@@ -34,13 +34,12 @@
 #define fop_CHAR 11
 #define fop_SINGLE_FLOAT 12
 #define fop_DOUBLE_FLOAT 13
+#define fop_EXTENDED_FLOAT 14
 
-#define fop_SHORT_STRING 14
-#define fop_STRING 15
-#define fop_SHORT_SYMBOL 16
-#define fop_SYMBOL 17
-#define fop_SHORT_KEYWORD 18
-#define fop_KEYWORD 19
+#define fop_SHORT_STRING 15
+#define fop_STRING 16
+#define fop_SHORT_SYMBOL 17
+#define fop_SYMBOL 18
 
 #define fop_NIL 20
 #define fop_LIST1 21
