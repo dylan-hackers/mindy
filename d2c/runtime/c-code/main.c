@@ -1,8 +1,9 @@
-/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.5 1996/06/24 20:07:09 rgs Exp $ */
+/* $Header: /home/housel/work/rcs/gd/src/d2c/runtime/c-code/main.c,v 1.6 1996/08/07 13:43:16 nkramer Exp $ */
 
 #include <stdlib.h>
-
+#include <stdio.h>
 #include <runtime.h>
+#include <math.h>
 
 #include "../gc/gc.h"
 
@@ -142,3 +143,70 @@ gdb_print_genobj (descriptor_t obj)
   dylan_gdb_print_object_main((descriptor_t *)GC_malloc(10000), obj);
 }
 
+/* Most of these win32-only functions will go away as soon as we move
+   from Visual C++ 4.0 to version 4.2. */
+#ifdef win32
+double rint(double x)
+{
+  /* uh, this is wrong unless rounding to -infinity */
+  return floor(x+0.5);				
+}
+
+float fabsf (float x)
+{
+    return (float) fabs(x);
+}
+
+float sinf (float x)
+{
+  return (float) sin(x);
+}
+
+float cosf (float x)
+{
+  return (float) cos(x);
+}
+
+float tanf (float x)
+{
+  return (float) tan(x);
+}
+
+float asinf (float x)
+{
+  return (float) asin(x);
+}
+
+float acosf (float x)
+{
+  return (float) acos(x);
+}
+
+float atanf (float x)
+{
+  return (float) atan(x);
+}
+
+float atan2f (float x, float y)
+{
+  return (float) atan2(x, y);
+}
+
+float expf (float x)
+{
+  return (float) exp(x);
+}
+
+float sqrtf (float x)
+{
+  return (float) sqrt(x);
+}
+
+/* Man, is this broken...
+ */
+double log2 (double x)
+{
+  return 0;
+}
+
+#endif
