@@ -1,6 +1,6 @@
 module: dylan-user
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/library.dylan,v 1.1 1997/01/16 15:32:25 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tools/synopsis/library.dylan,v 1.2 1997/02/13 13:06:35 nkramer Exp $
 
 // Copyright JPRC 1996, all rights reserved.
 
@@ -9,7 +9,6 @@ define library synopsis
   use streams;
   use standard-io;
   use format;
-  use stream-extensions;
   use regular-expressions;
   use table-extensions;
 end library synopsis;
