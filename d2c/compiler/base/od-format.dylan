@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.18 2002/03/12 21:59:34 gabor Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.19 2002/04/18 23:14:14 gabor Exp $
 
 //======================================================================
 //
@@ -2440,10 +2440,11 @@ end method;
 
 // This function adds dumping information for objects of the specified
 // obj-class.  Note that obj-class must be the direct class of the instances we
-// are to dump (and of course, must also be instantiable via make.)
+// are to dump (and of course, must also be instantiable via make
+// unless dumper-only.)
 //
-// We parse the slots into a <make-info>, stick it in *make-dumpers* and add
-// and od-loader with a closure as the function.
+// We parse the slots into a <make-info>, stick it in *make-dumpers* and
+// (for not dumper-only) add an od-loader with a closure as the function.
 //
 define /* exported */ method add-make-dumper
   (name :: <symbol>, dispatcher :: <dispatcher>,
