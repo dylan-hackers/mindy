@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.7 2002/01/19 19:08:01 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.8 2002/04/28 20:46:09 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -54,7 +54,7 @@ type <object>. This is the result type of an unconstrained function.
 /// Superclass of multi-value types and regular single types.
 define abstract class <values-ctype> (<identity-preserving-mixin>)
   //
-  // Memo of the extentional version of this type.
+  // Memo of the extensional version of this type.
   slot %ctype-extent :: false-or(<values-ctype>) = #f;
 end class;
 
@@ -912,42 +912,6 @@ define method find-direct-classes (type :: <limited-ctype>)
     => res :: false-or(<list>);
   find-direct-classes(type.base-class);
 end;
-
-
-// range types:
-
-/*
-
-define class <range-ctype> (<limited-ctype>)
-  constant slot ranges :: <simple-object-vector>, required-init-keyword: ranges:;
-end class <range-ctype>;
-
-define sealed domain make (singleton(<range-ctype>));
-
-define class <range-entry> (<object>)
-  constant slot minimum
-      :: type-union(singleton(#"negative-infinity"), <extended-integer>),
-    required-init-keyword: minimum:;
-  constant slot maximum
-      :: type-union(singleton(#"positive-infinity"), <extended-integer>),
-    required-init-keyword: maximum:;
-end class <range-entry>;
-
-define sealed domain make (singleton(<range-entry>));
-define sealed domain initialize (<range-entry>);
-
-
-define method make
-    (class == <range-ctype>, #next next-method,
-     #key minimum :: type-union(one-of(#f, #"negative-infinity"),
-				<extended-integer>),
-          maximum :: type-union(one-of(#f, #"positive-infinity"),
-				<extended-integer>)
-          ranges :: false-or(<simple-object-vector>))
-    => res :: <range-ctype>;
-end method make;
-
-*/
 
 
 /// Limited integer types:
