@@ -361,7 +361,7 @@ define method spew-object
 		      make(<ct-entry-point>, for: discriminator,
 			   kind: #"general");
 		    else
-		      let dispatch = dylan-defn(#"gf-dispatch");
+		      let dispatch = dylan-defn(#"gf-call");
 		      if (dispatch)
 			make(<ct-entry-point>,
 			     for: dispatch.ct-value,
@@ -377,7 +377,7 @@ define method spew-object (object :: <ct-method>, state :: <state>) => ();
   spew-instance(object.ct-value-cclass, state,
 		general-entry:
 		  if (object.ct-method-hidden?)
-		    let tramp = dylan-defn(#"general-entry");
+		    let tramp = dylan-defn(#"general-call");
 		    if (tramp)
 		      make(<ct-entry-point>,
 			   for: tramp.ct-value,
