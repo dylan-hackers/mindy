@@ -2,7 +2,7 @@ module: Dylan-user
 author: Ben Folk-Williams, bfw@cmu.edu and David Watson, dwatson@cmu.edu
 synopsis: The Time library definitions.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/time/library.dylan,v 1.4 2000/11/29 04:28:32 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/time/library.dylan,v 1.5 2000/12/07 12:04:30 dauclair Exp $
 
 //======================================================================
 //
@@ -99,6 +99,7 @@ define module time-internal
     encodable-time?,
 
     // For the Time-IO module
+    <time-parsing-error>,
     parse-time,
     format-time;
 end module time-internal;
@@ -117,6 +118,6 @@ end module Time;
 
 define module Time-IO
   use time-internal,
-    import: {parse-time, format-time},
+    import: {<time-parsing-error>, parse-time, format-time},
     export: all;
 end module Time-IO
