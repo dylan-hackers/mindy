@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.30 1996/07/12 14:25:26 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.31 1996/07/23 17:25:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -215,6 +215,7 @@ define module dylan-viscera
     %make-next-method-cookie,
     %object-class,
     ambiguous-method-error,
+    apply-safely,		 
     catch,
     check-types,
     class-all-slot-descriptors,

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.16 1996/07/18 15:04:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.17 1996/07/23 17:25:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -666,6 +666,34 @@ end;
 // in the future.
 
 define method gdb-print-object (obj :: <object>) => ();
+  block ()
   condition-format(*warning-output*, "%=\n", obj);
   condition-force-output(*warning-output*);
+  exception (error :: <error>)
+    #f;
+  end block;
 end method gdb-print-object;
+
+// This debugging support routine does a normal apply, but also traps
+// all errors (sending the error message to the standard error
+// output).  The debugger can thus call this function without worrying
+// about an unexpected error messing up the call stack.  
+//
+// WRETCHED HACK: The generic functions is intentionally left open in
+// order to assure that the compiler will include the full generic in
+// the image.
+//
+define open generic apply-safely (fun :: <function>, #rest arguments);
+
+define method apply-safely (fun :: <function>, #rest arguments)
+  block ()
+    apply(fun, arguments);
+  exception (error :: <error>)
+    condition-format(*warning-output*, "%s\n", error);
+    condition-force-output(*warning-output*);
+  end block;
+end method apply-safely;
+
+define method seg-fault-error () => res :: <never-returns>;
+  error("GDB encountered a seg fault -- invalid data.");
+end;
