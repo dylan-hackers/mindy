@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/tk/Attic/Makefile.in,v 1.6 1996/04/12 00:53:14 rsbe Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/tk/Attic/Makefile.in,v 1.7 1996/05/09 19:08:48 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy/Tk windowing library.
 ##
@@ -118,7 +118,7 @@ tk-class.dbc: ${SRCDIR}/tk-class.dylan
 	${MC} ${MINDYFLAGS} -o tk-class.dbc ${SRCDIR}/tk-class.dylan
 
 clean:
-	rm -f ${TKOBJS} tk.dbc dylan-tk.html
+	rm -f ${TKOBJS} tk.dbc
 
 realclean:
 	rm -f ${TKOBJS} tk.dbc Makefile *~ \#* core
