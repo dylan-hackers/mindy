@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.65 1995/06/10 12:39:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.66 1995/06/14 10:25:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -549,69 +549,22 @@ end;
 // Prologue and epilogue stuff.
 
 define method emit-prologue (output-info :: <output-info>) => ();
-  let bstream = output-info.output-info-body-stream;
-  format(bstream, "#include <stdlib.h>\n\n");
+  let stream = output-info.output-info-body-stream;
+  format(stream, "#include <stdlib.h>\n\n");
 
-  let header = output-info.output-info-header-stream;
-  format(header, "typedef struct heapptr *heapptr_t;\n");
-  format(header, "typedef struct {\n");
-  format(header, "    heapptr_t heapptr;\n");
-  format(header, "    union {\n");
-  format(header, "        long l;\n");
-  format(header, "        float f;\n");
-  if (instance?(*double-rep*, <data-word-representation>))
-    format(header, "        double d;\n");
-  end;
-  if (instance?(*long-double-rep*, <data-word-representation>))
-    format(header, "        long double x;\n");
-  end;
-  format(header, "        void *ptr;\n");
-  format(header, "    } dataword;\n");
-  format(header, "} descriptor_t;\n\n");
-  format(header, "typedef int boolean;\n");
-  format(header, "typedef char bool;\n");
-  format(header, "#define TRUE 1\n");
-  format(header, "#define FALSE 0\n\n");
-  format(header, "#define SLOTADDR(ptr, type, offset) "
-	   "((type *)((char *)ptr + offset))\n");
-  format(header, "#define SLOT(ptr, type, offset) "
-	   "(*SLOTADDR(ptr, type, offset))\n\n");
-  format(header, "typedef descriptor_t *(*entry_t)();\n");
-  format(header, "#define GENERAL_ENTRY(func) \\\n");
-  format(header, "    ((entry_t)SLOT(func, void *, %d))\n",
-	 dylan-slot-offset(function-ctype(), #"general-entry"));
-  format(header, "#define GENERIC_ENTRY(func) \\\n");
-  format(header, "    ((entry_t)SLOT(func, void *, %d))\n\n",
-	 dylan-slot-offset(specifier-type(#"<method>"), #"generic-entry"));
-  format(header, "extern heapptr_t allocate(int bytes);\n");
-  format(header,
-	 "extern descriptor_t *pad_cluster"
-	   "(descriptor_t *start, descriptor_t *end, int min_values);\n");
-  format(header,
-	 "extern descriptor_t *values_sequence"
-	   "(descriptor_t *sp, heapptr_t vector);\n");
-  format(header,
-	 "extern descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, "
-	   "void *state,\n                                               "
-	   "heapptr_t thunk),\n                           descriptor_t *sp, "
-	   "heapptr_t func);\n");
-  format(header, "extern void throw(void *state, descriptor_t *stack_top);\n");
-  format(header,
-	 "extern heapptr_t make_rest_arg(descriptor_t *start, long count);\n");
-  unless (instance?(*double-rep*, <data-word-representation>))
-    format(header, "extern heapptr_t make_double_float(double value);\n");
-    format(header, "extern double double_float_value(heapptr_t df);\n");
-  end;
-  unless (instance?(*long-double-rep*, <data-word-representation>))
-    format(header,
-	   "extern heapptr_t make_extended_float(long double value);\n");
-    format(header, "extern long double extended_float_value(heapptr_t xf);\n");
-  end;
-  format(header, "\nextern descriptor_t roots[];\n\n");
-  format(header, "#define obj_True %s.heapptr\n",
+  format(stream, "#include <runtime.h>\n\n");
+
+  format(stream, "extern descriptor_t roots[];\n\n");
+  format(stream, "#define obj_True %s.heapptr\n",
 	 c-expr-and-rep(as(<ct-value>, #t), $general-rep, output-info));
-  format(header, "#define obj_False %s.heapptr\n\n",
+  format(stream, "#define obj_False %s.heapptr\n\n",
 	 c-expr-and-rep(as(<ct-value>, #f), $general-rep, output-info));
+  format(stream, "#define GENERAL_ENTRY(func) \\\n");
+  format(stream, "    ((entry_t)SLOT(func, void *, %d))\n",
+	 dylan-slot-offset(function-ctype(), #"general-entry"));
+  format(stream, "#define GENERIC_ENTRY(func) \\\n");
+  format(stream, "    ((entry_t)SLOT(func, void *, %d))\n\n",
+	 dylan-slot-offset(specifier-type(#"<method>"), #"generic-entry"));
 end;
 
 define method emit-epilogue
@@ -619,11 +572,6 @@ define method emit-epilogue
   let bstream = output-info.output-info-body-stream;
   let gstream = output-info.output-info-guts-stream;
 
-  format(bstream, "heapptr_t allocate(int bytes)\n{\n");
-  format(gstream, "return malloc(bytes);\n");
-  write(gstream.string-output-stream-string, bstream);
-  write("}\n\n", bstream);
-  
   format(bstream, "descriptor_t *pad_cluster(descriptor_t *start, "
 	   "descriptor_t *end,\n");
   format(bstream, "                          int min_values)\n{\n");
@@ -638,16 +586,13 @@ define method emit-epilogue
   format(bstream,
 	 "descriptor_t *values_sequence"
 	   "(descriptor_t *sp, heapptr_t vector)\n{\n");
-  format(gstream, "long elements = SLOT(vector, long, /* ### */ 0);\n");
-  format(gstream, "memcpy(sp, SLOTADDR(vector, descriptor_t, /* ### */ 0),\n");
-  format(gstream, "       elements * sizeof(descriptor_t));\n");
+  let sov-cclass = specifier-type(#"<simple-object-vector>");
+  format(gstream, "long elements = SLOT(vector, long, %d);\n",
+	 dylan-slot-offset(sov-cclass, #"size"));
+  format(gstream, "memcpy(sp, (char *)vector + %d, elements * "
+	   "sizeof(descriptor_t));\n",
+	 dylan-slot-offset(sov-cclass, #"%element"));
   format(gstream, "return sp + elements;\n");
-  write(gstream.string-output-stream-string, bstream);
-  write("}\n\n", bstream);
-
-  format(bstream,
-	 "heapptr_t make_rest_arg(descriptor_t *start, long count)\n{\n");
-  format(gstream, "return NULL; /* ### */\n");
   write(gstream.string-output-stream-string, bstream);
   write("}\n\n", bstream);
 
