@@ -1,16 +1,18 @@
 module: dylan-user
 
-define module gtk-support
+define module gtk-internal-support
   use dylan;
   use extensions;
+  use introspection;
+  use system;
   use melange-support;
   use gtk-internal;
 
-  export g-signal-connect, g-signal-connect-swapped, gtk-init;
-end module gtk-support;
+  export gtk-init, find-gtype, g-type-from-instance, g-value-type;
+end module gtk-internal-support;
 
-define module gtk
+define module gtk-internal-all
   use gtk-internal, export: all;
-  use gtk-support, export: all;
-end module gtk;
+  use gtk-internal-support, export: all;
+end module gtk-internal-all;
   
