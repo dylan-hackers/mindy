@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.21 2001/02/25 20:33:58 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.22 2001/02/26 21:07:19 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -126,11 +126,11 @@ define class <local-heap-file-state> (<heap-file-state>)
   //
   // Holds the objects that have been referenced but are not going to be
   // dumped until the global heap is dumped.
-  slot undumped-objects :: <stretchy-vector> = make(<stretchy-vector>);
+  constant slot undumped-objects :: <stretchy-vector> = make(<stretchy-vector>);
   //
   // Holds the extra labels we've had to allocate for externally defined
   // ctvs.
-  slot extra-labels :: <stretchy-vector> = make(<stretchy-vector>);
+  constant slot extra-labels :: <stretchy-vector> = make(<stretchy-vector>);
 end class <local-heap-file-state>;
 
 define sealed domain make(singleton(<local-heap-file-state>));
@@ -1347,31 +1347,19 @@ define method spew-object
     (name :: <byte-string>,
      object :: <ct-generic-function>, state :: <heap-file-state>) => ();
   let defn = object.ct-function-definition;
-  let methods
-    = make(<literal-list>,
-	   contents: remove(map(ct-value, generic-defn-methods(defn)), #f), 
-	   sharable: #f);
   let discriminator = defn.generic-defn-discriminator;
-  if (discriminator)
-    spew-function(name, object, state,
-		  general-entry:
-		    (discriminator.has-general-entry?
-		       & make(<ct-entry-point>, for: discriminator,
-			      kind: #"general")));
-  else
-    spew-function(name, object, state,
-		  general-entry:
-		    begin
-		      let dispatch = dylan-defn(#"gf-call");
-		      if (dispatch)
-			make(<ct-entry-point>, for: dispatch.ct-value,
-			     kind: #"main");
-		      else
-			#f;
-		      end;
-		    end,
-		  generic-function-methods: methods);
-  end if;
+  apply(spew-function, name, object, state,
+	general-entry: object.gf-generic-entry-point,
+	if (discriminator)
+	  #[];
+	else
+	  vector(generic-function-methods:
+		 make(<literal-list>,
+		      contents: remove(map(ct-value,
+					   generic-defn-methods(defn)),
+				       #f), 
+		      sharable: #f));
+	end if);
 end;
 
 // method-general-entry -- internal.

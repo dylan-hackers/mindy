@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.20 2001/02/25 20:38:07 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.21 2001/02/26 21:06:40 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -595,7 +595,7 @@ end;
 //
 define function maybe-emit-prototype
     (name :: <byte-string>, info :: <object>, file :: <file-state>)
-    => ();
+    => did :: <boolean>;
   unless (element(file.file-prototypes-exist-for, name,
 		  default: #f))
     emit-prototype-for(name, info, file);
@@ -761,26 +761,31 @@ end;
 // definitions) for local variables which (for some reason) do not get
 // named by "make-info-for".
 //
-define method c-name-and-rep (leaf :: <abstract-variable>,
-			      // ### Should really be ssa-variable
-			      file :: <file-state>)
+define function c-name-and-rep
+    (leaf :: <abstract-variable>,
+     // ### Should really be ssa-variable
+     file :: <file-state>,
+     #key dont-add :: <boolean>,
+	  prefix :: <string> = "L_")
     => (name :: <string>, rep :: <c-representation>);
   let info = get-info-for(leaf, file);
   let name = info.backend-var-info-name;
   unless (name)
     if (instance?(leaf.var-info, <debug-named-info>))
       let dname = string-to-c-name(as(<string>, leaf.var-info.debug-name));
-      name := new-local(file, modifier: dname);
+      name := new-local(file, name: prefix, modifier: dname);
     else
-      name := new-local(file);
+      name := new-local(file, name: prefix);
     end if;
-    let stream = file.file-vars-stream;
-    format(stream, "%s %s;",
-	   info.backend-var-info-rep.representation-c-type, name);
-    if (instance?(leaf.var-info, <debug-named-info>))
-      format(stream, " /* %s */", leaf.var-info.debug-name.clean-for-comment);
-    end;
-    new-line(stream);
+    unless (dont-add)
+      let stream = file.file-vars-stream;
+      format(stream, "%s %s;",
+	     info.backend-var-info-rep.representation-c-type, name);
+      if (instance?(leaf.var-info, <debug-named-info>))
+	format(stream, " /* %s */", leaf.var-info.debug-name.clean-for-comment);
+      end;
+      new-line(stream);
+    end unless;
     info.backend-var-info-name := name;
   end;
   values(name, info.backend-var-info-rep);
@@ -1697,7 +1702,15 @@ define method compute-function-prototype
     if(~first-arg)
       write(stream, ", ");
     end if;
-    format(stream, "%s A%d", rep.representation-c-type, index);
+    format(stream, "%s ", rep.representation-c-type);
+    let preferred-names = function & function.prologue.preferred-names;
+    let preferred-name = preferred-names
+			 & element(preferred-names, index, default: #f);
+    if (preferred-name)
+      format(stream, "%s", preferred-name);
+    else
+      format(stream, "A%d", index);
+    end;
     if (var)
       let varinfo = var.var-info;
       if (instance?(varinfo, <debug-named-info>))
@@ -2257,8 +2270,6 @@ define method xep-expr-and-name
   let ctv = ct-value(defn);
   if (ctv)
     xep-expr-and-name(ctv, generic-entry?, file);
-  else
-    values(#f, #f);
   end;
 end;
 
@@ -2285,6 +2296,19 @@ define method xep-expr-and-name
   values(name, ctv.ct-function-name);
 end;
 
+define function gf-generic-entry-point(object :: <ct-generic-function>)
+  => entry :: false-or(<ct-entry-point>);
+  let defn = object.ct-function-definition;
+  let discriminator = defn.generic-defn-discriminator;
+  if (discriminator)
+    discriminator.has-general-entry?
+      & make(<ct-entry-point>, for: discriminator, kind: #"general");
+  else
+    let dispatch = dylan-defn(#"gf-call");
+    dispatch & make(<ct-entry-point>, for: dispatch.ct-value, kind: #"main");
+  end if;
+end function;
+
 define method xep-expr-and-name
     (ctv :: <ct-generic-function>, generic-entry? :: <boolean>,
      file :: <file-state>)
@@ -2293,16 +2317,25 @@ define method xep-expr-and-name
     error("%= doesn't have a generic entry.", ctv);
   end;
   let defn = ctv.ct-function-definition;
-  if (defn)
-    let discriminator = defn.generic-defn-discriminator;
-    if (discriminator)
-      xep-expr-and-name(discriminator, #f, file);
-    else
-      values(#f, #f);
-    end;
+  let discriminator = defn & defn.generic-defn-discriminator;
+  if (discriminator)
+    xep-expr-and-name(discriminator, #f, file);
   else
-    values(#f, #f);
-  end;
+    let entry-point = ctv.gf-generic-entry-point;
+    if (entry-point)
+      let entry-point-for = entry-point.ct-entry-point-for;
+      let info = get-info-for(entry-point-for, file);
+      let (c-name, info)
+	= if (entry-point.ct-entry-point-kind == #"main")
+	    values(main-entry-c-name(info, file), info);
+	  else
+	    values(general-entry-c-name(info, file), #"general");
+	  end if;
+      maybe-emit-prototype(c-name, info, file)
+	& eagerly-reference(ctv, file);
+      c-name;
+    end if;
+  end if;
 end;
 
 define method xep-expr-and-name
@@ -2473,14 +2506,24 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
                                source-location :: <source-location>,
 			       file :: <file-state>)
     => ();
-  let function-info = get-info-for(expr.function, file);
-  deliver-results(defines,
-		  map(method (rep, index)
-			pair(stringify('A', index), rep);
-		      end,
-		      function-info.function-info-argument-representations,
-		      make(<range>, from: 0)),
-		  #f, file);
+    for (var = defines then var.definer-next, index from 0,
+	 while: var)
+      let preferred-names = expr.preferred-names
+			    | (expr.preferred-names := make(<stretchy-vector>));
+      let target-name = c-name-and-rep(var, file, prefix: "A_", dont-add: #t);
+      preferred-names[index] := target-name;
+    finally
+      let function-info = get-info-for(expr.function, file);
+      deliver-results
+	(var,
+	 map(method (rep, index)
+	      pair(stringify('A', index), rep);
+	     end,
+	     copy-sequence(function-info.function-info-argument-representations,
+			   start: index),
+	     make(<range>, from: index)),
+	 #f, file);
+    end for;
 end;
 
 define method emit-assignment
@@ -2552,9 +2595,18 @@ define method emit-assignment
 	 arg-dep = call.depends-on then arg-dep.dependent-next,
 	 index from index,
 	 while: arg-dep & param)
+      let prefs = function.prologue.preferred-names;
+      let pref = element(prefs, index, default: #f);
       let (name, rep) = c-name-and-rep(param, file);
-      format(stream, "A%d = %s;\n",
-	     index, ref-leaf(rep, arg-dep.source-exp, file));
+      let source = ref-leaf(rep, arg-dep.source-exp, file);
+      unless (source = pref)
+	if (pref)
+	  format(stream, "%s", pref);
+	else
+	  format(stream, "A%d", index); // should never happen!
+	end if;
+	format(stream, " = %s;\n", source);
+      end unless;
     finally
       if (arg-dep | param)
 	error("Wrong number of operands in a self-tail-call?");
@@ -2909,11 +2961,12 @@ define method ref-leaf (target-rep :: <heap-representation>,
 			file :: <file-state>,
 			#next next-method)
     => res :: <string>;
-
-  let label = object-label(leaf.value);
+  let value = leaf.value;
+  let label = value.object-label;
   if (label)
-    next-method();
-    maybe-emit-prototype(label, #"heap", file);
+    maybe-emit-prototype(label, #"heap", file)
+      & (get-info-for(value, file).const-info-expr
+	 | eagerly-reference(value, file));
     stringify('&', label);
   else
     next-method();
@@ -3022,8 +3075,29 @@ define method c-expr-and-rep
      file :: <file-state>)
  => (name :: <string>, rep :: <c-representation>);
   maybe-emit-entries(lit, file);
-  let fname = lit.ct-function-name;
-  aux-c-expr-and-rep(lit, file, name: fname);
+  aux-c-expr-and-rep(lit, file, name: lit.ct-function-name);
+end;
+
+define method c-expr-and-rep
+    (lit :: <ct-function>, rep-hint :: <heap-representation>,
+     file :: <file-state>)
+ => (name :: <string>, rep :: <heap-representation>);
+  maybe-emit-entries(lit, file);
+  let info = get-info-for(lit, file);
+  let labels = info.const-info-heap-labels;
+  
+  if (labels.empty?) // suggest a label for lit
+    let label = object-label(lit)
+		| new-c-global(lit.ct-function-name,
+			       file,
+			       modifier: "_ROOT");
+    info.const-info-heap-labels := add!(labels, label);
+  end if;
+
+  let c-name = info.const-info-heap-labels.first;
+  maybe-emit-prototype(c-name, #"heap", file)
+    & (info.const-info-expr | eagerly-reference(lit, file));
+  values(stringify('&', c-name), rep-hint);
 end;
 
 define method c-expr-and-rep
@@ -3297,7 +3371,7 @@ define method emit-copy
     => ();
   let stream = file.file-guts-stream;
   let expr = conversion-expr(target-rep, source, source-rep, file);
-  format(stream, "%s = %s;\n", target, expr);
+  target ~= expr & format(stream, "%s = %s;\n", target, expr);
 end;
 
 

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.8 2001/02/04 23:18:08 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.9 2001/02/26 21:07:05 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -90,7 +90,7 @@ define module cback
     <file-state>, file-body-stream, file-guts-stream,
     file-prototypes-exist-for, get-string, $indentation-step,
     emit-prologue, emit-tlf-gunk, emit-component, maybe-emit-include,
-    maybe-emit-prototype,
+    maybe-emit-prototype, gf-generic-entry-point,
     get-info-for, const-info-heap-labels, const-info-heap-labels-setter,
     const-info-dumped?, const-info-dumped?-setter,
     entry-point-c-name, *emit-all-function-objects?*,
