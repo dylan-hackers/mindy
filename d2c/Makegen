@@ -7,10 +7,10 @@ else {
     print <<'EOF';
 .PHONY: d2c-compile d2c-install
 
-d2c-compile:
+d2c-compile: compile
 	$(MAKE) -C compiler d2c-compile
 
-d2c-install:
+d2c-install: install
 	$(MAKE) -C compiler d2c-install
 
 EOF
