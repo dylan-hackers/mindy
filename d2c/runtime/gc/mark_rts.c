@@ -312,11 +312,23 @@ void GC_remove_tmp_roots()
     
 }
 
+/******
+ * The "launder" variable is an attempt to keep the compiler from complaining
+ * bitterly about the fact that we are returning the address of a local 
+ * variable.  It _should_ be a reasonably safe assumption that vars will be 
+ * stored on the stack in the order that they were declared, however this may 
+ * not be the case on all systems.
+ * Accuracy was never really guaranteed by this function, anyhow, though.
+ ******/
+ 
 ptr_t GC_approx_sp()
 {
     word dummy;
+    ptr_t launder;
     
-    return((ptr_t)(&dummy));
+    launder = (ptr_t)(&dummy);
+    
+    return launder;
 }
 
 /*
