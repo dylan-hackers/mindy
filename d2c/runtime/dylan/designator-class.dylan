@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/designator-class.dylan,v 1.3 2002/01/03 16:31:22 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/designator-class.dylan,v 1.4 2002/01/04 15:49:43 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -40,10 +40,6 @@ define class <designator-class> (<class>)
   // Type's required alignment, a power of 2 in C sizeof units
   constant slot alignment-of :: <integer>,
     required-init-keyword: alignment:;
-  //
-  // Key for C representation (see base/c-rep.dylan)
-  constant slot class-representation :: false-or(<symbol>),
-    init-value: #f;
   //
   // Type that a pointer designator type refers to
   constant slot referenced-type :: false-or(<designator-class>),
