@@ -1,4 +1,13 @@
-Gwydion Dylan 2.3.10
+Gwydion Dylan 2.3.11 (2003-07-28)
+
+  This release features further improvements in introspection support,
+  and the build system, along with major work in floating-point
+  functionality, macro hygiene, and common-dylan compliance and
+  feature support.  There are further workarounds for buggy code
+  generation in some versions of gcc, and of course we've fixed a few
+  of our own bugs too.
+
+Gwydion Dylan 2.3.10 (2003-04-12)
 
   For this release, we have further improved Common Dylan compliance,
   exception reporting, the Melange tool, introspection, and runtime error
@@ -11,7 +20,7 @@ Gwydion Dylan 2.3.10
   There's a technology demonstration of a Dylan interactor (also known
   as a REPL to the Lisp folks). Try 'd2c -i'.
 
-Gwydion Dylan 2.3.9
+Gwydion Dylan 2.3.9 (2002-10-17)
 
   Besides the obvious ton of bugfixes, we have now working class and
   each-subclass slots, a rudimentary network library, greatly improved
@@ -20,16 +29,16 @@ Gwydion Dylan 2.3.9
   the last unstable release before 2.4. All we want to do before 2.4
   is making all the quality assurance tests pass.
 
-Gwydion Dylan 2.3.8
+Gwydion Dylan 2.3.8 (2002-03-05)
 
   More bug fixes.
 
-Gwydion Dylan 2.3.7
+Gwydion Dylan 2.3.7 (2002-02-21)
   
   This release mainly fixes a bug in class slots, and is considered
   a maintenance release. Various other tweaks and bugfixes as well.
 
-Gwydion Dylan 2.3.6
+Gwydion Dylan 2.3.6 (2001-11-25)
 
   The most visible change in 2.3.6 is support for DUIM, a framework
   for user interfaces.  It's supposed to be portable between
@@ -42,7 +51,7 @@ Gwydion Dylan 2.3.6
   inlining (non-gf) functions.  Have a look at the ChangeLog for all
   the gory details.
 
-Gwydion Dylan 2.3.5
+Gwydion Dylan 2.3.5 (2001-05-26)
 
   Some measurable performance and build-time optimizations have been
   incorporated into d2c.  The compiler now supports limited containers,
@@ -50,7 +59,7 @@ Gwydion Dylan 2.3.5
   Common Dylan library implementation has expanded further, and support
   for the myriad styles of end-of-line delimiters has been strengthened.
 
-Gwydion Dylan 2.3.4
+Gwydion Dylan 2.3.4 (2000-11-30)
   
   The cygnus port created in 2.3.3 has now been integrated into the
   build environment (meaning, there's no special incantations needed
@@ -68,8 +77,7 @@ Gwydion Dylan 2.3.4
   Carbon interface library with several examples including a full GUI
   application.
 
-
-Gwydion Dylan 2.3.3
+Gwydion Dylan 2.3.3 (2000-04-12)
 
   This release is the first official version that includes MacOS
   support for both mindy and d2c. MacOS X mindy is also
@@ -77,14 +85,12 @@ Gwydion Dylan 2.3.3
   common-dylan compliance (this eventually should give you full source
   code compatibility with Functional Developer).
 
-
-Gwydion Dylan 2.3.2
+Gwydion Dylan 2.3.2 (1999-08-25)
 
   New in this release is shared library support, being made possible
   by Peter Housels C heap generator. 
 
-
-Gwydion Dylan 2.3.1
+Gwydion Dylan 2.3.1 (1999-06-08)
 
   This is the first release of the new development branch. Lots of
   things changed: the build system has been completely revamped by
@@ -101,8 +107,7 @@ Gwydion Dylan 2.3.1
   Unicode escape in strings, and of course bugs have been fixed by
   various people.
 
-
-Gwydion Dylan 2.2.0 
+Gwydion Dylan 2.2.0 (1999-02-10)
 
   This is basically a polished-up 2.1.3, with several more bugfixes.
   It is intended to be a stable release without too much new code
