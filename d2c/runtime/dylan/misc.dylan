@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.6 2002/11/01 21:40:56 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/misc.dylan,v 1.7 2003/03/28 00:36:43 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -175,11 +175,9 @@ end;
 // Should declare an <element-range-error> class and instantiate it
 
 define method element-range-error
-    (sequence :: <sequence>, index :: <integer>)
- => ()
-  error( "range error (element %d of %=)", index, sequence );
+    (sequence :: <collection>, index :: <integer>)
+ => (res :: <never-returns>);
+  error("range error (element %d of %=)", index, sequence);
 end method;
-
-
 
 %%primitive(magic-internal-primitives-placeholder);
