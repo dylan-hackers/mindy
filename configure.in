@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.9 1998/08/07 19:10:17 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.10 1998/08/10 15:01:36 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -195,10 +195,12 @@ fi
 enable_d2c=${enable_d2c:-yes}
 AC_MSG_CHECKING(whether to build d2c)
 AC_MSG_RESULT($enable_d2c)
+AC_SUBST(enable_d2c)
 
 enable_mindy=${enable_mindy:-yes}
 AC_MSG_CHECKING(whether to build mindy)
 AC_MSG_RESULT($enable_mindy)
+AC_SUBST(enable_mindy)
 
 if test "$enable_mindy" = "no" -a "$enable_d2c" = "no" ; then
     AC_MSG_ERROR([\
@@ -251,6 +253,16 @@ else
   echo "I could not find bison, so do not try to rebuild comp/parser-tab.c"
   echo "or interp/parser-tab.c because yacc cannot do it."
 fi
+
+#--------------------------------------------------------------------
+#	Determine whether or not the time library can be supported
+#--------------------------------------------------------------------
+
+AC_MSG_CHECKING([whether or not daylight and timezone are supported])
+AC_TRY_LINK([#include <time.h>], [int a = daylight; long b = timezone;],
+  [AC_MSG_RESULT(yes); TIME_INC=$srcdir/common/time/time.inc],
+  [AC_MSG_RESULT(no); TIME_INC=])
+AC_SUBST(TIME_INC)
 
 #--------------------------------------------------------------------
 #	Find out if sigaction is available.
@@ -545,7 +557,12 @@ FILE f;
 (f._IO_read_ptr >= f._IO_read_end);
 ],[AC_DEFINE(USE_LINUX_FBUFEMPTYP)
    AC_MSG_RESULT(using Linux fbufempty)],
-AC_MSG_RESULT(yes))
+AC_TRY_COMPILE([#include <stdio.h>], [
+FILE f;
+(f._r <= 0);
+],[AC_DEFINE(USE_BSD_FBUFEMPTYP)
+   AC_MSG_RESULT(using BSD fbufempty)],
+AC_MSG_RESULT(yes)))
 
 #--------------------------------------------------------------------
 #	Check to see if fsync is available.
