@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.8 1995/01/10 13:55:12 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.9 1995/03/23 22:06:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -65,6 +65,16 @@ define class <method-definition> (<abstract-method-definition>)
     required-init-keyword: method-of:;
 end;
 
+define abstract class <accessor-method-definition> (<method-definition>)
+  slot accessor-method-defn-slot-info :: union(<false>, <slot-info>),
+    required-init-keyword: slot:;
+end;
+
+define class <getter-method-definition> (<accessor-method-definition>)
+end;
+
+define class <setter-method-definition> (<accessor-method-definition>)
+end;
 
 define class <define-generic-tlf> (<simple-define-tlf>)
   //
@@ -151,7 +161,7 @@ define method implicitly-define-generic
     (name :: <basic-name>, num-required :: <integer>,
      variable-args? :: <boolean>, keyword-args? :: <boolean>)
     => ();
-  let var = find-variable(name.name-module, name.name-symbol);
+  let var = find-variable(name);
   unless (var & var.variable-definition)
     let defn
       = make(<implicit-generic-definition>,
@@ -207,7 +217,7 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
 		    #next next-method, #rest keys,
 		    #key base-name, signature, hairy: hairy?)
     => res :: <method-definition>;
-  let var = find-variable(base-name.name-module, base-name.name-symbol);
+  let var = find-variable(base-name);
   let generic-defn
     = if (var & instance?(var.variable-definition, <generic-definition>))
 	var.variable-definition;
@@ -288,7 +298,7 @@ define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-implicit-generic-tlf>) => ();
   let defn = tlf.tlf-defn;
   let name = defn.defn-name;
-  let var = find-variable(name.name-module, name.name-symbol);
+  let var = find-variable(name);
   if (var & var.variable-definition == defn)
     convert-generic-definition(builder, tlf.tlf-defn);
   end;
@@ -324,7 +334,7 @@ define method convert-top-level-form
     // We don't use method-defn-of, because that is #f if there is a definition
     // but it isn't a define generic.
     let gf-name = tlf.method-tlf-base-name;
-    let gf-var = find-variable(gf-name.name-module, gf-name.name-symbol);
+    let gf-var = find-variable(gf-name);
     let gf-defn = gf-var & gf-var.variable-definition;
     if (gf-defn)
       let policy = $Default-Policy;
