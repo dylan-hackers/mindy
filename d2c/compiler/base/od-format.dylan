@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.11 2001/03/17 03:43:30 bruce Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.12 2001/03/28 11:52:54 bruce Exp $
 
 //======================================================================
 //
@@ -1840,7 +1840,7 @@ end method;
 // Utility that loads an object's subobjects into a stretchy-vector.
 //
 define method load-subobjects-vector
-    (state :: <load-state>, #key size-hint :: false-or(<integer>))
+    (state :: <load-state>, size-hint :: false-or(<integer>))
  => (res :: <simple-object-vector>);
   if (size-hint)
     let contents :: <simple-object-vector>
@@ -2212,7 +2212,7 @@ add-od-loader(*default-dispatcher*, #"local-object-map",
 
 add-od-loader(*default-dispatcher*, #"extern-index",
   method (state :: <load-state>)
-    load-subobjects-vector(state);
+    load-subobjects-vector(state, #f);
   end method
 );
 
@@ -2327,31 +2327,54 @@ end method;
 // Actual body of make-loader loading.  Iterate across the slots and handle
 // ones w/o init-keywords or that need to be backpatched.
 //
+
+define variable *loader-vector-cache* :: <stretchy-object-vector> = make(<stretchy-vector>);
+
 define method make-loader-guts 
     (state :: <load-state>, info :: <make-info>)
  => res :: <object>;
+
+  local
+    method get-vector() => v :: <stretchy-object-vector>;
+      let cache = *loader-vector-cache*;
+      let sz = cache.size;
+      if (sz > 0)
+	let v :: <stretchy-object-vector> = cache[sz - 1];
+	cache.size := sz - 1;
+	v.size := 0;
+	v;
+      else
+	make(<stretchy-vector>);
+      end;
+    end,
+
+    method release-vector(v) => ();
+      add!(*loader-vector-cache*, v);
+    end;
+
   let key-count = info.init-keys.size;
-  let vec = load-subobjects-vector(state, size-hint: key-count);
+  let vec = load-subobjects-vector(state, key-count);
   assert(vec.size == key-count);
 
-  let keys = #();
-  let setter-losers = #();
-  let key-losers = #();
+  let keys = get-vector();
+  let setter-losers = get-vector();
+  let key-losers = get-vector();
 
   for (i :: <integer> from 0 below key-count)
     let key = info.init-keys[i];
     let val = vec[i];
     if (obj-resolved?(val))
       if (key)
-	keys := pair(key, pair(val.actual-obj, keys));
+	add!(keys, key);
+	add!(keys, val.actual-obj);
       else
-	setter-losers := pair(i, setter-losers);
+	add!(setter-losers, i);
       end if;
     else
       if (info.setter-funs[i])
-	setter-losers := pair(i, setter-losers);
+	add!(setter-losers, i);
       else
-	key-losers := pair(i, key-losers);
+	add!(key-losers, i);
       end if;
     end if;
   end for;
@@ -2369,12 +2392,16 @@ define method make-loader-guts
 	      request-backpatch(val, method (actual) setter(actual, obj) end);
 	    end;
 	  end;
+
+	  release-vector(keys);
+	  release-vector(setter-losers);
 	  
 	  obj;
 	end method make-obj;
 
 
-  if (key-losers == #())
+  if (key-losers.size == 0)
+    release-vector(key-losers);
     make-obj();
   else
     let unresolved-keys = key-losers.size;
@@ -2386,13 +2413,15 @@ define method make-loader-guts
       request-backpatch
 	(val,
 	 method (actual) => ();
-	   keys := pair(key, pair(actual, keys));
+	   add!(keys, key);
+	   add!(keys, actual);
 	   if ((unresolved-keys := unresolved-keys - 1).zero?)
 	     resolve-forward-ref(forward, make-obj());
 	   end if;
 	 end method);
     end for;
 
+    release-vector(key-losers);
     forward;
   end if;
 

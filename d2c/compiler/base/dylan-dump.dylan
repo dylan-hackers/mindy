@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/dylan-dump.dylan,v 1.2 2000/01/24 04:56:00 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/dylan-dump.dylan,v 1.3 2001/03/28 11:52:54 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -347,7 +347,7 @@ end method;
 //
 add-od-loader(*default-dispatcher*, #"list", 
   method (state :: <load-state>) => res :: <list>;
-    let contents = load-subobjects-vector(state);
+    let contents = load-subobjects-vector(state, #f);
     let res = #();
     for (i from contents.size - 1 to 0 by -1)
       res := pair(contents[i], res);
@@ -363,7 +363,7 @@ add-od-loader(*default-dispatcher*, #"list",
 //
 add-od-loader(*default-dispatcher*, #"list*", 
   method (state :: <load-state>) => res :: <list>;
-    let contents = load-subobjects-vector(state);
+    let contents = load-subobjects-vector(state, #f);
     let last-idx = contents.size - 1;
     let last-pair = pair(contents[last-idx - 1], contents[last-idx]);
     head-maybe-backpatch(last-pair);
@@ -404,7 +404,7 @@ end method;
 //
 add-od-loader(*default-dispatcher*, #"simple-object-vector", 
   method (state :: <load-state>) => res :: <simple-object-vector>;
-    let contents = load-subobjects-vector(state);
+    let contents = load-subobjects-vector(state, #f);
     let rsize = contents.size;
     let res = make(<simple-object-vector>, size: rsize);
     for (i from 0 below rsize)
