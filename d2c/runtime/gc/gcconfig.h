@@ -820,6 +820,9 @@
 #   ifdef FREEBSD
 #	define OS_TYPE "FREEBSD"
 #	define MPROTECT_VDB
+#       ifdef __ELF__
+#           define DYNAMIC_LOADING
+#	endif
 #   endif
 #   ifdef NETBSD
 #	define OS_TYPE "NETBSD"
