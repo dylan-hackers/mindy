@@ -2,7 +2,7 @@ module: print-test
 author: David Watson, Nick Kramer
 synopsis: Test for the print library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/print-test.dylan,v 1.2 1996/08/07 14:53:39 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/print-test.dylan,v 1.3 1997/02/02 13:49:57 dwatson Exp $
 
 //======================================================================
 //
@@ -117,6 +117,12 @@ define method print-test () => ();
     end for;
   end for;
   run-test(print-to-string(array-1), "{<array>: {{0, 1}, {2, 3}}}", "array");
+
+   let float-1 = 10.0s0;
+   run-test(print-to-string(float-1), "10.0s0", "float");
+
+   let double-float-1 = 10.0d0;
+   run-test(print-to-string(double-float-1), "10.0d0", "double-float");
 end method print-test;
 
 define method main (argv0, #rest ignored)
