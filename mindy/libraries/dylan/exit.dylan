@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exit.dylan,v 1.5 1996/01/11 18:43:32 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exit.dylan,v 1.6 1996/02/17 15:12:29 nkramer Exp $
 
 //======================================================================
 //
@@ -38,6 +38,6 @@ define method exit (#key exit-code :: <integer> = 0)
   raw-exit(exit-code);
 end;
 
-define method on-exit(fun :: <function>)
+define method on-exit(fun :: <function>) => ();
   push-last(*on-exit*, fun);
 end;

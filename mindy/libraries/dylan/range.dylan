@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.8 1996/02/13 20:09:56 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/range.dylan,v 1.9 1996/02/17 15:12:29 nkramer Exp $
 
 //======================================================================
 //
@@ -157,19 +157,13 @@ end class;
 // If valid sizes exists the maximum of 0 and the minimum of the valid
 // sizes is returned.
 //
-define constant <false-or-real> =
-   union (singleton (#f), <real>);
-
-define constant <false-or-fixed> =
-   union (singleton (#f), <integer>);
-
 define method compute-range-size (r-from :: <real>,
 				  r-by :: <real>,
-				  r-to :: <false-or-real>,
-				  r-above :: <false-or-real>,
-				  r-below :: <false-or-real>,
-				  r-size :: <false-or-fixed>)
-      => size :: <false-or-fixed>;
+				  r-to :: false-or(<real>),
+				  r-above :: false-or(<real>),
+				  r-below :: false-or(<real>),
+				  r-size :: false-or(<integer>))
+      => size :: false-or(<integer>);
    let to-size = r-to & compute-to-size (r-from, r-by, r-to);
    let above-size = r-above & compute-above-size (r-from, r-by, r-above);
    let below-size = r-below & compute-below-size (r-from, r-by, r-below);
@@ -202,7 +196,7 @@ end method;
 define method compute-to-size (start :: <integer>,
 			       increment :: <integer>,
 			       bound :: <integer>)
-      => to-size :: <false-or-fixed>;
+      => to-size :: false-or(<integer>);
    select (increment by \=)
       0 =>
 	 #f;
@@ -218,7 +212,7 @@ end method;
 define method compute-to-size (start :: <real>,
 			       increment :: <real>,
 			       bound :: <real>)
-      => to-size :: <false-or-fixed>;
+      => to-size :: false-or(<integer>);
    select (increment by \=)
       0 =>
 	 #f;
@@ -245,7 +239,7 @@ end method;
 define method compute-above-size (start :: <integer>,
 				  increment :: <integer>,
 				  bound :: <integer>)
-      => above-size :: <false-or-fixed>;
+      => above-size :: false-or(<integer>);
    if (negative? (increment))
       if (increment = -1)
 	 -(bound - start)
@@ -264,7 +258,7 @@ end method;
 define method compute-above-size (start :: <real>,
 				  increment :: <real>,
 				  bound :: <real>)
-      => above-size :: <false-or-fixed>;
+      => above-size :: false-or(<integer>);
    if (negative? (increment))
       ceiling/ (bound - start, increment)
    else
@@ -294,7 +288,7 @@ end method;
 define method compute-below-size (start :: <integer>,
 				  increment :: <integer>,
 				  bound :: <integer>)
-      => below-size :: <false-or-fixed>;
+      => below-size :: false-or(<integer>);
    if (positive? (increment))
       if (increment = 1)
 	 bound - start
@@ -313,7 +307,7 @@ end method;
 define method compute-below-size (start :: <real>,
 				  increment :: <real>,
 				  bound :: <real>)
-      => below-size :: <false-or-fixed>;
+      => below-size :: false-or(<integer>);
    if (positive? (increment))
       if (increment = 1)
 	 bound - start
@@ -1017,7 +1011,7 @@ end method;
 //
 define method intersection-interval (range1 :: <bounded-range>,
 				     range2 :: <bounded-range>)
-      => (x-from :: <false-or-fixed>, x-to :: <false-or-fixed>);
+      => (x-from :: false-or(<integer>), x-to :: false-or(<integer>));
    let from1 = range1.range-from;
    let to1 = range1.last;
    let from2 = range2.range-from;
@@ -1036,7 +1030,7 @@ end method;
 //
 define method intersection-interval (range1 :: <bounded-range>,
 				     range2 :: <unbounded-range>)
-      => (x-from :: <false-or-fixed>, x-to :: <false-or-fixed>);
+      => (x-from :: false-or(<integer>), x-to :: false-or(<integer>));
    let from1 = range1.range-from;
    let to1 = range1.last;
    let from2 = range2.range-from;
@@ -1054,7 +1048,7 @@ end method;
 //
 define method intersection-interval (range1 :: <unbounded-range>,
 				     range2 :: <bounded-range>)
-      => (x-from :: <false-or-fixed>, x-to :: <false-or-fixed>);
+      => (x-from :: false-or(<integer>), x-to :: false-or(<integer>));
    let from1 = range1.range-from;
    let from2 = range2.range-from;
    let to2 = range2.last;
@@ -1072,7 +1066,7 @@ end method;
 //
 define method intersection-interval (range1 :: <unbounded-range>,
 				     range2 :: <unbounded-range>)
-      => (x-from :: <false-or-fixed>, x-to :: <false-or-fixed>);
+      => (x-from :: false-or(<integer>), x-to :: false-or(<integer>));
    let from1 = range1.range-from;
    let from2 = range2.range-from;
    select (range-directions (range1, range2))

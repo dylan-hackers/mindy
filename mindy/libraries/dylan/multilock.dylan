@@ -1,5 +1,5 @@
 module: threads
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/multilock.dylan,v 1.5 1996/01/11 18:43:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/multilock.dylan,v 1.6 1996/02/17 15:12:29 nkramer Exp $
 
 //======================================================================
 //
@@ -38,7 +38,7 @@ define class <multilock> (<lock>)
     init-function: curry(make, <spinlock>);
 
   // The thread currently holding this lock, or #f if currently unlocked.
-  slot locker :: union(<false>, <thread>), init-value: #f;
+  slot locker :: false-or(<thread>), init-value: #f;
 
   // The number of times the multilock has been locked by the locking
   // thread.

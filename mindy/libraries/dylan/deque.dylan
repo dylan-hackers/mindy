@@ -1,6 +1,6 @@
 module: Dylan
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.16 1996/02/13 23:20:04 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/deque.dylan,v 1.17 1996/02/17 15:12:29 nkramer Exp $
 
 //======================================================================
 //
@@ -529,9 +529,10 @@ end method map-into;
 // function similarly to add!, so this adds to the front of the
 // deque.
 //
-define method add (deque :: <deque>, new) => <deque>;
+define method add (deque :: <deque>, new) => deque :: <deque>;
   let new-deque = copy-sequence(deque);
   push(new-deque, new);
+  new-deque;
 end method add;
 
 // add! -- public
@@ -541,6 +542,7 @@ end method add;
 //
 define method add! (deque :: <deque>, new) => <deque>;
   push(deque, new);
+  deque;
 end method add!;
 
 // remove -- public
@@ -555,13 +557,13 @@ end method add!;
 define method remove (deque :: <deque>, value,
 		      #key test = \==, count) => <deque>;
   let count = count | size(deque);
-  local method copy(state :: union(singleton(#f), <deque-element>),
+  local method copy(state :: false-or(<deque-element>),
 		    count :: <integer>) => <deque>;
 	  case
 	    ~state =>
 	      make(<deque>);
 	    count <= 0 | ~test(deque-element-data(state), value) =>
-	      push(copy(next-deque-element(state), count),
+	      add!(copy(next-deque-element(state), count),
 		   deque-element-data(state));
 	    otherwise =>
 	      copy(next-deque-element(state), count - 1);
@@ -582,7 +584,7 @@ end method remove;
 define method remove! (deque :: <deque>, value,
 		       #key test = \==, count: count) => <deque>;
   let count = count | size(deque);
-  local method scan!(state :: union(singleton(#f), <deque-element>),
+  local method scan!(state :: false-or(<deque-element>),
 		     count :: <integer>)
 	  case
 	    count <= 0 | ~state =>
@@ -654,7 +656,7 @@ define method remove-duplicates (deque :: <deque>,
 	    member?(deque-element-data(state), next-deque-element(state)) =>
 	      copy(next-deque-element, state);
 	    otherwise =>
-	      push(copy(next-deque-element(state)), deque-element-data(state));
+	      add!(copy(next-deque-element(state)), deque-element-data(state));
 	  end case;
 	end method copy;
   copy(deque-head(deque));
@@ -719,7 +721,7 @@ define method copy-sequence (source :: <deque>,
 	    first > 0 =>
 	      copy(next-deque-element(state), first - 1, last - 1);
 	    last > 0 =>
-	      push(copy(next-deque-element(state), first, last - 1),
+	      add!(copy(next-deque-element(state), first, last - 1),
 		   deque-element-data(state));
 	    otherwise =>
 	      make(<deque>);
