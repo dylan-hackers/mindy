@@ -225,16 +225,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -885,6 +875,13 @@
                 </FILE>
                 <FILE>
                     <PATHTYPE>Name</PATHTYPE>
+                    <PATH>machineword.dylan</PATH>
+                    <PATHFORMAT>MacOS</PATHFORMAT>
+                    <FILEKIND>Text</FILEKIND>
+                    <FILEFLAGS></FILEFLAGS>
+                </FILE>
+                <FILE>
+                    <PATHTYPE>Name</PATHTYPE>
                     <PATH>macros.dylan</PATH>
                     <PATHFORMAT>MacOS</PATHFORMAT>
                     <FILEKIND>Text</FILEKIND>
@@ -1134,6 +1131,11 @@
                 <FILEREF>
                     <PATHTYPE>Name</PATHTYPE>
                     <PATH>list.dylan</PATH>
+                    <PATHFORMAT>MacOS</PATHFORMAT>
+                </FILEREF>
+                <FILEREF>
+                    <PATHTYPE>Name</PATHTYPE>
+                    <PATH>machineword.dylan</PATH>
                     <PATHFORMAT>MacOS</PATHFORMAT>
                 </FILEREF>
                 <FILEREF>
@@ -1427,16 +1429,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -2204,16 +2196,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -2955,16 +2937,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -3806,16 +3778,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -4557,16 +4519,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -5387,16 +5339,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -6146,16 +6088,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -6897,16 +6829,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -7715,16 +7637,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -8486,16 +8398,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -9448,16 +9350,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -10211,16 +10103,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -10993,16 +10875,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -11744,16 +11616,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -12535,16 +12397,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -13297,16 +13149,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -14048,16 +13890,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -14871,16 +14703,6 @@
                     </SETTING>
                     <SETTING>
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.c</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE>MW C/C++ PPC</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
@@ -15641,16 +15463,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -16608,16 +16420,6 @@
                         <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
                         <SETTING><NAME>FileExtension</NAME><VALUE>.arr</VALUE></SETTING>
                         <SETTING><NAME>Compiler</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
-                        <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>ResourceFile</NAME><VALUE>false</VALUE></SETTING>
-                        <SETTING><NAME>IgnoredByMake</NAME><VALUE>false</VALUE></SETTING>
-                    </SETTING>
-                    <SETTING>
-                        <SETTING><NAME>FileType</NAME><VALUE>TEXT</VALUE></SETTING>
-                        <SETTING><NAME>FileExtension</NAME><VALUE>.bh</VALUE></SETTING>
-                        <SETTING><NAME>Compiler</NAME><VALUE>Balloon Help</VALUE></SETTING>
                         <SETTING><NAME>EditLanguage</NAME><VALUE></VALUE></SETTING>
                         <SETTING><NAME>Precompile</NAME><VALUE>false</VALUE></SETTING>
                         <SETTING><NAME>Launchable</NAME><VALUE>false</VALUE></SETTING>
@@ -18160,7 +17962,7 @@
                 <TARGETNAME>dylan</TARGETNAME>
                 <PATHTYPE>Name</PATHTYPE>
                 <PATH>machineword.dylan</PATH>
-                <PATHFORMAT>Unix</PATHFORMAT>
+                <PATHFORMAT>MacOS</PATHFORMAT>
             </FILEREF>
             <FILEREF>
                 <TARGETNAME>dylan</TARGETNAME>
