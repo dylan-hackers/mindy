@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.25 1996/02/17 17:54:44 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.26 1996/03/07 17:55:04 nkramer Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -51,6 +51,18 @@ Synopsis:   Implements <table>, <object-table>, <equal-table>,
 // not call object-hash*.
 //
 // For a more in depth explanation, see mindy.doc
+
+// Exported interface.
+
+define open generic table-protocol (table :: <table>)
+    => (key-test :: <function>, key-hash :: <function>);
+
+define open generic value-hash (thing :: <object>)
+    => (id :: <integer>, state :: <object>);
+
+define open generic equal-hash (thing :: <object>)
+    => (id :: <integer>, state :: <object>);
+
 
 // -------------------------------------------------------------------
 // Mindy-specific code
@@ -487,6 +499,7 @@ define constant $no-default = pair(#f, #f);
 //
 define method element (ht :: <table>, key :: <object>, 
 		       #key default: default = $no-default )
+ => elt :: <object>;
   // We don't yet check for outdated hash states, since the element
   // might match anyway, and the lookup is much cheaper than a rehash.
 
@@ -517,6 +530,7 @@ end method element;
 //
 define method element (  ht :: <value-table>, key, 
 		         #key default: default = $no-default )
+ => elt :: <object>;
   let (key=, key-hash)      = table-protocol(ht);
   let key-id                = key-hash(key);
   let bucket-index          = modulo(key-id, ht.buckets.size);
@@ -801,11 +815,11 @@ define method rehash (ht :: <table>) => rehashed-ht :: <table>;
   ht;
 end method rehash;
 
-define method size (ht :: <table>)
+define method size (ht :: <table>) => size :: <integer>;
   ht.table-size;
 end method size;
 
-define method empty? (ht :: <table>)
+define method empty? (ht :: <table>) => answer :: <boolean>;
   ht.table-size = 0;
 end method empty?;
 
@@ -897,6 +911,14 @@ define method make-table-state (ht :: <table>)
 end method make-table-state;
 
 define method forward-iteration-protocol (ht :: <table>)
+ => (initial-state :: <object>,
+     limit :: <object>,
+     next-state :: <function>,
+     finished-state? :: <function>,
+     current-key :: <function>,
+     current-element :: <function>,
+     current-element-setter :: <function>,
+     copy-state :: <function>);
   values (make-table-state(ht),       // initial hash state
 	  #f,             // limit -- isn't actually used by finished-state?
 	  next-table-state,
@@ -912,6 +934,7 @@ end method forward-iteration-protocol;
 define class <string-table> (<value-table>)
 end class <string-table>;
 
-define method table-protocol (ht :: <string-table>);
+define method table-protocol (ht :: <string-table>)
+ => (key-test :: <function>, key-hash :: <function>);
   values(\=, string-hash);
 end method table-protocol;
