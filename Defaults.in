@@ -22,7 +22,11 @@ $gen_makefile = "$buildroot/gen-makefile";
 $enable_debug = "@enable_debug@" eq "yes";
 $enable_mindy = "@enable_mindy@" eq "yes";
 $enable_d2c = "@enable_d2c@" eq "yes";
-$enable_mindy_bootstrap = "@enable_mindy_bootstrap@" eq "yes";
+$build_tools_with_d2c = "@build_tools_with_d2c@" eq "yes";
+$cross_compiling = "@d2c_cross_compiling@" eq "yes";
+$enable_bootstrap = "@enable_bootstrap@" eq "yes";
+$bootstrap_compiler = "@bootstrap_compiler@";
+$enable_mindy_bootstrap = $enable_bootstrap && $bootstrap_compiler eq "mindy";
 $INSTALL = "@INSTALL@";
 
 # INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
@@ -30,10 +34,14 @@ $INSTALL = "@INSTALL@";
 $install_data = "@INSTALL@";
 $install_program = "@INSTALL@ -m oug+rx";
 
-$D2C = "@D2C@ -T$target_name";
-if ($host_name ne $target_name) {
-  $D2C = "$D2C -no-binaries";
-};
+if ($cross_compiling) {
+  # Use cross-compilation flags if necessary.
+  $D2C = "@D2C@ -T$target_name -no-binaries";
+} else {
+  # Try to build using the default d2c settings. This makes bootstrapping
+  # *much* easier.
+  $D2C = "@D2C@";
+}
 
 $MC = '@MC@';
 $MINDY = '@MINDY@';
@@ -44,12 +52,22 @@ if ($enable_debug) {
 } else {
   $CFLAGS = '-O4 -finline-functions';
 }
-$CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
 
-if ($enable_mindy_bootstrap) {
-  $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen-lib.dbc";
-  $MELANGE = "$MINDY -f $buildroot/tools/melange/melange.dbc";
-} else {
+if ($build_tools_with_d2c) {
   $PARSERGEN = "$buildroot/tools/parsergen/parsergen";
   $MELANGE = "$buildroot/tools/melange/melange";
+} else {
+  $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen-lib.dbc";
+  $MELANGE = "$MINDY -f $buildroot/tools/melange/melange.dbc";
 };
+
+if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {
+    $CPPFLAGS = '-I@LOCAL_RUNTIME@';
+    $d2c_runtime = '-L@LOCAL_RUNTIME@ ';
+} else {
+    $CPPFLAGS = '-I'.$srcroot.'/d2c/runtime';
+    @runtime_directories = ('c-code', 'gc', 'dylan', 'melange');
+    foreach (@runtime_directories) {
+	$d2c_runtime .= "-L$buildroot/d2c/runtime/$_ ";
+    }
+}
