@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.82 1995/11/20 16:16:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.83 1995/11/20 16:39:57 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -166,6 +166,10 @@ define class <file-state> (<object>)
   slot file-unit :: <unit-state>,
     required-init-keyword: unit:;
   //
+  // Files we have already included.
+  slot file-includes-exist-for :: <string-table>,
+    init-function: curry(make, <string-table>);
+  //
   // Things we have already spewed defns for.
   slot file-prototypes-exist-for :: <string-table>,
     init-function: curry(make, <string-table>);
@@ -208,6 +212,14 @@ end;
 
 
 // Utilities.
+
+define method maybe-emit-include
+    (name :: <byte-string>, file :: <file-state>)
+  unless (element(file.file-includes-exist-for, name, default: #f))
+    format(file.file-body-stream, "#include <%s>\n\n", name);
+    element(file.file-includes-exist-for, name) := #t;
+  end;
+end;
 
 define method maybe-emit-prototype
     (name :: <byte-string>, info :: <object>, file :: <file-state>)
@@ -686,11 +698,10 @@ end;
 define method emit-prologue
     (file :: <file-state>, other-units :: <simple-object-vector>)
     => ();
+  maybe-emit-include("stdlib.h", file);
+  maybe-emit-include("runtime.h", file);
+
   let stream = file.file-body-stream;
-  format(stream, "#include <stdlib.h>\n\n");
-
-  format(stream, "#include <runtime.h>\n\n");
-
   for (unit in other-units)
     format(stream, "extern descriptor_t %s_roots[];\n", unit);
   end;
