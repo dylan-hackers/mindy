@@ -47,8 +47,11 @@ static DWORD input_checker (LPDWORD param)
     if (!read_result) {
       /* For easier debugging, find out what error */
       DWORD the_error = GetLastError();
-      fprintf(stderr, "Read error on fd %d", fd);
-      exit(1);
+      if (the_error != ERROR_BROKEN_PIPE) { 
+	/* handle broken pipes later */
+	fprintf(stderr, "Read error on fd %d", fd);
+	exit(1);
+      }
     }
     thread_status[fd] = thread_finished;
     fd_threads[fd] = NULL;
@@ -145,8 +148,13 @@ int fd_input_available (int fd)
 
 int fd_read (int fd, char *buffer, int max_chars)
 {
+  int res;
   kill_checker(fd);
-  return read(fd, buffer, max_chars);
+  res = read(fd, buffer, max_chars);
+  if (res < 0 && GetLastError() == ERROR_BROKEN_PIPE) {
+    res = 0;  /* treat broken pipes as EOF */
+  }
+  return res;
 }
 
 /* And now, it's time for fd_exec -- create a child process whose input 
