@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.28 1996/04/13 21:17:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.29 1996/05/01 12:26:00 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -658,6 +658,22 @@ define method instance?-transformer
 end;
 
 define-transformer(#"instance?", #f, instance?-transformer);
+
+
+define method optimize
+    (component :: <component>, op :: <instance?>) => ();
+  let value-type = op.depends-on.source-exp.derived-type;
+  let test-type = op.type;
+  if (csubtype?(value-type, test-type))
+    replace-expression
+      (component, op.dependents,
+       make-literal-constant(make-builder(component), as(<ct-value>, #t)));
+  elseif (~ctypes-intersect?(value-type, test-type))
+    replace-expression
+      (component, op.dependents,
+       make-literal-constant(make-builder(component), as(<ct-value>, #f)));
+  end if;
+end method optimize;
 
 
 define method replace-placeholder
