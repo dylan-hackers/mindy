@@ -4,7 +4,7 @@ synopsis:   Contains the library and module definitions for the String
             Extensions library.
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.2 1996/04/06 18:30:25 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dylan,v 1.3 1996/07/12 16:43:29 dwatson Exp $
 
 //======================================================================
 //
@@ -35,6 +35,8 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/library.dyla
 define library string-extensions
   use dylan;
   use collection-extensions;
+  // We've moved case-insensitive-equal to table-extensions
+  use table-extensions;
   export
     string-conversions, character-type, string-hacking,
     substring-search, regular-expressions;
@@ -47,9 +49,10 @@ end library string-extensions;
 define module character-type
   use dylan;
   use extensions;
+  use %Hash-Tables, export: {uppercase?};
   export
     alpha?, digit?, alphanumeric?, whitespace?,
-    uppercase?, lowercase?, hex-digit?, graphic?, printable?,
+    lowercase?, hex-digit?, graphic?, printable?,
     punctuation?, control?, byte-character?;
 end module character-type;
 
@@ -68,8 +71,12 @@ define module string-hacking
   use extensions;
   use character-type;
   use parse-string;
+  // Re-export case-insensitive-equal from table-extensions
+  use table-extensions,
+    import: {case-insensitive-equal},
+    export: {case-insensitive-equal};
   export
-    predecessor, successor, add-last, case-insensitive-equal,
+    predecessor, successor, add-last,
     <character-set>, <case-sensitive-character-set>, 
     <case-insensitive-character-set>, 
     <byte-character-table>;
