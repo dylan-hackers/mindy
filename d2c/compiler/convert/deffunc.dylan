@@ -1,13 +1,14 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.29 1995/06/06 02:12:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.30 1995/06/12 17:37:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
 define abstract class <function-definition> (<abstract-constant-definition>)
   //
-  // The signature.  Filled in during definition finalization.
-  slot function-defn-signature :: <signature>, init-keyword: signature:;
+  // The signature.
+  slot %function-defn-signature :: union(<signature>, <function>),
+    setter: function-defn-signature-setter, init-keyword: signature:;
   //
   // #t if this definition requires special handling at loadtime.  Can be
   // because of something non-constant in the signature or in the case of
@@ -57,7 +58,7 @@ define class <generic-definition> (<function-definition>)
   //
   // Information about sealed methods of this GF.  This is filled in on demand.
   // Use generic-defn-seal-info instead.  See "method-tree".
-  slot %generic-defn-seal-info :: <list>;
+  slot %generic-defn-seal-info :: false-or(<list>), init-value: #f;
   //
   // The discriminator ct-value, if there is one.
   slot %generic-defn-discriminator
@@ -104,6 +105,9 @@ define class <method-definition> (<abstract-method-definition>)
   // undefined or not a generic function.
   slot method-defn-of :: union(<generic-definition>, <false>),
     required-init-keyword: method-of:;
+  //
+  // True if this method is congruent with the corresponding GF.
+  slot method-defn-congruent? :: <boolean>, init-value: #f;
 end;
 
 define abstract class <accessor-method-definition> (<method-definition>)
@@ -221,11 +225,26 @@ define method process-top-level-form (form :: <define-generic-parse>) => ();
 		  movable: movable?,
 		  flushable: flushable? | movable?);
   note-variable-definition(defn);
-  add!($Top-Level-Forms,
-       make(<define-generic-tlf>,
+  let tlf = make(<define-generic-tlf>,
 	    defn: defn,
 	    param-list: form.defgen-param-list,
-	    returns: form.defgen-returns));
+	    returns: form.defgen-returns);
+  defn.function-defn-signature := curry(compute-define-generic-signature, tlf);
+  add!($Top-Level-Forms, tlf);
+end;
+
+define method compute-define-generic-signature
+    (tlf :: <define-generic-tlf>) => res :: <signature>;
+  let (signature, anything-non-constant?)
+    = compute-signature(tlf.generic-tlf-param-list, tlf.generic-tlf-returns);
+  if (anything-non-constant?)
+    let defn = tlf.tlf-defn;
+    defn.function-defn-hairy? := #t;
+    if (defn.function-defn-ct-value)
+      error("noticed that a function was hairy after creating a ct-value.");
+    end;
+  end;
+  signature;
 end;
 
 define method process-top-level-form (form :: <seal-generic-parse>) => ();
@@ -265,13 +284,15 @@ define method implicitly-define-generic
       = make(<implicit-generic-definition>,
 	     name: name,
 	     signature:
-	       make(<signature>,
-		    specializers:
-		      make(<list>, size: num-required, fill: object-ctype()),
-		    rest-type: variable-args? & object-ctype(),
-		    keys: keyword-args? & #(),
-		    all-keys: #f,
-		    returns: wild-ctype()));
+	       method ()
+		 make(<signature>,
+		      specializers:
+			make(<list>, size: num-required, fill: object-ctype()),
+		      rest-type: variable-args? & object-ctype(),
+		      keys: keyword-args? & #(),
+		      all-keys: #f,
+		      returns: wild-ctype());
+	       end);
     note-variable-definition(defn);
     add!($Top-Level-Forms, make(<define-implicit-generic-tlf>, defn: defn));
   end;
@@ -281,23 +302,15 @@ end;
 // finalize-top-level-form
 
 define method finalize-top-level-form (tlf :: <define-generic-tlf>) => ();
-  let defn = tlf.tlf-defn;
-  let (signature, anything-non-constant?)
-    = compute-signature(tlf.generic-tlf-param-list, tlf.generic-tlf-returns);
-  defn.function-defn-signature := signature;
-  if (anything-non-constant?)
-    defn.function-defn-hairy? := #t;
-    if (defn.function-defn-ct-value)
-      error("noticed that a function was hairy after creating a ct-value.");
-    end;
-  end;
+  // Force the processing of the signature and ct-value.
+  tlf.tlf-defn.ct-value;
 end;
 
 define method finalize-top-level-form (tlf :: <seal-generic-tlf>) => ();
   let var = find-variable(tlf.seal-generic-name);
   let defn = var & var.variable-definition;
   unless (instance?(defn, <generic-definition>))
-    compiler-error("%s doesn't name a generic function.",
+    compiler-error("%s doesn't name a generic function, so can't be sealed.",
 		   tlf.seal-generic-name);
   end;
   let type-exprs = tlf.seal-generic-type-exprs;
@@ -305,7 +318,9 @@ define method finalize-top-level-form (tlf :: <seal-generic-tlf>) => ();
 	   map(method (type-expr)
 		 let type = ct-eval(type-expr, #f) | make(<unknown-ctype>);
 		 unless (instance?(type, <ctype>))
-		   compiler-error("Type in seal generic isn't a type.");
+		   compiler-error
+		     ("Parameter in seal generic of %s isn't a type:\n  %s",
+		      tlf.seal-generic-name, type);
 		 end;
 		 type;
 	       end,
@@ -314,9 +329,16 @@ end;
 
 define method finalize-top-level-form (tlf :: <define-implicit-generic-tlf>)
     => ();
-  // The signature comes pre-initialized for implicit define generics,
-  // so we don't have to compute it like we do for regular define
-  // generics.
+  let defn = tlf.tlf-defn;
+  let name = defn.defn-name;
+  let var = find-variable(name);
+  if (var & var.variable-definition == defn)
+    // The implicit defn is still around.  Force the processing of the
+    // signature and ct-value.
+    defn.ct-value;
+  else
+    remove!($Top-Level-Forms, tlf);
+  end;
 end;
 
 define method finalize-top-level-form (tlf :: <define-method-tlf>)
@@ -335,10 +357,15 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
 		    & ~anything-non-constant?
 		    & tlf.method-tlf-parse);
   tlf.tlf-defn := defn;
+  let gf = defn.method-defn-of;
+  if (gf)
+    ct-add-method(gf, defn);
+  end;
   if (tlf.method-tlf-sealed?)
-    let gf = defn.method-defn-of;
     if (gf)
       add-seal(gf, signature.specializers);
+    else
+      error("%s doesn't name a generic function", name);
     end;
   end;
 end;
@@ -353,32 +380,17 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
     = if (var & instance?(var.variable-definition, <generic-definition>))
 	var.variable-definition;
       end;
-  let defn = apply(next-method, wot,
-		   name: make(<method-name>,
-			      generic-function: base-name,
-			      specializers: signature.specializers),
-		   hairy: hairy?,
-		   movable: movable?
-		     | (generic-defn & generic-defn.function-defn-movable?),
-		   flushable: flushable?
-		     | (generic-defn & generic-defn.function-defn-flushable?),
-		   method-of: generic-defn,
-		   keys);
-  if (generic-defn)
-    if (slot-initialized?(generic-defn, %generic-defn-seal-info))
-      error("Adding a method to GF %s, which has already been sealed.",
-	    generic-defn.defn-name);
-    end;
-    generic-defn.generic-defn-methods
-      := pair(defn, generic-defn.generic-defn-methods);
-    defn.function-defn-transformers
-      := choose(method (transformer)
-		  let specs = transformer.transformer-specializers;
-		  specs == #f | specs = signature.specializers;
-		end,
-		generic-defn.function-defn-transformers);
-  end;
-  defn;
+  apply(next-method, wot,
+	name: make(<method-name>,
+		   generic-function: base-name,
+		   specializers: signature.specializers),
+	hairy: hairy?,
+	movable: movable?
+	  | (generic-defn & generic-defn.function-defn-movable?),
+	flushable: flushable?
+	  | (generic-defn & generic-defn.function-defn-flushable?),
+	method-of: generic-defn,
+	keys);
 end;
 
 // This method exists just so make will recognize base-name as a valid
@@ -434,6 +446,153 @@ define method compute-signature
 	 anything-non-constant?);
 end;
 
+define method function-defn-signature
+    (defn :: <function-definition>) => res :: <signature>;
+  let sig-or-func = defn.%function-defn-signature;
+  if (instance?(sig-or-func, <function>))
+    defn.function-defn-signature := sig-or-func();
+  else
+    sig-or-func;
+  end;
+end;
+
+
+// Congruence testing.
+
+// Check congruence at one position, returning #t if definitely congruent.
+// Meth and GF are for error context.
+//
+define method check-1-arg-congruent
+    (mspec :: <values-ctype>, gspec :: <values-ctype>,
+     meth :: <method-definition>, gf :: <generic-definition>)
+    => res :: <boolean>;
+  let (val, val-p) = values-subtype?(mspec, gspec);
+  case
+    ~val-p =>
+      compiler-warning
+	("Can't tell if %s is a subtype of %s, so can't tell if method %s is "
+	   "congruent to GF %s.",
+	 mspec, gspec, meth.defn-name, gf.defn-name);
+      #f;
+
+    ~val =>
+      compiler-warning
+	("Method %s isn't congruent to GF %s because method type %s isn't a "
+	   "subtype of GF type %s.",
+	 meth.defn-name, gf.defn-name, mspec, gspec);
+      #f;
+
+    otherwise => #t;
+  end case;
+end method;
+
+
+// Check that the methods on GF are congruent to it, and return the methods
+// that are congruent.
+//
+define method check-congruence
+    (meth :: <method-definition>, gf :: <generic-definition>)
+    => res :: <boolean>;
+  let gsig = gf.function-defn-signature;
+  let gspecs = gsig.specializers;
+  let msig = meth.function-defn-signature;
+  let win = #t;
+
+  let mspecs = msig.specializers;
+  unless (size(mspecs) = size(gspecs))
+    compiler-warning
+      ("Method %s has different number of required arguments than GF %s.",
+       meth.defn-name, gf.defn-name);
+    win := #f;
+  end;
+  for (mspec in mspecs, gspec in gspecs)
+    win := check-1-arg-congruent(mspec, gspec, meth, gf) & win;
+  end for;
+
+  case
+    gsig.key-infos =>
+      if (~msig.key-infos)
+	compiler-warning
+	  ("GF %s accepts keywords but method %s doesn't.",
+	   gf.defn-name, meth.defn-name);
+	win := #f;
+      elseif (msig.all-keys? & ~gsig.all-keys?)
+	compiler-warning
+	  ("Method %s accepts all keys but GF %s doesn't.",
+	   meth.defn-name, gf.defn-name);
+	win := #f;
+      else
+	for (gkey in gsig.key-infos)
+	  let gkey-name = gkey.key-name;
+	  let gspec = gkey.key-type;
+	  block (found-it)
+	    for (mkey in msig.key-infos)
+	      if (mkey.key-name == gkey-name)
+		win := check-1-arg-congruent (mkey.key-type, gspec, meth, gf)
+		  & win;
+		found-it();
+	      end;
+	    end for;
+	    
+	    compiler-warning
+	      ("GF %s mandatory keyword arg %= is not accepted by "
+		 "method %s.",
+	       gf.defn-name, gkey-name, meth.defn-name);
+	    win := #f;
+	  end block;
+	end for;
+      end if;
+
+    msig.key-infos =>
+      compiler-warning
+	("Method %s accepts keywords but GF %s doesn't.",
+	 meth.defn-name, gf.defn-name);
+      win := #f;
+
+    gsig.rest-type & ~msig.rest-type =>
+      compiler-warning
+	("GF %s accepts variable arguments, but method %s doesn't.",
+	 gf.defn-name, meth.defn-name);
+      win := #f;
+
+    ~gsig.rest-type & msig.rest-type =>
+      compiler-warning
+	("Method %s accepts variable arguments, but GF %s doesn't.",
+	 meth.defn-name, gf.defn-name);
+      win := #f;
+  end;
+
+  win & check-1-arg-congruent(msig.returns, gsig.returns, meth, gf);
+end method;
+
+
+define method ct-add-method
+    (gf :: <generic-definition>, meth :: <method-definition>) => ();
+  let old-methods = gf.generic-defn-methods;
+  let meth-specs = meth.function-defn-signature.specializers;
+  block (return)
+    for (old-meth in old-methods)
+      if (meth-specs = old-meth.function-defn-signature.specializers)
+	compiler-error("%s is multiply defined -- ignoring extra definition.",
+		       meth.defn-name);
+	return();
+      end;
+    end;
+    gf.generic-defn-methods := pair(meth, old-methods);
+  end;
+  if (check-congruence(meth, gf))
+    meth.method-defn-congruent? := #t;
+    meth.function-defn-transformers
+      := choose(method (transformer)
+		  let specs = transformer.transformer-specializers;
+		  specs == #f | specs = meth-specs;
+		end,
+		gf.function-defn-transformers);
+  else
+    meth.function-defn-hairy? := #t;
+  end;
+end;
+
 
 // CT-value
 
@@ -441,11 +600,13 @@ define method ct-value (defn :: <generic-definition>)
     => res :: false-or(<ct-function>);
   let ctv = defn.function-defn-ct-value;
   if (ctv == #"not-computed-yet")
+    // We extract the sig first, because doing so way change the -hairy? flag.
+    let sig = defn.function-defn-signature;
     defn.function-defn-ct-value
       := unless (defn.function-defn-hairy?)
 	   make(<ct-generic-function>,
 		name: format-to-string("%s", defn.defn-name),
-		signature: defn.function-defn-signature,
+		signature: sig,
 		definition: defn);
 	 end;
   else
