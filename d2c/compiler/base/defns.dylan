@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.16 1996/03/17 00:30:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.17 1996/04/06 07:07:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -169,7 +169,7 @@ define method check-syntax-table-additions
   //
   // For almost all definitions name must be ordinary.
   unless (category-merge-okay?(table, name, #"ordinary"))
-    compiler-error("Inconsistent syntax for %=", name);
+    compiler-fatal-error("Inconsistent syntax for %=", name);
   end;
 end;
 

@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.27 1996/03/17 00:30:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/variables.dylan,v 1.28 1996/04/06 07:07:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -283,10 +283,10 @@ define method note-library-definition
     => ();
   let lib = find-library(name);
   unless (lib == *Current-Library*)
-    compiler-error("Defining strange library.");
+    error("Defining strange library.");
   end;
   if (lib.defined?)
-    compiler-error("Library %s is already defined.", name);
+    compiler-fatal-error("Library %s is already defined.", name);
   end;
   lib.defined? := #t;
   lib.used-libraries := as(<simple-object-vector>, uses);
@@ -328,9 +328,9 @@ define method find-module (lib :: <library>, name :: <symbol>,
   elseif (lib.defined?)
     find-in-library-uses(lib, name, #f);
   elseif (lib == *Current-Library*)
-    compiler-error("Can't look up modules in library %s "
-		     "before it is defined.",
-		   lib.library-name);
+    compiler-fatal-error
+      ("Can't look up modules in library %s before it is defined.",
+       lib.library-name);
   else
     load-library(lib);
     find-module(lib, name);
@@ -344,8 +344,9 @@ end method;
 //
 define method use-module (mod :: <module>) => ();
   unless (mod.defined?)
-    compiler-error("Can't use module %s before it is defined.",
-		   mod.module-name);
+    compiler-fatal-error
+      ("Can't use module %s before it is defined.",
+       mod.module-name);
   end unless;
 end method use-module;
 
@@ -467,13 +468,13 @@ define method note-module-definition
   unless (mod.module-home == lib | name == #"Dylan-User")
     // We suppress this test for dylan-user modules, because they are
     // homed in the dylan library.  Hence this test would always flame out.
-    compiler-error("Can't define module %s in library %s, "
-		     "because library %s already imports a module %s.",
-		   name, lib.library-name, lib.library-name, name);
+    compiler-fatal-error("Can't define module %s in library %s, "
+			   "because library %s already imports a module %s.",
+			 name, lib.library-name, lib.library-name, name);
   end;
   if (mod.defined?)
-    compiler-error("Module %s is already defined in library %s.",
-		   name, lib.library-name);
+    compiler-fatal-error("Module %s is already defined in library %s.",
+			 name, lib.library-name);
   end;
   //
   // Mark it as defined, and record the uses for later.
@@ -501,7 +502,7 @@ define method note-module-definition
     let old = element(mod.variables, name, default: #f);
     if (old)
       if (old.exported?)
-	compiler-error
+	compiler-fatal-error
 	  ("%s in both a create clause and an export clause in module %s",
 	   name, mod.module-name);
       else
@@ -522,15 +523,15 @@ define method note-module-definition
   for (u in mod.used-modules)
     let used-mod = find-module(mod.module-home, u.name-used);
     unless (used-mod)
-      compiler-error("No module %s in library %s",
-		     u.name-used, mod.module-home.library-name);
+      compiler-fatal-error("No module %s in library %s",
+			   u.name-used, mod.module-home.library-name);
     end;
     if (used-mod == mod)
-      compiler-error("Module %s can't use itself.", u.name-used);
+      compiler-fatal-error("Module %s can't use itself.", u.name-used);
     end if;
     unless (used-mod.defined?)
-      compiler-error("Attempt to use module %s before it is defined.",
-		     u.name-used);
+      compiler-fatal-error("Attempt to use module %s before it is defined.",
+			   u.name-used);
     end unless;
 
     local
@@ -539,9 +540,9 @@ define method note-module-definition
 	//
 	// Make sure it was even there.
 	unless (var)
-	  compiler-error("Can't import %s from module %s because it "
-			   "isn't exported.",
-			 orig-name, used-mod.module-name);
+	  compiler-fatal-error("Can't import %s from module %s because it "
+				 "isn't exported.",
+			       orig-name, used-mod.module-name);
 	end;
 	//
 	// Check to see if the new import causes a clash.
@@ -549,11 +550,11 @@ define method note-module-definition
 	let old = element(mod.variables, new-name, default: #f);
 	if (old & ~(old == var))
 	  if (new-name == orig-name)
-	    compiler-error
+	    compiler-fatal-error
 	      ("Importing %s from module %s into module %s clashes.",
 	       new-name, used-mod.module-name, mod.module-name);
 	  else
-	    compiler-error
+	    compiler-fatal-error
 	      ("Importing %s from module %s into module %s as %s clashes.",
 	       orig-name, used-mod.module-name, mod.module-name, new-name);
 	  end;
@@ -722,7 +723,7 @@ end method;
 define method find-exported-variable (mod :: <module>, name :: <symbol>)
     => result :: false-or(<variable>);
   unless (mod.defined?)
-    compiler-error("Module %s is not defined.", mod.module-name);
+    compiler-fatal-error("Module %s is not defined.", mod.module-name);
   end;
   element(mod.exported-variables, name, default: #f);
 end method;
@@ -746,13 +747,13 @@ define method note-variable-definition (defn :: <definition>)
   //
   if (var.created?)
     if (var.variable-home == mod)
-      compiler-error("%s in create clause for module %s, so must be "
-		       "defined elsewhere.",
-		     name.name-symbol, mod.module-name);
+      compiler-fatal-error("%s in create clause for module %s, so must be "
+			     "defined elsewhere.",
+			   name.name-symbol, mod.module-name);
     end;
   else
     unless (var.variable-home == mod)
-      compiler-error
+      compiler-fatal-error
 	("%s is imported into module %s, so can't be defined locally.",
 	 name.name-symbol, mod.module-name);
     end;
@@ -762,8 +763,8 @@ define method note-variable-definition (defn :: <definition>)
   //
   if (var.variable-definition)
     unless (instance?(var.variable-definition, <implicit-definition>))
-      compiler-error("%s in module %s multiply defined.",
-		     name.name-symbol, mod.module-name);
+      compiler-fatal-error("%s in module %s multiply defined.",
+			   name.name-symbol, mod.module-name);
     end;
   end;
   //
@@ -841,7 +842,8 @@ define method find-data-unit
       force-output(*debug-output*);
       let res = next-method();
       unless (lib.defined?)
-	compiler-error("Loaded library %s but it wasn't ever defined.", name);
+	compiler-fatal-error
+	  ("Loaded library %s but it wasn't ever defined.", name);
       end unless;
       write(']', *debug-output*);
       if (zero?(previous-depth))

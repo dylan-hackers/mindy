@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.34 1996/03/20 22:30:07 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.35 1996/04/06 07:07:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -560,10 +560,11 @@ define method add-slot (slot :: <slot-info>, class :: <cclass>) => ();
   if (slot.slot-getter)
     for (other-slot in class.all-slot-infos)
       if (slot.slot-getter == other-slot.slot-getter)
-	compiler-error("Class %= can't combine two different %s slots, "
-			 "one introduced by %= and the other by %=",
-		       class, slot.slot-getter.variable-name,
-		       slot.slot-introduced-by, other-slot.slot-introduced-by);
+	compiler-fatal-error
+	  ("Class %= can't combine two different %s slots, "
+	     "one introduced by %= and the other by %=",
+	   class, slot.slot-getter.variable-name,
+	   slot.slot-introduced-by, other-slot.slot-introduced-by);
       end;
     end;
   end;
@@ -582,24 +583,25 @@ define method inherit-overrides ()
 	for (slot in cclass.all-slot-infos)
 	  if (override.override-getter == slot.slot-getter)
 	    if (slot.slot-introduced-by == cclass)
-	      compiler-error("Class %= can't both introduce and override "
-			       "slot %s",
-			     cclass, slot.slot-getter.variable-name);
+	      compiler-fatal-error
+		("Class %= can't both introduce and override slot %s",
+		 cclass, slot.slot-getter.variable-name);
 	    end;
 	    if (instance?(slot, <class-slot-info>))
-	      compiler-error("Can't override class allocation slots");
+	      compiler-fatal-error("Can't override class allocation slots");
 	    end;
 	    if (instance?(slot, <virtual-slot-info>))
-	      compiler-error("Can't override virtual slots");
+	      compiler-fatal-error("Can't override virtual slots");
 	    end;
 	    slot.slot-overrides := pair(override, slot.slot-overrides);
 	    override.override-slot := slot;
 	    next-override();
 	  end;
 	end;
-	compiler-error("Class %= can't override slot %s, because is doesn't "
-			 "have that slot.",
-		       cclass, override.override-getter.variable-name);
+	compiler-fatal-error
+	  ("Class %= can't override slot %s, because is doesn't "
+	     "have that slot.",
+	   cclass, override.override-getter.variable-name);
       end;
     end;
     for (slot in cclass.all-slot-infos)
@@ -620,11 +622,12 @@ define method inherit-overrides ()
 			     active-overrides));
 	  end;
 	  unless (active-overrides.tail == #())
-	    compiler-error("Class %= must override slot %s itself to resolve "
-			     "the conflict in inheriting overrides from each "
-			     "of %=",
-			   cclass, slot.slot-getter.variable-name,
-			   map(override-introduced-by, active-overrides));
+	    compiler-fatal-error
+	      ("Class %= must override slot %s itself to resolve "
+		 "the conflict in inheriting overrides from each "
+		 "of %=",
+	       cclass, slot.slot-getter.variable-name,
+	       map(override-introduced-by, active-overrides));
 	  end;
 	end;
       end;
@@ -643,9 +646,10 @@ define method set-and-record-unique-id
   if (id)
     let clash = element($class-for-id, id, default: #f);
     if (clash)
-      compiler-error("Can't give both %= and %= unique id %d, because then "
-		       "it wouldn't be unique.",
-		     clash, class, id);
+      compiler-fatal-error
+	("Can't give both %= and %= unique id %d, because then "
+	   "it wouldn't be unique.",
+	 clash, class, id);
     end;
     $class-for-id[id] := class;
     class.unique-id := id;
@@ -668,9 +672,10 @@ define method assign-unique-ids (base :: <integer>) => ();
       else
 	unless (class.abstract?)
 	  if (element($class-for-id, next-id, default: #f))
-	    compiler-error("Attempting to reuse unique id %d, you should pick "
-			     "a different unique-id-base.",
-			   next-id);
+	    compiler-fatal-error
+	      ("Attempting to reuse unique id %d, you should pick "
+		 "a different unique-id-base.",
+	       next-id);
 	  end;
 	  $class-for-id[next-id] := class;
 	  class.unique-id := next-id;
@@ -880,8 +885,8 @@ end;
 define method layout-slot (slot :: <instance-slot-info>, class :: <cclass>)
     => ();
   if (class.vector-slot)
-    compiler-error("variable length slots must be the last slot in "
-		     "the class.");
+    compiler-fatal-error
+      ("variable length slots must be the last slot in the class.");
   end;
   let rep = slot.slot-representation;
   let offset = find-position(class.instance-slots-layout,
@@ -894,8 +899,8 @@ end;
 define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
     => ();
   if (class.vector-slot)
-    compiler-error("variable length slots must be the last slot in "
-		     "the class.");
+    compiler-fatal-error
+      ("variable length slots must be the last slot in the class.");
   end;
   class.vector-slot := slot;
   let rep = slot.slot-representation;
