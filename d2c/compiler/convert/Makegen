@@ -1,4 +1,4 @@
-do "../common-Makegen";
+do makegen_include("../common-Makegen");
 
 do d2c_library("compiler-convert", "convert", 
                "convert-exports lexenv cteval expand fer-convert defmacro"

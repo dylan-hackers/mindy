@@ -1,4 +1,4 @@
-do "../common-Makegen";
+do makegen_include("../common-Makegen");
 
 $d2c_binary = ($win32 ? "d2c.exe" : "d2c");
 

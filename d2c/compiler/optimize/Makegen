@@ -1,4 +1,4 @@
-do "../common-Makegen";
+do makegen_include("../common-Makegen");
 
 do d2c_library("compiler-optimize", "optimize", 
                "optimize-exports optutil cheese fer-edit callopt xep"

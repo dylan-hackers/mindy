@@ -1,4 +1,4 @@
-do "../common-Makegen";
+do makegen_include("../common-Makegen");
 
 do d2c_library("compiler-parser", "parser", 
                "parser-exports tokenize srcutil lexer fragments parse-tree"

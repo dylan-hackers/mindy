@@ -1,4 +1,4 @@
-do "../common-Makegen";
+do makegen_include("../common-Makegen");
 
 do d2c_library("compiler-front", "front",
                "front-exports primitives front func-defns var-defns tlf"
