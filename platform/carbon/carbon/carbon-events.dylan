@@ -471,7 +471,7 @@ define method InstallWindowEventHandler( inTarget :: <WindowRef>,
     let temp :: <handle> = make( <Handle> );
     let status = call-out( "InstallWindowEventHandler", int:, ptr: inTarget.raw-value, ptr: inHandler.raw-value,
                             int: inNumTypes, ptr: inList.raw-value, ptr: inUserData.raw-value, ptr: temp.raw-value );
-    values( as( <OSStatus>, status ), make( <EventHandlerRef>, pointer: temp.raw-value ) );
+    values( as( <OSStatus>, status ), pointer-at( temp, class: <EventHandlerRef>, offset: 0 ) );
 end method InstallWindowEventHandler;
 
 define method AddEventTypesToHandler( inHandlerRef :: <EventHandlerRef>, inNumTypes :: <integer>,
@@ -530,26 +530,26 @@ end method GetEventParameter;
 
 define method GetMainEventQueue()
 =>( result :: <EventQueueRef> )
-  let result = call-out( "GetMainEventQueue", ptr: );
-  make( <EventQueueRef>, pointer: result );
+  let temp :: <Handle> = make( <Handle>, pointer: call-out( "GetMainEventQueue", ptr: ) );
+  pointer-at( temp, class: <EventQueueRef>, offset: 0 );
 end method GetMainEventQueue;
 
 define method GetMenuEventTarget( inMenu :: <MenuRef> )
 =>( result :: <EventTargetRef> )
-  let result = call-out( "GetMenuEventTarget", ptr:, ptr: inMenu.raw-value );
-  make( <EventTargetRef>, pointer: result );
+  let temp :: <Handle> = make( <Handle>, pointer: call-out( "GetMenuEventTarget", ptr:, ptr: inMenu.raw-value ) );
+  pointer-at( temp, class: <EventTargetRef>, offset: 0 );
 end method GetMenuEventTarget;
 
 define method GetMainEventLoop()
 =>( result :: <EventLoopRef> )
-  let result = call-out( "GetMainEventLoop", ptr: );
-  make( <EventLoopRef>, pointer: result );
+  let temp :: <Handle> = make( <Handle>, pointer: call-out( "GetMainEventLoop", ptr: ) );
+  pointer-at( temp, class: <EventLoopRef>, offset: 0 );
 end method GetMainEventLoop;
 
 define method GetUserFocusEventTarget()
 =>( result :: <EventTargetRef> )
-  let result = call-out( "GetUserFocusEventTarget", ptr: );
-  make( <EventTargetRef>, pointer: result );
+  let temp :: <Handle> = make( <Handle>, pointer: call-out( "GetUserFocusEventTarget", ptr: ) );
+  pointer-at( temp, class: <EventTargetRef>, offset: 0 );
 end method GetUserFocusEventTarget;
 
 define method GetWindowEventTarget( inWindow :: <WindowRef> )
@@ -568,7 +568,7 @@ define method InstallEventHandler( inTarget :: <EventTargetRef>,
   let result = call-out( "InstallEventHandler", int:, ptr: inTarget.raw-value, ptr: inHandler.raw-value,
   												int: inNumTypes,
                           ptr: inList.raw-value, ptr: inUserData.raw-value, ptr: temp.raw-value );
-  values( as( <OSStatus>, result ), make( <EventHandlerRef>, pointer: temp.raw-value ) );
+  values( as( <OSStatus>, result ), pointer-at( temp, class: <EventHandlerRef>, offset: 0 ) );
 end method InstallEventHandler; 
 
 /*
@@ -603,7 +603,8 @@ end method RemoveEventLoopTimer;
 
 define method GetUserFocusWindow()
 => ( result :: <WindowRef> )
-	make( <WindowRef>, pointer: call-out( "GetUserFocusWindow", ptr: ) );
+	let temp :: <Handle> = make( <Handle>, pointer: call-out( "GetUserFocusWindow", ptr: ) );
+	pointer-at( temp, class: <WindowRef>, offset: 0 );
 end method GetUserFocusWindow;
 
 define method  SetUserFocusWindow( inWindow :: <WindowRef> )

@@ -445,10 +445,10 @@ end method SetWindowKind;
 */
 
 define method GetWindowPort( window :: <WindowRef> )
-=> ( result :: <CGrafPtr> )
+=> ( result :: <GrafPtr> )
     let ptr = call-out( "GetWindowPort", ptr:, ptr: window.raw-value );
 
-    make( <CGrafPtr>, pointer: ptr );
+    make( <GrafPtr>, pointer: ptr );
 
 end method GetWindowPort;
 
@@ -467,7 +467,7 @@ end method SetPortWindowPort;
 	GetWindowFromPort()
 */
 
-define method GetWindowFromPort( port :: <CGrafPtr> )
+define method GetWindowFromPort( port :: <GrafPtr> )
 => ( result :: <WindowRef> )
 	make( <WindowRef>, pointer: call-out( "GetWindowFromPort", ptr:, ptr: port.raw-value ) );
 end method GetWindowFromPort;
@@ -487,13 +487,52 @@ end method CreateNewWindow;
 
 
 /*
+		CreateWindowFromResource
+*/
+
+define method CreateWindowFromResource( resID :: <integer> )
+=> ( result :: <OSStatus>, outWindow :: <WindowRef> )
+	let temp :: <Handle> = make( <Handle> );
+	let result = call-out( "CreateWindowFromResource", int:, int: resID, ptr: temp.raw-value );
+	values( as(<OSErr>, result), pointer-at( temp, class: <WindowRef>, offset: 0 ) );
+end method CreateWindowFromResource;
+
+
+/*
 	GetWindowPortBounds
 	Returns GLOBAL bounds
 */
 
 define method GetWindowPortBounds( ref :: <WindowRef> )
 =>( bounds :: <Rect> )
-	let temp :: <Handle> = make( <Handle> );
+	let temp :: <Rect> = make( <Rect> );
 	call-out( "GetWindowPortBounds", int:, ptr: ref.raw-value, ptr: temp.raw-value );
-	pointer-at( temp, class: <Rect>, offset: 0 );
+	
+	temp;
 end method GetWindowPortBounds;
+
+
+/*
+		GetWindowBounds
+*/
+
+define method GetWindowBounds( window :: <WindowRef>, region :: <integer>, globalBounds :: <Rect> )
+=> ( result :: <OSStatus>, outBounds :: <Rect> )
+	let temp :: <Handle> = make( <Handle> );
+	let result = call-out( "GetWindowBounds", int:, ptr: window.raw-value, int: region, 
+													ptr: globalBounds.raw-value );
+	values( as(<OSErr>, result), globalBounds );
+end method GetWindowBounds;
+
+
+/*
+		SetWindowBounds
+*/
+
+define method SetWindowBounds( window :: <WindowRef>, region :: <integer>, globalBounds :: <Rect> )
+=> ( result :: <OSStatus> )
+	let temp :: <Handle> = make( <Handle> );
+	let result = call-out( "SetWindowBounds", int:, ptr: window.raw-value, int: region, 
+													ptr: globalBounds.raw-value );
+	as(<OSErr>, result);
+end method SetWindowBounds;

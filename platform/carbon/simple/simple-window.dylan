@@ -28,7 +28,7 @@ define open abstract class <simple-window> ( <object> )
 
 	slot windowRef :: <WindowRef>, init-value: as( <WindowRef>, $NULL );
 	
-	slot grafPort :: <CGrafPtr>, init-value: as( <CGrafPtr>, $NULL );
+	slot grafPort :: <GrafPtr>, init-value: as( <GrafPtr>, $NULL );
 	
 	slot modal :: <boolean>, init-value: #f;
 	
@@ -279,7 +279,7 @@ define open generic update( window :: <simple-window>, event :: <EventRecord>  )
 define method update( window :: <simple-window>, event :: <EventRecord>  )
 => ()
 
-	let savePort :: <CGrafPtr> = make( <CGrafPtr> );
+	let savePort :: <GrafPtr> = make( <GrafPtr> );
 		GetPort( savePort );
 		if( window ~= #f )
 		 	focus( window );

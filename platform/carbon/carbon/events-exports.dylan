@@ -40,7 +40,7 @@ define module events
 		AEInstallEventHandler, AERemoveEventHandler, AEProcessAppleEvent,
 		
 		// Misc Event Stuff
-		TickCount, Button, StillDown, WaitMouseUp, GetMouse, GlobalToLocal;
+		TickCount, Button, StillDown, WaitMouseUp, GetMouse;
 		//SystemClick;
 		
 end module events;

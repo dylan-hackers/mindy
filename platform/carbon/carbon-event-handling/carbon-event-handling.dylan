@@ -46,15 +46,13 @@ define method make-window()
 			logior( $kWindowStandardDocumentAttributes, $kWindowStandardHandlerAttribute),
 			bounds );
 
-// XXX - use a <c-vector>
+	// Add the event types individually
 	
-	let list :: <EventTypeSpec> = make( <EventTypeSpec>,
-																			eventClass: $kEventClassWindow,
-																			eventKind: $kEventWindowDrawContent );
-	
+	let list :: <EventTypeSpec> = make( <EventTypeSpec>, eventClass: $kEventClassWindow, eventKind: $kEventWindowDrawContent );
+
 	*window-event-handler-upp* := NewEventHandlerUPP( $window-event-handler-callback );
 	let (err, event-handler) = InstallWindowEventHandler( window, *window-event-handler-upp*, 1, list, $NULL );
-/*	
+	
 	list.eventClass := $kEventClassWindow;
 	list.eventKind := $kEventWindowBoundsChanged;
 	AddEventTypesToHandler( event-handler, 1, list );
@@ -62,7 +60,7 @@ define method make-window()
 	list.eventClass := $kEventClassWindow;
 	list.eventKind := $kEventWindowClose;
 	AddEventTypesToHandler( event-handler, 1, list );
-*/	
+	
 	ShowWindow(window);
 end method make-window;
 
@@ -72,26 +70,25 @@ end method make-window;
 define method window-event-handler( myHandler :: <EventHandlerCallRef>, event :: <EventRef>, 
 														 userData :: <statically-typed-pointer> )
 =>( result :: <OSStatus> )
-	let window :: <WindowRef> = make( <WindowRef> );
 	let result :: <OSStatus> = $eventNotHandledErr;
-
+	
+	// This is a bit horrible. We need a pointer to a WindowRef so we use a Handle
+	// which is a pointer to a 4-byte block of memory that's usually used as a pointer.
+	// We then get the WindowRef out of it and whistle nonchalantly.
+	let temp :: <Handle> = make( <Handle> );
 	GetEventParameter( event, $kEventParamDirectObject, $typeWindowRef, 
-										 4, window ); // 4 is the size of a WindowRef
+										 4, temp ); // 4 is the size of a WindowRef
+	let window :: <WindowRef> = pointer-at( temp, class: <WindowRef>, offset: 0 );
 	
 	let event-kind = GetEventKind( event );
-	
-	format-out( "%d\n", event-kind );
 
 	if( event-kind = $kEventWindowDrawContent )
-		format-out( "Draw\n" );
 		handle-window-update( window );
 		result := $noErr;
 	elseif( event-kind = $kEventWindowBoundsChanged )
-		format-out( "Bounds\n" );
 		InvalWindowRect( window, GetWindowPortBounds( window ) );
 		result := $noErr;
 	elseif( event-kind = $kEventWindowClose )
-		format-out( "Close\n" );
 		DisposeEventHandlerUPP( *window-event-handler-upp* );
 		DisposeWindow( window );
 		result := $noErr;

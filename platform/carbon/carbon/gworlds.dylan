@@ -67,14 +67,14 @@ end method DisposeGWorld;
 */
 
 define method GetGWorld()
-=> ( port :: <CGrafPtr>, gdh :: <GDHandle> )  
+=> ( port :: <GrafPtr>, gdh :: <GDHandle> )  
 
 	let port = make( <Handle> );
 	let gdh = make( <Handle> );
 
 	call-out( "GetGWorld", void:, ptr: port.raw-value, ptr: gdh.raw-value );
 	
-	values( pointer-at( port, offset: 0, class: <CGrafPtr> ),
+	values( pointer-at( port, offset: 0, class: <GrafPtr> ),
 			pointer-at( gdh, offset: 0, class: <GDHandle> ) );
 
 end method GetGWorld;
@@ -84,7 +84,7 @@ end method GetGWorld;
 	SetGWorld
 */
 
-define method SetGWorld( port :: <CGrafPtr>, gdh :: <GDHandle> )    
+define method SetGWorld( port :: <GrafPtr>, gdh :: <GDHandle> )    
 => ()
 
 	call-out( "SetGWorld", void:, ptr: port.raw-value, ptr: gdh.raw-value );

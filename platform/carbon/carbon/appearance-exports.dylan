@@ -9,10 +9,16 @@ define module appearance
 	//use Extensions;						// <extended-integer>
 	use melange-support;
 	use mac-types;
+	use memory;
         
 	export // appearance
         
-            RegisterAppearanceClient, UnregisterAppearanceClient;
+        // Types and classes
+        <ThemeBrush>, <ThemeBackgroundKind>, <ThemeDrawingState>,	
+        
+        // Methods
+        RegisterAppearanceClient, UnregisterAppearanceClient,
+        GetThemeDrawingState, SetThemeDrawingState;
             
 end module appearance;
 

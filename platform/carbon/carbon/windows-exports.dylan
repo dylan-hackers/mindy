@@ -71,8 +71,9 @@ define module windows
 		$kWindowTitleProxyIconRgn, $kWindowStructureRgn, $kWindowContentRgn,
 		$kWindowUpdateRgn, $kWindowOpaqueRgn,$kWindowGlobalPortRgn,
 		
-		CreateNewWindow, GetWindowPort, SetPortWindowPort,
-    GetWindowPortBounds, GetWindowFromPort;
+		CreateNewWindow, CreateWindowFromResource, GetWindowPort, SetPortWindowPort,
+    GetWindowPortBounds, GetWindowFromPort,
+    GetWindowBounds, SetWindowBounds;
 		
 end module windows;
 

@@ -276,13 +276,6 @@ define method GetMouse( pt :: <Point> )
 	call-out( "GetMouse", void:, ptr: pt.raw-value );
 	values;
 end method GetMouse;
-											
-											
-define method GlobalToLocal( pt :: <Point> )
-=> ()
-	call-out( "GlobalToLocal", void:, ptr: pt.raw-value );
-	values;
-end method GlobalToLocal;
 
 
 /*define method SystemClick( event :: <EventRecord>, window :: <WindowPtr> )

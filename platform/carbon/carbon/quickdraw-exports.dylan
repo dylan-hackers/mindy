@@ -13,8 +13,8 @@ define module quickdraw
 	use memory;
 	
 	export	// QuickDraw.
-                <Point>, point-v, point-v-setter, point-h, point-h-setter,
-		point,
+    <Point>, point-v, point-v-setter, point-h, point-h-setter,
+		point, GlobalToLocal, LocalToGlobal,
 		
 		<Rect>, top, top-setter, left, left-setter,
 				bottom, bottom-setter, right, right-setter,
@@ -23,7 +23,7 @@ define module quickdraw
 		<BitMap>, bounds, //<QDGlobals>, screenBits, qd,
 		<RgnHandle>, NewRgn, DisposeRgn, SetEmptyRgn, SetRectRgn, RectRgn,
 		
-		<CGrafPtr>, SetPort, GetPort,
+		<GrafPtr>, SetPort, GetPort,
 		MoveTo, LineTo, DrawString, TextFont,
 		PenMode, $patOr, $patCopy, $patXor, 
 		SetOrigin,

@@ -16,7 +16,7 @@ c-include("Carbon.h");
 
 //define constant $qd-lock = make(<multilock>);
 //
-//define method acquire-quickdraw (port :: <CGrafPtr>)
+//define method acquire-quickdraw (port :: <GrafPtr>)
 //    grab-lock($qd-lock);
 //    SetPort(port);
 //end method acquire-quickdraw;
@@ -102,6 +102,20 @@ define method as (cls == <integer>, pt :: <Point>) => (result :: <integer>);
 	as(<integer>, signed-long-at(pt));
 end method as;
 */
+
+
+define method GlobalToLocal( pt :: <Point> )
+=> ()
+	call-out( "GlobalToLocal", void:, ptr: pt.raw-value );
+	values;
+end method GlobalToLocal;
+
+
+define method LocalToGlobal( pt :: <Point> )
+=> ()
+	call-out( "LocalToGlobal", void:, ptr: pt.raw-value );
+	values;
+end method LocalToGlobal;
 
 
 /*
@@ -333,29 +347,29 @@ end method RectRgn;
 */
 
 /*
-	<CGrafPtr>
+	<GrafPtr>
 	A Mac GrafPtr.
 */
 
-define functional class <CGrafPtr> (<Ptr>) 
+define functional class <GrafPtr> (<Ptr>) 
 end class;
 
 
 /*
-	content-size <CGrafPtr>
+	content-size <GrafPtr>
 */
 
-define method content-size (value :: subclass(<CGrafPtr>))
+define method content-size (value :: subclass(<GrafPtr>))
 => (result :: <integer>);
   1;
 end method content-size;
 
 
 /*
-	SetPort <CGrafPtr>
+	SetPort <GrafPtr>
 */
 
-define method SetPort( port :: <CGrafPtr> )
+define method SetPort( port :: <GrafPtr> )
 => ()
 	call-out( "SetPort", void:, ptr: port.raw-value );
 	values										
@@ -366,7 +380,7 @@ end method SetPort;
 	GetPort
 */
 											
-define method GetPort( port :: <CGrafPtr> )
+define method GetPort( port :: <GrafPtr> )
 => ()
 	call-out( "GetPort", void:, ptr: port.raw-value );
 	values();
@@ -719,7 +733,7 @@ end method QDError;
     GetPortBounds
 */
 
-define method GetPortBounds( port :: <CGrafPtr> )
+define method GetPortBounds( port :: <GrafPtr> )
 =>( result :: <Rect> )
     let r = make( <Rect> );
     call-out( "GetPortBounds", ptr:, ptr: port.raw-value, ptr: r.raw-value );
@@ -730,7 +744,7 @@ end method GetPortBounds;
     SetPortBounds
 */
 
-define method SetPortBounds( port :: <CGrafPtr>, r :: <Rect> )
+define method SetPortBounds( port :: <GrafPtr>, r :: <Rect> )
 =>()
     call-out( "SetPortBounds", ptr:, ptr: port.raw-value, ptr: r.raw-value );
     values();
@@ -740,7 +754,7 @@ end method SetPortBounds;
     GetPortVisibleRegion
 */
 
-define method GetPortVisibleRegion( port :: <CGrafPtr>, visRgn :: <RgnHandle> )
+define method GetPortVisibleRegion( port :: <GrafPtr>, visRgn :: <RgnHandle> )
 => ( result :: <RgnHandle> )
     call-out( "GetPortVisibleRegion", ptr:, ptr: port.raw-value, ptr: visRgn.raw-value );
     visRgn
@@ -750,7 +764,7 @@ end method GetPortVisibleRegion;
     SetPortVisibleRegion
 */
 
-define method SetPortVisibleRegion( port :: <CGrafPtr>, visRgn :: <RgnHandle> )
+define method SetPortVisibleRegion( port :: <GrafPtr>, visRgn :: <RgnHandle> )
 => ()
     call-out( "SetPortVisibleRegion", void:, ptr: port.raw-value, ptr: visRgn.raw-value );
     values();
@@ -780,7 +794,7 @@ end method SetPortVisibleRegion;
     QDIsPortBuffered
 */
 
-define method QDIsPortBuffered( port :: <CGrafPtr> )
+define method QDIsPortBuffered( port :: <GrafPtr> )
 => ( result :: <boolean> )
    let result = call-out( "QDIsPortBuffered", int:, ptr: port.raw-value );
     if( result = 0 )
@@ -794,7 +808,7 @@ end method QDIsPortBuffered;
     QDIsPortBufferDirty
 */
 
-define method QDIsPortBufferDirty( port :: <CGrafPtr> )
+define method QDIsPortBufferDirty( port :: <GrafPtr> )
 => ( result :: <boolean> )
    let result = call-out( "QDIsPortBufferDirty", int:, ptr: port.raw-value );
     if( result = 0 )
@@ -808,7 +822,7 @@ end method QDIsPortBufferDirty;
     QDFlushPortBuffer
 */
 
-define method QDFlushPortBuffer( port :: <CGrafPtr>, region :: <RgnHandle> )
+define method QDFlushPortBuffer( port :: <GrafPtr>, region :: <RgnHandle> )
 => ()
    call-out( "QDFlushPortBuffer", void:, ptr: port.raw-value, ptr: region.raw-value );
    values();
@@ -818,7 +832,7 @@ end method QDFlushPortBuffer;
     QDGetDirtyRegion
 */
 
-define method QDGetDirtyRegion( port :: <CGrafPtr>, region :: <RgnHandle> )
+define method QDGetDirtyRegion( port :: <GrafPtr>, region :: <RgnHandle> )
 => ( result :: <OSStatus> )
    let status :: <integer> = call-out( "QDGetDirtyRegion", void:, ptr: port.raw-value, ptr: region.raw-value );
    as( <OSStatus>, status );
@@ -828,7 +842,7 @@ end method QDGetDirtyRegion;
     QDSetDirtyRegion
 */
 
-define method QDSetDirtyRegion( port :: <CGrafPtr>, region :: <RgnHandle> )
+define method QDSetDirtyRegion( port :: <GrafPtr>, region :: <RgnHandle> )
 => ( result :: <OSStatus> )
    let status :: <integer> = call-out( "QDSetDirtyRegion", void:, ptr: port.raw-value, ptr: region.raw-value );
    as( <OSStatus>, status );

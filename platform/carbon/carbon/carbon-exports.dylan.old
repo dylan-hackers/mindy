@@ -104,7 +104,7 @@ define module quickdraw
 		<BitMap>, bounds, //<QDGlobals>, screenBits, qd,
 		<RgnHandle>, NewRgn, DisposeRgn, SetEmptyRgn, SetRectRgn, RectRgn,
 		
-		<CGrafPtr>, SetPort, GetPort,
+		<GrafPtr>, SetPort, GetPort,
 		MoveTo, LineTo, DrawString, TextFont,
 		PenMode, $patOr, $patCopy, $patXor, 
 		SetOrigin,

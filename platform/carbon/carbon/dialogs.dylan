@@ -223,9 +223,9 @@ end method GetDialogWindow;
 */
 
 define method GetDialogPort( dialog :: <DialogRef> )
-=> ( result :: <CGrafPtr> )
+=> ( result :: <GrafPtr> )
     let ptr = call-out( "GetDialogPort", ptr:, ptr: dialog.raw-value );
-    make( <CGrafPtr>, pointer: ptr );
+    make( <GrafPtr>, pointer: ptr );
 end method GetDialogPort;
 
 
