@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.7 1998/12/21 00:03:18 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.8 1998/12/30 00:40:12 emk Exp $
 
 //======================================================================
 //
@@ -595,8 +595,9 @@ end method invoke-debugger;
 //----------------------------------------------------------------------
 
 define method show-copyright(stream :: <stream>) => ()
-  format(stream, "Melange (turns C headers into Dylan libraries)\n");
-  format(stream, "Copyright 1995-1997 Carnegie Mellon University\n");
+  format(stream, "Melange (Gwydion Dylan)\n");
+  format(stream, "Turns C headers into Dylan libraries.\n");
+  format(stream, "Copyright 1994-1997 Carnegie Mellon University\n");
   format(stream, "Copyright 1998 Gwydion Dylan Maintainers\n");
 end method show-copyright;
 

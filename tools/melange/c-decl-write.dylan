@@ -134,7 +134,9 @@ define function register-written-name
     // XXX - We should try to extract a source location from each record
     // when printing these error messages. We should also give the C and
     // Dylan forms of each name. But doing so will be a pain.
-    error("melange: %s has already been defined once before", name);
+    signal(make(<simple-warning>,
+		format-string: "melange: %s has multiple definitions",
+		format-arguments: name));
   else 
     element(table, interned-name) := decl;
   end if;
