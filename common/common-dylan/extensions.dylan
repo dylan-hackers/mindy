@@ -167,7 +167,7 @@ end function;
 #else
 
   define macro assert 
-  { assert(?value:expression, ?format-string:expression, ?format-args:expression) }
+  { assert(?value:expression, ?format-string:expression, ?format-args:*) }
   =>{	block()
               unless (?value)
                   let error-string :: <string> = format-to-string(?format-string, ?format-args);
@@ -192,7 +192,7 @@ end function;
   end macro assert;
 
   define macro debug-assert
-      { debug-assert(?value:expression, ?format-string:expression, ?format-args:expression) }
+      { debug-assert(?value:expression, ?format-string:expression, ?format-args:*) }
   =>{ assert(?value, ?format-string, ?format-args) }
       { debug-assert(?value:expression, ?message:expression) }
   =>{ assert(?value, ?message) }
