@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.89 2002/03/11 05:01:12 brent Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.90 2002/03/13 16:12:09 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -409,7 +409,7 @@ if test -d "$LOCAL_RUNTIME"; then
 fi
 
 # Process our --with-existing-runtime option.
-AC_ARG_WITH(mindy-bootstrap,[\
+AC_ARG_WITH(existing-runtime,[\
   --with-existing-runtime=RUNTIME_DIRECTORY
                           Look for the d2c runtime libraries in a different
                           place when bootstrapping. Defaults to
