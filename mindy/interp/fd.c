@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.1 1994/03/31 22:44:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.2 1994/03/31 23:00:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -83,7 +83,7 @@ static void unix_open(obj_t self, struct thread *thread, obj_t *args)
 static void maybe_read(struct thread *thread)
 {
     obj_t *fp = thread->fp;
-    int fd = fixnum_value(fp[-7]);
+    int fd = fixnum_value(fp[-8]);
     fd_set fds;
     struct timeval tv;
     int nfound, res;
@@ -108,14 +108,16 @@ static void maybe_read(struct thread *thread)
     else if (nfound == 0)
 	wait_for_input(thread, fd, maybe_read);
 
-    res = read(fd, buffer_data(fp[-6]), fixnum_value(fp[-5]));
+    res = read(fd,
+	       buffer_data(fp[-7]) + fixnum_value(fp[-6]),
+	       fixnum_value(fp[-5]));
 
     results(thread, pop_linkage(thread), res, make_fixnum(res));
 }
 
 static void unix_read(obj_t self, struct thread *thread, obj_t *args)
 {
-    thread->sp = args + 3;
+    thread->sp = args + 4;
     push_linkage(thread, args);
     maybe_read(thread);
 }
@@ -131,7 +133,7 @@ static obj_t unix_strerror(obj_t errno)
 static void maybe_write(struct thread *thread)
 {
     obj_t *fp = thread->fp;
-    int fd = fixnum_value(fp[-7]);
+    int fd = fixnum_value(fp[-8]);
     fd_set fds;
     struct timeval tv;
     int nfound, res;
@@ -156,19 +158,22 @@ static void maybe_write(struct thread *thread)
     else if (nfound == 0)
 	wait_for_output(thread, fd, maybe_write);
 
-    res = write(fd, buffer_data(fp[-6]), fixnum_value(fp[-5]));
+    res = write(fd,
+		buffer_data(fp[-7]) + fixnum_value(fp[-6]),
+		fixnum_value(fp[-5]));
 
     results(thread, pop_linkage(thread), res, make_fixnum(res));
 }
 
 static void unix_write(obj_t self, struct thread *thread, obj_t *args)
 {
-    thread->sp = args + 3;
+    thread->sp = args + 4;
     push_linkage(thread, args);
     maybe_write(thread);
 }
 
-
+
+/* Init stuff. */
 
 void init_unix_functions(void)
 {
@@ -194,8 +199,8 @@ void init_unix_functions(void)
 				    obj_False, unix_open));
     define_constant("unix-read",
 		    make_raw_method("unix-read",
-				    list3(obj_IntegerClass, obj_BufferClass,
-					  obj_IntegerClass),
+				    listn(4, obj_IntegerClass, obj_BufferClass,
+					  obj_IntegerClass, obj_IntegerClass),
 				    FALSE, obj_False,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, unix_read));
@@ -203,8 +208,8 @@ void init_unix_functions(void)
 		  list1(obj_ObjectClass), unix_strerror);
     define_constant("unix-write",
 		    make_raw_method("unix-lseek",
-				    list3(obj_IntegerClass, obj_BufferClass,
-					  obj_IntegerClass),
+				    listn(4, obj_IntegerClass, obj_BufferClass,
+					  obj_IntegerClass, obj_IntegerClass),
 				    FALSE, obj_False,
 				    list2(obj_ObjectClass, obj_ObjectClass),
 				    obj_False, unix_write));
