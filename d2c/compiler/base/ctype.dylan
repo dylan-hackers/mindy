@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.11 1995/04/24 10:11:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.12 1995/04/27 01:00:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1193,11 +1193,16 @@ define constant values-type-union = method
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (res :: <values-ctype>, win :: <boolean>);
   if (type1 == empty-ctype())
-    type2;
+    values(type2, #t);
   elseif (type2 == empty-ctype())
-    type1;
+    values(type1, #t);
   else
-    args-type-op(type1, type2, ctype-union, min);
+    args-type-op(type1, type2,
+		 method (t1, t2)
+		   let res = ctype-union(t1, t2);
+		   values(res, ~instance?(res, <unknown-ctype>));
+		 end,
+		 min);
   end;
 end method;
 ///
