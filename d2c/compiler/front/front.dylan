@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.31 1995/05/09 14:05:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.32 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -13,10 +13,11 @@ assignment
 operation
     primitive
     abstract-call [annotatable] {abstract}
-        local-call
-        unknown-call
+	known-call
+	general-call {abstract}
+	    unknown-call
+	    mv-call
 	error-call
-	mv-call
     prologue
     catcher
     set
@@ -116,12 +117,6 @@ end;
 define abstract class <abstract-call> (<operation>, <annotatable>)
 end class;
 
-// An arbitrary function call where the function call might be computed and the
-// argument syntax might be incorrect.
-//
-define class <unknown-call> (<abstract-call>)
-end class;
-
 // A call where the function is known and all hairy argument stuff has been
 // expanded away into positional arguments, hence is now a candidate for
 // inlining and other magic.
@@ -129,19 +124,30 @@ end class;
 define class <known-call> (<abstract-call>)
 end;
 
-// A call that is known to be in error.  Basically, the same as <unknown-call>
-// but we've given up trying to improve it.
-//
-define class <error-call> (<abstract-call>)
+define abstract class <general-call> (<abstract-call>)
+  slot use-generic-entry? :: <boolean>,
+    required-init-keyword: use-generic-entry:;
 end;
+
+// An arbitrary function call where the function call might be computed and the
+// argument syntax might be incorrect.
+//
+define class <unknown-call> (<general-call>)
+end class;
 
 // In a MV-Call, there is one argument which must be a values cluster.  This
 // values cluster is spread out to form the actual arguments to the called
 // function.  If the resulting actual parameters are not syntactically legal
 // (e.g. not enough required args, etc.), then an error will be signalled.
 //
-define class <mv-call> (<abstract-call>)
+define class <mv-call> (<general-call>)
 end class;
+
+// A call that is known to be in error.  Basically, the same as <unknown-call>
+// but we've given up trying to improve it.
+//
+define class <error-call> (<abstract-call>)
+end;
 
 // A prologue is used to represent the incomming arguments to a function.
 // 

@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.25 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.26 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -279,7 +279,11 @@ define method kind (op :: <known-call>) => res :: <string>;
 end;
 
 define method kind (op :: <unknown-call>) => res :: <string>;
-  "UNKNOWN-CALL";
+  if (op.use-generic-entry?)
+    "UNKNOWN-CALL-W/-NEXT";
+  else
+    "UNKNOWN-CALL";
+  end;
 end;
 
 define method kind (op :: <error-call>) => res :: <string>;
@@ -287,7 +291,11 @@ define method kind (op :: <error-call>) => res :: <string>;
 end;
 
 define method kind (op :: <mv-call>) => res :: <string>;
-  "MV-CALL";
+  if (op.use-generic-entry?)
+    "MV-CALL-W/-NEXT";
+  else
+    "MV-CALL";
+  end;
 end;
 
 define method kind (op :: <prologue>) => res :: <string>;

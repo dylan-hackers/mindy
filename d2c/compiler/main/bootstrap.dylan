@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.14 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.15 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -398,6 +398,9 @@ define open generic even? (x :: <integer>) => res :: <boolean>;
 define open generic odd? (x :: <integer>) => res :: <boolean>;
 define open generic %closure-ref
     (closure :: <method>, index :: <fixed-integer>) => res :: <object>;
+define open generic %make-next-method-cookie
+    (next-method-info :: <list>, #rest original-args)
+    => res :: union(<false>, <function>);
 
 define open generic value (x) => value :: <object>;
 define open generic value-setter (x, y) => value;

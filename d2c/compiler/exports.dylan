@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.58 1995/05/08 17:17:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.59 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -700,7 +700,8 @@ define module front
     <fer-assignment>, policy,
     <let-assignment>, let-next, <set-assignment>,
 
-    <abstract-call>, <known-call>, <unknown-call>, <error-call>, <mv-call>,
+    <abstract-call>, <known-call>, <error-call>,
+    <general-call>, use-generic-entry?, <unknown-call>, <mv-call>,
     <primitive>, name,
     <prologue>, function,
     <catcher>, exit-function, exit-function-setter, target-region,

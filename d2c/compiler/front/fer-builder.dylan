@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.28 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.29 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -414,9 +414,17 @@ end method;
 
 
 define method make-unknown-call
-    (builder :: <fer-builder>, operands :: <list>)
+    (builder :: <fer-builder>, function :: <leaf>,
+     next-method-info :: false-or(<leaf>), arguments :: <list>)
     => res :: <operation>;
-  make-operation(builder, <unknown-call>, operands);
+  let operands = pair(function,
+		      if (next-method-info)
+			pair(next-method-info, arguments);
+		      else
+			arguments;
+		      end);
+  make-operation(builder, <unknown-call>, operands,
+		 use-generic-entry: next-method-info & #t);
 end;
 
 

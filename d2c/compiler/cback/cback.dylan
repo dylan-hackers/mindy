@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.39 1995/05/08 17:17:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.40 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -874,7 +874,16 @@ define method emit-assignment
     => ();
   let setup-stream = make(<byte-string-output-stream>);
   let function = call.depends-on.source-exp;
-  
+  let use-generic-entry?
+    = instance?(call, <unknown-call>) & call.use-generic-entry?;
+  let (next-info, arguments)
+    = if (use-generic-entry?)
+	let dep = call.depends-on.dependent-next;
+	values(ref-leaf($heap-rep, dep.source-exp, output-info),
+	       dep.dependent-next);
+      else
+	values(#f, call.depends-on.dependent-next);
+      end;
   let (args, sp) = cluster-names(output-info.output-info-cur-stack-depth);
   for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
        count from 0,
@@ -882,7 +891,8 @@ define method emit-assignment
     format(setup-stream, "%s[%d] = %s;\n", args, count,
 	   ref-leaf($general-rep, arg-dep.source-exp, output-info));
   finally
-    let (entry, name) = general-entry-expr-and-name(function, output-info);
+    let (entry, name)
+      = xep-expr-and-name(function, use-generic-entry?, output-info);
     let func = ref-leaf($heap-rep, function, output-info);
     spew-pending-defines(output-info);
     let stream = output-info.output-info-guts-stream;
@@ -893,51 +903,75 @@ define method emit-assignment
     if (results)
       format(stream, "%s = ", sp);
     end;
-    format(stream, "%s(%s + %d, %s, %d);\n", entry, args, count, func, count);
+    format(stream, "%s(%s + %d, %s, %d", entry, args, count, func, count);
+    if (next-info)
+      write(", ", stream);
+      write(next-info, stream);
+    end;
+    write(");\n", stream);
     deliver-cluster(results, args, sp, call.derived-type, output-info);
   end;
 end;
 
-define method general-entry-expr-and-name
-    (func :: <leaf>, output-info :: <output-info>)
+define method xep-expr-and-name
+    (func :: <leaf>, generic-entry? :: <boolean>, output-info :: <output-info>)
     => (expr :: <string>, name :: false-or(<string>));
   spew-pending-defines(output-info);
-  values(format-to-string("GENERAL_ENTRY(%s)",
+  values(format-to-string(if (generic-entry?)
+			    "GENERIC_ENTRY(%s)";
+			  else
+			    "GENERAL_ENTRY(%s)";
+			  end,
 			  ref-leaf($heap-rep, func, output-info)),
 	 #f);
 end;
 
-define method general-entry-expr-and-name
-    (func :: <function-literal>, output-info :: <output-info>)
+define method xep-expr-and-name
+    (func :: <function-literal>, generic-entry? :: <boolean>,
+     output-info :: <output-info>)
     => (expr :: <string>, name :: <string>);
+  if (generic-entry?)
+    error("%= doesn't have a generic entry.", func);
+  end;
   let general-entry = func.general-entry;
   let entry-info = get-info-for(general-entry, output-info);
-  values(entry-info.function-info-name,
-	 general-entry.name);
+  values(entry-info.function-info-name, general-entry.name);
 end;
 
-define method general-entry-expr-and-name
-    (func :: <definition-constant-leaf>, output-info :: <output-info>,
+define method xep-expr-and-name
+    (func :: <method-literal>, generic-entry? :: <true>,
+     output-info :: <output-info>)
+    => (expr :: <string>, name :: <string>);
+  let generic-entry = func.generic-entry;
+  let entry-info = get-info-for(generic-entry, output-info);
+  values(entry-info.function-info-name, generic-entry.name);
+end;
+
+define method xep-expr-and-name
+    (func :: <definition-constant-leaf>, generic-entry? :: <boolean>,
+     output-info :: <output-info>,
      #next next-method)
     => (expr :: <string>, name :: <string>);
   let defn = func.const-defn;
-  let (expr, name) = general-entry-expr-and-name(defn, output-info);
+  let (expr, name) = xep-expr-and-name(defn, generic-entry?, output-info);
   values(expr | next-method(),
 	 name | format-to-string("%s", defn.defn-name));
 end;
 
-define method general-entry-expr-and-name
-    (defn :: <abstract-constant-definition>, output-info :: <output-info>)
+define method xep-expr-and-name
+    (defn :: <abstract-constant-definition>, generic-entry? :: <boolean>,
+     output-info :: <output-info>)
     => (expr :: false-or(<string>), name :: false-or(<string>));
   values(#f, #f);
 end;
 
-define method general-entry-expr-and-name
-    (defn :: <abstract-method-definition>, output-info :: <output-info>)
+define method xep-expr-and-name
+    (defn :: <abstract-method-definition>, generic-entry? :: <boolean>,
+     output-info :: <output-info>)
     => (expr :: false-or(<string>), name :: false-or(<string>));
   let leaf = defn.method-defn-leaf;
   if (leaf)
-    general-entry-expr-and-name(leaf, output-info);
+    xep-expr-and-name(leaf, generic-entry?, output-info);
   else
     values(#f, #f);
   end;
@@ -1022,10 +1056,19 @@ define method emit-assignment
     => ();
   let stream = output-info.output-info-guts-stream;
   let function = call.depends-on.source-exp;
-  let (entry, name) = general-entry-expr-and-name(function, output-info);
+  let use-generic-entry? = call.use-generic-entry?;
+  let (next-info, cluster)
+    = if (use-generic-entry?)
+	let dep = call.depends-on.dependent-next;
+	values(ref-leaf($heap-rep, dep.source-exp, output-info),
+	       dep.dependent-next.source-exp);
+      else
+	values(#f, call.depends-on.dependent-next.source-exp);
+      end;
+  let (entry, name)
+    = xep-expr-and-name(function, use-generic-entry?, output-info);
   let func = ref-leaf($heap-rep, function, output-info);
   spew-pending-defines(output-info);
-  let cluster = call.depends-on.dependent-next.source-exp;
   let (bottom-name, top-name) = consume-cluster(cluster, output-info);
   if (name)
     format(stream, "/* %s */\n", name);
@@ -1033,8 +1076,13 @@ define method emit-assignment
   if (results)
     format(stream, "%s = ", top-name);
   end;
-  format(stream, "%s(%s, %s, %s - %s);\n",
+  format(stream, "%s(%s, %s, %s - %s",
 	 entry, top-name, func, top-name, bottom-name);
+  if (next-info)
+    write(", ", stream);
+    write(next-info, stream);
+  end;
+  write(");\n", stream);
   deliver-cluster(results, bottom-name, top-name, call.derived-type,
 		  output-info);
 end;

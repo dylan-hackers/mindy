@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.17 1995/05/09 14:05:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.18 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -336,9 +336,8 @@ define method convert-generic-definition
     let temp = make-local-var(builder, #"gf", object-ctype());
     build-assignment
       (builder, policy, source, temp,
-       make-unknown-call(builder,
-			 pair(dylan-defn-leaf(builder, #"%make-gf"),
-			      as(<list>, args))));
+       make-unknown-call(builder, dylan-defn-leaf(builder, #"%make-gf"), #f,
+			 as(<list>, args)));
     build-assignment(builder, policy, source, #(),
 		     make-operation(builder, <set>, list(temp), var: defn));
   else
@@ -367,10 +366,8 @@ define method convert-top-level-form
       build-assignment
 	(builder, policy, source, #(),
 	 make-unknown-call
-	   (builder,
-	    list(dylan-defn-leaf(builder, #"add-method"),
-		 make-definition-leaf(builder, gf-defn),
-		 leaf)));
+	   (builder, dylan-defn-leaf(builder, #"add-method"), #f,
+	    list(make-definition-leaf(builder, gf-defn), leaf)));
     else
       error("No definition for %=, and can't implicitly define it.",
 	    gf-name);
@@ -452,22 +449,44 @@ define method build-discriminator-tree
     build-assignment(builder, policy, source, results,
 		     make-error-operation(builder, "No applicable methods."));
   elseif (empty?(remaining-discriminations))
-    if (~empty?(method-set.ordered-methods))
-      // ### Should have some way of propagating in the next method
-      // info given that we have it.
-      let func = make-definition-leaf(builder,
-				      method-set.ordered-methods.first);
+    let ordered = map(curry(make-definition-leaf, builder),
+		      method-set.ordered-methods);
+    let ambig = map(curry(make-definition-leaf, builder),
+		    method-set.ambiguous-methods);
+    let ambig-leaf
+      = if (~empty?(ambig))
+	  let var = make-local-var(builder, #"ambiguous", object-ctype());
+	  build-assignment
+	    (builder, policy, source, var,
+	     make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
+			       ambig));
+	  var;
+	end;
+    if (~empty?(ordered))
+      let func = ordered.head;
+      let next-leaf = make-local-var(builder, #"next-methods", object-ctype());
+      build-assignment
+	(builder, policy, source, next-leaf,
+	 make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
+			   if (ambig-leaf)
+			     concatenate(ordered.tail, list(ambig-leaf));
+			   else
+			     ordered.tail;
+			   end));
       if (rest?)
 	let apply-leaf = dylan-defn-leaf(builder, #"apply");
 	build-assignment
 	  (builder, policy, source, results,
-	   make-unknown-call(builder, pair(apply-leaf, pair(func, arg-vars))));
+	   make-unknown-call(builder, apply-leaf, next-leaf,
+			     pair(func, arg-vars)));
       else
 	build-assignment(builder, policy, source, results,
-			 make-unknown-call(builder, pair(func, arg-vars)));
+			 make-unknown-call(builder, func, next-leaf,
+					   arg-vars));
       end;
-    elseif (~empty?(method-set.ambiguous-methods))
-      let op = make-error-operation(builder, "Ambiguous method.");
+    elseif (ambig-leaf)
+      let op = make-error-operation
+	(builder, "Ambiguous method: %s", ambig-leaf);
       build-assignment(builder, policy, source, results, op);
     else
       error("Where did all the methods go?");
@@ -502,14 +521,13 @@ define method build-discriminator-tree
     let class-temp = make-local-var(builder, #"class", object-ctype());
     let obj-class-leaf = dylan-defn-leaf(builder, #"%object-class");
     build-assignment(builder, policy, source, class-temp,
-		     make-unknown-call(builder,
-				       list(obj-class-leaf,
-					    arg-vars[discriminate-on])));
+		     make-unknown-call(builder, obj-class-leaf, #f,
+				       list(arg-vars[discriminate-on])));
     let id-temp = make-local-var(builder, #"id", object-ctype());
     let unique-id-leaf = dylan-defn-leaf(builder, #"unique-id");
     build-assignment(builder, policy, source, id-temp,
-		     make-unknown-call(builder,
-				       list(unique-id-leaf, class-temp)));
+		     make-unknown-call(builder, unique-id-leaf, #f,
+				       list(class-temp)));
     let less-then = dylan-defn-leaf(builder, #"<");
     //
     // Recursivly build an if tree based on that division of the methods.
@@ -535,8 +553,8 @@ define method build-discriminator-tree
 			 value: ranges[half-way-point].second + 1);
 	  let bound = make-literal-constant(builder, ctv);
 	  build-assignment(builder, policy, source, cond-temp,
-			   make-unknown-call(builder,
-					     list(less-then, id-temp, bound)));
+			   make-unknown-call(builder, less-then, #f,
+					     list(id-temp, bound)));
 	  build-if-body(builder, policy, source, cond-temp);
 	  split-range(min, half-way-point);
 	  build-else(builder, policy, source);

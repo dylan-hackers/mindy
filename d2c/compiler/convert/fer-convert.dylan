@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.27 1995/05/08 17:04:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.28 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -272,12 +272,12 @@ define method fer-convert (builder :: <fer-builder>, form :: <funcall>,
   if (expansion)
     fer-convert-body(builder, expansion, lexenv, want, datum);
   else
-    let ops = make(<list>, size: form.funcall-arguments.size + 1);
-    ops.head := fer-convert(builder, form.funcall-function,
-			    make(<lexenv>, inside: lexenv),
-			    #"leaf", #"function");
+    let func = fer-convert(builder, form.funcall-function,
+			   make(<lexenv>, inside: lexenv),
+			   #"leaf", #"function");
+    let ops = make(<list>, size: form.funcall-arguments.size);
     for (arg in form.funcall-arguments,
-	 op-ptr = ops.tail then op-ptr.tail,
+	 op-ptr = ops then op-ptr.tail,
 	 index from 0)
       let name = if (index < $arg-names.size)
 		   $arg-names[index];
@@ -288,7 +288,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <funcall>,
 				 #"leaf", name);
     end;
     deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		   make-unknown-call(builder, ops));
+		   make-unknown-call(builder, func, #f, ops));
   end;
 end;
 
@@ -307,7 +307,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <dot>,
 			       make(<lexenv>, inside: lexenv),
 			       #"leaf", #"function");
     deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		   make-unknown-call(builder, list(fun-leaf, arg-leaf)));
+		   make-unknown-call(builder, fun-leaf, #f, list(arg-leaf)));
   end;
 end;
 
@@ -413,8 +413,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   let cluster = make-values-cluster(builder, #"results", wild-ctype());
   fer-convert-body(builder, form.exit-body, lexenv, #"assignment", cluster);
   build-assignment(builder, lexenv.lexenv-policy, source, #(),
-		   make-operation(builder, <fer-mv-call>,
-				  list(exit, cluster)));
+		   make-operation(builder, <fer-mv-call>, list(exit, cluster),
+				  use-generic-entry: #f));
   end-body(builder);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 blk.catcher);
@@ -475,7 +475,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
 	      #"assignment", cluster);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 make-operation(builder, <fer-mv-call>,
-				list(function, cluster)));
+				list(function, cluster),
+				use-generic-entry: #f));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
@@ -589,11 +590,11 @@ define method fer-convert-method
 				  else
 				    #();
 				  end);
-    build-let(body-builder, lexenv.lexenv-policy, source, var,
-	      make-unknown-call
-		(builder,
-		 pair(dylan-defn-leaf(#"%make-next-method-cookie"),
-		      cookie-args)));
+    build-let
+      (body-builder, lexenv.lexenv-policy, source, var,
+       make-unknown-call
+	 (builder, dylan-defn-leaf(builder, #"%make-next-method-cookie"),
+	  #f, cookie-args));
     add!(vars, next-info-var);
     add-binding(lexenv, next, var);
   end;
@@ -769,14 +770,15 @@ define method fer-convert-method
 	= make-values-cluster(builder, #"results", wild-ctype());
 
       let args = make(<stretchy-vector>);
-      add!(args, dylan-defn-leaf(builder, #"apply"));
       add!(args, dylan-defn-leaf(builder, #"values"));
       for (fixed in checked-fixed-results)
 	add!(args, fixed);
       end;
       add!(args, rest-result);
-      build-assignment(builder, lexenv.lexenv-policy, source, checked-cluster,
-		       make-unknown-call(builder, as(<list>, args)));
+      build-assignment
+	(builder, lexenv.lexenv-policy, source, checked-cluster,
+	 make-unknown-call(builder, dylan-defn-leaf(builder, #"apply"), #f,
+			   as(<list>, args)));
       build-return(builder, lexenv.lexenv-policy, source,
 		   function-region, checked-cluster);
     end;
@@ -803,10 +805,11 @@ define method fer-convert-method
   if (non-const-arg-types? | non-const-result-types?)
     local
       method build-call (name, args)
-	let ops = pair(dylan-defn-leaf(builder, name), as(<list>, args));
 	let temp = make-local-var(builder, name, object-ctype());
-	build-assignment(builder, lexenv.lexenv-policy, source, temp,
-			 make-unknown-call(builder, ops));
+	build-assignment
+	  (builder, lexenv.lexenv-policy, source, temp,
+	   make-unknown-call(builder, dylan-defn-leaf(builder, name), #f,
+			     as(<list>, args)));
 	temp;
       end;
     build-call(#"%make-method",
@@ -834,17 +837,15 @@ define method make-check-type-operation (builder :: <fer-builder>,
 					 value-leaf :: <leaf>,
 					 type-leaf :: <leaf>)
     => res :: <operation>;
-  make-unknown-call(builder,
-		    list(dylan-defn-leaf(builder, #"check-type"),
-			 value-leaf,
-			 type-leaf));
+  make-unknown-call(builder, dylan-defn-leaf(builder, #"check-type"), #f,
+		    list(value-leaf, type-leaf));
 end method;
 
 define method make-error-operation
     (builder :: <fer-builder>, msg :: <byte-string>, #rest args)
     => res :: <operation>;
-  let error = dylan-defn-leaf(builder, #"error");
-  let msg = make-literal-constant(builder, as(<ct-value>, msg));
-  make-unknown-call(builder, concatenate(list(error, msg), args));
+  make-unknown-call(builder, dylan-defn-leaf(builder, #"error"), #f,
+		    pair(make-literal-constant(builder, as(<ct-value>, msg)),
+			 as(<list>, args)));
 end method;
 

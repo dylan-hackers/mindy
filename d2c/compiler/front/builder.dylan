@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.11 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.12 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -172,7 +172,8 @@ define generic build-let
 // Special purpose variant of MAKE-OPERATION because it occurs so often.
 // 
 define generic make-unknown-call
-    (builder :: <fer-builder>, operands :: <list>)
+    (builder :: <fer-builder>, function :: <leaf>,
+     next-method-info :: false-or(<leaf>), arguments :: <list>)
  => res :: <operation>;
 
 

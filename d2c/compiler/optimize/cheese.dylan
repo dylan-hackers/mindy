@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.56 1995/05/09 14:05:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.57 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -467,7 +467,11 @@ define method optimize-unknown-call
     => ();
   // Assert that the function is a function.
   assert-type(component, call.dependents.dependent, call.depends-on,
-	      function-ctype());
+	      if (call.use-generic-entry?)
+		specifier-type(#"<method>");
+	      else
+		function-ctype();
+	      end);
 end;
 
 
@@ -479,13 +483,22 @@ define method optimize-unknown-call
   // First, observe the result type.
   maybe-restrict-type(component, call, func.main-entry.result-type);
 
+  // Next, convert to a known call if possible and an error call if we must.
   let sig = func.signature;
 
   let bogus? = #f;
   let known? = #t;
+  let (next-method-info, arguments)
+    = if (call.use-generic-entry?)
+	let dep = call.depends-on.dependent-next;
+	values(dep.source-exp, dep.dependent-next);
+      else
+	values(#f, call.depends-on.dependent-next);
+      end;
+
   block (return)
     for (spec in sig.specializers,
-	 arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next)
+	 arg-dep = arguments then arg-dep.dependent-next)
       unless (arg-dep)
 	compiler-warning("Not enough arguments.");
 	bogus? := #t;
@@ -567,6 +580,12 @@ define method optimize-unknown-call
     end;
   end;
   if (bogus?)
+    if (next-method-info)
+      let call-dep = call.depends-on;
+      let next-info-dep = call-dep.dependent-next;
+      remove-dependency-from-source(component, next-info-dep);
+      call-dep.dependent-next := next-info-dep.dependent-next;
+    end;
     change-call-kind(component, call, <error-call>);
   elseif (known?)
     let builder = make-builder(component);
@@ -581,18 +600,24 @@ define method optimize-unknown-call
       replace-expression(component, func-dep, new-func);
     else
       let new-ops = make(<stretchy-vector>);
+      // Add the original function to the known-call operands.
       add!(new-ops, call.depends-on.source-exp);
+      // Add the fixed parameters.
       let assign = call.dependents.dependent;
       for (spec in sig.specializers,
-	   arg-dep = call.depends-on.dependent-next
-	     then arg-dep.dependent-next)
+	   arg-dep = arguments then arg-dep.dependent-next)
+	// Assert the argument types before adding them to the known-call
+	// operands so that the known-call sees the asserted leaves.
 	assert-type(component, assign, arg-dep, spec);
 	add!(new-ops, arg-dep.source-exp);
       finally
+	// If there is a #next parameter, add something for it.
 	if (sig.next?)
-	  // ### Need to actually deal with #next args.
-	  add!(new-ops,
-	       make-literal-constant(builder, make(<literal-false>)));
+	  if (next-method-info)
+	    add!(new-ops, next-method-info);
+	  else
+	    add!(new-ops, make-literal-constant(builder, as(<ct-value>, #())));
+	  end;
 	end;
 	// Need to assert the key types before we build the #rest vector.
 	if (sig.key-infos)
@@ -612,7 +637,6 @@ define method optimize-unknown-call
 	end;
 	if (sig.rest-type | (sig.next? & sig.key-infos))
 	  let rest-args = make(<stretchy-vector>);
-	  add!(rest-args, dylan-defn-leaf(builder, #"vector"));
 	  for (arg-dep = arg-dep then arg-dep.dependent-next,
 	       while: arg-dep)
 	    add!(rest-args, arg-dep.source-exp);
@@ -620,7 +644,8 @@ define method optimize-unknown-call
 	  let rest-temp = make-local-var(builder, #"rest", object-ctype());
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, rest-temp,
-	     make-unknown-call(builder, as(<list>, rest-args)));
+	     make-unknown-call(builder, dylan-defn-leaf(builder, #"vector"),
+			       #f, as(<list>, rest-args)));
 	  add!(new-ops, rest-temp);
 	end;
 	if (sig.key-infos)
@@ -651,14 +676,9 @@ define method optimize-unknown-call
 	  end;
 	end;
 	insert-before(component, assign, builder-result(builder));
-	let orig-func = call.depends-on.source-exp;
 	let new-call = make-operation(builder, <known-call>,
 				      as(<list>, new-ops));
-	let call-dep = call.dependents;
-	call.dependents := #f;
-	new-call.dependents := call-dep;
-	call-dep.source-exp := new-call;
-	delete-dependent(component, call);
+	replace-expression(component, call.dependents, new-call);
       end;
     end;
   end;
@@ -679,7 +699,11 @@ define method optimize-unknown-call
     => ();
   // Assert that the function is a function.
   assert-type(component, call.dependents.dependent, call.depends-on,
-	      function-ctype());
+	      if (call.use-generic-entry?)
+		specifier-type(#"<method>");
+	      else
+		function-ctype();
+	      end);
 end;
 
 define method optimize-unknown-call
@@ -699,7 +723,12 @@ define method optimize-unknown-call
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns);
 
+  if (call.use-generic-entry?)
+    error("Trying to pass a generic function next-method information?");
+  end;
+
   let bogus? = #f;
+  let arg-leaves = #();
   let arg-types = #();
   block (return)
     for (arg-dep = call.depends-on.dependent-next then arg-dep.dependent-next,
@@ -709,11 +738,13 @@ define method optimize-unknown-call
 	bogus? := #t;
 	return();
       end;
-      let arg-type = arg-dep.source-exp.derived-type;
+      let arg-leaf = arg-dep.source-exp;
+      let arg-type = arg-leaf.derived-type;
       unless (ctypes-intersect?(arg-type, gf-spec))
 	compiler-warning("Invalid type argument.");
 	bogus? := #t;
       end;
+      arg-leaves := pair(arg-leaf, arg-leaves);
       arg-types := pair(arg-type, arg-types);
     finally
       if (arg-dep & ~sig.key-infos & ~sig.rest-type)
@@ -732,9 +763,22 @@ define method optimize-unknown-call
     elseif (meths)
       // ### Need to check the keywords before the ct method selection
       // is valid.
-      let new-func = make-definition-leaf(make-builder(component),meths.first);
-      let func-dep = call.depends-on;
-      replace-expression(component, func-dep, new-func);
+      let builder = make-builder(component);
+      let assign = call.dependents.dependent;
+      let policy = assign.policy;
+      let source = assign.source-location;
+      let new-func = make-definition-leaf(builder, meths.head);
+      let next-leaf = make-local-var(builder, #"next-method-info",
+				     object-ctype());
+      build-assignment
+	(builder, policy, source, next-leaf,
+	 make-unknown-call(builder, dylan-defn-leaf(builder, #"list"), #f,
+			   map(curry(make-definition-leaf, builder),
+			       meths.tail)));
+      let new-call = make-unknown-call(builder, new-func, next-leaf,
+				       reverse!(arg-leaves));
+      insert-before(component, call, builder-result(builder));
+      replace-expression(component, call.dependents, new-call);
     end;
   end;
 end;    
@@ -967,11 +1011,13 @@ end;
 
 
 define method change-call-kind
-    (component :: <component>, call :: <abstract-call>, new-kind :: <class>)
+    (component :: <component>, call :: <abstract-call>, new-kind :: <class>,
+     #rest make-keyword-args, #all-keys)
     => ();
-  let new = make(new-kind, dependents: call.dependents,
-		 depends-on: call.depends-on,
-		 derived-type: call.derived-type);
+  let new = apply(make, new-kind, dependents: call.dependents,
+		  depends-on: call.depends-on,
+		  derived-type: call.derived-type,
+		  make-keyword-args);
   for (dep = call.depends-on then dep.dependent-next,
        while: dep)
     dep.dependent := new;
@@ -1004,9 +1050,15 @@ end;
 // function is an exit function, then convert it into a pitcher.
 // 
 define method optimize (component :: <component>, call :: <mv-call>) => ();
-  let cluster = call.depends-on.dependent-next.source-exp;
+  let cluster
+    = if (call.use-generic-entry?)
+	call.depends-on.dependent-next.dependent-next.source-exp;
+      else
+	call.depends-on.dependent-next.source-exp;
+      end;
   if (maybe-expand-cluster(component, cluster))
-    change-call-kind(component, call, <unknown-call>);
+    change-call-kind(component, call, <unknown-call>,
+		     use-generic-entry: call.use-generic-entry?);
   else
     let func = call.depends-on.source-exp;
     if (instance?(func, <exit-function>))
@@ -1130,8 +1182,7 @@ define-primitive-transformer
 	       let fixed = copy-sequence(temps, end: nfixed);
 	       let rest = copy-sequence(temps, start: nfixed);
 	       let op = make-unknown-call
-		 (builder,
-		  pair(dylan-defn-leaf(builder, #"vector"), rest));
+		 (builder, dylan-defn-leaf(builder, #"vector"), #f, rest);
 	       let rest-temp
 		 = make-local-var(builder, #"temp", object-ctype());
 	       build-assignment(builder, orig-assign.policy,
@@ -1181,8 +1232,9 @@ define-primitive-transformer
 
 
 define method optimize (component :: <component>, op :: <truly-the>) => ();
-  let (intersection, win) = ctype-intersection(op.depends-on.source-exp,
-					       op.guaranteed-type);
+  let (intersection, win)
+    = ctype-intersection(op.depends-on.source-exp.derived-type,
+			 op.guaranteed-type);
   maybe-restrict-type(component, op,
 		      if (win)
 			intersection;
@@ -2554,16 +2606,17 @@ define method maybe-close-over
 	    = make-literal-constant(builder,
 				    make(<literal-symbol>, value: #"value"));
 	  let op
-	    = make-unknown-call(builder,
-				list(make-leaf, value-cell-type-leaf,
-				     value-keyword-leaf, temp));
+	    = make-unknown-call(builder, make-leaf, #f, 
+				list(value-cell-type-leaf, value-keyword-leaf,
+				     temp));
 	  op.derived-type := value-cell-type;
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, value-cell, op);
 	<set-assignment> =>
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, #(),
-	     make-unknown-call(builder, list(value-setter, temp, value-cell)));
+	     make-unknown-call(builder, value-setter, #f,
+			       list(temp, value-cell)));
       end;
       insert-after(component, assign, builder-result(builder));
       reoptimize(component, assign);
@@ -2578,7 +2631,7 @@ define method maybe-close-over
       dep.source-exp := temp;
       temp.dependents := dep;
       dep.source-next := #f;
-      let op = make-unknown-call(builder, list(value, value-cell));
+      let op = make-unknown-call(builder, value, #f, list(value-cell));
       op.derived-type := var.derived-type;
       build-assignment(builder, $Default-Policy, make(<source-location>),
 		       temp, op);
@@ -2666,9 +2719,8 @@ define method build-xep
 				    object-ctype());
       let index-leaf = make-literal-constant(builder, as(<ct-value>, index));
       build-assignment(builder, policy, source, pre-type,
-		       make-unknown-call(builder,
-					 list(closure-ref-leaf, self-leaf,
-					      index-leaf)));
+		       make-unknown-call(builder, closure-ref-leaf, #f,
+					 list(self-leaf, index-leaf)));
       let post-type = make-local-var(builder, copy.var-info.debug-name,
 				     copy.derived-type);
       build-assignment(builder, policy, source, post-type,
@@ -2698,8 +2750,8 @@ define method build-xep
   else
     if (signature.rest-type == #f & signature.key-infos == #f)
       let op = make-unknown-call
-	(builder,
-	 list(dylan-defn-leaf(builder, #"=="), nargs-leaf, wanted-leaf));
+	(builder, dylan-defn-leaf(builder, #"=="), #f,
+	 list(nargs-leaf, wanted-leaf));
       let temp = make-local-var(builder, #"nargs-okay?", object-ctype());
       build-assignment(builder, policy, source, temp, op);
       build-if-body(builder, policy, source, temp);
@@ -2717,8 +2769,8 @@ define method build-xep
     else
       begin
 	let op = make-unknown-call
-	  (builder,
-	   list(dylan-defn-leaf(builder, #"<"), nargs-leaf, wanted-leaf));
+	  (builder, dylan-defn-leaf(builder, #"<"), #f,
+	   list(nargs-leaf, wanted-leaf));
 	let temp = make-local-var(builder, #"nargs-okay?", object-ctype());
 	build-assignment(builder, policy, source, temp, op);
 	build-if-body(builder, policy, source, temp);
@@ -2732,15 +2784,13 @@ define method build-xep
 	end-body(builder);
       end;
       if (signature.key-infos)
-	let op = make-unknown-call(builder,
-				   list(dylan-defn-leaf
-					  (builder,
-					   if (odd?(arg-types.size))
-					     #"even?";
-					   else
-					     #"odd?";
-					   end),
-					nargs-leaf));
+	let func = dylan-defn-leaf(builder,
+				   if (odd?(arg-types.size))
+				     #"even?";
+				   else
+				     #"odd?";
+				   end);
+	let op = make-unknown-call(builder, func, #f, list(nargs-leaf));
 	let temp = make-local-var(builder, #"nkeys-okay?", object-ctype());
 	build-assignment(builder, policy, source, temp, op);
 	build-if-body(builder, policy, source, temp);
@@ -2846,8 +2896,9 @@ define method build-xep
 	    (key-dispatch-builder, policy, source, temp,
 	     make-unknown-call
 	       (key-dispatch-builder,
-		list(dylan-defn-leaf(key-dispatch-builder, #"=="),
-		     key-var,
+		dylan-defn-leaf(key-dispatch-builder, #"=="),
+		#f,
+		list(key-var,
 		     make-literal-constant(key-dispatch-builder,
 					   as(<ct-value>, key)))));
 	  build-if-body(key-dispatch-builder, policy, source, temp);
@@ -2870,8 +2921,9 @@ define method build-xep
       (key-dispatch-builder, policy, source, index-var,
        make-unknown-call
 	 (key-dispatch-builder,
-	  list(dylan-defn-leaf(key-dispatch-builder, #"-"),
-	       nargs-leaf,
+	  dylan-defn-leaf(key-dispatch-builder, #"-"),
+	  #f,
+	  list(nargs-leaf,
 	       make-literal-constant
 		 (key-dispatch-builder, as(<ct-value>, 2)))));
 
@@ -2883,8 +2935,8 @@ define method build-xep
     build-assignment
       (key-dispatch-builder, policy, source, more-var,
        make-unknown-call(key-dispatch-builder,
-			 list(dylan-defn-leaf(key-dispatch-builder, #"<"),
-			      index-var, wanted-leaf)));
+			 dylan-defn-leaf(key-dispatch-builder, #"<"),
+			 #f, list(index-var, wanted-leaf)));
     build-if-body(key-dispatch-builder, policy, source, more-var);
     build-exit(key-dispatch-builder, policy, source, done-block);
     build-else(key-dispatch-builder, policy, source);
@@ -2906,8 +2958,9 @@ define method build-xep
     build-assignment
       (key-dispatch-builder, policy, source, temp,
        make-unknown-call(key-dispatch-builder,
-			 list(dylan-defn-leaf(key-dispatch-builder, #"+"),
-			      index-var,
+			 dylan-defn-leaf(key-dispatch-builder, #"+"),
+			 #f,
+			 list(index-var,
 			      make-literal-constant(key-dispatch-builder,
 						    as(<ct-value>, 1)))));
     build-assignment(key-dispatch-builder, policy, source, val-var,
@@ -2918,8 +2971,9 @@ define method build-xep
     build-assignment
       (key-dispatch-builder, policy, source, index-var,
        make-unknown-call(key-dispatch-builder,
-			 list(dylan-defn-leaf(key-dispatch-builder, #"-"),
-			      index-var,
+			 dylan-defn-leaf(key-dispatch-builder, #"-"),
+			 #f,
+			 list(index-var,
 			      make-literal-constant(key-dispatch-builder,
 						    as(<ct-value>, 2)))));
     end-body(key-dispatch-builder); // if

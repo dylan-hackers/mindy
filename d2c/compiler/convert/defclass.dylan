@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.18 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.19 1995/05/09 16:15:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -665,10 +665,11 @@ define method convert-top-level-form
 	  
 	  local
 	    method build-call (name, #rest args)
-	      let ops = pair(dylan-defn-leaf(builder, name), as(<list>, args));
 	      let temp = make-local-var(builder, name, object-ctype());
-	      build-assignment(builder, lexenv.lexenv-policy, source, temp,
-			       make-unknown-call(builder, ops));
+	      build-assignment
+		(builder, lexenv.lexenv-policy, source, temp,
+		 make-unknown-call(builder, dylan-defn-leaf(builder, name), #f,
+				   as(<list>, args)));
 	      temp;
 	    end;
 
@@ -720,11 +721,9 @@ define method build-hairy-class (???)
   if (~ct-value(defn))
     let cclass-ctype = dylan-defn(#"<class>");
     let args = make(<stretchy-vector>);
-    add!(args, dylan-defn-leaf(builder, #"%make-class"));
     add!(args, make-symbol-literal(defn.defn-name.name-symbol));
     begin
       let supers-args = make(<stretchy-vector>);
-      add!(supers-args, vector-leaf);
       for (super in defn.class-defn-supers)
 	let temp = make-local-var(builder, #"temp", cclass-ctype);
 	fer-convert(builder, super, lexenv, #"assignment", temp);
@@ -732,12 +731,14 @@ define method build-hairy-class (???)
       end;
       let temp = make-local-var(builder, #"supers", object-ctype());
       build-assignment(builder, policy, source, temp,
-		       make-unknown-call(builder, as(<list>, supers-args)));
+		       make-unknown-call(builder, vector-leaf, #f,
+					 as(<list>, supers-args)));
       add!(args, temp);
     end;
-    build-assignment(builder, policy, source,
-		     make-definition-leaf(builder, defn),
-		     make-unknown-call(builder, as(<list>, args)));
+    build-assignment
+      (builder, policy, source, make-definition-leaf(builder, defn),
+       make-unknown-call(builder, dylan-defn-leaf(builder, #"%make-class"), #f,
+			 as(<list>, args)));
   end;
 
     begin
@@ -988,13 +989,13 @@ define method build-slot-posn-dispatch
       let class-temp = make-local-var(builder, #"class", object-ctype());
       let obj-class-leaf = dylan-defn-leaf(builder, #"%object-class");
       build-assignment(builder, policy, source, class-temp,
-		       make-unknown-call(builder,
-					 list(obj-class-leaf, instance-leaf)));
+		       make-unknown-call(builder, obj-class-leaf, #f,
+					 list(instance-leaf)));
       let id-temp = make-local-var(builder, #"id", object-ctype());
       let unique-id-leaf = dylan-defn-leaf(builder, #"unique-id");
       build-assignment(builder, policy, source, id-temp,
-		       make-unknown-call(builder,
-					 list(unique-id-leaf, class-temp)));
+		       make-unknown-call(builder, unique-id-leaf, #f,
+					 list(class-temp)));
       
       local
 	method split-range (min, max)
@@ -1008,7 +1009,8 @@ define method build-slot-posn-dispatch
 	    let bound = make-literal-constant(builder, ctv);
 	    build-assignment
 	      (builder, policy, source, cond-temp,
-	       make-unknown-call(builder, list(less-then, id-temp, bound)));
+	       make-unknown-call(builder, less-then, #f,
+				 list(id-temp, bound)));
 	    build-if-body(builder, policy, source, cond-temp);
 	    split-range(min, half-way-point);
 	    build-else(builder, policy, source);
@@ -1061,7 +1063,7 @@ define method build-slot-posn-dispatch
 	  build-assignment
 	    (builder, policy, source, cond-temp,
 	     make-unknown-call
-	       (builder, list(instance?-leaf, instance-leaf, type-leaf)));
+	       (builder, instance?-leaf, #f, list(instance-leaf, type-leaf)));
 	  build-if-body(builder, policy, source, cond-temp);
 	  split(best-yes, best-yes-init?);
 	  build-else(builder, policy, source);
