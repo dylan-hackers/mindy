@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.28 2002/11/20 04:25:01 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.29 2002/11/24 13:52:36 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -126,7 +126,8 @@ define module Dylan
 	     default-handler, restart-query, return-query,
 	     do-handlers, return-allowed?, return-description,
 	     condition-format-string, condition-format-arguments,
-	     type-error-value, type-error-expected-type,
+	     type-error-value, type-error-expected-type, 
+	     type-error-location,
 
 	     // Definitions
 	     variable-definer, constant-definer, domain-definer,
