@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.19 1996/02/13 04:50:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.20 1996/02/18 18:34:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -693,50 +693,64 @@ define method compare-methods
     for (index :: <integer> from 0 below specializers1.size)
       let spec1 = specializers1[index];
       let spec2 = specializers2[index];
-      if (subtype?(spec1, spec2))
-	unless (subtype?(spec2, spec1))
-	  if (result == #"less-specific")
+      block (next)
+	let cmp = if (subtype?(spec1, spec2))
+		    if (subtype?(spec2, spec1))
+		      next();
+		    else
+		      #"more-specific";
+		    end if;
+		  elseif (subtype?(spec2, spec1))
+		    #"less-specific";
+		  else
+		    compare-overlapping-specializers
+		      (spec1, spec2, %%primitive extract-arg(arg-ptr, index));
+		  end if;
+	unless (result == cmp)
+	  if (cmp == #"ambiguous" | result ~== #"identical")
 	    return(#"ambiguous");
 	  else
-	    result := #"more-specific";
-	  end;
-	end;
-      elseif (subtype?(spec2, spec1))
-	if (result == #"more-specific")
-	  return(#"ambiguous");
-	else
-	  result := #"less-specific";
-	end;
-      elseif (instance?(spec1, <class>) & instance?(spec2, <class>))
-	let arg-class = object-class(%%primitive extract-arg(arg-ptr, index));
-	block (found)
-	  for (super :: <class> in arg-class.all-superclasses)
-	    if (super == spec1)
-	      if (result == #"less-specific")
-		return(#"ambiguous");
-	      else
-		result := #"more-specific";
-	      end;
-	      found();
-	    elseif (super == spec2)
-	      if (result == #"more-specific")
-		return(#"ambiguous");
-	      else
-		result := #"less-specific";
-	      end;
-	      found();
-	    end;
-	  end;
-	  error("Specializer not in the CPL even though the "
-		  "method was applicable?");
-	end;
-      else
-	return(#"ambiguous");
-      end;
+	    result := cmp;
+	  end if;
+	end unless;
+      end block;
     end for;
     result;
   end block;
 end method compare-methods;
+
+define method compare-overlapping-specializers
+    (spec1 :: <type>, spec2 :: <type>, arg :: <object>)
+    => res :: one-of(#"more-specific", #"less-specific", #"ambiguous");
+  #"ambiguous";
+end method compare-overlapping-specializers;
+
+define method compare-overlapping-specializers
+    (spec1 :: <class>, spec2 :: <class>, arg :: <object>)
+    => res :: one-of(#"more-specific", #"less-specific", #"ambiguous");
+  compare-overlapping-classes(spec1, spec2, arg.object-class);
+end method compare-overlapping-specializers;
+
+define method compare-overlapping-specializers
+    (spec1 :: <subclass>, spec2 :: <subclass>, arg :: <object>)
+    => res :: one-of(#"more-specific", #"less-specific", #"ambiguous");
+  compare-overlapping-classes(spec1.subclass-of, spec2.subclass-of, arg);
+end method compare-overlapping-specializers;
+
+define method compare-overlapping-classes
+    (spec1 :: <class>, spec2 :: <class>, arg-class :: <class>)
+    => res :: one-of(#"more-specific", #"less-specific", #"ambiguous");
+  block (return)
+    for (super :: <class> in arg-class.all-superclasses)
+      if (super == spec1)
+	return(#"more-specific");
+      elseif (super == spec2)
+	return(#"less-specific");
+      end;
+    end;
+    lose("Specializer not in the CPL even though the method was applicable?");
+  end block;
+end method compare-overlapping-classes;
 
 
 // Accessor methods.
