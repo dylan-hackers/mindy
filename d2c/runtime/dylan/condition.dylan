@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.5 1995/11/17 02:31:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/condition.dylan,v 1.6 1995/12/07 00:26:06 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -51,7 +51,7 @@ seal generic initialize(<simple-error>);
 define class <type-error> (<error>)
   //
   // The object that is of the wrong type.
-  slot type-error-value, required-init-keyword: value:;
+  slot type-error-value :: <object>, required-init-keyword: value:;
   //
   // The type the object is supposed to be.
   slot type-error-expected-type :: <type>, required-init-keyword: type:;
@@ -331,7 +331,8 @@ end;
 //
 // Signals a <type-error> complaining that value is not of the correct type.
 //
-define method type-error (value, type) => res :: <never-returns>;
+define method type-error (value :: <object>, type :: <type>)
+    => res :: <never-returns>;
   error(make(<type-error>, value: value, type: type));
 end method type-error;
 
