@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.39 1995/10/30 13:11:10 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.40 1995/11/09 16:55:06 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -379,15 +379,27 @@ define method build-join
   add-body-assignment(builder, res);
 end method;
 
-  
+
+// We've kind of deprecated this operation, since we want to support creating
+// operations with make to make load/dump easier.  make-operation is kept
+// around, but just calls make.  Nobody actually dispatches off of the
+// builder, but knowledge of which class to instantiate is explictly passed in,
+// so there is no need for the builder to imply it.
+//  
 define method make-operation
     (builder :: <flow-builder>, class :: <class>, operands :: <list>,
      #rest additional-make-arguments)
  => res :: <operation>;
-  ignore(builder);
-  let op :: <operation> = apply(make, class, additional-make-arguments);
-  make-operand-dependencies(builder, op, operands);
-  op;
+  apply(make, class, operands: operands, builder: builder,
+        additional-make-arguments); 
+end method;
+
+define method initialize
+    (op :: <operation>, #next next-method, #key builder, operands) => ();
+  next-method();
+  if (operands)
+    make-operand-dependencies(builder, op, operands);
+  end if;
 end method;
 
 
