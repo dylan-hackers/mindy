@@ -1,7 +1,19 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.10 1996/01/15 12:51:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.11 1996/02/07 12:56:24 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
+
+
+// Tokenizer interface.
+
+define primary abstract open class <tokenizer> (<object>)
+end;
+
+define open generic get-token (tokenizer :: <tokenizer>)
+    => token :: <token>;
+
+define open generic unget-token (tokenizer :: <tokenizer>, token :: <token>)
+    => ();
 
 
 // token classes.
@@ -452,14 +464,4 @@ define method merge-category(table :: <table>,
     end;
   end;
 end;
-
-
-// Tokenizer interface.
-
-define primary abstract open class <tokenizer> (<object>)
-end;
-
-define generic get-token (tokenizer :: <tokenizer>) => token :: <token>;
-
-define generic unget-token (tokenizer :: <tokenizer>, token :: <token>) => ();
 
