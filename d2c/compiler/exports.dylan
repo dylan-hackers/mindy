@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.2 1994/12/12 21:21:53 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.3 1994/12/13 13:27:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -145,9 +145,10 @@ define module definitions
   use utils;
   use tokens;
   use names;
+  use forwards, import: {<ctype>};
 
   export
-    <definition>, defn-name,
+    <definition>, defn-name, defn-type,
     check-syntax-table-additions, make-syntax-table-additions,
     <abstract-constant-definition>,
     <implicit-definition>;
@@ -443,6 +444,7 @@ define module macros
   use parse-tree;
   use top-level-forms;
   use parser;
+  use expand;
 
   export
     <define-macro-definition>, <define-bindings-macro-definition>,
@@ -555,6 +557,7 @@ define module front
   use common;
   use utils;
   use compile-time-values;
+  use names;
   use definitions;
   use flow;
   use ctype;
@@ -562,6 +565,8 @@ define module front
   use source;
   use builder-interface;
   use policy;
+
+  export dump-fer;
 end;
 
 define module fer-convert
@@ -637,7 +642,7 @@ define module dump
   use source;
 
   export
-    dump;
+    dump-parse;
 end;
 
 define module main
@@ -654,4 +659,6 @@ define module main
   use flow;
   use builder-interface;
   use fer-convert;
+  use front;
+  use dump;
 end;
