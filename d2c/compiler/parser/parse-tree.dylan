@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.14 1996/02/19 20:29:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.15 1996/02/21 02:44:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -164,28 +164,6 @@ define method print-object (meth :: <method-parse>, stream :: <stream>) => ();
 		param-list: meth.method-param-list,
 		returns: meth.method-returns,
 		body: meth.method-body);
-end;
-
-// <case-clause> -- exported.
-//
-define class <case-clause> (<object>)
-  //
-  // The ``label'' for this case clause.  Either a vector of expressions, or
-  // #t for otherwise labels.
-  slot case-label :: type-union(<simple-object-vector>, <true>), setter: #f,
-    required-init-keyword: label:;
-  
-  // Starts out a stretchy-vector, and is converted into a simple-object
-  // vector once it has been filled in.
-  slot case-body :: <vector>,
-    init-function: method () make(<stretchy-vector>, size: 0) end,
-    init-keyword: body:;
-end;
-
-define method print-object (clause :: <case-clause>, stream :: <stream>) => ();
-  pprint-fields(clause, stream,
-		label: clause.case-label,
-		body: as(<simple-object-vector>, clause.case-body));
 end;
 
 // <property-set> -- exported.
