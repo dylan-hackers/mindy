@@ -23,14 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.19 1994/08/18 21:35:40 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.20 1994/10/05 20:54:45 nkramer Exp $
 *
 * This file does source-to-source expansions.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "src.h"
@@ -187,14 +186,14 @@ static void change_to_setter(struct id *id)
     static char buf[256];
     char *ptr;
     struct symbol *sym = id->symbol;
-    int len = strlen(sym->name);
+    int len = strlen((char *)sym->name);
 
     if (len + 8 > sizeof(buf))
 	ptr = malloc(len + 8);
     else
 	ptr = buf;
 
-    strcpy(ptr, sym->name);
+    strcpy(ptr, (char *)sym->name);
     strcpy(ptr+len, "-setter");
 
     id->symbol = symbol(ptr);
@@ -522,9 +521,9 @@ static struct method *make_initializer(char *kind, struct bindings *bindings)
 
     len = strlen(kind) + 1 - strlen(", ");
     for (param = params->required_params; param != NULL; param = param->next)
-	len += strlen(", ") + strlen(param->id->symbol->name);
+	len += strlen(", ") + strlen((char *)param->id->symbol->name);
     if (params->rest_param)
-	len += strlen(", #rest ") + strlen(params->rest_param->symbol->name);
+	len += strlen(", #rest ") + strlen((char *)params->rest_param->symbol->name);
     debug_name = malloc(len);
     strcpy(debug_name, kind);
 
@@ -534,7 +533,7 @@ static struct method *make_initializer(char *kind, struct bindings *bindings)
 	    first = FALSE;
 	else
 	    strcat(debug_name, ", ");
-	strcat(debug_name, param->id->symbol->name);
+	strcat(debug_name, (char *)param->id->symbol->name);
 
 	temp = gensym();
 	temp_param = make_param(id(temp), NULL);
@@ -578,7 +577,7 @@ static struct method *make_initializer(char *kind, struct bindings *bindings)
 	    strcat(debug_name, "#rest ");
 	else
 	    strcat(debug_name, ", #rest ");
-	strcat(debug_name, params->rest_param->symbol->name);
+	strcat(debug_name, (char *)params->rest_param->symbol->name);
 	temp = gensym();
 	temps->rest_param = id(temp);
 	init_args = make_argument_list();
@@ -810,7 +809,7 @@ static void expand_defmethod_for_parse(struct defmethod_constituent *c)
 static void expand_defmethod_for_compile(struct defmethod_constituent *c)
 {
     struct method *method = c->method;
-    char *name = method->name->symbol->name;
+    char *name = (char *)method->name->symbol->name;
     char *debug_name = malloc(strlen(name) + sizeof("Define Method "));
     struct symbol *defmeth = sym_DefineMethod;
     struct body *body;
@@ -858,7 +857,7 @@ static void expand_defgeneric_for_parse(struct defgeneric_constituent *c)
 
 static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
 {
-    char *name = c->name->symbol->name;
+    char *name = (char *)c->name->symbol->name;
     char *debug_name = malloc(strlen(name) + sizeof("Define Generic "));
     struct body *body = make_body();
     struct arglist *init_args = make_argument_list();
@@ -1160,7 +1159,7 @@ static void expand_inheriteds(struct body *body,
 
 static void expand_defclass_for_compile(struct defclass_constituent *c)
 {
-    char *name = c->name->symbol->name;
+    char *name = (char *)c->name->symbol->name;
     char *debug_name = malloc(strlen(name) + sizeof("Define Class "));
 
     strcpy(debug_name, "Define Class ");

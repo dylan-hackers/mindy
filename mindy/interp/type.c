@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.17 1994/06/27 16:32:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.18 1994/10/05 21:04:47 nkramer Exp $
 *
 * This file implements the type system.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"

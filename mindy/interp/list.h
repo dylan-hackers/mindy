@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.h,v 1.2 1994/06/27 16:32:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.h,v 1.3 1994/10/05 21:03:47 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -50,5 +50,5 @@ extern int length(obj_t list);
 extern obj_t list1(obj_t x);
 extern obj_t list2(obj_t x, obj_t y);
 extern obj_t list3(obj_t x, obj_t y, obj_t z);
-extern obj_t listn(int n, ...);
+extern obj_t listn _ANSI_ARGS_((int n, ...));
 

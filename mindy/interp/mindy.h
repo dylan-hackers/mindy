@@ -23,15 +23,9 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.4 1994/07/26 18:30:01 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.5 1994/10/05 21:03:58 nkramer Exp $
 *
 \**********************************************************************/
-
-#include <stddef.h>
-
-extern void *malloc(size_t bytes);
-extern void *realloc(void *ptr, size_t bytes);
-extern void free(void *ptr);
 
 typedef struct _object *obj_t;
 
@@ -45,7 +39,7 @@ struct object {
 #define obj_rawptr(o) ((void *)(o))
 #define rawptr_obj(p) ((obj_t)(p))
 
-extern void lose(char *fmt, ...);
+extern void lose _ANSI_ARGS_((char *fmt, ...));
 
 #define assert(cond) \
     do { \
@@ -77,20 +71,4 @@ typedef int boolean;
 
 #ifndef SLOW_FUNCTION_POINTERS
 #define SLOW_FUNCTION_POINTERS 0
-#endif
-
-#ifdef sparc
-extern int printf();
-extern int fprintf();
-extern int fputc();
-extern int fputs();
-extern int fclose();
-extern int fseek();
-extern int isatty();
-extern int fflush();
-extern int vfprintf();
-extern int _filbuf();
-extern int _flsbuf();
-extern int tolower();
-extern int fsync();
 #endif

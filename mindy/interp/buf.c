@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.8 1994/07/26 18:31:55 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.9 1994/10/05 21:01:15 nkramer Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
 \**********************************************************************/
 
-#include <string.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -48,6 +48,8 @@
 #include "str.h"
 #include "buf.h"
 
+#define max(a,b) ((a)>(b) ? (a) : (b))
+
 obj_t obj_BufferClass = NULL;
 
 static obj_t dylan_buffer_make(obj_t class, obj_t size)
@@ -62,7 +64,9 @@ static obj_t dylan_buffer_make(obj_t class, obj_t size)
     if (len < 0)
 	error("Bogus size: for make %=: %=", class, size);
 
-    res = alloc(obj_BufferClass, sizeof(struct buffer) + len);
+    res = alloc(obj_BufferClass, sizeof(struct buffer) 
+	  + max(len - sizeof(((struct buffer *)res)->data),
+		sizeof(((struct buffer *)res)->data)));
 
     obj_ptr(struct buffer *, res)->length = len;
 
@@ -100,36 +104,12 @@ static obj_t dylan_buffer_element_setter(obj_t val, obj_t buffer, obj_t index)
     return val;
 }
 
-#ifdef sparc
-void *memmove(void *s1, void *s2, size_t n)
-{
-  char *src = s2;
-  char *dest = s1;
-  if(src==dest)
-    return s1;
-  else if(dest < src)
-    while(n-- > 0) *dest++ = *src++;
-  else {
-    src += n - 1;
-    dest += n - 1;
-    while(n-- > 0) *dest-- = *src--;
-  }
-  return s1;
-}
-#endif
-
 static obj_t dylan_memcpy(obj_t dst, obj_t dst_off, obj_t src, obj_t src_off,
 			  obj_t count)
 {
-    if (dst == src)
-	memmove(buffer_data(dst) + fixnum_value(dst_off),
-		buffer_data(src) + fixnum_value(src_off),
-		fixnum_value(count));
-    else
-	memcpy(buffer_data(dst) + fixnum_value(dst_off),
-	       buffer_data(src) + fixnum_value(src_off),
-	       fixnum_value(count));
-
+    memmove(buffer_data(dst) + fixnum_value(dst_off),
+	    buffer_data(src) + fixnum_value(src_off),
+	    fixnum_value(count));
     return dst;
 }
 
@@ -140,14 +120,17 @@ static int scav_buffer(struct object *ptr)
 {
     struct buffer *buffer = (struct buffer *)ptr;
 
-    return sizeof(struct buffer) + buffer->length;
+    return sizeof(struct buffer) + max(buffer->length - sizeof(buffer->data),
+				       sizeof(buffer->data));
 }
 
 static obj_t trans_buffer(obj_t buffer)
 {
     return transport(buffer,
 		     sizeof(struct buffer)
-		       + obj_ptr(struct buffer *, buffer)->length);
+		     + max(obj_ptr(struct buffer *, buffer)->length
+			   - sizeof(((struct buffer *)buffer)->data),
+			   sizeof(((struct buffer *)buffer)->data)));
 }
 
 void scavenge_buffer_roots(void)

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.h,v 1.6 1994/06/27 16:32:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.h,v 1.7 1994/10/05 21:02:31 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -39,7 +39,7 @@ struct component {
     obj_t source_file;
     obj_t debug_info;
     int n_constants;
-    obj_t constant[0];
+    obj_t constant[1];
 };
 
 #define COMPONENT(o) obj_ptr(struct component *, o)

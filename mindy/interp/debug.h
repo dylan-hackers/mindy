@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.h,v 1.3 1994/06/27 16:31:40 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.h,v 1.4 1994/10/05 21:01:38 nkramer Exp $
 *
 \**********************************************************************/
 

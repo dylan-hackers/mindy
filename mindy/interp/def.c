@@ -23,11 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.12 1994/08/18 18:42:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.13 1994/10/05 21:01:41 nkramer Exp $
 *
 * This file implements the stuff to install definitions.
 *
 \**********************************************************************/
+
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "module.h"

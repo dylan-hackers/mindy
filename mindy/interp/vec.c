@@ -23,17 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.9 1994/07/26 18:34:21 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.10 1994/10/05 21:04:55 nkramer Exp $
 *
 * This file implements vectors.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#ifdef sparc
-#include <memory.h>
-#endif
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -61,7 +57,7 @@ obj_t obj_SimpleObjectVectorClass = NULL;
 obj_t make_vector(int length, obj_t *contents)
 {
     obj_t res = alloc(obj_SimpleObjectVectorClass,
-		      sizeof(struct sovec) + sizeof(obj_t)*length);
+		      sizeof(struct sovec) + sizeof(obj_t)*(length-1));
 
     SOVEC(res)->length = length;
 
@@ -144,7 +140,7 @@ obj_t obj_ByteVectorClass = NULL;
 obj_t make_byte_vector(int length, unsigned char *contents)
 {
     obj_t res = alloc(obj_ByteVectorClass,
-		      sizeof(struct sovec) + length);
+		      sizeof(struct bytevec) + length - 1);
 
     BYTEVEC(res)->length = length;
 
@@ -236,25 +232,25 @@ static int scav_sovec(struct object *ptr)
     for (i = 0; i < len; i++)
 	scavenge(v->contents + i);
 
-    return sizeof(struct sovec) + sizeof(obj_t)*len;
+    return sizeof(struct sovec) + sizeof(obj_t)*(len-1);
 }
 
 static obj_t trans_sovec(obj_t v)
 {
     int len = SOVEC(v)->length;
-    return transport(v, sizeof(struct sovec) + sizeof(obj_t)*len);
+    return transport(v, sizeof(struct sovec) + sizeof(obj_t)*(len-1));
 }
 
 static int scav_bytevec(struct object *ptr)
 {
     struct bytevec *v = (struct bytevec *)ptr;
     
-    return sizeof(struct bytevec) + v->length;
+    return sizeof(struct bytevec) + v->length - sizeof(v->contents);
 }
 
 static obj_t trans_bytevec(obj_t v)
 {
-    return transport(v, sizeof(struct bytevec) + BYTEVEC(v)->length);
+    return transport(v, sizeof(struct bytevec) + BYTEVEC(v)->length - sizeof(((struct bytevec *)v)->contents));
 }
 
 void scavenge_vec_roots(void)

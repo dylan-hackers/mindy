@@ -23,11 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.h,v 1.2 1994/06/27 16:32:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.h,v 1.3 1994/10/05 21:04:21 nkramer Exp $
 *
 \**********************************************************************/
 
 #define YYSTYPE obj_t
+extern YYSTYPE yylval;
+
 #include "parser.tab.h"
-#define tok_EOF 0
-extern obj_t parse_exprs(void);
+
+extern YYSTYPE parse_command(FILE *input);
+

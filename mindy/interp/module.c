@@ -23,18 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.15 1994/08/30 23:21:13 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.16 1994/10/05 21:04:01 nkramer Exp $
 *
 * This file implements the module system.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#ifdef sparc
-#include <memory.h>
-#endif
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -218,10 +213,9 @@ static void *table_remove(struct table *table, obj_t symbol)
 
 /* Utilities */
 
-static void make_entry(struct table *table, obj_t name, void *datum,
-		       boolean exported, char *template, ...)
+static void vmake_entry(struct table *table, obj_t name, void *datum,
+		       boolean exported, char *template, va_list ap1, va_list ap2)
 {
-    va_list ap;
     char *ptr;
     int len;
     char *origin;
@@ -238,7 +232,6 @@ static void make_entry(struct table *table, obj_t name, void *datum,
     entry->exported = exported;
 
     len = strlen(template);
-    va_start(ap, template);
     for (ptr = template; *ptr != '\0'; ptr++) {
 	if (*ptr == '%') {
 	    len--;
@@ -246,19 +239,17 @@ static void make_entry(struct table *table, obj_t name, void *datum,
 	      case '%':
 		break;
 	      case '=':
-		len += strlen(sym_name(va_arg(ap, obj_t)));
+		len += strlen(sym_name(va_arg(ap1, obj_t)));
 		break;
 	      default:
 		lose("Bogus thing in origin template: %%%c", *ptr);
 	    }
 	}
     }
-    va_end(ap);
 
     entry->origin = alloc_byte_string(len);
-    origin = string_chars(entry->origin);
+    origin = (char *)string_chars(entry->origin);
 
-    va_start(ap, template);
     for(ptr = template; *ptr != '\0'; ptr++) {
 	if (*ptr == '%') {
 	    switch (*++ptr) {
@@ -267,7 +258,7 @@ static void make_entry(struct table *table, obj_t name, void *datum,
 		break;
 	      case '=':
 		{
-		    char *name = sym_name(va_arg(ap, obj_t));
+		    char *name = sym_name(va_arg(ap2, obj_t));
 		    while (*name != '\0')
 			*origin++ = *name++;
 		}
@@ -284,6 +275,43 @@ static void make_entry(struct table *table, obj_t name, void *datum,
 
     table_add(table, name, entry);
 }
+#if _USING_PROTOTYPES_
+static void make_entry(struct table *table, obj_t name, void *datum,
+		       boolean exported, char *template, ...)
+{
+    va_list ap1, ap2;
+    va_start(ap1, template);
+    va_start(ap2, template);
+    vmake_entry(table, name, datum, exported, template, ap1, ap2);
+    va_end(ap1);
+    va_end(ap2);
+}
+#else
+static void make_entry(va_alist) va_dcl
+{
+    va_list ap1, ap2;
+    struct table *table;
+    obj_t name;
+    void *datum;
+    boolean exported;
+    char *template;
+    va_start(ap1);
+    va_start(ap2);
+    table = va_arg(ap1, struct table *);
+    table = va_arg(ap2, struct table *);
+    name = va_arg(ap1, obj_t);
+    name = va_arg(ap2, obj_t);
+    datum = va_arg(ap1, void *);
+    datum = va_arg(ap2, void *);
+    exported = va_arg(ap1, boolean);
+    exported = va_arg(ap2, boolean);
+    template = va_arg(ap1, char *);
+    template = va_arg(ap2, char *);
+    vmake_entry(table, name, datum, exported, template, ap1, ap2);
+    va_end(ap1);
+    va_end(ap2);
+}
+#endif
 
 static obj_t prepend_prefix(obj_t name, struct use *use)
 {
@@ -294,7 +322,7 @@ static obj_t prepend_prefix(obj_t name, struct use *use)
     if (use->prefix == obj_False)
 	return name;
 
-    prefix = obj_ptr(struct string *, use->prefix)->chars;
+    prefix = (char *)obj_ptr(struct string *, use->prefix)->chars;
     local_name = (char *)malloc(strlen(prefix) + strlen(sym_name(name)) + 1);
     strcpy(local_name, prefix);
     strcat(local_name, sym_name(name));

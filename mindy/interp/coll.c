@@ -23,11 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.5 1994/06/27 16:31:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/coll.c,v 1.6 1994/10/05 21:01:28 nkramer Exp $
 *
 * This file implements the collection framework.
 *
 \**********************************************************************/
+
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "class.h"

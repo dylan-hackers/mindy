@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.h,v 1.6 1994/06/27 16:49:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.h,v 1.7 1994/10/05 20:55:23 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -89,7 +89,7 @@ struct string_literal {
     struct literal *next;
     int line;
     int length;
-    unsigned char chars[0];
+    unsigned char chars[4];
 };
 
 struct vector_literal {

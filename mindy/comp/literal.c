@@ -23,14 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.10 1994/08/22 23:17:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.11 1994/10/05 20:55:21 nkramer Exp $
 *
 * This file implements the various kinds of literal constants.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "literal.h"
@@ -78,14 +77,15 @@ struct literal *make_unbound_literal(void)
 struct literal *make_string_literal(char *str)
 {
     int len = strlen(str);
-    struct string_literal *res = malloc(sizeof(struct string_literal)+len+1);
+    struct string_literal *res = malloc(sizeof(struct string_literal)
+					+ len + 1 - sizeof(res->chars));
 
     res->kind = literal_STRING;
     res->next = NULL;
     res->line = 0;
     res->length = len;
 
-    strcpy(res->chars, str);
+    strcpy((char *)res->chars, str);
 
     return (struct literal *)res;
 }
@@ -247,7 +247,8 @@ struct literal *dup_literal(struct literal *literal)
 	break;
       case literal_STRING:
 	size = sizeof(struct string_literal)
-	    + ((struct string_literal *)literal)->length + 1;
+	    + ((struct string_literal *)literal)->length + 1
+		  - sizeof(((struct string_literal *)literal)->chars);
 	break;
       case literal_TRUE:
       case literal_FALSE:

@@ -23,11 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.6 1994/06/27 16:32:21 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.7 1994/10/05 21:04:06 nkramer Exp $
 *
 * This file implements non-local exit.
 *
 \**********************************************************************/
+
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"

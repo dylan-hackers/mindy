@@ -23,14 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.9 1994/08/30 21:56:24 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.10 1994/10/05 21:04:25 nkramer Exp $
 *
 * This file implements the printer framework.
 *
 \**********************************************************************/
 
-#include <stdarg.h>
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "obj.h"
@@ -99,20 +98,38 @@ void print(obj_t object)
     putchar('\n');
 }
 
-void format(char *fmt, ...)
+static void vvformat(char *fmt, va_list ap)
 {
     int args = count_format_args(fmt);
     obj_t vec = make_vector(args, NULL);
     int i;
-    va_list ap;
 
-    va_start(ap, fmt);
     for (i = 0; i < args; i++)
 	SOVEC(vec)->contents[i] = va_arg(ap, obj_t);
-    va_end(ap);
 
     vformat(fmt, SOVEC(vec)->contents);
 }
+#if _USING_PROTOTYPES_
+void format(char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    vvformat(fmt, ap);
+    va_end(ap);
+}
+#else
+void format(va_alist) va_dcl
+{
+    va_list ap;
+    char *fmt;
+
+    va_start(ap);
+    fmt = va_arg(ap, char *);
+    vvformat(fmt, ap);
+    va_end(ap);
+}
+#endif
 
 int count_format_args(char *fmt)
 {
@@ -201,28 +218,15 @@ void vformat(char *fmt, obj_t *args)
 		/* Gotta somehow have two cases,          */
 		/* one for strings and another for errors */
 		if (instancep(*args, obj_ByteStringClass)) {
-		  fputs(string_chars(*args++), stdout);
-		}
-		else if (instancep(*args, obj_UnicodeStringClass)) {
-		    obj_t str = *args++;
-		    int len = obj_ptr(struct string *, str)->len;
-		    int i = 0;
-		    int c;
-
-		    for (i=0; i<len; i++) {
-			c = get_unichar(str, i);
-			if (c > 255)
-			    printf("\\{#x%x}", c);
-			else
-			    putchar(c);
-		    }
+		  fputs((char *)string_chars(*args++), stdout);
 		}
 /* This will have to be commented out until we figure out how 
    to print conditions. */
-/*		else if (instancep(*args, obj_ConditionClass)) {
+#if 0
+		else if (instancep(*args, obj_ConditionClass)) {
 		  fputs(conditionthing, *args++);
 		}
-*/
+#endif
 		else {
 		  error("%= is neither a string nor a condition,"
 			" and so can't be printed with %%s", *args++);
@@ -265,7 +269,7 @@ static obj_t dylan_putc(obj_t obj)
 
 static obj_t dylan_puts(obj_t obj)
 {
-    fputs(string_chars(obj), stdout);
+    fputs((char *)string_chars(obj), stdout);
     return obj;
 }
 
@@ -279,7 +283,7 @@ static void dylan_format(struct thread *thread, int nargs)
 
     check_type(fmt, obj_ByteStringClass);
 
-    vformat(string_chars(fmt), args+1);
+    vformat((char *)string_chars(fmt), args+1);
 
     old_sp = pop_linkage(thread);
     thread->sp = old_sp;

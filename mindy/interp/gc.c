@@ -23,14 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.13 1994/07/26 00:39:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/gc.c,v 1.14 1994/10/05 21:02:01 nkramer Exp $
 *
 * This file is the garbage collector.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "class.h"
@@ -93,7 +92,7 @@ static int GCTrigger = BYTES_CONSED_BETWEEN_GCS;
 static int bytes_in_use(void)
 {
     if (cur_block)
-	return BytesInUse + (cur_fill - cur_block->base);
+	return BytesInUse + ((char *)cur_fill - (char *)cur_block->base);
     else
 	return BytesInUse;
 }
@@ -112,7 +111,7 @@ void *raw_alloc(int bytes)
 	lose("Can't allocate %d bytes, %d at most.",
 	     bytes, BLOCK_SIZE - sizeof(struct block));
 
-    if (cur_fill + bytes > cur_end) {
+    if ((char *)cur_fill + bytes > (char *)cur_end) {
 	struct block *block;
 
 	if (FreeBlocks) {
@@ -121,13 +120,13 @@ void *raw_alloc(int bytes)
 	}
 	else {
 	    block = malloc(BLOCK_SIZE);
-	    block->base = (void *)block + sizeof(struct block);
-	    block->end = (void *)block + BLOCK_SIZE;
+	    block->base = (char *)block + sizeof(struct block);
+	    block->end = (char *)block + BLOCK_SIZE;
 	}
 	block->next = 0;
 
 	if (cur_block) {
-	    BytesInUse += cur_fill - cur_block->base;
+	    BytesInUse += (char *)cur_fill - (char *)cur_block->base;
 	    cur_block->fill = cur_fill;
 	    cur_block->next = block;
 	    if (BytesInUse > GCTrigger)
@@ -142,7 +141,7 @@ void *raw_alloc(int bytes)
     }
 
     result = cur_fill;
-    cur_fill += bytes;
+    cur_fill = (char *)cur_fill + bytes;
 
     return result;
 }
@@ -248,7 +247,7 @@ static void scavenge_newspace(void)
 		unsigned int *header = ptr;
 		if (header[0] != 0xbeadbabe)
 		    lose("Scavenge_newspace found a bogus object.");
-		ptr += sizeof(int)*2;
+		ptr = (char *)ptr + sizeof(int)*2;
 #endif
 		scavenge((obj_t *)ptr);
 		class = *(obj_t *)ptr;
@@ -259,7 +258,7 @@ static void scavenge_newspace(void)
 			 "was %d bytes.",
 			 header[1], bytes);
 #endif
-		ptr += (bytes + 7) & ~7;
+		ptr = (char *)ptr + ((bytes + 7) & ~7);
 	    } while (ptr < end);
 	}
 	block = block->next;

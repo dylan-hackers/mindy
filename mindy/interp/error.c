@@ -23,14 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.7 1994/08/30 21:55:49 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.8 1994/10/05 21:01:49 nkramer Exp $
 *
 * This file implements the stuff to signal errors from C code.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <stdarg.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "str.h"
@@ -52,20 +51,17 @@ static boolean error_system_enabled = FALSE;
 static struct variable *error_var = NULL;
 static struct variable *type_error_var = NULL;
 
-void error(char *msg, ...)
+static void verror(char *msg, va_list ap)
 {
     int nargs = count_format_args(msg);
-    va_list ap;
     int i;
     struct thread *thread = thread_current();
     
     if (error_system_enabled) {
 	*thread->sp++ = error_var->value;
 	*thread->sp++ = make_byte_string(msg);
-	va_start(ap, msg);
 	for (i = 0; i < nargs; i++)
 	    *thread->sp++ = va_arg(ap, obj_t);
-	va_end(ap);
 
 	invoke(thread, nargs+1);
 	go_on();
@@ -74,20 +70,16 @@ void error(char *msg, ...)
 	obj_t cond = make_vector(nargs+1, NULL);
 
 	SOVEC(cond)->contents[0] = make_byte_string(msg);
-	va_start(ap, msg);
 	for (i = 1; i <= nargs; i++)
 	    SOVEC(cond)->contents[i] = va_arg(ap, obj_t);
-	va_end(ap);
 
 	thread_debuggered(thread, cond);
     }
     else {
 	obj_t cond = make_vector(nargs, NULL);
 
-	va_start(ap, msg);
 	for (i = 0; i < nargs; i++)
 	    SOVEC(cond)->contents[i] = va_arg(ap, obj_t);
-	va_end(ap);
 	
 	printf("error: ");
 	vformat(msg, SOVEC(cond)->contents);
@@ -95,6 +87,26 @@ void error(char *msg, ...)
 	exit(1);
     }
 }
+#if _USING_PROTOTYPES_
+void error(char *msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    verror(msg, ap);
+    va_end(ap);
+}
+#else
+void error(va_alist) va_dcl
+{
+    va_list ap;
+    char *msg;
+    
+    va_start(ap);
+    msg = va_arg(ap, char *);
+    verror(msg, ap);
+    va_end(ap);
+}
+#endif
 
 void type_error(obj_t value, obj_t type)
 {

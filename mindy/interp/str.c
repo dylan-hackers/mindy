@@ -23,14 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.9 1994/08/30 21:51:36 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.c,v 1.10 1994/10/05 21:04:28 nkramer Exp $
 *
 * This file implements strings.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -49,7 +48,6 @@
 #include "def.h"
 #include "sym.h"
 
-
 obj_t obj_ByteStringClass = 0;
 obj_t obj_UnicodeStringClass = 0;
 
@@ -60,10 +58,11 @@ obj_t obj_UnicodeStringClass = 0;
 obj_t make_byte_string(char *chars)
 {
     int len = strlen(chars);
-    obj_t res = alloc(obj_ByteStringClass, sizeof(struct string) + len + 1);
+    obj_t res = alloc(obj_ByteStringClass, sizeof(struct string) 
+		      + len + 1 - sizeof(((struct string *)res)->chars));
 
     obj_ptr(struct string *, res)->len = len;
-    strcpy(obj_ptr(struct string *, res)->chars, chars);
+    strcpy((char *)obj_ptr(struct string *, res)->chars, chars);
 
     return res;
 }
@@ -71,7 +70,8 @@ obj_t make_byte_string(char *chars)
 
 obj_t alloc_byte_string(int len)
 {
-    obj_t res = alloc(obj_ByteStringClass, sizeof(struct string) + len + 1);
+    obj_t res = alloc(obj_ByteStringClass, sizeof(struct string)
+		      + len + 1 - sizeof(((struct string *)res)->chars));
 
     obj_ptr(struct string *, res)->len = len;
     obj_ptr(struct string *, res)->chars[len] = '\0';
@@ -82,7 +82,8 @@ obj_t alloc_byte_string(int len)
 obj_t alloc_unicode_string(int len)
 {
     obj_t res = alloc(obj_UnicodeStringClass, 
-		      sizeof(struct string) + 2*(len+1));
+		      sizeof(struct string) 
+		      + 2*(len+1) - sizeof(((struct string *)res)->chars));
 
     obj_ptr(struct string *, res)->len = len;
     obj_ptr(struct string *, res)->chars[2*len] = '\0';
@@ -265,28 +266,32 @@ static void print_unicode_string(obj_t str)
 static int scav_byte_string(struct object *ptr)
 {
     struct string *str = (struct string *)ptr;
-    return sizeof(struct string) + str->len + 1;
+
+    return sizeof(struct string) + str->len + 1 - sizeof(str->chars);
 }
 
 static int scav_unicode_string(struct object *ptr)
 {
     struct string *str = (struct string *)ptr;
-    return sizeof(struct string) + (2 * ((str->len) + 1));
+
+    return sizeof(struct string)
+	+ 2*(str->len + 1) - sizeof(str->chars);
 }
 
 static obj_t trans_byte_string(obj_t string)
 {
     return transport(string,
 		     sizeof(struct string)
-		       + obj_ptr(struct string *, string)->len
-		       + 1);
+		     + obj_ptr(struct string *, string)->len + 1
+		     - sizeof(((struct string *)string)->chars));
 }
 
 static obj_t trans_unicode_string(obj_t string)
 {
     return transport(string,
 		     sizeof(struct string) 
-		       + 2 * ((obj_ptr(struct string *, string)->len + 1)));
+		     + 2 * (obj_ptr(struct string *, string)->len + 1)
+		     - sizeof(((struct string *)string)->chars));
 }
 
 void scavenge_str_roots(void)

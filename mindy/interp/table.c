@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.10 1994/06/27 16:32:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.c,v 1.11 1994/10/05 21:04:38 nkramer Exp $
 *
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
@@ -33,8 +33,7 @@
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <limits.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "thread.h"

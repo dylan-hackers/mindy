@@ -23,19 +23,24 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.7 1994/06/27 16:32:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.8 1994/10/05 21:04:23 nkramer Exp $
 *
 * This file is the parser for the debugger.
 *
 \**********************************************************************/
 
 %{
+#include "../compat/std-c.h"
+
 #include "mindy.h"
+#include "lexer.h"
 #include "parser.h"
 #include "list.h"
+#include "str.h"
 #include "sym.h"
+#include "num.h"
 #include "bool.h"
-#include "lexer.h"
+
 
 static void yyerror(char *);
 
@@ -43,60 +48,95 @@ static obj_t result;
 
 %}
 
+%token tok_TRUE
+%token tok_FALSE
 %token tok_ERROR
 %token tok_LPAREN
 %token tok_RPAREN
 %token tok_DEBUGVAR
 %token tok_ARG
-%token tok_LITERAL
+%token tok_NUMBER
+%token tok_CHARACTER
+%token tok_STRING
+%token tok_ADDRESS
 %token tok_SYMBOL
 %token tok_KEYWORD
 %token tok_COMMA
 
 %%
 
-start:		exprlist			{ result = $1; }
-	|	/* epsilon */			{ result = obj_Nil; }
+start:
+		command exprlist
+		    { result = pair($1,$2); }
+	|	command
+		    { result = pair($1,obj_Nil); }
+	|	/* epsilon */
+		    { result = obj_Nil; }
+	|	error
+		    { result = make_byte_string("command error: try ``help''"); }
 ;
 
-exprlist:	expr				{ $$ = list1($1); }
-	|	expr tok_COMMA exprlist		{ $$ = pair($1, $3); }
+command:	tok_SYMBOL
 ;
 
-expr:		leaf				{ $$ = $1; }
+exprlist:	expr
+		    { $$ = list1($1); }
+	|	expr tok_COMMA exprlist
+		    { $$ = pair($1, $3); }
+;
+
+expr:		leaf
+		    { $$ = $1; }
 	|	expr tok_LPAREN tok_RPAREN
 		    { $$ = list2(symbol("funcall"), $1); }
 	|	expr tok_LPAREN arglist tok_RPAREN
 		    { $$ = pair(symbol("funcall"), pair($1, $3)); }
 ;
 
-leaf:		tok_DEBUGVAR		{ $$ = pair(symbol("debug-var"), $1); }
-	|	tok_ARG			{ $$ = pair(symbol("arg"), $1); }
-	|	tok_LITERAL		{ $$ = pair(symbol("literal"), $1); }
-	|	tok_KEYWORD		{ $$ = pair(symbol("literal"), $1); }
-	|	tok_SYMBOL		{ $$ = pair(symbol("variable"),$1); }
+leaf:		tok_DEBUGVAR
+		    { $$ = pair(symbol("debug-var"), $1); }
+	|	tok_ARG
+		    { $$ = pair(symbol("arg"), $1); }
+	|	tok_SYMBOL
+		    { $$ = pair(symbol("variable"), $1); }
+	|	literal
+		    { $$ = pair(symbol("literal"), $1); }
 ;
 
-arglist:	expr more_args			{ $$ = pair($1, $2); }
+literal:	tok_TRUE
+		    { $$ = obj_True; }
+	|	tok_FALSE
+		    { $$ = obj_False; }
+	|	tok_KEYWORD
+	|	tok_STRING
+	|	tok_CHARACTER
+	|	tok_NUMBER
+	|	tok_ADDRESS
+;
+
+arglist:	expr more_args
+		    { $$ = pair($1, $2); }
 	|	tok_KEYWORD expr more_args
 		    { $$ = pair(pair(symbol("literal"),$1),pair($2, $3)); }
 ;
 
-more_args:	/* epsilon */			{ $$ = obj_Nil; }
-	|	tok_COMMA arglist		{ $$ = $2; }
+more_args:	/* epsilon */
+		    { $$ = obj_Nil; }
+	|	tok_COMMA arglist
+		    { $$ = $2; }
 ;
 
 %%
 
 static void yyerror(char *msg)
 {
+    yyinput_clear();
 }
 
-obj_t parse_exprs()
+YYSTYPE parse_command(FILE *input)
 {
-    if (yyparse())
-	return obj_False;
-    else
-	return result;
+    extern int yyparse();
+    yyinput_setter(input);
+    return yyparse() ? obj_False : result;
 }
 

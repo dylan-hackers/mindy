@@ -23,11 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.9 1994/08/30 21:56:15 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.10 1994/10/05 21:03:56 nkramer Exp $
 *
 * This file starts everything going.
 *
 \**********************************************************************/
+
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "init.h"
@@ -43,7 +45,6 @@
 #include "debug.h"
 #include "load.h"
 #include "num.h"
-#include "error.h"
 
 static void invoke_main(struct thread *thread, obj_t *vals)
 {
@@ -70,11 +71,20 @@ static void startup(struct thread *thread, int nargs)
     load_do_inits(thread);
 }
 
+static void missing_arg(char *whose)
+{
+    fprintf(stderr, "mindy: missing argument to %s option\n", whose);
+    exit(1);
+}
+  
 void main(int argc, char *argv[])
 {
     struct thread *thread;
     enum pause_reason reason;
     struct variable *var;
+#if ! NO_ARGV_0
+    char *argv0 = "mindy";
+#endif
 
     init();
 
@@ -83,17 +93,41 @@ void main(int argc, char *argv[])
 				      obj_Nil, obj_ObjectClass,
 				      startup);
 
-    while (*++argv != NULL)
+    while (*++argv != NULL) {
 	if (strcmp(*argv, "-f") == 0) {
-	    char *file = *++argv;
-
-	    if (file)
-		load(file);
-	    else
-		error("-f must be followed by a file name to load.");
+	    if (*++argv == NULL)
+	        missing_arg("-f");
+	    load(*argv);
+#if ! NO_SHARP_BANG
+        } else if (strcmp(*argv, "-x") == 0) {
+	    if (*++argv == NULL)
+	        missing_arg("-f");
+#if ! NO_ARGV_0
+	    if (strcmp(*argv, "-") != 0)
+	        argv0 = *argv;
+#endif
+	    load(*argv);
+	    argv += 1;
+	    break;
+#endif
+#if ! NO_ARGV_0
+	} else if (strcmp(*argv, "-0") == 0) {
+	    if (*++argv == NULL)
+	        missing_arg("-0");
+	    argv0 = *argv;
+#endif
+        } else {
+	    break;
 	}
-	else
-	    *thread->sp++ = make_byte_string(*argv);
+    }
+
+#if 0
+#   if ! NO_ARGV_0
+        *thread->sp++ = make_byte_string(argv0);    /* pass command name */
+#    endif
+#endif
+    while (*argv != NULL)
+        *thread->sp++ = make_byte_string(*argv++);
 
     finalize_modules();
 

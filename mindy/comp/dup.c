@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dup.c,v 1.5 1994/06/27 16:49:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dup.c,v 1.6 1994/10/05 20:54:30 nkramer Exp $
 *
 * This file duplicates parts of the parse tree.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "src.h"

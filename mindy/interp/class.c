@@ -23,14 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.7 1994/06/27 16:31:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.8 1994/10/05 21:01:24 nkramer Exp $
 *
 * This file implements classes.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <stdarg.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -50,8 +49,8 @@ obj_t obj_ClassClass = 0;
 
 /* Class constructors. */
 
-obj_t make_builtin_class(int scavenge(struct object *ptr),
-			 obj_t transport(obj_t object))
+obj_t make_builtin_class(int (*scavenge)(struct object *ptr),
+			 obj_t (*transport)(obj_t object))
 {
     obj_t res = alloc(obj_ClassClass, sizeof(struct class));
 
@@ -277,16 +276,13 @@ void setup_class_supers(obj_t class, obj_t supers)
     }
 }
 
-void init_builtin_class(obj_t class, char *name, ...)
+static void vinit_builtin_class(obj_t class, char *name, va_list ap)
 {
     obj_t super, supers;
-    va_list ap;
 
     supers = obj_Nil;
-    va_start(ap, name);
     while ((super = va_arg(ap, obj_t)) != NULL)
 	supers = pair(super, supers);
-    va_end(ap);
     supers = nreverse(supers);
 
     CLASS(class)->debug_name = symbol(name);
@@ -296,6 +292,29 @@ void init_builtin_class(obj_t class, char *name, ...)
 
     define_class(name, class);
 }
+#if _USING_PROTOTYPES_
+void init_builtin_class(obj_t class, char *name, ...)
+{
+    va_list ap;
+
+    va_start(ap, name);
+    vinit_builtin_class(class, name, ap);
+    va_end(ap);
+}
+#else
+void init_builtin_class(va_alist) va_dcl
+{
+    va_list ap;
+    obj_t class;
+    char *name;
+
+    va_start(ap);
+    class = va_arg(ap, obj_t);
+    name = va_arg(ap, char *);
+    vinit_builtin_class(class, name, ap);
+    va_end(ap);
+}
+#endif
 
 
 /* Dylan functions. */

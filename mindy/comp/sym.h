@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.6 1994/07/11 20:06:45 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.7 1994/10/05 20:56:12 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -32,7 +32,7 @@ struct symbol {
     unsigned hash;
     struct symbol *next;
     int handle;
-    unsigned char name[0];
+    unsigned char name[1];
 };
 
 extern struct symbol *symbol(char *name);

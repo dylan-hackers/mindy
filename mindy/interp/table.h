@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.h,v 1.2 1994/06/27 16:32:35 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/table.h,v 1.3 1994/10/05 21:04:39 nkramer Exp $
 *
 \**********************************************************************/
 

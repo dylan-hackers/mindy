@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.15 1994/08/18 21:35:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.16 1994/10/05 20:56:05 nkramer Exp $
 *
 \**********************************************************************/
 

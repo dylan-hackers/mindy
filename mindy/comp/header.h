@@ -23,10 +23,10 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/header.h,v 1.2 1994/06/27 16:49:24 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/header.h,v 1.3 1994/10/05 20:55:06 nkramer Exp $
 *
 \**********************************************************************/
 
 
 void add_header_handler(char *key, void (*func)(char *value));
-void read_header(FILE *file);
+void process_header(char *key, char *value);

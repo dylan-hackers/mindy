@@ -23,12 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.8 1994/06/27 16:32:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.9 1994/10/05 21:03:59 nkramer Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
 *
 \**********************************************************************/
+
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "thread.h"

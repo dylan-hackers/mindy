@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.h,v 1.3 1994/06/27 16:32:34 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.h,v 1.4 1994/10/05 21:04:34 nkramer Exp $
 *
 \**********************************************************************/
 

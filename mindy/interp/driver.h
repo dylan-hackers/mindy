@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.h,v 1.3 1994/06/27 16:31:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.h,v 1.4 1994/10/05 21:01:48 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -42,5 +42,10 @@ extern void wait_for_input(struct thread *thread, int fd,
 extern void wait_for_output(struct thread *thread, int fd,
 			    void (*advance)(struct thread *thread));
 
+extern void set_signal_handler(int sig, void (*handler)(void));
+extern void clear_signal_handler(int sig);
+extern void unblock_signal_handler(int sig);
+
 extern void set_interrupt_handler(void (*handler)(void));
 extern void clear_interrupt_handler(void);
+extern void unblock_interrupt_handler(void);

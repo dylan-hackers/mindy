@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.h,v 1.3 1994/08/30 21:51:56 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.h,v 1.4 1994/10/05 21:01:21 nkramer Exp $
 *
 \**********************************************************************/
 

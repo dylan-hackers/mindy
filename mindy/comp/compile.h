@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.h,v 1.4 1994/06/27 16:49:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.h,v 1.5 1994/10/05 20:54:20 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -32,7 +32,7 @@
 struct block {
     struct block *next;
     unsigned char *end;
-    unsigned char bytes[0];
+    unsigned char bytes[1];
 };
 
 struct debug_info {

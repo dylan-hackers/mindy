@@ -23,14 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.6 1994/06/27 16:32:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/list.c,v 1.7 1994/10/05 21:03:42 nkramer Exp $
 *
 * This file implements lists.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <stdarg.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -75,25 +74,49 @@ obj_t list3(obj_t x, obj_t y, obj_t z)
     return pair(x, list2(y, z));
 }
 
-obj_t listn(int n, ...)
+static obj_t vlistn(int n, va_list ap)
 {
-    va_list ap;
     obj_t res, *tail = &res;
     int i;
 
-    va_start(ap, n);
     for (i = 0; i < n; i ++) {
 	obj_t new = list1(va_arg(ap, obj_t));
 	*tail = new;
 	tail = &TAIL(new);
     }
-    va_end(ap);
 
     *tail = obj_Nil;
 
     return res;
 }
 
+#if _USING_PROTOTYPES_
+obj_t listn(int n, ...)
+{
+    va_list ap;
+    obj_t res;
+
+    va_start(ap, n);
+    res = vlistn(n, ap);
+    va_end(ap);
+
+    return res;
+}
+#else
+obj_t listn(va_alist) va_dcl
+{
+    va_list ap;
+    int n;
+    obj_t res;
+
+    va_start(ap);
+    n = va_arg(ap, int);
+    res = vlistn(n, ap);
+    va_end(ap);
+
+    return res;
+}
+#endif
 
 boolean memq(obj_t o, obj_t list)
 {

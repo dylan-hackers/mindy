@@ -23,39 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.14 1994/07/26 18:32:48 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.15 1994/10/05 21:02:19 nkramer Exp $
 *
 * This file implements getc.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/errno.h>
-#ifdef MACH
-extern void bzero(void *ptr, size_t bytes);
-extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
-		  fd_set *except_fds, struct timeval *timeout);
-#endif
-#if defined(__osf__) || defined(ultrix) || defined(sparc)
-extern void bzero(char *string, int length);
-extern int select(int nfds, fd_set *readfds, fd_set *writefds,
-		  fd_set *exceptfds, struct timeval *timeout);
-#endif
-#ifdef sparc
-#include <errno.h>
-#endif
-#ifdef sgi
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-#include <sys/types.h>
-#include <bstring.h>
-#include <sys/time.h>
-#include <errno.h>
-#endif
+#include "../compat/std-c.h"
+#include "../compat/std-os.h"
 
 #include "mindy.h"
 #include "char.h"
@@ -69,12 +44,7 @@ extern int select(int nfds, fd_set *readfds, fd_set *writefds,
 
 static void getc_or_wait(struct thread *thread)
 {
-    if (
-#ifdef linux
-        stdin->_IO_read_ptr >= stdin->_IO_read_end
-#else
-        stdin->_cnt == 0
-#endif
+    if (FBUFEMPTYP(stdin)
         && !feof(stdin)) {
 	int fd = fileno(stdin);
 	fd_set fds;
@@ -85,11 +55,8 @@ static void getc_or_wait(struct thread *thread)
 	FD_SET(fd, &fds);
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
-#ifdef hpux
-	nfound = select(fd+1, (int *)&fds, NULL, NULL, &tv);
-#else
+
 	nfound = select(fd+1, &fds, NULL, NULL, &tv);
-#endif
 
 	if (nfound < 0) {
 	    switch (errno) {

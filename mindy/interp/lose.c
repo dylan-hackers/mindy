@@ -23,29 +23,45 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lose.c,v 1.3 1994/06/27 16:32:15 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lose.c,v 1.4 1994/10/05 21:03:54 nkramer Exp $
 *
 * This file contains lose, the interal flame-out routine.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 
-void lose(char *fmt, ...)
+static void vlose(char *fmt, va_list ap)
 {
-    va_list ap;
-
     if (fmt != NULL) {
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+        vfprintf(stderr, fmt, ap);
 	fflush(stderr);
-	va_end(ap);
 	if (fmt[strlen(fmt)-1] != '\n')
 	    putc('\n', stderr);
     }
     abort();
 }
+
+#if _USING_PROTOTYPES_
+void lose(char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    vlose(fmt, ap);
+    va_end(ap);
+}
+#else
+void lose(va_alist) va_dcl
+{
+    va_list ap;
+    char *fmt;
+    va_start(ap);
+    fmt = va_arg(ap, char *);
+    vlose(fmt, ap);
+    va_end(ap);
+}
+#endif
+

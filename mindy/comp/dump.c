@@ -23,25 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.18 1994/07/26 18:36:15 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.19 1994/10/05 20:54:22 nkramer Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#ifdef ultrix
-#include <sys/types.h>
-#endif
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <time.h>
-#include <limits.h>
-#include <string.h>
-
-#ifdef sparc
-extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
-#endif
+#include "../compat/std-c.h"
+#include "../compat/std-os.h"
 
 #include "mindycomp.h"
 #include "src.h"
@@ -78,7 +67,7 @@ inline static void dump_bytes(void *ptr, int bytes)
 
     while (bytes > 0) {
 	count = fwrite(ptr, 1, bytes, File);
-	ptr += count;
+	ptr = (char *)ptr + count;
 	bytes -= count;
     }
 }
@@ -166,8 +155,8 @@ static void dump_symbol(struct symbol *symbol)
 	dump_ref(symbol->handle);
     else {
 	symbol->handle = implicit_store();
-	dump_string_guts(fop_SHORT_SYMBOL, fop_SYMBOL, symbol->name,
-			 strlen(symbol->name));
+	dump_string_guts(fop_SHORT_SYMBOL, fop_SYMBOL, (char *)symbol->name,
+			 strlen((char *)symbol->name));
     }
 }
 
@@ -210,7 +199,7 @@ static void dump_character_literal(struct character_literal *literal)
 
 static void dump_string_literal(struct string_literal *literal)
 {
-    dump_string_guts(fop_SHORT_STRING, fop_STRING, literal->chars,
+    dump_string_guts(fop_SHORT_STRING, fop_STRING, (char *)literal->chars,
 		     literal->length);
 }
 
@@ -574,19 +563,22 @@ static void dump_defnamespace(struct defnamespace_constituent *c,
 void dump_setup_output(char *source, FILE *file)
 {
     struct stat buf;
-    struct timeval tv;
+    time_t tv;
     int statres;
 
     File = file;
 
+#if ! NO_SHARP_BANG
+    fprintf(File, "#!%s/mindy -x\n", BINDIR);
+#endif
     fprintf(File, "# %s (%d.%d) of %s\n", ParseOnly ? "parse" : "compilation",
 	    file_MajorVersion, file_MinorVersion, source);
     statres = stat(source, &buf);
     if (statres >= 0)
 	fprintf(File, "# last modified on %s", ctime(&buf.st_mtime));
     fprintf(File, "# produced with the %s version of mindycomp\n", Version);
-    gettimeofday(&tv, NULL);
-    fprintf(File, "# at %s", ctime(&tv.tv_sec));
+    time(&tv);
+    fprintf(File, "# at %s", ctime(&tv));
 
     dump_op(fop_HEADER);
     dump_byte(file_MajorVersion);

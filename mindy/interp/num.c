@@ -23,13 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.11 1994/06/27 16:32:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.12 1994/10/05 21:04:08 nkramer Exp $
 *
 * This file implements numbers.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
+
 #include <math.h>
 
 #include "mindy.h"
@@ -352,7 +353,7 @@ static obj_t dylan_logand(obj_t x, obj_t y)
     return make_fixnum(fixnum_value(x) & fixnum_value(y));
 }
 
-static obj_t dylan_logbitp(obj_t x, obj_t index)
+static obj_t dylan_logbitp(obj_t index, obj_t x)
 {
     if (fixnum_value(x) & (1 << fixnum_value(index)))
 	return obj_True;
@@ -446,12 +447,7 @@ static void dylan_sf_sf_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     float x = single_value(args[0]);
-#ifdef hpux
-    /* There is apparently no rint on the hps. */
-    int res = floor(x+0.5);
-#else
     int res = rint(x);
-#endif
 
     thread->sp = old_sp + 2;
 
@@ -564,12 +560,7 @@ static void dylan_df_df_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     double x = double_value(args[0]);
-#ifdef hpux
-    /* There is apparently no rint on the hps. */
-    int res = floor(x+0.5);
-#else
     int res = rint(x);
-#endif
 
     thread->sp = old_sp + 2;
 

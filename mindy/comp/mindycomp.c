@@ -23,15 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.8 1994/06/27 16:49:37 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.9 1994/10/05 20:55:29 nkramer Exp $
 *
 * This file is the main driver.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
+#include "../compat/std-c.h"
+#include "../compat/std-os.h"
 
 #include "mindycomp.h"
 #include "parser.h"
@@ -51,42 +50,84 @@ struct body *Program = NULL;
 struct symbol *LibraryName = NULL;
 struct symbol *ModuleName = NULL;
 boolean ParseOnly = FALSE;
+boolean GiveWarnings = TRUE;
 
 char *current_file = "<stdin>";
 
 static int nerrors = 0;
 
-void error(int line, char *msg, ...)
+static void verror(int line, char *msg, va_list ap)
 {
-    va_list ap;
-
     fprintf(stderr, "%s:%d: error: ", current_file, line);
-    va_start(ap, msg);
     vfprintf(stderr, msg, ap);
-    va_end(ap);
     if (msg[strlen(msg)-1] != '\n')
 	putc('\n', stderr);
 
     nerrors++;
 }
-
-void warn(int line, char *msg, ...)
+#if _USING_PROTOTYPES_
+void error(int line, char *msg, ...)
 {
     va_list ap;
 
-    fprintf(stderr, "%s:%d: warning: ", current_file, line);
     va_start(ap, msg);
-    vfprintf(stderr, msg, ap);
+    verror(line, msg, ap);
     va_end(ap);
+}
+#else
+void error(va_alist) va_dcl
+{
+    va_list ap;
+    int line;
+    char *msg;
+
+    va_start(ap);
+    line = va_arg(ap, int);
+    msg = va_arg(ap, char *);
+    verror(line, msg, ap);
+    va_end(ap);
+}
+#endif
+
+static void vwarn(int line, char *msg, va_list ap)
+{
+    if ( ! GiveWarnings)
+        return;
+    fprintf(stderr, "%s:%d: warning: ", current_file, line);
+    vfprintf(stderr, msg, ap);
     if (msg[strlen(msg)-1] != '\n')
 	putc('\n', stderr);
 }
 
+#if _USING_PROTOTYPES_
+void warn(int line, char *msg, ...)
+{
+    va_list ap;
+
+    va_start(ap, msg);
+    vwarn(line, msg, ap);
+    va_end(ap);
+}
+#else
+void warn(va_alist) va_dcl
+{
+    va_list ap;
+    int line;
+    char *msg;
+
+    va_start(ap);
+    line = va_arg(ap, int);
+    msg = va_arg(ap, char *);
+    vwarn(line, msg, ap);
+    va_end(ap);
+}
+#endif
 
 static void usage(void)
 {
     fprintf(stderr, "usage: mindycomp [-d[p][e]] [-l library-name] "
 	    "[-o object-name] [-p] source-name\n");
+    fprintf(stderr, "or:    mindycomp -x source-name [args ...]\n");
     exit(1);
 }
 
@@ -97,6 +138,23 @@ static void set_module(char *value)
 	exit(1);
     }
     ModuleName = symbol(value);
+}
+
+static void set_library(char *value)
+{
+    if (LibraryName) {
+	fprintf(stderr, "multiple library: file headers.\n");
+	exit(1);
+    }
+    LibraryName = symbol(value);
+}
+
+static void end_of_headers(char *value)
+{
+    if ( ! ModuleName) {
+        warn(line_count-1, "no module: header, assuming Dylan-User\n");
+	ModuleName = sym_DylanUser;
+    }
 }
 
 static char *find_extension(char *source)
@@ -132,6 +190,8 @@ void main(int argc, char *argv[])
     FILE *file;
 
     add_header_handler("module", set_module);
+    add_header_handler("library", set_library);
+    add_header_handler(NULL, end_of_headers);
 
     init_sym_table();
     init_info();
@@ -209,6 +269,10 @@ void main(int argc, char *argv[])
 		ParseOnly = TRUE;
 		break;
 
+	      case 'q':
+		GiveWarnings = FALSE;
+		break;
+
 	      default:
 		fprintf(stderr, "Invalid flag: ``%s''\n", arg);
 		usage();
@@ -232,20 +296,7 @@ void main(int argc, char *argv[])
 	exit(1);
     }
 
-    /* This hack is necessary because flex ignores everything in the */
-    /* stdio buffer, so we can't have touched the stream before calling */
-    /* yyparse. */
-    file = fopen(source_name, "r");
-    read_header(file);
-    fseek(yyin, ftell(file), 0);
-    fclose(file);
-
     current_file = source_name;
-
-    if (ModuleName == NULL) {
-	warn(line_count-1, "no module: header, assuming Dylan-User\n");
-	ModuleName = sym_DylanUser;
-    }
 
     yyparse();
 
@@ -279,7 +330,12 @@ void main(int argc, char *argv[])
 	output_name = make_output_name(source_name,
 				       ParseOnly ? ".parse" : ".dbc");
 
-    file = fopen(output_name, "w");
+
+    if (strcmp(output_name, "-") == 0)
+        file = stdout;
+    else
+        file = fopen(output_name, "w");
+
     if (file == NULL) {
 	perror(output_name);
 	exit(1);

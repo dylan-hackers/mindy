@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.h,v 1.2 1994/06/27 16:49:28 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.h,v 1.3 1994/10/05 20:55:18 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -34,7 +34,23 @@ extern FILE *yyin;
 struct token {
     int length;
     int line;
-    unsigned char chars[0];
+    unsigned char chars[4];
 };
 
+extern struct token *make_token();
+
 extern int line_count;
+
+/*
+ * This file is somewhat fragile.  The flex generated lexer introduces
+ * all sorts of gotchas into the compatability code, because it includes
+ * unsanitized versions of headers before and after it gives control to
+ * user code.  This definition supplies boolean if mindycomp.h has not
+ * been previously included.
+ */
+
+#ifndef TRUE
+typedef int boolean;
+#define TRUE 1
+#define FALSE 0
+#endif

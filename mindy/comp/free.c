@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/free.c,v 1.4 1994/06/27 16:49:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/free.c,v 1.5 1994/10/05 20:54:56 nkramer Exp $
 *
 * This file frees parts of the parse tree.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "src.h"

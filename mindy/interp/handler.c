@@ -23,11 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.6 1994/06/27 16:31:56 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.c,v 1.7 1994/10/05 21:02:06 nkramer Exp $
 *
 * This file implements the low level support for exception handlers.
 *
 \**********************************************************************/
+
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "class.h"

@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.4 1994/06/27 16:31:24 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.c,v 1.5 1994/10/05 20:57:39 nkramer Exp $
 *
 * This file implements the booleans, #t and #f.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "print.h"

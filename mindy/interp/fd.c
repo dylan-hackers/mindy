@@ -23,79 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.19 1994/08/30 21:55:51 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.20 1994/10/05 21:01:54 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <errno.h>
-#include <sys/file.h>
-#ifdef MACH
-#define alloca buttplug1
-#define pause buttplug2
-#define execvp buttplug3
-#include <libc.h>
-#undef alloca
-#undef pause
-#undef execvp
-extern int execvp(const char *, char *const []);
-#endif MACH
-#ifdef hpux
-#include <stdlib.h>
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-#include <fcntl.h>
-/* hpux doesn't define these for some reason. */
-extern int sys_nerr;
-extern char *sys_errlist[];
-#endif hpux
-#if defined(__osf__) || defined(ultrix)
-#include <stdlib.h>
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-#include <fcntl.h>
-extern void bzero(char *string, int length);
-extern int select(int nfds, fd_set *readfds, fd_set *writefds,
-		  fd_set *exceptfds, struct timeval *timeout);
-extern int fsync(int filedes);
-#endif
-#ifdef sgi
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <bstring.h>
-#include <stdlib.h>
-#endif sgi
-#ifdef ultrix
-extern int sys_nerr;
-extern char *sys_errlist[];
-#endif ultrix
-#ifdef linux
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-#endif
-#ifdef sparc
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-extern void bzero(char *string, int length);
-extern int select(int nfds, fd_set *readfds, fd_set *writefds,
-		  fd_set *exceptfds, struct timeval *timeout);
-extern int sys_nerr;
-extern char *sys_errlist[];
-#include <malloc.h>
-#include <fcntl.h>
-#endif
+#include "../compat/std-c.h"
+#include "../compat/std-os.h"
 
 #include "mindy.h"
 #include "list.h"
@@ -135,10 +70,7 @@ static void fd_close(obj_t self, struct thread *thread, obj_t *args)
 
 static obj_t fd_error_str(obj_t errno)
 {
-    if (fixnum_value(errno) < 0 || fixnum_value(errno) >= sys_nerr)
-	return obj_False;
-    else
-	return make_byte_string(sys_errlist[fixnum_value(errno)]);
+  return make_byte_string(strerror(fixnum_value(errno)));
 }
 
 static int input_available(int fd)
@@ -150,11 +82,7 @@ static int input_available(int fd)
     FD_SET(fd, &fds);
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-#ifdef hpux
-    return select(fd+1, (int *)&fds, NULL, NULL, &tv);
-#else
     return select(fd+1, &fds, NULL, NULL, &tv);
-#endif
 }
 
 static void fd_input_available(obj_t self, struct thread *thread, obj_t *args)
@@ -171,7 +99,7 @@ static void fd_open(obj_t self, struct thread *thread, obj_t *args)
     obj_t flags = args[1];
     int res;
 
-    res = open(string_chars(path), fixnum_value(flags), 0666);
+    res = open((char *)string_chars(path), fixnum_value(flags), 0666);
 
     results(thread, args-1, res, make_fixnum(res));
 }
@@ -246,11 +174,7 @@ static void maybe_write(struct thread *thread)
     FD_SET(fd, &fds);
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-#ifdef hpux
-    nfound = select(fd+1, NULL, (int *)&fds, NULL, &tv);
-#else
     nfound = select(fd+1, NULL, &fds, NULL, &tv);
-#endif
 
     if (nfound < 0)
 	if (errno != EINTR) {
@@ -298,7 +222,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 	    /* This process is going to exit shortly, so we needn't be too
 	       careful about malloc behavior, nor about the fact that we
 	       destructively modify the command string. */
-	    char *command = string_chars(args[0]);
+	    char *command = (char *)string_chars(args[0]);
 	    char *p, **args;
 	    int argcounter = 1;
 
@@ -318,7 +242,6 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 		}
 	    }
 	    args[argcounter] = 0;
-
 	    close(0);
 	    dup(inpipes[0]);
 	    close(inpipes[0]);
@@ -438,30 +361,417 @@ void init_fd_functions(void)
     define_constant("O_TRUNC", make_fixnum(O_TRUNC));
     define_constant("O_EXCL", make_fixnum(O_EXCL));
 
-    define_constant("ENOENT", make_fixnum(ENOENT));
-    define_constant("EIO", make_fixnum(EIO));
-    define_constant("ENXIO", make_fixnum(ENXIO));
-    define_constant("EACCES", make_fixnum(EACCES));
-    define_constant("EFAULT", make_fixnum(EFAULT));
-    define_constant("EEXIST", make_fixnum(EEXIST));
-    define_constant("ENOTDIR", make_fixnum(ENOTDIR));
-    define_constant("EISDIR", make_fixnum(EISDIR));
-    define_constant("EINVAL", make_fixnum(EINVAL));
-    define_constant("ENFILE", make_fixnum(ENFILE));
-    define_constant("EMFILE", make_fixnum(EMFILE));
-    define_constant("ETXTBSY", make_fixnum(ETXTBSY));
-    define_constant("ENOSPC", make_fixnum(ENOSPC));
-    define_constant("EROFS", make_fixnum(EROFS));
-    define_constant("EOPNOTSUPP", make_fixnum(EOPNOTSUPP));
-    define_constant("ELOOP", make_fixnum(ELOOP));
-    define_constant("ENAMETOOLONG", make_fixnum(ENAMETOOLONG));
-    define_constant("EDQUOT", make_fixnum(EDQUOT));
-
-    define_constant("EBADF", make_fixnum(EBADF));
-
-    define_constant("EINTR", make_fixnum(EINTR));
-    define_constant("EWOULDBLOCK", make_fixnum(EWOULDBLOCK));
-
-    define_constant("EPIPE", make_fixnum(EPIPE));
-    define_constant("EFBIG", make_fixnum(EFBIG));
+    /* This compendium of error numbers comes from Tcl. */
+#ifdef E2BIG
+    define_constant("E2BIG", make_fixnum(E2BIG)); 
+#endif
+#ifdef EACCES
+    define_constant("EACCES", make_fixnum(EACCES)); 
+#endif
+#ifdef EADDRINUSE
+    define_constant("EADDRINUSE", make_fixnum(EADDRINUSE)); 
+#endif
+#ifdef EADDRNOTAVAIL
+    define_constant("EADDRNOTAVAIL", make_fixnum(EADDRNOTAVAIL)); 
+#endif
+#ifdef EADV
+    define_constant("EADV", make_fixnum(EADV)); 
+#endif
+#ifdef EAFNOSUPPORT
+    define_constant("EAFNOSUPPORT", make_fixnum(EAFNOSUPPORT)); 
+#endif
+#ifdef EAGAIN
+    define_constant("EAGAIN", make_fixnum(EAGAIN)); 
+#endif
+#ifdef EALIGN
+    define_constant("EALIGN", make_fixnum(EALIGN)); 
+#endif
+#ifdef EALREADY
+    define_constant("EALREADY", make_fixnum(EALREADY)); 
+#endif
+#ifdef EBADE
+    define_constant("EBADE", make_fixnum(EBADE)); 
+#endif
+#ifdef EBADF
+    define_constant("EBADF", make_fixnum(EBADF)); 
+#endif
+#ifdef EBADFD
+    define_constant("EBADFD", make_fixnum(EBADFD)); 
+#endif
+#ifdef EBADMSG
+    define_constant("EBADMSG", make_fixnum(EBADMSG)); 
+#endif
+#ifdef EBADR
+    define_constant("EBADR", make_fixnum(EBADR)); 
+#endif
+#ifdef EBADRPC
+    define_constant("EBADRPC", make_fixnum(EBADRPC)); 
+#endif
+#ifdef EBADRQC
+    define_constant("EBADRQC", make_fixnum(EBADRQC)); 
+#endif
+#ifdef EBADSLT
+    define_constant("EBADSLT", make_fixnum(EBADSLT)); 
+#endif
+#ifdef EBFONT
+    define_constant("EBFONT", make_fixnum(EBFONT)); 
+#endif
+#ifdef EBUSY
+    define_constant("EBUSY", make_fixnum(EBUSY)); 
+#endif
+#ifdef ECHILD
+    define_constant("ECHILD", make_fixnum(ECHILD)); 
+#endif
+#ifdef ECHRNG
+    define_constant("ECHRNG", make_fixnum(ECHRNG)); 
+#endif
+#ifdef ECOMM
+    define_constant("ECOMM", make_fixnum(ECOMM)); 
+#endif
+#ifdef ECONNABORTED
+    define_constant("ECONNABORTED", make_fixnum(ECONNABORTED)); 
+#endif
+#ifdef ECONNREFUSED
+    define_constant("ECONNREFUSED", make_fixnum(ECONNREFUSED)); 
+#endif
+#ifdef ECONNRESET
+    define_constant("ECONNRESET", make_fixnum(ECONNRESET)); 
+#endif
+#if defined(EDEADLK) && (!defined(EWOULDBLOCK) || (EDEADLK != EWOULDBLOCK))
+    define_constant("EDEADLK", make_fixnum(EDEADLK)); 
+#endif
+#ifdef EDEADLOCK
+    define_constant("EDEADLOCK", make_fixnum(EDEADLOCK)); 
+#endif
+#ifdef EDESTADDRREQ
+    define_constant("EDESTADDRREQ", make_fixnum(EDESTADDRREQ)); 
+#endif
+#ifdef EDIRTY
+    define_constant("EDIRTY", make_fixnum(EDIRTY)); 
+#endif
+#ifdef EDOM
+    define_constant("EDOM", make_fixnum(EDOM)); 
+#endif
+#ifdef EDOTDOT
+    define_constant("EDOTDOT", make_fixnum(EDOTDOT)); 
+#endif
+#ifdef EDQUOT
+    define_constant("EDQUOT", make_fixnum(EDQUOT)); 
+#endif
+#ifdef EDUPPKG
+    define_constant("EDUPPKG", make_fixnum(EDUPPKG)); 
+#endif
+#ifdef EEXIST
+    define_constant("EEXIST", make_fixnum(EEXIST)); 
+#endif
+#ifdef EFAULT
+    define_constant("EFAULT", make_fixnum(EFAULT)); 
+#endif
+#ifdef EFBIG
+    define_constant("EFBIG", make_fixnum(EFBIG)); 
+#endif
+#ifdef EHOSTDOWN
+    define_constant("EHOSTDOWN", make_fixnum(EHOSTDOWN)); 
+#endif
+#ifdef EHOSTUNREACH
+    define_constant("EHOSTUNREACH", make_fixnum(EHOSTUNREACH)); 
+#endif
+#ifdef EIDRM
+    define_constant("EIDRM", make_fixnum(EIDRM)); 
+#endif
+#ifdef EINIT
+    define_constant("EINIT", make_fixnum(EINIT)); 
+#endif
+#ifdef EINPROGRESS
+    define_constant("EINPROGRESS", make_fixnum(EINPROGRESS)); 
+#endif
+#ifdef EINTR
+    define_constant("EINTR", make_fixnum(EINTR)); 
+#endif
+#ifdef EINVAL
+    define_constant("EINVAL", make_fixnum(EINVAL)); 
+#endif
+#ifdef EIO
+    define_constant("EIO", make_fixnum(EIO)); 
+#endif
+#ifdef EISCONN
+    define_constant("EISCONN", make_fixnum(EISCONN)); 
+#endif
+#ifdef EISDIR
+    define_constant("EISDIR", make_fixnum(EISDIR)); 
+#endif
+#ifdef EISNAME
+    define_constant("EISNAM", make_fixnum(EISNAM)); 
+#endif
+#ifdef ELBIN
+    define_constant("ELBIN", make_fixnum(ELBIN)); 
+#endif
+#ifdef EL2HLT
+    define_constant("EL2HLT", make_fixnum(EL2HLT)); 
+#endif
+#ifdef EL2NSYNC
+    define_constant("EL2NSYNC", make_fixnum(EL2NSYNC)); 
+#endif
+#ifdef EL3HLT
+    define_constant("EL3HLT", make_fixnum(EL3HLT)); 
+#endif
+#ifdef EL3RST
+    define_constant("EL3RST", make_fixnum(EL3RST)); 
+#endif
+#ifdef ELIBACC
+    define_constant("ELIBACC", make_fixnum(ELIBACC)); 
+#endif
+#ifdef ELIBBAD
+    define_constant("ELIBBAD", make_fixnum(ELIBBAD)); 
+#endif
+#ifdef ELIBEXEC
+    define_constant("ELIBEXEC", make_fixnum(ELIBEXEC)); 
+#endif
+#ifdef ELIBMAX
+    define_constant("ELIBMAX", make_fixnum(ELIBMAX)); 
+#endif
+#ifdef ELIBSCN
+    define_constant("ELIBSCN", make_fixnum(ELIBSCN)); 
+#endif
+#ifdef ELNRNG
+    define_constant("ELNRNG", make_fixnum(ELNRNG)); 
+#endif
+#ifdef ELOOP
+    define_constant("ELOOP", make_fixnum(ELOOP)); 
+#endif
+#ifdef EMFILE
+    define_constant("EMFILE", make_fixnum(EMFILE)); 
+#endif
+#ifdef EMLINK
+    define_constant("EMLINK", make_fixnum(EMLINK)); 
+#endif
+#ifdef EMSGSIZE
+    define_constant("EMSGSIZE", make_fixnum(EMSGSIZE)); 
+#endif
+#ifdef EMULTIHOP
+    define_constant("EMULTIHOP", make_fixnum(EMULTIHOP)); 
+#endif
+#ifdef ENAMETOOLONG
+    define_constant("ENAMETOOLONG", make_fixnum(ENAMETOOLONG)); 
+#endif
+#ifdef ENAVAIL
+    define_constant("ENAVAIL", make_fixnum(ENAVAIL)); 
+#endif
+#ifdef ENET
+    define_constant("ENET", make_fixnum(ENET)); 
+#endif
+#ifdef ENETDOWN
+    define_constant("ENETDOWN", make_fixnum(ENETDOWN)); 
+#endif
+#ifdef ENETRESET
+    define_constant("ENETRESET", make_fixnum(ENETRESET)); 
+#endif
+#ifdef ENETUNREACH
+    define_constant("ENETUNREACH", make_fixnum(ENETUNREACH)); 
+#endif
+#ifdef ENFILE
+    define_constant("ENFILE", make_fixnum(ENFILE)); 
+#endif
+#ifdef ENOANO
+    define_constant("ENOANO", make_fixnum(ENOANO)); 
+#endif
+#if defined(ENOBUFS) && (!defined(ENOSR) || (ENOBUFS != ENOSR))
+    define_constant("ENOBUFS", make_fixnum(ENOBUFS)); 
+#endif
+#ifdef ENOCSI
+    define_constant("ENOCSI", make_fixnum(ENOCSI)); 
+#endif
+#ifdef ENODATA
+    define_constant("ENODATA", make_fixnum(ENODATA)); 
+#endif
+#ifdef ENODEV
+    define_constant("ENODEV", make_fixnum(ENODEV)); 
+#endif
+#ifdef ENOENT
+    define_constant("ENOENT", make_fixnum(ENOENT)); 
+#endif
+#ifdef ENOEXEC
+    define_constant("ENOEXEC", make_fixnum(ENOEXEC)); 
+#endif
+#ifdef ENOLCK
+    define_constant("ENOLCK", make_fixnum(ENOLCK)); 
+#endif
+#ifdef ENOLINK
+    define_constant("ENOLINK", make_fixnum(ENOLINK)); 
+#endif
+#ifdef ENOMEM
+    define_constant("ENOMEM", make_fixnum(ENOMEM)); 
+#endif
+#ifdef ENOMSG
+    define_constant("ENOMSG", make_fixnum(ENOMSG)); 
+#endif
+#ifdef ENONET
+    define_constant("ENONET", make_fixnum(ENONET)); 
+#endif
+#ifdef ENOPKG
+    define_constant("ENOPKG", make_fixnum(ENOPKG)); 
+#endif
+#ifdef ENOPROTOOPT
+    define_constant("ENOPROTOOPT", make_fixnum(ENOPROTOOPT)); 
+#endif
+#ifdef ENOSPC
+    define_constant("ENOSPC", make_fixnum(ENOSPC)); 
+#endif
+#ifdef ENOSR
+    define_constant("ENOSR", make_fixnum(ENOSR)); 
+#endif
+#if defined(ENOSTR) && (!defined(ENOTTY) || (ENOTTY != ENOSTR))
+    define_constant("ENOSTR", make_fixnum(ENOSTR)); 
+#endif
+#ifdef ENOSYM
+    define_constant("ENOSYM", make_fixnum(ENOSYM)); 
+#endif
+#ifdef ENOSYS
+    define_constant("ENOSYS", make_fixnum(ENOSYS)); 
+#endif
+#ifdef ENOTBLK
+    define_constant("ENOTBLK", make_fixnum(ENOTBLK)); 
+#endif
+#ifdef ENOTCONN
+    define_constant("ENOTCONN", make_fixnum(ENOTCONN)); 
+#endif
+#ifdef ENOTDIR
+    define_constant("ENOTDIR", make_fixnum(ENOTDIR)); 
+#endif
+#if defined(ENOTEMPTY) && (!defined(EEXIST) || (ENOTEMPTY != EEXIST))
+    define_constant("ENOTEMPTY", make_fixnum(ENOTEMPTY)); 
+#endif
+#ifdef ENOTNAM
+    define_constant("ENOTNAM", make_fixnum(ENOTNAM)); 
+#endif
+#ifdef ENOTSOCK
+    define_constant("ENOTSOCK", make_fixnum(ENOTSOCK)); 
+#endif
+#ifdef ENOTTY
+    define_constant("ENOTTY", make_fixnum(ENOTTY)); 
+#endif
+#ifdef ENOTUNIQ
+    define_constant("ENOTUNIQ", make_fixnum(ENOTUNIQ)); 
+#endif
+#ifdef ENXIO
+    define_constant("ENXIO", make_fixnum(ENXIO)); 
+#endif
+#ifdef EOPNOTSUPP
+    define_constant("EOPNOTSUPP", make_fixnum(EOPNOTSUPP)); 
+#endif
+#ifdef EPERM
+    define_constant("EPERM", make_fixnum(EPERM)); 
+#endif
+#ifdef EPFNOSUPPORT
+    define_constant("EPFNOSUPPORT", make_fixnum(EPFNOSUPPORT)); 
+#endif
+#ifdef EPIPE
+    define_constant("EPIPE", make_fixnum(EPIPE)); 
+#endif
+#ifdef EPROCLIM
+    define_constant("EPROCLIM", make_fixnum(EPROCLIM)); 
+#endif
+#ifdef EPROCUNAVAIL
+    define_constant("EPROCUNAVAIL", make_fixnum(EPROCUNAVAIL)); 
+#endif
+#ifdef EPROGMISMATCH
+    define_constant("EPROGMISMATCH", make_fixnum(EPROGMISMATCH)); 
+#endif
+#ifdef EPROGUNAVAIL
+    define_constant("EPROGUNAVAIL", make_fixnum(EPROGUNAVAIL)); 
+#endif
+#ifdef EPROTO
+    define_constant("EPROTO", make_fixnum(EPROTO)); 
+#endif
+#ifdef EPROTONOSUPPORT
+    define_constant("EPROTONOSUPPORT", make_fixnum(EPROTONOSUPPORT)); 
+#endif
+#ifdef EPROTOTYPE
+    define_constant("EPROTOTYPE", make_fixnum(EPROTOTYPE)); 
+#endif
+#ifdef ERANGE
+    define_constant("ERANGE", make_fixnum(ERANGE)); 
+#endif
+#if defined(EREFUSED) && (!defined(ECONNREFUSED) || (EREFUSED != ECONNREFUSED))
+    define_constant("EREFUSED", make_fixnum(EREFUSED)); 
+#endif
+#ifdef EREMCHG
+    define_constant("EREMCHG", make_fixnum(EREMCHG)); 
+#endif
+#ifdef EREMDEV
+    define_constant("EREMDEV", make_fixnum(EREMDEV)); 
+#endif
+#ifdef EREMOTE
+    define_constant("EREMOTE", make_fixnum(EREMOTE)); 
+#endif
+#ifdef EREMOTEIO
+    define_constant("EREMOTEIO", make_fixnum(EREMOTEIO)); 
+#endif
+#ifdef EREMOTERELEASE
+    define_constant("EREMOTERELEASE", make_fixnum(EREMOTERELEASE)); 
+#endif
+#ifdef EROFS
+    define_constant("EROFS", make_fixnum(EROFS)); 
+#endif
+#ifdef ERPCMISMATCH
+    define_constant("ERPCMISMATCH", make_fixnum(ERPCMISMATCH)); 
+#endif
+#ifdef ERREMOTE
+    define_constant("ERREMOTE", make_fixnum(ERREMOTE)); 
+#endif
+#ifdef ESHUTDOWN
+    define_constant("ESHUTDOWN", make_fixnum(ESHUTDOWN)); 
+#endif
+#ifdef ESOCKTNOSUPPORT
+    define_constant("ESOCKTNOSUPPORT", make_fixnum(ESOCKTNOSUPPORT)); 
+#endif
+#ifdef ESPIPE
+    define_constant("ESPIPE", make_fixnum(ESPIPE)); 
+#endif
+#ifdef ESRCH
+    define_constant("ESRCH", make_fixnum(ESRCH)); 
+#endif
+#ifdef ESRMNT
+    define_constant("ESRMNT", make_fixnum(ESRMNT)); 
+#endif
+#ifdef ESTALE
+    define_constant("ESTALE", make_fixnum(ESTALE)); 
+#endif
+#ifdef ESUCCESS
+    define_constant("ESUCCESS", make_fixnum(ESUCCESS)); 
+#endif
+#ifdef ETIME
+    define_constant("ETIME", make_fixnum(ETIME)); 
+#endif
+#ifdef ETIMEDOUT
+    define_constant("ETIMEDOUT", make_fixnum(ETIMEDOUT)); 
+#endif
+#ifdef ETOOMANYREFS
+    define_constant("ETOOMANYREFS", make_fixnum(ETOOMANYREFS)); 
+#endif
+#ifdef ETXTBSY
+    define_constant("ETXTBSY", make_fixnum(ETXTBSY)); 
+#endif
+#ifdef EUCLEAN
+    define_constant("EUCLEAN", make_fixnum(EUCLEAN)); 
+#endif
+#ifdef EUNATCH
+    define_constant("EUNATCH", make_fixnum(EUNATCH)); 
+#endif
+#ifdef EUSERS
+    define_constant("EUSERS", make_fixnum(EUSERS)); 
+#endif
+#ifdef EVERSION
+    define_constant("EVERSION", make_fixnum(EVERSION)); 
+#endif
+#if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+    define_constant("EWOULDBLOCK", make_fixnum(EWOULDBLOCK)); 
+#endif
+#ifdef EXDEV
+    define_constant("EXDEV", make_fixnum(EXDEV)); 
+#endif
+#ifdef EXFULL
+    define_constant("EXFULL", make_fixnum(EXFULL)); 
+#endif
+    
 }

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/byteops.h,v 1.4 1994/06/27 16:49:05 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/byteops.h,v 1.5 1994/10/05 20:53:58 nkramer Exp $
 *
 * This file defines the byte opcodes.
 *

@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.17 1994/08/18 21:35:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.18 1994/10/05 20:54:13 nkramer Exp $
 *
 * This file generates sequences of byte-ops for each method.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "src.h"
@@ -1244,7 +1244,7 @@ static void compile_find_variable_call(struct call_expr *call,
 	lose("find-variable called with the wrong number of arguments?");
 }
 
-static void set_compiler(char *name, void compiler(), boolean internal)
+static void set_compiler(char *name, void (*compiler)(), boolean internal)
 {
     struct id *identifier = id(symbol(name));
     struct function_info *info;

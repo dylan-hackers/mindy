@@ -23,47 +23,16 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.15 1994/07/26 18:32:10 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.16 1994/10/05 21:01:46 nkramer Exp $
 *
 * Main driver routines for mindy.
 *
 \**********************************************************************/
 
+#include "../compat/std-c.h"
+#include "../compat/std-os.h"
+
 #include <setjmp.h>
-#ifdef sgi
-#define _BSD_SIGNALS
-#endif
-#include <signal.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/errno.h>
-#ifdef MACH
-extern void bzero(void *ptr, size_t bytes);
-extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
-		  fd_set *except_fds, struct timeval *timeout);
-#endif
-#if defined(__osf__) || defined(ultrix)
-extern void bzero(char *string, int length);
-extern int select(int nfds, fd_set *readfds, fd_set *writefds,
-		  fd_set *exceptfds, struct timeval *timeout);
-#include <exc_handling.h>
-#endif
-#ifdef sgi
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-#include <bstring.h>
-#include <errno.h>
-#endif
-#ifdef sparc
-extern void bzero(char *string, int length);
-extern int select(int nfds, fd_set *readfds, fd_set *writefds,
-		  fd_set *exceptfds, struct timeval *timeout);
-extern int sigpause(int sigmask);
-#include <errno.h>
-extern int sigvec(int sig, struct sigvec *vec, struct sigvec *ovec);
-#endif
 
 #include "mindy.h"
 #include "gc.h"
@@ -82,33 +51,72 @@ static enum pause_reason PauseReason;
 #define OPS_PER_TIME_SLICE 100
 
 
-/* SIGINT handling. */
+/* signal handling. */
+static void (*SignalHandlers[NSIG])(void) = {0};
+static boolean SignalPending[NSIG] = {0};
+static boolean SignalAction[NSIG] = {0};
+static boolean SignalBlocked[NSIG] = {0};
 
-static void (*InterruptHandler)(void) = NULL;
-static boolean InterruptPending = FALSE;
-
-static void sigint_handler()
+static void signal_handler(int sig)
 {
-    if (InterruptHandler)
-	InterruptHandler();
-    else
-	InterruptPending = TRUE;
+    if (SignalHandlers[sig]) {
+        SignalBlocked[sig] = TRUE;
+	SignalHandlers[sig]();
+        SignalBlocked[sig] = FALSE;
+    } else
+	SignalPending[sig] = TRUE;
+}  
+
+void set_signal_handler(int sig, void(*handler)(void))
+{
+    SignalHandlers[sig] = handler;
+    if (SignalPending[sig]) {
+        SignalPending[sig] = FALSE;
+	handler();
+    }
+    if ( ! SignalAction[sig]) {
+        struct sigaction sa = { 0 };
+	sa.sa_handler = signal_handler;
+	sigaction(sig, &sa, NULL);
+	SignalAction[sig] = TRUE;
+    }
+    if (SignalBlocked[sig])
+      unblock_signal_handler(sig);
 }
+
+void clear_signal_handler(int sig)
+{
+    SignalHandlers[sig] = NULL;
+    if (SignalBlocked[sig])
+      unblock_signal_handler(sig);
+}
+
+void unblock_signal_handler(int sig)
+{
+  sigset_t set;
+
+  SignalBlocked[sig] = FALSE;
+  sigemptyset(&set);
+  sigaddset(&set, sig);
+  sigprocmask(SIG_UNBLOCK, &set, NULL);
+}
+
+/* SIGINT handling. */
 
 void set_interrupt_handler(void (*handler)(void))
 {
-    InterruptHandler = handler;
-    if (InterruptPending) {
-	InterruptPending = FALSE;
-	handler();
-    }
+    set_signal_handler(SIGINT, handler);
 }
 
 void clear_interrupt_handler(void)
 {
-    InterruptHandler = NULL;
+    clear_signal_handler(SIGINT);
 }
 
+void unblock_interrupt_handler(void)
+{
+    unblock_signal_handler(SIGINT);
+}
 
 /* Waiting on file descriptors. */
 
@@ -126,7 +134,7 @@ static void check_fds(boolean block)
 
     if (NumFds == 0) {
 	if (block)
-	    sigpause(0);
+	  sigsuspend(0);
 	return;
     }
 
@@ -141,11 +149,7 @@ static void check_fds(boolean block)
 	tvp = &tv;
     }
 
-#ifdef hpux
-    nfound = select(NumFds, (int *)&readfds, (int *)&writefds, NULL, tvp);
-#else
     nfound = select(NumFds, &readfds, &writefds, NULL, tvp);
-#endif
 
     if (nfound < 0) {
 	switch (errno) {
@@ -352,30 +356,8 @@ static void init_waiters(struct waiters *waiters)
 
 void init_driver()
 {
-#ifdef linux
-    struct sigaction sa;
-#else
-    struct sigvec sv;
-#endif
-
     init_waiters(&Readers);
     init_waiters(&Writers);
     NumFds = 0;
-
-#ifdef linux
-    sa.sa_handler = sigint_handler;
-    sa.sa_mask = 0;
-    sa.sa_flags = 0;
-    sa.sa_restorer = NULL;
-    sigaction(SIGINT, &sa, NULL);
-#else
-    sv.sv_handler = sigint_handler;
-    sv.sv_mask = 0;
-    sv.sv_flags = 0;
-#ifdef hpux
-    sigvector(SIGINT, &sv, NULL);
-#else
-    sigvec(SIGINT, &sv, NULL);
-#endif
-#endif
+    set_interrupt_handler(NULL);
 }

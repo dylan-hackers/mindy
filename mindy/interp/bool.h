@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.h,v 1.2 1994/06/27 16:31:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/bool.h,v 1.3 1994/10/05 21:01:07 nkramer Exp $
 *
 \**********************************************************************/
 

@@ -23,15 +23,15 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.8 1994/07/11 20:06:24 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.9 1994/10/05 20:56:10 nkramer Exp $
 *
 * This file implements symbols.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
+
 #include <ctype.h>
-#include <string.h>
 
 #include "mindycomp.h"
 #include "sym.h"
@@ -161,7 +161,7 @@ static struct symbol *intern(char *name, struct table *table)
     struct symbol *id;
 
     for (id = table->table[index]; id != NULL; id = id->next)
-	if (id->hash == hash && same_name(name, id->name))
+	if (id->hash == hash && same_name(name, (char *)id->name))
 	    return id;
 
     id = malloc(sizeof(struct symbol) + strlen(name) + 1);
@@ -169,7 +169,7 @@ static struct symbol *intern(char *name, struct table *table)
     id->next = table->table[index];
     id->handle = -1;
     table->table[index] = id;
-    strcpy(id->name, name);
+    strcpy((char *)id->name, name);
     
     table->entries++;
     if (table->entries >= table->threshold)
@@ -194,7 +194,7 @@ struct symbol *gensym(void)
     res->hash = (unsigned long)res;
     res->next = NULL;
     res->handle = -1;
-    sprintf(res->name, "g%d", counter++);
+    sprintf((char *)res->name, "g%d", counter++);
 
     if (counter == rollover) {
 	digits++;

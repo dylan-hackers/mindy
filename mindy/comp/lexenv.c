@@ -23,14 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexenv.c,v 1.2 1994/06/27 16:49:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexenv.c,v 1.3 1994/10/05 20:55:13 nkramer Exp $
 *
 * This file implements the stuff to keep track of what is in the lexical
 * environment.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "src.h"

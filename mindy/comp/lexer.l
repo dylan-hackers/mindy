@@ -1,3 +1,4 @@
+%{
 /**********************************************************************\
 *
 *  Copyright (c) 1994  Carnegie Mellon University
@@ -23,29 +24,32 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.11 1994/07/12 20:45:41 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.12 1994/10/05 20:55:19 nkramer Exp $
 *
 * This file is the lexical analizer.
 *
 \**********************************************************************/
 
-%{
-#include <string.h>
-
-#include "mindycomp.h"
+#include <stdio.h>
 #include "lexer.h"
 #include "src.h"
 #include "parser.tab.h"
 
+extern int isatty();
+extern void warn();
+
 int line_count = 1;
 
-#define is(type) \
-    do { yylval.token = make_token(yytext, yyleng); return type; } while(0)
+#define is(type) return (yylval.token = make_token(yytext, yyleng)), type;
 
 static void skip_multi_line_comment(void);
-static struct token *make_token(char *ptr, int len);
-
+static int make_header_key(void);
+static int make_header_val(void);
+static int make_header_end(void);
+  
 %}
+  
+%x ini key val etc
 
 D	[0-9]
 E	[esdx][-+]?{D}+
@@ -65,118 +69,127 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 
 %%
 
-[ \t\f]+	;
-[\n]		line_count++;
+<INITIAL>.			BEGIN(ini); yyless(0);
 
-"//".*		;
-"/*"		skip_multi_line_comment();
+<ini>^#!.*\n			BEGIN(key); warn(line_count, "igoring initial #! interpreter comment\n"); line_count++; 
 
-abstract	is(ABSTRACT);
-above		is(ABOVE);
-begin		is(DBEGIN);
-below		is(BELOW);
-block		is(BLOCK);
-by		is(BY);
-case		is(CASE);
-class		is(CLASS);
-cleanup		is(CLEANUP);
-concrete	is(CONCRETE);
-constant	is(CONSTANT);
-define		is(DEFINE);
-else		is(ELSE);
-elseif		is(ELSEIF);
-end		is(END);
-exception	is(EXCEPTION);
-finally		is(FINALLY);
-for		is(FOR);
-free		is(FREE);
-from		is(FROM);
-generic		is(GENERIC);
-handler		is(HANDLER);
-if		is(IF);
-in		is(IN);
-inherited	is(INHERITED);
-instance	is(INSTANCE);
-keyed-by	is(KEYED_BY);
-keyword		is(KEYWORD_RESERVED_WORD);
-let		is(LET);
-local		is(LOCAL);
-method		is(METHOD);
-open		is(OPEN);
-otherwise	is(OTHERWISE);
-primary		is(PRIMARY);
-required	is(REQUIRED);
-seal		is(SEAL);
-sealed		is(SEALED);
-select		is(SELECT);
-slot		is(SLOT);
-subclass	is(SUBCLASS);
-then		is(THEN);
-to		is(TO);
-unless		is(UNLESS);
-until		is(UNTIL);
-variable	is(VARIABLE);
-virtual		is(VIRTUAL);
-while		is(WHILE);
+<ini,key>^[a-z][-a-z0-9]*:	BEGIN(val); return make_header_key();
+<ini,key>^[ \t]*\n		BEGIN(etc); return make_header_end();
 
-module		is(MODULE);
-library		is(LIBRARY);
-export		is(EXPORT);
-create		is(CREATE);
-use		is(USE);
-all		is(ALL);
+<val>.*\n([ \t]+.+\n)*		BEGIN(key); return make_header_val();
 
-"prefix:"	is(PREFIX_OPTION);
-"import:"	is(IMPORT_OPTION);
-"exclude:"	is(EXCLUDE_OPTION);
-"export:"	is(EXPORT_OPTION);
-"rename:"	is(RENAME_OPTION);
+<etc>[ \t\f]+			;
+<etc>[\n]			line_count++;
 
-"("		is(LPAREN);
-")"		is(RPAREN);
-","		is(COMMA);
-"."		is(DOT);
-";"		is(SEMI);
-"["		is(LBRACKET);
-"]"		is(RBRACKET);
-"{"		is(LBRACE);
-"}"		is(RBRACE);
-"::"		is(COLON_COLON);
-"-"		is(MINUS);
-"~"		is(TILDE);
-"="		is(EQUAL);
-"=="		is(EQUAL_EQUAL);
-"=>"		is(ARROW);
-"#("		is(SHARP_PAREN);
-"#["		is(SHARP_BRACKET);
-"#t"		is(SHARP_T);
-"#f"		is(SHARP_F);
-"#next"		is(NEXT);
-"#rest"		is(REST);
-"#key"		is(KEY);
-"#all-keys"	is(ALL_KEYS);
+<etc>"//".*			;
+<etc>"/*"			skip_multi_line_comment();
 
-[-+]?{D}+	is(INTEGER);
-#x[0-9a-f]+	is(INTEGER);
-#o[0-7]+	is(INTEGER);
-#b[01]+		is(INTEGER);
+<etc>abstract			is(ABSTRACT);
+<etc>above			is(ABOVE);
+<etc>begin			is(DBEGIN);
+<etc>below			is(BELOW);
+<etc>block			is(BLOCK);
+<etc>by				is(BY);
+<etc>case			is(CASE);
+<etc>class			is(CLASS);
+<etc>cleanup			is(CLEANUP);
+<etc>concrete			is(CONCRETE);
+<etc>constant			is(CONSTANT);
+<etc>define			is(DEFINE);
+<etc>else			is(ELSE);
+<etc>elseif			is(ELSEIF);
+<etc>end			is(END);
+<etc>exception			is(EXCEPTION);
+<etc>finally			is(FINALLY);
+<etc>for			is(FOR);
+<etc>free			is(FREE);
+<etc>from			is(FROM);
+<etc>generic			is(GENERIC);
+<etc>handler			is(HANDLER);
+<etc>if				is(IF);
+<etc>in				is(IN);
+<etc>inherited			is(INHERITED);
+<etc>instance			is(INSTANCE);
+<etc>keyed-by			is(KEYED_BY);
+<etc>keyword			is(KEYWORD_RESERVED_WORD);
+<etc>let			is(LET);
+<etc>local			is(LOCAL);
+<etc>method			is(METHOD);
+<etc>open			is(OPEN);
+<etc>otherwise			is(OTHERWISE);
+<etc>primary			is(PRIMARY);
+<etc>required			is(REQUIRED);
+<etc>seal			is(SEAL);
+<etc>sealed			is(SEALED);
+<etc>select			is(SELECT);
+<etc>slot			is(SLOT);
+<etc>subclass			is(SUBCLASS);
+<etc>then			is(THEN);
+<etc>to				is(TO);
+<etc>unless			is(UNLESS);
+<etc>until			is(UNTIL);
+<etc>variable			is(VARIABLE);
+<etc>virtual			is(VIRTUAL);
+<etc>while			is(WHILE);
 
-[-+]?{D}*\.{D}+{E}?	is(FLOAT);
-[-+]?{D}+\.{D}*{E}?	is(FLOAT);
-[-+]?{D}+{E}		is(FLOAT);
+<etc>module			is(MODULE);
+<etc>library			is(LIBRARY);
+<etc>export			is(EXPORT);
+<etc>create			is(CREATE);
+<etc>use			is(USE);
+<etc>all			is(ALL);
 
-'[ -&(-\[\]-~]'		is(CHARACTER);
-'\\['\\abefnrt0]'	is(CHARACTER);
+<etc>"prefix:"			is(PREFIX_OPTION);
+<etc>"import:"			is(IMPORT_OPTION);
+<etc>"exclude:"			is(EXCLUDE_OPTION);
+<etc>"export:"			is(EXPORT_OPTION);
+<etc>"rename:"			is(RENAME_OPTION);
 
-{STR}		is(STRING);
+<etc>"("			is(LPAREN);
+<etc>")"			is(RPAREN);
+<etc>","			is(COMMA);
+<etc>"."			is(DOT);
+<etc>";"			is(SEMI);
+<etc>"["			is(LBRACKET);
+<etc>"]"			is(RBRACKET);
+<etc>"{"			is(LBRACE);
+<etc>"}"			is(RBRACE);
+<etc>"::"			is(COLON_COLON);
+<etc>"-"			is(MINUS);
+<etc>"~"			is(TILDE);
+<etc>"="			is(EQUAL);
+<etc>"=="			is(EQUAL_EQUAL);
+<etc>"=>"			is(ARROW);
+<etc>"#("			is(SHARP_PAREN);
+<etc>"#["			is(SHARP_BRACKET);
+<etc>"#t"			is(SHARP_T);
+<etc>"#f"			is(SHARP_F);
+<etc>"#next"			is(NEXT);
+<etc>"#rest"			is(REST);
+<etc>"#key"			is(KEY);
+<etc>"#all-keys"		is(ALL_KEYS);
 
-{O}		is(BINARY_OPERATOR);
-{N}		is(SYMBOL);
-\\{O}		is(SYMBOL);
-{N}:		is(KEYWORD);
-#{STR}		is(SYMBOL_LITERAL);
+<etc>[-+]?{D}+			is(INTEGER);
+<etc>#x[0-9a-f]+		is(INTEGER);
+<etc>#o[0-7]+			is(INTEGER);
+<etc>#b[01]+			is(INTEGER);
 
-.		is(BOGUS);
+<etc>[-+]?{D}*\.{D}+{E}?	is(FLOAT);
+<etc>[-+]?{D}+\.{D}*{E}?	is(FLOAT);
+<etc>[-+]?{D}+{E}		is(FLOAT);
+
+<etc>'[ -&(-\[\]-~]'		is(CHARACTER);
+<etc>'\\['\\abefnrt0]'		is(CHARACTER);
+
+<etc>{STR}			is(STRING);
+
+<etc>{O}			is(BINARY_OPERATOR);
+<etc>{N}			is(SYMBOL);
+<etc>\\{O}			is(SYMBOL);
+<etc>{N}:			is(KEYWORD);
+<etc>#{STR}			is(SYMBOL_LITERAL);
+
+<ini,key,val,etc>.		is(BOGUS);
 
 %%
 
@@ -218,14 +231,39 @@ static void skip_multi_line_comment(void)
     }
 }
 
-static struct token *make_token(char *ptr, int len)
+static int make_header_key()
 {
-    struct token *token = malloc(sizeof(struct token) + len + 1);
-
-    token->length = len;
-    memcpy(token->chars, ptr, len);
-    token->line = line_count;
-    token->chars[len] = 0;
-
-    return token;
+  yylval.token = make_token(yytext, yyleng-1);
+  return HEADER_KEY;
 }
+static int make_header_val()
+{
+  char *p1, *p2;
+  int skipped = 0;
+
+  for (p1 = p2 = yytext; p1 < yytext + yyleng; ) {
+    /* skip initial spaces */
+    while (p1 < yytext + yyleng && (*p1 == ' ' || *p1 == '\t')) {
+      p1 += 1;
+      skipped += 1;
+    }
+    /* copy to end of line */
+    while (p1 < yytext + yyleng && *p1 != '\n') {
+      *p2++ = *p1++;
+    }
+    /* copy and count newline */
+    *p2++ = *p1++;
+    line_count += 1;
+  }
+  /* make the token, dropping the last newline */
+  yylval.token = make_token(yytext, yyleng - skipped - 1);
+  return HEADER_VAL;
+}
+static int make_header_end()
+{
+  line_count += 1;
+  yylval.token = yylval.token = make_token(yytext, yyleng);
+  return HEADER_END;
+}
+
+int yywrap() { return 1; }

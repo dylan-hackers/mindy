@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.h,v 1.3 1994/08/30 21:51:52 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/str.h,v 1.4 1994/10/05 21:04:30 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -40,7 +40,7 @@ extern obj_t obj_UnicodeStringClass;
 struct string {
     obj_t class;
     int len;
-    unsigned char chars[0];
+    unsigned char chars[4];
 };
 
 /* How you interpret the chars depends on whether its a byte string or 

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.h,v 1.5 1994/06/27 16:49:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.h,v 1.6 1994/10/05 20:54:24 nkramer Exp $
 *
 \**********************************************************************/
 

@@ -23,17 +23,9 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.5 1994/07/26 18:36:03 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.6 1994/10/05 20:55:33 nkramer Exp $
 *
 \**********************************************************************/
-
-#ifdef sparc
-#include <sys/stdtypes.h>
-#endif
-
-extern void *malloc(size_t len);
-extern void *realloc(void *ptr, size_t len);
-extern void free(void *ptr);
 
 typedef int boolean;
 #define TRUE 1
@@ -41,25 +33,10 @@ typedef int boolean;
 
 extern char *current_file;
 extern boolean ParseOnly;
+extern boolean GiveWarnings;
 
-extern void error(int line, char *msg, ...);
-extern void warn(int line, char *msg, ...);
+extern void error _ANSI_ARGS_((int line, char *msg, ...));
+extern void warn _ANSI_ARGS_((int line, char *msg, ...));
 
 extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;
-
-#ifdef sparc
-extern int printf();
-extern int fprintf();
-extern int vfprintf();
-extern int _flsbuf();
-extern int _filbuf();
-extern int fseek();
-extern int fclose();
-extern int fwrite();
-extern void perror();
-extern int fputs();
-extern int tolower();
-extern int fflush();
-extern int ungetc();
-#endif

@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.7 1994/08/30 21:51:54 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.8 1994/10/05 21:01:19 nkramer Exp $
 *
 * This file implements characters.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "obj.h"

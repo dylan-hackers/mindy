@@ -23,13 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.6 1994/08/30 21:56:11 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.7 1994/10/05 21:04:33 nkramer Exp $
 *
 * This file implements symbols.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
+
 #include <ctype.h>
 
 #include "mindy.h"
@@ -139,7 +140,7 @@ static obj_t intern(char *name, struct symtable *table)
 	 sym = obj_ptr(struct symbol *, sym)->next) {
 	if (obj_ptr(struct symbol *, sym)->hash == hash) {
 	    obj_t sym_name = obj_ptr(struct symbol *, sym)->name;
-	    if (same_name(name, obj_ptr(struct string *, sym_name)->chars))
+	    if (same_name(name, (char *)obj_ptr(struct string *, sym_name)->chars))
 		return sym;
 	}
     }
@@ -166,7 +167,7 @@ char *sym_name(obj_t sym)
 {
     obj_t string = obj_ptr(struct symbol *, sym)->name;
 
-    return obj_ptr(struct string *, string)->chars;
+    return (char *)obj_ptr(struct string *, string)->chars;
 }
 
 unsigned sym_hash(obj_t sym)
@@ -182,7 +183,7 @@ unsigned sym_hash(obj_t sym)
 
 static obj_t string_as_symbol(obj_t class, obj_t string)
 {
-    return symbol(obj_ptr(struct string *, string)->chars);
+    return symbol((char *)obj_ptr(struct string *, string)->chars);
 }
 
 static obj_t symbol_as_string(obj_t class, obj_t symbol)

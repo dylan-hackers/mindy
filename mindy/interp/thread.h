@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.4 1994/06/27 16:32:37 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.h,v 1.5 1994/10/05 21:04:45 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -85,7 +85,7 @@ extern void thread_restart(struct thread *thread);
 extern obj_t make_lock(void);
 extern boolean lock_query(obj_t lock);
 extern void lock_grab(struct thread *thread, obj_t lock,
-		      void advance(struct thread *thread));
+		      void (*advance)(struct thread *thread));
 extern void lock_release(obj_t lock);
 
 extern obj_t make_event(void);

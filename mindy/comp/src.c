@@ -23,15 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.22 1994/08/18 21:35:51 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.23 1994/10/05 20:55:59 nkramer Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
 \**********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "sym.h"
@@ -331,7 +329,7 @@ struct id *dup_id(struct id *id)
 
 struct id *make_id(struct token *token)
 {
-    char *ptr = token->chars;
+    char *ptr = (char *)token->chars;
     struct id *res;
 
     if (*ptr == '\\')
@@ -437,7 +435,7 @@ struct keyword_param
     if (key) {
 	/* The keyword token has a trailing : */
 	key->chars[key->length-1] = '\0';
-	res->keyword = symbol(key->chars);
+	res->keyword = symbol((char *)key->chars);
 	free(key);
     }
     else
@@ -688,7 +686,7 @@ struct plist
     key->chars[key->length-1] = '\0';
 
     prop->line = key->line;
-    prop->keyword = symbol(key->chars);
+    prop->keyword = symbol((char *)key->chars);
     prop->expr = expr;
     prop->next = NULL;
 
@@ -785,7 +783,7 @@ struct literal *parse_string_token(struct token *token)
     int i;
     char *src, *dst;
 
-    src = token->chars + 1;
+    src = (char *)token->chars + 1;
     for (i = length; i > 0; i--) {
 	if (*src++ == '\\') {
 	    length--;
@@ -794,15 +792,16 @@ struct literal *parse_string_token(struct token *token)
 	}
     }
 
-    res = malloc(sizeof(struct string_literal) + length + 1);
+    res = malloc(sizeof(struct string_literal) 
+		 + length + 1 - sizeof(res->chars));
 
     res->kind = literal_STRING;
     res->next = NULL;
     res->line = token->line;
     res->length = length;
 
-    src = token->chars + 1;
-    dst = res->chars;
+    src = (char *)token->chars + 1;
+    dst = (char *)res->chars;
     for (i = length; i > 0; i--) {
 	int c = *src++;
 	if (c == '\\')
@@ -822,21 +821,22 @@ struct literal
 {
     struct string_literal *old = (struct string_literal *)old_literal;
     int old_length = old->length;
-    char *old_string = old->chars;
+    char *old_string = (char *)old->chars;
     struct string_literal *res;
     int length = token->length - 2;
     int i;
     char *src, *dst;
 
-    res = malloc(sizeof(struct string_literal) + old_length + length + 1);
+    res = malloc(sizeof(struct string_literal)
+		 + old_length + length + 1 - sizeof(res->chars));
 
     res->kind = literal_STRING;
     res->next = NULL;
     res->line = old_literal->line;
 
-    strncpy(res->chars, old_string, old_length);
-    src = token->chars + 1;
-    dst = res->chars + old_length;
+    strncpy((char *)res->chars, old_string, old_length);
+    src = (char *)token->chars + 1;
+    dst = (char *)res->chars + old_length;
     for (i = 0; i < length; i++) {
 	int c = *src++;
 	if (c == '\\') {
@@ -874,12 +874,12 @@ struct literal *parse_integer_token(struct token *token)
     long value;
     int count, radix = 0;
     boolean negative;
-    char *ptr;
+    char *ptr, *remnant;
     struct literal *res;
 
     value = 0;
     count = token->length;
-    ptr = token->chars;
+    ptr = (char *)token->chars;
     if (*ptr == '#') {
 	switch (ptr[1]) {
 	  case 'x': radix = 16; break;
@@ -908,20 +908,16 @@ struct literal *parse_integer_token(struct token *token)
     if (radix == 0)
 	lose("No radix in integer literal?");
 
-    while (count-- > 0) {
-	int digit = *ptr++;
-	if (digit >= 'a')
-	    digit = digit - 'a' + 10;
-	else if (digit >= 'A')
-	    digit = digit - 'A' + 10;
-	else
-	    digit = digit - '0';
-	if (negative)
-	    value = value * radix - digit;
-	else
-	    value = value * radix + digit;
-    }
+    value = strtoul(ptr, &remnant, radix);
+    if (negative)
+      value = -value;
 
+    if (remnant == ptr)
+      lose("Integer literal did not convert: %s\n", token->chars);
+
+    if (*remnant != 0)
+      lose("Integer literal did not convert completely: %s left %s\n", token->chars, remnant);
+    
     res = make_integer_literal(value);
     res->line = token->line;
 
@@ -932,7 +928,7 @@ struct literal *parse_integer_token(struct token *token)
 
 struct literal *parse_float_token(struct token *token)
 {
-    unsigned char c, *ptr;
+    unsigned char c, *ptr, *remnant;
     enum literal_kind kind = literal_SINGLE_FLOAT;
     struct literal *res = NULL;
 
@@ -960,27 +956,37 @@ struct literal *parse_float_token(struct token *token)
 	{
 	    struct single_float_literal *r = malloc(sizeof(*r));
 	    res = (struct literal *)r;
-	    r->value = atof(token->chars);
+	    r->value = strtod((char *)token->chars, (char **)&remnant);
 	    break;
 	}
       case literal_DOUBLE_FLOAT:
 	{
 	    struct double_float_literal *r = malloc(sizeof(*r));
 	    res = (struct literal *)r;
-	    r->value = atof(token->chars);
+	    r->value = strtod((char *)token->chars, (char **)&remnant);
 	    break;
 	}
       case literal_EXTENDED_FLOAT:
 	{
 	    struct extended_float_literal *r = malloc(sizeof(*r));
 	    res = (struct literal *)r;
-	    r->value = atof(token->chars);
+	    r->value = strtod((char *)token->chars, (char **)&remnant);
 	    break;
 	}
       default:
 	lose("Strange float literal kind.\n");
 	break;
     }
+
+    if (remnant == token->chars)
+      lose("Float literal did not convert: %s\n", token->chars);
+
+    if (*remnant != 0)
+      lose("Float literal did not completely convert: %s left %s\n", token->chars, remnant);
+
+    /* Other possible errors would be indicated by errno == ERANGE:
+     * a result value of +/- HUGE_VAL returned indicates overflow,
+     * a result value of 0 returned indicates underflow. */
 
     res->kind = kind;
     res->next = NULL;
@@ -993,7 +999,7 @@ struct literal *parse_float_token(struct token *token)
 
 struct literal *parse_symbol_token(struct token *token)
 {
-    char *ptr = token->chars;
+    char *ptr = (char *)token->chars;
     struct literal *res;
 
     /* We modify the token here, but we don't care 'cause we will be */
@@ -1013,7 +1019,7 @@ struct literal *parse_symbol_token(struct token *token)
 
 struct literal *parse_keyword_token(struct token *token)
 {
-    char *ptr = token->chars;
+    char *ptr = (char *)token->chars;
     struct literal *res;
 
     /* We modify the token here, but we don't care 'cause we will be */
@@ -1546,7 +1552,7 @@ struct initarg_spec
     key->chars[key->length-1] = '\0';
 
     res->required = required;
-    res->keyword = symbol(key->chars);
+    res->keyword = symbol((char *)key->chars);
     res->plist = plist;
     res->next = NULL;
 

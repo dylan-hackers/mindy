@@ -23,36 +23,22 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.35 1994/08/30 21:55:25 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.36 1994/10/05 21:01:33 nkramer Exp $
 *
 * This file implements the debugger.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
+#include "../compat/std-os.h"
+
 #include <setjmp.h>
-#include <string.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#ifdef MACH
-extern int isatty(int fd);
-#endif
-#if defined(hpux) || defined(__osf__) || defined(linux) || defined(ultrix)
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-#endif
-#ifdef sgi
-#include <stdlib.h>
-#endif
 
 #include "mindy.h"
 #include "thread.h"
 #include "driver.h"
 #include "func.h"
 #include "module.h"
-#include "lexer.h"
-#include "parser.h"
 #include "str.h"
 #include "list.h"
 #include "vec.h"
@@ -362,7 +348,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
 	return NULL;
 
     if (file != cur_source_file) {
-	char *name = string_chars(file);
+	char *name = (char *)string_chars(file);
 
 	if (cur_source_stream != NULL) {
 	    fclose(cur_source_stream);
@@ -428,7 +414,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
 static void explain_condition(struct thread *thread, obj_t condition)
 {
     if (instancep(condition, obj_SimpleObjectVectorClass)) {
-	char *fmt = string_chars(SOVEC(condition)->contents[0]);
+	char *fmt = (char *)string_chars(SOVEC(condition)->contents[0]);
 
 	putchar('\n');
 	vformat(fmt, SOVEC(condition)->contents+1);
@@ -508,24 +494,25 @@ static void explain_reason(enum pause_reason reason)
 struct cmd_entry {
     char *cmd;
     char *help;
-    void (*fn)(void);
+    void (*fn)(obj_t args);
 };
 
-static struct cmd_entry *find_cmd(struct cmd_entry *table, char *what)
+static struct cmd_entry *find_cmd(obj_t cmd_name, struct cmd_entry *table, char *what)
 {
     struct cmd_entry *match = NULL;
+    char *text = sym_name(cmd_name);
+    int leng = strlen(text);
 
     while (table->cmd) {
-	if (strncmp(table->cmd, yytext, yyleng) == 0) {
-	    if (strlen(table->cmd) == yyleng)
+	if (strncasecmp(table->cmd, text, leng) == 0) {
+	    if (strlen(table->cmd) == leng)
 		return table;
-	    else if (match) {
+	    if (match) {
 		printf("ambiguous %s, could be either ``%s'' or ``%s''\n",
 		       what, match->cmd, table->cmd);
 		return NULL;
 	    }
-	    else
-		match = table;
+	    match = table;
 	}
 	table++;
     }
@@ -537,17 +524,101 @@ static struct cmd_entry *find_cmd(struct cmd_entry *table, char *what)
 }
 
 
+/* Argument list hacking */
+static obj_t arg_kind(obj_t arg)
+{
+    return HEAD(arg);
+}
+static obj_t arg_value(obj_t arg)
+{
+    return TAIL(arg);
+}
+static int any_args(obj_t args)
+{
+    return args != obj_Nil;
+}
+static obj_t first_arg(obj_t args)
+{
+    return HEAD(args);
+}
+static obj_t rest_args(obj_t args)
+{
+    return TAIL(args);
+}
+static int get_fixnum(obj_t obj, int *num)
+{
+    if (obj != obj_Nil
+     && arg_kind(obj) == symbol("literal")
+     && instancep(arg_value(obj), obj_IntegerClass)) {
+        *num = fixnum_value(arg_value(obj));
+	return 1;
+    }
+    return 0;
+}
+static int get_symbol(obj_t obj, obj_t *sym)
+{
+    if (obj != obj_Nil
+     && arg_kind(obj) == symbol("literal")
+     && instancep(arg_value(obj), obj_SymbolClass)) {
+        *sym = arg_value(obj);
+	return 1;
+    }
+    return 0;
+}
+static int get_string(obj_t obj, obj_t *str)
+{
+    if (obj != obj_Nil
+     && arg_kind(obj) == symbol("literal")
+     && instancep(arg_value(obj), obj_ByteStringClass)) {
+        *str = arg_value(obj);
+	return 1;
+    }
+    return 0;
+}
+static int get_variable(obj_t obj, obj_t *sym)
+{
+    if (obj != obj_Nil
+     && arg_kind(obj) == symbol("variable")
+     && instancep(arg_value(obj), obj_SymbolClass)) {
+        *sym = arg_value(obj);
+	return 1;
+    }
+    return 0;
+}
+static int get_name(obj_t obj, char **name)
+{
+    obj_t named;
+    if (get_symbol(obj, &named)
+     || get_variable(obj, &named)) {
+        *name = sym_name(named);
+	return 1;
+    }
+    if (get_string(obj, &named)) {
+        *name = (char *)string_chars(named);
+	return 1;
+    }
+    return 0;
+}
+static void should_be_no_args(obj_t args)
+{
+    if (any_args(args))
+        printf("superfluous arguments ignored\n");
+}
+
+
 /* Generic Commands */
 
-static void quit_cmd(void)
+static void quit_cmd(obj_t args)
 {
+    should_be_no_args(args);
     exit(0);
 }
 
-static void continue_cmd(void)
+static void continue_cmd(obj_t args)
 {
     struct thread_list *threads;
 
+    should_be_no_args(args);
     for (threads = all_threads(); threads != NULL; threads = threads->next) {
 	enum thread_status status = threads->thread->status;
 
@@ -560,25 +631,29 @@ static void continue_cmd(void)
     printf("No threads are potentially runnable.\n");
 }
 
-static void tron_cmd(void)
+static void tron_cmd(obj_t args)
 {
     extern boolean Tracing;
+    should_be_no_args(args);
     Tracing = TRUE;
 }
 
-static void troff_cmd(void)
+static void troff_cmd(obj_t args)
 {
     extern boolean Tracing;
+    should_be_no_args(args);
     Tracing = FALSE;
 }
 
-static void gc_cmd(void)
+static void gc_cmd(obj_t args)
 {
+    should_be_no_args(args);
     collect_garbage();
 }
 
-static void error_cmd(void)
+static void error_cmd(obj_t args)
 {
+    should_be_no_args(args);
     if (CurThread == NULL)
 	printf("No current thread.\n");
     else if (CurThread->status != status_Debuggered)
@@ -587,15 +662,13 @@ static void error_cmd(void)
 	explain_condition(CurThread, CurThread->datum);
 }
 
-/* help_cmd is defined later, because it needs to */
-/* reference the cmd table. */
-static void help_cmd(void);
-
+static void help_cmd(obj_t args);
 
 /* Frame manipulation commands. */
 
-static void down_cmd(void)
+static void down_cmd(obj_t args)
 {
+    should_be_no_args(args);
     if (CurThread == NULL)
 	printf("No current thread.\n");
     else if (CurFrame == NULL)
@@ -610,8 +683,9 @@ static void down_cmd(void)
     }
 }
 
-static void up_cmd(void)
+static void up_cmd(obj_t args)
 {
+    should_be_no_args(args);
     if (CurThread == NULL)
 	printf("No current thread.\n");
     else if (CurFrame == NULL)
@@ -626,37 +700,33 @@ static void up_cmd(void)
     }
 }
 
-static void frame_cmd(void)
+static void frame_cmd(obj_t args)
 {
     if (CurThread == NULL)
 	printf("No current thread.\n");
     else if (TopFrame == NULL)
 	printf("The current thread has nothing on the stack.\n");
     else {
-	int tok = yylex();
-
-	if (tok == tok_EOF)
+        int num;
+	if ( ! any_args(args))
 	    FrameChanged = TRUE;
-	else if (tok != tok_LITERAL || !obj_is_fixnum(yylval))
+	else if ( ! get_fixnum(first_arg(args), &num))
 	    printf("Bogus frame number, should be an integer.\n");
+	else if (num < 0)
+	    printf("Bogus frame number, should be >= 0.\n");
 	else {
-	    int num = fixnum_value(yylval);
+	    struct frame_info *frame = TopFrame;
+	    int i;
 
-	    if (num < 0)
-		printf("Bogus frame number, should be >= 0.\n");
+	    should_be_no_args(rest_args(args));
+	    for (i = 0; frame != NULL && i < num; i++)
+	        frame = frame_down(frame);
+
+	    if (frame == NULL)
+	        printf("Frame number too large, should be < %d.\n", i);
 	    else {
-		struct frame_info *frame = TopFrame;
-		int i;
-
-		for (i = 0; frame != NULL && i < num; i++)
-		    frame = frame_down(frame);
-
-		if (frame == NULL)
-		    printf("Frame number too large, should be < %d.\n", i);
-		else {
-		    set_frame(NULL);
-		    set_frame(frame);
-		}
+	        set_frame(NULL);
+		set_frame(frame);
 	    }
 	}
     }
@@ -669,8 +739,9 @@ static void punt_backtrace(void)
     backtrace_punted = TRUE;
 }
 
-static void backtrace_cmd(void)
+static void backtrace_cmd(obj_t args)
 {
+    should_be_no_args(args);
     if (CurThread == NULL)
 	printf("No current thread.\n");
     else {
@@ -694,12 +765,12 @@ static void backtrace_cmd(void)
 
 /* Library/module/variable manipulation commands. */
 
-static void library_cmd(void)
+static void library_cmd(obj_t args)
 {
     struct library *lib;
+    obj_t sym;
 
-    switch (yylex()) {
-      case tok_EOF:
+    if ( ! any_args(args)) {
 	list_libraries();
 	putchar('\n');
 	if (CurLibrary) {
@@ -708,35 +779,34 @@ static void library_cmd(void)
 	}
 	else
 	    printf("No library currently selected\n");
-	break;
-      case tok_SYMBOL:
-	lib = find_library(yylval, FALSE);
+    } else if (get_symbol(first_arg(args), &sym)
+	    || get_variable(first_arg(args), &sym)) {
+        should_be_no_args(rest_args(args));
+	lib = find_library(sym, FALSE);
 	if (lib) {
 	    CurLibrary = lib;
 	    CurModule = find_module(lib, symbol("Dylan-User"), FALSE, FALSE);
 	}
 	else {
 	    printf("No library named ");
-	    print(yylval);
+	    print(sym);
 	}
-	break;
-      default:
+    } else {
 	printf("Syntax error.\n");
-	break;
     }
 }
 
-static void module_cmd(void)
+static void module_cmd(obj_t args)
 {
     struct module *module;
+    obj_t sym;
 
     if (CurLibrary == NULL) {
 	printf("No library currently selected.\n");
 	return;
     }
 
-    switch (yylex()) {
-      case tok_EOF:
+    if ( ! any_args(args)) {
 	list_modules(CurLibrary);
 	putchar('\n');
 	if (CurModule) {
@@ -745,29 +815,29 @@ static void module_cmd(void)
 	}
 	else
 	    printf("No module currently selected.\n");
-	break;
-      case tok_SYMBOL:
-	module = find_module(CurLibrary, yylval, FALSE, FALSE);
+    } else if (get_symbol(first_arg(args), &sym)
+	    || get_variable(first_arg(args), &sym)) {
+        should_be_no_args(rest_args(args));
+	module = find_module(CurLibrary, sym, FALSE, FALSE);
 	if (module)
 	    CurModule = module;
 	else {
 	    printf("No module named ");
-	    print(yylval);
+	    print(sym);
 	}
-	break;
-      default:
-	printf("Syntax error.\n");
-	break;
+    } else {
+    	printf("Syntax error.\n");
     }
 }
 
 
 /* Locals command. */
 
-static void locals_cmd()
+static void locals_cmd(obj_t args)
 {
     obj_t locals;
 
+    should_be_no_args(args);
     if (CurFrame == NULL) {
 	printf("No current frame.\n");
 	return;
@@ -813,10 +883,11 @@ static void locals_cmd()
 
 /* Flush command. */
 
-static void flush_cmd(void)
+static void flush_cmd(obj_t args)
 {
     struct thread *thread;
 
+    should_be_no_args(args);
     if (debugger_flush_var == NULL
 	  || debugger_flush_var->value == obj_Unbound) {
 	printf("debugger-flush undefined.\n");
@@ -844,14 +915,14 @@ static void flush_cmd(void)
 
 static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 {
-    obj_t kind = HEAD(expr);
+    obj_t kind = arg_kind(expr);
 
     if (kind == symbol("literal")) {
 	/* Don't have to do anything for literals. */
     }
     else if (kind == symbol("variable")) {
 	/* Variable reference. */
-	obj_t name = TAIL(expr);
+	obj_t name = arg_value(expr);
 	if (CurFrame != NULL && CurFrame->locals != obj_False) {
 	    obj_t list = CurFrame->locals;
 	    while (list != obj_Nil) {
@@ -921,7 +992,7 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 	    obj_t *fp = CurFrame->fp;
 	    obj_t *args = ((obj_t *)obj_rawptr(fp[-3])) + 1;
 	    int nargs = fp - args - 4;
-	    int arg = fixnum_value(TAIL(expr));
+	    int arg = fixnum_value(arg_value(expr));
 
 	    if (arg >= nargs) {
 		printf("%d too large -- Only %d argument%s\n", arg, nargs,
@@ -937,8 +1008,8 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
     else if (kind == symbol("funcall")) {
 	obj_t args;
 
-	for (args = TAIL(expr); args != obj_Nil; args = TAIL(args))
-	    eval_vars(HEAD(args), okay, simple);
+	for (args = rest_args(expr); args != obj_Nil; args = rest_args(args))
+	    eval_vars(first_arg(args), okay, simple);
     
 	*simple = FALSE;
     }
@@ -968,25 +1039,25 @@ static void continue_eval(struct thread *thread, obj_t *vals)
 static void do_eval(struct thread *thread, obj_t args, int nargs)
 {
     while (args != obj_Nil) {
-	obj_t arg = HEAD(args);
-	obj_t kind = HEAD(arg);
+	obj_t arg = first_arg(args);
+	obj_t kind = arg_kind(arg);
 
 	if (kind == symbol("literal")) {
-	    *thread->sp++ = TAIL(arg);
+	    *thread->sp++ = arg_value(arg);
 	    nargs++;
 	}
 	else if (kind == symbol("funcall")) {
-	    *thread->sp++ = TAIL(args);
+	    *thread->sp++ = rest_args(args);
 	    *thread->sp++ = make_fixnum(nargs+1);
 	    *thread->sp++ = do_eval_func;
-	    *thread->sp++ = TAIL(arg);
+	    *thread->sp++ = arg_value(arg);
 	    set_c_continuation(thread, continue_eval);
 	    invoke(thread, 1);
 	    return;
 	}
 	else
 	    lose("Print command found a strange expression.");
-	args = TAIL(args);
+	args = rest_args(args);
     }
     /* One of the ``args'' is the function. */
     check_type(thread->sp[-nargs], obj_FunctionClass);
@@ -1032,16 +1103,16 @@ static void do_print(struct thread *thread, obj_t *vals)
 static void do_more_prints(struct thread *thread, obj_t exprs)
 {
     while (exprs != obj_Nil) {
-	obj_t expr = HEAD(exprs);
-	obj_t kind = HEAD(expr);
+	obj_t expr = first_arg(exprs);
+	obj_t kind = arg_kind(expr);
 
 	if (kind == symbol("literal")) {
-	    print(TAIL(expr));
+	    print(arg_value(expr));
 	}
 	else if (kind == symbol("funcall")) {
-	    *thread->sp++ = TAIL(exprs);
+	    *thread->sp++ = rest_args(exprs);
 	    *thread->sp++ = do_eval_func;
-	    *thread->sp++ = TAIL(expr);
+	    *thread->sp++ = arg_value(expr);
 	    set_c_continuation(thread, do_print);
 	    invoke(thread, 1);
 	    return;
@@ -1067,9 +1138,9 @@ static void do_print_start(struct thread *thread, int nargs)
     do_more_prints(thread, args[0]);
 }
 
-static void call_or_print(struct variable *var)
+static void call_or_print(struct variable *var, obj_t args)
 {
-    obj_t exprs = parse_exprs();
+    obj_t exprs = args;
     boolean okay = TRUE;
     boolean simple = TRUE;
     obj_t expr;
@@ -1084,15 +1155,15 @@ static void call_or_print(struct variable *var)
 	return;
     }
 
-    for (expr = exprs; expr != obj_Nil; expr = TAIL(expr))
-	eval_vars(HEAD(expr), &okay, &simple);
+    for (expr = exprs; expr != obj_Nil; expr = rest_args(expr))
+	eval_vars(first_arg(expr), &okay, &simple);
 
     if (!okay)
 	return;
 
     if (simple && (var == NULL || var->value == obj_Unbound)) {
-	for (expr = exprs; expr != obj_Nil; expr = TAIL(expr))
-	    print(TAIL(HEAD(expr)));
+	for (expr = exprs; expr != obj_Nil; expr = rest_args(expr))
+	    print(arg_value(first_arg(expr)));
 	return;
     }
 
@@ -1119,23 +1190,24 @@ static void call_or_print(struct variable *var)
 }
 
 
-static void call_cmd(void)
+static void call_cmd(obj_t args)
 {
-    call_or_print(debugger_call_var);
+    call_or_print(debugger_call_var, args);
 }
 
-static void print_cmd(void)
+static void print_cmd(obj_t args)
 {
-    call_or_print(debugger_print_var);
+    call_or_print(debugger_print_var, args);
 }
 
 
 /* Restart commands. */
 
-static void abort_cmd(void)
+static void abort_cmd(obj_t args)
 {
     struct thread *thread;
 
+    should_be_no_args(args);
     if (debugger_abort_var == NULL
 	  || debugger_abort_var->value == obj_Unbound) {
 	printf("debugger-abort undefined.\n");
@@ -1262,29 +1334,28 @@ static void do_restart(obj_t restart)
     Continue = TRUE;
 }
 
-static void restart_cmd(void)
+static void restart_cmd(obj_t args)
 {
-    int tok = yylex();
+    int restart;
 
-    if (tok == tok_EOF)
+    if ( ! any_args(args))
 	describe_restarts();
-    else if (tok != tok_LITERAL || !obj_is_fixnum(yylval))
-	printf("Bogus restart number, should be an integer.\n");
+    else if ( ! get_fixnum(first_arg(args), &restart))
+        printf("Bogus restart number, should be an integer.\n");
+    else if (restart < 0)
+        printf("Bogus restart number, should be >= 0.\n");
     else {
-	int restart = fixnum_value(yylval);
-
-	if (restart < 0)
-	    printf("Bogus restart number, should be >= 0.\n");
-	else
-	    do_restart(yylval);
+        should_be_no_args(rest_args(args));
+        do_restart(arg_value(first_arg(args)));
     }
 }
 
-static void return_cmd(void)
+static void return_cmd(obj_t args)
 {
     obj_t cond;
     struct thread *thread;
 
+    should_be_no_args(args);
     if (debugger_return_var == NULL
 	  || debugger_return_var->value == obj_Unbound) {
 	printf("debugger-return undefined.\n");
@@ -1319,36 +1390,41 @@ static void return_cmd(void)
 
 /* Thread commands. */
 
-static struct thread *find_thread(void)
+static struct thread *find_thread(obj_t tag)
 {
-    int id;
     struct thread_list *threads;
+    int id = -1;
 
-    if (instancep(yylval, obj_IntegerClass))
-	id = fixnum_value(yylval);
-    else
-	id = -1;
-
+    if (instancep(tag, obj_SymbolClass)) {
+        ;
+    } else if (instancep(tag, obj_IntegerClass)) {
+        id = fixnum_value(tag);
+    } else {
+        printf("Bogus thread identifier: ");
+	print(tag);
+	printf("should be either a symbol or integer.");
+	return NULL;
+    }
+	
     for (threads = all_threads(); threads != NULL; threads = threads->next) {
 	struct thread *thread = threads->thread;
-	if (THREAD(thread->thread_obj)->debug_name == yylval
-	      || thread->id == id)
+	if (THREAD(thread->thread_obj)->debug_name == tag
+	 || thread->id == id)
 	    return thread;
     }
 
     printf("No thread named ");
-    print(yylval);
+    print(tag);
     return NULL;
 }
     
 
-static void thread_cmd(void)
+static void thread_cmd(obj_t args)
 {
     struct thread_list *threads;
     struct thread *thread;
 
-    switch (yylex()) {
-      case tok_EOF:
+    if ( ! any_args(args)) {
 	for (threads=all_threads(); threads != NULL; threads=threads->next) {
 	    if (threads->thread == CurThread)
 		printf("c ");
@@ -1356,48 +1432,29 @@ static void thread_cmd(void)
 		printf("  ");
 	    print_thread(threads->thread);
 	}
-	break;
-
-      case tok_SYMBOL:
-      case tok_LITERAL:
-	thread = find_thread();
+    } else {
+        should_be_no_args(rest_args(args));
+        thread = find_thread(arg_value(first_arg(args)));
 	if (thread != NULL)
 	    set_thread(thread);
-	break;
-
-      default:
-	printf("Bogus thread identifier: ");
-	print(yylval);
-	printf("should be either a symbol or integer.");
-	break;
     }
 }
 
-static void kill_cmd(void)
+static void kill_cmd(obj_t args)
 {
     struct thread *thread;
 
-    switch (yylex()) {
-      case tok_EOF:
+    if ( ! any_args(args)) {
 	thread = CurThread;
 	if (thread == NULL) {
 	    printf("No current thread selected.\n");
 	    return;
 	}
-	break;
-
-      case tok_SYMBOL:
-      case tok_LITERAL:
-	thread = find_thread();
+    } else {
+        should_be_no_args(rest_args(args));
+        thread = find_thread(arg_value(first_arg(args)));
 	if (thread == NULL)
 	    return;
-	break;
-
-      default:
-	printf("Bogus thread identifier: ");
-	print(yylval);
-	printf("should be either a symbol or integer.");
-	return;
     }
 
     thread_kill(thread);
@@ -1409,67 +1466,47 @@ static void kill_cmd(void)
     }
 }
     
-static void disable_cmd(void)
+static void disable_cmd(obj_t args)
 {
     struct thread *thread;
 
-    switch (yylex()) {
-      case tok_EOF:
+    if ( ! any_args(args)) {
 	thread = CurThread;
 	if (thread == NULL) {
 	    printf("No current thread selected.\n");
 	    return;
 	}
-	break;
-
-      case tok_SYMBOL:
-      case tok_LITERAL:
-	thread = find_thread();
+    } else {
+        should_be_no_args(rest_args(args));
+        thread = find_thread(arg_value(first_arg(args)));
 	if (thread == NULL)
 	    return;
-	break;
-
-      default:
-	printf("Bogus thread identifier: ");
-	print(yylval);
-	printf("should be either a symbol or integer.");
-	return;
     }
 
     thread_suspend(thread);
     print_thread(thread);
 }
     
-static void enable_cmd(void)
+static void enable_cmd(obj_t args)
 {
     struct thread *thread;
 
-    switch (yylex()) {
-      case tok_EOF:
+    if ( ! any_args(args)) {
 	thread = CurThread;
 	if (thread == NULL) {
 	    printf("No current thread selected.\n");
 	    return;
 	}
-	break;
-
-      case tok_SYMBOL:
-      case tok_LITERAL:
-	thread = find_thread();
+    } else {
+        should_be_no_args(rest_args(args));
+        thread = find_thread(arg_value(first_arg(args)));
 	if (thread == NULL)
 	    return;
-	break;
-
-      default:
-	printf("Bogus thread identifier: ");
-	print(yylval);
-	printf("should be either a symbol or integer.");
-	return;
     }
 
     if (thread->suspend_count == 0) {
 	printf("thread ");
-	prin1(yylval);
+	prin1(arg_value(first_arg(args)));
 	printf(" isn't suspended\n");
 	return;
     }
@@ -1482,9 +1519,11 @@ static void enable_cmd(void)
 
 /* Step/next commands */
 
-static void step_cmd(void)
+static void step_cmd(obj_t args)
 {
     struct thread *thread = CurThread;
+
+    should_be_no_args(args);
 
     if (thread == NULL) {
 	printf("No current thread.\n");
@@ -1625,20 +1664,18 @@ static void breakpoint_cont(struct thread *thread, obj_t *vals)
     do_return(thread, old_sp, old_sp);
 }
 
-static void breakpoint_cmd(void)
+static void breakpoint_cmd(obj_t args)
 {
-    obj_t exprs = parse_exprs();
+    obj_t exprs = args;
     
-    if (exprs == obj_False)
-	printf("Invalid function expression.\n");
-    else if (exprs == obj_Nil)
+    if ( ! any_args(exprs))
 	list_breakpoints();
     else {
 	boolean okay = TRUE;
 	boolean func_simple = TRUE;
 	obj_t line;
 
-	eval_vars(HEAD(exprs), &okay, &func_simple);
+	eval_vars(first_arg(exprs), &okay, &func_simple);
 
 	if (!okay)
 	    return;
@@ -1702,12 +1739,16 @@ static void breakpoint_cmd(void)
     }
 }
 
-static void delete_cmd(void)
+static void delete_cmd(obj_t args)
 {
-    if (yylex() != tok_LITERAL || !obj_is_fixnum(yylval))
-	printf("Bogus breakpoint id\n");
-    else
-	remove_breakpoint(fixnum_value(yylval));
+    int num;
+    while (any_args(args)) {
+        if ( ! get_fixnum(first_arg(args), &num))
+	    printf("Bogus breakpoint id\n");
+	else
+	    remove_breakpoint(num);
+	args = rest_args(args);
+    }
 }
 
 
@@ -1991,13 +2032,11 @@ static void disassemble_cont(struct thread *thread, obj_t *vals)
     do_return(thread, old_sp, old_sp);
 }
 
-static void disassemble_cmd(void)
+static void disassemble_cmd(obj_t args)
 {
-    obj_t exprs = parse_exprs();
+    obj_t exprs = args;
 
-    if (exprs == obj_False)
-	printf("Invalid function expression.\n");
-    else if (exprs == obj_Nil) {
+    if (exprs == obj_Nil) {
 	if (CurFrame == NULL)
 	    printf("No current frame.\n");
 	else if (obj_is_fixnum(CurFrame->component))
@@ -2070,9 +2109,9 @@ static void describe_cont(struct thread *thread, obj_t *vals)
     do_return(thread, old_sp, old_sp);
 }
 
-static void describe_cmd(void)
+static void describe_cmd(obj_t args)
 {
-    obj_t exprs = parse_exprs();
+    obj_t exprs = args;
 
     if (exprs == obj_False)
 	printf("Invalid expression.\n");
@@ -2180,21 +2219,43 @@ static struct cmd_entry Cmds[] = {
     {NULL, NULL, NULL}
 };
     
-static void do_cmd(void)
-{
-    struct cmd_entry *entry = find_cmd(Cmds, "command");
-
-    if (entry)
-	(*entry->fn)();
-}
-
-static void help_cmd(void)
+static void help_cmd(obj_t args)
 {
     struct cmd_entry *ptr;
 
-    for (ptr = Cmds; ptr->cmd != NULL; ptr++)
-	if (ptr->help)
-	    printf("%s\n", ptr->help);
+    if ( ! any_args(args)) {
+        for (ptr = Cmds; ptr->cmd != NULL; ptr++)
+	    if (ptr->help)
+	        printf("%s\n", ptr->help);
+    } else {
+        while (any_args(args)) {
+	    char *name;
+
+	    if ( ! get_name(first_arg(args), &name)) {
+	        printf("Bogus command name: ");
+		print(arg_value(first_arg(args)));
+	    } else {
+	        for (ptr = Cmds; ptr->cmd != NULL; ptr++)
+		    if (strncasecmp(name, ptr->cmd, strlen(name)) == 0)
+		        if (ptr->help) 
+			    printf("%s\n", ptr->help);
+	    }
+	    args = rest_args(args);
+	}
+    }
+}
+
+static void do_cmd(obj_t command)
+{
+    if (command == obj_Nil)
+        ;
+    else if (instancep(command, obj_ByteStringClass))
+      printf("%s\n", string_chars(command));
+    else {
+        struct cmd_entry *entry = find_cmd(HEAD(command), Cmds, "command");
+        if (entry && entry->fn)
+	    (*entry->fn)(TAIL(command));
+    }
 }
 
 
@@ -2256,12 +2317,13 @@ static void maybe_print_frame(void)
 
 static void blow_off_cmd(void)
 {
+
     longjmp(BlowOffCmd, TRUE);
 }
 
 void invoke_debugger(enum pause_reason reason)
 {
-    char line[256];
+    extern obj_t parse_command(FILE *input);
 
     Continue = FALSE;
 
@@ -2273,12 +2335,11 @@ void invoke_debugger(enum pause_reason reason)
 	explain_reason(reason);
     }
 
-    if (!isatty(fileno(stdin))) {
-	printf("STDIN is not a tty.  Cannot debug.\n");
+    if ( ! isatty(fileno(stdin))
+      && ! freopen("/dev/tty", "r", stdin)) {
+        printf("STDIN is not a tty and cannot open /dev/tty.  Cannot debug.\n");
 	exit(1);
     }
-
-    lex_init();
 
     while (1) {
 	thread_set_current(NULL);
@@ -2287,34 +2348,21 @@ void invoke_debugger(enum pause_reason reason)
 
 	    maybe_print_frame();
 
-	    if (setjmp(BlowOffCmd))
-		printf("\ninterrupted\n");
-	    else
-		set_interrupt_handler(blow_off_cmd);
+	    if (setjmp(BlowOffCmd)) {
+	        printf("\ninterrupted\n");
+		unblock_interrupt_handler();
+	    } else
+	        set_interrupt_handler(blow_off_cmd);
 
 	    printf("mindy> ");
 	    fflush(stdout);
 
-	    if (fgets(line, sizeof(line), stdin) == NULL) {
-		putchar('\n');
-		lex_setup("quit", 4);
-	    }
-	    else
-		lex_setup(line, strlen(line));
+	    do_cmd(parse_command(stdin));
 
-	    clear_interrupt_handler();
-
-	    switch (yylex()) {
-	      case tok_EOF:
-		break;
-	      case tok_SYMBOL:
-		do_cmd();
-		break;
-	      default:
-		printf("Bogus command -- use ``help'' for help.\n");
-		break;
-	    }
+	    if (feof(stdin))
+	        quit_cmd(obj_Nil);
 	}
+
 	Continue = FALSE;
 
 	reason = do_stuff();

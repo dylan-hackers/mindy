@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.c,v 1.3 1994/06/27 16:49:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.c,v 1.4 1994/10/05 20:55:09 nkramer Exp $
 *
 * This file maintains info about builtin/magic functions/names.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "src.h"

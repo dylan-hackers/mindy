@@ -23,16 +23,17 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.14 1994/08/18 21:35:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.15 1994/10/05 20:55:49 nkramer Exp $
 *
 * This file is the grammar.
 *
 \**********************************************************************/
 
 %{
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
+#include "header.h"
 #include "parser.h"
 #include "lexer.h"
 #include "literal.h"
@@ -103,6 +104,10 @@ static void pop_yacc_recoveries(int count);
     struct import_option *import_option;
     struct renamings *renamings;
 }
+
+%token <token> HEADER_KEY
+%token <token> HEADER_VAL
+%token <token> HEADER_END
 
 %token <token> BOGUS
 %token <token> SYMBOL
@@ -200,6 +205,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> RENAME_OPTION
 %type  <token> keyword keyword_opt
 
+%type <nothing> dylan_file dylan_headers header_list
 %type <nothing> dylan_program block_opt case_opt if_opt for_opt select_opt
 %type <nothing> unless_opt until_opt while_opt class_opt method_opt semi_opt
 %type <nothing> arrow_opt
@@ -265,6 +271,22 @@ static void pop_yacc_recoveries(int count);
 %type <variable_names> variable_name_set variable_names
 
 %%
+
+dylan_file:
+	dylan_headers dylan_program
+;
+
+dylan_headers:
+	HEADER_END	{ process_header(NULL, NULL); free($1); }
+    |	header_list HEADER_END	{ process_header(NULL, NULL); free($2); }
+;
+
+header_list:
+	HEADER_KEY HEADER_VAL
+	{ process_header((char *)$1->chars, (char *)$2->chars); free($1); free($2); }
+    |	header_list HEADER_KEY HEADER_VAL
+	{ process_header((char *)$2->chars, (char *)$3->chars); free($2); free($3); }
+;
 
 dylan_program:
 	{ push_yacc_recovery(SEMI); }
@@ -348,7 +370,7 @@ variables:
 	rest_parameter
 	{ $$ = set_rest_param(make_param_list(), $1); }
     |	variable
-	{ $$ = push_param($1, make_param_list()) }
+	{ $$ = push_param($1, make_param_list()); }
     |	variable COMMA variables
 	{ free($2); $$ = push_param($1, $3); }
 ;
@@ -479,7 +501,7 @@ literal:
 ;
 
 statement:
-	DBEGIN { push_yacc_recovery(END) }
+	DBEGIN { push_yacc_recovery(END); }
 	body_opt END
 	{ free($1); free($4); $$ = make_body_expr($3);
           pop_yacc_recoveries(1); }
@@ -964,7 +986,7 @@ keyword_parameter_default:
 module_definition:
 	SYMBOL module_clauses_opt END module_opt symbol_opt
 	{ if ($5) {
-	      if (strcasecmp($1->chars, $5->chars) != 0) {
+	      if (strcasecmp((char *)$1->chars, (char *)$5->chars) != 0) {
 		  error($5->line, "mismatched name, ``%s'' isn't ``%s''",
 			$5->chars, $1->chars);
 		  yacc_recover();
@@ -1098,7 +1120,7 @@ variable_names:
 library_definition:
 	SYMBOL library_clauses_opt END library_opt symbol_opt
 	{ if ($5) {
-	      if (strcasecmp($1->chars, $5->chars) != 0) {
+	      if (strcasecmp((char *)$1->chars, (char *)$5->chars) != 0) {
 		  error($5->line, "mismatched name, ``%s'' isn't ``%s''",
 			$5->chars, $1->chars);
 		  yacc_recover();
@@ -1166,12 +1188,12 @@ static boolean verify_symbol_aux(struct id *id, struct token *token)
 {
     if (token) {
 	int line = token->line;
-	char *ptr = token->chars;
+	char *ptr = (char *)token->chars;
 
 	if (*ptr == '\\')
 	    ptr++;
 
-	if (strcasecmp(id->symbol->name, ptr)) {
+	if (strcasecmp((char *)id->symbol->name, ptr)) {
 	    error(line, "mismatched name, ``%s'' isn't ``%s''",
 		  token->chars, id->symbol->name);
 	    free(token);
@@ -1211,5 +1233,18 @@ static void pop_yacc_recoveries(int count)
 {
     for ( ; count-- > 0; )
 	yacc_recovery_list = yacc_recovery_list->next;
+}
+
+struct token *make_token(char *ptr, int len)
+{
+    struct token *token = malloc(sizeof(struct token) 
+				 + len + 1 - sizeof(token->chars));
+
+    token->length = len;
+    memcpy(token->chars, ptr, len);
+    token->line = line_count;
+    token->chars[len] = 0;
+
+    return token;
 }
 

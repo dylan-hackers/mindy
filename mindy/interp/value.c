@@ -23,11 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/value.c,v 1.2 1994/06/27 16:32:40 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/value.c,v 1.3 1994/10/05 21:04:51 nkramer Exp $
 *
 * This file implements value cells.
 *
 \**********************************************************************/
+
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.h,v 1.4 1994/06/27 16:32:30 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.h,v 1.5 1994/10/05 21:04:27 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -31,7 +31,7 @@ extern void prin1(obj_t object);
 extern void print(obj_t object);
 extern void print_nonzero_in_binary(int number);
 extern void print_number_in_binary(int number);
-extern void format(char *fmt, ...);
+extern void format _ANSI_ARGS_((char *fmt, ...));
 extern int count_format_args(char *fmt);
 extern void vformat(char *fmt, obj_t *args);
 

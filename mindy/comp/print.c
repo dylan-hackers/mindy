@@ -23,14 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.13 1994/08/18 21:35:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.14 1994/10/05 20:55:53 nkramer Exp $
 *
 * This file prints out parts of the parse tree in a human readable
 * format for debugging purposes.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindycomp.h"
 #include "src.h"
@@ -129,7 +129,7 @@ static void print_string_literal(struct string_literal *l, int depth)
     int i;
 
     printf("%sstring \"", indent(depth));
-    ptr = l->chars;
+    ptr = (char *)l->chars;
     for (i = 0; i < l->length; i++)
 	print_char(*ptr++, '"');
     printf("\"\n");
@@ -286,9 +286,9 @@ static char *debug_name_string(struct literal *literal)
 {
     switch (literal->kind) {
       case literal_SYMBOL:
-	return ((struct symbol_literal *)literal)->symbol->name;
+	return (char *)((struct symbol_literal *)literal)->symbol->name;
       case literal_STRING:
-	return ((struct string_literal *)literal)->chars;
+	return (char *)((struct string_literal *)literal)->chars;
       default:
 	return "with strange debug name";
     }

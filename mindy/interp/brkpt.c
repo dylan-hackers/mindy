@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.5 1994/06/27 16:31:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/brkpt.c,v 1.6 1994/10/05 21:01:11 nkramer Exp $
 *
 * This file implements breakpoints.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "weak.h"

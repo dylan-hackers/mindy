@@ -23,17 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.20 1994/07/26 18:34:10 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.21 1994/10/05 21:04:42 nkramer Exp $
 *
 * This file implements threads, and the various synchronization
 * primitives.
 *
 \**********************************************************************/
 
-#include <string.h>
-#ifdef sparc
-#include <memory.h>
-#endif
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -213,7 +210,7 @@ struct thread *thread_create(obj_t debug_name)
     set_status(thread, status_Suspended);
     thread->datum = rawptr_obj(thread+1);
     thread->stack_base = (obj_t *)(thread+1);
-    thread->stack_end = (obj_t *)(((void *)thread) + STACK_SIZE);
+    thread->stack_end = (obj_t *)(((char *)thread) + STACK_SIZE);
     thread->sp = thread->stack_base;
     thread->fp = NULL;
     thread->component = 0;
@@ -460,7 +457,7 @@ static obj_t dylan_lock_query(obj_t lock)
 }
 
 void lock_grab(struct thread *thread, obj_t lock,
-	       void advance(struct thread *thread))
+	       void (*advance)(struct thread *thread))
 {
     if (LOCK(lock)->locked) {
 	suspend_thread(thread);

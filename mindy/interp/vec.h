@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.h,v 1.3 1994/06/27 16:32:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.h,v 1.4 1994/10/05 21:04:57 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -34,13 +34,13 @@ extern obj_t obj_ByteVectorClass;
 struct sovec {
     obj_t class;
     int length;
-    obj_t contents[0];
+    obj_t contents[1];
 };
 
 struct bytevec {
     obj_t class;
     int length;
-    unsigned char contents[0];
+    unsigned char contents[1];
 };
 
 #define SOVEC(o) obj_ptr(struct sovec *, o)

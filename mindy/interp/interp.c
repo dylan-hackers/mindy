@@ -23,11 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.17 1994/06/27 16:32:02 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.18 1994/10/05 21:02:28 nkramer Exp $
 *
 * This file implements the actual byte interpreter.
 *
 \**********************************************************************/
+
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -1028,7 +1030,7 @@ obj_t make_component(obj_t debug_name, int frame_size, obj_t mtime,
 		     obj_t source_file, obj_t debug_info, int nconst,
 		     int nbytes)
 {
-    int len = sizeof(struct component) + sizeof(obj_t)*nconst + nbytes;
+    int len = sizeof(struct component) + sizeof(obj_t)*(nconst - 1) + nbytes;
     obj_t res = alloc(obj_ComponentClass, len);
     int i;
 

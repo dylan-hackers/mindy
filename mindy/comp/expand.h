@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.h,v 1.3 1994/06/27 16:49:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.h,v 1.4 1994/10/05 20:54:49 nkramer Exp $
 *
 \**********************************************************************/
 

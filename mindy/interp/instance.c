@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.23 1994/08/22 22:36:19 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.24 1994/10/05 21:02:21 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -146,7 +146,7 @@ struct initializer {
 
 struct instance {
     obj_t class;
-    obj_t slots[0];
+    obj_t slots[1];
 };
 
 #define INST(o) obj_ptr(struct instance *, o)
@@ -790,11 +790,11 @@ static void do_initialization(obj_t inst_or_class, obj_t initargs,
 
 /* Defined Classes */
 
+static int scav_instance(struct object *ptr);
+static obj_t trans_instance(obj_t instance);
+
 obj_t make_defined_class(obj_t debug_name, struct library *library)
 {
-    static int scav_instance(struct object *ptr);
-    static obj_t trans_instance(obj_t instance);
-
     obj_t res = alloc(obj_DefinedClassClass, sizeof(struct defined_class));
 
     init_class_type_stuff(res);
@@ -1353,8 +1353,8 @@ static obj_t defaulted_initargs(obj_t class, obj_t keyword_arg_pairs)
 
 static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
 {
-    obj_t res = alloc(class, sizeof(struct instance)
-		               + DC(class)->instance_length * sizeof(obj_t));
+    obj_t res = alloc(class, sizeof(struct instance) 
+		               + (DC(class)->instance_length - 1) * sizeof(obj_t));
     obj_t default_initargs;
     obj_t slots;
     obj_t initargs;
@@ -1685,7 +1685,7 @@ static int scav_instance(struct object *ptr)
     for (i = 0; i < nslots; i++)
 	scavenge(instance->slots + i);
 
-    return sizeof(struct instance) + nslots*sizeof(obj_t);
+    return sizeof(struct instance) + sizeof(obj_t)*(nslots - 1);
 }
 
 static obj_t trans_instance(obj_t instance)
@@ -1693,7 +1693,7 @@ static obj_t trans_instance(obj_t instance)
     obj_t class = INST(instance)->class;
     int nslots = DC(class)->instance_length;
 
-    return transport(instance, sizeof(struct instance) + nslots*sizeof(obj_t));
+    return transport(instance, sizeof(struct instance) + sizeof(obj_t)*(nslots-1));
 }
 
 void scavenge_instance_roots(void)

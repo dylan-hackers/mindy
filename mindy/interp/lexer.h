@@ -23,14 +23,12 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.h,v 1.2 1994/06/27 16:32:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.h,v 1.3 1994/10/05 21:03:39 nkramer Exp $
 *
 \**********************************************************************/
 
 
-extern void lex_init(void);
-extern void lex_setup(char *input, int len);
+extern void yyinput_clear(void);
+extern void yyinput_setter(FILE *);
 extern int yylex(void);
-extern char *yytext;
-extern int yyleng;
 

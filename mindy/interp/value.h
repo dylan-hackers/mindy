@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/value.h,v 1.2 1994/06/27 16:32:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/value.h,v 1.3 1994/10/05 21:04:53 nkramer Exp $
 *
 \**********************************************************************/
 

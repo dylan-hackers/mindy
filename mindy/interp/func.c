@@ -23,13 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.30 1994/07/12 00:41:58 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.31 1994/10/05 21:01:56 nkramer Exp $
 *
 * This file implements functions.
 *
 \**********************************************************************/
 
-#include <stdio.h>
+#include "../compat/std-c.h"
 
 #include "mindy.h"
 #include "gc.h"
@@ -102,13 +102,14 @@ struct gf_cache {
     boolean simple;
     obj_t cached_result;
     int size;
-    obj_t cached_classes[0];
+    obj_t cached_classes[1];
 };
 
 obj_t make_gf_cache(int req_args, obj_t cached_result)
 {
-    obj_t res = alloc(obj_GFCacheClass, (sizeof(struct gf_cache) +
-					 req_args * sizeof(obj_t)));
+    obj_t res = alloc(obj_GFCacheClass, 
+		      (sizeof(struct gf_cache) 
+		       + sizeof(obj_t)*(req_args - 1)));
     struct gf_cache *gfc = obj_ptr(struct gf_cache *, res);
     int i;
 
@@ -138,7 +139,7 @@ struct function {
 obj_t make_raw_function(char *debug_name, int required_args,
 			boolean restp, obj_t keywords, boolean all_keys,
 			obj_t result_types, obj_t more_results_type,
-			void xep(struct thread *thread, int nargs))
+			void (*xep)(struct thread *thread, int nargs))
 {
     obj_t res = alloc(obj_RawFunctionClass, sizeof(struct function));
 
@@ -239,7 +240,7 @@ obj_t *pop_linkage(struct thread *thread)
 }
 
 void set_c_continuation(struct thread *thread,
-			void cont(struct thread *thread, obj_t *vals))
+			void (*cont)(struct thread *thread, obj_t *vals))
 {
     thread->component = rawptr_obj(cont);
     thread->pc = 0;
@@ -511,7 +512,7 @@ static void method_xep(struct thread *thread, int nargs)
 obj_t make_raw_method(char *debug_name, obj_t specializers, boolean restp,
 		      obj_t keywords, boolean all_keys, obj_t result_types,
 		      obj_t more_results_type,
-		      void iep(obj_t self, struct thread *thread, obj_t *args))
+		      void (*iep)(obj_t self, struct thread *thread, obj_t *args))
 {
     obj_t res = alloc(obj_RawMethodClass, sizeof(struct method));
 
@@ -531,7 +532,7 @@ obj_t make_raw_method(char *debug_name, obj_t specializers, boolean restp,
 }
 
 void set_method_iep(obj_t method, 
-		    void iep(obj_t self, struct thread *thread, obj_t *args))
+		    void (*iep)(obj_t self, struct thread *thread, obj_t *args))
 {
     METHOD(method)->iep = iep;
 }
@@ -898,7 +899,7 @@ struct byte_method {
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
     obj_t component;
     int n_closure_vars;
-    obj_t lexenv[0];
+    obj_t lexenv[1];
 };
 
 #define BYTE_METHOD(o) obj_ptr(struct byte_method *, o)
@@ -946,7 +947,7 @@ obj_t make_byte_method(obj_t method_info, obj_t specializers,
 {
     int n_closure_vars = METHOD_INFO(method_info)->n_closure_vars;
     obj_t res = alloc(obj_ByteMethodClass,
-		      sizeof(struct byte_method)+sizeof(obj_t)*n_closure_vars);
+		      sizeof(struct byte_method) + sizeof(obj_t)*(n_closure_vars - 1));
     obj_t component = METHOD_INFO(method_info)->component;
     int i;
 
@@ -995,7 +996,7 @@ struct accessor_method {
 
 obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
 			   boolean setter, obj_t datum,
-			   void iep(obj_t self, struct thread *thread,
+			   void (*iep)(obj_t self, struct thread *thread,
 				    obj_t *args))
 {
     obj_t res = alloc(obj_AccessorMethodClass, sizeof(struct accessor_method));
@@ -1683,14 +1684,16 @@ static int scav_byte_method(struct object *ptr)
     for (i = 0; i < method->n_closure_vars; i++)
 	scavenge(method->lexenv + i);
 
-    return sizeof(struct byte_method) + sizeof(obj_t)*method->n_closure_vars;
+    return sizeof(struct byte_method) 
+	+ sizeof(obj_t)*(method->n_closure_vars - 1);
 }
 
 static obj_t trans_byte_method(obj_t method)
 {
     int nvars = BYTE_METHOD(method)->n_closure_vars;
 
-    return transport(method, sizeof(struct byte_method) + sizeof(obj_t)*nvars);
+    return transport(method, sizeof(struct byte_method) 
+		     + sizeof(obj_t)*(nvars - 1));
 }
 
 static int scav_method_info(struct object *ptr)
@@ -1750,14 +1753,15 @@ static int scav_gf_cache(struct object *ptr)
     for (i = 0; i < max; i++)
 	scavenge(&gf_cache->cached_classes[i]);
 
-    return sizeof(struct gf_cache) + max * sizeof(obj_t);
+    return sizeof(struct gf_cache) + sizeof(obj_t)*(max - 1);
 }
 
 static obj_t trans_gf_cache(obj_t gf_cache)
 {
-    return transport(gf_cache, (sizeof(struct gf_cache) +
-				obj_ptr(struct gf_cache *, gf_cache)->size
-				* sizeof(obj_t)));
+    return transport(gf_cache, 
+		     (sizeof(struct gf_cache) 
+		      + sizeof(obj_t) 
+		        * (obj_ptr(struct gf_cache *, gf_cache)->size - 1)));
 }
 
 void scavenge_func_roots(void)

@@ -23,41 +23,16 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.23 1994/08/30 21:56:05 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.24 1994/10/05 21:03:48 nkramer Exp $
 *
 * This file implements the loader.
 *
 \**********************************************************************/
 
-#include <string.h>
-#include <errno.h>
-#include <sys/file.h>
-#include <sys/param.h>
+#include "../compat/std-c.h"
+#include "../compat/std-os.h"
+
 #include <ctype.h>
-#ifdef MACH
-extern int open(const void *path, int flags, int mode);
-extern int close(int fd);
-extern int read(int fd, void *ptr, int bytes);
-extern int access(const void *path, int flags);
-#endif
-#if defined(hpux) || defined(__osf__) || defined(sgi) || defined(linux) || defined(ultrix) || defined(sparc)
-#define pause buttplug
-#include <unistd.h>
-#undef pause
-#endif
-#ifdef sgi
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#endif
-#ifdef linux
-#include <stdlib.h>
-#endif
-#ifdef sparc
-#include <stdlib.h>
-extern char *sys_errlist[];
-#endif
 
 #include "mindy.h"
 #include "bool.h"
@@ -79,15 +54,17 @@ extern char *sys_errlist[];
 #include "vec.h"
 #include "error.h"
 #include "../comp/fileops.h"
-#include "config.h"
 #include "load.h"
 
-#if defined(MACH) || defined(hpux)
-extern char *strerror(int errnum);
-extern char *getenv(char *name);
+#if BUFSIZ > 4096
+#define BUFFER_SIZE BUFSIZ
+#else
+#define BUFFER_SIZE 4096
 #endif
 
-#define BUFFER_SIZE 4096
+#ifndef DEFAULT_LOAD_PATH
+#define DEFAULT_LOAD_PATH LIBDIR
+#endif
 
 struct form {
     obj_t method;
@@ -133,11 +110,7 @@ static int safe_read(struct load_info *info, void *ptr, int bytes)
     if (count < 0)
 	error("error loading %s: %s",
 	      make_byte_string(info->name),
-#ifndef sparc
 	      make_byte_string(strerror(errno)));
-#else
-              make_byte_string(sys_errlist[errno]));
-#endif
     if (count == 0)
 	error("premature EOF loading %s", make_byte_string(info->name));
 
@@ -156,13 +129,13 @@ static void read_bytes(struct load_info *info, void *ptr, int bytes)
 	}
 
 	memcpy(ptr, info->ptr, count);
-	ptr += count;
+	ptr = (char *)ptr + count;
 	bytes -= count;
 	info->ptr = info->end = info->buffer;
 
 	while (bytes > BUFFER_SIZE) {
 	    count = safe_read(info, ptr, bytes);
-	    ptr += count;
+	    ptr = (char *)ptr + count;
 	    bytes -= count;
 	}
 	
@@ -461,13 +434,13 @@ static obj_t fop_string(struct load_info *info)
 
 static obj_t fop_short_symbol(struct load_info *info)
 {
-    return store(info, symbol(string_chars(fop_short_string(info))),
+    return store(info, symbol((char *)string_chars(fop_short_string(info))),
 		 next_handle(info));
 }
 
 static obj_t fop_symbol(struct load_info *info)
 {
-    return store(info, symbol(string_chars(fop_string(info))),
+    return store(info, symbol((char *)string_chars(fop_string(info))),
 		 next_handle(info));
 }
 
@@ -981,17 +954,17 @@ static void free_load_info(struct load_info *info)
 
 void load(char *name)
 {
-    int fd = open(name, O_RDONLY, 0);
+    int fd;
     struct load_info *info;
 
+    if (strcmp(name, "-") == 0)
+      fd = 0;
+    else
+      fd = open(name, O_RDONLY, 0);
     if (fd < 0)
 	error("Error loading %s: %s\n",
 	      make_byte_string(name),
-#ifndef sparc
 	      make_byte_string(strerror(errno)));
-#else
-              make_byte_string(sys_errlist[errno]));
-#endif
 
     info = make_load_info(name, fd);
 
@@ -1002,18 +975,15 @@ void load(char *name)
 	    if (count < 0)
 		error("error loading %s: %s",
 		      make_byte_string(name),
-#ifndef sparc
 		      make_byte_string(strerror(errno)));
-#else
-                      make_byte_string(sys_errlist[errno]));
-#endif
 	    if (count == 0)
 		break;
 	    info->ptr = info->buffer;
 	    info->end = info->ptr + count;
 	}
     }
-    close(info->fd);
+    if (info->fd != 0)
+      close(info->fd);
     free_load_info(info);
 }
 

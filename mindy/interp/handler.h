@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.h,v 1.3 1994/06/27 16:31:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/handler.h,v 1.4 1994/10/05 21:02:08 nkramer Exp $
 *
 \**********************************************************************/
 
