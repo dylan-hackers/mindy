@@ -28,5 +28,6 @@ int delegate_gdb_signals(void)
     act.sa_flags    = SA_RESTART;
     sigemptyset(&act.sa_mask);
 
-    return sigaction(SIGINT, &act, NULL);
+    //return sigaction(SIGINT, &act, NULL);
+    return 0;
 }
