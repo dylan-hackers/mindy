@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.29 1996/05/01 12:26:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.30 1996/05/29 23:12:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -541,7 +541,7 @@ define method replace-with-functional-==
   let source = assign.source-location;
   let policy = assign.policy;
 
-  let type = class.direct-type;
+  let type = make(<direct-instance-ctype>, base-class: class);
   let need-instance? = ~csubtype?(y.derived-type, type);
 
   let boolean-ctype = specifier-type(#"<boolean>");
@@ -641,11 +641,12 @@ define method instance?-transformer
     let type = extract-constant-type(type-leaf);
     if (type)
       let derived-type = value-leaf.derived-type;
+      let type-extent = type.ctype-extent;
       replace-expression
 	(component, call.dependents,
-	 if (csubtype?(derived-type, type))
+	 if (csubtype?(derived-type, type-extent))
 	   make-literal-constant(make-builder(component), as(<ct-value>, #t));
-	 elseif (~ctypes-intersect?(derived-type, type))
+	 elseif (~ctypes-intersect?(derived-type, type-extent))
 	   make-literal-constant(make-builder(component), as(<ct-value>, #f));
 	 else
 	   make-operation
@@ -663,7 +664,7 @@ define-transformer(#"instance?", #f, instance?-transformer);
 define method optimize
     (component :: <component>, op :: <instance?>) => ();
   let value-type = op.depends-on.source-exp.derived-type;
-  let test-type = op.type;
+  let test-type = op.type.ctype-extent;
   if (csubtype?(value-type, test-type))
     replace-expression
       (component, op.dependents,
@@ -695,6 +696,11 @@ define method replace-placeholder
   insert-before(component, assign, builder-result(builder));
   replace-expression(component, dep, expr);
 end;
+
+define generic build-instance?
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value :: <leaf>, type :: <ctype>)
+    => res :: <expression>;
 
 define method build-instance?
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
@@ -790,7 +796,6 @@ define method build-instance?
   res;
 end;
 
-
 define method build-instance?
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      value :: <leaf>, class :: <cclass>, #next next-method)
@@ -825,7 +830,8 @@ define method build-instance?
       let direct-classes
 	= choose(method (direct-class)
 		   ctypes-intersect?(value.derived-type,
-				     direct-class.direct-type);
+				     make(<direct-instance-ctype>,
+					  base-class: direct-class));
 		 end,
 		 find-direct-classes(class));
       if (empty?(direct-classes))
@@ -938,6 +944,54 @@ define method build-instance?
   end;
 end;  
 
+define method build-instance?
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value :: <leaf>, type :: <direct-instance-ctype>)
+    => res :: <expression>;
+  let class-temp = make-local-var(builder, #"class", object-ctype());
+  build-assignment
+    (builder, policy, source, class-temp,
+     make-unknown-call
+       (builder, ref-dylan-defn(builder, policy, source, #"%object-class"),
+	#f, list(value)));
+  make-unknown-call
+    (builder, ref-dylan-defn(builder, policy, source, #"=="),
+     #f, list(class-temp, make-literal-constant(builder, type.base-class)));
+end method build-instance?;
+
+define method build-instance?
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     value :: <leaf>, type :: <subclass-ctype>)
+    => res :: <expression>;
+  local method build-subtype-call ()
+	  make-unknown-call
+	    (builder, ref-dylan-defn(builder, policy, source, #"subtype?"), #f,
+	     list(value, make-literal-constant(builder, type.subclass-of)));
+	end method build-subtype-call;
+  let class-ctype = specifier-type(#"<class>");
+  if (csubtype?(value.derived-type, class-ctype))
+    build-subtype-call();
+  else
+    let temp = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+    build-assignment
+      (builder, policy, source, temp,
+       build-instance?(builder, policy, source, value, class-ctype));
+    if (csubtype?(ctype-intersection(value.derived-type, class-ctype), type))
+      temp;
+    else
+      let res = make-local-var(builder, #"temp", specifier-type(#"<boolean>"));
+      build-if-body(builder, policy, source, temp);
+      build-assignment(builder, policy, source, res, build-subtype-call());
+      build-else(builder, policy, source);
+      build-assignment(builder, policy, source, res,
+		       make-literal-constant(builder, as(<ct-value>, #f)));
+      end-body(builder);
+      res;
+    end if;
+  end if;
+end method build-instance?;
+
+
 
 // slot initialized and address functions.
 
@@ -973,7 +1027,7 @@ define method slot-initialized?-transformer
 			list(instance,
 			     make-literal-constant(builder,
 						   as(<ct-value>, offset))),
-			derived-type: init?-slot.slot-type,
+			derived-type: init?-slot.slot-type.ctype-extent,
 			slot-info: init?-slot));
       done(#t);
     end if;
@@ -993,7 +1047,8 @@ define method slot-initialized?-transformer
 		      list(instance,
 			   make-literal-constant(builder,
 						 as(<ct-value>, offset))),
-		      derived-type: slot.slot-type, slot-info: slot));
+		      derived-type: slot.slot-type.ctype-extent,
+		      slot-info: slot));
     replace-expression(component, dep,
 		       make-operation(builder, <primitive>, list(temp),
 				      name: #"initialized?"));
@@ -1156,7 +1211,9 @@ define method make-transformer
 		       cclass.cclass-name);
       give-up();
     end;
-    maybe-restrict-type(component, call, cclass);
+    maybe-restrict-type
+      (component, call,
+       make(<direct-instance-ctype>, base-class: cclass).ctype-extent);
     unless (instance?(cclass, <defined-cclass>))
       give-up();
     end;

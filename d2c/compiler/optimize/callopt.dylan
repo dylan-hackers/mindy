@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.13 1996/05/11 14:45:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/callopt.dylan,v 1.14 1996/05/29 23:12:12 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -210,7 +210,8 @@ define method optimize-general-call-defn
     (component :: <component>, call :: <general-call>,
      defn :: <function-definition>)
     => ();
-  maybe-restrict-type(component, call, defn.function-defn-signature.returns);
+  maybe-restrict-type
+    (component, call, defn.function-defn-signature.returns.ctype-extent);
 end method optimize-general-call-defn;
 
 // optimize-general-call-defn{<generic-definition>}
@@ -234,7 +235,7 @@ define method optimize-general-call-defn
      defn :: <abstract-method-definition>)
     => ();
   let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
+  maybe-restrict-type(component, call, sig.returns.ctype-extent);
   maybe-change-to-known-or-error-call
     (component, call, sig, defn.defn-name, defn.method-defn-inline-function,
      defn.function-defn-hairy?);
@@ -265,7 +266,7 @@ define method optimize-general-call-ctv
   else
     assert(~instance?(ctv, <ct-generic-function>));
     let sig = ctv.ct-function-signature;
-    maybe-restrict-type(component, call, sig.returns);
+    maybe-restrict-type(component, call, sig.returns.ctype-extent);
     maybe-change-to-known-or-error-call
       (component, call, sig, ctv.ct-function-name, #f, #f);
   end;
@@ -297,7 +298,7 @@ define method optimize-generic
       return();
     end if;
 
-    maybe-restrict-type(component, call, sig.returns);
+    maybe-restrict-type(component, call, sig.returns.ctype-extent);
 
     if (call-is == #"valid" & instance?(call, <unknown-call>)
 	  & maybe-transform-call(component, call))
@@ -326,7 +327,7 @@ define method optimize-generic
 	   then values-type-union(result-type,
 				  meth.function-defn-signature.returns))
     finally
-      maybe-restrict-type(component, call, result-type);
+      maybe-restrict-type(component, call, result-type.ctype-extent);
     end for;
 
     // Blow out of here if we can't tell exactly what methods are (or can
@@ -344,7 +345,8 @@ define method optimize-generic
 	return();
       else
 	maybe-restrict-type
-	  (component, call, ordered.head.function-defn-signature.returns);
+	  (component, call,
+	   ordered.head.function-defn-signature.returns.ctype-extent);
       end if;
     end if;
 
@@ -1007,7 +1009,7 @@ define method convert-to-known-call
 		  make-literal-constant(builder, default);
 		else
 		  make(<uninitialized-value>,
-		       derived-type: keyinfo.key-type);
+		       derived-type: keyinfo.key-type.ctype-extent);
 		end;
 	      end;
 	  add!(new-ops, leaf);
@@ -1166,7 +1168,8 @@ define method optimize-known-call-leaf
     if (defn)
       optimize-known-call-defn(component, call, defn);
     else
-      maybe-restrict-type(component, call, ctv.ct-function-signature.returns);
+      maybe-restrict-type
+	(component, call, ctv.ct-function-signature.returns.ctype-extent);
     end;
   end;
 end;
@@ -1193,7 +1196,7 @@ define method optimize-known-call-defn
      defn :: <function-definition>)
     => ();
   let sig = defn.function-defn-signature;
-  maybe-restrict-type(component, call, sig.returns);
+  maybe-restrict-type(component, call, sig.returns.ctype-extent);
 end;
 
 define method optimize-known-call-defn
@@ -1208,7 +1211,8 @@ define method optimize-known-call-defn
     (component :: <component>, call :: <known-call>,
      func :: <getter-method-definition>)     
     => ();
-  maybe-restrict-type(component, call, func.function-defn-signature.returns);
+  maybe-restrict-type
+    (component, call, func.function-defn-signature.returns.ctype-extent);
   optimize-slot-ref(component, call, func.accessor-method-defn-slot-info,
 		    listify-dependencies(call.depends-on.dependent-next));
 end;
@@ -1217,7 +1221,8 @@ define method optimize-known-call-defn
     (component :: <component>, call :: <known-call>,
      func :: <setter-method-definition>)     
     => ();
-  maybe-restrict-type(component, call, func.function-defn-signature.returns);
+  maybe-restrict-type
+    (component, call, func.function-defn-signature.returns.ctype-extent);
   optimize-slot-set(component, call, func.accessor-method-defn-slot-info,
 		    listify-dependencies(call.depends-on.dependent-next));
 end;
@@ -1247,14 +1252,14 @@ define method optimize-slot-ref
 	error("The init? slot is in the data-word?");
       end if;
       let temp = make-local-var(builder, #"slot-initialized?", object-ctype());
-      build-assignment(builder, policy, source, temp,
-		       make-operation(builder, <heap-slot-ref>,
-				      list(instance,
-					   make-literal-constant
-					     (builder,
-					      as(<ct-value>, init?-offset))),
-				      derived-type: init?-slot.slot-type,
-				      slot-info: init?-slot));
+      build-assignment
+	(builder, policy, source, temp,
+	 make-operation
+	   (builder, <heap-slot-ref>,
+	    list(instance,
+		 make-literal-constant(builder, as(<ct-value>, init?-offset))),
+	    derived-type: init?-slot.slot-type.ctype-extent,
+	    slot-info: init?-slot));
       build-if-body(builder, policy, source, temp);
       build-else(builder, policy, source);
       build-assignment
@@ -1271,14 +1276,14 @@ define method optimize-slot-ref
        if (offset == #"data-word")
 	 make-operation
 	   (builder, <data-word-ref>, list(instance),
-	    derived-type: slot.slot-type, slot-info: slot);
+	    derived-type: slot.slot-type.ctype-extent, slot-info: slot);
        else
 	 make-operation
 	   (builder, <heap-slot-ref>,
 	    pair(instance,
 		 pair(make-literal-constant(builder, as(<ct-value>, offset)),
 		      args.tail)),
-	    derived-type: slot.slot-type,
+	    derived-type: slot.slot-type.ctype-extent,
 	    slot-info: slot);
        end);
     unless (init?-slot | guaranteed-initialized?)

@@ -1,5 +1,5 @@
 module: cheese
-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/typeinf.dylan,v 1.3 1996/04/18 17:09:21 wlott Exp $
+header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/typeinf.dylan,v 1.4 1996/05/29 23:12:12 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -260,7 +260,8 @@ define method infer-type
   let type-deriver = prim.primitive-info.priminfo-type-deriver;
   if (type-deriver)
     let arg-types = map(guessed-type, listify-dependencies(prim.depends-on));
-    fix-type-guess(component, prim, type-deriver(prim, arg-types));
+    fix-type-guess
+      (component, prim, type-deriver(prim, arg-types).ctype-extent);
   end if;
 end method infer-type;
 
@@ -288,7 +289,7 @@ define method function-result-type
     (leaf :: <literal-constant>) => res :: <values-ctype>;
   let ctv = leaf.value;
   if (instance?(ctv, <ct-function>))
-    ctv.ct-function-signature.returns;
+    ctv.ct-function-signature.returns.ctype-extent;
   else
     wild-ctype();
   end if;
@@ -298,7 +299,7 @@ define method function-result-type
     (leaf :: <definition-constant-leaf>) => res :: <values-ctype>;
   let defn = leaf.const-defn;
   if (instance?(defn, <function-definition>))
-    defn.function-defn-signature.returns;
+    defn.function-defn-signature.returns.ctype-extent;
   else
     wild-ctype();
   end if;
@@ -329,7 +330,8 @@ define method infer-unknown-call-type-leaf
     if (defn)
       infer-unknown-call-type-defn(component, call, defn);
     else
-      fix-type-guess(component, call, ctv.ct-function-signature.returns);
+      fix-type-guess
+	(component, call, ctv.ct-function-signature.returns.ctype-extent);
     end if;
   else
     fix-type-guess(component, call, wild-ctype());
@@ -358,7 +360,8 @@ define method infer-unknown-call-type-defn
     (component :: <component>, call :: <unknown-call>,
      defn :: <function-definition>)
     => ();
-  fix-type-guess(component, call, defn.function-defn-signature.returns);
+  fix-type-guess
+    (component, call, defn.function-defn-signature.returns.ctype-extent);
 end method infer-unknown-call-type-defn;
 
 define method infer-unknown-call-type-defn
@@ -383,7 +386,7 @@ define method infer-unknown-call-type-defn
 
     let (definitely, maybe) = ct-applicable-methods(defn, arg-types);
     if (definitely == #f)
-      fix-type-guess(component, call, sig.returns);
+      fix-type-guess(component, call, sig.returns.ctype-extent);
       return();
     end if;
 
@@ -400,7 +403,7 @@ define method infer-unknown-call-type-defn
 	       then values-type-union(result-type,
 				      meth.function-defn-signature.returns))
 	finally
-	  fix-type-guess(component, call, result-type);
+	  fix-type-guess(component, call, result-type.ctype-extent);
 	end for;
 	return();
       end method could-be-any;
@@ -419,8 +422,9 @@ define method infer-unknown-call-type-defn
     end if;
 
     unless (ordered == #())
-      fix-type-guess(component, call,
-		     ordered.first.function-defn-signature.returns);
+      fix-type-guess
+	(component, call,
+	 ordered.first.function-defn-signature.returns.ctype-extent);
     end unless;
   end block;
 end method infer-unknown-call-type-defn;

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.4 1996/03/20 22:32:20 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.5 1996/05/29 23:12:12 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -313,7 +313,7 @@ define method aux-build-xep
 	   if (default & ~default-bogus?)
 	     make-literal-constant(builder, default);
 	   else
-	     make(<uninitialized-value>, derived-type: type);
+	     make(<uninitialized-value>, derived-type: type.ctype-extent);
 	   end);
 	if (supplied?-var)
 	  if (needs-supplied?-var?)

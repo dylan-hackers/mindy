@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.131 1996/05/09 02:16:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.132 1996/05/29 23:12:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -422,7 +422,7 @@ define method optimize
 
 	// For the variables that might be defaulted to #f because the value
 	// was unsupplied, union in <false>.
-	let false-type = dylan-value(#"<false>");
+	let false-type = dylan-value(#"<false>").ctype-extent;
 	for (var = var then var.definer-next,
 	     positionals = positionals then positionals.tail,
 	     until: var == #f | positionals == #())
@@ -730,7 +730,8 @@ define method optimize (component :: <component>, catch :: <catch>) => ();
        make-unknown-call
 	 (builder, catch.depends-on.source-exp, #f,
 	  list(make(<uninitialized-value>, 
-		    derived-type: specifier-type(#"<raw-pointer>")))));
+		    derived-type:
+		      specifier-type(#"<raw-pointer>").ctype-extent))));
     let make-catcher-op = nlx-info.nlx-make-catcher;
     if (make-catcher-op)
       replace-expression
@@ -918,15 +919,11 @@ end method expand-next-method-if-ref;
 // Type utilities.
 
 define method optimize (component :: <component>, op :: <truly-the>) => ();
+  let guaranteed = op.guaranteed-type.ctype-extent;
   let (intersection, win)
-    = ctype-intersection(op.depends-on.source-exp.derived-type,
-			 op.guaranteed-type);
-  maybe-restrict-type(component, op,
-		      if (win)
-			intersection;
-		      else
-			op.guaranteed-type;
-		      end);
+    = ctype-intersection(op.depends-on.source-exp.derived-type, guaranteed);
+  maybe-restrict-type
+    (component, op, if (win) intersection else guaranteed end);
 end;
 
 define method assert-type
@@ -934,7 +931,7 @@ define method assert-type
      dependent :: <dependency>, type :: <ctype>)
     => ();
   let source = dependent.source-exp;
-  unless (csubtype?(source.derived-type, type))
+  unless (csubtype?(source.derived-type, type.ctype-extent))
     let builder = make-builder(component);
     let temp = make-ssa-var(builder, #"temp", type);
     build-assignment(builder, before.policy, before.source-location,
@@ -1008,7 +1005,7 @@ define method maybe-restrict-type
      type :: <values-ctype>, #next next-method)
     => ();
   if (var.needs-type-check?
-	& values-subtype?(type, var.var-info.asserted-type))
+	& values-subtype?(type, var.var-info.asserted-type.ctype-extent))
     var.needs-type-check? := #f;
     reoptimize(component, var.definer);
   end;
@@ -1024,7 +1021,7 @@ define method defaulted-type (ctype :: <ctype>, index :: <integer>)
   if (index.zero?)
     ctype;
   else
-    specifier-type(#"<false>");
+    specifier-type(#"<false>").ctype-extent;
   end if;
 end;
 
@@ -1037,10 +1034,11 @@ define method defaulted-type
     if (index < ctype.min-values)
       type;
     else
-      ctype-union(type, specifier-type(#"<false>"));
+      ctype-union(type, specifier-type(#"<false>").ctype-extent);
     end if;
   else
-    ctype-union(ctype.rest-value-type, specifier-type(#"<false>"));
+    ctype-union(ctype.rest-value-type,
+		specifier-type(#"<false>").ctype-extent);
   end if;
 end method defaulted-type;
 
@@ -1691,7 +1689,7 @@ define method maybe-close-over
 					 asserted-type: value-cell-type,
 					 source-location:
 					   var.var-info.source-location),
-			  derived-type: value-cell-type);
+			  derived-type: value-cell-type.ctype-extent);
     for (defn in var.definitions)
       let temp = make-ssa-var(builder, var.var-info.debug-name,
 			      defn.derived-type);
@@ -1722,7 +1720,7 @@ define method maybe-close-over
 	    = make-unknown-call(builder, make-leaf, #f, 
 				list(value-cell-type-leaf, value-keyword-leaf,
 				     temp));
-	  op.derived-type := value-cell-type;
+	  op.derived-type := value-cell-type.ctype-extent;
 	  build-assignment
 	    (builder, assign.policy, assign.source-location, value-cell, op);
 	<set-assignment> =>

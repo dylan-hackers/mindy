@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/funcopt.dylan,v 1.2 1996/03/18 01:47:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/funcopt.dylan,v 1.3 1996/05/29 23:12:12 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -85,8 +85,9 @@ end method optimize;
 
 define method optimize (component :: <component>, prologue :: <prologue>)
     => ();
-  maybe-restrict-type(component, prologue,
-		      make-values-ctype(prologue.function.argument-types, #f));
+  maybe-restrict-type
+    (component, prologue,
+     make-values-ctype(prologue.function.argument-types, #f).ctype-extent);
 end;
 
 define method optimize (component :: <component>, return :: <return>) => ();

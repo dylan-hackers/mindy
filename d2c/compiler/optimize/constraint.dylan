@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/constraint.dylan,v 1.4 1996/05/01 12:30:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/constraint.dylan,v 1.5 1996/05/29 23:12:12 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -249,9 +249,9 @@ define method extract-if-constraints
 					 as(<ct-value>, #t));
 		 end method);
   else
-    maybe-constrain-type(component, region.then-region, then-renamings, cond,
-			 ctype-difference(cond-type,
-					  specifier-type(#"<false>")));
+    maybe-constrain-type
+      (component, region.then-region, then-renamings, cond,
+       ctype-difference(cond-type, specifier-type(#"<false>").ctype-extent));
   end if;
   add-renaming(else-renamings,
 	       cond,
@@ -292,10 +292,11 @@ define method extract-if-constraints
     => ();
   let value = cond.depends-on.source-exp;
   if (instance?(value, <ssa-variable>))
+    let type = cond.type.ctype-extent;
     maybe-constrain-type(component, region.then-region, then-renamings, value,
-			 ctype-intersection(value.derived-type, cond.type));
+			 ctype-intersection(value.derived-type, type));
     maybe-constrain-type(component, region.else-region, else-renamings, value,
-			 ctype-difference(value.derived-type, cond.type));
+			 ctype-difference(value.derived-type, type));
   end if;
 end method extract-if-constraints;
 
@@ -337,9 +338,10 @@ define method constrain-as-different
     => ();
   let ctv = y.value;
   if (instance?(ctv, <eql-ct-value>))
-    maybe-constrain-type(component, inside, renamings, x,
-			 ctype-difference(x.derived-type,
-					  make-canonical-singleton(ctv)));
+    maybe-constrain-type
+      (component, inside, renamings, x,
+       ctype-difference
+	 (x.derived-type, make(<singleton-ctype>, value: ctv).ctype-extent));
   end if;
 end method constrain-as-different;
 

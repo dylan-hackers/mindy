@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.16 1996/04/15 18:30:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.17 1996/05/29 23:08:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -311,7 +311,7 @@ define-ct-evaluator(#"singleton", #(#"<object>"),
 		    method (object :: <ct-value>)
 			=> res :: false-or(<ct-value>);
 		      if (instance?(object, <eql-ct-value>))
-			make-canonical-singleton(object);
+			make(<singleton-ctype>, value: object);
 		      else
 			#f;
 		      end;
@@ -320,6 +320,13 @@ define-ct-evaluator(#"singleton", #(#"<object>"),
 define-ct-evaluator(#"subclass", #(#"<class>"),
 		    method (class :: <cclass>) => res :: <subclass-ctype>;
 		      make(<subclass-ctype>, of: class);
+		    end method);
+
+define-ct-evaluator(#"direct-instance", #(#"<class>"),
+		    method (class :: <cclass>) => res :: <subclass-ctype>;
+		      unless (class.abstract?)
+			make(<direct-instance-ctype>, base-class: class);
+		      end unless;
 		    end method);
 
 define-ct-evaluator(#"type-union", #(rest:, #"<type>"),
@@ -334,12 +341,19 @@ define-ct-evaluator(#"false-or", #(#"<type>"),
 
 define-ct-evaluator(#"one-of", #(rest:, #"<object>"),
 		    method (#rest objects) => res :: false-or(<ctype>);
-		      if (every?(rcurry(instance?, <eql-ct-value>), objects))
-			reduce(ctype-union, empty-ctype(),
-			       map(make-canonical-singleton, objects));
-		      else
-			#f;
-		      end;
+		      block (return)
+			for (result = empty-ctype()
+			       then ctype-union(result,
+						make(<singleton-ctype>,
+						     value: value)),
+			     value in objects)
+			  unless (instance?(value, <eql-ct-value>))
+			    return(#f);
+			  end unless;
+			finally
+			  result;
+			end for;
+		      end block;
 		    end method);
 
 define-ct-evaluator
@@ -370,7 +384,7 @@ define-ct-evaluator
        dylan-value(#"<singleton>") =>
 	 let (okay, object) = ct-keywords(keys, #"object");
 	 if (okay & instance?(object, <eql-ct-value>))
-	   make-canonical-singleton(object);
+	   make(<singleton-ctype>, value: object);
 	 end;
        dylan-value(#"<byte-character-type>") =>
 	 if (ct-keywords(keys))

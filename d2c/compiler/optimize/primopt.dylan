@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.26 1996/05/12 00:16:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.27 1996/05/29 23:12:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -11,9 +11,8 @@ define method optimize (component :: <component>, primitive :: <primitive>)
   maybe-restrict-type
     (component, primitive,
      if (type-deriver)
-       type-deriver(primitive,
-		    map(derived-type,
-			listify-dependencies(primitive.depends-on)));
+       let args = listify-dependencies(primitive.depends-on);
+       type-deriver(primitive, map(derived-type, args)).ctype-extent;
      else
        info.priminfo-result-type;
      end if);
@@ -184,8 +183,9 @@ define-primitive-transformer
 	   end;
 	 end;
 	 add!(types, specifier-type(#"<simple-object-vector>"));
-	 maybe-restrict-type(component, primitive,
-			     make-values-ctype(as(<list>, types), #f));
+	 maybe-restrict-type
+	   (component, primitive,
+	    make-values-ctype(as(<list>, types), #f).ctype-extent);
        end;
      end;
    end);
@@ -647,7 +647,7 @@ define-primitive-transformer
      let result-dep = func-dep.dependent-next;
      begin
        let result-type = result-dep.source-exp.dylan-type-for-c-type;
-       maybe-restrict-type(component, primitive, result-type);
+       maybe-restrict-type(component, primitive, result-type.ctype-extent);
      end;
      let assign = primitive.dependents.dependent;
      local
@@ -671,7 +671,7 @@ define-primitive-transformer
    method (component :: <component>, primitive :: <primitive>) => ();
      let result-dep = primitive.depends-on;
      let result-type = result-dep.source-exp.dylan-type-for-c-type;
-     maybe-restrict-type(component, primitive, result-type);
+     maybe-restrict-type(component, primitive, result-type.ctype-extent);
    end);
 
 define method dylan-type-for-c-type (leaf :: <leaf>) => res :: <values-ctype>;
@@ -878,7 +878,7 @@ define-primitive-transformer
    method (component :: <component>, primitive :: <primitive>) => ();
      let result-dep = primitive.depends-on;
      let result-type = result-dep.source-exp.dylan-type-for-c-type;
-     maybe-restrict-type(component, primitive, result-type);
+     maybe-restrict-type(component, primitive, result-type.ctype-extent);
    end);
 
 define-primitive-transformer

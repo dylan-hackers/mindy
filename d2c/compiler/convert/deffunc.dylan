@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.68 1996/05/01 14:24:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.69 1996/05/29 23:08:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1160,7 +1160,9 @@ define method discriminate-on-one-arg
     arg-classes[discriminate-on] := direct-class;
     let method-set
       = sort-methods-set(concatenate(entry.tail, always-applicable),
-			 arg-classes, direct-class.direct-type);
+			 arg-classes,
+			 make(<direct-instance-ctype>,
+			      base-class: direct-class));
     let this-id = direct-class.unique-id;
     for (remaining = ranges then remaining.tail,
 	 prev = #f then remaining,

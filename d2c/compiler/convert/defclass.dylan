@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.69 1996/04/15 11:57:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.70 1996/05/29 23:08:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1312,7 +1312,8 @@ define method class-defn-maker-function
 	   let name = format-to-string("Maker for %s", defn.defn-name);
 	   let sig = make(<signature>, specializers: #(),
 			  keys: as(<list>, key-infos), all-keys: #t,
-			  returns: cclass.direct-type);
+			  returns: make(<direct-instance-ctype>,
+					base-class: cclass));
 	   //
 	   // If this is the maker for an immediate representation class,
 	   // set up the maker so that it can be inlined.
@@ -1667,7 +1668,7 @@ define method build-maker-function-body
   let maker-builder = make-builder(tl-builder);
   let init-builder = make-builder(tl-builder);
   let cclass :: <cclass> = defn.ct-value;
-  let direct = cclass.direct-type;
+  let direct = make(<direct-instance-ctype>, base-class: cclass);
   let instance-leaf = make-local-var(init-builder, #"instance", direct);
   let representation = pick-representation(direct, #"speed");
   let immediate-rep?
@@ -1962,7 +1963,7 @@ define method build-maker-function-body
 		build-assignment(maker-builder, policy, source,
 				 init-value-var,
 				 make(<uninitialized-value>,
-				      derived-type: type));
+				      derived-type: type.ctype-extent));
 	      end;
 	      end-body(maker-builder);
 	      build-slot-init(slot, init-value-var);
@@ -1991,7 +1992,8 @@ define method build-maker-function-body
 						    as(<ct-value>, #t)));
 	    else
 	      build-slot-init
-		(slot, make(<uninitialized-value>, derived-type: type));
+		(slot, make(<uninitialized-value>,
+			    derived-type: type.ctype-extent));
 	      build-slot-init
 		(slot.slot-initialized?-slot,
 		 make-literal-constant(init-builder, as(<ct-value>, #f)));
@@ -2062,18 +2064,18 @@ define method build-maker-function-body
      if (immediate-rep?)
        make-operation
 	 (tl-builder, <primitive>, as(<list>, make-immediate-args),
-	  name: #"make-immediate", derived-type: direct);
+	  name: #"make-immediate", derived-type: direct.ctype-extent);
      elseif (data-word-leaf)
        make-operation
 	 (tl-builder, <primitive>,
 	  list(make-literal-constant(tl-builder, cclass),
 	       len-leaf, data-word-leaf),
-	  name: #"allocate-with-data-word", derived-type: direct);
+	  name: #"allocate-with-data-word", derived-type: direct.ctype-extent);
      else
        make-operation
 	 (tl-builder, <primitive>,
 	  list(make-literal-constant(tl-builder, cclass), len-leaf),
-	  name: #"allocate", derived-type: direct);
+	  name: #"allocate", derived-type: direct.ctype-extent);
      end if);
   build-region(tl-builder, builder-result(init-builder));
   build-return(tl-builder, policy, source, maker-region,
@@ -2083,7 +2085,7 @@ define method build-maker-function-body
 	 make(<signature>, specializers: #(),
 	      keys: as(<list>, key-infos),
 	      all-keys: #t,
-	      returns: cclass.direct-type));
+	      returns: direct));
 end method build-maker-function-body;
 
 
@@ -2183,11 +2185,13 @@ define method build-getter
 	let init?-slot = slot.slot-initialized?-slot;
 	let temp = make-local-var(builder, #"initialized?",
 				  specifier-type(#"<boolean>"));
-	build-assignment(builder, policy, source, temp,
-			 make-operation(builder, <heap-slot-ref>,
-					list(instance, init?-offset),
-					derived-type: init?-slot.slot-type,
-					slot-info: init?-slot));
+	build-assignment
+	  (builder, policy, source, temp,
+	   make-operation
+	     (builder, <heap-slot-ref>,
+	      list(instance, init?-offset),
+	      derived-type: init?-slot.slot-type.ctype-extent,
+	      slot-info: init?-slot));
 	build-if-body(builder, policy, source, temp);
 	build-else(builder, policy, source);
 	build-assignment
@@ -2213,19 +2217,22 @@ define method build-getter
 	build-if-body(builder, policy, source, temp);
 	build-assignment
 	  (builder, policy, source, result,
-	   make-operation(builder, <data-word-ref>, list(instance),
-			  derived-type: slot.slot-type, slot-info: slot));
+	   make-operation
+	     (builder, <data-word-ref>, list(instance),
+	      derived-type: slot.slot-type.ctype-extent, slot-info: slot));
 	build-else(builder, policy, source);
       end if;
-      build-assignment(builder, policy, source, result,
-		       make-operation(builder, <heap-slot-ref>,
-				      if (index)
-					list(instance, offset, index);
-				      else
-					list(instance, offset);
-				      end,
-				      derived-type: slot.slot-type,
-				      slot-info: slot));
+      build-assignment
+	(builder, policy, source, result,
+	 make-operation
+	   (builder, <heap-slot-ref>,
+	    if (index)
+	      list(instance, offset, index);
+	    else
+	      list(instance, offset);
+	    end,
+	    derived-type: slot.slot-type.ctype-extent,
+	    slot-info: slot));
       if (maybe-data-word?)
 	end-body(builder);
       end if;
