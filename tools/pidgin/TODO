@@ -1,0 +1,19 @@
+THINGS TO DO
+------------
+
+Here's a rough list of things to do before the C parser is integrated.
+
+ * Cut out dead code.
+ * Figure out why GL/gl.h parses so much slower than ansi-test.h.
+   - source-location seems to be part of the problem. A bit part, too.
+ * Profile.
+   - Wasting time in source-location.
+   - Wasting time in generic function dispatch.
+   - Wasting time calling forward-iteration-protocol.
+   - Somebody's burning a *lot* of time comparing things.
+ * How fast is appending a chunk to the end of a <stretchy-vector>?
+   - Not too bad... It only resizes every 1024 elements or so.
+ * How bad does fast-string-hash suck when run on the OpenGL headers?
+   - Oh, wow. That's nasty.
+ * Figure out what to do with sizeof.
+ * Polish c-parser API.

@@ -11,8 +11,11 @@ Current status:
 
  * C parser
    - Almost entirely integrated
-   - Many new bugs fixes
+   - Many new bug fixes
    - Basic search paths work
+   - Need to improve API
+
+See the TODO file for more information.
 
 Please mail your feedback to <eric.kidd@pobox.com>. You can find more
 information about pidgin in the comp.lang.dylan newsgroup and on the
@@ -22,34 +25,3 @@ Gwydion Dylan website at:
 
 Eric Kidd
 27 March 1999
-
-Parts of the to do list are out of date.
-
------ THINGS TO DO -----
-Here's a rough list of things to do before the C parser is integrated.
-
- * Reactive process-declarator, declare objects and add-declaration.
- * Get rid of declaration-closure.
- * Hook parse-c-file up to the parser engine.
- * Cut out dead code.
- * Replace code in c-parser-stubs.dylan with ANSI-C equivalents.
- * Handle all the problems described in "PROBLEM AREAS" below.
- * Check printing of bitfields.
- * Implement <c-empty-define>.
- * Figure out why GL/gl.h parses so much slower than ansi-test.h.
- * Profile.
- * How fast is appending a chunk to the end of a <stretchy-vector>?
-   Not too bad... It only resizes every 1024 elements or so.
- * How bad does fast-string-hash suck when run on the OpenGL headers?
-   Oh, wow. That's nasty.
-
------ PROBLEM AREAS -----
-This is an older list.
-
-c-parser.input needs to know about enum members for constant folding
-c-lexer.dylan needs to know about typedefs (in a complicated fashion, too)
-c-parser.input knows too much about function arguments
-c-parser.input refers to '@0.objects' a lot
-c-parser-interface.dylan uses 'state.objects' in 'declare-objects'.
-
-Also, look for code related to sizeof.
