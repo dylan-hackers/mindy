@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.35 1996/09/15 15:57:12 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.36 1996/09/16 09:59:21 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -396,6 +396,12 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 
     oldargs = args - 1;
     thread->sp = args + 1;
+
+    /* ### Collect some zombie processes before we launch a new
+       process.  Ideally, we'd collect them in a more orderly fashion,
+       but this will do for now. */
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+	;
 
     if (pipe(inpipes) >= 0 && pipe(outpipes) >= 0 &&
 	(forkresult = fork()) != -1)
