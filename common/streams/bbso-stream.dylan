@@ -317,7 +317,7 @@ end method;
 ///
 define sealed method stream-contents
     (stream :: <buffered-byte-string-output-stream>,
-     #key clear-contents? = #t)
+     #key clear-contents? :: <boolean> = #t)
  => output :: <byte-string>;
   let buf :: <buffer> = get-output-buffer(stream);
   let backup :: false-or(<byte-string>) = stream.string-output-stream-backup;
