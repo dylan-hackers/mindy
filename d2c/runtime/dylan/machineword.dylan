@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.3 2002/03/17 11:43:34 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.4 2002/04/06 01:29:50 brent Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -31,6 +31,23 @@ module: dylan-viscera
 
 define functional class <machine-word> (<object>)
   slot value :: <integer>, required-init-keyword: %value:;
+end;
+
+define sealed abstract class <invalid-bit-number> (<error>)
+  constant slot bit-number :: <integer>,
+    required-init-keyword: bit-number:;
+end class;
+
+ignore(bit-number);
+
+define sealed class <invalid-bit-index> (<invalid-bit-number>)
+end class;
+
+define sealed domain make (singleton(<invalid-bit-index>));
+define sealed domain initialize (<invalid-bit-index>);
+
+define function invalid-bit-index (index :: <integer>)
+  error(make(<invalid-bit-index>, bit-number: index));
 end;
 
 define sealed inline method as
@@ -93,6 +110,51 @@ define sealed inline method \<
   a.value < b;
 end method;
 
+// Added to support Functional Object's Common Dylan
+define inline function valid-bit-number? (bit :: <integer>)
+  (0 <= bit) & (bit < $machine-word-size);
+end;
+
+define inline function check-bit-index(idx :: <integer>)
+  unless (valid-bit-number?(idx))
+    invalid-bit-index(idx);
+  end unless;
+end;
+
+define sealed inline method %logbit? (idx :: <integer>, a :: <machine-word>)
+ => (res :: <boolean>);
+  check-bit-index(idx);
+  //machine-word-logbit?(idx, a);
+  odd?(ash(as(<integer>, a), -idx));
+end method %logbit?;
+
+define sealed inline method odd? (a :: <machine-word>)
+ => (res :: <boolean>)
+  %logbit?(0, a)
+end method odd?;
+
+define sealed inline method even? (a :: <machine-word>)
+ => (res :: <boolean>)
+  ~%logbit?(0, a)
+end method even?;
+
+define sealed inline method zero? (a :: <machine-word>)
+ => (res :: <boolean>)
+  a = $machine-word-zero
+end method zero?;
+
+define sealed inline method positive? (a :: <machine-word>)
+ => (res :: <boolean>)
+  a > $machine-word-zero
+end method positive?;
+
+define sealed inline method negative? (a :: <machine-word>)
+ => (res :: <boolean>)
+  a < $machine-word-zero
+end method negative?;
+
+// End FO Support
+
 define constant $machine-word-size :: <integer> = $fixed-integer-bits;
 define constant $maximum-signed-machine-word :: <machine-word>
   = as(<machine-word>, $maximum-integer);
@@ -102,6 +164,9 @@ define constant $maximum-unsigned-machine-word :: <machine-word>
   = as(<machine-word>, -1);
 define constant $minimum-unsigned-machine-word :: <machine-word>
   = as(<machine-word>, 0);
+define constant $machine-word-zero :: <machine-word>
+  = as(<machine-word>, 0);
+
 
 define sealed domain make (singleton(<machine-word>));
 define sealed domain initialize (<machine-word>);

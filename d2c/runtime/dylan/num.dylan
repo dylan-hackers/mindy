@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.5 2001/03/17 03:43:36 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.6 2002/04/06 01:29:50 brent Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -63,6 +63,10 @@ define open generic negative? (num :: <object>) => res :: <boolean>;
 
 define open generic integral? (num :: <object>) => res :: <boolean>;
 
+define open generic odd? (num :: <object>) => res :: <boolean>;
+
+define open generic even? (num :: <object>) => res :: <boolean>;
+
 define open generic \+ (num1 :: <object>, num2 :: <object>);
 
 define open generic \* (num1 :: <object>, num2 :: <object>);
@@ -76,6 +80,7 @@ define open generic negative (num :: <object>) => res :: <object>;
 define open generic \^ (num :: <object>, power :: <object>) => res :: <object>;
 
 define open generic abs (num :: <object>) => res :: <object>;
+
 
 
 // Complex methods.
@@ -199,14 +204,12 @@ end;
 
 // Integer methods.
 
-define sealed generic odd? (a :: <general-integer>) => res :: <boolean>;
-
+//define sealed generic odd? (a :: <general-integer>) => res :: <boolean>;
 define inline method odd? (a :: <general-integer>) => res :: <boolean>;
   ~even?(a);
 end;
 
-define sealed generic even? (a :: <general-integer>) => res :: <boolean>;
-
+//define sealed generic even? (a :: <general-integer>) => res :: <boolean>;
 // No default method for even?.
 
 define inline method integral? (a :: <general-integer>) => res :: <boolean>;
@@ -262,6 +265,9 @@ define sealed generic binary-logand
 
 define sealed generic lognot (x :: <general-integer>)
     => res :: <general-integer>;
+
+define sealed generic %logbit? (index :: <integer>, num :: <object>)
+    => res :: <boolean>;
 
 define sealed generic logbit? (index :: <integer>, int :: <general-integer>)
     => res :: <boolean>;

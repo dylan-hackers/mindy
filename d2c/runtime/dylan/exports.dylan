@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.23 2001/12/13 22:43:58 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.24 2002/04/06 01:29:50 brent Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -230,9 +230,10 @@ end;
 
 define module Machine-Words
   use Dylan-Viscera,
-    import: {<machine-word>, $machine-word-size,
+    import: {<machine-word>, $machine-word-size, $machine-word-zero,
              $maximum-signed-machine-word, $minimum-signed-machine-word,
              $maximum-unsigned-machine-word, $minimum-unsigned-machine-word,
+             odd?, even?, zero?, negative?, positive?,
              // as-unsigned, %logior, %logxor, %logand, %lognot, %logbit?
              // %count-low-zeros, %count-high-zeros, %+, %-, %*,
              // %floor/, %ceiling/, %ceiling/, %round/, %truncate/,
