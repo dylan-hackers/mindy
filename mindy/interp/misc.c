@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.13 1995/09/27 22:47:53 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.14 1995/11/07 11:37:07 wlott Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -44,6 +44,7 @@
 #include "def.h"
 #include "num.h"
 #include "error.h"
+#include "str.h"
 
 static struct variable *generic_apply_var = NULL;
 
@@ -128,9 +129,7 @@ static void dylan_apply_curry(struct thread *thread, int nargs)
     invoke(thread, len1+len2);
 }
 
-
 /* Invoking the debugger. */
-
 static void dylan_invoke_debugger(struct thread *thread, int nargs)
 {
     obj_t *args;
@@ -146,6 +145,11 @@ static void dylan_invoke_debugger(struct thread *thread, int nargs)
 static obj_t dylan_get_time_of_day (void)
 {
     return make_bignum(time(NULL));
+}
+
+static obj_t dylan_system(obj_t command)
+{
+    return make_fixnum(system(string_chars(command)));
 }
 
 
@@ -164,6 +168,8 @@ void init_misc_functions(void)
 		    FALSE, obj_ObjectClass, dylan_exit);
     define_function("get-time-of-day", obj_Nil, FALSE, 
 		    obj_False, FALSE, obj_BignumClass, dylan_get_time_of_day);
+    define_function("system", list1(obj_ByteStringClass), FALSE, obj_False,
+		    FALSE, obj_FixnumClass, dylan_system);
     define_constant("invoke-debugger",
 		    make_raw_function("invoke-debugger", 1, FALSE, obj_False,
 				      FALSE, obj_Nil, obj_ObjectClass,

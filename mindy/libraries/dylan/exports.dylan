@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.72 1995/10/26 16:10:22 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.73 1995/11/07 11:37:32 wlott Exp $
 
 //======================================================================
 //
@@ -91,7 +91,7 @@ define module Builtin-Stuff
     slot-descriptors, slot-getter, slot-getter-method, slot-initialized?,
     slot-name, slot-setter, slot-setter-method, slot-type, slot-value,
     slot-value-setter, sorted-applicable-methods, spawn-thread, state-valid?,
-    subclass-of, subtype?,
+    subclass-of, subtype?, system,
     tail, tail-setter, truncate, truncate/,
     union, union-members,
     values, vector,
@@ -247,7 +247,8 @@ end Extensions;
 define module System
   use Dylan;
   use Builtin-Stuff,
-    import: {<buffer>, copy-bytes, $Newlines-Are-CRLF, get-time-of-day},
+    import: {<buffer>, copy-bytes, $Newlines-Are-CRLF, get-time-of-day,
+	     system},
     export: all;
 end System;
 
