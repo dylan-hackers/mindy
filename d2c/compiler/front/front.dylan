@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.30 1995/05/08 15:55:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.31 1995/05/09 14:05:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -210,7 +210,11 @@ define class <slot-set> (<slot-access>)
 end;
 
 define class <truly-the> (<operation>)
-  slot guaranteed-type :: <ctype>, required-init-keyword: derived-type:;
+  slot guaranteed-type :: <ctype>, required-init-keyword: guaranteed-type:;
+end;
+
+define method initialize (op :: <truly-the>, #key guaranteed-type)
+  op.derived-type := guaranteed-type;
 end;
 
 

@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.16 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.17 1995/05/09 14:05:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -522,7 +522,7 @@ define method build-discriminator-tree
 	  build-assignment
 	    (builder, policy, source, temp,
 	     make-operation(builder, <truly-the>, list(arg),
-			    derived-type: method-set.restriction-type));
+			    guaranteed-type: method-set.restriction-type));
 	  arg-vars[discriminate-on] := temp;
 	  build-discriminator-tree
 	    (builder, policy, source, arg-vars, rest?, results,
