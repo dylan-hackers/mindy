@@ -13,7 +13,8 @@ copyright: Copyright 1998 Jeff Dubrule, Eric Kidd
 //  use, provided that the following conditions are observed:
 // 
 //  1. This copyright notice must be retained in full on any copies
-//     and on appropriate parts of any derivative works.
+//     and on appropriate parts of any derivative works. (Other names
+//     and years may be added, so long as no existing ones are removed.)
 // 
 //  This software is made available "as is".  Neither the authors nor
 //  Carnegie Mellon University make any warranty about the software,
