@@ -84,7 +84,7 @@ define macro with-keywords-removed
      => { begin
             let remove = ?remove;
             let ?new-rest
-              = for(plist = ?fun-rest then tail(tail(plist)),
+              = for(plist = as(<list>, ?fun-rest) then tail(tail(plist)),
                     new = #()
                       then if(member?(head(plist), remove))
                              new
@@ -225,17 +225,19 @@ end method release-all;
 // put-property!
 
 define method put-property!
-    (properties :: <collection>, property :: <object>, value :: <object>)
+    (properties :: <stretchy-object-vector>,
+     property :: <object>,
+     value :: <object>)
  => ()
   add!(properties, property);
-  add!(properties, property);
+  add!(properties, value);
   values();
 end method put-property!;
 
 // get-property
 
 define method get-property
-    (properties :: <list>, key :: <object>, #key default)
+    (properties :: <sequence>, key :: <object>, #key default)
  => (result :: <object>);
   block(return)
     for(item in properties,
@@ -255,7 +257,7 @@ define macro remove-property!
     => { begin
            let result = #f;
            let key = ?key;
-           ?place := for(plist = ?place then tail(tail(plist)),
+           ?place := for(plist = as(<list>, ?place) then tail(tail(plist)),
                          new = #()
                            then if(head(plist) == key)
                                   result := head(tail(plist));
