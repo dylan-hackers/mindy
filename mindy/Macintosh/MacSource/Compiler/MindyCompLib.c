@@ -33,8 +33,8 @@ void FinalizeAnsi( void );
 /* globals */
 
 jmp_buf		gJmp;
-
-FILE * gSTDERR;
+int			gStatus;
+FILE* 		gSTDERR;
 
 
 /* functions */
@@ -47,13 +47,11 @@ int MindyComp( int argc, char *argv[], FILE * newStderr )
 
 	InitializeAnsi( newStderr );
 	
-	result = setjmp( gJmp );		/* Set the longjump point */
-	if( result )					/* If we've longjumped */
-		goto bail;
-	
-	result = main( argc, argv );	/* Call main with argC and argV */
-
-	bail:
+	if (setjmp(gJmp) == 0) {			/* Set the longjump point */
+		result = main( argc, argv );	/* Call main with argC and argV */
+	} else {
+		result = gStatus;
+	}
 
 	FinalizeAnsi();
 	return result;
@@ -67,6 +65,7 @@ int MindyComp( int argc, char *argv[], FILE * newStderr )
 
 void exit( int code )
 {
+	gStatus = code;
 	longjmp( gJmp, 1 );
 }
 
