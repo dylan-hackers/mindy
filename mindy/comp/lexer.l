@@ -26,7 +26,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.5 2000/01/24 04:58:02 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.6 2000/10/31 14:24:43 dauclair Exp $
 *
 * This file is the lexical analizer.
 *
@@ -72,19 +72,20 @@ O	":="|"+"|"-"|"*"|"/"|"="|"=="|"<"|">"|"<="|">="|"~="|"~=="|"&"|"|"|"^"
 
 STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0<]))*\"
 
+EOL	"\n"|"\r"|"\r\n"|"\n\r"
 %%
 
 <INITIAL>.			BEGIN(ini); yyless(0);
 
-<ini>#!.*\n			BEGIN(key); warn(line_count, "igoring initial #! interpreter comment\n"); line_count++; 
+<ini>#!.*{EOL}			BEGIN(key); warn(line_count, "igoring initial #! interpreter comment\n"); line_count++; 
 
 <ini,key>[a-z][-a-z0-9]*:	BEGIN(val); return make_header_key();
-<ini,key>[ \t]*\n		BEGIN(etc); return make_header_end();
+<ini,key>[ \t]*{EOL}		BEGIN(etc); return make_header_end();
 
-<val>.*\n([ \t]+.+\n)*		BEGIN(key); return make_header_val();
+<val>.*{EOL}([ \t]+.+{EOL})*	BEGIN(key); return make_header_val();
 
 <etc>[ \t\f]+			;
-<etc>[\n]			line_count++;
+<etc>{EOL}			line_count++;
 
 <etc>"//".*			;
 <etc>"/*"			skip_multi_line_comment();
@@ -222,6 +223,7 @@ static void skip_multi_line_comment(void)
 	  case EOF:
 	    return;
 	  case '\n':
+	  case '\r':
 	    line_count++;
 	    prev = c;
 	    break;
@@ -256,7 +258,7 @@ static int make_header_key()
 }
 static int make_header_val()
 {
-  char *p1, *p2;
+  char *p1, *p2, tentative_line_terminator;
   int skipped = 0;
 
   for (p1 = p2 = yytext; p1 < yytext + yyleng; ) {
@@ -266,12 +268,19 @@ static int make_header_val()
       skipped += 1;
     }
     /* copy to end of line */
-    while (p1 < yytext + yyleng && *p1 != '\n') {
+    while (p1 < yytext + yyleng && (*p1 != '\n' && *p1 != '\r')) {
       *p2++ = *p1++;
     }
     /* copy and count newline */
     *p2++ = *p1++;
-    line_count += 1;
+    line_count++;
+    /* check for weird (Mac and Windows) line-endings */
+    tentative_line_terminator = *(p1 - 1);
+    if((*p1 == '\n' || *p1 == '\r') && tentative_line_terminator != *p1)
+    {
+      *p2++ = *p1++;
+      skipped++;
+    }
   }
   /* make the token, dropping the last newline */
   yylval.token = make_token(yytext, yyleng - skipped - 1);
