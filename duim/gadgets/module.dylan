@@ -1,10 +1,10 @@
 Module:       Dylan-User
 Synopsis:     DUIM gadgets
 Author:       Scott McKay, Andy Armstrong
-Copyright:    Original Code is Copyright (c) 1995-1999 Harlequin Group plc.
-	      All rights reserved.
-License:      Harlequin Library Public License Version 1.0
-Dual License: GNU Library General Public License
+Copyright:    Original Code is Copyright (c) 1995-2000 Functional Objects, Inc.
+              All rights reserved.
+License:      Functional Objects Library Public License Version 1.0
+Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 define module duim-gadgets
@@ -27,6 +27,7 @@ define module duim-gadgets
          gadget-command, gadget-command-setter,
          gadget-documentation, gadget-documentation-setter,
          gadget-enabled?, gadget-enabled?-setter,
+         gadget-end-value,
          gadget-id, gadget-id-setter,
          gadget-key-press-callback, gadget-key-press-callback-setter,
          gadget-label, gadget-label-setter,
@@ -41,15 +42,21 @@ define module duim-gadgets
          gadget-state, gadget-state-setter,
 	 gadget-text-selection-changed-callback, gadget-text-selection-changed-callback-setter,
          gadget-slug-size, gadget-slug-size-setter,
+         gadget-start-value,
+         gadget-supplies-scroll-bars?,
          gadget-update-callback, gadget-update-callback-setter,
          gadget-value, gadget-value-setter,
          gadget-value-changed-callback, gadget-value-changed-callback-setter,
          gadget-value-changing-callback, gadget-value-changing-callback-setter,
+         gadget-value-increment,
          gadget-value-range, gadget-value-range-setter,
 	 gadget-value-type,
          gadget-x-alignment, gadget-y-alignment,
          gadget?,
 	 \labeling, \labelling,		// everyone always spells this "wrong"
+         horizontal-line-scroll-amount,
+         normalize-gadget-value,
+         vertical-line-scroll-amount,
          activate-gadget,
          update-gadget;
 
@@ -165,7 +172,8 @@ define module duim-gadgets
          tab-control-tabs-position;
 
   // List and table control panes
-  create <list-control>,
+  create <item>,
+         <list-control>,
          <list-item>,
          <table-column>,
 	 <table-control>,
@@ -190,8 +198,10 @@ define module duim-gadgets
 	 graph-center-nodes?,
 	 graph-edge-class,
 	 graph-edge-initargs,
-	 graph-edge-from-node, graph-edge-from-node-setter,
-	 graph-edge-to-node, graph-edge-to-node-setter,
+	 graph-edge-generator,
+	 graph-edge-from-node,
+	 graph-edge-to-node,
+	 graph-edge-object,
 	 graph-inter-generation-spacing,
 	 graph-intra-generation-spacing,
 	 graph-orientation,
@@ -446,6 +456,7 @@ define module duim-gadgets-internals
          <push-box-pane>,
          <radio-box-pane>,
          button-box-spacing,
+         button-class-for-gadget-box,
 	 button-first-in-group?,
          button-gadget-box,
 	 button-in-tool-bar?,

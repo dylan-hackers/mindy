@@ -1,10 +1,10 @@
 Module:       duim-gadgets-internals
 Synopsis:     DUIM gadgets
 Author:       Scott McKay, Andy Armstrong
-Copyright:    Original Code is Copyright (c) 1996-1999 Harlequin Group plc.
-	      All rights reserved.
-License:      Harlequin Library Public License Version 1.0
-Dual License: GNU Library General Public License
+Copyright:    Original Code is Copyright (c) 1996-2000 Functional Objects, Inc.
+              All rights reserved.
+License:      Functional Objects Library Public License Version 1.0
+Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 /// List controls
@@ -21,7 +21,7 @@ define open abstract class <list-control>
      <key-press-gadget-mixin>,
      <popup-menu-gadget-mixin>,
      <basic-choice-gadget>)
-  /*sealed*/ constant slot gadget-lines :: false-or(<integer>) = #f,
+  sealed constant slot gadget-lines :: false-or(<integer>) = #f,
     init-keyword: lines:;
   sealed slot list-control-view :: <list-control-view> = #"list",
     init-keyword: view:,

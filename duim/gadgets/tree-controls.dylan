@@ -1,10 +1,10 @@
 Module:       duim-gadgets-internals
 Synopsis:     DUIM gadgets
 Author:       Scott McKay, Andy Armstrong
-Copyright:    Original Code is Copyright (c) 1996-1999 Harlequin Group plc.
-	      All rights reserved.
-License:      Harlequin Library Public License Version 1.0
-Dual License: GNU Library General Public License
+Copyright:    Original Code is Copyright (c) 1996-2000 Functional Objects, Inc.
+              All rights reserved.
+License:      Functional Objects Library Public License Version 1.0
+Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 /// Tree controls
@@ -18,7 +18,7 @@ define open abstract class <tree-control>
      <key-press-gadget-mixin>,
      <popup-menu-gadget-mixin>,
      <basic-choice-gadget>)
-  /*sealed*/ constant slot gadget-lines :: false-or(<integer>) = #f,
+  sealed constant slot gadget-lines :: false-or(<integer>) = #f,
     init-keyword: lines:;
   sealed slot tree-control-roots :: <stretchy-object-vector> = make(<stretchy-vector>),
     setter: %roots-setter;
@@ -29,11 +29,11 @@ define open abstract class <tree-control>
   // Takes an object, produces child objects
   sealed slot tree-control-children-generator :: <function>,
     required-init-keyword: children-generator:;
-  // Takes an object, returns #t if there are any child objects
+  // Takes an object, returns #t iff there are any child objects
   sealed slot tree-control-children-predicate :: <function> = default-children-predicate,
     init-keyword: children-predicate:;
   // Takes an object, produces two icons -- a normal and a selected icon
-  /*sealed*/ constant slot tree-control-icon-function :: false-or(<function>) = #f,
+  sealed constant slot tree-control-icon-function :: false-or(<function>) = #f,
     init-keyword: icon-function:;
   // Compressed tree control flag word
   sealed slot tree-control-flags :: <integer> = $initial-tree-control-flags;
@@ -51,9 +51,8 @@ define constant $initial-tree-control-flags :: <integer>
     = logior(%tree_show_edges, %tree_show_root_edges, %tree_show_buttons);
 
 define method initialize
-    (tree :: <tree-control>, #rest initargs,
+    (tree :: <tree-control>,
      #key roots = #[], show-edges? = #t, show-root-edges? = #t, show-buttons? = #t)
-  dynamic-extent(initargs);
   next-method();
   let bits = logior(if (show-edges?)      %tree_show_edges      else 0 end,
 		    if (show-root-edges?) %tree_show_root_edges else 0 end,
@@ -110,9 +109,9 @@ define constant <node-state> = one-of(#"expanded", #"contracted", #f);
 define open abstract class <tree-node> (<item>)
   sealed constant slot node-object = #f,
     init-keyword: object:;
-  /*sealed*/ slot node-parents :: <sequence> = make(<stretchy-vector>),
+  sealed slot node-parents :: <sequence> = make(<stretchy-vector>),
     init-keyword: node-parents:;
-  /*sealed*/ slot node-children :: <sequence> = make(<stretchy-vector>),
+  sealed slot node-children :: <sequence> = make(<stretchy-vector>),
     init-keyword: node-children:,
     setter: %node-children-setter;
   sealed slot node-state :: <node-state> = #f;
@@ -192,10 +191,10 @@ define sealed inline method item-object
 end method item-object;
 
 
-define method default-children-predicate (node) => (true? :: <boolean>) //- function
+define function default-children-predicate (node) => (true? :: <boolean>)
   ignore(node);
   #t
-end method default-children-predicate;
+end function default-children-predicate;
 
 define method tree-control-roots-setter
     (roots :: <sequence>, tree :: <tree-control>)

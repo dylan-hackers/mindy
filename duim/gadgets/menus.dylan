@@ -1,10 +1,10 @@
 Module:       duim-gadgets-internals
 Synopsis:     DUIM gadgets
 Author:       Scott McKay, Andy Armstrong
-Copyright:    Original Code is Copyright (c) 1995-1999 Harlequin Group plc.
-	      All rights reserved.
-License:      Harlequin Library Public License Version 1.0
-Dual License: GNU Library General Public License
+Copyright:    Original Code is Copyright (c) 1995-2000 Functional Objects, Inc.
+              All rights reserved.
+License:      Functional Objects Library Public License Version 1.0
+Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 /// Menus
@@ -310,7 +310,7 @@ end method make;
 
 // Default implementation of menu chooser when handed a sequence of items.
 // This is "sideways" because it is a forward reference from DUIM-Sheets.
-define /*sideways*/ method do-choose-from-menu
+define sideways method do-choose-from-menu
     (framem :: <frame-manager>, owner :: <sheet>, items :: <sequence>,
      #rest keys,
      #key title = #f, value,

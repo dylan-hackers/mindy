@@ -1,10 +1,10 @@
 Module:       duim-gadgets-internals
 Synopsis:     DUIM gadgets
 Author:       Scott McKay, Andy Armstrong
-Copyright:    Original Code is Copyright (c) 1995-1999 Harlequin Group plc.
-	      All rights reserved.
-License:      Harlequin Library Public License Version 1.0
-Dual License: GNU Library General Public License
+Copyright:    Original Code is Copyright (c) 1995-2000 Functional Objects, Inc.
+              All rights reserved.
+License:      Functional Objects Library Public License Version 1.0
+Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 /// Text editing gadgets
@@ -313,29 +313,29 @@ end method do-gadget-value-setter;
 /// 'accept' and 'present', ha ha ha
 
 define method gadget-text-parser
-    (type == <string>, text :: <string>) => (value :: <string>)  //- type :: subclass(<string>)
+    (type :: subclass(<string>), text :: <string>) => (value :: <string>)
   text
 end method gadget-text-parser;
 
 define method gadget-value-printer
-    (type == <string>, value :: <string>) => (text :: <string>)
+    (type :: subclass(<string>), value :: <string>) => (text :: <string>)
   value
 end method gadget-value-printer;
 
 
 define method gadget-text-parser
-    (type == <symbol>, text :: <string>) => (value :: <symbol>)
+    (type :: subclass(<symbol>), text :: <string>) => (value :: <symbol>)
   as(<symbol>, text)
 end method gadget-text-parser;
 
 define method gadget-value-printer
-    (type == <symbol>, value :: <symbol>) => (text :: <string>)
+    (type :: subclass(<symbol>), value :: <symbol>) => (text :: <string>)
   as(<string>, value)
 end method gadget-value-printer;
 
 
 define method gadget-text-parser
-    (type == <integer>, text :: <string>) => (value :: false-or(<integer>))
+    (type :: subclass(<integer>), text :: <string>) => (value :: false-or(<integer>))
   block ()
     let (value, next) = string-to-integer(text);
     next = size(text) & value
@@ -345,9 +345,9 @@ define method gadget-text-parser
 end method gadget-text-parser;
 
 define method gadget-value-printer
-    (type == <integer>, value :: false-or(<integer>)) => (text :: <string>)
+    (type :: subclass(<integer>), value :: false-or(<integer>)) => (text :: <string>)
   if (value)
-    integer-to-string(value);
+    integer-to-string(value)
   else
     ""
   end
@@ -356,7 +356,7 @@ end method gadget-value-printer;
 
 /*
 define method gadget-text-parser
-    (type == <float>, text :: <string>) => (value :: false-or(<float>))
+    (type :: subclass(<float>), text :: <string>) => (value :: false-or(<float>))
   block ()
     let (value, next) = string-to-float(text);
     next = size(text) & value
@@ -366,7 +366,7 @@ define method gadget-text-parser
 end method gadget-text-parser;
 
 define method gadget-value-printer
-    (type == <float>, value :: false-or(<float>)) => (text :: <string>)
+    (type :: subclass(<float>), value :: false-or(<float>)) => (text :: <string>)
   if (value)
     float-to-string(value)
   else
@@ -413,7 +413,7 @@ end protocol <<text-editor-protocol>>;
 // A multi-line text editing field
 define open abstract class <text-editor>
     (<scrolling-gadget-mixin>, <text-field>)
-  /*sealed*/ constant slot gadget-lines   :: false-or(<integer>) = #f,	// i.e., bottomless
+  sealed constant slot gadget-lines   :: false-or(<integer>) = #f,	// i.e., bottomless
     init-keyword: lines:;
   sealed constant slot gadget-columns :: false-or(<integer>) = #f,
     init-keyword: columns:;

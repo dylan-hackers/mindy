@@ -1,14 +1,11 @@
 Module:       duim-gadgets-internals
 Synopsis:     DUIM gadgets
 Author:       Scott McKay, Andy Armstrong
-Copyright:    Original Code is Copyright (c) 1995-1999 Harlequin Group plc.
-	      All rights reserved.
-License:      Harlequin Library Public License Version 1.0
-Dual License: GNU Library General Public License
+Copyright:    Original Code is Copyright (c) 1995-2000 Functional Objects, Inc.
+              All rights reserved.
+License:      Functional Objects Library Public License Version 1.0
+Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
-
-//- Moved for fix by Chris Double
-define constant <accelerator> = type-union(<character>, <keyboard-gesture>);
 
 /// Generic gadget protocols
 
@@ -336,6 +333,7 @@ end method callback-for-command;
 define method callback-for-command
     (command :: <command>) => (callback :: <function>, command)
   values(method (sheet)
+	   //--- This could copy the command and plug in the new server and client...
 	   execute-command(command)
 	 end method,
 	 command)
@@ -344,7 +342,7 @@ end method callback-for-command;
 define method callback-for-command
     (command-type :: subclass(<command>)) => (callback :: <function>, command)
   values(method (sheet)
-	   execute-command-type(command-type, server: sheet-frame(sheet))
+	   execute-command-type(command-type, server: sheet-frame(sheet), client: sheet)
 	 end method,
 	 command-type)
 end method callback-for-command;
@@ -352,7 +350,7 @@ end method callback-for-command;
 define method callback-for-command
     (command-type :: <list>) => (callback :: <function>, command)
   values(method (sheet)
-	   execute-command-type(command-type, server: sheet-frame(sheet))
+	   execute-command-type(command-type, server: sheet-frame(sheet), client: sheet)
 	 end method,
 	 head(command-type))
 end method callback-for-command;
@@ -977,6 +975,8 @@ define sealed class <compound-label> (<object>)
     required-init-keyword: text:;
   sealed constant slot %image :: <image>,
     required-init-keyword: image:;
+  sealed constant slot %orientation :: one-of(#"horizontal", #"vertical") = #"horizontal",
+    init-keyword: orientation:;
 end class <compound-label>;
 
 define sealed domain make (singleton(<compound-label>));
@@ -991,9 +991,14 @@ define sealed method compound-label-size
   let text-style = get-default-text-style(_port, gadget);
   let (tw, th) = text-size(_port, text, text-style: text-style);
   let (iw, ih) = values(image-width(image), image-height(image));
-  // Add a little slop so that label doesn't get too squeezed
-  values(ceiling(iw + 2 + tw) + 1,
-	 ceiling(max(font-height(text-style, _port), ih)) + 1)
+  if (label.%orientation == #"horizontal")
+    // Add a little slop so that label doesn't get too squeezed
+    values(ceiling(iw + tw) + 2 + 1,
+	   ceiling(max(font-height(text-style, _port), ih)) + 1)
+  else
+    values(ceiling(max(iw, tw) + 2),
+	   ceiling(ih + font-height(text-style, _port)) + 2 + 1)
+  end
 end method compound-label-size;
 
 define sealed method draw-compound-label
@@ -1006,7 +1011,13 @@ define sealed method draw-compound-label
   with-drawing-options (medium,
 			brush: brush | default-foreground(gadget),
 			text-style: default-text-style(gadget))
-    draw-text(medium, text, x + iw + 2, y, align-x: #"left", align-y: #"top")
+    if (label.%orientation == #"horizontal")
+      draw-text(medium, text, x + iw + 2, y + floor/(ih, 2),
+		align-x: #"left", align-y: #"center")
+    else
+      draw-text(medium, text, x + floor/(iw, 2) + 2, y + ih + 2,
+		align-x: #"center", align-y: #"top")
+    end
   end
 end method draw-compound-label;
 
@@ -1040,6 +1051,8 @@ end method draw-image-label;
 
 
 /// Mixins for accelerators and mnemonics
+
+define constant <accelerator> = type-union(<character>, <keyboard-gesture>);
 
 define open abstract class <accelerator-mixin> (<abstract-gadget>)
   sealed slot gadget-accelerator = $unsupplied,
@@ -1575,8 +1588,8 @@ end method gadget-supplies-scroll-bars?;
 
 /// Updating scrollbars
 
-define /*thread*/variable *inhibit-updating-scroll-bars?* = #f;
-define /*thread*/variable *inhibit-updating-scroll-bars-viewports* = #f;
+define thread variable *inhibit-updating-scroll-bars?* = #f;
+define thread variable *inhibit-updating-scroll-bars-viewports* = #f;
 
 // Inhibit updating any scroll bars for the duration of the body
 define macro inhibit-updating-scroll-bars
@@ -1676,7 +1689,7 @@ end method sheet-scroller;
 
 /// Viewport fenceposts... don't ask
 
-define open generic viewport-fencepost? (object) => (true? :: <boolean>);
+define generic viewport-fencepost? (object) => (true? :: <boolean>);
 
 define method viewport-fencepost? (sheet) => (true? :: <boolean>)
   #f

@@ -1,10 +1,10 @@
 Module:       duim-gadgets-internals
 Synopsis:     DUIM gadgets
 Author:       Scott McKay, Andy Armstrong
-Copyright:    Original Code is Copyright (c) 1995-1999 Harlequin Group plc.
-	      All rights reserved.
-License:      Harlequin Library Public License Version 1.0
-Dual License: GNU Library General Public License
+Copyright:    Original Code is Copyright (c) 1995-2000 Functional Objects, Inc.
+              All rights reserved.
+License:      Functional Objects Library Public License Version 1.0
+Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 /// Useful constants
@@ -348,7 +348,7 @@ define open abstract class <list-box>
      <scrolling-gadget-mixin>,
      <action-gadget-mixin>,
      <basic-choice-gadget>)
-  /*sealed*/ constant slot gadget-lines :: false-or(<integer>) = #f,
+  sealed constant slot gadget-lines :: false-or(<integer>) = #f,
     init-keyword: lines:;
   keyword read-only?: = #t;
 end class <list-box>;
@@ -387,7 +387,7 @@ define open abstract class <combo-box>
      <text-gadget>,
      <basic-choice-gadget>)
   // Same deal as <text-field>...
-  /*sealed*/ slot gadget-text-buffer :: <string> = "",
+  sealed slot gadget-text-buffer :: <string> = "",
     init-keyword: text:;
   constant slot gadget-value-type :: <type> = <string>,
     init-keyword: value-type:;
@@ -462,7 +462,7 @@ end class <gadget-box>;
 
 /// Tool bars
 
-define open abstract class <gadget-bar-mixin>
+define abstract class <gadget-bar-mixin>
     (<updatable-gadget-mixin>)
 end class <gadget-bar-mixin>;
 
@@ -503,7 +503,8 @@ end class <status-bar>;
 
 define method initialize 
     (pane :: <status-bar>,
-     #key frame-manager: framem, label, value, value-range, progress-bar?) => ()
+     #key frame-manager: framem, label, value, value-range, progress-bar?)
+ => ()
   next-method();
   when (empty?(sheet-children(pane)))
     with-frame-manager (framem)
@@ -515,11 +516,11 @@ define method initialize
 	= if (progress-bar? | (value | value-range))
 	    let best-width  = $progress-bar-best-width;
 	    let value-range = value-range | range(from: 0, to: 100);
-	    let value       = value       | value-range[0];
             let progress-bar
               = make(<progress-bar>, 
 		     value-range: value-range,
-		     value:       value,
+		     value:       value | value-range[0],
+		     withdrawn?:  ~value,
 		     min-width: best-width, max-width: best-width);
             status-bar-progress-bar(pane) := progress-bar;
             vector(label-pane, progress-bar)
@@ -562,16 +563,18 @@ end method gadget-label-setter;
 define method gadget-value
     (status-bar :: <status-bar>) => (value :: false-or(<real>))
   let progress-bar = status-bar-progress-bar(status-bar);
-  progress-bar & gadget-value(progress-bar)
+  progress-bar
+    & ~sheet-withdrawn?(progress-bar)
+    & gadget-value(progress-bar)
 end method gadget-value;
 
-// Allow #f meaning don't display the progress control if possible
+// Allow #f meaning don't display the progress bar if possible
 define method normalize-gadget-value
     (status-bar :: <status-bar>, value :: false-or(<real>))
  => (value :: false-or(<real>))
   let progress-bar = status-bar-progress-bar(status-bar);
   if (progress-bar)
-    normalize-gadget-value(progress-bar, value)
+    value & normalize-gadget-value(progress-bar, value)
   else
     next-method()
   end
@@ -580,7 +583,18 @@ end method normalize-gadget-value;
 define method do-gadget-value-setter
     (status-bar :: <status-bar>, value :: false-or(<real>)) => ()
   let progress-bar = status-bar-progress-bar(status-bar);
-  progress-bar & (gadget-value(progress-bar) := value)
+  when (progress-bar)
+    if (value)
+      sheet-withdrawn?(progress-bar) := #f;
+      gadget-value(progress-bar) := value
+    else
+      sheet-withdrawn?(progress-bar) := #t
+    end;
+    if (sheet-mapped?(status-bar))
+      relayout-children(status-bar);
+      sheet-mapped?(progress-bar) := ~(~value);
+    end
+  end
 end method do-gadget-value-setter;
 
 define method gadget-value-range-setter 
@@ -588,7 +602,9 @@ define method gadget-value-range-setter
  => (range :: <range>)
   next-method();
   let progress-bar = status-bar-progress-bar(status-bar);
-  progress-bar & (gadget-value-range(progress-bar) := range);
+  when (progress-bar)
+    gadget-value-range(progress-bar) := range
+  end;
   range
 end method gadget-value-range-setter;
 
@@ -691,7 +707,7 @@ end method collection-gadget-default-label-key;
 
 define method collection-gadget-default-label-key 
     (n :: <integer>) => (name :: <string>)
-    integer-to-string(n);
+  integer-to-string(n)
 end method collection-gadget-default-label-key;
 
 

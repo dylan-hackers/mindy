@@ -1,10 +1,10 @@
 Module:       duim-gadgets-internals
 Synopsis:     DUIM gadgets
 Author:       Scott McKay, Andy Armstrong
-Copyright:    Original Code is Copyright (c) 1995-1999 Harlequin Group plc.
-	      All rights reserved.
-License:      Harlequin Library Public License Version 1.0
-Dual License: GNU Library General Public License
+Copyright:    Original Code is Copyright (c) 1995-2000 Functional Objects, Inc.
+              All rights reserved.
+License:      Functional Objects Library Public License Version 1.0
+Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 /// Generic implementation of <menu-box> using just buttons
@@ -56,8 +56,8 @@ define method relayout-parent
   #f
 end method relayout-parent;
 
-//* Unsealed for Vanilla
-define /*sealed*/ class <push-menu-box-pane>
+
+define sealed class <push-menu-box-pane>
     (<menu-box-pane>, 
      <push-menu-box>, 
      <multiple-child-composite-pane>)
@@ -69,7 +69,7 @@ define method class-for-make-pane
   values(<push-menu-box-pane>, #f)
 end method class-for-make-pane;
 
-//*define sealed domain make (singleton(<push-menu-box-pane>));
+define sealed domain make (singleton(<push-menu-box-pane>));
 define sealed domain initialize (<push-menu-box-pane>);
 
 define method do-execute-activate-callback
@@ -80,8 +80,8 @@ define method do-execute-activate-callback
   next-method()
 end method do-execute-activate-callback;
 
-//* Unsealed for Vanilla
-define /*sealed*/ class <radio-menu-box-pane>
+
+define sealed class <radio-menu-box-pane>
     (<menu-box-pane>,
      <radio-menu-box>,
      <multiple-child-composite-pane>)
@@ -93,7 +93,7 @@ define method class-for-make-pane
   values(<radio-menu-box-pane>, #f)
 end method class-for-make-pane;
 
-//define sealed domain make (singleton(<radio-menu-box-pane>));
+define sealed domain make (singleton(<radio-menu-box-pane>));
 define sealed domain initialize (<radio-menu-box-pane>);
 
 define method do-execute-value-changed-callback
@@ -108,8 +108,8 @@ define method do-execute-value-changed-callback
   next-method()
 end method do-execute-value-changed-callback;
 
-//* Unsealed for Vanilla
-define /*sealed*/ class <check-menu-box-pane>
+
+define sealed class <check-menu-box-pane>
     (<menu-box-pane>,
      <check-menu-box>,
      <multiple-child-composite-pane>)
@@ -121,7 +121,7 @@ define method class-for-make-pane
   values(<check-menu-box-pane>, #f)
 end method class-for-make-pane;
 
-//define sealed domain make (singleton(<check-menu-box-pane>));
+define sealed domain make (singleton(<check-menu-box-pane>));
 define sealed domain initialize (<check-menu-box-pane>);
 
 define method do-execute-value-changed-callback
