@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/Dylan.lid,v 1.1 1998/05/03 19:55:38 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/Dylan.lid,v 1.2 2001/01/25 03:50:28 housel Exp $
 library: Dylan
 unique-id-base: 0
 
@@ -11,6 +11,7 @@ boolean.dylan
 cmp.dylan
 type.dylan
 class.dylan
+designator-class.dylan
 copy.dylan
 func.dylan
 num.dylan

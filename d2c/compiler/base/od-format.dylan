@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.7 2000/10/20 14:56:29 housel Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.8 2001/01/25 03:50:26 housel Exp $
 
 //======================================================================
 //
@@ -476,6 +476,8 @@ begin
   register-object-id(#"class-proxy", #x0071);
   register-object-id(#"subclass-type", #x0072);
   register-object-id(#"limited-collection", #x0073);
+  register-object-id(#"defined-designator-class", #x014B);
+  register-object-id(#"struct-slot-info", #x014C);
 
 
   // Compile-time functions:
@@ -644,6 +646,8 @@ begin
   // see above: register-object-id(#"ct-callback-function", #x0148);
   // see above: register-object-id(#"constant-callback-function-info", #x0149);
   // see above: register-object-id(#"callback-literal", #x014A);
+  // see above: register-object-id(#"defined-designator-class", #x014B);
+  // see above: register-object-id(#"struct-slot-info", #x014C);
 
 end;
 

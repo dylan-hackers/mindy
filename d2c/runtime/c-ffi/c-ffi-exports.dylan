@@ -10,13 +10,16 @@ define library c-ffi
 end library;
 
 define module c-ffi
-  use dylan;
+  use Dylan;
+  use Extensions, import: { subclass };
+  use System, export: { size-of, alignment-of, referenced-type };
+/*
   export
     // Types which might be intended to live here?
     <machine-word>,
 
     // Basic designator types & operations
-    <C-value>, <C-void>, size-of, alignment-of,
+    <C-value>, <C-void>,
 
     // Numeric designator types. Is this enough float types for ANSI C?
     <C-number>, <C-float>, <C-double>, <C-float*>, <C-double*>,
@@ -57,7 +60,7 @@ define module c-ffi
     // Pointer types
     <C-pointer>, pointer-address, pointer-cast, null-pointer,
     null-pointer?, <C-void*>, <C-statically-typed-pointer>,
-    \C-pointer-type-definer, referenced-type, pointer-value,
+    \C-pointer-type-definer, pointer-value,
     pointer-value-setter, pointer-value-address, 
     // element, element-setter, \=, \<,
 
@@ -97,4 +100,5 @@ define module c-ffi
     clear-memory!, copy-bytes!, copy-into!, equal-memory?, <C-Dylan-object>,
     register-C-Dylan-object, unregister-C-Dylan-object,
     export-C-Dylan-object, import-C-Dylan-object;
+*/
 end module;

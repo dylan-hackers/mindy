@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.4 2000/01/24 04:55:52 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.5 2001/01/25 03:50:26 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -303,6 +303,26 @@ define method seed-representations () => ();
     set-representations(ptr-cclass, *ptr-rep*, *ptr-rep*);
   end;
 end method seed-representations;
+
+define method c-rep (c-type :: <symbol>) => rep :: false-or(<representation>);
+  select (c-type)
+    #"general", #"object" => *general-rep*;
+    #"heap" => *heap-rep*;
+    #"boolean" => *boolean-rep*;
+    #"long" => *long-rep*;
+    #"int" => *int-rep*;
+    #"uint", #"unsigned-int" => *uint-rep*;
+    #"short" => *short-rep*;
+    #"ushort", #"unsigned-short" => *ushort-rep*;
+    #"byte", #"char" => *byte-rep*;
+    #"ubyte", #"unsigned-char" => *ubyte-rep*;
+    #"float" => *float-rep*;
+    #"double" => *double-rep*;
+    #"long-double" => *long-double-rep*;
+    #"ptr" => *ptr-rep*;
+    #"void" => #f;
+  end;
+end method;
 
 
 // Assigning class representations.

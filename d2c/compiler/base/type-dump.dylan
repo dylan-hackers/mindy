@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.3 2000/01/24 04:56:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.4 2001/01/25 03:50:27 housel Exp $
 copyright: see below
 
 
@@ -270,3 +270,28 @@ add-make-dumper(#"limited-class", *compiler-dispatcher*, <limited-cclass>,
 		$class-dump-slots, load-external: #t);
 
 
+add-make-dumper(#"defined-designator-class", *compiler-dispatcher*,
+  <defined-cdclass>,
+  concatenate($class-dump-slots,
+	      list(size-of, size:, #f,
+		   alignment-of, alignment:, #f,
+		   designated-representation, representation:, #f,
+		   referenced-type, referenced-type:, #f,
+		   pointer-type, pointer-type:, #f,
+		   import-type, import-type:, #f,
+		   export-type, export-type:, #f,
+		   struct-slot-infos, struct-slots:, #f)),
+  load-external: #t
+);
+
+add-make-dumper(#"struct-slot-info", *compiler-dispatcher*,
+  <struct-slot-info>,
+  list(struct-slot-c-type, c-type:, #f,
+       struct-slot-c-name, c-name:, #f,
+       struct-slot-getter, getter:, #f,
+       struct-slot-setter, setter:, #f,
+       struct-slot-address-getter, address-getter:, #f,
+       struct-slot-dimensions, dimensions:, #f,
+       struct-slot-bitfield-width, width:, #f),	
+  load-external: #t
+);

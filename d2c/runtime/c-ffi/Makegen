@@ -1,0 +1,6 @@
+
+$D2CFLAGS = '-L../dylan';
+
+do emit_library_rule(
+    'c-ffi', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
+);

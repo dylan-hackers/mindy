@@ -15,6 +15,8 @@
 #undef NO_GETWD
 #undef NO_LIMITS_H
 #undef NO_SHARP_BANG
+#undef HAVE_DAYLIGHT
+#undef HAVE_TM_GMTOFF
 #undef NO_SIGACTION
 #undef NO_STDLIB_H
 #undef NO_STRING_H

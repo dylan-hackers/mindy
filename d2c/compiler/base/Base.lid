@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Base.lid,v 1.5 2000/10/21 03:39:42 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Base.lid,v 1.6 2001/01/25 03:50:26 housel Exp $
 library: compiler-base
 unit-prefix: base
 unique-id-base: 10000
@@ -20,6 +20,7 @@ policy.dylan
 ctype.dylan
 rep.dylan
 cclass.dylan
+cdclass.dylan
 type-dump.dylan
 c-rep.dylan
 transdef.dylan

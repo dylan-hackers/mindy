@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.17 2000/10/20 15:00:24 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.18 2001/01/25 03:50:27 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1148,6 +1148,77 @@ define method spew-object
 		    object.override-init-function;
 		  end);
 end method spew-object;
+
+define method spew-object
+    (name :: <byte-string>,
+     object :: <defined-cdclass>, state :: <heap-file-state>) => ();
+  let defn = object.class-defn;
+  spew-instance(name, specifier-type(#"<class>"), state,
+		class-name:
+		  make(<literal-string>,
+		       value: as(<byte-string>,
+				 object.cclass-name.name-symbol)),
+		unique-id:
+		  as(<ct-value>, object.unique-id | -1),
+		direct-superclasses:
+		  make(<literal-simple-object-vector>,
+		       contents: object.direct-superclasses,
+		       sharable: #t),
+		all-superclasses:
+		  make(<literal-simple-object-vector>,
+		       contents: object.precedence-list,
+		       sharable: #t),
+		closest-primary-superclass: object.closest-primary-superclass,
+		direct-subclasses:
+		  make(<literal-list>, contents: object.direct-subclasses),
+		class-functional?: as(<ct-value>, object.functional?),
+		class-primary?: as(<ct-value>, object.primary?),
+		class-abstract?: as(<ct-value>, object.abstract?),
+		class-sealed?: as(<ct-value>, object.sealed?),
+		class-defered-evaluations:
+		  defn.class-defn-defered-evaluations-function
+		  | as(<ct-value>, #f),
+		class-maker: defn.class-defn-maker-function
+		  | as(<ct-value>, #f),
+		class-new-slot-descriptors:
+		  make(<literal-simple-object-vector>,
+		       contents: object.new-slot-infos,
+		       sharable: #t),
+		class-slot-overrides:
+		  make(<literal-simple-object-vector>,
+		       contents: object.override-infos,
+		       sharable: #t),
+		class-all-slot-descriptors:
+		  make(<literal-simple-object-vector>,
+		       contents: object.all-slot-infos,
+		       sharable: #t),
+		class-bucket: as(<ct-value>, object.bucket),
+		class-row:
+		  make(<literal-simple-object-vector>,
+		       contents: map(curry(as,<ct-value>), object.row),
+		       sharable: #t),
+		size: as(<ct-value>, object.size-of),
+		alignment: as(<ct-value>, object.alignment-of),
+		c-rep:
+		  as(<ct-value>,
+		     begin
+		       let rep = object.designated-representation;
+		       rep & rep.representation-name;
+		     end),
+		referenced-type: object.referenced-type | as(<ct-value>, #f),
+		class-struct-slot-descriptors:
+		  make(<literal-simple-object-vector>,
+		       contents: object.struct-slot-infos,
+		       sharable: #t));
+end;
+
+define method spew-object
+    (name :: <byte-string>,
+     object :: <struct-slot-info>, state :: <heap-file-state>) => ();
+  spew-instance(name, specifier-type(#"<struct-slot-descriptor>"), state,
+		c-type: object.struct-slot-c-type,
+		offset: as(<ct-value>, object.struct-slot-offset));
+end;
 
 define method spew-object
     (name :: <byte-string>,

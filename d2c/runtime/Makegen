@@ -6,6 +6,7 @@ if (!$enable_bootstrap || $enable_mindy_bootstrap) {
 
     do compile_subdirs('dylan',
 		       'melange',
+#		       'c-ffi',
 		       'garbage-collection',
 		       '../../common',
 		       'random');

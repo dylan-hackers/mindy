@@ -7,3 +7,4 @@ time-intr.dylan
 time.dylan
 time-io.dylan
 parse-time.dylan
+time-portability.o

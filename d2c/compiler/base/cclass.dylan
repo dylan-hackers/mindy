@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.7 2000/01/24 04:55:53 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.8 2001/01/25 03:50:26 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1798,6 +1798,17 @@ define method csubtype-dispatch
     & direct-classes.size == 1
     & direct-classes.first == type2.base-class;
 end method csubtype-dispatch;
+
+// csubtype-dispatch{<limited-ctype>,<direct-instance-ctype>}
+//
+// For singletons we don't care how many direct classes the base class
+// has, since the instance is of a particular one of them.
+//
+define method csubtype-dispatch
+    (type1 :: <singleton-ctype>, type2 :: <direct-instance-ctype>)
+ => (result :: <boolean>);
+  type1.base-class == type2.base-class;
+end method;
 
 
 // Subclass types.

@@ -1,3 +1,3 @@
-daylight
-timezone
 strftime()
+my_daylight()
+my_timezone()

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/Convert.lid,v 1.4 1999/08/24 19:50:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/Convert.lid,v 1.5 2001/01/25 03:50:27 housel Exp $
 library: compiler-convert
 unit-prefix: convert
 unique-id-base: 11000
@@ -14,4 +14,5 @@ deflibmod.dylan
 deffunc.dylan
 defconstvar.dylan
 defclass.dylan
+defdclass.dylan
 tlexpr.dylan

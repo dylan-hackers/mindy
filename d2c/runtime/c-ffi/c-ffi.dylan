@@ -7,31 +7,10 @@ Synopsis: An implementation of the low-level Harlequin C API, as faked on
 //  <machine-word>
 //=========================================================================
 //  Must be able to represent either a "long" or a "void*". We implement
-//  this using d2c's internal <raw-pointer> type. I don't know how we'll
-//  implement 64-bit values on 32-bit systems.
+//  this using d2c's <integer> type. I don't know how we'll implement
+//  64-bit values on 32-bit systems.
 
-define sealed functional class <machine-word> (<object>)
-  slot machine-word-value :: <raw-pointer>,
-    required-init-keyword: value:;
-end class <machine-word>;
-
-define inline function %as-machine-word
-    (value :: <integer>)
- => (result :: <machine-word>)
-  make(<machine-word>, value: as(<raw-pointer>, value));
-end function;
-
-define inline function %as-integer
-    (machine-word :: <machine-word>)
- => (value :: <integer>)
-  as(<integer>, machine-word.machine-word-value);
-end function;
-
-define inline method \=
-    (m1 :: <machine-word>, m2 :: <machine-word>)
- => (equal? :: <boolean>)
-  m1.machine-word-value == m2.machine-word-value;
-end method;
+define constant <machine-word> = <integer>;
 
 //=========================================================================
 //  Primitive Designator Types
@@ -45,8 +24,6 @@ end class <C-value>;
 define sealed abstract class <C-void> (<C-value>)
 end class <C-void>;
 
-/* XXX - size-of, alignment-of really require each-subclass slots */
-
 define sealed abstract class <C-number> (<C-value>)
 end class <C-number>;
 
@@ -56,12 +33,11 @@ end class <C-number>;
 //  These designator types represent pointers. All but the top-level types
 //  are directly instantiable and map to themselves for import and export.
 
-define primary open abstract class <C-pointer> (<C-value>)
+define primary open abstract functional class <C-pointer> (<C-value>)
   // XXX - Why is this class open? It has two complete, mutually
   // exclusive subclasses which could be open.
-  slot pointer-address :: <machine-word>,
-    required-init-keyword: %address:,
-    setter: #f;
+  constant slot pointer-address :: <raw-pointer>,
+    required-init-keyword: %address:;
 end class <C-pointer>;
 
 define function pointer-cast
@@ -73,27 +49,35 @@ end function;
 define function null-pointer
     (class :: subclass(<C-pointer>))
  => (null-pointer :: <C-pointer>)
-  make(class, %address: %as-machine-word(0));
+  make(class, %address: as(<raw-pointer>, 0));
 end function;
 
 define function null-pointer?
     (pointer :: <C-pointer>)
  => (null? :: <boolean>)
-  pointer.pointer-address = %as-machine-word(0);
+  pointer.pointer-address == as(<raw-pointer>, 0);
 end function;
 
-define open class <C-void*> (<C-pointer>)
-end class <C-void*>;
-
-define open abstract class <C-statically-typed-pointer> (<C-pointer>)
+define open abstract functional class <C-statically-typed-pointer>
+    (<C-pointer>)
+  // no additional slots
 end class <C-statically-typed-pointer>;
 
 define macro C-pointer-type-definer
-  { define C-pointer-type ?pointer-class:name => ?designator-class:name; }
-    => { /* XXX - How on earth do I return previously existing types? */ }
+  { define C-pointer-type ?pointer-class:name => ?designator-class:expression }
+    => { define functional designator-class ?pointer-class
+             (<C-statically-typed-pointer>)
+           referenced-type: ?designator-class,
+           c-rep: #"ptr",
+           pointer-type-superclass: <C-statically-typed-pointer>
+	 end designator-class; }
 end macro;
 
-/* XXX - referenced-type really requires each-subclass slots */
+define C-pointer-type <C-void*> => <C-void>;
+
+define open generic c-type-cast
+    (type :: <class>, value :: <object>)
+ => (value :: <object>);
 
 define open generic pointer-value
     (pointer :: <C-statically-typed-pointer>, #key index :: <integer>)
@@ -119,7 +103,7 @@ define inline method element-setter
      index :: <integer>)
  => (new-value :: <object>)
   pointer-value(pointer, index: index) := new-value;
-end method element;
+end method element-setter;
 
 define inline method \=
     (p1 :: <C-pointer>, p2 :: <C-pointer>)
@@ -127,26 +111,31 @@ define inline method \=
   p1.pointer-address = p2.pointer-address;
 end method;
 
-/* XXX - How should I define "\<"? */
+define inline method \<
+    (p1 :: <C-pointer>, p2 :: <C-pointer>)
+ => (equal? :: <boolean>)
+  p1.pointer-address < p2.pointer-address;
+end method;
 
 //=========================================================================
-//  Defining Types
+//  Pointer Dereferencing Operators
 //=========================================================================
-//  Macros for creating new designator types.
 
-define macro C-subtype-definer
-  { define ?modifiers:* C-subtype ?:name (?superclasses:*)
-      /* XXX - need slots and property list */
-    end }
-    => { /* XXX - need expansion */ }
-end macro;
+define sealed inline function C-char-at
+    (ptr :: <C-pointer>,
+     #key byte-index :: <integer> = 0, scaled-index :: <integer> = 0)
+ => (result :: <machine-word>);
+  pointer-deref(char:, ptr.pointer-address, 
+		byte-index + scaled-index * size-of(<C-char>));
+end function C-char-at;
 
-define macro C-mapped-subtype-definer
-  { define ?modifiers:* C-mapped-subtype ?:name (?superclasses:*)
-      /* XXX - a bunch of messy clauses */
-    end }
-    => { /* XXX - need expansion */ }
-end macro;
+define sealed inline function C-char-at-setter
+    (new :: <machine-word>, ptr :: <C-pointer>,
+     #key byte-index :: <integer> = 0, scaled-index :: <integer> = 0)
+ => (result :: <machine-word>);
+  pointer-deref(char:, ptr.pointer-address.machine-word-value,
+		byte-index + scaled-index * size-of(<C-char>)) := new;
+end function C-char-at-setter;
 
 //=========================================================================
 //  Structs and Unions
@@ -157,6 +146,7 @@ end macro;
 //  not instantiable.
 
 define open abstract class <C-struct> (<C-value>)
+  
 end class <C-struct>;
 
 define open abstract class <C-union> (<C-value>)
@@ -164,15 +154,41 @@ end class <C-union>;
 
 define macro C-struct-definer
   { define C-struct ?:name
-      /* slot specs and options */
-    end; }
-    => { /* XXX - need expansion */ }
+      ?slots
+      ?type-options
+    end }
+    => { define abstract designator-class ?name (<C-struct>)
+           ?slots
+           pointer-type-superclass: <C-statically-typed-pointer>,
+           ?type-options
+         end designator-class; }
 end macro;
 
 define macro C-union-definer
   { define C-union ?:name
       /* slot specs and options */
-    end; }
+    end }
+    => { /* XXX - need expansion */ }
+end macro;
+
+//=========================================================================
+//  Defining Types
+//=========================================================================
+//  Macros for creating new designator types.
+
+define macro C-subtype-definer
+  { define ?modifiers:* C-subtype ?:name (?superclasses:*)
+      /* XXX - need slots and property list */
+      ?FIXME:*
+    end }
+    => { /* XXX - need expansion */ }
+end macro;
+
+define macro C-mapped-subtype-definer
+  { define ?modifiers:* C-mapped-subtype ?:name (?superclasses:*)
+      /* XXX - a bunch of messy clauses */
+      ?FIXME:*
+    end }
     => { /* XXX - need expansion */ }
 end macro;
 
@@ -183,9 +199,9 @@ end macro;
 
 define macro C-function-definer
   { define C-function ?:name
-      /* paramters and results */
+      ?FIXME:*
     end }
-    => { /* XXX - need expansion */ }
+    => { /* XXX need expansion */}
 end macro;
 
 define macro C-callable-wrapper-definer
@@ -201,11 +217,25 @@ end macro;
 //  Access to C globals.
 
 define macro C-variable-definer
-  /* XXX - Need implementation. */
+    { define C-variable ?:name :: ?type:expression,
+	  #key ?setter:expression = #f,
+	       ?c-name:expression = #f,
+	       ?import:expression = #f
+      end }
+      => { /* XXX need expansion */ }
 end macro;
 
 define macro C-address-definer
-  /* XXX - Need implementation. */
+    { define C-address ?:name :: ?type:expression
+        ?options
+      end }
+      => { /* XXX need expansion */ }
+
+  options:
+    { #rest ?all:*,
+      #key ?c-name:expression = #f,
+           ?import:expression = #f }
+      => { ?all }
 end macro;
 
 //=========================================================================
@@ -228,8 +258,9 @@ end;
 /* XXX - can we *please* seal this? */
 define sealed inline method make
     (class :: subclass(<C-pointer>),
+     #next next-method,
      #key allocator = malloc, element-count = 1, extra-bytes = 0, address,
-     #next next-method, #all-keys)
+     #all-keys)
  => (pointer :: <C-pointer>)
   if (address)
     next-method(class, %address: address);
@@ -253,7 +284,7 @@ end method destroy;
 define macro with-stack-structure
   /* XXX - double check type specifier rules f*r macros, keys */
   { with-stack-structure (?:name :: ?type:name,
-			  #key element-count = 1, extra-bytes = 0)
+			  #key ?element-count = 1, ?extra-bytes = 0)
       ?:body
     end }
     => { let ?name = make(?type,

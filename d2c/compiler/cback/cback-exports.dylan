@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.6 2000/01/24 04:56:06 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback-exports.dylan,v 1.7 2001/01/25 03:50:27 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -57,8 +57,6 @@ end;
 
 
 define module cback
-  use system, rename: {callback-entry => callback-function-entry};
-  
   use indenting-streams;
   use c-representation;
   use classes;

@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.58 2001/01/14 17:43:23 david Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.59 2001/01/25 03:50:26 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -48,7 +48,7 @@ AC_SUBST(VERSION)
 # interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=4
+CURRENT_BOOTSTRAP_COUNTER=5
 
 #--------------------------------------------------------------------
 # Make srcdir absolute to keep Mindy's build system from choking.
@@ -518,8 +518,14 @@ fi
 
 AC_MSG_CHECKING([whether daylight and timezone are supported])
 AC_TRY_LINK([#include <time.h>], [int a = daylight; long b = timezone;],
-  [AC_MSG_RESULT(yes); TIME_INC=$srcdir/common/time/time.inc],
-  [AC_MSG_RESULT(no); TIME_INC=])
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE(HAVE_DAYLIGHT)
+   TIME_INC=$srcdir/common/time/time.inc],
+  [AC_MSG_RESULT(no)
+   TIME_INC=
+   AC_MSG_CHECKING([whether struct tm has a tm_gmtoff field])
+   AC_TRY_COMPILE([#include <time.h>], [struct tm t; long g = t.tm_gmtoff;],
+     [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_TM_GMTOFF)], [AC_MSG_RESULT(no)])])
 AC_SUBST(TIME_INC)
 
 #--------------------------------------------------------------------

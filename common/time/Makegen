@@ -1,12 +1,11 @@
 &makegen_include("../common-Makegen");
 
-$D2CFLAGS = $D2CFLAGS . ' -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../coll-ext';
+$D2CFLAGS = "$D2CFLAGS -L../streams -L../standard-io -L../print -L../format -L../string-ext -L../table-ext -L../coll-ext";
+$CPPFLAGS = $CPPFLAGS . ' -I$(SRCDIR) -I$(top_builddir)';
 
-unless ($features{'no_time'}) {
-	&emit_melange_rule('time-intr');
+&emit_melange_rule('time-intr');
 
-	do emit_library_rule(
-	    'Time', '$(BUILDROOT)/force.timestamp', '', 'compile', 
-	    'compile-mindy', 'install'
-	);
-}
+&emit_c_file_rule("time-portability") if ($enable_d2c);
+
+do emit_library_rule('Time', '$(BUILDROOT)/force.timestamp', '', 'compile', 
+		     '', 'install');

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.7 2000/10/20 15:02:15 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.8 2001/01/25 03:50:27 housel Exp $
 copyright: see below
 
 
@@ -559,21 +559,7 @@ define method rep-for-c-type (leaf :: <leaf>)
     error("Type spec in call-out isn't a symbol?");
   end;
   let c-type = ct-value.literal-value;
-  select (c-type)
-    #"long" => *long-rep*;
-    #"int" => *int-rep*;
-    #"unsigned-int" => *uint-rep*;
-    #"short" => *short-rep*;
-    #"unsigned-short" => *ushort-rep*;
-    #"char" => *byte-rep*;
-    #"unsigned-char" => *ubyte-rep*;
-    #"ptr" => *ptr-rep*;
-    #"float" => *float-rep*;
-    #"double" => *double-rep*;
-    #"long-double" => *long-double-rep*;
-    #"object" => *general-rep*;
-    #"void" => #f;
-  end;
+  c-rep(c-type);
 end;
 
 define-primitive-emitter
