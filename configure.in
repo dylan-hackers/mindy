@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.114 2003/02/18 13:11:13 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.115 2003/03/01 13:35:55 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -159,7 +159,7 @@ AC_SUBST(DYLAN_OS_VERSION)
 
 AC_MSG_CHECKING(to see if we're cross-compiling)
 d2c_cross_compiling=no
-if test "$d2c_build" != "$d2c_host"; then
+if test "$d2c_target" != "$d2c_host"; then
     d2c_cross_compiling=yes
 fi
 AC_MSG_RESULT($d2c_cross_compiling)

@@ -56,7 +56,7 @@ if ($shared) {
     
 if ($cross_compiling) {
   # Use cross-compilation flags if necessary.
-  $D2C = "@D2C@ -T$target_name -no-binaries";
+  $D2C = "@D2C@ -T$target_name --no-binaries";
 } else {
   # Try to build using the default d2c settings. This makes bootstrapping
   # *much* easier.
