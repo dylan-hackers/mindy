@@ -1,5 +1,5 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.13 1996/04/10 20:45:39 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/misc.dylan,v 1.14 1996/09/15 15:57:16 nkramer Exp $
 
 //======================================================================
 //
@@ -37,8 +37,6 @@ end;
 //
 // False-or takes a type and returns a type that is the union of the argument
 // type and the type singleton(#f).
-// There are two copies of false-or, one for the Dylan module and one for 
-// the rest of the world.
 //
 define constant false-or
     = method (type :: <type>) => new-type :: <type>;
