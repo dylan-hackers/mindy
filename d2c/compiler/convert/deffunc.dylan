@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.1 1998/05/03 19:55:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/deffunc.dylan,v 1.2 1998/09/09 13:40:21 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -911,7 +911,8 @@ define method make-discriminator
   build-return(builder, policy, source, region, results);
   end-body(builder);
   
-  make-function-literal(builder, discriminator, #f, #"global", sig, region);
+  make-function-literal(builder, discriminator,
+			#"function", #"global", sig, region);
 end;
 
 define method build-discriminator-tree

@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.2 1998/09/09 13:40:29 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -603,14 +603,16 @@ end;
 define method build-function-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      lambda? :: <boolean>, name :: <name>, arg-vars :: <list>,
-     result-type :: <values-ctype>, hidden-references? :: <boolean>)
+     result-type :: <values-ctype>, hidden-references? :: <boolean>,
+     #key calling-convention :: one-of(#"standard", #"callback") = #"standard")
  => res :: <fer-function-region>;
   ignore(policy);
   let region = make(if (lambda?) <lambda> else <fer-function-region> end,
 		    source-location: source, name: name,
 		    argument-types: map(derived-type, arg-vars),
 		    result-type: result-type.ctype-extent,
-		    hidden-references: hidden-references?);
+		    hidden-references: hidden-references?,
+		    calling-convention: calling-convention);
   push-body(builder, region);
   build-let(builder, policy, source, arg-vars, region.prologue);
   add!(builder.component.all-function-regions, region);
@@ -619,10 +621,15 @@ end method;
 
 define method make-function-literal
     (builder :: <fer-builder>, ctv :: false-or(<ct-function>),
-     method? :: <boolean>, visibility :: <function-visibility>,
+     kind :: one-of(#"function", #"method", #"callback"),
+     visibility :: <function-visibility>,
      signature :: <signature>, main-entry :: <fer-function-region>)
  => res :: <leaf>;
-  let leaf = make(if (method?) <method-literal> else <function-literal> end,
+  let leaf = make(select(kind)
+		    #"function" => <function-literal>;
+		    #"method" => <method-literal>;
+		    #"callback" => <callback-literal>;
+		  end,
 		  visibility: visibility, signature: signature,
 		  ct-function: ctv, main-entry: main-entry);
   main-entry.literal := leaf;

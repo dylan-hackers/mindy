@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/builder.dylan,v 1.1 1998/05/03 19:55:27 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/builder.dylan,v 1.2 1998/09/09 13:40:24 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -176,7 +176,8 @@ define generic build-unwind-protect-body
 define generic build-function-body
     (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
      lambda? :: <boolean>, name :: <name>, arg-vars :: <list>,
-     result-type :: <values-ctype>, hidden-references? :: <boolean>)
+     result-type :: <values-ctype>, hidden-references? :: <boolean>,
+     #key calling-convention)
  => res :: <fer-function-region>;
 
 
@@ -269,7 +270,8 @@ define generic make-exit-function
 
 define generic make-function-literal
     (builder :: <fer-builder>, ctv :: false-or(<ct-function>),
-     method? :: <boolean>, visibility :: <function-visibility>,
+     kind :: one-of(#"function", #"method", #"callback"),
+     visibility :: <function-visibility>,
      signature :: <signature>, main-entry :: <fer-function-region>)
  => res :: <leaf>;
 

@@ -1,5 +1,5 @@
 module: names
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.1 1998/05/03 19:55:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.2 1998/09/09 13:40:12 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -99,6 +99,7 @@ add-od-loader(*compiler-dispatcher*, #"basic-name", load-basic-name);
 define class <derived-name> (<name>)
   slot derived-name-how
     :: one-of(#"type-cell", #"general-entry", #"generic-entry",
+	      #"callback-entry",
     	      #"discriminator",
     	      #"deferred-evaluation", #"init-function", #"setter", #"getter",
 	      #"maker"

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.1 1998/05/03 19:55:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/cheese.dylan,v 1.2 1998/09/09 13:40:36 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1805,6 +1805,8 @@ define-primitive-transformer
 	    | (func.ct-function
 		 := make(if (instance?(func, <method-literal>))
 			   <ct-method>;
+			 elseif (instance?(func, <callback-literal>))
+			   <ct-callback-function>;
 			 else
 			   <ct-function>;
 			 end,
@@ -1827,6 +1829,10 @@ define-primitive-transformer
      if (instance?(func, <method-literal>) & ~func.generic-entry)
        ctv.has-generic-entry? := #t;
        func.generic-entry := build-xep(func, #t, component);
+     end if;
+     if (instance?(func, <callback-literal>) & ~func.callback-entry)
+       ctv.has-callback-entry? := #t;
+       func.callback-entry := build-callback-xep(func, component);
      end if;
      let var = make-local-var(builder, #"closure", object-ctype());
      build-assignment

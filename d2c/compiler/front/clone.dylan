@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.1 1998/05/03 19:55:27 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.2 1998/09/09 13:40:25 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -288,7 +288,8 @@ define method clone-expr
 		name: orig-region.name,
 		argument-types: orig-region.argument-types,
 		result-type: orig-region.result-type,
-		hidden-references: orig-region.hidden-references?);
+		hidden-references: orig-region.hidden-references?,
+		calling-convention: orig-region.calling-convention);
        push-body(state.clone-builder, region-clone);
        add!(state.clone-builder.component.all-function-regions, region-clone);
        state.cloned-stuff[orig-region] := region-clone;
@@ -303,7 +304,11 @@ define method clone-expr
        end;
        let func
 	 = make-function-literal(state.clone-builder, #f,
-				 instance?(function, <method-literal>),
+				 select(function by instance?)
+				   <callback-literal> => #"callback";
+				   <method-literal> => #"method";
+				   <function-literal> => #"function";
+				 end,
 				 function.visibility, function.signature,
 				 region-clone);
        element(state.cloned-stuff, function) := func;

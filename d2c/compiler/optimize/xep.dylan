@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/Attic/xep.dylan,v 1.1 1998/05/03 19:55:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/Attic/xep.dylan,v 1.2 1998/09/09 13:40:38 andreas Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -63,6 +63,8 @@ define method build-xep-get-ctv (func :: <function-literal>)
     | (func.ct-function
 	 := make(if (instance?(func, <method-literal>))
 		   <ct-method>;
+		 elseif (instance?(func, <callback-literal>))
+		   <ct-callback-function>;
 		 else
 		   <ct-function>;
 		 end,
@@ -74,6 +76,14 @@ define method build-external-entries-for
     (component :: <component>, function :: <function-literal>) => ();
   function.general-entry := build-xep(function, #f, component);
   build-xep-get-ctv(function).has-general-entry? := #t;
+end;
+
+define method build-external-entries-for
+    (component :: <component>, function :: <callback-literal>) => ();
+  function.general-entry := build-xep(function, #f, component);
+  build-xep-get-ctv(function).has-general-entry? := #t;
+  function.callback-entry := build-callback-xep(function, component);
+  build-xep-get-ctv(function).has-callback-entry? := #t;
 end;
 
 define method build-external-entries-for
@@ -110,7 +120,12 @@ define method build-xep
   
   aux-build-xep(make(<literal-constant>, value: function),
 		function.ct-function-signature, component,
-		function.ct-function-name, instance?(function, <ct-method>),
+		function.ct-function-name,
+		select(function by instance?)
+		  <ct-method> => #"method";
+		  <ct-callback-function> => #"callback";
+		  <ct-function> => #"function";
+		end,
 		generic-entry?, #f);
 end method build-xep;
 
@@ -120,13 +135,19 @@ define method build-xep
  => xep :: <fer-function-region>;
   let main-entry = function.main-entry;
   aux-build-xep(function, function.signature, component, main-entry.name,
-		instance?(function, <method-literal>), generic-entry?,
+		select(function by instance?)
+		  <method-literal> => #"method";
+		  <callback-literal> => #"callback";
+		  <function-literal> => #"function";
+		end,
+		generic-entry?,
 		main-entry);
 end;
 
 define method aux-build-xep
     (function :: <expression>, signature :: <signature>,
-     component :: <component>, entry-name, method? :: <boolean>,
+     component :: <component>, entry-name,
+     kind :: one-of(#"function", #"method", #"callback"),
      generic-entry? :: <boolean>, main-entry :: false-or(<object>))
  => (xep :: <fer-function-region>);
   let builder = make-builder(component);
@@ -136,18 +157,25 @@ define method aux-build-xep
     = instance?(main-entry, <lambda>) & main-entry.environment.closure-vars;
   let self-leaf
     = make-local-var(builder, #"self",
-		     specifier-type(if (method?)
-				      if (closure?)
-					#"<method-closure>";
-				      else
-					#"<method>";
-				      end;
-				    else
-				      if (closure?)
-					#"<raw-closure>";
-				      else
-					#"<raw-function>";
-				      end;
+		     specifier-type(select(kind)
+				      #"method" =>
+					if (closure?)
+					  #"<method-closure>";
+					else
+					  #"<method>";
+					end;
+				      #"function" =>
+					if (closure?)
+					  #"<raw-closure>";
+					else
+					  #"<raw-function>";
+					end;
+				      #"callback" =>
+					if (closure?)
+					  #"<callback-closure>";
+					else
+					  #"<callback-function>";
+					end;
 				    end));
   let nargs-leaf = make-local-var(builder, #"nargs", 
 				  dylan-value(#"<integer>"));
@@ -169,7 +197,7 @@ define method aux-build-xep
 				end,
 				wild-ctype(), #t);
   let new-args = make(<stretchy-vector>);
-  if (instance?(main-entry, <lambda>) & main-entry.environment.closure-vars)
+  if (closure?)
     let closure-ref-leaf = ref-dylan-defn(builder, policy, source,
 					  #"closure-var");
     for (closure-var = main-entry.environment.closure-vars
@@ -496,6 +524,78 @@ define method aux-build-xep
 
   xep;
 end;
+
+define method build-callback-xep
+    (function :: <callback-literal>, component :: <component>)
+ => (xep :: <fer-function-region>);
+  let main-entry = function.main-entry;
+  let entry-name = main-entry.name;
+  let signature = function.signature;
+  let builder = make-builder(component);
+  let policy = $Default-Policy;
+  let source = make(<source-location>);
+  let closure?
+    = instance?(main-entry, <lambda>) & main-entry.environment.closure-vars;
+  let self-leaf
+    = make-local-var(builder, #"self",
+		     specifier-type(if (closure?)
+				      #"<callback-closure>";
+				    else
+				      #"<callback-function>";
+				    end));
+  let name = make(<derived-name>, how: #"callback-entry", base: entry-name);
+  let vars = map-as(<list>,
+		    method(type) make-local-var(builder, #"arg", type) end,
+		    signature.specializers);
+
+  let xep = build-function-body(builder, policy, source, #f, name,
+				if(closure?)
+				  pair(self-leaf, vars);
+				else
+				  vars;
+				end,
+				signature.returns, #t,
+				calling-convention: #"callback");
+
+  let new-args = make(<stretchy-vector>);
+  if (closure?)
+    let closure-ref-leaf = ref-dylan-defn(builder, policy, source,
+					  #"closure-var");
+    for (closure-var = main-entry.environment.closure-vars
+	   then closure-var.closure-next,
+	 index from 0,
+	 while: closure-var)
+      let copy = closure-var.copy-var;
+      let pre-type = make-local-var(builder, copy.var-info.debug-name,
+				    object-ctype());
+      let index-leaf = make-literal-constant(builder, as(<ct-value>, index));
+      build-assignment(builder, policy, source, pre-type,
+		       make-unknown-call(builder, closure-ref-leaf, #f,
+					 list(self-leaf, index-leaf)));
+      let post-type = make-local-var(builder, copy.var-info.debug-name,
+				     copy.derived-type);
+      build-assignment(builder, policy, source, post-type,
+		       make-operation(builder, <truly-the>, list(pre-type),
+				      guaranteed-type: copy.derived-type));
+      add!(new-args, post-type);
+    end;
+  end;
+
+  for(var in vars)
+    add!(new-args, var);
+  end;
+
+  let cluster = make-values-cluster(builder, #"result", signature.returns);
+
+  let ops = pair(function, as(<list>, new-args));
+  build-assignment(builder, policy, source, cluster,
+		   make-operation(builder, <known-call>, ops));
+  build-return(builder, policy, source, xep, cluster);
+  end-body(builder);
+  xep;
+end method build-callback-xep;
+
+
 
 // Seals for file xep.dylan
 

@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.2 1998/08/10 15:17:31 housel Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.3 1998/09/09 13:40:44 andreas Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,7 +19,7 @@ void not_reached(void)
    */
 void real_main(int argc, char *argv[])
 {
-    descriptor_t *sp = GC_malloc(64*1024);
+    descriptor_t *sp = allocate_stack();
 
     /* Run all the top level initializations. */
     inits(sp, argc, argv);
@@ -27,6 +27,11 @@ void real_main(int argc, char *argv[])
     /* exit(0) -- I would have thought this to be the default, but it
        seems to be neccessary, at least on win32 */
     exit(0);
+}
+
+descriptor_t *allocate_stack(void)
+{
+    return (descriptor_t *) GC_malloc(64*1024);
 }
 
 

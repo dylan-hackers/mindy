@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.1 1998/05/03 19:55:38 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.2 1998/09/09 13:40:50 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -196,7 +196,8 @@ define module System
     import: {\%%primitive,
 	     
 	     // Foreign interface stuff.
-	     \call-out, \c-include, \c-decl, \c-expr,
+	     \call-out, \c-include, \c-decl, \c-expr, \callback-method,
+	     callback-entry,
 
 	     // Raw pointer stuff.
 	     <raw-pointer>, pointer-deref, pointer-deref-setter,

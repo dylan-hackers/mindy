@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/dump.dylan,v 1.1 1998/05/03 19:55:27 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/dump.dylan,v 1.2 1998/09/09 13:40:25 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -357,6 +357,30 @@ define method dump (meth :: <method-parse>, stream :: <dump-state-stream>)
     (stream,
      body: method (stream)
 	     write(stream, "method ");
+	     if (meth.method-name)
+	       dump(meth.method-name, stream);
+	       write-element(stream, ' ');
+	     end;
+	     dump(meth.method-param-list, stream);
+	     write-element(stream, ' ');
+	     pprint-indent(#"block", 4, stream);
+	     pprint-newline(#"fill", stream);
+	     write(stream, "=> ");
+	     dump(meth.method-returns, stream);
+	     write(stream, "; ");
+	     dump(meth.method-body, stream);
+	     pprint-newline(#"linear", stream);
+	     write(stream, "end");
+	   end);
+end;
+
+define method dump (meth :: <callback-method-parse>,
+		    stream :: <dump-state-stream>)
+    => ();
+  pprint-logical-block
+    (stream,
+     body: method (stream)
+	     write(stream, "callback-method ");
 	     if (meth.method-name)
 	       dump(meth.method-name, stream);
 	       write-element(stream, ' ');

@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctfunc.dylan,v 1.1 1998/05/03 19:55:30 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctfunc.dylan,v 1.2 1998/09/09 13:40:12 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -92,6 +92,22 @@ add-make-dumper(#"ct-function", *compiler-dispatcher*, <ct-raw-function>,
 		$ct-function-dump-slots,
 		load-external: #t);
 
+
+define class <ct-callback-function> (<ct-function>)
+  slot has-callback-entry? :: <boolean>, init-value: #f,
+    init-keyword: #"callback-entry?";
+end;
+
+define method ct-value-cclass (ctv :: <ct-callback-function>)
+    => res :: <cclass>;
+  specifier-type(#"<callback-function>");
+end;
+
+add-make-dumper(#"ct-callback-function", *compiler-dispatcher*,
+		<ct-callback-function>,
+		concatenate($ct-function-dump-slots,
+			    list(has-callback-entry?, callback-entry?:, #f)),
+		load-external: #t);
 
 
 define abstract class <ct-generic-function> (<ct-function>, <eql-ct-value>)
@@ -191,7 +207,10 @@ define class <ct-entry-point> (<ct-value>, <identity-preserving-mixin>)
     required-init-keyword: for:;
   //
   // The kind of entry point.
-  slot ct-entry-point-kind :: one-of(#"main", #"general", #"generic"),
+  slot ct-entry-point-kind :: one-of(#"main",
+				     #"general",
+				     #"generic",
+				     #"callback"),
     required-init-keyword: kind:;
 end;
 

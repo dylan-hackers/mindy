@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/funcopt.dylan,v 1.1 1998/05/03 19:55:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/funcopt.dylan,v 1.2 1998/09/09 13:40:37 andreas Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -64,6 +64,9 @@ define method optimize
       delete-function-region(function.general-entry);
       if (instance?(function, <method-literal>))
 	delete-function-region(function.generic-entry);
+      end;
+      if (instance?(function, <callback-literal>))
+	delete-function-region(function.callback-entry);
       end;
       // Deleting the body should have flushed the remaining references.
       assert(function.dependents == #f);

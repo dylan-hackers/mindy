@@ -1,5 +1,5 @@
 Module: fer-od
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-od.dylan,v 1.1 1998/05/03 19:55:27 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-od.dylan,v 1.2 1998/09/09 13:40:30 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -545,6 +545,13 @@ add-make-dumper(#"method-literal", *compiler-dispatcher*, <method-literal>,
   )
 );
 
+add-make-dumper(#"callback-literal", *compiler-dispatcher*, <callback-literal>,
+  concatenate(
+    $function-literal-slots,
+    list(callback-entry, #f, callback-entry-setter)
+  )
+);
+
 add-make-dumper(#"exit-function-literal", *compiler-dispatcher*,
   <exit-function>,
   concatenate(
@@ -611,6 +618,7 @@ define method dump-od (obj :: <fer-function-region>, buf :: <dump-state>)
       dump-od(obj.argument-types, buf);
       dump-od(obj.result-type, buf);
       dump-od(obj.hidden-references?, buf);
+      dump-od(obj.calling-convention, buf);
       dump-od(obj, buf);
 
       fer-dump-od(obj.body, obj.parent, buf);
@@ -636,9 +644,11 @@ add-od-loader(*compiler-dispatcher*, #"fer-function-region",
     let arg-types = load-object-dispatch(state);
     let result-type = load-object-dispatch(state);
     let hidden = load-object-dispatch(state);
+    let cconv = load-object-dispatch(state);
     let self = load-object-dispatch(state);
     let res = build-function-body(builder, $default-policy, source, lambda?,
-    				  name, arg-vars, result-type, hidden);
+    				  name, arg-vars, result-type, hidden,
+				  calling-convention: cconv);
     resolve-forward-ref(self, res);
     res.argument-types := arg-types;
     load-object-dispatch(state);

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.1 1998/05/03 19:55:29 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.2 1998/09/09 13:40:40 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -132,6 +132,8 @@ define module parse-tree
     <method-parse>, method-name, method-name-setter, method-parameters,
     method-returns, method-body,
 
+    <callback-method-parse>,
+
     <variable-list>, varlist-fixed, varlist-fixed-setter, varlist-rest,
     varlist-rest-setter,
 
@@ -187,6 +189,8 @@ define module parse-tree
     <if-parse>, if-condition, if-consequent, if-alternate,
 
     <method-ref-parse>, method-ref-method,
+
+    <callback-method-ref-parse>,
 
     <primitive-parse>, primitive-name, primitive-operands,
 

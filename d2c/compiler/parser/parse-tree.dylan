@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parse-tree.dylan,v 1.1 1998/05/03 19:55:29 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parse-tree.dylan,v 1.2 1998/09/09 13:40:40 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -32,6 +32,8 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 //
 //  <method-parse>
 //
+//  <callback-method-parse>
+//
 //  <variable-list>
 //	<parameter-list>
 //
@@ -63,6 +65,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 //	    <bind-exit-parse>
 //	    <if-parse>
 //	    <method-ref-parse>
+//	    <callback-method-ref-parse>
 //	    <primitive-parse>
 //	    <unwind-protect-parse>
 //	    
@@ -152,6 +155,19 @@ define sealed method print-object
 		returns: meth.method-returns,
 		body: meth.method-body);
 end method print-object;
+
+
+// <callback-method-parse> -- exported.
+//
+// Encapsulation of the parse of a callback method.
+// 
+define class <callback-method-parse> (<method-parse>)
+
+end class <callback-method-parse>;
+
+define sealed domain make (singleton(<callback-method-parse>));
+define sealed domain initialize (<callback-method-parse>);
+
 
 
 // <variable-list> -- exported.
@@ -716,6 +732,15 @@ define sealed method print-object
     (expr :: <method-ref-parse>, stream :: <stream>) => ();
   pprint-fields(expr, stream, method: expr.method-ref-method);
 end method print-object;
+
+
+// <callback-method-ref-parse> -- exported.
+//
+define class <callback-method-ref-parse> (<method-ref-parse>)
+
+end class <callback-method-ref-parse>;
+
+define sealed domain make (singleton(<callback-method-ref-parse>));
 
 
 // <primitive-parse> -- exported.

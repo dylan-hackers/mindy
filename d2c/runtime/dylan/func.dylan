@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.1 1998/05/03 19:55:38 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.2 1998/09/09 13:40:51 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -81,10 +81,24 @@ define sealed domain make(singleton(<raw-function>));
 
 
 
+define class <callback-function> (<function>)
+  //
+  // The C callback entry point for this method.
+  slot callback-entry :: <raw-pointer>,
+    required-init-keyword: callback-entry:;
+  slot callback-signature :: <byte-string>,
+    required-init-keyword: callback-signature:;
+end;
+
+define sealed domain make(singleton(<callback-function>));
+
+
+
 define class <raw-closure> (<raw-function>, <closure>)
 end;
 
 define sealed domain make(singleton(<raw-closure>));
+
 
 define method make-closure
     (func :: <function>, closure-size :: <integer>)
@@ -101,6 +115,36 @@ define method make-closure
        closure-size: closure-size);
 end;
 
+
+define class <callback-closure> (<callback-function>, <closure>)
+end;
+
+define sealed domain make(singleton(<callback-closure>));
+
+define method make-closure
+    (func :: <callback-function>, closure-size :: <integer>)
+    => res :: <callback-closure>;
+  let closure
+    = make(<callback-closure>,
+	   function-name: func.function-name,
+	   general-entry: func.general-entry,
+	   specializers: func.function-specializers,
+	   rest?: func.function-rest?,
+	   keywords: func.function-keywords,
+	   all-keys?: func.function-all-keys?,
+	   values: func.function-values,
+	   rest-value: func.function-rest-value,
+	   closure-size: closure-size,
+	   callback-entry: func.callback-entry,
+	   callback-signature: func.callback-signature);
+  closure.callback-entry
+    := call-out("make_trampoline", ptr:,
+		ptr: func.callback-entry,
+		object: closure,
+		int: func.callback-signature.size,
+		ptr: %%primitive(vector-elements, func.callback-signature));
+  closure;
+end;
 
 
 define class <method> (<function>)

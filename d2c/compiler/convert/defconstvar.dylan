@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.1 1998/05/03 19:55:36 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.2 1998/09/09 13:40:20 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -206,6 +206,11 @@ define method process-top-level-form (form :: <define-constant-parse>) => ();
 end;
 
 define method expand-until-method-ref (expr :: <expression-parse>)
+    => res :: false-or(<method-ref-parse>);
+  #f;
+end;
+
+define method expand-until-method-ref (expr :: <callback-method-ref-parse>)
     => res :: false-or(<method-ref-parse>);
   #f;
 end;

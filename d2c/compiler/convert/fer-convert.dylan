@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.1 1998/05/03 19:55:36 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.2 1998/09/09 13:40:22 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -512,7 +512,8 @@ define method fer-convert
 	 list(saved-state-var), wild-ctype(), #f);
   let body-sig = make(<signature>, specializers: list(state-type));
   let body-literal
-    = make-function-literal(builder, #f, #f, #"local", body-sig, body-region);
+    = make-function-literal(builder, #f, #"function", #"local", body-sig,
+			    body-region);
   let catcher-var
     = make-lexical-var(builder, symcat(name.token-symbol, "-catcher"),
 		       source, object-ctype());
@@ -573,6 +574,21 @@ define method fer-convert
   let temp = make-local-var(builder, #"method", function-ctype());
   build-assignment(builder, lexenv.lexenv-policy, source, temp,
 		   fer-convert-method(builder, form.method-ref-method,
+		   		      make(<internal-name>, symbol: #"method",
+				      	   base: lexenv.lexenv-method-name),
+				      #f, #"local", lexenv, lexenv));
+  deliver-result(builder, lexenv.lexenv-policy, source, want, datum, temp);
+end;
+
+define method fer-convert
+    (builder :: <fer-builder>, form :: <callback-method-ref-parse>,
+     lexenv :: <lexenv>, want :: <result-designator>, datum :: <result-datum>)
+    => res :: <result>;
+  let source = form.source-location;
+  let temp = make-local-var(builder, #"method", function-ctype());
+  build-assignment(builder, lexenv.lexenv-policy, source, temp,
+		   fer-convert-callback-method(builder,
+						 form.method-ref-method,
 		   		      make(<internal-name>, symbol: #"method",
 				      	   base: lexenv.lexenv-method-name),
 				      #f, #"local", lexenv, lexenv));
@@ -641,7 +657,7 @@ define method fer-convert
 	       base: lexenv.lexenv-method-name),
 	  #(), make-values-ctype(#(), #f), #f);
   let cleanup-literal
-    = make-function-literal(cleanup-builder, #f, #f, #"local",
+    = make-function-literal(cleanup-builder, #f, #"function", #"local",
 			    make(<signature>, specializers: #(),
 				 returns: make-values-ctype(#(), #f)),
 			    cleanup-region);
@@ -1051,10 +1067,127 @@ define method fer-convert-method
 		    build-call(#"vector", result-type-leaves),
 		    rest-type-leaf
 		      | make-literal-constant(builder, empty-ctype()),
-		    make-function-literal(builder, #f, #t, #"local", signature,
-					  function-region)));
+		    make-function-literal(builder, #f, #"method", #"local",
+					  signature, function-region)));
   else
-    make-function-literal(builder, ctv, #t, visibility, signature,
+    make-function-literal(builder, ctv, #"method", visibility, signature,
 			  function-region);
   end;
+end;
+
+// fer-convert-callback-method
+//
+define method fer-convert-callback-method
+    (builder :: <fer-builder>, meth :: <callback-method-parse>,
+     name :: <name>, ctv :: false-or(<ct-function>),
+     visibility :: <function-visibility>, specializer-lexenv :: <lexenv>,
+     lexenv :: <lexenv>,
+     #key next-method-info :: false-or(<list>))
+    => res :: <leaf>;
+  let lexenv = make(<lexenv>, inside: lexenv);
+  let policy = lexenv.lexenv-policy;
+  let specializer-policy = specializer-lexenv.lexenv-policy;
+
+  let paramlist = meth.method-parameters;
+  let vars = make(<stretchy-vector>);
+  let body-builder = make-builder(builder);
+
+  let specializers = make(<stretchy-vector>);
+  let non-const-arg-types? = #f;
+  for (param in paramlist.varlist-fixed)
+    let type
+      = if (param.param-type)
+	  let ct-type = ct-eval(param.param-type, specializer-lexenv);
+	  if (ct-type)
+	    ct-type;
+	  else
+	    compiler-error-location
+	      (param.param-type,
+	       "callback-method types must be compile-time constants");
+	  end;
+	else
+	  object-ctype();
+	end;
+
+    add!(specializers, type);
+    let name = param.param-name;
+    let var = make-lexical-var(body-builder, name.token-symbol, source, type);
+    add-binding(lexenv, name, var);
+    add!(vars, var);
+  end;
+
+  if (paramlist.varlist-rest)
+    compiler-error-location
+      (meth, "callback-methods can't have #rest arguments");
+  end;
+  if (paramlist.paramlist-next)
+    compiler-error-location
+      (meth, "callback-methods can't have #next arguments");
+  end if;
+  if (paramlist.paramlist-keys)
+    compiler-error-location
+      (meth, "callback-method can't have keyword arguments");
+  end if;
+
+  let returns = meth.method-returns;
+  let fixed-results = make(<stretchy-vector>);
+  let checked-fixed-results = make(<stretchy-vector>);
+  let result-types = make(<stretchy-vector>);
+  let non-const-result-types? = #f;
+  let result-check-builder = make-builder(builder);
+  for (param in returns.varlist-fixed)
+    let type
+      = if (param.param-type)
+	  let ct-type = ct-eval(param.param-type, specializer-lexenv);
+	  if (ct-type)
+	    ct-type;
+	  else
+	    compiler-error-location
+	      (param.param-type,
+	       "callback-method types must be compile-time constants");
+	  end;
+	else
+	  object-ctype();
+	end;
+    add!(result-types, type);
+    let var
+      = make-local-var(result-check-builder, param.param-name.token-symbol,
+		       type);
+    add!(fixed-results, var);
+    add!(checked-fixed-results, var);
+  end;
+
+  if(checked-fixed-results.size > 1 | returns.varlist-rest)
+    compiler-error-location
+      (meth, "callback-method can only return one value");
+  end if;
+
+  let vars = as(<list>, vars);
+  let result-type = make-values-ctype(as(<list>, result-types), #f);
+  let lambda? = visibility == #"local";
+  let function-region
+    = build-function-body(builder, policy, source, lambda?,
+			  name, vars, result-type, ~lambda?);
+
+  build-region(builder, builder-result(body-builder));
+
+  fer-convert(builder, meth.method-body, lexenv, #"assignment",
+	      as(<list>, fixed-results));
+  build-region(builder, builder-result(result-check-builder));
+  build-return(builder, policy, source,
+		 function-region, as(<list>, checked-fixed-results));
+
+  end-body(builder);
+
+  let signature
+    = make(<signature>,
+	   specializers: as(<list>, specializers),
+	   next: #f,
+	   rest-type: #f,
+	   keys: #f,
+	   all-keys: #f,
+	   returns: make-values-ctype(as(<list>, result-types), #f));
+
+  make-function-literal(builder, ctv, #"callback", visibility, signature,
+			function-region);
 end;

@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.5 1998/08/10 15:41:07 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.6 1998/09/09 13:40:34 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -634,7 +634,8 @@ define method compile-1-tlf
     end-body(builder);
     let sig = make(<signature>, specializers: #(), returns: result-type);
     let ctv = make(<ct-function>, name: name-obj, signature: sig);
-    make-function-literal(builder, ctv, #f, #"global", sig, init-function);
+    make-function-literal(builder, ctv, #"function", #"global",
+			  sig, init-function);
     add!(state.unit-init-functions, ctv);
   end;
   optimize-component(component);
@@ -1168,7 +1169,7 @@ define method build-command-line-entry
   let sig = make(<signature>, specializers: list(int-type, rawptr-type),
 		 returns: result-type);
   let ctv = make(<ct-function>, name: name-obj, signature: sig);
-  make-function-literal(builder, ctv, #f, #"global", sig, func);
+  make-function-literal(builder, ctv, #"function", #"global", sig, func);
   optimize-component(component);
   emit-component(component, file);
   ctv;

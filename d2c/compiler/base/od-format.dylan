@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.1 1998/05/03 19:55:30 andreas Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.2 1998/09/09 13:40:13 andreas Exp $
 
 //======================================================================
 //
@@ -477,6 +477,7 @@ begin
 
   // Compile-time functions:
   register-object-id(#"ct-function", #x0080);
+  register-object-id(#"ct-callback-function", #x0148);
   register-object-id(#"ct-sealed-generic", #x0081);
   register-object-id(#"ct-open-generic", #x0082);
   register-object-id(#"ct-method", #x0083);
@@ -531,6 +532,7 @@ begin
   register-object-id(#"definition-constant-leaf", #x00AE);
   register-object-id(#"uninitialized-value-leaf", #x00AF);
   register-object-id(#"method-literal", #x00B0);
+  register-object-id(#"callback-literal", #x014A);
   register-object-id(#"exit-function-literal", #x00B1);
   register-object-id(#"fer-function-region", #x00B2);
   register-object-id(#"fer-component", #x00B3);
@@ -570,6 +572,7 @@ begin
   register-object-id(#"constant-info", #x00E2);
   register-object-id(#"constant-function-info", #x00E3);
   register-object-id(#"constant-method-info", #x00E4);
+  register-object-id(#"constant-callback-function-info", #x0149);
 
   register-object-id(#"general-representation", #x00E8);
   register-object-id(#"heap-representation", #x00E9);
@@ -634,6 +637,11 @@ begin
   register-object-id(#"concatenating-pattern-variable-reference", #x145);
   register-object-id(#"sequence-pattern-variable-reference", #x146);
   register-object-id(#"unhygienic-pattern-variable-reference", #x147);
+
+  // see above: register-object-id(#"ct-callback-function", #x0148);
+  // see above: register-object-id(#"constant-callback-function-info", #x0149);
+  // see above: register-object-id(#"callback-literal", #x014A);
+
 end;
 
 

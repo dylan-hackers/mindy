@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.1 1998/05/03 19:55:39 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.2 1998/09/09 13:40:48 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -207,7 +207,7 @@ define module dylan-viscera
 
     // System stuff
     \%%primitive,
-    call-out, c-include, c-decl, c-expr,
+    call-out, c-include, c-decl, c-expr, callback-method, callback-entry,
     <raw-pointer>, pointer-deref, pointer-deref-setter,
     object-address,
     <buffer>, <buffer-index>, $maximum-buffer-size,

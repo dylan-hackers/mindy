@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.1 1998/05/03 19:55:27 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.2 1998/09/09 13:40:32 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -447,6 +447,10 @@ define class <method-literal> (<function-literal>)
   slot generic-entry :: false-or(<fer-function-region>), init-value: #f;
 end class;
 
+define class <callback-literal> (<function-literal>)
+  slot callback-entry :: false-or(<fer-function-region>), init-value: #f;
+end class;
+
 
 
 // An <exit-function> is a magical function literal that represents
@@ -509,6 +513,10 @@ define class <fer-function-region>
   // Chain of all the self tail calls in this function.  Linked via
   // next-self-tail-call.
   slot self-tail-calls :: false-or(<self-tail-call>), init-value: #f;
+
+  // The calling convention used for this function.
+  slot calling-convention :: one-of(#"standard", #"callback") = #"standard",
+    init-keyword: calling-convention:;
 end;
 
 define method initialize

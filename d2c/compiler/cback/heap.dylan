@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.4 1998/08/13 05:23:13 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.5 1998/09/09 13:40:17 andreas Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1184,6 +1184,63 @@ define method spew-object (object :: <ct-function>, state :: <state>) => ();
   else
     spew-function(object, state);
   end if;
+end;
+
+define method spew-object (object :: <ct-callback-function>, state :: <state>) => ();
+  spew-function(object, state,
+		callback-entry: make(<ct-entry-point>,
+				     for: object, kind: #"callback"),
+		callback-signature: make(<literal-string>,
+					 value: callback-signature(object)));
+end;
+
+define method callback-signature(func :: <ct-callback-function>)
+ => (signature :: <byte-string>);
+  let sig = func.ct-function-signature;
+  let args = sig.specializers;
+  let returns = sig.returns;
+
+  let callback-sig = make(<byte-string>, size: sig.specializers.size + 1);
+
+  callback-sig[0] := callback-signature-key(returns);
+  for(type in args, i = 1 then i + 1)
+    callback-sig[i] := callback-signature-key(type);
+  end;
+    
+  callback-sig;
+end;
+    
+define method callback-signature-key (type :: <values-ctype>)
+ => (key :: <byte-character>);
+  if (type == empty-ctype())
+    'v';
+  elseif (type.min-values ~== 1)
+    'v';
+  else
+    let rep = pick-representation(type, #"speed");
+    select(rep)
+      *general-rep* => 'o';
+      *heap-rep* => 'h';
+      *boolean-rep* => 'B';
+      
+      *long-rep* => 'l';
+      *int-rep* => 'i';
+      *uint-rep* => 'u';
+      *short-rep* => 's';
+      *ushort-rep* => 't';
+      *byte-rep* => 'c';
+      *ubyte-rep* => 'b';
+      
+      *ptr-rep* => 'p';
+      
+      *float-rep* => 'f';
+      *double-rep* => 'd';
+      *long-double-rep* => 'D';
+      otherwise =>
+	error("Couldn't find a callback signature key for representation %=",
+	      rep);
+    end;
+  end;
 end;
 
 define method spew-object

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.1 1998/05/03 19:55:28 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.2 1998/09/09 13:40:31 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -132,6 +132,7 @@ define module front
     name, signature, ct-function, ct-function-setter, main-entry,
     general-entry, general-entry-setter,
     <method-literal>, generic-entry, generic-entry-setter,
+    <callback-literal>, callback-entry, callback-entry-setter,
     <exit-function>,
 
     <fer-function-region>, prologue, argument-types, argument-types-setter,
@@ -139,6 +140,7 @@ define module front
     guessed-result-type-setter, hidden-references?,
     self-call-block, self-call-block-setter,
     self-tail-calls, self-tail-calls-setter,
+    calling-convention, calling-convention-setter,
     <lambda>, literal, environment,
 
     // <fer-component> is picked up via a create

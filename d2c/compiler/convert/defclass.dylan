@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.1 1998/05/03 19:55:35 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.2 1998/09/09 13:40:19 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1370,7 +1370,7 @@ define method maker-inline-expansion
   let component = make(<fer-component>);
   let builder = make-builder(component);
   let region = build-maker-function-body(builder, class-defn);
-  let leaf = make-function-literal(builder, #f, #f, #"local",
+  let leaf = make-function-literal(builder, #f, #"function", #"local",
 				   maker-defn.function-defn-signature, region);
   optimize-component(component, simplify-only: #t);
   leaf;
@@ -1625,13 +1625,13 @@ define method convert-top-level-form
       // Fill in the maker function.
       let ctv = defn.class-defn-maker-function;
       if (ctv)
-	make-function-literal(tl-builder, ctv, #f, #"global",
+	make-function-literal(tl-builder, ctv, #"function", #"global",
 			      maker-signature, maker-region);
       else
 	// The maker function isn't a compile-time constant, so add code to
 	// the defered evaluations to install it.
 	let maker-leaf
-	  = make-function-literal(tl-builder, #f, #f, #"local",
+	  = make-function-literal(tl-builder, #f, #"function", #"local",
 				  maker-signature, maker-region);
 	build-assignment
 	  (evals-builder, policy, source, #(),
@@ -1658,7 +1658,7 @@ define method convert-top-level-form
       // Return nothing.
       build-return(tl-builder, policy, source, func-region, #());
       end-body(tl-builder);
-      make-function-literal(tl-builder, ctv, #f, #"global",
+      make-function-literal(tl-builder, ctv, #"function", #"global",
 			    ctv.ct-function-signature, func-region);
     else
       assert(instance?(builder-result(evals-builder), <empty-region>));
@@ -2141,7 +2141,7 @@ define method convert-init-function
 		   make-unknown-call(builder, var, #f, #()));
   build-return(builder, policy, source, func-region, temp);
   end-body(builder);
-  make-function-literal(builder, #f, #f, #"local",
+  make-function-literal(builder, #f, #"function", #"local",
 			make(<signature>, specializers: #()),
 			func-region);
 end;
@@ -2290,7 +2290,7 @@ define method build-getter
   build-return(builder, policy, source, region, result);
   end-body(builder);
   make-function-literal
-    (builder, ctv, #t, if (ctv) #"global" else #"local" end,
+    (builder, ctv, #"method", if (ctv) #"global" else #"local" end,
      make(<signature>,
 	  specializers:
 	    if (index)
@@ -2357,7 +2357,7 @@ define method build-setter
   build-return(builder, policy, source, region, new);
   end-body(builder);
   make-function-literal
-    (builder, ctv, #t, if (ctv) #"global" else #"local" end,
+    (builder, ctv, #"method", if (ctv) #"global" else #"local" end,
      make(<signature>,
 	  specializers:
 	    if (index)
