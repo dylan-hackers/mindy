@@ -23,8 +23,10 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/Attic/GNUmakefile,v 1.1 1994/06/28 23:07:46 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/Attic/GNUmakefile,v 1.2 1994/06/29 03:34:49 wlott Exp $
 ##
+
+include ../Config
 
 SUBDIRS = dylan streams random coll-ext
 
@@ -37,3 +39,9 @@ ${SUBDIRS}:
 
 clean:
 	$(foreach subdir,$(SUBDIRS), $(MAKE) -C $(subdir) clean; )
+
+$(DESTDIR)/lib:
+	mkdir $(DESTDIR)/lib
+
+install: $(DESTDIR)/lib
+	$(foreach subdir,$(SUBDIRS), $(MAKE) -C $(subdir) install; )
