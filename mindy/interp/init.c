@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.7 1994/04/09 13:33:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.8 1994/04/20 02:37:29 wlott Exp $
 *
 * This file does whatever.
 *
@@ -38,6 +38,7 @@ extern void make_handler_classes(void);
 extern void make_instance_classes(void);
 extern void make_buffer_classes(void);
 extern void make_weak_classes(void);
+extern void make_table_classes(void);
 
 extern void init_nil(void);
 extern void init_symbol_tables(void);
@@ -64,6 +65,7 @@ extern void init_handler_classes(void);
 extern void init_instance_classes(void);
 extern void init_buffer_classes(void);
 extern void init_weak_classes(void);
+extern void init_table_classes(void);
 
 extern void init_obj_functions(void);
 extern void init_type_functions(void);
@@ -120,6 +122,7 @@ void init(void)
     make_instance_classes();
     make_buffer_classes();
     make_weak_classes();
+    make_table_classes();
 
     init_nil();
     init_symbol_tables();
@@ -146,6 +149,7 @@ void init(void)
     init_instance_classes();
     init_buffer_classes();
     init_weak_classes();
+    init_table_classes();
 
     init_obj_functions();
     init_type_functions();
