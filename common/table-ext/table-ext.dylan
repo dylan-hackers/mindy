@@ -1,6 +1,6 @@
 module: Table-Extensions
 author: Nick Kramer (nkramer@cs.cmu.edu), David Watson (dwatson@cmu.edu)
-rcs-header: $Header: /scm/cvs/src/common/table-ext/table-ext.dylan,v 1.1 1998/05/03 19:55:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/table-ext/table-ext.dylan,v 1.2 1998/11/11 03:30:48 housel Exp $
 
 //======================================================================
 //
@@ -53,15 +53,16 @@ end method table-protocol;
 // This function hashes each object in the #rest arguments using
 // elt-hash-function, merging the resulting hash codes in order.
 //
-define function values-hash (elt-hash-function :: <function>, #rest args)
+define function values-hash (elt-hash-function :: <function>,
+			     initial-state :: <hash-state>, #rest args)
  => (hash-id :: <integer>, hash-state :: <hash-state>);
-  let (current-id, current-state) = values(0, $permanent-hash-state);
+  let (current-id, current-state) = values(0, initial-state);
   for (elt in args)
-    let (id, state) = elt-hash-function(elt);
-    let (captured-id, captured-state)
-      = merge-hash-codes(current-id, current-state, id, state, ordered: #t);
+    let (id, state) = elt-hash-function(elt, current-state);
+    let captured-id
+      = merge-hash-ids(current-id, id, ordered: #t);
     current-id := captured-id;
-    current-state := captured-state;
+    current-state := state;
   end for;
   values(current-id, current-state);
 end function values-hash;
@@ -69,9 +70,10 @@ end function values-hash;
 // This function produces hash codes for strings using the equality test
 // case-insensitive-equal.
 //
-define method case-insensitive-string-hash (s :: <string>)
+define method case-insensitive-string-hash
+    (s :: <string>, initial-state :: <hash-state>)
  => (id :: <integer>, hash-state :: <hash-state>);
-  string-hash(as-lowercase(s));
+  string-hash(as-lowercase(s), initial-state);
 end method case-insensitive-string-hash;
 
 define method case-insensitive-equal (o1 :: <object>, o2 :: <object>)
