@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.5 1999/04/17 17:46:55 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.6 1999/05/26 05:57:38 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2761,29 +2761,33 @@ define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
   let defn = tlf.tlf-defn;
   dump-simple-object(#"define-binding-tlf", state, defn);
   for (slot in defn.class-defn-slots)
-    let sealed? = slot.slot-defn-sealed?;
-    let getter = slot.slot-defn-getter;
-    if (getter.method-defn-of & name-inherited-or-exported?(getter.defn-name))
-      dump-od(slot.slot-defn-getter, state);
-      if (sealed? & getter.method-defn-of.defn-library ~== defn.defn-library)
-	dump-simple-object(#"sealed-domain", state,
-			   getter.method-defn-of,
-			   defn.defn-library,
-			   getter.function-defn-signature.specializers);
+    unless (slot.slot-defn-allocation == #"virtual")
+      let sealed? = slot.slot-defn-sealed?;
+      let getter = slot.slot-defn-getter;
+      if (getter.method-defn-of
+	    & name-inherited-or-exported?(getter.defn-name))
+	dump-od(slot.slot-defn-getter, state);
+	if (sealed? & getter.method-defn-of.defn-library ~== defn.defn-library)
+	  dump-simple-object(#"sealed-domain", state,
+			     getter.method-defn-of,
+			     defn.defn-library,
+			     getter.function-defn-signature.specializers);
+	end if;
+      end;
+      let setter = slot.slot-defn-setter;
+      if (setter & setter.method-defn-of
+	    & name-inherited-or-exported?(setter.defn-name))
+	dump-od(setter, state);
+	if (sealed? & setter.method-defn-of.defn-library ~== defn.defn-library)
+	  dump-simple-object
+	    (#"sealed-domain", state, setter.method-defn-of, defn.defn-library,
+	     // We don't use the setter specializers, because the first
+	     // specializer will be the slot type, not <object>.
+	     pair(object-ctype(),
+		  getter.function-defn-signature.specializers));
+	end if;
       end if;
-    end;
-    let setter = slot.slot-defn-setter;
-    if (setter & setter.method-defn-of
-	  & name-inherited-or-exported?(setter.defn-name))
-      dump-od(setter, state);
-      if (sealed? & setter.method-defn-of.defn-library ~== defn.defn-library)
-	dump-simple-object
-	  (#"sealed-domain", state, setter.method-defn-of, defn.defn-library,
-	   // We don't use the setter specializers, because the first
-	   // specializer will be the slot type, not <object>.
-	   pair(object-ctype(), getter.function-defn-signature.specializers));
-      end if;
-    end if;
+    end unless;
   end for;
 end method dump-od;
 
