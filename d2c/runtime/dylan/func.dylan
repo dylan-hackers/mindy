@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.12 1995/12/16 15:31:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.13 1995/12/16 21:54:15 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -308,7 +308,10 @@ define constant gf-call
       if (valid-keywords)
 	for (index :: <fixed-integer> from nfixed below nargs by 2)
 	  let key :: <symbol> = %%primitive extract-arg (arg-ptr, index);
-	  unless (valid-keywords == #"all" | member?(key, valid-keywords))
+	  unless (valid-keywords == #"all"
+		    | member?(key,
+			      check-type(valid-keywords,
+					 <simple-object-vector>)))
 	    error("Unrecognized keyword: %=", key);
 	  end unless;
 	end for;
@@ -366,9 +369,9 @@ define method internal-sorted-applicable-methods
   let ambiguous :: <list> = #();
 
   // Accumulates the valid keywords.
-  let valid-keywords :: type-union(<simple-object-vector>, one-of(#f, #"all"))
+  let valid-keywords :: type-union(<list>, one-of(#f, #"all"))
     = if (gf.function-keywords)
-	if (gf.function-all-keys?) #"all" else #[] end if;
+	if (gf.function-all-keys?) #"all" else #() end if;
       else
 	#f;
       end if;
@@ -379,7 +382,12 @@ define method internal-sorted-applicable-methods
 	if (meth.function-all-keys?)
 	  valid-keywords := #"all";
 	else
-	  valid-keywords := union(valid-keywords, meth.function-keywords);
+	  for (keyword in check-type(meth.function-keywords,
+				     <simple-object-vector>))
+	    unless (member?(keyword, check-type(valid-keywords, <list>)))
+	      valid-keywords := pair(keyword, valid-keywords);
+	    end unless;
+	  end for;
 	end if;
       end unless;
 
@@ -465,9 +473,20 @@ define method internal-sorted-applicable-methods
   cache.next := old-cache;
   cache.cached-normal := ordered;
   cache.cached-ambiguous := ambiguous;
+  let valid-keywords
+    = if (instance?(valid-keywords, <list>))
+	let vec = make(<simple-object-vector>,
+		       size: check-type(valid-keywords, <list>).size);
+	for (index :: <fixed-integer> from 0,
+	     keyword in check-type(valid-keywords, <list>))
+	  vec[index] := keyword;
+	end for;
+      else
+	valid-keywords;
+      end if;
   cache.cached-valid-keywords := valid-keywords;
 
-  values(ordered, ambiguous);
+  values(ordered, ambiguous, valid-keywords);
 end;
 
 define variable *debug-generic-threshold* :: <fixed-integer> = -1;
