@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/feature.c,v 1.5 1996/06/11 11:20:53 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/feature.c,v 1.6 1996/06/11 12:39:10 wlott Exp $
 *
 * This file handles conditional compilation
 *
@@ -62,6 +62,7 @@ static boolean feature_present(struct symbol *sym)
 }
 
 static struct state {
+    int line;
     boolean active;
     boolean do_else;
     boolean seen_else;
@@ -72,6 +73,7 @@ static void push_state(boolean active, boolean do_else)
 {
     struct state *new = malloc(sizeof(struct state));
 
+    new->line = line_count;
     new->active = active;
     new->do_else = do_else;
     new->seen_else = FALSE;
@@ -100,7 +102,7 @@ static void new_token(void)
 
 static void parse_error(void)
 {
-    if (yylval.token)
+    if (yytoken)
 	error(line_count,
 	      "syntax error in feature condition at or before ``%s''",
 	      yylval.token->chars);
@@ -263,6 +265,14 @@ int yylex(void)
 		pop_state();
 	    new_token();
 	    break;
+
+	  case NULL:
+	    while (State != NULL) {
+		error(State->line,
+		      "#if with no matching #endif, assuming #endif at EOF.");
+		pop_state();
+	    }
+	    return yytoken;
 
 	  default:
 	    if (State == NULL || State->active)
