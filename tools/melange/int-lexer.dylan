@@ -91,7 +91,9 @@ end module int-lexer;
 // The public view of tokenizers is described above.  
 //
 define primary class <tokenizer> (<object>)
-  slot contents :: <string>, required-init-keyword: #"source";
+  slot file-name :: false-or(<string>),
+    init-value: #f, init-keyword: #"source-file";
+  slot contents :: <string>, required-init-keyword: #"source-string";
   slot position :: <integer>, init-keyword: #"start", init-value: 0;
   slot unget-stack :: <deque>, init-function: curry(make, <deque>);
 end class <tokenizer>;
@@ -325,8 +327,20 @@ define class <arrow-token> (<punctuation-token>) end class;
 //
 define method parse-error (token :: <token>, format :: <string>, #rest args)
  => ();	// never returns
-  apply(error, concatenate("%s:char %d: ", format),
-	"<unknown-file>", token.position | -1, args);
+  let source-string = token.generator.contents;
+  let line-num = 1;
+  let last-CR = -1;
+
+  for (i from 0 below token.position | 0)
+    if (source-string[i] == '\n')
+      line-num := line-num + 1;
+      last-CR := i;
+    end if;
+  end for;
+
+  let char-num = (token.position | 0) - last-CR;
+  apply(error, concatenate("%s:line %d: ", format),
+	token.generator.file-name | "<unknown-file>", line-num, args);
 end method parse-error;
 
 //========================================================================
@@ -568,7 +582,7 @@ end method skip-whitespace;
 //
 define constant match-literal
   = make-regexp-positioner("^('(\\\\?.)'|"
-			     "#?\"([^\"]|\\\\\")*\"|"
+			     "(#?\"([^\"]|\\\\\")*\")|"
 			     "(([1-9][0-9]*)|(#[xX][0-9a-fA-F]+)|(#[oO][0-7]*)))",
 			   byte-characters-only: #t);
 
@@ -606,7 +620,8 @@ define method get-token
     if (token?) return(token?) end if;
 
     let (start-index, end-index, dummy1, dummy2, char-start, char-end,
-	 string-start, string-end, int-start, int-end)
+	 string-start, string-end, string-contents-start, string-contents-end,
+	 int-start, int-end)
       = match-literal(contents, start: pos);
 
     if (start-index)
