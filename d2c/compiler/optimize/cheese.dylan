@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.77 1995/06/06 00:29:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.78 1995/06/06 02:12:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2928,7 +2928,16 @@ define method build-external-entries-for
     (component :: <component>, function :: <function-literal>) => ();
   function.general-entry
     := build-xep(component, #f, function, function.signature);
-  if (instance?(function, <method-literal>))
+end;
+
+define method build-external-entries-for
+    (component :: <component>, function :: <method-literal>) => ();
+  let ctv = function.ct-function;
+  unless (ctv & ctv.ct-method-hidden?)
+    function.general-entry
+      := build-xep(component, #f, function, function.signature);
+  end;
+  unless (function.generic-entry)
     function.generic-entry
       := build-xep(component, #t, function, function.signature);
   end;

@@ -355,7 +355,18 @@ end;
 define method spew-object (object :: <ct-method>, state :: <state>) => ();
   spew-instance(object.ct-value-cclass, state,
 		general-entry:
-		  make(<ct-entry-point>, for: object, kind: #"general"),
+		  if (object.ct-method-hidden?)
+		    let tramp = dylan-defn(#"general-entry");
+		    if (tramp)
+		      make(<ct-entry-point>,
+			   for: tramp.ct-value,
+			   kind: #"main");
+		    else
+		      #f;
+		    end;
+		  else
+		    make(<ct-entry-point>, for: object, kind: #"general");
+		  end,
 		generic-entry:
 		  make(<ct-entry-point>, for: object, kind: #"generic"));
 end;

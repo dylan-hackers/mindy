@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.28 1995/06/06 00:29:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.29 1995/06/06 02:12:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -437,19 +437,33 @@ end;
 
 // CT-value
 
-define method ct-value (defn :: <function-definition>)
+define method ct-value (defn :: <generic-definition>)
     => res :: false-or(<ct-function>);
   let ctv = defn.function-defn-ct-value;
   if (ctv == #"not-computed-yet")
     defn.function-defn-ct-value
       := unless (defn.function-defn-hairy?)
-	   make(select (defn by instance?)
-		  <generic-definition> => <ct-generic-function>;
-		  <abstract-method-definition> => <ct-method>;
-		end,
+	   make(<ct-generic-function>,
 		name: format-to-string("%s", defn.defn-name),
 		signature: defn.function-defn-signature,
 		definition: defn);
+	 end;
+  else
+    ctv;
+  end;
+end;
+
+define method ct-value (defn :: <abstract-method-definition>)
+    => res :: false-or(<ct-function>);
+  let ctv = defn.function-defn-ct-value;
+  if (ctv == #"not-computed-yet")
+    defn.function-defn-ct-value
+      := unless (defn.function-defn-hairy?)
+	   make(<ct-method>,
+		name: format-to-string("%s", defn.defn-name),
+		signature: defn.function-defn-signature,
+		definition: defn,
+		hidden: instance?(defn, <method-definition>));
 	 end;
   else
     ctv;
