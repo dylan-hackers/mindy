@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.8 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.9 1995/06/07 15:16:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -587,8 +587,11 @@ define method find-applicable (mt :: <list>, nexts :: <list>, types :: <list>)
 	    intersects-with := sub;
 	    found();
 	  otherwise =>
-	    if (intersects-with)
-	      // It intersects with two things at this level.  Give up.
+	    // If we intersect with two root level methods, then we have
+	    // to punt.  If we intersect with a child method, we have to
+	    // punt because we can't know if the results should include
+	    // the child or not.
+	    if (intersects-with | mt.head)
 	      punt(#f);
 	    else
 	      intersects-with := sub;
