@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.11 1994/05/31 18:12:45 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.12 1994/06/23 03:17:44 wlott Exp $
 //
 //  This file contains the support for vectors.
 //
@@ -386,6 +386,7 @@ define method copy-sequence(vector :: <vector>, #key start = 0, end: last)
   end for;
   result;
 end method copy-sequence;
+
 
 //// Array methods.
 
@@ -414,3 +415,15 @@ end;
 define method dimensions (v :: <vector>) => dimensions :: <sequence>;
   vector (size (v));
 end method dimensions;
+
+
+//// Special purpose element setter methods.
+
+define method element-setter (value, v :: <byte-vector>, index :: <integer>)
+  error("%= is not an integer between 0 and 255.", value);
+end;
+
+define method element-setter (value, v :: <buffer>, index :: <integer>)
+  error("%= is not an integer between 0 and 255.", value);
+end;
+
