@@ -86,7 +86,7 @@ define method dump (region :: <if-region>, stream :: <stream>) => ();
     (stream,
      body: method (stream)
 	     format(stream, "[%d]: IF (", region.id);
-	     dump(region.if-test, stream);
+	     dump(region.depends-on.source-exp, stream);
 	     write(')', stream);
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
@@ -148,7 +148,7 @@ define method dump (assignment :: <assignment>, stream :: <stream>) => ();
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"fill", stream);
 	     write(":= ", stream);
-	     dump(assignment.expression, stream);
+	     dump(assignment.depends-on.source-exp, stream);
 	     write(';', stream);
 	   end);
 end;
@@ -163,7 +163,7 @@ define method dump (assignment :: <join-assignment>, stream :: <stream>) => ();
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"fill", stream);
 	     write("JOIN ", stream);
-	     dump(assignment.expression, stream);
+	     dump(assignment.depends-on.source-exp, stream);
 	     write(';', stream);
 	   end);
 end;
@@ -196,21 +196,21 @@ end;
 
 define method dump (op :: <primitive>, stream :: <stream>) => ();
   format(stream, "primitive %s", op.name);
-  dump-operands(op.operands, stream);
+  dump-operands(op.depends-on, stream);
 end;
 
 define method dump (call :: <abstract-call>, stream :: <stream>) => ();
-  if (~call.operands)
+  if (~call.depends-on)
     write("<call w/ no operands>", stream);
   else
-    dump(call.operands.source-exp, stream);
-    dump-operands(call.operands.dependent-next, stream);
+    dump(call.depends-on.source-exp, stream);
+    dump-operands(call.depends-on.dependent-next, stream);
   end;
 end;
 
 define method dump (call :: <mv-call>, stream :: <stream>) => ();
   write("mv-call", stream);
-  dump-operands(call.operands, stream);
+  dump-operands(call.depends-on, stream);
 end;
 
 define method dump-operands(dep :: false-or(<dependency>), stream :: <stream>)
