@@ -1,0 +1,3 @@
+&emit_library_rule('Inspector-base', '', '', 'compile-mindy', 'install');
+&emit_library_rule('Text-inspector', '', '', 'compile-mindy', 'install');
+&emit_library_rule('X-inspector', '', '', 'compile-mindy', 'install');

@@ -1,0 +1,1 @@
+&emit_library_rule('Tk', '', '', 'compile-mindy', 'install');
