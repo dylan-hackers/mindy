@@ -1,5 +1,5 @@
 module:      operating-system
-rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.6 2000/01/24 04:55:35 andreas Exp $
+rcs-header:  $Header: /scm/cvs/src/common/system/Attic/posix-os.dylan,v 1.7 2002/08/04 22:36:30 andreas Exp $
 author:      Tom Emerson, tree@tiac.net
              [based on stubs from Eric Kidd]
 copyright:   Copyright 1999 Thomas R. Emerson
@@ -86,6 +86,10 @@ define function environment-variable-setter(new-value :: false-or(<byte-string>)
   end if;
 end;
 
+/* Have that in the regex library. Keep this as a remainder to
+   make split a g.f. some say that works on characters as 
+   delimiters too.
+
 define function split(character :: <character>, string :: <byte-string>)
  => (components :: <vector>)
 
@@ -112,10 +116,11 @@ define function split(character :: <character>, string :: <byte-string>)
 
   result;
 end;
+*/
 
 define function tokenize-environment-variable(variable :: <byte-string>)
  => (components :: <vector>)
-  split(':', variable);
+  split(":", variable);
 end function;
 
 /*
