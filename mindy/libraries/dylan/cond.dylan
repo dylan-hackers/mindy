@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.13 1996/03/07 18:01:54 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.14 1996/03/19 02:00:59 wlott Exp $
 
 //======================================================================
 //
@@ -207,8 +207,7 @@ define method abort ()
   error(make(<abort>));
 end method abort;
 
-define generic default-handler (condition :: <condition>)
- => return-val :: <object>;
+define generic default-handler (condition :: <condition>);
 
 define method default-handler (condition :: <condition>)
  => return-val :: singleton(#f);
@@ -217,7 +216,6 @@ end method default-handler;
 
 
 define method default-handler (condition :: <serious-condition>)
- => return-val :: <object>;
   invoke-debugger(condition);
 end method default-handler;
 
@@ -230,7 +228,6 @@ end method default-handler;
 
 
 define method default-handler (restart :: <restart>)
- => return-val :: <object>;
   error("No restart handler for %=", restart);
 end method default-handler;
 
