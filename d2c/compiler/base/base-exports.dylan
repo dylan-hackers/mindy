@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.34 1996/03/21 19:15:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.35 1996/03/27 23:51:48 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -240,10 +240,7 @@ define module source
   export
     <source-location-mixin>, source-location,
 
-    <source-location>,
-    source-location-before, source-location-after,
-    source-location-between, source-location-spanning, 
-    describe-source-location,
+    <source-location>, describe-source-location,
 
     <unknown-source-location>,
 
