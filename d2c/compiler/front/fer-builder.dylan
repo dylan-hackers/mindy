@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.34 1995/06/04 22:55:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.35 1995/06/07 15:22:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -103,8 +103,7 @@ define method make-operand-dependencies(builder :: <internal-builder>,
 
   // Add this dependent to the reoptimize queue.
   let component = builder.component;
-  result.queue-next := component.reoptimize-queue;
-  component.reoptimize-queue := result;
+  add-to-queue(component, result);
 
   // Build the dependencies.
   let prev = #f;
@@ -135,8 +134,7 @@ define method make-operand-dependencies(builder :: <internal-builder>,
     => res :: <dependent-mixin>;
   // Add this dependent to the reoptimize queue.
   let component = builder.component;
-  result.queue-next := component.reoptimize-queue;
-  component.reoptimize-queue := result;
+  add-to-queue(component, result);
 
   // Build the dependency.
   let dep = make(<dependency>, source-exp: op, source-next: op.dependents,
