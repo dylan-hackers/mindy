@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.42 1995/11/22 16:41:52 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.43 1995/12/05 03:51:32 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -751,12 +751,19 @@ define method generic-defn-discriminator (gf :: <generic-definition>)
 	   let sig = gf.function-defn-signature;
 	   make(<ct-function>,
 		name: format-to-string("Discriminator for %s", gf.defn-name),
-		signature: make(<signature>,
-				specializers: sig.specializers,
-				rest-type: sig.rest-type,
-				keys: sig.key-infos & #(),
-				all-keys: sig.key-infos & #t,
-				returns: sig.returns));
+		signature:
+		  if (sig.key-infos)
+		    make(<signature>,
+			 specializers: sig.specializers,
+			 rest-type: sig.rest-type | object-ctype(),
+			 keys: #(), all-keys: #t,
+			 returns: sig.returns);
+		  else
+		    make(<signature>,
+			 specializers: sig.specializers,
+			 rest-type: sig.rest-type,
+			 returns: sig.returns);
+		  end);
 	 else
 	   #f;
 	 end;
@@ -812,7 +819,8 @@ define method make-discriminator
 
   assert(~sig.next?);
   if (sig.rest-type)
-    let var = make-local-var(builder, #"rest", sig.rest-type);
+    let var = make-local-var(builder, #"rest",
+			     specifier-type(#"<simple-object-vector>"));
     add!(vars, var);
   end;
   assert(sig.key-infos == #f | sig.key-infos == #());
