@@ -1148,9 +1148,9 @@ end method try-punctuation;
 
 define constant match-comment-end = make-substring-positioner("*/");
 
-// *handle-//-comments* -- xported variable.
+// *handle-c++-comments* -- xported variable.
 //
-define /* xported */ variable *handle-//-comments* :: <boolean> = #f;
+define /* xported */ variable *handle-c++-comments* :: <boolean> = #f;
 
 #if (~mindy)
 define multistring-checker comment-matcher("/*", "//", "\\\n", "\\\r\n");
@@ -1179,7 +1179,7 @@ define method skip-whitespace
 		end if;
 		skip-comments(end-index + 2);
 	      "//" =>
-                if (*handle-//-comments*)
+                if (*handle-c++-comments*)
   	          while (i < sz & contents[i] ~== '\n')
 		    i := i + 1;
 		  end while;
@@ -1220,8 +1220,8 @@ define method skip-cpp-whitespace
 		end if;
 		skip-comments(end-index + 2);
 	      "//" =>
-                if (*handle-//-comments*)
-  	          while (i < sz & contents[i] ~== '\n')
+                if (*handle-c++-comments*)
+		  while (i < sz & contents[i] ~== '\n')
 		    i := i + 1;
 		  end while;
 	          // i points at the newline now.
@@ -1297,9 +1297,16 @@ define /* exported */ method get-token
 	pop(stack);		// Get rid of the pound-pound-token
 	let new-string = concatenate(token.string-value,
 				     get-token(state).string-value);
-	let sub-tokenizer
-	  = make(<tokenizer>, contents: new-string);
-	return(get-token(sub-tokenizer));
+	if (new-string = "/" "/" & *handle-c++-comments*)
+	  // Cruft to handle VC++ 4.2, which attempts to make a comment out of
+	  // a boolean declaration.  Don't ask -- you don't wan to know.
+	  return(make(<char-token>, position: token.position,
+		      generator: token.generator, string: "char"));
+	else 
+	  let sub-tokenizer
+	    = make(<tokenizer>, contents: new-string);
+	  return(get-token(sub-tokenizer));
+	end if;
       elseif (instance?(token, <identifier-token>)
 		& element(state.typedefs, token.value, default: #f))
 	// This is our last chance to deal with recently declared typedefs, so
