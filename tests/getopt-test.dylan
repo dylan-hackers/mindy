@@ -46,6 +46,10 @@ define method main(progname :: <string>, #rest argv)
 			    long-options: #("quux"),
 			    short-options: #("Q"));
   add-option-parser-by-type(*parser*,
+			    <optional-parameter-option-parser>,
+			    long-options: #("optimize"),
+			    short-options: #("O"));
+  add-option-parser-by-type(*parser*,
 			    <repeated-parameter-option-parser>,
 			    long-options: #("warning"),
 			    short-options: #("W"));
@@ -63,6 +67,7 @@ define method main(progname :: <string>, #rest argv)
   let verbose? = option-value-by-long-name(*parser*, "verbose");
   let foo? = option-value-by-long-name(*parser*, "foo");
   let quux = option-value-by-long-name(*parser*, "quux");
+  let optimize = option-value-by-long-name(*parser*, "optimize");
   let warnings = option-value-by-long-name(*parser*, "warning");
   let defines = option-value-by-long-name(*parser*, "define");
 
@@ -70,6 +75,7 @@ define method main(progname :: <string>, #rest argv)
   format-out("Verbose?:        %=\n", verbose?);
   format-out("Foo?:            %=\n", foo?);
   format-out("Quux:            %=\n", quux);
+  format-out("Optimize:        %=\n", optimize);
 
   format-out("Warnings:\n");  
   for (arg in warnings)
