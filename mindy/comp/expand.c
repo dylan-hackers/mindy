@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.3 1994/03/31 10:16:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.4 1994/04/08 14:28:40 wlott Exp $
 *
 * This file does whatever.
 *
@@ -86,6 +86,17 @@ static void expand_bindings(struct bindings *bindings)
     expand_expr(&bindings->expr);
 }
 
+static void expand_rettypes(struct return_type_list *rettypes)
+{
+    struct return_type *r;
+
+    for (r = rettypes->req_types; r != NULL; r = r->next)
+	if (r->type)
+	    expand_expr(&r->type);
+    if (rettypes->rest_type)
+	expand_expr(&rettypes->rest_type);
+}
+
 static void bind_rettypes(struct body *body,
 			  struct return_type_list *rettypes)
 {
@@ -120,6 +131,16 @@ static void bind_rettypes(struct body *body,
 	bind_temp(body, id(rettypes->rest_temp),
 		  make_function_call(make_varref(id(ctype)), args));
 	rettypes->rest_type = make_varref(id(rettypes->rest_temp));
+    }
+}
+
+static void expand_plist(struct plist *plist)
+{
+    if (plist) {
+	struct property *p;
+
+	for (p = plist->head; p != NULL; p = p->next)
+	    expand_expr(&p->expr);
     }
 }
 
@@ -179,6 +200,9 @@ static void add_method_wrap(struct body *body, struct method *method)
     struct arglist *list_args = make_argument_list();
     struct symbol *ctype = symbol("check-type");
     struct symbol *type_class = symbol("<type>");
+
+    if (ParseOnly)
+	lose("Adding method wrap when ParseOnly is true?");
 
     for (p = params->required_params; p != NULL; p = p->next) {
 	if (p->type) {
@@ -370,7 +394,7 @@ static struct body
     }
 }
 
-static void expand_method(struct method *method)
+static void expand_method_for_compile(struct method *method)
 {
     struct param_list *params = method->params;
     struct param *p;
@@ -394,6 +418,13 @@ static void expand_method(struct method *method)
     expand_body(method->body, FALSE);
 }
 
+static void expand_method_for_parse(struct method *method)
+{
+    expand_param_list(method->params);
+    if (method->rettypes)
+	expand_rettypes(method->rettypes);
+    expand_body(method->body, FALSE);
+}
 
 
 /* defvar/defconst initializer generation. */
@@ -645,28 +676,53 @@ static void expand_defnamespace(struct defnamespace_constituent *c)
 
 /* Constituent expanders. */
 
+static void expand_defconst_for_parse(struct defconst_constituent *c)
+{
+    expand_bindings(c->bindings);
+}
+
+static void expand_defconst_for_compile(struct defconst_constituent *c)
+{
+    c->tlf = make_initializer("Define Constant ", c->bindings);
+    expand_method_for_compile(c->tlf);
+}
+
 static void expand_defconst_constituent(struct defconst_constituent **ptr,
 					boolean top_level)
 {
-    struct defconst_constituent *c = *ptr;
+    if (ParseOnly)
+	expand_defconst_for_parse(*ptr);
+    else
+	expand_defconst_for_compile(*ptr);
+}
 
-    c->tlf = make_initializer("Define Constant ", c->bindings);
-    expand_method(c->tlf);
+static void expand_defvar_for_parse(struct defvar_constituent *c)
+{
+    expand_bindings(c->bindings);
+}
+
+static void expand_defvar_for_compile(struct defvar_constituent *c)
+{
+    c->tlf = make_initializer("Define Variable ", c->bindings);
+    expand_method_for_compile(c->tlf);
 }
 
 static void expand_defvar_constituent(struct defvar_constituent **ptr,
 				      boolean top_level)
 {
-    struct defvar_constituent *c = *ptr;
-
-    c->tlf = make_initializer("Define Variable ", c->bindings);
-    expand_method(c->tlf);
+    if (ParseOnly)
+	expand_defvar_for_parse(*ptr);
+    else
+	expand_defvar_for_compile(*ptr);
 }
 
-static void expand_defmethod_constituent(struct defmethod_constituent **ptr,
-					 boolean top_level)
+static void expand_defmethod_for_parse(struct defmethod_constituent *c)
 {
-    struct defmethod_constituent *c = *ptr;
+    expand_method_for_parse(c->method);
+}
+
+static void expand_defmethod_for_compile(struct defmethod_constituent *c)
+{
     struct method *method = c->method;
     char *name = method->name->symbol->name;
     char *debug_name = malloc(strlen(name) + sizeof("Define Method "));
@@ -691,13 +747,28 @@ static void expand_defmethod_constituent(struct defmethod_constituent **ptr,
 
     free(debug_name);
 
-    expand_method(c->tlf);
+    expand_method_for_compile(c->tlf);
 }
 
-static void expand_defgeneric_constituent(struct defgeneric_constituent **ptr,
-					  boolean top_level)
+static void expand_defmethod_constituent(struct defmethod_constituent **ptr,
+					 boolean top_level)
 {
-    struct defgeneric_constituent *c = *ptr;
+    if (ParseOnly)
+	expand_defmethod_for_parse(*ptr);
+    else
+	expand_defmethod_for_compile(*ptr);
+}
+
+static void expand_defgeneric_for_parse(struct defgeneric_constituent *c)
+{
+    expand_param_list(c->params);
+    if (c->rettypes)
+	expand_rettypes(c->rettypes);
+    expand_plist(c->plist);
+}
+
+static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
+{
     char *name = c->name->symbol->name;
     char *debug_name = malloc(strlen(name) + sizeof("Define Generic "));
     struct body *body = make_body();
@@ -775,13 +846,40 @@ static void expand_defgeneric_constituent(struct defgeneric_constituent **ptr,
 
     free(debug_name);
 
-    expand_method(c->tlf);
+    expand_method_for_compile(c->tlf);
 }
 
-static void expand_defclass_constituent(struct defclass_constituent **ptr,
-					boolean top_level)
+static void expand_defgeneric_constituent(struct defgeneric_constituent **ptr,
+					  boolean top_level)
 {
-    struct defclass_constituent *c = *ptr;
+    if (ParseOnly)
+	expand_defgeneric_for_parse(*ptr);
+    else
+	expand_defgeneric_for_compile(*ptr);
+}
+
+static void expand_defclass_for_parse(struct defclass_constituent *c)
+{
+    struct superclass *super;
+    struct slot_spec *slot;
+    struct keyword_spec *keyword;
+    struct inherited_spec *inherit;
+
+    for (super = c->supers; super != NULL; super = super->next)
+	expand_expr(&super->expr);
+    for (slot = c->slots; slot != NULL; slot = slot->next) {
+	if (slot->type)
+	    expand_expr(&slot->type);
+	expand_plist(slot->plist);
+    }
+    for (keyword = c->keywords; keyword != NULL; keyword = keyword->next)
+	expand_plist(keyword->plist);
+    for (inherit = c->inherits; inherit != NULL; inherit = inherit->next)
+	expand_plist(inherit->plist);
+}
+
+static void expand_defclass_for_compile(struct defclass_constituent *c)
+{
     char *name = c->name->symbol->name;
     char *debug_name = malloc(strlen(name) + sizeof("Define Class "));
     struct body *body = make_body();
@@ -797,7 +895,7 @@ static void expand_defclass_constituent(struct defclass_constituent **ptr,
 	struct arglist *list_args = make_argument_list();
 	struct superclass *super;
 
-	for (super = (*ptr)->supers; super != NULL; super = super->next)
+	for (super = c->supers; super != NULL; super = super->next)
 	    add_argument(list_args, make_argument(super->expr));
 	expr = make_function_call(make_varref(id(symbol("list"))), list_args);
 	add_argument(init_args, make_argument(expr));
@@ -811,7 +909,7 @@ static void expand_defclass_constituent(struct defclass_constituent **ptr,
 	struct symbol *make_slot = symbol("make-slot");
 	struct symbol *defslot = symbol("%define-slot");
 	
-	for (slot = (*ptr)->slots; slot != NULL; slot = slot->next) {
+	for (slot = c->slots; slot != NULL; slot = slot->next) {
 	    struct arglist *slot_args;
 
 	    /* Extract the getter and setter. */
@@ -921,7 +1019,16 @@ static void expand_defclass_constituent(struct defclass_constituent **ptr,
 
     free(debug_name);
 
-    expand_method(c->tlf);
+    expand_method_for_compile(c->tlf);
+}
+
+static void expand_defclass_constituent(struct defclass_constituent **ptr,
+					boolean top_level)
+{
+    if (ParseOnly)
+	expand_defclass_for_parse(*ptr);
+    else
+	expand_defclass_for_compile(*ptr);
 }
 
 static void expand_expr_constituent(struct constituent **ptr,
@@ -930,7 +1037,7 @@ static void expand_expr_constituent(struct constituent **ptr,
     struct expr_constituent *c = (struct expr_constituent *)*ptr;
     struct expr *expr = c->expr;
 
-    if (top_level) {
+    if (top_level && !ParseOnly) {
 	if (expr->kind == expr_BODY) {
 	    struct body_expr *body_expr = (struct body_expr *)expr;
 	    expand_body(body_expr->body, TRUE);
@@ -949,12 +1056,16 @@ static void expand_local_constituent(struct constituent **ptr,
     struct local_constituent *c = (struct local_constituent *)*ptr;
     struct method *method = c->methods;
 
-    if (top_level) {
-	*ptr = make_top_level_form("Top Level Form", (struct constituent *)c);
-	return;
+    if (ParseOnly) {
+	while (method != NULL) {
+	    expand_method_for_parse(method);
+	    method = method->next_local;
+	}
+	expand_body(c->body, FALSE);
     }
-
-    if (method != NULL && method->specializers == NULL) {
+    else if (top_level)
+	*ptr = make_top_level_form("Top Level Form", (struct constituent *)c);
+    else if (method != NULL && method->specializers == NULL) {
 	struct body *body = make_body();
 	for (; method != NULL; method = method->next_local)
 	    add_method_wrap(body, method);
@@ -963,7 +1074,7 @@ static void expand_local_constituent(struct constituent **ptr,
     }
     else {
 	for (; method != NULL; method = method->next_local)
-	    expand_method(method);
+	    expand_method_for_compile(method);
 	expand_body(c->body, FALSE);
     }
 }
@@ -975,7 +1086,7 @@ static void expand_handler_constituent(struct constituent **ptr,
     struct body *body;
     struct arglist *args;
 
-    if (top_level) {
+    if (top_level && !ParseOnly) {
 	*ptr = make_top_level_form("Top Level Form", (struct constituent *)h);
 	return;
     }
@@ -997,6 +1108,10 @@ static void expand_handler_constituent(struct constituent **ptr,
     /* the handler body with it. */
     h->body = chain_bodies(body, h->body);
 
+    /* Clear out the type and func */
+    h->type = NULL;
+    h->func = NULL;
+
     /* Now expand that body. */
     expand_body(h->body, FALSE);
 }
@@ -1005,79 +1120,85 @@ static void expand_let_constituent(struct constituent **ptr, boolean top_level)
 {
     struct let_constituent *let = (struct let_constituent *)*ptr;
     struct bindings *bindings = let->bindings;
-    struct param_list *params = bindings->params;
-    struct body *body = NULL;
-    struct param *p;
-    struct arglist *args;
-    struct expr *expr;
-    struct symbol *check_type = symbol("check-type");
-    struct symbol *type_class = symbol("<type>");
 
-    if (top_level) {
-	*ptr = make_top_level_form("Top Level Form",(struct constituent *)let);
-	return;
+    if (ParseOnly) {
+	expand_bindings(bindings);
+	expand_body(let->body, FALSE);
     }
+    else if (top_level)
+	*ptr = make_top_level_form("Top Level Form",(struct constituent *)let);
+    else {
+	struct param_list *params = bindings->params;
+	struct body *body = NULL;
+	struct param *p;
+	struct arglist *args;
+	struct expr *expr;
+	struct symbol *check_type = symbol("check-type");
+	struct symbol *type_class = symbol("<type>");
 
-    for (p = params->required_params; p != NULL; p = p->next)
-	if (p->type) {
-	    if (body == NULL)
-		body = make_body();
-	    p->type_temp = gensym();
-	    args = make_argument_list();
-	    add_argument(args, make_argument(p->type));
-	    add_argument(args, make_argument(make_varref(id(type_class))));
-	    expr = make_function_call(make_varref(id(check_type)), args);
-	    bind_temp(body, id(p->type_temp), expr);
-	    p->type = NULL;
-	}
-    if (body != NULL) {
-	p = params->required_params;
-	if (p->next || params->rest_param) {
-	    /* There are multiple parameters, so we can't just wrap the */
-	    /* expression with check-type.  Therefore, we bind a bunch of */
-	    /* temps, and then bind the real variables to check-type of the */
-	    /* temps. */
-	    struct body *let_body = let->body;
-	    let->body = make_body();
-	    add_constituent(body, (struct constituent *)let);
-	    for (; p != NULL; p = p->next) {
-		if (p->type_temp) {
-		    struct symbol *temp = gensym();
-		    struct param *new_param = make_param(p->id, NULL);
-
-		    p->id = id(temp);
-		    args = make_argument_list();
-		    add_argument(args, make_argument(make_varref(id(temp))));
-		    expr = make_varref(id(p->type_temp));
-		    add_argument(args, make_argument(expr));
-		    expr = make_function_call(make_varref(id(check_type)),
-					      args);
-		    bind_param(body, new_param, expr);
-		}
+	for (p = params->required_params; p != NULL; p = p->next)
+	    if (p->type) {
+		if (body == NULL)
+		    body = make_body();
+		p->type_temp = gensym();
+		args = make_argument_list();
+		add_argument(args, make_argument(p->type));
+		add_argument(args, make_argument(make_varref(id(type_class))));
+		expr = make_function_call(make_varref(id(check_type)), args);
+		bind_temp(body, id(p->type_temp), expr);
+		p->type = NULL;
 	    }
-	    add_expr(body, make_body_expr(let_body));
+	if (body != NULL) {
+	    p = params->required_params;
+	    if (p->next || params->rest_param) {
+		/* There are multiple parameters, so we can't just wrap the */
+		/* expression with check-type.  Therefore, we bind a bunch */
+		/* of temps, and then bind the real variables to check-type */
+		/* of the temps. */
+		struct body *let_body = let->body;
+		let->body = make_body();
+		add_constituent(body, (struct constituent *)let);
+		for (; p != NULL; p = p->next) {
+		    if (p->type_temp) {
+			struct symbol *temp = gensym();
+			struct param *new_param = make_param(p->id, NULL);
+
+			p->id = id(temp);
+			args = make_argument_list();
+			add_argument(args,
+				     make_argument(make_varref(id(temp))));
+			expr = make_varref(id(p->type_temp));
+			add_argument(args, make_argument(expr));
+			expr = make_function_call(make_varref(id(check_type)),
+						  args);
+			bind_param(body, new_param, expr);
+		    }
+		}
+		add_expr(body, make_body_expr(let_body));
+	    }
+	    else {
+		/* Wrap the expression with a call to check-type */
+		args = make_argument_list();
+		add_argument(args, make_argument(bindings->expr));
+		add_argument(args,
+			     make_argument(make_varref(id(p->type_temp))));
+		expr = make_function_call(make_varref(id(check_type)), args);
+		bindings->expr = expr;
+		add_constituent(body, (struct constituent *)let);
+	    }
+	    *ptr = make_expr_constituent(make_body_expr(body));
 	}
 	else {
-	    /* Wrap the expression with a call to check-type */
-	    args = make_argument_list();
-	    add_argument(args, make_argument(bindings->expr));
-	    add_argument(args, make_argument(make_varref(id(p->type_temp))));
-	    expr = make_function_call(make_varref(id(check_type)), args);
-	    bindings->expr = expr;
-	    add_constituent(body, (struct constituent *)let);
+	    expand_bindings(bindings);
+	    expand_body(let->body, FALSE);
 	}
-	*ptr = make_expr_constituent(make_body_expr(body));
-    }
-    else {
-	expand_bindings(let->bindings);
-	expand_body(let->body, FALSE);
     }
 }
 
 static void expand_tlf_constituent(struct tlf_constituent **ptr,
 				   boolean top_level)
 {
-    expand_method((*ptr)->form);
+    expand_method_for_compile((*ptr)->form);
 }
 
 static void expand_error_constituent(struct constituent **ptr)
@@ -1305,18 +1426,47 @@ static void expand_block_expr(struct expr **ptr)
     struct block_expr *e = (struct block_expr *)*ptr;
     struct body *body = e->body;
 
-    if (e->inner)
-	body = make_handler_case(body, e->inner);
-    if (e->cleanup)
-	body = make_unwind_protect(body, e->cleanup);
-    if (e->outer)
-	body = make_handler_case(body, e->outer);
-    if (e->exit_fun)
-	body = make_catch(body, e->exit_fun);
+    if (ParseOnly) {
+	if (e->inner) {
+	    body = make_handler_case(body, e->inner);
+	    e->inner = NULL;
+	}
+	if (e->outer) {
+	    /* There can only be an outer if there is also a cleanup */
+	    struct block_epilog *epilog
+		= make_block_epilog(NULL, e->cleanup, NULL);
+	    struct expr *new = make_block(NULL, body, epilog);
 
-    *ptr = make_body_expr(body);
+	    e->cleanup = NULL;
+	    add_expr(body = make_body(), new);
+	    body = make_handler_case(body, e->outer);
+	    e->outer = NULL;
+	}
+	if (e->exit_fun || e->cleanup) {
+	    e->body = body;
+	    expand_body(e->body, FALSE);
+	    if (e->cleanup)
+		expand_body(e->cleanup, FALSE);
+	}
+	else {
+	    *ptr = make_body_expr(body);
+	    free(e);
+	}
+    }
+    else {
+	if (e->inner)
+	    body = make_handler_case(body, e->inner);
+	if (e->cleanup)
+	    body = make_unwind_protect(body, e->cleanup);
+	if (e->outer)
+	    body = make_handler_case(body, e->outer);
+	if (e->exit_fun)
+	    body = make_catch(body, e->exit_fun);
 
-    free(e);
+	*ptr = make_body_expr(body);
+
+	free(e);
+    }
 }
 
 
@@ -1920,8 +2070,10 @@ static void expand_method_expr(struct expr **ptr)
     struct method_expr *e = (struct method_expr *)*ptr;
     struct method *method = e->method;
 
-    if (method->specializers)
-	expand_method(method);
+    if (ParseOnly)
+	expand_method_for_parse(method);
+    else if (method->specializers)
+	expand_method_for_compile(method);
     else {
 	struct body *body = make_body();
 	add_method_wrap(body, method);
