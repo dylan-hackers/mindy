@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.39 1995/11/12 21:52:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.40 1995/11/14 15:45:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -744,20 +744,7 @@ define method generic-defn-discriminator (gf :: <generic-definition>)
     => res :: false-or(<ct-function>);
   if (gf.%generic-defn-discriminator == #"not-computed-yet")
     gf.%generic-defn-discriminator
-      := if (gf.generic-defn-sealed? & ~gf.function-defn-hairy?
-	       & gf.generic-defn-methods.size > 1
-	       & every?(method (meth)
-			  ~meth.function-defn-hairy?
-			    & every?(method (method-spec, gf-spec)
-				       method-spec == gf-spec
-					 | (instance?(method-spec, <cclass>)
-					      & method-spec.sealed?);
-				     end,
-				     meth.function-defn-signature.specializers,
-				     gf.function-defn-signature.specializers);
-			end,
-			gf.generic-defn-methods))
-	   
+      := if (discriminator-possible?(gf))
 	   let sig = gf.function-defn-signature;
 	   make(<ct-function>,
 		name: format-to-string("Discriminator for %s", gf.defn-name),
@@ -774,6 +761,33 @@ define method generic-defn-discriminator (gf :: <generic-definition>)
     gf.%generic-defn-discriminator;
   end;
 end;
+
+define method discriminator-possible? (gf :: <generic-definition>)
+    => res :: <boolean>;
+  if (gf.generic-defn-sealed? & ~gf.function-defn-hairy?
+	& gf.generic-defn-methods.size > 1)
+    block (return)
+      for (meth in gf.generic-defn-methods)
+	if (meth.function-defn-hairy?)
+	  return(#f);
+	end;
+	for (method-spec in meth.function-defn-signature.specializers,
+	     gf-spec in gf.function-defn-signature.specializers)
+	  unless (method-spec == gf-spec
+		    | (instance?(method-spec, <cclass>)
+			 & method-spec.sealed?
+			 & every?(method (subclass :: <cclass>)
+				    subclass.abstract? | subclass.unique-id;
+				  end,
+				  method-spec.subclasses)))
+	    return(#f);
+	  end;
+	end for;
+      end for;
+      #t;
+    end block;
+  end if;
+end method discriminator-possible?;
 
 define method make-discriminator
     (builder :: <fer-builder>, gf :: <generic-definition>) => ();

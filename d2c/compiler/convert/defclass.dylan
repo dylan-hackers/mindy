@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.37 1995/11/12 21:49:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.38 1995/11/14 15:45:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1836,10 +1836,14 @@ define method build-slot-posn-dispatch
     // place.
     thunk(positions.head.tail,
 	  init?-positions & init?-positions.head.tail);
-  elseif (cclass.sealed?)
-    // The slot shows up in more than one place, but the class is sealed so
-    // we can compute a direct mapping from instance.object-class.unique-id
-    // to offset.
+  elseif (cclass.sealed?
+	    & every?(method (subclass :: <cclass>)
+		       subclass.abstract? | subclass.unique-id;
+		     end,
+		     cclass.subclasses))
+    // The slot shows up in more than one place, but the class is sealed and
+    // all the concrete subclasses have unique-id's, so we can compute a
+    // direct mapping from instance.object-class.unique-id to offset.
     local
       method find-position-for (subclass, posns)
 	block (return)
