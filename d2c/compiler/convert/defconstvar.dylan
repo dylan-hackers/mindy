@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.14 1995/05/03 07:27:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.15 1995/05/05 08:49:51 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -253,14 +253,14 @@ define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
 	let tail = copy-sequence(res, start: tlf.tlf-required-defns.size);
 	if (every?(rcurry(instance?, <literal>), tail))
 	  tlf.tlf-rest-defn.defn-init-value
-	    := make(<literal-vector>, contents: tail);
+	    := make(<literal-simple-object-vector>, contents: tail);
 	else
 	  tlf.tlf-anything-non-constant? := #t;
 	  tlf.tlf-rest-defn.defn-init-value := #f;
 	end;
       else
 	tlf.tlf-rest-defn.defn-init-value
-	  := make(<literal-vector>, contents: #[]);
+	  := make(<literal-simple-object-vector>, contents: #[]);
       end;
     end;
   end;
