@@ -1,0 +1,47 @@
+$D2CFLAGS
+    = $d2c_runtime
+    . "-L../../../common/common-dylan ";
+
+$COPTS = "$gtk_cflags -I$srcdir";
+
+print "GOBJECT_TOOL = $buildroot/platform/gtk+/gobject-tool/gobject-tool\n\n";
+
+&emit_library_rule('glib', '$(BUILDROOT)/force.timestamp', '', 
+	           'compile', 'install');
+
+&emit_library_rule('gdk', 'glib.lib.du', '-L.',
+	           'compile', 'install');
+
+print "\$(SRCDIR)/gdk-internal-module.dylan: \$(SRCDIR)/gdk-1.2.defs\n";
+print "\t(cd \$(SRCDIR); \\\n";
+print "\t \$(GOBJECT_TOOL) $gtk_cflags --exports \\\n";
+print "\t\t--module gdk-internal \\\n";
+print "\t\t--use Dylan --use Melange-support \\\n";
+print "\t\t--use glib --use gdk-extra \\\n";
+print "\t\t\gdk-1.2.defs > gdk-internal-module.dylan)\n";
+print "\n";
+print "\$(SRCDIR)/gdk-internal.dylan: \$(SRCDIR)/gdk-1.2.defs\n";
+print "\t(cd \$(SRCDIR); \\\n";
+print "\t \$(GOBJECT_TOOL) $gtk_cflags \\\n";
+print "\t\t--module gdk-internal \\\n";
+print "\t\tgdk-1.2.defs > gdk-internal.dylan)\n";
+print "\n";
+
+&emit_library_rule('gtk', 'glib.lib.du gdk.lib.du', '-L.',
+	           'compile', 'install');
+
+print "\$(SRCDIR)/gtk-internal-module.dylan: \$(SRCDIR)/gtk-1.2.defs\n";
+print "\t(cd \$(SRCDIR); \\\n";
+print "\t \$(GOBJECT_TOOL) $gtk_cflags --exports \\\n";
+print "\t\t--module gtk-internal \\\n";
+print "\t\t--use Dylan --use Melange-support \\\n";
+print "\t\t--use glib --use gdk --use gtk-extra \\\n";
+print "\t\t\gtk-1.2.defs > gtk-internal-module.dylan)\n";
+print "\n";
+print "\$(SRCDIR)/gtk-internal.dylan: \$(SRCDIR)/gtk-1.2.defs\n";
+print "\t(cd \$(SRCDIR); \\\n";
+print "\t \$(GOBJECT_TOOL) $gtk_cflags \\\n";
+print "\t\t--module gtk-internal \\\n";
+print "\t\tgtk-1.2.defs > gtk-internal.dylan)\n";
+print "\n";
+
