@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.57 1996/02/09 00:02:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.58 1996/02/12 01:58:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -595,17 +595,38 @@ define method ct-add-method
     end;
     if (check-congruence(meth, gf))
       meth.method-defn-congruent? := #t;
-      meth.function-defn-transformers
-	:= choose(method (transformer)
-		    let specs = transformer.transformer-specializers;
-		    specs == #f | specs = meth-specs;
-		  end,
-		  gf.function-defn-transformers);
+      unless (empty?(gf.function-defn-transformers))
+	install-transformers(meth, gf.function-defn-transformers);
+      end unless;
     else
       meth.function-defn-hairy? := #t;
     end;
   end if;
 end method ct-add-method;
+
+define method install-transformers
+    (gf :: <generic-definition>, transformers :: <list>, #next next-method)
+    => ();
+  next-method();
+  for (meth in gf.generic-defn-methods)
+    install-transformers(meth, transformers);
+  end for;
+end method install-transformers;
+
+define method install-transformers
+    (meth :: <method-definition>, transformers :: <list>, #next next-method)
+    => ();
+  let meth-specs = meth.function-defn-signature.specializers;
+  let new-transformers
+    = choose(method (transformer)
+	       let specs = transformer.transformer-specializers;
+	       specs == #f | specs = meth-specs;
+	     end,
+	     transformers);
+  unless (empty?(new-transformers))
+    next-method(meth, new-transformers);
+  end unless;
+end method install-transformers;
 
 
 // CT-value
