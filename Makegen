@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.3 1998/12/24 08:59:57 emk Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.4 1999/01/17 02:21:43 emk Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -36,7 +36,6 @@
 ## Make force.timestamp if not there yet.
 push(@compile_commands, "\$(MAKE) force.timestamp");
 print <<'EOF'
-
 force.timestamp:
 	touch force.timestamp
 
@@ -74,18 +73,23 @@ push(@install_dependencies, "installdirs");
 if ($features{'compiled_for_unix'}) {
     print <<"EOF"
 installdirs:
-	$srcdir/mkinstalldirs $bindir $libdir $libdir/elisp $includedir \\
-	   $sysconfdir
+	$srcdir/mkinstalldirs \${DESTDIR}$bindir \\
+	   \${DESTDIR}$libdir \${DESTDIR}$libdir/elisp \\
+	   \${DESTDIR}$includedir \${DESTDIR}$sysconfdir \\
+           \${DESTDIR}$mandir/man1 \${DESTDIR}$mandir/man4 \\
+           \${DESTDIR}$mandir/man7
+
 EOF
 ;
 } elsif ($features{'compiled_for_win32'}) {
     print <<"EOF"
 installdirs:
-	-mkdir $bindir
-	-mkdir $libdir
-       	-mkdir $libdir\\elisp
-       	-mkdir $includedir
-	-mkdir $sysconfdir
+	-mkdir \${DESTDIR}$bindir
+	-mkdir \${DESTDIR}$libdir
+       	-mkdir \${DESTDIR}$libdir\\elisp
+       	-mkdir \${DESTDIR}$includedir
+	-mkdir \${DESTDIR}$sysconfdir
+
 EOF
 ;
 } else {
