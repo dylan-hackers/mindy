@@ -121,6 +121,7 @@ define constant $kControlEditTextTextTag :: <integer> = c-expr(int: "kControlEdi
 define constant $kControlListBoxListHandleTag :: <integer> = c-expr(int: "kControlListBoxListHandleTag");
 define constant $kControlEditTextValidationProcTag :: <integer> = c-expr(int: "kControlEditTextValidationProcTag");
 define constant $kControlEditTextKeyFilterTag :: <integer> = c-expr(int: "kControlEditTextKeyFilterTag");
+
 // etc.
 
 define constant $kControlSupportsEmbedding :: <integer> = c-expr(int: "kControlSupportsEmbedding");
@@ -147,6 +148,14 @@ define constant $kControlUseFontMask :: <integer> = c-expr(int: "kControlUseFont
 define constant $kControlUseJustMask :: <integer> = c-expr(int: "kControlUseJustMask");
 
 define constant $errDataBrowserPropertyNotSupported :: <integer> = c-expr(int: "errDataBrowserPropertyNotSupported");
+
+// Etc.
+
+define constant $kDataBrowserItemIsActiveProperty :: <integer> = c-expr(int: "kDataBrowserItemIsActiveProperty");
+define constant $kDataBrowserItemDoubleClicked :: <integer> = c-expr(int: "kDataBrowserItemDoubleClicked");
+define constant $kDataBrowserItemDeselected :: <integer> = c-expr(int: "kDataBrowserItemDeselected");
+define constant $kDataBrowserItemSelected :: <integer> = c-expr(int: "kDataBrowserItemSelected");
+
 
 /*
 	types
@@ -1366,7 +1375,21 @@ end class <DataBrowserItemDataRef>;
 define method SetDataBrowserItemDataText
 		(itemData :: <DataBrowserItemDataRef>, theData :: <CFStringRef>)
  => (status :: <OSStatus>)
- 	as(<OSStatus>, call-out("SetDataBrowserItemDataText", int:, ptr: itemData.raw-value, ptr: theData.raw-value))
+ 	as(<OSStatus>, call-out("SetDataBrowserItemDataText", int:, ptr: itemData.raw-value, ptr: theData.raw-value));
  end method SetDataBrowserItemDataText;
+
+define method SetDataBrowserHasScrollBars
+		(browser :: <ControlRef>, horiz :: <boolean>, vert :: <boolean>)
+ => (status :: <OSStatus>)
+	let horiz? = if(horiz) 1 else 0 end;
+	let vert? = if(vert) 1 else 0 end;
+		as(<OSStatus>, call-out("SetDataBrowserHasScrollBars", int:, ptr: browser.raw-value, int: horiz?, int: vert?));
+end method SetDataBrowserHasScrollBars;
+
+define method SetDataBrowserListViewHeaderBtnHeight
+		(browser :: <ControlRef>, height :: <integer>)
+ => (status :: <OSStatus>)
+		as(<OSStatus>, call-out("SetDataBrowserListViewHeaderBtnHeight", int:, ptr: browser.raw-value, int: height));
+end method SetDataBrowserListViewHeaderBtnHeight;
 
 // Tabs

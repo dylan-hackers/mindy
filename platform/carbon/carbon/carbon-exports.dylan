@@ -199,6 +199,8 @@ define module carbon
     $kControlContentTextOnly,
     $kDataBrowserOrderUndefined, $kDataBrowserOrderIncreasing, $kDataBrowserOrderDecreasing,
     $errDataBrowserPropertyNotSupported,
+    $kDataBrowserItemIsActiveProperty, $kDataBrowserItemDoubleClicked, $kDataBrowserItemDeselected,
+    $kDataBrowserItemSelected,
     /*$kControlTabDirectionNorth, $kControlTabDirectionSouth, $kControlTabDirectionEast, $kControlTabDirectionWest,
     $kControlTabSizeLarge, $kControlTabSizeSmall,*/
     <ControlHandle>, <ControlRef>,
@@ -260,7 +262,7 @@ define module carbon
     // XXX - No setters for these two. Get them, and set their fields
     btnFontStyle-value, btnContentInfo-value,
     <DataBrowserItemDataRef>,
-    SetDataBrowserItemDataText,
+    SetDataBrowserItemDataText, SetDataBrowserHasScrollBars, SetDataBrowserListViewHeaderBtnHeight,
     /*<ControlTabEntry*>,
     icon-value, icon-value-setter, name-value, name-value-setter, enabled-value, enabled-value-setter,
     CreateTabsControl, SetTabEnabled,*/
