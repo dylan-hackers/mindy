@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.97 1995/07/20 16:52:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.98 1995/08/08 02:22:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2267,6 +2267,12 @@ end;
 
 define method identify-tail-calls-in
     (component :: <component>, home :: <fer-function-region>,
+     results :: false-or(<dependency>), region :: <unwind-protect-region>)
+    => ();
+end;
+
+define method identify-tail-calls-in
+    (component :: <component>, home :: <fer-function-region>,
      results :: false-or(<dependency>), region :: <exit>)
     => ();
 end;
@@ -3865,6 +3871,11 @@ define method doesnt-return? (region :: <block-region>) => res :: <boolean>;
   else
     doesnt-return?(region.body);
   end;
+end;
+
+define method doesnt-return?
+    (region :: <unwind-protect-region>) => res :: <boolean>;
+  region.body.doesnt-return?;
 end;
 
 define method doesnt-return? (region :: <exit>) => res :: <boolean>;
