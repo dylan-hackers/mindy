@@ -1,5 +1,5 @@
 module: extern
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.3 1995/03/27 22:31:47 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/extern.dylan,v 1.4 1995/07/05 23:12:04 rgs Exp $
 
 //======================================================================
 //
@@ -216,6 +216,12 @@ define method \<
   strcmp(str1, str2) < 0;
 end method \<;
 
+define method \=
+    (str1 :: <c-string>, str2 :: <c-string>)
+ => result :: <object>;
+  strcmp(str1, str2) == 0;
+end method \=;
+
 define method size (string :: <c-string>)
  => result :: <integer>;
   strlen(string);
@@ -254,31 +260,44 @@ define method import-value (cls == <boolean>, value :: <integer>)
   value ~= 0;
 end method import-value;
 
-// Normal statically typed pointers can be regarded as vectors of length 1.
-// However, C sometimes allows you to access more than the first element, so
-// we do no bounds checking.
+//------------------------------------------------------------------------
+
+// <c-vector> can correspond to either true C vectors or to C pointers which
+// are treated as vectors.  In the latter case, we won't know the size, so we
+// will define it as "#f" (just like infinite lists have) and make sure that
+// the iteration protocol can handle this.
+//
+// C vector types are automatically made members of <c-vector> by Melange.
+// Pointer types will have to explicitly declare membership via a
+// "superclasses:" option.
+//
+define class <c-vector> (<vector>, <statically-typed-pointer>) end class;
+
+// C does not do bounds checking on vectors, and many of the interface files
+// make use of this weakngess.  Therefore, we do no bounds checking either.
+// Caveat emptor.
 //
 define method element
-    (vec :: <statically-typed-pointer>, index :: <integer>, #key default)
+    (vec :: <c-vector>, index :: <integer>, #key default)
  => (result :: <object>);
   pointer-value(vec, index: index);
 end method element;
 
-// For "normal" ponters, the size is wired in as "1".  However, subtypes can
-// redefine this to higher values and the iteration protocol will still work.
+// For "normal" ponters, the size is "#f", indicating that the size is unknown
+// and potentially infinite.  However, subtypes can redefine this to higher
+// values and the iteration protocol will still work.
 //
-define method size
-    (vec :: <statically-typed-pointer>) => (result :: <integer>);
-  1;
+define method size (vec :: <c-vector>) => (result :: <false>);
+  #f;
 end method size;
 
 // Straightforward vector FIP.  We duplicate it here to avoid problems with
 // possible recursive definitions of element.
 //
-define method forward-iteration-protocol (vec :: <statically-typed-pointer>);
+define method forward-iteration-protocol (vec :: <c-vector>);
   values(0, vec.size,
 	 method (c, s) s + 1 end,	// next-state
-	 method (c, s, l) s >= l end, // finished-state?
+	 method (c, s, l) s == l end, // finished-state?
 	 method (c, s) s end,	// current-key
 	 method (c, s) pointer-value(c, index: s) end, // current-element
 	 method (v, c, s) pointer-value(c, index: s) := v end, // ""-setter
