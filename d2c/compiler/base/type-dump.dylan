@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.9 2002/01/04 15:56:56 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.10 2002/03/24 20:00:29 gabor Exp $
 copyright: see below
 
 
@@ -187,9 +187,6 @@ define constant $class-dump-slots =
          general-speed-representation-setter,
        general-space-representation, general-space-representation:,
          general-space-representation-setter,
-	 /* ### -- currently recomputed, so we don't really need to dump it.
-	 , each-subclass-slots-count, each-subclass-slots-count:, #f
-	 */
        class-metaclass, metaclass:, #f);
 
 
