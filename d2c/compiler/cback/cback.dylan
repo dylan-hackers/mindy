@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.70 1995/08/31 01:28:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.71 1995/10/12 13:34:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1484,15 +1484,17 @@ define method emit-assignment
 	 then param.definer-next,
        closure-var = function.environment.closure-vars
 	 then closure-var.closure-next,
+       index from 0,
        while: closure-var & param)
   finally
     let stream = output-info.output-info-guts-stream;
     for (param = param then param.definer-next,
 	 arg-dep = call.depends-on then arg-dep.dependent-next,
+	 index from index,
 	 while: arg-dep & param)
       let (name, rep) = c-name-and-rep(param, output-info);
-      format(stream, "%s = %s;\n",
-	     name, ref-leaf(rep, arg-dep.source-exp, output-info));
+      format(stream, "A%d = %s;\n",
+	     index, ref-leaf(rep, arg-dep.source-exp, output-info));
     finally
       if (arg-dep | param)
 	error("Wrong number of operands in a self-tail-call?");
