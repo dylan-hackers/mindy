@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.5 1995/05/12 12:35:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.6 1995/05/24 19:30:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -194,10 +194,20 @@ define method print-object (lit :: <literal-ratio>, stream :: <stream>) => ();
   format(stream, "{literal ratio %=}", lit.literal-value);
 end;
 
+define method print-message (lit :: <literal-ratio>, stream :: <stream>)
+    => ();
+  format(stream, "%=", as(<ratio>, lit.literal-value));
+end;
+
 define method print-object (lit :: <literal-single-float>, stream :: <stream>)
     => ();
   format(stream, "{literal single-float %=}",
 	 as(<single-float>, lit.literal-value));
+end;
+
+define method print-message (lit :: <literal-single-float>, stream :: <stream>)
+    => ();
+  format(stream, "%=", as(<single-float>, lit.literal-value));
 end;
 
 define method print-object (lit :: <literal-double-float>, stream :: <stream>)
@@ -206,11 +216,22 @@ define method print-object (lit :: <literal-double-float>, stream :: <stream>)
 	 as(<double-float>, lit.literal-value));
 end;
 
+define method print-message (lit :: <literal-double-float>, stream :: <stream>)
+    => ();
+  format(stream, "%=", as(<double-float>, lit.literal-value));
+end;
+
 define method print-object (lit :: <literal-extended-float>,
 			    stream :: <stream>)
     => ();
   format(stream, "{literal extended-float %=}",
 	 as(<extended-float>, lit.literal-value));
+end;
+
+define method print-message
+    (lit :: <literal-extended-float>, stream :: <stream>)
+    => ();
+  format(stream, "%=", as(<extended-float>, lit.literal-value));
 end;
 
 define method as (class == <ct-value>, value :: <fixed-integer>)
