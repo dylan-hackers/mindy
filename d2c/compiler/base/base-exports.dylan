@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.35 1996/03/27 23:51:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.36 1996/04/06 06:48:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -92,6 +92,7 @@ define module utils
   // Stuff defined in utils
   export
     write-class-name, write-address, pprint-fields,
+    current-column, fresh-line,
     integer-to-english, ordinal-suffix,
     find-in, size-in,
     dformat, assert,
@@ -364,9 +365,12 @@ define module errors
   use tokens;
   export
     <compiler-condition>, condition-at,
-    <compiler-warning>, <compiler-error>,
-    compiler-warning, *warnings*, compiler-error,
-    compiler-warning-location, compiler-error-location,
+    <compiler-warning>, <compiler-error>, *break-on-compiler-errors*,
+    <fatal-error-recovery-restart>,
+    note-context, end-of-context,
+    compiler-warning, compiler-warning-location, *warnings*,
+    compiler-error, compiler-error-location, *errors*,
+    compiler-fatal-error, compiler-fatal-error-location,
     extract-source;
 end module;
 
