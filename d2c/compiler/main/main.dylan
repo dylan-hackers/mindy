@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.69 2002/08/26 01:36:01 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.70 2002/08/26 23:50:43 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -202,6 +202,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   no-core-dumps();
   #endif
 
+  #if (~mindy)
   // alter the GC params, if the user wants
   // This supports three levels:
   //   - small  : small initial heap, frequent GC
@@ -217,6 +218,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   if (getenv("D2C_BIG_MACHINE"))
     c-expr(void: "GC_free_space_divisor = 2");
   end;
+  #endif
 
   *random-state* := make(<random-state>, seed: 0);
   define-bootstrap-module();
