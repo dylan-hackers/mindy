@@ -18,7 +18,7 @@ Description: The Gwydion Dylan Runtime Environment
  contain the Gwydion Dylan Listener, which will allow interactive
  exploration of the language.
  .
- For more infomration, see the Gwydion Dylan maintainers' web page at
+ For more information, see the Gwydion Dylan maintainers' web page at
  <http://www.gwydiondylan.org/>.
 
 Package: gwydion-dylan-dev

@@ -1,3 +1,23 @@
+gwydion-dylan (2.3.8pre1-1) unstable; urgency=low
+
+  * Latest upstream.
+  * Corrections for various PR#'s (see http://www.gwydiondylan.org for
+    more details.)
+  * Correct spelling error (Closes:Bug#124716).
+  * Applied semi-fix for PowerPC (Ref:  Bug#135084).  Leaving bug open until
+    we have a real solution.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Tue, 26 Feb 2002 20:27:17 -0800
+
+gwydion-dylan (2.3.6release-1) unstable; urgency=low
+
+  * Inlined functions now work.
+  * Bignum optimizations.
+  * Profiling with gprof now works.
+  * Upstream release of 2.3.6 version.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sat, 29 Dec 2001 19:30:05 -0800
+
 gwydion-dylan (2.3.6pre2cvs11102001-1) unstable; urgency=low
 
   * Upstream changes
