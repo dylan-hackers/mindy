@@ -8,10 +8,7 @@ MINDY = mindy
 %.dbc: %.dylan
 	$(MC) ${MINDYFLAGS} -lcompiler-base -o $@ $<
 
-# Autodump divides object files into two types: Normal ones, and 
-# ones derived from autodumped Dylan code.
-#
-NORMAL_OBJS = \
+OBJS = \
 	base-exports.dbc \
 	params.dbc \
 	utils.dbc \
@@ -39,30 +36,13 @@ NORMAL_OBJS = \
 	expand.dbc \
 	data-flow.dbc \
 	control-flow.dbc \
-	signature.dbc \
-	autodump.dbc 
-
-AUTODUMPED_OBJS = parse-dump.dbc token-dump.dbc
-
-OBJS = ${NORMAL_OBJS} ${AUTODUMPED_OBJS}
-
+	signature.dbc
 
 baselib.dbc: ${OBJS}
-	cat $^ > $@
-
-parse-dump.dylan: parse-tree.dylan autodump.dylan
-	${MAKE} autodumper.dbc
-	${MINDY} -f autodumper.dbc -autodump parse-tree
-
-token-dump.dylan: tokens.dylan autodump.dylan
-	${MAKE} autodumper.dbc
-	${MINDY} -f autodumper.dbc -autodump tokens
-
-autodumper.dbc: ${NORMAL_OBJS}
 	cat $^ > $@
 
 EOF
 
 push(@compile_dependencies, 'baselib.dbc');
 
-push(@files_to_clean, '*.dbc', 'parse-dump.dylan', 'token-dump.dylan');
+push(@files_to_clean, '*.dbc');
