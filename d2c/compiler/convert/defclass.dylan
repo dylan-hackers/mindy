@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.19 2001/06/18 23:51:28 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.20 2001/06/20 02:05:36 housel Exp $
 copyright: see below
 
 
@@ -3224,10 +3224,7 @@ define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
 	if (sealed? & setter.method-defn-of.defn-library ~== defn.defn-library)
 	  dump-simple-object
 	    (#"sealed-domain", state, setter.method-defn-of, defn.defn-library,
-	     // We don't use the setter specializers, because the first
-	     // specializer will be the slot type, not <object>.
-	     pair(object-ctype(),
-		  getter.function-defn-signature.specializers));
+             setter.function-defn-signature.specializers);
 	end if;
       end if;
     end unless;
