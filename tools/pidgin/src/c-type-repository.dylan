@@ -173,3 +173,21 @@ define function do-c-type-repository-entries
     function(item);
   end;
 end;
+
+//=========================================================================
+//  Retreiving types by name
+//=========================================================================
+//
+define method c-tagged-type
+    (repository :: <c-type-repository>, name :: <string>)
+ => (type :: false-or(<c-tagged-type>));
+  element(repository.c-struct-types, name, default: #f)
+    | element(repository.c-union-types, name, default: #f)
+    | element(repository.c-enum-types, name, default: #f);
+end method;
+
+define method c-named-type
+    (repository :: <c-type-repository>, name :: <string>)
+ => (type :: false-or(<c-type>));
+  element(repository.c-typedef-types, name, default: #f);
+end method;

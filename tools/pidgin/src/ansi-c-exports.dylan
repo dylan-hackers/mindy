@@ -106,7 +106,9 @@ define module c-types
   // From c-type-repository.dylan
   export
     <c-type-repository>,
-    do-c-type-repository-entries;
+    do-c-type-repository-entries,
+    c-tagged-type,
+    c-named-type;
 end module;
 
 define module c-declarations
