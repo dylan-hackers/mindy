@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.22 1995/03/12 16:42:02 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.23 1995/04/02 14:43:51 wlott Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -296,6 +296,10 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 	    dup(outpipes[1]);
 	    close(outpipes[0]);
 	    close(outpipes[1]);
+
+	    /* Put the child in its own session so that signals don't hit it */
+	    setsid();
+	    
 	    execvp(args[0], args);
 	    /* We never get here.... */
 	}
