@@ -1,4 +1,4 @@
-module: new-Random
+module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
 // A replacement for David Pierce's Random library.  This one is
