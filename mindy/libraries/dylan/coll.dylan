@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.23 1994/11/06 20:09:37 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.24 1994/12/14 20:18:44 rgs Exp $
 
 //======================================================================
 //
@@ -183,7 +183,7 @@ define method map-as(cls :: <class>, proc :: <function>,
         = forward-iteration-protocol(coll);
       for (state = init then next(coll, state),
 	   until done?(coll, state, limit))
-	result[curkey(coll, state)] := curelt(coll, state);
+	result[curkey(coll, state)] := proc(curelt(coll, state));
       end for;
       result;
     otherwise => 
