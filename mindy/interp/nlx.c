@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.1 1994/03/24 21:49:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/nlx.c,v 1.2 1994/03/25 04:30:42 wlott Exp $
 *
 * This file does whatever.
 *
@@ -233,6 +233,7 @@ static int scav_catch(struct object *o)
     struct catch_block *catch = (struct catch_block *)o;
 
     scavenge(&catch->prev_catch);
+    scavenge(&catch->handlers);
 
     return sizeof(struct catch_block);
 }
