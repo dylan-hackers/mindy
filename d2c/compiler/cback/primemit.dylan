@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.8 1995/08/07 12:17:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.9 1995/08/23 20:33:01 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -487,6 +487,17 @@ define-primitive-emitter
 						  $heap-rep));
      deliver-result(defines, expr, $boolean-rep, #f, output-info);
    end);
+
+define-primitive-emitter
+  (#"initial-symbols",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     extract-operands(operation, output-info);
+     deliver-result(defines, "initial_symbols", $heap-rep, #f, output-info);
+   end);
+   
 
 
 // NLX primitives.

@@ -203,6 +203,9 @@ define-primitive
 define-primitive
   (#"==", #(#"<object>", #"<object>"), #"<boolean>", pure: #t);
 
+define-primitive
+  (#"initial-symbols", #(), #(union:, #"<symbol>", #"<false>"), pure: #t);
+
 
 // NLX operations.
 
