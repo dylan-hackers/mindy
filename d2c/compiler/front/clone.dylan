@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.7 2003/02/01 16:56:55 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.8 2003/02/03 12:38:31 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -56,8 +56,9 @@ end;
 // clone-function -- exported.
 //
 define method clone-function
-    (component :: <fer-component>, function :: <function-literal>,
-     #key location-transformer :: <function> = method(loc, #rest ignore) loc end)
+    (component :: <fer-component>,
+     function :: <function-literal>,
+     location-transformer :: <function>)
     => clone :: <function-literal>;
   let state = make(<clone-state>,
 		   builder: make-builder(component),
