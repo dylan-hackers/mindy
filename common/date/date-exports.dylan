@@ -10,9 +10,10 @@ author: Douglas M. Auclair, dauclair@hotmail.com
 
 define library date
   use dylan;
+  use collection-extensions;
+  use string-extensions;
   use streams;
   use time;
-  use string-extensions;
 
   export date;
 end library;
@@ -94,6 +95,7 @@ define module extracting
   use dates-and-times;
   use time-io;
   use streams;
+  use sequence-utilities;
 
   use date;
 end module extracting;

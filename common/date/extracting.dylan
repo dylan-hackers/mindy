@@ -52,16 +52,23 @@ define function date-time-zone-offset(d :: <date>) => (tzo :: <timezone>)
   floor/(false-to-0(d.time.timezone), 60);
 end function date-time-zone-offset;
 
-// for now I ignore precision and the time zone.
-define function as-iso8601-string(d :: <date>,
-				  #key precision) => (ans :: <string>)
-  let ans = make(<byte-string>, size: 256);
-  let stream = make(<byte-string-stream>, contents: ans);
-  format-time(stream, "%Y%m%dT%H%M%SZ", d.time);
-  ans;
+define function as-iso8601-string(d :: <date>, #key precision :: <integer> = 0)
+ => (ans :: <string>)
+  // let ans = make(<byte-string>, size: 256);
+  let stream = make(<byte-string-stream>, direction: #"input-output");
+  format-time(stream, "%Y%m%dT%H%M%S", d.time);
+  if(precision > 0)
+    let zero = as(<integer>, '0');
+    write-element(stream, '.');
+    do(method(digit) write-element(stream, as(<character>, digit + zero)) end,
+       tabulate(min(precision, 6),
+ 	        method(idx) modulo(floor/(d.microseconds, 6 - idx), 10) end));
+  end if;
+  write-element(stream, 'Z'); // ignoring time zone for now
+  stream.stream-contents;
 end function as-iso8601-string;
 
-// Strangely enough, the 0th element is #"Monday" ... this comes from
-// the Time library.
+// Strangely enough, the 0th element is #"Monday" (not Sunday)
+// ... this comes from the Time library.
 define variable *day* = vector(#"Monday", #"Tuesday", #"Wednesday",
 			       #"Thursday", #"Friday", #"Saturday", #"Sunday");
