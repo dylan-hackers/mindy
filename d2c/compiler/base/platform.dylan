@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.6 1999/04/11 05:21:53 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.7 1999/07/16 16:30:46 housel Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -89,23 +89,6 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot long-double-size :: <integer>,
     required-init-keyword: #"long-double-size";
 
-  constant /* exported */ slot heap-preamble :: <byte-string>,
-    required-init-keyword: #"heap-preamble";
-  constant /* exported */ slot align-directive :: <byte-string>, 
-    required-init-keyword: #"align-directive";
-  constant /* exported */ slot export-directive :: <byte-string>,
-    required-init-keyword: #"export-directive";
-  constant /* exported */ slot word-directive :: <byte-string>,
-    required-init-keyword: #"word-directive";
-  constant /* exported */ slot half-word-directive :: <byte-string>,
-    required-init-keyword: #"half-word-directive";
-  constant /* exported */ slot byte-directive :: <byte-string>, 
-    required-init-keyword: #"byte-directive";
-  constant /* exported */ slot comment-token :: <byte-string>,
-    required-init-keyword: #"comment-token";
-  constant /* exported */ slot mangled-name-prefix :: <byte-string>,
-    required-init-keyword: #"mangled-name-prefix";
-
   constant /* exported */ slot object-filename-suffix :: <byte-string>,
     required-init-keyword: #"object-filename-suffix";
   constant /* exported */ slot library-filename-prefix :: <byte-string>,
@@ -168,40 +151,33 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot shared-library-filename-suffix
       :: false-or(<byte-string>) = #f,
     init-keyword: #"shared-library-filename-suffix";
+  constant /* exported */ slot shared-object-filename-suffix
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"shared-object-filename-suffix";
   constant /* exported */ slot randomize-library-command
       :: false-or(<byte-string>) = #f,
     init-keyword: #"randomize-library-command";
+  constant /* exported */ slot libtool-command
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"libtool-command";
+  
 
   // if this is defined, we can build shared libraries
   constant /* exported */ slot link-shared-library-command
       :: false-or(<byte-string>) = #f,
     init-keyword: #"link-shared-library-command";
+  constant /* exported */ slot link-shared-executable-command
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"link-shared-executable-command";
+  constant /* exported */ slot compile-c-for-shared-command
+      :: false-or(<byte-string>),
+    init-keyword: #"compile-c-for-shared-command";
+
   // The remaining slots are really just a way for the compiler to
   // know when it needs to do black magic, but without knowing the
   // platform's name.
   constant /* exported */ slot link-doesnt-search-for-libs? :: <boolean> = #f,
     init-keyword: #"link-doesnt-search-for-libs?";
-  constant /* exported */ slot import-directive-required? :: <boolean> = #f,
-    init-keyword: #"import-directive-required?";
-  // perhaps this next one should be supports-stabs...
-  constant /* exported */ slot supports-debugging? :: <boolean> = #f,
-    init-keyword: #"supports-debugging?";
-
-  // used for debugging
-  constant /* exported */ slot descriptor-type-string :: <byte-string>,
-    required-init-keyword: #"descriptor-type-string";
-  constant /* exported */ slot descriptor-reference-string :: <byte-string>,
-    init-keyword: #"descriptor-reference-string";
-  constant /* exported */ slot object-size-string :: false-or(<byte-string>)
-      = #f,
-    init-keyword: #"object-size-string";
-
-  constant /* exported */ slot omit-colon-after-label-declarations? 
-      :: <boolean> = #f,
-    init-keyword: #"omit-colon-after-label-declarations?";
-  constant /* exported */ slot align-arg-is-power-of-two? :: <boolean> = #f,
-    init-keyword: #"align-arg-is-power-of-two?";
-
 end class <platform>;
 
 define sealed domain make(singleton(<platform>));
@@ -219,26 +195,22 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"single-size"] := #t;
 *valid-properties*[#"double-size"] := #t;
 *valid-properties*[#"long-double-size"] := #t;
-*valid-properties*[#"heap-preamble"] := #t;
-*valid-properties*[#"align-directive"] := #t;
-*valid-properties*[#"export-directive"] := #t;
-*valid-properties*[#"word-directive"] := #t;
-*valid-properties*[#"half-word-directive"] := #t;
-*valid-properties*[#"byte-directive"] := #t;
-*valid-properties*[#"comment-token"] := #t;
-*valid-properties*[#"mangled-name-prefix"] := #t;
 *valid-properties*[#"object-filename-suffix"] := #t;
+*valid-properties*[#"shared-object-filename-suffix"] := #f;
 *valid-properties*[#"library-filename-prefix"] := #t;
 *valid-properties*[#"library-filename-suffix"] := #t;
 *valid-properties*[#"executable-filename-suffix"] := #t;
 *valid-properties*[#"compile-c-command"] := #t;
+*valid-properties*[#"compile-c-for-shared-command"] := #f;
 *valid-properties*[#"default-c-compiler-flags"] := #t;
 *valid-properties*[#"default-c-compiler-debug-flags"] := #t;
 *valid-properties*[#"assembler-command"] := #t;
 *valid-properties*[#"link-library-command"] := #t;
 *valid-properties*[#"link-executable-command"] := #t;
+*valid-properties*[#"link-shared-executable-command"] := #f;
 *valid-properties*[#"link-executable-flags"] := #t;
 *valid-properties*[#"make-command"] := #t;
+*valid-properties*[#"libtool-command"] := #f;
 *valid-properties*[#"delete-file-command"] := #t;
 *valid-properties*[#"compare-file-command"] := #t;
 *valid-properties*[#"move-file-command"] := #t;
@@ -255,13 +227,6 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"randomize-library-command"] := #f;
 *valid-properties*[#"link-shared-library-command"] := #f;
 *valid-properties*[#"link-doesnt-search-for-libs?"] := #f;
-*valid-properties*[#"import-directive-required?"] := #f;
-*valid-properties*[#"supports-debugging?"] := #f;
-*valid-properties*[#"descriptor-type-string"] := #t;
-*valid-properties*[#"descriptor-reference-string"] := #f;
-*valid-properties*[#"object-size-string"] := #f;
-*valid-properties*[#"omit-colon-after-label-declarations?"] := #f;
-*valid-properties*[#"align-arg-is-power-of-two?"] := #f;
 
 // Contains a table of tables, keyed by platform-name, each of which contains a
 // table of values keyed by property name.
@@ -399,9 +364,7 @@ define function add-platform! (header :: <header>)
 	#"make-supports-phony-targets?", #"makefiles-can-rebuild-themselves?",
 	#"uses-drive-letters?", #"environment-variables-can-be-exported?",
 	#"use-dbclink?", #"link-doesnt-search-for-libs?",
-	#"import-directive-required?", #"supports-debugging?",
-	#"big-endian?", #"omit-colon-after-label-declarations?",
-	#"align-arg-is-power-of-two?"  =>
+	#"big-endian?" =>
 	  local-platform-info[key] := string-to-boolean(val);
 	#"integer-length", #"integer-size", #"long-size", #"pointer-size", 
 	#"single-size", #"double-size", #"long-double-size", #"short-size" =>

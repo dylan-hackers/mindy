@@ -34,13 +34,22 @@ $enable_bootstrap = "@enable_bootstrap@" eq "yes";
 $bootstrap_compiler = "@bootstrap_compiler@";
 $enable_mindy_bootstrap = $enable_bootstrap && $bootstrap_compiler eq "mindy";
 $recheck = "@recheck@";
+$shared = "@shared@" eq "yes";
+$static = "@static@" eq "yes";
 $INSTALL = "@INSTALL@";
+$LIBTOOL = "@LIBTOOL@";
 
 # INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
 # particular, INSTALL_PROGRAM doesn't force executability.
 $install_data = "@INSTALL@";
-$install_program = "@INSTALL@ -m oug+rx";
-
+if ($shared) {
+    $install_program = "@LIBTOOL@ @INSTALL@ -m oug+rx";
+    $install_library = "@LIBTOOL@ @INSTALL@";
+} else {
+    $install_program = "@INSTALL@ -m oug+rx";
+    $install_library = "@INSTALL@";
+}
+    
 if ($cross_compiling) {
   # Use cross-compilation flags if necessary.
   $D2C = "@D2C@ -T$target_name -no-binaries";

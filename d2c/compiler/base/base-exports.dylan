@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.12 1999/05/24 17:00:43 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.13 1999/07/16 16:30:46 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -437,29 +437,24 @@ define module platform
     double-size,
     long-double-size,
 
-    heap-preamble,
-    align-directive,
-    export-directive,
-    word-directive,
-    half-word-directive,
-    byte-directive,
-    comment-token,
-    mangled-name-prefix,
-
     object-filename-suffix,
     library-filename-prefix,
     library-filename-suffix,
     shared-library-filename-suffix,
+    shared-object-filename-suffix,
     executable-filename-suffix,
 
     compile-c-command,
+    compile-c-for-shared-command,
     default-c-compiler-flags,
     default-c-compiler-debug-flags,
     assembler-command,
     link-library-command,
     randomize-library-command,
+    libtool-command,
     link-shared-library-command,
     link-executable-command,
+    link-shared-executable-command,
     link-executable-flags,
     make-command,
     delete-file-command,
@@ -468,15 +463,8 @@ define module platform
     path-separator,
 
     link-doesnt-search-for-libs?,
-    import-directive-required?,
-    supports-debugging?,
-    descriptor-type-string,
-    descriptor-reference-string,
-    object-size-string,
 
-    big-endian?,
-    omit-colon-after-label-declarations?,
-    align-arg-is-power-of-two?;
+    big-endian?;
 end module platform;
 
 

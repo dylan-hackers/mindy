@@ -1,7 +1,8 @@
-rcs-header: $Header: /scm/cvs/src/tools/melange/freebsd-c-decl.lid,v 1.2 1998/09/25 00:11:02 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/freebsd-c-decl.lid,v 1.3 1999/07/16 16:30:53 housel Exp $
 library: melange-c
 unit-prefix: cdecl
 unique-id-base: 10000
+shared-library: no
 
 c-exports.dylan
 source-location.dylan

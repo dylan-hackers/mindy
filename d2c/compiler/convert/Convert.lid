@@ -1,7 +1,8 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/Convert.lid,v 1.1 1998/05/03 19:55:36 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/Convert.lid,v 1.2 1999/07/16 16:30:49 housel Exp $
 library: compiler-convert
 unit-prefix: convert
 unique-id-base: 11000
+shared-library: no
 
 convert-exports.dylan
 lexenv.dylan

@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.7 1999/03/21 04:40:13 emk Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.8 1999/07/16 16:30:53 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -96,6 +96,10 @@
 #         $destdir/etc.
 #     $gen_makefile
 #	  Where to run gen-makefile from for calls from makefiles.
+#     $shared
+#	  True if shared libraries will be built.
+#     $static
+#	  True if static libraries will be built.
 #
 # In addition, the d2c Makegens use the following variables:
 #
@@ -194,6 +198,7 @@ sub set_default_defaults {
     $gen_makefile = 'gen-makefile';
     $install_data = "cp";
     $install_program = "install";
+    $install_library = "install";
 }
 
 # find_Defaults_file() -- internal
@@ -258,6 +263,16 @@ sub read_Defaults_file {
     # preferred one.
     ($dot_lib) = split(/\s+/, $target_platform{'library_filename_suffix'});
     $lib_prefix = $target_platform{'library_filename_prefix'};
+
+    unless($target_platform{'link_shared_library_command'} ne '') {
+	$shared = 0;
+    }
+
+    if ($shared) {
+	$dot_obj = $target_platform{'shared_object_filename_suffix'};
+	($dot_lib) = split(/\s+/,
+			   $target_platform{'shared_library_filename_suffix'});
+    }
 
     # Check to see if buildroot changed to something else.
     unless ($buildroot eq $orig_buildroot) {
@@ -340,6 +355,7 @@ sub do_Makegen_file {
     print "SRCDIR=$srcdir\n";
     print 'VPATH=$(SRCDIR)' . "\n";
     print "BUILDROOT=$buildroot\n";
+    print "top_builddir=$buildroot\n";
     print "BUILDDIR=$builddir\n";
     print "DESTDIR=\n"; # GNU DESTDIR, not the $destdir variable.
     if ($host_platform{'make_supports_phony_targets?'}) {
@@ -487,13 +503,17 @@ MINDY = $MINDY
 EOF
         if ($host_platform{'environment_variables_can_be_exported?'}) {
 	    print "export CCFLAGS = \$(CFLAGS) \$(CPPFLAGS)\n\n";
+	    if ($LIBTOOL) {
+		print "export LIBTOOL = $LIBTOOL\n\n";
+	    }
 	    if ($DYLANPATH) {
 		print "export DYLANPATH = $DYLANPATH\n\n";
 	    };
 	    if ($DYLANDIR) {
 		print "export DYLANDIR = $DYLANDIR\n\n";
 	    }
-
+	} else {
+	    print "LIBTOOL = $LIBTOOL\n\n";
 	}
 	$d2c_defines = 1;
     }
@@ -719,6 +739,7 @@ sub emit_library_rule {
     local($unit_prefix) = $lidfile{'unit_prefix'} || "$library";
     local($executable) = $lidfile{'executable'};
     local($executable_filename) = $executable . $dot_exe;
+    local($shared_library) = $shared && ($lidfile{'shared_library'} ne 'no');
 
     local($d2c_target);
 
@@ -732,10 +753,10 @@ sub emit_library_rule {
 	push(@files_to_clean,
 	     "$unit_prefix-init.c", "$unit_prefix-init$dot_obj");
 	push(@files_to_clean,
-	     "$unit_prefix-heap.s", "$unit_prefix-heap$dot_obj");
+	     "$unit_prefix-heap.c", "$unit_prefix-heap$dot_obj");
 
 	if ($executable) {
-	    push(@files_to_clean, $executable_filename, 'heap.s', 'inits.c');
+	    push(@files_to_clean, $executable_filename, 'heap.c', 'inits.c');
 
 	    if (grep(/^compile$/, @keywords)) {
 		push(@compile_dependencies, $executable_filename);
@@ -755,8 +776,10 @@ sub emit_library_rule {
 	    
 	    if (grep(/^compile$/, @keywords)) {
 		push(@compile_dependencies, $foo_lib_du);
-		grep(/^install$/, @keywords)
-		    && do install($libdir, $foo_lib_du, $libfoo_a);
+		if (grep(/^install$/, @keywords)) {
+		    do install($libdir, $foo_lib_du);
+		    do install_library($libdir, $libfoo_a, $shared_library);
+		}
 	    }
 	    
 	    $d2c_target = $foo_lib_du;
@@ -765,8 +788,21 @@ sub emit_library_rule {
 
     if (! grep(/^no-d2c$/, @keywords) && $enable_d2c) {
 	print "$d2c_target: $srcdir/$lidfilename.lid $extradeps\n";
-	print "\t\$(D2C) -M \$(D2CFLAGS) $extraflags ",
-	    "$srcdir/$lidfilename.lid\n";
+	if ($shared_library) {
+	    print "\t\$(D2C) -M \$(D2CFLAGS) --rpath=$libdir $extraflags ",
+	    	"$srcdir/$lidfilename.lid\n";
+	    if ($static && !$executable) {
+		local ($dot_lib)
+		    = split(/\s+/,
+			    $target_platform{'library_filename_suffix'});
+		print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
+		print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
+		    " $lib_prefix$unit_prefix$dot_lib\n";
+	    }
+	} else {
+	    print "\t\$(D2C) -M \$(D2CFLAGS) --static $extraflags ",
+	    	"$srcdir/$lidfilename.lid\n";
+	}
 	local ($make_name) = $host_platform{'make_command'};
 	local($cc_files_cmd) = "$make_name -f cc-" . $unit_prefix
 	    . "-files.mak";
@@ -814,8 +850,71 @@ sub emit_c_file_rule {
     foreach $header (@headers) {
 	print " \$(SRCDIR)/$header";
     }
-    print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR) ";
-    print "-c \$(SRCDIR)/$basefile.c -o $objfile\n\n";
+    if ($shared) {
+	print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+    } else {
+	print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+    }
+    print " -c \$(SRCDIR)/$basefile.c -o $objfile\n\n";
+    if ($target_name eq $host_name) {
+      push(@compile_dependencies, $objfile);
+    } else {
+      push(@cc_files_dependencies, $objfile);
+    };
+
+    push(@files_to_clean, $objfile);
+}
+
+#
+# Emit the rule to compile an assembly file into an object file.  Dependencies
+# will be the source file and all @header_files.
+#
+sub emit_asm_file_rule {
+    local ($basefile, $srcfile, @headers) = @_;
+    local ($objfile) = "$basefile$dot_obj";
+
+    do maybe_emit_d2c_defines();
+
+    print "$objfile: \$(SRCDIR)/$srcfile.s";
+    foreach $header (@headers) {
+	print " \$(SRCDIR)/$header";
+    }
+    if ($shared) {
+	print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+    } else {
+	print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+    }
+    print " -c \$(SRCDIR)/$srcfile.s -o $objfile\n\n";
+    if ($target_name eq $host_name) {
+      push(@compile_dependencies, $objfile);
+    } else {
+      push(@cc_files_dependencies, $objfile);
+    };
+
+    push(@files_to_clean, $objfile);
+}
+
+#
+# Emit the rule to compile an assembly file (that requires
+# preprocessing) into an object file.  Dependencies will be the source
+# file and all @header_files.
+#
+sub emit_cppasm_file_rule {
+    local ($basefile, $srcfile, @headers) = @_;
+    local ($objfile) = "$basefile$dot_obj";
+
+    do maybe_emit_d2c_defines();
+
+    print "$objfile: \$(SRCDIR)/$srcfile.S";
+    foreach $header (@headers) {
+	print " \$(SRCDIR)/$header";
+    }
+    if ($shared) {
+	print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+    } else {
+	print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+    }
+    print " -c \$(SRCDIR)/$srcfile.S -o $objfile\n\n";
     if ($target_name eq $host_name) {
       push(@compile_dependencies, $objfile);
     } else {
@@ -841,7 +940,11 @@ sub emit_cc_file_rule {
     foreach $header (@headers) {
 	print " \$(SRCDIR)/$header";
     }
-    print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+    if ($shared) {
+	print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+    } else {
+	print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+    }
     print "-c \$(SRCDIR)/$basefile.cc -o $objfile\n\n";
     if ($target_name eq $host_name) {
       push(@compile_dependencies, $objfile);
@@ -994,6 +1097,23 @@ sub install_executable_from_src {
 	&install_one_file("$srcdir/$file", $dst, 1);
     }
 }
+
+# install_library_from_src($dest_dir, $library, $shared_library) -- exported
+#
+# Installs library in the given location.  If it's shared, use libtool
+# to do it.
+#
+sub install_library {
+    local ($dest_dir, $library, $shared_library) = @_;
+
+    # Don't generate any install rules unless destdir is set.
+    $dest_dir || return;
+
+    print "\n\${DESTDIR}$dest_dir/$library: $library\n";
+    print "\t$install_library $library \${DESTDIR}$dest_dir/$library\n\n";
+    push(@install_dependencies, "\${DESTDIR}$dest_dir/$library");
+}
+
 
 # emit_mindycomp_rule($dylan_source) -- exported
 #

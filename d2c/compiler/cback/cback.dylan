@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.9 1999/06/09 20:32:43 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.10 1999/07/16 16:30:47 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -446,6 +446,15 @@ define method c-name (name :: <anonymous-name>) => res :: <byte-string>;
   end;
 end method;
 
+define generic c-name-global (name :: <name>) => (result :: <byte-string>);
+
+define method c-name-global (name :: <name>) => (result :: <byte-string>);
+  let library-name
+    = string-to-c-name(as(<string>,
+			  name.name-module.module-home.library-name));
+  concatenate(library-name, "Z", c-name(name));
+end method;
+
 // Emit a description of the <source-location> in C.  For 
 // <file-source-location>s, this will be a #line directive.  For
 // other types of <source-location>, this will be a comment.
@@ -625,7 +634,7 @@ define method emit-prototype-for
     format(stream, "extern boolean %s_initialized;\n\n",
 	   info.backend-var-info-name);
   end;
-end;  
+end;
 
 // We don't know what sort of object we're working with, but we can
 // presume that the given name is meaningful.  This general case must
@@ -633,11 +642,11 @@ end;
 //
 define method emit-prototype-for
     (name :: <byte-string>, defn :: <object>, file :: <file-state>)
-    => ();
+ => ();
   let stream = file.file-body-stream;
   format(stream, "extern descriptor_t %s;\t/* %s */\n\n",
 	 name, defn.clean-for-comment);
-end;  
+end;
 
 define method emit-prototype-for
     (name :: <byte-string>, defn :: <class-definition>, file :: <file-state>)
@@ -1202,11 +1211,6 @@ define method emit-prologue
    maybe-emit-include("math.h", file);
 
   let stream = file.file-body-stream;
-  for (unit in other-units)
-    format(stream, "extern descriptor_t %s_roots[];\n", string-to-c-name(unit));
-  end;
-  format(stream, "extern descriptor_t %s_roots[];\n\n",
-	 file.file-unit.unit-prefix);
   format(stream, "#define obj_True %s.heapptr\n",
 	 c-expr-and-rep(as(<ct-value>, #t), *general-rep*, file));
   format(stream, "#define obj_False %s.heapptr\n\n",
@@ -1641,7 +1645,12 @@ define method compute-function-prototype
      function-info :: <function-info>,
      file :: <file-state>)
     => res :: <byte-string>;
-  let c-name = main-entry-c-name(function-info, file);
+  let c-name = if(instance?(function-info, <constant-callback-function-info>)
+		    & ~function)
+		 callback-entry-c-name(function-info, file);
+	       else
+		 main-entry-c-name(function-info, file);
+	       end if;
   let stream = make(<buffered-byte-string-output-stream>);
   let result-rep = function-info.function-info-result-representation;
   case
@@ -1657,7 +1666,11 @@ define method compute-function-prototype
     otherwise => write(stream, result-rep.representation-c-type);
   end;
   format(stream, " %s(", c-name);
-  let sp-arg? = ~function | function.calling-convention == #"standard";
+  let sp-arg? = if(function)
+		  function.calling-convention == #"standard";
+		else
+		  ~instance?(function-info, <constant-callback-function-info>);
+		end if;
   if (sp-arg?)
     write(stream, "descriptor_t *orig_sp");
   end if;
@@ -2254,7 +2267,6 @@ define method xep-expr-and-name
     error("%= doesn't have a generic entry.", ctv);
   end;
   let name = maybe-emit-callback-entry(ctv, file);  
-  maybe-emit-prototype(name, #"callback", file);
   values(name, ctv.ct-function-name);
 end;
 

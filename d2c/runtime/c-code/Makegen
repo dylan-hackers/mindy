@@ -8,10 +8,25 @@ $lib_name = "$lib_prefix" . "runtime$dot_lib";
 
 print "$lib_name: allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj\n";
 print "\trm -f $lib_name\n\t";
-printf($target_platform{'link_library_command'}, $lib_name,
-       "allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj");
-print "\n";
+if ($shared) {
+	printf($target_platform{'link_shared_library_command'}, $lib_name,
+	       "allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj",
+	       $libdir);
+	print "\n";
+	if ($static) {
+	    local ($dot_lib)
+		= split(/\s+/, $target_platform{'library_filename_suffix'});
+	    local $unit_prefix = "runtime";
+	    print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
+	    print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
+	        " $lib_prefix$unit_prefix$dot_lib\n";
+	}
+} else {
+	printf($target_platform{'link_library_command'}, $lib_name,
+	       "allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj");
+	print "\n";
+}
 
 push(@compile_dependencies, $lib_name);
-do install($libdir, $lib_name);
+do install_library($libdir, $lib_name, $shared);
 push(@files_to_clean, $lib_name);

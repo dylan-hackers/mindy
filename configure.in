@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.38 1999/05/29 21:28:28 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.39 1999/07/16 16:30:42 housel Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -29,10 +29,12 @@ AC_CONFIG_HEADER(config.h)
 
 #--------------------------------------------------------------------
 # This is used in conjuction with the output of 'd2c --compiler-info'
-# to decide when d2c needs a full bootstrap.
+# to decide when d2c needs a full bootstrap.  Increment the value here
+# AND in d2c/compiler/main/main.dylan whenever the dump format or the
+# interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=2
+CURRENT_BOOTSTRAP_COUNTER=3
 
 #--------------------------------------------------------------------
 # Try to guess the right prefix based on a previous installation.
@@ -166,6 +168,29 @@ if test "$EMACS" = no; then
 fi
 
 #--------------------------------------------------------------------
+# Configure libtool.
+#--------------------------------------------------------------------
+
+AC_PROG_LIBTOOL
+LIBTOOL="${CONFIG_SHELL-/bin/sh} $builddir/libtool"
+
+AC_MSG_CHECKING(whether or not to build shared libraries)
+shared=no
+if $LIBTOOL --features | grep 'enable shared libraries' > /dev/null; then
+	shared=yes
+fi
+AC_MSG_RESULT($shared)
+AC_SUBST(shared)	
+
+AC_MSG_CHECKING(whether or not to build static libraries)
+static=no
+if $LIBTOOL --features | grep 'enable static libraries' > /dev/null; then
+	static=yes
+fi
+AC_MSG_RESULT($static)
+AC_SUBST(static)	
+
+#--------------------------------------------------------------------
 # Figure out what to do with Mindy.
 #--------------------------------------------------------------------
 
@@ -269,6 +294,7 @@ elif test "$D2C" != no; then
         build_tools_with_d2c=yes
         enable_bootstrap=yes
         bootstrap_compiler=d2c
+        shared=no
     elif test "$d2c_cross_compiling" = yes; then
 	SCENARIO=CROSS_COMPILING
         build_tools_with_d2c=yes # XXX - this won't work at all
@@ -292,7 +318,7 @@ echo "    Bootstrapping:            $enable_bootstrap"
 echo "    Bootstrap compiler:       $bootstrap_compiler"
 
 #--------------------------------------------------------------------
-# Sanity-chek our "build scenario". Certain combinations should never
+# Sanity-check our "build scenario". Certain combinations should never
 # appear.
 #--------------------------------------------------------------------
 

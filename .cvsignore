@@ -1,9 +1,13 @@
+aclocal.m4
 configure
 config.log
 config.status
 config.cache
 gen-makefile
 mk-build-tree
+ltconfig
+ltmain.sh
+libtool
 Defaults
 GNUmakefile
 force.timestamp

@@ -1,489 +1,112 @@
-
-# I've had to really work over the Windows Makefile in order to get
-# the srcdir stuff to work right.  The Unix version, though, is almost
-# pristine--we just added the "srcdir = $(VPATH)" and commented out a
-# few lines above it.
-
-# While upgrading this to gc4.13alpha2, I didn't care for the Windows part.
-# You're on your own.
-
-if ($features{'compiled_for_win32'} && $features{'compiled_for_x86'}) {
-    print <<'EOF';
-
-CPU= i386
-!include <ntwin32.mak>
-
-OBJS= alloc.obj reclaim.obj allchblk.obj misc.obj mach_dep.obj os_dep.obj mark_rts.obj headers.obj mark.obj obj_map.obj blacklst.obj finalize.obj new_hblk.obj dbg_mlc.obj malloc.obj stubborn.obj dyn_load.obj typd_mlc.obj ptr_chck.obj gc_cpp.obj
-
-all: gctest.exe cord\de.exe test_cpp.exe
-
-EOF
-
-    if ($features{'c_compiler_is_gcc'}) {
-	print <<'EOF';
-CC = gcc
-
-CPLUSPLUSFLAGS = -O4 -finline-functions -Dtry=__try -Dexcept=__except -Dleave=__leave -Dfinally=__finally -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -D_X86_=1 -DWINVER=0x0400 -DWIN32_GCC -DWIN32 -D_WIN32 -DSILENT -DALL_INTERIOR_POINTERS -I$(SRCDIR)
-
-CCFLAGS = $(CPLUSPLUSFLAGS) -D__STDC__
-
-EOF
-    } else {
-	print <<'EOF';
-CC = cl
-
-CPLUSPLUSFLAGS = -Ox -W3 -Dtry=__try -Dexcept=__except -Dleave=__leave -Dfinally=__finally -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -nologo -D_X86_=1 -DWINVER=0x0400 -DWIN32  -D_WIN32 -DSILENT -DALL_INTERIOR_POINTERS -I$(SRCDIR)
-
-CCFLAGS = $(CPLUSPLUSFLAGS) -D__STDC__
-
-EOF
-    }
-
-    print <<'EOF';
-
-alloc.obj : $(SRCDIR)/alloc.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/alloc.c -o $*.obj
-reclaim.obj : $(SRCDIR)/reclaim.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/reclaim.c -o $*.obj
-allchblk.obj : $(SRCDIR)/allchblk.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/allchblk.c -o $*.obj
-misc.obj : $(SRCDIR)/misc.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/misc.c -o $*.obj
-mach_dep.obj : $(SRCDIR)/mach_dep.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/mach_dep.c -o $*.obj
-os_dep.obj : $(SRCDIR)/os_dep.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/os_dep.c -o $*.obj
-mark_rts.obj : $(SRCDIR)/mark_rts.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/mark_rts.c -o $*.obj
-headers.obj : $(SRCDIR)/headers.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/headers.c -o $*.obj
-mark.obj : $(SRCDIR)/mark.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/mark.c -o $*.obj
-obj_map.obj : $(SRCDIR)/obj_map.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/obj_map.c -o $*.obj
-blacklst.obj : $(SRCDIR)/blacklst.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/blacklst.c -o $*.obj
-finalize.obj : $(SRCDIR)/finalize.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/finalize.c -o $*.obj
-new_hblk.obj : $(SRCDIR)/new_hblk.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/new_hblk.c -o $*.obj
-dbg_mlc.obj : $(SRCDIR)/dbg_mlc.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/dbg_mlc.c -o $*.obj
-malloc.obj : $(SRCDIR)/malloc.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/malloc.c -o $*.obj
-stubborn.obj : $(SRCDIR)/stubborn.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/stubborn.c -o $*.obj
-dyn_load.obj : $(SRCDIR)/dyn_load.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/dyn_load.c -o $*.obj
-typd_mlc.obj : $(SRCDIR)/typd_mlc.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/typd_mlc.c -o $*.obj
-ptr_chck.obj : $(SRCDIR)/ptr_chck.c
-    $(CC) $(CCFLAGS) -c $(SRCDIR)/ptr_chck.c -o $*.obj
-
-# source is NOT in srcdir, but here, because we copied it here
-gc_cpp.obj : gc_cpp.cpp
-    $(CC) $(CPLUSPLUSFLAGS) -c gc_cpp.cpp -o $*.obj
-
-
-#.c.obj:
-#	$(cc) $(cdebug) $(cflags) $(cvars) -DSILENT -DALL_INTERIOR_POINTERS -D__STDC__ $*.c /Fo$*.obj
-
-#.cpp.obj:
-#	$(cc) $(cdebug) $(cflags) $(cvars) -DSILENT -DALL_INTERIOR_POINTERS $*.CPP /Fo$*.obj
-
-$(OBJS) test.obj: $(SRCDIR)/gc_priv.h $(SRCDIR)/gc_hdrs.h $(SRCDIR)/gc.h
-
-gc.lib: $(OBJS)
-	lib /MACHINE:i386 /out:gc.lib $(OBJS)
-# The original NT SDK used lib32 instead of lib
-
-gctest.exe: test.obj gc.lib
-#	The following works for win32 debugging.  For win32s debugging use debugtype:coff
-#	and add mapsympe line.
-#  This produces a "GUI" applications that opens no windows and writes to the log file
-#  "gc.log".  This is done to make the result runnable under win32s.
-	$(link) -debug:full -debugtype:cv $(guiflags) -stack:131072 -out:$*.exe test.obj $(guilibs) gc.lib
-#	mapsympe -n -o gctest.sym gctest.exe
-
-cord\de_win.rbj: cord\de_win.res
-	cvtres -$(CPU) cord\de_win.res -o cord\de_win.rbj
-
-cord\de.obj cord\de_win.obj: cord\cord.h cord\private\cord_pos.h cord\de_win.h cord\de_cmds.h
-
-cord\de_win.res: cord\de_win.rc cord\de_win.h cord\de_cmds.h
-	$(rc) $(rcvars) -r -fo cord\de_win.res $(cvars) cord\de_win.rc
-
-# Cord/de is a real win32 gui application.
-cord\de.exe: cord\cordbscs.obj cord\cordxtra.obj cord\de.obj cord\de_win.obj cord\de_win.rbj gc.lib
-	$(link) -debug:full -debugtype:cv $(guiflags) -stack:16384 -out:cord\de.exe  cord\cordbscs.obj cord\cordxtra.obj cord\de.obj cord\de_win.obj cord\de_win.rbj gc.lib $(guilibs)
-
-gc_cpp.obj: $(SRCDIR)/gc_cpp.h $(SRCDIR)/gc.h
-
-gc_cpp.cpp: $(SRCDIR)/gc_cpp.cc
-	cp -f $(SRCDIR)/gc_cpp.cc gc_cpp.cpp
-
-test_cpp.cpp: test_cpp.cc
-	copy test_cpp.cc test_cpp.cpp
-
-# This generates the C++ test executable.  The executable expects
-# a single numeric argument, which is the number of iterations.
-# The output appears in the file "gc.log".
-test_cpp.exe: test_cpp.obj gc_cpp.h gc.h gc.lib
-	$(link) -debug:full -debugtype:cv $(guiflags) -stack:16384 -out:test_cpp.exe test_cpp.obj gc.lib $(guilibs)
-
-EOF
-
-    push(@compile_dependencies, 'gc.lib');
-    do install($libdir, 'gc.lib');
-
-    push(@files_to_clean, '$(OBJS)', 'gc.lib', 'gctest', 'gctest_dyn_link',
-	 'test_cpp', 'setjmp_test', 'mon.out', 'gmon.out', 'a.out', 'core',
-	 'if_not_there', 'if_mach', '$(CORD_OBJS)', 'cord/cordtest', 
-	 'cord/de');
-
-
-} elsif ($features{'compiled_for_unix'}) {
-
-    print <<"EOF";
-
-# Primary targets:
-# gc.a - builds basic library
-# libgc.a - builds library for use with g++ "-fgc-keyword" extension
-# c++ - adds C++ interface to library
-# cords - adds cords (heavyweight strings) to library
-# test - prints porting information, then builds basic version of gc.a,
-#      	 and runs some tests of collector and cords.  Does not add cords or
-#	 c++ interface to gc.a
-# cord/de - builds dumb editor based on cords.
-ABI_FLAG=
-CC=$CC
-CXX=$CC
-AS=as
-#  The above doesn't work with gas, which doesn't run cpp.
-#  Define AS as `gcc -c -x assembler-with-cpp' instead.
-#  Under Irix 6, you will have to specify the ABI for as if you specify
-#  it for the C compiler.
-
-CFLAGS= -g -O -DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS -DNO_EXECUTE_PERMISSION -DSILENT -DLARGE_CONFIG
-
-# Setjmp_test may yield overly optimistic results when compiled
-# without optimization.
-# -DSILENT disables statistics printing, and improves performance.
-# -DCHECKSUMS reports on erroneously clear dirty bits, and unexpectedly
-#   altered stubborn objects, at substantial performance cost.
-#   Use only for incremental collector debugging.
-# -DFIND_LEAK causes the collector to assume that all inaccessible
-#   objects should have been explicitly deallocated, and reports exceptions.
-#   Finalization and the test program are not usable in this mode.
-# -DSOLARIS_THREADS enables support for Solaris (thr_) threads.
-#   (Clients should also define SOLARIS_THREADS and then include
-#   gc.h before performing thr_ or dl* or GC_ operations.)
-#   Must also define -D_REENTRANT
-# -D_SOLARIS_PTHREADS enables support for Solaris pthreads.
-#   Define SOLARIS_THREADS as well.
-# -DIRIX_THREADS enables support for Irix pthreads.  See README.irix.
-# -DALL_INTERIOR_POINTERS allows all pointers to the interior
-#   of objects to be recognized.  (See gc_priv.h for consequences.)
-# -DSMALL_CONFIG tries to tune the collector for small heap sizes,
-#   usually causing it to use less space in such situations.
-#   Incremental collection no longer works in this case.
-# -DLARGE_CONFIG tunes the collector for unusually large heaps.
-#   Necessary for heaps larger than about 500 MB on most machines.
-#   Recommended for heaps larger than about 64 MB.
-# -DDONT_ADD_BYTE_AT_END is meaningful only with
-#   -DALL_INTERIOR_POINTERS.  Normally -DALL_INTERIOR_POINTERS
-#   causes all objects to be padded so that pointers just past the end of
-#   an object can be recognized.  This can be expensive.  (The padding
-#   is normally more than one byte due to alignment constraints.)
-#   -DDONT_ADD_BYTE_AT_END disables the padding.
-# -DNO_SIGNALS does not disable signals during critical parts of
-#   the GC process.  This is no less correct than many malloc 
-#   implementations, and it sometimes has a significant performance
-#   impact.  However, it is dangerous for many not-quite-ANSI C
-#   programs that call things like printf in asynchronous signal handlers.
-# -DNO_EXECUTE_PERMISSION may cause some or all of the heap to not
-#   have execute permission, i.e. it may be impossible to execute
-#   code from the heap.  Currently this only affects the incremental
-#   collector on UNIX machines.  It may greatly improve its performance,
-#   since this may avoid some expensive cache synchronization.
-# -DOPERATOR_NEW_ARRAY declares that the C++ compiler supports the
-#   new syntax "operator new[]" for allocating and deleting arrays.
-#   See gc_cpp.h for details.  No effect on the C part of the collector.
-#   This is defined implicitly in a few environments.
-# -DREDIRECT_MALLOC=X causes malloc, realloc, and free to be defined
-#   as aliases for X, GC_realloc, and GC_free, respectively.
-#   Calloc is redefined in terms of the new malloc.  X should
-#   be either GC_malloc or GC_malloc_uncollectable.
-#   The former is occasionally useful for working around leaks in code
-#   you don't want to (or can't) look at.  It may not work for
-#   existing code, but it often does.  Neither works on all platforms,
-#   since some ports use malloc or calloc to obtain system memory.
-#   (Probably works for UNIX, and win32.)
-# -DIGNORE_FREE turns calls to free into a noop.  Only useful with
-#   -DREDIRECT_MALLOC.
-# -DNO_DEBUGGING removes GC_dump and the debugging routines it calls.
-#   Reduces code size slightly at the expense of debuggability.
-# -DJAVA_FINALIZATION makes it somewhat safer to finalize objects out of
-#   order by specifying a nonstandard finalization mark procedure  (see
-#   finalize.c).  Objects reachable from finalizable objects will be marked
-#   in a sepearte postpass, and hence their memory won't be reclaimed.
-#   Not recommended unless you are implementing a language that specifies
-#   these semantics.
-# -DFINALIZE_ON_DEMAND causes finalizers to be run only in response
-#   to explicit GC_invoke_finalizers() calls.
-# -DATOMIC_UNCOLLECTABLE includes code for GC_malloc_atomic_uncollectable.
-#   This is useful if either the vendor malloc implementation is poor,
-#   or if REDIRECT_MALLOC is used.
-# -DHBLKSIZE=ddd, where ddd is a power of 2 between 512 and 16384, explicitly
-#   sets the heap block size.  Each heap block is devoted to a single size and
-#   kind of object.  For the incremental collector it makes sense to match
-#   the most likely page size.  Otherwise large values result in more
-#   fragmentation, but generally better performance for large heaps.
-# -DUSE_MMAP use MMAP instead of sbrk to get new memory.
-#   Works for Solaris and Irix.
-# -DMMAP_STACKS (for Solaris threads) Use mmap from /dev/zero rather than
-#   GC_scratch_alloc() to get stack memory.
-# -DPRINT_BLACK_LIST Whenever a black list entry is added, i.e. whenever
-#   the garbage collector detects a value that looks almost, but not quite,
-#   like a pointer, print both the address containing the value, and the
-#   value of the near-bogus-pointer.  Can be used to identifiy regions of
-#   memory that are likely to contribute misidentified pointers.
-# -DOLD_BLOCK_ALLOC Use the old, possibly faster, large block
-#   allocation strategy.  The new strategy tries harder to minimize
-#   fragmentation, sometimes at the expense of spending more time in the
-#   large block allocator and/or collecting more frequently.
-#
-
-
-
-LIBGC_CFLAGS= -g -O -DNO_SIGNALS -DSILENT  -DREDIRECT_MALLOC=GC_malloc_uncollectable  -DDONT_ADD_BYTE_AT_END -DALL_INTERIOR_POINTERS
-#   Flags for building libgc.a -- the last two are required.
-
-CXXFLAGS= \$(CFLAGS) 
-AR= ar
-RANLIB= ranlib
-
-
-# Redefining srcdir allows object code for the nonPCR version of the collector
-# to be generated in different directories.  In this case, the destination directory
-# should contain a copy of the original include directory.
-# srcdir = .
-# VPATH = \$(srcdir)
-
-srcdir = \$(VPATH)
-
-
-OBJS= alloc.o reclaim.o allchblk.o misc.o mach_dep.o os_dep.o mark_rts.o headers.o mark.o obj_map.o blacklst.o finalize.o new_hblk.o dbg_mlc.o malloc.o stubborn.o checksums.o solaris_threads.o irix_threads.o linux_threads.o typd_mlc.o ptr_chck.o mallocx.o solaris_pthreads.o
-
-CSRCS= reclaim.c allchblk.c misc.c alloc.c mach_dep.c os_dep.c mark_rts.c headers.c mark.c obj_map.c pcr_interface.c blacklst.c finalize.c new_hblk.c real_malloc.c dyn_load.c dbg_mlc.c malloc.c stubborn.c checksums.c solaris_threads.c irix_threads.c linux_threads.c typd_mlc.c ptr_chck.c mallocx.c solaris_pthreads.c
-
-CORD_SRCS=  cord/cordbscs.c cord/cordxtra.c cord/cordprnt.c cord/de.c cord/cordtest.c cord/cord.h cord/ec.h cord/private/cord_pos.h cord/de_win.c cord/de_win.h cord/de_cmds.h cord/de_win.ICO cord/de_win.RC cord/SCOPTIONS.amiga 
-
-CORD_OBJS=  cord/cordbscs.o cord/cordxtra.o cord/cordprnt.o
-
-SRCS= \$(CSRCS) mips_sgi_mach_dep.s rs6000_mach_dep.s alpha_mach_dep.S sparc_mach_dep.s gc.h gc_typed.h gc_hdrs.h gc_priv.h gc_private.h config.h gc_mark.h include/gc_inl.h include/gc_inline.h gc.man threadlibs.c if_mach.c if_not_there.c gc_cpp.cc gc_cpp.h weakpointer.h gcc_support.c mips_ultrix_mach_dep.s include/gc_alloc.h gc_alloc.h sparc_sunos4_mach_dep.s sparc_openbsd_mach_dep.s solaris_threads.h \$(CORD_SRCS)
-
-OTHER_FILES= Makefile PCR-Makefile OS2_MAKEFILE NT_MAKEFILE BCC_MAKEFILE README test.c test_cpp.cc setjmp_t.c SMakefile.amiga            SCoptions.amiga README.amiga README.win32 cord/README            cord/gc.h include/gc.h include/gc_typed.h include/cord.h            include/ec.h include/private/cord_pos.h include/private/config.h            include/private/gc_hdrs.h include/private/gc_priv.h 	   include/gc_cpp.h README.rs6000            include/weakpointer.h README.QUICK callprocs pc_excludes            barrett_diagram README.OS2 README.Mac MacProjects.sit.hqx            MacOS.c EMX_MAKEFILE makefile.depend README.debugging            include/gc_cpp.h Mac_files/datastart.c Mac_files/dataend.c            Mac_files/MacOS_config.h Mac_files/MacOS_Test_config.h            add_gc_prefix.c README.solaris2 README.sgi README.hp README.uts 	   win32_threads.c NT_THREADS_MAKEFILE gc.mak README.dj Makefile.dj 	   README.alpha README.linux version.h Makefile.DLLs gc_watcom.asm 	   WCC_MAKEFILE
-
-CORD_INCLUDE_FILES= \$(srcdir)/gc.h \$(srcdir)/cord/cord.h \$(srcdir)/cord/ec.h            \$(srcdir)/cord/private/cord_pos.h
-
-UTILS= if_mach if_not_there threadlibs
-
-# Libraries needed for curses applications.  Only needed for de.
-CURSES= -lcurses -ltermlib
-
-# The following is irrelevant on most systems.  But a few
-# versions of make otherwise fork the shell specified in
-# the SHELL environment variable.
-SHELL= /bin/sh
-
-SPECIALCFLAGS = 
-# Alternative flags to the C compiler for mach_dep.c.
-# Mach_dep.c often doesn't like optimization, and it's
-# not time-critical anyway.
-# Set SPECIALCFLAGS to -q nodirect_code on Encore.
-
-all: gc.a gctest
-
-pcr: PCR-Makefile gc_private.h gc_hdrs.h gc.h config.h mach_dep.o \$(SRCS)
-	make -f PCR-Makefile depend
-	make -f PCR-Makefile
-
-\$(OBJS) test.o dyn_load.o dyn_load_sunos53.o: \$(srcdir)/gc_priv.h \$(srcdir)/gc_hdrs.h \$(srcdir)/gc.h     \$(srcdir)/config.h \$(srcdir)/gc_typed.h
-# The dependency on Makefile is needed.  Changing
-# options such as -DSILENT affects the size of GC_arrays,
-# invalidating all .o files that rely on gc_priv.h
-# We here in Gwydion land have our own Makefile dependency rule at end of file
-
-mark.o typd_mlc.o finalize.o: \$(srcdir)/gc_mark.h
-
-EOF
-
-print "libgc$dot_lib: \$(OBJS) dyn_load.o\n";
-    print <<'EOF';
-	rm -f on_sparc_sunos5
-	./if_mach SPARC SUNOS5 touch on_sparc_sunos5
-	./if_mach SPARC SUNOS5 $(AR) rus libgc.a $(OBJS) dyn_load.o
-EOF
-print "\t./if_not_there on_sparc_sunos5 \$(AR) ru libgc$dot_lib \$(OBJS) dyn_load.o\n";
-print "\t./if_not_there on_sparc_sunos5 \$(RANLIB) libgc$dot_lib || cat /dev/null\n";
-    print <<'EOF';
-#	ignore ranlib failure; that usually means it doesn't exist, and isn't needed
-
-cords: $(CORD_OBJS) cord/cordtest
-	rm -f on_sparc_sunos5
-	./if_mach SPARC SUNOS5 touch on_sparc_sunos5
-	./if_mach SPARC SUNOS5 $(AR) rus libgc.a $(CORD_OBJS)
-	./if_not_there on_sparc_sunos5 $(AR) ru libgc.a $(CORD_OBJS)
-	./if_not_there on_sparc_sunos5 $(RANLIB) libgc.a || cat /dev/null
-
-gc_cpp.o: $(srcdir)/gc_cpp.cc $(srcdir)/gc_cpp.h $(srcdir)/gc.h Makegen
-	$(CXX) -c $(CXXFLAGS) $(srcdir)/gc_cpp.cc
-
-test_cpp: $(srcdir)/test_cpp.cc $(srcdir)/gc_cpp.h gc_cpp.o $(srcdir)/gc.h libgc.a
-	$(CXX) $(CXXFLAGS) -o test_cpp $(srcdir)/test_cpp.cc gc_cpp.o libgc.a
-
-c++: gc_cpp.o $(srcdir)/gc_cpp.h test_cpp
-	rm -f on_sparc_sunos5
-	./if_mach SPARC SUNOS5 touch on_sparc_sunos5
-	./if_mach SPARC SUNOS5 $(AR) rus libgc.a gc_cpp.o
-	./if_not_there on_sparc_sunos5 $(AR) ru libgc.a gc_cpp.o
-	./if_not_there on_sparc_sunos5 $(RANLIB) libgc.a || cat /dev/null
-	./test_cpp 1
-
-dyn_load_sunos53.o: dyn_load.c
-	$(CC) $(CFLAGS) -DSUNOS53_SHARED_LIB -c dyn_load.c -o $@
-
-# SunOS5 shared library version of the collector
-libgc.so: $(OBJS) dyn_load_sunos53.o
-	$(CC) -G -o libgc.so $(OBJS) dyn_load_sunos53.o -ldl
-
-# Alpha/OSF shared library version of the collector
-libalphagc.so: $(OBJS)
-	ld -shared -o libalphagc.so $(OBJS) dyn_load.o -lc
-
-mach_dep.o: $(srcdir)/mach_dep.c $(srcdir)/mips_mach_dep.s $(srcdir)/rs6000_mach_dep.s if_mach if_not_there
-	rm -f mach_dep.o
-	./if_mach MIPS "" $(AS) -o mach_dep.o $(srcdir)/mips_mach_dep.s
-#  The above doesn't work with gas, which doesn't run cpp.
-#  Rename the above file to end in .S, and then use
-#  gcc -c -o mach_dep.o mips_mach_dep.S instead.
-	./if_mach RS6000 "" $(AS) -o mach_dep.o $(srcdir)/rs6000_mach_dep.s
-	./if_mach ALPHA "" $(CC) -c -o mach_dep.o $(srcdir)/alpha_mach_dep.S
-	./if_mach SPARC SUNOS5 $(AS) -o mach_dep.o $(srcdir)/sparc_mach_dep.s
-	./if_mach SPARC OPENBSD $(AS) -o mach_dep.o $(srcdir)/sparc_openbsd_mach_dep.s
-	./if_not_there mach_dep.o $(CC) -c $(SPECIALCFLAGS) $(srcdir)/mach_dep.c
-
-mark_rts.o: $(srcdir)/mark_rts.c if_mach if_not_there
-	rm -f mark_rts.o
-	./if_mach ALPHA "" $(CC) -c $(CFLAGS) -Wo,-notail $(srcdir)/mark_rts.c
-	./if_not_there mark_rts.o $(CC) -c $(CFLAGS) $(srcdir)/mark_rts.c
-#	work-around for DEC optimizer tail recursion elimination bug
-
-cord/cordbscs.o: $(srcdir)/cord/cordbscs.c $(CORD_INCLUDE_FILES)
-	$(CC) $(CFLAGS) -c $(srcdir)/cord/cordbscs.c
-	mv cordbscs.o cord/cordbscs.o
-#  not all compilers understand -o filename
-
-cord/cordxtra.o: $(srcdir)/cord/cordxtra.c $(CORD_INCLUDE_FILES)
-	$(CC) $(CFLAGS) -c $(srcdir)/cord/cordxtra.c
-	mv cordxtra.o cord/cordxtra.o
-
-cord/cordprnt.o: $(srcdir)/cord/cordprnt.c $(CORD_INCLUDE_FILES)
-	$(CC) $(CFLAGS) -c $(srcdir)/cord/cordprnt.c
-	mv cordprnt.o cord/cordprnt.o
-
-cord/cordtest: $(srcdir)/cord/cordtest.c $(CORD_OBJS) libgc.a
-	rm -f cord/cordtest
-	./if_mach SPARC SUNOS5 $(CC) $(CFLAGS) -o cord/cordtest $(srcdir)/cord/cordtest.c $(CORD_OBJS) libgc.a -lthread -ldl
-	./if_mach SPARC DRSNX $(CC) $(CFLAGS) -o cord/cordtest $(srcdir)/cord/cordtest.c $(CORD_OBJS) libgc.a -lucb
-	./if_not_there cord/cordtest $(CC) $(CFLAGS) -o cord/cordtest $(srcdir)/cord/cordtest.c $(CORD_OBJS) libgc.a
-
-cord/de: $(srcdir)/cord/de.c cord/cordbscs.o cord/cordxtra.o libgc.a
-	rm -f cord/de
-	./if_mach SPARC SUNOS5 $(CC) $(CFLAGS) -o cord/de $(srcdir)/cord/de.c cord/cordbscs.o cord/cordxtra.o libgc.a $(CURSES) -lthread -ldl
-	./if_mach SPARC DRSNX $(CC) $(CFLAGS) -o cord/de $(srcdir)/cord/de.c cord/cordbscs.o cord/cordxtra.o libgc.a $(CURSES) -lucb
-	./if_mach RS6000 "" $(CC) $(CFLAGS) -o cord/de $(srcdir)/cord/de.c cord/cordbscs.o cord/cordxtra.o libgc.a -lcurses
-	./if_mach I386 LINUX $(CC) $(CFLAGS) -o cord/de $(srcdir)/cord/de.c cord/cordbscs.o cord/cordxtra.o libgc.a -lcurses
-	./if_not_there cord/de $(CC) $(CFLAGS) -o cord/de $(srcdir)/cord/de.c cord/cordbscs.o cord/cordxtra.o libgc.a $(CURSES)
-
-if_mach: $(srcdir)/if_mach.c $(srcdir)/config.h
-	$(CC) $(CFLAGS) -o if_mach $(srcdir)/if_mach.c
-
-if_not_there: $(srcdir)/if_not_there.c
-	$(CC) $(CFLAGS) -o if_not_there $(srcdir)/if_not_there.c
-
-#clean: 
-#	rm -f libgc.a *.o gctest gctest_dyn_link test_cpp 
-#	      setjmp_test  mon.out gmon.out a.out core if_not_there if_mach 
-#	      $(CORD_OBJS) cord/cordtest cord/de
-#	-rm -f *~
-
-gctest: test.o libgc.a if_mach if_not_there
-	rm -f gctest
-	./if_mach SPARC SUNOS5 $(CC) $(CFLAGS) -o gctest  test.o libgc.a -lthread -ldl
-	./if_mach SPARC DRSNX $(CC) $(CFLAGS) -o gctest  test.o libgc.a -lucb
-	./if_not_there gctest $(CC) $(CFLAGS) -o gctest test.o libgc.a
-
-# If an optimized setjmp_test generates a segmentation fault,
-# odds are your compiler is broken.  Gctest may still work.
-# Try compiling setjmp_t.c unoptimized.
-setjmp_test: $(srcdir)/setjmp_t.c $(srcdir)/gc.h if_mach if_not_there
-	$(CC) $(CFLAGS) -o setjmp_test $(srcdir)/setjmp_t.c
-
-test:  KandRtest cord/cordtest
-	cord/cordtest
-
-# Those tests that work even with a K&R C compiler:
-KandRtest: setjmp_test gctest
-	./setjmp_test
-	./gctest
-
-gc.tar: $(SRCS) $(OTHER_FILES)
-	tar cvf gc.tar $(SRCS) $(OTHER_FILES)
-
-pc_gc.tar: $(SRCS) $(OTHER_FILES)
-	tar cvfX pc_gc.tar pc_excludes $(SRCS) $(OTHER_FILES)
-
-floppy: pc_gc.tar
-	-mmd a:/cord
-	-mmd a:/include
-	mkdir /tmp/pc_gc
-	cat pc_gc.tar | (cd /tmp/pc_gc; tar xvf -)
-	-mcopy -tmn /tmp/pc_gc/* a:
-	-mcopy -tmn /tmp/pc_gc/cord/* a:/cord
-	-mcopy -mn /tmp/pc_gc/cord/de_win.ICO a:/cord
-	-mcopy -tmn /tmp/pc_gc/include/* a:/cord
-	rm -r /tmp/pc_gc
-
-gc.tar.Z: gc.tar
-	compress gc.tar
-
-lint: $(CSRCS) test.c
-	lint -DLINT $(CSRCS) test.c | egrep -v "possible pointer alignment problem|abort|exit|sbrk|mprotect|syscall"
-
-# BTL: added to test shared library version of collector.
-# Currently works only under SunOS5.  Requires GC_INIT call from statically
-# loaded client code.
-ABSDIR = `pwd`
-gctest_dyn_link: test.o libgc.so
-	$(CC) -L$(ABSDIR) -R$(ABSDIR) -o gctest_dyn_link test.o -lgc -ldl -lthread
-
-
-EOF
-    push(@compile_dependencies, "libgc$dot_lib");
-
-    do install($libdir, "libgc$dot_lib");
-
-    push(@files_to_clean, '$(OBJS)', "libgc$dot_lib", 'gctest',
-	 'gctest_dyn_link', 
-	 'test_cpp', 'setjmp_test', 'mon.out', 'gmon.out', 'a.out', 'core',
-	 'if_not_there', 'if_mach', '$(CORD_OBJS)', 'cord/cordtest', 
-	 'cord/de');
+$CFLAGS = "-g -O -DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS "
+    . "-DNO_EXECUTE_PERMISSION -DSILENT -DLARGE_CONFIG";
+
+&emit_c_file_rule('allchblk', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('alloc', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h',
+		  'version.h');
+&emit_c_file_rule('blacklst', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('checksums', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('dbg_mlc', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+
+&emit_c_file_rule('dyn_load', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+
+&emit_c_file_rule('finalize', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h',
+		  'gc_mark.h');
+&emit_c_file_rule('headers', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('irix_threads', 'gc.h', 'gc_priv.h', 'gcconfig.h',
+		  'gc_hdrs.h');
+&emit_c_file_rule('linux_threads', 'gc.h', 'gc_priv.h', 'gcconfig.h',
+		  'gc_hdrs.h');
+
+# FIXME
+if ($target_name =~ /^sparc.*-solaris/) {
+    &emit_asm_file_rule('mach_dep', 'sparc_mach_dep');
+} elsif ($target_name =~ /^sparc.*-openbsd/) {
+    &emit_asm_file_rule('mach_dep', 'sparc_openbsd_mach_dep');
+} elsif ($target_name =~ /^alpha/) {
+    &emit_cppasm_file_rule('mach_dep', 'alpha_mach_dep');
 } else {
-    &unknown_platform_error();
+    local $CFLAGS = "-g";
+    &emit_c_file_rule('mach_dep', 'gc.h', 'gc_priv.h', 'gcconfig.h',
+		      'gc_hdrs.h');
 }
 
+&emit_c_file_rule('malloc', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('mallocx', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('mark', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h',
+		  'gc_mark.h');
+if ($target_name =~ /^alpha/) {
+    local $CFLAGS = "$CFLAGS -Wo,-notail";
+    &emit_c_file_rule('mark_rts', 'gc.h', 'gc_priv.h', 'gcconfig.h',
+		      'gc_hdrs.h');
+} else {
+    &emit_c_file_rule('mark_rts', 'gc.h', 'gc_priv.h', 'gcconfig.h',
+		      'gc_hdrs.h');
+}
 
+&emit_c_file_rule('misc', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('new_hblk', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('obj_map', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('os_dep', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('ptr_chck', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h',
+		  'gc_mark.h');
+&emit_c_file_rule('reclaim', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('solaris_pthreads', 'gc.h', 'gc_priv.h', 'gcconfig.h',
+		  'gc_hdrs.h', 'solaris_threads.h');
+&emit_c_file_rule('solaris_threads', 'gc.h', 'gc_priv.h', 'gcconfig.h',
+		  'gc_hdrs.h', 'solaris_threads.c');
+&emit_c_file_rule('stubborn', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h');
+&emit_c_file_rule('typd_mlc', 'gc.h', 'gc_priv.h', 'gcconfig.h', 'gc_hdrs.h',
+		  'gc_mark.h', 'gc_typed.h');
 
+$lib_name = "$lib_prefix" . "gc$dot_lib";
 
+$objs =
+    "allchblk$dot_obj"
+    . " alloc$dot_obj"
+    . " blacklst$dot_obj"
+    . " checksums$dot_obj"
+    . " dbg_mlc$dot_obj"
+    . " dyn_load$dot_obj"
+    . " finalize$dot_obj"
+    . " headers$dot_obj"
+    . " irix_threads$dot_obj"
+    . " linux_threads$dot_obj"
+    . " mach_dep$dot_obj"
+    . " malloc$dot_obj"
+    . " mallocx$dot_obj"
+    . " mark$dot_obj"
+    . " mark_rts$dot_obj"
+    . " misc$dot_obj"
+    . " new_hblk$dot_obj"
+    . " obj_map$dot_obj"
+    . " os_dep$dot_obj"
+    . " ptr_chck$dot_obj"
+    . " reclaim$dot_obj"
+    . " solaris_pthreads$dot_obj"
+    . " solaris_threads$dot_obj"
+    . " stubborn$dot_obj"
+    . " typd_mlc$dot_obj";
+
+print "$lib_name: $objs\n";
+print "\trm -f $lib_name\n\t";
+if ($shared) {
+    printf($target_platform{'link_shared_library_command'}, $lib_name,
+	   $objs, $libdir);
+    print "\n";
+    if ($static) {
+	local ($dot_lib)
+	    = split(/\s+/, $target_platform{'library_filename_suffix'});
+	local $unit_prefix = "gc";
+	print "\trm -f $lib_prefix$unit_prefix$dot_lib\n";
+	print "\tln -s .libs/$lib_prefix$unit_prefix$dot_lib",
+	" $lib_prefix$unit_prefix$dot_lib\n";
+    }
+} else {
+    printf($target_platform{'link_library_command'}, $lib_name, $objs);
+    print "\n";
+}
+
+push(@compile_dependencies, $lib_name);
+do install_library($libdir, $lib_name, $shared);
+push(@files_to_clean, $lib_name);

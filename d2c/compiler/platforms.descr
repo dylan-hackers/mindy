@@ -1,6 +1,6 @@
 // A description of all target platforms we support.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.18 1999/05/22 15:16:39 andreas Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.19 1999/07/16 16:30:46 housel Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -64,6 +64,7 @@
 
 // 32-bit
 // heap.dylan says gcc doesn't use extended floats for long doubles.
+//
 platform-name:			32-bit
 integer-length:			32
 pointer-size:			4
@@ -179,9 +180,10 @@ make-command:                   	nmake /nologo
 platform-name:				generic-unix
 default-features:			compiled-for-unix
 object-filename-suffix:         	.o
+shared-object-filename-suffix:         	.lo
 library-filename-prefix:        	lib
 library-filename-suffix:        	.a
-shared-library-filename-suffix: 	.so
+shared-library-filename-suffix: 	.la
 executable-filename-suffix:     
 delete-file-command:            	rm -f
 compare-file-command:           	cmp -s %s %s
@@ -193,6 +195,7 @@ makefile-name:				GNUmakefile
 make-supports-phony-targets?:   	#t
 makefiles-can-rebuild-themselves?:      #t
 recursive-make-command:         	$(MAKE) -C %s %s
+libtool-command:			libtool
 
 
 // Linux:
@@ -221,7 +224,6 @@ platform-name:				solaris
 inherit-from:				generic-unix
 default-features:			compiled-for-solaris
 make-command:                   	gmake
-comment-token:                  	!
 
 // HP/UX:
 platform-name:				hpux
@@ -233,6 +235,10 @@ make-command:                   	gmake
 //
 // object-filename-suffix: The suffix (aka extension) used to
 // designate a file as an object-code file.  Includes the period.
+//
+// shared-object-filename-suffix: The suffix (aka extension) used to
+// designate a file as an object-code file intended for use in a
+// shared library.  Includes the period.
 //
 // library-filename-prefix: A string that goes in front of the name of
 // the library when constructing the filename for that library.
@@ -249,38 +255,17 @@ make-command:                   	gmake
 //
 // executable-filename-suffix: The suffix for executable filenames.
 //
-// heap-preamble: A string that is outputted at the beginning of all
-// .s files (ie, all lib-heap.s and heap.s files)
-//
-// align-directive: Assembler directive that tells it to align the
-// next structure on an N byte boundary
-//
-// align-arg-is-power-of-two?: True if the argument to the align-directive
-// is a power-of-two rather than a byte count.  The default is #f.
-//
-// word-directive: Assembler directive for outputting a machine word.
-//
-// half-word-directive: Assembler directive for outputting a machine nybble.
-//
-// byte-directive: Assembler directive for outputting an 8-bit quantity.
-//
-// comment-token: A string that the assembler will recognize as the
-// beginning of a line comment.
-//
-// mangled-name-prefix: Mangled-name-prefix is a string that goes
-// before all symbol names inside an assembly file. (Some C compilers
-// "mangle" symbol names before passing them on to the linker.  For
-// assembly files to interact with C files, the assembly files must
-// have their names similarly mangled.  Prefixing names with something
-// (such as an underbar) is the most common form of name mangling.)
-//
 // compile-c-command: A format string that describes how to invoke the
 // C compiler.  Arg1 for the format statement is the source code
 // filename, arg2 is the object code filename.  Both filenames have
 // the appropriate extensions already added.  The command will be
-// outputted to a makefile.  In this makefile, the make variable
+// output to a makefile.  In this makefile, the make variable
 // $(CCFLAGS) will be defined; the compile-c-command is strongly
 // encouraged to use this.
+// 
+// compile-c-for-shared-command: The same as compile-c-command, except
+// that the resulting object file will be used to build a shared
+// library.
 //
 // default-c-compiler-flags: Provides the default value for $(CCFLAGS)
 // inside the makefile.  (see above)  A format string with one arg which is the
@@ -289,11 +274,9 @@ make-command:                   	gmake
 // default-c-compiler-debug-flags: The same as the above, but used when
 // "-g" is passed to d2c.
 //
-// assembler-command: A format string that describes how to invoke the
-// assembler.  Arg1 for the format statement is the source code
-// filename, arg2 is the object code filename.  Both filenames have
-// the appropriate extensions already added.  The command will be
-// outputted to a makefile.
+// libtool-command: A string that gives the command for running the
+// libtool utility.  Provides the value for $(LIBTOOL) within the
+// makefile. This is not a format string.
 //
 // link-library-command: A format string that gives the beginning of
 // the command for linking a library.  Arg1 is the name of the archive
@@ -301,7 +284,8 @@ make-command:                   	gmake
 //
 // link-shared-library-command: The same as link-library-command, but
 // for linking shared libraries. d2c won't try to generate a shared
-// library unless this is set.
+// library unless this is set.  An additional format argument, arg3,
+// is the directory where the library will eventually be installed.
 //
 // randomize-library-command: A format string that describes how to
 // invoke a command used for making a library linkable.  Arg1 is the
@@ -323,47 +307,6 @@ make-command:                   	gmake
 //
 // Optional flags: (All defaults are #f)
 //
-// supports-debugging?: Controls whether the compiler outputs
-// debugging information in the assembly file.  Debugging information
-// is in stabs format, and this does little good if the C compiler
-// doesn't also output debugging information in stabs format.
-//
-// import-directive-required?: If #t, outputs a ".import" directive in
-// assembly files for every symbol that is declared outside that
-// assembly file.
-//
-// descriptor-type-string: This string specifies the "descriptor_t"
-// type in enough detail to allow gdb to work with the objects we
-// define.  We got this string by looking at the output of "gcc -g -S
-// -c foo.c -o foo.s", and selectively copying a few key entries.  We
-// changed the embeded filename to "<unknown>", because we don't
-// really feel like trying to keep track of where the source code for
-// the current file can be located.  This and
-// descriptor-reference-string aren't used unless supports-debugging?
-// is true.
-//
-// descriptor-reference-string: A format string which is used to refer
-// to the descriptor entry in descriptor-type-string.  It is derived
-// from the entry of descriptor.  The first arg to the format string
-// will be the mangled-name-prefix, while the second arg will be the C
-// name of the label for which we are generating debug info.  (Our
-// real motivation for turning decriptor-reference-string into a
-// format string is so that we don't have unbalanced quotes in this
-// file.  Unbalanced quotes makes font-lock do really ugly things...)
-//
-// object-size-string: A format string used to declare the object size
-// for descriptor entries and initialized objects.  The first arg to
-// the format string will be the mangled-name-prefix, the second arg
-// will be the C name of the object's label, and the third will be the
-// object size in bytes.
-//
-// omit-colon-after-label-declarations?: If #f, puts a colon after
-// label declarations (when you first declare a label, not whenever
-// you reference it).  If #t, we don't put a colon there.  This is
-// mainly to support the HP assembler, which doesn't like colons after
-// label declarations.  The GNU assembler (even on the HP) always
-// accepts colons, and except on the HP considers them mandatory, so
-// we've made colons the default.
 
 
 // Visual C for Windows
@@ -372,116 +315,67 @@ default-features:		C-compiler-is-VC
 compile-c-command:              cl $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:       -nologo -Ox -DWIN32 -I. -I%s
 default-c-compiler-debug-flags: -nologo -Ox -DWIN32 -I. -I%s
-assembler-command:              as %s -o %s
 link-library-command:           lib /nologo /out:%s %s
 link-executable-command:        link /nologo /out:%s %s %s
 link-executable-flags:          /subsystem:console
 link-doesnt-search-for-libs?:   #t
-supports-debugging?:            #f
 path-separator:        		\\
-heap-preamble:			\t.data\n\t.balign 8\t
-align-directive:		.balign
-export-directive:		\t.globl\t%s\n
-word-directive:                 .long
-half-word-directive:            .hword
-byte-directive:                 .byte
-comment-token:                  #
-mangled-name-prefix:            _
-descriptor-type-string:         .stabs "<unknown>",100,0,0,Ltext0\n.text\nLtext0:\n.stabs "heapptr_t:t(9,3)=(9,4)=*(9,5)=xsheapobj:",128,0,6,0\n.stabs "descriptor:T(9,6)=s8heapptr:(9,3),0,32;dataword:(9,7)=u4l:(0,3),0,32;f:(0,12),0,32;ptr:(5,16),0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t(9,8)=(9,6)",128,0,14,0\n
-descriptor-reference-string:    \t.stabs\t"%s%s:G(9,8)",32,0,1,0\n
 object-filename-suffix:         .obj
 library-filename-prefix:                
 library-filename-suffix:        .lib
 executable-filename-suffix:     .exe
-path-separator:                 \\
 
 platform-name:			gcc
 default-features:		C-compiler-is-GCC
-heap-preamble:                  \t.data\n\t.align 8\t
-align-directive:                .align
-export-directive:               \t.global\t%s\n
-word-directive:                 .long
-half-word-directive:            .half
-byte-directive:                 .byte
-comment-token:                  #
-mangled-name-prefix:            
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
+compile-c-for-shared-command:   $(LIBTOOL) gcc $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
 default-c-compiler-debug-flags:	-I. -I%s -g -O4 -fno-inline-functions
-assembler-command:              gcc $(CCFLAGS) -c %s -o %s
+assembler-command:		gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
-link-shared-library-command:    gcc -shared -o %s %s
-link-executable-command:        gcc  -o %s %s %s
+link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+link-executable-command:        $(LIBTOOL) gcc -o %s %s %s
+link-shared-executable-command: $(LIBTOOL) gcc -o %s %s %s
 link-executable-flags:          -lm
 path-separator:        		/
-supports-debugging?:		#t
 
 // Combinations:
 
 // Fully supported platforms (i.e., we use these):
 platform-name:			x86-linux-gcc
 inherit-from:			gcc linux x86
-descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
-descriptor-reference-string:    \t.stabs\t"%s%s:G36",32,0,1,0\n
-object-size-string:             \t.size\t%s%s, %d\n
 
 // FreeBSD 2.x
 platform-name:			x86-freebsd-aout-gcc
 inherit-from:			gcc freebsd x86
-descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
-descriptor-reference-string:    \t.stabs\t"%s%s:G36",32,0,1,0\n
-object-size-string:             \t.size\t%s%s, %d\n
-mangled-name-prefix:		_
-align-arg-is-power-of-two?:	#t
+link-shared-library-command:	
 
 // FreeBSD 3.x
 platform-name:			x86-freebsd-elf-gcc
 inherit-from:			gcc freebsd x86
-descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
-descriptor-reference-string:    \t.stabs\t"%s%s:G36",32,0,1,0\n
-object-size-string:             \t.size\t%s%s, %d\n
 
 platform-name:			ppc-linux-gcc
 inherit-from:			gcc linux ppc
-descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
-descriptor-reference-string:    \t.stabs\t"%s%s:G36",32,0,1,0\n
-object-size-string:             \t.size\t%s%s, %d\n
-align-arg-is-power-of-two?:     #t
+link-shared-library-command:	
 
 platform-name:			alpha-linux-gcc
 inherit-from:			gcc linux alpha
-descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
-descriptor-reference-string:    \t.stabs\t"%s%s:G36",32,0,1,0\n
-object-size-string:             \t.size\t%s%s, %d\n
-word-directive:			.quad
-half-word-directive:		.word
 
 // Solaris support maintained by Tom Emerson, tree@tiac.net
-// Need to define default-features: below since all three of our inherited 'platforms'
-// also define a default-features. But later on code relies on features that otherwise
-// get stomped.
+// Need to define default-features: below since all three of our
+// inherited 'platforms' also define a default-features. But later on
+// code relies on features that otherwise get stomped.
+
 platform-name:			sparc-solaris-gcc
 inherit-from:			gcc solaris sparc
 default-features:               compiled-for-solaris compiled-for-sparc C-compiler-is-GCC
 default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
-comment-token:			!
-word-directive:			.word
-half-word-directive:		.half
-descriptor-type-string:		.stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
-descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
 
 // This is untested. 
 platform-name:			sparc-openbsd-gcc
 inherit-from:			gcc openbsd sparc
 default-features:               compiled-for-openbsd compiled-for-sparc C-compiler-is-GCC
 default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
-comment-token:			!
-word-directive:			.word
-half-word-directive:		.half
-descriptor-type-string:		.stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
-descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
-mangled-name-prefix:		_
-align-arg-is-power-of-two?:	#f
 
 
 // Other platforms:
@@ -497,16 +391,7 @@ default-c-compiler-debug-flags: -g -O4 -fno-inline-functions -I%s -I. -DWIN32 -D
 
 platform-name:				hppa-hpux-gcc
 inherit-from:				gcc hpux hppa
-heap-preamble:                  	\t.SPACE $PRIVATE$\n\t.SUBSPA $DATA$\n\t.data\n\t.align 8\t
-export-directive:               	\t.export\t%s, DATA\n
-import-directive-required?:      	#t
-comment-token:                  	;
 library-filename-suffix:        	.a .sl
 link-library-command:           	/bin/ar qc %s %s
 link-executable-command:        	gcc -z -o %s %s %s
 link-executable-flags:          	-L/lib/pa1.1 -lm /usr/lib/end.o
-descriptor-type-string:         	\t.stabs "<unknown>",100,0,0,L$text0000\nL$text0000\n\t.stabs "heapptr_t:t32=*33=xsheapobj:",128,0,6,0\n\t.stabs "descriptor:T34=s8heapptr:32,0,32;dataword:35=u4l:3,0,32;f:12,0,32;ptr:36=*19,0,32;;,32,32;;",128,0,0,0\n\t.stabs "descriptor_t:t34",128,0,14,0\n
-descriptor-reference-string:    	\t.stabs\t"%s%s:G34",32,0,1,0\n
-omit-colon-after-label-declarations?:  	#t
-word-directive:                 	.word
-half-word-directive:            	.half
