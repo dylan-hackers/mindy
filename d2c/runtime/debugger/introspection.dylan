@@ -18,7 +18,13 @@ define method inspect(symbol-name :: <string>)
     if(object-address == as(<raw-pointer>, $null-pointer))
       format-out("dlsym returned NULL.\n");
     else
-      dump-object(object-at(object-address));
+      block()
+        dump-object(object-at(object-address));
+      exception(condition :: <condition>)
+        condition-format(*standard-output*, "%s\r\n", condition);
+        force-output(*standard-output*);
+        #f
+      end block
     end if;
   end;
 end;
@@ -27,13 +33,13 @@ make(<command>, name: "Inspect", command: inspect);
 
 define method dump-object(o)
   let oc = o.object-class;
-  format-out("%s at %=\n", oc.class-name, o.object-address);
+  format-out("%s at %=\r\n", oc.class-name, o.object-address);
   let sorted-slots = sort(oc.class-all-slot-descriptors,
                           test: method(x, y) 
                                     find-slot-offset(oc, x) <
                                     find-slot-offset(oc, y) end);
   for(slot in sorted-slots)
-    format-out("%= %s :: %s == %= (%=)\n", 
+    format-out("%= %s :: %s == %= (%=)\r\n", 
                find-slot-offset(oc, slot), 
                slot.slot-name | "(unnamed)", 
                slot.slot-type.debug-name,
