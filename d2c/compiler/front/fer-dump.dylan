@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.14 1995/04/25 23:03:46 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.15 1995/04/26 03:33:07 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -161,7 +161,7 @@ define method dump (assignment :: <assignment>, stream :: <stream>) => ();
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"fill", stream);
 	     write(":= ", stream);
-	     dump(assignment.depends-on.source-exp, stream);
+	     dump-expr(assignment.depends-on.source-exp, stream);
 	     write(';', stream);
 	   end);
 end;
@@ -294,7 +294,7 @@ define method dump-expr (expr :: <expression>, stream :: <stream>) => ();
 end;
 
 define method dump-expr (expr :: <lambda>, stream :: <stream>) => ();
-  format(stream, "METHOD[%d] ", lambda.id);
+  format(stream, "METHOD[%d]", expr.id);
 end;
 
 define method dump (var :: <abstract-variable>, stream :: <stream>) => ();
