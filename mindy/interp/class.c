@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.10 1994/11/06 19:58:57 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.c,v 1.11 1994/11/28 04:55:00 wlott Exp $
 *
 * This file implements classes.
 *
@@ -261,6 +261,10 @@ void setup_class_supers(obj_t class, obj_t supers)
 	if (CLASS(super)->sealed_p
 	      && CLASS(super)->library != CLASS(class)->library)
 	    error("Can't add subclasses to sealed class %=", super);
+	if (CLASS(super)->superclasses == obj_False
+	      || CLASS(super)->superclasses == NULL)
+	    error("Attempt to use %= before it is initialized", super);
+	    
 	if (object_class(super) == obj_StaticTypeClass)
 	    some_static = TRUE;
 	else
