@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.5 1995/11/20 17:52:59 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/string.dylan,v 1.6 1995/12/09 02:48:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -7,6 +7,21 @@ module: dylan-viscera
 // General string stuff.
 
 define open abstract class <string> (<mutable-sequence>)
+end;
+
+define sealed inline method make (class == <string>, #key size = 0, fill = ' ')
+    => res :: <string>;
+  make(<byte-string>, size: size, fill: fill);
+end;
+
+define sealed inline method as (class == <string>, collection :: <collection>)
+    => res :: <string>;
+  as(<byte-string>, collection);
+end;
+
+define inline method as (class == <string>, string :: <string>)
+    => res :: <string>;
+  string;
 end;
 
 define method \< (str1 :: <string>, str2 :: <string>) => res :: <boolean>;
@@ -45,60 +60,82 @@ end;
 
 // Built-in strings.
 
-/*
+
+// Unicode strings.
 
-define variable *limited-strings* = #();
-
-define method limited (class == <string>,
-		       #key type :: <type>, fill :: <character> = ' ')
-  unless (subtype?(type, <character>))
-    error("Limited strings can only hold subtypes of <character>.");
-  end;
-  block (return)
-    for (entry in *limited-vectors*)
-      if (subtype?(type, entry.head) & subtype?(entry.head, type))
-	return(entry.tail);
-      end;
-    end;
-    let new = make(<class>, superclasses: list(<builtin-vector>, <string>),
-		   slots: vector(vector(getter: %element,
-					setter: element-setter,
-					type: type, init-keyword: fill:,
-					init-value: fill,
-					size: size,
-					size-init-keyword: size:)));
-    *limited-vectors* := pair(pair(type, new), *limited-vectors*);
-    new;
-  end;
-end;
-
-define constant <byte-string>
-  = limited(<string>, type: <byte-character>);
-
-define constant <unicode-string>
-  = limited(<string>, type: <character>);
-
-*/
-
-define class <unicode-string> (<builtin-vector>, <string>)
+define class <unicode-string> (<string>, <vector>)
   sealed slot %element :: <character>,
     init-value: ' ', init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
 end;
 
 seal generic make (singleton(<unicode-string>));
-seal generic initialize (<unicode-string>);
 
-define class <byte-string> (<builtin-vector>, <string>)
+define sealed method as (class == <unicode-string>, collection :: <collection>)
+    => res :: <unicode-string>;
+  let res = make(<unicode-string>, size: collection.size);
+  for (index :: <fixed-integer> from 0, element in collection)
+    res[index] := element;
+  end;
+  res;
+end;
+
+define inline method as (class == <unicode-string>, string :: <unicode-string>)
+    => res :: <unicode-string>;
+  string;
+end;
+
+define inline method element
+    (vec :: <unicode-string>, index :: <fixed-integer>,
+     #key default = $not-supplied)
+    => element :: <object>; // because of default:
+  if (index >= 0 & index < vec.size)
+    %element(vec, index);
+  elseif (default == $not-supplied)
+    element-error(vec, index);
+  else
+    default;
+  end;
+end;
+
+define inline method element-setter
+    (new-value :: <character>, vec :: <unicode-string>,
+     index :: <fixed-integer>)
+    => new-value :: <character>;
+  if (index >= 0 & index < vec.size)
+    %element(vec, index) := new-value;
+  else
+    element-error(vec, index);
+  end;
+end;
+
+
+
+// Byte strings.
+
+define class <byte-string> (<string>, <vector>)
   sealed slot %element :: <byte-character>,
     init-value: ' ', init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
 end;
 
 seal generic make (singleton(<byte-string>));
-seal generic initialize (<byte-string>);
 
-define sealed inline method element
+define sealed method as (class == <byte-string>, collection :: <collection>)
+    => res :: <byte-string>;
+  let res = make(<byte-string>, size: collection.size);
+  for (index :: <fixed-integer> from 0, element in collection)
+    res[index] := element;
+  end;
+  res;
+end;
+
+define inline method as (class == <byte-string>, string :: <byte-string>)
+    => res :: <byte-string>;
+  string;
+end;
+
+define inline method element
     (vec :: <byte-string>, index :: <fixed-integer>,
      #key default = $not-supplied)
     => element :: <object>; // because of default:
@@ -111,9 +148,10 @@ define sealed inline method element
   end;
 end;
 
-define sealed inline method element-setter
-    (new-value :: <byte-character>, vec :: <byte-string>, index :: <fixed-integer>)
-    => new-value :: <object>;
+define inline method element-setter
+    (new-value :: <byte-character>, vec :: <byte-string>,
+     index :: <fixed-integer>)
+    => new-value :: <byte-character>;
   if (index >= 0 & index < vec.size)
     %element(vec, index) := new-value;
   else
