@@ -1,13 +1,13 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.4 2001/01/25 03:50:27 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.5 2001/02/08 22:24:09 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -185,11 +185,11 @@ define constant $class-dump-slots =
        general-speed-representation, general-speed-representation:,
          general-speed-representation-setter,
        general-space-representation, general-space-representation:,
-         general-space-representation-setter
+         general-space-representation-setter,
 	 /* ### -- currently recomputed, so we don't really need to dump it.
 	 , each-subclass-slots-count, each-subclass-slots-count:, #f
 	 */
-       );
+       class-metaclass, metaclass:, #f);
 
 
 define constant $slot-info-dump-slots =
@@ -223,10 +223,24 @@ add-make-dumper(#"vector-slot-info", *compiler-dispatcher*, <vector-slot-info>,
    load-external: #t
 );
 
-add-make-dumper(#"class-slot-info", *compiler-dispatcher*, <class-slot-info>,
-  $slot-info-dump-slots,
+
+add-make-dumper(#"meta-slot-info", *compiler-dispatcher*,
+  <meta-slot-info>,
+  concatenate(
+    $slot-info-dump-slots,
+    list(referred-slot-info, referred:, #f)),
   load-external: #t
 );
+
+
+add-make-dumper(#"class-slot-info", *compiler-dispatcher*,
+  <class-slot-info>,
+  concatenate(
+    $slot-info-dump-slots,
+    list(associated-meta-slot, #f, associated-meta-slot-setter)),
+  load-external: #t
+);
+
 
 add-make-dumper(#"each-subclass-slot-info", *compiler-dispatcher*,
   <each-subclass-slot-info>,
@@ -261,13 +275,26 @@ add-make-dumper(#"layout-table", *compiler-dispatcher*,
 );
 */
 
-add-make-dumper(#"defined-class", *compiler-dispatcher*, <defined-cclass>,
+
+add-make-dumper(#"defined-class", *compiler-dispatcher*,
+  <defined-cclass>,
   $class-dump-slots,
   load-external: #t
 );
 
-add-make-dumper(#"limited-class", *compiler-dispatcher*, <limited-cclass>,
-		$class-dump-slots, load-external: #t);
+
+add-make-dumper(#"limited-class", *compiler-dispatcher*,
+  <limited-cclass>,
+  $class-dump-slots,
+  load-external: #t
+);
+
+
+add-make-dumper(#"meta-class", *compiler-dispatcher*,
+  <meta-cclass>,
+  $class-dump-slots,
+  load-external: #t
+);
 
 
 add-make-dumper(#"defined-designator-class", *compiler-dispatcher*,
