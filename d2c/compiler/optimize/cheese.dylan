@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.19 1995/04/25 18:25:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.20 1995/04/25 20:55:39 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -365,12 +365,12 @@ define method optimize-unknown-call
   // pitcher and exit region.
   let call-dependency = call.dependents;
   let assign = call-dependency.dependent;
-  let block-region = func.target-region;
+  let catcher = func.catcher;
+  let block-region = catcher.target-region;
   for (region = assign.region then region.parent,
        until: region == #f | region == block-region)
   finally
     if (region)
-      let catcher = block-region.catcher;
       let args = call.depends-on.dependent-next;
       let pitcher = make(<pitcher>, catcher: catcher, next: catcher.pitchers,
 			 depends-on: args, dependents: call-dependency);
@@ -458,7 +458,42 @@ define method optimize (component :: <component>, catcher :: <catcher>)
 	 while: pitcher)
       result-type := values-type-union(result-type, pitcher.pitched-type);
     end;
-    maybe-restrict-type(component, catcher, result-type);
+    if (fixed-number-of-values?(result-type))
+      let builder = make-builder(component);
+      let vars = map(method (type)
+		       make-local-var(builder, #"temp", type);
+		     end,
+		     result-type.positional-types);
+      // Convert the catcher into ``values(var, ...)''
+      begin
+	let op = make-primitive-operation(builder, #"values", vars);
+	let dep = catcher.dependents;
+	dep.source-exp := op;
+	op.dependents := dep;
+	delete-dependent(component, catcher);
+      end;
+      // Convert the pitchers into ``(var, ...) := values(...)''
+      for (pitcher = catcher.pitchers then pitcher.pitcher-next,
+	   while: pitcher)
+	// Make the values op, stealing the arguments to the pitcher.
+	let op = make-primitive-operation(builder, #"values", #());
+	op.depends-on := pitcher.depends-on;
+	pitcher.depends-on := #f;
+	for (dep = op.depends-on then dep.dependent-next,
+	     while: dep)
+	  dep.dependent := op;
+	end;
+	// Assign the results.
+	let assign = pitcher.dependents.dependent;
+	build-assignment(builder, assign.policy, assign.source-location,
+			 vars, op);
+	insert-after(component, assign, builder-result(builder));
+	delete-and-unlink-assignment(component, assign);
+      end;
+    else
+      maybe-restrict-type(component, catcher, result-type);
+    end;
+    catcher.target-region.catcher := #f;
   end;
 end;
 
@@ -529,9 +564,7 @@ end;
 define method maybe-expand-cluster
     (component :: <component>, cluster :: <abstract-variable>)
     => did-anything? :: <boolean>;
-  let return-type = cluster.derived-type;
-  if (return-type.min-values == return-type.positional-types.size
-	& return-type.rest-value-type == empty-ctype())
+  if (fixed-number-of-values?(cluster.derived-type))
     unless (cluster.dependents)
       error("Trying to expand a cluster that isn't being used?");
     end;
@@ -830,6 +863,16 @@ define method defaulted-first-type (ctype :: <values-ctype>) => res :: <ctype>;
   else
     positionals[0];
   end;
+end;
+
+define method fixed-number-of-values? (ctype :: <ctype>) => res :: <boolean>;
+  #t;
+end;
+
+define method fixed-number-of-values?
+    (ctype :: <values-ctype>) => res :: <boolean>;
+  ctype.min-values == ctype.positional-types.size
+    & ctype.rest-value-type == empty-ctype();
 end;
 
 
@@ -1171,7 +1214,7 @@ define method dropped-dependent
     (component :: <component>, exit :: <exit-function>) => ();
   // If we dropped the last reference, clear it out.
   unless (exit.dependents)
-    let catcher = exit.target-region.catcher;
+    let catcher = exit.catcher;
     catcher.exit-function := #f;
     queue-dependent(component, catcher);
   end;
