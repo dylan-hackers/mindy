@@ -1,9 +1,12 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.18 1995/12/07 14:30:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.19 1995/12/15 05:55:46 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define abstract class <ct-value> (<annotatable>)
+  //
+  // Used by the heap builder.
+  slot ct-value-heap-label :: false-or(<byte-string>), init-value: #f;
 end;
 
 define abstract class <literal> (<ct-value>)
