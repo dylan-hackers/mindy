@@ -2,14 +2,16 @@ module: heap
 
 define class <state> (<object>)
   slot stream :: <stream>, required-init-keyword: stream:;
+  slot output-info :: <output-info>, required-init-keyword: output-info:;
   slot next-id :: <fixed-integer>, init-value: 0;
   slot object-queue :: <deque>, init-function: curry(make, <deque>);
   slot object-names :: <table>, init-function: curry(make, <table>);
 end;
 
 define method build-initial-heap
-    (roots :: <vector>, stream :: <stream>) => ();
-  let state = make(<state>, stream: stream);
+    (roots :: <vector>, stream :: <stream>, output-info :: <output-info>)
+    => ();
+  let state = make(<state>, stream: stream, output-info: output-info);
   format(stream, "\t.data\n\t.align\t8\n\t.export\troots, DATA\nroots");
   for (ctv in roots)
     spew-reference(ctv, $general-rep, state);
@@ -75,6 +77,22 @@ define method spew-reference
   format(state.stream, "\t.word\t%s\n", object-name(object, state));
 end;
 
+define method spew-reference
+    (object :: <ct-entry-point>, rep :: <immediate-representation>,
+     state :: <state>)
+    => ();
+  format(state.stream, "\t.word\t%s\n", object-name(object, state));
+end;
+
+define method spew-reference
+    (object :: <ct-entry-point>, rep :: <general-representation>,
+     state :: <state>)
+    => ();
+  format(state.stream, "\t.word\t%s, %s\n",
+	 object-name(make(<proxy>, for: object.ct-value-cclass), state),
+	 object-name(object, state));
+end;
+
 
 define method object-name (object :: <ct-value>, state :: <state>)
     => name :: <string>;
@@ -87,6 +105,18 @@ define method object-name (object :: <ct-value>, state :: <state>)
 	name;
       end;
 end;
+
+define method object-name (object :: <ct-entry-point>, state :: <state>)
+    => name :: <string>;
+  element(state.object-names, object, default: #f)
+    | begin
+	let name = entry-point-c-name(object, state.output-info);
+	format(state.stream, "\t.import\t%s, code\n", name);
+	element(state.object-names, object) := name;
+	name;
+      end;
+end;
+	
 
 
 define generic raw-bits (ctv :: <literal>) => res :: <integer>;
@@ -290,9 +320,41 @@ define method spew-object (object :: <proxy>, state :: <state>) => ();
 end;
 
 define method spew-object (object :: <ct-function>, state :: <state>) => ();
-  spew-instance(object.ct-value-cclass, state);
+  spew-instance(object.ct-value-cclass, state,
+		general-entry:
+		  make(<ct-entry-point>, for: object, kind: #"general"));
 end;
 
+define method spew-object
+    (object :: <ct-generic-function>, state :: <state>) => ();
+  let defn = object.ct-function-definition;
+  spew-instance(object.ct-value-cclass, state,
+		general-entry:
+		  begin
+		    let discriminator = defn.generic-defn-discriminator;
+		    if (discriminator)
+		      make(<ct-entry-point>, for: discriminator,
+			   kind: #"general");
+		    else
+		      let dispatch = dylan-defn(#"gf-dispatch");
+		      if (dispatch)
+			make(<ct-entry-point>,
+			     for: dispatch.ct-value,
+			     kind: #"main");
+		      else
+			#f;
+		      end;
+		    end;
+		  end);
+end;
+
+define method spew-object (object :: <ct-method>, state :: <state>) => ();
+  spew-instance(object.ct-value-cclass, state,
+		general-entry:
+		  make(<ct-entry-point>, for: object, kind: #"general"),
+		generic-entry:
+		  make(<ct-entry-point>, for: object, kind: #"generic"));
+end;
 
 
 define method spew-instance
