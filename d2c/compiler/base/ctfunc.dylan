@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.12 1996/03/02 19:01:13 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.13 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -184,3 +184,19 @@ add-make-dumper(#"ct-entry-point", *compiler-dispatcher*, <ct-entry-point>,
 		    signal("Yes, a <ct-entry-point> was actually dumped.");
 		  end method,
 		load-external: #t);
+
+// Seals for file ctfunc.dylan
+
+// <ct-raw-function> -- subclass of <ct-function>
+define sealed domain make(singleton(<ct-raw-function>));
+// <ct-open-generic> -- subclass of <ct-generic-function>
+define sealed domain make(singleton(<ct-open-generic>));
+// <ct-sealed-generic> -- subclass of <ct-generic-function>
+define sealed domain make(singleton(<ct-sealed-generic>));
+// <ct-method> -- subclass of <ct-function>
+define sealed domain make(singleton(<ct-method>));
+// <ct-accessor-method> -- subclass of <ct-method>
+define sealed domain make(singleton(<ct-accessor-method>));
+// <ct-entry-point> -- subclass of <ct-value>, <identity-preserving-mixin>
+define sealed domain make(singleton(<ct-entry-point>));
+define sealed domain initialize(<ct-entry-point>);

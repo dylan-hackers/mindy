@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.22 1996/01/12 00:58:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.23 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -592,3 +592,14 @@ add-make-dumper(#"data-word-representation", *compiler-dispatcher*,
 				   data-word-member:, #f)),
 		load-external: #t);
 
+
+// Seals for file c-rep.dylan
+
+// <general-representation> -- subclass of <c-representation>
+define sealed domain make(singleton(<general-representation>));
+// <heap-representation> -- subclass of <c-representation>
+define sealed domain make(singleton(<heap-representation>));
+// <immediate-representation> -- subclass of <c-representation>
+define sealed domain make(singleton(<immediate-representation>));
+// <data-word-representation> -- subclass of <immediate-representation>
+define sealed domain make(singleton(<data-word-representation>));

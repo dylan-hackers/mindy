@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.29 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.30 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -780,3 +780,40 @@ define method dump-od
   end if;
 end method;
 
+
+// Seals for file ctv.dylan
+
+// <ct-not-supplied-marker> -- subclass of <eql-ct-value>, <identity-preserving-mixin>
+define sealed domain make(singleton(<ct-not-supplied-marker>));
+// <literal-true> -- subclass of <literal-boolean>
+define sealed domain make(singleton(<literal-true>));
+// <literal-false> -- subclass of <literal-boolean>
+define sealed domain make(singleton(<literal-false>));
+// <literal-integer> -- subclass of <literal-general-integer>
+define sealed domain make(singleton(<literal-integer>));
+// <literal-extended-integer> -- subclass of <literal-general-integer>
+define sealed domain make(singleton(<literal-extended-integer>));
+// <literal-ratio> -- subclass of <literal-rational>
+define sealed domain make(singleton(<literal-ratio>));
+// <literal-single-float> -- subclass of <literal-float>
+define sealed domain make(singleton(<literal-single-float>));
+// <literal-double-float> -- subclass of <literal-float>
+define sealed domain make(singleton(<literal-double-float>));
+// <literal-extended-float> -- subclass of <literal-float>
+define sealed domain make(singleton(<literal-extended-float>));
+// <literal-symbol> -- subclass of <eql-literal>, <identity-preserving-mixin>
+define sealed domain make(singleton(<literal-symbol>));
+// <literal-byte-symbol> -- subclass of <literal-symbol>
+define sealed domain make(singleton(<literal-byte-symbol>));
+// <literal-character> -- subclass of <eql-literal>
+define sealed domain make(singleton(<literal-character>));
+// <literal-byte-character> -- subclass of <literal-character>
+define sealed domain make(singleton(<literal-byte-character>));
+// <literal-pair> -- subclass of <literal-list>
+define sealed domain make(singleton(<literal-pair>));
+// <literal-empty-list> -- subclass of <literal-list>, <eql-literal>
+define sealed domain make(singleton(<literal-empty-list>));
+// <literal-simple-object-vector> -- subclass of <literal-vector>
+define sealed domain make(singleton(<literal-simple-object-vector>));
+// <literal-byte-string> -- subclass of <literal-string>
+define sealed domain make(singleton(<literal-byte-string>));

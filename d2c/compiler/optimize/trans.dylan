@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.26 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.27 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1402,3 +1402,9 @@ define method iteration-current-element-setter
 	     iteration-vars.iteration-state-var)));
 end;
 
+
+// Seals for file trans.dylan
+
+// <iteration-vars> -- subclass of <object>
+define sealed domain make(singleton(<iteration-vars>));
+define sealed domain initialize(<iteration-vars>);

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.3 1996/03/02 19:01:13 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/xep.dylan,v 1.4 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -467,3 +467,9 @@ define method aux-build-xep
 
   xep;
 end;
+
+// Seals for file xep.dylan
+
+// <keyarg-info> -- subclass of <object>
+define sealed domain make(singleton(<keyarg-info>));
+define sealed domain initialize(<keyarg-info>);

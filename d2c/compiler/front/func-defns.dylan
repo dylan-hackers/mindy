@@ -757,3 +757,23 @@ add-make-dumper(#"getter-method-definition", *compiler-dispatcher*,
 add-make-dumper(#"setter-method-definition", *compiler-dispatcher*,
 		<setter-method-definition>, $accessor-method-definition-slots,
 		load-external: #t);
+
+// Seals for file func-defns.dylan
+
+// <generic-definition> -- subclass of <function-definition>
+define sealed domain make(singleton(<generic-definition>));
+define sealed domain initialize(<generic-definition>);
+// <implicit-generic-definition> -- subclass of <generic-definition>, <implicit-definition>
+define sealed domain make(singleton(<implicit-generic-definition>));
+// <method-definition> -- subclass of <abstract-method-definition>
+define sealed domain make(singleton(<method-definition>));
+define sealed domain initialize(<method-definition>);
+// <accessor-method-definition> -- subclass of <method-definition>
+define sealed domain make(singleton(<accessor-method-definition>));
+// <getter-method-definition> -- subclass of <accessor-method-definition>
+define sealed domain make(singleton(<getter-method-definition>));
+// <setter-method-definition> -- subclass of <accessor-method-definition>
+define sealed domain make(singleton(<setter-method-definition>));
+// <seal-info> -- subclass of <object>
+define sealed domain make(singleton(<seal-info>));
+define sealed domain initialize(<seal-info>);

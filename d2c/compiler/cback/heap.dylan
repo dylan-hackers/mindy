@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.42 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.43 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -673,9 +673,9 @@ define method spew-object (object :: <literal-ratio>, state :: <state>) => ();
   let num = as(<ratio>, object.literal-value);
   spew-instance(object.ct-value-cclass, state,
 		numerator:
-		  make(<literal-extended-integer>, num.numerator),
+		  make(<literal-extended-integer>, value: num.numerator),
 		denominator:
-		  make(<literal-extended-integer>, num.denominator));
+		  make(<literal-extended-integer>, value: num.denominator));
 end;
 
 define method spew-object (object :: <literal-float>, state :: <state>) => ();
@@ -1191,3 +1191,13 @@ define method find-init-value
     slot.slot-init-value;
   end;
 end;
+
+// Seals for file heap.dylan
+
+// <global-state> -- subclass of <state>
+define sealed domain make(singleton(<global-state>));
+// <local-state> -- subclass of <state>
+define sealed domain make(singleton(<local-state>));
+// <extra-label> -- subclass of <object>
+define sealed domain make(singleton(<extra-label>));
+define sealed domain initialize(<extra-label>);

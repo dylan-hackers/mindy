@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.54 1996/03/18 01:46:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.55 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -567,3 +567,90 @@ define open generic optimize-component
 define open generic build-xep-component
     (function :: <ct-function>, generic-entry? :: <boolean>)
  => (entry :: <fer-function-region>, component :: <component>);
+
+// Seals for file front.dylan
+
+// <let-assignment> -- subclass of <fer-assignment>
+define sealed domain make(singleton(<let-assignment>));
+// <set-assignment> -- subclass of <fer-assignment>
+define sealed domain make(singleton(<set-assignment>));
+// <primitive> -- subclass of <operation>
+define sealed domain make(singleton(<primitive>));
+define sealed domain initialize(<primitive>);
+// <known-call> -- subclass of <abstract-call>
+define sealed domain make(singleton(<known-call>));
+// <unknown-call> -- subclass of <general-call>
+define sealed domain make(singleton(<unknown-call>));
+// <mv-call> -- subclass of <general-call>
+define sealed domain make(singleton(<mv-call>));
+// <error-call> -- subclass of <abstract-call>
+define sealed domain make(singleton(<error-call>));
+// <prologue> -- subclass of <operation>
+define sealed domain make(singleton(<prologue>));
+define sealed domain initialize(<prologue>);
+// <module-var-ref> -- subclass of <module-var-access>
+define sealed domain make(singleton(<module-var-ref>));
+// <module-var-set> -- subclass of <module-var-access>
+define sealed domain make(singleton(<module-var-set>));
+// <self-tail-call> -- subclass of <operation>
+define sealed domain make(singleton(<self-tail-call>));
+define sealed domain initialize(<self-tail-call>);
+// <slot-ref> -- subclass of <slot-access>
+define sealed domain make(singleton(<slot-ref>));
+// <slot-set> -- subclass of <slot-access>
+define sealed domain make(singleton(<slot-set>));
+// <truly-the> -- subclass of <operation>
+define sealed domain make(singleton(<truly-the>));
+define sealed domain initialize(<truly-the>);
+// <instance?> -- subclass of <operation>
+define sealed domain make(singleton(<instance?>));
+define sealed domain initialize(<instance?>);
+// <nlx-operation> -- subclass of <operation>
+define sealed domain make(singleton(<nlx-operation>));
+define sealed domain initialize(<nlx-operation>);
+// <catch> -- subclass of <nlx-operation>
+define sealed domain make(singleton(<catch>));
+// <throw> -- subclass of <nlx-operation>
+define sealed domain make(singleton(<throw>));
+// <make-catcher> -- subclass of <nlx-operation>
+define sealed domain make(singleton(<make-catcher>));
+// <disable-catcher> -- subclass of <nlx-operation>
+define sealed domain make(singleton(<disable-catcher>));
+// <literal-constant> -- subclass of <constant>
+define sealed domain make(singleton(<literal-constant>));
+// <definition-constant-leaf> -- subclass of <constant>
+define sealed domain make(singleton(<definition-constant-leaf>));
+// <uninitialized-value> -- subclass of <constant>
+define sealed domain make(singleton(<uninitialized-value>));
+// <values-cluster-info> -- subclass of <debug-named-info>
+define sealed domain make(singleton(<values-cluster-info>));
+// <local-var-info> -- subclass of <debug-named-info>
+define sealed domain make(singleton(<local-var-info>));
+// <lexical-var-info> -- subclass of <debug-named-info>, <source-location-mixin>
+define sealed domain make(singleton(<lexical-var-info>));
+// <function-literal> -- subclass of <abstract-function-literal>, <queueable-mixin>
+define sealed domain make(singleton(<function-literal>));
+// <method-literal> -- subclass of <function-literal>
+define sealed domain make(singleton(<method-literal>));
+// <exit-function> -- subclass of <abstract-function-literal>, <dependent-mixin>
+define sealed domain make(singleton(<exit-function>));
+// <fer-function-region> -- subclass of <function-region>, <queueable-mixin>, <annotatable>
+define sealed domain make(singleton(<fer-function-region>));
+define sealed domain initialize(<fer-function-region>);
+// <lambda> -- subclass of <fer-function-region>
+define sealed domain make(singleton(<lambda>));
+// <fer-component> -- subclass of <component>, <identity-preserving-mixin>
+define sealed domain make(singleton(<fer-component>));
+define sealed domain initialize(<fer-component>);
+// <unwind-protect-region> -- subclass of <body-region>
+define sealed domain make(singleton(<unwind-protect-region>));
+define sealed domain initialize(<unwind-protect-region>);
+// <environment> -- subclass of <annotatable>
+define sealed domain make(singleton(<environment>));
+define sealed domain initialize(<environment>);
+// <closure-var> -- subclass of <object>
+define sealed domain make(singleton(<closure-var>));
+define sealed domain initialize(<closure-var>);
+// <nlx-info> -- subclass of <identity-preserving-mixin>
+define sealed domain make(singleton(<nlx-info>));
+define sealed domain initialize(<nlx-info>);

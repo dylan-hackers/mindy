@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.45 1996/03/20 01:44:03 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.46 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1780,3 +1780,26 @@ define method slow-specifier-type-list (sym == #"values", args :: <list>)
     make-values-ctype(map(specifier-type, args), #f);
   end;
 end;
+
+// Seals for file ctype.dylan
+
+// <union-ctype> -- subclass of <ctype>, <ct-value>
+define sealed domain make(singleton(<union-ctype>));
+// <union-table> -- subclass of <table>
+define sealed domain make(singleton(<union-table>));
+define sealed domain initialize(<union-table>);
+// <unknown-ctype> -- subclass of <ctype>
+define sealed domain make(singleton(<unknown-ctype>));
+// <limited-integer-table> -- subclass of <table>
+define sealed domain make(singleton(<limited-integer-table>));
+define sealed domain initialize(<limited-integer-table>);
+// <limited-integer-ctype> -- subclass of <limited-ctype>, <ct-value>
+define sealed domain make(singleton(<limited-integer-ctype>));
+// <direct-instance-ctype> -- subclass of <limited-ctype>, <ct-value>
+define sealed domain make(singleton(<direct-instance-ctype>));
+// <singleton-ctype> -- subclass of <limited-ctype>, <ct-value>
+define sealed domain make(singleton(<singleton-ctype>));
+// <byte-character-ctype> -- subclass of <limited-ctype>, <ct-value>
+define sealed domain make(singleton(<byte-character-ctype>));
+// <multi-value-ctype> -- subclass of <values-ctype>
+define sealed domain make(singleton(<multi-value-ctype>));

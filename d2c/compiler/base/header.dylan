@@ -1,5 +1,5 @@
 module: header
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.6 1996/01/12 00:58:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/header.dylan,v 1.7 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -312,3 +312,12 @@ define method parse-header (source :: <source-file>)
     end;
   repeat(0, 1);
 end method;
+
+// Seals for file header.dylan
+
+// <header> -- subclass of <explicit-key-collection>
+define sealed domain make(singleton(<header>));
+define sealed domain initialize(<header>);
+// <header-entry> -- subclass of <object>
+define sealed domain make(singleton(<header-entry>));
+define sealed domain initialize(<header-entry>);

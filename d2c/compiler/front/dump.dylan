@@ -1,5 +1,5 @@
 module: dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.9 1996/01/27 00:21:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/dump.dylan,v 1.10 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -464,3 +464,12 @@ define method dump-parse (thing, #key stream = *debug-output*) => ();
   dump(thing, stream);
   write('\n', stream);
 end;
+
+// Seals for file dump.dylan
+
+// <dump-state-stream> -- subclass of <stream>
+define sealed domain make(singleton(<dump-state-stream>));
+define sealed domain initialize(<dump-state-stream>);
+// <varinfo> -- subclass of <object>
+define sealed domain make(singleton(<varinfo>));
+define sealed domain initialize(<varinfo>);

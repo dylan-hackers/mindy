@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/constraint.dylan,v 1.1 1996/02/23 15:44:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/constraint.dylan,v 1.2 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -362,3 +362,12 @@ define method insert-type-constraint
   temp;
 end method insert-type-constraint;
 
+
+// Seals for file constraint.dylan
+
+// <renaming> -- subclass of <object>
+define sealed domain make(singleton(<renaming>));
+define sealed domain initialize(<renaming>);
+// <renaming-set> -- subclass of <object>
+define sealed domain make(singleton(<renaming-set>));
+define sealed domain initialize(<renaming-set>);

@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.33 1996/01/12 00:58:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.34 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1076,3 +1076,32 @@ end;
 define method print-message (proxy :: <proxy>, stream :: <stream>) => ();
   format(stream, "proxy for %s", proxy.proxy-for);
 end;
+
+// Seals for file cclass.dylan
+
+// <instance-slot-info> -- subclass of <slot-info>
+define sealed domain make(singleton(<instance-slot-info>));
+// <vector-slot-info> -- subclass of <instance-slot-info>
+define sealed domain make(singleton(<vector-slot-info>));
+// <class-slot-info> -- subclass of <slot-info>
+define sealed domain make(singleton(<class-slot-info>));
+// <each-subclass-slot-info> -- subclass of <slot-info>
+define sealed domain make(singleton(<each-subclass-slot-info>));
+// <virtual-slot-info> -- subclass of <slot-info>
+define sealed domain make(singleton(<virtual-slot-info>));
+// <override-info> -- subclass of <identity-preserving-mixin>
+define sealed domain make(singleton(<override-info>));
+define sealed domain initialize(<override-info>);
+// <class-precedence-description> -- subclass of <object>
+define sealed domain make(singleton(<class-precedence-description>));
+define sealed domain initialize(<class-precedence-description>);
+// <layout-table> -- subclass of <object>
+define sealed domain make(singleton(<layout-table>));
+define sealed domain initialize(<layout-table>);
+// <defined-cclass> -- subclass of <cclass>
+define sealed domain make(singleton(<defined-cclass>));
+// <limited-cclass> -- subclass of <cclass>
+define sealed domain make(singleton(<limited-cclass>));
+// <proxy> -- subclass of <ct-value>, <identity-preserving-mixin>
+define sealed domain make(singleton(<proxy>));
+define sealed domain initialize(<proxy>);

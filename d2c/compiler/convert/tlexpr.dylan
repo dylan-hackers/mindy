@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.9 1996/03/17 00:56:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.10 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -108,3 +108,9 @@ define method dump-od
     => ();
   // Do nothing.
 end;
+
+// Seals for file tlexpr.dylan
+
+// <expression-tlf> -- subclass of <top-level-form>
+define sealed domain make(singleton(<expression-tlf>));
+define sealed domain initialize(<expression-tlf>);

@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.11 1996/03/17 00:56:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.12 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -361,3 +361,18 @@ end;
 
 
 add-bootstrap-export(#"module-definer");
+
+// Seals for file deflibmod.dylan
+
+// <define-library-tlf> -- subclass of <top-level-form>, <definition-parse>
+define sealed domain make(singleton(<define-library-tlf>));
+define sealed domain initialize(<define-library-tlf>);
+// <define-module-tlf> -- subclass of <top-level-form>, <definition-parse>
+define sealed domain make(singleton(<define-module-tlf>));
+define sealed domain initialize(<define-module-tlf>);
+// <export-clause> -- subclass of <object>
+define sealed domain make(singleton(<export-clause>));
+define sealed domain initialize(<export-clause>);
+// <create-clause> -- subclass of <object>
+define sealed domain make(singleton(<create-clause>));
+define sealed domain initialize(<create-clause>);

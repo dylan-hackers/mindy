@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.16 1996/03/17 00:54:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.17 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1367,3 +1367,12 @@ define sealed method print-object
 end;
 
 
+
+// Seals for file parse-tree.dylan
+
+// <body-style-definition-macro-call-parse> -- subclass of <definition-macro-call-parse>
+define sealed domain make(singleton(<body-style-definition-macro-call-parse>));
+// <list-style-definition-macro-call-parse> -- subclass of <definition-macro-call-parse>
+define sealed domain make(singleton(<list-style-definition-macro-call-parse>));
+// <concatenating-pattern-variable-reference> -- subclass of <pattern-variable-reference>
+define sealed domain make(singleton(<concatenating-pattern-variable-reference>));

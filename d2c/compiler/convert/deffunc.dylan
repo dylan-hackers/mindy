@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.62 1996/03/17 00:56:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.63 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1169,3 +1169,30 @@ add-od-loader(*compiler-dispatcher*, #"sealed-domain",
 		add-seal(gf, library, types, #f);
 	      end method);
 
+
+// Seals for file deffunc.dylan
+
+// <define-generic-parse> -- subclass of <definition-parse>
+define sealed domain make(singleton(<define-generic-parse>));
+define sealed domain initialize(<define-generic-parse>);
+// <define-sealed-domain-parse> -- subclass of <definition-parse>
+define sealed domain make(singleton(<define-sealed-domain-parse>));
+define sealed domain initialize(<define-sealed-domain-parse>);
+// <define-method-parse> -- subclass of <definition-parse>
+define sealed domain make(singleton(<define-method-parse>));
+define sealed domain initialize(<define-method-parse>);
+// <explicitly-define-generic-tlf> -- subclass of <define-generic-tlf>
+define sealed domain make(singleton(<explicitly-define-generic-tlf>));
+define sealed domain initialize(<explicitly-define-generic-tlf>);
+// <implicitly-define-generic-tlf> -- subclass of <define-generic-tlf>
+define sealed domain make(singleton(<implicitly-define-generic-tlf>));
+define sealed domain initialize(<implicitly-define-generic-tlf>);
+// <define-sealed-domain-tlf> -- subclass of <top-level-form>
+define sealed domain make(singleton(<define-sealed-domain-tlf>));
+define sealed domain initialize(<define-sealed-domain-tlf>);
+// <real-define-method-tlf> -- subclass of <define-method-tlf>
+define sealed domain make(singleton(<real-define-method-tlf>));
+define sealed domain initialize(<real-define-method-tlf>);
+// <method-set> -- subclass of <object>
+define sealed domain make(singleton(<method-set>));
+define sealed domain initialize(<method-set>);

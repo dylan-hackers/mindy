@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.5 1996/01/27 00:21:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.6 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -409,3 +409,9 @@ define method clone-region
   end-body(state.clone-builder);
 end;
 
+
+// Seals for file clone.dylan
+
+// <clone-state> -- subclass of <object>
+define sealed domain make(singleton(<clone-state>));
+define sealed domain initialize(<clone-state>);

@@ -1,5 +1,5 @@
 module: lexenv
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.5 1996/03/17 01:03:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/lexenv.dylan,v 1.6 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -49,3 +49,14 @@ define method find-binding (lexenv :: <lexenv>, name :: <identifier-token>)
     end;
   end;
 end;
+
+// Seals for file lexenv.dylan
+
+// <lexenv> -- subclass of <object>
+define sealed domain make(singleton(<lexenv>));
+define sealed domain initialize(<lexenv>);
+// <body-lexenv> -- subclass of <lexenv>
+define sealed domain make(singleton(<body-lexenv>));
+// <binding> -- subclass of <object>
+define sealed domain make(singleton(<binding>));
+define sealed domain initialize(<binding>);

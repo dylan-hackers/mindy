@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.45 1996/03/18 01:46:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.46 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -711,3 +711,8 @@ define method make-error-operation
      as(<list>, args));
 end method;
 
+
+// Seals for file fer-builder.dylan
+
+// <internal-fer-builder> -- subclass of <fer-builder>, <internal-builder>
+define sealed domain make(singleton(<internal-fer-builder>));

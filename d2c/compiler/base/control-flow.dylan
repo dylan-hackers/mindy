@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.21 1996/03/18 01:44:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.22 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -197,3 +197,27 @@ define method add-to-queue
   component.reoptimize-queue := queueable;
 end;
 
+
+// Seals for file control-flow.dylan
+
+// <simple-region> -- subclass of <linear-region>
+define sealed domain make(singleton(<simple-region>));
+// <compound-region> -- subclass of <linear-region>
+define sealed domain make(singleton(<compound-region>));
+// <empty-region> -- subclass of <compound-region>
+define sealed domain make(singleton(<empty-region>));
+// <if-region> -- subclass of <join-region>, <dependent-mixin>
+define sealed domain make(singleton(<if-region>));
+define sealed domain initialize(<if-region>);
+// <block-region> -- subclass of <body-region>, <block-region-mixin>, <queueable-mixin>, <annotatable>
+define sealed domain make(singleton(<block-region>));
+// <function-region> -- subclass of <block-region>
+define sealed domain make(singleton(<function-region>));
+// <loop-region> -- subclass of <body-region>
+define sealed domain make(singleton(<loop-region>));
+define sealed domain initialize(<loop-region>);
+// <exit> -- subclass of <region>
+define sealed domain make(singleton(<exit>));
+define sealed domain initialize(<exit>);
+// <return> -- subclass of <exit>, <dependent-mixin>
+define sealed domain make(singleton(<return>));

@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.30 1996/03/17 00:31:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/primitives.dylan,v 1.31 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -464,3 +464,9 @@ define-primitive
 define-primitive
   (#"object-address", #(#"<object>"), #"<raw-pointer>",
    pure: #t);
+
+// Seals for file primitives.dylan
+
+// <primitive-info> -- subclass of <identity-preserving-mixin>
+define sealed domain make(singleton(<primitive-info>));
+define sealed domain initialize(<primitive-info>);

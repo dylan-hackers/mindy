@@ -1,6 +1,6 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.10 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.11 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -97,3 +97,12 @@ add-make-dumper(#"function-key-info", *compiler-dispatcher*, <key-info>,
        required?, required:, #f,
        key-default, default:, #f)
 );
+
+// Seals for file signature.dylan
+
+// <signature> -- subclass of <object>
+define sealed domain make(singleton(<signature>));
+define sealed domain initialize(<signature>);
+// <key-info> -- subclass of <object>
+define sealed domain make(singleton(<key-info>));
+define sealed domain initialize(<key-info>);

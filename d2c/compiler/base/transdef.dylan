@@ -1,5 +1,5 @@
 module: transformers
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/transdef.dylan,v 1.3 1996/02/22 04:43:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/transdef.dylan,v 1.4 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -59,3 +59,9 @@ define method transformer-specializers
   end if;
 end method transformer-specializers;
 
+
+// Seals for file transdef.dylan
+
+// <transformer> -- subclass of <object>
+define sealed domain make(singleton(<transformer>));
+define sealed domain initialize(<transformer>);

@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.30 1996/03/17 00:56:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.31 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -444,3 +444,19 @@ add-make-dumper(#"variable-definition", *compiler-dispatcher*,
 			    list(var-defn-type-defn, type-defn:,
 				   var-defn-type-defn-setter)),
 		load-external: #t);
+
+// Seals for file defconstvar.dylan
+
+// <constant-definition> -- subclass of <bindings-definition>, <abstract-constant-definition>
+define sealed domain make(singleton(<constant-definition>));
+define sealed domain initialize(<constant-definition>);
+// <constant-method-definition> -- subclass of <abstract-method-definition>,
+
+define sealed domain make(singleton(<constant-method-definition>));
+define sealed domain initialize(<constant-method-definition>);
+// <define-constant-tlf> -- subclass of <real-define-bindings-tlf>
+define sealed domain make(singleton(<define-constant-tlf>));
+// <define-constant-method-tlf> -- subclass of <define-constant-tlf>
+define sealed domain make(singleton(<define-constant-method-tlf>));
+// <define-variable-tlf> -- subclass of <real-define-bindings-tlf>
+define sealed domain make(singleton(<define-variable-tlf>));

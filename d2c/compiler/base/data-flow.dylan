@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.25 1996/03/18 01:44:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.26 1996/03/20 22:32:20 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -287,3 +287,18 @@ end;
 // 
 define abstract class <join-assignment> (<abstract-assignment>)
 end;
+
+// Seals for file data-flow.dylan
+
+// <dependency> -- subclass of <object>
+define sealed domain make(singleton(<dependency>));
+define sealed domain initialize(<dependency>);
+// <ssa-variable> -- subclass of <definition-site-variable>
+define sealed domain make(singleton(<ssa-variable>));
+// <initial-definition> -- subclass of <definition-site-variable>
+define sealed domain make(singleton(<initial-definition>));
+// <initial-variable> -- subclass of <multi-definition-variable>
+define sealed domain make(singleton(<initial-variable>));
+// <join-operation> -- subclass of <operation>
+define sealed domain make(singleton(<join-operation>));
+define sealed domain initialize(<join-operation>);

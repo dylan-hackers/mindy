@@ -1,5 +1,5 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.11 1996/03/17 00:31:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.12 1996/03/20 22:30:07 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -106,3 +106,12 @@ add-od-loader(*compiler-dispatcher*, #"define-binding-tlf",
 		note-variable-definition(defn);
 		defn;
 	      end);
+
+// Seals for file tlf.dylan
+
+// <define-class-tlf> -- subclass of <simple-define-tlf>
+define sealed domain make(singleton(<define-class-tlf>));
+define sealed domain initialize(<define-class-tlf>);
+// <magic-interal-primitives-placeholder> -- subclass of <top-level-form>
+define sealed domain make(singleton(<magic-interal-primitives-placeholder>));
+define sealed domain initialize(<magic-interal-primitives-placeholder>);
