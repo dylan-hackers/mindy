@@ -6,10 +6,7 @@ if ($features{'compiled_for_unix'}) {
     &unknown_platform_error();
 }
 
-$D2CFLAGS = "$D2CFLAGS -L../standard-io -L../format-out -L.";
-
-&emit_library_rule('base-file-system', '$(BUILDROOT)/force.timestamp',
-		   '', 'compile', 'compile-mindy', 'install');
+$D2CFLAGS = "$D2CFLAGS -L../standard-io -L../format-out -L../file-system-base";
 
 &emit_library_rule($system_lid_file, '$(BUILDROOT)/force.timestamp', '',
                    'compile', 'no-mindy', 'install');
