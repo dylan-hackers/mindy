@@ -1346,13 +1346,88 @@ define generic combine-regions
 
 define method combine-regions
     (first :: <region>, second :: <region>) => res :: <region>;
-  first.parent := second.parent
-    := make(<compound-region>, regions: list(first, second));
+  let merged = combine-regions-aux(first, second);
+  if (merged)
+    merged;
+  else
+    let compound = make(<compound-region>, regions: list(first, second));
+    first.parent := second.parent := compound;
+    compound;
+  end;
 end;
 
 define method combine-regions
+    (first :: <region>, second :: <compound-region>) => res :: <region>;
+  if (instance?(second, <empty-region>))
+    first;
+  else
+    let regions = second.regions;
+    let merged = combine-regions-aux(first, regions.head);
+    if (merged)
+      regions.head := merged;
+      merged.parent := second;
+    else
+      second.regions := pair(first, regions);
+      first.parent := second;
+    end;
+    second;
+  end;
+end;
+
+define method combine-regions
+    (first :: <compound-region>, second :: <region>) => res :: <region>;
+  if (instance?(first, <empty-region>))
+    second;
+  else
+    for (scan = first.regions.tail then scan.tail,
+	 prev = first.regions then scan,
+	 until: scan == #())
+    finally
+      let merged = combine-regions-aux(prev.head, second);
+      if (merged)
+	prev.head := merged;
+	merged.parent := first;
+      else
+	prev.tail := list(second);
+	second.parent := first;
+      end;
+    end;
+    first;
+  end;
+end;
+
+define method combine-regions
+    (first :: <compound-region>, second :: <compound-region>)
+    => res :: <region>;
+  if (instance?(first, <empty-region>))
+    second;
+  elseif (instance?(second, <empty-region>))
+    first;
+  else
+    for (scan = first.regions.tail then scan.tail,
+	 prev = first.regions then scan,
+	 until: scan == #())
+    finally
+      let merged = combine-regions-aux(prev.head, second.regions.head);
+      if (merged)
+	prev.head := merged;
+	merged.parent := first;
+	prev.tail := second.regions.tail;
+      else
+	prev.tail := second.regions;
+      end;
+      for (region in prev.tail)
+	region.parent := first;
+      end;
+    end;
+    first;
+  end;
+end;
+
+
+define method combine-regions-aux
     (first :: <simple-region>, second :: <simple-region>)
-    => res :: <simple-region>;
+    => res :: false-or(<simple-region>);
   let last-of-first = first.last-assign;
   let first-of-second = second.first-assign;
 
@@ -1369,62 +1444,10 @@ define method combine-regions
   first;
 end;
 
-define method combine-regions
-    (first :: <compound-region>, second :: <compound-region>)
-    => res :: <compound-region>;
-  let new-regions = second.regions;
-  first.regions := concatenate(first.regions, new-regions);
-  for (reg in new-regions)
-    reg.parent := first;
-  end;
-  first;
-end;
-
-define method combine-regions
-    (first :: <compound-region>, second :: <region>)
-    => res :: <compound-region>;
-  first.regions := concatenate(first.regions, list(second));
-  second.parent := first;
-  first;
-end;
-
-define method combine-regions
-    (first :: <region>, second :: <compound-region>)
-    => res :: <compound-region>;
-  second.regions := pair(first, second.regions);
-  first.parent := second;
-  second;
-end;
-
-
-define method combine-regions
-    (first :: <empty-region>, second :: <empty-region>)
-    => res :: <empty-region>;
-  make(<empty-region>);
-end;
-
-define method combine-regions
-    (first :: <empty-region>, second :: <region>)
-    => res :: <region>;
-  second;
-end;
-
-define method combine-regions
-    (first :: <region>, second :: <empty-region>)
-    => res :: <region>;
-  first;
-end;
-
-define method combine-regions
-    (first :: <empty-region>, second :: <compound-region>)
-    => res :: <region>;
-  second;
-end;
-
-define method combine-regions
-    (first :: <compound-region>, second :: <empty-region>)
-    => res :: <region>;
-  first;
+define method combine-regions-aux
+    (first :: <region>, second :: <region>)
+    => res :: false-or(<simple-region>);
+  #f;
 end;
 
 // split-after - internal
@@ -1562,49 +1585,41 @@ define method replace-subregion
     error("Replacing unknown region");
   end;
   new.parent := region;
-end;
-
-define method replace-subregion
-    (component :: <component>, region :: <if-region>, old :: <region>,
-     new :: <empty-region>,
-     #next next-method)
-    => ();
-  next-method();
-  queue-dependent(component, region);
+  if (instance?(region.then-region, <empty-region>)
+	& instance?(region.else-region, <empty-region>))
+    queue-dependent(component, region);
+  end;
 end;
 
 define method replace-subregion
     (component :: <component>, region :: <compound-region>, old :: <region>,
      new :: <region>)
     => ();
-  for (regions = region.regions then regions.tail,
-       until: regions == #() | regions.head == old)
+  for (scan = region.regions then scan.tail,
+       prev = #f then scan,
+       until: scan == #() | scan.head == old)
   finally
-    if (regions == #())
+    if (scan == #())
       error("Replacing unknown region");
     end;
-    regions.head := new;
-  end;
-  new.parent := region;
-end;
+    let before-split
+      = if (prev)
+	  prev.tail := #();
+	  region;
+	else
+	  make(<empty-region>);
+	end;
 
-define method replace-subregion
-    (component :: <component>, region :: <compound-region>, old :: <region>,
-     new :: <empty-region>)
-    => ();
-  for (regions = region.regions then regions.tail,
-       prev = #f then regions,
-       until: regions == #() | regions.head == old)
-  finally
-    if (regions == #())
-      error("Replacing unknown region");
+    let after-splice = make(<compound-region>, regions: scan.tail);
+    for (sub-region in after-splice.regions)
+      sub-region.parent := after-splice;
     end;
-    if (prev)
-      prev.tail = regions.tail;
-    elseif (regions.tail == #())
-      replace-subregion(component, region.parent, region, new);
-    else
-      region.regions := regions.tail;
+
+    let parent = region.parent;
+    let combo = combine-regions(before-split,
+				combine-regions(new, after-splice));
+    unless (combo == region)
+      replace-subregion(component, parent, region, combo);
     end;
   end;
 end;
