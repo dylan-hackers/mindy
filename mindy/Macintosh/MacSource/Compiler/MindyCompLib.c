@@ -34,7 +34,7 @@ void FinalizeAnsi( void );
 
 jmp_buf		gJmp;
 int			gStatus;
-FILE* 		gSTDERR;
+FILE 		gSTDERR;
 
 
 /* functions */
@@ -43,7 +43,7 @@ FILE* 		gSTDERR;
 
 int MindyComp( int argc, char *argv[], FILE * newStderr )
 {
-	int result;						/* For the setjmp result */
+	int result;							/* For the setjmp result */
 
 	InitializeAnsi( newStderr );
 	
@@ -71,14 +71,13 @@ void exit( int code )
 
 void InitializeAnsi( FILE * newStderr )
 {
-	*gSTDERR = *stderr;
+	gSTDERR = *stderr;
 	*stderr = *newStderr;
 }
 
 void FinalizeAnsi( void )
 {
-	*stderr = *gSTDERR;
+	*stderr = gSTDERR;
 	__close_all();
-	
 	free_all_alloc_pools();
 }
