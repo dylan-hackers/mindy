@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.2 1996/08/22 18:32:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/optimize-exports.dylan,v 1.3 1997/02/04 14:39:40 nkramer Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,8 +20,8 @@ define module cheese
   use utils;
   use errors;
   use compile-time-values;
-  use target-environment,
-    import: {*current-target*, target-integer-length};
+  use platform,
+    import: {*current-target*, platform-integer-length};
   use names;
   use definitions;
   use variables, exclude: {<renaming>};

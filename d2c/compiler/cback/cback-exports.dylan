@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.16 1996/11/04 19:18:09 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.17 1997/02/04 14:39:20 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -38,8 +38,8 @@ define module cback
   use common;
   use compile-time-functions;
   use compile-time-values;
-  use target-environment,
-    import: {*current-target*, target-integer-length};
+  use platform,
+    import: {*current-target*, platform-integer-length};
   use ctype;
   use definitions;
   // use define-functions;
@@ -93,7 +93,7 @@ define module heap
   // use define-classes;
   use cback;
   use od-format;
-  use target-environment;
+  use platform;
 
   export
     build-global-heap, build-local-heap;

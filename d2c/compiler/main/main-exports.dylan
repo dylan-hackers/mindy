@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.17 1996/10/18 14:58:41 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.18 1997/02/04 14:39:36 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -66,7 +66,7 @@ define module main
   use macros;
   use fragments;
   use parse-tree, exclude: {primitive-name};
-  use target-environment;
+  use platform;
   use file-system;
   use extensions, import: {key-exists?};
 end;
