@@ -50,7 +50,9 @@ OBJS = \
 	ctfunc.dbc \
 	data-flow.dbc \
 	control-flow.dbc \
-	signature.dbc
+	signature.dbc \
+	ini-files.dbc \
+	target.dbc
 
 baselib.dbc: ${OBJS}
 	cat $^ > $@
