@@ -1005,6 +1005,9 @@
 #	define OS_TYPE "FREEBSD"
 #	define MPROTECT_VDB
 #	define FREEBSD_STACKBOTTOM
+#	ifdef __ELF__
+#	    define DYNAMIC_LOADING
+#	endif
 #   endif
 #   ifdef NETBSD
 #	define OS_TYPE "NETBSD"
