@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.5 1996/10/02 16:17:41 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.6 1997/02/10 03:55:19 rgs Exp $
 
 //======================================================================
 //
@@ -319,7 +319,7 @@ end method import-value;
 // Explicitly destroys C pointers, since we cannot garbage collect them.
 //
 define method destroy (ptr :: <statically-typed-pointer>) => ();
-  call-out("free", void:, ptr: ptr.raw-value);
+  call-out("GC_free", void:, ptr: ptr.raw-value);
 end method destroy;
 
 define functional class <machine-pointer> (<statically-typed-pointer>) 
