@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.7 2001/03/17 03:43:36 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/type.dylan,v 1.8 2002/03/30 01:48:13 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -58,15 +58,15 @@ define generic limited (type :: <type>, #key) => res :: <type>;
 //
 define class <union> (<type>)
   //
-  // List of non-singleton types that make up this union type.  None of these
+  // Vector of non-singleton types that make up this union type.  None of these
   // types will be subtype? any of the others and <union> types will be
   // expanded.
-  slot union-members :: <sequence>, setter: #f,
+  constant slot union-members :: <simple-object-vector>,
     init-value: #[], init-keyword: members:;
   //
-  // List of the singletons that are part of this union type.  Note: these are
+  // Vector of the singletons that are part of this union type.  Note: these are
   // the actual objects, not the singleton types.
-  slot union-singletons :: <sequence>, setter: #f,
+  constant slot union-singletons :: <simple-object-vector>,
     init-value: #[], init-keyword: singletons:;
 end;
 
