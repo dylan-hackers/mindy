@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.54 2002/09/20 23:43:49 andreas Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.55 2002/10/31 20:59:55 housel Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -47,23 +47,21 @@
 
 // Processor architectures:
 //
-// Mandatory keywords:
-//
 // integer-length: [integer] The number of bits in a machine integer.
 //
 // big-endian?: Specifies the endianness of the machine.  #t for big, #f
-// for little.  WARNING: there might be places in the compiler where this
-// flag is ignored.
+// for little.  (Note that this information is currently not used.)
 //
 // pointer-size: Specifies the size, in bytes, of a 'void *' pointer.
-// integer-size: Same for 'int's
-// long-size: Same for 'long's
-// single-size: Same for 'float's
-// double-size: Same for 'double's
-// long-double-size: Same for 'long double's
+// pointer-alignment: Specifies the alignment divisor, in bytes, of a 'void *'
+// integer-size:, integer-alignment: Same for 'int's
+// long-size:, long-alignment: Same for 'long's
+// long-long-size:, long-long-alignment: Same for 'long long's (if available)
+// single-size:, single-alignment:  Same for 'float's
+// double-size:, double-alignment: Same for 'double's
+// long-double-size:, long-double-alignment: Same for 'long double's
 
 // 32-bit
-// heap.dylan says gcc doesn't use extended floats for long doubles.
 //
 platform-name:			32-bit
 integer-length:			32
@@ -73,6 +71,7 @@ long-size:			4
 integer-size:			4
 single-size:			4
 double-size:			8
+double-alignment:		4
 long-double-size:		8
 
 // Intel 80386 or higher:
@@ -81,6 +80,7 @@ inherit-from:			32-bit
 default-features:		compiled-for-x86
 big-endian?:			#f
 long-double-size:		12
+long-double-alignment:		4
 
 // SPARC:
 platform-name:			sparc
@@ -484,14 +484,20 @@ path-separator:        		/
 platform-name:			x86-linux-gcc
 inherit-from:			gcc linux x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+long-long-size:			8
+long-long-alignment:		4
 
 platform-name:			x86-bsdi-gcc
 inherit-from:			gcc bsdi x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+long-long-size:			8
+long-long-alignment:		4
 
 platform-name:			x86-netbsd-gcc
 inherit-from:			gcc netbsd x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+long-long-size:			8
+long-long-alignment:		4
 
 platform-name:			x86-beos-gcc
 // Note:  These rules depend on the presence of the MingW utilities in your
@@ -504,19 +510,25 @@ link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
 platform-name:                 ppc-linux-gcc-3.0
 inherit-from:                  gcc-3.0 linux ppc
 link-shared-library-command:    $(LIBTOOL) gcc-3.0 -o %s %s -rpath %s
+long-long-size:			8
+long-long-alignment:		4
 
 // FreeBSD 2.x
 platform-name:			x86-freebsd-aout-gcc
 inherit-from:			gcc freebsd x86
 
-// FreeBSD 3.x
+// FreeBSD 3.x and above
 platform-name:			x86-freebsd-elf-gcc
 inherit-from:			gcc freebsd x86
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+long-long-size:			8
+long-long-alignment:		4
 
 platform-name:			ppc-linux-gcc
 inherit-from:			gcc linux ppc
 link-shared-library-command:    $(LIBTOOL) gcc -o %s %s -rpath %s
+long-long-size:			8
+long-long-alignment:		4
 
 platform-name:			alpha-linux-gcc
 inherit-from:			gcc linux alpha

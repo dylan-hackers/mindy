@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.42 2002/09/09 22:02:43 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.43 2002/10/31 20:59:55 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1413,8 +1413,19 @@ end;
 define method emit-prologue
     (file :: <file-state>, other-units :: <simple-object-vector>)
     => ();
+  maybe-emit-include("stddef.h", file);
   maybe-emit-include("stdlib.h", file);
-  maybe-emit-include("stdio.h", file);
+
+  if (instance?(*double-rep*, <c-data-word-representation>))
+    format(file.file-body-stream, "#define GD_DATAWORD_D\n");
+  end;
+  if (instance?(*long-double-rep*, <c-data-word-representation>))
+    format(file.file-body-stream, "#define GD_DATAWORD_X\n");
+  end;
+  if (*current-target*.long-long-size)
+    format(file.file-body-stream, "#define GD_HAVE_LONG_LONG\n");
+  end;
+  
   maybe-emit-include("runtime.h", file, left: '"', right: '"');
  
   // The most important thing math.h includes is a prototype for rint,
@@ -1433,6 +1444,32 @@ define method emit-prologue
   format(stream, "#define GENERIC_ENTRY(func) \\\n");
   format(stream, "    ((entry_t)SLOT(func, void *, %d))\n\n",
 	 dylan-slot-offset(specifier-type(#"<method>"), #"generic-entry"));
+
+  format(stream, "#define GD_CTASSERT(name, x) \\\n"
+                 "    typedef char gd_assert_ ## name[(x) ? 1 : -1];\n");
+
+  format(stream, "#define GD_VERIFY_SIZE_ASSUMPTION(name, type, size)\\\n");
+  format(stream, "    GD_CTASSERT(size_ ## name, sizeof(type) == (size))\n");
+
+  format(stream, "#define GD_VERIFY_ALIGN_ASSUMPTION(name, type, align)\\\n");
+  format(stream, "    typedef struct { char c; type x; } \\\n");
+  format(stream, "      gd_align_ ## name; \\\n");
+  format(stream, "    GD_CTASSERT(align_ ## name, "
+                 "offsetof(gd_align_ ## name, x) == (align))\n\n");
+
+  for(c-type in #[#"general", #"heap", #"boolean", #"long-long", #"long",
+                  #"int", #"unsigned-int", #"short", #"unsigned-short",
+                  #"float", #"double", #"long-double", #"ptr"])
+    let rep = c-rep(c-type);
+    if (rep)
+      format(stream, "GD_VERIFY_SIZE_ASSUMPTION(%s, %s, %d);\n",
+             string-to-c-name(as(<string>, rep.representation-name)),
+             rep.representation-c-type, rep.representation-size);
+      format(stream, "GD_VERIFY_ALIGN_ASSUMPTION(%s, %s, %d);\n",
+             string-to-c-name(as(<string>, rep.representation-name)),
+             rep.representation-c-type, rep.representation-alignment);
+    end if;
+  end for;
 end;
 
 define method dylan-slot-offset (cclass :: <cclass>, slot-name :: <symbol>)
@@ -1499,6 +1536,30 @@ define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
   format(gstream, "return sp + elements;\n");
   write(bstream, get-string(gstream));
   format(bstream, "}\n\n");
+
+  begin
+    let cclass = specifier-type(#"<double-integer>");
+    let c-type = cclass.direct-speed-representation.representation-c-type;
+    format(bstream, "heapptr_t make_double_integer(%s value)\n{\n", c-type);
+    format(gstream, "heapptr_t res = allocate(%d);\n",
+           cclass.instance-slots-layout.layout-length);
+
+    let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
+    let (c-code, temp?) = conversion-expr(*heap-rep*, expr, rep, file);
+    format(gstream, "SLOT(res, heapptr_t, %d) = %s;\n",
+           dylan-slot-offset(cclass, #"%object-class"),
+           c-code);
+    let value-offset = dylan-slot-offset(cclass, #"value");
+    format(gstream, "SLOT(res, %s, %d) = value;\n", c-type, value-offset);
+    format(gstream, "return res;\n");
+    write(bstream, get-string(gstream));
+    format(bstream, "}\n\n");
+
+    format(bstream, "%s double_integer_value(heapptr_t df)\n{\n", c-type);
+    format(gstream, "return SLOT(df, %s, %d);\n", c-type, value-offset);
+    write(bstream, get-string(gstream));
+    format(bstream, "}\n\n");
+  end;
 
   unless (instance?(*double-rep*, <c-data-word-representation>))
     let cclass = specifier-type(#"<double-float>");

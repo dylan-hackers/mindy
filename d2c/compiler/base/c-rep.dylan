@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.9 2002/01/29 00:51:03 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.10 2002/10/31 20:59:55 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -39,6 +39,8 @@ define variable *int-alignment* = #f;
 define variable *int-size* = #f;
 define variable *long-alignment* = #f;
 define variable *long-size* = #f;
+define variable *long-long-alignment* = #f;
+define variable *long-long-size* = #f;
 define variable *single-alignment* = #f;
 define variable *single-size* = #f;
 define variable *double-alignment* = #f;
@@ -47,6 +49,7 @@ define variable *long-double-alignment* = #f;
 define variable *long-double-size* = #f;
 
 define variable *data-word-size* = #f;
+define variable *data-word-alignment* = #f;
 
 define abstract class <c-representation>
     (<representation>, <identity-preserving-mixin>)
@@ -119,6 +122,7 @@ define variable *general-rep* :: false-or(<c-representation>) = #f;
 define variable *heap-rep* :: false-or(<c-representation>) = #f;
 define variable *boolean-rep* :: false-or(<c-representation>) = #f;
 
+define variable *long-long-rep* :: false-or(<c-representation>) = #f;
 define variable *long-rep* :: false-or(<c-representation>) = #f;
 define variable *int-rep* :: false-or(<c-representation>) = #f;
 define variable *uint-rep* :: false-or(<c-representation>) = #f;
@@ -148,21 +152,41 @@ define method seed-representations () => ();
       class.general-space-representation := space-rep;
     end;
 
-  *pointer-alignment* := *current-target*.pointer-size;
   *pointer-size* := *current-target*.pointer-size;
-  *short-alignment* := *current-target*.short-size;
+  *pointer-alignment*
+    := *current-target*.pointer-alignment | *current-target*.pointer-size;
+  
   *short-size* := *current-target*.short-size;
-  *int-alignment* := *current-target*.integer-size;
+  *short-alignment*
+    := *current-target*.short-alignment | *current-target*.short-size;
+  
   *int-size* := *current-target*.integer-size;
-  *long-alignment* := *current-target*.long-size;
+  *int-alignment*
+    := *current-target*.integer-alignment | *current-target*.integer-size;
+  
   *long-size* := *current-target*.long-size;
-  *single-alignment* := *current-target*.single-size;
+  *long-alignment*
+    := *current-target*.long-alignment | *current-target*.long-size;
+  
+  *long-long-size* := *current-target*.long-long-size;
+  *long-long-alignment*
+    := *current-target*.long-long-alignment | *current-target*.long-long-size;
+
   *single-size* := *current-target*.single-size;
-  *double-alignment* := *current-target*.double-size;
+  *single-alignment*
+    := *current-target*.single-alignment | *current-target*.single-size;
+
   *double-size* := *current-target*.double-size;
-  *long-double-alignment* := *current-target*.long-double-size;
+  *double-alignment*
+    := *current-target*.double-alignment | *current-target*.double-size;
+
   *long-double-size* := *current-target*.long-double-size;
+  *long-double-alignment*
+    := *current-target*.long-double-alignment
+    | *current-target*.long-double-size;
+
   *data-word-size* := max(*pointer-size*, *long-size*);
+  *data-word-alignment* := max(*pointer-alignment*, *long-alignment*);
 
   unless (*general-rep*)
     *general-rep*
@@ -192,6 +216,25 @@ define method seed-representations () => ();
     set-representations(dylan-value(#"<boolean>"), *boolean-rep*, space-rep);
     set-representations(dylan-value(#"<true>"), *boolean-rep*, space-rep);
     set-representations(dylan-value(#"<false>"), *boolean-rep*, space-rep);
+  end;
+  unless (*long-long-rep*)
+    let double-int-cclass = dylan-value(#"<double-integer>");
+    if (*long-long-size*)
+      *long-long-rep*
+        := make(<immediate-representation>, name: #"long-long",
+                alignment: *long-long-alignment*, size: *long-long-size*,
+                more-general: *heap-rep*, c-type: "long long",
+                to-more-general: "make_double_integer(%s)",
+                from-more-general: "double_integer_value(%s)");
+    else
+      *long-long-rep*
+        := make(<immediate-representation>, name: #"long-long",
+                alignment: *long-alignment*, size: *long-size* + *long-size*,
+                more-general: *heap-rep*, c-type: "gd_long_long",
+                to-more-general: "make_double_integer(%s)",
+                from-more-general: "double_integer_value(%s)");
+    end;
+    set-representations(double-int-cclass, *long-long-rep*, *long-long-rep*);
   end;
   begin
     let fixed-int-cclass = dylan-value(#"<integer>");
@@ -255,7 +298,8 @@ define method seed-representations () => ();
   unless (*double-rep*)
     let df-class = dylan-value(#"<double-float>");
     let df-rep
-      = if (*double-size* > *data-word-size*)
+      = if (*double-size* > *data-word-size*
+              | *double-alignment* > *data-word-alignment*)
 	  make(<immediate-representation>, name: #"double",
 	       more-general: *heap-rep*,
 	       to-more-general: "make_double_float(%s)",
@@ -275,7 +319,8 @@ define method seed-representations () => ();
   unless (*long-double-rep*)
     let xf-class = dylan-value(#"<extended-float>");
     let xf-rep
-      = if (*long-double-size* > *data-word-size*)
+      = if (*long-double-size* > *data-word-size*
+              | *long-double-alignment* > *data-word-alignment*)
 	  make(<immediate-representation>, name: #"long-double",
 	       more-general: *heap-rep*,
 	       to-more-general: "make_extended_float(%s)",
@@ -309,6 +354,7 @@ define method c-rep (c-type :: <symbol>) => rep :: false-or(<representation>);
     #"general", #"object" => *general-rep*;
     #"heap" => *heap-rep*;
     #"boolean" => *boolean-rep*;
+    #"long-long" => *long-long-rep*;
     #"long" => *long-rep*;
     #"int" => *int-rep*;
     #"uint", #"unsigned-int" => *uint-rep*;
@@ -579,6 +625,7 @@ define method set-name-and-remember
       #"general" => assert(~*general-rep*); *general-rep* := rep;
       #"heap" => assert(~*heap-rep*); *heap-rep* := rep;
       #"boolean" => assert(~*boolean-rep*); *boolean-rep* := rep;
+      #"long-long" => assert(~*long-long-rep*); *long-long-rep* := rep;
       #"long" => assert(~*long-rep*); *long-rep* := rep;
       #"int" => assert(~*int-rep*); *int-rep* := rep;
       #"uint" => assert(~*uint-rep*); *uint-rep* := rep;

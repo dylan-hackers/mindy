@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.7 2002/08/24 14:38:07 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bignum.dylan,v 1.8 2002/10/31 20:59:56 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -81,8 +81,9 @@ define sealed domain \< (<object>, <digit>);
 //
 // Make a digit from the low bits of a fixed integer.
 // 
-define inline method make-digit (num :: <integer>)
-    => res :: <digit>;
+define inline method make-digit
+    (num :: type-union(<integer>, <double-integer>))
+ => (res :: <digit>);
   make(<digit>, value: logand(num, $digit-mask));
 end;
 
@@ -380,6 +381,57 @@ define method as (class == <integer>, num :: <extended-integer>)
         end;
       end;
     repeat(len - 2, as-signed(bignum-digit(num, len - 1)));
+  end;
+end;
+
+define method as (class == <extended-integer>, num :: <double-integer>)
+    => res :: <extended-integer>;
+  //
+  // To convert a doube integer into an extended integer, we recurse to
+  // find how many digits we need, create a bignum, and then fill it in
+  // on the way back out of the recursion.
+  let sign = ash(num, 1 - $double-integer-bits);
+  local method loop(n :: <double-integer>, len :: <integer>)
+          let res = if (ash(n, 1 - $digit-bits) = sign)
+                      make-bignum(len + 1);
+                    else
+                      loop(ash(n, -$digit-bits), len + 1);
+                    end;
+          bignum-digit(res, len) := make-digit(n);
+          res;
+        end;
+  loop(num, 0);
+end;
+
+define method as (class == <double-integer>, num :: <extended-integer>)
+    => res :: <double-integer>;
+  //
+  // To convert an extended integer into a fixnum, we just combine the digits
+  // by shifting and logior-ing.  We use as-signed on the most significant
+  // digit because that is the digit that has the sign bit in it.
+  //
+  let len = bignum-size(num);
+  if (len = 1)
+    as(<double-integer>, bignum-digit(num, 0).as-signed);
+  elseif (len = 2)
+    as(<double-integer>, as-signed-2(bignum-digit(num, 1),
+                                     bignum-digit(num, 0)));
+  elseif (len * $digit-bits > $double-integer-bits)
+    // TODO: make extended constants for min/max
+    error("%= can't be represented as a <integer>", num);
+  else
+    local
+      method repeat (index :: <integer>, result :: <double-integer>)
+        if (negative?(index))
+          result;
+        else
+          repeat(index - 1,
+                 logior(ash(result, $digit-bits),
+                        as-unsigned(bignum-digit(num, index))));
+        end;
+      end;
+    repeat(len - 2,
+           as(<double-integer>, as-signed(bignum-digit(num, len - 1))));
   end;
 end;
 
@@ -1566,6 +1618,16 @@ define inline method \* (a :: <integer>, b :: <extended-integer>)
   as(<extended-integer>, a) * b;
 end;
 
+define inline method \* (a :: <extended-integer>, b :: <double-integer>)
+    => res :: <extended-integer>;
+  a * as(<extended-integer>, b);
+end;
+
+define inline method \* (a :: <double-integer>, b :: <extended-integer>)
+    => res :: <extended-integer>;
+  as(<extended-integer>, a) * b;
+end;
+
 define inline method \* (a :: <extended-integer>, b :: <single-float>)
     => res :: <single-float>;
   as(<single-float>, a) * b;
@@ -1666,78 +1728,86 @@ define inline method \/ (a :: <extended-float>, b :: <extended-integer>)
   a / as(<extended-float>, b);
 end;
 
-define inline method floor/ (a :: <extended-integer>, b :: <integer>)
-    => (quo :: <extended-integer>, rem :: <extended-integer>);
+define inline method floor/
+    (a :: <extended-integer>, b :: type-union(<integer>, <double-integer>))
+ => (quo :: <extended-integer>, rem :: <extended-integer>);
   floor/(a, as(<extended-integer>, b));
 end;
 
-define inline method floor/ (a :: <integer>, b :: <extended-integer>)
-    => (quo :: <extended-integer>, rem :: <extended-integer>);
+define inline method floor/
+    (a :: type-union(<integer>, <double-integer>), b :: <extended-integer>)
+ => (quo :: <extended-integer>, rem :: <extended-integer>);
   floor/(as(<extended-integer>, a), b);
 end;
 
-define inline method ceiling/ (a :: <extended-integer>, b :: <integer>)
-    => (quo :: <extended-integer>, rem :: <extended-integer>);
+define inline method ceiling/
+    (a :: <extended-integer>, b :: type-union(<integer>, <double-integer>))
+ => (quo :: <extended-integer>, rem :: <extended-integer>);
   ceiling/(a, as(<extended-integer>, b));
 end;
 
-define inline method ceiling/ (a :: <integer>, b :: <extended-integer>)
-    => (quo :: <extended-integer>, rem :: <extended-integer>);
+define inline method ceiling/
+    (a :: type-union(<integer>, <double-integer>), b :: <extended-integer>)
+ => (quo :: <extended-integer>, rem :: <extended-integer>);
   ceiling/(as(<extended-integer>, a), b);
 end;
 
-define inline method round/ (a :: <extended-integer>, b :: <integer>)
+define inline method round/
+    (a :: <extended-integer>, b :: type-union(<integer>, <double-integer>))
     => (quo :: <extended-integer>, rem :: <extended-integer>);
   round/(a, as(<extended-integer>, b));
 end;
 
-define inline method round/ (a :: <integer>, b :: <extended-integer>)
-    => (quo :: <extended-integer>, rem :: <extended-integer>);
+define inline method round/
+    (a :: type-union(<integer>, <double-integer>), b :: <extended-integer>)
+ => (quo :: <extended-integer>, rem :: <extended-integer>);
   round/(as(<extended-integer>, a), b);
 end;
 
-define inline method truncate/ (a :: <extended-integer>, b :: <integer>)
-    => (quo :: <extended-integer>, rem :: <extended-integer>);
+define inline method truncate/
+    (a :: <extended-integer>, b :: type-union(<integer>, <double-integer>))
+ => (quo :: <extended-integer>, rem :: <extended-integer>);
   truncate/(a, as(<extended-integer>, b));
 end;
 
-define inline method truncate/ (a :: <integer>, b :: <extended-integer>)
-    => (quo :: <extended-integer>, rem :: <extended-integer>);
+define inline method truncate/
+    (a :: type-union(<integer>, <double-integer>), b :: <extended-integer>)
+ => (quo :: <extended-integer>, rem :: <extended-integer>);
   truncate/(as(<extended-integer>, a), b);
 end;
 
 define inline method binary-logior
-    (a :: <extended-integer>, b :: <integer>)
+    (a :: <extended-integer>, b :: type-union(<integer>, <double-integer>))
     => res :: <extended-integer>;
   binary-logior(a, as(<extended-integer>, b));
 end;
 
 define inline method binary-logior
-    (a :: <integer>, b :: <extended-integer>)
+    (a :: type-union(<integer>, <double-integer>), b :: <extended-integer>)
     => res :: <extended-integer>;
   binary-logior(as(<extended-integer>, a), b);
 end;
 
 define inline method binary-logxor
-    (a :: <extended-integer>, b :: <integer>)
+    (a :: <extended-integer>, b :: type-union(<integer>, <double-integer>))
     => res :: <extended-integer>;
   binary-logxor(a, as(<extended-integer>, b));
 end;
 
 define inline method binary-logxor
-    (a :: <integer>, b :: <extended-integer>)
+    (a :: type-union(<integer>, <double-integer>), b :: <extended-integer>)
     => res :: <extended-integer>;
   binary-logxor(as(<extended-integer>, a), b);
 end;
 
 define inline method binary-logand
-    (a :: <extended-integer>, b :: <integer>)
-    => res :: <extended-integer>;
+    (a :: <extended-integer>, b :: type-union(<integer>, <double-integer>))
+ => (res :: <extended-integer>);
   binary-logand(a, as(<extended-integer>, b));
 end;
 
 define inline method binary-logand
-    (a :: <integer>, b :: <extended-integer>)
-    => res :: <extended-integer>;
+    (a :: type-union(<integer>, <double-integer>), b :: <extended-integer>)
+ => (res :: <extended-integer>);
   binary-logand(as(<extended-integer>, a), b);
 end;

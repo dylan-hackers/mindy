@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.7 2002/08/24 14:38:07 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.8 2002/10/31 20:59:56 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -622,6 +622,276 @@ define method integer-length (x :: <integer>) => res :: <integer>;
   end for;
 end method integer-length;
 
+
+
+// Double Integers.
+define constant $double-integer-bits = $fixed-integer-bits * 2;
+
+define functional class <double-integer> (<general-integer>)
+  slot value :: <double-integer>, init-value: 0;
+end;
+
+define sealed method make (class == <double-integer>, #key)
+    => res :: <never-returns>;
+  error("Can't make instances of <double-integer>, they just are.");
+end;
+
+define sealed domain as (singleton(<integer>), <double-integer>);
+
+define inline method as (class == <integer>, num :: <double-integer>)
+    => res :: <integer>;
+  %%primitive(dblfix-as-fixed, num);
+end;
+
+define sealed domain as (singleton(<double-integer>), <integer>);
+
+define inline method as (class == <double-integer>, num :: <integer>)
+    => res :: <integer>;
+  %%primitive(fixed-as-dblfix, num);
+end;
+
+define inline method \== (a :: <double-integer>, b :: <double-integer>)
+    => res :: <boolean>;
+  %%primitive(dblfix-=, a, b);
+end;
+
+define inline method \== (a :: <double-integer>, b :: <object>)
+    => res :: <boolean>;
+  #f;
+end;
+
+define inline method \< (a :: <double-integer>, b :: <double-integer>)
+    => res :: <boolean>;
+  %%primitive(dblfix-<, a, b);
+end;
+
+define inline method \< (a :: <integer>, b :: <double-integer>)
+    => res :: <boolean>;
+  let dbl-a = as(<double-integer>, a);
+  %%primitive(dblfix-<, dbl-a, b);
+end;
+
+define inline method \< (a :: <double-integer>, b :: <integer>)
+    => res :: <boolean>;
+  let dbl-b = as(<double-integer>, b);
+  %%primitive(dblfix-<, a, dbl-b);
+end;
+
+define inline method \+ (a :: <double-integer>, b :: <double-integer>)
+    => res :: <double-integer>;
+  %%primitive(dblfix-+, a, b);
+end;
+
+define inline method \+ (a :: <integer>, b :: <double-integer>)
+    => res :: <double-integer>;
+  let dbl-a = as(<double-integer>, a);
+  %%primitive(dblfix-+, dbl-a, b);
+end;
+
+define inline method \+ (a :: <double-integer>, b :: <integer>)
+    => res :: <double-integer>;
+  let dbl-b = as(<double-integer>, b);
+  %%primitive(dblfix-+, a, dbl-b);
+end;
+
+define inline method \* (a :: <double-integer>, b :: <double-integer>)
+    => res :: <double-integer>;
+  %%primitive(dblfix-*, a, b);
+end;
+
+define inline method \* (a :: <integer>, b :: <double-integer>)
+    => res :: <double-integer>;
+  let dbl-a = as(<double-integer>, a);
+  %%primitive(dblfix-*, dbl-a, b);
+end;
+
+define inline method \* (a :: <double-integer>, b :: <integer>)
+    => res :: <double-integer>;
+  let dbl-b = as(<double-integer>, b);
+  %%primitive(dblfix-*, a, dbl-b);
+end;
+
+define inline method \- (a :: <double-integer>, b :: <double-integer>)
+    => res :: <double-integer>;
+  %%primitive(dblfix--, a, b);
+end;
+
+define inline method \- (a :: <integer>, b :: <double-integer>)
+    => res :: <double-integer>;
+  let dbl-a = as(<double-integer>, a);
+  %%primitive(dblfix--, dbl-a, b);
+end;
+
+define inline method \- (a :: <double-integer>, b :: <integer>)
+    => res :: <double-integer>;
+  let dbl-b = as(<double-integer>, b);
+  %%primitive(dblfix--, a, dbl-b);
+end;
+
+define inline method negative (a :: <double-integer>)
+    => res :: <double-integer>;
+  %%primitive(dblfix-negative, a);
+end;
+
+// floor/{<double-integer>,<double-integer>}
+//
+// Divide a by b, rounding towards negative infinity.
+//
+define method floor/ (a :: <double-integer>, b :: <double-integer>)
+    => (quo :: <double-integer>, rem :: <double-integer>);
+  //
+  // Start with whatever truncate gives us.
+  let (q, r) = truncate/(a, b);
+  //
+  if (zero?(r)) 
+    // If we didn't have to round, then we are sitting pretty.
+    values(q, r);
+    
+  elseif (negative?(logxor(r, b)))
+    // If the sign of the remainder and the sign of b are not the same,
+    // then we rounded up instead of down.  We compare the signs by
+    // looking at the sign bit of their exclusive-or.  If it is set (i.e.
+    // negative) then the signs (i.e. sign bits) of r and b were different.
+    values(q - 1, r + b);
+
+  else
+    // Otherwise we rounded in the correct direction.
+    values(q, r);
+  end if;
+end method floor/;
+
+// ceiling/{<double-integer>,<double-integer>}
+// 
+define method ceiling/ (a :: <double-integer>, b :: <double-integer>)
+    => (quo :: <double-integer>, rem :: <double-integer>);
+  //
+  // Start with whatever truncate gives us.
+  let (q, r) = truncate/(a, b);
+
+  if (zero?(r))
+    // If we didn't have to round, then we are sitting pretty.
+    values(q, r);
+
+  elseif (negative?(logxor(r, b)))
+    // If the signs of the remainder and b are the same, then we rounded
+    // correctly.
+    values(q, r);
+
+  else
+    // Otherwise, we rounded down instead of up.
+    values(q + 1, r - b);
+  end if;
+end method ceiling/;
+
+// round/{<double-integer>,<double-integer>}
+// 
+define method round/ (a :: <double-integer>, b :: <double-integer>)
+    => (quo :: <double-integer>, rem :: <double-integer>);
+  let (q, r) = truncate/(a, b);
+
+  if (zero?(r))
+    values(q, r);
+  elseif (positive?(b))
+    let limit = ash(b, -1);
+    if (r > limit | (r == limit & odd?(q)))
+      values(q + 1, r - b);
+    elseif (r < -limit | (r == -limit & odd?(q)))
+      values(q - 1, r + b);
+    else
+      values(q, r);
+    end;
+  else
+    let limit = ash(-b, -1);
+    if (r > limit | (r == limit & odd?(q)))
+      values(q - 1, r + b);
+    elseif (r < -limit | (r == -limit & odd?(q)))
+      values(q + 1, r - b);
+    else
+      values(q, r);
+    end;
+  end;
+end method round/;
+
+// truncate/{<double-integer>,<double-integer>}
+//
+// Divide a by b, rounding towards zero.
+//
+
+define inline method truncate/
+    (a :: <double-integer>, b :: <double-integer>)
+    => (quo :: <double-integer>, rem :: <double-integer>);
+  if (zero?(b))
+    divide-by-zero-error();
+  else
+    %%primitive(dblfix-divide, a, b);
+  end;
+end;
+
+define inline method binary-logior
+    (a :: <double-integer>, b :: <double-integer>)
+ => (res :: <double-integer>);
+  %%primitive(dblfix-logior, a, b);
+end;
+
+define inline method binary-logior
+    (a :: <integer>, b :: <double-integer>)
+ => (res :: <double-integer>);
+  let dbl-a = as(<double-integer>, a);
+  %%primitive(dblfix-logior, dbl-a, b);
+end;
+
+define inline method binary-logior
+    (a :: <double-integer>, b :: <integer>)
+ => (res :: <double-integer>);
+  let dbl-b = as(<double-integer>, b);
+  %%primitive(dblfix-logior, a, dbl-b);
+end;
+
+define inline method binary-logxor
+    (a :: <double-integer>, b :: <double-integer>)
+ => (res :: <double-integer>);
+  %%primitive(dblfix-logxor, a, b);
+end;
+
+define inline method binary-logxor
+    (a :: <integer>, b :: <double-integer>)
+ => (res :: <double-integer>);
+  let dbl-a = as(<double-integer>, a);
+  %%primitive(dblfix-logxor, dbl-a, b);
+end;
+
+define inline method binary-logxor
+    (a :: <double-integer>, b :: <integer>)
+ => (res :: <double-integer>);
+  let dbl-b = as(<double-integer>, b);
+  %%primitive(dblfix-logxor, a, dbl-b);
+end;
+
+define inline method binary-logand
+    (a :: <double-integer>, b :: <double-integer>)
+ => (res :: <double-integer>);
+  %%primitive(dblfix-logand, a, b);
+end;
+
+define inline method lognot (a :: <double-integer>)
+    => res :: <double-integer>;
+  %%primitive(dblfix-lognot, a);
+end;
+
+define inline method logbit?
+    (index :: <integer>, integer :: <double-integer>)
+    => res :: <boolean>;
+  odd?(ash(integer, -index));
+end;
+
+define inline method ash (integer :: <double-integer>, count :: <integer>)
+    => res :: <double-integer>;
+  if (negative?(count))
+    %%primitive(dblfix-shift-right, integer, -count);
+  else
+    %%primitive(dblfix-shift-left, integer, count);
+  end;
+end;
 
 
 // Float methods.

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.6 2001/10/13 22:09:31 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/primopt.dylan,v 1.7 2002/10/31 20:59:56 housel Exp $
 copyright: see below
 
 
@@ -662,6 +662,7 @@ define-primitive-transformer
      end if;
    end method);
 
+// ### need transformers for the dblfix-primitives
 
 
 // Foreign code support primitives
@@ -725,6 +726,7 @@ define method dylan-type-for-c-type (leaf :: <leaf>) => res :: <values-ctype>;
 	#"char", #"short", #"int", #"long",
 	#"unsigned-char", #"unsigned-short", #"unsigned-int" =>
 	  specifier-type(#"<integer>");
+        #"long-long" => specifier-type(#"<double-integer>");
 	#"ptr" => specifier-type(#"<raw-pointer>");
 	#"float" => specifier-type(#"<single-float>");
 	#"double" => specifier-type(#"<double-float>");

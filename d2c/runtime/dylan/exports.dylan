@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.25 2002/10/31 10:17:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.26 2002/10/31 20:59:56 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -154,7 +154,7 @@ define module Extensions
   use Dylan-Viscera,
     import: {
 	     // More integers.
-	     <general-integer>, <extended-integer>,
+	     <general-integer>, <double-integer>, <extended-integer>,
 	     $maximum-integer, $minimum-integer, integer-length,
 
 	     // Ratios.

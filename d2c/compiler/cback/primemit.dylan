@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.13 2002/08/28 13:06:57 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.14 2002/10/31 20:59:55 housel Exp $
 copyright: see below
 
 
@@ -1123,6 +1123,296 @@ define-primitive-emitter
      contact-bgh-unless-empty(temps);
      deliver-result(defines, stringify('(', x, " >> ", y, ')'),
 		    *long-rep*, #f, file);
+   end);
+
+
+// Double-width Fixnum primitives.
+
+define-primitive-emitter
+  (#"dblfix-=",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " == ", y, ')'),
+                      *boolean-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_eq(", x, ", ", y, ')'),
+                      *boolean-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-<",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " < ", y, ')'),
+                      *boolean-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_lt(", x, ", ", y, ')'),
+                      *boolean-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-+",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " + ", y, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_add(", x, ", ", y, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-*",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " * ", y, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_mul(", x, ", ", y, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix--",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " - ", y, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_sub(", x, ", ", y, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-negative",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x) = extract-operands(operation, file, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify("(- ", x, ')'), *long-long-rep*,
+                      #f, file);
+     else
+       deliver-result(defines, stringify("double_integer_neg(", x, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-divide",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     spew-pending-defines(file);
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-results(defines,
+                       vector(pair(stringify('(', x, " / ", y, ')'),
+                                   *long-long-rep*),
+                              pair(stringify('(', x, " % ", y, ')'),
+                                   *long-long-rep*)),
+                       #f, file);
+     else
+       deliver-results(defines,
+                       vector(pair(stringify("double_integer_div(", x, ", ",
+                                             y, ')'),
+                                   *long-long-rep*),
+                              pair(stringify("double_integer_mod(", x, ", ",
+                                             y, ')'),
+                                   *long-long-rep*)),
+                       #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-logior",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " | ", y, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_logior(", x, ", ", y, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-logxor",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " ^ ", y, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_logxor(", x, ", ", y, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-logand",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " & ", y, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_logand(", x, ", ", y, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-lognot",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x) = extract-operands(operation, file, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify("(~ ", x, ')'), *long-long-rep*,
+                      #f, file);
+     else
+       deliver-result(defines, stringify("double_integer_lognot(", x, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-shift-left",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " << ", y, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_shl(", x, ", ", y, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-shift-right",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y)
+       = extract-operands(operation, file, *long-long-rep*, *long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(defines, stringify('(', x, " >> ", y, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(defines,
+                      stringify("double_integer_shr(", x, ", ", y, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"fixed-as-dblfix",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x) = extract-operands(operation, file, *long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(results, stringify("((long long)", x, ')'),
+                      *long-long-rep*, #f, file);
+     else
+       deliver-result(results, stringify("integer_to_double_integer(", x, ')'),
+                      *long-long-rep*, #f, file);
+     end if;
+   end);
+
+define-primitive-emitter
+  (#"dblfix-as-fixed",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x) = extract-operands(operation, file, *long-long-rep*);
+     contact-bgh-unless-empty(temps);
+     if (*current-target*.long-long-size)
+       deliver-result(results, stringify("((long)", x, ')'),
+                      *long-rep*, #f, file);
+     else
+       deliver-result(results, stringify("double_integer_to_integer(", x, ')'),
+                      *long-rep*, #f, file);
+     end if;
    end);
 
 

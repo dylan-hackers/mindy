@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.39 2002/10/31 10:17:09 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.40 2002/10/31 20:59:55 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -400,13 +400,14 @@ define module platform
     default-features,
 
     platform-integer-length,
-    pointer-size,
-    integer-size,
-    long-size,
-    short-size,
-    single-size,
-    double-size,
-    long-double-size,
+    pointer-size, pointer-alignment,
+    integer-size, integer-alignment,
+    long-size, long-alignment,
+    long-long-size, long-long-alignment,
+    short-size, short-alignment,
+    single-size, single-alignment,
+    double-size, double-alignment,
+    long-double-size, long-double-alignment,
 
     object-filename-suffix,
     library-filename-prefix,
@@ -784,8 +785,8 @@ define module c-representation
     representation-name,
 
     *general-rep*, *heap-rep*, *boolean-rep*,
-    *long-rep*, *int-rep*, *uint-rep*, *short-rep*, *ushort-rep*,
-    *byte-rep*, *ubyte-rep*, *ptr-rep*,
+    *long-long-rep*, *long-rep*, *int-rep*, *uint-rep*,
+    *short-rep*, *ushort-rep*, *byte-rep*, *ubyte-rep*, *ptr-rep*,
     *float-rep*, *double-rep*, *long-double-rep*;
 end;
 

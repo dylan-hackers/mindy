@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.7 2001/06/22 07:28:43 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.8 2002/10/31 20:59:55 housel Exp $
 copyright: see below
 
 
@@ -379,11 +379,54 @@ define-primitive
    #(values:, #"<integer>", #"<integer>"),
    cseable: #t);
 
+define-primitive
+  (#"dblfix-as-fixed", #(#"<double-integer>"), #"<integer>", cseable: #t);
+   
+
+// Double-wide fixnum operations.
+
+for (name in #[#"dblfix-=", #"dblfix-<"])
+  define-primitive
+    (name, #(#"<double-integer>", #"<double-integer>"), #"<boolean>",
+     cseable: #t);
+end;
+
+for (name in #[#"dblfix-+", #"dblfix-*", #"dblfix--", #"dblfix-logior",
+		 #"dblfix-logxor", #"dblfix-logand"])
+  define-primitive
+    (name, #(#"<double-integer>", #"<double-integer>"), #"<double-integer>",
+     cseable: #t);
+end;
+
+for (name in #[#"dblfix-shift-left", #"dblfix-shift-right"])
+  define-primitive
+    (name, #(#"<double-integer>", #"<integer>"), #"<double-integer>",
+     cseable: #t);
+end;
+
+for (name in #[#"dblfix-negative", #"dblfix-lognot"])
+  define-primitive
+    (name, #(#"<double-integer>"), #"<double-integer>",
+     cseable: #t);
+end;
+  
+define-primitive
+  (#"dblfix-divide", #(#"<double-integer>", #"<double-integer>"),
+   #(values:, #"<double-integer>", #"<double-integer>"),
+   cseable: #t);
+
+define-primitive
+  (#"fixed-as-dblfix", #(#"<integer>"), #"<double-integer>", cseable: #t);
+   
 
 // Single float operations.
 
 define-primitive
   (#"fixed-as-single", #(#"<integer>"), #"<single-float>", cseable: #t);
+   
+define-primitive
+  (#"dblfix-as-single", #(#"<double-integer>"), #"<single-float>",
+   cseable: #t);
    
 define-primitive
   (#"double-as-single", #(#"<double-float>"), #"<single-float>", cseable: #t);
@@ -427,6 +470,10 @@ define-primitive
   (#"fixed-as-double", #(#"<integer>"), #"<double-float>", cseable: #t);
    
 define-primitive
+  (#"dblfix-as-double", #(#"<double-integer>"), #"<double-float>",
+   cseable: #t);
+   
+define-primitive
   (#"single-as-double", #(#"<single-float>"), #"<double-float>", cseable: #t);
    
 define-primitive
@@ -466,6 +513,10 @@ end;
 
 define-primitive
   (#"fixed-as-extended", #(#"<integer>"), #"<extended-float>", cseable: #t);
+   
+define-primitive
+  (#"dblfix-as-extended", #(#"<double-integer>"), #"<extended-float>",
+   cseable: #t);
    
 define-primitive
   (#"single-as-extended", #(#"<single-float>"), #"<extended-float>",

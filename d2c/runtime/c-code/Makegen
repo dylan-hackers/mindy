@@ -1,10 +1,11 @@
-if ($host_platform{'integer_length'} >= 64) {
-	$CFLAGS = "$CFLAGS -DDYLAN_64BIT";
+if ($target_platform{'long_long_size'}) {
+    $CPPFLAGS = "$CPPFLAGS -DGD_HAVE_LONG_LONG";
 }
 &emit_c_file_rule('allocate');
 &emit_c_file_rule('main');
 &emit_c_file_rule('nlx');
 &emit_c_file_rule('trampoline');
+&emit_c_file_rule('dblfix');
 
 $lib_name = "$lib_prefix" . "runtime$dot_lib";
 
@@ -12,7 +13,8 @@ print "$lib_name: allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj\n
 print "\trm -f $lib_name\n\t";
 if ($shared) {
 	printf($target_platform{'link_shared_library_command'}, $lib_name,
-	       "allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj",
+	       "allocate$dot_obj main$dot_obj nlx$dot_obj trampoline$dot_obj"
+	       . " dblfix$dot_obj",
 	       $libdir);
 	print "\n";
 	if ($static) {

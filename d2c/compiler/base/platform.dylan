@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.10 2002/09/20 23:43:50 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.11 2002/10/31 20:59:55 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -77,18 +77,36 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"integer-length";
   constant /* exported */ slot pointer-size :: <integer>,
     required-init-keyword: #"pointer-size";
+  constant /* exported */ slot pointer-alignment :: false-or(<integer>),
+    init-value: #f, init-keyword: #"pointer-alignment";
   constant /* exported */ slot short-size :: <integer>,
     required-init-keyword: #"short-size";
+  constant /* exported */ slot short-alignment :: false-or(<integer>),
+    init-value: #f, init-keyword: #"short-alignment";
   constant /* exported */ slot integer-size :: <integer>,
     required-init-keyword: #"integer-size";
+  constant /* exported */ slot integer-alignment :: false-or(<integer>),
+    init-value: #f, init-keyword: #"integer-alignment";
   constant /* exported */ slot long-size :: <integer>,
     required-init-keyword: #"long-size";
+  constant /* exported */ slot long-alignment :: false-or(<integer>),
+    init-value: #f, init-keyword: #"long-alignment";
+  constant /* exported */ slot long-long-size :: false-or(<integer>),
+    init-value: #f, init-keyword: #"long-long-size";
+  constant /* exported */ slot long-long-alignment :: false-or(<integer>),
+    init-value: #f, init-keyword: #"long-long-alignment";
   constant /* exported */ slot double-size :: <integer>,
     required-init-keyword: #"double-size";
+  constant /* exported */ slot double-alignment :: false-or(<integer>),
+    init-value: #f, init-keyword: #"double-alignment";
   constant /* exported */ slot single-size :: <integer>,
     required-init-keyword: #"single-size";
+  constant /* exported */ slot single-alignment :: false-or(<integer>),
+    init-value: #f, init-keyword: #"single-alignment";
   constant /* exported */ slot long-double-size :: <integer>,
     required-init-keyword: #"long-double-size";
+  constant /* exported */ slot long-double-alignment :: false-or(<integer>),
+    init-value: #f, init-keyword: #"long-double-alignment";
 
   constant /* exported */ slot object-filename-suffix :: <byte-string>,
     required-init-keyword: #"object-filename-suffix";
@@ -201,12 +219,21 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"default-features"] := #t;
 *valid-properties*[#"integer-length"] := #t;
 *valid-properties*[#"integer-size"] := #t;
+*valid-properties*[#"integer-alignment"] := #f;
 *valid-properties*[#"pointer-size"] := #t;
+*valid-properties*[#"pointer-alignment"] := #f;
 *valid-properties*[#"short-size"] := #t;
+*valid-properties*[#"short-alignment"] := #f;
 *valid-properties*[#"long-size"] := #t;
+*valid-properties*[#"long-alignment"] := #f;
+*valid-properties*[#"long-long-size"] := #f;
+*valid-properties*[#"long-long-alignment"] := #f;
 *valid-properties*[#"single-size"] := #t;
+*valid-properties*[#"single-alignment"] := #f;
 *valid-properties*[#"double-size"] := #t;
+*valid-properties*[#"double-alignment"] := #f;
 *valid-properties*[#"long-double-size"] := #t;
+*valid-properties*[#"long-double-alignment"] := #f;
 *valid-properties*[#"object-filename-suffix"] := #t;
 *valid-properties*[#"shared-object-filename-suffix"] := #f;
 *valid-properties*[#"library-filename-prefix"] := #t;
@@ -381,9 +408,14 @@ define function add-platform! (header :: <header>)
 	#"uses-drive-letters?", #"environment-variables-can-be-exported?",
         #"use-dbclink?", #"link-doesnt-search-for-libs?",
         #"big-endian?", #"supports-asm-stabs-hack?" =>
-	  local-platform-info[key] := string-to-boolean(val);
-	#"integer-length", #"integer-size", #"long-size", #"pointer-size", 
-	#"single-size", #"double-size", #"long-double-size", #"short-size" =>
+          local-platform-info[key] := string-to-boolean(val);
+        #"integer-length", #"pointer-alignment", #"pointer-size",
+        #"short-alignment", #"short-size",
+        #"integer-alignment", #"integer-size", #"long-alignment", #"long-size",
+        #"long-long-alignment", #"long-long-size",
+        #"single-alignment", #"single-size",
+        #"double-alignment", #"double-size",
+        #"long-double-alignment", #"long-double-size" =>
 	  local-platform-info[key] := string-to-integer(val);
 	#"path-separator" =>
           local-platform-info[key] := string-to-character(val);
