@@ -14,4 +14,4 @@ melange.dbc: ${OBJS}
 	cat ${OBJS} > $@ 
 
 clean:
-	rm *.dbc
+	rm -f *.dbc *~ "#"*
