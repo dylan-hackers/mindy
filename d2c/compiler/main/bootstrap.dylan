@@ -1,5 +1,5 @@
 module: dylan-viscera
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.48 1996/02/08 23:52:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.49 1996/02/09 03:34:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -303,6 +303,7 @@ end;
 
 define abstract class <closure> (<function>)
   slot closure-var :: <object>,
+    init-value: #f,
     sizer: closure-size, size-init-value: 0, size-init-keyword: closure-size:;
 end;
 seal generic initialize (<closure>);
