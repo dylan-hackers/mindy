@@ -1,6 +1,6 @@
 	Compilation and installation instructions for Mindy.
 
-Compiling Mindy currently requires the use of an ANSI C compiler.  We
+Compiling Mindy for Unix requires the use of an ANSI C compiler.  We
 highly recommend gcc (GNU CC) if it is available.
 
 To configure Mindy for your system, simply type ``./configure'' and
@@ -77,9 +77,8 @@ required, please send diffs as well.
 
 Mindy can *not* be built out of the box on the DEC Alpha.  If you
 would like to port Mindy to the Alpha or any other architecture where
-Mindy does not easily compile, send mail to
-gwydion-bugs@cs.cmu.edu and we will try to provide as much help as we
-can.
+Mindy does not easily compile, send mail to gwydion-bugs@cs.cmu.edu
+and we will try to provide as much help as we can.
 
 
                     Mindy Trouble Shooting Tips             
