@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lose.c,v 1.4 1994/06/27 16:49:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lose.c,v 1.5 1994/07/26 18:36:24 hallgren Exp $
 *
 * This file contains lose, the interal flame-out routine.
 *
@@ -33,6 +33,9 @@
 #include <stdarg.h>
 #include <string.h>
 
+#ifdef sparc
+#include "mindycomp.h"
+#endif
 #include "lose.h"
 
 void lose(char *fmt, ...)

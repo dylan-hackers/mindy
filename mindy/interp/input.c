@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.13 1994/07/07 07:14:56 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.14 1994/07/26 18:32:48 hallgren Exp $
 *
 * This file implements getc.
 *
@@ -39,10 +39,13 @@ extern void bzero(void *ptr, size_t bytes);
 extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
 		  fd_set *except_fds, struct timeval *timeout);
 #endif
-#if defined(__osf__) || defined(ultrix)
+#if defined(__osf__) || defined(ultrix) || defined(sparc)
 extern void bzero(char *string, int length);
 extern int select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout);
+#endif
+#ifdef sparc
+#include <errno.h>
 #endif
 #ifdef sgi
 #define pause buttplug

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.17 1994/07/11 20:05:25 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/dump.c,v 1.18 1994/07/26 18:36:15 hallgren Exp $
 *
 * This file dumps the results of the compilation into a .dbc file.
 *
@@ -38,6 +38,10 @@
 #include <time.h>
 #include <limits.h>
 #include <string.h>
+
+#ifdef sparc
+extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
+#endif
 
 #include "mindycomp.h"
 #include "src.h"

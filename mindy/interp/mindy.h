@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.3 1994/06/27 16:32:17 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.4 1994/07/26 18:30:01 hallgren Exp $
 *
 \**********************************************************************/
 
@@ -77,4 +77,20 @@ typedef int boolean;
 
 #ifndef SLOW_FUNCTION_POINTERS
 #define SLOW_FUNCTION_POINTERS 0
+#endif
+
+#ifdef sparc
+extern int printf();
+extern int fprintf();
+extern int fputc();
+extern int fputs();
+extern int fclose();
+extern int fseek();
+extern int isatty();
+extern int fflush();
+extern int vfprintf();
+extern int _filbuf();
+extern int _flsbuf();
+extern int tolower();
+extern int fsync();
 #endif

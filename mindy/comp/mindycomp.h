@@ -23,9 +23,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.4 1994/06/27 16:49:38 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.h,v 1.5 1994/07/26 18:36:03 hallgren Exp $
 *
 \**********************************************************************/
+
+#ifdef sparc
+#include <sys/stdtypes.h>
+#endif
 
 extern void *malloc(size_t len);
 extern void *realloc(void *ptr, size_t len);
@@ -43,3 +47,19 @@ extern void warn(int line, char *msg, ...);
 
 extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;
+
+#ifdef sparc
+extern int printf();
+extern int fprintf();
+extern int vfprintf();
+extern int _flsbuf();
+extern int _filbuf();
+extern int fseek();
+extern int fclose();
+extern int fwrite();
+extern void perror();
+extern int fputs();
+extern int tolower();
+extern int fflush();
+extern int ungetc();
+#endif

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.20 1994/07/07 07:14:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.21 1994/07/26 18:33:30 hallgren Exp $
 *
 * This file implements the loader.
 *
@@ -40,7 +40,7 @@ extern int close(int fd);
 extern int read(int fd, void *ptr, int bytes);
 extern int access(const void *path, int flags);
 #endif
-#if defined(hpux) || defined(__osf__) || defined(sgi) || defined(linux) || defined(ultrix)
+#if defined(hpux) || defined(__osf__) || defined(sgi) || defined(linux) || defined(ultrix) || defined(sparc)
 #define pause buttplug
 #include <unistd.h>
 #undef pause
@@ -53,6 +53,10 @@ extern int access(const void *path, int flags);
 #endif
 #ifdef linux
 #include <stdlib.h>
+#endif
+#ifdef sparc
+#include <stdlib.h>
+extern char *sys_errlist[];
 #endif
 
 #include "mindy.h"
@@ -129,7 +133,11 @@ static int safe_read(struct load_info *info, void *ptr, int bytes)
     if (count < 0)
 	error("error loading %s: %s",
 	      make_string(info->name),
+#ifndef sparc
 	      make_string(strerror(errno)));
+#else
+              make_string(sys_errlist[errno]));
+#endif
     if (count == 0)
 	error("premature EOF loading %s", make_string(info->name));
 
@@ -978,7 +986,11 @@ void load(char *name)
     if (fd < 0)
 	error("Error loading %s: %s\n",
 	      make_string(name),
+#ifndef sparc
 	      make_string(strerror(errno)));
+#else
+              make_string(sys_errlist[errno]));
+#endif
 
     info = make_load_info(name, fd);
 
@@ -989,7 +1001,11 @@ void load(char *name)
 	    if (count < 0)
 		error("error loading %s: %s",
 		      make_string(name),
+#ifndef sparc
 		      make_string(strerror(errno)));
+#else
+                      make_string(sys_errlist[errno]));
+#endif
 	    if (count == 0)
 		break;
 	    info->ptr = info->buffer;

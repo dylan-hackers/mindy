@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.14 1994/07/07 07:14:54 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.15 1994/07/26 18:32:10 hallgren Exp $
 *
 * Main driver routines for mindy.
 *
@@ -55,6 +55,14 @@ extern int select(int nfds, fd_set *readfds, fd_set *writefds,
 #undef pause
 #include <bstring.h>
 #include <errno.h>
+#endif
+#ifdef sparc
+extern void bzero(char *string, int length);
+extern int select(int nfds, fd_set *readfds, fd_set *writefds,
+		  fd_set *exceptfds, struct timeval *timeout);
+extern int sigpause(int sigmask);
+#include <errno.h>
+extern int sigvec(int sig, struct sigvec *vec, struct sigvec *ovec);
 #endif
 
 #include "mindy.h"

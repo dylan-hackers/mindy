@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.11 1994/06/27 16:32:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.12 1994/07/26 18:33:45 hallgren Exp $
 *
 * This file implements the module system.
 *
@@ -32,6 +32,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef sparc
+#include <memory.h>
+#endif
 
 #include "mindy.h"
 #include "gc.h"

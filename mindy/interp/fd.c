@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.17 1994/07/07 07:14:55 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.18 1994/07/26 18:32:28 hallgren Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -83,6 +83,18 @@ extern char *sys_errlist[];
 #define pause buttplug
 #include <unistd.h>
 #undef pause
+#endif
+#ifdef sparc
+#define pause buttplug
+#include <unistd.h>
+#undef pause
+extern void bzero(char *string, int length);
+extern int select(int nfds, fd_set *readfds, fd_set *writefds,
+		  fd_set *exceptfds, struct timeval *timeout);
+extern int sys_nerr;
+extern char *sys_errlist[];
+#include <malloc.h>
+#include <fcntl.h>
 #endif
 
 #include "mindy.h"

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.19 1994/06/27 16:32:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.20 1994/07/26 18:34:10 hallgren Exp $
 *
 * This file implements threads, and the various synchronization
 * primitives.
@@ -31,6 +31,9 @@
 \**********************************************************************/
 
 #include <string.h>
+#ifdef sparc
+#include <memory.h>
+#endif
 
 #include "mindy.h"
 #include "gc.h"

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.7 1994/07/26 00:40:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/buf.c,v 1.8 1994/07/26 18:31:55 hallgren Exp $
 *
 * This file implements buffers, a special byte vector used by streams.
 *
@@ -99,6 +99,24 @@ static obj_t dylan_buffer_element_setter(obj_t val, obj_t buffer, obj_t index)
 
     return val;
 }
+
+#ifdef sparc
+void *memmove(void *s1, void *s2, size_t n)
+{
+  char *src = s2;
+  char *dest = s1;
+  if(src==dest)
+    return s1;
+  else if(dest < src)
+    while(n-- > 0) *dest++ = *src++;
+  else {
+    src += n - 1;
+    dest += n - 1;
+    while(n-- > 0) *dest-- = *src--;
+  }
+  return s1;
+}
+#endif
 
 static obj_t dylan_memcpy(obj_t dst, obj_t dst_off, obj_t src, obj_t src_off,
 			  obj_t count)

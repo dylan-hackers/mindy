@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.8 1994/07/26 00:40:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/vec.c,v 1.9 1994/07/26 18:34:21 hallgren Exp $
 *
 * This file implements vectors.
 *
@@ -31,6 +31,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef sparc
+#include <memory.h>
+#endif
 
 #include "mindy.h"
 #include "gc.h"
