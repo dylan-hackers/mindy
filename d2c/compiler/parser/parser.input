@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.6 1995/01/10 16:26:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.7 1995/03/04 21:52:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -617,7 +617,7 @@ expression (expression-aux)
 %
 
 expression (<keyword-token>)
-  make(<literal>, value: %1.token-literal);
+  make(<literal-ref>, literal: %1.token-literal);
 %
 
 :type expression-aux <vector>
@@ -635,7 +635,7 @@ expression-aux (expression-aux binary-operator-token binary-operand)
 :type binary-operand <expression>
 
 binary-operand (<keyword-token>)
-  make(<literal>, value: %1.token-literal);
+  make(<literal-ref>, literal: %1.token-literal);
 %
 
 binary-operand (binary-operand-sans-keyword)
@@ -709,7 +709,7 @@ arguments (expression)
 %
 
 arguments (<keyword-token> expression)
-  stretchy-vector(make(<literal>, value: %1.token-literal), %2);
+  stretchy-vector(make(<literal-ref>, literal: %1.token-literal), %2);
 %
 
 arguments (arguments <comma-token> expression)
@@ -717,7 +717,7 @@ arguments (arguments <comma-token> expression)
 %
 
 arguments (arguments <comma-token> <keyword-token> expression)
-  add!(add!(%1, make(<literal>, value: %3.token-literal)), %4);
+  add!(add!(%1, make(<literal-ref>, literal: %3.token-literal)), %4);
 %
 
 :type leaf <expression>
@@ -727,7 +727,7 @@ leaf (<expression>)
 %
 
 leaf (literal)
-  %1;
+  make(<literal-ref>, literal: %1);
 %
 
 leaf (<name-token>)
@@ -742,44 +742,39 @@ leaf (statement)
   %1;
 %
 
-:type literal <expression>
+:type literal <literal>
 
 literal (<literal-token>)
-  make(<literal>, value: %1.token-literal);
+  %1.token-literal;
 %
 
 literal (strings)
-  make(<literal>,
-       value: if (%1.size == 1)
-		%1[0];
-	      else
-		apply(concatenate, %1);
-	      end);
+  if (%1.size == 1)
+    %1[0];
+  else
+    apply(concatenate, %1);
+  end;
 %
 
 literal (<true-token>)
-  make(<literal>, value: #t);
+  make(<literal-true>);
 %
 
 literal (<false-token>)
-  make(<literal>, value: #f);
+  make(<literal-false>);
 %
 
 literal (<sharp-paren-token> constants <dot-token> constant
 	 <right-paren-token>)
-  for (results = %4 then pair(%2[index], results),
-       index from %2.size - 1 above -1)
-  finally
-    make(<literal>, value: results);
-  end;
+  make(<literal-list>, contents: as(<simple-object-vector>, %2), tail: %4);
 %
 
 literal (<sharp-paren-token> constants-opt <right-paren-token>)
-  make(<literal>, value: as(<list>, %2));
+  make(<literal-list>, contents: %2);
 %
 
 literal (<sharp-bracket-token> constants-opt <right-bracket-token>)
-  make(<literal>, value: as(<simple-object-vector>, %2));
+  make(<literal-vector>, contents: %2);
 %
 
 :type strings <stretchy-vector>
@@ -812,10 +807,10 @@ constants (constants <comma-token> constant)
   add!(%1, %3);
 %
 
-:type constant <object>
+:type constant <literal>
 
 constant (literal)
-  %1.lit-value;
+  %1;
 %
 
 constant (<keyword-token>)
@@ -1089,19 +1084,18 @@ modified-constant (<false-token>)
 
 modified-constant (<sharp-paren-token> constants <dot-token> constant
 	 <right-paren-token>)
-  for (results = %4 then pair(%2[index], results),
-       index from %2.size - 1 above -1)
-  finally
-    make(<literal>, value: results);
-  end;
+  make(<literal-ref>,
+       literal: make(<literal-list>,
+		     contents: as(<simple-object-vector>, %2),
+		     tail: %4));
 %
 
 modified-constant (<sharp-paren-token> constants-opt <right-paren-token>)
-  make(<literal>, value: as(<list>, %2));
+  make(<literal-ref>, literal: make(<literal-list>, contents: %2));
 %
 
 modified-constant (<sharp-bracket-token> constants-opt <right-bracket-token>)
-  make(<literal>, value: as(<simple-object-vector>, %2));
+  make(<literal-ref>, literal: make(<literal-vector>, contents: %2));
 %
 
 :type end-clause |union(<false>, <begin-word-token>)|
@@ -1406,7 +1400,7 @@ keyword-parameters-comma (keyword-parameters <comma-token>)
 
 keyword-parameter (keyword-opt <name-token> default-opt)
   make(<keyword-parameter>,
-       keyword: if (%1) %1.token-literal else %2.token-symbol end,
+       keyword: if (%1) %1.token-literal.literal-value else %2.token-symbol end,
        name: %2,
        default: %3);
 %
@@ -1414,7 +1408,7 @@ keyword-parameter (keyword-opt <name-token> default-opt)
 keyword-parameter (keyword-opt <name-token> <double-colon-token> type
 		   default-opt)
   make(<keyword-parameter>,
-       keyword: if (%1) %1.token-literal else %2.token-symbol end,
+       keyword: if (%1) %1.token-literal.literal-value else %2.token-symbol end,
        name: %2,
        type: %4,
        default: %5);
@@ -1557,7 +1551,7 @@ auxiliary-rule-sets-opt (auxiliary-rule-sets-opt auxiliary-rule-set)
 
 auxiliary-rule-set (<keyword-token> auxiliary-rules)
   make(<auxiliary-rule-set>,
-       name: %1.token-literal,
+       name: %1.token-literal.literal-value,
        rules: as(<simple-object-vector>, %2));
 %
 
