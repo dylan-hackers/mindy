@@ -1,0 +1,81 @@
+######################################################################
+##
+## Copyright (c) 1994  Carnegie Mellon University
+## All rights reserved.
+## 
+## Use and copying of this software and preparation of derivative
+## works based on this software are permitted, including commercial
+## use, provided that the following conditions are observed:
+## 
+## 1. This copyright notice must be retained in full on any copies
+##    and on appropriate parts of any derivative works.
+## 2. Documentation (paper or online) accompanying any system that
+##    incorporates this software, or any part of it, must acknowledge
+##    the contribution of the Gwydion Project at Carnegie Mellon
+##    University.
+## 
+## This software is made available "as is".  Neither the authors nor
+## Carnegie Mellon University make any warranty about the software,
+## its performance, or its conformity to any specification.
+## 
+## Bug reports, questions, comments, and suggestions should be sent by
+## E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+##
+######################################################################
+##
+##  $Header: /home/housel/work/rcs/gd/src/demos/tk-html2txt/Attic/Makefile.in,v 1.1 1996/04/22 23:49:49 nkramer Exp $
+##
+##  This is the makefile for the Mindy/Tk windowing library.
+##
+
+SHELL	=	/bin/sh
+
+##
+## begin autoconf'ed source
+##
+
+prefix	=		@prefix@
+exec_prefix	=	@exec_prefix@
+srcdir	=		@srcdir@
+
+SRCDIR	=		${srcdir}
+BINDIR	=		${exec_prefix}/bin
+LIBDIR	=		${exec_prefix}/lib/mindy
+
+CC	=		@CC@
+CCOPTS	=		@CCOPTS@
+CFLAGS	=		$(CCOPTS) -I${SRCDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+YACC	=		@YACC@
+YFLAGS	=		-d
+LEX	=		@LEX@
+LFLAGS	=		@LFLAGS@
+RANLIB	=		@RANLIB@
+INSTALL	=		@INSTALL@
+INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
+INSTALL_DATA	=	@INSTALL_DATA@
+
+LIBOBJS =		@LIBOBJS@
+LIBS	=		@LIBS@
+
+##
+## end of configure written portion
+##
+
+MC	=	../../comp/mindycomp
+
+MINDYFLAGS = -lhtml
+
+OBJS = html2txt.dbc
+
+main: ${OBJS}
+
+html2txt.dbc: ${SRCDIR}/html2txt.dylan
+	${MC} ${MINDYFLAGS} -o html2txt.dbc ${SRCDIR}/html2txt.dylan
+
+clean:
+	rm -f ${OBJS} *~ \#* core
+
+realclean:
+	rm -f ${OBJS} Makefile *~ \#* core
+
+install:
