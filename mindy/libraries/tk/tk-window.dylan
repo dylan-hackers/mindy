@@ -221,7 +221,8 @@ define method std-options
       otherwise =>
 	select (key)
 	  #"background", #"borderwidth", #"cursor", #"foreground",
-	  #"relief" =>
+	  #"relief", #"highlightbackground", #"highlightthickness",
+	  #"highlightcolor" =>
 	    result := add!(result, make-option(key, value));
 	  otherwise =>
 	    error("Option %= not supported for widget.", key)
@@ -232,11 +233,14 @@ define method std-options
 end method std-options;
 
 // The base initialization method for all windows just fills in the pathname
-// based upon the given name and parent.
+// based upon the given name and parent.  The abs-path keyword is for
+// creating an instance of an existing object.  This is used in the children
+// function
 //
 define method initialize
     (window :: <window>, #next next, #rest keys,
-     #key name, in: parent, before, after, pack: do-pack = #t, #all-keys);
+     #key name, in: parent, before, after, pack: do-pack = #t, abs-path = #f,
+     #all-keys);
   next();
   let name = name | anonymous-name();
   let parent = case
@@ -247,8 +251,13 @@ define method initialize
 	       end case;
 
   if (empty?(name))
+    if (abs-path)
+      // Special case for creating windows from a tk string
+      window.path := abs-path;
+    else
     // Special case for root window
-    window.path := "";
+      window.path := "";
+    end if;
   else
     let path-name
       = concatenate(parent, if (parent.last = '.') "" else "." end if, name);
