@@ -23,12 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.19 1996/03/15 23:05:27 bfw Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/misc.c,v 1.20 1996/03/18 19:05:53 wlott Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
 *
 \**********************************************************************/
+
+#include <unistd.h>
 
 #include "../compat/std-c.h"
 
@@ -190,6 +192,17 @@ static obj_t dylan_getenv(obj_t name)
 	return obj_False;
 }
 
+static obj_t dylan_getcwd()
+{
+    char buf[MAXPATHLEN + 1];
+
+    if (getcwd(buf, sizeof(buf)) == NULL)
+	error("Can't get the current directory: %s",
+	      make_byte_string(strerror(errno)));
+
+    return make_byte_string(buf);
+}	
+
 
 /* Init stuff. */
 
@@ -216,6 +229,8 @@ void init_misc_functions(void)
 		    FALSE, obj_FixnumClass, dylan_system);
     define_function("getenv", list1(obj_ByteStringClass), FALSE, obj_False,
 		    FALSE, obj_ObjectClass, dylan_getenv);
+    define_function("getcwd", obj_Nil, FALSE, obj_False,
+		    FALSE, obj_ByteStringClass, dylan_getcwd);
     define_constant("invoke-debugger",
 		    make_raw_function("invoke-debugger", 
 				      list1(obj_ObjectClass),

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.88 1996/03/15 22:59:02 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.89 1996/03/18 19:04:44 wlott Exp $
 
 //======================================================================
 //
@@ -76,7 +76,7 @@ define module Builtin-Stuff
     fflush, find-method, float-hash, floor, floor/, format, function-arguments,
     function-name,
     generic-function-mandatory-keywords, generic-function-methods,
-    get-local-timezone, get-time-of-day, getc, getenv, grab-lock,
+    get-local-timezone, get-time-of-day, getc, getcwd, getenv, grab-lock,
     handler-function, handler-init-args, handler-next, handler-test,
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
@@ -259,7 +259,7 @@ define module System
   use Builtin-Stuff,
     import: {<buffer>, copy-bytes, $Newlines-Are-CRLF, get-local-timezone,
 	     get-time-of-day, local-daylight-savings-time?,
-	     system, getenv, collect-garbage},
+	     system, getcwd, getenv, collect-garbage},
     export: all;
 end System;
 
