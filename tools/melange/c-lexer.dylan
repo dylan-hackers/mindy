@@ -472,7 +472,7 @@ define method initialize (value :: <tokenizer>,
 	  for (list = #() then pair(token, list),
 	       token = get-token(sub-tokenizer, expand: #f)
 		 then get-token(sub-tokenizer, expand: #f),
-	       until instance?(token, <eof-token>))
+	       until: instance?(token, <eof-token>))
 	    if (instance?(token, <error-token>))
 	      parse-error(value, "Error in cpp defines");
 	    end if;
@@ -524,7 +524,7 @@ define method parse-error (generator :: <tokenizer>, format :: <string>,
 			 #rest args)
  => ();	// never returns
   for (gen = generator then gen.include-tokenizer,
-       while gen.include-tokenizer)
+       while: gen.include-tokenizer)
   finally 
     let source-string = gen.contents;
     let line-num = 1;
@@ -662,7 +662,7 @@ define method try-identifier
   let pos = if (contents[position] == '#') position + 1 else position end if;
   if (alpha?(contents[pos]) | contents[pos] == '_')
     for (index from pos + 1 below contents.size,
-	 until ~alphanumeric?(contents[index]) & contents[index] ~= '_')
+	 until: ~alphanumeric?(contents[index]) & contents[index] ~= '_')
     finally
       state.position := index;
       let string-value = copy-sequence(contents,
@@ -709,7 +709,7 @@ define method skip-whitespace (contents :: <string>, position :: <integer>)
   local method skip-comments (index :: <integer>)
 	 => end-index :: union(<integer>, <false>);
 	  for (i from index,
-	       until (i >= sz | ~whitespace?(contents[i])))
+	       until: (i >= sz | ~whitespace?(contents[i])))
 	  finally
 	    if (i < sz - 1 & contents[i] == '/' & contents[i + 1] == '*')
 	      let end-index = match-comment-end(contents, start: i + 2);
@@ -735,7 +735,7 @@ define method skip-cpp-whitespace (contents :: <string>, position :: <integer>)
   local method skip-comments (index :: <integer>)
 	 => end-index :: union(<integer>, <false>);
 	  for (i from index,
-	       until (i >= sz | (contents[i] ~= ' ' & contents[i] ~= '\t')))
+	       until: (i >= sz | (contents[i] ~= ' ' & contents[i] ~= '\t')))
 	  finally
 	    if (i < sz - 1 & contents[i] == '/' & contents[i + 1] == '*')
 	      let end-index = match-comment-end(contents, start: i + 2);
