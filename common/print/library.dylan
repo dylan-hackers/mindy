@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Print library and modules.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/library.dylan,v 1.2 2000/01/24 04:54:37 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/library.dylan,v 1.3 2002/06/03 22:25:01 dauclair Exp $
 
 //======================================================================
 //
@@ -32,39 +32,12 @@ rcs-header: $Header: /scm/cvs/src/common/print/library.dylan,v 1.2 2000/01/24 04
 //======================================================================
 //
 
-
-///
-/// These definitions go into the Dylan-User module because this is how we
-/// jumpstart a library.
-///
-
 define library print
   use dylan;
   use streams;
   export pprint, print;
 end library;
 
-
-define module pprint
-  use Dylan;
-  use Extensions;
-  use System;
-  use Streams;
-
-  export
-    <pretty-stream>, pprint-logical-block, pprint-newline, pprint-indent,
-    pprint-tab, *default-line-length*, *print-miser-width*;
-end;
-
-/// The Internals Module exports everything that is necessary to make the
-/// code in the Print Module run, but only those things that are of an
-/// internals nature to a particular Dylan implementation.
-///
-/// There is inconsistent usage of the Internals module between the Print
-/// and Pprint modules because different hackers wrote each.  We should
-/// make Pprint use Internals and import what it needs, same for Print, but
-/// we don't have time now to determine exactly what Pprint uses.
-///
 define module internals
   use dylan;
   use extensions,
@@ -83,6 +56,17 @@ define module internals
     export: all;
 end module;
 
+define module pprint
+  use Dylan;
+  use internals;
+  use System, import: { copy-bytes };
+  use Streams;
+
+  export
+    pprint-logical-block, pprint-newline, pprint-indent, pprint-tab,
+    *default-line-length*, *print-miser-width*;
+end;
+
 define module print
   use dylan;
   use streams;
@@ -92,17 +76,6 @@ define module print
     import: {$minimum-integer, $not-supplied, <byte-character>,
 	     <ratio>, numerator, denominator};
   export
-    print,
-    print-object,
-    print-to-string,
-
-    print-length,
-    print-level,
-    print-depth,
-    print-circle?,
-    print-pretty?,
-    *default-length*,
-    *default-level*,
-    *default-circle?*,
-    *default-pretty?*;
+    print, print-object, print-to-string,
+    *print-length*, *print-level*, *print-circle?*, *print-pretty*;
 end module;
