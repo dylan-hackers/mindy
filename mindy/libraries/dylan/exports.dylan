@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.95 1996/06/04 23:23:40 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.96 1996/06/17 11:38:16 nkramer Exp $
 
 //======================================================================
 //
@@ -38,7 +38,7 @@ end Dylan;
 
 define module Builtin-Stuff
   export
-    \~, \*, \+, \-, \/, \<, \<=, \=, \==, \~=, \~==,
+    \~, \*, \+, \-, \/, \<, \<=, \=, \==, \~=, \~==, \^,
     $maximum-integer, $minimum-integer, $Newlines-Are-CRLF,
     <array>,
     <boolean>, <buffer>, <byte-character>, <byte-string>, <byte-vector>,
@@ -151,7 +151,7 @@ end;
 define module Dylan
   use Builtin-Stuff,
     import: all,
-    export: {\~, \*, \+, \-, \/, \<, \<=, \=, \==, \~=, \~==,
+    export: {\~, \*, \+, \-, \/, \<, \<=, \=, \==, \~=, \~==, \^,
 	     <array>,
 	     <boolean>,
 	     <byte-string>,
@@ -201,7 +201,7 @@ define module Dylan
 	     values, vector};
   use extras;
   export
-    \>=, \>, \:=, \|, \&, \^,
+    \>=, \>, \:=, \|, \&,
     <abort>,
     <condition>,
     <deque>,
