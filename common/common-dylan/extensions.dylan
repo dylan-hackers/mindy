@@ -262,142 +262,102 @@ end method integer-to-string;
 
 // XXX - number-to-string isn't in common-dylan? ASK FUN-O: about this.
 
-define method string-to-integer( string :: <byte-string>, #key base :: <integer> = 10, 
-                                    start-position :: <integer> = 0, 
-                                    end-position :: type-union( <integer>, object-class( $unsupplied ) ) = $unsupplied,
-                                    default :: type-union( <integer>, object-class( $unsupplied ) ) = $unsupplied )
-=> ( result :: <integer> )
-    // Get the string we're actually parsing
-    if( ~ supplied?( end-position ) )
-        end-position := string.size();
-    end if;
-    let substring :: <string> = copy-sequence( string, start: start-position, end: end-position );
-    
-    // Set the state and parse
-    let negative :: <boolean> = #f;
-    let this-base :: <integer> = 1;
-    let integer :: <integer> = 0;
-    
-    if( substring.size = 0 )
-        base := string-to-number-error( default );
-    end if;
-    
-    block( exit-loop )
-        for( i :: <integer> from substring.size - 1 to 0 by - 1   )
-            let char :: <character> = substring[ i ];
-            select( char )
-                '-' => negative := #t;		// Check we haven't set already?
-                '0' => #f;
-                '1' => integer := integer + (1 * this-base);
-                '2' => integer := integer + (2 * this-base);
-                '3' => integer := integer + (3 * this-base);
-                '4' => integer := integer + (4 * this-base);
-                '5' => integer := integer + (5 * this-base);
-                '6' => integer := integer + (6 * this-base);
-                '7' => integer := integer + (7 * this-base);
-                '8' => integer := integer + (8 * this-base);
-                '9' => integer := integer + (9 * this-base);
-                ',' => #f;
-                otherwise => integer := string-to-number-error( default );
-            end select; 
-            this-base := this-base * base;
-        end for;
-        // If the string is negative, make the integer negative as well
-        if( negative )
-            integer := - integer;
-        end if;
-    end block;
-    
-    integer;
+define method string-to-integer
+    (string :: <byte-string>,
+     #key base :: <integer> = 10, 
+          start :: <integer> = 0, 
+          end: _end :: <integer> = size(string),
+          default = $unsupplied )
+ => (result :: <integer>, next-key :: <integer>);
+  // Set initial state
+  let negative? :: <boolean> = #f;
+  let sign?  :: <boolean> = #f;
+  let integer :: <integer> = 0;
+  
+  block (return)
+    for (i :: <integer> from start below _end)
+      let char :: <character> = string[i];
+      let digit :: false-or(<integer>)
+	= select (char)
+	    '-' =>
+	      if(i = start)
+		negative? := #t;
+		sign? := #t;
+	      elseif (sign? & i = start + 1)
+		return(default, i);
+	      else
+		return(if (negative?) - integer else integer end, i);
+	      end if;
+	      #f;
+	    '+' =>
+	      if(i = start)
+		sign? := #t;
+	      elseif (sign? & i = start + 1)
+		return(default, i);
+	      else
+		return(if (negative?) - integer else integer end, i);
+	      end if;
+	      #f;
+	    '0'      => 0;
+	    '1'      => 1;
+	    '2'      => 2;
+	    '3'      => 3;
+	    '4'      => 4;
+	    '5'      => 5;
+	    '6'      => 6;
+	    '7'      => 7;
+	    '8'      => 8;
+	    '9'      => 9;
+	    'A', 'a' => 10;
+	    'B', 'b' => 11;
+	    'C', 'c' => 12;
+	    'D', 'd' => 13;
+	    'E', 'e' => 14;
+	    'F', 'f' => 15;
+	    'G', 'g' => 16;
+	    'H', 'h' => 17;
+	    'I', 'i' => 18;
+	    'J', 'j' => 19;
+	    'K', 'k' => 20;
+	    'L', 'l' => 21;
+	    'M', 'm' => 22;
+	    'N', 'n' => 23;
+	    'O', 'o' => 24;
+	    'P', 'p' => 25;
+	    'Q', 'q' => 26;
+	    'R', 'r' => 27;
+	    'S', 's' => 28;
+	    'T', 't' => 29;
+	    'U', 'u' => 30;
+	    'V', 'v' => 31;
+	    'W', 'w' => 32;
+	    'X', 'x' => 33;
+	    'Y', 'y' => 34;
+	    'Z', 'z' => 35;
+	    otherwise =>
+	      if (i = start)
+		return(default, i);
+	      elseif (sign? & i = start + 1)
+		return(default, i);
+	      else
+		return(if (negative?) - integer else integer end, i);
+	      end if;
+	  end select;
+      if(digit)
+	if(digit < base)
+	  integer := integer * base + digit;
+	elseif (i = start)
+	  return(default, i);
+	elseif (sign? & i = start + 1)
+	  return(default, i);
+	else
+	  return(if (negative?) - integer else integer end, i);
+	end if;
+      end if;
+    end for;
+    values(if (negative?) - integer else integer end, _end);
+  end block;
 end method string-to-integer;
-
-define method string-to-number-error( default :: type-union( <number>, object-class( $unsupplied ) ) )
-=> ( result :: <number> )
-    let result :: <number> = 0;	// This will never be returned
-    
-    if( supplied?( default ) )
-        result := default;
-    else
-        break("Invalid string for conversion to number.");
-    end if;
-    
-    result;
-end method string-to-number-error;
-
-// XXX - ASK FUN-O: Not part of common-dylan, but used in DUIM?
-// Rewrite along the same lines as string-to-integer: find the decimal then work left & right
-
-define method string-to-float( string :: <string>, #key base :: <integer> = 10, start-position :: <integer> = 0, 
-                                end-position :: type-union( <integer>, object-class( $unsupplied ) ) = $unsupplied,
-                                default :: type-union( <float>, object-class( $unsupplied ) ) = $unsupplied   )
-=>( result :: <float> )
-    // Get the string we're actually parsing
-    if( ~ supplied?( end-position ) )
-        end-position := string.size;
-    end if;
-    let substring :: <string> = copy-sequence( string, start: start-position, end: end-position );
-    
-    // Set up the parsing state
-    let base-float :: <float> = as( <float>, base );
-    let float :: <float> = 0.0;
-    let left :: <stretchy-vector>  = make( <stretchy-vector> );
-    let right :: <stretchy-vector>  = make( <stretchy-vector> );
-    let current :: <stretchy-vector> = left;
-    let negative :: <boolean> = #f;
-    
-    if( substring.size = 0 )
-        float := string-to-number-error( default );
-    end if;
-    
-    block( exit-loop )
-        for( char in substring  )
-            select( char )
-                '-' => negative := #t;		//TODO Check we haven't set already
-                '0' => add!( current, 0.0 );
-                '1' => add!( current, 1.0 );
-                '2' => add!( current, 2.0 );
-                '3' => add!( current, 3.0 );
-                '4' => add!( current, 4.0 );
-                '5' => add!( current, 5.0 );
-                '6' => add!( current, 6.0 );
-                '7' => add!( current, 7.0 );
-                '8' => add!( current, 8.0 );
-                '9' => add!( current, 9.0 );
-                '.' => current := right;		//TODO Use decimal-separator
-                ',' => #f;				//TODO Use thousands-separator
-                otherwise => float := string-to-number-error( default );
-            end select; 
-        end for;
-    
-        if( left.size > 0 )
-            //OPTIMIZE to go from right to left, multiplying
-            let multiple = as( <float>, (base ^ (left.size - 1)) );
-            for( digit in left )
-                float := float + (digit * multiple);
-                multiple := multiple / base-float;
-            end for;
-        end if;
-        
-        if( right.size > 0 )
-            let fraction = 1.0 / base-float;
-            for( digit in right )
-                float := float + (digit * fraction);
-                fraction := fraction / base-float;
-            end for
-        end if;
-        
-        if( negative )
-            float := float * -1.0;
-        end if;
-    end block;
-    
-    if( ~ float )
-        break("Invalid string in string-to-float.");
-    end if;
-    
-    float;
-end method string-to-float;
-
 
 //=========================================================================
 //  Macros
