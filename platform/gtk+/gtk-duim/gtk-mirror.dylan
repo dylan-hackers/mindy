@@ -205,20 +205,20 @@ define sealed method raise-mirror
     ignoring("activate? keyword to raise-mirror")
   end;
   let widget = mirror-widget(mirror);
-  gdk-window-raise(widget)
+  gdk-window-raise(widget.window-value)
 end method raise-mirror;
 
 define sealed method lower-mirror
     (_port :: <gtk-port>, sheet :: <sheet>, mirror :: <widget-mirror>) => ()
   let widget = mirror-widget(mirror);
-  gdk-window-lower(widget)
+  gdk-window-lower(widget.window-value)
 end method lower-mirror;
 
 define sealed method mirror-visible? 
     (_port :: <gtk-port>, sheet :: <sheet>, mirror :: <widget-mirror>)
  => (visible? :: <boolean>)
   let widget = mirror-widget(mirror);
-  gdk-window-is-visible(widget) == $false
+  gdk-window-is-visible(widget.window-value) == $false
 end method mirror-visible?;
 
 
