@@ -90,10 +90,24 @@ define method make-closure
        closure-size: closure-size);
 end;
 
+define class <gf-cache> (<object>)
+  slot simple :: <boolean>, init-value: #t;
+  slot cached-normal :: <list>, init-value: #();
+  slot cached-ambiguous :: <list>, init-value: #();
+  slot cached-classes :: <simple-object-vector>,
+    required-init-keyword: #"classes";
+  slot next :: union(<false>, <gf-cache>), required-init-keyword: #"next";
+  slot prev :: union(<false>, <gf-cache>), init-value: #f;
+end class <gf-cache>;
+
+seal generic make(singleton(<gf-cache>));
+seal generic initialize (<gf-cache>);
+
 define class <generic-function> (<function>)
   //
   slot generic-function-methods :: <list>,
     required-init-keyword: methods:;
+  slot method-cache :: union(<false>, <gf-cache>), init-value: #f;
 end;
 
 seal generic make(singleton(<generic-function>));
@@ -153,19 +167,21 @@ define constant gf-call
       end;
       let arg-ptr = %%primitive extract-args(nargs);
       let args = make(<simple-object-vector>, size: nargs);
-      for (specializer :: <type> in specializers,
-	   index :: <fixed-integer> from 0)
-	args[index] := check-type(%%primitive extract-arg (arg-ptr, index),
-				  specializer);
-      end;
-      for (index :: <fixed-integer> from nfixed below nargs)
-	args[index] := %%primitive extract-arg (arg-ptr, index);
+      for (index :: <fixed-integer> from 0 below nargs)
+	// This is a very critical path, and we know that the indices are
+	// valid, so use the lower level function
+	%element(args, index) := %%primitive extract-arg (arg-ptr, index);
       end;
       %%primitive pop-args(arg-ptr);
       let (ordered, ambiguous)
-	= internal-sorted-applicable-methods(self, args);
+	= cached-sorted-applicable-methods(self, args);
       if (ambiguous == #())
 	if (ordered == #())
+	  for (index :: <fixed-integer> from 0 below nfixed)
+	    let specializer :: <type> = %element(specializers, index);
+	    let arg = %element(args, index);
+	    %check-type(arg, specializer);
+	  end;
 	  no-applicable-methods-error();
 	else
 	  %%primitive invoke-generic-entry
@@ -191,6 +207,14 @@ define method internal-sorted-applicable-methods
     (gf :: <generic-function>, args :: <simple-object-vector>)
     => (ordered :: <list>, ambiguous :: <list>);
 
+  // We have to use low-level stuff here.  It would be bad to do a full
+  // generic function call at this point.
+  let cache-classes = make(<simple-object-vector>, size: args.size);
+  for (i :: <fixed-integer> from 0 below args.size)
+    %element(cache-classes, i) := %element(args, i).object-class;
+  end for;
+  let cache = make(<gf-cache>, next: gf.method-cache, classes: cache-classes);
+
   // Ordered accumulates the methods we can tell the ordering of.  Each
   // element in this list is a method.
   let ordered = #();
@@ -200,7 +224,7 @@ define method internal-sorted-applicable-methods
   let ambiguous = #();
 
   for (meth :: <method> in gf.generic-function-methods)
-    if (internal-applicable-method?(meth, args))
+    if (internal-applicable-method?(meth, args, cache))
       block (done-with-method)
 	for (remaining :: <list> = ordered then remaining.tail,
 	     prev :: false-or(<pair>) = #f then remaining,
@@ -278,23 +302,107 @@ define method internal-sorted-applicable-methods
     end;
   end;
 
+  gf.method-cache := cache;
+  cache.cached-normal := ordered;
+  cache.cached-ambiguous := ambiguous;
+
   values(ordered, ambiguous);
 end;
 
+define method cached-sorted-applicable-methods
+    (gf :: <generic-function>, args :: <simple-object-vector>)
+ => (ordered :: <list>, ambiguous :: <list>);
+  if (gf.generic-function-methods.empty?)
+    values(#(), #());
+  else
+    block (return)
+      for (cache :: union(<false>, <gf-cache>) = gf.method-cache
+	     then cache.next,
+	   until: cache == #f)
+	block (no-match)
+	  let cache :: <gf-cache> = cache; // A hint to the type system.
+
+	  let classes :: <simple-object-vector> = cache.cached-classes;
+	  if (cache.simple)
+	    for (index :: <fixed-integer> from 0 below args.size)
+	      let type :: <type> = %element(classes, index);
+	      let arg = %element(args, index);
+	      unless (type == arg.object-class) no-match() end unless;
+	    end for;
+	  else
+	    for (index :: <fixed-integer> from 0 below args.size)
+	      let type :: <type> = %element(classes, index);
+	      let arg = %element(args, index);
+	      unless (type == arg.object-class
+			| (~instance?(type, <class>) & instance?(arg, type)))
+		no-match();
+	      end unless;
+	    end for;
+	  end if;
+
+	  unless (gf.method-cache == cache)
+	    if (cache.prev) cache.prev.next := cache.next end if;
+	    if (cache.next) cache.next.prev := cache.prev end if;
+	    cache.next := gf.method-cache;
+	    gf.method-cache := cache;
+	  end unless;
+	  return(cache.cached-normal, cache.cached-ambiguous);
+	end block;
+      end for;
+      internal-sorted-applicable-methods(gf, args);
+    end block;
+  end if;
+end method cached-sorted-applicable-methods;
 
 define method internal-applicable-method?
-    (meth :: <method>, args :: <simple-object-vector>) => res :: <boolean>;
+    (meth :: <method>, args :: <simple-object-vector>, cache :: <gf-cache>)
+ => (res :: <boolean>);
   block (return)
-    for (spec :: <type> in meth.function-specializers,
+    let classes :: <simple-object-vector> = cache.cached-classes;
+    for (specializer :: <type> in meth.function-specializers,
+	 arg :: <object> in args,
 	 index :: <fixed-integer> from 0)
-      unless (instance?(args[index], spec))
-	return(#f);
-      end;
-    end;
-    #t;
-  end;
-end;
+      let arg-type = classes[index];
 
+      // arg-type may be either a singleton, a limited-int, or a class.  This
+      // stuff has been worked out on a case by case basis.  It could
+      // certainly be made clearer, but this could potentially reduce the
+      // efficiency by a large margin.
+      if (subtype?(arg-type, specializer))
+	// A valid arg -- continue
+	#f;
+      else
+	if (instance?(arg, specializer))
+	  // Still a valid arg, but a complicated one.  Therefore we patch up
+	  // the cache entry to better identify this particular case.
+	  classes[index] := if (~%instance?(specializer, <limited-integer>))
+			      singleton(arg);
+			    elseif (%instance?(arg-type, <limited-integer>))
+			      intersect-limited-ints(arg-type, specializer);
+			    else
+			      specializer;
+			    end if;
+	  cache.simple := #f;
+	else
+	  // At last, we've found something which isn't valid.  We'll return
+	  // false, but first we may need to adjust the cache to identify the
+	  // subtypes that might still be valid.
+	  if (overlap?(arg-type, specializer))
+	    classes[index]
+	      := if (~%instance?(specializer, <limited-integer>))
+		   restrict-type(specializer, arg-type);
+		 else
+		   restrict-limited-ints(arg, arg-type, specializer);
+		 end if;
+	    cache.simple := #f;
+	  end if;
+	  return(#f);
+	end if;
+      end if;
+    end for;
+    #t;
+  end block;
+end;
 
 define method compare-methods
     (meth1 :: <method>, meth2 :: <method>, args :: <simple-object-vector>)
@@ -359,7 +467,7 @@ define method sorted-applicable-methods
   unless (args.size == gf.function-specializers.size)
     error("Wrong number of arguments to sorted-applicable-methods.");
   end;
-  internal-sorted-applicable-methods(gf, args);
+  cached-sorted-applicable-methods(gf, args);
 end;
 
 

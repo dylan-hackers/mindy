@@ -22,7 +22,7 @@ define generic limited (type :: <type>, #key) => res :: <type>;
 //
 define movable method instance? (object :: <object>, type :: <type>)
     => res :: <boolean>;
-  %instance?(object, type);
+  object.object-class.subtype-cache == type | %instance?(object, type);
 end;
 
 // %instance? -- internal.
@@ -311,7 +311,10 @@ end;
 //
 define method %instance? (object :: <object>, type :: <union>)
     => res :: <boolean>;
-  any?(curry(instance?, object), type.union-members)
+  local method object-instance? (type :: <type>) => res :: <boolean>;
+	  instance?(object, type);
+	end method object-instance?;
+  any?(object-instance?, type.union-members)
     | member?(object, type.union-singletons);
 end;
 
@@ -448,6 +451,36 @@ define method %instance? (object :: <integer>, type :: <limited-integer>)
   end;
 end;
 
+// The general case is too slow (since it must do generic dispatch), but so is
+// next-method.  Therefore we duplicate the preceding routine *twice* in order
+// to get up to a factor of 20 speedup.
+//
+define method %instance?
+    (object :: <fixed-integer>, type :: <limited-integer>)
+ => res :: <boolean>;
+  if (type.limited-integer-base-class == <fixed-integer>)
+    let min :: <fixed-integer> = type.limited-integer-minimum;
+    if (~min | object >= min)
+      let max :: <fixed-integer> = type.limited-integer-maximum;
+      ~max | object <= max;
+    else
+      #f;
+    end;
+  else
+    if (instance?(object, type.limited-integer-base-class))
+      let min = type.limited-integer-minimum;
+      if (~min | object >= min)
+	let max = type.limited-integer-maximum;
+	~max | object <= max;
+      else
+	#f;
+      end;
+    else
+      #f;
+    end;
+  end;
+end;
+
 // subtype?(<limited-integer>,<type>) -- exported generic function method.
 //
 // Unless one of the other methods steps in, a limited integer is only
@@ -482,6 +515,69 @@ define method subtype? (type1 :: <limited-integer>, type2 :: <limited-integer>)
     #f;
   end;
 end;
+
+// intersect-limited-ints(<limited-integer>,<limited-integer>) -- internal
+//
+// Returns either a new limited integer type containing all elements common to
+// lim1 and lim2, or false if there are no common elements.
+//
+define method intersect-limited-ints
+    (lim1 :: <limited-integer>, lim2 :: <limited-integer>)
+ => (res :: union(<false>, <limited-integer>));
+  if (lim1.limited-integer-base-class ~= lim2.limited-integer-base-class)
+    error("interesect-limited-ints only works on homogenous types");
+  end if;
+  
+  let min1 = lim1.limited-integer-minimum;
+  let min2 = lim2.limited-integer-minimum;
+  let max1 = lim1.limited-integer-maximum;
+  let max2 = lim2.limited-integer-maximum;
+
+  if (max1 < min2 | max2 < min1)
+    #f;
+  else
+    let min = if (min1 < min2) min2 else min1 end if;
+    let max = if (max1 > max2) max2 else max1 end if;
+    make(<limited-integer>, base-class: lim1.limited-integer-base-class,
+	 min: min, max: max);
+  end if;
+end method intersect-limited-ints;
+
+// restrict-limited-ints(<limited-integer>,<limited-integer>) -- internal.
+//
+// Return a new limited integer type containing the portion of lim1 which
+// contains value but contains no instances of lim2.  Lim1 may be either an
+// "<integer>" class or a limited integer type.  We require, as a
+// precondition, that value not be an instance of lim2.
+//
+define method restrict-limited-ints
+    (value :: <integer>, lim1 :: <type>, lim2 :: <limited-integer>)
+ => (res :: <limited-integer>);
+  let (min1, max1)
+    = case
+	(instance?(lim1, <limited-integer>)) =>
+	  values(lim1.limited-integer-minimum, lim1.limited-integer-maximum);
+	(subtype?(lim1, <integer>)) =>
+	  values(#f, #f);
+	otherwise =>
+	  error("restrict-limited-ints must be passed two integer types.");
+      end case;
+  let min2 = lim2.limited-integer-minimum;
+  let max2 = lim2.limited-integer-maximum;
+
+  let min = if ((~min2 | min2 < value) & (~min1 | min1 < max2))
+	      max2 + 1;
+	    else
+	      min1;
+	    end if;
+  let max = if ((~max2 | max2 > value) & (~max1 | max1 > min2))
+	      min2 - 1;
+	    else
+	      max1;
+	    end if;
+  make(<limited-integer>, base-class: lim2.limited-integer-base-class,
+       min: min, max: max);
+end method restrict-limited-ints;
 
 
 // The <byte-character> type.
@@ -534,3 +630,138 @@ define method subtype?
     => res :: <boolean>;
   #t;
 end;
+
+
+// Negation-types
+
+// <none-of> -- internal
+//
+// This is a funky sort of special purpose type.  It represents objects which
+// are instances of a given "base type" but not members of any of a set of
+// excluded subtypes.  This concept probably has no conceivable use outside of
+// generic function dispatch.
+//
+define class <none-of> (<type>)
+  slot base-type :: <type>, required-init-keyword: #"base";
+  slot excluded-types :: <list>, init-value: #(), init-keyword: #"excluded";
+end;
+
+seal generic make (singleton(<none-of>));
+
+// restrict-types -- internal.
+//
+// return a version of "type" which excludes the given value.  If type
+// is already a none_of type, simply extend it, else return a new <none-of>
+// type.
+// 
+define method restrict-type (base :: <type>, exclude :: <type>);
+  if (instance?(base, <none-of>))
+    base.excluded-types := pair(exclude, base.excluded-types);
+    base;
+  else
+    make(<none-of>, base: base, exclude: list(exclude));
+  end if;
+end method restrict-type;
+
+// instance?(<object>,<none-of>) -- exported generic function method.
+//
+// Something is an instance of a union if it is an instance of any of the
+// member types or one of the singletons.
+//
+define method %instance? (object :: <object>, type :: <none-of>)
+    => res :: <boolean>;
+  instance?(object, type.base-type)
+    & ~any?(curry(instance?, object), type.excluded-types);
+end;
+
+// subtype?(<none-of>,<type>) -- exported generic function method.
+//
+// A type negation is subtype some other type if it's base is a subtype.
+// This case is straigtforward, but the (<type>, <none-of>) method is just too
+// hair to implement, so we won't.
+//
+define method subtype? (type1 :: <none-of>, type2 :: <type>)
+    => res :: <boolean>;
+  subtype?(type1.base-type, type2);
+end;
+  
+
+// Overlap? -- internal.
+//
+// This function returns true if it is possible to create an object which is a
+// member of both of the given types.  In case of doubt, it is permissible to
+// return a spurious true value.
+//
+define generic overlap? (type1 :: <type>, type2 :: <type>) => res :: <boolean>;
+
+define method overlap? (type1 :: <class>, type2 :: <class>)
+ => res :: <boolean>;
+  local method sub-overlap (cls :: <class>) => res :: <boolean>;
+	   subtype?(cls, type2) | any?(sub-overlap, direct-subclasses(cls));
+	end method sub-overlap;
+  sub-overlap(type1);
+end method overlap?;
+
+define method overlap? (type1 :: <class>, type2 :: <type>) => res :: <boolean>;
+  overlap?(type2, type1);
+end method overlap?;
+
+define method overlap?
+    (type1 :: <singleton>, type2 :: <type>) => res :: <boolean>;
+  subtype?(type1, type2);
+end method overlap?;
+
+/* ### not absolutly needed
+
+define method overlap? (type1 :: <subclass>, type2 :: <type>)
+ => res :: <boolean>;
+  local method check-subclass-instances (class :: <class>) => res :: <boolean>;
+	  instance?(class, type2)
+	    | any?(check-subclass-instances, direct-subclasses(class));
+	end method check-subclass-instances;
+  check-subclass-instances(type1.subclass-of);
+end method overlap?;
+*/
+
+define method overlap?
+    (type1 :: <limited-integer>, type2 :: <limited-integer>)
+ => (res :: <boolean>);
+  let min1 = type1.limited-integer-minimum;
+  let min2 = type2.limited-integer-minimum;
+  let max1 = type1.limited-integer-maximum;
+  let max2 = type2.limited-integer-maximum;
+
+  case
+    (~overlap?(type1.limited-integer-base-class,
+	       type2.limited-integer-base-class)) => #f;
+    (max1 & min2 & (max1 > min2)) => #f;
+    (max2 & min1 & (max2 > min1)) => #f;
+    otherwise => #t;
+  end case;
+end method overlap?;
+
+define method overlap? (type1 :: <limited-integer>, type2 :: <class>)
+ => res :: <boolean>;
+  overlap?(type1.limited-integer-base-class, type2);
+end method overlap?;
+
+define method overlap? (type1 :: <limited-integer>, type2 :: <type>)
+ => res :: <boolean>;
+  overlap?(type2, type1);
+end method overlap?;
+
+define method overlap? (type1 :: <union>, type2 :: <type>) => res :: <boolean>;
+  any?(rcurry(overlap?, type2), type1.union-members)
+    | any?(rcurry(instance?, type2), type1.union-singletons);
+end method overlap?;
+
+define method overlap?
+    (type1 :: <none-of>, type2 :: <type>) => res :: <boolean>;
+  overlap?(type1.base-type, type2);
+end method overlap?;
+
+define method overlap? (type1 :: <type>, type2 :: <type>) => res :: <boolean>;
+  // Default.  If nothing else catches the argument, then there is no overlap.
+  #f;
+end method overlap?;
+
