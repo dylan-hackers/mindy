@@ -1,3 +1,10 @@
+local($common);
+if ($features{'compiled_for_win32'}) {
+	$common = '..\..\common';
+} else {
+	$common = '../../common';
+}
+
 if (!$enable_bootstrap || $enable_mindy_bootstrap) {
     if ($host_name eq $target_name) {
 	do compile_subdirs('c-code',
@@ -8,11 +15,11 @@ if (!$enable_bootstrap || $enable_mindy_bootstrap) {
 		       'melange',
 #		       'c-ffi',
 		       'garbage-collection',
-		       '../../common',
+		       "$common",
 		       'random');
 
     do install_from_src($includedir, "runtime.h");
 } else {
-    do compile_subdirs('../../common',
+    do compile_subdirs("$common",
                        'random');    
 }
