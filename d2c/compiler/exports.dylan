@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.41 1995/04/29 08:39:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.42 1995/04/30 04:30:47 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -498,7 +498,7 @@ define module c-representation
     <data-word-representation>, representation-class,
     representation-data-word-member,
 
-    $cluster-rep, $general-rep, $heap-rep, $boolean-rep, *long-rep*;
+    $general-rep, $heap-rep, $boolean-rep, *long-rep*;
 end;
 
 define module compile-time-eval
@@ -837,6 +837,17 @@ define module cheese
   use define-functions;
 end;
 
+define module stack-analysis
+  use common;
+  use utils;
+  use flow;
+  use front;
+
+  export
+    analize-stack-usage;
+end;
+
+
 define module cback
   use common;
   use Standard-IO;
@@ -853,6 +864,7 @@ define module cback
   use define-functions;
   use define-constants-and-variables;
   use ctype;
+  use stack-analysis;
 
   export
     <output-info>, output-info-results,
