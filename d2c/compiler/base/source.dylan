@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.9 2003/03/01 13:37:04 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.10 2003/04/05 14:40:13 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -344,8 +344,8 @@ define class <known-source-location> (<source-location>)
     required-init-keyword: end-column:;
 end;
 
-define sealed domain make (singleton(<unknown-source-location>));
-define sealed domain initialize (<unknown-source-location>);
+define sealed domain make (singleton(<known-source-location>));
+define sealed domain initialize (<known-source-location>);
 
 define sealed method describe-source-location
     (srcloc :: <known-source-location>, stream :: <stream>)
@@ -377,8 +377,20 @@ define sealed method describe-source-location
 		   extract-line(srcloc.source,
 				srcloc.start-posn - srcloc.start-column);
 		 end;
+  block()
 	     highlight-line(line, srcloc.start-column, srcloc.end-column,
 			    stream);
+  exception(e :: <condition>) // FIXME: this is a stopgag measure
+    format(*debug-output*, "\n");
+    report-condition(e, *debug-output*);
+    format(*debug-output*, "\nsourceloc.start-posn = %=\n", srcloc.start-posn);
+    format(*debug-output*, "sourceloc.start-line = %=\n", srcloc.start-line);
+    format(*debug-output*, "sourceloc.start-column = %=\n", srcloc.start-column);
+    format(*debug-output*, "sourceloc.end-posn = %=\n", srcloc.end-posn);
+    format(*debug-output*, "sourceloc.end-line = %=\n", srcloc.end-line);
+    format(*debug-output*, "sourceloc.end-column = %=\n", srcloc.end-column); 
+    error("outta here...");
+  end block;
 	   end block;
 	 else
 	   format(stream,
@@ -400,8 +412,20 @@ define sealed method describe-source-location
 			    (srcloc.source,
 			     srcloc.end-posn - srcloc.end-column));
 		 end;
+  block()
 	     highlight-line(first-line, srcloc.start-column,
 			    first-line.size, stream);
+  exception(e :: <condition>) // FIXME: this is a stopgag measure
+    format(*debug-output*, "\n");
+    report-condition(e, *debug-output*);
+    format(*debug-output*, "\nsourceloc.start-posn = %=\n", srcloc.start-posn);
+    format(*debug-output*, "sourceloc.start-line = %=\n", srcloc.start-line);
+    format(*debug-output*, "sourceloc.start-column = %=\n", srcloc.start-column);
+    format(*debug-output*, "sourceloc.end-posn = %=\n", srcloc.end-posn);
+    format(*debug-output*, "sourceloc.end-line = %=\n", srcloc.end-line);
+    format(*debug-output*, "sourceloc.end-column = %=\n", srcloc.end-column);
+    error("outta here...");
+  end block;
 	     unless (srcloc.start-line + 1 == srcloc.end-line)
 	       write(stream, "  through");
 	     end unless;
@@ -450,6 +474,9 @@ define method highlight-line
 	end method repeat;
   repeat(0, 0);
   pprint-newline(#"mandatory", stream);
+  if (end-char > line.size)
+    error("ERROR in highlight-line: position %d-%d is greater than string length: %d '%s', ", start-char, end-char, line.size, line);
+  end;
   let start-column = compute-column(line, start-char);
   if (start-char < end-char)
     let end-column = compute-column(line, end-char);
