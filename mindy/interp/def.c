@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.10 1994/06/27 16:31:43 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/def.c,v 1.11 1994/07/11 20:28:42 dpierce Exp $
 *
 * This file implements the stuff to install definitions.
 *
@@ -215,9 +215,11 @@ static obj_t defclass1(obj_t class, obj_t superclasses)
     return class;
 }
 
-static obj_t defclass2(obj_t class, obj_t slots)
+static obj_t defclass2(obj_t class, obj_t slots,
+		       obj_t initargs, obj_t inheriteds)
 {
-    init_defined_class(class, slots);
+    init_defined_class(class, slots, initargs, inheriteds);
+
     /* init_defined_class doesn't return */
     lose("init_defined_class actually returned?\n");
     return NULL;
@@ -263,7 +265,8 @@ void init_def_functions(void)
 		    list2(obj_ObjectClass, obj_ObjectClass),
 		    FALSE, obj_False, FALSE, obj_ObjectClass, defclass1);
     define_function("%define-class-2",
-		    list2(obj_ObjectClass, obj_ObjectClass),
+		    listn(4, obj_ObjectClass, obj_ObjectClass,
+			  obj_ObjectClass, obj_ObjectClass),
 		    FALSE, obj_False, FALSE, obj_ObjectClass, defclass2);
     define_function("%define-slot", list2(obj_ObjectClass, obj_ObjectClass),
 		    FALSE, obj_False, FALSE, obj_ObjectClass, defslot);
