@@ -33,7 +33,7 @@ define module c-lexer
 	     parse-warning,
 	     parse-progress-report};
   use multistring-match;
-  create cpp-parse;
+//  create cpp-parse;
   export
     *handle-c++-comments*,
     <tokenizer>, cpp-table, cpp-decls, <token>, token-id, generator,
@@ -51,6 +51,9 @@ end module c-lexer;
 define module c-parser
   use dylan;
   use extensions;
+
+  use source-locations;
+
   use ansi-c;
   use c-lexer;
 
