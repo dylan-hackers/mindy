@@ -38,6 +38,7 @@ define library tk
   use streams;
   use string-extensions;
   use collection-extensions;
+  use format;
   export tk;
   export tk-extension;
 end library tk;
@@ -52,15 +53,18 @@ define module tk-internal
 
   use streams;
   use standard-io;
-
+  
   use vector-search;
   use self-organizing-list;
+
+  use format;
 
   export
     // from tk-io.dylan
     tk-as, tk-unquote, tk-quote, put-tk-line, 
     // from tk-util.dylan
     anonymous-name, make-option, join-tk-args, parse-tk-list,
+    get-name-from-class, get-class-from-name,
     // from tk-call.dylan
     <active-variable>, value, value-setter, call-tk-function;
 end module tk-internal;
@@ -77,6 +81,9 @@ define module tk
   use standard-io;
 
   use regular-expressions;
+  use string-conversions;
+  
+  use format;
   
   use tk-internal,
     export: {<active-variable>, value, value-setter, tk-as, tk-unquote};
@@ -86,31 +93,36 @@ define module tk
     <frame>, <label>, <listbox>, <menu>, <menubutton>, <message>, <scale>,
     <scrollbar>, <text>, <toplevel>;
   export // support classes
-    <text-index>, <text-mark>, <text-tag>, <canvas-item>;
+    <text-index>, <text-mark>, <text-tag>, <canvas-item>, <canvas-tag>,
+    <point>, <color>, <rgb-color>;
   export // variables
     *root-window*;
   export // user functions
     configure, configuration, map-window, unmap-window, destroy-window,
     pack, unpack;
   export // bindings
-    bind, get-binding, get-bindings;
+    bind, get-binding, get-bindings, tk-break, tk-continue;
   export // <button>s
-    flash, invoke, activate, deactivate, select-value, deselect-value,
+    flash, invoke, select-value, deselect-value,
     toggle-value;
   export // <canvas>s
     xview, yview, focus, focus-setter, scan-mark, scan-dragto, select-item,
     create-arc, create-bitmap, create-line, create-oval, create-polygon,
-    create-rectangle, create-text, create-window, postscript, items;
+    create-rectangle, create-text, create-window, postscript, items,
+    canvas-x, canvas-y;
   export // <entry>s, <listbox>s, and <text>s
     delete, insert, get-all, get-elements, scan-mark, scan-dragto,
     select-adjust, select-clear, select-from, select-to;
   export // <entry>s
-    icursor;
+    icursor, xview;
   export // <listbox>s
     // size, 
-    current-selection, nearest, xview, yview;
+    current-selection, nearest, xview, yview, set-selection,
+    selection-anchor-setter, clear-selection, selection-includes?;
   export // <menu>s
-    add-command, add-checkbutton, add-radiobutton, add-cascade, add-separator;
+    add-command, add-checkbutton, add-radiobutton, add-cascade, add-separator,
+    activate-entry, delete, configure-entry, entry-configuration, invoke-entry,
+    post, unpost, yposition-entry, post-cascade;
   export // <scale>s
     get-value, set-value;
   export // <scrollbar>s
@@ -124,10 +136,22 @@ define module tk
   export // <text-tag>s
     name, configure, configuration, bind, delete-tag, raise-tag,
     lower-tag, next-range, add-tag, remove-tag;
-  export // <canvas-item>s
+  export // <canvas-item>s and <canvas-tag>s
     configure, configuration, bind, delete-item, raise-item,
     lower-item, move-item, scale-item, item-type, item-coords,
-    item-coords-setter;
+    item-coords-setter, find-items, add-canvas-tag, get-canvas-tags,
+    delete-canvas-tag, bounding-box;
+  export // window information functions
+    tk-class, children, window-containing-x-y, window-containing-point,
+    depth, exists?, distance-to-float-pixels, geometry, height, X-id,
+    mapped?, geometry-manager, window-with-X-id, distance-to-pixels,
+    mouse-x-y, mouse-point, requested-height, requested-width, width,
+    color-to-r-g-b, color-to-rgb-color, abs-position-x-y, abs-position-point,
+    screen-name, screen-colormap-cells, screen-depth, screen-height,
+    screen-width, toplevel, viewable?, visual-class, available-visuals,
+    virtual-root-height, virtual-root-width, virtual-root-position-x-y,
+    virtual-root-position-point, x-y-in-parent, point-in-parent,
+    colormap-cells, colormap-full?;
 end module tk;
 
 define module tk-extension
