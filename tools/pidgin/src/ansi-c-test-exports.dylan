@@ -5,7 +5,9 @@ define library ansi-c-test
   use streams;
   use format;
   use standard-io;
+  use parse-arguments;
 
+  use parser-utilities;
   use ansi-c;
   use c-parser;
 end;
@@ -16,7 +18,9 @@ define module ansi-c-test
   use streams;
   use format;
   use standard-io;
+  use parse-arguments;
 
+  use parse-conditions;
   use ansi-c;
   use c-parser;
 end;

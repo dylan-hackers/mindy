@@ -194,11 +194,26 @@ end function test-c-types-and-declarations;
 define function test-c-parser(args)
   test-section-header("C Parser");
   if (~empty?(args))
-    let repository :: <c-type-repository> = make(<c-type-repository>);
+    let argp = make(<argument-list-parser>);
+    add-option-parser-by-type(argp,
+			      <repeated-parameter-option-parser>,
+			      short-options: #("I"),
+			      long-options: #("includedir"));
+    unless (parse-arguments(argp, args))
+      format(*standard-error*,
+	     "usage: ansi-c-test [[-Iincludedir...] file]\n");
+      exit(exit-code: 1);
+    end unless;
+    let include-path = option-value-by-long-name(argp, "includedir");
 
     format(*standard-output*, "Running C parser.\n");
+    let repository :: <c-type-repository> = make(<c-type-repository>);
     force-output(*standard-output*);
-    let c-file :: <c-file> = parse-c-file(repository, args[0]);
+    let c-file :: <c-file> = parse-c-file(repository,
+					  argp.regular-arguments[0],
+					  include-path: include-path,
+					  platform: $i386-linux-platform);
+    force-output(*standard-output*);
     format(*standard-output*, "Parser finished.\n");
     force-output(*standard-output*);
 
@@ -221,8 +236,11 @@ end function test-c-parser;
 //  Test program
 //=========================================================================
 
+// Set up our I/O.
+*warning-output* := *standard-error*;
+*show-parse-progress?* := #t;
+
 define method main(appname, #rest args)
-  *warning-output* := *standard-output*;
   test-c-types-and-declarations();
   test-c-parser(args);
 end;
