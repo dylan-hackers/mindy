@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.14 1994/04/28 19:25:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.15 1994/05/05 11:48:22 wlott Exp $
 *
 * This file does whatever.
 *
@@ -118,7 +118,7 @@ static void canonicalize_values(struct thread *thread, obj_t *old_sp,
 
 static void op_flame(int byte, struct thread *thread)
 {
-    error("Bogus byte-op: ~S", byte);
+    lose("Bogus byte-op: %d", byte);
 }
 
 static void op_breakpoint(int byte, struct thread *thread)
