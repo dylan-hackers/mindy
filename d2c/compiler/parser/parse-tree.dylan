@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parse-tree.dylan,v 1.3 2000/01/24 04:56:34 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parse-tree.dylan,v 1.4 2001/07/10 00:28:21 bruce Exp $
 copyright: see below
 
 //======================================================================
@@ -725,6 +725,9 @@ define class <method-ref-parse> (<expression-parse>)
   // The method referenced.
   constant slot method-ref-method :: <method-parse>,
     required-init-keyword: method:;
+
+  constant slot method-ref-options :: <simple-object-vector> = #[],
+    init-keyword: options:;
 end class <method-ref-parse>;
 
 define sealed domain make (singleton(<method-ref-parse>));
