@@ -11,13 +11,13 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.27 1994/05/23 18:00:57 nkramer Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.28 1994/05/25 12:40:26 wlott Exp $
 //
 //  This file does whatever.
 //
 
 define library Dylan
-  export Dylan, Extensions, System, Threads;
+  export Dylan, Extensions, System, File-Descriptors, Threads;
 end Dylan;
 
 define module Builtin-Stuff
@@ -68,10 +68,16 @@ define module Builtin-Stuff
     signal-event, singleton, size, slot-initialized?, spawn-thread,
     sorted-applicable-methods, state-valid?, subtype?,
     tail, tail-setter, truncate, truncate/,
-    union, fd-close, fd-error-string, fd-input-available?, fd-open,
-    fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
+    union,
     values, vector,
-    wait-for-event, weak-pointer-object;
+    wait-for-event, weak-pointer-object,
+    fd-close, fd-error-string, fd-input-available?, fd-open,
+    fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
+    L_SET, L_INCR, L_XTND, FNDELAY, FAPPEND, FCREAT, FTRUNC, FEXCL, O_RDONLY,
+    O_WRONLY, O_RDWR, O_NDELAY, O_APPEND, O_CREAT, O_TRUNC, O_EXCL,
+    ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
+    EINVAL, ENFILE, EMFILE, ETXTBSY, ENOSPC, EROFS, EOPNOTSUPP, ELOOP,
+    ENAMETOOLONG, EDQUOT, EBADF, EINTR, EWOULDBLOCK, EPIPE, EFBIG;
   create
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
@@ -180,16 +186,61 @@ define module Extensions
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object, <equal-table>),
     export: all;
+  export
+    one-of, type-or, ignore;
 end Extensions;
 
 define module System
   use Dylan;
   use Builtin-Stuff,
-    import: (<buffer>, copy-bytes,
-	     fd-close, fd-error-string, fd-input-available?,
-	     fd-open, fd-read, fd-seek, fd-sync-output, fd-write, fd-exec),
+    import: (<buffer>, copy-bytes),
     export: all;
 end System;
+
+define module File-Descriptors
+  use Dylan;
+  use Builtin-Stuff,
+    import: (fd-close, fd-error-string, fd-input-available?,
+	     fd-open, fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
+
+	     // Lseek call.
+	     //
+	     L_SET, L_INCR, L_XTND,
+
+	     // Flags also for fcntl call.
+	     //
+	     FNDELAY, FAPPEND,
+
+	     // Open only modes.
+	     //
+	     FCREAT, FTRUNC, FEXCL,
+
+	     // Open call.
+	     //
+	     O_RDONLY, O_WRONLY, O_RDWR, O_NDELAY, O_APPEND, O_CREAT, O_TRUNC,
+	     O_EXCL,
+
+	     // Open errors.
+	     //
+	     ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
+	     EINVAL, ENFILE, EMFILE, ETXTBSY, ENOSPC, EROFS, EOPNOTSUPP, ELOOP,
+	     ENAMETOOLONG, EDQUOT,
+
+	     // Close errors.
+	     //
+	     EBADF,
+
+	     // Read errors (that are also not Open or Close errors).
+	     //
+	     EINTR,
+	     EWOULDBLOCK,
+
+	     // Write errors (that are not also open, close, or read errors).
+	     //
+	     EPIPE,
+	     EFBIG),
+    export: all;
+end File-Descriptors;
 
 define module Threads
   use Dylan;
