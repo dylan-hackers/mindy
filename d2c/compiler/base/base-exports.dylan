@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.17 2000/10/31 13:41:00 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.18 2000/12/11 19:52:39 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -414,6 +414,7 @@ define module platform
     compile-c-for-shared-command,
     default-c-compiler-flags,
     default-c-compiler-debug-flags,
+    default-c-compiler-profile-flags,
     assembler-command,
     link-library-command,
     randomize-library-command,
@@ -422,6 +423,7 @@ define module platform
     link-executable-command,
     link-shared-executable-command,
     link-executable-flags,
+    link-profile-flags,
     make-command,
     delete-file-command,
     compare-file-command,

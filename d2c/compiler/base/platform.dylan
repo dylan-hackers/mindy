@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.8 2000/01/24 04:56:04 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.9 2000/12/11 19:52:39 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -105,6 +105,8 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"default-c-compiler-flags";
   constant /* exported */ slot default-c-compiler-debug-flags :: <byte-string>,
     required-init-keyword: #"default-c-compiler-debug-flags";
+  constant /* exported */ slot default-c-compiler-profile-flags :: <byte-string>,
+    required-init-keyword: #"default-c-compiler-profile-flags";
   constant /* exported */ slot assembler-command :: <byte-string>,
     required-init-keyword: #"assembler-command";
   constant /* exported */ slot link-library-command :: <byte-string>,
@@ -161,6 +163,9 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot libtool-command
       :: false-or(<byte-string>) = #f,
     init-keyword: #"libtool-command";
+  constant /* exported */ slot link-profile-flags
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"link-profile-flags";
   
 
   // if this is defined, we can build shared libraries
@@ -205,6 +210,7 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"compile-c-for-shared-command"] := #f;
 *valid-properties*[#"default-c-compiler-flags"] := #t;
 *valid-properties*[#"default-c-compiler-debug-flags"] := #t;
+*valid-properties*[#"default-c-compiler-profile-flags"] := #t;
 *valid-properties*[#"assembler-command"] := #t;
 *valid-properties*[#"link-library-command"] := #t;
 *valid-properties*[#"link-executable-command"] := #t;
@@ -227,6 +233,7 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"shared-library-filename-suffix"] := #f;
 *valid-properties*[#"randomize-library-command"] := #f;
 *valid-properties*[#"link-shared-library-command"] := #f;
+*valid-properties*[#"link-profile-flags"] := #f;
 *valid-properties*[#"link-doesnt-search-for-libs?"] := #f;
 
 // Contains a table of tables, keyed by platform-name, each of which contains a

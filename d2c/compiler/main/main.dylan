@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.40 2000/11/30 04:40:38 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.41 2000/12/11 19:52:39 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -71,6 +71,7 @@ define class <main-unit-state> (<object>)
   // Simplistic flags to control debugging (and someday, optimization).
   // We only have one of these right now.
   slot unit-debug? :: <boolean>, init-keyword: debug?:, init-value: #f;
+  slot unit-profile? :: <boolean>, init-keyword: profile?:, init-value: #f;
 
   slot unit-shared? :: <boolean>, init-keyword: shared?:, init-value: #f;
   
@@ -636,14 +637,16 @@ end method parse-and-finalize-library;
 define method emit-make-prologue (state :: <main-unit-state>) => ();
   let cc-flags
     = getenv("CCFLAGS") 
-        | format-to-string(if (state.unit-debug?)
+        | format-to-string(if (state.unit-profile?)
+			     state.unit-target.default-c-compiler-profile-flags;
+			   elseif (state.unit-debug?)
 			     state.unit-target.default-c-compiler-debug-flags;
 			   else
 			     state.unit-target.default-c-compiler-flags;
 			   end if,
 			   $runtime-include-dir);
 
-  state.unit-cc-flags := cc-flags;
+  state.unit-cc-flags := concatenate(cc-flags, getenv("CCOPTS")|"");
 
   state.unit-cback-unit := make(<unit-state>, prefix: state.unit-mprefix);
   state.unit-other-cback-units := map-as(<simple-object-vector>, unit-name, 
@@ -928,6 +931,7 @@ define method build-ar-file (state :: <main-unit-state>) => ();
 		      format-to-string(target.link-library-command,
 				       ar-name, objects);
 		    end;
+
   format(state.unit-makefile, "\t%s\n", link-string);
   
   if (target.randomize-library-command & ~state.unit-shared?)
@@ -1016,9 +1020,13 @@ define function use-correct-path-separator
 end function use-correct-path-separator;
 
 define method build-executable (state :: <main-unit-state>) => ();
+  let target = state.unit-target;
   let unit-libs = "";
   let dash-small-ells = "";
-  let linker-args = concatenate(" ", state.unit-target.link-executable-flags);
+  let linker-args = concatenate(" ", target.link-executable-flags);
+  if(state.unit-profile? & target.link-profile-flags)
+    linker-args := concatenate(linker-args, " ", target.link-profile-flags);
+  end if;
 
   local method add-archive (name :: <byte-string>) => ();
           if (state.unit-no-binaries)
@@ -1328,42 +1336,6 @@ define method build-command-line-entry
   ctv;
 end method build-command-line-entry;
 
-define method incorrect-usage () => ();
-  format(*standard-error*, "Usage: \n    compile [-Ldir ...] lid-file\n");
-  format(*standard-error*, "Options:\n");
-  format(*standard-error*, 
-	 "    -Ldir               Search for library files in dir\n");
-  format(*standard-error*, 
-	 "    -Dfeature           Define feature for #if conditional compilation\n");
-  format(*standard-error*, 
-	 "    -Ufeature           Undefine feature for #if conditional compilation\n");
-  format(*standard-error*, 
-	 "    -M                  Generate makefile dependencies\n");
-  format(*standard-error*, 
-	 "    -no-binaries        Do not compile the generated C code\n");
-  format(*standard-error*, 
-	 "    -static             Don't link against shared libraries\n");
-  format(*standard-error*, 
-	 "    -Ttarget            Generate code for the given target machine\n");
-  format(*standard-error*, 
-	 "                        Often used with -no-binaries\n");
-  format(*standard-error*, 
-	 "    -pfilename          Get platform information from \n"
-	 "                        filename instead of the default platforms.descr\n");
-  format(*standard-error*, 
-	 "    -d                  Compiler debug mode (for debugging this compiler)\n");
-  format(*standard-error*, 
-	 "    -Fformat-string     Alternate format string for running the C "
-	 "compiler\n"
-	 "                        Used when a C file named by -f is compiled.\n");
-  format(*standard-error*, 
-	 "    -fcfilename         Names a C output file to compile specially.\n");
-  format(*standard-error*, 
-	 "    -g                  Emit all function objects\n");
-  force-output(*standard-error*);
-  exit(exit-code: 1);
-end method incorrect-usage;
-
 define constant $search-path-seperator =
 #if (compiled-for-win32)
   ';';
@@ -1442,6 +1414,7 @@ define method show-help(stream :: <stream>) => ()
 "       -p, --platforms:   File containing platform descriptions.\n"
 "       --no-binaries:     Do not compile generated C files.\n"
 "       -g, --debug:       Generate debugging code.\n"
+"            --profile:    Generate profiling code.\n"
 "       -s, --static:      Force static linking.\n"
 "       -d, --break:       Debug d2c by breaking on errors.\n"
 "       --dump-transforms: Display detailed optimizer information.\n"
@@ -1606,6 +1579,9 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 			    short-options: #("g"));
   add-option-parser-by-type(argp,
 			    <simple-option-parser>,
+			    long-options: #("profile"));
+  add-option-parser-by-type(argp,
+			    <simple-option-parser>,
 			    long-options: #("static"),
 			    short-options: #("s"));
   add-option-parser-by-type(argp,
@@ -1653,6 +1629,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
      
   *break-on-compiler-errors* = option-value-by-long-name(argp, "break");
   let debug? = option-value-by-long-name(argp, "debug");
+  let profile? = option-value-by-long-name(argp, "profile");
   *emit-all-function-objects?* = debug?;
 
   // Determine our compilation target.
@@ -1707,6 +1684,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	     link-static: link-static,
 	     link-rpath: link-rpath,
 	     debug?: debug?,
+	     profile?: profile?,
 	     cc-override: cc-override,
 	     override-files: as(<list>, override-files));
   let worked? = compile-library(state);
