@@ -189,10 +189,10 @@ int APIENTRY WinMain(
 # endif
 #endif
 
-#  if defined(MACOS)                        // MacOS
-    char* argv_[] = {"test_cpp", "10"};     //   doesn't
-    argv = argv_;                           //     have a
-    argc = sizeof(argv_)/sizeof(argv_[0]);  //       commandline
+#  if defined(MACOS)                            // MacOS
+    char* argv_[] = {"test_cpp", "10"};         //   doesn't
+    char** argv = argv_;                        //     have a
+    int argc = sizeof(argv_)/sizeof(argv_[0]);  //       commandline
 #  endif 
     int i, iters, n;
 #   if !defined(MACOS)
