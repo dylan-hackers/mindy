@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.20 2003/01/26 14:03:59 andreas Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.21 2003/03/12 21:54:44 housel Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,11 +32,6 @@ void real_main(int argc, char *argv[])
 
     /* Run all the top level initializations. */
     inits(sp, argc, argv);
-}
-
-descriptor_t *allocate_stack(void)
-{
-    return (descriptor_t *) allocate(64*1024);
 }
 
 
