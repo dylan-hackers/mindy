@@ -73,10 +73,10 @@ do install_from_src('bin', 'rcsupdate.perl');
 do install_one_arg_wrapper('perl', 'rcsupdate', '.perl', 
 			   "$GwydionDir\\rcs-bin\\co.exe");
 
-# gen-makefile.perl and mk-build-tree are in shared-misc, which
-# doesn't do wrappers
+# These files are in shared-misc, which doesn't do wrappers
 do install_no_arg_wrapper('perl', 'gen-makefile', '.perl');
 do install_no_arg_wrapper('perl', 'mk-build-tree', '.perl');
+do install_no_arg_wrapper('perl', 'line-count', '.perl');
 
 # Custom utils that are straight batch files
 do install_from_src('bin', 'build-tags.bat');
