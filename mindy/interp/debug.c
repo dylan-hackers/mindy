@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.18 1994/04/28 04:02:10 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.19 1994/04/28 19:25:38 wlott Exp $
 *
 * This file does whatever.
 *
@@ -19,6 +19,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 #ifdef MACH
 extern int isatty(int fd);
 #endif
@@ -61,6 +62,7 @@ struct frame_info {
     obj_t component;
     int pc;
     obj_t source_file;
+    obj_t mtime;
     int line;
     obj_t locals;
 };
@@ -102,6 +104,7 @@ static struct frame_info *make_frame(struct frame_info *up, obj_t *fp,
     res->component = component;
     res->pc = pc;
     res->source_file = obj_False;
+    res->mtime = make_fixnum(0);
     res->line = 0;
     res->locals = obj_False;
 
@@ -109,6 +112,7 @@ static struct frame_info *make_frame(struct frame_info *up, obj_t *fp,
 	return res;
 
     res->source_file = COMPONENT(component)->source_file;
+    res->mtime = COMPONENT(component)->mtime;
 
     debug_info = COMPONENT(component)->debug_info;
     if (debug_info == obj_False)
@@ -183,6 +187,7 @@ static void scav_frames(struct frame_info *frame)
     while (frame != NULL) {
 	scavenge(&frame->component);
 	scavenge(&frame->source_file);
+	scavenge(&frame->mtime);
 	scavenge(&frame->locals);
 	frame = frame->down;
     }
@@ -323,15 +328,19 @@ static void validate_thread_and_frame()
 /* Source code stuff. */
 
 static obj_t cur_source_file = NULL;
+static time_t cur_mtime = 0;
 static FILE *cur_source_stream = NULL;
 static long *line_offsets = NULL;
 static int lines_alloced = 0;
 static int lines_found = 0;
 static char **source_directories = NULL;
 
-static FILE *find_source_line(obj_t file, int line)
+static FILE *find_source_line(obj_t file, obj_t mtime, int line)
 {
     int c;
+
+    if (file == obj_False)
+	return NULL;
 
     if (file != cur_source_file) {
 	char *name = string_chars(file);
@@ -347,6 +356,7 @@ static FILE *find_source_line(obj_t file, int line)
 	    cur_source_stream = NULL;
 
 	cur_source_file = file;
+	cur_mtime = 0;
 	if (line_offsets == NULL) {
 	    lines_alloced = 1000;
 	    line_offsets = malloc(sizeof(long) * lines_alloced);
@@ -358,6 +368,17 @@ static FILE *find_source_line(obj_t file, int line)
 
     if (cur_source_stream == NULL)
 	return NULL;
+
+    if (cur_mtime == 0) {
+	struct stat buf;
+
+	fstat(fileno(cur_source_stream), &buf);
+
+	cur_mtime = buf.st_mtime;
+    }
+
+    if (cur_mtime != fixnum_value(mtime))
+	printf("\nWarning: %s has changed", string_chars(file));
 
     if (line > lines_found) {
 	fseek(cur_source_stream, line_offsets[lines_found], 0);
@@ -1741,9 +1762,7 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
 	printf("   ");
     printf("\t%s", buf);
     if (trailer != NULL)
-	print(trailer);
-    else
-	putchar('\n');
+	prin1(trailer);
 
     return ptr;
 }
@@ -1753,6 +1772,7 @@ static void disassemble_component(obj_t component)
     obj_t debug_name = COMPONENT(component)->debug_name;
     obj_t debug_info = COMPONENT(component)->debug_info;
     obj_t source_file = COMPONENT(component)->source_file;
+    obj_t mtime = COMPONENT(component)->mtime;
     int nconst = COMPONENT(component)->n_constants;
     unsigned char *ptr
 	= (unsigned char *)(COMPONENT(component)->constant + nconst);
@@ -1767,11 +1787,9 @@ static void disassemble_component(obj_t component)
     else
 	prin1(debug_name);
     printf(" component");
-    if (source_file == obj_False)
-	putchar('\n');
-    else {
+    if (source_file != obj_False) {
 	printf(", from ");
-	print(source_file);
+	prin1(source_file);
     }
 
     if (debug_info == obj_False)
@@ -1783,21 +1801,21 @@ static void disassemble_component(obj_t component)
 	while (ptr >= next_line) {
 	    obj_t entry = SOVEC(debug_info)->contents[debug_index++];
 	    int line = fixnum_value(SOVEC(entry)->contents[0]);
-	    FILE *source = find_source_line(source_file, line);
+	    FILE *source = find_source_line(source_file, mtime, line);
 	    if (source) {
 		int c;
-		printf("%d\t", line);
+		printf("\n%d\t", line);
 		while ((c = getc(source)) != EOF && c != '\n')
 		    putchar(c);
-		putchar('\n');
 	    }
 	    else
-		printf("line %d:\n", line);
+		printf("\nline %d:", line);
 	    next_line += fixnum_value(SOVEC(entry)->contents[1]);
 	}
-	printf("%6d:", ptr - (unsigned char *)component);
+	printf("\n%6d:", ptr - (unsigned char *)component);
 	ptr = disassemble_op(component, ptr);
     }
+    putchar('\n');
 
     for (i = 0; i < nconst; i++) {
 	obj_t c = COMPONENT(component)->constant[i];
@@ -2005,7 +2023,9 @@ static void maybe_print_frame(void)
 	printf("%s", string_chars(CurFrame->source_file));
 	if (CurFrame->line != 0) {
 	    int line = CurFrame->line;
-	    FILE *source = find_source_line(CurFrame->source_file, line);
+	    FILE *source = find_source_line(CurFrame->source_file,
+					    CurFrame->mtime,
+					    line);
 	    if (source) {
 		int c;
 		printf("\n%d\t", line);
