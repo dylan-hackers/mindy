@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.1 1998/05/03 19:55:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.2 1998/10/05 02:46:01 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -438,14 +438,21 @@ define-primitive-emitter
 
      let func-dep = operation.depends-on;
      let func = func-dep.source-exp;
-     unless (instance?(func, <literal-constant>)
-	       & instance?(func.value, <literal-string>))
-       error("function in call-out isn't a constant string?");
-     end;
-     format(stream, "%s(", func.value.literal-value);
 
      let res-dep = func-dep.dependent-next;
      let result-rep = rep-for-c-type(res-dep.source-exp);
+
+     if (instance?(func, <literal-constant>)
+	   & instance?(func.value, <literal-string>))
+       format(stream, "%s(", func.value.literal-value);
+     elseif(csubtype?(func.derived-type, specifier-type(#"<raw-pointer>")))
+       format(stream, "((%s (*)())%s)(",
+	      result-rep.representation-c-type,
+	      ref-leaf(*ptr-rep*, func, file));
+     else
+       error("First argument to call-out must be a literal string "
+	       "or an instance of <raw-pointer>");
+     end;
 
      local
        method repeat (dep :: false-or(<dependency>), first? :: <boolean>)
