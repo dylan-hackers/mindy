@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.3 1994/04/20 02:38:43 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/num.dylan,v 1.4 1994/05/19 22:37:39 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -51,7 +51,7 @@ end;
 // Contagion.
 
 define method contagion (x :: <integer>, y :: <single-float>)
-  values(as(x, <single-float>), y);
+  values(as(<single-float>, x), y);
 end;
 
 define method contagion (x :: <single-float>, y :: <integer>)
@@ -93,25 +93,54 @@ define method \* (x :: <number>, y :: <number>)
   x * y;
 end;
 
-define method \/ (x :: <float>, y :: <float>)
+define method \/ (x :: <real>, y :: <float>)
   let (x, y) = contagion(x, y);
   x / y;
 end;
 
-define method floor (x :: <real>)
+define method \/ (x :: <float>, y :: <rational>)
+  let (x, y) = contagion(x, y);
+  x / y;
+end;
+
+define method truncate (x :: <rational>) => (q :: <integer>, r :: <real>);
+  truncate/(x, 1);
+end;
+
+define method floor (x :: <rational>) => (q :: <integer>, r :: <real>);
   floor/(x, 1);
 end;
 
-define method ceiling (x :: <real>)
+define method ceiling (x :: <rational>) => (q :: <integer>, r :: <real>);
   ceiling/(x, 1);
 end;
 
-define method round (x :: <real>)
+define method round (x :: <rational>) => (q :: <integer>, r :: <real>);
   round/(x, 1);
 end;
 
-define method truncate (x :: <real>)
-  truncate/(x, 1);
+define method truncate/ (x :: <float>, y :: <real>)
+    => (q :: <integer>, r :: <real>);
+  let res = truncate(x / y);
+  values(res, x - res * y);
+end;
+
+define method floor/ (x :: <float>, y :: <real>)
+    => (q :: <integer>, r :: <real>);
+  let res = truncate(x / y);
+  values(res, x - res * y);
+end;
+
+define method ceiling/ (x :: <float>, y :: <real>)
+    => (q :: <integer>, r :: <real>);
+  let res = truncate(x / y);
+  values(res, x - res * y);
+end;
+
+define method round/ (x :: <float>, y :: <real>)
+    => (q :: <integer>, r :: <real>);
+  let res = truncate(x / y);
+  values(res, x - res * y);
 end;
 
 define method modulo (x :: <real>, y :: <real>)
@@ -135,7 +164,7 @@ define method abs (real :: <real>)
   end;
 end;
 
-define method expt (base :: <integer>, power :: <integer>)
+define method expt (base :: <number>, power :: <integer>)
   case
     negative?(power)
       => 1 / expt(base, -power);
