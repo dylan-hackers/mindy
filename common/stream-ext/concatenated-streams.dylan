@@ -55,14 +55,17 @@ define inline function move-to-next-stream
     (stream :: <combination-stream>) => ();
   close(stream.inner-stream);
   stream.inner-stream := stream.get-next-component-stream();
-  stream.inner-stream.outer-stream := stream;
+  if (stream.inner-stream ~== #f)
+    stream.inner-stream.outer-stream := stream;
+  end if;
 end function move-to-next-stream;
 
-// ### Might be better as a macro, but we don't have those in Mindy
+// ### Might be better as a macro, but we don't have those in Mindy.
+// Implements the actual rolling over of component streams.
 //
 define inline function do-combo-stream-function
-    (stream :: <combination-stream>, on-end-of-stream :: <object>,
-     func :: <function>, #rest args)
+    (func :: <function>, stream :: <combination-stream>, 
+     on-end-of-stream :: <object>, #rest args)
  => (#rest values :: <object>);
   block (return)
     while (#t)
@@ -74,7 +77,13 @@ define inline function do-combo-stream-function
 	end if;
       end if;
       block ()
-	return(apply(func, args));
+	if (on-end-of-stream == $not-supplied)
+	  return(apply(func, stream.inner-stream, args));
+	else
+	  let args 
+	    = concatenate(args, vector(on-end-of-stream: on-end-of-stream));
+	  return(apply(func, stream.inner-stream, args));
+	end if;
       exception (<end-of-stream-error>)
 	move-to-next-stream(stream);
       end block;
@@ -82,27 +91,87 @@ define inline function do-combo-stream-function
   end block;
 end function do-combo-stream-function;
 
-define method read-element 
-    (stream :: <combination-stream>, #key on-end-of-stream = $not-supplied)
- => elt :: <object>;
-  do-combo-stream-function(stream, on-end-of-stream, read-element, stream);
-end method read-element;
+define inline method close 
+    (stream :: <combination-stream>, #rest keys, #all-keys) => ();
+  stream.get-next-component-stream 
+    := method () error("Combo-stream was closed!");  end method;
+  apply(close, stream.inner-stream, keys);
+  stream.inner-stream := #f;
+end method;
 
-define method peek-element 
-    (stream :: <combination-stream>, #key on-end-of-stream = $not-supplied)
- => elt :: <object>;
-  do-combo-stream-function(stream, on-end-of-stream, peek-element, stream);
-end method peek-element;
+define inline method stream-open? (stream :: <combination-stream>)
+ => open? :: <boolean>;
+  stream.inner-stream ~== #f;
+end method;
 
-// I'm not so sure that <wrapper-stream> provides useful implementations
-// of anything.  Here's what I hope it provides:
+// ### We have to assume that all the component streams have the same
+// element type
+//
+define inline method stream-element-type (stream :: <combination-stream>) 
+ => element-type :: <type>;
+  stream-element-type(stream.inner-stream);
+end method;
 
-// ### Use wrapper-stream version of unread-element
-// ### Use wrapper-stream version of read
-// ### Use wrapper-stream version of read-into!
-// ### Use wrapper-stream version of discard-input
-// ### Use wrapper-stream version of stream-input-availabe
-// ### Use wrapper-stream version of close
+// ### This ain't right, and at the moment I don't even care.
+//
+define inline method stream-at-end? (stream :: <combination-stream>)
+ => at-end? :: <boolean>;
+  stream-at-end?(stream.inner-stream);
+end method;
+
+define inline method read-element
+    (stream :: <combination-stream>,
+     #key on-end-of-stream :: <object> = $not-supplied)
+ => element-or-eof :: <object>;
+  do-combo-stream-function(read-element, stream, on-end-of-stream);
+end method;
+
+// wrapper-stream has no unread-element, so neither do we
+
+define inline method peek (stream :: <combination-stream>,
+			   #key on-end-of-stream :: <object> = $not-supplied)
+ => element-of-eof :: <object>;
+  do-combo-stream-function(peek, stream, on-end-of-stream);
+end method;
+
+define inline method read (stream :: <combination-stream>, n :: <integer>,
+			   #key on-end-of-stream :: <object> = $not-supplied)
+ => sequence-or-eof :: <object>;
+  do-combo-stream-function(read, stream, on-end-of-stream, n);
+end method;
+
+define inline method read-into!
+    (stream :: <combination-stream>, n :: <integer>,
+     sequence :: <mutable-sequence>,
+     #key start ::  <integer> = 0,
+          on-end-of-stream :: <object> = $not-supplied)
+ => count-or-eof :: <object>;
+  do-combo-stream-function(read-into!, stream, on-end-of-stream, 
+			   n, sequence, start: start);
+end method;
+
+// ### See also stream-at-end?
+//
+define inline method stream-input-available? (stream :: <combination-stream>)
+ => input-available? :: <boolean>;
+  stream-input-available?(stream.inner-stream);
+end method;
+
+define inline method read-line 
+    (stream :: <combination-stream>,
+     #key on-end-of-stream :: <object> = $not-supplied)
+ => (string-or-eof :: <object>, newline? :: <boolean>);
+  do-combo-stream-function(read-line, stream, on-end-of-stream);
+end method;
+
+define inline method read-line-into!
+    (stream :: <combination-stream>, string :: <string>,
+     #key start :: <integer> = 0, grow? :: <boolean> = #f,
+     on-end-of-stream :: <object> = $not-supplied)
+ => (string-or-eof :: <object>, newline? :: <boolean>);
+  do-combo-stream-function(read-line-into!, stream, on-end-of-stream, string, 
+			   start: start, grow?: grow?);
+end method;
 
 
 // ### This class is no longer used, but since I wrote it, I'm keeping
