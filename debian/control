@@ -1,8 +1,8 @@
 Source: gwydion-dylan
 Section: devel
 Priority: optional
-Maintainer: Neil Schemenauer <nascheme@enme.ucalgary.ca>
-Standards-Version: 2.5.0
+Maintainer: Brent A. Fulgham <bfulgham@debian.org>
+Standards-Version: 3.2.1.0
 
 Package: gwydion-dylan
 Architecture: any
@@ -20,9 +20,10 @@ Description: A Dylan-to-C batch compiler.
  For more infomration, see the Gwydion Dylan maintainers' web page at
  <http://www.gwydiondylan.org/>.
 
-Package: gwydion-dylan-extras
+Package: gwydion-dylan-dev
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: gwydion-dylan, ${shlibs:Depends}
+Suggests: mindy
 Description: Tools used for recompiling Gwydion Dylan.
  These tools are required to recompile d2c. They include a LISP to Dylan
  translator, a parser generator, and various tools for maintaining the
@@ -32,6 +33,7 @@ Description: Tools used for recompiling Gwydion Dylan.
 Package: mindy
 Architecture: any
 Depends: ${shlibs:Depends}
+Suggests: gwydion-dylan
 Description: A Dylan interpreter.
  Mindy is a Dylan bytecode interpreter, originally written as part of CMU's
  Gwydion Dylan project. It compiles faster than d2c and includes much better

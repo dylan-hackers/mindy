@@ -4,11 +4,56 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+bootstrap-stage1:  bootstrap-stage1-stamp
+bootstrap-stage1-stamp:
+	# Following is needed for bootstrapping
+	libtoolize
+	./configure --with-readline \
+			--prefix=/usr \
+			--enable-mindy-bootstrap \
+			--with-gnu-ld \
+			--with-site-dylan-prefix=/usr
+	$(MAKE)
+	$(MAKE) DESTDIR=`pwd`/debian/bootstrap install
+	mkdir `pwd`/bootstrap_compiler
+	ln -sf `pwd`/debian/bootstrap/usr/bin/d2c `pwd`/bootstrap_compiler
+
+	rm config.cache
+
+	touch bootstrap-stage1-stamp
+
+bootstrap-stage2:  bootstrap-stage1-stamp bootstrap-stage2-stamp
+bootstrap-stage2-stamp:  bootstrap-stage1-stamp
+	PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
+	    LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib:$(LD_LIBRARY_PATH); \
+	    ./configure --with-readline \
+			--prefix=/usr \
+			--with-site-dylan-prefix=/usr \
+			--with-gnu-ld \
+			--with-existing-runtime=`pwd`/debian/bootstrap/usr/lib/dylan/2.3.5pre2/x86-linux-gcc
+	# End Bootstrapping portion
+
+	touch bootstrap-stage2-stamp
+
+	# Add here commands to compile the package.
+
+	export PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
+	    export LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib/dylan/2.3.5pre2/x86-linux-gcc:$(LD_LIBRARY_PATH); \
+	    $(MAKE)
+
+	touch build-stamp
+	
+
+# Uncomment me to bootstrap
+#build: bootstrap-stage1-stamp bootstrap-stage2-stamp
+
+# Uncomment me to build normally
 build: config build-stamp
 build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
+
 	$(MAKE)
 
 	touch build-stamp
@@ -16,26 +61,37 @@ build-stamp:
 
 config: config-stamp
 config-stamp:
+	libtoolize
 	./configure --with-readline \
 			--prefix=/usr \
-			--with-site-dylan-prefix=/usr
+			--with-site-dylan-prefix=/usr \
+			--with-existing-runtime=/usr/lib/dylan \
+			--with-gnu-ld
 	touch config-stamp
 	
 
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp install-stamp config-stamp
+	rm -f build-stamp install-stamp config-stamp bootstrap-stage1-stamp bootstrap-stage2-stamp
+	rm -rf `pwd`/boostrap_compiler
+	rm -rf `pwd`/debian/bootstrap
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) clean
 	-$(MAKE) bootstrap_clean
-	#-$(MAKE) distclean
+
+	`pwd`/debian/delMakefiles `pwd`
+	`pwd`/debian/delStatics `pwd`
+	rm -f `pwd`/ltconfig
+	rm -f `pwd`/ltmain.sh
+	rm -f `pwd`/config.guess
+	rm -f `pwd`/config.sub
 
 	dh_clean
 
 install: install-stamp
 install-stamp: build-stamp
+
 	dh_testdir
 	dh_testroot
 	dh_clean -k
@@ -45,7 +101,57 @@ install-stamp: build-stamp
 	# Add here commands to install the package into debian/tmp.
 	$(MAKE) DESTDIR=`pwd`/debian/tmp install
 
+	# First, put everything in FSSTD-compliant places
+	mv `pwd`/debian/tmp/usr/etc/platforms.descr `pwd`/debian/tmp/etc/gwydion-dylan/platforms.descr
+	rm -rf `pwd`/debian/tmp/usr/etc
+	mv `pwd`/debian/tmp/usr/man/* `pwd`/debian/tmp/usr/share/man
+
+	# Now, copy some manpages
+	cp `pwd`/debian/dybug.1 `pwd`/debian/tmp/usr/share/man/man1
+	cp `pwd`/debian/gen-makefile.1 `pwd`/debian/tmp/usr/share/man/man1
+	cp `pwd`/debian/make-dylan-lib.1 `pwd`/debian/tmp/usr/share/man/man1
+	cp `pwd`/debian/mk-build-tree.1 `pwd`/debian/tmp/usr/share/man/man1
+	cp `pwd`/debian/line-count.1 `pwd`/debian/tmp/usr/share/man/man1
+	cp `pwd`/debian/parsergen.1 `pwd`/debian/tmp/usr/share/man/man1
+	cp `pwd`/debian/mindycomp.1 `pwd`/debian/tmp/usr/share/man/man1
+	cp `pwd`/debian/mindyexec.1 `pwd`/debian/tmp/usr/share/man/man1
+
+	# Get rid of non-Debian directories and stuff
+	rm -rf `pwd`/debian/tmp/usr/man
+	rm -f `pwd`/debian/tmp/usr/bin/mk-rcs-links
+
+	# Finally, put some stuff in a sane state
+	chmod 0644 `pwd`/debian/tmp/usr/include/*
+	chmod 0755 `pwd`/debian/tmp/etc/gwydion-dylan
+	chmod 0644 `pwd`/debian/tmp/etc/gwydion-dylan/*
+
 	dh_movefiles
+
+	# Make sure we don't have a bunch of extra stuff in Mindy
+	rm -rf `pwd`/debian/mindy/usr/share/man/man4
+	rm -rf `pwd`/debian/mindy/usr/share/man/man7
+	rm -f `pwd`/debian/mindy/usr/share/man/man1/d2c*
+	rm -f `pwd`/debian/mindy/usr/share/man/man1/dybug*
+	rm -f `pwd`/debian/mindy/usr/share/man/man1/make*
+	rm -f `pwd`/debian/mindy/usr/share/man/man1/mk*
+	rm -f `pwd`/debian/mindy/usr/share/man/man1/melange*
+	rm -f `pwd`/debian/mindy/usr/share/man/man1/parsergen*
+	rm -f `pwd`/debian/mindy/usr/share/man/man1/gen*
+	rm -f `pwd`/debian/mindy/usr/share/man/man1/line*
+
+	# Make sure we don't have a bunch of extra stuff in Extras
+	rm -rf `pwd`/debian/gwydion-dylan-dev/share/man/man4
+	rm -rf `pwd`/debian/gwydion-dylan-dev/share/man/man7
+	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/d2c*
+	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/dybug*
+	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/make*
+	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/mk*
+	rm -f `pwd`/debian/gwydion-dylan-dev/share/man/man1/mindy*
+
+	# Make sure we don't have a bunch of extra stuff in Dylan
+	rm -rf `pwd`/debian/gwydion-dylan/share/man/man1/parsergen*
+	rm -f `pwd`/debian/gwydion-dylan/share/man/man1/mindy*
+	rm -f `pwd`/debian/gwydion-dylan/share/man/man1/line*
 
 	touch install-stamp
 
@@ -70,11 +176,10 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_suidregister
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
-#	dh_makeshlibs
+	dh_makeshlibs
 	dh_md5sums
 	dh_builddeb
 

@@ -1,8 +1,13 @@
-gwydion-dylan (2.3.3-1) unstable; urgency=low
+gwydion-dylan (2.3.4-1) unstable; urgency=low
 
   * New upstream version.
+  * About 100 people have promised to package this and not followed through.  I'd 
+    like this to get into Debian *someday*, so I've packaged it.  If you feel like
+    this is unfair drop me an e-mail.
+  * Initial release, bootstrapped with Mindy.  Future release will depend on this
+    release (or newer) to build from source.
 
- -- Neil Schemenauer <nascheme@enme.ucalgary.ca>  Tue,  4 Apr 2000 13:34:00 -0600
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sat,  3 Mar 2001 13:35:14 -0800
 
 gwydion-dylan (2.3.2a-1) unstable; urgency=low
 
