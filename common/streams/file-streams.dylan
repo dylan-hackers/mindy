@@ -417,82 +417,92 @@ define sealed method initialize
 	      end,
           buffer-size :: <buffer-index> = $default-buffer-size)
     => result :: <fd-file-stream>;
-
-  if (~ locator)
-    error("Must supply a filename when making a <file-stream>.");
-  end;
-  stream.element-type := element-type;
-  if (direction == #"input")
-    // Make an #"input" stream.
-    let (fd, err) = fd-open(locator, fd-o_rdonly);
-    select (err)
-      (#f)
-	=> #f; // No error, don't do anything.
-      (fd-enoent)
-	=> select (if-does-not-exist) 
-	     #"signal"
-	       => error(make(<file-does-not-exist-error>, locator: locator));
-	     #"create"
-	       => error("Why would you want to create an empty input file?");
-	   end select;
-      (fd-eacces)
-	=> error(make(<invalid-file-permissions-error>, locator: locator));
-      otherwise
-	=> error(make(<syscall-error>, errno: err));
-    end select;
-    stream.file-name := locator;
-    stream.file-direction := #"input";
-    next-method(stream, fd: fd, direction: #"input", size: buffer-size); 
-  else
-    // Make an #"output" or #"input-output" stream.
-    let flags :: <integer> = fd-o_creat;
-    flags := select (direction)
-	       (#"output") => logior(flags, fd-o_wronly);
-	       (#"input-output") => logior(flags, fd-o_rdwr);
-	     end;
-    flags := select (if-exists)
-	       (#"signal")
-		 => logior(flags, fd-o_excl);
-	       (#"replace")
-		 => logior(flags, fd-o_trunc);
-	       (#"truncate")
-		 => logior(flags, fd-o_trunc);
-	       (#"new-version") 
-		 => error("<fd-file-stream> does not support new-version.");
-	       otherwise
-		 => flags;
-	     end;
-    let (fd, err) = fd-open(locator, flags);
-    select (err)
-      (#f)
-	=> #f; // No error, don't do anything.
-      (fd-eexist)
-	=> error(make(<file-exists-error>, locator: locator));
-      (fd-eacces)
-	=> error(make(<invalid-file-permissions-error>, locator: locator));
-      otherwise
-	=> error(make(<syscall-error>, errno: err));
-    end select;
-    select (if-exists)
-      (#"append")
-	=> call-fd-function(fd-seek, fd, 0, fd-seek-end);
-      // Don't really need this, since it will be at the beginning anyway...
-      // (#"overwrite")
-      //  => call-fd-function(fd-seek, fd, 0, fd-seek-set);
-      otherwise
-	=> #f;
+  block (exit)
+    if (~ locator)
+      error("Must supply a filename when making a <file-stream>.");
     end;
-    stream.file-name := locator;
-    stream.file-direction := direction;
-    next-method(stream, fd: fd,
-		direction: if (direction == #"output")
-			     #"output" 
-			   else 
-			     #"input" 
-			   end,
-		size: buffer-size);
-    register-output-stream(stream);
-  end;
+    stream.element-type := element-type;
+    if (direction == #"input")
+      // Make an #"input" stream.
+      let (fd, err) = fd-open(locator, fd-o_rdonly);
+      select (err)
+	(#f)
+	  => #f; // No error, don't do anything.
+	(fd-enoent)
+	  => select (if-does-not-exist) 
+	       (#f)
+		 => exit();
+	       (#"signal")
+		 => error(make(<file-does-not-exist-error>, locator: locator));
+	       (#"create")
+		 => error("Why would you want to create an empty input file?");
+	     end select;
+	(fd-eacces)
+	  => error(make(<invalid-file-permissions-error>, locator: locator));
+	otherwise
+	  => error(make(<syscall-error>, errno: err));
+      end select;
+      stream.file-name := locator;
+      stream.file-direction := #"input";
+      next-method(stream, fd: fd, direction: #"input", size: buffer-size); 
+    else
+      // Make an #"output" or #"input-output" stream.
+      let flags :: <integer>
+	= select (if-does-not-exist)
+	    (#f) => exit();
+	    (#"create") => fd-o_creat;
+	    (#"signal") => 0;
+	  end select;
+      flags := select (direction)
+		 (#"output") => logior(flags, fd-o_wronly);
+		 (#"input-output") => logior(flags, fd-o_rdwr);
+	       end;
+      flags := select (if-exists)
+		 (#"signal")
+		   => logior(flags, fd-o_excl);
+		 (#"replace")
+		   => logior(flags, fd-o_trunc);
+		 (#"truncate")
+		   => logior(flags, fd-o_trunc);
+		 (#"new-version") 
+		   => error("<fd-file-stream> does not support new-version.");
+		 otherwise
+		   => flags;
+	       end;
+      let (fd, err) = fd-open(locator, flags);
+      select (err)
+	(#f)
+	  => #f; // No error, don't do anything.
+	(fd-eexist)
+	  => error(make(<file-exists-error>, locator: locator));
+	(fd-eacces)
+	  => error(make(<invalid-file-permissions-error>, locator: locator));
+	(fd-enoent)
+	  => error(make(<file-does-not-exist-error>, locator: locator));
+	otherwise
+	  => error(make(<syscall-error>, errno: err));
+      end select;
+      select (if-exists)
+	(#"append")
+	  => call-fd-function(fd-seek, fd, 0, fd-seek-end);
+	// Don't really need this, since it will be at the beginning anyway...
+	// (#"overwrite")
+	//  => call-fd-function(fd-seek, fd, 0, fd-seek-set);
+	otherwise
+	  => #f;
+      end;
+      stream.file-name := locator;
+      stream.file-direction := direction;
+      next-method(stream, fd: fd,
+		  direction: if (direction == #"output")
+			       #"output" 
+			     else 
+			       #"input" 
+			     end,
+		  size: buffer-size);
+      register-output-stream(stream);
+    end;
+  end block;
 end method;
 
 define sealed method close (stream :: <fd-file-stream>, #next next-method, 
