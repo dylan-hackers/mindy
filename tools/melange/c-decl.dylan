@@ -340,6 +340,7 @@ end method true-type;
 
 define abstract class <structured-type-declaration> (<type-declaration>) 
   slot members :: type-union(<sequence>, <false>), init-value: #f;
+  slot anonymous? :: <boolean>, required-init-keyword: #"anonymous?";
 end class <structured-type-declaration>;
 
 define class <struct-declaration>
@@ -452,7 +453,12 @@ define method make-struct-type
 			    <union-token> => <union-declaration>;
 			  end select;
 
-  let true-name = name | anonymous-name();
+  let (true-name, anonymous?)
+    = if (name)
+	values(name, #f);
+      else
+	values(anonymous-name(), #t);
+      end if;
   let old-type = element(state.structs, true-name, default: #f);
   let type
     = if (old-type)
@@ -467,16 +473,18 @@ define method make-struct-type
 	parse-error(state, "Type not found: %s.", true-name);
       else
 	state.structs[true-name]
-	  := add-declaration(state, make(declaration-class, name: true-name));
+	  := add-declaration(state, make(declaration-class,
+					 name: true-name,
+					 anonymous?: anonymous?));
       end if;
 
   // "process-member" will make slot or "enum slot" declarations for the raw
-  // data returned by the parser.  For enum slots, this includes calculating
-  // the value if wasn't already specified.
+  // data returned by the parser.
   let last :: <integer> = -1;
   let process-member
     = if (declaration-class == <enum-declaration>)
 	method (elem)
+	  elem.containing-enum-declaration := type;
 	  elem;
 	end method;
       else
@@ -782,6 +790,12 @@ define method compute-closure
     decl.declared? := #t;
     compute-closure(results, decl.type);
     push-last(results, decl);
+
+    // Propagate the typedef name to anonymous (struct, union, enum) types
+    if (instance?(decl.type, <structured-type-declaration>)
+	  & decl.type.anonymous?)
+      decl.type.simple-name := decl.simple-name;
+    end if;
   end if;
   results;
 end method compute-closure;
@@ -1175,7 +1189,22 @@ end method argument-direction-setter;
 define abstract class <constant-declaration> (<declaration>)
   slot constant-value :: <object>, required-init-keyword: #"value";
 end class;
-define class <enum-slot-declaration> (<constant-declaration>) end class;
+
+define class <enum-slot-declaration> (<constant-declaration>)
+  slot containing-enum-declaration :: <enum-declaration>;
+end class;
+
+define method compute-dylan-name
+    (decl :: <enum-slot-declaration>, mapper :: <function>, prefix :: <string>,
+     containers :: <sequence>, rd-only :: <boolean>, sealing :: <string>)
+ => (result :: <string>);
+  if (empty?(containers))
+    mapper(#"constant", prefix, decl.simple-name,
+	   list(decl.containing-enum-declaration.simple-name));
+  else
+    mapper(#"constant", prefix, decl.simple-name, containers);
+  end if;
+end method compute-dylan-name;
 
 define class <macro-declaration> (<constant-declaration>) end class;
 
