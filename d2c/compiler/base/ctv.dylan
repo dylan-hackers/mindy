@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.14 1995/11/09 13:52:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.15 1995/11/12 21:06:56 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -607,7 +607,7 @@ add-od-loader(*compiler-dispatcher*, #"literal-pair",
     let hd = load-object-dispatch(state);
     let tl = load-object-dispatch(state);
     assert(load-object-dispatch(state) == $end-object);
-    make(<literal-pair>, literal-head: hd, literal-tail: tl, sharable: #t);
+    make(<literal-pair>, head: hd, tail: tl, sharable: #t);
   end method
 );
 
