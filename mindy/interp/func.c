@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.21 1994/04/26 15:26:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.22 1994/04/26 15:32:41 rgs Exp $
 *
 * This file does whatever.
 *
@@ -426,9 +426,10 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
 	    boolean simple_arg = simple ||
 		obj_ptr(struct type *, *cache_class)->type_id == id_Class;
 	    if (simple_arg ? *cache_class != object_class(*arg)
-		           : !instancep(*arg, *cache_class))
-		    found = FALSE;
-		    break;
+		           : !instancep(*arg, *cache_class)) {
+		found = FALSE;
+		break;
+	    }
 	}
 	if (found)
 	    return TRUE;
@@ -1120,9 +1121,10 @@ static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
 	    boolean simple_arg = simple ||
 		obj_ptr(struct type *, *cache_class)->type_id == id_Class;
 	    if (simple_arg ? *cache_class != object_class(*arg)
-		           : !instancep(*arg, *cache_class))
-		    found = FALSE;
-		    break;
+		           : !instancep(*arg, *cache_class)) {
+		found = FALSE;
+		break;
+	    }
 	}
 
 	if (found) {
