@@ -1,1 +1,11 @@
 GNUmakefile
+parsergen-init.c
+library.c
+lisp-read.c
+parsergen.c
+heap.s
+inits.c
+parsergen-heap.s
+cc-parsergen-files.mak
+parsergen
+.cvsignore

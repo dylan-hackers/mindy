@@ -1,1 +1,8 @@
 GNUmakefile
+print-init.c
+library.c
+print.c
+pprint.c
+print-heap.s
+cc-print-files.mak
+.cvsignore

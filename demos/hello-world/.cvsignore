@@ -1,1 +1,10 @@
 GNUmakefile
+heap.s
+inits.c
+hello-world-exports.c
+hello-world.c
+hw-init.c
+hw-heap.s
+cc-hw-files.mak
+hello-world
+.cvsignore

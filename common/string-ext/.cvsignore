@@ -1,1 +1,12 @@
 GNUmakefile
+character-type.c
+library.c
+do-replacement.c
+conversions.c
+string-hacking.c
+parse-string.c
+substring-search.c
+stringext-init.c
+stringext-heap.s
+cc-stringext-files.mak
+.cvsignore

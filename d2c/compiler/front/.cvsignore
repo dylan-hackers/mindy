@@ -1,1 +1,16 @@
 GNUmakefile
+cc-front-files.mak
+front-exports.c
+primitives.c
+front.c
+func-defns.c
+var-defns.c
+tlf.c
+clone.c
+builder.c
+fer-builder.c
+fer-dump.c
+fer-od.c
+front-init.c
+front-heap.s
+.cvsignore

@@ -5,3 +5,4 @@ parser-tab.c
 extern1.def
 extern2.def
 mindy
+.cvsignore

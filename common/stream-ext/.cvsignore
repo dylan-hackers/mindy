@@ -1,1 +1,9 @@
 GNUmakefile
+streamext-init.c
+library.c
+concatenated-streams.c
+stream-extensions.c
+indenting-streams.c
+streamext-heap.s
+cc-streamext-files.mak
+.cvsignore

@@ -41,3 +41,5 @@ main.c
 dylan-init.c
 dylan-heap.s
 
+cc-dylan-files.mak
+.cvsignore

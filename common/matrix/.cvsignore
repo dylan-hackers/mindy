@@ -1,1 +1,7 @@
 GNUmakefile
+matrix-init.c
+library.c
+matrix.c
+matrix-heap.s
+cc-matrix-files.mak
+.cvsignore

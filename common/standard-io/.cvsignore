@@ -1,1 +1,7 @@
 GNUmakefile
+standard-io.c
+library.c
+stdio-init.c
+stdio-heap.s
+cc-stdio-files.mak
+.cvsignore

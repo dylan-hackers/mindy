@@ -1,1 +1,7 @@
 GNUmakefile
+melange-init.c
+exports.c
+cc-melange-files.mak
+melange.c
+melange-heap.s
+.cvsignore

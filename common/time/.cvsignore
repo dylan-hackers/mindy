@@ -1,1 +1,10 @@
 GNUmakefile
+parse-time.c
+library.c
+time-intr.c
+time.c
+time-io.c
+time-init.c
+time-heap.s
+cc-time-files.mak
+.cvsignore

@@ -1,1 +1,11 @@
 GNUmakefile
+cc-cback-files.mak
+cback-exports.c
+cback.c
+primemit.c
+heap.c
+stackanal.c
+cback-init.c
+cback-heap.s
+.cvsignore
+cc-cback-files.mak

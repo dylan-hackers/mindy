@@ -1,1 +1,7 @@
 GNUmakefile
+format-out.c
+library.c
+formatout-init.c
+formatout-heap.s
+cc-formatout-files.mak
+.cvsignore

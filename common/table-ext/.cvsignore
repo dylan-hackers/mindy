@@ -1,1 +1,7 @@
 GNUmakefile
+tableext-init.c
+library.c
+table-ext.c
+tableext-heap.s
+cc-tableext-files.mak
+.cvsignore

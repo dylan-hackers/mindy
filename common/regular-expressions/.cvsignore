@@ -1,1 +1,9 @@
 GNUmakefile
+regexp-init.c
+library.c
+match.c
+parse.c
+interface.c
+cc-regexp-files.mak
+regexp-heap.s
+.cvsignore

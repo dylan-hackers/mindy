@@ -1,1 +1,11 @@
 GNUmakefile
+sde-vector.c
+library.c
+solist.c
+subseq.c
+vecsearch.c
+cc-collext-files.mak
+sequence-diff.c
+collext-init.c
+collext-heap.s
+.cvsignore

@@ -1,1 +1,3 @@
 GNUmakefile
+cc-make-exports-files.mak
+cc-mkexports-files.mak

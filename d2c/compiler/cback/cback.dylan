@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.6 1998/11/06 17:48:10 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.7 1998/11/26 04:51:18 igor Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -448,7 +448,7 @@ end method;
 
 // Emit a description of the <source-location> in C.  For 
 // <file-source-location>s, this will be a #line directive.  For
-// <unknown-source-location>s, thus will be a comment.
+// other types of <source-location>, this will be a comment.
 
 define method maybe-emit-source-location(source-loc :: <file-source-location>,
 				   file :: <file-state>) => ();
@@ -459,23 +459,13 @@ define method maybe-emit-source-location(source-loc :: <file-source-location>,
   end if;
 end method;
 
-define method maybe-emit-source-location(source-loc :: <unknown-source-location>,
+define method maybe-emit-source-location(source-loc :: <source-location>,
 				   file :: <file-state>) => ();
   if (file.file-source-location ~= source-loc)
-    format(file.file-guts-stream, "/* #line <unknown-source-location> */\n");
+    format(file.file-guts-stream, "/* #line %= */\n", object-class(source-loc));
     file.file-source-location := source-loc;
   end if;
 end method;
-
-define method maybe-emit-source-location(source-loc :: <macro-source-location>,
-				   file :: <file-state>) => ();
-  if (file.file-source-location ~= source-loc)
-    format(file.file-guts-stream, "/* #line <macro-source-location> */\n");
-    file.file-source-location := source-loc;
-  end if;
-end method;  
-
-
 
 
 // New-{scope}

@@ -1,1 +1,7 @@
 GNUmakefile
+transcendental.c
+library.c
+transcendental-init.c
+transcendental-heap.s
+cc-transcendental-files.mak
+.cvsignore
