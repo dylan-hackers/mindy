@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.6 1995/01/10 16:25:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.7 1995/01/10 22:56:26 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -166,51 +166,51 @@ end class;
 
 // An external entry point lambda.  The function it is an entry for is
 // in the Entry-Function.
-define constant %function-xep = ash(1, 0);
+define constant $function-xep = ash(1, 0);
 
 // A top-level lambda, holding a compiled top-level form.  A top-level lambda
 // should have *no* references.  Entry-Function is a self-pointer.
-define constant %function-top-level = ash(1, 1);
+define constant $function-top-level = ash(1, 1);
 
 // Any thing we make a callable function object for.
-define constant %function-external = logior(%function-xep, %function-top-level);
+define constant $function-external = logior($function-xep, $function-top-level);
 
 // Represents a BLOCK cleanup clause.  Doesn't get an XEP even though it
 // appears as the arg to a funny function.
-define constant %function-cleanup = ash(1, 2);
+define constant $function-cleanup = ash(1, 2);
 
 // A BLOCK exit function.
 //
-define constant %function-exit = ash(1, 3);
+define constant $function-exit = ash(1, 3);
 
 // A helper function for a <hairy-method-literal>.
 //
-define constant %function-helper = ash(1, 4);
+define constant $function-helper = ash(1, 4);
 
 // An anonymous method for a GF literal.
 //
-define constant %function-anonymous-method = ash(1, 5);
+define constant $function-anonymous-method = ash(1, 5);
 
 // Any function that may have hidden references, so (for example), we don't
 // want to delete it if there are no apparent references, and we can't infer
 // anything about the argument types.
 //
-define constant %function-hidden-calls =
-    logior(%function-external,
-	   logior(%function-cleanup, 
-		  logior(%function-helper, %function-anonymous-method)));
+define constant $function-hidden-calls =
+    logior($function-external,
+	   logior($function-cleanup, 
+		  logior($function-helper, $function-anonymous-method)));
 
 
 // This function has been found to be uncallable, and has been
 // marked for deletion.
-define constant %function-deleted = ash(1, 6);
+define constant $function-deleted = ash(1, 6);
 
 
 define abstract class <function-literal> (<leaf>)
   inherited slot derived-type, init-value: <function>;
 
-  // Some combination of %function-XXX flags as decribed above.
-  slot flags :: <fixed-integer>, init-value: 0;
+  // Some combination of $function-XXX flags as decribed above.
+  slot fun-flags :: <fixed-integer>, init-value: 0;
 
   // In a normal function, this is the external entry point (XEP) lambda for
   // this function, if any.  Each function that is used other than in a local
@@ -305,19 +305,10 @@ end class;
 // FE region classes:
 
 define class <fer-component> (<component>)
-  // The kind of component:
-  // 
-  // #F
-  //     An ordinary component.
   //
-  // "Initial"
-  //     The result of initial FE conversion, on which component analysis has
-  //     not been done.
-  //
-  // "Deleted"
-  //     Debris left over from component analysis.
-  //
-  slot kind :: one-of(#f, #"initial", #"deleted"), init-value: #f;
+  // List of <function-literal>s for functions that are newly introduced or
+  // that have new references to them.
+  slot reanalyze-functions :: <list>, init-value: #();
 
   // If true, then there is stuff in this component that could benefit from
   // further FE optimization.
