@@ -181,5 +181,3 @@ define module duim-geometry-internals
          compose-translation-into!,
          make-translation-transform-into!;
 end module duim-geometry-internals;
-
-
