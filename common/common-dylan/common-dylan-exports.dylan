@@ -81,13 +81,12 @@ define module simple-debugging
 end module;
 
 define module byte-vector
-  use extensions,
-    export: {<byte>,
-	     <byte-vector>};
-  // byte-vector-fill
-  // byte-vector-ref
-  // byte-vector-ref-setter
-  // copy-bytes
+  use extensions, export: { <byte>, <byte-vector> };
+  create
+    byte-vector-fill,
+    byte-vector-ref,
+    byte-vector-ref-setter,
+    copy-bytes;
 end module;
 
 define module common-extensions
@@ -282,12 +281,14 @@ end module streams-protocol;
 define module common-dylan-internals
   use common-dylan;
   use extensions;
-  use system, import: { copy-bytes };
+  use system, import: { copy-bytes => %copy-bytes, vector-elements-address };
+  use magic, import: { %element, %element-setter };
   use cheap-io, import: { puts => write-console };
   use introspection, rename: { subclass-of => subclass-class };
   use melange-support;
   use c-support;
   use simple-io;
+  use byte-vector;
   use simple-profiling;
   use locators-protocol;
   use streams-protocol;

@@ -8,5 +8,6 @@ common-extensions.dylan
 format.dylan
 profiling.dylan
 fun-dev-compat.dylan
+byte-vector.dylan
 locators-protocol.dylan
 streams-protocol.dylan

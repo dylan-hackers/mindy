@@ -21,7 +21,7 @@ define sealed method add!
   if (buffer.size + 1 > buffer.%contents.size)
     let new-contents = make(<byte-string>,
                             size: ash(buffer.%contents.size * 3, -1));
-    copy-bytes(new-contents, 0, buffer.%contents, 0, buffer.size);
+    %copy-bytes(new-contents, 0, buffer.%contents, 0, buffer.size);
     buffer.%contents := new-contents;
   end;
   buffer.%contents[buffer.size] := e;
@@ -36,10 +36,10 @@ define function print-string
     let new-size = max(ash(buffer.%contents.size * 3, -1),
                        buffer.size + string.size);
     let new-contents = make(<byte-string>, size: new-size);
-    copy-bytes(new-contents, 0, buffer.%contents, 0, buffer.size);
+    %copy-bytes(new-contents, 0, buffer.%contents, 0, buffer.size);
     buffer.%contents := new-contents;
   end if;
-  copy-bytes(buffer.%contents, buffer.size, string, 0, string.size);
+  %copy-bytes(buffer.%contents, buffer.size, string, 0, string.size);
   buffer.size := buffer.size + string.size;
 end function print-string;
 
