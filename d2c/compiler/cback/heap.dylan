@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.49 1996/06/20 21:09:40 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.50 1996/06/26 14:47:15 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -56,6 +56,9 @@ define abstract class <state> (<object>)
   //
   // The stream we are spewing to.
   slot stream :: <stream>, required-init-keyword: stream:;
+  // 
+  // The architecture we are compiling for.
+  slot target :: <target-environment>, required-init-keyword: target:;
   //
   // The prefix we are pre-pending to each symbol to guarantee uniqueness.
   slot id-prefix :: <byte-string>, init-keyword: #"id-prefix", init-value: "L";
@@ -162,10 +165,11 @@ add-make-dumper
 // dumping of the library specific local heaps.
 // 
 define method build-global-heap
-    (undumped-objects :: <simple-object-vector>, stream :: <stream>)
+    (undumped-objects :: <simple-object-vector>, stream :: <stream>,
+     target :: <target-environment>)
     => ();
-  let state = make(<global-state>, stream: stream);
-  format(stream, "\t.data\n\t.align\t8\n");
+  let state = make(<global-state>, stream: stream, target: target);
+  format(stream, "%s\n", target.heap-preamble);
 
   for (obj in undumped-objects)
     object-name(obj, state);
@@ -173,9 +177,10 @@ define method build-global-heap
 
   spew-objects-in-queue(state);
 
-  format(stream,
-	 "\n\n\t.align\t8\n\t.export\tinitial_symbols, DATA\n"
-	   "initial_symbols\n");
+  format(stream, "\n\n\t%s\t8\n", target.align-directive);
+  format(stream, target.export-directive, 
+	 concatenate(target.mangled-name-prefix, "initial_symbols"));
+  format(stream, "%sinitial_symbols:\n", target.mangled-name-prefix);
   spew-reference(state.symbols, *heap-rep*, "Initial Symbols", state);
 end;
 
@@ -201,26 +206,34 @@ define constant $descriptor-type-string
 // for some reason or other.
 // 
 define method build-local-heap
-    (unit :: <unit-state>, stream :: <stream>)
+    (unit :: <unit-state>, stream :: <stream>, target :: <target-environment>)
  => (undumped :: <simple-object-vector>,
      extra-labels :: <simple-object-vector>);
   let prefix = unit.unit-prefix;
-  let state = make(<local-state>, stream: stream, 
+  let state = make(<local-state>, stream: stream, target: target,
 		   id-prefix: concatenate(prefix, "_L"));
-  format(stream, "%s", $descriptor-type-string);
-  format(stream, "\t.data\n\t.align\t8\n");
+  // This debugging crap is only supported on the HP (at least for now)
+  if (target.target-name == #"hppa-hpux")
+    format(stream, "%s", $descriptor-type-string);
+  end if;
+  format(stream, "%s\n\n", target.heap-preamble);
 
-  format(stream, "\n\t.export\t%s_roots, DATA\n%s_roots\n", prefix, prefix);
+  format(stream, target.export-directive, 
+	 concatenate(target.mangled-name-prefix, prefix, "_roots"));
+  format(stream, "%s%s_roots:\n", target.mangled-name-prefix, prefix);
   for (root in unit.unit-init-roots, index from 0)
     let name = root.root-name;
     if (root.root-comment)
-      format(stream, "\n; %s\n", root.root-comment);
+      format(stream, "\n%s %s\n", target.comment-token, root.root-comment);
     else
       write('\n', stream);
     end if;
     if (name)
-      format(stream, "\t.export\t%s, DATA\n%s\n", name, name);
-      format(stream, "\t.stabs\t\"%s:G34\",32,0,1,0\n", name);
+      format(stream, target.export-directive, 
+	     concatenate(target.mangled-name-prefix, name));
+      format(stream, "%s%s:\n", target.mangled-name-prefix, name);
+      format(stream, "\t.stabs\t\"%s%s:G34\",32,0,1,0\n", 
+	     target.mangled-name-prefix, name);
     end if;
     spew-reference(root.root-init-value, *general-rep*,
 		   stringify(prefix, "_roots[", index, ']'),
@@ -243,22 +256,51 @@ end method build-local-heap;
 // 
 define method spew-objects-in-queue (state :: <state>) => ();
   let stream = state.stream;
+  let target = state.target;
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
     let info = get-info-for(object, #f);
 
-    format(stream, "\n; %s\n\t.align\t8\n", object);
+    format(stream, "\n%s %s\n\t%s\t8\n", target.comment-token, object,
+	   target.align-directive);
     let labels = info.const-info-heap-labels;
     if (labels.empty?)
       error("Trying to spew %=, but it doesn't have any labels.", object);
     end if;
     for (label in labels)
-      format(stream, "\t.export\t%s, DATA\n%s\n", label, label);
+      format(stream, target.export-directive, 
+	     concatenate(target.mangled-name-prefix, label));
+      format(stream, "%s%s:\n", target.mangled-name-prefix, label);
     end for;
 
     spew-object(object, state);
   end;
 end method spew-objects-in-queue;
+
+
+// On the HP, we could use ".blockz bytes".  But this directive
+// doesn't exist on any other machine...
+//
+// This function assumes that we are already on a word boundary.  If
+// we aren't, and save-n-bytes tries to use a .word directive, I'm not
+// real sure what will happen.
+//
+define method save-n-bytes
+    (state :: <state>, bytes :: <integer>, #key comment = #f) => ();
+  if (comment)
+    format(state.stream, "\t\t%s %s\n", state.target.comment-token, comment);
+  end if;
+  let i = bytes;
+  while (i > 3)
+    i := i - 4;
+    format(state.stream, "\t%s 0\n", state.target.word-directive);
+  end while;
+  while (i > 0)
+    i := i - 1;
+    format(state.stream, "\t%s 0\n", state.target.byte-directive);
+  end while;
+end method save-n-bytes;
+
 
 //------------------------------------------------------------------------
 //  Spew-reference
@@ -288,7 +330,7 @@ define method spew-reference
     (object :: <false>, rep :: <representation>,
      tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t.blockz\t%d\t; %s\n", rep.representation-size, tag);
+  save-n-bytes(state, rep.representation-size, comment: tag);
 end;
 
 // spew-reference{<literal>,<immediate-representation>}
@@ -300,16 +342,20 @@ define method spew-reference
     (object :: <literal>, rep :: <immediate-representation>,
      tag :: <byte-string>, state :: <state>)
     => ();
+  let target = state.target;
   let bits = raw-bits(object);
   select (rep.representation-size)
-    1 => format(state.stream, "\t.byte\t%d\t; %s\n", bits, tag);
-    2 => format(state.stream, "\t.half\t%d\t; %s\n", bits, tag);
-    4 => format(state.stream, "\t.word\t%d\t; %s\n", bits, tag);
+    1 => format(state.stream, "\t%s\t%d\t%s %s\n", 
+		target.byte-directive, bits, target.comment-token, tag);
+    2 => format(state.stream, "\t%s\t%d\t%s %s\n", 
+		target.half-word-directive, bits, target.comment-token, tag);
+    4 => format(state.stream, "\t%s\t%d\t%s %s\n", 
+		target.word-directive, bits, target.comment-token, tag);
     8 =>
-      format(state.stream, "\t.word\t%d, %d\t; %s\n",
-	     ash(bits, -32),
+      format(state.stream, "\t%s\t%d, %d\t%s %s\n",
+	     target.word-directive, ash(bits, -32),
 	     logand(bits, ash(as(<extended-integer>, 1), 32) - 1),
-	     tag)
+	     target.comment-token, tag)
   end;
 end;
 
@@ -329,9 +375,9 @@ define method spew-reference
       else
 	values(object, 0);
       end;
-  format(state.stream, "\t.word\t%s, %d\t; %s\n",
+  format(state.stream, "\t%s\t%s, %d\t%s %s\n", state.target.word-directive,
 	 object-name(heapptr, state),
-	 dataword, tag);
+	 dataword, state.target.comment-token, tag);
 end;
 
 // spew-reference{<proxy>,<general-representation>}
@@ -343,8 +389,8 @@ define method spew-reference
     (object :: <proxy>, rep :: <general-representation>,
      tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t.word\t%s, 0\t; %s\n",
-	 object-name(object, state), tag);
+  format(state.stream, "\t%s\t%s, 0\t%s %s\n", state.target.word-directive,
+	 object-name(object, state), state.target.comment-token, tag);
 end;
 
 // spew-reference{<ct-value>,<heap-representation>}
@@ -354,7 +400,9 @@ end;
 define method spew-reference
     (object :: <ct-value>, rep :: <heap-representation>,
      tag :: <byte-string>, state :: <state>) => ();
-  format(state.stream, "\t.word\t%s\t; %s\n", object-name(object, state), tag);
+  format(state.stream, "\t%s\t%s\t%s %s%s:\n", state.target.word-directive,
+	 object-name(object, state), state.target.comment-token, 
+	 state.target.mangled-name-prefix, tag);
 end;
 
 // spew-reference{<ct-entry-point>,<immediate-representation>}
@@ -368,7 +416,9 @@ define method spew-reference
     (object :: <ct-entry-point>, rep :: <immediate-representation>,
      tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t.word\t%s\t; %s\n", entry-name(object, state), tag);
+  format(state.stream, "\t%s\t%s\t%s %s%s:\n", state.target.word-directive,
+	 entry-name(object, state), state.target.comment-token, 
+	 state.target.mangled-name-prefix, tag);
 end;
 
 // spew-reference{<ct-entry-point>,<general-representation>}
@@ -379,10 +429,11 @@ define method spew-reference
     (object :: <ct-entry-point>, rep :: <general-representation>,
      tag :: <byte-string>, state :: <state>)
     => ();
-  format(state.stream, "\t.word\t%s, %s\t; %s\n",
+  format(state.stream, "\t%s\t%s, %s\t%s %s\n",
+	 state.target.word-directive,
 	 object-name(make(<proxy>, for: object.ct-value-cclass), state),
 	 entry-name(object, state),
-	 tag);
+	 state.target.comment-token, tag);
 end;
 
 // object-name -- internal.
@@ -428,9 +479,13 @@ define method object-name (object :: <ct-value>, state :: <state>)
       end if;
     end if;
   end unless;
-  let name = info.const-info-heap-labels.first;
+  let name = concatenate(state.target.mangled-name-prefix, 
+			 info.const-info-heap-labels.first);
   unless (heap-object-referenced?(object, state))
-    format(state.stream, "\t.import\t%s, data\n", name);
+    // Only the HP needs this silly .import directive
+    if (state.target.target-name == #"hppa-hpux")
+      format(state.stream, "\t.import\t%s, data\n", name);
+    end if;
     heap-object-referenced?(object, state) := #t;
   end unless;
   name;
@@ -445,9 +500,13 @@ end method object-name;
 // 
 define method entry-name (object :: <ct-entry-point>, state :: <state>)
     => name :: <string>;
-  let name = object.entry-point-c-name;
+  let name = concatenate(state.target.mangled-name-prefix,
+			 object.entry-point-c-name);
   unless (heap-object-referenced?(object, state))
-    format(state.stream, "\t.import\t%s, code\n", name);
+    // Only the HP needs this silly .import directive
+    if (state.target.target-name == #"hppa-hpux")
+      format(state.stream, "\t.import\t%s, code\n", name);
+    end if;
     heap-object-referenced?(object, state) := #t;
   end unless;
   name;
@@ -740,7 +799,7 @@ define method spew-object
     select (field by instance?)
       <false> => #f;
       <integer> =>
-	format(state.stream, "\t.blockz\t%d\n", field);
+	save-n-bytes(state, field);
       <instance-slot-info> =>
 	select (field.slot-getter.variable-name)
 	  #"%object-class" =>
@@ -1098,7 +1157,7 @@ define method spew-instance
     select (field by instance?)
       <false> => #f;
       <integer> =>
-	format(state.stream, "\t.blockz\t%d\n", field);
+	save-n-bytes(state, field);
       <instance-slot-info> =>
 	let init-value = find-init-value(class, field, slots);
 	let getter = field.slot-getter;
