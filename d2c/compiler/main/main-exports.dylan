@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.7 1996/03/17 00:50:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.8 1996/03/21 03:01:10 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -37,6 +37,7 @@ define module main
   use variables;
   use parser;
   use format;
+  use tokenize;
   use lexer;
   use header;
   use source;

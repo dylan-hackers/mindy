@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.14 1996/03/20 19:26:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.15 1996/03/21 03:01:10 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -521,25 +521,6 @@ define method merge-category
       := element(current.word-info-sub-infos, category)
   end unless;
 end method merge-category;
-
-
-
-// Tokenizer interface.
-
-define primary abstract open class <tokenizer> (<object>)
-end class <tokenizer>;
-
-define open generic get-token (tokenizer :: <tokenizer>)
-    => (token :: <token>, srcloc :: <source-location>);
-
-define open generic unget-token
-    (tokenizer :: <tokenizer>, token :: <token>, srcloc :: <source-location>)
-    => ();
-
-define open generic note-potential-end-point (tokenizer :: <tokenizer>) => ();
-
-define method note-potential-end-point (tokenizer :: <tokenizer>) => ();
-end method note-potential-end-point;
 
 
 

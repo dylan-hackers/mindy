@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.32 1996/03/20 19:20:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.33 1996/03/21 03:01:10 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -343,10 +343,7 @@ define module tokens
     <literal-token>, token-literal,
     <pre-parsed-token>, token-parse-tree,
 
-    <syntax-table>, syntax-for-name, category-merge-okay?, merge-category,
-
-    <tokenizer>, get-token, unget-token, note-potential-end-point;
-
+    <syntax-table>, syntax-for-name, category-merge-okay?, merge-category;
 end;
 
 define module header
