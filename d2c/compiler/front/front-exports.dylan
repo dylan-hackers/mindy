@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.6 1996/02/08 19:20:57 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.7 1996/02/16 02:40:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -323,6 +323,7 @@ define module define-classes
   use od-format;
 
   export
+    <define-class-tlf>,
     class-defn-defered-evaluations-function, class-defn-maker-function;
 end;
 
