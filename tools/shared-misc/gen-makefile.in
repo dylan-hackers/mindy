@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.29 2001/09/25 03:38:48 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.30 2002/01/23 06:30:40 bruce Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1052,11 +1052,11 @@ sub emit_parsergen_rule {
     local ($basefile) = @_;
     do maybe_emit_d2c_defines();
 
-    print "\$(SRCDIR)/$basefile.dylan: \$(SRCDIR)/$basefile.input";
+    print "$basefile.dylan: \$(SRCDIR)/$basefile.input";
     print "\n\t\$(PARSERGEN) ";
-    print "\$(SRCDIR)/$basefile.input \$(SRCDIR)/$basefile.dylan\n\n";
-    push(@compile_dependencies, "\$(SRCDIR)/$basefile.dylan");
-    push(@files_to_clean, "\$(SRCDIR)/$basefile.dylan");
+    print "\$(SRCDIR)/$basefile.input $basefile.dylan\n\n";
+    push(@compile_dependencies, "$basefile.dylan");
+    push(@files_to_clean, "$basefile.dylan");
 }
 
 # install_one_file($from_file, $to_file, $executable_permissions) -- internal
