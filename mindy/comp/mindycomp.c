@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.9 1994/10/05 20:55:29 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.10 1994/11/10 20:22:19 nkramer Exp $
 *
 * This file is the main driver.
 *
@@ -140,12 +140,27 @@ static void set_module(char *value)
     ModuleName = symbol(value);
 }
 
+static int case_insensitive_equal (const char *s1, const char *s2)
+{
+    char *p1=s1;
+    char *p2=s2;
+    for ( ; *p1 != 0 && *p2 != 0; p1++, p2++) {
+	if (toupper(*p1) != toupper(*p2)) {
+	    return 0;
+	}
+    }
+    return (*p1 == *p2);
+}
+
 static void set_library(char *value)
 {
-    if (LibraryName) {
-	fprintf(stderr, "multiple library: file headers.\n");
+    if (LibraryName && !case_insensitive_equal(LibraryName->name, value)) {
+	fprintf(stderr,
+		"Library name specified on the command line differs from\n"
+		"the library name specified in the file.\n");
 	exit(1);
     }
+    free(LibraryName);
     LibraryName = symbol(value);
 }
 
