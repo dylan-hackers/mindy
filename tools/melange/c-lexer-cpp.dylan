@@ -236,15 +236,35 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 	// specified, we just use that.)
 	let name = copy-sequence(contents, start: quote-start + 1,
 				 end: quote-end - 1);
+
+        // if (name is an absolute path) [drive/UNC optional on win32 systems]
+#if (compiled-for-x86-win32)
+        if (regexp-position(name, "((.:)|\\\\)?(\\\\|/)"))
+#else
 	if (first(name) == '/')
+#endif
 	  state.include-tokenizer
 	    := make(<tokenizer>, source: name, parent: state);
 	else
-	  // Replace the tail (i.e. everything after the last "/") of the
-	  // current file name with the new relative path name.
+	  // Turn the a relative pathname into an absolute pathname by
+	  // replacing everything after the last path separator with
+	  // the new relative path name.  Honestly, no one remembers
+	  // why we want to do this, although "gives more useful error
+	  // messages" sounds like a good guess.
+
+	  // ### If we try to absolutize a relative path with a drive
+	  // letter, this will do something horribly wrong.  Then
+	  // again, I suspect Melange will have crapped out long
+	  // before now if a user tried that.
 	  state.include-tokenizer
 	    := make(<tokenizer>, parent: state,
-		    source: regexp-replace(state.file-name, "[^/]+$", name));
+		    source: regexp-replace(state.file-name, 
+					   #if (compiled-for-x86-win32)
+					     "[^\\\\/]+$", 
+				           #else
+					     "[^/]+$", 
+                                           #endif
+					   name));
 	end if;
       end if;
   unget-token(generator, make(<begin-include-token>, position: pos,
