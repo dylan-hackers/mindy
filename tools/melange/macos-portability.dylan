@@ -2,14 +2,13 @@ documented: #t
 module: portability
 copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
-	   University.  If you are interested in using this code, contact
-	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: 
+	   University.
+rcs-header: $Header: /scm/cvs/src/tools/melange/macos-portability.dylan,v 1.8 2003/04/09 11:25:02 gabor Exp $
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -33,13 +32,6 @@ rcs-header: $Header:
 //
 //======================================================================
 
-//======================================================================
-//
-// Copyright (c) 1994  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
-// All rights reserved.
-//
-//======================================================================
 
 //======================================================================
 // Module portability is a tiny OS dependent module which defines the
@@ -54,15 +46,15 @@ rcs-header: $Header:
 
 define constant $default-defines
   = #[
-  		// Basics
-  		"const", "",
-      "volatile", "", 
+      // Basics
+      "const", "",
+      "volatile", "",
       //"__cdecl", "",
       
       // cpp -dM /dev/null
       "GNUC", "(1)",
       
-      // cc -E -v /dev/null
+      // cc -E -dM -o - /dev/null
       "__GNUC__", "2",
       "__GNUC_MINOR__", "95",
       "__ppc__", "",
@@ -71,17 +63,17 @@ define constant $default-defines
       "__BIG_ENDIAN__", "",
       "__APPLE__", "",
       "__STDC__", "",
-			"__APPLE_CC__", "934",
-			"__DYNAMIC__", "",
+      "__APPLE_CC__", "934",
+      "__DYNAMIC__", "",
+      "__signed__", "",
+      "__signed", "",
+      "__inline__", "",
+      "__inline", "",
       
       // Parameterized macros which remove various GCC extensions from our
       // source code. The last item in the list is the right-hand side of
       // the define; all the items preceding it are named parameters.
-      "__attribute__", #(#("x"), ""), 
-      "__signed__", "", 
-      "__signed", "", 
-      "__inline__", "",
-      "__inline", ""
+      "__attribute__", #(#("x"), "")
       ];
 
 // Set up the search path for .h files
