@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.10 2002/03/24 20:00:29 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.11 2002/04/23 20:22:18 gabor Exp $
 copyright: see below
 
 
@@ -243,10 +243,8 @@ add-make-dumper(#"class-slot-info", *compiler-dispatcher*,
 add-make-dumper(#"each-subclass-slot-info", *compiler-dispatcher*,
   <each-subclass-slot-info>,
   concatenate(
-    $slot-info-dump-slots
-    /* ### -- currently recomputed, so we don't really need to dump it.
-    ,
-    list(slot-positions, slot-positions:, #f) */),
+    $slot-info-dump-slots,
+    list(associated-meta-slot, #f, associated-meta-slot-setter)),
   load-external: #t
 );
 
