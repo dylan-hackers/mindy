@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.58 1997/01/13 03:12:11 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.59 1997/02/04 14:38:58 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -39,7 +39,7 @@ define library compiler-base
   export transformers;
   export utils;
   export variables;
-  export target-environment;
+  export platform;
   export file-system;
 end;
 
@@ -392,7 +392,7 @@ define module header
 end;
 
 
-define module target-environment
+define module platform
   use common;
   use header;
   use source;
@@ -401,10 +401,10 @@ define module target-environment
   use string-conversions, import: { string-to-integer };
 
   export
-    get-targets, <target-environment>, *current-target*,
+    get-platforms, <platform>, *current-target*,
     default-features,
 
-    target-integer-length,
+    platform-integer-length,
 
     heap-preamble,
     align-directive,
@@ -437,7 +437,7 @@ define module target-environment
     supports-debugging?,
     uses-win32-stabs?,
     omit-colon-after-label-declarations?;
-end module target-environment;
+end module platform;
 
 
 
@@ -574,8 +574,8 @@ define module ctype
   use utils;
   use od-format;
   use compile-time-values;
-  use target-environment,
-    import: {*current-target*, target-integer-length};
+  use platform,
+    import: {*current-target*, platform-integer-length};
   use names;
   use variables;
   use forwards, import: {<cclass>};
