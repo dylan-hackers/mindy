@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.2 1994/12/17 02:13:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.3 1995/01/06 21:16:46 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1090,8 +1090,8 @@ end method;
 /// Instead we provide new operations which are analogous to the one-value
 /// operations (and delegate to them in the single-value case.)  These
 /// operations are optimized for utility rather than exactness, but it is
-/// guaranteed that it will be no smaller (more restrictive) than the precise
-/// result.
+/// guaranteed that it will be no smaller (no more restrictive) than the
+/// precise result.
 ///
 /// With values types such as:
 ///    values(a0, a1)
@@ -1114,9 +1114,16 @@ end method;
 /// return, etc.) where there are more than one value.  We extend the slot
 /// accessors to handle the degenerate case of a 1-value <ctype>.
 ///
+/// In order to allow the result of union or intersection of values-types to be
+/// represented more precisely, we allow some vagueness in the number of
+/// "positional" values.  If we union (Y1, Y2) and (X1), then the positional
+/// types are (Y1 union X1, Y2), and the min-values is 1.  Y2 is thus sort of
+/// an "optional" result type.
+///
 define class <multi-value-ctype> (<values-ctype>)
 
-  // Types of each required value.
+  // Types of each specifically typed value.  Values > than min-values might
+  // not actually be returned.
   slot positional-types :: <list>, required-init-keyword: positional-types:;
 
   // The minimum number of values that will ever be returned (<= to
@@ -1124,9 +1131,29 @@ define class <multi-value-ctype> (<values-ctype>)
   slot min-values :: <fixed-integer>, required-init-keyword: min-values:;
 
   // Type of the rest values; empty-ctype if none.
-  slot rest-type :: <ctype>, required-init-keyword: rest-type:;
+  slot rest-value-type :: <ctype>, required-init-keyword: rest-value-type:;
 end class;
 
+
+// make-values-ctype  --  Exported
+//
+// Make a potentially multi-value ctype.  If there is only one value, just
+// return that.
+//
+define constant make-values-ctype = method
+  (req :: <list>, rest :: false-or(<ctype>)) => res :: <values-ctype>;
+
+ let nreq = req.size;
+ if (nreq == 1 & ~rest)
+   req.first;
+ else
+   make(<multi-value-ctype>, positional-types: req, min-values: nreq,
+        rest-value-type: rest | empty-ctype());
+	
+ end;
+end method;
+
+   
 define method positional-types(type :: <ctype>) => res :: <list>;
   list(type);
 end method;
@@ -1135,7 +1162,7 @@ define method min-values(type :: <ctype>) => res :: <fixed-integer>;
   1;
 end;
 
-define method rest-type(type :: <ctype>) => res :: <ctype>;
+define method rest-value-type(type :: <ctype>) => res :: <ctype>;
   empty-ctype();
 end method;
 
@@ -1152,7 +1179,7 @@ end method;
 define method first-value(type :: <values-ctype>) => res :: <ctype>;
   let types = type.positional-types;
   if (type == #())
-    ctype-union(type.rest-type, dylan-value(#"<false>"));
+    ctype-union(type.rest-value-type, dylan-value(#"<false>"));
   else
     types.head
   end;
@@ -1203,9 +1230,9 @@ define constant args-type-op = method
     operation(type1, type2);
   else
     let types1 = type1.positional-types;
-    let rest1 = type1.rest-type;
+    let rest1 = type1.rest-value-type;
     let types2 = type2.positional-types;
-    let rest2 = type2.rest-type;
+    let rest2 = type2.rest-value-type;
     let (rest, rest-exact) = operation(rest1, rest2);
     let (res, res-exact) =
         if (types1.size < types2.size)
@@ -1218,7 +1245,7 @@ define constant args-type-op = method
     else
       values(make(<multi-value-ctype>, positional-types: res,
           	  min-values: min-fun(type1.min-values, type2.min-values),
-		  rest-type: rest),
+		  rest-value-type: rest),
 	     res-exact & rest-exact);
     end;
   end;
@@ -1283,12 +1310,12 @@ define constant values-subtype? = method
 
     otherwise =>
       let types1 = type1.positional-types;
-      let rest1 = type1.rest-type;
+      let rest1 = type1.rest-value-type;
       let types2 = type2.positional-types;
-      let rest2 = type2.rest-type;
+      let rest2 = type2.rest-value-type;
       case
         type1.min-values < type2.min-values => values(#f, #t);
-	type1.size < type2.size => values(#f, #f);
+	types1.size < types2.size => values(#f, #f);
 	block (done)
 	  for (t1 in types1, t2 in types2)
 	    let (res, win-p) = csubtype?(t1, t2);
@@ -1312,7 +1339,7 @@ define constant wild-ctype
 	| (*wild-ctype-memo*
 	     := make(<multi-value-ctype>,
 		     positional-types: #(),
-		     rest-type: object-ctype(),
+		     rest-value-type: object-ctype(),
 		     min-values: 0));
     end;
 
