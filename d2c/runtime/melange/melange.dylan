@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.4 1996/09/28 21:02:26 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/melange/melange.dylan,v 1.5 1996/10/02 16:17:41 rgs Exp $
 
 //======================================================================
 //
@@ -225,7 +225,7 @@ define sealed inline method pointer-at-setter
     (new :: <statically-typed-pointer>,
      ptr :: <statically-typed-pointer>,
      #key offset :: <integer> = 0,
-          classlass :: <class> = <statically-typed-pointer>)
+          class :: <class> = <statically-typed-pointer>)
  => (result :: <statically-typed-pointer>);
   pointer-deref(ptr:, ptr.raw-value, offset) := new.raw-value;
 end method pointer-at-setter;
