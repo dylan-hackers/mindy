@@ -315,8 +315,29 @@ define method spew-object
 end;
 
 define method spew-object
-    (object :: <cclass>, state :: <state>) => ();
-  spew-instance(specifier-type(#"<class>"), state);
+    (object :: <defined-cclass>, state :: <state>) => ();
+  let defn = object.class-defn;
+  spew-instance(specifier-type(#"<class>"), state,
+		debug-name:
+		  make(<literal-symbol>,
+		       value: object.cclass-name.name-symbol),
+		unique-id:
+		  as(<ct-value>, object.unique-id | -1),
+		direct-superclasses:
+		  make(<literal-list>, contents: object.direct-superclasses,
+		       sharable: #t),
+		all-superclasses:
+		  make(<literal-list>, contents: object.precedence-list,
+		       sharable: #t),
+		closest-primary-superclass: object.closest-primary-superclass,
+		direct-subclasses:
+		  make(<literal-list>, contents: object.direct-subclasses),
+		class-primary?: as(<ct-value>, object.primary?),
+		class-abstract?: as(<ct-value>, object.abstract?),
+		class-sealed?: as(<ct-value>, object.sealed?),
+		class-defered-evaluations:
+		  defn.class-defn-defered-evaluations-function,
+		class-maker: defn.class-defn-maker-function);
 end;
 
 define method spew-object (object :: <proxy>, state :: <state>) => ();
