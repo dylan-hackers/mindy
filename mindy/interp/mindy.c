@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.14 1995/03/12 16:42:22 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.15 1995/06/12 01:42:16 rgs Exp $
 *
 * This file starts everything going.
 *
@@ -86,6 +86,7 @@ void main(int argc, char *argv[])
 #if ! NO_ARGV_0
     char *argv0 = "mindy";
 #endif
+    exec_file_name = argv[0];
 
     init();
 
@@ -94,7 +95,6 @@ void main(int argc, char *argv[])
 				      obj_Nil, obj_ObjectClass,
 				      startup);
 
-    exec_file_name = argv[0];
     while (*++argv != NULL) {
 	if (strcmp(*argv, "-f") == 0) {
 	    if (*++argv == NULL)
