@@ -1,12 +1,12 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.6 2001/05/30 21:28:20 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctype.dylan,v 1.7 2002/01/19 19:08:01 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -1550,6 +1550,14 @@ define method csubtype-dispatch
 end;
 
 
+
+// ct-value-cclass -- exported.
+//
+// Specify the instance relationship of ct-values.
+// Does not take layout or other compiler specific properties
+// into account. Generally some class defined in the dylan module
+// is returned.
+// 
 define generic ct-value-cclass (ct-value :: <ct-value>) => res :: <cclass>;
 
 define method ct-value-cclass (object :: <ct-not-supplied-marker>)
