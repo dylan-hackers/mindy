@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.84 2003/08/13 05:59:35 housel Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.85 2003/08/21 23:23:31 bruce Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -755,13 +755,15 @@ maximum-long-double-float-exponent: 1024
 
 // Bruce Hoult made this work on HP/UX 10.20
 // HP/UX 11 not tried yet
+// Shared libraries disabled for now so we can get 2.3.11 out.
+// The problem is the -lm, which is required by recent FP routine changes
 platform-name:				hppa-hpux-gcc
 inherit-from:				gcc hpux hppa
 default-features:               	compiled-for-hpux compiled-for-hppa C-compiler-is-GCC
 library-filename-suffix:        	.a .sl
 link-library-command:           	/bin/ar qc %s %s
-link-executable-command:        	gcc -static -o %s %s %s
-link-shared-library-command:    	$(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
+link-executable-command:        	$(LIBTOOL) --mode=link gcc -o %s %s %s
+//link-shared-library-command:    	$(LIBTOOL) --mode=link gcc -o %s %s -L/lib/pa1.1 -lm -rpath %s
 link-executable-flags:          	$(GC_LIBS) -L/lib/pa1.1 -lm
 double-alignment:                       8
 long-long-size:                         8
