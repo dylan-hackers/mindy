@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.4 1998/05/12 13:52:41 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.5 1998/08/10 15:41:07 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -802,6 +802,12 @@ define method build-ar-file (state :: <main-unit-state>) => ();
 				     end if, 
 				     ar-name, objects);
   format(state.unit-makefile, "\t%s\n", link-string);
+  
+  if (target.randomize-library-command)
+    let randomize-string = format-to-string(target.randomize-library-command,
+					    ar-name);
+    format(state.unit-makefile, "\t%s\n", randomize-string);
+  end if;
 end method;
 
 

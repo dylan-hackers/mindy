@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.2 1998/05/15 16:24:53 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.3 1998/08/10 15:41:05 housel Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -219,7 +219,9 @@ define method build-global-heap
 
   spew-objects-in-queue(state);
 
-  format(stream, "\n\n\t%s\t8\n", target.align-directive);
+  format(stream, "\n\n");
+  align-to-n-bytes(stream, 8, target);
+
   spew-label(state, "initial_symbols", export: #t);
   spew-reference(state.symbols, *heap-rep*, "Initial Symbols", state);
 end;
@@ -294,8 +296,9 @@ define method spew-objects-in-queue (state :: <state>) => ();
     let object = pop(state.object-queue);
     let info = get-info-for(object, #f);
 
-    format(stream, "\n%s %s\n\t%s\t8\n", target.comment-token, object,
-	   target.align-directive);
+    format(stream, "\n%s %s\n", target.comment-token, object);
+    align-to-n-bytes(stream, 8, target);
+
     let labels = info.const-info-heap-labels;
     if (labels.empty?)
       error("Trying to spew %=, but it doesn't have any labels.", object);
@@ -372,6 +375,27 @@ define method save-n-bytes
   end while;
 end method save-n-bytes;
 
+//------------------------------------------------------------------------
+//  align-to-n-bytes
+//
+// This method emits an align-directive to make sure we are on an n-byte
+// boundary.  The number of bytes should always be a power of two.
+//------------------------------------------------------------------------
+
+define method align-to-n-bytes
+    (stream :: <stream>, bytes :: <integer>, target :: <platform>) => ();
+  if (target.align-arg-is-power-of-two?)
+    let power-of-two = for (bytes :: <integer> = bytes then ash(bytes, -1),
+			    lg :: <integer> = 0 then lg + 1,
+			    while: bytes > 1)
+		       finally
+			 lg;
+		       end for;
+    format(stream, "\t%s\t%d\n", target.align-directive, power-of-two);
+  else
+    format(stream, "\t%s\t%d\n", target.align-directive, bytes);
+  end if;
+end method align-to-n-bytes;
 
 //------------------------------------------------------------------------
 //  Spew-reference

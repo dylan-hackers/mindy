@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.2 1998/05/11 17:28:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.3 1998/08/10 15:41:04 housel Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -107,6 +107,9 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"assembler-command";
   constant /* exported */ slot link-library-command :: <byte-string>,
     required-init-keyword: #"link-library-command";
+  constant /* exported */ slot randomize-library-command
+      :: false-or(<byte-string>) = #f,
+    init-keyword: #"randomize-library-command";
   // if this is defined, we can build shared libraries
   constant /* exported */ slot link-shared-library-command :: false-or(<byte-string>) = #f,
     init-keyword: #"link-shared-library-command";
@@ -167,6 +170,8 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot omit-colon-after-label-declarations? 
       :: <boolean> = #f,
     init-keyword: #"omit-colon-after-label-declarations?";
+  constant /* exported */ slot align-arg-is-power-of-two? :: <boolean> = #f,
+    init-keyword: #"align-arg-is-power-of-two?";
 end class <platform>;
 
 define sealed domain make(singleton(<platform>));
@@ -254,7 +259,8 @@ define function add-platform!
 	#"uses-drive-letters?", #"environment-variables-can-be-exported?",
 	#"use-dbclink?", #"link-doesnt-search-for-libs?",
 	#"import-directive-required?", #"supports-debugging?",
-	#"omit-colon-after-label-declarations?", #"big-endian?" =>
+	#"big-endian?", #"omit-colon-after-label-declarations?",
+	#"align-arg-is-power-of-two?"  =>
 	  keyword-values := add!(keyword-values, string-to-boolean(val));
 	#"integer-length" =>
 	  keyword-values := add!(keyword-values, string-to-integer(val));

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.3 1998/07/09 22:41:45 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.4 1998/08/10 15:41:03 housel Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -450,6 +450,7 @@ define module platform
     default-c-compiler-flags,
     assembler-command,
     link-library-command,
+    randomize-library-command,
     link-shared-library-command,
     link-executable-command,
     link-executable-flags,
@@ -466,7 +467,8 @@ define module platform
     descriptor-reference-string,
 
     big-endian?,
-    omit-colon-after-label-declarations?;
+    omit-colon-after-label-declarations?,
+    align-arg-is-power-of-two?;
 end module platform;
 
 
