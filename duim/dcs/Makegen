@@ -1,9 +1,11 @@
 $D2CFLAGS
     = $d2c_runtime
-    . "-L../../common/common-dylan -L../../common/threads ";
+    . ' -L../../common/common-dylan'
+    . ' -L../../common/collections'
+    . ' -L../../common/threads';
 
 &emit_library_rule('duim-dcs',
 		   '../utilities/duim-utilities.lib.du '
 		   . '../geometry/duim-geometry.lib.du',
-		   '-L../utilities -L../geometry', 
+		   ' -L../utilities -L../geometry', 
 	           'compile', 'install');

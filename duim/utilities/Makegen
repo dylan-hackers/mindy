@@ -1,6 +1,9 @@
 $D2CFLAGS
     = $d2c_runtime
-    . "-L../../common/common-dylan -L../../d2c/runtime/random -L../../common/threads ";
+    . ' -L../../common/common-dylan'
+    . ' -L../../d2c/runtime/random'
+    . ' -L../../common/threads'
+    . ' -L../../common/collections';
 
 &emit_library_rule('duim-utilities', '$(BUILDROOT)/force.timestamp', '', 
 	           'compile', 'install');
