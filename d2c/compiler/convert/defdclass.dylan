@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.3 2001/01/27 22:30:57 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.4 2001/07/24 06:34:20 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -120,7 +120,7 @@ define class <local-designator-class-definition>
     required-init-keyword: export-function:;
   //
   // A superclass for generating a pointer type that refers to this type
-  slot class-pointer-type-superclass :: false-or(<expression-parse>),
+  slot class-defn-pointer-type-superclass :: false-or(<expression-parse>),
     required-init-keyword: pointer-type-superclass:;
   //
   // The indirect getter function
@@ -336,33 +336,49 @@ define class <struct-slot-defn> (<object>)
     init-value: #f;
 end class;
 
+define method compute-cclass (defn :: <real-designator-class-definition>)
+    => res :: false-or(<cclass>);
+  let cclass = next-method();
+
+  make(<defined-cdclass>,
+       loading: #f,
+       name: defn.defn-name,
+       defn: defn,
+       direct-superclasses: cclass.direct-superclasses,
+       not-functional: cclass.not-functional?,
+       functional: cclass.functional?,
+       sealed: cclass.sealed?,
+       primary: cclass.primary?,
+       abstract: cclass.abstract?,
+       slots: cclass.new-slot-infos,
+       overrides: cclass.override-infos,
+       keywords: cclass.keyword-infos,
+       metaclass: cclass.class-metaclass,
+       pointer-type-superclass:
+         ct-eval(defn.class-defn-pointer-type-superclass, #f));
+end method;
+
+define method class-defn-struct-slot-infos
+    (defn :: <real-designator-class-definition>)
+ => (res :: <simple-object-vector>);
+  let class :: <cdclass> = defn.class-defn-cclass;
+  class & class.struct-slot-infos;
+end;
+
+define method class-defn-struct-slot-infos-setter
+    (vec :: false-or(<simple-object-vector>),
+     defn :: <real-designator-class-definition>)
+    => ();
+  if (vec)
+    let class :: <cdclass> = defn.class-defn-cclass;
+    class.struct-slot-infos := vec;
+  end;
+end;
+
 define constant $designator-class-definition-slots =
   concatenate($class-definition-slots,
-              list(class-defn-c-name, c-name:, class-defn-c-name-setter,
-		   class-referenced-type, referenced-type:,
-		     class-referenced-type-setter,
-		   class-pack, pack:, class-pack-setter,
-		   class-defn-c-rep, c-rep:, class-defn-c-rep-setter,
-		   class-defn-import-type, import-type:,
-		     class-defn-import-type-setter,
-		   class-defn-export-type, export-type:,
-		     class-defn-export-type-setter,
-		   class-defn-import-function, import-function:,
-		     class-defn-import-function,
-		   class-defn-export-function, export-function:,
-		     class-defn-export-function-setter,
-		   class-pointer-type-superclass, pointer-type-superclass:,
-		     class-pointer-type-superclass-setter,
-		   class-defn-indirect-getter-function, indirect-getter:,
-		     class-defn-indirect-getter-function-setter,
-		   class-defn-indirect-setter-function, indirect-setter:,
-		     class-defn-indirect-setter-function-setter, 
-		   class-defn-pointer-value-getter-function,
-		     pointer-value-getter:,
-		   class-defn-pointer-value-getter-function-setter,
-		   class-defn-pointer-value-setter-function,
-		     pointer-value-setter:,
-		     class-defn-pointer-value-setter-function-setter));
+              list(class-defn-struct-slot-infos, #f,
+                   class-defn-struct-slot-infos-setter));
 
 add-make-dumper(#"designator-class-definition", *compiler-dispatcher*,
 		<real-designator-class-definition>,
