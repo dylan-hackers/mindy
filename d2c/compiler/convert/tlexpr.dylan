@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/tlexpr.dylan,v 1.4 2001/02/08 22:21:19 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/tlexpr.dylan,v 1.5 2001/10/23 21:03:45 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -30,7 +30,7 @@ copyright: see below
 //======================================================================
 
 define class <expression-tlf> (<top-level-form>)
-  slot tlf-expression :: <expression-parse>,
+  constant slot tlf-expression :: <expression-parse>,
     required-init-keyword: expression:;
 end;
 
