@@ -1,0 +1,12 @@
+##
+##  $Header: /home/housel/work/rcs/gd/src/common/Makegen,v 1.1 1997/05/09 22:23:33 ram Exp $
+##
+##  This is the makegen file for the libraries shared between d2c and mindy.
+##
+
+# the order is significant, since the d2c libraries must be compiled in
+# dependency order. 
+
+&compile_subdirs('streams', 'standard-io', 'print', 'format', 'coll-ext',
+		'table-ext', 'string-ext', 'regexp', 'format-out', 'matrix',
+		'time', 'stream-ext', 'transcendental'); # 'internal-time' 
