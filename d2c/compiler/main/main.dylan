@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.27 1999/08/12 11:40:43 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.28 1999/11/11 21:13:16 robmyers Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -193,6 +193,16 @@ define method set-library (library :: <symbol>) => ();
     #f;
   end block;
 end method set-library;
+
+
+// The identifier for the current directory
+// Used in searching for files
+
+define constant $this-dir = #if (macos)
+								"";
+							#else
+								".";
+							#endif
 
 
 
@@ -513,7 +523,7 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
 			state.unit-target.shared-object-filename-suffix);
 	let prefixed-filename 
 	  = find-file(shared-file,
-		      vector(".", state.unit-lid-file.filename-prefix));
+		      vector($this-dir, state.unit-lid-file.filename-prefix));
 	if (prefixed-filename)
 	  log-dependency(prefixed-filename);
 	else
@@ -523,7 +533,7 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
 	end if;
       else
 	let prefixed-filename 
-	  = find-file(file, vector(".", state.unit-lid-file.filename-prefix));
+	  = find-file(file, vector($this-dir, state.unit-lid-file.filename-prefix));
 	if (prefixed-filename)
 	  log-dependency(prefixed-filename);
 	else
@@ -538,7 +548,7 @@ define method parse-and-finalize-library (state :: <main-unit-state>) => ();
 	// ### prefixed-filename is still not (necessarily) an absolute
 	// filename, but it's getting closer
 	let prefixed-filename
-	  = find-file(file, vector(".", state.unit-lid-file.filename-prefix));
+	  = find-file(file, vector($this-dir, state.unit-lid-file.filename-prefix));
 	if (prefixed-filename == #f)
 	  compiler-fatal-error("Can't find source file %=.", file);
 	end if;
@@ -611,7 +621,11 @@ define method emit-make-prologue (state :: <main-unit-state>) => ();
 					 *units*);
 
   let makefile-name = format-to-string("cc-%s-files.mak", state.unit-mprefix);
-  let temp-makefile-name = concatenate(makefile-name, "-temp");
+  #if (macos)
+		 let temp-makefile-name = "makefile";
+  #else
+		 let temp-makefile-name = concatenate(makefile-name, "-temp");
+  #endif
   state.unit-makefile-name := makefile-name;
   state.unit-temp-makefile-name := temp-makefile-name;
   format(*debug-output*, "Creating %s\n", makefile-name);
@@ -714,7 +728,11 @@ define method compile-all-files (state :: <main-unit-state>) => ();
 	format(*debug-output*, "Processing %s\n", file);
 	let base-name = file.base-filename;
 	let c-name = concatenate(base-name, ".c");
-	let temp-c-name = concatenate(c-name, "-temp");
+	#if (macos)
+		let temp-c-name = c-name;
+	#else
+		let temp-c-name = concatenate(c-name, "-temp");
+	#endif
 	let body-stream
 	  = make(<file-stream>, locator: temp-c-name, direction: #"output");
 	block ()
@@ -779,7 +797,11 @@ define method build-library-inits (state :: <main-unit-state>) => ();
 
     begin
       let c-name = concatenate(state.unit-mprefix, "-init.c");
-      let temp-c-name = concatenate(c-name, "-temp");
+      #if (macos)
+			let temp-c-name = c-name;
+	  #else
+			let temp-c-name = concatenate(c-name, "-temp");
+	  #endif
       let body-stream = make(<file-stream>, 
 			     locator: temp-c-name, direction: #"output");
       let file = make(<file-state>, unit: state.unit-cback-unit,
@@ -811,7 +833,11 @@ end method build-library-inits;
 define method build-local-heap-file (state :: <main-unit-state>) => ();
   format(*debug-output*, "Emitting Library Heap.\n");
   let c-name = concatenate(state.unit-mprefix, "-heap.c");
-  let temp-c-name = concatenate(c-name, "-temp");
+  #if (macos)
+		let temp-c-name = c-name;
+  #else
+		let temp-c-name = concatenate(c-name, "-temp");
+  #endif
   let heap-stream = make(<file-stream>, 
 			 locator: temp-c-name, direction: #"output");
   let prefix = state.unit-cback-unit.unit-prefix;
@@ -1289,7 +1315,11 @@ define constant $search-path-seperator =
 #if (compiled-for-win32)
   ';';
 #else
-  ':';
+	#if (macos)
+		'\t';
+	#else
+  		':';
+  	#endif
 #endif
 
 
@@ -1419,6 +1449,22 @@ end method;
 // use libdir, etc., but the default substitutions contain ${prefix}
 // variables, which Dylan doesn't have yet.
 
+#if (macos)
+
+define constant $dylan-dir = $default-dylan-dir;
+define constant $dylan-user-dir = $default-dylan-user-dir;
+
+// Platform parameter database.
+define constant $default-targets-dot-descr = concatenate($dylan-dir, ":support:platforms.descr" );
+
+// Library search path.
+define constant $default-dylan-path = concatenate($dylan-dir, ":support:\t");
+
+// Location of runtime.h
+define constant $runtime-include-dir = concatenate($dylan-dir, ":support:runtime-includes" );
+
+#else
+
 define constant $dylan-dir = getenv("DYLANDIR") | $default-dylan-dir;
 define constant $dylan-user-dir = getenv("DYLANUSERDIR") | getenv("DYLANDIR") | $default-dylan-user-dir;
 
@@ -1434,6 +1480,8 @@ define constant $default-dylan-path
 // Location of runtime.h
 define constant $runtime-include-dir
   = concatenate($dylan-dir, "/include");
+
+#endif
 
 
 //----------------------------------------------------------------------
