@@ -1,11 +1,11 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.32 2002/01/07 17:11:47 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.33 2002/01/19 19:24:12 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -1502,6 +1502,21 @@ define function spew-instance
   state.file-prototypes-exist-for[name] := #t;
 end;
 
+// layouter-cclass -- internal.
+// Return the <cclass> for a ctv that is containing the layout information
+// for that ctv.
+//
+define generic layouter-cclass (object :: <ct-value>) => res :: <cclass>;
+
+define method layouter-cclass (object :: <ct-value>) => res :: <cclass>;
+  object.ct-value-cclass;
+end;
+
+define method layouter-cclass (class :: <cclass>, #next next-method) => res
+:: <cclass>;
+  class.class-metaclass | next-method();
+end;
+
 // spew-heap-prototype is like maybe-emit-prototype except that it
 // writes out a prototype for the actual literal instead of the root.
 //
@@ -1510,7 +1525,7 @@ define method spew-heap-prototype
  => did :: <boolean>;
   unless (element(state.file-prototypes-exist-for, name, default: #f))
     let stream = state.file-body-stream;
-    let cclass = defn.ct-value-cclass;
+    let cclass = defn.layouter-cclass;
     format(stream, "extern ");
     spew-layout(cclass, state, size: literal-vector-size(defn));
     format(stream, " %s;\n\n", name);
@@ -1732,7 +1747,7 @@ define generic object-size (ctv :: <ct-value>) => size :: <integer>;
 // instance slot layout table.
 // 
 define method object-size (ctv :: <ct-value>) => size :: <integer>;
-  let class = ctv.ct-value-cclass;
+  let class = ctv.layouter-cclass;
   assert(~class.vector-slot);
   class.instance-slots-layout.layout-length;
 end method object-size;
@@ -1760,7 +1775,7 @@ end method object-size;
 define function object-size-from-length
     (ctv :: <ct-value>, elements :: <integer>)
     => size :: <integer>;
-  let class = ctv.ct-value-cclass;
+  let class = ctv.layouter-cclass;
   let vector-slot = class.vector-slot;
   assert(vector-slot);
   get-direct-position(vector-slot.slot-positions, class)
