@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.3 1995/03/23 22:01:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.4 1995/04/14 03:01:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -25,6 +25,10 @@ define method compile (#rest files) => res :: <region>;
   end;
   format(*debug-output*, "Finalizing definitions\n");
   do(finalize-top-level-form, $Top-Level-Forms);
+  format(*debug-output*, "inhereting slots\n");
+  inherit-slots();
+  format(*debug-output*, "seeding representations\n");
+  seed-representations();
   format(*debug-output*, "laying out instances\n");
   layout-instance-slots();
   format(*debug-output*, "Converting in FER\n");
