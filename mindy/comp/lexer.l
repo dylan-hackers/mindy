@@ -24,13 +24,14 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.2 1998/09/17 13:08:00 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/lexer.l,v 1.3 1999/01/07 23:46:11 housel Exp $
 *
 * This file is the lexical analizer.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "lexer.h"
 #include "src.h"
 #include "parser-tab.h"
