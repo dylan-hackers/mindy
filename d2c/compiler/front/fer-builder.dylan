@@ -1,12 +1,12 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.7 2001/12/01 13:57:44 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.8 2002/03/10 16:15:31 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -43,8 +43,7 @@ define abstract class <internal-builder> (<flow-builder>)
 
   // A list of lists of the bodies being built.  Each sublist is in reverse
   // order.
-  slot body-stack :: <list>,
-    init-function: method () list(#()) end;
+  slot body-stack :: <list> = list(#());
 end class;
 
 
@@ -735,6 +734,15 @@ define method build-defn-set
 				  var: defn));
 end;
 
+define method build-defn-set
+    (builder :: <fer-builder>, policy :: <policy>, source :: <source-location>,
+     defn :: <bindings-definition>, new-value :: <leaf>, #next next-method)
+    => ();
+	let temp = make-ssa-var(builder, #"temp", defn.defn-type);
+	build-assignment
+	  (builder, policy, source, temp, new-value);
+	next-method(builder, policy, source, defn, temp);
+end;
 
 
 // Random utilities.

@@ -1,11 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.8 2001/12/23 02:35:20 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front-exports.dylan,v 1.9 2002/03/10 16:15:40 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -90,6 +90,7 @@ define module front
   use names;
   use definitions;
   use variables;
+  use variable-definitions, import: {<bindings-definition>};
   use flow;
   use ctype;
   use classes;
@@ -235,7 +236,6 @@ define module variable-definitions
   use compile-time-values;
   use ctype;
   use definitions;
-  use function-definitions;
 
   export
     <bindings-definition>, defn-type-setter, %defn-init-value,
