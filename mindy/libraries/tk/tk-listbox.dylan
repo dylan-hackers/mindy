@@ -40,7 +40,8 @@ define method get-elements
 
   let buffer :: <stream> = make(<byte-string-output-stream>);
   for (i from real-index below real-end,
-       dummy = #f then write("\n", buffer))
+       newline = #f then #t)
+    if (newline) write("\n", buffer) end if;
     write(tk-unquote(call-tk-function(widget, " get ", i)), buffer);
   end for;
   string-output-stream-string(buffer);
