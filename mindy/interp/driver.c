@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.22 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/driver.c,v 1.23 1996/06/11 14:41:17 nkramer Exp $
 *
 * Main driver routines for mindy.
 *
@@ -262,6 +262,10 @@ void wait_for_output(struct thread *thread, int fd,
 
 static void set_pause_interrupted(void)
 {
+#ifdef WIN32
+    extern boolean hit_control_C;
+    hit_control_C = TRUE;
+#endif
     PauseReason = pause_Interrupted;
 }
 
