@@ -9,6 +9,10 @@ typedef struct descriptor {
     union {
         long l;
         float f;
+#if defined(DYLAN_64BIT) || defined (__arch64__)
+	double d;
+	long double x;
+#endif
         void *ptr;
     } dataword;
 } descriptor_t;
