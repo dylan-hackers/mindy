@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.7 2003/06/30 15:18:04 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/machineword.dylan,v 1.8 2003/10/22 20:48:54 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -165,6 +165,12 @@ define inline method %logand
     (a :: <machine-word>, b :: <machine-word>)
  => (res :: <machine-word>);
   as(<machine-word>, logand(as(<integer>, a), as(<integer>, b)));
+end method;
+
+define inline method %logand
+    (a :: <integer>, b :: <machine-word>)
+ => (res :: <machine-word>);
+  as(<machine-word>, logand(a, as(<integer>, b)));
 end method;
 
 define inline method %logior
