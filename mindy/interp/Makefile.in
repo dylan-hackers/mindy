@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.12 1996/02/15 19:19:46 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.13 1996/03/07 18:42:03 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -101,7 +101,7 @@ realclean:
 install: mindy
 	${INSTALL_PROGRAM} mindy ${BINDIR}/mindy
 
-# It's easiest to generate the rest by machine.
+# It's easiest to generate this part by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
 
 bool.o:  ${SRCDIR}/bool.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -140,7 +140,8 @@ class.o:  ${SRCDIR}/class.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
 
 coll.o:  ${SRCDIR}/coll.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/class.h ${SRCDIR}/obj.h ${SRCDIR}/gc.h \
-           ${SRCDIR}/coll.h
+           ${SRCDIR}/coll.h ${SRCDIR}/def.h ${SRCDIR}/list.h \
+           ${SRCDIR}/bool.h ${SRCDIR}/sym.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/coll.c
 
 debug.o:  ${SRCDIR}/debug.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/../compat/std-os.h \
@@ -288,7 +289,8 @@ misc.o:  ${SRCDIR}/misc.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/thread.h ${SRCDIR}/bool.h ${SRCDIR}/list.h \
            ${SRCDIR}/vec.h ${SRCDIR}/func.h ${SRCDIR}/obj.h \
            ${SRCDIR}/module.h ${SRCDIR}/sym.h ${SRCDIR}/def.h \
-           ${SRCDIR}/num.h ${SRCDIR}/error.h ${SRCDIR}/str.h
+           ${SRCDIR}/num.h ${SRCDIR}/error.h ${SRCDIR}/str.h \
+           ${SRCDIR}/coll.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/misc.c
 
 module.o:  ${SRCDIR}/module.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -319,12 +321,6 @@ obj.o:  ${SRCDIR}/obj.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
           ${SRCDIR}/def.h ${SRCDIR}/gc.h ${SRCDIR}/num.h \
           ${SRCDIR}/obj.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/obj.c
-
-parser-tab.o:  ${SRCDIR}/parser-tab.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
-                 ${SRCDIR}/lexer.h ${SRCDIR}/parser.h ${SRCDIR}/parser-tab.h \
-                 ${SRCDIR}/list.h ${SRCDIR}/str.h ${SRCDIR}/sym.h \
-                 ${SRCDIR}/num.h ${SRCDIR}/bool.h
-	${CC} -c ${CFLAGS} ${SRCDIR}/parser-tab.c
 
 print.o:  ${SRCDIR}/print.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
             ${SRCDIR}/obj.h ${SRCDIR}/class.h ${SRCDIR}/bool.h \
@@ -391,4 +387,3 @@ weak.o:  ${SRCDIR}/weak.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/error.h ${SRCDIR}/thread.h ${SRCDIR}/func.h \
            ${SRCDIR}/weak.h
 	${CC} -c ${CFLAGS} ${SRCDIR}/weak.c
-
