@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.1 1998/05/03 19:55:33 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/callopt.dylan,v 1.2 1999/02/25 07:03:07 housel Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -261,9 +261,14 @@ define method optimize-general-call-defn
     => ();
   let sig = defn.function-defn-signature;
   maybe-restrict-type(component, call, sig.returns.ctype-extent);
-  maybe-change-to-known-or-error-call
-    (component, call, sig, defn.defn-name, defn.method-defn-inline-function,
-     defn.function-defn-hairy?);
+  if (inlining-candidate?(defn))
+    maybe-change-to-known-or-error-call
+      (component, call, sig, defn.defn-name, defn.method-defn-inline-function,
+       defn.function-defn-hairy?);
+  else
+    maybe-change-to-known-or-error-call
+      (component, call, sig, defn.defn-name, #f, defn.function-defn-hairy?);
+  end if;
 end method optimize-general-call-defn;
 
 // optimize-general-call-ctv{<ct-value>}
@@ -635,6 +640,23 @@ define method maybe-change-to-known-or-error-call
       #f;
   end;
 end;
+
+// XXX not really enough information available here to make a good decision.
+// Need 
+define method inlining-candidate?
+    (defn :: <abstract-method-definition>)
+ => (res :: <boolean>);
+  select (defn.method-defn-inline-type)
+    #"not-inline" =>
+      #f;
+    #"default-inline" =>
+      #f;
+    #"may-inline" =>
+      #f;
+    #"inline", #"inline-only" =>
+      #t;
+  end select;
+end method inlining-candidate?;
 
 
 define generic compare-call-against-signature
