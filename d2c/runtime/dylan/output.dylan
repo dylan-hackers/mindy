@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.6 1995/11/17 02:35:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/output.dylan,v 1.7 1995/12/14 00:13:12 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -71,7 +71,12 @@ end;
 define generic print (thing :: <object>) => ();
 
 define method print (thing :: <object>) => ();
-  format("{an instance of %s}", thing.object-class.debug-name);
+  let name = thing.object-class.class-name;
+  if (name)
+    format("{an instance of %s}", name);
+  else
+    write("{an instance of something}");
+  end if;
 end;
 
 define method print (char :: <character>) => ();
@@ -161,8 +166,17 @@ define method print (list :: <list>) => ();
   write(')');
 end;
 
+define method print (func :: <function>) => ();
+  format("{the %s %s}", func.object-class.class-name, func.function-name);
+end method print;
+
 define method print (class :: <class>) => ();
-  format("{the class %s}", class.debug-name);
+  let name = class.class-name;
+  if (name)
+    format("{the class %s}", name);
+  else
+    write("{some random class}");
+  end if;
 end;
 
 define method print (true == #t) => ();
@@ -177,12 +191,10 @@ define method print (int :: <fixed-integer>) => ();
   write-integer(int, 10);
 end;
 
-/* ### not absolutly needed
 define method print (int :: <extended-integer>) => ();
   write("#e");
   write-integer(int, 10);
 end;
-*/
 
 
 define generic write-integer (int :: <integer>, radix :: <fixed-integer>)
@@ -210,7 +222,6 @@ define method write-integer (int :: <fixed-integer>, radix :: <fixed-integer>)
   end;
 end;
 
-/* ### not absolutly needed
 define method write-integer
     (int :: <extended-integer>, radix :: <fixed-integer>) => ();
   local
@@ -241,7 +252,6 @@ define method write-integer
     write(digit);
   end;
 end;
-*/  
 
 
 define generic write (thing :: <object>) => ();
