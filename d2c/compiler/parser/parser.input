@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.8 1995/03/23 21:59:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.9 1995/05/05 08:54:15 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -774,7 +774,7 @@ literal (<sharp-paren-token> constants-opt <right-paren-token>)
 %
 
 literal (<sharp-bracket-token> constants-opt <right-bracket-token>)
-  make(<literal-vector>, contents: %2);
+  make(<literal-simple-object-vector>, contents: %2);
 %
 
 :type strings <stretchy-vector>
@@ -1095,7 +1095,8 @@ modified-constant (<sharp-paren-token> constants-opt <right-paren-token>)
 %
 
 modified-constant (<sharp-bracket-token> constants-opt <right-bracket-token>)
-  make(<literal-ref>, literal: make(<literal-vector>, contents: %2));
+  make(<literal-ref>,
+       literal: make(<literal-simple-object-vector>, contents: %2));
 %
 
 :type end-clause |union(<false>, <begin-word-token>)|
