@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.35 1995/11/06 16:52:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.36 1995/11/08 19:53:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1310,3 +1310,18 @@ define method same-unordered? (list1 :: <list>, list2 :: <list>)
       end;
 end;
 
+
+// Dumping stuff.
+
+define method dump-od
+    (tlf :: <define-method-tlf>, state :: <dump-state>) => ();
+  let defn = tlf.tlf-defn;
+  if (defn.method-defn-of)
+    dump-od(defn, state);
+  end;
+end;
+
+define method dump-od
+    (tlf :: <seal-generic-tlf>, state :: <dump-state>) => ();
+  // Do nothing because all the seals are dumped as part of the generic.
+end;
