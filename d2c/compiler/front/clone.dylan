@@ -1,0 +1,413 @@
+module: front
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/clone.dylan,v 1.1 1995/10/05 01:16:36 wlott Exp $
+copyright: Copyright (c) 1995  Carnegie Mellon University
+	   All rights reserved.
+
+// Clone a (top-level) function and everything it references.
+
+
+define class <clone-state> (<object>)
+  //
+  // The builder used to build the clone.
+  slot clone-builder :: <fer-builder>,
+    required-init-keyword: builder:;
+  //
+  // The function-region we are currently building.  Needed for
+  // self-tail-calls.
+  slot clone-function-region :: false-or(<fer-function-region>),
+    init-value: #f;
+  //
+  // Hash table mapping original things to new things.
+  slot cloned-stuff :: <object-table>,
+    init-function: curry(make, <object-table>);
+end;
+
+
+// clone-function -- exported.
+//
+define method clone-function
+    (component :: <fer-component>, function :: <function-literal>)
+    => clone :: <function-literal>;
+  let state = make(<clone-state>, builder: make-builder(component));
+  state.cloned-stuff[function.main-entry.parent] := component;
+  clone-expr(function, state);
+end;
+
+
+define method maybe-clone (thing, state :: <clone-state>, cloner :: <function>)
+    => clone;
+  element(state.cloned-stuff, thing, default: #f)
+    | (element(state.cloned-stuff, thing) := cloner());
+end;  
+
+
+define method clone-expr
+    (var :: <ssa-variable>, state :: <clone-state>) => clone :: <ssa-variable>;
+  maybe-clone(var, state,
+	      method ()
+		make(<ssa-variable>,
+		     derived-type: var.derived-type,
+		     var-info: var.var-info);
+	      end);
+end;
+
+define method clone-expr
+    (var :: <initial-variable>, state :: <clone-state>)
+    => clone :: <initial-variable>;
+  maybe-clone(var, state,
+	      method ()
+		make-initial-var(state.clone-builder, var.derived-type,
+				 var.var-info);
+	      end);
+end;
+
+define method clone-expr
+    (const :: <literal-constant>, state :: <clone-state>)
+    => clone :: <literal-constant>;
+  make-literal-constant(state.clone-builder, const.value);
+end;
+
+define method clone-expr
+    (const :: <definition-constant-leaf>, state :: <clone-state>)
+    => clone :: <definition-constant-leaf>;
+  make-definition-constant(state.clone-builder, const.const-defn);
+end;
+
+define method clone-expr
+    (expr :: <uninitialized-value>, state :: <clone-state>)
+    => clone :: <uninitialized-value>;
+  make(<uninitialized-value>, derived-type: expr.derived-type);
+end;
+
+define method clone-expr
+    (expr :: <primitive>, state :: <clone-state>)
+    => clone :: <primitive>;
+  make-operation(state.clone-builder, <primitive>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 name: expr.name);
+end;
+
+define method clone-expr
+    (expr :: <known-call>, state :: <clone-state>)
+    => clone :: <known-call>;
+  make-operation(state.clone-builder, <known-call>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type);
+end;
+
+define method clone-expr
+    (expr :: <unknown-call>, state :: <clone-state>)
+    => clone :: <unknown-call>;
+  make-operation(state.clone-builder, <unknown-call>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 use-generic-entry: expr.use-generic-entry?);
+end;
+
+define method clone-expr
+    (expr :: <mv-call>, state :: <clone-state>)
+    => clone :: <mv-call>;
+  make-operation(state.clone-builder, <mv-call>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 use-generic-entry: expr.use-generic-entry?);
+end;
+
+define method clone-expr
+    (expr :: <error-call>, state :: <clone-state>)
+    => clone :: <error-call>;
+  make-operation(state.clone-builder, <error-call>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type);
+end;
+
+define method clone-expr
+    (expr :: <prologue>, state :: <clone-state>)
+    => clone :: <prologue>;
+  state.clone-function-region.prologue;
+end;
+
+define method clone-expr
+    (expr :: <module-var-ref>, state :: <clone-state>)
+    => clone :: <module-var-ref>;
+  make-operation(state.clone-builder, <module-var-ref>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 var: expr.variable);
+end;
+
+define method clone-expr
+    (expr :: <module-var-set>, state :: <clone-state>)
+    => clone :: <module-var-set>;
+  make-operation(state.clone-builder, <module-var-set>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 var: expr.variable);
+end;
+
+define method clone-expr
+    (expr :: <self-tail-call>, state :: <clone-state>)
+    => clone :: <self-tail-call>;
+  let func = state.clone-function-region;
+  let call = make-operation(state.clone-builder, <self-tail-call>,
+			    clone-arguments(expr.depends-on, state),
+			    of: func,
+			    next-self-tail-call: func.self-tail-calls);
+  func.self-tail-calls := call;
+  call;
+end;
+
+define method clone-expr
+    (expr :: <slot-ref>, state :: <clone-state>)
+    => clone :: <slot-ref>;
+  make-operation(state.clone-builder, <slot-ref>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 slot-info: expr.slot-info,
+		 slot-offset: expr.slot-offset);
+end;
+
+define method clone-expr
+    (expr :: <slot-set>, state :: <clone-state>)
+    => clone :: <slot-set>;
+  make-operation(state.clone-builder, <slot-set>,
+		 clone-arguments(expr.depends-on, state),
+		 slot-info: expr.slot-info,
+		 slot-offset: expr.slot-offset);
+end;
+
+define method clone-expr
+    (expr :: <truly-the>, state :: <clone-state>)
+    => clone :: <truly-the>;
+  make-operation(state.clone-builder, <truly-the>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 guaranteed-type: expr.guaranteed-type);
+end;
+
+define method clone-expr
+    (expr :: <instance?>, state :: <clone-state>)
+    => clone :: <instance?>;
+  make-operation(state.clone-builder, <instance?>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 type: expr.type);
+end;
+
+
+define method clone-nlx-info
+    (info :: <nlx-info>, state :: <clone-state>)
+  maybe-clone(info, state, curry(make, <nlx-info>));
+end;
+
+define method clone-expr
+    (expr :: <catch>, state :: <clone-state>)
+    => clone :: <catch>;
+  make-operation(state.clone-builder, <catch>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 nlx-info: clone-nlx-info(expr.nlx-info, state));
+end;
+
+define method clone-expr
+    (expr :: <throw>, state :: <clone-state>)
+    => clone :: <throw>;
+  make-operation(state.clone-builder, <throw>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 nlx-info: clone-nlx-info(expr.nlx-info, state));
+end;
+
+define method clone-expr
+    (expr :: <make-catcher>, state :: <clone-state>)
+    => clone :: <make-catcher>;
+  make-operation(state.clone-builder, <make-catcher>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 nlx-info: clone-nlx-info(expr.nlx-info, state));
+end;
+
+define method clone-expr
+    (expr :: <disable-catcher>, state :: <clone-state>)
+    => clone :: <disable-catcher>;
+  make-operation(state.clone-builder, <disable-catcher>,
+		 clone-arguments(expr.depends-on, state),
+		 derived-type: expr.derived-type,
+		 nlx-info: clone-nlx-info(expr.nlx-info, state));
+end;
+
+define method clone-expr
+    (function :: <function-literal>, state :: <clone-state>)
+    => clone :: union(<function-literal>, <uninitialized-value>);
+  maybe-clone
+    (function, state,
+     method ()
+       let placeholder = make(<uninitialized-value>);
+       element(state.cloned-stuff, function) := placeholder;
+       let orig-region = function.main-entry;
+       let region-clone
+	 = make(if (instance?(orig-region, <lambda>))
+		  <lambda>;
+		else
+		  <fer-function-region>;
+		end,
+		source-location: orig-region.source-location,
+		name: orig-region.name,
+		argument-types: orig-region.argument-types,
+		result-type: orig-region.result-type,
+		hidden-references: orig-region.hidden-references?);
+       push-body(state.clone-builder, region-clone);
+       add!(state.clone-builder.component.all-function-regions, region-clone);
+       state.cloned-stuff[orig-region] := region-clone;
+       let prev-function-region = state.clone-function-region;
+       state.clone-function-region := region-clone;
+       clone-region(orig-region.body, state);
+       state.clone-function-region := prev-function-region;
+       end-body(state.clone-builder);
+       if (orig-region.self-call-block)
+	 region-clone.self-call-block
+	   := state.cloned-stuff[orig-region.self-call-block];
+       end;
+       let func
+	 = make-function-literal(state.clone-builder, #f,
+				 instance?(function, <method-literal>),
+				 function.visibility, function.signature,
+				 region-clone);
+       element(state.cloned-stuff, function) := func;
+       let next = #f;
+       for (dep = placeholder.dependents then next,
+	    while: dep)
+	 next := dep.source-next;
+	 dep.source-exp := func;
+	 dep.source-next := func.dependents;
+	 func.dependents := dep;
+       end;
+       func;
+     end);
+end;
+
+define method clone-expr
+    (expr :: <exit-function>, state :: <clone-state>)
+    => clone :: <exit-function>;
+  make-exit-function(state.clone-builder,
+		     clone-nlx-info(expr.nlx-info, state),
+		     clone-expr(expr.depends-on.source-exp));
+end;
+
+
+define generic clone-arguments
+    (dep :: false-or(<dependency>), state :: <clone-state>)
+    => res :: <list>;
+
+define method clone-arguments (dep :: <dependency>, state :: <clone-state>)
+    => res :: <pair>;
+  pair(clone-expr(dep.source-exp, state),
+       clone-arguments(dep.dependent-next, state));
+end;
+
+define method clone-arguments (dep :: <false>, state :: <clone-state>)
+    => res :: <empty-list>;
+  #();
+end;
+
+
+
+define method clone-region
+    (region :: <simple-region>, state :: <clone-state>) => ();
+  for (assign = region.first-assign then assign.next-op,
+       while: assign)
+    select (assign by instance?)
+      <let-assignment> =>
+	build-let(state.clone-builder, assign.policy, assign.source-location,
+		  clone-defines(assign.defines, state),
+		  clone-expr(assign.depends-on.source-exp, state));
+      <set-assignment> =>
+	build-assignment(state.clone-builder, assign.policy,
+			 assign.source-location,
+			 clone-defines(assign.defines, state),
+			 clone-expr(assign.depends-on.source-exp, state));
+    end;
+  end;
+end;
+
+define generic clone-defines
+    (var :: false-or(<definition-site-variable>), state :: <clone-state>)
+    => res :: <list>;
+
+define method clone-defines (var :: <ssa-variable>, state :: <clone-state>)
+    => res :: <pair>;
+  pair(clone-expr(var, state), clone-defines(var.definer-next, state));
+end;
+
+define method clone-defines
+    (var :: <initial-definition>, state :: <clone-state>)
+    => res :: <pair>;
+  pair(clone-expr(var.definition-of, state),
+       clone-defines(var.definer-next, state));
+end;
+
+define method clone-defines
+    (var :: <false>, state :: <clone-state>)
+    => res :: <empty-list>;
+  #();
+end;
+
+
+
+define method clone-region
+    (region :: <compound-region>, state :: <clone-state>) => ();
+  for (subregion in region.regions)
+    clone-region(subregion, state);
+  end;
+end;
+
+define method clone-region
+    (region :: <if-region>, state :: <clone-state>) => ();
+  build-if-body(state.clone-builder, $Default-Policy, region.source-location,
+		clone-expr(region.depends-on.source-exp, state));
+  clone-region(region.then-region, state);
+  build-else(state.clone-builder, $Default-Policy, region.source-location);
+  clone-region(region.else-region, state);
+  end-body(state.clone-builder);
+end;
+
+define method clone-region
+    (region :: <block-region>, state :: <clone-state>) => ();
+  let clone = build-block-body(state.clone-builder, $Default-Policy,
+			       region.source-location);
+  state.cloned-stuff[region] := clone;
+  clone-region(region.body, state);
+  end-body(state.clone-builder);
+end;
+
+define method clone-region
+    (region :: <loop-region>, state :: <clone-state>) => ();
+  build-loop-body(state.clone-builder, $Default-Policy,
+		  region.source-location);
+  clone-region(region.body, state);
+  end-body(state.clone-builder);
+end;
+
+define method clone-region
+    (region :: <exit>, state :: <clone-state>) => ();
+  build-exit(state.clone-builder, $Default-Policy, region.source-location,
+	     state.cloned-stuff[region.block-of]);
+end;
+
+define method clone-region
+    (region :: <return>, state :: <clone-state>) => ();
+  build-return(state.clone-builder, $Default-Policy, region.source-location,
+	       state.cloned-stuff[region.block-of],
+	       clone-arguments(region.depends-on, state));
+end;
+
+define method clone-region
+    (region :: <unwind-protect-region>, state :: <clone-state>) => ();
+  build-unwind-protect-body
+    (state.clone-builder, $Default-Policy, region.source-location,
+     clone-expr(region.uwp-region-cleanup-function, state));
+  clone-region(region.body, state);
+  end-body(state.clone-builder);
+end;
+
