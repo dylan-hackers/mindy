@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.15 1995/06/04 22:42:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.16 1995/11/09 17:36:49 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -22,7 +22,9 @@ define constant $long-double-size = 8;
 
 define constant $data-word-size = max($pointer-size, $long-size);
 
-define class <c-representation> (<representation>)
+define class <c-representation> (<representation>, <identity-preserving-mixin>)
+  slot representation-name :: false-or(<symbol>),
+    init-value: #f, init-keyword: name:;
   slot more-general-representation :: union(<false>, <representation>),
     setter: #f, init-value: #f, init-keyword: more-general:;
   slot representation-depth :: <fixed-integer>;
@@ -80,35 +82,25 @@ define class <data-word-representation> (<immediate-representation>)
     required-init-keyword: data-word-member:;
 end;
 
-define constant $general-rep
-  = make(<general-representation>,
-	 alignment: $pointer-alignment, size: $pointer-size + $data-word-size,
-	 c-type: "descriptor_t");
-define constant $heap-rep
-  = make(<c-representation>,
-	 alignment: $pointer-alignment, size: $pointer-size,
-	 c-type: "heapptr_t", more-general: $general-rep,
-	 to-more-general: #f, from-more-general: "%s.heapptr");
-define constant $boolean-rep
-  = make(<immediate-representation>, more-general: $heap-rep,
-	 to-more-general: "(%s ? obj_True : obj_False)",
-	 from-more-general: "(%s != obj_False)",
-	 alignment: $int-alignment, size: $int-size,
-	 c-type: "boolean");
 
-define variable *long-rep* = #f;
-define variable *int-rep* = #f;
-define variable *uint-rep* = #f;
-define variable *short-rep* = #f;
-define variable *ushort-rep* = #f;
-define variable *byte-rep* = #f;
-define variable *ubyte-rep* = #f;
+define variable *general-rep* :: false-or(<c-representation>) = #f;
+define variable *heap-rep* :: false-or(<c-representation>) = #f;
+define variable *boolean-rep* :: false-or(<c-representation>) = #f;
 
-define variable *ptr-rep* = #f;
+define variable *long-rep* :: false-or(<c-representation>) = #f;
+define variable *int-rep* :: false-or(<c-representation>) = #f;
+define variable *uint-rep* :: false-or(<c-representation>) = #f;
+define variable *short-rep* :: false-or(<c-representation>) = #f;
+define variable *ushort-rep* :: false-or(<c-representation>) = #f;
+define variable *byte-rep* :: false-or(<c-representation>) = #f;
+define variable *ubyte-rep* :: false-or(<c-representation>) = #f;
 
-define variable *float-rep* = #f;
-define variable *double-rep* = #f;
-define variable *long-double-rep* = #f;
+define variable *ptr-rep* :: false-or(<c-representation>) = #f;
+
+define variable *float-rep* :: false-or(<c-representation>) = #f;
+define variable *double-rep* :: false-or(<c-representation>) = #f;
+define variable *long-double-rep* :: false-or(<c-representation>) = #f;
+
 
 define method seed-representations () => ();
   local
@@ -116,42 +108,61 @@ define method seed-representations () => ();
       class.speed-representation := speed-rep;
       class.space-representation := space-rep;
     end;
+  *general-rep*
+    := make(<general-representation>, name: #"general",
+	    alignment: $pointer-alignment,
+	    size: $pointer-size + $data-word-size,
+	    c-type: "descriptor_t");
+  *heap-rep*
+    := make(<c-representation>, name: #"heap",
+	    alignment: $pointer-alignment, size: $pointer-size,
+	    c-type: "heapptr_t", more-general: *general-rep*,
+	    to-more-general: #f, from-more-general: "%s.heapptr");
+  *boolean-rep*
+    := make(<immediate-representation>, name: #"boolean",
+	    more-general: *heap-rep*,
+	    to-more-general: "(%s ? obj_True : obj_False)",
+	    from-more-general: "(%s != obj_False)",
+	    alignment: $int-alignment, size: $int-size,
+	    c-type: "boolean");
   begin
     let space-rep = make(<immediate-representation>,
-			 more-general: $boolean-rep,
+			 more-general: *boolean-rep*,
 			 alignment: 1, size: 1, c-type: "bool");
-    set-representations(dylan-value(#"<boolean>"), $boolean-rep, space-rep);
-    set-representations(dylan-value(#"<true>"), $boolean-rep, space-rep);
-    set-representations(dylan-value(#"<false>"), $boolean-rep, space-rep);
+    set-representations(dylan-value(#"<boolean>"), *boolean-rep*, space-rep);
+    set-representations(dylan-value(#"<true>"), *boolean-rep*, space-rep);
+    set-representations(dylan-value(#"<false>"), *boolean-rep*, space-rep);
   end;
   begin
     let fixed-int-cclass = dylan-value(#"<fixed-integer>");
-    *long-rep* := make(<data-word-representation>,
+    *long-rep* := make(<data-word-representation>, name: #"long",
 		       alignment: $long-alignment, size: $long-size,
-		       more-general: $general-rep, c-type: "long",
+		       more-general: *general-rep*, c-type: "long",
 		       to-more-general: #f,
 		       from-more-general: "%s.dataword.l",
 		       class: fixed-int-cclass, data-word-member: "l");
-    *int-rep* := make(<data-word-representation>,
+    *int-rep* := make(<data-word-representation>, name: #"int",
 		      alignment: $int-alignment, size: $int-size,
 		      more-general: *long-rep*, c-type: "int",
 		      class: fixed-int-cclass, data-word-member: "l");
-    *uint-rep* := make(<data-word-representation>,
+    *uint-rep* := make(<data-word-representation>, name: #"uint",
 		       alignment: $int-alignment, size: $int-size,
 		       more-general: *long-rep*, c-type: "unsigned int",
 		       class: fixed-int-cclass, data-word-member: "l");
-    *short-rep* := make(<data-word-representation>,
+    *short-rep* := make(<data-word-representation>, name: #"short",
 			alignment: $short-alignment, size: $short-size,
 			more-general: *int-rep*, c-type: "short",
 			class: fixed-int-cclass, data-word-member: "l");
-    *ushort-rep* := make(<data-word-representation>,
+    *ushort-rep* := make(<data-word-representation>, name: #"ushort",
 			 alignment: $short-alignment, size: $short-size,
 			 more-general: *uint-rep*, c-type: "unsigned short",
 			 class: fixed-int-cclass, data-word-member: "l");
-    *byte-rep* := make(<data-word-representation>, alignment: 1, size: 1,
+    *byte-rep* := make(<data-word-representation>, name: #"byte",
+		       alignment: 1, size: 1,
 		       more-general: *short-rep*, c-type: "signed char",
 		       class: fixed-int-cclass, data-word-member: "l");
-    *ubyte-rep* := make(<data-word-representation>, alignment: 1, size: 1,
+    *ubyte-rep* := make(<data-word-representation>, name: #"ubyte",
+			alignment: 1, size: 1,
 			more-general: *ushort-rep*, c-type: "unsigned char",
 			class: fixed-int-cclass, data-word-member: "l");
     set-representations(fixed-int-cclass, *long-rep*, *long-rep*);
@@ -159,7 +170,8 @@ define method seed-representations () => ();
   begin
     let sf-cclass = dylan-value(#"<single-float>");
     let sf-rep
-      = make(<data-word-representation>, more-general: $general-rep,
+      = make(<data-word-representation>, name: #"float",
+	     more-general: *general-rep*,
 	     to-more-general: #f, from-more-general: "%s.dataword.f",
 	     alignment: 4, size: 4, c-type: "float",
 	     class: sf-cclass, data-word-member: "f");
@@ -170,13 +182,15 @@ define method seed-representations () => ();
     let df-class = dylan-value(#"<double-float>");
     let df-rep
       = if ($double-size > $data-word-size)
-	  make(<immediate-representation>, more-general: $heap-rep,
+	  make(<immediate-representation>, name: #"double",
+	       more-general: *heap-rep*,
 	       to-more-general: "make_double_float(%s)",
 	       from-more-general: "double_float_value(%s)",
 	       alignment: $double-alignment, size: $double-size,
 	       c-type: "double");
 	else
-	  make(<data-word-representation>, more-general: $general-rep,
+	  make(<data-word-representation>, name: #"double",
+	       more-general: *general-rep*,
 	       to-more-general: #f, from-more-general: "%s.dataword.d",
 	       alignment: $double-alignment, size: $double-size,
 	       c-type: "double", class: df-class, data-word-member: "d");
@@ -188,13 +202,15 @@ define method seed-representations () => ();
     let xf-class = dylan-value(#"<extended-float>");
     let xf-rep
       = if ($long-double-size > $data-word-size)
-	  make(<immediate-representation>, more-general: $heap-rep,
+	  make(<immediate-representation>, name: #"long-double",
+	       more-general: *heap-rep*,
 	       to-more-general: "make_extended_float(%s)",
 	       from-more-general: "extended_float_value(%s)",
 	       alignment: $long-double-alignment, size: $long-double-size,
 	       c-type: "long double");
 	else
-	  make(<data-word-representation>, more-general: $general-rep,
+	  make(<data-word-representation>, name: #"long-double",
+	       more-general: *general-rep*,
 	       to-more-general: #f, from-more-general: "%s.dataword.x",
 	       alignment: $long-double-alignment, size: $long-double-size,
 	       c-type: "long double", class: xf-class, data-word-member: "x");
@@ -204,9 +220,9 @@ define method seed-representations () => ();
   end;
   begin
     let ptr-cclass = dylan-value(#"<raw-pointer>");
-    *ptr-rep* := make(<data-word-representation>,
+    *ptr-rep* := make(<data-word-representation>, name: #"ptr",
 		      alignment: $pointer-alignment, size: $pointer-size,
-		      more-general: $general-rep, c-type: "void *",
+		      more-general: *general-rep*, c-type: "void *",
 		      to-more-general: #f,
 		      from-more-general: "%s.dataword.ptr",
 		      class: ptr-cclass, data-word-member: "ptr");
@@ -218,7 +234,7 @@ end;
 define method pick-representation
     (type :: <ctype>, optimize-for :: one-of(#"speed", #"space"))
     => rep :: <c-representation>;
-  $general-rep;
+  *general-rep*;
 end;
 
 define method pick-representation
@@ -276,7 +292,7 @@ define method assign-representations (class :: <cclass>) => ();
 	    //
 	    // If there are more than two slots, no subclass can possibly use
 	    // a data word representation.
-	    $heap-rep;
+	    *heap-rep*;
 	  else
 	    block (return)
 	      for (subclass in class.subclasses)
@@ -288,19 +304,19 @@ define method assign-representations (class :: <cclass>) => ();
 		  // slot type of the subclass is this class we will end
 		  // up right back here.  But the subclass will have been
 		  // added to *assigning-reps-for* so the next time though
-		  // it will return $heap-rep.  Which is what we want to
+		  // it will return *heap-rep*.  Which is what we want to
 		  // see.
 		  let subclass-rep = pick-representation(subclass, #"speed");
 		  if (instance?(subclass-rep, <data-word-representation>)
 			| instance?(subclass-rep, <general-representation>))
-		    return($general-rep);
+		    return(*general-rep*);
 		  end;
 		end;
 	      end;
 	      //
 	      // We only get here if none of the subclasses wanted a data
 	      // word.  So use the heap representation.
-	      $heap-rep;
+	      *heap-rep*;
 	    end;
 	  end;
 	else
@@ -311,7 +327,7 @@ define method assign-representations (class :: <cclass>) => ();
 	    1 =>
 	      // Only one slot (%object-class) so any newly added subclass
 	      // might very well pick a data-word representation.
-	      $general-rep;
+	      *general-rep*;
 	    2 =>
 	      // Two slots (%object-class and one other).  If that other slot
 	      // can't have a data-word representation, then no subclasses
@@ -330,7 +346,7 @@ define method assign-representations (class :: <cclass>) => ();
 	      // during the unwind.
 	      // 
 	      if (member?(class, *assigning-representations-for*))
-		$heap-rep;
+		*heap-rep*;
 	      else
 		let old-assigning-reps-for = *assigning-representations-for*;
 		block ()
@@ -340,16 +356,16 @@ define method assign-representations (class :: <cclass>) => ();
 		  let slot-rep = pick-representation(type, #"speed");
 		  if (instance?(slot-rep, <data-word-representation>)
 			| instance?(slot-rep, <general-representation>))
-		    $general-rep;
+		    *general-rep*;
 		  else
-		    $heap-rep;
+		    *heap-rep*;
 		  end;
 		cleanup
 		  *assigning-representations-for* := old-assigning-reps-for;
 		end;
 	      end;
 	    otherwise =>
-	      $heap-rep;
+	      *heap-rep*;
 	  end;
 	end;
     class.speed-representation := rep;
@@ -381,22 +397,22 @@ define method assign-representations (class :: <cclass>) => ();
 		   data-word-member: rep.representation-data-word-member);
 	    end;
 	  class.speed-representation
-	    := dup-rep(speed-rep, $general-rep, #f,
+	    := dup-rep(speed-rep, *general-rep*, #f,
 		       concatenate("%s.dataword.",
 				   speed-rep.representation-data-word-member));
 	  class.space-representation
 	    := dup-rep(pick-representation(type, #"space"),
 		       class.speed-representation, #t, #t);
 	else
-	  class.speed-representation := $heap-rep;
-	  class.space-representation := $heap-rep;    
+	  class.speed-representation := *heap-rep*;
+	  class.space-representation := *heap-rep*;    
 	end;
       cleanup
 	*assigning-representations-for* := old-assigning-reps-for;
       end;
     else
-      class.speed-representation := $heap-rep;
-      class.space-representation := $heap-rep;    
+      class.speed-representation := *heap-rep*;
+      class.space-representation := *heap-rep*;    
     end;
   end;
 end;
@@ -418,7 +434,8 @@ define method pick-representation
   else
     let char-rep = pick-representation(type.base-class, optimize-for);
     *byte-char-rep*
-      := make(<data-word-representation>, more-general: char-rep,
+      := make(<data-word-representation>, name: #"byte-char",
+	      more-general: char-rep,
 	      alignment: 1, size: 1, c-type: "unsigned char",
 	      class: type.base-class, data-word-member: "l");
   end;
@@ -496,3 +513,59 @@ define method merge-representations
     merge-representations(rep1, rep2.more-general-representation);
   end;
 end;
+
+
+// Dump/Load stuff.
+
+define method set-name-and-remember
+    (name :: false-or(<symbol>), rep :: <c-representation>)
+    => name :: false-or(<symbol>);
+  if (name)
+    rep.representation-name := name;
+    select (name)
+      #"general" => assert(~*general-rep*); *general-rep* := rep;
+      #"heap" => assert(~*heap-rep*); *heap-rep* := rep;
+      #"boolean" => assert(~*boolean-rep*); *boolean-rep* := rep;
+      #"long" => assert(~*long-rep*); *long-rep* := rep;
+      #"int" => assert(~*int-rep*); *int-rep* := rep;
+      #"uint" => assert(~*uint-rep*); *uint-rep* := rep;
+      #"short" => assert(~*short-rep*); *short-rep* := rep;
+      #"ushort" => assert(~*ushort-rep*); *ushort-rep* := rep;
+      #"byte" => assert(~*byte-rep*); *byte-rep* := rep;
+      #"ubyte" => assert(~*ubyte-rep*); *ubyte-rep* := rep;
+      #"float" => assert(~*float-rep*); *float-rep* := rep;
+      #"double" => assert(~*double-rep*); *double-rep* := rep;
+      #"long-double" => assert(~*long-double-rep*); *long-double-rep* := rep;
+      #"ptr" => assert(~*ptr-rep*); *ptr-rep* := rep;
+      #"byte-char" => assert(~*byte-char-rep*); *byte-char-rep* := rep;
+    end;
+  end;
+  name;
+end;
+
+define constant $rep-slots
+  = list(representation-name, #f, set-name-and-remember,
+	 more-general-representation, more-general:, #f,
+	 representation-to-more-general, to-more-general:, #f,
+	 representation-from-more-general, from-more-general:, #f,
+	 representation-alignment, alignment:, #f,
+	 representation-size, size:, #f,
+	 representation-c-type, c-type:, #f);
+
+add-make-dumper(#"c-representation", *compiler-dispatcher*,
+		<c-representation>, $rep-slots, load-external: #t);
+
+add-make-dumper(#"general-representation", *compiler-dispatcher*,
+		<general-representation>, $rep-slots, load-external: #t);
+
+add-make-dumper(#"immediate-representation", *compiler-dispatcher*,
+		<immediate-representation>, $rep-slots, load-external: #t);
+
+add-make-dumper(#"data-word-representation", *compiler-dispatcher*,
+		<data-word-representation>,
+		concatenate($rep-slots,
+			    list(representation-class, class:, #f,
+				 representation-data-word-member,
+				   data-word-member:, #f)),
+		load-external: #t);
+
