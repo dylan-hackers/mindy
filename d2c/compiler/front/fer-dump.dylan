@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.16 1995/04/28 07:20:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.17 1995/05/01 06:54:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -152,6 +152,12 @@ define method dump (region :: <exit>, stream :: <stream>) => ();
 	 target.id);
 end;
 
+define method dump (region :: <return>, stream :: <stream>) => ();
+  let target = region.block-of;
+  format(stream, "RETURN[%d]", region.id);
+  dump-operands(region.depends-on, stream);
+end;
+
 define method dump (region :: <pitcher>, stream :: <stream>) => ();
   format(stream, "PITCHER[%d](", region.id);
   dump-expr(region.depends-on.source-exp, stream);
@@ -258,6 +264,10 @@ define method kind (op :: <catcher>) => res :: <string>;
   "CATCHER";
 end;
 
+define method kind (op :: <self-tail-call>) => res :: <string>;
+  "SELF-TAIL-CALL";
+end;
+
 define method dump (op :: <primitive>, stream :: <stream>) => ();
   format(stream, "primitive %s[%d]", op.name, op.id);
   dump-operands(op.depends-on, stream);
@@ -358,30 +368,6 @@ define method dump (lambda :: <lambda>, stream :: <stream>) => ();
 			end;
 		      end,
 		suffix: ")");
-	     write(' ', stream);
-	     pprint-indent(#"block", 4, stream);
-	     pprint-newline(#"fill", stream);
-	     write("=> ", stream);
-	     let res = lambda.depends-on;
-	     if (res & res.dependent-next == #f)
-	       dump(res.source-exp, stream);
-	     else
-	       pprint-logical-block
-		 (stream,
-		  prefix: "(",
-		  body: method (stream)
-			  for (dep = res then dep.dependent-next,
-			       first? = #t then #f,
-			       while: dep)
-			    unless (first?)
-			      write(", ", stream);
-			      pprint-newline(#"fill", stream);
-			    end;
-			    dump(dep.source-exp, stream);
-			  end;
-			end,
-		  suffix: ")");
-	     end;
 	     pprint-indent(#"block", 2, stream);
 	     pprint-newline(#"mandatory", stream);
 	     dump(lambda.body, stream);
