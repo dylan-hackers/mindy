@@ -25,9 +25,9 @@
 #include <fcntl.h>
 #include <stat.h>
 
-#include <sys/errno.h>
+#include <errno.h>
 
-#include<assert.h>
+#include <assert.h>
 
 char * LIBDIR;
 
