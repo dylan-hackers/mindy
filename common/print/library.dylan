@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Print library and modules.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/library.dylan,v 1.3 2002/06/03 22:25:01 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/library.dylan,v 1.4 2002/11/28 13:53:43 andreas Exp $
 
 //======================================================================
 //
@@ -45,7 +45,7 @@ define module internals
 	     false-or, one-of},
     export: all;
   use introspection,
-    import: {class-name, function-name, 
+    import: {class-name, function-name, object-address,
 	     <subclass>, <limited-integer>, <union>,
 #if (~mindy)
              <direct-instance>, direct-instance-of, <byte-character-type>,
@@ -72,6 +72,9 @@ define module print
   use streams;
   use pprint;
   use internals;
+#if (~mindy)
+  use system, import: { <raw-pointer> };
+#endif
   use extensions,
     import: {$minimum-integer, $not-supplied, <byte-character>,
 	     <ratio>, numerator, denominator};

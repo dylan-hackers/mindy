@@ -2,7 +2,7 @@ module: Print
 author: Gwydion Project
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.4 2002/06/03 22:22:12 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/common/print/print.dylan,v 1.5 2002/11/28 13:53:43 andreas Exp $
 
 
 ///======================================================================
@@ -605,13 +605,14 @@ define method print-object (object :: <object>, stream :: <stream>)
 	       // This branch will never run at Harlequin.  See class-name
 	       // definition below.
 	       write(stream, as(<byte-string>, name));
-	       write(stream, " instance");
+	       write(stream, " instance at ");
 	     else
 	       print(obj-class, stream);
-	       write(stream, " instance");
+	       write(stream, " instance at ");
 	       //write(stream, "instance of ");
 	       //print-specializer(obj-class, stream);
 	     end if;
+             print(object.object-address, stream);
 	   end method,
      suffix: "}");
 end method;
@@ -1520,6 +1521,16 @@ define inline method print-float
   end;
 end;
 
+#if (~mindy)
+define sealed method print-object
+    (object :: <raw-pointer>, stream :: <stream>)
+ => ();
+  write(stream, "0x");
+  write(stream, integer-to-string(as(<integer>, object), radix: 16));
+end method;
+#endif
+
+///
 
 
 /// print-to-string -- Exported.
