@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.14 1995/12/05 03:03:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.15 1995/12/05 22:17:54 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -830,6 +830,9 @@ define method make-transformer
       give-up();
     end;
     let defn = cclass.class-defn;
+    if (defn.class-defn-defered-evaluations-function)
+      give-up();
+    end;
     unless (defn.class-defn-maker-function)
       give-up();
     end;
