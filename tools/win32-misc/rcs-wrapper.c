@@ -1,7 +1,7 @@
 /* rcs-wrapper.c */
 
 /* Author: Nick Kramer
-   RCS-header: $Header: /home/housel/work/rcs/gd/src/tools/win32-misc/rcs-wrapper.c,v 1.1 1997/03/04 16:54:36 nkramer Exp $
+   RCS-header: $Header: /home/housel/work/rcs/gd/src/tools/win32-misc/rcs-wrapper.c,v 1.2 1997/03/04 17:45:25 nkramer Exp $
 
    This is a replacement for rcs-wrapper.perl.  I've had to rewrite it
    in C in order to avoid having to play quoting games with the shell
@@ -20,9 +20,17 @@
    examining it's own filename.  It then invokes the appropriate
    command in $GWYDIONDIR/rcs-bin.
 
+   We play various games so that our wrapped RCS commands can be used
+   both natively and by CVS.  What we do is, if a fake symlink is
+   used, we add the "-V4" flag to the command line.  Otherwise, we
+   assume the command is being called by CVS, and we don't add -V4.
+
+   If you're trying to debug this program, try the -verbose-wrapper
+   flag.  This magical flag is interpreted by the wrapper instead of
+   the RCS command.  (It must be the first argument)
+
    The memory management in this program is terrible.  We can get away
-   with it here because this is a small program, but be careful...  
-   */
+   with it here because this is a small program, but be careful...  */
 
 #include <stdio.h>
 #include <windows.h>
@@ -87,38 +95,79 @@ static char *make_filename (char *path, char *file)
     return res;
 }
 
-static int use_dash_v4 = 0;
+static int already_a_dash_v4 = 0;
+
+/* NT insists on reparsing the command line, so we're going to have to
+   quote some things.  The main case is args with spaces in them.  We
+   have code to handle embedded quotation marks, but apparently CVS
+   strips the quotes out before handing the command line to us, so
+   there's not much we can do about it. */
+static char *maybe_quote (char *arg)
+{
+    char *ptr;
+    if (strcmp(arg, "-V4") == 0) {
+	already_a_dash_v4 = 1;
+    }
+    /* if arg has spaces, need to quote it */
+    for (ptr=arg; *ptr != 0; ptr++) {
+	if (*ptr == ' ') {
+	    char *res = malloc(2*strlen(arg) + 3);
+	    char *ptr2;
+	    char short_string[2];
+	    short_string[1] = 0;
+	    strcpy(res, "\"");
+	    for (ptr2=arg; *ptr2 != 0; ptr2++) { /* handle embedded quotes */
+		if (*ptr2 == '"') {
+		    strcat(res, "\\\"");  /* add \" to string */
+		} else {
+		    short_string[0] = *ptr2;
+		    strcat(res, short_string);
+		}
+	    }
+	    strcat(res, "\"");
+	    return res;
+	}
+    }
+    return arg;
+}
+
+static int use_dash_v4 = 1;
+
+static char *do_fake_symlinks (char *arg)
+{
+    char *path, *file;
+    cache_entry *entry;
+    extract_path(arg, &path, &file);
+    entry = cache_lookup(path);
+    if (entry) {
+	use_dash_v4 = 1;
+	return make_filename(entry->to_dir, file);
+    } else {
+	char rcsdir_filename[1000];     /* foo/RCS */
+	char *rcs_dir = malloc(1000);   /* ...../rcs/foo */
+	FILE *rcs;
+	strcpy(rcsdir_filename, path);
+	strcat(rcsdir_filename, "RCS");
+	rcs = fopen(rcsdir_filename, "r");
+	if (!rcs) {
+	    return arg; /* RCS dir not found */
+	} else {
+	    fscanf(rcs, "%s", rcs_dir);
+	    fclose(rcs);
+	    rcs_dir = strcat(rcs_dir, "/");
+	    add_cache_entry(path, rcs_dir);
+	    use_dash_v4 = 1;
+	    return make_filename(rcs_dir, file);
+	}
+    }
+}
 
 static char *convert_one_arg (char *arg)
 {
     if (strlen(arg) < 1 || arg[0] == '-') {
-	return arg;
+	return maybe_quote(arg);
     } else {
-	char *path, *file;
-	cache_entry *entry;
-	extract_path(arg, &path, &file);
-	entry = cache_lookup(path);
-	if (entry) {
-	    use_dash_v4 = 1;
-	    return make_filename(entry->to_dir, file);
-	} else {
-	    char rcsdir_filename[1000];     /* foo/RCS */
-	    char *rcs_dir = malloc(1000);   /* ...../rcs/foo */
-	    FILE *rcs;
-	    strcpy(rcsdir_filename, path);
-	    strcat(rcsdir_filename, "RCS");
-	    rcs = fopen(rcsdir_filename, "r");
-	    if (!rcs) {
-		return arg; /* RCS dir not found */
-	    } else {
-		fscanf(rcs, "%s", rcs_dir);
-		fclose(rcs);
-		rcs_dir = strcat(rcs_dir, "/");
-		add_cache_entry(path, rcs_dir);
-		use_dash_v4 = 1;
-		return make_filename(rcs_dir, file);
-	    }
-	}
+	return do_fake_symlinks(arg);
     }
 }
 
@@ -143,9 +192,12 @@ int main (int argc, char **argv)
     
     /* Create the final argv by adding or subtracting any args necessary. */
     src_index = (verbose) ? 2 : 1;
-    dest_index = (use_dash_v4) ? 2 : 1;
-    if (use_dash_v4) 
+    if (use_dash_v4 && !already_a_dash_v4) {
 	third_argv[1] = "-V4";
+	dest_index = 2;
+    } else {
+	dest_index = 1;
+    }
     for (; src_index < argc; src_index++, dest_index++) {
 	third_argv[dest_index] = new_argv[src_index];
     }
