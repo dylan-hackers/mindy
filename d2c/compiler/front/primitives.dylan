@@ -1,5 +1,5 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.9 2003/03/28 00:42:56 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.10 2003/04/10 20:26:45 prom Exp $
 copyright: see below
 
 
@@ -602,3 +602,6 @@ define-primitive
   (#"object-address", #(#"<object>"), #"<raw-pointer>",
    cseable: #t);
 
+define-primitive
+  (#"object-at", #(#"<raw-pointer>"), #"<object>",
+   cseable: #t);

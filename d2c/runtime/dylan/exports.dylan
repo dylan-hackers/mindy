@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.31 2003/03/28 00:30:37 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.32 2003/04/10 20:26:45 prom Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -276,7 +276,7 @@ define module Introspection
 	     <subclass>, subclass-of,
 	     <direct-instance>, direct-instance-of,
 	     <byte-character-type>,
-	     object-address
+	     object-address, object-at
 },
     export: all;
 end;

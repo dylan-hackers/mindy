@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.15 2003/03/28 00:42:57 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.16 2003/04/10 20:26:44 prom Exp $
 copyright: see below
 
 
@@ -2248,6 +2248,19 @@ define-primitive-emitter
 		    *ptr-rep*, #f, file);
    end);
 
+define-primitive-emitter
+  (#"object-at",
+   method (results :: false-or(<definition-site-variable>),
+           operation :: <primitive>,
+           file :: <file-state>)
+    => ();
+     let (temps, ptr) = extract-operands(operation, file, *ptr-rep*);
+     contact-bgh-unless-empty(temps);
+     deliver-result(results,
+                    stringify("((heapptr_t)", ptr, ')'),
+                    *heap-rep*, #f, file);
+   end);
+
 // Code moveability
 
 // A list of primitives which can safely be moved around in C code.
@@ -2339,7 +2352,8 @@ define constant $sequence-of-moveable-primitives
       #"pointer-=",
       #"pointer-deref",
       #"vector-elements",
-      #"object-address"];
+      #"object-address",
+      #"object-at"];
 
 define constant *moveable-primitives-table* 
   = begin
