@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.28 1995/05/02 03:57:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.29 1995/05/02 16:36:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -547,6 +547,7 @@ define method emit-lambda (lambda :: <lambda>, output-info :: <output-info>)
   format(output-info.output-info-header-stream, "static %s;\n", prototype);
 
   let stream = output-info.output-info-body-stream;
+  format(stream, "/* %s */\n", lambda.name);
   format(stream, "static %s\n{\n", prototype);
 
   let max-depth = analize-stack-usage(lambda);
@@ -587,7 +588,7 @@ define method emit-region (region :: <if-region>, output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
   let cond = ref-leaf($boolean-rep, region.depends-on.source-exp, output-info);
-  let depth = output-info.output-info-cur-stack-depth;
+  let initial-depth = output-info.output-info-cur-stack-depth;
   format(stream, "if (%s) {\n", cond);
   indent(stream, $indentation-step);
   emit-region(region.then-region, output-info);
@@ -595,7 +596,8 @@ define method emit-region (region :: <if-region>, output-info :: <output-info>)
   spew-pending-defines(output-info);
   indent(stream, -$indentation-step);
   write("}\n", stream);
-  output-info.output-info-cur-stack-depth := depth;
+  let after-then-depth = output-info.output-info-cur-stack-depth;
+  output-info.output-info-cur-stack-depth := initial-depth;
   write("else {\n", stream);
   indent(stream, $indentation-step);
   emit-region(region.else-region, output-info);
@@ -603,6 +605,9 @@ define method emit-region (region :: <if-region>, output-info :: <output-info>)
   spew-pending-defines(output-info);
   indent(stream, -$indentation-step);
   write("}\n", stream);
+  let after-else-depth = output-info.output-info-cur-stack-depth;
+  output-info.output-info-cur-stack-depth
+    := max(after-then-depth, after-else-depth);
 end;
 
 define method emit-region (region :: <loop-region>,
@@ -1081,20 +1086,20 @@ define method deliver-cluster
 		  end;
 		end;
     unless (count <= type.min-values)
-      format(stream, "pad_cluster(%s, sp, %d);\n", name, count);
+      format(stream, "pad_cluster(%s, %s, %d);\n", src-start, src-end, count);
     end;
     for (var = defines then var.definer-next,
 	 index from 0,
 	 while: var)
       let source
 	= if (index == count)
-	    format-to-string("make_rest_arg(%s + %d, sp)", name, index);
+	    format-to-string("make_rest_arg(%s + %d, %s)",
+			     src-start, index, src-end);
 	  else
-	    format-to-string("%s[%d]", name, index);
+	    format-to-string("%s[%d]", src-start, index);
 	  end;
       deliver-single-result(var, source, $general-rep, #t, output-info);
     end;
-    format(stream, "sp = %s;\n", name);
   end;
 end;
 
