@@ -10,19 +10,18 @@
 # latest source and documentation tarball from the FTP site and
 # put them into /usr/src/redhat/SOURCES. Edit your local copy of
 # this file, replacing:
-#   * SNAP with the source tarball's date in YYYYMMDD form.
-#     (Appears twice)
+#   * VERSION with a number of the form '2.2.1'.
 #   * libcX with either libc5 or libc6, depending on your Linux
 #     distribution.
 # Then type 'cd /usr/src/redhat/SPECS/; rpm -ba gwydion-dylan.spec`.
 
 Name: gwydion-dylan
 Summary: CMU's Gwydion Dylan development tools
-Version: 2.1
-Release: SNAP-libcX
+Version: VERSION
+Release: 1-libcX
 Copyright: X-style
 Group: Development/Languages/Dylan
-Source0: ftp://berlin.ccc.de/pub/gd/v2.1/src/gd-SNAP.tar.gz
+Source0: ftp://berlin.ccc.de/pub/gd/v2.1/src/gd-VERSION.tar.gz
 Source1: ftp://berlin.ccc.de/pub/gd/doc/gd20-html.tar.gz
 URL: http://www.randomhacks.com/dylan/
 Packager: eric.kidd@pobox.com
