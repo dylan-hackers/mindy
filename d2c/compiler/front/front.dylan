@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.27 1995/05/05 08:53:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.28 1995/05/05 16:58:25 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -36,9 +36,10 @@ variable-info
 	local-var-info
 
 leaf
-    constant
+    constant {abstract}
 	literal-constant
 	definition-constant-leaf
+        uninitialized-value
 
     function-literal
 	method-literal
@@ -225,6 +226,17 @@ end class;
 define class <definition-constant-leaf> (<constant>)
   slot const-defn :: <definition>, required-init-keyword: const-defn:;
 end class;
+
+
+// Used as a placeholder for some value that isn't actually initialized.
+// For example, unsupplied keywords with hairy defaults, and uninitialized
+// slots.  The uninitialized-value cannot reliably be tested against, because
+// in some representations, every bit pattern has an interpretation.  It is
+// up to the user of the uninitialized-value to known when the value is
+// initialized and when it isn't.
+// 
+define class <uninitialized-value> (<constant>)
+end;
 
 
 // Assignable variables:
