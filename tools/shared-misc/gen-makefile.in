@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.43 2003/04/16 19:37:51 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.44 2003/04/23 22:17:20 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -526,16 +526,20 @@ MINDY = $MINDY
 
 EOF
         if ($host_platform{'environment_variables_can_be_exported?'}) {
-			local($EXPORT = "export");
-        	#if ($target_name eq 'x86-win32-vc') {
-			#	$EXPORT="set";
-			#}
+	    local($EXPORT = "export");
+	    #if ($target_name eq 'x86-win32-vc') {
+	    #	$EXPORT="set";
+	    #}
             print "$EXPORT CCFLAGS = \$(CFLAGS) \$(CPPFLAGS) \$(COPTS)\n\n";
             if ($LIBTOOL) {
                 print "$EXPORT LIBTOOL = $LIBTOOL\n\n";
             }
             if ($DYLANPATH) {
-                print "$EXPORT DYLANPATH = $DYLANPATH\n\n";
+		if ($enable_mindy_bootstrap) {
+		    print "$EXPORT DYLANPATH = $DYLANPATH\n\n";
+		} else {
+		    print "$EXPORT DYLANPATH =\n\n";
+		}
             };
             if ($DYLANDIR) {
                 print "$EXPORT DYLANDIR = $DYLANDIR\n\n";
@@ -776,7 +780,9 @@ sub emit_library_rule {
                           || die("No library: header in $lidfilename.lid.\n");
     $library =~ tr/A-Z/a-z/;
     local($unit_prefix);
-    if($enable_bootstrap && $bootstrap_compiler eq "d2c" && $lid_format_version < 2) {
+    if($enable_bootstrap
+       && $bootstrap_compiler eq "d2c"
+       && $lid_format_version < 2) {
         $unit_prefix = $lidfile{'unit_prefix'} || "$library";
     } else {
         $unit_prefix = "$library";
@@ -853,6 +859,11 @@ sub emit_library_rule {
             
             $d2c_target = $foo_lib_du;
         }
+    }
+
+    if($extraflags ne '') {
+	print STDERR "gen-makefile: Makegen file contains extraflags: ";
+	print STDERR "'$extraflags'\n";
     }
 
     if (! grep(/^no-d2c$/, @keywords) && $enable_d2c) {
