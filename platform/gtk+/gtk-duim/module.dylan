@@ -41,6 +41,8 @@ define module gtk-duim
   export \event-handler-definer,
          <gtk-pane-mixin>,
 	 <gtk-gadget-mixin>,
+	 <gtk-text-gadget-mixin>,
+	 <gtk-top-level-sheet-mixin>,
          handle-gtk-destroy-event,
          handle-gtk-delete-event,
          handle-gtk-motion-event,
