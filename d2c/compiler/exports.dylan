@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.20 1995/03/24 12:23:21 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.21 1995/03/24 12:44:02 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -573,15 +573,15 @@ define module flow
   export 
     <region>, <linear-region>, <simple-region>, <compound-region>,
     <join-region>, <if-region>, <body-region>, <block-region-mixin>,
-    <block-region>, <method-region>, <loop-region>, <exit>, <call-site>,
+    <block-region>, <method-region>, <loop-region>, <exit>,
     <component>,
 
     parent, parent-setter, first-assign, first-assign-setter, last-assign,
     last-assign-setter, regions, regions-setter, join-region,
     join-region-setter, then-region,
     then-region-setter, else-region, else-region-setter, body, body-setter,
-    exits, exits-setter, call-sites, call-sites-setter, block-of,
-    block-of-setter, method-of, method-of-setter, all-methods,
+    exits, exits-setter, block-of,
+    block-of-setter, all-methods,
     all-methods-setter,
 
     <expression>, <dependency>, <dependent-mixin>, <leaf>, <variable-info>,
