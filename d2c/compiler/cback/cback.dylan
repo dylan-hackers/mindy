@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.87 1995/12/18 04:05:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.88 1995/12/18 05:13:07 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1198,7 +1198,7 @@ define method emit-region (region :: <exit>, file :: <file-state>)
   if (instance?(target, <block-region>))
     format(stream, "goto block%d;\n", get-info-for(target, file));
   else
-    format(stream, "abort();\n");
+    format(stream, "not_reached();\n");
   end;
 end;
 
