@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.89 1996/03/18 19:04:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.90 1996/03/19 23:54:42 nkramer Exp $
 
 //======================================================================
 //
@@ -81,7 +81,8 @@ define module Builtin-Stuff
     handler-type, head, head-setter,
     initialize, instance?, invoke-debugger,
     kill-thread,
-    limited, limited-integer-class, limited-integer-min, limited-integer-max,
+    limited, limited-integer-base-class, limited-integer-minimum,
+    limited-integer-maximum,
     list, load, local-daylight-savings-time?,
     locked?, logand, logbit?, logior, lognot, logxor,
     main, make, make-generic-function, make-ratio, merge-hash-codes,
@@ -134,8 +135,8 @@ end Builtin-Stuff;
 
 define module extras
   create
-    *format-function*, *force-output-function*, *debug-output*,
-    report-condition, ratio;
+    *debug-output*, condition-format, report-condition,
+    ratio, $not-supplied, false-or;
 end;
 
 
@@ -158,7 +159,7 @@ define module Dylan
 	     <number>,
 	     <object>,
 	     <pair>,
-	     <ratio>, <rational>, <real>,
+	     <rational>, <real>,
 	     <sequence>, <simple-vector>, <simple-object-vector>, 
 	     <single-float>, <singleton>,
 	     <string>, <symbol>,
@@ -171,7 +172,7 @@ define module Dylan
 	     backward-iteration-protocol,
 	     direct-subclasses, direct-superclasses,
 	     ceiling, ceiling/,
-	     denominator, do,
+	     do,
 	     element, element-setter, error,
 	     find-method, floor, floor/, forward-iteration-protocol,
 	     function-arguments,
@@ -181,7 +182,7 @@ define module Dylan
 	     limited, list, logand, logbit?, logior, lognot, logxor,
 	     make, merge-hash-codes, function-specializers, 
 	     function-return-values,
-	     negative, negative?, numerator,
+	     negative, negative?,
 	     object-class,
 	     pair,
 	     remove-method, round, round/,
@@ -242,6 +243,7 @@ define module Extensions
 	     <byte-character>, <byte-vector>,
 	     <true>, <false>,
 	     <general-integer>, <extended-integer>,
+	     <ratio>, numerator, denominator,
 	     <weak-pointer>, weak-pointer-object},
     export: all;
   use extras,
@@ -251,7 +253,7 @@ define module Extensions
     <value-table>, value-hash, sequence-hash, string-hash,
     <string-table>;
   export
-    one-of, false-or, ignore, key-exists?;
+    one-of, ignore, key-exists?, <byte>;
 end Extensions;
 
 define module System
@@ -261,6 +263,9 @@ define module System
 	     get-time-of-day, local-daylight-savings-time?,
 	     system, getcwd, getenv, collect-garbage},
     export: all;
+  use Builtin-Stuff, import: {$maximum-integer};
+  export
+    <buffer-index>, $maximum-buffer-size;
 end System;
 
 define module File-Descriptors
@@ -344,8 +349,8 @@ define module Introspection
 
 	     singleton-object,
 	     <subclass>, subclass-of,
-	     <limited-integer>, limited-integer-class, limited-integer-min,
-	     limited-integer-max,
+	     <limited-integer>, limited-integer-base-class, 
+	     limited-integer-minimum, limited-integer-maximum,
 	     <union>, union-members},
     export: all;
 end;
