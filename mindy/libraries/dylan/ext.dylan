@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.10 1996/09/15 15:57:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.11 1997/05/31 01:14:42 ram Exp $
 
 //======================================================================
 //
@@ -87,3 +87,13 @@ define function assert (value :: <object>) => ();
     error("Assertion failed.");
   end;
 end function assert;
+
+
+// We define this function so that people can unconditionally import it
+// from extensions so that it is accessible to be the d2c entry point.  It
+// should never actually be called in Mindy, and needn't even really be a
+// function.
+//
+define function %main (#rest ignore)
+  error("%main got called in Mindy somehow?");
+end function;
