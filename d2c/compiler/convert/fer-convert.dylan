@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.9 1994/12/17 02:17:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.10 1995/01/06 21:21:07 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -649,8 +649,8 @@ define method build-general-method
 	   rest-type: rest-var & object-ctype(),
 	   key-infos: keyword-infos & as(<list>, keyword-infos),
 	   all-keys?: paramlist.paramlist-all-keys?,
-	   returns: as(<list>, result-types),
-	   returns-rest-type: rest-result & object-ctype());
+	   returns: make-values-ctype(as(<list>, result-types),
+	   			      rest-result & object-ctype()));
 
   let (results, results-temp)
     = if (non-const-result-types?)
@@ -777,8 +777,7 @@ define method build-hairy-method-body
 		rest-type: object-ctype(),
 		keys: signature.key-infos,
 		all-keys: signature.all-keys?,
-		returns: signature.returns,
-		returns-rest-type: signature.returns-rest-type);
+		returns: signature.returns);
     end;
   end;
   if (rest-var)
