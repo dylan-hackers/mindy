@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.16 1996/04/13 21:39:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.17 1996/04/13 21:48:04 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -456,7 +456,7 @@ define method compute-layout (class :: <class>) => ();
 
 // The default make method.
 
-define open generic make (class :: <class>, #rest supplied-keys, #all-keys)
+define open generic make (type :: <type>, #rest supplied-keys, #all-keys)
     => instance;
 
 define method make (class :: <class>, #rest supplied-keys, #all-keys)
