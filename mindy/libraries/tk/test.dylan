@@ -1,4 +1,38 @@
 module: test
+author: Robert Stockton (rgs@cs.cmu.edu)
+
+//======================================================================
+//
+// Copyright (c) 1994  Carnegie Mellon University
+// All rights reserved.
+// 
+// Use and copying of this software and preparation of derivative
+// works based on this software are permitted, including commercial
+// use, provided that the following conditions are observed:
+// 
+// 1. This copyright notice must be retained in full on any copies
+//    and on appropriate parts of any derivative works.
+// 2. Documentation (paper or online) accompanying any system that
+//    incorporates this software, or any part of it, must acknowledge
+//    the contribution of the Gwydion Project at Carnegie Mellon
+//    University.
+// 
+// This software is made available "as is".  Neither the authors nor
+// Carnegie Mellon University make any warranty about the software,
+// its performance, or its conformity to any specification.
+// 
+// Bug reports, questions, comments, and suggestions should be sent by
+// E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+//
+//======================================================================
+//
+// This file contains a test program which exercises many features of the tk
+// library.  It may prove useful as a demonstration of the capabilities of the
+// system, but we make no claims concerning good taste in either the interface
+// or the code itself.  You may be better off pretending this file doesn't
+// exist.  
+//
+//======================================================================
 
 define library test
   use dylan;
@@ -59,7 +93,7 @@ define method main(program-name :: <string>, #rest args)
   let item1 = create-line(c1, #(0, 0, 100, 100, 200, 0), smooth: #t);
   let item2 = create-rectangle(c1, "1c", "1c", "2c", "3c", fill: "red");
   let item3 = create-oval(c1, "1c", "1c", "2c", "3c", fill: "green");
-  
+
   let l1 = make(<listbox>, in: f2, fill: "y");
   bind(l1, "<Double-Button-1>",
        method () do(print-config, current-selection(l1)) end method);
@@ -108,7 +142,7 @@ define method main(program-name :: <string>, #rest args)
 		       end method);
 
   let b3 = make(<menubutton>, in: f1, text: "Variables",
-		     underline: 0);
+		     underline: 0, anchor: "w");
   let m2 = make(<menu>, in: b3);
   configure(b3, menu: m2);
   add-radiobutton(m2, label: "foo", variable: word, value: "food chain");
@@ -149,13 +183,13 @@ define method main(program-name :: <string>, #rest args)
 					      100 * tk-as(<integer>, x));
 			 end method,
 		tickinterval: 1, fill: "x", orient: "horizontal", side: "top");
-  format(*tty*, "Scale was at: %=\n", get-units(s3));
-  set-units(s3, 4);
+  format(*tty*, "Scale was at: %=\n", get-value(s3));
+  set-value(s3, 4);
 
   add-command(m2, label: "reset aspect",
 	      command: method ()
-			 set-units(s3, 1);
-			 set-units(s3, 3);
+			 set-value(s3, 1);
+			 set-value(s3, 3);
 					do(print-a-config, configuration(m1));
 		       end method);
 
@@ -164,6 +198,10 @@ define method main(program-name :: <string>, #rest args)
 		relief: "sunken", fill: "both");
   create-window(c2, 0, 0, window: t1);
   let t1-insert = make(<text-mark>, in: t1, name: "insert");
+  let keyvar = make(<active-variable>, value: "",
+		    command: curry(format, *tty*, "Key code: %s\n"));
+  bind(t1, "<Any-KeyPress>", join-tk-args("set", keyvar, "%k"));
+  
   let string = read-as(<byte-string>, make(<file-stream>, name: "makefile"),
 		       to-eof?: #t);
   insert(t1, t1-insert, string);

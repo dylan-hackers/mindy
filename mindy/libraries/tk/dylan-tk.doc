@@ -107,6 +107,7 @@ can commonly include instances of the following native Dylan classes:
  * <integer>
  * <function>
  * <string>
+ * <sequence>
 
 and will occasionally include others on a case-by-case basis.  In addition,
 the following new classes are also frequently accepted as parameter values:
@@ -167,6 +168,10 @@ to the widget's function.
 Other options are by no means universal, but tend to mean the same thing
 whenever they occur:
 
+ bitmap:
+    This specifies a bitmap which will be displayed in the given widget.  The
+    most useful forms will be "name" to specify a name from the standard
+    cursor font, or "@Sourcefile fgColor" to load the cursor from a file.
  command:
     This specifies an action to be taken when a particular widget is "invoked"
     or when values associated with the widget change.  Typically this will be
@@ -243,7 +248,14 @@ There are a small set of methods which operate upon all windows:
 
  function pack (window :: <window>, #all-keys) => (window :: <window>);
     This is explained in the next section.  You should never need to call pack
-    unless you specified "pack: #f" when making the window.
+    unless you either specified "pack: #f" when making the window or you used
+    the "unpack" function to remove it from the display.
+
+ function unpack (window :: <window>) => (window :: <window>);
+    This hides a window which has previously been packed into another window.
+    The window still exists, and may be updated or repacked into its parent.
+    You may not pack the window into a different parent -- this will result in
+    errors. 
 
 Packing
 -------
@@ -266,7 +278,7 @@ window.  You specify this window either directly, via "in: parent" or
 indirectly via "before: sibling" or "after: sibling".  (The latter options
 specify that the window should have the same parent as the specified
 "sibling", and that they should be placed just before or after the sibling in
-the parent's "packing order".  If no parent is specified explicitly, Dylan/Tk
+the parent's "packing order".)  If no parent is specified explicitly, Dylan/Tk
 implicitly assumes "in: *root-window*".
 
 The "side:" option specifies where the widget should be placed relative to the
@@ -300,6 +312,12 @@ any windows which might be packed after W3).
 The other options available are "anchor:", "expand:", "fill:", "padx:", and
 "pady:", which are explained in the book.  "Expand:" typically takes a boolean
 value, while "fill:" takes one of "x", "y", "both", or "none".
+
+The "unpack" function will remove a window from the control of the "packer"
+and, as a side effect, remove it from the display.  The window will still
+exist and can be updated or repacked via the "pack" function.  You will,
+however, get errors if you try to specify a different parent when you repack
+it. 
 
 Event bindings
 --------------
@@ -350,8 +368,10 @@ type, although "value-setter" will accept arbitrary types (especially
 
 You may also specify a Dylan function to be executed when an active variable's
 value changes (i.e. becomes \~= to the old value).  This method is specified
-via the "command:" keyword to "make".  It will be invoked with the new value
-just before the old value is changed.
+via the "command:" keyword to "make".  It will be invoked with both the new
+and the old value at some point after the value is changed.  Note that the
+value is updated immediately (i.e. asynchronously), while the calls to the
+given command are executed sequentially along with event callbacks.
 
 Active variables will typically be passed as values of "variable:" or
 "text-variable:" keywords.
@@ -403,7 +423,8 @@ Dylan/Tk provides types corresponding to all of the standard Tcl/Tk widgets:
    Options: #"closeenough", #"confine", #"height", #"insertbackground",
    #"insertborderwidth", #"insertofftime", #"insertontime", #"insertwidth",
    #"scrollincrement", #"scrollregion", #"selectbackground",
-   #"selectborderwidth", #"selectforeground", #"width", #"yscrollcommand".
+   #"selectborderwidth", #"selectforeground", #"width", #"xscrollcommand",
+   #"yscrollcommand".
 
      function xview (canvas :: <canvas>, index) => canvas;
      function yview (canvas :: <canvas>, index) => canvas;
@@ -413,14 +434,28 @@ Dylan/Tk provides types corresponding to all of the standard Tcl/Tk widgets:
      function scan-dragto (window :: <canvas>, #rest coords) => window;
      function select-item (window :: <canvas>, index) => window;
      function create-arc (canvas, x1, y1, x2, y2, #rest opts) => item;
+       Options include: #"extent", #"fill", #"outline", #"start", #"stipple",
+       #"style", #"width".
      function create-bitmap (canvas, x1, y1, #rest opts) => item;
+       Options include: #"anchor", #"bitmap".
      function create-line (canvas, points :: <sequence>, #rest opts) => item;
+       Options include: #"arrow", #"arrowshape", #"capstyle", #"fill",
+       #"joinstyle", #"smooth", #"splinesteps", #"stipple", #"width".
      function create-oval (canvas, x1, y1, x2, y2, #rest opts) => item;
+       Options include: #"fill", #"outline", #"stipple", #"width".
      function create-polygon (canvas, pnts :: <sequence>, #rest opts) => item;
+       Options include: #"fill", #"smooth", #"splinesteps", #"stipple".
      function create-rectangle (canvas, x1, y1, x2, y2, #rest opts) => item;
+       Options include: #"fill", #"outline", #"stipple", #"width".
      function create-text (canvas, x1, y, #rest opts) => item;
+       Options include: #"anchor", #"fill", #"font", #"justify", #"stipple",
+       #"text", #"width".
      function create-window (canvas, x1, y1, #rest opts) => item;
+       Options include: #"anchor", #"height", #"width", #"window".
      function postscript (canvas, #rest opts) => result :: <string>;
+       Options include: #"colormap", #"colormode", #"fontmap", #"height",
+       #"pageanchor", #"pageheight", #"pagewidth", #"pagex", #"pagey",
+       #"rotate", #"width", #"x", #"y".
 
  <entry>:
    Options: #"exportselection", #"font", #"insertbackground",
@@ -567,10 +602,10 @@ specify the first character of a <text> by calling
 
 The following functions create and manipulate <text-index>s:
 
-  function text-at (line, character) => (result :: <text-index>);
-  function line-end (line) => (result :: <string>);
-  method as (cls == <text-index>, value :: <string>);
-  method as (cls == <string>, value :: <text-index>);
+  function text-at (line, character) => result :: <text-index>;
+  function line-end (line) => result :: <string>;
+  method as (cls == <text-index>, value :: <string>) => string
+  method as (cls == <string>, value :: <text-index>) => text-index
 
 The "text-at" function provides a convenient shorthand for making
 <text-index>s.  You might, for example replace the above "make" call with
@@ -592,9 +627,9 @@ associated with the Tcl/Tk mark.
 
 The following functions create or manipulate <text-mark>s:
 
-  method as (cls == <string>, object :: <text-mark>) => (result);
-  method as (cls == <text-index>, mark :: <text-mark>) => (result);
-  method marks (text :: <text>) => (result :: <sequence>);
+  method as (cls == <string>, object :: <text-mark>) => string
+  method as (cls == <text-index>, mark :: <text-mark>) => text-index
+  method marks (text :: <text>) => result :: <sequence>;
 
 The "marks" function returns a sequence containing all of the marks within a
 given <text>.  This will include both the "standard" Tcl/Tk marks and any that
@@ -609,22 +644,23 @@ display properties or event bindings for the characters that have been
 associated with a particular <text-tag>.
 
 <Text-tag>s are created within a particular <text> via "make", which requires
-an "in:" keyword and permits a "name:" keyword.  You may add ranges of
-characters to <text-tag>s via "add-tag" and change the characteristics of
-tagged regions via "configure-tag" or "bind-tag".  A complete list of
+an "in:" keyword.  Optional keywords include "name:", "bgstipple:",
+"fgstipple:", "font:", and "underline:".  Although tags are not widgets, they
+support the "configure", "configuration", and "bind" functions.  You may add
+ranges of characters to <text-tag>s via "add-tag".  A complete list of
 functions upon <text-tag>s follows:
 
-  function add-tag (tag, #key start, end: last) => (tag);
-  function remove-tag (tag, #key start, end: last) => (tag);
-  function configure-tag (tag, #rest options) => (tag);
-  function tag-configuration (tag, index) => (result :: <sequence>);
-  method as (cls == <string>, object :: <text-tag>) => (result);
-  function tags (text :: <text>) => (result :: <sequence>);
-  function bind-tag (tag, event :: <string>, command) => (tag);
+  function configure (tag, #rest options) => tag;
+  function configuration (tag, index) => result :: <sequence>;
+  function bind (tag, event :: <string>, command) => tag;
+  method as (cls == <string>, object :: <text-tag>) => string;
+  function add-tag (tag, #key start, end: last) => tag;
+  function remove-tag (tag, #key start, end: last) => tag;
+  function tags (text :: <text>) => result :: <sequence>;
   function delete-tag (tag) => ();
   function raise-tag (tag, #key past :: <text-tag>) => ();
   function lower-tag (tag, #key past :: <text-tag>) => ();
-  function next-range (tag, #key start, end) => (result :: false-or(<pair>));
+  function next-range (tag, #key start, end) => result :: false-or(<pair>);
 
 Canvas items
 ------------
@@ -632,25 +668,94 @@ Canvas items
 <canvas-item>s represent different graphical entity within a <canvas>.  Each
 "create-shape" function returns a <canvas-item> corresponding to the newly
 created shape.  These may be used to delete, resize, move, or respecify the
-shape.  
+shape.  Although canvas items are not widgets, they support the "configure",
+"configuration" and "bind" functions.  The configuration options which are
+accepted for a given item depend upon its type.  You should consult the list
+of "create-..." functions for a list of optoins.
 
 The following functions operate upon canvas items:
 
-  function configure-item (item, #rest options) => (item); 
-  function item-configuration (item, index) => (result :: <sequence>);
-  function bind-item (item, event :: <string>, command) => (item);
+  function configure (item, #rest options) => item; 
+  function configuration (item, index) => result :: <sequence>;
+  function bind (item, event :: <string>, command) => item;
   function delete-item (item) => ();
   function raise-item (item, #key past :: <canvas-item>) => ();
   function lower-item (item, #key past :: <canvas-item>) => ();
   function move-item (item, x :: <object>, y :: <object>) => ();
   function scale-item (item, x-origin, y-origin, x-scale, y-scale) => ();
-  function item-coords (item) => (result :: <sequence>);
+  function item-coords (item) => result :: <sequence>;
   function item-coords-setter (value :: <sequence>, item) => ();
-  function item-type (item) => (result :: <string>);
+  function item-type (item) => result :: <string>;
 
 Requested Enhancements
-----------------------
+======================
 
  * Allow event bindings to access the window, mouse coords, and character.
  * Provide a "focus" command.
+ * Revise the interface to provide a more uniform object-oriented integration
+   of <window>s, <text-tag>s, and <canvas-item>s.  (This would probably be an
+   incompatible change.)
 
+The Extension Protocol
+======================
+
+Because early versions of Dylan/Tk don't support the entire functionality of
+Tcl/Tk, users may wish to interface directly with the underlying Tcl/Tk
+interpreter.  This capability is provided by the Tk-extension module.  (Note:
+if any user decides to use these capabilities to provide a firm interface to
+a Tcl/Tk subsystem (e.g. the "wm" command), we would willingly incorporate
+such code into future versions of this library.)
+
+The following functions are exported:
+
+ generic funtion tk-as (cls :: <class>, value) => result :: <object>;
+   Performs conversions comparable to "as", but adds some which do not
+   generalize outside tk -- for example, tk-as(<boolean>, "1") == #t.
+
+   You may wish to add methods to this function for any new dylan types you
+   add. 
+
+ function put-tk-line (#rest pieces) => ();
+   Converts all of the input arguments into strings (using "tk-as"),
+   concatentates them into a line of tk input, and sends then to the running
+   tk process.  This routine expects no results and therefore does not wait
+   around for them.
+
+ function call-tk-function (#rest pieces) => result :: <string>;
+   Concatenates the input into a tk command, executes it, and returns the
+   result as a string.  Pauses execution of the current thread until the tk
+   function returns.
+  
+   You may need to call "tk-as", "tk-unquote", or "parse-tk-list" on the
+   result depending upon the expected result type.
+  
+ function join-tk-args (#rest object) => result :: <string>;
+   Creates a string containing the tk representation (via "tk-as") of each
+   argument, separated by spaces.
+  
+ function make-option (option, value) => option :: <string>;
+   Creates a tk "option" switch out of option name and an arbitrary value.
+   The value may be an <integer>, <string>, <symbol>, or <true>.  If the
+   option is #f, then an empty string (i.e. no option) will be returned.
+  
+ function parse-tk-list (string, #key depth, unquote, start, end) => sequence;
+   Takes a string returned by a tk function and converts it into a sequence
+   of values.  Values will either be 'words' or subsequences, depending upon
+   whether the string contains list grouping (i.e. '{' and '}') characters.
+   If depth is not #f, all groupings below the given depth will be returned as
+   simple strings.  If "unquote" is true, then result strings will be
+   filtered through "unquote".
+
+ function tk-quote (object :: <object>) => result :: <string>;
+   Performs whatever quotation is necessary to get the data to WISH intact.
+   For most objects, this is the same as "tk-as(<string>, ...)", but it does
+   extra quotation on strings to make sure brackets and such like come out OK.
+  
+ function tk-unquote (string :: <string>) => result :: <string>;
+   Strips away all quotation from a string.  This will undo the various
+   escapes required to imbed brackets and such like inside a tk list.  This
+   should be called for any user level string, just as "tk-as" might be
+   called for any other data type.
+  
+ function anonymous-name (#key prefix = "w") => result :: <string>;
+   Generates a unique new (but unexciting) name for a window.
