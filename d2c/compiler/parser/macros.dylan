@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.9 2002/07/27 12:14:39 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.10 2003/02/19 21:10:00 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -3184,6 +3184,8 @@ add-make-dumper
 
 // Testing code.
 
+#if (mindy)
+
 define open generic recursively-macro-expand (thing :: <object>)
     => new-thing :: <object>;
 
@@ -3334,4 +3336,4 @@ define method recursively-macro-expand
        cleanup: recursively-macro-expand(thing.uwp-cleanup));
 end method recursively-macro-expand;
 
-
+#endif
