@@ -1,6 +1,6 @@
 module: File-system
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Attic/file-system.dylan,v 1.1 1998/05/03 19:55:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Attic/file-system.dylan,v 1.2 1998/10/15 06:51:27 igor Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -130,7 +130,7 @@ define function end-of-prefix (filename :: <filename>)
   block (return)
     for (index from filename.size - 1 to 0 by -1)
       if (filename[index].path-separator?)
-	return(index);
+	return(index+1);
       end if;
     end for;
     0;
