@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.87 1995/06/08 14:11:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.88 1995/06/09 16:16:56 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2939,7 +2939,11 @@ define-primitive-transformer
      let args = make(<stretchy-vector>);
      add!(args,
 	  dylan-defn-leaf(builder,
-			  if (method?) #"<method>" else #"<function>" end));
+			  if (method?)
+			    #"<closure-method>";
+			  else
+			    #"<closure>";
+			  end));
      add!(args,
 	  make-literal-constant(builder, as(<ct-value>, general-entry:)));
      add!(args,
