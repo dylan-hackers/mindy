@@ -18,7 +18,7 @@ if ($features{'compiled_for_win32'}) {
     $dig_lid_file = 'hp-dig';
     &emit_c_file_rule('hp-dig-support', 'hp-dig-support.h');
     &emit_melange_rule('hp-dig-c', 'hp-dig-support.h');
-} elsif ($features{'compiled_for_solaris'}) {
+} elsif ($features{'compiled_for_solaris'} || $features{'compiled_for_linux'}) {
     ### Do nothing; we just want to be able to process this makegen
     $dig_lid_file = 'hp-dig';
 } else {
