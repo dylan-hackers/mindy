@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.5 1995/03/23 22:15:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.6 1995/04/21 02:32:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -208,7 +208,8 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 	#f;
       $singleton-var =>
 	if (args.size == 1)
-	  make-canonical-singleton(args[0]);
+	  let thing = args[0];
+	  instance?(thing, <eql-ct-value>) & make-canonical-singleton(args[0]);
 	end;
       $union-var =>
 	if (args.size == 2
@@ -241,7 +242,7 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
 	  select (args[0])
 	    dylan-value(#"<singleton>") =>
 	      let (okay, object) = ct-keywords(args, 1, #"object");
-	      if (okay & object)
+	      if (okay & instance?(object, <eql-ct-value>))
 		make-canonical-singleton(object);
 	      end;
 	    dylan-value(#"<byte-character-type>") =>
