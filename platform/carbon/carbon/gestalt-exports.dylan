@@ -15,7 +15,8 @@ define module gestalt
 	export	// Gestalt
 		Gestalt,
 		$gestaltQuickdrawVersion, $gestaltOriginalQD, $gestalt8BitQD, $gestalt32BitQD,
-		$gestalt32BitQD11, $gestalt32BitQD12, $gestalt32BitQD13, $gestaltAllegroQD;
+		$gestalt32BitQD11, $gestalt32BitQD12, $gestalt32BitQD13, $gestaltAllegroQD,
+		$gestaltSystemVersion;
 		
 end module gestalt;
 

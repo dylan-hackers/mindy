@@ -3,11 +3,19 @@ module: carbon-events
 c-include( "Carbon.h" );
 
 
-// Types
+// UPP Types
 
-define constant <EventHandlerUPP> :: <type> = <UniversalProcPtr>;
-define constant <EventComparatorUPP> :: <type> = <UniversalProcPtr>;
-define constant <EventLoopTimerUPP> :: <type> = <UniversalProcPtr>;
+define functional class <EventHandlerUPP> (<UniversalProcPtr>)
+end class <EventHandlerUPP>;
+
+define functional class <EventComparatorUPP> (<UniversalProcPtr>)
+end class <EventComparatorUPP>;
+
+define functional class <EventLoopTimerUPP> (<UniversalProcPtr>)
+end class <EventLoopTimerUPP>;
+
+
+// We can't sizeof() these as they are pointers to opaque (incomplete) types
 
 /*
 	<EventLoopRef>
@@ -17,32 +25,11 @@ define functional class <EventLoopRef> (<statically-typed-pointer>)
 end class <EventLoopRef>; 
 
 /*
-	content-size
-	The size of object a <EventLoopRef> contains
-*/
-
-define method content-size( cls == <EventLoopRef> )
-=>( result :: <integer> )
-	c-expr( int: "sizeof(OpaqueEventLoop)" );
-end method content-size;
-
-/*
 	<EventTargetRef>
 */
 
 define functional class <EventTargetRef> (<statically-typed-pointer>)
 end class <EventTargetRef>; 
-
-/*
-	content-size
-	The size of object a <EventTargetRef> contains
-*/
-
-define method content-size( cls == <EventTargetRef> )
-=>( result :: <integer> )
-	c-expr( int: "sizeof(OpaqueEventTarget)" );
-end method content-size;
-
 
 /*
 	<EventRef>
@@ -52,32 +39,11 @@ define functional class <EventRef> (<statically-typed-pointer>)
 end class <EventRef>; 
 
 /*
-	content-size
-	The size of object a <EventRef> contains
-*/
-
-define method content-size( cls == <EventRef> )
-=>( result :: <integer> )
-	c-expr( int: "sizeof(OpaqueEvent)" );
-end method content-size;
-
-/*
 	<EventHandlerRef>
 */
 
 define functional class <EventHandlerRef> (<statically-typed-pointer>)
 end class <EventHandlerRef>; 
-
-/*
-	content-size
-	The size of object a <EventHandlerRef> contains
-*/
-
-define method content-size( cls == <EventHandlerRef> )
-=>( result :: <integer> )
-	c-expr( int: "sizeof(OpaqueEventHandler)" );
-end method content-size;
-
 
 /*
 	<EventHandlerCallRef>
@@ -87,31 +53,11 @@ define functional class <EventHandlerCallRef> (<statically-typed-pointer>)
 end class <EventHandlerCallRef>; 
 
 /*
-	content-size
-	The size of object a <EventHandlerCallRef> contains
-*/
-
-define method content-size( cls == <EventHandlerCallRef> )
-=>( result :: <integer> )
-	c-expr( int: "sizeof(OpaqueEventHandlerCall)" );
-end method content-size;
-
-/*
 	<EventQueueRef> 
 */
 
 define functional class <EventQueueRef>  (<statically-typed-pointer>)
 end class <EventQueueRef> ; 
-
-/*
-	content-size
-	The size of object a <EventQueueRef>  contains
-*/
-
-define method content-size( cls == <EventQueueRef>  )
-=>( result :: <integer> )
-	c-expr( int: "sizeof(OpaqueEventQueue)" );
-end method content-size;
 
 /*
 	<EventLoopTimerRef>
@@ -120,15 +66,7 @@ end method content-size;
 define functional class <EventLoopTimerRef> (<statically-typed-pointer>)
 end class;
 
-/*
-	content-size
-	The size of object a <EventLoopTimerRef> contains
-*/
-
-define method content-size( cls == <EventLoopTimerRef> )
-=>( result :: <integer> )
-	c-expr( int: "sizeof(EventLoopTimer)" );
-end method content-size;
+// We can sizeof() this
 
 /*
 	<EventTypeSpec>
@@ -191,6 +129,12 @@ end method event-type-spec-eventKind-setter;
 
 
 // Values
+
+// Errors
+
+define constant $eventNotHandledErr :: <integer> = c-expr( int: "eventNotHandledErr" );
+
+// Types
   
 // Mouse Buttons
 
@@ -272,15 +216,242 @@ define constant $kEventPosToOffset :: <integer> = 4;
 define constant $kEventShowHideBottomWindow :: <integer> = 5;
 define constant $kEventGetSelectedText :: <integer> = 6;
 
+// Windows
 
+define constant $kEventWindowUpdate :: <integer> = 1;
+define constant $kEventWindowDrawContent :: <integer> = 2;
+define constant $kEventWindowActivated :: <integer> = 5;
+define constant $kEventWindowDeactivated :: <integer> = 6;
+define constant $kEventWindowGetClickActivation :: <integer> = 7;
+define constant $kEventWindowShowing :: <integer> = 22;
+define constant $kEventWindowHiding :: <integer> = 23;
+define constant $kEventWindowShown :: <integer> = 24;
+define constant $kEventWindowHidden :: <integer> = 25;
+define constant $kEventWindowBoundsChanging :: <integer> = 26;
+define constant $kEventWindowBoundsChanged :: <integer> = 27;
+define constant $kEventWindowResizeStarted :: <integer> = 28;
+define constant $kEventWindowResizeCompleted :: <integer> = 29;
+define constant $kEventWindowDragStarted :: <integer> = 30;
+define constant $kEventWindowDragCompleted :: <integer> = 31;
+define constant $kWindowBoundsChangeUserDrag :: <integer> = 1;			// Are these 4 right?
+define constant $kWindowBoundsChangeUserResize :: <integer> = 2;
+define constant $kWindowBoundsChangeSizeChanged :: <integer> = 4;
+define constant $kWindowBoundsChangeOriginChanged :: <integer> = 8;
+define constant $kEventWindowClickDragRgn :: <integer> = 32;
+define constant $kEventWindowClickResizeRgn :: <integer> = 33;
+define constant $kEventWindowClickCollapseRgn :: <integer> = 34;
+define constant $kEventWindowClickCloseRgn :: <integer> = 35;
+define constant $kEventWindowClickZoomRgn :: <integer> = 36;
+define constant $kEventWindowClickContentRgn :: <integer> = 37;
+define constant $kEventWindowClickProxyIconRgn :: <integer> = 38;
+define constant $kEventWindowCursorChange :: <integer> = 40;
+define constant $kEventWindowCollapse :: <integer> = 66;
+define constant $kEventWindowCollapsed :: <integer> = 67;
+define constant $kEventWindowCollapseAll :: <integer> = 68;
+define constant $kEventWindowExpand :: <integer> = 69;
+define constant $kEventWindowExpanded :: <integer> = 70;
+define constant $kEventWindowExpandAll :: <integer> = 71;
+define constant $kEventWindowClose :: <integer> = 72;
+define constant $kEventWindowClosed :: <integer> = 73;
+define constant $kEventWindowCloseAll :: <integer> = 74;
+define constant $kEventWindowZoom :: <integer> = 75;
+define constant $kEventWindowZoomed :: <integer> = 76;
+define constant $kEventWindowZoomAll :: <integer> = 77;
+define constant $kEventWindowContextualMenuSelect :: <integer> = 78;
+define constant $kEventWindowPathSelect :: <integer> = 79;
+define constant $kEventWindowGetIdealSize :: <integer> = 80;
+define constant $kEventWindowGetMinimumSize :: <integer> = 81;
+define constant $kEventWindowGetMaximumSize :: <integer> = 82;
+define constant $kEventWindowConstrain :: <integer> = 83;
+define constant $kEventWindowHandleContentClick :: <integer> = 85;
+define constant $kEventWindowProxyBeginDrag :: <integer> = 128;
+define constant $kEventWindowProxyEndDrag :: <integer> = 129;
+define constant $kEventWindowFocusAcquired :: <integer> = 200;
+define constant $kEventWindowFocusRelinquish :: <integer> = 201;
+define constant $kEventWindowDrawFrame :: <integer> = 1000;
+define constant $kEventWindowDrawPart :: <integer> = 1001;
+define constant $kEventWindowGetRegion :: <integer> = 1002;
+define constant $kEventWindowHitTest :: <integer> = 1003;
+define constant $kEventWindowInit :: <integer> = 1004;
+define constant $kEventWindowDispose :: <integer> = 1005;
+define constant $kEventWindowDragHilite :: <integer> = 1006;
+define constant $kEventWindowModified :: <integer> = 1007;
+define constant $kEventWindowSetupProxyDragImage :: <integer> = 1008;
+define constant $kEventWindowStateChanged :: <integer> = 1009;
+define constant $kEventWindowMeasureTitle :: <integer> = 1010;
+define constant $kEventWindowDrawGrowBox :: <integer> = 1011;
+define constant $kEventWindowGetGrowImageRegion :: <integer> = 1012;
+define constant $kEventWindowPaint :: <integer> = 1013;
+  
+    
+/*
+	Event Parameters
+*/
+
+define constant $kEventParamDirectObject :: <integer> = c-expr(int: "kEventParamDirectObject");
+define constant $kEventParamWindowRef :: <integer> = c-expr(int: "kEventParamWindowRef");
+define constant $kEventParamGrafPort :: <integer> = c-expr(int: "kEventParamGrafPort");
+define constant $kEventParamDragRef :: <integer> = c-expr(int: "kEventParamDragRef");
+define constant $kEventParamMenuRef :: <integer> = c-expr(int: "kEventParamMenuRef");
+define constant $kEventParamEventRef :: <integer> = c-expr(int: "kEventParamEventRef");
+define constant $kEventParamControlRef :: <integer> = c-expr(int: "kEventParamControlRef");
+define constant $kEventParamRgnHandle :: <integer> = c-expr(int: "kEventParamRgnHandle");
+define constant $kEventParamEnabled :: <integer> = c-expr(int: "kEventParamEnabled");
+define constant $kEventParamDimensions :: <integer> = c-expr(int: "kEventParamDimensions");
+define constant $kEventParamAvailableBounds :: <integer> = c-expr(int: "kEventParamAvailableBounds");
+define constant $kEventParamAEEventID :: <integer> = c-expr(int: "kEventParamAEEventID");
+define constant $kEventParamAEEventClass :: <integer> = c-expr(int: "kEventParamAEEventClass");
+define constant $kEventParamCGContextRef :: <integer> = c-expr(int: "kEventParamCGContextRef");
+define constant $typeWindowRef :: <integer> = c-expr(int: "typeWindowRef");
+define constant $typeGrafPtr :: <integer> = c-expr(int: "typeGrafPtr");
+define constant $typeGWorldPtr :: <integer> = c-expr(int: "typeGWorldPtr");
+define constant $typeDragRef :: <integer> = c-expr(int: "typeDragRef");
+define constant $typeMenuRef :: <integer> = c-expr(int: "typeMenuRef");
+define constant $typeControlRef :: <integer> = c-expr(int: "typeControlRef");
+define constant $typeCollection :: <integer> = c-expr(int: "typeCollection");
+define constant $typeQDRgnHandle :: <integer> = c-expr(int: "typeQDRgnHandle");
+define constant $typeOSStatus :: <integer> = c-expr(int: "typeOSStatus");
+define constant $typeCGContextRef :: <integer> = c-expr(int: "typeCGContextRef");
+define constant $kEventParamMouseLocation :: <integer> = c-expr(int: "kEventParamMouseLocation");
+define constant $kEventParamMouseButton :: <integer> = c-expr(int: "kEventParamMouseButton");
+define constant $kEventParamClickCount :: <integer> = c-expr(int: "kEventParamClickCount");
+define constant $kEventParamMouseWheelAxis :: <integer> = c-expr(int: "kEventParamMouseWheelAxis");
+define constant $kEventParamMouseWheelDelta :: <integer> = c-expr(int: "kEventParamMouseWheelDelta");
+define constant $kEventParamMouseDelta :: <integer> = c-expr(int: "kEventParamMouseDelta");
+define constant $typeMouseButton :: <integer> = c-expr(int: "typeMouseButton");
+define constant $typeMouseWheelAxis :: <integer> = c-expr(int: "typeMouseWheelAxis");
+define constant $kEventParamKeyCode :: <integer> = c-expr(int: "kEventParamKeyCode");
+define constant $kEventParamKeyMacCharCodes :: <integer> = c-expr(int: "kEventParamKeyMacCharCodes");
+define constant $kEventParamKeyModifiers :: <integer> = c-expr(int: "kEventParamKeyModifiers");
+define constant $kEventParamKeyUnicodes :: <integer> = c-expr(int: "kEventParamKeyUnicodes");
+define constant $typeEventHotKeyID :: <integer> = c-expr(int: "typeEventHotKeyID");
+define constant $kEventParamTextInputSendRefCon :: <integer> = c-expr(int: "kEventParamTextInputSendRefCon");
+define constant $kEventParamTextInputSendComponentInstance :: <integer> = c-expr(int: "kEventParamTextInputSendComponentInstance");
+define constant $kEventParamTextInputSendSLRec :: <integer> = c-expr(int: "kEventParamTextInputSendSLRec");
+define constant $kEventParamTextInputReplySLRec :: <integer> = c-expr(int: "kEventParamTextInputReplySLRec");
+define constant $kEventParamTextInputSendText :: <integer> = c-expr(int: "kEventParamTextInputSendText");
+define constant $kEventParamTextInputReplyText :: <integer> = c-expr(int: "kEventParamTextInputReplyText");
+define constant $kEventParamTextInputSendUpdateRng :: <integer> = c-expr(int: "kEventParamTextInputSendUpdateRng");
+define constant $kEventParamTextInputSendHiliteRng :: <integer> = c-expr(int: "kEventParamTextInputSendHiliteRng");
+define constant $kEventParamTextInputSendClauseRng :: <integer> = c-expr(int: "kEventParamTextInputSendClauseRng");
+define constant $kEventParamTextInputSendPinRng :: <integer> = c-expr(int: "kEventParamTextInputSendPinRng");
+define constant $kEventParamTextInputSendFixLen :: <integer> = c-expr(int: "kEventParamTextInputSendFixLen");
+define constant $kEventParamTextInputSendLeadingEdge :: <integer> = c-expr(int: "kEventParamTextInputSendLeadingEdge");
+define constant $kEventParamTextInputReplyLeadingEdge :: <integer> = c-expr(int: "kEventParamTextInputReplyLeadingEdge");
+define constant $kEventParamTextInputSendTextOffset :: <integer> = c-expr(int: "kEventParamTextInputSendTextOffset");
+define constant $kEventParamTextInputReplyTextOffset :: <integer> = c-expr(int: "kEventParamTextInputReplyTextOffset");
+define constant $kEventParamTextInputReplyRegionClass :: <integer> = c-expr(int: "kEventParamTextInputReplyRegionClass");
+define constant $kEventParamTextInputSendCurrentPoint :: <integer> = c-expr(int: "kEventParamTextInputSendCurrentPoint");
+define constant $kEventParamTextInputSendDraggingMode :: <integer> = c-expr(int: "kEventParamTextInputSendDraggingMode");
+define constant $kEventParamTextInputReplyPoint :: <integer> = c-expr(int: "kEventParamTextInputReplyPoint");
+define constant $kEventParamTextInputReplyFont :: <integer> = c-expr(int: "kEventParamTextInputReplyFont");
+define constant $kEventParamTextInputReplyPointSize :: <integer> = c-expr(int: "kEventParamTextInputReplyPointSize");
+define constant $kEventParamTextInputReplyLineHeight :: <integer> = c-expr(int: "kEventParamTextInputReplyLineHeight");
+define constant $kEventParamTextInputReplyLineAscent :: <integer> = c-expr(int: "kEventParamTextInputReplyLineAscent");
+define constant $kEventParamTextInputReplyTextAngle :: <integer> = c-expr(int: "kEventParamTextInputReplyTextAngle");
+define constant $kEventParamTextInputSendShowHide :: <integer> = c-expr(int: "kEventParamTextInputSendShowHide");
+define constant $kEventParamTextInputReplyShowHide :: <integer> = c-expr(int: "kEventParamTextInputReplyShowHide");
+define constant $kEventParamTextInputSendKeyboardEvent :: <integer> = c-expr(int: "kEventParamTextInputSendKeyboardEvent");
+define constant $kEventParamTextInputSendTextServiceEncoding :: <integer> = c-expr(int: "kEventParamTextInputSendTextServiceEncoding");
+define constant $kEventParamTextInputSendTextServiceMacEncoding :: <integer> = c-expr(int: "kEventParamTextInputSendTextServiceMacEncoding");
+define constant $kEventParamHICommand :: <integer> = c-expr(int: "kEventParamHICommand");
+define constant $typeHICommand :: <integer> = c-expr(int: "typeHICommand");
+define constant $kEventParamWindowFeatures :: <integer> = c-expr(int: "kEventParamWindowFeatures");
+define constant $kEventParamWindowDefPart :: <integer> = c-expr(int: "kEventParamWindowDefPart");
+define constant $kEventParamCurrentBounds :: <integer> = c-expr(int: "kEventParamCurrentBounds");
+define constant $kEventParamOriginalBounds :: <integer> = c-expr(int: "kEventParamOriginalBounds");
+define constant $kEventParamPreviousBounds :: <integer> = c-expr(int: "kEventParamPreviousBounds");
+define constant $kEventParamClickActivation :: <integer> = c-expr(int: "kEventParamClickActivation");
+define constant $kEventParamWindowRegionCode :: <integer> = c-expr(int: "kEventParamWindowRegionCode");
+define constant $kEventParamWindowDragHiliteFlag :: <integer> = c-expr(int: "kEventParamWindowDragHiliteFlag");
+define constant $kEventParamWindowModifiedFlag :: <integer> = c-expr(int: "kEventParamWindowModifiedFlag");
+define constant $kEventParamWindowProxyGWorldPtr :: <integer> = c-expr(int: "kEventParamWindowProxyGWorldPtr");
+define constant $kEventParamWindowProxyImageRgn :: <integer> = c-expr(int: "kEventParamWindowProxyImageRgn");
+define constant $kEventParamWindowProxyOutlineRgn :: <integer> = c-expr(int: "kEventParamWindowProxyOutlineRgn");
+define constant $kEventParamWindowStateChangedFlags :: <integer> = c-expr(int: "kEventParamWindowStateChangedFlags");
+define constant $kEventParamWindowTitleFullWidth :: <integer> = c-expr(int: "kEventParamWindowTitleFullWidth");
+define constant $kEventParamWindowTitleTextWidth :: <integer> = c-expr(int: "kEventParamWindowTitleTextWidth");
+define constant $kEventParamWindowGrowRect :: <integer> = c-expr(int: "kEventParamWindowGrowRect");
+define constant $kEventParamAttributes :: <integer> = c-expr(int: "kEventParamAttributes");
+define constant $typeWindowRegionCode :: <integer> = c-expr(int: "typeWindowRegionCode");
+define constant $typeWindowDefPartCode :: <integer> = c-expr(int: "typeWindowDefPartCode");
+define constant $typeClickActivationResult :: <integer> = c-expr(int: "typeClickActivationResult");
+define constant $kEventParamControlPart :: <integer> = c-expr(int: "kEventParamControlPart");
+define constant $kEventParamInitCollection :: <integer> = c-expr(int: "kEventParamInitCollection");
+define constant $kEventParamControlMessage :: <integer> = c-expr(int: "kEventParamControlMessage");
+define constant $kEventParamControlParam :: <integer> = c-expr(int: "kEventParamControlParam");
+define constant $kEventParamControlResult :: <integer> = c-expr(int: "kEventParamControlResult");
+define constant $kEventParamControlRegion :: <integer> = c-expr(int: "kEventParamControlRegion");
+define constant $kEventParamControlAction :: <integer> = c-expr(int: "kEventParamControlAction");
+define constant $kEventParamControlIndicatorDragConstraint :: <integer> = c-expr(int: "kEventParamControlIndicatorDragConstraint");
+define constant $kEventParamControlIndicatorRegion :: <integer> = c-expr(int: "kEventParamControlIndicatorRegion");
+define constant $kEventParamControlIsGhosting :: <integer> = c-expr(int: "kEventParamControlIsGhosting");
+define constant $kEventParamControlIndicatorOffset :: <integer> = c-expr(int: "kEventParamControlIndicatorOffset");
+define constant $kEventParamControlClickActivationResult :: <integer> = c-expr(int: "kEventParamControlClickActivationResult");
+define constant $kEventParamControlSubControl :: <integer> = c-expr(int: "kEventParamControlSubControl");
+define constant $kEventParamControlOptimalBounds :: <integer> = c-expr(int: "kEventParamControlOptimalBounds");
+define constant $kEventParamControlOptimalBaselineOffset :: <integer> = c-expr(int: "kEventParamControlOptimalBaselineOffset");
+define constant $kEventParamControlDataTag :: <integer> = c-expr(int: "kEventParamControlDataTag");
+define constant $kEventParamControlDataBuffer :: <integer> = c-expr(int: "kEventParamControlDataBuffer");
+define constant $kEventParamControlDataBufferSize :: <integer> = c-expr(int: "kEventParamControlDataBufferSize");
+define constant $kEventParamControlDrawDepth :: <integer> = c-expr(int: "kEventParamControlDrawDepth");
+define constant $kEventParamControlDrawInColor :: <integer> = c-expr(int: "kEventParamControlDrawInColor");
+define constant $kEventParamControlFeatures :: <integer> = c-expr(int: "kEventParamControlFeatures");
+define constant $kEventParamControlPartBounds :: <integer> = c-expr(int: "kEventParamControlPartBounds");
+define constant $kEventParamControlOriginalOwningWindow :: <integer> = c-expr(int: "kEventParamControlOriginalOwningWindow");
+define constant $kEventParamControlCurrentOwningWindow :: <integer> = c-expr(int: "kEventParamControlCurrentOwningWindow");
+define constant $typeControlActionUPP :: <integer> = c-expr(int: "typeControlActionUPP");
+define constant $typeIndicatorDragConstraint :: <integer> = c-expr(int: "typeIndicatorDragConstraint");
+define constant $typeControlPartCode :: <integer> = c-expr(int: "typeControlPartCode");
+define constant $kEventParamCurrentMenuTrackingMode :: <integer> = c-expr(int: "kEventParamCurrentMenuTrackingMode");
+define constant $kEventParamNewMenuTrackingMode :: <integer> = c-expr(int: "kEventParamNewMenuTrackingMode");
+define constant $kEventParamMenuFirstOpen :: <integer> = c-expr(int: "kEventParamMenuFirstOpen");
+define constant $kEventParamMenuItemIndex :: <integer> = c-expr(int: "kEventParamMenuItemIndex");
+define constant $kEventParamMenuCommand :: <integer> = c-expr(int: "kEventParamMenuCommand");
+define constant $kEventParamEnableMenuForKeyEvent :: <integer> = c-expr(int: "kEventParamEnableMenuForKeyEvent");
+define constant $kEventParamMenuEventOptions :: <integer> = c-expr(int: "kEventParamMenuEventOptions");
+define constant $typeMenuItemIndex :: <integer> = c-expr(int: "typeMenuItemIndex");
+define constant $typeMenuCommand :: <integer> = c-expr(int: "typeMenuCommand");
+define constant $typeMenuTrackingMode :: <integer> = c-expr(int: "typeMenuTrackingMode");
+define constant $typeMenuEventOptions :: <integer> = c-expr(int: "typeMenuEventOptions");
+define constant $kEventParamProcessID :: <integer> = c-expr(int: "kEventParamProcessID");
+define constant $kEventParamLaunchRefCon :: <integer> = c-expr(int: "kEventParamLaunchRefCon");
+define constant $kEventParamLaunchErr :: <integer> = c-expr(int: "kEventParamLaunchErr");
+define constant $kEventParamTabletPointerRec :: <integer> = c-expr(int: "kEventParamTabletPointerRec");
+define constant $kEventParamTabletProximityRec :: <integer> = c-expr(int: "kEventParamTabletProximityRec");
+define constant $typeTabletPointerRec :: <integer> = c-expr(int: "typeTabletPointerRec");
+define constant $typeTabletProximityRec :: <integer> = c-expr(int: "typeTabletProximityRec");
+
+    
+    
+    
 // Methods
+
+/*
+		NewEventHandlerUPP
+*/
+
+define method NewEventHandlerUPP( userRoutine )	//  :: <callback-function>
+=> ( UPP :: <EventHandlerUPP> )
+	let result = call-out( "NewEventHandlerUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <EventHandlerUPP>, pointer: result );
+end method NewEventHandlerUPP;
+
+/*
+		DisposeEventHandlerUPP
+*/
+
+define method DisposeEventHandlerUPP( userUPP :: <EventHandlerUPP> )
+=> ()
+	call-out( "DisposeEventHandlerUPP", void:, ptr: userUPP.raw-value );
+end method DisposeEventHandlerUPP;
 
 /*
     RunApplicationEventLoop
 */
 
 define method RunApplicationEventLoop() => ()
-    call-out( void:, "RunApplicationEventLoop" );
+    call-out( "RunApplicationEventLoop", void: );
 end method RunApplicationEventLoop;
 
 /*
@@ -302,21 +473,21 @@ end method InstallWindowEventHandler;
 define method AddEventTypesToHandler( inHandlerRef :: <EventHandlerRef>, inNumTypes :: <integer>,
                                       inList :: type-union( <c-vector>, <EventTypeSpec> ) ) // <EventTypeSpec*>
 =>( result :: <OSStatus> )
-  let result = call-out( int:, "AddEventTypesToHandler", ptr: inHandlerRef.raw-value, int: inNumTypes,
+  let result = call-out( "AddEventTypesToHandler", int:, ptr: inHandlerRef.raw-value, int: inNumTypes,
                          ptr: inList.raw-value);
   as( <OSStatus>, result );
 end method AddEventTypesToHandler;
  
 define method CallNextEventHandler( inCallRef :: <EventHandlerCallRef>, inEvent :: <EventRef> )
 =>( result :: <OSStatus> )
-  let result = call-out( int:, "CallNextEventHandler", ptr: inCallRef.raw-value, ptr: inEvent.raw-value );
+  let result = call-out( "CallNextEventHandler", int:, ptr: inCallRef.raw-value, ptr: inEvent.raw-value );
   as( <OSStatus>, result );
 end method CallNextEventHandler;
 
 define method ConvertEventRefToEventRecord( inEvent :: <EventRef> )
 =>( outEvent :: <EventRecord>, result :: <boolean> )
   let event-ptr :: <Handle> = make( <Handle> );
-  let result = call-out( int:, "ConvertEventRefToEventRecord", ptr: inEvent.raw-value, ptr: event-ptr.raw-value );
+  let result = call-out( "ConvertEventRefToEventRecord", int:, ptr: inEvent.raw-value, ptr: event-ptr.raw-value );
   values( make( <EventRecord>, pointer: event-ptr.raw-value ),
           if( result = 0 )
             #f;
@@ -327,55 +498,59 @@ end method ConvertEventRefToEventRecord;
 
 define method FlushEventQueue( inQueue :: <EventQueueRef> )
 =>( result :: <OSStatus> )
-  let result = call-out( int:, "FlushEventQueue", ptr: inQueue.raw-value );
+  let result = call-out( "FlushEventQueue", int:, ptr: inQueue.raw-value );
   as( <OSStatus>, result );
 end method FlushEventQueue;
 
 define method GetEventClass( inEvent :: <EventRef> )
 =>( result :: <integer> )
-  call-out( int:, "GetEventClass", ptr: inEvent.raw-value );
+  call-out( "GetEventClass", int:, ptr: inEvent.raw-value );
 end method GetEventClass;
 
 define method GetEventKind( inEvent :: <EventRef> )
 =>( result :: <integer> )
-  call-out( int:, "GetEventKind", ptr: inEvent.raw-value );
+  call-out( "GetEventKind", int:, ptr: inEvent.raw-value );
 end method GetEventKind;
 
-//OSStatus GetEventParameter(EventRef inEvent,
-// EventParamName inName,
-// EventParamType inDesiredType,
-// EventParamType * outActualType, / * can be NULL * /
-// integer inBufferSize,
-// integer * outActualSize, / * can be NULL * /
-// const void * ioBuffer);
+define method GetEventParameter( inEvent :: <EventRef>, 
+																 inName :: <integer>, 
+																 inDesiredType :: <integer>,
+																 inBufferSize :: <integer>,
+																 ioBuffer :: <statically-typed-pointer> )
+=> ( result :: <OSStatus> )
+	let result = call-out( "GetEventParameter", int:, ptr: inEvent.raw-value,
+												 int: inName, int: inDesiredType, ptr: $NULL,
+												 int: inBufferSize, ptr: $NULL, ptr: ioBuffer.raw-value );
+	as( <OSStatus>, result );
+end method GetEventParameter;
 
 define method GetMainEventQueue()
 =>( result :: <EventQueueRef> )
-  let result = call-out( ptr:, "GetMainEventQueue" );
+  let result = call-out( "GetMainEventQueue", ptr: );
   make( <EventQueueRef>, pointer: result );
 end method GetMainEventQueue;
 
 define method GetMenuEventTarget( inMenu :: <MenuRef> )
 =>( result :: <EventTargetRef> )
-  let result = call-out( ptr:, "GetMenuEventTarget", ptr: inMenu.raw-value );
+  let result = call-out( "GetMenuEventTarget", ptr:, ptr: inMenu.raw-value );
   make( <EventTargetRef>, pointer: result );
 end method GetMenuEventTarget;
 
 define method GetMainEventLoop()
 =>( result :: <EventLoopRef> )
-  let result = call-out( ptr:, "GetMainEventLoop" );
+  let result = call-out( "GetMainEventLoop", ptr: );
   make( <EventLoopRef>, pointer: result );
 end method GetMainEventLoop;
 
 define method GetUserFocusEventTarget()
 =>( result :: <EventTargetRef> )
-  let result = call-out( ptr:, "GetUserFocusEventTarget" );
+  let result = call-out( "GetUserFocusEventTarget", ptr: );
   make( <EventTargetRef>, pointer: result );
 end method GetUserFocusEventTarget;
 
 define method GetWindowEventTarget( inWindow :: <WindowRef> )
 =>( result :: <EventTargetRef> )
-  let result = call-out( ptr:, "GetWindowEventTarget", ptr: inWindow.raw-value );
+  let result = call-out( "GetWindowEventTarget", ptr:, ptr: inWindow.raw-value );
   make( <EventTargetRef>, pointer: result );
 end method GetWindowEventTarget;
 
@@ -386,7 +561,8 @@ define method InstallEventHandler( inTarget :: <EventTargetRef>,
                                     inUserData :: <statically-typed-pointer> )
 =>( result :: <OSStatus>, outRef :: <EventHandlerRef> )
   let temp :: <handle> = make( <Handle> );
-  let result = call-out( int:, "InstallEventHandler", ptr: inTarget.raw-value, ptr: inHandler.raw-value,
+  let result = call-out( "InstallEventHandler", int:, ptr: inTarget.raw-value, ptr: inHandler.raw-value,
+  												int: inNumTypes,
                           ptr: inList.raw-value, ptr: inUserData.raw-value, ptr: temp.raw-value );
   values( as( <OSStatus>, result ), make( <EventHandlerRef>, pointer: temp.raw-value ) );
 end method InstallEventHandler; 
@@ -402,19 +578,31 @@ OSStatus InstallEventLoopTimer(EventLoopRef inEventLoop,
  
 define method QuitEventLoop( inEventLoop :: <EventLoopRef> )
 =>( result :: <OSStatus> )
-  let result = call-out( int:, "QuitEventLoop", ptr: inEventLoop.raw-value );
+  let result = call-out( "QuitEventLoop", int:, ptr: inEventLoop.raw-value );
   as( <OSStatus>, result );
 end method QuitEventLoop;
 
 define method RemoveEventHandler( inHandlerRef :: <EventHandlerRef> )
 =>( result :: <OSStatus> )
-  let result = call-out( int:, "RemoveEventHandler", ptr: inHandlerRef.raw-value );
+  let result = call-out( "RemoveEventHandler", int:, ptr: inHandlerRef.raw-value );
   as( <OSStatus>, result );
 end method RemoveEventHandler;
 
 
 define method RemoveEventLoopTimer( inTimer :: <EventLoopTimerRef> )
 =>( result :: <OSStatus> )
-  let result = call-out( int:, "RemoveEventLoopTimer", ptr: inTimer.raw-value );
+  let result = call-out( "RemoveEventLoopTimer", int:, ptr: inTimer.raw-value );
   as( <OSStatus>, result );
 end method RemoveEventLoopTimer;
+
+// Get/Set UserFocus
+
+define method GetUserFocusWindow()
+=> ( result :: <WindowRef> )
+	make( <WindowRef>, pointer: call-out( "GetUserFocusWindow", ptr: ) );
+end method GetUserFocusWindow;
+
+define method  SetUserFocusWindow( inWindow :: <WindowRef> )
+=> ( result :: <OSStatus> )
+	as( <OSStatus>, call-out( "SetUserFocusWindow", int:, ptr: inWindow.raw-value ) );
+end method SetUserFocusWindow;

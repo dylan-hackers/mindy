@@ -8,9 +8,8 @@ memory-exports.dylan
 memory.dylan
 files-exports.dylan
 files.dylan
-carbon-quickdraw-exports.dylan
+quickdraw-exports.dylan
 quickdraw.dylan
-carbon-quickdraw.dylan
 gworlds.dylan
 windows-exports.dylan
 windows.dylan

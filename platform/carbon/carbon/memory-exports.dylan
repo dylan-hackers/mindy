@@ -14,6 +14,7 @@ define module memory
 	export	// Memory Manager
 			$nil, $NULL,
 			<Ptr>, 	NewPtr, DisposePtr, 
-			<Handle>, NewHandle, DisposeHandle;
+			<Handle>, NewHandle, DisposeHandle,
+			MemError;
 			
 end module memory;

@@ -177,3 +177,10 @@ define method finalize( handle :: <Handle> )
   DisposeHandle( handle );
 end method finalize;
 */
+
+// MemError
+
+define method MemError()
+=> ( result :: <OSErr> )
+	as( <OSErr>, call-out( "MemError", int: ) );
+end method MemError;

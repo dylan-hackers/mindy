@@ -52,6 +52,83 @@ define constant $floatSideGrowProc			= 1995;
 define constant $floatSideZoomProc			= 1997;
 define constant $floatSideZoomGrowProc		= 1999;
 
+/*
+		Window Classes
+*/
+
+define constant $kAlertWindowClass :: <integer> = c-expr(int: "kAlertWindowClass");
+define constant $kMovableAlertWindowClass :: <integer> = c-expr(int: "kMovableAlertWindowClass");
+define constant $kModalWindowClass :: <integer> = c-expr(int: "kModalWindowClass");
+define constant $kMovableModalWindowClass :: <integer> = c-expr(int: "kMovableModalWindowClass");
+define constant $kFloatingWindowClass :: <integer> = c-expr(int: "kFloatingWindowClass");
+define constant $kDocumentWindowClass :: <integer> = c-expr(int: "kDocumentWindowClass");
+define constant $kUtilityWindowClass :: <integer> = c-expr(int: "kUtilityWindowClass");
+define constant $kHelpWindowClass :: <integer> = c-expr(int: "kHelpWindowClass");
+define constant $kSheetWindowClass :: <integer> = c-expr(int: "kSheetWindowClass");
+define constant $kToolbarWindowClass :: <integer> = c-expr(int: "kToolbarWindowClass");
+define constant $kPlainWindowClass :: <integer> = c-expr(int: "kPlainWindowClass");
+
+
+
+/*
+		Window Attributes
+*/
+
+define constant $kWindowNoAttributes :: <integer> = c-expr(int: "kWindowNoAttributes");
+define constant $kWindowCloseBoxAttribute :: <integer> = c-expr(int: "kWindowCloseBoxAttribute");
+define constant $kWindowHorizontalZoomAttribute :: <integer> = c-expr(int: "kWindowHorizontalZoomAttribute");
+define constant $kWindowVerticalZoomAttribute :: <integer> = c-expr(int: "kWindowVerticalZoomAttribute");
+define constant $kWindowFullZoomAttribute :: <integer> = c-expr(int: "kWindowFullZoomAttribute");
+define constant $kWindowCollapseBoxAttribute :: <integer> = c-expr(int: "kWindowCollapseBoxAttribute");
+define constant $kWindowResizableAttribute :: <integer> = c-expr(int: "kWindowResizableAttribute");
+define constant $kWindowSideTitlebarAttribute :: <integer> = c-expr(int: "kWindowSideTitlebarAttribute");
+define constant $kWindowNoUpdatesAttribute :: <integer> = c-expr(int: "kWindowNoUpdatesAttribute");
+define constant $kWindowNoActivatesAttribute :: <integer> = c-expr(int: "kWindowNoActivatesAttribute");
+define constant $kWindowOpaqueForEventsAttribute :: <integer> = c-expr(int: "kWindowOpaqueForEventsAttribute");
+define constant $kWindowNoShadowAttribute :: <integer> = c-expr(int: "kWindowNoShadowAttribute");
+define constant $kWindowHideOnSuspendAttribute :: <integer> = c-expr(int: "kWindowHideOnSuspendAttribute");
+define constant $kWindowStandardHandlerAttribute :: <integer> = c-expr(int: "kWindowStandardHandlerAttribute");
+define constant $kWindowHideOnFullScreenAttribute :: <integer> = c-expr(int: "kWindowHideOnFullScreenAttribute");
+define constant $kWindowInWindowMenuAttribute :: <integer> = c-expr(int: "kWindowInWindowMenuAttribute");
+define constant $kWindowLiveResizeAttribute :: <integer> = c-expr(int: "kWindowLiveResizeAttribute");
+define constant $kWindowStandardDocumentAttributes :: <integer> = c-expr(int: "kWindowStandardDocumentAttributes");
+define constant $kWindowStandardFloatingAttributes :: <integer> = c-expr(int: "kWindowStandardFloatingAttributes");
+
+
+
+/*
+	WindowPart codes.
+*/
+
+define constant $inDesk :: <integer> = 0;
+define constant $inMenuBar :: <integer> = 1;
+define constant $inSysWindow :: <integer> = 2;
+define constant $inContent :: <integer> = 3;
+define constant $inDrag :: <integer> = 4;
+define constant $inGrow :: <integer> = 5;
+define constant $inGoAway :: <integer> = 6;
+define constant $inZoomIn :: <integer> = 7;
+define constant $inZoomOut :: <integer> = 8;
+
+
+/*
+	Window Regions.
+*/
+
+define constant $kWindowTitleBarRgn :: <integer>            = 0;
+define constant $kWindowTitleTextRgn :: <integer>           = 1;
+define constant $kWindowCloseBoxRgn :: <integer>            = 2;
+define constant $kWindowZoomBoxRgn :: <integer>             = 3;
+define constant $kWindowDragRgn :: <integer>                = 5;
+define constant $kWindowGrowRgn :: <integer>                = 6;
+define constant $kWindowCollapseBoxRgn :: <integer>         = 7;
+define constant $kWindowTitleProxyIconRgn :: <integer>      = 8;    /* Mac OS 8.5 forward*/
+define constant $kWindowStructureRgn :: <integer>           = 32;
+define constant $kWindowContentRgn :: <integer>             = 33;   /* Content area of the window; empty when the window is collapsed*/
+define constant $kWindowUpdateRgn :: <integer>              = 34;   /* Carbon forward*/
+define constant $kWindowOpaqueRgn :: <integer>              = 35;   /* Mac OS X: Area of window considered to be opaque. Only valid for windows with alpha channels.*/
+define constant $kWindowGlobalPortRgn :: <integer>          = 40;
+
 
 /*
 	FrontWindow
@@ -148,7 +225,7 @@ end method GetNewWindow;
 
 /*
 	NewWindow
-	IMPORTANT:	We can't pass -1 as a pointer, the GC chokes on it, 
+	IMPORTANT:	We can't pass -1 as a pointer, the Classic MacOS GC chokes on it, 
 				so pass $NULL or a valid <WindowRef>.
 */
 
@@ -226,21 +303,6 @@ define method FindWindow( point :: <Point> )
 	values( part, win );
 
 end method FindWindow;
-
-
-/*
-	WindowPart codes.
-*/
-
-define constant $inDesk = 0;
-define constant $inMenuBar = 1;
-define constant $inSysWindow = 2;
-define constant $inContent = 3;
-define constant $inDrag = 4;
-define constant $inGrow = 5;
-define constant $inGoAway = 6;
-define constant $inZoomIn = 7;
-define constant $inZoomOut = 8;
 
 
 /*
@@ -398,4 +460,40 @@ define method SetPortWindowPort( window :: <WindowRef> )
 => ()
     call-out( "SetPortWindowPort", void:, ptr: window.raw-value );
     values();
-end method SetPortWindowPort 
+end method SetPortWindowPort; 
+
+
+/*
+	GetWindowFromPort()
+*/
+
+define method GetWindowFromPort( port :: <CGrafPtr> )
+=> ( result :: <WindowRef> )
+	make( <WindowRef>, pointer: call-out( "GetWindowFromPort", ptr:, ptr: port.raw-value ) );
+end method GetWindowFromPort;
+
+
+/*
+		CreateNewWindow
+*/
+
+define method CreateNewWindow( windowClass :: <integer>, attributes :: <integer>, bounds :: <Rect> )
+=> ( result :: <OSStatus>, outWindow :: <WindowRef> )
+	let temp :: <Handle> = make( <Handle> );
+	let result = call-out( "CreateNewWindow", int:, int: windowClass, int: attributes,
+												 ptr: bounds.raw-value, ptr: temp.raw-value );
+	values( as(<OSErr>, result), pointer-at( temp, class: <WindowRef>, offset: 0 ) );
+end method CreateNewWindow;
+
+
+/*
+	GetWindowPortBounds
+	Returns GLOBAL bounds
+*/
+
+define method GetWindowPortBounds( ref :: <WindowRef> )
+=>( bounds :: <Rect> )
+	let temp :: <Handle> = make( <Handle> );
+	call-out( "GetWindowPortBounds", int:, ptr: ref.raw-value, ptr: temp.raw-value );
+	pointer-at( temp, class: <Rect>, offset: 0 );
+end method GetWindowPortBounds;

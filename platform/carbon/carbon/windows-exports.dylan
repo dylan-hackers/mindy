@@ -27,8 +27,52 @@ define module windows
 		DragWindow, TrackGoAway, TrackBox, ZoomWindow, GrowWindow, SizeWindow,
 		InvalWindowRect,
 		SetWRefCon, GetWRefCon, SetWindowKind, GetWindowKind,
-                
-                GetWindowPort, SetPortWindowPort;
+		
+		// Incomplete list
+		$kAlertWindowClass,
+		$kMovableAlertWindowClass,
+		$kModalWindowClass,
+		$kMovableModalWindowClass,
+		$kFloatingWindowClass,
+		$kDocumentWindowClass,
+		$kUtilityWindowClass,
+		$kHelpWindowClass,
+		$kSheetWindowClass,
+		$kToolbarWindowClass,
+		$kPlainWindowClass,
+		
+		// Incomplete list
+		$kWindowNoAttributes,
+		$kWindowCloseBoxAttribute,
+		$kWindowHorizontalZoomAttribute,
+		$kWindowVerticalZoomAttribute,
+		$kWindowFullZoomAttribute,
+		$kWindowCollapseBoxAttribute,
+		$kWindowResizableAttribute,
+		$kWindowSideTitlebarAttribute,
+		$kWindowNoUpdatesAttribute,
+		$kWindowNoActivatesAttribute,
+		$kWindowOpaqueForEventsAttribute,
+		$kWindowNoShadowAttribute,
+		$kWindowHideOnSuspendAttribute,
+		$kWindowHideOnSuspendAttribute,
+		$kWindowStandardHandlerAttribute,
+		$kWindowHideOnFullScreenAttribute,
+		$kWindowHideOnFullScreenAttribute,
+		$kWindowInWindowMenuAttribute,
+		$kWindowLiveResizeAttribute,
+		$kWindowStandardDocumentAttributes,
+		$kWindowStandardFloatingAttributes,
+		
+		// Region codes
+		
+		$kWindowTitleBarRgn, $kWindowTitleTextRgn, $kWindowCloseBoxRgn,
+		$kWindowZoomBoxRgn, $kWindowDragRgn, $kWindowGrowRgn, $kWindowCollapseBoxRgn,
+		$kWindowTitleProxyIconRgn, $kWindowStructureRgn, $kWindowContentRgn,
+		$kWindowUpdateRgn, $kWindowOpaqueRgn,$kWindowGlobalPortRgn,
+		
+		CreateNewWindow, GetWindowPort, SetPortWindowPort,
+    GetWindowPortBounds, GetWindowFromPort;
 		
 end module windows;
 

@@ -185,7 +185,6 @@ end method initialize;
 
 /*
 	SetRect
-	Checks whether a <Point> is within a <Rect>
 */
 
 define method SetRect(	rect :: <Rect>, l :: <integer>, t :: <integer>,
@@ -491,6 +490,19 @@ define method ShowCursor()
 end method ShowCursor;
 
 
+define method GetCursor( resource-number :: <integer> )
+=> ( result :: <Handle> )
+	let result = call-out( "GetCursor", ptr:, int: resource-number );
+	make( <Handle>, pointer: result ); 
+end method GetCursor;
+
+
+define method SetCursor( cursor-handle :: <Handle> )
+=> ()
+	call-out( "SetCursor", void:, ptr: cursor-handle.raw-value );
+end method SetCursor;
+
+
 
 /*
 	Fonts
@@ -689,6 +701,16 @@ define method SetOrigin( h :: <integer>, v :: <integer> )
 end method SetOrigin;
 
 /*
+	QDError
+*/
+
+define method QDError()
+=> ( result :: <OSErr> )
+	as( <OSErr>, call-out( "QDError", int: ) );
+end method QDError;
+
+
+/*
     Carbon GrafPort Accessors
     All Carbon ports are GrafPorts
 */
@@ -748,3 +770,66 @@ end method SetPortVisibleRegion;
 //    short                           txSize;                     /* in Carbon use GetPortTextSize or TextSize*/
 //    Fixed                           spExtra;                    /* in Carbon use GetPortSpExtra or SpaceExtra*/
 //    Handle                          picSave;                    /* in Carbon use IsPortPictureBeingDefined*/
+
+
+/*
+    MacOS X Buffering Routines
+*/
+
+/*
+    QDIsPortBuffered
+*/
+
+define method QDIsPortBuffered( port :: <CGrafPtr> )
+=> ( result :: <boolean> )
+   let result = call-out( "QDIsPortBuffered", int:, ptr: port.raw-value );
+    if( result = 0 )
+        #f;
+    else
+        #t;
+    end if;
+end method QDIsPortBuffered;
+
+/*
+    QDIsPortBufferDirty
+*/
+
+define method QDIsPortBufferDirty( port :: <CGrafPtr> )
+=> ( result :: <boolean> )
+   let result = call-out( "QDIsPortBufferDirty", int:, ptr: port.raw-value );
+    if( result = 0 )
+        #f;
+    else
+        #t;
+    end if;
+end method QDIsPortBufferDirty;
+
+/*
+    QDFlushPortBuffer
+*/
+
+define method QDFlushPortBuffer( port :: <CGrafPtr>, region :: <RgnHandle> )
+=> ()
+   call-out( "QDFlushPortBuffer", void:, ptr: port.raw-value, ptr: region.raw-value );
+   values();
+end method QDFlushPortBuffer;
+
+/*
+    QDGetDirtyRegion
+*/
+
+define method QDGetDirtyRegion( port :: <CGrafPtr>, region :: <RgnHandle> )
+=> ( result :: <OSStatus> )
+   let status :: <integer> = call-out( "QDGetDirtyRegion", void:, ptr: port.raw-value, ptr: region.raw-value );
+   as( <OSStatus>, status );
+end method QDGetDirtyRegion;
+
+/*
+    QDSetDirtyRegion
+*/
+
+define method QDSetDirtyRegion( port :: <CGrafPtr>, region :: <RgnHandle> )
+=> ( result :: <OSStatus> )
+   let status :: <integer> = call-out( "QDSetDirtyRegion", void:, ptr: port.raw-value, ptr: region.raw-value );
+   as( <OSStatus>, status );
+end method QDSetDirtyRegion;

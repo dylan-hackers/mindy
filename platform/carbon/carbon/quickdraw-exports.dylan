@@ -34,7 +34,7 @@ define module quickdraw
 		ClipRect, 
 		
 		InitCursor, HideCursor, ShowCursor,
-		ObscureCursor,
+		ObscureCursor, GetCursor, SetCursor,
 		
 		TextSize, TextFont, TextMode,
 		// GetFNum,
@@ -46,8 +46,12 @@ define module quickdraw
 		<GDHandle>, <PixMapHandle>, <GWorldPtr>,
 		NewGWorld, DisposeGWorld, GetGWorld, GetGWorldPixMap,
 		LockPixels, UnlockPixels, GetGWorldDevice, PixMap32Bit,
-                
-                GetPortBounds, SetPortBounds, GetPortVisibleRegion, SetPortVisibleRegion;
+    
+    QDError,
+    
+    GetPortBounds, SetPortBounds, GetPortVisibleRegion, SetPortVisibleRegion,
+    QDIsPortBuffered, QDIsPortBufferDirty, QDFlushPortBuffer, QDGetDirtyRegion, 
+    QDSetDirtyRegion;
 		
 end module quickdraw;
 

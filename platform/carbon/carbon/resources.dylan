@@ -4,6 +4,11 @@ c-include("Carbon.h");
 
 // Resource Manager.
 
+define method ResError()
+=> ( result :: <OSErr> )
+	as( <OSErr>, call-out( "ResError", int: ) );
+end method ResError;
+
 define method GetResource( type :: <OSType>, id :: <integer> )
 => ( result :: <Handle> )
 	call-out( "GetResource", ptr:, int: type, short: id );

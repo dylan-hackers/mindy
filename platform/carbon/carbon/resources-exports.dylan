@@ -13,6 +13,7 @@ define module resources
 	use memory;
 	
 	export	// Resource Manager.
+		ResError,
 		GetResource, ReleaseResource;
 		
 end module resources;
