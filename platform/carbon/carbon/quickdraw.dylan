@@ -254,13 +254,13 @@ end class;
 	Gets the bounding <Rect> of a bitmap
 */
 
-define method bounds (bitmap :: <BitMap>) 
+define method GetPixBounds (bitmap :: <BitMap>) 
 => (result :: <Rect>);
 	let r :: <Rect> = make( <Rect> );
         
 	call-out( "GetPixBounds", ptr:, ptr: bitmap.raw-value, ptr: r.raw-value );
         r;
-end method bounds;
+end method GetPixBounds;
 
 
 /*
@@ -294,6 +294,12 @@ end method content-size;*/
 	make( <BitMap>, pointer: qdg + 80);
 end method;*/
 
+define method GetQDGlobalsScreenBits()
+=> (screenBits :: <BitMap>)
+  let temp :: <Handle> = make(<Handle>);
+  call-out(GetQDGlobalsScreenBits, ptr:, ptr: temp.raw-value);
+  pointer-at( temp, class: <BitMap>, offset: 0 );
+end method GetQDGlobalsScreenBits;
 
 /*
 	<RgnHandle>

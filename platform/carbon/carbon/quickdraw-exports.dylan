@@ -20,7 +20,7 @@ define module quickdraw
 				bottom, bottom-setter, right, right-setter,
 		SetRect, PtInRect, InsetRect,
 				
-		<BitMap>, bounds, //<QDGlobals>, screenBits, qd,
+		<BitMap>, GetPixBounds, //<QDGlobals>, screenBits, qd,
 		<RgnHandle>, NewRgn, DisposeRgn, SetEmptyRgn, SetRectRgn, RectRgn,
 		
 		<GrafPtr>, SetPort, GetPort,
