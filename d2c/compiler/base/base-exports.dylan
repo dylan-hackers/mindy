@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.59 1997/02/04 14:38:58 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.60 1997/02/10 13:11:34 dwatson Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -435,7 +435,10 @@ define module platform
     link-doesnt-search-for-libs?,
     import-directive-required?,
     supports-debugging?,
-    uses-win32-stabs?,
+    descriptor-type-string,
+    descriptor-reference-string,
+
+    big-endian?,
     omit-colon-after-label-declarations?;
 end module platform;
 
