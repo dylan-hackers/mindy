@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.47 2002/02/28 23:54:52 brent Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.48 2002/03/03 07:45:29 brent Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -387,7 +387,7 @@ link-library-command:           lib /nologo /out:%s %s
 link-executable-command:        link /nologo /out:%s %s %s
 link-executable-flags:          /subsystem:console
 link-doesnt-search-for-libs?:   #t
-path-separator:        		\\
+path-separator:        		/
 object-filename-suffix:         .obj
 library-filename-prefix:                
 library-filename-suffix:        .lib
