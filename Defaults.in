@@ -7,7 +7,7 @@
 $target_name = '@d2c_target@';
 $host_name = '@d2c_host@';
 
-$srcroot = "@srcdir@";
+$srcroot = "@srcroot@";
 $buildroot = "@builddir@";
 $prefix = "@prefix@";
 $destdir = "@exec_prefix@";
