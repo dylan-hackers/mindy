@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.64 1996/04/10 17:01:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.65 1996/04/13 21:23:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -412,8 +412,6 @@ define method compile-library
     end;
     format(*debug-output*, "seeding representations\n");
     seed-representations();
-    format(*debug-output*, "assigning slot representations\n");
-    assign-slot-representations();
     format(*debug-output*, "laying out instances\n");
     layout-instance-slots();
     let init-functions = make(<stretchy-vector>);
