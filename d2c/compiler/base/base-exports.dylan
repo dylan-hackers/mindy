@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.5 1996/01/15 13:40:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.6 1996/01/25 00:27:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -394,7 +394,7 @@ define module variables
     $Dylan-Library, $Dylan-Module, *Current-Library*, *Current-Module*,
 
     <library>, find-library, library-name, note-library-definition,
-    find-module, complete-module, module-name, module-syntax-table,
+    find-module, use-module, module-name, module-syntax-table,
     note-module-definition,
     <variable>, find-variable, variable-name, variable-definition,
     variable-transformers, variable-transformers-setter,
@@ -402,7 +402,6 @@ define module variables
     note-variable-definition,
     <use>, <renaming>,
 
-    done-initializing-module-system,
     module-home, variable-home,
 
     dylan-var, dylan-defn, dylan-value;
