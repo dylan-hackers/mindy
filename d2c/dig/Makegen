@@ -1,6 +1,6 @@
 
-$D2CFLAGS = '-L../runtime/c-code -L../runtime/gc '
-    . '-L../runtime/dylan -L../../common/streams '
+$D2CFLAGS = $d2c_runtime
+    . '-L../../common/streams '
     . '-L../../common/print -L../../common/format '
     . '-L../runtime/random -L../../common/coll-ext '
     . '-L../../common/string-ext -L../runtime/melange '
@@ -21,10 +21,14 @@ if ($features{'compiled_for_win32'}) {
 } elsif ($features{'compiled_for_solaris'}
 	 || $features{'compiled_for_linux'}
 	 || $features{'compiled_for_freebsd'}) {
-    # dig is unsupported on these platforms because the port is
-    # non-trivial.  There's a fair amount of OS-specific work involved
-    # in handling interrupts to make sure ^C does what you'd expect.
-    $dig_lid_file = 0;
+    # The only non-portable part of dig involves passing Control-C through
+    # to GDB. This can be done in a portable fashion assuming the system
+    # supports sigaction and SA_RESTART. For now, we'll assume that all
+    # non-Windows platforms work this way. If dig fails to compile on one
+    # of these platforms, contact the gd-hackers list.
+    $dig_lid_file = 'posix-dig';
+    &emit_c_file_rule('posix-dig-support', 'posix-dig-support.h');
+    &emit_melange_rule('posix-dig-c', 'posix-dig-support.h');
 } else {
     &unknown_platform_error();
 }
