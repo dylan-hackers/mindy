@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.1 1994/12/12 13:01:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.2 1994/12/12 21:22:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -20,6 +20,14 @@ end;
 define method print-object (defn :: <definition>, stream :: <stream>) => ();
   pprint-fields(defn, stream, name: defn.defn-name);
 end;
+
+
+define abstract class <implicit-definition> (<definition>)
+end;
+
+define abstract class <abstract-constant-definition> (<definition>)
+end;
+
 
 
 // {check,make}-syntax-table-additions -- exported.
@@ -55,7 +63,4 @@ define method make-syntax-table-additions
   table[name] := merge-category(table, name, <name-token>);
 end;
 
-
-define abstract class <implicit-definition> (<definition>)
-end;
 
