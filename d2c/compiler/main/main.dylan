@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.37 2000/10/20 15:19:48 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.38 2000/10/21 00:49:52 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -1075,7 +1075,7 @@ define method build-executable (state :: <main-unit-state>) => ();
   let link-string
     = format-to-string(state.unit-target.link-executable-command,
 		       state.unit-executable,
-		       concatenate(dash-cap-ells, dash-small-ells, objects),
+		       concatenate(objects, dash-cap-ells, dash-small-ells," "),
 		       linker-args);
   format(state.unit-makefile, "\t%s\n", link-string);
 
