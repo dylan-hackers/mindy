@@ -148,7 +148,14 @@
 // import-directive-required?: If #t, outputs a ".import" directive in
 // assembly files for every symbol that is declared outside that
 // assembly file.
-
+//
+// omit-colon-after-label-declarations?: If #f, puts a colon after
+// label declarations (when you first declare a label, not whenever
+// you reference it).  If #t, we don't put a colon there.  This is
+// mainly to support the HP assembler, which doesn't like colons after
+// label declarations.  The GNU assembler (even on the HP) always
+// accepts colons, and except on the HP considers them mandatory, so
+// we've made colons the default.
 
 // Microsoft Windows '95 or NT on Intel 80386 or higher
 //
@@ -242,35 +249,19 @@ compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
 supports-debugging?:            #t
 path-separator:        		/
+omit-colon-after-label-declarations?:  #t
 
 
 // HP/UX on HP PA-RISC processors w/ shared libs, HP CC, no gdb.  Try xdb.
 //
 target-name:                    hppa-hpux-shared
+inherit-from:                   hppa-hpux
 default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
-integer-length:			32
-heap-preamble:                  \t.SPACE $PRIVATE$\n\t.SUBSPA $DATA$\n\t.data\n\t.align 8\t
-align-directive:                .align
-export-directive:               \t.export\t%s, DATA\n
-import-directive-required?:      #t
-word-directive:                 .word
-half-word-directive:            .half
-byte-directive:                 .byte
-comment-token:                  ;
-mangled-name-prefix:            
-object-filename-suffix:         .o
-library-filename-prefix:        lib
 library-filename-suffix:        .sl .a
-executable-filename-suffix:     
 compile-c-command:              cc -Ae +Z $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:       -O4
 assembler-command:              cc $(CCFLAGS) -c %s -o %s
 link-library-command:           ld -b -o %s %s
 link-executable-command:        cc -g -o %s %s %s
 link-executable-flags:          -L/lib/pa1.1 -lm
-make-command:                   gmake
-delete-file-command:            rm -f
-compare-file-command:           cmp -s %s %s
-move-file-command:              mv -f %s %s
 supports-debugging?:            #f
-path-separator:        		/
