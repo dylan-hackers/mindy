@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.15 2004/08/25 04:01:20 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.16 2004/08/25 06:12:35 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>,
             and <value-table>.
 
@@ -298,7 +298,7 @@ define sealed domain size(<table>);
 define sealed domain empty?(<table>);
 
 
-define inline method key-test (ht :: <table>) => test :: <function>;
+define inline sealed method key-test (ht :: <table>) => test :: <function>;
   table-protocol(ht);    // drop the second return value
 end method key-test;
 
@@ -526,14 +526,14 @@ define function sequence-hash
   values(current-id, current-state);
 end function sequence-hash;
 
-define sealed inline method table-protocol (ht :: <object-table>) 
+define inline sealed method table-protocol (ht :: <object-table>) 
  => (key-test :: <function>, key-hash :: <function>);
   values(\==, object-hash);
 end method table-protocol;
 
 define sealed domain table-protocol (<simple-object-table>);
 
-define sealed inline method table-protocol (ht :: <equal-table>) 
+define inline sealed method table-protocol (ht :: <equal-table>) 
  => (key-test :: <function>, key-hash :: <function>);
   values(\=, equal-hash);
 end method table-protocol;
@@ -842,7 +842,7 @@ define function make-initial-iteration-state(ht :: <table>)
 end make-initial-iteration-state;
 
 
-define inline method forward-iteration-protocol (ht :: <table>)
+define inline sealed method forward-iteration-protocol (ht :: <table>)
  => (initial-state :: <table-iterator>,
      limit :: <integer>,
      next-state :: <function>,
@@ -903,7 +903,7 @@ end method forward-iteration-protocol;
 // A convenient method for hashing strings. Calls sequence-hash 
 // and "does the right thing."
 //
-define inline method string-hash (s :: <string>, initial-state :: <hash-state>)
+define inline sealed method string-hash (s :: <string>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   sequence-hash(value-hash, s, initial-state);
 end method string-hash;
@@ -911,7 +911,7 @@ end method string-hash;
 // This string-hash method should have the same semantics as the standard
 // one, but should be much faster.
 //
-define method string-hash (s :: <byte-string>, initial-state :: <hash-state>)
+define sealed method string-hash (s :: <byte-string>, initial-state :: <hash-state>)
  => (id :: <integer>, state :: <hash-state>);
   for (id = 0 then merge-hash-ids(id, as(<integer>, s[i]), ordered: #t),
        i from 0 below s.size)
