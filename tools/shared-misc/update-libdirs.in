@@ -1,0 +1,470 @@
+#!@PERL@ -w
+
+# Author: Peter S. Housel
+#
+# Usage: update-libdirs [directory ...]
+#
+# The update-libdirs utility scans the given directories (the default
+# is ".")  for Makegen files and Dylan libraries and programs, and
+# updates the Makegen scripts so that every library loaded by another
+# (either directly or indirectly) can be found in the correct build
+# directory.
+#
+
+use strict;
+use File::Spec;
+
+my $lidfile_line = 1;
+
+my @makegen_dirs;		# directories containing a Makegen
+my %library_dir;		# directory where each library is located
+my %used_from_library;		# libraries used by library
+my %used_from_dir;		# libraries used by directory
+
+my %runtime_libraries = ('dylan' => 1, 'melange-support' => 1, 'random' => 1);
+
+if($#ARGV < 0) {
+    &scan_directory(File::Spec->curdir());
+} else {
+    foreach my $dir (@ARGV) {
+	&scan_directory($dir);
+    }
+}
+
+foreach my $makegendir (@makegen_dirs) {
+    &update_directory_makegen($makegendir);
+}
+
+exit 0;
+
+########################################################################
+
+# scan_directory($dir)
+#
+# Scan the given directory, looking for LID files, Makegen files, and
+# subdirectories.  Subdirectories are scanned in a postorder manner.
+#
+sub scan_directory {
+    my ($dir) = @_;
+    my @subdirs;
+    my @lidfiles;
+    my $has_makegen = 0;
+    
+    # print STDERR "Scanning: $dir\n";
+    opendir(DIR, $dir) || die "failed to open $dir: $!";
+    while(my $entry = readdir(DIR)) {
+	next if($entry eq '.' || $entry eq '..' || $entry eq 'CVS');
+	if($entry =~ /.*\.lid$/) {
+	    push @lidfiles, File::Spec->catfile($dir, $entry);
+	} elsif($entry eq 'Makegen') {
+	    $has_makegen = 1;
+	    push @makegen_dirs, $dir;
+	} else {
+	    my $subdir = File::Spec->catdir($dir, $entry);
+	    if(-d $subdir && !-l $subdir) {
+		push @subdirs, $subdir;
+	    }
+	}
+    }
+    closedir(DIR);
+
+    if($has_makegen) {
+	foreach my $lidfile (@lidfiles) {
+	    &scan_lidfile($lidfile, $dir);
+	}
+    }
+    foreach my $subdir (@subdirs) {
+	&scan_directory($subdir);
+    }
+}
+
+# scan_lidfile($lidfile, $dir)
+#
+# Scan the given LID file and scan the one or more source files named
+# therein that contain the Dylan-user module, until we find the
+# "define library" form.
+#
+sub scan_lidfile {
+    my ($lidfile, $dir) = @_;
+
+    # print STDERR "Scanning LID: $lidfile\n";
+
+    my %header = &parse_lid_file($lidfile);
+
+    my $library = $header{'library'};
+
+    if(!defined $library) {
+	print STDERR "$lidfile: no `library:' keyword\n";
+	return;
+    }
+    $library =~ y/A-Z/a-z/;
+    unless(defined $header{'executable'}) {
+	if(defined $library_dir{$library}) {
+	    if($library_dir{$library} ne $dir) {
+		print STDERR "$lidfile: Library $library is also defined ";
+		print STDERR "in $library_dir{$library}\n";
+	    }
+	} else {
+	    $library_dir{$library} = $dir;
+	}
+    }
+
+    if($library eq 'dylan' || !defined $header{'files'}) {
+	return;
+    }
+
+    foreach my $source (split /\s+/, $header{'files'}) {
+	if($source !~ /.*\.dylan$/i) {
+	    $source .= ".dylan";
+	}
+	$source = File::Spec->catfile($dir, $source);
+	if(!&scan_dylan_user($source, $dir, $library)) {
+	    return;
+	}
+    }
+}
+
+# scan_dylan_user()
+#
+# "Parse" the given Dylan source file until the "define library" form is
+# located.  Returns 1 if the "define library" form hasn't been located
+# yet (and there is still some hope of finding it).  When we find the
+# definition, we scan it for "use" clauses (and ignore "export" clauses).
+#
+sub scan_dylan_user {
+    my ($source, $dir, $library) = @_;
+
+    open(SOURCE, "<$source") || return 0;
+
+    my %header = &parse_dylan_header(\*SOURCE, $source);
+    my $module = $header{'module'};
+    if(!defined $module || $module !~ /dylan-user/i) {
+	close(SOURCE);
+	return 0;
+    }
+    # print STDERR "Scanning Dylan-user: $source\n";
+    $_ = '';
+
+    while(my $token = &dylan_token(\*SOURCE)) {
+	if($token !~ /^define$/i) {
+	    print STDERR "$source: didn't expect '$token' here\n";
+	    close(SOURCE);
+	    return 0;
+	}
+	$token = &dylan_token(\*SOURCE);
+	if($token =~ /^module$/i) {
+	    while(($token = &dylan_token(\*SOURCE)) && $token !~ /^end$/i) {
+	    }
+	    while(($token = &dylan_token(\*SOURCE)) && $token ne ';') {
+	    }
+	    next;
+	} elsif($token !~ /^library$/i) {
+	    print STDERR "$source: didn't expect 'define $token' here\n";
+	    close(SOURCE);
+	    return 0;
+	}
+	my $deflibrary = &dylan_token(\*SOURCE);
+	$deflibrary =~ y/A-Z/a-z/;
+	if($deflibrary ne $library) {
+	    print STDERR "($deflibrary)($library)\n";
+	    print STDERR $source, ": did not expect ";
+	    print STDERR "define library $deflibrary ";
+	    print STDERR "in library $library\n";
+	    close(SOURCE);
+	    return 0;
+	}
+
+	CLAUSE:
+	while(($token = &dylan_token(\*SOURCE)) && $token !~ /^end$/i) {
+	    if($token =~ /^use$/i) {
+		my $used = &dylan_token(\*SOURCE);
+		$used =~ y/A-Z/a-z/; 
+		&use_library($used, $dir, $library);
+	    } elsif($token !~ /^export$/i) {
+		print STDERR "$source: didn't expect '$token' here\n";
+		close(SOURCE);
+		return 0;
+	    }
+	    while(($token = &dylan_token(\*SOURCE)) && $token ne ';') {
+		if($token =~ /^end$/) {
+		    last CLAUSE;
+		}
+	    }
+	}
+	close(SOURCE);
+	return 0;
+	
+    }
+
+    close(SOURCE);
+    return 1;
+}
+
+# dylan_token()
+#
+# A tokenizer for the subset of Dylan tokens that can appear within
+# "define library" and "define module" top-level defining forms.
+#
+sub dylan_token {
+    my ($fh) = @_;
+    while(1) {
+	s|^\s+||;
+	if($_ eq '') {
+	    defined($_ = <$fh>) || return undef;
+	    chop;
+	    next;
+	} elsif(s|^//.*||) {
+	    next;
+	} elsif(s|^/\*||) {
+	    my $level = 1;
+	    while($level > 0) {
+		if($_ eq '') {
+		    defined($_ = <$fh>) || return undef;
+		    chop;
+		    next;
+		}
+		s%^([^/*]|/[^*]|\*[^/])*%%;
+		s%^[/*]$%%;
+		if(s%\*/%%) {
+		    --$level;
+		} elsif(s%/\*%%) {
+		    ++$level;
+		}
+	    }
+	    next;
+	} elsif(s|^([,;{}])||) {
+	    return $1;
+	} elsif(s|^(=>)||) {
+	    return $1;
+	} elsif(s|^\\?(([!&*<>;\|^\$%\@_][-0-9~&*<>\|^\$%\@_+~?/=]*)?[a-zA-Z][-a-zA-Z0-9~&!*<>\|^\$%\@_+~?/=]*:?)||) {
+	    return $1;
+	} elsif(s|^\\?([0-9][-0-9~&*<>\|^\$%\@_+~?/=]*([a-zA-Z][-0-9~&*<>\|^\$%\@_+~?/=]+)*[a-zA-Z][a-zA-Z][-a-zA-Z0-9~&!*<>\|^\$%\@_+~?/=]*:?)||) {
+	    return $1;
+	} elsif(s/^\#if\s*\(mindy\)//) {
+	    while(!s/^\s*\#endif//) {
+		defined($_ = <$fh>) || return undef;
+		chop;
+	    }
+	    next;
+	} elsif(s/^\#if\s*\(~mindy\)// || s/^\#endif//) {
+	    next;
+	} else {
+	    die "Unrecognized token '$_'";
+	}
+    }
+}
+
+# use_library($used, $dir, $library)
+#
+# Record the fact that library $used is imported by $library, which is 
+# found in $dir.
+#
+sub use_library {
+    my ($used, $dir, $library) = @_;
+
+    return if(defined $runtime_libraries{$used});
+
+    if(defined $used_from_dir{$dir}) {
+	my $need = 1;
+	foreach my $lib (split / /, $used_from_dir{$dir}) {
+	    if($lib eq $used) {
+		$need = 0;
+	    }
+	}
+	if($need) {
+	    $used_from_dir{$dir} .= " $used";
+	}
+    } else {
+	$used_from_dir{$dir} = $used;
+    }
+    
+    if(defined $used_from_library{$library}) {
+	my $need = 1;
+	foreach my $lib (split / /, $used_from_library{$library}) {
+	    if($lib eq $used) {
+		$need = 0;
+	    }
+	}
+	if($need) {
+	    $used_from_library{$library} .= " $used";
+	}
+    } else {
+	$used_from_dir{$library} = $used;
+    }
+}
+
+########################################################################
+
+# update_directory_makegen($makegendir)
+#
+# Updates the $D2CFLAGS variable assignment in the Makegen file found
+# in the given directory.  Adds an -Ldir argument (with a relative
+# path) for each directory containing a library imported by a library
+# in this directory.
+#
+sub update_directory_makegen {
+    my ($makegendir) = @_;
+
+    return unless(defined $used_from_dir{$makegendir});
+
+    my @libdirs;
+    my %libdirs;
+
+    foreach my $lib (&library_closure(split / /,$used_from_dir{$makegendir})) {
+	my $dir = $library_dir{$lib};
+	if(defined $dir
+	   && $dir ne $makegendir
+	   && !defined $libdirs{$dir}) {
+	    push @libdirs, $dir;
+	    $libdirs{$dir} = 1;
+	}
+    }
+
+    my $makegen = File::Spec->catfile($makegendir, 'Makegen');
+    my $makegen_tmp = File::Spec->catfile($makegendir, 'Makegen-tmp');
+
+    open(MAKEGEN, "<$makegen") || die "Can't open $makegen: $!";
+    open(MAKEGEN_TMP, ">$makegen_tmp") || die "Can't open $makegen_tmp: $!";
+
+    my $d2cflags_found = 0;
+    while(<MAKEGEN>) {
+	if(/^\$D2CFLAGS\b/) {
+	    $d2cflags_found = 1;
+	    while(!/;/) {
+		$_ = <MAKEGEN>;
+	    }
+	    print MAKEGEN_TMP "\$D2CFLAGS         # added by update-libdirs\n";
+	    print MAKEGEN_TMP "    = \$d2c_runtime";
+	    foreach my $dir (@libdirs) {
+		$dir = File::Spec->abs2rel($dir, $makegendir);
+		print MAKEGEN_TMP "\n    . ' -L$dir'";
+	    }
+	    print MAKEGEN_TMP ";\n";
+
+	} else {
+	    print MAKEGEN_TMP $_;
+	}
+    }
+
+    close(MAKEGEN);
+    close(MAKEGEN_TMP);
+
+    if($d2cflags_found) {
+	rename $makegen_tmp, $makegen || die "unable to replace $makegen";
+    } else {
+	print STDERR "$makegen: Did not locate an assignment to \$D2CFLAGS\n";
+	unlink $makegen_tmp;
+    }
+}
+
+# library_closure(@libs)
+#
+# Computes the transitive closure of the given @libs with respect to
+# the "uses" relation.  No effort is made to remove duplicates, since the
+# caller does this on a directory-by-directory basis.
+#
+sub library_closure {
+    my @libs;
+
+    foreach my $lib (@_) {
+	if(defined $used_from_library{$lib}) {
+	    push @libs, &library_closure(split / /, $used_from_library{$lib});
+	}
+	push @libs, $lib;
+    }
+
+    return @libs;
+}
+
+########################################################################
+    
+# parse_lid_file($filename)
+#
+# Reads in the LID file, and returns an associative array where the
+# keys are header keywords (mashed to lower case), and the values are
+# the header values.  As a magic special case, the keyword 'files'
+# contains all the files in the body of the lid file.
+#
+sub parse_lid_file {
+    my ($lidfile) = @_;
+    my %contents;
+
+    open(LIDFILE, $lidfile) || die("Can't open $lidfile: $!\n");
+    $lidfile_line = 1;
+
+    %contents = &parse_dylan_header(\*LIDFILE, $lidfile);
+
+    # Read the filenames
+    # a .o in the Lid file is a hack to get a foreign .o put in the archive.
+    # Just ignore em, since there should be a seperate C rule to clean, etc.
+    while (<LIDFILE>) {
+        $lidfile_line = $lidfile_line + 1;
+
+	s/\r//g;		# Get rid of bogus carriage returns
+	chop;			# kill newline
+	$contents{'files'} .= " $_";
+    }
+    close(LIDFILE);
+
+    if(defined $contents{'files'}) {
+	# replace multiple spaces with single spaces
+	$contents{'files'} =~ s/\s+/ /g;
+	
+	# strip leading whitespace, which tends to screw up other parts of
+	# gen-makefile
+	$contents{'files'} =~ s/^\s+//;
+    }
+
+    return %contents;
+}
+
+# parse_dylan_header($fh, $file)
+#
+# Reads the Dylan header (keyword: value, ...) from the filehandle $fh
+# which is already open.  (The file doesn't have to be a lid file, it
+# could be something else like a platforms.descr) Returns an
+# associative array where the keys are header keywords (mashed to
+# lower case), and the values are the header values.
+#
+# In contrast to the Dylan version, keywords can not appear more than
+# once.  If they do, the last value will be used.  Multi-line values
+# are supported, though.
+#
+sub parse_dylan_header {
+    my ($fh, $file) = @_;
+
+    my %contents;
+    my $last_keyword;		# for multi-line values
+
+    while (<$fh>) {
+        $lidfile_line = $lidfile_line + 1;
+        # remember, in Perl "." is any character other than newline.
+	s/\r//g;		# Get rid of bogus carriage returns
+	
+        if (/^\s*$/) {  # if blank line, break out of loop
+            return %contents;
+        } elsif (m|^//.*$|) {
+            # comment line, ignore
+        } elsif (/^\s+(.*)$/) {
+            # Continuation line -- part of a multi-line value
+            $contents{$last_keyword} .= ' ' . $1;
+        } else {
+            if(!/^([-A-Za-z0-9_!&*<>|^\$\%\@\?]+):\s*(.*)\s*$/) {
+		print STDERR "$file:$lidfile_line: Warning: ",
+		             "bad keyword line\n";
+		next;
+	    }
+            my $keyword = $1;
+            my $value = $2;
+            if ($value eq '#f' | $value eq '#F') {
+                $value = 0;
+            } elsif ($value eq '#t' | $value eq '#T') {
+                $value = 1;
+            }
+            $keyword =~ tr/-A-Z/_a-z/;
+            $contents{$keyword} = $value;
+            $last_keyword = $keyword;
+        }
+    }
+    return %contents;
+}
