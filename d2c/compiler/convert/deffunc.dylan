@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.38 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.39 1995/11/12 21:52:02 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1354,8 +1354,6 @@ define constant $function-definition-slots
 define constant $generic-definition-slots
   = concatenate($function-definition-slots,
 		list(generic-defn-sealed?, sealed:, #f,
-		     generic-defn-methods, methods:,
-		       generic-defn-methods-setter,
 		     generic-defn-seals, seals:, #f,
 		     // %generic-defn-seal-info, seal-info:,
 		     //   %generic-defn-seal-info-setter,
@@ -1375,9 +1373,17 @@ define constant $abstract-method-definition-slots
 		list(method-defn-inline-function, inline-function:,
 		       %method-defn-inline-function-setter));
 
+define method set-method-defn-of
+    (gf :: false-or(<generic-definition>), meth :: <method-definition>) => ();
+  meth.method-defn-of := gf;
+  if (gf)
+    ct-add-method(gf, meth);
+  end;
+end;
+
 define constant $method-definition-slots
   = concatenate($abstract-method-definition-slots,
-		list(method-defn-of, method-of:, method-defn-of-setter,
+		list(method-defn-of, #f, set-method-defn-of,
 		     method-defn-congruent?, congruent:, #f));
 
 add-make-dumper(#"method-definition", *compiler-dispatcher*,
