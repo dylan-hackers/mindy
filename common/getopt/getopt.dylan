@@ -2,14 +2,15 @@ library: getopt
 module: getopt
 author: Jeff Dubrule & Ole Tetlie
 copyright: LGPL
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.1 1998/09/22 18:49:27 olet Exp $
+rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.2 1998/09/23 16:26:28 igor Exp $
 
 define class <option-table> (<object-table>)
   // perhaps we'll need something here later
 end;
 
-define method add-internal (table :: <option-table>, name :: <symbol>,
+define method add-internal (table :: <option-table>, name :: <string>,
 			    option :: <option>)
+    // Note: names can't be symbols, as symbols are case-insensitive
   table[name] := option;
 end method;
 
@@ -24,7 +25,7 @@ define method add-option (table :: <option-table>, doc-string :: <string>,
   let real-names :: <list> = make (<list>);
   for (name in names)
     if (instance? (name, <string>))
-      real-names := add! (real-names, as (<symbol>, name));
+      real-names := add! (real-names, name);
     end if;
   end for;
 
@@ -38,19 +39,19 @@ end method;
 define method element (table :: <option-table>, key :: <string>,
 		       #key default = #f)
  => (element :: <object>)
-  element (table, as (<symbol>, key), default: default).value;
+  element (table, key, default: default).value;
 end method;
 
 define method element-setter (new-value :: <object>, table :: <option-table>,
 			      key :: <string>)
  => (new-value :: <object>)
-  table[as (<symbol>, key)].value := new-value;
+  table[<symbol>].value := new-value;
 end method;
 
 define constant option-not-there = pair(#f, #f);
 
 define method has-option? (table :: <option-table>, key :: <string>)
-  element (table, as (<symbol>, key), default: option-not-there)
+  element (table, key, default: option-not-there)
     ~= option-not-there;
 end method;
 
@@ -70,3 +71,5 @@ define method parse-options (table :: <option-table>, argv :: <list>)
     end if;
   end for;
 end method;
+
+
