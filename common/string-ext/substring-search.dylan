@@ -9,7 +9,7 @@ synopsis:	Provides a small assortment of specialized operations for
 		collection-extensions)
 copyright:  Copyright (C) 1994, Carnegie Mellon University.
             All rights reserved.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/substring-search.dylan,v 1.1 1996/02/17 16:12:26 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/string-ext/substring-search.dylan,v 1.2 1996/03/07 18:06:22 nkramer Exp $
 
 //======================================================================
 //
@@ -151,7 +151,7 @@ end method find-substring;
 //
 define method compile-substring
     (pattern :: <byte-string>, equal? :: one-of(\=, case-insensitive-equal))
- => (compiled);
+ => (compiled :: <object>);
   let sz = size(pattern);
   if (sz < 3)
     #();
