@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.18 1996/02/09 01:38:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/func.dylan,v 1.19 1996/02/13 04:50:14 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -760,7 +760,7 @@ define constant general-rep-setter
   = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
       // We don't specify a return type because we want to use the
       // unknown-values convention.
-      let arg-ptr :: <raw-pointer> = %%primitive extract-args(1);
+      let arg-ptr :: <raw-pointer> = %%primitive extract-args(2);
       let new-value = %%primitive extract-arg(arg-ptr, 0);
       let instance = %%primitive extract-arg(arg-ptr, 1);
       %%primitive pop-args(arg-ptr);
@@ -789,7 +789,7 @@ define constant heap-rep-setter
   = method (self :: <accessor-method>, nargs :: <integer>, next-info :: <list>)
       // We don't specify a return type because we want to use the
       // unknown-values convention.
-      let arg-ptr :: <raw-pointer> = %%primitive extract-args(1);
+      let arg-ptr :: <raw-pointer> = %%primitive extract-args(2);
       let new-value = %%primitive extract-arg(arg-ptr, 0);
       let instance = %%primitive extract-arg(arg-ptr, 1);
       %%primitive pop-args(arg-ptr);
