@@ -43,13 +43,19 @@ You can also use a separate build directory:
 
   $ mkdir build
   $ cd build
-  $ ../configure
+  $ ../src/configure
   $ make
   $ make install
 
 If the configure process complains that your platform is unsupported,
 things get a little more involved. Read the BOOTSTRAPPING file for
 more details.
+
+As d2c relies on the platform's native C compiler for code generation,
+building d2c can sometimes fail due to bugs in the C compiler.  In
+situations such as these we recommend reducing the C compiler
+optimization level by adding the --enable-debug option to the
+configure command line.
 
 RELOCATING BINARIES
 
