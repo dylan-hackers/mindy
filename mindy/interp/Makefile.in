@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.5 1998/12/17 09:28:13 igor Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.6 1998/12/17 10:58:58 igor Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -183,7 +183,7 @@ error.o:  ${SRCDIR}/error.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
 ext-init.o:  ${SRCDIR}/ext-init.c ${SRCDIR}/mindy.h ${SRCDIR}/gc.h \
                ${SRCDIR}/bool.h ${SRCDIR}/extern.h ${SRCDIR}/error.h \
                ${SRCDIR}/extern1.def ${SRCDIR}/extern2.def
-	${CC} -c ${CFLAGS} ${SRCDIR}/ext-init.c
+	${CC} -c ${CFLAGS} -fno-builtin ${SRCDIR}/ext-init.c
 
 extern.o:  ${SRCDIR}/extern.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
              ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
