@@ -18,22 +18,21 @@ seal generic initialize (<type>);
 // 
 define generic limited (type :: <type>, #key) => res :: <type>;
 
-// instance? and subtype? -- exported from Dylan.
+// instance? -- exported from Dylan.
 //
-// The two exported type predicates.
-//
-define generic instance? (object :: <object>, type :: <type>)
+define movable method instance? (object :: <object>, type :: <type>)
     => res :: <boolean>;
-define generic subtype? (type1 :: <type>, type2 :: <type>)
+  %instance?(object, type);
+end;
+
+// %instance? -- internal.
+// 
+define movable generic %instance? (object :: <object>, type :: <type>)
     => res :: <boolean>;
 
-// subtype?-type2-dispatch -- internal.
-//
-// Used to dispatch off the second type.  Methods on this should have type1
-// just be <type>.  This generic function is necessary to avoid having
-// ambiguous methods.
+// subtype? -- exported from Dylan.
 // 
-define generic subtype?-type2-dispatch (type1 :: <type>, type2 :: <type>)
+define movable generic subtype? (type1 :: <type>, type2 :: <type>)
     => res :: <boolean>;
 //
 // We can't tell just by dispatching off of type1 (or some other method would
@@ -43,6 +42,16 @@ define method subtype? (type1 :: <type>, type2 :: <type>)
     => res :: <boolean>;
   subtype?-type2-dispatch(type1, type2);
 end;
+
+// subtype?-type2-dispatch -- internal.
+//
+// Used to dispatch off the second type.  Methods on this should have type1
+// just be <type>.  This generic function is necessary to avoid having
+// ambiguous methods.
+// 
+define movable generic subtype?-type2-dispatch
+    (type1 :: <type>, type2 :: <type>)
+    => res :: <boolean>;
 //
 // And if nobody pipes up when dispatching off of type2 then the two types
 // must be unrelated.
@@ -73,18 +82,20 @@ define inline method singleton (object :: <object>)
   make(<singleton>, object: object);
 end;
 
+/* ### not absolutly needed
 // one-of -- exported from Extensions.
 //
 define method one-of (#rest things) => res :: <type>;
   apply(type-or, map(singleton, things));
 end;
+*/
 
 // instance? -- exported generic function method.
 //
 // An object is instance? a singleton iff it is (i.e. ==) the singleton's
 // object.
 // 
-define method instance? (object, type :: <singleton>)
+define method %instance? (object, type :: <singleton>)
     => res :: <boolean>;
   object == type.singleton-object;
 end;
@@ -126,6 +137,7 @@ end;
 
 seal generic make (singleton(<union>));
 
+/* ### not absolutly needed
 // union -- exported from Dylan.
 //
 // Cheesy binary constructor for <union> types that is overloaded on top of
@@ -290,13 +302,14 @@ define method merge-singleton
     values(members, pair(object, singletons));
   end;
 end;
+*/
 
 // instance?(<object>,<union>) -- exported generic function method.
 //
 // Something is an instance of a union if it is an instance of any of the
 // member types or one of the singletons.
 //
-define method instance? (object :: <object>, type :: <union>)
+define method %instance? (object :: <object>, type :: <union>)
     => res :: <boolean>;
   any?(curry(instance?, object), type.union-members)
     | member?(object, type.union-singletons);
@@ -348,6 +361,7 @@ end;
 
 seal generic make (singleton(<limited-integer>));
 
+/* ### not absolutly needed
 // limited(<integer>,...), limited(<extended-integer>) -- exported gf methods
 //
 define method limited (class :: one-of(<integer>, <extended-integer>),
@@ -402,13 +416,14 @@ define method limited (class == <fixed-integer>, #key min, max)
     end;
   end;
 end;
+*/
 
 // instance?(<object>,<limited-integer>) -- exported generic function method
 //
 // Only integers are instance? a limited integer, and they have their own
 // method.
 // 
-define method instance? (object :: <object>, type :: <limited-integer>)
+define method %instance? (object :: <object>, type :: <limited-integer>)
     => res :: <boolean>;
   #f;
 end;
@@ -418,7 +433,7 @@ end;
 // Make sure the integer is the right kind of integer and that it is in the
 // given range.
 //
-define method instance? (object :: <integer>, type :: <limited-integer>)
+define method %instance? (object :: <integer>, type :: <limited-integer>)
     => res :: <boolean>;
   if (instance?(object, type.limited-integer-base-class))
     let min = type.limited-integer-minimum;
@@ -491,12 +506,12 @@ define constant <byte-character> = make(<byte-character-type>);
 // The only instances of <byte-character> are characters that have a character
 // code of less than 256.
 //
-define method instance? (object, type :: <byte-character-type>)
+define method %instance? (object, type :: <byte-character-type>)
     => res :: <boolean>;
   #f;
 end;
 //
-define method instance? (object :: <character>, type :: <byte-character-type>)
+define method %instance? (object :: <character>, type :: <byte-character-type>)
     => res :: <boolean>;
   as(<fixed-integer>, object) < 256;
 end;
