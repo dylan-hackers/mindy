@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.21 1995/05/03 05:05:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.22 1995/05/03 07:28:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -193,8 +193,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
     build-assignment
       (builder, lexenv.lexenv-policy, source,
        concatenate(temps, list(rest-temp)),
-       make-primitive-operation
-	 (builder, #"canonicalize-results", list(cluster)));
+       make-operation(builder, <fer-primitive>, list(cluster),
+		      name: #"canonicalize-results"));
   else
     fer-convert(builder, bindings.bindings-expression,
 		make(<lexenv>, inside: lexenv), #"assignment", temps);
@@ -285,7 +285,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <funcall>,
 				 #"leaf", name);
     end;
     deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		   make-operation(builder, ops));
+		   make-unknown-call(builder, ops));
   end;
 end;
 
@@ -304,7 +304,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <dot>,
 			       make(<lexenv>, inside: lexenv),
 			       #"leaf", #"function");
     deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		   make-operation(builder, list(fun-leaf, arg-leaf)));
+		   make-unknown-call(builder, list(fun-leaf, arg-leaf)));
   end;
 end;
 
@@ -378,8 +378,9 @@ define method fer-convert (builder :: <fer-builder>, form :: <assignment>,
       if (binding)
 	build-assignment(builder, lexenv.lexenv-policy, source, leaf, temp);
       else
-	build-assignment(builder, lexenv.lexenv-policy, source, #(),
-			 make-set-operation(builder, defn, temp));
+	build-assignment
+	  (builder, lexenv.lexenv-policy, source, #(),
+	   make-operation(builder, <set>, list(temp), var: defn));
       end;
       deliver-result(builder, lexenv.lexenv-policy, source, want, datum, temp);
     end;
@@ -409,7 +410,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   let cluster = make-values-cluster(builder, #"results", wild-ctype());
   fer-convert-body(builder, form.exit-body, lexenv, #"assignment", cluster);
   build-assignment(builder, lexenv.lexenv-policy, source, #(),
-		   make-mv-operation(builder, exit, cluster));
+		   make-operation(builder, <mv-call>, list(exit, cluster)));
   end-body(builder);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
 		 blk.catcher);
@@ -467,7 +468,7 @@ define method fer-convert (builder :: <fer-builder>, form :: <mv-call>,
   fer-convert(builder, operands[1], make(<lexenv>, inside: lexenv),
 	      #"assignment", cluster);
   deliver-result(builder, lexenv.lexenv-policy, source, want, datum,
-		 make-mv-operation(builder, function, cluster));
+		 make-operation(builder, <mv-call>, list(function, cluster)));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
@@ -487,7 +488,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <primitive>,
   end;
   deliver-result
     (builder, lexenv.lexenv-policy, source, want, datum,
-     make-primitive-operation(builder, form.primitive-name.token-symbol, ops));
+     make-operation(builder, <fer-primitive>, ops,
+		    name: form.primitive-name.token-symbol));
 end;
 
 define method fer-convert (builder :: <fer-builder>, form :: <uwp>,
@@ -607,7 +609,7 @@ define method build-general-method
 	    let temp = make-local-var(builder, #"temp", object-ctype());
 	    build-assignment
 	      (builder, lexenv.lexenv-policy, source, temp,
-	       make-operation
+	       make-unknown-call
 		 (builder,
 		  list(dylan-defn-leaf(builder, #"unbound?"),
 		       pre-default)));
@@ -706,8 +708,9 @@ define method build-general-method
     build-assignment
       (builder, lexenv.lexenv-policy, source,
        concatenate(as(<list>, fixed-results), list(rest-result)),
-       make-primitive-operation
-	 (builder, #"canonicalize-results", list(results-temp)));
+       make-operation
+	 (builder, <fer-primitive>, list(results-temp),
+	  name: #"canonicalize-results"));
     build-region(builder, builder-result(result-check-builder));
     let args = make(<stretchy-vector>);
     if (rest-result)
@@ -721,7 +724,7 @@ define method build-general-method
       add!(args, rest-result);
     end;
     build-assignment(builder, lexenv.lexenv-policy, source, results,
-		     make-operation(builder, as(<list>, args)));
+		     make-unknown-call(builder, as(<list>, args)));
   end;
   build-return(builder, lexenv.lexenv-policy, source, method-region, results);
   end-body(builder);
@@ -732,7 +735,7 @@ define method build-general-method
 	let ops = pair(dylan-defn-leaf(builder, name), as(<list>, args));
 	let temp = make-local-var(builder, name, object-ctype());
 	build-assignment(builder, lexenv.lexenv-policy, source, temp,
-			 make-operation(builder, ops));
+			 make-unknown-call(builder, ops));
 	temp;
       end;
     build-call(#"%make-method",
@@ -827,7 +830,7 @@ define method build-hairy-method-body
       add!(ops, rest-var);
     end;
     build-let(body-builder, policy, source, next-var,
-	      make-operation(body-builder, as(<list>, ops)));
+	      make-unknown-call(body-builder, as(<list>, ops)));
   end;
   if (keyword-vars)
     for (var in keyword-vars)
@@ -886,7 +889,7 @@ define method build-hairy-method-more-arg-entry (leaf)
 				      as(<list>, vars), cluster);
   build-region(builder, builder-result(body-builder));
   build-assignment(builder, policy, source, cluster,
-		   make-operation(builder, as(<list>, args)));
+		   make-unknown-call(builder, as(<list>, args)));
   end-body(builder);
   method-leaf;
 end;
@@ -910,7 +913,7 @@ define method build-keyword-dispatch(builder, policy, source, args, keywords,
     add!(ops, make-literal-constant(builder, info.keyinfo-default));
   end;
   build-assignment(builder, policy, source, as(<list>, vars),
-		   make-operation(builder, as(<list>, ops)));
+		   make-unknown-call(builder, as(<list>, ops)));
 end;
 
 define method build-hairy-method-general-entry (leaf)
@@ -936,7 +939,7 @@ define method build-hairy-method-general-entry (leaf)
 			make(<literal-false>);
 		      end));
     build-assignment(body-builder, policy, source, #(),
-		     make-operation(body-builder, ops));
+		     make-unknown-call(body-builder, ops));
   end;
   for (var in fixed-vars, index from 0)
     let temp = make-lexical-var(builder, #"temp", source, object-ctype());
@@ -946,7 +949,7 @@ define method build-hairy-method-general-entry (leaf)
 		   make-literal-constant
 		     (body-builder, make(<literal-fixed-integer>, value: index)));
     build-let(body-builder, policy, source, temp,
-	      make-operation(body-builder, ops));
+	      make-unknown-call(body-builder, ops));
   end;
   add!(args, make-literal-constant(body-builder, make(<literal-false>)));
   if (more?)
@@ -957,7 +960,7 @@ define method build-hairy-method-general-entry (leaf)
 		   make-literal-constant
 		     (body-builder, make(<literal-fixed-integer>, value: nfixed)));
     build-assignment(body-builder, policy, source, list(context, count),
-		     make-operation(body-builder, ops));
+		     make-unknown-call(body-builder, ops));
     add!(args, context);
     add!(args, count);
   end;
@@ -967,7 +970,7 @@ define method build-hairy-method-general-entry (leaf)
 				      cluster);
   build-region(builder, builder-result(body-builder));
   build-assignment(builder, policy, source, cluster,
-		   make-operation(builder, as(<list>, args)));
+		   make-unknown-call(builder, as(<list>, args)));
   end-body(builder);
 end;
 
@@ -986,10 +989,10 @@ define method make-check-type-operation (builder :: <fer-builder>,
 					 value-leaf :: <leaf>,
 					 type-leaf :: <leaf>)
     => res :: <operation>;
-  make-operation(builder,
-		 list(dylan-defn-leaf(builder, #"check-type"),
-		      value-leaf,
-		      type-leaf));
+  make-unknown-call(builder,
+		    list(dylan-defn-leaf(builder, #"check-type"),
+			 value-leaf,
+			 type-leaf));
 end method;
 
 define method make-error-operation
@@ -998,6 +1001,6 @@ define method make-error-operation
   let error = dylan-defn-leaf(builder, #"error");
   let msg = make-literal-constant(builder,
 				  make(<literal-string>, contents: msg));
-  make-operation(builder, concatenate(list(error, msg), args));
+  make-unknown-call(builder, concatenate(list(error, msg), args));
 end method;
 
