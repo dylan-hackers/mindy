@@ -402,7 +402,7 @@ define method try-cpp
 	    state.cpp-stack := pair(#"accept", state.cpp-stack);
 	  else
 	    do-skip(state.position,
-		    state.cpp-stack := pair(#"skip", state.cpp-stack));
+		    state.cpp-stack := pair(#"retry", state.cpp-stack));
 	  end if;
 	"ifndef" =>
 	  let name = try-identifier(state, pos, expand: #f);
@@ -417,17 +417,27 @@ define method try-cpp
 	    do-skip(state.position,
 		    state.cpp-stack := pair(#"skip", state.cpp-stack));
 	  end if;
+	"if" =>
+	  let stack = state.cpp-stack;
+	  if ((empty?(stack) | head(stack) == #"accept")
+		& cpp-parse(state) ~= 0)
+	    state.cpp-stack := pair(#"accept", stack);
+	  else
+	    do-skip(pos, state.cpp-stack := pair(#"retry", stack));
+	  end if;
 	"else" =>
 	  let stack = state.cpp-stack;
 	  if (empty?(stack))
 	    parse-error(state, "Mismatched #else.");
 	  else
-	    let rest = tail(stack); 
-	    if (head(stack) == #"skip"
+	    let rest = tail(stack);
+	    if (head(stack) == #"accept")
+	      do-skip(pos, state.cpp-stack := pair(#"done", tail(stack)));
+	    elseif (head(stack) == #"retry"
 		  & (empty?(rest) | head(rest) == #"accept"))
 	      state.cpp-stack := pair(#"accept", rest);
-	    else 
-	      do-skip(pos, state.cpp-stack := pair(#"skip", tail(stack)));
+	    else
+	      do-skip(pos, stack);
 	    end if;
 	  end if;
 	  // For SUN4 headers, kill to end of line
@@ -442,12 +452,14 @@ define method try-cpp
 	    parse-error(state, "Mismatched #elif.");
 	  else
 	    let rest = tail(stack); 
-	    if (head(stack) == #"skip"
+	    if (head(stack) == #"accept")
+	      do-skip(pos, state.cpp-stack := pair(#"done", tail(stack)));
+	    elseif (head(stack) == #"retry"
 		  & (empty?(rest) | head(rest) == #"accept")
 		  & cpp-parse(state) ~= 0)
 	      state.cpp-stack := pair(#"accept", rest);
 	    else 
-	      do-skip(pos, state.cpp-stack := pair(#"skip", tail(stack)));
+	      do-skip(pos, stack);
 	    end if;
 	  end if;
 	  // For SUN4 headers, kill to end of line
@@ -468,14 +480,6 @@ define method try-cpp
 	  finally
 	    state.position := i;
 	  end for;
-	"if" =>
-	  let stack = state.cpp-stack;
-	  if ((empty?(stack) | head(stack) == #"accept")
-		& cpp-parse(state) ~= 0)
-	    state.cpp-stack := pair(#"accept", stack);
-	  else
-	    do-skip(pos, state.cpp-stack := pair(#"skip", stack));
-	  end if;
 	"error" =>
 	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
 	    parse-error(state, "Encountered #error directive.");
