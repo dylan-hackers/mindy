@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.20 1995/06/05 21:04:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.21 1995/06/07 15:13:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -93,6 +93,7 @@ define method compile (#rest files) => ();
   build-initial-heap(output-info.output-info-init-roots, heap-stream,
 		     output-info);
   close(heap-stream);
+  format(*debug-output*, "Optimize called %d times.\n", *optimize-ncalls*);
 end;
 
 define method main (argv0, #rest files)
