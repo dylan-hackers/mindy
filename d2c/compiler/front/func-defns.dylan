@@ -499,7 +499,11 @@ define method sort-methods
 	      // in the current ambiguous set, so throw it away making a new
 	      // ambiguous set.  Taking into account that we might have a set
 	      // of equivalent methods on our hands.
-	      remaining.tail := #();
+	      if (prev)
+		prev.tail := #();
+	      else
+		ordered := #();
+	      end if;
 	      if (instance?(remaining.head, <pair>))
 		ambiguous := pair(meth, remaining.head);
 	      else
