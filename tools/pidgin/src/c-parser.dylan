@@ -70,9 +70,10 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 //
 define abstract class <parse-state> (<object>)
   slot repository :: <c-type-repository>,
-    required-init-keyword: repository:; // XXX - fix everyone to pass this
+    required-init-keyword: repository:;
+  // XXX - can initialize get this from our parent if we have one?
   slot objects :: <table>;
-  slot structs :: <table>;
+  slot structs :: <table>;  // XXX - may go away
   slot tokenizer :: <tokenizer>,
     required-init-keyword: tokenizer:;
   slot pointers :: <table>; // XXX - will probably go away
@@ -308,6 +309,17 @@ define function process-type-list
   end select;
 end function process-type-list;
 
+// XXX - This particular combination of identifiers and typedefs appears
+// everywhere. This constant should be used to document it wherever it is
+// discovered. Let's hope that no other types belong in this union.
+//
+// This may correspond to 'type-name' in the formal grammar. If something
+// fails to typecheck against <icky-type-name>, investigate it thoroughly
+// and take appropriate steps.
+//
+define constant <icky-type-name> =
+  type-union(<identifier-token>, <c-typedef-declaration>);
+
 // Deals with the odd idiomatic data structures which result from the LALR
 // parser generator.  These might take the form of 
 // #((#"pointer", #"pointer", ...) . name) or
@@ -316,11 +328,14 @@ end function process-type-list;
 // #(#"bitfield", bits . name)
 //
 define generic process-declarator
-    (type :: <c-type>, declarator :: <object>, state :: <parse-state>);
+    (type :: <c-type>,
+     declarator :: type-union(<icky-type-name>, <list>),
+     state :: <parse-state>)
+ => (new-type :: <c-type>, name :: <icky-type-name>);
 
 define method process-declarator
     (tp :: <c-type>, declarator :: <pair>, state :: <parse-state>)
- => (new-type :: <c-type>, name :: <object>)
+ => (new-type :: <c-type>, name :: <icky-type-name>)
   case 
 
     // Process pointer types.
@@ -420,9 +435,9 @@ end method process-declarator;
 // are therefore done.
 //
 define method process-declarator
-    (type :: <c-type>, declarator :: <object>,
+    (type :: <c-type>, declarator :: <icky-type-name>,
      state :: <parse-state>)
- => (new-type :: <c-type>, name :: <object>);
+ => (new-type :: <c-type>, name :: <icky-type-name>);
   values(type, declarator);
 end method process-declarator;
 
@@ -487,72 +502,15 @@ define method add-declaration
   declaration;
 end method add-declaration;
 
-define constant null-table = make(<table>);
 
-// This is the exported routine for determining which declarations to include
-// in Melange's output routine.  It walks through all of the non-excluded top
-// level declarations and explicitly imported non-top level declarations and
-// invokes "compute-closure" (documented in "c-decls.dylan") to determine
-// other declarations are required to have a complete & consistent interface.
-//
-define method declaration-closure (#rest foo) /* XXX - needs updating
-    (state :: <parse-file-state>,
-     files :: <sequence>, excluded-files :: <sequence>,
-     imports :: <table>, file-imports :: <table>,
-     import-mode :: <symbol>, file-import-modes :: <table>)
- => (ordered-decls :: <deque>);
-  let files-processed :: <table> = make(<string-table>);
-  for (file in excluded-files)
-    // By saying that this file has already been processed, we stop it from
-    // being included in a recursive file walk.
-    files-processed[file] := file;
-    for (decl in state.recursive-declaration-table[file])
-      // By saying that each declaration has been processed, we prevent it
-      // from being emitted, even if it is explicitly used by an imported
-      // symbol.
-      decl.declared? := #t;
-    end for;
-  end for;    
-  let ordered-decls = make(<deque>);
-  let recursive-files? = (import-mode == #"all-recursive");
-  local method declaration-closure-aux
-	    (decls :: <sequence>, file-import-table :: <table>,
-	     subfiles :: <sequence>) => ();
-	  for (decl in decls)
-	    compute-closure(ordered-decls, decl);
-	    let import = (element(imports, decl, default: #f)
-			    | element(file-import-table, decl, default: #f));
-	    if (instance?(import, <string>)) rename(decl, import) end if;
-	  end for;
-	  for (file in subfiles)
-	    unless (element(files-processed, file, default: #f))
-	      files-processed[file] := file;
-	      let sub = if (recursive-files?)
-			  element(state.recursive-include-table, file,
-				  default: #());
-			else
-			  #();
-			end if;
-	      let decls = if (element(file-import-modes, file, default: #"all")
-				== #"all")
-			    state.recursive-declaration-table[file];
-			  else
-			    element(file-imports, file, default: null-table)
-			      .key-sequence;
-			  end if;
-	      declaration-closure-aux(decls, element(file-imports, file,
-						     default: null-table),
-				      sub);
-	    end unless;
-	  end for;
-	end method declaration-closure-aux;
-
-  let subfiles = if (import-mode == #"none") #() else files end if;
-  declaration-closure-aux(key-sequence(imports), null-table, subfiles);
-			  
-  ordered-decls;
-*/
-end method declaration-closure;
+//----------------------------------------------------------------------
+// Public interface to c-parser library.
+//----------------------------------------------------------------------
+// Actually, this is logically separate from the rest of this module.
+// It's in here because it connects the parser to its clients. The rest
+// of the file connects the parser to it's abstraction layer. There two
+// things are similar in an abstract sort of way, but don't read too
+// much into it.
 
 // Main parser routine:
 define function parse-c-file
