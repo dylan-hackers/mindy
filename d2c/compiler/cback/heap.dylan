@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.61 1996/12/03 23:27:51 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.62 1996/12/05 14:00:50 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -195,9 +195,7 @@ define method build-global-heap
   spew-objects-in-queue(state);
 
   format(stream, "\n\n\t%s\t8\n", target.align-directive);
-  format(stream, target.export-directive, 
-	 concatenate(target.mangled-name-prefix, "initial_symbols"));
-  format(stream, "%sinitial_symbols\n", target.mangled-name-prefix);
+  spew-label(state, "initial_symbols", export: #t);
   spew-reference(state.symbols, *heap-rep*, "Initial Symbols", state);
 end;
 
@@ -237,7 +235,7 @@ define method build-local-heap
 	  // them..
 	  ".stabs \"<unknown>\",100,0,0,Ltext0\n"
 	    ".text\n"
-	    "Ltext0\n"
+	    "Ltext0:\n"
 	    ".stabs \"heapptr_t:t(9,3)=(9,4)=*(9,5)=xsheapobj:\",128,0,6,0\n"
 	    ".stabs \"descriptor:T(9,6)=s8heapptr:(9,3),0,32;dataword:"
 	    "(9,7)=u4l:(0,3),0,32;f:(0,12),0,32;ptr:(5,16),0,32;;,32,32;;\","
@@ -256,9 +254,7 @@ define method build-local-heap
   end if;
   format(stream, "%s\n\n", target.heap-preamble);
 
-  format(stream, target.export-directive, 
-	 concatenate(target.mangled-name-prefix, prefix, "_roots"));
-  format(stream, "%s%s_roots\n", target.mangled-name-prefix, prefix);
+  spew-label(state, concatenate(prefix, "_roots"), export: #t);
   for (root in unit.unit-init-roots, index from 0)
     let name = root.root-name;
     if (root.root-comment)
@@ -267,9 +263,7 @@ define method build-local-heap
       new-line(stream);
     end if;
     if (name)
-      format(stream, target.export-directive, 
-	     concatenate(target.mangled-name-prefix, name));
-      format(stream, "%s%s\n", target.mangled-name-prefix, name);
+      spew-label(state, name, export: #t);
       if (target.supports-debugging?)
 	if (target.uses-win32-stabs?)
 	  format(stream, "\t.stabs\t\"%s%s:G(9,8)\",32,0,1,0\n", 
@@ -304,12 +298,8 @@ end method build-local-heap;
 define method spew-objects-in-queue (state :: <state>) => ();
   let stream = state.stream;
   let target = state.target;
-  begin
-    let name = stringify(target.mangled-name-prefix, state.heap-base);
-    new-line(stream);
-    format(stream, target.export-directive, name);
-    format(stream, "%s\n", name);
-  end;
+  new-line(stream);
+  spew-label(state, state.heap-base, export: #t);
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);
     let info = get-info-for(object, #f);
@@ -324,9 +314,7 @@ define method spew-objects-in-queue (state :: <state>) => ();
       if (member?('+', label))
 	format(stream, "%s %s\n", target.comment-token, label);
       else
-	let name = stringify(target.mangled-name-prefix, label);
-	format(stream, target.export-directive, name);
-	format(stream, "%s\n", name);
+	spew-label(state, label, export: #t);
       end if;
     end for;
 
@@ -335,12 +323,47 @@ define method spew-objects-in-queue (state :: <state>) => ();
 end method spew-objects-in-queue;
 
 
-// On the HP, we could use ".blockz bytes".  But this directive
-// doesn't exist on any other machine...
+// spew-label -- internal
+//
+// This function dumps a label declaration to the heap.  The real
+// reason we have this is that the HP assembler doesn't want colons
+// after the label declarations, GNU assembler for HP considers them
+// optional, and GNU assembler on every other platform considers them
+// mandatory.  I can also imagine adding other name-mangling stuff to
+// this function...
+//
+// Specify export: #t if you want to export the label from the
+// assembly file (ie, if you want to reference the label from another
+// file).  For the record, it seems that we only declare labels we
+// intend to export, so currently the export: option is always used.
+//
+define function spew-label (state :: <state>, unmangled-label :: <string>,
+			    #key export = #f)
+ => ();
+  let maybe-colon = if (state.target.omit-colon-after-label-declarations?)
+		      "";
+		    else
+		      ":";
+		    end if;
+  let label-name = concatenate(state.target.mangled-name-prefix,
+			       unmangled-label);
+  if (export)
+    format(state.stream, state.target.export-directive, label-name);
+  end if;
+  format(state.stream, "%s%s\n", label-name, maybe-colon);
+end function spew-label;
+
+// save-n-bytes -- internal
+//
+// This function reserves N bytes in the heap, and fills them with any
+// old crap (usually zeros).  On the HP, we could use the .blockz
+// directive, but that doesn't exist on other machines.  (There are
+// probably portable directives that accomplish that, like perhaps
+// .fill, but this function works, so I'm not going to toy with it.)
 //
 // This function assumes that we are already on a word boundary.  If
 // we aren't, and save-n-bytes tries to use a .word directive, I'm not
-// real sure what will happen.
+// really sure what will happen.
 //
 define method save-n-bytes
     (state :: <state>, bytes :: <integer>, #key comment = #f) => ();
@@ -873,7 +896,7 @@ define method spew-object
 		%element: contents);
 end;
 
-define constant $spewed-string-buffer = as(<stretchy-vector>, "\t.string\t\"");
+define constant $spewed-string-buffer = as(<stretchy-vector>, "\t.ascii\t\"");
 define constant $spewed-string-initial-size :: <integer>
   = $spewed-string-buffer.size;
 
