@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.29 1994/06/27 16:31:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.30 1994/07/12 00:41:58 rgs Exp $
 *
 * This file implements functions.
 *
@@ -1763,10 +1763,12 @@ static obj_t trans_gf_cache(obj_t gf_cache)
 void scavenge_func_roots(void)
 {
     scavenge(&obj_FunctionClass);
+    scavenge(&obj_RawFunctionClass);
     scavenge(&obj_MethodClass);
     scavenge(&obj_RawMethodClass);
     scavenge(&obj_BuiltinMethodClass);
     scavenge(&obj_ByteMethodClass);
+    scavenge(&obj_AccessorMethodClass);
     scavenge(&obj_MethodInfoClass);
     scavenge(&obj_GFClass);
     scavenge(&obj_GFCacheClass);
