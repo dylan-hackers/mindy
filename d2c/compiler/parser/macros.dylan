@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.13 1996/02/06 15:49:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.14 1996/02/21 02:50:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -773,7 +773,7 @@ define method find-intermediate-word
   finally
     if (prev)
       values(make(<fragment>, head: fragment.fragment-head, tail: prev),
-	     make(<fragment>, head: piece, tail: fragment.fragment-tail));
+	     make(<fragment>, head: piece, tail: tail));
     else
       values(make(<fragment>), fragment);
     end;
@@ -807,6 +807,35 @@ define method trim-until-parsable (fragment :: <fragment>,
     end;
   end;
 end;
+
+
+define method split-at-separator
+    (fragment :: <fragment>, seperator :: <class>)
+    => (found? :: <boolean>, before :: <fragment>, after :: <fragment>);
+  block (return)
+    let tail = fragment.fragment-tail;
+    for (prev = #f then piece,
+	 piece = fragment.fragment-head then piece.piece-next,
+	 while: (piece & piece.piece-prev ~= tail))
+      if (instance?(piece.piece-token, seperator))
+	if (prev)
+	  return(#t,
+		 make(<fragment>, head: fragment.fragment-head, tail: prev),
+		 make(<fragment>, head: piece.piece-next, tail: tail));
+	else
+	  return(#t,
+		 make(<fragment>),
+		 make(<fragment>, piece.piece-next, tail));
+	end if;
+      end if;
+      if (instance?(piece, <balanced-piece>))
+	piece := piece.piece-other;
+      end;
+    end for;
+    values(#f, fragment, make(<fragment>));
+  end block;
+end method split-at-separator;
+
 
 
 
@@ -904,40 +933,62 @@ define method match (pattern :: <pattern-list>, fragment :: <fragment>,
 	       intermediate-words, fail, continue, results);
 end;
 
-define method match (pattern :: <pattern-sequence>, fragment :: <fragment>,
-		     intermediate-words :: <simple-object-vector>,
-		     fail :: <function>, continue :: <function>,
-		     results :: <list>)
+define method match-pieces
+    (pieces :: <simple-object-vector>, seperator :: <class>,
+     fragment :: <fragment>, intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>, results :: <list>)
     => res :: false-or(<list>);
-  match-pieces(pattern.pattern-sequence-pieces, #f, fragment,
-	       intermediate-words, fail, continue, results);
-end;
-
-
-define method match-pieces (pieces, separator, fragment,
-			    intermediate-words :: <simple-object-vector>,
-			    fail, continue, results)
   local
-    method match-pieces-aux (this-piece, fragment, fail, results)
+    method match-piece
+	(this-piece :: <integer>, fragment :: <fragment>, results :: <list>)
+      let next-piece = this-piece + 1;
+      if (next-piece == pieces.size)
+	match(pieces[this-piece], fragment, intermediate-words, fail,
+	      continue, results);
+      else
+	let (found?, before, after) = split-at-separator(fragment, seperator);
+	if (found? | this-piece + 2 == pieces.size)
+	  match(pieces[this-piece], before, intermediate-words, fail,
+		method (remaining :: <fragment>, fail :: <function>,
+			results :: <list>)
+		  if (remaining.more?)
+		    fail();
+		  else
+		    match-piece(next-piece, after, results);
+		  end if;
+		end method,
+		results);
+	else
+	  fail();
+	end if;
+      end if;
+    end method match-piece;
+  if (pieces.empty?)
+    continue(fragment, fail, results);
+  else
+    match-piece(0, fragment, results);
+  end if;
+end method match-pieces;
+
+
+define method match
+    (pattern :: <pattern-sequence>, fragment :: <fragment>,
+     intermediate-words :: <simple-object-vector>,
+     fail :: <function>, continue :: <function>, results :: <list>)
+    => res :: false-or(<list>);
+  let pieces = pattern.pattern-sequence-pieces;
+  local
+    method match-piece
+	(this-piece :: <integer>, fragment :: <fragment>, fail :: <function>,
+	 results :: <list>)
       match(pieces[this-piece], fragment, intermediate-words, fail,
-	    method (fragment, fail, results)
+	    method (fragment :: <fragment>, fail :: <function>,
+		    results :: <list>)
 	      let next-piece = this-piece + 1;
 	      if (next-piece == pieces.size)
 		continue(fragment, fail, results);
-	      elseif (~separator)
-		match-pieces-aux(next-piece, fragment, fail, results);
-	      elseif (fragment.more?
-			& instance?(fragment.next-token, separator))
-		match-pieces-aux(next-piece, consume-token(fragment),
-				 fail, results);
-	      elseif (next-piece == pieces.size - 1)
-		match-empty(pieces[next-piece], fail,
-			    method (results)
-			      continue(fragment, fail, results);
-			    end,
-			    results);
 	      else
-		fail();
+		match-piece(next-piece, fragment, fail, results);
 	      end;
 	    end,
 	    results);
@@ -945,17 +996,17 @@ define method match-pieces (pieces, separator, fragment,
   if (pieces.empty?)
     continue(fragment, fail, results);
   else
-    match-pieces-aux(0, fragment, fail, results);
+    match-piece(0, fragment, fail, results);
   end;
 end;
 
 
 define method match-empty (pattern :: <pattern>, fail, continue, results)
-  match-empty-pieces (pattern.pattern-pieces, fail, continue, results);
+  match-empty-pieces(pattern.pattern-pieces, fail, continue, results);
 end;
 
 define method match-empty (pattern :: <pattern-list>, fail, continue, results)
-  match-empty-pieces (pattern.pattern-list-pieces, fail, continue, results);
+  match-empty-pieces(pattern.pattern-list-pieces, fail, continue, results);
 end;
 
 define method match-empty (pattern :: <pattern-sequence>, fail, continue,
@@ -1093,9 +1144,11 @@ define method match (pattern :: <variable-pattern>, fragment :: <fragment>,
       let (type, type-fragment, remaining)
 	= trim-until-parsable(type-guess, remaining-guess, parse-type);
       if (type)
+	let piece = make(<piece>, token: type);
 	continue(remaining, fail,
 		 add-binding(pattern.variable-type-pattern,
-			     type-fragment, results));
+			     make(<fragment>, head: piece, tail: piece),
+			     results));
       else
 	no-type();
       end;
@@ -1137,8 +1190,11 @@ define method match (pattern :: <pattern-variable>, fragment :: <fragment>,
       let (expr, expr-fragment, remaining)
 	= trim-until-parsable(expr-guess, remaining-guess, parse-expression);
       if (expr)
+	let piece = make(<piece>, token: expr);
 	continue(remaining, fail,
-		 add-binding(pattern, expr-fragment, results));
+		 add-binding(pattern,
+			     make(<fragment>, head: piece, tail: piece),
+			     results));
       else
 	fail();
       end;
@@ -1166,13 +1222,25 @@ define method match (pattern :: <pattern-variable>, fragment :: <fragment>,
     #"body" =>
       let (body-guess, remaining-guess)
 	= find-intermediate-word(fragment, intermediate-words);
-      match-variable(pattern, body-guess, remaining-guess, parse-body,
-		     fail, continue, results);
+      let (body, body-fragment, remaining)
+	= trim-until-parsable(body-guess, remaining-guess, parse-body);
+      if (body)
+	let piece = make(<piece>, token: make(<begin>, body: body));
+	let body-frag = make(<fragment>, head: piece, tail: piece);
+	continue(remaining, fail, add-binding(pattern, body-frag, results));
+      else
+	fail();
+      end if;
     #"case-body" =>
       let (body-guess, remaining-guess)
 	= find-intermediate-word(fragment, intermediate-words);
-      match-variable(pattern, body-guess, remaining-guess, parse-case-body,
-		     fail, continue, results);
+      let (body, body-fragment, remaining)
+	= trim-until-parsable(body-guess, remaining-guess, parse-case-body);
+      if (body)
+	continue(remaining, fail, add-binding(pattern, body, results));
+      else
+	fail();
+      end if;
     #f =>
       if (pattern.patvar-wildcard?)
 	if (pattern.patvar-at-end?)
@@ -1201,37 +1269,6 @@ define method match (pattern :: <pattern-variable>, fragment :: <fragment>,
       else
 	fail();
       end;
-  end;
-end;
-
-define method match-variable (pattern :: <pattern-variable>,
-			      fragment :: <fragment>, remaining :: <fragment>,
-			      parser :: <function>, fail :: <function>,
-			      continue :: <function>, results :: <list>)
-    => res :: false-or(<list>);
-  let fail = if (fragment.more?)
-	       method ()
-		 let prev-piece = fragment.fragment-tail;
-		 if (instance?(prev-piece, <balanced-piece>))
-		   prev-piece := prev-piece.piece-other;
-		 end;
-		 match-variable(pattern,
-				make(<fragment>,
-				     head: fragment.fragment-head,
-				     tail: prev-piece.piece-prev),
-				make(<fragment>,
-				     head: prev-piece,
-				     tail: remaining.fragment-tail),
-				parser, fail, continue, results);
-	       end;
-	     else
-	       fail;
-	     end;
-  block ()
-    parser(make(<fragment-tokenizer>, fragment: fragment));
-    continue(remaining, fail, add-binding(pattern, fragment, results));
-  exception <error>
-    fail();
   end;
 end;
 
