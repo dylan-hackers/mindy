@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.6 2001/10/16 21:58:20 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.7 2001/10/17 20:52:58 gabor Exp $
 copyright: see below
 
 
@@ -63,6 +63,7 @@ define module fer-transform
     remove-dependency-from-source,
     dropped-dependent,
     delete-queueable,
+    queue-dependents,
     function-movable?,
     expression-movable?,
     fixed-number-of-values?,
