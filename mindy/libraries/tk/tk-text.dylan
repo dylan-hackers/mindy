@@ -37,7 +37,8 @@ define-widget(<text>, "text",
 	      #"insertborderwidth", #"insertofftime", #"insertontime",
 	      #"insertwidth", #"selectbackground", #"selectborderwidth",
 	      #"selectforeground", #"setgrid", #"state", #"textvariable",
-	      #"width", #"wrap", #"yscrollcommand");
+	      #"width", #"wrap", #"yscrollcommand", #"spacing1", #"spacing2",
+	      #"spacing3", #"tabs");
 
 define class <text-index> (<object>)
   slot line :: limited(<integer>, min: 1), required-init-keyword: #"line";
@@ -176,7 +177,10 @@ end class <text-tag>;
 define method initialize
     (object :: <text-tag>, #next next, #rest options, #all-keys);
   apply(put-tk-line, object.widget, " tag configure ", object.name,
-	std-options(#[#"bgstipple", #"fgstipple", #"font", #"underline"],
+	std-options(#[#"bgstipple", #"fgstipple", #"font", #"underline",
+		      #"justify", #"lmargin1", #"lmargin2", #"offset",
+		      #"overstrike", #"relief", #"rmargin", #"spacing1",
+		      #"spacing2", #"spacing3", #"tabs", #"wrap"],
 		    #t, options));
 end method initialize;
 
