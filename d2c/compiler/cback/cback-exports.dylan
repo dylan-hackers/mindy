@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.10 1996/03/17 00:46:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback-exports.dylan,v 1.11 1996/03/17 02:49:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -24,7 +24,7 @@ define module stack-analysis
   use compile-time-functions;
 
   export
-    analize-stack-usage;
+    analyze-stack-usage;
 end;
 
 

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.114 1996/03/17 00:46:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.115 1996/03/17 02:49:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1535,7 +1535,7 @@ define method emit-function
   let c-name = main-entry-name(function-info, file);
   file.file-prototypes-exist-for[c-name] := #t;
 
-  let max-depth = analize-stack-usage(function);
+  let max-depth = analyze-stack-usage(function);
   for (i from 0 below max-depth)
     format(file.file-vars-stream,
 	   "descriptor_t *cluster_%d_top;\n",
