@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.19 1994/04/15 14:54:34 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.20 1994/04/29 05:46:58 rgs Exp $
 //
 //  This file does whatever.
 //
@@ -69,7 +69,7 @@ define module Builtin-Stuff
     sorted-applicable-methods, state-valid?, subtype?,
     tail, tail-setter, truncate/,
     union, fd-close, fd-error-string, fd-input-available?, fd-open,
-    fd-read, fd-seek, fd-sync-output, fd-write,
+    fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
     values, vector,
     wait-for-event, weak-pointer-object;
   create
@@ -184,7 +184,7 @@ define module System
   use Dylan;
   use Builtin-Stuff,
     import: (<buffer>, fd-close, fd-error-string, fd-input-available?,
-	     fd-open, fd-read, fd-seek, fd-sync-output, fd-write),
+	     fd-open, fd-read, fd-seek, fd-sync-output, fd-write, fd-exec),
     export: all;
 end System;
 
@@ -193,5 +193,6 @@ define module Threads
   use Builtin-Stuff,
     import: (<thread>, spawn-thread, kill-thread,
 	     <lock>, locked?, grab-lock, release-lock,
-	     <event>, wait-for-event, signal-event, broadcast-event);
+	     <event>, wait-for-event, signal-event, broadcast-event),
+    export: all;
 end;
