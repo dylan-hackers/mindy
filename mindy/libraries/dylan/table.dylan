@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.11 1994/11/03 23:51:11 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.12 1994/11/22 16:55:22 nkramer Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -29,6 +29,10 @@ Synopsis:   Implements <table>, <object-table>, <equal-table>,
 //
 //======================================================================
 
+// This code is a more or less implementation independent.  Almost all
+// of the code that is implementation dependent is in the beginning of
+// the file; the rest can be found with a search for "mindy".
+//
 // Author's note: "ht" is my abbreviation for "hashtable", and is used
 // as a parameter quite frequently.
 //
@@ -155,8 +159,7 @@ define class <bucket-entry> (<object>)
 end class <bucket-entry>;
 
 
-define class <table> (<mutable-explicit-key-collection>,
-		       <stretchy-collection>)
+define abstract class <table> (<dictionary>)
   slot item-count-slot         :: <fixed-integer>;     // Number of keys
   slot bucket-array-slot       :: <vector>;
   slot bucket-count-slot       :: <fixed-integer>;     // size of bucket-array
