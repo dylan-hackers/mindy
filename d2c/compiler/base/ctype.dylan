@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.47 1996/04/15 18:25:31 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.48 1996/05/01 14:21:19 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1351,15 +1351,14 @@ define constant make-values-ctype = method
   (req :: <list>, rest :: false-or(<ctype>)) => res :: <values-ctype>;
 
  let nreq = req.size;
- if (nreq == 1 & ~rest)
+ if (nreq == 1 & (rest == #f | rest == empty-ctype()))
    req.first;
  elseif (nreq == 0 & rest == object-ctype())
    wild-ctype();
  else
    make(<multi-value-ctype>, positional-types: req, min-values: nreq,
         rest-value-type: rest | empty-ctype());
-	
- end;
+ end if;
 end method;
 
    
