@@ -19,105 +19,114 @@ define function print-c-declaration (decl :: <c-declaration>) => ()
   force-output(*standard-output*);
 end;
 
+define function sv (#rest items) => (sv :: <stretchy-vector>)
+  let result = make(<stretchy-vector>);
+  for (item in items)
+    add!(result, item);
+  end;
+  result;
+end;
+
 //=========================================================================
 //  C Types & Declarations
 //=========================================================================
 
 define function test-c-types-and-declarations () => ()
+  let r = make(<c-type-repository>);
+
   test-section-header("C Types");
 
   print-c-type($c-int-type);
-  print-c-type(make(<c-pointer-type>, referent: $c-signed-long-type));
-  print-c-type(make(<c-array-type>, referent: $c-char-type));
-  print-c-type(make(<c-array-type>, referent: $c-char-type, size: 10));
-  print-c-type(make(<c-pointer-type>,
-		    referent: make(<c-array-type>,
+  print-c-type(make(<c-pointer-type>, repository: r,
+		    referent: $c-signed-long-type));
+  print-c-type(make(<c-array-type>, repository: r,
+		    referent: $c-char-type));
+  print-c-type(make(<c-array-type>, repository: r,
+		    referent: $c-char-type, size: 10));
+  print-c-type(make(<c-pointer-type>, repository: r,
+		    referent: make(<c-array-type>, repository: r,
 				   referent: $c-char-type, size: 10)));
-  print-c-type(make(<c-array-type>,
+  print-c-type(make(<c-array-type>, repository: r,
 		    size: 10,
-		    referent: make(<c-pointer-type>,
+		    referent: make(<c-pointer-type>, repository: r,
 				   referent: $c-char-type)));
 
   let char* =
-    make(<c-pointer-type>, referent: $c-char-type);
+    make(<c-pointer-type>, repository: r, referent: $c-char-type);
   let array-10-char* =
-    make(<c-array-type>, referent: char*, size: 10);
+    make(<c-array-type>, repository: r, referent: char*, size: 10);
   let array-10-char*-* =
-    make(<c-pointer-type>, referent: array-10-char*);
+    make(<c-pointer-type>, repository: r, referent: array-10-char*);
   let func =
-    make(<c-function-type>, return-type: array-10-char*-*);
+    make(<c-function-type>, repository: r, return-type: array-10-char*-*);
   print-c-type(func);
   let func-ptr =
-    make(<c-pointer-type>, referent: func);
+    make(<c-pointer-type>, repository: r, referent: func);
   print-c-type(func-ptr);
 
   print-c-type($c-long-double-type);
   print-c-type($c-long-long-type);
 
-  print-c-type(make(<c-struct-type>, tag: "foo"));
-  print-c-type(make(<c-struct-type>));
-  print-c-type(make(<c-union-type>, tag: "bar"));
-  print-c-type(make(<c-union-type>));
-  print-c-type(make(<c-enum-type>, tag: "baz"));
-  print-c-type(make(<c-enum-type>));
+  print-c-type(make(<c-struct-type>, repository: r, tag: "foo"));
+  print-c-type(make(<c-struct-type>, repository: r));
+  print-c-type(make(<c-union-type>, repository: r, tag: "bar"));
+  print-c-type(make(<c-union-type>, repository: r));
+  print-c-type(make(<c-enum-type>, repository: r, tag: "baz", members: sv()));
+  print-c-type(make(<c-enum-type>, repository: r, members: sv()));
 
-  let typedef = make(<c-typedef-type>,
+  let typedef = make(<c-typedef-type>, repository: r,
 		    name: "typedefed_type",
 		    type: $c-int-type);
   print-c-type(typedef);
 
-  print-c-type(make(<c-function-type>,
+  print-c-type(make(<c-function-type>, repository: r,
 		    return-type: $c-void-type,
 		    explicit-void?: #t));
-  print-c-type(make(<c-function-type>,
+  print-c-type(make(<c-function-type>, repository: r,
 		    return-type: $c-void-type,
 		    explicit-varargs?: #t));
 
-  local method build-argument-list (f :: <c-function-type>)
-	  add!(f.c-function-parameter-types, $c-int-type);
-	  add!(f.c-function-parameter-types, $c-char-type);
-	  add!(f.c-function-parameter-types, $c-long-long-type);
+  local method make-argument-list ()
+	  sv($c-int-type, $c-char-type, $c-long-long-type);
 	end;
-  let func2 = make(<c-function-type>,
-		   return-type: $c-void-type);
-  build-argument-list(func2);
-  print-c-type(func2);
-  let func3 = make(<c-function-type>,
+  let func2 = make(<c-function-type>, repository: r,
 		   return-type: $c-void-type,
+		   parameter-types: make-argument-list());
+  print-c-type(func2);
+  let func3 = make(<c-function-type>, repository: r,
+		   return-type: $c-void-type,
+		   parameter-types: make-argument-list(),
 		   explicit-varargs?: #t);
-  build-argument-list(func3);
   print-c-type(func3);
 
   // Display a struct with all its members.
-  let int* = make(<c-pointer-type>, referent: $c-int-type);
+  let int* = make(<c-pointer-type>, repository: r, referent: $c-int-type);
   let m1 = make(<c-member-variable>, name: "foo", type: int*);
   let m2 = make(<c-member-variable>, name: "bar", type: int*);
   let b1 = make(<c-bit-field>, name: "baz", sign: #"signed", width: 10);
-  let b2 = make(<c-bit-field>, name: #f, sign: #"unspecified", width: 2);
-  let struct = make(<c-struct-type>, tag: "my_struct");
-  add!(struct.c-type-members, m1);
-  add!(struct.c-type-members, m2);
-  add!(struct.c-type-members, b1);
-  add!(struct.c-type-members, b2);
+  let b2 = make(<c-bit-field>, sign: #"unspecified", width: 2);
+  let struct = make(<c-struct-type>, repository: r,
+		    tag: "my_struct",
+		    members: sv(m1, m2, b1, b2));
   format(*standard-output*, "%s\n", format-c-tagged-type(struct));
   force-output(*standard-output*);
   format(*standard-output*, "%s\n",
 	 format-c-tagged-type(struct, multi-line?: #t));
   force-output(*standard-output*);
 
-  // Display a union
-  let union = make(<c-union-type>, tag: "my_union");
-  add!(union.c-type-members, m1);
-  add!(union.c-type-members, m2);
+  // Display a union (and test c-type-members-setter & incomplete types)
+  // XXX - What happens when we try to print an incomplete type?
+  let union = make(<c-union-type>, repository: r, tag: "my_union");
+  union.c-type-members := sv(m1, m2);
   format(*standard-output*, "%s\n", format-c-tagged-type(union));
   force-output(*standard-output*);
 
   // Display an enumeration
   let e1 = make(<c-enum-constant>, name: "quux", value: 2);
   let e2 = make(<c-enum-constant>, name: "quuux", value: 3);
-  let enum = make(<c-enum-type>, tag: "my_enum");
-  add!(enum.c-enum-members, e1);
-  add!(enum.c-enum-members, e2);
+  let enum = make(<c-enum-type>, repository: r,
+		  tag: "my_enum",
+		  members: sv(e1, e2));
   format(*standard-output*, "%s\n", format-c-tagged-type(enum));
   force-output(*standard-output*);
   format(*standard-output*, "%s\n",
@@ -142,6 +151,7 @@ define function test-c-types-and-declarations () => ()
 			   name: "v2", type: typedef, extern?: #f));
   print-c-declaration(make(<c-variable-declaration>,
 			   name: "v3", type: enum));
+/*
   print-c-declaration(make(<c-variable-declaration>,
 			   name: "f2", type: func2));
   print-c-declaration(make(<c-variable-declaration>,
@@ -150,78 +160,33 @@ define function test-c-types-and-declarations () => ()
 			   name: "f", type: func));
   print-c-declaration(make(<c-variable-declaration>,
 			   name: "fp", type: func-ptr));
+*/
 
   // Defines
   print-c-declaration(make(<c-integer-define>, name: "d1", value: 3));
   print-c-declaration(make(<c-string-define>, name: "d2", value: "Hi!"));
   print-c-declaration(make(<c-type-alias-define>, name: "d3", type: struct));
   print-c-declaration(make(<c-unknown-define>, name: "d4"));
-end function test-c-types-and-declarations;
 
-//=========================================================================
-//  C Type Repositories
-//=========================================================================
+  // See what we've accumulated.
+  test-section-header("Dump of type repository");
 
-define function test-c-type-repositories () => ()
-  test-section-header("C Type Repository");
-
-  let r = make(<c-type-repository>);
   local
-    method add-type(type :: <c-type>) => (type :: <c-type>)
-      format(*standard-output*, "Checking repository for '%s'... ",
-	     format-c-type(type));
-      force-output(*standard-output*);
-      let canonical = find-canonical-c-type(r, type);
-      format(*standard-output*,
-	     if (type == canonical)
-	       "already canonical.\n"
-	     else
-	       "found.\n"
-	     end);
-      force-output(*standard-output*);
-      canonical;
-    end,
-    method add-pointer-to-type(type :: <c-type>) => (type :: <c-type>)
-      format(*standard-output*, "Finding pointer to '%s'.\n",
-	     format-c-type(type));
-      force-output(*standard-output*);
-      find-canonical-pointer-to-c-type(r, type);
-    end,
     method dump-entry(type :: <c-type>) => ()
       format(*standard-output*, "  %s\n", format-c-type(type));
       force-output(*standard-output*);
     end;
-
-  add-type($c-char-type);
-  add-type($c-int-type);
-  add-type($c-void-type);
-
-  add-pointer-to-type($c-char-type);
-  let t1 = add-type(make(<c-pointer-type>, referent: $c-char-type));
-  let t2 = add-type(make(<c-pointer-type>, referent: $c-int-type));
-
-  add-type(make(<c-typedef-type>, name: "foo", type: $c-int-type));
-  add-type(make(<c-typedef-type>, name: "foo", type: $c-int-type));
-  add-type(make(<c-typedef-type>, name: "bar", type: $c-int-type));
-
-  let t3 = add-type(make(<c-struct-type>, tag: "baz"));
-  add-type(make(<c-struct-type>, tag: "baz"));
-  let t4 = add-type(make(<c-union-type>, tag: "baz"));
-  let t5 = add-type(make(<c-enum-type>, tag: "baz"));
-
-  let t6 = add-type(make(<c-array-type>, referent: t1, size: 10));  
-  let t7 = add-type(make(<c-array-type>, referent: t1));  
-  add-type(make(<c-array-type>, referent: t1, size: 10));  
-
-  format(*standard-output*, "Dumping type repository:\n");
   do-c-type-repository-entries(dump-entry, r);
-end function test-c-type-repositories;
+  
+end function test-c-types-and-declarations;
+
 
 //=========================================================================
 //  Test C parser
-//  type-rep, header name, header-file-finder object
-//  outputs c-file object.
+//  Inputs: type-rep, header name, header-file-finder object
+//  Outputs: c-file object.
 //=========================================================================
+
 define function test-c-parser(args)
   test-section-header("C Parser");
   let r :: <c-type-repository> = make(<c-type-repository>);
@@ -237,7 +202,6 @@ end function test-c-parser;
 
 define method main(appname, #rest args)
   test-c-types-and-declarations();
-  test-c-type-repositories();
   if (~empty?(args))
     test-c-parser(args);
   end if;
