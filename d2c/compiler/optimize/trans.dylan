@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.12 1995/11/14 15:24:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.13 1995/12/03 21:23:24 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -600,6 +600,112 @@ define method build-instance?
     next-method();
   end;
 end;  
+
+
+// slot initialized and address functions.
+
+define method slot-initialized?-transformer
+    (component :: <component>, call :: <known-call>)
+    => (did-anything? :: <boolean>);
+  let (okay?, instance, getter) = extract-args(call, 2, #f, #f, #f);
+  if (okay?)
+    let class = best-idea-of-class(instance.derived-type);
+    if (class)
+      let slot = slot-from-getter(class, getter);
+      let builder = make-builder(component);
+      let instance-type = instance.derived-type;
+      if (slot-guaranteed-initialized?(slot, instance-type))
+	replace-expression(component, call.dependents,
+			   make-literal-constant(builder, as(<ct-value>, #t)));
+	#t;
+      else
+	let init?-slot = slot.slot-initialized?-slot;
+	if (init?-slot)
+	  let offset = find-slot-offset(init?-slot, instance-type);
+	  if (offset)
+	    replace-expression
+	      (component, call.dependents,
+	       make-operation(builder, <slot-ref>, list(instance),
+			      derived-type: init?-slot.slot-type,
+			      slot-info: init?-slot,
+			      slot-offset: offset));
+	    #t;
+	  else
+	    #f;
+	  end if;
+	else
+	  let offset = find-slot-offset(slot, instance-type);
+	  if (offset)
+	    let dep = call.dependents;
+	    let call-assign = dep.dependent;
+	    let policy = call-assign.policy;
+	    let source = call-assign.source-location;
+	    let temp = make-local-var(builder, slot.slot-getter.variable-name,
+				      slot.slot-type);
+	    build-assignment
+	      (builder, policy, source, temp,
+	       make-operation(builder, <slot-ref>, list(instance),
+			      derived-type: slot.slot-type,
+			      slot-info: slot, slot-offset: offset));
+	    replace-expression(component, dep,
+			       make-operation(builder, <primitive>, list(temp),
+					      name: #"initialized?"));
+	    insert-before(component, call-assign, builder-result(builder));
+	    #t;
+	  else
+	    #f;
+	  end if;
+	end if;
+      end if;
+    else
+      #f;
+    end if;
+  else
+    #f;
+  end if;
+end method slot-initialized?-transformer;
+	    
+define-transformer(#"slot-initialized?", #f, slot-initialized?-transformer);
+
+
+define method slot-from-getter
+    (class :: <cclass>, getter :: <literal-constant>)
+    => res :: false-or(<slot-info>);
+  block (return)
+    let ctv = getter.value;
+    for (slot in class.all-slot-infos)
+      let var = slot.slot-getter;
+      if (var)
+	let defn = var.variable-definition;
+	if (defn & defn.ct-value == ctv)
+	  return(slot);
+	end;
+      end;
+    end;
+    #f;
+  end;
+end method slot-from-getter;
+
+define method slot-from-getter
+    (class :: <cclass>, getter :: <definition-constant-leaf>)
+    => res :: false-or(<slot-info>);
+  block (return)
+    for (slot in class.all-slot-infos)
+      let var = slot.slot-getter;
+      if (var & var.variable-definition == getter)
+	return(slot);
+      end;
+    end;
+    #f;
+  end;
+end method slot-from-getter;
+
+define method slot-from-getter
+    (class :: <cclass>, getter :: <leaf>) => res :: <false>;
+  #f;
+end method slot-from-getter;
+
+
 
 
 define method apply-transformer
