@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.17 1994/06/17 18:05:02 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.18 1994/06/26 22:39:38 wlott Exp $
 *
 * This file does whatever.
 *
@@ -259,6 +259,8 @@ void thread_push_escape(struct thread *thread)
     *thread->sp++ = thread->datum;
     *thread->sp++ = make_fixnum((int)thread->status);
     *thread->sp++ = rawptr_obj(thread->advance);
+    *thread->sp++ = thread->component;
+    *thread->sp++ = make_fixnum(thread->pc);
 
     thread->advance = start_thread;
     set_status(thread, status_Suspended);
@@ -269,6 +271,8 @@ void thread_push_escape(struct thread *thread)
 
 void thread_pop_escape(struct thread *thread)
 {
+    thread->pc = fixnum_value(*--thread->sp);
+    thread->component = *--thread->sp;
     thread->advance = obj_rawptr(*--thread->sp);
     set_status(thread, (enum thread_status)fixnum_value(*--thread->sp));
     thread->datum = *--thread->sp;
