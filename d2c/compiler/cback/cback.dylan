@@ -317,6 +317,18 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
     => res :: <lambda-info>;
   // Compute the prototype.
 
+  let defines = lambda.prologue.dependents.dependent.defines;
+  for (var = defines then var.definer-next,
+       index from 0,
+       while: var)
+    if (var.info)
+      error("lambda arg already has a backend-info?");
+    end;
+    let rep = pick-representation(var.derived-type, #"speed");
+    let name = format-to-string("A%d", index);
+    var.info := make(<backend-var-info>, representation: rep, name: name);
+  end;
+
   let stream = make(<byte-string-output-stream>);
   let name = new-global(output-info);
   let result = lambda.depends-on;
@@ -346,28 +358,18 @@ define method make-info-for (lambda :: <lambda>, output-info :: <output-info>)
   end;
 
   format(stream, " %s(", name);
-  let defines = lambda.prologue.dependents.dependent.defines;
   if (defines)
     for (var = defines then var.definer-next,
 	 index from 0,
 	 while: var)
-      let info = var.info;
-      if (info)
-	error("lambda arg already has a backend-info?");
-      end;
-      let rep = pick-representation(var.derived-type, #"speed");
-      let varinfo = var.var-info;
-      let debug-name
-	= instance?(varinfo, <debug-named-info>) & varinfo.debug-name;
-      let name = format-to-string("A%d", index);
-      info := make(<backend-var-info>, representation: rep, name: name);
-      var.info := info;
       unless (zero?(index))
 	write(", ", stream);
       end;
+      let (name, rep) = c-name-and-rep(var, output-info);
       format(stream, "%s %s", rep.representation-c-type, name);
-      if (debug-name)
-	format(stream, " /* %s */", debug-name);
+      let varinfo = var.var-info;
+      if (instance?(varinfo, <debug-named-info>))
+	format(stream, " /* %s */", varinfo.debug-name);
       end;
     end;
   else
@@ -585,11 +587,35 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
-			       expr :: <abstract-variable>,
+			       var :: <abstract-variable>,
 			       output-info :: <output-info>)
     => ();
-  let (name, rep) = c-name-and-rep(expr, output-info);
-  deliver-results(defines, vector(pair(name, rep)), output-info);
+  if (instance?(var.var-info, <values-cluster-info>))
+    let stream = output-info.output-info-guts-stream;
+    if (defines & instance?(defines.var-info, <values-cluster-info>))
+      write("VALUES-CLUSTER = VALUES-CLUSTER;\n", stream);
+    else
+      let count
+	= for (var = defines then var.definer-next,
+	       index from 0,
+	       while: var)
+	  finally
+	    index;
+	  end;
+      unless (count <= var.derived-type.min-values)
+	format("pad(VALUES-CLUSTER, %d);\n", count);
+      end;
+      for (var = defines then var.definer-next,
+	   index from 0,
+	   while: var)
+	let source = format-to-string("VALUES-CLUSTER[%d]", index);
+	deliver-single-result(var, source, $general-rep, output-info);
+      end;
+    end;
+  else
+    let (name, rep) = c-name-and-rep(var, output-info);
+    deliver-results(defines, vector(pair(name, rep)), output-info);
+  end;
 end;
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
