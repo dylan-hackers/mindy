@@ -23,6 +23,8 @@ $shared = 0;
 if($enable_d2c) { $deps = $D2C; }
 else { $deps = ''; }
 
+$D2C .= ' -p$(SRCROOT)/d2c/compiler/platforms.descr';
+
 do emit_library_rule(
     'dylan-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
