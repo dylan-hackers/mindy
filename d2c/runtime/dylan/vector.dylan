@@ -1,145 +1,101 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.4 1995/11/16 03:40:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.5 1995/12/09 02:44:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
+
+// Abstract vector stuff.
+
 define open abstract class <vector> (<array>)
 end;
 
-define generic vector (#rest args) => res :: <vector>;
+define inline sealed method make (class == <vector>, #key size = 0, fill)
+    => res :: <simple-object-vector>;
+  make(<simple-object-vector>, size: size, fill: fill);
+end;
+
+define sealed inline method as
+    (class == <vector>, collection :: <collection>)
+    => res :: <vector>;
+  as(<simple-object-vector>, collection);
+end;
+
+define sealed inline method as
+    (class == <vector>, vector :: <vector>)
+    => res :: <vector>;
+  vector;
+end;
 
 define inline method dimensions (vec :: <vector>) => res :: <sequence>;
   vector(vec.size);
 end;
 
-define inline sealed method make (class == <vector>, #rest keys, #all-keys)
-    => res :: <simple-object-vector>;
-  apply(make, <simple-object-vector>, keys);
+define inline method rank (vec :: <vector>) => res :: <fixed-integer>;
+  1;
+end;
+
+define inline method row-major-index (vec :: <vector>, #rest indices)
+    => index :: <fixed-integer>;
+  if (indices.size ~== 1)
+    error("Number of indices not equal to rank. Got %=, wanted one index",
+	  indices);
+  end if;
+  let index :: <fixed-integer> = indices[0];
+  if (index < 0 | index > vec.size)
+    error("Vector index out of bounds: %=", index);
+  end;
+  index;
 end;
 
 
-// Shared support for builtin vectors.
+// ???
 
-define open abstract class <builtin-vector> (<vector>, <builtin-array>)
-end;
-
-// Builtin vectors are built around size, %element, and %element-setter.
-// %element and %element-setter are just like element and element-setter,
-// except they don't deal with the default keyword (and currently don't do
-// any bounds checking).
-
-define open generic %element
-    (vec :: <builtin-vector>, index :: <fixed-integer>)
-    => res :: <object>;
-
-define open generic %element-setter
-    (new :: <object>, vec :: <builtin-vector>, index :: <fixed-integer>)
-    => res :: <object>;
-
-// By making this a separate non-inline routine, we avoid inlining calls to
-// error, which are annoyingly large.
-//
 define constant element-error
   = method (coll :: <sequence>, index :: <fixed-integer>)
 	=> res :: <never-returns>;
       error("No element %d in %=", index, coll);
     end method;
 
-define sealed inline method element
-    (vec :: <builtin-vector>, index :: <fixed-integer>,
-     #key default = $not-supplied)
-    => element :: <object>;
-  if (index >= 0 & index < vec.size)
-    %element(vec, index);
-  elseif (default == $not-supplied)
-    element-error(vec, index);
-  else
-    default;
-  end;
-end;
-
-define sealed inline method element-setter
-    (new-value :: <object>, vec :: <builtin-vector>, index :: <fixed-integer>)
-    => new-value :: <object>;
-  if (index >= 0 & index < vec.size)
-    %element(vec, index) := new-value;
-  else
-    element-error(vec, index);
-  end;
-end;
-
-define sealed inline method empty? (vec :: <builtin-vector>)
-    => res :: <boolean>;
-  vec.size == 0;
-end;
-
-
 
-// Making new Limited vectors.
+// <simple-vector>s
 
-/*
-
-define variable *limited-vectors* = #();
-
-define class <limited-vector-info> (<object>)
-  slot lvi-type :: <type>,
-    required-init-keyword: type:;
-  slot lvi-size :: type-union(<false>, <fixed-integer>),
-    required-init-keyword: size:;
-  slot lvi-class :: <class>,
-    required-init-keyword: class:;
-  slot lvi-next :: type-union(<limited-vector-info>, <false>),
-    required-init-keyword: next:;
+define abstract class <simple-vector> (<vector>)
 end;
 
-define method limited (class == <vector>, #key of :: <type>, fill, size: len)
-  block (return)
-    for (entry = *limited-vectors* then entry.lvi-next)
-      if (subtype?(of, entry.lvi-type) & subtype?(entry.lvi-type, of)
-	    & len == entry.lvi-size)
-	return(entry.class);
-      end;
-    end;
-    let slot = concatenate(vector(getter: %element, setter: element-setter,
-				  type: type, init-keyword: fill:,
-				  init-value: fill, size: size),
-			   if (len)
-			     vector(size-init-value: len);
-			   else
-			     vector(size-init-keyword: size:));
-    let new = make(<class>, superclasses: <builtin-vector>,
-		   slots: vector(slot));
-    *limited-vectors* :=
-      make(<limited-vector-info>, type: of, size: len, class: new,
-	   next: *limited-vectors*);
-    new;
-  end;
+define inline sealed method make
+    (class == <simple-vector>, #key size = 0, fill)
+    => res :: <simple-object-vector>;
+  make(<simple-object-vector>, size: size, fill: fill);
 end;
 
-*/
+define sealed inline method as
+    (class == <simple-vector>, collection :: <collection>)
+    => res :: <simple-vector>;
+  as(<simple-object-vector>, collection);
+end;
+
+define sealed inline method as
+    (class == <simple-vector>, vector :: <simple-vector>)
+    => res :: <simple-vector>;
+  vector;
+end;
 
 
 // <simple-object-vector>s
 
-/* 
-define constant <simple-object-vector>
-  = limited(<vector>, of: <object>);
-*/
+define inline method vector (#rest args) => res :: <simple-object-vector>;
+  args;
+end;
 
-define class <simple-object-vector> (<builtin-vector>)
+define class <simple-object-vector> (<simple-vector>)
   sealed slot %element,
     init-value: #f, init-keyword: fill:,
     sizer: size, required-size-init-keyword: size:;
 end;
 
 seal generic make (singleton(<simple-object-vector>));
-seal generic initialize (<simple-object-vector>);
 
-define inline method vector (#rest args) => res :: <simple-object-vector>;
-  args;
-end;
-
-define sealed inline method element
+define inline method element
     (vec :: <simple-object-vector>, index :: <fixed-integer>,
      #key default = $not-supplied)
     => element :: <object>;
@@ -152,8 +108,9 @@ define sealed inline method element
   end;
 end;
 
-define sealed inline method element-setter
-    (new-value :: <object>, vec :: <simple-object-vector>, index :: <fixed-integer>)
+define inline method element-setter
+    (new-value :: <object>, vec :: <simple-object-vector>,
+     index :: <fixed-integer>)
     => new-value :: <object>;
   if (index >= 0 & index < vec.size)
     %element(vec, index) := new-value;
@@ -162,3 +119,18 @@ define sealed inline method element-setter
   end;
 end;
 
+define sealed method as
+    (class == <simple-object-vector>, collection :: <collection>)
+    => res :: <simple-object-vector>;
+  let res = make(<simple-object-vector>, size: collection.size);
+  for (index :: <fixed-integer> from 0, element in collection)
+    res[index] := element;
+  end;
+  res;
+end method as;
+
+define inline method as
+    (class == <simple-object-vector>, vector :: <simple-object-vector>)
+    => res :: <simple-object-vector>;
+  vector;
+end;
