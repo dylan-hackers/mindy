@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.4 1998/11/11 15:54:22 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.5 1999/01/18 22:21:45 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -237,6 +237,7 @@ end module %Hash-Tables;
 define module magic
   use Dylan-Viscera,
     import: {%check-type,
+             %element,
 	     %element-setter,
 	     %instance?,
 	     %make-method,
