@@ -3,7 +3,7 @@ author: chiles@cs.cmu.edu
 synopsis: This file implements some extensions to the Gwydion Dylan
           implementation.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-internals.dylan,v 1.4 1996/07/04 18:11:49 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-internals.dylan,v 1.5 1996/07/10 17:07:07 bfw Exp $
 
 //======================================================================
 //
@@ -53,12 +53,20 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-inter
 ///
 
 #if (mindy) // singleton(<byte>) causes the compiler to die, very ungracefully.
+
 define method as (result :: singleton(<byte>), object :: <byte-character>)
     => result :: <byte>;
   as(<integer>, object);
 end method;
  
-define method as (result :: singleton(<byte-string>), object :: <byte-vector>)
+define method as (result :: singleton(<byte>), object :: <integer>)
+    => result :: <byte>;
+  // If it's out of bounds, the error will be caught by the type system.
+  object;
+end method;
+
+define method as (result :: singleton(<byte-string>),
+		  object :: type-union(<byte-vector>, <buffer>))
  => result :: <byte-string>;
   let len :: <integer> = object.size;
   let res :: <byte-string> = make(<byte-string>, size: len);
@@ -66,13 +74,26 @@ define method as (result :: singleton(<byte-string>), object :: <byte-vector>)
   res;
 end method;
 
-define method as (result :: singleton(<byte-vector>), object :: <byte-string>)
+define method as (result :: singleton(<byte-vector>),
+		  object :: type-union(<byte-string>, <buffer>))
  => result :: <byte-vector>;
   let len :: <integer> = object.size;
   let res :: <byte-vector> = make(<byte-vector>, size: len);
   copy-bytes(res, 0, object, 0, len);
   res;
 end method;
+
+define method as (result :: singleton(<buffer>),
+		  object :: type-union(<byte-string>, <byte-vector>))
+ => result :: <buffer>;
+  let len :: <integer> = object.size;
+  let res :: <buffer> = make(<buffer>, size: len);
+  copy-bytes(res, 0, object, 0, len);
+  res;
+end method;
+
+// Need some unicode methods...
+
 #endif
 
 ///
