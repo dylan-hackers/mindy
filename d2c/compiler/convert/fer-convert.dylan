@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.45 1995/09/01 19:30:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.46 1995/11/16 00:15:38 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -250,12 +250,12 @@ define method fer-convert (builder :: <fer-builder>, form :: <let-handler>,
        fer-convert(builder, form.handler-expression,
 		   make(<lexenv>, inside: lexenv), #"leaf", #"handler"));
   for (prop in form.handler-plist)
-    add!(args,
-	 make-literal-constant(builder, as(<ct-value>, prop.prop-keyword)));
+    let lit = prop.prop-keyword.token-literal;
+    add!(args, make-literal-constant(builder, lit));
     add!(args,
 	 fer-convert(builder, prop.prop-value,
-		     make(<lexenv>, inside: lexenv), #"lead",
-		     prop.prop-keyword));
+		     make(<lexenv>, inside: lexenv), #"leaf",
+		     lit.literal-value));
   end;
   build-assignment(builder, policy, source, #(),
 		   make-unknown-call(builder, func, #f, as(<list>, args)));
