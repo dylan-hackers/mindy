@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.11 1995/01/10 16:12:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/stretchy.dylan,v 1.12 1995/11/20 03:16:36 rgs Exp $
 
 //======================================================================
 //
@@ -77,8 +77,7 @@ define method make(cls == <simple-stretchy-vector>,
 		      otherwise =>
 			ceiling/(size + 1024, 1024) * 1024;
 		    end case;
-    let data = make(<simple-object-vector>, size: data-size);
-    fill!(data, fill, end: data-size);
+    let data = make(<simple-object-vector>, size: data-size, fill: fill);
     next-method(cls, fill: size, data: data);
   end if;
 end method make;
@@ -101,13 +100,12 @@ define method size-setter(new :: <fixed-integer>, ssv :: <simple-stretchy-vector
 		    else 
 		      ceiling/(new + 1024, 1024) * 1024;
 		    end if;
-      let new-data = make(<simple-object-vector>, size: new-len);
+      let new-data = make(<simple-object-vector>, size: new-len, fill: #f);
       for (index from 0 below fill)
 	new-data[index] := data[index];
       end for;
       ssv-data(ssv) := new-data;
     end if;
-    fill!(data, #f, start: fill);
   else
     fill!(data, #f, start: new, end: fill);
   end if;
@@ -155,7 +153,7 @@ define method add!(ssv :: <simple-stretchy-vector>, new-element)
 		      fill + 1024;
 		    end if;
     let new-data = replace-subsequence!(make(<simple-object-vector>,
-					     size: data-size),
+					     size: data-size, fill: #f),
 					data, end: fill);
     ssv-data(ssv) := new-data;
     new-data[fill] := new-element;
