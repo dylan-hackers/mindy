@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.5 1995/02/23 17:08:28 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.6 1995/03/04 21:58:55 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,9 +8,6 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 Todo: 
   subclass types (unknown or union of singletons if sealed)
   difference
-  limited-collection creation
-  class creation database hookup
-  primary class intersection
   type specifier list concept? (a parsed but uncanonicalized type)
 
 */
@@ -165,35 +162,59 @@ define generic find-direct-classes(type :: <ctype>) => res :: false-or(<list>);
 //// CSUBTYPE?
 ///
 
-/*
-
-This table summarizes the function implemented by csubtype-dispatch.  Rows are
-the class of the first arg, and columns are the class of the second arg.  For
-example, a limited integer type is a subtype of a direct instance type only if
-the limited base class is the same as the direct instance class.
-Non-symmetrically, a direct instance type is never a subtype of a limited
-integer type.
-
-  		single     l-int      l-coll      class      direct
----------------------------------------------------------------------------
-   singleton:   #f         #f       csubtype?/object-cclass  ==/object-cclass
-     lim int:   #f	   subrange   #f	  base-is-   ==base
-    lim coll:	#f	   #f         #f	   subclass  #f
-       class:   #f	   #f	      #f	  subclass   #f
-      direct:	#f         #f	      #f	  subclass   #f
-
-Note that many of these results only hold because of canonicalization which
-maps surface forms to other types, e.g. singleton(3) becomes
-    limited(<integer>, from: 3, to: 3)
-
-singleton/singleton is false because the types are known to be unequal at this
-point.  Similar for direct/direct and l-coll/l-coll.
-
-These rules are not arbitrarily general; they are the simplest ones that work
-in our particular type system.  Adding new meta-types could trash everything.
-
-*/
-
+/// Ignoring unknown and union types (which are handled specially), we have the
+/// following cross products:
+///
+/// Singleton with:
+///   singleton -- #f, 'cause == singletons are picked off
+///   limited-int -- #f, 'cause singleton integers don't exist due to
+///     canonicalization.
+///   class -- subtype?(base-class, class)
+///   direct -- subtype?(singleton.base-class, direct)
+///   byte-char -- is the singleton a byte-character?
+///   heap-instance -- subtype?(base-class, heap-inst)
+/// limited integer:
+///   singleton -- #f, 'cause singleton integers don't exist due to
+///     canonicalization.
+///   limited integer -- the base classes are subtype? and the ranges are in order
+///   class -- subtype?(base-class, class)
+///   direct -- subtype?(limint.base-class, direct)
+///   byte-char -- #f
+///   heap-instance -- subtype?(base-class, heap-inst)
+/// class:
+///   singleton -- #f, 'cause #t, #f, and #() don't exist as singletons due to
+///     canonicalization.
+///   limited integer -- #f, 'cause infinate bound limited integers are
+///     canonicalized back to the base class.
+///   class -- check the class precedence list
+///   direct -- class == direct.base-class, sealed, and no subclasses
+///   byte-char -- #f
+///   heap-instance -- #t if the class is guarenteed to be heap allocated.
+/// Direct:
+///   singleton -- #f.
+///   limited-int -- #f.
+///   class -- subtype?(base-class, class)
+///   direct -- #f, 'cause == direct classes are picked off.
+///   byte-char -- #f
+///   heap-instance -- #t iff the base-class is heap allocated.
+/// byte-char:
+///   singleton -- #f.
+///   limited-int -- #f.
+///   class -- subtype?(base-class, class)
+///   direct -- subtype?(base-class, direct)
+///   byte-char -- can't happen, cause == types are picked off.
+///   heap-instance -- #t iff the base-class is heap allocated.
+/// heap-instance:
+///   singleton -- #f;
+///   limited-int -- #f;
+///   class -- class == <object>
+///   direct -- #f;
+///   byte-char -- #f;
+///   heap-instance -- can't happen, cause == types are picked off.
+///   
+/// Note that for most of the subtype?(limited,other) cases, it just becomes
+/// subtype?(limited.base-class,other).
+///
 
 /// Handle csubtype? for unequal types other than union and unknown.
 /// Result is always precise because any vagueness is in the unknown types.
@@ -202,7 +223,8 @@ define sealed generic csubtype-dispatch(type1 :: <ctype>, type2 :: <ctype>)
        => result :: <boolean>;
 
 /// Many cases are false, so make that the default.
-define method csubtype-dispatch(type1, type2) => result :: <boolean>;
+define method csubtype-dispatch(type1 :: <ctype>, type2 :: <ctype>)
+    => result :: <boolean>;
   #f;
 end method;
 
@@ -247,6 +269,158 @@ define constant csubtype? = method (type1 :: <ctype>, type2 :: <ctype>)
     values(val, win);
   else
     values(memo-val, memo-win);
+  end;
+end method;
+
+
+//// Intersection:
+
+/// Ignoring unknowns and unions (which are handled specially), we have the following
+/// possible combinations.  Note: we only list half of them, because intersection
+/// is commutative.
+///
+/// Singleton with:
+///   singleton -- empty, 'cause == singletons are picked off.
+///   limited-int -- empty, 'cause singleton integers don't exist due to
+///     canonicalization.
+///   class -- the singleton if subtype?, otherwise empty
+///   direct -- the singleton if subtype?, otherwise empty
+///   byte-char -- the singleton if subtype?, otherwise empty
+///   heap-instance -- the singletion if subtype?, otherwise empty
+/// Limited integer with:
+///   limited-int -- the intersection of the base classes and range.
+///   class -- the intersection of the base class and the other class, same range
+///   direct -- empty, 'cause the direct integer classes are canonicalized into
+///     themselves.
+///   byte-char -- empty
+///   heap-instance -- intersection of the base class and the other, same range
+/// Class:
+///   class -- the subtype class if one is a subtype of the other, the
+///     intersection of their subtypes if both are sealed, or one at random
+///     otherwise.
+///   direct -- the direct type if it is a subtype of the class, empty otherwise
+///   byte-char -- the byte-char type if it is a subtype of the class
+///   heap-instance -- the class,#t if subtype, empty if the class is immediate,
+///     otherwise class,#f
+/// Direct:
+///   direct -- the type when they are the same, otherwise empty
+///   byte-char -- the byte-char type if it is a subtype of the class
+///   heap-instance -- the direct if the class is heap allocated, empty otherwise
+/// Byte-char:
+///   byte-char -- won't be called, 'cause the == case is picked off
+///   heap-instance -- empty
+/// heap-instance
+///   heap-instance -- won't be called, 'cause the == case is picked off
+///
+/// So if we pick off the case where one type is a subtype of the other first, we
+/// have the following cases left:
+///
+/// Limited integer with:
+///   limited-int -- the intersection of the base classes and range.
+///   class -- the intersection of the base class and the other class, same range
+/// Class:
+///   class -- the subtype class if one is a subtype of the other, the
+///     intersection of their subtypes if both are sealed, or one at random
+///     otherwise.
+///
+
+/// Handle ctype-intersection for unequal types other than union and unknown.
+/// Result may be imprecise if we intersect two non-sealed classes.
+///
+define sealed generic ctype-intersection-dispatch
+    (type1 :: <ctype>, type2 :: <ctype>)
+     => (result :: union(<ctype>, <false>), precise :: <boolean>);
+
+/// indicates try swapping args, or if that failed, the result is empty.
+define method ctype-intersection-dispatch(type1, type2)
+     => (result :: union(<ctype>, <false>), precise :: <boolean>);
+  values(#f, #t);
+end method;
+
+
+define variable intersection-memo = make-memo2-table();
+
+///    Return as restrictive a type as we can discover that is no more
+/// restrictive than the intersection of Type1 and Type2.  The second value is
+/// true if the result is exact.  At worst, we arbitrarily return one of the
+/// arguments as the first value (trying not to return an unknown type).
+///
+define constant ctype-intersection = method (type1 :: <ctype>, type2 :: <ctype>)
+       => (result :: <ctype>, precise :: <boolean>);
+
+  let (memo-val, memo-win) = memo2-lookup(type1, type2, intersection-memo);
+  if (memo-val == #"miss")
+    let (val, win) = 
+      case
+        // Makes unknown types intersect with themselves, & eliminates the case
+	// of equal types from later consideration.
+	type1 == type2 => values(type1, #t);
+
+        // If one arg is unknown, return the other and #f.
+        instance?(type1, <unknown-ctype>) => values(type2, #f);
+	instance?(type2, <unknown-ctype>) => values(type1, #f);
+	  
+	// Otherwise, the intersection is the union of the pairwise
+	// intersection of the members.  As described above, we try both
+	// orders. 
+	otherwise =>
+	  let win-int = #t;
+	  let res-union = empty-ctype();
+	  for (mem1 in type1.members)
+	    for (mem2 in type2.members)
+	      // If either is a subtype of the other, include the subtype.
+	      if (csubtype?(mem1, mem2))
+		res-union 
+	      elseif (csubtype?(mem2, mem1))
+		res-union := ctype-union(res-union, mem2);
+	      else
+		// Call the intersection dispatch function.
+		let (res12, win12) = ctype-intersection-dispatch(mem1, mem2);
+		if (res12)
+		  unless (win12) win-int := #f end;
+		  res-union := ctype-union(res-union, res12);
+		else
+		  let (res21, win21) = ctype-intersection-dispatch(mem2, mem1);
+		  if (res21)
+		    unless (win21) win-int := #f end;
+		    res-union := ctype-union(res-union, res21);
+		    
+		    // else precisely empty, nothing to union.
+		  end if;
+		end if;
+	      end if;
+	    end for;
+	  end for;
+	  values(res-union, win-int);
+      end case;
+
+    memo2-enter(type1, type2, val, win, intersection-memo);
+    values(val, win);
+  else
+    values(memo-val, memo-win);
+  end;
+end method;
+
+
+/// The first value is true unless the types definitely don't intersect.  The
+/// second value is true if the first value is definitely correct.  empty-ctype
+/// is considered to intersect with any type.  If either type is <object>, we
+/// also return #T, #T.  This way we consider unknown types to intersect with
+/// <object>.
+///
+define constant ctypes-intersect? = method (type1 :: <ctype>, type2 :: <ctype>)
+       => (result :: <boolean>, precise :: <boolean>);
+  if (type1 == empty-ctype() | type2 == empty-ctype())
+    values(#t, #t);
+  else
+    let (res, win) = ctype-intersection(type1, type2);
+    if (win)
+      values(~(res == empty-ctype()), #t);
+    elseif (type1 == object-ctype() | type2 == object-ctype())
+      values(#t, #t);
+    else
+      values(#t, #f);
+    end;
   end;
 end method;
 
@@ -387,121 +561,6 @@ define constant ctype-union = method (type1 :: <ctype>, type2 :: <ctype>)
 end method;
 
 
-//// Intersection:
-
-/*
-
-This table describes the result of ctype-intersection-dispatch.  See the
-csubtype? table for qualifications & notes.  Since
-intersection is commutative, this matrix is conceptually symmetrical, however
-to reduce the number of methods needed, we have a default method which returns
-(#f, #f), in which case we try swapping the args.  If that fails, the
-intersection is empty.
-
-  		single     l-int      l-coll      class      direct
----------------------------------------------------------------------------
-   singleton: 	empty      empty    csubtype?/object-cclass  ==/object-cclass
-     lim int:             overlap    empty	  base-is-   ==base
-    lim coll:	                     empty	   subclass  empty
-       class:                               subclass|sealed  subclass
-      direct:	                                             empty
-
-*/
-
-
-/// Handle ctype-intersection for unequal types other than union and unknown.
-/// Result may be imprecise if we intersect two non-sealed classes.
-///
-define sealed generic ctype-intersection-dispatch
-    (type1 :: <ctype>, type2 :: <ctype>)
-     => (result :: union(<ctype>, <false>), precise :: <boolean>);
-
-/// Indicates try swapping args, or if that failed, the result is empty.
-define method ctype-intersection-dispatch(type1, type2)
-     => (result :: union(<ctype>, <false>), precise :: <boolean>);
-  values(#f, #t);
-end method;
-
-
-define variable intersection-memo = make-memo2-table();
-
-///    Return as restrictive a type as we can discover that is no more
-/// restrictive than the intersection of Type1 and Type2.  The second value is
-/// true if the result is exact.  At worst, we arbitrarily return one of the
-/// arguments as the first value (trying not to return an unknown type).
-///
-define constant ctype-intersection = method (type1 :: <ctype>, type2 :: <ctype>)
-       => (result :: <ctype>, precise :: <boolean>);
-
-  let (memo-val, memo-win) = memo2-lookup(type1, type2, intersection-memo);
-  if (memo-val == #"miss")
-    let (val, win) = 
-      case
-        // Makes unknown types intersect with themselves, & eliminates the case
-	// of equal types from later consideration.
-	type1 == type2 => values(type1, #t);
-
-        // If one arg is unknown, return the other and #f.
-        instance?(type1, <unknown-ctype>) => values(type2, #f);
-	instance?(type2, <unknown-ctype>) => values(type1, #f);
-
-	// Otherwise, the intersection is the union of the pairwise
-	// intersection of the members.  As described above, we try both
-	// orders. 
-	otherwise =>
-	  let win-int = #t;
-	  let res-union = empty-ctype();
-	  for (mem1 in type1.members)
-	    for (mem2 in type2.members)
-	      let (res12, win12) = ctype-intersection-dispatch(mem1, mem2);
-	      if (res12)
- 	        unless (win12) win-int := #f end;
-	        res-union := ctype-union(res-union, res12);
-	      else
-	        let (res21, win21) = ctype-intersection-dispatch(mem2, mem1);
-		if (res21)
-		  unless (win21) win-int := #f end;
-		  res-union := ctype-union(res-union, res21);
-
-		// else precisely empty, nothing to union.
-		end if;
-	      end if;
-	    end for;
-	  end for;
-	  values(res-union, win-int);
-      end case;
-
-    memo2-enter(type1, type2, val, win, intersection-memo);
-    values(val, win);
-  else
-    values(memo-val, memo-win);
-  end;
-end method;
-
-
-/// The first value is true unless the types definitely don't intersect.  The
-/// second value is true if the first value is definitely correct.  empty-ctype
-/// is considered to intersect with any type.  If either type is <object>, we
-/// also return #T, #T.  This way we consider unknown types to intersect with
-/// <object>.
-///
-define constant ctypes-intersect? = method (type1 :: <ctype>, type2 :: <ctype>)
-       => (result :: <boolean>, precise :: <boolean>);
-  if (type1 == empty-ctype() | type2 == empty-ctype())
-    values(#t, #t);
-  else
-    let (res, win) = ctype-intersection(type1, type2);
-    if (win)
-      values(~(res == empty-ctype()), #t);
-    elseif (type1 == object-ctype() | type2 == object-ctype())
-      values(#t, #t);
-    else
-      values(#t, #f);
-    end;
-  end;
-end method;
-
-
 /// <unknown-ctype> represents some random non-compile-time expression that
 /// ought to be a type.
 ///
@@ -533,11 +592,12 @@ define abstract class <limited-ctype> (<ctype>)
   slot base-class :: <cclass>, required-init-keyword: base-class:;
 end class;
 
-/// A limited type is only a subtype of a class if the limited class is a
-/// subclass of that class. 
-define method csubtype-dispatch(type1 :: <limited-ctype>, type2 :: <cclass>)
+/// In general, a limited type is only a subtype of some other type if the limited
+/// class is a subtype of that tpe.
+/// 
+define method csubtype-dispatch(type1 :: <limited-ctype>, type2 :: <ctype>)
     => result :: <boolean>;
-  subclass?(type1.base-class, type2);
+  csubtype?(type1.base-class, type2);
 end method;
 
 define method find-direct-classes(type :: <limited-ctype>)
@@ -579,9 +639,23 @@ define method csubtype-dispatch
     & 
   (H1 == H2 | H2 == #f | (H1 ~= #f & H1 <= H2))
     &
-  subclass?(type1.base-class, type2.base-class);
+  csubtype?(type1.base-class, type2.base-class);
 end method;
 
+define method ctype-intersection-dispatch
+    (type1 :: <limited-integer-ctype>, type2 :: <ctype>)
+    => (result :: <ctype>, precise :: <true>);
+  let base = ctype-intersection(type1.base-class, type2);
+  if (base == empty-ctype())
+    values(empty-ctype(), #t);
+  elseif (instance?(base, <cclass>))
+    values(make(<limited-integer-ctype>, base-class: base,
+		low-bound: type1.low-bound, high-bound: type1.high-bound),
+	   #t);
+  else
+    error("Shouldn't happen.");
+  end;
+end;
 
 /// The intersection of two limited integer types is the overlap of the ranges.
 /// We determine this by maximizing the lower bounds and minimizing the upper
@@ -599,7 +673,9 @@ define method ctype-intersection-dispatch
   end method;
 
   let rbase = ctype-intersection(type1.base-class, type2.base-class);
-  if (rbase)
+  if (rbase == empty-ctype())
+    values(empty-ctype(), #t);
+  else
     let L1 = type1.low-bound;
     let L2 = type2.low-bound;
     let H1 = type1.high-bound;
@@ -613,8 +689,6 @@ define method ctype-intersection-dispatch
     else
       values(empty-ctype(), #t);
     end if;
-  else
-    values(empty-ctype(), #t);
   end;
 end method;
 
@@ -686,40 +760,10 @@ define method make(wot == <limited-integer-ctype>,
 end method;
 
 
-//// Limited collection types:
-
-/// a limited collection can only be a subtype of another if it is identical,
-/// and that case is implicitly handled by csubtype?
-///
-define class <limited-collection-ctype> (<limited-ctype>, <ct-value>)
-  slot element-limit :: union(<ctype>, <false>), 
-       required-init-keyword: element-limit:;
-
-  slot size-limit :: union(<simple-object-vector>, <false>),
-       required-init-keyword: size-limit:;
-end class;
-
-
 //// Direct instance types:
 
 define class <direct-instance-ctype> (<limited-ctype>)
 end class;
-
-define method csubtype-dispatch
-    (type1 :: <limited-ctype>, type2 :: <direct-instance-ctype>)
-    => result :: <boolean>;
-
-  type1.base-class == type2.base-class;
-end method;
-
-
-define method ctype-intersection-dispatch
-    (type1 :: <limited-ctype>, type2 :: <direct-instance-ctype>)
-    => (result :: union(<ctype>, <false>), precise :: <true>);
-
-  values(if (type1.base-class == type2.base-class) type1 else empty-ctype() end,
-         #t);
-end method;
 
 
 //// Singleton types:
@@ -750,19 +794,28 @@ define method print-object (sing :: <singleton-ctype>, stream :: <stream>)
   pprint-fields(sing, stream, value: sing.singleton-value);
 end;
 
-define method csubtype-dispatch(type1 :: <singleton-ctype>, type2 :: <ctype>)
-    => result :: <boolean>;
-  csubtype?(type1.base-class, type2);
-end method;
+
+// <byte-character-ctype>
 
-// The method is only necessary because which of the previous method and
-// the <limited-ctype>,<cclass> method is applicable is ambiguous when
-// given a singleton and a class.
-//
-define method csubtype-dispatch(type1 :: <singleton-ctype>, type2 :: <cclass>)
-    => result :: <boolean>;
-  csubtype?(type1.base-class, type2);
-end method;
+define class <byte-character-ctype> (<limited-ctype>, <ct-value>)
+  keyword base-class:,
+    init-function: curry(dylan-value, #"<character>");
+end;
+
+define variable *byte-character-ctype-memo* = #f;
+
+define method make (class == <byte-character-ctype>, #next next-method, #key)
+  *byte-character-ctype-memo*
+    | (*byte-character-ctype-memo* := next-method());
+end;
+
+define method csubtype-dispatch (type1 :: <singleton-ctype>,
+				 type2 :: <byte-character-ctype>)
+    => res :: <boolean>;
+  let val = type1.singleton-value;
+  instance?(val, <literal-character>)
+    & instance?(val.literal-value, <byte-character>);
+end;
 
 
 //// Class Precedence List computation
@@ -890,7 +943,12 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // Closest primary superclass.
   slot closest-primary-superclass :: <cclass>;
 
-  // True when class is sealed, abstract, and/or primary.
+  // True when the class can't be functional.  Not the same thing as ~functional?
+  // because abstract classes can be neither functional? nor not-functional?.
+  slot not-functional? :: <boolean>, init-keyword: not-functional:, init-value: #f;
+
+  // True when class is functional, sealed, abstract, and/or primary.
+  slot functional? :: <boolean>, init-keyword: functional:, init-value: #f;
   slot sealed? :: <boolean>, init-keyword: sealed:, init-value: #f;
   slot abstract? :: <boolean>, init-keyword: abstract:, init-value: #f;
   slot primary? :: <boolean>, init-keyword: primary:, init-value: #f;
@@ -940,43 +998,34 @@ end class;
 define class <defined-cclass> (<cclass>)
 end class;
 
-define constant subclass? = method
-    (type1 :: <cclass>, type2 :: <cclass>) => res :: <boolean>;
+define method csubtype-dispatch(type1 :: <cclass>, type2 :: <cclass>)
+    => result :: <boolean>;
   member?(type2, type1.precedence-list);
 end method;
 
-define method csubtype-dispatch(type1 :: <cclass>, type2 :: <cclass>)
+define method csubtype-dispatch(type1 :: <cclass>, type2 :: <direct-instance-ctype>)
     => result :: <boolean>;
-  subclass?(type1, type2);
-end method;
-
-define method csubtype-dispatch
-    (type1 :: <direct-instance-ctype>, type2 :: <cclass>)
-    => result :: <boolean>;
-  subclass?(type1.base-class, type2);
-end method;
+  type1 == type1.base-class & type1.sealed? & empty?(type1.subclasses);
+end;
 
 define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
     => (result :: <ctype>, precise :: <boolean>);
-  case
-    subclass?(type1, type2) => values(type1, #t);
-    subclass?(type2, type1) => values(type2, #t);
-
-    type1.sealed? & type2.sealed? =>
-      values(reduce(ctype-union, empty-ctype(),
-      	            intersection(type1.subclasses, type2.subclasses)),
-	     #t);
-
-    otherwise => values(type1, #f);
+  if (type1.sealed? & type2.sealed?)
+    values(reduce(ctype-union, empty-ctype(),
+		  intersection(type1.subclasses, type2.subclasses)),
+	   #t);
+  else
+    let primary1 = type1.closest-primary-superclass;
+    let primary2 = type2.closest-primary-superclass;
+    if (csubtype?(primary1, primary2) | csubtype?(primary2, primary1))
+      // The closest primary superclasses are not inconsistent.  Therefore, someone
+      // could make a new subclass that inherits from both.
+      values(type1, #f);
+    else
+      values(empty-ctype(), #t);
+    end;
   end;
 end method;
-
-define method ctype-intersection-dispatch
-    (type1 :: <cclass>, type2 :: <limited-ctype>)
-    => (result :: <ctype>, precise :: <true>);
-  values(if (subclass?(type2.base-class, type1)) type2 else empty-ctype() end,
-         #t);
-end;
 
 define method find-direct-classes(type :: <cclass>) => res :: false-or(<list>);
   if (type.sealed?)
@@ -1005,88 +1054,82 @@ define method make-canonical-singleton (thing :: <eql-ct-value>)
     | (thing.ct-value-singleton := really-make-canonical-singleton(thing));
 end;
 
-define method really-make-canonical-singleton (thing :: <cclass>)
+define method really-make-canonical-singleton (thing :: <eql-ct-value>)
     => res :: <ctype>;
   make(<singleton-ctype>,
-       base-class: dylan-value(#"<class>"),
+       base-class: ct-value-cclass(thing),
        singleton-value: thing);
 end;
 
-define method really-make-canonical-singleton (thing :: <eql-ct-literal>,
-					       #next next-method)
+define method really-make-canonical-singleton (thing :: <literal-integer>)
     => res :: <ctype>;
-  let object = thing.ct-literal-value;
-  case
-    instance?(object, <integer>) =>
-      make(<limited-integer-ctype>,
-	   base-class: object-cclass(object),
-	   low-bound: object, high-bound: object);
-	    
-    object == #t => dylan-value(#"<true>");
-    object == #f => dylan-value(#"<false>");
-    object == #() => dylan-value(#"<empty-list>");
-      
-    otherwise =>
-      make(<singleton-ctype>,
-	   base-class: object-cclass(object),
-	   singleton-value: thing);
-  end;
-end method;
+  let value = thing.literal-value;
+  make(<limited-integer-ctype>,
+       base-class: ct-value-cclass(thing),
+       low-bound: value, high-bound: value);
+end;
 
-define method object-cclass (object :: <true>) => res :: <cclass>;
+define method really-make-canonical-singleton
+    (thing :: union(<literal-boolean>, <literal-empty-list>))
+    => res :: <ctype>;
+  ct-value-cclass(thing);
+end;
+
+define method ct-value-cclass (object :: <literal-true>) => res :: <cclass>;
   dylan-value(#"<true>");
 end method;
 
-define method object-cclass (object :: <false>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-false>) => res :: <cclass>;
   dylan-value(#"<false>");
 end method;
 
-define method object-cclass (object :: <symbol>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-symbol>) => res :: <cclass>;
   dylan-value(#"<symbol>");
 end method;
 
-define method object-cclass (object :: <character>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-character>) => res :: <cclass>;
   dylan-value(#"<character>");
 end method;
 
-define method object-cclass (object :: <byte-character>) => res :: <cclass>;
-  dylan-value(#"<byte-character>");
-end method;
-
-define method object-cclass (object :: <empty-list>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-empty-list>) => res :: <cclass>;
   dylan-value(#"<empty-list>");
 end method;
 
-define method object-cclass (object :: <pair>) => res :: <cclass>;
+define method ct-value-cclass (object :: <pair>) => res :: <cclass>;
   dylan-value(#"<pair>");
 end method;
 
-define method object-cclass (object :: <byte-string>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-string>) => res :: <cclass>;
   dylan-value(#"<byte-string>");
 end method;
 
-define method object-cclass (object :: <simple-object-vector>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-vector>) => res :: <cclass>;
   dylan-value(#"<simple-object-vector>");
 end method;
 
-define method object-cclass (object :: <fixed-integer>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-fixed-integer>) => res :: <cclass>;
   dylan-value(#"<fixed-integer>");
 end method;
 
-define method object-cclass (object :: <extended-integer>)
+define method ct-value-cclass (object :: <literal-extended-integer>)
     => res :: <cclass>;
   dylan-value(#"<extended-integer>");
 end method;
 
-define method object-cclass (object :: <single-float>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-ratio>) => res :: <cclass>;
+  dylan-value(#"<ratio>");
+end method;
+
+define method ct-value-cclass (object :: <literal-single-float>) => res :: <cclass>;
   dylan-value(#"<single-float>");
 end method;
 
-define method object-cclass (object :: <double-float>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-double-float>) => res :: <cclass>;
   dylan-value(#"<double-float>");
 end method;
 
-define method object-cclass (object :: <extended-float>) => res :: <cclass>;
+define method ct-value-cclass (object :: <literal-extended-float>)
+    => res :: <cclass>;
   dylan-value(#"<extended-float>");
 end method;
 
