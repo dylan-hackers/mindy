@@ -1,6 +1,6 @@
 module: dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.9 1994/10/26 15:08:04 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.10 1994/10/26 20:19:53 wlott Exp $
 
 //======================================================================
 //
@@ -30,11 +30,14 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dy
 // This file contains the support routines used by the debugger.
 //
 
+define variable *debug-output* = #f;
+
 define method report-problem (problem)
   block ()
-    report-condition(problem, *format-hook-default-stream*);
+    report-condition(problem, *debug-output*);
   exception <error>
-    puts("\nproblem reporting problem... giving up");
+    *format-function*(*debug-output*,
+			"\nproblem reporting problem... giving up");
   end block;
 end method report-problem;
 
@@ -76,9 +79,10 @@ define method debugger-eval (expr)
       let (#rest results) = eval-debugger-expr(expr, debug-variables.size);
       values(#t, results);
     exception (problem :: <error>)
-      puts("invocation failed:\n  ");
+      *format-function*(*debug-output*, "invocation failed:\n  ");
       report-problem(problem);
-      putc('\n');
+      *format-function*(*debug-output*, "\n");
+      *force-output-function*(*debug-output*);
       #f;
     end block;
   exception (<error>)
@@ -91,21 +95,20 @@ end method debugger-eval;
 define method eval-and-print (expr, num-debug-vars)
   let (#rest results) = eval-debugger-expr(expr, num-debug-vars);
   if (empty?(results))
-    puts("[0 values returned]");
+    *format-function*(*debug-output*, "[0 values returned]");
   else
     for (first = #t then #f,
 	 result in results)
-      if (first)
-	*format-hook*(*format-hook-default-stream*, "$%==%=",
-		       debug-variables.size, result);
-      else
-	*format-hook*(*format-hook-default-stream*, ", $%==%=",
-		       debug-variables.size, result);
+      unless (first)
+	*format-function*(*debug-output*, ", ");
       end;
+      *format-function*(*debug-output*, "$%==%=",
+			debug-variables.size, result);
       add!(debug-variables, result);
     end for;
   end if;
-  putc('\n');
+  *format-function*(*debug-output*, "\n");
+  *force-output-function*(*debug-output*);
 end method eval-and-print;
 
 
@@ -128,9 +131,10 @@ define method debugger-print (exprs)
       block ()
 	eval-and-print(expr, num-debug-vars);
       exception (problem :: <error>)
-	puts("invocation failed:\n  ");
+	*format-function*(*debug-output*, "invocation failed:\n  ");
 	report-problem(problem);
-	putc('\n');
+	*format-function*(*debug-output*, "\n");
+	*force-output-function*(*debug-output*);
       end block;
     end for;
   exception (<error>)
@@ -141,14 +145,15 @@ end method debugger-print;
 
 define method debugger-report-condition (cond)
   block ()
-    putc('\n');
+    *format-function*(*debug-output*, "\n");
     block ()
-      report-condition(cond, *format-hook-default-stream*);
+      report-condition(cond, *debug-output*);
     exception (problem :: <error>)
-      puts("problem reporting condition:\n  ");
+      *format-function*(*debug-output*, "problem reporting condition:\n  ");
       report-problem(problem);
     end block;
-    puts("\n\n");
+    *format-function*(*debug-output*, "\n\n");
+    *force-output-function*(*debug-output*);
   exception <error>
     puts("\nCould not recover from earlier errors.\n\n");
   end block;
@@ -160,9 +165,11 @@ define method debugger-abort ()
     block ()
       signal(make(<abort>));
     exception (problem :: <error>)
-      puts("problem signaling abort restart:\n  ");
+      *format-function*(*debug-output*,
+			"problem signaling abort restart:\n  ");
       report-problem(problem);
-      putc('\n');
+      *format-function*(*debug-output*, "\n");
+      *force-output-function*(*debug-output*);
     end block;
   exception <error>
     puts("Could not recover from earlier errors.\n");
@@ -178,51 +185,55 @@ define method debugger-describe-restarts (cond)
 	let type = h.handler-type;
 	if (instance?(type, <class>) & subtype?(type, <restart>))
 	  block ()
-	    *format-hook*(*format-hook-default-stream*, "%= [%=]: ",
-			  index, type);
+	    *format-function*(*debug-output*, "%= [%=]: ", index, type);
 	    report-condition(apply(make, type, h.handler-init-args),
-			     *format-hook-default-stream*);
+			     *debug-output*);
 	  exception (problem :: <error>)
-	    puts("\nproblem describing restart:\n  ");
+	    *format-function*(*debug-output*,
+			      "\nproblem describing restart:\n  ");
 	    report-problem(problem);
 	  end block;
-	  putc('\n');
+	  *format-function*(*debug-output*, "\n");
 	  index := index + 1;
 	end if;
       end for;
       if (zero?(index))
-	puts("No active restarts.\n");
+	*format-function*(*debug-output*, "No active restarts.\n");
       end if;
     exception (problem :: <error>)
-      puts("\nproblem describing restarts:\n  ");
+      *format-function*(*debug-output*, "\nproblem describing restarts:\n  ");
       report-problem(problem);
-      putc('\n');
+      *format-function*(*debug-output*, "\n");
     end block;
     block ()
       if (instance?(cond, <condition>) & return-allowed?(cond))
 	block ()
-	  puts("\nReturning is allowed");
+	  *format-function*(*debug-output*, "\nReturning is allowed");
 	  let description = return-description(cond);
 	  select (description by instance?)
 	    singleton(#f) =>
 	      #f;
 	    <byte-string> =>
-	      puts(":\n  ");
-	      puts(description);
+	      *format-function*(*debug-output*, ":\n  %s", description);
 	    <restart> =>
-	      puts(":\n  ");
-	      report-condition(description, *format-hook-default-stream*);
+	      *format-function*(*debug-output*, ":\n  ");
+	      report-condition(description, *debug-output*);
 	  end select;
+	  *force-output-function*(*debug-output*);
 	exception (problem :: <error>)
-	  puts("\nproblem describing return convention:\n  ");
+	  *format-function*(*debug-output*,
+			    "\nproblem describing return convention:\n  ");
 	  report-problem(problem);
 	end block;
-	putc('\n');
+	*format-function*(*debug-output*, "\n");
       end if;
+      *force-output-function*(*debug-output*);
     exception (problem :: <error>)
-      puts("\nproblem checking on return contention:\n  ");
+      *format-function*(*debug-output*,
+			"\nproblem checking on return contention:\n  ");
       report-problem(problem);
-      putc('\n');
+      *format-function*(*debug-output*, "\n");
+      *force-output-function*(*debug-output*);
     end block;
   exception <error>
     puts("\nCould not recover from earlier errors.\n");
@@ -242,26 +253,36 @@ define method debugger-restart (cond, index)
 	    let restart = apply(make, type, h.handler-init-args);
 	    restart-query(restart);
 	    unless (~test | test(h))
-	      puts("The restart handler refused to handle the restart.\n");
+	      *format-function*(*debug-output*,
+				"The restart handler refused to "
+				  "handle the restart.\n");
+	      *force-output-function*(*debug-output*);
 	      return(#f);
 	    end unless;
 	    local
 	      method next-handler ()
-		puts("The restart handler declined to handle the restart.\n");
+		*format-function*(*debug-output*,
+				  "The restart handler declined "
+				    "to handle the restart.\n");
+		*force-output-function*(*debug-output*);
 		return(#f);
 	      end method next-handler;
 	    let (#rest values) = h.handler-function(restart, next-handler);
 	    if (instance?(cond, <condition>) & return-allowed?(cond))
 	      return(#t, values);
 	    else
-	      puts("The restart handler tried to return, but returning "
-		     "is not allowed\n");
+	      *format-function*(*debug-output*,
+				"The restart handler tried to return, but "
+				  "returning is not allowed\n");
+	      *force-output-function*(*debug-output*);
 	      return(#f);
 	    end if;
 	  exception (problem :: <error>)
-	    puts("Problem while attempting to restart:\n  ");
+	    *format-function*(*debug-output*,
+			      "Problem while attempting to restart:\n  ");
 	    report-problem(problem);
-	    putc('\n');
+	    *format-function*(*debug-output*, "\n");
+	    *force-output-function*(*debug-output*);
 	    return(#f);
 	  end block;
 	else
@@ -270,10 +291,13 @@ define method debugger-restart (cond, index)
       end if;
     end for;
     if (zero?(count))
-      puts("No active restarts.\n");
+      *format-function*(*debug-output*, "No active restarts.\n");
     else
-      format("Invalid restart number, should be less than %d\n", count);
+      *format-function*(*debug-output*,
+			"Invalid restart number, should be less than %d\n",
+			count);
     end if;
+    *force-output-function*(*debug-output*);
     #f;
   exception <error>
     puts("Could not recover from earlier errors.\n");
@@ -290,19 +314,25 @@ define method debugger-return (cond)
 	  let (#rest values) = return-query(cond);
 	  return(#t, values);
 	exception (problem :: <error>)
-	  puts("problem quering for values to return:\n  ");
+	  *format-function*(*debug-output*,
+			    "problem quering for values to return:\n  ");
 	  report-problem(problem);
-	  putc('\n');
+	  *format-function*(*debug-output*, "\n");
+	  *force-output-function*(*debug-output*);
 	  return(#f);
 	end block;
       else
-	puts("Returning is not allowed\n");
+	*format-function*(*debug-output*, "Returning is not allowed\n");
+	*force-output-function*(*debug-output*);
 	return(#f);
       end if;
     exception (problem :: <error>)
-      puts("problem checking to see if returning is allowed:\n  ");
+      *format-function*(*debug-output*,
+			"problem checking to see if "
+			  "returning is allowed:\n  ");
       report-problem(problem);
-      putc('\n');
+      *format-function*(*debug-output*, "\n");
+      *force-output-function*(*debug-output*);
       return(#f);
     end block;
   exception <error>
