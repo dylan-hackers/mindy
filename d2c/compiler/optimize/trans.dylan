@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.6 1995/06/09 19:10:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/trans.dylan,v 1.7 1995/06/14 12:16:50 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -210,7 +210,14 @@ define method trivial-==-optimization
     (component :: <component>, operation :: <operation>,
      x :: <leaf>, y :: <leaf>)
     => did-anything? :: <boolean>;
-  if (x == y)
+  local method origin (thing :: <expression>)
+	  if (instance?(thing, <ssa-variable>))
+	    origin(thing.definer.depends-on.source-exp);
+	  else
+	    thing;
+	  end;
+	end;
+  if (always-the-same?(x.origin, y.origin))
     // Same variable or same literal constant.
     replace-expression(component, operation.dependents,
 		       make-literal-constant(make-builder(component),
@@ -234,6 +241,24 @@ define method trivial-==-optimization
     end;
   end;
 end;
+
+define method always-the-same?
+    (x :: <expression>, y :: <expression>) => res :: <boolean>;
+  x == y;
+end;
+
+define method always-the-same?
+    (x :: <global-variable>, y :: <global-variable>) => res :: <boolean>;
+  instance?(x.var-info, <module-almost-constant-var-info>)
+    & x.var-info.var-defn == y.var-info.var-defn;
+end;
+
+define method always-the-same?
+    (x :: <definition-constant-leaf>, y :: <definition-constant-leaf>)
+    => res :: <boolean>;
+  x.const-defn == y.const-defn;
+end;
+
 
 
 define method check-type-transformer
