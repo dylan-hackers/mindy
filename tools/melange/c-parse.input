@@ -717,6 +717,11 @@ struct-declaration (type-specifier-list struct-declarator-list <semicolon-token>
   return;
 %
 
+struct-declaration (type-specifier-list <semicolon-token>)
+  let type = process-type-list(reverse!($r1), $state);
+  list(pair("_anon_field", type));
+%
+
 struct-declarator-list (struct-declarator)
   list($r1);
 %
