@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.15 2003/03/05 17:14:14 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.16 2003/03/15 18:14:29 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -400,16 +400,18 @@ define method compile-all-files (state :: <lid-mode-state>) => ();
        module in state.unit-modules)
     let extension = file.filename-extension;
     if (extension = state.unit-target.object-filename-suffix)
-      if (state.unit-shared?)
-	let shared-file
-	  = concatenate(file.extensionless-filename,
-			state.unit-target.shared-object-filename-suffix);
-	format(*debug-output*, "Adding %s\n", shared-file);
-	format(state.unit-objects-stream, " %s", shared-file);
-      else
-	format(*debug-output*, "Adding %s\n", file);
-	format(state.unit-objects-stream, " %s", file);
-      end;
+      unless (state.unit-no-makefile)
+	if (state.unit-shared?)
+	  let shared-file
+	    = concatenate(file.extensionless-filename,
+			  state.unit-target.shared-object-filename-suffix);
+	  format(*debug-output*, "Adding %s\n", shared-file);
+	  format(state.unit-objects-stream, " %s", shared-file);
+	else
+	  format(*debug-output*, "Adding %s\n", file);
+	  format(state.unit-objects-stream, " %s", file);
+	end;
+      end unless;
     else  // assumed a Dylan file, with or without a ".dylan" extension
       block ()
 	format(*debug-output*, "Processing %s\n", file);
