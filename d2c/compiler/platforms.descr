@@ -77,7 +77,9 @@
 // Usually blank on Windows, "lib" on Unix.
 //
 // library-filename-suffix: The suffix (aka extension) for library
-// files.  Includes the period.
+// files.  Includes the period.  There can be more than one suffix for
+// libraries; in this case, the extensions are separated by spaces,
+// and the first extension listed will be the default extension.
 //
 // executable-filename-suffix: The suffix for executable filenames.
 //
