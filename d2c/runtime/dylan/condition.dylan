@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.10 2001/10/06 11:49:21 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.11 2002/08/09 21:10:26 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -98,6 +98,11 @@ end class <sealed-object-error>;
 
 define sealed domain make(singleton(<sealed-object-error>));
 define sealed domain initialize(<sealed-object-error>);
+
+define method make(class == <sealed-object-error>, #key, #all-keys)
+ => (obj :: subclass(<sealed-object-error>));
+  error("Can't make instances of <sealed-object-error> because the DRM says so.");
+end method make;
 
 // <warning> -- exported from Dylan
 //
