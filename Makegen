@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/Makegen,v 1.5 1999/04/10 00:42:59 andreas Exp $
+##  $Header: /scm/cvs/src/Makegen,v 1.6 1999/04/10 18:50:21 emk Exp $
 ##
 ##  This is the makegen file for the entire Dylan tree.
 ##
@@ -35,28 +35,44 @@
 
 ## Make force.timestamp if not there yet.
 push(@compile_commands, "\$(MAKE) force.timestamp");
-print <<'EOF'
+print <<'EOF';
 force.timestamp:
 	touch force.timestamp
 
 EOF
-;
+
+sub message {
+    push(@compile_commands, "\@echo \"$_[0]\"");
+}
+
+if ($features{'compiled_for_unix'}) {
+    &compile_subdirs('doc');
+}
 
 if ($enable_mindy) {
     &compile_subdirs("mindy");
 }
-if ($enable_mindy_bootstrap) {
-    push(@compile_commands, 
-	 sprintf($host_platform{'recursive_make_command'}, 
-		 "common", "dbc_only"));
-    &compile_subdirs("d2c", "common");
-    push(@compile_commands, 
-	 sprintf($host_platform{'recursive_make_command'}, 
-		 "d2c", "d2c-compile"));
-    push(@compile_commands,
-	 '@echo "Bootstrap complete; now install d2c, remove config.cache,"');
-    push(@compile_commands,
-	 '@echo "re-run configure, and make again."');
+if ($enable_bootstrap) {
+    if ($bootstrap_compiler eq "mindy") {
+	push(@compile_commands, 
+	     sprintf($host_platform{'recursive_make_command'}, 
+		     "common", "dbc_only"));
+	&compile_subdirs("d2c", "common");
+	push(@compile_commands, 
+	     sprintf($host_platform{'recursive_make_command'}, 
+		     "d2c", "d2c-compile"));
+	&message("Bootstrap complete; now install d2c, remove config.cache,");
+	&message("re-run configure, and make again.");
+    } else {
+	&compile_subdirs("d2c");
+	# XXX - this directory name is confusing
+	push(@compile_commands, 'mkdir bootstrap_compiler');
+	push(@compile_commands, 'cp d2c/compiler/main/d2c bootstrap_compiler');
+	push(@compile_commands, 'rm config.cache');
+	push(@compile_commands, './configure');
+	push(@compile_commands, 'make clean');
+	push(@compile_commands, 'make');
+    }
 }
 else {
     if ($enable_d2c) {
@@ -64,9 +80,6 @@ else {
     }
     &compile_subdirs("common", "tools", "tests", "demos");
 }    
-if ($features{'compiled_for_unix'}) {
-    &compile_subdirs('doc');
-}
 
 push(@install_dependencies, "installdirs");
     
@@ -96,3 +109,8 @@ EOF
 } else {
     &unknown_platform_error();
 }
+
+# Blow away our dep files whenever we make clean.
+# XXX - it might be better to do this when we re-run configure.
+push(@clean_commands,
+     'find . -name \\*.dep -exec rm {} \\; -exec touch {} \\;');
