@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.27 1996/03/20 04:54:59 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/type.c,v 1.28 1996/06/20 17:27:12 rgs Exp $
 *
 * This file implements the type system.
 *
@@ -476,7 +476,7 @@ static boolean class_class_overlapp(obj_t class1, obj_t class2)
 {
     obj_t remaining;
 
-    if (class1 == class2)
+    if (subtypep(class1, class2))
 	return TRUE;
 
     for (remaining = CLASS(class1)->all_subclasses;
