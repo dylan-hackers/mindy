@@ -2,7 +2,7 @@ copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 author: David Pierce (dpierce@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.7 1996/03/22 01:48:09 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/deque.dylan,v 1.8 1996/03/22 23:45:33 rgs Exp $
 
 //======================================================================
 //
@@ -463,12 +463,13 @@ end method element-setter;
 
 // add! -- public
 //
-// Add a NEW element to a deque destructively.  This is another name
-// for push (so it adds to the front of the deque).
+// Add a NEW element to a deque destructively.  This is effectively
+// the same as "push", but returns a different value.
 //
 define sealed inline method add! (deque :: <deque>, new)
  => (result :: <deque>);
   push(deque, new);
+  deque;
 end method add!;
 
 // remove! -- public
