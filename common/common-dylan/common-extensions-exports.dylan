@@ -32,7 +32,10 @@ define module common-extensions
              key-exists?,
 	     assert,
 	     exit => exit-application,
-	     on-exit => register-exit-application-function},
+	     on-exit => register-exit-application-function,
+	     <stretchy-sequence>,
+	     <object-deque>,
+	     <stretchy-object-vector>},
     export: all;
 
   // Unsupplied, unfound.
@@ -50,11 +53,9 @@ define module common-extensions
 
 /* UNIMPLEMENTED:
   export
-    <object-deque>,
-    <object-set>,
-    <set>,
-    <stretchy-sequence>,
-    <stretchy-object-vector>,
+    //<object-deque>,
+    //<stretchy-sequence>,
+    //<stretchy-object-vector>,
     concatenate!,
     position,
     // key-exists?,
