@@ -2,7 +2,7 @@ module: format
 author: Gwydion Project
 synopsis: This file implements a simple mechanism for formatting output.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format.dylan,v 1.5 1996/07/15 16:36:19 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/format/format.dylan,v 1.6 1996/07/23 17:25:08 rgs Exp $
 
 ///======================================================================
 ///
@@ -128,10 +128,10 @@ define method format (stream :: <stream>, control-string :: <byte-string>,
     while (start < control-len)
       // Skip to dispatch char.
       for (i = start then (i + 1),
-	   until: ((i = control-len) | (control-string[i] = $dispatch-char)))
+	   until: ((i == control-len) | (control-string[i] == $dispatch-char)))
       finally
 	write(stream, control-string, start: start, end: i);
-	if (i = control-len)
+	if (i == control-len)
 	  exit();
 	else
 	  start := i + 1;
@@ -139,7 +139,7 @@ define method format (stream :: <stream>, control-string :: <byte-string>,
       end for;
       // Parse for field within which to pad output.
       let (field, field-spec-end)
-	= if (char-classes[as(<integer> /***/, control-string[start])] = #"digit")
+	= if (char-classes[as(<integer> /***/, control-string[start])] == #"digit")
 	    parse-integer(control-string, start);
 	  end;
       if (field)
@@ -187,7 +187,7 @@ end method;
 ///
 define function do-dispatch (char :: <byte-character>, stream :: <stream>, arg)
     => consumed-arg? :: <boolean>;
-  select (char by \=)
+  select (char by \==)
     ('s'), ('S'), ('c'), ('C') =>
       print-message(arg, stream);
       #t;
@@ -228,17 +228,17 @@ end function;
 define function parse-integer (input :: <byte-string>, index :: <integer>)
     => (result :: false-or(<integer>), index :: <integer>);
   let result :: <integer> = 0;
-  let negative? = if (input[index] = '-')
+  let negative? = if (input[index] == '-')
 		    index := index + 1;
 		  end;
   for (i :: <integer> = index then (i + 1),
        len :: <integer> = input.size then len,
        ascii-zero :: <byte> = as(<integer> /***/, '0') then ascii-zero,
-       until: ((i = len) |
+       until: ((i == len) |
 		 (~ (char-classes[as(<integer> /***/, input[i])] == #"digit"))))
     result := ((result * 10) + (as(<integer> /***/, input[i]) - ascii-zero));
   finally
-    if (result = 0)
+    if (result == 0)
       values(#f, index);
     else
       values(if (negative?) (- result) else result end, i);
