@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.34 1997/02/13 13:05:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.35 1997/04/26 18:28:20 ram Exp $
 *
 * This file implements the loader.
 *
@@ -100,6 +100,9 @@ struct load_info {
 };
 
 static obj_t (*opcodes[256])(struct load_info *info);
+
+/* The library we think we're loading, to see if that's what we really found */
+static obj_t currently_loading = NULL;
 
 
 /* Utility routines. */
@@ -264,7 +267,8 @@ static obj_t fop_header(struct load_info *info)
 
     if (major_version < file_MajorVersion)
 	error("Obsolete .dbc file: %s", make_byte_string(info->name));
-    if (major_version > file_MajorVersion | minor_version > file_MinorVersion)
+    if ((major_version > file_MajorVersion)
+        | (minor_version > file_MinorVersion))
 	error("Obsolete version of Mindy for %s",
 	      make_byte_string(info->name));
 
@@ -743,6 +747,10 @@ static obj_t fop_method(struct load_info *info)
 static obj_t fop_in_library(struct load_info *info)
 {
     obj_t name = read_thing(info);
+    if (currently_loading != NULL && name != currently_loading) 
+	error("Trying to library %s, but found library %s in file:\n  %s",
+	      currently_loading, name, make_byte_string(info->name));
+
     info->library = find_library(name, TRUE);
     if (CurLibrary == NULL)
 	CurLibrary = info->library;
@@ -1020,6 +1028,10 @@ void load_library(obj_t name)
     char path[MAXPATHLEN];
     char *start, *ptr, *src, *dst;
     int c;
+    obj_t was_loading;
+
+    was_loading = currently_loading;
+    currently_loading = name;
 
     if (load_path == NULL)
 	load_path = DEFAULT_LOAD_PATH;
@@ -1043,11 +1055,13 @@ void load_library(obj_t name)
 	    strcpy(dst, "-lib.dbc");
 	    if (access(path, R_OK) == 0) {
 		load(path);
+		currently_loading = was_loading;
 		return;
 	    }
 	    strcpy(dst, ".dbc");
 	    if (access(path, R_OK) == 0) {
 		load(path);
+		currently_loading = was_loading;
 		return;
 	    }
 	    start = ptr+1;
