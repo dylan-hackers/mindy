@@ -2,7 +2,7 @@ module:     Inspector
 author:     Russell M. Schaaf (rsbe@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/inspector.dylan,v 1.3 1996/03/19 23:46:09 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/Attic/inspector.dylan,v 1.4 1996/04/03 23:52:43 nkramer Exp $
 
 //======================================================================
 //
@@ -722,6 +722,12 @@ define method object-info (the-class :: <class>,
 	write("  ", inspect-stream);
 	print(n, inspect-stream);
 	write("] ", inspect-stream);
+	if (slot-item.slot-setter == #f 
+	      & slot-item.slot-allocation ~== #"virtual")
+	  write("constant ", inspect-stream);
+	end if;
+	write(as(<string>, slot-item.slot-allocation), inspect-stream);
+	write(" ", inspect-stream);
 	write(as(<byte-string>, slot-item.slot-name).as-uppercase,
 	      inspect-stream);
 	write(": ", inspect-stream);
@@ -821,6 +827,12 @@ define method object-info (the-object,
 	write("  ", inspect-stream);
 	print(n, inspect-stream);
 	write("] ", inspect-stream);
+	if (slot-item.slot-setter == #f 
+	      & slot-item.slot-allocation ~== #"virtual")
+	  write("constant ", inspect-stream);
+	end if;
+	write(as(<string>, slot-item.slot-allocation), inspect-stream);
+	write(" ", inspect-stream);
 	// Print slot name
 	write(as(<byte-string>,slot-item.slot-name).as-uppercase,
 	      inspect-stream);
