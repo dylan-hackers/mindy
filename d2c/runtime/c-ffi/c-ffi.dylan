@@ -59,7 +59,7 @@ define function null-pointer?
 end function;
 
 define open abstract functional class <C-statically-typed-pointer>
-    (<C-pointer>)
+    (<C-pointer>, <mutable-collection>)
   // no additional slots
 end class <C-statically-typed-pointer>;
 
@@ -92,9 +92,8 @@ define open generic pointer-value-address
     (pointer :: <C-statically-typed-pointer>, #key index)
  => (offset-pointer :: <C-statically-typed-pointer>);
 
-/* XXX
 define inline method element
-    (pointer :: <C-statically-typed-pointer>, index :: <integer>)
+    (pointer :: <C-statically-typed-pointer>, index :: <integer>, #key default)
  => (value :: <object>)
   pointer-value(pointer, index: index);
 end method element;
@@ -105,7 +104,6 @@ define inline method element-setter
  => (new-value :: <object>)
   pointer-value(pointer, index: index) := new-value;
 end method element-setter;
-*/
 
 define inline method \=
     (p1 :: <C-pointer>, p2 :: <C-pointer>)
@@ -123,21 +121,19 @@ end method;
 //  Pointer Dereferencing Operators
 //=========================================================================
 
-define sealed inline function C-char-at
+define sealed inline method C-char-at
     (ptr :: <C-pointer>,
      #key byte-index :: <integer> = 0, scaled-index :: <integer> = 0)
  => (result :: <machine-word>);
-  pointer-deref(char:, ptr.pointer-address, 
-		byte-index + scaled-index);
-end function C-char-at;
+  pointer-deref(char:, ptr.pointer-address, byte-index + scaled-index);
+end method C-char-at;
 
-define sealed inline function C-char-at-setter
+define sealed inline method C-char-at-setter
     (new :: <machine-word>, ptr :: <C-pointer>,
      #key byte-index :: <integer> = 0, scaled-index :: <integer> = 0)
  => (result :: <machine-word>);
-  pointer-deref(char:, ptr.pointer-address,
-		byte-index + scaled-index) := new;
-end function C-char-at-setter;
+  pointer-deref(char:, ptr.pointer-address, byte-index + scaled-index) := new;
+end method C-char-at-setter;
 
 //=========================================================================
 //  Structs and Unions
@@ -148,10 +144,11 @@ end function C-char-at-setter;
 //  not instantiable.
 
 define open abstract class <C-struct> (<C-value>)
-  
+  // no additional slots
 end class <C-struct>;
 
 define open abstract class <C-union> (<C-value>)
+  // no additional slots
 end class <C-union>;
 
 define macro C-struct-definer
