@@ -59,18 +59,21 @@ define method tk-as
   if (value) "1" else "0" end if;
 end method tk-as;
 
+define constant tk-symbol-table :: <dictionary> = make(<object-table>);
 define method tk-as
     (cls == <string>, value :: <symbol>) => (result :: <string>);
-  as-lowercase(as(<string>, value));
+  element(tk-symbol-table, value, default: #f)
+    | (tk-symbol-table[value] := as-lowercase(as(<string>, value)));
+end method tk-as;
+
+define method tk-as
+    (cls == <string>, value :: <string>) => (result :: <string>);
+  value;
 end method tk-as;
 
 define method tk-as
     (cls == <string>, value :: <sequence>) => (result :: <string>);
-  if (instance?(value, <string>))
-    value;
-  else
-    apply(join-tk-args, value);
-  end if;
+  apply(join-tk-args, value);
 end method tk-as;
 
 //======================================================================
