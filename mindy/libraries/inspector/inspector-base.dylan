@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.1 1996/04/07 01:43:44 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.2 1996/04/07 17:20:27 nkramer Exp $
 
 //======================================================================
 //
@@ -54,7 +54,7 @@ define module inspector-base
   export
     <body-component>, description, related-objects, 
     <object-attribute>, attrib-header, attrib-body,
-    object-info, *show-elements*;
+    object-info, *show-elements*, short-string;
 end module inspector-base;
 
 define variable *show-elements* = #t;
@@ -81,9 +81,10 @@ define function make-simple-body (objs :: <sequence>)
  => body :: <sequence>;
   let obj-body = make(<deque>);
   for (obj in objs)
-    push-last(obj-body, make(<body-component>, 
-			      description: short-string(obj),
-			      related-objects: list(obj)));
+    push-last(obj-body, 
+	      make(<body-component>, 
+		   description: concatenate("#!", short-string(obj), "!#"),
+		   related-objects: list(obj)));
   end for;
   if (objs.empty?)
     push-last(obj-body, $component-none);
@@ -94,7 +95,7 @@ end function make-simple-body;
 define function make-one-liner-body (obj :: <object>)
  => body :: <sequence>;
   deque(make(<body-component>, 
-	     description: short-string(obj),
+	     description: concatenate("#!", short-string(obj), "!#"),
 	     related-objects: list(obj)));
 end function make-one-liner-body;
 
@@ -111,7 +112,7 @@ end method short-string;
 
 define method short-string (u :: <union>)
   concatenate("type-union(", 
-	      join(", ", map(short-string, u.union-members)), 
+	      apply(join, ", ", map(short-string, u.union-members)), 
 	      ")");
 end method short-string;
 
@@ -128,7 +129,11 @@ define method short-string (kwd :: <symbol>)
 end method short-string;
 
 define method short-string (fun :: <function>)
-  as(<string>, fun.function-name | "Anonymous function");
+  concatenate
+    (as(<string>, fun.function-name | "Anonymous function"),
+     "(",
+     apply(join, ", ", map(short-string, fun.function-specializers)),
+     ")");
 end method short-string;
 
 define function deque (#rest objs) => d :: <deque>;
@@ -179,8 +184,10 @@ define method function-info (fun :: <function>) => info :: <deque>;
   if (rest-type)
     push-last(returns-body, 
 	      make(<body-component>, 
-		   description: concatenate("#rest ", short-string(rest-type)),
-		   related-objects: #[]));
+		   description: concatenate("#rest #!", 
+					    short-string(rest-type),
+					    "!#"),
+		   related-objects: list(rest-type)));
   end if;
   push-last(info, make(<object-attribute>,
 		       header: "Returns:", body: returns-body));
@@ -198,15 +205,9 @@ define method object-info (gf :: <generic-function>) => info :: <sequence>;
       end if;
   push(info, make(<object-attribute>, 
 		  header: header-string, body: #[]));
-  let methods = gf.generic-function-methods;
-  let meth-body = make(<deque>);
-  for (meth in methods)
-    push-last(meth-body, make(<body-component>, 
-			      description: short-string(meth),
-			      related-objects: list(meth)));
-  end for;
   push-last(info, make(<object-attribute>,
-		       header: "Methods:", body: meth-body));
+		       header: "Methods:", 
+		       body: make-simple-body(gf.generic-function-methods)));
   info;
 end method object-info;
 
@@ -239,14 +240,8 @@ end method object-info;
 define method object-info (u :: <union>) => info :: <sequence>;
   let info = make(<deque>);
   push(info, make(<object-attribute>, header: "Type union", body: #()));
-  let members-body = make(<deque>);
-  for (type in u.union-members)
-    push-last(members-body,
-	      make(<body-component>, description: short-string(type),
-		   related-objects: list(type)));
-  end for;
   push-last(info, make(<object-attribute>, header: "Union Members:",
-		       body: members-body));
+		       body: make-simple-body(u.union-members)));
   info;
 end method object-info;
 
@@ -255,9 +250,7 @@ define method object-info (s :: <singleton>) => info :: <sequence>;
   push(info, make(<object-attribute>, header: "Singleton", body: #()));
   push-last(info, 
 	    make(<object-attribute>, header: "Singleton object:",
-		 body: make(<body-component>, 
-			    description: short-string(s.singleton-object),
-			    related-objects: list(s.singleton-object))));
+		 body: make-one-liner-body(s.singleton-object)));
   info;
 end method object-info;
 
@@ -266,9 +259,7 @@ define method object-info (subclass :: <subclass>) => info :: <sequence>;
   push(info, make(<object-attribute>, header: "Subclass", body: #()));
   push-last(info, 
 	    make(<object-attribute>, header: "Subclass of:",
-		 body: make(<body-component>, 
-			    description: short-string(subclass.subclass-of),
-			    related-objects: list(subclass.subclass-of))));
+		 body: make-one-liner-body(subclass.subclass-of)));
   info;
 end method object-info;
 
@@ -301,7 +292,7 @@ define function slot-info (cls :: <class>, #key object = $no-object)
 			     as(<string>, getter.function-name),
 			     "!# :: #!", short-string(type),
 			     value-string, "!#, setter: #!", 
-			     short-string(as(<string>, setter.function-name)),
+			     short-string(setter.function-name),
 			     "!#"),
 		 concatenate(list(getter), type-and-value, list(setter)));
 	end if;
@@ -317,9 +308,12 @@ define method object-info (cls :: <class>) => info :: <sequence>;
   let info = slot-info(cls);
   let header-string
     = if (cls.class-name)
-	concatenate("Class ", as(<string>, cls.class-name));
+	concatenate(if (cls.abstract?) "Abstract " else "" end,
+		    "Class ", as(<string>, cls.class-name));
       else
-	concatenate("Anonymous Class");
+	concatenate("Anonymous ",
+		    if (cls.abstract?) "Abstract " else "" end,
+		    "Class");
       end if;
   push(info, make(<object-attribute>, 
 		  header: header-string, body: #[]));
@@ -410,171 +404,3 @@ define method object-info (obj :: <object>) => info :: <sequence>;
 		  body: make-one-liner-body(obj.object-class)));
   info;
 end method object-info;
-
-///////////////////////////////////////////////////
-// Now we're getting into stuff that really should be in a separate
-// module or even library
-
-
-define method display-object-info (object :: <object>) => ();
-  let info = object.object-info;
-  for (attribute in info)
-    condition-format(*debug-output*, "%s\n", attribute.attrib-header);
-    for (body in attribute.attrib-body)
-      let descr1 = substring-replace(body.description, "#!", "");
-      let descr = substring-replace(descr1, "!#", "");
-      condition-format(*debug-output*, "    %s\n", body.description);
-    end for;
-  end for;
-end method display-object-info;
-
-// Just like display-object-info except it sticks numbers into 
-//
-define method show-object (object :: <object>) => ();
-  let count = 0;
-  let info = object.object-info;
-  for (attribute in info)
-    condition-format(*debug-output*, "%s\n", attribute.attrib-header);
-    for (body in attribute.attrib-body)
-      let descr
-	= if (body.related-objects.size < 2)
-	    body.description;
-	  else
-	    let string = substring-replace(body.description, "!#", "");
-	    for (subobject in body.related-objects)
-	      count := count + 1;
-	      string 
-		:= substring-replace(string, "#!",
-				     concatenate("{",
-						 integer-to-string(count),
-						 "}"),
-				     count: 1);
-	    end for;
-	    string;
-	  end if;
-      condition-format(*debug-output*, "    %s\n", descr);
-    end for;
-  end for;
-end method show-object;
-
-// The only use of this (hopefully) is to be caught when
-// get-nth-object can't find the object in question
-//
-define class <no-such-object> (<error>)
-end class <no-such-object>;
-
-define function get-nth-subobject (object :: <object>, n :: <integer>)
- => subobjet :: <object>;
-  let info = object.object-info;
-  block (return)
-    for (attrib in info)
-      for (component in attrib.attrib-body)
-	for (sub-object in component.related-objects)
-	  n := n - 1;
-	  if (n == 0)
-	    return(sub-object);
-	  end if;
-	end for;
-      end for;
-    end for;
-    signal(make(<no-such-object>));
-  end block;
-end function get-nth-subobject;
-
-// Routine for printing the help page.  This should (possibly in a future
-// revision) be taken from a file rather than hard coded.
-//
-define method show-help () => ();
-  condition-format
-    (*debug-output*,
-     "\n"
-       "Inspector online help\n"
-       "(all commands may be abbreviated by their first letter)\n"
-       "1, 2, ...      Inspects the corresponding object\n"
-       "history        Shows the inspected object stack\n"
-       "up             Moves up the inspected object stack\n"
-       "print          Prints the object,\n"
-       "               using the standard print functions\n"
-       "view           Redisplays the current object\n"
-       "?, help        Displays this page\n"
-       "quit, exit     Quits the object inspector\n");
-end method show-help;
-
-// Prints the "inspect>" line and reads in the input.  The input string
-// is returned to inspect.  This also flushes the inspect-stream buffer.
-//
-define method command-prompt () => command :: <string>;
-  condition-format(*debug-output*, "inspect> ");
-  condition-force-output(*debug-output*);
-  read-line(*standard-input*, signal-eof?: #f);
-end method command-prompt;
-
-// This is the main loop of the inspector.  This method processes commands, and
-// responds appropriately. All keywords have defaults, and all of the keywords
-// get passed on to object-info whenever it is called.
-//
-define method inspect (object :: <object>) => ();
-  // Create a deque to hold the previously created objects.  object
-  // contains the current object, which is *not* in the history deque.
-  let history = make(<deque>);
-  condition-format(*debug-output*, "\n");
-  show-object(object);
-  block (quit-inspector)
-    while (#t)
-      let command = as-lowercase!(command-prompt());
-      condition-format(*debug-output*, "\n");
-      select (command by \=)
-	"u", "up" =>
-	  if (history.empty?)
-	    condition-format(*debug-output*, "This is the first object\n");
-	  else
-	    object := pop(history);
-	    show-object(object);
-	  end if;
-	  
-	"print", "p" =>
-	  print(object, *debug-output*, pretty?: #t);
-	  condition-format(*debug-output*, "\n\n");
-	
-	"history", "hi" => 
-	  // Add the current object, so that it will print out as well
-	  push(history, object);
-	  condition-format(*debug-output*, "\n");
-	  // Go backwards through the stack, so that the current
-	  // object is on the bottom of the list.
-	  for (i from history.size - 1 to 0 by -1)
-	    condition-format(*debug-output*, "%s\n", 
-			     short-string(history[i]));
-	  end for;
-	  object := pop(history);
-	  condition-format(*debug-output*, "\n");
-
-	"view", "v" => 
-	  show-object(object);
-	  
-	"?", "help", "h", "he" => 
-	  show-help();
-
-	"quit", "q", "e", "exit" => 
-	  quit-inspector();
-
-	otherwise => 
-	  if (every?(digit?, command))
-	    block ()
-	      let new-object = get-nth-subobject(object, 
-						 string-to-integer(command));
-	      push(history, object);
-	      show-object(object := new-object);
-	    exception (<no-such-object>)
-	      condition-format(*debug-output*, 
-			       "There is no %sth object to inspect\n",
-			       command);
-	    end block;
-	  else
-	    condition-format(*debug-output*,
-			     "unknown command (type ? for help)\n");
-	  end if;
-      end select;
-    end while;
-  end block;
-end method inspect;
