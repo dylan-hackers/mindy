@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.9 1995/03/24 12:23:49 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.10 1995/04/15 18:44:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -177,7 +177,9 @@ define method build-if-body
  => ();
   ignore(policy);
   push-body(builder,
-  	    make(<if-region>, if-test: predicate-leaf, source-location: source));
+	    make-operand-dependencies(make(<if-region>,
+					   source-location: source),
+				      list(predicate-leaf)));
 end method;
 
 
