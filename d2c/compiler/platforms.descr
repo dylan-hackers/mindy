@@ -169,7 +169,7 @@ library-filename-prefix:
 library-filename-suffix:        .lib
 executable-filename-suffix:     .exe
 compile-c-command:              cl $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       /nologo /Ox -DWIN32
+default-c-compiler-flags:       -nologo -Ox -DWIN32 -I.
 assembler-command:              as %s -o %s
 link-doesnt-search-for-libs?:   #t
 link-library-command:           lib /nologo /out:%s %s
