@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.4 1995/11/13 23:09:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.5 1995/11/16 03:49:45 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -332,7 +332,8 @@ define functional class <fixed-integer> (<integer>)
   slot value :: <fixed-integer>, init-value: 0;
 end;
 
-define sealed method make (class == <fixed-integer>, #key) => res :: type-or();
+define sealed method make (class == <fixed-integer>, #key)
+    => res :: <never-returns>;
   error("Can't make instances of <fixed-integer>, they just are.");
 end;
 
@@ -671,7 +672,8 @@ define functional class <single-float> (<float>)
   slot value :: <single-float>, init-value: 0.0s0;
 end;
 
-define sealed method make (class == <single-float>, #key) => res :: type-or();
+define sealed method make (class == <single-float>, #key)
+    => res :: <never-returns>;
   error("Can't make instances of <single-float>, they just are.");
 end;
 
@@ -896,7 +898,8 @@ define functional class <double-float> (<float>)
   slot value :: <double-float>, init-value: 0.0d0;
 end;
 
-define sealed method make (class == <double-float>, #key) => res :: type-or();
+define sealed method make (class == <double-float>, #key)
+    => res :: <never-returns>;
   error("Can't make instances of <double-float>, they just are.");
 end;
 
@@ -1201,7 +1204,7 @@ define functional class <extended-float> (<float>)
 end;
 
 define sealed method make (class == <extended-float>, #key)
-    => res :: type-or();
+    => res :: <never-returns>;
   error("Can't make instances of <extended-float>, they just are.");
 end;
 
