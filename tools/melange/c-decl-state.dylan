@@ -185,10 +185,12 @@ define method process-type-list
   let type = unknown-type;
   for (specifier in types)
     type := select (specifier by instance?)
-	      <const-token>,
-	      <volatile-token> =>
-		// At present we simply ignore these.
-		type;
+// We are now using the preprocessor to eliminate these tokens before they
+// ever occur.
+//	      <const-token>,
+//	      <volatile-token> =>
+//		// At present we simply ignore these.
+//		type;
 	      <char-token> =>
 		select (type)
 		  unknown-type, signed-type => char-type;
@@ -337,18 +339,22 @@ end method process-declarator;
 // declared names and their types into the state's typedef or object table. 
 //
 define method declare-objects
-    (state :: <parse-state>, type :: <type-declaration>, names :: <list>,
+    (state :: <parse-state>, new-type :: <type-declaration>, names :: <list>,
      is-typedef? :: <boolean>)
  => ();
   for (name in names)
-    let (type, name) = process-declarator(type, name, state);
-    if (is-typedef?)
+    let (new-type, name) = process-declarator(new-type, name, state);
+    if (instance?(name, <typedef-declaration>))
+      unless (is-typedef? & new-type == name.type)
+	parse-error(state, "illegal redefinition of typedef.");
+      end unless;
+    elseif (is-typedef?)
       state.objects[name.value] 
 	:= add-declaration(state, make(<typedef-declaration>, name: name.value,
-				       type: type));
+				       type: new-type));
       add-typedef(state.tokenizer, name);
     else
-      let decl-type = if (instance?(type, <function-type-declaration>))
+      let decl-type = if (instance?(new-type, <function-type-declaration>))
 			<function-declaration>;
 		      else
 			<variable-declaration>;
@@ -360,7 +366,7 @@ define method declare-objects
       if (element(state.objects, name.value, default: #f) == #f)
 	state.objects[name.value]
 	  := add-declaration(state, make(decl-type, name: name.value,
-					 type: type));
+					 type: new-type));
       end if;
     end if;
   end for;
