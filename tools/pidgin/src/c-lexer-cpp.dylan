@@ -530,7 +530,7 @@ define method try-cpp
 	"if" =>
 	  let stack = state.cpp-stack;
 	  if ((empty?(stack) | head(stack) == #"accept")
-		& cpp-parse(state) ~= 0)
+		/* & cpp-parse(state) ~= 0 */)  // XXX - disabling cpp-parse
 	    state.cpp-stack := pair(#"accept", stack);
 	  else
 	    do-skip(pos, state.cpp-stack := pair(#"retry", stack));
@@ -566,7 +566,7 @@ define method try-cpp
 	      do-skip(pos, state.cpp-stack := pair(#"done", tail(stack)));
 	    elseif (head(stack) == #"retry"
 		  & (empty?(rest) | head(rest) == #"accept")
-		  & cpp-parse(state) ~= 0)
+		  /* & cpp-parse(state) ~= 0 */)  // XXX - disabling cpp-parse
 	      state.cpp-stack := pair(#"accept", rest);
 	    else 
 	      do-skip(pos, stack);
