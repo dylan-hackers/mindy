@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.34 1996/09/04 18:02:21 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.35 1996/09/15 15:57:12 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -88,18 +88,29 @@ static DWORD input_checker (LPDWORD param)
     char small_buffer;  /* Ignore the contents of the next two vars */
     int bytes_read;
     for (;;) {
+	DWORD the_error = 0;
 	boolean read_result;
 	/* Wait until someone invalidates our last answer */
         WaitForSingleObject(update_input_available[fd], INFINITE);
+	/* Now loop until we complete a read without getting a
+	   broken pipe error */
 	/* read 0 bytes, block if not available */
 	read_result = ReadFile(handle, &small_buffer,
 			       0, &bytes_read, NULL);
 	if (!read_result) {
-	    DWORD the_error = GetLastError();
-	    lose("Read error type %d on fd %d", the_error, fd);
+	    the_error = GetLastError();
+	    if (the_error != ERROR_BROKEN_PIPE) { 
+	      /* handle broken pipes later */
+		lose("Read error type %d on fd %d", the_error, fd);
+	    }
 	}
 	input_available_array[fd] = TRUE;
-        SetEvent(input_available_is_updated[fd]);
+	SetEvent(input_available_is_updated[fd]);
+	if (the_error == ERROR_BROKEN_PIPE) {
+	    /* All further read attempts will return this error.  
+	       Go to sleep; we'll soon be killed off by mindy_close */
+	    SuspendThread(fd_threads[fd]);
+	}
     }
     lose("This is not supposed to be reached!");
     return 0;
@@ -188,6 +199,9 @@ int mindy_read (int fd, char *buffer, int max_chars)
     WaitForSingleObject(input_available_is_updated[fd], INFINITE);
     input_available_array[fd] = FALSE;
     res = read(fd, buffer, max_chars);
+    if (res < 0 && GetLastError() == ERROR_BROKEN_PIPE) {
+	res = 0;  /* treat broken pipes as EOF */
+    }
     SetEvent(update_input_available[fd]);
     return res;
 }
@@ -328,6 +342,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 
 	if (! CreateProcess(NULL, command_line, NULL, NULL, TRUE, 0,
 	                    NULL, NULL, &siStartInfo, &piProcInfo)) {
+	    DWORD debug_info = GetLastError();
 	    oldargs[0] = obj_False;
 	    oldargs[1] = obj_False;
 	} else {
