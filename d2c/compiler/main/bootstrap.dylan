@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.4 1995/03/04 21:42:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.5 1995/03/23 22:17:00 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -277,7 +277,12 @@ end;
 
 // Classes that need to be pre-defined.
 
-define primary abstract open %%class <object> () end;
+define primary abstract open %%class <object> ()
+  //
+  // The class of the instance.  Non-abstract classes automatically override
+  // the init-value to be the correct class.
+  slot %object-class, type: <class>, setter: #f
+end;
 
 define abstract class <boolean> (<object>) end;
 define class <true> (<boolean>) end;
