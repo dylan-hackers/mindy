@@ -5,9 +5,9 @@ $D2CFLAGS
 $COPTS = "$gtk_cflags -I$srcdir";
 
 if($EXTRA_INCLUDE_DIR ne "") {
-    print "GOBJECT_TOOL = $buildroot/platform/gtk+/gobject-tool/gobject-tool -I $EXTRA_INCLUDE_DIR\n\n";
+    print "GOBJECT_TOOL = $buildroot/platform/gtk+/gobject-tool/gobject-tool -I $EXTRA_INCLUDE_DIR --platform '$target_name'\n\n";
   } else {
-    print "GOBJECT_TOOL = $buildroot/platform/gtk+/gobject-tool/gobject-tool\n\n";
+    print "GOBJECT_TOOL = $buildroot/platform/gtk+/gobject-tool/gobject-tool --platform '$target_name'\n\n";
 }
 
 &emit_library_rule('glib', '$(BUILDROOT)/force.timestamp', '', 
