@@ -25,7 +25,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.10 2002/08/11 02:05:07 andreas Exp $
+##  $Header: /scm/cvs/src/mindy/comp/Makefile.in,v 1.11 2002/08/11 02:09:52 andreas Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -61,7 +61,7 @@ INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
 INSTALL_DATA	=	@INSTALL_DATA@
 
 LIBOBJS =		@LIBOBJS@
-LIBS	=		../compat/libcompat.a @LIBS@ @LEXLIBS@
+LIBS	=		../compat/libcompat.a @LIBS@ @LEXLIB@
 
 ##
 ## end of configure written portion
