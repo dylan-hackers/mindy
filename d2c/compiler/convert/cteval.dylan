@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.4 1995/03/04 21:43:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.5 1995/03/23 22:15:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -75,9 +75,9 @@ end;
 define method ct-mv-eval (expr :: <varref>,
 			  lexenv :: union(<false>, <lexenv>))
     => res :: union(<ct-value>, <false>);
-  let name = expr.varref-name;
-  unless (lexenv & find-binding(lexenv, name))
-    let var = find-variable(name.token-module, name.token-symbol);
+  let id = expr.varref-id;
+  unless (lexenv & find-binding(lexenv, id))
+    let var = find-variable(id-name(id));
     var & var.variable-definition & ct-value(var.variable-definition);
   end;
 end;
@@ -172,7 +172,7 @@ end;
 define method ct-mv-eval-funcall (function :: <varref>,
 				  args :: <simple-object-vector>,
 				  lexenv :: union(<false>, <lexenv>))
-  ct-mv-eval-funcall(function.varref-name, args, lexenv);
+  ct-mv-eval-funcall(function.varref-id, args, lexenv);
 end;
 
 // The <variable> objects for the various functions we know how to deal with.
@@ -202,7 +202,7 @@ define method ct-mv-eval-funcall (function :: <identifier-token>,
       return(#f);
     end;
     let args = map(method (arg) ct-eval(arg, lexenv) | return(#f) end, args);
-    let var = find-variable(function.token-module, function.token-symbol);
+    let var = find-variable(id-name(function));
     select (var)
       #f =>
 	#f;
