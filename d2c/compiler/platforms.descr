@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.65 2003/03/01 20:04:03 andreas Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.66 2003/04/04 11:45:53 bruce Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -500,12 +500,25 @@ path-separator:        		/
 
 // Combinations:
 
+// -fomit-frame-pointer seems buggy in gcc 32 on x86
+// gcc 3.2 is the default compiler, so inherit from gcc, not gcc32
+platform-name:			x86-gcc32
+inherit-from:			x86 gcc
+default-c-compiler-flags:	-I. -I%s -O2 -fno-strict-aliasing
+link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
+long-long-size:			8
+long-long-alignment:		4
+
+
 // Fully supported platforms (i.e., we use these):
 platform-name:			x86-linux-gcc
 inherit-from:			gcc linux x86
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 long-long-size:			8
 long-long-alignment:		4
+
+platform-name:			x86-linux-gcc32
+inherit-from:			linux x86-gcc32
 
 platform-name:			x86-bsdi-gcc
 inherit-from:			gcc bsdi x86
