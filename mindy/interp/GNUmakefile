@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.11 1994/04/12 19:48:47 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/GNUmakefile,v 1.12 1994/05/19 22:32:40 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -25,7 +25,7 @@ OBJS = bool.o class.o coll.o debug.o def.o error.o func.o gc.o init.o \
 	table.o fd.o buf.o weak.o brkpt.o
 SRCS = $(patsubst %.o,%.c,$(OBJS))
 
-LDLIBS = -lfl
+LDLIBS = -lfl -lm
 
 mindy: $(OBJS)
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o ,mindy
