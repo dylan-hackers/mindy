@@ -5,10 +5,10 @@ define library common-extensions
   use melange-support;
 
   // Only import transcendentals if we have them.
-  // XXX - library should be named 'transcendentals'
 #if (~compiled-for-solaris)
   use transcendental,
-    export: { transcendental };
+     import: { transcendental => transcendentals },
+     export: all;
 #endif
 
   export
@@ -17,8 +17,9 @@ define library common-extensions
     simple-io,
     simple-random,
     simple-profiling,
-    byte-vector,
-    machine-word;
+    simple-debugging,
+    byte-vectors,
+    machine-words;
 end library;
 
 define module common-extensions
@@ -125,13 +126,17 @@ define module simple-profiling
   // XXX - Needs definition.
 end module;
 
-define module byte-vector
+define module simple-debugging
+  // XXX - Needs definition.
+end module;
+
+define module byte-vectors
   use extensions,
     export: {<byte>,
 	     <byte-vector>};
 end module;
 
-define module machine-word
+define module machine-words
   // XXX - Needs definition.
 end module;
 

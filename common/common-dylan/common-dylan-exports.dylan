@@ -7,13 +7,16 @@ define library common-dylan
 	      simple-debugging,
 	      simple-io,
 	      simple-random,
-	      machine-word,
-	      byte-vector };
+	      simple-profiling,
+	      simple-debugging,
+	      machine-words,
+	      byte-vectors };
 
   // Only import transcendentals if we have them.
 #if (~compiled-for-solaris)
   use transcendental,
-    export: { transcendental };
+     import: { transcendental => transcendentals },
+     export: all;
 #endif
 
   export
