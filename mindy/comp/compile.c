@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.5 1994/03/28 11:32:58 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.6 1994/04/08 15:24:10 wlott Exp $
 *
 * This file does whatever.
 *
@@ -1043,20 +1043,91 @@ void compile(struct body *program)
 
 /* Compilers for various magic functions */
 
-static void compile_check_type_call(struct call_expr *call,
-				    struct component *component,
-				    int want)
+static void compile_binary_call(struct call_expr *call,
+				struct component *component,
+				int want,
+				int op)
 {
     struct argument *args = call->args;
 
     if (args && args->next && args->next->next == NULL) {
 	compile_expr(args->expr, component, SINGLE);
 	compile_expr(args->next->expr, component, SINGLE);
-	emit_op(component, op_CHECK_TYPE);
+	emit_op(component, op);
 	canonicalize_value(component, want);
     }
     else
 	compile_call(call, component, want);
+}    
+
+static void compile_check_type_call(struct call_expr *call,
+				    struct component *component,
+				    int want)
+{
+    compile_binary_call(call, component, want, op_CHECK_TYPE);
+}
+
+static void compile_plus_call(struct call_expr *call,
+			      struct component *component,
+			      int want)
+{
+    compile_binary_call(call, component, want, op_PLUS);
+}
+
+static void compile_minus_call(struct call_expr *call,
+			       struct component *component,
+			       int want)
+{
+    compile_binary_call(call, component, want, op_MINUS);
+}
+
+static void compile_lt_call(struct call_expr *call,
+			      struct component *component,
+			      int want)
+{
+    compile_binary_call(call, component, want, op_LT);
+}
+
+static void compile_le_call(struct call_expr *call,
+			      struct component *component,
+			      int want)
+{
+    compile_binary_call(call, component, want, op_LE);
+}
+
+static void compile_eq_call(struct call_expr *call,
+			      struct component *component,
+			      int want)
+{
+    compile_binary_call(call, component, want, op_EQ);
+}
+
+static void compile_idp_call(struct call_expr *call,
+			      struct component *component,
+			      int want)
+{
+    compile_binary_call(call, component, want, op_IDP);
+}
+
+static void compile_ne_call(struct call_expr *call,
+			      struct component *component,
+			      int want)
+{
+    compile_binary_call(call, component, want, op_NE);
+}
+
+static void compile_ge_call(struct call_expr *call,
+			      struct component *component,
+			      int want)
+{
+    compile_binary_call(call, component, want, op_GE);
+}
+
+static void compile_gt_call(struct call_expr *call,
+			      struct component *component,
+			      int want)
+{
+    compile_binary_call(call, component, want, op_GT);
 }
 
 static void compile_values_call(struct call_expr *call,
@@ -1145,6 +1216,24 @@ void init_compile(void)
 {
     set_compiler("check-type", compile_check_type_call, TRUE);
     set_compiler("check-type", compile_check_type_call, FALSE);
+    set_compiler("+", compile_plus_call, TRUE);
+    set_compiler("+", compile_plus_call, FALSE);
+    set_compiler("-", compile_minus_call, TRUE);
+    set_compiler("-", compile_minus_call, FALSE);
+    set_compiler("<", compile_lt_call, TRUE);
+    set_compiler("<", compile_lt_call, FALSE);
+    set_compiler("<=", compile_le_call, TRUE);
+    set_compiler("<=", compile_le_call, FALSE);
+    set_compiler("=", compile_eq_call, TRUE);
+    set_compiler("=", compile_eq_call, FALSE);
+    set_compiler("==", compile_idp_call, TRUE);
+    set_compiler("==", compile_idp_call, FALSE);
+    set_compiler("~=", compile_ne_call, TRUE);
+    set_compiler("~=", compile_ne_call, FALSE);
+    set_compiler(">", compile_gt_call, TRUE);
+    set_compiler(">", compile_gt_call, FALSE);
+    set_compiler(">=", compile_ge_call, TRUE);
+    set_compiler(">=", compile_ge_call, FALSE);
     set_compiler("values", compile_values_call, TRUE);
     set_compiler("values", compile_values_call, FALSE);
     set_compiler("find-variable", compile_find_variable_call, TRUE);

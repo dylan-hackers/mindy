@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/byteops.h,v 1.1 1994/03/24 21:49:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/byteops.h,v 1.2 1994/04/08 15:23:43 wlott Exp $
 *
 * This file does whatever.
 *
@@ -46,3 +46,14 @@
 #define op_CALL_TAIL 0x70
 #define op_CALL_FOR_MANY 0x80
 #define op_CALL_FOR_SINGLE 0x90
+
+
+#define op_PLUS 0xf0
+#define op_MINUS 0xf1
+#define op_LT 0xf2
+#define op_LE 0xf3
+#define op_EQ 0xf4
+#define op_IDP 0xf5
+#define op_NE 0xf6
+#define op_GE 0xf7
+#define op_GT 0xf8

@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.5 1994/04/06 13:49:52 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.6 1994/04/08 15:22:27 wlott Exp $
 *
 * This file does whatever.
 *
@@ -28,10 +28,18 @@
 #include "value.h"
 #include "num.h"
 #include "vec.h"
+#include "sym.h"
 #include "interp.h"
 #include "../comp/byteops.h"
 
 static obj_t obj_ComponentClass = 0;
+
+static struct variable *plus_var = NULL;
+static struct variable *minus_var = NULL;
+static struct variable *lt_var = NULL;
+static struct variable *le_var = NULL;
+static struct variable *eq_var = NULL;
+static struct variable *ne_var = NULL;
 
 
 /* Various utility routines. */
@@ -398,123 +406,437 @@ static void op_call(int byte, struct thread *thread)
     invoke(thread, nargs);
 }
 
+static void op_plus(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
+	sp[-2] = make_fixnum(fixnum_value(x) + fixnum_value(y));
+	thread->sp = sp-1;
+    }
+    else {
+	thread->sp = sp+1;
+	sp[-2] = plus_var->value;
+	sp[-1] = x;
+	sp[0] = y;
+	invoke(thread, 2);
+    }
+}
+
+static void op_minus(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
+	sp[-2] = make_fixnum(fixnum_value(x) - fixnum_value(y));
+	thread->sp = sp-1;
+    }
+    else {
+	thread->sp = sp+1;
+	sp[-2] = minus_var->value;
+	sp[-1] = x;
+	sp[0] = y;
+	invoke(thread, 2);
+    }
+}
+
+static void op_lt(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
+	sp[-2] = ((long)x < (long)y) ? obj_True : obj_False;
+	thread->sp = sp-1;
+    }
+    else {
+	thread->sp = sp+1;
+	sp[-2] = lt_var->value;
+	sp[-1] = x;
+	sp[0] = y;
+	invoke(thread, 2);
+    }
+}
+
+static void op_le(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
+	sp[-2] = ((long)x <= (long)y) ? obj_True : obj_False;
+	thread->sp = sp-1;
+    }
+    else {
+	thread->sp = sp+1;
+	sp[-2] = le_var->value;
+	sp[-1] = x;
+	sp[0] = y;
+	invoke(thread, 2);
+    }
+}
+
+static void op_eq(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (x == y) {
+	sp[-2] = obj_True;
+	thread->sp = sp-1;
+    }
+    else if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
+	sp[-2] = obj_False;
+	thread->sp = sp-1;
+    }
+    else {
+	thread->sp = sp+1;
+	sp[-2] = eq_var->value;
+	sp[-1] = x;
+	sp[0] = y;
+	invoke(thread, 2);
+    }
+}
+
+static void op_idp(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (x == y)
+	sp[-2] = obj_True;
+    else if (obj_is_fixnum(x) || obj_is_fixnum(y))
+	sp[-2] = obj_False;
+    else if (idp(x, y))
+	sp[-2] = obj_True;
+    else
+	sp[-2] = obj_False;
+
+    thread->sp = sp-1;
+}
+
+static void op_ne(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (x == y) {
+	sp[-2] = obj_False;
+	thread->sp = sp-1;
+    }
+    else if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
+	sp[-2] = obj_True;
+	thread->sp = sp-1;
+    }
+    else {
+	thread->sp = sp+1;
+	sp[-2] = ne_var->value;
+	sp[-1] = x;
+	sp[0] = y;
+	invoke(thread, 2);
+    }
+}
+
+static void op_ge(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
+	sp[-2] = ((long)x >= (long)y) ? obj_True : obj_False;
+	thread->sp = sp-1;
+    }
+    else {
+	thread->sp = sp+1;
+	sp[-2] = le_var->value;
+	/* sp[-1] already holds y */
+	sp[0] = x;
+	invoke(thread, 2);
+    }
+}
+
+static void op_gt(int byte, struct thread *thread)
+{
+    obj_t *sp = thread->sp;
+    obj_t x = sp[-2];
+    obj_t y = sp[-1];
+
+    if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
+	sp[-2] = ((long)x > (long)y) ? obj_True : obj_False;
+	thread->sp = sp-1;
+    }
+    else {
+	thread->sp = sp+1;
+	sp[-2] = lt_var->value;
+	/* sp[-1] already holds y */
+	sp[0] = x;
+	invoke(thread, 2);
+    }
+}
+
 static void interpret_byte(struct thread *thread)
 {
     int byte = decode_byte(thread);
 
     switch (byte) {
-    case op_BREAKPOINT:
+      case op_BREAKPOINT:
 	op_breakpoint(byte, thread);
 	break;
-    case op_RETURN_SINGLE:
+      case op_RETURN_SINGLE:
 	op_return_single(byte, thread);
 	break;
-    case op_MAKE_VALUE_CELL:
+      case op_MAKE_VALUE_CELL:
 	op_make_value_cell(byte, thread);
 	break;
-    case op_VALUE_CELL_REF:
+      case op_VALUE_CELL_REF:
 	op_value_cell_ref(byte, thread);
 	break;
-    case op_VALUE_CELL_SET:
+      case op_VALUE_CELL_SET:
 	op_value_cell_set(byte, thread);
 	break;
-    case op_VARIABLE_VALUE:
+      case op_VARIABLE_VALUE:
 	op_variable_value(byte, thread);
 	break;
-    case op_VARIABLE_FUNCTION:
+      case op_VARIABLE_FUNCTION:
 	op_variable_function(byte, thread);
 	break;
-    case op_SET_VARIABLE_VALUE:
+      case op_SET_VARIABLE_VALUE:
 	op_set_variable_value(byte, thread);
 	break;
-    case op_MAKE_METHOD:
+      case op_MAKE_METHOD:
 	op_make_method(byte, thread);
 	break;
-    case op_CHECK_TYPE:
+      case op_CHECK_TYPE:
 	op_check_type(byte, thread);
 	break;
-    case op_CHECK_TYPE_FUNCTION:
+      case op_CHECK_TYPE_FUNCTION:
 	op_check_type_function(byte, thread);
 	break;
-    case op_CANONICALIZE_VALUE:
+      case op_CANONICALIZE_VALUE:
 	op_canonicalize_value(byte, thread);
 	break;
-    case op_PUSH_BYTE:
+      case op_PUSH_BYTE:
 	op_push_byte(byte, thread);
 	break;
-    case op_PUSH_INT:
+      case op_PUSH_INT:
 	op_push_int(byte, thread);
 	break;
-    case op_CONDITIONAL_BRANCH:
+      case op_CONDITIONAL_BRANCH:
 	op_conditional_branch(byte, thread);
 	break;
-    case op_BRANCH:
+      case op_BRANCH:
 	op_branch(byte, thread);
 	break;
-    case op_PUSH_NIL:
+      case op_PUSH_NIL:
 	op_push_nil(byte, thread);
 	break;
-    case op_PUSH_UNBOUND:
+      case op_PUSH_UNBOUND:
 	op_push_unbound(byte, thread);
 	break;
-    case op_PUSH_TRUE:
+      case op_PUSH_TRUE:
 	op_push_true(byte, thread);
 	break;
-    case op_PUSH_FALSE:
+      case op_PUSH_FALSE:
 	op_push_false(byte, thread);
 	break;
-    case op_DUP:
+      case op_DUP:
 	op_dup(byte, thread);
 	break;
-    case op_PUSH_CONSTANT|15:
+      case op_PUSH_CONSTANT|0:
+      case op_PUSH_CONSTANT|1:
+      case op_PUSH_CONSTANT|2:
+      case op_PUSH_CONSTANT|3:
+      case op_PUSH_CONSTANT|4:
+      case op_PUSH_CONSTANT|5:
+      case op_PUSH_CONSTANT|6:
+      case op_PUSH_CONSTANT|7:
+      case op_PUSH_CONSTANT|8:
+      case op_PUSH_CONSTANT|9:
+      case op_PUSH_CONSTANT|10:
+      case op_PUSH_CONSTANT|11:
+      case op_PUSH_CONSTANT|12:
+      case op_PUSH_CONSTANT|13:
+      case op_PUSH_CONSTANT|14:
+	op_push_constant_immed(byte, thread);
+	break;
+      case op_PUSH_CONSTANT|15:
 	op_push_constant(byte, thread);
 	break;
-    case op_PUSH_ARG|15:
+      case op_PUSH_ARG|0:
+      case op_PUSH_ARG|1:
+      case op_PUSH_ARG|2:
+      case op_PUSH_ARG|3:
+      case op_PUSH_ARG|4:
+      case op_PUSH_ARG|5:
+      case op_PUSH_ARG|6:
+      case op_PUSH_ARG|7:
+      case op_PUSH_ARG|8:
+      case op_PUSH_ARG|9:
+      case op_PUSH_ARG|10:
+      case op_PUSH_ARG|11:
+      case op_PUSH_ARG|12:
+      case op_PUSH_ARG|13:
+      case op_PUSH_ARG|14:
+	op_push_arg_immed(byte, thread);
+	break;
+      case op_PUSH_ARG|15:
 	op_push_arg(byte, thread);
 	break;
-    case op_POP_ARG|15:
+      case op_POP_ARG|0:
+      case op_POP_ARG|1:
+      case op_POP_ARG|2:
+      case op_POP_ARG|3:
+      case op_POP_ARG|4:
+      case op_POP_ARG|5:
+      case op_POP_ARG|6:
+      case op_POP_ARG|7:
+      case op_POP_ARG|8:
+      case op_POP_ARG|9:
+      case op_POP_ARG|10:
+      case op_POP_ARG|11:
+      case op_POP_ARG|12:
+      case op_POP_ARG|13:
+      case op_POP_ARG|14:
+	op_pop_arg_immed(byte, thread);
+	break;
+      case op_POP_ARG|15:
 	op_pop_arg(byte, thread);
 	break;
-    case op_PUSH_LOCAL|15:
+      case op_PUSH_LOCAL|0:
+      case op_PUSH_LOCAL|1:
+      case op_PUSH_LOCAL|2:
+      case op_PUSH_LOCAL|3:
+      case op_PUSH_LOCAL|4:
+      case op_PUSH_LOCAL|5:
+      case op_PUSH_LOCAL|6:
+      case op_PUSH_LOCAL|7:
+      case op_PUSH_LOCAL|8:
+      case op_PUSH_LOCAL|9:
+      case op_PUSH_LOCAL|10:
+      case op_PUSH_LOCAL|11:
+      case op_PUSH_LOCAL|12:
+      case op_PUSH_LOCAL|13:
+      case op_PUSH_LOCAL|14:
+	op_push_local_immed(byte, thread);
+	break;
+      case op_PUSH_LOCAL|15:
 	op_push_local(byte, thread);
 	break;
-    case op_POP_LOCAL|15:
+      case op_POP_LOCAL|0:
+      case op_POP_LOCAL|1:
+      case op_POP_LOCAL|2:
+      case op_POP_LOCAL|3:
+      case op_POP_LOCAL|4:
+      case op_POP_LOCAL|5:
+      case op_POP_LOCAL|6:
+      case op_POP_LOCAL|7:
+      case op_POP_LOCAL|8:
+      case op_POP_LOCAL|9:
+      case op_POP_LOCAL|10:
+      case op_POP_LOCAL|11:
+      case op_POP_LOCAL|12:
+      case op_POP_LOCAL|13:
+      case op_POP_LOCAL|14:
+	op_pop_local_immed(byte, thread);
+	break;
+      case op_POP_LOCAL|15:
 	op_pop_local(byte, thread);
 	break;
-    case op_CALL_TAIL|15:
+      case op_CALL_TAIL|0:
+      case op_CALL_TAIL|1:
+      case op_CALL_TAIL|2:
+      case op_CALL_TAIL|3:
+      case op_CALL_TAIL|4:
+      case op_CALL_TAIL|5:
+      case op_CALL_TAIL|6:
+      case op_CALL_TAIL|7:
+      case op_CALL_TAIL|8:
+      case op_CALL_TAIL|9:
+      case op_CALL_TAIL|10:
+      case op_CALL_TAIL|11:
+      case op_CALL_TAIL|12:
+      case op_CALL_TAIL|13:
+      case op_CALL_TAIL|14:
+	op_call_tail_immed(byte, thread);
+	break;
+      case op_CALL_TAIL|15:
 	op_call_tail(byte, thread);
 	break;
-    case op_CALL_FOR_MANY|15:
-    case op_CALL_FOR_SINGLE|15:
+      case op_CALL_FOR_MANY|0:
+      case op_CALL_FOR_MANY|1:
+      case op_CALL_FOR_MANY|2:
+      case op_CALL_FOR_MANY|3:
+      case op_CALL_FOR_MANY|4:
+      case op_CALL_FOR_MANY|5:
+      case op_CALL_FOR_MANY|6:
+      case op_CALL_FOR_MANY|7:
+      case op_CALL_FOR_MANY|8:
+      case op_CALL_FOR_MANY|9:
+      case op_CALL_FOR_MANY|10:
+      case op_CALL_FOR_MANY|11:
+      case op_CALL_FOR_MANY|12:
+      case op_CALL_FOR_MANY|13:
+      case op_CALL_FOR_MANY|14:
+      case op_CALL_FOR_SINGLE|0:
+      case op_CALL_FOR_SINGLE|1:
+      case op_CALL_FOR_SINGLE|2:
+      case op_CALL_FOR_SINGLE|3:
+      case op_CALL_FOR_SINGLE|4:
+      case op_CALL_FOR_SINGLE|5:
+      case op_CALL_FOR_SINGLE|6:
+      case op_CALL_FOR_SINGLE|7:
+      case op_CALL_FOR_SINGLE|8:
+      case op_CALL_FOR_SINGLE|9:
+      case op_CALL_FOR_SINGLE|10:
+      case op_CALL_FOR_SINGLE|11:
+      case op_CALL_FOR_SINGLE|12:
+      case op_CALL_FOR_SINGLE|13:
+      case op_CALL_FOR_SINGLE|14:
+	op_call_immed(byte, thread);
+	break;
+      case op_CALL_FOR_MANY|15:
+      case op_CALL_FOR_SINGLE|15:
 	op_call(byte, thread);
 	break;
-    default:
-	switch (byte & 240) {
-	case op_PUSH_CONSTANT:
-	    op_push_constant_immed(byte, thread);
-	    break;
-	case op_PUSH_ARG:
-	    op_push_arg_immed(byte, thread);
-	    break;
-	case op_POP_ARG:
-	    op_pop_arg_immed(byte, thread);
-	    break;
-	case op_PUSH_LOCAL:
-	    op_push_local_immed(byte, thread);
-	    break;
-	case op_POP_LOCAL:
-	    op_pop_local_immed(byte, thread);
-	    break;
-	case op_CALL_TAIL:
-	    op_call_tail_immed(byte, thread);
-	    break;
-	case op_CALL_FOR_MANY:
-	case op_CALL_FOR_SINGLE:
-	    op_call_immed(byte, thread);
-	    break;
-	default:
-	    op_flame(byte, thread);
-	}
+      case op_PLUS:
+	op_plus(byte, thread);
+	break;
+      case op_MINUS:
+	op_minus(byte, thread);
+	break;
+      case op_LT:
+	op_lt(byte, thread);
+	break;
+      case op_LE:
+	op_le(byte, thread);
+	break;
+      case op_EQ:
+	op_eq(byte, thread);
+	break;
+      case op_IDP:
+	op_idp(byte, thread);
+	break;
+      case op_NE:
+	op_ne(byte, thread);
+	break;
+      case op_GE:
+	op_ge(byte, thread);
+	break;
+      case op_GT:
+	op_gt(byte, thread);
+	break;
+      default:
+	op_flame(byte, thread);
     }
 }
 
@@ -535,7 +857,7 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 {
     int opcode = ((unsigned char *)(thread->component))[thread->pc - 1] & 0xf0;
 
-    if (opcode == op_CALL_FOR_SINGLE) {
+    if (opcode == op_CALL_FOR_SINGLE || opcode >= op_PLUS) {
 	if (vals == thread->sp)
 	    *old_sp = obj_False;
 	else if (vals != old_sp)
@@ -545,7 +867,7 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
     else if (opcode == op_CALL_FOR_MANY)
 	canonicalize_values(thread, old_sp, vals);
     else
-	lose("Strange call opcode: 0x~02x", opcode);
+	lose("Strange call opcode: 0x%02x", opcode);
 
     thread->advance = interpret_byte;
 
@@ -615,8 +937,12 @@ void init_interp_classes(void)
 		       obj_ObjectClass, NULL);
 }
 
-/* Probably obsolete, but keep it around just in case. */
 void init_interpreter(void)
 {
-    ;
+    plus_var = find_variable(module_BuiltinStuff, symbol("+"), FALSE, TRUE);
+    minus_var = find_variable(module_BuiltinStuff, symbol("-"), FALSE, TRUE);
+    lt_var = find_variable(module_BuiltinStuff, symbol("<"), FALSE, TRUE);
+    le_var = find_variable(module_BuiltinStuff, symbol("<="), FALSE, TRUE);
+    eq_var = find_variable(module_BuiltinStuff, symbol("="), FALSE, TRUE);
+    ne_var = find_variable(module_BuiltinStuff, symbol("~="), FALSE, TRUE);
 }
