@@ -49,26 +49,47 @@ rcs-header: $Header:
 // of different sorts of numbers.
 //
 // This particular implementation of module portability corresponds to
-// the compilation environment for a MacOS X Macintosh using the BSD layer.
+// the compilation environment for a MacOS X Macintosh using the Darwin BSD layer.
 //======================================================================
 
 define constant $default-defines
-  = #["const", "",
+  = #[
+  		// Basics
+  		"const", "",
       "volatile", "", 
-      "__cdecl", "",
-      "__STDC__", "(1)",
-      "__APPLE__", "(1)",
-      "__ppc__", "(1)",
-      "__APPLE_CC__", "(1)",
-      "__GNUC__", "(1)",			// Is this right?
-      "__BIG_ENDIAN__", "(1)",
-      "__MACH__", "(1)",			// Unless we're on Classic...
-      "TARGET_CPU_PPC", "(1)"];
+      //"__cdecl", "",
+      
+      // cpp -dM /dev/null
+      "GNUC", "(1)",
+      
+      // cc -E -v /dev/null
+      "__GNUC__", "2",
+      "__GNUC_MINOR__", "95",
+      "__ppc__", "",
+      "__NATURAL_ALIGNMENT__", "",
+      "__MACH__", "",
+      "__BIG_ENDIAN__", "",
+      "__APPLE__", "",
+      "__STDC__", "",
+			"__APPLE_CC__", "934",
+			"__DYNAMIC__", "",
+      
+      // Parameterized macros which remove various GCC extensions from our
+      // source code. The last item in the list is the right-hand side of
+      // the define; all the items preceding it are named parameters.
+      "__attribute__", #(#("x"), ""), 
+      "__signed__", "", 
+      "__signed", "", 
+      "__inline__", "",
+      "__inline", ""
+      ];
 
 // Set up the search path for .h files
-
+// cc -E -v /dev/null
 define constant macos-include-directories
-  = #["/usr/include"];
+  = #["/usr/local/include",
+ 			"/usr/include/gcc/darwin/2.95.2/g++/..",
+ 			"/usr/include"];
 
 for (dir in macos-include-directories)
   push-last(include-path, dir);
