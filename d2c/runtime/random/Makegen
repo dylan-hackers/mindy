@@ -1,8 +1,9 @@
 if ($host_platform{'integer_length'} >= 64) {
         $CFLAGS = "$CFLAGS -DDYLAN_64BIT";
-}       
+}
+$CPPFLAGS = "$CPPFLAGS -I.. ";
 	
-$D2CFLAGS = $d2c_runtime;;
+$D2CFLAGS = $d2c_runtime . '-L../../../common/transcendental ';
 
 do emit_library_rule(
     'Random', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
