@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.2 1994/03/31 10:19:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.3 1994/04/06 22:49:30 wlott Exp $
 *
 * This file does whatever.
 *
@@ -48,8 +48,11 @@ IDENTIFIER	[-!$%&*+/0-9<=>?@A-Z^_a-z~]+
 \)			return tok_RPAREN;
 "#"[tT]			yylval = obj_True; return tok_LITERAL;
 "#"[fF]			yylval = obj_False; return tok_LITERAL;
+"$"			yylval = make_fixnum(-1); return tok_DEBUGVAR;
+"$$"			yylval = make_fixnum(-2); return tok_DEBUGVAR;
+"$"-?{DIGIT}+	yylval = make_fixnum(atoi(yytext+1)); return tok_DEBUGVAR;
 0x{HEXDIGIT}+		yylval = token_as_address(); return tok_LITERAL;
--?{DIGIT}+		yylval = token_as_integer(); return tok_LITERAL;
+-?{DIGIT}+	yylval = make_fixnum(atoi(yytext)); return tok_LITERAL;
 \"[^"\\]*(\\.[^"\\])*\"	yylval = token_as_string(); return tok_LITERAL;
 {IDENTIFIER}		yylval = token_as_symbol(); return tok_SYMBOL;
 {IDENTIFIER}:		yylval = token_as_keyword(); return tok_KEYWORD;
@@ -111,30 +114,6 @@ static obj_t token_as_address(void)
     }
 
     return (obj_t)addr;
-}
-
-static obj_t token_as_integer(void)
-{
-    int integer = 0;
-    int i;
-    boolean negative;
-
-    if (yytext[0] == '-') {
-	i = 1;
-	negative = TRUE;
-    }
-    else {
-	negative = FALSE;
-	i = 0;
-    }
-
-    while (i < yyleng)
-	integer = integer * 10 + yytext[i++] - '0';
-
-    if (negative)
-	return make_fixnum(-integer);
-    else
-	return make_fixnum(integer);
 }
 
 static obj_t token_as_string(void)
