@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.50 2000/06/11 20:43:22 emk Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.51 2000/06/19 09:44:55 robmyers Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -25,7 +25,7 @@ dnl	it.
 
 AC_INIT(common/format/format.dylan)
 AC_PREREQ(2.12)
-AC_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER(config.h)
 
 #--------------------------------------------------------------------
 # Version/package information, eventually to be used by automake, but
@@ -166,7 +166,7 @@ fi
 
 AC_PROG_INSTALL
 AC_PROG_CC			# Specify when cross-compiling.
-AC_PROG_LEX
+AM_PROG_LEX
 AC_PROG_YACC
 
 AC_CHECK_TOOL(RANLIB, ranlib, :)
