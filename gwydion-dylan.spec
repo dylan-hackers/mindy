@@ -10,7 +10,7 @@
 # latest source and documentation tarball from the FTP site and
 # put them into /usr/src/redhat/SOURCES. Edit your local copy of
 # this file, replacing:
-#   * VERSION with a number of the form '2.2.1'. (2 occurances)
+#   * VERSION with a number of the form '2.1.2'. (2 occurances)
 #   * libcX with either libc5 or libc6, depending on your Linux
 #     distribution.
 # Then type 'cd /usr/src/redhat/SPECS/; rpm -ba gwydion-dylan.spec`.
@@ -25,6 +25,7 @@ Source0: ftp://berlin.ccc.de/pub/gd/v2.1/src/gd-VERSION.tar.gz
 Source1: ftp://berlin.ccc.de/pub/gd/doc/gd20-html.tar.gz
 URL: http://www.randomhacks.com/dylan/
 Packager: eric.kidd@pobox.com
+Prefix: /usr
 
 %description
 CMU's Gwydion Dylan provides d2c, a Dylan-to-C batch compiler. It produces
@@ -66,6 +67,12 @@ on the web at <http://www.randomhacks.com/dylan/>.
 
 %changelog
 
+* Sat Nov 21 1998 Eric Kidd <eric.kidd@pobox.com>
+  - Added primitive relocation support for Gwydion and Mindy.
+  - Commented out code to check for parsergen, because Andreas says
+    we can build with only a copy of d2c now.
+  - Updated some other comments.
+
 * Sat Aug 15 1998 Eric Kidd <eric.kidd@pobox.com>
   - Final cleanup for 2.1 snapshots
   - Removed handy macros for compatibility with
@@ -88,17 +95,19 @@ on the web at <http://www.randomhacks.com/dylan/>.
 
 %prep
 if [ ! -x /usr/bin/d2c -a ! -x /usr/local/bin/d2c ]; then
-  # Fail now so configure doesn't choose to bootstrap with Mindy later.
+  # Fail now. (./configure can probably take care of this by itself now,
+  # but this check remains for now)
   echo "d2c prep: Must have /usr/bin/d2c installed to recompile d2c."
   echo "d2c prep: Trying installing the Gwydion Dylan RPMs."
   exit 1
 fi
-if [ ! -x /usr/bin/parsergen -a ! -x /usr/local/bin/parsergen ]; then
-  # Look for the other utilities need to bootstrap d2c.
-  echo "d2c prep: Must have gwydion-dylan-extras installed to"
-  echo "d2c prep: recompile d2c."
-  exit 1
-fi
+# We should be able to build parsergen from source now.
+#if [ ! -x /usr/bin/parsergen -a ! -x /usr/local/bin/parsergen ]; then
+#  # Look for the other utilities need to bootstrap d2c.
+#  echo "d2c prep: Must have gwydion-dylan-extras installed to"
+#  echo "d2c prep: recompile d2c."
+#  exit 1
+#fi
 %setup -n gd -a 1
 
 
@@ -116,6 +125,30 @@ make
 %install
 cd src/
 make install
+
+
+%post
+# We could automate all of this if the package is installed as root, but
+# these instructions will always need to remain for non-root installs.
+if test "x$RPM_INSTALL_PREFIX" != "x/usr"; then
+    echo "Gwydion Dylan was installed someplace other than /usr, so additional"
+    echo "setup will be required:"
+    echo "  * Set DYLANDIR to $RPM_INSTALL_PREFIX"
+    echo "  * Make sure your PATH contains $RPM_INSTALL_PREFIX/bin"
+    echo "  * Either add $RPM_INSTALL_PREFIX/lib/dylan to LD_LIBRARY_PATH, or"
+    echo "    add it to /etc/ld.so.conf and rerun /sbin/ldconfig"
+fi
+
+
+%post -n mindy
+# We could automate all of this if the package is installed as root, but
+# these instructions will always need to remain for non-root installs.
+if test "x$RPM_INSTALL_PREFIX" != "x/usr"; then
+    echo "Mindy was installed someplace other than /usr, so additional"
+    echo "setup will be required:"
+    echo "  * Set DYLANDIR to $RPM_INSTALL_PREFIX"
+    echo "  * Make sure your PATH contains $RPM_INSTALL_PREFIX/bin"
+fi
 
 
 %files
