@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.4 1994/04/30 14:57:18 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.5 1994/04/30 15:17:58 wlott Exp $
 *
 * This file does whatever.
 *
@@ -90,6 +90,5 @@ void main(int argc, char *argv[])
 
 	thread = thread_create(symbol("exit"));
 	*thread->sp++ = var->value;
-	*thread->sp++ = make_fixnum(0);
     }
 }
