@@ -1,5 +1,5 @@
 module: errors
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/errors.dylan,v 1.5 2004/02/06 15:30:49 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/errors.dylan,v 1.6 2004/06/05 00:32:01 bruce Exp $
 copyright: see below
 
 
@@ -100,20 +100,13 @@ end method report-condition;
 // By default just report the condition.  But first, make sure we are starting
 // a new line and print the context if we haven't already.
 // 
-
-define function print-condition-with-context
-    (condition :: <compiler-condition>) => ();
+define method default-handler (condition :: <compiler-condition>) => ();
   fresh-line(*error-output*);
   if (*print-context*)
     format(*error-output*, "In %s:\n", *current-context*);
     *print-context* := #f;
   end if;
   format(*error-output*, "%s\n", condition);
-end function print-condition-with-context;
-
-
-define method default-handler (condition :: <compiler-condition>) => ();
-  print-condition-with-context(condition);
 end method default-handler;
 
 
@@ -149,58 +142,10 @@ define variable *break-on-compiler-errors* :: <boolean> = #f;
 // Dink *errors* and report the error.  And break if *break-on-compiler-errors*
 // is true.
 // 
-
-define variable *error-stack* :: <list> = #();
-
-define function error-loc-size (cond :: <compiler-condition>)
- => (size :: <integer>);
-  let loc :: <known-source-location> = cond.condition-at;
-  loc.end-posn - loc.start-posn;
-end;
-
-define function insert-in-error-stack(a :: <compiler-condition>) => ();
-  block ()
-    let a-loc :: <known-source-location> = a.condition-at;
-    let (a-start, a-end) = values(a-loc.start-posn, a-loc.end-posn);
-
-    let keep = #t;
-    *error-stack* :=
-      choose(method(b :: <compiler-condition>)
-                 let b-loc :: <known-source-location> = b.condition-at;
-                 let b-start = b-loc.start-posn;
-                 let b-end = b-loc.end-posn;
-                 if (a-start > b-start)
-                   a-end <= b-end
-                 else
-                   if (a-start < b-start)
-                     a-end < b-end & (keep := #f);
-                   else
-                     a-end = b-end & (keep := #f);
-                   end;
-                   #t;
-                 end;
-             end,
-             *error-stack*);
-    if (keep)
-      *error-stack* := add!(*error-stack*, a);
-    end;
-  exception (<object>)
-    // we have to default to reporting this new error
-    *error-stack* := list(a);
-  end;
-end insert-in-error-stack;
-
 define method default-handler
     (error :: <compiler-error>, #next next-method) => ();
   *errors* := *errors* + 1;
-
-  insert-in-error-stack(error);
-  do(print-condition-with-context,
-     sort(*error-stack*,
-          test: method(a :: <compiler-condition>, b :: <compiler-condition>)
-                    a.error-loc-size < b.error-loc-size;
-                end));
-
+  next-method();
   if (*break-on-compiler-errors*)
     break("hit a compiler error.");
   end if;
@@ -274,16 +219,14 @@ end method compiler-warning-location;
 define constant compiler-error-location = method
     (loc :: type-union(<source-location-mixin>, <source-location>),
      format-string :: <byte-string>, #rest format-arguments)
- => ();
-  let error = make(<compiler-error>,
-                   at: select (loc by instance?)
-                         <source-location> => loc;
-                         <source-location-mixin> => loc.source-location;
-                       end select,
-                   format-string: stringify("Error: ", format-string),
-                   format-arguments: format-arguments);
-  insert-in-error-stack(error);
-  signal(error);
+    => ();
+  signal(make(<compiler-error>,
+	      at: select (loc by instance?)
+		    <source-location> => loc;
+		    <source-location-mixin> => loc.source-location;
+		  end select,
+	      format-string: stringify("Error: ", format-string),
+	      format-arguments: format-arguments));
 end method;
 
 // compiler-fatal-error-location -- exported.
