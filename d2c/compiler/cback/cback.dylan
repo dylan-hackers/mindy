@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.76 1995/11/09 17:35:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.77 1995/11/09 23:35:22 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1979,18 +1979,18 @@ define method c-expr-and-rep (lit :: <ct-value>,
 	 *general-rep*);
 end;
 
-define method c-expr-and-rep (lit :: <literal-true>,
-			      rep-hint == *boolean-rep*,
-			      output-info :: <output-info>)
+define method c-expr-and-rep
+    (lit :: <literal-true>, rep-hint :: <immediate-representation>,
+     output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
-  values("TRUE", *boolean-rep*);
+  values("TRUE", rep-hint);
 end;
 
-define method c-expr-and-rep (lit :: <literal-false>,
-			      rep-hint == *boolean-rep*,
-			      output-info :: <output-info>)
+define method c-expr-and-rep
+    (lit :: <literal-false>, rep-hint :: <immediate-representation>,
+     output-info :: <output-info>)
     => (name :: <string>, rep :: <representation>);
-  values("FALSE", *boolean-rep*);
+  values("FALSE", rep-hint);
 end;
 
 define method c-expr-and-rep (lit :: <literal-fixed-integer>,
