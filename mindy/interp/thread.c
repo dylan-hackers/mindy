@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/thread.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/thread.c,v 1.2 1998/12/17 10:24:58 igor Exp $
 *
 * This file implements threads, and the various synchronization
 * primitives.
@@ -289,7 +289,7 @@ void thread_pop_escape(struct thread *thread)
 {
     thread->pc = fixnum_value(*--thread->sp);
     thread->component = *--thread->sp;
-    thread->advance = obj_rawptr(*--thread->sp);
+    thread->advance = (void (*)(struct thread *thread)) obj_rawptr(*--thread->sp);
     set_status(thread, (enum thread_status)fixnum_value(*--thread->sp));
     thread->datum = *--thread->sp;
     
