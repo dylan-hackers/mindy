@@ -1,25 +1,36 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.18 1996/01/15 13:40:47 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.19 1996/02/02 23:13:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 
 define constant stretchy-vector =
-  method (#rest things)
+  method (#rest things) => res :: <stretchy-vector>;
     as(<stretchy-vector>, things);
   end;
 
 
-define class <action> (<object>)
+define abstract class <action> (<object>)
   slot on :: <class>, required-init-keyword: on:, setter: #f;
   slot next :: false-or(<action>), init-value: #f;
 end;
+
+#if (~mindy)
+seal generic initialize (<action>);
+seal generic \= (<action>, <object>);
+seal generic \= (<object>, <action>);
+#end
 
 define class <shift> (<action>)
   slot state :: <integer>, required-init-keyword: state:, setter: #f;
 end;
 
+#if (~mindy)
+seal generic make (singleton(<shift>));
+#end
+
 define method \= (action1 :: <shift>, action2 :: <shift>)
+    => res :: <boolean>;
   action1.state == action2.state;
 end;
 
@@ -27,23 +38,33 @@ define class <reduce> (<action>)
   slot production :: <integer>, required-init-keyword: production:, setter: #f;
 end;
 
+#if (~mindy)
+seal generic make (singleton(<reduce>));
+#end
+
 define method \= (action1 :: <reduce>, action2 :: <reduce>)
+    => res :: <boolean>;
   action1.production == action2.production;
 end;
 
 define class <accept> (<action>)
 end;
 
+#if (~mindy)
+seal generic make (singleton(<accept>));
+#end
+
 define method \= (action1 :: <accept>, action2 :: <accept>)
+    => res :: <boolean>;
   #t;
 end;
 
-define method make-action-table(#rest actions)
+define method make-action-table (#rest actions) => res :: false-or(<action>);
   let length = actions.size;
   unless (length == 0)
-    let prev = actions[0];
-    for (index from 1 below length)
-      let action = actions[index];
+    let prev :: <action> = actions[0];
+    for (index :: <integer> from 1 below length)
+      let action :: <action> = actions[index];
       prev.next := action;
       prev := action;
     end;
@@ -67,6 +88,8 @@ end;
 :entry-point type
 
 
+:type program <false>
+
 program ()
   #f;
 %
@@ -74,6 +97,8 @@ program ()
 program (top-level-forms semi-opt)
   #f;
 %
+
+:type top-level-forms <false>
 
 top-level-forms (constituent)
   process-top-level-form(%1);
@@ -2163,67 +2188,67 @@ macro-opt (<macro-token>)
 
 // Driver loop.
 
-define method do-action (action :: <accept>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 tokenizer :: <tokenizer>)
-  unget-token(tokenizer, token);
-  if (symbol-stack.size ~= 1)
-    error("Symbol-stack didn't get reduced all the way?");
-  end;
-  symbol-stack.head;
-end;
-
-define method do-action (action :: <shift>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 tokenizer :: <tokenizer>)
-  parse-loop(pair(action.state, state-stack),
-	     pair(token, symbol-stack),
-	     get-token(tokenizer),
-	     tokenizer);
-end;
-
-define method do-action (action :: <reduce>, state-stack :: <list>,
-			 symbol-stack :: <list>, token :: <token>,
-			 tokenizer :: <tokenizer>)
-  let (new-state-stack, new-symbol-stack)
-    = *production-table*[action.production](state-stack, symbol-stack);
-  parse-loop(new-state-stack, new-symbol-stack, token, tokenizer);
-end;
-
-define method parse-loop (state-stack :: <list>, symbol-stack :: <list>,
-			  token :: <token>, tokenizer :: <tokenizer>)
-  parse-loop-aux(state-stack, symbol-stack, token, tokenizer,
-		 *action-table*[state-stack.head], #f);
-end;
-
-define method parse-loop-aux (state-stack :: <list>, symbol-stack :: <list>,
-			      token :: <token>, tokenizer :: <tokenizer>,
-			      action :: false-or(<action>),
-			      prev :: false-or(<action>))
-  if (action)
-    if (instance?(token, action.on))
-      if (prev)
-	prev.next := action.next;
-	let state = state-stack.head;
-	action.next := *action-table*[state];
-	*action-table*[state] := action;
-      end;
-      do-action(action, state-stack, symbol-stack, token, tokenizer);
-    else
-      parse-loop-aux(state-stack, symbol-stack, token, tokenizer,
-		     action.next, action);
-    end;
-  else
-    error("Parse error at or before %=", token);
-    #f;
-  end;
-end;
-
 define method parse (tokenizer :: <tokenizer>, start-state :: <integer>)
-  parse-loop(list(start-state), #(), get-token(tokenizer), tokenizer);
+    => result :: <object>;
+  local
+    method repeat
+	(state-stack :: <list>, symbol-stack :: <list>, token :: <token>,
+	 action :: false-or(<action>), prev :: false-or(<action>))
+#if (~mindy)
+	=> result :: <object>;
+#end
+      if (action)
+#if (~mindy)
+	let action :: <action> = action;
+#end
+	if (instance?(token, action.on))
+	  if (prev)
+#if (~mindy)
+	    let prev :: <action> = prev;
+#end
+	    prev.next := action.next;
+	    let state :: <integer> = state-stack.head;
+	    action.next := *action-table*[state];
+	    *action-table*[state] := action;
+	  end;
+	  select (action.object-class)
+	    <reduce> =>
+	      let semantic-action = *production-table*[action.production];
+	      let (new-state-stack, new-symbol-stack)
+		= semantic-action(state-stack, symbol-stack);
+	      repeat(new-state-stack,
+		     new-symbol-stack,
+		     token,
+		     *action-table*[new-state-stack.head],
+		     #f);
+	    <shift> =>
+	      let new-state = action.state;
+	      repeat(pair(new-state, state-stack),
+		     pair(token, symbol-stack),
+		     get-token(tokenizer),
+		     *action-table*[new-state],
+		     #f);
+	    <accept> =>
+	      unget-token(tokenizer, token);
+	      if (symbol-stack.size ~== 1)
+		error("Symbol-stack didn't get reduced all the way?");
+	      end;
+	      symbol-stack.head;
+	  end select;
+	else
+	  repeat(state-stack, symbol-stack, token, action.next, action);
+	end;
+      else
+	compiler-error("Parse error at or before %=", token);
+	#f;
+      end;
+    end method repeat;
+  repeat(list(start-state), #(), get-token(tokenizer),
+	 *action-table*[start-state], #f);
 end;
 
-define method parse-program (tokenizer :: <tokenizer>) => ();
+define method parse-program (tokenizer :: <tokenizer>)
+    => ();
   parse(tokenizer, $program-start-state);
 end;
 
