@@ -15,11 +15,6 @@ c-include( "Carbon.h" );
 define functional class <GDHandle> (<Handle>)
 end class <GDHandle>;
 
-
-define functional class <PixMapHandle> (<Handle>)
-end class <PixMapHandle>;
-
-
 define functional class <GWorldPtr> (<Ptr>)
 end class <GWorldPtr>;
 

@@ -242,64 +242,55 @@ end;
 
 
 /*
-	<BitMap>
+	<BitMap> 
 */
 
-define functional class <BitMap> (<Ptr>) 
+define functional class <BitMap> (<statically-typed-pointer>) 
+end class;
+
+define method content-size( cls == <BitMap> )
+=>( result :: <integer> )
+	c-expr( int: "sizeof(BitMap)" );
+end method content-size;
+
+define method bounds(bitmap :: <BitMap>)
+=>(result :: <Rect>)
+  pointer-at( bitmap, class: <Rect>, offset: 6 );	// 68k packing, after a Ptr and an SInt16
+end method bounds;
+
+
+/*
+  <PixMapHandle>
+*/
+
+define functional class <PixMapHandle> (<Handle>) 
 end class;
 
 
 /*
-	bounds
-	Gets the bounding <Rect> of a bitmap
+	GetPixBounds
+	Gets the bounding <Rect> of a bitmap/pixmap
 */
 
-define method GetPixBounds (bitmap :: <BitMap>) 
+define method GetPixBounds (pixmap :: <PixMapHandle>) 
 => (result :: <Rect>);
 	let r :: <Rect> = make( <Rect> );
-        
-	call-out( "GetPixBounds", ptr:, ptr: bitmap.raw-value, ptr: r.raw-value );
-        r;
+	call-out( "GetPixBounds", ptr:, ptr: pixmap.raw-value, ptr: r.raw-value );
+  r;
 end method GetPixBounds;
-
-
-/*
-	<QDGlobals>
-*/
-
-//define functional class <QDGlobals> (<statically-typed-pointer>) 
-//end class;
-
-
-/*
-	content-size
-	The size of object a <QDGlobals> contains
-*/
-
-/*define method content-size( cls == <QDGlobals> )
-=>( result :: <integer> )
-	c-expr( int: "sizeof(QDGlobals)" );
-end method content-size;*/
-
-
-//define constant qd :: <QDGlobals> = make( <QDGlobals>, pointer: c-expr( ptr: "&qd" ) );
 
 
 /*
 	screenBits
 */
 
-/*define method screenBits (qdg :: <QDGlobals>)
-=> (result :: <BitMap>);
-	make( <BitMap>, pointer: qdg + 80);
-end method;*/
-
 define method GetQDGlobalsScreenBits()
 => (screenBits :: <BitMap>)
-  let temp :: <Handle> = make(<Handle>);
-  call-out(GetQDGlobalsScreenBits, ptr:, ptr: temp.raw-value);
-  pointer-at( temp, class: <BitMap>, offset: 0 );
+  let bits :: <BitMap> = make(<BitMap>);
+  call-out("GetQDGlobalsScreenBits", ptr:, ptr: bits.raw-value);
+  bits;
 end method GetQDGlobalsScreenBits;
+
 
 /*
 	<RgnHandle>

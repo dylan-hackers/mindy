@@ -192,3 +192,12 @@ end method DeleteMenu;
 	call-out( "OpenDeskAcc", short:, ptr: name.raw-value );
 end method OpenDeskAcc;
 */
+
+/*
+	GetMBarHeight
+*/
+
+define method GetMBarHeight()
+=> (result ::<integer>)
+  call-out("GetMBarHeight", int:);
+end method GetMBarHeight

@@ -20,7 +20,7 @@ define module quickdraw
 				bottom, bottom-setter, right, right-setter,
 		SetRect, PtInRect, InsetRect,
 				
-		<BitMap>, GetPixBounds, //<QDGlobals>, screenBits, qd,
+		<BitMap>, <PixMapHandle>, bounds, GetPixBounds, //<QDGlobals>, screenBits, qd,
     GetQDGlobalsScreenBits,
 		<RgnHandle>, NewRgn, DisposeRgn, SetEmptyRgn, SetRectRgn, RectRgn,
 		
@@ -44,7 +44,7 @@ define module quickdraw
 		RGBForeColor, RGBBackColor, InvertColor,
 		red, blue, green, red-setter, green-setter, blue-setter,
 		
-		<GDHandle>, <PixMapHandle>, <GWorldPtr>,
+		<GDHandle>, <GWorldPtr>,
 		NewGWorld, DisposeGWorld, GetGWorld, GetGWorldPixMap,
 		LockPixels, UnlockPixels, GetGWorldDevice, PixMap32Bit,
     

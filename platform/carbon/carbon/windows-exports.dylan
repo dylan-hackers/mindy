@@ -27,6 +27,7 @@ define module windows
 		DragWindow, TrackGoAway, TrackBox, ZoomWindow, GrowWindow, SizeWindow,
 		InvalWindowRect,
 		SetWRefCon, GetWRefCon, SetWindowKind, GetWindowKind,
+    IsWindowVisible,
 		
 		// Incomplete list
 		$kAlertWindowClass,

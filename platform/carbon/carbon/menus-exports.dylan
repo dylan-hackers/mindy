@@ -19,7 +19,8 @@ define module menus
 		MenuSelect, MenuKey,
 		GetMenuHandle, GetMenuItemText, EnableMenuItem, DisableMenuItem, CountMenuItems,
 		DeleteMenu,
-		AppendResMenu;
+		AppendResMenu,
+    GetMBarHeight;
 		
 		// Desk Accessories.
 		//OpenDeskAcc;

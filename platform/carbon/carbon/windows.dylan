@@ -536,3 +536,18 @@ define method SetWindowBounds( window :: <WindowRef>, region :: <integer>, globa
 													ptr: globalBounds.raw-value );
 	as(<OSErr>, result);
 end method SetWindowBounds;
+
+
+/*
+		IsWindowVisible
+*/
+
+define method IsWindowVisible( window :: <WindowRef> )
+=> ( result :: <OSStatus> )
+	let result = call-out( "IsWindowVisible", int:, ptr: window.raw-value, );
+	if(result = 1)
+    #t;
+  else
+    #f;
+  end if;
+end method IsWindowVisible;
