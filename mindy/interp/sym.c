@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.9 1996/01/07 22:58:15 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.10 1996/02/02 01:51:11 wlott Exp $
 *
 * This file implements symbols.
 *
@@ -56,13 +56,12 @@ struct symbol {
     unsigned hash;
 };
 
-static struct symtable {
-    obj_t class;
-    int entries;
-    int threshold;
-    int length;
-    obj_t *table;
-} Symbols;
+#define SYMBOL(x) obj_ptr(struct symbol *, x)
+
+static int symtab_entries = 0;
+static int symtab_threshold = 0;
+static int symtab_length = 0;
+static obj_t *symtab_table = NULL;
 
 static unsigned hash_name(char *name)
 {
@@ -95,17 +94,17 @@ static boolean same_name(char *name1, char *name2)
     }
 }
 
-static void rehash_table(struct symtable *table)
+static void rehash_table(void)
 {
     int new_length;
     obj_t *new_table;
     obj_t *ptr;
     int i;
 
-    if (table->length < 1024)
-	new_length = table->length << 1;
+    if (symtab_length < 1024)
+	new_length = symtab_length << 1;
     else
-	new_length = table->length + 1024;
+	new_length = symtab_length + 1024;
 
     new_table = (obj_t *)malloc(sizeof(obj_t)*new_length);
 
@@ -113,67 +112,59 @@ static void rehash_table(struct symtable *table)
     for (i = 0; i < new_length; i++)
 	*ptr++ = obj_False;
 
-    ptr = table->table;
-    for (i = 0; i < table->length; i++) {
+    ptr = symtab_table;
+    for (i = 0; i < symtab_length; i++) {
 	obj_t sym, next;
 	for (sym = *ptr++; sym != obj_False; sym = next) {
-	    int index = obj_ptr(struct symbol *, sym)->hash % new_length;
-	    next = obj_ptr(struct symbol *, sym)->next;
-	    obj_ptr(struct symbol *, sym)->next = new_table[index];
+	    int index = SYMBOL(sym)->hash % new_length;
+	    next = SYMBOL(sym)->next;
+	    SYMBOL(sym)->next = new_table[index];
 	    new_table[index] = sym;
 	}
     }
 
-    free(table->table);
-    table->table = new_table;
-    table->length = new_length;
-    table->threshold = (new_length * 3) / 2;
-}
-
-static obj_t intern(char *name, struct symtable *table)
-{
-    unsigned hash = hash_name(name);
-    int index = hash % table->length;
-    obj_t sym;
-
-    for (sym = table->table[index];
-	 sym != obj_False;
-	 sym = obj_ptr(struct symbol *, sym)->next) {
-	if (obj_ptr(struct symbol *, sym)->hash == hash) {
-	    obj_t sym_name = obj_ptr(struct symbol *, sym)->name;
-	    if (same_name(name, (char *)obj_ptr(struct string *, sym_name)->chars))
-		return sym;
-	}
-    }
-
-    sym = alloc(table->class, sizeof(struct symbol));
-    obj_ptr(struct symbol *, sym)->name = make_byte_string(name);
-    obj_ptr(struct symbol *, sym)->next = table->table[index];
-    obj_ptr(struct symbol *, sym)->hash = hash;
-    table->table[index] = sym;
-    
-    table->entries++;
-    if (table->entries >= table->threshold)
-	rehash_table(table);
-
-    return sym;
+    free(symtab_table);
+    symtab_table = new_table;
+    symtab_length = new_length;
+    symtab_threshold = (new_length * 3) / 2;
 }
 
 obj_t symbol(char *name)
 {
-    return intern(name, &Symbols);
+    unsigned hash = hash_name(name);
+    int index = hash % symtab_length;
+    obj_t sym;
+
+    for (sym = symtab_table[index];
+	 sym != obj_False;
+	 sym = SYMBOL(sym)->next) {
+	if (SYMBOL(sym)->hash == hash) {
+	    if (same_name(name, string_chars(SYMBOL(sym)->name)))
+		return sym;
+	}
+    }
+
+    sym = alloc(obj_SymbolClass, sizeof(struct symbol));
+    SYMBOL(sym)->name = make_byte_string(name);
+    SYMBOL(sym)->next = symtab_table[index];
+    SYMBOL(sym)->hash = hash;
+    symtab_table[index] = sym;
+    
+    symtab_entries++;
+    if (symtab_entries >= symtab_threshold)
+	rehash_table();
+
+    return sym;
 }
 
 char *sym_name(obj_t sym)
 {
-    obj_t string = obj_ptr(struct symbol *, sym)->name;
-
-    return (char *)obj_ptr(struct string *, string)->chars;
+    return string_chars(SYMBOL(sym)->name);
 }
 
 unsigned sym_hash(obj_t sym)
 {
-    return obj_ptr(struct symbol *, sym)->hash;
+    return SYMBOL(sym)->hash;
 }
 
 
@@ -189,7 +180,7 @@ static obj_t string_as_symbol(obj_t class, obj_t string)
 
 static obj_t symbol_as_string(obj_t class, obj_t symbol)
 {
-    return obj_ptr(struct symbol *, symbol)->name;
+    return SYMBOL(symbol)->name;
 }
 
 static obj_t symbol_object_hash(obj_t sym)
@@ -220,24 +211,17 @@ static int scav_sym(struct object *o)
 
 static obj_t trans_sym(obj_t sym)
 {
-    return transport(sym, sizeof(struct symbol));
-}
-
-static void scav_table(struct symtable *table)
-{
-    int i;
-    obj_t *ptr;
-
-    scavenge(&table->class);
-    ptr = table->table;
-    for (i = 0; i < table->length; i++)
-	scavenge(ptr++);
+    return transport(sym, sizeof(struct symbol), FALSE);
 }
 
 void scavenge_symbol_roots(void)
 {
-    scavenge(&obj_SymbolClass);
-    scav_table(&Symbols);
+    int i;
+    obj_t *ptr;
+
+    ptr = symtab_table;
+    for (i = 0; i < symtab_length; i++)
+	scavenge(ptr++);
 }
 
 
@@ -246,26 +230,21 @@ void scavenge_symbol_roots(void)
 void make_sym_classes(void)
 {
     obj_SymbolClass = make_builtin_class(scav_sym, trans_sym);
-}
-
-static void init_table(struct symtable *table, obj_t class)
-{
-    obj_t *ptr;
-    int i;
-
-    table->class = class;
-    table->entries = 0;
-    table->threshold = 96;
-    table->length = 64;
-    table->table = (obj_t *)malloc(sizeof(obj_t)*64);
-    ptr = table->table;
-    for (i = 0; i < 64; i++)
-	*ptr++ = obj_False;
+    add_constant_root(&obj_SymbolClass);
 }
 
 void init_symbol_tables(void)
 {
-    init_table(&Symbols, obj_SymbolClass);
+    obj_t *ptr;
+    int i;
+
+    symtab_entries = 0;
+    symtab_threshold = 96;
+    symtab_length = 64;
+    symtab_table = (obj_t *)malloc(sizeof(obj_t)*64);
+    ptr = symtab_table;
+    for (i = 0; i < 64; i++)
+	*ptr++ = obj_False;
 }
 
 void init_sym_classes(void)
