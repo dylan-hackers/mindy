@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.10 1996/03/28 18:02:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/num.dylan,v 1.11 1996/05/09 23:36:10 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -379,19 +379,13 @@ define method round/ (a :: <integer>, b :: <integer>)
   end;
 end;
 
-define method truncate/
+define inline method truncate/
     (a :: <integer>, b :: <integer>)
     => (quo :: <integer>, rem :: <integer>);
   if (zero?(b))
     error("Division by zero.");
   else
-    let (q, r) = %%primitive(fixnum-divide, a, b);
-
-    if (zero?(r) | negative?(r) == negative?(a))
-      values(q, r);
-    else
-      values(q + 1, r - b);
-    end;
+    %%primitive(fixnum-divide, a, b);
   end;
 end;
 
