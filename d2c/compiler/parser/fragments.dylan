@@ -1,5 +1,5 @@
 module: fragments
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.5 1996/03/17 00:54:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.6 1996/03/20 19:31:27 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -387,35 +387,37 @@ end method print-object;
 // handle the real work.
 // 
 define sealed method get-token (tokenizer :: <fragment-tokenizer>)
-    => token :: <token>;
+    => (token :: <token>, srcloc :: <source-location>);
   let lookahead = tokenizer.tokenizer-lookahead;
-  if (lookahead)
-    tokenizer.tokenizer-lookahead := #f;
-    lookahead;
-  else
-    let current = tokenizer.tokenizer-current;
-    tokenizer.tokenizer-previous := current;
-    if (current == tokenizer.tokenizer-end)
-      //
-      // We've hit the end of the current layer.  If we are inside some
-      // bracketed fragment, restore the state to just after that bracketed
-      // fragment and return the right bracket token.  If we are not inside
-      // a bracketed fragment, then we are at the every end, so return an
-      // EOF token.
-      let stack = tokenizer.tokenizer-stack;
-      if (stack)
-	let bracketed-frag = stack.stack-fragment;
-	tokenizer.tokenizer-current := bracketed-frag.fragment-next;
-	tokenizer.tokenizer-end := stack.stack-end;
-	tokenizer.tokenizer-stack := stack.stack-prev;
-	bracketed-frag.fragment-right-token;
-      else
-	make(<token>, kind: $eof-token);
-      end if;
-    else
-      advance-tokenizer(tokenizer, current);
-    end if;
-  end if;
+  values
+    (if (lookahead)
+       tokenizer.tokenizer-lookahead := #f;
+       lookahead;
+     else
+       let current = tokenizer.tokenizer-current;
+       tokenizer.tokenizer-previous := current;
+       if (current == tokenizer.tokenizer-end)
+	 //
+	 // We've hit the end of the current layer.  If we are inside some
+	 // bracketed fragment, restore the state to just after that bracketed
+	 // fragment and return the right bracket token.  If we are not inside
+	 // a bracketed fragment, then we are at the every end, so return an
+	 // EOF token.
+	 let stack = tokenizer.tokenizer-stack;
+	 if (stack)
+	   let bracketed-frag = stack.stack-fragment;
+	   tokenizer.tokenizer-current := bracketed-frag.fragment-next;
+	   tokenizer.tokenizer-end := stack.stack-end;
+	   tokenizer.tokenizer-stack := stack.stack-prev;
+	   bracketed-frag.fragment-right-token;
+	 else
+	   make(<token>, kind: $eof-token);
+	 end if;
+       else
+	 advance-tokenizer(tokenizer, current);
+       end if;
+     end if,
+     make(<unknown-source-location>));
 end method get-token;
 
 // unget-token -- method on imported gf.
@@ -423,7 +425,8 @@ end method get-token;
 // Push back the lookahead token.  But not if it was an EOF.
 // 
 define sealed method unget-token
-    (tokenizer :: <fragment-tokenizer>, token :: <token>)
+    (tokenizer :: <fragment-tokenizer>, token :: <token>,
+     srcloc :: <source-location>)
     => ();
   unless (token.token-kind == $eof-token)
     tokenizer.tokenizer-lookahead := token;
