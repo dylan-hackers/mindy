@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.18 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.19 1995/05/12 12:36:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -15,6 +15,20 @@ define abstract class <function-definition> (<abstract-constant-definition>)
   // finalization.
   slot function-defn-hairy? :: <boolean>,
     init-value: #f, init-keyword: hairy:;
+  //
+  // The FER transformers for this function.  Gets initialized from the
+  // variable.
+  slot function-defn-transformers :: <list>, init-value: #();
+  //
+  // True if we can drop calls to this function when the results isn't used
+  // because there are no side effects.
+  slot function-defn-flushable? :: <boolean>,
+    init-value: #f, init-keyword: flushable:;
+  //
+  // True if we can move calls to this function around with impunity because
+  // the result depends on nothing but the value of the arguments.
+  slot function-defn-movable? :: <boolean>,
+    init-value: #f, init-keyword: movable:;
 end;
 
 define method defn-type (defn :: <function-definition>) => res :: <cclass>;
@@ -123,6 +137,16 @@ define class <define-method-tlf> (<simple-define-tlf>)
   // True if the define method was declared inline, #f if not.
   slot method-tlf-inline? :: <boolean>, required-init-keyword: inline:;
   //
+  // True if we can drop calls to this function when the results isn't used
+  // because there are no side effects.
+  slot method-tlf-flushable? :: <boolean>,
+    init-value: #f, init-keyword: flushable:;
+  //
+  // True if we can move calls to this function around with impunity because
+  // the result depends on nothing but the value of the arguments.
+  slot method-tlf-movable? :: <boolean>,
+    init-value: #f, init-keyword: movable:;
+  //
   // The guts of the method being defined.
   slot method-tlf-parse :: <method-parse>, required-init-keyword: parse:;
 end;
@@ -133,9 +157,9 @@ end;
 
 define method process-top-level-form (form :: <define-generic-parse>) => ();
   let name = form.defgen-name.token-symbol;
-  let (open?, sealed?)
+  let (open?, sealed?, movable?, flushable?)
     = extract-modifiers("define generic", name, form.define-modifiers,
-			#"open", #"sealed");
+			#"open", #"sealed", #"movable", #"flushable");
   if (open? & sealed?)
     error("define generic %s can't be both open and sealed", name);
   end;
@@ -144,7 +168,9 @@ define method process-top-level-form (form :: <define-generic-parse>) => ();
 		  name: make(<basic-name>,
 			     symbol: name,
 			     module: *Current-Module*),
-		  sealed: ~open?);
+		  sealed: ~open?,
+		  movable: movable?,
+		  flushable: flushable? | movable?);
   note-variable-definition(defn);
   add!($Top-Level-Forms,
        make(<define-generic-tlf>,
@@ -155,9 +181,10 @@ end;
 
 define method process-top-level-form (form :: <define-method-parse>) => ();
   let name = form.defmethod-method.method-name.token-symbol;
-  let (open?, sealed?, inline?)
+  let (open?, sealed?, inline?, movable?, flushable?)
     = extract-modifiers("define method", name, form.define-modifiers,
-			#"open", #"sealed", #"inline");
+			#"open", #"sealed", #"inline", #"movable",
+			#"flushable");
   if (open? & sealed?)
     error("define method %s can't be both open and sealed", name);
   end;
@@ -168,7 +195,9 @@ define method process-top-level-form (form :: <define-method-parse>) => ();
 			    params.paramlist-rest & ~params.paramlist-keys,
 			    params.paramlist-keys & #t);
   let tlf = make(<define-method-tlf>, base-name: base-name, sealed: ~open?,
-		 inline: inline?, parse: parse);
+		 inline: inline?, movable: movable?,
+		 flushable: flushable? | movable?,
+		 parse: parse);
   add!($Top-Level-Forms, tlf);
 end;
 
@@ -226,6 +255,8 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
 		       signature: signature,
 		       hairy: anything-non-constant?,
 		       sealed: tlf.method-tlf-sealed?,
+		       movable: tlf.method-tlf-movable?,
+		       flushable: tlf.method-tlf-flushable?,
 		       inline-expansion: tlf.method-tlf-inline?
 			 & ~anything-non-constant?
 			 & tlf.method-tlf-parse);
@@ -233,7 +264,8 @@ end;
 
 define method make (wot :: limited(<class>, subclass-of: <method-definition>),
 		    #next next-method, #rest keys,
-		    #key base-name, signature, hairy: hairy?)
+		    #key base-name, signature, hairy: hairy?,
+		         movable: movable?, flushable: flushable?)
     => res :: <method-definition>;
   let var = find-variable(base-name);
   let generic-defn
@@ -246,6 +278,10 @@ define method make (wot :: limited(<class>, subclass-of: <method-definition>),
 			      specializers: signature.specializers),
 		   hairy: hairy? | generic-defn == #f
 		     | generic-defn.function-defn-hairy?,
+		   movable: movable?
+		     | (generic-defn & generic-defn.function-defn-movable?),
+		   flushable: flushable?
+		     | (generic-defn & generic-defn.function-defn-flushable?),
 		   method-of: generic-defn,
 		   keys);
   if (generic-defn)
@@ -382,6 +418,7 @@ end;
 define method maybe-make-discriminator
     (builder :: <fer-builder>, gf :: <generic-definition>) => ();
   if (gf.generic-defn-sealed? & ~gf.function-defn-hairy?
+	& gf.generic-defn-methods.size ~= 1
 	& every?(method (meth)
 		   ~meth.function-defn-hairy?
 		     & every?(method (method-spec, gf-spec)
@@ -475,10 +512,16 @@ define method build-discriminator-tree
 			   end));
       if (rest?)
 	let apply-leaf = dylan-defn-leaf(builder, #"apply");
+	let values-leaf = dylan-defn-leaf(builder, #"values");
+	let cluster = make-values-cluster(builder, #"args", wild-ctype());
+	build-assignment
+	  (builder, policy, source, cluster,
+	   make-unknown-call(builder, apply-leaf, #f,
+			     pair(values-leaf, arg-vars)));
 	build-assignment
 	  (builder, policy, source, results,
-	   make-unknown-call(builder, apply-leaf, next-leaf,
-			     pair(func, arg-vars)));
+	   make-operation(builder, <mv-call>, list(func, next-leaf, cluster),
+			  use-generic-entry: #t));
       else
 	build-assignment(builder, policy, source, results,
 			 make-unknown-call(builder, func, next-leaf,
