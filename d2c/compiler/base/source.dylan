@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.11 1996/03/20 19:24:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.12 1996/03/21 02:57:23 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -241,9 +241,10 @@ define class <source-file> (<identity-preserving-mixin>)
   //
   // The directory for this source file.  The make method defaults it to
   // the current directory and makes sure that it is absolute and ends in
-  // a slash.
-  constant slot directory :: <byte-string>,
-    required-init-keyword: directory:;
+  // a slash.  Unless the file-name is absolute, in which case the directory
+  // is #f.
+  constant slot directory :: false-or(<byte-string>) = #f,
+    init-keyword: directory:;
   //
   // The contents, or #f if we haven't read them in yet.
   slot %contents :: false-or(<file-contents>) = #f;
@@ -256,24 +257,31 @@ define method make
     (class == <source-file>, #next next-method,
      #key name :: <byte-string>, directory :: false-or(<byte-string>))
     => res :: <source-file>;
-  let absolute
-    = if (directory & directory.size > 0 & directory.first == '/')
-	directory;
-      else
-	let cwd = getcwd();
-	if (directory)
-	  stringify(cwd, '/', directory);
+  if (name.first == '/')
+    if (directory)
+      error("Can't supply a directory when suppling an absolute pathname.");
+    end if;
+    next-method(class, name: name);
+  else
+    let absolute
+      = if (directory & directory.size > 0 & directory.first == '/')
+	  directory;
 	else
-	  cwd;
+	  let cwd = getcwd();
+	  if (directory)
+	    stringify(cwd, '/', directory);
+	  else
+	    cwd;
+	  end if;
 	end if;
-      end if;
-  next-method(class, name: name,
-	      directory:
-		if (absolute.last == '/')
-		  absolute;
-		else
-		  stringify(absolute, '/');
-		end if);
+    next-method(class, name: name,
+		directory:
+		  if (absolute.last == '/')
+		    absolute;
+		  else
+		    stringify(absolute, '/');
+		  end if);
+  end if;
 end method make;
 
 define method print-object (sf :: <source-file>, stream :: <stream>) => ();
@@ -292,8 +300,11 @@ define method contents (source :: <source-file>)
   source.%contents
     | begin
 	let file = make(<file-stream>,
-			name: stringify(source.directory, '/',
-					source.file-name));
+			name: if (source.directory)
+				stringify(source.directory, source.file-name);
+			      else
+				source.file-name;
+			      end if);
 	block ()
 	  let result = make-buffer(file.stream-size);
 	  fill-buffer(result, file);
