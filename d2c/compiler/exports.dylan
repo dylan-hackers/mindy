@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.16 1995/02/23 17:10:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.17 1995/02/23 20:04:01 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -392,7 +392,7 @@ define module ctype
     low-bound, high-bound, element-limit, size-limit, <cclass>, cclass-name,
     closest-primary-superclass,
     <primitive-cclass>, <defined-cclass>,
-    precedence-list, subclasses, sealed?, abstract?, primary?, slot-infos,
+    precedence-list, subclasses, sealed?, abstract?, primary?,
     wild-ctype, empty-ctype, object-ctype, function-ctype,
     find-direct-classes,
 
