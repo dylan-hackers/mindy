@@ -984,7 +984,7 @@
 #   ifdef BSDI
 #	define OS_TYPE "BSDI"
 #   endif
-#   if defined(OPENBSD) || defined(NETBSD) \
+#   if defined(FREEBSD) || defined(OPENBSD) || defined(NETBSD) \
         || defined(THREE86BSD) || defined(BSDI)
 #	define HEURISTIC2
 	extern char etext;

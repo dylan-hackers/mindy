@@ -656,7 +656,6 @@ ptr_t GC_get_stack_base()
 
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/syscts.h>
 #include <sys/sysctl.h>
 
   ptr_t GC_freebsd_stack_base(void)

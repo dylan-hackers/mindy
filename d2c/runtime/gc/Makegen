@@ -1,10 +1,11 @@
+$inc = "include";
+$priv = "$inc/private";
+
 $COPTS = "-DATOMIC_UNCOLLECTABLE -DNO_SIGNALS -DALL_INTERIOR_POINTERS "
-    . "-DNO_EXECUTE_PERMISSION -DSILENT -DLARGE_CONFIG -Iinclude";
+    . "-DNO_EXECUTE_PERMISSION -DSILENT -DLARGE_CONFIG -I$srcdir/$inc";
 
-$inc = "include/";
-$priv = "include/private/";
-
-@std_deps = ($inc.'gc.h', $priv.'gc_priv.h', $priv.'gcconfig.h', $priv.'gc_hdrs.h');
+@std_deps = ("$inc/gc.h", "$priv/gc_priv.h", "$priv/gcconfig.h",
+             "$priv/gc_hdrs.h");
 
 &emit_c_file_rule('allchblk', @std_deps);
 &emit_c_file_rule('alloc', @std_deps, 'version.h');
@@ -14,7 +15,7 @@ $priv = "include/private/";
 
 &emit_c_file_rule('dyn_load', @std_deps);
 
-&emit_c_file_rule('finalize', @std_deps, $priv.'gc_mark.h');
+&emit_c_file_rule('finalize', @std_deps, "$priv/gc_mark.h");
 &emit_c_file_rule('headers', @std_deps);
 &emit_c_file_rule('linux_threads', @std_deps);
 
@@ -42,7 +43,7 @@ if ($target_name =~ /^sparc.*-solaris/) {
 
 &emit_c_file_rule('malloc', @std_deps);
 &emit_c_file_rule('mallocx', @std_deps);
-&emit_c_file_rule('mark', @std_deps, $priv.'gc_mark.h');
+&emit_c_file_rule('mark', @std_deps, "$priv/gc_mark.h");
 if ($target_name =~ /^alpha/) {
     local ($CFLAGS) = "$CFLAGS -Wo,-notail";
     &emit_c_file_rule('mark_rts', @std_deps);
@@ -51,17 +52,17 @@ if ($target_name =~ /^alpha/) {
 }
 
 &emit_c_file_rule('irix_threads', @std_deps);
-&emit_c_file_rule('solaris_pthreads', @std_deps, $priv.'solaris_threads.h');
+&emit_c_file_rule('solaris_pthreads', @std_deps, "$priv/solaris_threads.h");
 &emit_c_file_rule('solaris_threads', @std_deps, 'solaris_threads.c');
 
 &emit_c_file_rule('misc', @std_deps);
 &emit_c_file_rule('new_hblk', @std_deps);
 &emit_c_file_rule('obj_map', @std_deps);
 &emit_c_file_rule('os_dep', @std_deps);
-&emit_c_file_rule('ptr_chck', @std_deps, $priv.'gc_mark.h');
+&emit_c_file_rule('ptr_chck', @std_deps, "$priv/gc_mark.h");
 &emit_c_file_rule('reclaim', @std_deps);
 &emit_c_file_rule('stubborn', @std_deps);
-&emit_c_file_rule('typd_mlc', @std_deps, $priv.'gc_mark.h', $inc.'gc_typed.h');
+&emit_c_file_rule('typd_mlc', @std_deps, "$priv/gc_mark.h", "$inc/gc_typed.h");
 
 $lib_name = "$lib_prefix" . "gc$dot_lib";
 
