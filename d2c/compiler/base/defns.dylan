@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.4 1994/12/14 20:15:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.5 1995/03/04 21:53:59 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -23,6 +23,19 @@ end;
 
 define generic defn-type (defn :: <definition>)
     => res :: union(<false>, <ctype>);
+
+// ct-value -- exported.
+//
+// Returns the compile-time value for some definition, of #f if that
+// definition doesn't have a compile time value.
+//
+define generic ct-value (defn :: <definition>)
+    => res :: union(<ct-value>, <false>);
+
+define method ct-value (defn :: <definition>)
+    => res :: <false>;
+  #f;
+end;
 
 
 define abstract class <implicit-definition> (<definition>)
