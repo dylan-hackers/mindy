@@ -11,7 +11,7 @@
  * provided the above notices are retained, and a notice that the code was
  * modified is included with the above copyright notice.
  */
-/* Boehm, May 19, 1994 1:56 pm PDT */
+/* Boehm, August 9, 1995 6:09 pm PDT */
 # include "gc_priv.h"
 
 /*
@@ -46,7 +46,33 @@ word * GC_incomplete_normal_bl;
 word * GC_old_stack_bl;
 word * GC_incomplete_stack_bl;
 
+word GC_total_stack_black_listed;
+
+word GC_black_list_spacing = MINHINCR*HBLKSIZE;  /* Initial rough guess */
+
 void GC_clear_bl();
+
+void GC_default_print_heap_obj_proc(p)
+ptr_t p;
+{
+    ptr_t base = GC_base(p);
+
+    GC_err_printf2("start: 0x%lx, appr. length: %ld", base, GC_size(base));
+}
+
+void (*GC_print_heap_obj)(/* char * s, ptr_t p */) =
+				GC_default_print_heap_obj_proc;
+
+void GC_print_source_ptr(ptr_t p)
+{
+    ptr_t base = GC_base(p);
+    if (0 == base) {
+	GC_err_printf0("in root set");
+    } else {
+	GC_err_printf0("in object at ");
+	(*GC_print_heap_obj)(base);
+    }
+}
 
 void GC_bl_init()
 {
@@ -85,6 +111,8 @@ word *new, *old;
     BCOPY(old, new, sizeof(page_hash_table));
 }
 
+static word total_stack_black_listed();
+
 /* Signal the completion of a collection.  Turn the incomplete black	*/
 /* lists into new black lists, etc.					*/			 
 void GC_promote_black_lists()
@@ -100,6 +128,18 @@ void GC_promote_black_lists()
     GC_clear_bl(very_old_stack_bl);
     GC_incomplete_normal_bl = very_old_normal_bl;
     GC_incomplete_stack_bl = very_old_stack_bl;
+    GC_total_stack_black_listed = total_stack_black_listed();
+#   ifdef PRINTSTATS
+  	GC_printf1("%ld bytes in heap blacklisted for interior pointers\n",
+  		   (unsigned long)GC_total_stack_black_listed);
+#   endif
+    if (GC_total_stack_black_listed != 0) {
+        GC_black_list_spacing =
+		HBLKSIZE*(GC_heapsize/GC_total_stack_black_listed);
+    }
+    if (GC_black_list_spacing < 3 * HBLKSIZE) {
+    	GC_black_list_spacing = 3 * HBLKSIZE;
+    }
 }
 
 void GC_unpromote_black_lists()
@@ -114,7 +154,12 @@ void GC_unpromote_black_lists()
 /* P is not a valid pointer reference, but it falls inside	*/
 /* the plausible heap bounds.					*/
 /* Add it to the normal incomplete black list if appropriate.	*/
-void GC_add_to_black_list_normal(p)
+#ifdef PRINT_BLACK_LIST
+  void GC_add_to_black_list_normal(p, source)
+  ptr_t source;
+#else
+  void GC_add_to_black_list_normal(p)
+#endif
 word p;
 {
     if (!(GC_modws_valid_offsets[p & (sizeof(word)-1)])) return;
@@ -122,10 +167,13 @@ word p;
         register int index = PHT_HASH(p);
         
         if (HDR(p) == 0 || get_pht_entry_from_index(GC_old_normal_bl, index)) {
-#   	    ifdef PRINTBLACKLIST
+#   	    ifdef PRINT_BLACK_LIST
 		if (!get_pht_entry_from_index(GC_incomplete_normal_bl, index)) {
-	    	  GC_printf1("Black listing (normal) 0x%lx\n",
-	    	  	     (unsigned long) p);
+	    	  GC_err_printf2(
+			"Black listing (normal) 0x%lx referenced from 0x%lx ",
+	    	        (unsigned long) p, (unsigned long) source);
+		  GC_print_source_ptr(source);
+		  GC_err_puts("\n");
 	    	}
 #           endif
             set_pht_entry_from_index(GC_incomplete_normal_bl, index);
@@ -136,16 +184,24 @@ word p;
 # endif
 
 /* And the same for false pointers from the stack. */
-void GC_add_to_black_list_stack(p)
+#ifdef PRINT_BLACK_LIST
+  void GC_add_to_black_list_stack(p, source)
+  ptr_t source;
+#else
+  void GC_add_to_black_list_stack(p)
+#endif
 word p;
 {
     register int index = PHT_HASH(p);
         
     if (HDR(p) == 0 || get_pht_entry_from_index(GC_old_stack_bl, index)) {
-#   	ifdef PRINTBLACKLIST
+#   	ifdef PRINT_BLACK_LIST
 	    if (!get_pht_entry_from_index(GC_incomplete_stack_bl, index)) {
-	    	  GC_printf1("Black listing (stack) 0x%lx\n",
-	    	             (unsigned long)p);
+	    	  GC_err_printf2(
+			"Black listing (stack) 0x%lx referenced from 0x%lx ",
+	    	        (unsigned long)p, (unsigned long)source);
+		  GC_print_source_ptr(source);
+		  GC_err_puts("\n");
 	    }
 #       endif
 	set_pht_entry_from_index(GC_incomplete_stack_bl, index);
@@ -191,5 +247,40 @@ word len;
         index = PHT_HASH((word)(h+i));
     }
     return(0);
+}
+
+
+/* Return the number of blacklisted blocks in a given range.	*/
+/* Used only for statistical purposes.				*/
+/* Looks only at the GC_incomplete_stack_bl.			*/
+word GC_number_stack_black_listed(start, endp1)
+struct hblk *start, *endp1;
+{
+    register struct hblk * h;
+    word result = 0;
+    
+    for (h = start; h < endp1; h++) {
+        register int index = PHT_HASH((word)h);
+        
+        if (get_pht_entry_from_index(GC_old_stack_bl, index)) result++;
+    }
+    return(result);
+}
+
+
+/* Return the total number of (stack) black-listed bytes. */
+static word total_stack_black_listed()
+{
+    register unsigned i;
+    word total = 0;
+    
+    for (i = 0; i < GC_n_heap_sects; i++) {
+    	struct hblk * start = (struct hblk *) GC_heap_sects[i].hs_start;
+    	word len = (word) GC_heap_sects[i].hs_bytes;
+    	struct hblk * endp1 = start + len/HBLKSIZE;
+    	
+    	total += GC_number_stack_black_listed(start, endp1);
+    }
+    return(total * HBLKSIZE);
 }
 

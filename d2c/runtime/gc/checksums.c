@@ -25,7 +25,7 @@
 # define OFFSET 0x10000
 
 typedef struct {
-	bool new_valid;
+	GC_bool new_valid;
 	word old_sum;
 	word new_sum;
 	struct hblk * block;	/* Block to which this refers + OFFSET  */
@@ -50,7 +50,7 @@ struct hblk *h;
 # ifdef STUBBORN_ALLOC
 /* Check whether a stubborn object from the given block appears on	*/
 /* the appropriate free list.						*/
-bool GC_on_free_list(h)
+GC_bool GC_on_free_list(h)
 struct hblk *h;
 {
     register hdr * hhdr = HDR(h);
@@ -142,9 +142,9 @@ void GC_check_blocks()
     }
     GC_printf2("GC_bytes_in_used_blocks = %ld, bytes_in_free_blocks = %ld ",
     		GC_bytes_in_used_blocks, bytes_in_free_blocks);
-    GC_printf("GC_heapsize = %ld\n", GC_heapsize);
+    GC_printf1("GC_heapsize = %ld\n", GC_heapsize);
     if (GC_bytes_in_used_blocks + bytes_in_free_blocks != GC_heapsize) {
-    	GC_printf("LOST SOME BLOCKS!!\n");
+    	GC_printf0("LOST SOME BLOCKS!!\n");
     }
 }
 

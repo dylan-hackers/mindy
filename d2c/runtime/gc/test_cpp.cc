@@ -10,7 +10,7 @@ Permission to modify the code and to distribute modified code is
 granted, provided the above notices are retained, and a notice that
 the code was modified is included with the above copyright notice.
 ****************************************************************************
-Last modified on Wed Jan  4 16:35:11 PST 1995 by ellis
+Last modified on Mon Jul 10 21:06:03 PDT 1995 by ellis
      modified on December 20, 1994 7:27 pm PST by boehm
 
 usage: test_cpp number-of-iterations
@@ -25,16 +25,33 @@ few minutes to complete.
 ***************************************************************************/
 
 #include "gc_cpp.h"
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#ifndef __GNUC__
+#   include "gc_alloc.h"
+#endif
+extern "C" {
+#include "gc_priv.h"
+}
+#ifdef MSWIN32
+#   include <windows.h>
+#endif
+
+
+#define my_assert( e ) \
+    if (! (e)) { \
+        GC_printf1( "Assertion failure in " __FILE__ ", line %d: " #e "\n", \
+                    __LINE__ ); \
+        exit( 1 ); }
+
 
 class A {public:
     /* An uncollectable class. */
 
     A( int iArg ): i( iArg ) {}
     void Test( int iArg ) {
-        assert( i == iArg );} 
+        my_assert( i == iArg );} 
     int i;};
 
 
@@ -43,7 +60,7 @@ class B: public gc, public A {public:
 
     B( int j ): A( j ) {}
     ~B() {
-        assert( deleting );}
+        my_assert( deleting );}
     static void Deleting( int on ) {
         deleting = on;}
     static int deleting;};
@@ -64,13 +81,13 @@ class C: public gc_cleanup, public A {public:
     ~C() {
         this->A::Test( level );
         nFreed++;
-        assert( level == 0 ? 
+        my_assert( level == 0 ? 
                    left == 0 && right == 0 :
                    level == left->level + 1 && level == right->level + 1 );
         left = right = 0;
         level = -123456;}
     static void Test() {
-        assert( nFreed <= nAllocated && nFreed >= .8 * nAllocated );}
+        my_assert( nFreed <= nAllocated && nFreed >= .8 * nAllocated );}
 
     static int nFreed;
     static int nAllocated;
@@ -91,9 +108,9 @@ class D: public gc {public:
     static void CleanUp( void* obj, void* data ) {
         D* self = (D*) obj;
         nFreed++;
-        assert( self->i == (int) data );}
+        my_assert( self->i == (int) (long) data );}
     static void Test() {
-        assert( nFreed >= .8 * nAllocated );}
+        my_assert( nFreed >= .8 * nAllocated );}
        
     int i;
     static int nFreed;
@@ -103,6 +120,41 @@ int D::nFreed = 0;
 int D::nAllocated = 0;
 
 
+class E: public gc_cleanup {public:
+    /* A collectable class with clean-up for use by F. */
+
+    E() {
+        nAllocated++;}
+    ~E() {
+        nFreed++;}
+
+    static int nFreed;
+    static int nAllocated;};
+    
+int E::nFreed = 0;
+int E::nAllocated = 0;
+   
+
+class F: public E {public:
+    /* A collectable class with clean-up, a base with clean-up, and a
+    member with clean-up. */
+
+    F() {
+        nAllocated++;}
+    ~F() {
+        nFreed++;}
+    static void Test() {
+        my_assert( nFreed >= .8 * nAllocated );
+        my_assert( 2 * nFreed == E::nFreed );}
+       
+    E e;
+    static int nFreed;
+    static int nAllocated;};
+    
+int F::nFreed = 0;
+int F::nAllocated = 0;
+   
+
 long Disguise( void* p ) {
     return ~ (long) p;}
 
@@ -110,15 +162,43 @@ void* Undisguise( long i ) {
     return (void*) ~ i;}
 
 
-int main( int argc, char* argv[] ) {
-    int i, iters, n;
+#ifdef MSWIN32
+int APIENTRY WinMain(
+    HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int cmdShow ) 
+{
+    int argc;
+    char* argv[ 3 ];
 
+    for (argc = 1; argc < sizeof( argv ) / sizeof( argv[ 0 ] ); argc++) {
+        argv[ argc ] = strtok( argc == 1 ? cmd : 0, " \t" );
+        if (0 == argv[ argc ]) break;}
+
+#else
+# ifdef MACOS
+    int main() {
+# else
+    int main( int argc, char* argv[] ) {
+# endif
+#endif
+
+#  if defined(MACOS)                        // MacOS
+    char* argv_[] = {"test_cpp", "10"};     //   doesn't
+    argv = argv_;                           //     have a
+    argc = sizeof(argv_)/sizeof(argv_[0]);  //       commandline
+#  endif 
+    int i, iters, n;
+#   if !defined(__GNUC__) && !defined(MACOS)
+      int *x = (int *)alloc::allocate(sizeof(int));
+
+      *x = 29;
+      x -= 3;
+#   endif
     if (argc != 2 || (0 >= (n = atoi( argv[ 1 ] )))) {
-        fprintf( stderr, "usage: test_cpp number-of-iterations\n" );
+        GC_printf0( "usage: test_cpp number-of-iterations\n" );
         exit( 1 );}
         
     for (iters = 1; iters <= n; iters++) {
-        printf( "Starting iteration %d\n", iters );
+        GC_printf1( "Starting iteration %d\n", iters );
 
             /* Allocate some uncollectable As and disguise their pointers.
             Later we'll check to see if the objects are still there.  We're
@@ -129,12 +209,13 @@ int main( int argc, char* argv[] ) {
             as[ i ] = Disguise( new (NoGC) A( i ) );
             bs[ i ] = Disguise( new (NoGC) B( i ) );}
 
-            /* Allocate a fair number of finalizable Cs and Ds.  Later we'll
-            check to make sure they've gone away. */
+            /* Allocate a fair number of finalizable Cs, Ds, and Fs.
+            Later we'll check to make sure they've gone away. */
         for (i = 0; i < 1000; i++) {
             C* c = new C( 2 );
             C c1( 2 );           /* stack allocation should work too */
             D* d = ::new (GC, D::CleanUp, (void*) i) D( i );
+            F* f = new F;
             if (0 == i % 10) delete c;}
 
             /* Allocate a very large number of collectable As and Bs and
@@ -147,7 +228,11 @@ int main( int argc, char* argv[] ) {
             if (0 == i % 10) {
                 B::Deleting( 1 );
                 delete b;
-                B::Deleting( 0 );}}
+                B::Deleting( 0 );}
+#	    ifdef FINALIZE_ON_DEMAND
+	      GC_invoke_finalizers();
+#	    endif
+	    }
 
             /* Make sure the uncollectable As and Bs are still there. */
         for (i = 0; i < 1000; i++) {
@@ -158,13 +243,23 @@ int main( int argc, char* argv[] ) {
             b->Test( i );
             B::Deleting( 1 );
             delete b;
-            B::Deleting( 0 );}
+            B::Deleting( 0 );
+#	    ifdef FINALIZE_ON_DEMAND
+	   	 GC_invoke_finalizers();
+#	    endif
 
-            /* Make sure most of the finalizable Cs and Ds have gone away. */
+	    }
+
+            /* Make sure most of the finalizable Cs, Ds, and Fs have
+            gone away. */
         C::Test();
-        D::Test();}
+        D::Test();
+        F::Test();}
 
-    printf( "The test appears to have succeeded.\n" );
+#   if !defined(__GNUC__) && !defined(MACOS)
+      my_assert (29 == x[3]);
+#   endif
+    GC_printf0( "The test appears to have succeeded.\n" );
     return( 0 );}
     
 

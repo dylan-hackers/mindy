@@ -17,7 +17,7 @@
  * implementation.  They serve also serve as example client code for
  * cord_basics.
  */
-/* Boehm, October 3, 1994 5:10 pm PDT */
+/* Boehm, December 8, 1995 1:53 pm PST */
 # include <stdio.h>
 # include <string.h>
 # include <stdlib.h>
@@ -223,15 +223,24 @@ int CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
 
 char * CORD_to_char_star(CORD x)
 {
-    register size_t len;
-    char * result;
+    register size_t len = CORD_len(x);
+    char * result = GC_MALLOC_ATOMIC(len + 1);
     
-    if (x == 0) return("");
-    len = CORD_len(x);
-    result = (char *)GC_MALLOC_ATOMIC(len + 1);
     if (result == 0) OUT_OF_MEMORY;
     CORD_fill_buf(x, 0, len, result);
     result[len] = '\0';
+    return(result);
+}
+
+CORD CORD_from_char_star(const char *s)
+{
+    char * result;
+    size_t len = strlen(s);
+
+    if (0 == len) return(CORD_EMPTY);
+    result = GC_MALLOC_ATOMIC(len + 1);
+    if (result == 0) OUT_OF_MEMORY;
+    memcpy(result, s, len+1);
     return(result);
 }
 
@@ -381,7 +390,7 @@ size_t CORD_str(CORD x, size_t start, CORD s)
         x_buf |= CORD_pos_fetch(xpos);
         CORD_next(xpos);
     }
-    for (match_pos = start; match_pos < xlen - slen; match_pos++) {
+    for (match_pos = start; ; match_pos++) {
     	if ((x_buf & mask) == s_buf) {
     	    if (slen == start_len ||
     	     	CORD_ncmp(x, match_pos + start_len,
@@ -389,11 +398,13 @@ size_t CORD_str(CORD x, size_t start, CORD s)
     	        return(match_pos);
     	    }
     	}
+	if ( match_pos == xlen - slen ) {
+	    return(CORD_NOT_FOUND);
+	}
     	x_buf <<= 8;
         x_buf |= CORD_pos_fetch(xpos);
         CORD_next(xpos);
     }
-    return(CORD_NOT_FOUND);
 }
 
 void CORD_ec_flush_buf(CORD_ec x)

@@ -23,6 +23,15 @@
 /*VARARGS*/
 void GC_noop() {}
 
+/* Single argument version, robust against whole program analysis. */
+void GC_noop1(x)
+word x;
+{
+    static VOLATILE word sink;
+
+    sink = x;
+}
+
 mark_proc GC_mark_procs[MAX_MARK_PROCS] = {0};
 word GC_n_mark_procs = 0;
 
@@ -34,8 +43,8 @@ struct obj_kind GC_obj_kinds[MAXOBJKINDS] = {
 /* PTRFREE */ { &GC_aobjfreelist[0], 0 /* filled in dynamically */,
 		0 | DS_LENGTH, FALSE, FALSE },
 /* NORMAL  */ { &GC_objfreelist[0], 0,
-#		ifdef ADD_BYTE_AT_END
-		(word)(WORDS_TO_BYTES(-1)) | DS_LENGTH,
+#		if defined(ADD_BYTE_AT_END) && ALIGNMENT > DS_TAGS
+		(word)(-ALIGNMENT) | DS_LENGTH,
 #		else
 		0 | DS_LENGTH,
 #		endif
@@ -43,22 +52,37 @@ struct obj_kind GC_obj_kinds[MAXOBJKINDS] = {
 /* UNCOLLECTABLE */
 	      { &GC_uobjfreelist[0], 0,
 		0 | DS_LENGTH, TRUE /* add length to descr */, TRUE },
+# ifdef ATOMIC_UNCOLLECTABLE
+   /* AUNCOLLECTABLE */
+	      { &GC_auobjfreelist[0], 0,
+		0 | DS_LENGTH, FALSE /* add length to descr */, FALSE },
+# endif
 # ifdef STUBBORN_ALLOC
 /*STUBBORN*/ { &GC_sobjfreelist[0], 0,
 		0 | DS_LENGTH, TRUE /* add length to descr */, TRUE },
 # endif
 };
 
-# ifdef STUBBORN_ALLOC
-  int GC_n_kinds = 4;
+# ifdef ATOMIC_UNCOLLECTABLE
+#   ifdef STUBBORN_ALLOC
+      int GC_n_kinds = 5;
+#   else
+      int GC_n_kinds = 4;
+#   endif
 # else
-  int GC_n_kinds = 3;
+#   ifdef STUBBORN_ALLOC
+      int GC_n_kinds = 4;
+#   else
+      int GC_n_kinds = 3;
+#   endif
 # endif
 
 
-# define INITIAL_MARK_STACK_SIZE (1*HBLKSIZE)
+# ifndef INITIAL_MARK_STACK_SIZE
+#   define INITIAL_MARK_STACK_SIZE (1*HBLKSIZE)
 		/* INITIAL_MARK_STACK_SIZE * sizeof(mse) should be a 	*/
 		/* multiple of HBLKSIZE.				*/
+# endif
 
 /*
  * Limits of stack for GC_mark routine.
@@ -79,12 +103,12 @@ static struct hblk * scan_ptr;
 
 mark_state_t GC_mark_state = MS_NONE;
 
-bool GC_mark_stack_too_small = FALSE;
+GC_bool GC_mark_stack_too_small = FALSE;
 
-bool GC_objects_are_marked = FALSE;	/* Are there collectable marked	*/
+GC_bool GC_objects_are_marked = FALSE;	/* Are there collectable marked	*/
 					/* objects in the heap?		*/
 
-bool GC_collection_in_progress()
+GC_bool GC_collection_in_progress()
 {
     return(GC_mark_state != MS_NONE);
 }
@@ -94,6 +118,17 @@ void GC_clear_hdr_marks(hhdr)
 register hdr * hhdr;
 {
     BZERO(hhdr -> hb_marks, MARK_BITS_SZ*sizeof(word));
+}
+
+/* Set all mark bits in the header.  Used for uncollectable blocks. */
+void GC_set_hdr_marks(hhdr)
+register hdr * hhdr;
+{
+    register int i;
+
+    for (i = 0; i < MARK_BITS_SZ; ++i) {
+    	hhdr -> hb_marks[i] = ONES;
+    }
 }
 
 /*
@@ -106,7 +141,7 @@ word dummy;
 {
     register hdr * hhdr = HDR(h);
     
-    if (hhdr -> hb_obj_kind == UNCOLLECTABLE) return;
+    if (IS_UNCOLLECTABLE(hhdr -> hb_obj_kind)) return;
         /* Mark bit for these is cleared only once the object is 	*/
         /* explicitly deallocated.  This either frees the block, or	*/
         /* the bit is cleared once the object is on the free list.	*/
@@ -134,7 +169,7 @@ ptr_t p;
     clear_mark_bit_from_hdr(hhdr, word_no);
 }
 
-bool GC_is_marked(p)
+GC_bool GC_is_marked(p)
 ptr_t p;
 {
     register struct hblk *h = HBLKPTR(p);
@@ -148,7 +183,7 @@ ptr_t p;
 /*
  * Clear mark bits in all allocated heap blocks.  This invalidates
  * the marker invariant, and sets GC_mark_state to reflect this.
- * (This implicitly starts marking to reestablish the
+ * (This implicitly starts marking to reestablish the invariant.)
  */
 void GC_clear_marks()
 {
@@ -164,36 +199,10 @@ void GC_clear_marks()
 
 }
 
-/* Initiate full marking.	*/
-void GC_initiate_full()
-{
-#   ifdef PRINTSTATS
-	GC_printf2("***>Full mark for collection %lu after %ld allocd bytes\n",
-		  (unsigned long) GC_gc_no+1,
-	   	  (long)WORDS_TO_BYTES(GC_words_allocd));
-#   endif
-    GC_promote_black_lists();
-    GC_reclaim_or_delete_all();
-    GC_clear_marks();
-    GC_read_dirty();
-#   ifdef STUBBORN_ALLOC
-    	GC_read_changed();
-#   endif
-#   ifdef CHECKSUMS
-	{
-	    extern void GC_check_dirty();
-	    
-	    GC_check_dirty();
-	}
-#   endif
-#   ifdef GATHERSTATS
-	GC_n_rescuing_pages = 0;
-#   endif
-}
-
-/* Initiate partial marking.	*/
+/* Initiate a garbage collection.  Initiates a full collection if the	*/
+/* mark	state is invalid.						*/
 /*ARGSUSED*/
-void GC_initiate_partial()
+void GC_initiate_gc()
 {
     if (GC_dirty_maintained) GC_read_dirty();
 #   ifdef STUBBORN_ALLOC
@@ -224,7 +233,7 @@ static void alloc_mark_stack();
 /* Perform a small amount of marking.			*/
 /* We try to touch roughly a page of memory.		*/
 /* Return TRUE if we just finished a mark phase.	*/
-bool GC_mark_some()
+GC_bool GC_mark_some()
 {
     switch(GC_mark_state) {
     	case MS_NONE:
@@ -311,7 +320,7 @@ bool GC_mark_some()
 }
 
 
-bool GC_mark_stack_empty()
+GC_bool GC_mark_stack_empty()
 {
     return(GC_mark_stack_top < GC_mark_stack);
 }	
@@ -330,7 +339,13 @@ bool GC_mark_stack_empty()
 /* Returns NIL without black listing if current points to a block	*/
 /* with IGNORE_OFF_PAGE set.						*/
 /*ARGSUSED*/
-word GC_find_start(current, hhdr)
+# ifdef PRINT_BLACK_LIST
+  word GC_find_start(current, hhdr, source)
+  word source;
+# else
+  word GC_find_start(current, hhdr)
+# define source 0
+# endif
 register word current;
 register hdr * hhdr;
 {
@@ -348,18 +363,19 @@ register hdr * hhdr;
 	    if ((word *)orig - (word *)current
 	         >= (ptrdiff_t)(hhdr->hb_sz)) {
 	        /* Pointer past the end of the block */
-	        GC_ADD_TO_BLACK_LIST_NORMAL(orig);
+	        GC_ADD_TO_BLACK_LIST_NORMAL(orig, source);
 	        return(0);
 	    }
 	    return(current);
 	} else {
-	    GC_ADD_TO_BLACK_LIST_NORMAL(current);
+	    GC_ADD_TO_BLACK_LIST_NORMAL(current, source);
 	    return(0);
         }
 #   else
-        GC_ADD_TO_BLACK_LIST_NORMAL(current);
+        GC_ADD_TO_BLACK_LIST_NORMAL(current, source);
         return(0);
 #   endif
+#   undef source
 }
 
 void GC_invalidate_mark_state()
@@ -411,8 +427,8 @@ void GC_mark_from_mark_stack()
   	>= 0) {
 # endif
     current_p = GC_mark_stack_top_reg -> mse_start;
+  retry:
     descr = GC_mark_stack_top_reg -> mse_descr;
-  retry:  
     if (descr & ((~(WORDS_TO_BYTES(SPLIT_RANGE_WORDS) - 1)) | DS_TAGS)) {
       word tag = descr & DS_TAGS;
       
@@ -435,15 +451,14 @@ void GC_mark_from_mark_stack()
           credit -= WORDS_TO_BYTES(WORDSZ/2); /* guess */
           while (descr != 0) {
             if ((signed_word)descr < 0) {
-              current = *current_p++;
-              descr <<= 1;
-              if ((ptr_t)current < least_ha) continue;
-              if ((ptr_t)current >= greatest_ha) continue;
-              PUSH_CONTENTS(current, GC_mark_stack_top_reg, mark_stack_limit);
-            } else {
-              descr <<= 1;
-              current_p++;
+              current = *current_p;
+	      if ((ptr_t)current >= least_ha && (ptr_t)current < greatest_ha) {
+                PUSH_CONTENTS(current, GC_mark_stack_top_reg, mark_stack_limit,
+			      current_p, exit1);
+	      }
             }
+	    descr <<= 1;
+	    ++ current_p;
           }
           continue;
         case DS_PROC:
@@ -455,7 +470,8 @@ void GC_mark_from_mark_stack()
               	    mark_stack_limit, ENV(descr));
           continue;
         case DS_PER_OBJECT:
-          descr = *(word *)((ptr_t)current_p + descr - tag);
+          GC_mark_stack_top_reg -> mse_descr =
+			*(word *)((ptr_t)current_p + descr - tag);
           goto retry;
       }
     } else {
@@ -467,10 +483,11 @@ void GC_mark_from_mark_stack()
     limit -= 1;
     while (current_p <= limit) {
       current = *current_p;
+      if ((ptr_t)current >= least_ha && (ptr_t)current <  greatest_ha) {
+        PUSH_CONTENTS(current, GC_mark_stack_top_reg,
+		      mark_stack_limit, current_p, exit2);
+      }
       current_p = (word *)((char *)current_p + ALIGNMENT);
-      if ((ptr_t)current < least_ha) continue;
-      if ((ptr_t)current >= greatest_ha) continue;
-      PUSH_CONTENTS(current, GC_mark_stack_top_reg, mark_stack_limit);
     }
   }
   GC_mark_stack_top = GC_mark_stack_top_reg;
@@ -486,17 +503,14 @@ word n;
     GC_mark_stack_too_small = FALSE;
     if (GC_mark_stack_size != 0) {
         if (new_stack != 0) {
-          word displ = HBLKDISPL(GC_mark_stack);
+          word displ = (word)GC_mark_stack & (GC_page_size - 1);
           word size = GC_mark_stack_size * sizeof(struct ms_entry);
           
           /* Recycle old space */
-            if (displ == 0) {
-              GC_add_to_heap((struct hblk *)GC_mark_stack, size);
-	    } else {
+	      if (0 != displ) displ = GC_page_size - displ;
+	      size = (size - displ) & ~(GC_page_size - 1);
 	      GC_add_to_heap((struct hblk *)
-	      			((word)GC_mark_stack - displ + HBLKSIZE),
-	      		     size - HBLKSIZE);
-	    }
+	      			((word)GC_mark_stack + displ), size);
           GC_mark_stack = new_stack;
           GC_mark_stack_size = n;
 #	  ifdef PRINTSTATS
@@ -612,6 +626,7 @@ void (*push_fn)(/* ptr_t bottom, ptr_t top */);
 void GC_push_conditional(bottom, top, all)
 ptr_t bottom;
 ptr_t top;
+int all;
 {
     if (all) {
       if (GC_dirty_maintained) {
@@ -647,9 +662,15 @@ word p;
 # endif
 
 /* As above, but argument passed preliminary test. */
-void GC_push_one_checked(p, interior_ptrs)
+# ifdef PRINT_BLACK_LIST
+    void GC_push_one_checked(p, interior_ptrs, source)
+    ptr_t source;
+# else
+    void GC_push_one_checked(p, interior_ptrs)
+#   define source 0
+# endif
 register word p;
-register bool interior_ptrs;
+register GC_bool interior_ptrs;
 {
     register word r;
     register hdr * hhdr; 
@@ -687,9 +708,14 @@ register bool interior_ptrs;
     /* displ is the word index within the block.		 */
     if (hhdr == 0) {
     	if (interior_ptrs) {
-	    GC_add_to_black_list_stack(p);
+#	    ifdef PRINT_BLACK_LIST
+	      GC_add_to_black_list_stack(p, source);
+#	    else
+	      GC_add_to_black_list_stack(p);
+#	    endif
 	} else {
-	    GC_ADD_TO_BLACK_LIST_NORMAL(p);
+	    GC_ADD_TO_BLACK_LIST_NORMAL(p, source);
+#	    undef source  /* In case we had to define it. */
 	}
     } else {
 	if (!mark_bit_from_hdr(hhdr, displ)) {
@@ -725,7 +751,7 @@ void GC_add_trace_entry(char *kind, word arg1, word arg2)
     if (GC_trace_buf_ptr >= TRACE_ENTRIES) GC_trace_buf_ptr = 0;
 }
 
-void GC_print_trace(word gc_no, bool lock)
+void GC_print_trace(word gc_no, GC_bool lock)
 {
     int i;
     struct trace_entry *p;
@@ -926,7 +952,12 @@ register hdr * hhdr;
     register mse * mark_stack_limit = &(GC_mark_stack[GC_mark_stack_size]);
     
     /* Some quick shortcuts: */
-        if (hhdr -> hb_obj_kind == PTRFREE) return;
+	{ 
+	    struct obj_kind *ok = &(GC_obj_kinds[hhdr -> hb_obj_kind]);
+	    if ((0 | DS_LENGTH) == ok -> ok_descriptor
+		&& FALSE == ok -> ok_relocate_descr)
+		return;
+	}
         if (GC_block_empty(hhdr)/* nothing marked */) return;
 #   ifdef GATHERSTATS
         GC_n_rescuing_pages++;
@@ -976,7 +1007,7 @@ register hdr * hhdr;
 
 #ifndef SMALL_CONFIG
 /* Test whether any page in the given block is dirty	*/
-bool GC_block_was_dirty(h, hhdr)
+GC_bool GC_block_was_dirty(h, hhdr)
 struct hblk *h;
 register hdr * hhdr;
 {

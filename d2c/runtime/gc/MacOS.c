@@ -8,10 +8,12 @@
 	
 	11/22/94  pcb  StripAddress the temporary memory handle for 24-bit mode.
 	11/30/94  pcb  Tracking all memory usage so we can deallocate it all at once.
+	02/10/96  pcb  Added routine to perform a final collection when
+unloading shared library.
 	
 	by Patrick C. Beard.
  */
-/* Boehm, July 28, 1994 10:35 am PDT */
+/* Boehm, February 15, 1996 2:55 pm PST */
 
 #include <Resources.h>
 #include <Memory.h>
@@ -19,6 +21,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "gc.h"
+#include "gc_priv.h"
 
 // use 'CODE' resource 0 to get exact location of the beginning of global space.
 
@@ -51,11 +56,12 @@ struct TemporaryMemoryBlock {
 	char data[];
 };
 
-TemporaryMemoryHandle theTemporaryMemory = NULL;
+static TemporaryMemoryHandle theTemporaryMemory = NULL;
+static Boolean firstTime = true;
 
-static void GC_MacFreeTemporaryMemory(void);
+void GC_MacFreeTemporaryMemory(void);
 
-Ptr GC_MacTemporaryNewPtr(Size size, Boolean clearMemory)
+Ptr GC_MacTemporaryNewPtr(size_t size, Boolean clearMemory)
 {
 	static Boolean firstTime = true;
 	OSErr result;
@@ -74,17 +80,44 @@ Ptr GC_MacTemporaryNewPtr(Size size, Boolean clearMemory)
 		theTemporaryMemory = tempMemBlock;
 	}
 	
+#     if !defined(SHARED_LIBRARY_BUILD)
 	// install an exit routine to clean up the memory used at the end.
 	if (firstTime) {
 		atexit(&GC_MacFreeTemporaryMemory);
 		firstTime = false;
 	}
+#     endif
 	
 	return tempPtr;
 }
 
-static void GC_MacFreeTemporaryMemory()
+extern word GC_fo_entries; 
+
+static void perform_final_collection()
 {
+  unsigned i;
+  word last_fo_entries = 0;
+  
+  /* adjust the stack bottom, because CFM calls us from another stack
+     location. */
+     GC_stackbottom = (ptr_t)&i;
+
+  /* try to collect and finalize everything in sight */
+    for (i = 0; i < 2 || GC_fo_entries < last_fo_entries; i++) {
+        last_fo_entries = GC_fo_entries;
+        GC_gcollect();
+    }
+}
+
+
+void GC_MacFreeTemporaryMemory()
+{
+# if defined(SHARED_LIBRARY_BUILD)
+    /* if possible, collect all memory, and invoke all finalizers. */
+      perform_final_collection();
+# endif
+
+    if (theTemporaryMemory != NULL) {
 	long totalMemoryUsed = 0;
 	TemporaryMemoryHandle tempMemBlock = theTemporaryMemory;
 	while (tempMemBlock != NULL) {
@@ -94,5 +127,11 @@ static void GC_MacFreeTemporaryMemory()
 		tempMemBlock = nextBlock;
 	}
 	theTemporaryMemory = NULL;
-	fprintf(stdout, "[total memory used:  %ld bytes.]\n", totalMemoryUsed);
+
+#       if !defined(SILENT) && !defined(SHARED_LIBRARY_BUILD)
+          fprintf(stdout, "[total memory used:  %ld bytes.]\n",
+                  totalMemoryUsed);
+          fprintf(stdout, "[total collections:  %ld.]\n", GC_gc_no);
+#       endif
+    }
 }

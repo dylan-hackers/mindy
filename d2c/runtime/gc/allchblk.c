@@ -1,6 +1,7 @@
 /* 
  * Copyright 1988, 1989 Hans-J. Boehm, Alan J. Demers
  * Copyright (c) 1991-1994 by Xerox Corporation.  All rights reserved.
+ * Copyright (c) 1998 by Silicon Graphics.  All rights reserved.
  *
  * THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY EXPRESSED
  * OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.
@@ -11,7 +12,7 @@
  * provided the above notices are retained, and a notice that the code was
  * modified is included with the above copyright notice.
  */
-/* Boehm, June 13, 1995 3:34 pm PDT */
+/* Boehm, August 9, 1995 5:08 pm PDT */
 
 #define DEBUG
 #undef DEBUG
@@ -72,7 +73,7 @@ void GC_print_hblkfreelist()
 /* Initialize hdr for a block containing the indicated size and 	*/
 /* kind of objects.							*/
 /* Return FALSE on failure.						*/
-static bool setup_header(hhdr, sz, kind, flags)
+static GC_bool setup_header(hhdr, sz, kind, flags)
 register hdr * hhdr;
 word sz;	/* object size in words */
 int kind;
@@ -99,6 +100,12 @@ unsigned char flags;
     return(TRUE);
 }
 
+#ifdef EXACT_FIRST
+#   define LAST_TRIP 2
+#else
+#   define LAST_TRIP 1
+#endif
+	
 /*
  * Allocate (and return pointer to) a heap block
  *   for objects of size sz words.
@@ -123,7 +130,7 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
     register hdr * phdr;		/* Header corr. to prevhbp */
     signed_word size_needed;    /* number of bytes in requested objects */
     signed_word size_avail;	/* bytes available in this block	*/
-    bool first_time = TRUE;
+    int trip_count = 0;
 
     size_needed = HBLKSIZE * OBJ_SZ_TO_BLOCKS(sz);
 
@@ -137,16 +144,25 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
 	    hbp = (prevhbp == 0? GC_hblkfreelist : phdr->hb_next);
 	    hhdr = HDR(hbp);
 
-	    if( prevhbp == GC_savhbp && !first_time) {
-	        return(0);
+	    if( prevhbp == GC_savhbp) {
+		if (trip_count == LAST_TRIP) return(0);
+		++trip_count;
 	    }
-
-	    first_time = FALSE;
 
 	    if( hbp == 0 ) continue;
 
 	    size_avail = hhdr->hb_sz;
+#	    ifdef EXACT_FIRST
+		if (trip_count <= 1 && size_avail != size_needed) continue;
+#	    endif
 	    if (size_avail < size_needed) continue;
+#	    ifdef PRESERVE_LAST
+		if (size_avail != size_needed
+		    && !GC_incremental
+		    && GC_in_last_heap_sect(hbp) && GC_should_collect()) {
+		    continue;
+		} 
+#	    endif
 	    /* If the next heap block is obviously better, go on.	*/
 	    /* This prevents us from disassembling a single large block */
 	    /* to get tiny blocks.					*/
@@ -163,11 +179,11 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
 	          continue;
 	      }
 	    }
-	    if ( kind != UNCOLLECTABLE &&
+	    if ( !IS_UNCOLLECTABLE(kind) &&
 	         (kind != PTRFREE || size_needed > MAX_BLACK_LIST_ALLOC)) {
 	      struct hblk * lasthbp = hbp;
 	      ptr_t search_end = (ptr_t)hbp + size_avail - size_needed;
-	      word orig_avail = size_avail;
+	      signed_word orig_avail = size_avail;
 	      signed_word eff_size_needed = ((flags & IGNORE_OFF_PAGE)?
 	      					HBLKSIZE
 	      					: size_needed);
@@ -196,10 +212,11 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
 		      hbp = thishbp;
 		      hhdr = thishdr;
 		}
-	      } else if (size_needed > BL_LIMIT
-	                 && orig_avail - size_needed > BL_LIMIT) {
+	      } else if (size_needed > (signed_word)BL_LIMIT
+	                 && orig_avail - size_needed
+			    > (signed_word)BL_LIMIT) {
 	        /* Punt, since anything else risks unreasonable heap growth. */
-	        WARN("Needed to allocate blacklisted block at %ld\n",
+	        WARN("Needed to allocate blacklisted block at 0x%lx\n",
 		     (word)hbp);
 	        thishbp = hbp;
 	        size_avail = orig_avail;
@@ -215,22 +232,31 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
 	      	  /* blocks are unpopular.				*/
 	          /* A dropped block will be reconsidered at next GC.	*/
 	          if ((++count & 3) == 0) {
-	            /* Allocate and drop the block */
-	              if (GC_install_counts(hbp, hhdr->hb_sz)) {
-	                phdr -> hb_next = hhdr -> hb_next;
-	                (void) setup_header(
+	            /* Allocate and drop the block in small chunks, to	*/
+	            /* maximize the chance that we will recover some	*/
+	            /* later.						*/
+	              struct hblk * limit = hbp + (hhdr->hb_sz/HBLKSIZE);
+	              struct hblk * h;
+	              
+		      GC_words_wasted += hhdr->hb_sz;
+	              phdr -> hb_next = hhdr -> hb_next;
+	              for (h = hbp; h < limit; h++) {
+	                if (h == hbp || GC_install_header(h)) {
+	                  hhdr = HDR(h);
+	                  (void) setup_header(
 	                	  hhdr,
-	              		  BYTES_TO_WORDS(hhdr->hb_sz - HDR_BYTES),
+	              		  BYTES_TO_WORDS(HBLKSIZE - HDR_BYTES),
 	              		  PTRFREE, 0); /* Cant fail */
-	              	if (GC_debugging_started) {
-	              	    BZERO(hbp + HDR_BYTES, hhdr->hb_sz - HDR_BYTES);
-	              	}
-	                if (GC_savhbp == hbp) GC_savhbp = prevhbp;
+	              	  if (GC_debugging_started) {
+	              	    BZERO(hbp + HDR_BYTES, HBLKSIZE - HDR_BYTES);
+	              	  }
+	                }
 	              }
 	            /* Restore hbp to point at free block */
+	              if (GC_savhbp == hbp) GC_savhbp = prevhbp;
 	              hbp = prevhbp;
 	              hhdr = phdr;
-	              if (hbp == GC_savhbp) first_time = TRUE;
+	              if (hbp == GC_savhbp) --trip_count;
 	          }
 #		endif
 	      }
@@ -247,7 +273,10 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
 		    } else {
 			hbp = (struct hblk *)
 			    (((word)thishbp) + size_needed);
-			if (!GC_install_header(hbp)) continue;
+			if (!GC_install_header(hbp)) {
+			    hbp = thishbp;
+			    continue;
+			}
 			hhdr = HDR(hbp);
 			GC_invalidate_map(hhdr);
 			hhdr->hb_next = thishdr->hb_next;
@@ -283,6 +312,14 @@ unsigned char flags;  /* IGNORE_OFF_PAGE or 0 */
 	    || sz > MAXOBJSZ && GC_obj_kinds[kind].ok_init) {
 	    BZERO(thishbp + HDR_BYTES,  size_needed - HDR_BYTES);
 	}
+
+    /* We just successfully allocated a block.  Restart count of	*/
+    /* consecutive failures.						*/
+    {
+	extern unsigned GC_fail_count;
+	
+	GC_fail_count = 0;
+    }
     
     return( thishbp );
 }

@@ -49,7 +49,7 @@ RANLIB= ar s
 srcdir = .
 VPATH = $(srcdir)
 
-OBJS= alloc.o reclaim.o allchblk.o misc.o mach_dep.o os_dep.o mark_rts.o headers.o mark.o obj_map.o blacklst.o finalize.o new_hblk.o dyn_load.o dbg_mlc.o malloc.o stubborn.o checksums.o typd_mlc.o ptr_chck.o
+OBJS= alloc.o reclaim.o allchblk.o misc.o mach_dep.o os_dep.o mark_rts.o headers.o mark.o obj_map.o blacklst.o finalize.o new_hblk.o dyn_load.o dbg_mlc.o malloc.o stubborn.o checksums.o typd_mlc.o ptr_chck.o mallocx.o
 
 CORD_OBJS=  cord/cordbscs.o cord/cordxtra.o cord/cordprnt.o
 
@@ -90,13 +90,13 @@ cords: $(CORD_OBJS) cord/cordtest.exe
 	cp $(srcdir)/cord/ec.h include/ec.h
 	cp $(srcdir)/cord/cord_pos.h include/cord_pos.h
 
-gc_c++.o: $(srcdir)/gc_c++.cc $(srcdir)/gc_c++.h
-	$(CXX) -c -O $(srcdir)/gc_c++.cc
+gc_cpp.o: $(srcdir)/gc_cpp.cc $(srcdir)/gc_cpp.h
+	$(CXX) -c -O $(srcdir)/gc_cpp.cc
 	
-c++: gc_c++.o $(srcdir)/gc_c++.h
-	$(AR) ru gc.a gc_c++.o
+c++: gc_cpp.o $(srcdir)/gc_cpp.h
+	$(AR) ru gc.a gc_cpp.o
 	$(RANLIB) gc.a
-	cp $(srcdir)/gc_c++.h include/gc_c++.h 
+	cp $(srcdir)/gc_cpp.h include/gc_cpp.h 
 
 mach_dep.o: $(srcdir)/mach_dep.c
 	$(CC) -o mach_dep.o -c $(SPECIALCFLAGS) $(srcdir)/mach_dep.c

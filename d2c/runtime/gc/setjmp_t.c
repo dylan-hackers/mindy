@@ -10,7 +10,7 @@
  * provided the above notices are retained, and a notice that the code was
  * modified is included with the above copyright notice.
  */
-/* Boehm, September 12, 1994 3:39 pm PDT */
+/* Boehm, September 21, 1995 5:39 pm PDT */
  
 /* Check whether setjmp actually saves registers in jmp_buf. */
 /* If it doesn't, the generic mark_regs code won't work.     */
@@ -24,44 +24,12 @@
 /* code.)						     */
 #include <stdio.h>
 #include <setjmp.h>
+#include <string.h>
 #include "config.h"
 
-#ifdef __hpux
-#include <unistd.h>
-int
-getpagesize()
-{
-    return sysconf(_SC_PAGE_SIZE);
-}
-#endif
-
-#if defined(SUNOS5) || defined(DRSNX)
-#include <unistd.h>
-int
-getpagesize()
-{
-    return sysconf(_SC_PAGESIZE);
-}
-#endif
-
-#ifdef _AUX_SOURCE
-#include <sys/mmu.h>
-int
-getpagesize()
-{
-   return PAGESIZE;
-}
-#endif
-
-#if defined(AMIGA) || defined(MACOS)
-int
-getpagesize()
-{
-    return(4096);
-}
-#endif
-
 #ifdef OS2
+/* GETPAGESIZE() is set to getpagesize() by default, but that	*/
+/* doesn't really exist, and the collector doesn't need it.	*/
 #define INCL_DOSFILEMGR
 #define INCL_DOSMISC
 #define INCL_DOSERRORS
@@ -93,24 +61,26 @@ int * nested_sp()
 main()
 {
 	int dummy;
-	long ps = getpagesize();
+	long ps = GETPAGESIZE();
 	jmp_buf b;
-	register int x = strlen("a");  /* 1, slightly disguised */
+	register int x = (int)strlen("a");  /* 1, slightly disguised */
 	static int y = 0;
 
+	printf("This appears to be a %s running %s\n", MACH_TYPE, OS_TYPE);
 	if (nested_sp() < &dummy) {
 	  printf("Stack appears to grow down, which is the default.\n");
-	  printf("A good guess for STACKBOTTOM on this machine is 0x%X.\n",
-	         ((long)(&dummy) + ps) & ~(ps-1));
+	  printf("A good guess for STACKBOTTOM on this machine is 0x%lx.\n",
+	         ((unsigned long)(&dummy) + ps) & ~(ps-1));
 	} else {
 	  printf("Stack appears to grow up.\n");
 	  printf("Define STACK_GROWS_UP in gc_private.h\n");
-	  printf("A good guess for STACKBOTTOM on this machine is 0x%X.\n",
-	         ((long)(&dummy) + ps) & ~(ps-1));
+	  printf("A good guess for STACKBOTTOM on this machine is 0x%lx.\n",
+	         ((unsigned long)(&dummy) + ps) & ~(ps-1));
 	}
 	printf("Note that this may vary between machines of ostensibly\n");
 	printf("the same architecture (e.g. Sun 3/50s and 3/80s).\n");
-	printf("A good guess for ALIGNMENT on this machine is %d.\n",
+	printf("On many machines the value is not fixed.\n");
+	printf("A good guess for ALIGNMENT on this machine is %ld.\n",
 	       (unsigned long)(&(a.a_b))-(unsigned long)(&a));
 	
 	/* Encourage the compiler to keep x in a callee-save register */

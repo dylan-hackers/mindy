@@ -11,7 +11,7 @@
  * modified is included with the above copyright notice.
  *
  */
-/* Boehm, July 13, 1994 12:34 pm PDT */
+/* Boehm, July 31, 1995 5:02 pm PDT */
 
 
 /*
@@ -46,7 +46,7 @@
 #   define EXTRA_BYTES (sizeof(word))
 # endif
 
-bool GC_explicit_typing_initialized = FALSE;
+GC_bool GC_explicit_typing_initialized = FALSE;
 
 int GC_explicit_kind;	/* Object kind for objects with indirect	*/
 			/* (possibly extended) descriptors.		*/
@@ -59,7 +59,7 @@ int GC_array_kind;	/* Object kind for objects with complex		*/
 /* can be described by a BITMAP_BITS sized bitmap.		*/
 typedef struct {
 	word ed_bitmap;	/* lsb corresponds to first word.	*/
-	bool ed_continued;	/* next entry is continuation.	*/
+	GC_bool ed_continued;	/* next entry is continuation.	*/
 } ext_descr;
 
 /* Array descriptors.  GC_array_mark_proc understands these.	*/
@@ -430,7 +430,8 @@ word env;
     	if (bm & 1) {
     	    current = *current_p;
     	    if ((ptr_t)current >= least_ha && (ptr_t)current <= greatest_ha) {
-    	        PUSH_CONTENTS(current, mark_stack_ptr, mark_stack_limit);
+    	        PUSH_CONTENTS(current, mark_stack_ptr,
+			      mark_stack_limit, current_p, exit1);
     	    }
     	}
     }
@@ -467,7 +468,7 @@ register complex_descriptor *d;
                + GC_descr_obj_size(d -> sd.sd_second));
       default:
         ABORT("Bad complex descriptor");
-        /*NOTREACHED*/
+        /*NOTREACHED*/ return 0; /*NOTREACHED*/
     }
 }
 
@@ -527,8 +528,8 @@ mse * msl;
         }
       default:
         ABORT("Bad complex descriptor");
-        /*NOTREACHED*/
-    }
+        /*NOTREACHED*/ return 0; /*NOTREACHED*/
+   }
 }
 
 /*ARGSUSED*/
@@ -590,7 +591,7 @@ word env;
     if (last_set_bit < 0) return(0 /* no pointers */);
 #   if ALIGNMENT == CPP_WORDSZ/8
     {
-      register bool all_bits_set = TRUE;
+      register GC_bool all_bits_set = TRUE;
       for (i = 0; i < last_set_bit; i++) {
     	if (!GC_get_bit(bm, i)) {
     	    all_bits_set = FALSE;
@@ -628,12 +629,15 @@ word env;
 ptr_t GC_clear_stack();
 
 #define GENERAL_MALLOC(lb,k) \
-    (extern_ptr_t)GC_clear_stack(GC_generic_malloc((word)lb, k))
+    (GC_PTR)GC_clear_stack(GC_generic_malloc((word)lb, k))
     
+#define GENERAL_MALLOC_IOP(lb,k) \
+    (GC_PTR)GC_clear_stack(GC_generic_malloc_ignore_off_page((word)lb, k))
+
 #if defined(__STDC__) || defined(__cplusplus)
-  extern void * GC_malloc_explicitly_typed(size_t lb, GC_descr d)
+  void * GC_malloc_explicitly_typed(size_t lb, GC_descr d)
 #else
-  extern char * GC_malloc_explicitly_typed(lb, d)
+  char * GC_malloc_explicitly_typed(lb, d)
   size_t lb;
   GC_descr d;
 #endif
@@ -655,6 +659,7 @@ DCL_LOCK_STATE;
         if( !FASTLOCK_SUCCEEDED() || (op = *opp) == 0 ) {
             FASTUNLOCK();
             op = (ptr_t)GENERAL_MALLOC((word)lb, GC_explicit_kind);
+	    if (0 == op) return(0);
 #	    ifdef MERGE_SIZES
 		lw = GC_size_map[lb];	/* May have been uninitialized.	*/            
 #	    endif
@@ -665,10 +670,55 @@ DCL_LOCK_STATE;
         }
    } else {
        op = (ptr_t)GENERAL_MALLOC((word)lb, GC_explicit_kind);
+       if (op != NULL)
+	    lw = BYTES_TO_WORDS(GC_size(op));
+   }
+   if (op != NULL)
+       ((word *)op)[lw - 1] = d;
+   return((GC_PTR) op);
+}
+
+#if defined(__STDC__) || defined(__cplusplus)
+  void * GC_malloc_explicitly_typed_ignore_off_page(size_t lb, GC_descr d)
+#else
+  char * GC_malloc_explicitly_typed_ignore_off_page(lb, d)
+  size_t lb;
+  GC_descr d;
+#endif
+{
+register ptr_t op;
+register ptr_t * opp;
+register word lw;
+DCL_LOCK_STATE;
+
+    lb += EXTRA_BYTES;
+    if( SMALL_OBJ(lb) ) {
+#       ifdef MERGE_SIZES
+	  lw = GC_size_map[lb];
+#	else
+	  lw = ALIGNED_WORDS(lb);
+#       endif
+	opp = &(GC_eobjfreelist[lw]);
+	FASTLOCK();
+        if( !FASTLOCK_SUCCEEDED() || (op = *opp) == 0 ) {
+            FASTUNLOCK();
+            op = (ptr_t)GENERAL_MALLOC_IOP((word)lb, GC_explicit_kind);
+#	    ifdef MERGE_SIZES
+		lw = GC_size_map[lb];	/* May have been uninitialized.	*/            
+#	    endif
+        } else {
+            *opp = obj_link(op);
+            GC_words_allocd += lw;
+            FASTUNLOCK();
+        }
+   } else {
+       op = (ptr_t)GENERAL_MALLOC_IOP((word)lb, GC_explicit_kind);
+       if (op != NULL)
        lw = BYTES_TO_WORDS(GC_size(op));
    }
+   if (op != NULL)
    ((word *)op)[lw - 1] = d;
-   return((extern_ptr_t) op);
+   return((GC_PTR) op);
 }
 
 #if defined(__STDC__) || defined(__cplusplus)
@@ -716,6 +766,7 @@ DCL_LOCK_STATE;
         if( !FASTLOCK_SUCCEEDED() || (op = *opp) == 0 ) {
             FASTUNLOCK();
             op = (ptr_t)GENERAL_MALLOC((word)lb, GC_array_kind);
+	    if (0 == op) return(0);
 #	    ifdef MERGE_SIZES
 		lw = GC_size_map[lb];	/* May have been uninitialized.	*/            
 #	    endif
@@ -726,6 +777,7 @@ DCL_LOCK_STATE;
         }
    } else {
        op = (ptr_t)GENERAL_MALLOC((word)lb, GC_array_kind);
+       if (0 == op) return(0);
        lw = BYTES_TO_WORDS(GC_size(op));
    }
    if (descr_type == LEAF) {
@@ -748,16 +800,15 @@ DCL_LOCK_STATE;
        /* Make sure the descriptor is cleared once there is any danger	*/
        /* it may have been collected.					*/
        (void)
-         GC_general_register_disappearing_link((extern_ptr_t *)
+         GC_general_register_disappearing_link((GC_PTR *)
          					  ((word *)op+lw-1),
-       					          (extern_ptr_t) op);
+       					          (GC_PTR) op);
        if (ff != GC_finalization_failures) {
-           /* We may have failed to register op due to lack of memory.	*/
-           /* We were out of memory very recently, so we can safely 	*/
-           /* punt.							*/
-           ((word *)op)[lw - 1] = 0;
-           return(0);
+	   /* Couldn't register it due to lack of memory.  Punt.	*/
+	   /* This will probably fail too, but gives the recovery code  */
+	   /* a chance.							*/
+	   return(GC_malloc(n*lb));
        }			          
    }
-   return((extern_ptr_t) op);
+   return((GC_PTR) op);
 }
