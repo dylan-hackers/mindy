@@ -53,10 +53,6 @@ copyright:
 define method main(appname, #rest arguments)
   // insert code here ...
 
-  // XXX - This is temporary, and only here because of bugs in
-  // the compiler and runtime environment.
-  force-output(*standard-error*);
-  force-output(*standard-output*);
   exit(exit-code: 0);
 end method main;
 EOD
