@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.44 2003/04/23 22:17:20 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.45 2003/04/24 18:39:00 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -551,6 +551,30 @@ EOF
     }
 }
 
+# maybe_emit_parsergen_build_rule() -- internal
+#
+sub maybe_emit_parsergen_build_rule {
+    unless ($parsergen_rule) {
+	print "$PARSERGEN_target:\n";
+	print "\t";
+	printf($host_platform{'recursive_make_command'}, $PARSERGEN_DIR, "");
+	print "\n\n";
+    }
+    $parsergen_rule = 1;
+}
+
+# maybe_emit_melange_build_rule() -- internal
+#
+sub maybe_emit_melange_build_rule {
+    unless ($melange_rule) {
+	print "$MELANGE_target:\n";
+	print "\t";
+	printf($host_platform{'recursive_make_command'}, $MELANGE_DIR, "");
+	print "\n\n";
+    }
+    $melange_rule = 1;
+}
+
 # parse_dylan_header() -- internal
 #
 # Reads the Dylan header (keyword: value, ...) from the file LIDFILE,
@@ -1049,8 +1073,9 @@ sub emit_cc_file_rule {
 sub emit_melange_rule {
     local ($basefile, @headers) = @_;
     do maybe_emit_d2c_defines();
+    do maybe_emit_melange_build_rule();
 
-    print "$basefile.dylan: \$(SRCDIR)/$basefile.intr";
+    print "$basefile.dylan: \$(SRCDIR)/$basefile.intr $MELANGE_target";
     foreach $header (@headers) {
        print " \$(SRCDIR)/$header";
     }
@@ -1070,8 +1095,9 @@ sub emit_melange_rule {
 sub emit_parsergen_rule {
     local ($basefile) = @_;
     do maybe_emit_d2c_defines();
+    do maybe_emit_parsergen_build_rule();
 
-    print "$basefile.dylan: \$(SRCDIR)/$basefile.input";
+    print "$basefile.dylan: \$(SRCDIR)/$basefile.input $PARSERGEN_target";
     print "\n\t\$(PARSERGEN) ";
     print "\$(SRCDIR)/$basefile.input $basefile.dylan\n\n";
     push(@compile_dependencies, "$basefile.dylan");

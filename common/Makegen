@@ -1,5 +1,5 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.23 2003/04/23 22:05:34 housel Exp $
+##  $Header: /scm/cvs/src/common/Makegen,v 1.24 2003/04/24 18:39:00 housel Exp $
 ##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
@@ -26,10 +26,6 @@
 
 &compile_subdirs(@bootstrap_libraries);
 unless ($enable_bootstrap) {
-    # Melange is needed to compile the common libraries
-    push(@compile_commands,
-	 sprintf($host_platform{'recursive_make_command'},
-		 "../tools/melange", ""));
   &compile_subdirs(@non_bootstrap_libraries);
   if($features{'compiled_for_unix'}) {
     &compile_subdirs('command-processor');

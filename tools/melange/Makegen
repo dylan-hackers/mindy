@@ -37,10 +37,6 @@ if ($features{'compiled_for_win32'}) {
     &unknown_platform_error();
 };
 
-push(@compile_commands, 
-     sprintf($host_platform{'recursive_make_command'},
-	     "../parsergen", ""));
-
 &emit_parsergen_rule('c-parse');
 
 if ($build_tools_with_d2c) {

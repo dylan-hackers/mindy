@@ -75,12 +75,19 @@ $EXTRA_INCLUDE_DIR = '@EXTRA_INCLUDE_DIR@';
 #  $CFLAGS = '-O3 -g -fomit-frame-pointer';
 #}
 
-$PARSERGEN = "$buildroot/tools/parsergen/parsergen";
-$MELANGE = "$buildroot/tools/melange/melange";
+$PARSERGEN_DIR = "$buildroot/tools/parsergen";
+$PARSERGEN = "$PARSERGEN_DIR/parsergen";
+$MELANGE_DIR = "$buildroot/tools/melange";
+$MELANGE = "$MELANGE_DIR/melange";
 
-unless ($build_tools_with_d2c) {
-  $PARSERGEN = "$MINDY -f $PARSERGEN-lib.dbc";
-  $MELANGE = "$MINDY -f $MELANGE.dbc";
+if ($build_tools_with_d2c) {
+    $PARSERGEN_target = $PARSERGEN;
+    $MELANGE_target = $MELANGE;
+} else {
+    $PARSERGEN_target = "$PARSERGEN-lib.dbc";
+    $PARSERGEN = "$MINDY -f $PARSERGEN_target";
+    $MELANGE_target = "$MELANGE.dbc";
+    $MELANGE = "$MINDY -f $MELANGE_target";
 };
 
 if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {

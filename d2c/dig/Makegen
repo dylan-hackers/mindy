@@ -34,10 +34,6 @@ if ($features{'compiled_for_win32'}) {
 }
    
 if ($dig_lid_file) {
-    # Make sure melange is built before we attempt to build dig
-    push(@compile_commands,
-     sprintf($host_platform{'recursive_make_command'},
-	     "../../tools/melange", ""));
     &emit_library_rule($dig_lid_file, '$(BUILDROOT)/force.timestamp', '', 
 		       'compile', 'install');
 }
