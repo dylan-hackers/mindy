@@ -294,7 +294,7 @@ sub d2c_library {
     local ($dylan_lib_name, $unit_prefix, $source_files) = @_;
     local ($ar_name) = &make_into_library_name($unit_prefix);
     local ($du_name);
-    if ($dylan_lib_name eq "main") {  # hack...
+    if ($dylan_lib_name eq "compiler-main") {  # hack...
 	$du_name = "";
     } else {
 	$du_name = "compiler-" . $unit_prefix . ".lib.du";
