@@ -1,5 +1,5 @@
 module: stack-analysis
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.4 2000/01/24 04:56:08 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.5 2000/09/09 20:47:59 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -201,7 +201,7 @@ define method analyze
   if (op.dependents.dependent.defines)
     //
     // Dink the depth because the results really act like clusters
-    // even if they arn't.
+    // even if they aren't.
     let new-depth = depth + 1;
     if (new-depth > state.max-depth)
       state.max-depth := new-depth;
