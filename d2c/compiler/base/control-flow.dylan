@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.3 1995/03/24 12:21:48 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.4 1995/03/24 12:35:14 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -21,7 +21,6 @@ region [source-location-mixin] {abstract}
 	    loop-region
 
     exit
-    call-site
 
 */
 
@@ -108,9 +107,6 @@ end;
 // values coming from the different callers.
 //
 define class <method-region> (<body-region>)
- //
- // A list of all the <call-site> objects for local calls to this method.
- slot call-sites :: <list>, init-value: #();
 end;
 
 // A <loop-region> repeats execution of the body indefinitely (terminate by
