@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.3 1996/01/14 18:05:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front-exports.dylan,v 1.4 1996/01/27 20:24:12 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -248,10 +248,11 @@ define module define-functions
     add-seal, ct-add-method, ct-applicable-methods, sort-methods,
     method-defn-inline-expansion, method-defn-inline-function,
     %method-defn-inline-function, %method-defn-inline-function-setter,
+    generic-defn-sealed?,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,
     <getter-method-definition>, <setter-method-definition>,
-    <define-generic-tlf>,
+    <define-generic-tlf>, <define-implicit-generic-tlf>,
     <define-method-tlf>,
     implicitly-define-generic,
 
