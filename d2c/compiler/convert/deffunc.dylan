@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.45 1995/12/07 14:30:34 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.46 1995/12/09 00:12:49 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -42,6 +42,8 @@ define method defn-type (defn :: <function-definition>) => res :: <cclass>;
   dylan-value(#"<function>");
 end;
 
+define constant $ct-sam-cache-size = 97;  // handy prime.
+
 define class <generic-definition> (<function-definition>)
   //
   // #f iff the open adjective wasn't supplied.
@@ -52,14 +54,9 @@ define class <generic-definition> (<function-definition>)
     init-value: #(), init-keyword: methods:;
   //
   // List of all the seals on this generic function.  Each seal is a list of
-  // types.
+  // <seal-info>s.
   slot generic-defn-seals :: <list>,
     init-value: #(), init-keyword: seals:;
-  //
-  // Information about sealed methods of this GF.  This is filled in on demand.
-  // Use generic-defn-seal-info instead.  See "method-tree".
-  slot %generic-defn-seal-info :: false-or(<list>),
-    init-value: #f, init-keyword: seal-info:;
   //
   // The discriminator ct-value, if there is one.
   slot %generic-defn-discriminator
@@ -69,16 +66,6 @@ end;
 
 define method defn-type (defn :: <generic-definition>) => res :: <cclass>;
   dylan-value(#"<generic-function>");
-end;
-
-define method add-seal
-    (defn :: <generic-definition>, types :: <list>) => ();
-  defn.generic-defn-seals := pair(types, defn.generic-defn-seals);
-end;
-
-define method add-seal
-    (defn :: <generic-definition>, types :: <sequence>) => ();
-  add-seal(defn, as(<list>, types));
 end;
 
 define class <implicit-generic-definition>
@@ -255,12 +242,17 @@ define method compute-define-generic-signature
     (tlf :: <define-generic-tlf>) => res :: <signature>;
   let (signature, anything-non-constant?)
     = compute-signature(tlf.generic-tlf-param-list, tlf.generic-tlf-returns);
+  let defn = tlf.tlf-defn;
   if (anything-non-constant?)
-    let defn = tlf.tlf-defn;
     defn.function-defn-hairy? := #t;
     if (defn.function-defn-ct-value)
       error("noticed that a function was hairy after creating a ct-value.");
     end;
+  elseif (defn.generic-defn-sealed?)
+    // Fill in the slot so we add-seal's call to function-defn-signature
+    // doesn't cause us to recurse forever.
+    defn.function-defn-signature := signature;
+    add-seal(defn, signature.specializers, tlf);
   end;
   signature;
 end;
@@ -298,19 +290,21 @@ define method implicitly-define-generic
     => ();
   let var = find-variable(name);
   unless (var & var.variable-definition)
-    let defn
-      = make(<implicit-generic-definition>,
-	     name: name,
-	     signature:
-	       method ()
-		 make(<signature>,
-		      specializers:
-			make(<list>, size: num-required, fill: object-ctype()),
-		      rest-type: variable-args? & object-ctype(),
-		      keys: keyword-args? & #(),
-		      all-keys: #f,
-		      returns: wild-ctype());
-	       end);
+    let defn = make(<implicit-generic-definition>, name: name);
+    defn.function-defn-signature
+      := method ()
+	   let specs = make(<list>, size: num-required,
+			    fill: object-ctype());
+	   let sig = make(<signature>,
+			  specializers: specs,
+			  rest-type: variable-args? & object-ctype(),
+			  keys: keyword-args? & #(),
+			  all-keys: #f,
+			  returns: wild-ctype());
+	   defn.function-defn-signature := sig;
+	   add-seal(defn, specs, #f);
+	   sig;
+	 end;
     note-variable-definition(defn);
     add!(*Top-Level-Forms*, make(<define-implicit-generic-tlf>, defn: defn));
   end;
@@ -342,7 +336,8 @@ define method finalize-top-level-form (tlf :: <seal-generic-tlf>) => ();
 		 end;
 		 type;
 	       end,
-	       type-exprs));
+	       type-exprs),
+	   tlf);
 end;
 
 define method finalize-top-level-form (tlf :: <define-implicit-generic-tlf>)
@@ -381,7 +376,7 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
   end;
   if (tlf.method-tlf-sealed?)
     if (gf)
-      add-seal(gf, signature.specializers);
+      add-seal(gf, signature.specializers, tlf);
     else
       error("%s doesn't name a generic function", name);
     end;
@@ -684,10 +679,6 @@ end;
 
 define method convert-generic-definition
     (builder :: <fer-builder>, defn :: <generic-definition>) => ();
-  //
-  // Ensure summary analysis of method set.
-  generic-defn-seal-info(defn);
-
   if (defn.function-defn-hairy?)
     let policy = $Default-Policy;
     let source = make(<source-location>);
@@ -834,9 +825,9 @@ define method make-discriminator
   build-discriminator-tree
     (builder, policy, source, as(<list>, vars), sig.rest-type & #t, results,
      as(<list>, make(<range>, from: 0, below: nspecs)),
-     sort-methods(gf.generic-defn-methods,
-		  make(<vector>, size: nspecs, fill: #f),
-		  empty-ctype()),
+     sort-methods-set(gf.generic-defn-methods,
+		      make(<vector>, size: nspecs, fill: #f),
+		      empty-ctype()),
      gf);
   build-return(builder, policy, source, region, results);
   end-body(builder);
@@ -1012,6 +1003,35 @@ define class <method-set> (<object>)
     required-init-keyword: restriction-type:;
 end;
 
+// = on <method-set>s
+// 
+// Two method sets are ``the same'' if they have the same methods, the same
+// ordered methods (in the same order), and the same ambigous methods.
+// 
+define method \= (set1 :: <method-set>, set2 :: <method-set>)
+    => res :: <boolean>;
+  set1.ordered-methods = set2.ordered-methods
+    & same-unordered?(set1.all-methods, set2.all-methods)
+    & same-unordered?(set1.ambiguous-methods, set2.ambiguous-methods);
+end;
+
+// same-unordered?
+//
+// Return #t if the two lists have the same elements in any order.
+// We assume that there are no duplicates in either list.
+// 
+define method same-unordered? (list1 :: <list>, list2 :: <list>)
+    => res :: <boolean>;
+  list1.size == list2.size
+    & block (return)
+	for (elem in list1)
+	  unless (member?(elem, list2))
+	    return(#f);
+	  end;
+	end;
+	#t;
+      end;
+end;
 
 define method discriminate-on-one-arg
     (discriminate-on :: <fixed-integer>, method-set :: <method-set>,
@@ -1056,8 +1076,8 @@ define method discriminate-on-one-arg
     = begin
 	let arg-classes = copy-sequence(method-set.arg-classes);
 	arg-classes[discriminate-on] := gf-spec;
-	let method-set = sort-methods(always-applicable, arg-classes,
-				      gf-spec);
+	let method-set = sort-methods-set(always-applicable, arg-classes,
+					  gf-spec);
 	let possible-direct-classes = find-direct-classes(gf-spec);
 	if (possible-direct-classes)
 	  for (direct-class in possible-direct-classes.tail,
@@ -1077,8 +1097,8 @@ define method discriminate-on-one-arg
     let arg-classes = copy-sequence(method-set.arg-classes);
     arg-classes[discriminate-on] := direct-class;
     let method-set
-      = sort-methods(concatenate(entry.tail, always-applicable),
-		     arg-classes, direct-class.direct-type);
+      = sort-methods-set(concatenate(entry.tail, always-applicable),
+			 arg-classes, direct-class.direct-type);
     let this-id = direct-class.unique-id;
     for (remaining = ranges then remaining.tail,
 	 prev = #f then remaining,
@@ -1149,138 +1169,322 @@ define method discriminate-on-one-arg
 end;
     
 
+define method sort-methods-set
+    (methods :: <list>, arg-classes :: <simple-object-vector>,
+     restriction-type :: <ctype>)
+    => res :: <method-set>;
+  let (ordered, ambiguous) = sort-methods(methods, arg-classes);
+  make(<method-set>, arg-classes: arg-classes, ordered: ordered,
+       ambiguous: ambiguous, all: methods, restriction-type: restriction-type);
+end;
+
+
+// Seal processing.
+
+define class <seal-info> (<object>)
+  slot seal-types :: <list>, required-init-keyword: types:;
+  slot seal-methods :: false-or(<list>), init-value: #f;
+end class <seal-info>;
+
+
+define method add-seal
+    (defn :: <generic-definition>, types :: <list>,
+     tlf :: false-or(<top-level-form>))
+    => ();
+  block (return)
+    let specs = defn.function-defn-signature.specializers;
+    if (specs.size ~== types.size)
+      compiler-warning("Wrong number of types in seal, wanted %d but got %d",
+		       specs.size, types.size);
+      return();
+    end if;
+    let bogus? = #f;
+    for (spec in specs, type in types, index from 0)
+      if (instance?(type, <unknown-ctype>))
+	compiler-warning
+	  ("In %s: type for arg %d in seal is unknown, hence ignoring seal.",
+	   tlf | "???", index);
+	return();
+      end;
+      unless (instance?(spec, <unknown-ctype>)
+		| csubtype?(type, spec))
+	compiler-warning
+	  ("In %s: bad type in seal: %s is not a subtype of gf type %s",
+	   tlf | "???", type, spec);
+	bogus? := #t;
+      end;
+    end;
+    if (bogus?)
+      return();
+    end;
+    let new-seals = list(make(<seal-info>, types: types));
+    for (old-seal in defn.generic-defn-seals)
+      select (compare-methods(types, old-seal.seal-types, #f))
+	#"more-specific", #"unordered" =>
+	  // The new seal is more specific than or the same as the old seals,
+	  // so we can ignore the new seal.
+	  return();
+	#"less-specific" =>
+	  // The new seal is less specific than the old one, so we can blow off
+	  // the old one.
+	  begin end;
+	otherwise =>
+	  // We need them both.
+	  new-seals := pair(old-seal, new-seals);
+      end select;
+    end for;
+    defn.generic-defn-seals := new-seals;
+  end block;
+end;
+
+define method add-seal
+    (defn :: <generic-definition>, types :: <sequence>,
+     tlf :: false-or(<top-level-form>))
+    => ();
+  add-seal(defn, as(<list>, types), tlf);
+end;
+
+
+
+// ct-sorted-applicable-methods
+
+define method ct-sorted-applicable-methods
+    (gf :: <generic-definition>, call-types :: <list>)
+    => (ordered :: union(<list>, <false>),
+	ambiguous :: union(<list>, <false>));
+  let seal-info = find-seal(gf, call-types);
+  if (seal-info)
+    let definitely-applicable = #();
+    let maybe-applicable = #();
+    for (meth in seal-info.seal-methods | compute-seal-methods(seal-info, gf))
+      select (compare-methods(meth, call-types, #f))
+	#"disjoint" =>
+	  begin end;
+	#"less-specific", #"unordered" =>
+	  definitely-applicable := pair(meth, definitely-applicable);
+	otherwise =>
+	  maybe-applicable := pair(meth, maybe-applicable);
+      end select;
+    end for;
+
+    if (maybe-applicable == #())
+      // The things we know, we know we know.
+      if (definitely-applicable == #() | definitely-applicable.tail == #())
+	// No need to sort unless there are two or more methods.
+	values(definitely-applicable, #());
+      else
+	sort-methods(definitely-applicable, #f);
+      end;
+    elseif (maybe-applicable.tail == #() & definitely-applicable == #())
+      // There is one method that might be applicable and none that definitely
+      // are.  So assume that it is, because it is a type-error if it is not.
+      values(maybe-applicable, #());
+    else
+      // There is more than one method we don't know about, so we can't tell
+      // anything at compile-time.
+      values(#f, #f);
+    end if;
+  else
+    // The argument types arn't covered by a seal.
+    values(#f, #f);
+  end if;
+end method;
+
+
+define method find-seal (gf :: <generic-definition>, call-types :: <list>)
+    => res :: false-or(<seal-info>);
+  block (return)
+    for (seal-info in gf.generic-defn-seals)
+      select (compare-methods(call-types, seal-info.seal-types, #f))
+	#"more-specific", #"unordered" => return(seal-info);
+	otherwise => begin end;
+      end select;
+    end for;
+    #f;
+  end block;
+end method find-seal;
+
+
+define method compute-seal-methods
+    (seal-info :: <seal-info>, gf :: <generic-definition>)
+    => methods :: <list>;
+  let types = seal-info.seal-types;
+  seal-info.seal-methods
+    := choose(method (meth :: <method-definition>)
+		  => res :: <boolean>;
+		if (meth.method-defn-congruent?)
+		  compare-methods(meth, types, #f) ~== #"disjoint";
+		end;
+	      end method,
+	      gf.generic-defn-methods)
+end method compute-seal-methods;
+
+
+// method sorting and comparision utilities.
+
 // sort-methods
 //
 // This routine takes a set of methods and sorts them by some subset of the
 // arguments.
 // 
 define method sort-methods
-    (methods :: <list>, arg-classes :: <simple-object-vector>,
-     restriction-type :: <ctype>)
-    => res :: <method-set>;
+    (methods :: <list>, arg-classes :: false-or(<simple-object-vector>))
+    => (ordered :: false-or(<list>), ambiguous :: false-or(<list>));
 
-  // Ordered accumulates the methods we can tell the ordering of.  Each
-  // element in this list is either a method or a list of equivalent methods.
-  let ordered = #();
+  block (return)
 
-  // Ambiguous accumulates the set of methods of which it is unclear which
-  // follows next after ordered.  These methods will all be mutually ambiguous
-  // or equivalent.
-  let ambiguous = #();
+    // Ordered accumulates the methods we can tell the ordering of.  Each
+    // element in this list is either a method or a list of equivalent methods.
+    let ordered = #();
 
-  for (meth in methods)
-    block (done-with-method)
-      for (remaining = ordered then remaining.tail,
-	   prev = #f then remaining,
-	   until: remaining == #())
-	//
-	// Grab the method to compare this method against.  If the next element
-	// in ordered is a list of equivalent methods, grab the first one
-	// as characteristic.
-	let other
-	  = if (instance?(remaining.head, <pair>))
-	      remaining.head.head;
-	    else
-	      remaining.head;
-	    end;
-	select (compare-methods(meth, other, arg-classes))
-	  //
-	  // Our method is more specific, so insert it in the list of ordered
-	  // methods and go on to the next method.
-	  #"more-specific" =>
-	    if (prev)
-	      prev.tail := pair(meth, remaining);
-	    else
-	      ordered := pair(meth, remaining);
-	    end;
-	    done-with-method();
-	  #"less-specific" =>
-	    //
-	    // Our method is less specific, so we can't do anything at this
-	    // time.
-	    #f;
-	  #"unordered" =>
-	    //
-	    // Our method is equivalent.  Add it to the set of equivalent
-	    // methods, making such a set if necessary.
-	    if (instance?(remaining.head, <pair>))
-	      remaining.head := pair(meth, remaining.head);
-	    else
-	      remaining.head := list(meth, remaining.head);
-	    end;
-	    done-with-method();
-	  #"ambiguous" =>
-	    //
-	    // We know that the other method is more specific than anything
-	    // in the current ambiguous set, so throw it away making a new
-	    // ambiguous set.  Taking into account that we might have a set
-	    // of equivalent methods on our hands.
-	    remaining.tail := #();
-	    if (instance?(remaining.head, <pair>))
-	      ambiguous := pair(meth, remaining.head);
-	    else
-	      ambiguous := list(meth, remaining.head);
-	    end;
-	    done-with-method();
-	end;
-      finally
-	//
-	// Our method was less specific than any method in the ordered list.
-	// This either means that our method needs to be tacked onto the end
-	// of the ordered list, added to the ambiguous list, or ignored.
-	// Compare the method against all the methods in the ambiguous list
-	// to figure out which.
-	let ambiguous-with = #();
-	for (remaining = ambiguous then remaining.tail,
+    // Ambiguous accumulates the set of methods of which it is unclear which
+    // follows next after ordered.  These methods will all be mutually
+    // ambiguous or equivalent.
+    let ambiguous = #();
+
+    for (meth in methods)
+      block (done-with-method)
+	for (remaining = ordered then remaining.tail,
+	     prev = #f then remaining,
 	     until: remaining == #())
-	  select (compare-methods(meth, remaining.head, arg-classes))
+	  //
+	  // Grab the method to compare this method against.  If the next
+	  // element in ordered is a list of equivalent methods, grab the first
+	  // one as characteristic.
+	  let other
+	    = if (instance?(remaining.head, <pair>))
+		remaining.head.head;
+	      else
+		remaining.head;
+	      end;
+	  select (compare-methods(meth, other, arg-classes))
+	    //
+	    // Our method is more specific, so insert it in the list of ordered
+	    // methods and go on to the next method.
 	    #"more-specific" =>
-	      #f;
-	    #"less-specific" =>
+	      if (prev)
+		prev.tail := pair(meth, remaining);
+	      else
+		ordered := pair(meth, remaining);
+	      end;
 	      done-with-method();
+	    #"less-specific" =>
+	      //
+	      // Our method is less specific, so we can't do anything at this
+	      // time.
+	      #f;
 	    #"unordered" =>
-	      ambiguous := pair(meth, ambiguous);
+	      //
+	      // Our method is equivalent.  Add it to the set of equivalent
+	      // methods, making such a set if necessary.
+	      if (instance?(remaining.head, <pair>))
+		remaining.head := pair(meth, remaining.head);
+	      else
+		remaining.head := list(meth, remaining.head);
+	      end;
 	      done-with-method();
 	    #"ambiguous" =>
-	      ambiguous-with := pair(remaining.head, ambiguous-with);
+	      //
+	      // We know that the other method is more specific than anything
+	      // in the current ambiguous set, so throw it away making a new
+	      // ambiguous set.  Taking into account that we might have a set
+	      // of equivalent methods on our hands.
+	      remaining.tail := #();
+	      if (instance?(remaining.head, <pair>))
+		ambiguous := pair(meth, remaining.head);
+	      else
+		ambiguous := list(meth, remaining.head);
+	      end;
+	      done-with-method();
+	    #"unknown" =>
+	      compiler-warning("Can't statically determine the ordering of %s "
+				 "and %s and both are applicable.",
+			       meth.defn-name, other.defn-name);
+	      return(#f, #f);
 	  end;
-	end;
-	//
-	// Ambiguous-with is only #() if we are more specific than anything
-	// currently in the ambigous set.  So tack us onto the end of the
-	// ordered set.  Otherwise, set the ambigous set to us and everything
-	// we are ambiguous with.
-	if (ambiguous-with == #())
-	  if (prev)
-	    prev.tail := list(meth);
+	finally
+	  //
+	  // Our method was less specific than any method in the ordered list.
+	  // This either means that our method needs to be tacked onto the end
+	  // of the ordered list, added to the ambiguous list, or ignored.
+	  // Compare the method against all the methods in the ambiguous list
+	  // to figure out which.
+	  let ambiguous-with = #();
+	  for (remaining = ambiguous then remaining.tail,
+	       until: remaining == #())
+	    select (compare-methods(meth, remaining.head, arg-classes))
+	      #"more-specific" =>
+		#f;
+	      #"less-specific" =>
+		done-with-method();
+	      #"unordered" =>
+		ambiguous := pair(meth, ambiguous);
+		done-with-method();
+	      #"ambiguous" =>
+		ambiguous-with := pair(remaining.head, ambiguous-with);
+	      #"unknown" =>
+		compiler-warning("Can't statically determine the ordering of "
+				   "%s and %s and both are applicable.",
+				 meth.defn-name, remaining.head.defn-name);
+		return(#f, #f);
+	    end;
+	  end;
+	  //
+	  // Ambiguous-with is only #() if we are more specific than anything
+	  // currently in the ambigous set.  So tack us onto the end of the
+	  // ordered set.  Otherwise, set the ambigous set to us and everything
+	  // we are ambiguous with.
+	  if (ambiguous-with == #())
+	    if (prev)
+	      prev.tail := list(meth);
+	    else
+	      ordered := list(meth);
+	    end;
 	  else
-	    ordered := list(meth);
+	    ambiguous := pair(meth, ambiguous-with);
 	  end;
-	else
-	  ambiguous := pair(meth, ambiguous-with);
 	end;
       end;
     end;
-  end;
 
-  make(<method-set>, arg-classes: arg-classes, ordered: ordered,
-       ambiguous: ambiguous, all: methods, restriction-type: restriction-type);
-end;
+    values(ordered, ambiguous);
+  end;
+end method sort-methods;
 
 
 define method compare-methods
     (meth1 :: <method-definition>, meth2 :: <method-definition>,
-     arg-classes :: <vector>)
-    => res :: one-of(#"more-specific", #"less-specific",
-		     #"unordered", #"ambiguous");
+     arg-classes :: false-or(<simple-object-vector>))
+    => res :: one-of(#"more-specific", #"less-specific", #"unordered",
+		     #"disjoint", #"ambiguous", #"unknown");
+  compare-methods(meth1.function-defn-signature.specializers, 
+		  meth2.function-defn-signature.specializers,
+		  arg-classes);
+end;
+
+define method compare-methods
+    (meth1 :: <method-definition>, specs2 :: <list>,
+     arg-classes :: false-or(<simple-object-vector>))
+    => res :: one-of(#"more-specific", #"less-specific", #"unordered",
+		     #"disjoint", #"ambiguous", #"unknown");
+  compare-methods(meth1.function-defn-signature.specializers, specs2,
+		  arg-classes);
+end;
+
+define method compare-methods
+    (specs1 :: <list>, specs2 :: <list>,
+     arg-classes :: false-or(<simple-object-vector>))
+    => res :: one-of(#"more-specific", #"less-specific", #"unordered",
+		     #"disjoint", #"ambiguous", #"unknown");
   block (return)
     let result = #"unordered";
-    for (arg-class in arg-classes,
-	 spec1 in meth1.function-defn-signature.specializers,
-	 spec2 in meth2.function-defn-signature.specializers)
+    for (index from 0,
+	 spec1 in specs1,
+	 spec2 in specs2)
+      let arg-class = arg-classes & arg-classes[index];
       //
       // If this is an argument that we are actually sorting by,
-      if (arg-class & ~(spec1 == spec2))
+      if ((arg-classes == #f | arg-class) & spec1 ~== spec2)
 	//
 	// If the two specializers are the same, then this argument offers no
 	// ordering.
@@ -1289,21 +1493,30 @@ define method compare-methods
 	      #"more-specific";
 	    elseif (csubtype?(spec2, spec1))
 	      #"less-specific";
+	    elseif (~ctypes-intersect?(spec1, spec2))
+	      return(#"disjoint");
 	    elseif (instance?(spec1, <cclass>) & instance?(spec2, <cclass>))
 	      // Neither argument is a subclass of the other.  So we have to
 	      // base it on the precedence list of the actual argument class.
-	      let cpl = arg-class.precedence-list;
-	      block (found)
-		for (super in cpl)
-		  if (super == spec1)
-		    found(#"more-specific");
-		  elseif (super == spec2)
-		    found(#"less-specific");
+	      if (arg-classes)
+		let cpl = arg-class.precedence-list;
+		block (found)
+		  for (super in cpl)
+		    if (super == spec1)
+		      found(#"more-specific");
+		    elseif (super == spec2)
+		      found(#"less-specific");
+		    end;
+		  finally
+		    error("%= isn't applicable", arg-class);
 		  end;
-		finally
-		  error("%= isn't applicable", arg-class);
 		end;
-	      end;
+	      else
+		return(#"unknown");
+	      end if;
+	    elseif (instance?(spec1, <unknown-ctype>)
+		      | instance?(spec2, <unknown-ctype>))
+	      return(#"unknown");
 	    else
 	      // Neither argument is a subtype of the other and we have a
 	      // non-class specializers.  That's ambiguous, folks.
@@ -1322,36 +1535,6 @@ define method compare-methods
   end;
 end;
 
-
-// = on <method-set>s
-// 
-// Two method sets are ``the same'' if they have the same methods, the same
-// ordered methods (in the same order), and the same ambigous methods.
-// 
-define method \= (set1 :: <method-set>, set2 :: <method-set>)
-    => res :: <boolean>;
-  set1.ordered-methods = set2.ordered-methods
-    & same-unordered?(set1.all-methods, set2.all-methods)
-    & same-unordered?(set1.ambiguous-methods, set2.ambiguous-methods);
-end;
-
-// same-unordered?
-//
-// Return #t if the two lists have the same elements in any order.
-// We assume that there are no duplicates in either list.
-// 
-define method same-unordered? (list1 :: <list>, list2 :: <list>)
-    => res :: <boolean>;
-  list1.size == list2.size
-    & block (return)
-	for (elem in list1)
-	  unless (member?(elem, list2))
-	    return(#f);
-	  end;
-	end;
-	#t;
-      end;
-end;
 
 
 // Dumping stuff.
@@ -1382,8 +1565,6 @@ define constant $generic-definition-slots
   = concatenate($function-definition-slots,
 		list(generic-defn-sealed?, sealed:, #f,
 		     generic-defn-seals, seals:, #f,
-		     // %generic-defn-seal-info, seal-info:,
-		     //   %generic-defn-seal-info-setter,
 		     generic-defn-discriminator, discriminator:,
 		       %generic-defn-discriminator-setter));
 
@@ -1394,6 +1575,9 @@ add-make-dumper(#"generic-definition", *compiler-dispatcher*,
 add-make-dumper(#"implicit-generic-definition", *compiler-dispatcher*,
 		<implicit-generic-definition>, $generic-definition-slots,
 		load-external: #t);
+
+add-make-dumper(#"seal-info", *compiler-dispatcher*, <seal-info>,
+		list(seal-types, types:, #f));
 
 define constant $abstract-method-definition-slots
   = concatenate($function-definition-slots,
