@@ -9,13 +9,13 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.1 1994/11/06 20:03:48 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.2 1994/11/06 23:03:08 rgs Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
-#define _ANSI_ARGS_(a)  /* Hack to avoid loading "std-c.h" */
+#define _ANSI_ARGS_(a)  () /* Hack to avoid loading "std-c.h" */
 
 #include "mindy.h"
 #include "gc.h"
