@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.5 1995/06/07 22:36:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.6 1995/06/09 16:16:18 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -708,14 +708,26 @@ define-primitive-emitter
    end);
 
 define-primitive-emitter
-  (#"fixnum-ash",
+  (#"fixnum-shift-left",
    method (defines :: false-or(<definition-site-variable>),
 	   operation :: <primitive>,
 	   output-info :: <output-info>)
        => ();
      let (x, y) = extract-operands(operation, output-info,
 				   *long-rep*, *long-rep*);
-     deliver-result(defines, format-to-string("fixnum_ash(%s, %s)", x, y),
+     deliver-result(defines, format-to-string("(%s << %s)", x, y),
+		    *long-rep*, #f, output-info);
+   end);
+
+define-primitive-emitter
+  (#"fixnum-shift-right",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let (x, y) = extract-operands(operation, output-info,
+				   *long-rep*, *long-rep*);
+     deliver-result(defines, format-to-string("(%s >> %s)", x, y),
 		    *long-rep*, #f, output-info);
    end);
 
@@ -921,18 +933,6 @@ define-primitive-emitter
 		    *long-rep*, #f, output-info);
    end);
 
-define-primitive-emitter
-  (#"single-truncate",
-   method (results :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   output-info :: <output-info>)
-       => ();
-     let x = extract-operands(operation, output-info, *float-rep*);
-     deliver-result(results,
-		    format-to-string("((long)trunc(%s))", x),
-		    *long-rep*, #f, output-info);
-   end);
-
 
 // Double float primitives.
 
@@ -1135,18 +1135,6 @@ define-primitive-emitter
 		    *long-rep*, #f, output-info);
    end);
 
-define-primitive-emitter
-  (#"double-truncate",
-   method (results :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   output-info :: <output-info>)
-       => ();
-     let x = extract-operands(operation, output-info, *double-rep*);
-     deliver-result(results,
-		    format-to-string("((long)trunc(%s))", x),
-		    *long-rep*, #f, output-info);
-   end);
-
 
 // Extended float primitives.
 
@@ -1346,18 +1334,6 @@ define-primitive-emitter
        => ();
      let x = extract-operands(operation, output-info, *long-double-rep*);
      deliver-result(results, format-to-string("((long)rint(%s))", x),
-		    *long-rep*, #f, output-info);
-   end);
-
-define-primitive-emitter
-  (#"extended-truncate",
-   method (results :: false-or(<definition-site-variable>),
-	   operation :: <primitive>,
-	   output-info :: <output-info>)
-       => ();
-     let x = extract-operands(operation, output-info, *long-double-rep*);
-     deliver-result(results,
-		    format-to-string("((long)trunc(%s))", x),
 		    *long-rep*, #f, output-info);
    end);
 

@@ -221,7 +221,8 @@ for (name in #[#"fixnum-=", #"fixnum-<"])
 end;
 
 for (name in #[#"fixnum-+", #"fixnum-*", #"fixnum--", #"fixnum-logior",
-		 #"fixnum-logxor", #"fixnum-logand", #"fixnum-ash"])
+		 #"fixnum-logxor", #"fixnum-logand", #"fixnum-shift-left",
+		 #"fixnum-shift-right"])
   define-primitive
     (name, #(#"<fixed-integer>", #"<fixed-integer>"), #"<fixed-integer>",
      pure: #t);
@@ -276,8 +277,7 @@ for (name in #[#"single-abs", #"single-negative"])
     (name, #(#"<single-float>"), #"<single-float>", pure: #t);
 end;
 
-for (name in #[#"single-floor", #"single-ceiling", #"single-round",
-		 #"single-truncate"])
+for (name in #[#"single-floor", #"single-ceiling", #"single-round"])
   define-primitive
     (name, #(#"<single-float>"),
      #(values:, #"<fixed-integer>", #"<single-float>"),
@@ -317,8 +317,7 @@ for (name in #[#"double-abs", #"double-negative"])
     (name, #(#"<double-float>"), #"<double-float>", pure: #t);
 end;
 
-for (name in #[#"double-floor", #"double-ceiling", #"double-round",
-		 #"double-truncate"])
+for (name in #[#"double-floor", #"double-ceiling", #"double-round"])
   define-primitive
     (name, #(#"<double-float>"),
      #(values:, #"<fixed-integer>", #"<double-float>"),
@@ -359,8 +358,7 @@ for (name in #[#"extended-abs", #"extended-negative"])
     (name, #(#"<extended-float>"), #"<extended-float>", pure: #t);
 end;
 
-for (name in #[#"extended-floor", #"extended-ceiling", #"extended-round",
-		 #"extended-truncate"])
+for (name in #[#"extended-floor", #"extended-ceiling", #"extended-round"])
   define-primitive
     (name, #(#"<extended-float>"),
      #(values:, #"<fixed-integer>", #"<extended-float>"),
