@@ -1,4 +1,4 @@
-Gwydion Dylan 2.3
+Gwydion Dylan 2.4
 =================
 
 Gwydion Dylan provides two implementations of the Dylan programming
@@ -14,6 +14,12 @@ Gwydion Dylan was originally written by the Gwydion Group at CMU as part of
 a research project studying advanced hypercode development environments. It
 is now maintained by a group of volunteers.
 
+Release 2.4 marks the end of feature development of a version of d2c that
+bootstraps using mindy.  Versions 2.5 and onwards will support other
+means of bootstrap, probably using cross-platform compilation of generated
+C files.  We consider 2.4 to be of production stability, even though
+it still lacks certain features.
+
 To install Gwydion Dylan, take a look at the INSTALL file. For a brief
 overview, see the man pages dylan(7), gwydion(7), d2c(1), mindy(1),
 melange(1) and make-dylan-app(1).
@@ -22,21 +28,11 @@ If you'd like a tutorial or a more thorough reference, see the maintainers'
 web site (below). The following online resources are available:
 
   Maintainers' website:    http://www.gwydiondylan.org/
-  Gwydion group:           
-  	http://www-2.cs.cmu.edu/afs/cs/project/gwydion/docs/htdocs/gwydion/
-  FTP Site:                ftp://ftp.gwydiondylan.org/pub/gd/
-  FTP Site (mirror):       ftp://ftp.fu-berlin.de/pub/unix/languages/dylan/
-  Bug reports:             gd-bugs@gwydiondylan.org
   Mail to the maintainers: gd-hackers@gwydiondylan.org
   Newsgroup:               news:comp.lang.dylan
 
 If you use Gwydion to any extent, you'll want subscribe to gd-hackers so
 you can ask questions and report the inevitable bugs. Send a message to
-gd-hackers-subscribe@gwydiondylan.org to subscribe. If you want
-to contribute code or documentation, we enthusiastically encourage you to
-do so.
-
-Be warned: Gwydion is not primarily intended for production work. Some of
-the omissions and shortcomings are sometimes noticable, but it *has* been
-used in real-world projects before. Use Gwydion only if you're feeling
-daring and wish to experiment with a compiler currently under development.
+gd-hackers-request@gwydiondylan.org with the word "subscribe" in the subject 
+to subscribe. If you want to contribute code or documentation, we 
+enthusiastically encourage you to do so.
