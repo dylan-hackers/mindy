@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.10 2001/03/17 03:43:30 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.11 2001/07/07 17:12:59 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -198,7 +198,8 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // Is this a plain, join or spine class? This is used to
   // separate the classes into single-inheritance and
   // multiple-inheritance sets.
-  slot inheritance-type :: one-of (#"plain", #"join", #"spine", #f), init-value: #f;
+  slot inheritance-type :: one-of (#"plain", #"join", #"spine", #f),
+    init-value: #f;
   //
   // The metaclass that determines the class object's slot layout
   constant slot class-metaclass :: false-or(<meta-cclass>), required-init-keyword: metaclass:;
