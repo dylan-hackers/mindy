@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.71 1996/06/26 15:05:28 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.72 1996/06/26 15:23:24 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -826,7 +826,23 @@ define method build-command-line-entry
 end method build-command-line-entry;
 
 define method incorrect-usage () => ();
-  error("Usage: compile [-Ldir ...] lid-file");
+  format(*standard-error*, "Usage: \n\tcompile [-Ldir ...] lid-file\n");
+  format(*standard-error*, "Options:\n");
+  format(*standard-error*, "\t-Ldir\tSearch for library files in dir\n");
+  format(*standard-error*, 
+	 "\t-Dfeature\tDefine feature for #if conditional compilation\n");
+  format(*standard-error*, 
+	 "\t-Ufeature\tUndefine feature for #if conditional compilation\n");
+  format(*standard-error*, "\t-M\tGenerate makefile dependencies\n");
+  format(*standard-error*, 
+	 "\t-no-binaries\tDo not compile the generated C code\n");
+  format(*standard-error*, 
+	 "\t-Ttarget\tGenerate code for the given target machine\n");
+  format(*standard-error*, 
+	 "\tUsually used with -no-binaries\n");
+  format(*standard-error*, 
+	 "\t-tfilename\tGet target environment information from \n"
+	   "\tfilename instead of the default targets.ini\n");
 end method incorrect-usage;
 
 define method main (argv0 :: <byte-string>, #rest args) => ();
@@ -842,6 +858,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let target-machine = #"hppa-hpux";   // Need some better way than 
                                        // assuming we always want an 
                                        // HP compiler...
+  let targets-dot-ini = "/afs/cs/project/gwydion/compiler/include/targets.ini";
   let no-binaries = #f;
   for (arg in args)
     if (arg.size >= 1 & arg[0] == '-')
@@ -876,7 +893,13 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	    if (arg.size > 2)
 	      target-machine := as(<symbol>, copy-sequence(arg, start: 2));
 	    else
-	      error("Target architecture not supplied with -T.");
+	      error("Target environment not supplied with -T.");
+	    end if;
+	  't' =>
+	    if (arg.size > 2)
+	      targets-dot-ini := copy-sequence(arg, start: 2);
+	    else
+	      error("Name of targets description file not supplied with -t.");
 	    end if;
 	  'n' =>
 	    if (arg = "-no-binaries")  // We need this switch to keep gmake
@@ -909,8 +932,7 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
     incorrect-usage();
   end;
      // bug
-  let possible-targets 
-       = get-targets("/afs/cs/project/gwydion/compiler/include/targets.ini");
+  let possible-targets = get-targets(targets-dot-ini);
   if (~key-exists?(possible-targets, target-machine))
     error("Unknown target architecture %=.", target-machine);
   end if;
