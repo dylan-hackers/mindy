@@ -173,3 +173,33 @@ define function find-canonical-pointer-to-c-type
     pointer-type;
   end;
 end;
+
+
+//=========================================================================
+//  Iterating over the types in a repository.
+//=========================================================================
+//  A function to help iterate over all the items in a repository. This is
+//  modeled after 'do' and 'do-handlers'.
+
+define function do-c-type-repository-entries
+    (function :: <function>, repository :: <c-type-repository>)
+ => ()
+  for (item in repository.c-pointer-types)
+    function(item);
+  end;
+  for (item in repository.c-typedef-types)
+    function(item);
+  end;
+  for (item in repository.c-struct-types)
+    function(item);
+  end;
+  for (item in repository.c-union-types)
+    function(item);
+  end;
+  for (item in repository.c-enum-types)
+    function(item);
+  end;
+  for (item in repository.c-other-types)
+    function(item);
+  end;
+end;

@@ -140,7 +140,8 @@ define module c-type-repositories
     <c-identifier-table>,
     <c-type-repository>,
     find-canonical-c-type,
-    find-canonical-pointer-to-c-type;
+    find-canonical-pointer-to-c-type,
+    do-c-type-repository-entries;
 end;
 
 define module ansi-c
