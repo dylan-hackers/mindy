@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/Base-cw.lid,v 1.1 2002/03/12 22:00:50 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/Base-cw.lid,v 1.1.10.1 2004/10/05 00:36:40 gabor Exp $
 library: compiler-base
 unit-prefix: base
 unique-id-base: 10000
@@ -30,3 +30,4 @@ data-flow.dylan
 control-flow.dylan
 signature.dylan
 platform.dylan
+platform-constants.dylan
