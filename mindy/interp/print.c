@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.4 1994/06/11 02:23:42 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.5 1994/06/11 17:18:20 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -156,7 +156,7 @@ void vformat(char *fmt, obj_t *args)
 	    switch (*++fmt) {
               case 'd':
 		check_type(*args, obj_IntegerClass);
-		fprintf(stdout, "%d", fixnum_value(*args++));
+		fprintf(stdout, "%ld", fixnum_value(*args++));
 		break;
               case 'b':
 		check_type(*args, obj_IntegerClass);
@@ -164,11 +164,11 @@ void vformat(char *fmt, obj_t *args)
 		break;
               case 'o':
 		check_type(*args, obj_IntegerClass);
-		fprintf(stdout, "%o", fixnum_value(*args++));
+		fprintf(stdout, "%lo", fixnum_value(*args++));
 		break;
               case 'x':
 		check_type(*args, obj_IntegerClass);
-		fprintf(stdout, "%x", fixnum_value(*args++));
+		fprintf(stdout, "%lx", fixnum_value(*args++));
 		break;
 	      case 'c':
 		check_type(*args, obj_CharacterClass);
