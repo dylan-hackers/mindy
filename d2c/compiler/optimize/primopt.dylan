@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.5 1995/06/07 22:52:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/primopt.dylan,v 1.6 1995/06/09 19:09:41 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -372,19 +372,9 @@ define-primitive-transformer
 define-primitive-transformer
   (#"==",
    method (component :: <component>, primitive :: <primitive>) => ();
-     let x = primitive.depends-on.source-exp;
-     let x-type = x.derived-type;
-     let y = primitive.depends-on.dependent-next.source-exp;
-     let y-type = y.derived-type;
-     if (~ctypes-intersect?(x-type, y-type))
-       replace-expression(component, primitive.dependents,
-			  make-literal-constant(make-builder(component),
-						as(<ct-value>, #f)));
-     elseif (instance?(x-type, <singleton-ctype>) & x-type == y-type)
-       replace-expression(component, primitive.dependents,
-			  make-literal-constant(make-builder(component),
-						as(<ct-value>, #t)));
-     end;
+     trivial-==-optimization(component, primitive,
+			     primitive.depends-on.source-exp,
+			     primitive.depends-on.dependent-next.source-exp);
    end);
 
 define-primitive-transformer
