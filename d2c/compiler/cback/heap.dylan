@@ -277,18 +277,22 @@ end;
 
 define method spew-object
     (object :: <union-ctype>, state :: <state>) => ();
-  let members = #();
-  let singletons = #();
+  let mems = #();
+  let sings = #();
   for (member in object.members)
     if (instance?(member, <singleton-ctype>))
-      singletons := pair(member.singleton-value, singletons);
+      sings := pair(member.singleton-value, sings);
     else
-      members := pair(member, members);
+      mems := pair(member, mems);
     end;
   end;
   spew-instance(specifier-type(#"<union>"), state,
-		union-members: make(<literal-list>, contents: members),
-		union-singletons: make(<literal-list>, contents: singletons));
+		union-members: make(<literal-list>,
+				    contents: mems,
+				    sharable: #t),
+		union-singletons: make(<literal-list>,
+				       contents: sings,
+				       sharable: #t));
 end;
 
 define method spew-object
