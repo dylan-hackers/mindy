@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.22 1995/05/03 07:28:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.23 1995/05/05 08:51:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -999,8 +999,7 @@ define method make-error-operation
     (builder :: <fer-builder>, msg :: <byte-string>, #rest args)
     => res :: <operation>;
   let error = dylan-defn-leaf(builder, #"error");
-  let msg = make-literal-constant(builder,
-				  make(<literal-string>, contents: msg));
+  let msg = make-literal-constant(builder, as(<ct-value>, msg));
   make-unknown-call(builder, concatenate(list(error, msg), args));
 end method;
 
