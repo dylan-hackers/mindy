@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.14 1995/04/23 02:04:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.15 1995/04/23 21:49:45 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -270,8 +270,8 @@ define method definition-site-for
 end;
 
 define method definition-site-for
-    (component :: <component>, var :: <ssa-variable>)
-    => res :: <ssa-variable>;
+    (component :: <component>, var :: <definition-site-variable>)
+    => res :: <definition-site-variable>;
   var;
 end;
 
