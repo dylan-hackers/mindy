@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/evaluate.dylan,v 1.2 2003/02/15 19:33:01 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/evaluate.dylan,v 1.3 2003/02/16 14:09:28 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -386,7 +386,10 @@ end;
 
 define method evaluate(expr :: <known-call>, environment :: <interpreter-environment>)
  => result :: <ct-value>;
-  let func :: <method-literal> = expr.depends-on.source-exp;
+  let func /* :: <method-literal> */ = expr.depends-on.source-exp;
+  if(instance?(func, <literal-constant>))
+    func := evaluate(func, environment);
+  end if;
   let args = expr.depends-on.dependent-next;
   evaluate-call(func, args, environment);
 end;
