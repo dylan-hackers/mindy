@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.9 1994/06/27 16:49:29 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/literal.c,v 1.10 1994/08/22 23:17:25 wlott Exp $
 *
 * This file implements the various kinds of literal constants.
 *
@@ -223,7 +223,7 @@ void free_literal(struct literal *literal)
 struct literal *dup_literal(struct literal *literal)
 {
     size_t size = 0;
-    struct literal *res;
+    struct literal *res, *tail;
     struct literal *l, **prev;
 
     switch (literal->kind) {
@@ -269,8 +269,11 @@ struct literal *dup_literal(struct literal *literal)
 
     switch (literal->kind) {
       case literal_LIST:
-	((struct list_literal *)res)->tail
-	    = dup_literal(((struct list_literal *)literal)->tail);
+	tail = ((struct list_literal *)literal)->tail;
+	if (tail != NULL)
+	    ((struct list_literal *)res)->tail = dup_literal(tail);
+	else
+	    ((struct list_literal *)res)->tail = NULL;
 	/* Fall though */
       case literal_VECTOR:
 	prev = &((struct vector_literal *)res)->first;
