@@ -1,0 +1,6 @@
+do emit_library_rule(
+    'CollExt',
+    '../dylan/dylan.lib.du',
+    '-L../dylan',
+    'compile', 'install'
+);

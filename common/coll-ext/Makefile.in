@@ -1,0 +1,96 @@
+######################################################################
+##
+## Copyright (c) 1994  Carnegie Mellon University
+## All rights reserved.
+## 
+## Use and copying of this software and preparation of derivative
+## works based on this software are permitted, including commercial
+## use, provided that the following conditions are observed:
+## 
+## 1. This copyright notice must be retained in full on any copies
+##    and on appropriate parts of any derivative works.
+## 2. Documentation (paper or online) accompanying any system that
+##    incorporates this software, or any part of it, must acknowledge
+##    the contribution of the Gwydion Project at Carnegie Mellon
+##    University.
+## 
+## This software is made available "as is".  Neither the authors nor
+## Carnegie Mellon University make any warranty about the software,
+## its performance, or its conformity to any specification.
+## 
+## Bug reports, questions, comments, and suggestions should be sent by
+## E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
+##
+######################################################################
+##
+##  $Header: /home/housel/work/rcs/gd/src/common/coll-ext/Attic/Makefile.in,v 1.1 1996/02/17 16:55:12 nkramer Exp $
+##
+##  This is the makefile for the "collection extensions" library
+##
+
+SHELL	=	/bin/sh
+
+##
+## begin autoconf'ed source
+##
+
+prefix	=		@prefix@
+exec_prefix	=	@exec_prefix@
+srcdir	=		@srcdir@
+
+SRCDIR	=		${srcdir}
+BINDIR	=		${exec_prefix}/bin
+LIBDIR	=		${exec_prefix}/lib/mindy
+
+CC	=		@CC@
+CCOPTS	=		@CCOPTS@
+CFLAGS	=		$(CCOPTS) -I${SRCDIR} @DEFS@ -DBINDIR=\"${BINDIR}\" -DLIBDIR=\"${LIBDIR}\"
+YACC	=		@YACC@
+YFLAGS	=		-d
+LEX	=		@LEX@
+LFLAGS	=		@LFLAGS@
+RANLIB	=		@RANLIB@
+INSTALL	=		@INSTALL@
+INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
+INSTALL_DATA	=	@INSTALL_DATA@
+
+LIBOBJS =		@LIBOBJS@
+LIBS	=		@LIBS@
+
+##
+## end of configure written portion
+##
+
+MC	=	../../comp/mindycomp
+
+MINDYFLAGS = -lcollection-extensions
+
+OBJS = library.dbc heap.dbc solist.dbc subseq.dbc vecsearch.dbc \
+	sde-vector.dbc sequence-diff.dbc
+
+collection-extensions.dbc: ${OBJS}
+	cat ${OBJS} > $@
+
+library.dbc: ${SRCDIR}/library.dylan
+	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
+heap.dbc: ${SRCDIR}/heap.dylan
+	${MC} ${MINDYFLAGS} -o heap.dbc ${SRCDIR}/heap.dylan
+solist.dbc: ${SRCDIR}/solist.dylan
+	${MC} ${MINDYFLAGS} -o solist.dbc ${SRCDIR}/solist.dylan
+subseq.dbc: ${SRCDIR}/subseq.dylan
+	${MC} ${MINDYFLAGS} -o subseq.dbc ${SRCDIR}/subseq.dylan
+vecsearch.dbc: ${SRCDIR}/vecsearch.dylan
+	${MC} ${MINDYFLAGS} -o vecsearch.dbc ${SRCDIR}/vecsearch.dylan
+sde-vector.dbc: ${SRCDIR}/sde-vector.dylan
+	${MC} ${MINDYFLAGS} -o sde-vector.dbc ${SRCDIR}/sde-vector.dylan
+sequence-diff.dbc: ${SRCDIR}/sequence-diff.dylan
+	${MC} ${MINDYFLAGS} -o sequence-diff.dbc ${SRCDIR}/sequence-diff.dylan
+
+clean:
+	rm -f ${OBJS} collection-extensions.dbc *~ \#* core
+
+realclean:
+	rm -f ${OBJS} collection-extensions.dbc Makefile *~ \#* core
+
+install: collection-extensions.dbc
+	${INSTALL_DATA} collection-extensions.dbc ${LIBDIR}
