@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.37 1995/11/16 14:33:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.38 1995/11/16 17:07:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -311,6 +311,9 @@ define method compile-library (lid-file :: <byte-string>) => ();
   end;
 
   format(*debug-output*, "Optimize called %d times.\n", *optimize-ncalls*);
+
+  format(*debug-output*, "Compilation finished with %d Warning%s\n",
+	 *warnings*, if (*warnings* == 1) "" else "s" end);
 end;
 
 

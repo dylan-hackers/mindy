@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.10 1995/11/14 14:19:22 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.11 1995/11/16 17:07:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -293,9 +293,12 @@ define constant assert
       end;
     end;
 
+define variable *warnings* = 0;
+
 define constant compiler-warning = method (#rest args) => ();
   apply(format, *debug-output*, args);
   format(*debug-output*, "\n");
+  *warnings* := *warnings* + 1;
 end;
 
 define constant compiler-error

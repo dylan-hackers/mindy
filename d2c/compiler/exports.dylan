@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.113 1995/11/15 15:56:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.114 1995/11/16 17:07:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -43,7 +43,7 @@ define module utils
     find-in, size-in,
     dformat, assert,
     <annotatable>, info, info-setter,
-    compiler-warning, compiler-error, key-of, list?, pair?,
+    compiler-warning, *warnings*, compiler-error, key-of, list?, pair?,
     symcat;
 end;
 
@@ -774,6 +774,7 @@ end;
 define module define-libraries-and-modules
   use common;
   use utils;
+  use names;
   use compile-time-values;
   use tokens;
   use parse-tree;
