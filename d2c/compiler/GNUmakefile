@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.26 1995/12/11 15:33:00 wlott Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.27 1995/12/11 15:47:20 wlott Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -8,7 +8,7 @@ MINDYFLAGS = -lcompiler
 MINDY = mindy
 
 %.dbc: %.dylan
-	$(MC) ${MINDYFLAGS} -o $@ $$PWD/$<
+	$(MC) ${MINDYFLAGS} -o $@ `truename $<`
 
 # Autodump divides object files into two types: Normal ones, and 
 # ones derived from autodumped Dylan code.
