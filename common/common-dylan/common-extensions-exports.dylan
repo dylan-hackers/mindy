@@ -22,7 +22,6 @@ define library common-extensions
     simple-io,
     simple-random,
     simple-profiling,
-    simple-debugging,
     byte-vectors,
     functional-extensions;
 end library;
@@ -153,11 +152,7 @@ define module simple-profiling
   // XXX - Needs definition.
 end module;
 
-define module simple-debugging
-  // XXX - Needs definition.
-end module;
-
-define module byte-vectors
+define module byte-vector
   use extensions,
     export: {<byte>,
 	     <byte-vector>};
