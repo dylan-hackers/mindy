@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.108 1995/11/13 17:59:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.109 1995/11/14 13:29:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -115,7 +115,8 @@ define module od-format
     maybe-dump-reference,
     load-external-definition,
     add-make-dumper,
-    state-stack, state-stack-setter;
+    state-stack, state-stack-setter,
+    *Data-Unit-Search-Path*;
 
 end;
 
@@ -315,13 +316,14 @@ define module variables
   use names;
   use definitions;
   use variables-dumper-vars;
+  use od-format;
 
   use forwards, import: {<module>}, export: all;
   export
     $Dylan-Library, $Dylan-Module, *Current-Library*, *Current-Module*,
 
     <library>, find-library, library-name, note-library-definition,
-    find-module, module-name, module-syntax-table,
+    find-module, complete-module, module-name, module-syntax-table,
     note-module-definition,
     <variable>, find-variable, variable-name, variable-definition,
     variable-transformers, variable-transformers-setter,
