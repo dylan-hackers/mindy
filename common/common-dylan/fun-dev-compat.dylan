@@ -364,7 +364,7 @@ define method string-to-integer (string :: <sequence>, #key base = 10)
 				      error("Invalid digit %=", string[i]);
                 end select;
     if (digit >= base)
-      error("\"%s\" isn't in base %d\n", string, base);
+      error("\"%s\" isn't in base %d", string, base);
     else
       number := number * base  + digit;
     end if;
