@@ -1,5 +1,5 @@
 module: fragments
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.1 1994/12/12 13:01:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/fragments.dylan,v 1.2 1994/12/17 02:06:41 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -24,7 +24,7 @@ define method print-object (frag :: <fragment>, stream :: <stream>) => ();
 	     pprint-indent(#"block", 2, stream);
 	     let tail = frag.fragment-tail;
 	     for (piece = frag.fragment-head then piece.piece-next,
-		  while piece & piece.piece-prev ~= tail)
+		  while: piece & piece.piece-prev ~= tail)
 	       write(' ', stream);
 	       pprint-newline(#"linear", stream);
 	       print(piece.piece-token, stream);
