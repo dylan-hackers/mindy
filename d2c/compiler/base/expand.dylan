@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.10 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.11 1996/01/27 00:17:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -161,7 +161,7 @@ define method expand-assignment (place :: <funcall>, value :: <expression>)
 	    function: make(<varref>, id: setter),
 	    arguments: as(<simple-object-vector>, args)));
   add!(forms, make(<varref>, id: value-temp));
-  as(<simple-object-vector>, forms);
+  vector(make(<begin>, body: as(<simple-object-vector>, forms)));
 end;
 
 define method expand-assignment (place :: <dot>, value :: <expression>)
@@ -172,8 +172,9 @@ define method expand-assignment (place :: <dot>, value :: <expression>)
   let args = vector(make(<varref>, id: value-temp),
 		    make(<varref>, id: arg-temp));
   let funcall = make(<funcall>, function: function, arguments: args);
-  vector(arg-bind-form, value-bind-form, funcall,
-	 make(<varref>, id: value-temp));
+  vector(make(<begin>,
+	      body: vector(arg-bind-form, value-bind-form, funcall,
+			   make(<varref>, id: value-temp))));
 end;
 
 define method expand-assignment (place :: <expression>, value :: <expression>)
@@ -262,7 +263,7 @@ define method expand (form :: <for>, lexenv :: false-or(<lexenv>))
 	 make(<funcall>,
 	      function: make(<varref>, id: repeat),
 	      arguments: as(<simple-object-vector>, init-forms)));
-    as(<simple-object-vector>, outer-body);
+    vector(make(<begin>, body: as(<simple-object-vector>, outer-body)));
   end;
 end;
   
