@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.14 1995/07/11 12:39:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/init.c,v 1.15 1996/03/07 17:47:11 nkramer Exp $
 *
 * This file initializes everything else.
 *
@@ -86,6 +86,7 @@ extern void init_c_classes(void);
 extern void init_obj_functions(void);
 extern void init_type_functions(void);
 extern void init_sym_functions(void);
+extern void init_coll_functions(void);
 extern void init_list_functions(void);
 extern void init_str_functions(void);
 extern void init_vec_functions(void);
@@ -176,6 +177,7 @@ void init(void)
     init_obj_functions();
     init_type_functions();
     init_sym_functions();
+    init_coll_functions();
     init_list_functions();
     init_str_functions();
     init_vec_functions();
