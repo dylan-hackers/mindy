@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.10 1995/05/26 13:13:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.11 1995/05/29 00:43:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -787,15 +787,16 @@ literal (<false-token>)
 
 literal (<sharp-paren-token> constants <dot-token> constant
 	 <right-paren-token>)
-  make(<literal-list>, contents: as(<simple-object-vector>, %2), tail: %4);
+  make(<literal-list>, sharable: #t,
+       contents: as(<simple-object-vector>, %2), tail: %4);
 %
 
 literal (<sharp-paren-token> constants-opt <right-paren-token>)
-  make(<literal-list>, contents: %2);
+  make(<literal-list>, sharable: #t, contents: %2);
 %
 
 literal (<sharp-bracket-token> constants-opt <right-bracket-token>)
-  make(<literal-simple-object-vector>, contents: %2);
+  make(<literal-simple-object-vector>, sharable: #t, contents: %2);
 %
 
 :type strings <stretchy-vector>
@@ -1106,18 +1107,20 @@ modified-constant (<false-token>)
 modified-constant (<sharp-paren-token> constants <dot-token> constant
 	 <right-paren-token>)
   make(<literal-ref>,
-       literal: make(<literal-list>,
+       literal: make(<literal-list>, sharable: #t,
 		     contents: as(<simple-object-vector>, %2),
 		     tail: %4));
 %
 
 modified-constant (<sharp-paren-token> constants-opt <right-paren-token>)
-  make(<literal-ref>, literal: make(<literal-list>, contents: %2));
+  make(<literal-ref>, 
+       literal: make(<literal-list>, sharable: #t, contents: %2));
 %
 
 modified-constant (<sharp-bracket-token> constants-opt <right-bracket-token>)
   make(<literal-ref>,
-       literal: make(<literal-simple-object-vector>, contents: %2));
+       literal: make(<literal-simple-object-vector>, sharable: #t,
+		     contents: %2));
 %
 
 :type end-clause |union(<false>, <begin-word-token>)|
