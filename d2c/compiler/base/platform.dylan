@@ -1,6 +1,6 @@
 module: target-environment
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.10 1996/09/15 15:33:31 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.11 1996/12/05 14:00:34 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -81,9 +81,13 @@ define sealed class <target-environment> (<object>)
   // perhaps this next one should be supports-stabs...
   constant slot supports-debugging? :: <boolean> = #f,
     init-keyword: #"supports-debugging?";
+
   constant slot uses-win32-stabs? :: <boolean> = #f,
     init-keyword: #"uses-win32-stabs?";
   // rather than unix-stabs, which are slightly different
+
+  constant slot omit-colon-after-label-declarations? :: <boolean> = #f,
+    init-keyword: #"omit-colon-after-label-declarations?";
 end class <target-environment>;
 
 define sealed domain make(singleton(<target-environment>));
@@ -150,7 +154,8 @@ define function add-target!
 	#"target-name" =>
 	  keyword-values := add!(keyword-values, as(<symbol>, val));
 	#"link-doesnt-search-for-libs?", #"import-directive-required?", 
-	#"supports-debugging?", #"uses-win32-stabs?" =>
+	#"supports-debugging?", #"uses-win32-stabs?", 
+	#"omit-colon-after-label-declarations?" =>
 	  keyword-values := add!(keyword-values, string-to-boolean(val));
 	#"integer-length" =>
 	  keyword-values := add!(keyword-values, string-to-integer(val));
