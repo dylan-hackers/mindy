@@ -9,7 +9,6 @@ define library common-dylan
 	      simple-random,
 	      simple-profiling,
 	      simple-debugging,
-	      machine-words,
 	      byte-vectors };
 
   use transcendental,

@@ -22,7 +22,6 @@ define library common-extensions
     simple-profiling,
     simple-debugging,
     byte-vectors,
-    machine-words;
 end library;
 
 define module c-support
@@ -156,10 +155,6 @@ define module byte-vectors
   use extensions,
     export: {<byte>,
 	     <byte-vector>};
-end module;
-
-define module machine-words
-  // XXX - Needs definition.
 end module;
 
 /*
