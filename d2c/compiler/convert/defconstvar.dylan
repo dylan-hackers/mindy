@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.13 1995/04/29 04:04:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.14 1995/05/03 07:27:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -309,12 +309,14 @@ define method convert-top-level-form
 		  let type-defn = defn.var-defn-type-defn;
 		  build-assignment
 		    (builder, policy, source, #(),
-		     make-set-operation(builder, type-defn, type));
+		     make-operation(builder, <set>, list(type),
+				    var: type-defn));
 		end;
 		make-check-type-operation(init-builder, temp, type);
 	      end;
 	  build-assignment(init-builder, policy, source, #(),
-			   make-set-operation(init-builder, defn, checked));
+			   make-operation(init-builder, <set>, list(checked),
+					  var: defn));
 	end;
 	temp;
       end;
@@ -330,10 +332,12 @@ define method convert-top-level-form
 		  #"assignment", cluster);
       build-assignment
 	(builder, policy, source, concatenate(vars, list(rest-temp)),
-	 make-primitive-operation
-	   (builder, #"canonicalize-results", list(cluster)));
+	 make-operation
+	   (builder, <primitive>, list(cluster),
+	    name: #"canonicalize-results"));
       build-assignment(init-builder, policy, source, #(),
-		       make-set-operation(init-builder, rest-defn, rest-temp));
+		       make-operation(init-builder, <set>, list(rest-temp),
+				      var: rest-defn));
     else
       fer-convert(builder, bindings.bindings-expression, lexenv,
 		  #"assignment", vars);
@@ -355,6 +359,6 @@ define method convert-top-level-form
   if (defn.function-defn-hairy? | ~literal-method?)
     let source = make(<source-location>);
     build-assignment(builder, lexenv.lexenv-policy, source, #(),
-		     make-set-operation(builder, defn, leaf));
+		     make-operation(builder, <set>, list(leaf), var: defn));
   end;
 end;
