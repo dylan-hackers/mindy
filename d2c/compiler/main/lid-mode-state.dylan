@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.8 2002/10/29 23:38:15 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.9 2002/12/07 00:49:08 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -71,7 +71,10 @@ define class <lid-mode-state> (<main-unit-state>)
   
   // The name of the .ar file we generated.
   slot unit-ar-name :: <byte-string>;
-  
+
+  // should this library be a complete embeddable Dylan application
+  slot unit-embedded? :: <boolean> = #f;
+
   // The name of the executable file we generate.
   slot unit-executable :: false-or(<byte-string>);
 end class <lid-mode-state>;
@@ -154,6 +157,8 @@ define method parse-lid (state :: <lid-mode-state>) => ();
 
   state.unit-header := header;
   state.unit-files := concatenate(files, ofiles);
+  state.unit-executable := element(header, #"executable", default: #f);
+  state.unit-embedded? := element(header, #"embedded?", default: #f) & #t;
 end method parse-lid;
 
 // save-c-file is #t when we don't want the .c file added to the
@@ -210,7 +215,7 @@ define method parse-and-finalize-library (state :: <lid-mode-state>) => ();
 
   state.unit-shared?
     := ~state.unit-link-static
-       & ~element(state.unit-header, #"executable", default: #f)
+       & ~state.unit-executable
        & boolean-header-element(#"shared-library", #t, state)
        & state.unit-target.shared-library-filename-suffix
        & state.unit-target.shared-object-filename-suffix
@@ -462,10 +467,9 @@ end method compile-all-files;
 // .c and .o and update the make file.
 // 
 define method build-library-inits (state :: <lid-mode-state>) => ();
-    let executable = element(state.unit-header, #"executable", default: #f);
     let executable
-     = if (executable)
-	 concatenate(executable, state.unit-target.executable-filename-suffix);
+     = if (state.unit-executable)
+	 concatenate(state.unit-executable, state.unit-target.executable-filename-suffix);
        else 
 	 #f;
        end if;
@@ -593,36 +597,37 @@ end method;
 
 define method build-da-global-heap (state :: <lid-mode-state>) => ();
   format(*debug-output*, "Emitting Global Heap.\n");
-  #if (macos)
+  let c-name = concatenate(state.unit-lid-file.filename-prefix, "heap.c");
+  let o-name = concatenate(state.unit-lid-file.filename-prefix, "heap",
+                           if (state.unit-shared?)
+			     state.unit-target.shared-object-filename-suffix;
+			   else
+			     state.unit-target.object-filename-suffix
+			   end);
   let heap-stream 
-       = make(<file-stream>, 
-	      locator: concatenate(state.unit-lid-file.filename-prefix,
-				   "heap.c"), 
-	      direction: #"output");
-  #else
-  let heap-stream 
-  	= make(<file-stream>, locator: "heap.c", direction: #"output");
-  #endif
+  	= make(<file-stream>, locator: c-name, direction: #"output");
   let heap-state = make(<global-heap-file-state>, unit: state.unit-cback-unit,
 			body-stream: heap-stream); //, target: state.unit-target);
   build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
 		    heap-state);
   close(heap-stream);
+  output-c-file-rule(state, c-name, o-name);
+  state.unit-all-generated-files 
+    := add!(state.unit-all-generated-files, c-name);
 end method;
 
 
 define method build-inits-dot-c (state :: <lid-mode-state>) => ();
   format(*debug-output*, "Building inits.c.\n");
-#if (macos) 
+  let c-name = concatenate(state.unit-lid-file.filename-prefix, "inits.c");
+  let o-name = concatenate(state.unit-lid-file.filename-prefix, "inits",
+                           if (state.unit-shared?)
+			     state.unit-target.shared-object-filename-suffix;
+			   else
+			     state.unit-target.object-filename-suffix
+			   end);
   let stream
-   = make(<file-stream>, 
-	  locator: concatenate(state.unit-lid-file.filename-prefix,
-			       "inits.c"), 
-	  direction: #"output");
-#else
-  let stream
-   = make(<file-stream>, locator: "inits.c", direction: #"output");
-#endif
+   = make(<file-stream>, locator: c-name, direction: #"output");
   format(stream, "#include \"runtime.h\"\n\n");
   format(stream, 
 	"/* This file is machine generated.  Do not edit. */\n\n");
@@ -636,8 +641,13 @@ define method build-inits-dot-c (state :: <lid-mode-state>) => ();
 	   "extern void %s(descriptor_t *sp, int argc, void *argv);\n\n",
 	   entry-function-name);
   end if;
+  if(state.unit-embedded?)
   format(stream,
+	 "void inits()\n{\n    descriptor_t *sp = allocate(64*1024);\n\n");
+  else    
+    format(stream,
 	 "void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
+  end if;
   for (unit in *units*)
     format(stream, "    %s_Library_init(sp);\n", string-to-c-name(unit.unit-name));
   end;
@@ -645,18 +655,23 @@ define method build-inits-dot-c (state :: <lid-mode-state>) => ();
     format(stream, "    %s(sp, argc, argv);\n", entry-function-name);
   end if;
   format(stream, "}\n");
-  format(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
+  if(~state.unit-embedded?)
+    format(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
 #if (macos)
-  format(stream, "#include<console.h>\n");
+   format(stream, "#include<console.h>\n");
 #endif
-  format(stream, "int main(int argc, char *argv[]) {\n");
+   format(stream, "int main(int argc, char *argv[]) {\n");
 #if (macos)
-  format(stream, "    argc = ccommand( &argv );\n");
+   format(stream, "    argc = ccommand( &argv );\n");
 #endif
-  format(stream, "    real_main(argc, argv);\n");
-  format(stream, "    return 0;\n");
-  format(stream, "}\n");
-  close(stream);
+   format(stream, "    real_main(argc, argv);\n");
+   format(stream, "    return 0;\n");
+   format(stream, "}\n");
+ end if;
+ close(stream);
+ output-c-file-rule(state, c-name, o-name);
+ state.unit-all-generated-files 
+   := add!(state.unit-all-generated-files, c-name);
 end method;
 
 define method build-executable (state :: <lid-mode-state>) => ();
@@ -696,16 +711,6 @@ define method build-executable (state :: <lid-mode-state>) => ();
     end unless;
   end;
 
-  // We make sure the linker is not given any source files, only
-  // library and object files
-  format(state.unit-makefile, "\n");
-  let inits-dot-o 
-    = concatenate("inits", state.unit-target.object-filename-suffix);
-  let heap-dot-o
-    = concatenate("heap", state.unit-target.object-filename-suffix);
-  output-c-file-rule(state, "inits.c", inits-dot-o);
-  output-c-file-rule(state, "heap.c", heap-dot-o);
-
   let dash-cap-ells = "";
   // If cross-compiling, throw in a bunch of -Ls that will probably help.
   if (state.unit-no-binaries)
@@ -722,9 +727,8 @@ define method build-executable (state :: <lid-mode-state>) => ();
 
   let unit-libs = use-correct-path-separator(unit-libs, state.unit-target);
 
-  // Again, make sure inits.o and heap.o come first
-  let objects = format-to-string("%s %s %s %s", inits-dot-o, heap-dot-o, 
-				 state.unit-ar-name, unit-libs);
+  // Again, make sure inits.o and heap.o come first XXX old comment
+  let objects = format-to-string("%s %s", state.unit-ar-name, unit-libs);
 
   // rule to link executable
   format(state.unit-makefile, "\n%s : %s\n", state.unit-executable, objects);
@@ -822,12 +826,14 @@ define method compile-library (state :: <lid-mode-state>)
     if (~ zero?(*errors*)) give-up(); end if;
     build-library-inits(state);
     build-local-heap-file(state);
-    build-ar-file(state);
-    if (state.unit-executable)
-      log-target(state.unit-executable);
+    if(state.unit-executable | state.unit-embedded?)
       calculate-type-inclusion-matrix();
       build-da-global-heap(state);
       build-inits-dot-c(state);
+    end if;
+    build-ar-file(state);
+    if (state.unit-executable)
+      log-target(state.unit-executable);
       build-executable(state);
     else
       dump-library-summary(state);
