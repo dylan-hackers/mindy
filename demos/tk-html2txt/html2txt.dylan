@@ -79,7 +79,8 @@ synopsis:	Converts a file in WWW "HyperText Markup Language" into
 // not terribly well defined at present.
 define library html
   use dylan;
-  use streams;
+  use new-streams;
+  use standard-io;
   use collection-extensions;
   use string-extensions;
   use tk;
@@ -99,8 +100,8 @@ define module html
   // From string-extensions:
   use substring-search;
   
-  // I/O support from the "streams" library
-  use streams;
+  // I/O support from the "streams" and "standard-io" libraries
+  use new-streams;
   use standard-io;
 
   // And, of course, the nifty new tk/TK library
@@ -283,70 +284,99 @@ define constant <tag-table> = <self-organizing-list>;
 //////////////////////////////////////////////////////////////////////////
 //			       Window Streams				//
 //////////////////////////////////////////////////////////////////////////
-define class <window-stream> (<stream>)
+define class <window-stream> (<buffered-stream>)
   slot window :: <text>, required-init-keyword: #"window";
   slot buffer :: <buffer>;
-  slot next :: <integer>, init-value: 0;
 end class <window-stream>;
+
+define method stream-open? (stream :: <window-stream>)
+ => open? :: singleton(#t);
+  #t;
+end method stream-open?;
+
+define method stream-element-type (stream :: <window-stream>)
+ => type :: singleton(<byte-character>);
+  <byte-character>;
+end method stream-element-type;
+
+define method stream-at-end? (stream :: <window-stream>)
+ => at-end? :: singleton(#f);
+  #f;
+end method stream-at-end?;
 
 define method initialize
     (object :: <window-stream>, #next next, #key size = 256, #all-keys);
-  object.buffer := make(<buffer>, size: size);
+  object.buffer := make(<buffer>, size: size, end: size);
 end method initialize;
 
-define method close (stream :: <window-stream>) => ();
+define method close (stream :: <window-stream>, #all-keys) => ();
   #f;
 end method close;
 
-define method stream-extension-get-output-buffer
-    (stream :: <window-stream>)
- => (buffer :: <buffer>, next :: <buffer-index>, last :: <buffer-index>);
-  values(stream.buffer, stream.next, stream.buffer.size);
-end method stream-extension-get-output-buffer;
+define method do-get-output-buffer (stream :: <window-stream>,
+				    #key bytes :: <integer> = 1)
+ => buffer :: <buffer>;
+  let buff :: <buffer> = stream.buffer;
+  if (buff.size < bytes)
+    error("Can't possibly get %d bytes -- %=", bytes, stream);
+  elseif ((buff.buffer-end - buff.buffer-next) < bytes)
+    do-force-output-buffers(stream);
+  end;  
+  buff;
+end method do-get-output-buffer;
 
 define constant newline-value = as(<integer>, '\n');
-define method stream-extension-release-output-buffer
-    (stream :: <window-stream>, next :: <buffer-index>)
+define method do-release-output-buffer (stream :: <window-stream>)
  => ();
 // The commented code provides "eager" behavior -- i.e. it forces output after
 // newlines.  This is useful, but probably not worth the cost, especially
 // since we already have explicit "force"s in place.
-//  let buff = stream.buffer;
-//  for (i from next - 1 to 0 by -1, until buff[i] == newline-value)
-//  finally
-//    if (i >= 0)
-//      // ERROR: fails if result-class is anything other than <byte-string>
-//      let extra = buffer-subsequence(buff, <byte-string>, i + 1, next);
-//      insert(stream.window, "end",
-//	     buffer-subsequence(buff, <byte-string>, 0, i + 1));
-//      copy-into-buffer!(extra, buff, 0);
-//      stream.next := extra.size;
-//    else
-  stream.next := next;
-//    end if;
-//  end for;
-end method stream-extension-release-output-buffer;
+  let buff = stream.buffer;
+  let next = buff.buffer-next;
+  for (i from next - 1 to 0 by -1, until: buff[i] == newline-value)
+  finally
+    if (i >= 0)
+//       ERROR: fails if result-class is anything other than <byte-string>
+      let extra = buffer-subsequence(buff, <byte-string>, i + 1, next);
+      insert(stream.window, "end",
+	     buffer-subsequence(buff, <byte-string>, 0, i + 1));
+      copy-into-buffer!(buff, 0, extra);
+      buff.buffer-next := extra.size;
+    else
+      #f;
+    end if;
+  end for;
+end method do-release-output-buffer;
 
-define method stream-extension-empty-output-buffer
-    (stream :: <window-stream>, last :: <buffer-index>)
+define method do-next-output-buffer (stream :: <window-stream>,
+				     #key bytes :: <integer> = 1)
+ => buf :: <buffer>;
+  let buff :: <buffer> = stream.buffer;
+  if (buff.size < bytes)
+    error("Can't possibly get %d bytes -- %=", bytes, stream);
+  elseif ((buff.buffer-end - buff.buffer-next) < bytes)
+    do-force-output-buffers(stream);
+  end;
+  buff;
+end method do-next-output-buffer;
+
+define method do-force-output-buffers (stream :: <window-stream>)
  => ();
   let buff = stream.buffer;
+  let last = buff.buffer-next;
   insert(stream.window, "end",
 	 buffer-subsequence(buff, <byte-string>, 0, last));
   if (last ~= buff.size)
     let extra = buffer-subsequence(buff, <byte-string>, last, buff.size);
-    copy-into-buffer!(extra, buff, 0);
-    stream.next := extra.size;
+    copy-into-buffer!(buff, 0, extra);
+    buff.buffer-next := extra.size;
   else
-    stream.next := 0;
+    buff.buffer-next := 0;
   end if;
-end method stream-extension-empty-output-buffer;
+end method do-force-output-buffers;
 
-// Error: documentation claims there are 2 arguments
-define method stream-extension-synchronize
-    (stream :: <window-stream>) => ();
-  #f;
-end method stream-extension-synchronize;
+define method do-synchronize (stream :: <window-stream>) => ();
+end method do-synchronize;
 
 define constant *window-stream* = make(<window-stream>, window: text-window);
 define constant html-status-lock = make(<lock>);
@@ -412,7 +442,7 @@ define method write-string(string :: <string>)
   if (html-status == #"aborting")
     abort();
   end if;
-  write(string, *window-stream*);
+  write(*window-stream*, string);
 end method write-string;
 
 // Print a line according to *margin* and *linelen*.  Add special handling for
@@ -421,10 +451,10 @@ end method write-string;
 // interactively. 
 define method print-with-prefix(str :: <string>, #rest args) 
   for (i from 1 to *margin* - size(prefix))
-    write(" ", *window-stream*);
+    write(*window-stream*, " ");
   end for;
   write-string(prefix); 
-  apply(write-line, str, *window-stream*, args);
+  apply(write-line, *window-stream*, str, args);
   prefix := "" ;
   force-output(*window-stream*);
 end method print-with-prefix;
@@ -509,7 +539,7 @@ define method break-up(tag :: <symbol>, text :: <strings>,
   let full-text = if (text.empty?) "" else apply(concatenate, text) end;
   block ()
     break-up-table[tag](full-text, blank, want-blank);
-//  exception <error>
+//  exception (<error>)
 //    break-up-table[#"TEXT"](full-text, blank, want-blank);
   cleanup
     size(text) := 0;
@@ -529,12 +559,13 @@ define method tag-close(tag :: <symbol>, close :: <symbol>,
 			text :: <strings>, blank :: <boolean>)
     => (result :: <boolean>);
   if (tag ~= close) 
-    signal(concatenate("Tag mismatch: <", as(<string>, tag), "> vs. </",
-		       as(<string>, close), ">.\n"))  
+    #f;
+//    signal(concatenate("Tag mismatch: <", as(<string>, tag), "> vs. </",
+//		       as(<string>, close), ">.\n"))  
   end if;
   block ()
     tag-close-table[tag](tag, text, blank);
-//  exception <error>
+//  exception (<error>)
 //    tag-close-table[#"TEXT"](tag, text, blank);
   end block;
 end method tag-close;
@@ -550,7 +581,7 @@ define method tag-start(New-Tag :: <symbol>, Old-Tag :: <symbol>,
     => (New-Text :: <string>, blank :: <boolean>);
   let fun = block ()
 	      tag-start-table[New-Tag];
-//	    exception <error>
+//	    exception (<error>)
 //	      signal("Unknown tag type: <%=>\n", New-Tag);
 //	      tag-start-table[#"TEXT"];
 	    end block;
@@ -639,7 +670,7 @@ define method process-HTML(Tag :: <symbol>, Out-Text :: <strings>,
 	// Process newlines.  We ignore indentation in the next line unless we
 	// are inside a "<PRE>" environment.
 	Out-Text := add-eol(add-text(Tag, Out-Text, Current-Text));
-	let (New-Text, eof) = read-line(File);
+	let (New-Text, newline?) = read-line(File);
 	let First-Real = if (Pre-Count = 0)
 			   sfind(New-Text, not-space, failure: 0);
 			 else 0
@@ -651,7 +682,7 @@ define method process-HTML(Tag :: <symbol>, Out-Text :: <strings>,
 			end if;
       end if;
     end while;
-  exception (<end-of-file>)
+  exception (<end-of-stream-error>)
     // End of file processing.  Dump accumulated text and then exit.
     let blank = break-up(Tag, Out-Text, blank, #f);
     values("", blank);
@@ -696,7 +727,7 @@ define method html2text(fd :: <stream>) => ();
 end method html2text;
 
 define method html2text(file :: <string>) => ();
-  let stream = make(<file-stream>, name: file);
+  let stream = make(<file-stream>, locator: file);
   html2text(stream);
   close(stream);
 end method html2text;
@@ -862,8 +893,8 @@ add-tag(#["HR"],
 		     break-up(Old-Tag, Out-Text, blank, #t);
 		     force-output(*window-stream*);
 		     let start-index = end-mark.value;
-		     write-line(concatenate('-' * *linelen*, "\n"),
-				*window-stream*);
+		     write-line(*window-stream*,
+				concatenate('-' * *linelen*, "\n"));
 		     force-output(*window-stream*);
 		     add-tag(bold-tag, start: start-index,
 			     end: text-at(start-index.line,
@@ -877,9 +908,9 @@ add-tag(#["IMG"],
 			   File :: <stream>, blank :: <boolean>)
 		       => (result :: <string>, blank :: <boolean>);
 		     break-up(Old-Tag, Out-Text, blank, #t);
-		     write-line(concatenate(' ' * (*margin* + 4),
-					    "*** INLINE IMAGE IGNORED ***\n"),
-				*window-stream*);
+		     write-line(*window-stream*,
+				concatenate(' ' * (*margin* + 4),
+					    "*** INLINE IMAGE IGNORED ***\n"));
 		     values(Current-Text, #t);
 		   end method);
 
@@ -891,7 +922,7 @@ add-tag(#["IMG"],
 add-tag(#["PRE"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>) => (result :: <boolean>);
-		    unless(blank) write('\n', *window-stream*); end;
+		    unless(blank) write-element(*window-stream*, '\n'); end;
 		    let first = sfind(text, curry(\~=, '\n'));
 		    let last = rsfind(text,
 				      complement(rcurry(member?, "\n ")));
@@ -993,7 +1024,7 @@ add-tag(#["DD"],
 add-tag(#["H1"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write('\n', *window-stream*); end;
+		    unless(blank) write-element(*window-stream*, '\n'); end;
 		    let text
 		      = if (*H1cap*.value) as-uppercase(text) else text end if;
 
@@ -1024,7 +1055,7 @@ add-tag(#["H1"],
 						   2));
 		      force-output(*window-stream*);
 		      let start-index = end-mark.value;
-		      write-line(text, *window-stream*,
+		      write-line(*window-stream*, text,
 				 start: first, end: last);
 		      force-output(*window-stream*);
 		      add-tag(bold-tag, start: start-index,
@@ -1035,7 +1066,7 @@ add-tag(#["H1"],
 		    end while;
 		    if (*H1under*.value)
 		      write-string(' ' * truncate/(*linelen* - Max-Length, 2));
-		      write-line('=' * Max-Length, *window-stream*); 
+		      write-line(*window-stream*, '=' * Max-Length); 
 		    end if;
 		    if (want-blank) write-string("\n")  end if; 
 		    want-blank 
@@ -1044,7 +1075,7 @@ add-tag(#["H1"],
 add-tag(#["H2"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write('\n', *window-stream*); end;
+		    unless(blank) write-element(*window-stream*, '\n'); end;
 		    let text
 		      = if (*H2cap*.value) as-uppercase(text) else text end if;
 
@@ -1072,7 +1103,7 @@ add-tag(#["H2"],
 		      Max-Length := max(Max-Length, last - first);
 		      force-output(*window-stream*);
 		      let start-index = end-mark.value;
-		      write-line(text, *window-stream*,
+		      write-line(*window-stream*, text,
 				 start: first, end: last); 
 		      force-output(*window-stream*);
 		      add-tag(bold-tag, start: start-index,
@@ -1082,10 +1113,10 @@ add-tag(#["H2"],
 		      first := sfind(text, curry(\~=, ' '), start: last + 1)
 		    end while;
 		    if (*H2under*.value)
-		      write-line('-' * Max-Length, *window-stream*);
+		      write-line(*window-stream*, '-' * Max-Length);
 		      #f;
 		    else
-		      write('\n', *window-stream*);
+		      write-element(*window-stream*, '\n');
 		      #t
 		    end if;
 		  end method);
@@ -1093,7 +1124,7 @@ add-tag(#["H2"],
 add-tag(#["H3", "H4", "H5", "H6"],
 	break-up: method (text :: <string>, blank :: <boolean>,
 			  want-blank :: <boolean>)  => (result :: <boolean>);
-		    unless(blank) write('\n', *window-stream*); end;
+		    unless(blank) write-element(*window-stream*, '\n'); end;
 		    block ()
 		      push(margins, *margin*);
 		      *margin* := 0;
