@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.88 2002/03/08 18:25:17 brent Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.89 2002/03/11 05:01:12 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -93,7 +93,7 @@ AC_DEFUN(GD_D2C_SYSTEM,[
 case $1 in
     i*86-pc-linux-gnu*) $2=x86-linux-gcc ;;
     i*86-pc-bsdi*) $2=x86-bsdi-gcc ;;
-    powerpc-*-linux-gnu*) $2=ppc-linux-gcc ;;
+    powerpc-*-linux-gnu*) $2=ppc-linux-gcc-3.0 ;;
     alpha*-*-linux-gnu*) $2=alpha-linux-gcc ;;
     sparc*-*-linux-gnu*) $2=sparc-linux-gcc ;;
     s390*-*-linux-gnu*) $2=s390-linux-gcc ;;
