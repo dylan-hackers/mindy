@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.2 1994/04/09 13:35:45 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/class.h,v 1.3 1994/04/10 19:01:12 wlott Exp $
 *
 * This file does whatever.
 *
@@ -25,6 +25,8 @@ struct class {
     obj_t class;
     enum type_Id type_id;
     boolean abstract_p;
+    boolean sealed_p;
+    struct library *library;
     int (*scavenge)(struct object *ptr);
     obj_t (*transport)(obj_t object);
     void (*print)(obj_t object);
@@ -37,7 +39,7 @@ struct class {
 
 #define CLASS(o) obj_ptr(struct class *, o)
 
-extern obj_t make_abstract_class(void);
+extern obj_t make_abstract_class(boolean sealed_p);
 extern obj_t make_builtin_class(int (*scavenge)(struct object *ptr),
 				obj_t transport(obj_t object));
 
