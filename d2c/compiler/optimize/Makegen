@@ -1,0 +1,50 @@
+
+$D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
+    . '-L../../runtime/dylan -L../../runtime/streams '
+    . '-L../../runtime/print -L../../runtime/format '
+    . '-L../../runtime/random -L../../runtime/coll-ext '
+    . '-L../../runtime/string-ext';
+$CPPFLAGS = '-I$(SRCROOT)/runtime';
+
+if ($stage2) {
+    push(@compile_dependencies, 'compiler-optimize.lib.du liboptimize.a');
+}
+else {
+    push(@compile_dependencies, 'optimizelib.dbc');
+    push(@files_to_clean, '*.dbc');
+    $D2C = 'mindy -f $(BUILDROOT)/compiler/main/d2c.dbc';
+    print <<'EOF';
+
+.PHONY: d2c-compile
+
+d2c-compile: compiler-optimize.lib.du liboptimize.a
+
+MC = mindycomp
+MINDYFLAGS = -lcompiler-optimize
+MINDY = mindy
+
+%.dbc: %.dylan
+	$(MC) ${MINDYFLAGS} -o $@ $(subst ./,$(BUILDDIR)/,$(findstring ./,$(dir $<)))$<
+
+OBJS = \
+	optimize-exports.dbc \
+	cheese.dbc \
+	fer-edit.dbc \
+	callopt.dbc \
+	xep.dbc \
+	tailcall.dbc \
+	funcopt.dbc \
+	primopt.dbc \
+	trans.dbc \
+	constraint.dbc
+
+optimizelib.dbc: ${OBJS}
+	cat $^ > $@
+
+EOF
+}
+
+do emit_library_rule(
+    'Optimize', '$(BUILDROOT)/force.timestamp', '-L../base -L../front'
+);
+
