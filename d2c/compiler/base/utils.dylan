@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.12 1995/11/17 02:37:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.13 1995/12/13 23:59:12 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -325,7 +325,7 @@ define method key-of
   block (done)
     for (els = coll then els.tail,
          pos :: <fixed-integer> from 0,
-         while ~(els == #()))
+         until: els == #())
       if (test(value, els.head))
         done(pos);
       end;
