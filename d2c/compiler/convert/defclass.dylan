@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.55 1996/02/10 03:39:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.56 1996/02/11 16:59:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1269,9 +1269,12 @@ define method convert-top-level-form
 
       local
 	method maker-slot-descriptors-leaf ()
+/* This doesn't work and I don't want to fix it correctly now.
 	  %maker-slot-descriptors-leaf
 	    | (%maker-slot-descriptors-leaf
 		 := make-descriptors-leaf(maker-builder, "all-slot", cclass));
+*/
+	  make-descriptors-leaf(maker-builder, "all-slot", cclass);
 	end,
 	method maker-override-descriptors-leaf (introducer :: <cclass>)
 	  block (return)
