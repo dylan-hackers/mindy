@@ -1,12 +1,12 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/builder.dylan,v 1.3 2000/01/24 04:56:16 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/builder.dylan,v 1.4 2001/02/08 21:54:32 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -203,9 +203,10 @@ define generic make-unknown-call
 
 
 // Return a literal constant leaf.
+// If value is not a <ct-value> then it gets coerced first.
 //
 define generic make-literal-constant
-    (builder :: <fer-builder>, value :: <ct-value>)
+    (builder :: <fer-builder>, value)
  => res :: <leaf>;
 
 
@@ -229,7 +230,7 @@ define generic make-local-var
 
 
 // Similar to MAKE-LOCAL-VAR, but returns a values-cluster variable which can
-// hold an abitrary number of values.
+// hold an arbitrary number of values.
 //
 define generic make-values-cluster
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <values-ctype>)
@@ -259,6 +260,26 @@ define generic make-initial-var
 define generic make-ssa-var
     (builder :: <fer-builder>, name :: <symbol>, of-type :: <ctype>)
  => res :: <ssa-variable>;
+
+
+// Make an ssa-variable that contains a reference to the class a
+// {class, each-subclass} slot is located in.
+//
+define function build-slot-home
+    (slot-name :: <symbol>,
+     from :: <expression>,
+     builder :: <internal-fer-builder>,
+     policy :: <policy>,
+     source :: <source-location>)
+  => slot-home :: <ssa-variable>;
+  let slot-home
+    = make-ssa-var
+	(builder,
+	 symcat(slot-name, #"-home"),
+	 specifier-type(#"<class>"));
+  build-assignment(builder, policy, source, slot-home, from);
+  slot-home
+end function;
 
 
 // Return the exit function for the given nlx info, or make one if necessary.
