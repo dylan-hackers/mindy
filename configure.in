@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.7 1995/03/13 22:06:07 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.8 1995/03/13 22:08:59 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -67,7 +67,8 @@ AC_SUBST(LFLAGS)
 #--------------------------------------------------------------------
 
 if test $YACC = bison; then
-  # do nothing
+  # do nothing (an empty then clause is a syntax error)
+  DUMMY=dummy
 else
   echo "I could not find bison, so do not try to rebuild comp/parser-tab.c"
   echo "or interp/parser-tab.c because yacc cannot do it."
