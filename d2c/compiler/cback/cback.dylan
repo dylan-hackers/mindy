@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.22 1995/04/29 01:03:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.23 1995/04/29 04:06:20 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -604,7 +604,7 @@ define method emit-region (region :: <block-region>,
   if (region.catcher)
     indent(stream, - $indentation-step);
     format(stream, "}\n");
-    deliver-cluster(region.catcher.dependents.dependent.defines,
+    deliver-cluster(region.catcher.dependents.dependent.defines, #f,
 		    sp-temp, region.catcher.derived-type, output-info);
   end;
   let half-step = ash($indentation-step, -1);
@@ -687,7 +687,7 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
     => ();
   if (defines)
     if (instance?(var.var-info, <values-cluster-info>))
-      deliver-cluster(defines, ref-leaf($cluster-rep, var, output-info),
+      deliver-cluster(defines, #f, ref-leaf($cluster-rep, var, output-info),
 		      var.derived-type, output-info);
     else
       let rep = if (instance?(defines.var-info, <values-cluster-info>))
@@ -775,7 +775,7 @@ define method emit-assignment
 	   func, temp, count);
   end;
   if (results)
-    deliver-cluster(results, temp, call.derived-type, output-info);
+    deliver-cluster(results, #f, temp, call.derived-type, output-info);
   end;
 end;
 
@@ -791,7 +791,7 @@ define method emit-assignment
 	       output-info);
   format(output-info.output-info-guts-stream, "%sCALL(%s, %s, sp - %s);\n",
 	 if (results) "sp = " else "" end, func, cluster, cluster);
-  deliver-cluster(results, cluster, call.derived-type, output-info);
+  deliver-cluster(results, #f, cluster, call.derived-type, output-info);
 end;
 
 define method emit-assignment
@@ -847,7 +847,7 @@ define method emit-assignment
     if (instance?(results.var-info, <values-cluster-info>))
       deliver-single-result(results, temp, $cluster-rep, output-info, #f);
     else
-      deliver-cluster(results, temp, func.result-type, output-info);
+      deliver-cluster(results, #f, temp, func.result-type, output-info);
     end;
   else
     let rep = variable-representation(func.depends-on.source-exp, output-info);
@@ -924,7 +924,8 @@ end;
 
 
 define method deliver-cluster
-    (defines :: false-or(<definition-site-variable>), name :: <string>,
+    (defines :: false-or(<definition-site-variable>),
+     last-gets-rest? :: <boolean>, name :: <string>,
      type :: <values-ctype>, output-info :: <output-info>)
     => ();
   let stream = output-info.output-info-guts-stream;
@@ -935,7 +936,11 @@ define method deliver-cluster
 		     index from 0,
 		     while: var)
 		finally
-		  index;
+		  if (last-gets-rest?)
+		    index - 1;
+		  else
+		    index;
+		  end;
 		end;
     unless (count <= type.min-values)
       format(stream, "pad_cluster(%s, sp, %d);\n", name, count);
@@ -943,7 +948,12 @@ define method deliver-cluster
     for (var = defines then var.definer-next,
 	 index from 0,
 	 while: var)
-      let source = format-to-string("%s[%d]", name, index);
+      let source
+	= if (index == count)
+	    format-to-string("make_rest_arg(%s + %d, sp)", name, index);
+	  else
+	    format-to-string("%s[%d]", name, index);
+	  end;
       deliver-single-result(var, source, $general-rep, output-info, #t);
     end;
     format(stream, "sp = %s;\n", name);
@@ -1050,6 +1060,17 @@ define method default-primitive-emitter
   write(");\n", stream);
   deliver-results(defines, #[], output-info);
 end;
+
+define-primitive
+  (#"canonicalize-results",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   output-info :: <output-info>)
+       => ();
+     let cluster = operation.depends-on.source-exp;
+     deliver-cluster(defines, #t, ref-leaf($cluster-rep, cluster, output-info),
+		     cluster.derived-type, output-info);
+   end);
 
 define-primitive
   (#"values",
@@ -1530,6 +1551,9 @@ define method emit-copy
      source :: <string>, source-rep :: <c-representation>,
      output-info :: <output-info>)
     => ();
+  if (source-rep == $cluster-rep)
+    error("Can't copy values clusters into regular variables.");
+  end;
   let stream = output-info.output-info-guts-stream;
   let heapptr = conversion-expr($heap-rep, source, source-rep, output-info);
   format(stream, "%s.heapptr = %s;\n", target, heapptr);
@@ -1554,6 +1578,8 @@ define method conversion-expr
     => res :: <string>;
   if (target-rep == source-rep)
     source;
+  elseif (source-rep == $cluster-rep)
+    error("Can't reference values clusters as regular values.");
   else
     let temp = new-local(output-info);
     format(output-info.output-info-vars-stream, "%s %s;\n",
