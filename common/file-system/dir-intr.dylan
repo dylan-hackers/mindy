@@ -1,7 +1,7 @@
 module: dir-commands
 
-// call me with:
-// melange -v --d2c -I/usr/include --shadow-structs dir.intr dir-intr.dylan
+// To create dir-intr.intr, execute the following line:
+// melange -v --d2c -I/usr/include --shadow-structs dir-intr.intr dir-intr.dylan
 
 c-include("/usr/include/sys/stat.h");
 c-include("/usr/include/dirent.h");
@@ -498,14 +498,6 @@ define method mkdir
   values(result-value);
 end method mkdir;
 
-define method mkfifo
-    (arg1 :: <anonymous-9>, arg2 :: <mode-t>)
- => (result :: <integer>);
-  let result-value
-    = call-out("mkfifo", int:, ptr: (arg1).raw-value, long: arg2);
-  values(result-value);
-end method mkfifo;
-
 define method umask
     (arg1 :: <mode-t>)
  => (result :: <mode-t>);
@@ -778,6 +770,18 @@ define method readdir
   values(result-value);
 end method readdir;
 
+#if (compiled-for-cygnus)
+// cygnus does not support seekdir, telldir and mkfifo
+#else
+
+define method mkfifo
+    (arg1 :: <anonymous-9>, arg2 :: <mode-t>)
+ => (result :: <integer>);
+  let result-value
+    = call-out("mkfifo", int:, ptr: (arg1).raw-value, long: arg2);
+  values(result-value);
+end method mkfifo;
+
 define method telldir
     (arg1 :: <DIR>)
  => (result :: <integer>);
@@ -792,6 +796,7 @@ define method seekdir
   call-out("seekdir", void:, ptr: (arg1).raw-value, long: arg2);
   values();
 end method seekdir;
+#endif
 
 define method rewinddir
     (arg1 :: <DIR>)
