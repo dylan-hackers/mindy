@@ -46,14 +46,9 @@ $LIBTOOL = '@LIBTOOL@';
 # INSTALL_DATA and INSTALL_PROGRAM don't do what I would expect.  In
 # particular, INSTALL_PROGRAM doesn't force executability.
 $install_data = "@INSTALL@";
-if ($shared) {
-    $install_program = "@LIBTOOL@ --mode=install @INSTALL@ -m oug+rx";
-    $install_library = "@LIBTOOL@ --mode=install @INSTALL@";
-} else {
-    $install_program = "@INSTALL@ -m oug+rx";
-    $install_library = "@INSTALL@";
-}
-    
+$install_program = "@LIBTOOL@ --mode=install @INSTALL@ -m oug+rx";
+$install_library = "@LIBTOOL@ --mode=install @INSTALL@";
+
 if ($cross_compiling) {
   # Use cross-compilation flags if necessary.
   $D2C = "@D2C@ -T$target_name --no-binaries";
