@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.33 1996/08/21 10:04:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.34 1997/02/13 13:05:55 nkramer Exp $
 *
 * This file implements the loader.
 *
@@ -1008,6 +1008,12 @@ void load(char *name)
 
 /* Library loading. */
 
+#ifdef WIN32
+#    define SEPARATOR_CHAR ';'
+#else
+#    define SEPARATOR_CHAR ':'
+#endif
+
 void load_library(obj_t name)
 {
     char *load_path = getenv("MINDYPATH");
@@ -1022,7 +1028,7 @@ void load_library(obj_t name)
     ptr = load_path;
     do {
 	c = *ptr;
-	if (c == ':' || c == '\0') {
+	if (c == SEPARATOR_CHAR || c == '\0') {
 	    int len = ptr - start;
 	    if (len) {
 		memcpy(path, start, len);
