@@ -14,7 +14,7 @@
 #define TEST_ARRAYS
 #define TEST_FUNCTIONS
 #define TEST_ENUMS
-#define TEST_STRUCTS
+#define TEST_STRUCTS_AND_UNIONS
 
 #endif // !defined SPECIFIC_TESTS
 
@@ -193,10 +193,10 @@ enum enum_extra_comma {
 
 
 //=========================================================================
-//  Structs
+//  Structs & Unions
 //=========================================================================
 
-#if defined TEST_STRUCTS
+#if defined TEST_STRUCTS_AND_UNIONS
 
 struct struct_simple {
     int a;
@@ -230,9 +230,14 @@ struct struct_incomplete;
 struct struct_circular_1 {
     struct struct_circular_2* next;
 };
-
 struct struct_circular_2 {
     struct struct_circular_1* next;
 };
 
-#endif // TEST_STRUCTS
+typedef int union_mixed_int;
+union union_mixed {
+    int a, *b;
+    union union_mixed *next;
+};
+
+#endif // TEST_STRUCTS_AND_UNIONS
