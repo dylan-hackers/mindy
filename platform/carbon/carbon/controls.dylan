@@ -310,10 +310,12 @@ end method DragControl;
 	FindControl
 */
 
-define method FindControl( point :: <Point>, window :: <WindowRef>, control :: <ControlHandle> )
-=> ( result :: <integer> )
+define method FindControl( point :: <Point>, window :: <WindowRef> )
+=> ( control :: <ControlHandle>, result :: <ControlPartCode> )
 
-	call-out( "findcontrol", short:, ptr: point.raw-value, ptr: window.raw-value, ptr: control.raw-value );
+    let temp = make( <Handle> ); // used as a pointer parameter
+    let result = call-out( "findcontrol", short:, ptr: point.raw-value, ptr: window.raw-value, ptr: temp.raw-value );
+    values( pointer-at( temp, offset: 0, class: <ControlHandle> ), as( <ControlPartCode>, result ) );
 
 end method FindControl;
 
@@ -350,9 +352,10 @@ end method HandleControlKey;
 */
 
 define method IdleControls( window :: <WindowRef> )
-=> ( result :: <integer> )
+=> ()
 
-	call-out( "IdleControls", void:, ptr: window.raw-value, );
+    call-out( "IdleControls", void:, ptr: window.raw-value, );
+    values()
 
 end method IdleControls;
 
