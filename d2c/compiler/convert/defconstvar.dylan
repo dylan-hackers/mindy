@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.6 1994/12/16 14:30:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.7 1994/12/17 02:18:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -107,7 +107,7 @@ end;
 // Compile-time value stuff.
 
 define method ct-value (defn :: <constant-definition>)
-    => res :: union(<false>, <cclass>);
+    => res :: union(<false>, <ct-value>);
   let tlf = defn.defn-tlf;
   select (tlf.tlf-finalized?)
     #t =>
@@ -117,7 +117,7 @@ define method ct-value (defn :: <constant-definition>)
       finalize-top-level-form(tlf);
       defn.defn-init-value;
     #"computing" =>
-      error("constant %s circularly defined.", defn.defn-name);
+      error("constant %s circularly defined.", defn.defn-name.name-symbol);
   end;
 end;
 
@@ -125,7 +125,7 @@ end;
 // finalize-top-level-form
 
 define method finalize-top-level-form (tlf :: <define-bindings-tlf>) => ();
-  unless (tlf.tlf-finalized?)
+  unless (tlf.tlf-finalized? == #t)
     let (#rest res) = ct-mv-eval(tlf.tlf-bindings.bindings-expression, #f);
     let constant? = res.empty? | ~(res[0] == #f);
     for (defn in tlf.tlf-required-defns,
