@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.93 2002/05/08 14:42:10 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.94 2002/05/15 04:55:40 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -63,6 +63,8 @@ srcdir=`(cd $srcdir; pwd)`
 
 buildroot=`pwd`
 AC_SUBST(buildroot)
+top_builddir=$buildroot
+AC_SUBST(top_builddir)
 
 #--------------------------------------------------------------------
 # recheck is how we invoked configure so we can re-run it during
