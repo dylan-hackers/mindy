@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.3 2001/03/17 03:43:32 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.4 2001/10/14 18:51:13 gabor Exp $
 copyright: see below
 
 
@@ -43,30 +43,43 @@ end library compiler-fer-transform;
 define module fer-transform
   use common;
   use utils;
-  use errors;
+//  use errors;
   use compile-time-values;
-  use platform,
-    import: {*current-target*, platform-integer-length};
-  use names;
+//  use platform,
+//    import: {*current-target*, platform-integer-length};
+//  use names;
   use definitions;
-  use variables, exclude: {<renaming>};
+//  use variables, exclude: {<renaming>};
   use flow;
   use front;
   use ctype;
-  use classes;
-  use signature-interface;
+//  use classes;
+//  use signature-interface;
   use source;
   use builder-interface;
   use policy;
   use primitives;
-  use transformers;
+//  use transformers;
   use compile-time-functions;
-  use function-definitions;
+//  use function-definitions;
   
   export 
-    add-type-checks, 
+    just-add-type-checks, 
     convert-component-to-ssa,
-    traverse-component;
+    traverse-component,
+    delete-dependent,
+    remove-dependency-from-source,
+    dropped-dependent,
+    delete-queueable,
+    function-movable?,
+    expression-movable?,
+    fixed-number-of-values?,
+    insert-after,
+    split-after,
+    combine-regions,
+    replace-subregion,
+    defaulted-type,
+    maybe-restrict-type;
 end module fer-transform;
 
 define module null-optimizer

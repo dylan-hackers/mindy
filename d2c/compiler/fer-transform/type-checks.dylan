@@ -2,14 +2,14 @@ module: fer-transform
 
 // Cheesy type check stuff.
 
-define method add-type-checks (component :: <component>) => ();
+define method just-add-type-checks (component :: <component>) => ();
   for (function in component.all-function-regions)
-    add-type-checks-aux(component, function);
+    add-type-checks-aux(component, function, ignore);
   end;
 end;
 
 define method add-type-checks-aux
-    (component :: <component>, region :: <simple-region>) => ();
+    (component :: <component>, region :: <simple-region>, reoptimize :: <function>) => ();
   let next-assign = #f;
   for (assign = region.first-assign then next-assign,
        while: assign)
@@ -19,7 +19,6 @@ define method add-type-checks-aux
 	 prev = #f then defn,
 	 while: defn)
       if (defn.needs-type-check?)
-
 	if (instance?(defn.var-info, <values-cluster-info>))
 	  error("values cluster needs a type check?");
 	end;
@@ -59,31 +58,31 @@ define method add-type-checks-aux
     end;
     if (builder)
       // We built some type checks, so insert them.
-      insert-after(component, assign, builder-result(builder));
+      insert-after(component, assign, builder-result(builder), reoptimize);
       // Queue the assignment for reoptimization.
-      // reoptimize(component, assign);
+      reoptimize(component, assign);
     end;
   end;
 end;
 
 define method add-type-checks-aux
-    (component :: <component>, region :: <compound-region>) => ();
+    (component :: <component>, region :: <compound-region>, reoptimize :: <function>) => ();
   for (subregion in region.regions)
-    add-type-checks-aux(component, subregion);
+    add-type-checks-aux(component, subregion, reoptimize);
   end;
 end;
 
 define method add-type-checks-aux
-    (component :: <component>, region :: <if-region>) => ();
-  add-type-checks-aux(component, region.then-region);
-  add-type-checks-aux(component, region.else-region);
+    (component :: <component>, region :: <if-region>, reoptimize :: <function>) => ();
+  add-type-checks-aux(component, region.then-region, reoptimize);
+  add-type-checks-aux(component, region.else-region, reoptimize);
 end;
 
 define method add-type-checks-aux
-    (component :: <component>, region :: <body-region>) => ();
-  add-type-checks-aux(component, region.body);
+    (component :: <component>, region :: <body-region>, reoptimize :: <function>) => ();
+  add-type-checks-aux(component, region.body, reoptimize);
 end;
 
 define method add-type-checks-aux
-    (component :: <component>, region :: <exit>) => ();
+    (component :: <component>, region :: <exit>, reoptimize :: <function>) => ();
 end;

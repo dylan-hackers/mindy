@@ -2,7 +2,7 @@ module: fer-transform
 
 // SSA conversion.
 
-define function convert-component-to-ssa (component :: <component>) => ();
+define function convert-component-to-ssa (component :: <component> /*, needed? reoptimize :: <function>*/ ) => ();
   while (component.initial-variables)
     let init-var = component.initial-variables;
     component.initial-variables := init-var.next-initial-variable;
@@ -11,10 +11,10 @@ define function convert-component-to-ssa (component :: <component>) => ();
   end;
 
   // Massage code to be in a form that maybe-expand-cluster can work with...
+//  traverse-component(component, <assignment>, rcurry(fixup-assignment, reoptimize));
   traverse-component(component, <assignment>, fixup-assignment);
-  
-  
-  traverse-component(component, <abstract-variable>, maybe-expand-cluster);
+//  traverse-component(component, <abstract-variable>, rcurry(maybe-expand-cluster, reoptimize));
+  traverse-component(component, <abstract-variable>, rcurry(maybe-expand-cluster, ignore));
 end function convert-component-to-ssa;
 
 define method maybe-convert-to-ssa
@@ -69,7 +69,7 @@ end method maybe-convert-to-ssa;
 // Value-cluster expansion
 
 define method maybe-expand-cluster
-    (component :: <component>, cluster :: <abstract-variable>)
+    (component :: <component>, cluster :: <abstract-variable>, reoptimize :: <function>)
     => ();
   if (instance?(cluster.var-info, <values-cluster-info>)
 	& fixed-number-of-values?(cluster.derived-type))
@@ -80,13 +80,13 @@ define method maybe-expand-cluster
       error("Trying to expand a cluster that is referenced "
 	      "in more than one place?");
     end;
-    expand-cluster(component, cluster, cluster.derived-type.min-values, #());
+    expand-cluster(component, cluster, cluster.derived-type.min-values, #(), reoptimize);
   end if;
 end;
 
 define method expand-cluster 
     (component :: <component>, cluster :: <ssa-variable>,
-     number-of-values :: <integer>, names :: <list>)
+     number-of-values :: <integer>, names :: <list>, reoptimize :: <function>)
     => ();
   let cluster-dependency = cluster.dependents;
   let target = cluster-dependency.dependent;
@@ -131,7 +131,7 @@ end;
 
 define method expand-cluster 
     (component :: <component>, cluster :: <initial-variable>,
-     number-of-values :: <integer>, names :: <list>)
+     number-of-values :: <integer>, names :: <list>, /* needed? */ reoptimize :: <function>)
     => ();
   let cluster-dependency = cluster.dependents;
   let target = cluster-dependency.dependent;
@@ -190,16 +190,19 @@ end;
 
 // Helper functions for cluster expansion
 define method fixup-assignment
-    (component :: <component>, assignment :: <assignment>) => ();
+    (component :: <component>, assignment :: <assignment> /*, needed? reoptimize :: <function> */ ) => ();
   if (assignment.defines
 	& instance?(assignment.defines.var-info, <values-cluster-info>))
     maybe-restrict-type(component, assignment.defines, 
-			assignment.depends-on.source-exp.derived-type);
+			assignment.depends-on.source-exp.derived-type,
+			ignore, ignore);
+//			reoptimize, ignore);
   end if;
 end method;
 
 define method maybe-restrict-type
-    (component :: <component>, expr :: <expression>, type :: <values-ctype>)
+    (component :: <component>, expr :: <expression>, type :: <values-ctype>,
+     reoptimize :: <function>, queue-dependents :: <function>)
     => ();
   unless (type == wild-ctype())
     let old-type = expr.derived-type;
@@ -220,20 +223,20 @@ define method maybe-restrict-type
 		return();
 	      end;
 	    finally
-	      maybe-restrict-type(component, var, var-type);
+	      maybe-restrict-type(component, var, var-type, reoptimize, queue-dependents);
 	    end for;
 	  end block;
 	end if;
       end if;
-      // queue-dependents(component, expr);
+      queue-dependents(component, expr);
     end if;
   end unless;
 end method maybe-restrict-type;
 
 
 define method maybe-restrict-type
-    (component :: <component>, var :: <abstract-variable>,
-     type :: <values-ctype>, #next next-method)
+    (component :: <component>, var :: <abstract-variable>, type :: <values-ctype>,
+     reoptimize :: <function>, queue-dependents :: <function>, #next next-method)
     => ();
   let var-info = var.var-info;
   next-method(component, var,
@@ -242,12 +245,15 @@ define method maybe-restrict-type
 	      else
 		ctype-intersection(defaulted-type(type, 0),
 				   var-info.asserted-type);
-	      end);
+	      end,
+	      reoptimize, /* ICE if commented out. */
+	      queue-dependents);
 end;
 
 define method maybe-restrict-type
     (component :: <component>, var :: <definition-site-variable>,
-     type :: <values-ctype>, #next next-method)
+     type :: <values-ctype>,
+     reoptimize :: <function>, queue-dependents :: <function>, #next next-method)
     => ();
   if (var.needs-type-check?
 	& values-subtype?(type, var.var-info.asserted-type.ctype-extent))

@@ -1,5 +1,5 @@
 module: null-optimizer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/null-optimizer.dylan,v 1.2 2001/03/17 03:43:32 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/null-optimizer.dylan,v 1.3 2001/10/14 18:50:42 gabor Exp $
 copyright: see below
 
 
@@ -50,7 +50,7 @@ define method optimize-component
     debug-dump(optimizer, component);
 
     debug-message(optimizer, "Adding type checks");
-    add-type-checks(component);
+    just-add-type-checks(component);
     debug-dump(optimizer, component);
 
     // XXX - We'll generate incorrect code until this function is fully

@@ -1,15 +1,17 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-edit.dylan,v 1.2 2001/03/17 03:43:32 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-edit.dylan,v 1.3 2001/10/14 18:52:24 gabor Exp $
 copyright: see below
 
+/*
 define function reoptimize (component :: <component>, frob) => ()
-  dformat("*** Skipping re-optimization!\n");
+//  dformat("*** Skipping re-optimization!\n");
 end;
+*/
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -41,22 +43,22 @@ end;
 //
 define generic insert-after
     (component :: <component>, assign :: <abstract-assignment>,
-     insert :: <region>) => ();
+     insert :: <region>, reoptimize :: <function>) => ();
 
 define method insert-after
     (component :: <component>, assign :: <abstract-assignment>,
-     insert :: <region>) => ();
+     insert :: <region>, reoptimize :: <function>) => ();
   let region = assign.region;
   let parent = region.parent;
   let (before, after) = split-after(assign);
-  let new = combine-regions(component, before, insert, after);
+  let new = combine-regions(component, reoptimize, before, insert, after);
   new.parent := parent;
-  replace-subregion(component, parent, region, new);
+  replace-subregion(component, parent, region, new, reoptimize);
 end;
     
 define method insert-after
     (component :: <component>, after :: <abstract-assignment>,
-     insert :: <simple-region>) => ();
+     insert :: <simple-region>, reoptimize :: <function>) => ();
   let region = after.region;
   for (assign = insert.first-assign then assign.next-op,
        while: assign)
@@ -74,7 +76,7 @@ end method insert-after;
 
 define method insert-after
     (component :: <component>, assign :: <abstract-assignment>,
-     insert :: <empty-region>)
+     insert :: <empty-region>, reoptimize :: <function>)
     => ();
 end;
 
@@ -115,8 +117,11 @@ end;
 // first subregion to see if it exits or not (i.e. whether the second subregion
 // is actually reachable.
 // 
+define generic combine-regions
+    (component :: <component>, reoptimize :: <function>, #rest stuff) => res :: <region>;
+
 define method combine-regions
-    (component :: <component>, #rest stuff) => res :: <region>;
+    (component :: <component>, reoptimize :: <function>, #rest stuff) => res :: <region>;
   let results = #();
   local
     method grovel (region)
@@ -126,7 +131,7 @@ define method combine-regions
 	end;
       elseif (instance?(region, <simple-region>)
 		& instance?(results.head, <simple-region>))
-	results.head := merge-simple-regions(component, results.head, region);
+	results.head := merge-simple-regions(component, results.head, region, reoptimize);
       else
 	results := pair(region, results);
       end;
@@ -157,12 +162,12 @@ end;
 //
 define generic replace-subregion
     (component :: <component>, region :: <region>, old :: <region>,
-     new :: <region>)
+     new :: <region>, reoptimize :: <function>)
     => ();
 
 define method replace-subregion
     (component :: <component>, region :: <body-region>, old :: <region>,
-     new :: <region>)
+     new :: <region>, reoptimize :: <function>)
     => ();
   unless (region.body == old)
     error("Replacing unknown region");
@@ -173,7 +178,7 @@ end;
 
 define method replace-subregion
     (component :: <component>, region :: <if-region>, old :: <region>,
-     new :: <region>)
+     new :: <region>, reoptimize :: <function>)
     => ();
   if (region.then-region == old)
     region.then-region := new;
@@ -191,7 +196,7 @@ end;
 
 define method replace-subregion
     (component :: <component>, region :: <compound-region>, old :: <region>,
-     new :: <region>)
+     new :: <region>, reoptimize :: <function>)
     => ();
   for (scan = region.regions then scan.tail,
        prev = #f then scan,
@@ -209,14 +214,14 @@ define method replace-subregion
 	end;
 
     let parent = region.parent;
-    let combo = apply(combine-regions, component, regions);
-    replace-subregion(component, parent, region, combo);
+    let combo = apply(combine-regions, component, reoptimize, regions);
+    replace-subregion(component, parent, region, combo, reoptimize);
   end;
 end;
 
 define method merge-simple-regions
     (component :: <component>, first :: <simple-region>,
-     second :: <simple-region>)
+     second :: <simple-region>, reoptimize :: <function>)
     => res :: <simple-region>;
   let last-of-first = first.last-assign;
   let first-of-second = second.first-assign;
@@ -260,31 +265,31 @@ end;
 // Deletion routines
 
 define method delete-dependent
-    (component :: <component>, dependent :: <dependent-mixin>) => ();
+    (component :: <component>, dependent :: <dependent-mixin>, reoptimize :: <function>) => ();
   //
   // Remove our dependency from whatever we depend on.
   for (dep = dependent.depends-on then dep.dependent-next,
        while: dep)
-    remove-dependency-from-source(component, dep);
+    remove-dependency-from-source(component, dep, reoptimize);
   end;
   //
   delete-queueable(component, dependent);
 end;
 
 define method delete-dependent
-    (component :: <component>, op :: <catch>, #next next-method) => ();
+    (component :: <component>, op :: <catch>, reoptimize :: <function>, #next next-method) => ();
   op.nlx-info.nlx-catch := #f;
   next-method();
 end;
 
 define method delete-dependent
-    (component :: <component>, op :: <make-catcher>, #next next-method) => ();
+    (component :: <component>, op :: <make-catcher>, reoptimize :: <function>, #next next-method) => ();
   op.nlx-info.nlx-make-catcher := #f;
   next-method();
 end;
 
 define method delete-dependent
-    (component :: <component>, op :: <disable-catcher>, #next next-method)
+    (component :: <component>, op :: <disable-catcher>, reoptimize :: <function>, #next next-method)
     => ();
   let nlx-info = op.nlx-info;
   for (prev = #f then disable,
@@ -302,7 +307,8 @@ define method delete-dependent
 end;
 
 define method delete-dependent
-    (component :: <component>, op :: <throw>, #next next-method) => ();
+    (component :: <component>, op :: <throw>,
+     reoptimize :: <function>, #next next-method) => ();
   let nlx-info = op.nlx-info;
   for (prev = #f then throw,
        throw = nlx-info.nlx-throws then throw.throw-next,
@@ -323,7 +329,7 @@ end;
 
 
 define method remove-dependency-from-source
-    (component :: <component>, dependency :: <dependency>) => ();
+    (component :: <component>, dependency :: <dependency>, reoptimize :: <function>) => ();
   let source = dependency.source-exp;
   for (dep = source.dependents then dep.source-next,
        prev = #f then dep,
@@ -338,24 +344,31 @@ define method remove-dependency-from-source
 
   // Note that we dropped a dependent in case doing so will trigger
   // some optimization based on the number of definers.
-  dropped-dependent(component, source);
+  dropped-dependent(component, source, reoptimize);
+end;
+
+define generic dropped-dependent
+    (component :: <component>, expr :: <expression>,
+     reoptimize :: <function>) => ();
+
+define method dropped-dependent
+    (component :: <component>, expr :: <expression>,
+     reoptimize :: <function>) => ();
 end;
 
 define method dropped-dependent
-    (component :: <component>, expr :: <expression>) => ();
-end;
-
-define method dropped-dependent
-    (component :: <component>, op :: <operation>) => ();
+    (component :: <component>, op :: <operation>,
+     reoptimize :: <function>) => ();
   //
   // If we dropped the last dependent, delete this operation.
   unless (op.dependents)
-    delete-dependent(component, op);
+    delete-dependent(component, op, reoptimize);
   end unless;
 end;
 
 define method dropped-dependent
-    (component :: <component>, var :: <ssa-variable>) => ();
+    (component :: <component>, var :: <ssa-variable>,
+     reoptimize :: <function>) => ();
   // If the variable doesn't need a type check and is still being defined,
   // then we might be able to flush the assignment.  We can flush the
   // assignment if the variable is unused (i.e. dependents == #f) or if it
@@ -371,7 +384,8 @@ end method dropped-dependent;
 
 
 define method dropped-dependent
-    (component :: <component>, var :: <initial-variable>) => ();
+    (component :: <component>, var :: <initial-variable>,
+     reoptimize :: <function>) => ();
   // If the variable ended up with no references and doesn't need a type check,
   // queue it for reoptimization so it gets deleted.  But only if is still
   // actually being defines.
@@ -385,7 +399,8 @@ define method dropped-dependent
 end;
 
 define method dropped-dependent
-    (component :: <component>, function :: <function-literal>) => ();
+    (component :: <component>, function :: <function-literal>,
+     reoptimize :: <function>) => ();
   if (function.visibility == #"local")
     // If we dropped a reference to the function literal, we might be
     // able to nuke it.
@@ -394,13 +409,13 @@ define method dropped-dependent
 end;
 
 define method dropped-dependent
-    (component :: <component>, exit :: <exit-function>) => ();
+    (component :: <component>, exit :: <exit-function>, reoptimize :: <function>) => ();
   // If we dropped the last reference, clear it out.
   unless (exit.dependents)
     let nlx-info = exit.nlx-info;
     nlx-info.nlx-exit-function := #f;
 
-    delete-dependent(component, exit);
+    delete-dependent(component, exit, reoptimize);
 
     if (nlx-info.nlx-catch & ~nlx-info.nlx-hidden-references?
 	  & nlx-info.nlx-exit-function == #f & nlx-info.nlx-throws == #f)
