@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.67 1996/05/02 00:15:34 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.68 1996/05/08 15:57:06 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -62,7 +62,7 @@ define method no-core-dumps () => ();
 end method no-core-dumps;
 
 
-#end
+#endif
 
 define constant $cc-utility = "gcc";   // I don't know if cc would also work
 define constant $cc-flags = getenv("CCFLAGS") | "";
@@ -430,7 +430,7 @@ define method compile-library
     end;
 #if (mindy)
     collect-garbage(purify: #t);
-#end
+#endif
     format(*debug-output*, "Finalizing definitions\n");
     for (tlfs in tlf-vectors)
       *Top-Level-Forms* := tlfs;
@@ -856,7 +856,7 @@ end method incorrect-usage;
 define method main (argv0 :: <byte-string>, #rest args) => ();
   #if (~mindy)
   no-core-dumps();
-  #end
+  #endif
   *random-state* := make(<random-state>, seed: 0);
   define-bootstrap-module();
   let library-dirs = make(<stretchy-vector>);
@@ -928,9 +928,9 @@ define method %main (argc :: <integer>, argv :: <raw-pointer>) => ();
   end for;
   apply(main, args);
 end method %main;
-#end
+#endif
 
 
 #if (mindy)
 collect-garbage(purify: #t);
-#end
+#endif

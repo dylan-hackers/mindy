@@ -1,5 +1,5 @@
 module: utils
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.28 1996/04/13 21:08:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/utils.dylan,v 1.29 1996/05/08 15:56:31 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -133,7 +133,7 @@ define method write-address (thing, stream) => ();
   let address = thing.object-address;
 #else
   let address = as(<integer>, thing.object-address);
-#end
+#endif
   for (shift from -28 below 1 by 4)
     let digit = as(<integer>, logand(ash(address, shift), #xf));
     if (digit < 10)
@@ -460,7 +460,7 @@ end;
 define variable *debug-output* :: <stream>
   = make(<flush-happy-stream>, target: *standard-output*);
 
-#end
+#endif
 
 
 // Debugger hooks
@@ -484,7 +484,7 @@ method ()
   *debugger* := make(<pretty-debugger>);
 end method();
 
-#end
+#endif
 
 
 // Defines the Info slot used for back-end annotation.

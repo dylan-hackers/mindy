@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Print library and modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/library.dylan,v 1.1 1996/03/20 00:02:15 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/library.dylan,v 1.2 1996/05/08 15:58:08 nkramer Exp $
 
 //======================================================================
 //
@@ -75,7 +75,7 @@ define module internals
 #if (~mindy)
              <direct-instance>, direct-instance-of, <byte-character-type>,
              union-singletons,
-#end
+#endif
 	     singleton-object, subclass-of, limited-integer-base-class,
 	     limited-integer-minimum, limited-integer-maximum, union-members},
     export: all;

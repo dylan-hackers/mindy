@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.5 1996/03/17 00:15:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/random/random.dylan,v 1.6 1996/05/08 16:00:32 nkramer Exp $
 module: Random
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
@@ -53,7 +53,7 @@ end class <threadsafe-random-state>;
 
 define sealed domain make (singleton(<threadsafe-random-state>));
 
-#end
+#endif
 
 define inline method get-time-of-day () => res :: <integer>;
   call-out("time", int:, int: 0);
@@ -125,7 +125,7 @@ define method random-chunk
   release-lock(state.mutex);
   res;
 end;
-#end
+#endif
 
 
 // Random integers:

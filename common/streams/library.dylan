@@ -2,7 +2,7 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Streams library and its modules.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.2 1996/03/20 05:00:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/library.dylan,v 1.3 1996/05/08 15:57:51 nkramer Exp $
 
 //======================================================================
 //
@@ -79,7 +79,7 @@ end library;
       release-lock,
       locked?;
   end module;
-#end
+#endif
 
 
 /// The Internals Module exports everything that is necessary to make the
@@ -96,7 +96,7 @@ define module internals
 	     report-condition, condition-format,
 #if (mindy)
              on-exit,
-#end
+#endif
              <never-returns>, ignore},
     export: all;
   use system,
@@ -130,12 +130,12 @@ define module internals
     export: all;
 #else
   use file-descriptors, export: all;
-#end
+#endif
   export
     <syscall-error>, call-fd-function
 #if (~mindy)
    , on-exit
-#end
+#endif
      ;
 end module;
 

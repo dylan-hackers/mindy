@@ -2,7 +2,7 @@ module: Streams
 author: chiles@cs.cmu.edu
 synopsis: This file implements streams for the Gwydion implementation of Dylan.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/streams.dylan,v 1.2 1996/03/20 05:00:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/streams.dylan,v 1.3 1996/05/08 15:57:51 nkramer Exp $
 
 //======================================================================
 //
@@ -1204,7 +1204,7 @@ define sealed method read-into!
   read-into-required-vector(stream, destination, signal-eof?, to-eof?,
 			    start, stop);
 end method;
-#end
+#endif
 
 /// read-into-required-vector -- Internal.
 ///

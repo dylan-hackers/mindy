@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.9 1996/02/18 05:21:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.10 1996/05/08 15:56:31 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -112,7 +112,7 @@ define method dump-od(obj :: <extended-integer>, buf :: <dump-state>)
 	else
 	  as(<integer>, logior(word, ash(-$e1, $word-bits)));
 	end if;
-#end
+#endif
     dump-word(word, buf);
   end;
 end method;

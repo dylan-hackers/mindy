@@ -3,7 +3,7 @@ author: chiles@cs.cmu.edu
 synopsis: This file implements some extensions to the Gwydion Dylan
           implementation.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/internals.dylan,v 1.1 1996/03/19 23:58:28 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/internals.dylan,v 1.2 1996/05/08 15:57:51 nkramer Exp $
 
 //======================================================================
 //
@@ -41,7 +41,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/internals.dylan
   define inline method on-exit (x) => ();
     ignore(x);
   end;
-#end
+#endif
 
 
 ///

@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.48 1996/05/01 14:21:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.49 1996/05/08 15:56:31 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -86,7 +86,7 @@ define sealed inline method element-setter
   end;
 end;
 
-#end
+#endif
 
 /// log2 of the the number of entries in the table.
 define constant memo2-bits = 9;
@@ -116,7 +116,7 @@ define constant memo2-lookup = method
   let base = modulo(type1.type-hash - type2.type-hash, memo2-size);
 #else
   let base = logand(type1.type-hash - type2.type-hash, memo2-mask);
-#end
+#endif
   let entry :: <memo-entry> = table[base];
   if (entry.memo-type1 == type1 & entry.memo-type2 == type2)
     *memo2-hits* := *memo2-hits* + 1;
@@ -134,7 +134,7 @@ define constant memo2-enter = method
   let base = modulo(type1.type-hash - type2.type-hash, memo2-size);
 #else
   let base = logand(type1.type-hash - type2.type-hash, memo2-mask);
-#end
+#endif
   let entry :: <memo-entry> = table[base];
   if (entry == $null-memo-entry)
     entry := make(<memo-entry>);

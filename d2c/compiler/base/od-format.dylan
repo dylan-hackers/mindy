@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.48 1996/04/15 18:27:42 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.49 1996/05/08 15:56:31 nkramer Exp $
 
 /*
 
@@ -623,7 +623,7 @@ define /* exported */ constant $word-bits = 32;
 define constant <word> = <general-integer>;
 #else
 define constant <word> = <integer>;
-#end
+#endif
 
 // Read a word from a buffer at a word-aligned byte offset.
 // 
@@ -640,13 +640,13 @@ define method buffer-word(bbuf :: <buffer>, i :: <buffer-index>)
       if (high-end.zero?)
 	0;
       elseif (high-end < 64)
-#end
+#endif
 	ash(high-end, 24);
 #if (mindy)
       else
 	ash(as(<extended-integer>, high-end), 24);
       end if;
-#end
+#endif
     
 end method;
 
@@ -667,7 +667,7 @@ define method buffer-word-setter
   let byte2 = logand(ash(new-val, -16), 255);
   let byte3 = logand(ash(new-val, -8), 255);
   let byte4 = logand(new-val, 255);
-#end
+#endif
 
   bbuf[i + 0] := byte1;
   bbuf[i + 1] := byte2;
@@ -689,7 +689,7 @@ define method buffer-word-setter
   bbuf[i + 2] := byte3;
   bbuf[i + 3] := byte4;
 end method;
-#end
+#endif
 
 // #### HACK to allow us to dump headers w/o creating bignums in mindy.  This
 // is particularly incorrect for e.g. end entries and references, since they
@@ -712,7 +712,7 @@ define method dump-header-word
   let byte2 = logand(ash(obj, -16), 255);
   let byte3 = logand(ash(obj, -8), 255);
   let byte4 = logand(obj, 255);
-#end
+#endif
 
   bbuf[i + 0] := hi;
   bbuf[i + 1] := byte2;
@@ -854,7 +854,7 @@ define constant $rot-mask
   = lognot(ash(as(<extended-integer>, -1), $word-bits - 3));
 #else
   = lognot(ash(-1, $word-bits - 3));
-#end
+#endif
 
 // Note that this hash is completely arbitrary.  Nobody expects to able to
 // regenerate this hash.  We could use a random number if we had a handy one.
@@ -870,7 +870,7 @@ define method compute-unit-hash (state :: <dump-state>)
   let res = as(<extended-integer>, get-time-of-day());
 #else
   let res = call-out("time", int:, int: 0);
-#end
+#endif
   let hash-idx = object-hash(state) * $word-bytes;
   for (wot in state.all-dump-buffers)
     let buf = wot.head;

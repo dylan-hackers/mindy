@@ -2,7 +2,7 @@ module: Print
 author: chiles@cs.cmu.edu
 synopsis: This file implements object printing.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.3 1996/03/20 17:34:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/print/print.dylan,v 1.4 1996/05/08 15:58:08 nkramer Exp $
 
 //======================================================================
 //
@@ -933,7 +933,7 @@ define method print-specializer (type :: <direct-instance>, stream :: <stream>)
   print-specializer(type.direct-instance-of, stream);
   write(")", stream);
 end method;
-#end
+#endif
 
 #if (~mindy)
 define method print-specializer
@@ -941,7 +941,7 @@ define method print-specializer
     => ();
   write("<byte-character>", stream);
 end method;
-#end
+#endif
 
 define method print-specializer (type :: <limited-integer>, stream :: <stream>)
     => ();
@@ -979,7 +979,7 @@ define method print-specializer (type :: <union>, stream :: <stream>)
   print-union(as(<simple-object-vector>, type.union-members),
 	      as(<simple-object-vector>, type.union-singletons),
 	      stream);
-#end
+#endif
 end method print-specializer;
 
 define method print-union

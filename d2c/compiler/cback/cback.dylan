@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.118 1996/05/01 14:41:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.119 1996/05/08 15:56:53 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -615,7 +615,7 @@ define method key-exists? (table :: <string-table>, key :: <byte-string>)
     => res :: <boolean>;
   element(table, key, default: #f) ~== #f;
 end method key-exists?;
-#end
+#endif
 
 //========================================================================
 // New-{scope}

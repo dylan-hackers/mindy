@@ -1,5 +1,5 @@
 module: source
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.14 1996/03/27 23:53:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/source.dylan,v 1.15 1996/05/08 15:56:31 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -92,7 +92,7 @@ define method getcwd () => cwd :: <byte-string>;
   end if;
 end method getcwd;
 
-#end
+#endif
 
 
 // Source files.
@@ -197,7 +197,7 @@ define inline method make-buffer (size :: <integer>)
   make(<buffer>, size: size);
 end method make-buffer;
 
-#end
+#endif
 
 define method fill-buffer (buf :: <buffer>, stream :: <stream>) => ();
   read-into!(buf, stream);
