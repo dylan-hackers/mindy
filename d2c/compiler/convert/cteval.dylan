@@ -1,12 +1,12 @@
 module: compile-time-eval
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/cteval.dylan,v 1.4 2001/07/27 20:15:29 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/cteval.dylan,v 1.5 2002/05/14 21:08:48 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -347,7 +347,8 @@ define-ct-evaluator(#"subclass", #(#"<class>"),
 		    end method);
 
 define-ct-evaluator(#"direct-instance", #(#"<class>"),
-		    method (class :: <cclass>) => res :: <subclass-ctype>;
+		    method (class :: <cclass>)
+		     => res :: false-or(<direct-instance-ctype>);
 		      unless (class.abstract?)
 			make(<direct-instance-ctype>, base-class: class);
 		      end unless;
