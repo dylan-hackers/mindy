@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.28 2001/11/30 21:31:46 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.29 2001/12/01 13:57:14 gabor Exp $
 copyright: see below
 
 
@@ -2723,12 +2723,8 @@ define method build-maker-function-body
 	    build-assignment(maker-builder, policy, source,
 			     init-value-var, arg);
 	    build-slot-init(slot, init-value-var, supplied?-arg);
-/* ### otherwise ICE */	    build-else(maker-builder, policy, source);
-// Error   : Internal compiler error: Expected an instance of {Class <body-region>}, but got {<if-region> [0]}
-// fer-builder.dylan.c line 1557   File: "Archive:generated files:front:fer-builder.dylan.c", line: 1557
-	    /* #line 248 "fer-builder.dylan" */
 	    if (slot.slot-init-keyword-required?)
-	      // build-else(maker-builder, policy, source); /* otherwise ICE */
+	      build-else(maker-builder, policy, source);
 	      build-assignment
 		(maker-builder, policy, source, #(),
 		 make-error-operation

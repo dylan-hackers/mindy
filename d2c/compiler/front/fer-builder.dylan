@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.6 2001/05/30 21:23:38 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.7 2001/12/01 13:57:44 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -227,32 +227,36 @@ define method build-region
   end;
 end;
 
-
-// If "else", pop both bodies, otherwise a body-region with one body.  If the
+// If building an <if-region>, push "else" first,
+// if "else", pop both bodies, otherwise a body-region with one body.  If the
 // region is a function-region, set its parent to the component, otherwise
 // append it to the parent body.
 //
 define method end-body(builder :: <internal-builder>)
  => res :: <region>;
   let region = builder.region-stack.head;
-  builder.region-stack := builder.region-stack.tail;
-
-  if (region == #"else")
-    let region = builder.region-stack.head;
+  if (instance?(region, <if-region>))
+    push-body(builder, #"else");
+    end-body(builder);
+  else
     builder.region-stack := builder.region-stack.tail;
-    region.else-region := pop-canonical-body(builder, region);
-    region.then-region := pop-canonical-body(builder, region);
-    add-body-region(builder, region);
-    region;
-  else    
-    region.body := pop-canonical-body(builder, region);
-    if (instance?(region, <function-region>))
-      region.parent := builder.component;
-    else
+    if (region == #"else")
+      let region = builder.region-stack.head;
+      builder.region-stack := builder.region-stack.tail;
+      region.else-region := pop-canonical-body(builder, region);
+      region.then-region := pop-canonical-body(builder, region);
       add-body-region(builder, region);
+      region;
+    else
+      region.body := pop-canonical-body(builder, region);
+      if (instance?(region, <function-region>))
+        region.parent := builder.component;
+      else
+        add-body-region(builder, region);
+      end;
+      region;
     end;
-    region;
-  end;
+  end if;
 end method;
 
 

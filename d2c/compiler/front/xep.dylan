@@ -1,5 +1,5 @@
 module: xep-tools
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.2 2001/07/22 02:27:10 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.3 2001/12/01 13:57:54 gabor Exp $
 copyright: see below
 
 
@@ -273,7 +273,6 @@ define method aux-build-xep
 	   (builder, policy, source, #"wrong-number-of-arguments-error",
 	    make-literal-constant(builder, #f),
 	    wanted-leaf, nargs-leaf));
-	build-else(builder, policy, source);
 	end-body(builder);
       end;
       if (signature.key-infos)
@@ -292,7 +291,6 @@ define method aux-build-xep
 	   make-error-operation
 	     (builder, policy, source,
 	      #"odd-number-of-keyword/value-arguments-error"));
-	build-else(builder, policy, source);
 	end-body(builder);
       end;
       build-assignment(builder, policy, source, args-leaf,

@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.10 2001/08/02 07:05:51 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.11 2001/12/01 13:58:10 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1481,7 +1481,6 @@ define method do-transformer
       build-if-body(builder, policy, source,
 		    iteration-done(builder, policy, source, iteration-vars));
       build-exit(builder, policy, source, block-region);
-      build-else(builder, policy, source);
       end-body(builder); // if
     end;
     build-assignment(builder, policy, source, #(),
