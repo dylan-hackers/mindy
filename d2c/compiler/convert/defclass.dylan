@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.7 1994/12/16 14:30:17 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.8 1994/12/17 02:07:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -100,7 +100,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 			   #"instance";
 			 end;
 	let getter = option.classopt-name.token-symbol;
-	unless (instance?(type, <expression>))
+	unless (type == #f | instance?(type, <expression>))
 	  error("Bogus type expression: %=", type);
 	end;
 	let setter = if (allocation == #"constant")
@@ -327,10 +327,11 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 				  list(slot-type | make(<unknown-ctype>)),
 				returns-rest-type: #f),
 		hairy: hairy?,
-		sealed: slot-defn.slot-sealed?);
+		sealed: slot-defn.slot-sealed?,
+		slot: slot-defn);
       if (slot-defn.slot-setter-name)
 	slot-defn.slot-setter-method
-	  := make(<getter-method-definition>,
+	  := make(<setter-method-definition>,
 		  base-name: slot-defn.slot-getter-name,
 		  signature: make(<signature>,
 				  specializers:
@@ -343,7 +344,8 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 				    list(slot-type | make(<unknown-ctype>)),
 				  returns-rest-type: #f),
 		  hairy: hairy?,
-		  sealed: slot-defn.slot-sealed?);
+		  sealed: slot-defn.slot-sealed?,
+		  slot: slot-defn);
       end;
     end;
   end;
