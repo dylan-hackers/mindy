@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.4 2001/07/24 06:34:20 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.5 2001/09/21 06:13:18 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -336,7 +336,9 @@ define class <struct-slot-defn> (<object>)
     init-value: #f;
 end class;
 
-define method compute-cclass (defn :: <real-designator-class-definition>)
+define method compute-cclass
+    (defn :: <real-designator-class-definition>,
+     #next next-method)
     => res :: false-or(<cclass>);
   let cclass = next-method();
 
