@@ -140,7 +140,7 @@ define module define-interface
   // local packages
   use int-lexer;
   use int-parse, rename: {rename => renames};
-  use c-lexer, import: {include-path};
+  use c-lexer, import: {include-path, open-in-include-path};
   use c-declarations,
     rename: {parse => c-parse, <parse-state> => <c-parse-state>};
   use name-mappers;
