@@ -13,9 +13,9 @@ The following are enhancements added since release 1.2:
    Added the Tk library, which contains code to create graphical user
    interfaces using Tk (of TCL/TK fame).  See tk.doc for details.
 
-   Added while: and until: syntax to for statement.  Make words like
-   class, keyed-by, and module unresevered words.  The old syntax is
-   still supported.
+   Added while: and until: syntax to for statement.  The old syntax is
+   still supported.  Words like class, keyed-by, and module are now
+   unresevered words.
 
    Added <string-table> to the Extensions module.  See mindy.doc for
    details.
@@ -30,8 +30,10 @@ The following are enhancements added since release 1.2:
    L_XTND have been replaced with the POSIX equivalents SEEK_SET,
    SEEK_CUR, SEEK_END.  ONDELAY has been changed to ONONBLOCK.  The
    non-POSIX constants FCREAT, FTRUNC, FEXCL, and FNDELAY have been
-   removed, since they already had POSIX equivalents.  See mindy.doc
-   for more details.
+   removed, since they already had POSIX equivalents.  O_NONBLOCK,
+   ELOOP, EDQUOT, EOPNOTSUPP, and ETXTBSY have been removed, since
+   they are unused and cause portability problems.  See mindy.doc for
+   more details.
 
 
 The following are bug fixes since release 1.2:
@@ -61,115 +63,8 @@ The following are bug fixes since release 1.2:
 
    every? for vectors now works.
 
-
-I don't know what these mean:
-
-RCS file:        ./comp/RCS/expand.c,v;   Working file:    expand.c
-----------------------------
-revision 1.22        
-date: 94/12/17 01:23:22;  author: wlott;  state: Exp;  lines added/del: 5/2
-After changing the name of the function to function-setter, look the info
-up again instead of just continuing to use the old info.
-
-RCS file:        ./comp/RCS/lexer.l,v;   Working file:    lexer.l
-----------------------------
-revision 1.13        
-date: 94/12/16 19:18:01;  author: wlott;  state: Exp;  lines added/del: 9/6
-Changed mumble_OPTION to mumble_KEYWORD.  Added UNTIL_KEYWORD and
-WHILE_KEYWORD.  Added \name notation.
-
-RCS file:        ./interp/RCS/init.c,v;   Working file:    init.c
-----------------------------
-revision 1.12        
-date: 95/02/09 18:26:25;  author: wlott;  state: Exp;  lines added/del: 3/1
-Added call to init_load_functions.
-
-RCS file:        ./interp/RCS/load.c,v;   Working file:    load.c
-----------------------------
-revision 1.28        
-date: 95/02/09 18:26:44;  author: wlott;  state: Exp;  lines added/del: 53/10
-Added a dylan interface to load.
-
-RCS file:        ./interp/RCS/thread.c,v;   Working file:    thread.c
-----------------------------
-revision 1.22        
-date: 95/02/08 00:05:20;  author: wlott;  state: Exp;  lines added/del: 2/1
-Zero the stack after allocating it so that GC doesn't find random stuff
-on it.
-
-RCS file:        ./libraries/dylan/RCS/exports.dylan,v;   Working file:    exports.dylan
-----------------------------
-revision 1.62        
-date: 95/03/02 19:41:06;  author: wlott;  state: Exp;  lines added/del: 2/2
-Added ratio to extras so that it will get exported from Extensions.
-----------------------------
-revision 1.61        
-date: 95/03/02 19:15:24;  author: wlott;  state: Exp;  lines added/del: 3/3
-Added make-ratio to the builtin-stuff exports so that it can be called from the
-dylan module.  Removed a commented out create of some ratio related exports,
-because we have something for real now.
-----------------------------
-revision 1.59        
-date: 95/02/09 18:25:53;  author: wlott;  state: Exp;  lines added/del: 3/3
-Added export of load from the extensions module.
-
-RCS file:        ./libraries/dylan/RCS/cond.dylan,v;   Working file:    cond.dylan
-----------------------------
-revision 1.10        
-date: 95/01/10 16:12:15;  author: wlott;  state: Exp;  lines added/del: 2/2
-Added the stream argument to a call to report-condition that was missing
-it.
-
-RCS file:        ./libraries/dylan/RCS/stretchy.dylan,v;   Working file:    stretchy.dylan
-----------------------------
-revision 1.11        
-date: 95/01/10 16:12:40;  author: wlott;  state: Exp;  lines added/del: 3/3
-Fixed two uses of ceiling to ceiling/.
-
-
-RCS file:        ./libraries/dylan/RCS/ratio.dylan,v;   Working file:    ratio.dylan
-----------------------------
-revision 1.3        
-date: 95/03/13 15:39:32;  author: wlott;  state: Exp;  lines added/del: 38/4
-Added rationalize.
-----------------------------
-revision 1.2        
-date: 95/03/02 19:31:37;  author: wlott;  state: Exp;  lines added/del: 1/2
-Removed a spurious newline from the file header.
-----------------------------
-revision 1.1        
-date: 95/03/02 19:19:20;  author: wlott;  state: Exp;  
-Initial revision
-
-RCS file:        ./libraries/streams/RCS/streams.dylan,v;   Working file:    streams.dylan
-----------------------------
-revision 1.26        
-date: 95/02/03 11:00:02;  author: chiles;  state: Exp;  lines added/del: 2/2
-I deleted a declaration that was breaking buffer-subsequence.
-It would only return <byte-string>s.  Now it reutnturns 
-everything it should.
-
-RCS file:        ./libraries/random/RCS/distributions.dylan,v;   Working file:    distributions.dylan
-----------------------------
-revision 1.4        
-date: 95/01/10 16:13:22;  author: wlott;  state: Exp;  lines added/del: 3/3
-Fixed random-uniform to not assume all <integer>s are direct instances of
-<integer> and to use floor instead of round.
-
-RCS file:        ./libraries/print/RCS/print.dylan,v;   Working file:    print.dylan
-----------------------------
-revision 1.12        
-date: 95/03/13 15:40:07;  author: wlott;  state: Exp;  lines added/del: 104/2
-Added ratio and (simplistic) float printing.
-
-RCS file:        ./libraries/print/RCS/pprint.dylan,v;   Working file:    pprint.dylan
-----------------------------
-revision 1.6        
-date: 95/02/10 12:36:50;  author: wlott;  state: Exp;  lines added/del: 2/2
-Incorporated fix to set-indentation supplied by Paul Haar.
-
-
-
+   Random-uniform from the Random library now works in the presence of
+   extended integers.
 
 
 The following are enhancements added since release 1.1:
