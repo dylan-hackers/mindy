@@ -79,7 +79,7 @@ define module tk
   export // <menu>s
     add-command, add-checkbutton, add-radiobutton, add-cascade, add-separator;
   export // <scale>s
-    get-units, set-units;
+    get-value, set-value;
   export // <scrollbar>s
     scroll, get-units, set-units;
   export // <text>s
