@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.3 1996/04/13 21:24:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/convert-exports.dylan,v 1.4 1996/04/14 13:25:32 wlott Exp $
 copyright: Copyright (c) 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -257,6 +257,7 @@ define module define-classes
   use c-representation;
   use function-definitions;
 
+  use source-utilities;
   use fragments;
   use parse-tree;
   use parser;
