@@ -1,3 +1,10 @@
+gwydion-dylan (2.3.9pre3-2) unstable; urgency=low
+
+  * Updated to 'pre3' tag.
+  * Bumped bootstrap counter for autobuilders.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sat, 27 Jul 2002 14:43:47 -0700
+
 gwydion-dylan (2.3.9pre2-1) unstable; urgency=low
 
   * New upstream sources

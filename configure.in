@@ -1,6 +1,6 @@
 
 
-dnl	$Header: /scm/cvs/src/configure.in,v 1.96 2002/07/17 21:57:40 andreas Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.97 2002/07/28 04:21:13 brent Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -50,7 +50,7 @@ AC_SUBST(VERSION)
 # interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=19
+CURRENT_BOOTSTRAP_COUNTER=20
 AC_SUBST(CURRENT_BOOTSTRAP_COUNTER)
 
 #--------------------------------------------------------------------
