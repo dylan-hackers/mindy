@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.22 1995/06/12 17:38:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.23 1995/11/02 16:51:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -47,13 +47,10 @@ define method compile (#rest files) => ();
   format(*debug-output*, "laying out instances\n");
   layout-instance-slots();
   let init-functions = make(<stretchy-vector>);
-  let header-stream
-    = make(<file-stream>, name: "output.h", direction: #"output");
   let body-stream
     = make(<file-stream>, name: "output.c", direction: #"output");
   let output-info
-    = make(<output-info>, header-stream: header-stream,
-	   body-stream: body-stream);
+    = make(<output-info>, body-stream: body-stream);
   emit-prologue(output-info);
   format(body-stream, "#include \"output.h\"\n\n");
   for (tlf in $Top-Level-Forms)
@@ -85,7 +82,6 @@ define method compile (#rest files) => ();
     emit-component(component, output-info);
   end;
   emit-epilogue(init-functions, output-info);
-  close(header-stream);
   close(body-stream);
   format(*debug-output*, "Emitting Initial Heap.\n");
   let heap-stream 
@@ -95,6 +91,7 @@ define method compile (#rest files) => ();
   close(heap-stream);
   format(*debug-output*, "Optimize called %d times.\n", *optimize-ncalls*);
 end;
+
 
 define method main (argv0, #rest files)
   if (empty?(files))
