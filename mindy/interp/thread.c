@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.4 1994/03/27 02:08:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.5 1994/03/27 04:50:33 wlott Exp $
 *
 * This file does whatever.
 *
@@ -660,7 +660,7 @@ void init_thread_functions(void)
 
     define_method("make", list1(singleton(obj_LockClass)), FALSE, obj_Nil,
 		  obj_LockClass, make_lock);
-    define_function("lock-query", list1(obj_LockClass), FALSE, obj_False,
+    define_function("lock-locked?", list1(obj_LockClass), FALSE, obj_False,
 		    obj_BooleanClass, dylan_lock_query);
     define_function("lock-grab", list1(obj_LockClass), FALSE, obj_False,
 		    obj_ObjectClass, dylan_lock_grab);
