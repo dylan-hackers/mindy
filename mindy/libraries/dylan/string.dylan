@@ -11,14 +11,10 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.2 1994/03/30 06:07:29 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/string.dylan,v 1.3 1994/04/18 05:51:26 wlott Exp $
 //
 //  This file does whatever.
 //
-
-define method make (clas == <string>, #rest keyword-value-pairs)
-  apply(make, <byte-string>, keyword-value-pairs)
-end make;
 
 define method as (clas == <string>, collection :: <collection>)
   as(<byte-string>, collection)
