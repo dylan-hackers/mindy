@@ -1,75 +1,8 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.69 1996/06/20 21:09:40 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.70 1996/06/26 14:50:47 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-
-#if (~mindy)
-
-define method import-string (ptr :: <raw-pointer>)
-    => string :: <byte-string>;
-  for (len :: <integer> from 0,
-       until: zero?(pointer-deref(#"char", ptr, len)))
-  finally
-    let res = make(<byte-string>, size: len);
-    for (index :: <integer> from 0 below len)
-      res[index] := as(<character>, pointer-deref(#"char", ptr, index));
-    end for;
-    res;
-  end for;
-end method import-string;
-
-define method export-string (string :: <byte-string>)
-    => ptr :: <raw-pointer>;
-  let len = string.size;
-  let buffer = make(<buffer>, size: len + 1);
-  copy-bytes(buffer, 0, string, 0, len);
-  buffer[len] := 0;
-  buffer-address(buffer);
-end method export-string;
-
-define method getenv (name :: <byte-string>)
-    => res :: false-or(<byte-string>);
-  let ptr = call-out("getenv", #"ptr", #"ptr", export-string(name));
-  if (zero?(as(<integer>, ptr)))
-    #f;
-  else
-    import-string(ptr);
-  end if;
-end method getenv;
-
-define method system (command :: <byte-string>)
-    => res :: <integer>;
-  call-out("system", #"int", #"ptr", export-string(command));
-end method system;
-
-define method exit (#key exit-code :: <integer> = 0)
-    => res :: <never-returns>;
-  call-out("exit", void:, int:, exit-code);
-end method exit;
-
-
-// no-core-dumps -- internal.
-//
-// Sets the current limit for core dumps to 0.  Keeps us from dumping 32+ meg
-// core files when we hit an error.
-//
-define method no-core-dumps () => ();
-  let buf = make(<buffer>, size: 8);
-  call-out("getrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
-  pointer-deref(#"int", buf.buffer-address, 0) := 0;
-  call-out("setrlimit", #"void", #"int", 4, #"ptr", buf.buffer-address);
-end method no-core-dumps;
-
-
-#endif
-
-define constant $cc-utility = "gcc";   // I don't know if cc would also work
-define constant $cc-flags = getenv("CCFLAGS") | "";
-define constant $ar-utility = "/bin/ar";
-define constant $make-utility = "gmake";  // "make" should also work
-
-
 // Roots registry.
 
 // Information which needs to go into the library dump file.
@@ -328,32 +261,42 @@ end method find-source-file;
 
 
 define method find-library-archive
-    (unit-name :: <byte-string>) => path :: <byte-string>;
-  block (return)
-    local
-      method try (dir :: <byte-string>)
-	let path = stringify(dir, "/lib", unit-name, ".a");
-	block ()
-	  close(make(<file-stream>, name: path));
-	  return(path);
-	exception (<file-not-found>)
-	  #f;
-	end block;
-      end method try;
-    
-    for (dir in *data-unit-search-path*)
-      try(dir);
-    end for;
-    error("Can't find lib%s.a.", unit-name);
-  end block;
+    (unit-name :: <byte-string>, target :: <target-environment>,
+     no-binaries :: <boolean>)
+ => path :: <byte-string>;
+  let libname = concatenate(target.library-filename-prefix,
+			    unit-name, target.library-filename-suffix);
+  if (no-binaries)  // Who knows where the libraries will be when the user 
+                    // finally decides to link this?
+    libname;
+  else
+    block (return)
+      local
+	method try (dir :: <byte-string>)
+	  let path = stringify(dir, "/", libname);
+	  block ()
+	    close(make(<file-stream>, name: path));
+	    return(path);
+	  exception (<file-not-found>)
+	    #f;
+	  end block;
+	end method try;
+      
+      for (dir in *data-unit-search-path*)
+	try(dir);
+      end for;
+      error("Can't find %s.", libname);
+    end block;
+  end if;
 end method find-library-archive;
 
 
-
 define method output-c-file-rule
-    (makefile :: <stream>, c-name :: <string>, o-name :: <string>) => ();
+    (makefile :: <stream>, c-name :: <string>, o-name :: <string>,
+     target :: <target-environment>)
+ => ();
   let cc-command
-    = format-to-string("$(CC) $(CCFLAGS) -c %s -o %s", c-name, o-name);
+    = format-to-string(target.compile-c-command, c-name, o-name);
   format(makefile, "%s : %s\n", o-name, c-name);
   format(makefile, "\t%s\n", cc-command);
 end method output-c-file-rule;
@@ -366,32 +309,30 @@ end method output-c-file-rule;
 // files.
 //
 define method pick-which-file
-    (old-filename :: <string>, new-filename :: <string>)
+    (old-filename :: <string>, new-filename :: <string>, 
+     target :: <target-environment>)
  => (used-new-file :: <boolean>);
-  let cmp-command = format-to-string("cmp -s %s %s", 
-				     old-filename, new-filename);
-  // cmp will return non-zero if they are different, if a file's not
-  // found, or if cmp somehow fails to execute.
-  if (system(cmp-command) ~== 0)
-    let mv-command = format-to-string("mv -f %s %s", 
-				      new-filename, old-filename);
-    if (system(mv-command) ~== 0)
-      cerror("so what", "mv failed?");
-    end if;
-    #t;
-  else
-    let rm-command = format-to-string("rm -f %s", new-filename);
-    if (system(rm-command) ~== 0)
-      cerror("so what", "rm failed?");
-    end if;
+  if (files-identical?(old-filename, new-filename))
+    delete-file(new-filename);
     #f;
+  else
+    rename-file(new-filename, old-filename);
+    #t;
   end if;
 end method pick-which-file;
 
 define method compile-library
     (lid-file :: <byte-string>, command-line-features :: <list>,
-     log-dependencies :: <boolean>)
+     log-dependencies :: <boolean>, target :: <target-environment>,
+     no-binaries :: <boolean>)
     => worked? :: <boolean>;
+  // If no-binaries is specified, we assume the CCFLAGS environment
+  // variable is unreliable because we're probably cross-compiling.
+  let cc-flags = if (no-binaries)
+		   target.default-c-compiler-flags;
+		 else
+		   getenv("CCFLAGS") | target.default-c-compiler-flags;
+		 end if;
   block ()
 
     let (header, files) = parse-lid(lid-file);
@@ -469,9 +410,8 @@ define method compile-library
     format(makefile, "# Makefile for compiling the .c and .s files\n");
     format(makefile, "# If you want to compile .dylan files, don't use "
 	     "this makefile.\n\n");
-    format(makefile, "CC = %s\n", $cc-utility);
-    format(makefile, "CCFLAGS = %s\n", $cc-flags);
-    format(makefile, "AR = %s\n\n", $ar-utility);
+    format(makefile, "CCFLAGS = %s\n", cc-flags);
+    format(makefile, "LINK_LIBRARY = %s\n\n", target.link-library-command);
 
     format(makefile, "# We only know the ultimate target when we've finished"
 	     " building the rest\n");
@@ -532,9 +472,9 @@ define method compile-library
 	  fresh-line(*debug-output*);
 	end;
 
-	pick-which-file(c-name, temp-c-name);
-	let o-name = concatenate(base-name, ".o");
-	output-c-file-rule(makefile, c-name, o-name);
+	pick-which-file(c-name, temp-c-name, target);
+	let o-name = concatenate(base-name, target.object-filename-suffix);
+	output-c-file-rule(makefile, c-name, o-name, target);
 	all-generated-files := add!(all-generated-files, c-name);
 	format(objects-stream, " %s", o-name);
 
@@ -546,6 +486,12 @@ define method compile-library
     end for;
 
     let executable = element(header, #"executable", default: #f);
+    let executable
+     = if (executable)
+	 concatenate(executable, target.executable-filename-suffix);
+       else 
+	 #f;
+       end if;
     let entry-point = element(header, #"entry-point", default: #f);
     let entry-function = #f;
     if (entry-point & ~executable)
@@ -566,9 +512,10 @@ define method compile-library
       build-unit-init-function(unit-prefix, init-functions, body-stream);
       close(body-stream);
 
-      pick-which-file(c-name, temp-c-name);
-      let o-name = concatenate(unit-prefix, "-init.o");
-      output-c-file-rule(makefile, c-name, o-name);
+      pick-which-file(c-name, temp-c-name, target);
+      let o-name = concatenate(unit-prefix, "-init", 
+			       target.object-filename-suffix);
+      output-c-file-rule(makefile, c-name, o-name, target);
       all-generated-files := add!(all-generated-files, c-name);
       format(objects-stream, " %s", o-name);
     end;
@@ -578,22 +525,31 @@ define method compile-library
     let temp-s-name = concatenate(s-name, "-temp");
     let heap-stream = make(<file-stream>, 
 			   name: temp-s-name, direction: #"output");
-    let (undumped, extra-labels) = build-local-heap(unit, heap-stream);
+    let (undumped, extra-labels) = build-local-heap(unit, heap-stream, 
+						    target);
     close(heap-stream);
 
-    // Even though this isn't a .c file, we call the compiler the same
-    pick-which-file(s-name, temp-s-name);
-    let o-name = concatenate(unit-prefix, "-heap.o");
-    output-c-file-rule(makefile, s-name, o-name);
+    pick-which-file(s-name, temp-s-name, target);
+    let o-name = concatenate(unit-prefix, "-heap", 
+			     target.object-filename-suffix);
+    let assemble-string
+      = format-to-string(target.assembler-command, s-name, o-name);
+    format(makefile, "%s : %s\n", o-name, s-name);
+    format(makefile, "\t%s\n", assemble-string);
     all-generated-files := add!(all-generated-files, s-name);
     format(objects-stream, " %s", o-name);
 
     let objects = string-output-stream-string(objects-stream);
     
-    let ar-name = format-to-string("lib%s.a", unit-prefix);
+    let ar-name = concatenate(target.library-filename-prefix,
+			      unit-prefix, target.library-filename-suffix);
     format(makefile, "\n%s : %s\n", ar-name, objects);
-    format(makefile, "\trm -f %s\n", ar-name);
-    format(makefile, "\t$(AR) qc %s%s\n", ar-name, objects);
+    format(makefile, "\t%s %s\n", target.delete-file-command, ar-name);
+    if (target.target-name == #"i386-win32")
+      format(makefile, "\t$(LINK_LIBRARY) /out:%s%s\n", ar-name, objects);
+    else
+      format(makefile, "\t$(LINK_LIBRARY) %s%s\n", ar-name, objects);
+    end if;
 
     let linker-options = element(header, #"linker-options", default: #f);
     let unit-info = make(<unit-info>,
@@ -610,7 +566,7 @@ define method compile-library
 	let heap-stream 
 	  = make(<file-stream>, name: "heap.s", direction: #"output");
 	build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
-			  heap-stream);
+			  heap-stream, target);
 	close(heap-stream);
       end;
 
@@ -644,10 +600,10 @@ define method compile-library
 
       begin
 	let flags
-	  = if ($cc-flags.empty?)
+	  = if (cc-flags.empty?)
 	      "";
 	    else
-	      stringify(' ', $cc-flags);
+	      stringify(' ', cc-flags);
 	    end if;
 	for (dir in *data-unit-search-path*)
 	  flags := stringify(flags, " -L", dir);
@@ -660,17 +616,35 @@ define method compile-library
 	      := stringify(' ', unit.unit-linker-options, linker-args);
 	  end if;
 	  unless (unit == unit-info)
-	    let archive = find-library-archive(unit.unit-name);
+	    let archive
+	      = find-library-archive(unit.unit-name, target, no-binaries);
 	    linker-args := stringify(' ', archive, linker-args);
 	    unit-libs := stringify(' ', archive, unit-libs);
 	  end unless;
 	end;
 
-	format(makefile, "\n%s : %s %s%s\n",
-	       executable, objects, ar-name, unit-libs);
-	format(makefile,
-	       "\t$(CC) -z%s -L/lib/pa1.1 -o %s inits.c heap.s %s%s\n",
-	       flags, executable, ar-name, linker-args);
+	if (target.target-name == #"i386-win32")
+	  format(makefile, "\n");
+	  output-c-file-rule(makefile, "inits.c", "inits.obj", target);
+	  let assemble-heap-string
+	    = format-to-string(target.assembler-command, "heap.s", "heap.obj");
+	  format(makefile, "heap.obj : heap.s\n");
+	  format(makefile, "\t%s\n", assemble-heap-string);
+	  format(makefile, "\n%s : %s%s inits.obj heap.obj\n",
+		 executable, ar-name, unit-libs);
+	  format(makefile,
+		 "\tlink %s /out:%s %s inits.obj heap.obj %s\n", 
+		 target.link-executable-flags,
+		 executable, ar-name, unit-libs);
+	else
+	  format(makefile, "\n%s : %s %s%s\n",
+		 executable, objects, ar-name, unit-libs);
+	  format(makefile,
+		 "\t%s%s %s -o %s inits.c heap.s %s%s\n",
+		 target.link-executable-command,
+		 flags, target.link-executable-flags, executable, 
+		 ar-name, linker-args);
+	end if;
 	format(makefile, "\nall-at-end-of-file : %s\n", executable);
       end;
 
@@ -696,7 +670,7 @@ define method compile-library
     end if;
 
     close(makefile);
-    if (pick-which-file(makefile-name, temp-makefile-name) = #t)
+    if (pick-which-file(makefile-name, temp-makefile-name, target) = #t)
       // If the new makefile is different from the old one, then we need
       // to recompile all .c and .s files, regardless of whether they
       // were changed.  So touch them to make them look newer than the
@@ -713,12 +687,14 @@ define method compile-library
       end unless;
     end if;
 
-    let make-command = format-to-string("%s -f %s", $make-utility, 
-					makefile-name);
-    format(*debug-output*, "%s\n", make-command);
-    unless (zero?(system(make-command)))
-      cerror("so what", "gmake failed?");
-    end;
+    if (~no-binaries)
+      let make-string = format-to-string("%s -f %s", target.make-command, 
+					 makefile-name);
+      format(*debug-output*, "%s\n", make-string);
+      unless (zero?(system(make-string)))
+	cerror("so what", "gmake failed?");
+      end;
+    end if;
   exception (<fatal-error-recovery-restart>)
     format(*debug-output*, "giving up.\n");
   end block;
@@ -863,6 +839,10 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   let lid-file = #f;
   let features = #();
   let log-dependencies = #f;
+  let target-machine = #"hppa-hpux";   // Need some better way than 
+                                       // assuming we always want an 
+                                       // HP compiler...
+  let no-binaries = #f;
   for (arg in args)
     if (arg.size >= 1 & arg[0] == '-')
       if (arg.size >= 2)
@@ -892,6 +872,20 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
 	      error("Bogus switch: %s", arg);
 	    end if;
 	    log-dependencies := #t;
+	  'T' =>
+	    if (arg.size > 2)
+	      target-machine := as(<symbol>, copy-sequence(arg, start: 2));
+	    else
+	      error("Target architecture not supplied with -T.");
+	    end if;
+	  'n' =>
+	    if (arg = "-no-binaries")  // We need this switch to keep gmake
+	                               // from deleting dylan.lib.du when 
+	                               // gmake -f cc-dylan-files.mak fails
+	      no-binaries := #t;
+	    else
+	      error("Bogus switch: %s", arg);
+	    end if;
 	  'd' =>
 	    *break-on-compiler-errors* := #t;
 	  'g' =>
@@ -914,8 +908,14 @@ define method main (argv0 :: <byte-string>, #rest args) => ();
   unless (lid-file)
     incorrect-usage();
   end;
+     // bug
+  let possible-targets = get-targets("/usr1/users/nkramer/d2c/compiler/targets.ini");
+  if (~key-exists?(possible-targets, target-machine))
+    error("Unknown target architecture %=.", target-machine);
+  end if;
   let worked?
-    = compile-library(lid-file, reverse!(features), log-dependencies);
+    = compile-library(lid-file, reverse!(features), log-dependencies,
+		      possible-targets[target-machine], no-binaries);
   exit(exit-code: if (worked?) 0 else 1 end);
 end method main;
 
