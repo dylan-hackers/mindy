@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.20 1994/04/29 05:46:58 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.21 1994/04/29 06:11:57 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -24,7 +24,7 @@ define module Builtin-Stuff
   export
     \*, \+, \-, \/, \<, \<=, \=, \==, \~=,
     <array>,
-    <boolean>, <buffer>, <byte-string>,
+    <boolean>, <buffer>, <byte-string>, <byte-vector>,
     <character>, <class>, <collection>, <complex>,
     <double-float>,
     <empty-list>, <event>, <explicit-key-collection>, <extended-float>,
@@ -50,7 +50,7 @@ define module Builtin-Stuff
     apply-curry, as, ash,
     broadcast-event,
     direct-subclasses, direct-superclasses,
-    ceiling/, current-handler,
+    ceiling/, copy-bytes, current-handler,
     do-next-method,
     element, element-setter, enable-error-system,
     find-method, floor/, format, function-arguments,
@@ -174,7 +174,7 @@ end Dylan;
 define module Extensions
   use Dylan;
   use Builtin-Stuff,
-    import: (main, format, prin1, print, putc, puts, getc,
+    import: (main, format, prin1, print, putc, puts, getc, <byte-vector>,
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object),
     export: all;
@@ -183,7 +183,8 @@ end Extensions;
 define module System
   use Dylan;
   use Builtin-Stuff,
-    import: (<buffer>, fd-close, fd-error-string, fd-input-available?,
+    import: (<buffer>, copy-bytes,
+	     fd-close, fd-error-string, fd-input-available?,
 	     fd-open, fd-read, fd-seek, fd-sync-output, fd-write, fd-exec),
     export: all;
 end System;
