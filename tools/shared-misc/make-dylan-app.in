@@ -18,8 +18,7 @@ chdir $appname or die "Can't chdir to directory $appname: $!";
 &write_file("$appname.lid", <<"EOD");
 library: $appname
 executable: $appname
-files:
-  $appname-exports
+files: $appname-exports
   $appname
 EOD
 
