@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.43 1996/07/12 01:08:06 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/cclass.dylan,v 1.44 1996/07/21 15:18:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1089,31 +1089,34 @@ define method layout-slots-for (class :: <cclass>) => ();
       layout-slots-for(super);
     end for;
     //
-    // Pick a representation and add bound? slots for any slot that isn't
-    // guaranteed to be initialized and that the representation doesn't have
-    // a bottom value.
+    // Pick representation for each instance slot.  If the representation
+    // doesn't have a bottom value and slot isn't guaranteed to be initialized,
+    // then also add a bound? slot for it.
     for (slot in class.new-slot-infos)
-      let rep = pick-representation(slot.slot-type, #"space");
-      slot.slot-representation := rep;
-      unless (slot-guaranteed-initialized?(slot, slot.slot-introduced-by)
-		| rep.representation-has-bottom-value?)
-	let class = slot.slot-introduced-by;
-	let boolean-ctype = specifier-type(#"<boolean>");
-	let init?-slot = make(<instance-slot-info>,
-			      introduced-by: class,
-			      type: boolean-ctype,
-			      getter: #f,
-			      init-value: make(<literal-false>),
-			      slot-representation:
-				pick-representation(boolean-ctype, #"space"));
-	slot.slot-initialized?-slot := init?-slot;
-	//
-	// We have to add it to all the subclasses ourselves because
-	// inherit-slots has already run.
-	for (subclass in class.subclasses)
-	  add-slot(init?-slot, subclass);
-	end for;
-      end unless;
+      if (instance?(slot, <instance-slot-info>))
+	let rep = pick-representation(slot.slot-type, #"space");
+	slot.slot-representation := rep;
+	unless (slot-guaranteed-initialized?(slot, slot.slot-introduced-by)
+		  | rep.representation-has-bottom-value?)
+	  let class = slot.slot-introduced-by;
+	  let boolean-ctype = specifier-type(#"<boolean>");
+	  let init?-slot
+	    = make(<instance-slot-info>,
+		   introduced-by: class,
+		   type: boolean-ctype,
+		   getter: #f,
+		   init-value: make(<literal-false>),
+		   slot-representation:
+		     pick-representation(boolean-ctype, #"space"));
+	  slot.slot-initialized?-slot := init?-slot;
+	  //
+	  // We have to add it to all the subclasses ourselves because
+	  // inherit-slots has already run.
+	  for (subclass in class.subclasses)
+	    add-slot(init?-slot, subclass);
+	  end for;
+	end unless;
+      end if;
     end for;
     //
     // Now that all slots have been added, convert them into a simple
