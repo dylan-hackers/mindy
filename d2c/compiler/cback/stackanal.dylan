@@ -1,8 +1,14 @@
 module: stack-analysis
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/stackanal.dylan,v 1.15 1996/03/17 02:49:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/stackanal.dylan,v 1.16 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
+// Implementation note:
+//
+// These functions make extensive use of <list>.  Although <list> is
+// usually an inferior data structure, this module makes good use of
+// their data sharing properties, and doesn't actually *save* any data
+// in <list>s.  It should, therefore, be fine.
 
 // analyze-stack-usage -- exported.
 //
