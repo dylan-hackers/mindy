@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.13 1995/10/13 15:04:54 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.14 1995/11/09 13:52:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -575,24 +575,21 @@ define /* exported */ variable *compiler-dispatcher*
 // where the type of the literal-value is ambiguous (e.g. for numbers.)
 //
 define method dump-od (obj :: <eql-literal>, buf :: <dump-state>) => ();
-  dump-simple-object(#"eql-literal", buf, obj.literal-value);
+  dump-simple-object(#"eql-literal", buf, obj.info, obj.literal-value);
 end method;
-
-/*
-define method dump-od (obj :: <literal-true>, buf :: <dump-state>) => ();
-  dump-simple-object(#"eql-literal", buf, #t);
-end method;
-
-define method dump-od (obj :: <literal-false>, buf :: <dump-state>) => ();
-  dump-simple-object(#"eql-literal", buf, #f);
-end method;
-*/
 
 // Just use AS to reconstruct the literal.
 //
 add-od-loader(*compiler-dispatcher*, #"eql-literal",
   method (state :: <load-state>) => res :: <eql-literal>;
-    as(<ct-value>, load-sole-subobject(state));
+    let saved-info = load-object-dispatch(state);
+    let value = load-object-dispatch(state);
+    assert-end-object(state);
+    let res = as(<ct-value>, value);
+    unless (res.info)
+      res.info := saved-info;
+    end;
+    res;
   end method
 );
 
@@ -633,22 +630,26 @@ add-od-loader(*compiler-dispatcher*, #"literal-vector",
 //
 define method dump-od
     (obj :: <literal-fixed-integer>, buf :: <dump-state>) => ();
-  dump-simple-object(#"literal-fixed-integer", buf, obj.literal-value);
+  dump-simple-object(#"literal-fixed-integer", buf,
+		     obj.info, obj.literal-value);
 end method;
 
 define method dump-od
     (obj :: <literal-single-float>, buf :: <dump-state>) => ();
-  dump-simple-object(#"literal-single-float", buf, obj.literal-value);
+  dump-simple-object(#"literal-single-float", buf,
+		     obj.info, obj.literal-value);
 end method;
 
 define method dump-od
     (obj :: <literal-double-float>, buf :: <dump-state>) => ();
-  dump-simple-object(#"literal-double-float", buf, obj.literal-value);
+  dump-simple-object(#"literal-double-float", buf,
+		     obj.info, obj.literal-value);
 end method;
 
 define method dump-od
     (obj :: <literal-extended-float>, buf :: <dump-state>) => ();
-  dump-simple-object(#"literal-extended-float", buf, obj.literal-value);
+  dump-simple-object(#"literal-extended-float", buf,
+		     obj.info, obj.literal-value);
 end method;
 
 
@@ -661,7 +662,14 @@ for (x = list(#"literal-fixed-integer", <literal-fixed-integer>,
 
   add-od-loader(*compiler-dispatcher*, x.first,
     method (state :: <load-state>) => res :: <eql-literal>;
-      make(x.second, value: load-sole-subobject(state));
+      let saved-info = load-object-dispatch(state);
+      let value = load-object-dispatch(state);
+      assert-end-object(state);
+      let res = make(x.second, value: value);
+      unless (res.info)
+	res.info := saved-info;
+      end;
+      res;
     end method
   );
 

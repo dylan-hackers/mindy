@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.1 1995/10/13 15:08:56 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.2 1995/11/09 13:52:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -109,7 +109,8 @@ add-od-loader(*compiler-dispatcher*, #"multi-value-type",
 // Classes:
 
 define constant $class-dump-slots =
-  list(cclass-name, name:, #f,
+  list(info, #f, info-setter,
+       cclass-name, name:, #f,
        direct-superclasses, direct-superclasses:, #f,
        not-functional?, not-functional:, #f,
        functional?, functional: #f,
