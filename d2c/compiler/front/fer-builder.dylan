@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.3 1994/12/13 14:19:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.4 1994/12/13 18:38:18 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -334,10 +334,34 @@ end method;
 
 
 define method make-definition-leaf
-    (builder :: <fer-builder>, defn :: <definition>)
- => res :: <definition-constant-leaf>;
+    (builder :: <fer-builder>, defn :: <abstract-constant-definition>)
+ => res :: <leaf>;
   ignore(builder);
-  make(<definition-constant-leaf>, const-defn: defn);
+  let value = ct-value(defn);
+  if (instance?(value, <eql-ct-value>))
+    make(<literal-constant>, value: value);
+  elseif (value)
+    make(<definition-constant-leaf>, const-defn: defn);
+  else
+    make(<global-variable>,
+	 var-info: make(<module-almost-constant-var-info>,
+			var-defn: defn,
+			asserted-type: defn.defn-type | object-ctype()));
+  end;
+end method;
+
+define method make-definition-leaf
+    (builder :: <fer-builder>, defn :: <function-definition>)
+ => res :: <leaf>;
+  ignore(builder);
+  if (defn.function-defn-hairy?)
+    make(<global-variable>,
+	 var-info: make(<module-almost-constant-var-info>,
+			var-defn: defn,
+			asserted-type: defn.defn-type | object-ctype()));
+  else
+    make(<definition-constant-leaf>, const-defn: defn);
+  end;
 end method;
 
 define method make-definition-leaf
@@ -347,7 +371,7 @@ define method make-definition-leaf
   make(<global-variable>,
        var-info: make(<module-var-info>,
 		      var-defn: defn,
-		      asserted-type: defn.defn-type));
+		      asserted-type: defn.defn-type | object-ctype()));
 end method;
 
 
