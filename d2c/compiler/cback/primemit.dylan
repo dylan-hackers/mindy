@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.4 2000/01/24 04:56:08 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.5 2000/03/20 00:47:25 andreas Exp $
 copyright: see below
 
 
@@ -463,9 +463,7 @@ define-primitive-emitter
 	   end;
 	   let rep = rep-for-c-type(dep.source-exp);
 	   let next = dep.dependent-next;
-	   format(stream, "(%s)%s",
-		  rep.representation-c-type,
-		  ref-leaf(rep, next.source-exp, file));
+           format(stream, "%s",  ref-leaf(rep, next.source-exp, file));
 	   repeat(next.dependent-next, #f);
 	 end;
        end;
