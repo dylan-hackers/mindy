@@ -1,11 +1,11 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.8 2001/01/25 03:50:26 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.9 2001/02/08 22:42:31 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -171,6 +171,9 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   // separate the classes into single-inheritance and
   // multiple-inheritance sets.
   slot inheritance-type :: one-of (#"plain", #"join", #"spine", #f), init-value: #f;
+  //
+  // The metaclass that determines the class object's slot layout
+  constant slot class-metaclass :: false-or(<meta-cclass>), required-init-keyword: metaclass:;
 end class;
 
 define sealed domain make (singleton(<cclass>));
@@ -182,22 +185,34 @@ define method initialize
     => ();
   next-method();
   
+  // Update with default values if necessary.  
+  unless (slots)
+    slots := class.new-slot-infos;
+  end;
+  
+  unless (overrides)
+    overrides := class.override-infos;
+  end;
+  
   // Add this class to *All-Classes*.
   add!(*All-Classes*, class);
 
   // Add us to all our direct superclasses direct-subclass lists.
   let supers = class.direct-superclasses;
-  for (super in supers)
-    if (super.obj-resolved?)
-      super.direct-subclasses := pair(class, super.direct-subclasses);
-    else
-      request-backpatch
-	(super,
-	 method (actual)
-	   actual.direct-subclasses := pair(class, actual.direct-subclasses);
-	 end method);
-    end if;
-  end for;
+
+  unless (instance?(class, <meta-cclass>))
+    for (super in supers)
+      if (super.obj-resolved?)
+	super.direct-subclasses := pair(class, super.direct-subclasses);
+      else
+	request-backpatch
+	  (super,
+	   method (actual)
+	     actual.direct-subclasses := pair(class, actual.direct-subclasses);
+	   end method);
+      end if;
+    end for;
+  end unless;
 
   // Compute the cpl if it wasn't already handed to us.
   let cpl = (precedence-list
@@ -254,6 +269,13 @@ end;
 
 define constant <slot-allocation>
   = one-of(#"instance", #"class", #"each-subclass", #"virtual");
+
+// Determines the layout of <cclass> objects that contain class allocated slots
+define class <meta-cclass>(<cclass>)
+end;
+
+define sealed domain make (singleton(<meta-cclass>));
+define sealed domain initialize (<meta-cclass>);
 
 define abstract class <slot-info> (<eql-ct-value>, <identity-preserving-mixin>)
   //
@@ -314,7 +336,7 @@ define method print-message
 	 lit.slot-introduced-by);
 end;
 
-define method make (class == <slot-info>, #rest keys, #key allocation)
+define method make (class == <slot-info>, #rest keys, #key allocation :: <slot-allocation>)
     => res :: <slot-info>;
   apply(make,
 	select (allocation)
@@ -356,6 +378,7 @@ end;
 define sealed domain make (singleton(<vector-slot-info>));
 
 define class <class-slot-info> (<slot-info>)
+  slot associated-meta-slot :: <meta-slot-info>;
 end;
 
 define sealed domain make (singleton(<class-slot-info>));
@@ -373,6 +396,18 @@ end;
 
 define sealed domain make (singleton(<virtual-slot-info>));
 define sealed domain initialize (<virtual-slot-info>);
+
+
+// An extra slot that is physically located in the object-class of an instance
+// with a class allocated slot.
+//
+define class <meta-slot-info>(<instance-slot-info>)
+  constant slot referred-slot-info :: <class-slot-info>,
+    required-init-keyword: referred:;
+end;
+
+define sealed domain make (singleton(<meta-slot-info>));
+define sealed domain initialize (<meta-slot-info>);
 
 
 define class <override-info> (<eql-ct-value>, <identity-preserving-mixin>)
@@ -1061,6 +1096,7 @@ define sealed domain make (singleton(<layout-table>));
 define sealed domain initialize (<layout-table>);
 
 define method copy-layout-table (layout :: <layout-table>)
+   => copy :: <layout-table>;
   make(<layout-table>,
        length: layout.layout-length,
        holes: shallow-copy(layout.layout-holes));
@@ -1799,7 +1835,7 @@ define method csubtype-dispatch
     & direct-classes.first == type2.base-class;
 end method csubtype-dispatch;
 
-// csubtype-dispatch{<limited-ctype>,<direct-instance-ctype>}
+// csubtype-dispatch{<singleton-ctype>,<direct-instance-ctype>}
 //
 // For singletons we don't care how many direct classes the base class
 // has, since the instance is of a particular one of them.
