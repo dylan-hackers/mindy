@@ -409,25 +409,81 @@ define inline method negative (a :: <fixed-integer>)
   %%primitive fixnum-negative (a);
 end;
 
-define inline method floor/ (a :: <fixed-integer>, b :: <fixed-integer>)
+define method floor/ (a :: <fixed-integer>, b :: <fixed-integer>)
     => (quo :: <fixed-integer>, rem :: <fixed-integer>);
-  %%primitive fixnum-floor/ (a, b);
+  if (zero?(b))
+    error("Division by zero.");
+  else
+    let (q, r) = %%primitive fixnum-divide (a, b);
+
+    if (zero?(r) | negative?(r) == negative?(b))
+      values(q, r);
+    else
+      values(q - 1, r + b);
+    end;
+  end;
 end;
 
-define inline method ceiling/ (a :: <fixed-integer>, b :: <fixed-integer>)
+define method ceiling/ (a :: <fixed-integer>, b :: <fixed-integer>)
     => (quo :: <fixed-integer>, rem :: <fixed-integer>);
-  %%primitive fixnum-ceiling/ (a, b);
+  if (zero?(b))
+    error("Division by zero.");
+  else
+    let (q, r) = %%primitive fixnum-divide (a, b);
+
+    if (zero?(r) | negative?(r) ~== negative?(b))
+      values(q, r);
+    else
+      values(q + 1, r - b);
+    end;
+  end;
 end;
 
-define inline method round/ (a :: <fixed-integer>, b :: <fixed-integer>)
+define method round/ (a :: <fixed-integer>, b :: <fixed-integer>)
     => (quo :: <fixed-integer>, rem :: <fixed-integer>);
-  %%primitive fixnum-round/ (a, b);
+  if (zero?(b))
+    error("Division by zero.");
+  else
+    let (q, r) = %%primitive fixnum-divide (a, b);
+
+    if (zero?(r))
+      values(q, r);
+    elseif (positive?(b))
+      let limit = ash(b, -1);
+      if (r > limit | (r == limit & odd?(q)))
+	values(q + 1, r - b);
+      elseif (r < -limit | (r == -limit & odd?(q)))
+	values(q - 1, r + b);
+      else
+	values(q, r);
+      end;
+    else
+      let limit = ash(-b, -1);
+      if (r > limit | (r == limit & odd?(q)))
+	values(q - 1, r + b);
+      elseif (r < -limit | (r == -limit & odd?(q)))
+	values(q + 1, r - b);
+      else
+	values(q, r);
+      end;
+    end;
+  end;
 end;
 
-define inline method truncate/
+define method truncate/
     (a :: <fixed-integer>, b :: <fixed-integer>)
     => (quo :: <fixed-integer>, rem :: <fixed-integer>);
-  %%primitive fixnum-truncate/ (a, b);
+  if (zero?(b))
+    error("Division by zero.");
+  else
+    let (q, r) = %%primitive fixnum-divide (a, b);
+
+    if (zero?(r) | negative?(r) == negative?(a))
+      values(q, r);
+    else
+      values(q + 1, r - b);
+    end;
+  end;
 end;
 
 /* ### not absolutly needed
