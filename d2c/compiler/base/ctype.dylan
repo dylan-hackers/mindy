@@ -1,6 +1,6 @@
 Module: ctype
 Description: compile-time type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.12 1995/04/27 01:00:00 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctype.dylan,v 1.13 1995/04/28 02:42:04 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1210,7 +1210,7 @@ define constant values-type-intersection = method
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (res :: <values-ctype>, win :: <boolean>);
   if (type1 == empty-ctype() | type2 == empty-ctype())
-    empty-ctype();
+    values(empty-ctype(), #t);
   else
     args-type-op(type1, type2, ctype-intersection, max);
   end;
@@ -1232,8 +1232,12 @@ end;
 define method values-types-intersect?
     (type1 :: <values-ctype>, type2 :: <values-ctype>)
     => (result :: <boolean>, precise :: <boolean>);
-  let (res, win) = values-type-intersection(type1, type2);
-  values(~(res == empty-ctype()), win);
+  if (type1 == empty-ctype() | type2 == empty-ctype())
+    values(#t, #t);
+  else
+    let (res, win) = values-type-intersection(type1, type2);
+    values(~(res == empty-ctype()), win);
+  end;
 end method;
 
 
