@@ -1,11 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.68 1995/05/26 15:35:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.69 1995/05/29 00:42:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 define library compiler
   use Dylan;
-  use Collection-Extensions;
+  use Collection-Extensions, exclude: {heap};
   use Random;
   use Streams;
   use Print;
@@ -100,9 +100,13 @@ define module compile-time-values
     <literal-float>, <literal-single-float>, <literal-double-float>,
     <literal-extended-float>, <literal-symbol>, <literal-character>,
     <literal-boolean>, <literal-true>, <literal-false>,
-    <literal-sequence>, literal-contents,
-    <literal-list>, literal-tail, <literal-empty-list>,
-    <literal-vector>, <literal-simple-object-vector>, <literal-string>;
+    <literal-sequence>,
+    <literal-list>,
+    <literal-pair>, literal-head, literal-tail,
+    <literal-empty-list>,
+    <literal-vector>,
+    <literal-simple-object-vector>, literal-contents,
+    <literal-string>;
 end;
 
 
@@ -508,7 +512,7 @@ define module classes
     override-init-value, override-init-value-setter,
     override-init-function, override-init-function-setter,
 
-    <layout-table>, layout-length,
+    <layout-table>, layout-length, layout-holes,
 
     <proxy>, proxy-for,
 
@@ -941,7 +945,6 @@ end;
 
 define module cback
   use common;
-  use Standard-IO;
   use utils;
   use compile-time-values;
   use names;
@@ -960,8 +963,22 @@ define module cback
   use primitives;
 
   export
-    <output-info>,
-    emit-tlf-gunk, emit-function, emit-region;
+    <output-info>, output-info-init-roots,
+    emit-prologue, emit-tlf-gunk, emit-function, emit-epilogue;
+end;
+
+define module heap
+  use common;
+  use utils;
+  use compile-time-values;
+  use variables;
+  use representation;
+  use c-representation;
+  use ctype;
+  use classes;
+
+  export
+    build-initial-heap;
 end;
 
 define module init
@@ -1008,4 +1025,5 @@ define module main
   use classes;
   use c-representation;
   use cback;
+  use heap;
 end;
