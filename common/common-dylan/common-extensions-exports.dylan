@@ -26,6 +26,7 @@ define library common-extensions
   export
     common-extensions,
     finalization,
+    threads,
     simple-io,
     simple-random,
     simple-profiling,
@@ -81,6 +82,18 @@ define module functional-extensions
     put-property!, get-property, \remove-property!,
     element-range-error, \profiling;
 end module;
+
+define module threads
+  use functional-extensions, 
+    export: { dynamic-bind,
+    <synchronization>, <exclusive-lock>,
+    <semaphore>, <recursive-lock>,
+    <read-write-lock>,
+    <lock>, <simple-lock>, with-lock,
+    <thread>, atomic-increment!, current-thread,
+    <notification>, wait-for };
+end module threads;
+                                      
 
 define module common-extensions
   use dylan;

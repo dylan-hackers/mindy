@@ -9,6 +9,7 @@ define library common-dylan
   use common-extensions,
     export: { common-extensions,
               finalization,
+              threads,
 	      simple-random,
 	      simple-profiling,
 	      simple-debugging,
