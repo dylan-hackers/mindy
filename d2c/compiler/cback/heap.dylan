@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.37 2002/12/02 11:17:43 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.38 2003/10/04 00:48:23 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -916,6 +916,7 @@ define method spew-object
 	end select;
     end select;
   end for;
+  format(state.file-body-stream, "const ");
   spew-layout(class, state, size: str.size);
   format(state.file-body-stream, " %s = {\n", name);
   write(state.file-body-stream, get-string(state.file-guts-stream));
@@ -1531,6 +1532,9 @@ define method spew-heap-prototype
     let stream = state.file-body-stream;
     let cclass = defn.layouter-cclass;
     format(stream, "extern ");
+    if(instance?(defn, <literal-string>))
+      format(stream, "const ");
+    end;
     spew-layout(cclass, state, size: literal-vector-size(defn));
     format(stream, " %s;\n\n", name);
     state.file-prototypes-exist-for[name] := #t;
