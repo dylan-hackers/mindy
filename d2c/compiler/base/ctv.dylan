@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.27 1996/02/16 13:29:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.28 1996/02/23 02:34:33 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -122,28 +122,12 @@ define method \= (x :: <literal-number>, y :: <number>) => res :: <boolean>;
   x.literal-value = y;
 end;
 
-define method \~= (x :: <number>, y :: <literal-number>) => res :: <boolean>;
-  x ~= y.literal-value;
-end;
-
-define method \~= (x :: <literal-number>, y :: <number>) => res :: <boolean>;
-  x.literal-value ~= y;
-end;
-
 define method \< (x :: <number>, y :: <literal-number>) => res :: <boolean>;
   x < y.literal-value;
 end;
 
 define method \< (x :: <literal-number>, y :: <number>) => res :: <boolean>;
   x.literal-value < y;
-end;
-
-define method \<= (x :: <number>, y :: <literal-number>) => res :: <boolean>;
-  x <= y.literal-value;
-end;
-
-define method \<= (x :: <literal-number>, y :: <number>) => res :: <boolean>;
-  x.literal-value <= y;
 end;
 
 define abstract class <literal-real> (<literal-number>) end;
