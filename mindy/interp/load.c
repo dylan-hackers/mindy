@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.14 1994/06/11 18:15:00 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.15 1994/06/13 22:26:34 hallgren Exp $
 *
 * This file does whatever.
 *
@@ -26,10 +26,16 @@ extern int close(int fd);
 extern int read(int fd, void *ptr, int bytes);
 extern int access(const void *path, int flags);
 #endif
-#if defined(hpux) || defined(__osf__)
+#if defined(hpux) || defined(__osf__) || defined(sgi)
 #define pause buttplug
 #include <unistd.h>
 #undef pause
+#endif
+#ifdef sgi
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
 #endif
 
 #include "mindy.h"
