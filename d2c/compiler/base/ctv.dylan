@@ -1,5 +1,5 @@
 module: compile-time-values
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.7 1995/05/29 00:38:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctv.dylan,v 1.8 1995/05/29 20:57:58 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -403,6 +403,9 @@ define method make (class == <literal-pair>, #next next-method,
   end;
 end;
 
+define method initialize (lit :: <literal-pair>, #key sharable) => ();
+end;
+
 define method print-message (lit :: <literal-pair>, stream :: <stream>) => ();
   write("{a <pair>}", stream);
 end;
@@ -474,6 +477,10 @@ define method make (class == <literal-simple-object-vector>, #next next-method,
   else
     next-method(class, contents: contents);
   end;
+end;
+
+define method initialize (lit :: <literal-simple-object-vector>, #key sharable)
+    => ();
 end;
 
 define method print-message
