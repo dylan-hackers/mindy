@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.26 1994/10/18 00:50:27 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.27 1994/10/20 03:06:01 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -742,6 +742,9 @@ static void do_init_value(struct thread *thread, obj_t *vals)
 	      case alloc_CLASS:
 		value_cell_set(accessor_method_datum(SD(slot)->getter_method),
 			       value);
+		break;
+	      case alloc_VIRTUAL:
+		/* Do nothing with the value. */
 		break;
 	      default:
 		lose("Tried to initialize a strange kind of instance slot.");
