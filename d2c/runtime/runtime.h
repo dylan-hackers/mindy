@@ -87,11 +87,21 @@ extern heapptr_t initial_symbols;
 extern GD_NORETURN void not_reached(void);
 extern void no_core_dumps(void);
 
-double (rint)(double x);
-
 float (frexpf)(float x, int *exp);
 long double (frexpl)(long double x, int *exp);
 float (ldexpf)(float x, int exp);
 long double (ldexpl)(long double x, int exp);
+
+double (rint)(double x);
+float (fabsf)(float x);
+float (sinf)(float x);
+float (cosf)(float x);
+float (tanf)(float x);
+float (asinf)(float x);
+float (acosf)(float x);
+float (atanf)(float x);
+float (atan2f)(float y, float x);
+float (expf)(float x);
+float (sqrtf)(float x);
 
 #include <errno.h>

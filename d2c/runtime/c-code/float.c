@@ -82,14 +82,8 @@ long double (ldexpl)(long double x, int exp)
 #endif
 
 
-/* win32 specific stuff which patches over deficiencies in the Visual
- * C++ runtime.
- *
- * ### Fix these to use HAVE_xx on a per-function basis
- */
 
-#if defined(WIN32) && !defined(WIN32_GCC)
-
+#ifndef HAVE_RINT
 double rint(double x)
 {
   /* ### I'm not sure this is entirely correct, but it's certainly
@@ -98,61 +92,82 @@ double rint(double x)
   double temp = floor(x+0.5);
   return (temp > x) ? temp : floor(x);
 }
+#endif
 
+#ifndef HAVE_FABSF
 float fabsf (float x)
 {
     return (float) fabs(x);
 }
+#endif
 
+#ifndef HAVE_SINF
 float sinf (float x)
 {
   return (float) sin(x);
 }
+#endif
 
+#ifndef HAVE_COSF
 float cosf (float x)
 {
   return (float) cos(x);
 }
+#endif
 
+#ifndef HAVE_TANF
 float tanf (float x)
 {
   return (float) tan(x);
 }
+#endif
 
+#ifndef HAVE_ASINF
 float asinf (float x)
 {
   return (float) asin(x);
 }
+#endif
 
+#ifndef HAVE_ACOSF
 float acosf (float x)
 {
   return (float) acos(x);
 }
+#endif
 
+#ifndef HAVE_ATANF
 float atanf (float x)
 {
   return (float) atan(x);
 }
+#endif
 
-float atan2f (float x, float y)
+#ifndef HAVE_ATAN2F
+float atan2f (float y, float x)
 {
-  return (float) atan2(x, y);
+  return (float) atan2(y, x);
 }
+#endif
 
+#ifndef HAVE_EXPF
 float expf (float x)
 {
   return (float) exp(x);
 }
+#endif
 
+#ifndef HAVE_SQRTF
 float sqrtf (float x)
 {
   return (float) sqrt(x);
 }
+#endif
 
+#if 0
 double log2 (double x)
 {
   return log(x)/log(2);
 }
-
 #endif
 
