@@ -7,7 +7,7 @@
 
 &emit_dbc_link_rule
     ('d2c.dbc', 
-     '../../../common/file-system-base/base-file-system-lib.dbc '
+     '../../../common/base-file-system/base-file-system-lib.dbc '
      . '../base/compiler-base-lib.dbc ../front/compiler-front-lib.dbc'
      . ' ../fer-transform/compiler-fer-transform-lib.dbc'
      . ' ../optimize/compiler-optimize-lib.dbc '

@@ -2,7 +2,7 @@ $D2CFLAGS = $d2c_runtime
     . '-L../../../common/common-dylan '
     . '-L../../../common/getopt '
     . '-L../../../common/io '
-    . '-L../../../common/file-system-base ';
+    . '-L../../../common/base-file-system ';
 
 &emit_library_rule('parser-utilities', '$(BUILDROOT)/force.timestamp', '', 
                    'compile', 'install');
