@@ -19,12 +19,13 @@ void handle_interrupt (int sig, long code, struct sigcontext *scp)
 {
   signal(sig, handle_interrupt);
 
-  /* None of these seem to work under threads -- the one selected is the one
-  /* which does the least harm there. */
-
-  /*ioctl(master_pty, TIOCSIGSEND, SIGINT);*/
+#ifndef MIT_PTHREADS
+  /* None of these seem to work under threads, and the one that works best in
+  /* a non-threaded world active breaks under threads. */
+  ioctl(master_pty, TIOCSIGSEND, SIGINT);
   /*kill(process_id, sig);*/
-  write(master_pty, "\003", 1);
+  /*write(master_pty, "\003", 1);*/
+#endif
 
   scp->sc_syscall_action = SIG_RESTART;
   return;
