@@ -369,13 +369,164 @@ end class;
 // The compiler can't deal with singleton(<byte>)
 define sealed class <fd-file-stream> (<fd-stream>, <file-stream>)
   slot file-name :: <byte-string>;
-  slot file-direction :: one-of(#"input", #"output", #"input-output");
+  slot file-direction;// :: one-of(#"input", #"output", #"input-output");
   slot element-type = <byte-character>;
 end class;
 #endif
 
 define sealed domain make (singleton(<fd-file-stream>));
 // Don't need to seal initialize because it is sealed on <fd-stream>.
+
+
+//// Fd File Streams -- Querying and Stream Extension Protocol.
+////
+
+/// The following methods from <fd-streams> work:
+///    stream-open?
+///    close
+///    do-synchronize
+///
+
+define sealed method initialize
+    (stream :: <fd-file-stream>, #next next-method, #rest rest-args,
+     #key locator :: false-or(<byte-string>),
+          direction // :: one-of(#"input", #"output", #"input-output")
+            = #"input",
+          if-exists :: one-of(#f, #"new-version", #"overwrite", #"replace",
+			      #"append", #"truncate", #"signal")
+            = if (direction == #"output") #"replace" else #f end,
+          if-does-not-exist :: one-of(#f, #"signal", #"create")
+            = if (direction == #"input") #"signal" else #"create" end,
+          element-type // :: one-of(<byte>, <byte-character>, <unicode-character>)
+                       // ### The compiler can't deal with singleton(<byte>)
+       = <byte-character>,
+          encoding :: one-of(#f, #"ANSI")
+            = select (element-type) 
+		(<byte>) => #f;
+		(<byte-character>) => #"ANSI";
+		(<unicode-character>) => #"big-endian";
+	      end,
+          buffer-size :: <buffer-index> = $default-buffer-size)
+    => result :: <fd-file-stream>;
+  if (~ locator)
+    error("Must supply a filename when making a <file-stream>.");
+  end;
+  stream.element-type := element-type;
+  if (direction == #"input")
+    let (fd, err) = fd-open(locator, fd-o_rdonly);
+    if (err)
+      if (err = fd-enoent)
+	select (if-does-not-exist) 
+	  #"signal"
+	    => error(make(<file-does-not-exist-error>, locator: locator));
+	  #"create"
+	    => error("Why would you want to create an empty input file?");
+	end select;
+      else
+	error(make(<syscall-error>, errno: err));
+      end if;
+    end if;
+    stream.file-name := locator;
+    stream.file-direction := #"input";
+    apply(next-method, stream, fd: fd, direction: #"input", rest-args); 
+  else
+    // Make an #"output" or #"input-output" stream.
+    let flags :: <integer> = fd-o_creat;
+    flags := select (direction)
+	       (#"output") => logior(flags, fd-o_wronly);
+	       (#"input-output") => logior(flags, fd-o_rdwr);
+	     end;
+    flags := select (if-exists)
+	       (#"signal")
+		 => logior(flags, fd-o_excl);
+	       (#"replace")
+		 => logior(flags, fd-o_trunc);
+	       (#"truncate")
+		 => logior(flags, fd-o_trunc);
+	       (#"new-version") 
+		 => error("<fd-file-stream> does not support new-version.");
+	       otherwise
+		 => flags;
+	     end;
+    let (fd, err) = fd-open(locator, flags);
+    if (err)
+      if (err = fd-eexist) 
+	error(make(<file-exists-error>, locator: locator));
+      else 
+	error(make(<syscall-error>, errno: err));
+      end if;
+    end if;
+    select (if-exists)
+      (#"append")
+	=> call-fd-function(fd-seek, fd, 0, fd-seek-end);
+      // Don't really need this, since it will be at the beginning anyway...
+      // (#"overwrite")
+      //  => call-fd-function(fd-seek, fd, 0, fd-seek-set);
+      otherwise
+	=> #f;
+    end;
+    stream.file-name := locator;
+    stream.file-direction := direction;
+    apply(next-method, stream, fd: fd,
+	  direction: if (direction == #"output") #"output" else #"input" end,
+	  rest-args); 
+    register-output-stream(stream);
+  end;
+end method;
+
+define sealed method close (stream :: <fd-file-stream>, #next next-method, 
+			    #all-keys)
+ => ();
+  next-method();
+  if ((stream.file-direction == #"input-output")
+	& (stream.file-buffer-last-use == #"input"))
+    unregister-output-stream(stream);
+  end;
+end method;
+
+#if (mindy)
+define inline sealed method stream-element-type (stream :: <fd-file-stream>)
+ => type :: one-of(<byte>, <byte-character>, <unicode-character>);
+  stream.element-type;
+end method;
+#else
+// Until d2c can deal with singleton
+define inline sealed method stream-element-type (stream :: <fd-file-stream>)
+ => type :: <type>;
+  stream.element-type;
+end method;
+#endif
+
+define sealed method stream-at-end? (stream :: <fd-file-stream>,
+				     #next next-method)
+ => at-end? :: <boolean>;
+  // If the stream is input-output, we want to call next method with
+  // it as and input stream, since next-method always returns #f for
+  // output streams.
+  //
+  if  ((stream.file-direction == #"input-output")
+	 & (stream.file-buffer-last-use == #"output"))
+    let buf :: <buffer> = get-output-buffer(stream);
+    let next :: <buffer-index> = buf.buffer-next;
+    if (next > 0)
+      // Keep writing until fd-write manages to write everything.
+      let fd = stream.file-descriptor;
+      for (x :: <buffer-index>
+	     = call-fd-function(fd-write, fd, buf, 0, next)
+	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+	   until: (x = next))
+      end;
+    end;
+    buf.buffer-next := buf.buffer-end;
+    release-output-buffer(stream);
+    stream.file-buffer-last-use := #"input";
+  end if;
+  next-method();
+end method;
+
+
+//// Fd File Streams -- Positionable Stream Protocol.
+////
 
 /// stream-position -- Method for Exported Interface.
 ///
@@ -592,151 +743,8 @@ define sealed method stream-contents (stream :: <fd-file-stream>,
 end method stream-contents;
 
 
-//// Fd File Streams -- Querying and Stream Extension Protocol.
+//// Fd File Streams -- Stream Extension Protocol.
 ////
-
-/// The following methods from <fd-streams> work:
-///    stream-open?
-///    close
-///    do-synchronize
-///
-
-define sealed method initialize
-    (stream :: <fd-file-stream>, #next next-method, #rest rest-args,
-     #key locator :: false-or(<byte-string>),
-          direction :: one-of(#"input", #"output", #"input-output")
-            = #"input",
-          if-exists :: one-of(#f, #"new-version", #"overwrite", #"replace",
-			      #"append", #"truncate", #"signal")
-            = if (direction == #"output") #"replace" else #f end,
-          if-does-not-exist :: one-of(#f, #"signal", #"create")
-            = if (direction == #"input") #"signal" else #"create" end,
-          element-type // :: one-of(<byte>, <byte-character>, <unicode-character>)
-                       // The compiler can't deal with singleton(<byte>)
-       = <byte-character>,
-          encoding :: one-of(#f, #"ANSI")
-            = select (element-type) 
-		(<byte>) => #f;
-		(<byte-character>) => #"ANSI";
-		(<unicode-character>) => #"big-endian";
-	      end,
-          buffer-size :: <buffer-index> = $default-buffer-size)
-    => result :: <fd-file-stream>;
-  if (~ locator)
-    error("Must supply a filename when making a <file-stream>.");
-  end;
-  stream.element-type := element-type;
-  if (direction == #"input")
-    let (fd, err) = fd-open(locator, fd-o_rdonly);
-    if (err)
-      if (err = fd-enoent)
-	select (if-does-not-exist) 
-	  #"signal"
-	    => error(make(<file-does-not-exist-error>, locator: locator));
-	  #"create"
-	    => error("Why would you want to create an empty input file?");
-	end select;
-      else
-	error(make(<syscall-error>, errno: err));
-      end if;
-    end if;
-    stream.file-name := locator;
-    stream.file-direction := #"input";
-    apply(next-method, stream, fd: fd, direction: #"input", rest-args); 
-  else
-    // Make an #"output" or #"input-output" stream.
-    let flags :: <integer> = fd-o_creat;
-    flags := select (direction)
-	       (#"output") => logior(flags, fd-o_wronly);
-	       (#"input-output") => logior(flags, fd-o_rdwr);
-	     end;
-    flags := select (if-exists)
-	       (#"signal")
-		 => logior(flags, fd-o_excl);
-	       (#"replace")
-		 => logior(flags, fd-o_trunc);
-	       (#"truncate")
-		 => logior(flags, fd-o_trunc);
-	       (#"new-version") 
-		 => error("<fd-file-stream> does not support new-version.");
-	       otherwise
-		 => flags;
-	     end;
-    let (fd, err) = fd-open(locator, flags);
-    if (err)
-      if (err = fd-eexist) 
-	error(make(<file-exists-error>, locator: locator));
-      else 
-	error(make(<syscall-error>, errno: err));
-      end if;
-    end if;
-    select (if-exists)
-      (#"append")
-	=> call-fd-function(fd-seek, fd, 0, fd-seek-end);
-      // Don't really need this, since it will be at the beginning anyway...
-      // (#"overwrite")
-      //  => call-fd-function(fd-seek, fd, 0, fd-seek-set);
-      otherwise
-	=> #f;
-    end;
-    stream.file-name := locator;
-    stream.file-direction := direction;
-    apply(next-method, stream, fd: fd,
-	  direction: if (direction == #"output") #"output" else #"input" end,
-	  rest-args); 
-    register-output-stream(stream);
-  end;
-end method;
-
-define sealed method close (stream :: <fd-file-stream>, #next next-method, 
-			    #all-keys)
- => ();
-  next-method();
-  if ((stream.file-direction == #"input-output")
-	& (stream.file-buffer-last-use == #"input"))
-    unregister-output-stream(stream);
-  end;
-end method;
-
-#if (mindy)
-define inline sealed method stream-element-type (stream :: <fd-file-stream>)
- => type :: one-of(<byte>, <byte-character>, <unicode-character>);
-  stream.element-type;
-end method;
-#else
-// Until d2c can deal with singleton
-define inline sealed method stream-element-type (stream :: <fd-file-stream>)
- => type :: <type>;
-  stream.element-type;
-end method;
-#endif
-
-define sealed method stream-at-end? (stream :: <fd-file-stream>,
-				     #next next-method)
- => at-end? :: <boolean>;
-  // If the stream is input-output, we want to call next method with
-  // it as and input stream, since next-method always returns #f for
-  // output streams.
-  //
-  if  ((stream.file-direction == #"input-output")
-	 & (stream.file-buffer-last-use == #"output"))
-    let buf :: <buffer> = get-output-buffer(stream);
-    let next :: <buffer-index> = buf.buffer-next;
-    if (next > 0)
-      // Keep writing until fd-write manages to write everything.
-      let fd = stream.file-descriptor;
-      for (x :: <buffer-index>
-	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
-	   until: (x = next))
-      end;
-    end;
-    buf.buffer-next := buf.buffer-end;
-    release-output-buffer(stream);
-    stream.file-buffer-last-use := #"input";
-  end if;
-  next-method();
-end method;
 
 /// This method does not have to check whether the stream or buffer is locked
 /// because get-input-buffer does that.
