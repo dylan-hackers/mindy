@@ -1,5 +1,8 @@
 /* Mac prefix header for d2c code */
 
+
+#define GD_PLATFORM_MACOS
+
 #include <string.h> /* For memcpy */ 
 
 /* For the mac gc */
@@ -16,7 +19,7 @@
 /* Make sure the boehm GC compiles properly */
 //#define ATOMIC_UNCOLLECTABLE
 
-#define __D2C
+//#define __D2C
 
 /* Boehm GC Configuration*/
 
