@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.8 1996/01/12 02:10:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/vector.dylan,v 1.9 1996/03/02 19:21:08 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -134,3 +134,13 @@ define inline method as
     => res :: <simple-object-vector>;
   vector;
 end;
+
+define sealed inline method fill!
+    (vec :: <simple-vector>, value :: <object>,
+     #key start :: <integer> = 0, end: end-index :: <integer> = vec.size)
+ => (vec :: <simple-vector>);
+  for (index :: <integer> from start below end-index)
+    vec[index] := value;
+  end for;
+  vec;
+end method fill!;
