@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.65 1995/04/02 15:13:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.66 1995/04/08 19:22:59 nkramer Exp $
 
 //======================================================================
 //
@@ -97,8 +97,8 @@ define module Builtin-Stuff
     wait-for-event, weak-pointer-object,
     fd-close, fd-error-string, fd-input-available?, fd-open,
     fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
-    L_SET, L_INCR, L_XTND, FNDELAY, FAPPEND, FCREAT, FTRUNC, FEXCL, O_RDONLY,
-    O_WRONLY, O_RDWR, O_NDELAY, O_APPEND, O_CREAT, O_TRUNC, O_EXCL,
+    SEEK_SET, SEEK_CUR, SEEK_END, O_RDONLY,
+    O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL, O_TRUNC, O_NONBLOCK,
     ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
     EINVAL, ENFILE, EMFILE, ETXTBSY, ENOSPC, EROFS, EOPNOTSUPP, ELOOP,
     ENAMETOOLONG, EDQUOT, EBADF, EINTR, EPIPE, EFBIG, // EWOULDBLOCK, 
@@ -254,20 +254,20 @@ define module File-Descriptors
 
 	     // Lseek call.
 	     //
-	     L_SET, L_INCR, L_XTND,
+	     SEEK_SET, SEEK_CUR, SEEK_END, 
 
 	     // Flags also for fcntl call.
 	     //
-	     FNDELAY, FAPPEND,
+	     O_APPEND, O_NONBLOCK,
 
 	     // Open only modes.
 	     //
-	     FCREAT, FTRUNC, FEXCL,
+	     O_CREAT, O_EXCL, O_TRUNC,
 
 	     // Open call.
 	     //
-	     O_RDONLY, O_WRONLY, O_RDWR, O_NDELAY, O_APPEND, O_CREAT, O_TRUNC,
-	     O_EXCL,
+	     O_RDONLY, O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL, 
+	     O_TRUNC, O_NONBLOCK, 
 
 	     // Open errors.
 	     //
