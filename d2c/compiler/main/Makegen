@@ -1,26 +1,3 @@
-
-&makegen_include("../common-Makegen");
-$CPPFLAGS = "$CPPFLAGS -I../../runtime ";
-
-@potential_targets
-    = &d2c_library('Main', 
-		   '-L../base -L../front -L../fer-transform -L../optimize '
-		   . '-L../parser -L../convert -L../cback');
-
-&emit_dbc_link_rule
-    ('d2c.dbc', 
-     '../../../common/base-file-system/base-file-system-lib.dbc '
-     . '../base/compiler-base-lib.dbc ../front/compiler-front-lib.dbc'
-     . ' ../fer-transform/compiler-fer-transform-lib.dbc'
-     . ' ../optimize/compiler-optimize-lib.dbc '
-     . ' ../parser/compiler-parser-lib.dbc ../convert/compiler-convert-lib.dbc'
-     . ' ../cback/compiler-cback-lib.dbc compiler-main-lib.dbc');
-
-if ($enable_mindy_bootstrap) {
-    push(@compile_dependencies, 'd2c.dbc');
-}
-&install_executable($bindir, $potential_targets[0]);
-
 open(FILELOC,">$srcdir/file-locations.dylan")
     || die "cannot create file-locations.dylan";
 ## double any backslashes that might for some reason appear in the destdir.
@@ -48,3 +25,26 @@ define constant \$version = "$version";
 define constant \$bootstrap-counter = $bootstrap_counter;
 EOF
 close(VERSION);
+
+&makegen_include("../common-Makegen");
+$CPPFLAGS = "$CPPFLAGS -I../../runtime ";
+
+@potential_targets
+    = &d2c_library('Main', 
+		   '-L../base -L../front -L../fer-transform -L../optimize '
+		   . '-L../parser -L../convert -L../cback');
+
+&emit_dbc_link_rule
+    ('d2c.dbc', 
+     '../../../common/base-file-system/base-file-system-lib.dbc '
+     . '../base/compiler-base-lib.dbc ../front/compiler-front-lib.dbc'
+     . ' ../fer-transform/compiler-fer-transform-lib.dbc'
+     . ' ../optimize/compiler-optimize-lib.dbc '
+     . ' ../parser/compiler-parser-lib.dbc ../convert/compiler-convert-lib.dbc'
+     . ' ../cback/compiler-cback-lib.dbc compiler-main-lib.dbc');
+
+if ($enable_mindy_bootstrap) {
+    push(@compile_dependencies, 'd2c.dbc');
+}
+&install_executable($bindir, $potential_targets[0]);
+
