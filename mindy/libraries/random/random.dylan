@@ -10,6 +10,7 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 
 define library Random
   use dylan;
+  use transcendental;
   export random;
 end library Random;
 
@@ -192,7 +193,7 @@ define method random-gaussian (#key mean = 0, standard-deviation = 1,
  => random :: <float>;
   let unit-gaussian
     = sqrt(-2 * log(random-float(1.0, state: state))) 
-              * cos(2 * $pi * random-float(1.0, state: state));
+              * cos(2 * $double-pi * random-float(1.0, state: state));
    standard-deviation * unit-gaussian + mean;
 end method random-gaussian;
 
