@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.7 1995/04/21 21:56:56 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.8 1995/05/01 06:55:17 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -36,8 +36,10 @@ define method compile (#rest files) => res :: <component>;
   let builder = make-builder(component);
   let init-function
     = build-method-body(builder, $Default-Policy, make(<source-location>),
-			#(), #());
+			#());
   do(curry(convert-top-level-form, builder), $Top-Level-Forms);
+  build-return(builder, $Default-Policy, make(<source-location>),
+	       init-function, #());
   end-body(builder);
   format(*debug-output*, "Optimizing\n");
   optimize-component(component);
