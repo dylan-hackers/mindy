@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.8 1995/12/14 00:11:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.9 1996/01/11 19:06:33 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -145,6 +145,20 @@ define class <slot-descriptor> (<object>)
   // #t if the init-keyword is required, #f if not.
   constant slot slot-init-keyword-required? :: <boolean>,
     init-value: #f;
+  //
+  // A-list mapping classes to offsets for the slot.  An entry is for all
+  // subclasses of the key class, therefore more specific classes must preceed
+  // less specific classes.
+  slot slot-positions :: <list>,
+    init-value: #();
+  //
+  // Either a self-organizing linked list mapping specific classes to slot
+  // offsets or the one and only offset that is ever used.  Use of this avoids
+  // having to do the subtype? tests that checking slot-positions directly
+  // entails.
+  slot slot-positions-cache
+    :: type-union(<position-cache-node>, <false>, <fixed-integer>),
+    init-value: #f;
 end;
 
 /*
@@ -182,7 +196,27 @@ define method initialize
 
   
 end;
+*/
 
+define class <position-cache-node> (<object>)
+  //
+  // The class this node is an entry for.
+  constant slot cache-class :: <class>,
+    required-init-keyword: class:;
+  //
+  // The offset this slot shows up at in the above class.
+  constant slot cache-offset :: <fixed-integer>,
+    required-init-keyword: offset:;
+  //
+  // The next node in the position cache.
+  slot cache-next :: false-or(<position-cache-node>),
+    required-init-keyword: next:;
+end class <position-cache-node>;
+
+seal generic make (singleton(<position-cache-node>));
+seal generic initialize (<position-cache-node>);
+
+/*
 define method make (class == <class>,
 		    #key superclasses :: type-union(<class>, <sequence>)
 		           = <object>,
@@ -200,10 +234,6 @@ define method make (class == <class>,
 	      slots: slots);
 end;
 
-define method initialize (class :: <class>, #key)
-  ???;
-end;
-			      
 */
 
 
@@ -327,6 +357,48 @@ end;
 
 
 // Slot methods.
+
+// find-slot-offset -- internal
+//
+// Calls to this are introduced by the compiler when it cannot statically
+// determine where a slot is located.
+// 
+define method find-slot-offset (class :: <class>, slot :: <slot-descriptor>)
+    => offset :: <fixed-integer>;
+  block (return)
+    let cache = slot.slot-positions-cache;
+    if (instance?(cache, <fixed-integer>))
+      return(cache);
+    end if;
+    for (prev :: false-or(<position-cache-node>) = #f then node,
+	 node :: false-or(<position-cache-node>) = cache then node.cache-next,
+	 while: node)
+      if (node.cache-class == class)
+	if (prev)
+	  prev.cache-next := node.cache-next;
+	  node.cache-next := slot.slot-positions-cache;
+	  slot.slot-positions-cache := node;
+	end if;
+	return(node.cache-offset);
+      end if;
+    end for;
+    let positions = slot.slot-positions;
+    if (positions.tail == #())
+      return(slot.slot-positions-cache := positions.head.tail);
+    end if;
+    for (entry :: <list> in positions)
+      if (subtype?(class, check-type(<class>, entry.head)))
+	let offset :: <fixed-integer> = entry.tail;
+	let node = make(<position-cache-node>, class: class, offset: offset,
+			next: slot.slot-positions-cache);
+	slot.slot-positions-cache := node;
+	return(offset);
+      end if;
+    end for;
+    lose("Can't find the position for %s in %s.",
+	 slot, class.class-name);
+  end block;
+end method find-slot-offset;
 
 // slot-initialized? -- exported.
 //
