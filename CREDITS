@@ -41,6 +41,10 @@ D: Made Mindy work with standard flex, identified incredibly hairy bug
 D: in CSE optimizations, functional classes workaround.
 D: Lots of low-level compiler fixes.
 
+N: Bruce Hoult
+E: brucehoult@pobox.com
+D: PPC trampoline code
+
 N: Peter Housel
 E: housel@acm.org
 D: FreeBSD port, major portability work, callbacks, callbacks to
