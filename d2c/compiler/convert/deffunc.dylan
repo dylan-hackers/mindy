@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.31 1995/06/15 00:47:43 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.32 1995/08/09 02:17:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1074,7 +1074,7 @@ define method discriminate-on-one-arg
 	      prev-set.restriction-type
 		:= ctype-union(prev-set.restriction-type,
 			       method-set.restriction-type);
-	      prev-range.second = new.head.second;
+	      prev-range.second := new.head.second;
 	      prev.tail := new.tail;
 	    else
 	      prev.tail := new;
