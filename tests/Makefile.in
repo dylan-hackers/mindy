@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.7 1996/02/13 20:47:56 nkramer Exp $
+##  $Header: /home/housel/work/rcs/gd/src/tests/Attic/Makefile.in,v 1.8 1996/07/12 16:13:55 dwatson Exp $
 ##
 ##  This is the makefile for the tautology test demo.
 ##
@@ -64,7 +64,7 @@ LIBS	=		@LIBS@
 MC	=	../comp/mindycomp
 INTERP	=	../interp/mindy
 MINDYFLAGS =
-MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/string-ext:../libraries/streams:../libraries/random:../libraries/print:../libraries/format
+MINDYPATH =   MINDYPATH=../libraries/dylan:../libraries/coll-ext:../libraries/table-ext:../libraries/string-ext:../libraries/streams:../libraries/random:../libraries/print:../libraries/format
 
 # We don't want to run threaded-io-test by default because it is interactive
 #
