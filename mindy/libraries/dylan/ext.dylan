@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.2 1994/06/27 17:10:26 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.3 1994/11/04 14:13:17 chiles Exp $
 
 //======================================================================
 //
@@ -30,19 +30,22 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dyla
 //  else.
 //
 
-/// ONE-OF
+/// One-of -- Exported.
 ///
-/// One-of returns a type that represents one of the argument things.  In
-/// other words, a union of a bunch of singletons.
-/// 
+/// One-of takes any number of objects as arguments.  It returns a type that
+/// represents the argument values as an enumeration (singleton values in
+/// Dylan).
+///
 define constant one-of =
   method (thing, #rest more-things) => result :: <type>;
     reduce(union, singleton(thing), map(singleton, more-things));
   end;
 
-/// TYPE-OR
+/// Type-or -- Exported.
 ///
-/// Type-or returns the union of all the argument types.
+/// Type-or takes any number of types as arguments and returns a type that is
+/// the union of all the argument types.
+///
 define constant type-or =
   method (type :: <type>, #rest more-types) => result :: <type>;
   // Make sure all of more-types are <type>s.
@@ -51,8 +54,24 @@ define constant type-or =
     reduce(union, type, more-types);
   end;
 
+/// false-or -- Exported.
+///
+/// False-or takes a type and returns a type that is the union of the argument
+/// type and the type singleton(#f).
+///
+define constant false-or
+    = method (type :: <type>) => new-type :: <type>;
+	union(type, singleton(#f));
+      end;
 
-
+/// Ignore -- Exported.
+///
+/// Ignore takes any number of arguments and ignores them.  This is useful
+/// when extending functions that require arguments for which the new method
+/// has no use.  This function provides documentation to the code reader,
+/// and it provides a reference to the unneeded local variables so that
+/// compilers do not flame about unused locals.
+///
 define constant ignore =
   method (#rest noise)
     noise;
