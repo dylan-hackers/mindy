@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.13 1995/04/26 06:58:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.14 1995/04/26 09:43:35 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -461,6 +461,15 @@ define method emit-bindings-definition-gunk
   end;
 end;
 
+define method emit-bindings-definition-gunk
+    (defn :: <constant-method-definition>, output-info :: <output-info>,
+     #next next-method)
+    => ();
+  unless (defn.method-defn-leaf)
+    next-method();
+  end;
+end;
+
 
 // Control flow emitters
 
@@ -742,10 +751,10 @@ end;
 
 define method emit-assignment
     (results :: false-or(<definition-site-variable>),
-     expr :: <local-call>, output-info :: <output-info>)
-  let stream = make(<byte-string-output-stream>);
+     expr :: union(<known-call>, <local-call>), output-info :: <output-info>)
   let func = expr.depends-on.source-exp;
   let func-info = get-info-for(func, output-info);
+  let stream = make(<byte-string-output-stream>);
   let name = func-info.lambda-info-main-entry-name;
   write(name, stream);
   write('(', stream);
@@ -793,7 +802,6 @@ define method emit-assignment
     deliver-results(results, vector(pair(call, rep)), output-info);
   end;
 end;
-
 
 define method emit-assignment (defines :: false-or(<definition-site-variable>),
 			       expr :: <primitive>,
