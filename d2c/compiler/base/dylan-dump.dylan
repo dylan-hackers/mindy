@@ -1,5 +1,5 @@
 module: dylan-dump
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.10 1996/05/08 15:56:31 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/dylan-dump.dylan,v 1.11 1996/05/11 17:25:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -86,21 +86,13 @@ add-od-loader(*default-dispatcher*, #"fixed-integer",
 
 // Extended integer methods:
 
-// Return the number of bits needed to represent N as a signed integer.
-//
-define method integer-length (n :: <general-integer>) => res :: <integer>;
-  for (size from 1, x = abs(n) then ash(x, -1), until: zero?(x))
-    finally size;
-  end;
-end method;
-
 define constant $word-mask = lognot(ash(-$e1, $word-bits));
 
 define method dump-od(obj :: <extended-integer>, buf :: <dump-state>)
  => ();
   dump-definition-header(#"extended-integer", buf, 
   			 raw-data: $odf-word-raw-data-format);
-  let len = ceiling/(integer-length(obj), $word-bits);
+  let len = ceiling/(integer-length(obj) + 1, $word-bits);
   dump-word(len, buf);
   for (i :: <integer> from 0 below len,
        x :: <extended-integer> = obj then ash(x, - $word-bits))

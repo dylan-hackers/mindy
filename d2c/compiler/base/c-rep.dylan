@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.25 1996/04/14 13:23:08 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/c-rep.dylan,v 1.26 1996/05/11 17:25:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -467,19 +467,6 @@ define method pick-representation
     next-method();
   end if;
 end method pick-representation;
-
-define method integer-length (int :: <extended-integer>) => res :: <integer>;
-  if (negative?(int))
-    integer-length(lognot(int));
-  else
-    for (len from 0,
-	 int = int then ash(int, -1),
-	 until: zero?(int))
-    finally
-      len;
-    end for;
-  end if;
-end method integer-length;
 
 define method pick-representation
     (type :: <union-ctype>, optimize-for :: one-of(#"speed", #"space"))

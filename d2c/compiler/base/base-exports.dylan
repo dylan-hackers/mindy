@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.40 1996/05/08 15:56:08 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.41 1996/05/11 17:25:44 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -53,7 +53,7 @@ define module common
     export: all;
   use Extensions,
     import: {<general-integer>, <extended-integer>,
-	     $maximum-integer, ratio,
+	     $maximum-integer, ratio, integer-length,
 	     false-or, one-of, <false>, <true>, ignore,
 	     $minimum-integer, <byte-character>, $not-supplied,
 	     report-condition, condition-format,
