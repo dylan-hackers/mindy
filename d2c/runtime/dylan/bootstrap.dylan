@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.24 1996/05/11 16:16:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.25 1996/06/24 20:20:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: bootstrap
@@ -150,8 +150,8 @@ define module dylan-viscera
     $permanent-hash-state,
 
     // Definitions
-    variable-definer, constant-definer, domain-definer, generic-definer,
-    method-definer, class-definer, library-definer,
+    variable-definer, constant-definer, domain-definer, function-definer,
+    generic-definer, method-definer, class-definer, library-definer,
 
     // Statements
     \if, \unless, \case, \select, \while, \until, \for, \begin,

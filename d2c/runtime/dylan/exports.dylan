@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.26 1996/05/11 16:16:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.27 1996/06/24 20:20:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -106,8 +106,8 @@ define module Dylan
 
 	     // Definitions
 	     variable-definer, constant-definer, domain-definer,
-	     generic-definer, method-definer, class-definer, module-definer,
-	     library-definer,
+	     function-definer, generic-definer, method-definer, class-definer,
+	     module-definer, library-definer,
 
 	     // Statements
 	     \if, \unless, \case, \select, \while, \until, \for, \begin,

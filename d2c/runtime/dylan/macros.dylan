@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.8 1996/04/08 08:34:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/macros.dylan,v 1.9 1996/06/24 20:20:43 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -428,6 +428,11 @@ define macro domain-definer
   types:
     { ?type:expression, ... } => { ?type, ...}
     { } => { }
+end;
+
+define macro function-definer
+    { define ?adjectives:* function ?:name ?rest:* end }
+      => { define ?adjectives method ?name ?rest end }
 end;
 
 define macro generic-definer
