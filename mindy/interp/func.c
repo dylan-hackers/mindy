@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.35 1995/03/12 16:42:03 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.36 1995/04/21 01:43:06 rgs Exp $
 *
 * This file implements functions.
 *
@@ -469,7 +469,7 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
 	    }
 	}
 	if (found)
-	    return TRUE;
+	    return (c->cached_result == obj_True);
     }
 
     /* It wasn't in the cache.... */
@@ -481,7 +481,11 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
 	*cache_class = object_class(*arg);
 
     result = gfd_applicable_method_p(method, args, cache_elem);
+
+    obj_ptr(struct gf_cache *, cache_elem)->cached_result
+	= result ? obj_True : obj_False;
     METHOD(method)->class_cache = cache_elem;
+
     return result;
 }
 
