@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.15 2001/02/21 04:16:42 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.16 2001/02/25 18:01:02 gabor Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -140,9 +140,6 @@ define module Dylan
 	     // Function-macro operators
 	     \:=, \&, \|,
     
-	     // Hashing function essentials
-	     $permanent-hash-state,
-
              // Constants
              $maximum-integer, $minimum-integer
     },
@@ -206,8 +203,9 @@ define module System
     import: {\%%primitive,
 	     
 	     // Foreign interface stuff.
-	     \call-out, \c-include, \c-decl, \c-local-decl, \c-expr,
-	     \callback-method, callback-entry,
+	     \call-out, \c-include, \c-system-include,
+	     \c-decl, \c-local-decl, \c-expr, \c-literal,
+	     \callback-method, \callback-entry,
 
 	     // Designator-class (C-FFI) stuff.
 	     <designator-class>, designator-class-definer,

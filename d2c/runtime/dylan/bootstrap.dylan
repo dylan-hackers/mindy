@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.14 2001/02/21 04:16:35 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.15 2001/02/25 18:00:56 gabor Exp $
 copyright: see below
 module: bootstrap
 
@@ -184,9 +184,6 @@ define module dylan-viscera
     // Function-macro operators
     \:=, \&, \|,
     
-    // Hashing function essentials
-    $permanent-hash-state,
-
     // Extensions
     <general-integer>, <extended-integer>,
     $maximum-integer, $minimum-integer, integer-length,
@@ -210,7 +207,8 @@ define module dylan-viscera
 
     // System stuff
     \%%primitive,
-    call-out, c-include, c-decl, c-local-decl, c-expr,
+    call-out, c-include, c-system-include, c-decl, c-local-decl,
+    c-expr, c-literal,
     callback-method, callback-entry,
     <raw-pointer>, pointer-deref, pointer-deref-setter,
     object-address,
