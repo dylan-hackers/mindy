@@ -51,8 +51,9 @@ D: in CSE optimizations, functional classes workaround.
 D: Lots of low-level compiler fixes.
 
 N: Bruce Hoult
-E: brucehoult@pobox.com
-D: PPC trampoline code
+E: bruce@hoult.org
+D: PPC trampoline code, some optimizer bug fixes, some build fixes,
+D: some speed tuning.
 
 N: Peter Housel
 E: housel@acm.org
