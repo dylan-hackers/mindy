@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <runtime.h>
+#ifdef __sgi__
+#include <sys/cachectl.h>
+#endif
 
 #include "../gc/gc.h"
 
@@ -148,9 +151,8 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
      call mprotect() or anything like that. */
   return code;
 }
-#else
-#ifdef __powerpc__
 
+#elif defined __powerpc__
 /* On the PowerPC we will just rearrange the integer/pointer arguments within the
    integer registers, and then jump to the callback routine.  We don't need to make
    a stack frame, or return to ourselves for cleanup, and we can totally ignore all
@@ -345,6 +347,113 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
   return code;
 }
 #undef BLOCKSIZE
+
+#elif defined __mips__
+/* MIPS support is currently limited to the n32 ABI.  This is mostly
+ * like PPC (we're just a prologue to the function, accepting only
+ * arguments that fit into the registers), with the following additional
+ * details:
+ *
+ * With n32 we've got 64-bit registers for up to eight arguments.
+ * 
+ * The registers' nice size means that that every arguments fits into
+ * exactly one register, so we just step through the signature,
+ * shuffling registers where needed.
+ *
+ * We've got to shuffle fp registers, too, since argument number (say)
+ * `two' will, if it happens to be a float, go into $f2 regardless of
+ * whether argument number `one' was float.  I.e., adding any kind of
+ * argument arguments shifts _all_ registers.
+ */
+heapptr_t
+make_trampoline(void *func, descriptor_t closure, int n, char *sig)
+{
+    int size;                   /* size of code */
+    void *code;                 /* ptr to beginning of code */
+    unsigned *c;                /* ptr into code */
+    unsigned tmpf, tmpc;
+
+    /* if arguments don't fit into registers, give up */
+    if (n > 8) {
+	fprintf(stderr,
+		"\nCallback trampoline wants wants %d arguments,"
+		" exceeding the current\nmaximum of seven."
+		"  (Signature is %*s).--dfl@gmx.de",
+		n - 1, sig);
+	fflush(stderr);
+	abort();
+    }
+
+    /* one shuffling instruction per arg, plus five other, and one extra ptr */
+    size = ((n - 1) + 7) << 2;
+    c = code = GC_malloc(size);
+
+    /* step through args backwards, assembling code to shuffle regs */
+    for (n--; n > 0; n--)
+	switch(sig[n]) {
+	case KEY_OBJECT:
+	    /* This is an 8-byte structure, passed in a single 64-bit
+	     * register, so just fall through */
+	case KEY_HEAPPTR:
+	case KEY_PTR:
+	case KEY_INT:
+	case KEY_LONG:
+	case KEY_UINT:
+	case KEY_BOOLEAN:
+	case KEY_SHORT:
+	case KEY_USHORT:
+	case KEY_BYTE:
+	case KEY_UBYTE:
+	    /* daddu $an, $a{n-1}, $0 */
+	    *c++ = 0x2d                 /* op=0, func */
+		| (n + 3) << 21         /* rs, rt=0 */
+		| (n + 4) << 11;        /* rd */
+	    break;
+
+	case KEY_LONG_DOUBLE:
+	    /* `long double' is `double' for gcc, so fall through */
+	case KEY_FLOAT:
+	case KEY_DOUBLE:
+	    /* mov.d $fn, $f{n-1} */
+	    *c++ = 0x11 << 26 + 1 << 21 + 6     /* op, double, func */
+		| (n + 11) << 11                /* fs */
+		| (n + 12) << 6;                /* fd */
+	    break;
+
+	case KEY_VOID:
+	default:
+	    fprintf(stderr, "make_trampoline illegal argument key %c\n",
+		    sig[n]);
+	    fflush(stderr);
+	    abort();
+	    break;
+	}
+
+    tmpf = (unsigned) func;
+    tmpc = (unsigned) closure.heapptr;
+    *c++ = 0xf << 26 | 25 << 16 | tmpf >> 16;           /* lui $25, upper */
+    *c++ = 0xf << 26 | 4 << 16 | tmpc >> 16;            /* lui $4, upper */
+    *c++ = 9 << 26 | 25 << 21 | 25 << 16 | tmpf&0xffff; /* addiu $25,$25,low */
+    *c++ = 9 << 26 | 4 << 21 | 4 << 16 | tmpc & 0xffff; /* addiu $4,$4,lower */
+    *c++ = 25 << 21 | 8;                                /* jr $25 */
+    *c++ = 0;
+    
+    /* pointer for gc */
+    *c++ = (unsigned) closure.heapptr;
+
+#ifdef __sgi__
+    if (cacheflush(code, size, BCACHE) < 0) {
+	fprintf(stderr, "\nmake_trampoline: Argh--couldn't flush cache.\n");
+	fflush(stderr);
+    }	
+#else
+    fprintf(stderr, "\nmake_trampoline: Oh, new platform?\n");
+    fflush(stderr);
+#endif
+
+    return code;
+}
+
 #else
 heapptr_t make_trampoline(void *func, descriptor_t closure,
 			  int nkeys, char *signature)
@@ -355,4 +464,3 @@ heapptr_t make_trampoline(void *func, descriptor_t closure,
   return 0;			/* not reached */
 }
 #endif
-#endif;
