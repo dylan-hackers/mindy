@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.12 1994/06/11 02:23:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.13 1994/06/16 22:11:54 wlott Exp $
 *
 * This file does whatever.
 *
@@ -359,10 +359,20 @@ static obj_t make_slot_descriptor(obj_t debug_name, obj_t allocation,
 				  obj_t init_function, obj_t init_value)
 {
     obj_t res = alloc(obj_SlotDescrClass, sizeof(struct slot_descr));
+    enum slot_allocation alloc
+	= (enum slot_allocation)fixnum_value(allocation);
 
     SD(res)->debug_name = debug_name;
-    SD(res)->alloc = (enum slot_allocation)fixnum_value(allocation);
+    SD(res)->alloc = alloc;
     SD(res)->creator = obj_False;
+    if (alloc == alloc_CONSTANT) {
+	if (init_value == obj_Unbound)
+	    error("CONSTANT slots must have an init-value:");
+	if (req_init_keyword != obj_False)
+	    error("Can't use required-init-keyword: in constant slots.");
+	if (init_keyword != obj_False)
+	    error("Can't use init-keyword: in constant slots.");
+    }
     if (init_function != obj_Unbound) {
 	if (init_value != obj_Unbound)
 	    error("Can't specify both an init-function: and an init-value:");
@@ -370,6 +380,8 @@ static obj_t make_slot_descriptor(obj_t debug_name, obj_t allocation,
 	SD(res)->init_function_p = TRUE;
     }
     else {
+	if (init_value != obj_Unbound && type != obj_False)
+	    check_type(init_value, type);
 	SD(res)->init_function_or_value = init_value;
 	SD(res)->init_function_p = FALSE;
     }
@@ -463,6 +475,8 @@ static void do_next_init(struct thread *thread, obj_t *vals)
 	value = vals[0];
 	thread->sp = vals;
     }
+
+    check_type(value, SD(slot)->type);
 
     switch (SD(slot)->alloc) {
       case alloc_INSTANCE:
@@ -707,11 +721,16 @@ static void inherit_slots(obj_t class, obj_t super)
 		displaced_subclass_slots
 		    = pair(new_slot, displaced_subclass_slots);
 	    else {
+		obj_t init_val;
+
 		SOVEC(DC(class)->subclass_layout)->contents[offset] = new_slot;
-		if (SD(new_slot)->init_function_p)
+		if (SD(new_slot)->init_function_p) {
 		    init_functions = pair(new_slot, init_functions);
-		SOVEC(DC(class)->subclass_slots)->contents[offset]
-		    = SD(new_slot)->init_function_or_value;
+		    init_val = obj_Unbound;
+		}
+		else
+		    init_val = SD(new_slot)->init_function_or_value;
+		SOVEC(DC(class)->subclass_slots)->contents[offset] = init_val;
 	    }
 	    break;
 
@@ -751,6 +770,7 @@ static obj_t compute_positions(obj_t displaced_slots, obj_t layout)
 static void process_slot(obj_t class, obj_t slot)
 {
     int offset = SD(slot)->desired_offset;
+    obj_t init_val;
     obj_t value_cell;
 
     SD(slot)->creator = class;
@@ -778,10 +798,13 @@ static void process_slot(obj_t class, obj_t slot)
 
       case alloc_SUBCLASS:
 	SOVEC(DC(class)->subclass_layout)->contents[offset] = slot;
-	if (SD(slot)->init_function_p)
+	if (SD(slot)->init_function_p) {
 	    init_functions = pair(slot, init_functions);
-	SOVEC(DC(class)->subclass_slots)->contents[offset]
-	    = SD(slot)->init_function_or_value;
+	    init_val = obj_Unbound;
+	}
+	else
+	    init_val = SD(slot)->init_function_or_value;
+	SOVEC(DC(class)->subclass_slots)->contents[offset] = init_val;
 	SD(slot)->getter_method
 	    = make_accessor_method(function_debug_name(SD(slot)->getter),
 				   class, SD(slot)->type,
@@ -799,9 +822,13 @@ static void process_slot(obj_t class, obj_t slot)
 	break;
 
       case alloc_CLASS:
-	if (SD(slot)->init_function_p)
+	if (SD(slot)->init_function_p) {
 	    init_functions = pair(slot, init_functions);
-	value_cell = make_value_cell(SD(slot)->init_function_or_value);
+	    init_val = obj_Unbound;
+	}
+	else
+	    init_val = SD(slot)->init_function_or_value;
+	value_cell = make_value_cell(init_val);
 	SD(slot)->getter_method
 	    = make_accessor_method(function_debug_name(SD(slot)->getter),
 				   class, SD(slot)->type,
@@ -903,7 +930,9 @@ static obj_t dylan_make_instance(obj_t class, obj_t key_and_value_pairs)
 		    break;
 		}
 	    }
-	    if (SD(slot)->keyword_required && value == obj_Unbound)
+	    if (value != obj_Unbound)
+		check_type(value, SD(slot)->type);
+	    else if (SD(slot)->keyword_required)
 		error("Missing required init-keyword %=", keyword);
 	}
 	switch (SD(slot)->alloc) {
@@ -927,6 +956,8 @@ static obj_t dylan_make_instance(obj_t class, obj_t key_and_value_pairs)
 		obj_t cell = accessor_method_datum(SD(slot)->getter_method);
 		value_cell_set(cell, value);
 	    }
+	    break;
+	  case alloc_VIRTUAL:
 	    break;
 	  default:
 	    if (value != obj_Unbound)
@@ -1104,12 +1135,13 @@ void init_instance_classes(void)
 
 void init_instance_functions(void)
 {
+    obj_t obj_FalseClass = object_class(obj_False);
+
     define_function("make-slot",
 		    listn(5, obj_ObjectClass, obj_IntegerClass,
 			  obj_FunctionClass,
-			  type_union(obj_FunctionClass,
-				     object_class(obj_False)),
-			  obj_ObjectClass),
+			  type_union(obj_FunctionClass, obj_FalseClass),
+			  type_union(obj_TypeClass, obj_FalseClass)),
 		    FALSE,
 		    listn(4, pair(symbol("init-keyword"), obj_False),
 			  pair(symbol("required-init-keyword"), obj_False),
