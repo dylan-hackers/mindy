@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.5 1995/11/16 03:35:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.6 1995/12/05 22:12:16 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -50,11 +50,11 @@ define class <class> (<type>)
   // The maker function, or #f if we haven't computed it yet.
   slot class-maker :: false-or(<function>),
     init-value: #f;
-/*
   //
   // Vector of the slots introduced by this class.
-  slot class-slots :: <simple-object-vector>, setter: #f,
+  slot class-new-slot-descriptors :: <simple-object-vector>, setter: #f,
     required-init-keyword: slots:;
+/*
   //
   // Vector of keyword initialization arguments introduced by this class.
   slot class-keyword-init-args :: <simple-object-vector>, setter: #f,
@@ -63,10 +63,12 @@ define class <class> (<type>)
   // Vector of inherited slot overrides introduced by this class.
   slot class-slot-overrides :: <simple-object-vector>, setter: #f,
     required-init-keyword: slot-overrides:;
+*/
   //
   // Vector of all the slots for this class.  Filled in when defered-
   // evaluations are processed.
-  slot class-all-slots :: <simple-object-vector>;
+  slot class-all-slot-descriptors :: <simple-object-vector>;
+/*
   //
   // Layout of instance allocation slots.  #f until computed.
   slot class-instance-layout :: type-union(<false>, <layout>),
@@ -89,9 +91,10 @@ define method initialize (class :: <class>, #key)
   class.all-superclasses := compute-cpl(class, class.direct-superclasses);
   class.closest-primary-superclass := find-closest-primary-superclass(class);
 end;
+*/
 
 define constant <slot-allocation>
-  = one-of(#"instance", #"class", #"each-subclass", #"constant", #"virtual");
+  = one-of(#"instance", #"class", #"each-subclass", #"virtual");
 
 define class <slot-descriptor> (<object>)
   //
@@ -99,9 +102,10 @@ define class <slot-descriptor> (<object>)
   slot slot-allocation :: <slot-allocation>, setter: #f,
     required-init-keyword: allocation:;
   //
-  // The type of the slot, or #f it is deferred.
-  slot slot-type :: type-union(<false>, <type>),
-    required-init-keyword: type:;
+  // The type of the slot, or uninitialized if deferred.
+  slot slot-type :: <type>,
+    init-keyword: type:;
+/*
   //
   // The function to compute the type when deferred.
   slot slot-deferred-type :: type-union(<false>, <function>),
@@ -123,12 +127,15 @@ define class <slot-descriptor> (<object>)
   // The method added to the setter generic function if one had been added.
   slot slot-setter-method :: type-union(<false>, <method>),
     init-value: #f;
+*/
   //
-  // The function to compute the initial value, or #f if it starts out life
-  // unbound.  Note: the init-value: keyword is converted into a function
-  // so we don't have to tell them apart.
+  // The function to compute the initial value, or #f if there isn't one.
   slot slot-init-function :: type-union(<false>, <function>),
     init-value: #f;
+  //
+  // The init-value, or $not-supplied if there isn't one.
+  slot slot-init-value :: <object>,
+    init-value: $not-supplied;
   //
   // The init keyword, if there is one.
   slot slot-init-keyword :: type-union(<false>, <symbol>),
@@ -139,6 +146,7 @@ define class <slot-descriptor> (<object>)
     init-value: #f;
 end;
 
+/*
 define method initialize
     (slot :: <slot-descriptor>,
      #key setter :: type-union(<false>, <generic-function>),
@@ -385,9 +393,7 @@ define method make (class :: <class>, #rest supplied-keys, #all-keys)
   if (class.class-abstract?)
     error("Can't make instances of %= because it is abstract.", class);
   end;
-  if (class.class-defered-evaluations)
-    class.class-defered-evaluations();
-  end;
+  maybe-do-defered-evaluations(class);
   let defaulted-keys :: <simple-object-vector>
     = if (class.class-key-defaulter)
 	class.class-key-defaulter(supplied-keys);
@@ -406,6 +412,24 @@ define method make (class :: <class>, #rest supplied-keys, #all-keys)
   let instance = apply(class.class-maker, defaulted-keys);
   apply(initialize, instance, defaulted-keys);
   instance;
+end;
+
+define inline method maybe-do-defered-evaluations (class :: <class>) => ();
+  if (class.class-defered-evaluations)
+    do-defered-evaluations(class);
+  end;
+end;
+
+define method do-defered-evaluations (class :: <class>) => ();
+  let defered-evaluations = class.class-defered-evaluations;
+  class.class-defered-evaluations
+    := method () => res :: <never-returns>;
+	 error("Circularity detected while processing the defered evaluations "
+		 "for %=",
+	       class);
+       end;
+  defered-evaluations();
+  class.class-defered-evaluations := #f;
 end;
 
 define open generic initialize (instance :: <object>, #rest keys, #all-keys);
