@@ -28,13 +28,25 @@ define module controls
 		$kControlDownButtonPart, $kControlPageUpPart, $kControlPageDownPart,
 		$kControlClockHourDayPart, $kControlClockMinuteMonthPart, $kControlClockSecondYearPart,
 		$kControlClockAMPMPart, $kControlDataBrowserPart, $kControlDataBrowserDraggedPart,	
+                
+                $kControlKindBevelButton, $kControlKindChasingArrows, $kControlKindClock, 
+                $kControlKindDataBrowser, $kControlKindDisclosureButton, $kControlKindDisclosureTriangle,	
+                $kControlKindEditText, $kControlKindGroupBox, $kControlKindIcon, $kControlKindImageWell,	
+                $kControlKindListBox, $kControlKindLittleArrows, $kControlKindPicture, $kControlKindPlacard,	
+                $kControlKindPopupArrow, $kControlKindPopupButton, $kControlKindProgressBar,	
+                $kControlKindPushButton, $kControlKindRadioGroup, $kControlKindRoundButton, 
+                $kControlKindScrollBar,	$kControlKindScrollingTextBox,$kControlKindSeparator,
+                $kControlKindSignatureApple, $kControlKindSlider, $kControlKindStaticText,$kControlKindTabs,	
+                $kControlKindUserPane, $kControlKindWindowHeader,
 			
 		<ControlHandle>, <ControlActionUPP>,
 		NewControl, DisposeControl, KillControls,
 		HiliteControl, ShowControl, HideControl,
 		GetControlValue, SetControlValue, MoveControl, SizeControl,
 		SetControlTitle, GetControlTitle, 
-		DragControl, FindControl, TrackControl, TestControl,
+		DragControl, FindControl, HandleControlClick, HandleControlKey, IdleControls, 
+                TrackControl, TestControl,
+                AdvanceKeyboardFocus, ClearKeyboardFocus, GetKeyboardFocus, ReverseKeyboardFocus, SetKeyboardFocus,
 		DrawControls;
 		
 end module controls;

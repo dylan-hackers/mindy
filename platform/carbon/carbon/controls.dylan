@@ -5,6 +5,11 @@ module: controls
 */
 
 /*
+   TODO: Is it ControlRef or ControlHandle?
+*/
+
+
+/*
 	Includes
 */
 
@@ -58,7 +63,37 @@ define constant $kControlClockAMPMPart :: <integer>		= 12;						/* Appearance 1.
 define constant $kControlDataBrowserPart :: <integer>		= 24;							/* CarbonLib 1.0 and later*/
 define constant $kControlDataBrowserDraggedPart :: <integer> = 25;							/* CarbonLib 1.0 and later*/
 
+//- TODO
 
+define constant $kControlKindBevelButton :: <integer> = 0;
+define constant $kControlKindChasingArrows :: <integer> = 0;	
+define constant $kControlKindClock :: <integer> = 0;	
+define constant $kControlKindDataBrowser :: <integer> = 0;	
+define constant $kControlKindDisclosureButton :: <integer> = 0;	
+define constant $kControlKindDisclosureTriangle :: <integer> = 0;	
+define constant $kControlKindEditText :: <integer> = 0;	
+define constant $kControlKindGroupBox :: <integer> = 0;	
+define constant $kControlKindIcon :: <integer> = 0;	
+define constant $kControlKindImageWell :: <integer> = 0;	
+define constant $kControlKindListBox :: <integer> = 0;	
+define constant $kControlKindLittleArrows :: <integer> = 0;	
+define constant $kControlKindPicture :: <integer> = 0;	
+define constant $kControlKindPlacard :: <integer> = 0;	
+define constant $kControlKindPopupArrow :: <integer> = 0;	
+define constant $kControlKindPopupButton :: <integer> = 0;	
+define constant $kControlKindProgressBar :: <integer> = 0;	
+define constant $kControlKindPushButton :: <integer> = 0;	
+define constant $kControlKindRadioGroup :: <integer> = 0;	
+define constant $kControlKindRoundButton :: <integer> = 0;	
+define constant $kControlKindScrollBar :: <integer> = 0;	
+define constant $kControlKindScrollingTextBox :: <integer> = 0;	
+define constant $kControlKindSeparator :: <integer> = 0;	
+define constant $kControlKindSignatureApple :: <integer> = 0;	
+define constant $kControlKindSlider :: <integer> = 0;	
+define constant $kControlKindStaticText :: <integer> = 0;	
+define constant $kControlKindTabs :: <integer> = 0;	
+define constant $kControlKindUserPane :: <integer> = 0;	
+define constant $kControlKindWindowHeader :: <integer> = 0;
 
 /*
 	types
@@ -69,6 +104,8 @@ end class <ControlHandle>;
 
 define constant <ControlActionUPP> = <UniversalProcPtr>;
 
+define constant <ControlPartCode> = <SInt16>;
+define constant <ControlFocusPart> = <SInt16>;
 
 /*
 	DrawControls
@@ -95,7 +132,7 @@ define method NewControl( window :: <WindowRef>, bounds :: <Rect>, title :: <pas
 
 	let visBool = if( visible ) 1 else 0 end if;
 
-	make( <Handle>, pointer: 
+	make( <ControlHandle>, pointer: 
 		call-out( "NewControl", ptr:, ptr: window.raw-value, ptr: bounds.raw-value, 
 					ptr: title.raw-value, unsigned-char: visBool, 
 					short: initialValue, short: minimumValue, short: maximumValue,
@@ -282,6 +319,45 @@ end method FindControl;
 
 
 /*
+	HandleControlClick
+*/
+
+define method HandleControlClick( inControl :: <ControlHandle>, inWhere :: <Point>, 
+                                    inModifiers :: <EventModifiers>, inAction :: <ControlActionUPP> )
+=> ( result :: <ControlPartCode> )
+
+	call-out( "handlecontrolclick", short:, ptr: inControl.raw-value, ptr: inWhere.raw-value, 
+                    short: inModifiers, ptr: inAction.raw-value );
+
+end method HandleControlClick;
+
+/*
+	HandleControlKey
+*/
+
+define method HandleControlKey( control :: <ControlHandle>, inKeyCode :: <SInt16>, 
+                                inCharCode :: <SInt16>, inModifiers :: <EventModifiers> )
+=> ( result :: <SInt16> )
+
+	call-out( "HandleControlKey", short:, ptr: control.raw-value, short: inKeyCode,
+                    short: inCharCode, int: inModifiers );
+
+end method HandleControlKey;
+
+
+/*
+	IdleControls
+*/
+
+define method IdleControls( window :: <WindowRef> )
+=> ( result :: <integer> )
+
+	call-out( "IdleControls", void:, ptr: window.raw-value, );
+
+end method IdleControls;
+
+
+/*
 	TrackControl
 */
 
@@ -302,4 +378,69 @@ define method TestControl( control :: <ControlHandle>, point :: <Point> )
 	call-out( "testcontrol", short:, ptr: control.raw-value, ptr: point.raw-value );
 
 end method TestControl;
+
+/*
+    Keyboard Focus. Appearance 1.0+
+*/
+
+/*
+    AdvanceKeyboardFocus
+*/
+
+define method AdvanceKeyboardFocus( inWindow :: <WindowRef> )
+=> ( result :: <OSErr> )
+
+	call-out( "AdvanceKeyboardFocus", int:, ptr: inWindow.raw-value );
+
+end method AdvanceKeyboardFocus;
+
+/*
+    ClearKeyboardFocus
+*/
+
+define method ClearKeyboardFocus( inWindow :: <WindowRef> )
+=> ( result :: <OSErr> )
+
+	call-out( "ClearKeyboardFocus", int:, ptr: inWindow.raw-value );
+
+end method ClearKeyboardFocus;
+
+/*
+    GetKeyboardFocus
+*/
+
+define method GetKeyboardFocus( inWindow :: <WindowRef> )
+=> ( control :: <ControlHandle>, error :: <OSErr> )
+
+        let temp = make( <Handle> );	// Used as a ControlHandle * parameter
+	let error = call-out( "GetKeyboardFocus", int:, ptr: inWindow.raw-value, ptr: temp.raw-value );
+        values( pointer-at( temp, offset: 0, class: <ControlHandle> ), as( <OSErr>, error) );
+
+end method GetKeyboardFocus;
+
+
+/*
+    ReverseKeyboardFocus
+*/
+
+define method ReverseKeyboardFocus( inWindow :: <WindowRef> )
+=> ( result :: <OSErr> )
+
+	call-out( "ReverseKeyboardFocus", int:, ptr: inWindow.raw-value );
+
+end method ReverseKeyboardFocus;
+
+
+/*
+    SetKeyboardFocus
+*/
+
+define method SetKeyboardFocus( inWindow :: <WindowRef>, inControl :: <ControlHandle>,
+                                inPart :: <ControlFocusPart> )
+=> ( result :: <OSErr> )
+
+	call-out( "SetKeyboardFocus", int:, ptr: inWindow.raw-value, ptr: inControl.raw-value,
+                    short: inPart );
+
+end method SetKeyboardFocus;
 
