@@ -34,7 +34,7 @@ end;
 define function add-cpp-declaration
     (state :: <parse-state>, macro-name :: <string>)
  => ()
-  parse-warning(state, "Ignoring '#define %s' for now.\n", macro-name);
+  parse-warning(state, "Ignoring '#define %s' for now", macro-name);
 
 /*
   block ()
