@@ -92,3 +92,12 @@ trackgoaway						(WindowRef 				window,
 {
 	TrackGoAway( window, *thePt );
 }
+
+EXTERN_API_C (ControlPartCode )
+handlecontrolclick					(ControlRef inControl, 
+                                                        Point * inWhere, 
+                                                        EventModifiers inModifiers, 
+                                                        ControlActionUPP inAction)
+{
+    HandleControlClick( inControl, *inWhere, inModifiers, inAction );
+}
