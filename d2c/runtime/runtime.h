@@ -103,5 +103,11 @@ float (atanf)(float x);
 float (atan2f)(float y, float x);
 float (expf)(float x);
 float (sqrtf)(float x);
+float (logf)(float x);
+float (log10f)(float x);
+float (powf)(float b, float x);
+float (sinhf)(float x);
+float (coshf)(float x);
+float (tanhf)(float x);
 
 #include <errno.h>

@@ -164,6 +164,48 @@ float sqrtf (float x)
 }
 #endif
 
+#ifndef HAVE_LOGF
+float logf (float x)
+{
+  return (float) log(x);
+}
+#endif
+
+#ifndef HAVE_LOG10F
+float log10f (float x)
+{
+  return (float) log10(x);
+}
+#endif
+
+#ifndef HAVE_POWF
+float powf (float b, float x)
+{
+  return (float) pow(b, x);
+}
+#endif
+
+#ifndef HAVE_SINHF
+float sinhf (float x)
+{
+  return (float) sinh(x);
+}
+#endif
+
+#ifndef HAVE_COSHF
+float coshf (float x)
+{
+  return (float) cosh(x);
+}
+#endif
+
+#ifndef HAVE_TANHF
+float tanhf (float x)
+{
+  return (float) tanh(x);
+}
+#endif
+
 #if 0
 double log2 (double x)
 {
