@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.46 1996/04/14 19:46:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.47 1996/04/15 11:58:56 wlott Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -926,11 +926,11 @@ define method spew-object
   spew-instance(specifier-type(#"<override-descriptor>"), state,
 		slot-init-value:
 		  if (instance?(object.override-init-value, <ct-value>))
-		    object.slot-init-value;
+		    object.override-init-value;
 		  end,
 		slot-init-function:
 		  if (instance?(object.override-init-function, <ct-value>))
-		    object.slot-init-function;
+		    object.override-init-function;
 		  end);
 end method spew-object;
 
