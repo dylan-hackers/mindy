@@ -1,6 +1,6 @@
 module: d2c-gnu
 
-c-include("/users/rgs/ccomp/src/dig/dig-support.h");
+c-include("dig-support.h");
 
 define functional class <anonymous-1> (<c-vector>, <statically-typed-pointer>) end;
 
@@ -23,6 +23,15 @@ end method content-size;
 
 define constant <arg-vector> = <anonymous-1>;
 
+define sealed method process-id () => (result :: <integer>);
+  c-variable-ref(int: "&process_id");
+end method process-id;
+
+define sealed method process-id-setter (value :: <integer>) => (result :: <integer>);
+  c-variable-ref(int: "&process_id") := value;
+  value;
+end method process-id-setter;
+
 define functional class <anonymous-2> (<statically-typed-pointer>) end;
 
 define method pointer-value
@@ -42,7 +51,6 @@ define method content-size (value :: subclass(<anonymous-2>)) => (result :: <int
   4;
 end method content-size;
 
-#if (~mindy)
 define method fd-exec
     (arg1 :: <byte-string>)
  => (arg2 :: <integer>, arg3 :: <integer>);
@@ -55,5 +63,4 @@ destroy(arg2-ptr);
 destroy(arg3-ptr);
   values(arg2-value, arg3-value);
 end method fd-exec;
-#endif
 

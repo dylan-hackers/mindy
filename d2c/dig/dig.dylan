@@ -29,9 +29,68 @@ define method is-prefix?
   end case;
 end method is-prefix?;
 
-// This function will shortly be deprecated in favor of "regexp-matches"
-//
 define constant *match-strings-table* :: <table> = make(<table>);
+define constant *cs-match-strings-table* :: <table> = make(<table>);
+
+define method regexp-positions
+    (big :: <string>, matcher :: <string>,
+     #key start: start-index :: <integer> = 0,
+          end: end-index :: false-or(<integer>),
+          case-sensitive :: <boolean> = #f,
+          matches :: false-or(<sequence>))
+ => (#rest positions :: false-or(<integer>));
+  let cache = if (case-sensitive)
+		*cs-match-strings-table*;
+	      else
+		*match-strings-table*;
+	      end if;
+  let func :: false-or(<function>) = element(cache, matcher, default: #f);
+  unless (func)
+    func := cache[matcher]
+      := make-regexp-positioner(matcher, case-sensitive: case-sensitive);
+  end unless;
+  let (#rest positions) = func(big, start: start-index,
+			       end: end-index | big.size);
+  if (matches)
+    let return = make(<vector>, size: matches.size * 2);
+    for (raw-pos in matches, index from 0)
+      let src-pos = raw-pos * 2;
+      let dest-pos = index * 2;
+      return[dest-pos] := element(positions, src-pos, default: #f);
+      return[dest-pos + 1] := element(positions, src-pos + 1, default: #f);
+    end for;
+    apply(values, return);
+  else
+    apply(values, positions);
+  end if;
+end method regexp-positions;
+
+define method regexp-matches
+    (big :: <string>, matcher :: <string>,
+     #key start: start-index :: <integer> = 0,
+          end: end-index :: false-or(<integer>),
+          case-sensitive :: <boolean> = #f,
+          matches :: false-or(<sequence>))
+ => (#rest matches :: false-or(<string>));
+  let (#rest positions)
+    = regexp-positions(big, matcher, start: start-index, end: end-index, 
+		       matches: matches, case-sensitive: case-sensitive);
+  let sz = floor/(positions.size, 2);
+  let return = make(<vector>, size: sz);
+  for (index from 0 below sz)
+    let pos = index * 2;
+    if (element(positions, pos, default: #f))
+      return[index] := copy-sequence(big, start: positions[pos],
+				     end: positions[pos + 1]);
+    else
+      return[index] := #f;
+    end if;
+  end for;
+  apply(values, return);
+end method regexp-matches;
+
+// This function will shortly be deprecated in favor of "regexp-positions"
+//
 define method match-strings
     (big :: <string>, matcher :: <string>, #rest positions)
   let (func) = element(*match-strings-table*, matcher, default: #f);
@@ -132,12 +191,17 @@ end method at-prompt?;
 //
 define inline method send-gdb-command
     (template :: <byte-string>, #rest args)
+  let command = apply(format-to-string, template, args);
+  if (command.last == '\n')
+    error("Newlines should not be supplied to send-gdb-command");
+  end if;
+
   if ($dig-debug)
-    apply(format, *standard-output*, template, args);
+    write-line(*standard-output*, command);
     force-output(*standard-output*);
   end if;
     
-  apply(format, $to-gdb, template, args);
+  write-line($to-gdb, command);
   force-output($to-gdb);
 end method send-gdb-command;
 
@@ -259,9 +323,10 @@ end method do-gdb-command;
 // magically defined breakpoint in the error handler.
 //
 define method check-seg-fault (str :: <string>) => (result :: <boolean>);
-  if (match-strings(str, "Program received signal SIGSEGV", 0))
-    do-gdb-command("set dylan_seg_fault_error_main(orig_sp)\n");
-    do-gdb-command("continue\n");
+  if (regexp-positions(str, "Program received signal SIGSEGV"))
+    do-gdb-command("tbreak dylan_error_main_2");
+    do-gdb-command("set dylan_seg_fault_error_main(orig_sp)");
+    do-gdb-command("continue");
     send-user-response("Program received signal SIGSEGV -- giving up.\n");
     #t;
   end if;
@@ -272,20 +337,20 @@ end method check-seg-fault;
 // expertise.
 //
 define method print-any-value (line)
-  let value = do-gdb-command("print %s\n", line);
+  let value = do-gdb-command("print %s", line);
   let (idstr, heapptr1, heapptr2, extra)
-    = match-strings(value,
-		    "((.|\n)*)(\\$[0-9]+) = "
-		      "(\\(struct heapobj \\*\\) (.*)|\\{heapptr = ([^,]+))",
-		    3, 5, 6, 1);
+    = regexp-matches(value,
+		     "((.|\n)*)(\\$[0-9]+) = "
+		       "(\\(struct heapobj \\*\\) (.*)|\\{heapptr = ([^,]+))",
+		     matches: #[3, 5, 6, 1]);
   case
     (heapptr1) =>
-      let result = do-gdb-command("set gdb_print_heapobj(%s)\n", idstr);
+      let result = do-gdb-command("set gdb_print_heapobj(%s)", idstr);
       unless (check-seg-fault(result))
 	send-user-response("%s%s = %s", extra, idstr, result);
       end unless;
     (heapptr2) =>
-      let result = do-gdb-command("set gdb_print_genobj(%s)\n", idstr);
+      let result = do-gdb-command("set gdb_print_genobj(%s)", idstr);
       unless (check-seg-fault(result))
 	send-user-response("%s%s = %s", extra, idstr, result);
       end unless;
@@ -337,29 +402,30 @@ define method invoke-dylan-function
       let (#rest args) = split(",[ \t]*", arglist);
       for (arg in args)
 	let (keyarg, real-arg)
-	  = match-strings(arg, "([a-zA-Z0-9]+_sym_[a-zA-Z0-9_]+)?(.*)", 1, 2);
+	  = regexp-matches(arg, "([a-zA-Z0-9]+_sym_[a-zA-Z0-9_]+)?(.*)",
+			   matches: #[1, 2]);
 	if (keyarg)
 	  add-pusher(keyarg);
 	end if;
 	add-pusher(real-arg);
       end for;
       for (command in arg-pushers)
-	do-gdb-command("set %s\n", command);
+	do-gdb-command("set %s", command);
       end for;
       let value
 	= do-gdb-command("p gdb_invoke_function"
-			   "((descriptor_t)dylan_apply_safely, %d)\n",
+			   "((descriptor_t)dylan_apply_safely, %d)",
 			 size(arg-pushers));
       if (check-seg-fault(value))
 	0;
       else
 	let (extra, intarg)
-	  = match-strings(value,
-			  "^((.|\n)*)(\\$[0-9]+) = ([0-9]+)",
-			  1, 4);
+	  = regexp-matches(value, "^((.|\n)*)(\\$[0-9]+) = ([0-9]+)",
+			   matches: #[1, 4]);
 	unless (intarg)
-	  let result = do-gdb-command("continue\n");
-	  return(0, match-strings(result, "Continuing\\.\n(.*)\n", 1));
+	  let result = do-gdb-command("continue");
+	  return(0, regexp-matches(result, "Continuing\\.\n(.*)\n",
+				   matches: #[1]));
 	end unless;
 	send-user-response("%s", extra);
 	values(string-to-integer(intarg), #f);
@@ -488,24 +554,24 @@ define method find-local-variable
  => (name :: false-or(<string>), type :: false-or(<variable-types>));
   let locals  = (*cached-locals-vars* |
 		   (*cached-locals-vars*
-		      := concatenate(do-gdb-command("info local\n"),
-				     do-gdb-command("info args\n"))));
+		      := concatenate(do-gdb-command("info local"),
+				     do-gdb-command("info args"))));
   let match-start :: false-or(<integer>) = substring-position(locals, c-name);
   while (match-start
 	   & element(locals, match-start - 1, default: '\n') ~== '\n')
     match-start := substring-position(locals, c-name, start: match-start + 1);
   end while;
   if (match-start)
-    let (found, dummy, rest-start, rest-end)
-      = regexp-position(locals, "^ = (.*)", start: match-start + c-name.size);
-    if (found)
-      let rest = copy-sequence(locals, start: rest-start, end: rest-end);
+    let (rest)
+      = regexp-matches(locals, "^ = (.*)", start: match-start + c-name.size,
+		       matches: #[1]);
+    if (rest)
       let (stringarg, descarg, heaparg)
-	= match-strings(rest,
-			"^((\"[^\"]+\")"
-			  "|\\{heapptr = ([^,]+)"
-			  "|\\(struct heapobj \\*\\) (.*))",
-			2, 3, 5);
+	= regexp-matches(rest,
+			 "^((\"[^\"]+\")"
+			   "|\\{heapptr = ([^,]+)"
+			   "|\\(struct heapobj \\*\\) (.*))",
+			 matches: #[2, 3, 5]);
       let type = case
 		   stringarg => #"string";
 		   descarg => #"descriptor";
@@ -522,13 +588,11 @@ end method find-local-variable;
 //
 define method find-global-variable
     (name :: <string>) => (c-name :: false-or(<string>));
-  let response = do-gdb-command("info var ^%s$\n", name);
+  let response = do-gdb-command("info var ^%s$", name);
   if (response)
-    let (found, next, type-start, type-end, first, last)
-      = regexp-position(response, "(.* \\*?)([^ ]+)[[;]\n");
-    if (found)
-      let type-string = copy-sequence(response,
-				      start: type-start, end: type-end);
+    let (type-string)
+      = regexp-matches(response, "(.* \\*?)([^ ]+)[[;]\n", matches: #[1]);
+    if (type-string)
       let type = select (type-string by \=)
 		   "descriptor_t " => #"descriptor";
 		   "heapptr_t " => #"heap-object:";
@@ -552,10 +616,10 @@ end method find-global-variable;
 define method find-dylan-variable-list
     (dylan-name :: <string>) => (#rest c-names :: <string>);
   let search-string = c-prefix(dylan-name);
-  let response = do-gdb-command("info var ^[a-zA-Z0-9]*_%s$\n", search-string);
+  let response = do-gdb-command("info var ^[a-zA-Z0-9]*_%s$", search-string);
   local method do-search (pos :: <integer>, res :: <list>) => (res :: <list>);
 	  let (found, next, type-start, type-end, first, last)
-	    = regexp-position(response, "(.*) ([^ ]+)[[;]\n", start: pos);
+	    = regexp-positions(response, "(.*) ([^ ]+)[[;]\n", start: pos);
 	  if (found)
 	    let name = copy-sequence(response, start: first, end: last);
 	    let type-string = copy-sequence(response,
@@ -618,7 +682,7 @@ end method find-dylan-variable;
 //
 define method select-any-variable
     (name :: <string>) => (result :: false-or(<string>));
-  if (match-strings(name, "^[=-+/*]$|^\\$[0-9]+$", 0))
+  if (regexp-positions(name, "^[=-+/*]$|^\\$[0-9]+$"))
     #f;
   else
     element(*var-table*, name, default: #f)
@@ -634,10 +698,10 @@ end method select-any-variable;
 define method translate-arg-vars (arg :: <string>)
   local method try-one-var (string :: <string>, start :: <integer>)
 	  let (first, last)
-	    = regexp-position(string,
-			      "[-a-zA-Z*/+_?=~&<>|^@]"
-				"[-0-9a-zA-Z*/+_?=~$&<>|^@]*:?",
-			      start: start);
+	    = regexp-positions(string,
+			       "[-a-zA-Z*/+_?=~&<>|^@]"
+				 "[-0-9a-zA-Z*/+_?=~$&<>|^@]*:?",
+			       start: start);
 	  if (~first)
 	    string;
 	  else
@@ -660,41 +724,61 @@ end method translate-arg-vars;
 // Evaluating arbitrary Dylan & C expressions
 //========================================================================
 
-// Evaluates the given string as a C expression and returns a GDB variable
-// name (i.e. "$23") and an indication of the variable's type.
+// Evaluates the given string as a C expression and returns a variable
+// name and an indication of the variable's type.  This may be the
+// original expression if it was a variable, or it may be a GDB
+// variable (i.e. $23).
+//
+// Non-local dependency -- we enter GDB variables into the type table
+// so that we don't need to rederive this information later.  However,
+// the names will be re-used when we re-run the program.  They "run"
+// command must therefore clean all GDB variables out of the cache.
+// The function "clear-gdb-variable-types" below will do the job.
 //
 define method expr-token (expr :: <string>)
  => (result :: <string>, type :: false-or(<variable-types>));
-  let result = do-gdb-command("print %s\n", expr);
-  let (tag, intarg, stringarg, descarg, heaparg, extra)
-    = match-strings(result,
-		    "^((.|\n)*)(\\$[0-9]+) = (([0-9]+)|(\"[^\"]+\")"
-		      "|\\{heapptr = ([^,]+)"
-		      "|\\(struct heapobj \\*\\) (.*))?",
-		    3, 5, 6, 7, 8, 1);
-  if (tag)
-    let type = *var-types*[tag] := case
-				     stringarg => #"string";
-				     descarg => #"descriptor";
-				     heaparg => #"heap-object";
-				     otherwise => #"other";
-				   end case;
-    send-user-response(extra);
-    values(tag, type);
+  let type = element(*var-types*, expr, default: #f);
+  if (type)
+    // We won't have entered a type unless this is a variable.
+    // Therefore just return it and its type.
+    values(expr, type);
   else
-    values(expr, #f);
+    // This isn't known to be a variable, so use "print" to evaluate it.
+    let result = do-gdb-command("print %s", expr);
+    let (tag, intarg, stringarg, descarg, heaparg, extra)
+      = regexp-matches(result,
+		       "^((.|\n)*)(\\$[0-9]+) = (([0-9]+)|(\"[^\"]+\")"
+			 "|\\{heapptr = ([^,]+)"
+			 "|\\(struct heapobj \\*\\) (.*))?",
+		       matches: #[3, 5, 6, 7, 8, 1]);
+    if (tag)
+      let type = *var-types*[tag] := case
+				       stringarg => #"string";
+				       descarg => #"descriptor";
+				       heaparg => #"heap-object";
+				       otherwise => #"other";
+				     end case;
+      send-user-response(extra);
+      values(tag, type);
+    else
+      values(expr, #f);
+    end if;
   end if;
 end method expr-token;
+
+define method clear-gdb-variable-types () => ();
+  for (key in *var-types*.key-sequence)
+    if (regexp-positions(key, "^\\$[0-9]+$"))
+      remove-key!(*var-types*, key);
+    end if;
+  end for;
+end method clear-gdb-variable-types;
 
 // Returns #t iff the given variable contains a "Dylan object"
 // (i.e. something in the standard Heap or General representation).
 define method dylan-object? (name :: <string>) => (result :: <boolean>);
-  let (type) = element(*var-types*, name, default: #f);
-  unless (type)
-    let (tag, tag-type) = expr-token(name);
-    type := *var-types*[name] := tag-type;
-  end unless;
-  type == #"descriptor" | type == #"heap-object";
+  let (tag, tag-type) = expr-token(name);
+  tag-type == #"descriptor" | tag-type == #"heap-object";
 end method dylan-object?;
     
 // Converts nested strings and function calls into GDB variables (calling
@@ -704,7 +788,8 @@ end method dylan-object?;
 //
 define method transform-expression (expr :: <string>) => (result :: <string>);
   local method replace-quotes (str)
-	  let (match) = match-strings(str, "\"([^\"\\\\]|\\\\.)*\"", 0);
+	  let (match) = regexp-matches(str, "\"([^\"\\\\]|\\\\.)*\"",
+				       matches: #[0]);
 	  if (match)
 	    let newstr = substring-replace(str, match, match.expr-token);
 	    replace-quotes(newstr);
@@ -714,8 +799,7 @@ define method transform-expression (expr :: <string>) => (result :: <string>);
 	end method replace-quotes;
   local method replace-functions (str)
 	  let (match, fun, args)
-	    = match-strings(str, "([a-zA-Z0-9_]+)[ \t]*\\(([^()]+)\\)",
-			    0, 1, 2);
+	    = regexp-matches(str, "([a-zA-Z0-9_]+)[ \t]*\\(([^()]+)\\)");
 	  if (~match)
 	    str;
 	  elseif (fun.dylan-object?)
@@ -748,6 +832,22 @@ end method transform-expression;
 define method generic-function-generic-entries
     (fun :: <string>) => (#rest entries :: <string>);
   block (return)
+    // First, make sure that the translation table is primed with the
+    // functions we will be calling.  This is messy, but will produce
+    // faster results.  (Note -- after the first call, this will just be
+    // a set of 6 hash table lookups, which should be faster than the rest
+    // of the operation anyway.)
+    unless (select-any-variable("dylan_generic_function_methods")
+	      & select-any-variable("dylan_false")
+	      & select-any-variable("dylan_map")
+	      & select-any-variable("dylan_generic_entry")
+	      & select-any-variable("dylan_size")
+	      & select-any-variable("dylan_element"))
+      send-user-response("Can't find necessary runtime routines to"
+			   "lookup a function's methods\n");
+      values();
+    end unless;
+    
     let funs = dylan-function-result("dylan_generic_function_methods", fun);
     if (funs = "dylan_false") return() end if;
 
@@ -756,17 +856,17 @@ define method generic-function-generic-entries
 						    ", ", funs));
     if (entries = "dylan_false") return() end if;
 
-    let size-str = do-gdb-command("set gdb_print_genobj(%s)\n",
+    let size-str = do-gdb-command("set gdb_print_genobj(%s)",
 				  dylan-function-result("dylan_size",
 							entries));
-    let size = string-to-integer(match-strings(size-str, "[0-9]+", 0));
+    let size = string-to-integer(regexp-matches(size-str, "[0-9]+"));
     let results = make(<stretchy-vector>);
     for (i from 0 below size)
       let entry = dylan-function-result("dylan_element",
 					format-to-string("%s, %d",
 							 entries, i));
-      let instr = do-gdb-command("x/i %s.dataword.ptr\n", entry);
-      let name = match-strings(instr, "<([^>]+)>", 1);
+      let instr = do-gdb-command("x/i %s.dataword.ptr", entry);
+      let name = regexp-matches(instr, "<([^>]+)>", matches: #[1]);
       add!(results, name);
     end for;
     apply(values, results);
@@ -782,17 +882,17 @@ define method set-generic-breakpoints (fun :: <string>) => ();
   let (#rest entries) = generic-function-generic-entries(fun);
   let entry-table = make(<string-table>);
   for (entry in entries)
-    let str = match-strings(entry, "^(.*)_generic(_[0-9]+)?", 1);
+    let str = regexp-matches(entry, "^(.*)_generic(_[0-9]+)?", matches: #[1]);
     unless (key-exists?(entry-table, str))
       entry-table[str] := #t;
-      let result = do-gdb-command("info fun ^%s_main\n", str);
+      let result = do-gdb-command("info fun ^%s_main", str);
       local method find-funs (pos :: <integer>)
 	      let (found, next, first, last)
-		= regexp-position(result, "([a-zA-Z_][a-zA-Z0-9_]*)\\(",
-				  start: pos);
+		= regexp-positions(result, "([a-zA-Z_][a-zA-Z0-9_]*)\\(",
+				   start: pos);
 	      if (found)
 		let proc = copy-sequence(result, start: first, end: last);
-		send-user-response(do-gdb-command("break %s\n", proc));
+		send-user-response(do-gdb-command("break %s", proc));
 		find-funs(next);
 	      end if;
 	    end method find-funs;
@@ -809,7 +909,7 @@ define method set-any-breakpoints (fun :: <string>) => ();
   if (real-name & real-name.dylan-object?)
     set-generic-breakpoints(real-name);
   else
-    send-user-response(do-gdb-command("break %s\n", real-name | fun));
+    send-user-response(do-gdb-command("break %s", real-name | fun));
   end if;
 end method set-any-breakpoints;
 
@@ -823,8 +923,10 @@ define constant *command-table* :: <string-table> = make(<string-table>);
 define method dispatch-command (command :: <string>, line :: <string>)
   let proc = element(*command-table*, command, default: #f);
   if (proc)
-    proc(line);
-    send-user-response("%s", *gdb-prompt*);
+    let comm-result = proc(line);
+    unless (comm-result == #"prompt-sent")
+      send-user-response("%s", *gdb-prompt*);
+    end unless;
   else
     let count :: <integer> = 0;
     let result :: false-or(<string>) = #f;
@@ -836,15 +938,13 @@ define method dispatch-command (command :: <string>, line :: <string>)
     end for;
     select (count)
       0 =>
-	send-user-response("%s", do-gdb-command("%s %s\n", command, line));
-//	invoke-dylan-function("dylan_condition_force_output",
-//			      "dylan_Owarning_outputO");
-	send-user-response("%s", *gdb-prompt*);
+	send-gdb-command("%s %s", command, line);
+	receive-gdb-response();
       1 =>
-	*command-table*[result](line);
-//	invoke-dylan-function("dylan_condition_force_output",
-//			      "dylan_Owarning_outputO");
-	send-user-response("%s", *gdb-prompt*);
+	let comm-result = *command-table*[result](line);
+	unless (comm-result == #"prompt-sent")
+	  send-user-response("%s", *gdb-prompt*);
+	end unless;
       otherwise =>
 	send-user-response("Ambiguous command: %s\n%s",
 			   command, *gdb-prompt*);
@@ -873,14 +973,15 @@ define variable $exit-fun :: false-or(<function>) = #f;
 
 #if (~mindy)
 define dig-command "quit" (str)
+  send-gdb-command("quit");
   send-user-response("Bye!\n");
   $exit-fun();
 end;
 
 define dig-command "interactive" (line)
   case
-    regexp-position(line, "^ *on *$") =>  *interactive-mode* := #t;
-    regexp-position(line, "^ *off *$") => *interactive-mode* := #f;
+    regexp-positions(line, "^ *on *$") => *interactive-mode* := #t;
+    regexp-positions(line, "^ *off *$") => *interactive-mode* := #f;
     otherwise => *interactive-mode* := ~*interactive-mode*;
   end case;
   send-user-response("interactive mode %s\n",
@@ -905,15 +1006,24 @@ define dig-command "pr" (line)
 end;
 
 define dig-command "run" (line)
-  do-gdb-command("handle SIGSEGV nostop noprint pass\n");
-  send-user-response("%s", do-gdb-command("run %s\n", line));
-  do-gdb-command("handle SIGSEGV stop print nopass\n");
+  clear-gdb-variable-types();	// See expr-token for more info
+  do-gdb-command("handle SIGSEGV nostop noprint pass");
+  send-gdb-command("run %s", line);
+  receive-gdb-response();
+  do-gdb-command("handle SIGSEGV stop print nopass");
+  #"prompt-sent";
+end;
+
+define dig-command "gdb" (line)
+  send-gdb-command(line);
+  receive-gdb-response();
+  #"prompt-sent";
 end;
 
 define dig-command "prompt" (line)
   if (line.last ~= ' ') line := add!(line, ' ') end if;
   *gdb-prompt* := line;
-  do-gdb-command("set prompt %s\n", line);
+  do-gdb-command("set prompt %s", line);
 end;
 
 define dig-command "break" (line)
@@ -967,7 +1077,9 @@ define method main (prog-name :: <string>, #rest args);
   apply(open-gdb-process, args);
 
   receive-gdb-response();
-  do-gdb-command("break dylan_error_main_2\n");
+  do-gdb-command("set confirm off");
+  do-gdb-command("set height 10000");
+  do-gdb-command("break dylan_invoke_debugger_generic");
   command-loop();
 end method main;
 #else
@@ -984,7 +1096,9 @@ define method %main (argc :: <integer>, argv :: <object>)
   apply(open-gdb-process, args);
 
   receive-gdb-response();
-  do-gdb-command("break dylan_error_main_2\n");
+  do-gdb-command("set confirm off");
+  do-gdb-command("set height 10000");
+  do-gdb-command("break dylan_invoke_debugger_generic");
   command-loop();
 end method %main;
 #endif

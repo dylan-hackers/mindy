@@ -5,7 +5,7 @@ $D2CFLAGS = '-L../runtime/c-code -L../runtime/gc '
     . '-L../runtime/random -L../runtime/coll-ext '
     . '-L../runtime/string-ext -L../runtime/melange '
     . '-L../runtime/table-ext -L../runtime/standard-io';
-$CPPFLAGS = '-I$(SRCROOT)/runtime';
+$CPPFLAGS = '-I$(SRCROOT)/runtime -I$(SRCDIR)';
 
 push(@compile_dependencies, 'dig');
 push(@files_to_clean, 'dig');
