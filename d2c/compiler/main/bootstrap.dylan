@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.9 1995/04/27 00:59:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.10 1995/04/28 15:39:18 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -375,6 +375,7 @@ define generic %make-method (specializers :: <list>, result-types :: <list>,
 			     rest-result-type :: <type>, entry :: <method>)
     => res :: <method>;
 define generic list (#rest things) => res :: <list>;
+define generic vector (#rest things) => res :: <simple-object-vector>;
 define generic %make-rest-arg (context, count) => res :: <sequence>;
 define generic %make-next-method (info, #rest args) => res :: <function>;
 define generic %extract-keywords (context, count, ignore-unknown,
