@@ -1,11 +1,11 @@
 module: names
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.3 2000/01/24 04:56:02 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.4 2001/05/26 16:45:58 gabor Exp $
 copyright: see below
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -69,7 +69,7 @@ define method print-message (name :: <basic-name>, stream :: <stream>) => ();
   format(stream, "%s", name.name-symbol);
 end;
 
-define method id-name (token :: <identifier-token>) => res :: <basic-name>;
+define function id-name (token :: <identifier-token>) => res :: <basic-name>;
   make(<basic-name>, symbol: token.token-symbol, module: token.token-module);
 end;
 
