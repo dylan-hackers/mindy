@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.8 1995/11/09 13:32:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.9 1995/11/10 12:41:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1548,9 +1548,10 @@ end;
 // Dump/Load stuff.
 
 define constant $define-macro-slots
-  = list(macro-intermediate-words, intermediate-words:, #f,
-	 macro-main-rule-set, main-rule-set:, #f,
-	 macro-auxiliary-rule-sets, auxiliary-rule-sets:, #f);
+  = concatenate($definition-slots,
+		list(macro-intermediate-words, intermediate-words:, #f,
+		     macro-main-rule-set, main-rule-set:, #f,
+		     macro-auxiliary-rule-sets, auxiliary-rule-sets:, #f));
 
 add-make-dumper(#"define-bindings-macro-definition", *compiler-dispatcher*,
 		<define-bindings-macro-definition>,
