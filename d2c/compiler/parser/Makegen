@@ -6,6 +6,7 @@ $D2CFLAGS = '-L../../runtime/c-code -L../../runtime/gc '
     . '-L../../runtime/string-ext';
 $CPPFLAGS = '-I$(SRCROOT)/runtime';
 
+push(@compile_dependencies, ' parser.dylan ');
 if ($stage2) {
     push(@compile_dependencies, 'compiler-parser.lib.du libparser.a');
 }
