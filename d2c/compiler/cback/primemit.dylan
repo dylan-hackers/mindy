@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.24 1996/02/16 18:52:58 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.25 1996/04/06 07:21:18 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -120,6 +120,15 @@ end;
 
 
 // Argument primitives.
+
+define-primitive-emitter
+  (#"main-entry",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     error("argument to %%%%primitive main-entry isn't a constant method?");
+   end method);
 
 define-primitive-emitter
   (#"extract-args",
