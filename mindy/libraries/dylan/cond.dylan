@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.15 1996/03/19 23:53:14 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.16 1996/03/20 04:58:33 wlott Exp $
 
 //======================================================================
 //
@@ -45,16 +45,16 @@ define class <error> (<serious-condition>)
 end class <error>;
 
 
-define class <simple-condition> (<condition>)
+define abstract open class <format-string-condition> (<condition>)
   slot condition-format-string,
     required-init-keyword: format-string:;
   slot condition-format-arguments,
     init-keyword: format-arguments:,
     init-value: #();
-end class <simple-condition>;
+end class <format-string-condition>;
 
 
-define class <simple-error> (<error>, <simple-condition>)
+define class <simple-error> (<error>, <format-string-condition>)
 end class <simple-error>;
 
 
@@ -68,7 +68,7 @@ define class <warning> (<condition>)
 end class <warning>;
 
 
-define class <simple-warning> (<warning>, <simple-condition>)
+define class <simple-warning> (<warning>, <format-string-condition>)
 end class <simple-warning>;
 
 
@@ -76,7 +76,7 @@ define class <restart> (<condition>)
 end class <restart>;
 
 
-define class <simple-restart> (<restart>, <simple-condition>)
+define class <simple-restart> (<restart>, <format-string-condition>)
 end class <simple-restart>;
 
 
@@ -88,9 +88,6 @@ end class <abort>;
 
 
 // Condition reporting.
-
-
-define variable *debug-output* = #"cheap-IO";
 
 // condition-format
 //
@@ -111,6 +108,20 @@ define sealed method condition-format
   apply(format, control-string, arguments);
 end;
 
+// condition-force-output
+//
+// Just like condition-format, except performs a general force-output function.
+// 
+define open generic condition-force-output (stream :: <object>) => ();
+
+// condition-force-output(#"cheap-IO") -- internal.
+//
+// Bootstrap method for condition-format that just calls the cheap-IO fflush.
+//
+define sealed method condition-force-output (stream == #"cheap-IO") => ();
+  fflush();
+end;
+
 // report-condition
 //
 // Generate a human readable report of the condition on stream.  We restrict
@@ -129,8 +140,8 @@ define method report-condition (condition :: <condition>, stream) => ();
   condition-format(stream, "%=", condition);
 end method report-condition;
 
-define method report-condition (condition :: <simple-condition>, stream)
- => ();
+define method report-condition (condition :: <format-string-condition>, stream)
+    => ();
   apply(condition-format, stream,
 	condition.condition-format-string,
 	condition.condition-format-arguments);
@@ -244,9 +255,11 @@ define method default-handler (condition :: <serious-condition>)
 end method default-handler;
 
 
+define variable *warning-output* = #"Cheap-IO";
+
 define method default-handler (condition :: <warning>)
  => return-val :: singleton(#f);
-  condition-format(*debug-output*, "%s\n", condition);
+  condition-format(*warning-output*, "%s\n", condition);
   #f;
 end method default-handler;
 
