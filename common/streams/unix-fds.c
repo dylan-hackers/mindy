@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/wait.h>
 
 int fd_open (const char *filename, int flags, int mode)
 {
@@ -39,6 +40,12 @@ int fd_read (int fd, char *buffer, int max_chars)
 void fd_exec(char *command, int *toprog, int *fromprog)
 {
     int inpipes[2], outpipes[2], forkresult;
+
+    /* ### Collect some zombie processes before we launch a new
+       process.  Ideally, we'd collect them in a more orderly fashion,
+       but this will do for now. */
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+	;
 
     if (pipe(inpipes) >= 0 && pipe(outpipes) >= 0 &&
 	(forkresult = fork()) != -1)
