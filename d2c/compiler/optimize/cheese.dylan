@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.81 1995/06/07 15:24:09 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.82 1995/06/07 18:46:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2904,6 +2904,7 @@ define-primitive-transformer
      let source = assign.source-location;
      let func = primitive.depends-on.source-exp;
      assert(instance?(func, <function-literal>));
+     let method? = instance?(func, <method-literal>);
      func.visibility := #"global";
      let closure-size
        = for (dep = primitive.depends-on.dependent-next
@@ -2916,7 +2917,8 @@ define-primitive-transformer
      let ctv
        = (func.ct-function
 	    | (func.ct-function
-		 := make(<ct-method>, name: func.main-entry.name,
+		 := make(if (method?) <ct-method> else <ct-function> end,
+			 name: func.main-entry.name,
 			 signature: func.signature,
 			 closure-var-types:
 			   for (var = func.main-entry.environment.closure-vars
@@ -2928,23 +2930,29 @@ define-primitive-transformer
 			   finally
 			     reverse!(results);
 			   end)));
-     let args
-       = list(dylan-defn-leaf(builder, #"<method>"),
-	      make-literal-constant(builder, as(<ct-value>, general-entry:)),
-	      make-literal-constant(builder,
-				    make(<ct-entry-point>, for: ctv,
-					 kind: #"general")),
-	      make-literal-constant(builder, as(<ct-value>, generic-entry:)),
-	      make-literal-constant(builder,
-				    make(<ct-entry-point>, for: ctv,
-					 kind: #"generic")),
-	      make-literal-constant(builder, as(<ct-value>, closure-size:)),
-	      make-literal-constant(builder, as(<ct-value>, closure-size)));
+     let args = make(<stretchy-vector>);
+     add!(args,
+	  dylan-defn-leaf(builder,
+			  if (method?) #"<method>" else #"<function>" end));
+     add!(args,
+	  make-literal-constant(builder, as(<ct-value>, general-entry:)));
+     add!(args,
+	  make-literal-constant
+	    (builder, make(<ct-entry-point>, for: ctv, kind: #"general")));
+     if (method?)
+       add!(args,
+	    make-literal-constant(builder, as(<ct-value>, generic-entry:)));
+       add!(args,
+	    make-literal-constant
+	      (builder, make(<ct-entry-point>, for: ctv, kind: #"generic")));
+     end;
+     add!(args, make-literal-constant(builder, as(<ct-value>, closure-size:)));
+     add!(args, make-literal-constant(builder, as(<ct-value>, closure-size)));
      let var = make-local-var(builder, #"closure", object-ctype());
      build-assignment
        (builder, policy, source, var,
 	make-unknown-call
-	  (builder, dylan-defn-leaf(builder, #"make"), #f, args));
+	  (builder, dylan-defn-leaf(builder, #"make"), #f, as(<list>, args)));
      let closure-var-setter-leaf
        = dylan-defn-leaf(builder, #"closure-var-setter");
      for (dep = primitive.depends-on.dependent-next then dep.dependent-next,

@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.61 1995/06/06 19:29:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.62 1995/06/07 18:46:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -442,17 +442,6 @@ define method make-info-for
 		     #(), output-info);
 end;
 
-define method make-info-for
-    (function :: <lambda>, output-info :: <output-info>)
-    => res :: <function-info>;
-  make-function-info(<function-info>, function.name,
-		     make(<signature>, specializers: function.argument-types,
-			  returns: function.result-type),
-		     // the closure vars have already been rolled into
-		     // the function.argument-types
-		     #(), output-info);
-end;
-
 define method compute-function-prototype
     (function :: <fer-function-region>, output-info :: <output-info>)
     => res :: <byte-string>;
@@ -532,7 +521,8 @@ define method make-info-for
     (ctv :: <ct-function>, output-info :: <output-info>)
     => res :: <constant-function-info>;
   make-function-info(<constant-function-info>, ctv.ct-function-name,
-		     ctv.ct-function-signature, #(), output-info);
+		     ctv.ct-function-signature,
+		     ctv.ct-function-closure-var-types, output-info);
 end;
 
 define class <constant-method-info> (<constant-function-info>)
@@ -552,7 +542,7 @@ define method make-info-for
     => res :: <constant-function-info>;
   make-function-info(<constant-method-info>, ctv.ct-function-name,
 		     ctv.ct-function-signature,
-		     ctv.ct-method-closure-var-types, output-info);
+		     ctv.ct-function-closure-var-types, output-info);
 end;
 
 

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.76 1995/06/07 15:17:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.77 1995/06/07 18:46:53 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -561,11 +561,11 @@ define module compile-time-functions
 
   export
     <ct-function>, ct-function-name, ct-function-signature,
-    ct-function-definition,
+    ct-function-definition, ct-function-closure-var-types,
 
     <ct-generic-function>,
 
-    <ct-method>, ct-method-closure-var-types, ct-method-hidden?,
+    <ct-method>, ct-method-hidden?,
 
     <ct-entry-point>, ct-entry-point-for, ct-entry-point-kind;
 end;

@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.3 1995/06/06 02:12:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.4 1995/06/07 18:46:53 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,6 +18,11 @@ define class <ct-function> (<ct-value>, <annotatable>)
   // from a definition.
   slot ct-function-definition :: false-or(<function-definition>),
     init-value: #f, init-keyword: definition:;
+  //
+  // List of the types for the closure vars for this function.  Only local
+  // functions can have closure vars.
+  slot ct-function-closure-var-types :: <list>,
+    init-value: #(), init-keyword: closure-var-types:;
 end;
 
 define method print-object (ctv :: <ct-function>, stream :: <stream>) => ();
@@ -41,11 +46,6 @@ define method ct-value-cclass (ctv :: <ct-generic-function>)
 end;
 
 define class <ct-method> (<ct-function>)
-  //
-  // List of the types for the closure vars for this method.  Only local
-  // methods can have closure vars.
-  slot ct-method-closure-var-types :: <list>,
-    init-value: #(), init-keyword: closure-var-types:;
   //
   // True if this method is hidden inside a generic function so we don't
   // need to generate a general entry for it.
