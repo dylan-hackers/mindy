@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.2 2001/09/17 14:01:14 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.3 2001/09/17 16:46:53 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -43,6 +43,8 @@ define class <single-file-mode-state> (<main-unit-state>)
   
   slot unit-entry-function :: false-or(<ct-function>), init-value: #f;
   slot unit-unit-info :: <unit-info>;
+  slot unit-c-file = #f;
+  slot unit-stream = #f;
 end class <single-file-mode-state>;
 
 define method parse-and-finalize-library (state :: <single-file-mode-state>) => ();
@@ -71,7 +73,7 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
 
   state.unit-mprefix := as-lowercase(lib-name);
 
-  let libmod-declaration = as(<byte-vector>, format-to-string("define library %s\n  use common-dylan;\nend;\n\ndefine module %s\n  use common-dylan;\nend;\n\n", lib-name, lib-name));
+  let libmod-declaration = as(<byte-vector>, format-to-string("define library %s use common-dylan; use io; end; define module %s use common-dylan; use format-out; end;\n\n", lib-name, lib-name));
 
   block ()
     let tokenizer = make(<lexer>, 
@@ -92,7 +94,7 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
       *Current-Module* := #f;
     end;
   exception (<fatal-error-recovery-restart>)
-    format(*debug-output*, "skipping rest of %s\n", state.unit-source-file);
+    format(*debug-output*, "skipping rest of built-in init definition\n");
   end block;
 
 
@@ -145,147 +147,48 @@ define method parse-and-finalize-library (state :: <single-file-mode-state>) => 
   layout-instance-slots();
 end method parse-and-finalize-library;
 
-/*
 // Establish various condition handlers while iterating over all of the source
 // files and compiling each of them to an output file.
 //
-define method compile-all-files (state :: <single-file-mode-state>) => ();
-  for (file in state.unit-files,
-       tlfs in state.unit-tlf-vectors,
+define method compile-file (state :: <single-file-mode-state>) => ();
+  format(*debug-output*, "Processing %s\n", state.unit-source-file);
+  let c-name = concatenate(state.unit-name, ".c");
+  let body-stream
+     = make(<file-stream>, locator: c-name, direction: #"output");
+  let file = make(<file-state>, unit: state.unit-cback-unit,
+                     body-stream: body-stream);
+  state.unit-c-file := file;
+  state.unit-stream := body-stream;
+  emit-prologue(file, state.unit-other-cback-units);
+
+  for (tlfs in state.unit-tlf-vectors,
        module in state.unit-modules)
-    let extension = file.filename-extension;
-    if (extension = state.unit-target.object-filename-suffix)
-      if (state.unit-shared?)
-	let shared-file
-	  = concatenate(file.extensionless-filename,
-			state.unit-target.shared-object-filename-suffix);
-	format(*debug-output*, "Adding %s\n", shared-file);
-	format(state.unit-objects-stream, " %s", shared-file);
-      else
-	format(*debug-output*, "Adding %s\n", file);
-	format(state.unit-objects-stream, " %s", file);
-      end;
-    else  // assumed a Dylan file, with or without a ".dylan" extension
-      block ()
-	format(*debug-output*, "Processing %s\n", file);
-	let base-name = file.base-filename;
-	let c-name = concatenate(base-name, ".c");
-        #if (macos)
-        let temp-c-name = concatenate(state.unit-lid-file.filename-prefix,
-				      c-name);
-        #else
-        let temp-c-name = concatenate(c-name, "-temp");
-        #endif
-	let body-stream
-	  = make(<file-stream>, locator: temp-c-name, direction: #"output");
-	block ()
-	  *Current-Module* := module;
-	  let file = make(<file-state>, unit: state.unit-cback-unit,
-			  body-stream: body-stream);
-	  emit-prologue(file, state.unit-other-cback-units);
-	  for (tlf in tlfs)
-	    block ()
-	      compile-1-tlf(tlf, file, state);
-	    cleanup
-	      end-of-context();
-	    exception (<fatal-error-recovery-restart>)
-	      #f;
-	    end block;
-	  end for;
-	cleanup
-	  close(body-stream);
-	  fresh-line(*debug-output*);
-	  *Current-Module* := #f;
-	end block;
-
-	pick-which-file(c-name, temp-c-name, state.unit-target);
-	let o-name
-	  = concatenate(base-name,
-			if (state.unit-shared?)
-			  state.unit-target.shared-object-filename-suffix;
-			else
-			  state.unit-target.object-filename-suffix;
-			end);
-	state.unit-all-generated-files
-	  := add!(state.unit-all-generated-files, c-name);
-	output-c-file-rule(state, c-name, o-name);
-
-      exception (<fatal-error-recovery-restart>)
-	format(*debug-output*, "skipping rest of %s\n", file);
-      exception (<simple-restart>,
-		   init-arguments:
-		   vector(format-string: "Blow off compiling this file."))
-	#f;
-      end block;
-    end if;
+      *Current-Module* := module;
+      for (tlf in tlfs)
+        block ()
+          compile-1-tlf(tlf, file, state);
+        cleanup
+          end-of-context();
+        exception (<fatal-error-recovery-restart>)
+          #f;
+        end block;
+      end for;
   end for;
-end method compile-all-files;
+  format(*debug-output*, "\n", state.unit-source-file);
+end method compile-file;
 
 
 // Build initialization function for this library, generate the corresponding
 // .c and .o and update the make file.
 // 
 define method build-library-inits (state :: <single-file-mode-state>) => ();
-    let executable = element(state.unit-header, #"executable", default: #f);
-    let executable
-     = if (executable)
-	 concatenate(executable, state.unit-target.executable-filename-suffix);
-       else 
-	 #f;
-       end if;
-    state.unit-executable := executable;
-    let entry-point = element(state.unit-header, #"entry-point", default: #f);
-    if (entry-point & ~executable)
-      compiler-fatal-error("Can only specify an entry-point when producing an "
-			     "executable.");
-    end if;
-
-    begin
-      let c-name = concatenate(state.unit-mprefix, "-init.c");
-      #if (macos)
-      let temp-c-name = concatenate(state.unit-lid-file.filename-prefix,
-				    c-name);
-      #else
-      let temp-c-name = concatenate(c-name, "-temp");
-      #endif
-      let body-stream = make(<file-stream>, 
-			     locator: temp-c-name, direction: #"output");
-      let file = make(<file-state>, unit: state.unit-cback-unit,
-      		      body-stream: body-stream);
-      emit-prologue(file, state.unit-other-cback-units);
-      if (entry-point)
-        state.unit-entry-function
-	  := build-command-line-entry(state.unit-lib, entry-point, file);
-      end if;
-      build-unit-init-function(state.unit-mprefix, state.unit-init-functions,
-			       body-stream);
-      close(body-stream);
-
-      pick-which-file(c-name, temp-c-name, state.unit-target);
-      let o-name
-	= concatenate(state.unit-mprefix, "-init", 
-		      if (state.unit-shared?)
-			state.unit-target.shared-object-filename-suffix
-		      else
-			state.unit-target.object-filename-suffix
-		      end if);
-      output-c-file-rule(state, c-name, o-name);
-      state.unit-all-generated-files 
-	:= add!(state.unit-all-generated-files, c-name);
-    end;
+  build-unit-init-function(state.unit-mprefix, state.unit-init-functions,
+                           state.unit-stream);
 end method build-library-inits;
-
 
 define method build-local-heap-file (state :: <single-file-mode-state>) => ();
   format(*debug-output*, "Emitting Library Heap.\n");
-  let c-name = concatenate(state.unit-mprefix, "-heap.c");
-  #if (macos)
-  let temp-c-name = concatenate(state.unit-lid-file.filename-prefix, c-name);
-  #else
-  let temp-c-name = concatenate(c-name, "-temp");
-  #endif
-  let heap-stream = make(<file-stream>, 
-			 locator: temp-c-name, direction: #"output");
+  let heap-stream = state.unit-stream;
   let prefix = state.unit-cback-unit.unit-prefix;
   let heap-state = make(<local-heap-file-state>, unit: state.unit-cback-unit,
 			body-stream: heap-stream, // target: state.unit-target,
@@ -293,19 +196,6 @@ define method build-local-heap-file (state :: <single-file-mode-state>) => ();
 
   let (undumped, extra-labels) = build-local-heap(state.unit-cback-unit, 
 						  heap-state);
-  close(heap-stream);
-
-  pick-which-file(c-name, temp-c-name, state.unit-target);
-  let o-name = concatenate(state.unit-mprefix, "-heap", 
-			   if (state.unit-shared?)
-			     state.unit-target.shared-object-filename-suffix;
-			   else
-			     state.unit-target.object-filename-suffix
-			   end);
-  output-c-file-rule(state, c-name, o-name);
-  state.unit-all-generated-files 
-    := add!(state.unit-all-generated-files, c-name);
-
   let linker-options = element(state.unit-header, #"linker-options", 
 			       default: #f);
   state.unit-unit-info := make(<unit-info>, unit-name: state.unit-mprefix,
@@ -316,57 +206,22 @@ end method build-local-heap-file;
 
 define method build-da-global-heap (state :: <single-file-mode-state>) => ();
   format(*debug-output*, "Emitting Global Heap.\n");
-  #if (macos)
-  let heap-stream 
-       = make(<file-stream>, 
-	      locator: concatenate(state.unit-lid-file.filename-prefix,
-				   "heap.c"), 
-	      direction: #"output");
-  #else
-  let heap-stream 
-  	= make(<file-stream>, locator: "heap.c", direction: #"output");
-  #endif
+  let heap-stream = state.unit-stream;
   let heap-state = make(<global-heap-file-state>, unit: state.unit-cback-unit,
 			body-stream: heap-stream); //, target: state.unit-target);
   build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
 		    heap-state);
-  close(heap-stream);
 end method;
 
 
 define method build-inits-dot-c (state :: <single-file-mode-state>) => ();
-  format(*debug-output*, "Building inits.c.\n");
-#if (macos) 
-  let stream
-   = make(<file-stream>, 
-	  locator: concatenate(state.unit-lid-file.filename-prefix,
-			       "inits.c"), 
-	  direction: #"output");
-#else
-  let stream
-   = make(<file-stream>, locator: "inits.c", direction: #"output");
-#endif
-  format(stream, "#include <runtime.h>\n\n");
-  format(stream, 
-	"/* This file is machine generated.  Do not edit. */\n\n");
-  let entry-function-name
-    = (state.unit-entry-function
-	 & (make(<ct-entry-point>, for: state.unit-entry-function,
-	 	 kind: #"main")
-	      .entry-point-c-name));
-  if (entry-function-name)
-    format(stream,
-	   "extern void %s(descriptor_t *sp, int argc, void *argv);\n\n",
-	   entry-function-name);
-  end if;
+  format(*debug-output*, "Building inits.\n");
+  let stream = state.unit-stream;
   format(stream,
 	 "void inits(descriptor_t *sp, int argc, char *argv[])\n{\n");
   for (unit in *units*)
     format(stream, "    %s_Library_init(sp);\n", string-to-c-name(unit.unit-name));
   end;
-  if (entry-function-name)
-    format(stream, "    %s(sp, argc, argv);\n", entry-function-name);
-  end if;
   format(stream, "}\n");
   format(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
 #if (macos)
@@ -379,9 +234,9 @@ define method build-inits-dot-c (state :: <single-file-mode-state>) => ();
   format(stream, "    real_main(argc, argv);\n");
   format(stream, "    return 0;\n");
   format(stream, "}\n");
-  close(stream);
 end method;
 
+/*
 define method build-executable (state :: <single-file-mode-state>) => ();
   let target = state.unit-target;
   let unit-libs = "";
@@ -536,22 +391,19 @@ define method compile-library (state :: <single-file-mode-state>)
     // or create a dump file for library with undefined variables.
     // Thus, we stick some calls to give-up where it seems useful..
     parse-and-finalize-library(state);
-/*
     if (~ zero?(*errors*)) give-up(); end if;
-    compile-all-files(state);
+    state.unit-cback-unit := make(<unit-state>, prefix: state.unit-mprefix);
+    state.unit-other-cback-units := map-as(<simple-object-vector>, unit-name, 
+					 *units*);
+    compile-file(state);
     if (~ zero?(*errors*)) give-up(); end if;
     build-library-inits(state);
     build-local-heap-file(state);
-    build-ar-file(state);
-    if (state.unit-executable)
-      log-target(state.unit-executable);
-      calculate-type-inclusion-matrix();
-      build-da-global-heap(state);
-      build-inits-dot-c(state);
-      build-executable(state);
-    else
-      dump-library-summary(state);
-    end if;
+    calculate-type-inclusion-matrix();
+    build-da-global-heap(state);
+    build-inits-dot-c(state);
+/*
+    build-executable(state);
 
     if (state.unit-log-dependencies)
       spew-dependency-log(concatenate(state.unit-mprefix, ".dep"));
@@ -559,6 +411,12 @@ define method compile-library (state :: <single-file-mode-state>)
 
     do-make(state);
 */
+  cleanup
+    if(state.unit-stream)
+      close(state.unit-stream);
+    end if;
+    fresh-line(*debug-output*);
+    *Current-Module* := #f;
   exception (<fatal-error-recovery-restart>)
     format(*debug-output*, "giving up.\n");
   end block;
