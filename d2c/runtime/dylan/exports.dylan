@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.24 1996/04/06 05:23:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.25 1996/05/01 17:50:44 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -212,6 +212,7 @@ define module magic
 	     %object-class,
 	     ambiguous-method-error,
 	     catch,
+	     check-types,
 	     class-all-slot-descriptors,
 	     class-maker-setter,
 	     class-new-slot-descriptors,
