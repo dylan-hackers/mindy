@@ -33,9 +33,10 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 define class <listbox> (<window>, <editable>) end class;
 
 define-widget(<listbox>, "listbox",
-	      #"exportselection", #"font", #"geometry", #"selectbackground",
-	      #"selectborderwidth", #"selectforeground", #"setgrid",
-	      #"xscrollcommand", #"yscrollcommand");
+	      #"exportselection", #"font", #"width", #"height",
+	      #"selectbackground", #"selectborderwidth", #"selectforeground",
+	      #"setgrid", #"xscrollcommand", #"yscrollcommand",
+	      #"selectmode");
 
 define method current-selection(listbox :: <listbox>, #rest rest) =>
     (indices :: <sequence>);
@@ -80,4 +81,29 @@ end method get-elements;
 define method get-all (listbox :: <listbox>) => (result :: <string>);
   get-elements(listbox, 0, end: listbox.size);
 end method get-all;
+
+define method see (listbox :: <listbox>, index :: <integer>);
+  put-tk-line(listbox, " see ", index);
+end method see;
+
+define method selection-anchor-setter (listbox :: <listbox>, index)
+  => listb :: <listbox>;
+  put-tk-line(listbox, " selection anchor ", index);
+  listbox;
+end method selection-anchor-setter;
+
+define method clear-selection (listbox :: <listbox>, first :: <integer>,
+			       #rest last)
+  put-tk-line(listbox, "selection clear ", apply(join-tk-args, first, last));
+end method clear-selection;
+
+define method selection-includes? (listbox :: <listbox>, index)
+ => in-selection? :: <boolean>;
+  tk-as(<boolean>, call-tk-function(listbox, " selection includes ", index));
+end method selection-includes?;
+
+define method set-selection (listbox :: <listbox>, first :: <integer>,
+			     #rest last);
+  put-tk-line(listbox, " selection set ", apply(join-tk-args, first, last));
+end method set-selection;
 
