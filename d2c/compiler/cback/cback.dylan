@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.79 1995/11/14 13:52:07 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.80 1995/11/15 21:12:37 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -250,6 +250,7 @@ define constant c-prefix-transform :: <vector>
       map[as(<integer>, '=')] := 'O';
       map[as(<integer>, '&')] := 'O';
       map[as(<integer>, '|')] := 'O';
+      map[as(<integer>, '^')] := 'O';
       map;
     end;
 
