@@ -10,9 +10,7 @@ module: events
 	Toolbox includes
 */
 
-c-include("MacTypes.h");
-c-include("Events.h");
-c-include("AppleEvents.h");
+c-include("Carbon/Carbon.h");
 
 
 /*
@@ -277,7 +275,7 @@ end method GlobalToLocal;
 end method SystemClick;
 */
 
-define method DIBadMount( point :: <Point>, message :: <integer> )
+/*define method DIBadMount( point :: <Point>, message :: <integer> )
 => ( result :: <integer> )
 	call-out( "DIBadMount", short:, ptr: point.raw-value, unsigned-int: message );	
-end method DIBadMount;
+end method DIBadMount;*/

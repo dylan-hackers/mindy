@@ -9,7 +9,7 @@ module: sound
 	includes
 */
 
-c-include( "Sound.h" );
+c-include( "Carbon/Carbon.h" );
 
 
 /*
@@ -51,4 +51,4 @@ define method SndPlay( channel :: <SndChannel>, sound :: <Handle>, synchronous :
 	let synch = if( synchronous ) 1 else 0  end if;
 	call-out( "SndPlay", int:, ptr: channel.raw-value, ptr: sound.raw-value, unsigned-char: synch );
 end method SndPlay;
-*/
+*/

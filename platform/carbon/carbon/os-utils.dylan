@@ -10,8 +10,7 @@ module: os-utils
 */
 
 
-c-include("MacTypes.h");
-c-include("OSUtils.h");
+c-include("Carbon/Carbon.h");
 
 
 /*
@@ -98,8 +97,8 @@ end method SecondsToDate;
 	<SysEnvRec>
 */								
 											
-define functional class <SysEnvRec> ( <statically-typed-pointer> )
-end class;
+/*define functional class <SysEnvRec> ( <statically-typed-pointer> )
+end class;*/
 
 
 /*
@@ -107,17 +106,17 @@ end class;
 	The size of object a <SysEnvRec> contains
 */
 
-define method content-size( cls == <SysEnvRec> )
+/*define method content-size( cls == <SysEnvRec> )
 =>( result :: <integer> )
 	18;
 end method content-size;
-
+*/
 
 /*
 	<SysEnvRec> accessors
 */
 
-define method environsVersion (col :: <SysEnvRec>) => (result :: <integer>);
+/*define method environsVersion (col :: <SysEnvRec>) => (result :: <integer>);
 	signed-short-at(col, offset: 0);
 end method;
 
@@ -155,13 +154,13 @@ define method hasColorQD (col :: <SysEnvRec>) => (result :: <boolean>);
 		#t;
 	end if;
 end method;
-
+*/
 
 /*
 	SysEnvirons
 */
 
-define method SysEnvirons( versionRequested :: <integer>, rec :: <SysEnvRec> )
+/*define method SysEnvirons( versionRequested :: <integer>, rec :: <SysEnvRec> )
 => ( result :: <OSErr> )
 	call-out( "SysEnvirons", int:, int: versionRequested, ptr: rec.raw-value );
-end method SysEnvirons;
+end method SysEnvirons;*/

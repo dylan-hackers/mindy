@@ -4,7 +4,7 @@ module: memory
 
 // Include The Mac's Memory manager header
 
-c-include("MacMemory.h");
+c-include("Carbon/Carbon.h");
 
 /*
 	<Ptr>

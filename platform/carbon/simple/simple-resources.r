@@ -1,3 +1,10 @@
+/* Carbon Application */ 
+
+data 'carb' (0) {
+};
+
+/* Application Resources */
+
 data 'MENU' (32001, "File") {
 	$"7D01 0000 0000 0000 0000 FFFF FFFF 0446"            /* }.........ÿÿÿÿ.F */
 	$"696C 6504 5175 6974 0051 0000 00"                   /* ile.Quit.Q... */

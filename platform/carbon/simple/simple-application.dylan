@@ -214,11 +214,11 @@ define method dispatch-event( app :: <simple-application>, event :: <EventRecord
 									
 		$updateEvt =>	application-window-update( app, make( <WindowRef>, pointer: event.event-message ), event );
 
-		$diskEvt =>		let dPt :: <Point> = make( <Point>, h: 100, v: 100 );					
+	/*	$diskEvt =>		let dPt :: <Point> = make( <Point>, h: 100, v: 100 );					
 						if( floor/( event.event-message, 65536 ) ~= 0)
 							DIBadMount( dPt, event.event-message );
 						end if;
-
+	*/
 		$kHighLevelEvent => application-apple-event( app, event );
 
 		$osEvt =>		application-os-event( app, event );

@@ -4,7 +4,7 @@ module: mac-types
 	Include the Macintosh Type Declaration Header so we know what a Str255 is.
 */
 
-c-include("MacTypes.h");
+c-include("Carbon/Carbon.h");
 
 
 /*
@@ -190,4 +190,4 @@ define method as (cls == <string>, str :: <Pascal-string>)
     result[i] := as(<character>, unsigned-byte-at(str, offset: i + 1));
   end for;
   result;
-end method as;
+end method as;

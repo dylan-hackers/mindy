@@ -5,7 +5,7 @@ module: quickdraw
 	c-includes
 */
 
-c-include( "QuickDraw.h" );
+c-include( "Carbon/Carbon.h" );
 
 
 /*

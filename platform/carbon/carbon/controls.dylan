@@ -8,9 +8,7 @@ module: controls
 	Includes
 */
 
-c-include( "MacTypes.h" );
-c-include( "Controls.h" );
-c-include( "ControlDefinitions.h" );
+c-include( "Carbon/Carbon.h" );
 
 /*
 	Constants

@@ -9,8 +9,7 @@ module: dialogs
 	Includes
 */
 
-c-include( "MacTypes.h" );
-c-include( "Dialogs.h" );
+c-include( "Carbon/Carbon.h" );
 
 /*
 	Constants

@@ -2,14 +2,7 @@
 ** Extra wrapper functions that sanitize functions that use call-by-value Points
 */
 
-#ifndef TARGET_API_MAC_CARBON
-#define TARGET_API_MAC_CARBON 1
-#endif
-
-#include <Controls.h>
-#include <MacTypes.h>
-#include <MacWindows.h>
-#include <Menus.h>
+#include <Carbon/Carbon.h>
 
 /*
 	Menu Wrappers
@@ -98,4 +91,4 @@ trackgoaway						(WindowRef 				window,
 								 Point *				thePt)
 {
 	TrackGoAway( window, *thePt );
-}
+}

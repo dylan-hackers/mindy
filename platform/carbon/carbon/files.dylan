@@ -4,7 +4,7 @@ module: files
 	c-includes
 */
 
-c-include( "Files.h" );
+c-include( "Carbon/Carbon.h" );
   
   
 /*
@@ -441,4 +441,4 @@ define method FSpMakeFSRef( fileRefNum :: <integer>, source :: <FSSpec> )
 	
 	values( as( <OSErr>, result ), ref );
 
-end method FSpMakeFSRef; 
+end method FSpMakeFSRef; 

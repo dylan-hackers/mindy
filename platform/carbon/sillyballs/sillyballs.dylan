@@ -78,10 +78,11 @@ define method main (argv0 :: <byte-string>, #rest noise)
 								#t, 		// Initially visible
 								$noGrowDocProc, // window definition proc (WDEF)
 								#f, 		// No go-away box
-								$NULL,		// At the back, BOEH CHOKES ON PTR = -1
+								$NULL,		// At the back, BOEHM CHOKES ON PTR = -1
 								0 );		// No refcon
                 
                 // Show the window
+                BringToFront( my-window );	// Work around having to create windows at the back to avoid ptr: -1
 		ShowWindow( my-window );
                 
 		// Set it as the current graphics port

@@ -1,6 +1,6 @@
 module: resources
 
-c-include("Resources.h");
+c-include("Carbon/Carbon.h");
 
 // Resource Manager.
 
@@ -13,4 +13,4 @@ end method GetResource;
 define method ReleaseResource( res :: <Handle> )
 	call-out( "ReleaseResource", void:, ptr: res );
 end method ReleaseResource;
-
+

@@ -8,9 +8,7 @@ module: windows
 	Includes
 */
 
-c-include( "MacTypes.h" );
-c-include( "MacWindows.h" );
-
+c-include( "Carbon/Carbon.h" );
 
 
 /*

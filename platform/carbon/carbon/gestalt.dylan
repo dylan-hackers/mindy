@@ -8,7 +8,7 @@ module: gestalt
 	Includes
 */
 
-c-include( "Gestalt.h" );
+c-include( "Carbon/Carbon.h" );
 
 
 /*
@@ -34,4 +34,4 @@ define constant $gestalt32BitQD11			= #x0201;						/* 32-bit color QDv1.1 */
 define constant $gestalt32BitQD12			= #x0220;						/* 32-bit color QDv1.2 */
 define constant $gestalt32BitQD13			= #x0230;						/* 32-bit color QDv1.3 */
 define constant $gestaltAllegroQD			= #x0250;						/* Allegro QD OS 8.5 */
-
+

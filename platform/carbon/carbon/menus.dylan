@@ -9,8 +9,7 @@ module: menus
 	Includes
 */
 
-c-include("MacTypes.h");
-c-include("Menus.h");
+c-include("Carbon/Carbon.h");
 
 
 /*

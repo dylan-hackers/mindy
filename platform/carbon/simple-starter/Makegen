@@ -8,11 +8,11 @@ do emit_library_rule(
 );
 
 print <<'EOF';
-    
+
 compile:
-	/System/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple $(BUILDDIR)/../simple/simple-resources.r
-	/System/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple $(BUILDDIR)/my-resources.r
+	/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple.rsrc $(BUILDDIR)/../simple/simple-resources.r -useDF
+	/Developer/Tools/Rez -a -o $(BUILDDIR)/my-simple.rsrc $(BUILDDIR)/my-resources.r -useDF
+	/Developer/Tools/SetFile -c ???? -t APPL $(BUILDDIR)/my-simple
+	$(BUILDDIR)/../make-app-package my-simple
 
 EOF
-
-

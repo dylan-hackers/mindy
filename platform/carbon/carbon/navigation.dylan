@@ -5,8 +5,7 @@ module: navigation
         c-includes
 */
 
-c-include( "MacTypes.h" );
-c-include( "Navigation.h" );
+c-include( "Carbon/Carbon.h" );
 
 /*
         Constants
@@ -697,4 +696,4 @@ define method NavServicesCanRun()
                 #f 
         end if;
 
-end method NavServicesCanRun;
+end method NavServicesCanRun;

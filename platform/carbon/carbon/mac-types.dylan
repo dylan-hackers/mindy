@@ -23,7 +23,7 @@ define constant <OSType> = <integer>;
 
 
 /*
-	os-type <string
+	os-type <string>
 	converts a 4 char string to an OSType
 */
 
