@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.14 1996/03/17 00:11:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.15 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -35,13 +35,13 @@ define class <union> (<type>)
   // List of non-singleton types that make up this union type.  None of these
   // types will be subtype? any of the others and <union> types will be
   // expanded.
-  slot union-members :: <list>, setter: #f,
-    init-value: #(), init-keyword: members:;
+  slot union-members :: <sequence>, setter: #f,
+    init-value: #[], init-keyword: members:;
   //
   // List of the singletons that are part of this union type.  Note: these are
   // the actual objects, not the singleton types.
-  slot union-singletons :: <list>, setter: #f,
-    init-value: #(), init-keyword: singletons:;
+  slot union-singletons :: <sequence>, setter: #f,
+    init-value: #[], init-keyword: singletons:;
 end;
 
 define sealed domain make (singleton(<union>));
@@ -54,8 +54,8 @@ define method type-union (#rest types)
   //
   // First scan across the types using merge-type to build up the members
   // and singletons list.
-  let members = #();
-  let singletons = #();
+  let members :: <list> = #();
+  let singletons :: <list> = #();
   for (type :: <type> in types)
     let (new-members, new-singletons) = merge-type(members, singletons, type);
     members := new-members;
@@ -68,13 +68,14 @@ define method type-union (#rest types)
     if (~(members == #()) & members.tail == #())
       members.head;
     else
-      make(<union>, members: members);
+      make(<union>, members: as(<simple-object-vector>, members));
     end;
   else
     if (members == #() & singletons.tail == #())
       make(<singleton>, object: singletons.head);
     else
-      make(<union>, members: members, singletons: singletons);
+      make(<union>, members: as(<simple-object-vector>, members),
+	   singletons: as(<simple-object-vector>, singletons));
     end;
   end;
 end;
@@ -825,21 +826,24 @@ end method %subtype?;
 //
 define method %subtype? (class1 :: <class>, class2 :: <class>)
     => res :: <boolean>;
-  case
-    class1 == class2 =>
-      #t;
-    class1 == class2.subtype-success-cache =>
-      #t;
-    class1 == class2.subtype-failure-cache =>
-      #f;
-    member?(class2, class1.all-superclasses) =>
-      class2.subtype-success-cache := class1;
-      #t;
-    otherwise =>
-      class2.subtype-failure-cache := class1;
-      #f;
-  end case;
-end;
+  // This could be recoded simply as member(class2, class1.superclasses), but
+  // that would marginally slower, and this is in the critical path.
+  if (class1 == class2)
+    #t;
+  else
+    let superclasses = class1.all-superclasses;
+    block (return)
+      for (index :: <integer> from 1 below superclasses.size)
+	// We skip element 0 because it's the same as class1.
+	if (%element(superclasses, index) == class2)
+	  return(#t);
+	end if;
+      finally
+	#f;
+      end for;
+    end block;
+  end if;
+end method %subtype?;
 
 // %subtype?(<direct-instance>,<type>) -- internal gf method.
 //
