@@ -1,8 +1,10 @@
-Library:     file-system
-Unit-prefix: fileSystem
+Library:        file-system
 unique-id-base: 1800
-
-file-system-exports.dylan
-posix-fs.dylan
-file-system.dylan
-posix-io.o
+files:          exports
+		base-file-system
+	        types
+		files
+		information
+		helpers
+		dir-intr
+		directories

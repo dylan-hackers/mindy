@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.11 2000/10/21 01:30:48 dauclair Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.12 2000/10/21 03:39:42 dauclair Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -165,7 +165,8 @@ define module Extensions
 	     false-or, one-of, <never-returns>, subclass, direct-instance,
 
 	     // Condition extensions.
-	     <format-string-condition>, report-condition, condition-format,
+	     <format-string-condition>, <simple-condition>,
+	     report-condition, condition-format,
 	     condition-force-output, *warning-output*,
 
 	     // Debugger Hooks

@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.15 2000/04/01 12:08:25 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.16 2000/10/21 03:39:42 dauclair Exp $
 copyright: see below
 
 //======================================================================
@@ -43,6 +43,10 @@ define library compiler-base
 #endif
   use String-extensions;
   use Table-extensions, export: all;
+  use file-system,
+    exclude: { file-system },
+    rename: { base-file-system => file-system },
+    export: all;
   
   export c-representation;
   export classes;
@@ -66,7 +70,6 @@ define library compiler-base
   export utils;
   export variables;
   export platform;
-  export file-system;
 end;
 
 define module common
@@ -122,44 +125,6 @@ define module utils
     symcat, stringify,
     log-target, log-dependency, spew-dependency-log;
 end;
-
-define module file-system
-  use dylan;
-  use extensions;
-  use System, import: {system};
-  use String-conversions;  // as(<string>, char)
-  // We use the Streams library to see if a file exists
-  use Streams, 
-    import: {<stream>, <file-stream>, <file-does-not-exist-error>, close}; 
-
-#if (mindy)
-  use System, import: {getcwd};
-#else
-  use System, 
-     import: {call-out, buffer-address, <buffer>};
-#endif
-
-  export
-     <filename>,
-     $search-path-separator,
-     search-path-separator?,
-     $a-path-separator,
-     path-separator?,
-     filename-prefix,
-     filename-extension,
-     base-filename,
-     pathless-filename,
-     extensionless-filename,
-     
-     get-current-directory,
-
-     find-file,
-     find-and-open-file,
-     
-     delete-file,
-     rename-file,
-     files-identical?;
-end module file-system;
 
 define module od-format
   use common;

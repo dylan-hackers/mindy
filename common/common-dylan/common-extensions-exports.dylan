@@ -42,7 +42,7 @@ define module common-extensions
 	     false-or,
 	     one-of,
 	     //subclass,
-	     <format-string-condition>,
+	     <format-string-condition>, <simple-condition>,
 	     $unsupplied,
 	     ignore,
 	     key-exists?,

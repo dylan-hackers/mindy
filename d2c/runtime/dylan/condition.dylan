@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.5 2000/10/20 15:20:53 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.6 2000/10/21 03:39:42 dauclair Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -64,9 +64,14 @@ define abstract open class <format-string-condition> (<condition>)
     init-value: #();
 end class <format-string-condition>;
 
+// interposed this class to conform to the common-extensions
+// in the "core" document from Functional Objects, Inc.
+define abstract class <simple-condition> (<format-string-condition>)
+end class <simple-condition>;
+
 // <simple-error> -- exported from Dylan
 // 
-define class <simple-error> (<error>, <format-string-condition>)
+define class <simple-error> (<error>, <simple-condition>)
 end class <simple-error>;
 
 define sealed domain make(singleton(<simple-error>));
@@ -101,7 +106,7 @@ end class <warning>;
 
 // <simple-warning> -- exported from Dylan
 // 
-define class <simple-warning> (<warning>, <format-string-condition>)
+define class <simple-warning> (<warning>, <simple-condition>)
 end class <simple-warning>;
 
 define sealed domain make(singleton(<simple-warning>));
@@ -114,7 +119,7 @@ end class <restart>;
 
 // <simple-restart> -- exported from Dylan
 //
-define class <simple-restart> (<restart>, <format-string-condition>)
+define class <simple-restart> (<restart>, <simple-condition>)
 end class <simple-restart>;
 
 define sealed domain make(singleton(<simple-restart>));

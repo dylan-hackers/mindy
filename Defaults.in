@@ -71,12 +71,12 @@ if ($enable_debug) {
   $CFLAGS = '-O3 -g -fomit-frame-pointer';
 }
 
-if ($build_tools_with_d2c) {
-  $PARSERGEN = "$buildroot/tools/parsergen/parsergen";
-  $MELANGE = "$buildroot/tools/melange/melange";
-} else {
-  $PARSERGEN = "$MINDY -f $buildroot/tools/parsergen/parsergen-lib.dbc";
-  $MELANGE = "$MINDY -f $buildroot/tools/melange/melange.dbc";
+$PARSERGEN = "$buildroot/tools/parsergen/parsergen";
+$MELANGE = "$buildroot/tools/melange/melange";
+
+unless ($build_tools_with_d2c) {
+  $PARSERGEN = "$MINDY -f $PARSERGEN-lib.dbc";
+  $MELANGE = "$MINDY -f $MELANGE.dbc";
 };
 
 if ($enable_bootstrap && $bootstrap_compiler eq "d2c") {

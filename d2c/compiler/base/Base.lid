@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Base.lid,v 1.4 1999/08/24 19:50:05 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Base.lid,v 1.5 2000/10/21 03:39:42 dauclair Exp $
 library: compiler-base
 unit-prefix: base
 unique-id-base: 10000
@@ -6,7 +6,6 @@ shared-library: no
 
 base-exports.dylan
 utils.dylan
-file-system.dylan
 od-format.dylan
 dylan-dump.dylan
 ctv.dylan

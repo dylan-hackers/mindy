@@ -32,4 +32,4 @@ $D2CFLAGS = $d2c_runtime
     . '-L../../../common/string-ext -L../../../common/table-ext '
     . '-L../../../common/regexp -L../../runtime/melange '
     . '-L../../runtime/garbage-collection '
-    . '-L../../../common/getopt';
+    . '-L../../../common/getopt -L../../../common/file-system';

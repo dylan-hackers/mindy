@@ -1,11 +1,12 @@
 &makegen_include("../common-Makegen");
 
 if ($features{'compiled_for_unix'}) {
-    &emit_c_file_rule('posix-io') if ($enable_d2c);
     $system_lid_file = 'file-system';
 } else {
     &unknown_platform_error();
 }
+
+$D2CFLAGS = "$D2CFLAGS -L../standard-io -L../format-out";
 
 &emit_library_rule($system_lid_file, '$(BUILDROOT)/force.timestamp', '',
                    'compile', 'no-mindy', 'install');
