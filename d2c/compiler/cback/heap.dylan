@@ -90,7 +90,7 @@ define method spew-reference
 end;
 
 define method spew-reference
-    (object :: <ct-value>, rep == *heap-rep*,
+    (object :: <ct-value>, rep :: <heap-representation>,
      tag :: <byte-string>, state :: <state>) => ();
   format(state.stream, "\t.word\t%s\t; %s\n", object-name(object, state), tag);
 end;
