@@ -219,6 +219,8 @@ define constant convert-gt
   = make-substring-replacer("&gt;", replace-with: ">");
 define constant convert-amp
   = make-substring-replacer("&amp;", replace-with: "&");
+define constant convert-quot
+  = make-substring-replacer("&quot;", replace-with: "\"");
 
 // Accumulates text within a single tag environment.  The appropriate tag
 // action routine is called to transform the given text.  This may be
@@ -236,7 +238,8 @@ define method add-text(tag :: <symbol>, text :: <strings>,
     else
       new-text;
     end if;
-  let AMP :: <string> = convert-amp(convert-lt(convert-gt(Tab-Free)));
+  let AMP :: <string> 
+    = convert-amp(convert-lt(convert-gt(convert-quot(Tab-Free))));
   
   let new-text = element(add-text-table, tag, default: identity)(AMP);
   
