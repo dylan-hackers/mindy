@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.148 2003/11/04 19:44:41 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.149 2003/11/05 23:28:41 tim Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -1132,7 +1132,7 @@ case $SCENARIO in
 	echo "This means we have to bootstrap using a Dylan interpreter"
 	echo "written in C. The interpreter is called mindy."
 	echo
-	echo "Bootstrapping is a lengty process. You're definitely"
+	echo "Bootstrapping is a lengthy process. You're definitely"
 	echo "encouraged to check whether there's a pre-built"
 	echo "Gwydion for your system, install that, and then re-run"
 	echo "configure here. If you have trouble with the pre-built"
