@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Base.lid,v 1.6 2001/01/25 03:50:26 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/Base.lid,v 1.7 2003/05/25 15:39:16 housel Exp $
 library: compiler-base
 unit-prefix: base
 unique-id-base: 10000
@@ -29,3 +29,4 @@ data-flow.dylan
 control-flow.dylan
 signature.dylan
 platform.dylan
+platform-constants.dylan

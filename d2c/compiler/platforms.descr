@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.68 2003/04/17 19:00:43 brent Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.69 2003/05/25 15:39:16 housel Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -60,6 +60,15 @@
 // single-size:, single-alignment:  Same for 'float's
 // double-size:, double-alignment: Same for 'double's
 // long-double-size:, long-double-alignment: Same for 'long double's
+//
+// single-mantissa-digits:, double-mantissa-digits:,
+// long-double-mantissa-digits: Number of floating-point mantissa bits
+// minimum-single-float-exponent:, maximum-single-float-exponent: Minimum
+// and maximum floating-point exponent values for 'float's.
+// minimum-double-float-exponent:, maximum-double-float-exponent: Same for
+// 'double'.
+// minimum-long-double-float-exponent:, maximum-long-double-float-exponent:
+// Same for 'long double'. If not present, defaults to the values for 'double'.
 
 // 32-bit
 //
@@ -74,40 +83,53 @@ double-size:			8
 double-alignment:		4
 long-double-size:		8
 
+// IEEE floating point
+platform-name:			ieee-754
+single-mantissa-digits:		24
+minimum-single-float-exponent:	-125
+maximum-single-float-exponent:	128
+double-mantissa-digits:		53
+minimum-double-float-exponent:	-1021
+maximum-double-float-exponent:	1024
+
 // Intel 80386 or higher:
 platform-name:			x86
-inherit-from:			32-bit
+inherit-from:			32-bit ieee-754
 default-features:		compiled-for-x86
 big-endian?:			#f
 long-double-size:		12
 long-double-alignment:		4
+long-double-mantissa-digits:	64
+minimum-long-double-float-exponent: -16381
+maximum-long-double-float-exponent: 16384
 
 // SPARC:
 platform-name:			sparc
-inherit-from:			32-bit
+inherit-from:			32-bit ieee-754
 default-features:		compiled-for-sparc
 big-endian?:			#t
 
 // PowerPC:
 platform-name:			ppc
-inherit-from:			32-bit
+inherit-from:			32-bit ieee-754
 default-features:		compiled-for-ppc
 big-endian?:			#t
 
 // s390:
 platform-name:			s390
-inherit-from:			32-bit
+inherit-from:			32-bit ieee-754
 default-features:		compiled-for-s390
 big-endian?:			#t
 
 // HP-PA RISC processor:
 platform-name:			hppa
-inherit-from:			32-bit
+inherit-from:			32-bit ieee-754
 default-features:		compiled-for-hppa
 big-endian?:			#t
 
 // Alpha:
 platform-name:			alpha
+inherit-from:			ieee-754
 default-features:		compiled-for-alpha
 integer-length:			64
 big-endian?:			#t
@@ -121,7 +143,7 @@ long-double-size:		8
 
 // MIPS:
 platform-name:			mips
-inherit-from:			32-bit
+inherit-from:			32-bit ieee-754
 default-features:		compiled-for-mips
 big-endian?:			#t
 
@@ -228,8 +250,11 @@ inherit-from:				generic-unix
 make-command:				make
 use-dbclink?:				#t
 executable-filename-suffix:		.exe
-double-alignment:		8
-long-double-alignment:		8
+double-alignment:			8
+long-double-alignment:			8
+long-double-mantissa-digits:		53
+minimum-long-double-float-exponent:	-1021
+maximum-long-double-float-exponent:	1024
 
 // Mingwin (automake, autoconf, libtool installed)
 // added by Douglas M. Auclair (dauclair@hotmail.com)
@@ -240,10 +265,11 @@ inherit-from:				win32
 make-command:				make
 use-dbclink?:				#t
 executable-filename-suffix:		.exe
-double-alignment:		8
-long-double-alignment:		8
-
-
+double-alignment:			8
+long-double-alignment:			8
+long-double-mantissa-digits:		53
+minimum-long-double-float-exponent:	-1021
+maximum-long-double-float-exponent:	1024
 
 // Linux:
 platform-name:				linux
@@ -279,7 +305,6 @@ inherit-from:				generic-unix
 default-features:			compiled-for-netbsd
 make-command:                   	gmake
 randomize-library-command:      	ranlib %s
-
 
 // Solaris:
 platform-name:				solaris
@@ -647,7 +672,9 @@ long-double-size:               16
 long-double-alignment:          8
 long-long-size:                 8
 long-long-alignment:            8
-
+long-double-mantissa-digits:	113
+minimum-long-double-float-exponent: -16381
+maximum-long-double-float-exponent: 16384
 
 // Doug Auclair's taken over Solaris support ... here's a Solaris-x86 port:
 platform-name:			x86-solaris-gcc
@@ -672,6 +699,9 @@ default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
 //   members use them, we can't be too sure...
 platform-name:			x86-win32-vc
 inherit-from:			vc x86 win32
+long-double-mantissa-digits:	53
+minimum-long-double-float-exponent: -1021
+maximum-long-double-float-exponent: 1024
 
 // Bruce Hoult made this work on HP/UX 10.20
 // HP/UX 11 not tried yet

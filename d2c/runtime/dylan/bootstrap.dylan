@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.32 2003/04/29 00:29:26 prom Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/bootstrap.dylan,v 1.33 2003/05/25 15:39:16 housel Exp $
 copyright: see below
 module: bootstrap
 
@@ -192,6 +192,13 @@ define module dylan-viscera
     <general-integer>,  <double-integer>, <extended-integer>,
     $maximum-integer, $minimum-integer, integer-length,
     <ratio>, ratio, numerator, denominator,
+    decode-float, scale-float, float-radix,
+    float-digits, float-precision,
+    $single-float-epsilon, $double-float-epsilon,
+    $extended-float-epsilon,
+    $minimum-single-float-exponent, $maximum-single-float-exponent,
+    $minimum-double-float-exponent, $maximum-double-float-exponent,
+    $minimum-extended-float-exponent, $maximum-extended-float-exponent,
     <byte-character>, <true>, <false>,
     false-or, one-of, <never-returns>, subclass, direct-instance,
     report-condition, condition-format, condition-force-output,

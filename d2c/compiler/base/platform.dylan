@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.11 2002/10/31 20:59:55 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.12 2003/05/25 15:39:16 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -66,7 +66,6 @@ define sealed /* exported */ class <platform> (<object>)
   // Then the platform x86-win32-vc, which is supposed to be another
   // name for x86-win32, wouldn't behave the same as x86-win32.
   //
-// Required:
   constant slot platform-name :: <symbol>, 
     required-init-keyword: #"platform-name";
 
@@ -107,6 +106,27 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"long-double-size";
   constant /* exported */ slot long-double-alignment :: false-or(<integer>),
     init-value: #f, init-keyword: #"long-double-alignment";
+
+  constant /* exported */ slot single-mantissa-digits :: <integer>,
+    required-init-keyword: #"single-mantissa-digits";
+  constant /* exported */ slot double-mantissa-digits :: <integer>,
+    required-init-keyword: #"double-mantissa-digits";
+  constant /* exported */ slot long-double-mantissa-digits :: false-or(<integer>),
+    init-value: #f, init-keyword: #"long-double-mantissa-digits";
+
+  constant /* exported */ slot minimum-single-float-exponent :: <integer>,
+    required-init-keyword: #"minimum-single-float-exponent";
+  constant /* exported */ slot maximum-single-float-exponent :: <integer>,
+    required-init-keyword: #"maximum-single-float-exponent";
+
+  constant /* exported */ slot minimum-double-float-exponent :: <integer>,
+    required-init-keyword: #"minimum-double-float-exponent";
+  constant /* exported */ slot maximum-double-float-exponent :: <integer>,
+    required-init-keyword: #"maximum-double-float-exponent";
+  constant /* exported */ slot minimum-long-double-float-exponent :: false-or(<integer>),
+    init-value: #f, init-keyword: #"minimum-long-double-float-exponent";
+  constant /* exported */ slot maximum-long-double-float-exponent :: false-or(<integer>),
+    init-value: #f, init-keyword: #"maximum-long-double-float-exponent";
 
   constant /* exported */ slot object-filename-suffix :: <byte-string>,
     required-init-keyword: #"object-filename-suffix";
@@ -165,8 +185,6 @@ define sealed /* exported */ class <platform> (<object>)
     required-init-keyword: #"environment-variables-can-be-exported?";
   constant slot use-dbclink? :: <boolean>,
     required-init-keyword: #"use-dbclink?";
-
-// Optional:
 
   // if this is defined, search for shared libraries
   constant /* exported */ slot shared-library-filename-suffix
@@ -234,6 +252,15 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"double-alignment"] := #f;
 *valid-properties*[#"long-double-size"] := #t;
 *valid-properties*[#"long-double-alignment"] := #f;
+*valid-properties*[#"single-mantissa-digits"] := #t;
+*valid-properties*[#"double-mantissa-digits"] := #t;
+*valid-properties*[#"long-double-mantissa-digits"] := #f;
+*valid-properties*[#"minimum-single-float-exponent"] := #t;
+*valid-properties*[#"maximum-single-float-exponent"] := #t;
+*valid-properties*[#"minimum-double-float-exponent"] := #t;
+*valid-properties*[#"maximum-double-float-exponent"] := #t;
+*valid-properties*[#"minimum-long-double-float-exponent"] := #f;
+*valid-properties*[#"maximum-long-double-float-exponent"] := #f;
 *valid-properties*[#"object-filename-suffix"] := #t;
 *valid-properties*[#"shared-object-filename-suffix"] := #f;
 *valid-properties*[#"library-filename-prefix"] := #t;
@@ -398,7 +425,7 @@ define function add-platform! (header :: <header>)
       // few other hacks)
 
       unless (key-exists?(*valid-properties*, key))
-	error("platforms.descr contains unknown property, '%s'.", key);
+        signal("platforms.descr contains unknown property, '%s'.", key);
       end;
 
       select (key)
@@ -415,7 +442,13 @@ define function add-platform! (header :: <header>)
         #"long-long-alignment", #"long-long-size",
         #"single-alignment", #"single-size",
         #"double-alignment", #"double-size",
-        #"long-double-alignment", #"long-double-size" =>
+        #"long-double-alignment", #"long-double-size",
+        #"single-mantissa-digits", #"double-mantissa-digits",
+        #"long-double-mantissa-digits",
+        #"minimum-single-float-exponent", #"maximum-single-float-exponent",
+        #"minimum-double-float-exponent", #"maximum-double-float-exponent",
+        #"minimum-long-double-float-exponent", 
+        #"maximum-long-double-float-exponent" =>
 	  local-platform-info[key] := string-to-integer(val);
 	#"path-separator" =>
           local-platform-info[key] := string-to-character(val);

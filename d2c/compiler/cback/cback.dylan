@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.47 2003/04/12 05:49:36 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.48 2003/05/25 15:39:16 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -2725,8 +2725,8 @@ define method emit-assignment
       format(file.file-guts-stream, "%s;\n", call);
       deliver-results(results, #[], #f, file);
     (result-rep == #"doesn't-return") =>
-      error("Trying to get some values back from a function that "
-	      "doesn't return?");
+      error("Trying to get some values back from a function (%s) that "
+	      "doesn't return?", func-info.function-info-name);
     (result-rep == #"cluster") =>
       new-sp ~= call & format(file.file-guts-stream, "%s = %s;\n", new-sp, call);
       deliver-cluster(results, sp, new-sp,
@@ -3575,7 +3575,7 @@ define method c-expr-and-rep (lit :: <literal-double-float>,
 			      rep-hint :: <immediate-representation>,
 			      file :: <file-state>)
     => (name :: <string>, rep :: <c-representation>);
-  values(float-to-string(lit.literal-value, 16),
+  values(float-to-string(lit.literal-value, 18),
 	 pick-representation(dylan-value(#"<double-float>"), #"speed"));
 end;
 
@@ -3583,7 +3583,7 @@ define method c-expr-and-rep (lit :: <literal-extended-float>,
 			      rep-hint :: <immediate-representation>,
 			      file :: <file-state>)
     => (name :: <string>, rep :: <c-representation>);
-  values(float-to-string(lit.literal-value, 35),
+  values(float-to-string(lit.literal-value, 36),
 	 pick-representation(dylan-value(#"<extended-float>"), #"speed"));
 end;
 
@@ -3619,7 +3619,7 @@ define method float-to-string (value :: <ratio>, digits :: <integer>)
     write(stream, "0.");
     let zeros = 0;
     for (count from 0 below digits,
-	 until: zero?(fraction))
+         until: zero?(fraction))
       let (digit, remainder) = floor(fraction * ten);
       if (zero?(digit))
 	zeros := zeros + 1;

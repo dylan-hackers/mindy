@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.8 2002/10/31 20:59:56 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/num.dylan,v 1.9 2003/05/25 15:39:17 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -310,7 +310,7 @@ end;
 // Note the clever way we compute the second two of these that doesn't
 // overflow.  Tricky, huh?
 // 
-define constant $fixed-integer-bits = 32;
+define constant $fixed-integer-bits = $platform-fixed-integer-bits;
 define constant $minimum-integer :: <integer>
   = ash(-1, $fixed-integer-bits - 1);
 define constant $maximum-integer :: <integer>
@@ -908,6 +908,20 @@ define inline method as (class == <float>, num :: <rational>)
   as(<single-float>, num);
 end;
 
+define generic decode-float
+    (float :: <float>)
+ => (significand :: <float>, exponent :: <integer>, sign :: <float>);
+
+define generic scale-float
+    (float :: <float>, scale :: <integer>) => (result :: <float>);
+
+define function float-radix(float :: <float>) => (radix :: <integer>);
+  2;
+end;
+
+define generic float-digits (float :: <float>) => (digits :: <integer>);
+define generic float-precision (float :: <float>) => (digits :: <integer>);
+
 
 // Single floats.
 
@@ -1101,7 +1115,7 @@ define inline method truncate (a :: <single-float>)
   let quo = if (negative?(a))
 	      %%primitive(single-ceiling, a);
 	    else
-	      %%primitive(single-floor, a);
+              %%primitive(single-floor, a);
 	    end;
   values(quo, a - quo);
 end;
@@ -1110,6 +1124,38 @@ define inline method abs (a :: <single-float>)
     => abs :: <single-float>;
   %%primitive(single-abs, a);
 end;
+
+define inline method decode-float
+    (float :: <single-float>)
+ => (significand :: <single-float>, exponent :: <integer>,
+     sign :: <single-float>);
+  let (significand :: <single-float>, exponent :: <integer>)
+    = %%primitive(single-decode, float);
+  if (negative?(significand))
+    values(-significand, exponent, -1.0s0);
+  else
+    values(significand, exponent, 1.0s0);
+  end if;
+end;
+
+define inline method scale-float
+    (float :: <single-float>, scale :: <integer>)
+ => (result :: <single-float>);
+  %%primitive(single-scale, float, scale);
+end method;
+
+define inline method float-digits
+    (float :: <single-float>) => (digits :: <integer>);
+  $platform-single-float-mantissa-digits;
+end;
+
+define constant $single-float-epsilon :: <single-float>
+  = scale-float(1.0s0, 1 - $platform-single-float-mantissa-digits);
+
+define constant $minimum-single-float-exponent :: <integer>
+  = $platform-minimum-single-float-exponent;
+define constant $maximum-single-float-exponent :: <integer>
+  = $platform-maximum-single-float-exponent;
 
 
 // Double floats.
@@ -1392,6 +1438,38 @@ define inline method abs (a :: <double-float>)
     => abs :: <double-float>;
   %%primitive(double-abs, a);
 end;
+
+define inline method decode-float
+    (float :: <double-float>)
+ => (significand :: <double-float>, exponent :: <integer>,
+     sign :: <double-float>);
+  let (significand :: <double-float>, exponent :: <integer>)
+    = %%primitive(double-decode, float);
+  if (negative?(significand))
+    values(-significand, exponent, -1.0d0);
+  else
+    values(significand, exponent, 1.0d0);
+  end if;
+end;
+
+define inline method scale-float
+    (float :: <double-float>, scale :: <integer>)
+ => (result :: <double-float>);
+  %%primitive(double-scale, float, scale);
+end method;
+
+define inline method float-digits
+    (float :: <double-float>) => (digits :: <integer>);
+  $platform-double-float-mantissa-digits;
+end;
+
+define constant $double-float-epsilon :: <double-float>
+  = scale-float(1.0d0, 1 - $platform-double-float-mantissa-digits);
+
+define constant $minimum-double-float-exponent :: <integer>
+  = $platform-minimum-double-float-exponent;
+define constant $maximum-double-float-exponent :: <integer>
+  = $platform-maximum-double-float-exponent;
 
 
 // Extended floats.
@@ -1754,3 +1832,35 @@ define inline method abs (a :: <extended-float>)
     => abs :: <extended-float>;
   %%primitive(extended-abs, a);
 end;
+
+define inline method decode-float
+    (float :: <extended-float>)
+ => (significand :: <extended-float>, exponent :: <integer>,
+     sign :: <extended-float>);
+  let (significand :: <extended-float>, exponent :: <integer>)
+    = %%primitive(extended-decode, float);
+  if (negative?(significand))
+    values(-significand, exponent, -1.0x0);
+  else
+    values(significand, exponent, 1.0x0);
+  end if;
+end;
+
+define inline method scale-float
+    (float :: <extended-float>, scale :: <integer>)
+ => (result :: <extended-float>);
+  %%primitive(extended-scale, float, scale);
+end method;
+
+define inline method float-digits
+    (float :: <extended-float>) => (digits :: <integer>);
+  $platform-extended-float-mantissa-digits;
+end;
+
+define constant $extended-float-epsilon :: <extended-float>
+  = scale-float(1.0x0, 1 - $platform-extended-float-mantissa-digits);
+
+define constant $minimum-extended-float-exponent :: <integer>
+  = $platform-minimum-extended-float-exponent;
+define constant $maximum-extended-float-exponent :: <integer>
+  = $platform-maximum-extended-float-exponent;

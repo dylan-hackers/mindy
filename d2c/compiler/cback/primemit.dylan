@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.17 2003/04/29 00:29:26 prom Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/primemit.dylan,v 1.18 2003/05/25 15:39:16 housel Exp $
 copyright: see below
 
 
@@ -1039,7 +1039,7 @@ define-primitive-emitter
        => ();
      spew-pending-defines(file);
      let (temps, x, y) = extract-operands(operation, file,
-				   *long-rep*, *long-rep*);
+                                          *long-rep*, *long-rep*);
      contact-bgh-unless-empty(temps);
      deliver-results(defines,
 		     vector(pair(stringify('(', x, " / ", y, ')'), *long-rep*),
@@ -1474,7 +1474,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let (temps, x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " < ", y, ')'), *boolean-rep*,
 		    #f, file);
@@ -1486,7 +1486,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (temps, x, y) = extract-operands(operation, file, *float-rep*, *float-rep*);
+     let (temps, x, y) = extract-operands(operation, file,
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " <= ", y, ')'), *boolean-rep*,
 		    #f, file);
@@ -1498,7 +1499,8 @@ define-primitive-emitter
 	   operation :: <primitive>,
 	   file :: <file-state>)
        => ();
-     let (temps, x, y) = extract-operands(operation, file, *float-rep*, *float-rep*);
+     let (temps, x, y) = extract-operands(operation, file,
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " == ", y, ')'),
 		    *boolean-rep*, #f, file);
@@ -1511,7 +1513,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let (temps, x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      // ### This isn't right -- should really be doing a bitwise comparison.
      deliver-result(results, stringify('(', x, " == ", y, ')'),
@@ -1525,7 +1527,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let (temps, x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " != ", y, ')'), *boolean-rep*,
 		    #f, file);
@@ -1538,7 +1540,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let (temps, x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " + ", y, ')'), *float-rep*,
 		    #f, file);
@@ -1551,7 +1553,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let (temps, x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " * ", y, ')'), *float-rep*,
 		    #f, file);
@@ -1564,7 +1566,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let (temps, x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " - ", y, ')'), *float-rep*,
 		    #f, file);
@@ -1577,7 +1579,7 @@ define-primitive-emitter
 	   file :: <file-state>)
        => ();
      let (temps, x, y) = extract-operands(operation, file,
-				   *float-rep*, *float-rep*);
+                                          *float-rep*, *float-rep*);
      contact-bgh-unless-empty(temps);
      deliver-result(results, stringify('(', x, " / ", y, ')'), *float-rep*,
 		    #f, file);
@@ -1646,6 +1648,37 @@ define-primitive-emitter
 		    *long-rep*, #f, file);
    end);
 
+define-primitive-emitter
+  (#"single-decode",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     spew-pending-defines(file);
+     let (temps, x) = extract-operands(operation, file, *float-rep*);
+     contact-bgh-unless-empty(temps);
+     maybe-emit-include("math.h", file);
+     let temp = new-local(file, modifier: "exp", wanted-rep: "int");
+     deliver-results(defines,
+                     vector(pair(stringify("frexpf(", x, ", &", temp, ')'),
+                                 *float-rep*),
+			    pair(temp, *int-rep*)),
+                     #t, file);
+   end);
+
+define-primitive-emitter
+  (#"single-scale",
+   method (results :: false-or(<definition-site-variable>),
+           operation :: <primitive>,
+           file :: <file-state>)
+       => ();
+     let (temps, x, y) = extract-operands(operation, file,
+                                          *float-rep*, *int-rep*);
+     contact-bgh-unless-empty(temps);
+     maybe-emit-include("math.h", file);
+     deliver-result(results, stringify("ldexpf(", x, ",", y,")"),
+                    *float-rep*, #f, file);
+   end);
 
 // Double float primitives.
 
@@ -1869,6 +1902,37 @@ define-primitive-emitter
 		    *long-rep*, #f, file);
    end);
 
+define-primitive-emitter
+  (#"double-decode",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     spew-pending-defines(file);
+     let (temps, x) = extract-operands(operation, file, *double-rep*);
+     contact-bgh-unless-empty(temps);
+     maybe-emit-include("math.h", file);
+     let temp = new-local(file, modifier: "exp", wanted-rep: "int");
+     deliver-results(defines,
+                     vector(pair(stringify("frexp(", x, ", &", temp, ')'),
+                                 *double-rep*),
+                            pair(temp, *int-rep*)),
+		     #t, file);
+   end);
+
+define-primitive-emitter
+  (#"double-scale",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y) = extract-operands(operation, file,
+                                          *double-rep*, *int-rep*);
+     contact-bgh-unless-empty(temps);
+     maybe-emit-include("math.h", file);
+     deliver-result(results, stringify("ldexp(", x, ",", y, ")"),
+                    *double-rep*, #f, file);
+   end);
 
 // Extended float primitives.
 
@@ -2092,6 +2156,37 @@ define-primitive-emitter
 		    *long-rep*, #f, file);
    end);
 
+define-primitive-emitter
+  (#"extended-decode",
+   method (defines :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     spew-pending-defines(file);
+     let (temps, x) = extract-operands(operation, file, *long-double-rep*);
+     contact-bgh-unless-empty(temps);
+     maybe-emit-include("math.h", file);
+     let temp = new-local(file, modifier: "exp", wanted-rep: "int");
+     deliver-results(defines,
+                     vector(pair(stringify("frexpl(", x, ", &", temp, ')'),
+                                 *long-double-rep*),
+                            pair(temp, *int-rep*)),
+		     #t, file);
+   end);
+
+define-primitive-emitter
+  (#"extended-scale",
+   method (results :: false-or(<definition-site-variable>),
+	   operation :: <primitive>,
+	   file :: <file-state>)
+       => ();
+     let (temps, x, y) = extract-operands(operation, file,
+                                          *long-double-rep*, *int-rep*);
+     contact-bgh-unless-empty(temps);
+     maybe-emit-include("math.h", file);
+     deliver-result(results, stringify("ldexpl(", x, ",", y, ")"),
+                    *long-double-rep*, #f, file);
+   end);
 
 // raw pointer operations.
 
@@ -2323,6 +2418,7 @@ define constant $sequence-of-moveable-primitives
       #"single-floor",
       #"single-ceiling",
       #"single-round",
+      #"single-scale",
       #"fixed-as-double",            // Double float primitives.
       #"single-as-double",
       #"extended-as-double",
@@ -2340,6 +2436,7 @@ define constant $sequence-of-moveable-primitives
       #"double-floor",
       #"double-ceiling",
       #"double-round",
+      #"double-scale",
       #"fixed-as-extended",          // Extended float primitives.
       #"single-as-extended",
       #"double-as-extended",
@@ -2357,6 +2454,7 @@ define constant $sequence-of-moveable-primitives
       #"extended-floor",
       #"extended-ceiling",
       #"extended-round",
+      #"extended-scale",
       #"make-raw-pointer",           // raw pointer operations.
       #"raw-pointer-address",
       #"pointer-+",

@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.6 2002/04/28 20:45:06 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.7 2003/05/25 15:39:16 housel Exp $
 copyright: see below
 
 //======================================================================

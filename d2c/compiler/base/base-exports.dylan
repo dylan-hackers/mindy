@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.41 2003/03/15 06:23:03 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.42 2003/05/25 15:39:16 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -69,6 +69,7 @@ define library compiler-base
   export utils;
   export variables;
   export platform;
+  export platform-constants;
 end;
 
 define module common
@@ -411,6 +412,12 @@ define module platform
     double-size, double-alignment,
     long-double-size, long-double-alignment,
 
+    single-mantissa-digits, double-mantissa-digits,
+    long-double-mantissa-digits,
+    minimum-single-float-exponent, maximum-single-float-exponent,
+    minimum-double-float-exponent, maximum-double-float-exponent,
+    minimum-long-double-float-exponent, maximum-long-double-float-exponent,
+
     object-filename-suffix,
     library-filename-prefix,
     library-filename-suffix,
@@ -513,8 +520,8 @@ define module definitions
     *defn-dynamic-default*, ct-value,
     install-transformers, $definition-slots,
     definition-syntax-info, definition-kind,
-    <abstract-constant-definition>, <abstract-variable-definition>,
     <implicit-definition>,
+    <abstract-constant-definition>, <abstract-variable-definition>,
     <class-definition>, class-defn-maker-function,
     class-defn-deferred-evaluations-function,
     class-defn-key-defaulter-function,
@@ -525,7 +532,6 @@ define module definitions
     function-defn-ct-value, function-defn-ct-value-setter,
     function-defn-transformers,
     function-defn-movable?, function-defn-flushable?;
-
 end;
 
 define module variables
@@ -880,3 +886,15 @@ define module signature
   use od-format;
 end;
 
+define module platform-constants
+  use common;
+  use utils;
+  use compile-time-values;
+  use names;
+  use variables;
+  use ctype;
+  use definitions;
+  use platform;
+
+  export define-platform-constants;
+end module;
