@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.8 1995/12/09 21:03:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/type.dylan,v 1.9 1995/12/11 21:03:14 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -455,14 +455,27 @@ end;
 define method %instance?
     (object :: <fixed-integer>, type :: <limited-integer>)
  => res :: <boolean>;
-  if (type.limited-integer-base-class == <fixed-integer>)
-    let min :: false-or(<fixed-integer>) = type.limited-integer-minimum;
-    if (~min | object >= min)
-      let max :: false-or(<fixed-integer>) = type.limited-integer-maximum;
-      ~max | object <= max;
-    else
-      #f;
-    end;
+  let base-class :: <class> = type.limited-integer-base-class;
+  if (base-class == <fixed-integer>)
+    // This is appallingly messy, but until we get a better type inference
+    // mechanism, it seems to be the only way to get a fast enough inner loop.
+    let min = type.limited-integer-minimum;
+    let above-bottom :: <boolean>
+      = if (min)
+	  let min :: <fixed-integer> = min;
+	  object >= min;
+	else
+	  #t;
+	end if;
+    if (above-bottom)
+      let max = type.limited-integer-maximum;
+      if (max)
+	let max :: <fixed-integer> = max;
+	object <= max;
+      else
+	#t;
+      end if;
+    end if;
   else
     if (instance?(object, type.limited-integer-base-class))
       let min = type.limited-integer-minimum;
