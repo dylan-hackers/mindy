@@ -79,13 +79,8 @@ $PARSERGEN = "$PARSERGEN_DIR/parsergen";
 $MELANGE_DIR = "$buildroot/tools/melange";
 $MELANGE = "$MELANGE_DIR/melange";
 
-if ($build_tools_with_d2c) {
-    $PARSERGEN_target = $PARSERGEN;
-    $MELANGE_target = $MELANGE;
-} else {
-    $PARSERGEN_target = "$PARSERGEN-lib.dbc";
+if (!$build_tools_with_d2c) {
     $PARSERGEN = "$MINDY -f $PARSERGEN_target";
-    $MELANGE_target = "$MELANGE.dbc";
     $MELANGE = "$MINDY -f $MELANGE_target";
 };
 

@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.51 2003/09/18 19:34:32 gabor Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.52 2003/10/22 20:26:16 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -549,30 +549,6 @@ EOF
     }
 }
 
-# maybe_emit_parsergen_build_rule() -- internal
-#
-sub maybe_emit_parsergen_build_rule {
-    unless ($parsergen_rule) {
-	print "$PARSERGEN_target:\n";
-	print "\t";
-	printf($host_platform{'recursive_make_command'}, $PARSERGEN_DIR, "");
-	print "\n\n";
-    }
-    $parsergen_rule = 1;
-}
-
-# maybe_emit_melange_build_rule() -- internal
-#
-sub maybe_emit_melange_build_rule {
-    unless ($melange_rule) {
-	print "$MELANGE_target:\n";
-	print "\t";
-	printf($host_platform{'recursive_make_command'}, $MELANGE_DIR, "");
-	print "\n\n";
-    }
-    $melange_rule = 1;
-}
-
 # parse_dylan_header() -- internal
 #
 # Reads the Dylan header (keyword: value, ...) from the file LIDFILE,
@@ -1071,16 +1047,14 @@ sub emit_cc_file_rule {
 sub emit_melange_rule {
     local ($basefile, @headers) = @_;
     do maybe_emit_d2c_defines();
-    do maybe_emit_melange_build_rule();
 
-    print "$basefile.dylan: \$(SRCDIR)/$basefile.intr $MELANGE_target";
+    print "$basefile.dylan: \$(SRCDIR)/$basefile.intr";
     foreach $header (@headers) {
        print " \$(SRCDIR)/$header";
     }
-    print "\n\t\$(MELANGE) --d2c -I\$(SRCDIR) ";
-    if($target_name =~ /gcc/) {
-      print "-I`gcc --print-file-name=include` ";
-    }
+    print "\n";
+    printf("\t$host_platform{'recursive_make_command'}\n", $MELANGE_DIR, "");
+    print "\t\$(MELANGE) --d2c \$(CPPFLAGS) -I\$(SRCDIR) ";
     if($EXTRA_INCLUDE_DIR ne "") {
       print "-I$EXTRA_INCLUDE_DIR ";
     }
@@ -1096,10 +1070,10 @@ sub emit_melange_rule {
 sub emit_parsergen_rule {
     local ($basefile) = @_;
     do maybe_emit_d2c_defines();
-    do maybe_emit_parsergen_build_rule();
 
-    print "$basefile.dylan: \$(SRCDIR)/$basefile.input $PARSERGEN_target";
-    print "\n\t\$(PARSERGEN) ";
+    print "$basefile.dylan: \$(SRCDIR)/$basefile.input\n";
+    printf("\t$host_platform{'recursive_make_command'}\n", $PARSERGEN_DIR, "");
+    print "\t\$(PARSERGEN) ";
     print "\$(SRCDIR)/$basefile.input $basefile.dylan\n\n";
     push(@compile_dependencies, "$basefile.dylan");
     push(@files_to_clean, "$basefile.dylan");
