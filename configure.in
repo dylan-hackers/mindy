@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.32 1999/04/12 19:32:36 tree Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.33 1999/04/20 04:08:02 emk Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -342,7 +342,7 @@ fi
 if test $SCENARIO = BOOTSTRAPPING_WITH_D2C; then
     AC_MSG_CHECKING(for existing d2c runtime)
     if test "$with_existing_runtime" = no; then
-        relative_runtime="lib/dylan$_DCI_D2C_RUNTIME_SUBDIR"
+        relative_runtime="lib/dylan/$_DCI_D2C_RUNTIME_SUBDIR"
 	if test "$prefix" = NONE; then
 	    with_existing_runtime="$ac_default_prefix/$relative_runtime"
 	else	
@@ -824,6 +824,10 @@ AC_SUBST(little_endian)
 # but since it's idempotent we can get away with doing it here.
 $srcdir/mkinstalldirs mindy tools
 
+# Make sure there are no *.dylan.in files in this list. They cause two
+# problems: d2c expects all sources to live in the srcdir (which is a problem
+# in and of itself) and configure tries to create the *.dylan files before
+# we build our builddir tree causing things to flame out horribly.
 AC_OUTPUT(Defaults \
 	mindy/comp/Makefile \
 	mindy/interp/Makefile \
@@ -831,8 +835,6 @@ AC_OUTPUT(Defaults \
 	mindy/etc/Makefile \
 	mindy/etc/generate-depends \
 	mindy/interp/make-init.pl \
-	d2c/compiler/main/version.dylan \
-        common/system/os-constants.dylan \
 	tools/shared-misc/gen-makefile \
 	tools/shared-misc/mk-build-tree \
 	tools/shared-misc/line-count \
@@ -873,8 +875,7 @@ case $SCENARIO in
 	echo "will be used to compile programs written in Dylan."
 	echo
 	echo "If you've already done a second stage build and installed a"
-	echo "a working copy of d2c, you can try 'rm -r bootstrap_compiler',"
-        echo "'rm config.cache; ./configure'."
+	echo "a working copy of d2c, you can try 'make bootstrap_clean'."
 	;;
     MINDY_BUILD)
 	echo "Compiling Mindy and the standard libraries only--d2c will not"
@@ -897,6 +898,10 @@ case $SCENARIO in
 	echo "  2) Re-run configure without the --enable-mindy-bootstrap"
         echo "     option. This will build the Mindy interpreter using your"
 	echo "     local C compiler and will not try to build d2c."
+	echo
+	echo "If your platform isn't officially supported yet, you will want"
+	echo "to consult the porting and maintenance guide available at"
+	echo "<http://www.gwydiondylan.org/> before starting."
 	;;
     CROSS_COMPILING)
 	echo "You're trying to use d2c as a cross-compiler. You may encounter"
@@ -907,3 +912,10 @@ case $SCENARIO in
 	echo "Unknown build scenario! This is a bug."
 	;;
 esac
+if test "$srcdir" != "$builddir"; then
+    echo
+    echo "Warning: Your source directory does not appear to be the same as"
+    echo "your build directory. It should still be possible to build d2c,"
+    echo "but several machine-generated source files will be created in the"
+    echo "source hiearchy instead of the build hierarchy."
+fi
