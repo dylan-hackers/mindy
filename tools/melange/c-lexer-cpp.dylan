@@ -302,6 +302,98 @@ define /* exported */ function open-in-include-path
   end if;
 end function open-in-include-path;
 
+// Check for a #include<angles.h> file
+//
+define method angle-include( state, contents, angle-start, angle-end )
+=>( tokenizer :: <tokenizer> )
+    // We've got a '<>' name, so we need to successively try each of the
+    // directories in include-path until we find it.  (Of course, if a
+    // full pathname is specified, we just use that.)
+    let name = copy-sequence(contents, start: angle-start + 1,
+                                end: angle-end - 1);
+    let (full-name, stream) = open-in-include-path(name);
+    if (full-name)
+        // This is inefficient, but simplifies our logic.  We may wish to
+        // adjust later.
+        close(stream);
+        state.include-tokenizer
+        := make(<tokenizer>, name: full-name, parent: state);
+    else
+        parse-error(state, "File not found: %s", name);
+    end if;
+end;
+
+// Check for a #include"quotes.h" file
+// We could just use angle-include for everything
+// but this maintains the original intent.
+//
+define method quote-include( state, contents, quote-start, quote-end )
+=>( tokenizer :: <tokenizer> )
+    // We've got a '""' name, so we should look in the same directory as
+    // the current ".h" file first.  (Of course, if a full pathname is
+    // specified, we just use that.)
+    let name = copy-sequence(contents, start: quote-start + 1,
+                                end: quote-end - 1);
+    let absolute-name = "";
+    // if (name is not an absolute path) [drive/UNC optional on win32 systems]
+#if (compiled-for-win32)
+    if (regexp-position(name, "((.:)|\\\\)?(\\\\|/)"))
+#else
+    if (first(name) == '/')
+#endif
+        absolute-name := name;
+    else
+        // Turn the a relative pathname into an absolute pathname by
+        // replacing everything after the last path separator with
+        // the new relative path name.  Honestly, no one remembers
+        // why we want to do this, although "gives more useful error
+        // messages" sounds like a good guess.
+
+        // ### If we try to absolutize a relative path with a drive
+        // letter, this will do something horribly wrong.  Then
+        // again, I suspect Melange will have crapped out long
+        // before now if a user tried that.
+        absolute-name := regexp-replace(state.file-name, 
+                                        #if (compiled-for-x86-win32)
+                                            "[^\\\\/]+$", 
+                                        #else
+                                            #if (MacOS)
+                                                    "[^:]+$", 
+                                            #else
+                                                    "[^/]+$", 
+                                            #endif
+                                        #endif
+                                            name);
+    end if;
+    
+    // Make sure the file exists in the same directory as the file
+    // If not, try the include paths
+    let stream = block ()
+                    make(<file-stream>, locator: absolute-name, direction: #"input");
+                exception (<file-does-not-exist-error>)
+                    #f;
+                end block;
+    if (stream)
+        // This is inefficient, but simplifies our logic.  We may wish to
+        // adjust later.
+        close(stream);
+        state.include-tokenizer
+        := make(<tokenizer>, name: absolute-name, parent: state);
+    else
+        // Not found yet? Try the include paths
+        let (full-name, stream) = open-in-include-path(name);
+        if (full-name)
+            // This is inefficient, but simplifies our logic.  We may wish to
+            // adjust later.
+            close(stream);
+            state.include-tokenizer
+            := make(<tokenizer>, name: full-name, parent: state);
+        else
+            parse-error(state, "File not found: %s", name);
+        end if;
+    end if;
+end;
+
 // Creates a nested tokenizer corresponding to a new file specified by an
 // "#include" directive.  The file location is computed from the '<>' or '""'
 // string combined with the enclosing file's directory or the "include-path".
@@ -315,61 +407,9 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
     = if (~found)
 	parse-error(state, "Ill formed #include directive.");
       elseif (angle-start & angle-end)
-	// We've got a '<>' name, so we need to successively try each of the
-	// directories in include-path until we find it.  (Of course, if a
-	// full pathname is specified, we just use that.)
-	let name = copy-sequence(contents, start: angle-start + 1,
-				 end: angle-end - 1);
-	let (full-name, stream) = open-in-include-path(name);
-	if (full-name)
-	  // This is inefficient, but simplifies our logic.  We may wish to
-	  // adjust later.
-	  close(stream);
-	  state.include-tokenizer
-	    := make(<tokenizer>, name: full-name, parent: state);
-	else
-	  parse-error(state, "File not found: %s", name);
-	end if;
+        angle-include(state, contents, angle-start, angle-end);
       elseif (quote-start & quote-end)
-	// We've got a '""' name, so we should look in the same directory as
-	// the current ".h" file.  (Of course, if a full pathname is
-	// specified, we just use that.)
-	let name = copy-sequence(contents, start: quote-start + 1,
-				 end: quote-end - 1);
-
-        // if (name is an absolute path) [drive/UNC optional on win32 systems]
-#if (compiled-for-win32)
-        if (regexp-position(name, "((.:)|\\\\)?(\\\\|/)"))
-#else
-	if (first(name) == '/')
-#endif
-	  state.include-tokenizer
-	    := make(<tokenizer>, name: name, parent: state);
-	else
-	  // Turn the a relative pathname into an absolute pathname by
-	  // replacing everything after the last path separator with
-	  // the new relative path name.  Honestly, no one remembers
-	  // why we want to do this, although "gives more useful error
-	  // messages" sounds like a good guess.
-
-	  // ### If we try to absolutize a relative path with a drive
-	  // letter, this will do something horribly wrong.  Then
-	  // again, I suspect Melange will have crapped out long
-	  // before now if a user tried that.
-	  state.include-tokenizer
-	    := make(<tokenizer>, parent: state,
-		    name: regexp-replace(state.file-name, 
-					   #if (compiled-for-x86-win32)
-					     "[^\\\\/]+$", 
-				           #else
-				           	#if (MacOS)
-				           		"[^:]+$", 
-				           	#else
-					     		"[^/]+$", 
-					     	#endif
-                       #endif
-					   name));
-	end if;
+        quote-include(state, contents, quote-start, quote-end);
       else
         parse-error(state, "Fatal error handling #include: %= %= %= %= %= %=",
                     found, match-end,
