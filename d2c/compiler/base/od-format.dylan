@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.53 1996/07/25 12:58:22 ram Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.54 1996/08/10 20:07:08 nkramer Exp $
 
 /*
 
@@ -1392,27 +1392,16 @@ end method;
 
 define variable *Data-Unit-Search-Path* :: <sequence> = #[];
 
-
 define method search-for-file
     (name :: <byte-string>, hint :: false-or(<location-hint>))
     => (stream :: false-or(<stream>), found-loc :: false-or(<byte-string>));
-  block (return)
-    local
-      method try (path :: <byte-string>) => ();
-	block (punt)
-	  return(make(<file-stream>, locator: path, direction: #"input"),
-		 path);
-	exception (<file-does-not-exist-error>)
-	  #f;
-	end block;
-      end;
-    for (dir in *Data-Unit-Search-Path*)
-      try(concatenate(dir, "/", name));
-    end;
-    hint & try(hint);
-    values(#f, #f);
-  end;
-end;
+  find-and-open-file(name, if (hint)
+			     concatenate(*Data-Unit-Search-Path*, 
+					 vector(hint));
+			   else
+			     *Data-Unit-Search-Path*;
+			   end if);
+end method search-for-file;
 
 
 // find-data-unit
