@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.1 1998/05/03 19:55:14 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/interp.c,v 1.2 1998/09/30 17:45:17 andreas Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -50,6 +50,8 @@
 #include "brkpt.h"
 #include "interp.h"
 #include "../comp/byteops.h"
+
+#define OPS_PER_TIME_SLICE 100
 
 obj_t obj_ComponentClass = 0;
 
@@ -669,7 +671,7 @@ static void op_gt(int byte, struct thread *thread)
     }
 }
 
-void interpret_byte(int byte, struct thread *thread)
+inline void interpret_byte(int byte, struct thread *thread)
 {
     switch (byte) {
       case op_BREAKPOINT:
@@ -983,6 +985,9 @@ void interpret_byte(int byte, struct thread *thread)
 
 void interpret_next_byte(struct thread *thread)
 {
+  int timer = OPS_PER_TIME_SLICE ;
+
+  while(timer-- > 0) 
     interpret_byte(decode_byte(thread), thread);
 }
 
