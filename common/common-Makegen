@@ -2,5 +2,5 @@
 # each makegen should &makegen_include("../common-Makegen"), and also
 # add any of the other common libraries they use to D2CFLAGS.
 
-$D2CFLAGS = '-L../../d2c/runtime/dylan -L../../d2c/runtime/melange ';
+$D2CFLAGS = $d2c_runtime;
 $CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
