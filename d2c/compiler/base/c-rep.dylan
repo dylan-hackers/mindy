@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.6 2001/08/02 07:03:09 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.7 2001/10/07 10:05:49 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -326,8 +326,6 @@ end method;
 
 
 // Assigning class representations.
-
-define variable *assigning-representations-for* :: <list> = #();
 
 define method assign-representations (class :: <cclass>) => ();
   assert(class.direct-speed-representation == #f);
