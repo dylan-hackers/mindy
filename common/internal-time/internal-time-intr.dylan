@@ -104,8 +104,6 @@ end method times;
 define constant anonymous-119
   = load-object-file(#("/lib/libc.sl"), include: #("sysconf"));
 
-define constant $SC-CLK-TCK = 2;
-
 define constant anonymous-120
   = constrain-c-function(find-c-function("sysconf", file: anonymous-119), #(), #t, list(<integer>));
 define method sysconf
@@ -115,4 +113,6 @@ define method sysconf
     = anonymous-120(arg1);
   values(result-value);
 end method sysconf;
+
+define constant $SC-CLK-TCK = 2;
 
