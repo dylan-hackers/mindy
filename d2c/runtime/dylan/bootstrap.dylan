@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.8 1995/12/09 02:45:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.9 1995/12/09 20:58:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-user
@@ -122,6 +122,7 @@ define %%module dylan-viscera
 
     // Extensions
     <fixed-integer>, <extended-integer>, <byte-character>,
+    <ratio>, ratio, numerator, denominator,
     $not-supplied,
     false-or, one-of, <never-returns>,
     format, print-message, print, write-integer, write,

@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.11 1995/12/09 02:45:21 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/exports.dylan,v 1.12 1995/12/09 20:58:32 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -125,6 +125,9 @@ define module Extensions
 	     <fixed-integer>, <extended-integer>, <byte-character>,
 	     $maximum-fixed-integer, $minimum-fixed-integer,
 
+	     // Ratios.
+	     <ratio>, ratio, numerator, denominator,
+
 	     // Handy value that everyone wants.
 	     $not-supplied,
 
@@ -136,6 +139,8 @@ define module Extensions
 
 	     // Debugger Hooks
 	     <debugger>, invoke-debugger, *debugger*,
+
+	     // Buffer stuff.
 	     <byte>,
 	     <byte-vector>,
 	     <buffer>,
@@ -148,7 +153,7 @@ define module Extensions
     export: all;
 end;
 
-define module cheap-io
+define module Cheap-IO
   use Dylan-Viscera,
     import: {
 	     // Cheap-IO stuff.
