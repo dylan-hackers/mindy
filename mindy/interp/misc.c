@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/misc.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/misc.c,v 1.2 1998/12/17 10:21:38 igor Exp $
 *
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
@@ -151,12 +151,12 @@ static obj_t dylan_get_time_of_day (void)
 
 static obj_t dylan_system(obj_t command)
 {
-    return make_fixnum(system(string_chars(command)));
+    return make_fixnum(system((char *)string_chars(command)));
 }
 
 static obj_t dylan_getenv(obj_t name)
 {
-    char *res = getenv(string_chars(name));
+    char *res = getenv((char *)string_chars(name));
 
     if (res)
 	return make_byte_string(res);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/module.c,v 1.1 1998/05/03 19:55:16 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/module.c,v 1.2 1998/12/17 10:21:38 igor Exp $
 *
 * This file implements the module system.
 *
@@ -278,7 +278,7 @@ static obj_t format_entry_origin( struct entry *entry)
     len += strlen( safe_sym_name( entry->p2));
     len += strlen( safe_sym_name( entry->p3));
     origin = alloc_byte_string(len);
-    sprintf( string_chars(origin), 
+    sprintf( (char *) string_chars(origin), 
 	    entry->template, safe_sym_name(entry->p1), 
 	    safe_sym_name(entry->p2), safe_sym_name(entry->p3));
     return origin;

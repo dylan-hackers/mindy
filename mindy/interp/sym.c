@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/sym.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/sym.c,v 1.2 1998/12/17 10:21:40 igor Exp $
 *
 * This file implements symbols.
 *
@@ -139,7 +139,7 @@ obj_t symbol(char *name)
 	 sym != obj_False;
 	 sym = SYMBOL(sym)->next) {
 	if (SYMBOL(sym)->hash == hash) {
-	    if (same_name(name, string_chars(SYMBOL(sym)->name)))
+	    if (same_name(name, (char *) string_chars(SYMBOL(sym)->name)))
 		return sym;
 	}
     }
@@ -159,7 +159,7 @@ obj_t symbol(char *name)
 
 char *sym_name(obj_t sym)
 {
-    return string_chars(SYMBOL(sym)->name);
+    return (char *)string_chars(SYMBOL(sym)->name);
 }
 
 unsigned sym_hash(obj_t sym)

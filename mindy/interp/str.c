@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/str.c,v 1.1 1998/05/03 19:55:17 andreas Exp $
+* $Header: /scm/cvs/src/mindy/interp/str.c,v 1.2 1998/12/17 10:21:39 igor Exp $
 *
 * This file implements strings.
 *
@@ -162,7 +162,7 @@ static obj_t dylan_byte_str_equal(obj_t /* <byte-string> */ str1,
     struct string *s1 = obj_ptr(struct string *, str1);
     struct string *s2 = obj_ptr(struct string *, str2);
 
-    if ((s1->len == s2->len) && (strcmp(s1->chars, s2->chars) == 0))
+    if ((s1->len == s2->len) && (strcmp((char *)s1->chars, (char *)s2->chars) == 0))
 	return obj_True;
     else
 	return obj_False;
