@@ -1,0 +1,13 @@
+
+if ($win32) {
+    # Need to do funky stuff because we rename the file as well as copy it
+    push(@install_dependencies, "\$(DESTDIR)/bin/gen-makefile.perl");
+    print <<EOF;
+
+\$(DESTDIR)/bin/gen-makefile.perl : \$(SRCDIR)/gen-makefile
+	attrib -R \$(DESTDIR)\\bin\\gen-makefile.perl
+	copy \$(SRCDIR)\\gen-makefile \$(DESTDIR)\\bin\\gen-makefile.perl
+EOF
+} else {
+    do install_executable_from_src('bin', 'gen-makefile');
+}

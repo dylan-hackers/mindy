@@ -1,0 +1,12 @@
+
+do install_executable_from_src('bin', 'mk-build-tree');
+do install_executable_from_src('bin', 'mk-rcs-links');
+
+# Can't use emit_c_file_rule because they don't build executables
+print <<EOF;
+
+rcsupdate : rcsupdate.c
+	gcc rcsupdate.c -o rcsupdate
+
+EOF
+do install ('bin', 'rcsupdate');

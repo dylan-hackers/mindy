@@ -1,0 +1,28 @@
+
+if ($win32) {
+    $system_dependent_misc = 'win32-misc';
+} else {
+    $system_dependent_misc = 'hp-misc';
+}
+
+do compile_subdirs(
+    'elisp',
+    'melange',
+    'versioner',
+    'shared-misc',
+    $system_dependent_misc
+);
+
+print <<'EOF';
+.PHONY: force
+
+force:
+	touch force.timestamp
+
+EOF
+
+unless (-e "force.timestamp") {
+    open(FILE, ">force.timestamp")
+	|| die("Can't create force.timestamp: $!\n");
+    close(FILE);
+}
