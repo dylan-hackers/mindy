@@ -1,5 +1,5 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.36 1995/07/19 19:40:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.37 1995/08/07 12:25:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -424,7 +424,9 @@ define open generic %make-method
 define open generic %make-gf () => res :: <generic-function>;
 define open generic add-method (gf :: <generic-function>, meth :: <method>)
     => (new :: <method>, old :: union(<method>, <false>));
-define open generic instance? (value, type :: <type>) => res :: <boolean>;
+define open generic %instance? (value, type :: <type>) => res :: <boolean>;
+define open generic subtype? (type1 :: <type>, type2 :: <type>)
+    => res :: <boolean>;
 define open generic error (msg, #rest args) => res :: type-or();
 define open generic make (class :: <class>, #all-keys) => thing;
 define open generic initialize (instance, #all-keys);
@@ -509,13 +511,23 @@ end;
 
 // Methods that are nice to have by default.
 
-define method check-type
+define method check-type 
+    (object :: <object>, type :: <type>) => object :: <object>;
+  %check-type(object, type);
+end;
+
+define inline method %check-type
     (object :: <object>, type :: <type>) => object :: <object>;
   if (instance?(object, type))
     object;
   else
     type-error(object, type);
   end;
+end;
+
+define method instance?
+    (object :: <object>, type :: <type>) => object :: <object>;
+  %instance(object, type);
 end;
 
 define method make (class :: <class>, #rest keys, #all-keys) => res;
