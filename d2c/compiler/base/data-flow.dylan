@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.5 1995/04/12 17:06:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/data-flow.dylan,v 1.6 1995/04/21 02:37:11 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -59,8 +59,9 @@ end class;
 define abstract class <expression> (<object>)
   //
   // Threaded list of the dependencies connecting this expression to the
-  // assignments that this expression as their RHS.
-  slot dependents :: false-or(<dependency>), init-value: #f;
+  // dependent that use this expression.
+  slot dependents :: false-or(<dependency>),
+    init-value: #f, init-keyword: dependents:;
   //
   // Type we have inferred for this expression.  Any actual value will be an
   // instance of this type.  In <continuation>s and <operation>s this may be a
@@ -71,7 +72,7 @@ end class;
 
 
 // <dependent-mixin> is inherited by all things that can be the direct target
-// of a dependency: assignments, operations and IF-regions.
+// of a dependency: assignments, operations, IF-regions, and lambda results.
 //
 define class <dependent-mixin> (<object>)
   //
@@ -97,6 +98,8 @@ end class;
 // -- In the case of leaves, also by
 //     - <operation> expression operands, and
 //     - IF condition test values.
+// -- In the case of variables, also by
+//     - lambda results
 //
 // Expressions are only linked to the direct uses of that expression.  If I
 // have an expression like "X + Y", then the <operation> "X + Y" is a use of X
