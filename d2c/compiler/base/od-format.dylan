@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.17 1995/11/14 13:38:59 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.18 1995/11/14 14:18:44 ram Exp $
 
 /*
 
@@ -1260,15 +1260,7 @@ define /* exported */ class <load-state> (<object>)
   // cross-unit dependencies.
   slot extern-index :: <simple-object-vector>;
   //
-  // A stack of stuff which can be pushed on by cliques of loader methods that
-  // have some common state they want to hack on.  The theory is that if a
-  // certain kind of object can only appear as a subobject of some other object
-  // which pushes the state on the stack, then the right info will be there.
-  // Pushers should pop when they're done.  Think of this as a shallow-bound
-  // dynamic variable.
-  /* exported */ slot state-stack :: <list>, init-value: #(),
-    /* exported */ setter: state-stack-setter;
-  //
+  // User by debugging code to trace loaders in effect.
   slot load-stack :: <list>, init-value: #();
 end class;
 
@@ -1568,8 +1560,6 @@ define /* exported */ method load-object-dispatch (state :: <load-state>)
 
   let buffer = state.od-buffer;
   let next = state.od-next;
-//dformat("ROD entered, next = %=\n", next);
-let res =
   // Check if we at a label (or the end.)
   if (next >= state.label-index)
     assert(next = state.label-index);
@@ -1610,8 +1600,7 @@ let res =
     select (logand(flags, $odf-etype-mask))
      $odf-object-definition-etype =>
        assert(code < $dispatcher-table-size);
-//let name = find-key(*object-id-registry*, method (x) code = x end);
-//dformat("Calling loader for %=\n", name);
+
 if ($load-debug)
        let orig-stack = state.load-stack;
        block ()
@@ -1647,8 +1636,6 @@ end if;
 
     end select;
   end if;
-//dformat("ROD returning %=\n", res);
-res;
 end method;
 
 
@@ -1829,17 +1816,23 @@ define /* exported */ method request-backpatch
 end method;
 
 
-// Resolve a forward reference, doing any necessary backpatching.
+// Resolve a forward reference, doing any necessary backpatching.  This may be
+// called by loaders to resolve a reference early (before the loader for the
+// object has returned.)
 //
-define method resolve-forward-ref (ref :: <forward-ref>, value :: <object>)
+define /* exported */ method resolve-forward-ref
+  (ref :: <forward-ref>, value :: <object>)
  => ();
-  assert(~ref.obj-resolved?);
-  ref.actual-obj := value;
-  ref.obj-resolved? := #t;
-  for (x in ref.patchers)
-    x(value);
-  end;
-  ref.patchers := #(); // for GC
+  if (ref.obj-resolved?)
+    assert(value == ref.actual-obj);
+  else
+    ref.actual-obj := value;
+    ref.obj-resolved? := #t;
+    for (x in ref.patchers)
+      x(value);
+    end;
+    ref.patchers := #(); // for GC
+  end if;
 end method;
 
 
@@ -1852,6 +1845,8 @@ define method maybe-forward-ref (unit :: <data-unit>, id :: <fixed-integer>)
   let thing = lidx[id];
   if (thing == $empty-object)
     lidx[id] := make(<forward-ref>, ref-id: id);
+  elseif (thing.obj-resolved?)
+    thing.actual-obj;
   else
     thing;
   end;
