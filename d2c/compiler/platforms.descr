@@ -92,7 +92,8 @@
 // encouraged to use this.
 //
 // default-c-compiler-flags: Provides the default value for $(CCFLAGS)
-// inside the makefile.  (see above)
+// inside the makefile.  (see above)  A format string with one arg which is the
+// location of the include directory for runtime.h.
 //
 // assembler-command: A format string that describes how to invoke the
 // assembler.  Arg1 for the format statement is the source code
@@ -226,7 +227,7 @@ library-filename-prefix:
 library-filename-suffix:        .lib
 executable-filename-suffix:     .exe
 compile-c-command:              cl $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -nologo -Ox -DWIN32 -I.
+default-c-compiler-flags:       -nologo -Ox -DWIN32 -I. -I%s
 assembler-command:              as %s -o %s
 link-doesnt-search-for-libs?:   #t
 link-library-command:           lib /nologo /out:%s %s
@@ -266,7 +267,7 @@ inherit-from:                   x86-win32
 default-features:               compiled-for-x86 compiled-for-win32
                                 newlines-are-CRLF C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -g -O4 -finline-functions -I/gwydion/include -I. -DWIN32 -DWIN32_GCC
+default-c-compiler-flags:       -g -O4 -finline-functions -I%s -I. -DWIN32 -DWIN32_GCC
 // gcc/NT is perfectly capable of searching, but it'll look for .a
 // files instead of .lib files, which presents a whole different set
 // of problems
@@ -297,7 +298,7 @@ library-filename-prefix:        lib
 library-filename-suffix:        .a
 executable-filename-suffix:     
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -I. -g -O4 -finline-functions
+default-c-compiler-flags:	-I. -I%s -g -O4 -finline-functions
 assembler-command:              gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
 link-executable-command:        gcc  -o %s %s %s
@@ -347,7 +348,7 @@ default-features:               compiled-for-unix compiled-for-hppa
                                 compiled-for-hpux C-compiler-is-GCC
 library-filename-suffix:        .sl .a
 compile-c-command:              cc -Ae +Z $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -O
+default-c-compiler-flags:       -I%s -O
 assembler-command:              cc $(CCFLAGS) -c %s -o %s
 link-library-command:           ld -b -o %s %s
 link-executable-command:        cc -Wl,+s,+b,/afs/cs/project/gwydion/compiler/lib  -g -o %S %S %S
@@ -373,9 +374,15 @@ default-features:		compiled-for-unix compiled-for-x86
 				compiled-for-linux C-compiler-is-GCC
 word-directive:			.long
 half-word-directive:		.hword
-default-c-compiler-flags:	-I. -g -O4 -finline-functions
 make-command:			make
 supports-debugging?:		#t
 big-endian?:			#f
 descriptor-type-string:         .stabs "<unknown>",100,0,0,.Ltext0\n.text\n.Ltext0:\n.stabs "heapptr_t:t34=*35=xsheapobj:",128,0,6,0\n.stabs "descriptor:T36=s8heapptr:34,0,32;dataword:37=u4l:3,0,32;\\\",128,0,0,0\n.stabs "f:12,0,32;ptr:27,0,32;;,32,32;;",128,0,0,0\n.stabs "descriptor_t:t36",128,0,14,0\n
 descriptor-reference-string:	\t.stabs\t"%s%s:G36",32,0,1,0\n
+
+
+// Consider this a template to be modified for supporting other platforms.
+//
+platform-name:			unknown-unix
+inherit-from:			generic-unix
+default-c-compiler-flags:	-I. -I%s -g
