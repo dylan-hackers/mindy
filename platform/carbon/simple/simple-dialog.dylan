@@ -57,7 +57,7 @@ end class <simple-dialog>;
 */
 
 define method dialog-to-object( dialog :: <DialogRef> )
-=> ( result :: <simple-dialog> )
+=> ( result :: type-union( <simple-dialog>, <boolean> ) ) //- #f
 
 	window-to-object( GetDialogWindow( dialog ) );
 

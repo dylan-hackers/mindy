@@ -52,7 +52,7 @@ end class <simple-window>;
 define constant *objects-by-windowRef* :: <table> = make( <table> );
 
 define method window-to-object( window ::<WindowRef> )
-=> ( result :: <simple-window> )
+=> ( result :: type-union( <simple-window>, <boolean> ) ) //- #f
 
     //- Check for #f and throw an exception if not found!
     element( *objects-by-windowRef*, as( <integer>, window.raw-value ), default: #f );
@@ -100,7 +100,6 @@ define method initialize(	window :: <simple-window>,
 		
 	else
 		// LATER: handle this!
-	
 		#f;
 	
 	end if;

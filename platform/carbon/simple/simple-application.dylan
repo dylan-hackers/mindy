@@ -9,7 +9,7 @@ module: simple
 	-If you want to handle menu events differently at the application level, override
 	application-menu-choice(). It may be more appropriate to override window-menu-choice().
 	If your overriding application-menu-choice() doesn't handle the menu event, call next-method()
-	to make sure trhe default menu functionality is called.
+	to make sure the default menu functionality is called.
 	
 	-To give yourself credit for doing this, override about-box().
 */
@@ -79,16 +79,47 @@ define open generic run( app :: <simple-application> ) => ();
 define method run( app :: <simple-application> )
 => ()
 
-	initialize-application( app );
+        *application* := app;
 
-	initialize-menus( app );
+	InitCursor();
+        
+	RegisterAppearanceClient();	// Get access to StandardAlert
+        
+	block()
 
-	until( app.quit = #t )
-		next-event( app );
-	end until;
-	
-	finalize-application( app );
-	
+            initialize-application( app );
+    
+            initialize-menus( app );
+    
+            install-apple-events();
+    
+            until( app.quit = #t )
+                    next-event( app );
+            end until;
+            
+            remove-apple-events();
+            
+            finalize-application( app );
+        
+        exception( c1 :: type-union( <simple-error>, <simple-warning>, <simple-restart> ) )    
+            StandardAlert( $kAlertStopAlert, "A Condition was thrown.",
+                                apply(format-to-string, c1.condition-format-string, c1.condition-format-arguments), 
+                                as( <AlertStdAlertParam>, $NULL ) );
+        
+        exception( c2 :: <type-error> )    
+            StandardAlert( $kAlertStopAlert, "A Condition was thrown.",
+                                format-to-string( "Type Error: expected an instance of %=, but got %=",
+                                    c2.type-error-expected-type, c2.type-error-value), 
+                                as( <AlertStdAlertParam>, $NULL ) );
+                                
+	exception( c3 :: <condition> )	// And all other <condition> subtypes
+            StandardAlert( $kAlertStopAlert, "A Condition was thrown.",
+                                format-to-string( "%=", c3 ), 
+                                as( <AlertStdAlertParam>, $NULL ) );
+	end block;
+        
+        UnregisterAppearanceClient;
+            
 	values();
 	
 end method run;
@@ -378,10 +409,15 @@ define method application-menu-choice( app :: <simple-application>, menu :: <int
 				SetPort( savePort );*/
 			end if;
 		else if( menu = $FileMenuID )
-				if(item = CountMenuItems( GetMenuHandle( menu ) ) )	// Assume QUIT is last option
+                                if(item = 1)	// Close window
+                                    if( app.front-window ~= #f )
+                                        close-window( app.front-window );
+                                    end if;
+                                end if;
+				/*if(item = CountMenuItems( GetMenuHandle( menu ) ) )	// Assume QUIT is last option
 					// QUIT!
 					app.quit := #t;
-				end if;
+				end if;*/
 			end if;
 		end if;
 	end if;
@@ -459,6 +495,8 @@ define method application-apple-event( app :: <simple-application>, event :: <Ev
 	//-	err ~= errAECantSupplyType )
 		//-FailOSErr(err);
 	//-end if;
+        
+        values();
 	
 end method application-apple-event;
 

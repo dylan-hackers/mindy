@@ -5,6 +5,8 @@ define library simple
 	use dylan;
 	
 	use melange-support;
+        
+        use format;
 	
 	use carbon;
 	
@@ -15,9 +17,11 @@ end library simple;
 define module simple
 
 	use dylan;
-	use cheap-io;
 	
+        use System;
 	use melange-support;
+        
+        use format;
 	
 	use mac-types;
 	use controls;
@@ -29,6 +33,7 @@ define module simple
 	use resources;
 	use sound;
 	use windows;
+        use appearance;
 	
 	export
 	
