@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.51 1995/05/05 16:56:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.52 1995/05/06 08:53:36 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -47,7 +47,8 @@ define method optimize-component (component :: <component>) => ();
 	      function(component);
 	      component.initial-definitions | component.reoptimize-queue;
 	    end;
-      (*do-sanity-checks* & try(assure-all-done, #f))
+      try(propagate-call-results, "propagating call result types")
+	| (*do-sanity-checks* & try(assure-all-done, #f))
 	| try(identify-tail-calls, "finding tail calls")
 	| try(cleanup-control-flow, "cleaning up control flow")
 	| try(add-type-checks, "adding type checks")
@@ -516,10 +517,10 @@ define method optimize-unknown-call
      func :: <hairy-method-literal>,
      inline-expansion :: false-or(<method-parse>))
     => ();
-  let sig = func.signature;
-
   // First, observe the result type.
-  maybe-restrict-type(component, call, sig.returns);
+  maybe-restrict-type(component, call, func.main-entry.result-type);
+
+  let sig = func.signature;
 
   let bogus? = #f;
   let known? = #t;
@@ -863,6 +864,18 @@ define method optimize-known-call
 end;
 
 define method optimize-known-call
+    (component :: <component>, call :: <known-call>, func :: <lambda>) => ();
+  maybe-restrict-type(component, call, func.result-type);
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>,
+     func :: <hairy-method-literal>)
+    => ();
+  maybe-restrict-type(component, call, func.main-entry.result-type);
+end;
+
+define method optimize-known-call
     (component :: <component>, call :: <known-call>,
      func :: <definition-constant-leaf>)
     => ();
@@ -871,8 +884,29 @@ end;
 
 define method optimize-known-call
     (component :: <component>, call :: <known-call>,
+     defn :: <function-definition>)
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <unknown-call>,
+     defn :: <abstract-method-definition>)
+    => ();
+  let sig = defn.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
+  let leaf = defn.method-defn-leaf;
+  if (leaf)
+    optimize-known-call(component, call, leaf);
+  end;
+end;
+
+define method optimize-known-call
+    (component :: <component>, call :: <known-call>,
      func :: <getter-method-definition>)     
     => ();
+  let sig = func.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
   optimize-slot-ref(component, call, func.accessor-method-defn-slot-info);
 end;
 
@@ -880,6 +914,8 @@ define method optimize-known-call
     (component :: <component>, call :: <known-call>,
      func :: <setter-method-definition>)     
     => ();
+  let sig = func.function-defn-signature;
+  maybe-restrict-type(component, call, sig.returns);
   optimize-slot-set(component, call, func.accessor-method-defn-slot-info);
 end;
 
@@ -1780,6 +1816,91 @@ end;
 for (name in #[#"fixnum-floor/", #"fixnum-ceiling/", #"fixnum-round/",
 		 #"fixnum-truncate/"])
   define-primitive-deriver(name, fixnum-args-two-fixnums-result);
+end;
+
+
+
+// Call result propagation.
+
+define method propagate-call-results (component :: <component>) => ();
+  for (lambda in component.all-methods)
+    propagate-call-results-in(component, lambda);
+  end;
+end;
+
+define method propagate-call-results-in
+    (component :: <component>, region :: <simple-region>) => ();
+  for (assign = region.first-assign then assign.next-op,
+       while: assign)
+    let source = assign.depends-on.source-exp;
+    if (instance?(source, <abstract-call>))
+      let func = source.depends-on.source-exp;
+      propagate-call-results-of(component, source, func);
+    end;
+  end;
+end;
+
+define method propagate-call-results-in
+    (component :: <component>, region :: <compound-region>) => ();
+  for (subregion in region.regions)
+    propagate-call-results-in(component, subregion);
+  end;
+end;
+
+define method propagate-call-results-in
+    (component :: <component>, region :: <if-region>) => ();
+  propagate-call-results-in(component, region.then-region);
+  propagate-call-results-in(component, region.else-region);
+end;
+
+define method propagate-call-results-in
+    (component :: <component>, region :: <body-region>) => ();
+  propagate-call-results-in(component, region.body);
+end;
+
+define method propagate-call-results-in
+    (component :: <component>, region :: <exit>) => ();
+end;
+
+define method propagate-call-results-of
+    (component :: <component>, call :: <abstract-call>, function :: <leaf>)
+    => ();
+end;
+
+define method propagate-call-results-of
+    (component :: <component>, call :: <abstract-call>, function :: <lambda>)
+    => ();
+  maybe-restrict-type(component, call, function.result-type);
+end;
+
+define method propagate-call-results-of
+    (component :: <component>, call :: <abstract-call>,
+     function :: <hairy-method-literal>)
+    => ();
+  maybe-restrict-type(component, call, function.main-entry.result-type);
+end;
+
+define method propagate-call-results-of
+    (component :: <component>, call :: <abstract-call>,
+     function :: <definition-constant-leaf>)
+    => ();
+  propagate-call-results-of(component, call, function.const-defn);
+end;
+
+define method propagate-call-results-of
+    (component :: <component>, call :: <abstract-call>,
+     function :: <abstract-constant-definition>)
+    => ();
+end;
+
+define method propagate-call-results-of
+    (component :: <component>, call :: <abstract-call>,
+     function :: <abstract-method-definition>)
+    => ();
+  let leaf = function.method-defn-leaf;
+  if (leaf)
+    propagate-call-results-of(component, call, leaf);
+  end;
 end;
 
 
