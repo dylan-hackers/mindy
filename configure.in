@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.5 1995/03/12 16:28:32 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.6 1995/03/13 22:04:17 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -36,8 +36,9 @@ fi
 AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_LEX
-YACC=${YACC-yacc}
-AC_SUBST(YACC)dnl
+AC_PROG_YACC
+# YACC=${YACC-yacc}
+# AC_SUBST(YACC)dnl
 AC_PROG_RANLIB
 
 #--------------------------------------------------------------------
@@ -57,11 +58,22 @@ AC_SUBST(CCOPTS)dnl
 if test $LEX = flex; then
   LFLAGS=${LFLAGS--i}
 else
-  echo "I could not find flex, so do not try to rebuild comp/lexer.tab.c"
+  echo "I could not find flex, so do not try to rebuild comp/lexer-tab.c"
   echo "because lex cannot do it."
   LFLAGS=${LFLAGS-}
 fi
 AC_SUBST(LFLAGS)
+
+#--------------------------------------------------------------------
+#	Establish the default options for yacc
+#--------------------------------------------------------------------
+
+if test $YACC = bison; then
+  # do nothing
+else
+  echo "I could not find bison, so do not try to rebuild comp/parser-tab.c"
+  echo "or interp/parser-tab.c because yacc cannot do it."
+fi
 
 #--------------------------------------------------------------------
 #	Find out if sigaction is available.
