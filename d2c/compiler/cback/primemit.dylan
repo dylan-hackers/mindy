@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.32 1996/07/17 16:13:02 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.33 1996/08/23 17:09:40 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -440,7 +440,7 @@ define-primitive-emitter
      write-element(stream, ')');
 
      spew-pending-defines(file);
-     if (result-rep)
+     if (result-rep & defines)
        deliver-result(defines, stream-contents(stream),
 		      result-rep, #t, file);
      else
@@ -532,6 +532,7 @@ define method rep-for-c-type (leaf :: <leaf>)
     #"float" => *float-rep*;
     #"double" => *double-rep*;
     #"long-double" => *long-double-rep*;
+    #"object" => *general-rep*;
     #"void" => #f;
   end;
 end;
