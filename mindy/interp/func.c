@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.22 1994/04/26 15:32:41 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/func.c,v 1.23 1994/05/25 12:32:16 wlott Exp $
 *
 * This file does whatever.
 *
@@ -288,11 +288,6 @@ struct method {
 
 static obj_t *push_keywords(obj_t *sp, obj_t keywords, obj_t *args, int nargs)
 {
-    /* ### Should also check to make sure the supplied keywords are okay. */
-    /* But doing so requires us to know if we were invoked via a generic */
-    /* function or directly.  Also, I'm not sure just what keyword checking */
-    /* should be done when we are invoked via a generic function. */
-
     while (keywords != obj_Nil) {
 	obj_t key_info = HEAD(keywords);
 	obj_t key = HEAD(key_info);
@@ -320,6 +315,10 @@ static void really_invoke_methods(obj_t method, obj_t next_methods,
     obj_t keywords = METHOD(method)->keywords;
     int req_args = METHOD(method)->required_args;
     int rest_count = nargs - req_args;
+
+    /* Change the function on the stack to be the next method so that */
+    /* backtraces look better. */
+    args[-1] = method;
 
     if (restp || keywords != obj_False) {
 	obj_t *ptr = thread->sp - rest_count;
