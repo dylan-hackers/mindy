@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.43 2000/03/22 09:30:42 robmyers Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.44 2000/03/31 16:06:09 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -34,7 +34,7 @@ AC_CONFIG_HEADER(config.h)
 # interaction between the runtime and the compiler changes.
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=3
+CURRENT_BOOTSTRAP_COUNTER=4
 
 #--------------------------------------------------------------------
 # Try to guess the right prefix based on a previous installation.
@@ -357,7 +357,8 @@ AC_SUBST(bootstrap_compiler)
 #--------------------------------------------------------------------
 
 # Runtime libraries which must match the compiler used to build d2c.
-RUNTIME_LIBRARIES="libgc.a libruntime.a dylan.lib.du libdylan.a melange-support.lib.du libmelange.a"
+RUNTIME_LIBRARIES="libgc.a libruntime.a dylan.lib.du libdylan.a melange-support.lib.du"
+EXTRA_RUNTIME_LIBRARIES="libmelange.a libmelange-support.a"
 
 # Delete our local runtime directory, if it exists.
 LOCAL_RUNTIME="$builddir"/previous_runtime
@@ -406,6 +407,13 @@ You may need to specify the --with-existing-runtime option to configure; see
 './configure --help' for details.])
 	fi
     done
+    for f in $EXTRA_RUNTIME_LIBRARIES; do
+	lib="$with_existing_runtime/$f"
+	if test -r $lib; then
+	    ln -s "$lib" "$LOCAL_RUNTIME"
+	fi
+    done
+
 
     # Make a link to our runtime.h file.
     # XXX - We need to allow the user to specify a location for this!
