@@ -16,7 +16,3 @@ define sealed domain make(singleton(<GdkWindow**>));
 
 define functional class <GdkGC**> (<indexable-statically-typed-pointer>) end;
 define sealed domain make(singleton(<GdkGC**>));
-
-define open generic size-of-referenced-type
-    (ptr :: <class>)
- => (size :: <integer>);
