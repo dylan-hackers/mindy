@@ -1,0 +1,4 @@
+free()
+malloc()
+strcmp()
+strlen()
