@@ -14,6 +14,22 @@ Gwydion Dylan 2.3.4
   C-header information.  Various bugfixes, including --no-binaries
   for d2c.
 
+
+Gwydion Dylan 2.3.3
+
+  This release is the first official version that includes MacOS
+  support for both mindy and d2c. MacOS X mindy is also
+  working. Endless bugs have been fixed, and we're moving towards
+  common-dylan compliance (this eventually should give you full source
+  code compatibility with Functional Developer).
+
+
+Gwydion Dylan 2.3.2
+
+  New in this release is shared library support, being made possible
+  by Peter Housels C heap generator. 
+
+
 Gwydion Dylan 2.3.1
 
   This is the first release of the new development branch. Lots of
