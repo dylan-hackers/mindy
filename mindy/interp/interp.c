@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.21 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/interp.c,v 1.22 1996/11/11 13:26:17 nkramer Exp $
 *
 * This file implements the actual byte interpreter.
 *
@@ -219,10 +219,18 @@ static void op_push_int(int byte, struct thread *thread)
 
 static void op_conditional_branch(int byte, struct thread *thread)
 {
-    if (*--thread->sp == obj_False) {
+    obj_t test_obj = *--thread->sp;
+    if (test_obj == obj_False) {
 	int disp = decode_int4(thread);
 	thread->pc += disp;
+    } 
+#if 0
+    else if (test_obj == obj_Nil) {
+	fprintf(stderr, "Conditional on EmptyList\n");
+        mindy_pause(pause_HitBreakpoint);
+	thread->pc += 4;
     }
+#endif
     else
 	thread->pc += 4;
 }
