@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.23 2001/03/17 03:43:31 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.24 2001/07/07 17:17:40 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -186,7 +186,7 @@ add-make-dumper
 // build-global-heap -- exported.
 // 
 // Builds the global heap image.  Called after all the libraries have been
-// compiled or loaded.  Dumps all the objects that were defered during the
+// compiled or loaded.  Dumps all the objects that were deferred during the
 // dumping of the library specific local heaps.
 // 
 define method build-global-heap
@@ -692,7 +692,7 @@ end;
 // defer-for-global-heap? -- internal.
 //
 // Decide if we should be defering the dump of this object, and queue it
-// for defered dumping if so.
+// for deferred dumping if so.
 // XXX - If we defer anything, we need to generate a unique label for it, too.
 // See 'object-label' above.
 // 
@@ -721,7 +721,7 @@ define method defer-for-global-heap?
   object.defined-externally?;
 end method defer-for-global-heap?;
 
-// Symbols, on the other hand, must always be defered so we can correctly
+// Symbols, on the other hand, must always be deferred so we can correctly
 // chain them together and guarantee uniqueness.
 // 
 define method defer-for-global-heap?
@@ -731,7 +731,7 @@ define method defer-for-global-heap?
 end method defer-for-global-heap?;
 
 
-// Open generic functions must be defered, because they need to be populated
+// Open generic functions must be deferred, because they need to be populated
 // with any methods defined elsewhere.
 // 
 define method defer-for-global-heap?
@@ -740,9 +740,9 @@ define method defer-for-global-heap?
   #t;
 end method defer-for-global-heap?;
 
-// Open classes must be defered because they must be populated with any
+// Open classes must be deferred because they must be populated with any
 // subclasses defined elsewhere.  Likewise, classes that were not dumped
-// when originally defined must be defered because we *must* not ever dump
+// when originally defined must be deferred because we *must* not ever dump
 // more than one copy.
 // 
 // New: dump all the classes to global heap.
@@ -753,7 +753,7 @@ define method defer-for-global-heap?
   #t;
 end method defer-for-global-heap?;
 
-// Likewise, slot infos for open classes must be defered because their
+// Likewise, slot infos for open classes must be deferred because their
 // position table must be populated with entries for any subclasses that
 // are defined elsewhere.  Except that slots introduced by primary open classes
 // can be dumped now, because the position table can't be changed by
@@ -1119,8 +1119,11 @@ define method spew-object
 	class-primary?: primary?.as-ct-value,
 	class-abstract?: abstract?.as-ct-value,
 	class-sealed?: sealed?.as-ct-value,
-	class-defered-evaluations:
-	  defn.class-defn-defered-evaluations-function
+	class-deferred-evaluations:
+	  defn.class-defn-deferred-evaluations-function
+	  | as(<ct-value>, #f),
+	class-key-defaulter:
+	  defn.class-defn-key-defaulter-function
 	  | as(<ct-value>, #f),
 	class-maker: defn.class-defn-maker-function
 	  | as(<ct-value>, #f),
@@ -1205,7 +1208,7 @@ define method spew-object
     (name :: <byte-string>,
      object :: <defined-cdclass>, state :: <heap-file-state>) => ();
   let defn = object.class-defn;
-  spew-instance(name, specifier-type(#"<class>"), state,
+  spew-instance(name, specifier-type(#"<designator-class>"), state,
 		class-name:
 		  make(<literal-string>,
 		       value: as(<byte-string>,
@@ -1227,8 +1230,11 @@ define method spew-object
 		class-primary?: as(<ct-value>, object.primary?),
 		class-abstract?: as(<ct-value>, object.abstract?),
 		class-sealed?: as(<ct-value>, object.sealed?),
-		class-defered-evaluations:
-		  defn.class-defn-defered-evaluations-function
+		class-deferred-evaluations:
+		  defn.class-defn-deferred-evaluations-function
+		  | as(<ct-value>, #f),
+		class-key-defaulter:
+		  defn.class-defn-key-defaulter-function
 		  | as(<ct-value>, #f),
 		class-maker: defn.class-defn-maker-function
 		  | as(<ct-value>, #f),

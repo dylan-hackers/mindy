@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.25 2001/05/28 20:27:26 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.26 2001/07/07 17:17:39 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -435,6 +435,7 @@ define method c-name (name :: <derived-name>) => (result :: <byte-string>);
 		#"getter" => "_GETTER";
 		#"type-cell" => "_TYPE";
 		#"maker" => "_MAKER";
+		#"key-defaulter" => "_KEYWORD";
 // needed?		#"class-meta" => "_CLASS_META";
 // needed?		#"each-subclass-meta" => "_EACH_META";
 	      end select);
@@ -1452,8 +1453,10 @@ define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
   end if;
   // Walk through various structures and assure that any needed xeps
   // are generated
-  let deferred = defn.class-defn-defered-evaluations-function;
+  let deferred = defn.class-defn-deferred-evaluations-function;
   if (deferred) maybe-emit-entries(deferred, file) end if;
+  let defaulter = defn.class-defn-key-defaulter-function;
+  if (defaulter) maybe-emit-entries(defaulter, file) end if;
   let maker = defn.class-defn-maker-function;
   if (maker) maybe-emit-entries(maker, file) end if;
   // There may be function hidden in various overrides for this class.
