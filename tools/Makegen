@@ -12,6 +12,8 @@ do compile_subdirs(
     'lisp2dylan',
     'versioner',
     'shared-misc',
+    'make-exports',
+    'synopsis',
     $system_dependent_misc
 );
 
