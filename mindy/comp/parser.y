@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/parser.y,v 1.1 1998/05/03 19:55:08 andreas Exp $
+* $Header: /scm/cvs/src/mindy/comp/parser.y,v 1.2 1998/10/18 07:47:08 housel Exp $
 *
 * This file is the grammar.
 *
@@ -954,11 +954,11 @@ named_method:
 ;
 
 method_description:
-	LPAREN parameters RPAREN return_type SEMI body
-	{ free($1); free($3); free($5);
-	  $$ = make_method_description($2, $4, $6);
+	LPAREN parameters RPAREN return_type body
+	{ free($1); free($3);
+	  $$ = make_method_description($2, $4, $5);
 	}
-    |	LPAREN parameters RPAREN return_type semi_opt
+    |	LPAREN parameters RPAREN return_type
 	{ free($1); free($3);
 	  $$ = make_method_description($2, $4, make_body());
 	}
@@ -969,9 +969,9 @@ method_description:
 ;
 
 return_type:
-	ARROW return_type_list
-	{ free($1); $$ = $2; }
-    |	ARROW LPAREN return_type_list RPAREN
+	ARROW return_type_list SEMI
+	{ free($1); free($3); $$ = $2; }
+    |	ARROW LPAREN return_type_list RPAREN semi_opt
 	{ free($1); free($2); free($4); $$ = $3; }
 ;
 
