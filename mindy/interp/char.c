@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.1 1994/03/24 21:49:22 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/char.c,v 1.2 1994/03/26 07:44:36 wlott Exp $
 *
 * This file does whatever.
 *
@@ -65,7 +65,7 @@ static void print_char(obj_t obj)
     int c = char_int(obj);
 
     if (c < ' ' || c > '~')
-	printf("'\\0%03o'", c);
+	printf("'\\%03o'", c);
     else if (c == '\'')
 	printf("'\\''");
     else
