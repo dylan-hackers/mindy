@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.31 1994/11/18 03:40:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.32 1994/11/29 06:41:50 wlott Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -1694,7 +1694,7 @@ void describe(obj_t thing)
 	    int index;
 	    obj_t value;
 
-	    prin1(SD(slot)->name);
+	    fputs(sym_name(SD(slot)->name), stdout);
 	    switch (SD(slot)->alloc) {
 	      case alloc_INSTANCE:
 		index = find_position(DC(class)->instance_positions, slot);
