@@ -1,5 +1,5 @@
 module: extensions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.7 1996/02/17 15:12:29 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/ext.dylan,v 1.8 1996/02/17 17:54:44 nkramer Exp $
 
 //======================================================================
 //
@@ -79,21 +79,3 @@ define constant key-exists? =
     let value = element(coll, key, default: undefined);
     values(value ~= undefined, value);
   end method;
-
-// <dictionary> -- Exported
-//
-// What <table> and <self-organizing-list> are subclasses of.  (If you
-// want the semantics of a <table> but don't necessarily want a hash
-// table implementation, this is what you should use)
-//
-define abstract class <dictionary> (<mutable-explicit-key-collection>,
-				    <stretchy-collection>)
-end class <dictionary>;
-
-
-
-// remove-key! -- Created by the Dylan module
-//
-define open generic remove-key! (dictionary :: <dictionary>, key :: <object>) 
- => new_dictionary :: <dictionary>;
-

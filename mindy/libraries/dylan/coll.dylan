@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.29 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.30 1996/02/17 17:54:44 nkramer Exp $
 
 //======================================================================
 //
@@ -1061,3 +1061,7 @@ define method map-into(destination :: <stretchy-collection>,
     destination;
   end if;
 end method map-into;
+
+define open generic remove-key!
+    (c :: <mutable-explicit-key-collection>, key :: <object>) 
+ => removed-anything? :: <boolean>;

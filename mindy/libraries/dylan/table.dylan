@@ -1,6 +1,6 @@
 module:	    Hash-Tables
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.24 1996/02/13 20:43:17 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/table.dylan,v 1.25 1996/02/17 17:54:44 nkramer Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>, 
             and <value-table>.
 
@@ -161,7 +161,7 @@ define class <bucket-entry> (<object>)
   slot entry-hash-state :: <hash-state>, required-init-keyword: #"hash-state";
 end class <bucket-entry>;
 
-define abstract class <table> (<dictionary>)
+define abstract class <table> (<mutable-explicit-key-collection>)
   slot table-size :: <integer>, init-value: 0;  // Number of keys
   slot buckets :: <simple-object-vector>;  // vector of <bucket-entry>s
   slot bucket-states :: <simple-object-vector>;  // the merged states of each
@@ -635,7 +635,8 @@ define method maybe-shrink-table (ht :: <table>) => ();
   end if;
 end method maybe-shrink-table;
 
-define method remove-key! (ht :: <table>, key) => new-ht :: <table>;
+define method remove-key! (ht :: <table>, key)
+ => removed-anything? :: <boolean>;
   while (~ht.table-hash-state.state-valid?)
     rehash(ht);
   end while;
@@ -661,13 +662,14 @@ define method remove-key! (ht :: <table>, key) => new-ht :: <table>;
       // We leave all the merged-states as is. rehash will take care of it
       // if a remove-key! made the merged-state information overly cautious.
     end if; // had to remove something
-    ht;
+    the-item ~== #f;  // #t if we removed something, #f otherwise
   end if;   // states valid?
 end method remove-key!;
 
 // This is exactly the same code without the garbage collection stuff
 //
-define method remove-key! (ht :: <value-table>, key) => new-ht :: <table>;
+define method remove-key! (ht :: <value-table>, key)
+ => removed-anything? :: <boolean>;
   let (key=, key-hash)      = table-protocol(ht);
   let key-id                = key-hash(key);
   let bucket-index          = modulo(key-id, ht.buckets.size);
@@ -685,7 +687,7 @@ define method remove-key! (ht :: <value-table>, key) => new-ht :: <table>;
 
     maybe-shrink-table(ht);
   end if; // had to remove something
-  ht;
+  the-item ~== #f;  // #t if we removed something, #f otherwise
 end method remove-key!;
 
 // Takes a hashtable and mutates it so that it has a different number of
