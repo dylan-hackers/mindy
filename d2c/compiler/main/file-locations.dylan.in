@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.1 1996/08/22 11:47:45 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/Attic/file-locations.dylan.in,v 1.2 1996/09/04 16:47:21 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -8,7 +8,11 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 
 define constant $default-targets-dot-descr
 #if (compiled-for-x86-win32)
-  = "c:/gwydion/etc/targets.descr";
+  #if (C-compiler-is-gcc)
+    = "/gwydion/etc/targets.descr"; // the gcc runtime doesn't do drive letters
+  #else
+    = "c:/gwydion/etc/targets.descr";
+  #endif
 #elseif (compiled-for-hppa-hpux)
   = "/afs/cs/project/gwydion/compiler/etc/targets.descr";
 #else
