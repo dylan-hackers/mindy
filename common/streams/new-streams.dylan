@@ -445,19 +445,21 @@ define open generic stream-contents (stream :: <positionable-stream>,
  => contents :: <sequence>;
 
 define sealed method stream-contents (stream :: <simple-sequence-stream>,
-				      #key clear-contents? :: <boolean> = #f)
+				      #key clear-contents? :: <boolean> = #t)
  => contents :: <sequence>;
   block ()
     lock-stream(stream);
     check-stream-open(stream);
-    let contents-size = stream.stream-end - stream.stream-start;
+    check-output-stream(stream);
+    let start = stream.stream-start;
+    let contents-size = stream.stream-end - start;
     let res = make(type-for-copy(stream.contents), size: contents-size);
     copy-sequence!(res, 0,
-		   stream.contents, stream.stream-start,
+		   stream.contents, start,
 		   contents-size);
     if (clear-contents?)
-      stream.stream-end := stream.stream-start;
-      stream.position := stream.stream-start;
+      stream.stream-end := start;
+      stream.position := start;
     end if;
     res;
   cleanup
