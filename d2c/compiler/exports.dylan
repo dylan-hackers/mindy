@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.94 1995/11/08 16:45:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.95 1995/11/08 19:54:13 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -458,8 +458,10 @@ define module top-level-forms
   use tokens;
   use compile-time-values;
   use parse-tree;
+  use variables;
   use definitions;
   use builder-interface, import: {<fer-builder>};
+  use od-format;
 
   export
     <top-level-form>,
@@ -737,6 +739,7 @@ define module macros
   use parser;
   use expand;
   use lexenv, exclude: {add-binding};
+  use builder-interface, import: {<fer-builder>};
 
   export
     <define-macro-definition>, <define-bindings-macro-definition>,
@@ -976,6 +979,7 @@ define module define-functions
   use front,
     import: {<function-literal>, <method-literal>, <truly-the>, <mv-call>};
   use compile-time-functions;
+  use od-format;
 
   export
     compute-signature,
@@ -1013,6 +1017,7 @@ define module define-constants-and-variables
   use define-functions;
   use expand;
   use compile-time-functions;
+  use od-format;
 
   export
     <define-bindings-tlf>, tlf-required-defns, tlf-rest-defn;
