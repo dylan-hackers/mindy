@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.28 2001/09/17 11:47:31 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.29 2001/10/11 21:48:58 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -515,10 +515,10 @@ end;
 // name must be unique without any such suffix.  Name can be #f if there is no
 // <name> object, but you then must supply a modifier.
 //
-define method new-c-global
+define function new-c-global
     (name :: false-or(<name>), file :: <file-state>, 
      #key modifier :: <string> = "")
- => res :: <string>;
+ => res :: <byte-string>;
   let unit = file.file-unit;
   let da-name = if (name) name.c-name else "" end;
   let result = stringify(unit.unit-prefix, 'Z', da-name, modifier);
@@ -532,22 +532,20 @@ define method new-c-global
 //    end if;
     new-c-global(name, file, modifier: stringify(modifier, '_', num));
   end if;
-end method new-c-global;
+end function new-c-global;
 
 
-// Add a new root description and return the root index.
+// Add a new root description.
 //
-define method new-root
+define function new-root
     (init-value :: false-or(<ct-value>), name :: <byte-string>,
      file :: <file-state>, #key comment :: false-or(<byte-string>))
- => res :: <integer>;
+ => ();
   let unit = file.file-unit;
   let roots = unit.unit-init-roots;
-  let index = roots.size;
   let root = make(<root>, init-value: init-value, name: name,
 		  comment: comment);
-  roots[index] := root;
-  index;
+  add!(roots, root);
 end;
 
 
@@ -894,9 +892,7 @@ define method make-function-info
 	  for (key-info in signature.key-infos)
 	    add!(reps, pick-representation(key-info.key-type, #"speed"));
 	    if (key-info.key-needs-supplied?-var)
-	      add!(reps,
-		   pick-representation(specifier-type(#"<boolean>"),
-				       #"speed"));
+	      add!(reps, pick-representation(boolean-ctype(), #"speed"));
 	    end;
 	  end;
 	end;
@@ -1731,7 +1727,7 @@ define method compute-function-prototype
   stream.stream-contents;
 end;
 
-define method pick-result-structure
+define function pick-result-structure
     (results :: <sequence>, file :: <file-state>) => res :: <byte-string>;
   let types = map-as(<simple-object-vector>, representation-c-type, results);
   let table = file.file-result-structures;
@@ -1749,7 +1745,6 @@ define method pick-result-structure
     end;
     format(stream, "};\n\n");
     element(table, types) := name;
-    name;
   end;
 end;
 
