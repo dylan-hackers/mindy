@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.26 1995/05/09 16:15:25 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.27 1995/05/12 12:40:34 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -182,15 +182,19 @@ define method dump
 		   prefix: "(",
 		   body:
 		     method (stream)
-		       for (var = func.prologue.dependents.dependent.defines
-			      then var.definer-next,
-			    first? = #t then #f,
-			    while: var)
+		       for (arg-type in func.argument-types,
+			    var = func.prologue.dependents.dependent.defines
+			      then var & var.definer-next,
+			    first? = #t then #f)
 			 unless (first?)
 			   write(", ", stream);
 			   pprint-newline(#"fill", stream);
 			 end;
-			 dump(var, stream);
+			 if (var)
+			   dump(var, stream);
+			 else
+			   write("???", stream);
+			 end;
 		       end;
 		     end,
 		   suffix: ")");
@@ -419,13 +423,14 @@ define method dump (ct-value :: <ct-value>, stream :: <stream>) => ();
 end;
 
 define method dump (lit :: type-or(<literal-number>, <literal-symbol>,
-				   <literal-character>, <literal-string>),
+				   <literal-character>, <literal-string>,
+				   <literal-empty-list>, <literal-boolean>),
 		    stream :: <stream>) => ();
-  print(lit.literal-value, stream);
+  print-message(lit, stream);
 end;
 
-define method dump (ct-value :: <ctype>, stream :: <stream>) => ();
-  print-message(ct-value, stream);
+define method dump (type :: <ctype>, stream :: <stream>) => ();
+  print-message(type, stream);
 end;
 
 define method dump (leaf :: <definition-constant-leaf>, stream :: <stream>)
