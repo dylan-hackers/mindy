@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.4 1995/04/14 03:01:49 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.5 1995/04/21 02:49:16 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -17,7 +17,7 @@ define method file-tokenizer (lib :: <library>, name :: <byte-string>)
 end;
 
 
-define method compile (#rest files) => res :: <region>;
+define method compile (#rest files) => res :: <component>;
   $Top-Level-Forms.size := 0;
   for (file in files)
     format(*debug-output*, "Parsing %s\n", file);
@@ -34,8 +34,21 @@ define method compile (#rest files) => res :: <region>;
   format(*debug-output*, "Converting in FER\n");
   let component = make(<fer-component>);
   let builder = make-builder(component);
+  let init-function
+    = build-method-body(builder, $Default-Policy, make(<source-location>),
+			#(), #());
   do(curry(convert-top-level-form, builder), $Top-Level-Forms);
-  builder-result(builder);
+  end-body(builder);
+  format(*debug-output*, "Converting into SSA form\n");
+  convert-to-ssa(component);
+  format(*debug-output*, "Deriving types\n");
+  derive-types(component);
+  format(*debug-output*, "Emitting C code.\n");
+  let output-info = make(<output-info>);
+  do(rcurry(emit-tlf-gunk, output-info), $Top-Level-Forms);
+  do(rcurry(emit-lambda, output-info), component.all-methods);
+  output-info-results(output-info);
+  component;
 end;
 
 define method main (argv0, #rest files)
