@@ -63,7 +63,7 @@ if ($cross_compiling) {
 $MC = '@MC@';
 $MINDY = '@MINDY@';
 $DYLANPATH = @DYLANPATH@;
-$CC = 'gcc';
+$CC = '@CC@';
 if ($enable_debug) {
   $CFLAGS = '-g -O4 -finline-functions';
 } else {
