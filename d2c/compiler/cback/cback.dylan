@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.16 1995/04/26 22:04:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.17 1995/04/27 04:36:30 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -892,6 +892,33 @@ define method emit-assignment
   deliver-results(defines, #[], output-info);
 end;
 
+define method emit-assignment
+    (results :: false-or(<definition-site-variable>),
+     call :: <self-tail-call>, output-info :: <output-info>)
+    => ();
+  spew-pending-defines(output-info);
+  let lambda = call.self-tail-call-of;
+  for (param = lambda.prologue.dependents.dependent.defines
+	 then param.definer-next,
+       closure-var = lambda.environment.closure-vars
+	 then closure-var.closure-next,
+       while: closure-var & param)
+  finally
+    let stream = output-info.output-info-guts-stream;
+    for (param = param then param.definer-next,
+	 arg-dep = call.depends-on then arg-dep.dependent-next,
+	 while: arg-dep & param)
+      let (name, rep) = c-name-and-rep(param, output-info);
+      format(stream, "%s = %s;\n",
+	     name, ref-leaf(rep, arg-dep.source-exp, output-info));
+    finally
+      if (arg-dep | param)
+	error("Wrong number of operands in a self-tail-call?");
+      end;
+    end;
+  end;
+  deliver-results(results, #[], output-info);
+end;
 
 
 define method deliver-results (defines :: false-or(<definition-site-variable>),
