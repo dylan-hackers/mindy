@@ -302,120 +302,68 @@ define function expand-cpp-tokens
 end function expand-cpp-tokens;
 
 
-// open-in-include-path -- exported function.
-//
-define /* exported */ function open-in-include-path
-    (name :: <string>,
-     #key user-include-path :: <sequence>,
-     system-include-path :: <sequence>,
-     user-header? :: <boolean>,
-     current-directory :: false-or(<string>))
- => (full-name :: false-or(<string>), stream :: false-or(<stream>));
-  if (first(name) == '/')
-    block ()
-      values(name, make(<file-stream>, locator: name, direction: #"input"));
-    exception (<file-does-not-exist-error>)
-      values(#f, #f);
-    end block;
-  else
-    // We don't have any "file-exists" functions, so we just keep trying
-    // to open files until one of them fails to signal an error.
-    block (return)
-      for (dir in system-include-path)
-	block ()
-	  let full-name = concatenate(dir, "/", name);
-	  let stream = make(<file-stream>, locator: full-name,
-			    direction: #"input");
-	  return(full-name, stream);
-	exception (<file-does-not-exist-error>)
-	  #f;
-	end block;
-      finally
-	values(#f, #f);
-      end for;
-    end block;
-  end if;
-end function open-in-include-path;
-
 // Creates a nested tokenizer corresponding to a new file specified by an
 // "#include" directive.  The file location is computed from the '<>' or '""'
 // string combined with the enclosing file's directory or the "include-path".
 //
 define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
+  unless (state.include-path)
+    parse-error(state, "not allowed to use #include here");
+  end unless;
   let contents :: <string> = state.contents;
   let (found, match-end, angle-start, angle-end, quote-start, quote-end)
     = regexp-position(contents, "^(<[^>]+>)|(\"[^\"]+\")", start: pos);
   state.position := match-end;
-  let generator
-    = if (~found)
-	parse-error(state, "Ill formed #include directive.");
-      elseif (angle-start & angle-end)
-	// We've got a '<>' name, so we need to successively try each of the
-	// directories in include-path until we find it.  (Of course, if a
-	// full pathname is specified, we just use that.)
-	let name = copy-sequence(contents, start: angle-start + 1,
-				 end: angle-end - 1);
-	let (full-name, stream) =
-	  open-in-include-path(name,
-			       user-include-path: state.user-include-path,
-			       system-include-path: state.system-include-path);
-	if (full-name)
-	  // This is inefficient, but simplifies our logic.  We may wish to
-	  // adjust later.
-	  close(stream);
-	  state.include-tokenizer
-	    := make(<tokenizer>, name: full-name, parent: state);
+  let (name, full-name) =
+    if (~found)
+      parse-error(state, "Ill formed #include directive.");
+    elseif (angle-start & angle-end)
+      // We've got a '<>' name, so we need to successively try each of the
+      // directories in include-path until we find it.  (Of course, if a
+      // full pathname is specified, we just use that.)
+      let name = copy-sequence(contents, start: angle-start + 1,
+			       end: angle-end - 1);
+      values(name, find-in-include-path(name,
+					state.include-path,
+					system-header?: #t));
+    elseif (quote-start & quote-end)
+      // We've got a '""' name, so we should look in the same directory as
+      // the current ".h" file.  (Of course, if a full pathname is
+      // specified, we just use that.)
+      let name = copy-sequence(contents, start: quote-start + 1,
+			       end: quote-end - 1);
+      // XXX - work around "<top-level>" grik in c-parser-engine.input.
+      let current-header =
+	if (state.file-name = "<top-level>")
+	  #f;
 	else
-	  parse-error(state, "File not found: %s", name);
+	  state.file-name;
 	end if;
-      elseif (quote-start & quote-end)
-	// We've got a '""' name, so we should look in the same directory as
-	// the current ".h" file.  (Of course, if a full pathname is
-	// specified, we just use that.)
-	let name = copy-sequence(contents, start: quote-start + 1,
-				 end: quote-end - 1);
+      values(name, find-in-include-path(name,
+					state.include-path,
+					system-header?: #f,
+					current-header: current-header));
+    else
+      parse-error(state, "Fatal error handling #include: %= %= %= %= %= %=",
+		  found, match-end,
+		  angle-start, angle-end,
+		  quote-start, quote-end);
+    end if;
 
-        // if (name is an absolute path) [drive/UNC optional on win32 systems]
-#if (compiled-for-win32)
-        if (regexp-position(name, "((.:)|\\\\)?(\\\\|/)"))
-#else
-	if (first(name) == '/')
-#endif
-	  state.include-tokenizer
-	    := make(<tokenizer>, name: name, parent: state);
-	else
-	  // Turn the a relative pathname into an absolute pathname by
-	  // replacing everything after the last path separator with
-	  // the new relative path name.  Honestly, no one remembers
-	  // why we want to do this, although "gives more useful error
-	  // messages" sounds like a good guess.
+  let generator =
+    if (full-name)
+      state.include-tokenizer
+	:= make(<tokenizer>, name: full-name, parent: state);
+    else
+      parse-error(state, "file not found: %s", name);
+    end if;
 
-	  // ### If we try to absolutize a relative path with a drive
-	  // letter, this will do something horribly wrong.  Then
-	  // again, I suspect Melange will have crapped out long
-	  // before now if a user tried that.
-	  state.include-tokenizer
-	    := make(<tokenizer>, parent: state,
-		    name: regexp-replace(state.file-name, 
-					   #if (compiled-for-x86-win32)
-					     "[^\\\\/]+$", 
-				           #else
-					     "[^/]+$", 
-                                           #endif
-					   name));
-	end if;
-      else
-        parse-error(state, "Fatal error handling #include: %= %= %= %= %= %=",
-                    found, match-end,
-                    angle-start, angle-end,
-                    quote-start, quote-end);
-      end if;
   parse-progress-report(generator, ">>> entered header >>>");
   unget-token(generator, make(<begin-include-token>, position: pos,
 			      generator: generator,
 			      string: generator.file-name));
 end method cpp-include;
-    
+
 // Processes a preprocessor macro definition.  For "simple" macros, this only
 // involves building a reversed sequence of tokens from the remainder of the
 // line and putting it in cpp-table.  However, if it is a parameterized macro
