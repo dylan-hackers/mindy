@@ -1,6 +1,8 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/Parser.lid,v 1.1 1996/01/08 13:10:13 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/Parser.lid,v 1.2 1996/02/02 23:12:12 wlott Exp $
 library: compiler-parser
-unique-id-base: 11000
+unit-prefix: parser
+unique-id-base: 10500
 
+parser-exports.dylan
 parser.dylan
 macros.dylan
