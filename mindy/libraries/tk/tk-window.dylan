@@ -157,7 +157,7 @@ define method pack
   put-tk-line("pack ", place-string, place-window, " ", window,
 	       " {", side, fill-string, 
 	       if (expand) " expand" else "" end,
-	       " ", if (anchor) anchor else "" end,
+	       " ", if (anchor) concatenate("frame ", anchor) else "" end,
 	       " padx ", padx | 0,
 	       " pady ", pady | 0, "}");
   window;
