@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.3 1994/03/30 17:06:14 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.4 1994/03/31 20:56:50 ram Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -228,13 +228,13 @@ end method reduce;
 define method reduce1(proc :: <function>, collection :: <collection>)
   let (init_state, limit, next_state, done?,
        current_key, current_element) = forward-iteration-protocol(collection);
-  if (done?(collection, state, limit)) // empty collection
+  if (done?(collection, init_state, limit)) // empty collection
     error("Reduce1 not defined for empty collections.");
   else 
     for (state = next_state(collection, init_state)
 	   then next_state(collection, state),
 	 value = current_element(collection, init_state)
-	   then proc(value, current_element(collection, init_state)),
+	   then proc(value, current_element(collection, state)),
 	 until done?(collection, state, limit))
     finally value;
     end for;
