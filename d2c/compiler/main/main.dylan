@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.46 1996/02/02 23:17:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.47 1996/02/05 13:29:14 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -304,9 +304,9 @@ define method compile-library
 	    let sig = make(<signature>, specializers: #(),
 			   returns: result-type);
 	    let ctv = make(<ct-function>, name: name, signature: sig);
-	    add!(init-functions,
-		 make-function-literal(builder, ctv, #f, #"global", sig,
-				       init-function));
+	    make-function-literal(builder, ctv, #f, #"global", sig,
+				  init-function);
+	    add!(init-functions, ctv);
 	  end;
 	  optimize-component(component);
 	  emit-tlf-gunk(tlf, file);
@@ -348,7 +348,7 @@ define method compile-library
     if (entry-point)
       entry-function := build-command-line-entry(lib, entry-point, file);
     end if;
-    emit-epilogue(init-functions, file);
+    build-unit-init-function(unit-prefix, init-functions, body-stream);
     close(body-stream);
 
     let o-name = concatenate(unit-prefix, "-init.o");
@@ -404,14 +404,22 @@ define method compile-library
       let stream = make(<file-stream>, name: "inits.c", direction: #"output");
       write("#include <runtime.h>\n\n", stream);
       write("/* This file is machine generated.  Do not edit. */\n\n", stream);
+      let entry-function-name
+	= (entry-function
+	     & (make(<ct-entry-point>, for: entry-function, kind: #"main")
+		  .entry-point-c-name));
+      if (entry-function-name)
+	format(stream,
+	       "extern void %s(descriptor_t *sp, int argc, void *argv);\n\n",
+	       entry-function-name);
+      end if;
       write("void inits(descriptor_t *sp, int argc, char *argv[])\n{\n",
 	    stream);
       for (unit in *units*)
 	format(stream, "    %s_init(sp);\n", unit.unit-name);
       end;
-      if (entry-function)
-	let ep = make(<ct-entry-point>, for: entry-function, kind: #"main");
-	format(stream, "    %s(sp, argc, argv);\n", ep.entry-point-c-name);
+      if (entry-function-name)
+	format(stream, "    %s(sp, argc, argv);\n", entry-function-name);
       end if;
       write("}\n", stream);
       close(stream);
@@ -458,6 +466,52 @@ define method compile-library
 
   format(*debug-output*, "Compilation finished with %d Warning%s\n",
 	 *warnings*, if (*warnings* == 1) "" else "s" end);
+end;
+
+define constant $max-inits-per-function = 25;
+
+define method emit-init-functions
+    (unit-prefix :: <byte-string>, init-functions :: <vector>,
+     start :: <integer>, finish :: <integer>, stream :: <stream>)
+    => body :: <byte-string>;
+  let string-stream = make(<byte-string-output-stream>);
+  if (finish - start <= $max-inits-per-function)
+    for (index from start below finish)
+      let init-function = init-functions[index];
+      let ep = make(<ct-entry-point>, for: init-function, kind: #"main");
+      let name = ep.entry-point-c-name;
+      format(stream, "extern void %s(descriptor_t *sp);\n\n", name);
+      format(string-stream, "    %s(sp);\n", name);
+    end for;
+  else
+    for (divisions = finish - start
+	   then ceiling/(divisions, $max-inits-per-function),
+	 while: divisions > $max-inits-per-function)
+    finally
+      for (divisions from divisions above 0 by -1)
+	let count = ceiling/(finish - start, divisions);
+	let name = format-to-string("%s_init_%d_%d",
+				    unit-prefix, start, start + count - 1);
+	let guts = emit-init-functions(unit-prefix, init-functions,
+				       start, start + count, stream);
+	format(stream, "static void %s(descriptor_t *sp)\n{\n%s}\n\n",
+	       name, guts);
+	format(string-stream, "    %s(sp);\n", name);
+	start := start + count;
+      end for;
+    end for;
+  end if;
+  string-stream.string-output-stream-string;
+end method emit-init-functions;
+
+define method build-unit-init-function
+    (unit-prefix :: <byte-string>, init-functions :: <vector>,
+     stream :: <stream>)
+    => ();
+  let init-func-guts = emit-init-functions(unit-prefix, init-functions,
+					   0, init-functions.size, stream);
+  format(stream, "void %s_init(descriptor_t *sp)\n{\n%s}\n",
+	 unit-prefix, init-func-guts);
 end;
 
 
