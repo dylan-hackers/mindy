@@ -8,7 +8,7 @@ define suite libraries-test-suite ()
   suite dylan-test-suite;
   suite common-dylan-test-suite;
 //  suite functional-dylan-test-suite;
-//  suite collections-test-suite;
+  suite collections-test-suite;
 // suite system-test-suite;
 //  suite io-test-suite;
 //  suite testworks-test-suite;

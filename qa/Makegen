@@ -1,31 +1,18 @@
 &compile_subdirs("testworks", "testworks-specs");
 
-if ($features{'compiled_for_win32'}) {
+@testdirs = ("../d2c/runtime/dylan/tests",
+	     "../common/tests",
+	     "../common/collections/tests");
+
+foreach $testdir (@testdirs) {
+    if ($features{'compiled_for_win32'}) {
+	$testdir =~ s|/|\\|;
+    }
+
     push(@compile_commands,
-        sprintf($host_platform{'recursive_make_command'},
-		    "..\common\tests", ""));
+	 sprintf($host_platform{'recursive_make_command'}, $testdir, ""));
     push(@clean_commands,
-        sprintf($host_platform{'recursive_make_command'},
-		    "..\common\tests", "clean"));
-    push(@compile_commands,
-        sprintf($host_platform{'recursive_make_command'},
-		    "..\d2c\runtime\dylan\tests", ""));
-    push(@clean_commands,
-        sprintf($host_platform{'recursive_make_command'},
-		    "..\d2c\runtime\dylan\tests", "clean"));
-} else {
-    push(@compile_commands,
-         sprintf($host_platform{'recursive_make_command'},
-             "../d2c/runtime/dylan/tests", ""));
-    push(@clean_commands,
-         sprintf($host_platform{'recursive_make_command'},
-             "../d2c/runtime/dylan/tests", "clean"));
-    push(@compile_commands,
-         sprintf($host_platform{'recursive_make_command'},
-             "../common/tests", ""));
-    push(@clean_commands,
-         sprintf($host_platform{'recursive_make_command'},
-             "../common/tests", "clean"));
+	 sprintf($host_platform{'recursive_make_command'}, $testdir, "clean"));
 }
 
 &compile_subdirs("test-suites", "test-apps");

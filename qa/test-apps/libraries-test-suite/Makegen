@@ -10,6 +10,8 @@ $D2CFLAGS
     . ' -L../../testworks-specs'
     . ' -L../../test-suites/libraries-test-suite'
     . ' -L../../../common/tests'
+    . ' -L../../../common/collections'
+    . ' -L../../../common/collections/tests'
     . ' -L../../../d2c/runtime/random';
 
 do emit_library_rule(
