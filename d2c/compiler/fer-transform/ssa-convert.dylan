@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.7 2001/10/19 00:11:03 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.8 2003/04/11 22:15:40 gabor Exp $
 copyright: see below
 
 
@@ -203,7 +203,8 @@ define method expand-cluster
     let defns = map(method (assign, next-define)
 		      make(<initial-definition>, var-info: var-info,
 			   definition: var, definer: assign,
-			   definer-next: next-define);
+			   definer-next: next-define,
+			   needs-type-check: #f);
 		    end,
 		    assigns, new-defines);
     let dep = make(<dependency>, source-exp: var, source-next: #f,
