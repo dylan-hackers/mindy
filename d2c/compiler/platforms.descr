@@ -30,7 +30,7 @@
 // Mandatory keywords (must be declared either in this target or in
 // one of the targets it inherits from):
 //
-// target-name: The name of the target.  This is what the compiler
+// platform-name: The name of the target.  This is what the compiler
 // looks at when it tries to figure out what "foo" refers to in
 // "-Tfoo".  The compiler internals do *not* get to look at this name;
 // if it did, users could not define new targets.
@@ -126,7 +126,38 @@
 // move-file-command: A format string for the command to move a file.
 // The first arg will be the old filename, the second arg will be the
 // new filename.
-
+//
+// path-separator: The character to use to separate path components
+// (ie, in Unix, /, and in win32, \)
+//
+// makefile-name: The preferred name of a makefile, usually "Makefile"
+// or "GNUmakefile".
+//
+// make-supports-phony-targets?: Whether or not the make utility
+// supports .PHONY targets.  If it does, mk-build-tree will use them.
+//
+// recursive-make-command: A format string for the command to invoke
+// make on a subdirectory.  The first arg will be the directory, and
+// the second will be arguments passed to make (esp. the makefile
+// target to build).
+//
+// makefiles-can-rebuild-themselves?: Whether or not the make utility
+// supports makefiles that can rebuild themselves.  If it does,
+// mk-build-tree will create makefiles that rebuild themselves
+// whenever the Makegen or Defaults files change.
+//
+// uses-drive-letters?: Whether or not the platform uses drive letters
+// in its paths (like MS-Windows does).
+//
+// environment-variables-can-be-exported?: Whether or not we can
+// define and export environment variables from within a makefile.  If
+// supported, mk-build-tree will generate makefiles that export the
+// CCFLAGS variable.
+//
+// use-dbclink?: Whether or not we should use dbclink to link .dbc
+// files together.  If #f, we use "cat $(OBJS) > target.dbc".
+//
+//
 // Optional flags: (All defaults are #f)
 //
 // link-doesnt-search-for-libs?: If #t, the compiler assume the linker
@@ -159,9 +190,9 @@
 
 // Microsoft Windows '95 or NT on Intel 80386 or higher
 //
-target-name:                    x86-win32
-default-features:               compiled-for-x86-win32 newlines-are-CRLF
-				C-compiler-is-VC 
+platform-name:                    x86-win32
+default-features:               compiled-for-x86 compiled-for-win32 
+                                newlines-are-CRLF C-compiler-is-VC
 integer-length:			32
 heap-preamble:                  \t.data\n\t.balign 8\t
 align-directive:                .balign
@@ -188,10 +219,17 @@ compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
 supports-debugging?:            #f
 path-separator:        		\\
+makefile-name:                  Makefile
+make-supports-phony-targets?:   #f
+recursive-make-command:         cmd /c "cd %s && $(MAKE) /nologo %s"
+makefiles-can-rebuild-themselves?:      #f
+uses-drive-letters?:                    #t
+environment-variables-can-be-exported?: #f
+use-dbclink?:                           #t
 
 // Another name for x86-win32
 //
-target-name:                    x86-win32-vc
+platform-name:                    x86-win32-vc
 inherit-from:                   x86-win32
 
 
@@ -201,10 +239,10 @@ inherit-from:                   x86-win32
 // Since we only added gcc/NT support for debugging purposes,
 // default-cc-flags says to keep debugging information.
 //
-target-name:                    x86-win32-gcc
+platform-name:                    x86-win32-gcc
 inherit-from:                   x86-win32
-default-features:               compiled-for-x86-win32 newlines-are-CRLF
-				C-compiler-is-GCC
+default-features:               compiled-for-x86 compiled-for-win32
+                                newlines-are-CRLF C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:       -g -O4 -finline-functions -I/gwydion/include -I. -DWIN32 -DWIN32_GCC
 // gcc/NT is perfectly capable of searching, but it'll look for .a
@@ -219,44 +257,68 @@ uses-win32-stabs?:		#t
 path-separator:        		/
 
 
-// HP/UX on HP PA-RISC processors.  gcc/gdb/dig
+// Generic Unix on a 32 bit processor, using gcc and gas.  This target
+// is not intended to be used directly, merely inherited from.
 //
-target-name:                    hppa-hpux
-default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
+platform-name:                    generic-unix
+default-features:               compiled-for-unix C-compiler-is-GCC
 integer-length:			32
-heap-preamble:                  \t.SPACE $PRIVATE$\n\t.SUBSPA $DATA$\n\t.data\n\t.align 8\t
+heap-preamble:                  \t.data\n\t.align 8\t
 align-directive:                .align
-export-directive:               \t.export\t%s, DATA\n
-import-directive-required?:      #t
+export-directive:               \t.global\t%s\n
 word-directive:                 .word
 half-word-directive:            .half
 byte-directive:                 .byte
-comment-token:                  ;
+comment-token:                  #
 mangled-name-prefix:            
 object-filename-suffix:         .o
 library-filename-prefix:        lib
-library-filename-suffix:        .a .sl
+library-filename-suffix:        .a
 executable-filename-suffix:     
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
-default-c-compiler-flags:       -g -O4 -finline-functions
+default-c-compiler-flags:       -I. -g -O4 -finline-functions
 assembler-command:              gcc $(CCFLAGS) -c %s -o %s
-link-library-command:           /bin/ar qc %s %s
-link-executable-command:        gcc -z -o %s %s %s
-link-executable-flags:          -L/lib/pa1.1 -lm /usr/lib/end.o
+link-library-command:           ar qc %s %s
+link-executable-command:        gcc  -o %s %s %s
+link-executable-flags:          -lm
 make-command:                   gmake
 delete-file-command:            rm -f
 compare-file-command:           cmp -s %s %s
 move-file-command:              mv -f %s %s
-supports-debugging?:            #t
+supports-debugging?:            #f
 path-separator:        		/
+recursive-make-command:         $(MAKE) -C %s
+makefile-name:                  GNUmakefile
+make-supports-phony-targets?:   #t
+makefiles-can-rebuild-themselves?:      #t
+uses-drive-letters?:                    #f
+environment-variables-can-be-exported?: #t
+use-dbclink?:                           #f
+
+// HP/UX on HP PA-RISC processors.  gcc/gdb/dig
+//
+platform-name:                    hppa-hpux
+inherit-from:                   generic-unix
+default-features:               compiled-for-unix compiled-for-hppa 
+                                compiled-for-hpux C-compiler-is-GCC
+heap-preamble:                  \t.SPACE $PRIVATE$\n\t.SUBSPA $DATA$\n\t.data\n\t.align 8\t
+export-directive:               \t.export\t%s, DATA\n
+import-directive-required?:      #t
+comment-token:                  ;
+library-filename-suffix:        .a .sl
+link-library-command:           /bin/ar qc %s %s
+link-executable-command:        gcc -z -o %s %s %s
+link-executable-flags:          -L/lib/pa1.1 -lm /usr/lib/end.o
+supports-debugging?:            #t
 omit-colon-after-label-declarations?:  #t
 
 
 // HP/UX on HP PA-RISC processors w/ shared libs, HP CC, no gdb.  Try xdb.
 //
-target-name:                    hppa-hpux-shared
+platform-name:                    hppa-hpux-shared
 inherit-from:                   hppa-hpux
-default-features:               compiled-for-hppa-hpux C-compiler-is-GCC
+default-features:               compiled-for-unix compiled-for-hppa 
+                                compiled-for-hpux C-compiler-is-GCC
 library-filename-suffix:        .sl .a
 compile-c-command:              cc -Ae +Z $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:       -O
@@ -265,3 +327,12 @@ link-library-command:           ld -b -o %s %s
 link-executable-command:        cc -Wl,+s,+b,/afs/cs/project/gwydion/compiler/lib  -g -o %S %S %S
 link-executable-flags:          -L/lib/pa1.1 -lm
 supports-debugging?:            #f
+
+
+// Sparc Solaris 2
+//
+platform-name:                   	sparc-solaris
+inherit-from:                   generic-unix
+default-features:               compiled-for-unix compiled-for-sparc 
+                                compiled-for-solaris C-compiler-is-GCC
+comment-token:                  !
