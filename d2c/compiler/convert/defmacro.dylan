@@ -1,5 +1,5 @@
 module: define-macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defmacro.dylan,v 1.4 2002/07/27 12:20:22 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defmacro.dylan,v 1.5 2003/07/02 16:20:12 housel Exp $
 copyright: see below
 
 
@@ -78,14 +78,15 @@ define method process-top-level-form (defmacro :: <define-macro-parse>)
   let defn = make(<macro-definition>, module: *Current-Module*,
 		  library: *Current-Library*, defmacro: defmacro);
   note-variable-definition(defn);
-  add!(	*Top-Level-Forms*,
-        make(<define-macro-tlf>,	defn: defn, source-location: defn.source-location));
+  add!(*Top-Level-Forms*, make(<define-macro-tlf>,
+                               defn: defn,
+                               source-location: defn.source-location));
 end method process-top-level-form;
 
 // finalize-top-level-form{<define-macro-tlf>} -- method on imported GF.
 //
 define method finalize-top-level-form (tlf :: <define-macro-tlf>) => ();
-  // Nothing to do.
+  identify-variable-references(tlf.tlf-defn);
 end method finalize-top-level-form;
 
 // convert-top-level-form{<define-macro-tlf>} -- method on imported GF.
