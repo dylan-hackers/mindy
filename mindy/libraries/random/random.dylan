@@ -20,7 +20,7 @@ define module Random
   use transcendental;
   use threads;
   export
-    random, <random-state>, random-bits, $random-bits-count,
+    *random-state*, random, <random-state>, random-bits, $random-bits-count,
     random-float, random-gaussian, random-exponential;
 end module Random;
 
@@ -47,7 +47,8 @@ define constant random-chunk-length = random-upper-bound.integer-length;
 define sealed class <random-state> (<object>)
   slot state-j :: <general-integer>, init-value: 24;
   slot state-k :: <general-integer>, init-value: 0;
-  slot state-seed :: <simple-object-vector>;
+  slot state-seed :: <simple-object-vector>
+    = make(<simple-object-vector>, size: random-max + 1);
 end class <random-state>;
 
 define class <threadsafe-random-state> (<random-state>)
@@ -56,26 +57,21 @@ end class <threadsafe-random-state>;
 
 // Seed with the system clock
 //
-define method initialize (state :: <random-state>, #next next-method, 
-			  #key seed = #f)
+define method initialize
+    (state :: <random-state>, #next next-method, 
+     #key seed :: <integer> = as(<integer>, get-time-of-day()))
+    => ();
   next-method();
-  let rand-seed = if (~seed)
-		    get-time-of-day();
-		  elseif (~ instance?(seed, <general-integer>))
-		    error("Seed must be an integer");
-		  else
-		    seed;
-		  end if;
-  local method rand1 () => random-number :: <general-integer>;
-	  rand-seed := modulo((rand-seed * random-const-a) + random-const-c,
-			      random-upper-bound + 1);
+  local method rand1 () => random-number :: <integer>;
+	  seed := as(<integer>,
+		     modulo(as(<extended-integer>, seed) * random-const-a
+			      + random-const-c,
+			    random-upper-bound + 1));
 	end method rand1;
-  for (list-rands = #() then pair(rand1(), list-rands), 
-       i from 0,
-       until: i > random-max)
-  finally
-    state.state-seed := as(<vector>, list-rands);
-  end for;
+  let seed-vec = state.state-seed;
+  for (i :: <integer> from 0 to random-max)
+    seed-vec[i] := rand1();
+  end;
 end method initialize;
 		     
 define variable *random-state* = make(<random-state>);
