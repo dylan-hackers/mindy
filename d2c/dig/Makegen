@@ -18,7 +18,9 @@ if ($features{'compiled_for_win32'}) {
     $dig_lid_file = 'hp-dig';
     &emit_c_file_rule('hp-dig-support', 'hp-dig-support.h');
     &emit_melange_rule('hp-dig-c', 'hp-dig-support.h');
-} elsif ($features{'compiled_for_solaris'} || $features{'compiled_for_linux'}) {
+} elsif ($features{'compiled_for_solaris'}
+	 || $features{'compiled_for_linux'}
+	 || $features{'compiled_for_freebsd'}) {
     # dig is unsupported on these platforms because the port is
     # non-trivial.  There's a fair amount of OS-specific work involved
     # in handling interrupts to make sure ^C does what you'd expect.
