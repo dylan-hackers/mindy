@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.56 1995/05/08 11:43:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.57 1995/05/08 15:19:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -434,6 +434,9 @@ define module ctype
     // Shorthand constructor functions.
     ct-value-cclass, wild-ctype, object-ctype, function-ctype, empty-ctype,
 
+    // Type specifiers.
+    <type-specifier>, specifier-type,
+
     // Ctype extension generic functions.
     csubtype-dispatch, ctype-intersection-dispatch;
 end;
@@ -660,6 +663,21 @@ define module signature
   use definitions;
 end;
 
+define module primitives
+  use common;
+  use utils;
+  use ctype;
+
+  export
+    <primitive-info>, define-primitive, primitive-info-or-lose,
+    primitive-name, primitive-arg-types, primitive-result-type,
+    primitive-side-effect-free?, primitive-pure?,
+    primitive-transformer, primitive-emitter,
+
+
+    define-primitive-transformer, define-primitive-emitter;
+end;
+
 define module front
   use common;
   use utils;
@@ -674,6 +692,7 @@ define module front
   use source;
   use builder-interface;
   use policy;
+  use primitives;
 
   export
     dump-fer, id, optimize-component,
@@ -863,6 +882,7 @@ define module cheese
   use parse-tree, import: {<method-parse>};
   use lexenv;
   use fer-convert;
+  use primitives;
 end;
 
 define module stack-analysis
@@ -894,6 +914,7 @@ define module cback
   use ctype;
   use classes;
   use stack-analysis;
+  use primitives;
 
   export
     <output-info>, output-info-results,
