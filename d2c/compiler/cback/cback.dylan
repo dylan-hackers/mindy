@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.34 2002/03/07 23:28:18 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.35 2002/03/24 16:01:02 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -3171,14 +3171,17 @@ define function aux-c-expr-and-rep
 	info.const-info-heap-labels := add!(labels, label);
       end if;
       let c-name = info.const-info-heap-labels.first;
+      let single-file-mode? = file.single-file-mode?;
 
-      if(file.single-file-mode?)
+      if (single-file-mode?)
         spew-heap-prototype(c-name, lit, file)
       else
         maybe-emit-prototype(c-name, #"heap", file)
       end
 	& (info.const-info-expr | eagerly-reference(lit, file));
-      values(stringify("(heapptr_t)&", c-name), best-rep);
+      values(stringify(if (single-file-mode?) "(heapptr_t)&" else "&" end,
+		       c-name),
+	     best-rep);
     else
       make-global-root();
     end if;
