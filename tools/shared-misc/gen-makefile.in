@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.35 2002/09/20 23:51:16 brent Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.36 2002/09/27 05:27:55 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -1185,18 +1185,18 @@ sub install_executable_from_src {
 #
 sub install_library {
     local ($dest_dir, $library, $shared_library) = @_;
-	my ($gnu_dest_dir) = $dest_dir;
+    local ($gnu_dest_dir) = $dest_dir;
 
     # Don't generate any install rules unless destdir is set.
     $dest_dir || return;
 	
     unless ($host_platform{'default_features'} =~ /compiled-for-win32/i) {
-    	$gnu_dest_file = "\${DESTDIR}$gnu_dest_dir";
-	}
+    	$gnu_dest_dir = "\${DESTDIR}$gnu_dest_dir";
+    }
 
-    print "\n\$gnu_dest_dir/$library: $library\n";
-    print "\t$install_library $library \$gnu_dest_dir/$library\n\n";
-    push(@install_dependencies, "\$gnu_dest_dir/$library");
+    print "\n$gnu_dest_dir/$library: $library\n";
+    print "\t$install_library $library $gnu_dest_dir/$library\n\n";
+    push(@install_dependencies, "$gnu_dest_dir/$library");
 }
 
 
