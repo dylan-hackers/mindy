@@ -107,13 +107,13 @@ static boolean parse_feature_term(void)
 	/* All the various things that look like words. */
       case ABSTRACT: case ABOVE: case DBEGIN: case BELOW: case BLOCK:
       case BY: case CASE: case CLASS: case CLEANUP: case CONCRETE:
-      case CONSTANT: case DEFINE: case ELSE: case ELSEIF: case END:
-      case EXCEPTION: case FINALLY: case FOR: case FREE: case FROM:
-      case GENERIC: case HANDLER: case IF: case IN: case INHERITED:
-      case INSTANCE: case KEYED_BY: case KEYWORD_RESERVED_WORD:
+      case CONSTANT: case DEFINE: case EACH_SUBCLASS: case ELSE: 
+      case ELSEIF: case END: case EXCEPTION: case FINALLY: case FOR: 
+      case FREE: case FROM: case GENERIC: case HANDLER: case IF: case IN:
+      case INHERITED: case INSTANCE: case KEYED_BY: case KEYWORD_RESERVED_WORD:
       case LET: case LOCAL: case METHOD: case OPEN: case OTHERWISE:
       case PRIMARY: case REQUIRED: case SEAL: case SEALED: case SELECT:
-      case SLOT: case SUBCLASS: case THEN: case TO: case UNLESS:
+      case SLOT: case THEN: case TO: case UNLESS:
       case UNTIL: case VARIABLE: case VIRTUAL: case WHILE: case MODULE:
       case LIBRARY: case EXPORT: case CREATE: case USE: case ALL:
       case SYMBOL:

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.17 1995/07/11 12:41:26 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.18 1996/02/13 19:42:01 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -456,8 +456,8 @@ struct superclass {
 };
 
 enum slot_allocation {
-    alloc_INSTANCE, alloc_CLASS, alloc_SUBCLASS, alloc_CONSTANT, alloc_VIRTUAL,
-    alloc_Kinds
+    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS, alloc_CONSTANT,
+    alloc_VIRTUAL, alloc_Kinds
 };
 
 struct slot_spec {

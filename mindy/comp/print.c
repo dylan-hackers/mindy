@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.14 1994/10/05 20:55:53 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/print.c,v 1.15 1996/02/13 19:42:01 nkramer Exp $
 *
 * This file prints out parts of the parse tree in a human readable
 * format for debugging purposes.
@@ -626,7 +626,7 @@ static void
 static void
     print_defclass_constituent(struct defclass_constituent *c, int depth)
 {
-    static char *alloc[] = {"instance", "class", "subclass",
+    static char *alloc[] = {"instance", "class", "each-subclass",
 				"constant", "virtual"};
     struct superclass *super;
     struct slot_spec *slot;

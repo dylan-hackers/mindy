@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.8 1995/07/11 12:18:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.9 1996/02/13 19:42:01 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -60,6 +60,7 @@ extern struct symbol *sym_CheckType;
 extern struct symbol *sym_Class;
 extern struct symbol *sym_Constant;
 extern struct symbol *sym_Do;
+extern struct symbol *sym_Each_Subclass;
 extern struct symbol *sym_Element;
 extern struct symbol *sym_Error;
 extern struct symbol *sym_FindVariable;
@@ -80,7 +81,6 @@ extern struct symbol *sym_PopHandler;
 extern struct symbol *sym_PushHandler;
 extern struct symbol *sym_Setter;
 extern struct symbol *sym_Singleton;
-extern struct symbol *sym_Subclass;
 extern struct symbol *sym_Throw;
 extern struct symbol *sym_Uwp;
 extern struct symbol *sym_Values;

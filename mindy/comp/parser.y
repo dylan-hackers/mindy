@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.18 1995/12/10 02:25:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/parser.y,v 1.19 1996/02/13 19:42:01 nkramer Exp $
 *
 * This file is the grammar.
 *
@@ -154,6 +154,7 @@ static void pop_yacc_recoveries(int count);
 %token <token> CONCRETE
 %token <token> CONSTANT
 %token <token> DEFINE
+%token <token> EACH_SUBCLASS
 %token <token> ELSE
 %token <token> ELSEIF
 %token <token> END
@@ -181,7 +182,6 @@ static void pop_yacc_recoveries(int count);
 %token <token> SEALED
 %token <token> SELECT
 %token <token> SLOT
-%token <token> SUBCLASS
 %token <token> THEN
 %token <token> TO
 %token <token> UNLESS
@@ -399,6 +399,7 @@ variable_name:
     |	CLASS
     |	CONCRETE
     |	CONSTANT
+    |	EACH_SUBCLASS
     |	FREE
     |	FROM
     |	IN
@@ -410,7 +411,6 @@ variable_name:
     |	PRIMARY
     |	SEALED
     |	SLOT
-    |	SUBCLASS
     |	THEN
     |	TO
     |	VARIABLE
@@ -784,7 +784,7 @@ allocation:
 	/* epsilon */ { $$ = alloc_INSTANCE; }
     |	INSTANCE { free($1); $$ = alloc_INSTANCE; }
     |	CLASS { free($1); $$ = alloc_CLASS; }
-    |	SUBCLASS { free($1); $$ = alloc_SUBCLASS; }
+    |	EACH_SUBCLASS { free($1); $$ = alloc_EACH_SUBCLASS; }
     |	CONSTANT { free($1); $$ = alloc_CONSTANT; }
     |	VIRTUAL { free($1); $$ = alloc_VIRTUAL; }
 ;

@@ -23,14 +23,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.10 1995/05/11 14:33:11 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.h,v 1.11 1996/02/13 19:39:24 nkramer Exp $
 *
 \**********************************************************************/
 
 
 enum slot_allocation {
-    alloc_INSTANCE, alloc_CLASS, alloc_SUBCLASS, alloc_CONSTANT, alloc_VIRTUAL,
-    alloc_Kinds
+    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS, alloc_CONSTANT,
+    alloc_VIRTUAL, alloc_Kinds
 };
 
 struct library;
@@ -64,9 +64,9 @@ struct defined_class {
     int instance_length;
     obj_t instance_layout;
 
-    obj_t subclass_positions;
-    obj_t subclass_slots;
-    obj_t subclass_layout;
+    obj_t each_subclass_positions;
+    obj_t each_subclass_slots;
+    obj_t each_subclass_layout;
 };
 
 #define DC(o) obj_ptr(struct defined_class *, o)

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.10 1995/07/11 12:18:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.11 1996/02/13 19:42:01 nkramer Exp $
 *
 * This file implements symbols.
 *
@@ -76,7 +76,7 @@ struct symbol *sym_PopHandler = NULL;
 struct symbol *sym_PushHandler = NULL;
 struct symbol *sym_Setter = NULL;
 struct symbol *sym_Singleton = NULL;
-struct symbol *sym_Subclass = NULL;
+struct symbol *sym_Each_Subclass = NULL;
 struct symbol *sym_Throw = NULL;
 struct symbol *sym_Uwp = NULL;
 struct symbol *sym_Values = NULL;
@@ -266,7 +266,7 @@ void init_sym_table(void)
     sym_PushHandler = symbol("push-handler");
     sym_Setter = symbol("setter");
     sym_Singleton = symbol("singleton");
-    sym_Subclass = symbol("subclass");
+    sym_Each_Subclass = symbol("each-subclass");
     sym_Throw = symbol("throw");
     sym_Uwp = symbol("uwp");
     sym_Values = symbol("values");

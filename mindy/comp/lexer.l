@@ -24,7 +24,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.17 1995/12/10 02:25:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/lexer.l,v 1.18 1996/02/13 19:42:01 nkramer Exp $
 *
 * This file is the lexical analizer.
 *
@@ -98,6 +98,7 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 <etc>concrete			is(CONCRETE);
 <etc>constant			is(CONSTANT);
 <etc>define			is(DEFINE);
+<etc>each-subclass		is(EACH_SUBCLASS);
 <etc>else			is(ELSE);
 <etc>elseif			is(ELSEIF);
 <etc>end			is(END);
@@ -125,7 +126,6 @@ STR	\"(([ !#-\[\]-~])|(\\["\\abefnrt0]))*\"
 <etc>sealed			is(SEALED);
 <etc>select			is(SELECT);
 <etc>slot			is(SLOT);
-<etc>subclass			is(SUBCLASS);
 <etc>then			is(THEN);
 <etc>to				is(TO);
 <etc>unless			is(UNLESS);

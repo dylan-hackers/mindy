@@ -22,7 +22,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.40 1996/02/02 01:52:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/instance.c,v 1.41 1996/02/13 19:39:24 nkramer Exp $
 *
 * This file implements instances and user defined classes.
 *
@@ -201,15 +201,15 @@ static void fast_instance_setter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-static void slow_subclass_getter(obj_t method, struct thread *thread,
+static void slow_each_subclass_getter(obj_t method, struct thread *thread,
 				 obj_t *args)
 {
     obj_t datum = accessor_method_datum(method);
     obj_t *old_sp = args-1;
     obj_t instance = args[0];
     obj_t class = INST(instance)->class;
-    int index = find_position(DC(class)->subclass_positions, datum);
-    obj_t value = SOVEC(DC(class)->subclass_slots)->contents[index];
+    int index = find_position(DC(class)->each_subclass_positions, datum);
+    obj_t value = SOVEC(DC(class)->each_subclass_slots)->contents[index];
 
     if (value == obj_Unbound) {
 	push_linkage(thread, args);
@@ -221,7 +221,7 @@ static void slow_subclass_getter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-static void fast_subclass_getter(obj_t method, struct thread *thread,
+static void fast_each_subclass_getter(obj_t method, struct thread *thread,
 				 obj_t *args)
 {
     obj_t datum = accessor_method_datum(method);
@@ -229,7 +229,7 @@ static void fast_subclass_getter(obj_t method, struct thread *thread,
     obj_t instance = args[0];
     obj_t class = INST(instance)->class;
     int index = fixnum_value(datum);
-    obj_t value = SOVEC(DC(class)->subclass_slots)->contents[index];
+    obj_t value = SOVEC(DC(class)->each_subclass_slots)->contents[index];
 
     if (value == obj_Unbound) {
 	push_linkage(thread, args);
@@ -241,7 +241,7 @@ static void fast_subclass_getter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-static void slow_subclass_setter(obj_t method, struct thread *thread,
+static void slow_each_subclass_setter(obj_t method, struct thread *thread,
 				 obj_t *args)
 {
     obj_t datum = accessor_method_datum(method);
@@ -249,16 +249,16 @@ static void slow_subclass_setter(obj_t method, struct thread *thread,
     obj_t value = args[0];
     obj_t instance = args[1];
     obj_t class = INST(instance)->class;
-    int index = find_position(DC(class)->subclass_positions, datum);
+    int index = find_position(DC(class)->each_subclass_positions, datum);
 
-    SOVEC(DC(class)->subclass_slots)->contents[index] = value;
+    SOVEC(DC(class)->each_subclass_slots)->contents[index] = value;
 
     *old_sp = value;
     thread->sp = args;
     do_return(thread, old_sp, old_sp);
 }
 
-static void fast_subclass_setter(obj_t method, struct thread *thread,
+static void fast_each_subclass_setter(obj_t method, struct thread *thread,
 				 obj_t *args)
 {
     obj_t datum = accessor_method_datum(method);
@@ -268,7 +268,7 @@ static void fast_subclass_setter(obj_t method, struct thread *thread,
     obj_t class = INST(instance)->class;
     int index = fixnum_value(datum);
 
-    SOVEC(DC(class)->subclass_slots)->contents[index] = value;
+    SOVEC(DC(class)->each_subclass_slots)->contents[index] = value;
 
     *old_sp = value;
     thread->sp = args;
@@ -343,18 +343,18 @@ static void note_position(obj_t table, obj_t slot, int index)
 	    }
 	    break;
 
-	  case alloc_SUBCLASS:
-	    set_method_iep(SD(slot)->getter_method, slow_subclass_getter);
+	  case alloc_EACH_SUBCLASS:
+	    set_method_iep(SD(slot)->getter_method, slow_each_subclass_getter);
 	    set_accessor_method_datum(SD(slot)->getter_method, slot);
 	    if (SD(slot)->setter_method != obj_False) {
-		set_method_iep(SD(slot)->setter_method, slow_subclass_setter);
+		set_method_iep(SD(slot)->setter_method, slow_each_subclass_setter);
 		set_accessor_method_datum(SD(slot)->setter_method, slot);
 	    }
 	    break;
 
 	  default:
 	    lose("Displacing a slot with allocation other than "
-		 "instance or subclass?");
+		 "instance or each_subclass?");
 	    break;
 	}
     }
@@ -672,9 +672,10 @@ static void do_init_value(struct thread *thread, obj_t *vals)
 	    if (value != obj_Unbound && !instancep(value, SD(slot)->type))
 		type_error(value, SD(slot)->type);
 	    switch (SD(slot)->alloc) {
-	      case alloc_SUBCLASS:
-		index = find_position(DC(class)->subclass_positions, slot);
-		SOVEC(DC(class)->subclass_slots)->contents[index] = value;
+	      case alloc_EACH_SUBCLASS:
+		index 
+		    = find_position(DC(class)->each_subclass_positions, slot);
+		SOVEC(DC(class)->each_subclass_slots)->contents[index] = value;
 		break;
 	      case alloc_CLASS:
 		value_cell_set(accessor_method_datum(SD(slot)->getter_method),
@@ -706,9 +707,9 @@ static void do_init_value(struct thread *thread, obj_t *vals)
 		index = find_position(DC(class)->instance_positions, slot);
 		INST(instance)->slots[index] = value;
 		break;
-	      case alloc_SUBCLASS:
-		index = find_position(DC(class)->subclass_positions, slot);
-		SOVEC(DC(class)->subclass_slots)->contents[index] = value;
+	      case alloc_EACH_SUBCLASS:
+		index = find_position(DC(class)->each_subclass_positions, slot);
+		SOVEC(DC(class)->each_subclass_slots)->contents[index] = value;
 		break;
 	      case alloc_CLASS:
 		value_cell_set(accessor_method_datum(SD(slot)->getter_method),
@@ -794,9 +795,9 @@ obj_t make_defined_class(obj_t debug_name, struct library *library)
     DC(res)->instance_positions = obj_False;
     DC(res)->instance_length = 0;
     DC(res)->instance_layout = obj_False;
-    DC(res)->subclass_positions = obj_False;
-    DC(res)->subclass_slots = obj_False;
-    DC(res)->subclass_layout = obj_False;
+    DC(res)->each_subclass_positions = obj_False;
+    DC(res)->each_subclass_slots = obj_False;
+    DC(res)->each_subclass_layout = obj_False;
 
     return res;
 }
@@ -805,7 +806,7 @@ static void compute_lengths(obj_t class)
 {
     obj_t scan, slots, layout;
     int instance_length = 0;
-    int subclass_length = 0;
+    int each_subclass_length = 0;
     int i;
 
     for (scan = TAIL(DC(class)->cpl); scan != obj_Nil; scan = TAIL(scan)) {
@@ -816,8 +817,8 @@ static void compute_lengths(obj_t class)
 		  case alloc_INSTANCE:
 		    instance_length++;
 		    break;
-		  case alloc_SUBCLASS:
-		    subclass_length++;
+		  case alloc_EACH_SUBCLASS:
+		    each_subclass_length++;
 		    break;
 		  case alloc_CLASS:
 		  case alloc_CONSTANT:
@@ -836,8 +837,8 @@ static void compute_lengths(obj_t class)
 	  case alloc_INSTANCE:
 	    SD(slot)->desired_offset = instance_length++;
 	    break;
-	  case alloc_SUBCLASS:
-	    SD(slot)->desired_offset = subclass_length++;
+	  case alloc_EACH_SUBCLASS:
+	    SD(slot)->desired_offset = each_subclass_length++;
 	    break;
 	  case alloc_CLASS:
 	  case alloc_CONSTANT:
@@ -854,12 +855,12 @@ static void compute_lengths(obj_t class)
     for (i = 0; i < instance_length; i++)
 	SOVEC(layout)->contents[i] = obj_False;
 
-    if (subclass_length > 0) {
-	obj_t slots = make_vector(subclass_length, NULL);
-	DC(class)->subclass_slots = slots;
-	layout = make_vector(subclass_length, NULL);
-	DC(class)->subclass_layout = layout;
-	for (i = 0; i < subclass_length; i++) {
+    if (each_subclass_length > 0) {
+	obj_t slots = make_vector(each_subclass_length, NULL);
+	DC(class)->each_subclass_slots = slots;
+	layout = make_vector(each_subclass_length, NULL);
+	DC(class)->each_subclass_layout = layout;
+	for (i = 0; i < each_subclass_length; i++) {
 	    SOVEC(layout)->contents[i] = obj_False;
 	    SOVEC(slots)->contents[i] = obj_Unbound;
 	}
@@ -938,7 +939,7 @@ static void add_slot(obj_t class, obj_t new_slot, boolean inherited)
 
 static obj_t classes_processed;
 static obj_t displaced_instance_slots;
-static obj_t displaced_subclass_slots;
+static obj_t displaced_each_subclass_slots;
 static obj_t initializers;
 
 static void inherit_slots(obj_t class, obj_t super)
@@ -974,14 +975,14 @@ static void inherit_slots(obj_t class, obj_t super)
 		SOVEC(DC(class)->instance_layout)->contents[offset] = new_slot;
 	    break;
 
-	  case alloc_SUBCLASS:
+	  case alloc_EACH_SUBCLASS:
 	    offset = SD(new_slot)->desired_offset;
-	    if (SOVEC(DC(class)->subclass_layout)->contents[offset]
+	    if (SOVEC(DC(class)->each_subclass_layout)->contents[offset]
 		  != obj_False)
-		displaced_subclass_slots
-		    = pair(new_slot, displaced_subclass_slots);
+		displaced_each_subclass_slots
+		    = pair(new_slot, displaced_each_subclass_slots);
 	    else {
-		SOVEC(DC(class)->subclass_layout)->contents[offset] = new_slot;
+		SOVEC(DC(class)->each_subclass_layout)->contents[offset] = new_slot;
 		initializers = pair(slot_initializer(new_slot), initializers);
 	    }
 	    break;
@@ -1047,21 +1048,21 @@ static void process_slot(obj_t class, obj_t slot)
 	}
 	break;
 
-      case alloc_SUBCLASS:
-	SOVEC(DC(class)->subclass_layout)->contents[offset] = slot;
+      case alloc_EACH_SUBCLASS:
+	SOVEC(DC(class)->each_subclass_layout)->contents[offset] = slot;
 	initializers = pair(slot_initializer(slot), initializers);
 	SD(slot)->getter_method
 	    = make_accessor_method(function_debug_name(SD(slot)->getter),
 				   class, SD(slot)->type,
 				   FALSE, make_fixnum(offset),
-				   fast_subclass_getter);
+				   fast_each_subclass_getter);
 	add_method(SD(slot)->getter, SD(slot)->getter_method);
 	if (SD(slot)->setter != obj_False) {
 	    SD(slot)->setter_method
 		= make_accessor_method(function_debug_name(SD(slot)->setter),
 				       class, SD(slot)->type, TRUE,
 				       make_fixnum(offset),
-				       fast_subclass_setter);
+				       fast_each_subclass_setter);
 	    add_method(SD(slot)->setter, SD(slot)->setter_method);
 	}
 	break;
@@ -1208,7 +1209,7 @@ static obj_t process_inherited(obj_t class, obj_t inherited, obj_t overrides)
 	    overrides = pair(inherited, overrides);
 	    break;
 
-	  case alloc_SUBCLASS:
+	  case alloc_EACH_SUBCLASS:
 	    for (inits = initializers; inits != obj_Nil;
 		 inits = TAIL(inits)) {
 		obj_t init = HEAD(inits);
@@ -1301,7 +1302,7 @@ void init_defined_class(obj_t class, obj_t slots,
 
     classes_processed = obj_Nil;
     displaced_instance_slots = obj_Nil;
-    displaced_subclass_slots = obj_Nil;
+    displaced_each_subclass_slots = obj_Nil;
     initializers = obj_Nil;
 
     for (scan = DC(class)->superclasses; scan != obj_Nil; scan = TAIL(scan))
@@ -1310,13 +1311,13 @@ void init_defined_class(obj_t class, obj_t slots,
     DC(class)->instance_positions
 	= compute_positions(displaced_instance_slots,
 			    DC(class)->instance_layout);
-    DC(class)->subclass_positions
-	= compute_positions(displaced_subclass_slots,
-			    DC(class)->subclass_layout);
+    DC(class)->each_subclass_positions
+	= compute_positions(displaced_each_subclass_slots,
+			    DC(class)->each_subclass_layout);
 
     classes_processed = NULL;
     displaced_instance_slots = NULL;
-    displaced_subclass_slots = NULL;
+    displaced_each_subclass_slots = NULL;
 
     for (scan = slots; scan != obj_Nil; scan = TAIL(scan))
 	process_slot(class, HEAD(scan));
@@ -1595,8 +1596,8 @@ static obj_t dylan_slot_initialized_p(obj_t instance, obj_t getter)
 		index = find_position(DC(class)->instance_positions, slot);
 		value = INST(instance)->slots[index];
 		break;
-	      case alloc_SUBCLASS:
-		index = find_position(DC(class)->subclass_positions, slot);
+	      case alloc_EACH_SUBCLASS:
+		index = find_position(DC(class)->each_subclass_positions, slot);
 		value = INST(instance)->slots[index];
 		break;
 	      case alloc_CLASS:
@@ -1648,8 +1649,8 @@ static obj_t dylan_slot_alloc(obj_t slot)
 	return symbol("instance");
       case alloc_CLASS:
 	return symbol("class");
-      case alloc_SUBCLASS:
-	return symbol("subclass");
+      case alloc_EACH_SUBCLASS:
+	return symbol("each-subclass");
       case alloc_CONSTANT:
 	return symbol("constant");
       case alloc_VIRTUAL:
@@ -1702,8 +1703,8 @@ static void dylan_slot_value(obj_t self, struct thread *thread, obj_t *args)
 	index = find_position(DC(class)->instance_positions, slot);
 	value = INST(instance)->slots[index];
 	break;
-      case alloc_SUBCLASS:
-	index = find_position(DC(class)->subclass_positions, slot);
+      case alloc_EACH_SUBCLASS:
+	index = find_position(DC(class)->each_subclass_positions, slot);
 	value = INST(instance)->slots[index];
 	break;
       case alloc_CLASS:
@@ -1749,8 +1750,8 @@ static obj_t dylan_slot_value_setter(obj_t value, obj_t slot, obj_t instance)
 	index = find_position(DC(class)->instance_positions, slot);
 	INST(instance)->slots[index] = value;
 	break;
-      case alloc_SUBCLASS:
-	index = find_position(DC(class)->subclass_positions, slot);
+      case alloc_EACH_SUBCLASS:
+	index = find_position(DC(class)->each_subclass_positions, slot);
 	INST(instance)->slots[index] = value;
 	break;
       case alloc_CLASS:
@@ -1805,9 +1806,9 @@ void describe(obj_t thing)
 		index = find_position(DC(class)->instance_positions, slot);
 		value = INST(thing)->slots[index];
 		break;
-	      case alloc_SUBCLASS:
-		printf("[each subclass]");
-		index = find_position(DC(class)->subclass_positions, slot);
+	      case alloc_EACH_SUBCLASS:
+		printf("[each-subclass]");
+		index = find_position(DC(class)->each_subclass_positions, slot);
 		value = INST(thing)->slots[index];
 		break;
 	      case alloc_CLASS:
@@ -1860,9 +1861,9 @@ static int scav_defined_class(struct object *ptr)
     scavenge(&class->valid_init_keywords_clock);
     scavenge(&class->instance_positions);
     scavenge(&class->instance_layout);
-    scavenge(&class->subclass_positions);
-    scavenge(&class->subclass_slots);
-    scavenge(&class->subclass_layout);
+    scavenge(&class->each_subclass_positions);
+    scavenge(&class->each_subclass_slots);
+    scavenge(&class->each_subclass_layout);
 
     return sizeof(struct defined_class);
 }
