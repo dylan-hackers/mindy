@@ -1,12 +1,11 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.4 2001/10/14 18:51:13 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/fer-transform-exports.dylan,v 1.5 2001/10/15 20:33:41 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
-// Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -43,30 +42,22 @@ end library compiler-fer-transform;
 define module fer-transform
   use common;
   use utils;
-//  use errors;
   use compile-time-values;
-//  use platform,
-//    import: {*current-target*, platform-integer-length};
-//  use names;
   use definitions;
-//  use variables, exclude: {<renaming>};
   use flow;
   use front;
   use ctype;
-//  use classes;
-//  use signature-interface;
   use source;
   use builder-interface;
   use policy;
   use primitives;
-//  use transformers;
   use compile-time-functions;
-//  use function-definitions;
   
   export 
     just-add-type-checks, 
     convert-component-to-ssa,
     traverse-component,
+    add-type-checks-aux,
     delete-dependent,
     remove-dependency-from-source,
     dropped-dependent,
@@ -79,7 +70,8 @@ define module fer-transform
     combine-regions,
     replace-subregion,
     defaulted-type,
-    maybe-restrict-type;
+    maybe-restrict-type,
+    expand-cluster;
 end module fer-transform;
 
 define module null-optimizer
