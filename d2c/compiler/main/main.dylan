@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.91 1996/09/12 20:38:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.92 1996/09/15 15:33:35 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -867,10 +867,16 @@ end method do-make;
 
 define method compile-library (state :: <main-unit-state>)
     => worked? :: <boolean>;
-  block ()
+  block (give-up)
+    // We don't really have to give-up if we don't want to, but it
+    // seems kind of pointless to compile a file that doesn't parse,
+    // or create a dump file for library with undefined variables.
+    // Thus, we stick some calls to give-up where it seems useful..
     parse-and-finalize-library(state);
+    if (~ zero?(*errors*)) give-up(); end if;
     emit-make-prologue(state);
     compile-all-files(state);
+    if (~ zero?(*errors*)) give-up(); end if;
     build-library-inits(state);
     build-local-heap-file(state);
     build-ar-file(state);
