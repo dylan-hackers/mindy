@@ -1,12 +1,12 @@
 module: header
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.8 2001/04/24 23:29:03 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.9 2002/03/17 13:29:10 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -41,7 +41,7 @@ copyright: see below
 define class <header> (<explicit-key-collection>)
   //
   // The chain of entries.
-  slot entries :: false-or(<header-entry>),
+  constant slot entries :: false-or(<header-entry>),
     required-init-keyword: entries:;
 end;
 
@@ -52,13 +52,13 @@ end;
 define class <header-entry> (<object>)
   //
   // The keyword.
-  slot key :: <symbol>, required-init-keyword: key:;
+  constant slot key :: <symbol>, required-init-keyword: key:;
   //
   // The value.
-  slot value :: <byte-string>, required-init-keyword: value:;
+  constant slot value :: <byte-string>, required-init-keyword: value:;
   //
   // The next entry in the chain.
-  slot next :: false-or(<header-entry>), init-value: #f;
+  slot next :: false-or(<header-entry>), init-value: #f, init-keyword: next:;
 end;
 
 define method print-object (entry :: <header-entry>, stream :: <stream>) => ();
@@ -155,7 +155,7 @@ end method;
 
 // type-for-copy -- gf method.
 //
-// Because <header>s arn't mutable, we have to define a method for
+// Because <header>s aren't mutable, we have to define a method for
 // class-for-copy.  We return <object-table>, because it is a mutable
 // explicit key collection that uses the same key test -- i.e. just
 // what we need.
@@ -163,6 +163,86 @@ end method;
 define method type-for-copy (header :: <header>) => result :: <class>;
   <object-table>;
 end method type-for-copy;
+
+// key-sequence -- gf method.
+//
+// Return the keywords in the header.
+//
+define method key-sequence (header :: <header>) => result :: <list>;
+  local method header-entry-keys(entry :: false-or(<header-entry>))
+      => result :: <list>;
+    if (entry)
+      pair(entry.key, entry.next.header-entry-keys)
+    else
+      #()
+    end if;
+  end method;
+
+  remove-duplicates!(header-entry-keys(header.entries));
+end method;
+
+
+// Header extending.
+
+// header-add -- exported.
+//
+// Similar to GF add, but with <headers>. Takes an existing header, a key and
+// a value and returns a new header with an entry in the first position.
+//
+define function header-add
+    (header :: <header>, front-key :: <symbol>, front-value :: <byte-string>)
+  => result :: <header>;
+
+  make(<header>, entries: make(<header-entry>,
+			       key: front-key,
+			       value: front-value,
+			       next: header.entries))
+end;
+
+// header-add-new -- exported.
+//
+// Similar to GF add-new, but with <headers>. Takes an existing header, a key and
+// a value and if the key was not yet contained, returns a new header with an
+// entry in the first position. If the key was already in the header, the header
+// is returned unchanged.
+//
+define function header-add-new
+    (header :: <header>, front-key :: <symbol>, front-value :: <byte-string>)
+  => result :: <header>;
+
+  if (member?(front-key, header.key-sequence))
+    header
+  else
+    header-add(header, front-key, front-value)
+  end
+end;
+
+// header-concatenate -- exported.
+//
+// Similar to GF concatenate, but with <headers>. Takes two existing headers, and
+// returns a header that contains the entries from both, respecting order.
+// [Conses a bit, but suffices.]
+//
+define function header-concatenate
+    (header1 :: <header>, header2 :: <header>)
+  => result :: <header>;
+
+  if (~header1.entries)
+    header2
+  elseif (~header2.entries)
+    header1
+  else
+    local method prepend(entry :: false-or(<header-entry>), header :: <header>)
+        => result :: <header>;
+      if (entry)
+      	header-add(prepend(entry.next, header), entry.key, entry.value);
+      else
+        header
+      end if;
+    end method;
+    prepend(header1.entries, header2)
+  end
+end;
 
 
 // Header parsing.
