@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.30 1999/11/21 19:15:44 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.31 1999/11/21 20:49:31 robmyers Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -934,7 +934,13 @@ end method;
 define method build-da-global-heap (state :: <main-unit-state>) => ();
   format(*debug-output*, "Emitting Global Heap.\n");
   let heap-stream 
-    = make(<file-stream>, locator: "heap.c", direction: #"output");
+  #if (macos)
+    = make(	<file-stream>, 
+    		locator: concatenate( state.unit-lid-file.filename-prefix, "heap.c" ), 
+    		direction: #"output");
+  #else
+  	= make(<file-stream>, locator: "heap.c", direction: #"output");
+  #endif
   let heap-state = make(<global-heap-file-state>, unit: state.unit-cback-unit,
 			body-stream: heap-stream); //, target: state.unit-target);
   build-global-heap(apply(concatenate, map(undumped-objects, *units*)),
@@ -946,7 +952,13 @@ end method;
 define method build-inits-dot-c (state :: <main-unit-state>) => ();
   format(*debug-output*, "Building inits.c.\n");
   let stream
-    = make(<file-stream>, locator: "inits.c", direction: #"output");
+  #if (macos) 
+    = make(	<file-stream>, 
+    		locator: concatenate( state.unit-lid-file.filename-prefix,"inits.c" ), 
+    		direction: #"output");
+  #else
+  	= make(<file-stream>, locator: "inits.c", direction: #"output");
+  #endif
   write(stream, "#include <runtime.h>\n\n");
   write(stream, 
 	"/* This file is machine generated.  Do not edit. */\n\n");
