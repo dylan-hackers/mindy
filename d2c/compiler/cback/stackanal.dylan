@@ -1,43 +1,70 @@
 module: stack-analysis
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/stackanal.dylan,v 1.15 1996/03/17 02:49:15 wlott Exp $
+copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
+	   All rights reserved.
 
 
-define class <state> (<object>)
-  slot max-depth :: <integer>, init-value: 0;
-  slot block-wants :: <table>, init-function: curry(make, <object-table>);
-end;
-
-
-define method analize-stack-usage (func :: <fer-function-region>)
+// analyze-stack-usage -- exported.
+//
+// The external entry point into this module.  Returns the maximum number
+// of clusters alive at any one time in the given function.  Also annotates
+// the clusters used in the given function with what their depth is.
+// 
+define method analyze-stack-usage (func :: <fer-function-region>)
     => (max-depth :: <integer>);
   let state = make(<state>);
-  let want = analize(func.body, #(), state);
+  let want = analyze(func.body, #(), state);
   unless (want == #())
     error("We start the function wanting stuff?");
   end;
   state.max-depth;
 end;
 
-define method analize
+
+// <state> -- internal.
+//
+// State during an analysis of a single function.  This info is wrapped
+// up in a <state> object instead of being passed around as additional
+// arguments and results because few of the methods actually care about
+// this info.  It just makes the code a little simpler.
+// 
+define class <state> (<object>)
+  //
+  // The maximum depth we have hit so far.  Once we are done, this tells us
+  // how many clusters will be on the stack.
+  slot max-depth :: <integer> = 0;
+  //
+  // Table mapping blocks to the set of clusters we need at the end of that
+  // block.  Used to determine what clusters should be on the stack at an
+  // exit.
+  slot block-wants :: <object-table> = make(<object-table>);
+end;
+
+define sealed domain make (singleton(<state>));
+define sealed domain initialize (<state>);
+
+
+define method analyze
     (dependency :: <dependency>, want :: <list>, state :: <state>)
     => want :: <list>;
-  analize(dependency.dependent-next,
-	  analize(dependency.source-exp, want, state),
+  analyze(dependency.dependent-next,
+	  analyze(dependency.source-exp, want, state),
 	  state);
 end;
 
-define method analize
+define method analyze
     (dependency :: <false>, want :: <list>, state :: <state>)
     => want :: <list>;
   want;
 end;
 
-define method analize
+define method analyze
     (op :: <expression>, want :: <list>, state :: <state>)
     => want :: <list>;
   want;
 end;
 
-define method analize
+define method analyze
     (op :: <operation>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
@@ -45,11 +72,11 @@ define method analize
   let depth = size(want);
   op.info := depth;
   //
-  // Analize the wants.
-  analize(op.depends-on, want, state);
+  // Analyze the wants.
+  analyze(op.depends-on, want, state);
 end;
 
-define method analize
+define method analyze
     (op :: <catch>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
@@ -67,7 +94,7 @@ define method analize
   want;
 end;
 
-define method analize
+define method analyze
     (op :: <known-call>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
@@ -111,7 +138,7 @@ define method non-fixed-values? (signature :: <signature>) => res :: <boolean>;
       & returns.rest-value-type == empty-ctype());
 end;
 
-define method analize
+define method analyze
     (op :: <abstract-call>, want :: <list>, state :: <state>)
     => want :: <list>;
   //
@@ -135,15 +162,15 @@ define method analize
   want;
 end;
 
-define method analize
+define method analyze
     (op :: <mv-call>, want :: <list>, state :: <state>)
     => want :: <list>;
   // We don't need to worry about dinking the depth if the result is a cluster
   // because there will be a cluster in the arguments.
-  analize(op.depends-on, want, state);
+  analyze(op.depends-on, want, state);
 end;
 
-define method analize
+define method analyze
     (op :: <abstract-variable>, want :: <list>, state :: <state>)
     => want :: <list>;
   if (instance?(op.var-info, <values-cluster-info>))
@@ -159,12 +186,12 @@ define method analize
   end;
 end;
 
-define method analize
+define method analyze
     (region :: <simple-region>, want :: <list>, state :: <state>)
     => want :: <list>;
   for (assign = region.last-assign then assign.prev-op,
        want = want
-	 then analize(assign.depends-on,
+	 then analyze(assign.depends-on,
 		      produce(assign.defines, want),
 		      state),
        while: assign)
@@ -195,45 +222,57 @@ define method produce (var :: <abstract-variable>, want :: <list>)
   end;
 end;
 
-define method analize
+define method analyze
     (region :: <compound-region>, want :: <list>, state :: <state>)
     => want :: <list>;
   for (subregion in reverse(region.regions),
-       want = want then analize(subregion, want, state))
+       want = want then analyze(subregion, want, state))
   finally
     want;
   end;
 end;
 
-define method analize
+define method analyze
     (region :: <if-region>, want :: <list>, state :: <state>)
     => want :: <list>;
-  let then-wants = analize(region.then-region, want, state);
-  let else-wants = analize(region.else-region, want, state);
+  let then-wants = analyze(region.then-region, want, state);
+  let else-wants = analyze(region.else-region, want, state);
 
   merge-stacks(then-wants, else-wants);
 end;
 
-define method analize
+define method analyze
     (region :: <loop-region>, want :: <list>, state :: <state>)
     => want :: <list>;
-  analize(region.body, #(), state);
+  //
+  // We analyze the body once, assuming that that we need no clusters.
+  let body-wants = analyze(region.body, #(), state);
+  //
+  // But if the body wants some clusters (because some exit out of the
+  // loop wants some clusters), then we have to reanalyze the body with
+  // those wants to make sure that the repeat branch of the loop preserves
+  // them.
+  if (body-wants == #())
+    #();
+  else
+    analyze(region.body, body-wants, state);
+  end if;
 end;
 
-define method analize
+define method analyze
     (region :: <block-region>, want :: <list>, state :: <state>)
     => want :: <list>;
   state.block-wants[region] := want;
-  analize(region.body, want, state);
+  analyze(region.body, want, state);
 end;
 
-define method analize
+define method analyze
     (region :: <unwind-protect-region>, want :: <list>, state :: <state>)
     => want :: <list>;
-  analize(region.body, want, state);
+  analyze(region.body, want, state);
 end;
 
-define method analize
+define method analyze
     (region :: <exit>, want :: <list>, state :: <state>)
     => want :: <list>;
   let target = region.block-of;
@@ -248,10 +287,10 @@ define method analize
   end;
 end;
 
-define method analize
+define method analyze
     (region :: <return>, want :: <list>, state :: <state>, #next next-method)
     => want :: <list>;
-  analize(region.depends-on, #(), state);
+  analyze(region.depends-on, #(), state);
 end;
 
 
