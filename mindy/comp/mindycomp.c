@@ -9,13 +9,14 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.4 1994/04/10 15:11:44 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/mindycomp.c,v 1.5 1994/04/10 21:09:57 wlott Exp $
 *
 * This file does whatever.
 *
 \**********************************************************************/
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "mindycomp.h"
@@ -38,6 +39,35 @@ struct symbol *ModuleName = NULL;
 boolean ParseOnly = FALSE;
 
 char *current_file = "<stdin>";
+
+static int nerrors = 0;
+
+void error(int line, char *msg, ...)
+{
+    va_list ap;
+
+    fprintf(stderr, "%s:%d: error: ", current_file, line);
+    va_start(ap, msg);
+    vfprintf(stderr, msg, ap);
+    va_end(ap);
+    if (msg[strlen(msg)-1] != '\n')
+	putc('\n', stderr);
+
+    nerrors++;
+}
+
+void warn(int line, char *msg, ...)
+{
+    va_list ap;
+
+    fprintf(stderr, "%s:%d: warning: ", current_file, line);
+    va_start(ap, msg);
+    vfprintf(stderr, msg, ap);
+    va_end(ap);
+    if (msg[strlen(msg)-1] != '\n')
+	putc('\n', stderr);
+}
+
 
 static void usage(void)
 {
@@ -82,7 +112,6 @@ void main(int argc, char *argv[])
 {
     boolean print_parse = FALSE;
     boolean print_expanded = FALSE;
-    boolean lost;
     char *arg;
     char *source_name = NULL;
     char *output_name = NULL;
@@ -197,22 +226,21 @@ void main(int argc, char *argv[])
     fseek(yyin, ftell(file), 0);
     fclose(file);
 
+    current_file = source_name;
+
     if (ModuleName == NULL) {
-	fprintf(stderr, "%s:%d: no module: header, assuming Dylan-User\n",
-		source_name, line_count-1);
+	warn(line_count-1, "no module: header, assuming Dylan-User\n");
 	ModuleName = symbol("Dylan-User");
     }
 
-    current_file = source_name;
-
-    lost = yyparse();
+    yyparse();
 
     if (print_parse) {
 	printf("================ Original Parse Tree ================\n");
 	print_body(Program, 0);
     }
 
-    if (lost)
+    if (nerrors != 0)
 	exit(1);
 
     /* Do the various source-to-source expansions. */
@@ -223,9 +251,15 @@ void main(int argc, char *argv[])
 	print_body(Program, 0);
     }
 
+    if (nerrors != 0)
+	exit(1);
+
     /* Run environment analysis */
     if (!ParseOnly)
 	environment_analysis(Program);
+
+    if (nerrors != 0)
+	exit(1);
 
     if (output_name == NULL)
 	output_name = make_output_name(source_name,
