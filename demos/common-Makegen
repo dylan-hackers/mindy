@@ -1,2 +1,0 @@
-
-$D2CFLAGS = $d2c_runtime . '-L../../common/streams -L../../common/standard-io -L../../common/print -L../../common/format -L../../d2c/runtime/random -L. -L../../common/coll-ext -L../../common/string-ext -L../../common/table-ext -L../../d2c/runtime/melange';
