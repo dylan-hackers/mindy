@@ -1,6 +1,6 @@
 module:	    dylan-viscera
 Author:	    Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.14 2002/09/29 07:33:08 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/table.dylan,v 1.15 2004/08/25 04:01:20 bruce Exp $
 Synopsis:   Implements <table>, <object-table>, <equal-table>,
             and <value-table>.
 
@@ -741,6 +741,10 @@ end;
 
 // This list stolen shamelessly from the C++ standard library
 // Both g++ and CodeWarrior use exactly the same list
+//
+// It turns out that these are all exactly the next prime number
+// after 3 * 2^n for n >= 4
+
 define constant $prime-table = 
   #[53,         97,         193,       389,       769,
     1543,       3079,       6151,      12289,     24593,
