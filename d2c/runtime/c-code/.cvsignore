@@ -1,1 +1,7 @@
 GNUmakefile
+.libs
+allocate.lo
+main.lo
+nlx.lo
+trampoline.lo
+libruntime.la
