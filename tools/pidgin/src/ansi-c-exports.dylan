@@ -130,7 +130,19 @@ define module c-declarations
     format-c-declaration;
 end;
 
+define module c-type-repositories
+  use outside-dependencies;
+  use c-types;
+
+  export
+    <c-identifier-table>,
+    <c-type-repository>,
+    find-canonical-c-type,
+    find-canonical-pointer-to-c-type;
+end;
+
 define module ansi-c
   use c-types, export: all;
   use c-declarations, export: all;
+  use c-type-repositories, export: all;
 end;
