@@ -1,5 +1,5 @@
 module: policy
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/policy.dylan,v 1.2 1995/10/30 13:13:03 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/policy.dylan,v 1.3 1996/02/06 15:42:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,6 +16,11 @@ define class <policy> (<identity-preserving-mixin>)
   slot debug :: <single-float>, required-init-keyword: debug:;
 end class;
 
+#if (~mindy)
+seal generic make (singleton(<policy>));
+seal generic initialize (<policy>);
+#end
+
 define method print-object (policy :: <policy>, stream :: <stream>) => ();
   pprint-fields(policy, stream,
 		speed: policy.speed,
@@ -26,8 +31,8 @@ define method print-object (policy :: <policy>, stream :: <stream>) => ();
 end;
 
 define constant $Default-Policy
-  = make(<policy>, speed: 1.0, space: 1.0, safety: 1.0, brevity: 1.0,
-         debug: 1.0);
+  = make(<policy>, speed: 1.0s0, space: 1.0s0, safety: 1.0s0, brevity: 1.0s0,
+         debug: 1.0s0);
 
 
 add-make-dumper(#"compiler-policy", *compiler-dispatcher*, <policy>,
