@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.33 2002/01/19 19:24:12 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.34 2002/03/24 16:01:57 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -1644,8 +1644,8 @@ define method get-class-fields (class :: <cclass>)
   if (class.class-heap-fields)
     class.class-heap-fields;
   else
-    if (class.abstract?)
-      error("Spewing an abstract class?");
+    if (~instance?(class, <meta-cclass>) & class.abstract?) // ### put this in spew-class???? FIXME???
+      error("Spewing an instance of an abstract class?");
     end;
     let layout = class.instance-slots-layout;
     let fields = make(<vector>, size: layout.layout-length + 1, fill: #f);
