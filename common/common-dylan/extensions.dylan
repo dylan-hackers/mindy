@@ -45,19 +45,6 @@ end function unfound;
 
 
 //=========================================================================
-//  Condition string conversion
-//=========================================================================
-//  condition-to-string
-
-define open generic condition-to-string
-    (condition :: <condition>)
- => (string :: <string>);
-
-// XXX - need method on <format-string-condition>
-// XXX - need method on any conditions defined by Dylan library
-
-
-//=========================================================================
 //  Application environment functions.
 //=========================================================================
 //  Finding yourself and your arguments; exiting.

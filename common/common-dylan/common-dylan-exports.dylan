@@ -6,10 +6,8 @@ define library common-dylan
   use threads, export: { threads };
 
   use melange-support;
-  use format;
   use streams;
   use table-extensions;
-  use format-out;
   use random;
   use transcendental,
      import: { transcendental => transcendentals },
@@ -57,8 +55,7 @@ define module finalization
 end module;
 
 define module simple-io
-  use format-out,
-    export: {format-out};
+  create format-out;
 end module;
 
 define module simple-random
@@ -134,7 +131,6 @@ define module common-extensions
     export: {<string-table>};
   use transcendentals, import: { logn };
   use c-support;
-  use format, export: { format-to-string };
   use streams, import: { <stream> },
     export: {<stream>};
   use simple-profiling,
@@ -145,7 +141,9 @@ define module common-extensions
     position,
     split,
     fill-table!,
-    find-element;
+    find-element,
+    condition-to-string,
+    format-to-string;
 
   export
     /* Numerics */
@@ -175,7 +173,7 @@ define module common-extensions
 
     /* Conditions */
     //<format-string-condition>,
-    condition-to-string,
+    //condition-to-string,
 
     /* Debugging */
     //debug-message,
@@ -277,8 +275,12 @@ end module streams-protocol;
 
 define module common-dylan-internals
   use common-dylan;
+  use extensions;
+  use cheap-io, import: { puts => write-console };
+  use introspection, rename: { subclass-of => subclass-class };
   use melange-support;
   use c-support;
+  use simple-io;
   use simple-profiling;
   use locators-protocol;
   use streams-protocol;
