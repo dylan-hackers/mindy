@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.19 1995/04/26 03:31:37 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.20 1995/04/27 00:52:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -264,7 +264,8 @@ define method definition-site-for
     (component :: <component>, var :: <initial-variable>)
     => res :: <initial-definition>;
   let new = make(<initial-definition>, var-info: var.var-info, definition: var,
-		 next-initial-definition: component.initial-definitions);
+		 next-initial-definition: component.initial-definitions,
+		 derived-type: var.var-info.asserted-type);
   component.initial-definitions := new;
   new;
 end;
@@ -384,8 +385,7 @@ end method;
 
 
 define method make-set-operation
-    (builder :: <fer-builder>, defn :: <bindings-definition>,
-     value :: <leaf>)
+    (builder :: <fer-builder>, defn :: <definition>, value :: <leaf>)
  => res :: <operation>;
   make-operand-dependencies(builder, make(<set>, var: defn), value);
 end;
