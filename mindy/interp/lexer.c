@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.2 1995/04/19 13:11:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.3 1995/09/14 19:26:14 nkramer Exp $
 *
 * This file is the lexer for the debugger.
 *
@@ -48,6 +48,10 @@
 
 FILE *yyin;
 
+static char line[1024];
+static char *next_char = line;
+static int eof;
+
 void yyinput_setter(FILE *input)
 {
   yyin = input;
@@ -55,31 +59,70 @@ void yyinput_setter(FILE *input)
 
 void yyinput_clear(void)
 {
-  int c;
-  while ((c = getc(yyin)) != EOF && c != '\n')
-    ;
-  if (c == '\n')
-    ungetc(c, yyin);
+#ifdef HAVE_LIBREADLINE
+    for ( ; *next_char != 0 && *next_char != '\n'; next_char++)
+	;
+#else
+    int c;
+    while ((c = getc(yyin)) != EOF && c != '\n')
+	;
+    if (c == '\n')
+	ungetc(c, yyin);
+#endif
 }
 
-static int yyeof()
+int yyeof()
 {
-  if (errno == EINTR) {
-    errno = 0;
-    clearerr(yyin);
-    return 0;
-  } else
-    return -1;
+#ifdef HAVE_LIBREADLINE
+    return eof ? -1 : 0;
+#else
+    if (errno == EINTR) {
+	errno = 0;
+	clearerr(yyin);
+	return 0;
+    } else
+	return -1;
+#endif
 }
 
 static int yygetc()
 {
-  return getc(yyin);
+#ifdef HAVE_LIBREADLINE
+    char *l;
+
+    if ( *next_char) 
+	return *next_char++;
+    
+    l = readline("mindy> ");
+    if ( l == 0) {
+	eof = 1;
+	return -1;
+    }
+    
+    if ( *l != 0) 
+	add_history(l);
+    
+    strcpy( line, l);
+    strcat( line, "\n"); /* I hate this */
+    next_char = line;
+    return *next_char++;
+#else
+    return getc(yyin);
+#endif
 }
 
 static int yyungetc(int c)
 {
+#ifdef HAVE_LIBREADLINE
+    if (next_char > line) {
+	next_char--;
+	*next_char = c;
+	return c;
+    } else 
+	return EOF;  /* actually, can handle this if necessary. */
+#else
   return ungetc(c, yyin);
+#endif
 }
 
 static int yypeekc()
