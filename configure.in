@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.70 2001/06/19 16:06:25 housel Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.71 2001/06/22 05:10:34 dauclair Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -91,6 +91,7 @@ AC_ARG_PROGRAM			# Provide support for name prefixes
 AC_DEFUN(GD_D2C_SYSTEM,[
 case $1 in
     i*86-pc-linux-gnu*) $2=x86-linux-gcc ;;
+    i*86-pc-bsdi*) $2=x86-bsdi-gcc ;;
     powerpc-*-linux-gnu*) $2=ppc-linux-gcc ;;
     alpha*-*-linux-gnu*) $2=alpha-linux-gcc ;;
     sparc*-*-linux-gnu*) $2=sparc-linux-gcc ;;
@@ -124,7 +125,7 @@ AC_SUBST(d2c_host)
 #----------------------------------------------------------
 # Now that I know the build version, and particularly, if it's cygnus
 # I can add executable endings to those filenames
-# Douglas M. Auclair, dauclair@hotmail.com
+# Douglas M. Auclair, doug@cotilliongroup.com
 #----------------------------------------------------------
 AC_MSG_CHECKING(executable endings)
 exe_ext=""
