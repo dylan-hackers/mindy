@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.13 2001/09/17 11:47:32 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.14 2001/10/10 00:43:56 gabor Exp $
 copyright: see below
 
 
@@ -356,7 +356,7 @@ define method parse-integer
 	end method repeat;
   let first = as(<character>, contents[start]);
   if (first == '-')
-    -repeat(start + 1, as(<extended-integer>, 0));
+    - repeat(start + 1, as(<extended-integer>, 0));
   elseif (first == '+')
     repeat(start + 1, as(<extended-integer>, 0));
   else
@@ -1389,7 +1389,7 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
   let result-start :: <integer> = lexer.posn;
   let result-end :: false-or(<integer>) = #f;
   local
-    method repeat (state, posn :: <integer>)
+    method repeat (state, posn :: <integer>) => ();
       if (state.result)
 	//
 	// It is an accepting state, so record the result and where
@@ -1418,7 +1418,7 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	maybe-done();
       end if;
     end method repeat,
-    method maybe-done ()
+    method maybe-done () => ();
       //
       // maybe-done is called when the state machine cannot be
       // advanced any further.  It just checks to see if we really
@@ -1446,7 +1446,13 @@ define method internal-get-token (lexer :: <lexer>) => res :: <token>;
 	      result-end := i;
 	    end for;
 	  #"multi-line-comment" =>
+	    let line-start :: <integer> = lexer.line-start;
+	    let line :: <integer> = lexer.line;
 	    result-end := skip-multi-line-comment(lexer, result-end);
+	    unless (result-end)
+	    	lexer.line-start := line-start;
+	    	lexer.line := line;
+	    end;
 	end select;
 	result-kind := #f;
 	if (result-end)
