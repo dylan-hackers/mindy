@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.25 1995/04/21 19:42:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.26 1995/04/21 20:53:50 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -663,7 +663,7 @@ define module front
   export
     dump-fer, id, optimize-component, add-type-checks,
 
-    <primitive>, name,
+    <primitive>, name, <prologue>,
 
     <constant>, <literal-constant>, value,
     <definition-constant-leaf>, const-defn,
@@ -672,7 +672,7 @@ define module front
     <values-cluster-info>, <local-var-info>, <lexical-var-info>,
     <module-var-info>, var-defn, <module-almost-constant-var-info>,
 
-    <function-literal>, <method-literal>, <lambda>, vars,
+    <function-literal>, <method-literal>, <lambda>, prologue,
     <hairy-method-literal>;
     
 end;
