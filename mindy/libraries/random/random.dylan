@@ -32,7 +32,7 @@ define constant random-max = 54;
 
 define method integer-length (int :: <general-integer>) => n-bits :: <integer>;
   let num = if (int < 0) -int else int + 1 end;
-  for (count from 1, n = num then ash(n, -1), while n > 0)
+  for (count from 1, n = num then ash(n, -1), while: n > 0)
   finally
     count;
   end for;
@@ -72,7 +72,7 @@ define method initialize (state :: <random-state>, #next next-method,
 	end method rand1;
   for (list-rands = #() then pair(rand1(), list-rands), 
        i from 0,
-       until i > random-max)
+       until: i > random-max)
   finally
     state.state-seed := as(<vector>, list-rands);
   end for;
@@ -142,7 +142,7 @@ define method random (arg :: <general-integer>, #key state = *random-state*)
 	   then logxor(ash(bits, shift), random-chunk(state)),
 	 count = arg.integer-length + (random-integer-extra-bits - shift)
 	   then count - shift,
-	 until count < 0)
+	 until: count < 0)
     finally
       remainder(bits, arg);
     end for;
