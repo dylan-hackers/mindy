@@ -4,7 +4,7 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
             Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Interactive object inspector/class browser
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.4 1996/04/07 22:23:46 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/inspector-base.dylan,v 1.5 1996/04/10 20:42:03 nkramer Exp $
 
 //======================================================================
 //
@@ -33,7 +33,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/inspector/insp
 
 define library inspector-base
   use dylan;
-  use streams;
   use print;
   use string-extensions;
   export
@@ -44,21 +43,20 @@ define module inspector-base
   use dylan;
   use extensions;
   use introspection;
-  use streams;
-  use standard-io;
-  use print;
-  use string-conversions;
-  use character-type;
+  use namespace-introspection;
+  use print, import: { print-to-string };
   use substring-search;
+  use string-conversions;
   use regular-expressions, import: {join};
   export
     <body-component>, description, related-objects, stripped-description,
     <object-attribute>, attrib-header, attrib-body,
-    object-info, *show-elements*, short-string;
+    object-info, *show-elements*, short-string,
+    $all-libraries;
 end module inspector-base;
 
 
-define variable *show-elements* = #t;
+define variable *show-elements* :: <boolean> = #t;
 
 // The basic data structure for describing an object is a sequence of
 // <object-attribute>s.  Each attribute has a body, which is a
@@ -125,7 +123,8 @@ end function make-one-liner-body;
 
 
 // short-string is basically print-to-string without some of the
-// annoying text that comes with it.
+// annoying text that comes with it.  When print-to-string isn't too
+// ugly, we use it instead of writing our own.
 //
 define open generic short-string (obj :: <object>) => string :: <string>;
 
@@ -155,12 +154,69 @@ define method short-string (kwd :: <symbol>) => string :: <string>;
   concatenate("#\"", as(<string>, kwd), "\"");
 end method short-string;
 
+define method short-string (boolean == #t) => string :: <string>;
+  "#t";
+end method short-string;
+
+define method short-string (boolean == #f) => string :: <string>;
+  "#f";
+end method short-string;
+
+define method short-string (empty-list == #()) => string :: <string>;
+  "#()";
+end method short-string;
+
+define method short-string (string :: <string>) => string :: <string>;
+  // Silly as this sounds, we do need to add quote marks and such
+  print-to-string(string);  
+end method short-string;
+
+define method short-string (char :: <character>) => string :: <string>;
+  print-to-string(char);
+end method short-string;
+
+define method short-string (number :: <number>) => string :: <string>;
+  print-to-string(number);
+end method short-string;
+
 define method short-string (fun :: <function>) => string :: <string>;
   concatenate
     (as(<string>, fun.function-name | "Anonymous function"),
      "(",
      apply(join, ", ", map(short-string, fun.function-specializers)),
      ")");
+end method short-string;
+
+define method short-string (library :: <library>) => string :: <string>;
+  concatenate("Library ", as(<string>, library.library-name));
+end method short-string;
+
+define method short-string (module :: <module>) => string :: <string>;
+  concatenate("Module ", as(<string>, module.module-name));
+end method short-string;
+
+define function capitalize! (s :: <string>) => s :: <string>;
+  s.first := s.first.as-uppercase;
+  s;
+end function capitalize!;
+
+define function constant-and-untyped? (binding :: <binding>)
+ => answer :: <boolean>;
+  select (binding.binding-kind)
+    #"variable" => #f;
+    #"undefined" => #f;
+    #"constant" => binding.binding-type == #f;
+    otherwise => #t;
+  end select;
+end function constant-and-untyped?;
+
+define method short-string (binding :: <binding>) => string :: <string>;
+  if (binding.constant-and-untyped?)
+    short-string(binding.binding-value);
+  else
+    concatenate(capitalize!(as(<string>, binding.binding-kind)),
+		" Binding ", as(<string>, binding.binding-name));
+  end if;
 end method short-string;
 
 
@@ -335,16 +391,20 @@ define function slot-info (cls :: <class>, #key object = $no-object)
 		 list(type, object));
 	end if;
 
+    let allocation-string = if (slt.slot-allocation == #"instance")
+			      "";
+			    else
+			      as(<string>, slt.slot-allocation);
+			    end if;
     let (descr, related)
       = if (setter == #f & slt.slot-allocation ~== #"virtual")
-	  values(concatenate("constant ", 
-			     as(<string>, slt.slot-allocation), " slot #!",
+	  values(concatenate("constant ", allocation-string, " slot #!",
 			     as(<string>, getter.function-name),
 			     "!# :: #!", short-string(slt.slot-type), "!#",
 			     value-string),
 		 pair(getter, type-and-value));
 	else
-	  values(concatenate(as(<string>, slt.slot-allocation), " slot #!",
+	  values(concatenate(allocation-string, " slot #!",
 			     as(<string>, getter.function-name),
 			     "!# :: #!", short-string(type),
 			     value-string, "!#, setter: #!", 
@@ -352,9 +412,8 @@ define function slot-info (cls :: <class>, #key object = $no-object)
 			     "!#"),
 		 concatenate(list(getter), type-and-value, list(setter)));
 	end if;
-    push-last(slots-body,
-	      make(<body-component>, 
-		   description: descr, related-objects: related));
+    push-last(slots-body, make(<body-component>, 
+			       description: descr, related-objects: related));
   end for;
   deque(make(<object-attribute>, 
 	     header: "Slots:", body: slots-body));
@@ -362,14 +421,17 @@ end function slot-info;
 
 define method object-info (cls :: <class>) => info :: <sequence>;
   let info = slot-info(cls);
+  let class-adjectives
+    = if (cls.abstract?)
+	if (cls.instantiable?) "Abstract Instantiable " else "Abstract " end;
+      else
+	"";
+      end if;
   let header-string
     = if (cls.class-name)
-	concatenate(if (cls.abstract?) "Abstract " else "" end,
-		    "Class ", as(<string>, cls.class-name));
+	concatenate(class-adjectives, "Class ", as(<string>, cls.class-name));
       else
-	concatenate("Anonymous ",
-		    if (cls.abstract?) "Abstract " else "" end,
-		    "Class");
+	concatenate("Anonymous ", class-adjectives, "Class");
       end if;
   push(info, make(<object-attribute>, 
 		  header: header-string, body: #[]));
@@ -439,9 +501,166 @@ define method object-info (coll :: <explicit-key-collection>)
   info;
 end method object-info;
 
+// relobj is a "related object"
+//
+define function map-into-body-components
+    (descr-function :: <function>, relobj-function :: <function>, 
+     objects :: <sequence>)
+ => body-components :: <sequence>;
+  map(method (obj)
+	make(<body-component>, description: obj.descr-function, 
+	     related-objects: list(obj.relobj-function));
+      end method,
+      objects);
+end function map-into-body-components;
+
+define function owned-names (namespace :: <namespace>) 
+ => buncha-symbols :: <sequence>;
+  remove(namespace.visible-names, #f,
+	 test: method (symbol, ignored)
+		 namespace ~== name-owner(resolve-name(symbol, namespace));
+	       end method);
+end function owned-names;
+
+define function namespace-info (namespace :: <namespace>)
+ => info :: <deque>;
+  let make-name = method (symbol)
+		    concatenate("#!", as(<string>, symbol), "!#");
+		  end method;
+  let make-relobj = method (symbol)
+		      resolve-name(symbol, namespace)
+		    end method;
+  let exported-components
+    = map-into-body-components(make-name, make-relobj,
+			       sort(namespace.exported-names));
+  let owned-components
+    = map-into-body-components(make-name, make-relobj,
+			       sort(namespace.owned-names));
+  deque(make(<object-attribute>, 
+	     header: "Exported names",
+	     body: exported-components),
+	make(<object-attribute>,
+	     header: "Owned names",
+	     body: owned-components));
+end function namespace-info;
+
+define function add-info-for-names! (name :: <name>, info :: <deque>) => ();
+  push(info, make(<object-attribute>,
+		  header: "Owner:", 
+		  body: make-one-liner-body(name.name-owner)));
+end function add-info-for-names!;
+
+define method object-info (module :: <module>)
+ => info :: <sequence>;
+  let info = namespace-info(module);
+  add-info-for-names!(module, info);
+  push(info, make(<object-attribute>, header: short-string(module),
+		  body: #()));
+  info;
+end method object-info;
+
+define method object-info (library :: <library>)
+ => info :: <sequence>;
+  let info = namespace-info(library);
+  push(info, make(<object-attribute>, header: short-string(library),
+		  body: #()));
+  push-last(info, make(<object-attribute>,
+		       header: "Other libraries",
+		       body: make-one-liner-body($all-libraries)));
+  info;
+end method object-info;
+
+define method object-info (binding :: <binding>)
+ => info :: <sequence>;
+  if (binding.constant-and-untyped?)
+    object-info(binding.binding-value);
+  else
+    let info = make(<deque>);
+    add-info-for-names!(binding, info);
+    if (binding.binding-kind ~== #"undefined")
+      push(info, make(<object-attribute>,
+		      header: "Currently bound to:",
+		      body: make-one-liner-body(binding.binding-value)));
+    end if;
+    if (binding.binding-type ~== #f)
+      push(info, make(<object-attribute>,
+		      header: "Type constraint:",
+		      body: make-one-liner-body(binding.binding-type)));
+    end if;
+    push(info, make(<object-attribute>, header: short-string(binding),
+		    body: #()));
+    info;
+  end if;
+end method object-info;
+
+// Info for objects which are summed up by their short-string method.
+//
+define function literal-info (obj :: <object>) => info :: <sequence>;
+  deque(make(<object-attribute>, header: "Object of type", 
+	     body: make-one-liner-body(obj.object-class)),
+	make(<object-attribute>, header: "Value:",
+	     body: deque(make(<body-component>, description: short-string(obj),
+			      related-objects: #()))));
+end function literal-info;
+
+define method object-info (obj :: <complex>) => info :: <sequence>;
+  literal-info(obj);
+end method object-info;
+
+define method object-info (obj :: <string>) => info :: <sequence>;
+  literal-info(obj);
+end method object-info;
+
+define method object-info (obj :: <symbol>) => info :: <sequence>;
+  literal-info(obj);
+end method object-info;
+
+define method object-info (obj :: <boolean>) => info :: <sequence>;
+  literal-info(obj);
+end method object-info;
+
 define method object-info (obj :: <object>) => info :: <sequence>;
   let info = slot-info(obj.object-class, object: obj);
   push(info, make(<object-attribute>, header: "Object of type", 
 		  body: make-one-liner-body(obj.object-class)));
   info;
 end method object-info;
+
+// I'm not sure whether I like name-owner or name-home better, so
+// we'll define both..
+//
+define function name-owner (name)
+  name.name-home;
+end function name-owner;
+
+// Hacks for letting us see all the libraries in a nice format
+
+// All instances of this class are equivalent, because the only
+// interesting part about them is their class, which is used for
+// dispatching.  Nevertheless, keep $all-libraries as the only
+// instance of this class, please.
+//
+define class <loaded-libraries> (<object>)
+end class <loaded-libraries>;
+
+define constant $all-libraries :: <loaded-libraries>
+  = make(<loaded-libraries>);
+
+define method short-string (loaded-libs :: <loaded-libraries>)
+ => string :: <string>;
+  "All loaded libraries";
+end method short-string;
+
+define method object-info (loaded-libs :: <loaded-libraries>)
+ => info :: <sequence>;
+  deque(make(<object-attribute>,
+	     header: "All libraries currently loaded:",
+	     body: make-simple-body(get-all-libraries())));
+end method object-info;
+
+
+// Shouldn't < be already defined on symbols?  It isn't in the DRM...
+//
+define method \< (sym1 :: <symbol>, sym2 :: <symbol>) => answer :: <boolean>;
+  as(<string>, sym1) < as(<string>, sym2);
+end method;
