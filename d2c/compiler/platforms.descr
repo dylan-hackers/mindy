@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.56 2002/11/07 17:55:25 robmyers Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.57 2002/11/09 23:40:45 robmyers Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -556,9 +556,9 @@ long-double-alignment:	4
 
 platform-name:			ppc-darwin-egcs
 inherit-from:			egcs darwin ppc
-default-c-compiler-flags:	-I. -I%s -O -fomit-frame-pointer -no-cpp-precomp -Wno-long-double
-default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double
-default-c-compiler-profile-flags:	-I. -I%s -pg -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double
+default-c-compiler-flags:	-I. -I%s -O -fomit-frame-pointer -no-cpp-precomp -Wno-long-double -ObjC
+default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double -ObjC
+default-c-compiler-profile-flags:	-I. -I%s -pg -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double -ObjC
 long-long-size:			8
 long-long-alignment:	4
 long-double-size:		8
