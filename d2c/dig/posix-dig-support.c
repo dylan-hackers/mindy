@@ -22,18 +22,22 @@ void delegate_signal(int signum)
 
 int delegate_gdb_signals(void)
 {
+#ifdef __CYGNUS__
+    int SA_RESTART = 0;
+#endif
+
     struct sigaction act;
 
     act.sa_handler  = &delegate_signal;
 #if !defined(__BEOS__)
     act.sa_flags    = SA_RESTART;
 #else
-    // Can't find an SA_RESTART flag in the BeOS posix headers so
-    // I guess dig support will be broken for now...
+    /* Can't find an SA_RESTART flag in the BeOS posix headers so
+       I guess dig support will be broken for now... */
     act.sa_flags    = 0;
 #endif
     sigemptyset(&act.sa_mask);
 
-    //return sigaction(SIGINT, &act, NULL);
+    /* return sigaction(SIGINT, &act, NULL); */
     return 0;
 }
