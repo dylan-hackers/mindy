@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.36 1996/02/08 23:55:05 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.37 1996/02/16 03:43:40 wlott Exp $
 
 /*
 
@@ -406,7 +406,7 @@ begin
   // know how to dump and that can be unambiguously coerced (via AS) to a
   // ct-value.  The single subobject is the dylan value.
   //
-  register-object-id(#"eql-literal", #x0050);
+  register-object-id(#"simple-literal", #x0050);
 
   // Two subobject: head and tail.
   register-object-id(#"literal-pair", #x0051);
@@ -418,7 +418,7 @@ begin
   register-object-id(#"literal-extended-float", #x0055);
 
   // One subobject, the vector dylan value.
-  register-object-id(#"labelled-literal", #x0056);
+  register-object-id(#"literal-vector", #x0056);
 
   // Similar in concept to literals, but not quite one because there is no
   // literal syntax for it.
@@ -549,6 +549,7 @@ begin
   register-object-id(#"define-module-tlf", #x00E1);
   register-object-id(#"define-binding-tlf", #x00E2);
   register-object-id(#"unit-info", #x00E3);
+  register-object-id(#"extra-label", #x00E4);
 
   register-object-id(#"use", #x00E8);
   register-object-id(#"renaming", #x00E9);
@@ -2015,6 +2016,25 @@ define open abstract /* exported */ class <identity-preserving-mixin>
   slot handle :: false-or(<basic-handle>), init-value: #f;
 end class;
 
+
+// This predicate can be used to check to see if some object has been defined
+// externally.  If so, then any local changes to it will not be saved, because
+// the one true dump of the object has already been made.
+// 
+define /* exported */ generic defined-externally? (object :: <object>)
+    => res :: <boolean>;
+
+define method defined-externally? (thing :: <object>)
+    => res :: <boolean>;
+  #f;
+end method defined-externally?;
+
+define method defined-externally? (thing :: <identity-preserving-mixin>)
+    => res :: <boolean>;
+  instance?(thing.handle, <extern-handle>);
+end method defined-externally?;
+
+
 
 // maybe-dump-reference
 
@@ -2036,7 +2056,6 @@ end class;
 define /* exported */ method maybe-dump-reference
     (obj :: <identity-preserving-mixin>, buf :: <dump-state>)
  => res :: <boolean>;
-
   maybe-dump-reference-dispatch(obj, obj.handle, buf);
 end method;
 
