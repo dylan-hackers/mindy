@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.78 1995/06/07 19:38:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.79 1995/06/07 22:37:28 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -832,6 +832,8 @@ define module fer-convert
   use policy, export: all;
   use representation;
   use compile-time-functions;
+  use primitives,
+    import: {primitive-info-or-lose, primitive-arg-types};
 
   export
     fer-convert-method, fer-convert, fer-convert-body,
