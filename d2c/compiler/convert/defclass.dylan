@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.37 2002/04/15 18:07:16 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.38 2002/04/15 23:40:42 gabor Exp $
 copyright: see below
 
 
@@ -1826,7 +1826,8 @@ define generic build-home-store
    override-info :: false-or(<override-info>), 
    policy :: <policy>,
    source :: <source-location>,
-   #key class-instance :: false-or(<cclass>));
+   class-instance :: <cclass>)
+ => ();
 
 define method build-home-store
   (builder :: <fer-builder>,
@@ -1835,8 +1836,8 @@ define method build-home-store
    override-info :: false-or(<override-info>), 
    policy :: <policy>,
    source :: <source-location>,
-   #key class-instance :: <cclass> = slot-info.slot-introduced-by)
- => ()
+   class-instance :: <cclass>)
+ => ();
   let slot-home
     = build-slot-home
         (slot-info.slot-getter.variable-name,
@@ -1861,9 +1862,8 @@ define method build-home-store
    override-info :: false-or(<override-info>), 
    policy :: <policy>,
    source :: <source-location>,
-   #key class-instance :: <cclass> = override-info & override-info.override-introduced-by
-				     | slot-info.slot-introduced-by)
- => ()
+   class-instance :: <cclass>)
+ => ();
   let slot-home
     = build-slot-home
         (slot-info.slot-getter.variable-name,
@@ -1942,8 +1942,7 @@ define method convert-top-level-form
 	 init-value-var :: false-or(<initial-variable>),
 	 make-init-value-var :: <function>,
 	 init-function-leaf :: false-or(<leaf>),
-	 type-var :: false-or(<initial-variable>),
-	 #key class-instance :: false-or(<cclass>)/* do I want this???еее */)
+	 type-var :: false-or(<initial-variable>))
        => ();
 	if (init-value) // later: init-value == #t TODO
 	  //
@@ -1968,8 +1967,7 @@ define method convert-top-level-form
 	  // cannot simply use the slot-setter because slot might be constant.
 	  build-home-store(evals-builder, var,
 			   slot-info, override-info,
-			   policy, source,
-			   class-instance: cclass);
+			   policy, source, cclass);
 	elseif (init-function)
 	  //
 	  // Invoke the init function and store the result
@@ -1982,8 +1980,7 @@ define method convert-top-level-form
 	  // cannot simply use the slot-setter because slot might be constant.
 	  build-home-store(evals-builder, var,
 			   slot-info, override-info,
-			   policy, source,
-			   class-instance: cclass);
+			   policy, source, cclass);
 	end if;
       end method update-indirect-slot;
 
@@ -2147,6 +2144,31 @@ define method convert-top-level-form
 	end unless;
       end for;
 
+      local method effective-override(slot-info :: <slot-info>, #key start)
+       => override :: false-or(<override-info>);
+	block (return)
+	  if (start)
+	    if (start.override-init-value | start.override-init-function)
+	      return(start);
+	    end;
+	  else
+	    for (override in cclass.override-infos)
+	      if (override.override-slot == slot-info)
+	        return(#f);
+	      end if;
+	    end for;
+	  end;
+	  for (super in cclass.precedence-list.tail)
+	    for (override in super.override-infos)
+	      if (override.override-slot == slot-info
+		  & (override.override-init-value | override.override-init-function))
+	        return(override);
+	      end;
+	    end for;
+	  end for;
+	end block;
+      end method;
+      
       for (override-defn in defn.class-defn-overrides,
 	   index from 0)
 	let override-info = override-defn.override-defn-info;
@@ -2192,49 +2214,48 @@ define method convert-top-level-form
 	    values(#f, leaf);
 	  end if;
 
+	local method effective-inits(slot-info :: <slot-info>, #key start)
+	 => (override-info :: false-or(<override-info>),
+	     init-value :: type-union(<ct-value>, <boolean>),
+	     init-function :: type-union(<ct-value>, <boolean>));
+
+	  let override-info = effective-override(slot-info, start: start);
+	  values(override-info,
+		 override-info & override-info.override-init-value
+		  | slot-info.slot-init-value,
+		 override-info & override-info.override-init-function
+		  | slot-info.slot-init-function)
+	end method effective-inits;
+
 	// now update the each-subclass-slot
+	// since all deferred evaluations are performed at this point,
+	// we can assume that slot and override descriptors are properly set up.
 	let slot-info = override-info.override-slot;
 	if (instance?(slot-info, <each-subclass-slot-info>))
+	  let (override-info, init-value, init-function)
+	    = effective-inits(slot-info, start: override-info);
 	  update-indirect-slot(slot-info, override-info, slot-name, init-value, init-function, type,
 			       init-value-var, make-init-value-var, init-function-leaf,
-			       /* еее type-var */ #f,
-			       	class-instance: cclass);
+			       /* еее type-var */ #f);
 	end if;
       end for;
-      
-      
-      local method effective-override(slot-info :: <slot-info>)
-       => override :: false-or(<override-info>);
-	block (return)
-	  for (override in cclass.override-infos)
-	    if (override.override-slot == slot-info)
-	      return(#f);
-	    end if;
-	  end for;
-	  for (super in cclass.precedence-list.tail)
-	    for (override in super.override-infos)
-	      if (override.override-slot == slot-info
-		  & (override.override-init-value | override.override-init-function))
-	        return(override);
-	      end;
-	    end for;
-	  end for;
-	end block;
-      end method;
-	
       
       // now it remains to initialize all the remaining each subclass slots
       // that are inherited but not mentioned by override-infos
       //
       for (slot-info in cclass.all-slot-infos)
 	if (instance?(slot-info, <each-subclass-slot-info>)
-	    & slot-info.slot-introduced-by ~== cclass)
+	    & slot-info.slot-introduced-by ~== cclass
+	    & ~any?(compose(curry(\==, slot-info), override-slot), cclass.override-infos))
+	  
+	  // use effective-inits above!!! еее
 	  let override-info = slot-info.effective-override;
 	  // since all deferred evaluations are performed at this point,
 	  // we can assume that slot and override descriptors are properly set up.
 	  let init-value = override-info & override-info.override-init-value
 			   | slot-info.slot-init-value;
-	  let init-function = #f; // for now...ееее
+	  let init-function = override-info & override-info.override-init-function
+			      | slot-info.slot-init-function;
 	  let type = object-ctype(); /// еее as above!!!
 	  let slot-name = slot-info.slot-getter.variable-name;
 	  
@@ -2246,8 +2267,7 @@ define method convert-top-level-form
 	  update-indirect-slot
 	    (slot-info, override-info, slot-name,
 	     init-value, init-function, type,
-	     #f, make-init-value-var, #f, #f,
-	     class-instance: cclass);
+	     #f, make-init-value-var, #f, #f);
 	end if;
       end for;
     end begin;
