@@ -1,5 +1,5 @@
 module: cheese
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.121 1996/02/17 15:58:45 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/optimize/cheese.dylan,v 1.122 1996/02/23 15:12:09 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -61,6 +61,7 @@ define method optimize-component
       (*do-sanity-checks* & try(assure-all-done, #f))
 	| try(identify-tail-calls, "finding tail calls")
 	| try(cleanup-control-flow, "cleaning up control flow")
+	| try(propagate-constraints, "propagating constraints")
 	| (simplify-only & (done := #t))
 	| try(add-type-checks, "adding type checks")
 	| try(replace-placeholders, "replacing placeholders")
@@ -721,18 +722,37 @@ define method optimize (component :: <component>, if-region :: <if-region>)
   elseif (instance?(if-region.then-region, <empty-region>)
 	    & instance?(if-region.else-region, <empty-region>))
     replace-if-with(component, if-region, make(<empty-region>));
-  elseif (instance?(condition, <ssa-variable>))
-    let cond-source = condition.definer.depends-on.source-exp;
-    if (instance?(cond-source, <primitive>)
-	  & cond-source.primitive-name == #"not")
-      replace-expression(component, if-region.depends-on,
-			 cond-source.depends-on.source-exp);
-      let then-region = if-region.then-region;
-      if-region.then-region := if-region.else-region;
-      if-region.else-region := then-region;
-    end;
-  end;
-end;
+  else
+    if (instance?(condition, <ssa-variable>))
+      let cond-source = condition.definer.depends-on.source-exp;
+      if (instance?(cond-source, <primitive>)
+	    & cond-source.primitive-name == #"not")
+	replace-expression(component, if-region.depends-on,
+			   cond-source.depends-on.source-exp);
+	let then-region = if-region.then-region;
+	if-region.then-region := if-region.else-region;
+	if-region.else-region := then-region;
+      end if;
+    end if;
+    if (anything-after?(if-region.parent, if-region))
+      let then-doesnt-return? = if-region.then-region.doesnt-return?;
+      let else-doesnt-return? = if-region.else-region.doesnt-return?;
+      if (else-doesnt-return?)
+	unless (then-doesnt-return?)
+	  let after
+	    = extract-stuff-after(component, if-region.parent, if-region);
+	  replace-subregion(component, if-region, if-region.then-region,
+			    combine-regions(if-region.then-region, after));
+	end unless;
+      elseif (then-doesnt-return?)
+	let after
+	  = extract-stuff-after(component, if-region.parent, if-region);
+	replace-subregion(component, if-region, if-region.else-region,
+			  combine-regions(if-region.else-region, after));
+      end if;
+    end if;
+  end if;
+end method optimize;
 
 define method replace-if-with
     (component :: <component>, if-region :: <if-region>, with :: <region>)
@@ -876,110 +896,123 @@ end;
 // Control flow cleanup stuff.
 
 define method cleanup-control-flow (component :: <component>) => ();
+  let postpass-thunks = make(<stretchy-vector>);
   for (function in component.all-function-regions)
-    if (cleanup-control-flow-aux(component, function.body) == #f)
+    if (cleanup-control-flow-aux
+	  (component, function.body, #(), postpass-thunks))
       error("control flow drops off the end of %=?", function);
     end;
   end;
+  for (thunk in postpass-thunks)
+    thunk();
+  end for;
 end;
 
 define method cleanup-control-flow-aux
-    (component :: <component>, region :: <simple-region>)
-    => terminating-exit :: type-union(<exit>, <boolean>);
-  #f;
+    (component :: <component>, region :: <simple-region>,
+     surrounding-blocks :: <list>, postpass-thunks :: <stretchy-vector>)
+    => returns? :: <boolean>;
+  #t;
 end;
 
 define method cleanup-control-flow-aux
-    (component :: <component>, region :: <compound-region>)
-    => terminating-exit :: type-union(<exit>, <boolean>);
+    (component :: <component>, region :: <compound-region>,
+     surrounding-blocks :: <list>, postpass-thunks :: <stretchy-vector>)
+    => returns? :: <boolean>;
   block (return)
     for (remaining = region.regions then remaining.tail,
 	 until: remaining == #())
-      let terminating-exit
-	= cleanup-control-flow-aux(component, remaining.head);
-      if (terminating-exit)
-	unless (remaining.tail == #())
+      let last? = remaining.tail == #();
+      let returned?
+	= cleanup-control-flow-aux(component, remaining.head,
+				   if (last?)
+				     surrounding-blocks;
+				   else
+				     #();
+				   end,
+				   postpass-thunks);
+      unless (returned?)
+	unless (last?)
 	  for (subregion in remaining.tail)
 	    delete-stuff-in(component, subregion);
 	  end;
 	  remaining.tail := #();
 	  if (region.regions.tail == #())
-	    replace-subregion(component, region.parent, region,
-			      region.regions.head);
-	  end;
-	end;
-	return(terminating-exit);
-      end;
-    end;
-    #f;
-  end;
-end;
-
-define method cleanup-control-flow-aux
-    (component :: <component>, region :: <if-region>)
-    => terminating-exit :: type-union(<exit>, <boolean>);
-  let then-terminating-exit
-    = cleanup-control-flow-aux(component, region.then-region);
-  let else-terminating-exit
-    = cleanup-control-flow-aux(component, region.else-region);
-  if (then-terminating-exit & else-terminating-exit)
-    if (then-terminating-exit == #t)
-      else-terminating-exit;
-    elseif (else-terminating-exit == #t)
-      then-terminating-exit;
-    else
-      for (then-target-ancestor = then-terminating-exit.block-of
-	     then then-target-ancestor.parent,
-	   else-target-ancestor = else-terminating-exit.block-of
-	     then else-target-ancestor.parent,
-	   while: then-target-ancestor & else-target-ancestor)
-      finally
-	if (then-target-ancestor == #f)
-	  else-terminating-exit;
-	else
-	  then-terminating-exit;
-	end if;
-      end for;
-    end if;
-  else
-    #f;
-  end if;
+	    add!(postpass-thunks,
+		 method () => ();
+		   replace-subregion(component, region.parent, region,
+				     region.regions.head);
+		 end method);
+	  end if;
+	end unless;
+	return(#f);
+      end unless;
+    end for;
+    #t;
+  end block;
 end method cleanup-control-flow-aux;
 
 define method cleanup-control-flow-aux
-    (component :: <component>, region :: <loop-region>)
-    => terminating-exit :: type-union(<exit>, <boolean>);
-  if (cleanup-control-flow-aux(component, region.body))
-    // ### Hm.  Should flush this region, but that will cause all sorts of
-    // problems with the iteration in <compound-region> above.
-    #f;
-  end;
-  #t;
-end;
+    (component :: <component>, region :: <if-region>,
+     surrounding-blocks :: <list>, postpass-thunks :: <stretchy-vector>)
+    => returns? :: <boolean>;
+  let then-returns?
+    = cleanup-control-flow-aux(component, region.then-region,
+			       surrounding-blocks, postpass-thunks);
+  let else-returns?
+    = cleanup-control-flow-aux(component, region.else-region,
+			       surrounding-blocks, postpass-thunks);
+  if (then-returns? ~== else-returns? & anything-after?(region.parent, region))
+    reoptimize(component, region);
+  end if;
+  then-returns? | else-returns?;
+end method cleanup-control-flow-aux;
 
 define method cleanup-control-flow-aux
-    (component :: <component>, region :: <block-region>)
-    => terminating-exit :: type-union(<exit>, <boolean>);
-  let terminating-exit = cleanup-control-flow-aux(component, region.body);
-  if (instance?(terminating-exit, <exit>)
-	& terminating-exit.block-of == region)
-    delete-stuff-in(component, terminating-exit);
-    replace-subregion(component, terminating-exit.parent, terminating-exit,
-		      make(<empty-region>));
-  end;
+    (component :: <component>, region :: <loop-region>,
+     surrounding-blocks :: <list>, postpass-thunks :: <stretchy-vector>)
+    => returns? :: <boolean>;
+  unless (cleanup-control-flow-aux(component, region.body,
+				   #(), postpass-thunks))
+    add!(postpass-thunks,
+	 method () => ();
+	   replace-subregion(component, region.parent, region, region.body);
+	 end method);
+  end unless;
   #f;
 end;
 
 define method cleanup-control-flow-aux
-    (component :: <component>, region :: <unwind-protect-region>)
-    => terminating-exit :: type-union(<exit>, <boolean>);
-  cleanup-control-flow-aux(component, region.body);
+    (component :: <component>, region :: <block-region>,
+     surrounding-blocks :: <list>, postpass-thunks :: <stretchy-vector>)
+    => returns? :: <boolean>;
+  cleanup-control-flow-aux(component, region.body,
+			   pair(region, surrounding-blocks),
+			   postpass-thunks);
+  #t;
 end;
 
 define method cleanup-control-flow-aux
-    (component :: <component>, region :: <exit>)
-    => terminating-exit :: type-union(<exit>, <boolean>);
-  region;
+    (component :: <component>, region :: <unwind-protect-region>,
+     surrounding-blocks :: <list>, postpass-thunks :: <stretchy-vector>)
+    => returns? :: <boolean>;
+  cleanup-control-flow-aux(component, region.body,
+			   surrounding-blocks, postpass-thunks);
+end;
+
+define method cleanup-control-flow-aux
+    (component :: <component>, region :: <exit>,
+     surrounding-blocks :: <list>, postpass-thunks :: <stretchy-vector>)
+    => returns? :: <boolean>;
+  if (member?(region.block-of, surrounding-blocks))
+    add!(postpass-thunks,
+	 method () => ();
+	   delete-stuff-in(component, region);
+	   replace-subregion(component, region.parent, region,
+			     make(<empty-region>));
+	 end method);
+  end if;
+  #f;
 end;
 
 
