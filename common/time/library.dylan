@@ -2,7 +2,7 @@ module: Dylan-user
 author: Ben Folk-Williams, bfw@cmu.edu and David Watson, dwatson@cmu.edu
 synopsis: The Time library definitions.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.3 1996/08/14 15:35:04 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.4 1996/10/06 13:43:48 nkramer Exp $
  
 //======================================================================
 //
@@ -32,6 +32,10 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/time/library.dylan,v 1.
 define library Time
   use Dylan;
   use String-extensions;
+  use Streams;
+  use Print;
+  use Format;
+  use Table-extensions;
 #if (~mindy)
   use Melange-support;
 #endif
@@ -50,6 +54,11 @@ define module time-internal
   use Extensions;
   use System;
   use Character-type;
+  use String-conversions;
+  use Streams;
+  use Print;
+  use Format;
+  use Table-extensions;
 
   export
     // For the Time module
@@ -87,8 +96,8 @@ define module time-internal
     encodable-time?,
 
     // For the Time-IO module
-    string-parse-time,
-    string-format-time;
+    parse-time,
+    format-time;
 end module time-internal;
 
 define module Time
@@ -105,6 +114,6 @@ end module Time;
 
 define module Time-IO
   use time-internal,
-    import: {string-parse-time, string-format-time},
+    import: {parse-time, format-time},
     export: all;
 end module Time-IO
