@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.27 1995/04/16 23:43:25 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.28 1995/09/06 23:23:07 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -422,7 +422,10 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 	    setsid();
 	    
 	    execvp(args[0], args);
-	    /* We never get here.... */
+	    /* If we get here, execvp failed, so shut down as 
+	     * gracefully as we can 
+	     */
+	    exit(1);
 	}
 	close(inpipes[0]);
 	close(outpipes[1]);
