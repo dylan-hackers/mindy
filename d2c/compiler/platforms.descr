@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.88 2003/11/10 07:05:59 alexpotanin Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.89 2003/12/23 00:45:35 housel Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -454,8 +454,8 @@ default-features:		C-compiler-is-GCC
 compile-c-command:              gcc $(CCFLAGS) -c %s -o %s
 compile-c-for-shared-command:   $(LIBTOOL) --mode=compile gcc $(CCFLAGS) -c %s -o %s
 default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
-default-c-compiler-debug-flags:	-I. -I%s -gstabs1 -O -fno-inline-functions
-default-c-compiler-profile-flags:	-I. -I%s -pg -gstabs1 -O -fno-inline-functions
+default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions
+default-c-compiler-profile-flags:	-I. -I%s -pg -g -O -fno-inline-functions
 assembler-command:		gcc $(CCFLAGS) -c %s -o %s
 link-library-command:           ar qc %s %s
 link-executable-command: 	$(LIBTOOL) --mode=link gcc -o %s %s %s
@@ -464,7 +464,6 @@ link-executable-flags:          $(GC_LIBS) -lm
 link-debug-flags:               -g
 link-profile-flags:		-pg -g
 path-separator:        		/
-supports-asm-stabs-hack?:	#t
 
 platform-name:			beos-gcc
 default-features:		C-compiler-is-GCC

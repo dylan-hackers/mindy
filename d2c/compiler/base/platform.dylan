@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.13 2003/07/16 15:03:36 scotek Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.14 2003/12/23 00:45:35 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -207,10 +207,6 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot link-debug-flags
       :: false-or(<byte-string>) = #f,
     init-keyword: #"link-debug-flags";
-  constant /* exported */ slot supports-asm-stabs-hack?
-      :: <boolean> = #f,
-    init-keyword: #"supports-asm-stabs-hack?";
-  
 
   // if this is defined, we can build shared libraries
   constant /* exported */ slot link-shared-library-command
@@ -299,7 +295,6 @@ define variable *valid-properties* = make(<table>);
 *valid-properties*[#"link-debug-flags"] := #f;
 *valid-properties*[#"link-profile-flags"] := #f;
 *valid-properties*[#"link-doesnt-search-for-libs?"] := #f;
-*valid-properties*[#"supports-asm-stabs-hack?"] := #f;
 
 // Contains a table of tables, keyed by platform-name, each of which contains a
 // table of values keyed by property name.
@@ -437,7 +432,7 @@ define function add-platform! (header :: <header>)
 	#"make-supports-phony-targets?", #"makefiles-can-rebuild-themselves?",
 	#"uses-drive-letters?", #"environment-variables-can-be-exported?",
         #"use-dbclink?", #"link-doesnt-search-for-libs?",
-        #"big-endian?", #"supports-asm-stabs-hack?" =>
+        #"big-endian?" =>
           local-platform-info[key] := string-to-boolean(val);
         #"integer-length", #"pointer-alignment", #"pointer-size",
         #"short-alignment", #"short-size",
