@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.5 2001/02/26 20:19:21 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.6 2001/03/30 13:59:19 bruce Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -608,8 +608,8 @@ define method internal-find-method
 	 until: remaining == #())
       let old :: <method> = remaining.head;
       block (no-match)
-	for (old-spec in old.function-specializers,
-	     new-spec in specializers)
+	for (old-spec :: <type> in old.function-specializers,
+	     new-spec :: <type> in specializers)
 	  unless (old-spec == new-spec
 		    | (subtype?(old-spec, new-spec)
 			 & subtype?(new-spec, old-spec)))
@@ -1223,8 +1223,8 @@ define method %compare-methods
     //
     // Compare each specializer.
     for (index :: <integer> from 0 below specializers1.size)
-      let spec1 = specializers1[index];
-      let spec2 = specializers2[index];
+      let spec1 :: <type> = specializers1[index];
+      let spec2 :: <type> = specializers2[index];
       block (next)
 	let cmp = if (subtype?(spec1, spec2))
 		    if (subtype?(spec2, spec1))
@@ -1291,8 +1291,8 @@ define method compare-methods
     //
     // Compare each specializer.
     for (index :: <integer> from 0 below specializers1.size)
-      let spec1 = specializers1[index];
-      let spec2 = specializers2[index];
+      let spec1 :: <type> = specializers1[index];
+      let spec2 :: <type> = specializers2[index];
       block (next)
 	let cmp = if (subtype?(spec1, spec2))
 		    if (subtype?(spec2, spec1))
