@@ -23,12 +23,11 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.h,v 1.3 1994/10/05 21:03:39 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.h,v 1.4 1996/06/11 14:38:35 nkramer Exp $
 *
 \**********************************************************************/
 
 
-extern void yyinput_clear(void);
-extern void yyinput_setter(FILE *);
+extern void yyinput_setter(char *input);
 extern int yylex(void);
 

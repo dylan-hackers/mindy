@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.11 1996/05/11 21:33:04 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.h,v 1.12 1996/06/11 14:38:35 nkramer Exp $
 *
 \**********************************************************************/
 
@@ -42,6 +42,7 @@ struct object {
 #define rawptr_obj(p) ((obj_t)(p))
 
 extern void lose _ANSI_ARGS_((char *fmt, ...));
+extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 
 #define assert(cond) \
     do { \

@@ -23,9 +23,16 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.h,v 1.1 1995/04/16 23:33:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.h,v 1.2 1996/06/11 14:38:35 nkramer Exp $
 *
 \**********************************************************************/
 
 extern int input_available(int fd);
 extern int output_writable(int fd);
+
+#ifdef WIN32
+   extern int read_stdin (char *buffer, int max_chars);
+   extern int mindy_getchar (void);
+#else
+#  define mindy_getchar() getchar()
+#endif

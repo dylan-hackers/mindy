@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.4 1996/05/11 21:49:53 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/lexer.c,v 1.5 1996/06/11 14:38:35 nkramer Exp $
 *
 * This file is the lexer for the debugger.
 *
@@ -46,92 +46,34 @@
 
 #define BUFFER_SIZE	1024
 
-FILE *yyin;
+static char *line = NULL;
+static char *next_char = NULL;
 
-static char line[1024];
-static char *next_char = line;
-
-#ifdef HAVE_LIBREADLINE
-    static int eof = 0;
-#endif
-
-
-void yyinput_setter(FILE *input)
+void yyinput_setter(char *input)
 {
-  yyin = input;
-}
-
-void yyinput_clear(void)
-{
-#ifdef HAVE_LIBREADLINE
-    for ( ; *next_char != 0 && *next_char != '\n'; next_char++)
-	;
-#else
-    int c;
-    while ((c = getc(yyin)) != EOF && c != '\n')
-	;
-    if (c == '\n')
-	ungetc(c, yyin);
-#endif
-}
-
-int yyeof()
-{
-#ifdef HAVE_LIBREADLINE
-    return eof ? -1 : 0;
-#else
-    if (errno == EINTR) {
-	errno = 0;
-	clearerr(yyin);
-	return 0;
-    } else
-	return -1;
-#endif
+  line = input;
+  next_char = input;
 }
 
 static int yygetc()
 {
-#ifdef HAVE_LIBREADLINE
-    char *l;
-
-    if ( *next_char) 
-	return *next_char++;
-    
-    l = readline("mindy> ");
-    if ( l == 0) {
-	eof = 1;
-	return -1;
-    }
-    
-    if ( *l != 0) 
-	add_history(l);
-    
-    strcpy( line, l);
-    strcat( line, "\n"); /* I hate this */
-    next_char = line;
     return *next_char++;
-#else
-    return getc(yyin);
-#endif
 }
 
 static int yyungetc(int c)
 {
-#ifdef HAVE_LIBREADLINE
     if (next_char > line) {
 	next_char--;
 	*next_char = c;
 	return c;
-    } else 
+    } else {
 	return EOF;  /* actually, can handle this if necessary. */
-#else
-  return ungetc(c, yyin);
-#endif
+    }
 }
 
 static int yypeekc()
 {
-  return yyungetc(yygetc());
+  return *next_char;
 }
 
 static int yyescape(int c)
@@ -368,7 +310,7 @@ int yylex()
 
   c = yygetc();
   switch (c) {
-  case EOF:			return yyeof() ? -1 : yylex();
+  case EOF:			lose("How did yygetc() return EOF?");
   case '\n':			return -1;
   case ' ': case '\t':		return yylex();
   case '(':			return tok_LPAREN;

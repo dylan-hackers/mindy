@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.9 1995/04/19 13:12:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/parser.y,v 1.10 1996/06/11 14:38:35 nkramer Exp $
 *
 * This file is the parser for the debugger.
 *
@@ -133,13 +133,14 @@ more_args:	/* epsilon */
 
 static void yyerror(char *msg)
 {
-    yyinput_clear();
+    /* don't need to do anything except abort the parse, which is
+       automatically done for us 
+       */
 }
 
-YYSTYPE parse_command(FILE *input)
+YYSTYPE parse_command(char *input)
 {
     extern int yyparse();
     yyinput_setter(input);
     return yyparse() ? obj_False : result;
 }
-

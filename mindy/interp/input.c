@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.18 1995/04/16 23:37:53 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.19 1996/06/11 14:38:35 nkramer Exp $
 *
 * This file implements getc.
 *
@@ -42,6 +42,50 @@
 #include "error.h"
 #include "def.h"
 #include "fd.h"
+
+/* The buffer will always come back with a newline and null
+   termination at the end, even if that means truncating some of the
+   input
+   */
+int mindy_readline(char *prompt, char *buffer, int max_chars)
+{
+#ifdef HAVE_LIBREADLINE
+    char *line = readline(prompt);
+
+    if (line == NULL) {
+	return 0;
+    }
+    
+    if (*line != 0) 
+	add_history(line);
+    
+    strncpy(buffer, line, max_chars - 2);
+    buffer[max_chars-1] = 0;  /* Make sure its null terminated, on the
+				 off chance the input string is max_chars-2
+				 bytes long */
+    strcat(buffer, "\n");
+    return strlen(buffer);
+#else
+    int chars_read = 0;
+    int c;
+    
+    printf(prompt);
+    fflush(stdout);
+
+    while ((c=mindy_getchar()) != EOF 
+	   && c != '\n' 
+	   && chars_read < max_chars-1) {
+	buffer[chars_read] = c;
+	chars_read++;
+    }
+    if (c == '\n') {
+	buffer[chars_read] = c;
+	chars_read++;
+    }
+    buffer[chars_read] = 0;
+    return chars_read;
+#endif
+}
 
 static void getc_or_wait(struct thread *thread)
 {
@@ -64,8 +108,19 @@ static void getc_or_wait(struct thread *thread)
     }
 
     {
-	int c = getchar();
-	obj_t *old_sp = pop_linkage(thread);
+	int c;
+	obj_t *old_sp;
+#ifdef WIN32
+        if (isatty(0)) {
+	    char character;
+	    int bytes_read = read_stdin(&character, 1);
+	    c = (bytes_read == 0) ? EOF : character;
+	} 
+	else 
+#endif
+	    c = getchar();
+
+	old_sp = pop_linkage(thread);
 
 	if (c != EOF)
 	    *old_sp = int_char(c);
