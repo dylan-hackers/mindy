@@ -133,7 +133,7 @@ end class <written-declaration>;
 define function register-written-name
     (rec :: <written-name-record>, name :: <string>,
      decl :: <declaration>, #key subname? = #f)
- => ();
+ => (duplicate? :: <boolean>);
 
   let interned-name = as(<symbol>, name);
   let table = rec.written-name-table;
@@ -154,9 +154,11 @@ define function register-written-name
     signal(make(<simple-warning>,
 		format-string: "melange: %s has multiple definitions",
 		format-arguments: list(name)));
+    #t;
   else 
     element(table, interned-name)
       := make(<written-declaration>, declaration: decl, name: name);
+    #f;
   end if;
 end function register-written-name;
 
@@ -1054,8 +1056,9 @@ define method write-declaration
 		<character> => "1"; // for #define FOO\n, suggested by dauclair
 	      end select;
   unless(decl.dylan-name = value)
-    format(stream, "define constant %s = %s;\n\n", decl.dylan-name, value);
-    register-written-name(written-names, decl.dylan-name, decl);
+    unless(register-written-name(written-names, decl.dylan-name, decl))
+      format(stream, "define constant %s = %s;\n\n", decl.dylan-name, value);
+    end unless;
   end unless;
 end method write-declaration;
 

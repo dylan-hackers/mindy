@@ -417,10 +417,13 @@ define method declare-objects
 	parse-error(state, "illegal redefinition of typedef.");
       end unless;
     elseif (is-typedef?)
-      state.objects[name.value] 
-	:= add-declaration(state, make(<typedef-declaration>, name: name.value,
-				       type: new-type));
-      parse-progress-report(nameloc, "Processed typedef %s", name.value);
+      if (element(state.objects, name.value, default: #f) == #f)
+        state.objects[name.value] 
+          := add-declaration(state, make(<typedef-declaration>, 
+                                         name: name.value,
+                                         type: new-type));
+        parse-progress-report(nameloc, "Processed typedef %s", name.value);
+      end if;
       add-typedef(state.tokenizer, name);
     else
       let decl-type = if (instance?(new-type, <function-type-declaration>))
