@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.50 1996/01/27 00:21:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.51 1996/02/13 05:39:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -356,7 +356,7 @@ end;
 define constant <function-visibility>
   = one-of(#"global", #"local", #"deleted");
 
-define abstract class <function-literal>
+define class <function-literal>
     (<abstract-function-literal>, <queueable-mixin>)
 
   // An indication of what kind of references to this function can exist:
