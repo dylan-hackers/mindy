@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.2 1994/12/17 14:50:27 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.3 1995/01/10 16:26:09 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -755,6 +755,22 @@ end;
 
 define method print-object (mv-call :: <mv-call>, stream :: <stream>) => ();
   pprint-fields(mv-call, stream, operands: mv-call.mv-call-operands);
+end;
+
+// <primitive> -- exported.
+// 
+define class <primitive> (<expression>)
+  slot primitive-name :: <identifier-token>,
+    required-init-keyword: name:;
+  slot primitive-operands :: <simple-object-vector>,
+    required-init-keyword: operands:;
+end;
+
+define method print-object (primitive :: <primitive>, stream :: <stream>)
+    => ();
+  pprint-fields(primitive, stream,
+		name: primitive.primitive-name,
+		operands: primitive.primitive-operands);
 end;
 
 // <uwp> -- exported.
