@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.17 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.18 1996/01/15 13:40:47 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -773,7 +773,7 @@ literal (strings)
   if (%1.size == 1)
     %1[0];
   else
-    apply(concatenate, %1);
+    apply(concat-strings, %1);
   end;
 %
 
