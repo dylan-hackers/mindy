@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.73 1996/06/26 18:11:34 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.74 1996/06/26 18:18:39 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -828,21 +828,21 @@ end method build-command-line-entry;
 define method incorrect-usage () => ();
   format(*standard-error*, "Usage: \n\tcompile [-Ldir ...] lid-file\n");
   format(*standard-error*, "Options:\n");
-  format(*standard-error*, "\t-Ldir\tSearch for library files in dir\n");
+  format(*standard-error*, "\t-Ldir\t\tSearch for library files in dir\n");
   format(*standard-error*, 
 	 "\t-Dfeature\tDefine feature for #if conditional compilation\n");
   format(*standard-error*, 
 	 "\t-Ufeature\tUndefine feature for #if conditional compilation\n");
-  format(*standard-error*, "\t-M\tGenerate makefile dependencies\n");
+  format(*standard-error*, "\t-M\t\tGenerate makefile dependencies\n");
   format(*standard-error*, 
 	 "\t-no-binaries\tDo not compile the generated C code\n");
   format(*standard-error*, 
 	 "\t-Ttarget\tGenerate code for the given target machine\n");
   format(*standard-error*, 
-	 "\tUsually used with -no-binaries\n");
+	 "\t\t\tUsually used with -no-binaries\n");
   format(*standard-error*, 
 	 "\t-tfilename\tGet target environment information from \n"
-	   "\tfilename instead of the default targets.ini\n");
+	   "\t\t\tfilename instead of the default targets.ini\n");
   force-output(*standard-error*);
   error("Incorrect usage");
 end method incorrect-usage;
