@@ -4,7 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.27 2003/03/06 19:35:11 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.28 2003/03/16 08:24:30 brent Exp $
 
 //======================================================================
 //
@@ -633,7 +633,7 @@ end method process-define-interface;
 // XXX - Overhaul completed. This is now obsolete, but we're leaving it
 // until we start work on 2.3.
 //----------------------------------------------------------------------
-
+#if (~mindy)
 define class <better-debugger> (<debugger>)
 end class <better-debugger>;
 
@@ -645,9 +645,11 @@ define method invoke-debugger
    force-output(*warning-output*);
    call-out("abort", void:);
 end method invoke-debugger;
- 
-*warning-output* := *standard-error*;
+
 *debugger* := make(<better-debugger>);
+#endif
+
+*warning-output* := *standard-error*;
 
 // establish a protection boundary against unhandled conditions,
 // returning a function that behaves just like the original function,
