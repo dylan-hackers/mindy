@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.4 1994/03/26 00:46:31 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/compile.c,v 1.5 1994/03/28 11:32:58 wlott Exp $
 *
 * This file does whatever.
 *
@@ -46,6 +46,14 @@ static void compile_tl_body(struct body *body);
 
 
 /* Utilities. */
+
+static int current_position(struct component *component)
+{
+    if (component->cur_block)
+	return component->bytes+(component->fill-component->cur_block->bytes);
+    else
+	return 0;
+}
 
 static void grow_component(struct component *component)
 {
@@ -146,11 +154,6 @@ static unsigned char *reserve_space(struct component *component, int count)
     return res;
 }
 
-static int current_position(struct component *component)
-{
-    return component->bytes + (component->fill - component->cur_block->bytes);
-}
-
 static void write_branch_displacement(unsigned char *where, int here,
 				      int there)
 {
@@ -245,6 +248,85 @@ static int find_method_desc(struct component *component, struct method *method)
     return component->nconstants++;
 }
 
+
+/* Debug info. */
+
+static void finish_debug_info(struct component *component)
+{
+    int cur_pc = current_position(component);    
+
+    if (cur_pc != component->cur_line_start) {
+	struct debug_info *new = malloc(sizeof(*new));
+	new->line = component->cur_line;
+	new->scope = component->cur_scope;
+	new->bytes = cur_pc - component->cur_line_start;
+	new->next = NULL;
+	component->ndebug_infos++;
+	*component->debug_info_tail = new;
+	component->debug_info_tail = &new->next;
+	component->cur_line_start = cur_pc;
+    }
+}
+
+static void set_line(struct component *component, int line)
+{
+    if (line != 0 && line != component->cur_line) {
+	finish_debug_info(component);
+	component->cur_line = line;
+    }
+}
+
+static struct scope_info *make_scope(void)
+{
+    struct scope_info *res = malloc(sizeof(*res));
+
+    res->handle = -1;
+    res->nvars = 0;
+    res->vars = NULL;
+    res->vars_tail = &res->vars;
+    res->outer = NULL;
+
+    return res;
+}
+
+static void add_var_info(struct scope_info *scope, struct id *var,
+			 boolean indirect, boolean argument, int offset)
+{
+    struct var_info *var_info;
+
+    if (var->internal)
+	return;
+
+    var_info = malloc(sizeof(*var_info));
+    var_info->var = var;
+    var_info->indirect = indirect;
+    var_info->argument = argument;
+    var_info->offset = offset;
+    var_info->next = NULL;
+
+    scope->nvars++;
+    *scope->vars_tail = var_info;
+    scope->vars_tail = &var_info->next;
+}
+
+static void push_scope(struct component *component, struct scope_info *scope)
+{
+    if (scope->vars != NULL) {
+	finish_debug_info(component);
+	scope->outer = component->cur_scope;
+	component->cur_scope = scope;
+    }
+}
+
+static void pop_scope(struct component *component, struct scope_info *scope)
+{
+    if (scope->vars != NULL) {
+	if (component->cur_scope != scope)
+	    lose("popping wrong scope?");
+	finish_debug_info(component);
+	component->cur_scope = scope->outer;
+    }
+}
 
 
 /* Method creation */
@@ -257,6 +339,8 @@ static void compile_method_ref(struct method *method,
     struct closes_over *over;
 
     method->component = compile_method(method);
+
+    set_line(component, method->line);
 
     for (over = method->closes_over; over != NULL; over = over->next) {
 	struct binding *binding = over->binding;
@@ -299,6 +383,8 @@ static void compile_varref_expr(struct varref_expr *expr,
 {
     struct binding *binding = expr->binding;
 
+    set_line(component, expr->var->line);
+
     if (binding) {
 	if (want == make_want(0, FALSE))
 	    return;
@@ -336,6 +422,8 @@ static void compile_literal_expr(struct literal_expr *expr,
 
     if (want == make_want(0, FALSE))
 	return;
+
+    set_line(component, lit->line);
 
     switch (lit->kind) {
       case literal_TRUE:
@@ -497,6 +585,8 @@ static void compile_varset_expr(struct varset_expr *expr,
 {
     struct binding *binding = expr->binding;
 
+    set_line(component, expr->var->line);
+
     if (want == FUNC)
 	compile_expr(expr->value, component, FUNC);
     else
@@ -641,15 +731,23 @@ static void compile_local_constituent(struct local_constituent *c,
 {
     struct method *method;
     struct binding *binding;
+    struct scope_info *scope = make_scope();
 
     for (method = c->methods, binding = c->lexenv->bindings;
 	 method != NULL;
-	 method = method->next_local, binding = binding->next)
+	 method = method->next_local, binding = binding->next) {
+	if (binding->argument)
+	    lose("argument in the bindings of a local?");
 	if (binding->closed_over) {
 	    emit_op(component, op_PUSH_FALSE);
 	    emit_op(component, op_MAKE_VALUE_CELL);
 	    emit_op_and_arg(component, op_POP_LOCAL, binding->offset);
 	}
+	add_var_info(scope, binding->id, binding->closed_over, FALSE,
+		     binding->offset);
+    }
+
+    push_scope(component, scope);
 
     for (method = c->methods, binding = c->lexenv->bindings;
 	 method != NULL;
@@ -664,6 +762,8 @@ static void compile_local_constituent(struct local_constituent *c,
     }
 
     compile_body(c->body, component, want);
+
+    pop_scope(component, scope);
 }
 
 static void compile_handler_constituent(struct handler_constituent *c,
@@ -697,16 +797,23 @@ static void compile_let_constituent(struct let_constituent *c,
 {
     struct bindings *bindings = c->bindings;
     struct binding *binding = c->lexenv->bindings;
+    struct scope_info *scope = make_scope();
 
     compile_expr(bindings->expr, component,
 		 make_want(c->required, bindings->params->rest_param));
     while (binding != c->inside) {
-	if (binding->set && binding->closed_over)
+	boolean indirect = binding->set && binding->closed_over;
+	if (indirect)
 	    emit_op(component, op_MAKE_VALUE_CELL);
 	emit_op_and_arg(component, op_POP_LOCAL, binding->offset);
+	if (binding->argument)
+	    lose("Argument in the bindings of a let?");
+	add_var_info(scope, binding->id, indirect, FALSE, binding->offset);
 	binding = binding->next;
     }
+    push_scope(component, scope);
     compile_body(c->body, component, want);
+    pop_scope(component, scope);
 }
 
 static void compile_tlf_constituent(struct tlf_constituent *c,
@@ -773,32 +880,48 @@ static struct component *compile_method(struct method *method)
 {
     struct component *component = malloc(sizeof(struct component));
     struct binding *binding;
+    struct scope_info *scope = make_scope();
 
     component->debug_name = method->debug_name;
+    component->frame_size = method->frame_size;
+    component->cur_line = method->line;
+    component->cur_scope = NULL;
+    component->cur_line_start = 0;
+    component->ndebug_infos = 0;
+    component->debug_info = NULL;
+    component->debug_info_tail = &component->debug_info;
+    component->nconstants = 0;
+    component->constants = NULL;
+    component->constants_tail = &component->constants;
+    component->bytes = 0;
     component->blocks = NULL;
     component->cur_block = NULL;
     component->fill = NULL;
     component->end = NULL;
-    component->bytes = 0;
-    component->constants = NULL;
-    component->constants_tail = &component->constants;
-    component->nconstants = 0;
-
-    emit_4bytes(component, method->frame_size);
 
     for (binding = method->lexenv->bindings;
 	 binding != NULL && binding->home == method;
 	 binding = binding->next) {
-	if (binding->set && binding->closed_over) {
+	boolean indirect = binding->set && binding->closed_over;
+	if (indirect) {
 	    emit_op_and_arg(component, op_PUSH_ARG,
 			    method->nargs - binding->offset - 1);
 	    emit_op(component, op_MAKE_VALUE_CELL);
 	    emit_op_and_arg(component, op_POP_ARG,
 			    method->nargs - binding->offset - 1);
 	}
+	if (!binding->argument)
+	    lose("Non-argument in the method bindings?");
+	add_var_info(scope, binding->id, indirect, TRUE,
+		     method->nargs - binding->offset - 1);
     }
 
+    push_scope(component, scope);
+
     compile_body(method->body, component, TAIL);
+
+    pop_scope(component, scope);
+    finish_debug_info(component);
 
     component->cur_block->end = component->fill;
     component->bytes += component->fill - component->cur_block->bytes;
@@ -808,8 +931,6 @@ static struct component *compile_method(struct method *method)
 
     return component;
 }
-
-
 
 
 /* Top Level Constituent compilers */
