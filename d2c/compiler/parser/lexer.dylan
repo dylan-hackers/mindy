@@ -1,12 +1,12 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.10 2001/03/30 15:40:49 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.11 2001/05/22 20:02:21 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -823,7 +823,7 @@ define constant $Initial-State
 	     pair('"', #"double-quote"),
 	     pair("0-9", #"decimal")),
        state(#"whitespace", #"whitespace",
-	     pair(" \t\f\r", #"whitespace")),
+	     pair(" \t\f", #"whitespace")),
        state(#"newline", #"newline"),
        state(#"slash", make-binary-operator,
 	     pair('/', #"double-slash"),
@@ -952,8 +952,10 @@ define constant $Initial-State
 	     pair("a-zA-Z", #"symbol"),
 	     pair("0-9!&*<=>|^$%@_-+~?/", #"leading-graphic")),
        state(#"question", $question-token,
-	     pair('?', #"double-question")),
+	     pair('?', #"double-question"),
+	     pair('=', #"question-equal")),
        state(#"double-question", $double-question-token),
+       state(#"question-equal", $question-equal-token),
        state(#"backslash", #f,
 	     pair("-+/", #"backslash-done"),
 	     pair('~', #"backslash-tilde"),
@@ -1142,7 +1144,7 @@ define constant $Initial-State
 	     pair("0-9", #"decimal-exp"),
 	     pair("a-zA-Z", #"numeric-alpha"),
 	     pair("!&*<=>|^$%@_+~?/", #"leading-numeric"),
-	     pair("-", #"leading-numeric")));
+	     pair('-', #"leading-numeric")));
 
 
 // Features.
