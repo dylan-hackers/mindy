@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-unit-state.dylan,v 1.1 2001/09/08 23:34:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main-unit-state.dylan,v 1.2 2001/09/10 12:59:15 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -34,6 +34,11 @@ copyright: see below
 //
 
 define class <main-unit-state> (<object>)
+  slot unit-target :: <platform>,
+    required-init-keyword: target:;
+  slot unit-link-static :: <boolean>,
+    required-init-keyword: link-static:;
+  slot unit-init-functions :: <stretchy-vector> = make(<stretchy-vector>);
 end class <main-unit-state>;
 
 

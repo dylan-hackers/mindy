@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.1 2001/09/08 23:34:54 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/lid-mode-state.dylan,v 1.2 2001/09/10 12:59:15 andreas Exp $
 copyright: see below
 
 //======================================================================
@@ -33,14 +33,10 @@ define class <lid-mode-state> (<main-unit-state>)
   slot unit-lid-file :: <byte-string>, required-init-keyword: lid-file:;
   slot unit-command-line-features :: <list>, 
     required-init-keyword: command-line-features:;
-  slot unit-target :: <platform>,
-    required-init-keyword: target:;
   slot unit-log-dependencies :: <boolean>, 
     required-init-keyword: log-dependencies:;
   slot unit-no-binaries :: <boolean>,
     required-init-keyword: no-binaries:;
-  slot unit-link-static :: <boolean>,
-    required-init-keyword: link-static:;
   slot unit-link-rpath :: false-or(<string>),
     required-init-keyword: link-rpath:;
   
@@ -61,7 +57,6 @@ define class <lid-mode-state> (<main-unit-state>)
   slot unit-mprefix :: <byte-string>;
   slot unit-tlf-vectors :: <stretchy-vector> = make(<stretchy-vector>);
   slot unit-modules :: <stretchy-vector> = make(<stretchy-vector>);
-  slot unit-init-functions :: <stretchy-vector> = make(<stretchy-vector>);
   slot unit-cback-unit :: <unit-state>;
   slot unit-other-cback-units :: <simple-object-vector>;
   
