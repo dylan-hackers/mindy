@@ -1,5 +1,5 @@
 module: macros
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.1 1994/12/12 13:01:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/macros.dylan,v 1.2 1994/12/16 11:51:56 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -113,27 +113,8 @@ end;
 // process-top-level-form methods.
 // 
 
-define method process-top-level-form (form :: <funcall>, #next next-method)
-    => ();
-  let expansion = expand(form);
-  if (expansion)
-    do(process-top-level-form, expansion);
-  else
-    next-method();
-  end;
-end;
-
-define method process-top-level-form (form :: <dot>, #next next-method) => ();
-  let expansion = expand(form);
-  if (expansion)
-    do(process-top-level-form, expansion);
-  else
-    next-method();
-  end;
-end;
-
 define method process-top-level-form (form :: <macro-statement>) => ();
-  let expansion = expand(form);
+  let expansion = expand(form, #f);
   if (expansion)
     do(process-top-level-form, expansion);
   else
@@ -142,7 +123,7 @@ define method process-top-level-form (form :: <macro-statement>) => ();
 end;
 
 define method process-top-level-form (form :: <define-parse>) => ();
-  let expansion = expand(form);
+  let expansion = expand(form, #f);
   if (expansion)
     do(process-top-level-form, expansion);
   else
@@ -152,7 +133,7 @@ define method process-top-level-form (form :: <define-parse>) => ();
 end;
 
 define method process-top-level-form (form :: <define-bindings-parse>) => ();
-  let expansion = expand(form);
+  let expansion = expand(form, #f);
   if (expansion)
     do(process-top-level-form, expansion);
   else
@@ -245,7 +226,8 @@ end;
 
 // expand methods.
 
-define method expand (form :: <define-parse>)
+define method expand (form :: <define-parse>,
+		      lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
   let name = form.define-word;
   let var = find-variable(name.token-module,
@@ -262,7 +244,8 @@ define method expand (form :: <define-parse>)
   expand-macro-aux(form, form.define-fragment, defn);
 end;
 
-define method expand (form :: <define-bindings-parse>)
+define method expand (form :: <define-bindings-parse>,
+		      lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
   let name = form.define-word;
   let var = find-variable(name.token-module,
@@ -281,7 +264,8 @@ define method expand (form :: <define-bindings-parse>)
   expand-macro-aux(form, fragment, defn);
 end;
 
-define method expand (form :: <macro-statement>)
+define method expand (form :: <macro-statement>,
+		      lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
   let name = form.statement-begin-word;
   let var = find-variable(name.token-module, name.token-symbol);
@@ -295,7 +279,8 @@ define method expand (form :: <macro-statement>)
   expand-macro-aux(form, form.statement-fragment, defn);
 end;
 
-define method expand (form :: <funcall>)
+define method expand (form :: <funcall>,
+		      lexenv :: union(<false>, <lexenv>))
     => results :: union(<simple-object-vector>, <false>);
   let fun = form.funcall-function;
   if (instance?(fun, <varref>))
