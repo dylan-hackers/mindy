@@ -1,4 +1,4 @@
-### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.21 1995/10/30 13:14:55 ram Exp $
+### $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/GNUmakefile,v 1.22 1995/11/12 21:08:03 nkramer Exp $
 ###
 ### Copyright (c) 1994 Carnegie Mellon University, all rights reserved.
 ###
@@ -66,6 +66,9 @@ OBJS = exports.dbc \
 	fer-od.dbc \
 	misc-dump.dbc \
 	init.dbc \
+	autodump.dbc \
+	parse-dump.dbc \
+	token-dump.dbc \
 	main.dbc
 
 foo.dbc: ${OBJS}
