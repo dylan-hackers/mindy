@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.27 1994/11/29 06:43:04 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.28 1995/02/09 18:26:44 wlott Exp $
 *
 * This file implements the loader.
 *
@@ -53,6 +53,7 @@
 #include "instance.h"
 #include "vec.h"
 #include "error.h"
+#include "def.h"
 #include "../comp/fileops.h"
 #include "load.h"
 
@@ -1061,7 +1062,11 @@ static void do_next_init(struct thread *thread)
 {
     if (State.everything.head) {
 	struct form *tlf = State.everything.head;
-	State.everything.head = tlf->next;
+	struct form *next = tlf->next;
+
+	State.everything.head = next;
+	if (next == NULL)
+	    State.everything.tail = &State.everything.head;
 
 	*thread->sp++ = tlf->method;
 
@@ -1076,16 +1081,27 @@ static void do_next_init(struct thread *thread)
 
 static void do_first_init(struct thread *thread, int nargs)
 {
-    *State.classes.tail = State.top_level_forms.head;
-    State.top_level_forms.head = NULL;
-    State.top_level_forms.tail = NULL;
-
-    *State.everything.tail = State.classes.head;
-    State.classes.head = NULL;
-    State.classes.tail = NULL;
-
     assert(nargs == 0);
     push_linkage(thread, thread->sp);
+
+    /* Move the class inits to the end of the everything list. */
+    if (State.classes.head) {
+	*State.everything.tail = State.classes.head;
+	State.everything.tail = State.classes.tail;
+
+	State.classes.head = NULL;
+	State.classes.tail = &State.classes.head;
+    }
+
+    /* Move the tlfs to the end of the everything list. */
+    if (State.top_level_forms.head) {
+	*State.everything.tail = State.top_level_forms.head;
+	State.everything.tail = State.top_level_forms.tail;
+
+	State.top_level_forms.head = NULL;
+	State.top_level_forms.tail = &State.top_level_forms.head;
+    }
+
     do_next_init(thread);
 }
 
@@ -1095,6 +1111,21 @@ void load_do_inits(struct thread *thread)
 				      obj_Nil, obj_ObjectClass,
 				      do_first_init);
     invoke(thread, 0);
+}
+
+
+/* Dylan interface. */
+
+static void dylan_load(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t name = args[0];
+
+    push_linkage(thread, args);
+
+    load(string_chars(name));
+
+    thread->sp = pop_linkage(thread);
+    load_do_inits(thread);
 }
 
 
@@ -1114,6 +1145,17 @@ void scavenge_load_roots(void)
 
 
 /* Init stuff. */
+
+void init_load_functions(void)
+{
+    define_generic_function("load", 1, FALSE, obj_False, FALSE,
+			    obj_Nil, obj_False);
+    add_method(find_variable(module_BuiltinStuff, symbol("load"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("load", list1(obj_ByteStringClass),
+			       FALSE, obj_False, FALSE, obj_Nil,
+			       obj_False, dylan_load));
+}
 
 void init_loader(void)
 {
@@ -1199,3 +1241,4 @@ void init_loader(void)
     State.top_level_forms.head = NULL;
     State.top_level_forms.tail = &State.top_level_forms.head;
 }
+
