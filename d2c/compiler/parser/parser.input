@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.35 1996/04/10 16:58:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.36 1996/05/08 15:55:03 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -93,7 +93,7 @@ copyright: Copyright (c) 1994  Carnegie Mellon University
 :token FEATURE-IF			<token>
 :token FEATURE-ELSEIF			<token>
 :token FEATURE-ELSE			<token>
-:token FEATURE-END			<token>
+:token FEATURE-ENDIF			<token>
 
 
 :union SHARP-WORD <token>

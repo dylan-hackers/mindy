@@ -1,5 +1,5 @@
 module: tokens
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.17 1996/04/10 16:52:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/tokens.dylan,v 1.18 1996/05/08 15:56:08 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -103,7 +103,7 @@ define constant $parsed-variable-list-token = 60;
 define constant $feature-if-token = 61;
 define constant $feature-elseif-token = 62;
 define constant $feature-else-token = 63;
-define constant $feature-end-token = 64;
+define constant $feature-endif-token = 64;
 
 // <symbol-token> -- exported.
 //
@@ -389,7 +389,7 @@ define sealed method print-message
     $feature-if-token => write("#if", stream);
     $feature-elseif-token => write("#elseif", stream);
     $feature-else-token => write("#else", stream);
-    $feature-end-token => write("#end", stream);
+    $feature-endif-token => write("#endif", stream);
 
     otherwise =>
       error("Unknown token kind.");

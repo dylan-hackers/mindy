@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.16 1996/04/06 07:17:35 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.17 1996/05/08 15:55:03 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -741,7 +741,9 @@ define constant $Initial-State
        state(#"sharp-elsei", #f, pair("fF", #"sharp-elseif")),
        state(#"sharp-elseif", $feature-elseif-token),
        state(#"sharp-en", #f, pair("dD", #"sharp-end")),
-       state(#"sharp-end", $feature-end-token),
+       state(#"sharp-end", #f, pair("iI", #"sharp-endi")),
+       state(#"sharp-endi", #f, pair("fF", #"sharp-endif")),
+       state(#"sharp-endif", $feature-endif-token),
        state(#"extended-integer", parse-integer-literal,
 	     pair("0-9", #"extended-integer")),
        state(#"lparen", $left-paren-token),
@@ -1387,9 +1389,9 @@ define method get-token (lexer :: <lexer>)
 	      := lexer.conditional-state.do-else?;
 	  end if;
 
-	$feature-end-token =>
+	$feature-endif-token =>
 	  if (lexer.conditional-state == #f)
-	    compiler-fatal-error("#end with no matching #if");
+	    compiler-fatal-error("#endif with no matching #if");
 	  else
 	    lexer.conditional-state := lexer.conditional-state.old-state;
 	  end if;

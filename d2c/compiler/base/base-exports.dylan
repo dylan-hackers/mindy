@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.39 1996/04/15 18:27:23 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.40 1996/05/08 15:56:08 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -14,7 +14,7 @@ define library compiler-base
 #if (mindy)
   use Debugger-Format;
   use String-extensions, export: all;
-#end
+#endif
   
   export c-representation;
   export classes;
@@ -64,7 +64,7 @@ define module common
 #else
              *warning-output*,
              <debugger>, *debugger*, invoke-debugger,
-#end
+#endif
 	     <equal-table>, <string-table>, equal-hash},
     export: all;
   use Streams, export: all;
@@ -75,7 +75,7 @@ define module common
 #if (~mindy)
   create
      *debug-output*;
-#end
+#endif
 end;
 
 define module utils
@@ -87,7 +87,7 @@ define module utils
 #else
   use Introspection, import: {class-name};
   use System, import: {object-address, copy-bytes, \call-out};
-#end
+#endif
 
   // Stuff defined in utils
   export
@@ -108,7 +108,7 @@ define module od-format
   use system, import: {get-time-of-day};
 #else
   use system, import: {\call-out};
-#end
+#endif
   use standard-io;
   use introspection, import: {function-name};
   use utils;
@@ -233,7 +233,7 @@ define module source
   use System, import: {getcwd};
 #else
   use System, import: {\call-out, buffer-address};
-#end
+#endif
   use utils;
   use od-format;
   use compile-time-values;
@@ -331,7 +331,7 @@ define module tokens
     $feature-if-token,
     $feature-elseif-token,
     $feature-else-token,
-    $feature-end-token,
+    $feature-endif-token,
 
     <token>, token-kind, 
     <symbol-token>, token-symbol, 
