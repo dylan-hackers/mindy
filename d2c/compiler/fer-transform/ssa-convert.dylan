@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.4 2001/10/15 20:29:32 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.5 2001/10/16 21:57:41 gabor Exp $
 copyright: see below
 
 
@@ -33,12 +33,14 @@ copyright: see below
 
 // SSA conversion.
 
+// convert-component-to-ssa -- external.
+//
 define function convert-component-to-ssa (component :: <component>) => ();
   while (component.initial-variables)
     let init-var = component.initial-variables;
     component.initial-variables := init-var.next-initial-variable;
     init-var.next-initial-variable := #f;
-    maybe-convert-to-ssa(component, init-var);
+    maybe-convert-to-ssa(component, init-var, ignore);
   end;
 
   // Massage code to be in a form that maybe-expand-cluster can work with...
@@ -47,8 +49,10 @@ define function convert-component-to-ssa (component :: <component>) => ();
   traverse-component(component, <abstract-variable>, rcurry(maybe-expand-cluster, ignore));
 end function convert-component-to-ssa;
 
+// maybe-convert-to-ssa -- external.
+//
 define method maybe-convert-to-ssa
-    (component :: <component>, var :: <initial-variable>) => ();
+    (component :: <component>, var :: <initial-variable>, reoptimize :: <function>) => ();
   let defns = var.definitions;
   if (defns ~== #() & defns.tail == #())
     // Single definition -- replace it with an ssa variable.
@@ -85,11 +89,11 @@ define method maybe-convert-to-ssa
 	dep.source-exp := ssa;
 	// Reoptimize the dependent in case they can do something now that
 	// they are being given an ssa variable.
-	// reoptimize(component, dep.dependent);
+	reoptimize(component, dep.dependent);
       end;
       // Reoptimize the defining assignment in case it can now be
       // copy-propagated.
-      // reoptimize(component, assign);
+      reoptimize(component, assign);
     end;
   end;
 end method maybe-convert-to-ssa;
@@ -98,6 +102,8 @@ end method maybe-convert-to-ssa;
 
 // Value-cluster expansion
 
+// maybe-expand-cluster -- internal.
+//
 define function maybe-expand-cluster
     (component :: <component>, cluster :: <abstract-variable>, reoptimize :: <function>)
     => ();
@@ -114,6 +120,8 @@ define function maybe-expand-cluster
   end if;
 end;
 
+// expand-cluster -- external.
+//
 define generic expand-cluster 
     (component :: <component>, cluster :: <abstract-variable>,
      number-of-values :: <integer>, names :: <list>, reoptimize :: <function>)
@@ -224,6 +232,9 @@ define method expand-cluster
 end;
 
 // Helper functions for cluster expansion
+
+// fixup-assignment -- internal.
+//
 define method fixup-assignment
     (component :: <component>, assignment :: <assignment>) => ();
   if (assignment.defines
@@ -234,6 +245,8 @@ define method fixup-assignment
   end if;
 end method;
 
+// maybe-restrict-type -- external.
+//
 define method maybe-restrict-type
     (component :: <component>, expr :: <expression>, type :: <values-ctype>,
      reoptimize :: <function>, queue-dependents :: <function>)
@@ -299,6 +312,8 @@ define method maybe-restrict-type
 end;
 
 
+// defaulted-type -- external.
+//
 define generic defaulted-type (ctype :: <values-ctype>, index :: <integer>)
     => res :: <ctype>;
 
@@ -328,6 +343,10 @@ define method defaulted-type
   end if;
 end method defaulted-type;
 
+
+// fixed-number-of-values? -- external.
+//
+define generic fixed-number-of-values? (ctype :: <values-ctype>) => res :: <boolean>;
 
 define method fixed-number-of-values? (ctype :: <ctype>) => res :: <boolean>;
   #t;
