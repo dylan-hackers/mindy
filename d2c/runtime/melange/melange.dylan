@@ -1,5 +1,5 @@
 module: melange-support
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.2 1998/08/10 06:57:27 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.3 1998/12/04 21:22:06 housel Exp $
 
 //======================================================================
 //
@@ -226,6 +226,45 @@ define sealed inline method longlong-at-setter
  => (result :: <integer>);
   error("accesses to 'long long' data not currently supported");
 end method longlong-at-setter;
+
+define sealed inline method float-at
+    (ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
+ => (result :: <single-float>);
+  pointer-deref(float:, ptr.raw-value, offset);
+end method float-at;
+
+define sealed inline method float-at-setter
+    (new :: <single-float>,
+     ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
+ => (result :: <single-float>);
+  pointer-deref(float:, ptr.raw-value, offset) := new;
+end method float-at-setter;
+
+define sealed inline method double-at
+    (ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
+ => (result :: <double-float>);
+  pointer-deref(double:, ptr.raw-value, offset);
+end method double-at;
+
+define sealed inline method double-at-setter
+    (new :: <double-float>,
+     ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
+ => (result :: <double-float>);
+  pointer-deref(double:, ptr.raw-value, offset) := new;
+end method double-at-setter;
+
+define sealed inline method long-double-at
+    (ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
+ => (result :: <extended-float>);
+  pointer-deref(long-double:, ptr.raw-value, offset);
+end method long-double-at;
+
+define sealed inline method long-double-at-setter
+    (new :: <extended-float>,
+     ptr :: <statically-typed-pointer>, #key offset :: <integer> = 0)
+ => (result :: <extended-float>);
+  pointer-deref(double:, ptr.raw-value, offset) := new;
+end method long-double-at-setter;
 
 define sealed inline method pointer-at
     (ptr :: <statically-typed-pointer>,
