@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.51 1996/01/31 23:54:11 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.52 1996/02/05 01:20:54 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -2256,6 +2256,18 @@ end method build-runtime-slot-posn-dispatch;
 define method dump-od (tlf :: <define-class-tlf>, state :: <dump-state>) => ();
   let defn = tlf.tlf-defn;
   dump-simple-object(#"define-binding-tlf", state, defn);
+  for (slot in defn.class-defn-slots)
+    let getter = slot.slot-defn-getter;
+    if (getter.method-defn-of
+	  & name-inherited-or-exported?(getter.defn-name))
+      dump-od(slot.slot-defn-getter, state);
+    end;
+    let setter = slot.slot-defn-setter;
+    if (setter & setter.method-defn-of
+	  & name-inherited-or-exported?(setter.defn-name))
+      dump-od(setter, state);
+    end;
+  end;
 end;
 
 // These methods act like getters/setters on the <real-class-definition>, but
