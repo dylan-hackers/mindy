@@ -12,7 +12,6 @@ end;
 
 
 define method optimize-component (component :: <component>) => ();
-  //dump-fer(component);
   let done = #f;
   until (done)
     if (*do-sanity-checks*)
@@ -22,14 +21,15 @@ define method optimize-component (component :: <component>) => ();
       let init-defn = component.initial-definitions;
       component.initial-definitions := init-defn.next-initial-definition;
       init-defn.next-initial-definition := #f;
-      maybe-convert-to-ssa(init-defn);
+      maybe-convert-to-ssa(component, init-defn);
     elseif (component.reoptimize-queue)
       let dependent = component.reoptimize-queue;
       component.reoptimize-queue := dependent.queue-next;
       dependent.queue-next := #"absent";
-      //break("about to optimize %=", dependent);
-      optimize(component, dependent);
       //dump-fer(component);
+      //format(*debug-output*, "\n********** about to optimize %=\n\n",
+      //       dependent);
+      optimize(component, dependent);
     else
       local method try (function)
 	      function(component);
@@ -44,7 +44,8 @@ end;
 
 // SSA conversion.
 
-define method maybe-convert-to-ssa (defn :: <initial-definition>) => ();
+define method maybe-convert-to-ssa
+    (component :: <component>, defn :: <initial-definition>) => ();
   let var :: <initial-variable> = defn.definition-of;
   if (var.definitions.size == 1)
     let assign = defn.definer;
@@ -64,15 +65,17 @@ define method maybe-convert-to-ssa (defn :: <initial-definition>) => ();
 	assign.defines := ssa;
       end;
     end;
+    delete-definition(component, defn);
     for (dep = var.dependents then dep.source-next,
 	 while: dep)
-      if (dep.source-exp == var)
-	dep.source-exp := ssa;
-      else
+      unless (dep.source-exp == var)
 	error("The dependent's source-exp wasn't the var we were trying "
 		"to replace?");
       end;
+      dep.source-exp := ssa;
+      queue-dependent(component, dep.dependent);
     end;
+    queue-dependent(component, assign);
   end;
 end;
 
@@ -426,7 +429,7 @@ define method optimize (component :: <component>, primitive :: <primitive>)
       end;
       assign.defines := #f;
       // Insert the spred out assignments.
-      insert-after(assign, builder.builder-result);
+      insert-after(component, assign, builder.builder-result);
       // Nuke the original assignment.
       delete-and-unlink-assignment(component, assign);
     end;
@@ -521,51 +524,109 @@ define method maybe-restrict-result-type
 end;    
 
 define method maybe-expand-cluster
-    (component :: <component>, cluster :: <ssa-variable>)
+    (component :: <component>, cluster :: <abstract-variable>)
     => did-anything? :: <boolean>;
   let return-type = cluster.derived-type;
   if (return-type.min-values == return-type.positional-types.size
 	& return-type.rest-value-type == empty-ctype())
-    let cluster-dependency = cluster.dependents;
-    unless (cluster-dependency & cluster-dependency.source-next == #f)
-      error("Values cluster used in more than one place?");
+    unless (cluster.dependents)
+      error("Trying to expand a cluster that isn't being used?");
     end;
-    let target = cluster-dependency.dependent;
-    let assign = cluster.definer;
-    let new-defines = #f;
-    let new-depends-on = cluster-dependency.dependent-next;
-    for (index from return-type.min-values - 1 to 0 by -1)
-      let debug-name = as(<symbol>, format-to-string("result%d", index));
-      let var-info = make(<local-var-info>, debug-name: debug-name,
-			  asserted-type: object-ctype());
-      let var = make(<ssa-variable>, var-info: var-info,
-		     definer: assign, definer-next: new-defines);
-      let dep = make(<dependency>, source-exp: var, source-next: #f,
-		     dependent: target, dependent-next: new-depends-on);
-      var.dependents := dep;
-      new-defines := var;
-      new-depends-on := dep;
+    if (cluster.dependents.source-next)
+      error("Trying to expand a cluster that is in more than one place?");
     end;
-    assign.defines := new-defines;
-    for (dep = target.depends-on then dep.dependent-next,
-	 prev = #f then dep,
-	 until: dep == cluster-dependency)
-    finally
-      if (prev)
-	prev.dependent-next := new-depends-on;
-      else
-	target.depends-on := new-depends-on;
-      end;
+    expand-cluster(component, cluster);
+    #t;
+  else
+    #f;
+  end;
+end;
+
+define method expand-cluster 
+    (component :: <component>, cluster :: <ssa-variable>) => ();
+  let cluster-dependency = cluster.dependents;
+  let target = cluster-dependency.dependent;
+  let assign = cluster.definer;
+  let new-defines = #f;
+  let new-depends-on = cluster-dependency.dependent-next;
+  for (index from cluster.derived-type.min-values - 1 to 0 by -1)
+    let debug-name = as(<symbol>, format-to-string("result%d", index));
+    let var-info = make(<local-var-info>, debug-name: debug-name,
+			asserted-type: object-ctype());
+    let var = make(<ssa-variable>, var-info: var-info,
+		   definer: assign, definer-next: new-defines);
+    let dep = make(<dependency>, source-exp: var, source-next: #f,
+		   dependent: target, dependent-next: new-depends-on);
+    var.dependents := dep;
+    new-defines := var;
+    new-depends-on := dep;
+  end;
+  assign.defines := new-defines;
+  for (dep = target.depends-on then dep.dependent-next,
+       prev = #f then dep,
+       until: dep == cluster-dependency)
+  finally
+    if (prev)
+      prev.dependent-next := new-depends-on;
+    else
+      target.depends-on := new-depends-on;
     end;
-    queue-dependent(component, assign);
+  end;
+  queue-dependent(component, assign);
+  let assign-source = assign.depends-on.source-exp;
+  if (instance?(assign-source, <primitive>)
+	& assign-source.name == #"values")
+    queue-dependent(component, assign-source);
+  end;
+end;
+
+define method expand-cluster 
+    (component :: <component>, cluster :: <initial-variable>) => ();
+  let cluster-dependency = cluster.dependents;
+  let target = cluster-dependency.dependent;
+  let assigns = map(definer, cluster.definitions);
+  let new-defines = make(<list>, size: cluster.definitions.size, fill: #f);
+  let new-depends-on = cluster-dependency.dependent-next;
+  for (index from cluster.derived-type.min-values - 1 to 0 by -1)
+    let debug-name = as(<symbol>, format-to-string("result%d", index));
+    let var-info = make(<local-var-info>, debug-name: debug-name,
+			asserted-type: object-ctype());
+    let var = make(<initial-variable>, var-info: var-info);
+    let defns = map(method (assign, next-define)
+		      let defn = make(<initial-definition>, var-info: var-info,
+				      definition-of: var, definer: assign,
+				      definer-next: next-define,
+				      next-initial-definition:
+					component.initial-definitions);
+		      component.initial-definitions := defn;
+		      defn;
+		    end,
+		    assigns, new-defines);
+    let dep = make(<dependency>, source-exp: var, source-next: #f,
+		   dependent: target, dependent-next: new-depends-on);
+    var.dependents := dep;
+    new-defines := defns;
+    new-depends-on := dep;
+  end;
+  for (assign in assigns, defn in new-defines)
+    assign.defines := defn;
+  end;
+  for (dep = target.depends-on then dep.dependent-next,
+       prev = #f then dep,
+       until: dep == cluster-dependency)
+  finally
+    if (prev)
+      prev.dependent-next := new-depends-on;
+    else
+      target.depends-on := new-depends-on;
+    end;
+  end;
+  for (assign in assigns)
     let assign-source = assign.depends-on.source-exp;
     if (instance?(assign-source, <primitive>)
 	  & assign-source.name == #"values")
       queue-dependent(component, assign-source);
     end;
-    #t;
-  else
-    #f;
   end;
 end;
 
@@ -621,7 +682,7 @@ define method let-convert (component :: <component>, lambda :: <lambda>) => ();
 
   // Insert the lambda body before the call assignment (which is now the result
   // assignment).
-  insert-before(call-assign, lambda.body);
+  insert-before(component, call-assign, lambda.body);
 
   // Delete the lambda.
   component.all-methods := remove!(component.all-methods, lambda);
@@ -669,7 +730,7 @@ define method assert-type
     dependent.source-exp := temp;
     temp.dependents := dependent;
     dependent.source-next := #f;
-    insert-before(before, builder-result(builder));
+    insert-before(component, before, builder-result(builder));
   end;
 end;
 
@@ -854,7 +915,7 @@ define method add-type-checks-aux
       end;
     end;
     if (builder)
-      insert-after(assign, builder-result(builder));
+      insert-after(component, assign, builder-result(builder));
     end;
   end;
 end;
@@ -971,7 +1032,7 @@ define method delete-and-unlink-assignment
   else
     // It was the only assignment in the region, so flush the region.
     let region = assignment.region;
-    replace-subregion(region.parent, region, make(<empty-region>));
+    replace-subregion(component, region.parent, region, make(<empty-region>));
   end;
 
   // Set the region to #f to indicate that we are a gonner.
@@ -1001,7 +1062,12 @@ define method delete-definition
     (component :: <component>, defn :: <initial-definition>) => ();
   defn.definer := #f;
   let var = defn.definition-of;
-  var.definitions := remove!(var.definitions, var);
+  var.definitions := remove!(var.definitions, defn);
+  unless (empty?(var.definitions))
+    let remaining-defn = var.definitions.first;
+    remaining-defn.next-initial-definition := component.initial-definitions;
+    component.initial-definitions := remaining-defn;
+  end;
 end;
 
 
@@ -1092,10 +1158,10 @@ define method insert-exit-after
     target.exits := exit;
     let (before, after) = split-after(assignment);
     let new = combine-regions(before, exit);
-    replace-subregion(region-parent, region, new);
+    replace-subregion(component, region-parent, region, new);
     after.parent := #f;
     delete-stuff-in(component, after);
-    delete-stuff-after(component, new.parent, new);
+    delete-stuff-after(component, exit.parent, exit);
   end;
 end;
 
@@ -1157,7 +1223,7 @@ define method all-exits-gone
   let parent = region.parent;
   if (parent)
     delete-stuff-after(component, parent, region);
-    replace-subregion(parent, region, region.body);
+    replace-subregion(component, parent, region, region.body);
   end;
 end;
 
@@ -1181,19 +1247,14 @@ define method delete-stuff-after
   delete-stuff-after(component, region.parent, region);
 
   for (remaining = region.regions then remaining.tail,
-       prev = #f then remaining,
        until: remaining.head == after)
   finally
-    if (prev)
-      prev.tail := #();
-      if (region.regions.size == 1)
-	replace-subregion(region.parent, region, region.regions[0]);
-      end;
-    else
-      replace-subregion(region.parent, region, make(<empty-region>));
-    end;
-    for (subregion in remaining)
+    for (subregion in remaining.tail)
       delete-stuff-in(component, subregion);
+    end;
+    remaining.tail := #();
+    if (region.regions.size == 1)
+      replace-subregion(component, region.parent, region, region.regions[0]);
     end;
   end;
 end;
@@ -1418,20 +1479,23 @@ end;
 // and region links are updated.
 //
 define generic insert-after
-    (assign :: <abstract-assignment>, insert :: <region>) => ();
+    (component :: <component>, assign :: <abstract-assignment>,
+     insert :: <region>) => ();
 
 define method insert-after
-    (assign :: <abstract-assignment>, insert :: <region>) => ();
+    (component :: <component>, assign :: <abstract-assignment>,
+     insert :: <region>) => ();
   let region = assign.region;
   let parent = region.parent;
   let (before, after) = split-after(assign);
   let new = combine-regions(combine-regions(before, insert), after);
   new.parent := parent;
-  replace-subregion(parent, region, new);
+  replace-subregion(component, parent, region, new);
 end;
     
-define method insert-after (assign :: <abstract-assignment>,
-			    insert :: <empty-region>)
+define method insert-after
+    (component :: <component>, assign :: <abstract-assignment>,
+     insert :: <empty-region>)
     => ();
 end;
 
@@ -1441,21 +1505,25 @@ end;
 // and region links are updated.
 //
 define generic insert-before
-    (assign :: <abstract-assignment>, insert :: <region>) => ();
+    (component :: <component>, assign :: <abstract-assignment>,
+     insert :: <region>)
+    => ();
 
-define method insert-before (assign :: <abstract-assignment>,
-			     insert :: <region>)
+define method insert-before
+    (component :: <component>, assign :: <abstract-assignment>,
+     insert :: <region>)
     => ();
   let region = assign.region;
   let parent = region.parent;
   let (before, after) = split-before(assign);
   let new = combine-regions(combine-regions(before, insert), after);
   new.parent := parent;
-  replace-subregion(parent, region, new);
+  replace-subregion(component, parent, region, new);
 end;
     
-define method insert-before (assign :: <abstract-assignment>,
-			     insert :: <empty-region>)
+define method insert-before
+    (component :: <component>, assign :: <abstract-assignment>,
+     insert :: <empty-region>)
     => ();
 end;
 
@@ -1464,14 +1532,16 @@ end;
 // Replace region's child old with new.  This is NOT a deletion.  None of the
 // code associated with old is deleted.  It is assumed that this routine will
 // be used to edit the tree structure of regions while keeping the underlying
-// assignments the same.
+// assignments the same.  The new region's parent slot is updated.
 //
 define generic replace-subregion
-    (region :: <body-region>, old :: <region>, new :: <region>)
+    (component :: <component>, region :: <body-region>, old :: <region>,
+     new :: <region>)
     => ();
 
 define method replace-subregion
-    (region :: <body-region>, old :: <region>, new :: <region>)
+    (component :: <component>, region :: <body-region>, old :: <region>,
+     new :: <region>)
     => ();
   unless (region.body == old)
     error("Replacing unknown region");
@@ -1481,7 +1551,8 @@ define method replace-subregion
 end;
 
 define method replace-subregion
-    (region :: <if-region>, old :: <region>, new :: <region>)
+    (component :: <component>, region :: <if-region>, old :: <region>,
+     new :: <region>)
     => ();
   if (region.then-region == old)
     region.then-region := new;
@@ -1494,7 +1565,17 @@ define method replace-subregion
 end;
 
 define method replace-subregion
-    (region :: <compound-region>, old :: <region>, new :: <region>)
+    (component :: <component>, region :: <if-region>, old :: <region>,
+     new :: <empty-region>,
+     #next next-method)
+    => ();
+  next-method();
+  queue-dependent(component, region);
+end;
+
+define method replace-subregion
+    (component :: <component>, region :: <compound-region>, old :: <region>,
+     new :: <region>)
     => ();
   for (regions = region.regions then regions.tail,
        until: regions == #() | regions.head == old)
@@ -1508,7 +1589,8 @@ define method replace-subregion
 end;
 
 define method replace-subregion
-    (region :: <compound-region>, old :: <region>, new :: <empty-region>)
+    (component :: <component>, region :: <compound-region>, old :: <region>,
+     new :: <empty-region>)
     => ();
   for (regions = region.regions then regions.tail,
        prev = #f then regions,
@@ -1520,11 +1602,9 @@ define method replace-subregion
     if (prev)
       prev.tail = regions.tail;
     elseif (regions.tail == #())
-      let region-parent = region.parent;
-      new.parent := region-parent;
-      replace-subregion(region-parent, region, new);
+      replace-subregion(component, region.parent, region, new);
     else
-      parent.regions := regions.tail;
+      region.regions := regions.tail;
     end;
   end;
 end;
@@ -1591,6 +1671,26 @@ define method check-sanity (region :: <compound-region>) => ();
   end;
 end;
 
+define method check-sanity (region :: <if-region>) => ();
+  //
+  // Check the dependent aspects.
+  check-dependent(region);
+  //
+  // Check to make sure the subregion's parent links are correct.
+  unless (region.then-region.parent == region)
+    error("%= claims %= for its parent instead of %=",
+	  region.then-region, region.then-region.parent, region);
+  end;
+  unless (region.else-region.parent == region)
+    error("%= claims %= for its parent instead of %=",
+	  region.else-region, region.else-region.parent, region);
+  end;
+  //
+  // Check the sub regions.
+  check-sanity(region.then-region);
+  check-sanity(region.else-region);
+end;
+
 define method check-sanity (region :: <body-region>) => ();
   unless (region.body.parent == region)
     error("%='s body %= claims %= for its parent.",
@@ -1637,6 +1737,16 @@ define method check-expression (expr :: <expression>) => ();
       error("%s's dependent %= claims %s for its source-exp",
 	    expr, dep, dep.source-exp);
     end;
+    //
+    // And make sure that dependent depends on us.
+    for (other-dep = dep.dependent.depends-on then other-dep.dependent-next,
+	 until: other-dep == dep)
+      unless (other-dep)
+	error("%= lists %= as a dependent, but it isn't in the "
+		"depends-on chain.",
+	      expr, dep.dependent);
+      end;
+    end;
   end;
 end;
 
@@ -1661,6 +1771,16 @@ define method check-dependent (dep :: <dependent-mixin>) => ();
     //
     // Make make sure that source is okay.
     check-expression(dependency.source-exp);
+    //
+    // Make sure that source lists us as a dependent.
+    for (sources-dependency = dependency.source-exp.dependents
+	   then sources-dependency.source-next,
+	 until: sources-dependency == dependency)
+      unless (sources-dependency)
+	error("%= depends on %=, but isn't listed as a dependent.",
+	      dep, dep.source-exp);
+      end;
+    end;
   end;
 end;
 
