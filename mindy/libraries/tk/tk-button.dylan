@@ -62,7 +62,7 @@ define class <radiobutton> (<button>, <valued-button>)
 end class;
 
 define-widget(<radiobutton>, "radiobutton",
-	      #"activebackground", #"activeforeground", #"bitmap",
+	      #"activebackground", #"activeforeground", #"bitmap", #"command",
 	      #"disabledforeground", #"font", #"height", #"selector",
 	      #"state", #"text", #"textvariable", #"value", #"variable",
 	      #"width");
