@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.26 1996/04/14 13:42:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/primemit.dylan,v 1.27 1996/05/01 14:39:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -208,8 +208,10 @@ define-primitive-emitter
 			    "isn't constant?");
 		  end;
      let (bottom-name, top-name) = consume-cluster(cluster, file);
-     format(stream, "%s = pad_cluster(%s, %s, %d);\n",
-	    top-name, bottom-name, top-name, nfixed);
+     unless (nfixed == 0)
+       format(stream, "%s = pad_cluster(%s, %s, %d);\n",
+	      top-name, bottom-name, top-name, nfixed);
+     end unless;
      let results = make(<vector>, size: nfixed + 1);
      for (index from 0 below nfixed)
        results[index] := pair(stringify(bottom-name, '[', index, ']'),
