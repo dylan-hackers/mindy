@@ -87,8 +87,11 @@ extern heapptr_t initial_symbols;
 extern GD_NORETURN void not_reached(void);
 extern void no_core_dumps(void);
 
-#ifdef WIN32
-   double rint(double x);
-#endif
+double (rint)(double x);
+
+float (frexpf)(float x, int *exp);
+long double (frexpl)(long double x, int *exp);
+float (ldexpf)(float x, int exp);
+long double (ldexpl)(long double x, int exp);
 
 #include <errno.h>

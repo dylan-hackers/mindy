@@ -1,4 +1,4 @@
-/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.21 2003/03/12 21:54:44 housel Exp $ */
+/* $Header: /scm/cvs/src/d2c/runtime/c-code/main.c,v 1.22 2003/05/25 15:14:26 housel Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,7 +8,7 @@
 int application_argc;
 char **application_argv;
 
-void not_reached(void)
+void GD_NORETURN not_reached(void)
 {
     fprintf(stderr, "entered a branch that supposedly never could be.\n");
     abort();
@@ -155,78 +155,6 @@ void gdb_print_genobj (descriptor_t obj)
 }
 
 
-/* win32 specific stuff which patches over deficiencies in the Visual
-   C++ runtime.
-   */
-
-#if (defined(WIN32) && !defined(WIN32_GCC))
-
-double rint(double x)
-{
-  /* ### I'm not sure this is entirely correct, but it's certainly
-     closer than what we had here before 
-     */
-  double temp = floor(x+0.5);
-  return (temp > x) ? temp : floor(x);
-}
-
-float fabsf (float x)
-{
-    return (float) fabs(x);
-}
-
-float sinf (float x)
-{
-  return (float) sin(x);
-}
-
-float cosf (float x)
-{
-  return (float) cos(x);
-}
-
-float tanf (float x)
-{
-  return (float) tan(x);
-}
-
-float asinf (float x)
-{
-  return (float) asin(x);
-}
-
-float acosf (float x)
-{
-  return (float) acos(x);
-}
-
-float atanf (float x)
-{
-  return (float) atan(x);
-}
-
-float atan2f (float x, float y)
-{
-  return (float) atan2(x, y);
-}
-
-float expf (float x)
-{
-  return (float) exp(x);
-}
-
-float sqrtf (float x)
-{
-  return (float) sqrt(x);
-}
-
-double log2 (double x)
-{
-  return log(x)/log(2);
-}
-
-#endif
-
 #if !defined(WIN32) && !defined(GD_PLATFORM_BEOS) && !defined(GD_PLATFORM_MACOS) && !defined(GD_PLATFORM_CYGNUS)
 
 #include <sys/types.h>
