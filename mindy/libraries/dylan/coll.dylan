@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.22 1994/11/03 23:50:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.23 1994/11/06 20:09:37 rgs Exp $
 
 //======================================================================
 //
@@ -393,7 +393,7 @@ end method key-sequence;
 
 // Sequence routines.
 
-define method element(sequence :: <sequence>, key :: <fixed-integer>,
+define method element(sequence :: <sequence>, key :: <integer>,
 		      #key default = no_default) => <object>;
   block (return)
     for (this-key from 0, elem in sequence)
@@ -410,7 +410,7 @@ end method element;
 
 
 define method element-setter (new-value, sequence :: <mutable-sequence>,
-			      key :: <fixed-integer>)
+			      key :: <integer>)
   let (init-state, limit, next-state, done?,
        current-key, current-element,
        current-element-setter) = forward-iteration-protocol(sequence);

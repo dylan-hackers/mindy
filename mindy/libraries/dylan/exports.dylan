@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.51 1994/11/04 19:46:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.52 1994/11/06 20:10:19 rgs Exp $
 
 //======================================================================
 //
@@ -33,7 +33,7 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.
 define library Dylan
   export
     Dylan, Extensions, System, File-Descriptors, Threads, Introspection,
-    Cheap-IO;
+    Cheap-IO, Extern;
 end Dylan;
 
 define module Builtin-Stuff
@@ -100,7 +100,14 @@ define module Builtin-Stuff
     O_WRONLY, O_RDWR, O_NDELAY, O_APPEND, O_CREAT, O_TRUNC, O_EXCL,
     ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
     EINVAL, ENFILE, EMFILE, ETXTBSY, ENOSPC, EROFS, EOPNOTSUPP, ELOOP,
-    ENAMETOOLONG, EDQUOT, EBADF, EINTR, EWOULDBLOCK, EPIPE, EFBIG;
+    ENAMETOOLONG, EDQUOT, EBADF, EINTR, EWOULDBLOCK, EPIPE, EFBIG,
+    <foreign-file>, <c-function>, <statically-typed-pointer>, signed-byte-at,
+    signed-short-at, signed-long-at, unsigned-byte-at, unsigned-short-at,
+    unsigned-long-at, signed-byte-at-setter, signed-short-at-setter,
+    signed-long-at-setter, unsigned-byte-at-setter, unsigned-short-at-setter,
+    unsigned-long-at-setter, pointer-at, pointer-at-setter, c-pointer-slot,
+    c-pointer-slot-setter, load-object-file, null-pointer, find-c-pointer,
+    find-c-function, constrain-c-function;
   create
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
@@ -228,7 +235,7 @@ define module Extensions
     <equal-table>, equal-hash, collection-hash, 
     <value-table>, value-hash, sequence-hash, string-hash;
   export
-    one-of, type-or, false-or, ignore;
+    one-of, type-or, false-or, ignore, key-exists?;
 end Extensions;
 
 define module System
@@ -328,3 +335,23 @@ define module Cheap-IO
     export: all;
 end;
 
+define module Extern
+  use Dylan;
+  use Builtin-Stuff,
+    import: {<foreign-file>, <c-function>, <statically-typed-pointer>,
+	     signed-byte-at, signed-short-at, signed-long-at, 
+	     unsigned-byte-at, unsigned-short-at, unsigned-long-at, 
+	     signed-byte-at-setter, signed-short-at-setter,
+	     signed-long-at-setter, 
+	     unsigned-byte-at-setter, unsigned-short-at-setter,
+	     unsigned-long-at-setter,
+	     pointer-at, pointer-at-setter,
+	     c-pointer-slot, c-pointer-slot-setter,
+	     load-object-file, null-pointer,
+	     find-c-pointer, find-c-function, constrain-c-function},
+    export: all;
+  use Extensions;
+  export
+    <machine-pointer>, <c-string>, destroy, content-size, structure-size,
+    import-value, export-value;
+end module Extern;
