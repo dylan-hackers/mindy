@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.11 1994/04/29 06:47:49 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.12 1994/04/30 14:57:47 wlott Exp $
 *
 * This file does whatever.
 *
@@ -654,6 +654,11 @@ static obj_t trans_thread_obj(obj_t t)
 
 static int scav_lock(struct object *o)
 {
+    struct lock *lock = (struct lock *)o;
+
+    if (lock->waiting == NULL)
+	lock->last = &lock->waiting;
+
     return sizeof(struct lock);
 }
 
@@ -664,6 +669,11 @@ static obj_t trans_lock(obj_t lock)
 
 static int scav_event(struct object *o)
 {
+    struct event *event = (struct event *)o;
+
+    if (event->waiting == NULL)
+	event->last = &event->waiting;
+
     return sizeof(struct event);
 }
 
