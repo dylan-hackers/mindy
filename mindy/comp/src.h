@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.6 1994/03/31 10:16:36 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.h,v 1.7 1994/04/10 21:07:59 wlott Exp $
 *
 * This file does whatever.
 *
@@ -45,6 +45,7 @@ struct constituent {
 struct defconst_constituent {
     enum constituent_kind kind;
     struct constituent *next;
+    int line;
     struct bindings *bindings;
     struct method *tlf;
 };
@@ -52,6 +53,7 @@ struct defconst_constituent {
 struct defvar_constituent {
     enum constituent_kind kind;
     struct constituent *next;
+    int line;
     struct bindings *bindings;
     struct method *tlf;
 };
@@ -348,6 +350,7 @@ struct plist {
 };
 
 struct property {
+    int line;
     struct symbol *keyword;
     struct expr *expr;
     struct property *next;
@@ -440,6 +443,7 @@ enum slot_allocation {
 };
 
 struct slot_spec {
+    int line;
     flags_t flags;
     enum slot_allocation alloc;
     struct id *name;
@@ -559,10 +563,12 @@ extern struct body *make_body(void);
 extern struct body
     *add_constituent(struct body *body, struct constituent *constituent);
 extern struct body *make_expr_body(struct expr *expr);
-extern struct constituent *make_define_constant(struct bindings *bindings);
+extern struct constituent
+    *make_define_constant(int line, struct bindings *bindings);
 extern struct constituent
     *make_define_method(flags_t flags, struct method *method);
-extern struct constituent *make_define_variable(struct bindings *bindings);
+extern struct constituent
+    *make_define_variable(int line, struct bindings *bindings);
 extern struct constituent *make_expr_constituent(struct expr *expr);
 extern struct constituent *make_let(struct bindings *bindings);
 extern struct constituent *make_handler(struct expr *type, struct expr *func,
@@ -693,8 +699,8 @@ extern struct superclass_list
     *add_superclass(struct superclass_list *list, struct expr *expr);
 extern struct class_guts *make_class_guts(void);
 extern struct slot_spec
-    *make_slot_spec(flags_t flags, enum slot_allocation alloc, struct id *name,
-		    struct expr *type, struct plist *plist);
+    *make_slot_spec(int line, flags_t flags, enum slot_allocation alloc,
+		    struct id *name, struct expr *type, struct plist *plist);
 extern struct class_guts
     *add_slot_spec(struct class_guts *guts, struct slot_spec *spec);
 extern struct keyword_spec
