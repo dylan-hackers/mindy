@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.10 1996/01/12 02:10:42 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.11 1996/02/08 12:32:03 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -387,7 +387,8 @@ define method find-slot-offset (class :: <class>, slot :: <slot-descriptor>)
       return(slot.slot-positions-cache := positions.head.tail);
     end if;
     for (entry :: <list> in positions)
-      if (subtype?(class, check-type(<class>, entry.head)))
+      let entry-class :: <class> = entry.head;
+      if (subtype?(class, entry-class))
 	let offset :: <integer> = entry.tail;
 	let node = make(<position-cache-node>, class: class, offset: offset,
 			next: slot.slot-positions-cache);
