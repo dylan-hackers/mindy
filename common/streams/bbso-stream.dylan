@@ -43,7 +43,7 @@ end method stream-open?;
 ///
 define inline sealed method stream-element-type
     (stream :: <buffered-byte-string-output-stream>)
- => type :: <type>; // :: singleton(<byte-character>);
+ => type :: <type>; // ### :: singleton(<byte-character>);
     <byte-character>;
 end method stream-element-type;
 
@@ -99,6 +99,10 @@ define sealed method do-next-output-buffer
   buf.buffer-end := buf.size; // It should be that anyway, but we need to
                               // be sure
   let buf-next :: <buffer-index> = buf.buffer-next;
+  // Maintain buffer-stop
+  if (stream.buffer-stop < buf-next)
+    stream.buffer-stop := buf-next;
+  end;
   let stop :: <buffer-index> = stream.buffer-stop;
   // Test buf-next rather that buffer-stop.  Though buffer-stop may indicate
   // the buffer is full, there's no reason to back up the buffer when the
@@ -329,7 +333,7 @@ define sealed method stream-contents
 	  let res = make(<byte-string>, size: output-len);
 	  copy-bytes(res, 0, buf, 0, output-len);
 	  res;
-	(output-len = 0) =>
+	(output-len == 0) =>
 	  // The only output is what is in the backup string.
 	  backup;
 	otherwise =>
