@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.4 1994/04/10 19:00:20 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/obj.c,v 1.5 1994/04/17 17:43:08 wlott Exp $
 *
 * This file does whatever.
 *
@@ -26,13 +26,9 @@
 
 obj_t obj_ObjectClass = 0;
 
-#undef object_class		/* Get rid of inline def if it exists */
-obj_t object_class(obj_t object)
+static obj_t dylan_object_class(obj_t object)
 {
-    if (obj_is_ptr(object))
-	return obj_ptr(struct object *, object)->class;
-    else
-	return obj_IntegerClass;
+    return object_class(object);
 }
 
 
@@ -59,5 +55,5 @@ void init_obj_classes(void)
 void init_obj_functions(void)
 {
     define_function("object-class", list1(obj_ObjectClass),
-		    FALSE, obj_False, obj_ClassClass, object_class);
+		    FALSE, obj_False, obj_ClassClass, dylan_object_class);
 }
