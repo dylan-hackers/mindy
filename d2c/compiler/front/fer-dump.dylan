@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-dump.dylan,v 1.4 2001/03/17 03:43:33 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-dump.dylan,v 1.5 2003/04/12 16:52:14 gabor Exp $
 copyright: see below
 
 
@@ -439,7 +439,7 @@ end;
 
 define method dump (var :: <initial-definition>, stream :: <stream>) => ();
   dump(var.var-info, stream);
-  format(stream, "[%d]", var.definition-of.id);
+  format(stream, "'[%d]", var.definition-of.id);
 end;
 
 define method dump (info :: <debug-named-info>, stream :: <stream>) => ();
