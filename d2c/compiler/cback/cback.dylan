@@ -767,7 +767,7 @@ define method default-primitive-emitter
        while: op)
     add!(ops, ref-leaf($general-rep, op.source-exp, output-info));
   end;
-  format(stream, "PRIMITIVE %s(", name);
+  format(stream, "PRIMITIVE %s(", operation.name);
   for (op in ops, first? = #t then #f)
     unless (first?)
       write(", ", stream);
