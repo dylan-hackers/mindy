@@ -1,6 +1,6 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.3 1995/01/06 21:22:32 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/signature.dylan,v 1.4 1995/05/05 16:58:38 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -59,6 +59,12 @@ define class <key-info> (<object>)
   // The default, if it is a compile-time constant.  Otherwise, #f.
   slot key-default :: union(<false>, <ct-value>),
     init-value: #f, init-keyword: default:;
+  //
+  // #t if this keyword has an explicit supplied? variable after it.  Only
+  // needed if there is no key-default and the key-type doesn't allow for
+  // a bottom value.
+  slot key-supplied?-var :: <boolean>,
+    init-value: #f, init-keyword: supplied?-var:;
 end;
 
 define method print-object (key :: <key-info>, stream :: <stream>) => ();
