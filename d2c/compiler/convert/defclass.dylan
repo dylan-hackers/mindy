@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.2 1994/12/12 21:24:39 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.3 1994/12/13 13:16:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -27,6 +27,10 @@ define class <class-definition> (<abstract-constant-definition>)
   // Vector of the slots.
   slot class-defn-slots :: <simple-object-vector>,
     required-init-keyword: slots:;
+end;
+
+define method defn-type (defn :: <class-definition>) => res :: <cclass>;
+  dylan-value(#"<class>");
 end;
 
 define class <slot> (<object>)
