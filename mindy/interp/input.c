@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.12 1994/07/07 07:02:56 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/input.c,v 1.13 1994/07/07 07:14:56 wlott Exp $
 *
 * This file implements getc.
 *
@@ -39,7 +39,7 @@ extern void bzero(void *ptr, size_t bytes);
 extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
 		  fd_set *except_fds, struct timeval *timeout);
 #endif
-#ifdef __osf__
+#if defined(__osf__) || defined(ultrix)
 extern void bzero(char *string, int length);
 extern int select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.19 1994/07/07 07:02:57 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.20 1994/07/07 07:14:57 wlott Exp $
 *
 * This file implements the loader.
 *
@@ -40,7 +40,7 @@ extern int close(int fd);
 extern int read(int fd, void *ptr, int bytes);
 extern int access(const void *path, int flags);
 #endif
-#if defined(hpux) || defined(__osf__) || defined(sgi) || defined(linux)
+#if defined(hpux) || defined(__osf__) || defined(sgi) || defined(linux) || defined(ultrix)
 #define pause buttplug
 #include <unistd.h>
 #undef pause

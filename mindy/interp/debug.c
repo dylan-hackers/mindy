@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.30 1994/07/07 06:59:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.31 1994/07/07 07:14:52 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -37,7 +37,7 @@
 #ifdef MACH
 extern int isatty(int fd);
 #endif
-#if defined(hpux) || defined(__osf__) || defined(linux)
+#if defined(hpux) || defined(__osf__) || defined(linux) || defined(ultrix)
 #define pause buttplug
 #include <unistd.h>
 #undef pause

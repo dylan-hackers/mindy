@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.16 1994/07/07 07:02:55 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.17 1994/07/07 07:14:55 wlott Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -55,7 +55,7 @@ extern int execvp(const char *, char *const []);
 extern int sys_nerr;
 extern char *sys_errlist[];
 #endif hpux
-#ifdef __osf__
+#if defined(__osf__) || defined(ultrix)
 #include <stdlib.h>
 #define pause buttplug
 #include <unistd.h>
@@ -65,7 +65,7 @@ extern void bzero(char *string, int length);
 extern int select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout);
 extern int fsync(int filedes);
-#endif __osf__
+#endif
 #ifdef sgi
 #define pause buttplug
 #include <unistd.h>
@@ -75,6 +75,10 @@ extern int fsync(int filedes);
 #include <bstring.h>
 #include <stdlib.h>
 #endif sgi
+#ifdef ultrix
+extern int sys_nerr;
+extern char *sys_errlist[];
+#endif ultrix
 #ifdef linux
 #define pause buttplug
 #include <unistd.h>
