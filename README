@@ -23,7 +23,7 @@ web site (below). The following online resources are available:
 
   Maintainers' website:    http://www.gwydiondylan.org/
   Gwydion group:           http://legend.gwydion.cs.cmu.edu/
-  FTP Site:                ftp://berlin.ccc.de/pub/gd/
+  FTP Site:                ftp://ftp.gwydiondylan.org/pub/gd/
   FTP Site (mirror):       ftp://ftp.fu-berlin.de/pub/unix/languages/dylan/
   Bug reports:             gd-bugs@gwydiondylan.org
   Mail to the maintainers: gd-hackers@gwydiondylan.org
@@ -39,4 +39,3 @@ Be warned: Gwydion is not primarily intended for production work. Some of
 the omissions and shortcomings are fairly noticable, but it *has* been used
 in real-world projects before. Use Gwydion only if you're feeling daring
 and wish to experiment with a compiler currently under development.
-
