@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.19 2001/02/25 19:40:45 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.20 2001/02/25 20:38:07 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -254,7 +254,7 @@ end;
 // search path (as specified in CPATH or via -I switches.
 //
 define function maybe-emit-include
-    (name :: <byte-string>, file :: <file-state>, #key left = '"', right = '"')
+    (name :: <byte-string>, file :: <file-state>, #key left = '<', right = '>')
   unless (element(file.file-includes-exist-for, name, default: #f))
     format(file.file-body-stream, "#include %s%s%s\n\n", left, name, right);
     element(file.file-includes-exist-for, name) := #t;
@@ -1218,12 +1218,12 @@ define method emit-prologue
     => ();
   maybe-emit-include("stdlib.h", file);
   maybe-emit-include("stdio.h", file);
-  maybe-emit-include("runtime.h", file);
+  maybe-emit-include("runtime.h", file, left: '"', right: '"');
  
-   // The most important thing math.h includes is a prototype for rint,
-   // although it helps if we ever want to inline functions in the
-   // Transcendental library
-   maybe-emit-include("math.h", file);
+  // The most important thing math.h includes is a prototype for rint,
+  // although it helps if we ever want to inline functions in the
+  // Transcendental library
+  maybe-emit-include("math.h", file);
 
   let stream = file.file-body-stream;
   format(stream, "#define obj_True %s.heapptr\n",
@@ -2190,6 +2190,18 @@ define method xep-expr-and-name
 	 #f);
 end;
 
+define function entry-by-slot
+    (func :: <function-literal>,
+     entry-getter :: <function>,
+     file :: <file-state>)
+    => (expr :: <string>, name :: <name>);
+  let entry = func.entry-getter;
+  let entry-info = get-info-for(entry, file);
+  let entry-name = main-entry-c-name(entry-info, file);
+  maybe-emit-prototype(entry-name, entry-info, file);
+  values(entry-name, entry.name);
+end;
+
 define method xep-expr-and-name
     (func :: <function-literal>, generic-entry? :: <boolean>,
      file :: <file-state>)
@@ -2197,22 +2209,14 @@ define method xep-expr-and-name
   if (generic-entry?)
     error("%= doesn't have a generic entry.", func);
   end;
-  let general-entry = func.general-entry;
-  let entry-info = get-info-for(general-entry, file);
-  let entry-name = main-entry-c-name(entry-info, file);
-  maybe-emit-prototype(entry-name, entry-info, file);
-  values(entry-name, general-entry.name);
+  entry-by-slot(func, general-entry, file);
 end;
 
 define method xep-expr-and-name
     (func :: <method-literal>, generic-entry? :: <true>,
      file :: <file-state>)
     => (expr :: <string>, name :: <name>);
-  let generic-entry = func.generic-entry;
-  let entry-info = get-info-for(generic-entry, file);
-  let entry-name = main-entry-c-name(entry-info, file);
-  maybe-emit-prototype(entry-name, entry-info, file);
-  values(entry-name, generic-entry.name);
+  entry-by-slot(func, generic-entry, file);
 end;
 
 define method xep-expr-and-name
@@ -2222,11 +2226,7 @@ define method xep-expr-and-name
   if (generic-entry?)
     error("%= doesn't have a generic entry.", func);
   end;
-  let callback-entry = func.callback-entry;
-  let entry-info = get-info-for(callback-entry, file);
-  let entry-name = main-entry-c-name(entry-info, file);
-  maybe-emit-prototype(entry-name, entry-info, file);
-  values(entry-name, callback-entry.name);
+  entry-by-slot(func, callback-entry, file);
 end;
 
 define method xep-expr-and-name
@@ -2243,7 +2243,7 @@ end;
 define method xep-expr-and-name
     (func :: <literal-constant>, generic-entry? :: <boolean>,
      file :: <file-state>, #next next-method)
-    => (expr :: false-or(<string>), name :: false-or(<name>));
+    => (expr :: <string>, name :: false-or(<name>));
   let ctv = func.value;
   let (expr, name) = xep-expr-and-name(ctv, generic-entry?, file);
   values(expr | next-method(),
@@ -2354,7 +2354,7 @@ define method emit-assignment
       error("Trying to get some values back from a function that "
 	      "doesn't return?");
     (result-rep == #"cluster") =>
-      format(file.file-guts-stream, "%s = %s;\n", new-sp, call);
+      new-sp ~= call & format(file.file-guts-stream, "%s = %s;\n", new-sp, call);
       deliver-cluster(results, sp, new-sp,
 		      func-info.function-info-result-type.min-values,
 		      file);
@@ -3261,7 +3261,7 @@ define method emit-copy
      file :: <file-state>)
     => ();
   let stream = file.file-guts-stream;
-  format(stream, "%s = %s;\n", target, source);
+  target ~= source & format(stream, "%s = %s;\n", target, source);
 end;
 
 define method emit-copy
