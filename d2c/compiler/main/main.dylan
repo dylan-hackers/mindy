@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.92 1996/09/15 15:33:35 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main.dylan,v 1.93 1996/10/18 14:58:22 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -189,19 +189,13 @@ define method parse-lid (state :: <main-unit-state>) => ();
     method repeat (posn :: <integer>)
       if (posn < end-posn)
 	let char = as(<character>, contents[posn]);
-	if (char == '\n')
+	if (char.whitespace?)
 	  repeat(posn + 1);
-#if (newlines-are-CRLF)
-	elseif (char == '\r')
-          // Assume there's a LF following the CR...  (If the file is
-          // a Unix file, you'll see a LF with no CR, but you'll
-          // rarely see a CR without an LF)
-          repeat(posn + 2);
-#endif
-	elseif (char == '#')
+	elseif (char == '/' & (posn + 1 < contents.size) 
+		  & as(<character>, contents[posn + 1]) == '/')
 	  repeat(find-newline(posn + 1));
 	else
-	  let name-end = find-newline(posn + 1);
+	  let name-end = find-end-of-word(posn);
 	  let len = name-end - posn;
 	  let name = make(<byte-string>, size: len);
 	  copy-bytes(name, 0, contents, posn, len);
@@ -211,31 +205,44 @@ define method parse-lid (state :: <main-unit-state>) => ();
       end;
     end,
     method find-newline (posn :: <integer>)
-	=> newline :: <integer>;
+     => newline :: <integer>;
       if (posn < end-posn)
 	let char = as(<character>, contents[posn]);
 	if (char == '\n')
 	  posn;
-#if (newlines-are-CRLF)
-	elseif (char == '\r')
-          posn;
-#endif
 	else
 	  find-newline(posn + 1);
 	end;
       else
 	posn;
       end;
-    end method;
+    end method,
 
+    // find-end-of-word returns the position of the first character
+    // after the word, where "end of word" is defined as whitespace.
+    method find-end-of-word (posn :: <integer>)
+     => end-of-word :: <integer>;
+      if (posn < end-posn)
+	let char = as(<character>, contents[posn]);
+	if (char.whitespace?)
+	  posn;
+	else
+	  find-end-of-word(posn + 1);
+	end;
+      else
+	posn;
+      end;
+    end method;
+ 
   repeat(start-posn);
 
   state.unit-header := header;
   state.unit-files := files;
-end;
+end method parse-lid;
 
-// ### Actually, space (' ') is the only kind of whitespace this function
-// recognizes...
+// Considers anything with an ASCII value less than 32 (' ') to be
+// whitespace.  This includes control characters as well as what we
+// normally consider whitespace.
 //
 define method split-at-whitespace (string :: <byte-string>)
     => res :: <list>;
