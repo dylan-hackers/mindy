@@ -348,8 +348,8 @@ define method parse-error (token :: <token>, format :: <string>, #rest args)
   end for;
 
   let char-num = (token.position | 0) - last-CR;
-  apply(error, concatenate("%s:line %d: ", format),
-	token.generator.file-name, line-num, args);
+  apply(error, concatenate("%s:line %d chararacter %d: ", format),
+	token.generator.file-name, line-num, char-num, args);
 end method parse-error;
 
 //========================================================================
@@ -660,6 +660,8 @@ end method try-punctuation;
 
 define constant match-comment-end = make-substring-positioner("*/");
 
+define variable *handle-//-coments* :: <boolean> = #f;
+
 // Skip over whitespace characters (including newlines) and comments.
 //
 define method skip-whitespace (contents :: <string>, position :: <integer>)
@@ -677,6 +679,15 @@ define method skip-whitespace (contents :: <string>, position :: <integer>)
 		error("Incomplete comment in C header file.");
 	      end if;
 	      skip-comments(end-index + 2);
+	    elseif (*handle-//-coments* & i < sz - 1 
+		      & contents[i] == '/' & contents[i + 1] == '/')
+	      while (i < sz & contents[i] ~== '\n')
+		i := i + 1;
+	      end while;
+	      // i points at the newline if it ain't eof, but we need
+	      // to recurse anyway to handle multiple // comments in a
+	      // row, and that'll handle whitespace.
+	      skip-comments(i);
 	    else
 	      i;
 	    end if;
