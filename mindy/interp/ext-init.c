@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.2 1994/11/06 23:03:08 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/ext-init.c,v 1.3 1994/11/07 00:46:41 rgs Exp $
 *
 * This file does whatever.
 *
@@ -21,6 +21,7 @@
 #include "gc.h"
 #include "bool.h"
 #include "extern.h"
+#include "error.h"
 
 #include "extern1.def"
 
@@ -35,7 +36,6 @@ void add_explicit_symbol(char *name, void *address)
 
 void build_explicit_syms(void)
 {
-    obj_t foo;
     struct foreign_file *syms;
     int extra_size = (extern_sym_count) * sizeof(struct symtab);
 
