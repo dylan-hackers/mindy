@@ -81,17 +81,6 @@ end;
 //=========================================================================
 //  Convert numbers to and from strings.
 
-define method float-to-string( float :: <float> ) 
-=> ( string :: <string> )
-    
-    let string = format-to-string( "%=", float );
-    
-    // Take off the marker
-    string := copy-sequence( string, start: 0, end: string.size - 2 );
-    
-    string;
-end method float-to-string;
-
 define constant $digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 define method integer-to-string
@@ -143,17 +132,199 @@ define method integer-to-string
   returned-string;
 end method integer-to-string;
 
+define constant $minimum-normalized-single-significand :: <extended-integer>
+  = ash(#e1, float-digits(1.0s0) - 1);
+define constant $minimum-normalized-double-significand :: <extended-integer>
+  = ash(#e1, float-digits(1.0d0) - 1);
+define constant $minimum-normalized-extended-significand :: <extended-integer>
+  = ash(#e1, float-digits(1.0x0) - 1);
+
+define method float-to-string 
+    (v :: <single-float>)
+ => (string :: <byte-string>);
+  float-to-string-aux(v, $minimum-single-float-exponent,
+                      $minimum-normalized-single-significand);
+end method;
+
+define method float-to-string 
+    (v :: <double-float>)
+ => (string :: <byte-string>);
+  float-to-string-aux(v, $minimum-double-float-exponent,
+                      $minimum-normalized-double-significand);
+end method;
+
+define method float-to-string 
+    (v :: <extended-float>)
+ => (string :: <byte-string>);
+  float-to-string-aux(v, $minimum-extended-float-exponent,
+                      $minimum-normalized-extended-significand);
+end method;
+
+define inline method float-to-string-aux
+    (v :: <float>,
+     minimum-exponent :: <integer>,
+     minimum-normalized-significand :: <extended-integer>)
+ => (string :: <byte-string>);
+  local
+    // The following methods implement the free-format conversion
+    // algorithm by Burger and Dybvig, as described in "Printing
+    // Floating-Point Numbers Quickly and Accurately", in the 1996
+    // ACM PLDI conference proceedings.
+    // 
+    // Set initial values according to Table I.
+    //
+    method initial
+        (v :: <float>, f :: <extended-integer>, e :: <integer>)
+     => (exponent :: <integer>, digits :: <list>);
+      let round? = (even?(f));
+
+      if (e >= 0)
+        let be = ash(#e1, e);
+        if (f ~= minimum-normalized-significand)
+          scale(f * be * 2, #e2, be, be, 0, round?, round?, v);
+        else
+          scale(f * be * 4, #e4, be * 2, be, 0, round?, round?, v);
+        end if;
+      else
+        if (e = minimum-exponent | f ~= minimum-normalized-significand)
+          scale(f * 2, ash(#e1, 1 - e), #e1, #e1, 0, round?, round?, v);
+        else
+          scale(f * 4, ash(#e1, 2 - e), #e2, #e1, 0, round?, round?, v);
+        end if;
+      end if;
+    end,
+
+    // Scale to the appropriate power of 10 using an estimate of
+    // the base-10 logarithm.
+    //
+    method scale
+        (r :: <extended-integer>, s :: <extended-integer>,
+         m+ :: <extended-integer>, m- :: <extended-integer>,
+         k :: <integer>,
+         low-ok? :: <boolean>, high-ok? :: <boolean>,
+         v :: <float>)
+     => (exponent :: <integer>, digits :: <list>);
+      let log-estimate = ceiling(logn(v, 10) - 1d-10);
+      if (log-estimate >= 0)
+        fixup(r, s * #e10 ^ log-estimate, m+, m-, log-estimate,
+              low-ok?, high-ok?);
+      else
+        let scale = #e10 ^ -log-estimate;
+        fixup(r * scale, s, m+ * scale, m- * scale, log-estimate,
+              low-ok?, high-ok?);
+      end if;
+    end,
+
+    // Fix up the log estimate, which might be 1 too small.
+    //
+    method fixup
+        (r :: <extended-integer>, s :: <extended-integer>,
+         m+ :: <extended-integer>, m- :: <extended-integer>,
+         k :: <integer>,
+         low-ok? :: <boolean>, high-ok? :: <boolean>)
+     => (exponent :: <integer>, digits :: <list>);
+      if ((if (high-ok?) \>= else \> end)(r + m+, s)) // log estimate too low?
+        values(k + 1, generate(r, s, m+, m-, low-ok?, high-ok?));
+      else
+        values(k, generate(r * 10, s, m+ * 10, m- * 10, low-ok?, high-ok?));
+      end;
+    end,
+
+    // Digit generation loop
+    //
+    method generate
+        (r :: <extended-integer>, s :: <extended-integer>,
+         m+ :: <extended-integer>, m- :: <extended-integer>,
+         low-ok? :: <boolean>, high-ok? :: <boolean>)
+     => (digits :: <list>);
+      let (d :: <extended-integer>, r :: <extended-integer>) = truncate/(r, s);
+
+      let tc1 = (if (low-ok?) \<= else \< end)(r, m-);
+      let tc2 = (if (high-ok?) \>= else \> end)(r + m+, s);
+
+      if (~tc1)
+        if (~tc2)
+          pair(d, generate(r * 10, s, m+ * 10, m- * 10, low-ok?, high-ok?));
+        else
+          list(d + 1);
+        end;
+      else
+        if (~tc2)
+          list(d);
+        elseif(r * 2 < s)
+          list(d);
+        else
+          list(d + 1);
+        end if;
+      end if;
+    end;
+  
+  let s :: <stretchy-vector> = make(<stretchy-vector>);
+  let adds = curry(add!, s);
+  
+  let v = if (negative?(v)) add!(s, '-'); -v; else v end;
+
+  if (zero?(v))
+    do(adds, "0.0");
+  elseif (v ~= v)
+    do(adds, "{NaN}");
+  elseif (v + v = v)
+    do(adds, "{infinity}");
+  else
+    let (f :: <extended-integer>, e :: <integer>, sign :: <integer>)
+      = integer-decode-float(v);
+
+    let (exponent :: <integer>, digits :: <list>)
+      = initial(v, f, e);
+    
+    if (-3 <= exponent & exponent <= 0)
+      do(adds, "0.");
+      for (i from exponent below 0)
+        add!(s, '0');
+      end for;
+      for (digit in digits)
+        add!(s, $digits[as(<integer>, digit)]);
+      end for;
+    elseif (0 < exponent & exponent < 8)
+      for (digit in digits, place from exponent by -1)
+        if (place = 0)
+          add!(s, '.');
+        end;
+        add!(s, $digits[as(<integer>, digit)]);
+      finally
+        for (i from place above 0 by -1)
+          add!(s, '0');
+        end;
+        if (place >= 0)
+          do(adds, ".0");
+        end;
+      end for;
+    else
+      for (digit in digits, first? = #t then #f)
+        add!(s, $digits[as(<integer>, digit)]);
+        if (first?)
+          add!(s, '.')
+        end;
+      end;
+      if (digits.size = 1)
+        add!(s, '0');
+      end;
+      add!(s, 'e');
+      do(adds, integer-to-string(exponent - 1));
+    end if;
+  end if;
+  as(<byte-string>, s);
+end method;
+
 define open generic number-to-string
     (number :: <number>) => (string :: <string>);
 
-define method number-to-string
-    (float :: <float>) => (string :: <string>)
-  float-to-string(float)
+define method number-to-string (integer :: <integer>) => (string :: <string>);
+  integer-to-string(integer, base: 10);
 end method number-to-string;
 
-define method number-to-string
-    (integer :: <integer>) => (string :: <string>)
-  integer-to-string(integer, base: 10)
+define method number-to-string (float :: <float>) => (string :: <string>);
+  float-to-string(float);
 end method number-to-string;
 
 define method string-to-integer
@@ -443,7 +614,7 @@ define method string-to-float
     end,
 
     // Implements Algorithm M from William Clinger's "How to Read Floating-
-    // Point Numbers Accurately" (PLDI 1990)
+    // Point Numbers Accurately" in the 1990 ACM PLDI conference proceedings.
     //
     // ### Algorithm Bellerophon is much faster, need to implement it
     //
