@@ -1,6 +1,6 @@
 // A description of all target platforms we support. We use this in d2c as well as in the build scripts.
 // Remember, blank links separate the platforms.
-// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.43 2001/12/16 17:35:24 brent Exp $
+// $Header: /scm/cvs/src/d2c/compiler/platforms.descr,v 1.44 2002/01/01 00:53:19 dauclair Exp $
 
 // A target description is a description of the target-environment we
 // are compiling for.  This includes information such as what files
@@ -512,6 +512,10 @@ platform-name:			sparc-solaris-gcc
 inherit-from:			gcc solaris sparc
 default-features:               compiled-for-solaris compiled-for-sparc C-compiler-is-GCC
 default-c-compiler-debug-flags: -I. -I%s -g -O0 -fno-inline-functions
+
+// Doug Auclair's taken over Solaris support ... here's a Solaris-x86 port:
+platform-name:			x86-solaris-gcc
+inherit-from:			gcc solaris x86
 
 // MIPS support maintained by David Lichteblau, lichteblau@fhtw-berlin.de
 // This is supposed to work, but I don't use it extensively. 
