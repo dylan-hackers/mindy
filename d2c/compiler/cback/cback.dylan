@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.21 2001/02/26 21:06:40 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.22 2001/03/03 10:18:03 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -2517,11 +2517,11 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
       deliver-results
 	(var,
 	 map(method (rep, index)
-	      pair(stringify('A', index), rep);
+	       pair(stringify('A', index), rep);
 	     end,
 	     copy-sequence(function-info.function-info-argument-representations,
 			   start: index),
-	     make(<range>, from: index)),
+	     range(from: index)),
 	 #f, file);
     end for;
 end;
@@ -2956,23 +2956,6 @@ define method ref-leaf (target-rep :: <c-representation>,
   conversion-expr(target-rep, expr, rep, file);
 end;
 
-define method ref-leaf (target-rep :: <heap-representation>,
-			leaf :: <literal-constant>,
-			file :: <file-state>,
-			#next next-method)
-    => res :: <string>;
-  let value = leaf.value;
-  let label = value.object-label;
-  if (label)
-    maybe-emit-prototype(label, #"heap", file)
-      & (get-info-for(value, file).const-info-expr
-	 | eagerly-reference(value, file));
-    stringify('&', label);
-  else
-    next-method();
-  end;
-end;
-
 define method ref-leaf (target-rep :: <c-representation>,
 			leaf :: <definition-constant-leaf>,
 			file :: <file-state>)
@@ -3040,8 +3023,8 @@ end;
 
 
 // Emit a reference to a constant which must be referenced via the roots (not
-// as a C literal.)  name and modifier are passed through to
-// new-root.  Lit is the init-value, and defn is some thingie used to indicate
+// as a C literal.)  Name and modifier are passed through to new-root.
+// Lit is the init-value, and defn is some thingie used to indicate
 // whether we've prototyped this thing yet or not.
 //
 // Putting things in the roots is done lazily because we don't know if we
@@ -3051,16 +3034,45 @@ define method aux-c-expr-and-rep
     (lit :: <ct-value>, file :: <file-state>,
      #key name :: false-or(<name>), modifier :: <byte-string> = "",
 	  defn :: <object> = lit)
- => (name :: <string>, rep :: <c-representation>);
   let info = get-info-for(lit, file);
-  let c-name = info.const-info-expr;
-  unless (c-name)
-    c-name := new-c-global(name, file, modifier: modifier);
-    info.const-info-expr := c-name;
-    new-root(lit, c-name, file);
-  end unless;
-  maybe-emit-prototype(c-name, defn, file);
-  values(c-name, *general-rep*);
+
+  local make-global-root()
+   => (name :: <string>, rep :: <c-representation>);
+    let c-name = info.const-info-expr;
+    unless (c-name)
+      c-name := new-c-global(name, file, modifier: modifier);
+      info.const-info-expr := c-name;
+      new-root(lit, c-name, file);
+    end unless;
+    maybe-emit-prototype(c-name, defn, file);
+    values(c-name, *general-rep*);
+  end;
+  
+  if (instance?(lit, <proxy>))
+    make-global-root();
+  else
+    let best-rep = pick-representation(lit.ct-value-cclass, #"speed");
+    if (instance?(best-rep, <heap-representation>))
+      let labels = info.const-info-heap-labels;
+      if (labels.empty?) // suggest a label for lit
+	let label = object-label(lit)
+		    | new-c-global
+			(name, file,
+			 modifier: if (modifier.empty?)
+				     "_ROOT"
+				    else
+				      concatenate(modifier, "_ROOT")
+				    end if);
+	info.const-info-heap-labels := add!(labels, label);
+      end if;
+      let c-name = info.const-info-heap-labels.first;
+      maybe-emit-prototype(c-name, #"heap", file)
+	& (info.const-info-expr | eagerly-reference(lit, file));
+      values(stringify('&', c-name), best-rep);
+    else
+      make-global-root();
+    end if;
+  end if;
 end method aux-c-expr-and-rep;
 
 
@@ -3076,28 +3088,6 @@ define method c-expr-and-rep
  => (name :: <string>, rep :: <c-representation>);
   maybe-emit-entries(lit, file);
   aux-c-expr-and-rep(lit, file, name: lit.ct-function-name);
-end;
-
-define method c-expr-and-rep
-    (lit :: <ct-function>, rep-hint :: <heap-representation>,
-     file :: <file-state>)
- => (name :: <string>, rep :: <heap-representation>);
-  maybe-emit-entries(lit, file);
-  let info = get-info-for(lit, file);
-  let labels = info.const-info-heap-labels;
-  
-  if (labels.empty?) // suggest a label for lit
-    let label = object-label(lit)
-		| new-c-global(lit.ct-function-name,
-			       file,
-			       modifier: "_ROOT");
-    info.const-info-heap-labels := add!(labels, label);
-  end if;
-
-  let c-name = info.const-info-heap-labels.first;
-  maybe-emit-prototype(c-name, #"heap", file)
-    & (info.const-info-expr | eagerly-reference(lit, file));
-  values(stringify('&', c-name), rep-hint);
 end;
 
 define method c-expr-and-rep
