@@ -47,8 +47,8 @@ $LIBTOOL = '@LIBTOOL@';
 # particular, INSTALL_PROGRAM doesn't force executability.
 $install_data = "@INSTALL@";
 if ($shared) {
-    $install_program = "@LIBTOOL@ @INSTALL@ -m oug+rx";
-    $install_library = "@LIBTOOL@ @INSTALL@";
+    $install_program = "@LIBTOOL@ --mode=install @INSTALL@ -m oug+rx";
+    $install_library = "@LIBTOOL@ --mode=install @INSTALL@";
 } else {
     $install_program = "@INSTALL@ -m oug+rx";
     $install_library = "@INSTALL@";

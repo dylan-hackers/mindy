@@ -3,7 +3,7 @@
 use Cwd;
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.36 2002/09/27 05:27:55 housel Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.37 2003/01/22 22:22:31 housel Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -922,7 +922,7 @@ sub emit_c_file_rule {
         print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-        print "\n\t\$(LIBTOOL) \$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(LIBTOOL) --mode=compile \$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
     } else {
         print "\n\t\$(CC) \$(CCFLAGS) -I\$(SRCDIR)";
     }
@@ -956,7 +956,7 @@ sub emit_asm_file_rule {
         print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-        print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(LIBTOOL) --mode=compile \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     } else {
         print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     }
@@ -986,7 +986,7 @@ sub emit_cppasm_file_rule {
         print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-        print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
+        print "\n\t\$(LIBTOOL) --mode=compile \$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     } else {
         print "\n\t\$(CC) \$(CFLAGS) \$(CPPFLAGS) -I\$(SRCDIR)";
     }
@@ -1018,7 +1018,7 @@ sub emit_cc_file_rule {
         print " \$(SRCDIR)/$header";
     }
     if ($shared) {
-        print "\n\t\$(LIBTOOL) \$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
+        print "\n\t\$(LIBTOOL) --mode=compile \$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
     } else {
         print "\n\t\$(CC) \$(CFLAGS) -I\$(SRCDIR) ";
     }
