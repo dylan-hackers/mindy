@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.2 1999/04/10 22:48:22 emk Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.3 1999/08/27 16:42:45 andreas Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -600,9 +600,10 @@ define method remove
   for (result = #() then if (count = 0)
 			   pair(elem, result);
 			 elseif (~test(elem, value))
-			   if (count) count := count - 1 end if;
 			   pair(elem, result);
-			 else result
+			 else
+			   if (count) count := count - 1 end if;
+			   result
 			 end if,
        elem in sequence)
   finally
