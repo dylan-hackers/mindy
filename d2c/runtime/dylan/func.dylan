@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.2 1998/09/09 13:40:51 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.3 1999/05/24 17:12:52 housel Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -927,7 +927,7 @@ define method internal-sorted-applicable-methods
 	  //
 	  // Grab the method to compare this method against.
 	  let other = remaining.head;
-	  select (compare-methods(meth, other, arg-ptr))
+	  select (%compare-methods(meth, other, arg-ptr))
 	    //
 	    // Our method is more specific, so insert it in the list of ordered
 	    // methods and go on to the next method.
@@ -969,7 +969,7 @@ define method internal-sorted-applicable-methods
 	  let ambiguous-with = #();
 	  for (remaining :: <list> = ambiguous then remaining.tail,
 	       until: remaining == #())
-	    select (compare-methods(meth, remaining.head, arg-ptr))
+	    select (%compare-methods(meth, remaining.head, arg-ptr))
 	      #"more-specific" =>
 		#f;
 	      #"less-specific" =>
@@ -1209,7 +1209,7 @@ define method internal-applicable-method?
   end block;
 end;
 
-define method compare-methods
+define method %compare-methods
     (meth1 :: <method>, meth2 :: <method>, arg-ptr :: <raw-pointer>)
     => res :: one-of(#"more-specific", #"less-specific", #"ambiguous",
 		     #"identical");
@@ -1246,6 +1246,74 @@ define method compare-methods
 		    // out their ordering.
 		    compare-overlapping-specializers
 		      (spec1, spec2, %%primitive(extract-arg, arg-ptr, index));
+		  end if;
+	// Now merge the constrain imposed by this position with the constrain
+	// accumulated from the positions we have already looked at.
+	if (result == #"identical")
+	  // The order is currently unconstrained, so just use this positions
+	  // ordering.
+	  result := cmp;
+	elseif (cmp == #"more-specific" | cmp == #"less-specific")
+	  // This position imposes an ordering, so check to see if that melds
+	  // with the constrain previously accumulated.
+	  if (result == cmp)
+	    // Same as it ever was, so don't change anything now.
+	    #f;
+	  elseif (result == #"ambiguous")
+	    // So far we haven't established an ordering, so use this ordering.
+	    result := cmp;
+	  else
+	    // We've got us an inconsistent ordering from two different
+	    // positions, the overall result is ambiguous.
+	    return(#"ambiguous");
+	  end if;
+	end if;
+      end block;
+    end for;
+    result;
+  end block;
+end method %compare-methods;
+
+
+// This is the same as %compare-methods above except it uses a
+// sequence of arguments instead of a <raw-pointer>
+define method compare-methods
+    (meth1 :: <method>, meth2 :: <method>, arguments :: <sequence>)
+    => res :: one-of(#"more-specific", #"less-specific", #"ambiguous",
+		     #"identical");
+  block (return)
+    let specializers1 = meth1.function-specializers;
+    let specializers2 = meth2.function-specializers;
+    //
+    // Start out assuming that the they are identical.
+    let result = #"identical";
+    //
+    // Compare each specializer.
+    for (index :: <integer> from 0 below specializers1.size)
+      let spec1 = specializers1[index];
+      let spec2 = specializers2[index];
+      block (next)
+	let cmp = if (subtype?(spec1, spec2))
+		    if (subtype?(spec2, spec1))
+		      // The two specializers are identical, so they impose
+		      // no additional ordering constraints.
+		      next();
+		    else
+		      // Spec1 is more specific, so the result is more-specific
+		      // or ambiguous.
+		      #"more-specific";
+		    end if;
+		  elseif (subtype?(spec2, spec1))
+		    // Spec2 is more specific, so the result is less-specific
+		    // or ambiguous.
+		    #"less-specific";
+		  else
+		    // The specializers intersect (otherwise we wouldn't have
+		    // selected both) but neither is a subtype of the other.
+		    // Defer to compare-overlapping-specializers to figure
+		    // out their ordering.
+		    compare-overlapping-specializers
+		      (spec1, spec2, arguments[index]);
 		  end if;
 	// Now merge the constrain imposed by this position with the constrain
 	// accumulated from the positions we have already looked at.
@@ -1373,22 +1441,164 @@ define constant heap-rep-setter
 // Applicability predicates.
 
 define method applicable-method?
-    (function :: <function>, #rest sample-arguments)
-    => res :: <boolean>;
-  unless (sample-arguments.size == function.function-specializers.size)
-    error("Wrong number of sample arguments to applicable-method?");
-  end;
-  error("### runtime applicable-method? not yet implemented");
+    (meth :: <method>, #rest sample-arguments)
+ => res :: <boolean>;
+  block (return)
+    let (initial-state, limit, next-state, finished-state?, current-key,
+	 current-element) = forward-iteration-protocol(sample-arguments);
+    for (specializer :: <type> in meth.function-specializers,
+	 state = initial-state then next-state(sample-arguments, state))
+      if (finished-state?(sample-arguments, state, limit))
+	return(#f);
+      else
+	let arg = current-element(sample-arguments, state);
+	if (~instance?(arg, specializer))
+	  return(#f);
+	end if;
+      end if;
+    finally
+      // Matched all required arguments; look for keywords or #rest
+      //
+      if (finished-state?(sample-arguments, state, limit))
+	#t;
+      elseif (meth.function-keywords | meth.function-all-keys?)
+	for(state = state then next-state(sample-arguments, state),
+	    keyword? = #t then ~keyword?,
+	    until: finished-state?(sample-arguments, state, limit))
+	  if (keyword?)
+	    let key = current-element(sample-arguments, state);
+	    if (meth.function-all-keys?)
+	      unless (instance?(key, <symbol>))
+		return(#f);
+	      end;
+	    else
+	      unless (member?(key, meth.function-keywords))
+		return (#f);
+	      end;
+	    end if;
+	  end if;
+	finally
+	  if(keyword?)
+	    #f;
+	  else
+	    #t;
+	  end;
+	end for;
+      elseif (meth.function-rest?)
+	#t;
+      end if;
+    end for;
+  end block;
+end method;
+
+define method applicable-method?
+    (gf :: <generic-function>, #rest sample-arguments)
+  any?(method(meth :: <method>)
+	   apply(applicable-method?, meth, sample-arguments);
+       end,
+       generic-function-methods(gf));
 end;
 
-
+// This is similar to internal-sorted-applicable-methods except that
+// it operates on a sequence rather than a <raw-pointer>.
+//
 define method sorted-applicable-methods
     (gf :: <generic-function>, #rest sample-arguments)
     => (sorted :: <list>, unsorted :: <list>);
-  unless (sample-arguments.size == gf.function-specializers.size)
-    error("Wrong number of sample arguments to sorted-applicable-methods.");
+
+  let nargs = gf.function-specializers.size;
+  if(sample-arguments.size < nargs)
+    error("Not enough sample arguments in sorted-applicable-methods");
+  end if;
+  
+  // Ordered accumulates the methods we can tell the ordering of.  Each
+  // element in this list is a method.
+  let ordered :: <list> = #();
+
+  // Ambiguous accumulates the set of methods of which it is unclear which
+  // follows next after ordered.  These methods will all be mutually ambiguous.
+  let ambiguous :: <list> = #();
+
+  for (meth :: <method> in gf.generic-function-methods)
+    if (apply(applicable-method?, meth, sample-arguments))
+      block (done-with-method)
+	for (remaining :: <list> = ordered then remaining.tail,
+	     prev :: false-or(<pair>) = #f then remaining,
+	     until: remaining == #())
+	  //
+	  // Grab the method to compare this method against.
+	  let other = remaining.head;
+	  select (compare-methods(meth, other, sample-arguments))
+	    //
+	    // Our method is more specific, so insert it in the list of ordered
+	    // methods and go on to the next method.
+	    #"more-specific" =>
+	      if (prev)
+		prev.tail := pair(meth, remaining);
+	      else
+		ordered := pair(meth, remaining);
+	      end;
+	      done-with-method();
+
+	    #"less-specific" =>
+	      //
+	      // Our method is less specific, so we can't do anything at this
+	      // time.
+	      #f;
+
+	    #"ambiguous" =>
+	      //
+	      // We know that the other method is more specific than anything
+	      // in the current ambiguous set, so throw it away making a new
+	      // ambiguous set.  Taking into account that we might have a set
+	      // of equivalent methods on our hands.
+	      if (prev)
+		prev.tail := #();
+	      else
+		ordered := #();
+	      end;
+	      ambiguous := list(meth, remaining.head);
+	      done-with-method();
+	  end;
+	finally
+	  //
+	  // Our method was less specific than any method in the ordered list.
+	  // This either means that our method needs to be tacked onto the end
+	  // of the ordered list, added to the ambiguous list, or ignored.
+	  // Compare the method against all the methods in the ambiguous list
+	  // to figure out which.
+	  let ambiguous-with = #();
+	  for (remaining :: <list> = ambiguous then remaining.tail,
+	       until: remaining == #())
+	    select (compare-methods(meth, remaining.head, sample-arguments))
+	      #"more-specific" =>
+		#f;
+	      #"less-specific" =>
+		done-with-method();
+	      #"ambiguous" =>
+		ambiguous-with := pair(remaining.head, ambiguous-with);
+	    end;
+	  end;
+	  //
+	  // Ambiguous-with is only #() if we are more specific than anything
+	  // currently in the ambiguous set.  So tack us onto the end of the
+	  // ordered set.  Otherwise, set the ambiguous set to us and
+	  // everything we are ambiguous with.
+	  if (ambiguous-with == #())
+	    if (prev)
+	      prev.tail := list(meth);
+	    else
+	      ordered := list(meth);
+	    end;
+	  else
+	    ambiguous := pair(meth, ambiguous-with);
+	  end;
+	end;
+      end;
+    end;
   end;
-  error("### runtime sorted-applicable-methods not yet implemented");
+
+  values(ordered, ambiguous);
 end;
 
 
