@@ -18,6 +18,8 @@
 #include "../compat/std-c.h"
 #include "../compat/std-os.h"
 
+#define MINDYCOMP "mc"
+
 int main(argc, argv) int argc; char *argv[];
 {
   int fd[2], pid;
@@ -44,7 +46,7 @@ int main(argc, argv) int argc; char *argv[];
 
   if (pid == 0) {
     static char *nargv[] = {
-      "mindycomp",			/* compile */
+      MINDYCOMP,			/* compile */
       "source-script",			/* <source name here> */
       "-q",				/* no warnings */
       "-o",				/* output to */
@@ -59,9 +61,10 @@ int main(argc, argv) int argc; char *argv[];
     close(fd[0]);
     close(fd[1]);
 
-    execvp("mindycomp", nargv);
+    execvp(MINDYCOMP, nargv);
 
-    fprintf(stderr, "mindyexec: execvp(\"mindycomp\", ...) failed: %s\n", strerror(errno));
+    fprintf(stderr, "mindyexec: execvp(\"%s\", ...) failed: %s\n", MINDYCOMP,
+	    strerror(errno));
     exit(1);
   }
 
