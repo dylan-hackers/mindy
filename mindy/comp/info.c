@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.c,v 1.1 1994/03/24 21:49:16 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/info.c,v 1.2 1994/04/06 17:43:44 wlott Exp $
 *
 * This file does whatever.
 *
@@ -98,7 +98,7 @@ void init_info(void)
     push_binop_info("<=", 4, TRUE);
     push_binop_info("=", 4, TRUE);
     push_binop_info("==", 4, TRUE);
-    push_binop_info("/=", 4, TRUE);
+    push_binop_info("~=", 4, TRUE);
     push_binop_info(">=", 4, TRUE);
     push_binop_info(">", 4, TRUE);
     push_binop_info("+", 5, TRUE);

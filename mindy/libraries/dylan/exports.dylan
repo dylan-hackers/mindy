@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.11 1994/04/06 17:27:09 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.12 1994/04/06 17:45:20 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -22,7 +22,7 @@ end Dylan;
 
 define module Builtin-Stuff
   export
-    \*, \+, \-, \/, \<, \<=, \=, \==, \/=,
+    \*, \+, \-, \/, \<, \<=, \=, \==, \~=,
     <array>,
     <buffer>, <byte-string>,
     <character>, <class>, <collection>, <complex>,

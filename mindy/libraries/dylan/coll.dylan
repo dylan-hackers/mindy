@@ -12,7 +12,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.5 1994/04/04 20:36:18 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/coll.dylan,v 1.6 1994/04/06 17:45:28 wlott Exp $
 //
 // This file contains the collection support code that isn't built in.
 //
@@ -358,7 +358,7 @@ define method \=(a :: <sequence>, b :: <sequence>) => <object>;
     for (a_state = a_init then a_next(a, a_state),
 	 b_state = b_init then b_next(b, b_state),
 	 until a_done?(a, a_state, a_limit) | b_done?(b, b_state, b_limit))
-      if (a_elem(a, a_state) /= b_elem(b, b_state))
+      if (a_elem(a, a_state) ~= b_elem(b, b_state))
 	return(#f);
       end if;
     finally

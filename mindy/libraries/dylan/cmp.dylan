@@ -11,7 +11,7 @@ module: Dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.2 1994/03/30 06:07:20 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.3 1994/04/06 17:45:27 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -23,7 +23,7 @@ define method \<= (x :: <object>, y :: <object>)
   ~(x > y);
 end;
 
-define method \/= (x :: <object>, y :: <object>)
+define method \~= (x :: <object>, y :: <object>)
   ~(x = y);
 end;
 

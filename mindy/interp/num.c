@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.1 1994/03/24 21:49:32 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.2 1994/04/06 17:43:00 wlott Exp $
 *
 * This file does whatever.
 *
@@ -709,7 +709,7 @@ void init_num_functions(void)
 		  FALSE, obj_False, obj_BooleanClass, dylan_sf_sf_less_or_eql);
     define_method("=", list2(obj_SingleFloatClass, obj_SingleFloatClass),
 		  FALSE, obj_False, obj_BooleanClass, dylan_sf_sf_equal);
-    define_method("/=", list2(obj_SingleFloatClass, obj_SingleFloatClass),
+    define_method("~=", list2(obj_SingleFloatClass, obj_SingleFloatClass),
 		  FALSE, obj_False, obj_BooleanClass, dylan_sf_sf_not_equal);
     
     define_method("negative", list1(obj_DoubleFloatClass), FALSE, obj_False,
@@ -728,7 +728,7 @@ void init_num_functions(void)
 		  dylan_df_df_less_or_eql);
     define_method("=", two_dfs, FALSE, obj_False, obj_BooleanClass,
 		  dylan_df_df_equal);
-    define_method("/=", two_dfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("~=", two_dfs, FALSE, obj_False, obj_BooleanClass,
 		  dylan_df_df_not_equal);
 
     define_method("negative", list1(obj_ExtendedFloatClass), FALSE, obj_False,
@@ -747,7 +747,7 @@ void init_num_functions(void)
 		  dylan_xf_xf_less_or_eql);
     define_method("=", two_xfs, FALSE, obj_False, obj_BooleanClass,
 		  dylan_xf_xf_equal);
-    define_method("/=", two_xfs, FALSE, obj_False, obj_BooleanClass,
+    define_method("~=", two_xfs, FALSE, obj_False, obj_BooleanClass,
 		  dylan_xf_xf_not_equal);
     
     define_method("as", list2(int_sing, obj_IntegerClass),
