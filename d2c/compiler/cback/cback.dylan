@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.24 2001/04/04 09:44:10 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.25 2001/05/28 20:27:26 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -89,7 +89,12 @@ copyright: see below
 //             source :: <string>, source-rep :: <c-representation>,
 //             file :: <file-state>) => ();
 //      Writes out whatever code is necessary to copy "target"s data
-//      into "source".
+//      into "source". May be a zero to several lines of C.
+//   conversion-expr(target-rep :: <c-representation>,
+//		     source :: <string>, source-rep :: <c-representation>,
+//		     file :: <file-state>) => res :: <string>;
+//      converts a C expression to another C expression changing the
+//      representation as required. May introduce temporaries on the way.
 //   c-name-and-rep(leaf :: <abstract-variable>, file :: <file-state>)
 //     => (name :: <string>, rep :: <c-representation>);
 //      Looks up the "info" for the given variable and returns a legal
@@ -430,6 +435,8 @@ define method c-name (name :: <derived-name>) => (result :: <byte-string>);
 		#"getter" => "_GETTER";
 		#"type-cell" => "_TYPE";
 		#"maker" => "_MAKER";
+// needed?		#"class-meta" => "_CLASS_META";
+// needed?		#"each-subclass-meta" => "_EACH_META";
 	      end select);
 end method;
 
@@ -456,12 +463,6 @@ define method c-name-global (name :: <name>) => (result :: <byte-string>);
     = string-to-c-name(as(<string>,
 			  name.name-module.module-home.library-name));
   concatenate(library-name, "Z", c-name(name));
-end method;
-
-// Needed for <meta-cclass>.
-define method c-name-global (name :: <anonymous-name>) => (result :: <byte-string>);
-  concatenate(/*library-name,*/ "Y_", name.c-name);
-  // put in filename too!
 end method;
 
 // Emit a description of the <source-location> in C.  For 
@@ -3035,7 +3036,7 @@ end;
 // Putting things in the roots is done lazily because we don't know if we
 // will be able to represent as a C literal or constant until now.
 //
-define method aux-c-expr-and-rep
+define function aux-c-expr-and-rep
     (lit :: <ct-value>, file :: <file-state>,
      #key name :: false-or(<name>), modifier :: <byte-string> = "",
 	  defn :: <object> = lit)
@@ -3078,7 +3079,7 @@ define method aux-c-expr-and-rep
       make-global-root();
     end if;
   end if;
-end method aux-c-expr-and-rep;
+end function aux-c-expr-and-rep;
 
 
 define method c-expr-and-rep
