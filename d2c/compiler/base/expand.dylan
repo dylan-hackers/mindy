@@ -1,5 +1,5 @@
 module: expand
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.7 1995/04/27 02:54:55 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/Attic/expand.dylan,v 1.8 1995/05/18 13:27:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -21,10 +21,6 @@ end;
 
 
 // Random utilities.
-
-define method symcat (sym :: <symbol>, str :: <string>) => new :: <symbol>;
-  as(<symbol>, concatenate(as(<string>, sym), str));
-end;
 
 define method make-temp (name :: <symbol>) => res :: <name-token>;
   make(<name-token>, symbol: name, uniquifier: make(<uniquifier>));
