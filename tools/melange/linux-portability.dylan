@@ -68,6 +68,7 @@ define constant $default-defines
       // source code. The last item in the list is the right-hand side of
       // the define; all the items preceding it are named parameters.
       "__attribute__", #(#("x"), ""), 
+      "__signed__", #(#("x"), ""), 
 
       "__ELF__", "",
       "unix", "",
