@@ -26,10 +26,6 @@ define generic c-declaration-name
     (decl :: <c-declaration>)
  => (name :: <string>);
 
-define generic c-declaration-type
-    (decl :: <c-declaration>)
- => (type :: false-or(<c-type>));
-
 define generic format-c-declaration
     (decl :: <c-declaration>, #key multi-line? :: <boolean>)
  => (formatted :: <string>);
@@ -60,12 +56,6 @@ define method c-declaration-name
   decl.c-tagged-type-declaration-type.c-type-name;
 end;
 
-define method c-declaration-type
-    (decl :: <c-tagged-type-declaration>)
- => (type :: false-or(<c-type>))
-  decl.c-tagged-type-declaration-type;
-end;
-
 define method format-c-declaration
     (decl :: <c-tagged-type-declaration>, #key multi-line? :: <boolean>)
  => (formatted :: <string>)
@@ -92,17 +82,11 @@ define method c-declaration-name
   decl.c-typedef-declaration-type.c-typedef-name;
 end;
 
-define method c-declaration-type
-    (decl :: <c-typedef-declaration>)
- => (type :: false-or(<c-type>))
-  decl.c-typedef-declaration-type.c-typedef-type;
-end;
-
 define method format-c-declaration
     (decl :: <c-typedef-declaration>, #key multi-line? :: <boolean>)
  => (formatted :: <string>)
   concatenate("typedef ",
-	      format-c-type(decl.c-declaration-type,
+	      format-c-type(decl.c-typedef-declaration-type.c-typedef-type,
 			    decl-name: decl.c-declaration-name),
 	      ";");
 end;
@@ -130,18 +114,12 @@ define method c-declaration-name
   decl.c-variable-name;
 end;
 
-define method c-declaration-type
-    (decl :: <c-variable-declaration>)
- => (type :: false-or(<c-type>))
-  decl.c-variable-type;
-end;
-  
 define method format-c-declaration
     (decl :: <c-variable-declaration>, #key multi-line? :: <boolean>)
  => (formatted :: <string>)
   concatenate(if (decl.c-variable-extern?) "extern " else "static " end,
-	      format-c-type(decl.c-declaration-type,
-			    decl-name: decl.c-declaration-name),
+	      format-c-type(decl.c-variable-type,
+			    decl-name: decl.c-variable-name),
 	      ";");
 end;
 
@@ -170,12 +148,6 @@ define method c-declaration-name
   decl.c-define-name;
 end;
 
-define method c-declaration-type
-    (decl :: <c-define>)
- => (type :: singleton(#f))
-  #f;
-end;
-
 define method format-c-declaration
     (decl :: <c-define>, #key multi-line? :: <boolean>)
  => (formatted :: <string>)
@@ -198,12 +170,6 @@ define class <c-integer-define> (<c-define>)
     required-init-keyword: value:;
 end;
 
-define method c-declaration-type
-    (decl :: <c-integer-define>)
- => (type :: <c-type>)
-  #f; // XXX - some subclass of <c-integer-type>, but which?
-end;
-
 define method format-c-define-value
     (decl :: <c-integer-define>)
  => (formatted :: <string>)
@@ -219,12 +185,6 @@ end;
 define class <c-string-define> (<c-define>)
   slot c-string-define-value :: <string>,
     required-init-keyword: value:;
-end;
-
-define method c-declaration-type
-    (decl :: <c-string-define>)
- => (type :: <c-type>)
-  #f; // XXX - should be canonical "char *" type, but how?
 end;
 
 define method format-c-define-value

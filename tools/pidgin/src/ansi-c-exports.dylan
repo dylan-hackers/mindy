@@ -107,7 +107,6 @@ define module c-declarations
   export
     <c-declaration>,
       c-declaration-name,
-      c-declaration-type,
     <c-tagged-type-declaration>,
       c-tagged-type-declaration-type,
     <c-typedef-declaration>,
