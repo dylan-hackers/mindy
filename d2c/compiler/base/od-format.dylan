@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.8 2001/01/25 03:50:26 housel Exp $
+RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.9 2001/01/27 22:30:57 housel Exp $
 
 //======================================================================
 //
@@ -563,6 +563,7 @@ begin
   register-object-id(#"constant-method-definition", #x00C6);
   register-object-id(#"variable-definition", #x00C7);
   register-object-id(#"class-definition", #x00C8);
+  register-object-id(#"designator-class-definition", #x014D);
   register-object-id(#"init-function-definition", #x00C9);
   register-object-id(#"maker-function-definition", #x00CA);
   register-object-id(#"define-bindings-macro-definition", #x00CB);
@@ -648,6 +649,7 @@ begin
   // see above: register-object-id(#"callback-literal", #x014A);
   // see above: register-object-id(#"defined-designator-class", #x014B);
   // see above: register-object-id(#"struct-slot-info", #x014C);
+  // see above: register-object-id(#"designator-class-definition", #x014D);
 
 end;
 

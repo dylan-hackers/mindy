@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.2 2001/01/25 03:50:27 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.3 2001/01/27 22:30:57 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -124,17 +124,17 @@ define class <local-designator-class-definition>
     required-init-keyword: pointer-type-superclass:;
   //
   // The indirect getter function
-  slot class-defn-indirect-getter :: false-or(<expression-parse>),
+  slot class-defn-indirect-getter-function :: false-or(<expression-parse>),
     required-init-keyword: indirect-getter:;
   //
   // The indirect setter function
-  slot class-defn-indirect-setter :: false-or(<expression-parse>),
+  slot class-defn-indirect-setter-function :: false-or(<expression-parse>),
     required-init-keyword: indirect-setter:;
   // 
   // pointer value getter and setter functions
-  slot class-defn-pointer-value-getter :: false-or(<expression-parse>),
+  slot class-defn-pointer-value-getter-function :: false-or(<expression-parse>),
     required-init-keyword: pointer-value-getter:;
-  slot class-defn-pointer-value-setter :: false-or(<expression-parse>),
+  slot class-defn-pointer-value-setter-function :: false-or(<expression-parse>),
     required-init-keyword: pointer-value-setter:;
 end class;
 
@@ -321,17 +321,62 @@ define class <struct-slot-defn> (<object>)
     required-init-keyword: getter-name:;
   //
   // The getter method.  Filled in when computed.
-  slot struct-slot-defn-getter :: <getter-method-definition>;
+  slot struct-slot-defn-getter-method :: <getter-method-definition>;
   //
   // The name of the setter generic function, or #f if there is no setter.
   slot struct-slot-defn-setter-name :: false-or(<name>),
     required-init-keyword: setter-name:;
   //
   // The setter method.  Filled in when computed.
-  slot struct-slot-defn-setter :: false-or(<setter-method-definition>);
+  slot struct-slot-defn-setter-method :: false-or(<setter-method-definition>);
   //
   // The slot-info for this slot, or #f if we haven't computed it or don't know
   // enough about the class to compute it at all.
   slot struct-slot-defn-info :: false-or(<struct-slot-info>),
     init-value: #f;
 end class;
+
+define constant $designator-class-definition-slots =
+  concatenate($class-definition-slots,
+              list(class-defn-c-name, c-name:, class-defn-c-name-setter,
+		   class-referenced-type, referenced-type:,
+		     class-referenced-type-setter,
+		   class-pack, pack:, class-pack-setter,
+		   class-defn-c-rep, c-rep:, class-defn-c-rep-setter,
+		   class-defn-import-type, import-type:,
+		     class-defn-import-type-setter,
+		   class-defn-export-type, export-type:,
+		     class-defn-export-type-setter,
+		   class-defn-import-function, import-function:,
+		     class-defn-import-function,
+		   class-defn-export-function, export-function:,
+		     class-defn-export-function-setter,
+		   class-pointer-type-superclass, pointer-type-superclass:,
+		     class-pointer-type-superclass-setter,
+		   class-defn-indirect-getter-function, indirect-getter:,
+		     class-defn-indirect-getter-function-setter,
+		   class-defn-indirect-setter-function, indirect-setter:,
+		     class-defn-indirect-setter-function-setter, 
+		   class-defn-pointer-value-getter-function,
+		     pointer-value-getter:,
+		   class-defn-pointer-value-getter-function-setter,
+		   class-defn-pointer-value-setter-function,
+		     pointer-value-setter:,
+		     class-defn-pointer-value-setter-function-setter));
+
+add-make-dumper(#"designator-class-definition", *compiler-dispatcher*,
+		<real-designator-class-definition>,
+		$designator-class-definition-slots,
+		load-external: #t,
+		load-side-effect:
+		  method (defn :: <real-class-definition>) => ();
+		    let class = defn.class-defn-cclass;
+		    if (class)
+		      class.class-defn := defn;
+		    end;
+		  end);
+
+add-make-dumper(#"designator-class-definition", *compiler-dispatcher*,
+		<local-designator-class-definition>,
+		$designator-class-definition-slots,
+		dumper-only: #t);
