@@ -1,28 +1,26 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.7 1995/12/09 20:58:50 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/class.dylan,v 1.8 1995/12/14 00:11:20 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
 
 define class <class> (<type>)
   //
-  slot debug-name :: <symbol>, setter: #f,
-    required-init-keyword: debug-name:;
+  constant slot class-name :: false-or(<symbol>),
+    init-value: #f, init-keyword: debug-name:;
   //
-  slot unique-id :: <fixed-integer>, init-value: -1,
-    setter: #f;
+  constant slot unique-id :: <fixed-integer>, init-value: -1;
   //
   // The direct superclasses.
-  slot direct-superclasses :: <simple-object-vector>, setter: #f,
+  constant slot direct-superclasses :: <simple-object-vector>,
     required-init-keyword: superclasses:;
   //
   // The Class Precedence List.  We are the first and <object> is the last.
-  // Filled in by initialize.
-  slot all-superclasses :: <simple-object-vector>,
+  constant slot all-superclasses :: <simple-object-vector>,
     required-init-keyword: all-superclasses:;
   //
   // The primary superclass that is closest to us in the hierarchy (including
-  // ourself).  Filled in by initialize.
-  slot closest-primary-superclass :: <class>,
+  // ourself).
+  constant slot closest-primary-superclass :: <class>,
     required-init-keyword: closest-primary-superclass:;
   //
   // The direct subclasses.
@@ -30,13 +28,13 @@ define class <class> (<type>)
     init-value: #();
   //
   // Boolean properties of classes.
-  slot class-functional? :: <boolean>, setter: #f,
+  constant slot class-functional? :: <boolean>,
     init-value: #f, init-keyword: functional:;
-  slot class-primary? :: <boolean>, setter: #f,
+  constant slot class-primary? :: <boolean>,
     init-value: #f, init-keyword: primary:;
-  slot class-abstract? :: <boolean>, setter: #f,
+  constant slot class-abstract? :: <boolean>,
     init-value: #f, init-keyword: abstract:;
-  slot class-sealed? :: <boolean>, setter: #f,
+  constant slot class-sealed? :: <boolean>,
     init-value: #t, init-keyword: sealed:;
   //
   // The defered evaluations for this class.
@@ -52,22 +50,23 @@ define class <class> (<type>)
     init-value: #f;
   //
   // Vector of the slots introduced by this class.
-  slot class-new-slot-descriptors :: <simple-object-vector>, setter: #f,
+  constant slot class-new-slot-descriptors :: <simple-object-vector>,
     required-init-keyword: slots:;
 /*
   //
   // Vector of keyword initialization arguments introduced by this class.
-  slot class-keyword-init-args :: <simple-object-vector>, setter: #f,
+  constant slot class-keyword-init-args :: <simple-object-vector>,
     required-init-keyword: keyword-init-args:;
   //
   // Vector of inherited slot overrides introduced by this class.
-  slot class-slot-overrides :: <simple-object-vector>, setter: #f,
+  constant slot class-slot-overrides :: <simple-object-vector>,
     required-init-keyword: slot-overrides:;
 */
   //
-  // Vector of all the slots for this class.  Filled in when defered-
+  // Vector of all the slots for this class.  Filled in for real when defered-
   // evaluations are processed.
-  slot class-all-slot-descriptors :: <simple-object-vector>;
+  slot class-all-slot-descriptors :: <simple-object-vector>,
+    init-value: #[];
 /*
   //
   // Layout of instance allocation slots.  #f until computed.
@@ -83,6 +82,8 @@ define class <class> (<type>)
   // is computed.
   slot class-each-subclass-slots :: <simple-object-vector>;
 */
+  //
+  // A single entry cache of the last class that was subtype? us.
   slot subtype-cache :: false-or(<class>), init-value: #f;
 end;
 
@@ -99,7 +100,7 @@ define constant <slot-allocation>
 define class <slot-descriptor> (<object>)
   //
   // How this slot is to be allocated.
-  slot slot-allocation :: <slot-allocation>, setter: #f,
+  constant slot slot-allocation :: <slot-allocation>,
     required-init-keyword: allocation:;
   //
   // The type of the slot, or uninitialized if deferred.
@@ -112,7 +113,7 @@ define class <slot-descriptor> (<object>)
     required-init-keyword: deferred-type:;
   //
   // The getter generic function.  Also used to identify the slot.
-  slot slot-getter :: <generic-function>, setter: #f,
+  constant slot slot-getter :: <generic-function>,
     required-init-keyword: getter:;
   //
   // The method added to that generic function, or #f if it either hasn't
@@ -121,7 +122,7 @@ define class <slot-descriptor> (<object>)
     init-value: #f;
   //
   // the setter generic function, or #f if there isn't one.
-  slot slot-setter :: type-union(<false>, <generic-function>), setter: #f,
+  constant slot slot-setter :: type-union(<false>, <generic-function>),
     init-value: #f;
   //
   // The method added to the setter generic function if one had been added.
@@ -138,11 +139,11 @@ define class <slot-descriptor> (<object>)
     init-value: $not-supplied;
   //
   // The init keyword, if there is one.
-  slot slot-init-keyword :: type-union(<false>, <symbol>),
+  constant slot slot-init-keyword :: type-union(<false>, <symbol>),
     init-value: #f;
   //
   // #t if the init-keyword is required, #f if not.
-  slot slot-init-keyword-required? :: <boolean>,
+  constant slot slot-init-keyword-required? :: <boolean>,
     init-value: #f;
 end;
 
