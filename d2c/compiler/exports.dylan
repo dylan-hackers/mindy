@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.11 1994/12/16 16:35:06 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.12 1994/12/17 02:20:39 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -363,7 +363,7 @@ define module compile-time-values
   export
     <ct-value>,
     <ct-unbound-marker>, $Unbound-Marker-CT-Value,
-    <eql-ct-value>, ct-value-singleton,
+    <eql-ct-value>, ct-value-singleton, ct-value-singleton-setter,
     <ct-literal>, ct-literal-value,
     <eql-ct-literal>,
 
