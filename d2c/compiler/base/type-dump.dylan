@@ -1,6 +1,6 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.10 1995/12/18 17:29:40 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/type-dump.dylan,v 1.11 1996/01/27 20:10:36 rgs Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -126,7 +126,8 @@ define constant $class-dump-slots =
        subclass-id-range-max, subclass-id-range-max:, #f,
        speed-representation, speed-representation:, #f,
        space-representation, space-representation:, #f,
-       each-subclass-slots-count, each-subclass-slots-count:, #f);
+       each-subclass-slots-count, each-subclass-slots-count:, #f,
+       ct-value-heap-labels, heap-labels:, #f);
 
 
 define constant $slot-info-dump-slots =
@@ -199,6 +200,7 @@ add-make-dumper(#"limited-class", *compiler-dispatcher*, <limited-cclass>,
 		$class-dump-slots, load-external: #t);
 
 add-make-dumper(#"class-proxy", *compiler-dispatcher*, <proxy>,
-  list(proxy-for, for:, #f),
+  list(ct-value-heap-labels, heap-labels:, #f, proxy-for, for:, #f),
   load-external: #t
 );
+
