@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.101 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.102 1995/11/11 11:15:54 ram Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -871,6 +871,7 @@ define module front
   use policy;
   use primitives;
   use compile-time-functions;
+  use od-format;
 
   export
     dump-fer, id, reset-ids,
