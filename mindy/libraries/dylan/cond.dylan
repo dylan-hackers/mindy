@@ -1,6 +1,6 @@
 module: Dylan
 author: William Lott (wlott@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.7 1994/10/03 14:00:39 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.8 1994/10/26 15:07:15 wlott Exp $
 
 //======================================================================
 //
@@ -89,28 +89,41 @@ end class <abort>;
 
 // Condition reporting.
 
-define method report-condition (condition :: <condition>)
-  prin1(condition);
+define generic report-condition (condition, stream);
+
+define variable *format-hook* =
+  method (stream, string, #rest arguments)
+    apply(format, string, arguments);
+    fflush();
+    values();
+  end;
+
+define variable *format-hook-default-stream* = #f;
+
+define method report-condition (condition :: <condition>, stream)
+  *format-hook*(stream, "%=", condition);
 end method report-condition;
 
 
-define method report-condition (condition :: <simple-condition>)
-  apply(format,
+define method report-condition (condition :: <simple-condition>, stream)
+  apply(*format-hook*, stream,
 	condition.condition-format-string,
 	condition.condition-format-arguments);
 end method report-condition;
 
 
-define method report-condition (condition :: <type-error>)
-  format("%= is not of type %=",
-	 condition.type-error-value,
-	 condition.type-error-expected-type);
+define method report-condition (condition :: <type-error>, stream)
+  *format-hook*(stream,
+		 "%= is not of type %=",
+		 condition.type-error-value,
+		 condition.type-error-expected-type);
 end method report-condition;
 
 
-define method report-condition (condition :: <abort>)
-  puts(condition.abort-description);
+define method report-condition (condition :: <abort>, stream)
+  *format-hook*(stream, "%s", condition.abort-description);
 end method report-condition;
+
 
 // Condition signaling
 
