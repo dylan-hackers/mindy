@@ -112,15 +112,12 @@ end method find-frameworks;
 define method find-framework( name :: <string> )
 => ()
     for( path :: <string> in *framework-paths* )
-        let full-path :: <string> = concatenate( path, name ) ;
+        let full-path :: <string> = concatenate( path, name, ".framework" ) ;
         // If it has a headers directory
         let framework-headers-path :: <string> = 
                 concatenate( full-path, "/Headers/" );
         if( framework-exists?( framework-headers-path, name ) )
-            // Add it to the include table
-            let framework-name :: <string> = 
-                    copy-sequence( name, end: name.size - 10 ); 
-            *frameworks*[ as( <symbol>, framework-name ) ] := 
+            *frameworks*[ as( <symbol>, name ) ] := 
                     framework-headers-path;
             // Guess that it has a frameworks directory and add this
             // It's a little wasteful, but it isolates us from file-system
