@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.10 2002/08/08 06:29:12 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/func.dylan,v 1.11 2002/09/13 19:52:39 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -836,7 +836,7 @@ define function gf-call-lookup (self :: <generic-function>, nargs :: <integer>)
     for (index :: <integer> from 0 below nfixed)
       let specializer :: <type> = %element(specializers, index);
       let arg = %%primitive(extract-arg, arg-ptr, index);
-      %check-type(arg, specializer);
+      %check-type(arg, specializer, $unknown-source-location);
     end;
     no-applicable-methods-error
       (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
@@ -878,7 +878,7 @@ define constant gf-call-one-arg
 	let specializers = self.function-specializers;                         
 	let specializer :: <type> = %element(specializers, 0);
 	let arg = %%primitive(extract-arg, arg-ptr, 0);
-	%check-type(arg, specializer);
+	%check-type(arg, specializer, $unknown-source-location);
 	no-applicable-methods-error
 	  (self, mv-call(vector, %%primitive(pop-args, arg-ptr)));
       else

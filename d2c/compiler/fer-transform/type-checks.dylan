@@ -1,5 +1,5 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/type-checks.dylan,v 1.4 2001/10/15 20:32:45 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/type-checks.dylan,v 1.5 2002/09/13 19:52:39 andreas Exp $
 copyright: see below
 
 
@@ -81,7 +81,10 @@ define method add-type-checks-aux
 	     (builder,
 	      ref-dylan-defn(builder, assign.policy, assign.source-location,
 			     #"%check-type"),
-	      #f, list(temp, make-literal-constant(builder, asserted-type))));
+	      #f, list(temp, 
+                       make-literal-constant(builder, asserted-type),
+                       make-literal-constant(builder, 
+                                             format-to-string("%=", assign.source-location)))));
 	// Assign the type checked value to the real var.
 	build-assignment
 	  (builder, assign.policy, assign.source-location, defn,

@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.11 2002/08/09 21:10:26 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/condition.dylan,v 1.12 2002/09/13 19:52:39 andreas Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -77,6 +77,10 @@ end class <simple-error>;
 define sealed domain make(singleton(<simple-error>));
 define sealed domain initialize(<simple-error>);
 
+define constant <source-location> = <string>; // until we know better
+define constant $unknown-source-location :: <source-location>
+  = "unknown source location.";
+
 // <type-error> -- exported from Dylan
 //
 define class <type-error> (<error>)
@@ -86,6 +90,10 @@ define class <type-error> (<error>)
   //
   // The type the object is supposed to be.
   slot type-error-expected-type :: <type>, required-init-keyword: type:;
+  //
+  // The origin of the type check, if known.
+  slot type-error-location :: <source-location> = $unknown-source-location, 
+    init-keyword: source-location:;
 end class <type-error>;
 
 define sealed domain make(singleton(<type-error>));
@@ -226,9 +234,10 @@ end method report-condition;
 //
 define sealed method report-condition (condition :: <type-error>, stream)
     => ();
-  condition-format(stream, "Expected an instance of %=, but got %=",
+  condition-format(stream, "Expected an instance of %=, but got %=, at\n%s",
 		   condition.type-error-expected-type,
-		   condition.type-error-value);
+		   condition.type-error-value,
+                   condition.type-error-location);
 end method report-condition;
 
 // report-condition(<sealed-object-error>) -- exported gf method.
@@ -368,15 +377,16 @@ end method cerror;
 //
 define method check-type
     (object :: <object>, type :: <type>) => object :: <object>;
-  %check-type(object, type);
+  %check-type(object, type, $unknown-source-location);
 end;
 //
 define inline method %check-type
-    (object :: <object>, type :: <type>) => object :: <object>;
+    (object :: <object>, type :: <type>, source :: <source-location>) 
+ => object :: <object>;
   if (instance?(object, type))
     object;
   else
-    type-error(object, type);
+    type-error-with-location(object, type, source);
   end;
 end;
 
@@ -402,6 +412,12 @@ end method check-types;
 define function type-error (value :: <object>, type :: <type>)
  => res :: <never-returns>;
   error(make(<type-error>, value: value, type: type));
+end function;
+
+define function type-error-with-location (value :: <object>, type :: <type>, 
+                                          source :: <source-location>)
+ => res :: <never-returns>;
+  error(make(<type-error>, value: value, type: type, source-location: source));
 end function;
 
 // abort -- exported from Dylan
