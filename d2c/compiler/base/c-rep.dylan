@@ -1,5 +1,5 @@
 module: c-representation
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.5 2001/01/25 03:50:26 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/c-rep.dylan,v 1.6 2001/08/02 07:03:09 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -423,8 +423,8 @@ define method general-representation
     (class :: <cclass>, optimize-for :: one-of(#"speed", #"space"))
     => rep :: <c-representation>;
   //
-  // Check to see if the class is sealed.
-  if (class.sealed?)
+  // Check to see if the class and its subclasses are sealed.
+  if (class.all-subclasses-known?)
     //
     // The class is sealed.  We can explicitly look at all of possible
     // direct classes.

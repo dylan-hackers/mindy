@@ -1,5 +1,5 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.14 2001/07/30 20:33:38 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.15 2001/08/02 07:03:09 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -107,7 +107,7 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   slot direct-subclasses :: <list>, init-value: #();
 
   // List of all known subclasses (including this class and indirect
-  // subclasses).  If sealed, then this is all of 'em.
+  // subclasses).  If all-subclasses-known?, then this is all of 'em.
   slot subclasses :: <list>, init-value: #();
 
   // The unique id number associated with this class (only if concrete,
@@ -566,11 +566,11 @@ end method;
 
 define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
     => (result :: <ctype>, precise :: <boolean>);
-  if (type1.sealed?)
+  if (type1.all-subclasses-known?)
     values(reduce(ctype-union, empty-ctype(),
 		  choose(rcurry(csubtype?, type2), type1.subclasses)),
 	   #t);
-  elseif (type2.sealed?)
+  elseif (type2.all-subclasses-known?)
     values(reduce(ctype-union, empty-ctype(),
 		  choose(rcurry(csubtype?, type1), type2.subclasses)),
 	   #t);
@@ -587,6 +587,14 @@ define method ctype-intersection-dispatch(type1 :: <cclass>, type2 :: <cclass>)
   end;
 end method;
 
+// all-subclasses-known?{<cclass>}
+//
+define method all-subclasses-known?
+    (type :: <cclass>)
+ => (res :: <boolean>);
+  type.sealed? & every?(sealed?, type.subclasses);
+end method;
+
 // find-direct-classes{<cclass>}
 //
 // If the class is sealed, return all of the concrete subclass of it.
@@ -595,7 +603,7 @@ end method;
 //
 define method find-direct-classes (type :: <cclass>)
     => res :: false-or(<list>);
-  if (type.sealed?)
+  if (type.all-subclasses-known?)
     choose(complement(abstract?), type.subclasses);
   else
     #f;
@@ -610,7 +618,7 @@ end method;
 // 
 define method ctype-extent-dispatch (class :: <cclass>)
     => res :: <ctype>;
-  if (class.sealed?)
+  if (class.all-subclasses-known?)
     let result = empty-ctype();
     for (subclass in class.subclasses)
       unless (subclass.abstract?)
@@ -1177,7 +1185,7 @@ define method assign-unique-ids (base :: <integer>) => ();
 	=> (next-id :: <integer>);
       let next-id = this-id;
       if (class.loaded?)
-	unless (class.sealed?)
+	unless (class.all-subclasses-known?)
 	  for (sub in class.direct-subclasses)
 	    if (sub.direct-superclasses.first == class)
 	      next-id := grovel(sub, next-id);
@@ -1201,7 +1209,7 @@ define method assign-unique-ids (base :: <integer>) => ();
 	    next-id := grovel(sub, next-id);
 	  end;
 	end;
-	if (class.sealed?)
+	if (class.all-subclasses-known?)
 	  block (return)
 	    for (sub in class.subclasses)
 	      unless (sub.abstract?
@@ -1774,7 +1782,7 @@ define method find-slot-offset
 		slot.slot-introduced-by))
     get-direct-position(slot.slot-positions, instance-class)
       | error("Can't find position for slot %= in class %s?", slot.slot-getter.variable-name, instance-class);
-  elseif (instance-class.sealed?)
+  elseif (instance-class.all-subclasses-known?)
     get-general-position(slot.slot-positions, instance-class);
   else
     #f;
@@ -2031,7 +2039,7 @@ end method ct-value-cclass;
 define method ctype-extent-dispatch (type :: <subclass-ctype>)
     => res :: <ctype>;
   let class = type.subclass-of;
-  if (class.sealed?)
+  if (class.all-subclasses-known?)
     reduce1(ctype-union,
 	    map(method (class :: <cclass>)
 		  make(<singleton-ctype>, value: class);

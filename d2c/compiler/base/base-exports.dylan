@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.31 2001/07/24 06:27:23 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.32 2001/08/02 07:03:09 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -679,6 +679,8 @@ define module classes
     class-heap-fields, class-heap-fields-setter,
     <defined-cclass>, class-defn, class-defn-setter, bucket, row,
     class-metaclass, <meta-cclass>,
+
+    all-subclasses-known?,
 
     <cdclass>, size-of, alignment-of, designated-representation,
     referenced-type, pointer-type, pointer-type-setter, import-type,
