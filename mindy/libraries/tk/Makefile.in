@@ -23,9 +23,9 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/tk/Attic/Makefile.in,v 1.3 1995/02/22 18:47:27 rgs Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/tk/Attic/Makefile.in,v 1.4 1995/03/27 23:37:25 rgs Exp $
 ##
-##  This is the makefile for the Mindy print library, print-lib.dbc.
+##  This is the makefile for the Mindy/Tk windowing library.
 ##
 
 SHELL	=	/bin/sh
@@ -73,9 +73,6 @@ TKOBJS = tk-lib.dbc tk-io.dbc tk-call.dbc tk-util.dbc tk-window.dbc \
 
 tk.dbc: ${TKOBJS}
 	cat ${TKOBJS} > $@
-
-dylan-tk.html: ${SRCDIR}/dylan-tk.doc
-	htmlify -dlpattern='^ [^ *].*' ${SRCDIR}/dylan-tk.doc >dylan-tk.html
 
 tk-lib.dbc: ${SRCDIR}/tk-lib.dylan
 	${MC} ${MINDYFLAGS} -o tk-lib.dbc ${SRCDIR}/tk-lib.dylan
