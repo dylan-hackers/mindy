@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.106 1996/02/16 18:27:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.107 1996/02/17 06:48:00 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -916,7 +916,7 @@ end method;
 
 // Constant stuff.
 
-define abstract class <constant-info> (<object>)
+define class <constant-info> (<object>)
   //
   // The C ``expression'' for referencing this constant.
   slot const-info-expr :: false-or(<byte-string>),
