@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.18 1995/04/25 23:03:03 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.19 1995/04/26 03:31:37 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -397,9 +397,11 @@ define method build-let
      target-vars :: type-or(<leaf>, <list>),
      expr :: <expression>)
  => ();
-  build-assignment-aux
-    (make(<let-assignment>, source-location: source, policy: policy),
-     builder, target-vars, expr);
+  let component = builder.component;
+  let l = make(<let-assignment>, source-location: source, policy: policy,
+	       next: component.all-lets);
+  component.all-lets := l;
+  build-assignment-aux(l, builder, target-vars, expr);
 end method;
 
 
@@ -552,7 +554,7 @@ define method build-method-body
   make-operand-dependencies(builder, leaf, result-vars);
   let comp = builder.component;
   push-body(builder, leaf);
-  build-assignment(builder, policy, source, arg-vars, prologue);
+  build-let(builder, policy, source, arg-vars, prologue);
   comp.reanalyze-functions := pair(leaf, comp.reanalyze-functions);
   leaf;
 end method;
