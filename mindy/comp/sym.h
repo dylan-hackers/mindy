@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.5 1994/06/27 16:49:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.h,v 1.6 1994/07/11 20:06:45 dpierce Exp $
 *
 \**********************************************************************/
 
@@ -68,6 +68,8 @@ extern struct symbol *sym_Getter;
 extern struct symbol *sym_InitVariable;
 extern struct symbol *sym_Instance;
 extern struct symbol *sym_List;
+extern struct symbol *sym_MakeInherited;
+extern struct symbol *sym_MakeInitarg;
 extern struct symbol *sym_MakeNextMethodFunction;
 extern struct symbol *sym_MakeSlot;
 extern struct symbol *sym_Negative;

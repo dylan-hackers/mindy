@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.7 1994/06/27 16:49:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/sym.c,v 1.8 1994/07/11 20:06:24 dpierce Exp $
 *
 * This file implements symbols.
 *
@@ -64,6 +64,8 @@ struct symbol *sym_Getter = NULL;
 struct symbol *sym_InitVariable = NULL;
 struct symbol *sym_Instance = NULL;
 struct symbol *sym_List = NULL;
+struct symbol *sym_MakeInherited = NULL;
+struct symbol *sym_MakeInitarg = NULL;
 struct symbol *sym_MakeNextMethodFunction = NULL;
 struct symbol *sym_MakeSlot = NULL;
 struct symbol *sym_Negative = NULL;
@@ -251,6 +253,8 @@ void init_sym_table(void)
     sym_InitVariable = symbol("init-variable");
     sym_Instance = symbol("instance");
     sym_List = symbol("list");
+    sym_MakeInherited = symbol("make-inherited");
+    sym_MakeInitarg = symbol("make-initarg");
     sym_MakeNextMethodFunction = symbol("make-next-method-function");
     sym_MakeSlot = symbol("make-slot");
     sym_Negative = symbol("negative");
