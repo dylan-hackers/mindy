@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.10 1996/05/12 22:54:18 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.c,v 1.11 1996/10/06 12:57:22 nkramer Exp $
 *
 * This file provides support for manipulating native C pointers.
 *
@@ -135,7 +135,8 @@ obj_t  load_program_file()
    and returns a "foreign_file" object which allows access to those symbols */
 obj_t  load_program_file()
 {
-    error("Cannot do dynamic loading on this architecture");
+    error("Cannot do dynamic loading on this architecture -- \n"
+	  "wanted to examine %s", make_byte_string(exec_file_name));
     return obj_False;
 }
 
@@ -145,7 +146,8 @@ obj_t  load_program_file()
    these names so that they will show up in the linked version. */
 obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
 {
-    error("Cannot do dynamic loading on this architecture");
+    error("Cannot do dynamic loading on this architecture -- tried to load %=",
+	  HEAD(c_files));
     return obj_False;
 }
 
