@@ -1,6 +1,6 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.12 1997/02/04 14:39:01 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/platform.dylan,v 1.13 1997/02/10 13:12:22 dwatson Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -95,6 +95,9 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot path-separator :: <character>,
     required-init-keyword: #"path-separator";
 
+  constant /* exported */ slot big-endian? :: <boolean>,
+    required-init-keyword: #"big-endian?";
+
   // The next bunch of slots are unexported, because only
   // mk-build-tree/gen-makefile needs them.  They are required
   // keywords because gen-makefile doesn't do optional keywords.
@@ -124,9 +127,11 @@ define sealed /* exported */ class <platform> (<object>)
   constant /* exported */ slot supports-debugging? :: <boolean> = #f,
     init-keyword: #"supports-debugging?";
 
-  // unix-stabs are slightly different than win32 stabs.
-  constant /* exported */ slot uses-win32-stabs? :: <boolean> = #f,
-    init-keyword: #"uses-win32-stabs?";
+  // used for debugging
+  constant /* exported */ slot descriptor-type-string :: <byte-string>,
+    init-keyword: #"descriptor-type-string";
+  constant /* exported */ slot descriptor-reference-string :: <byte-string>,
+    init-keyword: #"descriptor-reference-string";
 
   constant /* exported */ slot omit-colon-after-label-declarations? 
       :: <boolean> = #f,
@@ -218,7 +223,7 @@ define function add-platform!
 	#"uses-drive-letters?", #"environment-variables-can-be-exported?",
 	#"use-dbclink?", #"link-doesnt-search-for-libs?",
 	#"import-directive-required?", #"supports-debugging?",
-	#"uses-win32-stabs?", #"omit-colon-after-label-declarations?" =>
+	#"omit-colon-after-label-declarations?", #"big-endian?" =>
 	  keyword-values := add!(keyword-values, string-to-boolean(val));
 	#"integer-length" =>
 	  keyword-values := add!(keyword-values, string-to-integer(val));
