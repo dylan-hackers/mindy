@@ -1,16 +1,70 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.17 1996/02/22 23:53:57 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/bootstrap.dylan,v 1.18 1996/03/17 00:08:55 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
-module: dylan-user
+module: bootstrap
 
-// This file initializes the module system sufficiently so that we can
-// start compiling real definitions.  Like the define module macro.
-
-// Have to use the define %%module internal form because define module
-// hasn't been defined yet.
+// The first thing we need to do is define ``define module''.
 //
-define %%module dylan-viscera
-  %%export
+define macro module-definer
+    { define module ?:name ?clauses end }
+      => make-define-module({ ?name }, { ?clauses })
+
+  clauses:
+    { } => { }
+    { ?clause; ... } => { ?clause, ... }
+
+  clause:
+    {use ?:name, #key ?import = all, ?exclude = none, ?prefix:token = "", 
+		      ?rename = none, ?export = none }
+      => make-use-clause({ ?name }, { ?import }, { ?exclude }, { ?prefix },
+			 { ?rename }, { ?export })
+    {export ?names }
+      => make-export-clause({ ?names })
+    {create ?names }
+      => make-create-clause({ ?names })
+
+  names:
+    { } => { }
+    { ?:name, ... } => { ?name, ... }
+
+  import:
+    { all } => { #t }
+    { { ?variable-specs } } => { ?variable-specs }
+
+  variable-specs:
+    { } => { }
+    { ?:name, ... } => { ?name, ... }
+    { ?renaming, ... } => { ?renaming, ... }
+
+  exclude:
+    { none } => { }
+    { { ?names } } => { ?names }
+
+  rename:
+    { none } => { }
+    { { ?renamings } } => { ?renamings }
+
+  renamings:
+    { } => { }
+    { ?renaming, ... } => { ?renaming, ... }
+
+  renaming:
+    { ?from:name => ?to:name } => make-renaming({ ?from }, { ?to })
+
+  export:
+    { none } => { }
+    { all } => { #t }
+    { { ?names } } => { ?names }
+
+end;
+
+// Then we can use it to define the dylan-viscera module.
+//
+define module dylan-viscera
+  use bootstrap,
+    export: all;
+
+  export
     
     // Objects
     <object>,
@@ -99,15 +153,15 @@ define %%module dylan-viscera
     $permanent-hash-state,
 
     // Definitions
-    variable-definer, constant-definer, /* generic-definer, */
-    method-definer, class-definer, module-definer, library-definer,
+    variable-definer, constant-definer, domain-definer, generic-definer,
+    method-definer, class-definer, library-definer,
 
     // Statements
     \if, \unless, \case, \select, \while, \until, \for, \begin,
     \block, \method,
 
-    // Special Operators
-    \&, \|, \:=,
+    // Function-macro operators.
+    \:=, \&, \|,
 
     // Extensions
     <general-integer>, <extended-integer>,
@@ -130,6 +184,7 @@ define %%module dylan-viscera
     format, print-message, print, write-integer, write,
 
     // System stuff
+    \%%primitive,
     call-out, c-include, c-decl, c-expr,
     <raw-pointer>, pointer-deref, pointer-deref-setter,
     object-address,
@@ -162,8 +217,12 @@ define %%module dylan-viscera
     class-new-slot-descriptors,
     closure-var,
     closure-var-setter,
+    \define-generic,
     disable-catcher,
     find-slot-offset,
+    \for-aux,
+    \for-aux2,
+    \for-clause,
     general-call,
     general-rep-getter,
     general-rep-setter,
@@ -176,6 +235,7 @@ define %%module dylan-viscera
     make-rest-arg,
     maybe-do-defered-evaluations,
     missing-required-init-keyword-error,
+    \mv-call,
     no-applicable-methods-error,
     odd-number-of-keyword/value-arguments-error,
     override-init-function,
