@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/common/stream-ext/Attic/Makefile.in,v 1.1 1996/03/15 06:43:03 rsbe Exp $
+##  $Header: /home/housel/work/rcs/gd/src/common/stream-ext/Attic/Makefile.in,v 1.2 1996/03/15 06:59:46 rsbe Exp $
 ##
 ##  This is the makefile for the "demo" directory
 ##
@@ -38,7 +38,7 @@ prefix	=		@prefix@
 exec_prefix	=	@exec_prefix@
 srcdir	=		@srcdir@
 
-SRCDIR	=		.
+SRCDIR	=		${srcdir}
 BINDIR	=		${exec_prefix}/bin
 LIBDIR	=		${exec_prefix}/lib/mindy
 
@@ -68,7 +68,7 @@ MINDYFLAGS = -lstream-extensions
 OBJS = library.dbc stream-extensions.dbc
 
 stream-extensions-lib.dbc: ${OBJS}
-	cat ${OBJS} > ${SRCDIR}/stream-extensions-lib.dbc
+	cat ${OBJS} > $@
 
 library.dbc: ${SRCDIR}/library.dylan
 	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
@@ -77,10 +77,10 @@ stream-extensions.dbc: ${SRCDIR}/stream-extensions.dylan
 	${MC} ${MINDYFLAGS} -o stream-extensions.dbc ${SRCDIR}/stream-extensions.dylan
 
 clean:
-	rm -f ${SRCDIR}/library.dbc ${SRCDIR}/stream-extnesions.dbc *~ \#* core
+	rm -f ${OBJS} stream-extensions-lib.dbc *~ \#* core
 
 realclean:
-	rm -f ${OBJS} Makefile *~ \#* core
+	rm -f ${OBJS} stream-extensions-lib.dbc Makefile *~ \#* core
 
 install: stream-extensions-lib.dbc
 	${INSTALL-DATA} stream-extensions-lib.dbc ${LIBDIR}
