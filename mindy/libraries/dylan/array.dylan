@@ -1,7 +1,7 @@
 module:   dylan
 language: infix-dylan
 author:   Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.5 1994/11/03 23:50:54 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/array.dylan,v 1.6 1994/12/14 11:11:30 nkramer Exp $
 
 //======================================================================
 //
@@ -244,10 +244,11 @@ define method size (array :: <multiD-array>) => size :: <fixed-integer>;
 end method size;
 
 
-define method class-for-copy (c :: singleton (<multiD-array>)) 
-                  => array :: <class>;
-  <array>;
-end method class-for-copy;
+define method shallow-copy (array :: <multiD-array>)
+ => new-array :: <multiD-array>;
+  let new-array = make(<multiD-array>, dimensions: array.dimensions);
+  map-into(new-array, identity, array);
+end method shallow-copy;
 
 
 define method dimensions (array :: <multiD-array>) => dimensions :: <sequence>;
