@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.31 1996/02/26 23:00:55 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.32 1996/04/10 20:43:31 nkramer Exp $
 *
 * This file implements the loader.
 *
@@ -1132,6 +1132,17 @@ static void dylan_load(obj_t self, struct thread *thread, obj_t *args)
     load_do_inits(thread);
 }
 
+static void dylan_load_library(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t name = args[0];
+    push_linkage(thread, args);
+
+    load_library(name);
+
+    thread->sp = pop_linkage(thread);
+    load_do_inits(thread);
+}
+
 
 /* GC hooks */
 
@@ -1160,6 +1171,14 @@ void init_load_functions(void)
 	       make_raw_method("load", list1(obj_ByteStringClass),
 			       FALSE, obj_False, FALSE, obj_Nil,
 			       obj_False, dylan_load));
+    define_generic_function("load-library", list1(obj_SymbolClass),
+			    FALSE, obj_False, FALSE,
+			    obj_Nil, obj_False);
+    add_method(find_variable(module_BuiltinStuff, symbol("load-library"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("load-library", list1(obj_SymbolClass),
+			       FALSE, obj_False, FALSE, obj_Nil,
+			       obj_False, dylan_load_library));
 }
 
 void init_loader(void)
