@@ -122,7 +122,7 @@ copyright: see below
 //     if they were real slots:
 // 
 //         define argument-parser <my-parser> ()
-//           slot verbose?, short: "v";
+//           option verbose?, short: "v";
 //         end argument-parser;
 //
 //         define method main (appname, #rest args);
