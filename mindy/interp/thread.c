@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.15 1994/06/11 02:23:47 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/thread.c,v 1.16 1994/06/16 22:09:47 wlott Exp $
 *
 * This file does whatever.
 *
@@ -729,7 +729,7 @@ void init_thread_classes(void)
 {
     init_builtin_class(obj_ThreadClass, "<thread>", obj_ObjectClass, NULL);
     init_builtin_class(obj_LockClass, "<lock>", obj_ObjectClass, NULL);
-    init_builtin_class(obj_SpinLockClass, "<spin-lock>", obj_LockClass, NULL);
+    init_builtin_class(obj_SpinLockClass, "<spinlock>", obj_LockClass, NULL);
     init_builtin_class(obj_EventClass, "<event>", obj_ObjectClass, NULL);
 }
 
