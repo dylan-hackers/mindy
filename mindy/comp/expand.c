@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.8 1994/04/10 21:52:06 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/expand.c,v 1.9 1994/04/14 19:17:59 wlott Exp $
 *
 * This file does whatever.
 *
@@ -300,9 +300,15 @@ static void bind_next_param(struct body *body, struct param_list *params)
 static void hairy_keyword(struct body *body, struct keyword_param *k)
 {
     struct symbol *temp = gensym();
-    struct arglist *args;
-    struct expr *expr = make_varref(id(temp));
     struct param *p = make_param(k->id, NULL);
+    int line = k->id->line;
+    struct arglist *args;
+    struct id *name;
+    struct expr *expr;
+
+    name = id(temp);
+    name->line = line;
+    expr = make_varref(name);
 
     if (k->def) {
 	/* Bind the original id to:
@@ -314,7 +320,7 @@ static void hairy_keyword(struct body *body, struct keyword_param *k)
 	add_argument(args, make_argument(expr));
 	expr = make_function_call(make_varref(id(symbol("=="))), args);
 	expr = make_if(expr, make_expr_body(k->def),
-		       make_expr_body(make_varref(id(temp))));
+		       make_else(0, make_expr_body(make_varref(id(temp)))));
 	k->def = make_literal_ref(make_unbound_literal());
     }
 
@@ -331,6 +337,7 @@ static void hairy_keyword(struct body *body, struct keyword_param *k)
     
     /* Change the keyword id to the temp. */
     k->id = id(temp);
+    k->id->line = line;
 }
 
 static struct body
@@ -1341,7 +1348,8 @@ static boolean expand_constituent(struct constituent **ptr, boolean top_level)
 
  */
 
-static struct body *make_catch(struct body *body, struct id *exit_fun)
+static struct body *make_catch(int line, struct body *body,
+			       struct id *exit_fun)
 {
     struct symbol *temp = gensym();
     struct symbol *rest = gensym();
@@ -1351,6 +1359,7 @@ static struct body *make_catch(struct body *body, struct id *exit_fun)
     struct method *method;
     struct local_methods *locals;
     struct expr *expr;
+    struct id *name;
 
     /* Make the call to apply */
     args = make_argument_list();
@@ -1376,11 +1385,14 @@ static struct body *make_catch(struct body *body, struct id *exit_fun)
     /* Make the method arg to catch */
     params = push_param(make_param(id(temp), NULL), make_param_list());
     method = make_method_description(params, NULL, new_body);
+    method->line = line;
 
     /* Make the call to catch */
     args = make_argument_list();
     add_argument(args, make_argument(make_method_ref(method)));
-    expr = make_function_call(make_varref(id(symbol("catch"))), args);
+    name = id(symbol("catch"));
+    name->line = line;
+    expr = make_function_call(make_varref(name), args);
 
     /* Return it. */
     return make_expr_body(expr);
@@ -1415,7 +1427,7 @@ static struct body *make_catch(struct body *body, struct id *exit_fun)
 
  */
 
-static struct body *make_handler_case(struct body *block_body,
+static struct body *make_handler_case(int line, struct body *block_body,
 				      struct exception_clause *clauses)
 {
     struct symbol *done = gensym();
@@ -1479,13 +1491,13 @@ static struct body *make_handler_case(struct body *block_body,
     add_expr(body, expr);
 
     /* make the do-handler block */
-    expr = make_block(id(do_handler), body, NULL);
+    expr = make_block(line, id(do_handler), body, NULL);
 
     /* Make a function call out of it. */
     expr = make_function_call(expr, make_argument_list());
 
     /* make the done block. */
-    expr = make_block(id(done), make_expr_body(expr), NULL);
+    expr = make_block(line, id(done), make_expr_body(expr), NULL);
 
     /* And return it as a body. */
     return make_expr_body(expr);
@@ -1517,18 +1529,18 @@ static boolean expand_block_expr(struct expr **ptr)
 
     if (ParseOnly) {
 	if (e->inner) {
-	    body = make_handler_case(body, e->inner);
+	    body = make_handler_case(e->line, body, e->inner);
 	    e->inner = NULL;
 	}
 	if (e->outer) {
 	    /* There can only be an outer if there is also a cleanup */
 	    struct block_epilog *epilog
 		= make_block_epilog(NULL, e->cleanup, NULL);
-	    struct expr *new = make_block(NULL, body, epilog);
+	    struct expr *new = make_block(e->line, NULL, body, epilog);
 
 	    e->cleanup = NULL;
 	    add_expr(body = make_body(), new);
-	    body = make_handler_case(body, e->outer);
+	    body = make_handler_case(e->line, body, e->outer);
 	    e->outer = NULL;
 	}
 	if (e->exit_fun || e->cleanup) {
@@ -1546,13 +1558,13 @@ static boolean expand_block_expr(struct expr **ptr)
     }
     else {
 	if (e->inner)
-	    body = make_handler_case(body, e->inner);
+	    body = make_handler_case(e->line, body, e->inner);
 	if (e->cleanup)
 	    body = make_unwind_protect(body, e->cleanup);
 	if (e->outer)
-	    body = make_handler_case(body, e->outer);
+	    body = make_handler_case(e->line, body, e->outer);
 	if (e->exit_fun)
-	    body = make_catch(body, e->exit_fun);
+	    body = make_catch(e->line, body, e->exit_fun);
 
 	*ptr = make_body_expr(body);
 
@@ -1577,7 +1589,7 @@ static struct expr *make_case_condition(struct condition *conditions)
 
 	free(conditions);
 
-	return make_if(cond, true_body, rest_body);
+	return make_if(cond, true_body, make_else(0, rest_body));
     }
     else {
 	free(conditions);
@@ -1596,7 +1608,8 @@ static struct expr *expand_case_body(struct condition_body *body)
 	
 	    free(body);
 
-	    return make_if(cond, clause->body, make_expr_body(rest));
+	    return make_if(cond, clause->body,
+			   make_else(0, make_expr_body(rest)));
 	}
 	else {
 	    free(body);
@@ -1842,7 +1855,7 @@ static void grovel_from_for_clause(struct from_for_clause *clause,
 				      args);
 
 	    add_test(make_if(expr, make_expr_body(when_negative),
-			     make_expr_body(when_positive)),
+			     make_else(0, make_expr_body(when_positive))),
 		     info);
 	}
 	else {
@@ -1922,7 +1935,7 @@ static boolean expand_for_expr(struct expr **ptr)
     /* Wrap the step body with the ``if (end-test) ...'' (if necessary) and */
     /* add it to the inner body. */
     if (e->until)
-	expr = make_if(e->until, NULL, info.step_body);
+	expr = make_if(e->until, NULL, make_else(0, info.step_body));
     else
 	expr = make_body_expr(info.step_body);
     add_expr(info.inner_body, expr);
@@ -1931,7 +1944,8 @@ static boolean expand_for_expr(struct expr **ptr)
     /* middle body */
     if (info.more_tests)
 	expr = make_if(make_binop_series_expr(info.first_test,info.more_tests),
-		       NULL, info.inner_body);
+		       NULL,
+		       make_else(0, info.inner_body));
     else
 	expr = make_body_expr(info.inner_body);
     add_expr(info.middle_body, expr);
@@ -1975,7 +1989,7 @@ static struct expr
 
 	free(conditions);
 
-	return make_if(cond, true_body, rest_body);
+	return make_if(cond, true_body, make_else(0, rest_body));
     }
     else {
 	free(conditions);
@@ -1996,7 +2010,8 @@ static struct expr *expand_select_body(struct condition_body *body,
 	
 	    free(body);
 
-	    return make_if(cond, clause->body, make_expr_body(rest));
+	    return make_if(cond, clause->body,
+			   make_else(0, make_expr_body(rest)));
 	}
 	else {
 	    free(body);
@@ -2142,17 +2157,11 @@ static boolean expand_call_expr(struct call_expr **ptr)
 static boolean expand_dot_expr(struct expr **ptr)
 {
     struct dot_expr *e = (struct dot_expr *)*ptr;
-    struct symbol *arg = gensym();
-    struct body *body = make_body();
-    struct arglist *args = make_argument_list();
 
-    bind_temp(body, id(arg), e->arg);
-    add_argument(args, make_argument(make_varref(id(arg))));
-    add_expr(body, make_function_call(e->func, args));
+    expand_expr(&e->arg);
+    expand_expr(&e->func);
 
-    *ptr = make_body_expr(body);
-
-    return TRUE;
+    return FALSE;
 }
 
 static struct literal *extract_literal(struct body *body)
@@ -2255,11 +2264,11 @@ static boolean expand_if_expr(struct expr **ptr)
 		e->consequent
 		    = make_expr_body(make_if(make_body_expr(inner->consequent),
 					     e->consequent,
-					     e->alternate));
+					     make_else(0, e->alternate)));
 		e->alternate
 		    = make_expr_body(make_if(make_body_expr(inner->alternate),
 					     consequent,
-					     alternate));
+					     make_else(0, alternate)));
 		free(inner);
 
 		return TRUE;
@@ -2549,7 +2558,7 @@ static boolean srctran_or(struct expr **ptr)
 	add_expr(body,
 		 make_if(make_varref(id(temp)),
 			 make_expr_body(make_varref(id(temp))),
-			 make_expr_body((struct expr *)e)));
+			 make_else(0, make_expr_body((struct expr *)e))));
 	*ptr = make_body_expr(body);
 	free(arg);
     }
