@@ -9,7 +9,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.h,v 1.1 1994/11/06 20:03:40 rgs Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/extern.h,v 1.2 1994/11/30 16:18:14 rgs Exp $
 *
 * This file exports definitions for support of raw C pointers.
 *
@@ -33,7 +33,7 @@ struct foreign_file {
     obj_t file_name;		/* relocatable object file */
     int sym_count;
     int extra_size;
-    struct symtab syms[0];
+    struct symtab syms[1];
 };
 
 #define FOREIGN_FILE(o) obj_ptr(struct foreign_file *, o)
