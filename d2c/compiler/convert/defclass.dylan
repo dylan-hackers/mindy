@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.45 2003/02/18 20:46:12 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defclass.dylan,v 1.46 2003/03/12 22:44:09 housel Exp $
 copyright: see below
 
 
@@ -1922,7 +1922,7 @@ define method convert-top-level-form
   if (cclass == #f)
     // The class is sufficiently hairy that we can't do anything.
     // Build top-level init code to create the class at runtime.
-    error("### Can't deal with hairy classes yet.");
+    error("### Can't deal with hairy classes (%s) yet.", defn.defn-name);
   else
     // The construction of the class object and the initialization of the class
     // variable will be handled by the linker.  We just need to build the
