@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.64 1997/02/04 14:39:14 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.65 1997/02/10 11:06:10 nkramer Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -260,7 +260,7 @@ define method build-local-heap
     if (root.root-comment)
       format(stream, "\n%s %s\n", target.comment-token, root.root-comment);
     else
-      new-line(stream);
+      write(stream, "\n");
     end if;
     if (name)
       spew-label(state, name, export: #t);
@@ -298,7 +298,7 @@ end method build-local-heap;
 define method spew-objects-in-queue (state :: <state>) => ();
   let stream = state.stream;
   let target = state.target;
-  new-line(stream);
+  write(stream, "\n");
   spew-label(state, state.heap-base, export: #t);
   until (state.object-queue.empty?)
     let object = pop(state.object-queue);

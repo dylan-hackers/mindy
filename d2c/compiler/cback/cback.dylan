@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.136 1997/02/04 14:39:02 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.137 1997/02/10 11:05:56 nkramer Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -700,7 +700,7 @@ define method c-name-and-rep (leaf :: <abstract-variable>,
     if (instance?(leaf.var-info, <debug-named-info>))
       format(stream, " /* %s */", leaf.var-info.debug-name.clean-for-comment);
     end;
-    new-line(stream);
+    write(stream, "\n");
     info.backend-var-info-name := name;
   end;
   values(name, info.backend-var-info-rep);
@@ -1224,7 +1224,7 @@ define method emit-tlf-gunk (tlf :: <define-generic-tlf>, file :: <file-state>)
   format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
   let defn = tlf.tlf-defn;
   emit-definition-gunk(defn, file);
-  new-line(file.file-body-stream);
+  write(file.file-body-stream, "\n");
 
   // If dynamic, force module var to be allocated now.  Otherwise the client
   // libraries will create it on demand, referencing its init-value which is
@@ -1289,7 +1289,7 @@ define method emit-tlf-gunk (tlf :: <define-class-tlf>, file :: <file-state>)
   // This class was obviously defined in this lib, so it is a local class.
   let defn = tlf.tlf-defn;
   emit-definition-gunk(defn, file);
-  new-line(file.file-body-stream);
+  write(file.file-body-stream, "\n");
   let ctv = defn.ct-value;
   if (ctv)
     if (ctv.sealed?)
@@ -1355,7 +1355,7 @@ define method emit-tlf-gunk
   if (tlf.tlf-rest-defn)
     emit-definition-gunk(tlf.tlf-rest-defn, file);
   end;
-  new-line(file.file-body-stream);
+  write(file.file-body-stream, "\n");
 end;
 
 define method emit-definition-gunk
@@ -1497,7 +1497,7 @@ define method emit-function
   format(stream, "%s\n{\n",
 	 compute-function-prototype(function, function-info, file));
   write(stream, get-string(file.file-vars-stream));
-  new-line(stream);
+  write(stream, "\n");
   let overflow = file.file-guts-overflow;
   unless (overflow.empty?)
     for (string in overflow)
