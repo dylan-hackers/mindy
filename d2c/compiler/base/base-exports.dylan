@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.56 1996/11/04 19:18:00 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.57 1996/12/05 13:59:57 nkramer Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -435,7 +435,8 @@ define module target-environment
     link-doesnt-search-for-libs?,
     import-directive-required?,
     supports-debugging?,
-    uses-win32-stabs?;
+    uses-win32-stabs?,
+    omit-colon-after-label-declarations?;
 end module target-environment;
 
 
