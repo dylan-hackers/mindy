@@ -61,12 +61,13 @@ define module c-lexer
     <question-token>, <colon-token>, <eq-op-token>, <assign-token>,
     <ge-op-token>, <le-op-token>, <ne-op-token>, <and-op-token>, <or-op-token>,
     <left-op-token>, <right-op-token>, <lcurly-token>, <rcurly-token>,
-    <type-specifier-token>;
+    <type-specifier-token>,
+    *handle-//-coments*;
 end module c-lexer;
 
 define module portability
   use dylan;
-  use c-lexer, import: {include-path};
+  use c-lexer, import: {include-path, *handle-//-coments*};
   export
     $default-defines,
     $enum-size,
