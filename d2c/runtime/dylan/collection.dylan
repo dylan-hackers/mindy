@@ -1,4 +1,4 @@
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.17 1996/02/11 21:57:49 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/runtime/dylan/collection.dylan,v 1.18 1996/02/20 18:15:47 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 module: dylan-viscera
@@ -539,22 +539,24 @@ define inline method add!
   add(seq, new-element);
 end method add!;
 
-define method add-new
+define inline method add-new
     (seq :: <sequence>, new-element :: <object>, #key test :: <function> = \==)
  => (new-seq :: <sequence>);
-  let found?
-    = if (test == \==)
-	member?(new-element, seq);
-      else
-	member?(new-element, seq, test: method (a, b) test(b, a) end method);
-      end if;
-  if (found?) seq else add(seq, new-element) end if;
+  if (member?(new-element, seq, test: method (a, b) test(b, a) end method))
+    seq;
+  else
+    add(seq, new-element);
+  end if;
 end method add-new;
 
 define inline method add-new!
     (seq :: <sequence>, new-element :: <object>, #key test :: <function> = \==)
  => (new-seq :: <sequence>);
-  add-new(seq, new-element, test: test);
+  if (member?(new-element, seq, test: method (a, b) test(b, a) end method))
+    seq;
+  else
+    add!(seq, new-element);
+  end if;
 end method add-new!;
 
 define method remove
