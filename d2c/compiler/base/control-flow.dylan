@@ -1,5 +1,5 @@
 Module: flow
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.15 1995/06/07 19:38:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/control-flow.dylan,v 1.16 1995/06/07 22:37:06 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -84,6 +84,11 @@ define class <join-region> (<region>)
   // Region containing join-assignments for this region.
   slot join-region :: <simple-region>;
 end class;
+
+define method initialize (region :: <join-region>, #next next-method, #key)
+  next-method();
+  region.join-region := make(<simple-region>, parent: region);
+end;
 
 // An <if-region> represents a conditional test.  The join function joins the
 // values of the two branches.
