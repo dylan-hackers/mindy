@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.8 1994/08/02 15:06:50 dpierce Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/print.c,v 1.9 1994/08/30 21:56:24 nkramer Exp $
 *
 * This file implements the printer framework.
 *
@@ -202,6 +202,20 @@ void vformat(char *fmt, obj_t *args)
 		/* one for strings and another for errors */
 		if (instancep(*args, obj_ByteStringClass)) {
 		  fputs(string_chars(*args++), stdout);
+		}
+		else if (instancep(*args, obj_UnicodeStringClass)) {
+		    obj_t str = *args++;
+		    int len = obj_ptr(struct string *, str)->len;
+		    int i = 0;
+		    int c;
+
+		    for (i=0; i<len; i++) {
+			c = get_unichar(str, i);
+			if (c > 255)
+			    printf("\\{#x%x}", c);
+			else
+			    putchar(c);
+		    }
 		}
 /* This will have to be commented out until we figure out how 
    to print conditions. */

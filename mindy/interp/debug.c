@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.34 1994/08/22 22:31:08 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.35 1994/08/30 21:55:25 nkramer Exp $
 *
 * This file implements the debugger.
 *
@@ -824,7 +824,7 @@ static void flush_cmd(void)
     }
 
     if ((thread = CurThread) == NULL) {
-	thread = thread_create(make_string("debugger flush cmd"));
+	thread = thread_create(make_byte_string("debugger flush cmd"));
 	set_c_continuation(thread, kill_me);
     }
 
@@ -1676,7 +1676,8 @@ static void breakpoint_cmd(void)
 	    struct thread *thread = CurThread;
 
 	    if (thread == NULL) {
-		thread = thread_create(make_string("eval for disassemble"));
+		thread
+		    = thread_create(make_byte_string("eval for disassemble"));
 		set_c_continuation(thread, kill_me);
 	    }
 	    else {
@@ -2025,7 +2026,8 @@ static void disassemble_cmd(void)
 	    struct thread *thread = CurThread;
 
 	    if (thread == NULL) {
-		thread = thread_create(make_string("eval for disassemble"));
+		thread
+		    = thread_create(make_byte_string("eval for disassemble"));
 		set_c_continuation(thread, kill_me);
 	    }
 	    else {
@@ -2097,7 +2099,8 @@ static void describe_cmd(void)
 	    struct thread *thread = CurThread;
 
 	    if (thread == NULL) {
-		thread = thread_create(make_string("eval for disassemble"));
+		thread
+		    = thread_create(make_byte_string("eval for disassemble"));
 		set_c_continuation(thread, kill_me);
 	    }
 	    else {

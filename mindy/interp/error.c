@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.6 1994/06/27 16:31:46 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/error.c,v 1.7 1994/08/30 21:55:49 nkramer Exp $
 *
 * This file implements the stuff to signal errors from C code.
 *
@@ -61,7 +61,7 @@ void error(char *msg, ...)
     
     if (error_system_enabled) {
 	*thread->sp++ = error_var->value;
-	*thread->sp++ = make_string(msg);
+	*thread->sp++ = make_byte_string(msg);
 	va_start(ap, msg);
 	for (i = 0; i < nargs; i++)
 	    *thread->sp++ = va_arg(ap, obj_t);
@@ -73,7 +73,7 @@ void error(char *msg, ...)
     else if (thread) {
 	obj_t cond = make_vector(nargs+1, NULL);
 
-	SOVEC(cond)->contents[0] = make_string(msg);
+	SOVEC(cond)->contents[0] = make_byte_string(msg);
 	va_start(ap, msg);
 	for (i = 1; i <= nargs; i++)
 	    SOVEC(cond)->contents[i] = va_arg(ap, obj_t);

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.22 1994/08/21 00:41:53 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/load.c,v 1.23 1994/08/30 21:56:05 nkramer Exp $
 *
 * This file implements the loader.
 *
@@ -132,14 +132,14 @@ static int safe_read(struct load_info *info, void *ptr, int bytes)
 
     if (count < 0)
 	error("error loading %s: %s",
-	      make_string(info->name),
+	      make_byte_string(info->name),
 #ifndef sparc
-	      make_string(strerror(errno)));
+	      make_byte_string(strerror(errno)));
 #else
-              make_string(sys_errlist[errno]));
+              make_byte_string(sys_errlist[errno]));
 #endif
     if (count == 0)
-	error("premature EOF loading %s", make_string(info->name));
+	error("premature EOF loading %s", make_byte_string(info->name));
 
     return count;
 }
@@ -275,7 +275,7 @@ static void check_size(struct load_info *info, int desired, char *what)
 
     if (bytes != desired)
 	error("Wrong sized %s in %s: should be %= but is %=",
-	      make_string(what), make_string(info->name),
+	      make_byte_string(what), make_byte_string(info->name),
 	      make_fixnum(desired), make_fixnum(bytes));
 }
 
@@ -289,11 +289,12 @@ static obj_t fop_header(struct load_info *info)
     minor_version = read_byte(info);
 
     if (major_version < file_MajorVersion)
-	error("Obsolete .dbc file: %s", make_string(info->name));
+	error("Obsolete .dbc file: %s", make_byte_string(info->name));
     if (major_version > file_MajorVersion)
-	error("Obsolete version of Mindy for %s", make_string(info->name));
+	error("Obsolete version of Mindy for %s", 
+	      make_byte_string(info->name));
     if (minor_version < file_MinorVersion)
-	error("Obsolete .dbc file: %s", make_string(info->name));
+	error("Obsolete .dbc file: %s", make_byte_string(info->name));
 
     check_size(info, sizeof(short), "short");
     check_size(info, sizeof(int), "int");
@@ -308,7 +309,7 @@ static obj_t fop_header(struct load_info *info)
     magic = read_int(info);
 
     if (magic != dbc_MagicNumber)
-	error("Invalid .dbc file: %s", make_string(info->name));
+	error("Invalid .dbc file: %s", make_byte_string(info->name));
 	
     return obj_False;
 }
@@ -441,7 +442,7 @@ static obj_t fop_extended_float(struct load_info *info)
 static obj_t fop_short_string(struct load_info *info)
 {
     int len = read_byte(info);
-    obj_t res = alloc_string(len);
+    obj_t res = alloc_byte_string(len);
 
     read_bytes(info, string_chars(res), len);
 
@@ -451,7 +452,7 @@ static obj_t fop_short_string(struct load_info *info)
 static obj_t fop_string(struct load_info *info)
 {
     int len = read_int(info);
-    obj_t res = alloc_string(len);
+    obj_t res = alloc_byte_string(len);
 
     read_bytes(info, string_chars(res), len);
 
@@ -934,7 +935,7 @@ static void skip_header(struct load_info *info)
 	    ;
 
     if (c != fop_HEADER)
-	error("Invalid .dbc file: %s", make_string(info->name));
+	error("Invalid .dbc file: %s", make_byte_string(info->name));
 
     unread_byte(info);
 }
@@ -985,11 +986,11 @@ void load(char *name)
 
     if (fd < 0)
 	error("Error loading %s: %s\n",
-	      make_string(name),
+	      make_byte_string(name),
 #ifndef sparc
-	      make_string(strerror(errno)));
+	      make_byte_string(strerror(errno)));
 #else
-              make_string(sys_errlist[errno]));
+              make_byte_string(sys_errlist[errno]));
 #endif
 
     info = make_load_info(name, fd);
@@ -1000,11 +1001,11 @@ void load(char *name)
 	    int count = read(fd, info->buffer, BUFFER_SIZE);
 	    if (count < 0)
 		error("error loading %s: %s",
-		      make_string(name),
+		      make_byte_string(name),
 #ifndef sparc
-		      make_string(strerror(errno)));
+		      make_byte_string(strerror(errno)));
 #else
-                      make_string(sys_errlist[errno]));
+                      make_byte_string(sys_errlist[errno]));
 #endif
 	    if (count == 0)
 		break;

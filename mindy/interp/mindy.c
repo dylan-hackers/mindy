@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.8 1994/08/18 19:51:48 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/mindy.c,v 1.9 1994/08/30 21:56:15 nkramer Exp $
 *
 * This file starts everything going.
 *
@@ -93,7 +93,7 @@ void main(int argc, char *argv[])
 		error("-f must be followed by a file name to load.");
 	}
 	else
-	    *thread->sp++ = make_string(*argv);
+	    *thread->sp++ = make_byte_string(*argv);
 
     finalize_modules();
 

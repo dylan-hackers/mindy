@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.13 1994/08/21 00:43:25 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/module.c,v 1.14 1994/08/30 21:56:22 nkramer Exp $
 *
 * This file implements the module system.
 *
@@ -255,7 +255,7 @@ static void make_entry(struct table *table, obj_t name, void *datum,
     }
     va_end(ap);
 
-    entry->origin = alloc_string(len);
+    entry->origin = alloc_byte_string(len);
     origin = string_chars(entry->origin);
 
     va_start(ap, template);

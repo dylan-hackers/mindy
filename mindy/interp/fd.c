@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.18 1994/07/26 18:32:28 hallgren Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.19 1994/08/30 21:55:51 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -138,7 +138,7 @@ static obj_t fd_error_str(obj_t errno)
     if (fixnum_value(errno) < 0 || fixnum_value(errno) >= sys_nerr)
 	return obj_False;
     else
-	return make_string(sys_errlist[fixnum_value(errno)]);
+	return make_byte_string(sys_errlist[fixnum_value(errno)]);
 }
 
 static int input_available(int fd)

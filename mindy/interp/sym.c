@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.5 1994/06/27 16:32:33 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/sym.c,v 1.6 1994/08/30 21:56:11 nkramer Exp $
 *
 * This file implements symbols.
 *
@@ -145,7 +145,7 @@ static obj_t intern(char *name, struct symtable *table)
     }
 
     sym = alloc(table->class, sizeof(struct symbol));
-    obj_ptr(struct symbol *, sym)->name = make_string(name);
+    obj_ptr(struct symbol *, sym)->name = make_byte_string(name);
     obj_ptr(struct symbol *, sym)->next = table->table[index];
     obj_ptr(struct symbol *, sym)->hash = hash;
     table->table[index] = sym;
@@ -177,6 +177,8 @@ unsigned sym_hash(obj_t sym)
 
 
 /* Dylan functions. */
+
+/* The following as methods only work on <byte-string>s */
 
 static obj_t string_as_symbol(obj_t class, obj_t string)
 {
@@ -270,6 +272,10 @@ void init_sym_functions(void)
     define_method("as", list2(singleton(obj_SymbolClass), obj_ByteStringClass),
 		  FALSE, obj_False, FALSE, obj_SymbolClass, string_as_symbol);
     define_method("as", list2(singleton(obj_StringClass), obj_SymbolClass),
+		  FALSE, obj_False, FALSE, obj_ByteStringClass,
+		  symbol_as_string);
+    /* same method as above, only for singleton <byte-string> */
+    define_method("as", list2(singleton(obj_ByteStringClass), obj_SymbolClass),
 		  FALSE, obj_False, FALSE, obj_ByteStringClass,
 		  symbol_as_string);
 }

@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.8 1994/06/27 16:32:07 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/Attic/lexer.l,v 1.9 1994/08/30 21:55:56 nkramer Exp $
 *
 * This file is the lexer for the debugger.
 *
@@ -146,7 +146,7 @@ static obj_t token_as_string(void)
 	    i++;
 	}
 
-    str = alloc_string(len);
+    str = alloc_byte_string(len);
     ptr = string_chars(str);
 
     for (i = 1; i < yyleng-1; i++)
