@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.24 1995/07/11 12:41:52 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/comp/src.c,v 1.25 1995/12/04 20:43:34 wlott Exp $
 *
 * This file implements the various nodes in the parse tree.
 *
@@ -885,9 +885,11 @@ struct literal *parse_integer_token(struct token *token)
     ptr = (char *)token->chars;
     if (*ptr == '#') {
 	switch (ptr[1]) {
-	  case 'x': radix = 16; break;
-	  case 'o': radix = 8; break;
-	  case 'b': radix = 2; break;
+	  case 'X': case 'x': radix = 16; break;
+	  case 'O': case 'o': radix = 8; break;
+	  case 'B': case 'b': radix = 2; break;
+	  default:
+	    lose("Strange radix marker ('%c') in integer literal", ptr[1]);
 	}
 	ptr += 2;
 	count -= 2;
