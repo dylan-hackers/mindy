@@ -1,4 +1,4 @@
-dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.8 1995/03/13 22:08:59 nkramer Exp $
+dnl     $Header: /home/housel/work/rcs/gd/src/configure.in,v 1.9 1995/03/13 22:37:16 nkramer Exp $
 dnl
 dnl	This file is an input file used by the GNU "autoconf" program
 dnl	to generate the file "configure", which is run during mindy
@@ -66,7 +66,7 @@ AC_SUBST(LFLAGS)
 #	Establish the default options for yacc
 #--------------------------------------------------------------------
 
-if test $YACC = bison; then
+if test "$YACC" = "bison -y"; then
   # do nothing (an empty then clause is a syntax error)
   DUMMY=dummy
 else
