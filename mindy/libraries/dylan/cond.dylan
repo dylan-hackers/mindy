@@ -1,5 +1,6 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.6 1994/06/27 17:10:20 wlott Exp $
+author: William Lott (wlott@cs.cmu.edu)
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dylan,v 1.7 1994/10/03 14:00:39 nkramer Exp $
 
 //======================================================================
 //
@@ -33,13 +34,16 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cond.dyl
 // Classes
 
 define class <condition> (<object>)
-end;
+end class <condition>;
+
 
 define class <serious-condition> (<condition>)
-end;
+end class <serious-condition>;
+
 
 define class <error> (<serious-condition>)
-end;
+end class <error>;
+
 
 define class <simple-condition> (<condition>)
   slot condition-format-string,
@@ -47,57 +51,66 @@ define class <simple-condition> (<condition>)
   slot condition-format-arguments,
     init-keyword: format-arguments:,
     init-value: #();
-end;
+end class <simple-condition>;
+
 
 define class <simple-error> (<error>, <simple-condition>)
-end;
+end class <simple-error>;
+
 
 define class <type-error> (<error>)
   slot type-error-value, init-keyword: value:;
   slot type-error-expected-type, init-keyword: type:;
-end;
+end class <type-error>;
+
 
 define class <warning> (<condition>)
-end;
+end class <warning>;
+
 
 define class <simple-warning> (<warning>, <simple-condition>)
-end;
+end class <simple-warning>;
+
 
 define class <restart> (<condition>)
-end;
+end class <restart>;
+
 
 define class <simple-restart> (<restart>, <simple-condition>)
-end;
+end class <simple-restart>;
+
 
 define class <abort> (<restart>)
   slot abort-description :: <byte-string>,
     init-keyword: description:,
     init-value: "<abort>";
-end;
+end class <abort>;
 
 
 // Condition reporting.
 
 define method report-condition (condition :: <condition>)
   prin1(condition);
-end;
+end method report-condition;
+
 
 define method report-condition (condition :: <simple-condition>)
   apply(format,
 	condition.condition-format-string,
 	condition.condition-format-arguments);
-end;
+end method report-condition;
+
 
 define method report-condition (condition :: <type-error>)
   format("%= is not of type %=",
 	 condition.type-error-value,
 	 condition.type-error-expected-type);
-end;
+end method report-condition;
+
 
 define method report-condition (condition :: <abort>)
   puts(condition.abort-description);
-end;
-
+end method report-condition;
 
 // Condition signaling
 
@@ -105,7 +118,8 @@ define method signal (string :: <string>, #rest arguments)
   signal(make(<simple-warning>,
 	      format-string: string,
 	      format-arguments: arguments));
-end;
+end method signal;
+
 
 define method signal (cond :: <condition>, #rest noise)
   unless (empty?(noise))
@@ -121,22 +135,24 @@ define method signal (cond :: <condition>, #rest noise)
 	    h.handler-function(cond, method () search(remaining) end);
 	  else
 	    search(h.handler-next);
-	  end;
+	  end if;
 	else
 	  search(h.handler-next);
-	end;
+	end if;
       else
 	default-handler(cond);
-      end;
-    end;
+      end if;
+    end method search;
   search(current-handler());
-end;
+end method signal;
+
 
 define method error (string :: <string>, #rest arguments)
   error(make(<simple-error>,
 	     format-string: string,
 	     format-arguments: arguments));
-end;
+end method error;
+
 
 define method error (cond :: <condition>, #rest noise)
   unless (empty?(noise))
@@ -146,7 +162,8 @@ define method error (cond :: <condition>, #rest noise)
   invoke-debugger(make(<simple-error>,
 		       format-string:
 			 "Attempt to return from a call to error"));
-end;
+end method error;
+
 
 define method cerror (restart-descr, cond-or-string, #rest arguments)
   block ()
@@ -155,85 +172,99 @@ define method cerror (restart-descr, cond-or-string, #rest arguments)
 	     init-arguments: list(format-string: restart-descr,
 				  format-arguments: arguments))
     #f;
-  end;
-end;
+  end block;
+end method cerror;
+
 
 define method type-error (value, type)
   error(make(<type-error>, value: value, type: type));
-end;
+end method type-error;
+
 
 define method check-type (value, type)
   if (instance?(value, type))
     value;
   else
     type-error(value, type);
-  end;
-end;
+  end if;
+end method check-type;
 
 define method abort ()
   error(make(<abort>));
-end;
+end method abort;
+
 
 define method default-handler (condition :: <condition>)
   #f;
-end;
+end method default-handler;
+
 
 define method default-handler (condition :: <serious-condition>)
   invoke-debugger(condition);
-end;
+end method default-handler;
+
 
 define method default-handler (condition :: <warning>)
   report-condition(condition);
   #f;
-end;
+end method default-handler;
+
 
 define method default-handler (restart :: <restart>)
   error("No restart handler for %=", restart);
-end;
+end method default-handler;
+
 
 
 // Breakpoints.
 
 define class <breakpoint> (<simple-warning>)
-end;
+end class <breakpoint>;
+
 
 define method return-allowed? (cond :: <breakpoint>)
   #t;
-end;
+end method return-allowed?;
+
 
 define method return-query (cond :: <breakpoint>)
   #f;
-end;
+end method return-query;
+
 
 define method return-description (cond :: <breakpoint>)
   "Return #f";
-end;
+end method return-description;
+
 
 define method %break (string :: <string>, #rest arguments)
   %break(make(<breakpoint>,
 	      format-string: string,
 	      format-arguments: arguments));
-end;
+end method %break;
+
 
 define method %break (cond :: <condition>, #rest noise)
   unless (empty?(noise))
     error("Can only supply format arguments when supplying a format string.");
-  end;
+  end unless;
   block ()
     invoke-debugger(cond);
   exception (<simple-restart>,
 	     init-arguments: list(format-string: "Continue from break"))
     #f;
-  end;
-end;
+  end block;
+end method %break;
+
 
 define method break (#rest arguments)
   if (empty?(arguments))
     %break("Break.");
   else
     apply(%break, arguments);
-  end;
-end;
+  end if;
+end method break;
+
 
 
 // Introspection.
@@ -245,12 +276,14 @@ define method do-handlers (function :: <function>)
 	     h.handler-test | method (x) #t end,
 	     h.handler-function,
 	     h.handler-init-args);
-  end;
-end;
+  end for;
+end method do-handlers;
+
 
 define method return-allowed? (cond :: <condition>)
   #f;
-end;
+end method return-allowed?;
+
 
 define generic return-description (cond);
 
@@ -259,7 +292,8 @@ define generic return-description (cond);
 
 define method restart-query (restart :: <restart>)
   #f;
-end;
+end method restart-query;
+
 
 define generic return-query (condition);
 

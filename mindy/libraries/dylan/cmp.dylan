@@ -1,5 +1,6 @@
 module: Dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.5 1994/06/27 17:10:16 wlott Exp $
+author: William Lott (wlott@cs.cmu.edu)
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dylan,v 1.6 1994/10/03 14:00:35 nkramer Exp $
 
 //======================================================================
 //
@@ -32,26 +33,22 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/cmp.dyla
 
 // Default methods for non-primitive compares.
 
-define method \<= (x :: <object>, y :: <object>)
+define method \<= (x :: <object>, y :: <object>) => answer :: <boolean>;
   ~(y < x);
-end;
+end method;
 
-define method \~= (x :: <object>, y :: <object>)
+
+define method \~= (x :: <object>, y :: <object>) => answer :: <boolean>;
   ~(x = y);
-end;
+end method;
 
-define constant \>= =
-  begin
-    local method \>= (x :: <object>, y :: <object>)
-	    ~(x < y);
-	  end;
-    \>=;
-  end;
 
-define constant \> =
-  begin
-    local method \> (x :: <object>, y :: <object>)
-	    y < x;
-	  end;
-    \>;
-  end;
+define constant \>= 
+  = method (x :: <object>, y :: <object>)  => answer :: <boolean>;
+      ~(x < y);
+    end method;
+
+define constant \> 
+  = method (x :: <object>, y :: <object>) => answer :: <boolean>;
+      y < x;
+    end method;

@@ -1,5 +1,6 @@
 module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.7 1994/06/27 17:10:21 wlott Exp $
+author: William Lott (wlott@cs.cmu.edu)
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/debug.dylan,v 1.8 1994/10/03 14:00:41 nkramer Exp $
 
 //======================================================================
 //
@@ -34,8 +35,8 @@ define method report-problem (problem)
     report-condition(problem);
   exception <error>
     puts("\nproblem reporting problem... giving up");
-  end;
-end;
+  end block;
+end method report-problem;
 
 
 define constant debug-variables = make(<stretchy-vector>);
@@ -45,8 +46,7 @@ define method debugger-flush ()
   debug-variables.size := 0;
   puts("Flushed all debugger variables.\n");
   values();
-end;
-
+end method debugger-flush;
 
 
 define method eval-debugger-expr (expr, num-debug-vars)
@@ -58,16 +58,16 @@ define method eval-debugger-expr (expr, num-debug-vars)
 	  debug-variables[num-debug-vars + var];
 	else
 	  debug-variables[var];
-	end;
+	end if;
       exception <error>
 	error("No debug variable $%=", var);
-      end;
+      end block;
     literal: => tail(expr);
     funcall: =>
       apply(method (func, #rest args) apply(func, args) end,
 	    map(rcurry(eval-debugger-expr, num-debug-vars), tail(expr)));
-  end;
-end method;
+  end select;
+end method eval-debugger-expr;
 
 
 define method debugger-eval (expr)
@@ -80,13 +80,13 @@ define method debugger-eval (expr)
       report-problem(problem);
       putc('\n');
       #f;
-    end;
+    end block;
   exception (<error>)
     puts("Could not recover from earlier error.\n");
     #f;
-  end;
-end;
-    
+  end block;
+end method debugger-eval;
+
 
 define method eval-and-print (expr, num-debug-vars)
   let (#rest results) = eval-debugger-expr(expr, num-debug-vars);
@@ -97,13 +97,14 @@ define method eval-and-print (expr, num-debug-vars)
 	 result in results)
       unless (first)
 	puts(", ");
-      end;
+      end unless;
       format("$%==%=", debug-variables.size, result);
       add!(debug-variables, result);
-    end;
-  end;
+    end for;
+  end if;
   putc('\n');
-end method;
+end method eval-and-print;
+
 
 define method debugger-call (exprs)
   let num-debug-vars = debug-variables.size;
@@ -112,9 +113,10 @@ define method debugger-call (exprs)
       eval-and-print(expr, num-debug-vars);
     exception (<abort>, init-arguments: list(description: "Blow off call"))
       #f;
-    end;
-  end;
-end;
+    end block;
+  end for;
+end method debugger-call;
+
 
 define method debugger-print (exprs)
   block ()
@@ -126,12 +128,13 @@ define method debugger-print (exprs)
 	puts("invocation failed:\n  ");
 	report-problem(problem);
 	putc('\n');
-      end;
-    end;
+      end block;
+    end for;
   exception (<error>)
     puts("Could not recover from earlier error.\n");
-  end;
-end;
+  end block;
+end method debugger-print;
+
 
 define method debugger-report-condition (cond)
   block ()
@@ -141,13 +144,13 @@ define method debugger-report-condition (cond)
     exception (problem :: <error>)
       puts("problem reporting condition:\n  ");
       report-problem(problem);
-    end;
+    end block;
     puts("\n\n");
   exception <error>
     puts("\nCould not recover from earlier errors.\n\n");
-  end;
-end;
-  
+  end block;
+end method debugger-report-condition;
+
 
 define method debugger-abort ()
   block ()
@@ -157,11 +160,11 @@ define method debugger-abort ()
       puts("problem signaling abort restart:\n  ");
       report-problem(problem);
       putc('\n');
-    end;
+    end block;
   exception <error>
     puts("Could not recover from earlier errors.\n");
   end block;
-end;
+end method debugger-abort;
 
 
 define method debugger-describe-restarts (cond)
@@ -177,19 +180,19 @@ define method debugger-describe-restarts (cond)
 	  exception (problem :: <error>)
 	    puts("\nproblem describing restart:\n  ");
 	    report-problem(problem);
-	  end;
+	  end block;
 	  putc('\n');
 	  index := index + 1;
 	end if;
       end for;
       if (zero?(index))
 	puts("No active restarts.\n");
-      end;
+      end if;
     exception (problem :: <error>)
       puts("\nproblem describing restarts:\n  ");
       report-problem(problem);
       putc('\n');
-    end;
+    end block;
     block ()
       if (instance?(cond, <condition>) & return-allowed?(cond))
 	block ()
@@ -204,7 +207,7 @@ define method debugger-describe-restarts (cond)
 	    <restart> =>
 	      puts(":\n  ");
 	      report-condition(description);
-	  end;
+	  end select;
 	exception (problem :: <error>)
 	  puts("\nproblem describing return convention:\n  ");
 	  report-problem(problem);
@@ -219,7 +222,8 @@ define method debugger-describe-restarts (cond)
   exception <error>
     puts("\nCould not recover from earlier errors.\n");
   end block;
-end method;
+end method debugger-describe-restarts;
+
 
 define method debugger-restart (cond, index)
   block (return)
@@ -235,12 +239,12 @@ define method debugger-restart (cond, index)
 	    unless (~test | test(h))
 	      puts("The restart handler refused to handle the restart.\n");
 	      return(#f);
-	    end;
+	    end unless;
 	    local
 	      method next-handler ()
 		puts("The restart handler declined to handle the restart.\n");
 		return(#f);
-	      end;
+	      end method next-handler;
 	    let (#rest values) = h.handler-function(restart, next-handler);
 	    if (instance?(cond, <condition>) & return-allowed?(cond))
 	      return(#t, values);
@@ -270,7 +274,7 @@ define method debugger-restart (cond, index)
     puts("Could not recover from earlier errors.\n");
     #f;
   end block;
-end method;
+end method debugger-restart;
       
     
 define method debugger-return (cond)
@@ -285,24 +289,25 @@ define method debugger-return (cond)
 	  report-problem(problem);
 	  putc('\n');
 	  return(#f);
-	end;
+	end block;
       else
 	puts("Returning is not allowed\n");
 	return(#f);
-      end;
+      end if;
     exception (problem :: <error>)
       puts("problem checking to see if returning is allowed:\n  ");
       report-problem(problem);
       putc('\n');
       return(#f);
-    end;
+    end block;
   exception <error>
     puts("Could not recover from earlier errors.\n");
     #f;
   end block;
-end method;
+end method debugger-return;
 
 
 
 // Now that we have the dylan helper routines defined, enable the error system.
+//
 enable-error-system();
