@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.38 2003/07/02 16:56:30 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/exports.dylan,v 1.39 2003/07/11 03:20:04 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -237,6 +237,7 @@ define module System
 
 	     // Raw pointer stuff.
 	     <raw-pointer>, pointer-deref, pointer-deref-setter,
+             vector-elements-address,
 
 	     system, import-string, export-string, getenv, 
 	     no-core-dumps, get-time-of-day,

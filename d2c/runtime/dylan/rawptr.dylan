@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/rawptr.dylan,v 1.3 2003/07/09 14:24:06 prom Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/rawptr.dylan,v 1.4 2003/07/11 03:20:04 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -96,3 +96,9 @@ define macro pointer-deref-setter
 			    ?ptr:expression, ?offset:expression) }
       => { %%primitive(\pointer-deref-setter, ?new-val, ?kind, ?ptr, ?offset) }
 end;
+
+define sealed inline-only method vector-elements-address
+    (vec :: <vector>)
+ => (res :: <raw-pointer>);
+  %%primitive(vector-elements, vec);
+end method;
