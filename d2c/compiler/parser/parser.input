@@ -1,5 +1,5 @@
 module: parser
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.9 1995/05/05 08:54:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parser.input,v 1.10 1995/05/26 13:13:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -233,6 +233,10 @@ defining-form (<define-token> modifiers-opt <generic-token>
   %4;
 %
 
+defining-form (seal-generic)
+  %1;
+%
+
 defining-form (<define-token> <library-token> <name-token> clauses-opt
 	       <end-token>)
   make(<define-library-parse>, name: %3, clauses: %4);
@@ -353,6 +357,13 @@ generic-function-definition (<name-token> generic-function-body
   %2.defgen-name := %1;
   %2.defgen-plist := %3;
   %2;
+%
+
+:type seal-generic <seal-generic-parse>
+
+seal-generic (<seal-token> <generic-token> <name-token>
+	      <left-paren-token> expressions-opt <right-paren-token>)
+  make(<seal-generic-parse>, name: %3, type-exprs: %5);
 %
 
 :type clauses-opt <simple-object-vector>
@@ -593,6 +604,16 @@ method-and-name (<begin-word-token> <name-token>)
 
 
 ;;;; Expressions
+
+:type expressions-opt <simple-object-vector>
+
+expressions-opt ()
+  #[];
+%
+
+expressions-opt (expressions)
+  as(<simple-object-vector>, %1);
+%
 
 :type expressions <stretchy-vector>
 

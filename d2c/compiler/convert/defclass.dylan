@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.22 1995/05/26 10:48:01 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.23 1995/05/26 13:13:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -52,8 +52,9 @@ define class <slot-defn> (<object>)
   // The class that introduces this slot.
   slot slot-defn-class :: <class-definition>;
   //
-  // #t if this class is sealed, #f if not.  This really means that the added
-  // methods are sealed.
+  // #t if this slot is sealed, #f if not.  This really means that the getter
+  // generic function is sealed on this class and the setter (if any) is sealed
+  // on object and this class.
   slot slot-defn-sealed? :: <boolean>,
     required-init-keyword: sealed:;
   //
@@ -172,15 +173,12 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
   for (option in form.defclass-options)
     select (option.classopt-kind)
       #"slot" =>
-	let (open?, sealed?, allocation, type, setter, init-keyword,
+	let (sealed?, allocation, type, setter, init-keyword,
 	     req-init-keyword, init-value, init-function)
 	  = extract-properties("slot spec", option.classopt-plist,
-			       open:, sealed:, allocation:, type:, setter:,
+			       sealed:, allocation:, type:, setter:,
 			       init-keyword:, required-init-keyword:,
 			       init-value:, init-function:);
-	if (open? & sealed?)
-	  compiler-error("Can't be both open and sealed.");
-	end;
 	let allocation = if (allocation)
 			   allocation.varref-id.token-symbol;
 			 else
@@ -257,7 +255,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
 	let setter-name = setter & make(<basic-name>, symbol: setter,
 					module: *Current-Module*);
 	let slot = make(<slot-defn>,
-			sealed: ~open?,
+			sealed: sealed?,
 			allocation: allocation,
 			type: type,
 			getter-name: getter-name,
@@ -616,18 +614,30 @@ define method finalize-top-level-form (tlf :: <define-class-tlf>) => ();
 				specializers: list(class-type),
 				returns: slot-type),
 		hairy: hairy?,
-		sealed: slot.slot-defn-sealed?,
 		slot: info);
+      if (slot.slot-defn-sealed?)
+	let gf = slot.slot-defn-getter.method-defn-of;
+	if (gf)
+	  add-seal(gf, list(class-type));
+	end;
+      end;
       slot.slot-defn-setter
 	:= if (slot.slot-defn-setter-name)
-	     make(<setter-method-definition>,
-		  base-name: slot.slot-defn-setter-name,
-		  signature: make(<signature>,
-				  specializers: list(slot-type, class-type),
-				  returns: slot-type),
-		  hairy: hairy?,
-		  sealed: slot.slot-defn-sealed?,
-		  slot: info);
+	     let defn = make(<setter-method-definition>,
+			     base-name: slot.slot-defn-setter-name,
+			     signature: make(<signature>,
+					     specializers:
+					       list(slot-type, class-type),
+					     returns: slot-type),
+			     hairy: hairy?,
+			     slot: info);
+	     if (slot.slot-defn-sealed?)
+	       let gf = defn.method-defn-of;
+	       if (gf)
+		 add-seal(gf, list(object-ctype(), class-type));
+	       end;
+	     end;
+	     defn;
 	   else
 	     #f;
 	   end;

@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.21 1995/05/26 10:48:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.22 1995/05/26 13:13:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -44,6 +44,11 @@ define class <generic-definition> (<function-definition>)
   slot generic-defn-methods :: <list>,
     init-value: #();
   //
+  // List of all the seals on this generic function.  Each seal is a list of
+  // types.
+  slot generic-defn-seals :: <list>,
+    init-value: #();
+  //
   // Information about sealed methods of this GF.  This is filled in on demand.
   // Use generic-defn-seal-info instead.  See "method-tree".
   slot %generic-defn-seal-info :: <list>;
@@ -56,6 +61,16 @@ end;
 
 define method defn-type (defn :: <generic-definition>) => res :: <cclass>;
   dylan-value(#"<generic-function>");
+end;
+
+define method add-seal
+    (defn :: <generic-definition>, types :: <list>) => ();
+  defn.generic-defn-seals := pair(types, defn.generic-defn-seals);
+end;
+
+define method add-seal
+    (defn :: <generic-definition>, types :: <sequence>) => ();
+  add-seal(defn, as(<list>, types));
 end;
 
 define class <implicit-generic-definition>
@@ -84,9 +99,6 @@ define method defn-type (defn :: <abstract-method-definition>)
 end;
 
 define class <method-definition> (<abstract-method-definition>)
-  //
-  // #f iff the open adjective wasn't supplied.
-  slot method-defn-sealed? :: <boolean>, required-init-keyword: sealed:;
   //
   // The generic function this method is part of, or #f if the base-name is
   // undefined or not a generic function.
@@ -123,6 +135,17 @@ define class <define-implicit-generic-tlf> (<simple-define-tlf>)
   //
   // Make the definition required.
   required keyword defn:;
+end;
+
+define class <seal-generic-tlf> (<top-level-form>)
+  //
+  // The name of the generic function.
+  slot seal-generic-name :: <name>,
+    required-init-keyword: name:;
+  //
+  // The type expressions.
+  slot seal-generic-type-exprs :: <simple-object-vector>,
+    required-init-keyword: type-exprs:;
 end;
 
 define class <define-method-tlf> (<simple-define-tlf>)
@@ -179,22 +202,27 @@ define method process-top-level-form (form :: <define-generic-parse>) => ();
 	    returns: form.defgen-returns));
 end;
 
+define method process-top-level-form (form :: <seal-generic-parse>) => ();
+  add!($Top-Level-Forms,
+       make(<seal-generic-tlf>,
+	    name: make(<basic-name>,
+		       symbol: form.sealgen-name.token-symbol,
+		       module: *Current-Module*),
+	    type-exprs: form.sealgen-type-exprs));
+end;
+
 define method process-top-level-form (form :: <define-method-parse>) => ();
   let name = form.defmethod-method.method-name.token-symbol;
-  let (open?, sealed?, inline?, movable?, flushable?)
+  let (sealed?, inline?, movable?, flushable?)
     = extract-modifiers("define method", name, form.define-modifiers,
-			#"open", #"sealed", #"inline", #"movable",
-			#"flushable");
-  if (open? & sealed?)
-    error("define method %s can't be both open and sealed", name);
-  end;
+			#"sealed", #"inline", #"movable", #"flushable");
   let base-name = make(<basic-name>, symbol: name, module: *Current-Module*);
   let parse = form.defmethod-method;
   let params = parse.method-param-list;
   implicitly-define-generic(base-name, params.paramlist-required-vars.size,
 			    params.paramlist-rest & ~params.paramlist-keys,
 			    params.paramlist-keys & #t);
-  let tlf = make(<define-method-tlf>, base-name: base-name, sealed: ~open?,
+  let tlf = make(<define-method-tlf>, base-name: base-name, sealed: sealed?,
 		 inline: inline?, movable: movable?,
 		 flushable: flushable? | movable?,
 		 parse: parse);
@@ -239,6 +267,29 @@ define method finalize-top-level-form (tlf :: <define-generic-tlf>) => ();
   end;
 end;
 
+define method finalize-top-level-form (tlf :: <seal-generic-tlf>) => ();
+  let var = find-variable(tlf.seal-generic-name);
+  let defn = var & var.variable-definition;
+  unless (instance?(defn, <generic-definition>))
+    compiler-error("%s doesn't name a generic function.",
+		   tlf.seal-generic-name);
+  end;
+  let type-exprs = tlf.seal-generic-type-exprs;
+  unless (defn.function-defn-signature.specializers.size == type-exprs.size)
+    compiler-error("Wrong number of types in seal generic for %s",
+		   tlf.seal-generic-name);
+  end;
+  add-seal(defn,
+	   map(method (type-expr)
+		 let type = ct-eval(type-expr, #f) | make(<unknown-ctype>);
+		 unless (instance?(type, <ctype>))
+		   compiler-error("Type in seal generic isn't a type.");
+		 end;
+		 type;
+	       end,
+	       type-exprs));
+end;
+
 define method finalize-top-level-form (tlf :: <define-implicit-generic-tlf>)
     => ();
   // Nothing to finalize.
@@ -250,16 +301,22 @@ define method finalize-top-level-form (tlf :: <define-method-tlf>)
   let (signature, anything-non-constant?)
     = compute-signature(tlf.method-tlf-parse.method-param-list,
 			tlf.method-tlf-parse.method-returns);
-  tlf.tlf-defn := make(<method-definition>,
-		       base-name: name,
-		       signature: signature,
-		       hairy: anything-non-constant?,
-		       sealed: tlf.method-tlf-sealed?,
-		       movable: tlf.method-tlf-movable?,
-		       flushable: tlf.method-tlf-flushable?,
-		       inline-expansion: tlf.method-tlf-inline?
-			 & ~anything-non-constant?
-			 & tlf.method-tlf-parse);
+  let defn = make(<method-definition>,
+		  base-name: name,
+		  signature: signature,
+		  hairy: anything-non-constant?,
+		  movable: tlf.method-tlf-movable?,
+		  flushable: tlf.method-tlf-flushable?,
+		  inline-expansion: tlf.method-tlf-inline?
+		    & ~anything-non-constant?
+		    & tlf.method-tlf-parse);
+  tlf.tlf-defn := defn;
+  if (tlf.method-tlf-sealed?)
+    let gf = defn.method-defn-of;
+    if (gf)
+      add-seal(gf, signature.specializers);
+    end;
+  end;
 end;
 
 define method make (wot :: limited(<class>, subclass-of: <method-definition>),
@@ -392,6 +449,10 @@ define method convert-generic-definition
     maybe-make-discriminator(builder, defn);
   end;
 end;  
+
+define method convert-top-level-form
+    (builder :: <fer-builder>, tlf :: <seal-generic-tlf>) => ();
+end;
 
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <define-method-tlf>) => ();

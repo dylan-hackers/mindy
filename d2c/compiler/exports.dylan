@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.66 1995/05/26 10:50:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.67 1995/05/26 13:13:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -128,10 +128,10 @@ define module tokens
     <from-token>, <generic-token>, <handler-token>, <if-token>,
     <in-token>, <let-token>, <library-token>, <local-token>,
     <macro-token>, <module-token>, <method-token>, <mv-call-token>,
-    <otherwise-token>, <primitive-token>, <set-token>, <use-token>,
-    <uwp-token>, <variable-token>, <while-token>, <keyword-token>,
-    <abstract-literal-token>, <literal-token>, <string-token>,
-    <operator-token>, <binary-operator-token>,
+    <otherwise-token>, <primitive-token>, <seal-token>, <set-token>,
+    <use-token>, <uwp-token>, <variable-token>, <while-token>,
+    <keyword-token>, <abstract-literal-token>, <literal-token>,
+    <string-token>, <operator-token>, <binary-operator-token>,
     <simple-binary-operator-token>, <unary-operator-token>,
     <punctuation-token>, <left-paren-token>, <right-paren-token>,
     <comma-token>, <dot-token>, <semicolon-token>,
@@ -301,6 +301,7 @@ define module parse-tree
     <define-constant-parse>, defconst-bindings,
     <define-generic-parse>, defgen-name, defgen-name-setter, defgen-param-list,
     defgen-returns, defgen-plist, defgen-plist-setter,
+    <seal-generic-parse>, sealgen-name, sealgen-type-exprs,
     <define-library-parse>, deflibrary-name, deflibrary-clauses,
     <define-method-parse>, defmethod-method,
     <define-module-parse>, defmodule-name, defmodule-clauses,
@@ -827,7 +828,7 @@ define module define-functions
   export
     compute-signature,
     function-defn-signature-setter, function-defn-hairy?-setter,
-    <generic-definition>, ct-sorted-applicable-methods,
+    <generic-definition>, add-seal, ct-sorted-applicable-methods,
     method-defn-leaf-setter, method-defn-inline-expansion,
     <method-definition>, method-defn-of,
     <accessor-method-definition>, accessor-method-defn-slot-info,

@@ -1,6 +1,6 @@
 Module: define-functions
 Description: stuff to process method seals and build method trees
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.4 1995/05/02 16:34:15 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/method-tree.dylan,v 1.5 1995/05/26 13:13:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -467,15 +467,7 @@ end method;
 //
 define method grovel-gf-stuff (gf :: <generic-definition>) => ();
   let meths = check-gf-congruence(gf);
-  let seals = #();
-  if (gf.generic-defn-sealed?)
-    seals := pair(gf.function-defn-signature.specializers, seals);
-  end;
-  for (meth in meths)
-    if (meth.method-defn-sealed?)
-      seals := pair(meth.function-defn-signature.specializers, seals);
-    end;
-  end;
+  let seals = gf.generic-defn-seals;
 
   gf.%generic-defn-seal-info := #();
   for (cur-seal in seals)

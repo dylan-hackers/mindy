@@ -1,5 +1,5 @@
 module: parse-tree
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.6 1995/04/27 23:02:52 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/parse-tree.dylan,v 1.7 1995/05/26 13:13:35 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -371,6 +371,16 @@ define class <define-generic-parse> (<modified-defining-form>)
   // And the property list.
   slot defgen-plist :: <simple-object-vector>,
     init-value: #[], init-keyword: plist:;
+end;
+
+define class <seal-generic-parse> (<defining-form>)
+  //
+  // The name of the generic function being defined.
+  slot sealgen-name :: <name-token>, required-init-keyword: name:;
+  //
+  // The type expressions.
+  slot sealgen-type-exprs :: <simple-object-vector>,
+    required-init-keyword: type-exprs:;
 end;
 
 // <define-library-parse> -- exported.
