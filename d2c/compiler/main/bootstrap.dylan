@@ -1,12 +1,12 @@
-module: dylan
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.39 1995/11/09 23:43:41 wlott Exp $
+module: dylan-viscera
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/bootstrap.dylan,v 1.40 1995/11/13 23:11:29 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
 // Have to use the define %%module internal form because define module
 // hasn't been defined yet.
 //
-define %%module dylan
+define %%module dylan-viscera
 end;
 
 
