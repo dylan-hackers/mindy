@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.3 2000/01/24 04:56:17 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/clone.dylan,v 1.4 2000/09/09 20:35:34 gabor Exp $
 copyright: see below
 
 //======================================================================
@@ -44,8 +44,7 @@ define class <clone-state> (<object>)
     init-value: #f;
   //
   // Hash table mapping original things to new things.
-  slot cloned-stuff :: <object-table>,
-    init-function: curry(make, <object-table>);
+  slot cloned-stuff :: <object-table> = make(<object-table>);
 end;
 
 
