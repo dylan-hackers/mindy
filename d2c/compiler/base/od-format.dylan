@@ -1,5 +1,5 @@
 Module: od-format
-RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.46 1996/04/13 21:11:32 wlott Exp $
+RCS-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/od-format.dylan,v 1.47 1996/04/15 11:55:28 wlott Exp $
 
 /*
 
@@ -505,7 +505,7 @@ begin
   register-object-id(#"uninitialized-value-leaf", #x00AF);
   register-object-id(#"method-literal", #x00B0);
   register-object-id(#"exit-function-literal", #x00B1);
-  register-object-id(#"fer-lambda", #x00B2);
+  register-object-id(#"fer-function-region", #x00B2);
   register-object-id(#"fer-component", #x00B3);
   register-object-id(#"prologue-operation", #x00B4);
   register-object-id(#"primitive-info", #x00B5);
@@ -530,33 +530,34 @@ begin
   register-object-id(#"variable-definition", #x00C7);
   register-object-id(#"class-definition", #x00C8);
   register-object-id(#"init-function-definition", #x00C9);
-  register-object-id(#"define-bindings-macro-definition", #x00CA);
-  register-object-id(#"define-macro-definition", #x00CB);
-  register-object-id(#"function-macro-definition", #x00CC);
-  register-object-id(#"statement-macro-definition", #x00CD);
-  register-object-id(#"seal-info", #x00CE);
-  register-object-id(#"sealed-domain", #x00CF);
+  register-object-id(#"maker-function-definition", #x00CA);
+  register-object-id(#"define-bindings-macro-definition", #x00CB);
+  register-object-id(#"define-macro-definition", #x00CC);
+  register-object-id(#"function-macro-definition", #x00CD);
+  register-object-id(#"statement-macro-definition", #x00CE);
+  register-object-id(#"seal-info", #x00CF);
+  register-object-id(#"sealed-domain", #x00D0);
 
-  register-object-id(#"backend-var-info", #x00D0);
-  // register-object-id(#"function-info", #x00D1);  ### Needed?
-  register-object-id(#"constant-info", #x00D2);
-  register-object-id(#"constant-function-info", #x00D3);
-  register-object-id(#"constant-method-info", #x00D4);
+  register-object-id(#"backend-var-info", #x00E0);
+  // register-object-id(#"function-info", #x00E1);  ### Needed?
+  register-object-id(#"constant-info", #x00E2);
+  register-object-id(#"constant-function-info", #x00E3);
+  register-object-id(#"constant-method-info", #x00E4);
 
-  register-object-id(#"general-representation", #x00D8);
-  register-object-id(#"heap-representation", #x00D9);
-  register-object-id(#"immediate-representation", #x00DA);
-  register-object-id(#"data-word-representation", #x00DB);
+  register-object-id(#"general-representation", #x00E8);
+  register-object-id(#"heap-representation", #x00E9);
+  register-object-id(#"immediate-representation", #x00EA);
+  register-object-id(#"data-word-representation", #x00EB);
 
-  register-object-id(#"define-library-tlf", #x00E0);
-  register-object-id(#"define-module-tlf", #x00E1);
-  register-object-id(#"define-binding-tlf", #x00E2);
-  register-object-id(#"unit-info", #x00E3);
-  register-object-id(#"extra-label", #x00E4);
+  register-object-id(#"define-library-tlf", #x00F0);
+  register-object-id(#"define-module-tlf", #x00F1);
+  register-object-id(#"define-binding-tlf", #x00F2);
+  register-object-id(#"unit-info", #x00F3);
+  register-object-id(#"extra-label", #x00F4);
 
-  register-object-id(#"use", #x00E8);
-  register-object-id(#"all-marker", #x00E9);
-  register-object-id(#"renaming", #x00EA);
+  register-object-id(#"use", #x00F8);
+  register-object-id(#"all-marker", #x00F9);
+  register-object-id(#"renaming", #x00FA);
 
 
   // Tokens
