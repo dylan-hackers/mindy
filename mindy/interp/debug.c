@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.38 1994/11/03 22:19:09 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/debug.c,v 1.39 1994/11/28 15:02:20 wlott Exp $
 *
 * This file implements the debugger.
 *
@@ -91,6 +91,7 @@ static struct variable *debugger_abort_var;
 static struct variable *debugger_restarts_var;
 static struct variable *debugger_restart_var;
 static struct variable *debugger_return_var;
+
 
 
 /* Frame utilities. */
@@ -201,9 +202,13 @@ static void print_frame(struct frame_info *frame, boolean print_line)
 {
     obj_t *ptr = obj_rawptr(frame->fp[-3]);
     obj_t *end = frame->fp - 4;
+    obj_t name = function_debug_name_or_self(*ptr++);
 
     printf("fp 0x%08lx: ", (unsigned long)frame->fp);
-    prin1(function_debug_name_or_self(*ptr++));
+    if (object_class(name) == obj_SymbolClass)
+	fputs(sym_name(name), stdout);
+    else
+	prin1(name);
     putchar('(');
     if (ptr < end) {
 	while (1) {
@@ -870,9 +875,7 @@ static void locals_cmd(obj_t args)
 	    if (indirect)
 		value = value_cell_ref(value);
 
-	    prin1(symbol);
-	    printf(": ");
-	    print(value);
+	    format("%s: %=\n", symbol, value);
 	}
 
 	locals = TAIL(locals);
@@ -1505,9 +1508,7 @@ static void enable_cmd(obj_t args)
     }
 
     if (thread->suspend_count == 0) {
-	printf("thread ");
-	prin1(arg_value(first_arg(args)));
-	printf(" isn't suspended\n");
+	format("thread %= isn't suspended\n", arg_value(first_arg(args)));
 	return;
     }
 
