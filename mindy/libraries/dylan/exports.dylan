@@ -11,7 +11,7 @@ module: dylan-user
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.13 1994/04/06 22:51:33 wlott Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.14 1994/04/08 17:22:47 wlott Exp $
 //
 //  This file does whatever.
 //
@@ -24,11 +24,11 @@ define module Builtin-Stuff
   export
     \*, \+, \-, \/, \<, \<=, \=, \==, \~=,
     <array>,
-    <buffer>, <byte-string>,
+    <boolean>, <buffer>, <byte-string>,
     <character>, <class>, <collection>, <complex>,
     <double-float>,
     <empty-list>, <explicit-key-collection>, <extended-float>,
-    <float>, <function>,
+    <false>, <float>, <function>,
     <generic-function>,
     <integer>,
     <keyword>,
@@ -41,7 +41,7 @@ define module Builtin-Stuff
     <ratio>, <rational>, <real>,
     <sequence>, <simple-object-vector>, <single-float>, <singleton>,
     <string>, <symbol>,
-    <type>,
+    <true>, <type>,
     <unicode-string>,
     <vector>,
     $permanent-hash-state,
@@ -82,6 +82,7 @@ define module Dylan
     exclude: (main, type-error, current-handler, handler-description,
 	      handler-function, handler-next, handler-test, handler-type,
 	      make-next-method-function, do-next-method, generic-apply,
+	      <boolean>, <true>, <false>,
 	      format, prin1, print, putc, puts, getc, invoke-debugger,
 	      debugger-flush, debugger-call, debugger-print,
 	      debugger-report-condition, debugger-abort,
@@ -94,6 +95,7 @@ define module Dylan
     import: (main, type-error, current-handler, handler-description,
 	     handler-function, handler-next, handler-test, handler-type,
 	     make-next-method-function, do-next-method, generic-apply,
+	     <boolean>, <true>, <false>,
 	     format, prin1, print, putc, puts, getc, invoke-debugger, 
 	     debugger-flush, debugger-call, debugger-print,
 	     debugger-report-condition, debugger-abort,
@@ -143,7 +145,8 @@ end Dylan;
 define module Extensions
   use Dylan;
   use Builtin-Stuff,
-    import: (main, format, prin1, print, putc, puts, getc),
+    import: (main, format, prin1, print, putc, puts, getc,
+	     <boolean>, <true>, <false>),
     export: all;
 end Extensions;
 
