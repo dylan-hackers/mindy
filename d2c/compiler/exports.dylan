@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.103 1995/11/12 17:11:37 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.104 1995/11/12 21:03:34 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -586,14 +586,15 @@ define module classes
   use forwards, import: {<cclass>}, export: all;
 
   export
-    cclass-name, closest-primary-superclass, closest-primary-superclass-setter,
-    precedence-list, subclasses,
+    cclass-name, closest-primary-superclass,
+    closest-primary-superclass-setter, precedence-list, subclasses,
     sealed?, abstract?, primary?, functional?, not-functional?,
-    all-slot-infos, new-slot-infos, override-infos, unique-id,
-    subclass-id-range-min, subclass-id-range-max, direct-type,
-    space-representation, space-representation-setter,
+    all-slot-infos, all-slot-infos-setter, new-slot-infos,
+    new-slot-infos-setter, override-infos, override-infos-setter,
+    unique-id, subclass-id-range-min, subclass-id-range-max,
+    direct-type, space-representation, space-representation-setter,
     speed-representation, speed-representation-setter,
-    instance-slots-layout, vector-slot,
+    instance-slots-layout, vector-slot, vector-slot-setter,
     <defined-cclass>, class-defn, class-defn-setter,
 
     <slot-allocation>, <slot-info>, slot-introduced-by,
