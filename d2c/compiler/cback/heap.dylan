@@ -1,5 +1,5 @@
 module: heap
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.41 1996/03/02 19:01:13 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/heap.dylan,v 1.42 1996/03/20 01:44:03 rgs Exp $
 copyright: Copyright (c) 1995, 1996  Carnegie Mellon University
 	   All rights reserved.
 
@@ -393,7 +393,7 @@ define method object-name (object :: <ct-value>, state :: <state>)
       // Dump-o-rama.  Mark it as dumped, queue it, and flag it as referenced
       // so we don't try to import the name.
       info.const-info-dumped? := #t;
-      push-last(state.object-queue, object);
+      push(state.object-queue, object);
       heap-object-referenced?(object, state) := #t;
     end if;
     //
@@ -738,7 +738,7 @@ define method spew-object
 	    let stream = state.stream;
 	    // The following ugly code should be immensely faster than
 	    // writing a character at a time to a stream.
-	    for (i from 0 below str.size)
+	    for (i :: <integer> from 0 below str.size)
 	      let char = str[i];
 	      select (char)
 		'\\' =>
@@ -797,10 +797,10 @@ define method spew-object
     end;
   end;
   spew-instance(specifier-type(#"<union>"), state,
-		union-members: make(<literal-list>,
+		union-members: make(<literal-simple-object-vector>,
 				    contents: mems,
 				    sharable: #t),
-		union-singletons: make(<literal-list>,
+		union-singletons: make(<literal-simple-object-vector>,
 				       contents: sings,
 				       sharable: #t));
 end;
@@ -1156,7 +1156,7 @@ define method find-init-value
     let getter = slot.slot-getter;
     let slot-name = getter & getter.variable-name;
     if (getter)
-      for (index from 0 below slots.size by 2)
+      for (index :: <integer> from 0 below slots.size by 2)
 	if (slots[index] == slot-name)
 	  let val = slots[index + 1];
 	  if (val)
