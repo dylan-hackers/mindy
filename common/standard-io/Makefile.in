@@ -68,6 +68,9 @@ OBJS = library.dbc standard-io.dbc
 
 all: ${OBJS}
 
+standard-io-lib.dbc: ${OBJS}
+	cat ${OBJS} > $@
+
 library.dbc: ${SRCDIR}/library.dylan
 	${MC} ${MINDYFLAGS} -o library.dbc ${SRCDIR}/library.dylan
 standard-io.dbc: ${SRCDIR}/standard-io.dylan
@@ -79,7 +82,7 @@ clean:
 realclean:
 	rm -f ${OBJS} Makefile *~ \#* core
 
-install: standard-io.dbc
-	${INSTALL_DATA} standard-io.dbc ${LIBDIR}
+install: standard-io-lib.dbc
+	${INSTALL_DATA} standard-io-lib.dbc ${LIBDIR}
 
 
