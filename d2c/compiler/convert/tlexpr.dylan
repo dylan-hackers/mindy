@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.5 1995/10/16 17:54:05 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.6 1995/11/06 16:52:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -18,7 +18,7 @@ define method process-top-level-form (form :: <expression>) => ();
   if (expansion)
     do(process-top-level-form, expansion);
   else
-    add!($Top-Level-Forms, make(<expression-tlf>, expression: form));
+    add!(*Top-Level-Forms*, make(<expression-tlf>, expression: form));
   end;
 end;
 
@@ -29,7 +29,7 @@ define method process-top-level-form (form :: <begin>) => ();
       if (instance?(subform, <local-declaration>))
 	let body = copy-sequence(form.begin-body, start: index);
 	let expr = make(<begin>, body: body);
-	add!($Top-Level-Forms, make(<expression-tlf>, expression: expr));
+	add!(*Top-Level-Forms*, make(<expression-tlf>, expression: expr));
 	return();
       else
 	process-top-level-form(subform);
@@ -64,7 +64,7 @@ define method process-top-level-form
     => ();
   if (form.primitive-name.token-symbol
 	== #"magic-internal-primitives-placeholder")
-    add!($Top-Level-Forms, make(<magic-interal-primitives-placeholder>));
+    add!(*Top-Level-Forms*, make(<magic-interal-primitives-placeholder>));
   else
     next-method();
   end;

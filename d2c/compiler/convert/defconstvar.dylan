@@ -1,5 +1,5 @@
 module: define-constants-and-variables
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.23 1995/08/20 17:43:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defconstvar.dylan,v 1.24 1995/11/06 16:52:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -187,7 +187,7 @@ define method process-aux (bindings :: <bindings>, tlf-class :: <class>,
 	end;
   let paramlist = bindings.bindings-parameter-list;
   let rest-param = paramlist.paramlist-rest;
-  add!($Top-Level-Forms,
+  add!(*Top-Level-Forms*,
        make(tlf-class,
 	    bindings: bindings,
 	    required-defns:

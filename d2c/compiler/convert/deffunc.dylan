@@ -1,5 +1,5 @@
 module: define-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.34 1995/10/05 01:11:41 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deffunc.dylan,v 1.35 1995/11/06 16:52:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -236,7 +236,7 @@ define method process-top-level-form (form :: <define-generic-parse>) => ();
 	    param-list: form.defgen-param-list,
 	    returns: form.defgen-returns);
   defn.function-defn-signature := curry(compute-define-generic-signature, tlf);
-  add!($Top-Level-Forms, tlf);
+  add!(*Top-Level-Forms*, tlf);
 end;
 
 define method compute-define-generic-signature
@@ -254,7 +254,7 @@ define method compute-define-generic-signature
 end;
 
 define method process-top-level-form (form :: <seal-generic-parse>) => ();
-  add!($Top-Level-Forms,
+  add!(*Top-Level-Forms*,
        make(<seal-generic-tlf>,
 	    name: make(<basic-name>,
 		       symbol: form.sealgen-name.token-symbol,
@@ -277,7 +277,7 @@ define method process-top-level-form (form :: <define-method-parse>) => ();
 		 inline: inline?, movable: movable?,
 		 flushable: flushable? | movable?,
 		 parse: parse);
-  add!($Top-Level-Forms, tlf);
+  add!(*Top-Level-Forms*, tlf);
 end;
 
 define method implicitly-define-generic
@@ -300,7 +300,7 @@ define method implicitly-define-generic
 		      returns: wild-ctype());
 	       end);
     note-variable-definition(defn);
-    add!($Top-Level-Forms, make(<define-implicit-generic-tlf>, defn: defn));
+    add!(*Top-Level-Forms*, make(<define-implicit-generic-tlf>, defn: defn));
   end;
 end;
 
@@ -343,7 +343,7 @@ define method finalize-top-level-form (tlf :: <define-implicit-generic-tlf>)
     // signature and ct-value.
     defn.ct-value;
   else
-    remove!($Top-Level-Forms, tlf);
+    remove!(*Top-Level-Forms*, tlf);
   end;
 end;
 

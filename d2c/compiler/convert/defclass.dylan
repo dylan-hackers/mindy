@@ -1,5 +1,5 @@
 module: define-classes
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.33 1995/08/29 15:22:48 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/defclass.dylan,v 1.34 1995/11/06 16:52:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -472,7 +472,7 @@ define method process-top-level-form (form :: <define-class-parse>) => ();
     override.override-defn-class := defn;
   end;
   note-variable-definition(defn);
-  add!($Top-Level-Forms, make(<define-class-tlf>, defn: defn));
+  add!(*Top-Level-Forms*, make(<define-class-tlf>, defn: defn));
 end;
 
 

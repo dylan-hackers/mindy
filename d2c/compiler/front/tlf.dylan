@@ -1,9 +1,9 @@
 module: top-level-forms
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.3 1995/03/23 21:57:13 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/tlf.dylan,v 1.4 1995/11/06 16:52:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
-define constant $Top-Level-Forms = make(<stretchy-vector>);
+define variable *Top-Level-Forms* = make(<stretchy-vector>);
 
 define abstract class <top-level-form> (<object>)
 end;
@@ -32,7 +32,7 @@ end;
 
 // finalize-top-level-form -- exported.
 //
-// Called by the main driver on each top level form in $Top-Level-Forms
+// Called by the main driver on each top level form in *Top-Level-Forms*
 // after everything has been parsed.
 //
 define generic finalize-top-level-form (tlf :: <top-level-form>) => ();
