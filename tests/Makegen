@@ -52,7 +52,7 @@ EOF
 if ($features{compiled_for_win32}) {
     $run_mindy = 'set DYLANPATH=$(DYLANPATH) && $(MINDY)';
 } else {
-    $run_mindy = 'DYLANPATH=$(DYLANPATH) ; $(MINDY)';
+    $run_mindy = 'DYLANPATH=$(DYLANPATH); export DYLANPATH ; $(MINDY)';
 }
     
 # I only wrote this function because of the .\ for win32 vs. ./ for
