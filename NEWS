@@ -1,3 +1,18 @@
+Gwydion Dylan 2.1.3 (1998-12-??)
+
+  This release includes Melange enhancements by Peter Housel, Andreas Bogk
+  and Eric Kidd; bug fixes by Andreas Bogk; optimizer fixes by Matthias
+  Hoelzl; and a new parse-arguments library (and lots of documentation) by
+  Eric Kidd.
+
+Gwydion Dylan 2.1.2 (1998-12-01)
+
+  A feature freeze is now in effect, and only a few critical bugs remain
+  before 2.2. This release includes bug fixes by Andreas Bogk, Peter Housel
+  and Eric Kidd; the new Dylan table-protocol by Peter Housel; build
+  process cleanup by Andreas Bogk and Peter Housel; Cheap-IO enhancements
+  by Eric Kidd; and more debugging support by Jeff Dubrule.
+
 Gwydion Dylan 2.1.1 (1998-10-18)
 
   Dylan is an advanced programming language, similar to Java, but with many

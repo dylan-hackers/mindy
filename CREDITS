@@ -16,7 +16,8 @@ credits file:
 N: Andreas Bogk
 E: ich@andreas.org
 D: LinuxPPC port, libc5 RPMS and tarballs, CVS and FTP site mirrors,
-D: shared libraries work, Boehm update, transcendental math.
+D: shared libraries work, Boehm update, transcendental math. Ongoing bug
+D: fixes and dirty work, too.
 
 N: Chaos Computer Club
 D: FTP and CVS hosting.
@@ -25,6 +26,7 @@ N: Jeff Dubrule
 E: igor@pobox.com
 D: Grand Exalted Poobah of .cvsignore files, miscellaneous cleanups.
 D: Interstate server repair team.
+D: 64-bit ports of Mindy and d2c (in progress).
 
 N: Harlequin, Ltd.
 D: Enormous improvements to Emacs dylan-mode, moral encouragement.
@@ -37,18 +39,21 @@ N: Matthias Hoelzl
 E: tc@gauss.muc.de
 D: Made Mindy work with standard flex, identified incredibly hairy bug
 D: in CSE optimizations, functional classes workaround.
+D: Lots of low-level compiler fixes.
 
 N: Peter Housel
 E: housel@acm.org
 D: FreeBSD port, major portability work, callbacks, callbacks to
-D: closures, fancy new SGML manuals.
+D: closures, fancy new SGML manuals. Lots of Melange work, and many,
+D: many bug fixes.
 
 N: Eric Kidd
 E: eric.kidd@pobox.com
 W: http://www.pobox.com/~emk/
 W: http://www.randomhacks.com/
 D: RPM packaging, new configure.in, Dylan tutorial, Melange fixes,
-D: website, bug tracker and mailing lists.
+D: website, bug tracker and mailing lists. Documentation and the new
+D: getopt, too.
 
 N: Megabyte Computers
 D: Hosting of randomhacks.com, server repairs, cheap parts. Our many

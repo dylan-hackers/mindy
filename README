@@ -1,24 +1,30 @@
-Gwydion Dylan 2.1 Snapshot Release
-==================================
+Gwydion Dylan 2.2
+=================
 
-THIS IS A SNAPSHOT RELEASE OF THE IN-DEVELOPMENT VERSION OF GWYDION
-DYLAN. Expect some bugs and extremely rough edges.
+THIS IS A STABLE RELEASE. It still has a number of known bugs, but should
+be suitable for day-to-day use. Development releases are also available
+through the maintainers' website; these offer more features and have a
+different set of bugs.
 
 Gwydion Dylan provides two implementations of the Dylan programming
 language: Mindy and d2c. Mindy is bytecode compiler and interpreter, and
 d2c is a Dylan-to-C compiler. Mindy compiles programs quickly, but the
 resulting executables run slowly. On the other hand, d2c compiles programs
 slowly, but they run quickly. Future development will mostly concentrate on
-removing bugs from d2c, adding new features, and making it run faster. To
-the best of our knowledge, nobody is actively maintaining Mindy at the
-moment.
+removing bugs from d2c, adding new features, and making it run faster.
+Although we will still port Mindy to new architectures, we probably won't
+be improving it significantly.
 
 Gwydion Dylan was originally written by the Gwydion Group at CMU as part of
 a research project studying advanced hypercode development environments. It
 is now maintained by a group of volunteers.
 
-To install Gwydion Dylan, take a look at the INSTALL file. For more
-information, see the following online resources:
+To install Gwydion Dylan, take a look at the INSTALL file. For a brief
+overview, see the man pages dylan(7), gwydion(7), d2c(1), mindy(1),
+melange(1) and make-dylan-app(1).
+
+If you'd like a tutorial or a more thorough reference, see the maintainers'
+web site (below). The following online resources are available:
 
   Maintainers' website:    http://www.gwydiondylan.org/
   Gwydion group:           http://legend.gwydion.cs.cmu.edu/
@@ -30,8 +36,11 @@ information, see the following online resources:
 
 If you use Gwydion to any extent, you'll want subscribe to gd-hackers so
 you can ask questions and report the inevitable bugs. Send a message to
-majordomo@randomhacks.com with the body "subscribe gd-hackers".
+majordomo@randomhacks.com with the body "subscribe gd-hackers". If you want
+to contribute code or documentation, we enthusiastically encourage you to
+do so.
 
-Be warned: Gwydion is not suitable for production work. Some of the
-omissions and shortcomings are drastic. Use Gwydion only if you're feeling
-daring and wish to experiment with a compiler currently under development.
+Be warned: Gwydion is not primarily intended for production work. Some of
+the omissions and shortcomings are fairly noticable, but it *has* been used
+in real-world projects before. Use Gwydion only if you're feeling daring
+and wish to experiment with a compiler currently under development.
