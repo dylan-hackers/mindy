@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.3 1996/02/02 23:18:10 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/main/main-exports.dylan,v 1.4 1996/02/08 02:23:40 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -39,6 +39,44 @@ define module init
   use source;
   use header;
 end;
+
+define module parse-tree-dump
+  use common;
+  use od-format;
+  use compile-time-values, import: { *compiler-dispatcher* };
+  use source;
+  use parse-tree;
+end module parse-tree-dump;
+
+define module tokens-dump
+  use common;
+  use od-format;
+  use compile-time-values, import: { *compiler-dispatcher* };
+  use source;
+  use tokens;
+end module tokens-dump;
+
+
+#if (mindy)
+// Part of the compiler library
+//
+define module autodump
+  use common;
+  use introspection;
+  use regular-expressions;
+  use streams;
+  use string-conversions;
+  use standard-io;
+
+  use parse-tree;
+  use tokens;
+  use variables;
+
+  export 
+    autodump;
+end module autodump;
+#end
+
 
 define module main
   use common;

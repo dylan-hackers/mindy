@@ -36,7 +36,6 @@ d2c: d2c.dbc
 	echo "#!/usr/local/bin/mindy -x" | cat - $^ > $@
 	chmod +x $@
 
-
 parse-dump.dylan: ../base/parse-tree.dylan autodump.dylan
 	${MAKE} autodumper.dbc
 	${MINDY} -f autodumper.dbc -autodump parse-tree
@@ -44,18 +43,6 @@ parse-dump.dylan: ../base/parse-tree.dylan autodump.dylan
 token-dump.dylan: ../base/tokens.dylan autodump.dylan
 	${MAKE} autodumper.dbc
 	${MINDY} -f autodumper.dbc -autodump tokens
-
-
-# autodump stuff is in the base library, even though we compile
-# them here.
-parse-dump.dbc: parse-dump.dylan
-	${MC} ${MINDYFLAGS} -lcompiler-base -o $@ $<
-
-token-dump.dbc: token-dump.dylan
-	${MC} ${MINDYFLAGS} -lcompiler-base -o $@ $<
-
-autodump.dbc: autodump.dylan
-	${MC} ${MINDYFLAGS} -lcompiler-base -o $@ $<
 
 autodumper.dbc: ${LIBS} ${NORMAL_OBJS}
 	cat $^ > $@
