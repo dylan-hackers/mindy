@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.60 1995/06/06 11:34:38 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.61 1995/06/06 19:29:01 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1090,8 +1090,8 @@ define method emit-assignment (defines :: false-or(<definition-site-variable>),
   if (defines)
     if (instance?(var.var-info, <values-cluster-info>))
       let (bottom-name, top-name) = consume-cluster(var, output-info);
-      deliver-cluster(defines, bottom-name, top-name, var.derived-type,
-		      output-info);
+      deliver-cluster(defines, bottom-name, top-name,
+		      var.derived-type.min-values, output-info);
     else
       let rep = if (instance?(defines.var-info, <values-cluster-info>))
 		  $general-rep;
@@ -1205,7 +1205,8 @@ define method emit-assignment
       write(next-info, stream);
     end;
     write(");\n", stream);
-    deliver-cluster(results, args, sp, call.derived-type, output-info);
+    deliver-cluster(results, args, sp, call.derived-type.min-values,
+		    output-info);
   end;
 end;
 
@@ -1351,7 +1352,8 @@ define method emit-assignment
 	    "doesn't return?");
   elseif (result-rep == #"cluster")
     format(output-info.output-info-guts-stream, "%s = %s;\n", new-sp, call);
-    deliver-cluster(results, sp, new-sp, func-info.function-info-result-type,
+    deliver-cluster(results, sp, new-sp,
+		    func-info.function-info-result-type.min-values,
 		    output-info);
   elseif (instance?(result-rep, <list>))
     let temp = new-local(output-info);
@@ -1451,7 +1453,7 @@ define method emit-assignment
     write(next-info, stream);
   end;
   write(");\n", stream);
-  deliver-cluster(results, bottom-name, top-name, call.derived-type,
+  deliver-cluster(results, bottom-name, top-name, call.derived-type.min-values,
 		  output-info);
 end;
 
@@ -1479,7 +1481,7 @@ define method emit-assignment
   format(stream, "save_state(%s, %s, %s);\n",
 	 main-entry-name(catch-info, output-info), values, func);
   if (defines)
-    deliver-cluster(defines, values, sp, wild-ctype(), output-info);
+    deliver-cluster(defines, values, sp, 0, output-info);
   end;
 end;
 
@@ -1627,8 +1629,9 @@ end;
 define method deliver-cluster
     (defines :: false-or(<definition-site-variable>),
      src-start :: <string>, src-end :: <string>,
-     type :: <values-ctype>, output-info :: <output-info>)
+     min-values :: <fixed-integer>, output-info :: <output-info>)
     => ();
+
   if (defines)
     let stream = output-info.output-info-guts-stream;
     if (instance?(defines.var-info, <values-cluster-info>))
@@ -1647,7 +1650,7 @@ define method deliver-cluster
 		  finally
 		    index;
 		  end;
-      unless (count <= type.min-values)
+      unless (count <= min-values)
 	format(stream, "%s = pad_cluster(%s, %s, %d);\n",
 	       src-end, src-start, src-end, count);
       end;
