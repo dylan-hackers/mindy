@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/list.dylan,v 1.3 2000/01/24 04:56:47 andreas Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/list.dylan,v 1.4 2000/10/20 15:21:41 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -318,3 +318,34 @@ define sealed inline method \= (sequence :: <sequence>, list :: <list>)
   list = sequence;
 end;
 
+define sealed method union
+    (list1 :: <list>, list2 :: <list>,
+     #key test :: <function> = \==)
+ => (result :: <list>);
+  for (item in list1,
+       result :: <list> = list2
+	 then if (member?(item, list2, test: test))
+		result;
+	      else
+		pair(item, result);
+	      end if)
+  finally
+    result;
+  end for;
+end method;
+
+define sealed method intersection
+    (list1 :: <list>, list2 :: <list>,
+     #key test :: <function> = \==)
+ => (result :: <list>);
+  for (item in list1,
+       result :: <list> = #()
+	 then if (member?(item, list2, test: test))
+		pair(item, result);
+	      else
+		result;
+	      end if)
+  finally
+    result;
+  end for;
+end method;
