@@ -9,6 +9,14 @@ typedef char bool;
    #define false FALSE
 #endif
 
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
+#define GD_NORETURN __attribute__((__noreturn__))
+#elif _MSC_VER >= 1200
+#define GD_NORETURN __declspec(noreturn)
+#else
+#define GD_NORETURN
+#endif
+
 typedef struct heapobj *heapptr_t;
 typedef struct descriptor {
     heapptr_t heapptr;
@@ -76,7 +84,7 @@ extern long double_integer_to_integer(gd_long_long b);
 
 extern heapptr_t initial_symbols;
 
-extern void not_reached(void);
+extern GD_NORETURN void not_reached(void);
 extern void no_core_dumps(void);
 
 #ifdef WIN32

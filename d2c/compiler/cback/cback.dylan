@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.46 2003/02/19 23:29:57 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.47 2003/04/12 05:49:36 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -1940,7 +1940,7 @@ define method compute-function-prototype
   let stream = make(<buffered-byte-string-output-stream>);
   let result-rep = function-info.function-info-result-representation;
   case
-    (result-rep == #"doesn't-return") => write(stream, "void");
+    (result-rep == #"doesn't-return") => write(stream, "GD_NORETURN void");
     (result-rep == #"cluster") => write(stream, "descriptor_t *");
     (instance?(result-rep, <sequence>)) =>
       if (result-rep.empty?)
