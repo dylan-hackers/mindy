@@ -1,3 +1,13 @@
+gwydion-dylan (2.3.6pre2cvs11102001-1) unstable; urgency=low
+
+  * Upstream changes
+  * More DUIM additions (font-select)
+  * Updates to support single-file mode.
+  * Support for clas-level slots.
+  * More clean-up and minor optimizations.
+
+ -- Brent A. Fulgham <bfulgham@debian.org>  Sat, 10 Nov 2001 23:18:13 -0800
+
 gwydion-dylan (2.3.6pre2cvs10182001-1) unstable; urgency=low
 
   * Upstream optimizations to compiler.
