@@ -1,5 +1,5 @@
 module: define-macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defmacro.dylan,v 1.3 2000/10/17 09:24:00 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defmacro.dylan,v 1.4 2002/07/27 12:20:22 housel Exp $
 copyright: see below
 
 
@@ -54,6 +54,18 @@ end method print-message;
 // 
 define method process-top-level-form (form :: <macro-call-parse>) => ();
   process-top-level-form(macro-expand(form));
+end method process-top-level-form;
+
+// process-top-level-form{<definition-macro-call-parse>} -- method on imported GF.
+//
+// Parse the expansion as a source-record, which will call
+// process-top-level-from() on each of the resulting parsed forms.
+// 
+//
+define method process-top-level-form
+    (form :: <definition-macro-call-parse>)
+ => ();
+  parse-source-record(macro-expansion-tokenizer(form));
 end method process-top-level-form;
 
 // process-top-level-form{<define-macro-parse>} -- method on imported GF.
