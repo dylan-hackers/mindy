@@ -76,6 +76,7 @@ int MacWrite(int fd, const char *buf, int count);
 OSErr ReallyWrite( int fd, Ptr buffer, long * amount );
 int FindUnusedFileStatus( void );
 long OpenApplicationAsFile( void );
+Boolean IsDUFile( Str255 name );
 void FileError( int err );
 
 
@@ -188,13 +189,16 @@ int MacOpen( const char *path, int flags, int mode )
 		
 	if( fd > 0 )									// If opened ok
 	{
+		Boolean b; //-
 		fileStatusRecord = FindUnusedFileStatus();
 		__fileIsText[ fileStatusRecord ].fileNum = fd;
 		// hack for .du files
-		if( gD2c && fileSpec.name[ fileSpec.name[ 0 ] ] == 0 )
+		if( gD2c && IsDUFile( fileSpec.name ) )
 			__fileIsText[ fileStatusRecord ].isText = FALSE;
 		else
 			__fileIsText[ fileStatusRecord ].isText = !(flags & O_BINARY );	// Set flag
+		
+		b = __fileIsText[ fileStatusRecord ].isText;
 	}
 	else
 	{	
@@ -538,6 +542,25 @@ long OpenApplicationAsFile( void )
 		gD2c = FALSE;
 	
 	return (short)fd;
+}
+
+// IsDUFile
+
+Boolean IsDUFile( Str255 name )
+{
+	int end = name[ 0 ];
+	
+	if( end < 4 )
+		return FALSE;
+
+	if(	name[ end-2 ] != '.' )
+		return FALSE;	
+	if(	name[ end-1 ] != 'd' )
+		return FALSE;
+	if(	name[ end ] != 'u' )
+		return FALSE;
+
+	return TRUE;
 }
 
 // Error translation
