@@ -208,6 +208,7 @@ define method process-type-list
 		// recognize it, without actually supporting access.
 		select (type)
 		  long-type => longlong-type;
+		  unsigned-long-type => longlong-type;
 		  unknown-type, signed-type => long-type;
 		  unsigned-type => unsigned-long-type;
 		  otherwise => parse-error(state, "Bad type specifier");
