@@ -6,9 +6,9 @@ if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "hp-c-decl";
 } elsif ($features{'compiled_for_solaris'}) {
     $c_decl_lid = "solaris-c-decl";
-} elsif ($features{'compiled_for_linux'}) {
-    $c_decl_lid = "linux-c-decl";
-} elsif ($features{'compiled_for_beos'}) {
+} elsif ($features{'compiled_for_linux'}
+         || $features{'compiled_for_beos'}
+         || $features{'compiled_for_cygnus'}) {
     $c_decl_lid = "linux-c-decl";
 } elsif ($features{'compiled_for_freebsd'}) {
     $c_decl_lid = "freebsd-c-decl";
