@@ -31,21 +31,21 @@ EOF
     push(@files_to_clean, '$(OBJS)', 'runtime.lib');
 } else { # not win32
 
-   print <<'EOF';
+   print <<"EOF";
 
 AS = /bin/as
-CC = gcc
-CPPFLAGS = -I$(SRCROOT)/runtime
-CFLAGS = -g
+CC = $CC
+CPPFLAGS = -I\$(SRCROOT)/runtime
+CFLAGS = $CFLAGS
 
 OBJS = allocate.o nlx.o hppa.o main.o
 
-libruntime.a: $(OBJS)
-	ar crvu libruntime.a $(OBJS)
+libruntime.$lib_type: \$(OBJS)
+	$lib_linker libruntime.$lib_type \$(OBJS)
 
 EOF
 
-    push(@compile_dependencies, 'libruntime.a');
-    do install('lib', 'libruntime.a');
-    push(@files_to_clean, '$(OBJS)', 'libruntime.a');
+    push(@compile_dependencies, "libruntime.$lib_type");
+    do install('lib', "libruntime.$lib_type");
+    push(@files_to_clean, '\$(OBJS)', "libruntime.$lib_type");
 }
