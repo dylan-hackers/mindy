@@ -1,5 +1,5 @@
 module: compile-time-eval
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.15 1996/03/17 00:56:29 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/cteval.dylan,v 1.16 1996/04/15 18:30:10 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -316,6 +316,11 @@ define-ct-evaluator(#"singleton", #(#"<object>"),
 			#f;
 		      end;
 		    end);
+
+define-ct-evaluator(#"subclass", #(#"<class>"),
+		    method (class :: <cclass>) => res :: <subclass-ctype>;
+		      make(<subclass-ctype>, of: class);
+		    end method);
 
 define-ct-evaluator(#"type-union", #(rest:, #"<type>"),
 		    method (#rest types) => res :: <ctype>;
