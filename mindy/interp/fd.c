@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.33 1996/08/21 10:07:08 nkramer Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/fd.c,v 1.34 1996/09/04 18:02:21 nkramer Exp $
 *
 * This file implements an interface to file descriptors.
 *
@@ -72,7 +72,7 @@
    case in Mindy.
  */
 
-#define MAX_FDS 100
+#define MAX_FDS FD_SETSIZE
 static boolean input_available_array[MAX_FDS]; /* no mutex protecting this */
 static HANDLE fd_threads[MAX_FDS]; /* thread handles */
 static HANDLE update_input_available[MAX_FDS]; /* handles to events */
@@ -95,9 +95,8 @@ static DWORD input_checker (LPDWORD param)
 	read_result = ReadFile(handle, &small_buffer,
 			       0, &bytes_read, NULL);
 	if (!read_result) {
-	    /* For easier debugging, find out what error */
 	    DWORD the_error = GetLastError();
-	    lose("Read error on fd %d", fd);
+	    lose("Read error type %d on fd %d", the_error, fd);
 	}
 	input_available_array[fd] = TRUE;
         SetEvent(input_available_is_updated[fd]);
@@ -141,15 +140,24 @@ static void stop_input_checker (int fd)
 static int mindy_open (const char *filename, int flags, int mode)
 {
     int fd = open(filename, flags | O_BINARY, mode);
-    if (fd != -1)
-	setup_input_checker(fd);
+    if (fd != -1) {
+	if (!(flags & O_WRONLY)) {
+	    /* You can't directly test O_RDONLY, because
+	       it is defined as 0 usually, and you'd have
+	       if (flags & 0) ...
+	    */
+	    setup_input_checker(fd);
+	} else {
+	    fd_threads[fd] = NULL;
+	}
+    }
     return fd;
 }
 
 static int mindy_close (int fd)
 {
     int res = close(fd);
-    if (!res)
+    if (!res && fd_threads[fd] != NULL)
 	stop_input_checker(fd);
     return res;
 }
@@ -434,103 +442,6 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 /* End Unix-specific */
 /* End OS-specific stuff */
 
-#if 0
-static CRITICAL_SECTION stdin_buffer_mutex;  /* protects stdin_buffer and
-				                chars_in_stdin_buffer */
-#define stdin_buffer_size 1000
-static char stdin_buffer[stdin_buffer_size];
-static char *stdin_buffer_start = &(stdin_buffer[0]);
-static int stdin_char_count = 0;
-static boolean stdin_hit_eof = FALSE;
-static HANDLE stdin_buffer_empty, stdin_buffer_not_empty;   /* Events */
-
-boolean hit_control_C = FALSE;
-
-static DWORD stdin_producer (LPDWORD unused_param)
-{
-    char local_buffer[stdin_buffer_size];
-    while (!stdin_hit_eof) {
-        int chars_read;
-        WaitForSingleObject(stdin_buffer_empty, INFINITE);
-        chars_read = read(0, (void *) local_buffer, stdin_buffer_size);
-        EnterCriticalSection(&stdin_buffer_mutex); {
-	    if (chars_read == 0) {
-		if (hit_control_C) {
-		    hit_control_C = FALSE;
-		} else {
-		    stdin_hit_eof = TRUE;
-		    /* Now wake up any waiting consumers */
-		    SetEvent(stdin_buffer_not_empty); 
-		}
-	    } else if (chars_read == -1) {
-		lose("chars_read == -1");
-	    } else {
-		memcpy(stdin_buffer, local_buffer, chars_read);
-		stdin_buffer_start = &(stdin_buffer[0]);
-		stdin_char_count = chars_read;
-		ResetEvent(stdin_buffer_empty); /* Set to false */
-		SetEvent(stdin_buffer_not_empty); /* Set to true */
-	    }
-	} LeaveCriticalSection(&stdin_buffer_mutex);
-    }
-    return 0;
-}
-
-int read_stdin (char *buffer, int max_chars)
-{
-    int chars_to_read;
-    WaitForSingleObject(stdin_buffer_not_empty, INFINITE);
-    EnterCriticalSection(&stdin_buffer_mutex); {
-        if (stdin_hit_eof)
-	    stdin_hit_eof = FALSE;
-        chars_to_read
-	    = (stdin_char_count < max_chars) ? stdin_char_count : max_chars;
-	memcpy((void *) buffer, stdin_buffer_start, chars_to_read);
-	stdin_buffer_start += chars_to_read;
-	stdin_char_count -= chars_to_read;
-	if (stdin_char_count == 0) {
-	    SetEvent(stdin_buffer_empty);
-	    ResetEvent(stdin_buffer_not_empty);
-	}
-    } LeaveCriticalSection(&stdin_buffer_mutex);
-    return chars_to_read;
-}
-
-/* This is the same as read_stdin except it always takes one character
- */
-int mindy_getchar (void)
-{
-    int res;
-    WaitForSingleObject(stdin_buffer_not_empty, INFINITE);
-    EnterCriticalSection(&stdin_buffer_mutex); {
-                /* min(stdin_char_count, max_chars) */
-	if (stdin_hit_eof) {
-	    stdin_hit_eof = FALSE;
-	    res = EOF;
-	} else {
-	    res = *stdin_buffer_start;
-	    stdin_buffer_start++;
-	    stdin_char_count--;
-	    if (stdin_char_count == 0) {
-		SetEvent(stdin_buffer_empty);
-		ResetEvent(stdin_buffer_not_empty);
-	    }
-	}
-    } LeaveCriticalSection(&stdin_buffer_mutex);
-    return res;
-}
-
-static boolean stdin_input_available (void)
-{
-    int answer;
-    EnterCriticalSection(&stdin_buffer_mutex); {
-        answer = stdin_char_count || stdin_hit_eof;
-    } LeaveCriticalSection(&stdin_buffer_mutex);
-    return answer;
-}
-
-#endif
- /* WIN32 */	    
 
 static void results(struct thread *thread, obj_t *old_sp,
 		    int okay, obj_t result)
