@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.2 1998/05/13 02:35:49 emk Exp $
+##  $Header: /scm/cvs/src/mindy/interp/Makefile.in,v 1.3 1998/08/10 15:09:55 housel Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -58,6 +58,8 @@ INSTALL_DATA	=	@INSTALL_DATA@
 LIBOBJS =		@LIBOBJS@
 LIBS	=		../compat/libcompat.a @LIBS@
 
+TIME_INC=		@TIME_INC@
+
 ##
 ## end of configure written portion
 ##
@@ -76,7 +78,7 @@ SRCS = parser-tab.c lexer.c \
 	char.c handler.c instance.c input.c driver.c \
 	table.c fd.c buf.c weak.c brkpt.c extern.c ext-init.c
 
-EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${SRCDIR}/../../common/time/time.inc
+EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${TIME_INC}
 
 mindy: ${OBJS} ../compat/libcompat.a
 	${CC} ${OBJS} ${LIBS} -o ,mindy
