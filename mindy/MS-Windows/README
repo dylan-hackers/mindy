@@ -1,40 +1,66 @@
-This file contains instructions for building Mindy under Windows/NT
-using Visual C++ version 2.0.
+Mindy/NT runs under Windows/NT v. 3.5 or later.  It runs only on file
+systems which support long file names, such as HPFS and NTFS, but not
+FAT.  It requires tar and GNU Zip (gzip) to unpackage.  It comes
+precompiled, but if you want to recompile it, you will need Microsoft
+Visual C++ version 2.0 and a make utility named "make" (any one will
+do, although we recommend GNU make).
 
-Execute d:\users\default\login.bat to set up your paths.
+To install Mindy, unzip the release, change directory to where you
+want to install Mindy, and untar it.  This will create a directory
+called "mindy-1.3"  In order to run Mindy, you will
+need to set the MINDYPATH environment variable to point to the \lib
+directory.  You may also want to put the \bin directory in your PATH.
+For example, if mindynt-1.3.tar.gz is currently in c:\users\fred, and
+you want to install it to c:\stuff\mindy-1.3, type the following:
 
-Get a copy of the Unix release as well as nt-supplement-version.tar.
-
-Unpack the unix release and the supplement:
+	c:
+	cd \users\fred
 	gzip -d mindy-1.3.tar.gz
-	tar -xvf mindy-1.3.tar
-	cd mindy-1.3
-	tar -xvf ../nt-supplement-1.3.tar
+	cd \stuff
+	tar -xvf \users\fred\mindy-1.3.tar
+	set MINDYPATH=c:\stuff\mindy-1.3\lib
+	set PATH=%PATH%;c:\stuff\mindy-1.3\bin
 
-(note that the supplement assumes the current directory is the root of
-the distribution, and not one directory above it)
 
-Run prepare-for-vc.bat
+To recompile Mindy, follow these steps:
+	- Fire up Visual C++ by double-clicking on Mindy.mak under the
+	  file manager.  Due to a bug in Visual C++ 2.0, you'll have
+	  to edit some preprocessor definitions.  Go into the General
+	  category of the C/C++ pane of the Project Settings dialog
+	  box and fix the preprocessor definitions for each of the
+	  Release targets.  In the little window at the bottom,
+	  manually remove 
 
-Fire up Visual C++.  Due to a bug in Visual C++ 2.0, you'll have to
-edit some preprocessor definitions.  Go into the C/C++ pane of the
-Project/Settings dialog box and fix the preprocessor definitions for
-each of the Release targets.  In the little window at the bottom,
-manually remove
+		/D /D /D VERSION=... BINDIR=... LIBDIR=...
 
-  /D /D /D VERSION=... BINDIR=... LIBDIR=...
+	  from the Project Options.  (You'll have to do this once for
+	  each of the targets you intend to build)  Then, in the
+	  Preprocessor Definitions area, add VERSION=..., BINDIR=...,
+	  and LIBDIR=... to the definitions.  Sample values are
 
-from the compiler options.  (You'll have to do this four times, once
-for each of the targets)  Then, in the preprocessor definitions
-area, add VERSION=..., BINDIR=..., and LIBDIR=... to the definitions.
-The values you should use are
+		, VERSION="\"1.3\"", BINDIR="\"c:/\"", LIBDIR="\"c:/""
 
-  , VERSION="\"1.3\"", BINDIR="\"d:/mindy-13/bin\"", LIBDIR="\"d:/mindy-13/lib\""
+	  (If you define LIBDIR here, you won't need to set the
+	  MINDYPATH environment variable.  BINDIR is unused)
+	- Select Batch Build under Project.  Check "Compiler Release"
+	  and "Interpreter Release".  Select Build.
+	- Go back to the command prompt.  Build the libraries by
+	  typing
 
-Select Batch Build under Project.  Check "Compiler Release" and "Interpreter Release".  Select Rebuild All.
+		finish-build "MC=mindydir\Released\mindycomp.exe"
 
-Go back to the command prompt.  Build the libraries by typing
-	finish-build MC=pathname\Released\mindycomp.exe
+	  where mindydir is the directory you're current in.
+	- Install the libraries by typing
+
+		finish-build "INSTALL=copy" "INSTALL_DATA=copy" 
+			"LIBDIR=whatever" install
+
+	  (all one line)  You'll need to specify LIBDIR even if you
+	  provided it to Visual C++.
+	- Install the binaries by typing
+
+		copy Released\mindy.exe bin
+		copy Released\mindycomp.exe bin
 
 If you have to modify any of the source files, you'll likely have to
 set the write permissions on them:  Go to the file manager, select the
