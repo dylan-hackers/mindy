@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.7 1995/11/10 15:10:44 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.8 1995/11/16 17:14:07 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -60,7 +60,10 @@ add-od-loader(*compiler-dispatcher*, #"define-library-tlf",
 // Define module.
 
 define class <define-module-tlf> (<top-level-form>)
-  slot define-module-name :: <symbol>, required-init-keyword: name:;
+  slot define-module-name :: <symbol>,
+    required-init-keyword: name:;
+  slot define-module-module :: false-or(<module>),
+    init-value: #f, init-keyword: module:;
   slot define-module-uses :: <simple-object-vector>,
     required-init-keyword: uses:;
   slot define-module-exports :: <simple-object-vector>,
@@ -79,12 +82,25 @@ define method process-top-level-form (form :: <define-module-parse>) => ();
   let (uses, exports, creates) = extract-clauses(form.defmodule-clauses);
   note-module-definition(*Current-Library*, name, uses, exports, creates);
   add!(*Top-Level-Forms*,
-       make(<define-module-tlf>, name: name, uses: uses, exports: exports,
-	    creates: creates));
+       make(<define-module-tlf>,
+	    name: name, module: find-module(*Current-Library*, name),
+	    uses: uses, exports: exports, creates: creates));
 end;
 
 define method finalize-top-level-form (tlf :: <define-module-tlf>) => ();
-  // Nothing to do.
+  let mod = tlf.define-module-module;
+  for (name in tlf.define-module-exports)
+    let var = find-variable(make(<basic-name>, symbol: name, module: mod));
+    unless (var & var.variable-definition)
+      compiler-warning("%s in %s is exported but never defined.", name, mod);
+    end;
+  end;
+  for (name in tlf.define-module-creates)
+    let var = find-variable(make(<basic-name>, symbol: name, module: mod));
+    unless (var & var.variable-definition)
+      compiler-warning("%s in %s is created but never defined.", name, mod);
+    end;
+  end;
 end;
 
 define method convert-top-level-form
@@ -230,8 +246,8 @@ define method process-clause (clause :: <create-clause>,
     => ();
   for (token in clause.create-names)
     let name = token.token-symbol;
-    unless (member?(creates, name))
-      add!(name, creates);
+    unless (member?(name, creates))
+      add!(creates, name);
     end;
   end;
 end;
