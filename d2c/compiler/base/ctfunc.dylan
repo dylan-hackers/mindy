@@ -1,5 +1,5 @@
 module: compile-time-functions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.11 1996/02/16 03:41:02 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/ctfunc.dylan,v 1.12 1996/03/02 19:01:13 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -24,6 +24,8 @@ define abstract class <ct-function>
   // functions can have closure vars.
   slot ct-function-closure-var-types :: <list>,
     init-value: #(), init-keyword: closure-var-types:;
+
+  slot has-general-entry? :: <boolean>, init-value: #f, init-keyword: #"general-entry?";
 end;
 
 define sealed method make (class == <ct-function>, #rest keys, #key)
@@ -44,8 +46,8 @@ define constant $ct-function-dump-slots =
        ct-function-name, name:, #f,
        ct-function-signature, signature:, #f,
        ct-function-definition, definition:, ct-function-definition-setter,
-       ct-function-closure-var-types, closure-var-types:, #f);
-
+       ct-function-closure-var-types, closure-var-types:, #f,
+       has-general-entry?, general-entry?:, #f);
 
 
 define class <ct-raw-function> (<ct-function>)
@@ -106,6 +108,7 @@ define class <ct-method> (<ct-function>)
   // need to generate a general entry for it.
   slot ct-method-hidden? :: <boolean>,
     init-value: #f, init-keyword: hidden:;
+  slot has-generic-entry? :: <boolean>, init-value: #f, init-keyword: #"generic-entry?";
 end;
 
 define method ct-value-cclass (ctv :: <ct-method>) => res :: <cclass>;
@@ -114,11 +117,11 @@ end;
 
 define constant $ct-method-dump-slots
   = concatenate($ct-function-dump-slots,
-		list(ct-method-hidden?, hidden:, #f));
+		list(ct-method-hidden?, hidden:, #f,
+		     has-generic-entry?, generic-entry?:, #f));
 
 add-make-dumper(#"ct-method", *compiler-dispatcher*, <ct-method>,
 		$ct-method-dump-slots, load-external: #t);
-
 
 
 define class <ct-accessor-method> (<ct-method>)
