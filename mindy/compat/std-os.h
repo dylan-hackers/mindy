@@ -40,7 +40,7 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-os.h,v 1.2 1995/03/12 16:37:27 nkramer Exp $ SPRITE (Berkeley)
+ * $Header: /home/housel/work/rcs/gd/src/mindy/compat/std-os.h,v 1.3 1995/04/08 19:20:14 nkramer Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_OS_H_
@@ -438,6 +438,46 @@ EXTERN int	protect_write _ANSI_ARGS_((int fd, VOID *buf, size_t numBytes));
 #if defined(__osf__)
     extern int fsync(int filedes);
 #   include <exc_handling.h>
+#endif
+
+/* Define a few POSIX constants in terms of the equivalent non-POSIX
+ * constants.
+ */
+
+#ifndef SEEK_SET
+#   define SEEK_SET L_SET
+#endif
+
+#ifndef SEEK_CUR
+#   define SEEK_CUR L_INCR
+#endif
+
+#ifndef SEEK_END
+#   define SEEK_END L_XTND
+#endif
+
+#ifndef O_APPEND
+#   define O_APPEND FAPPEND
+#endif
+
+#ifndef O_CREAT
+#   define O_CREAT FCREAT
+#endif
+
+#ifndef O_TRUNC
+#   define O_TRUNC FTRUNC
+#endif
+
+#ifndef O_EXCL
+#   define O_EXCL FEXCL
+#endif
+
+#ifndef O_NONBLOCK
+#   ifdef O_NDELAY
+#       define O_NONBLOCK O_NDELAY
+#   else
+#       define O_NONBLOCK FNDELAY
+#   endif
 #endif
 
 #endif	/* _STD_OS_H_ */
