@@ -2,7 +2,7 @@ module: coll-ext-test
 author: David Watson, Nick Kramer
 synopsis: Test for the collection-extensions library.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/coll-ext-test.dylan,v 1.1 1996/07/18 10:57:54 dwatson Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/coll-ext-test.dylan,v 1.2 1996/08/07 14:44:01 dwatson Exp $
 
 //======================================================================
 //
@@ -28,21 +28,6 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/tests/coll-ext-test.dylan,v 1.
 // E-mail to the Internet address "gwydion-bugs@cs.cmu.edu".
 //
 //======================================================================
-
-define library coll-ext-test
-  use Dylan;
-  use Collection-Extensions;
-  use Print;
-end library coll-ext-test;
-
-define module coll-ext-test
-  use Dylan;
-  use Extensions;
-  use Self-Organizing-list;
-  use Subseq;
-  use Vector-Search;
-  use Cheap-io;
-end module coll-ext-test;
 
 define variable has-errors = #f;
 
@@ -90,7 +75,7 @@ define method vect-search-test () => ();
   run-test(find-last-key(vector, curry(\==, 5)), 5, "find-last-key");
 end method vect-search-test;
 
-define method main (argv0 :: <byte-string>, #rest ignored)
+define method main (argv0, #rest ignored)
   format("\nRegression test for the Collection-extensions library.\n\n");
   run-several-tests("Self-Organizing-Lists", sol-test);
   run-several-tests("Subsequences", subseq-test);
