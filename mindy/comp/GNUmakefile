@@ -9,7 +9,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.4 1994/04/04 17:51:32 wlott Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/comp/Attic/GNUmakefile,v 1.5 1994/04/09 00:26:41 wlott Exp $
 ##
 ##  This is the makefile for the Mindy byte-compiler.
 ##
@@ -22,7 +22,7 @@ LDLIBS = -lfl
 
 OBJS = mindycomp.o parser.tab.o lexer.o src.o sym.o print.o expand.o \
 	literal.o info.o lose.o lexenv.o envanal.o compile.o header.o \
-	dump.o
+	dump.o free.o dup.o
 
 SRCS = $(patsubst %.o,%.c,$(OBJS))
 
