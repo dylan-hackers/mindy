@@ -1,5 +1,5 @@
 module: define-libraries-and-modules
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.9 1995/12/15 16:16:36 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/deflibmod.dylan,v 1.10 1996/01/14 02:06:00 wlott Exp $
 copyright: Copyright (c) 1994, 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -146,22 +146,31 @@ define method extract-clauses (clauses :: <simple-object-vector>)
 	 as(<simple-object-vector>, creates));
 end;
 
-define method process-clause (clause :: <use-clause>,
-			      uses :: <stretchy-vector>,
-			      exports :: <stretchy-vector>,
-			      creates :: <stretchy-vector>)
+define method process-clause
+    (clause :: <use-clause>, uses :: <stretchy-vector>,
+     exports :: <stretchy-vector>, creates :: <stretchy-vector>)
     => ();
+  let name = clause.use-name.token-symbol;
+  let imports = extract-names-or-all(clause.use-import, "import");
+  let prefix = extract-prefix(clause.use-prefix);
+  let excludes = extract-names(clause.use-exclude, "exclude");
+  let (orig-names, new-names) = extract-renamings(clause.use-rename);
+  unless (imports == #t)
+    imports := union(imports, orig-names);
+  end unless;
+  let renamings = map(method (orig :: <symbol>, new :: <symbol>)
+			  => renaming :: <renaming>;
+			make(<renaming>, orig-name: orig, new-name: new);
+		      end method,
+		      orig-names, new-names);
+  let exports = extract-names-or-all(clause.use-export, "export");
   add!(uses,
-       make(<use>,
-	    name: clause.use-name.token-symbol,
-	    imports: extract-names-or-all(clause.use-import, "import"),
-	    prefix: extract-prefix(clause.use-prefix),
-	    excludes: extract-names(clause.use-exclude, "exclude"),
-	    renamings: extract-renamings(clause.use-rename),
-	    exports: extract-names-or-all(clause.use-export, "export")));
+       make(<use>, name: name, imports: imports, prefix: prefix,
+	    excludes: excludes, renamings: renamings, exports: exports));
 end;
 
 define method extract-names (set :: <property-set>, where :: <string>)
+    => names :: <simple-object-vector>;
   let names = make(<stretchy-vector>);
   for (member in set.property-set-members)
     select (member by instance?)
@@ -173,18 +182,22 @@ define method extract-names (set :: <property-set>, where :: <string>)
 end;
 
 define method extract-names (expr :: <expression>, where :: <string>)
+    => names :: <simple-object-vector>;
   error("Bogus thing in %s clause: %=", where, expr);
 end;
 
 define method extract-names-or-all (set :: <property-set>, where :: <string>)
+    => names :: type-union(<simple-object-vector>, <true>);
   extract-names(set, where);
 end;
 
 define method extract-names-or-all (expr :: <expression>, where :: <string>)
+    => names :: type-union(<simple-object-vector>, <true>);
   error("Bogus thing in %s clause: %=", where, expr);
 end;
 
 define method extract-names-or-all (expr :: <varref>, where :: <string>)
+    => names :: type-union(<simple-object-vector>, <true>);
   if (expr.varref-id.token-symbol == #"all")
     #t;
   else
@@ -193,6 +206,7 @@ define method extract-names-or-all (expr :: <varref>, where :: <string>)
 end;
 
 define method extract-prefix (expr :: <literal-ref>)
+    => prefix :: false-or(<byte-string>);
   let literal = expr.litref-literal;
   select (literal by instance?)
     <literal-false> => #f;
@@ -202,34 +216,38 @@ define method extract-prefix (expr :: <literal-ref>)
   end;
 end;
 
-define method extract-prefix (whatever :: type-union(<property-set>, <expression>))
+define method extract-prefix
+    (whatever :: type-union(<property-set>, <expression>))
+    => prefix :: false-or(<byte-string>);
   error("Bogus thing in prefix clause: %=", whatever);
 end;
 
 define method extract-renamings (set :: <property-set>)
-  let renamings = make(<stretchy-vector>);
+    => (orig-names :: <simple-object-vector>,
+	new-names :: <simple-object-vector>);
+  let orig-names = make(<stretchy-vector>);
+  let new-names = make(<stretchy-vector>);
   for (member in set.property-set-members)
     select (member by instance?)
       <pair> =>
-	add!(renamings,
-	     make(<renaming>,
-		  orig-name: member.head.token-symbol,
-		  new-name: member.tail.token-symbol));
+	add!(orig-names, member.head.token-symbol);
+	add!(new-names, member.tail.token-symbol);
       <word-token> =>
 	error("Bogus thing in rename clause: %=", member);
     end;
   end;
-  as(<simple-object-vector>, renamings);
+  values(as(<simple-object-vector>, orig-names),
+	 as(<simple-object-vector>, new-names));
 end;
 
 define method extract-renames (expr :: <expression>)
+    => renamings :: <simple-object-vector>;
   error("Bogus thing in rename clause: %=", expr);
 end;
 
-define method process-clause (clause :: <export-clause>,
-			      uses :: <stretchy-vector>,
-			      exports :: <stretchy-vector>,
-			      creates :: <stretchy-vector>)
+define method process-clause
+    (clause :: <export-clause>, uses :: <stretchy-vector>,
+     exports :: <stretchy-vector>, creates :: <stretchy-vector>)
     => ();
   for (token in clause.export-names)
     let name = token.token-symbol;
@@ -239,10 +257,9 @@ define method process-clause (clause :: <export-clause>,
   end;
 end;
 
-define method process-clause (clause :: <create-clause>,
-			      uses :: <stretchy-vector>,
-			      exports :: <stretchy-vector>,
-			      creates :: <stretchy-vector>)
+define method process-clause
+    (clause :: <create-clause>, uses :: <stretchy-vector>,
+     exports :: <stretchy-vector>, creates :: <stretchy-vector>)
     => ();
   for (token in clause.create-names)
     let name = token.token-symbol;
