@@ -1,5 +1,5 @@
 module: definitions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.10 1996/01/15 12:51:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/defns.dylan,v 1.11 1996/02/06 15:40:07 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,6 +16,11 @@ define open primary abstract class <definition>
   //
   // The name this is the definition for.
   slot defn-name :: <name>, required-init-keyword: name:;
+  //
+  // The library making the definition.  Might be different than the library
+  // burried inside the defn-name, because the defn-name might refer to a
+  // variable pulled in from some other library.
+  slot defn-library :: <library>, required-init-keyword: library:;
 end;
 
 define method print-object (defn :: <definition>, stream :: <stream>) => ();
@@ -24,7 +29,8 @@ end;
 
 define constant $definition-slots
   = list(info, #f, info-setter,
-	 defn-name, name:, #f);
+	 defn-name, name:, #f,
+	 defn-library, library:, #f);
 	 
 
 define generic defn-type (defn :: <definition>)
