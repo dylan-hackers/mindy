@@ -38,19 +38,13 @@ define module duim-utilities
   // Gwydion compatibility
   // common-dylan
   use common-dylan, export: all, exclude: { position, assert };
-  // fun-dev-compat
-  export without-bounds-checks, find-value, assert, 
-    with-keywords-removed, dynamic-bind,
-    <lock>, <simple-lock>, with-lock,
-    <thread>, atomic-increment!, current-thread,
-    <notification>, wait-for, release-all,
-    put-property!, get-property, \remove-property!;
-  // format, for format-to-string
   use format, export: all;
 
   // Debug support
   export *debug-duim-function*,
          duim-debug-message;
+
+  export assert;
 
   //---*** Per-thread (i.e., dynamically bindable) slots
   export \thread-slot-definer;
