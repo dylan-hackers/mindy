@@ -2,7 +2,7 @@ module: Dylan-User
 author: Russ Schaaf (rsbe@andrew.cmu.edu), Nick Kramer, William Lott
 synopsis:   Extensions to the streams library
 copyright:  See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/library.dylan,v 1.2 1996/09/04 16:47:30 nkramer Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/stream-ext/library.dylan,v 1.3 1996/09/19 14:16:38 nkramer Exp $
 
 //======================================================================
 //
@@ -34,7 +34,7 @@ define library stream-extensions
   use dylan;
   use streams;
   export
-    stream-extensions, indenting-streams, combination-streams;
+    stream-extensions, indenting-streams, concatenated-streams;
 end library stream-extensions;
 
 define module stream-extensions
@@ -53,10 +53,10 @@ define module indenting-streams
     <indenting-stream>, indent;
 end module indenting-streams;
 
-define module combination-streams
+define module concatenated-streams
   use dylan;
   use extensions;
   use streams;
   export
-    <combination-stream>, <combination-file-stream>;
-end module combination-streams;
+    <concatenated-stream>;
+end module concatenated-streams;
