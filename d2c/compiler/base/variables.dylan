@@ -1,5 +1,5 @@
 module: variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.7 2003/05/25 15:39:16 housel Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/variables.dylan,v 1.8 2003/07/02 16:18:58 housel Exp $
 copyright: see below
 
 //======================================================================
@@ -809,6 +809,11 @@ define class <variable> (<namespace-constituent>)
   slot variable-definition :: false-or(<definition>),
     init-value: #f;
   //
+  // Names of macros that reference this variable.
+  //
+  slot variable-referencing-macro-names :: false-or(<stretchy-vector>),
+    init-value: #f;
+  //
   // List of FER transformers for this variable.  Gets propagated to the defn
   // when the defn is installed.
   slot variable-transformers :: <list>, init-value: #();
@@ -896,6 +901,13 @@ define method name-inherited-or-exported? (name :: <basic-name>)
 	  return(#t);
 	end if;
       end for;
+    end if;
+
+    if (var.variable-referencing-macro-names
+          & any?(name-inherited-or-exported?,
+                 var.variable-referencing-macro-names))
+      format(*debug-output*, "variable %s exported due to macro\n", name);
+      return(#t);
     end if;
 
     #f;
@@ -1045,6 +1057,16 @@ define method note-variable-definition (defn :: <implicit-definition>,
     end if;
   end unless;
 end method note-variable-definition;
+
+// note-variable-referencing-macro -- exported
+//
+define method note-variable-referencing-macro
+    (variable :: <variable>, macro-name :: <basic-name>) => ();
+  unless (variable.variable-referencing-macro-names)
+    variable.variable-referencing-macro-names := make(<stretchy-vector>);
+  end unless;
+  add-new!(variable.variable-referencing-macro-names, macro-name);
+end method;
 
 
 // Loading stuff.
