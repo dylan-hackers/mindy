@@ -1,7 +1,7 @@
 #!@PERL@
 
 # Authors: William Lott, Nick Kramer
-# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.10 1999/08/24 22:07:26 andreas Exp $
+# rcs-header: $Header: /scm/cvs/src/tools/shared-misc/gen-makefile.in,v 1.11 2000/01/22 02:25:03 andreas Exp $
 
 # Usage: gen-makefile [-pplatforms.descr] directory
 #
@@ -737,7 +737,7 @@ sub emit_library_rule {
                           || die("No library: header in $lidfilename.lid.\n");
     $library =~ tr/A-Z/a-z/;
     local($unit_prefix);
-    if($enable_bootstrap && $bootstrap_compiler eq "d2c") {
+    if($enable_bootstrap && $bootstrap_compiler eq "d2c" && $lid_format_version < 2) {
 	$unit_prefix = $lidfile{'unit_prefix'} || "$library";
     } else {
 	$unit_prefix = "$library";

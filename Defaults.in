@@ -8,6 +8,7 @@ $target_name = '@d2c_target@';
 $host_name = '@d2c_host@';
 
 $version = "@version@";
+$lid_format_version= "@lid_format_version@";
 
 $srcroot = "@srcdir@";
 $buildroot = "@builddir@";

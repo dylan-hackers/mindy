@@ -1,4 +1,4 @@
-dnl	$Header: /scm/cvs/src/configure.in,v 1.40 1999/09/15 10:47:33 bruce Exp $
+dnl	$Header: /scm/cvs/src/configure.in,v 1.41 2000/01/22 02:25:03 andreas Exp $
 dnl
 dnl	The new and improved configure file for Gwydion Dylan!
 dnl	This is based on the old configure file, but rewritten to
@@ -259,6 +259,9 @@ if test "$D2C" != no; then
     echo "    d2c bootstrap counter:    $_DCI_D2C_BOOTSTRAP_COUNTER"
     echo "    d2c runtime subdirectory: $_DCI_D2C_RUNTIME_SUBDIR"
 fi
+
+lid_format_version = $_DCI_DYLAN_LID_FORMAT_VERSION
+AC_SUBST(lid_format_version)
 
 #--------------------------------------------------------------------
 # Determine our "build scenario". See BOOTSTRAP for a description of

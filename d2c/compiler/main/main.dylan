@@ -1,5 +1,5 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.31 1999/11/21 20:49:31 robmyers Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/main.dylan,v 1.32 2000/01/22 02:25:03 andreas Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1458,7 +1458,8 @@ define method show-compiler-info(stream :: <stream>) => ()
   // This value indicates how much of LID we implement correctly.
   //   0: We only support CMU-style LID files.
   //   1: We support everything from 0 plus the 'File:' keyword.
-  p("_DCI_DYLAN_LID_FORMAT_VERSION=1\n");
+  //   2: 1 but with unit-prefix being ignored
+  p("_DCI_DYLAN_LID_FORMAT_VERSION=2\n");
 
   // Increment this value here (and CURRENT_BOOTSTRAP_COUNTER) in
   // configure.in to force an automatic bootstrap.
