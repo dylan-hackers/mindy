@@ -1,5 +1,5 @@
 module: lexer
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.1 1994/12/12 13:01:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/parser/lexer.dylan,v 1.2 1994/12/12 19:55:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -226,8 +226,8 @@ define method parse-integer (source-location :: <file-source-location>,
 	    result;
 	  end;
 	end;
-  if (contents[0] == '-')
-    -repeat(start, 1);
+  if (contents[start] == '-')
+    -repeat(start + 1, 0);
   else
     repeat(start, 0);
   end;
