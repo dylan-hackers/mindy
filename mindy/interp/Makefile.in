@@ -23,7 +23,7 @@
 ##
 ######################################################################
 ##
-##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.6 1994/11/06 23:03:24 rgs Exp $
+##  $Header: /home/housel/work/rcs/gd/src/mindy/interp/Makefile.in,v 1.7 1994/11/09 00:30:50 nkramer Exp $
 ##
 ##  This is the makefile for the Mindy byte-interpreter.
 ##
@@ -50,6 +50,7 @@ YFLAGS	=		-d
 LEX	=		@LEX@
 LFLAGS	=		@LFLAGS@
 RANLIB	=		@RANLIB@
+PERL    =               perl
 INSTALL	=		@INSTALL@
 INSTALL_PROGRAM	=	@INSTALL_PROGRAM@
 INSTALL_DATA	=	@INSTALL_DATA@
@@ -86,6 +87,10 @@ ${SRCDIR}/parser.tab.c: ${SRCDIR}/parser.y
 	mv y.tab.c ${SRCDIR}/parser.tab.c
 	mv y.tab.h ${SRCDIR}/parser.tab.h
 
+${SRCDIR}/extern1.def ${SRCDIR}/extern2.def: ${SRCDIR}/$(EXTERN-INCLUDES) ${SRCDIR}/make-init.pl
+	$(PERL) ${SRCDIR}/make-init.pl ${SRCDIR}/$(EXTERN-INCLUDES)
+	mv extern1.def ${SRCDIR}/extern1.def
+	mv extern2.def ${SRCDIR}/extern2.def
 
 clean:
 	rm -f ${OBJS} mindy *~ \#* core
@@ -96,7 +101,7 @@ realclean:
 install: mindy
 	${INSTALL_PROGRAM} mindy ${BINDIR}/mindy
 
-# It's easiest to generate this part by machine.
+# It's easiest to generate the rest by machine.
 # Try gcc -MM -E *.c | perl ../etc/generate-depends
 
 bool.o :  ${SRCDIR}/bool.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
@@ -176,13 +181,7 @@ extern.o :  ${SRCDIR}/extern.c ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/str.h ${SRCDIR}/func.h ${SRCDIR}/func.h 
 	${CC} -c ${CFLAGS} ${SRCDIR}/extern.c
 
-extern1.def: $(EXTERN-INCLUDES) make-init.pl
-	make-init.pl $(EXTERN-INCLUDES)
-
-extern2.def: $(EXTERN-INCLUDES) make-init.pl
-	make-init.pl $(EXTERN-INCLUDES)
-
-ext-init.o :  ${SRCDIR}/extern.c extern1.def extern2.def \
+ext-init.o :  ${SRCDIR}/extern.c ${SRCDIR}/extern1.def ${SRCDIR}/extern2.def \
            ${SRCDIR}/../compat/std-c.h ${SRCDIR}/mindy.h \
            ${SRCDIR}/gc.h ${SRCDIR}/obj.h ${SRCDIR}/bool.h \
            ${SRCDIR}/extern.h
