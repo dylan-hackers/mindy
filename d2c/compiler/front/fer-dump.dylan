@@ -1,5 +1,5 @@
 module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.38 1996/04/13 21:15:20 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-dump.dylan,v 1.39 1996/04/18 17:03:28 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -261,6 +261,9 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
     write("()", stream);
   elseif (~defines.definer-next)
     dump(defines, stream);
+    if (defines.needs-type-check?)
+      write('*', stream);
+    end if;
   else
     pprint-logical-block
       (stream,
@@ -274,6 +277,9 @@ define method dump-defines (defines :: false-or(<definition-site-variable>),
 		   pprint-newline(#"fill", stream);
 		 end;
 		 dump(def, stream);
+		 if (def.needs-type-check?)
+		   write('*', stream);
+		 end if;
 	       end;
 	     end,
        suffix: ")");
