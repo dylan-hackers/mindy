@@ -28,6 +28,7 @@ define constant $scrollBarProc :: <integer>				= 16;
 define constant $popupMenuProc :: <integer>				= 1008;
 
 
+define constant $kControlUserPaneProc	:: <integer> = c-expr(int: "kControlUserPaneProc");
 define constant $kControlEditTextProc :: <integer>				= 272; /* Appearance 1.0 or higher */
 define constant $kControlEditTextPasswordProc :: <integer> 		= 274; /* Appearance 1.0 or higher */
 define constant $kControlEditTextInlineInputProc :: <integer> 	= 276; /* Appearance 1.1 Can't combine with the other variants*/
@@ -35,7 +36,7 @@ define constant $kControlEditTextInlineInputProc :: <integer> 	= 276; /* Appeara
 define constant $kControlStaticTextProc :: <integer>		= 288; /* Appearance 1.0 or higher */ 
 
 define constant $kControlPictureProc :: <integer>			= 304; /* Appearance 1.0 or higher */
-define constant $kControlPictureNoTrackProc :: <integer>	= 305; /* Appearance 1.0 or higher */			
+define constant $kControlPictureNoTrackProc :: <integer>	= 305; /* Appearance 1.0 or higher */		
 
 
 define constant $kControlLabelPart :: <integer>			= 1;
@@ -62,38 +63,45 @@ define constant $kControlClockSecondYearPart :: <integer>	= 11;							/* Appeara
 define constant $kControlClockAMPMPart :: <integer>		= 12;						/* Appearance 1.1 and later*/
 define constant $kControlDataBrowserPart :: <integer>		= 24;							/* CarbonLib 1.0 and later*/
 define constant $kControlDataBrowserDraggedPart :: <integer> = 25;							/* CarbonLib 1.0 and later*/
+define constant $kControlEntireControl :: <integer> = c-expr(int: "kControlEntireControl");
 
-//- TODO
+define constant $kControlKindBevelButton :: <integer> = c-expr(int: "kControlKindBevelButton");
+define constant $kControlKindChasingArrows :: <integer> = c-expr(int: "kControlKindChasingArrows");	
+define constant $kControlKindClock :: <integer> = c-expr(int: "kControlKindClock");	
+define constant $kControlKindDataBrowser :: <integer> = c-expr(int: "kControlKindDataBrowser");	
+define constant $kControlKindDisclosureButton :: <integer> = c-expr(int: "kControlKindDisclosureButton");	
+define constant $kControlKindDisclosureTriangle :: <integer> = c-expr(int: "kControlKindDisclosureTriangle");	
+define constant $kControlKindEditText :: <integer> = c-expr(int: "kControlKindEditText");	
+define constant $kControlKindGroupBox :: <integer> = c-expr(int: "kControlKindGroupBox");	
+define constant $kControlKindIcon :: <integer> = c-expr(int: "kControlKindIcon");	
+define constant $kControlKindImageWell :: <integer> = c-expr(int: "kControlKindImageWell");	
+define constant $kControlKindListBox :: <integer> = c-expr(int: "kControlKindListBox");	
+define constant $kControlKindLittleArrows :: <integer> = c-expr(int: "kControlKindLittleArrows");	
+define constant $kControlKindPicture :: <integer> = c-expr(int: "kControlKindPicture");	
+define constant $kControlKindPlacard :: <integer> = c-expr(int: "kControlKindPlacard");	
+define constant $kControlKindPopupArrow :: <integer> = c-expr(int: "kControlKindPopupArrow");	
+define constant $kControlKindPopupButton :: <integer> = c-expr(int: "kControlKindPopupButton");	
+define constant $kControlKindProgressBar :: <integer> = c-expr(int: "kControlKindProgressBar");	
+define constant $kControlKindPushButton :: <integer> = c-expr(int: "kControlKindPushButton");	
+define constant $kControlKindRadioGroup :: <integer> = c-expr(int: "kControlKindRadioGroup");	
+define constant $kControlKindRoundButton :: <integer> = c-expr(int: "kControlKindRoundButton");	
+define constant $kControlKindScrollBar :: <integer> = c-expr(int: "kControlKindScrollBar");	
+define constant $kControlKindScrollingTextBox :: <integer> = c-expr(int: "kControlKindScrollingTextBox");	
+define constant $kControlKindSeparator :: <integer> = c-expr(int: "kControlKindSeparator");	
+define constant $kControlKindSignatureApple :: <integer> = c-expr(int: "kControlKindSignatureApple");	
+define constant $kControlKindSlider :: <integer> = c-expr(int: "kControlKindSlider");	
+define constant $kControlKindStaticText :: <integer> = c-expr(int: "kControlKindStaticText");	
+define constant $kControlKindTabs :: <integer> = c-expr(int: "kControlKindTabs");	
+define constant $kControlKindUserPane :: <integer> = c-expr(int: "kControlKindUserPane");	
+define constant $kControlKindWindowHeader :: <integer> = c-expr(int: "kControlKindWindowHeader");
 
-define constant $kControlKindBevelButton :: <integer> = 0;
-define constant $kControlKindChasingArrows :: <integer> = 0;	
-define constant $kControlKindClock :: <integer> = 0;	
-define constant $kControlKindDataBrowser :: <integer> = 0;	
-define constant $kControlKindDisclosureButton :: <integer> = 0;	
-define constant $kControlKindDisclosureTriangle :: <integer> = 0;	
-define constant $kControlKindEditText :: <integer> = 0;	
-define constant $kControlKindGroupBox :: <integer> = 0;	
-define constant $kControlKindIcon :: <integer> = 0;	
-define constant $kControlKindImageWell :: <integer> = 0;	
-define constant $kControlKindListBox :: <integer> = 0;	
-define constant $kControlKindLittleArrows :: <integer> = 0;	
-define constant $kControlKindPicture :: <integer> = 0;	
-define constant $kControlKindPlacard :: <integer> = 0;	
-define constant $kControlKindPopupArrow :: <integer> = 0;	
-define constant $kControlKindPopupButton :: <integer> = 0;	
-define constant $kControlKindProgressBar :: <integer> = 0;	
-define constant $kControlKindPushButton :: <integer> = 0;	
-define constant $kControlKindRadioGroup :: <integer> = 0;	
-define constant $kControlKindRoundButton :: <integer> = 0;	
-define constant $kControlKindScrollBar :: <integer> = 0;	
-define constant $kControlKindScrollingTextBox :: <integer> = 0;	
-define constant $kControlKindSeparator :: <integer> = 0;	
-define constant $kControlKindSignatureApple :: <integer> = 0;	
-define constant $kControlKindSlider :: <integer> = 0;	
-define constant $kControlKindStaticText :: <integer> = 0;	
-define constant $kControlKindTabs :: <integer> = 0;	
-define constant $kControlKindUserPane :: <integer> = 0;	
-define constant $kControlKindWindowHeader :: <integer> = 0;
+// Data types
+
+define constant $kControlUserPaneDrawProcTag :: <integer> = c-expr(int: "kControlUserPaneDrawProcTag");
+
+// etc.
+
+define constant $kControlSupportsEmbedding :: <integer> = c-expr(int: "kControlSupportsEmbedding");
 
 /*
 	types
@@ -134,7 +142,7 @@ define method NewControl( window :: <WindowRef>, bounds :: <Rect*>, title :: <pa
 
 	make( <ControlHandle>, pointer: 
 		call-out( "NewControl", ptr:, ptr: window.raw-value, ptr: bounds.raw-value, 
-					ptr: title.raw-value, unsigned-char: visBool, 
+					ptr: title.raw-value, unsigned-char: if(visBool) 1 else 0 end, 
 					short: initialValue, short: minimumValue, short: maximumValue,
 					short: procID, long: controlReference ) );
 
@@ -166,6 +174,24 @@ define method KillControls( window :: <WindowRef> )
 	values();
 
 end method KillControls;		
+
+
+								 
+								 	
+/*
+	GetControlBounds
+*/
+
+define method GetControlBounds( control :: <ControlHandle>, r :: <Rect*> )
+=> (r :: <Rect*>)
+	
+	call-out( "GetControlBounds", void:, ptr: control.raw-value, ptr: r.raw-value );
+	
+	r;
+	
+end method GetControlBounds;		
+
+
 
 /*
 	HiliteControl
@@ -474,3 +500,38 @@ define method CreateRootControl( for-window :: <WindowRef> )
   values(as(<OSErr>, err), pointer-at(temp, class: <ControlHandle>, offset: 0));
 
 end method CreateRootControl;
+
+/*
+  SetControlData
+*/
+
+define method SetControlData( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>,
+                        inSize :: <integer>, inData :: <statically-typed-pointer>)
+=> (result :: <OSErr>)
+  as(<OSErr>, call-out("SetControlData", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
+                        int: inSize, ptr: inData.raw-value));
+end method SetControlData;
+
+define method SetControlData( inControl :: <ControlHandle>, inPart :: <integer>, inTagName :: <integer>,
+                        inSize :: <integer>, inData :: <raw-pointer>)
+=> (result :: <OSErr>)
+  as(<OSErr>, call-out("SetControlData", int:, ptr: inControl.raw-value, short: inPart, int: inTagName,
+                        int: inSize, ptr: inData));
+end method SetControlData;
+
+
+/*
+		NewControlUserPaneDrawUPP
+*/
+
+define method NewControlUserPaneDrawUPP( userRoutine ) //:: <callback-function> )
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewControlUserPaneDrawUPP", ptr:, ptr: userRoutine.callback-entry );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewControlUserPaneDrawUPP;
+
+define method NewControlUserPaneDrawUPP( userRoutine :: <function-pointer> )	//  :: <callback-function>
+=> ( UPP :: <UniversalProcPtr> )
+	let result = call-out( "NewControlUserPaneDrawUPP", ptr:, ptr: userRoutine.raw-value );
+	make( <UniversalProcPtr>, pointer: result );
+end method NewControlUserPaneDrawUPP;

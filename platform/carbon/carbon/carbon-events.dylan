@@ -314,6 +314,7 @@ define constant $typeMenuRef :: <integer> = c-expr(int: "typeMenuRef");
 define constant $typeControlRef :: <integer> = c-expr(int: "typeControlRef");
 define constant $typeCollection :: <integer> = c-expr(int: "typeCollection");
 define constant $typeQDRgnHandle :: <integer> = c-expr(int: "typeQDRgnHandle");
+define constant $typeQDPoint :: <integer> = c-expr(int: "typeQDPoint");
 define constant $typeOSStatus :: <integer> = c-expr(int: "typeOSStatus");
 define constant $typeCGContextRef :: <integer> = c-expr(int: "typeCGContextRef");
 define constant $kEventParamMouseLocation :: <integer> = c-expr(int: "kEventParamMouseLocation");
@@ -426,7 +427,46 @@ define constant $kEventParamTabletProximityRec :: <integer> = c-expr(int: "kEven
 define constant $typeTabletPointerRec :: <integer> = c-expr(int: "typeTabletPointerRec");
 define constant $typeTabletProximityRec :: <integer> = c-expr(int: "typeTabletProximityRec");
 
-    
+/*
+  Control Events
+*/    
+
+define constant $kEventControlInitialize :: <integer> = c-expr(int: "kEventControlInitialize");
+define constant $kEventControlDispose :: <integer> = c-expr(int: "kEventControlDispose");
+define constant $kEventControlGetOptimalBounds :: <integer> = c-expr(int: "kEventControlGetOptimalBounds");
+define constant $kEventControlDefInitialize :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlDefDispose :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlHit :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlSimulateHit :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlHitTest :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlDraw :: <integer> = c-expr(int: "kEventControlDraw");
+define constant $kEventControlApplyBackground :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlApplyTextColor :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlSetFocusPart :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlGetFocusPart :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlActivate :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlDeactivate :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlSetCursor :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlContextualMenuClick :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlClick :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlTrack :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlGetScrollToHereStartPoint :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlGetIndicatorDragConstraint :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlIndicatorMoved :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlGhostingFinished :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlGetActionProcPart :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlGetPartRegion :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlGetPartBounds :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlSetData :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlGetData :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlValueFieldChanged :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlAddedSubControl :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlRemovingSubControl :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlBoundsChanged :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlOwningWindowChanged :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kEventControlArbitraryMessage :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kControlBoundsChangeSizeChanged :: <integer> = c-expr(int: "typeTabletProximityRec");
+define constant $kControlBoundsChangePositionChanged :: <integer> = c-expr(int: "typeTabletProximityRec");
     
     
 // Methods
@@ -496,6 +536,22 @@ define method InstallWindowEventHandler( inTarget :: <WindowRef>,
                             int: inNumTypes, ptr: inList.raw-value, ptr: inUserData.raw-value, ptr: temp.raw-value );
     values( as( <OSStatus>, status ), pointer-at( temp, class: <EventHandlerRef>, offset: 0 ) );
 end method InstallWindowEventHandler;
+
+/*
+    InstallControlEventHandler
+*/
+
+define method InstallControlEventHandler( inTarget :: <ControlHandle>, 
+                                        inHandler :: <EventHandlerUPP>,
+                                        inNumTypes :: <integer>, 
+                                        inList :: type-union( <c-vector>, <EventTypeSpec*> ), // <EventTypeSpec*>,
+                                        inUserData :: <statically-typed-pointer> ) 
+=> ( result :: <OSStatus>, outRef :: <EventHandlerRef> )
+    let temp :: <handle> = make( <Handle> );
+    let status = call-out( "InstallControlEventHandler", int:, ptr: inTarget.raw-value, ptr: inHandler.raw-value,
+                            int: inNumTypes, ptr: inList.raw-value, ptr: inUserData.raw-value, ptr: temp.raw-value );
+    values( as( <OSStatus>, status ), pointer-at( temp, class: <EventHandlerRef>, offset: 0 ) );
+end method InstallControlEventHandler;
 
 define method AddEventTypesToHandler( inHandlerRef :: <EventHandlerRef>, inNumTypes :: <integer>,
                                       inList :: type-union( <c-vector>, <EventTypeSpec*> ) ) // <EventTypeSpec*>
@@ -666,5 +722,14 @@ define method ReleaseEvent( inEvent :: <EventRef> )
 => ()
 	call-out( "ReleaseEvent", int:, ptr: inEvent.raw-value );
 end method ReleaseEvent;
+
+/*
+  GetControlEventTarget
+*/
+
+define method GetControlEventTarget( inControl :: <ControlHandle> )
+=> (status :: <EventTargetRef>)
+	make(<EventTargetRef>, pointer: call-out( "GetControlEventTarget", ptr:, ptr: inControl.raw-value ) );
+end method GetControlEventTarget;
 
 
