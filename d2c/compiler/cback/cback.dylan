@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.112 1996/03/08 05:22:35 rgs Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.113 1996/03/13 03:15:32 rgs Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -578,10 +578,10 @@ define method c-prefix (description :: <byte-string>) => (result :: <string>);
 		  otherwise => 0;
 		end case;
     for (i :: <integer> from start below description.size,
-	 until: description[i] = ' ' | description[i] = '{')
+	 until: description[i] == ' ' | description[i] == '{')
     finally
       let (first, last, offset, result)
-	= if (i > start & description[start] = '<' & description[i - 1] = '>')
+	= if (i > start & description[start] == '<' & description[i - 1] == '>')
 	    values(start + 1, i - 1, 4, 
 		   map-into(make(<byte-string>, size: i - start + 2),
 			    identity, "cls_"));
@@ -807,7 +807,7 @@ end;
 
 add-make-dumper(#"backend-var-info", *compiler-dispatcher*, <backend-var-info>,
 		list(backend-var-info-rep, representation:, #f,
-		     backend-var-info-name, name:, #f));
+		       backend-var-info-name, name:, #f));
 
 // Local variables are simple things.  Just pick a reasonable
 // representation, and create an anonymous <backend-var-info>
@@ -922,16 +922,16 @@ define class <function-info> (<object>)
   slot function-info-main-entry-name :: false-or(<byte-string>),
     init-value: #f, init-keyword: main-entry-name:;
   //
-  // List of the representations for the arguments.
-  slot function-info-argument-representations :: <list>,
+  // Sequence of the representations for the arguments.
+  slot function-info-argument-representations :: <simple-object-vector>,
     required-init-keyword: argument-reps:;
   //
   // Representation of the result.  If a <representation>, then that single
-  // value is returned.  If a list, then a structure of those values are
+  // value is returned.  If a sequence, then a structure of those values are
   // returned.  If #"doesn't-return" then it doesn't return.  If #"cluster",
   // it returns a cluster of values.
   slot function-info-result-representation
-    :: type-union(<representation>, <list>,
+    :: type-union(<representation>, <sequence>,
 	       one-of(#"doesn't-return", #"cluster")),
     required-init-keyword: result-rep:;
   //
@@ -958,7 +958,7 @@ end;
 
 define method make-function-info
     (class :: <class>, name :: <string>, signature :: <signature>,
-     closure-var-types :: <list>)
+     closure-var-types :: <sequence>)
     => res :: <function-info>;
   let argument-reps
     = begin
@@ -988,7 +988,7 @@ define method make-function-info
 	    end;
 	  end;
 	end;
-	as(<list>, reps);
+	as(<simple-object-vector>, reps);
       end;
 
   let result-type = signature.returns;
@@ -1024,7 +1024,7 @@ define method make-info-for
   make-function-info(<function-info>, function.name,
 		     make(<signature>, specializers: function.argument-types,
 			  returns: function.result-type),
-		     #());
+		     #[]);
 end;
 
 define method entry-point-c-name (entry :: <ct-entry-point>)
@@ -1114,7 +1114,7 @@ define constant $constant-function-info-slots
   = concatenate($constant-info-slots,
 		$function-info-slots,
 		list(function-info-general-entry-name, general-entry-name:,
-		       #f));
+		     #f));
 
 add-make-dumper(#"constant-function-info", *compiler-dispatcher*,
 		<constant-function-info>, $constant-function-info-slots);
@@ -1145,7 +1145,7 @@ end;
 define constant $constant-method-info-slots
   = concatenate($constant-function-info-slots,
 		list(function-info-generic-entry-name, generic-entry-name:,
-		       #f));
+		     #f));
 
 add-make-dumper(#"constant-method-info", *compiler-dispatcher*,
 		<constant-method-info>, $constant-method-info-slots);
@@ -1570,15 +1570,17 @@ define method compute-function-prototype
   let c-name = main-entry-name(function-info, file);
   let stream = make(<byte-string-output-stream>);
   let result-rep = function-info.function-info-result-representation;
-  if (result-rep == #() | result-rep == #"doesn't-return")
-    write("void", stream);
-  elseif (result-rep == #"cluster")
-    write("descriptor_t *", stream);
-  elseif (instance?(result-rep, <pair>))
-    format(stream, "struct %s",
-	   pick-result-structure(result-rep, file));
-  else
-    write(result-rep.representation-c-type, stream);
+  case
+    (result-rep == #"doesn't-return") => write("void", stream);
+    (result-rep == #"cluster") => write("descriptor_t *", stream);
+    (instance?(result-rep, <sequence>)) =>
+      if (result-rep.empty?)
+	write("void", stream);
+      else
+	format(stream, "struct %s",
+	       pick-result-structure(result-rep, file));
+      end if;
+    otherwise => write(result-rep.representation-c-type, stream);
   end;
   format(stream, " %s(descriptor_t *orig_sp", c-name);
   for (rep in function-info.function-info-argument-representations,
@@ -1598,7 +1600,7 @@ define method compute-function-prototype
 end;
 
 define method pick-result-structure
-    (results :: <list>, file :: <file-state>) => res :: <byte-string>;
+    (results :: <sequence>, file :: <file-state>) => res :: <byte-string>;
   let types = map-as(<simple-object-vector>, representation-c-type, results);
   let table = file.file-result-structures;
   let struct = element(table, types, default: #f);
@@ -1811,31 +1813,36 @@ define method emit-return
   format(stream, "return %s;\n", expr);
 end;
 
-define method emit-return
-    (return :: <return>, result-rep == #(), file :: <file-state>)
-    => ();
-  spew-pending-defines(file);
-  write("return;\n", file.file-guts-stream);
-end;
+//define method emit-return
+//    (return :: <return>, result-rep == #(), file :: <file-state>)
+//    => ();
+//  spew-pending-defines(file);
+//  write("return;\n", file.file-guts-stream);
+//end;
 
 define method emit-return
-    (return :: <return>, result-reps :: <list>, file :: <file-state>)
+    (return :: <return>, result-reps :: <sequence>, file :: <file-state>)
     => ();
-  let stream = file.file-guts-stream;  
-  let temp = new-local(file, modifier: "temp");
-  let function = return.block-of;
-  let function-info = get-info-for(function, file);
-  let name = pick-result-structure(result-reps, file);
-  format(file.file-vars-stream, "struct %s %s;\n",
-	 name, temp);
-  for (rep in result-reps,
-       index from 0,
-       dep = return.depends-on then dep.dependent-next)
-    format(stream, "%s.R%d = %s;\n",
-	   temp, index, ref-leaf(rep, dep.source-exp, file));
-  end;
-  spew-pending-defines(file);
-  format(stream, "return %s;\n", temp);
+  if (result-reps.empty?)
+    spew-pending-defines(file);
+    write("return;\n", file.file-guts-stream);
+  else
+    let stream = file.file-guts-stream;  
+    let temp = new-local(file, modifier: "temp");
+    let function = return.block-of;
+    let function-info = get-info-for(function, file);
+    let name = pick-result-structure(result-reps, file);
+    format(file.file-vars-stream, "struct %s %s;\n",
+	   name, temp);
+    for (rep in result-reps,
+	 index from 0,
+	 dep = return.depends-on then dep.dependent-next)
+      format(stream, "%s.R%d = %s;\n",
+	     temp, index, ref-leaf(rep, dep.source-exp, file));
+    end;
+    spew-pending-defines(file);
+    format(stream, "return %s;\n", temp);
+  end if;
 end;
 
 
@@ -2124,32 +2131,38 @@ define method emit-assignment
   format(file.file-guts-stream, "/* %s */\n",
 	 func-info.function-info-name.clean-for-comment);
   let result-rep = func-info.function-info-result-representation;
-  if (results == #f | result-rep == #())
-    format(file.file-guts-stream, "%s;\n", call);
-    deliver-results(results, #[], #f, file);
-  elseif (result-rep == #"doesn't-return")
-    error("Trying to get some values back from a function that "
-	    "doesn't return?");
-  elseif (result-rep == #"cluster")
-    format(file.file-guts-stream, "%s = %s;\n", new-sp, call);
-    deliver-cluster(results, sp, new-sp,
-		    func-info.function-info-result-type.min-values,
-		    file);
-  elseif (instance?(result-rep, <list>))
-    let temp = new-local(file, modifier: "temp");
-    format(file.file-vars-stream, "struct %s %s;\n",
-	   pick-result-structure(result-rep, file),
-	   temp);
-    format(file.file-guts-stream, "%s = %s;\n", temp, call);
-    let result-exprs = make(<vector>, size: result-rep.size);
-    for (rep in result-rep,
-	 index from 0)
-      result-exprs[index]
-	:= pair(stringify(temp, ".R", index), rep);
-    end;
-    deliver-results(results, result-exprs, #f, file);
-  else
-    deliver-result(results, call, result-rep, #t, file);
+  case
+    (results == #f) =>
+      format(file.file-guts-stream, "%s;\n", call);
+      deliver-results(results, #[], #f, file);
+    (result-rep == #"doesn't-return") =>
+      error("Trying to get some values back from a function that "
+	      "doesn't return?");
+    (result-rep == #"cluster") =>
+      format(file.file-guts-stream, "%s = %s;\n", new-sp, call);
+      deliver-cluster(results, sp, new-sp,
+		      func-info.function-info-result-type.min-values,
+		      file);
+    (instance?(result-rep, <sequence>)) =>
+      if (result-rep.empty?)
+	format(file.file-guts-stream, "%s;\n", call);
+	deliver-results(results, #[], #f, file);
+      else
+	let temp = new-local(file, modifier: "temp");
+	format(file.file-vars-stream, "struct %s %s;\n",
+	       pick-result-structure(result-rep, file),
+	       temp);
+	format(file.file-guts-stream, "%s = %s;\n", temp, call);
+	let result-exprs = make(<vector>, size: result-rep.size);
+	for (rep in result-rep,
+	     index from 0)
+	  result-exprs[index]
+	    := pair(stringify(temp, ".R", index), rep);
+	end;
+	deliver-results(results, result-exprs, #f, file);
+      end if;
+    otherwise =>
+      deliver-result(results, call, result-rep, #t, file);
   end;
 end;
 
@@ -2481,7 +2494,8 @@ define method deliver-cluster
 end;
 
 define method deliver-results
-    (defines :: false-or(<definition-site-variable>), values :: <sequence>,
+    (defines :: false-or(<definition-site-variable>),
+     values :: <sequence> /* of <pair>s */,
      now-dammit? :: <boolean>, file :: <file-state>)
     => ();
   if (defines & instance?(defines.var-info, <values-cluster-info>))
@@ -3001,3 +3015,34 @@ define method conversion-expr
     end;
   end;
 end;
+
+// Seals for file cback.dylan
+
+// <indenting-stream> -- subclass of <stream>
+seal generic make(singleton(<indenting-stream>));
+seal generic initialize(<indenting-stream>);
+// <unit-state> -- subclass of <object>
+seal generic make(singleton(<unit-state>));
+seal generic initialize(<unit-state>);
+// <root> -- subclass of <object>
+seal generic make(singleton(<root>));
+seal generic initialize(<root>);
+// <file-state> -- subclass of <object>
+seal generic make(singleton(<file-state>));
+seal generic initialize(<file-state>);
+// <backend-var-info> -- subclass of <object>
+seal generic make(singleton(<backend-var-info>));
+seal generic initialize(<backend-var-info>);
+// <function-info> -- subclass of <object>
+seal generic make(singleton(<function-info>));
+seal generic initialize(<function-info>);
+// <constant-info> -- subclass of <object>
+seal generic make(singleton(<constant-info>));
+seal generic initialize(<constant-info>);
+// <constant-function-info> -- subclass of <constant-info>, <function-info>
+seal generic make(singleton(<constant-function-info>));
+// <constant-method-info> -- subclass of <constant-function-info>
+seal generic make(singleton(<constant-method-info>));
+// <pending-define> -- subclass of <object>
+seal generic make(singleton(<pending-define>));
+seal generic initialize(<pending-define>);
