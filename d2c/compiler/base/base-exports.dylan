@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.4 1996/01/15 12:51:16 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/base/base-exports.dylan,v 1.5 1996/01/15 13:40:26 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -220,7 +220,7 @@ define module compile-time-values
     <literal-empty-list>,
     <literal-vector>,
     <literal-simple-object-vector>,
-    <literal-string>,
+    <literal-string>, concat-strings,
     *compiler-dispatcher*;
 end;
 
