@@ -3,7 +3,7 @@ author: chiles@cs.cmu.edu
 synopsis: This file implements some extensions to the Gwydion Dylan
           implementation.
 copyright: See below.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-internals.dylan,v 1.1 1996/06/12 21:56:39 bfw Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-internals.dylan,v 1.2 1996/06/13 18:10:08 bfw Exp $
 
 //======================================================================
 //
@@ -52,15 +52,14 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/common/streams/Attic/new-inter
 /// As methods.
 ///
 
-/*
+#if (mindy) // singleton doesn't work in compiler???
 define method as (result :: singleton(<byte>), object :: <byte-character>)
     => result :: <byte>;
   as(<integer>, object);
 end method;
-*/
-/*
+
 define method as (result :: singleton(<byte-string>), object :: <byte-vector>)
-    => result :: <byte-string>;
+ => result :: <byte-string>;
   let len :: <integer> = object.size;
   let res :: <byte-string> = make(<byte-string>, size: len);
   copy-bytes(res, 0, object, 0, len);
@@ -68,13 +67,13 @@ define method as (result :: singleton(<byte-string>), object :: <byte-vector>)
 end method;
 
 define method as (result :: singleton(<byte-vector>), object :: <byte-string>)
-    => result :: <byte-vector>;
+ => result :: <byte-vector>;
   let len :: <integer> = object.size;
   let res :: <byte-vector> = make(<byte-vector>, size: len);
   copy-bytes(res, 0, object, 0, len);
   res;
 end method;
-*/
+#endif
 
 ///
 /// Utilities.
