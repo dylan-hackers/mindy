@@ -95,6 +95,7 @@ end;
 define constant $integer-size :: <integer> = 4;
 define constant $short-int-size :: <integer> = 2;
 define constant $long-int-size :: <integer> = 4;
+define constant $longlong-int-size :: <integer> = 8;
 define constant $char-size :: <integer> = 1;
 define constant $float-size :: <integer> = 4;
 define constant $double-float-size :: <integer> = 8;

@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.2 1998/09/25 00:11:02 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/exports.dylan,v 1.3 1998/09/28 19:17:41 emk Exp $
 
 //======================================================================
 //
@@ -119,7 +119,7 @@ define module int-lexer
     <pointer-token>, <constant-token>, <variable-token>, <getter-token>,
     <setter-token>, <read-only-token>, <seal-token>, <seal-functions-token>,
     <boolean-token>, <sealed-token>, <open-token>, <inline-token>,
-    <value-token>, <literal-token>, <mindy-inc-token>;
+    <value-token>, <callback-token>, <literal-token>, <mindy-inc-token>;
 end module int-lexer;
 
 define module int-parse
@@ -139,7 +139,8 @@ define module int-parse
     file-imports, file-import-modes, prefix, exclude, excluded-files, rename,
     mappings, equates, read-only, seal-string, <clause>, <function-clause>,
     <struct-clause>, <union-clause>, <pointer-clause>, <constant-clause>,
-    <variable-clause>, name, options, <undefined>, undefined;
+    <variable-clause>, <callback-clause>, callback-generator, name, options,
+    <undefined>, undefined;
 end module int-parse;
 
 define module name-mappers

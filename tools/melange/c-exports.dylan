@@ -4,7 +4,7 @@ copyright: Copyright (C) 1994, 1996, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.4 1998/09/27 06:39:01 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-exports.dylan,v 1.5 1998/09/28 19:17:41 emk Exp $
 
 //======================================================================
 //
@@ -202,7 +202,8 @@ define module c-declarations
     <function-declaration>, <structured-type-declaration>,
     <struct-declaration>, <union-declaration>, <variable-declaration>,
     <constant-declaration>, <typedef-declaration>, <pointer-declaration>,
-    <vector-declaration>,
+    <vector-declaration>, <function-type-declaration>,
+    callback-generator-name, callback-generator-name-setter,
 
     // Preliminary "set declaration properties phase"
     ignored?-setter, find-result, find-parameter, find-slot,

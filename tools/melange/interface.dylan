@@ -5,7 +5,7 @@ copyright: Copyright (C) 1994, Carnegie Mellon University
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.3 1998/09/27 06:39:04 emk Exp $
+rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.4 1998/09/28 19:17:46 emk Exp $
 
 //======================================================================
 //
@@ -413,6 +413,17 @@ define method process-clause
   end for;
 end method process-clause;
 
+define method process-clause
+    (clause :: <callback-clause>, state :: <parse-state>,
+     c-state :: <c-parse-state>)
+ => ();
+  let decl = parse-type(clause.name, c-state).true-type;
+  unless (instance?(decl, <function-type-declaration>))
+    error("melange: callback clause %= is not a function type", decl);
+  end unless;
+  decl.callback-generator-name := clause.callback-generator;
+end method process-clause;
+
 //----------------------------------------------------------------------
 // High level processing routines for interface definitions
 //----------------------------------------------------------------------
@@ -498,7 +509,7 @@ define method process-parse-state
     write(out-stream, "#endif\n");
   end if;
 end method process-parse-state;
-  
+
 // Process-define-interface simply calls the parser in int-parse to decipher
 // the "define interface" and then call "process-parse-state" to annotate and
 // write out the declarations.  It returns the character position of the first

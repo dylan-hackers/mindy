@@ -210,6 +210,11 @@ define class <variable-clause> (<clause>) end class;
 define class <constant-clause> (<clause>) end class;
 define class <pointer-clause> (<clause>) end class;
 
+define class <callback-clause> (<clause>)
+  slot callback-generator :: <symbol>,
+    required-init-keyword: callback-generator:;
+end class;
+
 define class <container-clause> (<clause>)
   slot container-options :: <container-options>;
 end class <container-clause>;
@@ -285,6 +290,7 @@ define constant <source-location> = false-or(<parse-state>);
 :token <open-token> <reserved-word-token> 
 :token <inline-token> <reserved-word-token> 
 :token <value-token> <reserved-word-token> 
+:token <callback-token> <reserved-word-token>
 
 ;; A whole bunch of punctuation
 
@@ -783,6 +789,19 @@ variable-option (<equate-token> <identifier-token>)
 
 variable-option (<getter-token> sealing)
   pair(#"seal", %2);
+%
+
+interface-clause (<callback-token> <string-literal-token> <arrow-token>
+                  <identifier-token> callback-option-list)
+  @0.clauses := add!(@0.clauses,
+                     make(<callback-clause>,
+                          name: %2.value,
+                          callback-generator: %4.value,
+                          options: %5));
+%
+
+callback-option-list ()
+  #();
 %
 
 %%

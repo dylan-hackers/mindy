@@ -217,7 +217,8 @@ define constant <non-atomic-types>
     = type-union(<struct-declaration>, <union-declaration>,
 		 <vector-declaration>);
 define constant <pointer-rep-types>
-    = type-union(<pointer-declaration>, <non-atomic-types>);
+    = type-union(<pointer-declaration>, <non-atomic-types>,
+		 <function-type-declaration>);
 
 define method c-accessor
     (type :: <non-atomic-types>,
@@ -350,7 +351,8 @@ define method write-c-bitfield-methods
 end method write-c-bitfield-methods;
 
 define method d2c-type-tag
-    (type :: <pointer-rep-types>) => (result :: <byte-string>);
+    (type :: <pointer-rep-types>)
+ => (result :: <byte-string>);
   "ptr:";
 end method d2c-type-tag;
 
@@ -763,21 +765,33 @@ define method write-declaration
   format(stream, ");\nend method %s;\n\n", decl.dylan-name);
 end method write-declaration;
 
-// We don't really handle function types, since we can't really define them in
-// dylan.  We simply define them to be <statically-typed-pointer>s and assume
-// that anybody who tries to pass one as a parameter gets it right.  This will
-// be fleshed out more when we have an implementation which can handle
-// callbacks properly.
-//
+// XXX - Callback and function pointer support is currently in transition.
+// For now, we equate all function pointers as <function-pointer> and don't
+// worry about the different types. Once callbacks work, we'll worry about
+// type safety.
+
 define method write-declaration
     (decl :: <function-type-declaration>, load-string :: <string>,
      stream :: <stream>)
  => ();
   if (~decl.equated?)
-    // Equate this type to "<statically-typed-pointer>" as a placeholder.
-    // We may want to change this later.
-    format(stream, "define constant %s = <statically-typed-pointer>;\n\n",
+    format(stream, "define functional class %s (<function-pointer>) end;\n\n",
 	   decl.dylan-name)
+  end if;
+
+  let generator = as(<string>, decl.callback-generator-name);
+  if (generator)
+    select (melange-target)
+      #"d2c" =>
+	format(stream, "/* binding for %s goes here */\n\n", generator);
+      #"mindy" =>
+	format(stream, "/* skipping bindings for %s */\n\n", generator);
+	signal(make(<simple-warning>,
+		    format-string: "melange: skipping mindy bindings for %s",
+		    format-arguments: list(generator)));
+      otherwise =>
+	error("melange: so, you wrote a new compiler?");
+    end select;
   end if;
 end method write-declaration;
 
