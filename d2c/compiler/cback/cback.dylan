@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.71 1995/10/12 13:34:12 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.72 1995/10/16 17:54:05 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -571,6 +571,49 @@ define method emit-epilogue
   let bstream = output-info.output-info-body-stream;
   let gstream = output-info.output-info-guts-stream;
 
+  format(bstream, "void main(int argc, char *argv[])\n{\n");
+  format(gstream, "descriptor_t *sp = malloc(64*1024);\n\n");
+  for (init-function in init-functions)
+    let main-entry = init-function.main-entry;
+    let func-info = get-info-for(main-entry, output-info);
+    format(gstream, "/* %s */\n", main-entry.name);
+    format(gstream, "%s(sp);\n", main-entry-name(func-info, output-info));
+    write(gstream.string-output-stream-string, bstream);
+  end;
+  write("}\n", bstream);
+end;
+
+define method dylan-slot-offset (cclass :: <cclass>, slot-name :: <symbol>)
+  block (return)
+    for (slot in cclass.all-slot-infos)
+      if (slot.slot-getter & slot.slot-getter.variable-name == slot-name)
+	return(find-slot-offset(slot, cclass)
+		 | error("%s isn't at a constant offset in %=",
+			 slot-name, cclass));
+      end;
+    end;
+    error("%= doesn't have a slot named %s", cclass, slot-name);
+  end;
+end;
+
+
+// Top level form processors.
+
+define generic emit-tlf-gunk (tlf :: <top-level-form>,
+			      output-info :: <output-info>)
+    => ();
+
+define method emit-tlf-gunk (tlf :: <top-level-form>,
+			     output-info :: <output-info>)
+    => ();
+end;
+
+define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
+			     output-info :: <output-info>)
+    => ();
+  let bstream = output-info.output-info-body-stream;
+  let gstream = output-info.output-info-guts-stream;
+
   format(bstream, "descriptor_t *pad_cluster(descriptor_t *start, "
 	   "descriptor_t *end,\n");
   format(bstream, "                          int min_values)\n{\n");
@@ -636,42 +679,6 @@ define method emit-epilogue
     write(gstream.string-output-stream-string, bstream);
     write("}\n\n", bstream);
   end;
-
-  format(bstream, "void main(int argc, char *argv[])\n{\n");
-  format(gstream, "descriptor_t *sp = malloc(64*1024);\n\n");
-  for (init-function in init-functions)
-    let main-entry = init-function.main-entry;
-    let func-info = get-info-for(main-entry, output-info);
-    format(gstream, "/* %s */\n", main-entry.name);
-    format(gstream, "%s(sp);\n", main-entry-name(func-info, output-info));
-    write(gstream.string-output-stream-string, bstream);
-  end;
-  write("}\n", bstream);
-end;
-
-define method dylan-slot-offset (cclass :: <cclass>, slot-name :: <symbol>)
-  block (return)
-    for (slot in cclass.all-slot-infos)
-      if (slot.slot-getter & slot.slot-getter.variable-name == slot-name)
-	return(find-slot-offset(slot, cclass)
-		 | error("%s isn't at a constant offset in %=",
-			 slot-name, cclass));
-      end;
-    end;
-    error("%= doesn't have a slot named %s", cclass, slot-name);
-  end;
-end;
-
-
-// Top level form processors.
-
-define generic emit-tlf-gunk (tlf :: <top-level-form>,
-			      output-info :: <output-info>)
-    => ();
-
-define method emit-tlf-gunk (tlf :: <top-level-form>,
-			     output-info :: <output-info>)
-    => ();
 end;
 
 define method emit-tlf-gunk (tlf :: <define-bindings-tlf>,

@@ -1,5 +1,5 @@
 module: top-level-expressions
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.4 1995/06/04 01:06:30 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/tlexpr.dylan,v 1.5 1995/10/16 17:54:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -45,4 +45,38 @@ end;
 define method convert-top-level-form
     (builder :: <fer-builder>, tlf :: <expression-tlf>) => ();
   fer-convert(builder, tlf.tlf-expression, make(<lexenv>), #"nothing", #f);
+end;
+
+
+
+// Magic internal primitives placeholder.
+
+define class <magic-interal-primitives-placeholder> (<top-level-form>)
+end;
+
+define method print-message
+    (tlf :: <magic-interal-primitives-placeholder>, stream :: <stream>) => ();
+  write("Magic internal primitives.", stream);
+end;
+
+define method process-top-level-form
+    (form :: <primitive>, #next next-method)
+    => ();
+  if (form.primitive-name.token-symbol
+	== #"magic-internal-primitives-placeholder")
+    add!($Top-Level-Forms, make(<magic-interal-primitives-placeholder>));
+  else
+    next-method();
+  end;
+end;
+
+define method finalize-top-level-form
+    (tlf :: <magic-interal-primitives-placeholder>) => ();
+  // Nothing to do.
+end;
+
+define method convert-top-level-form
+    (builder :: <fer-builder>, tlf :: <magic-interal-primitives-placeholder>)
+    => ();
+  // Nothing to do.
 end;

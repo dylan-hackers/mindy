@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.89 1995/10/13 15:02:49 ram Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/Attic/exports.dylan,v 1.90 1995/10/16 17:54:05 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -1044,12 +1044,15 @@ end;
 define module top-level-expressions
   use common;
   use utils;
+  use tokens;
   use parse-tree;
   use top-level-forms;
   use lexenv;
   use builder-interface;
   use fer-convert;
   use expand;
+
+  export <magic-interal-primitives-placeholder>;
 end;
 
 define module cheese
@@ -1107,6 +1110,7 @@ define module cback
   use flow;
   use front;
   use top-level-forms;
+  use top-level-expressions;
   use define-functions;
   use define-constants-and-variables;
   use ctype;
