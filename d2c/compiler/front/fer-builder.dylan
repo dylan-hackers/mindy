@@ -1,6 +1,6 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.2 1994/12/13 13:22:18 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/fer-builder.dylan,v 1.3 1994/12/13 14:19:20 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -352,11 +352,14 @@ end method;
 
 
 define method make-lexical-var
-    (builder :: <fer-builder>, source :: <source-location>, of-type :: <ctype>)
+    (builder :: <fer-builder>, name :: <symbol>, source :: <source-location>,
+     of-type :: <ctype>)
  => res :: <initial-variable>;
   ignore(builder);
   make(<initial-variable>,
-       var-info: make(<lexical-var-info>, asserted-type: of-type,
+       var-info: make(<lexical-var-info>,
+		      debug-name: name,
+		      asserted-type: of-type,
        		      source-location: source));
 end method;
 

@@ -1,5 +1,5 @@
 module: fer-convert
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.3 1994/12/13 13:28:59 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/convert/fer-convert.dylan,v 1.4 1994/12/13 14:19:21 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -71,7 +71,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 			make(<lexenv>, inside: lexenv),
 			type-local);
 	    let type-temp
-	      = make-lexical-var(builder, source, dylan-value(#"<type>"));
+	      = make-lexical-var(builder, #"type", source,
+				 dylan-value(#"<type>"));
 	    build-let(builder, lexenv.lexenv-policy, source,
 		      type-temp, type-local);
 	    type-temps[index] := type-temp;
@@ -99,8 +100,9 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 
   // Copy the temps into real lexical vars and update the lexenv with em.
   for (param in params, type in types, type-temp in type-temps, temp in temps)
-    let var = make-lexical-var(builder, source, type);
-    add-binding(lexenv, param.param-name, var, type-var: type-temp);
+    let name = param.param-name;
+    let var = make-lexical-var(builder, name.token-symbol, source, type);
+    add-binding(lexenv, name, var, btype-var: type-temp);
     build-let(builder, lexenv.lexenv-policy, source, var,
 	      if (type-temp)
 		make-check-type-operation(builder, temp, type-temp);
@@ -109,7 +111,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <let>,
 	      end);
   end;
   if (rest)
-    let var = make-lexical-var(builder, source, object-ctype());
+    let var = make-lexical-var(builder, rest.token-symbol, source,
+			       object-ctype());
     add-binding(lexenv, rest, var);
     build-let(builder, lexenv.lexenv-policy, source, var, rest-temp);
   end;
@@ -129,7 +132,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <local>,
   let vars
     = map(method (meth)
 	    let name = meth.method-name;
-	    let var = make-lexical-var(builder, source, function-ctype());
+	    let var = make-lexical-var(builder, name.token-symbol, source,
+				       function-ctype());
 	    add-binding(lexenv, name, var);
 	    var;
 	  end,
@@ -296,7 +300,8 @@ define method fer-convert (builder :: <fer-builder>, form :: <bind-exit>,
   let blk = build-block-body(builder, lexenv.lexenv-policy, source);
   let lexenv = make(<lexenv>, inside: lexenv);
   let name = form.exit-name;
-  let exit = make-lexical-var(builder, source, function-ctype());
+  let exit = make-lexical-var(builder, name.token-symbol, source,
+			      function-ctype());
   add-binding(lexenv, name, exit);
   build-let(builder, lexenv.lexenv-policy, source, exit,
 	    make-exit-function(builder, blk));
@@ -366,7 +371,8 @@ define method build-general-method
 	  fer-convert(builder, param.param-type,
 		      make(<lexenv>, inside: specializer-lexenv),
 		      temp);
-	  let var = make-lexical-var(builder, source, dylan-value(#"<type>"));
+	  let var = make-lexical-var(builder, #"type", source,
+				     dylan-value(#"<type>"));
 	  build-let(builder, specializer-lexenv.lexenv-policy, source,
 		    var, temp);
 	  values(object-ctype(), var);
@@ -383,8 +389,9 @@ define method build-general-method
   let arg-check-builder = make-builder(builder);
   for (param in paramlist.paramlist-required-vars)
     let (type, type-var) = param-type-and-var(param);
-    let var = make-lexical-var(builder, source, type);
-    add-binding(lexenv, param.param-name, var, type-var: type-var);
+    let name = param.param-name;
+    let var = make-lexical-var(builder, name.token-symbol, source, type);
+    add-binding(lexenv, name, var, type-var: type-var);
     add!(fixed-vars, var);
     if (type-var)
       non-const-arg-types? := #t;
@@ -397,30 +404,40 @@ define method build-general-method
     end;
   end;
   let next-var
-    = if (paramlist.paramlist-next)
-	let var = make-lexical-var(builder, source, object-ctype());
-	add-binding(lexenv, paramlist.paramlist-next, var);
-	var;
+    = begin
+	let next = paramlist.paramlist-next;
+	if (next)
+	  let var = make-lexical-var(builder, next.token-symbol, source,
+				     object-ctype());
+	  add-binding(lexenv, next, var);
+	  var;
+	end;
       end;
   let rest-var
-    = if (paramlist.paramlist-rest)
-	let var = make-lexical-var(builder, source, object-ctype());
-	add-binding(lexenv, paramlist.paramlist-rest, var);
-	var;
+    = begin
+	let rest = paramlist.paramlist-rest;
+	if (rest)
+	  let var = make-lexical-var(builder, rest.token-symbol, source,
+				     object-ctype());
+	  add-binding(lexenv, rest, var);
+	  var;
+	end;
       end;
   let keywords
     = if (paramlist.paramlist-keys)
 	let infos = make(<stretchy-vector>);
 	for (param in paramlist.paramlist-keys)
+	  let name = param.param-name;
 	  let (type, type-var) = param-type-and-var(param);
-	  let var = make-lexical-var(builder, source, type);
+	  let var = make-lexical-var(builder, name.token-symbol, source, type);
 	  let default = ct-eval(param.param-default, lexenv);
 	  if (default)
 	    add!(infos, make(<keyword-info>, symbol: param.param-keyword,
 			     var: var, default: default, type: type));
 	  else
 	    let pre-default
-	      = make-lexical-var(builder, source, object-ctype());
+	      = make-lexical-var(builder, name.token-symbol, source,
+				 object-ctype());
 	    add!(infos, make(<keyword-info>, symbol: param.param-keyword,
 			     var: pre-default, type: object-ctype(),
 			     default: $Unbound-Marker-CT-Value));
@@ -446,7 +463,7 @@ define method build-general-method
 	      (builder, lexenv.lexenv-policy, source, var,
 	       make-check-type-operation(builder, var, type-var));
 	  end;
-	  add-binding(lexenv, param.param-name, var, type-var: type-var);
+	  add-binding(lexenv, name, var, type-var: type-var);
 	end;
 	as(<list>, infos);
       end;
@@ -619,15 +636,19 @@ define method build-hairy-method-body
   let vars = map-as(<stretchy-vector>, identity, fixed-vars);
   let body-builder = make-builder(builder);
   if (next-var)
-    let var = make-lexical-var(body-builder, source, object-ctype());
+    let var = make-lexical-var(body-builder, #"next-method-info", source,
+			       object-ctype());
     add!(vars, var);
     if (keywords & ~rest-var)
-      rest-var := make-lexical-var(body-builder, source, object-ctype());
+      rest-var := make-lexical-var(body-builder, #"rest", source,
+				   object-ctype());
     end;
   end;
   if (rest-var)
-    let context = make-lexical-var(body-builder, source, object-ctype());
-    let count = make-lexical-var(body-builder, source, object-ctype());
+    let context = make-lexical-var(body-builder, #"context", source,
+				   object-ctype());
+    let count = make-lexical-var(body-builder, #"count", source,
+				 object-ctype());
     add!(vars, context);
     add!(vars, count);
     let fn-leaf = dylan-defn-leaf(body-builder, #"%make-rest-arg");
@@ -680,12 +701,15 @@ define method build-hairy-method-more-arg-entry (leaf)
 		   add!(args, var);
 		   var;
 		 else
-		   make-lexical-var(builder, source, object-ctype());
+		   make-lexical-var(builder, #"next-method-info", source,
+				    object-ctype());
 		 end;
   add!(vars, next-var);
   if (leaf.hairy-method-rest-var | leaf.hairy-method-keywords)
-    let context = make-lexical-var(body-builder, source, object-ctype());
-    let count = make-lexical-var(body-builder, source, object-ctype());
+    let context = make-lexical-var(body-builder, #"context", source,
+				   object-ctype());
+    let count = make-lexical-var(body-builder, #"count", source,
+				 object-ctype());
     add!(vars, context);
     add!(vars, count);
     if (leaf.hairy-method-rest-var)
@@ -730,8 +754,9 @@ define method build-keyword-dispatch(builder, policy, source, args, keywords,
 end;
 
 define method build-hairy-method-general-entry (leaf)
-  let context-var = make-lexical-var(builder, source, object-ctype());
-  let count-var = make-lexical-var(builder, source, object-ctype());
+  let context-var = make-lexical-var(builder, #"context", source,
+				     object-ctype());
+  let count-var = make-lexical-var(builder, #"count", source, object-ctype());
   let args = make(<stretchy-vector>);
   add!(args, leaf.hairy-method-more-arg-entry);
   let body-builder = make-builder(builder);
@@ -749,7 +774,7 @@ define method build-hairy-method-general-entry (leaf)
 		     make-operation(body-builder, ops));
   end;
   for (var in fixed-vars, index from 0)
-    let temp = make-lexical-var(builder, source, object-ctype());
+    let temp = make-lexical-var(builder, #"temp", source, object-ctype());
     add!(args, temp);
     let ops = list(dylan-defn-leaf(body-builder, #"%arg"),
 		   context-var,
@@ -824,12 +849,14 @@ define method canonicalize-results (builder :: <fer-builder>,
   add!(ops, dylan-defn-leaf(builder, #"values"));
   let fixed-vars
     = map(method (result)
-	    let var = make-lexical-var(builder, source, object-ctype());
+	    let var = make-lexical-var(builder, #"temp", source,
+				       object-ctype());
 	    add!(ops, var);
 	    var;
 	  end,
 	  fixed-results);
-  let rest-var = make-lexical-var(builder, source, object-ctype());
+  let rest-var = make-lexical-var(builder, #"rest-temp", source,
+				  object-ctype());
   add!(ops, rest-var);
   let cluster = make-values-cluster(builder, #"temps", wild-ctype());
   let method-leaf

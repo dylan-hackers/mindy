@@ -1,6 +1,6 @@
 Module: front
 Description: Interface to building the Front-End representation.
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.1 1994/12/12 13:01:14 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/builder.dylan,v 1.2 1994/12/13 14:19:03 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -169,7 +169,8 @@ define generic make-definition-leaf
 // parameter to a METHOD literal or by initializing with LET.
 //
 define generic make-lexical-var
-    (builder :: <fer-builder>, source :: <source-location>, of-type :: <ctype>)
+    (builder :: <fer-builder>, name :: <symbol>, source :: <source-location>,
+     of-type :: <ctype>)
  => res :: <abstract-variable>;
 
 

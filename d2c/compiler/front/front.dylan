@@ -1,5 +1,5 @@
 Module: front
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.2 1994/12/13 13:24:22 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/front/front.dylan,v 1.3 1994/12/13 14:19:22 wlott Exp $
 copyright: Copyright (c) 1994  Carnegie Mellon University
 	   All rights reserved.
 
@@ -16,9 +16,9 @@ operation
 	mv-call
 
 variable-info
-    lambda-var-info [source-location-mixin]
     module-var-info
-    abstract-temp-info {abstract}
+    debug-named-info {abstract}
+        lambda-var-info [source-location-mixin]
 	values-cluster-info
 	local-var-info
 
@@ -131,17 +131,17 @@ end class;
 // expected.
 //
 
-define abstract class <abstract-temp-info> (<variable-info>)
+define abstract class <debug-named-info> (<variable-info>)
   slot debug-name :: <symbol>, required-init-keyword: debug-name:;
 end class;
 
-define class <values-cluster-info> (<abstract-temp-info>)
+define class <values-cluster-info> (<debug-named-info>)
 end class;
 
-define class <local-var-info> (<abstract-temp-info>)
+define class <local-var-info> (<debug-named-info>)
 end class;
 
-define class <lexical-var-info> (<variable-info>, <source-location-mixin>)
+define class <lexical-var-info> (<debug-named-info>, <source-location-mixin>)
 // ??? stuff to handle set & closure vars?
 end class;
 
