@@ -11,7 +11,7 @@ module: dylan
 //
 //////////////////////////////////////////////////////////////////////
 //
-//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.8 1994/04/21 02:04:12 rgs Exp $
+//  $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/vec.dylan,v 1.9 1994/04/30 02:48:38 rgs Exp $
 //
 //  This file contains the support for vectors.
 //
@@ -370,7 +370,16 @@ define method fill!(vector :: <vector>, value :: <object>,
   end for;
 end method fill!;
 
-
+define method copy-sequence(vector :: <vector>, #key start = 0, end: last)
+  let src-sz = size(vector);
+  let last = if (last & last < src-sz) last else src-sz end if;
+  let sz = last - start;
+  let result = make(class-for-copy(vector), size: sz);
+  for (src-index from start, index from 0 below sz)
+    result[index] := vector[src-index];
+  end for;
+  result;
+end method copy-sequence;
 
 //// Array methods.
 
