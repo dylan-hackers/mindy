@@ -1,4 +1,4 @@
-rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.9 2002/08/26 05:24:55 bruce Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/runtime/dylan/collection.dylan,v 1.10 2002/10/09 07:30:33 housel Exp $
 copyright: see below
 module: dylan-viscera
 
@@ -804,7 +804,7 @@ define method do
       states := pair(state, states);
       limits := pair(limit, limits);
       next-states := pair(next-state, next-states);
-      finished-state?s := pair(finished-state?s, finished-state?);
+      finished-state?s := pair(finished-state?, finished-state?s);
       current-elements := pair(current-element, current-elements);
     end;
     begin
@@ -814,7 +814,7 @@ define method do
       states := pair(state, states);
       limits := pair(limit, limits);
       next-states := pair(next-state, next-states);
-      finished-state?s := pair(finished-state?s, finished-state?);
+      finished-state?s := pair(finished-state?, finished-state?s);
       current-elements := pair(current-element, current-elements);
     end;
     
