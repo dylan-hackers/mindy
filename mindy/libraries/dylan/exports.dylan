@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.38 1994/06/27 17:10:24 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.39 1994/08/18 16:40:07 nkramer Exp $
 
 //======================================================================
 //
@@ -102,7 +102,8 @@ define module Builtin-Stuff
     debugger-return, debugger-eval,
     on-exit, exit, 
     <equal-table>, equal-hash, collection-hash,
-    <value-table>, value-hash, sequence-hash, string-hash;
+    <value-table>, value-hash, sequence-hash, string-hash,
+    row-major-index, rank, dimension;
 end Builtin-Stuff;
 
 define module Dylan
@@ -147,6 +148,7 @@ define module Dylan
 	     negative, negative?,
 	     object-class, object-hash,
 	     pair,
+	     row-major-index, rank, dimension,
 	     remove-method, round, round/,
 	     singleton, size, slot-initialized?, sorted-applicable-methods,
 	     subtype?,
