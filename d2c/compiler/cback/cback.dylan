@@ -1,5 +1,5 @@
 module: cback
-rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.108 1996/02/17 20:39:33 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/d2c/compiler/cback/cback.dylan,v 1.109 1996/02/18 18:31:34 wlott Exp $
 copyright: Copyright (c) 1995  Carnegie Mellon University
 	   All rights reserved.
 
@@ -306,8 +306,9 @@ define class <file-state> (<object>)
   //
   slot file-next-mv-result-struct :: <integer>, init-value: 0;
   //
-  slot file-local-vars :: <object-table>,
-    init-function: curry(make, <object-table>);
+  // Chain of <pending-define>s.
+  slot file-pending-defines :: false-or(<pending-define>),
+    init-value: #f;
   //
   // id number for the next block.
   slot file-next-block :: <integer>, init-value: 0;
@@ -1347,7 +1348,7 @@ define method emit-function
     => ();
   file.file-next-block := 0;
   file.file-local-table := make(<string-table>);
-  assert(file.file-local-vars.size == 0);
+  assert(file.file-pending-defines == #f);
 
   let function-info = get-info-for(function, file);
   let c-name = main-entry-name(function-info, file);
@@ -2366,7 +2367,7 @@ define method deliver-single-result
       let (target-name, target-rep) = c-name-and-rep(var, file);
       emit-copy(target-name, target-rep, source, source-rep, file);
     else
-      file.file-local-vars[var] := pair(source, source-rep);
+      add-pending-define(var, source, source-rep, file);
     end;
   end;
 end;
@@ -2384,33 +2385,68 @@ end;
 
 // Value manipulation utilities.
 
-define method spew-pending-defines (file :: <file-state>) => ();
-  let table = file.file-local-vars;
-  let vars = key-sequence(table);
-  let stream = file.file-guts-stream;
-  for (var in vars)
-    let (target, target-rep) = c-name-and-rep(var, file);
-    let noise = table[var];
-    emit-copy(target, target-rep, noise.head, noise.tail, file);
-    remove-key!(table, var);
-  end;
-end;
+define class <pending-define> (<object>)
+  constant slot pending-var :: <abstract-variable>,
+    required-init-keyword: var:;
+  constant slot pending-expr :: <byte-string>,
+    required-init-keyword: expr:;
+  constant slot pending-rep :: <representation>,
+    required-init-keyword: rep:;
+  slot pending-next :: false-or(<pending-define>),
+    init-value: #f;
+end class <pending-define>;
 
-define method ref-leaf (target-rep :: <representation>,
-			leaf :: <abstract-variable>,
-			file :: <file-state>)
+define method add-pending-define
+    (var :: <abstract-variable>, expr :: <byte-string>,
+     rep :: <representation>, file :: <file-state>)
+    => ();
+  for (prev = #f then pending,
+       pending = file.file-pending-defines then pending.pending-next,
+       while: pending)
+    if (pending.pending-var == var)
+      error("Overwriting a pending define?");
+    end if;
+  finally
+    let new = make(<pending-define>, var: var, expr: expr, rep: rep);
+    if (prev)
+      prev.pending-next := new;
+    else
+      file.file-pending-defines := new;
+    end if;
+  end for;
+end method add-pending-define;
+
+define method spew-pending-defines (file :: <file-state>) => ();
+  for (pending = file.file-pending-defines then pending.pending-next,
+       while: pending)
+    let (target, target-rep) = c-name-and-rep(pending.pending-var, file);
+    emit-copy(target, target-rep, pending.pending-expr, pending.pending-rep,
+	      file);
+  end for;
+  file.file-pending-defines := #f;
+end method spew-pending-defines;
+
+define method ref-leaf
+    (target-rep :: <representation>, leaf :: <abstract-variable>,
+     file :: <file-state>)
     => res :: <string>;
   let (expr, rep)
-    = begin
-	let info
-	  = element(file.file-local-vars, leaf, default: #f);
-	if (info)
-	  remove-key!(file.file-local-vars, leaf);
-	  values(info.head, info.tail);
-	else
+    = block (return)
+	for (prev = #f then pending,
+	     pending = file.file-pending-defines then pending.pending-next,
+	     while: pending)
+	  if (pending.pending-var == leaf)
+	    if (prev)
+	      prev.pending-next := pending.pending-next;
+	    else
+	      file.file-pending-defines := pending.pending-next;
+	    end if;
+	    return(pending.pending-expr, pending.pending-rep);
+	  end if;
+	finally
 	  c-name-and-rep(leaf, file);
-	end;
-      end;
+	end for;
+      end block;
   conversion-expr(target-rep, expr, rep, file);
 end;
 
