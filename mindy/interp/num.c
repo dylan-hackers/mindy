@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.17 1994/11/28 15:37:39 wlott Exp $
+* $Header: /home/housel/work/rcs/gd/src/mindy/interp/num.c,v 1.18 1995/02/08 02:45:01 wlott Exp $
 *
 * This file implements numbers.
 *
@@ -61,8 +61,9 @@ obj_t obj_SingleFloatClass = 0;
 obj_t obj_DoubleFloatClass = 0;
 obj_t obj_ExtendedFloatClass = 0;
 
+#ifndef MAX
 #define MAX(m, n) (((m) > (n)) ? (m) : (n))
-
+#endif
 
 
 /* Simple constructors */
@@ -240,8 +241,7 @@ int compare_bignums(obj_t x, obj_t y)
 		return -1;
 	    else if (x_length < y_length)
 		return 1;
-	    else
-		; /* fall though */
+	    /* else fall though */
 	}
 	else
 	    return -1;
@@ -254,8 +254,7 @@ int compare_bignums(obj_t x, obj_t y)
 		return 1;
 	    else if (x_length < y_length)
 		return -1;
-	    else
-		; /* fall though */
+	    /* else fall though */
 	}
     }
 
@@ -664,20 +663,9 @@ static void bignum_divide(obj_t *q, obj_t *r, obj_t x, obj_t y)
 {
     int len1, len2;
     digit_t *digits1, *digits2;
-    boolean xneg = FALSE;
-    boolean yneg = FALSE;
 
     if (ZEROP(y))
         error("Division by zero");
-
-    if (SIGN(x)) {
-        x = negate_bignum(x);
-	xneg = TRUE;
-    }
-    if (SIGN(y)) {
-        y = negate_bignum(y);
-	yneg = TRUE;
-    }
 
     len1 = BIGNUM(x)->length;
     len2 = BIGNUM(y)->length;
@@ -694,14 +682,8 @@ static void bignum_divide(obj_t *q, obj_t *r, obj_t x, obj_t y)
 	divide_by_digit(q, &r_value, x, digits2[0]);
 	*r = make_bignum(r_value);
     }
-    else {
+    else
 	divide(q, r, x, y);
-    }
-
-    if (xneg != yneg)
-        *q = negate_bignum(*q);
-    if (xneg)
-        *r = negate_bignum(*r);
 }
 
 static void print_bignum_aux(obj_t bignum, int radix)
@@ -1064,14 +1046,28 @@ static void dylan_ei_ei_floor(obj_t self, struct thread *thread, obj_t *args)
     obj_t *old_sp = args - 1;
     obj_t x = args[0];
     obj_t y = args[1];
-    obj_t q, r;
+    obj_t xabs, yabs, q, r;
+    boolean xneg, yneg;
 
-    bignum_divide(&q, &r, x, y);
+    if ((xneg = SIGN(x)))
+	xabs = negate_bignum(x);
+    else
+	xabs = x;
 
-    if (! ZEROP(r)) {
-	if (SIGN(r) != SIGN(y)) {
-	    r = add_bignums(r, y);
+    if ((yneg = SIGN(y)))
+	yabs = negate_bignum(y);
+    else
+	yabs = y;
+
+    bignum_divide(&q, &r, xabs, yabs);
+
+    if (yneg)
+	r = negate_bignum(r);
+    if (xneg != yneg) {
+	q = negate_bignum(q);
+	if (!ZEROP(r)) {
 	    q = subtract_bignums(q, make_bignum(1));
+	    r = subtract_bignums(y, r);
 	}
     }
 
@@ -1087,15 +1083,29 @@ static void dylan_ei_ei_ceil(obj_t self, struct thread *thread, obj_t *args)
     obj_t *old_sp = args - 1;
     obj_t x = args[0];
     obj_t y = args[1];
-    obj_t q, r;
+    obj_t xabs, yabs, q, r;
+    boolean xneg, yneg;
 
-    bignum_divide(&q, &r, x, y);
+    if ((xneg = SIGN(x)))
+	xabs = negate_bignum(x);
+    else
+	xabs = x;
 
-    if (! ZEROP(r)) {
-	if (SIGN(r) == SIGN(x)) {
-	    r = subtract_bignums(r, y);
-	    q = add_bignums(q, make_bignum(1));
-	}
+    if ((yneg = SIGN(y)))
+	yabs = negate_bignum(y);
+    else
+	yabs = y;
+
+    bignum_divide(&q, &r, xabs, yabs);
+
+    if (xneg)
+	r = negate_bignum(r);
+
+    if (xneg != yneg)
+	q = negate_bignum(q);
+    else if (!ZEROP(r)) {
+	q = add_bignums(q, make_bignum(1));
+	r = subtract_bignums(r, y);
     }
 
     thread->sp = old_sp + 2;
@@ -1110,16 +1120,25 @@ static void dylan_ei_ei_trunc(obj_t self, struct thread *thread, obj_t *args)
     obj_t *old_sp = args - 1;
     obj_t x = args[0];
     obj_t y = args[1];
-    obj_t q, r;
+    obj_t xabs, yabs, q, r;
+    boolean xneg, yneg;
 
-    bignum_divide(&q, &r, x, y);
+    if ((xneg = SIGN(x)))
+	xabs = negate_bignum(x);
+    else
+	xabs = x;
 
-    if (! ZEROP(r)) {
-	if (SIGN(r) != SIGN(x)) {
-	    r = subtract_bignums(r, y);
-	    q = add_bignums(q, make_bignum(1));
-	}
-    }
+    if ((yneg = SIGN(y)))
+	yabs = negate_bignum(y);
+    else
+	yabs = y;
+
+    bignum_divide(&q, &r, xabs, yabs);
+
+    if (xneg != yneg)
+	q = negate_bignum(q);
+    if (xneg)
+	r = negate_bignum(r);
 
     thread->sp = old_sp + 2;
     old_sp[0] = q;
@@ -1133,16 +1152,34 @@ static void dylan_ei_ei_round(obj_t self, struct thread *thread, obj_t *args)
     obj_t *old_sp = args - 1;
     obj_t x = args[0];
     obj_t y = args[1];
-    obj_t q, r;
+    obj_t xabs, yabs, q, r, twice_r;
+    boolean xneg, yneg;
+    int cmp;
 
-    bignum_divide(&q, &r, x, y);
+    if ((xneg = SIGN(x)))
+	xabs = negate_bignum(x);
+    else
+	xabs = x;
 
-    if (! ZEROP(r)) {
-	if (SIGN(r) != SIGN(x)) {
-	    r = subtract_bignums(r, y);
-	    q = add_bignums(q, make_bignum(1));
-	}
+    if ((yneg = SIGN(y)))
+	yabs = negate_bignum(y);
+    else
+	yabs = y;
+
+    bignum_divide(&q, &r, xabs, yabs);
+
+    twice_r = add_bignums(r, r);
+    cmp = compare_bignums(twice_r, yabs);
+
+    if (cmp > 0 || (cmp == 0 && (BIGNUM(q)->digits[0] & 1) != 0)) {
+	q = add_bignums(q, make_bignum(1));
+	r = subtract_bignums(r, yabs);
     }
+
+    if (xneg != yneg)
+	q = negate_bignum(q);
+    if (xneg)
+	r = negate_bignum(r);
 
     thread->sp = old_sp + 2;
     old_sp[0] = q;
@@ -2024,6 +2061,10 @@ void init_num_functions(void)
 			     FALSE, FALSE)->value,
 	       make_raw_method("ceiling/", two_eis, FALSE, obj_False, FALSE,
 			       two_eis, obj_False, dylan_ei_ei_ceil));
+    add_method(find_variable(module_BuiltinStuff, symbol("round/"),
+			     FALSE, FALSE)->value,
+	       make_raw_method("round/", two_eis, FALSE, obj_False, FALSE,
+			       two_eis, obj_False, dylan_ei_ei_round));
     add_method(find_variable(module_BuiltinStuff, symbol("truncate/"),
 			     FALSE, FALSE)->value,
 	       make_raw_method("truncate/", two_eis, FALSE, obj_False, FALSE,
