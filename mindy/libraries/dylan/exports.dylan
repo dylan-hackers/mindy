@@ -1,5 +1,5 @@
 module: dylan-user
-rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.45 1994/10/25 20:24:19 wlott Exp $
+rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.dylan,v 1.46 1994/10/26 15:08:59 wlott Exp $
 
 //======================================================================
 //
@@ -31,7 +31,9 @@ rcs-header: $Header: /home/housel/work/rcs/gd/src/mindy/libraries/dylan/exports.
 //
 
 define library Dylan
-  export Dylan, Extensions, System, File-Descriptors, Threads, Introspection;
+  export
+    Dylan, Extensions, System, File-Descriptors, Threads, Introspection,
+    Cheap-IO;
 end Dylan;
 
 define module Builtin-Stuff
@@ -66,7 +68,7 @@ define module Builtin-Stuff
     ceiling, ceiling/, class-name, copy-bytes, current-handler, current-thread,
     do-next-method,
     element, element-setter, enable-error-system,
-    find-method, float-hash, floor, floor/, format, function-arguments,
+    fflush, find-method, float-hash, floor, floor/, format, function-arguments,
     function-name,
     generic-function-mandatory-keywords, generic-function-methods,
     getc, grab-lock,
@@ -105,6 +107,13 @@ define module Builtin-Stuff
     debugger-return, debugger-eval,
     on-exit, exit;
 end Builtin-Stuff;
+
+
+define module extras
+  create
+    *format-hook*, *format-hook-default-stream*, report-condition;
+end;
+
 
 define module Dylan
   use Builtin-Stuff,
@@ -154,6 +163,7 @@ define module Dylan
 	     table-protocol, tail, tail-setter, truncate, truncate/,
 	     union,
 	     values, vector};
+  use extras;
   export
     \>=, \>, \:=, \|, \&,
     <abort>,
@@ -201,10 +211,11 @@ define module Extensions
   use Dylan;
   use Builtin-Stuff,
     import: {main, exit, on-exit,
-	     format, prin1, print, putc, puts, getc, <byte-vector>,
-	     <byte-character>,
+	     <byte-character>, <byte-vector>,
 	     <boolean>, <true>, <false>,
 	     <weak-pointer>, weak-pointer-object},
+    export: all;
+  use extras,
     export: all;
   create
     <equal-table>, equal-hash, collection-hash, 
@@ -265,6 +276,7 @@ define module File-Descriptors
     export: all;
 end File-Descriptors;
 
+
 define module Threads
   use Dylan;
   use Extensions;
@@ -295,3 +307,11 @@ define module Introspection
 	     slot-type, slot-value, slot-value-setter},
     export: all;
 end;
+
+
+define module Cheap-IO
+  use Builtin-Stuff,
+    import: {fflush, format, prin1, print, putc, puts, getc},
+    export: all;
+end;
+
