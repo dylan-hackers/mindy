@@ -1,12 +1,12 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.5 2001/02/04 22:05:48 gabor Exp $
+rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.6 2001/02/08 21:56:13 gabor Exp $
 copyright: see below
 
 
 //======================================================================
 //
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+// Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -288,6 +288,9 @@ define-primitive
   (#"c-include", #(#"<string>"), #(values:));
 
 define-primitive
+  (#"c-system-include", #(#"<string>"), #(values:));
+
+define-primitive
   (#"c-decl", #(#"<string>"), #(values:));
 
 define-primitive
@@ -296,6 +299,10 @@ define-primitive
 define-primitive
   (#"c-expr", #(#"<symbol>", #"<string>"),
    #(values:, rest:, #"<object>"));
+
+define-primitive
+  (#"c-literal", #(#"<symbol>", #"<string>"), #"<integer>",	// <general/extended-integer> ??
+   cseable: #t);
 
 define-primitive
   (#"as-boolean", #(#"<object>"), #"<boolean>",
