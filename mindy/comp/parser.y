@@ -23,7 +23,7 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/parser.y,v 1.3 1999/05/25 01:21:26 housel Exp $
+* $Header: /scm/cvs/src/mindy/comp/parser.y,v 1.4 1999/07/13 03:20:04 igor Exp $
 *
 * This file is the grammar.
 *
@@ -303,7 +303,7 @@ header_list:
 
 dylan_program:
 	{ push_yacc_recovery(SEMI); }
-	body	{ Program = $2; $$ = NULL; }
+	body_opt { Program = $2; $$ = NULL; }
 ;
 
 body:
@@ -316,8 +316,8 @@ body_opt:
 ;
 
 
-constituents:
-	constituent
+constituents: 
+    constituent
 	{ $$ = add_constituent(make_body(), $1); }
     |	constituents SEMI constituent
 	{ free($2); $$ = add_constituent($1, $3); }
