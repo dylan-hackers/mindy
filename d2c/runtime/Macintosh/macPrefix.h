@@ -19,6 +19,7 @@
 /* Make sure the boehm GC compiles properly */
 //#define ATOMIC_UNCOLLECTABLE
 
+// mindy files use the following #define
 //#define __D2C
 
 /* Boehm GC Configuration*/
@@ -55,7 +56,5 @@
 //#define SMALL_CONFIG		// whether to use a smaller heap.
 //#define USE_TEMPORARY_MEMORY	// use Macintosh temporary memory.
 
-
-#include <sys/errno.h>
 
 #define write( _____a, _____b, _____c )	MacWrite( _____a, _____b, _____c )
