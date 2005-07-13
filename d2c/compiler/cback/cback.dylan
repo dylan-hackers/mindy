@@ -1505,7 +1505,7 @@ define method emit-tlf-gunk (tlf :: <top-level-form>, file :: <file-state>)
   format(file.file-body-stream, "\n/* %s */\n\n", tlf.clean-for-comment);
 end;
 
-define method emit-tlf-gunk (tlf :: <magic-interal-primitives-placeholder>,
+define method emit-tlf-gunk (tlf :: <magic-internal-primitives-placeholder>,
 			     file :: <file-state>)
     => ();
   let bstream = file.file-body-stream;

@@ -272,7 +272,7 @@ define module top-level-forms
 
     <define-class-tlf>, tlf-init-function-defns,
 
-    <magic-interal-primitives-placeholder>;
+    <magic-internal-primitives-placeholder>;
 end;
 
 define module abstract-optimizer
