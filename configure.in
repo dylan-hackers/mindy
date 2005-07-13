@@ -125,7 +125,11 @@ case $1 in
     i*86-pc-mingw32*) $2=x86-mingw32-gcc32 ;;
     i*86-pc-none) $2=x86-win32-vc ;;
     i*86-pc-beos) $2=x86-beos-gcc ;;
-    powerpc-apple-darwin*) $2=ppc-darwin-gcc ;;
+    powerpc-apple-darwin*)
+	case `gcc -dumpversion` in
+	     4.*) $2=ppc-darwin-gcc4 ;;
+	     *)   $2=ppc-darwin-gcc ;;
+	esac ;;
     mips-sgi-irix*) $2=mips-irix-gcc ;;
     i*86-*-netbsd*) $2=x86-netbsd-gcc ;;
     *) $2=unknown-unix ;;
