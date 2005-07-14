@@ -665,6 +665,7 @@ long-double-alignment:		4
 
 platform-name:			ppc-darwin-gcc4
 inherit-from:			ppc-darwin-gcc
+default-c-compiler-flags:	-I. -I%s -Os -fomit-frame-pointer -no-cpp-precomp -Wno-long-double
 long-double-size:		16
 long-double-alignment:		16
 
