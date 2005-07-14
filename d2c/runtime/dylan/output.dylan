@@ -366,6 +366,7 @@ define function cheap-io-to-stdio(stream :: <symbol>)
     otherwise =>
       fputs("cheap-io-to-stdio: bad Dylan Cheap-IO stream\n", #"Cheap-Err");
       cheap-force-output(#"Cheap-Err");
+      c-system-include("stdlib.h");
       call-out("abort", void:);
   end select;
 end function cheap-io-to-stdio;
@@ -409,5 +410,6 @@ end;
 
 
 define method cheap-force-output(fake-stream :: <symbol>) => ()
+  c-system-include("stdio.h");
   call-out("fflush", int:, ptr: cheap-io-to-stdio(fake-stream));
 end method cheap-force-output;

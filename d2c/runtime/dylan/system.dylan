@@ -33,6 +33,8 @@ module: dylan-viscera
 // Some of the functions that go in the System module.  Much of the
 // code was moved from the d2c Main module.
 
+c-system-include("stdlib.h");
+
 define method import-string (ptr :: <raw-pointer>)
  => string :: <byte-string>;
   for (len :: <integer> from 0,

@@ -259,8 +259,9 @@ define method build-inits-dot-c (state :: <single-file-mode-state>) => ();
   format(stream, "}\n");
   format(stream, "\nextern void real_main(int argc, char *argv[]);\n\n");
 #if (macos)
-  format(stream, "#include<console.h>\n");
+  format(stream, "#include <console.h>\n");
 #endif
+  format(stream, "#include <stdlib.h>\n");
   format(stream, "int main(int argc, char *argv[]) {\n");
 #if (macos)
   format(stream, "    argc = ccommand( &argv );\n");

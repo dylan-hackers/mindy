@@ -78,6 +78,7 @@ define sealed method invoke-debugger
     => res :: <never-returns>;
   condition-format(*gdb-output*, "%s\n", condition);
   condition-force-output(*gdb-output*);
+  c-system-include("stdlib.h");
   call-out("abort", void:);
 end;
 

@@ -680,7 +680,8 @@ define method build-inits-dot-c (state :: <lid-mode-state>) => ();
 			   end);
   let stream
    = make(<file-stream>, locator: c-name, direction: #"output");
-  format(stream, "#include \"runtime.h\"\n\n");
+  format(stream, "#include \"runtime.h\"\n");
+  format(stream, "#include <stdlib.h>\n\n");
   format(stream, 
 	"/* This file is machine generated.  Do not edit. */\n\n");
   let entry-function-name

@@ -33,6 +33,8 @@ rcs-header: $Header: /scm/cvs/src/d2c/runtime/melange/melange.dylan,v 1.15.8.1 2
 // produced by Melange rather than being explicitly referenced by users.
 //
 
+c-system-include("string.h");
+
 // Usage: c-variable(int: "&variable") { := expression }
 //
 define macro c-variable
