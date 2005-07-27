@@ -62,6 +62,14 @@ define constant default-cpp-table = make(<string-table>);
 //
 define /* exported */ constant include-path :: <deque> = make(<deque>);
 
+// *include-path-next-number*
+//
+// This is reset to 0 every time and every call to #include_next advances it
+// to the next successful directory position in include-path until it runs out
+// and causes an error. This allows to find "next" files in include-paths even if
+// we go through several duplicates in the path one by one.
+define variable *include-path-next-number* :: <integer> = 0;
+
 // *framework-path* -- exported variable
 
 define variable *framework-paths* :: <vector> = make( <vector> );
@@ -349,19 +357,31 @@ define /* exported */ function open-in-include-path
  		name := regexp-replace( name, "\\./", ":" ); 
  		name := regexp-replace( name, "/", ":" );
  	#endif
- 
-  if (first(name) == '/')
-    block ()
-      values(name, make(<file-stream>, locator: name, direction: #"input"));
-    exception (<file-does-not-exist-error>)
-      values(#f, #f);
-    end block;
-  else
+
+  // Every time normal #include is called, *include-path-next-number* is reset:
+  *include-path-next-number* := 0;
+             
+  // if (name is not an absolute path) [drive/UNC optional on win32 systems]
+  #if (compiled-for-win32)
+    if (regexp-position(name, "((.:)|\\\\)?(\\\\|/)"))
+  #else
+    if (first(name) == '/')
+  #endif
+      block ()
+        values(name, make(<file-stream>, locator: name, direction: #"input"));
+      exception (<file-does-not-exist-error>)
+        values(#f, #f);
+      end block;
+    else
 
     // We don't have any "file-exists" functions, so we just keep trying
     // to open files until one of them fails to signal an error.
     block (return)
         for (dir in include-path)
+            // This is then set to the current position in the path,
+            // in case include_next comes next.
+            *include-path-next-number* := *include-path-next-number* + 1;
+
             block ()
             #if (MacOS)
                     let full-name = if( (dir ~= "") & (dir ~= ":") )
@@ -388,8 +408,100 @@ define /* exported */ function open-in-include-path
             end if;
         end for;
     end block;
-  end if;
+    end if;
 end function open-in-include-path;
+
+// open-in-include-path-next
+//
+// This function is based on open-in-include-path function with the main
+// difference being that it accommodates #include_next by including not
+// the first file found by standard #include search, but the second file
+// found after doing a standard #include search. If the second file is not
+// found, then it makes melange fail. This was written by Alex Potanin
+// (alex@mcs.vuw.ac.nz) if you have any more questions.
+define function open-in-include-path-next
+    (name :: <string>)
+ => (full-name :: false-or(<string>), stream :: false-or(<stream>));
+ 
+ 	#if (MacOS)
+ 		// Convert UNIX paths to Mac paths
+ 		name := regexp-replace( name, "\\.\\./", "::" );
+ 		name := regexp-replace( name, "\\./", ":" ); 
+ 		name := regexp-replace( name, "/", ":" );
+ 	#endif
+ 
+ 
+  // if (name is not an absolute path) [drive/UNC optional on win32 systems]
+  #if (compiled-for-win32)
+    if (regexp-position(name, "((.:)|\\\\)?(\\\\|/)"))
+  #else
+    if (first(name) == '/')
+  #endif
+    // This is the case when an absolute path is specified. There is
+    // no point in doing #include_next in such a case. This is a fail.
+    values(#f, #f);
+    else
+
+    // The number below is used to track the traversal of the include-path
+    // assuming that for dir in path maintains same order to get the path
+    // that is after the current value of *include-path-next-number*.
+    let dir-number :: <integer> = 0;
+    let valid-match :: <boolean> = #f;
+    
+    // We don't have any "file-exists" functions, so we just keep trying
+    // to open files until one of them fails to signal an error.
+    block (return)
+        for (dir in include-path)
+            signal("Processing %= dir.", dir);
+
+            dir-number := dir-number + 1;
+
+            if (dir-number > *include-path-next-number*)
+              valid-match := #t;
+            end if;
+          
+            block ()
+            #if (MacOS)
+                    let full-name = if( (dir ~= "") & (dir ~= ":") )
+                                                            concatenate(dir, ":", name);
+                                                    else
+                                                            name;
+                                                    end if;
+            #else
+                    let full-name = concatenate(dir, "/", name);
+            #endif
+            let stream = make(<file-stream>, locator: full-name,
+                                direction: #"input");
+
+            if (valid-match)
+              // Successful next directory found after the last include.
+              *include-path-next-number* := dir-number;
+              signal("%= is full-name", full-name);
+              return(full-name, stream);
+            else
+              // Ignore invalid matches.
+              #f;
+            end if;
+               
+            exception (<file-does-not-exist-error>)
+            #f;
+            end block;
+
+        finally
+            // Try looking in the frameworks
+            // 
+            // N.B. This was not modified to checked to accommodate for
+            // #include_next.
+            let( file-path, file-stream ) = framework-include( name );
+            if( file-stream )
+                values( file-path, file-stream );
+            else
+                values(#f, #f);
+            end if;
+        end for;
+    end block;
+    end if;
+end function open-in-include-path-next;
 
 // Check for a #include<angles.h> file
 //
@@ -483,6 +595,30 @@ define method quote-include( state, contents, quote-start, quote-end )
     end if;
 end;
 
+// Check for a #include_next["|<]angles.h["|>] file
+//
+// This is a version of include function that accommodates
+// for #include_next use. it doesn't care if it is quotes or
+// angle brackets, since #include_next doesn't.
+define method include-next( state, contents, delimeter-start, delimeter-end )
+=>( tokenizer :: <tokenizer> )
+    // We've got a '<>' name, so we need to successively try each of the
+    // directories in include-path until we find it.  (Of course, if a
+    // full pathname is specified, we just use that.)
+    let name = copy-sequence(contents, start: delimeter-start + 1,
+                                end: delimeter-end - 1);
+    let (full-name, stream) = open-in-include-path-next(name);
+    if (full-name)
+        // This is inefficient, but simplifies our logic.  We may wish to
+        // adjust later.
+        close(stream);
+        state.include-tokenizer
+        := make(<tokenizer>, name: full-name, parent: state);
+    else
+        parse-error(state, "File not found: %s", name);
+    end if;
+end;
+
 // Creates a nested tokenizer corresponding to a new file specified by an
 // "#include" directive.  The file location is computed from the '<>' or '""'
 // string combined with the enclosing file's directory or the "include-path".
@@ -510,6 +646,38 @@ define method cpp-include (state :: <tokenizer>, pos :: <integer>) => ();
 			      generator: generator,
 			      string: generator.file-name));
 end method cpp-include;
+
+// Creates a nested tokenizer corresponding to a new file specified by an
+// "#include_next" directive.  The file location is computed from the '<>' or '""'
+// string combined with the enclosing file's directory or the "include-path".
+//
+// This is a version of cpp-include function that accommodates for
+// #include_next that needs to use open-in-include-path-next function.
+// Important point is that quote-include doesn't apply to #include_next and
+// thus generalised include-next is called instead.
+define method cpp-include-next (state :: <tokenizer>, pos :: <integer>) => ();
+  let contents :: <string> = state.contents;
+  let (found, match-end, angle-start, angle-end, quote-start, quote-end)
+    = regexp-position(contents, "^(<[^>]+>)|(\"[^\"]+\")", start: pos);
+  state.position := match-end;
+  let generator
+    = if (~found)
+	parse-error(state, "Ill formed #include directive.");
+      elseif (angle-start & angle-end)
+        include-next(state, contents, angle-start, angle-end);
+      elseif (quote-start & quote-end)
+        include-next(state, contents, quote-start, quote-end);
+      else
+        parse-error(state, "Fatal error handling #include_next: %= %= %= %= %= %=",
+                    found, match-end,
+                    angle-start, angle-end,
+                    quote-start, quote-end);
+      end if;
+  parse-header-progress-report(generator, ">>> entered header >>>");
+  unget-token(generator, make(<begin-include-token>, position: pos,
+			      generator: generator,
+			      string: generator.file-name));
+end method cpp-include-next;
     
 // Processes a preprocessor macro definition.  For "simple" macros, this only
 // involves building a reversed sequence of tokens from the remainder of the
@@ -769,9 +937,8 @@ define method try-cpp
 	    cpp-include(state, pos);
 	  end if;
 	"include_next" =>
-	  //signal("Warning: doing the wrong thing with #include_next.");
 	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
-	    cpp-include(state, pos);
+	    cpp-include-next(state, pos);
 	  end if;
 	otherwise =>
 	  parse-error(state, "Unhandled preprocessor directive.");
