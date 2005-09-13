@@ -1057,7 +1057,11 @@ sub emit_melange_rule {
     }
     print "\n";
     printf("\t$host_platform{'recursive_make_command'}\n", $MELANGE_DIR, "");
-    print "\t\$(MELANGE) --d2c \$(CPPFLAGS) -I\$(SRCDIR) ";
+    print "\t\$(MELANGE) --d2c";
+    if ($features{'compiled_for_cygnus'}) {
+      print " -D__uint16_t=short -D__uint32_t=int -D__int32_t=int";
+    }
+    print " \$(CPPFLAGS) -I\$(SRCDIR) ";
     if($EXTRA_INCLUDE_DIR ne "") {
       print "-I$EXTRA_INCLUDE_DIR ";
     }
