@@ -1510,6 +1510,7 @@ define method emit-tlf-gunk (tlf :: <magic-internal-primitives-placeholder>,
     => ();
   let bstream = file.file-body-stream;
   format(bstream, "\n/* %s */\n\n", tlf.clean-for-comment);
+  maybe-emit-include("string.h", file);
 
   let gstream = file.file-guts-stream;
 
@@ -1530,7 +1531,6 @@ define method emit-tlf-gunk (tlf :: <magic-internal-primitives-placeholder>,
   let sov-cclass = specifier-type(#"<simple-object-vector>");
   format(gstream, "long elements = SLOT(vector, long, %d);\n",
 	 dylan-slot-offset(sov-cclass, #"size"));
-  maybe-emit-include("string.h", file);
   format(gstream, "memcpy(sp, (char *)vector + %d, elements * "
 	   "sizeof(descriptor_t));\n",
 	 dylan-slot-offset(sov-cclass, #"%element"));

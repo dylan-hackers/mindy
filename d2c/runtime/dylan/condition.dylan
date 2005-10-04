@@ -756,9 +756,9 @@ end;
 
 // XXX - *gdb-output* is evil and should go away when we get a new
 // streams-protocol. It should be bound to whatever the current program
-// is using for standard output.
+// is using for standard error.
 //
-define variable *gdb-output* = #"Cheap-IO";
+define variable *gdb-output* = #"Cheap-Err";
 
 define method gdb-print-object (obj :: <object>) => ();
   block ()
