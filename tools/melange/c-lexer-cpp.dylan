@@ -691,7 +691,6 @@ define method cpp-define (state :: <tokenizer>, pos :: <integer>) => ();
   if (~name)
     parse-error(state, "Ill formed #define directive.");
   end if;
-  parse-progress-report(name, "Processing define %=", name.value);
 
   // Simply read the rest of the line and build a reversed list of tokens.
   local method grab-tokens (list :: <list>)
@@ -741,6 +740,21 @@ define method cpp-define (state :: <tokenizer>, pos :: <integer>) => ();
     state.cpp-table[name.string-value] := grab-tokens(#());
     if (state.cpp-decls) push-last(state.cpp-decls, name.string-value) end if;
   end if;
+
+  // some of this is expensive
+  if (*show-parse-progress-level* > $parse-progress-level-none)
+    let defn = state.cpp-table[name.string-value];
+    let (args, expansion) =
+      if (instance?(defn.head, <pair>))
+        values(defn.head.reverse, defn.tail.reverse)
+      else
+        values(#f, defn.reverse)
+      end;
+    parse-progress-report(name, "Processing define %= %= => %=",
+                          name.string-value,
+                          args,
+                          map(string-value, expansion));
+  end;
 end method cpp-define;
 
 //define constant preprocessor-match
