@@ -591,6 +591,31 @@ define macro define-generic
       => make-define-generic({ ?name }, { ?params }, { ?results}, { ?options })
 end;
 
+define macro copy-down-method-definer
+    { define ?adjectives:* copy-down-method ?:name ( ?params:* ) ?rest:* }
+      => { define ?adjectives method ?name ( ?params ) ?rest
+             next-method();
+           end }
+
+  params:
+    { } => { #next next-method }
+    { ?:variable, ... } => { ?variable, ... }
+    { ?other:* } => { #next next-method, ?other }
+
+  adjectives:
+    { } => { }
+    { sealed ... } => { sealed ... }
+    { open ... } => { open ... }
+    { not-inline ... } => { not-inline ... }
+    { default-inline ... } => { default-inline ... }
+    { may-inline ... } => { may-inline ... }
+    { inline ... } => { inline ... }
+    { inline-only ... } => { inline-only ... }
+    { movable ... } => { movable ... }
+    { flushable ... } => { flushable ... }
+    { sideways ... } => { ... }
+end;
+
 define macro method-definer
     { define ?adjectives:* method ?:name ?rest:* end }
       => make-define-method({?name}, {method ?rest end}, {?adjectives})

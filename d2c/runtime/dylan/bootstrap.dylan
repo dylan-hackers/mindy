@@ -175,7 +175,8 @@ define module dylan-viscera
 
     // Definitions
     variable-definer, constant-definer, domain-definer, function-definer,
-    generic-definer, method-definer, class-definer, designator-class-definer,
+    generic-definer, copy-down-method-definer, method-definer,
+    class-definer, designator-class-definer,
     library-definer,
 
     // Statements

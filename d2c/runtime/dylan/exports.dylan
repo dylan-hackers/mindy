@@ -150,6 +150,9 @@ end;
 define module Extensions
   use Dylan-Viscera,
     import: {
+             // Macros
+             copy-down-method-definer,
+             
 	     // More integers.
 	     <general-integer>, <double-integer>, <extended-integer>,
 	     $maximum-integer, $minimum-integer, integer-length,
