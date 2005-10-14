@@ -41,6 +41,7 @@ exec_prefix	=	@exec_prefix@
 exe_ext = @exe_ext@
 srcdir	=		@srcdir@
 top_srcdir =		@top_srcdir@
+top_builddir =		@top_builddir@
 
 SRCDIR	=		${srcdir}
 CONFIGDIR =		@top_builddir@
@@ -49,6 +50,8 @@ LIBDIR	=		@libdir@/dylan/@version@/@d2c_target@
 DESTDIR =
 
 TIME	=		${top_srcdir}/common/time
+TIMEBUILD =		${top_builddir}/common/time
+
 
 CC	=		@CC@
 CCOPTS	=		@CCOPTS@
@@ -86,7 +89,7 @@ SRCS = parser-tab.c lexer.c \
 	table.c fd.c buf.c weak.c brkpt.c extern.c ext-init.c \
 	${TIME}/time-portability.c
 
-EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${TIME}/time.inc
+EXTERN-INCLUDES = ${SRCDIR}/malloc.inc ${TIMEBUILD}/time.inc
 
 mindy$(exe_ext): ${OBJS} ../compat/libcompat.a
 	${CC} ${OBJS} ${LIBS} -o ,$@
