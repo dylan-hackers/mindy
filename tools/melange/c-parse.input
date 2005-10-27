@@ -398,27 +398,37 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
   //
   if (~instance?(@0, <parse-cpp-state>) | %1.string-value ~= "defined")
     let definition = element(%1.generator.cpp-table, %1.string-value,
-			  default: #f);
+			default: #f);
     if (definition ~= #f)
       if (instance?(definition.head, <token>))	
-	parse-error(@0,concatenate(%1.string-value, " isn't a parameterized macro."));
+        parse-error(@0,concatenate(%1.string-value, " isn't a parameterized macro."));
       else
-	// XXX: We don't actually substitute here like we should, but
-	// it'll handle "#define __GNUC_PREREQ(maj,min) 0" correctly...
-//	for (token in definition.tail)
-/*	  for (count from 0, param in definition.head)
-	    if (token.string-value = param.string-value)
-	      token := %3[count];
-	    end if;
-	  end for;
+        // XXX: We don't actually substitute here like we should, but
+        // it'll handle "#define __GNUC_PREREQ(maj,min) 0" correctly...
+//      for (token in definition.tail)
+/*        for (count from 0, param in definition.head)
+            if (token.string-value = param.string-value)
+              token := %3[count];
+            end if;
+          end for;
 */
-//	  unget-token(%1.generator, token);
-//	end for;
-//	cpp-parse(%1.generator);
+//        unget-token(%1.generator, token);
+//      end for;
+//      cpp-parse(%1.generator);
         0; // yeah, chickening out.
       end if;
     else
-      parse-error(@0,"Function calls not allowed in constant expressions.");
+      if ( %1.string-value = "defined" )
+        if (~instance?(%3, <token>))
+          %3;  // It's a literal
+        elseif (element(%3.generator.cpp-table, %3.string-value, default: #f))
+          1;
+        else
+          0
+        end if
+      else
+        parse-error(@0,"Function calls not allowed in constant expressions.");
+      end if;
     end if;
   elseif (element(%3.generator.cpp-table, %3.string-value, default: #f))
     1;

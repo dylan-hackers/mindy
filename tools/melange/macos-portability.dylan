@@ -48,38 +48,41 @@ define constant $default-defines
       // Basics
       "const", "",
       "volatile", "",
+      "__STDC__", "",
+
       //"__cdecl", "",
-      
       // cpp -dM /dev/null
-      "GNUC", "(1)",
-      
+      //"GNUC", "(1)",
       // cc -E -dM -o - /dev/null
-      "__GNUC__", "2",
-      "__GNUC_MINOR__", "95",
+      "__GNUC__", "4",
+      "__GNUC_MINOR__", "0",
+
+      "__APPLE__", "",
       "__ppc__", "",
       "__NATURAL_ALIGNMENT__", "",
       "__MACH__", "",
       "__BIG_ENDIAN__", "",
-      "__APPLE__", "",
-      "__STDC__", "",
-      "__APPLE_CC__", "934",
+      "__APPLE_CC__", "5026",
       "__DYNAMIC__", "",
       "__signed__", "",
       "__signed", "",
       "__inline__", "",
       "__inline", "",
+      "__STDC_VERSION__", "199901L",
+      "__builtin_va_list", "void*",
       
       // Parameterized macros which remove various GCC extensions from our
       // source code. The last item in the list is the right-hand side of
       // the define; all the items preceding it are named parameters.
-      "__attribute__", #(#("x"), "")
+      "__attribute__", #(#("x"), ""),
+      "__asm", #(#("x"), "")
       ];
 
 // Set up the search path for .h files
 // cc -E -v /dev/null
 define constant macos-include-directories
   = #["/usr/local/include",
- 			"/usr/include/gcc/darwin/2.95.2/g++/..",
+ 			"/usr/include/gcc/darwin/default/c++/..",
  			"/usr/include"];
 
 for (dir in macos-include-directories)

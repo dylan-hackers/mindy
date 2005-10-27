@@ -745,7 +745,7 @@ define method cpp-define (state :: <tokenizer>, pos :: <integer>) => ();
   if (*show-parse-progress-level* > $parse-progress-level-none)
     let defn = state.cpp-table[name.string-value];
     let (args, expansion) =
-      if (instance?(defn.head, <pair>))
+      if (defn ~== #() & instance?(defn.head, <list>))
         values(defn.head.reverse, defn.tail.reverse)
       else
         values(#f, defn.reverse)
