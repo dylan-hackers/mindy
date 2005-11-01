@@ -18,4 +18,8 @@ if ($enable_bootstrap) {
   $D2CFLAGS = $D2CFLAGS . ' -Dbootstrap_hack ';
 }
 
-&d2c_library('Base', '');
+if ($features{'64-bit-target'}) {
+    &d2c_library('Base64', '');
+} else {
+    &d2c_library('Base', '');
+}

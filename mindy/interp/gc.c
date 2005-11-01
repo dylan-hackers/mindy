@@ -101,7 +101,7 @@ struct ref_list {
     int used;
 };
 
-#if defined (__arch64__) || defined(__alpha__) || defined(__ia64__)
+#if defined (__arch64__) || defined(__alpha__) || defined(__ia64__) || defined(__x86_64)
 #define BLOCK_SIZE (256*1024)
 #else
 #define BLOCK_SIZE (128*1024)

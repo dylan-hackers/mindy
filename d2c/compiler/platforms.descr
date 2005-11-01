@@ -124,7 +124,7 @@ maximum-long-double-float-exponent: 16384
 // AMD64/EMT64
 platform-name:			x86_64
 inherit-from:			64-bit ieee-754
-default-features:		compiled-for-x86_64
+default-features:		compiled-for-x86_64 64-bit-target
 big-endian?:			#f
 long-double-size: 		16
 long-double-alignment: 		16
@@ -135,7 +135,7 @@ maximum-long-double-float-exponent: 16384
 // SPARC64:
 platform-name:			sparc64
 inherit-from:			64-bit ieee-754
-default-features:		compiled-for-sparc
+default-features:		compiled-for-sparc 64-bit-target
 big-endian?:			#t
 long-double-size:			16
 long-double-alignment:			16
