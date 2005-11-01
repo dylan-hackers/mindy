@@ -29,7 +29,7 @@ copyright: see below
 //======================================================================
 
 
-
+
 // Buffer interface for 32bit-platforms:
 
 // ### not portable, should be generalized.  Should be provided somewhere else.
@@ -38,7 +38,11 @@ copyright: see below
 define /* exported */ constant $word-bytes = 4;
 define /* exported */ constant $word-bits = 32;
 
+#if (mindy)
+define constant <word> = <general-integer>;
+#else
 define constant <word> = <integer>;
+#endif
 
 // Read a word from a buffer at a word-aligned byte offset.
 // 
@@ -49,7 +53,20 @@ define method buffer-word(bbuf :: <buffer>, i :: <buffer-index>)
 
   // ### big-endian 32 assumption.  Should be a primitive.
   bbuf[i + 3] + ash(bbuf[i + 2], 8) + ash(bbuf[i + 1], 16)
-    + ash(high-end, 24);
+    + 
+#if (mindy)
+    // for mindy, return extended if too big to be fixed...
+      if (high-end.zero?)
+	0;
+      elseif (high-end < 64)
+#endif
+	ash(high-end, 24);
+#if (mindy)
+      else
+	ash(as(<extended-integer>, high-end), 24);
+      end if;
+#endif
+    
 end method;
 
 
@@ -59,10 +76,17 @@ define method buffer-word-setter
     (new-val :: <word>, bbuf :: <buffer>, i :: <buffer-index>)
  => res :: <word>;
   // ### big-endian 32 assumption.  Should be a primitive.
+#if (mindy)
+  let (rest, byte4) = floor/(new-val, 256);
+  let (rest, byte3) = floor/(as(<integer>, rest), 256);
+  // This assumes that the word is unsigned (i.e. new-val is a positive int)
+  let (byte1, byte2) = floor/(rest, 256);
+#else
   let byte1 = logand(ash(new-val, -24), 255);
   let byte2 = logand(ash(new-val, -16), 255);
   let byte3 = logand(ash(new-val, -8), 255);
   let byte4 = logand(new-val, 255);
+#endif
 
   bbuf[i + 0] := byte1;
   bbuf[i + 1] := byte2;
@@ -70,6 +94,26 @@ define method buffer-word-setter
   bbuf[i + 3] := as(<integer>, byte4);
 end method;
 
+#if (mindy)
+define method buffer-word-setter
+    (new-val :: <integer>, bbuf :: <buffer>, i :: <buffer-index>)
+ => res :: <word>;
+  // ### big-endian 32 assumption.  Should be a primitive.
+  let (rest, byte4) = floor/(new-val, 256);
+  let (rest, byte3) = floor/(rest, 256);
+  // This assumes that the word is unsigned (i.e. new-val is a positive int)
+  let (byte1, byte2) = floor/(rest, 256);
+  bbuf[i + 0] := byte1;
+  bbuf[i + 1] := byte2;
+  bbuf[i + 2] := byte3;
+  bbuf[i + 3] := byte4;
+end method;
+#endif
+
+// #### HACK to allow us to dump headers w/o creating bignums in mindy.  This
+// is particularly incorrect for e.g. end entries and references, since they
+// might conceivably need more than 24 bits for their data part.
+//
 define method dump-header-word
     (hi :: <integer>, obj :: <integer>, buf :: <dump-buffer>) => ();
 
@@ -78,9 +122,16 @@ define method dump-header-word
 
   let bbuf = buf.dump-buffer;
   // ### big-endian 32 assumption.  Should be a primitive.
+#if (mindy)
+  let (rest, byte4) = floor/(obj, 256);
+  let (rest, byte3) = floor/(rest, 256);
+  // This assumes that the word is unsigned (i.e. new-val is a positive int)
+  let (byte1, byte2) = floor/(rest, 256);
+#else
   let byte2 = logand(ash(obj, -16), 255);
   let byte3 = logand(ash(obj, -8), 255);
   let byte4 = logand(obj, 255);
+#endif
 
   bbuf[i + 0] := hi;
   bbuf[i + 1] := byte2;
@@ -109,15 +160,16 @@ define method round-to-word (x :: <integer>) => res :: <integer>;
   logand(x + 3, -4);
 end method;
 
+
 // Dump the header for the overall data-unit.
 //
 define method dump-unit-header
     (state :: <dump-state>, buf :: <dump-buffer>, oa-len :: <integer>)
  => ();
   dump-definition-header(#"32bit-data-unit", buf, subobjects: #t,
-  		         raw-data: $odf-word-raw-data-format);
+                        raw-data: $odf-word-raw-data-format);
 
-  // subtract header words to get raw data words.			 
+  // subtract header words to get raw data words.                       
   dump-word($data-unit-header-size - 2, buf);
 
   dump-word($od-format-major-version, buf);
