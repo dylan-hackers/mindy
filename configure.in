@@ -97,6 +97,7 @@ case $1 in
 	     3.2*) $2=x86-linux-gcc32 ;;
 	     *)    $2=x86-linux-gcc ;;
         esac ;;
+    x86_64-*-linux-gnu*) $2=x86_64-linux-gcc ;;
     i*86-pc-bsdi*) $2=x86-bsdi-gcc ;;
     powerpc-*-linux-gnu*) $2=ppc-linux-gcc32 ;;
     alpha*-*-linux-gnu*) $2=alpha-linux-gcc ;;
@@ -109,6 +110,7 @@ case $1 in
 	     *)    $2=sparc-solaris-gcc ;;
         esac ;;
     sparc*-openbsd*) $2=sparc-openbsd-gcc ;;
+    sparc*-freebsd*) $2=sparc64-freebsd-gcc ;;
     i*86-*-solaris*) $2=x86-solaris-gcc ;;
     i*86-*-freebsd2.*) $2=x86-freebsd-aout-gcc ;;
     i*86-*-freebsd*)
@@ -568,7 +570,7 @@ AC_CHECK_FUNCS(mprotect getpagesize)
 #--------------------------------------------------------------------
 #	Look for getrlimit, getrusage
 #--------------------------------------------------------------------
-AC_CHECK_HEADERS(sys/time.h sys/resource.h)
+AC_CHECK_HEADERS(time.h sys/time.h sys/resource.h)
 AC_CHECK_FUNCS(getrlimit getrusage)
 
 #--------------------------------------------------------------------

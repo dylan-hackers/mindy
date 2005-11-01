@@ -69,10 +69,14 @@
 #   include <sys/file.h>
 #endif
 #include <sys/stat.h>
-#ifndef NO_SYS_TIME_H
-#    include <sys/time.h>
-#else
+#ifdef HAVE_TIME_H
 #    include <time.h>
+#else
+# ifndef NO_SYS_TIME_H
+#    include <sys/time.h>
+# else
+#    warning Neither time.h nor sys/time.h found
+# endif
 #endif
 #ifndef NO_SYS_WAIT_H
 #   include <sys/wait.h>

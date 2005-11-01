@@ -70,6 +70,7 @@
 // minimum-long-double-float-exponent:, maximum-long-double-float-exponent:
 // Same for 'long double'. If not present, defaults to the values for 'double'.
 
+
 // 32-bit
 //
 platform-name:			32-bit
@@ -83,6 +84,21 @@ single-size:			4
 double-size:			8
 double-alignment:		4
 long-double-size:		8
+
+// 64-bit
+platform-name:			64-bit
+integer-length:			64
+pointer-size:			8
+integer-size:			4
+short-size:			2
+long-size:			8
+long-long-size:			8
+single-size:			4
+double-size:			8
+double-alignment:		8
+long-long-alignment:		8
+
+
 
 // IEEE floating point
 platform-name:			ieee-754
@@ -104,6 +120,28 @@ long-double-alignment:		4
 long-double-mantissa-digits:	64
 minimum-long-double-float-exponent: -16381
 maximum-long-double-float-exponent: 16384
+
+// AMD64/EMT64
+platform-name:			x86_64
+inherit-from:			64-bit ieee-754
+default-features:		compiled-for-x86_64
+big-endian?:			#f
+long-double-size: 		16
+long-double-alignment: 		16
+long-double-mantissa-digits: 	64
+minimum-long-double-float-exponent: -16381
+maximum-long-double-float-exponent: 16384
+
+// SPARC64:
+platform-name:			sparc64
+inherit-from:			64-bit ieee-754
+default-features:		compiled-for-sparc
+big-endian?:			#t
+long-double-size:			16
+long-double-alignment:			16
+long-double-mantissa-digits:		113
+minimum-long-double-float-exponent:	-16381
+maximum-long-double-float-exponent:	16384
 
 // SPARC:
 platform-name:			sparc
@@ -575,6 +613,11 @@ inherit-from:			gcc linux x86
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
 link-executable-command: 	$(LIBTOOL) --mode=link gcc -static -o %s %s %s
 
+platform-name:			x86_64-linux-gcc
+inherit-from:			gcc linux x86_64
+link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
+link-executable-command: 	$(LIBTOOL) --mode=link gcc -static -o %s %s %s
+
 platform-name:			x86-linux-gcc32
 inherit-from:			linux x86-gcc32
 
@@ -629,6 +672,10 @@ inherit-from:			freebsd x86-gcc32
 
 platform-name:			x86-freebsd-elf-gcc33
 inherit-from:			freebsd x86-gcc33
+
+// FreeBSD-sparc64
+platform-name:			sparc64-freebsd-gcc
+inherit-from:			gcc freebsd sparc64
 
 platform-name:			alpha-linux-gcc
 inherit-from:			gcc linux alpha
