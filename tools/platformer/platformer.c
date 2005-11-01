@@ -14,7 +14,9 @@
 int main(int argc, char *argv[]) {
   double d;
   
-  printf("integer-length: %u\n", (unsigned) (CHAR_BIT * sizeof(int)));
+  /* Attention: what d2c calls an "integer-length" is really the word
+   * size, represented as a "long" */
+  printf("integer-length: %u\n", (unsigned) (CHAR_BIT * sizeof(long)));
   TYPE("pointer", void *);
   TYPE("integer", int);
   TYPE("short", short);
