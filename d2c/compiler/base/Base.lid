@@ -7,6 +7,7 @@ shared-library: no
 base-exports.dylan
 utils.dylan
 od-format.dylan
+32bit-od-format.dylan
 dylan-dump.dylan
 ctv.dylan
 source.dylan
