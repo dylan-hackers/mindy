@@ -39,7 +39,7 @@ typedef unsigned char digit_t;
 
 struct bignum {
     obj_t class;
-    int length;
+    long length;
     digit_t digits[1];
 };
 

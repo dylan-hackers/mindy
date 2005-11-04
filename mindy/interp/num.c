@@ -124,7 +124,7 @@ obj_t make_extended(long double value)
 #define ZEROP(e) (BIGNUM(e)->length == 1 && BIGNUM(e)->digits[0] == 0)
 #define PAD(e) ((SIGN(e)) ? (DIGIT_MASK) : (0))
 
-static obj_t alloc_bignum(int length)
+static obj_t alloc_bignum(long length)
 {
     obj_t res = alloc(obj_BignumClass,
 		      sizeof(struct bignum) + (length-1) * sizeof(digit_t));
@@ -134,7 +134,7 @@ static obj_t alloc_bignum(int length)
     return res;
 }
 
-static void shrink_bignum(obj_t num, int length)
+static void shrink_bignum(obj_t num, long length)
 {
     shrink(num,
 	   sizeof(struct bignum) + (BIGNUM(num)->length - 1) * sizeof(digit_t),
@@ -168,9 +168,9 @@ obj_t make_bignum(long value)
 
 long bignum_value(obj_t bignum)
 {
-    int length = BIGNUM(bignum)->length;
+    long length = BIGNUM(bignum)->length;
     digit_t *digits = BIGNUM(bignum)->digits;
-    int i;
+    long i;
     long res = 0;
 
     if (digits[length-1] & SIGN_MASK)
@@ -183,7 +183,7 @@ long bignum_value(obj_t bignum)
 }
 
 #ifdef DEBUG_BIGNUM
-static void dump_bignum(obj_t bignum, int length)
+static void dump_bignum(obj_t bignum, long length)
 {
     digit_t *digits = BIGNUM(bignum)->digits;
     digit_t *ptr = digits + length;
@@ -195,11 +195,11 @@ static void dump_bignum(obj_t bignum, int length)
 }
 #endif
 
-static obj_t extend_bignum(obj_t bignum, int length)
+static obj_t extend_bignum(obj_t bignum, long length)
 {
     obj_t res;
-    int extend;
-    int i;
+    long extend;
+    long i;
 
     if (SIGN(bignum))
 	extend = DIGIT_MASK;
@@ -220,11 +220,11 @@ static obj_t extend_bignum(obj_t bignum, int length)
     return res;
 }
 
-static void normalize_bignum(obj_t bignum, int length)
+static void normalize_bignum(obj_t bignum, long length)
 {
     digit_t *digits = BIGNUM(bignum)->digits;
     digit_t *ptr = digits + length - 1;
-    int useless = (*ptr & SIGN_MASK) ? DIGIT_MASK : 0;
+    long useless = (*ptr & SIGN_MASK) ? DIGIT_MASK : 0;
 #ifdef DEBUG_BIGNUM
     printf("normalizing "); dump_bignum(bignum, length);
 #endif
@@ -244,9 +244,9 @@ int compare_bignums(obj_t x, obj_t y)
 {
     digit_t *x_digits = BIGNUM(x)->digits;
     digit_t *y_digits = BIGNUM(y)->digits;
-    int x_length = BIGNUM(x)->length;
-    int y_length = BIGNUM(y)->length;
-    int i;
+    long x_length = BIGNUM(x)->length;
+    long y_length = BIGNUM(y)->length;
+    long i;
 
     if (x_digits[x_length-1] & SIGN_MASK) {
 	if (y_digits[y_length-1] & SIGN_MASK) {
@@ -283,37 +283,37 @@ int compare_bignums(obj_t x, obj_t y)
 
 obj_t add_bignums(obj_t x, obj_t y)
 {
-    int len1 = BIGNUM(x)->length;
-    int len2 = BIGNUM(y)->length;
-    int length = MAX(len1, len2) + 1;
+    long len1 = BIGNUM(x)->length;
+    long len2 = BIGNUM(y)->length;
+    long length = MAX(len1, len2) + 1;
     obj_t res = alloc_bignum(length);
     digit_t *result = BIGNUM(res)->digits;
     digit_t *digits1 = BIGNUM(x)->digits;
     digit_t *digits2 = BIGNUM(y)->digits;
-    int pad1 = PAD(x);
-    int pad2 = PAD(y);
-    int i, carry = 0;
+    long pad1 = PAD(x);
+    long pad2 = PAD(y);
+    long i, carry = 0;
 
     if (len1 < len2) {
 	for (i = 0; i < len1; i++) {
-	    int sum = digits1[i] + digits2[i] + carry;
+	    long sum = digits1[i] + digits2[i] + carry;
 	    result[i] = sum & DIGIT_MASK;
 	    carry = sum >> DIGIT_BITS;
 	}
 	for (i = len1; i < len2; i++) {
-	    int sum = pad1 + digits2[i] + carry;
+	    long sum = pad1 + digits2[i] + carry;
 	    result[i] = sum & DIGIT_MASK;
 	    carry = sum >> DIGIT_BITS;
 	}
     }
     else {
 	for (i = 0; i < len2; i++) {
-	    int sum = digits1[i] + digits2[i] + carry;
+	    long sum = digits1[i] + digits2[i] + carry;
 	    result[i] = sum & DIGIT_MASK;
 	    carry = sum >> DIGIT_BITS;
 	}
 	for (i = len2; i < len1; i++) {
-	    int sum = digits1[i] + pad2 + carry;
+	    long sum = digits1[i] + pad2 + carry;
 	    result[i] = sum & DIGIT_MASK;
 	    carry = sum >> DIGIT_BITS;
 	}
@@ -331,37 +331,37 @@ obj_t add_bignums(obj_t x, obj_t y)
 
 obj_t subtract_bignums(obj_t x, obj_t y)
 {
-    int len1 = BIGNUM(x)->length;
-    int len2 = BIGNUM(y)->length;
-    int length = MAX(len1, len2) + 1;
+    long len1 = BIGNUM(x)->length;
+    long len2 = BIGNUM(y)->length;
+    long length = MAX(len1, len2) + 1;
     obj_t res = alloc_bignum(length);
     digit_t *result = BIGNUM(res)->digits;
     digit_t *digits1 = BIGNUM(x)->digits;
     digit_t *digits2 = BIGNUM(y)->digits;
-    int pad1 = PAD(x);
-    int pad2 = PAD(y);
-    int i, borrow = 0;
+    long pad1 = PAD(x);
+    long pad2 = PAD(y);
+    long i, borrow = 0;
 
     if (len1 < len2) {
 	for (i = 0; i < len1; i++) {
-	    int sum = digits1[i] - digits2[i] - borrow;
+	    long sum = digits1[i] - digits2[i] - borrow;
 	    result[i] = sum & DIGIT_MASK;
 	    borrow = (sum >> DIGIT_BITS) & 1;
 	}
 	for (i = len1; i < len2; i++) {
-	    int sum = pad1 - digits2[i] - borrow;
+	    long sum = pad1 - digits2[i] - borrow;
 	    result[i] = sum & DIGIT_MASK;
 	    borrow = (sum >> DIGIT_BITS) & 1;
 	}
     }
     else {
 	for (i = 0; i < len2; i++) {
-	    int sum = digits1[i] - digits2[i] - borrow;
+	    long sum = digits1[i] - digits2[i] - borrow;
 	    result[i] = sum & DIGIT_MASK;
 	    borrow = (sum >> DIGIT_BITS) & 1;
 	}
 	for (i = len2; i < len1; i++) {
-	    int sum = digits1[i] - pad2 - borrow;
+	    long sum = digits1[i] - pad2 - borrow;
 	    result[i] = sum & DIGIT_MASK;
 	    borrow = (sum >> DIGIT_BITS) & 1;
 	}
@@ -378,17 +378,17 @@ obj_t subtract_bignums(obj_t x, obj_t y)
 
 obj_t negate_bignum(obj_t x)
 {
-    int len = BIGNUM(x)->length;
-    int length = len + 1;
+    long len = BIGNUM(x)->length;
+    long length = len + 1;
     obj_t res = alloc_bignum(length);
     digit_t *digits = BIGNUM(x)->digits;
     digit_t *result = BIGNUM(res)->digits;
-    int pad = PAD(x);
-    int i;
-    int borrow = 0;
+    long pad = PAD(x);
+    long i;
+    long borrow = 0;
 
     for (i = 0; i < len; i++) {
-	int sum = 0 - digits[i] - borrow;
+	long sum = 0 - digits[i] - borrow;
 	result[i] = sum & DIGIT_MASK;
 	borrow = (sum >> DIGIT_BITS) & 1;
     }
@@ -403,43 +403,43 @@ obj_t negate_bignum(obj_t x)
 
 obj_t multiply_bignums(obj_t x, obj_t y)
 {
-    int len1 = BIGNUM(x)->length;
-    int len2 = BIGNUM(y)->length;
-    int length = len1 + len2;
+    long len1 = BIGNUM(x)->length;
+    long len2 = BIGNUM(y)->length;
+    long length = len1 + len2;
     obj_t res = alloc_bignum(length);
     digit_t *result = BIGNUM(res)->digits;
     digit_t *digits1 = BIGNUM(x)->digits;
     digit_t *digits2 = BIGNUM(y)->digits;
-    int pad1 = PAD(x);
-    int pad2 = PAD(y);
-    int i, j;
+    long pad1 = PAD(x);
+    long pad2 = PAD(y);
+    long i, j;
 
     for (i = 0; i < length; i++)
         result[i] = 0;
     for (i = 0; i < len2; i++) {
-	int carry = 0;
+	long carry = 0;
 
 	for (j = 0; (j < len1) && (j < length - i); j++) {
-	    int product = digits1[j] * digits2[i] + result[i+j] + carry;
+	    long product = digits1[j] * digits2[i] + result[i+j] + carry;
 	    result[i+j] = product & DIGIT_MASK;
 	    carry = product >> DIGIT_BITS;
 	}
 	for (j = len1; j < length - i; j++) {
-	    int product = pad1 * digits2[i] + result[i+j] + carry;
+	    long product = pad1 * digits2[i] + result[i+j] + carry;
 	    result[i+j] = product & DIGIT_MASK;
 	    carry = product >> DIGIT_BITS;
 	}
     }
     for (i = len2; i < length; i++) {
-	int carry = 0;
+	long carry = 0;
 
 	for (j = 0; (j < len1) && (j < length - i); j++) {
-	    int product = digits1[j] * pad2 + result[i+j] + carry;
+	    long product = digits1[j] * pad2 + result[i+j] + carry;
 	    result[i+j] = product & DIGIT_MASK;
 	    carry = product >> DIGIT_BITS;
 	}
 	for (j = len1; j < length - i; j++) {
-	    int product = pad1 * pad2 + result[i+j] + carry;
+	    long product = pad1 * pad2 + result[i+j] + carry;
 	    result[i+j] = product & DIGIT_MASK;
 	    carry = product >> DIGIT_BITS;
 	}
@@ -453,19 +453,19 @@ obj_t multiply_bignums(obj_t x, obj_t y)
     return res;
 }
 
-static obj_t bignum_shift_left(obj_t bignum, int shift)
+static obj_t bignum_shift_left(obj_t bignum, long shift)
 {
-    int ndigits = shift / DIGIT_BITS;
-    int nbits = shift % DIGIT_BITS;
-    int len = BIGNUM(bignum)->length;
-    int length = len + ndigits + 1;
+    long ndigits = shift / DIGIT_BITS;
+    long nbits = shift % DIGIT_BITS;
+    long len = BIGNUM(bignum)->length;
+    long length = len + ndigits + 1;
     obj_t res = alloc_bignum(length);
     digit_t *result = BIGNUM(res)->digits;
     digit_t *digits = BIGNUM(bignum)->digits;
-    int pad = PAD(bignum);
-    int high_mask = (~0 << nbits) & DIGIT_MASK;
-    int low_mask = ~high_mask & DIGIT_MASK;
-    int i;
+    long pad = PAD(bignum);
+    long high_mask = (~0 << nbits) & DIGIT_MASK;
+    long low_mask = ~high_mask & DIGIT_MASK;
+    long i;
 
     for (i = 0; i < ndigits; i++)
         result[i] = 0;
@@ -490,13 +490,13 @@ static obj_t bignum_shift_left(obj_t bignum, int shift)
     return res;
 }
 
-static obj_t bignum_shift_right(obj_t bignum, int shift)
+static obj_t bignum_shift_right(obj_t bignum, long shift)
 {
-    int ndigits = shift / DIGIT_BITS;
-    int nbits = shift % DIGIT_BITS;
-    int len = BIGNUM(bignum)->length;
-    int length = len - ndigits;
-    int pad = PAD(bignum);
+    long ndigits = shift / DIGIT_BITS;
+    long nbits = shift % DIGIT_BITS;
+    long len = BIGNUM(bignum)->length;
+    long length = len - ndigits;
+    long pad = PAD(bignum);
 
     if (length < 1) {
 	obj_t res = alloc_bignum(1);
@@ -507,9 +507,9 @@ static obj_t bignum_shift_right(obj_t bignum, int shift)
 	obj_t res = alloc_bignum(length < 1 ? 1 : length);
 	digit_t *result = BIGNUM(res)->digits;
 	digit_t *digits = BIGNUM(bignum)->digits;
-	int high_mask = (~0 << (DIGIT_BITS - nbits)) & DIGIT_MASK;
-	int low_mask = ~high_mask & DIGIT_MASK;
-	int i;
+	long high_mask = (~0 << (DIGIT_BITS - nbits)) & DIGIT_MASK;
+	long low_mask = ~high_mask & DIGIT_MASK;
+	long i;
 
 	if (nbits == 0) {
 	    for (i = 0; i < length; i++)
@@ -535,13 +535,13 @@ static obj_t bignum_shift_right(obj_t bignum, int shift)
     }
 }
 
-static void divide_by_digit(obj_t *quotient, int *remainder,
+static void divide_by_digit(obj_t *quotient, long *remainder,
 			    obj_t dividend, digit_t divisor)
 {
-    int length = BIGNUM(dividend)->length;
+    long length = BIGNUM(dividend)->length;
     digit_t *qptr, *dptr;
-    int i;
-    int d, q, r;
+    long i;
+    long d, q, r;
 
     *quotient = alloc_bignum(length);
     qptr = BIGNUM(*quotient)->digits + length;
@@ -558,10 +558,10 @@ static void divide_by_digit(obj_t *quotient, int *remainder,
     *remainder = r;
 }
 
-static int division_shift(obj_t divisor)
+static long division_shift(obj_t divisor)
 {
-    int y1 = BIGNUM(divisor)->digits[BIGNUM(divisor)->length - 1];
-    int shift = 0;
+    long y1 = BIGNUM(divisor)->digits[BIGNUM(divisor)->length - 1];
+    long shift = 0;
 
     while (y1 > 0) {
 	y1 = y1 >> 1;
@@ -571,11 +571,11 @@ static int division_shift(obj_t divisor)
     return (DIGIT_BITS - shift - 1);
 }
 
-static int division_guess(int x1, int x2, int x3, int y1, int y2)
+static long division_guess(long x1, long x2, long x3, long y1, long y2)
 {
-    int guess;
-    int x12 = (x1 << DIGIT_BITS) | x2;
-    int x123 = (x12 << DIGIT_BITS) | x3;
+    long guess;
+    long x12 = (x1 << DIGIT_BITS) | x2;
+    long x123 = (x12 << DIGIT_BITS) | x3;
 /*
     printf("starting guess with %02x %02x %02x / %02x %02x\n",
 	   x1, x2, x3, y1, y2);
@@ -609,9 +609,9 @@ static void divide(obj_t *quotient, obj_t *remainder,
 {
     obj_t x, y, q;
     digit_t *result, *digits1, *digits2;
-    int len1, len2, length;
-    int shift = division_shift(divisor);
-    int i, j;
+    long len1, len2, length;
+    long shift = division_shift(divisor);
+    long i, j;
 #ifdef DEBUG_BIGNUM
     x = dividend; y = divisor;
     printf("dividing "); dump_bignum(x, BIGNUM(x)->length);
@@ -631,13 +631,13 @@ static void divide(obj_t *quotient, obj_t *remainder,
     result = BIGNUM(q)->digits;
 
     for (i = length - 1; i >= 0; i--) {
-	int x1 = digits1[i + len2];
-	int x2 = digits1[i + len2 - 1];
-	int x3 = digits1[i + len2 - 2];
-	int y1 = digits2[len2 - 1];
-	int y2 = digits2[len2 - 2];
-	int guess = division_guess(x1, x2, x3, y1, y2);
-	int value, carry, borrow;
+	long x1 = digits1[i + len2];
+	long x2 = digits1[i + len2 - 1];
+	long x3 = digits1[i + len2 - 2];
+	long y1 = digits2[len2 - 1];
+	long y2 = digits2[len2 - 2];
+	long guess = division_guess(x1, x2, x3, y1, y2);
+	long value, carry, borrow;
 /*
 	printf("doing digit %d of quotient\n", i);
 	printf("guess is %d\n", guess);
@@ -677,7 +677,7 @@ static void divide(obj_t *quotient, obj_t *remainder,
 
 static void bignum_divide(obj_t *q, obj_t *r, obj_t x, obj_t y)
 {
-    int len1, len2;
+    long len1, len2;
     digit_t *digits1, *digits2;
 
     if (ZEROP(y))
@@ -694,7 +694,7 @@ static void bignum_divide(obj_t *q, obj_t *r, obj_t x, obj_t y)
 	*r = x;
     }
     else if (len2 == 1) {
-	int r_value;
+	long r_value;
 	divide_by_digit(q, &r_value, x, digits2[0]);
 	*r = make_bignum(r_value);
     }
@@ -704,7 +704,7 @@ static void bignum_divide(obj_t *q, obj_t *r, obj_t x, obj_t y)
 
 static void print_bignum_aux(obj_t bignum, int radix)
 {
-    int remainder;
+    long remainder;
     obj_t quotient;
 
     divide_by_digit(&quotient, &remainder, bignum, radix);
@@ -804,7 +804,7 @@ static void print_sf(obj_t sf)
     printf("%#g", single_value(sf));
 }
 
-static void change_exponent_marker(char *ptr, int marker)
+static void change_exponent_marker(char *ptr, long marker)
 {
     while (*ptr != '\0' && *ptr != 'e' && *ptr != 'E')
 	ptr++;
@@ -861,14 +861,14 @@ static obj_t dylan_fi_fi_times(obj_t x, obj_t y)
 static void dylan_fi_fi_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
-    int x = fixnum_value(args[0]);
-    int y = fixnum_value(args[1]);
+    long x = fixnum_value(args[0]);
+    long y = fixnum_value(args[1]);
 
     if (y == 0)
 	error("Division by zero");
     else {
-	int q = x / y;
-	int r = x % y;
+	long q = x / y;
+	long r = x % y;
 
 	/* The remainder is supposed to have the same sign as the dividend. */
 	if (r != 0 && (r ^ x) < 0) {
@@ -888,14 +888,14 @@ static void dylan_fi_fi_trunc(obj_t self, struct thread *thread, obj_t *args)
 static void dylan_fi_fi_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
-    int x = fixnum_value(args[0]);
-    int y = fixnum_value(args[1]);
+    long x = fixnum_value(args[0]);
+    long y = fixnum_value(args[1]);
 
     if (y == 0)
 	error("Division by zero");
     else {
-	int q = x / y;
-	int r = x % y;
+	long q = x / y;
+	long r = x % y;
 
 	/* The remainder is supposed to be the same sign as the divisor. */
 	if (r != 0 && (r ^ y) < 0) {
@@ -915,14 +915,14 @@ static void dylan_fi_fi_floor(obj_t self, struct thread *thread, obj_t *args)
 static void dylan_fi_fi_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
-    int x = fixnum_value(args[0]);
-    int y = fixnum_value(args[1]);
+    long x = fixnum_value(args[0]);
+    long y = fixnum_value(args[1]);
 
     if (y == 0)
 	error("Division by zero");
     else {
-	int q = x / y;
-	int r = x % y;
+	long q = x / y;
+	long r = x % y;
 
 	/* The remainder is supposed to be the opposite sign from */
 	/* the divisor.  */
@@ -943,20 +943,20 @@ static void dylan_fi_fi_ceil(obj_t self, struct thread *thread, obj_t *args)
 static void dylan_fi_fi_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
-    int x = fixnum_value(args[0]);
-    int y = fixnum_value(args[1]);
+    long x = fixnum_value(args[0]);
+    long y = fixnum_value(args[1]);
 
     if (y == 0)
 	error("Division by zero");
     else {
-	int q = x / y;
-	int r = x % y;
+	long q = x / y;
+	long r = x % y;
 
 	if (r != 0) {
 	    /* The remainder should be smaller (i.e. closer to zero) than */
 	    /* half the divisor. */
 	    if (y > 0) {
-		int limit = y >> 1;
+		long limit = y >> 1;
 		if (r > limit || (r == limit && (q & 1))) {
 		    /* r is too large. */
 		    r -= y;
@@ -969,7 +969,7 @@ static void dylan_fi_fi_round(obj_t self, struct thread *thread, obj_t *args)
 		}
 	    }
 	    else {
-		int limit = -y >> 1;
+		long limit = -y >> 1;
 		if (r > limit || (r == limit && (q & 1))) {
 		    /* r is too large. */
 		    r += y;  /* note: y is negative. */
@@ -1010,7 +1010,7 @@ static obj_t dylan_fi_fi_equal(obj_t x, obj_t y)
 
 static obj_t dylan_fi_ash(obj_t x, obj_t shift_obj)
 {
-    int shift = fixnum_value(shift_obj);
+    long shift = fixnum_value(shift_obj);
 
     if (shift < 0)
 	return make_fixnum(fixnum_value(x) >> -shift);
@@ -1178,7 +1178,7 @@ static void dylan_ei_ei_round(obj_t self, struct thread *thread, obj_t *args)
     obj_t y = args[1];
     obj_t xabs, yabs, q, r, twice_r;
     boolean xneg, yneg;
-    int cmp;
+    long cmp;
 
     if ((xneg = SIGN(x)))
 	xabs = negate_bignum(x);
@@ -1214,16 +1214,16 @@ static void dylan_ei_ei_round(obj_t self, struct thread *thread, obj_t *args)
 
 static obj_t dylan_ei_ei_logior(obj_t x, obj_t y)
 {
-    int len1 = BIGNUM(x)->length;
-    int len2 = BIGNUM(y)->length;
-    int length = MAX(len1, len2);
+    long len1 = BIGNUM(x)->length;
+    long len2 = BIGNUM(y)->length;
+    long length = MAX(len1, len2);
     obj_t res = alloc_bignum(length);
     digit_t *result = BIGNUM(res)->digits;
     digit_t *digits1 = BIGNUM(x)->digits;
     digit_t *digits2 = BIGNUM(y)->digits;
-    int pad1 = PAD(x);
-    int pad2 = PAD(y);
-    int i;
+    long pad1 = PAD(x);
+    long pad2 = PAD(y);
+    long i;
 
     if (len1 < len2) {
 	for (i = 0; i < len1; i++)
@@ -1244,16 +1244,16 @@ static obj_t dylan_ei_ei_logior(obj_t x, obj_t y)
 
 static obj_t dylan_ei_ei_logxor(obj_t x, obj_t y)
 {
-    int len1 = BIGNUM(x)->length;
-    int len2 = BIGNUM(y)->length;
-    int length = MAX(len1, len2);
+    long len1 = BIGNUM(x)->length;
+    long len2 = BIGNUM(y)->length;
+    long length = MAX(len1, len2);
     obj_t res = alloc_bignum(length);
     digit_t *result = BIGNUM(res)->digits;
     digit_t *digits1 = BIGNUM(x)->digits;
     digit_t *digits2 = BIGNUM(y)->digits;
-    int pad1 = PAD(x);
-    int pad2 = PAD(y);
-    int i;
+    long pad1 = PAD(x);
+    long pad2 = PAD(y);
+    long i;
 
     if (len1 < len2) {
 	for (i = 0; i < len1; i++)
@@ -1274,16 +1274,16 @@ static obj_t dylan_ei_ei_logxor(obj_t x, obj_t y)
 
 static obj_t dylan_ei_ei_logand(obj_t x, obj_t y)
 {
-    int len1 = BIGNUM(x)->length;
-    int len2 = BIGNUM(y)->length;
-    int length = MAX(len1, len2);
+    long len1 = BIGNUM(x)->length;
+    long len2 = BIGNUM(y)->length;
+    long length = MAX(len1, len2);
     obj_t res = alloc_bignum(length);
     digit_t *result = BIGNUM(res)->digits;
     digit_t *digits1 = BIGNUM(x)->digits;
     digit_t *digits2 = BIGNUM(y)->digits;
-    int pad1 = PAD(x);
-    int pad2 = PAD(y);
-    int i;
+    long pad1 = PAD(x);
+    long pad2 = PAD(y);
+    long i;
 
     if (len1 < len2) {
 	for (i = 0; i < len1; i++)
@@ -1304,11 +1304,11 @@ static obj_t dylan_ei_ei_logand(obj_t x, obj_t y)
 
 static obj_t dylan_ei_lognot(obj_t x)
 {
-    int length = BIGNUM(x)->length;
+    long length = BIGNUM(x)->length;
     obj_t res = alloc_bignum(length);
     digit_t *result = BIGNUM(res)->digits;
     digit_t *digits = BIGNUM(x)->digits;
-    int i;
+    long i;
 
     for (i = 0; i < length; i++)
 	result[i] = ~digits[i];
@@ -1319,9 +1319,9 @@ static obj_t dylan_ei_lognot(obj_t x)
 
 static obj_t dylan_ei_logbitp(obj_t i, obj_t x)
 {
-    int index = fixnum_value(i);
-    int digit = index / DIGIT_BITS;
-    int bit = index % DIGIT_BITS;
+    long index = fixnum_value(i);
+    long digit = index / DIGIT_BITS;
+    long bit = index % DIGIT_BITS;
 
     if (index < 0)
 	return obj_False;
@@ -1341,7 +1341,7 @@ static obj_t dylan_ei_logbitp(obj_t i, obj_t x)
 
 static obj_t dylan_ei_ash(obj_t x, obj_t shift_count)
 {
-    int shift = fixnum_value(shift_count);
+    long shift = fixnum_value(shift_count);
 
     if (shift > 0)
         return bignum_shift_left(x, shift);
@@ -1404,7 +1404,7 @@ static void dylan_sf_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     float x = single_value(args[0]);
-    int res = x < 0 ? ceil(x) : floor(x);
+    long res = x < 0 ? ceil(x) : floor(x);
 
     thread->sp = old_sp + 2;
 
@@ -1418,7 +1418,7 @@ static void dylan_sf_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     float x = single_value(args[0]);
-    int res = floor(x);
+    long res = floor(x);
 
     thread->sp = old_sp + 2;
 
@@ -1432,7 +1432,7 @@ static void dylan_sf_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     float x = single_value(args[0]);
-    int res = ceil(x);
+    long res = ceil(x);
 
     thread->sp = old_sp + 2;
 
@@ -1446,7 +1446,7 @@ static void dylan_sf_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     float x = single_value(args[0]);
-    int res = rint(x);
+    long res = rint(x);
 
     thread->sp = old_sp + 2;
 
@@ -1520,7 +1520,7 @@ static void dylan_df_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     double x = double_value(args[0]);
-    int res = x < 0 ? ceil(x) : floor(x);
+    long res = x < 0 ? ceil(x) : floor(x);
 
     thread->sp = old_sp + 2;
 
@@ -1534,7 +1534,7 @@ static void dylan_df_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     double x = double_value(args[0]);
-    int res = floor(x);
+    long res = floor(x);
 
     thread->sp = old_sp + 2;
 
@@ -1548,7 +1548,7 @@ static void dylan_df_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     double x = double_value(args[0]);
-    int res = ceil(x);
+    long res = ceil(x);
 
     thread->sp = old_sp + 2;
 
@@ -1562,7 +1562,7 @@ static void dylan_df_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     double x = double_value(args[0]);
-    int res = rint(x);
+    long res = rint(x);
 
     thread->sp = old_sp + 2;
 
@@ -1636,7 +1636,7 @@ static void dylan_xf_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     long double x = extended_value(args[0]);
-    int res = x < 0 ? ceil(x) : floor(x);
+    long res = x < 0 ? ceil(x) : floor(x);
 
     thread->sp = old_sp + 2;
 
@@ -1650,7 +1650,7 @@ static void dylan_xf_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     long double x = extended_value(args[0]);
-    int res = floor(x);
+    long res = floor(x);
 
     thread->sp = old_sp + 2;
 
@@ -1664,7 +1664,7 @@ static void dylan_xf_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     long double x = extended_value(args[0]);
-    int res = ceil(x);
+    long res = ceil(x);
 
     thread->sp = old_sp + 2;
 
@@ -1678,7 +1678,7 @@ static void dylan_xf_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
     long double x = extended_value(args[0]);
-    int res = rint(x);
+    long res = rint(x);
 
     thread->sp = old_sp + 2;
 
@@ -1750,9 +1750,9 @@ static obj_t dylan_fi_as_xf(obj_t class, obj_t x)
 
 static obj_t dylan_ei_as_fi(obj_t class, obj_t x)
 {
-    int length = BIGNUM(x)->length;
+    long length = BIGNUM(x)->length;
     digit_t *digits = BIGNUM(x)->digits;
-    int i;
+    long i;
     long res = 0;
 
     if (digits[length-1] & SIGN_MASK) {
@@ -1774,13 +1774,13 @@ static obj_t dylan_ei_as_fi(obj_t class, obj_t x)
 
 static obj_t dylan_ei_as_sf(obj_t class, obj_t x)
 {
-    int length = BIGNUM(x)->length;
+    long length = BIGNUM(x)->length;
     digit_t *digits = BIGNUM(x)->digits;
     digit_t digit = 0;
     float res = 0;
     float base = (float) (1 << DIGIT_BITS);
     float place = 1;
-    int i;
+    long i;
 
     for (i = 0; i < length; i++) {
 	digit = digits[i];
@@ -1796,13 +1796,13 @@ static obj_t dylan_ei_as_sf(obj_t class, obj_t x)
 
 static obj_t dylan_ei_as_df(obj_t class, obj_t x)
 {
-    int length = BIGNUM(x)->length;
+    long length = BIGNUM(x)->length;
     digit_t *digits = BIGNUM(x)->digits;
     digit_t digit = 0;
     double res = 0;
     double base = (double) (1 << DIGIT_BITS);
     double place = 1;
-    int i;
+    long i;
 
     for (i = 0; i < length; i++) {
 	digit = digits[i];
@@ -1818,13 +1818,13 @@ static obj_t dylan_ei_as_df(obj_t class, obj_t x)
 
 static obj_t dylan_ei_as_xf(obj_t class, obj_t x)
 {
-    int length = BIGNUM(x)->length;
+    long length = BIGNUM(x)->length;
     digit_t *digits = BIGNUM(x)->digits;
     digit_t digit = 0;
     long double res = 0;
     long double base = (long double) (1 << DIGIT_BITS);
     long double place = 1;
-    int i;
+    long i;
 
     for (i = 0; i < length; i++) {
 	digit = digits[i];
@@ -1923,21 +1923,21 @@ static obj_t dylan_df_expt (obj_t df1, obj_t df2)
 
 /* GC stuff. */
 
-static int scav_bignum(struct object *ptr)
+static long scav_bignum(struct object *ptr)
 {
-    int length = ((struct bignum *)ptr)->length;
+    long length = ((struct bignum *)ptr)->length;
     return (sizeof(struct bignum) + (length - 1) * sizeof(digit_t));
 }
 
 static obj_t trans_bignum(obj_t sf)
 {
-    int length = BIGNUM(sf)->length;
+    long length = BIGNUM(sf)->length;
     return transport(sf,
 		     (sizeof(struct bignum) + (length - 1) * sizeof(digit_t)),
 		     TRUE);
 }
 
-static int scav_ratio(struct object *ptr)
+static long scav_ratio(struct object *ptr)
 {
     struct ratio *ratio = (struct ratio *) ptr;
 
@@ -1952,7 +1952,7 @@ static obj_t trans_ratio(obj_t ratio)
     return transport(ratio, sizeof(struct ratio), TRUE);
 }
 
-static int scav_sf(struct object *ptr)
+static long scav_sf(struct object *ptr)
 {
     return sizeof(struct single_float);
 }
@@ -1962,7 +1962,7 @@ static obj_t trans_sf(obj_t sf)
     return transport(sf, sizeof(struct single_float), TRUE);
 }
 
-static int scav_df(struct object *ptr)
+static long scav_df(struct object *ptr)
 {
     return sizeof(struct double_float);
 }
@@ -1972,7 +1972,7 @@ static obj_t trans_df(obj_t sf)
     return transport(sf, sizeof(struct double_float), TRUE);
 }
 
-static int scav_xf(struct object *ptr)
+static long scav_xf(struct object *ptr)
 {
     return sizeof(struct extended_float);
 }
