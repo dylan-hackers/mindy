@@ -1,5 +1,4 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/gwydion-exports.dylan,v 1.2.10.1 2004/10/09 07:00:13 gabor Exp $
 file: gwydion-exports.dylan
 author: gabor@mac.com
 status: still much of experimental

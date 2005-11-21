@@ -1,5 +1,4 @@
 module: stack-analysis
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/stackanal.dylan,v 1.8 2003/02/18 15:59:30 gabor Exp $
 copyright: see below
 
 //======================================================================

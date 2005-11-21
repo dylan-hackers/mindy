@@ -1,5 +1,4 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/heap.dylan,v 1.38 2003/10/04 00:48:23 housel Exp $
 copyright: see below
 
 //======================================================================

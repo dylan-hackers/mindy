@@ -1,5 +1,4 @@
 module: abstract-optimizer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/abstract-optimizer.dylan,v 1.3.4.1 2004/10/12 02:33:32 gabor Exp $
 copyright: See below.
 
 

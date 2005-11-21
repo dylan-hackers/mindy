@@ -1,5 +1,4 @@
 Module: source-utilities
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/srcutil.dylan,v 1.5 2003/12/21 14:26:59 andreas Exp $
 copyright: see below
 
 

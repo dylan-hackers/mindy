@@ -2,7 +2,6 @@ module: plugin-api
 file: plugin-api.dylan
 author: gabor@mac.com
 synopsis: CW plugin interface.
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/plugin-api.dylan,v 1.4 2004/04/16 03:07:27 gabor Exp $
 copyright: see below
 
 //======================================================================

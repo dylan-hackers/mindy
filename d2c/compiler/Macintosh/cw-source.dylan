@@ -1,5 +1,4 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/cw-source.dylan,v 1.2 2002/04/18 23:11:38 gabor Exp $
 author: gabor@mac.com
 copyright: see below
 

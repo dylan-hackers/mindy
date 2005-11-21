@@ -1,5 +1,4 @@
 module: fer-convert
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/fer-convert.dylan,v 1.10 2003/02/19 23:39:34 gabor Exp $
 copyright: see below
 
 //======================================================================

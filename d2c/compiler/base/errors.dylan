@@ -1,5 +1,4 @@
 module: errors
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/errors.dylan,v 1.6 2004/06/05 00:32:01 bruce Exp $
 copyright: see below
 
 

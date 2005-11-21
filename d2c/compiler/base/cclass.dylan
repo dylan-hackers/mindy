@@ -1,5 +1,4 @@
 module: classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/cclass.dylan,v 1.26 2003/07/11 03:36:50 housel Exp $
 copyright: see below
 
 //======================================================================

@@ -1,5 +1,4 @@
 module: names
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/names.dylan,v 1.7 2001/11/08 01:10:57 gabor Exp $
 copyright: see below
 
 //======================================================================

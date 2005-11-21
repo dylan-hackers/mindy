@@ -1,5 +1,4 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/traverse.dylan,v 1.3 2001/10/15 20:30:13 gabor Exp $
 copyright: see below
 
 

@@ -1,5 +1,4 @@
 module: define-constants-and-variables
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defconstvar.dylan,v 1.10 2002/02/23 04:21:38 andreas Exp $
 copyright: see below
 
 

@@ -1,5 +1,4 @@
 module: primitives
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/primitives.dylan,v 1.13 2003/07/11 03:17:27 housel Exp $
 copyright: see below
 
 

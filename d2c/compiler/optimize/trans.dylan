@@ -1,5 +1,4 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/trans.dylan,v 1.14 2003/02/19 00:36:14 andreas Exp $
 copyright: see below
 
 //======================================================================

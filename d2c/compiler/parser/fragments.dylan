@@ -1,5 +1,4 @@
 module: fragments
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/fragments.dylan,v 1.3 2003/12/21 14:26:59 andreas Exp $
 copyright: see below
 
 //======================================================================

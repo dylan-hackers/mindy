@@ -1,5 +1,4 @@
 module: function-definitions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/func-defns.dylan,v 1.7 2002/05/13 19:43:34 gabor Exp $
 copyright: see below
 
 //======================================================================

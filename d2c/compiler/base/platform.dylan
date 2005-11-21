@@ -1,6 +1,5 @@
 module: platform
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/platform.dylan,v 1.14 2003/12/23 00:45:35 housel Exp $
 copyright: see below
 
 //======================================================================

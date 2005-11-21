@@ -1,5 +1,4 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/single-file-mode-state.dylan,v 1.15.4.1 2004/10/13 05:57:34 housel Exp $
 copyright: see below
 
 //======================================================================

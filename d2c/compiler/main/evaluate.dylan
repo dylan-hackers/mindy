@@ -1,5 +1,4 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/evaluate.dylan,v 1.5 2003/03/16 08:43:28 brent Exp $
 copyright: see below
 
 //======================================================================

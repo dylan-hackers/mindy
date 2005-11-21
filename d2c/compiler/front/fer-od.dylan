@@ -1,5 +1,4 @@
 Module: fer-od
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-od.dylan,v 1.5 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 

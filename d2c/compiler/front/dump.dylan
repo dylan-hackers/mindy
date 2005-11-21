@@ -1,5 +1,4 @@
 module: dump
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/dump.dylan,v 1.4 2000/01/24 04:56:17 andreas Exp $
 copyright: see below
 
 

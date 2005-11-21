@@ -1,5 +1,4 @@
 module: xep-tools
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/xep.dylan,v 1.7 2003/04/04 19:20:20 gabor Exp $
 copyright: see below
 
 

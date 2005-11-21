@@ -1,5 +1,4 @@
 module: compile-time-values
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctv.dylan,v 1.5 2003/06/10 06:16:22 housel Exp $
 copyright: see below
 
 //======================================================================

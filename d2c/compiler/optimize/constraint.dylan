@@ -1,5 +1,4 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/constraint.dylan,v 1.5 2001/10/13 22:11:43 gabor Exp $
 copyright: see below
 
 //======================================================================

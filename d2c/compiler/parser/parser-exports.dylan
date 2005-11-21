@@ -1,5 +1,4 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parser-exports.dylan,v 1.9 2003/07/02 16:21:42 housel Exp $
 copyright: see below
 
 //======================================================================

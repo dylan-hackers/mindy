@@ -1,5 +1,4 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/base-exports.dylan,v 1.47 2004/05/11 21:54:04 andreas Exp $
 copyright: see below
 
 //======================================================================

@@ -1,5 +1,4 @@
 module: source
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/source.dylan,v 1.13 2003/12/21 14:26:58 andreas Exp $
 copyright: see below
 
 //======================================================================

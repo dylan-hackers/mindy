@@ -1,5 +1,4 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/set-module.dylan,v 1.2 2000/01/24 04:56:24 andreas Exp $
 copyright: see below
 
 //======================================================================

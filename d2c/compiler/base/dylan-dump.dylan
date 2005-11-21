@@ -1,5 +1,4 @@
 module: dylan-dump
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/dylan-dump.dylan,v 1.4 2001/08/01 15:02:52 dauclair Exp $
 copyright: see below
 
 //======================================================================

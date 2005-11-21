@@ -1,6 +1,5 @@
 Module: type-dump
 Description: OD dump/load methods for type system
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/type-dump.dylan,v 1.11 2002/04/23 20:22:18 gabor Exp $
 copyright: see below
 
 

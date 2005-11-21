@@ -1,5 +1,4 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/ssa-convert.dylan,v 1.10 2003/06/24 21:00:07 andreas Exp $
 copyright: see below
 
 

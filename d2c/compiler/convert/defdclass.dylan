@@ -1,5 +1,4 @@
 module: define-classes
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defdclass.dylan,v 1.8 2002/01/07 21:29:59 housel Exp $
 copyright: see below
 
 //======================================================================

@@ -1,5 +1,4 @@
 module: lexenv
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/lexenv.dylan,v 1.3 2001/05/26 18:49:09 gabor Exp $
 copyright: see below
 
 //======================================================================

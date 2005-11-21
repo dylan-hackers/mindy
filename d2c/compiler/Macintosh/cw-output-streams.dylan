@@ -2,7 +2,6 @@ module: cw-output-streams
 file: cw-output-streams.dylan
 author: gabor@mac.com
 synopsis: <cw-output-stream> -- used inside d2c CW plugin.
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/cw-output-streams.dylan,v 1.1 2004/04/13 21:04:04 gabor Exp $
 copyright: see below
 
 //======================================================================

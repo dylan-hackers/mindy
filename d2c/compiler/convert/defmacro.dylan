@@ -1,5 +1,4 @@
 module: define-macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/defmacro.dylan,v 1.5 2003/07/02 16:20:12 housel Exp $
 copyright: see below
 
 

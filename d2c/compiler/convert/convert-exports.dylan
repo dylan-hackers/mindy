@@ -1,5 +1,4 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/convert-exports.dylan,v 1.11 2003/07/06 03:50:00 housel Exp $
 copyright: see below
 
 

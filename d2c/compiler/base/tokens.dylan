@@ -1,5 +1,4 @@
 module: tokens
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/tokens.dylan,v 1.6 2001/05/26 16:52:17 gabor Exp $
 copyright: see below
 
 

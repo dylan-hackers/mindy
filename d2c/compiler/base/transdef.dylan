@@ -1,5 +1,4 @@
 module: transformers
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/transdef.dylan,v 1.2 2000/01/24 04:56:05 andreas Exp $
 copyright: see below
 
 //======================================================================

@@ -1,5 +1,4 @@
 module: top-level-forms
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/tlf.dylan,v 1.3 2003/03/12 21:47:07 housel Exp $
 copyright: see below
 
 //======================================================================

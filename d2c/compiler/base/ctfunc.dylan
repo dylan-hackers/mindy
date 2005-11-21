@@ -1,5 +1,4 @@
 module: compile-time-functions
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/ctfunc.dylan,v 1.5 2001/05/30 21:34:23 gabor Exp $
 copyright: see below
 
 //======================================================================

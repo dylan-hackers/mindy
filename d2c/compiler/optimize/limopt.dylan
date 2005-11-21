@@ -1,4 +1,3 @@
-RCS-Header: $Header: /scm/cvs/src/d2c/compiler/optimize/limopt.dylan,v 1.4 2002/07/13 05:07:54 bruce Exp $
 module: cheese
 Copyright: See below.
 Synopsis: Optimizer support for limited collections.

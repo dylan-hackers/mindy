@@ -1,5 +1,4 @@
 module: tokenize
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/tokenize.dylan,v 1.2 2000/01/24 04:56:36 andreas Exp $
 copyright: see below
 
 

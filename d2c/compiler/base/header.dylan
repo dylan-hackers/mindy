@@ -1,5 +1,4 @@
 module: header
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/header.dylan,v 1.9 2002/03/17 13:29:10 gabor Exp $
 copyright: see below
 
 

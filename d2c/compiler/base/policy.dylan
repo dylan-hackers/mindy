@@ -1,5 +1,4 @@
 module: policy
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/policy.dylan,v 1.2 2000/01/24 04:56:04 andreas Exp $
 copyright: see below
 
 //======================================================================

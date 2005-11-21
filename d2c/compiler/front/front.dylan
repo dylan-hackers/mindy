@@ -1,5 +1,4 @@
 Module: front
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/front.dylan,v 1.11 2003/06/24 21:00:08 andreas Exp $
 copyright: see below
 
 //======================================================================

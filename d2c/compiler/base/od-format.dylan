@@ -1,5 +1,4 @@
 Module: od-format
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/base/od-format.dylan,v 1.20 2003/06/24 21:00:07 andreas Exp $
 
 //======================================================================
 //

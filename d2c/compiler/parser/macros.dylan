@@ -1,5 +1,4 @@
 module: macros
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/macros.dylan,v 1.12 2003/07/11 03:13:08 housel Exp $
 copyright: see below
 
 //======================================================================

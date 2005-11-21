@@ -1,5 +1,4 @@
 module: lexer
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/lexer.dylan,v 1.19 2004/08/18 13:09:52 gabor Exp $
 copyright: see below
 
 

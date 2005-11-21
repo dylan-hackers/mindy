@@ -1,5 +1,4 @@
 module: parser
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/support.dylan,v 1.3 2004/04/18 21:23:55 gabor Exp $
 copyright: see below
 
 

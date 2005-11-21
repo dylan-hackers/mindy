@@ -1,5 +1,4 @@
 Module: flow
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/data-flow.dylan,v 1.4 2002/04/28 20:42:12 gabor Exp $
 copyright: see below
 
 //======================================================================

@@ -1,5 +1,4 @@
 module: symbol-browser
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/Macintosh/symbol-browser.dylan,v 1.3 2004/04/13 23:47:13 gabor Exp $
 file: gwydion.dylan
 author: gabor@mac.com
 copyright: see below

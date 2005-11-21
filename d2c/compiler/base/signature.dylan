@@ -1,6 +1,5 @@
 Module: signature
 Description: Method/GF signatures and operations on them
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/signature.dylan,v 1.3 2002/04/13 01:29:12 gabor Exp $
 copyright: see below
 
 //======================================================================

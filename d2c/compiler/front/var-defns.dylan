@@ -1,5 +1,4 @@
 module: variable-definitions
-RCS-header: $Header: /scm/cvs/src/d2c/compiler/front/var-defns.dylan,v 1.2 2000/01/24 04:56:22 andreas Exp $
 
 
 //======================================================================

@@ -1,5 +1,4 @@
 module: fer-transform
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/fer-transform/type-checks.dylan,v 1.5 2002/09/13 19:52:39 andreas Exp $
 copyright: see below
 
 

@@ -1,5 +1,4 @@
 module: cheese
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/optimize/typeinf.dylan,v 1.3 2003/03/22 11:48:41 gabor Exp $
 copyright: see below
 
 //======================================================================

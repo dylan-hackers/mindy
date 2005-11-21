@@ -1,5 +1,4 @@
 module: parse-tree
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/parser/parse-tree.dylan,v 1.4 2001/07/10 00:28:21 bruce Exp $
 copyright: see below
 
 //======================================================================

@@ -1,5 +1,4 @@
 module: expanders
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/expand.dylan,v 1.6 2003/03/27 17:39:01 housel Exp $
 copyright: see below
 
 

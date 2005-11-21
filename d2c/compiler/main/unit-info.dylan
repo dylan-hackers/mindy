@@ -1,5 +1,4 @@
 module: main
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/main/unit-info.dylan,v 1.1 2001/09/08 23:34:54 andreas Exp $
 copyright: see below
 
 //======================================================================

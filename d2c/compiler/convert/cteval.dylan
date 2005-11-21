@@ -1,5 +1,4 @@
 module: compile-time-eval
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/convert/cteval.dylan,v 1.5 2002/05/14 21:08:48 gabor Exp $
 copyright: see below
 
 

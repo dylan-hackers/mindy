@@ -1,6 +1,5 @@
 Module: front
 Description: implementation of Front-End-Representation builder
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/front/fer-builder.dylan,v 1.12 2003/12/15 21:38:59 andreas Exp $
 copyright: see below
 
 //======================================================================

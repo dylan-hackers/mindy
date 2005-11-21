@@ -1,5 +1,4 @@
 module: cback
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/cback/cback.dylan,v 1.53 2004/05/11 21:54:06 andreas Exp $
 copyright: see below
 
 //======================================================================

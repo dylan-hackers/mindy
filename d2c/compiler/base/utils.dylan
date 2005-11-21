@@ -1,5 +1,4 @@
 module: utils
-rcs-header: $Header: /scm/cvs/src/d2c/compiler/base/utils.dylan,v 1.8 2003/03/15 06:23:03 housel Exp $
 copyright: see below
 
 
