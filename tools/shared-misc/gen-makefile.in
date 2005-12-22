@@ -1059,7 +1059,9 @@ sub emit_melange_rule {
     printf("\t$host_platform{'recursive_make_command'}\n", $MELANGE_DIR, "");
     print "\t\$(MELANGE) --d2c";
     if ($features{'compiled_for_cygnus'}) {
-      print " -D__uint16_t=short -D__uint32_t=int -D__int32_t=int";
+# Maybe a better way:
+# -D__uint16_t=uint16_t -D__int32_t=int32_t -D__uint32_t=uint32_t
+      print " -D__uint16_t=\"unsigned short\" -D__uint32_t=\"unsigned int\" -D__int32_t=int";
     }
     print " \$(CPPFLAGS) -I\$(SRCDIR) ";
     if($EXTRA_INCLUDE_DIR ne "") {
