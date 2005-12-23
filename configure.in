@@ -89,9 +89,10 @@ fi
 AC_CANONICAL_SYSTEM		# Find the system type
 AC_ARG_PROGRAM			# Provide support for name prefixes
 
+
 AC_DEFUN(GD_D2C_SYSTEM,[
 case $1 in
-    i*86-*-linux-gnu*)
+    i*86-*-linux-gnu* | i*86-*-linux)
         case `gcc -dumpversion` in
 	     3.3*) $2=x86-linux-gcc33 ;;
 	     3.2*) $2=x86-linux-gcc32 ;;
