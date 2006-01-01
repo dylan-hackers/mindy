@@ -785,6 +785,13 @@ define constant do-skip-matcher
 // looking at a preprocessor directive, we return #f and the caller can
 // continue as normal.
 //
+
+// for debugging
+define function map-string-value(foo)
+  foo & map(string-value, foo)
+end;
+
+
 define method try-cpp
     (state :: <tokenizer>, start-pos :: <integer>) => (result :: <boolean>);
   let contents = state.contents;
@@ -838,40 +845,61 @@ define method try-cpp
 	    if (~name)
 	      parse-error(state, "Ill formed #undef directive.");
 	    end if;
+            parse-progress-report(name, "undef %=", name.string-value);
 	    remove-key!(state.cpp-table, name.string-value);
 	  end if;
 	"ifdef" =>
-	  let name = try-identifier(state, pos, expand: #f);
-	  if (~name)
-	    parse-error(state, "Ill formed #ifdef directive.");
-	  end if;
-	  if (element(state.cpp-table, name.string-value, default: #f)
-		& (empty?(state.cpp-stack)
-		     | head(state.cpp-stack) == #"accept"))
-	    state.cpp-stack := pair(#"accept", state.cpp-stack);
-	  else
-	    do-skip(state.position,
-		    state.cpp-stack := pair(#"retry", state.cpp-stack));
-	  end if;
+	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
+            let name = try-identifier(state, pos, expand: #f);
+            if (~name)
+              parse-error(state, "Ill formed #ifdef directive.");
+            end if;
+            parse-progress-report(name, "ifdef %=, element = %=", name.string-value,
+                                  element(state.cpp-table, name.string-value,
+                                          default: #f).map-string-value);
+            if (element(state.cpp-table, name.string-value, default: #f))
+              parse-progress-report(name, "ifdef %= -- taking true branch",
+                                    name.string-value);
+              state.cpp-stack := pair(#"accept", state.cpp-stack);
+            else
+              parse-progress-report(name, "ifdef %= -- skipping", name.string-value);
+              do-skip(state.position,
+                      state.cpp-stack := pair(#"retry", state.cpp-stack));
+            end if;
+          else
+            do-skip(state.position,
+                    state.cpp-stack := pair(#"retry", state.cpp-stack));
+          end if;
 	"ifndef" =>
-	  let name = try-identifier(state, pos, expand: #f);
-	  if (~name)
-	    parse-error(state, "Ill formed #ifndef directive.");
-	  end if;
-	  if (~element(state.cpp-table, name.string-value, default: #f)
-		& (empty?(state.cpp-stack)
-		     | head(state.cpp-stack) == #"accept"))
-	    state.cpp-stack := pair(#"accept", state.cpp-stack);
-	  else
-	    do-skip(state.position,
-		    state.cpp-stack := pair(#"retry", state.cpp-stack));
-	  end if;
+	  if (empty?(state.cpp-stack) | head(state.cpp-stack) == #"accept")
+            let name = try-identifier(state, pos, expand: #f);
+            if (~name)
+              parse-error(state, "Ill formed #ifndef directive.");
+            end if;
+            parse-progress-report(name, "ifndef %=, element = %=", name.string-value,
+                                  element(state.cpp-table, name.string-value,
+                                          default: #f).map-string-value);
+            if (~element(state.cpp-table, name.string-value, default: #f))
+              parse-progress-report(name, "ifndef %= -- taking true branch",
+                                    name.string-value);
+              state.cpp-stack := pair(#"accept", state.cpp-stack);
+            else
+              parse-progress-report(name, "ifndef %= -- skipping", name.string-value);
+              do-skip(state.position,
+                      state.cpp-stack := pair(#"retry", state.cpp-stack));
+            end if;
+          else
+            do-skip(state.position,
+                    state.cpp-stack := pair(#"retry", state.cpp-stack));
+          end if;
 	"if" =>
 	  let stack = state.cpp-stack;
 	  if ((empty?(stack) | head(stack) == #"accept")
 		& cpp-parse(state) ~= 0)
+            parse-progress-report(state, "if -- taking true branch");
 	    state.cpp-stack := pair(#"accept", stack);
 	  else
+            parse-progress-report(state, "if -- skipping");
 	    do-skip(pos, state.cpp-stack := pair(#"retry", stack));
 	  end if;
 	"else" =>
@@ -881,11 +909,14 @@ define method try-cpp
 	  else
 	    let rest = tail(stack);
 	    if (head(stack) == #"accept")
+              parse-progress-report(state, "else -- skipping");
 	      do-skip(pos, state.cpp-stack := pair(#"done", tail(stack)));
 	    elseif (head(stack) == #"retry"
 		  & (empty?(rest) | head(rest) == #"accept"))
+              parse-progress-report(state, "else -- processing");
 	      state.cpp-stack := pair(#"accept", rest);
 	    else
+              parse-progress-report(state, "else -- skipping");
 	      do-skip(pos, stack);
 	    end if;
 	  end if;
