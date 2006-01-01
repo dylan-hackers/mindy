@@ -43,32 +43,32 @@ copyright: see below
 // the compilation environment for a MacOS X Macintosh using the Darwin BSD layer.
 //======================================================================
 
+// Many of these can be found from
+// cpp -dM /dev/null
+
 define constant $default-defines
   = #[
       // Basics
       "const", "",
       "volatile", "",
-      "__STDC__", "",
 
-      //"__cdecl", "",
-      // cpp -dM /dev/null
-      //"GNUC", "(1)",
-      // cc -E -dM -o - /dev/null
-      "__GNUC__", "4",
-      "__GNUC_MINOR__", "0",
+      "GNUC", "(1)",
+      "__GNUC__", "2",
+      "__GNUC_MINOR__", "95",
+      "__STDC__", "",
+      "__STDC_VERSION__", "199901L",
 
       "__APPLE__", "",
+      "__APPLE_CC__", "934",
       "__ppc__", "",
       "__NATURAL_ALIGNMENT__", "",
       "__MACH__", "",
       "__BIG_ENDIAN__", "",
-      "__APPLE_CC__", "5026",
       "__DYNAMIC__", "",
       "__signed__", "",
       "__signed", "",
       "__inline__", "",
       "__inline", "",
-      "__STDC_VERSION__", "199901L",
       "__builtin_va_list", "void*",
       
       // Parameterized macros which remove various GCC extensions from our
@@ -82,8 +82,7 @@ define constant $default-defines
 // cc -E -v /dev/null
 define constant macos-include-directories
   = #["/usr/local/include",
- 			"/usr/include/gcc/darwin/default/c++/..",
- 			"/usr/include"];
+      "/usr/include"];
 
 for (dir in macos-include-directories)
   push-last(include-path, dir);
