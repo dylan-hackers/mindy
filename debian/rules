@@ -7,7 +7,7 @@
 STYLE=$(shell if [ -f "/usr/bin/d2c" ]; then echo "normal"; 	\
 	else echo "bootstrap";					\
 	fi)
-VERSION=2.3.12pre3
+VERSION=$(shell cat version)
 MACHINE=$(shell uname -m)
 GCCVER=$(shell gcc -dumpversion | sed "s/\([0-9]\.[0-9]\).*/\1/")
 
@@ -49,7 +49,7 @@ bootstrap-stage1-stamp:
 	# Following is needed for bootstrapping
 ifeq ("$(STYLE)", "bootstrap")
 		aclocal
-		-automake-1.7 --add-missing
+		-automake-1.9 --add-missing
 		libtoolize --force --copy
 		autoheader
 		autoconf
@@ -74,7 +74,7 @@ bootstrap-stage2:	bootstrap-stage2-stamp
 bootstrap-stage2-stamp:  bootstrap-stage1-stamp
 ifeq ("$(STYLE)", "bootstrap")
 		-rm config.cache
-		-automake-1.7 --add-missing
+		-automake-1.9 --add-missing
 		libtoolize --force --copy
 		PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH); \
 		    LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib/dylan/$(VERSION)/$(MACHINE)-linux-$(GCCVER):$(LD_LIBRARY_PATH); \
@@ -167,10 +167,15 @@ install-stamp: build-stamp
 	dh_installdocs CREDITS NEWS ONEWS.html README
 
 	# Add here commands to install the package into debian/tmp.
+ifeq ("$(STYLE)", "bootstrap")
+	$(MAKE) PATH=`pwd`/debian/bootstrap/usr/bin:$(PATH) LD_LIBRARY_PATH=`pwd`/debian/bootstrap/usr/lib/dylan/$(VERSION)/$(MACHINE)-linux-$(GCCVER):$(LD_LIBRARY_PATH) DESTDIR=`pwd`/debian/tmp install
+else
 	$(MAKE) DESTDIR=`pwd`/debian/tmp install
+endif
 
 	# First, put everything in FSSTD-compliant places
-	mv `pwd`/debian/tmp/usr/man/* `pwd`/debian/tmp/usr/share/man
+	mkdir -p `pwd`/debian/tmp/usr/share/man
+	mv `pwd`/debian/tmp/usr/man/man[1-9] `pwd`/debian/tmp/usr/share/man/
 
 	# Now, copy some manpages
 	cp `pwd`/debian/gen-makefile.1 `pwd`/debian/tmp/usr/share/man/man1
@@ -190,6 +195,7 @@ install-stamp: build-stamp
 	# Add the emacs mode
 	cp -a -r `pwd`/tools/elisp/* `pwd`/debian/gwydion-dylan-dev/usr/share/emacs/site-lisp/gwydion-dylan
 
+	dh_install --sourcedir=debian/tmp
 	dh_movefiles
 
 	# Make sure we don't have a bunch of extra stuff in Mindy
@@ -238,10 +244,10 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
 	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps -l`pwd`/debian/gwydion-dylan-dev/usr/lib
+	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
 

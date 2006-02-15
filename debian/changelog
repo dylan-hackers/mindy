@@ -1,3 +1,14 @@
+gwydion-dylan (1:2.4.1pre1-1) unstable; urgency=low
+
+  * New upstream release
+  * Removed hardcoded version from rules and use value in "version" file
+  * Created debian/compat for debhelper version 4
+  * Require automake1.9 in control and updated rules to match
+  * Added a bootstrap-specific install target to rules
+  * Created debian/gwydion-dylan.install and added dh_install to rules
+
+ -- Charles Stevenson <core@bokeoa.com>  Wed, 15 Feb 2006 00:36:45 -0800
+
 gwydion-dylan (1:2.3.12pre3-1) unstable; urgency=low
 
   * Bugfixes.
