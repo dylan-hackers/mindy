@@ -133,6 +133,11 @@ case $1 in
 	     4.*) $2=ppc-darwin-gcc4 ;;
 	     *)   $2=ppc-darwin-gcc ;;
 	esac ;;
+    i*86-apple-darwin*)
+	case `gcc -dumpversion` in
+	     4.*) $2=intel-darwin-gcc4 ;;
+	     *)   $2=intel-darwin-gcc ;;
+	esac ;;
     mips-sgi-irix*) $2=mips-irix-gcc ;;
     i*86-*-netbsd*) $2=x86-netbsd-gcc ;;
     *) $2=unknown-unix ;;
