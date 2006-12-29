@@ -212,8 +212,10 @@ define method make
 	  fix-define-rules(defmacro);
 	  <define-list-macro-definition>;
 	<function-rule> =>
+          check-macro-rule-names(defmacro);
 	  <function-macro-definition>;
 	<statement-rule> =>
+          check-macro-rule-names(defmacro);
 	  <statement-macro-definition>;
       end select;
 
@@ -231,6 +233,25 @@ define method make
   defn;
 end method make;
 
+
+// check-macro-rule-names
+
+// check-macro-rule-names -- internal
+//
+// makes sure that the first token in a function or statement macro is in
+// fact the name of the macro
+
+define method check-macro-rule-names(defmacro :: <define-macro-parse>) => ();
+  let name = defmacro.defmacro-name.token-symbol;
+  for (rule in defmacro.defmacro-main-rule-set.rule-set-rules)
+    let rule-name = rule.main-rule-name.token-symbol;
+    unless (rule-name == name)
+      compiler-fatal-error-location(defmacro,
+                                    "Macro rule name %s does not match macro name (%s).",
+                                    rule-name, name);
+    end;
+  end for;
+end method check-macro-rule-names;
 
 
 // fix-define-rules
