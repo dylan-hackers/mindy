@@ -32,7 +32,7 @@ define library compiler-main
   use Dylan;
   use String-extensions;
   use Random;
-  use command-line-parser;
+  use parse-arguments;
   use compiler-base;
   use compiler-front;
   use compiler-fer-transform;
@@ -58,7 +58,7 @@ define module main
   use substring-search;
   use character-type;
   use random;
-  use command-line-parser;
+  use parse-arguments;
   use option-parser-protocol;
    
   use utils;

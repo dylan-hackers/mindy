@@ -5,7 +5,7 @@ define library ansi-c-test
   use streams;
   use format;
   use standard-io;
-  use command-line-parser;
+  use parse-arguments;
   use melange-support;
 
   use parser-utilities;
@@ -21,7 +21,7 @@ define module ansi-c-test
   use streams;
   use format;
   use standard-io;
-  use command-line-parser;
+  use parse-arguments;
   use melange-support, import: {call-out};
 
   use parse-conditions;

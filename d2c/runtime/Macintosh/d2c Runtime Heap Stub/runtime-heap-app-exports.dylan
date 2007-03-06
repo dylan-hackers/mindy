@@ -20,7 +20,7 @@ define library runtime-heap-app
     use Format-Out;						// Format-out
     
     
-    use command-line-parser;				// GetOpt
+    use parse-arguments;				// GetOpt
     
     
     use Matrix;							// Matrix
@@ -86,7 +86,7 @@ define module runtime-heap-app
 	use Format-Out;						// Format-Out
 	
 	use option-parser-protocol;			// GetOpt
-	use command-line-parser;
+	use parse-arguments;
 	
 	
 	use Matrix;							// Matrix

@@ -4,7 +4,7 @@ Author: Peter S. Housel
 define library gobject-tool
   use dylan;
   use common-dylan;
-  use command-line-parser;
+  use parse-arguments;
   use streams;
   use standard-io;
   use format;

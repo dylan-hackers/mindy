@@ -6,7 +6,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/streams'
     . ' -L../../../common/stream-ext'
     . ' -L../../../common/collection-extensions'
-    . ' -L../../../d2c/runtime/random'
+    . ' -L../../runtime/random'
     . ' -L../../../common/standard-io'
     . ' -L../../../common/print'
     . ' -L../../../common/format'

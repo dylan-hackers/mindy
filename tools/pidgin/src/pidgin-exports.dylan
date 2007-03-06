@@ -9,7 +9,7 @@ define library pidgin
   use format;
   use standard-io;
   use string-extensions;
-  use command-line-parser;
+  use parse-arguments;
   use parser-utilities;
   use ansi-c;
   use c-parser;
@@ -24,7 +24,7 @@ define module pidgin
   use piped-exec;
   use format;
   use standard-io;
-  use command-line-parser;
+  use parse-arguments;
   use substring-search;
   use subseq;
   use parse-conditions;

@@ -23,12 +23,10 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/format-out'
     . ' -L../../../duim/frames'
     . ' -L../../../duim/core'
-    . ' -L../../../duim/vanilla'
     . ' -L../../../duim/panes'
     . ' -L../carbon'
     . ' -L../carbon-duim'
-    . ' -L../../gtk+/gtk+'
-    . ' -L../../gtk+/gtk-duim';
+    . ' -L../../../d2c/runtime/random';
 
 do emit_library_rule(
     'duim-gui-test-suite', '$(BUILDROOT)/force.timestamp', '', 'compile',

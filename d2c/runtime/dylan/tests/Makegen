@@ -5,7 +5,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../../common/threads'
     . ' -L../../../../common/streams'
     . ' -L../../../../common/table-ext'
-    . ' -L../../../../d2c/runtime/random'
+    . ' -L../../random'
     . ' -L../../../../common/common-dylan'
     . ' -L../../../../qa/testworks'
     . ' -L../../../../qa/testworks-specs';
