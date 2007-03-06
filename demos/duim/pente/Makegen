@@ -31,6 +31,8 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../duim/core'
     . ' -L../../../duim/vanilla'
     . ' -L../../../duim/panes'
+    . ' -L../../../platform/carbon/carbon'
+    . ' -L../../../platform/carbon/carbon-duim'
     . ' -L../../../platform/gtk+/gtk+'
     . ' -L../../../platform/gtk+/gtk-duim';
 

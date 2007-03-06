@@ -12,7 +12,7 @@
 @bootstrap_libraries =
     ('streams', 'standard-io', 'print', 'format', 'collection-extensions',
      'table-ext', 'string-ext', 'regular-expressions',
-     'stream-ext', 'transcendental', 'getopt', 'base-file-system');
+     'stream-ext', 'transcendental', 'threads', 'format-out', 'common-dylan', 'io', 'command-line-parser', 'base-file-system');
 
 # These libraries have been introduced since 2.2.0. They may not be used by
 # d2c, parsergen or any of the above libraries. Once common-dylan stabilizes,
@@ -20,8 +20,8 @@
 # compatibility with 2.2.0 and port everything to build against these
 # libraries.
 @non_bootstrap_libraries =
-    ('transcendental', 'threads', 'format-out', 'common-dylan', 'collections',
-     'io', 'file-system', 'time', 'date', 'system', 'locators', 'matrix');
+    ('collections',
+     'file-system', 'time', 'date', 'system', 'locators', 'matrix');
     #'network'
     #'internal-time'
 

@@ -87,7 +87,7 @@ define library melange
   use streams;
   use standard-io;
   use format;
-  use parse-arguments;
+  use command-line-parser;
   use melange-c;
   export
     name-mappers;
@@ -181,7 +181,7 @@ define module define-interface
   use standard-io;
 
   // From parse-arguments
-  use parse-arguments;
+  use command-line-parser;
   
   // local packages
   use int-lexer;

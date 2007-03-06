@@ -28,12 +28,12 @@ copyright: see below
 define library getopttest
   use dylan;
   use format-out;
-  use parse-arguments;
+  use command-line-parser;
 end library;
 
 define module getopttest
   use dylan;
   use extensions;
   use format-out;
-  use parse-arguments;
+  use command-line-parser;
 end module;

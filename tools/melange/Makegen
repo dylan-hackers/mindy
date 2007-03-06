@@ -8,7 +8,12 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../common/standard-io'
     . ' -L../../common/print'
     . ' -L../../common/format'
-    . ' -L../../common/getopt'
+    . ' -L../../common/threads'
+    . ' -L../../d2c/runtime/random'
+    . ' -L../../common/common-dylan'
+    . ' -L../../common/format-out'
+    . ' -L../../common/io'
+    . ' -L../../common/command-line-parser'
     . ' -L.';
 
 if ($features{'compiled_for_win32'}) {

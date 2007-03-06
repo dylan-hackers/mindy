@@ -41,7 +41,7 @@ end module;
 define module gobject-tool
   use common-dylan, exclude: { format-to-string };
   use Extensions, import: { *warning-output* };
-  use parse-arguments;
+  use command-line-parser;
   use streams;
   use standard-io;
   use format;
