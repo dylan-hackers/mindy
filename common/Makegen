@@ -21,7 +21,8 @@
 # libraries.
 @non_bootstrap_libraries =
     ('transcendental', 'threads', 'format-out', 'common-dylan', 'collections',
-     'io', 'file-system', 'time', 'date', 'system', 'locators', 'matrix');
+     'io', 'file-system', 'time', 'date', 'system', 'locators', 'matrix',
+     'command-line-parser');
     #'network'
     #'internal-time'
 
