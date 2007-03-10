@@ -786,12 +786,6 @@ define constant do-skip-matcher
 // continue as normal.
 //
 
-// for debugging
-define function map-string-value(foo)
-  foo & map(string-value, foo)
-end;
-
-
 define method try-cpp
     (state :: <tokenizer>, start-pos :: <integer>) => (result :: <boolean>);
   let contents = state.contents;
@@ -854,10 +848,9 @@ define method try-cpp
             if (~name)
               parse-error(state, "Ill formed #ifdef directive.");
             end if;
-            parse-progress-report(name, "ifdef %=, element = %=", name.string-value,
-                                  element(state.cpp-table, name.string-value,
-                                          default: #f).map-string-value);
-            if (element(state.cpp-table, name.string-value, default: #f))
+            let elt = element(state.cpp-table, name.string-value, default: #f);
+            parse-progress-report(name, "ifdef %=", name.string-value);
+            if (elt)
               parse-progress-report(name, "ifdef %= -- taking true branch",
                                     name.string-value);
               state.cpp-stack := pair(#"accept", state.cpp-stack);
@@ -876,10 +869,9 @@ define method try-cpp
             if (~name)
               parse-error(state, "Ill formed #ifndef directive.");
             end if;
-            parse-progress-report(name, "ifndef %=, element = %=", name.string-value,
-                                  element(state.cpp-table, name.string-value,
-                                          default: #f).map-string-value);
-            if (~element(state.cpp-table, name.string-value, default: #f))
+            let elt = element(state.cpp-table, name.string-value, default: #f);
+            parse-progress-report(name, "ifndef %=", name.string-value);
+            if (~elt)
               parse-progress-report(name, "ifndef %= -- taking true branch",
                                     name.string-value);
               state.cpp-stack := pair(#"accept", state.cpp-stack);
