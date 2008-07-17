@@ -658,6 +658,11 @@ platform-name:			ppc-linux-gcc32
 inherit-from:			ppc-gcc32 ppc-linux
 link-shared-library-command:	$(LIBTOOL) --mode=link gcc-3.2 -o %s %s -rpath %s
 
+platform-name:			ppc-linux-gcc4
+inherit-from:			ppc-linux-gcc
+long-double-size:		16
+long-double-alignment:		16
+
 // FreeBSD 2.x
 platform-name:			x86-freebsd-aout-gcc
 inherit-from:			gcc freebsd x86

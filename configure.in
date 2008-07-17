@@ -100,7 +100,12 @@ case $1 in
         esac ;;
     x86_64-*-linux-gnu*) $2=x86_64-linux-gcc ;;
     i*86-pc-bsdi*) $2=x86-bsdi-gcc ;;
-    powerpc-*-linux-gnu*) $2=ppc-linux-gcc32 ;;
+    powerpc-*-linux-gnu*)
+    	   case `gcc -dumpversion` in
+	      4.*)  $2=ppc-linux-gcc4 ;;
+	      3.2*) $2=ppc-linux-gcc32 ;;
+	      *)    $2=ppc-linux-gcc ;;
+         esac ;;
     alpha*-*-linux-gnu*) $2=alpha-linux-gcc ;;
     sparc*-*-linux-gnu*) $2=sparc-linux-gcc ;;
     s390*-*-linux-gnu*) $2=s390-linux-gcc ;;
