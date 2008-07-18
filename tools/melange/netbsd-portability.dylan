@@ -61,7 +61,6 @@ define constant $default-defines
       "__unix", "",
       "__lint__", "",
       "__symbolrename", #(#("x"), ""),
-      "__signed", "signed",
 // Both gcc and Solaris cc support 64-bits long long int
 //      "_NO_LONGLONG", "",
       "__STDC__", ""

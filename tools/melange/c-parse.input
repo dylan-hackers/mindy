@@ -4,6 +4,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
+rcs-header: $Header: /scm/cvs/src/tools/melange/c-parse.input,v 1.23 2004/05/30 10:57:48 cpage Exp $
 
 //======================================================================
 //
@@ -86,7 +87,7 @@ define variable *typedef-flag* = #f;
 //
 define generic int-value (value :: <object>, state :: <parse-state>);
 
-define method int-value (value :: <abstract-integer>, state :: <parse-state>)
+define method int-value (value :: <general-integer>, state :: <parse-state>)
   value;
 end method;
 
@@ -103,16 +104,14 @@ define method int-value (token :: <character-token>, state :: <parse-state>)
 end method;
 
 define method int-value (value :: <object>, state :: <parse-state>)
-  error(value, 
-	"Value in constant expression must be an integer, but is %=\n.",
-	value);
+  error(value, "Value in constant expression must be an integer.");
 end method;
 
 // This method will only be called if we are evaluating an expression in a CPP
 // line.  It is not called for arbitrary identifiers.
 //
 define method int-value
-    (value :: <identifier-token>, state :: <parse-value-state>)
+    (value :: <identifier-token>, state :: <parse-cpp-state>)
   let expansion = element(value.generator.cpp-table,
                           value.string-value, default: #f);
   case
@@ -122,7 +121,6 @@ define method int-value
     empty?(expansion) =>
       1;
     expansion.size > 1 =>
-      format(*standard-output*, "Parsing odd macro: %=\n", value.string-value);
       int-value(parse-macro(value.string-value, state), state);
     otherwise =>
       int-value(head(expansion), state);
@@ -138,8 +136,7 @@ define method int-value
   if (instance?(object-decl, <enum-slot-declaration>))
     object-decl.constant-value;
   else
-    parse-error(value, 
-	"Value in constant expression must be an integer, but isn't.");
+    parse-error(value, "Value in constant expression must be an integer.");
   end if;
 end method int-value;
 
@@ -399,30 +396,39 @@ postfix-expr (postfix-expr <lparen-token> argument-expr-list <rparen-token>)
   // CPP line, we should be prepared to evaluate the pseudo-function
   // "defined".
   //
-  //if (~instance?(@0, <parse-cpp-state>) | %1.string-value ~= "defined")
-  if (%1.string-value ~= "defined")
+  if (~instance?(@0, <parse-cpp-state>) | %1.string-value ~= "defined")
     let definition = element(%1.generator.cpp-table, %1.string-value,
-			  default: #f);
+			default: #f);
     if (definition ~= #f)
       if (instance?(definition.head, <token>))	
-	parse-error(@0,concatenate(%1.string-value, " isn't a parameterized macro."));
+        parse-error(@0,concatenate(%1.string-value, " isn't a parameterized macro."));
       else
-	// XXX: We don't actually substitute here like we should, but
-	// it'll handle "#define __GNUC_PREREQ(maj,min) 0" correctly...
-//	for (token in definition.tail)
-/*	  for (count from 0, param in definition.head)
-	    if (token.string-value = param.string-value)
-	      token := %3[count];
-	    end if;
-	  end for;
+        // XXX: We don't actually substitute here like we should, but
+        // it'll handle "#define __GNUC_PREREQ(maj,min) 0" correctly...
+//      for (token in definition.tail)
+/*        for (count from 0, param in definition.head)
+            if (token.string-value = param.string-value)
+              token := %3[count];
+            end if;
+          end for;
 */
-//	  unget-token(%1.generator, token);
-//	end for;
-//	cpp-parse(%1.generator);
+//        unget-token(%1.generator, token);
+//      end for;
+//      cpp-parse(%1.generator);
         0; // yeah, chickening out.
       end if;
     else
-      parse-error(@0,"Function calls not allowed in constant expressions.");
+      if ( %1.string-value = "defined" )
+        if (~instance?(%3, <token>))
+          %3;  // It's a literal
+        elseif (element(%3.generator.cpp-table, %3.string-value, default: #f))
+          1;
+        else
+          0
+        end if
+      else
+        parse-error(@0,"Function calls not allowed in constant expressions.");
+      end if;
     end if;
   elseif (element(%3.generator.cpp-table, %3.string-value, default: #f))
     1;
@@ -520,7 +526,7 @@ cast-expr (unary-expr)
 
 cast-expr (<lparen-token> type-name <rparen-token> cast-expr)
   let result = int-value(%4, @0);
-  if (instance?(result, <abstract-integer>)
+  if (instance?(result, <general-integer>)
         & instance?(%2.true-type, <integer-type-declaration>))
     // Handle casting a large unsigned value to a signed integer type.
     if (instance?(%2.true-type, <signed-integer-type-declaration>)

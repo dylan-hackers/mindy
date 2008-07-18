@@ -51,7 +51,7 @@ define constant $default-defines
       // Basics
       "const", "",
       "volatile", "",
-      
+
       "GNUC", "(1)",
       "__GNUC__", "2",
       "__GNUC_MINOR__", "95",

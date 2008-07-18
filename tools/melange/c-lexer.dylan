@@ -105,7 +105,7 @@ define /* exported */ primary class <tokenizer> (<object>)
   slot unget-stack :: <deque>, init-function: curry(make, <deque>);
   /* exported */ slot cpp-table :: <table>;
   slot cpp-stack :: <list> = #();
-  /* exported */ slot cpp-decls :: false-or(<deque>) = #f;
+  /* exported */ slot cpp-decls :: type-union(<deque>, <false>) = #f;
   slot include-tokenizer :: false-or(<tokenizer>) = #f;
   slot typedefs :: <table>;
 end class <tokenizer>;
@@ -544,14 +544,8 @@ end class;
 
 // string-value -- exported generic.
 //
-// define /* exported */ sealed generic string-value
-//   (token :: <token>) => (result :: <string>);
 define /* exported */ sealed generic string-value
-  (token :: <object>) => (result :: <string>);
-
-define method string-value (object) => (empty-string :: <string>);
-  format-to-string("%= is not a token", object);
-end method string-value;
+  (token :: <token>) => (result :: <string>);
 
 // value -- exported generic.
 //
@@ -573,7 +567,7 @@ end method value;
 // Integer tokens can be in one of three different radices.  Figure out which
 // and then compute an integer value.
 //
-define method value (token :: <integer-token>) => (result :: <abstract-integer>);
+define method value (token :: <integer-token>) => (result :: <general-integer>);
   let string = token.string-value;
   // Strip trailing markers from string.
   while (member?(string.last, "uUlL"))
@@ -940,7 +934,7 @@ define method initialize (value :: <tokenizer>,
       parse-progress-report(value, "Initialize tokenizer defining %= = %=",
                             key,
                             cpp-value);
-      value.cpp-table[key] := 
+      value.cpp-table[key] :=
 	select (cpp-value by instance?)
 	  <integer> =>
 	    list(make(<integer-token>,
@@ -968,7 +962,7 @@ end method initialize;
 //
 define /* exported */ method unget-token
     (state :: <tokenizer>, token :: <token>)
- => (result :: singleton(#f));
+ => (result :: <false>);
   push(state.unget-stack, token);
   #f;
 end method unget-token;
@@ -978,16 +972,16 @@ end method unget-token;
 // Record the given name as a valid type specifier.
 //
 define /* exported */ generic add-typedef
-    (tokenizer :: <tokenizer>, name :: <object>) => (result :: singleton(#f));
+    (tokenizer :: <tokenizer>, name :: <object>) => (result :: <false>);
 
 define method add-typedef (tokenizer :: <tokenizer>, token :: <token>)
- => (result :: singleton(#f));
+ => (result :: <false>);
   tokenizer.typedefs[token.value] := <type-name-token>;
   #f;
 end method add-typedef;
 
 define method add-typedef (tokenizer :: <tokenizer>, name :: <string>)
- => (result :: singleton(#f));
+ => (result :: <false>);
   tokenizer.typedefs[name] := <type-name-token>;
   #f;
 end method add-typedef;
@@ -1152,7 +1146,7 @@ end function lex-identifier;
 //
 define function try-identifier
     (state :: <tokenizer>, position :: <integer>, #key expand = #t, cpp-line = #f)
- => (result :: false-or(<token>));
+ => (result :: type-union(<token>, <false>));
   let contents :: <long-byte-string> = state.contents;
 
   let pos = if (contents[position] == '#') position + 1 else position end if;
@@ -1189,7 +1183,7 @@ define constant match-punctuation
 // and #f otherwise.
 //
 define method try-punctuation (state :: <tokenizer>, position :: <integer>)
- => result :: false-or(<token>);
+ => result :: type-union(<token>, <false>);
   let contents :: <long-byte-string> = state.contents;
 
   if (punctuation?(contents[position]))
@@ -1222,7 +1216,7 @@ define method skip-whitespace
   let sz = contents.size;
 
   local method skip-comments (index :: <integer>)
-	 => end-index :: false-or(<integer>);
+	 => end-index :: type-union(<integer>, <false>);
 	  for (i from index,
 	       until: (i >= sz | ~whitespace?(contents[i])))
 	  finally
@@ -1266,7 +1260,7 @@ define method skip-cpp-whitespace
   let sz = contents.size;
 
   local method skip-comments (index :: <integer>)
-	 => end-index :: false-or(<integer>);
+	 => end-index :: type-union(<integer>, <false>);
 	  for (i from index,
 	       until: (i >= sz 
 			 | ~(whitespace?(contents[i]) & contents[i] ~== '\n')))

@@ -5,6 +5,7 @@ copyright: see below
 	   This code was produced by the Gwydion Project at Carnegie Mellon
 	   University.  If you are interested in using this code, contact
 	   "Scott.Fahlman@cs.cmu.edu" (Internet).
+rcs-header: $Header: 
 
 //======================================================================
 //
@@ -50,7 +51,7 @@ copyright: see below
 
 // Designates an "optional" string.
 //
-define constant <string?> = false-or(<string>);
+define constant <string?> = type-union(<string>, <false>);
 
 // Undefined values are useful for values that may need to be defaulted.  This
 // is superious do simply filling in the default value at the start, since it
@@ -132,10 +133,12 @@ define method process-container-options
           result.global-import-mode := value;
         end if;
       #"import-file" =>
-        let file = file-in-include-path(item.second.value);
-        unless(file)
+        let (file, stream) = open-in-include-path(item.second.value);
+        if (stream)
+          close(stream);
+        else
           parse-error(item.second, "File does not exist in path.");
-        end unless;
+        end if;
 	let value = item.third;
         if (instance?(value, <sequence>))
 	  let imports = (element(result.file-imports, file, default: #f)
@@ -162,9 +165,10 @@ define method process-container-options
       #"exclude-file" =>
         // exclude lists contain tokens
 	for (elem in item.second) 
-          let file = file-in-include-path(elem.value);
-          if (file)
+          let (file, stream) = open-in-include-path(elem.value);
+          if (stream)
 	    add!(result.excluded-files, file);
+            close(stream);
           else
             parse-error(elem, "File does not exist in path.");
           end if;
