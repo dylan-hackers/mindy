@@ -92,7 +92,7 @@ end method make;
 define sealed method describe-source-location
     (srcloc :: <unknown-source-location>, stream)
     => ();
-  condition-format(stream, "(unknown source location): ");
+  format(stream, "(unknown source location): ");
 end method describe-source-location;
 
 
@@ -126,8 +126,6 @@ define sealed method describe-source-location
 //		     srcloc.source-line,
 //		     srcloc.source-line-position);
 //  else
-  condition-format(stream, "%s:%d: ",
-		   srcloc.source-file,
-		   srcloc.source-line);
+  format(stream, "%s:%d: ", srcloc.source-file, srcloc.source-line);
 //  end if;
 end method describe-source-location;

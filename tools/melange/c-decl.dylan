@@ -121,10 +121,10 @@ copyright: see below
 //
 define abstract class <declaration> (<object>)
   slot simple-name :: <string>, required-init-keyword: #"name";
-  slot c-name :: type-union(<string>, <false>), init-value: #f;
-  slot d-name :: type-union(<string>, <false>),
+  slot c-name :: false-or(<string>), init-value: #f;
+  slot d-name :: false-or(<string>),
     init-value: #f, init-keyword: #"dylan-name";
-  slot map-type :: type-union(<string>, <false>), init-value: #f;
+  slot map-type :: false-or(<string>), init-value: #f;
   slot declared? :: <boolean>, init-value: #f;
   constant slot abstract-type? :: <boolean>, 
     init-value: #f, init-keyword: abstract-type?:;
@@ -146,7 +146,7 @@ end class <typed>;
 // for the given declaration.
 //
 define generic mapped-name
-    (decl :: <declaration>, #key) => (result :: type-union(<string>, <false>));
+    (decl :: <declaration>, #key) => (result :: false-or(<string>));
 
 // Sets the mapped name for a given type (or for an object's type).
 //
@@ -231,7 +231,7 @@ end method equated?;
 
 define method mapped-name
     (decl :: <declaration>, #key explicit-only?)
- => (result :: type-union(<string>, <false>));
+ => (result :: false-or(<string>));
   decl.map-type | (~explicit-only? & decl.type-name);
 end method mapped-name;
 
@@ -349,7 +349,7 @@ end method true-type;
 //------------------------------------------------------------------------
 
 define abstract class <structured-type-declaration> (<type-declaration>) 
-  slot members :: type-union(<sequence>, <false>), init-value: #f;
+  slot members :: false-or(<sequence>), init-value: #f;
   // This slot (initialized lazily by "do-coalesce-members" stores an
   // alternate version of the "members" sequence in which adjacent
   // bitfields are combined into a <coalesced-bitfields> pseudo-slot.
@@ -390,8 +390,8 @@ define generic exclude-slots
 // the given token.
 //
 define generic make-struct-type
-    (name :: type-union(<string>, <false>),
-     member-list :: type-union(<list>, <false>),
+    (name :: false-or(<string>),
+     member-list :: false-or(<list>),
      token :: <token>, state :: <parse-state>)
  => (result :: <structured-type-declaration>);
 
@@ -438,7 +438,7 @@ define method canonical-name (decl :: <enum-declaration>)
 end method canonical-name;
 
 define method make-enum-slot
-    (name :: <string>, value :: false-or(<general-integer>),
+    (name :: <string>, value :: false-or(<abstract-integer>),
      prev :: false-or(<enum-slot-declaration>), state :: <parse-state>)
  => (result :: <enum-slot-declaration>);
   if (element(state.objects, name, default: #f))
@@ -458,8 +458,8 @@ define method make-enum-slot
 end method make-enum-slot;
 
 define method make-struct-type
-    (name :: type-union(<string>, <false>),
-     member-list :: type-union(<list>, <false>),
+    (name :: false-or(<string>),
+     member-list :: false-or(<list>),
      decl-token :: <token>, state :: <parse-state>)
  => (result :: <structured-type-declaration>);
   let declaration-class = select (decl-token by instance?)
@@ -585,7 +585,7 @@ end class;
 
 define class <vector-declaration> (<new-static-pointer>, <type-declaration>)
   slot pointer-equiv :: <type-declaration>, required-init-keyword: #"equiv";
-  slot length :: type-union(<integer>, <false>),
+  slot length :: false-or(<integer>),
     required-init-keyword: #"length";
 end class <vector-declaration>;
 
@@ -599,7 +599,7 @@ end method rename;
 
 define method mapped-name
     (decl :: <pointer-declaration>, #key explicit-only?)
- => (result :: type-union(<string>, <false>));
+ => (result :: false-or(<string>));
   if (decl.simple-name = decl.referent.simple-name)
     decl.map-type | decl.referent.map-type
       | (~explicit-only? & decl.type-name);
@@ -610,7 +610,7 @@ end method mapped-name;
 
 define method mapped-name
     (decl :: <vector-declaration>, #key explicit-only?)
- => (result :: type-union(<string>, <false>));
+ => (result :: false-or(<string>));
   decl.map-type | decl.pointer-equiv.map-type
     | (~explicit-only? & decl.type-name);
 end method mapped-name;
@@ -816,7 +816,7 @@ define class <typedef-declaration> (<type-declaration>, <typed>) end class;
 
 define method mapped-name
     (decl :: <typedef-declaration>, #key explicit-only?)
- => (result :: type-union(<string>, <false>));
+ => (result :: false-or(<string>));
   decl.map-type | decl.type.map-type | (~explicit-only? & decl.type-name);
 end method mapped-name;
 
@@ -997,12 +997,12 @@ define abstract class <value-declaration> (<declaration>, <typed>)
 end class;
 define class <function-declaration> (<value-declaration>) end class;
 define class <object-declaration> (<value-declaration>)
-  slot equated :: type-union(<string>, <false>), init-value: #f;
+  slot equated :: false-or(<string>), init-value: #f;
   slot read-only :: type-union(<boolean>, <empty-list>), init-value: #();
 end class;  
 define class <variable-declaration> (<object-declaration>)
-  slot getter :: type-union(<string>, <false>), init-value: #f;
-  slot setter :: type-union(<string>, <false>), init-value: #f;
+  slot getter :: false-or(<string>), init-value: #f;
+  slot setter :: false-or(<string>), init-value: #f;
 end class;
 define class <slot-declaration> (<object-declaration>)
   slot excluded? :: <boolean>, init-value: #f, init-keyword: #"excluded?";
@@ -1010,7 +1010,7 @@ end class;
 define class <result-declaration> (<object-declaration>) end class;
 define class <arg-declaration> (<object-declaration>)
   slot direction :: <symbol>, init-value: #"default";
-  slot original-type :: type-union(<false>, <type-declaration>),
+  slot original-type :: false-or(<type-declaration>),
     init-value: #f;
 end class;
 define class <varargs-declaration> (<arg-declaration>) end class;
@@ -1085,7 +1085,7 @@ end method compute-closure;
 
 define method mapped-name
     (decl :: <object-declaration>, #key explicit-only?)
- => (result :: type-union(<string>, <false>));
+ => (result :: false-or(<string>));
   decl.map-type | mapped-name(decl.type, explicit-only?: #t)
     | (~explicit-only? & decl.type-name);
 end method mapped-name;

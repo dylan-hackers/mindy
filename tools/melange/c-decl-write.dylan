@@ -86,7 +86,7 @@ end method class-sealing;
 // static linking of libraries.
 //
 define generic write-mindy-includes
-    (file :: type-union(<string>, <false>), decls :: <sequence>) => ();
+    (file :: false-or(<string>), decls :: <sequence>) => ();
 
 // Writes out appropriate code to load object file and insure that all desired
 // objects are included.  Returns a string which can be included in a
@@ -94,7 +94,7 @@ define generic write-mindy-includes
 //
 define generic write-file-load
     (include-files :: <sequence>,
-     object-file :: type-union(<sequence>, <false>),
+     object-file :: false-or(<sequence>),
      decls :: <sequence>,
      stream :: <stream>)
  => (load-string :: <string>);
@@ -328,7 +328,7 @@ define method write-c-accessor-method
   // Write getter method
   unless(real-type.abstract-type?)
     format(stream,
-           "define %s inline-only method %s\n"
+           "define %s inline method %s\n"
              "    (ptr :: %s) => (result :: %s);\n"
              "  %s;\n"
              "end method %s;\n\n",
@@ -343,7 +343,7 @@ define method write-c-accessor-method
           & ~instance?(real-type, <non-atomic-types>))
       // Write setter method
       format(stream,
-             "define %s inline-only method %s-setter\n"
+             "define %s inline method %s-setter\n"
                "    (value :: %s, ptr :: %s) => (result :: %s);\n"
                "  %s := %s;\n"
                "  value;\n"
@@ -387,7 +387,7 @@ define method write-c-accessor-method
 			 real-type.start-bit, real-type.bits-in-field);
       // Write getter method
       format(stream,
-	     "define %s inline-only method %s\n"
+	     "define %s inline method %s\n"
 	       "    (ptr :: %s) => (result :: %s);\n"
 	       "  %s;\n"
 	       "end method %s;\n\n",
@@ -400,7 +400,7 @@ define method write-c-accessor-method
 	    & ~instance?(real-type, <non-atomic-types>))
 	// Write setter method
 	format(stream,
-	       "define %s inline-only method %s-setter\n"
+	       "define %s inline method %s-setter\n"
 		 "    (value :: %s, ptr :: %s) => (result :: %s);\n"
 		 "  let mask = lognot(ash((2 ^ %d) - 1, %d));\n"
 		 "  %s := logand(%s, mask) + ash(%s, %d);\n"
@@ -1005,7 +1005,7 @@ define method write-declaration
   let raw-value = decl.constant-value;
   let value = select (raw-value by instance?)
 		<declaration> => raw-value.dylan-name;
-		<general-integer>, <float> => format-to-string("%=", raw-value);
+		<abstract-integer>, <float> => format-to-string("%=", raw-value);
 		<string> => format-to-string("\"%s\"", 
                                              escape-characters(raw-value));
 		<token> => raw-value.string-value;
@@ -1154,7 +1154,7 @@ end method write-file-load;
 // static linking of libraries.
 //
 define method write-mindy-includes
-    (file :: type-union(<string>, <false>), decls :: <sequence>) => ();
+    (file :: false-or(<string>), decls :: <sequence>) => ();
   if (file)
     let stream = make(<file-stream>, locator: file, direction: #"output");
     for (decl in decls)

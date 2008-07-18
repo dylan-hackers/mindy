@@ -8,7 +8,7 @@ parse-conditions.dylan
 multistring.dylan
 c-lexer.dylan
 c-lexer-cpp.dylan
-freebsd-portability.dylan
+linux-x86-portability.dylan
 c-parse.dylan
 alignment.dylan
 c-decl-state.dylan

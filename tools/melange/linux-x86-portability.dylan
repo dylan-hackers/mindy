@@ -1,9 +1,6 @@
 documented: #t
 module: portability
 copyright: see below
-	   This code was produced by the Gwydion Project at Carnegie Mellon
-	   University.  If you are interested in using this code, contact
-	   "Scott.Fahlman@cs.cmu.edu" (Internet).
 
 //======================================================================
 //
@@ -47,31 +44,49 @@ copyright: see below
 // also include behavioral switches for things like slot allocation or sizes
 // of different sorts of numbers.
 //
+// This particular implementation of module portability corresponds to the
+// compilation environment for an Intel x86 running Linux 2.x.x.
 //======================================================================
 
-// default defines came from "gcc -v anyfile.c"
-//
 define constant $default-defines
   = #["const", "",
       "volatile", "",
+      "__STDC__", "1",
+
+      // The following six declarations should be removed someday, as soon as 
+      // we fix a bug in MINDY.
+      //"__GNUC__", "2",
+      //"__GNUC_MINPR__", "7",
+      //"__signed__", "",
+      //"__const", "",
+      //"__CONSTVALUE", "",
+      //"__CONSTVALUE2", "",
+
+      // Parameterized macros which remove various GCC extensions from our
+      // source code. The last item in the list is the right-hand side of
+      // the define; all the items preceding it are named parameters.
+      "__attribute__", #(#("x"), ""), 
+      "__signed__", "", 
+      "__inline__", "",
+      "inline", "",
+      "__inline", "",
+
+      "__ELF__", "",
       "unix", "",
-      "__NetBSD__", "",
+      "i386", "",
+      "linux", "",
       "__unix__", "",
-      "__NetBSD", "",
+      "__i386__", "",
+      "__linux__", "",
       "__unix", "",
-      "__lint__", "",
-      "__symbolrename", #(#("x"), ""),
-      "__signed", "signed",
-// Both gcc and Solaris cc support 64-bits long long int
-//      "_NO_LONGLONG", "",
-      "__STDC__", ""
-];
-
+      "__i386", "",
+      "__linux", "",
+      "__builtin_va_list", "void*"];
   
-define constant netbsd-include-directories
-  = #["/usr/local/include", "/usr/include"];
+define constant linux-include-directories
+  = #["/usr/include"];
 
-for (dir in netbsd-include-directories)
+for (dir in linux-include-directories)
   push-last(include-path, dir);
 end for;
 

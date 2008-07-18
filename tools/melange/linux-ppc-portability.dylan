@@ -51,7 +51,7 @@ copyright: see below
 define constant $default-defines
   = #["const", "",
       "volatile", "",
-      "__STDC__", "",
+      "__STDC__", "1",
 
       // The following six declarations should be removed someday, as soon as 
       // we fix a bug in MINDY.
@@ -70,16 +70,21 @@ define constant $default-defines
       "__inline__", "",
       "inline", "",
       "__inline", "",
-
+      "__gnu_linux__","",
       "__ELF__", "",
       "unix", "",
-      "i386", "",
+      "__powerpc__","1",
+      "__powerpc","1",
+      "powerpc","1",
+      "PPC", "1",
+      "__PPC__", "1",
+      "__PPC", "1",
+      "__LONG_DOUBLE_128__","",
+      "__SIZEOF_LONG_DOUBLE__","16",
       "linux", "",
       "__unix__", "",
-      "__i386__", "",
       "__linux__", "",
       "__unix", "",
-      "__i386", "",
       "__linux", "",
       "__builtin_va_list", "void*"];
   

@@ -79,23 +79,23 @@ copyright: see below
 //======================================================================
 
 define library melange
-  use dylan;
+  use common-dylan;
   use table-extensions;
   use string-extensions;
   use collection-extensions;
   use regular-expressions;
-  use streams;
-  use standard-io;
-  use format;
-  use parse-arguments;
+  use io;
+  use system;
+  use command-line-parser;
   use melange-c;
   export
     name-mappers;
 end library melange;
 
 define module int-lexer
-  use dylan;
-  use extensions, exclude: {value};
+  use common-dylan,
+    exclude: { format-to-string, position, split,
+               string-to-integer, integer-to-string };
   use self-organizing-list;
   use string-conversions;
   use regular-expressions;
@@ -126,11 +126,10 @@ define module int-lexer
 end module int-lexer;
 
 define module int-parse
-  use dylan;
-  use extensions, exclude: {value};
+  use common-dylan, exclude: { format-to-string, position };
   use table-extensions;
   use self-organizing-list;
-  use c-lexer, import: {include-path, open-in-include-path};
+  use c-lexer, import: {include-path, file-in-include-path};
   use streams;
   use standard-io;
   use format;
@@ -155,9 +154,9 @@ end module name-mappers;
 
 define module define-interface
   // From Dylan
-  use dylan;
-  use extensions, exclude: {value};		// required for "main" (as well as key-exists?)
+  use common-dylan, exclude: { format-to-string, split, position };
   use table-extensions;
+/*
   use %hash-tables;
 #if (~mindy)
   use System,
@@ -165,28 +164,32 @@ define module define-interface
 	      copy-bytes, call-out, c-expr, buffer-address, <raw-pointer>,
 	      pointer-deref};
 #endif
+*/
 
   // From string-extensions
   use regular-expressions;
   use substring-search;
   use character-type;
 
-  // From streams
+  // From io
   use streams;
   
-  // From format
+  // From io
   use format;
 
-  // From standard-io
+  // From io
   use standard-io;
 
-  // From parse-arguments
-  use parse-arguments;
+  // From system
+  use file-system;
+
+  // From command-line-parser
+  use command-line-parser;
   
   // local packages
   use int-lexer;
   use int-parse, rename: {rename => renames};
-  use c-lexer, import: {include-path, open-in-include-path, *framework-paths*, find-frameworks};
+  use c-lexer, import: {include-path, file-in-include-path, *framework-paths*, find-frameworks};
   use c-declarations,
     rename: {parse => c-parse, <parse-state> => <c-parse-state>};
   use name-mappers;

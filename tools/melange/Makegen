@@ -3,12 +3,24 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../common/collection-extensions'
     . ' -L../../common/table-ext'
     . ' -L../../common/string-ext'
+    . ' -L../../common/command-line-parser'
+    . ' -L../../common/common-dylan'
+    . ' -L../../common/io'
     . ' -L../../common/regular-expressions'
     . ' -L../../common/streams'
     . ' -L../../common/standard-io'
+    . ' -L../../common/system'
+    . ' -L../../common/base-file-system'
+    . ' -L../../common/file-system'
+    . ' -L../../common/time'
+    . ' -L../../common/date'
+    . ' -L../../common/locators'
     . ' -L../../common/print'
     . ' -L../../common/format'
+    . ' -L../../common/format-out'
     . ' -L../../common/getopt'
+    . ' -L../../d2c/runtime/random'
+    . ' -L../../common/threads'
     . ' -L.';
 
 if ($features{'compiled_for_win32'}) {
@@ -17,11 +29,17 @@ if ($features{'compiled_for_win32'}) {
     $c_decl_lid = "hp-c-decl";
 } elsif ($features{'compiled_for_solaris'}) {
     $c_decl_lid = "solaris-c-decl";
-} elsif ($features{'compiled_for_linux'}
-         || $features{'compiled_for_beos'}) {
-    $c_decl_lid = "linux-c-decl";
 } elsif ($features{'compiled_for_cygnus'}) {
     $c_decl_lid = "cygnus-c-decl";
+} elsif ($features{'compiled_for_linux'}
+         || $features{'compiled_for_beos'}) {
+    if ($features{'compiled_for_x86'}) {
+        $c_decl_lid = "linux-x86-c-decl";
+    } elsif ($features{'compiled_for_ppc'}) {
+        $c_decl_lid = "linux-ppc-c-decl";
+    } else {
+        &unknown_platform_error();
+    }
 } elsif ($features{'compiled_for_freebsd'}
          || $features{'compiled_for_bsdi'}) { # best guess for bsdi
     $c_decl_lid = "freebsd-c-decl";

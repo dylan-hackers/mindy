@@ -1,5 +1,4 @@
 library: melange-c
-unit-prefix: cdecl
 unique-id-base: 10000
 shared-library: yes
 

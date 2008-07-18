@@ -114,7 +114,7 @@ end function find-source-location;
 
 define function parse-error
     (context, format-string, #rest format-args)
- => does-not-return :: <never-returns>;
+ => does-not-return :: <bottom>;
   error(make(<simple-parse-error>,
 	     source-location: find-source-location(context),
 	     format-string: format-string,
@@ -160,31 +160,19 @@ end function;
 //  when I catch someone using it. There's too many codepaths in the
 //  Dylan libraries which might use it, and I want to find them all.
 
-define method report-condition
+define method print-message
     (parse-condition :: <format-string-parse-condition>,
-     stream,
+     stream :: <stream>,
      #next next-method)
  => ();
-
-  // Temporary debugging code. Warn me when someone pulls this
-  // stupid stunt.
-  if (stream == #"Cheap-IO")
-    format(*standard-error*, "Somebody's using #\"Cheap-IO\"!\n");
-    force-output(*standard-error*);
-  end if;
-
   describe-source-location(parse-condition.parse-condition-source-location,
 			   stream);
-  apply(condition-format, stream, parse-condition.condition-format-string,
+  apply(format, stream, parse-condition.condition-format-string,
 	parse-condition.condition-format-arguments);
-  unless (stream == #"Cheap-IO")
-    force-output(stream);
-  end unless;
-end method report-condition;
+end method print-message;
 
 define method default-handler(condition :: <parse-progress-report>)
   if (*show-parse-progress-level* >= condition.parse-progress-level)
-    report-condition(condition, *warning-output*);
-    condition-format(*warning-output*, "\n");
+    format(*standard-output*, "%s\n", condition);
   end;
 end method default-handler;

@@ -41,13 +41,14 @@ copyright: see below
 
 define library melange-c
   use dylan;
+  use common-dylan;
   use string-extensions;
   use collection-extensions;
   use regular-expressions;
   use table-extensions;
-  use streams;
-  use standard-io;
-  use format;
+  use system;
+  use io;
+  use locators;
 
   // General purpose utility modules.
   export
@@ -63,8 +64,7 @@ define library melange-c
 end library melange-c;
 
 define module source-locations
-  use dylan;
-  use extensions;
+  use common-dylan, exclude: { format-to-string };
   use streams;
   use format;
   use standard-io;
@@ -79,8 +79,7 @@ define module source-locations
 end module source-locations;
 
 define module parse-conditions
-  use dylan;
-  use extensions;
+  use common-dylan, exclude: { format-to-string };
   use source-locations;
   use streams;
   use format;
@@ -104,8 +103,7 @@ define module parse-conditions
 end module;
 
 define module multistring-match
-  use dylan;
-  use extensions;
+  use common-dylan;
   export
 #if (~mindy)
     multistring-checker-definer, multistring-positioner-definer,
@@ -114,8 +112,10 @@ define module multistring-match
 end module multistring-match;
 
 define module c-lexer
-  use dylan;
-  use extensions, exclude: {value};
+  use common-dylan,
+    exclude: { format, format-to-string, 
+               string-to-integer, integer-to-string, split, position };
+  use format;
   use table-extensions;
   use self-organizing-list;
   use string-conversions;
@@ -123,8 +123,8 @@ define module c-lexer
   use substring-search;
   use character-type;
   use streams;
-  use format;
-  use standard-io;
+  use file-system;
+  use locators;
   use source-locations;
   use parse-conditions,
     // XXX - These should probably go away.
@@ -145,7 +145,7 @@ define module c-lexer
     <union-token>, <enum-token>, <minus-token>, <tilde-token>, <bang-token>,
     <alien-name-token>, <macro-parse-token>, <cpp-parse-token>, string-value,
     value, unget-token, add-typedef, get-token, include-path,
-    check-cpp-expansion, open-in-include-path
+    check-cpp-expansion, file-in-include-path
 end module c-lexer;
 
 define module portability
@@ -165,8 +165,8 @@ define module portability
 end module portability;
 
 define module c-parse
-  use dylan;
-  use extensions, exclude: {value};
+  use common-dylan, exclude: { format-to-string };
+  use extensions, import: { <extended-integer> };
   use self-organizing-list;
   use c-lexer;
   use streams;
@@ -190,11 +190,11 @@ define module c-parse
 end module c-parse;
 
 define module c-declarations
-  use dylan;
-  use extensions, exclude: {format, value};
-  use table-extensions;
+  use common-dylan, exclude: { format-to-string, split };
+  use table-extensions, rename: { table => make-table };
   use regular-expressions;
   use streams;
+  use file-system;
   use format;
   use standard-io;
 

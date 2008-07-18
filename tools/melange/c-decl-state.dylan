@@ -174,7 +174,7 @@ define class <parse-cpp-state> (<parse-value-state>) end class;
 
 define method initialize
     (value :: <parse-value-state>,
-     #key parent :: type-union(<parse-state>, <false>))
+     #key parent :: false-or(<parse-state>))
   if (parent)
     value.objects := parent.objects;
     value.structs := parent.structs;
