@@ -886,10 +886,10 @@ sub emit_library_rule {
             print "\t\$(D2C) -M $profile_flag \$(D2CFLAGS) --static $extraflags ",
                 "$srcdir/$lidfilename.lid\n";
         }
+        local ($make_file_name) = "cc-" . $unit_prefix  . "-files.mak";
         local ($make_name) = $host_platform{'make_command'};
-        local($cc_files_cmd) = "$make_name -f cc-" . $unit_prefix
-            . "-files.mak";
-        push(@cc_files_commands, $cc_files_cmd);
+        push(@cc_files_commands, "$make_name -f $make_file_name");
+        push(@clean_commands, "if [ -e $make_file_name ]; then make -f $make_file_name clean; fi");
 
         print "\ninclude $unit_prefix.dep\n\n";
 
