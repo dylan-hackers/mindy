@@ -70,7 +70,6 @@ define constant $default-defines
       "__inline__", "",
       "inline", "",
       "__inline", "",
-
       "__ELF__", "",
       "unix", "",
       "i386", "",
@@ -81,7 +80,11 @@ define constant $default-defines
       "__unix", "",
       "__i386", "",
       "__linux", "",
-      "__builtin_va_list", "void*"];
+      "__builtin_va_list", "void*",
+      "__LONGDOUBLE128", "1",
+      "__LONG_DOUBLE_128__", "1",
+      "__SIZEOF_LONG_DOUBLE__", "16"
+      ];
   
 define constant linux-include-directories
   = #["/usr/include"];

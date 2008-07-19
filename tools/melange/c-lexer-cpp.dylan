@@ -764,13 +764,13 @@ end method cpp-define;
 #if (~mindy)
 define multistring-checker preprocessor-match
   ("define", "undef", "include", "include_next", "ifdef", "ifndef", "if",
-   "else", "elif", "line", "endif", "error", "pragma");
+   "else", "elif", "line", "endif", "error", "warning", "pragma");
 define multistring-positioner do-skip-matcher("#", "/*");
 #else
 define constant preprocessor-match
   = make-multistring-checker("define", "undef", "include", "include_next",
 			     "ifdef", "ifndef", "if", "else", "elif", "line",
-			     "endif", "error", "pragma");
+			     "endif", "error", "warning", "pragma");
 define constant do-skip-matcher
   = make-multistring-positioner("#", "/*");
 #endif
