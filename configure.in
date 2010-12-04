@@ -109,6 +109,7 @@ case $1 in
     alpha*-*-linux-gnu*) $2=alpha-linux-gcc ;;
     sparc*-*-linux-gnu*) $2=sparc-linux-gcc ;;
     s390*-*-linux-gnu*) $2=s390-linux-gcc ;;
+	arm*-*-linux-gnu*) $2=arm-linux-gcc ;;
     hppa*-hp-hpux*) $2=hppa-hpux-gcc ;;
     sparc*-solaris*)
         case `gcc -dumpversion` in

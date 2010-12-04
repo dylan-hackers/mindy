@@ -143,6 +143,13 @@ long-double-mantissa-digits:		113
 minimum-long-double-float-exponent:	-16381
 maximum-long-double-float-exponent:	16384
 
+// ARM
+platform-name:			arm
+inherit-from:			32-bit ieee-754
+default-features:		compiled-for-arm
+big-endian?:			#f
+double-alignment:		8
+
 // SPARC:
 platform-name:			sparc
 inherit-from:			32-bit ieee-754
@@ -640,6 +647,9 @@ platform-name:			x86-beos-gcc
 // UNIX-alike commands like "mv", "cmp", and GNU make.
 inherit-from:			beos-gcc beos x86
 link-shared-library-command:    $(LIBTOOL) --mode=link gcc -o %s %s -rpath %s
+
+platform-name:			arm-linux-gcc
+inherit-from:			linux arm gcc
 
 platform-name:			ppc-linux
 inherit-from:			linux ppc
