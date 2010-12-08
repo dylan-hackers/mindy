@@ -552,6 +552,22 @@ link-shared-executable-command: $(LIBTOOL) --mode=link cc -o %s %s %s
 link-executable-flags:          $(GC_LIBS) -multiply_defined suppress         
 path-separator:        		/
 
+platform-name:			clang
+default-features:		C-compiler-is-GCC
+compile-c-command:              clang $(CCFLAGS) -c %s -o %s
+compile-c-for-shared-command:   $(LIBTOOL) --mode=compile clang $(CCFLAGS) -c %s -o %s
+default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -fno-strict-aliasing
+default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions
+default-c-compiler-profile-flags:	-I. -I%s -pg -g -O -fno-inline-functions
+assembler-command:		clang $(CCFLAGS) -c %s -o %s
+link-library-command:           ar qc %s %s
+link-executable-command: 	$(LIBTOOL) --mode=link clang -o %s %s %s
+link-shared-executable-command: $(LIBTOOL) --mode=link clang -o %s %s %s
+link-executable-flags:          $(GC_LIBS) -lm
+link-debug-flags:               -g
+link-profile-flags:		-pg -g
+path-separator:        		/
+
 
 // FIXME:  Temporary measure until gcc-3.0 is the default
 //
@@ -746,6 +762,16 @@ inherit-from:                  x86-darwin-gcc
 // Deprecated
 platform-name:                 intel-darwin-gcc4
 inherit-from:                  x86-darwin-gcc
+
+platform-name:                 x86-darwin-clang
+inherit-from:                  clang darwin x86
+default-c-compiler-flags:      -I. -I%s -Os -fomit-frame-pointer -arch i386
+default-c-compiler-debug-flags:        -I. -I%s -g -O -fno-inline-functions -arch i386
+default-c-compiler-profile-flags:      -I. -I%s -pg -g -O -fno-inline-functions -arch i386
+link-executable-flags:          $(GC_LIBS) -multiply_defined suppress -arch i386
+long-long-alignment:           4
+long-double-size:              16
+long-double-alignment:         16
 
 // Douglas M. Auclair's cygnus port (doug@cotilliongroup.com)
 platform-name:			x86-cygnus-gcc
