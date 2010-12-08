@@ -57,6 +57,7 @@ echo processing...
   aclocal $ACLOCAL_FLAGS
   # we just run automake for copying in missing files. Ignore errors.
   automake --add-missing
-  $LIBTOOLIZE --force --copy
+  $LIBTOOLIZE --install --force --copy >/dev/null 2>&1 \
+      || $LIBTOOLIZE --force --copy 
   autoheader
   autoconf )
