@@ -57,15 +57,6 @@ define sealed method GC-all-interior-pointers-setter (value :: <integer>) => (re
   value;
 end method GC-all-interior-pointers-setter;
 
-define sealed method GC-quiet () => (result :: <integer>);
-  as(<integer>, c-variable-ref(int: "&GC_quiet"));
-end method GC-quiet;
-
-define sealed method GC-quiet-setter (value :: <integer>) => (result :: <integer>);
-  c-variable-ref(int: "&GC_quiet") := value;
-  value;
-end method GC-quiet-setter;
-
 define sealed method GC-finalize-on-demand () => (result :: <integer>);
   as(<integer>, c-variable-ref(int: "&GC_finalize_on_demand"));
 end method GC-finalize-on-demand;
@@ -575,19 +566,6 @@ define method GC-invoke-finalizers
     = call-out("GC_invoke_finalizers", int:);
   values(result-value);
 end method GC-invoke-finalizers;
-
-define functional class <anonymous-58> (<function-pointer>) end;
-
-define constant <GC-warn-proc> = <anonymous-58>;
-
-define method GC-set-warn-proc
-    (arg1 :: <GC-warn-proc>)
- => (result :: <GC-warn-proc>);
-  let result-value
-    = call-out("GC_set_warn_proc", ptr:, ptr: (arg1).raw-value);
-  let result-value = make(<GC-warn-proc>, pointer: result-value);
-  values(result-value);
-end method GC-set-warn-proc;
 
 define functional class <anonymous-60> (<function-pointer>) end;
 

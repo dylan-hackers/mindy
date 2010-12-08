@@ -14,7 +14,6 @@ define module garbage-collection
 
   export GC-gc-no, 
     // GC-oom-fn, GC-oom-fn-setter,
-    GC-quiet, GC-quiet-setter, 
     GC-dont-gc, GC-dont-gc-setter,
     GC-dont-expand, GC-dont-expand-setter, 
     GC-full-freq, GC-full-freq-setter,
@@ -40,6 +39,5 @@ define module garbage-collection
     // GC-general-register-disappearing-link,
     // GC-unregister-disappearing-link,
     // GC-invoke-finalizers,
-    // GC-warn-proc, GC-warn-proc-setter, GC-set-warn-proc,
     // GC-pthread-join, GC-pthread-create, GC-pthread-sigmask;
 end module;
