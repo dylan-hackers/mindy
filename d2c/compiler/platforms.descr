@@ -717,35 +717,35 @@ long-double-alignment:		4
 
 platform-name:			ppc-darwin-gcc
 inherit-from:			gcc darwin ppc
-default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -no-cpp-precomp -Wno-long-double
-default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double
-default-c-compiler-profile-flags:	-I. -I%s -pg -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double
-link-executable-flags:          $(GC_LIBS) -multiply_defined suppress         
+default-c-compiler-flags:	-I. -I%s -O2 -fomit-frame-pointer -arch ppc
+default-c-compiler-debug-flags:	-I. -I%s -g -O -fno-inline-functions -arch ppc
+default-c-compiler-profile-flags:	-I. -I%s -pg -g -O -fno-inline-functions -arch ppc
+link-executable-flags:          $(GC_LIBS) -multiply_defined suppress -arch ppc
 long-long-alignment:		4
-long-double-size:		8
-long-double-alignment:		4
-
-platform-name:			ppc-darwin-gcc4
-inherit-from:			ppc-darwin-gcc
-default-c-compiler-flags:	-I. -I%s -Os -fomit-frame-pointer -no-cpp-precomp
 long-double-size:		16
 long-double-alignment:		16
 
-platform-name:                 intel-darwin-gcc
+// Deprecated.
+platform-name:			ppc-darwin-gcc4
+inherit-from:			ppc-darwin-gcc
+
+platform-name:                 x86-darwin-gcc
 inherit-from:                  gcc darwin x86
-default-c-compiler-flags:      -I. -I%s -O2 -fomit-frame-pointer -no-cpp-precomp -Wno-long-double -arch i386
-default-c-compiler-debug-flags:        -I. -I%s -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double -arch i386
-default-c-compiler-profile-flags:      -I. -I%s -pg -g -O -fno-inline-functions -no-cpp-precomp -Wno-long-double -arch i386
+default-c-compiler-flags:      -I. -I%s -Os -fomit-frame-pointer -arch i386
+default-c-compiler-debug-flags:        -I. -I%s -g -O -fno-inline-functions -arch i386
+default-c-compiler-profile-flags:      -I. -I%s -pg -g -O -fno-inline-functions -arch i386
 link-executable-flags:          $(GC_LIBS) -multiply_defined suppress -arch i386
 long-long-alignment:           4
 long-double-size:              16
 long-double-alignment:         16
 
+// Deprecated
+platform-name:                 intel-darwin-gcc
+inherit-from:                  x86-darwin-gcc
+
+// Deprecated
 platform-name:                 intel-darwin-gcc4
-inherit-from:                  intel-darwin-gcc
-default-c-compiler-flags:      -I. -I%s -Os -fomit-frame-pointer -no-cpp-precomp -arch i386
-long-double-size:              16
-long-double-alignment:         16
+inherit-from:                  x86-darwin-gcc
 
 // Douglas M. Auclair's cygnus port (doug@cotilliongroup.com)
 platform-name:			x86-cygnus-gcc
