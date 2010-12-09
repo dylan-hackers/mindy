@@ -12,7 +12,7 @@
 //
 // Each description looks like a Dylan header, with keywords and
 // values.  In a value, the character sequences \, \\, \n, and \t are
-// interpretted as if they were inside Dylan string literals.
+// interpreted as if they were inside Dylan string literals.
 // Multi-line values might or might not do what you expect (this of
 // course depends on what you expect); they work fine for feature
 // lists..
@@ -39,10 +39,10 @@
 // target.
 //
 // default-features: Conditional compilation features that are defined
-// on this platform.  When overriding an inheritted default-features,
+// on this platform.  When overriding an inherited default-features,
 // remember that you are giving an entirely new value to default
 // features, *not* merely adding to the list of default-features you
-// inheritted.
+// inherited.
 
 
 // Processor architectures:
