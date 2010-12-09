@@ -1,5 +1,6 @@
 &makegen_include("../common-Makegen");
 
+$CPPFLAGS .= ' -I$(BUILDROOT)';
 $D2CFLAGS = $d2c_runtime;
 
 $plat = "unix";

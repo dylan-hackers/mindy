@@ -4,6 +4,7 @@
    adapted from Mindy, but beware--it is adapted!  
  */
 
+#include "config.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -20,6 +21,9 @@
 	#include <sys/time.h>
 #endif
 #include <sys/wait.h>
+#ifdef HAVE_UNISTD_H
+	#include <unistd.h>
+#endif
 
 #if defined(__BEOS__)
 // For select, etc.
