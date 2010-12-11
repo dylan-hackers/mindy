@@ -943,11 +943,13 @@ define-primitive-emitter
      let (state-expr, temp?)
        = ref-leaf(*ptr-rep*, operation.depends-on.source-exp, file);
      contact-bgh-if(temp?);
-     let cluster = operation.depends-on.dependent-next.source-exp;
+     let sp = operation.depends-on.dependent-next.source-exp;
+     let (sp-name, sp-rep) = c-name-and-rep(sp, file);
+     let cluster = operation.depends-on.dependent-next.dependent-next.source-exp;
      let (bottom-name, top-name) = consume-cluster(cluster, file);
      spew-pending-defines(file);
      format(file.file-guts-stream,
-	    "throw(%s, %s);\n", state-expr, top-name);
+	    "throw(%s, %s, %s);\n", state-expr, sp-name, top-name);
    end);
 
 

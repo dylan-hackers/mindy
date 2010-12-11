@@ -117,5 +117,5 @@ define function throw (catcher :: <catcher>, values :: <simple-object-vector>)
   %%primitive(unwind-stack, catcher.saved-stack);
   this-thread.cur-handler := catcher.saved-handler;
   // Note: the values-sequence has to happen after the unwind-stack.
-  %%primitive(throw, catcher.saved-state, values-sequence(values));
+  %%primitive(throw, catcher.saved-state, catcher.saved-stack, values-sequence(values));
 end;

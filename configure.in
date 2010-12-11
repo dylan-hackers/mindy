@@ -46,7 +46,7 @@ AC_SUBST(VERSION)
 # $srcdir/version when incrementing this value.)
 #--------------------------------------------------------------------
 
-CURRENT_BOOTSTRAP_COUNTER=38
+CURRENT_BOOTSTRAP_COUNTER=39
 AC_SUBST(CURRENT_BOOTSTRAP_COUNTER)
 
 #--------------------------------------------------------------------

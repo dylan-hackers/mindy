@@ -52,7 +52,7 @@ extern heapptr_t make_trampoline(void *func, descriptor_t closure,
 extern descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, void *state,
                                                heapptr_t thunk),
                            descriptor_t *sp, heapptr_t func);
-extern void throw(void *state, descriptor_t *stack_top);
+extern void throw(void *state, descriptor_t *sp, descriptor_t *stack_top);
 
 extern descriptor_t *pad_cluster(descriptor_t *start, descriptor_t *end,
 				 int min_values);

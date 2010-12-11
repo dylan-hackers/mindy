@@ -348,7 +348,7 @@ define-primitive
   (#"unwind-stack", #(#"<raw-pointer>"), #(values:));
 
 define-primitive
-  (#"throw", #(#"<raw-pointer>", #"cluster"), #(union:));
+  (#"throw", #(#"<raw-pointer>", #"<raw-pointer>", #"cluster"), #(union:));
 
 
 // Fixnum operations.
