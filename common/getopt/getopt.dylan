@@ -238,14 +238,13 @@ end;
 define function split-args(argv)
  => (clean-args :: <sequence>, extra-args :: <sequence>)
   let splitter = find-key(argv, curry(\=, "--"));
-  let clean-args = copy-sequence(argv, end: splitter);
-  let extra-args =
-    if (splitter)
-      copy-sequence(argv, start: splitter + 1);
-    else
-      #();
-    end if;
-  values (clean-args, extra-args);
+  if (splitter)
+    let clean-args = copy-sequence(argv, end: splitter);
+    let extra-args = copy-sequence(argv, start: splitter + 1);
+    values (clean-args, extra-args);
+  else
+    values(argv, #());
+  end if;
 end function split-args;
 
 // Chop things up around '=' characters.
@@ -266,12 +265,14 @@ define function chop-args(clean-args)
 	end if;
       (arg[0] = '-') =>
 	let break = subsequence-position(arg, "=");
-	store(copy-sequence(arg, end: break));
 	if (break)
+	  store(copy-sequence(arg, end: break));
 	  store("=");
 	  if (arg.size > break + 1)
 	    store(copy-sequence(arg, start: break + 1));
 	  end if;
+      else
+        store(arg);
 	end if;
       otherwise =>
 	store(arg);

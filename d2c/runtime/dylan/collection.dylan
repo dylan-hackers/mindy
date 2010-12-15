@@ -1140,10 +1140,14 @@ define inline method third-setter
 end;
 
 define method copy-sequence
-    (sequence :: <sequence>, #key start :: <integer> = 0, end: last)
+    (sequence :: <sequence>,
+     #key start :: <integer> = 0,
+          end: last :: type-union(<integer>, singleton($not-supplied))
+                 = $not-supplied)
  => (result :: <sequence>);
   let seq-size :: <integer> = sequence.size;
-  let last :: <integer> = last | seq-size;
+  let last :: <integer>
+    = if (last ~== $not-supplied) last else seq-size end if;
   case
     (last > seq-size) => error("End: (%=) out of range.", last);
     (start < 0) => error("Start: (%=) out of range.", start);

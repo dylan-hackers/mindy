@@ -328,11 +328,14 @@ define method \= (str1 :: <byte-string>, str2 :: <byte-string>)
 end;
 
 define method copy-sequence
-    (vector :: <byte-string>, #key start :: <integer> = 0, end: last :: false-or(<integer>))
+    (vector :: <byte-string>,
+     #key start :: <integer> = 0,
+          end: last :: type-union(<integer>, singleton($not-supplied))
+                 = $not-supplied)
  => (result :: <byte-string>);
   let src-sz :: <integer> = size(vector);
   let last :: <integer>
-    = if (last & last < src-sz) last else src-sz end if;
+    = if (last ~== $not-supplied & last < src-sz) last else src-sz end if;
   let start :: <integer> = if (start < 0) 0 else start end if;
   let sz :: <integer> = last - start;
   
