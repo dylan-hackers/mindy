@@ -68,7 +68,7 @@ if ($enable_mindy) {
 }
 if ($enable_bootstrap) {
     if ($bootstrap_compiler eq "mindy") {
-	print "BYTES_CONSED_BETWEEN_GCS=20000000\n";
+	print "BYTES_CONSED_BETWEEN_GCS=200000000\n";
 	push(@compile_commands, 
 	     sprintf($host_platform{'recursive_make_command'}, 
 		     "common", "dbc_only"));
