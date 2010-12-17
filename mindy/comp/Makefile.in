@@ -90,7 +90,7 @@ ${SRCDIR}/lexer-tab.c: ${SRCDIR}/lexer.l
 	${LEX} -t ${LFLAGS} ${SRCDIR}/lexer.l > ${SRCDIR}/lexer-tab.c
 
 clean:
-	rm -f ${OBJS} version.o mindycomp$(exe_ext) *~ \#* core
+	rm -f ${OBJS} version.o parser-tab.c parser-tab.h lexer-tab.c mindycomp$(exe_ext) *~ \#* core
 
 realclean:
 	rm -f ${OBJS} version.o parser-tab.c parser-tab.h lexer-tab.c mindycomp$(exe_ext) Makefile *~ \#* core
