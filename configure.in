@@ -710,9 +710,7 @@ AC_SUBST(EXTRA_INCLUDE_DIR)
 if test $LEX = flex; then
   LFLAGS=${LFLAGS--i}
 else
-  echo "I could not find flex, so do not try to rebuild comp/lexer-tab.c"
-  echo "because lex cannot do it."
-  LFLAGS=${LFLAGS-}
+  AC_MSG_ERROR(Cannot build without flex to build mindy/comp/lexer-tab.c)
 fi
 AC_SUBST(LFLAGS)
 
@@ -724,8 +722,7 @@ if test "$YACC" = "bison -y"; then
   # do nothing (an empty then clause is a syntax error)
   DUMMY=dummy
 else
-  echo "I could not find bison, so do not try to rebuild comp/parser-tab.c"
-  echo "or interp/parser-tab.c because yacc cannot do it."
+  AC_MSG_ERROR(Cannot build without bison to build mindy/comp/parser-tab.c)
 fi
 
 #--------------------------------------------------------------------
