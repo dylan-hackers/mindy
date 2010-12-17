@@ -1,5 +1,6 @@
 #if defined(__CYGWIN__)
 #define __extension__
+#include <machine/types.h>
 #endif
 #include <time.h>
 

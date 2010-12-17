@@ -35,7 +35,7 @@ void destroy(void* ptr)
   GC_free(ptr);
 }
 
-#if defined(HAVE_MPROTECT) && defined(HAVE_GETPAGESIZE)
+#if defined(HAVE_MPROTECT) && defined(HAVE_GETPAGESIZE) && !defined(__CYGWIN__)
 void finalize_stack(void *stack, void *boundary)
 {
   mprotect(boundary, getpagesize(), PROT_READ | PROT_WRITE | PROT_EXEC);

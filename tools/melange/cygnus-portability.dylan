@@ -90,6 +90,7 @@ define constant $default-defines
       "inline", "",
       "__inline", "",
       "__extension__", "",
+      "__asm__", #(#("x"), ""),
 
       "__ELF__", "",
       "unix", "",

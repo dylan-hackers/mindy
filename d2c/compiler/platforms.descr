@@ -301,7 +301,7 @@ default-features:			compiled-for-cygnus
 					newlines-are-CRLF
 inherit-from:				generic-unix
 make-command:				make
-use-dbclink?:				#t
+use-dbclink?:				#f
 executable-filename-suffix:		.exe
 long-double-mantissa-digits:		53
 minimum-long-double-float-exponent:	-1021
