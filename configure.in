@@ -312,7 +312,7 @@ enable_mindy=${enable_mindy:-yes}
 AC_ARG_ENABLE(mindy-bootstrap,
 [  --enable-mindy-bootstrap
                           Force bootstrap with Mindy. This can easily
-                          take a few hours, or a day, and is normally
+                          take a couple of hours, and is normally
                           done only when porting d2c to a new
                           architecture for the first time.  You
                           usually want to get precompiled d2c binaries
@@ -1182,7 +1182,7 @@ case $SCENARIO in
 	echo "go on with the bootstrapping."
 	echo
 	echo "Of course, if you're too lazy to install the binary, and"
-	echo "don't mind waiting for up to a day, you can go on too."
+	echo "don't mind waiting for a couple of hours, you can go on too."
 	echo
 	echo "If your platform isn't officially supported yet, you will want"
 	echo "to consult the porting and maintenance guide available at"
