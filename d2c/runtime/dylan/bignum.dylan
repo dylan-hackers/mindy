@@ -994,7 +994,7 @@ define method floor/ (x :: <extended-integer>, y :: <extended-integer>)
   if (x-len + y-len = 2)
     let (quo, rem) = floor/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
     values(as(<extended-integer>, quo), as(<extended-integer>, rem));
-  elseif (x-len <= 2 & y-len <= 2)
+  elseif (x-len == 2 & y-len == 2)
     let (quo, rem) = floor/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
                             as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
     values(as(<extended-integer>, quo), as(<extended-integer>, rem));
