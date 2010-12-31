@@ -152,7 +152,7 @@ end method stop-profiling-type;
 
 define method start-profiling-type
     (state :: <profiling-state>, keyword == #"allocation") => ()
-  state[#"allocation-count"] := call-out("GC_get_total_bytes", long:);
+  state[#"allocation-count"] := call-out("dylan_gc_get_total_bytes", long:);
 end method start-profiling-type;
 
 define method stop-profiling-type
@@ -163,7 +163,7 @@ end method stop-profiling-type;
 define method profiling-type-result
     (state :: <profiling-state>, keyword == #"allocation", #key)
  => (allocation :: <integer>)
-  call-out("GC_get_total_bytes", long:) - state[#"allocation-count"];
+  call-out("dylan_gc_get_total_bytes", long:) - state[#"allocation-count"];
 end method profiling-type-result;
 
 /*
