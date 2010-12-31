@@ -255,8 +255,8 @@ define /* exported */ function check-cpp-expansion
     current-depth >= $maximum-cpp-expansion-depth =>
       parse-error(tokenizer, "Preprocessor macro expansion of ~s too deep",
 		  string);
-    // member?(string, forbidden-expansions, test: \=) =>
-    //   #f;
+    member?(string, forbidden-expansions, test: \=) =>
+      #f;
     string.first == '#' =>
       if (string = "##")
 	// Special case for <pound-pound-token>

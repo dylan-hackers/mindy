@@ -102,7 +102,12 @@ define constant $default-defines
       "__unix", "",
       "__i386", "",
       "__linux", "",
-      "__builtin_va_list", "void*"
+      "__builtin_va_list", "void*",
+
+      // Macros that cause melange to fail with their original
+      // definition on cygwin.
+      "_EXPARM", #(#("name", "proto"), "(* name) proto"),
+      "_EXFNPTR", #(#("name1", "proto1"), "(* name1) proto1")
      ];
   
 define constant linux-include-directories
