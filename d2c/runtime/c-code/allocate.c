@@ -25,6 +25,13 @@
 
 #define STACK_SIZE (96 * 1024)
 
+/* This function is not used in GD 2.4 but it is necessary for
+   bootstrapping GD 2.5. */
+long dylan_gc_get_total_bytes(void)
+{
+  return GC_get_total_bytes();
+}
+
 heapptr_t allocate(int bytes)
 {
   return (heapptr_t)GC_malloc_ignore_off_page(bytes);

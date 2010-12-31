@@ -794,6 +794,9 @@ link-shared-library-command:    $(LIBTOOL) --tag=CC --mode=link gcc -o %s %s -rp
 long-long-alignment:		8
 double-alignment:		8
 
+platform-name:			x86-cygwin-gcc
+inherit-from:			x86-cygnus-gcc
+
 platform-name:			x86-cygnus-gcc32
 inherit-from:			x86-gcc32 cygnus
 link-shared-library-command:    $(LIBTOOL) --tag=CC --mode=link gcc -o %s %s -rpath %s
