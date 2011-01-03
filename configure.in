@@ -135,6 +135,11 @@ case $1 in
     i*86-pc-none) $2=x86-win32-vc ;;
     i*86-pc-beos) $2=x86-beos-gcc ;;
     powerpc-apple-darwin*) $2=ppc-darwin-gcc ;;
+    x86_64-apple-darwin*)
+        case $CC in
+            *clang*) $2=x86_64-darwin-clang ;;
+            *) $2=x86_64-darwin-gcc ;;
+        esac ;;
     i*86-apple-darwin*)
         case $CC in
             *clang*) $2=x86-darwin-clang ;;
