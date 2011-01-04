@@ -4,8 +4,8 @@ copyright: see below
 
 //======================================================================
 //
-// Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
-// Copyright (c) 1998-2003  Gwydion Dylan Maintainers
+// Copyright (c) 1995 - 1997  Carnegie Mellon University
+// Copyright (c) 1998 - 2003  Gwydion Dylan Maintainers
 // All rights reserved.
 // 
 // Use and copying of this software and preparation of derivative
@@ -78,8 +78,48 @@ end method;
 // Define platform-specific constant values in the Bootstrap module.
 //
 define method define-platform-constants(platform :: <platform>) => ();
-  add-bootstrap-constant(#"$platform-fixed-integer-bits",
+  add-bootstrap-constant(#"$platform-integer-length",
                          platform.platform-integer-length);
+
+  add-bootstrap-constant(#"$platform-pointer-size",
+                         platform.pointer-size);
+  add-bootstrap-constant(#"$platform-pointer-alignment",
+                         platform.pointer-alignment);
+
+  add-bootstrap-constant(#"$platform-short-size",
+                         platform.short-size);
+  add-bootstrap-constant(#"$platform-short-alignment",
+                         platform.short-alignment);
+
+  add-bootstrap-constant(#"$platform-integer-size",
+                         platform.integer-size);
+  add-bootstrap-constant(#"$platform-integer-alignment",
+                         platform.integer-alignment);
+
+  add-bootstrap-constant(#"$platform-long-size",
+                         platform.long-size);
+  add-bootstrap-constant(#"$platform-long-alignment",
+                         platform.long-alignment);
+
+  add-bootstrap-constant(#"$platform-long-long-size",
+                         platform.long-long-size);
+  add-bootstrap-constant(#"$platform-long-long-alignment",
+                         platform.long-long-alignment);
+
+  add-bootstrap-constant(#"$platform-double-size",
+                         platform.double-size);
+  add-bootstrap-constant(#"$platform-double-alignment",
+                         platform.double-alignment);
+
+  add-bootstrap-constant(#"$platform-single-size",
+                         platform.single-size);
+  add-bootstrap-constant(#"$platform-single-alignment",
+                         platform.single-alignment);
+
+  add-bootstrap-constant(#"$platform-long-double-size",
+                         platform.long-double-size);
+  add-bootstrap-constant(#"$platform-long-double-alignment",
+                         platform.long-double-alignment);
 
   add-bootstrap-constant(#"$platform-single-float-mantissa-digits",
                          platform.single-mantissa-digits);
@@ -103,4 +143,7 @@ define method define-platform-constants(platform :: <platform>) => ();
   add-bootstrap-constant(#"$platform-maximum-extended-float-exponent",
                          platform.maximum-long-double-float-exponent
                            | platform.maximum-double-float-exponent);
+
+  add-bootstrap-constant(#"$platform-big-endian?",
+                         platform.big-endian?);
 end method;

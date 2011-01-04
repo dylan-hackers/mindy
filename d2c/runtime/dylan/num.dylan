@@ -310,7 +310,7 @@ end;
 // Note the clever way we compute the second two of these that doesn't
 // overflow.  Tricky, huh?
 // 
-define constant $fixed-integer-bits = $platform-fixed-integer-bits;
+define constant $fixed-integer-bits = $platform-integer-length;
 define constant $minimum-integer :: <integer>
   = ash(-1, $fixed-integer-bits - 1);
 define constant $maximum-integer :: <integer>
@@ -625,7 +625,7 @@ end method integer-length;
 
 
 // Double Integers.
-define constant $double-integer-bits = $fixed-integer-bits * 2;
+define constant $double-integer-bits = $platform-long-long-size * 8;
 
 define functional class <double-integer> (<general-integer>)
   slot value :: <double-integer>, init-value: 0;
