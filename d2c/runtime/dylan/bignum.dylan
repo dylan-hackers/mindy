@@ -933,6 +933,21 @@ define method bignum-divide (x :: <extended-integer>, y :: <extended-integer>)
 		 & (bignum-digit(x, x-len - 1)
 		      < bignum-digit(y, y-len - 1))))
     values(#e0, x);
+  elseif (x-len <= 2) // y-len must be also
+    let x-dig = bignum-digit(x, 0);
+    let y-dig = bignum-digit(y, 0);
+    let xv = if (x-len = 1)
+               x-dig.as-signed;
+             else
+               as-signed-2(bignum-digit(x, 1), x-dig);
+             end;
+    let yv = if (y-len = 1)
+               y-dig.as-signed;
+             else
+               as-signed-2(bignum-digit(y, 1), y-dig);
+             end;
+    let (quo, rem) = truncate/(xv, yv);
+    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
   elseif (y-len == 1)
     divide-by-digit(x, bignum-digit(y, 0));
   else
@@ -989,98 +1004,54 @@ end;
 
 define method floor/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
-  let x-len = x.bignum-size;
-  let y-len = y.bignum-size;
-  if (x-len + y-len = 2)
-    let (quo, rem) = floor/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
-    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
-  elseif (x-len == 2 & y-len == 2)
-    let (quo, rem) = floor/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
-                            as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
-    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
+  let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
+  let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
+  let (quo, rem) = bignum-divide(x-abs, y-abs);
+  if (x-neg == y-neg)
+    values(quo, if (y-neg) -rem else rem end);
+  elseif (zero?(rem))
+    values(-quo, rem);
   else
-    let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
-    let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-    let (quo, rem) = bignum-divide(x-abs, y-abs);
-    if (x-neg == y-neg)
-      values(quo, if (y-neg) -rem else rem end);
-    elseif (zero?(rem))
-      values(-quo, rem);
-    else
-      values(-1 - quo, if (y-neg) y + rem else y - rem end);
-    end;
+    values(-1 - quo, if (y-neg) y + rem else y - rem end);
   end;
 end;
 
 define method ceiling/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
-  let x-len = x.bignum-size;
-  let y-len = y.bignum-size;
-  if (x-len + y-len = 2)
-    let (quo, rem) = ceiling/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
-    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
-  elseif (x-len <= 2 & y-len <= 2)
-    let (quo, rem) = ceiling/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
-                              as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
-    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
+  let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
+  let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
+  let (quo, rem) = bignum-divide(x-abs, y-abs);
+  if (x-neg ~== y-neg)
+    values(-quo, if (x-neg) -rem else rem end);
+  elseif (zero?(rem))
+    values(quo, rem);
   else
-    let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
-    let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-    let (quo, rem) = bignum-divide(x-abs, y-abs);
-    if (x-neg ~== y-neg)
-      values(-quo, if (x-neg) -rem else rem end);
-    elseif (zero?(rem))
-      values(quo, rem);
-    else
-      values(1 + quo, (if (x-neg) -rem else rem end) - y);
-    end;
+    values(1 + quo, (if (x-neg) -rem else rem end) - y);
   end;
 end;
 
 define method round/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
-  let x-len = x.bignum-size;
-  let y-len = y.bignum-size;
-  if (x-len + y-len = 2)
-    let (quo, rem) = round/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
-    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
-  elseif (x-len <= 2 & y-len <= 2)
-    let (quo, rem) = round/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
-                            as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
-    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
-  else
-    let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
-    let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-    let (quo :: <extended-integer>, rem :: <extended-integer>)
-      = bignum-divide(x-abs, y-abs);
-    let twice-rem = rem + rem;
-    if (twice-rem > y-abs | (twice-rem == y-abs & odd?(quo)))
-      quo := quo + 1;
-      rem := rem - y-abs;
-    end;
-    values(if (x-neg == y-neg) quo else -quo end,
-           if (x-neg) -rem else rem end);
+  let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
+  let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
+  let (quo :: <extended-integer>, rem :: <extended-integer>)
+    = bignum-divide(x-abs, y-abs);
+  let twice-rem = rem + rem;
+  if (twice-rem > y-abs | (twice-rem == y-abs & odd?(quo)))
+    quo := quo + 1;
+    rem := rem - y-abs;
   end;
+  values(if (x-neg == y-neg) quo else -quo end,
+         if (x-neg) -rem else rem end);
 end;
 
 define method truncate/ (x :: <extended-integer>, y :: <extended-integer>)
     => (quo :: <extended-integer>, rem :: <extended-integer>);
-  let x-len = x.bignum-size;
-  let y-len = y.bignum-size;
-  if (x-len + y-len = 2)
-    let (quo, rem) = truncate/(bignum-digit(x, 0).as-signed, bignum-digit(y, 0).as-signed);
-    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
-  elseif (x-len <= 2 & y-len <= 2)
-    let (quo, rem) = truncate/(as-signed-2(bignum-digit(x, 1), bignum-digit(x, 0)),
-                               as-signed-2(bignum-digit(y, 1), bignum-digit(y, 0)));
-    values(as(<extended-integer>, quo), as(<extended-integer>, rem));
-  else
-    let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
-    let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
-    let (quo, rem) = bignum-divide(x-abs, y-abs);
-    values(if (x-neg == y-neg) quo else -quo end,
-           if (x-neg) -rem else rem end);
-  end;
+  let (x-abs, x-neg) = if (negative?(x)) values(-x, #t) else values(x, #f) end;
+  let (y-abs, y-neg) = if (negative?(y)) values(-y, #t) else values(y, #f) end;
+  let (quo, rem) = bignum-divide(x-abs, y-abs);
+  values(if (x-neg == y-neg) quo else -quo end,
+         if (x-neg) -rem else rem end);
 end;
 
 
