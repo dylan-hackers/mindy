@@ -126,12 +126,12 @@ define method stop-profiling-type
     (state :: <profiling-state>, keyword :: <cpu-profiling-type>) => ()
   when (element(state, #"cpu-profiling", default: #f))
     let start-time = state[#"cpu-profiling"];
-    let start-time-seconds = pointer-value(start-time, index: 0);
-    let start-time-microseconds = pointer-value(start-time, index: 1);
+    let start-time-seconds = start-time.profiling-seconds-value;
+    let start-time-microseconds = start-time.profiling-microseconds-value;
 
     let current-time = cpu-time();
-    let current-time-seconds = pointer-value(current-time, index: 0);
-    let current-time-microseconds = pointer-value(current-time, index: 1);
+    let current-time-seconds = current-time.profiling-seconds-value;
+    let current-time-microseconds = current-time.profiling-microseconds-value;
     
     let (seconds, microseconds)
       = if (current-time-microseconds < start-time-microseconds)
