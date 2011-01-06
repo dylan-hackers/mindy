@@ -20,6 +20,8 @@
 int application_argc;
 char **application_argv;
 
+extern void dylan_gc_init(void);
+
 void GD_NORETURN not_reached(void)
 {
     fprintf(stderr, "entered a branch that supposedly never could be.\n");
@@ -34,7 +36,7 @@ void real_main(int argc, char *argv[])
 {
     descriptor_t *sp;
 
-    GC_INIT();
+    dylan_gc_init();
 
     sp = allocate_stack();
 
