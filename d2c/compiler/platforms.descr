@@ -704,6 +704,9 @@ inherit-from:			freebsd x86-gcc32
 platform-name:			x86-freebsd-elf-gcc33
 inherit-from:			freebsd x86-gcc33
 
+platform-name:			x86-freebsd-gcc
+inherit-from:			x86-freebsd-elf-gcc
+
 // FreeBSD-sparc64
 platform-name:			sparc64-freebsd-gcc
 inherit-from:			gcc freebsd sparc64
