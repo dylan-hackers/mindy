@@ -11,12 +11,6 @@
 #endif
 #include "runtime.h"
 
-#if defined(HAVE_GC_H)
-#include <gc.h>
-#elif defined(HAVE_GC_GC_H)
-#include <gc/gc.h>
-#endif
-
 int application_argc;
 char **application_argv;
 

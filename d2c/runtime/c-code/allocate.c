@@ -27,6 +27,9 @@
 
 void dylan_gc_init(void)
 {
+  GC_all_interior_pointers = 0;
+  GC_free_space_divisor = 2;
+  GC_use_entire_heap = 1;
   GC_INIT();
 }
 
@@ -37,7 +40,7 @@ long dylan_gc_get_total_bytes(void)
 
 heapptr_t allocate(int bytes)
 {
-  return (heapptr_t)GC_malloc_ignore_off_page(bytes);
+  return (heapptr_t)GC_malloc(bytes);
 }
 
 void destroy(void* ptr)
@@ -53,7 +56,7 @@ void finalize_stack(void *stack, void *boundary)
 
 descriptor_t *allocate_stack(void)
 {
-  void *stack = GC_malloc_ignore_off_page(STACK_SIZE);
+  void *stack = GC_malloc(STACK_SIZE);
   int pagesize = getpagesize();
   GC_word boundary;
   void *boundaryp;
