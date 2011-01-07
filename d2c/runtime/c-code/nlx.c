@@ -23,7 +23,7 @@ descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, void *state,
     jmp_buf state;
     int rc;
 
-    if ((rc = setjmp(state))) { /* This _is_ an assignment */
+    if ((rc = _setjmp(state))) { /* This _is_ an assignment */
       /* longjmp was called, return stack_top */
       /* See comment above for explanation of the -1 bias. */
       return (descriptor_t *)(sp + rc - 1);
@@ -36,5 +36,5 @@ descriptor_t *catch(descriptor_t *(*fn)(descriptor_t *sp, void *state,
 void throw(void *state, descriptor_t *sp, descriptor_t *stack_top)
 {
     /* See comment above for explanation of the +1 bias. */
-    longjmp(state, (int)(stack_top - sp + 1));
+    _longjmp(state, (int)(stack_top - sp + 1));
 }
