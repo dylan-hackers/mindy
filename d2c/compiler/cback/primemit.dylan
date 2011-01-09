@@ -347,8 +347,14 @@ define-primitive-emitter
      let (bytes, temp?) = ref-leaf(*long-rep*, bytes-leaf, file);
      contact-bgh-if(temp?);
 
-     deliver-result(defines, stringify("allocate(", bytes, ')'),
-		    *heap-rep*, #f, file);
+     let allocator =
+       if (class.ptr-free?)
+         "allocate_ptrfree"
+       else
+         "allocate"
+       end;
+     deliver-result(defines, stringify(allocator, "(", bytes, ')'),
+                    *heap-rep*, #f, file);
    end);
 
 define-primitive-emitter

@@ -1541,7 +1541,7 @@ define method emit-tlf-gunk (tlf :: <magic-internal-primitives-placeholder>,
     let cclass = specifier-type(#"<double-integer>");
     let c-type = cclass.direct-speed-representation.representation-c-type;
     format(bstream, "heapptr_t make_double_integer(%s value)\n{\n", c-type);
-    format(gstream, "heapptr_t res = allocate(%d);\n",
+    format(gstream, "heapptr_t res = allocate_ptrfree(%d);\n",
            cclass.instance-slots-layout.layout-length);
 
     let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
@@ -1564,7 +1564,7 @@ define method emit-tlf-gunk (tlf :: <magic-internal-primitives-placeholder>,
   unless (instance?(*double-rep*, <c-data-word-representation>))
     let cclass = specifier-type(#"<double-float>");
     format(bstream, "heapptr_t make_double_float(double value)\n{\n");
-    format(gstream, "heapptr_t res = allocate(%d);\n",
+    format(gstream, "heapptr_t res = allocate_ptrfree(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
 
     let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);
@@ -1588,7 +1588,7 @@ define method emit-tlf-gunk (tlf :: <magic-internal-primitives-placeholder>,
   unless (instance?(*long-double-rep*, <c-data-word-representation>))
     let cclass = specifier-type(#"<extended-float>");
     format(bstream, "heapptr_t make_extended_float(long double value)\n{\n");
-    format(gstream, "heapptr_t res = allocate(%d);\n",
+    format(gstream, "heapptr_t res = allocate_ptrfree(%d);\n",
 	   cclass.instance-slots-layout.layout-length);
 
     let (expr, rep) = c-expr-and-rep(cclass, *heap-rep*, file);

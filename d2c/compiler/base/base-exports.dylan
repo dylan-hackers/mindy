@@ -671,6 +671,7 @@ define module classes
   use compile-time-values;
   use ctype;
   use representation;
+  use c-representation, import: {representation-name};
 
   use forwards, import: {<cclass>}, export: all;
 
@@ -678,8 +679,9 @@ define module classes
     cclass-name, loaded?, direct-superclasses,
     closest-primary-superclass, closest-primary-superclass-setter,
     precedence-list, subclasses, direct-subclasses, sealed?,
-    abstract?, primary?, functional?, not-functional?, all-slot-infos,
-    all-slot-infos-setter, new-slot-infos, new-slot-infos-setter,
+    abstract?, primary?, functional?, not-functional?, ptr-free?,
+    all-slot-infos, all-slot-infos-setter,
+    new-slot-infos, new-slot-infos-setter,
     override-infos, override-infos-setter, unique-id,
     keyword-infos, keyword-infos-setter, all-keyword-infos,
     set-and-record-unique-id, subclass-id-range-min,

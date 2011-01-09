@@ -90,6 +90,11 @@ define abstract class <cclass> (<ctype>, <eql-ct-value>)
   slot abstract? :: <boolean>, init-keyword: abstract:, init-value: #f;
   slot primary? :: <boolean>, init-keyword: primary:, init-value: #f;
 
+  // true if this class contains no pointers to the heap and thus does
+  // not need to be scanned by a conservative GC such as Boehm.
+  // Starts true, set to false if any slot has general-rep or heap-rep
+  slot ptr-free? :: <boolean>, init-value: #t;
+
   // The direct-instance type for direct instances of this class, or #f
   // if we haven't made one yet.
   slot %direct-type :: false-or(<direct-instance-ctype>), init-value: #f;
@@ -1705,6 +1710,16 @@ define method layout-slots-for (class :: <cclass>) => ();
 end method layout-slots-for;
 
 
+define method update-ptrfree(slot :: <instance-slot-info>, class :: <cclass>)
+ => ();
+  let rep = slot.slot-representation;
+  let rep-name = rep.representation-name;
+  if (rep-name == #"general" | rep-name == #"heap")
+    class.ptr-free? := #f;
+  end;
+end;
+
+
 define method inherit-layout
     (slot :: <slot-info>, class :: <cclass>, super :: <cclass>) => ();
   // Default method -- do nothing.
@@ -1715,8 +1730,12 @@ define method inherit-layout
      class :: <cclass>,
      super :: <cclass>)
     => ();
+  let inherited-position = get-direct-position(slot.slot-positions, super);
+  unless (inherited-position = 0) // HACK WARNING ignore the ISA pointer
+    update-ptrfree(slot, class);
+  end;
   add-position(slot.slot-positions, class,
-	       get-direct-position(slot.slot-positions, super));
+	       inherited-position);
 end method inherit-layout;
 
 
@@ -1737,6 +1756,7 @@ define method layout-slot (slot :: <instance-slot-info>, class :: <cclass>)
          "(unnamed slot)"
        end);
   end;
+  update-ptrfree(slot, class);
   let rep = slot.slot-representation;
   let offset
     = if (slot == class.data-word-slot)
@@ -1759,6 +1779,7 @@ define method layout-slot (slot :: <vector-slot-info>, class :: <cclass>)
        slot.slot-getter.variable-name);
   end;
   class.vector-slot := slot;
+  update-ptrfree(slot, class);
   let rep = slot.slot-representation;
   let offset = find-position(class.instance-slots-layout, 0,
 			     rep.representation-alignment);

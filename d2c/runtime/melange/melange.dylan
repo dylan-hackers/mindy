@@ -115,9 +115,14 @@ define method make
       error("Bad element-count: in make: %=", element-count);
     end if;
 
-    let rawptr = call-out("allocate", ptr:,
-			  unsigned-int:
-			    (content-size(cls) + extra-bytes) * element-count);
+    let elt-size = content-size(cls) + extra-bytes;
+    let total-bytes = elt-size * element-count;
+    let rawptr =
+      if (elt-size < c-expr(int: "sizeof(char*)"))
+        call-out("allocate_ptrfree", ptr:, unsigned-int: total-bytes);
+      else
+        call-out("allocate", ptr:, unsigned-int: total-bytes);
+      end;
     let ptr = next(cls, pointer: rawptr);
     if (ptr = null-pointer) error("Make failed to allocate memory.") end if;
 
@@ -590,7 +595,7 @@ define sealed  method as (cls == <c-string>, str :: <byte-string>)
  => string :: <c-string>;
   let sz = str.size;
   let result
-    = as(<c-string>, call-out("allocate", ptr:, unsigned-int: sz + 1));
+    = as(<c-string>, call-out("allocate_ptrfree", ptr:, unsigned-int: sz + 1));
   for (i from 0 below sz)
     unsigned-byte-at(result, offset: i) := as(<integer>, str[i]);
   end for;
