@@ -1709,6 +1709,13 @@ define method layout-slots-for (class :: <cclass>) => ();
   end if;
 end method layout-slots-for;
 
+#if (mindy)
+// Can't import from c-representation because it's circular
+// Just pretend every slot can be a pointer
+define method representation-name(rep)
+  #"general";
+end;
+#endif
 
 define method update-ptrfree(slot :: <instance-slot-info>, class :: <cclass>)
  => ();
