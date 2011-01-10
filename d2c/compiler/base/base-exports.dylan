@@ -671,7 +671,9 @@ define module classes
   use compile-time-values;
   use ctype;
   use representation;
+  #if (~mindy)
   use c-representation, import: {representation-name};
+  #endif
 
   use forwards, import: {<cclass>}, export: all;
 
