@@ -48,8 +48,8 @@ You can also use a separate build directory:
   $ make install
 
 If the configure process complains that your platform is unsupported,
-things get a little more involved. Read the BOOTSTRAPPING file for
-more details.
+things get a little more involved. Read the BOOTSTRAP file for more
+details.
 
 As d2c relies on the platform's native C compiler for code generation,
 building d2c can sometimes fail due to bugs in the C compiler.  In
