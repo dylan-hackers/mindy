@@ -1,7 +1,7 @@
-To install a precompiled binary distribution of Gwydion, go to one of
-the FTP sites listed in the README and download an appropriate package
-for your operating system. Tarballs are available for several common
-Unix-like systems and a variety of processors. RPMs and other
+To install a precompiled binary distribution of Gwydion, go to
+http://www.opendylan.org/downloading.phtml and download an appropriate
+package for your operating system. Tarballs are available for several
+common Unix-like systems and a variety of processors. RPMs and other
 "packaged" binaries are slowly becoming available as well.
 
 Binary tarballs are currently designed to untar into /usr/local on most
@@ -33,7 +33,7 @@ the lengthy process of an interpreter bootstrap, do:
   $ make
   $ make install
 
-or from CVS:
+or from source:
 
   $ ./autogen.sh
   $ make

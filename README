@@ -7,8 +7,7 @@ d2c is a Dylan-to-C compiler. Mindy compiles programs quickly, but the
 resulting executables run slowly. On the other hand, d2c compiles programs
 slowly, but they run quickly. Future development will mostly concentrate on
 removing bugs from d2c, adding new features, and making it run faster.
-Although we will still port Mindy to new architectures, we probably won't
-be improving it significantly.
+Mindy is no longer maintained, except as needed for bootstrapping.
 
 Gwydion Dylan was originally written by the Gwydion Group at CMU as part of
 a research project studying advanced hypercode development environments. It
@@ -30,6 +29,7 @@ web site (below). The following online resources are available:
   Maintainers' website:    http://www.gwydiondylan.org/
   Mail to the maintainers: gd-hackers@gwydiondylan.org
   Newsgroup:               news:comp.lang.dylan
+  IRC:                     #dylan on freenode
 
 If you use Gwydion to any extent, you'll want subscribe to gd-hackers so
 you can ask questions and report the inevitable bugs. Send a message to
