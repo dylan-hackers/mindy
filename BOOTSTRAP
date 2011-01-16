@@ -14,7 +14,7 @@ There are several possible scenarios, which the ./configure script is
 pretty good at figuring out for you based on asking the installed d2c
 (d2c --compiler-info) and looking at the source code you have
 (CURRENT_BOOTSTRAP_COUNTER defined in configure.in).  You can also
-force some scenarios using comamnd line arguments to ./configure.
+force some scenarios using command line arguments to ./configure.
 
 Here's what happens in each case:
 
@@ -34,7 +34,7 @@ Here's what happens in each case:
     need to bootstrap d2c using d2c. This is a two-stage process: first
     a temporary version of d2c will be built and then this temporary version
     will automatically be used to build your new d2c.  This takes a
-    bit less than twice as long as 1) because not everything is built
+    bit less than twice as long as (1) because not everything is built
     for the temporary version.
 
 
@@ -42,24 +42,46 @@ Here's what happens in each case:
 
     Run './configure --disable-d2c'
 
+
  4) You want d2c, can't find a binary for d2c, but d2c already
     supports your platform: BOOTSTRAPPING_WITH_MINDY
 
-    If you can't find a working d2c binary, you'll need to bootstrap
-    d2c using Mindy. This involves compiling Mindy, building a
-    bytecode-compiled copy of d2c that runs (very slowly) under Mindy,
-    and using that copy of d2c to compile a new version, as per step
-    (2) above.  This automatically happens when configure doesn't find
-    a pre-installed binary.  After configure, run "make", and the rest
-    will happen automagically.
+    This is also the scenario to use when you want a clean bootstrap to a
+    newer version of d2c than this one.
+
+    You'll need to bootstrap d2c using Mindy. This involves compiling Mindy,
+    building a bytecode-compiled copy of d2c that runs (very slowly) under
+    Mindy, and using that copy of d2c to compile a new version, as per step
+    (2) above. This automatically happens when configure doesn't find a
+    pre-installed binary. After configure, run "make", and the rest will
+    happen automagically.
 
     This takes anything from several hours to several days.
 
     If this process fails, subscribe to gd-hackers and tell us what
     happened, or send a bug report to gd-bugs.
 
+    Here is the process in more detail:
 
- 5) You want to run d2c on your platform, but d2c doesn't support it yet.
+     a) Ensure you have a clean environment. Remove any existing d2c
+        installations from your PATH and undefine DYLANDIR.
+
+     b) Run autogen.sh, configure, make, and make install. Force the Mindy
+        bootstrap by giving the "--enable-mindy-bootstrap" option to the
+        configure command.
+
+     c) Add the d2c you just installed to the PATH and set DYLANDIR to the
+        PREFIX you configured in (b). This step will complete scenario (4).
+
+     d) Delete autom4te.cache.
+
+     e) Re-run configure, make, and make install. Your previous configure
+        command will be listed in the first few lines of config.log; do not
+        include the "--enable-mindy-bootstrap" option this time. This step
+        will complete scenario (2) and you will be left with a
+        fully-functional d2c installation.
+
+ 6) You want to run d2c on your platform, but d2c doesn't support it yet.
 
     This is the fun part. You'll need to port Mindy and d2c to your
     platform, which will require some work. Start by subscribing to the

@@ -76,7 +76,9 @@ if ($enable_bootstrap) {
 	push(@compile_commands, 
 	     sprintf($host_platform{'recursive_make_command'}, 
 		     "d2c", "d2c-compile"));
-	&message("Bootstrap complete; now install d2c, remove config.cache,");
+	&message("");
+	&message("BOOTSTRAP COMPLETE");
+	&message("Now install d2c, remove autom4te.cache,");
 	&message("re-run configure, and make again.");
     } else {
 	&compile_subdirs("d2c");
@@ -87,7 +89,8 @@ if ($enable_bootstrap) {
 	push(@compile_commands, $recheck);
 	push(@compile_commands, '$(MAKE) clean');
 	push(@compile_commands, '$(MAKE)');
-	&message("Bootstrap complete.");
+	&message("");
+	&message("BOOTSTRAP COMPLETE");
     }
 }
 else {
