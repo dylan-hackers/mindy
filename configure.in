@@ -560,6 +560,19 @@ LIBS="$GC_LIBS $LIBS"
 FOUND_BOEHM=no
 AC_CHECK_HEADERS(gc.h gc/gc.h, FOUND_BOEHM=yes,)
 if test "$FOUND_BOEHM" = no; then
+if test "x$gc_prefix" == x; then
+    AC_MSG_NOTICE([Looking for Boehm in /opt/local...])
+    gc_prefix="/opt/local"
+    GC_CFLAGS="-I$gc_prefix/include -I$gc_prefix/include/gc"
+    GC_LIBS="-L$gc_prefix/lib -lgc $GC_LIBS"
+    $as_unset ac_cv_header_gc_gc_h
+    $as_unset ac_cv_header_gc_h
+    CPPFLAGS="$GC_CFLAGS $CPPFLAGS"
+    LIBS="$GC_LIBS $LIBS"
+    AC_CHECK_HEADERS(gc.h gc/gc.h, FOUND_BOEHM=yes,)
+fi
+fi
+if test "$FOUND_BOEHM" = no; then
 AC_MSG_ERROR([
 Cannot locate the Boehm-Weiser conservative garbage collector. Please
 download the library from http://www.hpl.hp.com/personal/Hans_Boehm/gc/
