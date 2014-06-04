@@ -19,12 +19,13 @@ dnl	it.
 
 #--------------------------------------------------------------------
 # Emit configure initialization, verify that we're in the right
-# source directory, require autoconf version 2.12, and start 
+# source directory, require autoconf version 2.50, and start
 # processing config.h.in.
 #--------------------------------------------------------------------
 
-AC_INIT(common/format/format.dylan)
+AC_INIT([gywdion-dylan],[2.4.1pre2])
 AC_PREREQ(2.50)
+AC_CONFIG_SRCDIR(common/format/format.dylan)
 AC_CONFIG_HEADER(config.h)
 
 #--------------------------------------------------------------------
@@ -90,7 +91,7 @@ AC_CANONICAL_SYSTEM		# Find the system type
 AC_ARG_PROGRAM			# Provide support for name prefixes
 
 
-AC_DEFUN(GD_D2C_SYSTEM,[
+AC_DEFUN([GD_D2C_SYSTEM],[
 case $1 in
     i*86-*-linux*)
         case `gcc -dumpversion` in
@@ -226,6 +227,8 @@ AC_PATH_PROG(PERL, perl, no)
 if test "$PERL" = no; then
     AC_MSG_ERROR(Cannot build without perl to run gen-makefile)
 fi
+
+AM_INIT_AUTOMAKE
 
 AC_PROG_INSTALL
 AC_PROG_CC			# Specify when cross-compiling.
