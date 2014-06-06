@@ -9,6 +9,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../common-dylan';
 
 
-do emit_library_rule(
+&emit_library_rule(
     'collections', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );

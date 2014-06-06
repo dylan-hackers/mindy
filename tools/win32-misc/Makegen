@@ -66,40 +66,40 @@ push(@compile_dependencies, 'rcs-wrapper.exe');
 
 if ($install_rcs_wrappers_n_stuff) {
 # Wrapped RCS stuff
-do install_rcs_wrappers('ci', 'co', 'rcs', 'rcsdiff', 'rlog');
+&install_rcs_wrappers('ci', 'co', 'rcs', 'rcsdiff', 'rlog');
 
 # Custom utils with wrappers
-do install_perl_scripts('configure',
+&install_perl_scripts('configure',
 			'find-dylan-files', 'mass-ci', 'mass-diff', 
 			'mk-rcs-links', 'tree-diff', 'unix-find', 'which');
 
 # rcsupdate needs the path to co.exe
-do install_from_src("$destdir/bin", 'rcsupdate.perl');
-do install_one_arg_wrapper('perl', 'rcsupdate', '.perl', 
+&install_from_src("$destdir/bin", 'rcsupdate.perl');
+&install_one_arg_wrapper('perl', 'rcsupdate', '.perl', 
 			   "$GwydionDir\\rcs-bin\\co.exe");
 }
 
 # These files are in shared-misc, which doesn't do wrappers
-do install_no_arg_wrapper('perl', 'gen-makefile', '.perl');
-do install_no_arg_wrapper('perl', 'mk-build-tree', '.perl');
+&install_no_arg_wrapper('perl', 'gen-makefile', '.perl');
+&install_no_arg_wrapper('perl', 'mk-build-tree', '.perl');
 
 if ($install_rcs_wrappers_n_stuff) {
-do install_no_arg_wrapper('perl', 'line-count', '.perl');
+&install_no_arg_wrapper('perl', 'line-count', '.perl');
 
 # Custom utils that are straight batch files
-do install_from_src("$destdir/bin", 'build-tags.bat');
-do install_from_src("$destdir/bin", 'dytc.bat');
-do install_from_src("$destdir/bin", 'mk-backup.bat');
+&install_from_src("$destdir/bin", 'build-tags.bat');
+&install_from_src("$destdir/bin", 'dytc.bat');
+&install_from_src("$destdir/bin", 'mk-backup.bat');
 
 # Custom perl scripts without wrappers
-do install_from_src("$destdir/bin", 'find-unrcsed-files.perl');
-do install_from_src("$destdir/bin", 'module-tool.perl');
-do install_from_src("$destdir/bin", 'shadows.perl');
+&install_from_src("$destdir/bin", 'find-unrcsed-files.perl');
+&install_from_src("$destdir/bin", 'module-tool.perl');
+&install_from_src("$destdir/bin", 'shadows.perl');
 
 # Wrappers for DOS commands that don't like forward slashes
-do install_from_src("$destdir/bin", 'backslash-wrapper.perl');
-do install_backslash_wrapper('dbccopy', 'copy');
-do install_backslash_wrapper('sattrib', 'attrib');
+&install_from_src("$destdir/bin", 'backslash-wrapper.perl');
+&install_backslash_wrapper('dbccopy', 'copy');
+&install_backslash_wrapper('sattrib', 'attrib');
 }
 
 # Can't use emit_c_file_rule because they don't build executables
@@ -109,5 +109,5 @@ dbclink.exe : \$(SRCDIR)/dbclink.c
 	cl -nologo -Ox \$(SRCDIR)/dbclink.c -o dbclink.exe
 
 EOF
-do install ("$destdir/bin", 'dbclink.exe');
+&install ("$destdir/bin", 'dbclink.exe');
 push(@compile_dependencies, 'dbclink.exe');

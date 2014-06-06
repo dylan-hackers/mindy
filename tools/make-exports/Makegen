@@ -9,5 +9,5 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../common/string-ext'
     . ' -L../../common/regular-expressions';
 
-do emit_library_rule('Make-exports', '$(BUILDROOT)/force.timestamp', '', 
+&emit_library_rule('Make-exports', '$(BUILDROOT)/force.timestamp', '', 
 		     'compile', 'install');

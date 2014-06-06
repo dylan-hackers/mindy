@@ -38,5 +38,5 @@ END
 &emit_c_file_rule("time-portability") if ($enable_d2c);
 $time_lid_file = "$plat-time";
 
-do emit_library_rule($time_lid_file, '$(BUILDROOT)/force.timestamp', '',
+&emit_library_rule($time_lid_file, '$(BUILDROOT)/force.timestamp', '',
 		     'compile', 'install');

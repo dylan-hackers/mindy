@@ -33,7 +33,7 @@ if ($features{'compiled_for_cygnus'}) {
 &emit_melange_rule('sockets-api');
 &emit_melange_rule('gettimeofday');
 
-do emit_library_rule(
+&emit_library_rule(
     'network', '$(BUILDROOT)/force.timestamp', '', 'compile',
 	'no-mindy', 'install');
 

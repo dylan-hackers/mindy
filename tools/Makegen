@@ -7,7 +7,7 @@ if ($features{'compiled_for_win32'}) {
     &unknown_platform_error();
 }
 
-do compile_subdirs(
+&compile_subdirs(
     'elisp',
     'parsergen',
     'melange',
@@ -17,7 +17,7 @@ do compile_subdirs(
 );
 
 #  if ($build_tools_with_d2c) {
-#    do compile_subdirs(
+#    &compile_subdirs(
 #        'lisp2dylan',
 #        'versioner',
 #        'make-exports',

@@ -16,7 +16,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../testworks/tests'
     . ' -L../../test-suites/libraries-test-suite';
 
-do emit_library_rule(
+&emit_library_rule(
     'libraries-test-suite-app', '$(BUILDROOT)/force.timestamp', '', 'compile');
 
-do emit_run_tests_rule('libraries-test-suite-app');
+&emit_run_tests_rule('libraries-test-suite-app');

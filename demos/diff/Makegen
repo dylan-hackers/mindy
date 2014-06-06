@@ -6,6 +6,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../common/format'
     . ' -L../../common/collection-extensions';
 
-do emit_library_rule(
+&emit_library_rule(
     'diff', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',
 );

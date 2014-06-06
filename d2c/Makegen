@@ -1,8 +1,8 @@
 if (!$enable_bootstrap) {
-    do compile_subdirs('runtime', 'compiler', 'dig');
+    &compile_subdirs('runtime', 'compiler', 'dig');
 } else {
     if ($enable_mindy_bootstrap) {
-	do compile_subdirs('compiler', 'runtime', 'dig');
+	&compile_subdirs('compiler', 'runtime', 'dig');
 	print <<'EOF';
 .PHONY: d2c-compile d2c-install
 
@@ -14,6 +14,6 @@ d2c-install: install
 
 EOF
     } else {
-	do compile_subdirs('runtime', 'compiler');
+        &compile_subdirs('runtime', 'compiler');
     }
 }

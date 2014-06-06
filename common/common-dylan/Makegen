@@ -17,5 +17,5 @@ $CPPFLAGS .= " -I$srcdir";
 # $use_previous_melange = 1;
 # &emit_melange_rule("c-support", "support.h");
 
-do emit_library_rule ('common-dylan', '$(BUILDROOT)/force.timestamp', '',
+&emit_library_rule ('common-dylan', '$(BUILDROOT)/force.timestamp', '',
 		      'compile', 'no-mindy', 'install');

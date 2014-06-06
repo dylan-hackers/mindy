@@ -105,7 +105,7 @@ int mindy_readline(char *prompt, char *buffer, int max_chars)
     int chars_read = 0;
     int c;
     
-    printf(prompt);
+    fputs(prompt, stdout);
     fflush(stdout);
 
     while ((c=mindy_getchar()) != EOF 
@@ -135,7 +135,8 @@ int mindy_readline(char *prompt, char *buffer, int max_chars)
 
 static void getc_or_wait(struct thread *thread)
 {
-    if (FBUFEMPTYP(stdin) && !feof(stdin)) {
+    // if (FBUFEMPTYP(stdin) && !feof(stdin)) {
+    if (!feof(stdin)) {
 	int fd = fileno(stdin);
 	int nfound = input_available(fd);
 

@@ -8,7 +8,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/format'
     . ' -L../simple';
 
-do emit_library_rule(
+&emit_library_rule(
     'my-simple', '$(BUILDROOT)/force.timestamp', '', 'compile',
     'no-mindy', 'install'
 );

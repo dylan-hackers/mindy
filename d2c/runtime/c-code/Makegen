@@ -46,5 +46,5 @@ if ($shared) {
 }
 
 push(@compile_dependencies, $lib_name);
-do install_library($libdir, $lib_name, $shared);
+&install_library($libdir, $lib_name, $shared);
 push(@files_to_clean, $lib_name);

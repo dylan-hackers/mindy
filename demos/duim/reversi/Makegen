@@ -35,5 +35,5 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../platform/gtk+/gtk+'
     . ' -L../../../platform/gtk+/gtk-duim';
 
-do emit_library_rule('reversi', '$(BUILDROOT)/force.timestamp', '',
+&emit_library_rule('reversi', '$(BUILDROOT)/force.timestamp', '',
 		     'compile');

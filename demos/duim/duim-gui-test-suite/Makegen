@@ -27,5 +27,5 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../platform/gtk+/gtk-duim'
     . ' -L../../../common/io';
 
-do emit_library_rule('duim-gui-test-suite', '$(BUILDROOT)/force.timestamp', '',
+&emit_library_rule('duim-gui-test-suite', '$(BUILDROOT)/force.timestamp', '',
 		     'compile');

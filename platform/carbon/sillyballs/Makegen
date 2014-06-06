@@ -5,7 +5,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../carbon'
     . ' -L../../../d2c/runtime/random';
 
-do emit_library_rule(
+&emit_library_rule(
     'sillyballs', '$(BUILDROOT)/force.timestamp', '', 'compile',
     'no-mindy', 'install'
 );

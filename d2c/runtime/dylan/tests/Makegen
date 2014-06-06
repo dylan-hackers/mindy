@@ -10,6 +10,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../../qa/testworks'
     . ' -L../../../../qa/testworks-specs';
 
-do emit_library_rule(
+&emit_library_rule(
     'dylan-test-suite', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install'
 );

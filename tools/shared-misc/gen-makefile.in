@@ -170,10 +170,10 @@ chdir($ARGV[0]) || die "Can't cd to $ARGV[0]: $!\n";
 $lidfile_hit_eof = 0;
 $lidfile_line = 1;
 
-do set_default_defaults();
-do find_Defaults_file();
-do read_Defaults_file();
-do do_Makegen_file();
+&set_default_defaults();
+&find_Defaults_file();
+&read_Defaults_file();
+&do_Makegen_file();
 exit(0);
 
 
@@ -387,8 +387,8 @@ sub do_Makegen_file {
         "$gen_makefile -p$platforms_dot_descr .");
 
     &emit_rule('compile');
-    $destdir && do emit_rule ('install');
-    $destdir && do emit_rule ('uninstall');
+    $destdir && &emit_rule ('install');
+    $destdir && &emit_rule ('uninstall');
     &emit_rule('clean');
     if ($host_platform{'makefiles_can_rebuild_themselves?'}) {
         print $makefile, ': ', join(' ', eval('@GNUmakefile_dependencies'));
@@ -728,7 +728,7 @@ sub get_platform {
 sub compile_subdirs {
     local($dir);
     foreach $dir (@_) {
-        do compile_subdir($dir);
+        &compile_subdir($dir);
     }
 }
 
@@ -774,7 +774,7 @@ sub compile_subdirs {
 sub emit_library_rule {
     local($lidfilename, $extradeps, $extraflags, @keywords) = @_;
 
-    do maybe_emit_d2c_defines();
+    &maybe_emit_d2c_defines();
 
     local(%lidfile) = &parse_lid_file($lidfilename);
     local($library) = $lidfile{'library'} 
@@ -831,7 +831,7 @@ sub emit_library_rule {
             if (grep(/^compile$/, @keywords)) {
                 push(@compile_dependencies, $executable_filename);
                 grep(/^install$/, @keywords)
-                    && do install_executable($bindir, $executable_filename);
+                    && &install_executable($bindir, $executable_filename);
             }
 
             $d2c_target = $executable_filename;
@@ -853,8 +853,8 @@ sub emit_library_rule {
             if (grep(/^compile$/, @keywords)) {
                 push(@compile_dependencies, $foo_lib_du);
                 if (grep(/^install$/, @keywords)) {
-                    do install($libdir, $foo_lib_du);
-                    do install_library($libdir, $libfoo_a, $shared_library);
+                    &install($libdir, $foo_lib_du);
+                    &install_library($libdir, $libfoo_a, $shared_library);
                 }
             }
 
@@ -906,7 +906,7 @@ sub emit_library_rule {
     if (grep(/^compile-mindy$/, @keywords) && $enable_mindy) {
         push(@compile_dependencies, "$library-lib.dbc");
         grep(/^install$/, @keywords)
-            && do install($libdir, "$library-lib.dbc");
+            && &install($libdir, "$library-lib.dbc");
     }
     local(@return_val);
     if ($enable_d2c) {
@@ -927,7 +927,7 @@ sub emit_c_file_rule {
     local ($basefile, @headers) = @_;
     local ($objfile) = "$basefile$dot_obj";
 
-    do maybe_emit_d2c_defines();
+    &maybe_emit_d2c_defines();
 
     print "$objfile: \$(SRCDIR)/$basefile.c";
     foreach $header (@headers) {
@@ -961,7 +961,7 @@ sub emit_asm_file_rule {
     local ($basefile, $srcfile, @headers) = @_;
     local ($objfile) = "$basefile$dot_obj";
 
-    do maybe_emit_d2c_defines();
+    &maybe_emit_d2c_defines();
 
     print "$objfile: \$(SRCDIR)/$srcfile.s";
     foreach $header (@headers) {
@@ -991,7 +991,7 @@ sub emit_cppasm_file_rule {
     local ($basefile, $srcfile, @headers) = @_;
     local ($objfile) = "$basefile$dot_obj";
 
-    do maybe_emit_d2c_defines();
+    &maybe_emit_d2c_defines();
 
     print "$objfile: \$(SRCDIR)/$srcfile.s";
     foreach $header (@headers) {
@@ -1023,7 +1023,7 @@ sub emit_cc_file_rule {
     local ($basefile, @headers) = @_;
     local ($objfile) = "$basefile$dot_obj";
 
-    do maybe_emit_d2c_defines();
+    &maybe_emit_d2c_defines();
 
     print "$objfile: \$(SRCDIR)/$basefile.cc";
     foreach $header (@headers) {
@@ -1049,7 +1049,7 @@ sub emit_cc_file_rule {
 # file.
 sub emit_melange_rule {
     local ($basefile, @headers) = @_;
-    do maybe_emit_d2c_defines();
+    &maybe_emit_d2c_defines();
 
     print "$basefile.dylan: \$(SRCDIR)/$basefile.intr";
     foreach $header (@headers) {
@@ -1078,7 +1078,7 @@ sub emit_melange_rule {
 #
 sub emit_parsergen_rule {
     local ($basefile) = @_;
-    do maybe_emit_d2c_defines();
+    &maybe_emit_d2c_defines();
 
     print "$basefile.dylan: \$(SRCDIR)/$basefile.input\n";
     printf("\t$host_platform{'recursive_make_command'}\n", $PARSERGEN_DIR, "");

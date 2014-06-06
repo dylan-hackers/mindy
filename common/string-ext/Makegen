@@ -5,7 +5,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../collection-extensions'
     . ' -L../table-ext';
 
-do emit_library_rule(
+&emit_library_rule(
     'StringExt', '$(BUILDROOT)/force.timestamp', '', 'compile', 
     'compile-mindy', 'install'
 );

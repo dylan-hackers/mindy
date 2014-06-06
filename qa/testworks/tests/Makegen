@@ -9,5 +9,5 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/common-dylan'
     . ' -L..';
 
-do emit_library_rule(
+&emit_library_rule(
     'testworks-test-suite', '$(BUILDROOT)/force.timestamp', '', 'compile', 'install');

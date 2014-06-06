@@ -14,7 +14,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/io'
     . ' -L../carbon';
 
-do emit_library_rule(
+&emit_library_rule(
     'carbon-event-handling', '$(BUILDROOT)/force.timestamp', '', 'compile',
     'no-mindy', 'install'
 );

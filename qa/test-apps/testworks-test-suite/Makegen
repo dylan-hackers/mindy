@@ -12,7 +12,7 @@ $D2CFLAGS         # added by update-libdirs
 
 $CPPFLAGS = '-I$(SRCROOT)/d2c/runtime';
 
-do emit_library_rule(
+&emit_library_rule(
     'testworks-test-suite-app', '$(BUILDROOT)/force.timestamp', '', 'compile');
 
-do emit_run_tests_rule('testworks-test-suite-app');
+&emit_run_tests_rule('testworks-test-suite-app');

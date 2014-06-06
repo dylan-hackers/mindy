@@ -24,45 +24,45 @@ else { $deps = ''; }
 
 $D2C .= ' -p$(SRCROOT)/d2c/compiler/platforms.descr';
 
-do emit_library_rule(
+&emit_library_rule(
     'dylan-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'regexp-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'stream-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'table-ext-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'random-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'matrix-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'coll-ext-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'print-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'format-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-do emit_library_rule(
+&emit_library_rule(
     'format-out-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
-#do emit_library_rule(
+#&emit_library_rule(
 #    'itime-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 #);
-do emit_library_rule(
+&emit_library_rule(
     'getopt-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 
 unless ($features{'no_time'}) { 
-	do emit_library_rule(
+	&emit_library_rule(
 	    'time-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 	);
 }
@@ -100,7 +100,7 @@ sub emit_run_tests_rule {
     push(@compile_dependencies, "run_tests");
 }
 
-do emit_run_tests_rule('dylan-test', 'regexp-test', 'stream-test', 
+&emit_run_tests_rule('dylan-test', 'regexp-test', 'stream-test', 
 		       'table-ext-test', 'random-test', 'matrix-test', 
 		       'coll-ext-test', 'print-test', 'format-test', 
 		       'format-out-test');

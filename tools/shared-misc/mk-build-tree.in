@@ -35,7 +35,7 @@ if ($buildroot) {
 # gen-makefile may have an opinion on the issue, though.
 ($srcroot =~ /^(\w:)|\//) || die("\$srcroot is not absolute:\n  $srcroot\n");
 
-do mk_build_tree($srcroot, '.');
+&mk_build_tree($srcroot, '.');
 
 sub mk_build_tree {
     local ($srcdir, $builddir) = @_;
@@ -83,6 +83,6 @@ sub mk_build_tree {
     }
 
     foreach $subdir (@subdirs) {
-	do mk_build_tree($srcdir.'/'.$subdir, $builddir.'/'.$subdir);
+	&mk_build_tree($srcdir.'/'.$subdir, $builddir.'/'.$subdir);
     }
 }

@@ -6,6 +6,6 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../common/table-ext'
     . ' -L../../common/string-ext';
 
-do emit_library_rule(
+&emit_library_rule(
     'html2txt', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',
 );

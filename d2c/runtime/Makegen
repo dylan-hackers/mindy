@@ -2,18 +2,18 @@ local($common);
 
 if (!$enable_bootstrap || $enable_mindy_bootstrap) {
     if ($host_name eq $target_name) {
-	do compile_subdirs('c-code');
+	&compile_subdirs('c-code');
     };
 
-    do compile_subdirs('dylan',
+    &compile_subdirs('dylan',
 		       'melange',
 #		       'c-ffi',
 		       '../../common/transcendental',
 		       'random',
 		       '../../common');
 
-    do install_from_src($includedir, "runtime.h");
+    &install_from_src($includedir, "runtime.h");
 } else {
-    do compile_subdirs('random',
+    &compile_subdirs('random',
 		       '../../common');
 }

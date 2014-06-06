@@ -8,5 +8,5 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../standard-io'
     . ' -L../format-out';
 
-do emit_library_rule('io', '$(BUILDROOT)/force.timestamp', '',
+&emit_library_rule('io', '$(BUILDROOT)/force.timestamp', '',
 		     'compile', 'compile-mindy', 'install')

@@ -30,7 +30,7 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../../../common/io'
     . ' -L.';
 
-do emit_library_rule(
+&emit_library_rule(
     'duim-test-suite', '$(BUILDROOT)/force.timestamp', '', 'compile');
-do emit_library_rule(
+&emit_library_rule(
     'duim-test-suite-app', 'duim-test-suite.lib.du', '', 'compile');
