@@ -56,7 +56,7 @@
 #include "vec.h"
 #include "error.h"
 #include "def.h"
-#include "../comp/fileops.h"
+#include "../compiler/fileops.h"
 #include "load.h"
 #include "../compat/cygwin.h"
 

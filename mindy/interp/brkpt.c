@@ -41,7 +41,7 @@
 #include "interp.h"
 #include "bool.h"
 #include "print.h"
-#include "../comp/byteops.h"
+#include "../compiler/byteops.h"
 #include "brkpt.h"
 
 static int NextBreakpoint = 1;

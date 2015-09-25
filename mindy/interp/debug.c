@@ -57,7 +57,7 @@
 #include "brkpt.h"
 #include "instance.h"
 #include "parser.h"
-#include "../comp/byteops.h"
+#include "../compiler/byteops.h"
 #include "../compat/cygwin.h"
 
 struct library *CurLibrary = NULL;

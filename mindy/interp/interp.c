@@ -51,7 +51,7 @@
 #include "type.h"
 #include "brkpt.h"
 #include "interp.h"
-#include "../comp/byteops.h"
+#include "../compiler/byteops.h"
 
 #define OPS_PER_TIME_SLICE 100
 

@@ -170,16 +170,6 @@ extern double rint();
 #endif
 
 /*
- * Irix defines FD_ZERO() in sys/types.h using bzero(), but bzero() is
- * not declared.
- */
-#if NO_BSTRING_H
-#   include "std-bstring.h"
-#else
-#   include <bstring.h>
-#endif
-
-/*
  * Visual C++ puts alloca in malloc.h.
  */
 #ifdef WIN32
