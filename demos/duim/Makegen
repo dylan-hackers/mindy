@@ -1,4 +1,0 @@
-&compile_subdirs("duim-gui-test-suite",
-		 "pente",
-		 "reversi",
-		 "scribble");

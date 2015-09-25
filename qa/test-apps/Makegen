@@ -1,2 +1,0 @@
-&compile_subdirs("testworks-test-suite", "libraries-test-suite");
-

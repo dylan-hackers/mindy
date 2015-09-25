@@ -1,9 +1,0 @@
-These sources are a port of the Functional Objects testworks and associated
-tools.  They are functionally identical, though certain features have been
-commented out due to Gwydion Dylan's lack of support (e.g., benchmarking
-statistics, etc.)
-
-The sources are being distributed by the Gwydion Dylan Maintainers under
-the terms of Functional Objects' "Open Source License" (a copy of which
-is included in this folder.)
-

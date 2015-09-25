@@ -1,8 +1,0 @@
-##
-##  This is the makegen file for the carbon library and projects.
-
-&compile_subdirs('carbon', 'sillyballs', 'carbon-event-handling');
-
-if($enable_duim eq 'carbon') {
-    &compile_subdirs('carbon-duim', 'duim-gui-test-suite');
-}

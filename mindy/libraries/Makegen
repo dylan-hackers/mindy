@@ -1,1 +1,0 @@
-&compile_subdirs("dylan", "random", "tk", "inspector");

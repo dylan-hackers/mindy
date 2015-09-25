@@ -1,4 +1,0 @@
-&compile_subdirs("gobject-tool", "gtk+");
-if($enable_duim eq 'gtk') {
-    &compile_subdirs("gtk-duim");
-}

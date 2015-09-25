@@ -1,6 +1,0 @@
-# common makegen stuff for the "cocoa" libraries under d2c.
-# each makegen should &makegen_include("../cocoa-Makegen"), and also
-# add any libraries they use to D2CFLAGS.
-
-$CPPFLAGS = '-I$(SRCROOT)/d2c/runtime -I/System/Library/Frameworks/AppKit.framework/Headers';
-
