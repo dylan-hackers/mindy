@@ -1923,7 +1923,7 @@ static obj_t dylan_df_expt (obj_t df1, obj_t df2)
 
 /* GC stuff. */
 
-static long scav_bignum(struct object *ptr)
+static int scav_bignum(struct object *ptr)
 {
     long length = ((struct bignum *)ptr)->length;
     return (sizeof(struct bignum) + (length - 1) * sizeof(digit_t));
@@ -1937,7 +1937,7 @@ static obj_t trans_bignum(obj_t sf)
 		     TRUE);
 }
 
-static long scav_ratio(struct object *ptr)
+static int scav_ratio(struct object *ptr)
 {
     struct ratio *ratio = (struct ratio *) ptr;
 
@@ -1952,7 +1952,7 @@ static obj_t trans_ratio(obj_t ratio)
     return transport(ratio, sizeof(struct ratio), TRUE);
 }
 
-static long scav_sf(struct object *ptr)
+static int scav_sf(struct object *ptr)
 {
     return sizeof(struct single_float);
 }
@@ -1962,7 +1962,7 @@ static obj_t trans_sf(obj_t sf)
     return transport(sf, sizeof(struct single_float), TRUE);
 }
 
-static long scav_df(struct object *ptr)
+static int scav_df(struct object *ptr)
 {
     return sizeof(struct double_float);
 }
@@ -1972,7 +1972,7 @@ static obj_t trans_df(obj_t sf)
     return transport(sf, sizeof(struct double_float), TRUE);
 }
 
-static long scav_xf(struct object *ptr)
+static int scav_xf(struct object *ptr)
 {
     return sizeof(struct extended_float);
 }
