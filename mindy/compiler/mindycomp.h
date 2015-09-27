@@ -50,7 +50,7 @@ extern struct symbol *LibraryName;
 /* Don't call check_malloc yourself, always use the malloc macro.
  * Has no parameter list so that ext-init.c can read this file 
  * without knowing about a size_t.
- * Also, try to keep this section consistent with interp/mindy.h
+ * Also, try to keep this section consistent with interpreter/mindy.h
  */
 void *check_malloc();
 #ifdef malloc

@@ -359,7 +359,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/* Try to keep this consistent with interp/mindy.c */
+/* Try to keep this consistent with interpreter/mindy.c */
 
 #undef malloc
 void *check_malloc(size_t sz, char *file, int line)
