@@ -52,13 +52,7 @@
 #include "str.h"
 #include "print.h"
 #include "coll.h"
-#ifdef HAVE_LIBDLD
-#   ifdef HAVE_LIBDLDELF
-#      include "../compat/shl.h"
-#   else
-#      include <dl.h>
-#   endif
-#endif
+#include "shl.h"
 
 obj_t obj_CPointerClass = NULL;	  /* all instances of StaticTypeClass are
 				     subclasses of this one */
@@ -79,8 +73,6 @@ obj_t make_c_pointer(obj_t /* <static-pointer-class> */ cls, void *ptr)
 }
 
 /* Dylan routines. */
-
-#ifdef HAVE_LIBDLD
 
 obj_t obj_SharedFileClass = NULL;
 
@@ -131,41 +123,16 @@ obj_t  load_program_file()
     obj_ptr(struct shared_file *, retval)->handles[0] = PROG_HANDLE;
     return retval;
 }
-#else
-
-/* Reads the symtab (in some machine specific format) from the main program 
-   and returns a "foreign_file" object which allows access to those symbols */
-obj_t  load_program_file()
-{
-    error("Cannot do dynamic loading on this architecture -- \n"
-	  "wanted to examine %s", make_byte_string(exec_file_name));
-    return obj_False;
-}
-
-/* Links the named object files for dynamic loading, reads it in, and returns
-   a "foreign_file" object which allows access to its symbols.  If
-   names is a non-empty list (of byte-strings), then make ld "undefine"
-   these names so that they will show up in the linked version. */
-obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
-{
-    error("Cannot do dynamic loading on this architecture -- tried to load %=",
-	  HEAD(c_files));
-    return obj_False;
-}
-
-#endif /* HAVE_LIBDLD */
 
 static void print_foreign_file(obj_t file)
 {
     printf("{<foreign-file> %s}", string_chars(FOREIGN_FILE(file)->file_name));
 }
 
-#ifdef HAVE_LIBDLD
 static void print_shared_foreign_file(obj_t file)
 {
     printf("{<shared-file> %s}", string_chars(FOREIGN_FILE(file)->file_name));
 }
-#endif /* HAVE_LIBDLD */
 
 static void print_c_pointer(obj_t ptr)
 {
@@ -202,7 +169,6 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
     else if (!instancep(lookup, obj_ForeignFileClass)) {
 	error("Keyword file: is not a <foreign-file>: %=", lookup);
 	return retval;		/* make lint happy */
-#ifdef HAVE_LIBDLD
     } else if (instancep(lookup, obj_SharedFileClass)) {
 	shl_t *files = obj_ptr(struct shared_file *, lookup)->handles;
 	int file_count = obj_ptr(struct shared_file *, lookup)->file_count;
@@ -212,7 +178,6 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
 	    if (shl_findsym(&files[i], string, TYPE_PROCEDURE, &ptr) == 0)
 		return(make_c_function(make_byte_string(string), ptr));
 	return retval;
-#endif
     } else {
 	syms = FOREIGN_FILE(lookup)->syms;
 	sym_count = FOREIGN_FILE(lookup)->sym_count;
@@ -247,7 +212,6 @@ obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
     else if (!instancep(lookup, obj_ForeignFileClass)) {
 	error("Keyword file: is not a <foreign-file>: %=", lookup);
 	return retval;		/* make lint happy */
-#ifdef HAVE_LIBDLD
     } else if (instancep(lookup, obj_SharedFileClass)) {
 	shl_t *files = obj_ptr(struct shared_file *, lookup)->handles;
 	int file_count = obj_ptr(struct shared_file *, lookup)->file_count;
@@ -257,7 +221,6 @@ obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
 	    if (shl_findsym(&files[i], string, TYPE_UNDEFINED, &ptr) == 0)
 		return(make_c_pointer(obj_CPointerClass, ptr));
 	return retval;
-#endif
     } else {
 	syms = FOREIGN_FILE(lookup)->syms;
 	sym_count = FOREIGN_FILE(lookup)->sym_count;
@@ -641,7 +604,6 @@ static obj_t trans_foreign_file(obj_t cptr)
 		     TRUE);
 }
 
-#ifdef HAVE_LIBDLD
 static int scav_shared_file(struct object *obj)
 {
     scavenge(&((struct shared_file *)obj)->file_name);
@@ -657,7 +619,6 @@ static obj_t trans_shared_file(obj_t cptr)
 			* sizeof(shl_t)),
 		     TRUE);
 }
-#endif /* HAVE_LIBDLD */
 
 void scavenge_c_roots(void)
 {
@@ -678,16 +639,12 @@ void make_c_classes(void)
     obj_ForeignFileClass = make_abstract_class(0);
     obj_ArchivedFileClass
 	= make_builtin_class(scav_foreign_file, trans_foreign_file);
-#ifdef HAVE_LIBDLD
     obj_SharedFileClass 
 	= make_builtin_class(scav_shared_file, trans_shared_file);
-#endif /* HAVE_LIBDLD */
 
     add_constant_root(&obj_CPointerClass);
     add_constant_root(&obj_ForeignFileClass);
-#ifdef HAVE_LIBDLD
     add_constant_root(&obj_SharedFileClass);
-#endif /* HAVE_LIBDLD */
     add_constant_root(&obj_ArchivedFileClass);
 }
 
@@ -701,11 +658,9 @@ void init_c_classes(void)
     init_builtin_class(obj_ArchivedFileClass, "<archived-file>",
 		       obj_ForeignFileClass, NULL);
     def_printer(obj_ArchivedFileClass, print_foreign_file);
-#ifdef HAVE_LIBDLD
     init_builtin_class(obj_SharedFileClass, "<shared-file>",
 		       obj_ForeignFileClass, NULL);
     def_printer(obj_ForeignFileClass, print_shared_foreign_file);
-#endif /* HAVE_LIBDLD */
 }
 
 void init_c_functions(void)

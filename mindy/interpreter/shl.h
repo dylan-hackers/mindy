@@ -7,7 +7,7 @@
 /*
 ** This module approximates the HP shl_* functions for ELF based systems.
 */
-typedef void *shl_t; 
+typedef void *shl_t;
 
 #define         NO_INITIALIZER  ((void *)(-1))
 
@@ -19,7 +19,7 @@ typedef void *shl_t;
 #define BIND_NONFATAL   0x8
 #define BIND_NOSTART    0x10
 #define BIND_VERBOSE    0x20
-#define BIND_RESTRICTED 0x40  
+#define BIND_RESTRICTED 0x40
 
 #define TYPE_UNDEFINED  0
 #define TYPE_PROCEDURE  3
@@ -41,8 +41,8 @@ extern int shl_unload ( shl_t handle);
 extern int shl_get ( int index, struct shl_descriptor **desc);
 extern int shl_gethandle ( shl_t handle, struct shl_descriptor **desc);
 extern int shl_definesym ( const char *sym, short type, long value, int flags);
-extern int shl_getsymbols ( shl_t handle, short type, int flags, 
-                            void *(*memory)(), struct shl_symbol **symbols); 
+extern int shl_getsymbols ( shl_t handle, short type, int flags,
+                            void *(*memory)(), struct shl_symbol **symbols);
 #endif
 
 

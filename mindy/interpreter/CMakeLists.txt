@@ -35,6 +35,7 @@ SET(mindy_SOURCES
     num.c
     obj.c
     print.c
+    shl.c
     str.c
     sym.c
     table.c
@@ -44,7 +45,6 @@ SET(mindy_SOURCES
     vec.c
     weak.c
     ../compat/cygwin.c
-    ../compat/shl.c
     ../../common/time/time-portability.c
 )
 
@@ -76,6 +76,7 @@ SET(mindy_HEADERS
     obj.h
     parser.h
     print.h
+    shl.h
     str.h
     sym.h
     table.h
@@ -85,7 +86,6 @@ SET(mindy_HEADERS
     vec.h
     weak.h
     ../compat/cygwin.h
-    ../compat/shl.h
     ../config.h
 )
 
