@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -68,11 +68,11 @@ obj_t make_weak_pointer(obj_t object)
 obj_t dylan_make_weak_pointer(obj_t class, obj_t object)
 {
     if (object == obj_Unbound) {
-	error("Must supply the object when making weak pointers.");
-	return NULL;
+        error("Must supply the object when making weak pointers.");
+        return NULL;
     }
     else
-	return make_weak_pointer(object);
+        return make_weak_pointer(object);
 }
 
 void dylan_weak_pointer_object(obj_t meth, struct thread *thread, obj_t *args)
@@ -95,18 +95,18 @@ void dylan_weak_pointer_object(obj_t meth, struct thread *thread, obj_t *args)
 void weak_pointer_gc_setup(void)
 {
     WeakPointers = NULL;
-}    
+}
 
 static int scav_weak_pointer(struct object *obj)
 {
     struct weak_pointer *weakptr = (struct weak_pointer *)obj;
 
     if (!weakptr->broken && obj_is_ptr(weakptr->object)) {
-	weakptr->next = WeakPointers;
-	WeakPointers = weakptr;
+        weakptr->next = WeakPointers;
+        WeakPointers = weakptr;
     }
     else
-	scavenge(&weakptr->object);
+        scavenge(&weakptr->object);
 
     return sizeof(struct weak_pointer);
 }
@@ -121,14 +121,14 @@ void break_weak_pointers(void)
     struct weak_pointer *w, *n;
 
     for (w = WeakPointers; w != NULL; w = n) {
-	if (object_collected(w->object)) {
-	    w->object = obj_False;
-	    w->broken = TRUE;
-	}
-	else
-	    scavenge(&w->object);
-	n = w->next;
-	w->next = NULL;
+        if (object_collected(w->object)) {
+            w->object = obj_False;
+            w->broken = TRUE;
+        }
+        else
+            scavenge(&w->object);
+        n = w->next;
+        w->next = NULL;
     }
 }
 
@@ -138,30 +138,30 @@ void break_weak_pointers(void)
 void make_weak_classes(void)
 {
     obj_WeakPointerClass
-	= make_builtin_class(scav_weak_pointer, trans_weak_pointer);
+        = make_builtin_class(scav_weak_pointer, trans_weak_pointer);
     add_constant_root(&obj_WeakPointerClass);
 }
 
 void init_weak_classes(void)
 {
     init_builtin_class(obj_WeakPointerClass, "<weak-pointer>", obj_ObjectClass,
-		       NULL);
+                       NULL);
 }
 
 void init_weak_functions(void)
 {
     define_method("make", list1(singleton(obj_WeakPointerClass)), FALSE,
-		  list1(pair(symbol("object"), obj_Unbound)),
-		  FALSE, obj_WeakPointerClass, dylan_make_weak_pointer);
-    define_generic_function("weak-pointer-object", 
-			    list1(obj_WeakPointerClass), 
-			    FALSE, obj_False, FALSE,
-			    list2(obj_ObjectClass, obj_BooleanClass),
-			    obj_False);
+                  list1(pair(symbol("object"), obj_Unbound)),
+                  FALSE, obj_WeakPointerClass, dylan_make_weak_pointer);
+    define_generic_function("weak-pointer-object",
+                            list1(obj_WeakPointerClass),
+                            FALSE, obj_False, FALSE,
+                            list2(obj_ObjectClass, obj_BooleanClass),
+                            obj_False);
     add_method(find_variable(module_BuiltinStuff,symbol("weak-pointer-object"),
-			     FALSE, FALSE)->value,
-	       make_raw_method("weak-pointer-object",
-			       list1(obj_WeakPointerClass), FALSE, obj_False,
-			       FALSE, list2(obj_ObjectClass, obj_BooleanClass),
-			       obj_False, dylan_weak_pointer_object));
+                             FALSE, FALSE)->value,
+               make_raw_method("weak-pointer-object",
+                               list1(obj_WeakPointerClass), FALSE, obj_False,
+                               FALSE, list2(obj_ObjectClass, obj_BooleanClass),
+                               obj_False, dylan_weak_pointer_object));
 }

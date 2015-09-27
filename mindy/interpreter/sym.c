@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -69,7 +69,7 @@ static unsigned hash_name(char *name)
     unsigned hash = 0;
 
     for (ptr = (unsigned char *)name; *ptr; ptr++)
-	hash = ((hash<<5)|(hash>>27)) ^ (*ptr & ~('a'^'A'));
+        hash = ((hash<<5)|(hash>>27)) ^ (*ptr & ~('a'^'A'));
 
     return hash;
 }
@@ -79,18 +79,18 @@ static boolean same_name(char *name1, char *name2)
     char c1, c2;
 
     while (1) {
-	c1 = *name1++;
-	c2 = *name2++;
-	
-	if (c1) {
-	    if ((isupper(c1) ? tolower(c1) : c1)
-		!= (isupper(c2) ? tolower(c2) : c2))
-		return FALSE;
-	}
-	else if (c2)
-	    return FALSE;
-	else
-	    return TRUE;
+        c1 = *name1++;
+        c2 = *name2++;
+
+        if (c1) {
+            if ((isupper(c1) ? tolower(c1) : c1)
+                != (isupper(c2) ? tolower(c2) : c2))
+                return FALSE;
+        }
+        else if (c2)
+            return FALSE;
+        else
+            return TRUE;
     }
 }
 
@@ -102,25 +102,25 @@ static void rehash_table(void)
     int i;
 
     if (symtab_length < 1024)
-	new_length = symtab_length << 1;
+        new_length = symtab_length << 1;
     else
-	new_length = symtab_length + 1024;
+        new_length = symtab_length + 1024;
 
     new_table = (obj_t *)malloc(sizeof(obj_t)*new_length);
 
     ptr = new_table;
     for (i = 0; i < new_length; i++)
-	*ptr++ = obj_False;
+        *ptr++ = obj_False;
 
     ptr = symtab_table;
     for (i = 0; i < symtab_length; i++) {
-	obj_t sym, next;
-	for (sym = *ptr++; sym != obj_False; sym = next) {
-	    int index = SYMBOL(sym)->hash % new_length;
-	    next = SYMBOL(sym)->next;
-	    SYMBOL(sym)->next = new_table[index];
-	    new_table[index] = sym;
-	}
+        obj_t sym, next;
+        for (sym = *ptr++; sym != obj_False; sym = next) {
+            int index = SYMBOL(sym)->hash % new_length;
+            next = SYMBOL(sym)->next;
+            SYMBOL(sym)->next = new_table[index];
+            new_table[index] = sym;
+        }
     }
 
     free(symtab_table);
@@ -136,12 +136,12 @@ obj_t symbol(char *name)
     obj_t sym;
 
     for (sym = symtab_table[index];
-	 sym != obj_False;
-	 sym = SYMBOL(sym)->next) {
-	if (SYMBOL(sym)->hash == hash) {
-	    if (same_name(name, (char *) string_chars(SYMBOL(sym)->name)))
-		return sym;
-	}
+         sym != obj_False;
+         sym = SYMBOL(sym)->next) {
+        if (SYMBOL(sym)->hash == hash) {
+            if (same_name(name, (char *) string_chars(SYMBOL(sym)->name)))
+                return sym;
+        }
     }
 
     sym = alloc(obj_SymbolClass, sizeof(struct symbol));
@@ -149,10 +149,10 @@ obj_t symbol(char *name)
     SYMBOL(sym)->next = symtab_table[index];
     SYMBOL(sym)->hash = hash;
     symtab_table[index] = sym;
-    
+
     symtab_entries++;
     if (symtab_entries >= symtab_threshold)
-	rehash_table();
+        rehash_table();
 
     return sym;
 }
@@ -186,7 +186,7 @@ static obj_t symbol_as_string(obj_t class, obj_t symbol)
 static obj_t symbol_object_hash(obj_t sym)
 {
     return make_fixnum(sym_hash(sym));
-}    
+}
 
 
 /* Printing. */
@@ -221,7 +221,7 @@ void scavenge_symbol_roots(void)
 
     ptr = symtab_table;
     for (i = 0; i < symtab_length; i++)
-	scavenge(ptr++);
+        scavenge(ptr++);
 }
 
 
@@ -244,7 +244,7 @@ void init_symbol_tables(void)
     symtab_table = (obj_t *)malloc(sizeof(obj_t)*64);
     ptr = symtab_table;
     for (i = 0; i < 64; i++)
-	*ptr++ = obj_False;
+        *ptr++ = obj_False;
 }
 
 void init_sym_classes(void)
@@ -256,17 +256,17 @@ void init_sym_classes(void)
 void init_sym_functions(void)
 {
     define_generic_function("as", list2(obj_TypeClass, obj_ObjectClass),
-			    FALSE, obj_False, FALSE,
-			    list1(obj_ObjectClass), obj_False);
+                            FALSE, obj_False, FALSE,
+                            list1(obj_ObjectClass), obj_False);
     define_method("as", list2(singleton(obj_SymbolClass), obj_ByteStringClass),
-		  FALSE, obj_False, FALSE, obj_SymbolClass, string_as_symbol);
+                  FALSE, obj_False, FALSE, obj_SymbolClass, string_as_symbol);
     define_method("as", list2(singleton(obj_StringClass), obj_SymbolClass),
-		  FALSE, obj_False, FALSE, obj_ByteStringClass,
-		  symbol_as_string);
+                  FALSE, obj_False, FALSE, obj_ByteStringClass,
+                  symbol_as_string);
     /* same method as above, only for singleton <byte-string> */
     define_method("as", list2(singleton(obj_ByteStringClass), obj_SymbolClass),
-		  FALSE, obj_False, FALSE, obj_ByteStringClass,
-		  symbol_as_string);
+                  FALSE, obj_False, FALSE, obj_ByteStringClass,
+                  symbol_as_string);
     define_method("symbol-hash", list1(obj_SymbolClass), FALSE, obj_False,
-		  FALSE, obj_FixnumClass, symbol_object_hash);
+                  FALSE, obj_FixnumClass, symbol_object_hash);
 }

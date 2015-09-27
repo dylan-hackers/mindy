@@ -15,15 +15,15 @@ synopsis:  This Module implements some useful methods on collections.
 //  Use and copying of this software and preparation of derivative
 //  works based on this software are permitted, including commercial
 //  use, provided that the following conditions are observed:
-// 
+//
 //  1. This copyright notice must be retained in full on any copies
 //     and on appropriate parts of any derivative works. (Other names
 //     and years may be added, so long as no existing ones are removed.)
-// 
+//
 //  This software is made available "as is".  Neither the authors nor
 //  Carnegie Mellon University make any warranty about the software,
 //  its performance, or its conformity to any specification.
-// 
+//
 //  Bug reports, questions, comments, and suggestions should be sent by
 //  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 
@@ -177,12 +177,12 @@ define function unfold
     (pred :: <function>, f :: <function>, g :: <function>, seed)
  => new-list :: <list>;
   local method recur (seed)
-	  if (pred(seed))
-	    #();
-	  else
-	    pair(f(seed), recur(g(seed)));
-	  end if;
-	end method;
+          if (pred(seed))
+            #();
+          else
+            pair(f(seed), recur(g(seed)));
+          end if;
+        end method;
   recur(seed);
 end function unfold;
 
@@ -193,12 +193,12 @@ define function unfold/tail
      e :: <function>, seed)
  => new-list :: <list>;
   local method recur (seed)
-	  if (pred(seed))
-	    e(seed);
-	  else
-	    pair(f(seed), recur(g(seed)));
-	  end if;
-	end method;
+          if (pred(seed))
+            e(seed);
+          else
+            pair(f(seed), recur(g(seed)));
+          end if;
+        end method;
   recur(seed);
 end function unfold/tail;
 
@@ -209,12 +209,12 @@ end function unfold/tail;
 //
 define function foldl (cons :: <function>, nil, lst :: <list>)
   local method recur (lst :: <list>, acc)
-	  if (pair?(lst))
-	    recur(tail(lst), cons(head(lst), acc));
-	  else
-	    acc;
-	  end if;
-	end method recur;
+          if (pair?(lst))
+            recur(tail(lst), cons(head(lst), acc));
+          else
+            acc;
+          end if;
+        end method recur;
   recur(lst, nil);
 end function foldl;
 
@@ -224,12 +224,12 @@ end function foldl;
 //
 define function foldr (cons :: <function>, nil, lst :: <list>)
   local method recur (lst :: <list>)
-	  if (pair?(lst))
-	    cons(head(lst), recur(tail(lst)));
-	  else
-	    nil;
-	  end if;
-	end method;
+          if (pair?(lst))
+            cons(head(lst), recur(tail(lst)));
+          else
+            nil;
+          end if;
+        end method;
   recur(lst);
 end function foldr;
 
@@ -238,12 +238,12 @@ end function foldr;
 //
 define function pair-foldl (cons :: <function>, nil, lst :: <list>)
   local method recur (lst :: <list>, acc)
-	  if (pair?(lst))
-	    recur(tail(lst), cons(lst, acc));
-	  else
-	    acc;
-	  end if;
-	end method;
+          if (pair?(lst))
+            recur(tail(lst), cons(lst, acc));
+          else
+            acc;
+          end if;
+        end method;
   recur(lst, nil);
 end function pair-foldl;
 
@@ -252,22 +252,22 @@ end function pair-foldl;
 //
 define function pair-foldr (cons :: <function>, nil, lst :: <list>)
   local method recur (lst :: <list>)
-	  if (pair?(lst))
-	    cons(lst, recur(tail(lst)));
-	  else
-	    nil;
-	  end if;
-	end method;
+          if (pair?(lst))
+            cons(lst, recur(tail(lst)));
+          else
+            nil;
+          end if;
+        end method;
   recur(lst);
-end function pair-foldr;	  
+end function pair-foldr;
 
 // REDUCE-L -- a variant of FOLDL. RZERO should be a "right zero" of
 // the two-argument procedure F, that is, for any value X acceptable
 // to F,
-//	f(x, rzero) = x
+//        f(x, rzero) = x
 // REDUCE-L has the following definition:
-//	If LIS = (),  return LZERO.
-//	If LIS = (x), return X.
+//        If LIS = (),  return LZERO.
+//        If LIS = (x), return X.
 // Otherwise, return (foldl f (car x) (cdr x)).  Note that RZERO is
 // used *only* in the empty-list case.  You typically use REDUCE-L when
 // applying F is expensive and you'd like to avoid the extra
@@ -293,12 +293,12 @@ end function reduce-l;
 define function reduce-r (cons :: <function>, nil, lst :: <list>)
   if (pair?(lst))
     local method recur(hd, lst)
-	    if (pair?(lst))
-	      cons(hd, recur(head(lst), tail(lst)));
-	    else
-	      hd;
-	    end if;
-	  end method;
+            if (pair?(lst))
+              cons(hd, recur(head(lst), tail(lst)));
+            else
+              hd;
+            end if;
+          end method;
     recur(head(lst), tail(lst));
   else
     nil;
@@ -309,12 +309,12 @@ end function reduce-r;
 //
 define function heads (lists :: <list>) => new-list :: <list>;
   local method recur (lst :: <list>)
-	  if (pair?(lst))
-	    pair(head(head(lst)), recur(tail(lst)));
-	  else
-	    #();
-	  end if;
-	end method;
+          if (pair?(lst))
+            pair(head(head(lst)), recur(tail(lst)));
+          else
+            #();
+          end if;
+        end method;
   recur(lists);
 end function heads;
 
@@ -322,12 +322,12 @@ end function heads;
 //
 define function tails (lists :: <list>)
   local method recur (lst :: <list>)
-	  if (pair?(lst))
-	    pair(tail(head(lst)), recur(tail(lst)));
-	  else
-	    #();
-	  end if;
-	end method;
+          if (pair?(lst))
+            pair(tail(head(lst)), recur(tail(lst)));
+          else
+            #();
+          end if;
+        end method;
   recur(lists);
 end function tails;
 
@@ -348,16 +348,16 @@ define method concatenate-map
  => new-list :: <list>;
   if (empty?(lists)) // fast path
     foldr(method (elt, acc) concatenate(func(list), acc) end,
-	  #(), list);
-  else 
+          #(), list);
+  else
     local method recur (lists :: <list>)
-	    if (every?(pair?, lists))
-	      concatenate(apply(func, head(lists)),
-			  recur(tails(lists)));
-	    else
-	      #();
-	    end if;
-	  end method recur;
+            if (every?(pair?, lists))
+              concatenate(apply(func, head(lists)),
+                          recur(tails(lists)));
+            else
+              #();
+            end if;
+          end method recur;
     recur(pair(list, as(<list>, lists)));
   end if;
 end method concatenate-map;
@@ -370,21 +370,21 @@ define function pair-do
  => false :: <boolean>;
   if (empty?(lists)) // fast path
     local method recurse (lst)
-	    if (pair?(lst))
-	      let t = tail(lst); // grab the tail in case FUNC sets it
-	      func(lst);
-	      recurse(t);
-	    end if;
-	  end method;
+            if (pair?(lst))
+              let t = tail(lst); // grab the tail in case FUNC sets it
+              func(lst);
+              recurse(t);
+            end if;
+          end method;
     recurse(lst);
   else
     local method recur (lst)
-	    if (every?(pair?, lst))
-	      let t = tails(lst);
-	      apply(func, lst);
-	      recur(t);
-	    end if;
-	  end method;
+            if (every?(pair?, lst))
+              let t = tails(lst);
+              apply(func, lst);
+              recur(t);
+            end if;
+          end method;
     recur(pair(list, as(<list>, lists)));
   end if;
   #f;
@@ -408,24 +408,24 @@ define method choose-map
  => new-list :: <list>;
   if (empty?(lists)) // fast path
     foldr(method (elt, acc)
-	    let res = func(elt);
-	    if (pred(res)) pair(res, acc) else acc end if;
-	  end method,
-	  #(), lst);
+            let res = func(elt);
+            if (pred(res)) pair(res, acc) else acc end if;
+          end method,
+          #(), lst);
   else
     local method recur (lst)
-	    if (every?(pair, lst))
-	      let t = tails(lst);
-	      let res = apply(func, heads(lst));
-	      if (pred(res))
-		pair(res, recur(tails(lst)));
-	      else
-		recur(t);
-	      end if;
-	    else
-	      #();
-	    end if;
-	  end method;
+            if (every?(pair, lst))
+              let t = tails(lst);
+              let res = apply(func, heads(lst));
+              if (pred(res))
+                pair(res, recur(tails(lst)));
+              else
+                recur(t);
+              end if;
+            else
+              #();
+            end if;
+          end method;
     recur(pair(list, as(<list>, lists)));
   end if;
 end method choose-map;
@@ -453,14 +453,14 @@ end function partition;
 // sequence SEQ.
 //
 define function assoc (elt, seq :: <sequence>,
-		       #key key = head, test = \=)
+                       #key key = head, test = \=)
   find(method (entry) test(elt, key(entry)) end, seq);
 end function assoc;
 
 // APAIR -- cons a new pair #(KEY, DATUM) on the head of ALIST.
 //
 define function apair (key, datum, aseq :: <sequence>,
-		       #key cons = pair, add: add-fun = xpair)
+                       #key cons = pair, add: add-fun = xpair)
  => new-aseq :: <sequence>;
   add-fun(aseq, cons(key, datum));
 end function apair;
@@ -469,8 +469,8 @@ end function apair;
 // like an alist.
 //
 define function alist-copy (alist :: <sequence>,
-			    #key key = head, datum = tail,
-			    cons = pair)
+                            #key key = head, datum = tail,
+                            cons = pair)
  => new-alist :: <sequence>;
   map(method (elt) cons(key(elt), datum(elt)) end, alist);
 end function alist-copy;
@@ -478,9 +478,9 @@ end function alist-copy;
 // ALIST-DELETE -- delete all members keyed by ELT-KEY from ALIST.
 //
 define function alist-delete (elt, alist :: <sequence>,
-			      #key key = head, test = \=)
+                              #key key = head, test = \=)
   choose(method (entry) ~test(elt, key(entry)) end,
-	 alist);
+         alist);
 end function alist-delete;
 
 // SATISFIES -- find the first element that satifies PRED.
@@ -500,16 +500,16 @@ end method satisfies;
 // INDEX -- find the position of ELT is SEQ.
 //
 define method index (elt, seq :: <sequence>,
-		     #key test = \=, failure = #f)
+                     #key test = \=, failure = #f)
  => index;
   satisfies(method (entry) test(elt, entry) end,
-	    seq, failure: failure);
+            seq, failure: failure);
 end method index;
 
 // FIND -- returns the first true value produced by PRED.
 //
 define method find (pred :: <function>, seq :: <sequence>,
-		    #key failure = #f)
+                    #key failure = #f)
   let res = find-tail(pred, seq);
   if (res) res[0] else #f end;
 end method find;
@@ -518,7 +518,7 @@ end method find;
 // first element that satisfies PRED.
 //
 define method find-tail (pred :: <function>, seq :: <sequence>,
-			 #key failure = #f)
+                         #key failure = #f)
   let index = satisfies(pred, seq);
   if (index = 0)
     seq;
@@ -532,43 +532,43 @@ end method find-tail;
 // FIND-TAIL -- specialized version for lists.
 //
 define method find-tail (pred :: <function>, lst :: <pair>,
-			 #key failure = #f)
+                         #key failure = #f)
   local method recur (elt, lst :: <list>)
-	  if (pair?(lst))
-	    if (pred(elt)) lst else recur(head(lst), tail(lst)) end;
-	  else
-	    failure;
-	  end if;
-	end method recur;
+          if (pair?(lst))
+            if (pred(elt)) lst else recur(head(lst), tail(lst)) end;
+          else
+            failure;
+          end if;
+        end method recur;
   recur(head(lst), tail(lst));
 end method find-tail;
 
 define method find-tail (pred :: <function>, lst :: <empty-list>,
-			 #key failure = #f);
+                         #key failure = #f);
   failure;
 end method find-tail;
 
 // PRECEDES? -- checks whether ELT-1 precedes ELT-2 in SEQ.
 //
 define method precedes?(elt-1, elt-2, seq :: <sequence>,
-			#key test = \=, not-found = #f)
+                        #key test = \=, not-found = #f)
  => precedes? :: <boolean>;
   let elt-1-seen? = #f;
   let elt-2-seen? = #f;
   block (return)
     for (elt in seq)
       if (test(elt, elt-1))
-	if (elt-2-seen?)
-	  return(#f);
-	else
-	  elt-1-seen? := #t;
-	end if;
+        if (elt-2-seen?)
+          return(#f);
+        else
+          elt-1-seen? := #t;
+        end if;
       elseif (test(elt, elt-2))
-	if (elt-1-seen?)
-	  return(#t);
-	else
-	  elt-2-seen? := #t;
-	end if;
+        if (elt-1-seen?)
+          return(#t);
+        else
+          elt-2-seen? := #t;
+        end if;
       end if;
     end for;
     not-found;

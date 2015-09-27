@@ -1,7 +1,7 @@
 module:   regular-expressions
 author:   Nick Kramer (nkramer@cs.cmu.edu)
-synopsis: This provides a useable interface for users. Functions 
-	  defined outside this file are really too strange and quirky 
+synopsis: This provides a useable interface for users. Functions
+          defined outside this file are really too strange and quirky
           to be of use to people.
 copyright: see below
 
@@ -10,25 +10,25 @@ copyright: see below
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -67,9 +67,9 @@ copyright: see below
 // What we use for keys in the *regexp-cache*.
 //
 define class <cache-key> (<object>)
-  constant slot regexp-string :: <string>, 
+  constant slot regexp-string :: <string>,
     required-init-keyword: #"regexp-string";
-  constant slot character-set-type :: <class>, 
+  constant slot character-set-type :: <class>,
     required-init-keyword: #"character-set-type";
 end class <cache-key>;
 
@@ -92,27 +92,27 @@ end class <cache-element>;
 //
 // This used to compare strings with == rather than =, but this leaks
 // lots of memory
-// 
+//
 define class <regexp-cache> (<table>) end;
 
 // table-protocol{<regexp-cache>} -- method on imported G.F.
 //
-define method table-protocol (table :: <regexp-cache>) 
+define method table-protocol (table :: <regexp-cache>)
  => (equal? :: <function>, hash :: <function>);
   values(method (key1 :: <cache-key>, key2 :: <cache-key>) // equal?
-	  => res :: <boolean>;
-	   key1.regexp-string = key2.regexp-string
-	     & key1.character-set-type == key2.character-set-type;
-	 end method,
-	 method (key :: <cache-key>, initial-state)
-	  => (id :: <integer>, state); // hash()
-	   let (string-id, string-state)
-	     = string-hash(key.regexp-string, initial-state);
-	   let (set-type-id, set-type-state) 
-	     = object-hash(key.character-set-type, string-state);
-	   let id = merge-hash-ids(string-id, set-type-id, ordered: #t);
-	   values(id, set-type-state);
-	 end method);
+          => res :: <boolean>;
+           key1.regexp-string = key2.regexp-string
+             & key1.character-set-type == key2.character-set-type;
+         end method,
+         method (key :: <cache-key>, initial-state)
+          => (id :: <integer>, state); // hash()
+           let (string-id, string-state)
+             = string-hash(key.regexp-string, initial-state);
+           let (set-type-id, set-type-state)
+             = object-hash(key.character-set-type, string-state);
+           let id = merge-hash-ids(string-id, set-type-id, ordered: #t);
+           values(id, set-type-state);
+         end method);
 end method table-protocol;
 
 // *regexp-cache* -- internal
@@ -126,18 +126,18 @@ define constant *regexp-cache* = make(<regexp-cache>);
 // Tries to use the cached version of the regexp, and if not possible,
 // parses it and adds it to the cache.
 //
-define inline function parse-or-use-cached 
-    (regexp :: <string>, character-set-type :: <class>) 
+define inline function parse-or-use-cached
+    (regexp :: <string>, character-set-type :: <class>)
  => (parsed-regexp :: <parsed-regexp>, last-group :: <integer>);
-  let key = make(<cache-key>, regexp-string: regexp, 
-		 character-set-type: character-set-type); 
+  let key = make(<cache-key>, regexp-string: regexp,
+                 character-set-type: character-set-type);
   let (cached?, cached-value) = key-exists?(*regexp-cache*, key);
   if (cached?)
     values(cached-value.parse-tree, cached-value.last-group);
   else
     let (parsed-regexp, last-group) = parse(regexp, character-set-type);
     *regexp-cache*[key] := make(<cache-element>, parse-tree: parsed-regexp,
-				last-group: last-group);
+                                last-group: last-group);
     values(parsed-regexp, last-group);
   end if;
 end function parse-or-use-cached;
@@ -154,30 +154,30 @@ define function regexp-position
      end: big-end = #f, case-sensitive = #f)
  => (regexp-start :: false-or(<integer>), #rest marks :: false-or(<integer>));
   let substring = make(<substring>, string: big, start: big-start,
-		       end: big-end | big.size);
-  let char-set-class = if (case-sensitive) 
-			 <case-sensitive-character-set>;
-		       else
-			 <case-insensitive-character-set>;
-		       end if;
-  let (parsed-regexp, last-group) 
+                       end: big-end | big.size);
+  let char-set-class = if (case-sensitive)
+                         <case-sensitive-character-set>;
+                       else
+                         <case-insensitive-character-set>;
+                       end if;
+  let (parsed-regexp, last-group)
     = parse-or-use-cached(regexp, char-set-class);
 
   let (matched, marks)
     = if (parsed-regexp.is-anchored?)
-	anchored-match-root?(parsed-regexp, substring, case-sensitive,
-			     last-group + 1, #f);
+        anchored-match-root?(parsed-regexp, substring, case-sensitive,
+                             last-group + 1, #f);
       else
-	let initial = parsed-regexp.initial-substring;
-	let searcher = ~initial.empty?
-	  & make-substring-positioner(initial, case-sensitive: case-sensitive);
-	match-root?(parsed-regexp, substring, case-sensitive, last-group + 1,
-		    searcher);
+        let initial = parsed-regexp.initial-substring;
+        let searcher = ~initial.empty?
+          & make-substring-positioner(initial, case-sensitive: case-sensitive);
+        match-root?(parsed-regexp, substring, case-sensitive, last-group + 1,
+                    searcher);
       end if;
-  if (matched)  
+  if (matched)
     apply(values, marks);
   else
-    #f  
+    #f
   end if;
 end function regexp-position;
 
@@ -187,16 +187,16 @@ end function regexp-position;
 // now ignored.
 //
 define inline function make-regexp-positioner
-    (regexp :: <string>, 
+    (regexp :: <string>,
      #key byte-characters-only = #f, need-marks = #t, maximum-compile = #f,
      case-sensitive = #f)
  => regexp-positioner :: <function>;
   method (big :: <string>, #key start: big-start = 0,
-	  end: big-end = #f)
-   => (regexp-start :: false-or(<integer>), 
+          end: big-end = #f)
+   => (regexp-start :: false-or(<integer>),
        #rest marks :: false-or(<integer>));
-    regexp-position(big, regexp, case-sensitive: case-sensitive, 
-		    start: big-start, end: big-end);
+    regexp-position(big, regexp, case-sensitive: case-sensitive,
+                    start: big-start, end: big-end);
   end method;
 end function make-regexp-positioner;
 
@@ -221,14 +221,14 @@ define function regexp-matches
     error("Mandatory keyword groups: not used in call to regexp-matches");
   end if;
   let (#rest marks)
-    = regexp-position(big, regexp, start: start-index, end: end-index, 
-		      case-sensitive: case-sensitive);
+    = regexp-position(big, regexp, start: start-index, end: end-index,
+                      case-sensitive: case-sensitive);
   let return-val = make(<vector>, size: groups.size, fill: #f);
   for (index from 0 below return-val.size)
     let group-start = groups[index] * 2;
     let group-end = group-start + 1;
     if (element(marks, group-start, default: #f))
-      return-val[index] := copy-sequence(big, start: 
+      return-val[index] := copy-sequence(big, start:
 
   let sz = floor/(marks.size, 2);
   let return = make(<vector>, size: sz, fill: #f);
@@ -236,7 +236,7 @@ define function regexp-matches
     let pos = index * 2;
     if (element(marks, pos, default: #f))
       return[index] := copy-sequence(big, start: marks[pos],
-				     end: marks[pos + 1]);
+                                     end: marks[pos + 1]);
     end if;
   end for;
   if (matches)
@@ -249,7 +249,7 @@ define function regexp-matches
     end for;
     apply(values, return);
   else
-    
+
     apply(values, marks);
   end if;
 
@@ -264,28 +264,28 @@ define function regexp-replace
  => changed-string :: <string>;
   let positioner
     = make-regexp-positioner(regexp, case-sensitive: case-sensitive);
-  do-replacement(positioner, new-substring, input, start, 
-		 input-end, count, #t);
+  do-replacement(positioner, new-substring, input, start,
+                 input-end, count, #t);
 end function regexp-replace;
 
-define inline function make-regexp-replacer 
+define inline function make-regexp-replacer
     (regexp :: <string>, #key replace-with, case-sensitive = #f)
  => replacer :: <function>;
   let positioner
     = make-regexp-positioner(regexp, case-sensitive: case-sensitive);
   if (replace-with)
-    method (input :: <string>, #key count: count, 
-	    start = 0, end: input-end = #f)
+    method (input :: <string>, #key count: count,
+            start = 0, end: input-end = #f)
      => string :: <string>;
-      do-replacement(positioner, replace-with, input, start, 
-		     input-end, count, #t);
+      do-replacement(positioner, replace-with, input, start,
+                     input-end, count, #t);
     end method;
   else
-    method (input :: <string>, new-substring :: <string>, 
-	    #key count = #f, start = 0, end: input-end = #f)
+    method (input :: <string>, new-substring :: <string>,
+            #key count = #f, start = 0, end: input-end = #f)
      => string :: <string>;
-      do-replacement(positioner, new-substring, input, 
-		     start, input-end, count, #t);
+      do-replacement(positioner, new-substring, input,
+                     start, input-end, count, #t);
     end method;
   end if;
 end function make-regexp-replacer;
@@ -293,7 +293,7 @@ end function make-regexp-replacer;
 // equivalent of Perl's tr.  Does a character by character translation.
 //
 define open generic translate
-    (input :: <string>, from-set :: <string>, to-set :: <string>, 
+    (input :: <string>, from-set :: <string>, to-set :: <string>,
      #key delete, start, end: the-end)
  => output :: <string>;
 
@@ -336,49 +336,49 @@ define function make-translation-table
   let previous-from = #f;
   let previous-to = #f;
 
-     // These local methods are identical except for the 
+     // These local methods are identical except for the
      // choice of variable names and next-from-character signals end of
      // string rather than repeating the last character indefinitely like
      // next-to-character does.
   local method next-from-character ()
-	  if (from-index >= size(from-set))
-	    #f;
-	  elseif (from-set[from-index] = '\\')
-	    from-index := from-index + 2;
-	    previous-from := from-set[from-index - 1];
-	  elseif (from-set[from-index] = '-')
-	    if (previous-from = from-set[from-index + 1])
-	      from-index := from-index + 1;
-	      from-set[from-index];
-	    else
-	      previous-from := successor(previous-from); 
-	              // and return that value
-	    end if;
-	  else
-	    from-index := from-index + 1;
-	    previous-from := from-set[from-index - 1];
-	  end if;
-	end method next-from-character;
+          if (from-index >= size(from-set))
+            #f;
+          elseif (from-set[from-index] = '\\')
+            from-index := from-index + 2;
+            previous-from := from-set[from-index - 1];
+          elseif (from-set[from-index] = '-')
+            if (previous-from = from-set[from-index + 1])
+              from-index := from-index + 1;
+              from-set[from-index];
+            else
+              previous-from := successor(previous-from);
+                      // and return that value
+            end if;
+          else
+            from-index := from-index + 1;
+            previous-from := from-set[from-index - 1];
+          end if;
+        end method next-from-character;
 
   local method next-to-character ()
-	  if (to-index >= size(to-set))
-	    if (delete)  #f  else  last(to-set)  end;
-	  elseif (to-set[to-index] = '\\')
-	    to-index := to-index + 2;
-	    previous-to := to-set[to-index - 1];
-	  elseif (to-set[to-index] = '-')
-	    if (previous-to = to-set[to-index + 1])
-	      to-index := to-index + 1;
-	      to-set[to-index];
-	    else
-	      previous-to := successor(previous-to); 
-	              // and return that value
-	    end if;
-	  else
-	    to-index := to-index + 1;
-	    previous-to := to-set[to-index - 1];
-	  end if;
-	end method next-to-character;
+          if (to-index >= size(to-set))
+            if (delete)  #f  else  last(to-set)  end;
+          elseif (to-set[to-index] = '\\')
+            to-index := to-index + 2;
+            previous-to := to-set[to-index - 1];
+          elseif (to-set[to-index] = '-')
+            if (previous-to = to-set[to-index + 1])
+              to-index := to-index + 1;
+              to-set[to-index];
+            else
+              previous-to := successor(previous-to);
+                      // and return that value
+            end if;
+          else
+            to-index := to-index + 1;
+            previous-to := to-set[to-index - 1];
+          end if;
+        end method next-to-character;
 
   let table = make(<byte-character-table>);
   // Wish I had keyed-by
@@ -401,7 +401,7 @@ end function make-translation-table;
 // Used by translate.  Not exported.
 //
 define function run-translator
-    (source :: <byte-string>, table :: <byte-character-table>, 
+    (source :: <byte-string>, table :: <byte-character-table>,
      start-index :: <integer>, end-index :: <integer>)
  => output :: <byte-string>;
   let dest-string = copy-sequence(source);
@@ -427,58 +427,58 @@ end function run-translator;
 // Like Perl's split function
 //
 define function split
-    (pattern :: <string>, input :: <string>, 
+    (pattern :: <string>, input :: <string>,
      #key count = #f, remove-empty-items = #t, start = 0, end: input-end = #f)
  => (#rest whole-bunch-of-strings :: <string>);
   let positioner = make-regexp-positioner(pattern);
   split-string(positioner, input, start, input-end | size(input),
-	       count, remove-empty-items);
+               count, remove-empty-items);
 end function split;
 
 define inline function make-splitter
     (pattern :: <string>) => splitter :: <function>;
   let positioner = make-regexp-positioner(pattern);
   method (string :: <string>, #key count = #f,
-	  remove-empty-items = #t, start = 0, end: input-end = #f)
+          remove-empty-items = #t, start = 0, end: input-end = #f)
    => (#rest whole-bunch-of-strings :: <string>);
-    split-string(positioner, string, start, input-end | size(string), 
-		 count, remove-empty-items);
+    split-string(positioner, string, start, input-end | size(string),
+                 count, remove-empty-items);
   end method;
 end function make-splitter;
 
 // Used by split.  Not exported.
 //
 define function split-string
-    (positioner :: <function>, input :: <string>, start :: <integer>, 
-     input-end :: <integer>, count :: false-or(<integer>), 
+    (positioner :: <function>, input :: <string>, start :: <integer>,
+     input-end :: <integer>, count :: false-or(<integer>),
      remove-empty-items :: <object>)
  => (#rest whole-bunch-of-strings :: <string>);
   let strings = make(<deque>);
   block (done)
     let end-of-last-match = 0;
     let start-of-where-to-look = start;
-    let string-number = 1;    // Since count: starts at 1, so 
+    let string-number = 1;    // Since count: starts at 1, so
                               // should string-number
     while (#t)
       let (substring-start, substring-end)
-	= positioner(input, start: start-of-where-to-look, end: input-end);
+        = positioner(input, start: start-of-where-to-look, end: input-end);
       if (~substring-start | (count & (count <= string-number)))
-	push-last(strings, copy-sequence(input, start: end-of-last-match));
-	done(); 
+        push-last(strings, copy-sequence(input, start: end-of-last-match));
+        done();
       elseif ((substring-start = start-of-where-to-look)
-		&  remove-empty-items)
-	      // delimited item is empty
-	end-of-last-match := substring-end;
-	start-of-where-to-look := end-of-last-match;
+                &  remove-empty-items)
+              // delimited item is empty
+        end-of-last-match := substring-end;
+        start-of-where-to-look := end-of-last-match;
       else
-	let new-string = copy-sequence(input, start: end-of-last-match, 
-				       end: substring-start);
-	if (~new-string.empty? | ~remove-empty-items)
-	  push-last(strings, new-string);
-	  string-number := string-number + 1;
-	  end-of-last-match := substring-end;
-	  start-of-where-to-look := end-of-last-match;
-	end if;
+        let new-string = copy-sequence(input, start: end-of-last-match,
+                                       end: substring-start);
+        if (~new-string.empty? | ~remove-empty-items)
+          push-last(strings, new-string);
+          string-number := string-number + 1;
+          end-of-last-match := substring-end;
+          start-of-where-to-look := end-of-last-match;
+        end if;
       end if;
     end while;
   end block;
@@ -505,18 +505,18 @@ define function join (delimiter :: <byte-string>, #rest strings)
   for (i from 0 to strings.size - 2)  // Don't iterate over the last string
     let string = strings[i];
     let new-index = big-index + string.size;
-    big-string := replace-subsequence!(big-string, string, 
-				       start: big-index, end: new-index);
+    big-string := replace-subsequence!(big-string, string,
+                                       start: big-index, end: new-index);
     big-index := new-index;
     let new-index = big-index + delimiter.size;
-    big-string := replace-subsequence!(big-string, delimiter, 
-				       start: big-index, end: new-index);
+    big-string := replace-subsequence!(big-string, delimiter,
+                                       start: big-index, end: new-index);
     big-index := new-index;
   end for;
   if (strings.size > 0)
-    big-string 
-      := replace-subsequence!(big-string, strings.last, 
-			      start: big-index, end: big-string.size);
+    big-string
+      := replace-subsequence!(big-string, strings.last,
+                              start: big-index, end: big-string.size);
   end if;
   big-string;
 end function join;

@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 \**********************************************************************/
 
@@ -72,8 +72,8 @@ extern struct library *find_library(obj_t name, boolean createp);
 
 extern void define_module(struct library *library, struct defn *defn);
 extern struct module *find_module(struct library *library, obj_t name,
-				  boolean lose_if_not_there,
-				  boolean lose_if_imported);
+                                  boolean lose_if_not_there,
+                                  boolean lose_if_imported);
 
 enum var_kind {
     var_Assumed, var_AssumedWriteable,
@@ -82,7 +82,7 @@ enum var_kind {
 };
 
 extern void define_variable(struct module *module, obj_t name,
-			    enum var_kind kind);
+                            enum var_kind kind);
 
 struct variable {
     obj_t /* symbol */ name;
@@ -98,7 +98,7 @@ struct variable {
 };
 
 extern struct variable *find_variable(struct module *module, obj_t name,
-				      boolean writeable, boolean createp);
+                                      boolean writeable, boolean createp);
 
 extern struct module *module_BuiltinStuff;
 

@@ -1,6 +1,6 @@
 Module:       dylan-user
 Synopsis:     Common Dylan library test suite
-Author:	      Andy Armstrong
+Author:              Andy Armstrong
 Copyright:    Original Code is Copyright (c) 1996-2001 Functional Objects, Inc.
               All rights reserved.
 License:      Functional Objects Library Public License Version 1.0
@@ -28,11 +28,11 @@ define module common-dylan-test-suite
   use transcendentals;
   use byte-vector;
   use machine-words;
-//  use threads;		We Wish! :-)
+//  use threads;                We Wish! :-)
 
   use testworks;
   use testworks-specs;
-  use dylan-test-suite;		// to get collection testing
+  use dylan-test-suite;                // to get collection testing
 
   // Common Dylan test suite
   export common-dylan-test-suite;

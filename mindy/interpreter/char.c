@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -57,13 +57,13 @@ obj_t int_char(int c)
     obj_t res = obj_Characters[c];
 
     if (res == NULL) {
-	if (c < 256)
-	    res = alloc(obj_ByteCharacterClass, sizeof(struct character));
-	else
-	    res = alloc(obj_CharacterClass, sizeof(struct character));
-	obj_ptr(struct character *, res)->unicode_value = c;
-	obj_Characters[c] = res;
-	add_constant_root(obj_Characters + c);
+        if (c < 256)
+            res = alloc(obj_ByteCharacterClass, sizeof(struct character));
+        else
+            res = alloc(obj_CharacterClass, sizeof(struct character));
+        obj_ptr(struct character *, res)->unicode_value = c;
+        obj_Characters[c] = res;
+        add_constant_root(obj_Characters + c);
     }
 
     return res;
@@ -77,10 +77,10 @@ static obj_t fixnum_as_char(obj_t class, obj_t i)
     int c = fixnum_value(i);
 
     if (0 <= c && c < num_characters)
-	return int_char(c);
+        return int_char(c);
     else {
-	error("Can't make a character out of %=", i);
-	return NULL;
+        error("Can't make a character out of %=", i);
+        return NULL;
     }
 }
 
@@ -89,10 +89,10 @@ static obj_t fixnum_as_byte_char(obj_t class, obj_t i)
     int c = fixnum_value(i);
 
     if (0 <= c && c < 256)
-	return int_char(c);
+        return int_char(c);
     else {
-	error("Can't make a byte character out of %=", i);
-	return NULL;
+        error("Can't make a byte character out of %=", i);
+        return NULL;
     }
 }
 
@@ -105,9 +105,9 @@ static obj_t char_as_fixnum(obj_t class, obj_t c)
 static obj_t char_less(obj_t /* <character> */ c1, obj_t /* <character> */ c2)
 {
     if (char_int(c1) < char_int(c2))
-	return obj_True;
+        return obj_True;
     else
-	return obj_False;
+        return obj_False;
 }
 
 
@@ -118,13 +118,13 @@ static void print_char(obj_t obj)
     int c = char_int(obj);
 
     if (c > 255)
-	printf("'\\{#x%x}'", c);
+        printf("'\\{#x%x}'", c);
     else if (c < ' ' || c > '~')
-	printf("'\\%03o'", c);
+        printf("'\\%03o'", c);
     else if (c == '\'')
-	printf("'\\''");
+        printf("'\\''");
     else
-	printf("'%c'", c);
+        printf("'%c'", c);
 }
 
 
@@ -147,7 +147,7 @@ void make_char_classes()
 {
     obj_CharacterClass = make_builtin_class(scav_char, trans_char);
     obj_ByteCharacterClass = make_builtin_class(scav_char, trans_char);
-    /* Since characters and byte characters actually have identical 
+    /* Since characters and byte characters actually have identical
        C structures, they can use the same functions. */
 
     add_constant_root(&obj_CharacterClass);
@@ -157,25 +157,25 @@ void make_char_classes()
 void init_char_classes()
 {
     init_builtin_class(obj_CharacterClass, "<character>",
-		       obj_ObjectClass, NULL);
+                       obj_ObjectClass, NULL);
     def_printer(obj_CharacterClass, print_char);
        /* This will also work for byte characters */
     init_builtin_class(obj_ByteCharacterClass, "<byte-character>",
-		       obj_CharacterClass, NULL);
+                       obj_CharacterClass, NULL);
 }
 
 void init_char_functions()
 {
     define_method("as", list2(singleton(obj_CharacterClass), obj_FixnumClass),
-		  FALSE, obj_False, FALSE, obj_CharacterClass, fixnum_as_char);
+                  FALSE, obj_False, FALSE, obj_CharacterClass, fixnum_as_char);
     define_method("as",
-		  list2(singleton(obj_ByteCharacterClass), obj_FixnumClass),
-		  FALSE, obj_False, FALSE, obj_ByteCharacterClass, 
-		  fixnum_as_byte_char);
+                  list2(singleton(obj_ByteCharacterClass), obj_FixnumClass),
+                  FALSE, obj_False, FALSE, obj_ByteCharacterClass,
+                  fixnum_as_byte_char);
     define_method("as", list2(singleton(obj_IntegerClass), obj_CharacterClass),
-		  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
+                  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
     define_method("as", list2(singleton(obj_FixnumClass), obj_CharacterClass),
-		  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
+                  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
     define_method("<", list2(obj_CharacterClass, obj_CharacterClass),
-		  FALSE, obj_False, FALSE, obj_BooleanClass, char_less);
+                  FALSE, obj_False, FALSE, obj_BooleanClass, char_less);
 }

@@ -5,25 +5,25 @@ module: dylan
 // Copyright (c) 1995  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -43,11 +43,11 @@ define method make (class == <ratio>, #key numerator, denominator)
   // Make sure the denominator is positive.
   let (numerator, denominator)
     = if (negative?(denominator))
-	values(- numerator, - denominator);
+        values(- numerator, - denominator);
       elseif (positive?(denominator))
-	values(numerator, denominator);
+        values(numerator, denominator);
       else
-	error("Can't make a ratio with a zero denominator.");
+        error("Can't make a ratio with a zero denominator.");
       end;
   //
   // Now divide out the gcd and make the ratio object.
@@ -71,7 +71,7 @@ end;
 
 
 define method as (class :: limited(<class>, subclass-of: <float>),
-		  num :: <ratio>)
+                  num :: <ratio>)
     => res :: <float>;
   as(class, num.numerator) / as(class, num.denominator);
 end;
@@ -119,7 +119,7 @@ define method \+ (a :: <ratio>, b :: <ratio>)
   // Factor out the new denominator:
   //   (an*bd + bn*ad) / (ad*bd)
   ratio(a.numerator * b.denominator + b.numerator * a.denominator,
-	a.denominator * b.denominator);
+        a.denominator * b.denominator);
 end;
 
 define method \* (a :: <ratio>, b :: <ratio>)
@@ -140,7 +140,7 @@ define method \- (a :: <ratio>, b :: <ratio>)
   // Factor out the new denominator:
   //   (an*bd - bn*ad) / (ad*bd)
   ratio(a.numerator * b.denominator - b.numerator * a.denominator,
-	a.denominator * b.denominator);
+        a.denominator * b.denominator);
 end;
 
 define method \/ (a :: <ratio>, b :: <ratio>)
@@ -198,11 +198,11 @@ end;
 
 define method rationalize (num :: <float>) => res :: <ratio>;
   let sign = if (negative?(num))
-	       num := -num;
-	       -1;
-	     else
-	       1;
-	     end;
+               num := -num;
+               -1;
+             else
+               1;
+             end;
   let scale = 0;
   while (num >= 1)
     scale := scale + 8;

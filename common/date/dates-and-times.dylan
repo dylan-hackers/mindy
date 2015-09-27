@@ -29,32 +29,32 @@ define constant <timezone> = limited(<integer>, min: -720, max: 720);
 define constant <microseconds> = limited(<integer>, min: 0, max: 999999);
 
 // either iso8601-string or year,month,day must be filled in.
-define method initialize(date :: <date>, 
-			 #key iso8601-string,
-			      year :: false-or(<years>),
-			      month :: false-or(<month>),
-			      day :: false-or(<days>),
-			      hours :: <hours> = 0,
-			      minutes :: <minutes> = 0,
-			      seconds :: <seconds> = 0,
-			      microseconds :: <microseconds> = 0,
-			      time-zone-offset :: <timezone> = 0)
+define method initialize(date :: <date>,
+                         #key iso8601-string,
+                              year :: false-or(<years>),
+                              month :: false-or(<month>),
+                              day :: false-or(<days>),
+                              hours :: <hours> = 0,
+                              minutes :: <minutes> = 0,
+                              seconds :: <seconds> = 0,
+                              microseconds :: <microseconds> = 0,
+                              time-zone-offset :: <timezone> = 0)
  => (date :: <date>)
   if(iso8601-string)
     initialize-date-from-iso8601(date, iso8601-string);
   else
     unless(year & month & day)
       error("You must specify the year, month and day "
-	      "to create a <date> instance");
+              "to create a <date> instance");
     end unless;
-    date.time := make(<decoded-time>, 
-		      seconds: seconds,
-		      minutes: minutes,
-		      hours: hours,
-		      day-of-month: day,
-		      month: month,
-		      year: year,
-		      timezone: time-zone-offset * 60);
+    date.time := make(<decoded-time>,
+                      seconds: seconds,
+                      minutes: minutes,
+                      hours: hours,
+                      day-of-month: day,
+                      month: month,
+                      year: year,
+                      timezone: time-zone-offset * 60);
     date.microseconds := microseconds;
     date;
   end if;
@@ -68,35 +68,35 @@ define function initialize-date-from-iso8601(date :: <date>, str :: <string>)
   // first, let's make the string parse-time friendly:
   let year = string-to-integer(copy-sequence(str, end: 4));
   let rest = choose(method(x) x ~= 'T' & x ~= 'Z' end,
-		    copy-sequence(str, start: 4));
+                    copy-sequence(str, start: 4));
   let spacy = make(<deque>);
   for(x in rest, y from 1)
     push-last(spacy, x);
     if(modulo(y, 2) = 0) push-last(spacy, ' '); end if;
   end for;
   let new-str = concatenate(integer-to-string(year), " ", spacy);
-  
+
   let stream = make(<byte-string-stream>, contents: new-str);
-  date.time := make(<decoded-time>, 
-		    default-from: parse-time(stream, "%Y %m %d %H %M %S"),
-		    timezone: 0);
+  date.time := make(<decoded-time>,
+                    default-from: parse-time(stream, "%Y %m %d %H %M %S"),
+                    timezone: 0);
   date;
 end function initialize-date-from-iso8601;
 
 define constant <day-of-week> = one-of(#"Monday", #"Tuesday",
-				       #"Wednesday", #"Thursday", #"Friday",
-				       #"Saturday", #"Sunday");
+                                       #"Wednesday", #"Thursday", #"Friday",
+                                       #"Saturday", #"Sunday");
 
 define function encode-date(year :: <years>,
-			    month :: <month>,
-			    day :: <days>,
-			    hours :: <hours>,
-			    minutes :: <minutes>,
-			    seconds :: <seconds>,
-			    #key microseconds :: <microseconds> = 0,
-			         time-zone-offset :: <timezone> = 0)
+                            month :: <month>,
+                            day :: <days>,
+                            hours :: <hours>,
+                            minutes :: <minutes>,
+                            seconds :: <seconds>,
+                            #key microseconds :: <microseconds> = 0,
+                                 time-zone-offset :: <timezone> = 0)
  => (date :: <date>)
-  make(<date>, year: year, month: month, day: day, hours: hours, 
+  make(<date>, year: year, month: month, day: day, hours: hours,
        minutes: minutes, seconds: seconds, microseconds: microseconds,
        time-zone-offset: time-zone-offset);
 end function encode-date;

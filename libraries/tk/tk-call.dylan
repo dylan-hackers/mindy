@@ -6,25 +6,25 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -76,7 +76,7 @@ end class <active-variable>;
 
 
 //==========================================================================
-//			       Active variables
+//                               Active variables
 //==========================================================================
 
 // Support variables for creating and storing active values.  We maintain an
@@ -91,15 +91,15 @@ define variable tk-var-array = make(<stretchy-vector>);
 //
 define method init-active-variables ()
   put-tk-line("proc dylan-trace {name element op} ",
-	       "{upvar #0 dylan-vars($element) x;",
-	       "dylan-put \"!V${element}!\" $x}");
+               "{upvar #0 dylan-vars($element) x;",
+               "dylan-put \"!V${element}!\" $x}");
   put-tk-line("trace variable dylan-vars w dylan-trace");
 end method init-active-variables;
 
 define method initialize (object :: <active-variable>, #key value, #all-keys)
   let idx = tk-var-count := tk-var-count + 1;
   tk-var-array[idx] := object;
-  
+
   object.index := tk-as(<string>, idx);
   object.value := value;
 end method initialize;
@@ -112,12 +112,12 @@ define method value-setter (value :: <object>, var :: <active-variable>)
   block (return)
     let handler <simple-error>
       = method (error, next-handler)
-	  // Make this into a less serious error.
-	  apply(signal, concatenate("Error in setting active variable:\n  ",
-				    condition-format-string(error)),
-		condition-format-arguments(error));
-	  return();
-	end method;
+          // Make this into a less serious error.
+          apply(signal, concatenate("Error in setting active variable:\n  ",
+                                    condition-format-string(error)),
+                condition-format-arguments(error));
+          return();
+        end method;
     let new-value = tk-as(var.cls, value);
     if (var.command & new-value ~= var.internal-value)
       var.command(new-value, var.internal-value)
@@ -134,7 +134,7 @@ define method tk-as
 end method tk-as;
 
 //==========================================================================
-//			      Event handler loop
+//                              Event handler loop
 //==========================================================================
 // Because tk doesn't know about Dylan functions, we generate strings to
 // identify the functions and store them in a dictionary.  Value callbacks are
@@ -213,33 +213,33 @@ define method do-callback (line :: <string>) => ();
     // Special callback for "set variable"
     block (return)
       let handler <simple-error>
-	= method (error, next-handler)
-	    // Make this into a less serious error.
-	    apply(signal, concatenate("Error in setting active variable:  ",
-				      condition-format-string(error)),
-		  condition-format-arguments(error));
-	    return();
-	  end method;
+        = method (error, next-handler)
+            // Make this into a less serious error.
+            apply(signal, concatenate("Error in setting active variable:  ",
+                                      condition-format-string(error)),
+                  condition-format-arguments(error));
+            return();
+          end method;
       let index = tk-as(<integer>,
-			copy-sequence(line, start: index, end: sep));
+                        copy-sequence(line, start: index, end: sep));
       let var = tk-var-array[index];
       let new-value
-	= tk-as(var.cls, parse-tk-list(line, start: frst,
-				       depth: 1, unquote: #t).first);
+        = tk-as(var.cls, parse-tk-list(line, start: frst,
+                                       depth: 1, unquote: #t).first);
       if (var.command & new-value ~= var.internal-value)
-	// Give the execution thread a new function to execute.  It may be
-	// waiting for us to give it to us, or it may be too busy executing a
-	// previous function, in which case it will be deferred.
-	if (~exec-thread-running)
-	  spawn-thread("exec", exec-thread-loop);
-	  exec-thread-running := #t;
-	end if;
+        // Give the execution thread a new function to execute.  It may be
+        // waiting for us to give it to us, or it may be too busy executing a
+        // previous function, in which case it will be deferred.
+        if (~exec-thread-running)
+          spawn-thread("exec", exec-thread-loop);
+          exec-thread-running := #t;
+        end if;
 
-	grab-lock(exec-thread-lock);
-	push-last(exec-thread-procs,
-		  curry(var.command, new-value, var.internal-value));
-	signal-event(exec-thread-event);
-	release-lock(exec-thread-lock);
+        grab-lock(exec-thread-lock);
+        push-last(exec-thread-procs,
+                  curry(var.command, new-value, var.internal-value));
+        signal-event(exec-thread-event);
+        release-lock(exec-thread-lock);
       end if;
       var.internal-value := new-value;
     end block;
@@ -256,8 +256,8 @@ define method do-callback (line :: <string>) => ();
       // We don't create execution threads till we need them.  Often we find
       // that we don't.
       if (~exec-thread-running)
-	spawn-thread("exec", exec-thread-loop);
-	exec-thread-running := #t;
+        spawn-thread("exec", exec-thread-loop);
+        exec-thread-running := #t;
       end if;
 
       // Give the execution thread a new function to execute.  It may be
@@ -265,8 +265,8 @@ define method do-callback (line :: <string>) => ();
       // previous function, in which case it will be deferred.
       grab-lock(exec-thread-lock);
       push-last(exec-thread-procs,
-		curry(apply, callback,
-		      parse-tk-list(line, start: frst, depth: 1)));
+                curry(apply, callback,
+                      parse-tk-list(line, start: frst, depth: 1)));
       signal-event(exec-thread-event);
       release-lock(exec-thread-lock);
     else
@@ -277,7 +277,7 @@ end method do-callback;
 
 
 //==========================================================================
-//			      tk function call
+//                              tk function call
 //==========================================================================
 
 
@@ -303,7 +303,7 @@ define method value-return-string
   release-lock(call-back-lock);
 
   values(concatenate("dylan-put {!R",  key, "!} [", tk-command, "]"),
-	 key-symbol);
+         key-symbol);
 end method value-return-string;
 
 // See description of the generic above.
@@ -319,13 +319,13 @@ define method call-tk-function (#rest strings) => (result :: <sequence>);
 
   let (command-line, callback-key)
     = value-return-string(method (result :: <string>)
-			    grab-lock(return-lock);
-			    return-value := result;
-			    signal-event(return-event);
-			    release-lock(return-lock);
-			  end method,
-			  apply(concatenate, map(curry(tk-as, <string>),
-						 strings)));
+                            grab-lock(return-lock);
+                            return-value := result;
+                            signal-event(return-event);
+                            release-lock(return-lock);
+                          end method,
+                          apply(concatenate, map(curry(tk-as, <string>),
+                                                 strings)));
   put-tk-line(command-line);
 
   while (~return-value)
@@ -340,7 +340,7 @@ end method call-tk-function;
 
 
 //==========================================================================
-//			      Callback creation
+//                              Callback creation
 //==========================================================================
 
 
@@ -362,4 +362,4 @@ define method tk-as
     (cls == <string>, value :: <function>) => (result :: <string>);
   function-string(value);
 end method tk-as;
-  
+

@@ -6,25 +6,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -42,7 +42,7 @@ define constant $Dylan-User-Uses :: <vector> = #[#"Dylan", #"Extensions"];
 // <use> -- exported.
 //
 // Used to represent a use clause in a define library or define module.
-// 
+//
 define class <use> (<object>)
   //
   // The name of the library/module being used.
@@ -84,18 +84,18 @@ define method print-object (u :: <use>, stream :: <stream>) => ();
      name: u.use-name.token-symbol,
      imports:
        if (instance?(u.use-imports, <all-marker>))
-	 #"all";
+         #"all";
        else
-	 map(token-symbol, u.use-imports);
+         map(token-symbol, u.use-imports);
        end if,
      prefix: u.use-prefix,
      excludes: map(token-symbol, u.use-excludes),
      renamings: u.use-renamings,
      exports:
        if (instance?(u.use-exports, <all-marker>))
-	 #"all";
+         #"all";
        else
-	 map(token-symbol, u.use-exports);
+         map(token-symbol, u.use-exports);
        end if);
 end method print-object;
 */
@@ -104,7 +104,7 @@ end method print-object;
 // <all-marker> -- exported.
 //
 // Used in place of a vector of names to indicate that it should be all names.
-// 
+//
 define class <all-marker> (<source-location-mixin>)
 end class <all-marker>;
 
@@ -130,8 +130,8 @@ define sealed domain initialize (<renaming>);
 /*
 define method print-object (ren :: <renaming>, stream :: <stream>) => ();
   pprint-fields(ren, stream,
-		orig-name: ren.renaming-orig-name.token-symbol,
-		new-name: ren.renaming-new-name.token-symbol);
+                orig-name: ren.renaming-orig-name.token-symbol,
+                new-name: ren.renaming-new-name.token-symbol);
 end method print-object;
 */
 
@@ -142,7 +142,7 @@ end method print-object;
 // <namespace> -- internal.
 //
 // Shared superclass for libraries and modules.
-// 
+//
 define abstract class <namespace> (<object>)
   //
   // The name of this namespace.
@@ -169,7 +169,7 @@ end class <namespace>;
 //
 // Returns a string identifing the kind of namespace this is.  Used
 // when generating error messages.
-// 
+//
 define generic namespace-kind
     (namespace :: <namespace>) => res :: <byte-string>;
 
@@ -205,7 +205,7 @@ end class <entry>;
 //
 // Shared superclass for things that can be found in namespaces -- i.e.
 // modules and variables.
-// 
+//
 define abstract class <namespace-constituent> (<object>)
   //
   // Linked list of all the entries refering to this constituent.
@@ -225,11 +225,11 @@ define method add-entry
   let old = element(namespace.entries, name, default: #f);
   if (old & old.entry-constituent ~== constituent)
     error("Trying to overwrite the entry for %s in %s %s",
-	  name, namespace.namespace-kind, namespace.namespace-name);
+          name, namespace.namespace-kind, namespace.namespace-name);
   else
     let new = make(<entry>, namespace: namespace, name: name, origin: origin,
-		   constituent: constituent,
-		   next: constituent.constituent-entries);
+                   constituent: constituent,
+                   next: constituent.constituent-entries);
     constituent.constituent-entries := new;
     element(namespace.entries, name) := new;
     new;
@@ -255,8 +255,8 @@ define method note-namespace-definition
       //
       // We've already created the entry for some reason, so just export it.
       unless (old.entry-exported?)
-	add!(namespace.exported-names, name);
-	old.entry-exported? := #t;
+        add!(namespace.exported-names, name);
+        old.entry-exported? := #t;
       end unless;
       old.entry-constituent.exported? := #t;
     else
@@ -273,15 +273,15 @@ define method note-namespace-definition
     let old = element(namespace.entries, name, default: #f);
     if (old)
       if (old.entry-constituent.exported?)
-	compiler-error-location
-	  (token, "%s in both a create clause and an export clause in %s %s",
-	   name, namespace.namespace-kind, namespace.namespace-name);
+        compiler-error-location
+          (token, "%s in both a create clause and an export clause in %s %s",
+           name, namespace.namespace-kind, namespace.namespace-name);
       else
-	unless (old.entry-exported?)
-	  add!(namespace.exported-names, name);
-	  old.entry-exported? := #t;
-	end unless;
-	old.entry-constituent.created? := #t;
+        unless (old.entry-exported?)
+          add!(namespace.exported-names, name);
+          old.entry-exported? := #t;
+        end unless;
+        old.entry-constituent.created? := #t;
       end if;
     else
       let constituent = make-constituent(namespace, name);
@@ -295,48 +295,48 @@ define method note-namespace-definition
   for (use in uses)
     block (skip-use)
       let used-namespace
-	= block ()
-	    lookup-use(namespace, use.use-name);
-	  exception (<fatal-error-recovery-restart>)
-	    skip-use();
-	  end block;
+        = block ()
+            lookup-use(namespace, use.use-name);
+          exception (<fatal-error-recovery-restart>)
+            skip-use();
+          end block;
 
       if (used-namespace == namespace)
-	compiler-error-location
-	  (use.use-name, "%s %s can't use itself.",
-	   namespace.namespace-kind, use.use-name.token-symbol);
-	skip-use();
+        compiler-error-location
+          (use.use-name, "%s %s can't use itself.",
+           namespace.namespace-kind, use.use-name.token-symbol);
+        skip-use();
       end if;
 
       let imports = use.use-imports;
       if (instance?(imports, <all-marker>))
-	//
-	// Import all the exported variables.
-	local method import-all() => ();
-		let srcloc = imports.source-location;
-		for (orig-name in used-namespace.exported-names)
-		  do-import(namespace, used-namespace, orig-name, srcloc, use);
-		end for;
-	      end;
-	
-	if (used-namespace.exported-names.empty?)
-	  // this is a good indication to retry later...
-	  let importers-so-far = namespace.deferred-importers;
-	  namespace.deferred-importers
-	    := method(ns :: <namespace>) => ();
-		   importers-so-far(ns);
-		   import-all();
-	       end method;
-	else
-	  import-all();
-	end if;
+        //
+        // Import all the exported variables.
+        local method import-all() => ();
+                let srcloc = imports.source-location;
+                for (orig-name in used-namespace.exported-names)
+                  do-import(namespace, used-namespace, orig-name, srcloc, use);
+                end for;
+              end;
+
+        if (used-namespace.exported-names.empty?)
+          // this is a good indication to retry later...
+          let importers-so-far = namespace.deferred-importers;
+          namespace.deferred-importers
+            := method(ns :: <namespace>) => ();
+                   importers-so-far(ns);
+                   import-all();
+               end method;
+        else
+          import-all();
+        end if;
       else
-	//
-	// Import everything listed.
-	for (token in use.use-imports)
-	  do-import(namespace, used-namespace, token.token-symbol,
-		    token.source-location, use);
-	end for;
+        //
+        // Import everything listed.
+        for (token in use.use-imports)
+          do-import(namespace, used-namespace, token.token-symbol,
+                    token.source-location, use);
+        end for;
       end if;
     end block;
   end for;
@@ -347,7 +347,7 @@ end method note-namespace-definition;
 //
 // Used by definition processing stuff to lookup the namespace used by a
 // use clause.
-// 
+//
 define generic make-constituent
     (namespace :: <namespace>, name :: <symbol>)
     => constituent :: <namespace-constituent>;
@@ -357,7 +357,7 @@ define generic make-constituent
 //
 // Used by definition processing stuff to lookup the namespace used by a
 // use clause.
-// 
+//
 define generic lookup-use
     (namespace :: <namespace>, token :: <symbol-token>)
     => used-namespace :: <namespace>;
@@ -379,15 +379,15 @@ define method do-import
       // we try to defer the import first...
       let importers-so-far = into.deferred-importers;
       if (importers-so-far)
-	into.deferred-importers
-	  := method(ns :: <namespace>) => ();
-		 importers-so-far(ns);
-		 do-import(into, from, orig-name, srcloc, use);
-	     end method;
+        into.deferred-importers
+          := method(ns :: <namespace>) => ();
+                 importers-so-far(ns);
+                 do-import(into, from, orig-name, srcloc, use);
+             end method;
       else
-	compiler-error-location
-	  (srcloc, "Can't import %s from %s %s because it isn't exported.",
-	   orig-name, from.namespace-kind, from.namespace-name);
+        compiler-error-location
+          (srcloc, "Can't import %s from %s %s because it isn't exported.",
+           orig-name, from.namespace-kind, from.namespace-name);
       end if;
       return();
     end unless;
@@ -400,23 +400,23 @@ define method do-import
       // There is.  Check to see if it is just a duplicate, or if it is
       // a problem.
       if (old.entry-constituent ~== constituent)
-	if (new-name == orig-name)
-	  compiler-error-location
-	    (srcloc,
-	     "Can't import %s from %s %s into %s %s because it would "
-	       "clash with %s %s.",
-	     new-name, from.namespace-kind, from.namespace-name,
-	     into.namespace-kind, into.namespace-name,
-	     new-name, old.entry-origin);
-	else
-	  compiler-error-location
-	    (srcloc,
-	     "Can't import %s as %s from %s %s into %s %s because it would "
-	       "clash with %s %s.",
-	     orig-name, new-name, from.namespace-kind, from.namespace-name,
-	     into.namespace-kind, into.namespace-name,
-	     new-name, old.entry-origin);
-	end if;
+        if (new-name == orig-name)
+          compiler-error-location
+            (srcloc,
+             "Can't import %s from %s %s into %s %s because it would "
+               "clash with %s %s.",
+             new-name, from.namespace-kind, from.namespace-name,
+             into.namespace-kind, into.namespace-name,
+             new-name, old.entry-origin);
+        else
+          compiler-error-location
+            (srcloc,
+             "Can't import %s as %s from %s %s into %s %s because it would "
+               "clash with %s %s.",
+             orig-name, new-name, from.namespace-kind, from.namespace-name,
+             into.namespace-kind, into.namespace-name,
+             new-name, old.entry-origin);
+        end if;
       end if;
       //
       // Either way, we don't have to do anything more.
@@ -448,8 +448,8 @@ define method compute-new-name
     //
     for (ren in use.use-renamings)
       if (ren.renaming-orig-name.token-symbol == name)
-	let new-name = ren.renaming-new-name;
-	return(new-name.token-symbol, new-name.source-location);
+        let new-name = ren.renaming-new-name;
+        return(new-name.token-symbol, new-name.source-location);
       end if;
     end for;
     //
@@ -457,7 +457,7 @@ define method compute-new-name
     //
     for (exclude in use.use-excludes)
       if (exclude.token-symbol == name)
-	return(#f, #f);
+        return(#f, #f);
       end if;
     end for;
     //
@@ -496,18 +496,18 @@ define method do-import-aux
      srcloc :: <source-location>, use :: <use>)
     => ();
   let new = add-entry(into, new-name,
-		      concatenate("imported from ", from.namespace-kind, " ",
-				as(<byte-string>, from.namespace-name)),
-		      constituent);
+                      concatenate("imported from ", from.namespace-kind, " ",
+                                as(<byte-string>, from.namespace-name)),
+                      constituent);
   if (instance?(use.use-exports, <all-marker>)
-	| block (exported)
-	    for (export in use.use-exports)
-	      if (export.token-symbol == new-name)
-		exported(#t);
-	      end if;
-	    end for;
-	    #f;
-	  end block)
+        | block (exported)
+            for (export in use.use-exports)
+              if (export.token-symbol == new-name)
+                exported(#t);
+              end if;
+            end for;
+            #f;
+          end block)
     add!(into.exported-names, new-name);
     new.entry-exported? := #t;
   end if;
@@ -559,7 +559,7 @@ define method find-library
     (name :: <symbol>, #key create: create? :: <boolean>)
     => result :: false-or(<library>);
   let lib = element($Libraries, name, default: #f);
-  
+
   if (lib)
     //
     // The library already exists, so return it.
@@ -577,20 +577,20 @@ define method find-library
       // Create the Dylan-User module.
       let dylan-user = make(<module>, name: #"Dylan-User", home: new);
       add-entry(new, #"Dylan-User",
-		"magically created by the system", dylan-user);
+                "magically created by the system", dylan-user);
       //
       // We use note-namespace-definition instead of note-module-definition
       // because we don't need to do any of the error checks in n-m-d, and
       // this way we don't need to come up with a token for the name.
       note-namespace-definition
-	(dylan-user,
-	 map(method (name :: <symbol>) => use :: <use>;
-	       make(<use>, name: token-for-symbol(name),
-		    imports: make(<all-marker>), prefix: #f, excludes: #[],
-		    renamings: #[], exports: #[]);
-	     end,
-	     $Dylan-User-Uses),
-	 #[], #[]);
+        (dylan-user,
+         map(method (name :: <symbol>) => use :: <use>;
+               make(<use>, name: token-for-symbol(name),
+                    imports: make(<all-marker>), prefix: #f, excludes: #[],
+                    renamings: #[], exports: #[]);
+             end,
+             $Dylan-User-Uses),
+         #[], #[]);
     end unless;
     //
     // Return the newly created library.
@@ -689,8 +689,8 @@ end method print-object;
 
 define method print-message (mod :: <module>, stream :: <stream>) => ();
   format(stream, "module %s:%s",
-	 mod.module-home.library-name,
-	 mod.module-name);
+         mod.module-home.library-name,
+         mod.module-name);
 end method print-message;
 
 define method namespace-kind (lib :: <module>) => res :: <byte-string>;
@@ -720,20 +720,20 @@ define method find-module
   elseif (create?)
     let new = make(<module>, name: name, home: lib);
     add-entry(lib, name,
-	      concatenate("defined inside library ",
-			  as(<byte-string>, lib.library-name)),
-	      new);
+              concatenate("defined inside library ",
+                          as(<byte-string>, lib.library-name)),
+              new);
     new;
   else
     let srcloc = srcloc | make(<unknown-source-location>);
     if (lib.defined?)
       compiler-fatal-error-location
-	(srcloc, "No such module %s in library %s.",
-	 name, lib.library-name);
+        (srcloc, "No such module %s in library %s.",
+         name, lib.library-name);
     else
       compiler-fatal-error-location
-	(srcloc, "Attempting to use library %s before it is defined.",
-	 lib.library-name);
+        (srcloc, "Attempting to use library %s before it is defined.",
+         lib.library-name);
     end if;
   end if;
 end method find-module;
@@ -743,7 +743,7 @@ define method make-constituent
     (namespace :: <module>, name :: <symbol>)
     => res :: <variable>;
   find-variable(make(<basic-name>, module: namespace, symbol: name),
-		create: #t);
+                create: #t);
 end method make-constituent;
 
 
@@ -757,16 +757,16 @@ define method lookup-use
     => used-namespace :: <module>;
   let lib
     = if (module.module-name == #"Dylan-User")
-	assure-loaded($Dylan-Library);
-	if ($Dylan-Library.broken?)
-	  compiler-fatal-error
-	    ("Skipping use of %s in module Dylan-User because library Dylan "
-	       "is broken.",
-	     token.token-symbol);
-	end if;
-	$Dylan-Library;
+        assure-loaded($Dylan-Library);
+        if ($Dylan-Library.broken?)
+          compiler-fatal-error
+            ("Skipping use of %s in module Dylan-User because library Dylan "
+               "is broken.",
+             token.token-symbol);
+        end if;
+        $Dylan-Library;
       else
-	module.module-home;
+        module.module-home;
       end if;
   find-module(lib, token.token-symbol, srcloc: token.source-location);
 end method lookup-use;
@@ -787,7 +787,7 @@ define method note-module-definition
     compiler-error-location
       (name,
        "Can't define module %s in library %s, "
-	 "because library %s already imports a module %s.",
+         "because library %s already imports a module %s.",
        name.token-symbol, lib.library-name, lib.library-name,
        name.token-symbol);
   elseif (mod.defined?)
@@ -804,12 +804,12 @@ end method note-module-definition;
 // Variable stuff.
 
 // <variable> -- exported.
-// 
+//
 define class <variable> (<namespace-constituent>)
   //
   // The name of the variable, as a symbol.
   constant slot variable-name :: <symbol>, required-init-keyword: name:;
-  // 
+  //
   // The module this variable lives in.  Note: this is not necessarily
   // the same as where it is defined, because the create clause in
   // define module forms creates a variable, but requires it to be
@@ -867,9 +867,9 @@ define method find-variable (name :: <basic-name>, #key create: create?)
   elseif (create?)
     let new = make(<variable>, name: sym, home: mod);
     add-entry(mod, sym,
-	      concatenate("defined inside module ",
-			  as(<byte-string>, mod.module-name)),
-	      new);
+              concatenate("defined inside module ",
+                          as(<byte-string>, mod.module-name)),
+              new);
     new;
   end if;
 end method find-variable;
@@ -903,11 +903,11 @@ define method name-inherited-or-exported? (name :: <basic-name>)
 
     if (var.exported? | var.created?)
       for (entry = var.constituent-entries then entry.entry-next,
-	   while: entry)
-	let module = entry.entry-namespace;
-	if (module.exported? | module.created?)
-	  return(#t);
-	end if;
+           while: entry)
+        let module = entry.entry-namespace;
+        if (module.exported? | module.created?)
+          return(#t);
+        end if;
       end for;
     end if;
 
@@ -935,16 +935,16 @@ define method do-import-aux
   if (problem)
     if (new-name == orig-name)
       compiler-error-location
-	(srcloc,
-	 "Can't import %s into module %s because doing so would make %s "
-	   "be a %s word, but it is already a %s word.",
-	 new-name, into.module-name, word, category, problem);
+        (srcloc,
+         "Can't import %s into module %s because doing so would make %s "
+           "be a %s word, but it is already a %s word.",
+         new-name, into.module-name, word, category, problem);
     else
       compiler-error-location
-	(srcloc,
-	 "Can't import %s as %s into module %s because doing so would "
-	   "make %s be a %s word, but it is already a %s word.",
-	 orig-name, new-name, into.module-name, word, category, problem);
+        (srcloc,
+         "Can't import %s as %s into module %s because doing so would "
+           "make %s be a %s word, but it is already a %s word.",
+         orig-name, new-name, into.module-name, word, category, problem);
     end if;
   else
     next-method();
@@ -959,7 +959,7 @@ end method do-import-aux;
 // note-variable-definition -- exported.
 //
 // Note that name is defined in module.
-// 
+//
 define method note-variable-definition (defn :: <definition>)
     => ();
   block (return)
@@ -976,19 +976,19 @@ define method note-variable-definition (defn :: <definition>)
     //
     if (var.created?)
       if (var.variable-home == mod)
-	compiler-error-location
-	  (defn,
-	   "%s is in a create clause for module %s, so must be "
-	     "defined elsewhere.",
-	   name.name-symbol, mod.module-name);
-	return();
+        compiler-error-location
+          (defn,
+           "%s is in a create clause for module %s, so must be "
+             "defined elsewhere.",
+           name.name-symbol, mod.module-name);
+        return();
       end if;
     else
       unless (var.variable-home == mod)
-	compiler-error-location
-	  (defn, "%s is imported into module %s, so can't be defined locally.",
-	   name.name-symbol, mod.module-name);
-	return();
+        compiler-error-location
+          (defn, "%s is imported into module %s, so can't be defined locally.",
+           name.name-symbol, mod.module-name);
+        return();
       end unless;
     end if;
     //
@@ -996,10 +996,10 @@ define method note-variable-definition (defn :: <definition>)
     //
     if (var.variable-definition)
       unless (instance?(var.variable-definition, <implicit-definition>))
-	compiler-error-location
-	  (defn, "Duplicate definition for %s in module %s.",
-	   name.name-symbol, mod.module-name);
-	return();
+        compiler-error-location
+          (defn, "Duplicate definition for %s in module %s.",
+           name.name-symbol, mod.module-name);
+        return();
       end unless;
     end if;
     //
@@ -1007,19 +1007,19 @@ define method note-variable-definition (defn :: <definition>)
     // syntax tables of modules that can access this variable.
     //
     for (entry = var.constituent-entries then entry.entry-next,
-	 while: entry)
+         while: entry)
       let (word, category) = definition-syntax-info(defn, entry.entry-name);
       if (word)
-	let table = entry.entry-namespace.module-syntax-table;
-	let problem = problem-with-category-merge(table, word, category);
-	if (problem)
-	  compiler-error-location
-	    (defn,
-	     "Can't define %s in module %s as a %s because doing so would make"
-	       " %s in module %s be a %s word, but it is already a %s word.",
-	     name.name-symbol, mod.module-name, defn.definition-kind,
-	     word, entry.entry-namespace.module-name, category, problem);
-	end if;
+        let table = entry.entry-namespace.module-syntax-table;
+        let problem = problem-with-category-merge(table, word, category);
+        if (problem)
+          compiler-error-location
+            (defn,
+             "Can't define %s in module %s as a %s because doing so would make"
+               " %s in module %s be a %s word, but it is already a %s word.",
+             name.name-symbol, mod.module-name, defn.definition-kind,
+             word, entry.entry-namespace.module-name, category, problem);
+        end if;
       end if;
     end for;
     //
@@ -1030,16 +1030,16 @@ define method note-variable-definition (defn :: <definition>)
     // And adjust the syntax tables.
     //
     for (entry = var.constituent-entries then entry.entry-next,
-	 while: entry)
+         while: entry)
       let (word, category) = definition-syntax-info(defn, entry.entry-name);
       if (word)
-	let table = entry.entry-namespace.module-syntax-table;
-	merge-category(table, word, category);
+        let table = entry.entry-namespace.module-syntax-table;
+        merge-category(table, word, category);
       end if;
     end for;
     //
     // If we have some transformers, propagate them over.
-    // 
+    //
 /*
     if (~empty?(var.variable-transformers))
       install-transformers(defn, var.variable-transformers);
@@ -1050,9 +1050,9 @@ end method note-variable-definition;
 //
 // We ignore implicit definitions for variables already defined or from outside
 // the module (unless the variable was set up with a create clause).
-// 
+//
 define method note-variable-definition (defn :: <implicit-definition>,
-					#next next-method)
+                                        #next next-method)
   let var = find-variable(defn.defn-name, create: #t);
   unless (var.variable-definition)
     if (var.variable-home == defn.defn-name.name-module | var.created?)
@@ -1080,28 +1080,28 @@ define method find-data-unit
       *Current-Library* := lib;
       *load-depth* := previous-depth + 1;
       unless (zero?(previous-depth))
-	new-line(*standard-error*);
-	for (i from 0 below *load-depth*)
-	  write-element(*standard-error*, ' ');
-	end for;
+        new-line(*standard-error*);
+        for (i from 0 below *load-depth*)
+          write-element(*standard-error*, ' ');
+        end for;
       end unless;
       format(*standard-error*, "[Loading library %s...", name);
       force-output(*standard-error*);
       let handler (<error>)
-	= method (cond :: <error>, next :: <function>)
-	    lib.broken? := #t;
-	    compiler-fatal-error
-	      ("Puked loading library %s:\n  %s", name, cond);
-	  end method;
+        = method (cond :: <error>, next :: <function>)
+            lib.broken? := #t;
+            compiler-fatal-error
+              ("Puked loading library %s:\n  %s", name, cond);
+          end method;
       let res = next-method();
       unless (lib.defined?)
-	error("Loaded library %s but it wasn't ever defined.", name);
+        error("Loaded library %s but it wasn't ever defined.", name);
       end unless;
       res;
     cleanup
       write-element(*standard-error*, ']');
       if (zero?(previous-depth))
-	new-line(*standard-error*);
+        new-line(*standard-error*);
       end if;
       force-output(*standard-error*);
       *Current-Library* := previous-library;
@@ -1115,10 +1115,10 @@ end method find-data-unit;
 // Initilization stuff.
 
 // *Current-Library* and *Current-Module* -- exported.
-// 
+//
 // The Current Library and Module during a parse or load, or #f if we arn't
 // parsing or loading at the moment.
-// 
+//
 define variable *Current-Library* :: false-or(<library>) = #f;
 define variable *Current-Module* :: false-or(<module>) = #f;
 
@@ -1143,18 +1143,18 @@ define constant $Bootstrap-Module
 // $bootstrap-exports -- internal.
 //
 // Names to export from the bootstrap module.
-// 
+//
 define constant $bootstrap-exports :: <stretchy-vector>
   = make(<stretchy-vector>);
 
 // add-bootstrap-export -- exported.
 //
 // Record that name is supposed to be exported from the bootstrap module.
-// 
+//
 define method add-bootstrap-export (name :: <symbol>) => ();
   if ($bootstrap-module.defined?)
     error("Trying to add an export to the bootstrap module after it has"
-	    " been defined.");
+            " been defined.");
   end if;
   add!($bootstrap-exports, token-for-symbol(name));
 end method add-bootstrap-export;
@@ -1162,7 +1162,7 @@ end method add-bootstrap-export;
 // define-bootstrap-module -- exported.
 //
 // Actually define the bootstrap module.
-// 
+//
 define method define-bootstrap-module () => ();
   note-module-definition
     ($Dylan-Library, token-for-symbol(#"Bootstrap"), #[],
@@ -1177,7 +1177,7 @@ define method token-for-symbol (sym :: <symbol>) => res :: <symbol-token>;
 end method token-for-symbol;
 
 // dylan-name -- ???
-// 
+//
 define method dylan-name (sym :: <symbol>) => res :: <basic-name>;
   make(<basic-name>, symbol: sym, module: $Dylan-module);
 end method dylan-name;
@@ -1185,7 +1185,7 @@ end method dylan-name;
 // dylan-var -- exported.
 //
 // Return the variable for name in the dylan module.
-// 
+//
 define method dylan-var (name :: <symbol>, #key create: create?)
     => res :: false-or(<variable>);
   find-variable(dylan-name(name), create: create?);
@@ -1194,7 +1194,7 @@ end method dylan-var;
 // dylan-defn -- exported.
 //
 // Return the definition for name in the dylan module.
-// 
+//
 define method dylan-defn (name :: <symbol>)
     => res :: false-or(<definition>);
   let var = dylan-var(name);

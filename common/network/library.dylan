@@ -11,18 +11,18 @@ end library network;
 define module network-internal
   use common-dylan;
   use format-out;
-  use melange-support, 
+  use melange-support,
     export: { pointer-value, pointer-at,
              content-size, <c-vector>};
 
-  export 
+  export
     gethostbyname,
-    getprotobyname, 
+    getprotobyname,
     socket,
     connect,
     htons,
     sendto,
-    $PF-INET, 
+    $PF-INET,
     $SOCK-STREAM,
     $IPPROTO-TCP,
     $SOCK-DGRAM,

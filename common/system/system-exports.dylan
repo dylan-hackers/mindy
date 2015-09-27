@@ -45,10 +45,10 @@ define module operating-system
   use common-dylan,
     exclude: {subclass},
     export: {application-name,
-	     application-filename,
-	     application-arguments,
-	     exit-application,
-	     register-exit-application-function};
+             application-filename,
+             application-arguments,
+             exit-application,
+             register-exit-application-function};
 
   export
     $architecture-little-endian?,

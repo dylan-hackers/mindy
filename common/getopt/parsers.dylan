@@ -7,19 +7,19 @@ copyright: Copyright 1998 Eric Kidd and Jeff Dubrule
 //
 //  Copyright (c) 1998 Eric Kidd, Jeff Dubrule
 //  All rights reserved.
-// 
+//
 //  Use and copying of this software and preparation of derivative
 //  works based on this software are permitted, including commercial
 //  use, provided that the following conditions are observed:
-// 
+//
 //  1. This copyright notice must be retained in full on any copies
 //     and on appropriate parts of any derivative works. (Other names
 //     and years may be added, so long as no existing ones are removed.)
-// 
+//
 //  This software is made available "as is".  Neither the authors nor
 //  Carnegie Mellon University make any warranty about the software,
 //  its performance, or its conformity to any specification.
-// 
+//
 //  Bug reports, questions, comments, and suggestions should be sent by
 //  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 //
@@ -38,7 +38,7 @@ define abstract open primary class <negative-option-parser> (<option-parser>)
     init-value: #();
   slot negative-short-options :: <list> /* of: <string> */,
     init-keyword: negative-short-options:,
-    init-value: #();  
+    init-value: #();
 end class <negative-option-parser>;
 
 define method initialize
@@ -50,9 +50,9 @@ define method initialize
   // our extra options to parse-options by adding them to the standard
   // list.
   parser.long-option-names := concatenate(parser.long-option-names,
-					  parser.negative-long-options);
+                                          parser.negative-long-options);
   parser.short-option-names := concatenate(parser.short-option-names,
-					   parser.negative-short-options);
+                                           parser.negative-short-options);
 end method;
 
 define method negative-option?
@@ -82,7 +82,7 @@ define class <simple-option-parser> (<negative-option-parser>)
   // Information used to reset our parse state.
   slot option-default-value :: <boolean>,
     init-keyword: default:,
-    init-value: #f;  
+    init-value: #f;
 end class <simple-option-parser>;
 
 define method initialize
@@ -138,7 +138,7 @@ end method parse-option;
 //  Similar to the above, but these options may appear more than once.
 //  The final value is a deque of parameter values in the order they
 //  appeared on the command line. It defaults to the empty deque.
-//  
+//
 //  Examples:
 //    -wall, -w=all, -w = all, --warnings all, --warnings=all
 
@@ -171,7 +171,7 @@ end method parse-option;
 //  or follow an "=" token. The value is #f if the option never appears,
 //  #t if the option appears but the parameter does not, and the value
 //  of the parameter otherwise.
-//  
+//
 //  Examples:
 //    -z, -z3, -z=3, -z = 3, --zip, --zip=3, --zip = 3
 //  Counter-examples:
@@ -191,13 +191,13 @@ define method parse-option
   parser.option-value :=
     case
       instance?(next, <equals-token>) =>
-	get-argument-token(arg-parser);
-	get-argument-token(arg-parser).token-value;
+        get-argument-token(arg-parser);
+        get-argument-token(arg-parser).token-value;
       (instance?(option, <short-option-token>)
-	 & option.tightly-bound-to-next-token?) =>
-	get-argument-token(arg-parser).token-value;
+         & option.tightly-bound-to-next-token?) =>
+        get-argument-token(arg-parser).token-value;
       otherwise =>
-	#t;
+        #t;
     end case;
 end method parse-option;
 

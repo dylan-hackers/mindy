@@ -6,25 +6,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -61,8 +61,8 @@ define sealed domain make (singleton(<basic-name>));
 /*
 define method print-object (name :: <basic-name>, stream :: <stream>) => ();
   pprint-fields(name, stream,
-		symbol: name.name-symbol,
-		module: name.name-module);
+                symbol: name.name-symbol,
+                module: name.name-module);
 end;
 */
 
@@ -86,11 +86,11 @@ end method;
 define class <derived-name> (<name>)
   constant slot derived-name-how
     :: one-of(#"type-cell", #"general-entry", #"generic-entry",
-	      #"callback-entry",
-    	      #"discriminator",
-    	      #"deferred-evaluation", #"init-function", #"setter", #"getter",
-	      #"maker", #"key-defaulter",
-	      #"class-meta", #"each-subclass-meta"),
+              #"callback-entry",
+                  #"discriminator",
+                  #"deferred-evaluation", #"init-function", #"setter", #"getter",
+              #"maker", #"key-defaulter",
+              #"class-meta", #"each-subclass-meta"),
     required-init-keyword: how:;
   constant slot derived-name-base :: <name>, required-init-keyword: base:;
 end;
@@ -99,9 +99,9 @@ define sealed domain make (singleton(<derived-name>));
 
 define method name-unique? (name :: <derived-name>) => res :: <boolean>;
   member?(name.derived-name-how,
-  	  #[#"type-cell", #"general-entry", #"generic-entry", #"discriminator",
-	    #"maker", #"key-defaulter", #"setter", #"getter",
-	    #"class-meta", #"each-subclass-meta"])
+            #[#"type-cell", #"general-entry", #"generic-entry", #"discriminator",
+            #"maker", #"key-defaulter", #"setter", #"getter",
+            #"class-meta", #"each-subclass-meta"])
     & name-unique?(name.derived-name-base);
 end method;
 
@@ -109,7 +109,7 @@ end method;
 define method print-object (name :: <derived-name>, stream :: <stream>)
     => ();
   pprint-fields(name, stream, how: name.derived-name-how,
-  		base: name.derived-name-base);
+                  base: name.derived-name-base);
 end;
 */
 
@@ -133,14 +133,14 @@ define sealed domain make (singleton(<internal-name>));
 define method print-object (name :: <internal-name>, stream :: <stream>)
     => ();
   pprint-fields(name, stream, symbol: name.internal-name-symbol,
-  		base: name.internal-name-base);
+                  base: name.internal-name-base);
 end;
 */
 
 define method print-message (name :: <internal-name>, stream :: <stream>)
     => ();
   format(stream, "%s internal %s", name.internal-name-base,
-  	 name.internal-name-symbol);
+           name.internal-name-symbol);
 end;
 
 
@@ -179,8 +179,8 @@ define sealed domain make (singleton(<method-name>));
 /*
 define method print-object (name :: <method-name>, stream :: <stream>) => ();
   pprint-fields(name, stream,
-		generic-function: name.method-name-generic-function,
-		specializers: name.method-name-specializers);
+                generic-function: name.method-name-generic-function,
+                specializers: name.method-name-specializers);
 end;
 */
 

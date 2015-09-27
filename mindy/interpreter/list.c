@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -80,9 +80,9 @@ static obj_t vlistn(int n, va_list ap)
     int i;
 
     for (i = 0; i < n; i ++) {
-	obj_t new = list1(va_arg(ap, obj_t));
-	*tail = new;
-	tail = &TAIL(new);
+        obj_t new = list1(va_arg(ap, obj_t));
+        *tail = new;
+        tail = &TAIL(new);
     }
 
     *tail = obj_Nil;
@@ -105,9 +105,9 @@ obj_t listn(int n, ...)
 boolean memq(obj_t o, obj_t list)
 {
     while (list != obj_Nil) {
-	if (o == HEAD(list))
-	    return TRUE;
-	list = TAIL(list);
+        if (o == HEAD(list))
+            return TRUE;
+        list = TAIL(list);
     }
     return FALSE;
 }
@@ -117,10 +117,10 @@ obj_t nreverse(obj_t list)
     obj_t result = obj_Nil;
 
     while (list != obj_Nil) {
-	obj_t t = TAIL(list);
-	TAIL(list) = result;
-	result = list;
-	list = t;
+        obj_t t = TAIL(list);
+        TAIL(list) = result;
+        result = list;
+        list = t;
     }
     return result;
 }
@@ -130,7 +130,7 @@ int length(obj_t list)
     int count;
 
     for (count = 0; list != obj_Nil; list = TAIL(list))
-	count++;
+        count++;
 
     return count;
 }
@@ -166,7 +166,7 @@ static void dylan_list(struct thread *thread, int nargs)
     obj_t result = obj_Nil;
 
     while (nargs-- > 0)
-	result = pair(*--ptr, result);
+        result = pair(*--ptr, result);
 
     thread->sp = ptr;
     *--ptr = result;
@@ -180,27 +180,27 @@ static obj_t dylan_list_size(obj_t list)
     int length;
 
     if (list == obj_Nil)
-	return make_fixnum(0);
+        return make_fixnum(0);
     if (object_class(list) != obj_PairClass)
-	type_error(list, obj_ListClass);
+        type_error(list, obj_ListClass);
 
     slow = list;
     fast = list;
     length = 0;
 
     do {
-	fast = TAIL(fast);
-	if (fast == obj_Nil)
-	    return make_fixnum(length+1);
-	if (object_class(fast) != obj_PairClass)
-	    type_error(fast, obj_ListClass);
-	fast = TAIL(fast);
-	length += 2;
-	if (fast == obj_Nil)
-	    return make_fixnum(length);
-	if (object_class(fast) != obj_PairClass)
-	    type_error(fast, obj_ListClass);
-	slow = TAIL(slow);
+        fast = TAIL(fast);
+        if (fast == obj_Nil)
+            return make_fixnum(length+1);
+        if (object_class(fast) != obj_PairClass)
+            type_error(fast, obj_ListClass);
+        fast = TAIL(fast);
+        length += 2;
+        if (fast == obj_Nil)
+            return make_fixnum(length);
+        if (object_class(fast) != obj_PairClass)
+            type_error(fast, obj_ListClass);
+        slow = TAIL(slow);
     } while (slow != fast);
     return obj_False;
 }
@@ -214,22 +214,22 @@ static void print_list(obj_t list)
 
     printf("#(");
     if (list != obj_Nil) {
-	while (1) {
-	    prin1(HEAD(list));
-	    list = TAIL(list);
-	    if (list == obj_Nil)
-		break;
-	    if (++len > 20) {
-		printf(" ...");
-		break;
-	    }
-	    if (!instancep(list, obj_ListClass)) {
-		printf(" . ");
-		prin1(list);
-		break;
-	    }
-	    printf(", ");
-	}
+        while (1) {
+            prin1(HEAD(list));
+            list = TAIL(list);
+            if (list == obj_Nil)
+                break;
+            if (++len > 20) {
+                printf(" ...");
+                break;
+            }
+            if (!instancep(list, obj_ListClass)) {
+                printf(" . ");
+                prin1(list);
+                break;
+            }
+            printf(", ");
+        }
     }
     putchar(')');
 }
@@ -279,26 +279,26 @@ void init_list_classes(void)
     def_printer(obj_ListClass, print_list);
     init_builtin_class(obj_PairClass, "<pair>", obj_ListClass, NULL);
     init_builtin_class(obj_EmptyListClass, "<empty-list>",
-		       obj_ListClass, NULL);
+                       obj_ListClass, NULL);
 }
 
 void init_list_functions(void)
 {
     define_function("pair", list2(obj_ObjectClass, obj_ObjectClass),
-		    FALSE, obj_False, FALSE, obj_PairClass, pair);
+                    FALSE, obj_False, FALSE, obj_PairClass, pair);
     define_function("head", list1(obj_ListClass),
-		    FALSE, obj_False, FALSE, obj_ObjectClass, dylan_head);
+                    FALSE, obj_False, FALSE, obj_ObjectClass, dylan_head);
     define_function("head-setter", list2(obj_ObjectClass, obj_ListClass),
-		    FALSE, obj_False, FALSE, obj_ObjectClass,
-		    dylan_head_setter);
+                    FALSE, obj_False, FALSE, obj_ObjectClass,
+                    dylan_head_setter);
     define_function("tail", list1(obj_ListClass),
-		    FALSE, obj_False, FALSE, obj_ObjectClass, dylan_tail);
+                    FALSE, obj_False, FALSE, obj_ObjectClass, dylan_tail);
     define_function("tail-setter", list2(obj_ObjectClass, obj_ListClass),
-		    FALSE, obj_False, FALSE, obj_ObjectClass,
-		    dylan_tail_setter);
+                    FALSE, obj_False, FALSE, obj_ObjectClass,
+                    dylan_tail_setter);
     define_constant("list",
-		    make_raw_function("list", obj_Nil, TRUE, obj_False, FALSE,
-				      obj_Nil, obj_ObjectClass, dylan_list));
+                    make_raw_function("list", obj_Nil, TRUE, obj_False, FALSE,
+                                      obj_Nil, obj_ObjectClass, dylan_list));
     define_method("size", list1(obj_ListClass), FALSE, obj_False, FALSE,
-		  obj_FixnumClass, dylan_list_size);
+                  obj_FixnumClass, dylan_list_size);
 }

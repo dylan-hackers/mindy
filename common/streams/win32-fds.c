@@ -47,20 +47,20 @@ static DWORD input_checker (LPDWORD param)
     if (!read_result) {
       /* For easier debugging, find out what error */
       DWORD the_error = GetLastError();
-      if (the_error != ERROR_BROKEN_PIPE) { 
-	/* handle broken pipes later */
-	fprintf(stderr, "Read error on fd %d", fd);
-	exit(1);
+      if (the_error != ERROR_BROKEN_PIPE) {
+        /* handle broken pipes later */
+        fprintf(stderr, "Read error on fd %d", fd);
+        exit(1);
       }
     }
     thread_status[fd] = thread_finished;
     fd_threads[fd] = NULL;
       /* If we don't do this, the file handle may be reused for a different
-	 fd, and fd_read() may kill off a thread it didn't mean to */
+         fd, and fd_read() may kill off a thread it didn't mean to */
     return 0;
 }
 
-/* Create an input_checker thread, initializing global structures as 
+/* Create an input_checker thread, initializing global structures as
    necessary.
  */
 static void spawn_input_checker (int fd)
@@ -68,21 +68,21 @@ static void spawn_input_checker (int fd)
     DWORD thread_id;
     if (fd >= MAX_FDS) {
         fprintf(stderr, "%d is too high a file descriptor for us.", fd);
-	exit(1);
+        exit(1);
     }
     fd_threads[fd]
-	= CreateThread(NULL, 0, /* default security + stack size */
-		       (LPTHREAD_START_ROUTINE) input_checker, 
-		       (VOID *) fd, /* param */
-		       0,  /* default creation flags */
-		       &thread_id);
+        = CreateThread(NULL, 0, /* default security + stack size */
+                       (LPTHREAD_START_ROUTINE) input_checker,
+                       (VOID *) fd, /* param */
+                       0,  /* default creation flags */
+                       &thread_id);
     if (fd_threads[fd] == NULL) {
         fprintf(stderr, "Can't create input_checker thread for fd %d", fd);
-	exit(1);
+        exit(1);
     }
     thread_status[fd] = thread_still_waiting;
 }
-    
+
 /* If the input_checker thread is alive, kill it.
  */
 static void kill_checker (int fd)
@@ -100,7 +100,7 @@ int fd_open (const char *filename, int flags, int mode)
     int fd = open(filename, flags | O_BINARY, mode);
     if (fd != -1) {
         thread_status[fd] = thread_killed;
-	fd_threads[fd] = NULL;
+        fd_threads[fd] = NULL;
     }
     return fd;
 }
@@ -133,15 +133,15 @@ int fd_input_available (int fd)
     } else {
         /* not a socket; use the input_checker black magic */
       if (thread_status[fd] == thread_still_waiting) {
-	return 0;
+        return 0;
       } else if (thread_status[fd] == thread_finished) {
-	return 1;
+        return 1;
       } else if (thread_status[fd] == thread_killed) {
-	spawn_input_checker(fd);
-	return 0;
+        spawn_input_checker(fd);
+        return 0;
       } else {
-	fprintf(stderr, "Bad thread status on fd %d\n", fd);
-	exit(1);
+        fprintf(stderr, "Bad thread status on fd %d\n", fd);
+        exit(1);
       }
     }
 }
@@ -157,14 +157,14 @@ int fd_read (int fd, char *buffer, int max_chars)
   return res;
 }
 
-/* And now, it's time for fd_exec -- create a child process whose input 
+/* And now, it's time for fd_exec -- create a child process whose input
    comes from us and whose output goes to us.
 
    This version of fd_exec is based on Emacs 19.31 ntproc.c.  It is
    more or less unchanged from the Mindy version (it does take
    different parameters, though)
 
-   prepare_standard_handles and reset_standard_handles are ripped straight 
+   prepare_standard_handles and reset_standard_handles are ripped straight
    out of Emacs.  You give it two file descriptors, it sticks them
    into stdin and stdout, and puts the old values of them into
    handles[].  (The original Emacs version also did stderr.  We don't need
@@ -196,8 +196,8 @@ int fd_read (int fd, char *buffer, int max_chars)
    I'm not sure duplicating them is necessary, but it doesn't hurt...)
 
    inpipes, outpipes, and old_handles are 2 element arrays.  */
-static void pipe_setup (STARTUPINFO *siStartInfo, int inpipes[], 
-			int outpipes[], HANDLE old_handles[])
+static void pipe_setup (STARTUPINFO *siStartInfo, int inpipes[],
+                        int outpipes[], HANDLE old_handles[])
 {
   const int pipe_size = 2000;
   HANDLE new_stdin, new_stdout;
@@ -211,21 +211,21 @@ static void pipe_setup (STARTUPINFO *siStartInfo, int inpipes[],
 
       /* Duplicate the stdin and stdout handles.  False on failure. */
       || !DuplicateHandle(parent, /* source process */
-			  /* next, handle to dup */
-			  (HANDLE) _get_osfhandle(inpipes[0]),
-			  parent,  /* Proc to give new handles to */
-			  &new_stdin, /* Where new handle is stored */
-			  0,  /* Parameter ignored */
-			  TRUE, /* Make new handle inheritable */
-			  DUPLICATE_SAME_ACCESS)
+                          /* next, handle to dup */
+                          (HANDLE) _get_osfhandle(inpipes[0]),
+                          parent,  /* Proc to give new handles to */
+                          &new_stdin, /* Where new handle is stored */
+                          0,  /* Parameter ignored */
+                          TRUE, /* Make new handle inheritable */
+                          DUPLICATE_SAME_ACCESS)
       || !DuplicateHandle(parent,  /* source process */
-			  /* next, handle to dup */
-			  (HANDLE)_get_osfhandle(outpipes[1]),
-			  parent,   /* Proc to give new handles to */
-			  &new_stdout,  /* Where new handle is stored */
-			  0,  /* Parameter ignored */
-			  TRUE, /* Make new handle inheritable */
-			  DUPLICATE_SAME_ACCESS)) {
+                          /* next, handle to dup */
+                          (HANDLE)_get_osfhandle(outpipes[1]),
+                          parent,   /* Proc to give new handles to */
+                          &new_stdout,  /* Where new handle is stored */
+                          0,  /* Parameter ignored */
+                          TRUE, /* Make new handle inheritable */
+                          DUPLICATE_SAME_ACCESS)) {
     fprintf(stderr, "Failed while doing pipe stuff for fd_exec");
     exit(1);
   }
@@ -248,7 +248,7 @@ static void pipe_setup (STARTUPINFO *siStartInfo, int inpipes[],
   siStartInfo->hStdInput = new_stdin;
   siStartInfo->hStdOutput = new_stdout;
 
-  /* nothing funny with stderr, but we still have to initialize 
+  /* nothing funny with stderr, but we still have to initialize
      the field anyway */
   siStartInfo->hStdError = GetStdHandle(STD_ERROR_HANDLE);
 }

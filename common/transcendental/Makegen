@@ -2,8 +2,8 @@
 
 $D2CFLAGS = $d2c_runtime;
 
-&emit_library_rule('Transcendental', '$(BUILDROOT)/force.timestamp', '', 
-		     'compile', 'no-mindy', 'install');
+&emit_library_rule('Transcendental', '$(BUILDROOT)/force.timestamp', '',
+                   'compile', 'no-mindy', 'install');
 
 # The mindy random needs the mindy transcendental.
 &emit_library_rule(

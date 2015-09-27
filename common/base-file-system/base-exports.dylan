@@ -16,13 +16,13 @@ define module base-file-system
   use System, import: {system};
   use String-conversions;  // as(<string>, char)
   // We use the Streams library to see if a file exists
-  use Streams, 
-    import: {<stream>, <file-stream>, <file-does-not-exist-error>, close}; 
+  use Streams,
+    import: {<stream>, <file-stream>, <file-does-not-exist-error>, close};
 
 #if (mindy)
   use System, import: {getcwd};
 #else
-  use System, 
+  use System,
      import: {call-out, buffer-address, <buffer>};
 #endif
 
@@ -37,12 +37,12 @@ define module base-file-system
      base-filename,
      pathless-filename,
      extensionless-filename,
-     
+
      get-current-directory,
 
      find-file,
      find-and-open-file,
-     
+
      delete-file,
      rename-file,
      files-identical?;

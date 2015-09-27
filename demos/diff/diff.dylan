@@ -2,7 +2,7 @@ module: Diff-Program
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
 // This file implements an algorithm that accomplishes something
-// similar to the Unix diff utility.  
+// similar to the Unix diff utility.
 
 // Usage:
 //      mindy -f diff.dbc file1 file2
@@ -11,17 +11,17 @@ define constant <script> = <sequence>;
 define method slurp-file (filename :: <string>) => lines :: <sequence>;
   let stream = make(<file-stream>, locator: filename, direction: #"input");
   let lines = make(<stretchy-vector>);
-  for (i from 0, 
-       line = read-line(stream, on-end-of-stream: #f) 
-	 then read-line(stream, on-end-of-stream: #f),
+  for (i from 0,
+       line = read-line(stream, on-end-of-stream: #f)
+         then read-line(stream, on-end-of-stream: #f),
        while: line ~= #f)
       lines[i] := line;
   end for;
   lines;
 end method slurp-file;
 
-define method print-lines (prefix :: <string>, seq :: <sequence>, 
-			   start :: <integer>, count :: <integer>) => ();
+define method print-lines (prefix :: <string>, seq :: <sequence>,
+                           start :: <integer>, count :: <integer>) => ();
   for (i from start below start + count)
     if (i < seq.size)  // Kluge to avoid some unknown fencepost error
       format(*standard-output*, "%s%s\n", prefix, seq[i]);
@@ -56,22 +56,22 @@ define method print-entry
   print-lines("< ", file1, entry.dest-index, entry.element-count);
 end method print-entry;
 
-define method print-diffs 
+define method print-diffs
     (diffs :: <script>, file1 :: <sequence>, file2 :: <sequence>) => ();
   for (pointer = diffs then pointer.tail, while: pointer ~= #())
     let entry = pointer.head;
 
     // If two consecutive entries could be considered a "change" (ie,
     // a delete with a corresponding insert), treat them specially.
-    if (pointer.tail ~= #() & instance?(entry, <delete-entry>) 
-	  & instance?(pointer.tail.head, <insert-entry>)
-	  & (entry.dest-index + entry.element-count - 1
-	       = pointer.tail.head.dest-index))
+    if (pointer.tail ~= #() & instance?(entry, <delete-entry>)
+          & instance?(pointer.tail.head, <insert-entry>)
+          & (entry.dest-index + entry.element-count - 1
+               = pointer.tail.head.dest-index))
       let entry2 = pointer.tail.head;
       print-line-nums(entry.dest-index, entry.dest-index + entry.element-count - 1);
       format(*standard-output*, "c");
-      print-line-nums(entry2.source-index, 
-		      entry2.source-index + entry.element-count - 1);
+      print-line-nums(entry2.source-index,
+                      entry2.source-index + entry.element-count - 1);
       format(*standard-output*, "\n");
       print-lines("< ", file1, entry.dest-index, entry.element-count);
       format(*standard-output*, "---\n");

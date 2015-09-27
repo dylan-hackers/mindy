@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -109,11 +109,11 @@ static int safe_read(struct load_info *info, void *ptr, int bytes)
     int count = read(info->fd, ptr, bytes);
 
     if (count < 0)
-	error("error loading %s: %s",
-	      make_byte_string(info->name),
-	      make_byte_string(strerror(errno)));
+        error("error loading %s: %s",
+              make_byte_string(info->name),
+              make_byte_string(strerror(errno)));
     if (count == 0)
-	error("premature EOF loading %s", make_byte_string(info->name));
+        error("premature EOF loading %s", make_byte_string(info->name));
 
     return count;
 }
@@ -123,51 +123,51 @@ static void read_bytes(struct load_info *info, void *ptr, int bytes)
     int count = info->end - info->ptr;
 
     while (1) {
-	if (bytes <= count) {
-	    memcpy(ptr, info->ptr, bytes);
-	    info->ptr += bytes;
-	    return;
-	}
+        if (bytes <= count) {
+            memcpy(ptr, info->ptr, bytes);
+            info->ptr += bytes;
+            return;
+        }
 
-	memcpy(ptr, info->ptr, count);
-	ptr = (char *)ptr + count;
-	bytes -= count;
-	info->ptr = info->end = info->buffer;
+        memcpy(ptr, info->ptr, count);
+        ptr = (char *)ptr + count;
+        bytes -= count;
+        info->ptr = info->end = info->buffer;
 
-	while (bytes > BUFFER_SIZE) {
-	    count = safe_read(info, ptr, bytes);
-	    ptr = (char *)ptr + count;
-	    bytes -= count;
-	}
-	
-	if (bytes == 0)
-	    return;
-	
-	count = safe_read(info, info->buffer, BUFFER_SIZE);
-	info->end = info->buffer + count;
+        while (bytes > BUFFER_SIZE) {
+            count = safe_read(info, ptr, bytes);
+            ptr = (char *)ptr + count;
+            bytes -= count;
+        }
+
+        if (bytes == 0)
+            return;
+
+        count = safe_read(info, info->buffer, BUFFER_SIZE);
+        info->end = info->buffer + count;
     }
 }
 
 static void read_ordered_bytes(struct load_info *info, void *ptr, int bytes)
 {
     if (info->swap_bytes) {
-	unsigned char *dst = (unsigned char *)ptr + bytes;
-	unsigned char *src = info->ptr;
-	unsigned char *end = info->end;
+        unsigned char *dst = (unsigned char *)ptr + bytes;
+        unsigned char *src = info->ptr;
+        unsigned char *end = info->end;
 
-	while (end-src < dst-(unsigned char *)ptr) {
-	    while (src < end)
-		*--dst = *src++;
-	    src = info->buffer;
-	    end = src + safe_read(info, src, BUFFER_SIZE);
-	}
-	while (dst > (unsigned char *)ptr)
-	    *--dst = *src++;
-	info->ptr = src;
-	info->end = end;
+        while (end-src < dst-(unsigned char *)ptr) {
+            while (src < end)
+                *--dst = *src++;
+            src = info->buffer;
+            end = src + safe_read(info, src, BUFFER_SIZE);
+        }
+        while (dst > (unsigned char *)ptr)
+            *--dst = *src++;
+        info->ptr = src;
+        info->end = end;
     }
     else
-	read_bytes(info, ptr, bytes);
+        read_bytes(info, ptr, bytes);
 }
 
 static int read_byte(struct load_info *info)
@@ -175,8 +175,8 @@ static int read_byte(struct load_info *info)
     unsigned char *ptr = info->ptr;
 
     if (ptr == info->end) {
-	ptr = info->buffer;
-	info->end = ptr + safe_read(info, ptr, BUFFER_SIZE);
+        ptr = info->buffer;
+        info->end = ptr + safe_read(info, ptr, BUFFER_SIZE);
     }
     info->ptr = ptr+1;
 
@@ -186,7 +186,7 @@ static int read_byte(struct load_info *info)
 static void unread_byte(struct load_info *info)
 {
     if (info->ptr == info->buffer)
-	lose("unread_byte used while buffer empty.");
+        lose("unread_byte used while buffer empty.");
 
     info->ptr--;
 }
@@ -248,9 +248,9 @@ static void check_size(struct load_info *info, int desired, char *what)
     int bytes = read_byte(info);
 
     if (bytes != desired)
-	error("Wrong sized %s in %s: should be %d but is %d",
-	      make_byte_string(what), make_byte_string(info->name),
-	      make_fixnum(desired), make_fixnum(bytes));
+        error("Wrong sized %s in %s: should be %d but is %d",
+              make_byte_string(what), make_byte_string(info->name),
+              make_fixnum(desired), make_fixnum(bytes));
 }
 
 static obj_t fop_header(struct load_info *info)
@@ -263,11 +263,11 @@ static obj_t fop_header(struct load_info *info)
     minor_version = read_byte(info);
 
     if (major_version < file_MajorVersion)
-	error("Obsolete .dbc file: %s", make_byte_string(info->name));
+        error("Obsolete .dbc file: %s", make_byte_string(info->name));
     if ((major_version > file_MajorVersion)
         | (minor_version > file_MinorVersion))
-	error("Obsolete version of Mindy for %s",
-	      make_byte_string(info->name));
+        error("Obsolete version of Mindy for %s",
+              make_byte_string(info->name));
 
     check_size(info, sizeof(short), "short");
     check_size(info, sizeof(int), "int");
@@ -282,8 +282,8 @@ static obj_t fop_header(struct load_info *info)
     magic = read_int(info);
 
     if (magic != dbc_MagicNumber)
-	error("Invalid .dbc file: %s", make_byte_string(info->name));
-	
+        error("Invalid .dbc file: %s", make_byte_string(info->name));
+
     return obj_False;
 }
 
@@ -298,19 +298,19 @@ static obj_t store(struct load_info *info, obj_t value, int handle)
     int size = info->table_end - info->table;
 
     if (handle >= size) {
-	if (handle < 16*1024) {
-	    if (size == 0)
-		size = 1024;
-	    while (handle >= size)
-		size *= 2;
-	}
-	else
-	    size = ((handle + 16*1024-1) / (16*1024)) * 16*1024;
-	if (info->table)
-	    info->table = realloc(info->table, sizeof(obj_t) * size);
-	else
-	    info->table = malloc(sizeof(obj_t) * size);
-	info->table_end = info->table + size;
+        if (handle < 16*1024) {
+            if (size == 0)
+                size = 1024;
+            while (handle >= size)
+                size *= 2;
+        }
+        else
+            size = ((handle + 16*1024-1) / (16*1024)) * 16*1024;
+        if (info->table)
+            info->table = realloc(info->table, sizeof(obj_t) * size);
+        else
+            info->table = malloc(sizeof(obj_t) * size);
+        info->table_end = info->table + size;
     }
 
     info->table[handle] = value;
@@ -329,8 +329,8 @@ static obj_t ref(struct load_info *info, int index)
     int table_size = info->table_end - info->table;
 
     if (index < 0 || index >= table_size)
-	lose("Bogus ref index %d, should be >= 0 and < %d\n",
-	     index, table_size);
+        lose("Bogus ref index %d, should be >= 0 and < %d\n",
+             index, table_size);
 
     return info->table[index];
 }
@@ -435,13 +435,13 @@ static obj_t fop_string(struct load_info *info)
 static obj_t fop_short_symbol(struct load_info *info)
 {
     return store(info, symbol((char *)string_chars(fop_short_string(info))),
-		 next_handle(info));
+                 next_handle(info));
 }
 
 static obj_t fop_symbol(struct load_info *info)
 {
     return store(info, symbol((char *)string_chars(fop_string(info))),
-		 next_handle(info));
+                 next_handle(info));
 }
 
 static obj_t fop_nil(struct load_info *info)
@@ -456,15 +456,15 @@ static obj_t read_list(struct load_info *info, int len, boolean dotted)
     prev = &result;
 
     while (len-- > 0) {
-	obj_t new = pair(read_thing(info), obj_False);
-	*prev = new;
-	prev = &TAIL(new);
+        obj_t new = pair(read_thing(info), obj_False);
+        *prev = new;
+        prev = &TAIL(new);
     }
 
     if (dotted)
-	*prev = read_thing(info);
+        *prev = read_thing(info);
     else
-	*prev = obj_Nil;
+        *prev = obj_Nil;
 
     return result;
 }
@@ -565,7 +565,7 @@ static obj_t read_vector(struct load_info *info, int len)
     int i;
 
     for (i = 0; i < len; i++)
-	SOVEC(res)->contents[i] = read_thing(info);
+        SOVEC(res)->contents[i] = read_thing(info);
 
     return res;
 }
@@ -620,11 +620,11 @@ static obj_t fop_vectorn(struct load_info *info)
     int len = read_byte(info);
 
     if (len == 255)
-	len = read_int(info)+9+254+(1<<16);
+        len = read_int(info)+9+254+(1<<16);
     else if (len == 254)
-	len = read_ushort(info)+9+254;
+        len = read_ushort(info)+9+254;
     else
-	len += 9;
+        len += 9;
 
     return read_vector(info, len);
 }
@@ -642,13 +642,13 @@ static obj_t fop_writable_value_cell(struct load_info *info)
 static obj_t fop_builtin_value_cell(struct load_info *info)
 {
     return rawptr_obj(find_variable(module_BuiltinStuff, read_thing(info),
-				    FALSE, TRUE));
+                                    FALSE, TRUE));
 }
 
 static obj_t fop_builtin_writable_value_cell(struct load_info *info)
 {
     return rawptr_obj(find_variable(module_BuiltinStuff, read_thing(info),
-				    TRUE, TRUE));
+                                    TRUE, TRUE));
 }
 
 static obj_t fop_note_reference(struct load_info *info)
@@ -658,8 +658,8 @@ static obj_t fop_note_reference(struct load_info *info)
     struct variable *var = obj_rawptr(var_obj);
 
     if (var->ref_file == obj_False) {
-	var->ref_file = info->source_file;
-	var->ref_line = line;
+        var->ref_file = info->source_file;
+        var->ref_line = line;
     }
 
     return var_obj;
@@ -671,13 +671,13 @@ static obj_t read_component(struct load_info *info, int nconst, int nbytes)
     int frame_size = fixnum_value(read_thing(info));
     obj_t debug_info = read_thing(info);
     obj_t res = make_component(debug_name, frame_size, info->mtime,
-			       info->source_file, debug_info, nconst, nbytes);
+                               info->source_file, debug_info, nconst, nbytes);
     int i;
 
     for (i = 0; i < nconst; i++)
-	obj_ptr(struct component *, res)->constant[i] = read_thing(info);
+        obj_ptr(struct component *, res)->constant[i] = read_thing(info);
     read_bytes(info, &obj_ptr(struct component *, res)->constant[nconst],
-	       nbytes);
+               nbytes);
 
     return res;
 }
@@ -699,7 +699,7 @@ static obj_t fop_component(struct load_info *info)
 }
 
 static obj_t read_method(struct load_info *info, int param_info,
-			 int nclosure_vars)
+                         int nclosure_vars)
 {
     boolean restp = param_info & 1;
     boolean all_keys = param_info & 2;
@@ -707,22 +707,22 @@ static obj_t read_method(struct load_info *info, int param_info,
     obj_t keys;
 
     if (nkeys == -1)
-	keys = obj_False;
+        keys = obj_False;
     else {
-	obj_t *prev = &keys;
-	while (nkeys-- > 0) {
-	    obj_t key = read_thing(info);
-	    obj_t def = read_thing(info);
-	    obj_t keyinfo = pair(key, def);
-	    obj_t new = list1(keyinfo);
-	    *prev = new;
-	    prev = &TAIL(new);
-	}
-	*prev = obj_Nil;
+        obj_t *prev = &keys;
+        while (nkeys-- > 0) {
+            obj_t key = read_thing(info);
+            obj_t def = read_thing(info);
+            obj_t keyinfo = pair(key, def);
+            obj_t new = list1(keyinfo);
+            *prev = new;
+            prev = &TAIL(new);
+        }
+        *prev = obj_Nil;
     }
 
     return make_method_info(restp, keys, all_keys, read_thing(info),
-			    nclosure_vars);
+                            nclosure_vars);
 }
 
 static obj_t fop_short_method(struct load_info *info)
@@ -744,13 +744,13 @@ static obj_t fop_method(struct load_info *info)
 static obj_t fop_in_library(struct load_info *info)
 {
     obj_t name = read_thing(info);
-    if (currently_loading != NULL && name != currently_loading) 
-	error("Trying to library %s, but found library %s in file:\n  %s",
-	      currently_loading, name, make_byte_string(info->name));
+    if (currently_loading != NULL && name != currently_loading)
+        error("Trying to library %s, but found library %s in file:\n  %s",
+              currently_loading, name, make_byte_string(info->name));
 
     info->library = find_library(name, TRUE);
     if (CurLibrary == NULL)
-	CurLibrary = info->library;
+        CurLibrary = info->library;
     return name;
 }
 
@@ -759,7 +759,7 @@ static obj_t fop_in_module(struct load_info *info)
     obj_t name = read_thing(info);
     info->module = find_module(info->library, name, TRUE, TRUE);
     if (CurLibrary == info->library && CurModule == NULL)
-	CurModule = info->module;
+        CurModule = info->module;
     return name;
 }
 
@@ -773,9 +773,9 @@ static obj_t fop_source_file(struct load_info *info)
 static obj_t make_top_level_method(obj_t component)
 {
     obj_t method_info = make_method_info(FALSE, obj_False, FALSE,
-					 component, 0);
+                                         component, 0);
     return make_byte_method(method_info, obj_Nil, obj_Nil, obj_ObjectClass,
-			    NULL);
+                            NULL);
 }
 
 static obj_t queue_form(struct queue *queue, obj_t component)
@@ -806,12 +806,12 @@ static obj_t fop_define_class(struct load_info *info)
     var = find_variable(info->module, name, FALSE, TRUE);
 
     if (var->value != obj_Unbound)
-	error("Can't both define class and define method %s", name);
+        error("Can't both define class and define method %s", name);
 
     var->value = make_defined_class(name, info->library);
 
     while ((slot = read_thing(info)) != obj_False)
-	define_variable(info->module, slot, var_Method);
+        define_variable(info->module, slot, var_Method);
 
     queue_form(&State.classes, read_thing(info));
     queue_form(&State.top_level_forms, read_thing(info));
@@ -847,7 +847,7 @@ static obj_t fop_define_constant(struct load_info *info)
     int i;
 
     for (i = 0; i < num_names; i++)
-	define_variable(info->module, read_thing(info), var_Constant);
+        define_variable(info->module, read_thing(info), var_Constant);
     return queue_form(&State.top_level_forms, read_thing(info));
 }
 
@@ -857,7 +857,7 @@ static obj_t fop_define_variable(struct load_info *info)
     int i;
 
     for (i = 0; i < num_names; i++)
-	define_variable(info->module, read_thing(info), var_Variable);
+        define_variable(info->module, read_thing(info), var_Variable);
     return queue_form(&State.top_level_forms, read_thing(info));
 }
 
@@ -870,22 +870,22 @@ static struct defn *read_defn(struct load_info *info, boolean read_creates)
     defn->name = read_thing(info);
     prev = &defn->use;
     while ((name = read_thing(info)) != obj_False) {
-	use = malloc(sizeof(struct use));
-	use->name = name;
-	use->import = read_thing(info);
-	use->exclude = read_thing(info);
-	use->prefix = read_thing(info);
-	use->rename = read_thing(info);
-	use->export = read_thing(info);
-	*prev = use;
-	prev = &use->next;
+        use = malloc(sizeof(struct use));
+        use->name = name;
+        use->import = read_thing(info);
+        use->exclude = read_thing(info);
+        use->prefix = read_thing(info);
+        use->rename = read_thing(info);
+        use->export = read_thing(info);
+        *prev = use;
+        prev = &use->next;
     }
     *prev = NULL;
     defn->exports = read_thing(info);
     if (read_creates)
-	defn->creates = read_thing(info);
+        defn->creates = read_thing(info);
     else
-	defn->creates = obj_Nil;
+        defn->creates = obj_Nil;
 
     return defn;
 }
@@ -922,11 +922,11 @@ static void skip_header(struct load_info *info)
     int c;
 
     while ((c = read_byte(info)) == '#')
-	while ((c = read_byte(info)) != '\n')
-	    ;
+        while ((c = read_byte(info)) != '\n')
+            ;
 
     if (c != fop_HEADER)
-	error("Invalid .dbc file: %s", make_byte_string(info->name));
+        error("Invalid .dbc file: %s", make_byte_string(info->name));
 
     unread_byte(info);
 }
@@ -939,13 +939,13 @@ static void load_group(struct load_info *info)
     skip_header(info);
 
     while (!info->done)
-	read_thing(info);
+        read_thing(info);
 }
 
 struct load_info *make_load_info(char *name, int fd)
 {
     struct load_info *info
-	= (struct load_info *)malloc(sizeof(struct load_info));
+        = (struct load_info *)malloc(sizeof(struct load_info));
 
     info->name = name;
     info->fd = fd;
@@ -965,7 +965,7 @@ struct load_info *make_load_info(char *name, int fd)
 static void free_load_info(struct load_info *info)
 {
     if (info->table)
-	free(info->table);
+        free(info->table);
     free(info->buffer);
     free(info);
 }
@@ -980,30 +980,30 @@ void load(char *name)
     else {
 #if WIN32
       fd = open(name, O_RDONLY | O_BINARY, 0);
-#else 
+#else
       fd = open(name, flags_for(O_RDONLY), 0);
 #endif
     }
     if (fd < 0)
-	error("Error loading %s: %s\n",
-	      make_byte_string(name),
-	      make_byte_string(strerror(errno)));
+        error("Error loading %s: %s\n",
+              make_byte_string(name),
+              make_byte_string(strerror(errno)));
 
     info = make_load_info(name, fd);
 
     while (1) {
-	load_group(info);
-	if (info->ptr == info->end) {
-	    int count = read(fd, info->buffer, BUFFER_SIZE);
-	    if (count < 0)
-		error("error loading %s: %s",
-		      make_byte_string(name),
-		      make_byte_string(strerror(errno)));
-	    if (count == 0)
-		break;
-	    info->ptr = info->buffer;
-	    info->end = info->ptr + count;
-	}
+        load_group(info);
+        if (info->ptr == info->end) {
+            int count = read(fd, info->buffer, BUFFER_SIZE);
+            if (count < 0)
+                error("error loading %s: %s",
+                      make_byte_string(name),
+                      make_byte_string(strerror(errno)));
+            if (count == 0)
+                break;
+            info->ptr = info->buffer;
+            info->end = info->ptr + count;
+        }
     }
     if (info->fd != 0)
       close(info->fd);
@@ -1032,56 +1032,56 @@ void load_library(obj_t name)
     currently_loading = name;
 
     if (load_path == NULL) {
-	/* no load path, compute default_path */
-	char *dylandir = getenv("DYLANDIR");
-	char* next = default_path;
-	*next++ = '.';
-	*next++ = SEPARATOR_CHAR;
-	if (dylandir == NULL) {
-	    memcpy(next, LIBDIR, strlen(LIBDIR));
-	    next += strlen(LIBDIR);
-	}
-	else {
-	    memcpy(next, dylandir, strlen(dylandir));
-	    next += strlen(dylandir);
-	    memcpy(next, "/lib/dylan/" VERSION "/" TARGET, strlen("/lib/dylan/" VERSION "/" TARGET));
-	    next += strlen("/lib/dylan/" VERSION "/" TARGET);
-	}
-	*next = '\0';
-	load_path = default_path;
+        /* no load path, compute default_path */
+        char *dylandir = getenv("DYLANDIR");
+        char* next = default_path;
+        *next++ = '.';
+        *next++ = SEPARATOR_CHAR;
+        if (dylandir == NULL) {
+            memcpy(next, LIBDIR, strlen(LIBDIR));
+            next += strlen(LIBDIR);
+        }
+        else {
+            memcpy(next, dylandir, strlen(dylandir));
+            next += strlen(dylandir);
+            memcpy(next, "/lib/dylan/" VERSION "/" TARGET, strlen("/lib/dylan/" VERSION "/" TARGET));
+            next += strlen("/lib/dylan/" VERSION "/" TARGET);
+        }
+        *next = '\0';
+        load_path = default_path;
     }
 
     start = load_path;
     ptr = load_path;
     do {
-	c = *ptr;
-	if (c == SEPARATOR_CHAR || c == '\0') {
-	    int len = ptr - start;
-	    if (len) {
-		memcpy(path, start, len);
-		path[len++] = '/';
-	    }
-	    dst = path+len;
-	    for (src = sym_name(name); *src != '\0'; src++)
-		if (isupper(*src))
-		    *dst++ = tolower(*src);
-		else
-		    *dst++ = *src;
-	    strcpy(dst, "-lib.dbc");
-	    if (access(path, R_OK) == 0) {
-		load(path);
-		currently_loading = was_loading;
-		return;
-	    }
-	    strcpy(dst, ".dbc");
-	    if (access(path, R_OK) == 0) {
-		load(path);
-		currently_loading = was_loading;
-		return;
-	    }
-	    start = ptr+1;
-	}
-	ptr++;
+        c = *ptr;
+        if (c == SEPARATOR_CHAR || c == '\0') {
+            int len = ptr - start;
+            if (len) {
+                memcpy(path, start, len);
+                path[len++] = '/';
+            }
+            dst = path+len;
+            for (src = sym_name(name); *src != '\0'; src++)
+                if (isupper(*src))
+                    *dst++ = tolower(*src);
+                else
+                    *dst++ = *src;
+            strcpy(dst, "-lib.dbc");
+            if (access(path, R_OK) == 0) {
+                load(path);
+                currently_loading = was_loading;
+                return;
+            }
+            strcpy(dst, ".dbc");
+            if (access(path, R_OK) == 0) {
+                load(path);
+                currently_loading = was_loading;
+                return;
+            }
+            start = ptr+1;
+        }
+        ptr++;
     } while (c != '\0');
 
     error("Can't find library %s in %s", name, make_byte_string(load_path));
@@ -1101,22 +1101,22 @@ static void did_form(struct thread *thread, obj_t *vals)
 static void do_next_init(struct thread *thread)
 {
     if (State.everything.head) {
-	struct form *tlf = State.everything.head;
-	struct form *next = tlf->next;
+        struct form *tlf = State.everything.head;
+        struct form *next = tlf->next;
 
-	State.everything.head = next;
-	if (next == NULL)
-	    State.everything.tail = &State.everything.head;
+        State.everything.head = next;
+        if (next == NULL)
+            State.everything.tail = &State.everything.head;
 
-	*thread->sp++ = tlf->method;
+        *thread->sp++ = tlf->method;
 
-	free(tlf);
+        free(tlf);
 
-	set_c_continuation(thread, did_form);
-	invoke(thread, 0);
+        set_c_continuation(thread, did_form);
+        invoke(thread, 0);
     }
     else
-	do_return(thread, pop_linkage(thread), thread->sp);
+        do_return(thread, pop_linkage(thread), thread->sp);
 }
 
 static void do_first_init(struct thread *thread, int nargs)
@@ -1126,20 +1126,20 @@ static void do_first_init(struct thread *thread, int nargs)
 
     /* Move the class inits to the end of the everything list. */
     if (State.classes.head) {
-	*State.everything.tail = State.classes.head;
-	State.everything.tail = State.classes.tail;
+        *State.everything.tail = State.classes.head;
+        State.everything.tail = State.classes.tail;
 
-	State.classes.head = NULL;
-	State.classes.tail = &State.classes.head;
+        State.classes.head = NULL;
+        State.classes.tail = &State.classes.head;
     }
 
     /* Move the tlfs to the end of the everything list. */
     if (State.top_level_forms.head) {
-	*State.everything.tail = State.top_level_forms.head;
-	State.everything.tail = State.top_level_forms.tail;
+        *State.everything.tail = State.top_level_forms.head;
+        State.everything.tail = State.top_level_forms.tail;
 
-	State.top_level_forms.head = NULL;
-	State.top_level_forms.tail = &State.top_level_forms.head;
+        State.top_level_forms.head = NULL;
+        State.top_level_forms.tail = &State.top_level_forms.head;
     }
 
     do_next_init(thread);
@@ -1148,8 +1148,8 @@ static void do_first_init(struct thread *thread, int nargs)
 void load_do_inits(struct thread *thread)
 {
     *thread->sp++ = make_raw_function("init", obj_Nil, FALSE, obj_False, FALSE,
-				      obj_Nil, obj_ObjectClass,
-				      do_first_init);
+                                      obj_Nil, obj_ObjectClass,
+                                      do_first_init);
     invoke(thread, 0);
 }
 
@@ -1187,11 +1187,11 @@ void scavenge_load_roots(void)
     struct form *tlf;
 
     for (tlf = State.everything.head; tlf != NULL; tlf = tlf->next)
-	scavenge(&tlf->method);
+        scavenge(&tlf->method);
     for (tlf = State.classes.head; tlf != NULL; tlf = tlf->next)
-	scavenge(&tlf->method);
+        scavenge(&tlf->method);
     for (tlf = State.top_level_forms.head; tlf != NULL; tlf = tlf->next)
-	scavenge(&tlf->method);
+        scavenge(&tlf->method);
 }
 
 
@@ -1200,21 +1200,21 @@ void scavenge_load_roots(void)
 void init_load_functions(void)
 {
     define_generic_function("load", list1(obj_ByteStringClass),
-			    FALSE, obj_False, FALSE,
-			    obj_Nil, obj_False);
+                            FALSE, obj_False, FALSE,
+                            obj_Nil, obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("load"),
-			     FALSE, FALSE)->value,
-	       make_raw_method("load", list1(obj_ByteStringClass),
-			       FALSE, obj_False, FALSE, obj_Nil,
-			       obj_False, dylan_load));
+                             FALSE, FALSE)->value,
+               make_raw_method("load", list1(obj_ByteStringClass),
+                               FALSE, obj_False, FALSE, obj_Nil,
+                               obj_False, dylan_load));
     define_generic_function("load-library", list1(obj_SymbolClass),
-			    FALSE, obj_False, FALSE,
-			    obj_Nil, obj_False);
+                            FALSE, obj_False, FALSE,
+                            obj_Nil, obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("load-library"),
-			     FALSE, FALSE)->value,
-	       make_raw_method("load-library", list1(obj_SymbolClass),
-			       FALSE, obj_False, FALSE, obj_Nil,
-			       obj_False, dylan_load_library));
+                             FALSE, FALSE)->value,
+               make_raw_method("load-library", list1(obj_SymbolClass),
+                               FALSE, obj_False, FALSE, obj_Nil,
+                               obj_False, dylan_load_library));
 }
 
 void init_loader(void)
@@ -1222,7 +1222,7 @@ void init_loader(void)
     int i;
 
     for (i = 0; i < 256; i++)
-	opcodes[i] = fop_flame;
+        opcodes[i] = fop_flame;
 
     opcodes[fop_HEADER] = fop_header;
     opcodes[fop_STORE] = fop_store;

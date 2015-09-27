@@ -15,4 +15,4 @@ if ($features{'compiled_for_win32'}) {
 }
 
 &emit_library_rule ($lid_file, '$(BUILDROOT)/force.timestamp', '',
-		      'compile', 'no-mindy', 'install');
+                    'compile', 'no-mindy', 'install');

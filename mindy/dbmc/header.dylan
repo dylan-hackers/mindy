@@ -7,25 +7,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -80,17 +80,17 @@ end;
 //
 define method forward-iteration-protocol (header :: <header>)
     => (initial-state :: false-or(<header-entry>), done-state :: singleton(#f),
-	next-state :: <function>, finished-state? :: <function>,
-	current-key :: <function>, current-element :: <function>,
-	current-element-setter :: <function>, copy-state :: <function>);
+        next-state :: <function>, finished-state? :: <function>,
+        current-key :: <function>, current-element :: <function>,
+        current-element-setter :: <function>, copy-state :: <function>);
   local
     method header-fip-next (header :: <header>, state :: <header-entry>)
      => next-state :: false-or(<header-entry>);
       state.next;
     end,
     method header-fip-finished? (header :: <header>,
-				 state :: false-or(<header-entry>),
-				 limit :: singleton(#f))
+                                 state :: false-or(<header-entry>),
+                                 limit :: singleton(#f))
      => finished? :: <boolean>;
       ~ state;
     end,
@@ -103,7 +103,7 @@ define method forward-iteration-protocol (header :: <header>)
       state.value;
     end,
     method header-fip-curel-setter (header :: <header>,
-				    state :: <header-entry>)
+                                    state :: <header-entry>)
      => (res :: singleton(#f));
       error("<header> objects are not mutable.");
       #f;
@@ -114,15 +114,15 @@ define method forward-iteration-protocol (header :: <header>)
     end;
 
   values(header.entries, #f, header-fip-next, header-fip-finished?,
-	 header-fip-curkey, header-fip-curel, header-fip-curel-setter,
-	 header-fip-copy);
+         header-fip-curkey, header-fip-curel, header-fip-curel-setter,
+         header-fip-copy);
 end method;
 
 // key-test -- gf method.
 //
 // key-test is another method we have to define to be a collection.
 // We just use ==.
-// 
+//
 define method key-test (header :: <header>) => result :: <function>;
   \==;
 end;
@@ -141,9 +141,9 @@ define method element (header :: <header>, keywrd, #key default = no-default)
     => value;
   block (return)
     for (entry = header.entries then entry.next,
-	 while: entry)
+         while: entry)
       if (entry.key == keywrd)
-	return(entry.value);
+        return(entry.value);
       end;
     end;
     if (default == no-default)
@@ -195,9 +195,9 @@ define function header-add
   => result :: <header>;
 
   make(<header>, entries: make(<header-entry>,
-			       key: front-key,
-			       value: front-value,
-			       next: header.entries))
+                               key: front-key,
+                               value: front-value,
+                               next: header.entries))
 end;
 
 // header-add-new -- exported.
@@ -236,7 +236,7 @@ define function header-concatenate
     local method prepend(entry :: false-or(<header-entry>), header :: <header>)
         => result :: <header>;
       if (entry)
-      	header-add(prepend(entry.next, header), entry.key, entry.value);
+              header-add(prepend(entry.next, header), entry.key, entry.value);
       else
         header
       end if;
@@ -258,10 +258,10 @@ define method skip-whitespace (contents :: <sequence>, posn :: <integer>)
   if (posn < contents.size)
     let char = as(<character>, contents[posn]);
     if (char == ' '
-	  | char == '\t'
-	  | char == '\r'
-	  | char == '\n'
-	  | char == '\<0c>')
+          | char == '\t'
+          | char == '\r'
+          | char == '\n'
+          | char == '\<0c>')
       skip-whitespace(contents, posn + 1);
     else
       posn;
@@ -281,10 +281,10 @@ define method skip-whitespace-backwards
   else
     let char = as(<character>, contents[posn - 1]);
     if (char == ' '
-	  | char == '\t'
-	  | char == '\r'
-	  | char == '\n'
-	  | char == '\<0c>')
+          | char == '\t'
+          | char == '\r'
+          | char == '\n'
+          | char == '\<0c>')
       skip-whitespace-backwards(contents, posn - 1);
     else
       posn;
@@ -305,12 +305,12 @@ define function find-newline (contents :: <sequence>, posn :: <integer>)
       let nxt_posn = posn + 1;
       if (nxt_posn < contents.size
           & as(<character>, contents[nxt_posn]) == '\n')
-        nxt_posn;	// DOS style...
+        nxt_posn;        // DOS style...
       else
-        posn;		// No? ... then, Mac style.
+        posn;                // No? ... then, Mac style.
       end;
     elseif (char == '\n')
-      posn;		// Standard UNIX case
+      posn;                // Standard UNIX case
     else
       find-newline(contents, posn + 1);
     end;
@@ -328,25 +328,25 @@ end function;
 //
 define method scan-keyword (contents :: <sequence>, start :: <integer>)
     => (keywrd :: false-or(<symbol>),
-	keyword-end :: <integer>);
+        keyword-end :: <integer>);
   local
     method repeat (posn :: <integer>)
       if (posn < contents.size)
-	let char = as(<character>, contents[posn]);
-	if (char == ':')
-	  let str = copy-sequence(contents, start: start, end: posn);
-	  values(as(<symbol>, str), posn + 1);
-	elseif (('a' <= char & char <= 'z')
-		  | ('A' <= char & char <= 'Z')
-		  | ('0' <= char & char <= '9')
-		  | char == '-'
-		  | char == '?')
-	  repeat(posn + 1);
-	else
-	  values(#f, posn);
-	end;
+        let char = as(<character>, contents[posn]);
+        if (char == ':')
+          let str = copy-sequence(contents, start: start, end: posn);
+          values(as(<symbol>, str), posn + 1);
+        elseif (('a' <= char & char <= 'z')
+                  | ('A' <= char & char <= 'Z')
+                  | ('0' <= char & char <= '9')
+                  | char == '-'
+                  | char == '?')
+          repeat(posn + 1);
+        else
+          values(#f, posn);
+        end;
       else
-	values(#f, posn);
+        values(#f, posn);
       end;
     end;
   repeat(start + 1);
@@ -370,35 +370,35 @@ define method scan-value
     => (value :: <byte-string>, value-end :: <integer>, end-line :: <integer>);
   local
     method repeat (posn :: <integer>, line :: <integer>,
-		   prefix :: <byte-string>)
+                   prefix :: <byte-string>)
       let ws-end = skip-whitespace(contents, posn);
       let newline = find-newline(contents, posn);
       // Now, if the line has no value (only a keyword), then ws-end > newline
       let value-end = skip-whitespace-backwards(contents, newline);
       let continued?
-	= (newline + 1 < contents.size 
-	     & begin
-		 let char = as(<character>, contents[newline + 1]);
-		 char == ' '
-		   | char == '\t'
-		   | char == '\r'
-		   | char == '\n'
-		   | char == '\<0c>'
-	       end
-	     & ~blank-line?(contents, newline + 1));
+        = (newline + 1 < contents.size
+             & begin
+                 let char = as(<character>, contents[newline + 1]);
+                 char == ' '
+                   | char == '\t'
+                   | char == '\r'
+                   | char == '\n'
+                   | char == '\<0c>'
+               end
+             & ~blank-line?(contents, newline + 1));
       let value-start = min(ws-end, newline, value-end);
       let len = value-end - value-start + if (continued?) 1 else 0 end;
       let result = concatenate(prefix,
-			       copy-sequence(contents,
-					     start: value-start,
-					     end: value-start + len));
+                               copy-sequence(contents,
+                                             start: value-start,
+                                             end: value-start + len));
       if (continued?)
-	result.last := '\n';
-	repeat(newline + 1, line + 1, result);
+        result.last := '\n';
+        repeat(newline + 1, line + 1, result);
       elseif (newline < contents.size)
-	values(result, newline + 1, line + 1);
+        values(result, newline + 1, line + 1);
       else
-	values(result, newline, line);
+        values(result, newline, line);
       end;
     end;
   repeat(start, start-line, "");
@@ -409,50 +409,50 @@ end method;
 // Parse the header of the given source file and return a <header>
 // mapping keywords to values.  Also return the line and posn of the
 // start of the body.
-// 
-define method parse-header (source :: <source-file>, 
-			    #key line: init-line = 1, position: init-posn = 0)
+//
+define method parse-header (source :: <source-file>,
+                            #key line: init-line = 1, position: init-posn = 0)
      => (header :: <header>,
-	 body-start-line :: <integer>,
-	 body-start-posn :: <integer>);
+         body-start-line :: <integer>,
+         body-start-posn :: <integer>);
   let contents = source.contents;
   let entries = #f;
   let prev = #f;
   local
     method repeat (posn :: <integer>, line :: <integer>)
       if (posn < contents.size)
-	let char = as(<character>, contents[posn]);
-	if (('a' <= char & char <= 'z')
-	      | ('A' <= char & char <= 'Z'))
-	  let (keywrd, key-end) = scan-keyword(contents, posn);
-	  if (keywrd)
-	    let (value, value-end, value-end-line)
-	      = scan-value(contents, key-end, line);
-	    let new = make(<header-entry>, key: keywrd, value: value);
-	    if (prev)
-	      prev.next := new;
-	    else
-	      entries := new;
-	    end;
-	    prev := new;
-	    repeat(value-end, value-end-line);
-	  else
-	    error("Bogus header keyword on line %d", line);
-	  end;
-	elseif (char == '/' & (posn + 1 < contents.size) 
-		  & as(<character>, contents[posn + 1]) == '/')
-	  // We have a comment line (it must start at column 0).
-	  // Don't treat it as a blank line, or that will end the
-	  // header and move us into the file body.
-	  repeat(1 + find-newline(contents, posn), line + 1);
-	elseif (blank-line?(contents, posn))
-	  values(make(<header>, entries: entries), line + 1, 
-		 1 + find-newline(contents, posn));
-	else
-	  error("Bogus header keyword on line %d", line);
-	end;
+        let char = as(<character>, contents[posn]);
+        if (('a' <= char & char <= 'z')
+              | ('A' <= char & char <= 'Z'))
+          let (keywrd, key-end) = scan-keyword(contents, posn);
+          if (keywrd)
+            let (value, value-end, value-end-line)
+              = scan-value(contents, key-end, line);
+            let new = make(<header-entry>, key: keywrd, value: value);
+            if (prev)
+              prev.next := new;
+            else
+              entries := new;
+            end;
+            prev := new;
+            repeat(value-end, value-end-line);
+          else
+            error("Bogus header keyword on line %d", line);
+          end;
+        elseif (char == '/' & (posn + 1 < contents.size)
+                  & as(<character>, contents[posn + 1]) == '/')
+          // We have a comment line (it must start at column 0).
+          // Don't treat it as a blank line, or that will end the
+          // header and move us into the file body.
+          repeat(1 + find-newline(contents, posn), line + 1);
+        elseif (blank-line?(contents, posn))
+          values(make(<header>, entries: entries), line + 1,
+                 1 + find-newline(contents, posn));
+        else
+          error("Bogus header keyword on line %d", line);
+        end;
       else
-	values(make(<header>, entries: entries), line, posn);
+        values(make(<header>, entries: entries), line, posn);
       end;
     end;
   repeat(init-posn, init-line);

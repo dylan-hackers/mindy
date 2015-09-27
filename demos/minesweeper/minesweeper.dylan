@@ -6,25 +6,25 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -32,7 +32,7 @@ define class <square> (<object>)
   slot button :: <button>, required-init-keyword: #"button";
   slot exposed? :: <boolean>, init-value: #f;
   slot mine? :: <boolean>, init-value: #f;
-  slot internal-mine-count :: <integer>, 
+  slot internal-mine-count :: <integer>,
     init-value: 0;  // Filled in during grid initialization
   slot square-row :: <integer>, required-init-keyword: #"row";
   slot square-column :: <integer>, required-init-keyword: #"column";
@@ -42,8 +42,8 @@ define variable num-rows = 16;
 define variable num-cols = 16;
 define variable num-mines = 40;
 define variable grid = make(<array>, dimensions: #[0, 0]);
-define variable grid-frame = make(<frame>, relief: #"sunken", 
-				  in: *root-window*);
+define variable grid-frame = make(<frame>, relief: #"sunken",
+                                  in: *root-window*);
 define variable automation-level = 3;
 define variable row-vector = make(<vector>, size: 0);
 
@@ -64,24 +64,24 @@ define method create-grid () => ();
 
   for (i from 0 below num-rows)
     let row = if (i < old-grid.dimensions.first)
-		old-row-vector[i];
-	      else
-		make(<frame>, in: grid-frame, side: "bottom");
-	      end if;
+                old-row-vector[i];
+              else
+                make(<frame>, in: grid-frame, side: "bottom");
+              end if;
     row-vector[i] := row;
     for (j from 0 below num-cols)
       let widget
-	= if (i < old-grid.dimensions.first & j < old-grid.dimensions.second)
-	    let w = old-grid[i, j].button;
-	    configure(old-grid[i, j].button, relief: "raised", text: " ");
-	    w;
-	  else
-	    let w = make(<button>, relief: #"raised", width: 2,
-			 command: curry(interactive-pick-square, i, j),
-			 in: row, side: #"left", text: " ");		     
-	    bind(w, "<Button-3>", curry(interactive-pick-mine, i, j));
-	    w;
-	  end if;
+        = if (i < old-grid.dimensions.first & j < old-grid.dimensions.second)
+            let w = old-grid[i, j].button;
+            configure(old-grid[i, j].button, relief: "raised", text: " ");
+            w;
+          else
+            let w = make(<button>, relief: #"raised", width: 2,
+                         command: curry(interactive-pick-square, i, j),
+                         in: row, side: #"left", text: " ");
+            bind(w, "<Button-3>", curry(interactive-pick-mine, i, j));
+            w;
+          end if;
       grid[i, j] := make(<square>, button: widget, row: i, column: j);
     end for;
   end for;
@@ -109,16 +109,16 @@ define method initialize-grid () => ();
   for (count from 0 below num-mines)
     block (break)
       while (#t)
-	let row = random(num-rows);
-	let col = random(num-cols);
-	if (~ grid[row, col].mine?)
-	  grid[row, col].mine? := #t;
-	  let neighbors = grid[row, col].all-neighbors;
-	  for (square in neighbors)
-	    square.internal-mine-count := square.internal-mine-count + 1;
-	  end for;
-	  break();
-	end if;
+        let row = random(num-rows);
+        let col = random(num-cols);
+        if (~ grid[row, col].mine?)
+          grid[row, col].mine? := #t;
+          let neighbors = grid[row, col].all-neighbors;
+          for (square in neighbors)
+            square.internal-mine-count := square.internal-mine-count + 1;
+          end for;
+          break();
+        end if;
       end while;
     end block;
   end for;
@@ -130,7 +130,7 @@ define method new-game () => ();
   game-paused := #t;
   let options-window = make(<toplevel>);
   call-tk-function("wm title ", tk-as(<string>, options-window),
-		   " \"", tk-quote("New Game"), "\"");
+                   " \"", tk-quote("New Game"), "\"");
   let difficulty-frame = make(<frame>, in: options-window);
   make(<label>, text: "Board Size:", anchor: "w", relief: "flat",
         side: "top", in: difficulty-frame);
@@ -150,7 +150,7 @@ define method new-game () => ();
        anchor: "w", relief: "flat");
 //  make(<radiobutton>, in: difficulty-frame, variable: difficulty-level,
 //       text: "Custom");
-  
+
   let automation-frame = make(<frame>, in: options-window);
   make(<label>, text: "Tedium level:", anchor: "w", relief: "flat",
         side: "top", in: automation-frame);
@@ -175,11 +175,11 @@ define method new-game () => ();
   make(<button>, in: options-window, side: "top", text: "Start game",
        fill: "x",
        command: method ()
-		  destroy-window(options-window);
-		  initialize-grid();
-		  game-paused := #f;
-		end method);
-  make(<button>, in: options-window, side: "top", text: "Quit Minesweeper", 
+                  destroy-window(options-window);
+                  initialize-grid();
+                  game-paused := #f;
+                end method);
+  make(<button>, in: options-window, side: "top", text: "Quit Minesweeper",
        command: exit);
 end method new-game;
 
@@ -255,7 +255,7 @@ define method lose-game (square :: <square>) => ();
   new-game();
 end method lose-game;
 
-define method interactive-pick-square 
+define method interactive-pick-square
     (row :: <integer>, col :: <integer>) => ();
   if (~ game-paused)
     let square = grid[row, col];
@@ -265,7 +265,7 @@ define method interactive-pick-square
   end if;
 end method interactive-pick-square;
 
-define method interactive-pick-mine 
+define method interactive-pick-mine
     (row :: <integer>, col :: <integer>) => ();
   if (~ game-paused)
     let square = grid[row, col];
@@ -283,12 +283,12 @@ define method pick-square (square :: <square>) => auto-play? :: <boolean>;
     #f;
   else
     square.exposed? := #t;
-    configure(square.button, relief: "flat", 
-	      text: if (square.mine-count = 0)
-		      " ";
-		    else
-		      integer-to-string(square.mine-count);
-		    end if);
+    configure(square.button, relief: "flat",
+              text: if (square.mine-count = 0)
+                      " ";
+                    else
+                      integer-to-string(square.mine-count);
+                    end if);
     #t;
   end if;
 end method pick-square;
@@ -327,11 +327,11 @@ define method auto-play-1 (s :: <square>) => exposed-any-squares? :: <boolean>;
     if (square.exposed? & ~square.mine? & square.mine-count = 0)
       let neighbors = square.all-neighbors;
       for (s in neighbors)
-	if (~ s.exposed?)
-	  pick-square(s);
-	  did-something := #t;
-	  push(q, s);
-	end if;
+        if (~ s.exposed?)
+          pick-square(s);
+          did-something := #t;
+          push(q, s);
+        end if;
       end for;
     end if;
   end while;
@@ -352,14 +352,14 @@ define method auto-play-2 (s :: <square>) => exposed-any-squares? :: <boolean>;
   while (~ q.empty?)
     let square = pop(q);
     if (square.exposed? & ~square.mine?
-	  & square.mine-count = square.exposed-mine-count)
+          & square.mine-count = square.exposed-mine-count)
       let neighbors = square.all-neighbors;
       for (s in neighbors)
-	if (~ s.exposed?)
-	  pick-square(s);
-	  did-something := #t;
-	  push(q, s);
-	end if;
+        if (~ s.exposed?)
+          pick-square(s);
+          did-something := #t;
+          push(q, s);
+        end if;
       end for;
     end if;
   end while;
@@ -377,18 +377,18 @@ define method auto-play-3 (s :: <square>) => exposed-any-squares? :: <boolean>;
       did-something := #f;
       for (square in grid)
       if (square.exposed? & ~square.mine?
-	    & (square.exposed-mine-count ~= square.mine-count)
-	    & (square.mine-count 
-		 = square.exposed-mine-count + square.unexposed-neighbors))
-	  let neighbors = square.all-neighbors;
-	  for (s in neighbors)
-	    if (~ s.exposed?)
-	      pick-mine(s);
-	      did-something := #t;
-	      auto-play-2(s);
-	    end if;
-	  end for;
-	end if;
+            & (square.exposed-mine-count ~= square.mine-count)
+            & (square.mine-count
+                 = square.exposed-mine-count + square.unexposed-neighbors))
+          let neighbors = square.all-neighbors;
+          for (s in neighbors)
+            if (~ s.exposed?)
+              pick-mine(s);
+              did-something := #t;
+              auto-play-2(s);
+            end if;
+          end for;
+        end if;
       end for;
     end while;
   end block;
@@ -397,7 +397,7 @@ end method auto-play-3;
 define method main (prog-name :: <byte-string>, #rest args)
   let button-bar = make(<frame>, in: *root-window*, side: "top");
   call-tk-function("wm title ", tk-as(<string>, *root-window*),
-		   " \"", tk-quote("Minesweeper"), "\"");
+                   " \"", tk-quote("Minesweeper"), "\"");
   make(<button>, in: button-bar, text: "New game...", command: new-game,
        side: "top", fill: "both");
   make(<button>, in: button-bar, text: "Quit", command: exit,

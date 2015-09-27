@@ -48,7 +48,7 @@ end method;
 
 
 //
-// 
+//
 //
 define method compute-not-bits(bits :: <sequence>, size :: <integer>)
  => (not-bits :: <sequence>)
@@ -128,7 +128,7 @@ define method bit-vector-consistency-checks
 end method;
 
 define method bit-vector-checks
-    (vector :: <bit-vector>, pad :: <bit>, prefix :: <string>, 
+    (vector :: <bit-vector>, pad :: <bit>, prefix :: <string>,
      expected-size :: <integer>, expected-elements, expected-pad :: <bit>)
  => ()
   check-equal(concatenate(prefix, ": expected size"),

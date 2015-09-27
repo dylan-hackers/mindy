@@ -9,5 +9,5 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../streams';
 
 &emit_library_rule('base-file-system', '$(BUILDROOT)/force.timestamp',
-		   '', 'compile', 'compile-mindy', 'install');
+                   '', 'compile', 'compile-mindy', 'install');
 

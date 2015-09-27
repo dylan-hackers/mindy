@@ -42,7 +42,7 @@ Gwydion Dylan 2.3.8 (2002-03-05)
   More bug fixes.
 
 Gwydion Dylan 2.3.7 (2002-02-21)
-  
+
   This release mainly fixes a bug in class slots, and is considered
   a maintenance release. Various other tweaks and bugfixes as well.
 
@@ -68,7 +68,7 @@ Gwydion Dylan 2.3.5 (2001-05-26)
   for the myriad styles of end-of-line delimiters has been strengthened.
 
 Gwydion Dylan 2.3.4 (2000-11-30)
-  
+
   The cygnus port created in 2.3.3 has now been integrated into the
   build environment (meaning, there's no special incantations needed
   to compile the cygnus port from a previous revision's port).  The
@@ -96,7 +96,7 @@ Gwydion Dylan 2.3.3 (2000-04-12)
 Gwydion Dylan 2.3.2 (1999-08-25)
 
   New in this release is shared library support, being made possible
-  by Peter Housels C heap generator. 
+  by Peter Housels C heap generator.
 
 Gwydion Dylan 2.3.1 (1999-06-08)
 
@@ -161,7 +161,7 @@ Gwydion Dylan 2.1 1998-09-16
   Housel and a vastly improved Emacs dylan-mode courtesy of Harlequin, Ltd
   (and others). Peter Housel has also worked extensively on cleaning up and
   adding to the documentation.
- 
+
 Gwydion Dylan 2.1 1998-08-17
 
   The current release has been prepared by a group of volunteers. It
@@ -172,4 +172,4 @@ Gwydion Dylan 2.1 1998-08-17
 Older Releases
 
   See ONEWS.html for more information about 1.6 and earlier. No release
-  info is currently available for Gwydion Dylan	2.0.
+  info is currently available for Gwydion Dylan 2.0.

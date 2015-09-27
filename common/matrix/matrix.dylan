@@ -8,25 +8,25 @@ copyright: See below.
 // Copyright (c) 1994, 1995  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -39,7 +39,7 @@ end class <matrix>;
 define constant matrix-no-default = pair(#f, #f);
 
 define method element (mat :: <matrix>, index :: <integer>,
-		       #key default = matrix-no-default) => elem :: <number>;
+                       #key default = matrix-no-default) => elem :: <number>;
   if (default == matrix-no-default)
     mat.components[index];
   else
@@ -48,17 +48,17 @@ define method element (mat :: <matrix>, index :: <integer>,
 end method element;
 
 define method element-setter (new-value, mat :: <matrix>,
-			      index :: <integer>) => elem :: <number>;
+                              index :: <integer>) => elem :: <number>;
   mat.components[index] := new-value;
 end method element-setter;
 
 define method initialize (mat :: <matrix>,
-			  #next next-method,
-			  #key dimensions = #[1,1], fill = 0);
+                          #next next-method,
+                          #key dimensions = #[1,1], fill = 0);
   if (dimensions.size == 2)
     mat.dimensions := dimensions;
     mat.components := make(<simple-object-vector>,
-			   size: reduce1(\*, dimensions), fill: fill);
+                           size: reduce1(\*, dimensions), fill: fill);
     next-method();
   else
     error("Matrices must have two dimensions, not %S.", dimensions);
@@ -78,7 +78,7 @@ define method forward-iteration-protocol(mat :: <matrix>)
      finished-state? :: <function>, current-key :: <function>,
      current-element :: <function>, current-element-setter :: <function>,
      copy-state :: <function>);
-  values( 0, reduce1(\*, mat.dimensions), 
+  values( 0, reduce1(\*, mat.dimensions),
           method (mat, state) state + 1 end,
           method (mat, state, limit) state == limit end,
           method (mat, state) state end,
@@ -90,7 +90,7 @@ end method forward-iteration-protocol;
 define method matrix(#rest row-vectors) => mat :: <matrix>;
   let row-size = row-vectors[0].size;
   let mat = make(<matrix>,
-		 dimensions: vector(row-vectors.size, row-size));
+                 dimensions: vector(row-vectors.size, row-size));
   if (every?(method (x) x.size == row-size; end, row-vectors))
     mat.components := reduce1(concatenate, row-vectors);
   else
@@ -163,7 +163,7 @@ define method \- (matrix1 :: <matrix>, matrix2 :: <matrix>)
     let temp-mat = make(<matrix>,dimensions: dimensions(matrix1));
     map-into(temp-mat, \-, matrix1, matrix2);
   end if;
-end method \- ; 
+end method \- ;
 
 
 // Multiplication of a matrix and a scalar quantity.  This simply multiplies
@@ -208,7 +208,7 @@ end method \*;
 //       | 2  3 |     | 1  4 |     | (2*1 + 3*7), (2*4 + 3*8) |   | 23 32 |
 //       | 6  5 |  *  | 7  8 |  =  | (6*1 + 5*7), (6*4 + 5*8) | = | 41 64 |
 //
-//  The actual algorithm used was reproduced from Sedgewick's Algorithms, Ch. 
+//  The actual algorithm used was reproduced from Sedgewick's Algorithms, Ch.
 //  36.
 //  Basically, the algorithm goes through the temporary matrix, filling out
 //  each element in the following way: For the i,jth element of the matrix,
@@ -225,19 +225,19 @@ define method \* (matrix1 :: <matrix>, matrix2 :: <matrix>)
   let columns2 = dimension(matrix2, 1);
   if (columns1 ~= rows2)
     error("You cannot multiply two matrices of dimensions NxM and PxQ where M != P.");
-  else 
-    let temp-mat = make(<matrix>, dimensions: list(rows1,columns2), 
+  else
+    let temp-mat = make(<matrix>, dimensions: list(rows1,columns2),
                    fill: 0 );
     for (i from 0 below rows1)
       for (j from 0 below columns2)
-	for (k from 0 below columns1)
-	  temp-mat[i,j] := temp-mat[i,j] + matrix1[i,k] * matrix2[k,j];
-	end for;
+        for (k from 0 below columns1)
+          temp-mat[i,j] := temp-mat[i,j] + matrix1[i,k] * matrix2[k,j];
+        end for;
       end for;
     end for;
     temp-mat;
-  end if; 
-end method \*; 
+  end if;
+end method \*;
 
 
 // The augment-matrix procedure will take matrices A and B and return a matrix
@@ -255,15 +255,15 @@ define method augment-matrix (matrix1 :: <matrix>, matrix2 :: <matrix>)
   if (rows1 ~= rows2)
     error("You can't augment two matrices of dimensions NxM and PxQ where N != P\n");
   else
-    let temp-mat = make(<matrix>, 
+    let temp-mat = make(<matrix>,
           dimensions: vector(rows1, columns1 + columns2));
     for (j from 0 below rows1)
       for (i from 0 below columns1)
-	temp-mat[j,i] := matrix1[j,i];
+        temp-mat[j,i] := matrix1[j,i];
       end for;
       for (temp-i from columns1 below (columns2 + columns1),
-	   i from 0 below columns2)
-	temp-mat[j,columns1 + i] := matrix2[j,i];
+           i from 0 below columns2)
+        temp-mat[j,columns1 + i] := matrix2[j,i];
       end for;
     end for;
     temp-mat;
@@ -273,7 +273,7 @@ end method;
 
 // This procedure does gauss-jordan elimation on a matrix of dimension N by
 // N + 1.  The first N columns are the coefficents in a set of simultaneous
-// equations, and the last column is a solution vector.  So if you had the 
+// equations, and the last column is a solution vector.  So if you had the
 // set of equations
 //          2(x1) + 4(x2) - 2(x3) = 2
 //          4(x1) + 9(x2) - 3(x3) = 8
@@ -302,8 +302,8 @@ define method gauss-jordan (matrix1 :: <matrix>)
     // Finds good row for elimination
     for (j from i + 1 below rows)
       if (abs(temp-mat[j,i]) > abs(temp-mat[max,i]))
-	max := j;
-      end if; 
+        max := j;
+      end if;
     end for;
 
     // Switch good row with ith row
@@ -316,12 +316,12 @@ define method gauss-jordan (matrix1 :: <matrix>)
     // Use elimination to make the upper triangular matrix
     for (j from i + 1 below rows)
       for (k from columns - 1 to i by -1)
-	temp-mat[j,k] := (temp-mat[j,k]
-			  - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]));
+        temp-mat[j,k] := (temp-mat[j,k]
+                          - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]));
       end for;
     end for;
   end for;
-  
+
   // Finds solution matrix and return it.
   let temp-vect = make(<matrix>, dimensions: vector(rows, 1), fill: 0);
   for (j from rows - 1 to 0 by -1)
@@ -330,13 +330,13 @@ define method gauss-jordan (matrix1 :: <matrix>)
       t := t + temp-mat[j,k] * temp-vect[k,0];
     end for;
     temp-vect[j,0] := my/((temp-mat[j,columns - 1] - t ), temp-mat[j,j]);
-  end for; 
+  end for;
    temp-vect;
 end method gauss-jordan;
 
 
 // Finds the inverse of a matrix, by using a modified gauss-jordan elimination
-// Given any matrix, if there is an inverse, the inverse will be returned, 
+// Given any matrix, if there is an inverse, the inverse will be returned,
 // otherwise, an error will be signalled. To determine the existance of an
 // inverse, the algorithm finds the upper triangular matrix, and then
 // multiplies all of the elements along the main diagonal.  If the result of
@@ -347,41 +347,41 @@ define method inverse (matrix1 :: <matrix>)
  => inverted-matrix :: <matrix>;
   let rows = dimension(matrix1, 0);
   let columns = dimension(matrix1, 1);
-  
+
   // make sure that matrix is square
   if (rows ~= columns)
     error("Matrix can not be inverted.\n");
   end if;
-  
+
   let temp-mat = make(<matrix>, dimensions: list(rows, 2 * columns));
   temp-mat := augment-matrix(matrix1,
-			     identity-matrix( dimensions:
-					       dimensions(matrix1)));
+                             identity-matrix( dimensions:
+                                               dimensions(matrix1)));
 //  columns := 2 * columns;
 
   // Make the upper triangular matrix
  let max :: <integer> = 0;
   let t :: <number> = 0;
-  
+
   for (i from 0 below rows)
 
     max := i;
     for (j from i + 1 below rows)
       if (abs(temp-mat[j,i]) > abs(temp-mat[max, i]))
-	max := j;
+        max := j;
       end if;
     end for;
-    
+
     for (k from i below columns * 2)
       t := temp-mat[i,k];
       temp-mat[i,k] := temp-mat[max, k];
       temp-mat[max,k] := t;
     end for;
-    
+
     for (j from i + 1 below rows)
       for (k from (columns * 2) - 1 to i by -1)
-	temp-mat[j,k] := (temp-mat[j,k]
-			  - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]));
+        temp-mat[j,k] := (temp-mat[j,k]
+                          - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]));
       end for;
     end for;
   end for;
@@ -389,8 +389,8 @@ define method inverse (matrix1 :: <matrix>)
  /* for (i from 0 below rows)
     for (j from i + 1 below rows)
       for (k from columns - 1 to i by -1)
-	temp-mat[j,k]
-	  := temp-mat[j,k] - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]);
+        temp-mat[j,k]
+          := temp-mat[j,k] - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]);
       end for;
     end for;
   end for;
@@ -398,10 +398,10 @@ define method inverse (matrix1 :: <matrix>)
 
   // If any element along the diagonal is zero, signal an error
   if (block (exit)
-	for (i from 0 below rows)
-	  if (temp-mat[i,i] = 0) exit(#t) end;
-	end;
-	#f;
+        for (i from 0 below rows)
+          if (temp-mat[i,i] = 0) exit(#t) end;
+        end;
+        #f;
       end)
     error("Matrix with determinant of zero can not be inverted.");
   end;
@@ -411,8 +411,8 @@ define method inverse (matrix1 :: <matrix>)
   for (i from rows - 1 to 1 by -1)
     for (j from  i - 1  to 0 by - 1)
       for (k from (columns * 2) - 1 to 0 by -1)
-	temp-mat[j,k]
-	  := temp-mat[j,k] - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]);
+        temp-mat[j,k]
+          := temp-mat[j,k] - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]);
       end for;
     end for;
   end for;
@@ -435,52 +435,52 @@ define method inverse (matrix1 :: <matrix>)
   end for;
 
   inverted-matrix;
-  
+
 end method inverse;
 
-// This just does what the first half of inverse does. It reduces the matrix 
-// to the upper triangular form, and then returns the product of all of the 
+// This just does what the first half of inverse does. It reduces the matrix
+// to the upper triangular form, and then returns the product of all of the
 // elements along the diagonal.  This is the determinant of the matrix.
 //
-define method det (matrix1 :: <matrix>) 
+define method det (matrix1 :: <matrix>)
  => determinant :: <number>;
   let rows = dimension(matrix1, 0);
   let columns = dimension(matrix1, 1);
   if (rows ~= columns)
     error("Matrix must be square to have a determinant.");
   end if;
-  
+
   let temp-mat = make(<matrix>, dimensions: dimensions(matrix1));
   map-into(temp-mat, identity, matrix1);
-    
+
   // Finds the upper triangular
   let max :: <integer> = 0;
   let t :: <number> = 0;
   let pos-or-neg :: <integer> = 1;
-  
+
   for (i from 0 below rows)
 
     max := i;
     for (j from i + 1 below rows)
       if (abs(temp-mat[j,i]) > abs(temp-mat[max, i]))
-	max := j;
+        max := j;
       end if;
     end for;
 
     if (~(i = max))
       pos-or-neg := -pos-or-neg;
     end if;
-    
+
     for (k from i below columns)
       t := temp-mat[i,k];
       temp-mat[i,k] := temp-mat[max, k];
       temp-mat[max,k] := t;
     end for;
-    
+
     for (j from i + 1 below rows)
       for (k from columns - 1 to i by -1)
-	temp-mat[j,k] := (temp-mat[j,k]
-			  - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]));
+        temp-mat[j,k] := (temp-mat[j,k]
+                          - temp-mat[i,k] * my/(temp-mat[j,i], temp-mat[i,i]));
       end for;
     end for;
   end for;
@@ -491,11 +491,11 @@ define method det (matrix1 :: <matrix>)
   finally
     deter
   end for;
-  
+
 end method det;
 
 
-// This function transposes a matrix.  It takes a M by N matrix and turns it 
+// This function transposes a matrix.  It takes a M by N matrix and turns it
 // into an N by M matrix.  All it does is take the i,jth element in the M by N
 // matrix, and turns it into the j,ith element in the N by M matrix.
 //

@@ -8,25 +8,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -57,7 +57,7 @@ define sealed domain initialize (<macro-source>);
 // to maintain, because if some range of tokens stays all within one section
 // of the expansion, then they where in that same order wherever they came
 // from.
-// 
+//
 define class <section-marker> (<object>)
 end class <section-marker>;
 
@@ -67,7 +67,7 @@ define sealed domain initialize (<section-marker>);
 // <macro-source-location> -- exported.
 //
 // Some location within the expansion of a macro.
-// 
+//
 define abstract class <macro-source-location> (<source-location>)
   //
   // The macro source this is part of.
@@ -82,7 +82,7 @@ define sealed domain initialize (<macro-source-location>);
 // <simple-macro-source-location> -- exported.
 //
 // A single token within the expansion of a macro.
-// 
+//
 define class <simple-macro-source-location> (<macro-source-location>)
   //
   // The source location for the fragment this source location was
@@ -104,7 +104,7 @@ define sealed domain make (singleton(<simple-macro-source-location>));
 // <compound-macro-source-location> -- exported.
 //
 // A range of tokens within the expansion of a macro.
-// 
+//
 define class <compound-macro-source-location> (<macro-source-location>)
   //
   // simple-macro-srclocs for the start and end (both inclusive) of this
@@ -120,7 +120,7 @@ define sealed domain make (singleton(<compound-macro-source-location>));
 // describe-source-location{<macro-source-location>}
 //
 // Just identify the macro call we are inside of.  Good enough for now.
-// 
+//
 define sealed method describe-source-location
     (srcloc :: <macro-source-location>, stream :: <stream>)
     => ();
@@ -128,11 +128,11 @@ define sealed method describe-source-location
     (stream,
      body:
        method (stream :: <stream>)
-	 format(stream, "Inside expansion of %s.",
-		srcloc.macro-srcloc-source.macro-source-description);
-	 pprint-newline(#"mandatory", stream);
-	 describe-source-location
-	   (srcloc.macro-srcloc-source.source-location, stream);
+         format(stream, "Inside expansion of %s.",
+                srcloc.macro-srcloc-source.macro-source-description);
+         pprint-newline(#"mandatory", stream);
+         describe-source-location
+           (srcloc.macro-srcloc-source.source-location, stream);
        end method);
 end method describe-source-location;
 
@@ -172,10 +172,10 @@ define method source-location-before
        source: srcloc.macro-srcloc-source,
        first: srcloc,
        last: make(<simple-macro-source-location>,
-		  source: srcloc.macro-srcloc-source,
-		  came-from: make(<unknown-source-location>),
-		  token: srcloc.macro-srcloc-token - 1,
-		  section: srcloc.macro-srcloc-section));
+                  source: srcloc.macro-srcloc-source,
+                  came-from: make(<unknown-source-location>),
+                  token: srcloc.macro-srcloc-token - 1,
+                  section: srcloc.macro-srcloc-section));
 end method source-location-before;
 
 define method source-location-before
@@ -219,10 +219,10 @@ define method source-location-after
   make(<compound-macro-source-location>,
        source: srcloc.macro-srcloc-source,
        first: make(<simple-macro-source-location>,
-		   source: srcloc.macro-srcloc-source,
-		   came-from: make(<unknown-source-location>),
-		   token: srcloc.macro-srcloc-token + 1,
-		   section: srcloc.macro-srcloc-section),
+                   source: srcloc.macro-srcloc-source,
+                   came-from: make(<unknown-source-location>),
+                   token: srcloc.macro-srcloc-token + 1,
+                   section: srcloc.macro-srcloc-section),
        last: srcloc);
 end method source-location-after;
 
@@ -238,7 +238,7 @@ end method source-location-after;
 //
 // Return a source location for the point between left-loc and right-loc,
 // which are guaranteed to be adjacent.
-// 
+//
 define generic source-location-between
     (left-loc :: <source-location>, right-loc :: <source-location>)
     => res :: <source-location>;
@@ -298,7 +298,7 @@ end method source-location-between;
 // Return a source location for the range of tokens including start-loc,
 // end-loc, and everything in between.  end-loc is guaranteed to follow
 // start-loc.
-// 
+//
 define generic source-location-spanning
     (start-loc :: <source-location>, end-loc :: <source-location>)
     => res :: <source-location>;
@@ -334,14 +334,14 @@ define method source-location-spanning
        first: start,
        last: stop);
 end method source-location-spanning;
-  
+
 define method source-location-spanning
     (start :: <simple-macro-source-location>,
      stop :: <compound-macro-source-location>)
     => res :: <source-location>;
   assert(start.macro-srcloc-source == stop.macro-srcloc-source);
   if (stop.macro-srcloc-first.macro-srcloc-token >
-	stop.macro-srcloc-last.macro-srcloc-token)
+        stop.macro-srcloc-last.macro-srcloc-token)
     start;
   else
     source-location-spanning(start, stop.macro-srcloc-last);
@@ -354,7 +354,7 @@ define method source-location-spanning
     => res :: <source-location>;
   assert(start.macro-srcloc-source == stop.macro-srcloc-source);
   if (start.macro-srcloc-first.macro-srcloc-token >
-	start.macro-srcloc-last.macro-srcloc-token)
+        start.macro-srcloc-last.macro-srcloc-token)
     stop;
   else
     source-location-spanning(start.macro-srcloc-first, stop);
@@ -368,7 +368,7 @@ end method source-location-spanning;
 // Return a simplified version of the supplied source location.  In practice,
 // this means that if location is a macro source location and all of it came
 // from the same section, return the original location of those tokens.
-// 
+//
 define generic simplify-source-location
     (srcloc :: <source-location>) => res :: <source-location>;
 
@@ -389,11 +389,11 @@ define method simplify-source-location
   if (first.macro-srcloc-section == last.macro-srcloc-section)
     simplify-source-location
       (if (first.macro-srcloc-token > last.macro-srcloc-token)
-	 source-location-between(last.macro-srcloc-came-from,
-				 first.macro-srcloc-came-from);
+         source-location-between(last.macro-srcloc-came-from,
+                                 first.macro-srcloc-came-from);
        else
-	 source-location-spanning(first.macro-srcloc-came-from,
-				  last.macro-srcloc-came-from);
+         source-location-spanning(first.macro-srcloc-came-from,
+                                  last.macro-srcloc-came-from);
        end if);
   else
     srcloc;

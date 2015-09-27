@@ -8,31 +8,31 @@ copyright: See below.
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
 define variable has-errors = #f;
 
-define method run-several-tests (test-name :: <string>, 
+define method run-several-tests (test-name :: <string>,
                                  test :: <function>)
  => ();
   format("%s ... ", test-name);
@@ -69,7 +69,7 @@ define method \=(a :: <decoded-time>, b :: <decoded-time>)
      & a.year = b.year
      & a.timezone = b.timezone)
 end method;
-     
+
 define method time-test () => ();
   let universal-time ::  <universal-time> = get-universal-time();
   let decoded-time :: <decoded-time> = get-decoded-time();
@@ -87,13 +87,13 @@ end method time-test;
 define method time-io-test () => ();
   let decoded-time
     = parse-time(make(<string-stream>, contents: "19 June 1996, 12:34 pm"),
-		 "%d %B %Y, %I:%M %p");
+                 "%d %B %Y, %I:%M %p");
 
   // Now, we make up a value for seconds.  We never print it, but
   // format-time demands that it be specified because it wants to
   // convert the whole <decoded-time> into a C struct tm.
-  let decoded-time = make(<decoded-time>, default-from: decoded-time, 
-			  seconds: 0);
+  let decoded-time = make(<decoded-time>, default-from: decoded-time,
+                          seconds: 0);
 
   let string-stream = make(<buffered-byte-string-output-stream>);
   format-time(string-stream, "%A %d %B %Y, %I:%M %p", decoded-time);

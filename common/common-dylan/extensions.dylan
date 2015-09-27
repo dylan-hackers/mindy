@@ -118,7 +118,7 @@ define method integer-to-string
         collect(quotient, digits, count + 1);
       end if;
     end method;
-  
+
   let (digits, count) =
     if (integer < 0)
       // strip off last digit to avoid overflow in $minimum-integer case
@@ -138,7 +138,7 @@ define method integer-to-string
     = if(desired-size) max(desired-size, min-size) else min-size end;
   let returned-string
     = make(<byte-string>, size: string-size, fill: fill);
-  
+
   if(integer < 0)
     returned-string[0] := '-';
   end if;
@@ -156,21 +156,21 @@ define constant $minimum-normalized-double-significand :: <extended-integer>
 define constant $minimum-normalized-extended-significand :: <extended-integer>
   = ash(#e1, float-digits(1.0x0) - 1);
 
-define method float-to-string 
+define method float-to-string
     (v :: <single-float>)
  => (string :: <byte-string>);
   float-to-string-aux(v, $minimum-single-float-exponent,
                       $minimum-normalized-single-significand);
 end method;
 
-define method float-to-string 
+define method float-to-string
     (v :: <double-float>)
  => (string :: <byte-string>);
   float-to-string-aux(v, $minimum-double-float-exponent,
                       $minimum-normalized-double-significand);
 end method;
 
-define method float-to-string 
+define method float-to-string
     (v :: <extended-float>)
  => (string :: <byte-string>);
   float-to-string-aux(v, $minimum-extended-float-exponent,
@@ -187,7 +187,7 @@ define inline method float-to-string-aux
     // algorithm by Burger and Dybvig, as described in "Printing
     // Floating-Point Numbers Quickly and Accurately", in the 1996
     // ACM PLDI conference proceedings.
-    // 
+    //
     // Set initial values according to Table I.
     //
     method initial
@@ -275,10 +275,10 @@ define inline method float-to-string-aux
         end if;
       end if;
     end;
-  
+
   let s :: <stretchy-vector> = make(<stretchy-vector>);
   let adds = curry(add!, s);
-  
+
   let v = if (negative?(v)) add!(s, '-'); -v; else v end;
 
   if (zero?(v))
@@ -293,7 +293,7 @@ define inline method float-to-string-aux
 
     let (exponent :: <integer>, digits :: <list>)
       = initial(v, f, e);
-    
+
     if (-3 <= exponent & exponent <= 0)
       do(adds, "0.");
       for (i from exponent below 0)
@@ -346,8 +346,8 @@ end method number-to-string;
 
 define method string-to-integer
     (string :: <byte-string>,
-     #key base :: <integer> = 10, 
-          start :: <integer> = 0, 
+     #key base :: <integer> = 10,
+          start :: <integer> = 0,
           end: _end :: <integer> = size(string),
           default = $unsupplied)
  => (result :: <integer>, next-key :: <integer>);
@@ -355,71 +355,71 @@ define method string-to-integer
   let valid? :: <boolean> = #f;
   let negative? :: <boolean> = #f;
   let integer :: <integer> = 0;
-  
+
   block (return)
     for (i :: <integer> from start below _end)
       let char :: <character> = string[i];
       let digit :: false-or(<integer>)
-	= select (char)
-	    '-' =>
-	      if (i = start)
-		negative? := #t;
-	      elseif (valid?)
-		return(if (negative?) - integer else integer end, i);
+        = select (char)
+            '-' =>
+              if (i = start)
+                negative? := #t;
+              elseif (valid?)
+                return(if (negative?) - integer else integer end, i);
               elseif (supplied?(default))
-		return(default, i);
+                return(default, i);
               else
                 error("not a valid integer");
-	      end if;
-	      #f;
-	    '+' =>
-	      if (i = start)
+              end if;
+              #f;
+            '+' =>
+              if (i = start)
                 negative? := #f;
-	      elseif (valid?)
-		return(if (negative?) - integer else integer end, i);
+              elseif (valid?)
+                return(if (negative?) - integer else integer end, i);
               elseif (supplied?(default))
-		return(default, i);
+                return(default, i);
               else
                 error("not a valid integer");
-	      end if;
-	      #f;
-	    '0'      => 0;
-	    '1'      => 1;
-	    '2'      => 2;
-	    '3'      => 3;
-	    '4'      => 4;
-	    '5'      => 5;
-	    '6'      => 6;
-	    '7'      => 7;
-	    '8'      => 8;
-	    '9'      => 9;
-	    'A', 'a' => 10;
-	    'B', 'b' => 11;
-	    'C', 'c' => 12;
-	    'D', 'd' => 13;
-	    'E', 'e' => 14;
-	    'F', 'f' => 15;
-	    'G', 'g' => 16;
-	    'H', 'h' => 17;
-	    'I', 'i' => 18;
-	    'J', 'j' => 19;
-	    'K', 'k' => 20;
-	    'L', 'l' => 21;
-	    'M', 'm' => 22;
-	    'N', 'n' => 23;
-	    'O', 'o' => 24;
-	    'P', 'p' => 25;
-	    'Q', 'q' => 26;
-	    'R', 'r' => 27;
-	    'S', 's' => 28;
-	    'T', 't' => 29;
-	    'U', 'u' => 30;
-	    'V', 'v' => 31;
-	    'W', 'w' => 32;
-	    'X', 'x' => 33;
-	    'Y', 'y' => 34;
-	    'Z', 'z' => 35;
-	    otherwise =>
+              end if;
+              #f;
+            '0'      => 0;
+            '1'      => 1;
+            '2'      => 2;
+            '3'      => 3;
+            '4'      => 4;
+            '5'      => 5;
+            '6'      => 6;
+            '7'      => 7;
+            '8'      => 8;
+            '9'      => 9;
+            'A', 'a' => 10;
+            'B', 'b' => 11;
+            'C', 'c' => 12;
+            'D', 'd' => 13;
+            'E', 'e' => 14;
+            'F', 'f' => 15;
+            'G', 'g' => 16;
+            'H', 'h' => 17;
+            'I', 'i' => 18;
+            'J', 'j' => 19;
+            'K', 'k' => 20;
+            'L', 'l' => 21;
+            'M', 'm' => 22;
+            'N', 'n' => 23;
+            'O', 'o' => 24;
+            'P', 'p' => 25;
+            'Q', 'q' => 26;
+            'R', 'r' => 27;
+            'S', 's' => 28;
+            'T', 't' => 29;
+            'U', 'u' => 30;
+            'V', 'v' => 31;
+            'W', 'w' => 32;
+            'X', 'x' => 33;
+            'Y', 'y' => 34;
+            'Z', 'z' => 35;
+            otherwise =>
               if (valid?)
                 return(if (negative?) - integer else integer end, i);
               elseif (supplied?(default))
@@ -427,18 +427,18 @@ define method string-to-integer
               else
                 error("not a valid integer");
               end if;
-	  end select;
+          end select;
       if (digit)
-	if(digit < base)
-	  integer := integer * base + digit;
+        if(digit < base)
+          integer := integer * base + digit;
           valid? := #t;
-	elseif (valid?)
-	  return(if (negative?) - integer else integer end, i);
+        elseif (valid?)
+          return(if (negative?) - integer else integer end, i);
         elseif(supplied?(default))
           return(default, i);
         else
           error("not a valid integer");
-	end if;
+        end if;
       end if;
     end for;
 
@@ -479,9 +479,9 @@ end macro;
 define macro iterate
   { iterate ?:name (?clauses:*) ?:body end }
     => { %iterate-aux ?name
-	   %iterate-param-helper(?clauses)
+           %iterate-param-helper(?clauses)
            %iterate-value-helper(?clauses)
-	   ?body
+           ?body
          end }
 end;
 
@@ -493,7 +493,7 @@ define macro %iterate-aux
     end }
     => { local method ?name (?param-clauses)
                  ?body
-	       end;
+               end;
          ?name(?value-clauses) }
 end macro;
 
@@ -527,7 +527,7 @@ end macro;
 #endif
 define method string-to-float
     (string :: <byte-string>,
-     #key _start :: <integer> = 0, 
+     #key _start :: <integer> = 0,
           end: _end :: <integer> = size(string),
           default-class :: subclass(<float>) = <double-float>)
  => (result :: <float>, next-key :: <integer>);
@@ -549,7 +549,7 @@ define method string-to-float
           '7' => integer-part(index + 1, neg?, mantissa * 10 + 7);
           '8' => integer-part(index + 1, neg?, mantissa * 10 + 8);
           '9' => integer-part(index + 1, neg?, mantissa * 10 + 9);
-            
+
           '.' => fraction-part(index + 1, neg?, mantissa, 0);
 
           'e', 'E' =>
@@ -560,7 +560,7 @@ define method string-to-float
             exponent-sign(index + 1, neg?, mantissa, 0, <double-float>);
           'x', 'X' =>
             exponent-sign(index + 1, neg?, mantissa, 0, <extended-float>);
-          
+
           otherwise =>
             finish-float(index, neg?, mantissa, 0, #f, 0, default-class);
         end select;
@@ -584,7 +584,7 @@ define method string-to-float
           '7' => fraction-part(index + 1, neg?, mantissa * 10 + 7, scale + 1);
           '8' => fraction-part(index + 1, neg?, mantissa * 10 + 8, scale + 1);
           '9' => fraction-part(index + 1, neg?, mantissa * 10 + 9, scale + 1);
-      
+
           'e', 'E' =>
             exponent-sign(index + 1, neg?, mantissa, scale, default-class);
           's', 'S' =>
@@ -593,7 +593,7 @@ define method string-to-float
             exponent-sign(index + 1, neg?, mantissa, scale, <double-float>);
           'x', 'X' =>
             exponent-sign(index + 1, neg?, mantissa, scale, <extended-float>);
-          
+
           otherwise =>
             finish-float(index, neg?, mantissa, scale, #f, 0, default-class);
         end select;

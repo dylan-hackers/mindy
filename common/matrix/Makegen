@@ -3,6 +3,6 @@
 $D2CFLAGS = $d2c_runtime;
 
 &emit_library_rule(
-    'Matrix', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy', 
+    'Matrix', '$(BUILDROOT)/force.timestamp', '', 'compile', 'compile-mindy',
     'install'
 );

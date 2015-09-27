@@ -5,25 +5,25 @@ module: Dylan
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -49,13 +49,13 @@ define method \< (string1 :: <string>, string2 :: <string>)
     let (init, limit, next, done?, key, elem) =
        forward-iteration-protocol(string2);
     for (char1 in string1,
-	 state = init then next(string2, state),
-	 until: done?(string2, state, limit))
+         state = init then next(string2, state),
+         until: done?(string2, state, limit))
       let char2 = elem(string2, state);
       case
-	char1 < char2 => return(#t);
-	char1 > char2 => return(#f);
- 	otherwise => #f;
+        char1 < char2 => return(#t);
+        char1 > char2 => return(#f);
+         otherwise => #f;
       end case
     finally
       if (done?(string2, state, limit)) #f else #t end
@@ -97,7 +97,7 @@ define method element-setter
   error(make(<type-error>, value: new, type: <byte-character>));
 end;
 
-define method element-setter 
+define method element-setter
     (new, string :: <unicode-string>, index :: <integer>)
  => new :: <object>;
   error(make(<type-error>, value: new, type: <character>));
@@ -129,38 +129,38 @@ define method concatenate-as
       // We can get big wins in the common two-string case.
       let second-vector = first(more_vectors);
       if (instance?(second-vector, <byte-string>))
-	let size1 = size(vector);
-	let size2 = size(second-vector);
-      
-	let result = make(cls, size: size1 + size2);
-	copy-bytes(result, 0, vector, 0, size1);
-	copy-bytes(result, size1, second-vector, 0, size2);
-	result;
+        let size1 = size(vector);
+        let size2 = size(second-vector);
+
+        let result = make(cls, size: size1 + size2);
+        copy-bytes(result, 0, vector, 0, size1);
+        copy-bytes(result, size1, second-vector, 0, size2);
+        result;
       else
-	next-method();
+        next-method();
       end if;
     otherwise =>
       block (return)
-	// Strange test.  By combining size computation and checking that all
-	// args are byte-strings, we gain time in the typical case, while not
-	// losing much in the odd cases.  The main cost is in code clarity.
-	let length = for (sz = vector.size then sz + seq.size,
-			  seq in more_vectors)
-		       if (~instance?(seq, <byte-string>))
-			 return(next-method())
-		       end if;
-		     finally sz;
-		     end for;
-	let result = make(cls, size: length);
-	for (next in more_vectors,
-	     src = vector then next,
-	     sz = size(vector) then size(next),
-	     index = 0 then index + sz)
-	  copy-bytes(result, index, src, 0, sz);
-	finally
-	  copy-bytes(result, index, src, 0, sz);
-	end for;
-	result;
+        // Strange test.  By combining size computation and checking that all
+        // args are byte-strings, we gain time in the typical case, while not
+        // losing much in the odd cases.  The main cost is in code clarity.
+        let length = for (sz = vector.size then sz + seq.size,
+                          seq in more_vectors)
+                       if (~instance?(seq, <byte-string>))
+                         return(next-method())
+                       end if;
+                     finally sz;
+                     end for;
+        let result = make(cls, size: length);
+        for (next in more_vectors,
+             src = vector then next,
+             sz = size(vector) then size(next),
+             index = 0 then index + sz)
+          copy-bytes(result, index, src, 0, sz);
+        finally
+          copy-bytes(result, index, src, 0, sz);
+        end for;
+        result;
       end block;
   end case;
 end method concatenate-as;

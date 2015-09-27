@@ -18,4 +18,4 @@ $CPPFLAGS .= " -I$srcdir";
 # &emit_melange_rule("c-support", "support.h");
 
 &emit_library_rule ('common-dylan', '$(BUILDROOT)/force.timestamp', '',
-		      'compile', 'no-mindy', 'install');
+                    'compile', 'no-mindy', 'install');

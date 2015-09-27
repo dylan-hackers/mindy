@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -53,7 +53,7 @@ obj_t obj_StaticTypeClass = NULL; /* type of static pointer classes */
 /* Class constructors. */
 
 obj_t make_builtin_class(int (*scavenge)(struct object *ptr),
-			 obj_t (*transport)(obj_t object))
+                         obj_t (*transport)(obj_t object))
 {
     obj_t res = alloc(obj_ClassClass, sizeof(struct class));
 
@@ -138,9 +138,9 @@ static struct cpd *pop_cpd(struct cpd_chain **chainptr)
 static void free_cpd_chain(struct cpd_chain *chain)
 {
     while (chain != NULL) {
-	struct cpd_chain *next = chain->next;
-	free(chain);
-	chain = next;
+        struct cpd_chain *next = chain->next;
+        free(chain);
+        chain = next;
     }
 }
 
@@ -158,18 +158,18 @@ static struct cpd *compute_cpd(obj_t class, obj_t supers)
     class_count++;
 
     if (supers != obj_Nil) {
-	struct cpd *prev_super_cpd = find_cpd(HEAD(supers));
-	push_cpd(prev_super_cpd, &cpd->supers);
-	push_cpd(prev_super_cpd, &cpd->after);
-	prev_super_cpd->count++;
-	while ((supers = TAIL(supers)) != obj_Nil) {
-	    struct cpd *super_cpd = find_cpd(HEAD(supers));
-	    push_cpd(super_cpd, &cpd->supers);
-	    push_cpd(super_cpd, &cpd->after);
-	    push_cpd(super_cpd, &prev_super_cpd->after);
-	    super_cpd->count += 2;
-	    prev_super_cpd = super_cpd;
-	}
+        struct cpd *prev_super_cpd = find_cpd(HEAD(supers));
+        push_cpd(prev_super_cpd, &cpd->supers);
+        push_cpd(prev_super_cpd, &cpd->after);
+        prev_super_cpd->count++;
+        while ((supers = TAIL(supers)) != obj_Nil) {
+            struct cpd *super_cpd = find_cpd(HEAD(supers));
+            push_cpd(super_cpd, &cpd->supers);
+            push_cpd(super_cpd, &cpd->after);
+            push_cpd(super_cpd, &prev_super_cpd->after);
+            super_cpd->count += 2;
+            prev_super_cpd = super_cpd;
+        }
     }
     return cpd;
 }
@@ -179,8 +179,8 @@ static struct cpd *find_cpd(obj_t class)
     struct cpd_chain *ptr;
 
     for (ptr = cpds; ptr != NULL; ptr = ptr->next)
-	if (ptr->cpd->class == class)
-	    return ptr->cpd;
+        if (ptr->cpd->class == class)
+            return ptr->cpd;
 
     return compute_cpd(class, CLASS(class)->superclasses);
 }
@@ -191,10 +191,10 @@ static struct cpd *tie_breaker(struct cpd_chain **candidates, obj_t rcpl)
     struct cpd_chain **prev, *ptr;
 
     for (remaining = rcpl; remaining != obj_Nil; remaining = TAIL(remaining)) {
-	supers = CLASS(HEAD(remaining))->superclasses;
-	for (prev = candidates; (ptr = *prev) != NULL; prev = &ptr->next)
-	    if (memq(ptr->cpd->class, supers))
-		return pop_cpd(prev);
+        supers = CLASS(HEAD(remaining))->superclasses;
+        for (prev = candidates; (ptr = *prev) != NULL; prev = &ptr->next)
+            if (memq(ptr->cpd->class, supers))
+                return pop_cpd(prev);
     }
     lose("Can't happen.\n");
     return NULL;
@@ -217,23 +217,23 @@ static obj_t slow_compute_cpl(obj_t class, obj_t superclasses)
 
     rcpl = obj_Nil;
     for (count = 0; count < class_count; count++) {
-	if (candidates == NULL)
-	    error("Inconsistent CPL");
-	if (candidates->next != NULL)
-	    candidate = tie_breaker(&candidates, rcpl);
-	else
-	    candidate = pop_cpd(&candidates);
+        if (candidates == NULL)
+            error("Inconsistent CPL");
+        if (candidates->next != NULL)
+            candidate = tie_breaker(&candidates, rcpl);
+        else
+            candidate = pop_cpd(&candidates);
 
-	rcpl = pair(candidate->class, rcpl);
+        rcpl = pair(candidate->class, rcpl);
 
-	free_cpd_chain(candidate->supers);
-	for (after = candidate->after; after != NULL; after = after->next) {
-	    after->cpd->count--;
-	    if (after->cpd->count == 0)
-		push_cpd(after->cpd, &candidates);
-	}
-	free_cpd_chain(candidate->after);
-	free(candidate);
+        free_cpd_chain(candidate->supers);
+        for (after = candidate->after; after != NULL; after = after->next) {
+            after->cpd->count--;
+            if (after->cpd->count == 0)
+                push_cpd(after->cpd, &candidates);
+        }
+        free_cpd_chain(candidate->after);
+        free(candidate);
     }
 
     return nreverse(rcpl);
@@ -242,11 +242,11 @@ static obj_t slow_compute_cpl(obj_t class, obj_t superclasses)
 static obj_t compute_cpl(obj_t class, obj_t superclasses)
 {
     if (superclasses == obj_Nil)
-	return list1(class);
+        return list1(class);
     else if (TAIL(superclasses) == obj_Nil)
-	return pair(class, CLASS(HEAD(superclasses))->cpl);
+        return pair(class, CLASS(HEAD(superclasses))->cpl);
     else
-	return slow_compute_cpl(class, superclasses);
+        return slow_compute_cpl(class, superclasses);
 }
 
 
@@ -258,26 +258,26 @@ void setup_class_supers(obj_t class, obj_t supers)
     boolean some_static = FALSE;
 
     for (scan = supers; scan != obj_Nil; scan = TAIL(scan)) {
-	obj_t super = HEAD(scan);
-	if (CLASS(super)->sealed_p
-	      && CLASS(super)->library != CLASS(class)->library)
-	    error("Can't add subclasses to sealed class %=", super);
-	if (CLASS(super)->superclasses == obj_False
-	      || CLASS(super)->superclasses == NULL)
-	    error("Attempt to use %= before it is initialized", super);
-	if (object_class(super) == obj_StaticTypeClass)
-	    some_static = TRUE;
+        obj_t super = HEAD(scan);
+        if (CLASS(super)->sealed_p
+              && CLASS(super)->library != CLASS(class)->library)
+            error("Can't add subclasses to sealed class %=", super);
+        if (CLASS(super)->superclasses == obj_False
+              || CLASS(super)->superclasses == NULL)
+            error("Attempt to use %= before it is initialized", super);
+        if (object_class(super) == obj_StaticTypeClass)
+            some_static = TRUE;
     }
-    
+
     if (some_static) {
-	/* If we inherit from a statically typed pointer class, then we must
-	   be a statically typed pointer class.  We must therefore act like
-	   one */
-	assert(CLASS(class)->class == obj_DefinedClassClass);
-	CLASS(class)->class = obj_StaticTypeClass;
-	CLASS(class)->scavenge = scav_c_pointer;
-	CLASS(class)->transport = trans_c_pointer;
-	shrink(class, sizeof(struct defined_class), sizeof(struct class));
+        /* If we inherit from a statically typed pointer class, then we must
+           be a statically typed pointer class.  We must therefore act like
+           one */
+        assert(CLASS(class)->class == obj_DefinedClassClass);
+        CLASS(class)->class = obj_StaticTypeClass;
+        CLASS(class)->scavenge = scav_c_pointer;
+        CLASS(class)->transport = trans_c_pointer;
+        shrink(class, sizeof(struct defined_class), sizeof(struct class));
     }
 
     CLASS(class)->superclasses = supers;
@@ -285,14 +285,14 @@ void setup_class_supers(obj_t class, obj_t supers)
     CLASS(class)->cpl = cpl;
 
     for (scan = TAIL(cpl); scan != obj_Nil; scan = TAIL(scan)) {
-	obj_t super = HEAD(scan);
-	CLASS(super)->all_subclasses
-	    = pair(class, CLASS(super)->all_subclasses);
+        obj_t super = HEAD(scan);
+        CLASS(super)->all_subclasses
+            = pair(class, CLASS(super)->all_subclasses);
     }
     for (scan = supers; scan != obj_Nil; scan = TAIL(scan)) {
-	obj_t super = HEAD(scan);
-	CLASS(super)->direct_subclasses
-	    = pair(class, CLASS(super)->direct_subclasses);
+        obj_t super = HEAD(scan);
+        CLASS(super)->direct_subclasses
+            = pair(class, CLASS(super)->direct_subclasses);
     }
 }
 
@@ -302,7 +302,7 @@ static void vinit_builtin_class(obj_t class, char *name, va_list ap)
 
     supers = obj_Nil;
     while ((super = va_arg(ap, obj_t)) != NULL)
-	supers = pair(super, supers);
+        supers = pair(super, supers);
     supers = nreverse(supers);
 
     CLASS(class)->debug_name = symbol(name);
@@ -358,9 +358,9 @@ static void print_class(obj_t class)
     obj_t debug_name = CLASS(class)->debug_name;
 
     if (debug_name != NULL && debug_name != obj_False)
-	printf("{class %s}", sym_name(debug_name));
+        printf("{class %s}", sym_name(debug_name));
     else
-	printf("{anonymous class 0x%08lx}", (unsigned long)class);
+        printf("{anonymous class 0x%08lx}", (unsigned long)class);
 }
 
 
@@ -402,20 +402,20 @@ void init_class_classes(void)
     init_builtin_class(obj_ClassClass, "<class>", obj_TypeClass, NULL);
     def_printer(obj_ClassClass, print_class);
     init_builtin_class(obj_StaticTypeClass, "<static-pointer-class>",
-		       obj_ClassClass, NULL);
+                       obj_ClassClass, NULL);
     def_printer(obj_StaticTypeClass, print_class);
 }
 
 void init_class_functions(void)
 {
     define_method("abstract?", list1(obj_ClassClass), FALSE, obj_False,
-		  FALSE, obj_ObjectClass, abstractp);
+                  FALSE, obj_ObjectClass, abstractp);
     define_method("class-name", list1(obj_ClassClass), FALSE, obj_False,
-		  FALSE, obj_ObjectClass, class_name);
+                  FALSE, obj_ObjectClass, class_name);
     define_method("all-superclasses", list1(obj_ClassClass), FALSE, obj_False,
-		  FALSE, obj_ObjectClass, all_superclasses);
+                  FALSE, obj_ObjectClass, all_superclasses);
     define_method("direct-superclasses", list1(obj_ClassClass), FALSE,
-		  obj_False, FALSE, obj_ObjectClass, direct_superclasses);
+                  obj_False, FALSE, obj_ObjectClass, direct_superclasses);
     define_method("direct-subclasses", list1(obj_ClassClass), FALSE,
-		  obj_False, FALSE, obj_ObjectClass, direct_subclasses);
+                  obj_False, FALSE, obj_ObjectClass, direct_subclasses);
 }

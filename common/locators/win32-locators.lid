@@ -6,13 +6,13 @@ Copyright:    Original Code is Copyright (c) 1999-2000 Functional Objects, Inc.
 License:      Functional Objects Library Public License Version 1.0
 Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
-Files:	library
-	utilities
-	locators
-	posix-locators
-	microsoft-locators
-	web-locators
-	native-microsoft-locators
+Files:        library
+               utilities
+               locators
+               posix-locators
+               microsoft-locators
+               web-locators
+               native-microsoft-locators
 Other-Files:   Open-Source-License.txt
 Major-Version: 2
 Minor-Version: 0

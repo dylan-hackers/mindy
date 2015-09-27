@@ -25,10 +25,10 @@ define function root-directories() => (roots :: <sequence>)
   let roots = #();
 
   local method add-if-dir(root, name, type)
-		if(type == #"directory") 
-		  roots := append(roots, as-dir(concatenate(root, name)));
-		end if;
-	end;
+                if(type == #"directory")
+                  roots := append(roots, as-dir(concatenate(root, name)));
+                end if;
+        end;
 
   do-directory(add-if-dir, $path-separator);
   roots;
@@ -39,7 +39,7 @@ end function root-directories;
 // name and removing the name
 define function temp-directory() => tmp :: <pathname>;
   let file-name* = tmpnam();
-  if(as(<integer>, file-name*) = 0) 
+  if(as(<integer>, file-name*) = 0)
     file-signal("tmpnam", "no arguments");
   end if;
 

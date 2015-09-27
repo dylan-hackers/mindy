@@ -9,25 +9,25 @@ copyright: See below.
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -178,8 +178,8 @@ end class <decoded-time>;
 #if (mindy)
 define constant $null-decoded-time
   = make(<decoded-time>, seconds: #f, minutes: #f, hours: #f, day-of-week: #f,
-	 day-of-month: #f, month: #f, year: #f, daylight-savings-time?: #f,
-	 timezone: #f);
+         day-of-month: #f, month: #f, year: #f, daylight-savings-time?: #f,
+         timezone: #f);
 #else
 define constant $null-decoded-time
   = make(<decoded-time>, default-from: #f);
@@ -188,7 +188,7 @@ define constant $null-decoded-time
 // This one is exported.
 define constant $default-time
   = make(<decoded-time>, seconds: 0, minutes: 0, hours: 0, day-of-month: 1,
-	 month: 1, year: 0, daylight-savings-time?: #f, timezone: 0);
+         month: 1, year: 0, daylight-savings-time?: #f, timezone: 0);
 
 //=============================================================================
 
@@ -215,7 +215,7 @@ define method compute-day-of-week
   let days-this-year = days-before-month(month, year)
     + day-of-month
     - 1; // We've double counted Jan 1
-  
+
   modulo(jan-1-dow-this-year + days-this-year, 7);
 end method compute-day-of-week;
 
@@ -248,26 +248,26 @@ define method initialize
        #next next-method,
        #key default-from :: false-or(<decoded-time>) = $null-decoded-time,
        seconds: secs :: false-or(<seconds>)
-	 = if (default-from) default-from.seconds else #f end if,
+         = if (default-from) default-from.seconds else #f end if,
        minutes: mins :: false-or(<minutes>)
-	 = if (default-from) default-from.minutes else #f end if,
+         = if (default-from) default-from.minutes else #f end if,
        hours: hrs :: false-or(<hours>)
-	 = if (default-from) default-from.hours else #f end if,
+         = if (default-from) default-from.hours else #f end if,
        day-of-week: weekday :: false-or(<day-of-week>)
-	 = if (default-from) default-from.day-of-week else #f end if,
+         = if (default-from) default-from.day-of-week else #f end if,
        day-of-month: date :: false-or(<day-of-month>)
-	 = if (default-from) default-from.day-of-month else #f end if,
+         = if (default-from) default-from.day-of-month else #f end if,
        month: mth :: false-or(<month>)
-	 = if (default-from) default-from.month else #f end if,
+         = if (default-from) default-from.month else #f end if,
        year: yr :: false-or(<year>)
-	 = if (default-from) default-from.year else #f end if,
+         = if (default-from) default-from.year else #f end if,
        daylight-savings-time?: dst? :: <boolean>
-	 = if (default-from) default-from.daylight-savings-time?
-	   else
-	     #f
-	   end if,
+         = if (default-from) default-from.daylight-savings-time?
+           else
+             #f
+           end if,
        timezone: tzone :: false-or(<timezone>)
-	 = if (default-from) default-from.timezone else #f end if);
+         = if (default-from) default-from.timezone else #f end if);
   next-method();
 
   time.seconds := secs;
@@ -301,13 +301,13 @@ end method initialize;
 //
 define method print-object (time :: <decoded-time>, stream :: <stream>) => ();
   write(stream, "{<decoded-time> ");
-  
-  format(stream, 
-	 "seconds=%= minutes=%= hours=%= day-of-month=%= month=%= "
-	   "year=%= day-of-week=%= daylight-savings-time?=%= timezone=%=", 
-	 time.seconds, time.minutes, time.hours, time.day-of-month, 
-	 time.month, time.year, time.day-of-week, time.daylight-savings-time?,
-	 time.timezone);
+
+  format(stream,
+         "seconds=%= minutes=%= hours=%= day-of-month=%= month=%= "
+           "year=%= day-of-week=%= daylight-savings-time?=%= timezone=%=",
+         time.seconds, time.minutes, time.hours, time.day-of-month,
+         time.month, time.year, time.day-of-week, time.daylight-savings-time?,
+         time.timezone);
   write(stream, "}");
 end method print-object;
 
@@ -319,7 +319,7 @@ end method get-universal-time;
 
 // Return current time as a <decoded-time>.
 //
-define method get-decoded-time 
+define method get-decoded-time
     (#key timezone :: false-or(<timezone>) = #f)
  => current-time :: <decoded-time>;
   if (~timezone)
@@ -336,20 +336,20 @@ end method get-decoded-time;
 
 // Decode a <universal-time> into a <decoded-time> using the supplied timezone.
 //
-define method decode-time 
+define method decode-time
     (universal-time :: <universal-time>,
      #key timezone :: false-or(<timezone>) = #f)
  => decoded-time :: <decoded-time>;
 
   let daylight-savings-time? = local-daylight-savings-time?();
-  
+
   let zone = if (timezone)
-	       timezone;
-	     elseif (daylight-savings-time?)
-	       get-local-timezone() - $seconds-per-hour;
-	     else
-	       get-local-timezone();
-	     end if;
+               timezone;
+             elseif (daylight-savings-time?)
+               get-local-timezone() - $seconds-per-hour;
+             else
+               get-local-timezone();
+             end if;
   let secs = universal-time - zone;
 
   // Guess the number of years and work from there
@@ -367,7 +367,7 @@ define method decode-time
   else
     let days-since-1970 = days-since-1970
       + if (leap-year?(years + 1970)) 366 else 365 end if;
-    
+
     if (secs > days-since-1970 * $seconds-per-day)
       years := years + 1;
     end if;
@@ -377,9 +377,9 @@ define method decode-time
 
   let seconds-this-year
     = as(<integer>, secs - (as(<universal-time>,
-			       $days-since-1970[year-this-cycle])
-			      + leap-year-cycles * $days-per-400-years)
-			      * $seconds-per-day);
+                               $days-since-1970[year-this-cycle])
+                              + leap-year-cycles * $days-per-400-years)
+                              * $seconds-per-day);
 
   let year = 1970 + years;
 
@@ -413,7 +413,7 @@ define method decode-time
 
 end method decode-time;
 
-define method as (cls == <decoded-time>, universal-time :: <universal-time>) 
+define method as (cls == <decoded-time>, universal-time :: <universal-time>)
  => decoded-time :: <decoded-time>;
   decode-time(universal-time);
 end method as;
@@ -422,23 +422,23 @@ end method as;
 //
 define method encode-time (decoded-time :: <decoded-time>)
  => universal-time :: <universal-time>;
-  
-  if (~encodable-time?(decoded-time)) 
+
+  if (~encodable-time?(decoded-time))
     error("Time not encodable. Only completely specified times after 1969 are encodable");
   else
     let years = decoded-time.year - 1970;
     let (leap-year-cycles, year-this-cycle) = truncate/(years, 400);
 
     let days = as(<universal-time>, decoded-time.day-of-month - 1
-		    + days-before-month(decoded-time.month, decoded-time.year)
-		    + $days-since-1970[year-this-cycle]
-		    + leap-year-cycles * $days-per-400-years);
-    
+                    + days-before-month(decoded-time.month, decoded-time.year)
+                    + $days-since-1970[year-this-cycle]
+                    + leap-year-cycles * $days-per-400-years);
+
     let hours = as(<universal-time>, decoded-time.hours + days * 24);
 
     decoded-time.seconds + (decoded-time.minutes + hours * 60) * 60
-      + decoded-time.timezone; 
-    
+      + decoded-time.timezone;
+
   end if;
 end method encode-time;
 

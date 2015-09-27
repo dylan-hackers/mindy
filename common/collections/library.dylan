@@ -51,7 +51,7 @@ end module bit-set;
 
 define module collectors
   create collector-protocol,
-         \collecting, 
+         \collecting,
          \collect-into, \collect-first-into, \collect-last-into,
          \collect, \collect-first, \collect-last,
          \collected;
@@ -59,10 +59,10 @@ end module collectors;
 
 define module plists
   create get-property,
-	 \put-property!, do-put-property!,
+         \put-property!, do-put-property!,
          keyword-sequence, value-sequence,
-	 \remove-property!, do-remove-property!,
-	 remove-keywords, \with-keywords-removed;
+         \remove-property!, do-remove-property!,
+         remove-keywords, \with-keywords-removed;
 end module plists;
 
 define module set
@@ -75,14 +75,14 @@ end module set;
 define module table-extensions
   use dylan-extensions,
     import: { <string-table>, <hash-state>,
-              collection-hash, sequence-hash, 
-              collection-hash!, sequence-hash!, 
+              collection-hash, sequence-hash,
+              collection-hash!, sequence-hash!,
               values-hash,
               string-hash,
               case-insensitive-string-hash,
               case-insensitive-equal,
-	      remove-all-keys!,
-	      merge-hash-ids },
+              remove-all-keys!,
+              merge-hash-ids },
     export: all;
 end module table-extensions;
 */

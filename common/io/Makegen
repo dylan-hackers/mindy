@@ -9,4 +9,4 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L../format-out';
 
 &emit_library_rule('io', '$(BUILDROOT)/force.timestamp', '',
-		     'compile', 'compile-mindy', 'install')
+                   'compile', 'compile-mindy', 'install')

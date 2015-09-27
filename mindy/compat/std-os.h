@@ -1,24 +1,24 @@
 /*
  * std-os.h --
  *
- *	Provide emulation of standard unix where parts might be lacking.
+ *        Provide emulation of standard unix where parts might be lacking.
  *
- *	This file is adapted from tcl-7.3 tclUnix.h and should be considered
- *	a highly derivative workd covered by the following copyright.
+ *        This file is adapted from tcl-7.3 tclUnix.h and should be considered
+ *        a highly derivative workd covered by the following copyright.
  *
- *	Parts of this are irrelevant to mindy as it stands, but they're easier
- *	to keep than to go back and dig them up later.
+ *        Parts of this are irrelevant to mindy as it stands, but they're easier
+ *        to keep than to go back and dig them up later.
  *
  * tclUnix.h --
  *
- *	This file reads in UNIX-related header files and sets up
- *	UNIX-related macros for Tcl's UNIX core.  It should be the
- *	only file that contains #ifdefs to handle different flavors
- *	of UNIX.  This file sets up the union of all UNIX-related
- *	things needed by any of the Tcl core files.
+ *        This file reads in UNIX-related header files and sets up
+ *        UNIX-related macros for Tcl's UNIX core.  It should be the
+ *        only file that contains #ifdefs to handle different flavors
+ *        of UNIX.  This file sets up the union of all UNIX-related
+ *        things needed by any of the Tcl core files.
  *
- *	Much of the material in this file was originally contributed
- *	by Karl Lehenbauer, Mark Diekhans and Peter da Silva.
+ *        Much of the material in this file was originally contributed
+ *        by Karl Lehenbauer, Mark Diekhans and Peter da Silva.
  *
  * Copyright (c) 1991-1993 The Regents of the University of California.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * software and its documentation for any purpose, provided that the
  * above copyright notice and the following two paragraphs appear in
  * all copies of this software.
- * 
+ *
  * IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
  * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
  * OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
@@ -43,7 +43,7 @@
  */
 
 #ifndef _STD_OS_H_
-#define _STD_OS_H_	1
+#define _STD_OS_H_        1
 
 #include <errno.h>
 #include <sys/types.h>
@@ -74,7 +74,7 @@
 #endif
 #ifdef WIN32
 #   include <io.h>
-#	  define fsync	_commit
+#          define fsync        _commit
 #else
 #   include <unistd.h>
 #endif
@@ -117,4 +117,4 @@
 #   endif
 #endif
 
-#endif	/* _STD_OS_H_ */
+#endif        /* _STD_OS_H_ */

@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -85,13 +85,13 @@ __inline__ static int decode_arg(struct thread *thread)
     int arg = decode_byte(thread);
 
     if (arg == 0xff)
-	return decode_int4(thread);
+        return decode_int4(thread);
     else
-	return arg;
+        return arg;
 }
 
 static void canonicalize_values(struct thread *thread, obj_t *old_sp,
-				obj_t *vals)
+                                obj_t *vals)
 {
     int supplied = thread->sp - vals;
     int wants = decode_arg(thread);
@@ -103,28 +103,28 @@ static void canonicalize_values(struct thread *thread, obj_t *old_sp,
     restp = wants & 1;
 
     if (supplied <= fixed) {
-	if (old_sp != vals)
-	    for (i = 0; i < supplied; i++)
-		*old_sp++ = *vals++;
-	else {
-	    i = supplied;
-	    old_sp += supplied;
-	}
-	while (i < fixed) {
-	    *old_sp++ = obj_False;
-	    i++;
-	}
-	if (restp)
-	    *old_sp++ = make_vector(0, NULL);
+        if (old_sp != vals)
+            for (i = 0; i < supplied; i++)
+                *old_sp++ = *vals++;
+        else {
+            i = supplied;
+            old_sp += supplied;
+        }
+        while (i < fixed) {
+            *old_sp++ = obj_False;
+            i++;
+        }
+        if (restp)
+            *old_sp++ = make_vector(0, NULL);
     }
     else {
-	if (old_sp != vals)
-	    for (i = 0; i < fixed; i++)
-		*old_sp++ = *vals++;
-	else
-	    vals += fixed;
-	if (restp)
-	    *old_sp++ = make_vector(supplied - fixed, vals);
+        if (old_sp != vals)
+            for (i = 0; i < fixed; i++)
+                *old_sp++ = *vals++;
+        else
+            vals += fixed;
+        if (restp)
+            *old_sp++ = make_vector(supplied - fixed, vals);
     }
 
     thread->sp = old_sp;
@@ -174,10 +174,10 @@ static void op_make_method(int byte, struct thread *thread)
     obj_t result_types = sp[-2];
     obj_t rest_results_type = sp[-1];
     int n_closure_vars
-	= obj_ptr(struct method_info *, method_info)->n_closure_vars;
+        = obj_ptr(struct method_info *, method_info)->n_closure_vars;
     obj_t *lexenv = sp - n_closure_vars - 4;
     obj_t method = make_byte_method(method_info, specializers, result_types,
-				    rest_results_type, lexenv);
+                                    rest_results_type, lexenv);
 
     lexenv[0] = method;
     thread->sp = lexenv+1;
@@ -190,7 +190,7 @@ static void op_check_type(int byte, struct thread *thread)
     obj_t type = sp[-1];
 
     if (!instancep(value, type))
-	type_error(value, type);
+        type_error(value, type);
 
     thread->sp = sp - 1;
 }
@@ -198,7 +198,7 @@ static void op_check_type(int byte, struct thread *thread)
 static void op_check_type_function(int byte, struct thread *thread)
 {
     if (!instancep(thread->sp[-1], obj_FunctionClass))
-	type_error(thread->sp[-1], obj_FunctionClass);
+        type_error(thread->sp[-1], obj_FunctionClass);
 }
 
 static void op_canonicalize_value(int byte, struct thread *thread)
@@ -223,18 +223,18 @@ static void op_conditional_branch(int byte, struct thread *thread)
 {
     obj_t test_obj = *--thread->sp;
     if (test_obj == obj_False) {
-	int disp = decode_int4(thread);
-	thread->pc += disp;
-    } 
+        int disp = decode_int4(thread);
+        thread->pc += disp;
+    }
 #if 0
     else if (test_obj == obj_Nil) {
-	fprintf(stderr, "Conditional on EmptyList\n");
+        fprintf(stderr, "Conditional on EmptyList\n");
         mindy_pause(pause_HitBreakpoint);
-	thread->pc += 4;
+        thread->pc += 4;
     }
 #endif
     else
-	thread->pc += 4;
+        thread->pc += 4;
 }
 
 static void op_branch(int byte, struct thread *thread)
@@ -296,12 +296,12 @@ static void op_dot(int byte, struct thread *thread)
     sp[-1] = arg;
 
     invoke(thread, 1);
-}    
+}
 
 static void push_constant(struct thread *thread, int arg)
 {
     *thread->sp++
-	= COMPONENT(thread->component)->constant[arg];
+        = COMPONENT(thread->component)->constant[arg];
 }
 
 static void op_push_constant_immed(int byte, struct thread *thread)
@@ -381,7 +381,7 @@ static void call_tail(struct thread *thread, int arg)
     obj_t *old_sp = pop_linkage(thread);
 
     while (stuff < sp)
-	*old_sp++ = *stuff++;
+        *old_sp++ = *stuff++;
 
     thread->sp = old_sp;
 
@@ -413,13 +413,13 @@ static void op_call(int byte, struct thread *thread)
 static void push_value(struct thread *thread, int arg)
 {
     struct variable *var
-	= (struct variable *)COMPONENT(thread->component)->constant[arg];
+        = (struct variable *)COMPONENT(thread->component)->constant[arg];
     obj_t value = var->value;
 
     if (value != obj_Unbound)
-	*thread->sp++ = value;
+        *thread->sp++ = value;
     else
-	error("Unbound variable: %s", var->name);
+        error("Unbound variable: %s", var->name);
 }
 
 static void op_push_value_immed(int byte, struct thread *thread)
@@ -435,26 +435,26 @@ static void op_push_value(int byte, struct thread *thread)
 static void push_function(struct thread *thread, int arg)
 {
     struct variable *var
-	= (struct variable *)COMPONENT(thread->component)->constant[arg];
+        = (struct variable *)COMPONENT(thread->component)->constant[arg];
     obj_t value = var->value;
 
     switch (var->function) {
       case func_No:
-	type_error(value, obj_FunctionClass);
+        type_error(value, obj_FunctionClass);
       case func_Yes:
       case func_Always:
-	break;
+        break;
       case func_Maybe:
-	if (instancep(value, obj_FunctionClass)) {
-	    var->function = func_Yes;
-	    break;
-	}
-	else if (value == obj_Unbound)
-	    error("Unbound variable: %s", var->name);
-	else {
-	    var->function = func_No;
-	    type_error(value, obj_FunctionClass);
-	}
+        if (instancep(value, obj_FunctionClass)) {
+            var->function = func_Yes;
+            break;
+        }
+        else if (value == obj_Unbound)
+            error("Unbound variable: %s", var->name);
+        else {
+            var->function = func_No;
+            type_error(value, obj_FunctionClass);
+        }
     }
 
     *thread->sp++ = value;
@@ -473,13 +473,13 @@ static void op_push_function(int byte, struct thread *thread)
 static void pop_value(struct thread *thread, int arg)
 {
     struct variable *var
-	= (struct variable *)COMPONENT(thread->component)->constant[arg];
+        = (struct variable *)COMPONENT(thread->component)->constant[arg];
     obj_t value = *--thread->sp;
 
     if (var->type != obj_False && !instancep(value, var->type))
-	type_error(value, var->type);
+        type_error(value, var->type);
     if (var->function != func_Always)
-	var->function = func_Maybe;
+        var->function = func_Maybe;
     var->value = value;
 }
 
@@ -500,15 +500,15 @@ static void op_plus(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
-	sp[-2] = make_fixnum(fixnum_value(x) + fixnum_value(y));
-	thread->sp = sp-1;
+        sp[-2] = make_fixnum(fixnum_value(x) + fixnum_value(y));
+        thread->sp = sp-1;
     }
     else {
-	thread->sp = sp+1;
-	sp[-2] = plus_var->value;
-	sp[-1] = x;
-	sp[0] = y;
-	invoke(thread, 2);
+        thread->sp = sp+1;
+        sp[-2] = plus_var->value;
+        sp[-1] = x;
+        sp[0] = y;
+        invoke(thread, 2);
     }
 }
 
@@ -519,15 +519,15 @@ static void op_minus(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
-	sp[-2] = make_fixnum(fixnum_value(x) - fixnum_value(y));
-	thread->sp = sp-1;
+        sp[-2] = make_fixnum(fixnum_value(x) - fixnum_value(y));
+        thread->sp = sp-1;
     }
     else {
-	thread->sp = sp+1;
-	sp[-2] = minus_var->value;
-	sp[-1] = x;
-	sp[0] = y;
-	invoke(thread, 2);
+        thread->sp = sp+1;
+        sp[-2] = minus_var->value;
+        sp[-1] = x;
+        sp[0] = y;
+        invoke(thread, 2);
     }
 }
 
@@ -538,15 +538,15 @@ static void op_lt(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
-	sp[-2] = ((long)x < (long)y) ? obj_True : obj_False;
-	thread->sp = sp-1;
+        sp[-2] = ((long)x < (long)y) ? obj_True : obj_False;
+        thread->sp = sp-1;
     }
     else {
-	thread->sp = sp+1;
-	sp[-2] = lt_var->value;
-	sp[-1] = x;
-	sp[0] = y;
-	invoke(thread, 2);
+        thread->sp = sp+1;
+        sp[-2] = lt_var->value;
+        sp[-1] = x;
+        sp[0] = y;
+        invoke(thread, 2);
     }
 }
 
@@ -557,15 +557,15 @@ static void op_le(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
-	sp[-2] = ((long)x <= (long)y) ? obj_True : obj_False;
-	thread->sp = sp-1;
+        sp[-2] = ((long)x <= (long)y) ? obj_True : obj_False;
+        thread->sp = sp-1;
     }
     else {
-	thread->sp = sp+1;
-	sp[-2] = le_var->value;
-	sp[-1] = x;
-	sp[0] = y;
-	invoke(thread, 2);
+        thread->sp = sp+1;
+        sp[-2] = le_var->value;
+        sp[-1] = x;
+        sp[0] = y;
+        invoke(thread, 2);
     }
 }
 
@@ -576,19 +576,19 @@ static void op_eq(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (x == y) {
-	sp[-2] = obj_True;
-	thread->sp = sp-1;
+        sp[-2] = obj_True;
+        thread->sp = sp-1;
     }
     else if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
-	sp[-2] = obj_False;
-	thread->sp = sp-1;
+        sp[-2] = obj_False;
+        thread->sp = sp-1;
     }
     else {
-	thread->sp = sp+1;
-	sp[-2] = eq_var->value;
-	sp[-1] = x;
-	sp[0] = y;
-	invoke(thread, 2);
+        thread->sp = sp+1;
+        sp[-2] = eq_var->value;
+        sp[-1] = x;
+        sp[0] = y;
+        invoke(thread, 2);
     }
 }
 
@@ -599,13 +599,13 @@ static void op_idp(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (x == y)
-	sp[-2] = obj_True;
+        sp[-2] = obj_True;
     else if (obj_is_fixnum(x) || obj_is_fixnum(y))
-	sp[-2] = obj_False;
+        sp[-2] = obj_False;
     else if (idp(x, y))
-	sp[-2] = obj_True;
+        sp[-2] = obj_True;
     else
-	sp[-2] = obj_False;
+        sp[-2] = obj_False;
 
     thread->sp = sp-1;
 }
@@ -617,19 +617,19 @@ static void op_ne(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (x == y) {
-	sp[-2] = obj_False;
-	thread->sp = sp-1;
+        sp[-2] = obj_False;
+        thread->sp = sp-1;
     }
     else if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
-	sp[-2] = obj_True;
-	thread->sp = sp-1;
+        sp[-2] = obj_True;
+        thread->sp = sp-1;
     }
     else {
-	thread->sp = sp+1;
-	sp[-2] = ne_var->value;
-	sp[-1] = x;
-	sp[0] = y;
-	invoke(thread, 2);
+        thread->sp = sp+1;
+        sp[-2] = ne_var->value;
+        sp[-1] = x;
+        sp[0] = y;
+        invoke(thread, 2);
     }
 }
 
@@ -640,15 +640,15 @@ static void op_ge(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
-	sp[-2] = ((long)x >= (long)y) ? obj_True : obj_False;
-	thread->sp = sp-1;
+        sp[-2] = ((long)x >= (long)y) ? obj_True : obj_False;
+        thread->sp = sp-1;
     }
     else {
-	thread->sp = sp+1;
-	sp[-2] = le_var->value;
-	/* sp[-1] already holds y */
-	sp[0] = x;
-	invoke(thread, 2);
+        thread->sp = sp+1;
+        sp[-2] = le_var->value;
+        /* sp[-1] already holds y */
+        sp[0] = x;
+        invoke(thread, 2);
     }
 }
 
@@ -659,15 +659,15 @@ static void op_gt(int byte, struct thread *thread)
     obj_t y = sp[-1];
 
     if (obj_is_fixnum(x) && obj_is_fixnum(y)) {
-	sp[-2] = ((long)x > (long)y) ? obj_True : obj_False;
-	thread->sp = sp-1;
+        sp[-2] = ((long)x > (long)y) ? obj_True : obj_False;
+        thread->sp = sp-1;
     }
     else {
-	thread->sp = sp+1;
-	sp[-2] = lt_var->value;
-	/* sp[-1] already holds y */
-	sp[0] = x;
-	invoke(thread, 2);
+        thread->sp = sp+1;
+        sp[-2] = lt_var->value;
+        /* sp[-1] already holds y */
+        sp[0] = x;
+        invoke(thread, 2);
     }
 }
 
@@ -698,7 +698,7 @@ static void (*const preters[0x100])(int byte, struct thread *thread)
     op_dot_tail,
     op_dot,  /* twice! */
     op_dot, /* twice! */
-    
+
     op_flame,
     op_flame,
     op_flame,
@@ -709,17 +709,17 @@ static void (*const preters[0x100])(int byte, struct thread *thread)
     op_flame,
     op_flame,
     op_flame,
-    
+
 
 #define FIFTEEN_TIMES(op) \
   op,op,op,op,op,op,op,op,op,op,op,op,op,op,op
 
 #define SIXTEEN_TIMES(op) \
   FIFTEEN_TIMES(op ## _immed),op
-    
+
     SIXTEEN_TIMES(op_push_constant),
     SIXTEEN_TIMES(op_push_arg),
-    
+
     SIXTEEN_TIMES(op_pop_arg),
     SIXTEEN_TIMES(op_push_local),
     SIXTEEN_TIMES(op_pop_local),
@@ -729,10 +729,10 @@ static void (*const preters[0x100])(int byte, struct thread *thread)
     SIXTEEN_TIMES(op_push_value),
     SIXTEEN_TIMES(op_push_function),
     SIXTEEN_TIMES(op_pop_value),
-    
+
     FIFTEEN_TIMES(op_flame), op_flame,
     FIFTEEN_TIMES(op_flame), op_flame,
-    
+
     op_plus,
     op_minus,
     op_lt,
@@ -742,7 +742,7 @@ static void (*const preters[0x100])(int byte, struct thread *thread)
     op_ne,
     op_ge,
     op_gt,
-    
+
     op_flame,
     op_flame,
     op_flame,
@@ -750,9 +750,9 @@ static void (*const preters[0x100])(int byte, struct thread *thread)
     op_flame,
     op_flame,
     op_flame
-    
+
   };
- 
+
  preters[byte](byte, thread);
 }
 
@@ -760,7 +760,7 @@ void interpret_next_byte(struct thread *thread)
 {
   int timer = OPS_PER_TIME_SLICE ;
 
-  while(timer-- > 0) 
+  while(timer-- > 0)
     interpret_byte(decode_byte(thread), thread);
 }
 
@@ -773,13 +773,13 @@ void set_byte_continuation(struct thread *thread, obj_t component)
     int n_const = COMPONENT(component)->n_constants;
     thread->component = component;
     thread->pc = (char *)(&COMPONENT(component)->constant[n_const])
-	- (char *)component;
+        - (char *)component;
     thread->sp = thread->fp + COMPONENT(component)->frame_size;
 #if SLOW_FUNCTION_POINTERS
     thread->advance = NULL;
 #else
     thread->advance = interpret_next_byte;
-#endif    
+#endif
 }
 
 void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
@@ -787,20 +787,20 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
     int opcode = ((unsigned char *)(thread->component))[thread->pc - 1];
 
     if (opcode == op_BREAKPOINT)
-	opcode = original_byte(thread->component, thread->pc - 1);
+        opcode = original_byte(thread->component, thread->pc - 1);
 
     if ((opcode&0xf0) == op_CALL_FOR_SINGLE || opcode == op_DOT_FOR_SINGLE
-	  || opcode >= op_PLUS) {
-	if (vals == thread->sp)
-	    *old_sp = obj_False;
-	else if (vals != old_sp)
-	    *old_sp = vals[0];
-	thread->sp = old_sp + 1;
+          || opcode >= op_PLUS) {
+        if (vals == thread->sp)
+            *old_sp = obj_False;
+        else if (vals != old_sp)
+            *old_sp = vals[0];
+        thread->sp = old_sp + 1;
     }
     else if ((opcode&0xf0) == op_CALL_FOR_MANY || opcode == op_DOT_FOR_MANY)
-	canonicalize_values(thread, old_sp, vals);
+        canonicalize_values(thread, old_sp, vals);
     else
-	lose("Strange call opcode: 0x%02x", opcode);
+        lose("Strange call opcode: 0x%02x", opcode);
 
 #if SLOW_FUNCTION_POINTERS
     thread->advance = NULL;
@@ -813,8 +813,8 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 /* Component allocation. */
 
 obj_t make_component(obj_t debug_name, int frame_size, obj_t mtime,
-		     obj_t source_file, obj_t debug_info, int nconst,
-		     int nbytes)
+                     obj_t source_file, obj_t debug_info, int nconst,
+                     int nbytes)
 {
     int len = sizeof(struct component) + sizeof(obj_t)*(nconst - 1) + nbytes;
     obj_t res = alloc(obj_ComponentClass, len);
@@ -829,7 +829,7 @@ obj_t make_component(obj_t debug_name, int frame_size, obj_t mtime,
     COMPONENT(res)->n_constants = nconst;
 
     for (i = 0; i < nconst; i++)
-	COMPONENT(res)->constant[i] = obj_Unbound;
+        COMPONENT(res)->constant[i] = obj_Unbound;
 
     return res;
 }
@@ -847,7 +847,7 @@ static int scav_component(struct object *ptr)
     scavenge(&component->source_file);
     scavenge(&component->debug_info);
     for (i = 0; i < component->n_constants; i++)
-	scavenge(component->constant + i);
+        scavenge(component->constant + i);
 
     return component->length;
 }
@@ -869,7 +869,7 @@ void make_interp_classes(void)
 void init_interp_classes(void)
 {
     init_builtin_class(obj_ComponentClass, "<component>",
-		       obj_ObjectClass, NULL);
+                       obj_ObjectClass, NULL);
 }
 
 void init_interpreter(void)

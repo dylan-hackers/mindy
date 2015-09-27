@@ -17,23 +17,23 @@ define method split-at (test :: <function>, string :: <byte-string>)
   let size = string.size;
   local
     method scan (posn :: <integer>, results :: <list>)
-	=> res :: <list>;
+        => res :: <list>;
       if (posn == size)
-	results;
+        results;
       elseif (test(string[posn]))
-	scan(posn + 1, results);
+        scan(posn + 1, results);
       else
-	copy(posn + 1, posn, results);
+        copy(posn + 1, posn, results);
       end;
     end method scan,
     method copy (posn :: <integer>, start :: <integer>,
-		 results :: <list>)
-	=> res :: <list>;
+                 results :: <list>)
+        => res :: <list>;
       if (posn == size | test(string[posn]))
-	scan(posn,
-	     pair(copy-sequence(string, start: start, end: posn), results));
+        scan(posn,
+             pair(copy-sequence(string, start: start, end: posn), results));
       else
-	copy(posn + 1, start, results);
+        copy(posn + 1, start, results);
       end;
     end method copy;
   reverse!(scan(0, #()));
@@ -50,14 +50,14 @@ end method split-at-whitespace;
 define method file-tokenizer
     (lib :: <library>, name :: <byte-string>)
     => (tokenizer :: <tokenizer>, module :: <module>);
-  
+
   let source = make(<source-file>, name: name);
   let (header, start-line, start-posn) = parse-header(source);
   values(make(<lexer>,
-	      source: source,
-	      start-posn: start-posn,
-	      start-line: start-line),
-	 find-module(lib, as(<symbol>, header[#"module"])));
+              source: source,
+              start-posn: start-posn,
+              start-line: start-line),
+         find-module(lib, as(<symbol>, header[#"module"])));
 end;
 
 define method main (name, arguments) => ()
@@ -69,24 +69,24 @@ define method main (name, arguments) => ()
   let lid-header = parse-header(lid);
 
   let files = map-as(<stretchy-vector>,
-		     translate-abstract-filename,
-		     split-at-whitespace(element(lid-header, #"files",
-						 default: "")));
+                     translate-abstract-filename,
+                     split-at-whitespace(element(lid-header, #"files",
+                                                 default: "")));
   let lib-name = lid-header[#"library"];
 
   for(file in files)
     block ()
       let (tokenizer, module) = file-tokenizer($dylan-library, file);
       block (return)
-	format(*standard-output*, "Parsing %s, module %s\n",
-	       file, as(<string>, module.module-name));
-	*Current-Module* := module;
-	*Current-Library* := find-library(as(<symbol>, lib-name), create: #t);
+        format(*standard-output*, "Parsing %s, module %s\n",
+               file, as(<string>, module.module-name));
+        *Current-Module* := module;
+        *Current-Library* := find-library(as(<symbol>, lib-name), create: #t);
 
-	parse-source-record(tokenizer);
-	format(*standard-output*, "done.\n");
+        parse-source-record(tokenizer);
+        format(*standard-output*, "done.\n");
       cleanup
-	*Current-Module* := #f;
+        *Current-Module* := #f;
       end block;
     exception (<fatal-error-recovery-restart>)
       #f;

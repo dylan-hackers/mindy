@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -44,7 +44,7 @@
 #include "num.h"
 #include "bool.h"
 
-#define BUFFER_SIZE	1024
+#define BUFFER_SIZE        1024
 
 static char *line = NULL;
 static char *next_char = NULL;
@@ -63,11 +63,11 @@ static int yygetc()
 static int yyungetc(int c)
 {
     if (next_char > line) {
-	next_char--;
-	*next_char = c;
-	return c;
+        next_char--;
+        *next_char = c;
+        return c;
     } else {
-	return EOF;  /* actually, can handle this if necessary. */
+        return EOF;  /* actually, can handle this if necessary. */
     }
 }
 
@@ -133,88 +133,88 @@ static int yyissymbolic(int c)
 static int yysymbol(int c)
 {
     char buff[1024], *p = buff;
-    
+
     do {
-	if (p == buff+sizeof(buff))
-	    return tok_ERROR;
-	*p++ = c;
-	c = yygetc();
-	if (c == EOF) return tok_ERROR;
+        if (p == buff+sizeof(buff))
+            return tok_ERROR;
+        *p++ = c;
+        c = yygetc();
+        if (c == EOF) return tok_ERROR;
     } while (yyissymbolic(c));
     *p = 0;
 
     if (c == ':') {
-	c = yygetc();
-	if (c == EOF) return tok_ERROR;
-	if (yyissymbolic(c)) {
-	    obj_t result = list1(symbol(buff));
-	    while (1) {
-		p = buff;
-		do {
-		    if (p == buff+sizeof(buff))
-			return tok_ERROR;
-		    *p++ = c;
-		    c = yygetc();
-		    if (c == EOF) return tok_ERROR;
-		} while (yyissymbolic(c));
-		*p = 0;
-		result = pair(symbol(buff), result);
-		if (c != ':')
-		    break;
-		c = yygetc();
-		if (c == EOF) return tok_ERROR;
-		if (!yyissymbolic(c)) {
-		    yyungetc(c);
-		    return tok_ERROR;
-		}
-	    }
-	    yyungetc(c);
-	    if (length(result) > 3)
-		return tok_ERROR;
-	    yylval = result;
-	    return tok_EXTERN_NAME;
-	}
-	else {
-	    yyungetc(c);
-	    yylval = symbol(buff);
-	    return tok_KEYWORD;
-	}
+        c = yygetc();
+        if (c == EOF) return tok_ERROR;
+        if (yyissymbolic(c)) {
+            obj_t result = list1(symbol(buff));
+            while (1) {
+                p = buff;
+                do {
+                    if (p == buff+sizeof(buff))
+                        return tok_ERROR;
+                    *p++ = c;
+                    c = yygetc();
+                    if (c == EOF) return tok_ERROR;
+                } while (yyissymbolic(c));
+                *p = 0;
+                result = pair(symbol(buff), result);
+                if (c != ':')
+                    break;
+                c = yygetc();
+                if (c == EOF) return tok_ERROR;
+                if (!yyissymbolic(c)) {
+                    yyungetc(c);
+                    return tok_ERROR;
+                }
+            }
+            yyungetc(c);
+            if (length(result) > 3)
+                return tok_ERROR;
+            yylval = result;
+            return tok_EXTERN_NAME;
+        }
+        else {
+            yyungetc(c);
+            yylval = symbol(buff);
+            return tok_KEYWORD;
+        }
     }
     else {
-	yyungetc(c);
+        yyungetc(c);
 
-	/* Uh, wouldn't it be better if these used # instead of $
-	   so we couldn't be shadowing user variables? Or \ so we
-	   couldn't shadow syntax, either? */
-	if (buff[0] == '$') {
-	    if (buff[1] == 0) {
-		yylval = make_fixnum(-1);
-		return tok_DEBUGVAR;
-	    }
-	    if (buff[1] == '$' && buff[2] == 0) {
-		yylval = make_fixnum(-2);
-		return tok_DEBUGVAR;
-	    }
-	    if (buff[1] == '-' || yyisnumeric(buff[1], 10)) {
-		yylval = make_fixnum(strtol(buff+1, NULL, 10));
-		return tok_DEBUGVAR;
-	    }
-	    if ((buff[1] == 'a' || buff[1] == 'A')
-		&& yyisnumeric(buff[2], 10)) {
-		yylval = make_fixnum(strtol(buff+2, NULL, 10));
-		return tok_ARG;
-	    }
-	}
-	yylval = symbol(buff);
-	return tok_SYMBOL;
+        /* Uh, wouldn't it be better if these used # instead of $
+           so we couldn't be shadowing user variables? Or \ so we
+           couldn't shadow syntax, either? */
+        if (buff[0] == '$') {
+            if (buff[1] == 0) {
+                yylval = make_fixnum(-1);
+                return tok_DEBUGVAR;
+            }
+            if (buff[1] == '$' && buff[2] == 0) {
+                yylval = make_fixnum(-2);
+                return tok_DEBUGVAR;
+            }
+            if (buff[1] == '-' || yyisnumeric(buff[1], 10)) {
+                yylval = make_fixnum(strtol(buff+1, NULL, 10));
+                return tok_DEBUGVAR;
+            }
+            if ((buff[1] == 'a' || buff[1] == 'A')
+                && yyisnumeric(buff[2], 10)) {
+                yylval = make_fixnum(strtol(buff+2, NULL, 10));
+                return tok_ARG;
+            }
+        }
+        yylval = symbol(buff);
+        return tok_SYMBOL;
     }
 }
 
 static int yynumber(int c, int radix, int addressp)
 {
   char buff[1024], *p = buff, isfloat = 0;
-# define append(c)	{if (p == buff+sizeof(buff)) return tok_ERROR; *p++ = c;}
-# define advance(c)	{c = yygetc(); if (c == EOF) return tok_ERROR;}
+# define append(c)        {if (p == buff+sizeof(buff)) return tok_ERROR; *p++ = c;}
+# define advance(c)        {c = yygetc(); if (c == EOF) return tok_ERROR;}
 
   if (c != '.') {
     do {
@@ -226,8 +226,8 @@ static int yynumber(int c, int radix, int addressp)
     if (c == '.') {
       isfloat = 1;
       do {
-	append(c);
-	advance(c);
+        append(c);
+        advance(c);
       } while (yyisnumeric(c, radix));
     }
     if (strchr("eEsSdDxX", c)) {
@@ -235,12 +235,12 @@ static int yynumber(int c, int radix, int addressp)
       append('e');
       advance(c);
       if (c != '-' && c != '+' && ! yyisnumeric(c, radix)) {
-	yyungetc(c);
-	return tok_ERROR;
+        yyungetc(c);
+        return tok_ERROR;
       }
       do {
-	append(c);
-	advance(c);
+        append(c);
+        advance(c);
       } while (yyisnumeric(c, radix));
     }
   }
@@ -282,9 +282,9 @@ static int yystring(int q, int symbolp)
     if (c == '\\') {
       c = yygetc();
       if (c == EOF)
-	return tok_ERROR;
+        return tok_ERROR;
       else
-	*p++ = yyescape(c);
+        *p++ = yyescape(c);
     } else {
       *p++ = c;
     }
@@ -295,7 +295,7 @@ static int yystring(int q, int symbolp)
     return tok_ERROR;
   *p = 0;
   if (symbolp) {
-    yylval = symbol(buff);	/* symbol with embedded \0 how? */
+    yylval = symbol(buff);        /* symbol with embedded \0 how? */
     return tok_KEYWORD;
   } else {
     yylval = alloc_byte_string(p-buff);
@@ -310,34 +310,34 @@ int yylex()
 
   c = yygetc();
   switch (c) {
-  case EOF:			lose("How did yygetc() return EOF?");
-  case '\n':			return -1;
-  case ' ': case '\t':		return yylex();
-  case '(':			return tok_LPAREN;
-  case ')':			return tok_RPAREN;
-  case ',':			return tok_COMMA;
+  case EOF:                        lose("How did yygetc() return EOF?");
+  case '\n':                        return -1;
+  case ' ': case '\t':                return yylex();
+  case '(':                        return tok_LPAREN;
+  case ')':                        return tok_RPAREN;
+  case ',':                        return tok_COMMA;
   case '#':
     c = yygetc();
     switch (c) {
-    case 't': case 'T':			return tok_TRUE;
-    case 'f': case 'F':			return tok_FALSE;
-    case 'b': case 'B':			return yynumber(yygetc(), 2, 0);
-    case 'o': case 'O':			return yynumber(yygetc(), 8, 0);
-    case 'x': case 'X':			return yynumber(yygetc(), 16, 0);
-    case '"':				return yystring(c, 1);
+    case 't': case 'T':                        return tok_TRUE;
+    case 'f': case 'F':                        return tok_FALSE;
+    case 'b': case 'B':                        return yynumber(yygetc(), 2, 0);
+    case 'o': case 'O':                        return yynumber(yygetc(), 8, 0);
+    case 'x': case 'X':                        return yynumber(yygetc(), 16, 0);
+    case '"':                                return yystring(c, 1);
     default:
       yyungetc(c);
       return tok_ERROR;
     }
-  case '"':			return yystring(c, 0);
+  case '"':                        return yystring(c, 0);
   case '\'':
     c = yygetc();
     if (c == '\\') {
       c = yygetc();
       if (c == EOF)
-	return tok_ERROR;
+        return tok_ERROR;
       else
-	yylval = int_char(yyescape(c));
+        yylval = int_char(yyescape(c));
     } else {
       yylval = int_char(c);
     }

@@ -8,25 +8,25 @@ copyright: See below.
 // Copyright (c) 1994, 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -95,7 +95,7 @@ define sealed method close (stream :: <fd-stream>, #key, #all-keys) => ();
     release-output-buffer(stream);
   end;
 end method close;
-  
+
 define sealed method initialize
     (stream :: <fd-stream>, #next next-method,
      #key direction :: one-of(#"input", #"output") = #"input",
@@ -117,7 +117,7 @@ define sealed method initialize
   stream;
 end method initialize;
 
-define inline sealed method stream-open? (stream :: <fd-stream>) 
+define inline sealed method stream-open? (stream :: <fd-stream>)
  => open? :: <boolean>;
   if (stream.buffer) #t else #f end;
 end method;
@@ -149,7 +149,7 @@ end method;
 //// Fd Streams -- Stream Extension Protocol.
 ////
 
-define sealed method do-get-input-buffer 
+define sealed method do-get-input-buffer
     (stream :: <fd-stream>,
      #key wait? :: <boolean> = #t,
           bytes :: false-or(<integer>))
@@ -165,7 +165,7 @@ end method;
 
 define sealed method do-next-input-buffer
     (stream :: <fd-stream>,
-     #key wait? :: <boolean> = #t, 
+     #key wait? :: <boolean> = #t,
           bytes :: false-or(<integer>))
  => buffer :: false-or(<buffer>);
   fill-input-buffer(stream, wait?, bytes);
@@ -187,13 +187,13 @@ define function fill-input-buffer
     if (avail < bytes)
       // Fill input buffer
       if (buf.buffer-next == buf.buffer-end)
-	// We don't have to worry about loosing valid input.
-	buf.buffer-next := (buf.buffer-end := 0);
+        // We don't have to worry about loosing valid input.
+        buf.buffer-next := (buf.buffer-end := 0);
       elseif (buf.buffer-next > 0 & buf.size - buf.buffer-end < bytes)
-	// Move the currently valid data to the start of the buffer.
-	copy-bytes(buf, 0, buf, buf.buffer-next, avail);
-	buf.buffer-next := 0;
-	buf.buffer-end := avail;
+        // Move the currently valid data to the start of the buffer.
+        copy-bytes(buf, 0, buf, buf.buffer-next, avail);
+        buf.buffer-next := 0;
+        buf.buffer-end := avail;
       end if;
       let count :: <integer> =
         call-fd-function(fd-read, stream.file-descriptor, buf,
@@ -202,12 +202,12 @@ define function fill-input-buffer
       let max-avail = avail + count;
       buf.buffer-end := buf.buffer-end + count;
       if (max-avail < bytes)
-	// Still not enough!
-	let inc-seq = make(<buffer>, size: max-avail);
-	copy-bytes(inc-seq, 0, buf, buf.buffer-next, max-avail);
-	buf.buffer-next := buf.buffer-end;
-	error(make(<incomplete-read-error>, stream: stream,
-		   sequence: inc-seq, count: bytes));
+        // Still not enough!
+        let inc-seq = make(<buffer>, size: max-avail);
+        copy-bytes(inc-seq, 0, buf, buf.buffer-next, max-avail);
+        buf.buffer-next := buf.buffer-end;
+        error(make(<incomplete-read-error>, stream: stream,
+                   sequence: inc-seq, count: bytes));
       end if;
     end if;
     buf;
@@ -238,7 +238,7 @@ define inline sealed method do-input-available-at-source?
 end method do-input-available-at-source?;
 
 define sealed method do-get-output-buffer
-    (stream :: <fd-stream>, #key bytes :: <integer> = 1) 
+    (stream :: <fd-stream>, #key bytes :: <integer> = 1)
  => buffer :: <buffer>;
   let direction = stream.fd-direction;
   if (direction == #"input")
@@ -256,9 +256,9 @@ define sealed method do-get-output-buffer
       // Keep writing until fd-write manages to write everything.
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
-	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
-	   until: (x = next))
+             = call-fd-function(fd-write, fd, buf, 0, next)
+             then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+           until: (x = next))
       end;
     end;
     buf.buffer-next := 0;
@@ -287,14 +287,14 @@ define sealed method do-next-output-buffer
   if (buf.size < bytes)
     // No way we can get that much space
     error("Can't get %d bytes to write to stream -- %=", bytes, stream);
-  elseif ((buf.buffer-end - next) < bytes)  
+  elseif ((buf.buffer-end - next) < bytes)
     if (next > 0)
       // Keep writing until fd-write manages to write everything.
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
-	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
-	   until: (x = next))
+             = call-fd-function(fd-write, fd, buf, 0, next)
+             then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+           until: (x = next))
       end for;
     end if;
     buf.buffer-next := 0;
@@ -313,9 +313,9 @@ define sealed method do-force-output-buffers (stream :: <fd-stream>) => ();
     // Keep writing until fd-write manages to write everything.
     let fd = stream.file-descriptor;
     for (x :: <buffer-index>
-	   = call-fd-function(fd-write, fd, buf, 0, next)
-	   then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
-	 until: (x = next))
+           = call-fd-function(fd-write, fd, buf, 0, next)
+           then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+         until: (x = next))
     end;
   end;
   buf.buffer-next := 0;
@@ -354,7 +354,7 @@ define constant file-buffer-last-use-setter = fd-direction-setter;
 /// <file-stream>.
 ///
 
-define constant <file-direction> 
+define constant <file-direction>
   = one-of(#"input", #"output", #"input-output");
 
 #if (mindy)
@@ -389,7 +389,7 @@ define sealed domain make (singleton(<fd-file-stream>));
 ///
 define constant <if-exists-action>
   = one-of(#f, #"new-version", #"overwrite", #"replace",
-	   #"append", #"truncate", #"signal");
+           #"append", #"truncate", #"signal");
 define constant <if-does-not-exist-action>
   = one-of(#f, #"signal", #"create");
 // ### d2c can't deal with singleton(<byte>)
@@ -409,12 +409,12 @@ define sealed method initialize
           element-type // :: <file-element-type>
             = <byte-character>,
           encoding :: one-of(#f, #"ANSI", #"big-endian")
-            = select (element-type) 
-		(<byte>) => #f;
-		(<byte-character>) => #"ANSI";
-		(<unicode-character>) => #"big-endian"; // ?
-		otherwise => error("Unknown element-type");
-	      end,
+            = select (element-type)
+                (<byte>) => #f;
+                (<byte-character>) => #"ANSI";
+                (<unicode-character>) => #"big-endian"; // ?
+                otherwise => error("Unknown element-type");
+              end,
           buffer-size :: <buffer-index> = $default-buffer-size)
     => result :: <fd-file-stream>;
   block (exit)
@@ -426,93 +426,93 @@ define sealed method initialize
       // Make an #"input" stream.
       let (fd, err) = fd-open(locator, fd-o_rdonly);
       select (err)
-	(#f)
-	  => #f; // No error, don't do anything.
-	(fd-enoent)
-	  => select (if-does-not-exist) 
-	       (#f)
-		 => exit();
-	       (#"signal")
-		 => error(make(<file-does-not-exist-error>, locator: locator));
-	       (#"create")
-		 => error("Why would you want to create an empty input file?");
-	     end select;
-	(fd-eacces)
-	  => error(make(<invalid-file-permissions-error>, locator: locator));
-	otherwise
-	  => error(make(<syscall-error>, errno: err));
+        (#f)
+          => #f; // No error, don't do anything.
+        (fd-enoent)
+          => select (if-does-not-exist)
+               (#f)
+                 => exit();
+               (#"signal")
+                 => error(make(<file-does-not-exist-error>, locator: locator));
+               (#"create")
+                 => error("Why would you want to create an empty input file?");
+             end select;
+        (fd-eacces)
+          => error(make(<invalid-file-permissions-error>, locator: locator));
+        otherwise
+          => error(make(<syscall-error>, errno: err));
       end select;
       stream.file-name := locator;
       stream.file-direction := #"input";
-      next-method(stream, fd: fd, direction: #"input", size: buffer-size); 
+      next-method(stream, fd: fd, direction: #"input", size: buffer-size);
     else
       // Make an #"output" or #"input-output" stream.
       let flags :: <integer>
-	= select (if-does-not-exist)
-	    (#f) => exit();
-	    (#"create") => fd-o_creat;
-	    (#"signal") => 0;
-	  end select;
+        = select (if-does-not-exist)
+            (#f) => exit();
+            (#"create") => fd-o_creat;
+            (#"signal") => 0;
+          end select;
       flags := select (direction)
-		 (#"output") => logior(flags, fd-o_wronly);
-		 (#"input-output") => logior(flags, fd-o_rdwr);
-	       end;
+                 (#"output") => logior(flags, fd-o_wronly);
+                 (#"input-output") => logior(flags, fd-o_rdwr);
+               end;
       flags := select (if-exists)
-		 (#"signal")
-		   => logior(flags, fd-o_excl);
-		 (#"replace")
-		   => logior(flags, fd-o_trunc);
-		 (#"truncate")
-		   => logior(flags, fd-o_trunc);
-		 (#"append")
-		   => logior(flags, fd-o_append);
-		 (#"new-version") 
-		   => error("<fd-file-stream> does not support new-version.");
-		 otherwise
-		   => flags;
-	       end;
+                 (#"signal")
+                   => logior(flags, fd-o_excl);
+                 (#"replace")
+                   => logior(flags, fd-o_trunc);
+                 (#"truncate")
+                   => logior(flags, fd-o_trunc);
+                 (#"append")
+                   => logior(flags, fd-o_append);
+                 (#"new-version")
+                   => error("<fd-file-stream> does not support new-version.");
+                 otherwise
+                   => flags;
+               end;
       let (fd, err) = fd-open(locator, flags);
       select (err)
-	(#f)
-	  => #f; // No error, don't do anything.
-	(fd-eexist)
-	  => error(make(<file-exists-error>, locator: locator));
-	(fd-eacces)
-	  => error(make(<invalid-file-permissions-error>, locator: locator));
-	(fd-enoent)
-	  => error(make(<file-does-not-exist-error>, locator: locator));
-	otherwise
-	  => error(make(<syscall-error>, errno: err));
+        (#f)
+          => #f; // No error, don't do anything.
+        (fd-eexist)
+          => error(make(<file-exists-error>, locator: locator));
+        (fd-eacces)
+          => error(make(<invalid-file-permissions-error>, locator: locator));
+        (fd-enoent)
+          => error(make(<file-does-not-exist-error>, locator: locator));
+        otherwise
+          => error(make(<syscall-error>, errno: err));
       end select;
       select (if-exists)
-	(#"append")
-	  => call-fd-function(fd-seek, fd, 0, fd-seek-end);
-	// Don't really need this, since it will be at the beginning anyway...
-	// (#"overwrite")
-	//  => call-fd-function(fd-seek, fd, 0, fd-seek-set);
-	otherwise
-	  => #f;
+        (#"append")
+          => call-fd-function(fd-seek, fd, 0, fd-seek-end);
+        // Don't really need this, since it will be at the beginning anyway...
+        // (#"overwrite")
+        //  => call-fd-function(fd-seek, fd, 0, fd-seek-set);
+        otherwise
+          => #f;
       end;
       stream.file-name := locator;
       stream.file-direction := direction;
       next-method(stream, fd: fd,
-		  direction: if (direction == #"output")
-			       #"output" 
-			     else 
-			       #"input" 
-			     end,
-		  size: buffer-size);
+                  direction: if (direction == #"output")
+                               #"output"
+                             else
+                               #"input"
+                             end,
+                  size: buffer-size);
       register-output-stream(stream);
     end;
   end block;
 end method;
 
-define sealed method close (stream :: <fd-file-stream>, #next next-method, 
-			    #key, #all-keys)
+define sealed method close (stream :: <fd-file-stream>, #next next-method,
+                            #key, #all-keys)
  => ();
   next-method();
   if ((stream.file-direction == #"input-output")
-	& (stream.file-buffer-last-use == #"input"))
+        & (stream.file-buffer-last-use == #"input"))
     unregister-output-stream(stream);
   end;
 end method;
@@ -526,23 +526,23 @@ define inline sealed method stream-element-type (stream :: <fd-file-stream>)
 end method;
 
 define sealed method stream-at-end? (stream :: <fd-file-stream>,
-				     #next next-method)
+                                     #next next-method)
  => at-end? :: <boolean>;
   // If the stream is input-output, we want to call next method with
   // it as and input stream, since next-method always returns #f for
   // output streams.
   //
   if  ((stream.file-direction == #"input-output")
-	 & (stream.file-buffer-last-use == #"output"))
+         & (stream.file-buffer-last-use == #"output"))
     let buf :: <buffer> = get-output-buffer(stream);
     let next :: <buffer-index> = buf.buffer-next;
     if (next > 0)
       // Keep writing until fd-write manages to write everything.
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
-	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
-	   until: (x = next))
+             = call-fd-function(fd-write, fd, buf, 0, next)
+             then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+           until: (x = next))
       end;
     end;
     buf.buffer-next := buf.buffer-end;
@@ -580,7 +580,7 @@ define sealed method stream-position (stream :: <fd-file-stream>)
     // Get the current position as recorded by the file-descritor module
     // and add what output we have in the buffer but haven't sent yet.
     let pos = call-fd-function(fd-seek, stream.file-descriptor, 0,
-			       fd-seek-current) + buf.buffer-next;
+                               fd-seek-current) + buf.buffer-next;
     release-output-buffer(stream);
     pos;
   end;
@@ -609,7 +609,7 @@ define sealed method stream-position-setter
   // Set the position.
   let fd = stream.file-descriptor;
   let fd-end :: <buffer-index> = call-fd-function(fd-seek, fd, 0, fd-seek-end);
-  if (position == #"start") 
+  if (position == #"start")
     position := 0;
   elseif (position == #"end")
     position := fd-end;
@@ -631,7 +631,7 @@ end method;
 /// adjust-stream-position -- Method for Exported Interface.
 ///
 define sealed method adjust-stream-position
-    (stream :: <fd-file-stream>, delta :: <integer>, 
+    (stream :: <fd-file-stream>, delta :: <integer>,
      #key from :: one-of(#"start", #"current", #"end") = #"current")
     => position :: <integer>;
   if (stream.file-buffer-last-use == #"input")
@@ -715,7 +715,7 @@ end method;
 
 // Doug Auclair:  modified the behavior for stream-contents on #"input"
 // to conform with Common-Dylan Spec (as documented by Functional Objects, Inc).
-// Requesting stream-contents on input stream defaults to KEEPING THE ORIGINAL 
+// Requesting stream-contents on input stream defaults to KEEPING THE ORIGINAL
 // CONTENTS INTACT! (instead of clearing the contents).
 //
 // Requesting stream-contents on an #"output" file stream does indeed
@@ -725,15 +725,15 @@ end method;
 // with two helper fns (maybe-clear-file? and read-file)
 
 define sealed method stream-contents (stream :: <fd-file-stream>,
-				      #key clear-contents? :: <boolean> = #t)
+                                      #key clear-contents? :: <boolean> = #t)
  => seq :: <sequence>;
   let direction :: <file-direction> = stream.file-direction;
   let clear? :: <boolean> = if(direction == #"input")
-		              #f
-		            else
-		              clear-contents?
-		            end if;
-   as(type-for-sequence(stream.stream-element-type), 
+                              #f
+                            else
+                              clear-contents?
+                            end if;
+   as(type-for-sequence(stream.stream-element-type),
       file-stream-contents(stream, direction, stream.file-descriptor, clear?));
 end method stream-contents;
 
@@ -747,7 +747,7 @@ define function read-file(fd :: <integer>) => (sz :: <integer>, res :: <buffer>)
 end function read-file;
 
 define function maybe-clear-file?(stream :: <fd-file-stream>, buf :: <buffer>,
-                                  flag :: <integer>, new-pos :: <integer>, 
+                                  flag :: <integer>, new-pos :: <integer>,
                                   clear-contents? :: <boolean>)
  => cleared? :: <boolean>;
   if (clear-contents?)
@@ -814,7 +814,7 @@ end method file-stream-contents;
 
 /// This method does not have to check whether the stream or buffer is locked
 /// because get-input-buffer does that.
-/// 
+///
 define sealed method do-get-input-buffer
     (stream :: <fd-file-stream>,
      #next next-method,
@@ -835,9 +835,9 @@ define sealed method do-get-input-buffer
       // Keep writing until fd-write manages to write everything.
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
-	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
-	   until: (x = next))
+             = call-fd-function(fd-write, fd, buf, 0, next)
+             then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+           until: (x = next))
       end;
     end;
     stream.file-buffer-last-use := #"input";
@@ -856,7 +856,7 @@ define sealed method do-release-input-buffer
   case (direction == #"output") =>
       error("Stream is an output stream -- %=.", stream);
     (~ ((direction == #"input") |
-	(stream.file-buffer-last-use == #"input"))) =>
+        (stream.file-buffer-last-use == #"input"))) =>
       error("Buffer is currently held for output -- %=.", stream);
   end;
 end method;
@@ -867,7 +867,7 @@ end method;
 define sealed method do-next-input-buffer
     (stream :: <fd-file-stream>,
      #next next-method,
-     #key wait? :: <boolean> = #t, 
+     #key wait? :: <boolean> = #t,
           bytes :: false-or(<integer>))
  =>  buffer :: false-or(<buffer>);
   let direction = stream.file-direction;
@@ -884,9 +884,9 @@ define sealed method do-next-input-buffer
       // Keep writing until fd-write manages to write everything.
       let fd = stream.file-descriptor;
       for (x :: <buffer-index>
-	     = call-fd-function(fd-write, fd, buf, 0, next)
-	     then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
-	   until: (x = next))
+             = call-fd-function(fd-write, fd, buf, 0, next)
+             then (x + call-fd-function(fd-write, fd, buf, x, next - x)),
+           until: (x = next))
       end;
     end;
     stream.file-buffer-last-use := #"input";
@@ -916,7 +916,7 @@ end method;
 /// because get-output-buffer does that.
 ///
 define sealed method do-get-output-buffer
-    (stream :: <fd-file-stream>, 
+    (stream :: <fd-file-stream>,
      #next next-method,
      #key bytes :: <integer> = 1)
  => buffer :: <buffer>;
@@ -924,14 +924,14 @@ define sealed method do-get-output-buffer
   // Since buffer is currently unheld by anyone, make sure it isn't closed.
   unless (buf) error("Stream has been closed -- %=.", stream) end;
   if ((stream.file-direction == #"input-output")
-	& (stream.file-buffer-last-use = #"input"))
+        & (stream.file-buffer-last-use = #"input"))
     if (buf.buffer-end > buf.buffer-next)
       // Set the file position correctly relative to the actual reading done
       // on the stream so that when users force output, it goes to the right
       // location in the file.
       call-fd-function(fd-seek, stream.file-descriptor,
-		       buf.buffer-next - buf.buffer-end,
-		       fd-seek-current);
+                       buf.buffer-next - buf.buffer-end,
+                       fd-seek-current);
     end;
     buf.buffer-next := 0;
     buf.buffer-end := buf.size;
@@ -944,7 +944,7 @@ end method do-get-output-buffer;
 /// because next-output-buffer does that.
 ///
 define sealed method do-next-output-buffer
-    (stream :: <fd-file-stream>, 
+    (stream :: <fd-file-stream>,
      #next next-method,
      #key bytes :: <integer> = 1)
  => buffer :: <buffer>;
@@ -952,14 +952,14 @@ define sealed method do-next-output-buffer
   // Since buffer is currently unheld by anyone, make sure it isn't closed.
   unless (buf) error("Stream has been closed -- %=.", stream) end;
   if ((stream.file-direction == #"input-output")
-	& (stream.file-buffer-last-use = #"input"))
+        & (stream.file-buffer-last-use = #"input"))
     if (buf.buffer-end > buf.buffer-next)
       // Set the file position correctly relative to the actual reading done
       // on the stream so that when users force output, it goes to the right
       // location in the file.
       call-fd-function(fd-seek, stream.file-descriptor,
-		       buf.buffer-next - buf.buffer-end,
-		       fd-seek-current);
+                       buf.buffer-next - buf.buffer-end,
+                       fd-seek-current);
     end;
     buf.buffer-next := 0;
     buf.buffer-end := buf.size;
@@ -978,14 +978,14 @@ define sealed method do-release-output-buffer (stream :: <fd-file-stream>)
   if (direction == #"input")
     error("Stream is an input stream -- %=.", stream);
   end;
-  unless ((direction == #"output") 
-	    | (stream.file-buffer-last-use == #"output"))
+  unless ((direction == #"output")
+            | (stream.file-buffer-last-use == #"output"))
     error("Buffer is currently held for input -- %=.", stream);
   end;
 end method;
 
 define sealed method do-force-output-buffers (stream :: <fd-file-stream>,
-					      #next next-method)
+                                              #next next-method)
  => ();
   if ((stream.file-direction == #"input-output") &
       (stream.file-buffer-last-use == #"input"))

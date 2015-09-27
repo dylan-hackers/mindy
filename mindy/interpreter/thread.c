@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -92,7 +92,7 @@ struct thread *thread_pick_next()
     struct thread *thread = Runnable;
 
     if (thread)
-	Runnable = thread->next;
+        Runnable = thread->next;
 
     Current = thread;
 
@@ -111,17 +111,17 @@ static void set_status(struct thread *thread, enum thread_status status)
 static void suspend_thread(struct thread *thread)
 {
     if (thread == Runnable) {
-	if (thread == thread->next)
-	    Runnable = NULL;
-	else {
-	    Runnable = thread->next;
-	    *thread->prev = Runnable;
-	    Runnable->prev = thread->prev;
-	}
+        if (thread == thread->next)
+            Runnable = NULL;
+        else {
+            Runnable = thread->next;
+            *thread->prev = Runnable;
+            Runnable->prev = thread->prev;
+        }
     }
     else {
-	*thread->prev = thread->next;
-	thread->next->prev = thread->prev;
+        *thread->prev = thread->next;
+        thread->next->prev = thread->prev;
     }
 
     thread->next = NULL;
@@ -131,21 +131,21 @@ static void suspend_thread(struct thread *thread)
 static void wakeup_thread(struct thread *thread)
 {
     if (thread->suspend_count == 0) {
-	if (Runnable) {
-	    thread->next = Runnable;
-	    thread->prev = Runnable->prev;
-	    *thread->prev = thread;
-	    Runnable->prev = &thread->next;
-	}
-	else {
-	    thread->next = thread;
-	    thread->prev = &thread->next;
-	    Runnable = thread;
-	}
-	set_status(thread, status_Running);
+        if (Runnable) {
+            thread->next = Runnable;
+            thread->prev = Runnable->prev;
+            *thread->prev = thread;
+            Runnable->prev = &thread->next;
+        }
+        else {
+            thread->next = thread;
+            thread->prev = &thread->next;
+            Runnable = thread;
+        }
+        set_status(thread, status_Running);
     }
     else
-	set_status(thread, status_Suspended);
+        set_status(thread, status_Suspended);
 }
 
 static void return_false(struct thread *thread)
@@ -250,26 +250,26 @@ void thread_push_escape(struct thread *thread)
 {
     switch (thread->status) {
       case status_Running:
-	suspend_thread(thread);
-	break;
+        suspend_thread(thread);
+        break;
 
       case status_Suspended:
-	*thread->sp++ = make_fixnum(thread->suspend_count);
-	break;
+        *thread->sp++ = make_fixnum(thread->suspend_count);
+        break;
 
       case status_Debuggered:
-	break;
+        break;
 
       case status_Blocked:
-	remove_from_lock(thread);
-	break;
+        remove_from_lock(thread);
+        break;
 
       case status_Waiting:
-	remove_from_event(thread);
-	break;
+        remove_from_event(thread);
+        break;
 
       default:
-	lose("strange thread status.");
+        lose("strange thread status.");
     }
 
     *thread->sp++ = thread->datum;
@@ -292,30 +292,30 @@ void thread_pop_escape(struct thread *thread)
     thread->advance = (void (*)(struct thread *thread)) obj_rawptr(*--thread->sp);
     set_status(thread, (enum thread_status)fixnum_value(*--thread->sp));
     thread->datum = *--thread->sp;
-    
+
     switch (thread->status) {
       case status_Running:
-	break;
+        break;
 
       case status_Suspended:
-	suspend_thread(thread);
-	thread->suspend_count = fixnum_value(*--thread->sp);
-	break;
+        suspend_thread(thread);
+        thread->suspend_count = fixnum_value(*--thread->sp);
+        break;
 
       case status_Debuggered:
-	suspend_thread(thread);
-	break;
+        suspend_thread(thread);
+        break;
 
       case status_Blocked:
-	add_to_lock(thread);
-	break;
+        add_to_lock(thread);
+        break;
 
       case status_Waiting:
-	set_status(thread, status_Running);
-	break;
+        set_status(thread, status_Running);
+        break;
 
       default:
-	lose("strange thread status.");
+        lose("strange thread status.");
     }
 }
 
@@ -328,36 +328,36 @@ void thread_kill(struct thread *thread)
 
     switch (thread->status) {
       case status_Running:
-	suspend_thread(thread);
-	break;
+        suspend_thread(thread);
+        break;
       case status_Suspended:
       case status_Debuggered:
-	break;
+        break;
       case status_Blocked:
-	remove_from_lock(thread);
-	break;
+        remove_from_lock(thread);
+        break;
       case status_Waiting:
-	remove_from_event(thread);
-	break;
+        remove_from_event(thread);
+        break;
 
       default:
-	lose("strange thread status.");
+        lose("strange thread status.");
     }
 
     for (prev = &AllThreads; (list = *prev) != NULL; prev = &list->next) {
-	if (list->thread == thread) {
-	    struct thread_list *next = list->next;
-	    *prev = next;
-	    if (next == NULL)
-		AllThreadsTail = prev;
-	    free(list);
-	    break;
-	}
+        if (list->thread == thread) {
+            struct thread_list *next = list->next;
+            *prev = next;
+            if (next == NULL)
+                AllThreadsTail = prev;
+            free(list);
+            break;
+        }
     }
     assert(list != NULL);
 
     if (Current == thread)
-	Current = NULL;
+        Current = NULL;
 
     THREAD(thread->thread_obj)->thread = NULL;
     THREAD(thread->thread_obj)->status = status_Killed;
@@ -373,11 +373,11 @@ static obj_t dylan_kill_thread(obj_t thread_obj)
     thread_kill(thread);
 
     if (me)
-	mindy_pause(pause_PickNewThread);
+        mindy_pause(pause_PickNewThread);
 
     return thread_obj;
 }
-    
+
 
 
 /* Thread suspending and restarting. */
@@ -395,28 +395,28 @@ void thread_debuggered(struct thread *thread, obj_t condition)
 void thread_buggered(struct thread *thread)
 {
     if (thread->status != status_Debuggered)
-	lose("Trying to bugger a thread that wasn't originally Debuggered?");
+        lose("Trying to bugger a thread that wasn't originally Debuggered?");
     else {
-	wakeup_thread(thread);
-	set_status(thread, status_Running);
-	thread->datum = obj_False;
+        wakeup_thread(thread);
+        set_status(thread, status_Running);
+        thread->datum = obj_False;
     }
 }
 
 void thread_stop(struct thread *thread)
 {
     if (thread->suspend_count++ == 0 && thread->status == status_Running) {
-	suspend_thread(thread);
-	set_status(thread, status_Suspended);
+        suspend_thread(thread);
+        set_status(thread, status_Suspended);
     }
 }
 
 void thread_restart(struct thread *thread)
 {
     if (thread->suspend_count > 0) {
-	thread->suspend_count--;
-	if (thread->suspend_count == 0 && thread->status == status_Suspended)
-	    wakeup_thread(thread);
+        thread->suspend_count--;
+        if (thread->suspend_count == 0 && thread->status == status_Suspended)
+            wakeup_thread(thread);
     }
 }
 
@@ -452,29 +452,29 @@ boolean lock_query(obj_t lock)
 static obj_t dylan_lock_query(obj_t lock)
 {
     if (lock_query(lock))
-	return obj_True;
+        return obj_True;
     else
-	return obj_False;
+        return obj_False;
 }
 
 void lock_grab(struct thread *thread, obj_t lock,
-	       void (*advance)(struct thread *thread))
+               void (*advance)(struct thread *thread))
 {
     if (LOCK(lock)->locked) {
-	suspend_thread(thread);
-	*LOCK(lock)->last = thread;
-	LOCK(lock)->last = &thread->next;
-	thread->next = NULL;
-	thread->prev = NULL;
-	set_status(thread, status_Blocked);
-	thread->datum = lock;
-	thread->advance = advance;
+        suspend_thread(thread);
+        *LOCK(lock)->last = thread;
+        LOCK(lock)->last = &thread->next;
+        thread->next = NULL;
+        thread->prev = NULL;
+        set_status(thread, status_Blocked);
+        thread->datum = lock;
+        thread->advance = advance;
 
-	mindy_pause(pause_PickNewThread);
+        mindy_pause(pause_PickNewThread);
     }
     else {
-	LOCK(lock)->locked = TRUE;
-	advance(thread);
+        LOCK(lock)->locked = TRUE;
+        advance(thread);
     }
 }
 
@@ -491,22 +491,22 @@ void lock_release(obj_t lock)
     struct thread *waiting = LOCK(lock)->waiting;
 
     if (waiting != NULL) {
-	struct thread *next = waiting->next;
+        struct thread *next = waiting->next;
 
-	LOCK(lock)->waiting = next;
-	if (next == NULL)
-	    LOCK(lock)->last = &LOCK(lock)->waiting;
-	wakeup_thread(waiting);
-	waiting->datum = obj_False;
+        LOCK(lock)->waiting = next;
+        if (next == NULL)
+            LOCK(lock)->last = &LOCK(lock)->waiting;
+        wakeup_thread(waiting);
+        waiting->datum = obj_False;
     }
     else
-	LOCK(lock)->locked = FALSE;
+        LOCK(lock)->locked = FALSE;
 }
 
 static obj_t dylan_lock_release(obj_t lock)
 {
     if (!LOCK(lock)->locked)
-	error("%= is already unlocked.", lock);
+        error("%= is already unlocked.", lock);
 
     lock_release(lock);
 
@@ -520,16 +520,16 @@ static void remove_from_lock(struct thread *thread)
 
     prev = &LOCK(lock)->waiting;
     while (1) {
-	scan = *prev;
-	if (scan == NULL)
-	    lose("Tried to remove a thread from an lock it "
-		 "wasn't waiting on.");
-	if (scan == thread) {
-	    *prev = thread->next;
-	    if (thread->next == NULL)
-		LOCK(lock)->last = prev;
-	    return;
-	}
+        scan = *prev;
+        if (scan == NULL)
+            lose("Tried to remove a thread from an lock it "
+                 "wasn't waiting on.");
+        if (scan == thread) {
+            *prev = thread->next;
+            if (thread->next == NULL)
+                LOCK(lock)->last = prev;
+            return;
+        }
     }
 }
 
@@ -538,15 +538,15 @@ static void add_to_lock(struct thread *thread)
     obj_t lock = thread->datum;
 
     if (LOCK(lock)->locked) {
-	suspend_thread(thread);
-	*LOCK(lock)->last = thread;
-	LOCK(lock)->last = &thread->next;
-	thread->next = NULL;
-	thread->prev = NULL;
+        suspend_thread(thread);
+        *LOCK(lock)->last = thread;
+        LOCK(lock)->last = &thread->next;
+        thread->next = NULL;
+        thread->prev = NULL;
     }
     else {
-	LOCK(lock)->locked = TRUE;
-	thread->datum = obj_False;
+        LOCK(lock)->locked = TRUE;
+        thread->datum = obj_False;
     }
 }
 
@@ -564,7 +564,7 @@ struct event {
 obj_t make_event(void)
 {
     obj_t res = alloc(obj_EventClass, sizeof(struct event));
-    
+
     EVENT(res)->waiting = NULL;
     EVENT(res)->last = &EVENT(res)->waiting;
 
@@ -572,10 +572,10 @@ obj_t make_event(void)
 }
 
 void event_wait(struct thread *thread, obj_t event, obj_t lock,
-		void (*advance)(struct thread *thread))
+                void (*advance)(struct thread *thread))
 {
     if (lock != obj_False && !LOCK(lock)->locked)
-	error("%= is already unlocked.", lock);
+        error("%= is already unlocked.", lock);
 
     suspend_thread(thread);
     *EVENT(event)->last = thread;
@@ -587,10 +587,10 @@ void event_wait(struct thread *thread, obj_t event, obj_t lock,
     thread->advance = advance;
 
     if (lock != obj_False)
-	lock_release(lock);
+        lock_release(lock);
 
     mindy_pause(pause_PickNewThread);
-}    
+}
 
 static obj_t dylan_event_wait(obj_t event, obj_t lock)
 {
@@ -607,13 +607,13 @@ obj_t event_signal(obj_t event)
     waiting = EVENT(event)->waiting;
 
     if (waiting != NULL) {
-	struct thread *next = waiting->next;
+        struct thread *next = waiting->next;
 
-	EVENT(event)->waiting = next;
-	if (next == NULL)
-	    EVENT(event)->last = &EVENT(event)->waiting;
-	wakeup_thread(waiting);
-	waiting->datum = obj_False;
+        EVENT(event)->waiting = next;
+        if (next == NULL)
+            EVENT(event)->last = &EVENT(event)->waiting;
+        wakeup_thread(waiting);
+        waiting->datum = obj_False;
     }
 
     return obj_False;
@@ -622,16 +622,16 @@ obj_t event_signal(obj_t event)
 obj_t event_broadcast(obj_t event)
 {
     struct thread *waiting;
-    
+
     waiting = EVENT(event)->waiting;
 
     while (waiting != NULL) {
-	struct thread *next = waiting->next;
+        struct thread *next = waiting->next;
 
-	wakeup_thread(waiting);
-	waiting->datum = obj_False;
+        wakeup_thread(waiting);
+        waiting->datum = obj_False;
 
-	waiting = next;
+        waiting = next;
     }
     EVENT(event)->waiting = NULL;
     EVENT(event)->last = &EVENT(event)->waiting;
@@ -646,17 +646,17 @@ static void remove_from_event(struct thread *thread)
 
     prev = &EVENT(event)->waiting;
     while (1) {
-	scan = *prev;
-	if (scan == NULL)
-	    lose("Tried to remove a thread from an event it "
-		 "wasn't waiting on.");
-	if (scan == thread) {
-	    *prev = thread->next;
-	    if (thread->next == NULL)
-		EVENT(event)->last = prev;
-	    thread->datum = obj_False;
-	    return;
-	}
+        scan = *prev;
+        if (scan == NULL)
+            lose("Tried to remove a thread from an event it "
+                 "wasn't waiting on.");
+        if (scan == thread) {
+            *prev = thread->next;
+            if (thread->next == NULL)
+                EVENT(event)->last = prev;
+            thread->datum = obj_False;
+            return;
+        }
     }
 }
 
@@ -682,7 +682,7 @@ static int scav_lock(struct object *o)
     struct lock *lock = (struct lock *)o;
 
     if (lock->waiting == NULL)
-	lock->last = &lock->waiting;
+        lock->last = &lock->waiting;
 
     return sizeof(struct lock);
 }
@@ -697,7 +697,7 @@ static int scav_event(struct object *o)
     struct event *event = (struct event *)o;
 
     if (event->waiting == NULL)
-	event->last = &event->waiting;
+        event->last = &event->waiting;
 
     return sizeof(struct event);
 }
@@ -718,7 +718,7 @@ static void scav_thread(struct thread *thread)
     scavenge(&thread->handlers);
 
     for (ptr = thread->stack_base; ptr < thread->sp; ptr++)
-	scavenge(ptr);
+        scavenge(ptr);
     memset(thread->sp, 0, (thread->stack_end - thread->sp) * sizeof(obj_t));
 }
 
@@ -727,7 +727,7 @@ void scavenge_thread_roots(void)
     struct thread_list *list;
 
     for (list = AllThreads; list != NULL; list = list->next)
-	scav_thread(list->thread);
+        scav_thread(list->thread);
 }
 
 
@@ -757,30 +757,30 @@ void init_thread_classes(void)
 void init_thread_functions(void)
 {
     define_function("spawn-thread", list2(obj_ObjectClass, obj_FunctionClass),
-		    FALSE, obj_False, FALSE, obj_ThreadClass,
-		    dylan_spawn_thread);
+                    FALSE, obj_False, FALSE, obj_ThreadClass,
+                    dylan_spawn_thread);
     define_function("current-thread", obj_Nil, FALSE, obj_False, FALSE,
-		    obj_ThreadClass, dylan_current_thread);
+                    obj_ThreadClass, dylan_current_thread);
     define_function("kill-thread", list1(obj_ThreadClass), FALSE, obj_False,
-		    FALSE, obj_ThreadClass, dylan_kill_thread);
+                    FALSE, obj_ThreadClass, dylan_kill_thread);
 
     define_method("make", list1(singleton(obj_LockClass)), FALSE, obj_Nil,
-		  FALSE, obj_SpinLockClass, make_lock);
+                  FALSE, obj_SpinLockClass, make_lock);
     define_method("make", list1(singleton(obj_SpinLockClass)), FALSE, obj_Nil,
-		  FALSE, obj_SpinLockClass, make_lock);
+                  FALSE, obj_SpinLockClass, make_lock);
     define_method("locked?", list1(obj_SpinLockClass), FALSE, obj_False,
-		  FALSE, obj_BooleanClass, dylan_lock_query);
+                  FALSE, obj_BooleanClass, dylan_lock_query);
     define_method("grab-lock", list1(obj_SpinLockClass), FALSE, obj_False,
-		  FALSE, obj_ObjectClass, dylan_lock_grab);
+                  FALSE, obj_ObjectClass, dylan_lock_grab);
     define_method("release-lock", list1(obj_SpinLockClass), FALSE, obj_False,
-		  FALSE, obj_ObjectClass, dylan_lock_release);
+                  FALSE, obj_ObjectClass, dylan_lock_release);
 
     define_method("make", list1(singleton(obj_EventClass)), FALSE, obj_Nil,
-		  FALSE, obj_EventClass, make_event);
+                  FALSE, obj_EventClass, make_event);
     define_method("wait-for-event", list2(obj_EventClass, obj_SpinLockClass),
-		  FALSE, obj_False, FALSE, obj_ObjectClass, dylan_event_wait);
+                  FALSE, obj_False, FALSE, obj_ObjectClass, dylan_event_wait);
     define_method("signal-event", list1(obj_EventClass),
-		  FALSE, obj_False, FALSE, obj_ObjectClass, event_signal);
+                  FALSE, obj_False, FALSE, obj_ObjectClass, event_signal);
     define_method("broadcast-event", list1(obj_EventClass),
-		  FALSE, obj_False, FALSE, obj_ObjectClass, event_broadcast);
+                  FALSE, obj_False, FALSE, obj_ObjectClass, event_broadcast);
 }

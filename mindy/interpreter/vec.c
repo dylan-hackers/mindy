@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -58,13 +58,13 @@ obj_t obj_SimpleObjectVectorClass = NULL;
 obj_t make_vector(int length, obj_t *contents)
 {
     obj_t res = alloc(obj_SimpleObjectVectorClass,
-		      sizeof(struct sovec) + sizeof(obj_t)*(length-1));
+                      sizeof(struct sovec) + sizeof(obj_t)*(length-1));
 
     SOVEC(res)->length = length;
 
     if (contents)
-	memcpy(SOVEC(res)->contents, contents,
-	       sizeof(obj_t) * length);
+        memcpy(SOVEC(res)->contents, contents,
+               sizeof(obj_t) * length);
 
     return res;
 }
@@ -85,12 +85,12 @@ static obj_t dylan_sovec_element(obj_t sovec, obj_t index, obj_t def)
     int i = fixnum_value(index);
 
     if (0 <= i && i < SOVEC(sovec)->length)
-	return SOVEC(sovec)->contents[i];
+        return SOVEC(sovec)->contents[i];
     else if (def != obj_Unbound)
-	return def;
+        return def;
     else {
-	error("No element %= in %=", index, sovec);
-	return NULL;
+        error("No element %= in %=", index, sovec);
+        return NULL;
     }
 }
 
@@ -99,9 +99,9 @@ static obj_t dylan_sovec_element_setter(obj_t value, obj_t sovec, obj_t index)
     int i = fixnum_value(index);
 
     if (0 <= i && i < SOVEC(sovec)->length)
-	SOVEC(sovec)->contents[i] = value;
+        SOVEC(sovec)->contents[i] = value;
     else
-	error("No element %= in %=", index, sovec);
+        error("No element %= in %=", index, sovec);
 
     return value;
 }
@@ -120,19 +120,19 @@ static obj_t dylan_vec_make(obj_t class, obj_t size, obj_t fill)
     len = fixnum_value(check_type(size, obj_FixnumClass));
 
     if (len < 0)
-	error("Bogus size: for make %=: %=", class, size);
+        error("Bogus size: for make %=: %=", class, size);
 
     res = make_vector(len, NULL);
 
     ptr = SOVEC(res)->contents;
     while (len-- > 0)
-	*ptr++ = fill;
+        *ptr++ = fill;
 
     return res;
 }
 
 static obj_t dylan_sovec_fill(obj_t /* <simple-object-vector> */ vector,
-			      obj_t value, obj_t first, obj_t last)
+                              obj_t value, obj_t first, obj_t last)
 {
     int start = fixnum_value(check_type(first, obj_FixnumClass));
     int end;
@@ -140,46 +140,46 @@ static obj_t dylan_sovec_fill(obj_t /* <simple-object-vector> */ vector,
     obj_t *ptr;
 
     if (start < 0)
-	error("Bogus start: for fill! %=: %=", vector, first);
+        error("Bogus start: for fill! %=: %=", vector, first);
 
     if (last == obj_Unbound)
-	end = size;
+        end = size;
     else {
-	end = fixnum_value(check_type(last, obj_FixnumClass));
-	if (end > size)
-	    error("Bogus end: for fill! %=: %=", vector, last);
+        end = fixnum_value(check_type(last, obj_FixnumClass));
+        if (end > size)
+            error("Bogus end: for fill! %=: %=", vector, last);
     }
 
     if (start > end)
-	error("Bogus range for fill! %=: %d to %d", vector,
-	      make_fixnum(start), make_fixnum(end));
-    
+        error("Bogus range for fill! %=: %d to %d", vector,
+              make_fixnum(start), make_fixnum(end));
+
     for (ptr = SOVEC(vector)->contents + start; start < end; start++)
-	*ptr++ = value;
+        *ptr++ = value;
     return vector;
 }
 
 static obj_t dylan_sovec_copy(obj_t /* <simple-object-vector> */ vector,
-			      obj_t first, obj_t last)
+                              obj_t first, obj_t last)
 {
     int start = fixnum_value(check_type(first, obj_FixnumClass));
     int end;
     int size = SOVEC(vector)->length;
 
     if (start < 0)
-	error("Bogus start: for copy-sequence %=: %=", vector, first);
+        error("Bogus start: for copy-sequence %=: %=", vector, first);
 
     if (last == obj_Unbound)
-	end = size;
+        end = size;
     else {
-	end = fixnum_value(check_type(last, obj_FixnumClass));
-	if (end > size)
-	    error("Bogus end: for copy-sequence %=: %=", vector, last);
+        end = fixnum_value(check_type(last, obj_FixnumClass));
+        if (end > size)
+            error("Bogus end: for copy-sequence %=: %=", vector, last);
     }
 
     if (start > end)
-	error("Bogus range for copy-sequence %=: %d to %d", vector,
-	      make_fixnum(start), make_fixnum(end));
+        error("Bogus range for copy-sequence %=: %d to %d", vector,
+              make_fixnum(start), make_fixnum(end));
 
     return make_vector(end - start, SOVEC(vector)->contents + start);
 }
@@ -192,12 +192,12 @@ obj_t obj_ByteVectorClass = NULL;
 obj_t make_byte_vector(int length, unsigned char *contents)
 {
     obj_t res = alloc(obj_ByteVectorClass,
-		      sizeof(struct bytevec) + length - 1);
+                      sizeof(struct bytevec) + length - 1);
 
     BYTEVEC(res)->length = length;
 
     if (contents)
-	memcpy(BYTEVEC(res)->contents, contents, length);
+        memcpy(BYTEVEC(res)->contents, contents, length);
 
     return res;
 }
@@ -207,24 +207,24 @@ static obj_t dylan_bytevec_element(obj_t bytevec, obj_t index, obj_t def)
     int i = fixnum_value(index);
 
     if (0 <= i && i < BYTEVEC(bytevec)->length)
-	return make_fixnum(BYTEVEC(bytevec)->contents[i]);
+        return make_fixnum(BYTEVEC(bytevec)->contents[i]);
     else if (def != obj_Unbound)
-	return def;
+        return def;
     else {
-	error("No element %= in %=", index, bytevec);
-	return NULL;
+        error("No element %= in %=", index, bytevec);
+        return NULL;
     }
 }
 
 static obj_t dylan_bytevec_element_setter(obj_t value, obj_t bytevec,
-					  obj_t index)
+                                          obj_t index)
 {
     int i = fixnum_value(index);
 
     if (0 <= i && i < BYTEVEC(bytevec)->length)
-	BYTEVEC(bytevec)->contents[i] = fixnum_value(value);
+        BYTEVEC(bytevec)->contents[i] = fixnum_value(value);
     else
-	error("No element %= in %=", index, bytevec);
+        error("No element %= in %=", index, bytevec);
 
     return value;
 }
@@ -241,11 +241,11 @@ static obj_t dylan_byte_vec_make(obj_t class, obj_t size, obj_t fill)
 
     len = fixnum_value(check_type(size, obj_FixnumClass));
     if (len < 0)
-	error("Bogus size: for make %=: %d", class, size);
+        error("Bogus size: for make %=: %d", class, size);
 
     byte = fixnum_value(check_type(fill, obj_FixnumClass));
     if (byte < 0 || byte > 255)
-	error("Bogus fill: for make %=: %d", class, fill);
+        error("Bogus fill: for make %=: %d", class, fill);
 
     res = make_byte_vector(len, NULL);
 
@@ -265,9 +265,9 @@ static void print_sovec(obj_t sovec)
 
     printf("#[");
     for (i = 0; i < len; i++) {
-	if (i)
-	    printf(", ");
-	prin1(SOVEC(sovec)->contents[i]);
+        if (i)
+            printf(", ");
+        prin1(SOVEC(sovec)->contents[i]);
     }
     printf("]");
 }
@@ -280,9 +280,9 @@ static int scav_sovec(struct object *ptr)
     struct sovec *v = (struct sovec *)ptr;
     int len = v->length;
     int i;
-    
+
     for (i = 0; i < len; i++)
-	scavenge(v->contents + i);
+        scavenge(v->contents + i);
 
     return sizeof(struct sovec) + sizeof(obj_t)*(len-1);
 }
@@ -296,16 +296,16 @@ static obj_t trans_sovec(obj_t v)
 static int scav_bytevec(struct object *ptr)
 {
     struct bytevec *v = (struct bytevec *)ptr;
-    
+
     return sizeof(struct bytevec) + v->length - sizeof(v->contents);
 }
 
 static obj_t trans_bytevec(obj_t v)
 {
     return transport(v,
-		     sizeof(struct bytevec) + BYTEVEC(v)->length
-		     - sizeof(((struct bytevec *)v)->contents),
-		     TRUE);
+                     sizeof(struct bytevec) + BYTEVEC(v)->length
+                     - sizeof(((struct bytevec *)v)->contents),
+                     TRUE);
 }
 
 
@@ -324,70 +324,70 @@ void make_vec_classes(void)
 void init_vec_classes(void)
 {
     init_builtin_class(obj_SimpleVectorClass, "<simple-vector>",
-		       obj_VectorClass, NULL);
+                       obj_VectorClass, NULL);
     init_builtin_class(obj_SimpleObjectVectorClass, "<simple-object-vector>",
-		       obj_SimpleVectorClass, NULL);
+                       obj_SimpleVectorClass, NULL);
     def_printer(obj_SimpleObjectVectorClass, print_sovec);
     init_builtin_class(obj_ByteVectorClass, "<byte-vector>",
-		       obj_VectorClass, NULL);
+                       obj_VectorClass, NULL);
 }
 
 void init_vec_functions(void)
 {
     define_constant("vector",
-		    make_raw_function("vector", obj_Nil,
-				      TRUE, obj_False, FALSE,
-				      list1(obj_SimpleObjectVectorClass),
-				      obj_False, dylan_vector));
+                    make_raw_function("vector", obj_Nil,
+                                      TRUE, obj_False, FALSE,
+                                      list1(obj_SimpleObjectVectorClass),
+                                      obj_False, dylan_vector));
     define_method("element",
-		    list2(obj_SimpleObjectVectorClass, obj_FixnumClass),
-		    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
-		    obj_ObjectClass, dylan_sovec_element);
+                    list2(obj_SimpleObjectVectorClass, obj_FixnumClass),
+                    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
+                    obj_ObjectClass, dylan_sovec_element);
     define_method("element-setter",
-		  list3(obj_ObjectClass,
-			obj_SimpleObjectVectorClass,
-			obj_FixnumClass),
-		  FALSE, obj_False, FALSE,
-		  obj_ObjectClass, dylan_sovec_element_setter);
+                  list3(obj_ObjectClass,
+                        obj_SimpleObjectVectorClass,
+                        obj_FixnumClass),
+                  FALSE, obj_False, FALSE,
+                  obj_ObjectClass, dylan_sovec_element_setter);
     define_method("size", list1(obj_SimpleObjectVectorClass),
-		  FALSE, obj_False, FALSE, obj_FixnumClass,
-		  dylan_sovec_size);
+                  FALSE, obj_False, FALSE, obj_FixnumClass,
+                  dylan_sovec_size);
     define_method("make", list1(singleton(obj_VectorClass)), FALSE,
-		  list2(pair(symbol("size"), make_fixnum(0)),
-			pair(symbol("fill"), obj_False)),
-		  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
+                  list2(pair(symbol("size"), make_fixnum(0)),
+                        pair(symbol("fill"), obj_False)),
+                  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
     define_method("make", list1(singleton(obj_SimpleVectorClass)), FALSE,
-		  list2(pair(symbol("size"), make_fixnum(0)),
-			pair(symbol("fill"), obj_False)),
-		  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
+                  list2(pair(symbol("size"), make_fixnum(0)),
+                        pair(symbol("fill"), obj_False)),
+                  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
     define_method("make", list1(singleton(obj_SimpleObjectVectorClass)), FALSE,
-		  list2(pair(symbol("size"), make_fixnum(0)),
-			pair(symbol("fill"), obj_False)),
-		  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
+                  list2(pair(symbol("size"), make_fixnum(0)),
+                        pair(symbol("fill"), obj_False)),
+                  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
 
     define_method("element",
-		  list2(obj_ByteVectorClass, obj_FixnumClass),
-		  FALSE, list1(pair(symbol("default"), obj_Unbound)),
-		  FALSE, obj_FixnumClass, dylan_bytevec_element);
+                  list2(obj_ByteVectorClass, obj_FixnumClass),
+                  FALSE, list1(pair(symbol("default"), obj_Unbound)),
+                  FALSE, obj_FixnumClass, dylan_bytevec_element);
     define_method("element-setter",
-		  list3(obj_FixnumClass,
-			obj_ByteVectorClass,
-			obj_FixnumClass),
-		  FALSE, obj_False, FALSE,
-		  obj_FixnumClass, dylan_bytevec_element_setter);
+                  list3(obj_FixnumClass,
+                        obj_ByteVectorClass,
+                        obj_FixnumClass),
+                  FALSE, obj_False, FALSE,
+                  obj_FixnumClass, dylan_bytevec_element_setter);
     define_method("size", list1(obj_ByteVectorClass),
-		  FALSE, obj_False, FALSE,
-		  obj_FixnumClass, dylan_bytevec_size);
+                  FALSE, obj_False, FALSE,
+                  obj_FixnumClass, dylan_bytevec_size);
     define_method("fill!", list2(obj_SimpleObjectVectorClass, obj_ObjectClass),
-		  FALSE, list2(pair(symbol("start"), make_fixnum(0)),
-			       pair(symbol("end"), obj_Unbound)),
-		  FALSE, obj_SimpleObjectVectorClass, dylan_sovec_fill);
+                  FALSE, list2(pair(symbol("start"), make_fixnum(0)),
+                               pair(symbol("end"), obj_Unbound)),
+                  FALSE, obj_SimpleObjectVectorClass, dylan_sovec_fill);
     define_method("copy-sequence", list1(obj_SimpleObjectVectorClass),
-		  FALSE, list2(pair(symbol("start"), make_fixnum(0)),
-			       pair(symbol("end"), obj_Unbound)),
-		  FALSE, obj_SimpleObjectVectorClass, dylan_sovec_copy);
+                  FALSE, list2(pair(symbol("start"), make_fixnum(0)),
+                               pair(symbol("end"), obj_Unbound)),
+                  FALSE, obj_SimpleObjectVectorClass, dylan_sovec_copy);
     define_method("make", list1(singleton(obj_ByteVectorClass)), FALSE,
-		  list2(pair(symbol("size"), make_fixnum(0)),
-			pair(symbol("fill"), make_fixnum(0))),
-		  FALSE, obj_ByteVectorClass, dylan_byte_vec_make);
+                  list2(pair(symbol("size"), make_fixnum(0)),
+                        pair(symbol("fill"), make_fixnum(0))),
+                  FALSE, obj_ByteVectorClass, dylan_byte_vec_make);
 }

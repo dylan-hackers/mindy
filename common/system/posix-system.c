@@ -1,6 +1,6 @@
 /* Unix support routines for the Dylan operating-system library
    Written by Tom Emerson, tree@tiac.net
-   
+
    Copyright (C) 1999 Thomas R. Emerson
 
    This library is free software; you can redistribute it and/or
@@ -58,21 +58,21 @@ extern char **environ;
 int primary_group_name(unsigned char *outBuf, long bufLen)
 {
 #ifdef WIN32
-	typedef struct group
-	{
-		char* gr_name;
-	};
+    typedef struct group
+    {
+        char* gr_name;
+    };
 #endif
-	struct group *gpptr;
+    struct group *gpptr;
 
     if ((outBuf == NULL) || (bufLen <= 0))
         return 1;
 
 #ifdef WIN32
-	if (1) {
-		struct group fake;
-		gpptr = &fake;
-		fake.gr_name = "ROOT";
+    if (1) {
+        struct group fake;
+        gpptr = &fake;
+        fake.gr_name = "ROOT";
 #else
     if ((gpptr = getgrgid(getgid())) != NULL) {
 #endif
@@ -104,7 +104,7 @@ static int environ_size(void)
 **
 ** The following implementation is based the discussion in Stevens'
 ** "Advanced Programming in the Unix Environment", p. 174.
-** 
+**
 ** FIXME: this function will leak memory when replacing an table entry
 **        which was allocated from our heap with malloc; i can't
 **        portably determine whether or not a specific pointer is in
@@ -119,7 +119,7 @@ int safe_putenv(const char *nvp)
     int result = 1;
     char *name;
     char **p;
-    
+
     if ((name = strchr(nvp, '=')) != NULL) {
         /* see if this name already exists */
         p = environ;
@@ -208,15 +208,15 @@ int main()
     i = safe_putenv("QUX=bal");
 
     foo = getenv("FOO");
-	printf("Foo = %s\n", foo);
+    printf("Foo = %s\n", foo);
     foo = getenv("GREAT_QUX");
-	printf("Foo = %s\n", foo);
+    printf("Foo = %s\n", foo);
 
     i = safe_unsetenv("QUX");
     i = safe_unsetenv("PWD");
     i = safe_unsetenv("MAIRIN");
 
-	printf("returning %d\n", i);
+    printf("returning %d\n", i);
 
     return i;
 }

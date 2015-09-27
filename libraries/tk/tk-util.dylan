@@ -6,25 +6,25 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -64,7 +64,7 @@ define generic parse-tk-list
 
 
 //======================================================================
-//			      Utility functions
+//                              Utility functions
 //======================================================================
 
 // Auxiliary variable for "anonymous-name".
@@ -74,7 +74,7 @@ define variable anonymous-counter = 0;
 //
 define method anonymous-name (#key prefix = "w") => (result :: <string>);
   concatenate(prefix,
-	      tk-as(<string>, anonymous-counter := anonymous-counter + 1))
+              tk-as(<string>, anonymous-counter := anonymous-counter + 1))
 end method anonymous-name;
 
 // Creates a tk "option" switch out of option name and an arbitrary value.
@@ -84,7 +84,7 @@ end method anonymous-name;
 define method make-option (option, value) => (option :: <string>);
   if (value)
     concatenate(" -", tk-as(<string>, option),
-		" \"", tk-quote(value), "\" ");
+                " \"", tk-quote(value), "\" ");
   else
     "";
   end if;
@@ -115,64 +115,64 @@ define method parse-tk-list
      #key depth, start = 0, end: last = string.size, unquote)
  => (result :: <sequence>);
   local method skip-spaces (string, start)
-	  for (i from start below string.size, until: string[i] ~= ' ')
-	  finally i;
-	  end for;
-	end method;
+          for (i from start below string.size, until: string[i] ~= ' ')
+          finally i;
+          end for;
+        end method;
   local method balance-open-brace (string, start, last)
-	  for (count = 1 then select (string[i])
-				'{' => count + increment;
-				'}' => count - increment;
-				otherwise => count;
-			      end select,
-	       // only change count if we're not quoted
-	       increment = 1
-		 then if (string[i] == '\\') 1 - increment else 1 end if,
-	       i from start below last, until: count == 0)
-	  finally
-	    i - 1;		// I is the character after the close brace.
-	  end for;
-	end method balance-open-brace;
+          for (count = 1 then select (string[i])
+                                '{' => count + increment;
+                                '}' => count - increment;
+                                otherwise => count;
+                              end select,
+               // only change count if we're not quoted
+               increment = 1
+                 then if (string[i] == '\\') 1 - increment else 1 end if,
+               i from start below last, until: count == 0)
+          finally
+            i - 1;                // I is the character after the close brace.
+          end for;
+        end method balance-open-brace;
   local method word-break (string, start, last)
-	  for (quoted = #f then (string[i] == '\\'),
-	       i from start below last,
-	       until: ~quoted & (string[i] == ' '))
-	  finally
-	    i;
-	  end for;
-	end method word-break;
+          for (quoted = #f then (string[i] == '\\'),
+               i from start below last,
+               until: ~quoted & (string[i] == ' '))
+          finally
+            i;
+          end for;
+        end method word-break;
   local method parse-elements (string, first, last, depth);
-	  if (depth == 0)
-	    let result = copy-sequence(string, start: first, end: last);
-	    if (unquote) tk-unquote(result) else result end if;
-	  else
-	    let first = skip-spaces(string, first);
-	    let list = #();
-	    until (first >= last | string[first] == '}')
-	      if (string[first] == '{')
-		let rbrace = balance-open-brace(string, first + 1, last);
-		let sublist = parse-elements(string, first + 1,
-					     rbrace, depth & (depth - 1));
-		list := pair(sublist, list);
-		first := skip-spaces(string, rbrace + 1);
-	      else 
-		let index = word-break(string, first, last);
-		let word = copy-sequence(string, start: first, end: index);
-		list := pair(if (unquote) tk-unquote(word) else word end,
-			     list);
-		first := skip-spaces(string, index);
-	      end if;
-	    end until;
-	    values(reverse!(list), first);
-	  end if;
-	end method parse-elements;
+          if (depth == 0)
+            let result = copy-sequence(string, start: first, end: last);
+            if (unquote) tk-unquote(result) else result end if;
+          else
+            let first = skip-spaces(string, first);
+            let list = #();
+            until (first >= last | string[first] == '}')
+              if (string[first] == '{')
+                let rbrace = balance-open-brace(string, first + 1, last);
+                let sublist = parse-elements(string, first + 1,
+                                             rbrace, depth & (depth - 1));
+                list := pair(sublist, list);
+                first := skip-spaces(string, rbrace + 1);
+              else
+                let index = word-break(string, first, last);
+                let word = copy-sequence(string, start: first, end: index);
+                list := pair(if (unquote) tk-unquote(word) else word end,
+                             list);
+                first := skip-spaces(string, index);
+              end if;
+            end until;
+            values(reverse!(list), first);
+          end if;
+        end method parse-elements;
 
   parse-elements(string, start, last, depth);
 end method parse-tk-list;
 
 
 //==========================================================================
-//			   Library initializations
+//                           Library initializations
 //==========================================================================
 
 // This is the main tk execution loop.  It captures all output from the
@@ -182,20 +182,20 @@ end method parse-tk-list;
 define method tk-input-loop () => ();
   block ()
     for (line = read-tk-line() then read-tk-line(),
-	 while: line)
+         while: line)
       if (empty?(line))
-	write-line(*standard-output*, line);
-	force-output(*standard-output*);
+        write-line(*standard-output*, line);
+        force-output(*standard-output*);
       elseif (first(line) == '!')
-	// !E! is a magic line that the process sends to confim we are still
-	// alive.  This is a wretched hack forced upon us by the inflexibility
-	// of Tcl/Tk.
-	if (line ~= "!E!")
-	  do-callback(line);
-	end if;
+        // !E! is a magic line that the process sends to confim we are still
+        // alive.  This is a wretched hack forced upon us by the inflexibility
+        // of Tcl/Tk.
+        if (line ~= "!E!")
+          do-callback(line);
+        end if;
       else
-	write-line(*standard-output*, line);
-	force-output(*standard-output*);
+        write-line(*standard-output*, line);
+        force-output(*standard-output*);
       end if;
     end for;
     exit();
@@ -211,7 +211,7 @@ define method tk-init () => ();
   let (fd-in, fd-out) = fd-exec("wish -name MindyTk");
   if (~fd-in)
     error("Could not spawn 'wish' process -- "
-	    "please check your PATH environment.");
+            "please check your PATH environment.");
   end if;
   tk-in := make(<fd-stream>, fd: fd-in, direction: #"output");
   tk-out := make(<fd-stream>, fd: fd-out);
@@ -221,14 +221,14 @@ define method tk-init () => ();
   // this will generate an error and it will itself exit.  This is a wretched
   // hack, but it was the best I could find.
   put-tk-line("proc tkerror {msg}",
-	       " {if {$msg == {error flushing \"stdout\": Broken pipe}}",
-	       " {exit} else {error {Unhandled error.}}}");
+               " {if {$msg == {error flushing \"stdout\": Broken pipe}}",
+               " {exit} else {error {Unhandled error.}}}");
   put-tk-line("proc checkexit {} {puts stdout !E!;flush stdout;"
-		 "after 3000 checkexit};checkexit");
+                 "after 3000 checkexit};checkexit");
 
   put-tk-line("wm withdraw .");
   put-tk-line("proc dylan-put args ",
-	       "{puts stdout \"$args\";flush stdout}");
+               "{puts stdout \"$args\";flush stdout}");
   put-tk-line("wm minsize . 1 1");
   init-active-variables();
 

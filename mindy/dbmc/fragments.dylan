@@ -6,25 +6,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -55,7 +55,7 @@ copyright: see below
 // <fragment> -- exported.
 //
 // Abstract superclass of all the different kinds of fragments we can have.
-// 
+//
 define abstract class <fragment> (<object>)
 end class <fragment>;
 
@@ -69,7 +69,7 @@ define sealed domain initialize (<fragment>);
 //
 // We mix in <source-location-mixin> so we can keep track of where
 // this empty fragment came from.
-// 
+//
 define class <empty-fragment> (<fragment>, <source-location-mixin>)
 end class <empty-fragment>;
 
@@ -101,15 +101,15 @@ define sealed method print-object
      prefix: "{",
      body:
        method (stream :: <stream>)
-	 pprint-indent(#"block", 2, stream);
-	 write-class-name(frag, stream);
-	 let stop = frag.fragment-tail.fragment-next;
-	 for (subfrag = frag.fragment-head then subfrag.fragment-next,
-	      until: subfrag == stop)
-	   write-element(stream, ' ');
-	   pprint-newline(#"linear", stream);
-	   print(subfrag, stream);
-	 end for;
+         pprint-indent(#"block", 2, stream);
+         write-class-name(frag, stream);
+         let stop = frag.fragment-tail.fragment-next;
+         for (subfrag = frag.fragment-head then subfrag.fragment-next,
+              until: subfrag == stop)
+           write-element(stream, ' ');
+           pprint-newline(#"linear", stream);
+           print(subfrag, stream);
+         end for;
        end method,
      suffix: "}");
 end method print-object;
@@ -119,18 +119,18 @@ end method print-object;
 //
 // Return the source location spanning from the head to the tail.  We
 // could store it, but why bother?
-// 
+//
 define method source-location (fragment :: <compound-fragment>)
     => res :: <source-location>;
   source-location-spanning(fragment.fragment-head.source-location,
-			   fragment.fragment-tail.source-location);
+                           fragment.fragment-tail.source-location);
 end method source-location;
 
 // <elementary-fragment> -- exported.
 //
 // Abstract class for all elementary fragments.  Elementary fragments can
 // be linked together to form the guts of a <compound-fragment>.
-// 
+//
 define abstract class <elementary-fragment> (<fragment>)
   //
   // The previous fragment in the compound fragment this fragment is part of.
@@ -148,11 +148,11 @@ define sealed domain make (singleton(<elementary-fragment>));
 //
 // A token elementary fragment.  We use token-fragments for what the DRM talks
 // about as token fragments, parsed fragments, and macro-call fragments.
-// 
+//
 // We mix in <source-location-mixin> instead of just using the token's source
 // location, because the token's source location will have been minimized,
 // and we want the source location in all its glory.
-// 
+//
 define class <token-fragment> (<elementary-fragment>, <source-location-mixin>)
   //
   // The token for this fragment.
@@ -170,11 +170,11 @@ define sealed method print-object
      prefix: "{",
      body:
        method (stream :: <stream>)
-	 write-class-name(frag, stream);
-	 write-element(stream, ' ');
-	 pprint-indent(#"block", 2, stream);
-	 pprint-newline(#"fill", stream);
-	 print-message(frag.fragment-token, stream);
+         write-class-name(frag, stream);
+         write-element(stream, ' ');
+         pprint-indent(#"block", 2, stream);
+         pprint-newline(#"fill", stream);
+         print-message(frag.fragment-token, stream);
        end method,
      suffix: "}");
 end method print-object;
@@ -183,7 +183,7 @@ end method print-object;
 // <bracketed-fragment> -- exported.
 //
 // A balanced pair of general brackets and the stuff between them.
-// 
+//
 define class <bracketed-fragment> (<elementary-fragment>)
   //
   // The token that makes up the left bracket.
@@ -223,17 +223,17 @@ define sealed method print-object
      prefix: "{",
      body:
        method (stream :: <stream>)
-	 pprint-indent(#"block", 2, stream);
-	 write-class-name(fragment, stream);
-	 write-element(stream, ' ');
-	 pprint-newline(#"fill", stream);
-	 print(fragment.fragment-left-token, stream);
-	 write-element(stream, ' ');
-	 pprint-newline(#"fill", stream);
-	 print(fragment.fragment-contents, stream);
-	 write-element(stream, ' ');
-	 pprint-newline(#"fill", stream);
-	 print(fragment.fragment-right-token, stream);
+         pprint-indent(#"block", 2, stream);
+         write-class-name(fragment, stream);
+         write-element(stream, ' ');
+         pprint-newline(#"fill", stream);
+         print(fragment.fragment-left-token, stream);
+         write-element(stream, ' ');
+         pprint-newline(#"fill", stream);
+         print(fragment.fragment-contents, stream);
+         write-element(stream, ' ');
+         pprint-newline(#"fill", stream);
+         print(fragment.fragment-right-token, stream);
        end method,
      suffix: "}");
 end method print-object;
@@ -243,11 +243,11 @@ end method print-object;
 //
 // Return the source location spanning from the left token to the right
 // token.  We could store it, but why bother?
-// 
+//
 define method source-location (fragment :: <bracketed-fragment>)
     => res :: <source-location>;
   source-location-spanning(fragment.fragment-left-srcloc,
-			   fragment.fragment-right-srcloc);
+                           fragment.fragment-right-srcloc);
 end method source-location;
 
 
@@ -280,7 +280,7 @@ end method copy-fragment;
 //
 // Copy each component elementary fragment, linking them together.  Then
 // make a new compound fragment.
-// 
+//
 define method copy-fragment
     (frag :: <compound-fragment>, #key preserve-source-locations :: <boolean>)
     => res :: <compound-fragment>;
@@ -308,11 +308,11 @@ define method copy-fragment
     => res :: <token-fragment>;
   make(<token-fragment>,
        source-location:
-	 if (preserve-source-locations)
-	   frag.source-location;
-	 else
-	   make(<unknown-source-location>);
-	 end if,
+         if (preserve-source-locations)
+           frag.source-location;
+         else
+           make(<unknown-source-location>);
+         end if,
        token: frag.fragment-token);
 end method copy-fragment;
 
@@ -327,19 +327,19 @@ define method copy-fragment
   make(<bracketed-fragment>,
        left-token: frag.fragment-left-token,
        left-srcloc:
-	 if (preserve-source-locations)
-	   frag.fragment-left-srcloc;
-	 else
-	   make(<unknown-source-location>);
-	 end if,
+         if (preserve-source-locations)
+           frag.fragment-left-srcloc;
+         else
+           make(<unknown-source-location>);
+         end if,
        contents: copy-fragment(frag.fragment-contents),
        right-token: frag.fragment-right-token,
        right-srcloc:
-	 if (preserve-source-locations)
-	   frag.fragment-right-srcloc;
-	 else
-	   make(<unknown-source-location>);
-	 end if);
+         if (preserve-source-locations)
+           frag.fragment-right-srcloc;
+         else
+           make(<unknown-source-location>);
+         end if);
 end method copy-fragment;
 
 
@@ -349,14 +349,14 @@ end method copy-fragment;
 //
 // Build a new fragment that appends the two argument fragments and return
 // it.  We can destroy either argument fragment in the process.
-// 
+//
 define generic append-fragments! (frag1 :: <fragment>, frag2 :: <fragment>)
     => res :: <fragment>;
 
 // append-fragments!{<empty-fragment>,<fragment>}
 //
 // Just return the second fragment.
-// 
+//
 define method append-fragments!
     (frag1 :: <empty-fragment>, frag2 :: <fragment>)
     => res :: <fragment>;
@@ -366,7 +366,7 @@ end method append-fragments!;
 // append-fragments!{<fragment>,<empty-fragment>}
 //
 // Just return the first fragment.
-// 
+//
 define method append-fragments!
     (frag1 :: <fragment>, frag2 :: <empty-fragment>)
     => res :: <fragment>;
@@ -377,18 +377,18 @@ end method append-fragments!;
 //
 // Return a new empty fragment that has a source location spanning the
 // two source fragments.
-// 
+//
 define method append-fragments!
     (frag1 :: <empty-fragment>, frag2 :: <empty-fragment>)
     => res :: <fragment>;
   make(<empty-fragment>,
        source-location:
-	 source-location-spanning(frag1.source-location,
-				  frag2.source-location));
+         source-location-spanning(frag1.source-location,
+                                  frag2.source-location));
 end method append-fragments!;
 
 // append-fragments!{<compound-fragment>,<compound-fragment>}
-// 
+//
 define method append-fragments!
     (frag1 :: <compound-fragment>, frag2 :: <compound-fragment>)
     => res :: <fragment>;
@@ -404,7 +404,7 @@ end method append-fragments!;
 //
 // Tack the elementary fragment onto the end of the compound fragment and
 // return the compound fragment.
-// 
+//
 define method append-fragments!
     (frag1 :: <compound-fragment>, frag2 :: <elementary-fragment>)
     => res :: <fragment>;
@@ -416,10 +416,10 @@ define method append-fragments!
 end method append-fragments!;
 
 // append-fragments!{<elementary-fragment>,<compound-fragment>}
-// 
+//
 // Tack the elementary fragment onto the start of the compound fragment and
 // return the compound fragment.
-// 
+//
 define method append-fragments!
     (frag1 :: <elementary-fragment>, frag2 :: <compound-fragment>)
     => res :: <fragment>;
@@ -434,7 +434,7 @@ end method append-fragments!;
 //
 // Link the two elementary fragments together and return a new compound
 // fragment.
-// 
+//
 define method append-fragments!
     (frag1 :: <elementary-fragment>, frag2 :: <elementary-fragment>)
     => res :: <fragment>;
@@ -450,7 +450,7 @@ end method append-fragments!;
 //
 // Used to keep track of the bracketed fragments the fragment-tokenizer has
 // descended into so that we can pop back out of them.
-// 
+//
 define class <bracketed-fragment-stack> (<object>)
   //
   // The bracketed fragment that was descended into.
@@ -525,7 +525,7 @@ end method print-object;
 // Extract the next token.  This handles pushed-back lookahead tokens, pops
 // the bracketed token stack if necessary, or calls advance-tokenizer to
 // handle the real work.
-// 
+//
 define sealed method get-token (tokenizer :: <fragment-tokenizer>)
     => (token :: <token>, srcloc :: <source-location>);
   let lookahead = tokenizer.tokenizer-lookahead;
@@ -546,17 +546,17 @@ define sealed method get-token (tokenizer :: <fragment-tokenizer>)
       // EOF token.
       let stack = tokenizer.tokenizer-stack;
       if (stack)
-	let bracketed-frag = stack.stack-fragment;
-	tokenizer.tokenizer-current := bracketed-frag.fragment-next;
-	tokenizer.tokenizer-end := stack.stack-end;
-	tokenizer.tokenizer-stack := stack.stack-prev;
-	values(bracketed-frag.fragment-right-token,
-	       bracketed-frag.fragment-right-srcloc);
+        let bracketed-frag = stack.stack-fragment;
+        tokenizer.tokenizer-current := bracketed-frag.fragment-next;
+        tokenizer.tokenizer-end := stack.stack-end;
+        tokenizer.tokenizer-stack := stack.stack-prev;
+        values(bracketed-frag.fragment-right-token,
+               bracketed-frag.fragment-right-srcloc);
       else
-	let frag = tokenizer.tokenizer-fragment;
-	let srcloc = source-location-after(frag.source-location);
-	values(make(<token>, source-location: srcloc, kind: $eof-token),
-	       srcloc);
+        let frag = tokenizer.tokenizer-fragment;
+        let srcloc = source-location-after(frag.source-location);
+        values(make(<token>, source-location: srcloc, kind: $eof-token),
+               srcloc);
       end if;
     else
       advance-tokenizer(tokenizer, current);
@@ -567,7 +567,7 @@ end method get-token;
 // unget-token -- method on imported gf.
 //
 // Push back the lookahead token.  But not if it was an EOF.
-// 
+//
 define sealed method unget-token
     (tokenizer :: <fragment-tokenizer>, token :: <token>,
      srcloc :: <source-location>)
@@ -582,7 +582,7 @@ end method unget-token;
 // note-potential-end-point -- method on imported gf.
 //
 // Record the current fragment.
-// 
+//
 define sealed method note-potential-end-point
     (tokenizer :: <fragment-tokenizer>) => ();
   unless (tokenizer.tokenizer-stack)
@@ -596,7 +596,7 @@ end method note-potential-end-point;
 // prime-tokenizer -- internal
 //
 // Set up the tokenizer to iterate though the tokens in the supplied fragment.
-// 
+//
 define generic prime-tokenizer
     (tokenizer :: <fragment-tokenizer>, fragment :: <fragment>) => ();
 
@@ -620,7 +620,7 @@ define method prime-tokenizer
   tokenizer.tokenizer-current := fragment.fragment-head;
   tokenizer.tokenizer-end := fragment.fragment-tail.fragment-next;
 end method prime-tokenizer;
-  
+
 // prime-tokenizer{<elementary-fragment>}
 //
 // Set the current to this fragment and the end to whatever follows this
@@ -638,7 +638,7 @@ end method prime-tokenizer;
 //
 // Advance the tokenizer one token and return that token.  We dispatch off
 // of the current fragment because we advance into them differently.
-// 
+//
 define generic advance-tokenizer
     (tokenizer :: <fragment-tokenizer>, current :: <elementary-fragment>)
     => (next :: <token>, srcloc :: <source-location>);
@@ -665,9 +665,9 @@ define method advance-tokenizer
     => (next :: <token>, srcloc :: <source-location>);
   tokenizer.tokenizer-stack
     := make(<bracketed-fragment-stack>,
-	    fragment: current,
-	    end: tokenizer.tokenizer-end,
-	    prev: tokenizer.tokenizer-stack);
+            fragment: current,
+            end: tokenizer.tokenizer-end,
+            prev: tokenizer.tokenizer-stack);
   prime-tokenizer(tokenizer, current.fragment-contents);
   values(current.fragment-left-token, current.fragment-left-srcloc);
 end method advance-tokenizer;

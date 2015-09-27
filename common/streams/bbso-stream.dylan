@@ -8,25 +8,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -38,9 +38,9 @@ copyright: see below
 ///
 define class <buffered-byte-string-output-stream>
     (<buffered-stream>, <positionable-stream>)
-  slot buffer :: false-or(<buffer>) = make(<buffer>, 
-					   size: $default-buffer-size,
-					   end: $default-buffer-size);
+  slot buffer :: false-or(<buffer>) = make(<buffer>,
+                                           size: $default-buffer-size,
+                                           end: $default-buffer-size);
   slot string-output-stream-backup :: false-or(<byte-string>) = #f;
   //
   // This slot holds the end of the output held in the buffer.  Because of the
@@ -59,7 +59,7 @@ define sealed domain initialize(<buffered-byte-string-output-stream>);
 
 /// stream-open?
 ///
-define inline sealed method stream-open? 
+define inline sealed method stream-open?
     (stream :: <buffered-byte-string-output-stream>)
  => open? :: <boolean>;
   if (stream.buffer) #t else #f end;
@@ -102,7 +102,7 @@ end method;
 /// do-release-output-buffer
 ///
 define inline sealed method do-release-output-buffer
-    (stream :: <buffered-byte-string-output-stream>) 
+    (stream :: <buffered-byte-string-output-stream>)
  => ();
   // Maintain buffer-stop
   let next :: <buffer-index> = stream.buffer.buffer-next;
@@ -118,9 +118,9 @@ define sealed method do-next-output-buffer
      #key bytes :: <integer> = 1)
  => buf :: <buffer>;
   let buf :: <buffer> = stream.buffer;
-  if (bytes > buf.size) 
+  if (bytes > buf.size)
     error("Stream's buffer is not large enough to get %d bytes -- %=",
-	  bytes, stream);
+          bytes, stream);
   end;
   buf.buffer-end := buf.size; // It should be that anyway, but we need to
                               // be sure
@@ -176,7 +176,7 @@ end method;
 /// do nothing.
 ///
 define sealed method do-force-output-buffers
-    (stream :: <buffered-byte-string-output-stream>) 
+    (stream :: <buffered-byte-string-output-stream>)
  => ();
   let buf :: <buffer> = stream.buffer;
   let stop :: <integer> = stream.buffer-stop;
@@ -211,14 +211,14 @@ end method;
 /// do-synchronize
 ///
 define inline sealed method do-synchronize
-    (stream :: <buffered-byte-string-output-stream>) 
+    (stream :: <buffered-byte-string-output-stream>)
  => ();
 end method;
 
 /// close
 ///
 define sealed method close (stream :: <buffered-byte-string-output-stream>,
-			    #key, #all-keys) 
+                            #key, #all-keys)
  => ();
   // Get the buffer to make sure no one is using it.
   get-output-buffer(stream, bytes: 0);
@@ -267,8 +267,8 @@ define method stream-position-setter
     // Reposition within the existing buffer.
     buf.buffer-next := position - backup-len;
   else
-    new-string-output-stream-backup(stream, buf, stream.buffer-stop, 
-				    backup, backup-len);
+    new-string-output-stream-backup(stream, buf, stream.buffer-stop,
+                                    backup, backup-len);
     buf.buffer-next := position;
   end;
   let next = buf.buffer-next;
@@ -297,10 +297,10 @@ define method adjust-stream-position
   let backup-len :: <integer> = if (backup) backup.size else 0 end;
   let stream-len :: <integer> = backup-len + stop;
   let position = select (reference)
-		   (#"start") => delta;
-		   (#"current") => (buf-next + delta);
-		   (#"end") => (stream-len + delta);
-		 end;
+                   (#"start") => delta;
+                   (#"current") => (buf-next + delta);
+                   (#"end") => (stream-len + delta);
+                 end;
   case
     (position < 0) =>
       error("Illegal stream position -- %d.", position);
@@ -310,11 +310,11 @@ define method adjust-stream-position
       // Get output from both the backup string and the buffer.
       let new-backup = make(<byte-string>, size: position);
       if (backup)
-	copy-bytes(new-backup, 0, backup, 0, backup-len);
+        copy-bytes(new-backup, 0, backup, 0, backup-len);
       end;
       copy-bytes(new-backup, backup-len, buf, 0, stop);
       for (i from (backup-len + stop) below position)
-	new-backup[i] := '\0';
+        new-backup[i] := '\0';
       end;
       stream.string-output-stream-backup := new-backup;
       stream.buffer-stop := 0;
@@ -330,7 +330,7 @@ end method;
 
 /// stream-size
 ///
-define sealed method stream-size 
+define sealed method stream-size
     (stream :: <buffered-byte-string-output-stream>)
  => size :: <integer>;
   let buf :: <buffer> = get-output-buffer(stream, bytes: 0);
@@ -354,22 +354,22 @@ define sealed method stream-contents
   let output-len :: <integer> = stream.buffer-stop;
   let string
     = case
-	(~ backup) =>
-	  // The only output is what is in the buffer.
-	  let res = make(<byte-string>, size: output-len);
-	  copy-bytes(res, 0, buf, 0, output-len);
-	  res;
-	(output-len == 0) =>
-	  // The only output is what is in the backup string.
-	  backup;
-	otherwise =>
-	  // Get output from both the backup string and the buffer.
-	  let backup-len :: <integer> = backup.size;
-	  let res :: <byte-string>
-	    = make(<byte-string>, size: (backup-len + output-len));
-	  copy-bytes(res, 0, backup, 0, backup-len);
-	  copy-bytes(res, backup-len, buf, 0, output-len);
-	  res;
+        (~ backup) =>
+          // The only output is what is in the buffer.
+          let res = make(<byte-string>, size: output-len);
+          copy-bytes(res, 0, buf, 0, output-len);
+          res;
+        (output-len == 0) =>
+          // The only output is what is in the backup string.
+          backup;
+        otherwise =>
+          // Get output from both the backup string and the buffer.
+          let backup-len :: <integer> = backup.size;
+          let res :: <byte-string>
+            = make(<byte-string>, size: (backup-len + output-len));
+          copy-bytes(res, 0, backup, 0, backup-len);
+          copy-bytes(res, backup-len, buf, 0, output-len);
+          res;
       end;
   if (clear-contents?)
     stream.string-output-stream-backup := #f;

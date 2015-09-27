@@ -8,31 +8,31 @@ copyright: See below.
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
 define variable has-errors = #f;
 
-define method run-several-tests (test-name :: <string>, 
+define method run-several-tests (test-name :: <string>,
                                  test :: <function>)
  => ();
   format("%s ... ", test-name);
@@ -65,24 +65,24 @@ define method print-test () => ();
 
   let eint :: <extended-integer> = as(<extended-integer>, -1);
   run-test(print-to-string(eint), "#e-1", "extended-integer");
-	   
+
   let sequence-1 = make(<stretchy-vector>);
 #if (mindy)
   run-test(print-to-string(sequence-1), "{<simple-stretchy-vector>: }",
-	   "empty sequence");
+           "empty sequence");
 #else
   run-test(print-to-string(sequence-1), "{<stretchy-object-vector>: }",
-	   "empty sequence");
+           "empty sequence");
 #endif
 
   let sequence-2 = make(<stretchy-vector>, size: 5);
   sequence-2[3] := 3;
 #if (mindy)
   run-test(print-to-string(sequence-2),
-	   "{<simple-stretchy-vector>: #f, #f, #f, 3, #f}", "sequence");
+           "{<simple-stretchy-vector>: #f, #f, #f, 3, #f}", "sequence");
 #else
   run-test(print-to-string(sequence-2),
-	   "{<stretchy-object-vector>: #f, #f, #f, 3, #f}", "sequence");
+           "{<stretchy-object-vector>: #f, #f, #f, 3, #f}", "sequence");
 #endif
 
   let sequence-3 = #[4, 5, 6, 2];
@@ -103,13 +103,13 @@ define method print-test () => ();
 
   let range-1 = make(<range>);
   run-test(print-to-string(range-1), "{<range>: 0, 1, ...}", "range");
-  
+
   let range-2 = make(<range>, from: 0, to: 0);
   run-test(print-to-string(range-2), "{<range>: 0}", "0 range");
 
   let range-3 = make(<range>, from: 0, to: -20, by: -2);
   run-test(print-to-string(range-3), "{<range>: 0, -2, ..., -20}",
-	   "negative range");
+           "negative range");
 
   let array-1 = make(<array>, dimensions: #[2, 2]);
   for (i from 0 below 2)

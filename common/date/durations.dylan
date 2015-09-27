@@ -22,16 +22,16 @@ define class <day/time-duration> (<duration>)
 end class <day/time-duration>;
 
 define function encode-year/month-duration(years :: <integer>,
-					   months :: <integer>)
+                                           months :: <integer>)
  => (ans :: <duration>)
   make(<year/month-duration>, duration: months + 12 * years);
 end function encode-year/month-duration;
 
 define function encode-day/time-duration(days :: <integer>,
-					 hours :: <hours>,
-					 minutes :: <minutes>,
-					 seconds :: <seconds>,
-					 microseconds :: <microseconds>)
+                                         hours :: <hours>,
+                                         minutes :: <minutes>,
+                                         seconds :: <seconds>,
+                                         microseconds :: <microseconds>)
  => (ans :: <duration>)
   let secs = seconds + 60 * minutes + 3600 * hours + 24 * 3600 * days;
   make(<day/time-duration>, duration: secs, microseconds: microseconds);
@@ -45,7 +45,7 @@ define method decode-duration(d :: <year/month-duration>)
 end method decode-duration;
 
 define method decode-duration(d :: <day/time-duration>)
- => (days :: <integer>, hours :: <integer>, minutes :: <integer>, 
+ => (days :: <integer>, hours :: <integer>, minutes :: <integer>,
      seconds :: <integer>, microseconds :: <integer>)
   let(days, secs) = floor/(d.duration, 24 * 3600);
   let(hours, rem) = floor/(secs, 3600);

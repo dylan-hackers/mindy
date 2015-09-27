@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -51,10 +51,10 @@ static void invoke_main(struct thread *thread, obj_t *vals)
     obj_t *args_end = fp - 5;
     obj_t *old_sp = pop_linkage(thread);
     struct variable *var = find_variable(module_BuiltinStuff, symbol("main"),
-					 FALSE, FALSE);
+                                         FALSE, FALSE);
 
     if (var == NULL)
-	lose("main undefined?");
+        lose("main undefined?");
 
     thread->sp = args_end;
     old_sp[0] = var->value;
@@ -75,7 +75,7 @@ static void missing_arg(char *whose)
     fprintf(stderr, "mindy: missing argument to %s option\n", whose);
     exit(1);
 }
-  
+
 /* exec_file_name is used by extern.c, so it can find the executable
    again and search it for symbol table stuff */
 char *exec_file_name;
@@ -95,36 +95,36 @@ int main(int argc, char *argv[])
 
     thread = thread_make(symbol("main"));
     *thread->sp++ = make_raw_function("startup", obj_Nil,
-				      TRUE, obj_False, FALSE,
-				      obj_Nil, obj_ObjectClass,
-				      startup);
+                                      TRUE, obj_False, FALSE,
+                                      obj_Nil, obj_ObjectClass,
+                                      startup);
 
     while (*++argv != NULL) {
-	if (strcmp(*argv, "-f") == 0) {
-	    if (*++argv == NULL)
-	        missing_arg("-f");
-	    load(*argv);
+        if (strcmp(*argv, "-f") == 0) {
+            if (*++argv == NULL)
+                missing_arg("-f");
+            load(*argv);
 #if ! NO_SHARP_BANG
         } else if (strcmp(*argv, "-x") == 0) {
-	    if (*++argv == NULL)
-	        missing_arg("-f");
+            if (*++argv == NULL)
+                missing_arg("-f");
 #if ! NO_ARGV_0
-	    if (strcmp(*argv, "-") != 0)
-	        argv0 = *argv;
+            if (strcmp(*argv, "-") != 0)
+                argv0 = *argv;
 #endif
-	    load(*argv);
-	    argv += 1;
-	    break;
+            load(*argv);
+            argv += 1;
+            break;
 #endif
 #if ! NO_ARGV_0
-	} else if (strcmp(*argv, "-0") == 0) {
-	    if (*++argv == NULL)
-	        missing_arg("-0");
-	    argv0 = *argv;
+        } else if (strcmp(*argv, "-0") == 0) {
+            if (*++argv == NULL)
+                missing_arg("-0");
+            argv0 = *argv;
 #endif
         } else {
-	    break;
-	}
+            break;
+        }
     }
 
 #if ! NO_ARGV_0
@@ -136,19 +136,19 @@ int main(int argc, char *argv[])
     finalize_modules();
 
     while (1) {
-	thread_restart(thread);
+        thread_restart(thread);
 
-	reason = do_stuff();
-	if (reason != pause_NothingToRun)
-	    invoke_debugger(reason);
+        reason = do_stuff();
+        if (reason != pause_NothingToRun)
+            invoke_debugger(reason);
 
-	var = find_variable(module_BuiltinStuff, symbol("exit"),
-			    FALSE, FALSE);
-	if (var == NULL)
-	    lose("main undefined?");
+        var = find_variable(module_BuiltinStuff, symbol("exit"),
+                            FALSE, FALSE);
+        if (var == NULL)
+            lose("main undefined?");
 
-	thread = thread_make(symbol("exit"));
-	*thread->sp++ = var->value;
+        thread = thread_make(symbol("exit"));
+        *thread->sp++ = var->value;
     }
     return 0;
 }
@@ -159,8 +159,8 @@ int main(int argc, char *argv[])
 void *check_malloc(size_t sz, char *file, int line)
 {
     void *ret = malloc(sz);
-    if (ret == 0) 
-	lose("malloc failed -- out of memory in %s line %d", file, line);
+    if (ret == 0)
+        lose("malloc failed -- out of memory in %s line %d", file, line);
     return ret;
 }
 
@@ -168,8 +168,8 @@ void *check_malloc(size_t sz, char *file, int line)
 void *check_calloc(size_t nobj, size_t sz, char *file, int line)
 {
     void *ret = calloc(nobj, sz);
-    if (ret == 0) 
-	lose("calloc failed -- out of memory in %s line %d", file, line);
+    if (ret == 0)
+        lose("calloc failed -- out of memory in %s line %d", file, line);
     return ret;
 }
 
@@ -177,7 +177,7 @@ void *check_calloc(size_t nobj, size_t sz, char *file, int line)
 void *check_realloc(void *ptr, size_t sz, char *file, int line)
 {
     void *ret = realloc(ptr, sz);
-    if (ret == 0) 
-	lose("realloc failed -- out of memory in %s line %d", file, line);
+    if (ret == 0)
+        lose("realloc failed -- out of memory in %s line %d", file, line);
     return ret;
 }

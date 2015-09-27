@@ -9,25 +9,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -38,7 +38,7 @@ copyright: see below
 // These variables are used to maintain a notion of the current error context.
 // When we print an error for the first time in some new context, we print
 // out the context first.
-// 
+//
 define variable *current-context* = #f;
 define variable *print-context* :: <boolean> = #f;
 
@@ -46,7 +46,7 @@ define variable *print-context* :: <boolean> = #f;
 //
 // Set the current error context.  The next time an error is printed, call
 // print-message on the context first.
-// 
+//
 define method note-context (context :: <object>) => ();
   *current-context* := context;
   *print-context* := #t;
@@ -56,7 +56,7 @@ end method note-context;
 //
 // Note that we have finished the current error context, so don't print
 // anything at the next error.
-// 
+//
 define method end-of-context () => ();
   *current-context* := #f;
   *print-context* := #f;
@@ -67,7 +67,7 @@ end method end-of-context;
 //
 // Superclass of all compiler conditions.  A compiler condition is some message
 // to the user of the compiler about something about their program.
-// 
+//
 define abstract class <compiler-condition> (<format-string-condition>)
   //
   // The source location this condition happened at.
@@ -81,14 +81,14 @@ define sealed domain initialize (<compiler-condition>);
 // report-condition{<compiler-condition>} -- method on imported GF.
 //
 // Print out the source location and the message.
-// 
+//
 define method condition-to-string
     (condition :: <compiler-condition>)
     => (string :: <string>);
   let stream = make(<string-stream>, direction: #"output");
   describe-source-location(condition.condition-at, stream);
   apply(format, stream, condition.condition-format-string,
-	condition.condition-format-arguments);
+        condition.condition-format-arguments);
   stream.stream-contents;
 end method condition-to-string;
 
@@ -96,7 +96,7 @@ end method condition-to-string;
 //
 // By default just report the condition.  But first, make sure we are starting
 // a new line and print the context if we haven't already.
-// 
+//
 define method default-handler (condition :: <compiler-condition>) => ();
   new-line(*standard-error*);
   if (*print-context*)
@@ -112,7 +112,7 @@ end method default-handler;
 // Things that are real problems with the program being compiled.  If any of
 // these are signaled, then consider the program broken and make sure the
 // exit status is non-zero when we finally exit.
-// 
+//
 define class <compiler-error> (<compiler-condition>)
 end class <compiler-error>;
 
@@ -121,7 +121,7 @@ define sealed domain make (singleton(<compiler-error>));
 // *errors* -- exported.
 //
 // The number of <compiler-error>s that have been signaled.
-// 
+//
 define variable *errors* :: <integer> = 0;
 
 // *break-on-compiler-errors* -- exported.
@@ -131,14 +131,14 @@ define variable *errors* :: <integer> = 0;
 // information to figure out what is wrong, so sometimes you have to tell
 // the compiler to dump you into the debugger so that you can poke around
 // yourself.
-// 
+//
 define variable *break-on-compiler-errors* :: <boolean> = #f;
 
 // default-handler{<compiler-error>} -- method on imported GF.
 //
 // Dink *errors* and report the error.  And break if *break-on-compiler-errors*
 // is true.
-// 
+//
 define method default-handler
     (error :: <compiler-error>, #next next-method) => ();
   *errors* := *errors* + 1;
@@ -154,7 +154,7 @@ end method default-handler;
 //
 // Things that are probably wrong with the program.  Signaling these does not
 // cause the compile to fail, but they probably should be fixed anyway.
-// 
+//
 define class <compiler-warning> (<compiler-condition>)
 end class <compiler-warning>;
 
@@ -163,13 +163,13 @@ define sealed domain make (singleton(<compiler-warning>));
 // *warnings* -- exported.
 //
 // The number of <compiler-warning>s signaled so far.
-// 
+//
 define variable *warnings* :: <integer> = 0;
 
 // default-handler{<compiler-warning>} -- method on imported GF.
 //
 // Dink *warnings* and report the warning.
-// 
+//
 define method default-handler
     (warning :: <compiler-warning>, #next next-method) => ();
   *warnings* := *warnings* + 1;
@@ -183,7 +183,7 @@ end method default-handler;
 // Restart used for recovering from fatal compiler errors.  After a fatal
 // compiler error is signaled, one of these restarts is signaled.  The current
 // handler is responsible for resuming compilation.
-// 
+//
 define class <fatal-error-recovery-restart> (<restart>)
 end class <fatal-error-recovery-restart>;
 
@@ -201,12 +201,12 @@ define method compiler-warning-location
      format-string :: <byte-string>, #rest format-arguments)
  => ();
   signal(make(<compiler-warning>,
-	      at: select (loc by instance?)
-		    <source-location> => loc;
-		    <source-location-mixin> => loc.source-location;
-		  end select,
-	      format-string: concatenate("Warning: ", format-string),
-	      format-arguments: format-arguments));
+              at: select (loc by instance?)
+                    <source-location> => loc;
+                    <source-location-mixin> => loc.source-location;
+                  end select,
+              format-string: concatenate("Warning: ", format-string),
+              format-arguments: format-arguments));
 end method compiler-warning-location;
 
 // compiler-error-location -- exported.
@@ -218,19 +218,19 @@ define function compiler-error-location
      format-string :: <byte-string>, #rest format-arguments)
  => ();
   signal(make(<compiler-error>,
-	      at: select (loc by instance?)
-		    <source-location> => loc;
-		    <source-location-mixin> => loc.source-location;
-		  end select,
-	      format-string: concatenate("Error: ", format-string),
-	      format-arguments: format-arguments));
+              at: select (loc by instance?)
+                    <source-location> => loc;
+                    <source-location-mixin> => loc.source-location;
+                  end select,
+              format-string: concatenate("Error: ", format-string),
+              format-arguments: format-arguments));
 end function;
 
 // compiler-fatal-error-location -- exported.
 //
 // Signals a compiler error, followed by a fatal-error-recovery-restart.  This
 // is used to signal compiler errors that can't be ignored by the compiler.
-// 
+//
 define function compiler-fatal-error-location
     (loc :: type-union(<source-location-mixin>, <source-location>),
      format-string :: <byte-string>, #rest format-arguments)
@@ -238,14 +238,14 @@ define function compiler-fatal-error-location
   apply(compiler-error-location, loc, format-string, format-arguments);
   signal(make(<fatal-error-recovery-restart>));
   error("handler for <fatal-error-recovery-restart> returned but isn't "
-	  "allowed to.");
+          "allowed to.");
 end function;
 
 // compiler-{warning,error,fatal-error} -- external.
 //
 // Call compiler-{warning,error}-location with any location we can extract
 // from the args.
-// 
+//
 define function compiler-warning(string, #rest args) => ();
   apply(compiler-warning-location, find-source-loc(args), string, args);
 end function;
@@ -262,12 +262,12 @@ end method;
 //
 // Look in the rest args, hoping to find an object with a source location.
 //
-define method find-source-loc (args :: <sequence>) 
+define method find-source-loc (args :: <sequence>)
     => res :: <source-location>;
   block (return)
     for (x in args)
       if (instance?(x, <source-location-mixin>))
-	return(x.source-location);
+        return(x.source-location);
       end;
     finally
       make(<unknown-source-location>);

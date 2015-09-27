@@ -39,4 +39,4 @@ END
 $time_lid_file = "$plat-time";
 
 &emit_library_rule($time_lid_file, '$(BUILDROOT)/force.timestamp', '',
-		     'compile', 'install');
+                   'compile', 'install');

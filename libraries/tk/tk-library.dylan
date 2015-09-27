@@ -6,32 +6,32 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
 // This file contains the library declarations for the "tk" library.  It
 // exports two modules:  "tk-internal" provides an informal "extension
 // protocol" for outside implementors, while "tk" provides all user level
-// functions. 
+// functions.
 //
 //======================================================================
 
@@ -59,7 +59,7 @@ define module tk-internal
 
   use streams;
   use standard-io;
-  
+
   use vector-search;
   use self-organizing-list;
 
@@ -67,7 +67,7 @@ define module tk-internal
 
   export
     // from tk-io.dylan
-    tk-as, tk-unquote, tk-quote, put-tk-line, 
+    tk-as, tk-unquote, tk-quote, put-tk-line,
     // from tk-util.dylan
     anonymous-name, make-option, join-tk-args, parse-tk-list,
     get-name-from-class, get-class-from-name,
@@ -89,9 +89,9 @@ define module tk
 
   use regular-expressions;
   use string-conversions;
-  
+
   use format;
-  
+
   use tk-internal,
     export: {<active-variable>, value, value-setter, tk-as, tk-unquote};
 
@@ -123,7 +123,7 @@ define module tk
   export // <entry>s
     icursor, xview;
   export // <listbox>s
-    // size, 
+    // size,
     current-selection, nearest, xview, yview, set-selection,
     selection-anchor-setter, clear-selection, selection-includes?;
   export // <menu>s
@@ -166,5 +166,5 @@ end module tk;
 define module tk-extension
   use tk-internal,
     export: {tk-as, put-tk-line, call-tk-function, join-tk-args, make-option,
-	       tk-quote, tk-unquote, anonymous-name, parse-tk-list};
+               tk-quote, tk-unquote, anonymous-name, parse-tk-list};
 end module tk-extension;

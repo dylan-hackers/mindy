@@ -7,7 +7,7 @@ end library threads;
 
 define module threads
   use dylan;
-  
+
   export dynamic-bind,
     <synchronization>, <exclusive-lock>,
     <semaphore>, <recursive-lock>,

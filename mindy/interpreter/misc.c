@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -74,34 +74,34 @@ static void dylan_apply(struct thread *thread, int nargs)
     boolean vector;
 
     if (!(vector = (class == obj_SimpleObjectVectorClass))
-	&& class != obj_EmptyListClass && class != obj_PairClass) {
-	/* It isn't a simple-object-vector nor a list, we have to defer. */
-	*dst++ = generic_apply_var->value;
-	while (src < end)
-	    *dst++ = *src++;
-	*dst++ = *src;
+        && class != obj_EmptyListClass && class != obj_PairClass) {
+        /* It isn't a simple-object-vector nor a list, we have to defer. */
+        *dst++ = generic_apply_var->value;
+        while (src < end)
+            *dst++ = *src++;
+        *dst++ = *src;
     }
     else {
-	/* Make sure the function is a function. */
-	check_type(*src, obj_FunctionClass);
+        /* Make sure the function is a function. */
+        check_type(*src, obj_FunctionClass);
 
-	/* Copy the function and the first n-1 args down the stack. */
-	while (src < end)
-	    *dst++ = *src++;
+        /* Copy the function and the first n-1 args down the stack. */
+        while (src < end)
+            *dst++ = *src++;
 
-	/* Spread the collection out on the stack. */
-	if (vector) {
-	    src = obj_ptr(struct sovec *, seq)->contents;
-	    end = src + obj_ptr(struct sovec *, seq)->length;
-	    while (src < end)
-		*dst++ = *src++;
-	}
-	else {
-	    while (seq != obj_Nil) {
-		*dst++ = HEAD(seq);
-		seq = TAIL(seq);
-	    }
-	}
+        /* Spread the collection out on the stack. */
+        if (vector) {
+            src = obj_ptr(struct sovec *, seq)->contents;
+            end = src + obj_ptr(struct sovec *, seq)->length;
+            while (src < end)
+                *dst++ = *src++;
+        }
+        else {
+            while (seq != obj_Nil) {
+                *dst++ = HEAD(seq);
+                seq = TAIL(seq);
+            }
+        }
     }
     thread->sp = dst;
     invoke(thread, dst - args);
@@ -122,9 +122,9 @@ static void dylan_apply_curry(struct thread *thread, int nargs)
     args[-1] = func;
 
     for (i = 0; i < len1; i++)
-	*args++ = SOVEC(vec1)->contents[i];
+        *args++ = SOVEC(vec1)->contents[i];
     for (i = 0; i < len2; i++)
-	*args++ = SOVEC(vec2)->contents[i];
+        *args++ = SOVEC(vec2)->contents[i];
 
     thread->sp = args;
 
@@ -159,9 +159,9 @@ static obj_t dylan_getenv(obj_t name)
     char *res = getenv((char *)string_chars(name));
 
     if (res)
-	return make_byte_string(res);
+        return make_byte_string(res);
     else
-	return obj_False;
+        return obj_False;
 }
 
 static obj_t dylan_getcwd()
@@ -169,11 +169,11 @@ static obj_t dylan_getcwd()
     char buf[MAXPATHLEN + 1];
 
     if (getcwd(buf, sizeof(buf)) == NULL)
-	error("Can't get the current directory: %s",
-	      make_byte_string(strerror(errno)));
+        error("Can't get the current directory: %s",
+              make_byte_string(strerror(errno)));
 
     return make_byte_string(buf);
-}	
+}
 
 
 /* Init stuff. */
@@ -182,48 +182,48 @@ void init_misc_functions(void)
 {
 #if ! NO_ARGV_0
     define_generic_function("main", list1(obj_ObjectClass),
-			    TRUE, obj_False, FALSE,
-			    obj_Nil, obj_ObjectClass);
+                            TRUE, obj_False, FALSE,
+                            obj_Nil, obj_ObjectClass);
 #else
     define_generic_function("main", obj_NIL, TRUE, obj_False, FALSE,
-			    obj_Nil, obj_ObjectClass);
+                            obj_Nil, obj_ObjectClass);
 #endif
     define_function("raw-exit", list1(obj_FixnumClass), FALSE, obj_False,
-		    FALSE, obj_ObjectClass, dylan_exit);
-    define_function("get-time-of-day", obj_Nil, FALSE, 
-		    obj_False, FALSE, obj_BignumClass, dylan_get_time_of_day);
+                    FALSE, obj_ObjectClass, dylan_exit);
+    define_function("get-time-of-day", obj_Nil, FALSE,
+                    obj_False, FALSE, obj_BignumClass, dylan_get_time_of_day);
     define_function("system", list1(obj_ByteStringClass), FALSE, obj_False,
-		    FALSE, obj_FixnumClass, dylan_system);
+                    FALSE, obj_FixnumClass, dylan_system);
     define_function("getenv", list1(obj_ByteStringClass), FALSE, obj_False,
-		    FALSE, obj_ObjectClass, dylan_getenv);
+                    FALSE, obj_ObjectClass, dylan_getenv);
     define_function("getcwd", obj_Nil, FALSE, obj_False,
-		    FALSE, obj_ByteStringClass, dylan_getcwd);
+                    FALSE, obj_ByteStringClass, dylan_getcwd);
     define_constant("invoke-debugger",
-		    make_raw_function("invoke-debugger", 
-				      list1(obj_ObjectClass),
-				      FALSE, obj_False,
-				      FALSE, obj_Nil, obj_ObjectClass,
-				      dylan_invoke_debugger));
+                    make_raw_function("invoke-debugger",
+                                      list1(obj_ObjectClass),
+                                      FALSE, obj_False,
+                                      FALSE, obj_Nil, obj_ObjectClass,
+                                      dylan_invoke_debugger));
     define_constant("values",
-		    make_raw_function("values", obj_Nil,
-				      TRUE, obj_False, FALSE,
-				      obj_Nil, obj_ObjectClass,
-				      dylan_values));
+                    make_raw_function("values", obj_Nil,
+                                      TRUE, obj_False, FALSE,
+                                      obj_Nil, obj_ObjectClass,
+                                      dylan_values));
     define_constant("apply",
-		    make_raw_function("apply", 
-				      list2(obj_FunctionClass, 
-					    obj_ObjectClass), 
-				      TRUE, obj_False, FALSE,
-				      obj_Nil, obj_ObjectClass,
-				      dylan_apply));
+                    make_raw_function("apply",
+                                      list2(obj_FunctionClass,
+                                            obj_ObjectClass),
+                                      TRUE, obj_False, FALSE,
+                                      obj_Nil, obj_ObjectClass,
+                                      dylan_apply));
     generic_apply_var = find_variable(module_BuiltinStuff,
-				      symbol("generic-apply"),
-				      FALSE, TRUE);
+                                      symbol("generic-apply"),
+                                      FALSE, TRUE);
     define_constant("apply-curry",
-		    make_raw_function("apply-curry", 
-				      list3(obj_FunctionClass, obj_SeqClass, 
-					    obj_SeqClass), 
-				      FALSE, obj_False,
-				      FALSE, obj_Nil, obj_ObjectClass,
-				      dylan_apply_curry));
+                    make_raw_function("apply-curry",
+                                      list3(obj_FunctionClass, obj_SeqClass,
+                                            obj_SeqClass),
+                                      FALSE, obj_False,
+                                      FALSE, obj_Nil, obj_ObjectClass,
+                                      dylan_apply_curry));
 }

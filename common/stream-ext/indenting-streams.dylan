@@ -6,25 +6,25 @@ author: William Lott
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -69,12 +69,12 @@ define method stream-at-end? (stream :: <indenting-stream>)
 end method stream-at-end?;
 
 define method do-get-output-buffer (stream :: <indenting-stream>,
-				    #key bytes :: <integer> = 1)
+                                    #key bytes :: <integer> = 1)
  => buf :: <buffer>;
   let buf :: <buffer> = stream.is-buffer;
   if (bytes > buf.size)
     error("Stream's buffer is not large enough to get %d bytes -- %=",
-	  bytes, stream);
+          bytes, stream);
   end;
   buf.buffer-next := 0;
   buf.buffer-end := buf.size;
@@ -103,92 +103,92 @@ define method indenting-stream-spew-output
     let buffer = stream.is-buffer;
     local
       method spew-n-chars (n :: <integer>, char :: <integer>)
-	let available :: <integer> = target-size - target-next;
-	while (available < n)
-	  for (i :: <integer> from target-next below target-size)
-	    target-buffer[i] := char;
-	  end;
-	  target-buffer.buffer-next := target-size;
-	  target-buffer := next-output-buffer(stream.inner-stream);
-	  // target-buffer may be different
-	  target-next := target-buffer.buffer-next;
-	  target-size := target-buffer.buffer-end;
-	  n := n - available;
-	  available := target-size - target-next;
-	end;
-	for (i :: <integer> from target-next below target-next + n)
-	  target-buffer[i] := char;
-	finally
-	  target-buffer.buffer-next := (target-next := i);
-	end;
+        let available :: <integer> = target-size - target-next;
+        while (available < n)
+          for (i :: <integer> from target-next below target-size)
+            target-buffer[i] := char;
+          end;
+          target-buffer.buffer-next := target-size;
+          target-buffer := next-output-buffer(stream.inner-stream);
+          // target-buffer may be different
+          target-next := target-buffer.buffer-next;
+          target-size := target-buffer.buffer-end;
+          n := n - available;
+          available := target-size - target-next;
+        end;
+        for (i :: <integer> from target-next below target-next + n)
+          target-buffer[i] := char;
+        finally
+          target-buffer.buffer-next := (target-next := i);
+        end;
       end,
       method spew-range (finish :: <integer>, start :: <integer>)
-	let n = finish - start;
-	let available = target-size - target-next;
-	if (available < n)
-	  copy-bytes(target-buffer, target-next, buffer, start, available);
-	  target-buffer.buffer-next := target-size;
-	  target-buffer := next-output-buffer(stream.inner-stream);
-	  // target-buffer may be different
-	  target-next := target-buffer.buffer-next;
-	  target-size := target-buffer.buffer-end;
-	  spew-range(finish, start + available);
-	else
-	  copy-bytes(target-buffer, target-next, buffer, start, n);
-	  target-buffer.buffer-next := (target-next := target-next + n);
-	end if;
+        let n = finish - start;
+        let available = target-size - target-next;
+        if (available < n)
+          copy-bytes(target-buffer, target-next, buffer, start, available);
+          target-buffer.buffer-next := target-size;
+          target-buffer := next-output-buffer(stream.inner-stream);
+          // target-buffer may be different
+          target-next := target-buffer.buffer-next;
+          target-size := target-buffer.buffer-end;
+          spew-range(finish, start + available);
+        else
+          copy-bytes(target-buffer, target-next, buffer, start, n);
+          target-buffer.buffer-next := (target-next := target-next + n);
+        end if;
       end method spew-range;
     local
       method do-indentation (index :: <integer>, col :: <integer>)
 // Return type declarations screw up tail calls
 //       => (after-newline :: <boolean>, column :: <integer>);
-	if (index == stop)
-	  values(#t, col);
-	else
-	  let char :: <integer> = buffer[index];
-	  if (char == $newline)
-	    spew-range(index + 1, index);
-	    do-indentation(index + 1, col);
-	  elseif (char == $tab)
-	    do-indentation(index + 1, col + 8 - modulo(col, 8));
-	  elseif (char == $space)
-	    do-indentation(index + 1, col + 1);
-	  else
-	    let (tabs, space) = floor/(stream.is-indentation + col, 8);
-	    spew-n-chars(tabs, $tab);
-	    spew-n-chars(space, $space);
-	    do-text(index, index, col);
-	  end if;
-	end if;
+        if (index == stop)
+          values(#t, col);
+        else
+          let char :: <integer> = buffer[index];
+          if (char == $newline)
+            spew-range(index + 1, index);
+            do-indentation(index + 1, col);
+          elseif (char == $tab)
+            do-indentation(index + 1, col + 8 - modulo(col, 8));
+          elseif (char == $space)
+            do-indentation(index + 1, col + 1);
+          else
+            let (tabs, space) = floor/(stream.is-indentation + col, 8);
+            spew-n-chars(tabs, $tab);
+            spew-n-chars(space, $space);
+            do-text(index, index, col);
+          end if;
+        end if;
       end method do-indentation,
       method do-text (index :: <integer>, start-index :: <integer>,
-		      col :: <integer>)
+                      col :: <integer>)
 // Return type declarations screw up tail calls
 //       => (after-newline :: <boolean>, column :: <integer>);
-	if (index == stop)
-	  spew-range(index, start-index);
-	  values(#f, col);
-	else
-	  let char :: <integer> = buffer[index];
-	  if (char == $tab)
-	    spew-range(index, start-index);
-	    let spaces = 8 - modulo(col, 8);
-	    spew-n-chars($space, spaces);
-	    do-text(index + 1, index + 1, col + spaces);
-	  elseif (char == $newline)
-	    spew-range(index + 1, start-index);
-	    do-indentation(index + 1, 0);
-	  else
-	    do-text(index + 1, start-index, col + 1);
-	  end if;
-	end if;
+        if (index == stop)
+          spew-range(index, start-index);
+          values(#f, col);
+        else
+          let char :: <integer> = buffer[index];
+          if (char == $tab)
+            spew-range(index, start-index);
+            let spaces = 8 - modulo(col, 8);
+            spew-n-chars($space, spaces);
+            do-text(index + 1, index + 1, col + spaces);
+          elseif (char == $newline)
+            spew-range(index + 1, start-index);
+            do-indentation(index + 1, 0);
+          else
+            do-text(index + 1, start-index, col + 1);
+          end if;
+        end if;
       end method do-text;
     let (new-after-newline?, new-column)
       = if (stream.is-after-newline?)
-	  do-indentation(0, stream.is-column);
-	else
-	  do-text(0, 0, stream.is-column);
-	end if;
+          do-indentation(0, stream.is-column);
+        else
+          do-text(0, 0, stream.is-column);
+        end if;
     release-output-buffer(stream.inner-stream);
     stream.is-after-newline? := new-after-newline?;
     stream.is-column := new-column;
@@ -204,12 +204,12 @@ define method do-release-output-buffer (stream :: <indenting-stream>)
 end;
 
 define method do-next-output-buffer (stream :: <indenting-stream>,
-				     #key bytes :: <integer> = 1)
+                                     #key bytes :: <integer> = 1)
  => buf :: <buffer>;
   let buf :: <buffer> = stream.is-buffer;
   if (bytes > buf.size)
     error("Stream's buffer is not large enough to get %d bytes -- %=",
-	  bytes, stream);
+          bytes, stream);
   end;
   indenting-stream-spew-output(stream, buf.buffer-next);
   buf.buffer-next := 0;
@@ -220,7 +220,7 @@ end;
 define method do-force-output-buffers (stream :: <indenting-stream>)
  => ();
   force-output-buffers(stream.inner-stream);
-end;  
+end;
 
 define method do-synchronize (stream :: <indenting-stream>)
  => ();

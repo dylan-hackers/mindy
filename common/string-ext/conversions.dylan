@@ -8,25 +8,25 @@ copyright: see below
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -46,7 +46,7 @@ end method check-base;
 // Integer-to-string checks a few special cases, and lets
 // positive-integer-to-string do the real work.
 //
-define method integer-to-string 
+define method integer-to-string
     (num :: <general-integer>, #key base = 10, uppercase = #f)
  => number :: <string>;
   check-base(base);
@@ -59,11 +59,11 @@ define method integer-to-string
   end if;
 end method integer-to-string;
 
-define method integer-to-string (num == $minimum-integer, 
-				 #key base = 10, uppercase = #f)
+define method integer-to-string (num == $minimum-integer,
+                                 #key base = 10, uppercase = #f)
  => number :: <string>;
-  integer-to-string(as(<extended-integer>, num), 
-		    base: base, uppercase: uppercase);
+  integer-to-string(as(<extended-integer>, num),
+                    base: base, uppercase: uppercase);
 end method integer-to-string;
 
 define method positive-integer-to-string
@@ -74,7 +74,7 @@ define method positive-integer-to-string
   else
     let low-digit = as(<integer>, modulo(num, base));
     add-last(positive-integer-to-string(truncate/(num, base), base, uppercase),
-	     integer-to-digit(low-digit, base: base, uppercase: uppercase));
+             integer-to-digit(low-digit, base: base, uppercase: uppercase));
   end if;
 end method positive-integer-to-string;
 
@@ -101,8 +101,8 @@ define method integer-to-digit
     8 => '8';
     9 => '9';
     otherwise =>
-      as(<character>, 
-	 integer - 10 + as(<integer>, if (uppercase) 'A' else 'a' end));
+      as(<character>,
+         integer - 10 + as(<integer>, if (uppercase) 'A' else 'a' end));
   end select;
 end method integer-to-digit;
 
@@ -174,15 +174,15 @@ define method string-to-number (string :: <sequence>, #key base: base = 10)
       '+' =>      negate := 1;
       '.' =>      seen-decimal := #t;
       otherwise =>
-	let digit = digit-to-integer(c);
-	if (digit >= base) 
-	  error("\"%s\" isn't in base %d", string, base);
-	elseif (seen-decimal)  
-	  decimal-divisor := decimal-divisor * base;
-	  number := number + as(<float>, digit) / as(<float>, decimal-divisor);
-	else 
-	  number := number * base  + digit;
-	end if;
+        let digit = digit-to-integer(c);
+        if (digit >= base)
+          error("\"%s\" isn't in base %d", string, base);
+        elseif (seen-decimal)
+          decimal-divisor := decimal-divisor * base;
+          number := number + as(<float>, digit) / as(<float>, decimal-divisor);
+        else
+          number := number * base  + digit;
+        end if;
     end select;
   end for;
 

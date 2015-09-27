@@ -6,9 +6,9 @@ Copyright:    Original Code is Copyright (c) 1998-2001 Functional Objects, Inc.
 License:      Functional Objects Library Public License Version 1.0
 Dual-license: GNU Lesser General Public License
 Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
-Files:	      library
+Files:        library
               bit-vector
-	      bit-set
+              bit-set
               collectors
               collectors-macros
               plists

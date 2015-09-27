@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -113,9 +113,9 @@ static int BytesConsedBetweenGCs = DEFAULT_BYTES_CONSED_BETWEEN_GCS;
 
 static struct space _Dynamic0Space
      = {0, NULL, NULL, NULL, NULL, 0, DEFAULT_BYTES_CONSED_BETWEEN_GCS,
-	    NULL, NULL, 1, NULL};
+            NULL, NULL, 1, NULL};
 #define Dynamic0Space (&_Dynamic0Space)
-static struct space _Dynamic1Space 
+static struct space _Dynamic1Space
     = {0, NULL, NULL, NULL, NULL, 0, 0, NULL, NULL, 1, NULL};
 #define Dynamic1Space (&_Dynamic1Space)
 
@@ -155,11 +155,11 @@ static struct variable *print_messages_var = NULL;
 static void add_reference(struct ref_list *list, obj_t *ref)
 {
     if (list->alloc == list->used) {
-	if (list->refs == NULL) {
-	    list->refs = malloc(sizeof(obj_t *) * (list->alloc = 32));
-	} else {
-	    list->refs = realloc(list->refs,
-				 sizeof(obj_t *) * (list->alloc *= 2));
+        if (list->refs == NULL) {
+            list->refs = malloc(sizeof(obj_t *) * (list->alloc = 32));
+        } else {
+            list->refs = realloc(list->refs,
+                                 sizeof(obj_t *) * (list->alloc *= 2));
         }
     }
     list->refs[list->used++] = ref;
@@ -168,7 +168,7 @@ static void add_reference(struct ref_list *list, obj_t *ref)
 void add_constant_root(obj_t *ref)
 {
     if (obj_is_ptr(*ref))
-	add_reference(ConstantRoots, ref);
+        add_reference(ConstantRoots, ref);
 }
 
 void add_variable_root(obj_t *ref)
@@ -189,10 +189,10 @@ static struct block *object_block(obj_t obj)
 static int bytes_in_use(struct space *space)
 {
     if (space->cur_block)
-	return (space->bytes_in_use
-		+ ((char *)space->cur_fill - (char *)space->cur_block->base));
+        return (space->bytes_in_use
+                + ((char *)space->cur_fill - (char *)space->cur_block->base));
     else
-	return space->bytes_in_use;
+        return space->bytes_in_use;
 }
 
 
@@ -203,46 +203,46 @@ static struct block *alloc_block(void)
     struct block *block;
 
     block = (struct block *)
-	mmap(NULL, BLOCK_SIZE * 2, PROT_READ | PROT_WRITE,
-	     MAP_ANONYMOUS | MAP_VARIABLE | MAP_PRIVATE,
-	     -1, 0);
+        mmap(NULL, BLOCK_SIZE * 2, PROT_READ | PROT_WRITE,
+             MAP_ANONYMOUS | MAP_VARIABLE | MAP_PRIVATE,
+             -1, 0);
     if (block == (void *)-1)
-	return NULL;
+        return NULL;
     if ((unsigned long)block & (BLOCK_SIZE-1)) {
-	struct block *aligned
-	    = (struct block *)(((unsigned long)block + BLOCK_SIZE)
-			       & ~(BLOCK_SIZE-1));
-	long before = (char *)aligned - (char *)block;
-	if (munmap((caddr_t)block, before))
-	    lose("munmap flamed.");
-	if (munmap((caddr_t)((char *)aligned + BLOCK_SIZE),
-		   BLOCK_SIZE - before))
-	    lose("munmap flamed.");
+        struct block *aligned
+            = (struct block *)(((unsigned long)block + BLOCK_SIZE)
+                               & ~(BLOCK_SIZE-1));
+        long before = (char *)aligned - (char *)block;
+        if (munmap((caddr_t)block, before))
+            lose("munmap flamed.");
+        if (munmap((caddr_t)((char *)aligned + BLOCK_SIZE),
+                   BLOCK_SIZE - before))
+            lose("munmap flamed.");
 
-	return aligned;
+        return aligned;
     }
     else {
-	struct block *extra = (struct block *)((char *)block + BLOCK_SIZE);
+        struct block *extra = (struct block *)((char *)block + BLOCK_SIZE);
 
-	extra->space = NULL;
-	extra->next = FreeBlocks;
-	extra->base = extra;
-	extra->end = (char *)extra + BLOCK_SIZE;
-	FreeBlocks = extra;
+        extra->space = NULL;
+        extra->next = FreeBlocks;
+        extra->base = extra;
+        extra->end = (char *)extra + BLOCK_SIZE;
+        FreeBlocks = extra;
 
-	return block;
+        return block;
     }
 #else
     struct block *block;
 
     block = (struct block *)
-	mmap(NULL, BLOCK_SIZE, PROT_READ | PROT_WRITE,
-	     MAP_ANONYMOUS | MAP_VARIABLE | MAP_PRIVATE,
-	     -1, 0);
+        mmap(NULL, BLOCK_SIZE, PROT_READ | PROT_WRITE,
+             MAP_ANONYMOUS | MAP_VARIABLE | MAP_PRIVATE,
+             -1, 0);
     if (block == (void *)-1)
-	return NULL;
+        return NULL;
     else
-	return block;
+        return block;
 #endif
 #else
     return malloc(BLOCK_SIZE);
@@ -254,15 +254,15 @@ static void grow_space (struct space *space)
     struct block *block;
 
     if (FreeBlocks) {
-	block = FreeBlocks;
-	FreeBlocks = block->next;
+        block = FreeBlocks;
+        FreeBlocks = block->next;
     }
     else {
-	block = alloc_block();
-	if (block == NULL)
-	    lose("Heap is full!\n");
-	block->base = (char *)block + ALIGN_DWORD(sizeof(struct block));
-	block->end = (char *)block + BLOCK_SIZE;
+        block = alloc_block();
+        if (block == NULL)
+            lose("Heap is full!\n");
+        block->base = (char *)block + ALIGN_DWORD(sizeof(struct block));
+        block->end = (char *)block + BLOCK_SIZE;
     }
 #if PURIFY
     block->space = space;
@@ -271,17 +271,17 @@ static void grow_space (struct space *space)
 
     /* Do we already have some blocks in this space? */
     if (space->blocks) {
-	/* Yes, so finish off the old block and point it at the new. */
-	space->bytes_in_use
-	    += (char *)space->cur_fill - (char *)space->cur_block->base;
-	space->cur_block->fill = space->cur_fill;
-	space->cur_block->next = block;
-	if (space->gc_trigger && space->bytes_in_use > space->gc_trigger)
-	    TimeToGC = TRUE;
+        /* Yes, so finish off the old block and point it at the new. */
+        space->bytes_in_use
+            += (char *)space->cur_fill - (char *)space->cur_block->base;
+        space->cur_block->fill = space->cur_fill;
+        space->cur_block->next = block;
+        if (space->gc_trigger && space->bytes_in_use > space->gc_trigger)
+            TimeToGC = TRUE;
     }
     else
-	/* No, so just make this this first block. */
-	space->blocks = block;
+        /* No, so just make this this first block. */
+        space->blocks = block;
 
     space->n_blocks++;
     space->cur_block = block;
@@ -294,22 +294,22 @@ static void *raw_alloc(int bytes, struct space *space)
     void *result;
 
     if (bytes < 0)
-	/* We don't return NULL because trying to allocate a negative number */
-	/* of bytes is a sign that something real bad is trying to happen. */
-	lose("Can't allocate a negative number of bytes: %d", bytes);
+        /* We don't return NULL because trying to allocate a negative number */
+        /* of bytes is a sign that something real bad is trying to happen. */
+        lose("Can't allocate a negative number of bytes: %d", bytes);
 
     /* round bytes up to the next dual-word boundy. */
     bytes = ALIGN_DWORD(bytes);
 
     /* check to see if the object fits in the current block */
     if ((char *)space->cur_fill + bytes > (char *)space->cur_end) {
-	/* check to see if it can fit in a block. */
-	if (bytes > BLOCK_SIZE - ALIGN_DWORD(sizeof(struct block))) {
-	    /* it can't fit, so complain it is too large. */
-	    return NULL;
-	} else {
-	    /* extend the space by another block. */
-	    grow_space(space);
+        /* check to see if it can fit in a block. */
+        if (bytes > BLOCK_SIZE - ALIGN_DWORD(sizeof(struct block))) {
+            /* it can't fit, so complain it is too large. */
+            return NULL;
+        } else {
+            /* extend the space by another block. */
+            grow_space(space);
         }
     }
     result = space->cur_fill;
@@ -328,13 +328,13 @@ obj_t alloc(obj_t class, int bytes)
     obj_t result;
 
     if (class == NULL)
-	lose("Tried to allocate a class that hasn't been created yet.");
+        lose("Tried to allocate a class that hasn't been created yet.");
 
 #ifdef GD_DEBUG
 
     if (class != ptr_obj(NULL)
-	  && *obj_ptr(unsigned long *, class) == COLLECTED_COOKIE)
-	lose("Tried to allocate a class that wasn't scavenged.");
+          && *obj_ptr(unsigned long *, class) == COLLECTED_COOKIE)
+        lose("Tried to allocate a class that wasn't scavenged.");
 
     ptr = raw_alloc(bytes + sizeof(unsigned long)*2, CurrentSpace);
 #else
@@ -342,9 +342,9 @@ obj_t alloc(obj_t class, int bytes)
 #endif
 
     if (ptr == NULL)
-	error("Can't allocate %d bytes for %s",
-	      make_fixnum(bytes),
-	      CLASS(class)->debug_name);
+        error("Can't allocate %d bytes for %s",
+              make_fixnum(bytes),
+              CLASS(class)->debug_name);
 
 #ifdef GD_DEBUG
     ptr[0] = ALLOC_HEADER_COOKIE;
@@ -369,10 +369,10 @@ void shrink(obj_t obj, int old_bytes, int new_bytes)
         lose("Bogus pointer passed to shrink().");
 
     if (ptr[1] != old_bytes)
-	lose("Someone lied to shrink about the old size.");
+        lose("Someone lied to shrink about the old size.");
 
     if (new_bytes > old_bytes)
-	lose("Can't shrink a %d byte object to %d bytes.", ptr[1], new_bytes);
+        lose("Can't shrink a %d byte object to %d bytes.", ptr[1], new_bytes);
 
     ptr[1] = new_bytes;
 #endif
@@ -390,16 +390,16 @@ void scavenge(obj_t *addr)
 
     if (obj_is_ptr(obj)
 #if PURIFY
-	&& object_block(obj)->space == OldSpace
+        && object_block(obj)->space == OldSpace
 #endif
-	) {
-	obj_t class = obj_ptr(struct object *, obj)->class;
-	if (class == ForwardingMarker) {
-	    *addr = obj_ptr(struct forwarding_pointer *, obj)->new_value;
-	} else {
-	    ASSERT_VALID_OBJ(class);
-	    *addr = obj_ptr(struct class *, class)->transport(obj);
-	}
+        ) {
+        obj_t class = obj_ptr(struct object *, obj)->class;
+        if (class == ForwardingMarker) {
+            *addr = obj_ptr(struct forwarding_pointer *, obj)->new_value;
+        } else {
+            ASSERT_VALID_OBJ(class);
+            *addr = obj_ptr(struct class *, class)->transport(obj);
+        }
     }
 }
 
@@ -417,27 +417,27 @@ obj_t transport(obj_t obj, int bytes, boolean read_only)
 
 #ifdef GD_DEBUG
     if (ptr[0] != ALLOC_HEADER_COOKIE)
-	lose("Someone called transport with a bogus object.");
+        lose("Someone called transport with a bogus object.");
     if (ptr[1] != bytes)
-	lose("Someone told transport that %d byte object was %d bytes.",
-	     ptr[1], bytes);
+        lose("Someone told transport that %d byte object was %d bytes.",
+             ptr[1], bytes);
 
     raw_bytes += sizeof(long)*2;
 
 #endif
 #if PURIFY
     if (Purifying) {
-	if (read_only) {
-	    new = raw_alloc(raw_bytes, ReadOnlySpace);
-	} else {
-	    new = raw_alloc(raw_bytes, StaticSpace);
+        if (read_only) {
+            new = raw_alloc(raw_bytes, ReadOnlySpace);
+        } else {
+            new = raw_alloc(raw_bytes, StaticSpace);
         }
     } else
 #endif
-	new = raw_alloc(raw_bytes, NewSpace);
+        new = raw_alloc(raw_bytes, NewSpace);
 
     if (new == NULL)
-	lose("raw_alloc failed during GC");
+        lose("raw_alloc failed during GC");
 
 #ifdef GD_DEBUG
     new_obj = ptr_obj(new + 2);
@@ -458,15 +458,15 @@ static void scavenge_ref_list(struct ref_list *list)
     int i;
 
     for (i = 0; i < list->used; i++)
-	scavenge(list->refs[i]);
+        scavenge(list->refs[i]);
 }
 
 
 /* This is called after all top-level root objects have been moved into the
-   new heap.  This goes after the contained objects by calling the 
+   new heap.  This goes after the contained objects by calling the
    class-specific scavenger on each object and having it move additional
    objects into the end of the heap.  These objects will be encountered later
-   by the still-running scavenge space and processed recursively.  The net 
+   by the still-running scavenge space and processed recursively.  The net
    effect is a breadth-first search & copy. */
 static boolean scavenge_space(struct space *space)
 {
@@ -477,38 +477,38 @@ static boolean scavenge_space(struct space *space)
     int bytes;
 
     if (block == space->cur_block && ptr >= space->cur_fill)
-	return FALSE;
+        return FALSE;
 
     while (block != NULL) {
-	/* The reason for this double loop is so that we don't have to */
-	/* do the block->next conditional each time around the inner loop. */
-	while (ptr < (end = (block->next ? block->fill : space->cur_fill))) {
-	    do {
+        /* The reason for this double loop is so that we don't have to */
+        /* do the block->next conditional each time around the inner loop. */
+        while (ptr < (end = (block->next ? block->fill : space->cur_fill))) {
+            do {
 #ifdef GD_DEBUG
-		unsigned long *header = ptr;
-		if (header[0] != ALLOC_HEADER_COOKIE)
-		    lose("Scavenge_space found a bogus object.");
+                unsigned long *header = ptr;
+                if (header[0] != ALLOC_HEADER_COOKIE)
+                    lose("Scavenge_space found a bogus object.");
                 ptr = (char *)ptr + sizeof(long)*2;
 #endif
-		scavenge((obj_t *)ptr);
-		class = *(obj_t *)ptr;
-		bytes = obj_ptr(struct class *, class)->scavenge(ptr);
+                scavenge((obj_t *)ptr);
+                class = *(obj_t *)ptr;
+                bytes = obj_ptr(struct class *, class)->scavenge(ptr);
 #ifdef GD_DEBUG
-		if (header[1] != bytes)
-		    lose("Some scavenger claimed a %d byte object "
-			 "was %d bytes.",
-			 header[1], bytes);
+                if (header[1] != bytes)
+                    lose("Some scavenger claimed a %d byte object "
+                         "was %d bytes.",
+                         header[1], bytes);
 #endif
-		ptr = (char *)ptr + ALIGN_DWORD(bytes);
-	    } while (ptr < end);
-	}
-	space->scan_block = block;
-	space->scan_ptr = ptr;
+                ptr = (char *)ptr + ALIGN_DWORD(bytes);
+            } while (ptr < end);
+        }
+        space->scan_block = block;
+        space->scan_ptr = ptr;
 
-	block = block->next;
-	if (block != NULL) {
-	    ptr = block->base;
-	}
+        block = block->next;
+        if (block != NULL) {
+            ptr = block->base;
+        }
     }
 
     return TRUE;
@@ -530,28 +530,28 @@ void collect_garbage(boolean purify)
 
     if (print_message) {
 #if PURIFY
-	if (purify) {
-	    sprintf(strbuf, "[Purifying with %d bytes (%d blocks) in use...",
-		    bytes_at_start, blocks_at_start);
-	} else
+        if (purify) {
+            sprintf(strbuf, "[Purifying with %d bytes (%d blocks) in use...",
+                    bytes_at_start, blocks_at_start);
+        } else
 #endif
-	    sprintf(strbuf, "[GCing with %d bytes (%d blocks) in use...",
-		    bytes_at_start, blocks_at_start);
-	fputs(strbuf, stderr);
-	fflush(stderr);
+            sprintf(strbuf, "[GCing with %d bytes (%d blocks) in use...",
+                    bytes_at_start, blocks_at_start);
+        fputs(strbuf, stderr);
+        fflush(stderr);
     }
 
     OldSpace = CurrentSpace;
     if (OldSpace == Dynamic0Space)
-	NewSpace = Dynamic1Space;
+        NewSpace = Dynamic1Space;
     else
-	NewSpace = Dynamic0Space;
+        NewSpace = Dynamic0Space;
     CurrentSpace = NULL;
 
     weak_pointer_gc_setup();
     if (OldSpace->hash_state != NULL) {
-	invalidate_hash_state(OldSpace->hash_state);
-	OldSpace->hash_state = NULL;
+        invalidate_hash_state(OldSpace->hash_state);
+        OldSpace->hash_state = NULL;
     }
 
     /* These all go through the first level of their in-mindy-heap objects
@@ -568,32 +568,32 @@ void collect_garbage(boolean purify)
     scavenge_ref_list(VariableRoots);
 #if PURIFY
     if (ReadOnlySpace->hash_state != NULL)
-	scavenge(&ReadOnlySpace->hash_state);
+        scavenge(&ReadOnlySpace->hash_state);
     if (StaticSpace->hash_state != NULL)
-	scavenge(&StaticSpace->hash_state);
+        scavenge(&StaticSpace->hash_state);
 
     StaticSpace->scan_block = StaticSpace->blocks;
     StaticSpace->scan_ptr = StaticSpace->scan_block->base;
     if (purify) {
-	if (ReadOnlySpace->scan_block == NULL) {
-	    ReadOnlySpace->scan_block = ReadOnlySpace->blocks;
-	    ReadOnlySpace->scan_ptr = ReadOnlySpace->scan_block->base;
-	}
-	ConstantRoots->used = 0;
-	/* Note: we want a logical or here so that we scavenge both each */
-	/* time though the loop. */
-	while (scavenge_space(ReadOnlySpace) | scavenge_space(StaticSpace))
-	    ;
+        if (ReadOnlySpace->scan_block == NULL) {
+            ReadOnlySpace->scan_block = ReadOnlySpace->blocks;
+            ReadOnlySpace->scan_ptr = ReadOnlySpace->scan_block->base;
+        }
+        ConstantRoots->used = 0;
+        /* Note: we want a logical or here so that we scavenge both each */
+        /* time though the loop. */
+        while (scavenge_space(ReadOnlySpace) | scavenge_space(StaticSpace))
+            ;
     }
     else {
-	scavenge_space(StaticSpace);
-	NewSpace->scan_block = NewSpace->blocks;
-	NewSpace->scan_ptr = NewSpace->scan_block->base;
-	scavenge_space(NewSpace);
-	if (scavenge_space(ReadOnlySpace))
-	    lose("A regular GC added something to read only space?");
-	if (scavenge_space(StaticSpace))
-	    lose("A regular GC added something to static space?");
+        scavenge_space(StaticSpace);
+        NewSpace->scan_block = NewSpace->blocks;
+        NewSpace->scan_ptr = NewSpace->scan_block->base;
+        scavenge_space(NewSpace);
+        if (scavenge_space(ReadOnlySpace))
+            lose("A regular GC added something to read only space?");
+        if (scavenge_space(StaticSpace))
+            lose("A regular GC added something to static space?");
     }
 #else
     NewSpace->scan_block = NewSpace->blocks;
@@ -605,26 +605,26 @@ void collect_garbage(boolean purify)
 
 #ifdef GD_DEBUG
     {
-	struct block *block, *next;
-	for (block = OldBlocks; block != NULL; block = next) {
-	    next = block->next;
-	    block->next = FreeBlocks;
-	    FreeBlocks = block;
-	}
-	OldBlocks = NULL;
-	for (block = OldSpace->blocks; block != NULL; block = next) {
-	    unsigned long *ptr;
-	    next = block->next;
-	    block->next = OldBlocks;
-	    OldBlocks = block;
-	    for (ptr = block->base; ptr < (unsigned long *)block->end; ptr++)
-		*ptr = COLLECTED_COOKIE;
-	}
+        struct block *block, *next;
+        for (block = OldBlocks; block != NULL; block = next) {
+            next = block->next;
+            block->next = FreeBlocks;
+            FreeBlocks = block;
+        }
+        OldBlocks = NULL;
+        for (block = OldSpace->blocks; block != NULL; block = next) {
+            unsigned long *ptr;
+            next = block->next;
+            block->next = OldBlocks;
+            OldBlocks = block;
+            for (ptr = block->base; ptr < (unsigned long *)block->end; ptr++)
+                *ptr = COLLECTED_COOKIE;
+        }
     }
 #else
     if (OldSpace->blocks != NULL) {
-	OldSpace->cur_block->next = FreeBlocks;
-	FreeBlocks = OldSpace->blocks;
+        OldSpace->cur_block->next = FreeBlocks;
+        FreeBlocks = OldSpace->blocks;
     }
 #endif
     OldSpace->n_blocks = 0;
@@ -647,28 +647,28 @@ void collect_garbage(boolean purify)
 
     if (print_message) {
 #if PURIFY
-	if (purify)
-	    sprintf(strbuf, "finished with %d bytes (%d blocks) permanent]\n",
-		    bytes_in_use(StaticSpace) + bytes_in_use(ReadOnlySpace),
-		    StaticSpace->n_blocks + ReadOnlySpace->n_blocks);
-	else
+        if (purify)
+            sprintf(strbuf, "finished with %d bytes (%d blocks) permanent]\n",
+                    bytes_in_use(StaticSpace) + bytes_in_use(ReadOnlySpace),
+                    StaticSpace->n_blocks + ReadOnlySpace->n_blocks);
+        else
 #endif
-	    sprintf(strbuf, "reclaimed %d leaving %d (%d blocks)]\n",
-		    bytes_at_start - bytes_at_end,
-		    bytes_at_end, CurrentSpace->n_blocks);
-	fputs(strbuf, stderr);
-	fflush(stderr);
+            sprintf(strbuf, "reclaimed %d leaving %d (%d blocks)]\n",
+                    bytes_at_start - bytes_at_end,
+                    bytes_at_end, CurrentSpace->n_blocks);
+        fputs(strbuf, stderr);
+        fflush(stderr);
 #if PURIFY
-	{
-	    int bytes = bytes_at_start + bytes_at_end + bytes_in_use(StaticSpace) + bytes_in_use(ReadOnlySpace);
-	    int blocks = blocks_at_start + CurrentSpace->n_blocks + StaticSpace->n_blocks + ReadOnlySpace->n_blocks;
-	    sprintf(strbuf,
-		    "[overall heap, %d bytes, %d blocks, density %2.4f%%.]\n",
-		    bytes, blocks,
-		    (double)bytes * 100 / (blocks * BLOCK_SIZE));
-	    fputs(strbuf, stderr);
-	    fflush(stderr);
-	}
+        {
+            int bytes = bytes_at_start + bytes_at_end + bytes_in_use(StaticSpace) + bytes_in_use(ReadOnlySpace);
+            int blocks = blocks_at_start + CurrentSpace->n_blocks + StaticSpace->n_blocks + ReadOnlySpace->n_blocks;
+            sprintf(strbuf,
+                    "[overall heap, %d bytes, %d blocks, density %2.4f%%.]\n",
+                    bytes, blocks,
+                    (double)bytes * 100 / (blocks * BLOCK_SIZE));
+            fputs(strbuf, stderr);
+            fflush(stderr);
+        }
 #endif
     }
 }
@@ -680,7 +680,7 @@ boolean object_collected(obj_t obj)
 {
 #if PURIFY
     return object_block(obj)->space == OldSpace
-	&& obj_ptr(struct object *, obj)->class != ForwardingMarker;
+        && obj_ptr(struct object *, obj)->class != ForwardingMarker;
 #else
     return obj_ptr(struct object *, obj)->class != ForwardingMarker;
 #endif
@@ -697,7 +697,7 @@ obj_t pointer_hash_state(obj_t pointer)
 #endif
 
     if (space->hash_state == NULL)
-	space->hash_state = make_hash_state(space->volatility);
+        space->hash_state = make_hash_state(space->volatility);
 
     return space->hash_state;
 }
@@ -722,30 +722,30 @@ void init_gc_functions(void)
 
     define_variable(module_BuiltinStuff, namesym, var_Variable);
     print_messages_var = find_variable(module_BuiltinStuff, namesym,
-				       FALSE, TRUE);
+                                       FALSE, TRUE);
     print_messages_var->function = func_No;
     print_messages_var->type = obj_BooleanClass;
     print_messages_var->value = obj_False;
 
     define_constant("collect-garbage",
-		    make_raw_method("collect-garbage", obj_Nil, FALSE,
-				    list1(pair(symbol("purify"), obj_False)),
-				    FALSE, obj_Nil, obj_False, dylan_gc));
+                    make_raw_method("collect-garbage", obj_Nil, FALSE,
+                                    list1(pair(symbol("purify"), obj_False)),
+                                    FALSE, obj_Nil, obj_False, dylan_gc));
 
     {
-	char *str = getenv("BYTES_CONSED_BETWEEN_GCS");
+        char *str = getenv("BYTES_CONSED_BETWEEN_GCS");
 
-	if (str) {
-	    int bcbgcs = atoi(str);
-	    if (bcbgcs < DEFAULT_BYTES_CONSED_BETWEEN_GCS) {
-		fprintf(stderr,
-			"Bogus value for BYTES_CONSED_BETWEEN_GCS, using %d\n",
-			DEFAULT_BYTES_CONSED_BETWEEN_GCS);
-	    }
-	    else {
-		CurrentSpace->gc_trigger += bcbgcs - BytesConsedBetweenGCs;
-		BytesConsedBetweenGCs = bcbgcs;
-	    }
-	}
+        if (str) {
+            int bcbgcs = atoi(str);
+            if (bcbgcs < DEFAULT_BYTES_CONSED_BETWEEN_GCS) {
+                fprintf(stderr,
+                        "Bogus value for BYTES_CONSED_BETWEEN_GCS, using %d\n",
+                        DEFAULT_BYTES_CONSED_BETWEEN_GCS);
+            }
+            else {
+                CurrentSpace->gc_trigger += bcbgcs - BytesConsedBetweenGCs;
+                BytesConsedBetweenGCs = bcbgcs;
+            }
+        }
     }
 }

@@ -35,5 +35,5 @@ if ($features{'compiled_for_cygnus'}) {
 
 &emit_library_rule(
     'network', '$(BUILDROOT)/force.timestamp', '', 'compile',
-	'no-mindy', 'install');
+    'no-mindy', 'install');
 

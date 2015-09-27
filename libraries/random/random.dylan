@@ -6,25 +6,25 @@ author: Nick Kramer (nkramer@cs.cmu.edu)
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -86,22 +86,22 @@ end class <threadsafe-random-state>;
 // Seed with the system clock
 //
 define method initialize
-    (state :: <random-state>, #next next-method, 
+    (state :: <random-state>, #next next-method,
      #key seed :: <integer> = modulo( get-time-of-day(), random-upper-bound ) )//as(<integer>, get-time-of-day()))
     => ();
   next-method();
   local method rand1 () => random-number :: <integer>;
-	  seed := as(<integer>,
-		     modulo(as(<extended-integer>, seed) * random-const-a
-			      + random-const-c,
-			    random-upper-bound + 1));
-	end method rand1;
+          seed := as(<integer>,
+                     modulo(as(<extended-integer>, seed) * random-const-a
+                              + random-const-c,
+                            random-upper-bound + 1));
+        end method rand1;
   let seed-vec = state.state-seed;
   for (i :: <integer> from 0 to random-max)
     seed-vec[i] := rand1();
   end;
 end method initialize;
-		     
+
 define variable *random-state* = make(<random-state>);
 
 define method shallow-copy (state :: <random-state>)
@@ -115,13 +115,13 @@ end method shallow-copy;
 
 // random-chunk  --  Internal
 //
-// This function generates fixnums between 0 and random-upper-bound, 
-// inclusive.  For the algorithm to work random-upper-bound must be an 
+// This function generates fixnums between 0 and random-upper-bound,
+// inclusive.  For the algorithm to work random-upper-bound must be an
 // even positive fixnum.  State is the random state to use.
 //
 define method random-chunk (state :: <random-state>)
  => number :: <integer>;
-  if (instance?(state, <threadsafe-random-state>)) 
+  if (instance?(state, <threadsafe-random-state>))
     grab-lock(state.mutex);
   end if;
   let seed = state.state-seed;
@@ -151,22 +151,22 @@ define constant random-integer-extra-bits = 10;
 
 // Largest fixnum we can compute from one chunk of bits.
 //
-define constant random-fixnum-max 
+define constant random-fixnum-max
   = ash(1, random-chunk-length - random-integer-extra-bits) - 1;
 
 // Interface to the outside world:
 
-define method random (arg :: <general-integer>, #key state = *random-state*) 
+define method random (arg :: <general-integer>, #key state = *random-state*)
  => random-number :: <general-integer>;
   let shift = random-chunk-length - random-integer-overlap;
   if (arg <= random-fixnum-max)
     remainder(random-chunk(state), arg);
   else
     for (bits = as(<extended-integer>, random-chunk(state))
-	   then logxor(ash(bits, shift), random-chunk(state)),
-	 count = arg.integer-length + (random-integer-extra-bits - shift)
-	   then count - shift,
-	 until: count < 0)
+           then logxor(ash(bits, shift), random-chunk(state)),
+         count = arg.integer-length + (random-integer-extra-bits - shift)
+           then count - shift,
+         until: count < 0)
     finally
       remainder(bits, arg);
     end for;
@@ -176,7 +176,7 @@ end method random;
 define constant $random-bits-count
   = random-chunk-length - random-integer-extra-bits;
 
-define method random-bits (#key state = *random-state*) 
+define method random-bits (#key state = *random-state*)
  => bits :: <integer>;
   ash(random-chunk(*random-state*), - random-integer-extra-bits);
 end method random-bits;
@@ -201,25 +201,25 @@ end method random-float;
 // generated using two uniform distributions, A and B.  Numbers from a
 // normal distribution with mean 0 and standard deviation (or sigma) 1
 // can be found using this formula:
-// 
+//
 //                                1/2
-// 		   X = (- 2 ln(A))    cos(2 pi B).
-// 
+//                    X = (- 2 ln(A))    cos(2 pi B).
+//
 // This distribution can be transformed to a distribution with mean m
 // and sigma o by a linear function.
 //
-//			     Y = o X + m
+//                             Y = o X + m
 //
 // Generates a normal distribution with mean 0 and sigma 1 from two
 // numbers chosen from a unit uniform distribution, then applies the
 // linear transformation to adjust to the real mean and sigma of the
 // desired distribution.
-// 
-define method random-gaussian (#key mean = 0, standard-deviation = 1, 
-			       state = *random-state*)
+//
+define method random-gaussian (#key mean = 0, standard-deviation = 1,
+                               state = *random-state*)
  => random :: <float>;
   let unit-gaussian
-    = sqrt(-2 * log(random-float(1.0, state: state))) 
+    = sqrt(-2 * log(random-float(1.0, state: state)))
               * cos(2 * $double-pi * random-float(1.0, state: state));
    standard-deviation * unit-gaussian + mean;
 end method random-gaussian;
@@ -230,7 +230,7 @@ end method random-gaussian;
 // described by
 //
 //                                 -lx
-//		       F(x) = 1 - e      x > 0
+//                       F(x) = 1 - e      x > 0
 //
 // An exponential distribution X can be generated from a unit uniform
 // distribution U using a transformation.  That is, a number u from
@@ -261,22 +261,22 @@ end method random-exponential;
 // uniform random number generator.  It takes a function which takes
 // one parameter, like random(), and the upper bound of the range to
 // calculate over, and returns the chi square value for the generator.
-// 
+//
 // The chi square value of a integer uniform distribution on [0, r] is
 // found by taking the sum of the squares of the difference between
 // the frequencies of the elements of the distribution and the mean
 // frequency.  The mean frequency is the number of samples divided by
 // the number of elements in the interval (N / r).  For this to work,
 // N should be at least 10 r.
-// 
+//
 // This function sets up a frequency array and generates N random
 // numbers and fills in their frequencies.  It then calculates the chi
 // square value of the distribution.
-// 
+//
 // The chi square value should be no farther from r than twice the
 // square root of r.
 //
-define method chi-square 
+define method chi-square
     (generator :: <function>, r :: <general-integer>) => chi-square :: <number>;
   let N = 10 * r;
   let f = as(<double-float>, N) / as(<double-float>, r);

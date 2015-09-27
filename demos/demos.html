@@ -20,7 +20,7 @@ mk-build-tree
 </SAMP>
 then there will be makefiles in the demo build directories which will compile
 the demos.  We don't go into too much detail here about how to build these
-demos, see the documentation for 
+demos, see the documentation for
 <A HREF="http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/maker-out/mindy.htm">mindy</A>
 and
 <A HREF="http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/htdocs/d2c.html">
@@ -30,7 +30,7 @@ d2c</A>
 <HR>
 <H2><A HREF="hello-world/hello-world.dylan" NAME=HW>hello-world</A></H2>
 
-This is the canonical "hello, world" demo.  Type 
+This is the canonical "hello, world" demo.  Type
 <PRE>
   mindycomp -lhello-world hello-world-exports.dylan
   mindycomp -lhello-world hello-world.dylan
@@ -48,7 +48,7 @@ to run it under d2c.
 <H2><A HREF="cat/cat.dylan">cat</A></H2>
 
 This program demonstrates buffered stream I/O by duplicating the UNIX (tm)
-"cat" utility.  See also 
+"cat" utility.  See also
 <A HREF="stream-demo/stream-demo.dylan">stream-demo</A> for more basic usage.
 
 Usage is typical for a unix program.  It may be invoked either with a
@@ -74,7 +74,7 @@ You could then simply type:
 </PRE>
 You must, of course, remember to specify the DYLANDIR environment variable so
 that it points to directories containing all of the relevant libraries.  (This
-demo uses only "dylan" and "streams", but the "html2txt" demo also uses 
+demo uses only "dylan" and "streams", but the "html2txt" demo also uses
 "collection-extensions".)
 <P>
 
@@ -96,7 +96,7 @@ Usage:
   mindy -f diff-lib.dbc file1 file2
 </PRE>
 <P>
-<SAMP>diff-lib.dbc</SAMP> is created by the 
+<SAMP>diff-lib.dbc</SAMP> is created by the
 <A HREF="http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/htdocs/tools.html">
 Makegen
 </A>
@@ -112,7 +112,7 @@ standard Unix diff.
 You must, of course, remember to specify the DYLANDIR environment variable so
 that it points to directories containing all of the relevant libraries.  (This
 demo uses "dylan", "streams", "format", and "collection-extensions")
-The build procedure is similar to 
+The build procedure is similar to
 <P>
 
 <HR>
@@ -125,15 +125,15 @@ demonstration of a "real" (albeit small) Dylan (tm) program.  Note that this
 demo only understands HTML 2.0.
 
 <P>
-Usage is similar to "cat" above, except that it does not support the "-" 
+Usage is similar to "cat" above, except that it does not support the "-"
 argument.  You may therefore set of files on the command line or use
 standard input by specifying no command line arguments
 <PRE>
   mindy -f html2txt-lib.dbc file1.html file2.html ....
   mindy -f cat-lib.dbc file1.html file2.html | mindy -f html2txt-lib.dbc
 </PRE>
-At present, "html2txt" accepts no command line switches, although the 
-behavior may be changed by changing several constant declarations towards 
+At present, "html2txt" accepts no command line switches, although the
+behavior may be changed by changing several constant declarations towards
 the top of the source file.
 <P>
 A useful test case for this program is this file (<SAMP>demos.html</SAMP>).
@@ -191,7 +191,7 @@ Under Mindy, you can run this as the other demos:
   mindy -f library-demo-lib.dbc
 </PRE>
 Note however that <SAMP>library-demo-lib.dbc</SAMP> does <EM>not</EM> include
-the <CODE>Fact</CODE> library.  Instead this is demand-loaded by searching on 
+the <CODE>Fact</CODE> library.  Instead this is demand-loaded by searching on
 <SAMP>DYLANPATH</SAMP> for <SAMP>fact-lib.dbc</SAMP> (preferrably) or
 <SAMP>fact.dbc</SAMP>.  Sometimes you can get in trouble if the
 <SAMP>-lib.dbc</SAMP> file doesn't appear in <SAMP>DYLANPATH</SAMP> before some

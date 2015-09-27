@@ -7,7 +7,7 @@ copyright:   2000, LGPL
 // element in the directory (except . and ..)
 
 // Most of this module does not work on cygnus platforms, ah, well!
-// Dylan will throw conditions when a cygnus user attempts to 
+// Dylan will throw conditions when a cygnus user attempts to
 // create or to remove directories
 
 define function create-directory(parent :: <pathname>, name :: <string>)
@@ -54,7 +54,7 @@ define function do-directory(fn :: <function>, dir-name :: <pathname>) => ()
 end function do-directory;
 
 // Working-directory-setter works fine on all platforms, so far
-define function working-directory-setter(dir :: <pathname>) 
+define function working-directory-setter(dir :: <pathname>)
  => ans :: <pathname>;
   with-pointer(dir* = dir)
     if(chdir(dir*) ~= 0) file-signal("chdir", "dir") end if;
@@ -85,17 +85,17 @@ define function dir-element(dir :: <machine-pointer>, path :: <pathname>)
                gd-stat-mode(path);
              end;
   let type = case
-	       gd-is-dir?(stat) => #"directory";
-	       gd-is-link?(stat) => #"link";
-	       otherwise => #"file";
-	     end case;
+               gd-is-dir?(stat) => #"directory";
+               gd-is-link?(stat) => #"link";
+               otherwise => #"file";
+             end case;
   values(name, type);
 end function dir-element;
 
 define function create-down-to(dir :: <pathname>) => b :: <boolean>;
   let (#rest dirs) = split($path-separator, dir);
-  create-dirs(if(relative-path?(dir)) #(".") else #("") end, 
-		   as(<list>,dirs));
+  create-dirs(if(relative-path?(dir)) #(".") else #("") end,
+                   as(<list>,dirs));
 end function create-down-to;
 
 define method create-dirs(parent :: <list>, rest :: <list>)
@@ -105,9 +105,9 @@ define method create-dirs(parent :: <list>, rest :: <list>)
   else
     let above = build-dir(parent);
     let sleepy = head(rest); // get it?
-    let recurse = method() 
-		      create-dirs(append(parent, sleepy), tail(rest))
-		  end;
+    let recurse = method()
+                      create-dirs(append(parent, sleepy), tail(rest))
+                  end;
 
     if(file-exists?(build-dir(above, sleepy)))
       recurse()
@@ -118,7 +118,7 @@ define method create-dirs(parent :: <list>, rest :: <list>)
     end if;
   end if;
 end method create-dirs;
-  
+
 define function relative-path?(path :: <pathname>)
  => (relative? :: <boolean>)
   path.size > 0 & path[0] ~= $path-separator[0];
@@ -138,12 +138,12 @@ define method create-pointer(c :: <class>, s :: <string>)
   create-c-type(<char*>, string: s);
 end method create-pointer;
 
-define function create-c-type(c-type :: <class>, 
-			      #key size :: <integer> = 0, 
-			      string)
-  let str* = export-value(<c-string>, if(size = 0) string 
-				      else make(<string>, size: size)
-				      end if);
+define function create-c-type(c-type :: <class>,
+                              #key size :: <integer> = 0,
+                              string)
+  let str* = export-value(<c-string>, if(size = 0) string
+                                      else make(<string>, size: size)
+                                      end if);
   make(c-type, pointer: str*);
 end function create-c-type;
 

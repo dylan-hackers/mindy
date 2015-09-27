@@ -1,9 +1,9 @@
 module: threads
 
-// dynamic-bind 
+// dynamic-bind
 // shadow the given variables within a block we add
 
-define macro dynamic-bind 
+define macro dynamic-bind
     { dynamic-bind (?var:name = ?val:expression)
         ?:body
       end }
@@ -67,10 +67,10 @@ end method;
 // do-nothing version
 
 define macro with-lock
-	{ with-lock( ?lock:expression ) ?lock-body:body end }
-	 => { ?lock-body }
-	{ with-lock( ?lock:expression ) ?lock-body:body failure ?fail-body:body end }
-	 => { ?lock-body }
+        { with-lock( ?lock:expression ) ?lock-body:body end }
+         => { ?lock-body }
+        { with-lock( ?lock:expression ) ?lock-body:body failure ?fail-body:body end }
+         => { ?lock-body }
 end macro with-lock;
 
 

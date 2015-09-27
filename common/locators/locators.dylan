@@ -10,7 +10,7 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 define open abstract class <server-locator> (<locator>)
 end class <server-locator>;
 
-define open abstract class <physical-locator> (<locator>) 
+define open abstract class <physical-locator> (<locator>)
 end class <physical-locator>;
 
 define open abstract class <directory-locator> (<physical-locator>)
@@ -143,9 +143,9 @@ end class <locator-error>;
 
 define function locator-error
     (format-string :: <string>, #rest format-arguments)
-  error(make(<locator-error>, 
-	     format-string:    format-string,
-	     format-arguments: format-arguments))
+  error(make(<locator-error>,
+             format-string:    format-string,
+             format-arguments: format-arguments))
 end function locator-error;
 
 
@@ -184,9 +184,9 @@ define method locator-directory
   let path = locator.locator-path;
   unless (empty?(path))
     make(object-class(locator),
-	 server:    locator.locator-server,
-	 path:      copy-sequence(path, end: path.size - 1),
-	 relative?: locator.locator-relative?)
+         server:    locator.locator-server,
+         path:      copy-sequence(path, end: path.size - 1),
+         relative?: locator.locator-relative?)
   end
 end method locator-directory;
 
@@ -205,9 +205,9 @@ define method simplify-locator
   let simplified-path = simplify-path(path, resolve-parent?: resolve-parent?);
   if (path ~= simplified-path)
     make(object-class(locator),
-	 server:    locator.locator-server,
-	 path:      simplified-path,
-	 relative?: locator.locator-relative?)
+         server:    locator.locator-server,
+         path:      simplified-path,
+         relative?: locator.locator-relative?)
   else
     locator
   end
@@ -219,9 +219,9 @@ define method simplify-locator
   let simplified-directory = directory & simplify-locator(directory);
   if (directory ~= simplified-directory)
     make(object-class(locator),
-	 directory: simplified-directory,
-	 base:      locator.locator-base,
-	 extension: locator.locator-extension)
+         directory: simplified-directory,
+         base:      locator.locator-base,
+         extension: locator.locator-extension)
   else
     locator
   end
@@ -260,18 +260,18 @@ define method relative-locator
   case
     ~locator.locator-relative? & from-locator.locator-relative? =>
       locator-error
-	("Cannot find relative path of absolute locator %= from relative locator %=",
-	 locator, from-locator);
+        ("Cannot find relative path of absolute locator %= from relative locator %=",
+         locator, from-locator);
     locator.locator-server ~= from-locator.locator-server =>
       locator;
     path = from-path =>
       make(object-class(locator),
-	   path: vector(#"self"),
-	   relative?: #t);
+           path: vector(#"self"),
+           relative?: #t);
     otherwise =>
       make(object-class(locator),
-	   path: relative-path(path, from-path, test: locator.locator-test),
-	   relative?: #t);
+           path: relative-path(path, from-path, test: locator.locator-test),
+           relative?: #t);
   end
 end method relative-locator;
 
@@ -283,9 +283,9 @@ define method relative-locator
   if (relative-directory ~= directory)
     simplify-locator
       (make(object-class(locator),
-	    directory: relative-directory,
-	    base:      locator.locator-base,
-	    extension: locator.locator-extension))
+            directory: relative-directory,
+            base:      locator.locator-base,
+            extension: locator.locator-extension))
   else
     locator
   end
@@ -300,8 +300,8 @@ define method relative-locator
       relative-locator(locator, from-directory);
     ~locator.locator-relative? =>
       locator-error
-	("Cannot find relative path of absolute locator %= from relative locator %=",
-	 locator, from-locator);
+        ("Cannot find relative path of absolute locator %= from relative locator %=",
+         locator, from-locator);
     otherwise =>
       locator;
   end
@@ -319,7 +319,7 @@ define method merge-locators
     (locator :: <pathname>, from-locator :: <pathname>)
  => (merged-locator :: <physical-locator>)
   merge-locators(as(<physical-locator>, locator),
-		 as(<physical-locator>, from-locator))
+                 as(<physical-locator>, from-locator))
 end method merge-locators;
 
 define method merge-locators
@@ -329,9 +329,9 @@ define method merge-locators
     let path = concatenate(from-locator.locator-path, locator.locator-path);
     simplify-locator
       (make(object-class(locator),
-	    server:    from-locator.locator-server,
-	    path:      path,
-	    relative?: from-locator.locator-relative?))
+            server:    from-locator.locator-server,
+            path:      path,
+            relative?: from-locator.locator-relative?))
   else
     locator
   end
@@ -341,17 +341,17 @@ define method merge-locators
     (locator :: <file-locator>, from-locator :: <directory-locator>)
  => (merged-locator :: <file-locator>)
   let directory = locator.locator-directory;
-  let merged-directory 
+  let merged-directory
     = if (directory)
-	merge-locators(directory, from-locator)
+        merge-locators(directory, from-locator)
       else
-	simplify-locator(from-locator)
+        simplify-locator(from-locator)
       end;
   if (merged-directory ~= directory)
     make(object-class(locator),
-	 directory: merged-directory,
-	 base:      locator.locator-base,
-	 extension: locator.locator-extension)
+         directory: merged-directory,
+         base:      locator.locator-base,
+         extension: locator.locator-extension)
   else
     locator
   end
@@ -410,7 +410,7 @@ define sideways method as
     locator
   else
     locator-error("Cannot convert %= to %=",
-		  locator, class)
+                  locator, class)
   end
 end method as;
 
@@ -432,23 +432,23 @@ define sideways method make
     end;
   let directory-locator
     = if (directory)
-	make(<directory-locator>,
-	     server: server,
-	     path:   if (instance?(directory, <path>))
-		       directory.elements
-		     else
-		       directory | #[]
-		     end,
-	     relative?: if (instance?(directory, <path>))
-			  directory.relative-path?
-			end)
+        make(<directory-locator>,
+             server: server,
+             path:   if (instance?(directory, <path>))
+                       directory.elements
+                     else
+                       directory | #[]
+                     end,
+             relative?: if (instance?(directory, <path>))
+                          directory.relative-path?
+                        end)
       end;
   if (base | extension | name)
     make(<file-locator>,
-	 directory: directory-locator,
-	 base:      base,
-	 extension: extension,
-	 name:      name)
+         directory: directory-locator,
+         base:      base,
+         extension: extension,
+         name:      name)
   else
     directory-locator
   end
@@ -473,69 +473,69 @@ define method override-locator
     (locator :: <directory-locator>,
      #rest args,
      #key host = $unsupplied,
-	  volume = $unsupplied,
-	  directory-path = $unsupplied,
-	  directory = directory-path,
-	  base = $unsupplied,
-	  type = $unsupplied,
-	  prefix = $unsupplied,
-	  name = $unsupplied,
-	  extension = type,
+          volume = $unsupplied,
+          directory-path = $unsupplied,
+          directory = directory-path,
+          base = $unsupplied,
+          type = $unsupplied,
+          prefix = $unsupplied,
+          name = $unsupplied,
+          extension = type,
      #all-keys)
  => (result :: <physical-locator>)
   let old-server = locator.locator-server;
   let new-server
     = case
-	host ~== $unsupplied =>
-	  if (host)
-	    make(<microsoft-unc-locator>, host: host)
-	  end;
-	volume ~== $unsupplied =>
-	  if (volume)
-	    make(<microsoft-volume-locator>, volume: volume)
-	  end;
-	otherwise =>
-	  old-server;
+        host ~== $unsupplied =>
+          if (host)
+            make(<microsoft-unc-locator>, host: host)
+          end;
+        volume ~== $unsupplied =>
+          if (volume)
+            make(<microsoft-volume-locator>, volume: volume)
+          end;
+        otherwise =>
+          old-server;
       end;
   let directory
     = make(object-class(locator),
-	   server:    new-server,
-	   path:      case
-			directory == $unsupplied =>
-			  locator.locator-path;
-			~directory =>
-			  #[];
-			instance?(directory, <path>) =>
-			  directory.elements;
-			otherwise =>
-			  directory;
-		      end,
-	   relative?: case
-			directory == $unsupplied =>
-			  locator.locator-relative?;
-			instance?(directory, <path>) =>
-			  directory.relative-path?;
-			otherwise =>
-			  #f;
-		      end);
+           server:    new-server,
+           path:      case
+                        directory == $unsupplied =>
+                          locator.locator-path;
+                        ~directory =>
+                          #[];
+                        instance?(directory, <path>) =>
+                          directory.elements;
+                        otherwise =>
+                          directory;
+                      end,
+           relative?: case
+                        directory == $unsupplied =>
+                          locator.locator-relative?;
+                        instance?(directory, <path>) =>
+                          directory.relative-path?;
+                        otherwise =>
+                          #f;
+                      end);
   let new-locator
     = if ((name & name ~== $unsupplied)
-	    | (base & base ~== $unsupplied)
-	    | (extension & extension ~== $unsupplied))
-	make(<microsoft-file-locator>,
-	     directory:    directory,
-	     name:         if (name ~== $unsupplied) name end,
-	     base:         if (base ~== $unsupplied) base end,
-	     extension:    case
-			     extension == $unsupplied =>
-			       #f;
-			     extension & ~empty?(extension) & extension[0] == '.' =>
-			       copy-sequence(extension, start: 1);
-			     otherwise =>
-			       extension;
-			   end)
+            | (base & base ~== $unsupplied)
+            | (extension & extension ~== $unsupplied))
+        make(<microsoft-file-locator>,
+             directory:    directory,
+             name:         if (name ~== $unsupplied) name end,
+             base:         if (base ~== $unsupplied) base end,
+             extension:    case
+                             extension == $unsupplied =>
+                               #f;
+                             extension & ~empty?(extension) & extension[0] == '.' =>
+                               copy-sequence(extension, start: 1);
+                             otherwise =>
+                               extension;
+                           end)
       else
-	directory
+        directory
       end;
   // debug-message("Override %s => %s: arguments: %=",
   //               locator, new-locator, args);
@@ -546,82 +546,82 @@ define method override-locator
     (locator :: <file-locator>,
      #rest args,
      #key host = $unsupplied,
-	  volume = $unsupplied,
-	  directory-path = $unsupplied,
-	  directory = directory-path,
-	  base = $unsupplied,
-	  type = $unsupplied,
-	  prefix = $unsupplied,
-	  name = $unsupplied,
-	  extension = type,
+          volume = $unsupplied,
+          directory-path = $unsupplied,
+          directory = directory-path,
+          base = $unsupplied,
+          type = $unsupplied,
+          prefix = $unsupplied,
+          name = $unsupplied,
+          extension = type,
      #all-keys)
  => (result :: <physical-locator>)
   let old-directory = locator.locator-directory;
   let new-directory
     = case
-	old-directory =>
-	  override-locator(old-directory,
-			   host: host,
-			   volume: volume,
-			   directory-path: directory-path,
-			   directory: directory);
-	(~directory | directory == $unsupplied) =>
-	  #f;
-	otherwise =>
-	  let server
-	    = case 
-		(host & host ~== $unsupplied) =>
-		  make(<microsoft-unc-locator>, host: host);
-		(volume & volume ~== $unsupplied) =>
-		  make(<microsoft-volume-locator>, volume: volume);
-		otherwise =>
-		  #f;
-	      end;
-	  make(<directory-locator>,
-	       server:    server,
-	       path:      if (instance?(directory, <path>))
-			    directory.elements
-			  else
-			    directory
-			  end,
-	       relative?: if (instance?(directory, <path>))
-			    directory.relative-path?
-			  end);
+        old-directory =>
+          override-locator(old-directory,
+                           host: host,
+                           volume: volume,
+                           directory-path: directory-path,
+                           directory: directory);
+        (~directory | directory == $unsupplied) =>
+          #f;
+        otherwise =>
+          let server
+            = case
+                (host & host ~== $unsupplied) =>
+                  make(<microsoft-unc-locator>, host: host);
+                (volume & volume ~== $unsupplied) =>
+                  make(<microsoft-volume-locator>, volume: volume);
+                otherwise =>
+                  #f;
+              end;
+          make(<directory-locator>,
+               server:    server,
+               path:      if (instance?(directory, <path>))
+                            directory.elements
+                          else
+                            directory
+                          end,
+               relative?: if (instance?(directory, <path>))
+                            directory.relative-path?
+                          end);
       end;
   let (base, extension)
     = case
-	name ~== $unsupplied =>
-	  if (name)
-	    let filename = as(object-class(locator), name);
-	    values(filename.locator-base, filename.locator-extension)
-	  else
-	    values(#f, #f);
-	  end;
-	(base ~== $unsupplied | extension ~== $unsupplied) =>
-	  values(if (base ~== $unsupplied)
-		   base
-		 else
-		   locator.locator-base
-		 end,
-		 case
-		   extension == $unsupplied =>
-		     locator.locator-extension;
-		   extension & ~empty?(extension) & extension[0] == '.' =>
-		     copy-sequence(extension, start: 1);
-		   otherwise =>
-		     extension;
-		 end);
-	otherwise =>
-	  values(locator.locator-base, locator.locator-extension);
+        name ~== $unsupplied =>
+          if (name)
+            let filename = as(object-class(locator), name);
+            values(filename.locator-base, filename.locator-extension)
+          else
+            values(#f, #f);
+          end;
+        (base ~== $unsupplied | extension ~== $unsupplied) =>
+          values(if (base ~== $unsupplied)
+                   base
+                 else
+                   locator.locator-base
+                 end,
+                 case
+                   extension == $unsupplied =>
+                     locator.locator-extension;
+                   extension & ~empty?(extension) & extension[0] == '.' =>
+                     copy-sequence(extension, start: 1);
+                   otherwise =>
+                     extension;
+                 end);
+        otherwise =>
+          values(locator.locator-base, locator.locator-extension);
       end;
   let new-locator
     = if (base)
-	make(object-class(locator),
-	     directory: new-directory,
-	     base:      base,
-	     extension: extension)
+        make(object-class(locator),
+             directory: new-directory,
+             base:      base,
+             extension: extension)
       else
-	new-directory
+        new-directory
       end;
   // debug-message("Override %s => %s: arguments: %=",
   //               locator, new-locator, args);
@@ -654,8 +654,8 @@ define method locator-directory-path
     directory.locator-directory-path
   else
     make(<path>,
-	 relative-path?: #t,
-	 elements:       #())
+         relative-path?: #t,
+         elements:       #())
   end
 end method locator-directory-path;
 
@@ -671,7 +671,7 @@ define method element-setter
   element(elements(sequence), key) := new-value;
 end method element-setter;
 
-define function path-elements 
+define function path-elements
     (path :: <path>) => (elements :: <list>)
   path.elements
 end function;
@@ -708,7 +708,7 @@ define inline function path-current-element-setter
   state.head := current-element
 end function;
 
-define method forward-iteration-protocol 
+define method forward-iteration-protocol
     (path :: <path>)
  => (initial-state, limit,
      next-state :: <function>, finished-state? :: <function>,
@@ -716,16 +716,16 @@ define method forward-iteration-protocol
      current-element :: <function>, current-element-setter :: <function>,
      copy-state :: <function>)
   values(elements(path),
-	 #(),
-	 path-next-state,
-	 path-finished-state?,
-	 path-current-key,
-	 path-current-element,
-	 path-current-element-setter,
-	 method (collection, state) => (value) state end)
+         #(),
+         path-next-state,
+         path-finished-state?,
+         path-current-key,
+         path-current-element,
+         path-current-element-setter,
+         method (collection, state) => (value) state end)
 end method;
 
-define method \= 
+define method \=
     (path1 :: <path>, path2 :: <path>) => (equal? :: <boolean>)
   object-class(path1) == object-class(path2)
   & relative-path?(path1) = relative-path?(path2)

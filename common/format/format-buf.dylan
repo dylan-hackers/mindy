@@ -7,25 +7,25 @@ copyright: See below.
 ///
 /// Copyright (c) 1994  Carnegie Mellon University
 /// All rights reserved.
-/// 
+///
 /// Use and copying of this software and preparation of derivative
 /// works based on this software are permitted, including commercial
 /// use, provided that the following conditions are observed:
-/// 
+///
 /// 1. This copyright notice must be retained in full on any copies
 ///    and on appropriate parts of any derivative works.
 /// 2. Documentation (paper or online) accompanying any system that
 ///    incorporates this software, or any part of it, must acknowledge
 ///    the contribution of the Gwydion Project at Carnegie Mellon
 ///    University, and the Gwydion Dylan Maintainers.
-/// 
+///
 /// This software is made available "as is".  Neither the authors nor
 /// Carnegie Mellon University make any warranty about the software,
 /// its performance, or its conformity to any specification.
-/// 
+///
 /// Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 /// comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-/// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+/// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 ///
 ///======================================================================
 ///
@@ -124,8 +124,8 @@ end function;
 ///
 
 define method format (stream :: <buffered-stream>,
-		      control-string :: <byte-string>,
-		      #rest args)
+                      control-string :: <byte-string>,
+                      #rest args)
     => ();
   let control-len :: <integer> = control-string.size;
   let start :: <integer> = 0;
@@ -138,60 +138,60 @@ define method format (stream :: <buffered-stream>,
   // I ensure buff-size is kept up to date and use it.
   let buff-size :: <buffer-index> = buff.buffer-end;
   let bd = make(<buffer-desc>, stream: stream, buffer: buff,
-		next: buff.buffer-next, limit: buff-size);
+                next: buff.buffer-next, limit: buff-size);
   block (exit)
     while (start < control-len)
       // Skip to dispatch char.
       for (i :: <integer> from start below control-len,
-	   // Rebind buff, instead of using binding outside the 'block',
-	   // because the buffer can change depending on the stream.
-	   buff :: <buffer> = bd.buffer then buff,
-	   buff-index :: <buffer-index> from bd.next-ele below bd.limit,
-	   until: (control-string[i] == $dispatch-char)
-	            | (control-string[i] == '\n'))
-	buff[buff-index] := as(<integer> /***/, control-string[i]);
+           // Rebind buff, instead of using binding outside the 'block',
+           // because the buffer can change depending on the stream.
+           buff :: <buffer> = bd.buffer then buff,
+           buff-index :: <buffer-index> from bd.next-ele below bd.limit,
+           until: (control-string[i] == $dispatch-char)
+                    | (control-string[i] == '\n'))
+        buff[buff-index] := as(<integer> /***/, control-string[i]);
       finally
-	bd.next-ele := buff-index;
-	if (i == control-len)
-	  exit();
-	else
-	  start := i;
-	end;
+        bd.next-ele := buff-index;
+        if (i == control-len)
+          exit();
+        else
+          start := i;
+        end;
       end for;
 
       if (bd.next-ele == buff-size)
-	get-next-output-buffer(bd, buff-size);
-	buff-size := bd.limit;
+        get-next-output-buffer(bd, buff-size);
+        buff-size := bd.limit;
       elseif (control-string[start] == '\n')
-	with-buffer-released(bd, curry(new-line, stream));
-	start := start + 1;  // Skip % and dispatch char.
-	buff-size := bd.limit;
+        with-buffer-released(bd, curry(new-line, stream));
+        start := start + 1;  // Skip % and dispatch char.
+        buff-size := bd.limit;
       else
-	// Parse for field within which to pad output.
-	let (field, field-spec-end)
-	  = if (char-classes[as(<integer> /***/, control-string[start + 1])] == #"digit")
-	      parse-integer(control-string, start + 1);
-	    end;
-	if (field)
-	  if (buf-do-dispatch-padded(field, control-string[field-spec-end],
-				     bd, element(args, arg-i, default: #f)))
-	    arg-i := arg-i + 1;
-	  end if;
-	  start := field-spec-end + 1;  // Add one to skip dispatch char.
-	  // Since buf-do-dispatch-padded could have indirectly called
-	  // next-output-buffer, Robert needs to keep buff-size up to date.
-	  // He always gets the buffer and buffer-next from his bd buffer
-	  // descriptor, so they don't need to be updated here.
-	  buff-size := bd.limit;
-	else
-	  if (buf-do-dispatch(control-string[start + 1], bd,
-			      element(args, arg-i, default: #f)))
-	    arg-i := arg-i + 1;
-	  end;
-	  start := start + 2;  // Skip % and dispatch char.
-	  // Must update buff-size.  See comment above.
-	  buff-size := bd.limit;
-	end;
+        // Parse for field within which to pad output.
+        let (field, field-spec-end)
+          = if (char-classes[as(<integer> /***/, control-string[start + 1])] == #"digit")
+              parse-integer(control-string, start + 1);
+            end;
+        if (field)
+          if (buf-do-dispatch-padded(field, control-string[field-spec-end],
+                                     bd, element(args, arg-i, default: #f)))
+            arg-i := arg-i + 1;
+          end if;
+          start := field-spec-end + 1;  // Add one to skip dispatch char.
+          // Since buf-do-dispatch-padded could have indirectly called
+          // next-output-buffer, Robert needs to keep buff-size up to date.
+          // He always gets the buffer and buffer-next from his bd buffer
+          // descriptor, so they don't need to be updated here.
+          buff-size := bd.limit;
+        else
+          if (buf-do-dispatch(control-string[start + 1], bd,
+                              element(args, arg-i, default: #f)))
+            arg-i := arg-i + 1;
+          end;
+          start := start + 2;  // Skip % and dispatch char.
+          // Must update buff-size.  See comment above.
+          buff-size := bd.limit;
+        end;
       end if;
     end while;
   cleanup
@@ -202,14 +202,14 @@ define method format (stream :: <buffered-stream>,
     signal(condition);          // re-signal after running cleanup
   end;
 end method;
-    
+
 /// get-next-output-buffer -- Internal.
 ///
 /// This function calls next-output-buffer and resets all the slots in the
 /// buffer descriptor that Robert passes around.
 ///
 define function get-next-output-buffer (bd :: <buffer-desc>,
-					next :: <buffer-index>)
+                                        next :: <buffer-index>)
     => ();
   bd.buffer.buffer-next := next;
   let buf = next-output-buffer(bd.stream);
@@ -237,29 +237,29 @@ define function buf-do-dispatch
   select (char by \==)
     ('s'), ('S') =>
       if (instance?(arg, <byte-string>))
-	// Simulate "write-message" upon the argument.  This code must be
-	// changed if the semantics of "write-message" changes.
-	write-to-buffer(arg, bd);
+        // Simulate "write-message" upon the argument.  This code must be
+        // changed if the semantics of "write-message" changes.
+        write-to-buffer(arg, bd);
       else
-	with-buffer-released(bd, curry(print-message, arg, stream));
+        with-buffer-released(bd, curry(print-message, arg, stream));
       end if;
       #t;
     ('c'), ('C') =>
       select (arg by instance?)
-	<byte-character> =>
-	  // Simulate "write-message" upon the argument.  This code must be
-	  // changed if the semantics of "write-message" changes.
-	  let next = bd.next-ele;
-	  if (next == bd.limit)
-	    get-next-output-buffer(bd, next);
-	    next := bd.next-ele;
-	  end if;
-	  bd.buffer[next] := as(<integer> /***/, arg);
-	  bd.next-ele := next + 1;
-	<character> =>
-	  with-buffer-released(bd, curry(print-message, arg, stream));
-	otherwise =>
-	  error("The %%C format directive only works for characters: %=", arg);
+        <byte-character> =>
+          // Simulate "write-message" upon the argument.  This code must be
+          // changed if the semantics of "write-message" changes.
+          let next = bd.next-ele;
+          if (next == bd.limit)
+            get-next-output-buffer(bd, next);
+            next := bd.next-ele;
+          end if;
+          bd.buffer[next] := as(<integer> /***/, arg);
+          bd.next-ele := next + 1;
+        <character> =>
+          with-buffer-released(bd, curry(print-message, arg, stream));
+        otherwise =>
+          error("The %%C format directive only works for characters: %=", arg);
       end select;
       #t;
     ('=') =>
@@ -283,8 +283,8 @@ define function buf-do-dispatch
     ('%') =>
       let next = bd.next-ele;
       if (next == bd.limit)
-	get-next-output-buffer(bd, next);
-	next := bd.next-ele;
+        get-next-output-buffer(bd, next);
+        next := bd.next-ele;
       end if;
       bd.buffer[next] := as(<integer> /***/, '%');
       bd.next-ele := next + 1;
@@ -305,8 +305,8 @@ define function buf-do-dispatch-padded
   // Capture output in string and compute padding.
   // Assume the output is very small in length.
   let s = make(<byte-string-stream>,
-	       contents: make(<byte-string>, size: 80),
-	       direction: #"output");
+               contents: make(<byte-string>, size: 80),
+               direction: #"output");
   let consumed-arg? = do-dispatch(char, s, arg);
   let output = s.stream-contents;
   let output-len :: <integer> = output.size;
@@ -318,10 +318,10 @@ define function buf-do-dispatch-padded
       let next = bd.next-ele;
       let span = next + padding;
       if (span > bd.limit)
-	write-to-buffer(make(<byte-string>, size: padding, fill: ' '), bd);
+        write-to-buffer(make(<byte-string>, size: padding, fill: ' '), bd);
       else
-	fill!(bd.buffer, as(<integer> /***/, ' '), start: next, end: span);
-	bd.next-ele := span;
+        fill!(bd.buffer, as(<integer> /***/, ' '), start: next, end: span);
+        bd.next-ele := span;
       end if;
       write-to-buffer(output, bd);
     otherwise =>
@@ -329,10 +329,10 @@ define function buf-do-dispatch-padded
       let next = bd.next-ele;
       let span = next + padding;
       if (span > bd.limit)
-	write-to-buffer(make(<byte-string>, size: padding, fill: ' '), bd);
+        write-to-buffer(make(<byte-string>, size: padding, fill: ' '), bd);
       else
-	fill!(bd.buffer, as(<integer> /***/, ' '), start: next, end: span);
-	bd.next-ele := span;
+        fill!(bd.buffer, as(<integer> /***/, ' '), start: next, end: span);
+        bd.next-ele := span;
       end if;
   end case;
   consumed-arg?;
@@ -351,24 +351,24 @@ define method buf-format-integer
   let buf = bd.buffer;
   let next = bd.next-ele;
   let size = bd.limit;
-  
+
   // Print this digit (and those which precede it).
   local method next-digit (arg :: <extended-integer>) => ();
-	  let (quotient, remainder) = floor/(arg, radix);
-	  unless (zero?(quotient))
-	    next-digit(quotient);
-	  end unless;
-	  if (next == size)
-	    get-next-output-buffer(bd, next);
-	    buf := bd.buffer;
-	    next := bd.next-ele;
-	    size := bd.limit;
-	  end if;
-	  buf[next] := as(<integer>, $digits[as(<integer>, remainder)]);
-	  next := next + 1;
-	end method next-digit;
+          let (quotient, remainder) = floor/(arg, radix);
+          unless (zero?(quotient))
+            next-digit(quotient);
+          end unless;
+          if (next == size)
+            get-next-output-buffer(bd, next);
+            buf := bd.buffer;
+            next := bd.next-ele;
+            size := bd.limit;
+          end if;
+          buf[next] := as(<integer>, $digits[as(<integer>, remainder)]);
+          next := next + 1;
+        end method next-digit;
   if (negative?(arg))
-    if (next == size) 
+    if (next == size)
       get-next-output-buffer(bd, next);
       buf := bd.buffer;
       next := bd.next-ele;
@@ -389,8 +389,8 @@ end method buf-format-integer;
 // integers so that no generic operations will be required.
 //
 define method buf-format-integer (arg :: <integer>,
-				  radix :: limited(<integer>, min: 2, max: 36),
-				  bd :: <buffer-desc>)
+                                  radix :: limited(<integer>, min: 2, max: 36),
+                                  bd :: <buffer-desc>)
     => ();
   let buf = bd.buffer;
   let next = bd.next-ele;
@@ -399,10 +399,10 @@ define method buf-format-integer (arg :: <integer>,
   local
     method append-char (byte :: <byte>) => ();
       if (next == size)
-	get-next-output-buffer(bd, next);
-	buf := bd.buffer;
-	next := bd.next-ele;
-	size := bd.limit;
+        get-next-output-buffer(bd, next);
+        buf := bd.buffer;
+        next := bd.next-ele;
+        size := bd.limit;
       end if;
       buf[next] := byte;
       next := next + 1;
@@ -410,7 +410,7 @@ define method buf-format-integer (arg :: <integer>,
     method next-digit (arg :: limited(<integer>, min: 0)) => ();
       let (quotient, remainder) = truncate/(arg, radix);
       unless (zero?(quotient))
-	next-digit(quotient);
+        next-digit(quotient);
       end unless;
       append-char($ascii-digits[remainder]);
     end method next-digit;

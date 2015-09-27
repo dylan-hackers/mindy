@@ -7,32 +7,32 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000, 2001  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
 // token classes.
 
 // <token> -- exported.
-// 
+//
 // All the different tokens returned by the tokenizer are all
 // instances the class <token>.  The different kinds of tokens are
 // represented via an enumeration of integer constants.
@@ -94,7 +94,7 @@ define constant $handler-token = 32;
 define constant $let-token = 33;
 define constant $local-token = 34;
 define constant $macro-token = 35;
-define constant $otherwise-token = 36; 
+define constant $otherwise-token = 36;
 //
 define constant $raw-ordinary-word-token = 37;
 define constant $raw-begin-word-token = 38;
@@ -146,7 +146,7 @@ define sealed domain make (singleton(<symbol-token>));
 define sealed method print-object
     (token :: <symbol-token>, stream :: <stream>) => ();
   format(stream, "instance of <symbol-token>, kind: %=, symbol: %=}",
-	 token.token-kind, token.token-symbol);
+         token.token-kind, token.token-symbol);
 end method print-object;
 
 // <identifier-token> -- exported.
@@ -170,7 +170,7 @@ define sealed method print-object
   let mod = token.token-module;
   let uniq = token.token-uniquifier;
   format(stream, "{instance of <identifier-token>, kind: %=, symbol: %s",
-	 token.token-kind, token.token-symbol);
+         token.token-kind, token.token-symbol);
   if (mod) format(stream, ", module: %=", mod) end;
   if (uniq) format(stream, ", uniqifier: %=", uniq) end;
   format(stream, "}");
@@ -186,7 +186,7 @@ define sealed domain initialize (<uniquifier>);
 
 
 // same-id? -- exported.
-// 
+//
 define function same-id? (id1 :: <identifier-token>, id2 :: <identifier-token>)
     => res :: <boolean>;
   id1.token-symbol == id2.token-symbol
@@ -214,12 +214,12 @@ define sealed method print-object
   let mod = token.token-module;
   let uniq = token.token-uniquifier;
   pprint-fields(token, stream,
-		kind: token.token-kind,
-		symbol: token.token-symbol,
-		if (mod) module: end, mod,
-		if (uniq) uniquifier: end, uniq,
-		precedence: token.operator-precedence,
-		associativity: token.operator-associativity);
+                kind: token.token-kind,
+                symbol: token.token-symbol,
+                if (mod) module: end, mod,
+                if (uniq) uniquifier: end, uniq,
+                precedence: token.operator-precedence,
+                associativity: token.operator-associativity);
 end method print-object;
 */
 
@@ -269,9 +269,9 @@ define sealed domain make (singleton(<constrained-name-token>));
 define sealed method print-object
     (token :: <constrained-name-token>, stream :: <stream>) => ();
   pprint-fields(token, stream,
-		kind: token.token-kind,
-		symbol: token.token-symbol,
-		constraint: token.token-constraint);
+                kind: token.token-kind,
+                symbol: token.token-symbol,
+                constraint: token.token-constraint);
 end method print-object;
 */
 
@@ -293,8 +293,8 @@ define sealed domain make (singleton(<literal-token>));
 define sealed method print-object
     (token :: <literal-token>, stream :: <stream>) => ();
   pprint-fields(token, stream,
-		kind: token.token-kind,
-		literal: token.token-literal);
+                kind: token.token-kind,
+                literal: token.token-literal);
 end method print-object;
 */
 
@@ -314,8 +314,8 @@ define sealed domain make (singleton(<pre-parsed-token>));
 define sealed method print-object
     (token :: <pre-parsed-token>, stream :: <stream>) => ();
   pprint-fields(token, stream,
-		kind: token.token-kind,
-		parse-tree: token.token-parse-tree);
+                kind: token.token-kind,
+                parse-tree: token.token-parse-tree);
 end method print-object;
 */
 
@@ -389,7 +389,7 @@ define sealed method print-message
 
     $constrained-name-token =>
       format(stream, "constrained name ``%s:%s''",
-	     wot.token-symbol, wot.token-constraint);
+             wot.token-symbol, wot.token-constraint);
 
     $tilde-token =>
       write(stream, "tilde");
@@ -435,7 +435,7 @@ end method print-message;
 
 define constant <word-category>
   = one-of(#"core", #"ordinary", #"begin", #"function",
-	   #"define-body", #"define-list");
+           #"define-body", #"define-list");
 
 define class <word-info> (<object>)
   //
@@ -452,7 +452,7 @@ define class <word-info> (<object>)
   constant slot word-info-sub-infos :: <object-table>
     = make(<object-table>);
 end class <word-info>;
-  
+
 define sealed domain make (singleton(<word-info>));
 define sealed domain initialize (<word-info>);
 
@@ -462,14 +462,14 @@ define constant $default-word-info :: <word-info>
 begin
   local
     method add-sub-category
-	(to :: <word-info>, category :: <word-category>,
-	 kind :: <integer>)
-	=> (sub-category :: <word-info>);
+        (to :: <word-info>, category :: <word-category>,
+         kind :: <integer>)
+        => (sub-category :: <word-info>);
       let categories = add(to.word-info-categories, category);
       let sub-info = make(<word-info>, categories: categories, kind: kind);
       to.word-info-sub-infos[category] := sub-info;
       for (category in categories)
-	sub-info.word-info-sub-infos[category] := sub-info;
+        sub-info.word-info-sub-infos[category] := sub-info;
       end for;
       sub-info;
     end method add-sub-category;
@@ -477,7 +477,7 @@ begin
        kind from $raw-ordinary-word-token)
     let sub-info = add-sub-category($default-word-info, category, kind);
     for (sub-category in #[#"define-body", #"define-list"],
-	 delta from 3 by 3)
+         delta from 3 by 3)
       add-sub-category(sub-info, sub-category, kind + delta);
     end for;
   end for;
@@ -485,7 +485,7 @@ begin
        kind from $ordinary-define-body-word-token by 3)
     let sub-info = add-sub-category($default-word-info, category, kind);
     for (sub-category in #[#"ordinary", #"begin", #"function"],
-	 delta from 0)
+         delta from 0)
       add-sub-category(sub-info, sub-category, kind + delta);
     end for;
   end for;
@@ -501,16 +501,16 @@ define sealed domain make (singleton(<core-word-info>));
 
 define constant $core-word-infos :: <simple-object-vector>
   = map-as(<simple-object-vector>,
-	   method (core-word :: <symbol>, kind :: <integer>)
-	       => res :: <core-word-info>;
-	     make(<core-word-info>,
-		  categories: #[#"core"],
-		  kind: kind,
-		  word: core-word);
-	   end method,
-	   #[#"define", #"end", #"handler", #"let",
-	     #"local", #"macro", #"otherwise"],
-	   range(from: $define-token));
+           method (core-word :: <symbol>, kind :: <integer>)
+               => res :: <core-word-info>;
+             make(<core-word-info>,
+                  categories: #[#"core"],
+                  kind: kind,
+                  word: core-word);
+           end method,
+           #[#"define", #"end", #"handler", #"let",
+             #"local", #"macro", #"otherwise"],
+           range(from: $define-token));
 
 
 define class <syntax-table> (<object>)
@@ -533,11 +533,11 @@ end method initialize;
 // syntax-for-name -- exported.
 //
 // Return the token kind and set of categories for given name.
-// 
+//
 define method syntax-for-name (table :: <syntax-table>, name :: <symbol>)
     => (kind :: <integer>, categories :: <simple-object-vector>);
   let entry = element(table.syntax-table-entries, name,
-		      default: $default-word-info);
+                      default: $default-word-info);
   values(entry.word-info-token-kind, entry.word-info-categories);
 end method syntax-for-name;
 
@@ -546,12 +546,12 @@ end method syntax-for-name;
 //
 // Return the category that would clashe with new category if we were to
 // try to merge them, or #f if the merge is okay.
-// 
+//
 define method problem-with-category-merge
     (table :: <syntax-table>, word :: <symbol>, category :: <word-category>)
     => problem :: false-or(<word-category>);
   let current = element(table.syntax-table-entries, word,
-			default: $default-word-info);
+                        default: $default-word-info);
   let current-categories = current.word-info-categories;
   let new = element(current.word-info-sub-infos, category, default: #f);
   if (new)
@@ -561,15 +561,15 @@ define method problem-with-category-merge
       current-categories.first;
     else
       block (return)
-	let just-new = $default-word-info.word-info-sub-infos[category];
-	for (current-category in current-categories)
-	  unless (element(just-new.word-info-sub-infos, current-category,
-			  default: #f))
-	    return(current-category);
-	  end unless;
-	end for;
-	error("Can't merge %s with %=, but can't tell why.",
-	      category, current-categories);
+        let just-new = $default-word-info.word-info-sub-infos[category];
+        for (current-category in current-categories)
+          unless (element(just-new.word-info-sub-infos, current-category,
+                          default: #f))
+            return(current-category);
+          end unless;
+        end for;
+        error("Can't merge %s with %=, but can't tell why.",
+              category, current-categories);
       end block;
     end if;
   end if;
@@ -579,11 +579,11 @@ end method problem-with-category-merge;
 // merge-category -- exported.
 //
 // Note that word is also of the given category.
-// 
+//
 define method merge-category
     (table :: <syntax-table>, word :: <symbol>, category :: <word-category>)
     => ();
   let current = element(table.syntax-table-entries, word,
-			default: $default-word-info);
+                        default: $default-word-info);
   table.syntax-table-entries[word] := current.word-info-sub-infos[category];
 end method merge-category;

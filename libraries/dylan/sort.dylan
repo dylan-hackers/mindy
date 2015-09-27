@@ -5,25 +5,25 @@ module: dylan
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -63,7 +63,7 @@ module: dylan
 // Swaps two elements in a vector.
 //
 define method swap-elements! (vector :: <vector>, key1 :: <integer>,
-			      key2 :: <integer>)
+                              key2 :: <integer>)
   let element1 = vector[key1];
   let element2 = vector[key2];
   vector[key1] := element2;
@@ -86,15 +86,15 @@ end method swap-elements!;
 // Selection sort is NOT stable, but it does sort in place.
 //
 define method selection-sort!(vector :: <vector>,
-			      #key test = \<, start: first = 0,
-			           end: last)
+                              #key test = \<, start: first = 0,
+                                   end: last)
   let last = last | size(vector);
   for (current-key from first below last)
     for (search-key from current-key + 1 below last,
-	 select-key = current-key
-	   then if (test(vector[search-key], vector[select-key])) search-key
-		else select-key
-		end if)
+         select-key = current-key
+           then if (test(vector[search-key], vector[select-key])) search-key
+                else select-key
+                end if)
     finally
       swap-elements!(vector, current-key, select-key)
     end for;
@@ -108,7 +108,7 @@ end method selection-sort!;
 // calls the destructive version on copy of the vector.
 //
 define method selection-sort (vector :: <vector>,
-			      #key test = \<, start: first = 0, end: last)
+                              #key test = \<, start: first = 0, end: last)
   let sort-vector = copy-sequence(vector, start: first, end: last);
   selection-sort!(sort-vector, test: test);
 end method selection-sort;
@@ -124,12 +124,12 @@ end method selection-sort;
 // sort is stable, and this method sorts the vector in place.
 //
 define method insertion-sort!(vector :: <vector>,
-			      #key test = \<, start: first = 0, end: last)
+                              #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
   for (current-key from first + 1 below last)
     let current-element = vector[current-key];
     for (insert-key from current-key - 1 to first by -1,
-	 while: test(current-element, vector[insert-key]))
+         while: test(current-element, vector[insert-key]))
       vector[insert-key + 1] := vector[insert-key];
     finally
       vector[insert-key + 1] := current-element;
@@ -144,8 +144,8 @@ end method insertion-sort!;
 // calls the destructive version on copy of the vector.
 //
 define method insertion-sort(vector :: <vector>,
-			     #key test = \<, start: first = 0,
-			          end: last)
+                             #key test = \<, start: first = 0,
+                                  end: last)
   let sort-vector = copy-sequence(vector, start: first, end: last);
   insertion-sort!(sort-vector, test: test);
 end method insertion-sort;
@@ -193,7 +193,7 @@ define variable $small-sort-size$ = 10;
 // position.
 //
 define method merge!(vector :: <vector>,
-		     #key test: test, start: first, middle: middle, end: last)
+                     #key test: test, start: first, middle: middle, end: last)
   let merge-size = last - first;
   let merge-vector = make(<vector>, size: merge-size);
   let start-key = first;
@@ -201,16 +201,16 @@ define method merge!(vector :: <vector>,
   for (merge-key from 0 below merge-size)
     case
       start-key >= middle =>
-	merge-vector[merge-key] := vector[middle-key];
+        merge-vector[merge-key] := vector[middle-key];
         middle-key := middle-key + 1;
       middle-key >= last =>
-	merge-vector[merge-key] := vector[start-key];
+        merge-vector[merge-key] := vector[start-key];
         start-key := start-key + 1;
       test(vector[middle-key], vector[start-key]) =>
-	merge-vector[merge-key] := vector[middle-key];
+        merge-vector[merge-key] := vector[middle-key];
         middle-key := middle-key + 1;
       otherwise =>
-	merge-vector[merge-key] := vector[start-key];
+        merge-vector[merge-key] := vector[start-key];
         start-key := start-key + 1;
     end case;
   end for;
@@ -234,7 +234,7 @@ end method merge!;
 // subvector to be operated on in VECTOR.
 //
 define method merge-sort!(vector :: <vector>,
-			  #key test = \<, start: first = 0, end: last)
+                          #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
   let (div, mod) = floor/(last - first, 2);
   let middle = first + div;
@@ -258,7 +258,7 @@ end method merge-sort!;
 // arguments.  The TEST key gives the test for ascending order.
 //
 define method merge(vector1 :: <vector>, vector2 :: <vector>,
-		    #key test = \<)
+                    #key test = \<)
   let size1 = size(vector1);
   let size2 = size(vector2);
   let merge-size = size1 + size2;
@@ -268,17 +268,17 @@ define method merge(vector1 :: <vector>, vector2 :: <vector>,
   for (merge-key from 0 below merge-size)
     case
       key1 >= size1 =>
-	merge-vector[merge-key] := vector2[key2];
-	key2 := key2 + 1;
+        merge-vector[merge-key] := vector2[key2];
+        key2 := key2 + 1;
       key2 >= size2 =>
-	merge-vector[merge-key] := vector1[key1];
+        merge-vector[merge-key] := vector1[key1];
         key1 := key1 + 1;
       test(vector2[key2], vector1[key1]) =>
-	merge-vector[merge-key] := vector2[key2];
-	key2 := key2 + 1;
+        merge-vector[merge-key] := vector2[key2];
+        key2 := key2 + 1;
       otherwise =>
-	merge-vector[merge-key] := vector1[key1];
-	key1 := key1 + 1;
+        merge-vector[merge-key] := vector1[key1];
+        key1 := key1 + 1;
     end case;
   end for;
   merge-vector;
@@ -298,7 +298,7 @@ end method merge;
 // halves of the vector are not copied before the calls.)
 //
 define method merge-sort(vector :: <vector>,
-			 #key test = \<, start: first = 0, end: last)
+                         #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
   let (div, mod) = floor/(last - first, 2);
   let middle = first + div;
@@ -307,8 +307,8 @@ define method merge-sort(vector :: <vector>,
       insertion-sort(vector, test: test, start: first, end: last);
     (last - first) > 1 =>
       merge(merge-sort(vector, test: test, start: first, end: middle),
-	    merge-sort(vector, test: test, start: middle, end: last),
-	    test: test);
+            merge-sort(vector, test: test, start: middle, end: last),
+            test: test);
     otherwise =>
       copy-sequence(vector, start: first, end: last);
   end case;
@@ -331,7 +331,7 @@ end method merge-sort;
 // median(vec[first], vec[middle], vec[last - 1]).  Note: In accordance with
 // convention, "last" is an exclusive bound.
 //
-define constant median-of-three = method 
+define constant median-of-three = method
     (vec :: <vector>, first :: <integer>, last :: <integer>,
      less-than :: <function>)
  => pivot-index :: <integer>;
@@ -342,7 +342,7 @@ define constant median-of-three = method
   if (less-than(first-elem, last-elem))
     if (less-than(middle-elem, last-elem))
       middle;
-    else 
+    else
       last;
     end if;
   else  // last-elem <= first-elem
@@ -369,7 +369,7 @@ end method;
 // PARTITION! takes the usual keyword arguments TEST, START, and END.
 //
 define method partition!(vector :: <vector>,
-			 #key test = \<, start: first = 0, end: last)
+                         #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
   let pivot-key = median-of-three(vector, first, last - 1, test);
   let pivot-element = vector[pivot-key];
@@ -378,13 +378,13 @@ define method partition!(vector :: <vector>,
   block (break-while)
     while (#t)
       while (test(vector[small-key], pivot-element))
-	small-key := small-key + 1;
+        small-key := small-key + 1;
       end while;
       while (test(pivot-element, vector[large-key]))
-	large-key := large-key - 1;
+        large-key := large-key - 1;
       end while;
       unless (small-key < large-key)
-	break-while();
+        break-while();
       end unless;
       swap-elements!(vector, small-key, large-key);
       small-key := small-key + 1;
@@ -406,7 +406,7 @@ end method partition!;
 // QUICK-SORT! takes the usual keyword arguments TEST, START, and END.
 //
 define method quick-sort!(vector :: <vector>,
-			  #key test = \<, start: first = 0, end: last)
+                          #key test = \<, start: first = 0, end: last)
   let last = last | size(vector);
   case
     (last - first) < $small-sort-size$ =>
@@ -437,12 +437,12 @@ end method quick-sort!;
 // sorted it is coerced to the class for copy of the original sequence.
 //
 define method sort!(sequence :: <sequence>,
-		    #key test = \<, stable: stable)
+                    #key test = \<, stable: stable)
  => sequence :: <sequence>;
   let vector = as(<vector>, sequence);
   let result = if (stable) merge-sort!(vector, test: test);
-	       else quick-sort!(vector, test: test);
-	       end if;
+               else quick-sort!(vector, test: test);
+               end if;
   as(type-for-copy(sequence), result);
 end method sort!;
 
@@ -452,7 +452,7 @@ end method sort!;
 // on a copy of the original sequence.
 //
 define method sort (sequence :: <sequence>,
-		    #key test = \<, stable: stable)
+                    #key test = \<, stable: stable)
  => new-seq :: <sequence>;
   sort!(copy-sequence(sequence), test: test, stable: stable);
 end method sort;

@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -58,8 +58,8 @@ obj_t obj_UnicodeStringClass = 0;
 obj_t make_byte_string(char *chars)
 {
     int len = strlen(chars);
-    obj_t res = alloc(obj_ByteStringClass, sizeof(struct string) 
-		      + len + 1 - sizeof(((struct string *)res)->chars));
+    obj_t res = alloc(obj_ByteStringClass, sizeof(struct string)
+                      + len + 1 - sizeof(((struct string *)res)->chars));
 
     obj_ptr(struct string *, res)->len = len;
     strcpy((char *)obj_ptr(struct string *, res)->chars, chars);
@@ -71,7 +71,7 @@ obj_t make_byte_string(char *chars)
 obj_t alloc_byte_string(int len)
 {
     obj_t res = alloc(obj_ByteStringClass, sizeof(struct string)
-		      + len + 1 - sizeof(((struct string *)res)->chars));
+                      + len + 1 - sizeof(((struct string *)res)->chars));
 
     obj_ptr(struct string *, res)->len = len;
     obj_ptr(struct string *, res)->chars[len] = '\0';
@@ -81,9 +81,9 @@ obj_t alloc_byte_string(int len)
 
 obj_t alloc_unicode_string(int len)
 {
-    obj_t res = alloc(obj_UnicodeStringClass, 
-		      sizeof(struct string) 
-		      + 2*(len+1) - sizeof(((struct string *)res)->chars));
+    obj_t res = alloc(obj_UnicodeStringClass,
+                      sizeof(struct string)
+                      + 2*(len+1) - sizeof(((struct string *)res)->chars));
 
     obj_ptr(struct string *, res)->len = len;
     obj_ptr(struct string *, res)->chars[2*len] = '\0';
@@ -99,12 +99,12 @@ static obj_t dylan_byte_str_element(obj_t str, obj_t index, obj_t def)
     int i = fixnum_value(index);
 
     if (0 <= i && i < obj_ptr(struct string *, str)->len)
-	return int_char(string_chars(str)[i]);
+        return int_char(string_chars(str)[i]);
     else if (def != obj_Unbound)
-	return def;
+        return def;
     else {
-	error("No element %= in %=", index, str);
-	return NULL;
+        error("No element %= in %=", index, str);
+        return NULL;
     }
 }
 
@@ -113,12 +113,12 @@ static obj_t dylan_unicode_str_element(obj_t str, obj_t index, obj_t def)
     int i = fixnum_value(index);
 
     if (0 <= i && i < obj_ptr(struct string *, str)->len)
-	return int_char(get_unichar(str, i));
+        return int_char(get_unichar(str, i));
     else if (def != obj_Unbound)
-	return def;
+        return def;
     else {
-	error("No element %= in %=", index, str);
-	return NULL;
+        error("No element %= in %=", index, str);
+        return NULL;
     }
 }
 
@@ -127,26 +127,26 @@ static obj_t dylan_byte_str_element_setter(obj_t value, obj_t str, obj_t index)
     int i = fixnum_value(index);
 
     if (0 <= i && i < obj_ptr(struct string *, str)->len)
-	string_chars(str)[i] = char_int(value);
+        string_chars(str)[i] = char_int(value);
     else
-	error("No element %= in %=", index, str);
+        error("No element %= in %=", index, str);
 
     return value;
 }
 
 static obj_t dylan_unicode_str_element_setter(obj_t value,
-					      obj_t str, obj_t index)
+                                              obj_t str, obj_t index)
 {
     int i = fixnum_value(index);
 
     if (0 <= i && i < obj_ptr(struct string *, str)->len) {
-	string_chars(str)[2*i]     /* High byte */
-	    = (obj_ptr(struct character *, value)->unicode_value) >> 8;
-	string_chars(str)[2*i + 1]  /* Low byte */
-	    = (obj_ptr(struct character *, value)->unicode_value) & 255;
+        string_chars(str)[2*i]     /* High byte */
+            = (obj_ptr(struct character *, value)->unicode_value) >> 8;
+        string_chars(str)[2*i + 1]  /* Low byte */
+            = (obj_ptr(struct character *, value)->unicode_value) & 255;
     }
     else
-	error("No element %= in %=", index, str);
+        error("No element %= in %=", index, str);
 
     return value;
 }
@@ -157,15 +157,15 @@ static obj_t dylan_str_size(obj_t str)
 }
 
 static obj_t dylan_byte_str_equal(obj_t /* <byte-string> */ str1,
-				  obj_t /* <byte-string> */ str2)
+                                  obj_t /* <byte-string> */ str2)
 {
     struct string *s1 = obj_ptr(struct string *, str1);
     struct string *s2 = obj_ptr(struct string *, str2);
 
     if ((s1->len == s2->len) && (strcmp((char *)s1->chars, (char *)s2->chars) == 0))
-	return obj_True;
+        return obj_True;
     else
-	return obj_False;
+        return obj_False;
 }
 
 static obj_t dylan_byte_str_make(obj_t class, obj_t size, obj_t fill)
@@ -178,7 +178,7 @@ static obj_t dylan_byte_str_make(obj_t class, obj_t size, obj_t fill)
     len = fixnum_value(check_type(size, obj_FixnumClass));
 
     if (len < 0)
-	error("Bogus size: for make %=: %=", class, size);
+        error("Bogus size: for make %=: %=", class, size);
 
     fill_char = char_int(check_type(fill, obj_ByteCharacterClass));
 
@@ -186,7 +186,7 @@ static obj_t dylan_byte_str_make(obj_t class, obj_t size, obj_t fill)
 
     ptr = string_chars(res);
     while (len-- > 0)
-	*ptr++ = fill_char;
+        *ptr++ = fill_char;
     *ptr = '\0';
 
     return res;
@@ -202,15 +202,15 @@ static obj_t dylan_unicode_str_make(obj_t class, obj_t size, obj_t fill)
     len = fixnum_value(check_type(size, obj_FixnumClass));
 
     if (len < 0)
-	error("Bogus size: for make %=: %=", class, size);
+        error("Bogus size: for make %=: %=", class, size);
 
     fill_char = char_int(check_type(fill, obj_CharacterClass));
 
     res = alloc_unicode_string(len);
 
     for (i=0; i<len; i++) {
-	string_chars(res)[2*i] = (fill_char >> 8);
-	string_chars(res)[2*i + 1] = (fill_char & 255);
+        string_chars(res)[2*i] = (fill_char >> 8);
+        string_chars(res)[2*i + 1] = (fill_char & 255);
     }
     string_chars(res)[2*len] = (fill_char >> 8);
     string_chars(res)[2*len + 1] = (fill_char & 255);
@@ -229,14 +229,14 @@ static void print_byte_string(obj_t str)
     putchar('"');
     while (len-- > 0) {
         if (*ptr == '\n')
-	    printf("\\n");
-	else if (*ptr < ' ' || *ptr > '~')
-	    printf("\\%03o", *ptr);
-	else if (*ptr == '"')
-	    printf("\\\"");
-	else
-	    putchar(*ptr);
-	ptr++;
+            printf("\\n");
+        else if (*ptr < ' ' || *ptr > '~')
+            printf("\\%03o", *ptr);
+        else if (*ptr == '"')
+            printf("\\\"");
+        else
+            putchar(*ptr);
+        ptr++;
     }
     putchar('"');
 }
@@ -249,17 +249,17 @@ static void print_unicode_string(obj_t str)
 
     putchar('"');
     for (i=0; i<len; i++) {
-	c = get_unichar(str, i);
-	if (c == '\n')
-	    printf("\\n");
-	else if (c > 255)
-	    printf("\\{#x%x}", c);
-	else if (c < ' ' || c > '~')
-	    printf("\\%03o", c);
-	else if (c == '"')
-	    printf("\\\"");
-	else
-	    putchar(c);
+        c = get_unichar(str, i);
+        if (c == '\n')
+            printf("\\n");
+        else if (c > 255)
+            printf("\\{#x%x}", c);
+        else if (c < ' ' || c > '~')
+            printf("\\%03o", c);
+        else if (c == '"')
+            printf("\\\"");
+        else
+            putchar(c);
     }
     putchar('"');
 }
@@ -279,25 +279,25 @@ static int scav_unicode_string(struct object *ptr)
     struct string *str = (struct string *)ptr;
 
     return sizeof(struct string)
-	+ 2*(str->len + 1) - sizeof(str->chars);
+        + 2*(str->len + 1) - sizeof(str->chars);
 }
 
 static obj_t trans_byte_string(obj_t string)
 {
     return transport(string,
-		     sizeof(struct string)
-		     + obj_ptr(struct string *, string)->len + 1
-		     - sizeof(((struct string *)string)->chars),
-		     TRUE);
+                     sizeof(struct string)
+                     + obj_ptr(struct string *, string)->len + 1
+                     - sizeof(((struct string *)string)->chars),
+                     TRUE);
 }
 
 static obj_t trans_unicode_string(obj_t string)
 {
     return transport(string,
-		     sizeof(struct string) 
-		     + 2 * (obj_ptr(struct string *, string)->len + 1)
-		     - sizeof(((struct string *)string)->chars),
-		     TRUE);
+                     sizeof(struct string)
+                     + 2 * (obj_ptr(struct string *, string)->len + 1)
+                     - sizeof(((struct string *)string)->chars),
+                     TRUE);
 }
 
 
@@ -306,9 +306,9 @@ static obj_t trans_unicode_string(obj_t string)
 void make_str_classes(void)
 {
     obj_ByteStringClass = make_builtin_class(scav_byte_string,
-					     trans_byte_string);
-    obj_UnicodeStringClass = make_builtin_class(scav_unicode_string, 
-						trans_unicode_string);
+                                             trans_byte_string);
+    obj_UnicodeStringClass = make_builtin_class(scav_unicode_string,
+                                                trans_unicode_string);
 
     add_constant_root(&obj_ByteStringClass);
     add_constant_root(&obj_UnicodeStringClass);
@@ -317,9 +317,9 @@ void make_str_classes(void)
 void init_str_classes(void)
 {
     init_builtin_class(obj_ByteStringClass, "<byte-string>",
-		       obj_VectorClass, obj_StringClass, NULL);
+                       obj_VectorClass, obj_StringClass, NULL);
     init_builtin_class(obj_UnicodeStringClass, "<unicode-string>",
-		       obj_VectorClass, obj_StringClass, NULL);
+                       obj_VectorClass, obj_StringClass, NULL);
     def_printer(obj_ByteStringClass, print_byte_string);
     def_printer(obj_UnicodeStringClass, print_unicode_string);
 }
@@ -327,51 +327,51 @@ void init_str_classes(void)
 void init_str_functions(void)
 {
     define_method("element",
-		    list2(obj_ByteStringClass, obj_FixnumClass),
-		    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
-		    obj_ByteCharacterClass, dylan_byte_str_element);
+                    list2(obj_ByteStringClass, obj_FixnumClass),
+                    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
+                    obj_ByteCharacterClass, dylan_byte_str_element);
     define_method("element",
-		    list2(obj_UnicodeStringClass, obj_FixnumClass),
-		    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
-		    obj_CharacterClass, dylan_unicode_str_element);
+                    list2(obj_UnicodeStringClass, obj_FixnumClass),
+                    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
+                    obj_CharacterClass, dylan_unicode_str_element);
     define_method("element-setter",
-		  list3(obj_ByteCharacterClass,
-			obj_ByteStringClass,
-			obj_FixnumClass),
-		  FALSE, obj_False, FALSE,
-		  obj_ObjectClass, dylan_byte_str_element_setter);
+                  list3(obj_ByteCharacterClass,
+                        obj_ByteStringClass,
+                        obj_FixnumClass),
+                  FALSE, obj_False, FALSE,
+                  obj_ObjectClass, dylan_byte_str_element_setter);
     define_method("element-setter",
-		  list3(obj_CharacterClass,
-			obj_UnicodeStringClass,
-			obj_FixnumClass),
-		  FALSE, obj_False, FALSE,
-		  obj_ObjectClass, dylan_unicode_str_element_setter);
+                  list3(obj_CharacterClass,
+                        obj_UnicodeStringClass,
+                        obj_FixnumClass),
+                  FALSE, obj_False, FALSE,
+                  obj_ObjectClass, dylan_unicode_str_element_setter);
 
-    /* size is the same for both <byte-string> and <unicode-string>, 
+    /* size is the same for both <byte-string> and <unicode-string>,
        but not for the general user defined instance of <string>.
     */
     define_method("size", list1(obj_ByteStringClass),
-		  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
+                  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
     define_method("size", list1(obj_UnicodeStringClass),
-		  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
+                  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
 
     define_method("=", list2(obj_ByteStringClass, obj_ByteStringClass),
-		  FALSE, obj_False, FALSE, obj_BooleanClass,
-		  dylan_byte_str_equal);
+                  FALSE, obj_False, FALSE, obj_BooleanClass,
+                  dylan_byte_str_equal);
 
-    /* make(<string>) returns a <byte-string>, even if fill happens to 
+    /* make(<string>) returns a <byte-string>, even if fill happens to
        be a unicode character.
     */
     define_method("make", list1(singleton(obj_StringClass)), FALSE,
-		  list2(pair(symbol("size"), make_fixnum(0)),
-			pair(symbol("fill"), int_char('\0'))),
-		  FALSE, obj_ByteStringClass, dylan_byte_str_make);
+                  list2(pair(symbol("size"), make_fixnum(0)),
+                        pair(symbol("fill"), int_char('\0'))),
+                  FALSE, obj_ByteStringClass, dylan_byte_str_make);
     define_method("make", list1(singleton(obj_ByteStringClass)), FALSE,
-		  list2(pair(symbol("size"), make_fixnum(0)),
-			pair(symbol("fill"), int_char('\0'))),
-		  FALSE, obj_ByteStringClass, dylan_byte_str_make);
+                  list2(pair(symbol("size"), make_fixnum(0)),
+                        pair(symbol("fill"), int_char('\0'))),
+                  FALSE, obj_ByteStringClass, dylan_byte_str_make);
     define_method("make", list1(singleton(obj_UnicodeStringClass)), FALSE,
-		  list2(pair(symbol("size"), make_fixnum(0)),
-			pair(symbol("fill"), int_char('\0'))),
-		  FALSE, obj_UnicodeStringClass, dylan_unicode_str_make);
+                  list2(pair(symbol("size"), make_fixnum(0)),
+                        pair(symbol("fill"), int_char('\0'))),
+                  FALSE, obj_UnicodeStringClass, dylan_unicode_str_make);
 }

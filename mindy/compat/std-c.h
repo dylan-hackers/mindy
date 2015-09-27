@@ -1,14 +1,14 @@
 /*
  * std-c.h --
  *
- *	Provide emulations of standard c where parts might be lacking.
+ *        Provide emulations of standard c where parts might be lacking.
  *
- *	This file is adapted from tcl-7.3 tcl.h and tclInt.h and should
- *	be considered a highly derivative work covered by the following
- *	copyright.
+ *        This file is adapted from tcl-7.3 tcl.h and tclInt.h and should
+ *        be considered a highly derivative work covered by the following
+ *        copyright.
  *
- *	Parts of this are irrelevant to mindy as it stands, but they're
- *	easier to keep than to go back and dig them up later.
+ *        Parts of this are irrelevant to mindy as it stands, but they're
+ *        easier to keep than to go back and dig them up later.
  *
  * tcl.h --
  * tclInt.h --
@@ -21,7 +21,7 @@
  * software and its documentation for any purpose, provided that the
  * above copyright notice and the following two paragraphs appear in
  * all copies of this software.
- * 
+ *
  * IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
  * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
  * OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
@@ -57,8 +57,8 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef WIN32
-#   define strcasecmp	_stricmp
-#   define strncasecmp	_memicmp
+#   define strcasecmp        _stricmp
+#   define strncasecmp        _memicmp
 #endif
 #include <stdarg.h>
 
@@ -72,7 +72,7 @@
 #   ifdef USE_BSD_FBUFEMPTYP
 #       define FBUFEMPTYP(fp)    (fp->_r <= 0)
 #   else
-#      	define FBUFEMPTYP(fp)    (fp->_cnt == 0)
+#              define FBUFEMPTYP(fp)    (fp->_cnt == 0)
 #   endif
 #endif
 
@@ -92,5 +92,5 @@
 #   include <malloc.h>
 #endif
 
-#endif	/* _STD_C_H_ */
+#endif        /* _STD_C_H_ */
 

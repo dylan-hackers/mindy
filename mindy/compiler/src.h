@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 \**********************************************************************/
 
@@ -115,7 +115,7 @@ struct expr_constituent {
     struct constituent *next;
     struct expr *expr;
 };
-    
+
 struct binding_constituent {
     enum constituent_kind kind;
     struct constituent *next;
@@ -464,7 +464,7 @@ struct superclass {
 };
 
 enum slot_allocation {
-    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS, 
+    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS,
     alloc_VIRTUAL, alloc_Kinds
 };
 
@@ -601,7 +601,7 @@ extern struct constituent
 extern struct constituent *make_expr_constituent(struct expr *expr);
 extern struct constituent *make_let(struct bindings *bindings);
 extern struct constituent *make_handler(struct expr *type, struct expr *func,
-					struct plist *plist);
+                                        struct plist *plist);
 extern struct constituent
     *make_local_constituent(struct local_methods *methods);
 extern struct constituent
@@ -612,15 +612,15 @@ extern struct id *id(struct symbol *symbol);
 extern struct id *dup_id(struct id *id);
 extern struct id *make_id(struct token *token);
 extern struct bindings *make_bindings(struct param_list *params,
-				      struct expr *expr);
+                                      struct expr *expr);
 extern struct param_list *make_param_list(void);
 extern struct param_list *push_param(struct param *param,
-				     struct param_list *list);
+                                     struct param_list *list);
 extern struct param_list *set_rest_param(struct param_list *list,
-					 struct id *id);
+                                         struct id *id);
 extern struct param *make_param(struct id *id, struct expr *type);
 extern struct local_methods *add_local_method(struct local_methods *methods,
-					      struct method *method);
+                                              struct method *method);
 extern struct local_methods *make_local_methods(void);
 extern struct expr *make_literal_ref(struct literal *lit);
 extern struct expr
@@ -628,7 +628,7 @@ extern struct expr
 extern struct binop_series *make_binop_series(void);
 extern struct binop_series
     *add_binop(struct binop_series *series, struct binop *op,
-	       struct expr *operand);
+               struct expr *operand);
 extern struct binop *make_binop(struct id *id);
 extern struct expr *make_negate(int line, struct expr *expr);
 extern struct expr *make_not(int line, struct expr *expr);
@@ -640,21 +640,21 @@ extern struct expr *make_method_ref(struct method *method);
 extern struct expr *make_dot_operation(struct expr *expr, struct expr *fn);
 extern struct arglist *make_argument_list(void);
 extern struct arglist *add_argument(struct arglist *arglist,
-				    struct argument *arg);
+                                    struct argument *arg);
 extern struct argument *make_argument(struct expr *expr);
 extern struct argument
     *make_keyword_argument(struct token *keyword, struct expr *expr);
 extern struct plist *make_property_list(void);
 extern struct plist
     *add_property(struct plist *plist, struct token *keyword,
-		  struct expr *expr);
+                  struct expr *expr);
 extern struct return_type_list *make_return_type_list(boolean restp,
-						      struct expr *rest);
+                                                      struct expr *rest);
 extern struct return_type_list *add_return_type(struct return_type_list *l,
-						struct expr *type);
+                                                struct expr *type);
 extern struct return_type_list
     *set_return_type_rest_type(struct return_type_list *l,
-			       struct expr *type);
+                               struct expr *type);
 extern struct literal *parse_true_token(struct token *token);
 extern struct literal *parse_false_token(struct token *token);
 extern struct literal *parse_string_token(struct token *token);
@@ -667,63 +667,63 @@ extern struct literal *parse_symbol_token(struct token *token);
 extern struct literal *parse_keyword_token(struct token *token);
 extern struct expr *make_body_expr(struct body *body);
 extern struct expr *make_block(int line, struct id *exit, struct body *body,
-			       struct block_epilog *epilog);
+                               struct block_epilog *epilog);
 extern struct expr *make_case(struct condition_body *body);
 extern struct expr *make_if(struct expr *cond, struct body *consequent,
-			    struct else_part *else_part);
+                            struct else_part *else_part);
 extern struct else_part *make_else(int else_line, struct body *alternate);
 extern struct expr *make_for(struct for_header *header, struct body *body,
-			     struct body *finally);
+                             struct body *finally);
 extern struct expr *make_select(struct expr *expr, struct expr *by,
-				struct condition_body *body);
+                                struct condition_body *body);
 extern struct expr *make_loop(struct body *body);
 extern struct expr *make_repeat(void);
 extern struct block_epilog *make_block_epilog(struct exception_clauses *inner,
-					      struct body *cleanup,
-					      struct exception_clauses *outer);
+                                              struct body *cleanup,
+                                              struct exception_clauses *outer);
 extern struct for_header *make_for_header(struct expr *until);
 extern struct for_header *push_for_clause(struct for_clause *clause,
-					  struct for_header *header);
+                                          struct for_header *header);
 extern struct exception_clauses *make_exception_clauses(void);
 extern struct exception_clauses
     *add_exception_clause(struct exception_clauses *clauses,
-			  struct exception_clause *clause);
+                          struct exception_clause *clause);
 extern struct exception_clause
     *make_exception_clause(struct expr *type, struct id *condition,
-			   struct plist *plist, struct body *body);
+                           struct plist *plist, struct body *body);
 extern struct condition_body
     *push_condition_clause(struct condition_clause *clause,
-			   struct condition_body *cond_body);
+                           struct condition_body *cond_body);
 extern struct condition_clause
     *make_otherwise_condition_clause(struct body *body);
 extern struct incomplete_condition_body
     *make_incomplete_condition_clauses(struct constituent *constituent,
-				       struct condition_body *rest);
+                                       struct condition_body *rest);
 extern struct incomplete_condition_body
     *push_condition_constituent(struct constituent *constituent,
-				struct incomplete_condition_body *body);
+                                struct incomplete_condition_body *body);
 extern struct condition_body
     *complete_condition_clauses(struct condition_clause *clause,
-				struct incomplete_condition_body *body);
+                                struct incomplete_condition_body *body);
 extern struct condition_clause
     *make_condition_clause(struct constituent *constituent);
 extern struct condition_clause
     *push_condition(struct expr *cond, struct condition_clause *clause);
 extern struct for_clause
     *make_equal_then_for_clause(struct param_list *vars, struct expr *equal,
-				struct expr *then);
+                                struct expr *then);
 extern struct for_clause
     *make_in_for_clause(struct param *var, struct param *keyed_by,
-			struct expr *collection, struct param *protocol);
+                        struct expr *collection, struct param *protocol);
 extern struct for_clause
     *make_from_for_clause(struct param *var, struct expr *from,
-			  struct to_part *to, struct expr *by);
+                          struct to_part *to, struct expr *by);
 extern struct to_part *make_to(struct expr *expr);
 extern struct to_part *make_above(struct expr *expr);
 extern struct to_part *make_below(struct expr *expr);
 extern struct constituent
     *make_class_definition(struct id *name, struct superclass_list *supers,
-			   struct class_guts *guts);
+                           struct class_guts *guts);
 extern struct constituent
     *set_class_flags(flags_t flags, struct constituent *defclass);
 extern struct superclass_list *make_superclass_list(void);
@@ -732,18 +732,18 @@ extern struct superclass_list
 extern struct class_guts *make_class_guts(void);
 extern struct slot_spec
     *make_slot_spec(int line, flags_t flags, enum slot_allocation alloc,
-		    struct id *name, struct expr *type, struct expr *init_expr,
-		    struct plist *plist);
+                    struct id *name, struct expr *type, struct expr *init_expr,
+                    struct plist *plist);
 extern struct class_guts
     *add_slot_spec(struct class_guts *guts, struct slot_spec *spec);
 extern struct initarg_spec
     *make_initarg_spec(boolean required, struct token *keyword,
-		       struct plist *plist);
+                       struct plist *plist);
 extern struct class_guts
     *add_initarg_spec(struct class_guts *guts, struct initarg_spec *spec);
 extern struct inherited_spec
-    *make_inherited_spec(int line, struct id *name, struct expr *init_expr, 
-			 struct plist *plist);
+    *make_inherited_spec(int line, struct id *name, struct expr *init_expr,
+                         struct plist *plist);
 extern struct class_guts
     *add_inherited_spec(struct class_guts *guts, struct inherited_spec *spec);
 extern struct constituent
@@ -752,19 +752,19 @@ extern struct constituent
     *set_sealed_domain_flags(flags_t flags, struct constituent *sealed_domain);
 extern struct constituent
     *make_define_generic(struct id *name, struct param_list *params,
-			 struct gf_suffix *suffix);
+                         struct gf_suffix *suffix);
 extern struct constituent
     *set_generic_flags(flags_t flags, struct constituent *defgeneric);
 extern struct gf_suffix
     *make_gf_suffix(struct return_type_list *rettypes,
-		    struct plist *plist);
+                    struct plist *plist);
 extern struct param_list
     *push_keyword_param(struct keyword_param *param, struct param_list *list);
 extern struct param_list *allow_keywords(struct param_list *param_list);
 extern struct param_list *allow_all_keywords(struct param_list *param_list);
 extern struct keyword_param
     *make_keyword_param(struct token *keyword, struct id *sym,
-			struct expr *type, struct expr *def);
+                        struct expr *type, struct expr *def);
 extern struct method
     *set_method_source(struct token *source, struct method *method);
 extern struct method
@@ -773,8 +773,8 @@ extern struct method
     *make_top_level_method(char *debug_name, struct body *body);
 extern struct method
     *make_method_description(struct param_list *params,
-			     struct return_type_list *rettypes,
-			     struct body *body);
+                             struct return_type_list *rettypes,
+                             struct body *body);
 extern struct expr *make_singleton(int line, struct expr *expr);
 extern struct param_list
     *set_next_param(struct param_list *list, struct id *var);
@@ -784,16 +784,16 @@ extern struct defnamespace_constituent *make_define_module(void);
 extern struct defnamespace_constituent *make_define_library(void);
 extern struct defnamespace_constituent
     *set_namespace_name(struct defnamespace_constituent *namespace,
-			struct token *name);
+                        struct token *name);
 extern struct defnamespace_constituent
     *add_use_clause(struct defnamespace_constituent *namespace,
-		    struct use_clause *clause);
+                    struct use_clause *clause);
 extern struct defnamespace_constituent
     *add_exports(struct defnamespace_constituent *namespace,
-		 struct variable_names *vars);
+                 struct variable_names *vars);
 extern struct defnamespace_constituent
     *add_creates(struct defnamespace_constituent *namespace,
-		 struct variable_names *vars);
+                 struct variable_names *vars);
 extern struct use_clause
     *make_use_clause(struct token *symbol, struct use_options *options);
 extern struct use_options *make_use_options(void);
@@ -807,11 +807,11 @@ extern struct variable_names
 extern struct renamings *make_renamings(void);
 extern struct renamings
     *add_renaming(struct renamings *names,
-		  struct token *from, struct token *to);
+                  struct token *from, struct token *to);
 extern struct import_option *make_import_option(void);
 extern struct import_option
     *add_import(struct import_option *opt,
-		struct token *from, struct token *to);
+                struct token *from, struct token *to);
 extern struct use_option *make_exclude_option(struct variable_names *vars);
 extern struct use_option *make_export_option(struct variable_names *vars);
 extern struct use_option *make_rename_option(struct renamings *lst);

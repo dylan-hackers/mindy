@@ -1,7 +1,7 @@
 module: command-processor
-synopsis: 
-author: 
-copyright: 
+synopsis:
+author:
+copyright:
 
 define constant <modifiers> = one-of(#"shift", #"control", #"alternate",
                                      #"meta", #"super", #"hyper");
@@ -54,7 +54,7 @@ end function n-spaces;
 
 // find the command with command-name as the prefix of its name
 define function find-command-by-prefix(command-name :: <string>)
-  choose(method(x) 
+  choose(method(x)
              case-insensitive-equal(command-name,
                                     subsequence(x.name, end: command-name.size))
          end, *command-table*)
@@ -63,27 +63,27 @@ end function find-command-by-prefix;
 // Find the command that forms the prefix of command-name. This
 // is not the same as above!
 define function find-prefixing-command(command-name :: <string>)
-  choose(method(x) 
-             case-insensitive-equal(subsequence(*command-line*, 
+  choose(method(x)
+             case-insensitive-equal(subsequence(*command-line*,
                                                 end: x.name.size), x.name)
          end, *command-table*)
 end function find-prefixing-command;
 
 define function find-command(command-name :: <string>)
-  choose(method(x) case-insensitive-equal(command-name, x.name) end, 
+  choose(method(x) case-insensitive-equal(command-name, x.name) end,
          *command-table*)
 end function find-command;
 
-make(<command>, 
-     name: "Help", 
+make(<command>,
+     name: "Help",
      summary:   "You have just found out what this does :).",
-     full-help: 
+     full-help:
        "Without an argument, lists all available commands.  When given\r\n"
        "an argument, displays help for the command named.\r\n",
      command: method(parameter)
                   if(parameter.size = 0)
                     for(c in *command-table*)
-                      format-out("%s%s %s\r\n", 
+                      format-out("%s%s %s\r\n",
                                  c.name,
                                  n-spaces(20 - c.name.size),
                                  c.summary);
@@ -97,7 +97,7 @@ make(<command>,
                         if(c.full-help)
                           format-out("%s:\r\n%s", c.name, c.full-help)
                         else
-                          format-out("%s: %s\r\n", 
+                          format-out("%s: %s\r\n",
                                      c.name, c.summary)
                         end if;
                       end for;
@@ -105,7 +105,7 @@ make(<command>,
                   end if;
               end);
 
-make(<command>, name: "Set Prompt", 
+make(<command>, name: "Set Prompt",
      summary: "Sets the prompt to the argument given.",
      command: method(x) *prompt* := x end);
 
@@ -114,7 +114,7 @@ define variable *buffer-pointer* = 0;
 define variable *prompt* = "gwydion> ";
 
 define method self-insert-command(c)
-  *command-line* := 
+  *command-line* :=
     concatenate(subsequence(*command-line*, end: *buffer-pointer*),
                 vector(c),
                 subsequence(*command-line*, start: *buffer-pointer*));
@@ -132,7 +132,7 @@ define method run-command(c)
     format-out("Ambiguous command. Try Help.\r\n");
   else
     to-cooked();
-    commands[0].command(copy-sequence(*command-line*, 
+    commands[0].command(copy-sequence(*command-line*,
                                       start: commands[0].name.size + 1));
     to-raw();
   end if;
@@ -162,7 +162,7 @@ end method backward-char-command;
 
 define method delete-char-backwards(c)
   if(*buffer-pointer* > 0)
-    *command-line* := 
+    *command-line* :=
       concatenate(subsequence(*command-line*, end: *buffer-pointer* - 1),
                   subsequence(*command-line*, start: *buffer-pointer*));
     *buffer-pointer* := *buffer-pointer* - 1;
@@ -174,7 +174,7 @@ end method delete-char-backwards;
 
 define method complete-command-aux()
   for(i in *command-table*)
-    if(case-insensitive-equal(*command-line*, 
+    if(case-insensitive-equal(*command-line*,
                               subsequence(i.name, end: *command-line*.size)))
       *command-line* := copy-sequence(i.name);
       *buffer-pointer* := i.name.size;
@@ -207,12 +207,12 @@ define method kill-to-end-of-line(c)
   for(i from 0 below *command-line*.size - *buffer-pointer*)
     put-char(' ');
   end for;
-  *command-line* := copy-sequence(subsequence(*command-line*, 
+  *command-line* := copy-sequence(subsequence(*command-line*,
                                               end: *buffer-pointer*));
   repaint-line();
 end method kill-to-end-of-line;
 
-define variable *key-bindings* = make(<simple-vector>, 
+define variable *key-bindings* = make(<simple-vector>,
                                       size: 256,
                                       fill: self-insert-command);
 
@@ -233,8 +233,8 @@ define variable to-cooked = identity;
 
 define function run-command-processor()
   let running = #t;
-  make(<command>, 
-       name: "Exit", 
+  make(<command>,
+       name: "Exit",
        command: method(parameter)
                     running := #f;
                 end,
@@ -248,9 +248,9 @@ define function run-command-processor()
   cfmakeraw(new-termios);
   #endif
 
-  to-raw    := curry(tcsetattr, *standard-input*.file-descriptor, 
+  to-raw    := curry(tcsetattr, *standard-input*.file-descriptor,
                      $TCSANOW, new-termios);
-  to-cooked := curry(tcsetattr, *standard-input*.file-descriptor, 
+  to-cooked := curry(tcsetattr, *standard-input*.file-descriptor,
                      $TCSANOW, old-termios);
 
   to-raw();

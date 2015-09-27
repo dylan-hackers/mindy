@@ -7,25 +7,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -83,10 +83,10 @@ copyright: see below
 //    has no additional dots.  In these cases, the filename-extension
 //    is empty.
 
-//    For all filenames, 
-//       filename = concatenate(filename.filename-prefix, 
-//			      filename.base-filename, 
-//			      filename.filename-extension)
+//    For all filenames,
+//       filename = concatenate(filename.filename-prefix,
+//                              filename.base-filename,
+//                              filename.filename-extension)
 
 // Simple filename manipulations
 
@@ -94,11 +94,11 @@ define constant <filename> = <byte-string>;
 
 define constant $search-path-separator = #if (compiled-for-win32)
                                             ';';
-                                         #else 
-                                         	#if (macos)
-                                         		'\t';
-                                         	#else
-                                            	':';
+                                         #else
+                                                 #if (macos)
+                                                         '\t';
+                                                 #else
+                                                    ':';
                                             #endif
                                          #endif
 
@@ -124,11 +124,11 @@ define function path-separator? (c :: <character>) => answer :: <boolean>;
   #if (compiled-for-win32)
      (c == '/') | (c == '\\') | (c == ':');
   #else
-	#if (macos)
-		c == ':';
-	#else
-		c == '/';
-	#endif
+        #if (macos)
+                c == ':';
+        #else
+                c == '/';
+        #endif
   #endif
 end function path-separator?;
 
@@ -137,12 +137,12 @@ define constant foo2 = 0;  // reset indentation
 // Internal.  One past the last character of the prefix; 0 if there is
 // no prefix.
 //
-define function end-of-prefix (filename :: <filename>) 
+define function end-of-prefix (filename :: <filename>)
  => index :: <integer>;
   block (return)
     for (index from filename.size - 1 to 0 by -1)
       if (filename[index].path-separator?)
-	return(index + 1);
+        return(index + 1);
       end if;
     end for;
     0;
@@ -160,17 +160,17 @@ define function start-of-extension (filename :: <filename>)
  => index :: <integer>;
   block (return)
     let last-dot = block (break)
-		     for (index from filename.size - 1 to 0 by -1)
-		       if (filename[index] == '.')
-			 break(index);
-		       end if;
-		     end for;
-		     return(filename.size);
-		   end block;
+                     for (index from filename.size - 1 to 0 by -1)
+                       if (filename[index] == '.')
+                         break(index);
+                       end if;
+                     end for;
+                     return(filename.size);
+                   end block;
 
     let prefix-end = filename.end-of-prefix;
     // last-dot ~= filename.size, or else it would have returned by now
-    if (last-dot == prefix-end)  
+    if (last-dot == prefix-end)
       // special case 1: pathless-filename is of the form ".*"
       filename.size;
     elseif (last-dot == prefix-end + 1 & filename[prefix-end] == '.')
@@ -196,7 +196,7 @@ end function filename-extension;
 define function base-filename (filename :: <filename>)
  => basename :: <filename>;
   copy-sequence(filename, start: filename.end-of-prefix,
-		end: filename.start-of-extension);
+                end: filename.start-of-extension);
 end function base-filename;
 
 define function pathless-filename (filename :: <filename>)
@@ -218,18 +218,18 @@ end function extensionless-filename;
 //
 // dir-sequence is a sequence of directory names.
 //
-define method find-and-open-file 
+define method find-and-open-file
     (pathless-name :: <filename>, dir-sequence :: <sequence>)
  => (stream :: false-or(<stream>), filename :: false-or(<filename>));
   block (return)
     local
       method try (filename :: <filename>) => ();
-	block (punt)
-	  return(make(<file-stream>, locator: filename, direction: #"input"),
-		 filename);
-	exception (<file-does-not-exist-error>)
-	  #f;
-	end block;
+        block (punt)
+          return(make(<file-stream>, locator: filename, direction: #"input"),
+                 filename);
+        exception (<file-does-not-exist-error>)
+          #f;
+        end block;
       end method try;
     for (dir in dir-sequence)
       try(concatenate( fully-separated-path( dir ), pathless-name ) );
@@ -241,7 +241,7 @@ end method find-and-open-file;
 define function find-file
     (pathless-name :: <filename>, dir-sequence :: <sequence>)
  => filename :: false-or(<filename>);
-  let (worthless-stream, filename) 
+  let (worthless-stream, filename)
     = find-and-open-file(pathless-name, dir-sequence);
   if (worthless-stream)
     close(worthless-stream);
@@ -253,11 +253,11 @@ end function find-file;
 
 define function fully-separated-path( path :: <filename> )
 =>( full-path :: <filename> )
-	if( (size(path) > 0) & last( as( <string>, path ) ) = $a-path-separator )
-		path;
-	else
-		concatenate( path, as( <string>, $a-path-separator ) );
-	end if;
+        if( (size(path) > 0) & last( as( <string>, path ) ) = $a-path-separator )
+                path;
+        else
+                concatenate( path, as( <string>, $a-path-separator ) );
+        end if;
 end function fully-separated-path;
 
 // getcwd -- Mindy defines this in the System module.  d2c does not.
@@ -268,18 +268,18 @@ define function getcwd () => cwd :: <byte-string>;
   // Something about getdrive() on MS-windows.  include <direct.h>
   let buffer = make(<buffer>, size: 1024);
   if (zero?(call-out("(long)getcwd", #"long",
-		     #"ptr", buffer-address(buffer),
-		     #"int", 1024)))
+                     #"ptr", buffer-address(buffer),
+                     #"int", 1024)))
     error("Can't get the current directory.");
   else
     let len = block (return)
-		for (index :: <integer> from 0 below 1024)
-		  if (buffer[index].zero?)
-		    return(index);
-		  end if;
-		end for;
-		error("Can't get the current directory.");
-	      end block;
+                for (index :: <integer> from 0 below 1024)
+                  if (buffer[index].zero?)
+                    return(index);
+                  end if;
+                end for;
+                error("Can't get the current directory.");
+              end block;
     let result = make(<byte-string>, size: len);
     for (index :: <integer> from 0 below len)
       result[index] := as(<character>, buffer[index]);
@@ -319,7 +319,7 @@ end function rename-file;
 
 // Returns false if one of the files isn't there
 //
-define function files-identical? 
+define function files-identical?
     (filename1 :: <string>, filename2 :: <string>)
  => answer :: <boolean>;
   let cmp-command = concatenate("cmp -s ", filename1, " ", filename2);

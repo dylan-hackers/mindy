@@ -113,7 +113,7 @@ define inline function set-bit-vector-word
   if (bit-limit ~= 0)
     word := if (fill = 0)
               %logand(word, mask-for-bits-strictly-below(bit-limit));
-	    else
+            else
               %logior(word, mask-for-bits-above(bit-limit));
             end if;
   end if;
@@ -125,7 +125,7 @@ end function;
 //
 /*
 define method check-start-compute-end
-  (vector :: <bit-vector>, start :: <integer>, last) 
+  (vector :: <bit-vector>, start :: <integer>, last)
       => (real-last :: <integer>);
   let vector-size = vector.size;
   let last :: <integer> = if (unsupplied?(last)) vector-size else last end;
@@ -185,12 +185,12 @@ define inline-only function bit-vector-and-internal!
 
     if (result.word-size > v1.word-size)
       for (i :: <integer> from v1.word-size below result.word-size)
-        bit-vector-word(result, i) := 
+        bit-vector-word(result, i) :=
           if (p1 = 0)
             $machine-word-zero;
           else
             bit-vector-word(v2, i);
-	  end if;
+          end if;
       end for;
     end if;
   end if;
@@ -306,7 +306,7 @@ define inline-only function bit-vector-andc2-internal-swapped!
       else
         for (i :: <integer> from v1.word-size below result.word-size)
           bit-vector-word(result, i) := $machine-word-zero;
-	end for;
+        end for;
       end if;
     end if;
   end if;
@@ -358,13 +358,13 @@ define inline-only function bit-vector-or-internal!
 
     if (v1.word-size < result.word-size)
       if (p1 = 0)
-	for (i :: <integer> from v1.word-size below result.word-size)
-	  bit-vector-word(result, i) := bit-vector-word(v2, i);
-	end for;
+        for (i :: <integer> from v1.word-size below result.word-size)
+          bit-vector-word(result, i) := bit-vector-word(v2, i);
+        end for;
       else
         for (i :: <integer> from v1.word-size below result.word-size)
           bit-vector-word(result, i) := $machine-word-minus-one;
-	end for;
+        end for;
       end if;
     end if;
   end if;
@@ -417,13 +417,13 @@ define inline-only function bit-vector-xor-internal!
     if (v1.word-size < result.word-size)
       if (p1 = 0)
         for (i :: <integer> from v1.word-size below result.word-size)
-	  bit-vector-word(result, i) := bit-vector-word(v2, i);
-	end for;
+          bit-vector-word(result, i) := bit-vector-word(v2, i);
+        end for;
       else
-	for (i :: <integer> from v1.word-size below result.word-size)
+        for (i :: <integer> from v1.word-size below result.word-size)
           bit-vector-word(result, i) :=
             %lognot(bit-vector-word(v2, i));
-	end for;
+        end for;
       end if;
     end if;
   end if;
@@ -576,7 +576,7 @@ define sealed method make
       if (bit-size <= copy-from.size)
         for (i :: <integer> from 0 below wsize)
           bit-vector-word(vector, i) := bit-vector-word(copy-from, i);
-	end for;
+        end for;
       else
         let last = copy-from.word-size - 1;
         for (i :: <integer> from 0 below last)
@@ -663,9 +663,9 @@ define sealed method element-setter
     let new-word :: <machine-word>
       = if (bit = 0)
           %logand(word, %lognot(%shift-left($machine-word-one, bit-offset)));
-	else
+        else
           %logior(word, %shift-left($machine-word-one, bit-offset));
-	end if;
+        end if;
     bit-vector-word(vector, word-offset) := new-word;
 /*
     primitive-bit-element-setter(integer-as-raw(bit), vector,
@@ -757,10 +757,10 @@ define sealed method fill!
         if (value = 0)
           let mask = mask-for-bits-above(last-bit-offset);
           word := %logand(word, mask);
-	else
+        else
           let mask = mask-for-bits-strictly-below(last-bit-offset);
           word := %logior(word, mask);
-	end if;
+        end if;
         bit-vector-word(vector, last-word-offset) := word;
       end if;
 
@@ -773,10 +773,10 @@ define sealed method fill!
         if (value = 0)
           let mask = mask-for-bits-strictly-below(start-bit-offset);
           word := %logand(word, mask);
-	else
+        else
           let mask = mask-for-bits-above(start-bit-offset);
           word := %logior(word, mask);
-	end if;
+        end if;
         bit-vector-word(vector, start-word-offset) := word;
         let new-start-word-offset :: <integer> = start-word-offset + 1;
         start-word-offset := new-start-word-offset;
@@ -793,8 +793,8 @@ define sealed method fill!
                           $machine-word-minus-one
                         end if;
         /*
-	primitive-fill!(vector,
-			primitive-repeated-slot-offset(vector),
+        primitive-fill!(vector,
+                        primitive-repeated-slot-offset(vector),
                         start-word-offset,
                         last-word-offset - start-word-offset,
                         as(<raw-pointer>, fill-word));
@@ -868,17 +868,17 @@ define function bit-vector-and
 
   let result-size :: <integer>
     = if (pad1 = 0)
-	if (pad2 = 0)
-	  min(vector1.size, vector2.size);
-	else
-	  vector1.size;
-	end if;
+        if (pad2 = 0)
+          min(vector1.size, vector2.size);
+        else
+          vector1.size;
+        end if;
       else
-	if (pad2 = 0)
-	  vector2.size;
-	else
-	  max(vector1.size, vector2.size);
-	end if;
+        if (pad2 = 0)
+          vector2.size;
+        else
+          max(vector1.size, vector2.size);
+        end if;
       end if;
   let result :: <bit-vector> = make(<bit-vector>, size: result-size);
 
@@ -906,9 +906,9 @@ define function bit-vector-and!
 
   let (result :: <bit-vector>, result-size :: <integer>)
     = if (vector2.size <= vector1.size | pad1 = 0)
-	values(vector1, vector1.size);
+        values(vector1, vector1.size);
       else
-	values(make(<bit-vector>, size: vector2.size), vector2.size);
+        values(make(<bit-vector>, size: vector2.size), vector2.size);
       end if;
 
   if (result-size > 0)
@@ -933,7 +933,7 @@ define function bit-vector-andc2
      #key pad1 :: <bit> = 0, pad2 :: <bit> = 0)
  => (result :: <bit-vector>, pad :: <bit>)
 
-  let result-size = 
+  let result-size =
   if (pad1 = 0)
     if (pad2 = 0)
       vector1.size
@@ -971,9 +971,9 @@ define function bit-vector-andc2!
 
   let (result :: <bit-vector>, result-size :: <integer>)
     = if (vector2.size <= vector1.size | pad1 = 0)
-	values(vector1, vector1.size);
+        values(vector1, vector1.size);
       else
-	values(make(<bit-vector>, size: vector2.size), vector2.size);
+        values(make(<bit-vector>, size: vector2.size), vector2.size);
       end if;
 
   if (result-size > 0)
@@ -996,7 +996,7 @@ define function bit-vector-or
      #key pad1 :: <bit> = 0, pad2 :: <bit> = 0)
  => (result :: <bit-vector>, pad :: <bit>)
 
-  let result-size = 
+  let result-size =
   if (pad1 = 0)
     if (pad2 = 0)
       max(vector1.size, vector2.size);
@@ -1036,9 +1036,9 @@ define function bit-vector-or!
 
   let (result :: <bit-vector>, result-size :: <integer>)
     = if (vector2.size <= vector1.size | pad1 = 1)
-	values(vector1, vector1.size);
+        values(vector1, vector1.size);
       else
-	values(make(<bit-vector>, size: vector2.size), vector2.size);
+        values(make(<bit-vector>, size: vector2.size), vector2.size);
       end if;
 
   if (result-size > 0)
@@ -1090,9 +1090,9 @@ define function bit-vector-xor!
 
   let (result :: <bit-vector>, result-size :: <integer>)
     = if (vector2.size <= vector1.size)
-	values(vector1, vector1.size);
+        values(vector1, vector1.size);
       else
-	values(make(<bit-vector>, size: vector2.size), vector2.size);
+        values(make(<bit-vector>, size: vector2.size), vector2.size);
       end if;
 
   if (result-size > 0)
@@ -1117,7 +1117,7 @@ define function bit-vector-not
  => (result :: <bit-vector>, result-pad :: <bit>)
   let result :: <bit-vector> = make(<bit-vector>, size: vector.size);
   for (i :: <integer> from 0 below vector.word-size)
-    bit-vector-word(result, i) := 
+    bit-vector-word(result, i) :=
         %lognot(bit-vector-word(vector, i));
   end for;
   values(result, if (pad = 0) 1 else 0 end);

@@ -8,31 +8,31 @@ copyright: See below.
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
 
 //// Right now this file is chopped up with #if's for workarounds to the
-//// current d2c not dealing with singleton({<byte>, <byte-character>}). 
+//// current d2c not dealing with singleton({<byte>, <byte-character>}).
 //// Once it does, the mindy versions of everything should be used.
 //// Check file-streams.dylan, stream-writing.dylan, new-internals.dylan
 //// for the same.
@@ -58,7 +58,7 @@ define constant <unicode-character> = <character>;
 
 
 //// Classes.
-//// 
+////
 
 /// <stream> -- Exported.
 ///
@@ -98,7 +98,7 @@ end class;
 /// <simple-sequence-stream> -- Internal.
 /// This is the class on which the generic implementation for <sequence-stream>
 /// is built.
-/// 
+///
 /// contents: is required for make(<simple-sequence-stream>), only because
 /// there's no obvious choice for a default sequence. Subclasses
 /// have default values for contents, e.g. for <byte-string-stream> the
@@ -106,7 +106,7 @@ end class;
 ///
 /// This is maintained through every action on a <simple-sequence-stream>:
 /// 0 <= stream-start <= position <= stream-end <= contents.size
-/// 
+///
 define class <simple-sequence-stream> (<sequence-stream>)
   // The contents slot is set to #f when the stream is closed.
   slot contents :: false-or(<sequence>),
@@ -130,7 +130,7 @@ end class;
 
 /// <unicode-string-stream> -- Exported.
 ///
-define class <unicode-string-stream> 
+define class <unicode-string-stream>
     (<simple-sequence-stream>, <string-stream>)
 //  keyword contents: = make(<unicode-string>), type: <unicode-string>;
 end class;
@@ -182,7 +182,7 @@ end method;
 // The compiler can't deal with singleton(<byte>)
 //
 define inline method type-for-file-stream
-    (locator :: <byte-string>, 
+    (locator :: <byte-string>,
      element-type :: false-or(<type>),
      encoding :: one-of(#f, #"ANSI", #"big-endian"))
  => type :: <type>;
@@ -223,7 +223,7 @@ end method;
 /// initialize
 ///
 define method initialize (stream :: <stream>, #next next-method,
-			  #key, #all-keys)
+                          #key, #all-keys)
  => ();
   stream.outer-stream := stream;
   next-method();
@@ -243,14 +243,14 @@ define sealed method initialize
  => ();
   // Make sure they didn't try and give us start and stop on an output stream
   if (start ~== $not-supplied)
-    if (dir ~== #"input") 
+    if (dir ~== #"input")
       error("Keyword start: only valid for input-only streams -- %=", stream);
     end;
   else
     start := 0;
   end;
   if (stop ~== $not-supplied)
-    if (dir ~== #"input") 
+    if (dir ~== #"input")
       error("Keyword stop: only valid for input-only streams -- %=", stream);
     end;
   else
@@ -280,7 +280,7 @@ define sealed method make
     (stream == <byte-string-stream>,
      #next next-method,
      #rest all-parameters,
-     #key contents :: type-union(singleton($not-supplied), <byte-string>) = $not-supplied, 
+     #key contents :: type-union(singleton($not-supplied), <byte-string>) = $not-supplied,
      #all-keys)
  => (result :: <byte-string-stream>)
   if(contents == $not-supplied)
@@ -294,7 +294,7 @@ define sealed method make
     (stream == <unicode-string-stream>,
      #next next-method,
      #rest all-parameters,
-     #key contents :: type-union(singleton($not-supplied), <unicode-string>) = $not-supplied, 
+     #key contents :: type-union(singleton($not-supplied), <unicode-string>) = $not-supplied,
      #all-keys)
  => (result :: <unicode-string-stream>)
   if(contents == $not-supplied)
@@ -310,7 +310,7 @@ end method make;
 define open generic close (stream :: <stream>, #key, #all-keys);
 
 define sealed method close (stream :: <simple-sequence-stream>,
-			    #key, #all-keys);
+                            #key, #all-keys);
   block ()
     lock-stream(stream);
     if (stream.direction ~== #"input")
@@ -365,7 +365,7 @@ end method stream-open?;
 
 /// stream-element-type
 ///
-define open generic stream-element-type (stream :: <stream>) 
+define open generic stream-element-type (stream :: <stream>)
  => element-type :: <type>;
 
 /// The default method on <simple-sequence-stream> looks at the first element
@@ -373,7 +373,7 @@ define open generic stream-element-type (stream :: <stream>)
 /// be in the stream. More specific methods do not require this.
 /// There must be a better way.
 ///
-define sealed method stream-element-type (stream :: <simple-sequence-stream>) 
+define sealed method stream-element-type (stream :: <simple-sequence-stream>)
  => element-type :: <type>;
   block ()
     lock-stream(stream);
@@ -389,7 +389,7 @@ define sealed method stream-element-type (stream :: <simple-sequence-stream>)
 end method stream-element-type;
 
 #if (mindy)
-define inline sealed method stream-element-type 
+define inline sealed method stream-element-type
     (stream :: <byte-string-stream>)
  => element-type :: singleton(<byte-character>);
   <byte-character>;
@@ -401,7 +401,7 @@ define inline sealed method stream-element-type
   <unicode-character>;
 end method stream-element-type;
 #else
-define inline sealed method stream-element-type 
+define inline sealed method stream-element-type
     (stream :: <byte-string-stream>)
  => element-type :: <type>;
   <byte-character>;
@@ -455,8 +455,8 @@ end method stream-position;
 /// stream-position-setter
 ///
 define open generic stream-position-setter
-    (pos :: type-union(<stream-position>, <integer>, 
-		       one-of(#"start", #"end")),
+    (pos :: type-union(<stream-position>, <integer>,
+                       one-of(#"start", #"end")),
      stream :: <positionable-stream>)
  => new-position :: type-union(<stream-position>, <integer>);
 
@@ -471,14 +471,14 @@ define sealed method stream-position-setter
       #"start" => stream.position := stream.stream-start;
       #"end" => stream.position := stream.stream-end;
       otherwise // pos is an <integer>
-	=> begin
-	     if (pos < stream.stream-start | pos > stream.contents.size)
-	       error("Position %d out of bounds -- %=", pos, stream);
-	     elseif (pos > stream.stream-end)
-	       stream.stream-end := pos;
-	     end if;
-	     stream.position := pos;
-	   end;
+        => begin
+             if (pos < stream.stream-start | pos > stream.contents.size)
+               error("Position %d out of bounds -- %=", pos, stream);
+             elseif (pos > stream.stream-end)
+               stream.stream-end := pos;
+             end if;
+             stream.position := pos;
+           end;
     end select;
     stream.position;
   cleanup
@@ -502,11 +502,11 @@ define sealed method adjust-stream-position
     check-stream-open(stream);
     select (from)
       #"current"
-	=> stream.position := (stream.position + delta);
+        => stream.position := (stream.position + delta);
       #"start"
-	=> stream.position := (stream.stream-start + delta);
+        => stream.position := (stream.stream-start + delta);
       #"end"
-	=> stream.position := (stream.stream-end + delta);
+        => stream.position := (stream.stream-end + delta);
     end select;
     if (stream.position < stream.stream-start)
       error("Stream cannot be positioned before start -- %=", stream);
@@ -542,11 +542,11 @@ end method stream-size;
 /// stream-contents
 ///
 define open generic stream-contents (stream :: <positionable-stream>,
-				     #key clear-contents? :: <boolean>)
+                                     #key clear-contents? :: <boolean>)
  => contents :: <sequence>;
 
 define sealed method stream-contents (stream :: <simple-sequence-stream>,
-				      #key clear-contents? :: <boolean> = #t)
+                                      #key clear-contents? :: <boolean> = #t)
  => contents :: <sequence>;
   block ()
     lock-stream(stream);
@@ -556,8 +556,8 @@ define sealed method stream-contents (stream :: <simple-sequence-stream>,
     let contents-size = stream.stream-end - start;
     let res = make(type-for-copy(stream.contents), size: contents-size);
     copy-sequence!(res, 0,
-		   stream.contents, start,
-		   contents-size);
+                   stream.contents, start,
+                   contents-size);
     if (clear-contents?)
       stream.stream-end := start;
       stream.position := start;
@@ -575,20 +575,20 @@ end method stream-contents;
 define macro with-open-file
   {
     with-open-file (?stream:variable = ?namestring:expression,
-		    #rest ?parameters:expression)
+                    #rest ?parameters:expression)
       ?:body
     end
   }
  => {
       let stream = #f;
       block ()
-	stream := make(<file-stream>, locator: ?namestring, ?parameters);
-	let ?stream = stream;
-	?body;
+        stream := make(<file-stream>, locator: ?namestring, ?parameters);
+        let ?stream = stream;
+        ?body;
       cleanup
-	if (stream)
-	  close(stream);
-	end if;
+        if (stream)
+          close(stream);
+        end if;
       end block
     }
 end macro with-open-file;
@@ -647,7 +647,7 @@ end method;
 ////
 
 //// Wrapper Stream Protocol
-//// 
+////
 //// See file wrapper-streams.dylan
 ////
 
@@ -667,7 +667,7 @@ define inline sealed method report-condition
     (cond :: <end-of-stream-error>, stream)
  => ();
   condition-format(stream, "Unexpected end of stream -- %=",
-		   cond.end-of-stream-stream);
+                   cond.end-of-stream-stream);
 end method;
 
 
@@ -681,13 +681,13 @@ end class;
 define sealed domain make (singleton(<incomplete-read-error>));
 define sealed domain initialize (<incomplete-read-error>);
 
-define inline sealed method report-condition 
+define inline sealed method report-condition
     (cond :: <incomplete-read-error>, stream)
  => ();
   condition-format(stream, "Incomplete read on %=. Sequence read: %= (%d elements requested)",
-		   cond.end-of-stream-stream,
-		   cond.incomplete-read-sequence,
-		   cond.incomplete-read-count);
+                   cond.end-of-stream-stream,
+                   cond.incomplete-read-sequence,
+                   cond.incomplete-read-count);
 end method;
 
 define class <file-error> (<error>)
@@ -701,7 +701,7 @@ define sealed domain initialize (<file-error>);
 define sealed method report-condition
     (cond :: <file-error>, stream) => ();
   condition-format(stream, "File error: %=",
-		   cond.file-locator);
+                   cond.file-locator);
 end method;
 
 define class <file-exists-error> (<file-error>)
@@ -714,7 +714,7 @@ define inline sealed method report-condition
     (cond :: <file-exists-error>, stream)
  => ();
   condition-format(stream, "File already exists: %=",
-		   cond.file-locator);
+                   cond.file-locator);
 end method;
 
 define class <file-does-not-exist-error> (<file-error>)
@@ -727,7 +727,7 @@ define inline sealed method report-condition
     (cond :: <file-does-not-exist-error>, stream)
  => ();
   condition-format(stream, "File does not exist: %=",
-		   cond.file-locator);
+                   cond.file-locator);
 end method;
 
 define class <invalid-file-permissions-error> (<file-error>)
@@ -736,10 +736,10 @@ end class;
 define sealed domain make (singleton(<invalid-file-permissions-error>));
 define sealed domain initialize (<invalid-file-permissions-error>);
 
-define inline sealed method report-condition 
+define inline sealed method report-condition
     (cond :: <invalid-file-permissions-error>, stream) => ();
   condition-format(stream, "Invalid file permissions: %=",
-		   cond.file-locator);
+                   cond.file-locator);
 end method;
 
 
@@ -818,7 +818,7 @@ end method;
 /// Assumes stream is held by caller.
 ///
 define inline sealed method check-output-stream
-    (stream :: <simple-sequence-stream>) 
+    (stream :: <simple-sequence-stream>)
  => ();
   if (stream.direction == #"input")
     error("Stream is not an output stream: %=", stream);
@@ -841,8 +841,8 @@ define sealed method grow-stream-sequence!
   else
     let new-seq = make(seq-type, size: new-size);
     copy-sequence!(new-seq, stream.stream-start,
-		   stream.contents, stream.stream-start,
-		   stream.contents.size);
+                   stream.contents, stream.stream-start,
+                   stream.contents.size);
     stream.contents := new-seq;
   end if;
 end method;
@@ -852,8 +852,8 @@ define inline sealed method grow-stream-sequence!
  => ();
   let new-seq = make(<byte-string>, size: new-size);
   copy-bytes(new-seq, stream.stream-start,
-	     stream.contents, stream.stream-start,
-	     stream.contents.size);
+             stream.contents, stream.stream-start,
+             stream.contents.size);
   stream.contents := new-seq;
 end method;
 
@@ -862,8 +862,8 @@ define inline sealed method grow-stream-sequence!
  => ();
   let new-seq = make(<unicode-string>, size: new-size);
   copy-bytes(new-seq, stream.stream-start,
-	     stream.contents, stream.stream-start,
-	     stream.contents.size);
+             stream.contents, stream.stream-start,
+             stream.contents.size);
   stream.contents := new-seq;
 end method;
 
@@ -876,8 +876,8 @@ end method;
 /// better with.
 ///
 define sealed method copy-sequence!
-    (dest :: <mutable-sequence>, dest-start :: <integer>, 
-     source :: <sequence>, source-start :: <integer>, 
+    (dest :: <mutable-sequence>, dest-start :: <integer>,
+     source :: <sequence>, source-start :: <integer>,
      length :: <integer>)
  => ();
   for (i from dest-start below dest-start + length,
@@ -887,15 +887,15 @@ define sealed method copy-sequence!
 end method;
 
 define constant <byte-sequence> = type-union(<buffer>,
-					     <byte-vector>,
-					     <byte-string>, 
-					     <unicode-string>);
+                                             <byte-vector>,
+                                             <byte-string>,
+                                             <unicode-string>);
 
 define inline sealed method copy-sequence!
     (dest :: <byte-sequence>,
-     dest-start :: <integer>, 
+     dest-start :: <integer>,
      source :: <byte-sequence>,
-     source-start :: <integer>, 
+     source-start :: <integer>,
      length :: <integer>)
  => ();
   copy-bytes(dest, dest-start, source, source-start, length);
@@ -947,10 +947,10 @@ end method;
 /// remaining thread.
 ///
 on-exit(method ()
-	  for (stream in *output-streams*)
-	    get-output-buffer(stream);
-	    force-output-buffers(stream);
-	    synchronize(stream);
-	    release-output-buffer(stream);
-	  end;
-	end);
+          for (stream in *output-streams*)
+            get-output-buffer(stream);
+            force-output-buffers(stream);
+            synchronize(stream);
+            release-output-buffer(stream);
+          end;
+        end);

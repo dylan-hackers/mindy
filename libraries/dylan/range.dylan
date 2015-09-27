@@ -5,25 +5,25 @@ module: Dylan
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -63,11 +63,11 @@ module: Dylan
 */
 
 // <range> -- public
-// 
+//
 // The <range> abstract class represents ranges (linear arithmetic
 // sequences).  The class has slots to store the FROM and BY
 // parameters of the range and a virtual slot RANGE-DIRECTION.
-// 
+//
 // The concrete subclasses that implement the range protocol are
 // <bounded-range> and <unbounded-range>.
 //
@@ -84,7 +84,7 @@ end class;
 
 
 // range-direction -- internal
-// 
+//
 // This implements the virtual slot RANGE-DIRECTION.  Returns the
 // direction of the range.  If the range increment BY is positive, the
 // range has the direction #"increasing", if negative, #"decreasing",
@@ -102,9 +102,9 @@ end method;
 
 
 // <unbounded-range> -- extremely internal
-// 
+//
 // Class to represent unbounded (infinite) ranges.
-// 
+//
 // MAKE should never be called on <unbounded-range> except for the few
 // places in the range constructor.  Please use RANGE instead.
 //
@@ -112,10 +112,10 @@ define class <unbounded-range> (<range>) end class;
 
 
 // <bounded-range> -- extremely internal
-// 
+//
 // Class to represent bounded (finite) ranges.  This class adds a size
 // slot to the <range> class.
-// 
+//
 // MAKE should never be called on <bounded-range> except for the few
 // places in the range constructor.  Please use RANGE instead.
 //
@@ -136,11 +136,11 @@ end class;
 */
 
 // compute-range-size -- internal
-// 
+//
 // This function translates the (from, by, to, above, below, size)
 // representation of the user to the (from, by, size) (bounded) or
 // (from, by) (unbounded) internal representation.
-// 
+//
 // The size returned by COMPUTE-RANGE-SIZE is the smallest range size
 // such that:
 // 1) the first (if any) element of the range is FROM and its
@@ -149,21 +149,21 @@ end class;
 // 3) the range has no element greater than TO + BY if BY is positive,
 //    or no element less than TO + BY if BY is negative
 // 4) the size of the range is no greater than SIZE
-// 
+//
 // Size limitations for each of the arguments are computed.  Valid
 // sizes (sizes not #f) are taken.
-// 
+//
 // If there are no valid sizes, #f is returned.  (Everywhere in this
 // implementation of ranges, a size of #f denotes an unbounded range.)
 // If valid sizes exists the maximum of 0 and the minimum of the valid
 // sizes is returned.
 //
 define method compute-range-size (r-from :: <real>,
-				  r-by :: <real>,
-				  r-to :: false-or(<real>),
-				  r-above :: false-or(<real>),
-				  r-below :: false-or(<real>),
-				  r-size :: false-or(<integer>))
+                                  r-by :: <real>,
+                                  r-to :: false-or(<real>),
+                                  r-above :: false-or(<real>),
+                                  r-below :: false-or(<real>),
+                                  r-size :: false-or(<integer>))
       => size :: false-or(<integer>);
    let to-size = r-to & compute-to-size (r-from, r-by, r-to);
    let above-size = r-above & compute-above-size (r-from, r-by, r-above);
@@ -182,91 +182,91 @@ end method;
 
 
 // compute-to-size -- internal
-// 
+//
 // Computes the limiting size of a TO argument to RANGE.  This size is
 // one plus the nearest integer larger than
-// 
-//		 (BOUND - START) / INCREMENT
-// 
+//
+//                 (BOUND - START) / INCREMENT
+//
 // (See also APPROXIMATE-RANGE-KEY.  The TO size limit is essentially
 // the larger approximate key for BOUND (plus 1).)
-// 
+//
 // (The <integer> method is slightly optimized for case where the
 // increment is +1 or -1.)
 //
 define method compute-to-size (start :: <integer>,
-			       increment :: <integer>,
-			       bound :: <integer>)
+                               increment :: <integer>,
+                               bound :: <integer>)
       => to-size :: false-or(<integer>);
    select (increment by \=)
       0 =>
-	 #f;
+         #f;
       1 =>
-	 bound - start + 1;
+         bound - start + 1;
       -1 =>
-	 -(bound - start) + 1;
+         -(bound - start) + 1;
       otherwise =>
-	 ceiling/ (bound - start, increment) + 1;
+         ceiling/ (bound - start, increment) + 1;
    end select;
 end method;
 //
 define method compute-to-size (start :: <real>,
-			       increment :: <real>,
-			       bound :: <real>)
+                               increment :: <real>,
+                               bound :: <real>)
       => to-size :: false-or(<integer>);
    select (increment by \=)
       0 =>
-	 #f;
+         #f;
       otherwise =>
-	 ceiling/ (bound - start, increment) + 1;
+         ceiling/ (bound - start, increment) + 1;
    end select;
 end method;
 
 
 // compute-above-size -- internal
-// 
+//
 // Computes the limiting size of an ABOVE argument to RANGE.  This
 // size is the nearest integer larger than
-// 
-//		 (BOUND - START) / INCREMENT
-// 
+//
+//                 (BOUND - START) / INCREMENT
+//
 // if the increment is negative (the range is decreasing toward the
 // ABOVE bound.)
-// 
+//
 // If the range is not decreasing, then if START if above ABOVE, #f is
 // returned (no limiting size).  But if START is below ABOVE, 0 is
 // returned.
 //
 define method compute-above-size (start :: <integer>,
-				  increment :: <integer>,
-				  bound :: <integer>)
+                                  increment :: <integer>,
+                                  bound :: <integer>)
       => above-size :: false-or(<integer>);
    if (negative? (increment))
       if (increment = -1)
-	 -(bound - start)
+         -(bound - start)
       else
-	 ceiling/ (bound - start, increment)
+         ceiling/ (bound - start, increment)
       end if;
    else
       if (bound < start)
-	 #f
+         #f
       else
-	 0
+         0
       end if;
    end if;
 end method;
 //
 define method compute-above-size (start :: <real>,
-				  increment :: <real>,
-				  bound :: <real>)
+                                  increment :: <real>,
+                                  bound :: <real>)
       => above-size :: false-or(<integer>);
    if (negative? (increment))
       ceiling/ (bound - start, increment)
    else
       if (bound < start)
-	 #f
+         #f
       else
-	 0
+         0
       end if;
    end if;
 end method;
@@ -276,50 +276,50 @@ end method;
 //
 // Computes the limiting size of an BELOW argument to RANGE.  This size is
 // the nearest integer larger than
-// 
-//		 (BOUND - START) / INCREMENT
-// 
+//
+//                 (BOUND - START) / INCREMENT
+//
 // if the increment is positive (the range is increasing toward the
 // BELOW bound.)
-// 
+//
 // If the range is not increasing, then if START if below BELOW, #f is
 // returned (no limiting size).  But if START is above BELOW, 0 is
 // returned.
 //
 define method compute-below-size (start :: <integer>,
-				  increment :: <integer>,
-				  bound :: <integer>)
+                                  increment :: <integer>,
+                                  bound :: <integer>)
       => below-size :: false-or(<integer>);
    if (positive? (increment))
       if (increment = 1)
-	 bound - start
+         bound - start
       else
-	 ceiling/ (bound - start, increment)
+         ceiling/ (bound - start, increment)
       end if;
    else
       if (bound > start)
-	 #f
+         #f
       else
-	 0
+         0
       end if;
    end if;
 end method;
 //
 define method compute-below-size (start :: <real>,
-				  increment :: <real>,
-				  bound :: <real>)
+                                  increment :: <real>,
+                                  bound :: <real>)
       => below-size :: false-or(<integer>);
    if (positive? (increment))
       if (increment = 1)
-	 bound - start
+         bound - start
       else
-	 ceiling/ (bound - start, increment)
+         ceiling/ (bound - start, increment)
       end if;
    else
       if (bound > start)
-	 #f
+         #f
       else
-	 0
+         0
       end if;
    end if;
 end method;
@@ -329,8 +329,8 @@ end method;
 //
 // Returns the key of the element of RANGE nearest to ELEMENT.  The
 // approximate key for a number N is the integer nearest
-// 
-//			 (N - FROM) / BY
+//
+//                         (N - FROM) / BY
 //
 define method approximate-range-key (range :: <range>, element :: <real>)
       => key :: <integer>;
@@ -348,7 +348,7 @@ end method;
 */
 
 // range -- public
-// 
+//
 // RANGE is the constructor for ranges.  It accepts six keywords --
 // from:, by:, to:, above:, below:, and size:.  It uses
 // COMPUTE-RANGE-SIZE to find the appropriate size for the new range.
@@ -357,21 +357,21 @@ end method;
 //
 define constant range =
    method (#key from: r-from = 0, by: r-by = 1,
-	   to: r-to = #f, above: r-above = #f, below: r-below = #f,
-	   size: r-size = #f)
-	 => new-range :: <range>;
+           to: r-to = #f, above: r-above = #f, below: r-below = #f,
+           size: r-size = #f)
+         => new-range :: <range>;
       let range-size =
-	 compute-range-size (r-from, r-by, r-to, r-above, r-below, r-size);
+         compute-range-size (r-from, r-by, r-to, r-above, r-below, r-size);
       if (range-size)
-	 make (<bounded-range>, from: r-from, by: r-by, size: range-size);
+         make (<bounded-range>, from: r-from, by: r-by, size: range-size);
       else
-	 make (<unbounded-range>, from: r-from, by: r-by);
+         make (<unbounded-range>, from: r-from, by: r-by);
       end if;
    end method;
 
 
 // make -- public
-// 
+//
 // The MAKE method for abstract class <range> applies RANGE, the range
 // constructor, to the keyword arguments.  This produces an instance
 // of one of the concrete subclasses <bounded-range> or
@@ -384,7 +384,7 @@ end method;
 
 
 // element -- public
-// 
+//
 // Returns the element of the range corresponding to KEY.  This
 // element is found using FROM + KEY * BY.  If KEY is out of the
 // bounds of the range, the default is returned or an error is
@@ -418,7 +418,7 @@ end method;
 
 
 // = -- public
-// 
+//
 // Ranges are = if their beginning points, increments, and sizes are
 // equal.
 //
@@ -443,66 +443,66 @@ end method;
 */
 
 // forward-iteration-protocol -- public
-// 
+//
 define method forward-iteration-protocol (range :: <bounded-range>)
       => (initial-state :: <object>, limit :: <object>,
-	  next-state :: <function>, finished-state? :: <function>,
-	  current-key :: <function>, current-element :: <function>,
-	  current-element-setter :: <function>, copy-state? :: <function>);
+          next-state :: <function>, finished-state? :: <function>,
+          current-key :: <function>, current-element :: <function>,
+          current-element-setter :: <function>, copy-state? :: <function>);
    let initial-state = 0;
    let limit = range.range-size;
    local method next-state (r :: <range>, s :: <integer>)
-	    s + 1
-	 end method;
+            s + 1
+         end method;
    local method finished-state? (r :: <range>, s :: <integer>,
-				 l :: <integer>)
-	    s = l
-	 end method;
+                                 l :: <integer>)
+            s = l
+         end method;
    local method current-key (r :: <range>, s :: <integer>)
-	    s
-	 end method;
+            s
+         end method;
    local method current-element (r :: <range>, s :: <integer>)
-	    r[s];
-	 end method;
+            r[s];
+         end method;
    local method current-element-setter (r :: <range>, s :: <integer>,
-					value)
+                                        value)
             error ("CURRENT-ELEMENT-SETTER not applicable for <range>");
-	 end method;
+         end method;
    local method copy-state (r :: <range>, s :: <integer>)
-	    s
-	 end method;
+            s
+         end method;
    values (initial-state, limit, next-state, finished-state?, current-key,
-	   current-element, current-element-setter, copy-state);
+           current-element, current-element-setter, copy-state);
 end method;
 //
 define method forward-iteration-protocol (range :: <unbounded-range>)
       => (initial-state :: <object>, limit :: <object>,
-	  next-state :: <function>, finished-state? :: <function>,
-	  current-key :: <function>, current-element :: <function>,
-	  current-element-setter :: <function>, copy-state? :: <function>);
+          next-state :: <function>, finished-state? :: <function>,
+          current-key :: <function>, current-element :: <function>,
+          current-element-setter :: <function>, copy-state? :: <function>);
    let initial-state = 0;
    let limit = #f;
    local method next-state (r :: <range>, s :: <integer>)
-	    s + 1
-	 end method;
+            s + 1
+         end method;
    local method finished-state? (r :: <range>, s :: <integer>, l)
-	    #f
-	 end method;
+            #f
+         end method;
    local method current-key (r :: <range>, s :: <integer>)
-	    s
-	 end method;
+            s
+         end method;
    local method current-element (r :: <range>, s :: <integer>)
-	    r[s];
-	 end method;
-   local method current-element-setter (r :: <range>, s :: <integer>, 
-					value)
+            r[s];
+         end method;
+   local method current-element-setter (r :: <range>, s :: <integer>,
+                                        value)
             error ("CURRENT-ELEMENT-SETTER not applicable for <range>");
-	 end method;
+         end method;
    local method copy-state (r :: <range>, s :: <integer>)
-	    s
-	 end method;
+            s
+         end method;
    values (initial-state, limit, next-state, finished-state?, current-key,
-	   current-element, current-element-setter, copy-state);
+           current-element, current-element-setter, copy-state);
 end method forward-iteration-protocol;
 
 
@@ -531,7 +531,7 @@ end method forward-iteration-protocol;
 */
 
 // size -- public
-// 
+//
 // SIZE for unbounded ranges returns #f.
 //
 define method size (range :: <bounded-range>) => size :: <integer>;
@@ -544,14 +544,14 @@ end method;
 
 
 // type-for-copy -- public
-// 
+//
 define method type-for-copy (range :: <range>) => type :: <type>;
    <list>
 end method;
 
 
 // empty? -- public
-// 
+//
 // A bounded range is empty if the size is zero.  An unbounded range
 // can never be empty.
 //
@@ -565,11 +565,11 @@ end method;
 
 
 // reduce reduce1
-// 
+//
 // Trying to reduce an unbounded range will not terminate.
 //
 define method reduce (procedure :: <function>, initial-value,
-		      range :: <unbounded-range>)
+                      range :: <unbounded-range>)
  => answer :: <object>;
    error ("REDUCE not applicable for unbounded <range>");
 end method;
@@ -581,7 +581,7 @@ end method;
 
 
 // member? -- public
-// 
+//
 // MEMBER? for ranges must terminate even if the range is unbounded.
 // The way to check to see if a number N is an element of a range is
 // to compute its approximate key in the range.  Then if the
@@ -589,12 +589,12 @@ end method;
 // tests with the element at the key, MEMBER? returns #t.
 //
 define method member? (value :: <real>, range :: <bounded-range>,
-		       #key test = \==) => answer :: <boolean>;
+                       #key test = \==) => answer :: <boolean>;
    let approximate-position =
       if (range.range-by = 0)
-	 0
+         0
       else
-	 approximate-range-key (range, value)
+         approximate-range-key (range, value)
       end if;
 
    if (approximate-position >= 0 & approximate-position < range.range-size)
@@ -605,12 +605,12 @@ define method member? (value :: <real>, range :: <bounded-range>,
 end method;
 //
 define method member? (value :: <real>, range :: <unbounded-range>,
-		       #key test = \==) => answer :: <boolean>;
+                       #key test = \==) => answer :: <boolean>;
    let approximate-position =
       if (range.range-by = 0)
-	 0
+         0
       else
-	 approximate-range-key (range, value)
+         approximate-range-key (range, value)
       end if;
 
    if (approximate-position >= 0)
@@ -672,7 +672,7 @@ end method;
 
 
 // intersection -- public
-// 
+//
 // Range intersection is quite complicated, so the implementation is
 // included in its own section below.
 
@@ -686,63 +686,63 @@ end method;
 
 
 // copy-sequence -- public
-// 
+//
 // Returns a range which is a copy of the source range.  The START and
 // END keywords specify at which elements of the range copying should
 // begin and end.
-// 
+//
 // For bounded ranges, correct values for COPY-START and COPY-END are
 // found with respect to the range, and RANGE is called with the right
 // length and other parameters from the original range.
-// 
+//
 // For unbounded ranges, a bounded range is returned if END is
 // supplied, and an unbounded range if not.
 //
 define method copy-sequence (source :: <bounded-range>,
-			     #key start: copy-start = 0, end: copy-end)
+                             #key start: copy-start = 0, end: copy-end)
  => new-range :: <range>;
    let r-size = source.range-size;
    let r-from = source.range-from;
    let r-by = source.range-by;
    let copy-start = if (copy-start >= 0)
-		       copy-start
-		    else
-		       0
-		    end if;
+                       copy-start
+                    else
+                       0
+                    end if;
    let copy-end = if (copy-end)
-		     copy-end
-		  else
-		     r-size
-		  end if;
-   if (copy-start > copy-end) 
+                     copy-end
+                  else
+                     r-size
+                  end if;
+   if (copy-start > copy-end)
      error("End: (%=) is smaller than start: (%=)", copy-start, copy-end);
    end if;
 
    case
       copy-start > r-size =>
-	 range (size: 0);
+         range (size: 0);
       copy-end > r-size =>
-	 range (from: source[copy-start], by: r-by,
-		size: r-size - copy-start);
+         range (from: source[copy-start], by: r-by,
+                size: r-size - copy-start);
       otherwise =>
-	 range (from: source[copy-start], by: r-by,
-		size: copy-end - copy-start);
+         range (from: source[copy-start], by: r-by,
+                size: copy-end - copy-start);
    end case;
 end method;
 //
 define method copy-sequence (source :: <unbounded-range>,
-			     #key start: copy-start = 0, end: copy-end)
+                             #key start: copy-start = 0, end: copy-end)
  => new-range :: <range>;
    let r-from = source.range-from;
    let r-by = source.range-by;
    let copy-start = if (copy-start >= 0)
-		       copy-start
-		    else
-		       0
-		    end if;
+                       copy-start
+                    else
+                       0
+                    end if;
    if (copy-end)
       range (from: source[copy-start], by: r-by,
-	     size: copy-end - copy-start);
+             size: copy-end - copy-start);
    else
       range (from: source[copy-start], by: r-by);
    end if;
@@ -750,18 +750,18 @@ end method;
 
 
 // reverse -- public
-// 
+//
 // For bounded ranges REVERSE returns a new range from: the last
 // element of the original range, by: the negative of the original by,
 // with size: the size of the original range.
-// 
+//
 // Unbounded ranges cannot be reversed.p
 //
 define method reverse (range-to-reverse :: <bounded-range>)
  => new-range :: <range>;
    range (from: last (range-to-reverse, default: range-to-reverse.range-from),
-	  by: negative (range-to-reverse.range-by),
-	  size: range-to-reverse.range-size);
+          by: negative (range-to-reverse.range-by),
+          size: range-to-reverse.range-size);
 end method;
 //
 define method reverse (range :: <unbounded-range>)
@@ -771,11 +771,11 @@ end method;
 
 
 // reverse! -- public
-// 
+//
 // For bounded ranges, REVERSE! sets RANGE-FROM to the last element of
 // the range and RANGE-BY to the negative of the original by, and
 // returns the range.
-// 
+//
 // Unbounded ranges cannot be REVERSED!.
 //
 define method reverse! (range :: <bounded-range>)
@@ -800,7 +800,7 @@ end method;
 
 
 // last -- public
-// 
+//
 // Returns the element at RANGE-SIZE - 1.  Signals an error for
 // unbounded ranges.
 //
@@ -817,7 +817,7 @@ end method;
 
 
 /*
-			  Range Intersection
+                          Range Intersection
 
    INTERSECTION for ranges is required to return even for unbounded
    ranges.  So the algorithm used for range intersection must be able
@@ -844,14 +844,14 @@ end method;
 */
 
 // intersection -- public
-// 
+//
 // The method on sequence intersection for ranges.  If the TEST is ==
 // or =, INTERSECTION will produce a range as its result.  If not,
 // then the sequence produced is the result of the default sequence
 // method for ranges.
 //
 define method intersection (range1 :: <range>, range2 :: <range>,
-			    #next next-method, #key test = \==)
+                            #next next-method, #key test = \==)
  => sequence :: <sequence>;
    if (test == \== | test == \=)
       range-intersection (range1, range2, test: test);
@@ -862,30 +862,30 @@ end method;
 
 
 // range-intersection -- internal
-// 
+//
 // Return a new range which is the intersection of the two ranges.
-// 
+//
 // This is done by finding the interval of intersection of the two
 // ranges, and calculating the either finite, infinite increasing, or
 // infinite decreasing intersection withing the interval.
 //
 define method range-intersection (range1 :: <range>, range2 :: <range>,
-				  #key test)
+                                  #key test)
  => range :: <range>;
    let (x-from, x-to) = intersection-interval (range1, range2);
    case
       ~ x-from =>
-	 decreasing-intersection (range1, range2, test: test);
+         decreasing-intersection (range1, range2, test: test);
       ~ x-to =>
-	 increasing-intersection (range1, range2, test: test);
+         increasing-intersection (range1, range2, test: test);
       otherwise =>
-	 finite-intersection (range1, range2, test: test);
+         finite-intersection (range1, range2, test: test);
    end case;
 end method;
 
 
 // finite-intersection -- internal
-// 
+//
 // Returns a bounded range containing the intersection of the two
 // ranges.  The keys in RANGE1 of the bounds of the intersection
 // interval are computed.  Then all the elements of RANGE1 between
@@ -895,33 +895,33 @@ end method;
 // returned.
 //
 define method finite-intersection (range1 :: <range>, range2 :: <range>,
-				   #key test)
+                                   #key test)
  => range :: <bounded-range>;
    let (x-from, x-to) = intersection-interval (range1, range2);
    let from-key = approximate-range-key (range1, x-from);
    let to-key = approximate-range-key (range1, x-to);
    let intersection =
       if (range1.range-direction == #"increasing")
-	 choose (rcurry (member?, range2, test: test),
-		 copy-sequence (range1, start: from-key, end: to-key + 1));
+         choose (rcurry (member?, range2, test: test),
+                 copy-sequence (range1, start: from-key, end: to-key + 1));
       else
-	 choose (rcurry (member?, range2, test: test),
-		 copy-sequence (range1, start: to-key, end: from-key + 1));
+         choose (rcurry (member?, range2, test: test),
+                 copy-sequence (range1, start: to-key, end: from-key + 1));
       end if;
    select (intersection.size by \=)
       0 =>
-	 range (size: 0);
+         range (size: 0);
       1 =>
          range (from: intersection.first, size: 1);
       otherwise =>
          range (from: intersection.first, to: intersection.last,
-		by: intersection.second - intersection.first);
+                by: intersection.second - intersection.first);
    end select;
 end method;
 
 
 // increasing-intersection -- internal
-// 
+//
 // Returns an unbounded increasing range containing the intersection
 // of the two ranges.  BY is taken to be the least common multiple of
 // the BYs of RANGE1 and RANGE2.  The key in RANGE1 of the lower
@@ -930,14 +930,14 @@ end method;
 // interval has no upper bound).  (If the intersection has any
 // elements, there must be one within BY of the bottom of the
 // intersection interval.)
-// 
+//
 // The elements of RANGE1 between these keys which are also elements
 // of RANGE2 are found, and a new range beginning with the first of
 // these (if any) and with an increment of BY is returned.
 //
 define method increasing-intersection (range1 :: <unbounded-range>,
-				       range2 :: <unbounded-range>,
-				       #key test)
+                                       range2 :: <unbounded-range>,
+                                       #key test)
  => range :: <unbounded-range>;
    let (x-from, x-to) = intersection-interval (range1, range2);
    let x-by = lcm (range1.range-by, range2.range-by);
@@ -945,7 +945,7 @@ define method increasing-intersection (range1 :: <unbounded-range>,
    let to-key = approximate-range-key (range1, x-from + 2 * x-by);
    let intersection =
       choose (rcurry (member?, range2, test: test),
-	      copy-sequence (range1, start: from-key, end: to-key));
+              copy-sequence (range1, start: from-key, end: to-key));
    if (empty? (intersection))
       range (size: 0);
    else
@@ -955,7 +955,7 @@ end method;
 
 
 // decreasing-intersection -- internal
-// 
+//
 // Returns an unbounded decreasing range containing the intersection
 // of the two ranges.  BY is taken to be the least common multiple of
 // the BYs of RANGE1 and RANGE2.  The key in RANGE1 of the upper
@@ -964,14 +964,14 @@ end method;
 // interval has no lower bound).  (If the intersection has any
 // elements, there must be one within BY of the top of the
 // intersection interval.)
-// 
+//
 // The elements of RANGE1 between these keys which are also elements
 // of RANGE2 are found, and a new range beginning with the first of
 // these (if any) and with an increment of BY is returned.
 //
 define method decreasing-intersection (range1 :: <unbounded-range>,
-				       range2 :: <unbounded-range>,
-				       #key test)
+                                       range2 :: <unbounded-range>,
+                                       #key test)
  => range :: <unbounded-range>;
    let (x-from, x-to) = intersection-interval (range1, range2);
    let x-by = -lcm (-range1.range-by, -range2.range-by);
@@ -979,7 +979,7 @@ define method decreasing-intersection (range1 :: <unbounded-range>,
    let to-key = approximate-range-key (range1, x-to);
    let intersection =
       choose (rcurry (member?, range2, test: test),
-	      copy-sequence (range1, start: to-key, end: from-key));
+              copy-sequence (range1, start: to-key, end: from-key));
    if (empty? (intersection))
       range (size: 0);
    else
@@ -989,7 +989,7 @@ end method;
 
 
 // range-directions -- internal
-// 
+//
 // Returns a symbol denoting the respective directions of RANGE1 and
 // RANGE2.
 //
@@ -997,36 +997,36 @@ define method range-directions (range1 :: <range>, range2 :: <range>)
       => direction :: <symbol>;
    if (range1.range-direction == #"increasing")
       if (range2.range-direction == #"increasing")
-	 #"increasing-increasing"
+         #"increasing-increasing"
       else
-	 #"increasing-decreasing"
+         #"increasing-decreasing"
       end if;
    else
       if (range2.range-direction == #"increasing")
-	 #"decreasing-increasing"
+         #"decreasing-increasing"
       else
-	 #"decreasing-decreasing"
+         #"decreasing-decreasing"
       end if;
    end if;
 end method;
 
 
 // intersection-interval -- internal
-// 
+//
 // Returns the lower and upper bounds of the interval in which the two
 // ranges intersect.
-// 
+//
 // For any intersection with a bounded range, the intersection
 // interval will be finite.  The first number returned is always lower
 // than the second.
-// 
+//
 // For two unbounded ranges, the interval of intersection may be
 // infinitely long in one direction or the other.  In this case one of
 // the bounds will be #f (using the convention in this code that #f
 // represents an unbounded size).
 //
 define method intersection-interval (range1 :: <bounded-range>,
-				     range2 :: <bounded-range>)
+                                     range2 :: <bounded-range>)
       => (x-from :: false-or(<integer>), x-to :: false-or(<integer>));
    let from1 = range1.range-from;
    let to1 = range1.last;
@@ -1034,65 +1034,65 @@ define method intersection-interval (range1 :: <bounded-range>,
    let to2 = range2.last;
    select (range-directions (range1, range2))
       #"increasing-increasing" =>
-	 values (max (from1, from2), min (to1, to2));
+         values (max (from1, from2), min (to1, to2));
       #"increasing-decreasing" =>
-	 values (max (from1, to2), min (to1, from2));
+         values (max (from1, to2), min (to1, from2));
       #"decreasing-increasing" =>
-	 values (max (to1, from2), min (from1, to2));
+         values (max (to1, from2), min (from1, to2));
       #"decreasing-decreasing" =>
-	 values (max (to1, to2), min (from1, from2));
+         values (max (to1, to2), min (from1, from2));
    end select;
 end method;
 //
 define method intersection-interval (range1 :: <bounded-range>,
-				     range2 :: <unbounded-range>)
+                                     range2 :: <unbounded-range>)
       => (x-from :: false-or(<integer>), x-to :: false-or(<integer>));
    let from1 = range1.range-from;
    let to1 = range1.last;
    let from2 = range2.range-from;
    select (range-directions (range1, range2))
       #"increasing-increasing" =>
-	 values (max (from1, from2), to1);
+         values (max (from1, from2), to1);
       #"increasing-decreasing" =>
-	 values (from1, min (to1, from2));
+         values (from1, min (to1, from2));
       #"decreasing-increasing" =>
-	 values (max (to1, from2), from1);
+         values (max (to1, from2), from1);
       #"decreasing-decreasing" =>
-	 values (to1, min (from1, from2));
+         values (to1, min (from1, from2));
    end select;
 end method;
 //
 define method intersection-interval (range1 :: <unbounded-range>,
-				     range2 :: <bounded-range>)
+                                     range2 :: <bounded-range>)
       => (x-from :: false-or(<integer>), x-to :: false-or(<integer>));
    let from1 = range1.range-from;
    let from2 = range2.range-from;
    let to2 = range2.last;
    select (range-directions (range1, range2))
       #"increasing-increasing" =>
-	 values (max (from1, from2), to2);
+         values (max (from1, from2), to2);
       #"increasing-decreasing" =>
-	 values (max (from1, to2), from2);
+         values (max (from1, to2), from2);
       #"decreasing-increasing" =>
-	 values (from2, min (from1, to2));
+         values (from2, min (from1, to2));
       #"decreasing-decreasing" =>
-	 values (to2, min (from1, from2));
+         values (to2, min (from1, from2));
    end select;
 end method;
 //
 define method intersection-interval (range1 :: <unbounded-range>,
-				     range2 :: <unbounded-range>)
+                                     range2 :: <unbounded-range>)
       => (x-from :: false-or(<integer>), x-to :: false-or(<integer>));
    let from1 = range1.range-from;
    let from2 = range2.range-from;
    select (range-directions (range1, range2))
       #"increasing-increasing" =>
-	 values (max (from1, from2), #f);
+         values (max (from1, from2), #f);
       #"increasing-decreasing" =>
-	 values (from1, from2);
+         values (from1, from2);
       #"decreasing-increasing" =>
-	 values (from2, from1);
+         values (from2, from1);
       #"decreasing-decreasing" =>
-	 values (#f, min (from1, from2));
+         values (#f, min (from1, from2));
    end select;
 end method;

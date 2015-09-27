@@ -24,14 +24,14 @@ define library-spec common-dylan ()
 end library-spec common-dylan;
 
 define module-spec common-extensions ()
-  
+
   // Numerics
   function integer-length (<integer>) => (<integer>);
 
   // Unsupplied, unfound
   constant $unsupplied :: <object>;
   constant $unfound    :: <object>;
-  
+
   // Collections
   sealed instantiable class <object-deque> (<deque>);
   open abstract class <stretchy-sequence> (<stretchy-collection>, <sequence>);
@@ -56,7 +56,7 @@ define module-spec common-extensions ()
   //sealed instantiable class <division-by-zero-error> (<arithmetic-error>);
   //sealed instantiable class <arithmetic-overflow-error> (<arithmetic-error>);
   //sealed instantiable class <arithmetic-underflow-error> (<arithmetic-error>);
-  
+
   // Assertions & Debugging
   function debug-message (<string>, #"rest") => ();
   macro-test assert-test;
@@ -66,11 +66,11 @@ define module-spec common-extensions ()
   function false-or (<type>, #"rest") => (<type>);
   function one-of (<type>, #"rest") => (<type>);
   function subclass (<class>) => (<type>);
-  
+
   // Ignoring
   function ignorable (<object>) => ();
   function ignore (<object>) => ();
-  
+
   // Formatting
   function float-to-string (<float>) => (<string>);
   function integer-to-string (<integer>, #"key", #"base") => (<string>);
@@ -79,7 +79,7 @@ define module-spec common-extensions ()
       (<string>, #"key", #"base", #"start", #"end")
    => (<integer>, <integer>);
   function format-to-string (<string>, #"rest") => (<string>);
-  
+
   // Control constructs
   macro-test iterate-test; // the macro iterate
   macro-test when-test;    // the macro when (which we're discussing)
@@ -119,7 +119,7 @@ define module-spec streams-protocol ()
   open generic-function read (<stream>, <integer>, #"key", #"on-end-of-stream")
     => (<object>);
   open generic-function read-into! (<stream>, <integer>, <mutable-sequence>,
-				    #"key", #"start", #"on-end-of-stream")
+                                    #"key", #"start", #"on-end-of-stream")
     => (<object>);
   open generic-function peek (<stream>, #"key", #"on-end-of-stream")
     => (<object>);
@@ -168,13 +168,13 @@ end module-spec locators-protocol;
 define module-spec finalization ()
   // As per Functional Objects documentation.
 end module-spec finalization;
-  
+
 define module-spec simple-io ()
   // Exports some or all of streams protocol?
   function format-out (<string>, #"rest") => ();
   // ... under construction
 end module-spec simple-io;
-  
+
 define module-spec simple-random ()
   sealed instantiable class <random> (<object>);
   function random (<integer>, #"key", #"random") => (<integer>);
@@ -308,7 +308,7 @@ define module-spec transcendentals ()
 // of _b_.  The result will be a <single-float> if _b_ is an integer.
 
 
-//  open 
+//  open
 //    generic-function \^ (b :: <integer>, x :: <integer>) => (y :: <integer>);
 
 // Returns an integer result giving _b_ raised to the power _x_.  If _b_

@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -95,7 +95,7 @@ static unsigned hash_name(char *name)
     unsigned hash = 0;
 
     for (ptr = (unsigned char *)name; *ptr; ptr++)
-	hash = ((hash<<5)|(hash>>27)) ^ (*ptr & ~('a'^'A'));
+        hash = ((hash<<5)|(hash>>27)) ^ (*ptr & ~('a'^'A'));
 
     return hash;
 }
@@ -105,18 +105,18 @@ static boolean same_name(char *name1, char *name2)
     char c1, c2;
 
     while (1) {
-	c1 = *name1++;
-	c2 = *name2++;
-	
-	if (c1) {
-	    if ((isupper(c1) ? tolower(c1) : c1)
-		!= (isupper(c2) ? tolower(c2) : c2))
-		return FALSE;
-	}
-	else if (c2)
-	    return FALSE;
-	else
-	    return TRUE;
+        c1 = *name1++;
+        c2 = *name2++;
+
+        if (c1) {
+            if ((isupper(c1) ? tolower(c1) : c1)
+                != (isupper(c2) ? tolower(c2) : c2))
+                return FALSE;
+        }
+        else if (c2)
+            return FALSE;
+        else
+            return TRUE;
     }
 }
 
@@ -128,25 +128,25 @@ static void rehash_table(struct table *table)
     int i;
 
     if (table->length < 1024)
-	new_length = table->length << 1;
+        new_length = table->length << 1;
     else
-	new_length = table->length + 1024;
+        new_length = table->length + 1024;
 
     new_table = malloc(sizeof(struct symbol *) * new_length);
 
     ptr = new_table;
     for (i = 0; i < new_length; i++)
-	*ptr++ = NULL;
+        *ptr++ = NULL;
 
     ptr = table->table;
     for (i = 0; i < table->length; i++) {
-	struct symbol *id, *next;
-	for (id = *ptr++; id != NULL; id = next) {
-	    int index = id->hash % new_length;
-	    next = id->next;
-	    id->next = new_table[index];
-	    new_table[index] = id;
-	}
+        struct symbol *id, *next;
+        for (id = *ptr++; id != NULL; id = next) {
+            int index = id->hash % new_length;
+            next = id->next;
+            id->next = new_table[index];
+            new_table[index] = id;
+        }
     }
 
     free(table->table);
@@ -162,8 +162,8 @@ static struct symbol *intern(char *name, struct table *table)
     struct symbol *id;
 
     for (id = table->table[index]; id != NULL; id = id->next)
-	if (id->hash == hash && same_name(name, (char *)id->name))
-	    return id;
+        if (id->hash == hash && same_name(name, (char *)id->name))
+            return id;
 
     id = malloc(sizeof(struct symbol) + strlen(name) + 1);
     id->hash = hash;
@@ -171,10 +171,10 @@ static struct symbol *intern(char *name, struct table *table)
     id->handle = -1;
     table->table[index] = id;
     strcpy((char *)id->name, name);
-    
+
     table->entries++;
     if (table->entries >= table->threshold)
-	rehash_table(table);
+        rehash_table(table);
 
     return id;
 }
@@ -198,8 +198,8 @@ struct symbol *gensym(void)
     sprintf((char *)res->name, "g%d", counter++);
 
     if (counter == rollover) {
-	digits++;
-	rollover *= 10;
+        digits++;
+        rollover *= 10;
     }
 
     return res;
@@ -219,7 +219,7 @@ static void init_table(struct table *table)
     table->table = (struct symbol **)malloc(sizeof(struct symbol *)*64);
     ptr = table->table;
     for (i = 0; i < 64; i++)
-	*ptr++ = NULL;
+        *ptr++ = NULL;
 }
 
 void init_sym_table(void)

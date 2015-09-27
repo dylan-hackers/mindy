@@ -7,25 +7,25 @@ copyright: See below.
 ///
 /// Copyright (c) 1994  Carnegie Mellon University
 /// All rights reserved.
-/// 
+///
 /// Use and copying of this software and preparation of derivative
 /// works based on this software are permitted, including commercial
 /// use, provided that the following conditions are observed:
-/// 
+///
 /// 1. This copyright notice must be retained in full on any copies
 ///    and on appropriate parts of any derivative works.
 /// 2. Documentation (paper or online) accompanying any system that
 ///    incorporates this software, or any part of it, must acknowledge
 ///    the contribution of the Gwydion Project at Carnegie Mellon
 ///    University, and the Gwydion Dylan Maintainers.
-/// 
+///
 /// This software is made available "as is".  Neither the authors nor
 /// Carnegie Mellon University make any warranty about the software,
 /// its performance, or its conformity to any specification.
-/// 
+///
 /// Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 /// comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-/// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+/// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 ///
 ///======================================================================
 ///
@@ -53,7 +53,7 @@ define method format-to-string (control-string :: <byte-string>, #rest args)
   // Format-to-string is typically used for small amounts of output, so
   // use a smaller string to collect the contents.
   let s = make(<byte-string-stream>, contents: make(<byte-string>, size: 200),
-	       direction: #"output");
+               direction: #"output");
   apply(format, s, control-string, args);
   s.stream-contents;
 end method;
@@ -140,11 +140,11 @@ char-classes[as(<integer> /***/, '-')] := #"digit";
 
 
 define generic format (stream :: <stream>, control-string :: <string>,
-		       #rest args)
+                       #rest args)
     => ();
 
 define method format (stream :: <stream>, control-string :: <byte-string>,
-		      #rest args)
+                      #rest args)
     => ();
   let control-len :: <integer> = control-string.size;
   block (exit)
@@ -155,64 +155,64 @@ define method format (stream :: <stream>, control-string :: <byte-string>,
     while (start < control-len)
       // Skip to dispatch char.
       for (i = start then (i + 1),
-	   until: ((i == control-len)
-		     | (control-string[i] == $dispatch-char)
-		     | (control-string[i] == '\n')))
+           until: ((i == control-len)
+                     | (control-string[i] == $dispatch-char)
+                     | (control-string[i] == '\n')))
       finally
-	write(stream, control-string, start: start, end: i);
-	if (i == control-len)
-	  exit();
-	else
-	  start := i + 1;
-	end;
+        write(stream, control-string, start: start, end: i);
+        if (i == control-len)
+          exit();
+        else
+          start := i + 1;
+        end;
       end for;
 
       if(control-string[start - 1] == '\n')
-	new-line(stream);
+        new-line(stream);
       else
-	// Parse for field within which to pad output.
-	let (field, field-spec-end)
-	  = if (char-classes[as(<integer>, control-string[start])] == #"digit")
-	      parse-integer(control-string, start);
-	    end;
-	if (field)
-	  // Capture output in string and compute padding.
-	  // Assume the output is very small in length.
-	  let s = make(<byte-string-stream>,
-		       contents: make(<byte-string>, size: 80),
-		       direction: #"output");
-	  if (do-dispatch(control-string[field-spec-end], s,
-			  element(args, arg-i, default: #f)))
-	    arg-i := arg-i + 1;
-	  end;
-	  let output = s.stream-contents;
-	  let output-len :: <integer> = output.size;
-	  let padding :: <integer> = (abs(field) - output-len);
-	  case
-	    (padding < 0) =>
-	      write(stream, output);
-	    (field > 0) =>
-	      write(stream, make(<byte-string>, size: padding, fill: ' '));
-	      write(stream, output);
-	    otherwise =>
-	      write(stream, output);
-	      write(stream, make(<byte-string>, size: padding, fill: ' '));
-	  end;
-	  start := field-spec-end + 1;  // Add one to skip dispatch char.
-	else
-	  if (do-dispatch(control-string[start], stream,
-			  element(args, arg-i, default: #f)))
-	    arg-i := arg-i + 1;
-	  end;
-	  start := start + 1;  // Add one to skip dispatch char.
-	end;
+        // Parse for field within which to pad output.
+        let (field, field-spec-end)
+          = if (char-classes[as(<integer>, control-string[start])] == #"digit")
+              parse-integer(control-string, start);
+            end;
+        if (field)
+          // Capture output in string and compute padding.
+          // Assume the output is very small in length.
+          let s = make(<byte-string-stream>,
+                       contents: make(<byte-string>, size: 80),
+                       direction: #"output");
+          if (do-dispatch(control-string[field-spec-end], s,
+                          element(args, arg-i, default: #f)))
+            arg-i := arg-i + 1;
+          end;
+          let output = s.stream-contents;
+          let output-len :: <integer> = output.size;
+          let padding :: <integer> = (abs(field) - output-len);
+          case
+            (padding < 0) =>
+              write(stream, output);
+            (field > 0) =>
+              write(stream, make(<byte-string>, size: padding, fill: ' '));
+              write(stream, output);
+            otherwise =>
+              write(stream, output);
+              write(stream, make(<byte-string>, size: padding, fill: ' '));
+          end;
+          start := field-spec-end + 1;  // Add one to skip dispatch char.
+        else
+          if (do-dispatch(control-string[start], stream,
+                          element(args, arg-i, default: #f)))
+            arg-i := arg-i + 1;
+          end;
+          start := start + 1;  // Add one to skip dispatch char.
+        end;
       end if;
     end while;
   cleanup
     unlock-stream(stream);
   end;
 end method;
-    
+
 /// do-dispatch -- Internal.
 ///
 /// This function dispatches on char, which should be a format directive.
@@ -263,13 +263,13 @@ define function parse-integer (input :: <byte-string>, index :: <integer>)
     => (result :: false-or(<integer>), index :: <integer>);
   let result :: <integer> = 0;
   let negative? = if (input[index] == '-')
-		    index := index + 1;
-		  end;
+                    index := index + 1;
+                  end;
   for (i :: <integer> = index then (i + 1),
        len :: <integer> = input.size then len,
        ascii-zero :: <byte> = as(<integer> /***/, '0') then ascii-zero,
        until: ((i == len) |
-		 (~ (char-classes[as(<integer> /***/, input[i])] == #"digit"))))
+                 (~ (char-classes[as(<integer> /***/, input[i])] == #"digit"))))
     result := ((result * 10) + (as(<integer> /***/, input[i]) - ascii-zero));
   finally
     if (result == 0)
@@ -286,23 +286,23 @@ define constant $digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 /// format-integer -- internal.
 ///
 define method format-integer (arg :: <extended-integer>,
-			      radix :: limited(<integer>, min: 2, max: 36),
-			      stream :: <stream>)
+                              radix :: limited(<integer>, min: 2, max: 36),
+                              stream :: <stream>)
  => ();
   // Define an iteration that collects the digits for the print
   // representation of arg.
   local method repeat (arg /* :: <general-integer> */, digits :: <list>)
-	  let (quotient, remainder) = floor/(arg, radix);
-	  // remainder is prob. an <extended-integer>, even though it's small.
-	  let digits = pair($digits[as(<integer>, remainder)], digits);
-	  if (zero?(quotient))
-	    for (digit in digits)
-	      write-element(stream, digit);
-	    end;
-	  else
-	    repeat(quotient, digits);
-	  end;
-	end;
+          let (quotient, remainder) = floor/(arg, radix);
+          // remainder is prob. an <extended-integer>, even though it's small.
+          let digits = pair($digits[as(<integer>, remainder)], digits);
+          if (zero?(quotient))
+            for (digit in digits)
+              write-element(stream, digit);
+            end;
+          else
+            repeat(quotient, digits);
+          end;
+        end;
   // Set up for the iteration.
   if (negative?(arg))
     write-element(stream, '-');
@@ -315,23 +315,23 @@ end method format-integer;
 /// format-integer -- internal.
 ///
 define method format-integer (arg :: <integer>,
-			      radix :: limited(<integer>, min: 2, max: 36),
-			      stream :: <stream>)
+                              radix :: limited(<integer>, min: 2, max: 36),
+                              stream :: <stream>)
  => ();
   // Define an iteration that collects the digits for the print
   // representation of arg.
   local method repeat (arg :: <integer>, digits :: <list>)
-	  let (quotient :: <integer>, remainder :: <integer>)
-	    = floor/(arg, radix);
-	  let digits = pair($digits[remainder], digits);
-	  if (zero?(quotient))
-	    for (digit in digits)
-	      write-element(stream, digit);
-	    end;
-	  else
-	    repeat(quotient, digits);
-	  end;
-	end;
+          let (quotient :: <integer>, remainder :: <integer>)
+            = floor/(arg, radix);
+          let digits = pair($digits[remainder], digits);
+          if (zero?(quotient))
+            for (digit in digits)
+              write-element(stream, digit);
+            end;
+          else
+            repeat(quotient, digits);
+          end;
+        end;
   // Set up for the iteration.
   if (negative?(arg))
     write-element(stream, '-');

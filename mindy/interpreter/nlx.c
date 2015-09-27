@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -179,8 +179,8 @@ static void throw(struct thread *thread, int nargs)
     args = thread->sp - nargs;
     catch_block = args[0];
     if (obj_ptr(struct catch_block *, catch_block)->thread != thread) {
-	push_linkage(thread, args);
-	error("Bogus throw");
+        push_linkage(thread, args);
+        error("Bogus throw");
     }
 
     unwind(thread, args[0], args+1);
@@ -204,36 +204,36 @@ static void unwind(struct thread *thread, obj_t catch_block, obj_t *vals)
     cur_uwp = thread->cur_uwp;
 
     do {
-	cur_catch = thread->cur_catch;
-	if (cur_uwp != obj_ptr(struct catch_block *, cur_catch)->cur_uwp) {
-	    obj_t cleanup = cur_uwp->cleanup;
-	    obj_t *dst = (obj_t *)cur_uwp;
-	    obj_t *src = vals;
-	    obj_t *end = thread->sp;
+        cur_catch = thread->cur_catch;
+        if (cur_uwp != obj_ptr(struct catch_block *, cur_catch)->cur_uwp) {
+            obj_t cleanup = cur_uwp->cleanup;
+            obj_t *dst = (obj_t *)cur_uwp;
+            obj_t *src = vals;
+            obj_t *end = thread->sp;
 
-	    /* Set the frame pointer to where the values will show up. */
-	    thread->fp = dst;
+            /* Set the frame pointer to where the values will show up. */
+            thread->fp = dst;
 
-	    /* Restore the handlers, and unlink the uwp. */
-	    thread->handlers = cur_uwp->handlers;
-	    thread->cur_uwp = obj_rawptr(cur_uwp->prev_uwp);
+            /* Restore the handlers, and unlink the uwp. */
+            thread->handlers = cur_uwp->handlers;
+            thread->cur_uwp = obj_rawptr(cur_uwp->prev_uwp);
 
-	    /* Copy the values down the stack, and save the catch block */
-	    while (src < end)
-		*dst++ = *src++;
-	    thread->sp = dst+2;
-	    dst[0] = catch_block;
+            /* Copy the values down the stack, and save the catch block */
+            while (src < end)
+                *dst++ = *src++;
+            thread->sp = dst+2;
+            dst[0] = catch_block;
 
-	    /* call the cleanup function. */
-	    dst[1] = cleanup;
-	    set_c_continuation(thread, continue_unwind);
-	    invoke(thread, 0);
-	    return;
-	}
-	/* Unlink the catch block we just unwound past. */
-	obj_ptr(struct catch_block *, cur_catch)->thread = NULL;
-	thread->handlers = obj_ptr(struct catch_block *, cur_catch)->handlers;
-	thread->cur_catch=obj_ptr(struct catch_block *, cur_catch)->prev_catch;
+            /* call the cleanup function. */
+            dst[1] = cleanup;
+            set_c_continuation(thread, continue_unwind);
+            invoke(thread, 0);
+            return;
+        }
+        /* Unlink the catch block we just unwound past. */
+        obj_ptr(struct catch_block *, cur_catch)->thread = NULL;
+        thread->handlers = obj_ptr(struct catch_block *, cur_catch)->handlers;
+        thread->cur_catch=obj_ptr(struct catch_block *, cur_catch)->prev_catch;
     } while (cur_catch != catch_block);
 
     /* Restore the frame pointer and the handlers. */
@@ -280,16 +280,16 @@ void init_nlx_classes(void)
 void init_nlx_functions(void)
 {
     define_constant("uwp",
-		    make_raw_function("uwp", 
-				      list2(obj_ObjectClass, obj_ObjectClass),
-				      FALSE, obj_False, FALSE,
-				      obj_Nil, obj_ObjectClass, uwp));
+                    make_raw_function("uwp",
+                                      list2(obj_ObjectClass, obj_ObjectClass),
+                                      FALSE, obj_False, FALSE,
+                                      obj_Nil, obj_ObjectClass, uwp));
     define_constant("catch",
-		    make_raw_function("catch", list1(obj_ObjectClass),
-				      FALSE, obj_False, FALSE,
-				      obj_Nil, obj_ObjectClass, catch));
+                    make_raw_function("catch", list1(obj_ObjectClass),
+                                      FALSE, obj_False, FALSE,
+                                      obj_Nil, obj_ObjectClass, catch));
     define_constant("throw",
-		    make_raw_function("throw", list1(obj_ObjectClass),
-				      TRUE, obj_False, FALSE,
-				      obj_Nil, obj_ObjectClass, throw));
+                    make_raw_function("throw", list1(obj_ObjectClass),
+                                      TRUE, obj_False, FALSE,
+                                      obj_Nil, obj_ObjectClass, throw));
 }

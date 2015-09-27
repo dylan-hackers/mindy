@@ -6,25 +6,25 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -35,10 +35,10 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 define class <listbox> (<window>, <editable>) end class;
 
 define-widget(<listbox>, "listbox",
-	      #"exportselection", #"font", #"width", #"height",
-	      #"selectbackground", #"selectborderwidth", #"selectforeground",
-	      #"setgrid", #"xscrollcommand", #"yscrollcommand",
-	      #"selectmode");
+              #"exportselection", #"font", #"width", #"height",
+              #"selectbackground", #"selectborderwidth", #"selectforeground",
+              #"setgrid", #"xscrollcommand", #"yscrollcommand",
+              #"selectmode");
 
 define method current-selection(listbox :: <listbox>, #rest rest) =>
     (indices :: <sequence>);
@@ -48,7 +48,7 @@ end method;
 
 define method nearest(listbox :: <listbox>, y-coord) => index :: <integer>;
   tk-as(<integer>, call-tk-function(listbox.path, " nearest ",
-					tk-as(<string>, y-coord)));
+                                        tk-as(<string>, y-coord)));
 end method nearest;
 
 define method size(listbox :: <listbox>) => result :: <integer>;
@@ -79,7 +79,7 @@ define method get-elements
   end for;
   stream-contents(buffer);
 end method get-elements;
-  
+
 define method get-all (listbox :: <listbox>) => (result :: <string>);
   get-elements(listbox, 0, end: listbox.size);
 end method get-all;
@@ -95,7 +95,7 @@ define method selection-anchor-setter (listbox :: <listbox>, index)
 end method selection-anchor-setter;
 
 define method clear-selection (listbox :: <listbox>, first :: <integer>,
-			       #rest last)
+                               #rest last)
   put-tk-line(listbox, " selection clear ", apply(join-tk-args, first, last));
 end method clear-selection;
 
@@ -105,7 +105,7 @@ define method selection-includes? (listbox :: <listbox>, index)
 end method selection-includes?;
 
 define method set-selection (listbox :: <listbox>, first :: <integer>,
-			     #rest last);
+                             #rest last);
   put-tk-line(listbox, " selection set ", apply(join-tk-args, first, last));
 end method set-selection;
 

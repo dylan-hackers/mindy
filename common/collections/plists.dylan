@@ -16,7 +16,7 @@ define macro pop!
            let _result = head(?list);
            ?list := tail(?list);
            _result
-	 end }
+         end }
 end macro pop!;
 
 
@@ -41,14 +41,14 @@ define method get-property
   block (return)
     let length :: <integer> = size(plist);
     assert(even?(length),
-	   "This plist does not have even length");
+           "This plist does not have even length");
     without-bounds-checks
       for (i :: <integer> from 0 below length by 2)
-	when (plist[i] == indicator)
-	  return(plist[i + 1])
-	end;
+        when (plist[i] == indicator)
+          return(plist[i + 1])
+        end;
       finally
-	return(default);
+        return(default);
       end
     end
   end
@@ -83,15 +83,15 @@ define method do-put-property!
   block (return)
     let length :: <integer> = size(plist);
     assert(even?(length),
-	   "This plist does not have even length");
+           "This plist does not have even length");
     without-bounds-checks
       for (i :: <integer> from 0 below length by 2)
-	when (plist[i] == indicator)
-	  plist[i + 1] := value;
-	  return(plist)
-	end;
+        when (plist[i] == indicator)
+          plist[i + 1] := value;
+          return(plist)
+        end;
       finally
-	return(concatenate!(plist, vector(indicator, value)));
+        return(concatenate!(plist, vector(indicator, value)));
       end
     end
   end
@@ -107,7 +107,7 @@ define method keyword-sequence
     (plist :: <vector>) => (keywords :: <vector>)
   let length :: <integer> = size(plist);
   assert(even?(length),
-	 "This plist does not have even length");
+         "This plist does not have even length");
   let count :: <integer> = ash(length, -1);
   without-bounds-checks
     let keywords = make(<vector>, size: count);
@@ -122,7 +122,7 @@ define method value-sequence
     (plist :: <vector>) => (values :: <vector>)
   let length :: <integer> = size(plist);
   assert(even?(length),
-	 "This plist does not have even length");
+         "This plist does not have even length");
   let count :: <integer> = ash(length, -1);
   without-bounds-checks
     let values = make(<vector>, size: count);
@@ -136,25 +136,25 @@ end method value-sequence;
 define method keyword-sequence
     (plist :: <list>) => (keywords :: <list>)
   local method loop (plist :: <list>, keywords)
-	  if (plist == #())
-	    reverse!(keywords)
-	  else
-	    loop(plist.tail.tail, pair(plist.head, keywords))
-	  end
-	end method;
+          if (plist == #())
+            reverse!(keywords)
+          else
+            loop(plist.tail.tail, pair(plist.head, keywords))
+          end
+        end method;
   loop(plist, #());
 end method keyword-sequence;
 
 define method value-sequence
     (plist :: <list>) => (values :: <list>)
   local method loop (plist :: <list>, values)
-	  if (plist == #())
-	    reverse!(values)
-	  else
-	    let next :: <pair> = plist.tail;
-	    loop(next.tail, pair(next.head, values))
-	  end
-	end method;
+          if (plist == #())
+            reverse!(values)
+          else
+            let next :: <pair> = plist.tail;
+            loop(next.tail, pair(next.head, values))
+          end
+        end method;
   loop(plist, #());
 end method value-sequence;
 
@@ -205,15 +205,15 @@ define method do-remove-property!
   let value = #f;
   let length :: <integer> = size(plist);
   assert(even?(length),
-	 "This plist does not have even length");
+         "This plist does not have even length");
   without-bounds-checks
     for (i :: <integer> from 0 below length by 2)
       if (plist[i] == indicator)
-	value := plist[i + 1];
+        value := plist[i + 1];
       else
-	plist[j]     := plist[i];
-	plist[j + 1] := plist[i + 1];
-	j := j + 2
+        plist[j]     := plist[i];
+        plist[j + 1] := plist[i + 1];
+        j := j + 2
       end
     end
   end;
@@ -227,7 +227,7 @@ define method do-remove-property!
   let value = #f;
   let length :: <integer> = size(plist);
   assert(even?(length),
-	 "This plist does not have even length");
+         "This plist does not have even length");
   let count :: <integer> = 0;
   without-bounds-checks
     for (i :: <integer> from 0 below length by 2)
@@ -240,13 +240,13 @@ define method do-remove-property!
     let new = make(<simple-object-vector>, size: length - count);
     without-bounds-checks
       for (i :: <integer> from 0 below length by 2)
-	if (plist[i] == indicator)
-	  value := plist[i + 1];
-	else
-	  new[j]     := plist[i];
-	  new[j + 1] := plist[i + 1];
-	  j := j + 2
-	end
+        if (plist[i] == indicator)
+          value := plist[i + 1];
+        else
+          new[j]     := plist[i];
+          new[j + 1] := plist[i + 1];
+          j := j + 2
+        end
       end
     end;
     values(value, new)
@@ -267,44 +267,44 @@ define method remove-keywords
     otherwise =>
       let length :: <integer> = size(plist);
       assert(even?(length),
-	     "This plist does not have even length");
+             "This plist does not have even length");
       let new-plist :: <stretchy-object-vector>
-	= make(<stretchy-vector>, size: length);
+        = make(<stretchy-vector>, size: length);
       let j :: <integer> = 0;
-      if (size(keywords) = 1)	// speed bum when only one keyword
+      if (size(keywords) = 1)        // speed bum when only one keyword
         let keyword = keywords[0];
-	block (break)
-	  without-bounds-checks
-	    while (#t)
-	      let indicator = pop!(plist);
-	      let value     = pop!(plist);
-	      unless (keyword == indicator)
-		new-plist[j]     := indicator;
-		new-plist[j + 1] := value;
-		j := j + 2
-	      end;
-	      when (empty?(plist))
-		break()
-	      end
-	    end
-	  end
+        block (break)
+          without-bounds-checks
+            while (#t)
+              let indicator = pop!(plist);
+              let value     = pop!(plist);
+              unless (keyword == indicator)
+                new-plist[j]     := indicator;
+                new-plist[j + 1] := value;
+                j := j + 2
+              end;
+              when (empty?(plist))
+                break()
+              end
+            end
+          end
         end
       else
         block (break)
           without-bounds-checks
-	    while (#t)
-	      let indicator = pop!(plist);
-	      let value     = pop!(plist);
-	      unless (member?(indicator, keywords))
-		new-plist[j]     := indicator;
-		new-plist[j + 1] := value;
-		j := j + 2
-	      end;
-	      when (empty?(plist))
-		break()
-	      end
-	    end
-	  end
+            while (#t)
+              let indicator = pop!(plist);
+              let value     = pop!(plist);
+              unless (member?(indicator, keywords))
+                new-plist[j]     := indicator;
+                new-plist[j + 1] := value;
+                j := j + 2
+              end;
+              when (empty?(plist))
+                break()
+              end
+            end
+          end
         end
       end;
       size(new-plist) := j;
@@ -320,34 +320,34 @@ define method remove-keywords
     otherwise =>
       let length :: <integer> = size(plist);
       assert(even?(length),
-	     "This plist does not have even length");
+             "This plist does not have even length");
       let new-plist :: <stretchy-object-vector>
-	= make(<stretchy-vector>, size: length);
+        = make(<stretchy-vector>, size: length);
       let j :: <integer> = 0;
-      if (size(keywords) = 1)	// speed bum when only one keyword
+      if (size(keywords) = 1)        // speed bum when only one keyword
         let keyword = keywords[0];
-	without-bounds-checks
-	  for (i :: <integer> from 0 below length by 2)
-	    let indicator = plist[i];
-	    let value     = plist[i + 1];
-	    unless (keyword == indicator)
-	      new-plist[j]     := indicator;
-	      new-plist[j + 1] := value;
-	      j := j + 2
-	    end
-	  end
+        without-bounds-checks
+          for (i :: <integer> from 0 below length by 2)
+            let indicator = plist[i];
+            let value     = plist[i + 1];
+            unless (keyword == indicator)
+              new-plist[j]     := indicator;
+              new-plist[j + 1] := value;
+              j := j + 2
+            end
+          end
         end
       else
         without-bounds-checks
-	  for (i :: <integer> from 0 below length by 2)
-	    let indicator = plist[i];
-	    let value     = plist[i + 1];
-	    unless (member?(indicator, keywords))
-	      new-plist[j]     := indicator;
-	      new-plist[j + 1] := value;
-	      j := j + 2
-	    end
-	  end
+          for (i :: <integer> from 0 below length by 2)
+            let indicator = plist[i];
+            let value     = plist[i + 1];
+            unless (member?(indicator, keywords))
+              new-plist[j]     := indicator;
+              new-plist[j + 1] := value;
+              j := j + 2
+            end
+          end
         end
       end;
       size(new-plist) := j;

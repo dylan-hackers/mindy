@@ -26,7 +26,7 @@ define method \+(dur1 :: <day/time-duration>, dur2 :: <day/time-duration>)
   make(<day/time-duration>, duration: new-sec, microseconds: new-usec);
 end method \+;
 
-// neither <date> + <duration> nor vice versa, but I will do it for 
+// neither <date> + <duration> nor vice versa, but I will do it for
 // implementation classes
 
 define method \+(d1 :: <date>, dur :: <year/month-duration>) => (d2 :: <date>)
@@ -34,11 +34,11 @@ define method \+(d1 :: <date>, dur :: <year/month-duration>) => (d2 :: <date>)
   let (years, months) = floor/(dur.duration, 12);
   if(months + t.month > 12) years := years + 1; end if;
   let new-months = modulo(months + t.month, 12);
-  make(<date>, 
-       year: t.year + years, 
+  make(<date>,
+       year: t.year + years,
        month: if(new-months = 0) 12 else new-months end if,
-       day: t.day-of-month, 
-       hours: false-to-0(t.hours), 
+       day: t.day-of-month,
+       hours: false-to-0(t.hours),
        minutes: false-to-0(t.minutes),
        seconds: false-to-0(t.seconds),
        microseconds: false-to-0(d1.microseconds),
@@ -51,10 +51,10 @@ define method \+(d1 :: <date>, dur :: <day/time-duration>) => (d2 :: <date>)
   if(microsec > 1000000) sec := sec + 1; end if;
   let u = sec + encode-time(d1.time);             // time in seconds from 1970
   let t = decode-time(u, timezone: d1.time.timezone);
-  make(<date>, 
-       year: t.year, month: t.month, day: t.day-of-month, 
-       hours: false-to-0(t.hours), 
-       minutes: false-to-0(t.minutes), 
+  make(<date>,
+       year: t.year, month: t.month, day: t.day-of-month,
+       hours: false-to-0(t.hours),
+       minutes: false-to-0(t.minutes),
        seconds: false-to-0(t.seconds),
        microseconds: modulo(microsec, 1000000),
        time-zone-offset: floor/(false-to-0(t.timezone), 60));
@@ -71,7 +71,7 @@ define method \-(dur1 :: <day/time-duration>, dur2 :: <day/time-duration>)
  => (dur3 :: <day/time-duration>)
   let new-usec = dur1.usec - dur2.usec;
   let new-sec = dur1.duration - dur2.duration;
-  if(new-usec < 0) 
+  if(new-usec < 0)
     new-usec := new-usec + 1000000;
     new-sec := new-sec - 1;
   end if;
@@ -83,28 +83,28 @@ end method \-;
 define method \-(d1 :: <date>, dur :: <year/month-duration>) => (d2 :: <date>)
   let t = d1.time;
   let (years, months) = floor/(dur.duration, 12);
-  if(t.month - months < 1) 
+  if(t.month - months < 1)
     years := years + 1;
     months := months - 12;
   end if;
-  make(<date>, 
+  make(<date>,
        year: t.year - years, month: months - t.month,
        day: t.day-of-month, hours: t.hours, minutes: t.minutes,
-       seconds: t.seconds, microseconds: d1.microseconds, 
+       seconds: t.seconds, microseconds: d1.microseconds,
        time-zone-offset: floor/(t.timezone, 60));
-end method \-;  
+end method \-;
 
 define method \-(d1 :: <date>, dur :: <day/time-duration>) => (d2 :: <date>)
   let sec = dur.duration;
   let microsec = dur.usec;
-  if(d1.microseconds - microsec < 0) 
-    sec := sec + 1; 
+  if(d1.microseconds - microsec < 0)
+    sec := sec + 1;
     microsec := microsec - 1000000;
   end if;
   let u = encode-time(d1.time) - sec;             // time in seconds from 1970
   let t = decode-time(u, timezone: d1.time.timezone);
-  make(<date>, 
-       year: t.year, month: t.month, day: t.day-of-month, hours: t.hours, 
+  make(<date>,
+       year: t.year, month: t.month, day: t.day-of-month, hours: t.hours,
        minutes: t.minutes, seconds: t.seconds,
        microseconds: d1.microseconds - microsec,
        time-zone-offset: floor/(t.timezone, 60));
@@ -124,12 +124,12 @@ end method \-;
 
 define method \*(d1 :: <day/time-duration>, r :: <real>) => (d2 :: <duration>)
   let (add-sec, new-usec) = floor/(floor(d1.usec * r), 1000000);
-  make(<day/time-duration>, 
+  make(<day/time-duration>,
        duration: floor(d1.duration * r) + add-sec,
        microseconds: new-usec);
 end method \*;
 
-define method \*(d1 :: <year/month-duration>, r :: <real>) 
+define method \*(d1 :: <year/month-duration>, r :: <real>)
  => (d2 :: <duration>)
   make(<year/month-duration>, duration: floor(d1.duration * r));
 end method \*;

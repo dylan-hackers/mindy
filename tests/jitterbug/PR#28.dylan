@@ -2,7 +2,7 @@ module: PR-28
 
 define variable has-errors = #f;
 
-define method run-several-tests (test-name :: <string>, 
+define method run-several-tests (test-name :: <string>,
                                  test :: <function>)
  => ();
   format-out("%s ... ", test-name);

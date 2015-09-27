@@ -6,7 +6,7 @@ author:      Douglas M. Auclair, dauclair@hotmail.com
 // http://www.functionalobjects.com/products/doc/io/io_200.htm
 
 define method file-exists?(file :: <pathname>)
-  find-file(pathless-filename(file), paths(file)); 
+  find-file(pathless-filename(file), paths(file));
 end method file-exists?;
 
 // for copying and renaming we want one, and only one, path to search
@@ -24,9 +24,9 @@ define method file-type(file :: <pathname>) => (type :: <file-type>);
                gd-stat-mode(file);
              end;
   let type = case
-	       gd-is-dir?(stat) => #"directory";
-	       gd-is-link?(stat) => #"link";
-	       otherwise => #"file";
-	     end case;
+               gd-is-dir?(stat) => #"directory";
+               gd-is-link?(stat) => #"link";
+               otherwise => #"file";
+             end case;
 end method file-type;
-       
+

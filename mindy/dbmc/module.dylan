@@ -50,7 +50,7 @@ define module source
     <unknown-source-location>,
 
     <source>,
-    <source-file>, contents, full-file-name, 
+    <source-file>, contents, full-file-name,
 
     <known-source-location>, source,
     start-posn, start-line, start-column,
@@ -138,8 +138,8 @@ define module tokens
     $feature-else-token,
     $feature-endif-token,
 
-    <token>, token-kind, 
-    <symbol-token>, token-symbol, 
+    <token>, token-kind,
+    <symbol-token>, token-symbol,
     <identifier-token>, token-module, token-uniquifier,
     <uniquifier>, same-id?,
     <operator-token>, operator-precedence, operator-associativity,
@@ -317,7 +317,7 @@ define module source-utilities
     <compound-macro-source-location>, macro-srcloc-first, macro-srcloc-last,
 
     source-location-before, source-location-after,
-    source-location-between, source-location-spanning, 
+    source-location-between, source-location-spanning,
     simplify-source-location;
 end module source-utilities;
 

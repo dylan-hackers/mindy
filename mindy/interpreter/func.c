@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -75,11 +75,11 @@ static void trace_call(obj_t function, obj_t *args, int nargs)
     prin1(function_debug_name_or_self(function));
     printf("(");
     if (nargs > 0) {
-	prin1(*args++);
-	while (--nargs > 0) {
-	    printf(", ");
-	    prin1(*args++);
-	}
+        prin1(*args++);
+        while (--nargs > 0) {
+            printf(", ");
+            prin1(*args++);
+        }
     }
     printf(")\n");
 }
@@ -88,11 +88,11 @@ static void trace_return(obj_t *old_sp, obj_t *vals, int nvals)
 {
     printf("< 0x%08lx: ", (unsigned long)old_sp);
     if (nvals > 0) {
-	prin1(*vals++);
-	while (--nvals > 0) {
-	    printf(", ");
-	    prin1(*vals++);
-	}
+        prin1(*vals++);
+        while (--nvals > 0) {
+            printf(", ");
+            prin1(*vals++);
+        }
     }
     printf("\n");
 }
@@ -110,9 +110,9 @@ struct gf_cache {
 
 obj_t make_gf_cache(int req_args, obj_t cached_result)
 {
-    obj_t res = alloc(obj_GFCacheClass, 
-		      (sizeof(struct gf_cache) 
-		       + sizeof(obj_t)*(req_args - 1)));
+    obj_t res = alloc(obj_GFCacheClass,
+                      (sizeof(struct gf_cache)
+                       + sizeof(obj_t)*(req_args - 1)));
     struct gf_cache *gfc = obj_ptr(struct gf_cache *, res);
     int i;
 
@@ -120,7 +120,7 @@ obj_t make_gf_cache(int req_args, obj_t cached_result)
     gfc->cached_result = cached_result;
     gfc->size = req_args;
     for (i = 0; i < req_args; i++)
-	gfc->cached_classes[i] = obj_Nil;
+        gfc->cached_classes[i] = obj_Nil;
 
     return res;
 }
@@ -141,9 +141,9 @@ struct function {
 #define FUNC(o) obj_ptr(struct function *, o)
 
 obj_t make_raw_function(char *debug_name, obj_t specializers,
-			boolean restp, obj_t keywords, boolean all_keys,
-			obj_t result_types, obj_t more_results_type,
-			void (*xep)(struct thread *thread, int nargs))
+                        boolean restp, obj_t keywords, boolean all_keys,
+                        obj_t result_types, obj_t more_results_type,
+                        void (*xep)(struct thread *thread, int nargs))
 {
     obj_t res = alloc(obj_RawFunctionClass, sizeof(struct function));
 
@@ -154,7 +154,7 @@ obj_t make_raw_function(char *debug_name, obj_t specializers,
     ASSERT_VALID_OBJ(keywords);
     FUNC(res)->keywords = keywords;
     FUNC(res)->all_keys = all_keys;
-    ASSERT_VALID_OBJ(result_types);    
+    ASSERT_VALID_OBJ(result_types);
     FUNC(res)->result_types = result_types;
     ASSERT_VALID_OBJ(more_results_type);
     FUNC(res)->more_results_type = more_results_type;
@@ -172,15 +172,15 @@ obj_t function_debug_name(obj_t function)
 obj_t function_debug_name_or_self(obj_t function)
 {
     if (instancep(function, obj_FunctionClass)) {
-	obj_t debug_name = FUNC(function)->debug_name;
+        obj_t debug_name = FUNC(function)->debug_name;
 
-	if (debug_name == obj_False)
-	    return function;
-	else
-	    return debug_name;
+        if (debug_name == obj_False)
+            return function;
+        else
+            return debug_name;
     }
     else
-	return function;
+        return function;
 }
 
 obj_t function_keywords(obj_t func)
@@ -205,30 +205,30 @@ void invoke(struct thread *thread, int nargs)
     obj_t func_type = object_class(function);
 
     if (func_type != obj_BuiltinMethodClass
-	&& func_type != obj_ByteMethodClass
-	&& func_type != obj_BuiltinMethodClass
-	&& func_type != obj_GFClass
-	&& !subtypep(func_type, obj_FunctionClass))
-	lose("invoke called on a non-function.");
+        && func_type != obj_ByteMethodClass
+        && func_type != obj_BuiltinMethodClass
+        && func_type != obj_GFClass
+        && !subtypep(func_type, obj_FunctionClass))
+        lose("invoke called on a non-function.");
 
     if (Tracing)
-	trace_call(function, thread->sp - nargs, nargs);
+        trace_call(function, thread->sp - nargs, nargs);
 
     if (nargs < required) {
-	push_linkage(thread, thread->sp - nargs);
-	error("Too few arguments for %=: expected %d, got %d",
-	      function_debug_name_or_self(function),
-	      make_fixnum(required),
-	      make_fixnum(nargs));
+        push_linkage(thread, thread->sp - nargs);
+        error("Too few arguments for %=: expected %d, got %d",
+              function_debug_name_or_self(function),
+              make_fixnum(required),
+              make_fixnum(nargs));
     }
-    
+
     if (!FUNC(function)->restp && FUNC(function)->keywords == obj_False
-	  && nargs > required) {
-	push_linkage(thread, thread->sp - nargs);
-	error("Too many arguments for %=: expected %d, got %d",
-	      function_debug_name_or_self(function),
-	      make_fixnum(required),
-	      make_fixnum(nargs));
+          && nargs > required) {
+        push_linkage(thread, thread->sp - nargs);
+        error("Too many arguments for %=: expected %d, got %d",
+              function_debug_name_or_self(function),
+              make_fixnum(required),
+              make_fixnum(nargs));
     }
 
     FUNC(function)->xep(thread, nargs);
@@ -243,13 +243,13 @@ obj_t *push_linkage(struct thread *thread, obj_t *args)
 
     fp[-5] = rawptr_obj(thread->fp);
     fp[-4] = rawptr_obj(args-1);
-	fp[-3] = fp[-2] = rawptr_obj(NULL);
+        fp[-3] = fp[-2] = rawptr_obj(NULL);
     if (obj_is_ptr(thread->component))
-		fp[-2] = thread->component;
-	else if (thread->component == C_CONTINUATION_MARKER) {
-		fp[-3] = save_c_function_hi(thread->c_continuation);
-		fp[-2] = save_c_function_lo(thread->c_continuation);
-	}
+                fp[-2] = thread->component;
+        else if (thread->component == C_CONTINUATION_MARKER) {
+                fp[-3] = save_c_function_hi(thread->c_continuation);
+                fp[-2] = save_c_function_lo(thread->c_continuation);
+        }
     fp[-1] = make_fixnum(thread->pc);
     thread->fp = fp;
     thread->component = rawptr_obj(NULL);
@@ -264,20 +264,20 @@ obj_t *pop_linkage(struct thread *thread)
 
     thread->fp = obj_rawptr(fp[-5]);
     if (obj_is_ptr(fp[-2]))
-    	thread->component = fp[-2];
-	else if (obj_is_saved_c_function(fp[-2])) {
-		thread->component = C_CONTINUATION_MARKER;
-		thread->c_continuation = restore_c_function(fp[-2], fp[-3]);
-	}
-	else
-		thread->component = rawptr_obj(NULL);
+            thread->component = fp[-2];
+        else if (obj_is_saved_c_function(fp[-2])) {
+                thread->component = C_CONTINUATION_MARKER;
+                thread->c_continuation = restore_c_function(fp[-2], fp[-3]);
+        }
+        else
+                thread->component = rawptr_obj(NULL);
     thread->pc = fixnum_value(fp[-1]);
 
     return obj_rawptr(fp[-4]);
 }
 
 void set_c_continuation(struct thread *thread,
-			void (*cont)(struct thread *thread, obj_t *vals))
+                        void (*cont)(struct thread *thread, obj_t *vals))
 {
     thread->component = C_CONTINUATION_MARKER;
     thread->c_continuation = cont;
@@ -291,22 +291,22 @@ void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
 #endif
 {
     if (Tracing)
-	trace_return(old_sp, vals, thread->sp - vals);
+        trace_return(old_sp, vals, thread->sp - vals);
 
     if (thread->pc)
-	do_byte_return(thread, old_sp, vals);
+        do_byte_return(thread, old_sp, vals);
     else if (thread->component == C_CONTINUATION_MARKER) {
-	    thread->component = rawptr_obj(NULL);
-	    if (old_sp != vals) {
-		obj_t *src = vals, *dst = old_sp, *end = thread->sp;
-		while (src < end)
-		    *dst++ = *src++;
-		thread->sp = dst;
-	    }
-	    (*thread->c_continuation)(thread, old_sp);
-	}
-	else
-	    lose("Attempt to return, but no continuation established.\n");
+            thread->component = rawptr_obj(NULL);
+            if (old_sp != vals) {
+                obj_t *src = vals, *dst = old_sp, *end = thread->sp;
+                while (src < end)
+                    *dst++ = *src++;
+                thread->sp = dst;
+            }
+            (*thread->c_continuation)(thread, old_sp);
+        }
+        else
+            lose("Attempt to return, but no continuation established.\n");
 }
 
 #if !SLOW_LONGJMP
@@ -331,7 +331,7 @@ struct method {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
-    obj_t class_cache;			/* #F or a gf_cache */
+    obj_t class_cache;                        /* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
 };
 
@@ -340,26 +340,26 @@ struct method {
 static obj_t *push_keywords(obj_t *sp, obj_t keywords, obj_t *args, int nargs)
 {
     while (keywords != obj_Nil) {
-	obj_t key_info = HEAD(keywords);
-	obj_t key = HEAD(key_info);
-	int i;
+        obj_t key_info = HEAD(keywords);
+        obj_t key = HEAD(key_info);
+        int i;
 
-	for (i = 0; i < nargs; i += 2) {
-	    if (key == args[i]) {
-		*sp++ = args[i+1];
-		goto next;
-	    }
-	}
-	*sp++ = TAIL(key_info);
+        for (i = 0; i < nargs; i += 2) {
+            if (key == args[i]) {
+                *sp++ = args[i+1];
+                goto next;
+            }
+        }
+        *sp++ = TAIL(key_info);
 
       next:
-	keywords = TAIL(keywords);
+        keywords = TAIL(keywords);
     }
     return sp;
 }
 
 static void really_invoke_methods(obj_t method, obj_t next_methods,
-				  struct thread *thread, int nargs)
+                                  struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - nargs;
     boolean restp = METHOD(method)->restp;
@@ -372,23 +372,23 @@ static void really_invoke_methods(obj_t method, obj_t next_methods,
     args[-1] = method;
 
     if (restp || keywords != obj_False) {
-	obj_t *ptr = thread->sp - rest_count;
-	obj_t rest = make_vector(rest_count, ptr);
+        obj_t *ptr = thread->sp - rest_count;
+        obj_t rest = make_vector(rest_count, ptr);
 
-	if (restp)
-	    *ptr++ = rest;
+        if (restp)
+            *ptr++ = rest;
 
-	if (keywords != obj_False) {
-	    if ((rest_count & 1) != 0) {
-		push_linkage(thread, args);
-		error("Odd number of keyword/value arguments.");
-	    }
+        if (keywords != obj_False) {
+            if ((rest_count & 1) != 0) {
+                push_linkage(thread, args);
+                error("Odd number of keyword/value arguments.");
+            }
 
-	    ptr = push_keywords(ptr, keywords, SOVEC(rest)->contents,
-				rest_count);
-	}
+            ptr = push_keywords(ptr, keywords, SOVEC(rest)->contents,
+                                rest_count);
+        }
 
-	thread->sp = ptr;
+        thread->sp = ptr;
     }
 
     /* add next-method info. */
@@ -398,18 +398,18 @@ static void really_invoke_methods(obj_t method, obj_t next_methods,
 }
 
 void invoke_methods(obj_t method, obj_t next_methods,
-		    struct thread *thread, int nargs)
+                    struct thread *thread, int nargs)
 {
     if (method == obj_False) {
-	push_linkage(thread, thread->sp - nargs);
-	error("It is ambiguous which of these methods to invoke:\n  %=",
-	      next_methods);
+        push_linkage(thread, thread->sp - nargs);
+        error("It is ambiguous which of these methods to invoke:\n  %=",
+              next_methods);
     }
     else
-	really_invoke_methods(method, next_methods, thread, nargs);
+        really_invoke_methods(method, next_methods, thread, nargs);
 }
 
-/* Version of applicable_method_p which does extra work to allow SAM caching 
+/* Version of applicable_method_p which does extra work to allow SAM caching
    for generic function dispatch.  The "cache" argument is carried across
    several calls to gfd_applicable_method_p and may be modified to reflect a
    more restrictive set of types. */
@@ -420,48 +420,48 @@ static boolean
     obj_t *cached_classes = obj_ptr(struct gf_cache *, cache)->cached_classes;
 
     while (specializers != obj_Nil) {
-	obj_t arg = *args++;
-	obj_t arg_class = *cached_classes++;
-	obj_t specializer = HEAD(specializers);
+        obj_t arg = *args++;
+        obj_t arg_class = *cached_classes++;
+        obj_t specializer = HEAD(specializers);
 
-	/* arg_class may be either a singleton, a limited_int, or a class.
-	   This stuff has been worked out on a case by case basis.  It could
-	   certainly be made clearer, but this could potentially reduce
-	   the efficiency by a large margin. */
-	if (!subtypep(arg_class, specializer)) {
-	    if (instancep(arg, specializer)) {
-		if (TYPE(specializer)->type_id == id_LimFixnum) {
-		    *(cached_classes - 1) =
-			(TYPE(arg_class)->type_id == id_LimFixnum
-			 ? intersect_limited_fixnums(arg_class,specializer)
-			 : specializer);
-		} else if (TYPE(specializer)->type_id == id_LimBignum) {
-		    *(cached_classes - 1) =
-			(TYPE(arg_class)->type_id == id_LimBignum
-			 ? intersect_limited_bignums(arg_class,specializer)
-			 : specializer);
-		} else
-		    *(cached_classes - 1) = singleton(arg);
-		obj_ptr(struct gf_cache *, cache)->simple = FALSE;
-	    } else {
-		if (overlapp(arg_class, specializer)) {
-		    if (TYPE(specializer)->type_id == id_LimFixnum)
-			*(cached_classes - 1) =
-			    restrict_limited_fixnums(arg, arg_class,
-						     specializer);
-		    else if (TYPE(specializer)->type_id == id_LimBignum)
-			*(cached_classes - 1) =
-			    restrict_limited_bignums(arg, arg_class,
-						     specializer);
-		    else
-			*(cached_classes - 1) = restrict_type(specializer,
-							      arg_class);
-		    obj_ptr(struct gf_cache *, cache)->simple = FALSE;
-		}
-		return FALSE;
-	      }
-	    }
-	specializers = TAIL(specializers);
+        /* arg_class may be either a singleton, a limited_int, or a class.
+           This stuff has been worked out on a case by case basis.  It could
+           certainly be made clearer, but this could potentially reduce
+           the efficiency by a large margin. */
+        if (!subtypep(arg_class, specializer)) {
+            if (instancep(arg, specializer)) {
+                if (TYPE(specializer)->type_id == id_LimFixnum) {
+                    *(cached_classes - 1) =
+                        (TYPE(arg_class)->type_id == id_LimFixnum
+                         ? intersect_limited_fixnums(arg_class,specializer)
+                         : specializer);
+                } else if (TYPE(specializer)->type_id == id_LimBignum) {
+                    *(cached_classes - 1) =
+                        (TYPE(arg_class)->type_id == id_LimBignum
+                         ? intersect_limited_bignums(arg_class,specializer)
+                         : specializer);
+                } else
+                    *(cached_classes - 1) = singleton(arg);
+                obj_ptr(struct gf_cache *, cache)->simple = FALSE;
+            } else {
+                if (overlapp(arg_class, specializer)) {
+                    if (TYPE(specializer)->type_id == id_LimFixnum)
+                        *(cached_classes - 1) =
+                            restrict_limited_fixnums(arg, arg_class,
+                                                     specializer);
+                    else if (TYPE(specializer)->type_id == id_LimBignum)
+                        *(cached_classes - 1) =
+                            restrict_limited_bignums(arg, arg_class,
+                                                     specializer);
+                    else
+                        *(cached_classes - 1) = restrict_type(specializer,
+                                                              arg_class);
+                    obj_ptr(struct gf_cache *, cache)->simple = FALSE;
+                }
+                return FALSE;
+              }
+            }
+        specializers = TAIL(specializers);
     }
     return TRUE;
 }
@@ -475,24 +475,24 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
     boolean result;
 
     if (cache != obj_False) {
-	boolean found = TRUE;
-	struct gf_cache *c = obj_ptr(struct gf_cache *, cache);
-	register boolean simple = c->simple;
+        boolean found = TRUE;
+        struct gf_cache *c = obj_ptr(struct gf_cache *, cache);
+        register boolean simple = c->simple;
 
-	cache_class = c->cached_classes;
-	arg = args;
+        cache_class = c->cached_classes;
+        arg = args;
 
-	for (i = 0; i < max; i++, arg++, cache_class++) {
-	    boolean simple_arg = simple ||
-		TYPE(*cache_class)->type_id == id_Class;
-	    if (simple_arg ? *cache_class != object_class(*arg)
-		           : !instancep(*arg, *cache_class)) {
-		found = FALSE;
-		break;
-	    }
-	}
-	if (found)
-	    return (c->cached_result == obj_True);
+        for (i = 0; i < max; i++, arg++, cache_class++) {
+            boolean simple_arg = simple ||
+                TYPE(*cache_class)->type_id == id_Class;
+            if (simple_arg ? *cache_class != object_class(*arg)
+                           : !instancep(*arg, *cache_class)) {
+                found = FALSE;
+                break;
+            }
+        }
+        if (found)
+            return (c->cached_result == obj_True);
     }
 
     /* It wasn't in the cache.... */
@@ -501,12 +501,12 @@ static boolean applicable_method_p(obj_t method, obj_t *args)
     arg = args;
 
     for (i = 0; i < max; i++, arg++, cache_class++)
-	*cache_class = object_class(*arg);
+        *cache_class = object_class(*arg);
 
     result = gfd_applicable_method_p(method, args, cache_elem);
 
     obj_ptr(struct gf_cache *, cache_elem)->cached_result
-	= result ? obj_True : obj_False;
+        = result ? obj_True : obj_False;
     METHOD(method)->class_cache = cache_elem;
 
     return result;
@@ -520,9 +520,9 @@ static boolean method_accepts_keyword(obj_t method, obj_t keyword)
     assert(keywords != obj_False);
 
     while (keywords != obj_Nil) {
-	if (HEAD(HEAD(keywords)) == keyword)
-	    return TRUE;
-	keywords = TAIL(keywords);
+        if (HEAD(HEAD(keywords)) == keyword)
+            return TRUE;
+        keywords = TAIL(keywords);
     }
     return FALSE;
 }
@@ -533,32 +533,32 @@ static void method_xep(struct thread *thread, int nargs)
     obj_t method = args[-1];
 
     if (applicable_method_p(method, args)) {
-	if (METHOD(method)->keywords != obj_False
-	      && !METHOD(method)->all_keys) {
-	    obj_t *ptr = args+METHOD(method)->required_args;
-	    while (ptr < thread->sp) {
-		if (!method_accepts_keyword(method, *ptr)) {
-		    push_linkage(thread, args);
-		    error("Method %= does not accept the keyword %=",
-			  function_debug_name_or_self(method), *ptr);
-		}
-		ptr += 2;
-	    }
-	}
-	invoke_methods(method, obj_Nil, thread, nargs);
+        if (METHOD(method)->keywords != obj_False
+              && !METHOD(method)->all_keys) {
+            obj_t *ptr = args+METHOD(method)->required_args;
+            while (ptr < thread->sp) {
+                if (!method_accepts_keyword(method, *ptr)) {
+                    push_linkage(thread, args);
+                    error("Method %= does not accept the keyword %=",
+                          function_debug_name_or_self(method), *ptr);
+                }
+                ptr += 2;
+            }
+        }
+        invoke_methods(method, obj_Nil, thread, nargs);
     }
     else {
-	push_linkage(thread, args);
-	error("Method %= is not applicable when given the arguments %=",
-	      function_debug_name_or_self(method),
-	      make_vector(nargs, args));
+        push_linkage(thread, args);
+        error("Method %= is not applicable when given the arguments %=",
+              function_debug_name_or_self(method),
+              make_vector(nargs, args));
     }
 }
 
 obj_t make_raw_method(char *debug_name, obj_t specializers, boolean restp,
-		      obj_t keywords, boolean all_keys, obj_t result_types,
-		      obj_t more_results_type,
-		      void (*iep)(obj_t self, struct thread *thread, obj_t *args))
+                      obj_t keywords, boolean all_keys, obj_t result_types,
+                      obj_t more_results_type,
+                      void (*iep)(obj_t self, struct thread *thread, obj_t *args))
 {
     obj_t res = alloc(obj_RawMethodClass, sizeof(struct method));
 
@@ -581,8 +581,8 @@ obj_t make_raw_method(char *debug_name, obj_t specializers, boolean restp,
     return res;
 }
 
-void set_method_iep(obj_t method, 
-		    void (*iep)(obj_t self, struct thread *thread, obj_t *args))
+void set_method_iep(obj_t method,
+                    void (*iep)(obj_t self, struct thread *thread, obj_t *args))
 {
     METHOD(method)->iep = iep;
 }
@@ -593,14 +593,14 @@ static boolean same_specializers(obj_t specializers1, obj_t specializers2)
     obj_t scan2 = specializers2;
 
     while (scan1 != obj_Nil) {
-	obj_t spec1 = HEAD(scan1);
-	obj_t spec2 = HEAD(scan2);
+        obj_t spec1 = HEAD(scan1);
+        obj_t spec2 = HEAD(scan2);
 
-	if (!subtypep(spec1, spec2) || !subtypep(spec2, spec1))
-	    return FALSE;
+        if (!subtypep(spec1, spec2) || !subtypep(spec2, spec1))
+            return FALSE;
 
-	scan1 = TAIL(scan1);
-	scan2 = TAIL(scan2);
+        scan1 = TAIL(scan1);
+        scan2 = TAIL(scan2);
     }
     return TRUE;
 }
@@ -611,7 +611,7 @@ enum method_comparison {
 };
 
 static enum method_comparison compare_methods(obj_t meth1, obj_t meth2,
-					      obj_t *args)
+                                              obj_t *args)
 {
     boolean meth1_first = FALSE;
     boolean meth2_first = FALSE;
@@ -619,62 +619,62 @@ static enum method_comparison compare_methods(obj_t meth1, obj_t meth2,
     obj_t scan2 = METHOD(meth2)->specializers;
 
     while (scan1 != obj_Nil) {
-	obj_t spec1 = HEAD(scan1);
-	obj_t spec2 = HEAD(scan2);
-	boolean spec1_more_specific = subtypep(spec1, spec2);
-	boolean spec2_more_specific = subtypep(spec2, spec1);
+        obj_t spec1 = HEAD(scan1);
+        obj_t spec2 = HEAD(scan2);
+        boolean spec1_more_specific = subtypep(spec1, spec2);
+        boolean spec2_more_specific = subtypep(spec2, spec1);
 
-	if (spec1_more_specific && spec2_more_specific)
-	    /* The two specializers are identical. */
-	    ;
-	else if (spec1_more_specific) {
-	    if (meth2_first)
-		return method_Ambiguous;
-	    meth1_first = TRUE;
-	}
-	else if (spec2_more_specific) {
-	    if (meth1_first)
-		return method_Ambiguous;
-	    meth2_first = TRUE;
-	}
-	else if (instancep(spec1, obj_ClassClass)
-		 && instancep(spec2, obj_ClassClass)) {
-	    obj_t class = object_class(*args);
-	    obj_t cpl = obj_ptr(struct class *, class)->cpl;
+        if (spec1_more_specific && spec2_more_specific)
+            /* The two specializers are identical. */
+            ;
+        else if (spec1_more_specific) {
+            if (meth2_first)
+                return method_Ambiguous;
+            meth1_first = TRUE;
+        }
+        else if (spec2_more_specific) {
+            if (meth1_first)
+                return method_Ambiguous;
+            meth2_first = TRUE;
+        }
+        else if (instancep(spec1, obj_ClassClass)
+                 && instancep(spec2, obj_ClassClass)) {
+            obj_t class = object_class(*args);
+            obj_t cpl = obj_ptr(struct class *, class)->cpl;
 
-	    while (cpl != obj_Nil) {
-		obj_t super = HEAD(cpl);
-		if (super == spec1) {
-		    if (meth2_first)
-			return method_Ambiguous;
-		    meth1_first = TRUE;
-		    break;
-		}
-		if (super == spec2) {
-		    if (meth1_first)
-			return method_Ambiguous;
-		    meth2_first = TRUE;
-		    break;
-		}
-		cpl = TAIL(cpl);
-	    }
-	    if (cpl == obj_Nil)
-		lose("Couldn't find either class in the objects cpl?");
-	}
-	else
-	    return method_Ambiguous;
+            while (cpl != obj_Nil) {
+                obj_t super = HEAD(cpl);
+                if (super == spec1) {
+                    if (meth2_first)
+                        return method_Ambiguous;
+                    meth1_first = TRUE;
+                    break;
+                }
+                if (super == spec2) {
+                    if (meth1_first)
+                        return method_Ambiguous;
+                    meth2_first = TRUE;
+                    break;
+                }
+                cpl = TAIL(cpl);
+            }
+            if (cpl == obj_Nil)
+                lose("Couldn't find either class in the objects cpl?");
+        }
+        else
+            return method_Ambiguous;
 
-	scan1 = TAIL(scan1);
-	scan2 = TAIL(scan2);
-	args++;
+        scan1 = TAIL(scan1);
+        scan2 = TAIL(scan2);
+        args++;
     }
 
     if (meth1_first)
-	return method_MoreSpecific;
+        return method_MoreSpecific;
     else if (meth2_first)
-	return method_LessSpecific;
+        return method_LessSpecific;
     else
-	return method_Identical;
+        return method_Identical;
 }
 
 
@@ -691,7 +691,7 @@ struct builtin_method {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
-    obj_t class_cache;			/* #F or a gf_cache */
+    obj_t class_cache;                        /* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
     obj_t (*func)();
 };
@@ -699,7 +699,7 @@ struct builtin_method {
 #define BUILTIN_METHOD(o) obj_ptr(struct builtin_method *, o)
 
 static void builtin_method_iep_1_arg(obj_t method, struct thread *thread,
-				     obj_t *args)
+                                     obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -717,7 +717,7 @@ static void builtin_method_iep_1_arg(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_2_args(obj_t method, struct thread *thread,
-				      obj_t *args)
+                                      obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -735,7 +735,7 @@ static void builtin_method_iep_2_args(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_3_args(obj_t method, struct thread *thread,
-				      obj_t *args)
+                                      obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -753,7 +753,7 @@ static void builtin_method_iep_3_args(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_4_args(obj_t method, struct thread *thread,
-				      obj_t *args)
+                                      obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -771,7 +771,7 @@ static void builtin_method_iep_4_args(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_5_args(obj_t method, struct thread *thread,
-				      obj_t *args)
+                                      obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -789,7 +789,7 @@ static void builtin_method_iep_5_args(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_6_args(obj_t method, struct thread *thread,
-				      obj_t *args)
+                                      obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -807,7 +807,7 @@ static void builtin_method_iep_6_args(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_7_args(obj_t method, struct thread *thread,
-				      obj_t *args)
+                                      obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -816,7 +816,7 @@ static void builtin_method_iep_7_args(obj_t method, struct thread *thread,
     push_linkage(thread, args);
 
     value = func(args[0], args[1], args[2], args[3],
-		 args[4], args[5], args[6]);
+                 args[4], args[5], args[6]);
 
     old_sp = pop_linkage(thread);
     *old_sp = value;
@@ -826,7 +826,7 @@ static void builtin_method_iep_7_args(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_8_args(obj_t method, struct thread *thread,
-				      obj_t *args)
+                                      obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -835,7 +835,7 @@ static void builtin_method_iep_8_args(obj_t method, struct thread *thread,
     push_linkage(thread, args);
 
     value = func(args[0], args[1], args[2], args[3],
-		 args[4], args[5], args[6], args[7]);
+                 args[4], args[5], args[6], args[7]);
 
     old_sp = pop_linkage(thread);
     *old_sp = value;
@@ -845,7 +845,7 @@ static void builtin_method_iep_8_args(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_9_args(obj_t method, struct thread *thread,
-				      obj_t *args)
+                                      obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -854,7 +854,7 @@ static void builtin_method_iep_9_args(obj_t method, struct thread *thread,
     push_linkage(thread, args);
 
     value = func(args[0], args[1], args[2], args[3], args[4],
-		 args[5], args[6], args[7], args[8]);
+                 args[5], args[6], args[7], args[8]);
 
     old_sp = pop_linkage(thread);
     *old_sp = value;
@@ -864,7 +864,7 @@ static void builtin_method_iep_9_args(obj_t method, struct thread *thread,
 }
 
 static void builtin_method_iep_10_args(obj_t method, struct thread *thread,
-				       obj_t *args)
+                                       obj_t *args)
 {
     obj_t (*func)() = BUILTIN_METHOD(method)->func;
     obj_t *old_sp;
@@ -873,7 +873,7 @@ static void builtin_method_iep_10_args(obj_t method, struct thread *thread,
     push_linkage(thread, args);
 
     value = func(args[0], args[1], args[2], args[3], args[4],
-		 args[5], args[6], args[7], args[8], args[9]);
+                 args[5], args[6], args[7], args[8], args[9]);
 
     old_sp = pop_linkage(thread);
     *old_sp = value;
@@ -899,21 +899,21 @@ static void (*builtin_method_ieps[])(obj_t m, struct thread *t, obj_t *a) = {
 #define MAX_BUILTIN_METHOD_ARGS (sizeof(builtin_method_ieps)/sizeof(builtin_method_ieps[0]))
 
 obj_t make_builtin_method(char *debug_name, obj_t specializers,
-			  boolean restp, obj_t keywords, boolean all_keys,
-			  obj_t result_type, obj_t (*func)())
+                          boolean restp, obj_t keywords, boolean all_keys,
+                          obj_t result_type, obj_t (*func)())
 {
     obj_t res = alloc(obj_BuiltinMethodClass, sizeof(struct builtin_method));
     int req_args = length(specializers);
     int num_args = req_args + 1; /* Add one for the next methods */
 
     if (restp)
-	num_args++;
+        num_args++;
     if (keywords != obj_False)
-	num_args += length(keywords);
+        num_args += length(keywords);
 
     if (num_args >= MAX_BUILTIN_METHOD_ARGS)
-	lose("Can't make a builtin method that wants %d args -- %d at most.",
-	     num_args, MAX_BUILTIN_METHOD_ARGS-1);
+        lose("Can't make a builtin method that wants %d args -- %d at most.",
+             num_args, MAX_BUILTIN_METHOD_ARGS-1);
 
     BUILTIN_METHOD(res)->xep = method_xep;
     BUILTIN_METHOD(res)->debug_name = symbol(debug_name);
@@ -948,7 +948,7 @@ struct byte_method {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
-    obj_t class_cache;			/* #F or a gf_cache */
+    obj_t class_cache;                        /* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
     obj_t component;
     int n_closure_vars;
@@ -970,7 +970,7 @@ static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
     /* push the closure vars */
     count = BYTE_METHOD(method)->n_closure_vars;
     for (i = 0; i < count; i++)
-	*thread->sp++ = BYTE_METHOD(method)->lexenv[i];
+        *thread->sp++ = BYTE_METHOD(method)->lexenv[i];
 
     fp = push_linkage(thread, args);
     set_byte_continuation(thread, BYTE_METHOD(method)->component);
@@ -980,7 +980,7 @@ static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
 }
 
 obj_t make_method_info(boolean restp, obj_t keys, boolean all_keys,
-		       obj_t component, int n_closure_vars)
+                       obj_t component, int n_closure_vars)
 {
     obj_t res = alloc(obj_MethodInfoClass, sizeof(struct method_info));
 
@@ -994,17 +994,16 @@ obj_t make_method_info(boolean restp, obj_t keys, boolean all_keys,
 }
 
 obj_t make_byte_method(obj_t method_info, obj_t specializers,
-		       obj_t result_types, obj_t more_results_type,
-		       obj_t *lexenv)
-		       
+                       obj_t result_types, obj_t more_results_type,
+                       obj_t *lexenv)
 {
     int n_closure_vars = METHOD_INFO(method_info)->n_closure_vars;
     obj_t res = alloc(obj_ByteMethodClass,
-		      sizeof(struct byte_method) + sizeof(obj_t)*(n_closure_vars - 1));
+                      sizeof(struct byte_method) + sizeof(obj_t)*(n_closure_vars - 1));
     obj_t component = METHOD_INFO(method_info)->component;
     int i;
 
-    ASSERT_VALID_OBJ(method_info); /* yeah, I know we already used it... */     
+    ASSERT_VALID_OBJ(method_info); /* yeah, I know we already used it... */
 
     BYTE_METHOD(res)->xep = method_xep;
     BYTE_METHOD(res)->debug_name = COMPONENT(component)->debug_name;
@@ -1015,10 +1014,10 @@ obj_t make_byte_method(obj_t method_info, obj_t specializers,
     ASSERT_VALID_OBJ(result_types);
     BYTE_METHOD(res)->result_types = result_types;
     if (more_results_type == obj_True)
-	BYTE_METHOD(res)->more_results_type = obj_ObjectClass;
+        BYTE_METHOD(res)->more_results_type = obj_ObjectClass;
     else {
-	ASSERT_VALID_OBJ(more_results_type);
-	BYTE_METHOD(res)->more_results_type = more_results_type;
+        ASSERT_VALID_OBJ(more_results_type);
+        BYTE_METHOD(res)->more_results_type = more_results_type;
     }
     ASSERT_VALID_OBJ(specializers);
     BYTE_METHOD(res)->specializers = specializers;
@@ -1027,8 +1026,8 @@ obj_t make_byte_method(obj_t method_info, obj_t specializers,
     BYTE_METHOD(res)->component = component;
     BYTE_METHOD(res)->n_closure_vars = n_closure_vars;
     for (i = 0; i < n_closure_vars; i++) {
-	ASSERT_VALID_OBJ(res);
-	BYTE_METHOD(res)->lexenv[i] = lexenv[i];
+        ASSERT_VALID_OBJ(res);
+        BYTE_METHOD(res)->lexenv[i] = lexenv[i];
     }
     return res;
 }
@@ -1047,7 +1046,7 @@ struct accessor_method {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
-    obj_t class_cache;			/* #F or a gf_cache */
+    obj_t class_cache;                        /* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
     obj_t datum;
 };
@@ -1055,9 +1054,9 @@ struct accessor_method {
 #define ACCESSOR_METHOD(o) obj_ptr(struct accessor_method *, o)
 
 obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
-			   boolean setter, obj_t datum,
-			   void (*iep)(obj_t self, struct thread *thread,
-				    obj_t *args))
+                           boolean setter, obj_t datum,
+                           void (*iep)(obj_t self, struct thread *thread,
+                                    obj_t *args))
 {
     obj_t res = alloc(obj_AccessorMethodClass, sizeof(struct accessor_method));
 
@@ -1072,7 +1071,7 @@ obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
     ACCESSOR_METHOD(res)->result_types = list1(type);
     ACCESSOR_METHOD(res)->more_results_type = obj_False;
     ACCESSOR_METHOD(res)->specializers
-	= setter ? list2(type, class) : list1(class);
+        = setter ? list2(type, class) : list1(class);
     ACCESSOR_METHOD(res)->class_cache = obj_False;
     ACCESSOR_METHOD(res)->iep = iep;
     ASSERT_VALID_OBJ(datum);
@@ -1105,7 +1104,7 @@ struct c_function {
     obj_t result_types;
     obj_t more_results_type;
     obj_t specializers;
-    obj_t class_cache;			/* #F or a gf_cache */
+    obj_t class_cache;                        /* #F or a gf_cache */
     void (*iep)(obj_t self, struct thread *thread, obj_t *args);
     void *pointer;
 };
@@ -1126,62 +1125,62 @@ static void c_function_xep(struct thread *thread, int nargs)
 
     switch (nargs) {
     case 0:
-	result = fun();
-	break;
+        result = fun();
+        break;
     case 1:
-	result = fun(get_c_object(args[0]));
-	break;
+        result = fun(get_c_object(args[0]));
+        break;
     case 2:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]));
+        break;
     case 3:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]),
-		     get_c_object(args[2]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]),
+                     get_c_object(args[2]));
+        break;
     case 4:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]),
-		     get_c_object(args[2]), get_c_object(args[3]),
-		     get_c_object(args[4]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]),
+                     get_c_object(args[2]), get_c_object(args[3]),
+                     get_c_object(args[4]));
+        break;
     case 5:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]),
-		     get_c_object(args[2]), get_c_object(args[3]),
-		     get_c_object(args[4]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]),
+                     get_c_object(args[2]), get_c_object(args[3]),
+                     get_c_object(args[4]));
+        break;
     case 6:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]),
-		     get_c_object(args[2]), get_c_object(args[3]),
-		     get_c_object(args[4]), get_c_object(args[5]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]),
+                     get_c_object(args[2]), get_c_object(args[3]),
+                     get_c_object(args[4]), get_c_object(args[5]));
+        break;
     case 7:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]),
-		     get_c_object(args[2]), get_c_object(args[3]),
-		     get_c_object(args[4]), get_c_object(args[5]),
-		     get_c_object(args[6]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]),
+                     get_c_object(args[2]), get_c_object(args[3]),
+                     get_c_object(args[4]), get_c_object(args[5]),
+                     get_c_object(args[6]));
+        break;
     case 8:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]),
-		     get_c_object(args[2]), get_c_object(args[3]),
-		     get_c_object(args[4]), get_c_object(args[5]),
-		     get_c_object(args[6]), get_c_object(args[7]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]),
+                     get_c_object(args[2]), get_c_object(args[3]),
+                     get_c_object(args[4]), get_c_object(args[5]),
+                     get_c_object(args[6]), get_c_object(args[7]));
+        break;
     case 9:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]),
-		     get_c_object(args[2]), get_c_object(args[3]),
-		     get_c_object(args[4]), get_c_object(args[5]),
-		     get_c_object(args[6]), get_c_object(args[7]),
-		     get_c_object(args[8]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]),
+                     get_c_object(args[2]), get_c_object(args[3]),
+                     get_c_object(args[4]), get_c_object(args[5]),
+                     get_c_object(args[6]), get_c_object(args[7]),
+                     get_c_object(args[8]));
+        break;
     case 10:
-	result = fun(get_c_object(args[0]), get_c_object(args[1]),
-		     get_c_object(args[2]), get_c_object(args[3]),
-		     get_c_object(args[4]), get_c_object(args[5]),
-		     get_c_object(args[6]), get_c_object(args[7]),
-		     get_c_object(args[8]), get_c_object(args[9]));
-	break;
+        result = fun(get_c_object(args[0]), get_c_object(args[1]),
+                     get_c_object(args[2]), get_c_object(args[3]),
+                     get_c_object(args[4]), get_c_object(args[5]),
+                     get_c_object(args[6]), get_c_object(args[7]),
+                     get_c_object(args[8]), get_c_object(args[9]));
+        break;
     default:
-	result = 0;		/* make compiler happy */
-	lose("Can't call a c function with more than 10 args");
+        result = 0;                /* make compiler happy */
+        lose("Can't call a c function with more than 10 args");
     }
 
     value = convert_c_object(res_type, (void *)result, TRUE);
@@ -1215,9 +1214,9 @@ obj_t make_c_function(obj_t debug_name, void *pointer)
 }
 
 obj_t constrain_c_function(obj_t /* <c-function> */ res,
-			   obj_t /* <list> */ specializers,
-			   obj_t restp,
-			   obj_t /* <list> */ result_types)
+                           obj_t /* <list> */ specializers,
+                           obj_t restp,
+                           obj_t /* <list> */ result_types)
 {
     C_FUNCTION(res)->required_args = length(specializers);
     C_FUNCTION(res)->restp = (restp != obj_False);
@@ -1226,7 +1225,7 @@ obj_t constrain_c_function(obj_t /* <c-function> */ res,
 
     return res;
 }
-    
+
 
 /* Generic functions. */
 
@@ -1258,63 +1257,63 @@ static obj_t
     obj_t cache_elem = make_gf_cache(max, obj_False);
     obj_t *cache = obj_ptr(struct gf_cache *, cache_elem)->cached_classes;
     obj_t *arg = args;
-    
+
     for (i = 0; i < max; i++, arg++, cache++)
-	*cache = object_class(*arg);
+        *cache = object_class(*arg);
 
     while (methods != obj_Nil) {
-	obj_t method = HEAD(methods);
+        obj_t method = HEAD(methods);
 
-	if (gfd_applicable_method_p(method, args, cache_elem)) {
-	    for (prev=&ordered; (scan=*prev) != obj_Nil; prev=&TAIL(scan)) {
-		switch (compare_methods(method, HEAD(scan), args)) {
-		  case method_MoreSpecific:
-		    *prev = pair(method, scan);
-		    goto next;
-		  case method_LessSpecific:
-		    break;
-		  case method_Ambiguous:
-		    *prev = obj_Nil;
-		    ambiguous = list2(method, HEAD(scan));
-		    goto next;
-		  case method_Identical:
-		    lose("Two identical methods in the same "
-			 "generic function?");
-		}
-	    }
-	    {
-		obj_t new_ambiguous = obj_Nil;
-		boolean more_specific = TRUE;
+        if (gfd_applicable_method_p(method, args, cache_elem)) {
+            for (prev=&ordered; (scan=*prev) != obj_Nil; prev=&TAIL(scan)) {
+                switch (compare_methods(method, HEAD(scan), args)) {
+                  case method_MoreSpecific:
+                    *prev = pair(method, scan);
+                    goto next;
+                  case method_LessSpecific:
+                    break;
+                  case method_Ambiguous:
+                    *prev = obj_Nil;
+                    ambiguous = list2(method, HEAD(scan));
+                    goto next;
+                  case method_Identical:
+                    lose("Two identical methods in the same "
+                         "generic function?");
+                }
+            }
+            {
+                obj_t new_ambiguous = obj_Nil;
+                boolean more_specific = TRUE;
 
-		for (scan = ambiguous; scan != obj_Nil; scan = TAIL(scan)) {
-		    switch (compare_methods(method, HEAD(scan), args)) {
-		      case method_MoreSpecific:
-			break;
-		      case method_Ambiguous:
-			new_ambiguous = pair(HEAD(scan), new_ambiguous);
-			break;
-		      case method_LessSpecific:
-			more_specific = FALSE;
-			break;
-		      case method_Identical:
-			lose("Two identical methods in the same "
-			     "generic function?");
-		    }
-		}
-		if (new_ambiguous != obj_Nil)
-		    ambiguous = new_ambiguous;
-		else if (more_specific)
-		    *prev = list1(method);
-	    }
-	}
+                for (scan = ambiguous; scan != obj_Nil; scan = TAIL(scan)) {
+                    switch (compare_methods(method, HEAD(scan), args)) {
+                      case method_MoreSpecific:
+                        break;
+                      case method_Ambiguous:
+                        new_ambiguous = pair(HEAD(scan), new_ambiguous);
+                        break;
+                      case method_LessSpecific:
+                        more_specific = FALSE;
+                        break;
+                      case method_Identical:
+                        lose("Two identical methods in the same "
+                             "generic function?");
+                    }
+                }
+                if (new_ambiguous != obj_Nil)
+                    ambiguous = new_ambiguous;
+                else if (more_specific)
+                    *prev = list1(method);
+            }
+        }
       next:
-	methods = TAIL(methods);
+        methods = TAIL(methods);
     }
 
     if (ambiguous != obj_Nil) {
-	for (prev = &ordered; (scan = *prev) != obj_Nil; prev = &TAIL(scan))
-	    ;
-	*prev = pair(obj_False, ambiguous);
+        for (prev = &ordered; (scan = *prev) != obj_Nil; prev = &TAIL(scan))
+            ;
+        *prev = pair(obj_False, ambiguous);
     }
 
     obj_ptr(struct gf_cache *, cache_elem)->cached_result = ordered;
@@ -1328,36 +1327,36 @@ static obj_t sorted_applicable_methods(obj_t gf, obj_t *args)
     obj_t *prev, cache;
     obj_t methods = true_gf->methods;
     int max = true_gf->required_args;
-	
+
     /* If there are no methods, then nothing is applicable. */
     if (methods == obj_Nil)
-	return obj_Nil;
+        return obj_Nil;
 
     for (prev = &true_gf->cache, cache = *prev;
-	 cache != obj_Nil; prev = &TAIL(cache), cache = *prev) {
-	struct gf_cache *cache_elem = obj_ptr(struct gf_cache *, HEAD(cache));
-	register boolean simple = cache_elem->simple;
-	obj_t *cache_class = cache_elem->cached_classes;
-	obj_t *arg = args;
-	int i;
-	boolean found = TRUE;
+         cache != obj_Nil; prev = &TAIL(cache), cache = *prev) {
+        struct gf_cache *cache_elem = obj_ptr(struct gf_cache *, HEAD(cache));
+        register boolean simple = cache_elem->simple;
+        obj_t *cache_class = cache_elem->cached_classes;
+        obj_t *arg = args;
+        int i;
+        boolean found = TRUE;
 
-	for (i = 0; i < max; i++, arg++, cache_class++) {
-	    boolean simple_arg = simple ||
-		TYPE(*cache_class)->type_id == id_Class;
-	    if (simple_arg ? *cache_class != object_class(*arg)
-		           : !instancep(*arg, *cache_class)) {
-		found = FALSE;
-		break;
-	    }
-	}
+        for (i = 0; i < max; i++, arg++, cache_class++) {
+            boolean simple_arg = simple ||
+                TYPE(*cache_class)->type_id == id_Class;
+            if (simple_arg ? *cache_class != object_class(*arg)
+                           : !instancep(*arg, *cache_class)) {
+                found = FALSE;
+                break;
+            }
+        }
 
-	if (found) {
-	    *prev = TAIL(cache);
-	    TAIL(cache) = true_gf->cache;
-	    true_gf->cache = cache;
-	    return cache_elem->cached_result;
-	}
+        if (found) {
+            *prev = TAIL(cache);
+            TAIL(cache) = true_gf->cache;
+            true_gf->cache = cache;
+            return cache_elem->cached_result;
+        }
     }
 
     /* We have to do it the slow way */
@@ -1369,9 +1368,9 @@ static boolean methods_accept_keyword(obj_t methods, obj_t keyword)
     obj_t method;
 
     while (methods != obj_Nil && (method = HEAD(methods)) != obj_False) {
-	if (method_accepts_keyword(method, keyword))
-	    return TRUE;
-	methods = TAIL(methods);
+        if (method_accepts_keyword(method, keyword))
+            return TRUE;
+        methods = TAIL(methods);
     }
     return FALSE;
 }
@@ -1385,44 +1384,44 @@ static void gf_xep(struct thread *thread, int nargs)
     methods = sorted_applicable_methods(gf, args);
 
     if (methods != obj_Nil) {
-	if (GF(gf)->keywords != obj_False && !GF(gf)->all_keys) {
-	    obj_t *ptr = args + GF(gf)->required_args;
-	    while (ptr < thread->sp) {
-		if (!methods_accept_keyword(methods, *ptr)) {
-		    push_linkage(thread, args);
-		    error("The keyword %= is accepted by none of the "
-			  "applicable methods:\n  %=",
-			  *ptr, methods);
-		}
-		ptr += 2;
-	    }
-	}
-	primary_method = HEAD(methods);
-	args[-1] = primary_method;
-	invoke_methods(primary_method, TAIL(methods), thread, nargs);
+        if (GF(gf)->keywords != obj_False && !GF(gf)->all_keys) {
+            obj_t *ptr = args + GF(gf)->required_args;
+            while (ptr < thread->sp) {
+                if (!methods_accept_keyword(methods, *ptr)) {
+                    push_linkage(thread, args);
+                    error("The keyword %= is accepted by none of the "
+                          "applicable methods:\n  %=",
+                          *ptr, methods);
+                }
+                ptr += 2;
+            }
+        }
+        primary_method = HEAD(methods);
+        args[-1] = primary_method;
+        invoke_methods(primary_method, TAIL(methods), thread, nargs);
     }
     else {
-	push_linkage(thread, args);
-	if (strcmp(sym_name(function_debug_name_or_self(gf)), "main") == 0) {
-	    error("No applicable methods for #\"main\" with arguments %=.\n"
-		  "\nYou need to define a method on the generic function\n"
-		  "Main with the specializers (<string>, #rest strings).\n"
-		  "The generic function Main is exported from the\n"
-		  "Extensions module; perhaps you forgot to import the\n"
-		  "Extensions module into the module that defines the\n"
-		  "method on Main?",
-	      make_vector(nargs, args));
-	} else {
-	    error("No applicable methods for %= with arguments %=",
-		  function_debug_name_or_self(gf),
-		  make_vector(nargs, args));
-	}
+        push_linkage(thread, args);
+        if (strcmp(sym_name(function_debug_name_or_self(gf)), "main") == 0) {
+            error("No applicable methods for #\"main\" with arguments %=.\n"
+                  "\nYou need to define a method on the generic function\n"
+                  "Main with the specializers (<string>, #rest strings).\n"
+                  "The generic function Main is exported from the\n"
+                  "Extensions module; perhaps you forgot to import the\n"
+                  "Extensions module into the module that defines the\n"
+                  "method on Main?",
+              make_vector(nargs, args));
+        } else {
+            error("No applicable methods for %= with arguments %=",
+                  function_debug_name_or_self(gf),
+                  make_vector(nargs, args));
+        }
     }
 }
 
 obj_t make_generic_function(obj_t debug_name, obj_t specializers,
-			    boolean restp, obj_t keywords, boolean all_keys,
-			    obj_t result_types, obj_t more_results_type)
+                            boolean restp, obj_t keywords, boolean all_keys,
+                            obj_t result_types, obj_t more_results_type)
 {
     obj_t res = alloc(obj_GFClass, sizeof(struct gf));
     int req_args = length(specializers);
@@ -1438,10 +1437,10 @@ obj_t make_generic_function(obj_t debug_name, obj_t specializers,
     ASSERT_VALID_OBJ(result_types);
     GF(res)->result_types = result_types;
     if (more_results_type == obj_True)
-	GF(res)->more_results_type = obj_ObjectClass;
+        GF(res)->more_results_type = obj_ObjectClass;
     else {
-	ASSERT_VALID_OBJ(more_results_type);
-	GF(res)->more_results_type = more_results_type;
+        ASSERT_VALID_OBJ(more_results_type);
+        GF(res)->more_results_type = more_results_type;
     }
     ASSERT_VALID_OBJ(specializers);
     GF(res)->specializers = specializers;
@@ -1458,7 +1457,7 @@ static obj_t make_nondescript_specializers (int required_args)
     int i;
 
     for (i=0; i<required_args; i++)
-	specializers = pair(obj_ObjectClass, specializers);
+        specializers = pair(obj_ObjectClass, specializers);
 
     return specializers;
 }
@@ -1472,17 +1471,17 @@ obj_t make_default_generic_function(obj_t debug_name, obj_t method)
     obj_t specializers = make_nondescript_specializers(req_args);
 
     if (keywords != obj_False)
-	keywords = obj_Nil;
+        keywords = obj_Nil;
 
     ASSERT_VALID_OBJ(method);
 
     return make_generic_function(debug_name, specializers, restp, keywords,
-				 all_keys, obj_Nil, obj_ObjectClass);
+                                 all_keys, obj_Nil, obj_ObjectClass);
 }
 
 void set_gf_signature(obj_t gf, obj_t specializers, boolean restp, obj_t keys,
-		      boolean all_keys, obj_t result_types,
-		      obj_t more_results_type)
+                      boolean all_keys, obj_t result_types,
+                      obj_t more_results_type)
 {
     obj_t methods = GF(gf)->methods;
 
@@ -1492,15 +1491,15 @@ void set_gf_signature(obj_t gf, obj_t specializers, boolean restp, obj_t keys,
     GF(gf)->all_keys = all_keys;
     GF(gf)->result_types = result_types;
     if (more_results_type == obj_True)
-	GF(gf)->more_results_type = obj_ObjectClass;
+        GF(gf)->more_results_type = obj_ObjectClass;
     else
-	GF(gf)->more_results_type = more_results_type;
+        GF(gf)->more_results_type = more_results_type;
     GF(gf)->specializers = specializers;
     GF(gf)->methods = obj_Nil;
 
     while (methods != obj_Nil) {
-	add_method(gf, HEAD(methods));
-	methods = TAIL(methods);
+        add_method(gf, HEAD(methods));
+        methods = TAIL(methods);
     }
 }
 
@@ -1514,8 +1513,8 @@ obj_t generic_function_methods_clock(obj_t gf)
     obj_t clock = GF(gf)->methods_clock;
 
     if (clock == obj_False) {
-	clock = list1(obj_False);
-	GF(gf)->methods_clock = clock;
+        clock = list1(obj_False);
+        GF(gf)->methods_clock = clock;
     }
 
     return clock;
@@ -1531,13 +1530,13 @@ static obj_t really_add_method(obj_t gf, obj_t method)
     GF(gf)->methods_clock = obj_False;
 
     for (scan = methods; scan != obj_Nil; scan = TAIL(scan)) {
-	obj_t old = HEAD(scan);
-	if (same_specializers(METHOD(old)->specializers, specializers)) {
-	    HEAD(scan) = method;
-	    return old;
-	}
+        obj_t old = HEAD(scan);
+        if (same_specializers(METHOD(old)->specializers, specializers)) {
+            HEAD(scan) = method;
+            return old;
+        }
     }
-    
+
     GF(gf)->methods = pair(method, methods);
     return obj_False;
 }
@@ -1550,61 +1549,61 @@ obj_t add_method(obj_t gf, obj_t method)
     boolean warned_about_method = FALSE;
 
     if (GF(gf)->required_args != METHOD(method)->required_args)
-	error("%= has %d required arguments, but %= has %d",
-	      method, make_fixnum(METHOD(method)->required_args),
-	      gf, make_fixnum(GF(gf)->required_args));
+        error("%= has %d required arguments, but %= has %d",
+              method, make_fixnum(METHOD(method)->required_args),
+              gf, make_fixnum(GF(gf)->required_args));
 
     gfkeys = GF(gf)->keywords;
     if (gfkeys != obj_False) {
-	/* The generic function takes keyword arguments. */
-	obj_t methkeys = METHOD(method)->keywords;
+        /* The generic function takes keyword arguments. */
+        obj_t methkeys = METHOD(method)->keywords;
 
-	if (methkeys == obj_False)
-	    error("%= allows keyword arguments, but %= does not.", gf, method);
-	while (gfkeys != obj_Nil) {
-	    obj_t gfkey = HEAD(gfkeys);
-	    obj_t scan;
+        if (methkeys == obj_False)
+            error("%= allows keyword arguments, but %= does not.", gf, method);
+        while (gfkeys != obj_Nil) {
+            obj_t gfkey = HEAD(gfkeys);
+            obj_t scan;
 
-	    for (scan = methkeys; scan != obj_Nil; scan = TAIL(scan))
-		if (HEAD(HEAD(scan)) == gfkey)
-		    goto okay;
-	    error("The keyword %= is mandatory for %=, "
-		  "but %= doesn't accept it.",
-		  gfkey, gf, method);
-	  okay:
-	    gfkeys = TAIL(gfkeys);
-	}
+            for (scan = methkeys; scan != obj_Nil; scan = TAIL(scan))
+                if (HEAD(HEAD(scan)) == gfkey)
+                    goto okay;
+            error("The keyword %= is mandatory for %=, "
+                  "but %= doesn't accept it.",
+                  gfkey, gf, method);
+          okay:
+            gfkeys = TAIL(gfkeys);
+        }
 
-	if (METHOD(method)->all_keys && !GF(gf)->all_keys)
-	    error("%= accepts all keys, but %= does not.", method, gf);
+        if (METHOD(method)->all_keys && !GF(gf)->all_keys)
+            error("%= accepts all keys, but %= does not.", method, gf);
     }
     else if (METHOD(method)->keywords != obj_False)
-	error("%= allows keyword arguments, but %= does not.", method, gf);
+        error("%= allows keyword arguments, but %= does not.", method, gf);
     else if (GF(gf)->restp) {
-	if (!METHOD(method)->restp)
-	    error("%= accepts a variable number of arguments, "
-		  "but %= does not.",
-		  gf, method);
+        if (!METHOD(method)->restp)
+            error("%= accepts a variable number of arguments, "
+                  "but %= does not.",
+                  gf, method);
     }
     else if (METHOD(method)->restp)
-	error("%= accepts a variable number of arguments, but %= does not.",
-	      method, gf);
+        error("%= accepts a variable number of arguments, but %= does not.",
+              method, gf);
 
     /* Check method specializers against GF */
     gfscan = GF(gf)->specializers;
     methscan = METHOD(method)->specializers;
     i = 1;
     while (gfscan != obj_Nil && methscan != obj_Nil) {
-	obj_t gftype = HEAD(gfscan);
-	obj_t methtype = HEAD(methscan);
+        obj_t gftype = HEAD(gfscan);
+        obj_t methtype = HEAD(methscan);
 
-	if (!subtypep(methtype, gftype))
-	    error("Specializer %= is %= for %=, but %= for %=",
-		  make_fixnum(i), gftype, gf, methtype, method);
+        if (!subtypep(methtype, gftype))
+            error("Specializer %= is %= for %=, but %= for %=",
+                  make_fixnum(i), gftype, gf, methtype, method);
 
-	gfscan = TAIL(gfscan);
-	methscan = TAIL(methscan);
-	i++;
+        gfscan = TAIL(gfscan);
+        methscan = TAIL(methscan);
+        i++;
     }
 
     /* Check method return types against GF */
@@ -1612,89 +1611,89 @@ obj_t add_method(obj_t gf, obj_t method)
     methscan = METHOD(method)->result_types;
     i = 1;
     while (gfscan != obj_Nil && methscan != obj_Nil) {
-	obj_t gftype = HEAD(gfscan);
-	obj_t methtype = HEAD(methscan);
+        obj_t gftype = HEAD(gfscan);
+        obj_t methtype = HEAD(methscan);
 
-	if (!subtypep(methtype, gftype))
-	    error("Result %= is %= for %=, but %= for %=",
-		  make_fixnum(i), gftype, gf, methtype, method);
+        if (!subtypep(methtype, gftype))
+            error("Result %= is %= for %=, but %= for %=",
+                  make_fixnum(i), gftype, gf, methtype, method);
 
-	gfscan = TAIL(gfscan);
-	methscan = TAIL(methscan);
-	i++;
+        gfscan = TAIL(gfscan);
+        methscan = TAIL(methscan);
+        i++;
     }
     i--;   /* Since the counter increments even on the last loop, undo that */
 
     if (gfscan != obj_Nil) {
-	int gf_returns = i;
-	while (gfscan != obj_Nil) {
-	    gf_returns++;
-	    gfscan = TAIL(gfscan);
-	}
-	if (METHOD(method)->more_results_type == obj_ObjectClass
-	    && METHOD(method)->result_types == obj_Nil) {
-	    warned_about_method = TRUE;
-	    format("WARNING: %= returns #rest <object>, but %= returns %=.\n",
-		   method, gf, GF(gf)->result_types);
-	} else if (GF(gf)->more_results_type != obj_False) {
-	    error("%= returns at least %d results, but %= only returns %d",
-		  gf, make_fixnum(gf_returns), method, make_fixnum(i));
-	} else {
-	    error("%= returns exactly %d results, but %= only returns %d",
-		  gf, make_fixnum(gf_returns), method, make_fixnum(i));
-	}
+        int gf_returns = i;
+        while (gfscan != obj_Nil) {
+            gf_returns++;
+            gfscan = TAIL(gfscan);
+        }
+        if (METHOD(method)->more_results_type == obj_ObjectClass
+            && METHOD(method)->result_types == obj_Nil) {
+            warned_about_method = TRUE;
+            format("WARNING: %= returns #rest <object>, but %= returns %=.\n",
+                   method, gf, GF(gf)->result_types);
+        } else if (GF(gf)->more_results_type != obj_False) {
+            error("%= returns at least %d results, but %= only returns %d",
+                  gf, make_fixnum(gf_returns), method, make_fixnum(i));
+        } else {
+            error("%= returns exactly %d results, but %= only returns %d",
+                  gf, make_fixnum(gf_returns), method, make_fixnum(i));
+        }
     }
     if (methscan != obj_Nil) {
-	obj_t gftype = GF(gf)->more_results_type;
+        obj_t gftype = GF(gf)->more_results_type;
 
-	if (gftype == obj_False) {
-	    int meth_returns = i;
-	    while (methscan != obj_Nil) {
-		methscan = TAIL(methscan);
-		meth_returns++;
-	    }
-	    if (METHOD(method)->more_results_type != obj_False) {
-		if (!warned_about_method) {
-		    warned_about_method = TRUE;
-		    error("%= returns exactly %d results, "
-			  "but %= returns %d or more",
-			  gf, make_fixnum(i), 
-			  method, make_fixnum(meth_returns));
-		}
-	    } else {
-		error("%= returns exactly %d results, but %= returns %d",
-		      gf, make_fixnum(i), method, make_fixnum(meth_returns));
-	    }
-	}
-	while (methscan != obj_Nil) {
-	    obj_t methtype = HEAD(methscan);
+        if (gftype == obj_False) {
+            int meth_returns = i;
+            while (methscan != obj_Nil) {
+                methscan = TAIL(methscan);
+                meth_returns++;
+            }
+            if (METHOD(method)->more_results_type != obj_False) {
+                if (!warned_about_method) {
+                    warned_about_method = TRUE;
+                    error("%= returns exactly %d results, "
+                          "but %= returns %d or more",
+                          gf, make_fixnum(i),
+                          method, make_fixnum(meth_returns));
+                }
+            } else {
+                error("%= returns exactly %d results, but %= returns %d",
+                      gf, make_fixnum(i), method, make_fixnum(meth_returns));
+            }
+        }
+        while (methscan != obj_Nil) {
+            obj_t methtype = HEAD(methscan);
 
-	    if (!subtypep(methtype, gftype))
-		error("Result %d is %= for %=, but %= for %=",
-		      make_fixnum(i), gftype, gf, methtype, method);
+            if (!subtypep(methtype, gftype))
+                error("Result %d is %= for %=, but %= for %=",
+                      make_fixnum(i), gftype, gf, methtype, method);
 
-	    methscan = TAIL(methscan);
-	    i++;
-	}
+            methscan = TAIL(methscan);
+            i++;
+        }
     }
 
     if (METHOD(method)->more_results_type != obj_False) {
-	if (GF(gf)->more_results_type != obj_False) {
-	    if (!subtypep(METHOD(method)->more_results_type,
-			  GF(gf)->more_results_type)) {
-		error("Results %d and on are instances of %= for %=, "
-		      "but are instances of %= for %=",
-		      make_fixnum(i), GF(gf)->more_results_type, gf,
-		      METHOD(method)->more_results_type, method);
-	    }
-	} else {
-	    if (!warned_about_method) {
-		warned_about_method = TRUE;
-		error("%= returns exactly %d results, "
-		      "but %= returns %d or more",
-		      gf, make_fixnum(i), method, make_fixnum(i));
-	    }
-	}
+        if (GF(gf)->more_results_type != obj_False) {
+            if (!subtypep(METHOD(method)->more_results_type,
+                          GF(gf)->more_results_type)) {
+                error("Results %d and on are instances of %= for %=, "
+                      "but are instances of %= for %=",
+                      make_fixnum(i), GF(gf)->more_results_type, gf,
+                      METHOD(method)->more_results_type, method);
+            }
+        } else {
+            if (!warned_about_method) {
+                warned_about_method = TRUE;
+                error("%= returns exactly %d results, "
+                      "but %= returns %d or more",
+                      gf, make_fixnum(i), method, make_fixnum(i));
+            }
+        }
     }
 
     return really_add_method(gf, method);
@@ -1704,14 +1703,14 @@ obj_t add_method(obj_t gf, obj_t method)
 /* Dylan interface functions. */
 
 static obj_t dylan_make_gf(obj_t debug_name, obj_t required,
-			   obj_t restp, obj_t keywords, obj_t all_keys,
-			   obj_t res_types, obj_t more_res_type)
+                           obj_t restp, obj_t keywords, obj_t all_keys,
+                           obj_t res_types, obj_t more_res_type)
 {
     obj_t specializers = make_nondescript_specializers(fixnum_value(required));
     return make_generic_function(debug_name, specializers,
-				 restp != obj_False, keywords,
-				 all_keys != obj_False, res_types,
-				 more_res_type);
+                                 restp != obj_False, keywords,
+                                 all_keys != obj_False, res_types,
+                                 more_res_type);
 }
 
 static void dylan_add_method(obj_t self, struct thread *thread, obj_t *args)
@@ -1729,7 +1728,7 @@ static void dylan_add_method(obj_t self, struct thread *thread, obj_t *args)
 }
 
 static void dylan_function_arguments(obj_t self, struct thread *thread,
-				     obj_t *args)
+                                     obj_t *args)
 {
     obj_t *vals = args-1;
     obj_t func = *args;
@@ -1738,16 +1737,16 @@ static void dylan_function_arguments(obj_t self, struct thread *thread,
     thread->sp = vals + 3;
     vals[0] = make_fixnum(FUNC(func)->required_args);
     if (FUNC(func)->restp && keywords == obj_False)
-	vals[1] = obj_True;
+        vals[1] = obj_True;
     else
-	vals[1] = obj_False;
+        vals[1] = obj_False;
     vals[2] = FUNC(func)->all_keys ? symbol("all") : keywords;
 
     do_return(thread, vals, vals);
 }
 
 static void dylan_method_arguments(obj_t self, struct thread *thread,
-				   obj_t *args)
+                                   obj_t *args)
 {
     obj_t *vals = args-1;
     obj_t meth = *args;
@@ -1756,34 +1755,34 @@ static void dylan_method_arguments(obj_t self, struct thread *thread,
     thread->sp = vals + 3;
     vals[0] = make_fixnum(METHOD(meth)->required_args);
     if (METHOD(meth)->restp && keywords == obj_False)
-	vals[1] = obj_True;
+        vals[1] = obj_True;
     else
-	vals[1] = obj_False;
+        vals[1] = obj_False;
     if (METHOD(meth)->all_keys)
-	vals[2] = symbol("all");
+        vals[2] = symbol("all");
     else if (keywords != obj_False) {
-	obj_t new = obj_Nil;
-	while (keywords != obj_Nil) {
-	    new = pair(HEAD(HEAD(keywords)), new);
-	    keywords = TAIL(keywords);
-	}
-	vals[2] = new;
+        obj_t new = obj_Nil;
+        while (keywords != obj_Nil) {
+            new = pair(HEAD(HEAD(keywords)), new);
+            keywords = TAIL(keywords);
+        }
+        vals[2] = new;
     }
     else
-	vals[2] = obj_False;
+        vals[2] = obj_False;
 
     do_return(thread, vals, vals);
 }
 
 static void dylan_function_return_values(obj_t self, struct thread *thread,
-					 obj_t *args)
+                                         obj_t *args)
 {
     obj_t *vals = args-1;
     obj_t func = *args;
 
     thread->sp = vals + 2;
     vals[0] = FUNC(func)->result_types;
-    vals[1] = FUNC(func)->more_results_type; 
+    vals[1] = FUNC(func)->more_results_type;
     do_return(thread, vals, vals);
 }
 
@@ -1792,21 +1791,21 @@ static obj_t dylan_sorted_app_meths(obj_t gf, obj_t args)
     int nargs = SOVEC(args)->length;
 
     if (nargs < GF(gf)->required_args)
-	return obj_Nil;
+        return obj_Nil;
     else
-	return sorted_applicable_methods(gf, SOVEC(args)->contents);
+        return sorted_applicable_methods(gf, SOVEC(args)->contents);
 }
 
 static obj_t dylan_app_meth_p(obj_t method, obj_t args)
 {
     int nargs = SOVEC(args)->length;
-    
+
     if (nargs < METHOD(method)->required_args)
-	return obj_False;
+        return obj_False;
     else if (applicable_method_p(method, SOVEC(args)->contents))
-	return obj_True;
+        return obj_True;
     else
-	return obj_False;
+        return obj_False;
 }
 
 static obj_t dylan_find_method(obj_t gf, obj_t specializers)
@@ -1814,12 +1813,12 @@ static obj_t dylan_find_method(obj_t gf, obj_t specializers)
     obj_t scan;
 
     for (scan = specializers; scan != obj_Nil; scan = TAIL(scan))
-	check_type(HEAD(scan), obj_TypeClass);
+        check_type(HEAD(scan), obj_TypeClass);
 
     for (scan = GF(gf)->methods; scan != obj_Nil; scan = TAIL(scan)) {
-	obj_t method = HEAD(scan);
-	if (same_specializers(METHOD(method)->specializers, specializers))
-	    return method;
+        obj_t method = HEAD(scan);
+        if (same_specializers(METHOD(method)->specializers, specializers))
+            return method;
     }
 
     return obj_False;
@@ -1834,18 +1833,18 @@ static obj_t dylan_remove_method(obj_t gf, obj_t method)
 
     prev = &GF(gf)->methods;
     while ((scan = *prev) != obj_Nil) {
-	if (method == HEAD(scan)) {
-	    *prev = TAIL(scan);
-	    return method;
-	}
-	prev = &TAIL(scan);
+        if (method == HEAD(scan)) {
+            *prev = TAIL(scan);
+            return method;
+        }
+        prev = &TAIL(scan);
     }
     error("%= isn't one of the methods in %=", method, gf);
     return NULL;
 }
 
 static void dylan_do_next_method(obj_t self, struct thread *thread,
-				 obj_t *args)
+                                 obj_t *args)
 {
     obj_t methods = args[0];
     obj_t new_args = args[1];
@@ -1853,7 +1852,7 @@ static void dylan_do_next_method(obj_t self, struct thread *thread,
     int i;
 
     for (i = 0; i < len; i++)
-	args[i] = SOVEC(new_args)->contents[i];
+        args[i] = SOVEC(new_args)->contents[i];
     thread->sp = args + len;
 
     invoke_methods(HEAD(methods), TAIL(methods), thread, len);
@@ -1870,17 +1869,17 @@ static void print_func(obj_t func)
     char *class_str;
 
     if (class_name != NULL && class_name != obj_False)
-	class_str = sym_name(class_name);
+        class_str = sym_name(class_name);
     else
-	class_str = "unknown function";
+        class_str = "unknown function";
 
     if (debug_name != NULL && debug_name != obj_False) {
-	printf("{%s ", class_str);
-	prin1(debug_name);
-	putchar('}');
+        printf("{%s ", class_str);
+        prin1(debug_name);
+        putchar('}');
     }
     else
-	printf("{anonymous %s 0x%08lx}", class_str, (unsigned long)func);
+        printf("{anonymous %s 0x%08lx}", class_str, (unsigned long)func);
 }
 
 static void print_method(obj_t method)
@@ -1891,22 +1890,22 @@ static void print_method(obj_t method)
     char *class_str;
 
     if (class_name != NULL && class_name != obj_False)
-	class_str = sym_name(class_name);
+        class_str = sym_name(class_name);
     else
-	class_str = "unknown function";
+        class_str = "unknown function";
 
     if (debug_name != NULL && debug_name != obj_False) {
-	printf("{%s ", class_str);
-	prin1(debug_name);
-	putchar(' ');
+        printf("{%s ", class_str);
+        prin1(debug_name);
+        putchar(' ');
     }
     else
-	printf("{anonymous %s 0x%08lx ", class_str, (unsigned long)method);
+        printf("{anonymous %s 0x%08lx ", class_str, (unsigned long)method);
 
 
     prin1(METHOD(method)->specializers);
     putchar('}');
-}    
+}
 
 
 /* GC stuff. */
@@ -1939,7 +1938,7 @@ static int scav_raw_method(struct object *ptr)
 
     return sizeof(struct method);
 }
-    
+
 static obj_t trans_raw_method(obj_t method)
 {
     return transport(method, sizeof(struct method), FALSE);
@@ -1952,7 +1951,7 @@ static int scav_builtin_method(struct object *ptr)
 
     return sizeof(struct builtin_method);
 }
-    
+
 static obj_t trans_builtin_method(obj_t method)
 {
     return transport(method, sizeof(struct builtin_method), FALSE);
@@ -1968,10 +1967,10 @@ static int scav_byte_method(struct object *ptr)
     scavenge(&method->component);
 
     for (i = 0; i < method->n_closure_vars; i++)
-	scavenge(method->lexenv + i);
+        scavenge(method->lexenv + i);
 
-    return sizeof(struct byte_method) 
-	+ sizeof(obj_t)*(method->n_closure_vars - 1);
+    return sizeof(struct byte_method)
+        + sizeof(obj_t)*(method->n_closure_vars - 1);
 }
 
 static obj_t trans_byte_method(obj_t method)
@@ -1979,8 +1978,8 @@ static obj_t trans_byte_method(obj_t method)
     int nvars = BYTE_METHOD(method)->n_closure_vars;
 
     return transport(method,
-		     sizeof(struct byte_method) + sizeof(obj_t)*(nvars - 1),
-		     FALSE);
+                     sizeof(struct byte_method) + sizeof(obj_t)*(nvars - 1),
+                     FALSE);
 }
 
 static int scav_method_info(struct object *ptr)
@@ -2008,7 +2007,7 @@ static int scav_accessor_method(struct object *ptr)
 
     return sizeof(struct accessor_method);
 }
-    
+
 static obj_t trans_accessor_method(obj_t method)
 {
     return transport(method, sizeof(struct accessor_method), FALSE);
@@ -2020,7 +2019,7 @@ static int scav_c_function(struct object *ptr)
 
     return sizeof(struct c_function);
 }
-    
+
 static obj_t trans_c_function(obj_t method)
 {
     return transport(method, sizeof(struct c_function), FALSE);
@@ -2050,18 +2049,18 @@ static int scav_gf_cache(struct object *ptr)
 
     scavenge(&gf_cache->cached_result);
     for (i = 0; i < max; i++)
-	scavenge(&gf_cache->cached_classes[i]);
+        scavenge(&gf_cache->cached_classes[i]);
 
     return sizeof(struct gf_cache) + sizeof(obj_t)*(max - 1);
 }
 
 static obj_t trans_gf_cache(obj_t gf_cache)
 {
-    return transport(gf_cache, 
-		     (sizeof(struct gf_cache) 
-		      + sizeof(obj_t) 
-		        * (obj_ptr(struct gf_cache *, gf_cache)->size - 1)),
-		     FALSE);
+    return transport(gf_cache,
+                     (sizeof(struct gf_cache)
+                      + sizeof(obj_t)
+                        * (obj_ptr(struct gf_cache *, gf_cache)->size - 1)),
+                     FALSE);
 }
 
 
@@ -2073,17 +2072,17 @@ void make_func_classes(void)
     obj_RawFunctionClass = make_builtin_class(scav_raw_func, trans_raw_func);
     obj_MethodClass = make_abstract_class(TRUE);
     obj_RawMethodClass
-	= make_builtin_class(scav_raw_method, trans_raw_method);
+        = make_builtin_class(scav_raw_method, trans_raw_method);
     obj_BuiltinMethodClass
-	= make_builtin_class(scav_builtin_method, trans_builtin_method);
+        = make_builtin_class(scav_builtin_method, trans_builtin_method);
     obj_ByteMethodClass
-	= make_builtin_class(scav_byte_method, trans_byte_method);
+        = make_builtin_class(scav_byte_method, trans_byte_method);
     obj_AccessorMethodClass
-	= make_builtin_class(scav_accessor_method, trans_accessor_method);
+        = make_builtin_class(scav_accessor_method, trans_accessor_method);
     obj_CFunctionClass
-	= make_builtin_class(scav_c_function, trans_c_function);
+        = make_builtin_class(scav_c_function, trans_c_function);
     obj_MethodInfoClass
-	= make_builtin_class(scav_method_info, trans_method_info);
+        = make_builtin_class(scav_method_info, trans_method_info);
     obj_GFClass = make_builtin_class(scav_gf, trans_gf);
     obj_GFCacheClass = make_builtin_class(scav_gf_cache, trans_gf_cache);
 
@@ -2105,106 +2104,106 @@ void init_func_classes(void)
     init_builtin_class(obj_FunctionClass, "<function>", obj_ObjectClass, NULL);
     def_printer(obj_FunctionClass, print_func);
     init_builtin_class(obj_RawFunctionClass, "<builtin-function>",
-		       obj_FunctionClass, NULL);
+                       obj_FunctionClass, NULL);
     init_builtin_class(obj_MethodClass, "<method>", obj_FunctionClass, NULL);
     def_printer(obj_MethodClass, print_method);
     init_builtin_class(obj_RawMethodClass, "<raw-method>",
-		       obj_MethodClass, NULL);
+                       obj_MethodClass, NULL);
     init_builtin_class(obj_BuiltinMethodClass, "<builtin-method>",
-		       obj_MethodClass, NULL);
+                       obj_MethodClass, NULL);
     init_builtin_class(obj_ByteMethodClass, "<byte-method>",
-		       obj_MethodClass, NULL);
+                       obj_MethodClass, NULL);
     init_builtin_class(obj_MethodInfoClass, "<method-info>",
-		       obj_ObjectClass, NULL);
+                       obj_ObjectClass, NULL);
     init_builtin_class(obj_AccessorMethodClass, "<slot-accessor-method>",
-		       obj_MethodClass, NULL);
+                       obj_MethodClass, NULL);
     init_builtin_class(obj_CFunctionClass, "<c-function>",
-		       obj_FunctionClass, NULL);
+                       obj_FunctionClass, NULL);
     init_builtin_class(obj_GFClass, "<generic-function>",
-		       obj_FunctionClass, NULL);
+                       obj_FunctionClass, NULL);
     init_builtin_class(obj_GFCacheClass, "<generic-function-cache>",
-		       obj_ObjectClass, NULL);
+                       obj_ObjectClass, NULL);
 }
 
 void init_func_functions(void)
 {
     obj_t type_or_singleton_false
-	= type_union(obj_TypeClass, singleton(obj_False));
+        = type_union(obj_TypeClass, singleton(obj_False));
     define_method("function-name", list1(obj_FunctionClass), FALSE, obj_False,
-		  FALSE, obj_ObjectClass, function_debug_name);
+                  FALSE, obj_ObjectClass, function_debug_name);
     define_function("make-generic-function",
-		    listn(7, obj_ObjectClass, obj_FixnumClass,
-			  obj_ObjectClass,
-			  type_union(object_class(obj_False), obj_ListClass),
-			  obj_ObjectClass, obj_ListClass,
-			  type_union(object_class(obj_False), obj_TypeClass)),
-		    FALSE, obj_False, FALSE,
-		    list1(obj_GFClass), dylan_make_gf);
-    define_generic_function("add-method", 
-			    list2(obj_GFClass, obj_MethodClass), 
-			    FALSE, obj_False, FALSE,
-			    list2(obj_MethodClass,obj_ObjectClass), obj_False);
+                    listn(7, obj_ObjectClass, obj_FixnumClass,
+                          obj_ObjectClass,
+                          type_union(object_class(obj_False), obj_ListClass),
+                          obj_ObjectClass, obj_ListClass,
+                          type_union(object_class(obj_False), obj_TypeClass)),
+                    FALSE, obj_False, FALSE,
+                    list1(obj_GFClass), dylan_make_gf);
+    define_generic_function("add-method",
+                            list2(obj_GFClass, obj_MethodClass),
+                            FALSE, obj_False, FALSE,
+                            list2(obj_MethodClass,obj_ObjectClass), obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("add-method"),
-			     FALSE, FALSE)->value,
-	       make_raw_method("add-method",list2(obj_GFClass,obj_MethodClass),
-			       FALSE, obj_False, FALSE,
-			       list2(obj_MethodClass, obj_ObjectClass),
-			       obj_False, dylan_add_method));
+                             FALSE, FALSE)->value,
+               make_raw_method("add-method",list2(obj_GFClass,obj_MethodClass),
+                               FALSE, obj_False, FALSE,
+                               list2(obj_MethodClass, obj_ObjectClass),
+                               obj_False, dylan_add_method));
     define_method("generic-function-methods", list1(obj_GFClass), FALSE,
-		  obj_False, FALSE, obj_ObjectClass, generic_function_methods);
+                  obj_False, FALSE, obj_ObjectClass, generic_function_methods);
     define_method("generic-function-mandatory-keywords", list1(obj_GFClass),
-		  FALSE, obj_False, FALSE, obj_ObjectClass,
-		  function_keywords);
+                  FALSE, obj_False, FALSE, obj_ObjectClass,
+                  function_keywords);
     define_method("function-specializers", list1(obj_FunctionClass), FALSE,
-		  obj_False, FALSE, obj_ObjectClass, function_specializers);
-    define_generic_function("function-arguments", list1(obj_FunctionClass), 
-			    FALSE, obj_False, FALSE,
-			    list3(obj_FixnumClass, obj_BooleanClass,
-				  obj_ObjectClass),
-			    obj_False);
+                  obj_False, FALSE, obj_ObjectClass, function_specializers);
+    define_generic_function("function-arguments", list1(obj_FunctionClass),
+                            FALSE, obj_False, FALSE,
+                            list3(obj_FixnumClass, obj_BooleanClass,
+                                  obj_ObjectClass),
+                            obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("function-arguments"),
-			     FALSE, FALSE)->value,
-	       make_raw_method("function-arguments", list1(obj_FunctionClass),
-			       FALSE, obj_False, FALSE,
-			       list3(obj_FixnumClass, obj_BooleanClass,
-				     obj_ObjectClass),
-			       obj_False, dylan_function_arguments));
+                             FALSE, FALSE)->value,
+               make_raw_method("function-arguments", list1(obj_FunctionClass),
+                               FALSE, obj_False, FALSE,
+                               list3(obj_FixnumClass, obj_BooleanClass,
+                                     obj_ObjectClass),
+                               obj_False, dylan_function_arguments));
     add_method(find_variable(module_BuiltinStuff, symbol("function-arguments"),
-			     FALSE, FALSE)->value,
-	       make_raw_method("function-arguments", list1(obj_MethodClass),
-			       FALSE, obj_False, FALSE,
-			       list3(obj_FixnumClass, obj_BooleanClass,
-				     obj_ObjectClass),
-			       obj_False, dylan_method_arguments));
+                             FALSE, FALSE)->value,
+               make_raw_method("function-arguments", list1(obj_MethodClass),
+                               FALSE, obj_False, FALSE,
+                               list3(obj_FixnumClass, obj_BooleanClass,
+                                     obj_ObjectClass),
+                               obj_False, dylan_method_arguments));
     define_generic_function("function-return-values",
-			    list1(obj_FunctionClass), 
-			    FALSE, obj_False, FALSE,
-			    list2(obj_SeqClass, type_or_singleton_false),
-			    obj_False);
-    add_method(find_variable(module_BuiltinStuff, 
-			     symbol("function-return-values"),
-			     FALSE, FALSE)->value,
-	       make_raw_method("function-return-values", 
-			       list1(obj_FunctionClass),
-			       FALSE, obj_False, FALSE,
-			       list2(obj_SeqClass, type_or_singleton_false),
-			       obj_False, dylan_function_return_values));
+                            list1(obj_FunctionClass),
+                            FALSE, obj_False, FALSE,
+                            list2(obj_SeqClass, type_or_singleton_false),
+                            obj_False);
+    add_method(find_variable(module_BuiltinStuff,
+                             symbol("function-return-values"),
+                             FALSE, FALSE)->value,
+               make_raw_method("function-return-values",
+                               list1(obj_FunctionClass),
+                               FALSE, obj_False, FALSE,
+                               list2(obj_SeqClass, type_or_singleton_false),
+                               obj_False, dylan_function_return_values));
     define_method("sorted-applicable-methods", list1(obj_GFClass), TRUE,
-		  obj_False, FALSE, obj_ObjectClass, dylan_sorted_app_meths);
+                  obj_False, FALSE, obj_ObjectClass, dylan_sorted_app_meths);
     define_method("applicable-method?", list1(obj_MethodClass), TRUE,
-		  obj_False, FALSE, obj_BooleanClass, dylan_app_meth_p);
+                  obj_False, FALSE, obj_BooleanClass, dylan_app_meth_p);
     define_method("find-method", list2(obj_GFClass, obj_ListClass), FALSE,
-		  obj_False, FALSE, obj_ObjectClass, dylan_find_method);
+                  obj_False, FALSE, obj_ObjectClass, dylan_find_method);
     define_method("remove-method", list2(obj_GFClass, obj_MethodClass), FALSE,
-		  obj_False, FALSE, obj_ObjectClass, dylan_remove_method);
+                  obj_False, FALSE, obj_ObjectClass, dylan_remove_method);
     define_constant("do-next-method",
-		    make_raw_method("do-next-method",
-				    list2(obj_ObjectClass, obj_ObjectClass),
-				    FALSE, obj_False, FALSE, obj_Nil,
-				    obj_ObjectClass, dylan_do_next_method));
+                    make_raw_method("do-next-method",
+                                    list2(obj_ObjectClass, obj_ObjectClass),
+                                    FALSE, obj_False, FALSE, obj_Nil,
+                                    obj_ObjectClass, dylan_do_next_method));
     define_method("constrain-c-function",
-		  listn(4, obj_CFunctionClass, obj_ListClass, 
-			obj_ObjectClass, obj_ListClass),
-		  TRUE, obj_False, FALSE, obj_ObjectClass,
-		  constrain_c_function);
+                  listn(4, obj_CFunctionClass, obj_ListClass,
+                        obj_ObjectClass, obj_ListClass),
+                  TRUE, obj_False, FALSE, obj_ObjectClass,
+                  constrain_c_function);
 }

@@ -8,25 +8,25 @@ copyright: See below.
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -36,18 +36,18 @@ define open class <wrapper-stream> (<stream>)
   slot inner-stream :: <stream>, init-keyword: inner-stream:;
 end class;
 
-define open generic inner-stream (stream :: <wrapper-stream>) 
+define open generic inner-stream (stream :: <wrapper-stream>)
  => res :: <stream>;
 
 define open generic inner-stream-setter (inner-stream :: <stream>,
-					 stream :: <wrapper-stream>)
+                                         stream :: <wrapper-stream>)
  => res :: <stream>;
 
 define open generic outer-stream (stream :: <stream>)
  => res :: <stream>;
 
 define open generic outer-stream-setter (outer-stream :: <stream>,
-					 stream :: <stream>)
+                                         stream :: <stream>)
  => res :: <stream>;
 
 /// Default implementation
@@ -63,7 +63,7 @@ define inline method stream-open? (stream :: <wrapper-stream>)
   stream-open?(stream.inner-stream);
 end method;
 
-define inline method stream-element-type (stream :: <wrapper-stream>) 
+define inline method stream-element-type (stream :: <wrapper-stream>)
  => element-type :: <type>;
   stream-element-type(stream.inner-stream);
 end method;
@@ -89,13 +89,13 @@ end method;
 // to the default <positionable-stream> method.
 //
 //define inline method unread-element (stream :: <wrapper-stream>,
-//				     element :: <object>)
+//                                     element :: <object>)
 // => element :: <object>;
 //  unread-element(stream.inner-stream, element);
 //end method;
 
 define inline method peek (stream :: <wrapper-stream>,
-			   #key on-end-of-stream :: <object> = $not-supplied)
+                           #key on-end-of-stream :: <object> = $not-supplied)
  => element-of-eof :: <object>;
   if (on-end-of-stream == $not-supplied)
     peek(stream.inner-stream);
@@ -106,7 +106,7 @@ end method;
 
 
 define inline method read (stream :: <wrapper-stream>, n :: <integer>,
-			   #key on-end-of-stream :: <object> = $not-supplied)
+                           #key on-end-of-stream :: <object> = $not-supplied)
  => sequence-or-eof :: <object>;
   if (on-end-of-stream == $not-supplied)
     read(stream.inner-stream, n);
@@ -126,7 +126,7 @@ define inline method read-into!
     read-into!(stream.inner-stream, n, sequence, start: start);
   else
     read-into!(stream.inner-stream, n, sequence, start: start,
-	       on-end-of-stream: on-end-of-stream);
+               on-end-of-stream: on-end-of-stream);
   end if;
 end method;
 
@@ -140,14 +140,14 @@ define inline method stream-input-available? (stream :: <wrapper-stream>)
 end method;
 
 define inline method write-element (stream :: <wrapper-stream>,
-				    element :: <object>)
+                                    element :: <object>)
  => ();
   write-element(stream.inner-stream, element);
 end method;
 
 define inline method write (stream :: <wrapper-stream>, sequence :: <sequence>,
-			    #key start :: <integer> = 0,
-			         end: stop :: <integer> = sequence.size)
+                            #key start :: <integer> = 0,
+                                 end: stop :: <integer> = sequence.size)
  => ();
   write(stream.inner-stream, sequence, start: start, end: stop);
 end method;
@@ -164,7 +164,7 @@ define inline method discard-output (stream :: <wrapper-stream>) => ();
   discard-output(stream.inner-stream);
 end method;
 
-define inline method read-line 
+define inline method read-line
     (stream :: <wrapper-stream>,
      #key on-end-of-stream :: <object> = $not-supplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
@@ -184,14 +184,14 @@ define inline method read-line-into!
       read-line-into!(stream.inner-stream, string, start: start, grow?: grow?);
   else
       read-line-into!(stream.inner-stream, string, start: start, grow?: grow?,
-		      on-end-of-stream: on-end-of-stream);
+                      on-end-of-stream: on-end-of-stream);
   end if;
 end method;
 
-define inline method write-line (stream :: <wrapper-stream>, 
-				 string :: <string>,
-				 #key start :: <integer> = 0,
-				      end: stop :: <integer> = string.size)
+define inline method write-line (stream :: <wrapper-stream>,
+                                 string :: <string>,
+                                 #key start :: <integer> = 0,
+                                      end: stop :: <integer> = string.size)
  => ();
   write-line(stream.inner-stream, string, start: start, end: stop);
 end method;

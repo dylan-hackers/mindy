@@ -6,25 +6,25 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -43,7 +43,7 @@ define abstract class <editable> (<object>) end class;
 // not-so-clean signature
 //
 define generic delete
-    (widget :: type-union(<window>, <editable>), index, #key end:) 
+    (widget :: type-union(<window>, <editable>), index, #key end:)
  => (widget :: <window>);
 
 define method delete
@@ -64,15 +64,15 @@ define generic insert
 define method insert
     (widget :: <editable>, index, #rest elements) => (widget :: <editable>);
   put-tk-line(widget, " insert ", tk-as(<string>, index),
-	       apply(concatenate,
-		     map(method (str)
-			   concatenate(" \"", tk-quote(str), "\"")
-			 end method, elements)));
+               apply(concatenate,
+                     map(method (str)
+                           concatenate(" \"", tk-quote(str), "\"")
+                         end method, elements)));
   widget;
 end method insert;
 
 define generic scan-mark
-    (widget :: type-union(<window>, <editable>), #rest coords) 
+    (widget :: type-union(<window>, <editable>), #rest coords)
  => (widget :: <window>);
 
 define method scan-mark
@@ -82,7 +82,7 @@ define method scan-mark
 end method scan-mark;
 
 define generic scan-dragto
-    (widget :: type-union(<window>, <editable>), #rest coords) 
+    (widget :: type-union(<window>, <editable>), #rest coords)
  => (widget :: <window>);
 
 define method scan-dragto
@@ -92,7 +92,7 @@ define method scan-dragto
 end method scan-dragto;
 
 define generic select-adjust
-    (widget :: type-union(<window>, <editable>), index) 
+    (widget :: type-union(<window>, <editable>), index)
  => (widget :: <window>);
 
 define method select-adjust
@@ -109,7 +109,7 @@ define method select-clear (widget :: <window>) => (widget :: <window>);
 end method select-clear;
 
 define generic select-from
-    (widget :: type-union(<window>, <editable>), index) 
+    (widget :: type-union(<window>, <editable>), index)
  => (widget :: <window>);
 
 define method select-from
@@ -119,7 +119,7 @@ define method select-from
 end method select-from;
 
 define generic select-to
-    (widget :: type-union(<window>, <editable>), index) 
+    (widget :: type-union(<window>, <editable>), index)
  => (widget :: <window>);
 
 define method select-to

@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000, 2001, 2002  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -118,40 +118,40 @@ struct body
     *add_constituent(struct body *body, struct constituent *constituent)
 {
     if (constituent->kind == constituent_EXPR) {
-	struct expr *expr = ((struct expr_constituent *)constituent)->expr;
-	if (expr->kind == expr_BODY) {
-	    struct body *insides = ((struct body_expr *)expr)->body;
-	    struct constituent *c, **prev;
+        struct expr *expr = ((struct expr_constituent *)constituent)->expr;
+        if (expr->kind == expr_BODY) {
+            struct body *insides = ((struct body_expr *)expr)->body;
+            struct constituent *c, **prev;
 
-	    *body->tail = insides->head;
-	    /* Note: we can't use insides->tail because that will point */
-	    /* inside the bindings established inside this block */
-	    for (prev = body->tail; (c = *prev) != NULL; prev = &c->next)
-		;
-	    body->tail = prev;
+            *body->tail = insides->head;
+            /* Note: we can't use insides->tail because that will point */
+            /* inside the bindings established inside this block */
+            for (prev = body->tail; (c = *prev) != NULL; prev = &c->next)
+                ;
+            body->tail = prev;
 
-	    free(insides);
-	    free(expr);
-	    free(constituent);
+            free(insides);
+            free(expr);
+            free(constituent);
 
-	    return body;
-	}
+            return body;
+        }
     }
-	    
+
     *body->tail = constituent;
 
     switch (constituent->kind) {
       case constituent_LET:
       case constituent_LOCAL:
       case constituent_HANDLER:
-	body->tail = ((struct binding_constituent *)constituent)->body->tail;
-	((struct binding_constituent *)constituent)->body->tail = NULL;
-	if (constituent->next)
-	  lose("constituent has next when deep-nesting?");
-	break;
+        body->tail = ((struct binding_constituent *)constituent)->body->tail;
+        ((struct binding_constituent *)constituent)->body->tail = NULL;
+        if (constituent->next)
+          lose("constituent has next when deep-nesting?");
+        break;
       default:
-	body->tail = &constituent->next;
-	break;
+        body->tail = &constituent->next;
+        break;
     }
 
     return body;
@@ -165,7 +165,7 @@ struct body *make_expr_body(struct expr *expr)
 struct constituent *make_define_constant(int line, struct bindings *bindings)
 {
     struct defconst_constituent *res
-	= malloc(sizeof(struct defconst_constituent));
+        = malloc(sizeof(struct defconst_constituent));
 
     res->kind = constituent_DEFCONST;
     res->next = NULL;
@@ -179,7 +179,7 @@ struct constituent *make_define_constant(int line, struct bindings *bindings)
 struct constituent *make_define_method(flags_t flags, struct method *method)
 {
     struct defmethod_constituent *res
-	= malloc(sizeof(struct defmethod_constituent));
+        = malloc(sizeof(struct defmethod_constituent));
 
     res->kind = constituent_DEFMETHOD;
     res->next = NULL;
@@ -192,18 +192,18 @@ struct constituent *make_define_method(flags_t flags, struct method *method)
 
 /* Implement "define function foo" as "define constant foo = method ..."
  */
-struct constituent *make_define_function(flags_t ignored, 
-					 struct method *method)
+struct constituent *make_define_function(flags_t ignored,
+                                         struct method *method)
 {
     struct param *func_name = make_param(method->name, NULL);
     struct defconst_constituent *res
-	= malloc(sizeof(struct defconst_constituent));
+        = malloc(sizeof(struct defconst_constituent));
 
     res->kind = constituent_DEFCONST;
     res->next = NULL;
     res->line = method->line;
-    res->bindings = make_bindings(push_param(func_name, make_param_list()), 
-				  make_method_ref(method));
+    res->bindings = make_bindings(push_param(func_name, make_param_list()),
+                                  make_method_ref(method));
     res->tlf = NULL;
 
     return (struct constituent *)res;
@@ -235,7 +235,7 @@ struct constituent *make_expr_constituent(struct expr *expr)
 
 struct constituent *make_let(struct bindings *bindings)
 {
-    struct let_constituent *res	= malloc(sizeof(struct let_constituent));
+    struct let_constituent *res        = malloc(sizeof(struct let_constituent));
 
     res->kind = constituent_LET;
     res->next = NULL;
@@ -253,7 +253,7 @@ struct constituent
     *make_handler(struct expr *type, struct expr *func, struct plist *plist)
 {
     struct handler_constituent *res
-	= malloc(sizeof(struct handler_constituent));
+        = malloc(sizeof(struct handler_constituent));
 
     res->kind = constituent_HANDLER;
     res->next = NULL;
@@ -268,7 +268,7 @@ struct constituent
 struct constituent *make_local_constituent(struct local_methods *methods)
 {
     struct local_constituent *res
-	= malloc(sizeof(struct local_constituent));
+        = malloc(sizeof(struct local_constituent));
 
     res->kind = constituent_LOCAL;
     res->next = NULL;
@@ -292,7 +292,7 @@ struct constituent
     res->kind = constituent_TOPLEVELFORM;
     res->next = NULL;
     res->form
-	= make_top_level_method(debug_name, add_constituent(make_body(), c));
+        = make_top_level_method(debug_name, add_constituent(make_body(), c));
 
     return (struct constituent *)res;
 }
@@ -354,7 +354,7 @@ struct id *make_id(struct token *token)
     struct id *res;
 
     if (*ptr == '\\')
-	ptr++;
+        ptr++;
 
     res = id(symbol(ptr));
     res->internal = FALSE;
@@ -449,18 +449,18 @@ struct param_list *allow_all_keywords(struct param_list *param_list)
 
 struct keyword_param
     *make_keyword_param(struct token *key, struct id *sym, struct expr *type,
-			struct expr *def)
+                        struct expr *def)
 {
     struct keyword_param *res = malloc(sizeof(struct keyword_param));
 
     if (key) {
-	/* The keyword token has a trailing : */
-	key->chars[key->length-1] = '\0';
-	res->keyword = symbol((char *)key->chars);
-	free(key);
+        /* The keyword token has a trailing : */
+        key->chars[key->length-1] = '\0';
+        res->keyword = symbol((char *)key->chars);
+        free(key);
     }
     else
-	res->keyword = sym->symbol;
+        res->keyword = sym->symbol;
 
     res->id = sym;
     res->type = type;
@@ -502,24 +502,24 @@ struct expr *make_literal_ref(struct literal *lit)
 }
 
 struct expr *make_binop_series_expr(struct expr *operand,
-				    struct binop_series *series)
+                                    struct binop_series *series)
 {
     if (series->head) {
-	struct binop_series_expr *res
-	    = malloc(sizeof(struct binop_series_expr));
+        struct binop_series_expr *res
+            = malloc(sizeof(struct binop_series_expr));
 
-	res->kind = expr_BINOP_SERIES;
-	res->analyzed = FALSE;
-	res->first_operand = operand;
-	res->first_binop = series->head;
+        res->kind = expr_BINOP_SERIES;
+        res->analyzed = FALSE;
+        res->first_operand = operand;
+        res->first_binop = series->head;
 
-	free(series);
+        free(series);
 
-	return (struct expr *)res;
+        return (struct expr *)res;
     }
     else {
-	free(series);
-	return operand;
+        free(series);
+        return operand;
     }
 }
 
@@ -535,7 +535,7 @@ struct binop_series *make_binop_series(void)
 
 struct binop_series
     *add_binop(struct binop_series *series, struct binop *op,
-	       struct expr *operand)
+               struct expr *operand)
 {
     *series->tail = op;
     series->tail = &op->next;
@@ -565,7 +565,7 @@ static struct expr *make_unary_fn_call(struct expr *fn, struct expr *arg)
     add_argument(args, make_argument(arg));
 
     return make_function_call(fn, args);
-}    
+}
 
 struct expr *make_negate(int line, struct expr *expr)
 {
@@ -589,7 +589,7 @@ struct expr *make_singleton(int line, struct expr *expr)
 }
 
 struct expr *make_aref_or_element(int line, struct expr *expr,
-				  struct arglist *args)
+                                  struct arglist *args)
 {
     struct argument *collection = make_argument(expr);
     struct id *func;
@@ -600,9 +600,9 @@ struct expr *make_aref_or_element(int line, struct expr *expr,
     /* we just pass it directly to make_function_call */
 
     if (args->head->next != NULL && args->head->next->next == NULL)
-	func = id(sym_Element);
+        func = id(sym_Element);
     else
-	func = id(sym_Aref);
+        func = id(sym_Aref);
 
     func->line = line;
     return make_function_call(make_varref(func), args);
@@ -616,10 +616,10 @@ struct expr *make_function_call(struct expr *expr, struct arglist *args)
     res->analyzed = FALSE;
     res->func = expr;
     if (expr->kind == expr_VARREF)
-	res->info = lookup_function_info(((struct varref_expr *)expr)->var,
-					 FALSE);
+        res->info = lookup_function_info(((struct varref_expr *)expr)->var,
+                                         FALSE);
     else
-	res->info = NULL;
+        res->info = NULL;
     res->args = args->head;
 
     free(args);
@@ -664,7 +664,7 @@ struct arglist *add_argument(struct arglist *arglist, struct argument *arg)
 {
     *arglist->tail = arg;
     while (arg->next != NULL)
-	arg = arg->next;
+        arg = arg->next;
     arglist->tail = &arg->next;
 
     return arglist;
@@ -684,7 +684,7 @@ struct argument
     *make_keyword_argument(struct token *keyword, struct expr *expr)
 {
     struct argument *keyarg
-	= make_argument(make_literal_ref(parse_keyword_token(keyword)));
+        = make_argument(make_literal_ref(parse_keyword_token(keyword)));
 
     keyarg->next = make_argument(expr);
 
@@ -723,7 +723,7 @@ struct plist
 }
 
 struct return_type_list *make_return_type_list(boolean restp,
-					       struct expr *rest)
+                                               struct expr *rest)
 {
     struct return_type_list *res = malloc(sizeof(struct return_type_list));
 
@@ -739,7 +739,7 @@ struct return_type_list *make_return_type_list(boolean restp,
 }
 
 struct return_type_list *add_return_type(struct return_type_list *list,
-					 struct expr *type)
+                                         struct expr *type)
 {
     struct return_type *rtype = malloc(sizeof(struct return_type));
 
@@ -754,7 +754,7 @@ struct return_type_list *add_return_type(struct return_type_list *list,
 
 struct return_type_list
     *set_return_type_rest_type(struct return_type_list *list,
-			       struct expr *type)
+                               struct expr *type)
 {
     list->restp = TRUE;
     list->rest_type = type;
@@ -844,8 +844,8 @@ struct literal *parse_string_token(struct token *token)
         }
     }
 
-    res = malloc(sizeof(struct string_literal) 
-		 + length + 1 - sizeof(res->chars));
+    res = malloc(sizeof(struct string_literal)
+                 + length + 1 - sizeof(res->chars));
 
     res->kind = literal_STRING;
     res->next = NULL;
@@ -855,11 +855,11 @@ struct literal *parse_string_token(struct token *token)
     src = (char *)token->chars + 1;
     dst = (char *)res->chars;
     for (i = length; i > 0; i--) {
-	int c = *src++;
-	if (c == '\\')
-	    *dst++ = escape_char(&src, res->line);
-	else
-	    *dst++ = c;
+        int c = *src++;
+        if (c == '\\')
+            *dst++ = escape_char(&src, res->line);
+        else
+            *dst++ = c;
     }
     *dst++ = '\0';
 
@@ -880,7 +880,7 @@ struct literal
     char *src, *dst;
 
     res = malloc(sizeof(struct string_literal)
-		 + old_length + length + 1 - sizeof(res->chars));
+                 + old_length + length + 1 - sizeof(res->chars));
 
     res->kind = literal_STRING;
     res->next = NULL;
@@ -895,8 +895,8 @@ struct literal
             char *t = src;
             *dst++ = escape_char(&src, res->line);
             length -= src - t;
-	} else
-	    *dst++ = c;
+        } else
+            *dst++ = c;
     }
     *dst++ = '\0';
 
@@ -936,34 +936,34 @@ struct literal *parse_integer_token(struct token *token)
     count = token->length;
     ptr = (char *)token->chars;
     if (*ptr == '#') {
-	switch (ptr[1]) {
-	  case 'X': case 'x': radix = 16; break;
-	  case 'O': case 'o': radix = 8; break;
-	  case 'B': case 'b': radix = 2; break;
-	  default:
-	    lose("Strange radix marker ('%c') in integer literal", ptr[1]);
-	}
-	ptr += 2;
-	count -= 2;
-	negative = FALSE;
+        switch (ptr[1]) {
+          case 'X': case 'x': radix = 16; break;
+          case 'O': case 'o': radix = 8; break;
+          case 'B': case 'b': radix = 2; break;
+          default:
+            lose("Strange radix marker ('%c') in integer literal", ptr[1]);
+        }
+        ptr += 2;
+        count -= 2;
+        negative = FALSE;
     }
     else {
-	radix = 10;
-	if (*ptr == '-') {
-	    negative = TRUE;
-	    count--;
-	    ptr++;
-	}
-	else {
-	    negative = FALSE;
-	    if (*ptr == '+') {
-		count--;
-		ptr++;
-	    }
-	}
+        radix = 10;
+        if (*ptr == '-') {
+            negative = TRUE;
+            count--;
+            ptr++;
+        }
+        else {
+            negative = FALSE;
+            if (*ptr == '+') {
+                count--;
+                ptr++;
+            }
+        }
     }
     if (radix == 0)
-	lose("No radix in integer literal?");
+        lose("No radix in integer literal?");
 
     value = strtoul(ptr, &remnant, radix);
     if (negative)
@@ -974,7 +974,7 @@ struct literal *parse_integer_token(struct token *token)
 
     if (*remnant != 0)
       lose("Integer literal did not convert completely: %s left %s\n", token->chars, remnant);
-    
+
     res = make_integer_literal(value);
     res->line = token->line;
 
@@ -990,49 +990,49 @@ struct literal *parse_float_token(struct token *token)
     struct literal *res = NULL;
 
     for (ptr = token->chars; (c = *ptr) != '\0'; ptr++) {
-	if (c == 'e' || c == 'E')
-	    break;
-	if (c == 's' || c == 'S') {
-	    *ptr = 'e';
-	    break;
-	}
-	if (c == 'd' || c == 'D') {
-	    *ptr = 'e';
-	    kind = literal_DOUBLE_FLOAT;
-	    break;
-	}
-	if (c == 'x' || c == 'X') {
-	    *ptr = 'e';
-	    kind = literal_EXTENDED_FLOAT;
-	    break;
-	}
+        if (c == 'e' || c == 'E')
+            break;
+        if (c == 's' || c == 'S') {
+            *ptr = 'e';
+            break;
+        }
+        if (c == 'd' || c == 'D') {
+            *ptr = 'e';
+            kind = literal_DOUBLE_FLOAT;
+            break;
+        }
+        if (c == 'x' || c == 'X') {
+            *ptr = 'e';
+            kind = literal_EXTENDED_FLOAT;
+            break;
+        }
     }
 
     switch (kind) {
       case literal_SINGLE_FLOAT:
-	{
-	    struct single_float_literal *r = malloc(sizeof(*r));
-	    res = (struct literal *)r;
-	    r->value = strtod((char *)token->chars, (char **)&remnant);
-	    break;
-	}
+        {
+            struct single_float_literal *r = malloc(sizeof(*r));
+            res = (struct literal *)r;
+            r->value = strtod((char *)token->chars, (char **)&remnant);
+            break;
+        }
       case literal_DOUBLE_FLOAT:
-	{
-	    struct double_float_literal *r = malloc(sizeof(*r));
-	    res = (struct literal *)r;
-	    r->value = strtod((char *)token->chars, (char **)&remnant);
-	    break;
-	}
+        {
+            struct double_float_literal *r = malloc(sizeof(*r));
+            res = (struct literal *)r;
+            r->value = strtod((char *)token->chars, (char **)&remnant);
+            break;
+        }
       case literal_EXTENDED_FLOAT:
-	{
-	    struct extended_float_literal *r = malloc(sizeof(*r));
-	    res = (struct literal *)r;
-	    r->value = strtod((char *)token->chars, (char **)&remnant);
-	    break;
-	}
+        {
+            struct extended_float_literal *r = malloc(sizeof(*r));
+            res = (struct literal *)r;
+            r->value = strtod((char *)token->chars, (char **)&remnant);
+            break;
+        }
       default:
-	lose("Strange float literal kind.\n");
-	break;
+        lose("Strange float literal kind.\n");
+        break;
     }
 
     if (remnant == token->chars)
@@ -1063,8 +1063,8 @@ struct literal *parse_symbol_token(struct token *token)
     /* freeing it shortly. */
 
     if (*ptr == '\\')
-	/* They used the \op quoting convention. */
-	ptr++;
+        /* They used the \op quoting convention. */
+        ptr++;
 
     res = make_symbol_literal(symbol(ptr));
     res->line = token->line;
@@ -1115,25 +1115,25 @@ struct literal *parse_keyword_token(struct token *token)
 struct expr *make_body_expr(struct body *body)
 {
     if (body->head && body->head->kind == constituent_EXPR
-	  && body->head->next == NULL) {
-	struct expr *res = ((struct expr_constituent *)body->head)->expr;
-	free(body->head);
-	free(body);
-	return res;
+          && body->head->next == NULL) {
+        struct expr *res = ((struct expr_constituent *)body->head)->expr;
+        free(body->head);
+        free(body);
+        return res;
     }
     else {
-	struct body_expr *res = malloc(sizeof(struct body_expr));
+        struct body_expr *res = malloc(sizeof(struct body_expr));
 
-	res->kind = expr_BODY;
-	res->analyzed = FALSE;
-	res->body = body;
+        res->kind = expr_BODY;
+        res->analyzed = FALSE;
+        res->body = body;
 
-	return (struct expr *)res;
+        return (struct expr *)res;
     }
 }
 
 struct expr *make_block(int line, struct id *exit, struct body *body,
-			struct block_epilog *epilog)
+                        struct block_epilog *epilog)
 {
     struct block_expr *res = malloc(sizeof(struct block_expr));
 
@@ -1143,15 +1143,15 @@ struct expr *make_block(int line, struct id *exit, struct body *body,
     res->exit_fun = exit;
     res->body = body;
     if (epilog) {
-	res->inner = epilog->inner;
-	res->cleanup = epilog->cleanup;
-	res->outer = epilog->outer;
-	free(epilog);
+        res->inner = epilog->inner;
+        res->cleanup = epilog->cleanup;
+        res->outer = epilog->outer;
+        free(epilog);
     }
     else {
-	res->inner = NULL;
-	res->cleanup = NULL;
-	res->outer = NULL;
+        res->inner = NULL;
+        res->cleanup = NULL;
+        res->outer = NULL;
     }
 
     return (struct expr *)res;
@@ -1176,7 +1176,7 @@ static struct body *make_literal_body(struct literal *literal)
 }
 
 struct expr *make_if(struct expr *cond, struct body *consequent,
-		     struct else_part *else_part)
+                     struct else_part *else_part)
 {
     struct if_expr *res = malloc(sizeof(struct if_expr));
 
@@ -1184,17 +1184,17 @@ struct expr *make_if(struct expr *cond, struct body *consequent,
     res->analyzed = FALSE;
     res->cond = cond;
     if (consequent)
-	res->consequent = consequent;
+        res->consequent = consequent;
     else
-	res->consequent = make_literal_body(make_false_literal());
+        res->consequent = make_literal_body(make_false_literal());
     if (else_part) {
-	res->else_line = else_part->else_line;
-	res->alternate = else_part->alternate;
-	free(else_part);
+        res->else_line = else_part->else_line;
+        res->alternate = else_part->alternate;
+        free(else_part);
     }
     else {
-	res->else_line = 0;
-	res->alternate = make_literal_body(make_false_literal());
+        res->else_line = 0;
+        res->alternate = make_literal_body(make_false_literal());
     }
 
     return (struct expr *)res;
@@ -1211,7 +1211,7 @@ struct else_part *make_else(int else_line, struct body *alternate)
 }
 
 struct expr *make_for(struct for_header *header, struct body *body,
-			     struct body *finally)
+                             struct body *finally)
 {
     struct for_expr *res = malloc(sizeof(struct for_expr));
 
@@ -1228,7 +1228,7 @@ struct expr *make_for(struct for_header *header, struct body *body,
 }
 
 struct expr *make_select(struct expr *expr, struct expr *by,
-				struct condition_body *body)
+                                struct condition_body *body)
 {
     struct select_expr *res = malloc(sizeof(struct select_expr));
 
@@ -1265,24 +1265,24 @@ struct expr *make_repeat(void)
 }
 
 struct block_epilog *make_block_epilog(struct exception_clauses *inner,
-				       struct body *cleanup,
-				       struct exception_clauses *outer)
+                                       struct body *cleanup,
+                                       struct exception_clauses *outer)
 {
     struct block_epilog *res = malloc(sizeof(struct block_epilog));
 
     if (inner) {
-	res->inner = inner->head;
-	free(inner);
+        res->inner = inner->head;
+        free(inner);
     }
     else
-	res->inner = NULL;
+        res->inner = NULL;
     res->cleanup = cleanup;
     if (outer) {
-	res->outer = outer->head;
-	free(outer);
+        res->outer = outer->head;
+        free(outer);
     }
     else
-	res->outer = NULL;
+        res->outer = NULL;
 
     return res;
 }
@@ -1298,7 +1298,7 @@ struct for_header *make_for_header(struct expr *until)
 }
 
 struct for_header *push_for_clause(struct for_clause *clause,
-				   struct for_header *header)
+                                   struct for_header *header)
 {
     clause->next = header->clauses;
     header->clauses = clause;
@@ -1318,7 +1318,7 @@ struct exception_clauses *make_exception_clauses(void)
 
 struct exception_clauses
     *add_exception_clause(struct exception_clauses *clauses,
-			  struct exception_clause *clause)
+                          struct exception_clause *clause)
 {
     *clauses->tail = clause;
     clauses->tail = &clause->next;
@@ -1328,7 +1328,7 @@ struct exception_clauses
 
 struct exception_clause
     *make_exception_clause(struct expr *type, struct id *condition,
-			   struct plist *plist, struct body *body)
+                           struct plist *plist, struct body *body)
 {
     struct exception_clause *res = malloc(sizeof(struct exception_clause));
 
@@ -1343,7 +1343,7 @@ struct exception_clause
 
 struct condition_body
     *push_condition_clause(struct condition_clause *clause,
-			   struct condition_body *cond_body)
+                           struct condition_body *cond_body)
 {
     struct condition_body *res = malloc(sizeof(struct condition_body));
 
@@ -1366,10 +1366,10 @@ struct condition_clause
 
 struct incomplete_condition_body
     *make_incomplete_condition_clauses(struct constituent *constituent,
-				       struct condition_body *rest)
+                                       struct condition_body *rest)
 {
     struct incomplete_condition_body *res
-	= malloc(sizeof(struct incomplete_condition_body));
+        = malloc(sizeof(struct incomplete_condition_body));
 
     res->constituents = constituent;
     res->rest = rest;
@@ -1379,7 +1379,7 @@ struct incomplete_condition_body
 
 struct incomplete_condition_body
     *push_condition_constituent(struct constituent *constituent,
-				struct incomplete_condition_body *body)
+                                struct incomplete_condition_body *body)
 {
     constituent->next = body->constituents;
     body->constituents = constituent;
@@ -1389,15 +1389,15 @@ struct incomplete_condition_body
 
 struct condition_body
     *complete_condition_clauses(struct condition_clause *clause,
-				struct incomplete_condition_body *body)
+                                struct incomplete_condition_body *body)
 {
     struct constituent *constit, *next;
     struct condition_body *res;
 
     for (constit = body->constituents; constit != NULL; constit = next) {
-	next = constit->next;
-	constit->next = NULL;
-	add_constituent(clause->body, constit);
+        next = constit->next;
+        constit->next = NULL;
+        add_constituent(clause->body, constit);
     }
     res = push_condition_clause(clause, body->rest);
 
@@ -1431,10 +1431,10 @@ struct condition_clause
 
 struct for_clause
     *make_equal_then_for_clause(struct param_list *vars, struct expr *equal,
-				struct expr *then)
+                                struct expr *then)
 {
     struct equal_then_for_clause *res
-	= malloc(sizeof(struct equal_then_for_clause));
+        = malloc(sizeof(struct equal_then_for_clause));
 
     res->kind = for_EQUAL_THEN;
     res->next = NULL;
@@ -1447,13 +1447,13 @@ struct for_clause
 
 struct for_clause
     *make_in_for_clause(struct param *var, struct param *keyed_by,
-			struct expr *collection, struct param *protocol)
+                        struct expr *collection, struct param *protocol)
 {
     struct in_for_clause *res = malloc(sizeof(*res));
     struct param_list *vars = make_param_list();
 
     if (keyed_by)
-	push_param(keyed_by, vars);
+        push_param(keyed_by, vars);
     push_param(var, vars);
 
     res->kind = for_IN;
@@ -1467,23 +1467,23 @@ struct for_clause
 
 struct for_clause
     *make_from_for_clause(struct param *var, struct expr *from,
-			  struct to_part *to, struct expr *by)
+                          struct to_part *to, struct expr *by)
 {
     struct from_for_clause *res
-	= malloc(sizeof(struct from_for_clause));
+        = malloc(sizeof(struct from_for_clause));
 
     res->kind = for_FROM;
     res->next = NULL;
     res->vars = push_param(var, make_param_list());
     res->from = from;
     if (to) {
-	res->to_kind = to->kind;
-	res->to = to->expr;
-	free(to);
+        res->to_kind = to->kind;
+        res->to = to->expr;
+        free(to);
     }
     else {
-	res->to_kind = to_UNBOUNDED;
-	res->to = NULL;
+        res->to_kind = to_UNBOUNDED;
+        res->to = NULL;
     }
     res->by = by;
 
@@ -1522,10 +1522,10 @@ struct to_part *make_below(struct expr *expr)
 
 struct constituent
     *make_class_definition(struct id *name, struct superclass_list *supers,
-			   struct class_guts *guts)
+                           struct class_guts *guts)
 {
     struct defclass_constituent *res
-	= malloc(sizeof(struct defclass_constituent));
+        = malloc(sizeof(struct defclass_constituent));
 
     res->kind = constituent_DEFCLASS;
     res->next = NULL;
@@ -1534,15 +1534,15 @@ struct constituent
     res->supers = supers->head;
     free(supers);
     if (guts) {
-	res->slots = guts->slots;
-	res->initargs = guts->initargs;
-	res->inheriteds = guts->inheriteds;
-	free(guts);
+        res->slots = guts->slots;
+        res->initargs = guts->initargs;
+        res->inheriteds = guts->inheriteds;
+        free(guts);
     }
     else {
-	res->slots = NULL;
-	res->initargs = NULL;
-	res->inheriteds = NULL;
+        res->slots = NULL;
+        res->initargs = NULL;
+        res->inheriteds = NULL;
     }
     res->tlf1 = NULL;
     res->tlf2 = NULL;
@@ -1551,7 +1551,7 @@ struct constituent
 }
 
 struct constituent *set_class_flags(flags_t flags,
-				    struct constituent *defclass)
+                                    struct constituent *defclass)
 {
     ((struct defclass_constituent *)defclass)->flags = flags;
     return defclass;
@@ -1595,46 +1595,46 @@ struct class_guts *make_class_guts(void)
     return res;
 }
 
-static struct plist *add_init_expr (int line, struct expr *init_expr, 
-				   struct plist *plist)
+static struct plist *add_init_expr (int line, struct expr *init_expr,
+                                   struct plist *plist)
 {
     if (init_expr != NULL) {
-	/* If the init-expr is a literal, add it to the property list 
-	   as a init-value:
-	   */
-	if (init_expr->kind == expr_LITERAL) {
-	    plist = add_property(plist ? plist : make_property_list(),
-				 make_token("init-value:", 11),
-				 init_expr);
-	} else {
-	    /* Otherwise, turn the expression into an anonymous method
-	       and add it to the property list as an init-function.
-	       To do that, we need to create all sorts of parse-tree
-	       stuff out of thin air, which ain't pretty.  
-	       */
-	    struct body *init_expr_body
-		= add_constituent(make_body(), 
-				  make_expr_constituent(init_expr));
-	    struct method *init_method
-		= make_method_description(make_param_list(), NULL, 
-					  init_expr_body);
-	    struct token *init_method_token;
-	    
-	    init_method->line = line;
-	    init_method_token = make_token("init-function:", 14);
-	    init_method_token->line = line;
-	    plist = add_property(plist ? plist : make_property_list(),
-				 init_method_token,
-				 make_method_ref(init_method));
-	}
+        /* If the init-expr is a literal, add it to the property list
+           as a init-value:
+           */
+        if (init_expr->kind == expr_LITERAL) {
+            plist = add_property(plist ? plist : make_property_list(),
+                                 make_token("init-value:", 11),
+                                 init_expr);
+        } else {
+            /* Otherwise, turn the expression into an anonymous method
+               and add it to the property list as an init-function.
+               To do that, we need to create all sorts of parse-tree
+               stuff out of thin air, which ain't pretty.
+               */
+            struct body *init_expr_body
+                = add_constituent(make_body(),
+                                  make_expr_constituent(init_expr));
+            struct method *init_method
+                = make_method_description(make_param_list(), NULL,
+                                          init_expr_body);
+            struct token *init_method_token;
+
+            init_method->line = line;
+            init_method_token = make_token("init-function:", 14);
+            init_method_token->line = line;
+            plist = add_property(plist ? plist : make_property_list(),
+                                 init_method_token,
+                                 make_method_ref(init_method));
+        }
     }
     return plist;
 }
 
 struct slot_spec
     *make_slot_spec(int line, flags_t flags, enum slot_allocation alloc,
-		    struct id *name, struct expr *type, struct expr *init_expr,
-		    struct plist *plist)
+                    struct id *name, struct expr *type, struct expr *init_expr,
+                    struct plist *plist)
 {
     struct slot_spec *res = malloc(sizeof(struct slot_spec));
 
@@ -1652,7 +1652,7 @@ struct slot_spec
 }
 
 struct class_guts *add_slot_spec(struct class_guts *guts,
-				 struct slot_spec *spec)
+                                 struct slot_spec *spec)
 {
     *guts->slots_tail = spec;
     guts->slots_tail = &spec->next;
@@ -1677,7 +1677,7 @@ struct initarg_spec
 }
 
 struct class_guts *add_initarg_spec(struct class_guts *guts,
-				    struct initarg_spec *spec)
+                                    struct initarg_spec *spec)
 {
     *guts->initargs_tail = spec;
     guts->initargs_tail = &spec->next;
@@ -1686,8 +1686,8 @@ struct class_guts *add_initarg_spec(struct class_guts *guts,
 }
 
 struct inherited_spec *make_inherited_spec(int line, struct id *name,
-					   struct expr *init_expr,
-					   struct plist *plist)
+                                           struct expr *init_expr,
+                                           struct plist *plist)
 {
     struct inherited_spec *res = malloc(sizeof(*res));
 
@@ -1699,7 +1699,7 @@ struct inherited_spec *make_inherited_spec(int line, struct id *name,
 }
 
 struct class_guts *add_inherited_spec(struct class_guts *guts,
-				      struct inherited_spec *spec)
+                                      struct inherited_spec *spec)
 {
     *guts->inheriteds_tail = spec;
     guts->inheriteds_tail = &spec->next;
@@ -1711,7 +1711,7 @@ struct constituent
     *make_sealed_domain(struct id *name, struct arglist *types)
 {
     struct defdomain_constituent *res
-	= malloc(sizeof(struct defdomain_constituent));
+        = malloc(sizeof(struct defdomain_constituent));
 
     res->kind = constituent_DEFDOMAIN;
     res->next = NULL;
@@ -1728,11 +1728,11 @@ struct constituent
     *set_sealed_domain_flags(flags_t flags, struct constituent *constituent)
 {
     if (flags != flag_SEALED) {
-	struct defdomain_constituent *defdomain
-	    = (struct defdomain_constituent *)constituent;
-	warn(defdomain->name->line,
-	     "Bogus adjectives for define sealed domain of %s",
-	     defdomain->name->symbol->name);
+        struct defdomain_constituent *defdomain
+            = (struct defdomain_constituent *)constituent;
+        warn(defdomain->name->line,
+             "Bogus adjectives for define sealed domain of %s",
+             defdomain->name->symbol->name);
     }
 
     return constituent;
@@ -1740,10 +1740,10 @@ struct constituent
 
 struct constituent
     *make_define_generic(struct id *name, struct param_list *params,
-			 struct gf_suffix *suffix)
+                         struct gf_suffix *suffix)
 {
     struct defgeneric_constituent *res
-	= malloc(sizeof(struct defgeneric_constituent));
+        = malloc(sizeof(struct defgeneric_constituent));
 
     res->kind = constituent_DEFGENERIC;
     res->next = NULL;
@@ -1760,7 +1760,7 @@ struct constituent
 }
 
 struct constituent *set_generic_flags(flags_t flags,
-				    struct constituent *defgeneric)
+                                    struct constituent *defgeneric)
 {
     ((struct defgeneric_constituent *)defgeneric)->flags = flags;
     return defgeneric;
@@ -1768,7 +1768,7 @@ struct constituent *set_generic_flags(flags_t flags,
 
 struct gf_suffix
     *make_gf_suffix(struct return_type_list *rettypes,
-		    struct plist *plist)
+                    struct plist *plist)
 {
     struct gf_suffix *res = malloc(sizeof(struct gf_suffix));
 
@@ -1796,8 +1796,8 @@ struct method *set_method_name(struct id *name, struct method *method)
 
 struct method
     *make_method_description(struct param_list *params,
-			     struct return_type_list *rettypes,
-			     struct body *body)
+                             struct return_type_list *rettypes,
+                             struct body *body)
 {
     struct method *res = malloc(sizeof(struct method));
 
@@ -1884,7 +1884,7 @@ struct defnamespace_constituent *make_define_library(void)
 
 struct defnamespace_constituent
     *set_namespace_name(struct defnamespace_constituent *namespace,
-			struct token *name)
+                        struct token *name)
 {
     namespace->name = parse_symbol_token(name);
 
@@ -1893,7 +1893,7 @@ struct defnamespace_constituent
 
 struct defnamespace_constituent
     *add_use_clause(struct defnamespace_constituent *namespace,
-		    struct use_clause *clause)
+                    struct use_clause *clause)
 {
     *namespace->use_tail = clause;
     namespace->use_tail = &clause->next;
@@ -1903,7 +1903,7 @@ struct defnamespace_constituent
 
 struct defnamespace_constituent
     *add_exports(struct defnamespace_constituent *namespace,
-		 struct variable_names *vars)
+                 struct variable_names *vars)
 {
     *namespace->exported_variables->tail = vars->head;
     namespace->exported_variables->tail = vars->tail;
@@ -1914,7 +1914,7 @@ struct defnamespace_constituent
 
 struct defnamespace_constituent
     *add_creates(struct defnamespace_constituent *namespace,
-		 struct variable_names *vars)
+                 struct variable_names *vars)
 {
     *namespace->created_variables->tail = vars->head;
     namespace->created_variables->tail = vars->tail;
@@ -2001,7 +2001,7 @@ struct variable_names
 
     *names->tail = new;
     names->tail = &new->next;
-    
+
     return names;
 }
 
@@ -2017,7 +2017,7 @@ struct renamings *make_renamings(void)
 
 struct renamings
     *add_renaming(struct renamings *names,
-		  struct token *from, struct token *to)
+                  struct token *from, struct token *to)
 {
     struct renaming *new = malloc(sizeof(*new));
 
@@ -2045,12 +2045,12 @@ struct import_option *make_import_option(void)
 
 struct import_option
     *add_import(struct import_option *opt,
-		struct token *from, struct token *to)
+                struct token *from, struct token *to)
 {
     if (to)
-	opt->renames = add_renaming(opt->renames, from, to);
+        opt->renames = add_renaming(opt->renames, from, to);
     else
-	opt->vars = add_variable_name(opt->vars, from);
+        opt->vars = add_variable_name(opt->vars, from);
 
     return opt;
 }

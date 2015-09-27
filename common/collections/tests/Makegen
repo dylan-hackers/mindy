@@ -12,4 +12,4 @@ $D2CFLAGS         # added by update-libdirs
     . ' -L..';
 
 &emit_library_rule('collections-test-suite', '$(BUILDROOT)/force.timestamp',
-		   '', 'compile', 'install');
+                   '', 'compile', 'install');

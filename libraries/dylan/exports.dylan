@@ -5,25 +5,25 @@ module: dylan-user
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -101,14 +101,14 @@ define module Builtin-Stuff
     slot-value-setter, sorted-applicable-methods, spawn-thread, state-valid?,
     subclass-of, subtype?, system, symbol-hash,
     tail, tail-setter, truncate, truncate/,
-    // union, 
+    // union,
     union-members,
     values, vector,
     wait-for-event, weak-pointer-object,
     fd-close, fd-error-string, fd-input-available?, fd-open,
     fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
     SEEK_SET, SEEK_CUR, SEEK_END, O_RDONLY,
-    O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL, O_TRUNC, 
+    O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL, O_TRUNC,
     ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
     EINVAL, ENFILE, EMFILE, ENOSPC, EROFS,
     ENAMETOOLONG, EBADF, EINTR, EPIPE, EFBIG,
@@ -119,21 +119,21 @@ define module Builtin-Stuff
     unsigned-long-at-setter, pointer-at, pointer-at-setter, c-pointer-slot,
     c-pointer-slot-setter, load-object-file, null-pointer, find-c-pointer,
     find-c-function, constrain-c-function,
-    sin, cos, tan, asin, acos, atan, atan2, 
+    sin, cos, tan, asin, acos, atan, atan2,
     sinh, cosh, tanh,
     exp, log, sqrt,
     $single-pi, $single-e, $double-pi, $double-e,
     init-keyword, keyword-required?,
     <name>, <namespace>, <module>, <library>, <binding>,
     binding-name, module-name, library-name, name-home,
-    resolve-name, exported-names, visible-names, 
+    resolve-name, exported-names, visible-names,
     binding-value, binding-type, binding-kind,
     get-all-libraries, get-all-modules;
   create
     %define-sealed-domain,
     aref, aref-setter, do, error, type-error,
     make-next-method-function, generic-apply,
-    forward-iteration-protocol, backward-iteration-protocol, 
+    forward-iteration-protocol, backward-iteration-protocol,
     table-protocol, negative?,
     debugger-flush, debugger-call, debugger-print, debugger-report-condition,
     debugger-abort, debugger-describe-restarts, debugger-restart,
@@ -156,52 +156,52 @@ define module Dylan
   use Builtin-Stuff,
     import: all,
     export: {\~, \*, \+, \-, \/, \<, \<=, \=, \==, \~=, \~==, \^,
-	     <array>,
-	     <boolean>,
-	     <byte-string>,
-	     <character>, <class>, <collection>, <complex>,
-	     <double-float>,
-	     <empty-list>, <explicit-key-collection>, <extended-float>,
-	     <float>, <function>,
-	     <generic-function>,
-	     <integer>,
-	     <list>,
-	     <method>, <mutable-collection>, <mutable-explicit-key-collection>,
-	     <mutable-sequence>,
-	     <number>,
-	     <object>,
-	     <pair>,
-	     <rational>, <real>,
-	     <sequence>, <simple-vector>, <simple-object-vector>, 
-	     <single-float>, <singleton>,
-	     <string>, <symbol>,
-	     <type>,
-	     <unicode-string>,
-	     <vector>,
-	     add-method, all-superclasses, applicable-method?, apply,
-	     aref, aref-setter, as, ash,
-	     backward-iteration-protocol,
-	     direct-subclasses, direct-superclasses,
-	     ceiling, ceiling/,
-	     do,
-	     element, element-setter, error,
-	     find-method, floor, floor/, forward-iteration-protocol,
-	     function-arguments,
-	     generic-function-mandatory-keywords, generic-function-methods,
-	     head, head-setter,
-	     initialize, instance?,
-	     limited, list, logand, logbit?, logior, lognot, logxor,
-	     make, merge-hash-ids, function-specializers, 
-	     function-return-values,
-	     negative, negative?,
-	     object-class,
-	     pair,
-	     remove-method, round, round/,
-	     singleton, size, slot-initialized?, sorted-applicable-methods,
-	     subtype?,
-	     table-protocol, tail, tail-setter, truncate, truncate/,
-//	     union,
-	     values, vector};
+             <array>,
+             <boolean>,
+             <byte-string>,
+             <character>, <class>, <collection>, <complex>,
+             <double-float>,
+             <empty-list>, <explicit-key-collection>, <extended-float>,
+             <float>, <function>,
+             <generic-function>,
+             <integer>,
+             <list>,
+             <method>, <mutable-collection>, <mutable-explicit-key-collection>,
+             <mutable-sequence>,
+             <number>,
+             <object>,
+             <pair>,
+             <rational>, <real>,
+             <sequence>, <simple-vector>, <simple-object-vector>,
+             <single-float>, <singleton>,
+             <string>, <symbol>,
+             <type>,
+             <unicode-string>,
+             <vector>,
+             add-method, all-superclasses, applicable-method?, apply,
+             aref, aref-setter, as, ash,
+             backward-iteration-protocol,
+             direct-subclasses, direct-superclasses,
+             ceiling, ceiling/,
+             do,
+             element, element-setter, error,
+             find-method, floor, floor/, forward-iteration-protocol,
+             function-arguments,
+             generic-function-mandatory-keywords, generic-function-methods,
+             head, head-setter,
+             initialize, instance?,
+             limited, list, logand, logbit?, logior, lognot, logxor,
+             make, merge-hash-ids, function-specializers,
+             function-return-values,
+             negative, negative?,
+             object-class,
+             pair,
+             remove-method, round, round/,
+             singleton, size, slot-initialized?, sorted-applicable-methods,
+             subtype?,
+             table-protocol, tail, tail-setter, truncate, truncate/,
+//             union,
+             values, vector};
   use extras;
   export
     \>=, \>, \:=, \|, \&,
@@ -250,14 +250,14 @@ define module Extensions
   use Dylan;
   use Builtin-Stuff,
     import: {main, exit, on-exit, load, load-library, *print-GC-messages*,
-	     $maximum-integer, $minimum-integer,
-	     <never-returns>,
-	     <byte-character>, <byte-vector>,
-	     <true>, <false>,
-	     <general-integer>, <extended-integer>,
-	     <ratio>, numerator, denominator,
-	     <weak-pointer>, weak-pointer-object,
-	     invoke-debugger},
+             $maximum-integer, $minimum-integer,
+             <never-returns>,
+             <byte-character>, <byte-vector>,
+             <true>, <false>,
+             <general-integer>, <extended-integer>,
+             <ratio>, numerator, denominator,
+             <weak-pointer>, weak-pointer-object,
+             invoke-debugger},
     export: all;
   use extras, exclude: { add-debug-variable, instantiable? },
     export: all;
@@ -269,10 +269,10 @@ define module System
   use Dylan;
   use Builtin-Stuff,
     import: {<buffer>, buffer-next, buffer-next-setter,
-	     buffer-end, buffer-end-setter, copy-bytes,
-	     get-time-of-day,
-	     system, getcwd, getenv, collect-garbage,
-	     file-write-date},
+             buffer-end, buffer-end-setter, copy-bytes,
+             get-time-of-day,
+             system, getcwd, getenv, collect-garbage,
+             file-write-date},
     export: all;
   use Builtin-Stuff, import: {$maximum-integer};
   use extras, import: { add-debug-variable },
@@ -285,43 +285,43 @@ define module File-Descriptors
   use Dylan;
   use Builtin-Stuff,
     import: {fd-close, fd-error-string, fd-input-available?,
-	     fd-open, fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
+             fd-open, fd-read, fd-seek, fd-sync-output, fd-write, fd-exec,
 
-	     // Lseek call.
-	     //
-	     SEEK_SET, SEEK_CUR, SEEK_END, 
+             // Lseek call.
+             //
+             SEEK_SET, SEEK_CUR, SEEK_END,
 
-	     // Flags also for fcntl call.
-	     //
-	     O_APPEND,
+             // Flags also for fcntl call.
+             //
+             O_APPEND,
 
-	     // Open only modes.
-	     //
-	     O_CREAT, O_EXCL, O_TRUNC,
+             // Open only modes.
+             //
+             O_CREAT, O_EXCL, O_TRUNC,
 
-	     // Open call.
-	     //
-	     O_RDONLY, O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL, 
-	     O_TRUNC,
+             // Open call.
+             //
+             O_RDONLY, O_WRONLY, O_RDWR, O_APPEND, O_CREAT, O_EXCL,
+             O_TRUNC,
 
-	     // Open errors.
-	     //
-	     ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
-	     EINVAL, ENFILE, EMFILE, ENOSPC, EROFS,
-	     ENAMETOOLONG,
+             // Open errors.
+             //
+             ENOENT, EIO, ENXIO, EACCES, EFAULT, EEXIST, ENOTDIR, EISDIR,
+             EINVAL, ENFILE, EMFILE, ENOSPC, EROFS,
+             ENAMETOOLONG,
 
-	     // Close errors.
-	     //
-	     EBADF,
+             // Close errors.
+             //
+             EBADF,
 
-	     // Read errors (that are also not Open or Close errors).
-	     //
-	     EINTR,
+             // Read errors (that are also not Open or Close errors).
+             //
+             EINTR,
 
-	     // Write errors (that are not also open, close, or read errors).
-	     //
-	     EPIPE,
-	     EFBIG},
+             // Write errors (that are not also open, close, or read errors).
+             //
+             EPIPE,
+             EFBIG},
     export: all;
 end File-Descriptors;
 
@@ -331,9 +331,9 @@ define module Threads
   use Extensions;
   use Builtin-Stuff,
     import: {<thread>, spawn-thread, current-thread, kill-thread,
-	     <lock>, <spinlock>,
-	     locked?, grab-lock, release-lock,
-	     <event>, wait-for-event, signal-event, broadcast-event},
+             <lock>, <spinlock>,
+             locked?, grab-lock, release-lock,
+             <event>, wait-for-event, signal-event, broadcast-event},
     export: all;
   export
     <multilock>, <semaphore>;
@@ -344,7 +344,7 @@ define module %Hash-Tables
   use Dylan;
   use Builtin-Stuff,
     import: {$permanent-hash-state, state-valid?, merge-hash-states,
-	     pointer-hash, float-hash, symbol-hash};
+             pointer-hash, float-hash, symbol-hash};
   use Extensions;
   export
     remove-all-keys!, uppercase?,
@@ -358,20 +358,20 @@ end;
 define module Introspection
   use Builtin-Stuff,
     import: {<defined-class>, <slot-descriptor>,
-	     class-name, function-name,
-	     abstract?,
-	     slot-allocation, slot-descriptors, slot-getter,
-	     slot-getter-method, slot-name, slot-setter, slot-setter-method,
-	     slot-type, slot-value, slot-value-setter,
-	     init-keyword, keyword-required?,
+             class-name, function-name,
+             abstract?,
+             slot-allocation, slot-descriptors, slot-getter,
+             slot-getter-method, slot-name, slot-setter, slot-setter-method,
+             slot-type, slot-value, slot-value-setter,
+             init-keyword, keyword-required?,
 
-	     object-address,
+             object-address,
 
-	     singleton-object,
-	     <subclass>, subclass-of,
-	     <limited-integer>, limited-integer-base-class, 
-	     limited-integer-minimum, limited-integer-maximum,
-	     <union>, union-members},
+             singleton-object,
+             <subclass>, subclass-of,
+             <limited-integer>, limited-integer-base-class,
+             limited-integer-minimum, limited-integer-maximum,
+             <union>, union-members},
     export: all;
   use extras, import: { instantiable? }, export: all;
 end;
@@ -379,10 +379,10 @@ end;
 define module Namespace-Introspection
   use Builtin-Stuff,
     import: {<name>, <namespace>, <module>, <library>, <binding>,
-	     binding-name, module-name, library-name, name-home,
-	     resolve-name, exported-names, visible-names, 
-	     binding-value,  binding-type, binding-kind,
-	     get-all-libraries, get-all-modules},
+             binding-name, module-name, library-name, name-home,
+             resolve-name, exported-names, visible-names,
+             binding-value,  binding-type, binding-kind,
+             get-all-libraries, get-all-modules},
     export: all;
 end module Namespace-Introspection;
 
@@ -396,16 +396,16 @@ define module Extern
   use Dylan;
   use Builtin-Stuff,
     import: {<foreign-file>, <c-function>, <statically-typed-pointer>,
-	     signed-byte-at, signed-short-at, signed-long-at, 
-	     unsigned-byte-at, unsigned-short-at, unsigned-long-at, 
-	     signed-byte-at-setter, signed-short-at-setter,
-	     signed-long-at-setter, 
-	     unsigned-byte-at-setter, unsigned-short-at-setter,
-	     unsigned-long-at-setter,
-	     pointer-at, pointer-at-setter,
-	     c-pointer-slot, c-pointer-slot-setter,
-	     load-object-file, null-pointer,
-	     find-c-pointer, find-c-function, constrain-c-function},
+             signed-byte-at, signed-short-at, signed-long-at,
+             unsigned-byte-at, unsigned-short-at, unsigned-long-at,
+             signed-byte-at-setter, signed-short-at-setter,
+             signed-long-at-setter,
+             unsigned-byte-at-setter, unsigned-short-at-setter,
+             unsigned-long-at-setter,
+             pointer-at, pointer-at-setter,
+             c-pointer-slot, c-pointer-slot-setter,
+             load-object-file, null-pointer,
+             find-c-pointer, find-c-function, constrain-c-function},
     export: all;
   use Extensions;
   export
@@ -418,10 +418,10 @@ end module Extern;
 define module %Transcendental
   use Dylan;
   use Extensions;
-  use Builtin-stuff, 
-    import: { sin, cos, tan, asin, acos, atan, atan2, 
-	      sinh, cosh, tanh, // no inverse hyperbolic functions
-	      exp, log, sqrt,
-	      $single-pi, $single-e, $double-pi, $double-e }, 
+  use Builtin-stuff,
+    import: { sin, cos, tan, asin, acos, atan, atan2,
+              sinh, cosh, tanh, // no inverse hyperbolic functions
+              exp, log, sqrt,
+              $single-pi, $single-e, $double-pi, $double-e },
     export: all;
 end module %Transcendental;

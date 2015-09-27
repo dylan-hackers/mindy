@@ -3,7 +3,7 @@
 ##
 
 # the order is significant, since the d2c libraries must be compiled in
-# dependency order. 
+# dependency order.
 
 # These libraries are needed to compile d2c. They must compile against the
 # runtime that shipped with 2.2.0.

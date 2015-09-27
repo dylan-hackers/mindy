@@ -5,25 +5,25 @@ module: dylan
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -35,13 +35,13 @@ module: dylan
 //// Construction.
 
 define method make
-    (cls == <list>, #rest keys, #key size = 0, fill = #f) 
+    (cls == <list>, #rest keys, #key size = 0, fill = #f)
  => l :: <list>;
   let result = for (i from 0 below size,
-		    list = #() then pair(fill, list))
-	       finally
-		 list;
-	       end for;
+                    list = #() then pair(fill, list))
+               finally
+                 list;
+               end for;
   apply(initialize, result, keys);
   result;
 end method make;
@@ -66,10 +66,10 @@ define constant list_fip_finished-state? =
 define constant list_fip_current_key =
   method (list :: <list>, state :: <list>) => cur-key :: <integer>;
     for (key from 0,
-	 scan = list then tail(scan),
-	 until: scan == state)
+         scan = list then tail(scan),
+         until: scan == state)
       if (scan == #())
-	error("State not part of list?");
+        error("State not part of list?");
       end;
     finally
       key;
@@ -103,8 +103,8 @@ define method forward-iteration-protocol (list :: <list>)
      current-element-setter :: <function>,
      copy-state :: <function>);
   values(list, #f, list_fip_next_state, list_fip_finished-state?,
-	 list_fip_current_key, list_fip_current_element,
-	 list_fip_current_element-setter, list_fip_copy_state);
+         list_fip_current_key, list_fip_current_element,
+         list_fip_current_element-setter, list_fip_copy_state);
 end method forward-iteration-protocol;
 
 
@@ -131,18 +131,18 @@ define method member? (value, l :: <list>, #key test: test = \==)
 
   block (return)
     for (slow = l        then tail (slow),
-	 fast = tail (l) then if (lapped-slow) fast;
-			      else tail (tail (fast))
-			      end if,
-	 until: done | slow == #() )
+         fast = tail (l) then if (lapped-slow) fast;
+                              else tail (tail (fast))
+                              end if,
+         until: done | slow == #() )
 
       if (test (value, head (slow)))
-	return(#t);
+        return(#t);
       elseif (fast == slow)
-	done   := lapped-slow;    // Since fast goes twice the speed,
-	                          // need to give slow a chance to
-	                          // catch up.
-	lapped-slow := #t;
+        done   := lapped-slow;    // Since fast goes twice the speed,
+                                  // need to give slow a chance to
+                                  // catch up.
+        lapped-slow := #t;
       end if;
     end for;
 
@@ -150,22 +150,22 @@ define method member? (value, l :: <list>, #key test: test = \==)
   end block;
 end method member?;
 
-define method map (proc :: <function>, 
-		   collection :: <empty-list>, 
-		   #rest more) => l :: <list>;
+define method map (proc :: <function>,
+                   collection :: <empty-list>,
+                   #rest more) => l :: <list>;
   #();
 end method map;
 
 define method map-as (a_class :: singleton (<list>), proc :: <function>,
-		      l :: <list>, #next next-method, #rest more-lists)
+                      l :: <list>, #next next-method, #rest more-lists)
  => result :: <list>;
   if (every? (rcurry ( instance?, <list> ), more-lists))
     for (l          = l          then tail (l),
-	 more-lists = more-lists then map (tail, more-lists),
-	 result     = #()        then pair (apply (proc, head (l),
-						   map (head, more-lists)),
-					    result),
-	 until: ( l == #() ) | any? (rcurry (\==, #()), more-lists))
+         more-lists = more-lists then map (tail, more-lists),
+         result     = #()        then pair (apply (proc, head (l),
+                                                   map (head, more-lists)),
+                                            result),
+         until: ( l == #() ) | any? (rcurry (\==, #()), more-lists))
     finally
       reverse! (result);
     end for;
@@ -197,7 +197,7 @@ define method add! (l :: <list>, new) => new-list :: <list>;
 end method add!;
 
 define method remove  (l :: <list>, value, #key test: test = \==,
-		       count: count) => new-l :: <list>;
+                       count: count) => new-l :: <list>;
   let result    = #();
   let remaining = l;
 
@@ -205,7 +205,7 @@ define method remove  (l :: <list>, value, #key test: test = \==,
     if ( (count ~= 0) & test (head (remaining), value) )
       remaining := tail (remaining);
       count     := count & (count - 1);         // False if undefined,
-			                        // count - 1 otherwise
+                                                // count - 1 otherwise
     else
       result    := pair (head (remaining), result);
       remaining := tail (remaining);
@@ -214,9 +214,9 @@ define method remove  (l :: <list>, value, #key test: test = \==,
 
   reverse! (result);
 end method remove;
-      
+
 define method remove! (l :: <list>, value, #key test: test = \==,
-		       count: count) => new-l :: <list>;
+                       count: count) => new-l :: <list>;
   let result    = l;
   let prev      = #f;
   let remaining = l;
@@ -273,7 +273,7 @@ define method remove-duplicates! ( l :: <list>, #key test: test = \== )
   let result    = l;
   let prev      = #f;
   let remaining = l;
-  
+
   until ( remaining == #() )
     if ( ~ member? (head (remaining), tail (remaining), test: test))
       prev        := remaining;
@@ -292,7 +292,7 @@ define method remove-duplicates! ( l :: <list>, #key test: test = \== )
 end method remove-duplicates!;
 
 define method replace-subsequence! (l :: <list>, seq :: <sequence>,
-				    #key start: start = 0, end: stop)
+                                    #key start: start = 0, end: stop)
  => new-l :: <list>;
   let result = pair (#f, l);
   let prev   = result;
@@ -306,17 +306,17 @@ define method replace-subsequence! (l :: <list>, seq :: <sequence>,
   end if;
 
   let after-hole = for (after-hole = tail (prev) then tail (after-hole),
-			index = start then index + 1,
-			until: index = stop)
-		   finally after-hole;
-		   end for;
+                        index = start then index + 1,
+                        until: index = stop)
+                   finally after-hole;
+                   end for;
 
   for (elt in seq)
     let next = pair (elt, #f);
     tail (prev) := next;
     prev        := next;
   end for;
-  
+
   tail (prev) := after-hole;
   tail (result);
 end method replace-subsequence!;

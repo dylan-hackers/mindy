@@ -8,25 +8,25 @@ copyright: see below
 // Copyright (c) 1994, 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -53,10 +53,10 @@ end method write-element;
 
 define sealed domain write-element(<fd-stream>, <object>);
 define sealed domain write-element(<buffered-byte-string-output-stream>,
-				   <object>);
+                                   <object>);
 
 define sealed method write-element (stream :: <simple-sequence-stream>,
-				    elemnt :: <object>)
+                                    elemnt :: <object>)
  => ();
   block ()
     lock-stream(stream);
@@ -64,8 +64,8 @@ define sealed method write-element (stream :: <simple-sequence-stream>,
     check-output-stream(stream);
     if (stream.position == stream.stream-end)
       if (stream.stream-end == stream.contents.size)
-	grow-stream-sequence!(stream, 
-			      stream.contents.size + $default-grow-amount);
+        grow-stream-sequence!(stream,
+                              stream.contents.size + $default-grow-amount);
       end if;
       stream.stream-end := stream.stream-end + 1;
     end if;
@@ -79,13 +79,13 @@ end method;
 /// write
 ///
 define open generic write (stream :: <stream>, sequence :: <sequence>,
-			   #key start :: <integer>, // = 0
-			        end: stop :: <integer>) // = sequence.size
+                           #key start :: <integer>, // = 0
+                                end: stop :: <integer>) // = sequence.size
  => ();
 
 define method write (stream :: <buffered-stream>, sequence :: <sequence>,
-		     #key start :: <integer> = 0,
-		          end: stop :: <integer> = sequence.size)
+                     #key start :: <integer> = 0,
+                          end: stop :: <integer> = sequence.size)
  => ();
   block (exit-loop)
     let buf :: <buffer> = get-output-buffer(stream);
@@ -94,18 +94,18 @@ define method write (stream :: <buffered-stream>, sequence :: <sequence>,
     let partial-stop :: <integer> = (start + buf-capacity);
     while (#t)
       if (partial-stop >= stop)
-	let this-copy :: <integer> = (stop - start);
-	copy-sequence!(buf, buf-start, sequence, start, this-copy);
-	buf.buffer-next := buf-start + this-copy;
-	exit-loop();
+        let this-copy :: <integer> = (stop - start);
+        copy-sequence!(buf, buf-start, sequence, start, this-copy);
+        buf.buffer-next := buf-start + this-copy;
+        exit-loop();
       else
-	copy-sequence!(buf, buf-start, sequence, start, buf-capacity);
-	buf.buffer-next := buf.buffer-end;
-	buf := next-output-buffer(stream);
-	buf-start := buf.buffer-next;
-	buf-capacity := buf.buffer-end - buf-start;
-	start := partial-stop;
-	partial-stop := partial-stop + buf-capacity;
+        copy-sequence!(buf, buf-start, sequence, start, buf-capacity);
+        buf.buffer-next := buf.buffer-end;
+        buf := next-output-buffer(stream);
+        buf-start := buf.buffer-next;
+        buf-capacity := buf.buffer-end - buf-start;
+        start := partial-stop;
+        partial-stop := partial-stop + buf-capacity;
       end if;
     end while;
   cleanup
@@ -117,9 +117,9 @@ define sealed domain write(<fd-stream>, <sequence>);
 define sealed domain write(<buffered-byte-string-output-stream>, <sequence>);
 
 define sealed method write (stream :: <simple-sequence-stream>,
-			    sequence :: <sequence>,
-			    #key start :: <integer> = 0,
-			         end: stop :: <integer> = sequence.size)
+                            sequence :: <sequence>,
+                            #key start :: <integer> = 0,
+                                 end: stop :: <integer> = sequence.size)
  => ();
   block ()
     lock-stream(stream);
@@ -140,7 +140,7 @@ define sealed method write (stream :: <simple-sequence-stream>,
     unlock-stream(stream);
   end block;
 end method write;
-   
+
 /// force-output
 ///
 define open generic force-output (stream :: <stream>) => ();

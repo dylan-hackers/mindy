@@ -30,7 +30,7 @@ define method sockaddr-offset(a == <ipv6-network-address>)
   6;
 end method sockaddr-offset;
 
-define method make(class == <network-address>, #rest args, 
+define method make(class == <network-address>, #rest args,
                    #key address-family, sockaddr, #all-keys)
  => (address :: <network-address>);
   let desired-class = select(address-family)
@@ -38,9 +38,9 @@ define method make(class == <network-address>, #rest args,
                         $AF-INET6 => <ipv6-network-address>;
                         otherwise => signal("Unknown Address Family in call to make(<network-address>, address-family: )");
                       end select;
-  let new-data = copy-vector(<byte-vector>, 
-                             sockaddr.get-sa-data 
-                               + desired-class.sockaddr-offset, 
+  let new-data = copy-vector(<byte-vector>,
+                             sockaddr.get-sa-data
+                               + desired-class.sockaddr-offset,
                              size: desired-class.address-length);
 
   apply(make, desired-class, #"data", new-data, args);
@@ -63,12 +63,12 @@ begin
                  a.get-ai-family,
                  a.get-ai-socktype,
                  a.get-ai-protocol);
-      
+
       let canonical-name = a.get-ai-canonname;
       if(canonical-name ~= $null-pointer)
         format-out("Canoncial name: %=\n", canonical-name);
       end;
-      let address = make(<network-address>, 
+      let address = make(<network-address>,
                          address-family: a.get-ai-family,
                          sockaddr: a.get-ai-addr);
       format-out("Address: %=\n", address);
@@ -96,7 +96,7 @@ define method copy-vector(class :: subclass(<vector>), c-vector :: <c-vector>, #
                      error("Accessing C array of unknown size and no size: keyword given to call of as(c == <vector>, v :: <c-vector>");
                    end if
                  end if;
-                           
+
   let new-vector = make(class, size: new-size);
   for(i from 0 below new-size)
     new-vector[i] := modulo(c-vector[i], 256);
@@ -104,4 +104,3 @@ define method copy-vector(class :: subclass(<vector>), c-vector :: <c-vector>, #
   new-vector;
 end method copy-vector;
 
-    

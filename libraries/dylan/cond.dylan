@@ -6,25 +6,25 @@ author: William Lott (wlott@cs.cmu.edu)
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -96,7 +96,7 @@ end class <abort>;
 // Report-condition methods should call this routine to do their formatting
 // and streams libraries should define methods on it to pick off their
 // kinds of streams and call their particular format utility.
-// 
+//
 define open generic condition-format
     (stream :: <object>, control-string :: <string>, #rest arguments) => ();
 
@@ -113,37 +113,37 @@ define sealed method condition-format
   local
     method scan (str-start, str-index, args-start, args-index)
       if (str-index < length)
-	let char = control-string[str-index];
-	if (char == '%')
-	  let next-char = control-string[str-index + 1];
-	  if (next-char == '%')
-	    scan(str-start, str-index + 2, args-start, args-index);
-	  elseif (next-char == 's' | next-char == 'S')
-	    let next-arg = arguments[args-index];
-	    if (instance?(next-arg, <condition>))
-	      apply(format,
-		    copy-sequence
-		      (control-string, start: str-start, end: str-index),
-		    copy-sequence
-		      (arguments, start: args-start, end: args-index));
-	      report-condition(next-arg, stream);
-	      let next-str-index = str-index + 2;
-	      let next-args-index = args-index + 1;
-	      scan(next-str-index, next-str-index,
-		   next-args-index, next-args-index);
-	    else
-	      scan(str-start, str-index + 2, args-start, args-index + 1);
-	    end if;
-	  else
-	    scan(str-start, str-index + 2, args-start, args-index + 1);
-	  end if;
-	else
-	  scan(str-start, str-index + 1, args-start, args-index);
-	end if;
+        let char = control-string[str-index];
+        if (char == '%')
+          let next-char = control-string[str-index + 1];
+          if (next-char == '%')
+            scan(str-start, str-index + 2, args-start, args-index);
+          elseif (next-char == 's' | next-char == 'S')
+            let next-arg = arguments[args-index];
+            if (instance?(next-arg, <condition>))
+              apply(format,
+                    copy-sequence
+                      (control-string, start: str-start, end: str-index),
+                    copy-sequence
+                      (arguments, start: args-start, end: args-index));
+              report-condition(next-arg, stream);
+              let next-str-index = str-index + 2;
+              let next-args-index = args-index + 1;
+              scan(next-str-index, next-str-index,
+                   next-args-index, next-args-index);
+            else
+              scan(str-start, str-index + 2, args-start, args-index + 1);
+            end if;
+          else
+            scan(str-start, str-index + 2, args-start, args-index + 1);
+          end if;
+        else
+          scan(str-start, str-index + 1, args-start, args-index);
+        end if;
       else
-	apply(format,
-	      copy-sequence(control-string, start: str-start),
-	      copy-sequence(arguments, start: args-start));
+        apply(format,
+              copy-sequence(control-string, start: str-start),
+              copy-sequence(arguments, start: args-start));
       end if;
     end method scan;
   scan(0, 0, 0, 0);
@@ -152,7 +152,7 @@ end;
 // condition-force-output
 //
 // Just like condition-format, except performs a general force-output function.
-// 
+//
 define open generic condition-force-output (stream :: <object>) => ();
 
 // condition-force-output(#"cheap-IO") -- internal.
@@ -176,7 +176,7 @@ define open generic report-condition
 //
 // Default method for all conditions.  Just print the condition object
 // to the stream.
-// 
+//
 define method report-condition (condition :: <condition>, stream) => ();
   condition-format(stream, "%=", condition);
 end method report-condition;
@@ -184,16 +184,16 @@ end method report-condition;
 define method report-condition (condition :: <format-string-condition>, stream)
     => ();
   apply(condition-format, stream,
-	condition.condition-format-string,
-	condition.condition-format-arguments);
+        condition.condition-format-string,
+        condition.condition-format-arguments);
 end method report-condition;
 
 
 define method report-condition (condition :: <type-error>, stream) => ();
   condition-format(stream,
-		    "%= is not of type %=",
-		    condition.type-error-value,
-		    condition.type-error-expected-type);
+                    "%= is not of type %=",
+                    condition.type-error-value,
+                    condition.type-error-expected-type);
 end method report-condition;
 
 
@@ -206,8 +206,8 @@ end method report-condition;
 
 define method signal (string :: <string>, #rest arguments)
   signal(make(<simple-warning>,
-	      format-string: string,
-	      format-arguments: arguments));
+              format-string: string,
+              format-arguments: arguments));
 end method signal;
 
 
@@ -218,19 +218,19 @@ define method signal (cond :: <condition>, #rest noise)
   local
     method search (h)
       if (h)
-	if (instance?(cond, h.handler-type))
-	  let test = h.handler-test;
-	  if (~test | test(cond))
-	    let remaining = h.handler-next;
-	    h.handler-function(cond, method () search(remaining) end);
-	  else
-	    search(h.handler-next);
-	  end if;
-	else
-	  search(h.handler-next);
-	end if;
+        if (instance?(cond, h.handler-type))
+          let test = h.handler-test;
+          if (~test | test(cond))
+            let remaining = h.handler-next;
+            h.handler-function(cond, method () search(remaining) end);
+          else
+            search(h.handler-next);
+          end if;
+        else
+          search(h.handler-next);
+        end if;
       else
-	default-handler(cond);
+        default-handler(cond);
       end if;
     end method search;
   search(current-handler());
@@ -239,8 +239,8 @@ end method signal;
 
 define method error (string :: <string>, #rest arguments)
   error(make(<simple-error>,
-	     format-string: string,
-	     format-arguments: arguments));
+             format-string: string,
+             format-arguments: arguments));
 end method error;
 
 
@@ -250,8 +250,8 @@ define method error (cond :: <condition>, #rest noise)
   end;
   signal(cond);
   invoke-debugger(make(<simple-error>,
-		       format-string:
-			 "Attempt to return from a call to error"));
+                       format-string:
+                         "Attempt to return from a call to error"));
 end method error;
 
 
@@ -259,8 +259,8 @@ define method cerror (restart-descr, cond-or-string, #rest arguments)
   block ()
     apply(error, cond-or-string, arguments);
   exception (<simple-restart>,
-	     init-arguments: list(format-string: restart-descr,
-				  format-arguments: arguments))
+             init-arguments: list(format-string: restart-descr,
+                                  format-arguments: arguments))
     #f;
   end block;
 end method cerror;
@@ -340,8 +340,8 @@ end method return-description;
 
 define method %break (string :: <string>, #rest arguments)
   %break(make(<breakpoint>,
-	      format-string: string,
-	      format-arguments: arguments));
+              format-string: string,
+              format-arguments: arguments));
 end method %break;
 
 
@@ -352,7 +352,7 @@ define method %break (cond :: <condition>, #rest noise)
   block ()
     invoke-debugger(cond);
   exception (<simple-restart>,
-	     init-arguments: list(format-string: "Continue from break"))
+             init-arguments: list(format-string: "Continue from break"))
     #f;
   end block;
 end method %break;
@@ -374,9 +374,9 @@ define method do-handlers (function :: <function>)
   for (h = current-handler() then h.handler-next,
        while: h)
     function(h.handler-type,
-	     h.handler-test | method (x) #t end,
-	     h.handler-function,
-	     h.handler-init-args);
+             h.handler-test | method (x) #t end,
+             h.handler-function,
+             h.handler-init-args);
   end for;
 end method do-handlers;
 

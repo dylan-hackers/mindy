@@ -1,7 +1,7 @@
 module:      types
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
-// The types used by the file-system module, these types mirror the 
+// The types used by the file-system module, these types mirror the
 // Function Developer file-system types found at
 // http://www.functionalobjects.com/products/doc/io/io_196.htm
 

@@ -6,25 +6,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -35,79 +35,79 @@ copyright: see below
 //  <callback-method-parse>
 //
 //  <variable-list>
-//	<parameter-list>
+//        <parameter-list>
 //
 //  <parameter>
-//	<keyword-parameter>
+//        <keyword-parameter>
 //
 //  <bindings-parse>
 //
 //  <constituent-parse> {abstract, open}
-//	<macro-call-parse> {abstract}
-//	<definition-parse> {abstract, open}
-//	    <definition-macro-call-parse> [macro-call-parse] {abstract}
-//		<body-style-definition-macro-call-parse>
-//		<list-style-definition-macro-call-parse>
-//	    <define-macro-parse>
-//	<local-declaration-parse> {abstract}
-//	    <let-parse>
-//	    <handler-parse>
-//	    <local-parse>
-//	<expression-parse> {abstract}
-//	    <literal-ref-parse>
-//	    <varref-parse>
-//	    <varset-parse>
-//	    <funcall-parse>
-//	    <dot-parse>
-//	    <statement-parse> [macro-call-parse]
-//	    <function-macro-call-parse> [macro-call-parse]
-//	    <body-parse>
-//	    <bind-exit-parse>
-//	    <if-parse>
-//	    <method-ref-parse>
-//	    <callback-method-ref-parse>
-//	    <primitive-parse>
-//	    <unwind-protect-parse>
-//	    
+//        <macro-call-parse> {abstract}
+//        <definition-parse> {abstract, open}
+//            <definition-macro-call-parse> [macro-call-parse] {abstract}
+//                <body-style-definition-macro-call-parse>
+//                <list-style-definition-macro-call-parse>
+//            <define-macro-parse>
+//        <local-declaration-parse> {abstract}
+//            <let-parse>
+//            <handler-parse>
+//            <local-parse>
+//        <expression-parse> {abstract}
+//            <literal-ref-parse>
+//            <varref-parse>
+//            <varset-parse>
+//            <funcall-parse>
+//            <dot-parse>
+//            <statement-parse> [macro-call-parse]
+//            <function-macro-call-parse> [macro-call-parse]
+//            <body-parse>
+//            <bind-exit-parse>
+//            <if-parse>
+//            <method-ref-parse>
+//            <callback-method-ref-parse>
+//            <primitive-parse>
+//            <unwind-protect-parse>
+//
 //  <rule-set> {abstract}
-//	<main-rule-set>
-//	<auxiliary-rule-set>
+//        <main-rule-set>
+//        <auxiliary-rule-set>
 //
 //  <rule>
 //      <main-rule> {abstract}
 //          <define-rule>
-//		<body-style-define-rule>
-//		<list-style-define-rule>
-//	    <statement-rule>
-//	    <function-rule>
+//                <body-style-define-rule>
+//                <list-style-define-rule>
+//            <statement-rule>
+//            <function-rule>
 //
 //  <pattern>
-//	<empty-pattern>
-//	<binary-pattern>
-//	    <semicolon-patter>
-//	    <comma-pattern>
-//	    <sequential-pattern>
-//	<simple-pattern>
-//	    <bracketed-pattern>
-//	    <variable-pattern>
-//	    <bindings-pattern>
-//	    <name-pattern>
-//	    <arrow-pattern>
-//	    <pattern-variable>
-//		<pattern-keyword>
-//	<property-list-pattern>
+//        <empty-pattern>
+//        <binary-pattern>
+//            <semicolon-patter>
+//            <comma-pattern>
+//            <sequential-pattern>
+//        <simple-pattern>
+//            <bracketed-pattern>
+//            <variable-pattern>
+//            <bindings-pattern>
+//            <name-pattern>
+//            <arrow-pattern>
+//            <pattern-variable>
+//                <pattern-keyword>
+//        <property-list-pattern>
 //
 //  <template>
-//	<procedural-template>
-//	<literal-template>
+//        <procedural-template>
+//        <literal-template>
 //
 //  <bracketed-element>
 //  <pattern-variable-reference>
-//	<simple-pattern-variable-reference>
-//	<ellipsis-pattern-variable-reference>
-//	<concatenating-pattern-variable-reference>
-//	<sequence-pattern-variable-reference>
-//	<unhygienic-pattern-variable-reference>
+//        <simple-pattern-variable-reference>
+//        <ellipsis-pattern-variable-reference>
+//        <concatenating-pattern-variable-reference>
+//        <sequence-pattern-variable-reference>
+//        <unhygienic-pattern-variable-reference>
 //
 //  <property>
 //
@@ -118,7 +118,7 @@ copyright: see below
 // <method-parse> -- exported.
 //
 // Encapsulation of the parse of a method.
-// 
+//
 define class <method-parse> (<source-location-mixin>)
   //
   // The name of this method, if there is one.  Settable because that makes
@@ -133,10 +133,10 @@ define class <method-parse> (<source-location-mixin>)
   // Parameter list describing the return values.
   constant slot method-returns :: <variable-list>
     = make(<variable-list>,
-	   rest: make(<parameter>,
-		      name: make(<identifier-token>,
-				 kind: $raw-ordinary-word-token,
-				 symbol: #"results"))),
+           rest: make(<parameter>,
+                      name: make(<identifier-token>,
+                                 kind: $raw-ordinary-word-token,
+                                 symbol: #"results"))),
     init-keyword: returns:;
   //
   // The body.
@@ -151,10 +151,10 @@ define sealed domain initialize (<method-parse>);
 define sealed method print-object
     (meth :: <method-parse>, stream :: <stream>) => ();
   pprint-fields(meth, stream,
-		if (meth.method-name) name: end, meth.method-name,
-		parameters: meth.method-parameters,
-		returns: meth.method-returns,
-		body: meth.method-body);
+                if (meth.method-name) name: end, meth.method-name,
+                parameters: meth.method-parameters,
+                returns: meth.method-returns,
+                body: meth.method-body);
 end method print-object;
 */
 
@@ -162,7 +162,7 @@ end method print-object;
 // <callback-method-parse> -- exported.
 //
 // Encapsulation of the parse of a callback method.
-// 
+//
 define class <callback-method-parse> (<method-parse>)
 
 end class <callback-method-parse>;
@@ -196,9 +196,9 @@ define sealed domain initialize (<variable-list>);
 define sealed method print-object
     (paramlist :: <variable-list>, stream :: <stream>) => ();
   pprint-fields(paramlist, stream,
-		fixed: paramlist.varlist-fixed,
-		if (paramlist.varlist-rest) #"#rest" end,
-		paramlist.varlist-rest);
+                fixed: paramlist.varlist-fixed,
+                if (paramlist.varlist-rest) #"#rest" end,
+                paramlist.varlist-rest);
 end method print-object;
 */
 
@@ -207,7 +207,7 @@ end method print-object;
 //
 // Used to represent hairy parameter lists (i.e. method argument parameter
 // lists).
-// 
+//
 define class <parameter-list> (<variable-list>)
   //
   // Either #f or the name of the #next parameter.  Assignable because that
@@ -231,15 +231,15 @@ define sealed domain initialize (<parameter-list>);
 define sealed method print-object
     (paramlist :: <parameter-list>, stream :: <stream>) => ();
   pprint-fields(paramlist, stream,
-		fixed: paramlist.varlist-fixed,
-		if (paramlist.varlist-rest) #"#rest" end,
-		  paramlist.varlist-rest,
-		if (paramlist.paramlist-next) #"#next" end,
-		  paramlist.paramlist-next,
-		if (paramlist.paramlist-keys) #"#key" end,
-		  paramlist.paramlist-keys,
-		if (paramlist.paramlist-all-keys?) #"#all-keys" end,
-		  paramlist.paramlist-all-keys?);
+                fixed: paramlist.varlist-fixed,
+                if (paramlist.varlist-rest) #"#rest" end,
+                  paramlist.varlist-rest,
+                if (paramlist.paramlist-next) #"#next" end,
+                  paramlist.paramlist-next,
+                if (paramlist.paramlist-keys) #"#key" end,
+                  paramlist.paramlist-keys,
+                if (paramlist.paramlist-all-keys?) #"#all-keys" end,
+                  paramlist.paramlist-all-keys?);
 end method print-object;
 */
 
@@ -265,8 +265,8 @@ define sealed domain initialize (<parameter>);
 define sealed method print-object
     (param :: <parameter>, stream :: <stream>) => ();
   pprint-fields(param, stream,
-		name: param.param-name,
-		if (param.param-type) type: end, param.param-type);
+                name: param.param-name,
+                if (param.param-type) type: end, param.param-type);
 end method print-object;
 */
 
@@ -289,10 +289,10 @@ define sealed domain make (singleton(<keyword-parameter>));
 define sealed method pprint-object
     (param :: <keyword-parameter>, stream :: <stream>) => ();
   pprint-fields(param, stream,
-		keyword: param.param-keyword,
-		name: param.param-name,
-		if (param.param-type) type: end, param.param-type,
-		if (param.param-default) default: end, param.param-default);
+                keyword: param.param-keyword,
+                name: param.param-name,
+                if (param.param-type) type: end, param.param-type,
+                if (param.param-default) default: end, param.param-default);
 end method pprint-object;
 */
 
@@ -319,8 +319,8 @@ define sealed domain initialize (<bindings-parse>);
 define sealed method print-object
     (bindings :: <bindings-parse>, stream :: <stream>) => ();
   pprint-fields(bindings, stream,
-		param-list: bindings.bindings-variables,
-		expression: bindings.bindings-expression);
+                param-list: bindings.bindings-variables,
+                expression: bindings.bindings-expression);
 end;
 */
 
@@ -341,7 +341,7 @@ define sealed domain initialize (<constituent-parse>);
 // <macro-call-parse> -- exported.
 //
 // Abstract superclass for all the different kinds of macro calls.
-// 
+//
 define abstract class <macro-call-parse> (<constituent-parse>)
   //
   // The word (DEFINE-BODY, DEFINE-LIST, STATEMENT, or FUNCTION) that names
@@ -360,15 +360,15 @@ define sealed domain make (singleton(<macro-call-parse>));
 define sealed method print-object
     (call :: <macro-call-parse>, stream :: <stream>) => ();
   pprint-fields(call, stream,
-		word: call.macro-call-word,
-		fragment: call.macro-call-fragment);
+                word: call.macro-call-word,
+                fragment: call.macro-call-fragment);
 end method print-object;
 */
 
 // <definition-parse> -- exported.
 //
 // Shared by the various defining forms.
-// 
+//
 define open abstract class <definition-parse> (<constituent-parse>)
 end class <definition-parse>;
 
@@ -392,9 +392,9 @@ define sealed domain make (singleton(<definition-macro-call-parse>));
 define sealed method print-object
     (object :: <definition-macro-call-parse>, stream :: <stream>) => ();
   pprint-fields(object, stream,
-		modifiers: object.definition-modifiers,
-		word: object.macro-call-word,
-		fragment: object.macro-call-fragment);
+                modifiers: object.definition-modifiers,
+                word: object.macro-call-word,
+                fragment: object.macro-call-fragment);
 end method print-object;
 */
 
@@ -406,7 +406,7 @@ end method print-message;
 // <body-style-definition-macro-call-parse> -- exported.
 //
 // A call to a body style definition macro.
-// 
+//
 define class <body-style-definition-macro-call-parse>
     (<definition-macro-call-parse>)
 end class <body-style-definition-macro-call-parse>;
@@ -417,7 +417,7 @@ define sealed domain make
 // <list-style-definition-macro-call-parse> -- exported.
 //
 // A call to a list style definition macro.
-// 
+//
 define class <list-style-definition-macro-call-parse>
     (<definition-macro-call-parse>)
 end class <list-style-definition-macro-call-parse>;
@@ -440,7 +440,7 @@ define sealed domain make (singleton(<local-declaration-parse>));
 // A let is just a bunch of local bindings.  We don't explicitly represent the
 // scoping of lets.  It is up to ICR to notice that the stuff after a let is
 // inside the scope of the bindings established by the let.
-// 
+//
 define class <let-parse> (<local-declaration-parse>)
   //
   constant slot let-variables :: <variable-list>,
@@ -456,8 +456,8 @@ define sealed domain make (singleton(<let-parse>));
 define sealed method print-object
     (form :: <let-parse>, stream :: <stream>) => ();
   pprint-fields(form, stream,
-		variables: form.let-variables,
-		expression: form.let-expression);
+                variables: form.let-variables,
+                expression: form.let-expression);
 end method print-object;
 */
 
@@ -484,9 +484,9 @@ define sealed domain make (singleton(<handler-parse>));
 define sealed method print-object
     (form :: <handler-parse>, stream :: <stream>) => ();
   pprint-fields(form, stream,
-		type: form.handler-type,
-		options: form.handler-options,
-		expression: form.handler-expression);
+                type: form.handler-type,
+                options: form.handler-options,
+                expression: form.handler-expression);
 end method print-object;
 */
 
@@ -540,7 +540,7 @@ end method print-object;
 // <varref-parse> -- exported.
 //
 // A reference to some variable.
-// 
+//
 define class <varref-parse> (<expression-parse>)
   //
   // The identifier being referenced.
@@ -579,8 +579,8 @@ define sealed domain make (singleton(<varset-parse>));
 define sealed method print-object
     (varset :: <varset-parse>, stream :: <stream>) => ();
   pprint-fields(varset, stream,
-		id: varset.varset-id,
-		value: varset.varset-value);
+                id: varset.varset-id,
+                value: varset.varset-value);
 end method print-object;
 */
 
@@ -612,8 +612,8 @@ define sealed method print-object
     vec[i * 2 + 1] := arg;
   end for;
   apply(pprint-fields, funcall, stream,
-	function: funcall.funcall-function,
-	vec);
+        function: funcall.funcall-function,
+        vec);
 end method print-object;
 */
 
@@ -646,7 +646,7 @@ end method print-object;
 // <statement-parse> -- exported.
 //
 // A generic statement -- i.e. before macro expansion.
-// 
+//
 define class <statement-parse> (<macro-call-parse>, <expression-parse>)
 end class <statement-parse>;
 
@@ -661,7 +661,7 @@ end method print-message;
 // <function-macro-call-parse> -- exported.
 //
 // An invocation of some function-call macro.
-// 
+//
 define class <function-macro-call-parse>
     (<macro-call-parse>, <expression-parse>)
 end class <function-macro-call-parse>;
@@ -677,7 +677,7 @@ end method print-message;
 // <body-parse> -- exported.
 //
 // A sequenctial body of constituents.  Used wherever we need a body.
-// 
+//
 define class <body-parse> (<expression-parse>)
   //
   // Vector of <constituent-parse>s that make up this body.
@@ -700,7 +700,7 @@ end method print-object;
 // Internal parse tree node used to represent the binding of an exit function.
 // Not actually generated by the parser.  Instead, the block macro magically
 // expands into these as necessary.
-// 
+//
 define class <bind-exit-parse> (<expression-parse>)
   //
   // The identifier to bind the exit function to.
@@ -727,7 +727,7 @@ end method print-object;
 // Internal parse tree node used to represent a conditional.  Not actually
 // generated by the parser.  Instead, the if macro magically expands into
 // these as necessary.
-// 
+//
 define class <if-parse> (<expression-parse>)
   //
   // The condition to test.
@@ -749,9 +749,9 @@ define sealed domain make (singleton(<if-parse>));
 define sealed method print-object
     (statement :: <if-parse>, stream :: <stream>) => ();
   pprint-fields(statement, stream,
-		condition: statement.if-condition,
-		consequent: statement.if-consequent,
-		alternate: statement.if-alternate);
+                condition: statement.if-condition,
+                consequent: statement.if-consequent,
+                alternate: statement.if-alternate);
 end method print-object;
 */
 
@@ -791,7 +791,7 @@ define sealed domain make (singleton(<callback-method-ref-parse>));
 //
 // Used to represent some magic internal operation.  Not actually generated
 // by the parser.  Instead, the %%primitive macro magically expands into these.
-// 
+//
 define class <primitive-parse> (<expression-parse>)
   //
   // The name of the primitive.
@@ -809,8 +809,8 @@ define sealed domain make (singleton(<primitive-parse>));
 define sealed method print-object
     (primitive :: <primitive-parse>, stream :: <stream>) => ();
   pprint-fields(primitive, stream,
-		name: primitive.primitive-name,
-		operands: primitive.primitive-operands);
+                name: primitive.primitive-name,
+                operands: primitive.primitive-operands);
 end method print-object;
 */
 
@@ -819,7 +819,7 @@ end method print-object;
 //
 // Represents a block/cleanup.  Not actually generated by the parser.  Instead,
 // the block macro expands into these where necessary.
-// 
+//
 define class <unwind-protect-parse> (<expression-parse>)
   //
   // The protected body.
@@ -868,7 +868,7 @@ define sealed domain make (singleton(<define-macro-parse>));
 // <rule-set> -- exported.
 //
 // A set of rewrite rules.
-// 
+//
 define abstract class <rule-set> (<object>)
   //
   // Vector of rules.
@@ -891,7 +891,7 @@ define sealed domain make (singleton(<main-rule-set>));
 // <auxiliary-rule-set> -- exported.
 //
 // An auxiliary rule set for some macro.
-// 
+//
 define class <auxiliary-rule-set> (<rule-set>)
   //
   // The keyword name for this ruleset.
@@ -913,16 +913,16 @@ define sealed domain make (singleton(<auxiliary-rule-set>));
 define sealed method print-object
     (aux-rule-set :: <auxiliary-rule-set>, stream :: <stream>) => ();
   pprint-fields(aux-rule-set, stream,
-		name: aux-rule-set.rule-set-name,
-		rules: aux-rule-set.rule-set-rules,
-		body-variable?: aux-rule-set.rule-set-body-variable?);
+                name: aux-rule-set.rule-set-name,
+                rules: aux-rule-set.rule-set-rules,
+                body-variable?: aux-rule-set.rule-set-body-variable?);
 end method print-object;
 */
 
 // <rule> -- exported.
 //
 // A single rewrite rule for some macro.
-// 
+//
 define abstract class <rule> (<object>)
   //
   // The pattern this rule matches.  Settable because we want to be able to
@@ -943,8 +943,8 @@ define sealed domain initialize (<rule>);
 define sealed method print-object
     (rule :: <rule>, stream :: <stream>) => ();
   pprint-fields(rule, stream,
-		pattern: rule.rule-pattern,
-		template: rule.rule-template);
+                pattern: rule.rule-pattern,
+                template: rule.rule-template);
 end method print-object;
 */
 
@@ -968,16 +968,16 @@ define sealed domain make (singleton(<main-rule>));
 define sealed method print-object
     (rule :: <main-rule>, stream :: <stream>) => ();
   pprint-fields(rule, stream,
-		name: rule.main-rule-name,
-		pattern: rule.rule-pattern,
-		template: rule.rule-template);
+                name: rule.main-rule-name,
+                pattern: rule.rule-pattern,
+                template: rule.rule-template);
 end method print-object;
 */
 
 // <define-rule> -- exported.
 //
 // A main rule for some definition macro.
-// 
+//
 define abstract class <define-rule> (<main-rule>)
   //
   // The modifiers pattern.  Starts out #f and gets filled in with the real
@@ -994,17 +994,17 @@ define sealed domain make (singleton(<define-rule>));
 define sealed method print-object
     (rule :: <define-rule>, stream :: <stream>) => ();
   pprint-fields(rule, stream,
-		modifiers-pattern: rule.define-rule-modifiers-pattern,
-		name: rule.main-rule-name,
-		pattern: rule.rule-pattern,
-		template: rule.rule-template);
+                modifiers-pattern: rule.define-rule-modifiers-pattern,
+                name: rule.main-rule-name,
+                pattern: rule.rule-pattern,
+                template: rule.rule-template);
 end method print-object;
 */
 
 // <body-style-define-rule> -- exported.
 //
 // A define rule for a body style definition macro.
-// 
+//
 define class <body-style-define-rule> (<define-rule>)
 end class <body-style-define-rule>;
 
@@ -1013,7 +1013,7 @@ define sealed domain make (singleton(<body-style-define-rule>));
 // <list-style-define-rule> -- exported.
 //
 // A define rule for a list style definition macro.
-// 
+//
 define class <list-style-define-rule> (<define-rule>)
 end class <list-style-define-rule>;
 
@@ -1022,7 +1022,7 @@ define sealed domain make (singleton(<list-style-define-rule>));
 // <statement-rule> -- exported.
 //
 // A define rule for a statement macro.
-// 
+//
 define class <statement-rule> (<main-rule>)
 end class <statement-rule>;
 
@@ -1031,7 +1031,7 @@ define sealed domain make (singleton(<statement-rule>));
 // <function-rule> -- exported.
 //
 // A define rule for a function macro.
-// 
+//
 define class <function-rule> (<main-rule>)
 end class <function-rule>;
 
@@ -1041,7 +1041,7 @@ define sealed domain make (singleton(<function-rule>));
 // <auxiliary-rule> -- exported.
 //
 // A rule in an auxiliary-rule-set.
-// 
+//
 define class <auxiliary-rule> (<rule>)
 end class <auxiliary-rule>;
 
@@ -1061,7 +1061,7 @@ define sealed domain initialize (<pattern>);
 // <empty-pattern>
 //
 // A pattern that matches the empty fragment.
-// 
+//
 define class <empty-pattern> (<pattern>)
 end class <empty-pattern>;
 
@@ -1070,7 +1070,7 @@ define sealed domain make (singleton(<empty-pattern>));
 // <binary-pattern>
 //
 // Shared abstract superclass for the patterns that combine two sub-patterns.
-// 
+//
 define abstract class <binary-pattern> (<pattern>)
   //
   // The sub-pattern on the left.
@@ -1093,9 +1093,9 @@ define sealed domain make (singleton(<binary-pattern>));
 define sealed method print-object
     (pattern :: <binary-pattern>, stream :: <stream>) => ();
   pprint-fields(pattern, stream,
-		left: pattern.pattern-left,
-		right: pattern.pattern-right,
-		pattern.pattern-last? & #"last", pattern.pattern-last?);
+                left: pattern.pattern-left,
+                right: pattern.pattern-right,
+                pattern.pattern-last? & #"last", pattern.pattern-last?);
 end method print-object;
 */
 
@@ -1158,7 +1158,7 @@ define sealed domain make (singleton(<bracketed-pattern>));
 // <variable-pattern>
 //
 // Matches variables (i.e. either ``foo'' or ``foo :: type'').
-// 
+//
 define class <variable-pattern> (<simple-pattern>)
   //
   // The pattern-variable that gets bound to the variable name.
@@ -1177,15 +1177,15 @@ define sealed domain make (singleton(<variable-pattern>));
 define sealed method print-object
     (pattern :: <variable-pattern>, stream :: <stream>) => ();
   pprint-fields(pattern, stream,
-		name-pattern: pattern.variable-name-pattern,
-		type-pattern: pattern.variable-type-pattern);
+                name-pattern: pattern.variable-name-pattern,
+                type-pattern: pattern.variable-type-pattern);
 end method print-object;
 */
 
 // <bindings-pattern>
 //
 // Matches variable = expression or (variable-list) = expression
-// 
+//
 define class <bindings-pattern> (<simple-pattern>)
   //
   constant slot bindings-variables-pattern
@@ -1203,8 +1203,8 @@ define sealed domain make (singleton(<bindings-pattern>));
 define sealed method print-object
     (pattern :: <bindings-pattern>, stream :: <stream>) => ();
   pprint-fields(pattern, stream,
-		variable-pattern: pattern.bindings-variables-pattern,
-		value-pattern: pattern.bindings-value-pattern);
+                variable-pattern: pattern.bindings-variables-pattern,
+                value-pattern: pattern.bindings-value-pattern);
 end method print-object;
 */
 
@@ -1212,7 +1212,7 @@ end method print-object;
 // <name-pattern> -- exported.
 //
 // Pattern that matches a literal name.
-// 
+//
 define class <name-pattern> (<simple-pattern>)
   constant slot pattern-name :: <symbol-token>,
     required-init-keyword: name:;
@@ -1230,7 +1230,7 @@ end method print-object;
 // <arrow-pattern> -- exported.
 //
 // Pattern that matches a literal arrow.
-// 
+//
 define class <arrow-pattern> (<simple-pattern>)
 end class <arrow-pattern>;
 
@@ -1267,18 +1267,18 @@ define sealed domain make (singleton(<pattern-variable>));
 define sealed method print-object
     (pattern :: <pattern-variable>, stream :: <stream>) => ();
   pprint-fields(pattern, stream,
-		name: pattern.patvar-name,
-		if (pattern.patvar-constraint) constraint: end,
-		pattern.patvar-constraint,
-		if (pattern.patvar-at-end?) at-end?: end,
-		pattern.patvar-at-end?);
+                name: pattern.patvar-name,
+                if (pattern.patvar-constraint) constraint: end,
+                pattern.patvar-constraint,
+                if (pattern.patvar-at-end?) at-end?: end,
+                pattern.patvar-at-end?);
 end method print-object;
 */
 
 // <property-list-pattern> -- exported.
 //
 // A pattern that matches a property-list like fragment.
-// 
+//
 define class <property-list-pattern> (<pattern>)
   //
   // The pattern variable to bind everything to if there is one.  Settable
@@ -1300,7 +1300,7 @@ define sealed domain make (singleton(<property-list-pattern>));
 // <pattern-keyword> -- exported.
 //
 // A pattern variable used for keyword matching of property lists.
-// 
+//
 define class <pattern-keyword> (<pattern-variable>)
   //
   // Pattern keywords get matched against the entire property value.  So they
@@ -1323,7 +1323,7 @@ define sealed domain make (singleton(<pattern-keyword>));
 // <template> -- exported.
 //
 // Abstract superclass of the different kinds of templates.
-// 
+//
 define abstract class <template> (<object>)
 end class <template>;
 
@@ -1349,7 +1349,7 @@ define sealed domain make (singleton(<procedural-template>));
 define sealed method print-object
     (template :: <procedural-template>, stream :: <stream>) => ();
   pprint-fields(template, stream, name: template.template-name,
-		arguments: template.template-arguments);
+                arguments: template.template-arguments);
 end method print-object;
 */
 
@@ -1399,14 +1399,14 @@ define sealed domain initialize (<bracketed-element>);
 define sealed method print-object
     (element :: <bracketed-element>, stream :: <stream>) => ();
   pprint-fields(element, stream,
-		left: element.bracketed-element-left-token,
-		guts: element.bracketed-element-guts,
-		right: element.bracketed-element-right-token);
+                left: element.bracketed-element-left-token,
+                guts: element.bracketed-element-guts,
+                right: element.bracketed-element-right-token);
 end method print-object;
 */
 
 // <pattern-variable-reference> -- exported.
-// 
+//
 define abstract class <pattern-variable-reference> (<object>)
   //
   // The variable being referenced, as a NAME, STRING, SYMBOL, or ELLIPSIS.
@@ -1433,11 +1433,11 @@ define class <concatenating-pattern-variable-reference>
     (<pattern-variable-reference>)
   //
   // The prefix, or #f if none.
-  constant slot patvarref-prefix :: false-or(<string>), 
+  constant slot patvarref-prefix :: false-or(<string>),
     required-init-keyword: prefix:;
   //
   // The suffix, or #f if none.
-  constant slot patvarref-suffix :: false-or(<string>), 
+  constant slot patvarref-suffix :: false-or(<string>),
     required-init-keyword: suffix:;
 end class <concatenating-pattern-variable-reference>;
 
@@ -1449,11 +1449,11 @@ define sealed method print-object
     (pvarref :: <concatenating-pattern-variable-reference>, stream :: <stream>)
   => ();
   pprint-fields(pvarref, stream,
-		if (pvarref.patvarref-prefix) prefix: end,
-		  pvarref.patvarref-prefix,
-		name: pvarref.patvarref-name,
-		if (pvarref.patvarref-suffix) separator: end,
-		  pvarref.patvarref-suffix);
+                if (pvarref.patvarref-prefix) prefix: end,
+                  pvarref.patvarref-prefix,
+                name: pvarref.patvarref-name,
+                if (pvarref.patvarref-suffix) separator: end,
+                  pvarref.patvarref-suffix);
 end method print-object;
 */
 
@@ -1515,8 +1515,8 @@ define sealed domain initialize (<property>);
 define sealed method print-object
     (prop :: <property>, stream :: <stream>) => ();
   pprint-fields(prop, stream,
-		keyword: prop.prop-keyword,
-		value: prop.prop-value);
+                keyword: prop.prop-keyword,
+                value: prop.prop-value);
 end;
 */
 

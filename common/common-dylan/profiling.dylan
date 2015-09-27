@@ -9,7 +9,7 @@ Warranty:     Distributed WITHOUT WARRANTY OF ANY KIND
 
 /// Generic profiling macro
 
-// Syntax: 
+// Syntax:
 // profiling
 //    (cpu-time-seconds,
 //     cpu-time-microseconds,
@@ -52,7 +52,7 @@ end macro profiling-keywords;
 define macro profiling-results
   { profiling-results (?options:*)
       ?body:body
-    end } 
+    end }
  => { method (state)
         ?options;
         ?body
@@ -106,7 +106,7 @@ end function do-with-profiling;
 
 /// CPU time profiling
 
-define constant <cpu-profiling-type> 
+define constant <cpu-profiling-type>
   = one-of(#"cpu-time-seconds", #"cpu-time-microseconds");
 
 define method profiling-type-result
@@ -132,7 +132,7 @@ define method stop-profiling-type
     let current-time = cpu-time();
     let current-time-seconds = current-time.profiling-seconds-value;
     let current-time-microseconds = current-time.profiling-microseconds-value;
-    
+
     let (seconds, microseconds)
       = if (current-time-microseconds < start-time-microseconds)
           values(current-time-seconds - start-time-seconds - 1,

@@ -5,25 +5,25 @@ module: extern
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -44,26 +44,26 @@ define method get-c-function
  => (result :: <c-function>);
   let real-args = if (args) as(<list>, args) else #() end if;
   let real-result = if (instance?(result, <sequence>)) as(<list>, result)
-		    else list(result)
-		    end if;
+                    else list(result)
+                    end if;
   let fun = if (file == gcf-unbound)
-	      find-c-function(name)
-	    else
-	      find-c-function(name, file: file);
-	    end if;
+              find-c-function(name)
+            else
+              find-c-function(name, file: file);
+            end if;
   fun & constrain-c-function(fun, real-args, rest, real-result);
 end method get-c-function;
 
 // These will be used by "make" and "destroy".
 //
 define constant malloc = get-c-function("malloc", args: list(<integer>),
-					result: <statically-typed-pointer>);
+                                        result: <statically-typed-pointer>);
 define constant calloc = get-c-function("calloc",
-					args: list(<integer>, <integer>),
-					result: <statically-typed-pointer>);
+                                        args: list(<integer>, <integer>),
+                                        result: <statically-typed-pointer>);
 define constant c-free = get-c-function("free",
-					args: list(<statically-typed-pointer>),
-					result: #());
+                                        args: list(<statically-typed-pointer>),
+                                        result: #());
 
 // Uses "free" to deallocate a native C pointer.
 //
@@ -130,9 +130,9 @@ define method make
     select (pointer by instance?)
       <statically-typed-pointer>,
       <integer> =>
-	as(cls, pointer);
+        as(cls, pointer);
       otherwise =>
-	error("Invalid pointer: keyword in make: %=", pointer);
+        error("Invalid pointer: keyword in make: %=", pointer);
     end select;
   else
     if (element-count < 1)
@@ -140,7 +140,7 @@ define method make
     end if;
 
     let ptr = as(cls,
-		 calloc((content-size(cls) + extra-bytes), element-count));
+                 calloc((content-size(cls) + extra-bytes), element-count));
     if (ptr = null-pointer) error("Make failed to allocate memory.") end if;
 
     apply(initialize, ptr, rest);
@@ -161,12 +161,12 @@ define class <machine-pointer> (<statically-typed-pointer>) end class;
 // functions to that it obeys the protocol of <string>.
 //
 define class <c-string>
-    (<stretchy-collection>, <string>, <statically-typed-pointer>) 
+    (<stretchy-collection>, <string>, <statically-typed-pointer>)
 end class <c-string>;
 
 // We come up with an ambiguity in this special case, so define a method which
 // resolves it.
-// 
+//
 define method as
     (cls == <c-string>, value :: <c-string>) => (result :: <c-string>);
   value;
@@ -177,7 +177,7 @@ end method as;
 //
 define constant strcmp
   = get-c-function("strcmp", args: list(<c-string>, <c-string>),
-		   result: <integer>);
+                   result: <integer>);
 define constant strlen
   = get-c-function("strlen", args: list(<c-string>), result: <integer>);
 
@@ -208,18 +208,18 @@ define method forward-iteration-protocol (str :: <c-string>)
      current-element-setter :: <function>,
      copy-state :: <function>);
   values(0, #f,
-	 method (str, state) state + 1 end method,
-	 method (str, state, limit)
-	   str = null-pointer | unsigned-byte-at(str, offset: state) == 0;
-	 end method,
-	 method (str, state) state end method,
-	 method (str, state)
-	   as(<character>, unsigned-byte-at(str, offset: state));
-	 end method,
-	 method (value :: <character>, str, state)
-	   unsigned-byte-at(str, offset: state) := as(<integer>, value);
-	 end method,
-	 method (str, state) state end method);
+         method (str, state) state + 1 end method,
+         method (str, state, limit)
+           str = null-pointer | unsigned-byte-at(str, offset: state) == 0;
+         end method,
+         method (str, state) state end method,
+         method (str, state)
+           as(<character>, unsigned-byte-at(str, offset: state));
+         end method,
+         method (value :: <character>, str, state)
+           unsigned-byte-at(str, offset: state) := as(<integer>, value);
+         end method,
+         method (str, state) state end method);
 end method forward-iteration-protocol;
 
 define method pointer-value (ptr :: <c-string>, #key index = 0)
@@ -260,7 +260,7 @@ define method size-setter (value :: <integer>, string :: <c-string>)
       #f;
     value > sz =>
       for (i from sz below value)
-	unsigned-byte-at(string, offset: i) := space-byte;
+        unsigned-byte-at(string, offset: i) := space-byte;
       end for;
       unsigned-byte-at(string, offset: value) := 0;
     value < 0 =>
@@ -287,7 +287,7 @@ define method element
       default;
   end case;
 end method element;
-    
+
 define method element-setter
     (char :: <byte-character>, vec :: <c-string>, index :: <integer>)
  => char :: <byte-character>;
@@ -410,10 +410,10 @@ define method forward-iteration-protocol (vec :: <c-vector>)
      current-element-setter :: <function>,
      copy-state :: <function>);
   values(0, vec.size,
-	 method (c, s) s + 1 end,	// next-state
-	 method (c, s, l) s == l end, // finished-state?
-	 method (c, s) s end,	// current-key
-	 method (c, s) pointer-value(c, index: s) end, // current-element
-	 method (v, c, s) pointer-value(c, index: s) := v end, // ""-setter
-	 method (c, s) s end); // copy-state
+         method (c, s) s + 1 end,        // next-state
+         method (c, s, l) s == l end, // finished-state?
+         method (c, s) s end,        // current-key
+         method (c, s) pointer-value(c, index: s) end, // current-element
+         method (v, c, s) pointer-value(c, index: s) := v end, // ""-setter
+         method (c, s) s end); // copy-state
 end method forward-iteration-protocol;

@@ -17,22 +17,22 @@ define method \<(d1 :: <date>, d2 :: <date>) => (before? :: <boolean>)
 end method \<;
 
 // 7.4.2 Comparing Durations
-define method \=(d1 :: <year/month-duration>, d2 :: <year/month-duration>) 
+define method \=(d1 :: <year/month-duration>, d2 :: <year/month-duration>)
  => (equal? :: <boolean>)
   d1.duration = d2.duration;
 end method \=;
 
-define method \=(d1 :: <day/time-duration>, d2 :: <day/time-duration>) 
+define method \=(d1 :: <day/time-duration>, d2 :: <day/time-duration>)
  => (equal? :: <boolean>)
   d1.duration = d2.duration;
 end method \=;
 
-define method \<(d1 :: <year/month-duration>, d2 :: <year/month-duration>) 
+define method \<(d1 :: <year/month-duration>, d2 :: <year/month-duration>)
  => (before? :: <boolean>)
   d1.duration < d2.duration;
 end method \<;
 
-define method \<(d1 :: <day/time-duration>, d2 :: <day/time-duration>) 
+define method \<(d1 :: <day/time-duration>, d2 :: <day/time-duration>)
  => (before? :: <boolean>)
   d1.duration < d2.duration;
 end method \<;

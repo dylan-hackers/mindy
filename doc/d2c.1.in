@@ -5,7 +5,7 @@
 d2c \- A Dylan-to-C compiler
 .SH SYNOPSIS
 .B d2c
-.RI "[ " option " ].\|.\|. " lidfile 
+.RI "[ " option " ].\|.\|. " lidfile
 .SH WARNING
 This man page is intended to supplement the main Gwydion Dylan
 documentation at

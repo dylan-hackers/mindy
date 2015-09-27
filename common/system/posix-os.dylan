@@ -69,7 +69,7 @@ define function environment-variable(name :: <byte-string>)
     #f;
   end if;
 end;
-    
+
 define function environment-variable-setter(new-value :: false-or(<byte-string>), name :: <byte-string>)
  => (value :: false-or(<byte-string>))
   if (new-value)

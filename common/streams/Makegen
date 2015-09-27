@@ -23,7 +23,7 @@ $streams_lid_file = "$plat-streams";
 
 &emit_library_rule(
     $streams_lid_file, '$(BUILDROOT)/force.timestamp', '', 'compile',
-	'no-mindy', 'install');
+    'no-mindy', 'install');
 
 &emit_library_rule(
     'Mindy-streams', '', '', 'compile-mindy', 'no-d2c', 'install');

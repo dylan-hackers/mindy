@@ -38,7 +38,7 @@ define open generic concatenate!
     (sequence :: <sequence>, #rest more-sequences)
  => (result-sequence :: <sequence>);
 
-define method concatenate! 
+define method concatenate!
     (s :: <sequence>, #rest more) => (result-sequence :: <sequence>)
   apply(concatenate, s, more);
 end method concatenate!;
@@ -60,37 +60,37 @@ define method concatenate! (x :: <list>, #rest more) => (z :: <list>)
   iterate find-result (r :: <list> = x, i :: <integer> = 0)
     if (i = size(more))
       r
-    elseif (empty?(r)) 
+    elseif (empty?(r))
       find-result(as(<list>, more[i]), i + 1) // skip empty arg prefix
     else
       // p points into r (which is growing).  p is non-empty.
       iterate connect (p :: <list> = r, i :: <integer> = i)
         if (i = size(more))
           r
-	else
-	  // find next non-empty arg. to add
+        else
+          // find next non-empty arg. to add
           let x = as(<list>, more[i]);
           if (empty?(x))
             connect(p, i + 1)      // skip empty arg
-	  else
-	    // cdr to end of p and side-effect tail
- 	    iterate find-tail (p :: <list> = p) 
-	      if (empty?(tail(p)))
-	        tail(p) := x;      // DESTRUCTIVE UPDATE
+          else
+            // cdr to end of p and side-effect tail
+             iterate find-tail (p :: <list> = p)
+              if (empty?(tail(p)))
+                tail(p) := x;      // DESTRUCTIVE UPDATE
                 connect(x, i + 1)  // connect next arg
-	      else
-	        find-tail(tail(p))
-	      end if
-	    end iterate
+              else
+                find-tail(tail(p))
+              end if
+            end iterate
           end if
         end if;
-      end iterate 
+      end iterate
     end if
   end iterate
 end method;
 
 define open generic difference
-    (sequence-1 :: <sequence>, sequence-2 :: <sequence>, 
+    (sequence-1 :: <sequence>, sequence-2 :: <sequence>,
      #key test :: <function>)
  => (result-sequence :: <sequence>);
 
@@ -113,8 +113,8 @@ define open generic position
  => (position :: false-or(<integer>));
 
 define method position
-    (sequence :: <sequence>, target, 
-     #key predicate :: <function> = \==, 
+    (sequence :: <sequence>, target,
+     #key predicate :: <function> = \==,
           skip :: <integer> = 0,
           count)
  => (position :: false-or(<integer>))
@@ -126,9 +126,9 @@ define method position
       let matched? = predicate(item, target);
       if (matched?)
         if (skip = 0)
-	  return(index);
+          return(index);
         end;
-	skip := skip - 1;
+        skip := skip - 1;
       end;
     end;
   end;
@@ -136,8 +136,8 @@ end method position;
 
 // Copy-down method for simple object vectors...
 define sealed method position
-    (sequence :: <simple-object-vector>, target, 
-     #key predicate :: <function> = \==, 
+    (sequence :: <simple-object-vector>, target,
+     #key predicate :: <function> = \==,
           skip :: <integer> = 0,
           count)
  => (position :: false-or(<integer>))
@@ -149,9 +149,9 @@ define sealed method position
       let matched? = predicate(item, target);
       if (matched?)
         if (skip = 0)
-	  return(index);
+          return(index);
         end;
-	skip := skip - 1;
+        skip := skip - 1;
       end
     end
   end
@@ -160,7 +160,7 @@ end method position;
 
 define open generic split
     (collection :: <string>, character :: <character>,
-     #key start :: <integer>, 
+     #key start :: <integer>,
           end: _end :: <integer>,
           trim? :: <boolean>)
  => (strings :: <sequence>);
@@ -176,20 +176,20 @@ define sealed method split
   let new-position :: <integer> = old-position;
   let results :: <stretchy-object-vector> = make(<stretchy-object-vector>);
   local method add-substring
-	    (start :: <integer>, _end :: <integer>, #key last? :: <boolean> = #f) => ()
-	  if (trim?)
-	    while (start < _end & string[start] = ' ')
-	      start := start + 1
-	    end;
-	    while (start < _end & string[_end - 1] = ' ')
-	      _end := _end - 1
-	    end
-	  end;
-	  // Don't ever return just a single empty string
-	  if (~last? | start ~== _end | ~empty?(results))
-	    add!(results, copy-sequence(string, start: start, end: _end))
-	  end
-	end method add-substring;
+            (start :: <integer>, _end :: <integer>, #key last? :: <boolean> = #f) => ()
+          if (trim?)
+            while (start < _end & string[start] = ' ')
+              start := start + 1
+            end;
+            while (start < _end & string[_end - 1] = ' ')
+              _end := _end - 1
+            end
+          end;
+          // Don't ever return just a single empty string
+          if (~last? | start ~== _end | ~empty?(results))
+            add!(results, copy-sequence(string, start: start, end: _end))
+          end
+        end method add-substring;
   while (new-position < end-position)
     if (string[new-position] = character)
       add-substring(old-position, new-position);
@@ -243,7 +243,7 @@ define method default-last-handler (condition :: <serious-condition>, next-handl
     format-out("%s\n", condition);
   exception ( print-error :: <error> )
     format-out("%=\nsignalled while trying to print an instance of %=\n",
-	       print-error, object-class(condition));
+               print-error, object-class(condition));
   end block;
   next-handler();
 end method;
@@ -251,7 +251,7 @@ end method;
 define last-handler <serious-condition> = default-last-handler;
 
 define sideways method default-handler (condition :: <warning>)
-  debug-message("Warning: %s", condition-to-string(condition) | condition);  
+  debug-message("Warning: %s", condition-to-string(condition) | condition);
 end method;
 
 

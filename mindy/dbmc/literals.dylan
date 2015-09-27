@@ -6,25 +6,25 @@ copyright: see below
 // Copyright (c) 1995, 1996, 1997  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -71,7 +71,7 @@ end;
 
 // Literal booleans.
 
-define abstract class <literal-boolean> (<eql-literal>) 
+define abstract class <literal-boolean> (<eql-literal>)
 end;
 define class <literal-true> (<literal-boolean>) end;
 define class <literal-false> (<literal-boolean>) end;
@@ -124,15 +124,15 @@ end;
 define method \= (x == #t, y :: <literal-true>) => res :: <boolean>;
   #t;
 end;
-    
+
 define method \= (x :: <literal-true>, y == #t) => res :: <boolean>;
   #t;
 end;
-    
+
 define method \= (x == #f, y :: <literal-false>) => res :: <boolean>;
   #t;
 end;
-    
+
 define method \= (x :: <literal-false>, y == #f) => res :: <boolean>;
   #t;
 end;
@@ -183,7 +183,7 @@ end;
 define class <literal-single-float> (<literal-float>) end;
 define class <literal-double-float> (<literal-float>) end;
 define class <literal-extended-float> (<literal-float>) end;
-				       
+
 define constant $literal-fixed-integer-memo :: <object-table>
   = make(<table>);
 /*
@@ -200,7 +200,7 @@ define constant $literal-extended-float-memo :: <object-table>
   = make(<table>);
 
 define method make (class == <literal-integer>, #next next-method,
-		    #key value)
+                    #key value)
     => res :: <literal-integer>;
   element($literal-fixed-integer-memo, value, default: #f)
     | (element($literal-fixed-integer-memo, value) := next-method());
@@ -208,7 +208,7 @@ end;
 
 /*
 define method make (class == <literal-extended-integer>, #next next-method,
-		    #key value)
+                    #key value)
     => res :: <literal-extended-integer>;
   element($literal-extended-integer-memo, value, default: #f)
     | (element($literal-extended-integer-memo, value) := next-method());
@@ -222,21 +222,21 @@ end;
 */
 
 define method make (class == <literal-single-float>, #next next-method,
-		    #key value)
+                    #key value)
     => res :: <literal-single-float>;
   element($literal-single-float-memo, value, default: #f)
     | (element($literal-single-float-memo, value) := next-method());
 end;
 
 define method make (class == <literal-double-float>, #next next-method,
-		    #key value)
+                    #key value)
     => res :: <literal-double-float>;
   element($literal-double-float-memo, value, default: #f)
     | (element($literal-double-float-memo, value) := next-method());
 end;
 
 define method make (class == <literal-extended-float>, #next next-method,
-		    #key value)
+                    #key value)
     => res :: <literal-extended-float>;
   element($literal-extended-float-memo, value, default: #f)
     | (element($literal-extended-float-memo, value) := next-method());
@@ -279,7 +279,7 @@ end;
 define method print-object (lit :: <literal-single-float>, stream :: <stream>)
     => ();
   format(stream, "{literal single-float %=}",
-	 as(<single-float>, lit.literal-value));
+         as(<single-float>, lit.literal-value));
 end;
 
 define method print-message (lit :: <literal-single-float>, stream :: <stream>)
@@ -290,7 +290,7 @@ end;
 define method print-object (lit :: <literal-double-float>, stream :: <stream>)
     => ();
   format(stream, "{literal double-float %=}",
-	 as(<double-float>, lit.literal-value));
+         as(<double-float>, lit.literal-value));
 end;
 
 define method print-message (lit :: <literal-double-float>, stream :: <stream>)
@@ -299,10 +299,10 @@ define method print-message (lit :: <literal-double-float>, stream :: <stream>)
 end;
 
 define method print-object (lit :: <literal-extended-float>,
-			    stream :: <stream>)
+                            stream :: <stream>)
     => ();
   format(stream, "{literal extended-float %=}",
-	 as(<extended-float>, lit.literal-value));
+         as(<extended-float>, lit.literal-value));
 end;
 
 define method print-message
@@ -359,7 +359,7 @@ define constant $literal-symbol-memo :: <object-table>
 define method make (class == <literal-symbol>, #next next-method, #key value)
     => (res :: <literal-symbol>);
   element($literal-symbol-memo, value, default: #f)
-    | (element($literal-symbol-memo, value) 
+    | (element($literal-symbol-memo, value)
          := make(<literal-byte-symbol>, value: value))
 end;
 
@@ -400,10 +400,10 @@ define constant $literal-character-memo :: <object-table>
   = make(<table>);
 
 define method make (class == <literal-character>, #next next-method,
-		    #key value)
+                    #key value)
     => res :: <literal-character>;
   element($literal-character-memo, value, default: #f)
-    | (element($literal-character-memo, value) 
+    | (element($literal-character-memo, value)
          := make(<literal-byte-character>, value: value))
 end;
 
@@ -452,17 +452,17 @@ define abstract class <literal-list> (<literal-sequence>)
 end;
 
 define method make (class == <literal-list>, #next next-method,
-		    #key sharable: sharable?, contents, tail)
+                    #key sharable: sharable?, contents, tail)
     => res :: <literal-list>;
   local
     method repeat (index)
       if (index == contents.size)
-	tail | make(<literal-empty-list>);
+        tail | make(<literal-empty-list>);
       else
-	make(<literal-pair>,
-	     sharable: sharable?,
-	     head: contents[index],
-	     tail: repeat(index + 1));
+        make(<literal-pair>,
+             sharable: sharable?,
+             head: contents[index],
+             tail: repeat(index + 1));
       end;
     end;
   repeat(0);
@@ -484,25 +484,25 @@ define sealed domain initialize(<literal-pair-memo-table>);
 define sealed inline method table-protocol (table :: <literal-pair-memo-table>)
     => (tester :: <function>, hasher :: <function>);
   values(method (key1 :: <literal-pair>, key2 :: <literal-pair>)
-	     => res :: <boolean>;
-	   key1.literal-head == key2.literal-head
-	     & key1.literal-tail == key2.literal-tail;
-	 end,
-	 method (key :: <literal-pair>, state) => (id :: <integer>, state);
-	   let (head-id, head-state)
-	     = object-hash(key.literal-head, state);
-	   let (tail-id, tail-state)
-	     = object-hash(key.literal-tail, head-state);
-	   let id = merge-hash-ids(head-id, tail-id, ordered: #t);
-	   values(id, tail-state);
-	 end);
+             => res :: <boolean>;
+           key1.literal-head == key2.literal-head
+             & key1.literal-tail == key2.literal-tail;
+         end,
+         method (key :: <literal-pair>, state) => (id :: <integer>, state);
+           let (head-id, head-state)
+             = object-hash(key.literal-head, state);
+           let (tail-id, tail-state)
+             = object-hash(key.literal-tail, head-state);
+           let id = merge-hash-ids(head-id, tail-id, ordered: #t);
+           values(id, tail-state);
+         end);
 end;
 
 define constant $literal-pair-memo :: <literal-pair-memo-table>
   = make(<literal-pair-memo-table>);
 
 define method make (class == <literal-pair>, #next next-method,
-		    #key sharable: sharable?, head, tail)
+                    #key sharable: sharable?, head, tail)
     => res :: <literal-pair>;
   if (sharable?)
     let key = next-method();
@@ -598,13 +598,13 @@ define method shallow-equal
   if (vec1.size = vec2.size)
     block (return)
       for (i from 0 below vec1.size)
-	if (vec1[i] ~== vec2[i]) return(#f) end if;
+        if (vec1[i] ~== vec2[i]) return(#f) end if;
       end for;
       #t;
     end block;
   end if;
 end method shallow-equal;
-      
+
 define method shallow-hash (vec :: <simple-object-vector>, state :: <object>)
     => (id :: <integer>, state :: <object>);
   let (current-id, current-state) = values(0, state);
@@ -622,14 +622,14 @@ define constant $literal-vector-memo :: <shallow-equal-table>
   = make(<shallow-equal-table>);
 
 define method make (class == <literal-simple-object-vector>, #next next-method,
-		    #key sharable: sharable?, contents)
+                    #key sharable: sharable?, contents)
     => res :: <literal-simple-object-vector>;
   do(rcurry(check-type, <literal>), contents);
   let contents = as(<simple-object-vector>, contents);
   if (sharable?)
     element($literal-vector-memo, contents, default: #f)
       | (element($literal-vector-memo, contents) :=
-	   next-method(class, sharable: #t, contents: contents));
+           next-method(class, sharable: #t, contents: contents));
   else
     next-method(class, sharable: #f, contents: contents);
   end;
@@ -657,7 +657,7 @@ end;
 define constant $literal-string-memo :: <string-table> = make(<string-table>);
 
 define method make (class == <literal-string>, #next next-method,
-		    #key value)
+                    #key value)
     => res :: <literal-string>;
   element($literal-string-memo, value, default: #f)
     | (element($literal-string-memo, value)
@@ -683,8 +683,8 @@ define method concat-strings (str1 :: <literal-string>, #rest more)
     => res :: <literal-string>;
   make(<literal-string>,
        value: apply(concatenate,
-		    str1.literal-value,
-		    map(literal-value, more)));
+                    str1.literal-value,
+                    map(literal-value, more)));
 end;
 
 

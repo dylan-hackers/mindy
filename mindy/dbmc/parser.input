@@ -20,80 +20,80 @@ define constant <false> = singleton(#f);
 :entry-point macro-call
 
 
-:token EOF		<token>
-:token ERROR		<token>
+:token EOF                <token>
+:token ERROR                <token>
 
-:token LEFT-PAREN	<token>
-:token RIGHT-PAREN	<token>
-:token COMMA		<token>
-:token DOT		<token>
-:token SEMICOLON	<token>
-:token LEFT-BRACKET	<token>
-:token RIGHT-BRACKET	<token>
-:token LEFT-BRACE	<token>
-:token RIGHT-BRACE	<token>
-:token DOUBLE-COLON	<token>
-:token MINUS		<operator-token>
-:token EQUAL		<operator-token>
-:token DOUBLE-EQUAL	<operator-token>
-:token ARROW		<token>
-:token SHARP-PAREN	<token>
-:token SHARP-BRACKET	<token>
-:token DOUBLE-SHARP	<token>
-:token QUESTION		<token>
-:token DOUBLE-QUESTION	<token>
-:token QUESTION-EQUAL	<token>
-:token ELLIPSIS		<token>
+:token LEFT-PAREN        <token>
+:token RIGHT-PAREN        <token>
+:token COMMA                <token>
+:token DOT                <token>
+:token SEMICOLON        <token>
+:token LEFT-BRACKET        <token>
+:token RIGHT-BRACKET        <token>
+:token LEFT-BRACE        <token>
+:token RIGHT-BRACE        <token>
+:token DOUBLE-COLON        <token>
+:token MINUS                <operator-token>
+:token EQUAL                <operator-token>
+:token DOUBLE-EQUAL        <operator-token>
+:token ARROW                <token>
+:token SHARP-PAREN        <token>
+:token SHARP-BRACKET        <token>
+:token DOUBLE-SHARP        <token>
+:token QUESTION                <token>
+:token DOUBLE-QUESTION        <token>
+:token QUESTION-EQUAL        <token>
+:token ELLIPSIS                <token>
 
-:token TRUE		<token>
-:token FALSE		<token>
-:token NEXT		<token>
-:token REST		<token>
-:token KEY		<token>
-:token ALL-KEYS		<token>
-:token INCLUDE		<token>
+:token TRUE                <token>
+:token FALSE                <token>
+:token NEXT                <token>
+:token REST                <token>
+:token KEY                <token>
+:token ALL-KEYS                <token>
+:token INCLUDE                <token>
 
-:token DEFINE		<identifier-token>
-:token END		<identifier-token>
-:token HANDLER		<identifier-token>
-:token LET		<identifier-token>
-:token LOCAL		<identifier-token>
-:token MACRO		<identifier-token>
-:token OTHERWISE	<identifier-token>
+:token DEFINE                <identifier-token>
+:token END                <identifier-token>
+:token HANDLER                <identifier-token>
+:token LET                <identifier-token>
+:token LOCAL                <identifier-token>
+:token MACRO                <identifier-token>
+:token OTHERWISE        <identifier-token>
 
-:token RAW-ORDINARY-WORD		<identifier-token>
-:token RAW-BEGIN-WORD			<identifier-token>
-:token RAW-FUNCTION-WORD		<identifier-token>
-:token ORDINARY-DEFINE-BODY-WORD	<identifier-token>
-:token BEGIN-AND-DEFINE-BODY-WORD	<identifier-token>
-:token FUNCTION-AND-DEFINE-BODY-WORD	<identifier-token>
-:token ORDINARY-DEFINE-LIST-WORD	<identifier-token>
-:token BEGIN-AND-DEFINE-LIST-WORD	<identifier-token>
-:token FUNCTION-AND-DEFINE-LIST-WORD	<identifier-token>
-:token QUOTED-NAME			<identifier-token>
+:token RAW-ORDINARY-WORD                <identifier-token>
+:token RAW-BEGIN-WORD                        <identifier-token>
+:token RAW-FUNCTION-WORD                <identifier-token>
+:token ORDINARY-DEFINE-BODY-WORD        <identifier-token>
+:token BEGIN-AND-DEFINE-BODY-WORD        <identifier-token>
+:token FUNCTION-AND-DEFINE-BODY-WORD        <identifier-token>
+:token ORDINARY-DEFINE-LIST-WORD        <identifier-token>
+:token BEGIN-AND-DEFINE-LIST-WORD        <identifier-token>
+:token FUNCTION-AND-DEFINE-LIST-WORD        <identifier-token>
+:token QUOTED-NAME                        <identifier-token>
 
-:token CONSTRAINED-NAME			<constrained-name-token>
+:token CONSTRAINED-NAME                        <constrained-name-token>
 
-:token TILDE				<identifier-token>
-:token OTHER-BINARY-OPERATOR		<operator-token>
+:token TILDE                                <identifier-token>
+:token OTHER-BINARY-OPERATOR                <operator-token>
 
-:token LITERAL				<literal-token>
-:token STRING				<literal-token>
-:token SYMBOL				<literal-token>
+:token LITERAL                                <literal-token>
+:token STRING                                <literal-token>
+:token SYMBOL                                <literal-token>
 
-:token PARSED-DEFINITION-MACRO-CALL	<pre-parsed-token>
-:token PARSED-SPECIAL-DEFINITION	<pre-parsed-token>
-:token PARSED-LOCAL-DECLARATION		<pre-parsed-token>
-:token PARSED-EXPRESSION		<pre-parsed-token>
-:token PARSED-CONSTANT			<pre-parsed-token>
-:token PARSED-MACRO-CALL		<pre-parsed-token>
-:token PARSED-PARAMETER-LIST		<pre-parsed-token>
-:token PARSED-VARIABLE-LIST		<pre-parsed-token>
+:token PARSED-DEFINITION-MACRO-CALL        <pre-parsed-token>
+:token PARSED-SPECIAL-DEFINITION        <pre-parsed-token>
+:token PARSED-LOCAL-DECLARATION                <pre-parsed-token>
+:token PARSED-EXPRESSION                <pre-parsed-token>
+:token PARSED-CONSTANT                        <pre-parsed-token>
+:token PARSED-MACRO-CALL                <pre-parsed-token>
+:token PARSED-PARAMETER-LIST                <pre-parsed-token>
+:token PARSED-VARIABLE-LIST                <pre-parsed-token>
 
-:token FEATURE-IF			<token>
-:token FEATURE-ELSEIF			<token>
-:token FEATURE-ELSE			<token>
-:token FEATURE-ENDIF			<token>
+:token FEATURE-IF                        <token>
+:token FEATURE-ELSEIF                        <token>
+:token FEATURE-ELSE                        <token>
+:token FEATURE-ENDIF                        <token>
 
 
 :union SHARP-WORD <token>
@@ -180,7 +180,7 @@ source-record (top-level-forms SEMICOLON top-level-body-semi)
 %
 
 ; Top-level-forms is just like body, except that it calls
-; process-top-level-form on each form instead of collecting them 
+; process-top-level-form on each form instead of collecting them
 ; into a body.
 
 :type top-level-forms <false>
@@ -320,7 +320,7 @@ property-list (SYMBOL basic-fragment)
 property-list (property-list COMMA SYMBOL basic-fragment)
   add!(%1,
        make(<property>, comma: %2, comma-srcloc: @2,
-	    keyword: %3, keyword-srcloc: @3, value: %4));
+            keyword: %3, keyword-srcloc: @3, value: %4));
 %
 
 
@@ -463,11 +463,11 @@ simple-fragment (SHARP-PAREN constants DOT constant RIGHT-PAREN)
   // make-parsed-fragment.
   make(<token-fragment>, source-location: @0,
        token: make(<pre-parsed-token>,
-		   source-location: @0,
-		   kind: $parsed-constant-token,
-		   parse-tree: make(<literal-list>, sharable: #t,
-				    contents: as(<simple-object-vector>, %2),
-				    tail: %4)));
+                   source-location: @0,
+                   kind: $parsed-constant-token,
+                   parse-tree: make(<literal-list>, sharable: #t,
+                                    contents: as(<simple-object-vector>, %2),
+                                    tail: %4)));
 %
 
 simple-fragment (SHARP-PAREN constants-opt RIGHT-PAREN)
@@ -477,11 +477,11 @@ simple-fragment (SHARP-PAREN constants-opt RIGHT-PAREN)
   // make-parsed-fragment.
   make(<token-fragment>, source-location: @0,
        token: make(<pre-parsed-token>,
-		   source-location: @0,
-		   kind: $parsed-constant-token,
-		   parse-tree:
-		     make(<literal-list>, sharable: #t,
-			  contents: as(<simple-object-vector>, %2))));
+                   source-location: @0,
+                   kind: $parsed-constant-token,
+                   parse-tree:
+                     make(<literal-list>, sharable: #t,
+                          contents: as(<simple-object-vector>, %2))));
 %
 
 simple-fragment (SHARP-BRACKET constants-opt RIGHT-BRACKET)
@@ -491,11 +491,11 @@ simple-fragment (SHARP-BRACKET constants-opt RIGHT-BRACKET)
   // make-parsed-fragment.
   make(<token-fragment>, source-location: @0,
        token: make(<pre-parsed-token>,
-		   source-location: @0,
-		   kind: $parsed-constant-token,
-		   parse-tree:
-		     make(<literal-simple-object-vector>, sharable: #t,
-			  contents: as(<simple-object-vector>, %2))));
+                   source-location: @0,
+                   kind: $parsed-constant-token,
+                   parse-tree:
+                     make(<literal-simple-object-vector>, sharable: #t,
+                          contents: as(<simple-object-vector>, %2))));
 %
 
 simple-fragment (LEFT-PAREN body-fragment-opt RIGHT-PAREN)
@@ -624,7 +624,7 @@ definition (definition-macro-call)
 %
 
 definition (DEFINE MACRO MACRO-NAME main-rule-set auxiliary-rule-sets-opt
-	    END macro-and-name-opt)
+            END macro-and-name-opt)
   unless (%7 == #f | same-id?(%3, %7))
     compiler-error("Macro name mismatch: %s isn't %s", %7, %3);
   end;
@@ -666,8 +666,8 @@ definition-macro-call
     if (first-word)
       unless (same-id?(first-word, %6))
         compiler-error
-	  ("Name or define-word mismatch: %s is neither %s nor %s",
-	   %6, %3, first-word);
+          ("Name or define-word mismatch: %s is neither %s nor %s",
+           %6, %3, first-word);
       end;
     else
       compiler-error("Define-word mismatch: %s isn't %s", %6, %3);
@@ -684,8 +684,8 @@ definition-macro-call
   if (first-word)
     unless (same-id?(first-word, %6))
       compiler-error
-	("Name or define-word mismatch: %s is neither %s nor %s",
-	 %6, %3, first-word);
+        ("Name or define-word mismatch: %s is neither %s nor %s",
+         %6, %3, first-word);
     end;
   else
     compiler-error("Define-word mismatch: %s isn't %s", %6, %3);
@@ -746,7 +746,7 @@ local-declaration (LET HANDLER operand EQUAL expression)
 %
 
 local-declaration (LET HANDLER LEFT-PAREN expression COMMA arguments
-		   RIGHT-PAREN EQUAL expression)
+                   RIGHT-PAREN EQUAL expression)
   make(<handler-parse>, source-location: simplify-source-location(@0),
        type: %4, options: as(<simple-object-vector>, %6), handler: %9);
 %
@@ -890,13 +890,13 @@ binary-operand-no-symbol (MINUS operand)
   make(<funcall-parse>,
        source-location: simplify-source-location(@0),
        function: make(<varref-parse>,
-       		      source-location: simplify-source-location(@1),
-		      id: make(<identifier-token>,
-			       source-location: simplify-source-location(@1),
-			       kind: $raw-ordinary-word-token,
-			       symbol: #"negative",
-			       module: %1.token-module,
-			       uniquifier: %1.token-uniquifier)),
+                             source-location: simplify-source-location(@1),
+                      id: make(<identifier-token>,
+                               source-location: simplify-source-location(@1),
+                               kind: $raw-ordinary-word-token,
+                               symbol: #"negative",
+                               module: %1.token-module,
+                               uniquifier: %1.token-uniquifier)),
        arguments: vector(%2));
 %
 
@@ -904,8 +904,8 @@ binary-operand-no-symbol (TILDE operand)
   make(<funcall-parse>,
        source-location: simplify-source-location(@0),
        function: make(<varref-parse>,
-		      source-location: simplify-source-location(@1),
-		      id: %1),
+                      source-location: simplify-source-location(@1),
+                      id: %1),
        arguments: vector(%2));
 %
 
@@ -920,16 +920,16 @@ operand (operand LEFT-BRACKET arguments-opt RIGHT-BRACKET)
   make(<funcall-parse>,
        source-location: simplify-source-location(@0),
        function: make(<varref-parse>,
-       		      source-location: simplify-source-location(@1),
-		      id: make(<identifier-token>,
-			       source-location: simplify-source-location(@1),
-			       kind: $raw-ordinary-word-token,
-			       symbol: if (%3.size == 1)
-					 #"element";
-				       else
-					 #"aref";
-				       end,
-			       module: *Current-Module*)),
+                             source-location: simplify-source-location(@1),
+                      id: make(<identifier-token>,
+                               source-location: simplify-source-location(@1),
+                               kind: $raw-ordinary-word-token,
+                               symbol: if (%3.size == 1)
+                                         #"element";
+                                       else
+                                         #"aref";
+                                       end,
+                               module: *Current-Module*)),
        arguments: apply(vector, %1, %3));
 %
 
@@ -978,8 +978,8 @@ arguments (arguments COMMA argument)
 
 argument (SYMBOL expression)
   pair(make(<literal-ref-parse>,
-	    source-location: simplify-source-location(@1),
-  	    literal: %1.token-literal),
+            source-location: simplify-source-location(@1),
+              literal: %1.token-literal),
        %2);
 %
 
@@ -1055,8 +1055,8 @@ literal-ref (SHARP-PAREN constants DOT constant RIGHT-PAREN)
   make(<literal-ref-parse>,
        source-location: simplify-source-location(@0),
        literal: make(<literal-list>, sharable: #t,
-		     contents: as(<simple-object-vector>, %2),
-		     tail: %4));
+                     contents: as(<simple-object-vector>, %2),
+                     tail: %4));
 %
 
 literal-ref (SHARP-PAREN constants-opt RIGHT-PAREN)
@@ -1069,7 +1069,7 @@ literal-ref (SHARP-BRACKET constants-opt RIGHT-BRACKET)
   make(<literal-ref-parse>,
        source-location: simplify-source-location(@0),
        literal: make(<literal-simple-object-vector>,
-		     sharable: #t, contents: %2));
+                     sharable: #t, contents: %2));
 %
 
 literal-ref (PARSED-CONSTANT)
@@ -1193,7 +1193,7 @@ end-clause (END BEGIN-WORD)
 
 ;;;; Case bodies.
 
-;// Case-body-1's end in a case-label.  Case-body-2's end in constituents.  
+;// Case-body-1's end in a case-label.  Case-body-2's end in constituents.
 ;// Either kind is a valid case-body, but can be extended differently.
 ;// This seperation is necessary in order to resolve the various conflicts
 ;// inherit in the original production:
@@ -1323,17 +1323,17 @@ case-label (case-label-expressions ARROW)
 %
 
 case-label (LEFT-PAREN expression COMMA case-label-expressions
-	    RIGHT-PAREN ARROW)
+            RIGHT-PAREN ARROW)
   append-fragments!
     (make(<bracketed-fragment>,
-	  left-token: %1, left-srcloc: @1, 
-	  contents:
-	    append-fragments!
-	      (append-fragments!
-		 (make-parsed-fragment(%2, source-location: @2),
-		  make(<token-fragment>, source-location: @3, token: %3)),
-	       %4),
-	  right-token: %5, right-srcloc: @5),
+          left-token: %1, left-srcloc: @1,
+          contents:
+            append-fragments!
+              (append-fragments!
+                 (make-parsed-fragment(%2, source-location: @2),
+                  make(<token-fragment>, source-location: @3, token: %3)),
+               %4),
+          right-token: %5, right-srcloc: @5),
      make(<token-fragment>, source-location: @6, token: %6));
 %
 
@@ -1343,7 +1343,7 @@ case-label (OTHERWISE)
 
 case-label (OTHERWISE ARROW)
   append-fragments!(make(<token-fragment>, source-location: @1, token: %1),
-		    make(<token-fragment>, source-location: @2, token: %2));
+                    make(<token-fragment>, source-location: @2, token: %2));
 %
 
 :type case-label-expressions <fragment>
@@ -1367,7 +1367,7 @@ case-label-expressions (case-label-expressions COMMA expression)
 method-definition (method-and-name method-body END method-and-name-opt)
   if (%4 & ~same-id?(%1, %4))
     compiler-error("Name mismatch: %s isn't %s",
-		   %4.token-symbol, %1.token-symbol);
+                   %4.token-symbol, %1.token-symbol);
   end;
   %2.method-name := %1;
   %2;
@@ -1437,7 +1437,7 @@ method-body (LEFT-PAREN parameter-list-opt RIGHT-PAREN semi-opt body-opt)
 %
 
 method-body (LEFT-PAREN parameter-list-opt RIGHT-PAREN
-	     ARROW variable SEMICOLON body-opt)
+             ARROW variable SEMICOLON body-opt)
   make(<method-parse>,
        parameters: %2,
        returns: make(<parameter-list>, fixed: vector(%5)),
@@ -1445,8 +1445,8 @@ method-body (LEFT-PAREN parameter-list-opt RIGHT-PAREN
 %
 
 method-body (LEFT-PAREN parameter-list-opt RIGHT-PAREN
-	     ARROW LEFT-PAREN variable-list-opt
-	     RIGHT-PAREN semi-opt body-opt)
+             ARROW LEFT-PAREN variable-list-opt
+             RIGHT-PAREN semi-opt body-opt)
   make(<method-parse>, parameters: %2, returns: %6, body: %9);
 %
 
@@ -1535,19 +1535,19 @@ parameter (variable)
 
 parameter (variable-name DOUBLE-EQUAL expression)
   let singleton-name = make(<identifier-token>,
-			    source-location: simplify-source-location(@2),
-			    kind: $raw-ordinary-word-token,
-			    symbol: #"singleton",
- 			    module: %2.token-module, 
- 			    uniquifier: %2.token-uniquifier);
+                            source-location: simplify-source-location(@2),
+                            kind: $raw-ordinary-word-token,
+                            symbol: #"singleton",
+                             module: %2.token-module,
+                             uniquifier: %2.token-uniquifier);
 
   let singleton-varref
     = make(<varref-parse>, source-location: simplify-source-location(@2),
-	   id: singleton-name);
+           id: singleton-name);
   let funcall = make(<funcall-parse>,
-  		     source-location: source-location-spanning(@2, @3),
-		     function: singleton-varref,
-		     arguments: vector(%3));
+                       source-location: source-location-spanning(@2, @3),
+                     function: singleton-varref,
+                     arguments: vector(%3));
   make(<parameter>, name: %1, type: funcall);
 %
 
@@ -1584,10 +1584,10 @@ keyword-parameter (keyword-opt variable default-opt)
        name: %2.param-name,
        type: %2.param-type,
        keyword: if (%1)
-		  %1.token-literal.literal-value;
-		else
-		  %2.param-name.token-symbol;
-		end,
+                  %1.token-literal.literal-value;
+                else
+                  %2.param-name.token-symbol;
+                end,
        default: %3);
 %
 
@@ -1855,10 +1855,10 @@ bindings-pattern (pattern-variable EQUAL pattern-variable)
 %
 
 bindings-pattern (pattern-variable DOUBLE-COLON pattern-variable
-		  EQUAL pattern-variable)
+                  EQUAL pattern-variable)
   make(<bindings-pattern>,
-       variables-pattern: 
-	 make(<variable-pattern>, name-pattern: %1, type-pattern: %3),
+       variables-pattern:
+         make(<variable-pattern>, name-pattern: %1, type-pattern: %3),
        value-pattern: %5);
 %
 
@@ -1930,28 +1930,28 @@ pattern-keywords-aux (pattern-keywords-aux COMMA pattern-keyword)
 pattern-keyword (QUESTION NAME macro-default-opt)
   make(<pattern-keyword>,
        source-location:
-	 simplify-source-location(source-location-spanning(@1, @2)),
+         simplify-source-location(source-location-spanning(@1, @2)),
        name: %2.token-symbol, default: %3);
 %
 
 pattern-keyword (QUESTION CONSTRAINED-NAME macro-default-opt)
   make(<pattern-keyword>,
        source-location:
-	 simplify-source-location(source-location-spanning(@1, @2)),
+         simplify-source-location(source-location-spanning(@1, @2)),
        name: %2.token-symbol, constraint: %2.token-constraint, default: %3);
 %
 
 pattern-keyword (DOUBLE-QUESTION NAME macro-default-opt)
   make(<pattern-keyword>,
        source-location:
-	 simplify-source-location(source-location-spanning(@1, @2)),
+         simplify-source-location(source-location-spanning(@1, @2)),
        name: %2.token-symbol, default: %3, all: #t);
 %
 
 pattern-keyword (DOUBLE-QUESTION CONSTRAINED-NAME macro-default-opt)
   make(<pattern-keyword>,
        source-location:
-	 simplify-source-location(source-location-spanning(@1, @2)),
+         simplify-source-location(source-location-spanning(@1, @2)),
        name: %2.token-symbol, constraint: %2.token-constraint,
        default: %3, all: #t);
 %

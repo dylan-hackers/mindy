@@ -6,25 +6,25 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -110,7 +110,7 @@ define generic std-options
 
 
 //==========================================================================
-//				Packer support
+//                                Packer support
 //==========================================================================
 
 // Strips the last '.' separated element off of the given string.  This will
@@ -126,7 +126,7 @@ define method window-parent (name :: <string>) => (parent :: <string>);
     end case;
   end for;
 end method window-parent;
-       
+
 define method window-parent (window :: <window>) => (parent :: <string>);
   window-parent(window.path);
 end method window-parent;
@@ -143,15 +143,15 @@ define method pack
   let parent
     = if (parent | after | before) parent else window.window-parent end if;
   put-tk-line("pack ", window,
-	      make-option(#"fill", fill),
-	      make-option(#"in", parent),
-	      make-option(#"after", after),
-	      make-option(#"before", before),
-	      make-option(#"expand", expand),
-	      make-option(#"anchor", anchor),
-	      make-option(#"side", side),
-	      make-option(#"padx", padx),
-	      make-option(#"pady", pady));
+              make-option(#"fill", fill),
+              make-option(#"in", parent),
+              make-option(#"after", after),
+              make-option(#"before", before),
+              make-option(#"expand", expand),
+              make-option(#"anchor", anchor),
+              make-option(#"side", side),
+              make-option(#"padx", padx),
+              make-option(#"pady", pady));
   window;
 end method pack;
 
@@ -161,25 +161,25 @@ define method unpack (window :: <window>) => (window :: <window>);
 end method unpack;
 
 //==========================================================================
-//			      <Window> creation
+//                              <Window> creation
 //==========================================================================
 
 // These variables store information about how to make new <window>s.  They
 // are updated by "define-widget" below.
 //
-define constant options-table :: <mutable-explicit-key-collection> 
+define constant options-table :: <mutable-explicit-key-collection>
   = make(<table>);
-define constant tk-command-table :: <mutable-explicit-key-collection> 
+define constant tk-command-table :: <mutable-explicit-key-collection>
   = make(<table>);
 define variable pack-options :: <sequence>
   = #[#"pack", #"name",
-	#"after", #"anchor", #"before", #"expand", #"fill", #"in",
-	#"padx", #"pady", #"side"];
+        #"after", #"anchor", #"before", #"expand", #"fill", #"in",
+        #"padx", #"pady", #"side"];
 define variable pack-options-table :: <mutable-explicit-key-collection>
   = block ()
       let result = make(<object-table>);
       for (option in pack-options)
-	result[option] := option;
+        result[option] := option;
       end for;
       result;
     end block;
@@ -196,7 +196,7 @@ define method define-widget
   end for;
 end method define-widget;
 
-define method valid-option? 
+define method valid-option?
     (key :: <symbol>, options :: <mutable-explicit-key-collection>)
   element(options, key, default: #f);
 end method valid-option?;
@@ -217,18 +217,18 @@ define method std-options
     let value = options[value-index];
     case
       valid-option?(key, window-options) =>
-	result := add!(result, make-option(key, value));
+        result := add!(result, make-option(key, value));
       accept-pack-options & valid-option?(key, pack-options-table) =>
-	#t;
+        #t;
       otherwise =>
-	select (key)
-	  #"background", #"borderwidth", #"cursor", #"foreground",
-	  #"relief", #"highlightbackground", #"highlightthickness",
-	  #"highlightcolor" =>
-	    result := add!(result, make-option(key, value));
-	  otherwise =>
-	    error("Option %= not supported for widget.", key)
-	end select;
+        select (key)
+          #"background", #"borderwidth", #"cursor", #"foreground",
+          #"relief", #"highlightbackground", #"highlightthickness",
+          #"highlightcolor" =>
+            result := add!(result, make-option(key, value));
+          otherwise =>
+            error("Option %= not supported for widget.", key)
+        end select;
     end case;
   end for;
   result;
@@ -246,11 +246,11 @@ define method initialize
   next();
   let name = name | anonymous-name();
   let parent = case
-		 parent => tk-as(<string>, parent);
-		 after => after.window-parent;
-		 before => before.window-parent;
-		 otherwise => ".";
-	       end case;
+                 parent => tk-as(<string>, parent);
+                 after => after.window-parent;
+                 before => before.window-parent;
+                 otherwise => ".";
+               end case;
 
   if (empty?(name))
     if (abs-path)
@@ -272,7 +272,7 @@ define method initialize
 end method initialize;
 
 // The main "wish" window.  All other windows are typically built underneath
-// this one.  
+// this one.
 //
 define constant *root-window* :: <window>
   = make(<window>, parent: #f, name: "");
@@ -288,7 +288,7 @@ end method tk-as;
 
 
 //==========================================================================
-//			  Generic support functions
+//                          Generic support functions
 //==========================================================================
 
 // Configure accepts pretty much the same options as initialize, and uses them

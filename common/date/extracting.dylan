@@ -12,8 +12,8 @@ define function decode-date(d :: <date>)
      minutes :: <minutes>, seconds :: <seconds>, day-of-week :: <day-of-week>,
      time-zone-offset :: <timezone>)
   values(date-year(d), date-month(d), date-day(d), date-hours(d),
-	 date-minutes(d), date-seconds(d), date-day-of-week(d),
-	 date-time-zone-offset(d));
+         date-minutes(d), date-seconds(d), date-day-of-week(d),
+         date-time-zone-offset(d));
 end function decode-date;
 
 define function date-year(d :: <date>) => (year :: <years>)
@@ -62,7 +62,7 @@ define function as-iso8601-string(d :: <date>, #key precision :: <integer> = 0)
     write-element(stream, '.');
     do(method(digit) write-element(stream, as(<character>, digit + zero)) end,
        tabulate(min(precision, 6),
- 	        method(idx) modulo(floor/(d.microseconds, 6 - idx), 10) end));
+                 method(idx) modulo(floor/(d.microseconds, 6 - idx), 10) end));
   end if;
   write-element(stream, 'Z'); // ignoring time zone for now
   stream.stream-contents;
@@ -71,4 +71,4 @@ end function as-iso8601-string;
 // Strangely enough, the 0th element is #"Monday" (not Sunday)
 // ... this comes from the Time library.
 define variable *day* = vector(#"Monday", #"Tuesday", #"Wednesday",
-			       #"Thursday", #"Friday", #"Saturday", #"Sunday");
+                               #"Thursday", #"Friday", #"Saturday", #"Sunday");

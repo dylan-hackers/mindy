@@ -24,10 +24,10 @@ define module date
   create <duration>, <year/month-duration>, <day/time-duration>,
     encode-year/month-duration, encode-day/time-duration,
     decode-duration;
-  
+
   create local-time-zone-name, local-time-zone-offset;
 
-  create decode-date, 
+  create decode-date,
     date-year, date-month, date-day, date-day-of-week, date-hours,
     date-minutes, date-seconds, date-microseconds, date-time-zone-offset,
     as-iso8601-string;
@@ -42,7 +42,7 @@ define module dates-and-times
   use string-conversions;
   use streams;
   use time-io;
-  use time, 
+  use time,
     exclude: { <timezone>, <day-of-week> },
     rename: { <day-of-month> => <days> },
     export: all;

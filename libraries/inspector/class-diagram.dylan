@@ -6,25 +6,25 @@ author:     Nick Kramer (nkramer@cs.cmu.edu)
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -68,28 +68,28 @@ define method create-dag
   local
     method reuse-or-make-dag (class :: <class>) => res :: <dag>;
       element(table, class, default: #f)
-	| (table[class] := make(<dag>, class: class));
+        | (table[class] := make(<dag>, class: class));
     end method reuse-or-make-dag,
     method create-dag-for
-	(class :: <class>, direction :: one-of(#"up", #"down", #"both"))
-	=> res :: <dag>;
+        (class :: <class>, direction :: one-of(#"up", #"down", #"both"))
+        => res :: <dag>;
       let dag = reuse-or-make-dag(class);
       if (direction ~== #"down")
-	for (parent in class.direct-superclasses)
-	  add-child!(create-dag-for(parent, #"up"), dag);
-	end for;
+        for (parent in class.direct-superclasses)
+          add-child!(create-dag-for(parent, #"up"), dag);
+        end for;
       end if;
       if (direction ~== #"up")
-	for (child in class.direct-subclasses)
-	  add-child!(dag, create-dag-for(child, #"down"));
-	end for;
+        for (child in class.direct-subclasses)
+          add-child!(dag, create-dag-for(child, #"down"));
+        end for;
       end if;
       dag;
     end method create-dag-for;
   create-dag-for(class, direction);
 end method create-dag;
 
-  
+
 define constant $horizontal-spacing = 25;
 define constant $vertical-spacing = 50;
 
@@ -103,11 +103,11 @@ define constant $vertical-spacing = 50;
 define method compute-dag-positions! (root :: <dag>) => ();
   // set-levels! only goes down
   local method set-levels! (dag, cur-level)
-	  dag.dag-level := max(dag.dag-level, cur-level);
-	  for (child in dag.dag-children)
-	    set-levels!(child, cur-level + 1);
-	  end for;
-	end method set-levels!;
+          dag.dag-level := max(dag.dag-level, cur-level);
+          for (child in dag.dag-children)
+            set-levels!(child, cur-level + 1);
+          end for;
+        end method set-levels!;
 
   set-levels!(root, 0);
   let peer-groups = make(<vector>, fill: #(), size: 500);  // Big enough...
@@ -116,62 +116,62 @@ define method compute-dag-positions! (root :: <dag>) => ();
   // even though that's not strictly guarenteed by Dylan
   //
   local method form-peer-groups (dag)
-	  peer-groups[dag.dag-level] 
-	    := add-new!(peer-groups[dag.dag-level], dag);
-	  for (child in dag.dag-children)
-	    form-peer-groups(child);
-	  end for;
-	end method form-peer-groups;
+          peer-groups[dag.dag-level]
+            := add-new!(peer-groups[dag.dag-level], dag);
+          for (child in dag.dag-children)
+            form-peer-groups(child);
+          end for;
+        end method form-peer-groups;
 
   form-peer-groups(root);
 
   local method set-peers! (dag)
-	  dag.dag-peers := peer-groups[dag.dag-level];
-	  block (quit-loop)
-	    for (ptr = peer-groups[dag.dag-level] then ptr.tail)
-	      if (ptr.head == dag)
-		dag.dag-left-peer := if (ptr.tail == #())
-				   #f;
-				 else
-				   ptr.tail.head;
-				 end if;
-		quit-loop();
-	      end if;
-	    end for;
-	  end block;
-	  for (child in dag.dag-children)
-	    set-peers!(child);
-	  end for;
-	end method set-peers!;
+          dag.dag-peers := peer-groups[dag.dag-level];
+          block (quit-loop)
+            for (ptr = peer-groups[dag.dag-level] then ptr.tail)
+              if (ptr.head == dag)
+                dag.dag-left-peer := if (ptr.tail == #())
+                                   #f;
+                                 else
+                                   ptr.tail.head;
+                                 end if;
+                quit-loop();
+              end if;
+            end for;
+          end block;
+          for (child in dag.dag-children)
+            set-peers!(child);
+          end for;
+        end method set-peers!;
 
   set-peers!(root);
 
   local method set-pos! (dag)
-	  if (~slot-initialized?(dag, dag-position))
-	    for (child in dag.dag-children)
-	      set-pos!(child);
-	    end for;
-	    let left-pos-suggestion    // Just to right of leftmost neighbor
-	      = if (dag.dag-left-peer)
-		  $horizontal-spacing + dag.dag-left-peer.dag-position
-		    + dag.dag-left-peer.class-width + dag.class-width;
-		else
-		  dag.class-width;
-		end if;
-	    let child-pos-suggestion   // Average of children's position
-	      = if (dag.dag-children.empty?)
-		  dag.class-width;
-		else 
-		  truncate/(reduce(\+, 0, map(dag-position, dag.dag-children)),
-			    dag.dag-children.size);
-		end if;
-	    dag.dag-position := max(left-pos-suggestion, child-pos-suggestion);
-	  end if;
-	end method set-pos!;
+          if (~slot-initialized?(dag, dag-position))
+            for (child in dag.dag-children)
+              set-pos!(child);
+            end for;
+            let left-pos-suggestion    // Just to right of leftmost neighbor
+              = if (dag.dag-left-peer)
+                  $horizontal-spacing + dag.dag-left-peer.dag-position
+                    + dag.dag-left-peer.class-width + dag.class-width;
+                else
+                  dag.class-width;
+                end if;
+            let child-pos-suggestion   // Average of children's position
+              = if (dag.dag-children.empty?)
+                  dag.class-width;
+                else
+                  truncate/(reduce(\+, 0, map(dag-position, dag.dag-children)),
+                            dag.dag-children.size);
+                end if;
+            dag.dag-position := max(left-pos-suggestion, child-pos-suggestion);
+          end if;
+        end method set-pos!;
 
   set-pos!(root);
 end method compute-dag-positions!;
-	  
+
 // I'm making this up as I go along
 // Should actually be half the width.
 // 3 as the magic number seems to be just a tiny bit too small.
@@ -198,28 +198,28 @@ define method draw-node
     let x-pos = dag.dag-position + 30;
     let y-pos = dag.dag-level * $vertical-spacing + 30;
     let text = create-text(canvas, x-pos, y-pos,
-			   text: as(<string>, dag.dag-class.class-name),
-			   anchor: "s");
+                           text: as(<string>, dag.dag-class.class-name),
+                           anchor: "s");
     bind(text, "<Button-1>",
-	 curry(xinspect-one-object, dag.dag-class, state));
+         curry(xinspect-one-object, dag.dag-class, state));
     for (child in dag.dag-children)
       let line-coords = vector(x-pos, y-pos,
-			       child.dag-position + 30,
-			       child.dag-level * $vertical-spacing + 30 - 15);
+                               child.dag-position + 30,
+                               child.dag-level * $vertical-spacing + 30 - 15);
       let line = create-line(canvas, line-coords);
     end for;
   end if;
 end method draw-node;
 
-define method find-max-level (dag :: <dag>) 
+define method find-max-level (dag :: <dag>)
  => max-level :: <integer>;
   apply(max, dag.dag-level, map(find-max-level, dag.dag-children));
 end method find-max-level;
-  
-define method find-max-width (dag :: <dag>) 
+
+define method find-max-width (dag :: <dag>)
  => max-width :: <integer>;
   apply(max, dag.dag-position + dag.class-width,
-	map(find-max-width, dag.dag-children));
+        map(find-max-width, dag.dag-children));
 end method find-max-width;
 
 define constant $max-width = 640;
@@ -236,13 +236,13 @@ define function view-class-hierarchy
     add!(state.state-all-windows, window);
     release-lock(state.state-lock);
     unmap-window(window);
-    
+
     call-tk-function("wm minsize ", tk-as(<string>, window), " 1 1");
     call-tk-function("wm title ", tk-as(<string>, window),
-		     " \"", tk-quote(window-title), "\"");
+                     " \"", tk-quote(window-title), "\"");
 
     put-tk-line("wm protocol ", window, " \"WM_DELETE_WINDOW\" {",
-		curry(close-command, state, window), "}");
+                curry(close-command, state, window), "}");
 
     let dag = create-dag(root, #"down");
 
@@ -251,18 +251,18 @@ define function view-class-hierarchy
     let height = (max-level + 1) * $vertical-spacing + 10;
     let width = find-max-width(dag) + 50;
     let canvas = make(<canvas>, in: window,
-		      scrollregion:
-			join-tk-args("0 0", width, height),
-		      height: min(height, $max-height),
-		      width: min(width, $max-width),
-		      relief: #"sunken", expand: #t, fill: "both");
+                      scrollregion:
+                        join-tk-args("0 0", width, height),
+                      height: min(height, $max-height),
+                      width: min(width, $max-width),
+                      relief: #"sunken", expand: #t, fill: "both");
     if (height > $max-height)
-      scroll(canvas, side: "right", before: canvas, fill: "y", 
-	     orient: "vertical");
+      scroll(canvas, side: "right", before: canvas, fill: "y",
+             orient: "vertical");
     end if;
     if (width > $max-width)
-      scroll(canvas, side: "bottom", before: canvas, fill: "x", 
-	     orient: "horizontal");
+      scroll(canvas, side: "bottom", before: canvas, fill: "x",
+             orient: "horizontal");
     end if;
     map-window(window);
     draw-dag(state, dag, canvas);

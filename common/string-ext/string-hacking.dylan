@@ -8,31 +8,31 @@ copyright: see below
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
 // add has no useful guarenteed behavior on strings.
 //
-define method add-last (string :: <string>, character :: <character>) 
+define method add-last (string :: <string>, character :: <character>)
     => new-string :: <string>;
   concatenate(string, make(<string>, size: 1, fill: character));
 end method add-last;
@@ -53,7 +53,7 @@ end method successor;
 
 // The following two functions are not exported.
 
-define method xor (value1 :: <object>, value2 :: <object>) 
+define method xor (value1 :: <object>, value2 :: <object>)
  => answer :: <object>;
   if (value1)
     ~value2;
@@ -118,9 +118,9 @@ end method type-for-copy;
 // an init-keyword.
 //
 define inline method my-initialize (set :: <character-set>,
-				    #next next-method, 
-				    #key description = "",
-				    #all-keys)
+                                    #next next-method,
+                                    #key description = "",
+                                    #all-keys)
  => false :: singleton(#f);
   let (ranges :: <list>, chars :: <list>, negated :: <boolean>)
     = parse-description(description);
@@ -133,7 +133,7 @@ define inline method my-initialize (set :: <character-set>,
       set.byte-characters[as(<character>, i)] := #t;
     end for;
   end if;
-    
+
   handle-single-chars!(set, chars);
 
   let unicode-ranges :: <list> = #();
@@ -144,9 +144,9 @@ define inline method my-initialize (set :: <character-set>,
       let first-ch :: <byte-character> = first;
       let last-ch :: <byte-character> = last;
       for (c :: <byte-character> = first-ch then successor(c), until: c > last-ch)
-	add-to-byte-vector!(set, c);
+        add-to-byte-vector!(set, c);
       end for;
-    else 
+    else
       unicode-ranges := add!(unicode-ranges, range);
     end if;
   end for;
@@ -155,18 +155,18 @@ define inline method my-initialize (set :: <character-set>,
 end method my-initialize;
 
 define sealed inline method initialize (set :: <case-sensitive-character-set>,
-				 #next next-method, 
-				 #key description = "",
-				 #all-keys)
+                                 #next next-method,
+                                 #key description = "",
+                                 #all-keys)
  => false :: singleton(#f);
   next-method();
   my-initialize(set, description: description);
 end initialize;
 
 define sealed inline method initialize (set :: <case-insensitive-character-set>,
-				 #next next-method, 
-				 #key description = "",
-				 #all-keys)
+                                 #next next-method,
+                                 #key description = "",
+                                 #all-keys)
  => false :: singleton(#f);
   next-method();
   my-initialize(set, description: description);
@@ -209,15 +209,15 @@ end method element;
 
 // test: is accepted but ignored.
 //
-define sealed method member? (char :: <byte-character>, set :: <character-set>, 
-		       #key test :: <function> = key-test(set))
+define sealed method member? (char :: <byte-character>, set :: <character-set>,
+                       #key test :: <function> = key-test(set))
  => answer :: <boolean>;
   if (test == key-test(set))
     in-byte-vector?(set, char);
   else
     block (return)
       for (elem :: <character> in set)
-	if (test(char, elem)) return(#t) end if;
+        if (test(char, elem)) return(#t) end if;
       end for;
     end block;
   end if;
@@ -226,21 +226,21 @@ end method member?;
 // char is not a byte-character
 //
 define sealed method member? (c :: <character>, set :: <character-set>,
-		       #key test :: <function> = key-test(set))
+                       #key test :: <function> = key-test(set))
  => answer :: <boolean>;
   if (test == key-test(set))
-    xor(in-single-chars?(set, c) | in-ranges?(c, set),	set.negated-set?);
+    xor(in-single-chars?(set, c) | in-ranges?(c, set),        set.negated-set?);
   else
     block (return)
       for (elem :: <character> in set)
-	if (test(c, elem)) return(#t) end if;
+        if (test(c, elem)) return(#t) end if;
       end for;
     end block;
   end if;
 end method member?;
 
-define method handle-single-chars! (set :: <character-set>, 
-				    char-coll :: <collection>)
+define method handle-single-chars! (set :: <character-set>,
+                                    char-coll :: <collection>)
  => same-set :: <character-set>;
   let not-byte-chars = make(<unicode-string>, size: 0);
   for (c in char-coll)
@@ -259,7 +259,7 @@ end method handle-single-chars!;
 define sealed method as (type == <character-set>, coll :: <collection>)
  => set :: <character-set>;
   error("Need to specify whether you want a <case-sensitive-character-set>"
-	  " or a <case-insensitive-character-set>");
+          " or a <case-insensitive-character-set>");
 end method as;
 
 define sealed method as
@@ -302,22 +302,22 @@ define method parse-description (string :: <sequence>)
       let escaped-char = lookahead(s);
       consume(s);
       select (escaped-char by \==)
-	'n' => char-list  := add!(char-list, '\n');    // newline
-	't' => char-list  := add!(char-list, '\t');    // tab
-	'f' => char-list  := add!(char-list, '\f');    // formfeed
-	'r' => char-list  := add!(char-list, '\r');    // carriage return
-	'b' => char-list  := add!(char-list, '\b');    // backspace
+        'n' => char-list  := add!(char-list, '\n');    // newline
+        't' => char-list  := add!(char-list, '\t');    // tab
+        'f' => char-list  := add!(char-list, '\f');    // formfeed
+        'r' => char-list  := add!(char-list, '\r');    // carriage return
+        'b' => char-list  := add!(char-list, '\b');    // backspace
 
-	'd' => range-list := add!(range-list, pair('0', '9'));  // digit-char
+        'd' => range-list := add!(range-list, pair('0', '9'));  // digit-char
 
-	'w' =>                                              // word-char
-	  range-list := concatenate(range-list, list(pair('a', 'z'), 
-						     pair('A', 'Z'), 
-						     pair('0', '9')));
-	  char-list := add!(char-list, '_');
+        'w' =>                                              // word-char
+          range-list := concatenate(range-list, list(pair('a', 'z'),
+                                                     pair('A', 'Z'),
+                                                     pair('0', '9')));
+          char-list := add!(char-list, '_');
 
-	's' => char-list := concatenate(char-list, " \t\n\r\f");  // whitespace
-	otherwise => char-list := add!(char-list, escaped-char);
+        's' => char-list := concatenate(char-list, " \t\n\r\f");  // whitespace
+        otherwise => char-list := add!(char-list, escaped-char);
       end select;
     else
       char-list := add!(char-list, char);
@@ -329,7 +329,7 @@ end method parse-description;
 // Not highly useful for a non-mutable class, but why bother erasing
 // perfectly good code..
 //
-define method shallow-copy (set :: <character-set>) 
+define method shallow-copy (set :: <character-set>)
  => new-set :: <character-set>;
   let new-set = make(object-class(set));
   // Wish I had keyed-by
@@ -355,44 +355,44 @@ define method in-byte-vector? (set :: <character-set>, c :: <byte-character>)
   set.byte-characters[c];
 end method in-byte-vector?;
 
-define method in-ranges? (c :: <character>, 
-			  set :: <case-sensitive-character-set>)
+define method in-ranges? (c :: <character>,
+                          set :: <case-sensitive-character-set>)
  => answer :: <boolean>;
   block (return)
     for (range in set.char-ranges)
       if (c >= head(range) & c <= tail(range))
-	return(#t);
+        return(#t);
       end if;
     end for;
     #f;
   end block;
 end method in-ranges?;
 
-define method in-ranges? (c :: <character>, 
-			  set :: <case-insensitive-character-set>)
+define method in-ranges? (c :: <character>,
+                          set :: <case-insensitive-character-set>)
  => answer :: <boolean>;
   block (return)
     for (range in set.char-ranges)
       if (as-lowercase(c) >= head(range)
-	    & as-lowercase(c) <= tail(range))
-	return(#t);
+            & as-lowercase(c) <= tail(range))
+        return(#t);
       elseif (as-uppercase(c) >= head(range)
-		& as-uppercase(c) <= tail(range))
-	return(#t);
+                & as-uppercase(c) <= tail(range))
+        return(#t);
       end if;
     end for;
     #f;
-  end block;  
+  end block;
 end method in-ranges?;
 
-define method in-single-chars? (set :: <case-sensitive-character-set>, 
-				c :: <character>)
+define method in-single-chars? (set :: <case-sensitive-character-set>,
+                                c :: <character>)
  => answer :: <boolean>;
   member?(c, set.single-chars, test: \==);
 end method in-single-chars?;
 
-define method in-single-chars? (set :: <case-insensitive-character-set>, 
-				c :: <character>)
+define method in-single-chars? (set :: <case-insensitive-character-set>,
+                                c :: <character>)
  => answer :: <boolean>;
   member?(c, set.single-chars, test: case-insensitive-equal);
 end method in-single-chars?;
@@ -441,92 +441,92 @@ define sealed method forward-iteration-protocol
     let state = make(<char-set-iterator>);
     block (return)
       for (ch in set.byte-characters, i from 0)
-	if (ch)
-	  state.index := i;
-	  state.char := as(<character>, i);
-	  return();
-	end if;
+        if (ch)
+          state.index := i;
+          state.char := as(<character>, i);
+          return();
+        end if;
       end for;
       new-phase(#"range", set, state);
     end block;
     values(state,
-	   #f,                 // limit
-	   // next
-	   method (set :: <character-set>, state :: <char-set-iterator>)
-	    => next-state :: <char-set-iterator>;
-	     select (state.phase)
-	       #"byte" =>
-		 block (return)
-		   let chars = set.byte-characters;
-		   for (i from state.index + 1 below chars.size)
-		     let ch = as(<character>, i);
-		     if (chars[ch])
-		       state.index := i;
-		       state.char := ch;
-		       return();
-		     end if;
-		   end for;
-		   new-phase(#"range", set, state);
-		 end block;
-	       #"range" =>
-		 let new-char = state.char.successor;
-		 case
-		   (new-char <= set.char-ranges[state.index].tail) =>
-		     state.char := new-char;
-		   (state.index + 1 < set.char-ranges.size) =>
-		     state.index := state.index + 1;
-		     state.char := set.char-ranges[state.index].head;
-		   otherwise =>
-		     new-phase(#"single", set, state);
-		 end case;
-	       #"single" =>
-		 let new-index = state.index + 1;
-		 if (new-index < set.single-chars.size)
-		   state.index := new-index;
-		   state.char := set.single-chars[new-index];
-		 else
-		   state.phase := #"done";
-		 end if;
-	       otherwise =>
-		 error("Attempt to advance a finished character-set iterator");
-	     end select;
-	     state;
-	   end method,
-	   
-	   // finished?
-	   method (set :: <character-set>, state :: <char-set-iterator>, 
-		   limit :: <false>)
-	    => answer :: <boolean>;
-	     state.phase == #"done";
-	   end method,
+           #f,                 // limit
+           // next
+           method (set :: <character-set>, state :: <char-set-iterator>)
+            => next-state :: <char-set-iterator>;
+             select (state.phase)
+               #"byte" =>
+                 block (return)
+                   let chars = set.byte-characters;
+                   for (i from state.index + 1 below chars.size)
+                     let ch = as(<character>, i);
+                     if (chars[ch])
+                       state.index := i;
+                       state.char := ch;
+                       return();
+                     end if;
+                   end for;
+                   new-phase(#"range", set, state);
+                 end block;
+               #"range" =>
+                 let new-char = state.char.successor;
+                 case
+                   (new-char <= set.char-ranges[state.index].tail) =>
+                     state.char := new-char;
+                   (state.index + 1 < set.char-ranges.size) =>
+                     state.index := state.index + 1;
+                     state.char := set.char-ranges[state.index].head;
+                   otherwise =>
+                     new-phase(#"single", set, state);
+                 end case;
+               #"single" =>
+                 let new-index = state.index + 1;
+                 if (new-index < set.single-chars.size)
+                   state.index := new-index;
+                   state.char := set.single-chars[new-index];
+                 else
+                   state.phase := #"done";
+                 end if;
+               otherwise =>
+                 error("Attempt to advance a finished character-set iterator");
+             end select;
+             state;
+           end method,
 
-	   // key
-	   method (set :: <character-set>, state :: <char-set-iterator>) 
-	    => state :: <character>;
-	     state.char;
-	   end method,
-	   
-	   // element
-	   method (set :: <character-set>, state :: <char-set-iterator>)
-	    => state :: <character>;
-	     state.char;
-	   end method,
+           // finished?
+           method (set :: <character-set>, state :: <char-set-iterator>,
+                   limit :: <false>)
+            => answer :: <boolean>;
+             state.phase == #"done";
+           end method,
 
-	   // element-setter
-	   method (value, set :: <character-set>, state :: <char-set-iterator>) 
-	    => state :: <character>;
-	     error("Character sets are immutable");
-	   end method,
+           // key
+           method (set :: <character-set>, state :: <char-set-iterator>)
+            => state :: <character>;
+             state.char;
+           end method,
 
-	   // copy-state
-	   method (set :: <character-set>, state :: <char-set-iterator>) 
-	    => state :: <char-set-iterator>;
-	     make(<char-set-iterator>, phase: state.phase, index: state.index,
-		  char: state.char);
-	   end method);
+           // element
+           method (set :: <character-set>, state :: <char-set-iterator>)
+            => state :: <character>;
+             state.char;
+           end method,
+
+           // element-setter
+           method (value, set :: <character-set>, state :: <char-set-iterator>)
+            => state :: <character>;
+             error("Character sets are immutable");
+           end method,
+
+           // copy-state
+           method (set :: <character-set>, state :: <char-set-iterator>)
+            => state :: <char-set-iterator>;
+             make(<char-set-iterator>, phase: state.phase, index: state.index,
+                  char: state.char);
+           end method);
   end if;
 end method forward-iteration-protocol;
-  
+
 define sealed method forward-iteration-protocol
     (set :: <case-insensitive-character-set>)
  => (initial-state :: <object>, limit :: <object>, next-state :: <function>,
@@ -585,58 +585,58 @@ define method slow-char-set-iterator (set :: <character-set>)
      copy-state :: <function>);
   let max-char :: <character>
     = if (set.negated-set?)
-	$max-character;
+        $max-character;
       else
-	guess-max-char(set);
+        guess-max-char(set);
       end if;
   local method find-next
-	    (set :: <character-set>, ch :: <character>, limit :: <character>)
-	 => (result :: false-or(<character>));
-	  block (return)
-	    for (c = ch then successor(c), until: member?(c, set))
-	      if (c == limit) return(#f) end if;
-	    finally
-	      c;
-	    end for;
-	  end block;
-	end method find-next;
+            (set :: <character-set>, ch :: <character>, limit :: <character>)
+         => (result :: false-or(<character>));
+          block (return)
+            for (c = ch then successor(c), until: member?(c, set))
+              if (c == limit) return(#f) end if;
+            finally
+              c;
+            end for;
+          end block;
+        end method find-next;
   values(find-next(set, as(<character>, 0), max-char), #f,
-	 // next
-	 method (set :: <character-set>, state :: <character>)
-	  => next-state :: false-or(<character>);
-	   state ~== max-char & find-next(set, state.successor, max-char);
-	 end method,
-	 
-	 // finished?
-	 method (set :: <character-set>, state :: false-or(<character>), 
-		 limit :: <false>)
-	  => answer :: <boolean>;
-	   ~state;
-	 end method,
+         // next
+         method (set :: <character-set>, state :: <character>)
+          => next-state :: false-or(<character>);
+           state ~== max-char & find-next(set, state.successor, max-char);
+         end method,
 
-	 // key
-	 method (set :: <character-set>, state :: <character>) 
-	  => state :: <character>;
-	   state;
-	 end method,
-	 
-	 // element
-	 method (set :: <character-set>, state :: <character>)
-	  => state :: <character>;
-	   state;
-	 end method,
+         // finished?
+         method (set :: <character-set>, state :: false-or(<character>),
+                 limit :: <false>)
+          => answer :: <boolean>;
+           ~state;
+         end method,
 
-	 // element-setter
-	 method (value, set :: <character-set>, state :: <character>) 
-	  => state :: <character>;
-	   error("Character sets are immutable");
-	 end method,
+         // key
+         method (set :: <character-set>, state :: <character>)
+          => state :: <character>;
+           state;
+         end method,
 
-	 // copy-state
-	 method (set :: <character-set>, state :: <character>) 
-	  => state :: <character>;
-	   state;
-	 end method);
+         // element
+         method (set :: <character-set>, state :: <character>)
+          => state :: <character>;
+           state;
+         end method,
+
+         // element-setter
+         method (value, set :: <character-set>, state :: <character>)
+          => state :: <character>;
+           error("Character sets are immutable");
+         end method,
+
+         // copy-state
+         method (set :: <character-set>, state :: <character>)
+          => state :: <character>;
+           state;
+         end method);
 end method slow-char-set-iterator;
 
 // -----------------------------------------------------------------
@@ -652,15 +652,15 @@ end class <byte-character-table>;
 // This function doesn't believe in the concept of defaults.
 // The parameter is there only to make the compiler happy.
 //
-define sealed inline method element 
+define sealed inline method element
     (jt :: <byte-character-table>, key :: <character>,
-     #key default: default = #f) 
+     #key default: default = #f)
  => elt :: <object>;
   jt.jump-vector [as(<integer>, key)];
 end method element;
 
 define sealed inline method element-setter
-    (value, jt :: <byte-character-table>, 
+    (value, jt :: <byte-character-table>,
      key :: <character>) => value :: <object>;
   jt.jump-vector [as(<integer>, key)] := value;
 end method element-setter;
@@ -671,13 +671,13 @@ define sealed inline method forward-iteration-protocol (jt :: <byte-character-ta
      current-element :: <function>, current-element-setter :: <function>,
      copy-state :: <function>);
   values(0, 256,        // init and limit
-	 method (coll, state) state + 1 end,               // next-state
-	 method (coll, state, limit) state >= limit end,   // finished-state?
-	 method (coll, state) as(<character>, state) end,  // current-key
-	 method (coll, state) jt.jump-vector[state] end,   // current-elt
-	 method (value, coll, state) jt.jump-vector[state] := value end,
-	                // Current-elt-setter
-	 method (coll, state) state end);                  // copy-state
+         method (coll, state) state + 1 end,               // next-state
+         method (coll, state, limit) state >= limit end,   // finished-state?
+         method (coll, state) as(<character>, state) end,  // current-key
+         method (coll, state) jt.jump-vector[state] end,   // current-elt
+         method (value, coll, state) jt.jump-vector[state] := value end,
+                        // Current-elt-setter
+         method (coll, state) state end);                  // copy-state
 end method forward-iteration-protocol;
 
 // Seals for file string-hacking.dylan

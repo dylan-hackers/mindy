@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -153,29 +153,29 @@ void init_handler_classes(void)
 void init_handler_functions(void)
 {
     define_constant("push-handler",
-		    make_raw_method("push-handler",
-				    list2(obj_TypeClass, obj_FunctionClass),
-				    FALSE,
-				    list2(pair(symbol("test"), obj_False),
-					  pair(symbol("init-arguments"),
-					       obj_Nil)),
-				    FALSE, obj_Nil, obj_False, push_handler));
+                    make_raw_method("push-handler",
+                                    list2(obj_TypeClass, obj_FunctionClass),
+                                    FALSE,
+                                    list2(pair(symbol("test"), obj_False),
+                                          pair(symbol("init-arguments"),
+                                               obj_Nil)),
+                                    FALSE, obj_Nil, obj_False, push_handler));
     define_constant("current-handler",
-		    make_raw_function("current-handler", obj_Nil,
-				      FALSE, obj_False,
-				      FALSE, list1(obj_HandlerClass),
-				      obj_False, current_handler));
+                    make_raw_function("current-handler", obj_Nil,
+                                      FALSE, obj_False,
+                                      FALSE, list1(obj_HandlerClass),
+                                      obj_False, current_handler));
     define_function("handler-type", list1(obj_HandlerClass), FALSE, obj_False,
-		    FALSE, obj_ObjectClass, handler_type);
+                    FALSE, obj_ObjectClass, handler_type);
     define_function("handler-function", list1(obj_HandlerClass), FALSE,
-		    obj_False, FALSE, obj_ObjectClass, handler_function);
+                    obj_False, FALSE, obj_ObjectClass, handler_function);
     define_function("handler-test", list1(obj_HandlerClass), FALSE, obj_False,
-		    FALSE, obj_ObjectClass, handler_test);
+                    FALSE, obj_ObjectClass, handler_test);
     define_function("handler-init-args", list1(obj_HandlerClass), FALSE,
-		    obj_False, FALSE, obj_ObjectClass, handler_init_args);
+                    obj_False, FALSE, obj_ObjectClass, handler_init_args);
     define_function("handler-next", list1(obj_HandlerClass), FALSE, obj_False,
-		    FALSE, obj_ObjectClass, handler_next);
+                    FALSE, obj_ObjectClass, handler_next);
     define_constant("pop-handler",
-		    make_raw_function("pop-handler", obj_Nil, FALSE, obj_False,
-				      FALSE, obj_Nil, obj_False, pop_handler));
+                    make_raw_function("pop-handler", obj_Nil, FALSE, obj_False,
+                                      FALSE, obj_Nil, obj_False, pop_handler));
 }

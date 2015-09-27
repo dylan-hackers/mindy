@@ -7,19 +7,19 @@ copyright: see below
 //
 //  Copyright (c) 1999-2001 David Lichteblau
 //  All rights reserved.
-// 
+//
 //  Use and copying of this software and preparation of derivative
 //  works based on this software are permitted, including commercial
 //  use, provided that the following conditions are observed:
-// 
+//
 //  1. This copyright notice must be retained in full on any copies
 //     and on appropriate parts of any derivative works. (Other names
 //     and years may be added, so long as no existing ones are removed.)
-// 
+//
 //  This software is made available "as is".  Neither the authors nor
 //  Carnegie Mellon University make any warranty about the software,
 //  its performance, or its conformity to any specification.
-// 
+//
 //  Bug reports, questions, comments, and suggestions should be sent by
 //  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 //
@@ -59,68 +59,68 @@ copyright: see below
 //
 // Argument parser definition
 // ==========================
-// 
+//
 //     Use ``define argument-parser'' to define a new parser class.  This
 //     macro is intended to look similar to ``define class'', but doesn't
 //     define slots as such.  Instead it takes ``option'' clauses.  At
-//     initialisation time of an instance, corresponding option parsers will 
+//     initialisation time of an instance, corresponding option parsers will
 //     be made automatically.
-// 
+//
 //         define argument-parser <my-parser> ()
 //           option verbose?, long: "verbose", short: "v";
 //         end;
-// 
+//
 //     Notes:
 //       - Default superclass is <argument-list-parser>.
-// 
+//
 //       - Default option class is <simple-option-parser>.
-// 
+//
 //         You can specify an alternative class with the kind: keyword:
 //           option logfile, kind: <parameter-option-parser>;
-// 
+//
 //       - For the options, default values are possible:
 //           option logfile = "default.log",
 //             kind: <parameter-option-parser>,
 //             long: "logfile", short: "L";
-// 
+//
 //       - You may want to specify types for an option:
 //           option logfile :: false-or(<string>), ...
 //         or
 //           option logfile :: <string> = "default.log", ...
-//         
+//
 //         Currently type checking is done, but errors are not handled.
 //         Future version will probably provide a facility for automatic
 //         error handling and error message generation.
-//     
+//
 //       - Remaining keywords are handed as initargs to make.
-// 
+//
 //       - Besides ``option'' there is also ``regular-arguments'':
 //           regular-arguments file-names;
-// 
-// 
+//
+//
 // Parsing an argument list
 // ========================
-// 
+//
 //     Originally I had macros to make an argument-list parser and do the
 //     parsing transparently.  It wasn't consistent enough, though, and
 //     therefore I decided to throw out that code for now.
-// 
+//
 //     Just do it manually:
-// 
+//
 //         define method main (appname, #rest args);
 //           let parser = make(<my-parser>);
 //           parse-arguments(parser, args);
-// 
+//
 //           // Here we go.
 //         end method main;
-// 
-// 
+//
+//
 // Accessing the options
 // =====================
-// 
+//
 //     ``define argument-parser'' defines function to access the options as
 //     if they were real slots:
-// 
+//
 //         define argument-parser <my-parser> ()
 //           option verbose?, short: "v";
 //         end argument-parser;
@@ -149,7 +149,7 @@ copyright: see below
 //           synopsis print-synopsis,
 //             usage: "test [options] file...",
 //             description: "Stupid test program doing nothing with the args.";
-//        
+//
 //           ...
 //         end argument-parser;
 //
@@ -161,8 +161,8 @@ copyright: see below
 //           -v, --verbose                Explanation
 //               --other-option           foo
 //
- 
- 
+
+
 #if (~mindy) // whole file
 
 // Macro ARGUMENT-PARSER-DEFINER--exported
@@ -175,7 +175,7 @@ copyright: see below
 //      [option-name, type, [default-if-any], #rest initargs]
 //      [regular-arguments-name]
 //      (synopsis-fn-name, usage, description)
-// 
+//
 //  - Hand it over to `defargparser-rec'.
 //
 // Explanation: I have no idea what that is for.
@@ -189,7 +189,7 @@ define macro argument-parser-definer
   supers:
     { ?super:expression, ... } => { ?super, ... }
     { } => { }
-    
+
   options:
     { option ?:name :: ?value-type:expression, ?initargs:*; ... }
       => { [?name, ?value-type, [], ?initargs] ... }
@@ -233,12 +233,12 @@ define macro defargparser-rec
 
     { defargparser-rec ?:name (?supers:*) (?processed:*) [?option:*] ?rem:* end }
       => { defargparser-rec ?name (?supers)
-	     (?processed [?name, ?option]) ?rem
-	   end }
+             (?processed [?name, ?option]) ?rem
+           end }
     { defargparser-rec ?:name (?supers:*) (?processed:*) (?usage:*) ?rem:* end }
       => { defargparser-rec ?name (?supers)
-	     ((?usage) ?processed) ?rem
-	   end }
+             ((?usage) ?processed) ?rem
+           end }
 end macro;
 
 // Macro DEFARGPARSER-AUX--internal
@@ -269,8 +269,8 @@ end macro;
 define macro defargparser-class
     { defargparser-class ?:name (?supers:*) ?slots end }
       => { define class ?name (?supers)
-	     ?slots
-	   end class }
+             ?slots
+           end class }
 
   slots:
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
@@ -280,20 +280,20 @@ define macro defargparser-class
             ?long:expression = #(),
        #all-keys] ... }
       => { constant slot ?option ## "-parser"
-	     = begin
-	         let long = ?long;
-	         let short = ?short;
-		 make(?kind,
-		      long-options: select (long by instance?)
-				      <list> => long;
-				      otherwise => list(long);
-				    end select,
-		      short-options: select (short by instance?)
-				       <list> => short;
-				       otherwise => list(short);
-				     end select,
-		      ?initargs);
-	       end; ... }
+             = begin
+                 let long = ?long;
+                 let short = ?short;
+                 make(?kind,
+                      long-options: select (long by instance?)
+                                      <list> => long;
+                                      otherwise => list(long);
+                                    end select,
+                      short-options: select (short by instance?)
+                                       <list> => short;
+                                       otherwise => list(short);
+                                     end select,
+                      ?initargs);
+               end; ... }
     { [?class:name, ?regular-arguments:name] ... }
       => {  ... }
     { (?usage:*) ... }
@@ -304,11 +304,11 @@ end macro;
 define macro defargparser-init
     { defargparser-init ?:name ?adders end }
       => { define method initialize (instance :: ?name,
-				     #next next-method, #key, #all-keys)
-	    => ();
-	     next-method();
-	     ?adders
-	   end method initialize }
+                                     #next next-method, #key, #all-keys)
+            => ();
+             next-method();
+             ?adders
+           end method initialize }
 
   adders:
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
@@ -329,26 +329,26 @@ define macro defargparser-accessors
     { [?class:name, ?option:name, ?value-type:expression,
        [], [?docstrings:*], ?initargs:*] ... }
       => { define method ?option (arglistparser :: ?class)
-	    => (value :: ?value-type);
-	     let optionparser = ?option ## "-parser" (arglistparser);
-	     option-value(optionparser);
-	   end method ?option; ... }
+            => (value :: ?value-type);
+             let optionparser = ?option ## "-parser" (arglistparser);
+             option-value(optionparser);
+           end method ?option; ... }
     { [?class:name, ?option:name, ?value-type:expression,
        [?default:expression], [?docstrings:*], ?initargs:*] ... }
       => { define method ?option (arglistparser :: ?class)
-	    => (value :: ?value-type);
-	     let optionparser = ?option ## "-parser" (arglistparser);
-	     if (option-present?(optionparser))
-	       option-value(optionparser);
-	     else
-	       ?default;
-	     end if;
-	   end method ?option; ... }
+            => (value :: ?value-type);
+             let optionparser = ?option ## "-parser" (arglistparser);
+             if (option-present?(optionparser))
+               option-value(optionparser);
+             else
+               ?default;
+             end if;
+           end method ?option; ... }
     { [?class:name, ?regular-arguments:name] ... }
       => { define method ?regular-arguments (arglistparser :: ?class)
-	    => (value :: <sequence>);
-	     regular-arguments(arglistparser);
-	   end method; ... }
+            => (value :: <sequence>);
+             regular-arguments(arglistparser);
+           end method; ... }
     { (?usage:*) ... }
       => { ... }
     { } => { }
@@ -360,46 +360,46 @@ define macro defargparser-synopsis
        ?options
       end }
       => { define method ?fn (parser :: ?name, stream :: <stream>) => ();
-	     let usage = ?usage;
-	     let desc = ?description;
-	     if (usage) format(stream, "Usage: %s\n", usage); end if;
-	     if (desc) format(stream, "%s\n", desc); end if;
-	     if (usage | desc) new-line(stream); end if;
-	     local method print-option(short, long, syntax, description);
-		     let short = select (short by instance?)
-				   <list> => first(short);
-				   <string> => short;
-				   otherwise => #f;
-				 end select;
-		     let long = select (long by instance?)
-				  <pair> => first(long);
-				  <string> => long;
-				  otherwise => #f;
-				end select;
-		     write(stream, "  ");
-		     if (short)
-		       format(stream, "-%s", short);
-		       if (long)
-			 write(stream, ", ");
-		       else
-			 write(stream, "  ");
-		       end if;
-		     else
-		       write(stream, "    ");
-		     end if;
-		     if (long)
-		       format(stream, "--%s%s", long, syntax);
-		       for (i from 1 to (28 - 2 - size(long) - size(syntax)))
-			 write-element(stream, ' ');
-		       end for;
-		     else
-		       format(stream, "%28s", "");
-		     end if;
-		     write(stream, description);
-		     new-line(stream);
-		   end method print-option;
-	     ?options
-	   end method ?fn; }
+             let usage = ?usage;
+             let desc = ?description;
+             if (usage) format(stream, "Usage: %s\n", usage); end if;
+             if (desc) format(stream, "%s\n", desc); end if;
+             if (usage | desc) new-line(stream); end if;
+             local method print-option(short, long, syntax, description);
+                     let short = select (short by instance?)
+                                   <list> => first(short);
+                                   <string> => short;
+                                   otherwise => #f;
+                                 end select;
+                     let long = select (long by instance?)
+                                  <pair> => first(long);
+                                  <string> => long;
+                                  otherwise => #f;
+                                end select;
+                     write(stream, "  ");
+                     if (short)
+                       format(stream, "-%s", short);
+                       if (long)
+                         write(stream, ", ");
+                       else
+                         write(stream, "  ");
+                       end if;
+                     else
+                       write(stream, "    ");
+                     end if;
+                     if (long)
+                       format(stream, "--%s%s", long, syntax);
+                       for (i from 1 to (28 - 2 - size(long) - size(syntax)))
+                         write-element(stream, ' ');
+                       end for;
+                     else
+                       format(stream, "%28s", "");
+                     end if;
+                     write(stream, description);
+                     new-line(stream);
+                   end method print-option;
+             ?options
+           end method ?fn; }
 
     { defargparser-synopsis ?:name ?ignore:* end }
       => { }

@@ -7,7 +7,7 @@ define method foo(i :: limited(<integer>, min: 0, max: 63))
 => res :: <boolean>;
 end;
 
-define method foo(i == 18) 
+define method foo(i == 18)
 => res :: <boolean>;
   #t
 end;

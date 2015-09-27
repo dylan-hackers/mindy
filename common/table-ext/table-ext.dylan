@@ -6,25 +6,25 @@ author: Nick Kramer (nkramer@cs.cmu.edu), David Watson (dwatson@cmu.edu)
 // Copyright (c) 1994, 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -86,7 +86,7 @@ end method table-protocol;
 // elt-hash-function, merging the resulting hash codes in order.
 //
 define function values-hash (elt-hash-function :: <function>,
-			     initial-state :: <hash-state>, #rest args)
+                             initial-state :: <hash-state>, #rest args)
  => (hash-id :: <integer>, hash-state :: <hash-state>);
   let (current-id, current-state) = values(0, initial-state);
   for (elt in args)
@@ -122,7 +122,7 @@ end method case-insensitive-equal;
 
 // This is useful for converting from uppercase to lowercase
 //
-define constant a-minus-A 
+define constant a-minus-A
   = as(<integer>, 'a') - as(<integer>, 'A');
 
 // Only works for ASCII and Unicode, and the case folding part works
@@ -136,9 +136,9 @@ define method case-insensitive-equal (c1 :: <character>, c2 :: <character>)
  => answer :: <boolean>;
   c1 == c2
     | (as(<integer>, c1)
-	  == as(<integer>, c2) + a-minus-A & uppercase?(c2))
+          == as(<integer>, c2) + a-minus-A & uppercase?(c2))
     | (as(<integer>, c1) + a-minus-A
-	 == as(<integer>, c2) & uppercase?(c1));
+         == as(<integer>, c2) & uppercase?(c1));
 end method case-insensitive-equal;
 
 define method case-insensitive-equal (s1 :: <string>, s2 :: <string>)
@@ -148,9 +148,9 @@ define method case-insensitive-equal (s1 :: <string>, s2 :: <string>)
   else
     block (return)
       for (c1 in s1, c2 in s2)
-	if (~ case-insensitive-equal(c1, c2))
-	  return(#f);
-	end if;
+        if (~ case-insensitive-equal(c1, c2))
+          return(#f);
+        end if;
       end for;
       #t;
     end block;
@@ -164,9 +164,9 @@ define method case-insensitive-equal (s1 :: <byte-string>, s2 :: <byte-string>)
   else
     block (return)
       for (c1 in s1, c2 in s2)
-	if (~ case-insensitive-equal(c1, c2))
-	  return(#f);
-	end if;
+        if (~ case-insensitive-equal(c1, c2))
+          return(#f);
+        end if;
       end for;
       #t;
     end block;

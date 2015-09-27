@@ -56,7 +56,7 @@ define macro user-assert
  { user-assert(?value:expression, ?format-string:expression, ?format-arguments:*) }
     => { unless (?value)
            user-assertion-error(?format-string, ?format-arguments)
-	 end }
+         end }
 end macro user-assert;
 */
 
@@ -66,8 +66,8 @@ end class <user-assertion-error>;
 define function user-assertion-error
     (format-string :: <string>, #rest format-arguments)
   error(make(<user-assertion-error>,
-	     format-string: format-string,
-	     format-arguments: format-arguments))
+             format-string: format-string,
+             format-arguments: format-arguments))
 end function user-assertion-error;
 
 
@@ -80,8 +80,8 @@ define function print-format
   let found-percent? = #f;
   let argument-index :: <integer> = 0;
   let no-of-arguments = size(format-arguments);
-  local method argument 
-	    (char :: <character>, class :: <class>) => (argument :: <object>)
+  local method argument
+            (char :: <character>, class :: <class>) => (argument :: <object>)
           let current-index = argument-index;
           argument-index := argument-index + 1;
           unless (current-index < no-of-arguments)
@@ -97,32 +97,32 @@ define function print-format
           argument
         end;
   local method collect (string :: <string>) => ()
-	  print-string(buffer, string)
+          print-string(buffer, string)
         end method collect;
   local method collect-character (character :: <character>) => ()
-	  add!(buffer, character)
-	end method collect-character;
+          add!(buffer, character)
+        end method collect-character;
   for (char :: <character> in format-string)
     if (found-percent?)
       select (as-uppercase(char))
-	'D' => collect(number-to-string(argument(char, <number>)));
-	'B' => collect(integer-to-string(argument(char, <integer>), base: 2));
-	'O' => collect(integer-to-string(argument(char, <integer>), base: 8));
-	'X' => collect(integer-to-string(argument(char, <integer>), base: 16));
-	'C' => collect-character(argument(char, <character>));
-	'S' => print-pretty-name(buffer, argument(char, <object>));
-	'=' => print-unique-name(buffer, argument(char, <object>));
-	'%' => collect-character('%');
-	otherwise =>
-	  error("Invalid format directive '%s' in \"%s\"",
-		char, format-string);
+        'D' => collect(number-to-string(argument(char, <number>)));
+        'B' => collect(integer-to-string(argument(char, <integer>), base: 2));
+        'O' => collect(integer-to-string(argument(char, <integer>), base: 8));
+        'X' => collect(integer-to-string(argument(char, <integer>), base: 16));
+        'C' => collect-character(argument(char, <character>));
+        'S' => print-pretty-name(buffer, argument(char, <object>));
+        '=' => print-unique-name(buffer, argument(char, <object>));
+        '%' => collect-character('%');
+        otherwise =>
+          error("Invalid format directive '%s' in \"%s\"",
+                char, format-string);
       end;
       found-percent? := #f;
     else
       if (char == '%')
         found-percent? := #t;
       else
-	collect-character(char)
+        collect-character(char)
       end
     end
   end;
@@ -177,8 +177,8 @@ end function print-basic-name;
 define method print-unique-name
     (buffer :: <string-buffer>, object :: <object>) => ()
   local method symbol-name (symbol :: <symbol>) => (name :: <string>)
-	  as-lowercase(as(<string>, symbol))
-	end method symbol-name;
+          as-lowercase(as(<string>, symbol))
+        end method symbol-name;
   select (object by instance?)
     <byte-string>  => print-format(buffer, "\"%s\"", object);
     <symbol>       => print-format(buffer, "#\"%s\"", symbol-name(object));
@@ -250,20 +250,20 @@ define function machine-word-to-string
  => (string :: <string>)
   let halfword-size = ash($machine-word-size, -1);
   let digits-per-halfword = ash(halfword-size, -2);
-  let high 
+  let high
     = as(<integer>, u%shift-right(mw, halfword-size));
-  let low 
+  let low
     = as(<integer>, u%shift-right(u%shift-left(mw, halfword-size),
                                   halfword-size));
   concatenate-as(<string>,
-		 prefix | "",
-		 integer-to-string(high, base: 16, size: digits-per-halfword),
-		 integer-to-string(low, base: 16, size: digits-per-halfword))
+                 prefix | "",
+                 integer-to-string(high, base: 16, size: digits-per-halfword),
+                 integer-to-string(low, base: 16, size: digits-per-halfword))
 end function machine-word-to-string;
 
 define function string-to-machine-word
-    (str :: <string>, 
-     #key start         :: <integer> = 0, 
+    (str :: <string>,
+     #key start         :: <integer> = 0,
           default = $unsupplied,
           end: stop     :: false-or(<integer>))
  => (n :: <machine-word>, next-key :: <integer>)
@@ -274,7 +274,7 @@ define function string-to-machine-word
   end;
   if (stop)
     unless (stop >= start & stop <= string-length)
-      user-assertion-error("Stop: %d is out of range [0, %d] for string %s.", 
+      user-assertion-error("Stop: %d is out of range [0, %d] for string %s.",
                            stop, string-length, str);
     end;
   else
@@ -285,8 +285,8 @@ define function string-to-machine-word
   end;
   // Remove common prefixes (#x, 0x) ...
   if ((start < stop - 2)
-	&((str[start] = '#' & str[start + 1] = 'x')
-	    | (str[start] = '0' & str[start + 1] = 'x')))
+        &((str[start] = '#' & str[start + 1] = 'x')
+            | (str[start] = '0' & str[start + 1] = 'x')))
     start := start + 2
   end;
   let (value, next-key)
@@ -308,15 +308,15 @@ end method condition-to-string;
 define method condition-to-string
     (condition :: <format-string-condition>) => (string :: <string>)
   apply(format-to-string,
-        condition-format-string(condition), 
+        condition-format-string(condition),
         condition-format-arguments(condition))
 end method condition-to-string;
 
 define method condition-to-string
     (error :: <type-error>) => (string :: <string>)
   format-to-string("%= is not of type %=",
-		   type-error-value(error),
-		   type-error-expected-type(error))
+                   type-error-value(error),
+                   type-error-expected-type(error))
 end method condition-to-string;
 
 define method print-pretty-name
@@ -327,7 +327,7 @@ define method print-pretty-name
     print-string(buffer, message)
   else
     print-format(buffer, "Condition of class %s occurred",
-		 object-class-name(condition))
+                 object-class-name(condition))
   end
 end method print-pretty-name;
 
@@ -362,7 +362,7 @@ define method print-collection-contents
  => ()
   let dimensions = dimensions(array);
   print-elements(buffer, dimensions,
-		 print-length: print-length, separator: " x ")
+                 print-length: print-length, separator: " x ")
 end method print-collection-contents;
 
 define method print-collection-contents
@@ -371,14 +371,14 @@ define method print-collection-contents
  => ()
   ignore(print-length);
   local method print-range
-	    (buffer :: <string-buffer>, from :: <real>, to :: <real>,
-	     by :: <real>)
+            (buffer :: <string-buffer>, from :: <real>, to :: <real>,
+             by :: <real>)
          => ()
-	  select (by)
-	    1         => print-format(buffer, "%d to %d", from, to);
-	    otherwise => print-format(buffer, "%d to %d by %d", from, to, by);
-	  end
-	end method print-range;
+          select (by)
+            1         => print-format(buffer, "%d to %d", from, to);
+            otherwise => print-format(buffer, "%d to %d by %d", from, to, by);
+          end
+        end method print-range;
   let range-size = size(range);
   if (range-size = 0)
     print-string(buffer, $collection-empty-text)
@@ -425,7 +425,7 @@ define method print-collection-contents
     next-method()
   else
     print-format(buffer, "%=, %=", head(pair), tail-object)
-  end     
+  end
 end method print-collection-contents;
 
 define function print-elements

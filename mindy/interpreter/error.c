@@ -3,25 +3,25 @@
 *  Copyright (c) 1994  Carnegie Mellon University
 *  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 *  All rights reserved.
-*  
+*
 *  Use and copying of this software and preparation of derivative
 *  works based on this software are permitted, including commercial
 *  use, provided that the following conditions are observed:
-*  
+*
 *  1. This copyright notice must be retained in full on any copies
 *     and on appropriate parts of any derivative works.
 *  2. Documentation (paper or online) accompanying any system that
 *     incorporates this software, or any part of it, must acknowledge
 *     the contribution of the Gwydion Project at Carnegie Mellon
 *     University, and the Gwydion Dylan Maintainers.
-*  
+*
 *  This software is made available "as is".  Neither the authors nor
 *  Carnegie Mellon University make any warranty about the software,
 *  its performance, or its conformity to any specification.
-*  
+*
 *  Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-*  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+*  Also, see http://www.gwydiondylan.org/ for updates and documentation.
 *
 ***********************************************************************
 *
@@ -56,35 +56,35 @@ static void verror(char *msg, va_list ap)
     int nargs = count_format_args(msg);
     int i;
     struct thread *thread = thread_current();
-    
-    if (error_system_enabled) {
-	*thread->sp++ = error_var->value;
-	*thread->sp++ = make_byte_string(msg);
-	for (i = 0; i < nargs; i++)
-	    *thread->sp++ = va_arg(ap, obj_t);
 
-	invoke(thread, nargs+1);
-	go_on();
+    if (error_system_enabled) {
+        *thread->sp++ = error_var->value;
+        *thread->sp++ = make_byte_string(msg);
+        for (i = 0; i < nargs; i++)
+            *thread->sp++ = va_arg(ap, obj_t);
+
+        invoke(thread, nargs+1);
+        go_on();
     }
     else if (thread) {
-	obj_t cond = make_vector(nargs+1, NULL);
+        obj_t cond = make_vector(nargs+1, NULL);
 
-	SOVEC(cond)->contents[0] = make_byte_string(msg);
-	for (i = 1; i <= nargs; i++)
-	    SOVEC(cond)->contents[i] = va_arg(ap, obj_t);
+        SOVEC(cond)->contents[0] = make_byte_string(msg);
+        for (i = 1; i <= nargs; i++)
+            SOVEC(cond)->contents[i] = va_arg(ap, obj_t);
 
-	thread_debuggered(thread, cond);
+        thread_debuggered(thread, cond);
     }
     else {
-	obj_t cond = make_vector(nargs, NULL);
+        obj_t cond = make_vector(nargs, NULL);
 
-	for (i = 0; i < nargs; i++)
-	    SOVEC(cond)->contents[i] = va_arg(ap, obj_t);
-	
-	printf("error: ");
-	vformat(msg, SOVEC(cond)->contents, nargs);
-	putchar('\n');
-	exit(1);
+        for (i = 0; i < nargs; i++)
+            SOVEC(cond)->contents[i] = va_arg(ap, obj_t);
+
+        printf("error: ");
+        vformat(msg, SOVEC(cond)->contents, nargs);
+        putchar('\n');
+        exit(1);
     }
 }
 
@@ -99,26 +99,26 @@ void error(char *msg, ...)
 void type_error(obj_t value, obj_t type)
 {
     if (error_system_enabled) {
-	struct thread *thread = thread_current();
-	*thread->sp++ = type_error_var->value;
-	*thread->sp++ = value;
-	*thread->sp++ = type;
-	invoke(thread, 2);
-	go_on();
+        struct thread *thread = thread_current();
+        *thread->sp++ = type_error_var->value;
+        *thread->sp++ = value;
+        *thread->sp++ = type;
+        invoke(thread, 2);
+        go_on();
     }
     else
-	error("%= is not an instance of type %=", value, type);
+        error("%= is not an instance of type %=", value, type);
 }
 
 obj_t check_type(obj_t thing, obj_t type)
 {
     if (!instancep(thing, type)) {
-	type_error(thing, type);
-	/* Never reached, but keeps the compiler happy. */
-	return 0;
+        type_error(thing, type);
+        /* Never reached, but keeps the compiler happy. */
+        return 0;
     }
     else
-	return thing;
+        return thing;
 }
 
 static obj_t enable_error_system(void)
@@ -130,10 +130,10 @@ static obj_t enable_error_system(void)
 void init_error_functions(void)
 {
     define_function("enable-error-system", obj_Nil, FALSE, obj_False, FALSE,
-		    obj_ObjectClass, enable_error_system);
+                    obj_ObjectClass, enable_error_system);
     error_var = find_variable(module_BuiltinStuff, symbol("error"),
-			      FALSE, TRUE);
+                              FALSE, TRUE);
     type_error_var = find_variable(module_BuiltinStuff, symbol("type-error"),
-				   FALSE, TRUE);
+                                   FALSE, TRUE);
 }
 

@@ -28,7 +28,7 @@ end function-test list-locator;
 define common-extensions function-test concatenate! ()
   let my-list = #(3, 4);
   check("test concatenate! on a list", \=, concatenate!(my-list, #(5), #(6)),
-	#(3, 4, 5, 6));
+        #(3, 4, 5, 6));
   check("concatenate! should have not affected my-list", \=, my-list, #(3, 4));
   let my-stretchy-vector = make(<stretchy-vector>);
   add!(my-stretchy-vector, 3);
@@ -38,11 +38,11 @@ define common-extensions function-test concatenate! ()
   add!(my-stretchy-vector-afterwards, 4);
   add!(my-stretchy-vector-afterwards, 5);
   add!(my-stretchy-vector-afterwards, 6);
-  check("test concatenate! on a stretchy-vector", \=, 
-	concatenate!(my-stretchy-vector, #(5, 6)),
-	my-stretchy-vector-afterwards);
+  check("test concatenate! on a stretchy-vector", \=,
+        concatenate!(my-stretchy-vector, #(5, 6)),
+        my-stretchy-vector-afterwards);
   check("concatenate! should have changed my-stretchy-vector",
-	\=, my-stretchy-vector, my-stretchy-vector-afterwards);
+        \=, my-stretchy-vector, my-stretchy-vector-afterwards);
 end function-test concatenate!;
 
 define common-extensions function-test integer-length ()
@@ -64,11 +64,11 @@ define common-extensions function-test condition-to-string ()
               condition-to-string(make(<simple-error>, format-string: "Hello")),
               "Hello");
   check-instance?("condition-to-string of a type error produces a string",
-		  <string>,
-		  begin
-		    let error = make(<type-error>, value: 10, type: <class>);
-		    condition-to-string(error)
-		  end);
+                  <string>,
+                  begin
+                    let error = make(<type-error>, value: 10, type: <class>);
+                    condition-to-string(error)
+                  end);
   check-equal("condition-to-string of an error with a condition-to-string method",
               condition-to-string(make(<test-error>)),
               $test-error-message)
@@ -94,11 +94,11 @@ end function-test difference;
 define common-extensions function-test false-or ()
   let new-type = #f;
   check-instance?("False-or returns type",
-		  <type>, new-type := false-or(<string>));
+                  <type>, new-type := false-or(<string>));
   check-instance?(format-to-string("%s is false-or(<string>)", "abc"),
-		  new-type, "abc");
+                  new-type, "abc");
   check-instance?("#f is false-or(<string>)",
-		  new-type, #f);
+                  new-type, #f);
   check-false("#t is not false-or(<string>)",
               instance?(#t, new-type));
 end function-test false-or;
@@ -106,21 +106,21 @@ end function-test false-or;
 define common-extensions function-test find-element ()
   //---*** Do all collections by using dylan-test-suite collection code
   let list1 = #("oh", "we", "like", "sheep", "like");
-  check("test find-element", \=, 
-	find-element(list1, method (the-element) (the-element = "like") end),
-	"like");
+  check("test find-element", \=,
+        find-element(list1, method (the-element) (the-element = "like") end),
+        "like");
   check("test failure find-element", \=,
-	find-element(list1, method (the-element) (the-element = "thermos") end),
-	#f);
+        find-element(list1, method (the-element) (the-element = "thermos") end),
+        #f);
   check("test failure find-element with failure as symbol", \=,
-	find-element(list1, method (the-element) (the-element = "thermos") end,  
-		     failure: #"heckfire"), #"heckfire");
+        find-element(list1, method (the-element) (the-element = "thermos") end,
+                     failure: #"heckfire"), #"heckfire");
   check("test find-element with skip: 1", \=,
-	find-element(list1, method (the-element) (the-element = "like") end,
-		     skip: 1), "like");
+        find-element(list1, method (the-element) (the-element = "like") end,
+                     skip: 1), "like");
   check("skip: is too big", \=,
-	find-element(list1, method (the-element) (the-element = "like") end,
-		     skip: 2), #f);
+        find-element(list1, method (the-element) (the-element = "like") end,
+                     skip: 2), #f);
 end function-test find-element;
 
 //---*** NOTE: The <double-float> results will have to be changed if
@@ -147,44 +147,44 @@ define common-extensions function-test float-to-string ()
   //---*** NOTE: Our runtime should catch 0.0 / 0.0 and signal an invalid
   //---***       float operation error rather than generating a {NaN}.
   check-equal("float-to-string(0.0 / 0.0)",
-	      float-to-string(0.0 / 0.0),
-	      "{NaN}");
+              float-to-string(0.0 / 0.0),
+              "{NaN}");
   check-equal("float-to-string(0.0d0 / 0.0d0)",
-	      float-to-string(0.0d0 / 0.0d0),
-	      "{NaN}d0");
+              float-to-string(0.0d0 / 0.0d0),
+              "{NaN}d0");
   //---*** NOTE: When we implement floating point exception control,
   //---***       replace the above two checks with the following:
 /*
   check-equal("float-to-string(0.0 / 0.0)",
-	      float-to-string(with-floating-exceptions-disabled ()
-				0.0 / 0.0
-			      end),
-	      "{NaN}");
+              float-to-string(with-floating-exceptions-disabled ()
+                                0.0 / 0.0
+                              end),
+              "{NaN}");
   check-equal("float-to-string(0.0d0 / 0.0d0)",
-	      float-to-string(with-floating-exceptions-disabled ()
-				0.0d0 / 0.0d0
-			      end),
-	      "{NaN}d0");
+              float-to-string(with-floating-exceptions-disabled ()
+                                0.0d0 / 0.0d0
+                              end),
+              "{NaN}d0");
   check-equal("float-to-string(1.0 / 0.0)",
-	      float-to-string(with-floating-exceptions-disabled ()
-				1.0 / 0.0
-			      end),
-	      "+{infinity}");
+              float-to-string(with-floating-exceptions-disabled ()
+                                1.0 / 0.0
+                              end),
+              "+{infinity}");
   check-equal("float-to-string(1.0d0 / 0.0d0)",
-	      float-to-string(with-floating-exceptions-disabled ()
-				1.0d0 / 0.0d0
-			      end),
-	      "+{infinity}d0");
+              float-to-string(with-floating-exceptions-disabled ()
+                                1.0d0 / 0.0d0
+                              end),
+              "+{infinity}d0");
   check-equal("float-to-string(-1.0 / 0.0)",
-	      float-to-string(with-floating-exceptions-disabled ()
-				-1.0 / 0.0
-			      end),
-	      "-{infinity}");
+              float-to-string(with-floating-exceptions-disabled ()
+                                -1.0 / 0.0
+                              end),
+              "-{infinity}");
   check-equal("float-to-string(-1.0d0 / 0.0d0)",
-	      float-to-string(with-floating-exceptions-disabled ()
-				-1.0d0 / 0.0d0
-			      end),
-	      "-{infinity}d0");
+              float-to-string(with-floating-exceptions-disabled ()
+                                -1.0d0 / 0.0d0
+                              end),
+              "-{infinity}d0");
 */
 end function-test float-to-string;
 
@@ -225,18 +225,18 @@ define common-extensions function-test integer-to-string ()
                 integer-to-string(integer, base: base), string)
   end;
   check-equal("integer-to-string(10, size: 6)",
-	      integer-to-string(10, size: 6),
-	      "000010");
+              integer-to-string(10, size: 6),
+              "000010");
   check-equal("integer-to-string(10, size: 6, fill: ' ')",
-	      integer-to-string(10, size: 6, fill: ' '),
-	      "    10");
+              integer-to-string(10, size: 6, fill: ' '),
+              "    10");
   check-equal("integer-to-string(127, base: 2, size: 8)",
-	      integer-to-string(127, base: 2, size: 8),
-	      "01111111");
+              integer-to-string(127, base: 2, size: 8),
+              "01111111");
   check-no-errors("integer-to-string($minimum-integer)",
-		  integer-to-string($minimum-integer));
+                  integer-to-string($minimum-integer));
   check-no-errors("integer-to-string($maximum-integer)",
-		  integer-to-string($maximum-integer));
+                  integer-to-string($maximum-integer));
 end function-test integer-to-string;
 
 define common-extensions function-test number-to-string ()
@@ -246,12 +246,12 @@ end function-test number-to-string;
 define common-extensions function-test one-of ()
   let new-type = #f;
   check-instance?("one-of returns type",
-		  <type>,
-		  new-type := one-of(#"one", #t));
+                  <type>,
+                  new-type := one-of(#"one", #t));
   check-instance?(format-to-string("%s is one-of(%=, #t)", #"one", #"one"),
-		  new-type, #"one");
+                  new-type, #"one");
   check-instance?(format-to-string("#t is one-of(%=, #t)", #"one"),
-		  new-type, #t);
+                  new-type, #t);
   check-false(format-to-string("#f is one-of(%=, #t)", #"one"),
               instance?(#f, new-type));
 end function-test one-of;
@@ -267,13 +267,13 @@ define common-extensions function-test position ()
               3);
   check-false("test position with wrong item",
               position(list1, 'w'));
-  check-false("test posision with skip greater than existance", 
-	      position(list1, 'a', skip: 2));
+  check-false("test posision with skip greater than existance",
+              position(list1, 'a', skip: 2));
 // The following check has been modified to match the documentation at
 // http://www.fun-o.com/products/doc/core/core_66.htm#MARKER-2-478
-  check-equal("test position using predicate: \\>", 
+  check-equal("test position using predicate: \\>",
               position(#(1, 2, 3, 4), 3, predicate: \>),
-              3); 
+              3);
 end function-test position;
 
 define common-extensions function-test split ()
@@ -281,53 +281,53 @@ define common-extensions function-test split ()
               split("", '/'),
               #[]);
   check-equal("split on single character",
-	      split("a", '/'),
-	      #["a"]);
+              split("a", '/'),
+              #["a"]);
   check-equal("split on two characters",
-	      split("a/b", '/'),
-	      #["a", "b"]);
+              split("a/b", '/'),
+              #["a", "b"]);
   check-equal("split on multiple single characters",
-	      split("aXbXcXdXeXfXg", 'X'),
-	      #["a", "b", "c", "d", "e", "f", "g"]);
+              split("aXbXcXdXeXfXg", 'X'),
+              #["a", "b", "c", "d", "e", "f", "g"]);
   check-equal("split on single word",
-	      split("hello", '/'),
-	      #["hello"]);
+              split("hello", '/'),
+              #["hello"]);
   check-equal("split on two words",
-	      split("hello/world", '/'),
-	      #["hello", "world"]);
+              split("hello/world", '/'),
+              #["hello", "world"]);
   check-equal("split on three words",
-	      split("majorXminorXbuild", 'X'),
-	      #["major", "minor", "build"]);
+              split("majorXminorXbuild", 'X'),
+              #["major", "minor", "build"]);
   check-equal("split on multiple words",
-	      split("x=100&y=200&width=30&height=10", '&'),
-	      #["x=100", "y=200", "width=30", "height=10"]);
+              split("x=100&y=200&width=30&height=10", '&'),
+              #["x=100", "y=200", "width=30", "height=10"]);
   check-equal("split on single separator character",
-	      split("/", '/'),
-	      #["", ""]);
+              split("/", '/'),
+              #["", ""]);
   check-equal("split on a/",
-	      split("a/", '/'),
-	      #["a", ""]);
+              split("a/", '/'),
+              #["a", ""]);
   check-equal("split on /b",
-	      split("/b", '/'),
-	      #["", "b"]);
+              split("/b", '/'),
+              #["", "b"]);
   check-equal("split with double separator",
-	      split("majorXXbuild", 'X'),
-	      #["major", "", "build"]);
+              split("majorXXbuild", 'X'),
+              #["major", "", "build"]);
   check-equal("split with spaces",
-	      split(" major X minor X build ", 'X'),
-	      #["major", "minor", "build"]);
+              split(" major X minor X build ", 'X'),
+              #["major", "minor", "build"]);
   check-equal("no trim split with spaces",
-	      split(" major X minor X build ", 'X', trim?: #f),
-	      #[" major ", " minor ", " build "]);
+              split(" major X minor X build ", 'X', trim?: #f),
+              #[" major ", " minor ", " build "]);
   check-equal("split with start",
-	      split("123456789x123456789", 'x', start: 1),
-	      #["23456789", "123456789"]);
+              split("123456789x123456789", 'x', start: 1),
+              #["23456789", "123456789"]);
   check-equal("split with end",
-	      split("0123456789", '3', end: 8),
-	      #["012", "4567"]);
+              split("0123456789", '3', end: 8),
+              #["012", "4567"]);
   check-equal("split with start and end",
-	      split("0123456789", '3', start: 2, end: 8),
-	      #["2", "4567"]);
+              split("0123456789", '3', start: 2, end: 8),
+              #["2", "4567"]);
 end function-test split;
 
 define common-extensions function-test remove-all-keys! ()
@@ -343,20 +343,20 @@ define common-extensions function-test string-to-integer ()
                 string-to-integer(string, base: base), integer)
   end;
   check-no-errors("string-to-integer of minimum integer",
-		  string-to-integer(integer-to-string($minimum-integer)));
+                  string-to-integer(integer-to-string($minimum-integer)));
   check-no-errors("string-to-integer of maximum integer",
-		  string-to-integer(integer-to-string($maximum-integer)));
+                  string-to-integer(integer-to-string($maximum-integer)));
 end function-test string-to-integer;
 
 define common-extensions function-test subclass ()
   let new-type = #f;
   check-instance?("subclass returns type",
-		  <type>,
-		  new-type := subclass(<string>));
+                  <type>,
+                  new-type := subclass(<string>));
   check-instance?(format-to-string("<string> is subclass(<string>)"),
-		  new-type, <string>);
+                  new-type, <string>);
   check-instance?(format-to-string("<byte-string> is subclass(<string>)"),
-		  new-type, <byte-string>);
+                  new-type, <byte-string>);
   check-false(format-to-string("<object> is not subclass(<string>)"),
               instance?(<object>, new-type));
 end function-test subclass;
@@ -398,32 +398,32 @@ end function-test register-application-exit-function;
 
 define common-extensions function-test format-to-string ()
   check-instance?("format-to-string returns a string",
-		  <string>,
-		  format-to-string("Hello"));
+                  <string>,
+                  format-to-string("Hello"));
   check-condition("format-to-string crashes when missing an argument",
-		  <error>, format-to-string("Hello %s"));
+                  <error>, format-to-string("Hello %s"));
   check-condition("format-to-string crashes with argument of wrong type",
-		  <error>, format-to-string("Hello %c", 10));
+                  <error>, format-to-string("Hello %c", 10));
   check-condition("format-to-string crashes with invalid directive %z",
-		  <error>, format-to-string("Hello %z", 10));
+                  <error>, format-to-string("Hello %z", 10));
   check-equal("format-to-string(\"%d\", 10)",
-	      format-to-string("%d", 10),
-	      "10");
+              format-to-string("%d", 10),
+              "10");
   check-equal("format-to-string(\"%b\", 7)",
-	      format-to-string("%b", 7),
-	      "111");
+              format-to-string("%b", 7),
+              "111");
   check-equal("format-to-string(\"%o\", 16)",
-	      format-to-string("%o", 16),
-	      "20");
+              format-to-string("%o", 16),
+              "20");
   check-equal("format-to-string(\"%x\", 257)",
-	      format-to-string("%x", 257),
-	      "101");
+              format-to-string("%x", 257),
+              "101");
   check-equal("format-to-string(\"%c\", 'a')",
-	      format-to-string("%c", 'a'),
-	      "a");
+              format-to-string("%c", 'a'),
+              "a");
   check-equal("format-to-string(\"%%\")",
-	      format-to-string("%%"),
-	      "%");
+              format-to-string("%%"),
+              "%");
   format-object-tests()
 end function-test format-to-string;
 
@@ -433,49 +433,49 @@ end function-test format-to-string;
 define simple-io function-test format-out ()
   check-false("format-out doesn't crash", format-out("Hello"));
   check-condition("format-out crashes when missing an argument",
-		  <error>, format-out("Hello %s"));
+                  <error>, format-out("Hello %s"));
   check-condition("format-out crashes with argument of wrong type",
-		  <error>, format-out("Hello %c", 10));
+                  <error>, format-out("Hello %c", 10));
   check-condition("format-out crashes with invalid directive %z",
-		  <error>, format-out("Hello %z", 10));
+                  <error>, format-out("Hello %z", 10));
 end function-test format-out;
 
 define constant $format-object-mappings
   = vector(vector(10, "10", "10"),
-	   vector('a', "a", "'a'"),
-	   vector('Z', "Z", "'Z'"),
-	   vector(#"symbol", "#\"symbol\""),
-	   vector(#"symbol", "#\"symbol\""),
-	   vector(#f, "#f"),
-	   vector(#t, "#t"),
-	   vector(<object>, "<object>", "{<class>: <object>}"),
-	   vector(find-key, "find-key", "{<incremental-generic-function>: find-key}"),
-	   vector("10", "10", "\"10\""));
+           vector('a', "a", "'a'"),
+           vector('Z', "Z", "'Z'"),
+           vector(#"symbol", "#\"symbol\""),
+           vector(#"symbol", "#\"symbol\""),
+           vector(#f, "#f"),
+           vector(#t, "#t"),
+           vector(<object>, "<object>", "{<class>: <object>}"),
+           vector(find-key, "find-key", "{<incremental-generic-function>: find-key}"),
+           vector("10", "10", "\"10\""));
 
 define constant $format-complex-object-mappings
   = vector(vector(#(), "size 0"),
-	   vector(pair(1, 2), "1, 2"),
-	   vector(range(from: 0, to: 10), "0 to 10"),
-	   vector(range(from: 10, to: 1, by: -1), "10 to 1 by -1"),
-	   vector(range(from: 10, by: -1), "10 by -1"),
-	   vector(make(<array>, dimensions: #(2, 3)), "2 x 3"),
-	   vector(as(<vector>, #(1, 'a', "Hello")),
-		  "1, 'a', \"Hello\""),
-	   vector(singleton(10), "10"),
-	   vector(type-union(<integer>, <string>), 
-		  "<integer>, <string>"),
-	   vector(type-union(singleton(#f), <string>),
-		  "#f, <string>"));
+           vector(pair(1, 2), "1, 2"),
+           vector(range(from: 0, to: 10), "0 to 10"),
+           vector(range(from: 10, to: 1, by: -1), "10 to 1 by -1"),
+           vector(range(from: 10, by: -1), "10 by -1"),
+           vector(make(<array>, dimensions: #(2, 3)), "2 x 3"),
+           vector(as(<vector>, #(1, 'a', "Hello")),
+                  "1, 'a', \"Hello\""),
+           vector(singleton(10), "10"),
+           vector(type-union(<integer>, <string>),
+                  "<integer>, <string>"),
+           vector(type-union(singleton(#f), <string>),
+                  "#f, <string>"));
 
 define function test-print-name
     (object, pretty-name :: <string>, unique-name :: <string>)
  => ()
   check-equal(format-to-string("format-to-string(\"%%s\", %s)", unique-name),
-	      format-to-string("%s", object),
-	      pretty-name);
+              format-to-string("%s", object),
+              pretty-name);
   check-equal(format-to-string("format-to-string(\"%%=\", %s)", unique-name),
-	      format-to-string("%=", object),
-	      unique-name);
+              format-to-string("%=", object),
+              unique-name);
 end function test-print-name;
 
 define function format-object-tests
@@ -496,7 +496,7 @@ define function format-object-tests
   let class-name = format-to-string("%s", object-class(type));
   let expected-name
     = format-to-string("{%s: <string>, {%s: 10, <character>}}",
-		       class-name, class-name);
+                       class-name, class-name);
   test-print-name(type, expected-name, expected-name)
 end function format-object-tests;
 
@@ -507,7 +507,7 @@ end function format-object-tests;
 define method chi-square
     (N :: <integer>, range :: <integer>) => (chi-square :: <integer>)
   let f = make(<simple-object-vector>, size: range, fill: 0);
-  for (i from 0 below N) 
+  for (i from 0 below N)
     let rand = random(range);
     f[rand] := f[rand] + 1;
   end;

@@ -104,10 +104,10 @@ define sealed method set-add
   end if;
   let vector
     = if (i >= size(set.member-vector) & set.member-vector-pad = 0)
-	make(<bit-vector>, size: (i + 1), round-up-size?: #t, fill: 0,
-	     copy-from: set.member-vector);
+        make(<bit-vector>, size: (i + 1), round-up-size?: #t, fill: 0,
+             copy-from: set.member-vector);
       else
-	copy-sequence(set.member-vector);
+        copy-sequence(set.member-vector);
       end if;
   if (i < size(vector))
     element-no-bounds-check-setter(1, vector, i);
@@ -129,7 +129,7 @@ define sealed method set-add!
     if (set.member-vector-pad = 0)
       set.member-vector := make(<bit-vector>, size: (i + 1),
                                 round-up-size?: #t,
-				fill: 0, copy-from: set.member-vector);
+                                fill: 0, copy-from: set.member-vector);
       element-no-bounds-check-setter(1, set.member-vector, i);
 //      set.member-vector[i] := 1;
     end if;
@@ -160,10 +160,10 @@ define sealed method set-remove
   end if;
   let vector
     = if (i >= size(set.member-vector) & set.member-vector-pad = 1)
-	make(<bit-vector>, size: (i + 1), round-up-size?: #t, fill: 1,
-	     copy-from: set.member-vector);
+        make(<bit-vector>, size: (i + 1), round-up-size?: #t, fill: 1,
+             copy-from: set.member-vector);
       else
-	copy-sequence(set.member-vector);
+        copy-sequence(set.member-vector);
       end if;
   if (i < size(vector))
     element-no-bounds-check-setter(0, vector, i);
@@ -185,7 +185,7 @@ define sealed method set-remove!
     if (set.member-vector-pad = 1)
       set.member-vector := make(<bit-vector>, size: (i + 1),
                                 round-up-size?: #t,
-				fill: 1, copy-from: set.member-vector);
+                                fill: 1, copy-from: set.member-vector);
       element-no-bounds-check-setter(0, set.member-vector, i);
 //      set.member-vector[i] := 0;
     end if;
@@ -291,7 +291,7 @@ define sealed method set-union!
         pad1: set1.member-vector-pad,  pad2: set2.member-vector-pad);
   set1.member-vector := vector;
   set1.member-vector-pad := pad;
-  set1;  
+  set1;
 end method;
 
 
@@ -463,14 +463,14 @@ define inline function bs-fip-initial-state
   block (return)
     for (j :: <integer> from 0 below word-size(set.member-vector))
       for (i :: <integer> from 0 below $machine-word-size,
-	   word :: <machine-word> = bit-vector-word(set.member-vector, j)
+           word :: <machine-word> = bit-vector-word(set.member-vector, j)
              then u%shift-right(word, 1))
-	if (%logand(word, $machine-word-one) = $machine-word-one)
-	  current-word := word;
-	  word-offset := j;
-	  bit-offset := i;
-	  return()
-	end if
+        if (%logand(word, $machine-word-one) = $machine-word-one)
+          current-word := word;
+          word-offset := j;
+          bit-offset := i;
+          return()
+        end if
       end for
     end for
   end block;
@@ -494,22 +494,22 @@ define inline function bs-fip-next-state
   else
     block(return)
       for (i :: <integer> from state.bit-offset + 1 below $machine-word-size,
-	   word :: <machine-word> = u%shift-right(state.current-word, 1)
+           word :: <machine-word> = u%shift-right(state.current-word, 1)
              then u%shift-right(word, 1))
         state.current-element := state.current-element + 1;
         if (%logand(word, $machine-word-one) = $machine-word-one)
-	  state.current-word := word;
+          state.current-word := word;
           state.bit-offset := i;
           return();
         end if;
       end for;
       for (j :: <integer> from state.word-offset + 1
-	                  below word-size(collection.member-vector))
-	for (i :: <integer> from 0 below $machine-word-size,
-	     word :: <machine-word>
+                          below word-size(collection.member-vector))
+        for (i :: <integer> from 0 below $machine-word-size,
+             word :: <machine-word>
                = bit-vector-word(collection.member-vector, j)
                then u%shift-right(word, 1))
-	  state.current-element := state.current-element + 1;
+          state.current-element := state.current-element + 1;
           if (%logand(word, $machine-word-one) = $machine-word-one)
             state.current-word := word;
             state.bit-offset := i;
@@ -559,13 +559,13 @@ define inline function bs-bip-initial-state
     for (woff :: <integer> from word-size(set.member-vector) - 1 to 0 by -1)
       let word :: <machine-word> = bit-vector-word(set.member-vector, woff);
       for (boff :: <integer> from $machine-word-size - 1 to 0 by -1)
-	word := u%rotate-left(word, 1);
-	if (%logand(word, $machine-word-one) = $machine-word-one)
-	  current-word := word;
-	  word-offset := woff;
-	  bit-offset := boff;
-	  return()
-	end if
+        word := u%rotate-left(word, 1);
+        if (%logand(word, $machine-word-one) = $machine-word-one)
+          current-word := word;
+          word-offset := woff;
+          bit-offset := boff;
+          return()
+        end if
       end for
     end for
   end block;

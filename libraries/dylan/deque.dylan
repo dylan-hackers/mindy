@@ -6,25 +6,25 @@ author: David Pierce (dpierce@cs.cmu.edu)
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -94,7 +94,7 @@ end class <deque>;
 //
 define open generic push (deque :: <deque>, new :: <object>) => new :: <object>;
 define open generic pop (deque :: <deque>) => top-val :: <object>;
-define open generic push-last 
+define open generic push-last
     (deque :: <deque>, new :: <object>) => new :: <object>;
 define open generic pop-last (deque :: <deque>) => last :: <object>;
 
@@ -113,7 +113,7 @@ define constant $deque-fill-default$ = #f;
 // contents to the new deque in a sequence.
 //
 define method initialize (deque :: <deque>,
-			  #key data, size = 0, fill = $deque-fill-default$)
+                          #key data, size = 0, fill = $deque-fill-default$)
   if (data)
     for (element in data)
       push-last(deque, element);
@@ -153,8 +153,8 @@ define constant deque_fip_finished_state? =
 define constant deque_fip_current_key =
   method (deque :: <deque>, state :: <deque-element>) => cur-key :: <integer>;
     for (count from -1,
-	 deque_elem = state then prev-deque-element(deque_elem),
-	 while: deque_elem)
+         deque_elem = state then prev-deque-element(deque_elem),
+         while: deque_elem)
     finally
       count;
     end for;
@@ -164,19 +164,19 @@ define constant deque_fip_current_element =
   method (deque :: <deque>, state :: <deque-element>) => cur-elt :: <object>;
     deque-element-data(state);
   end method;
-  
+
 define constant deque_fip_current_element-setter =
-  method (value, deque :: <deque>, state :: <deque-element>) 
+  method (value, deque :: <deque>, state :: <deque-element>)
    => value :: <object>;
     deque-element-data(state) := value;
   end method;
-  
+
 define constant deque_fip_copy_state =
-  method (deque :: <deque>, state :: <deque-element>) 
+  method (deque :: <deque>, state :: <deque-element>)
    => new-state :: <deque-element>;
     state;
   end method;
-  
+
 define method forward-iteration-protocol (deque :: <deque>)
  => (initial-state :: <object>,
      limit :: <object>,
@@ -187,9 +187,9 @@ define method forward-iteration-protocol (deque :: <deque>)
      current-element-setter :: <function>,
      copy-state :: <function>);
   values(deque-head(deque), #f, deque_fip_next_state,
-	 deque_fip_finished_state?, deque_fip_current_key,
-	 deque_fip_current_element, deque_fip_current_element-setter,
-	 deque_fip_copy_state);
+         deque_fip_finished_state?, deque_fip_current_key,
+         deque_fip_current_element, deque_fip_current_element-setter,
+         deque_fip_copy_state);
 end method forward-iteration-protocol;
 
 define method backward-iteration-protocol (deque :: <deque>)
@@ -202,9 +202,9 @@ define method backward-iteration-protocol (deque :: <deque>)
      current-element-setter :: <function>,
      copy-state :: <function>);
   values(deque-tail(deque), #f, deque_fip_prev_state,
-	 deque_fip_finished_state?, deque_fip_current_key,
-	 deque_fip_current_element, deque_fip_current_element-setter,
-	 deque_fip_copy_state);
+         deque_fip_finished_state?, deque_fip_current_key,
+         deque_fip_current_element, deque_fip_current_element-setter,
+         deque_fip_copy_state);
 end method backward-iteration-protocol;
 
 // drop! -- internal
@@ -235,7 +235,7 @@ define method drop! (deque :: <deque>, element :: <deque-element>)
       next-deque-element(prev-deque-element(element)) :=
         next-deque-element(element);
       prev-deque-element(next-deque-element(element)) :=
-	 prev-deque-element(element);
+         prev-deque-element(element);
   end case;
   deque.deque-size := size(deque) - 1;
   deque;
@@ -374,20 +374,20 @@ end method size-setter;
 // to the desired element and take that as our starting point.
 //
 define method element (deque :: <deque>, key :: <integer>,
-		       #key default = $not-supplied) => elt :: <object>;
+                       #key default = $not-supplied) => elt :: <object>;
   let sz = deque.size;
   if (key < 0 | key >= sz)
     if (default == $not-supplied) error("No such element in %=: %d", deque, key)
     else default
     end if;
-  elseif (key + key > sz)	// closer to end than start
+  elseif (key + key > sz)        // closer to end than start
     for (cur_key from sz - 1 above key,
-	 state = deque.deque-tail then state.prev-deque-element)
+         state = deque.deque-tail then state.prev-deque-element)
     finally state.deque-element-data
     end for;
   else
     for (cur_key from 0 below key,
-	 state = deque.deque-head then state.next-deque-element)
+         state = deque.deque-head then state.next-deque-element)
     finally state.deque-element-data
     end for;
   end if;
@@ -401,15 +401,15 @@ define method element-setter (value, deque :: <deque>, key :: <integer>)
   elseif (key >= sz)
     size(deque) := key + 1;
   end if;
-    
-  if (key + key > sz)		// closer to end than start
+
+  if (key + key > sz)                // closer to end than start
     for (cur_key from sz - 1 above key,
-	 state = deque.deque-tail then state.prev-deque-element)
+         state = deque.deque-tail then state.prev-deque-element)
     finally state.deque-element-data := value;
     end for;
   else
     for (cur_key from 0 below key,
-	 state = deque.deque-head then state.next-deque-element)
+         state = deque.deque-head then state.next-deque-element)
     finally state.deque-element-data := value;
     end for;
   end if;
@@ -426,13 +426,13 @@ end method element-setter;
 // we keep it undefined for now.           -rgs
 //
 // define method map-as(cls == <deque>, proc :: <function>,
-//		     collection :: <collection>, #rest more-collections);
+//                     collection :: <collection>, #rest more-collections);
 //   let result = make(<deque>);
 //   let keys = reduce(intersection, key-sequence(collection),
-// 		    map(key-sequence, more-collections));
+//                     map(key-sequence, more-collections));
 //   for (key in keys)
 //     push-last(result, apply(proc, collection[key],
-// 			    map(rcurry(element, key), more-collections)));
+//                             map(rcurry(element, key), more-collections)));
 //   end for;
 //   result;
 // end map-as;
@@ -446,15 +446,15 @@ end method element-setter;
 // collections              -rgs
 //
 define method map-as (cls == <deque>, proc :: <function>,
-		      sequence :: <sequence>,
-		      #next next-method, #rest more-sequences) => q :: <deque>;
+                      sequence :: <sequence>,
+                      #next next-method, #rest more-sequences) => q :: <deque>;
   if (empty?(more-sequences))
     let result = make(<deque>);
     for (element in sequence)
       push-last(result, proc(element));
     end for;
     result;
-  else 
+  else
     next-method();
   end if;
 end method map-as;
@@ -467,25 +467,25 @@ end method map-as;
 // Modified heavily for efficiency.  -- rgs
 //
 define method map-as (cls == <deque>, proc :: <function>,
-		     deque :: <deque>, #next next-method, #rest more-deques)
+                     deque :: <deque>, #next next-method, #rest more-deques)
  => result :: <deque>;
   case
     empty?(more-deques) =>
       let result = make(<deque>);
       for (element = deque-head(deque) then next-deque-element(element),
-	   while: element)
-	push-last(result, proc(deque-element-data(element)));
+           while: element)
+        push-last(result, proc(deque-element-data(element)));
       end for;
       result;
     every?(rcurry(instance?,<deque>), more-deques) =>
       let result = make(<deque>);
       let more-vals = make(<vector>, size: size(more-deques));
       for (element = deque-head(deque) then next-deque-element(element),
-	   more-elements = map-as(<vector>, deque-head, more-deques)
-	     then map-into(more-elements, next-deque-element, more-elements),
-	   while: element & every?(identity, more-elements))
-	map-into(more-vals, deque-element-data, more-elements);
-	push-last(result, apply(proc, deque-element-data(element), more-vals));
+           more-elements = map-as(<vector>, deque-head, more-deques)
+             then map-into(more-elements, next-deque-element, more-elements),
+           while: element & every?(identity, more-elements))
+        map-into(more-vals, deque-element-data, more-elements);
+        push-last(result, apply(proc, deque-element-data(element), more-vals));
       end for;
       result;
     otherwise =>
@@ -494,12 +494,12 @@ define method map-as (cls == <deque>, proc :: <function>,
 end map-as;
 
 define method map-into (destination :: <deque>,
-			proc :: <function>, sequence :: <sequence>,
-			#next next_method, #rest more_sequences)
+                        proc :: <function>, sequence :: <sequence>,
+                        #next next_method, #rest more_sequences)
  => destination :: <deque>;
   if (empty?(more_sequences))
     for (elem in sequence,
-	 state = destination.deque-head then state & state.next-deque-element)
+         state = destination.deque-head then state & state.next-deque-element)
       if (state) state.deque-element-data := proc(elem)
       else push-last(destination, proc(elem))
       end if;
@@ -566,20 +566,20 @@ end method add!;
 // skipping the element VALUE as long as COUNT does not run out.
 //
 define method remove (deque :: <deque>, value,
-		      #key test = \==, count) => q :: <deque>;
+                      #key test = \==, count) => q :: <deque>;
   let count = count | size(deque);
   local method copy(state :: false-or(<deque-element>),
-		    count :: <integer>) => deque :: <deque>;
-	  case
-	    ~state =>
-	      make(<deque>);
-	    count <= 0 | ~test(deque-element-data(state), value) =>
-	      add!(copy(next-deque-element(state), count),
-		   deque-element-data(state));
-	    otherwise =>
-	      copy(next-deque-element(state), count - 1);
-	  end case;
-	end method;
+                    count :: <integer>) => deque :: <deque>;
+          case
+            ~state =>
+              make(<deque>);
+            count <= 0 | ~test(deque-element-data(state), value) =>
+              add!(copy(next-deque-element(state), count),
+                   deque-element-data(state));
+            otherwise =>
+              copy(next-deque-element(state), count - 1);
+          end case;
+        end method;
   copy(deque-head(deque), count);
 end method remove;
 
@@ -593,20 +593,20 @@ end method remove;
 // which match VALUE.  When COUNT runs out it quits.
 //
 define method remove! (deque :: <deque>, value,
-		       #key test = \==, count: count) => q :: <deque>;
+                       #key test = \==, count: count) => q :: <deque>;
   let count = count | size(deque);
   local method scan!(state :: false-or(<deque-element>),
-		     count :: <integer>)
-	  case
-	    count <= 0 | ~state =>
-	      #t;
-	    test(deque-element-data(state), value) =>
-	      drop!(deque, state);
-	      scan!(next-deque-element(state), count - 1);
-	    otherwise =>
-	      scan!(next-deque-element(state), count);
-	  end case;
-	end method scan!;
+                     count :: <integer>)
+          case
+            count <= 0 | ~state =>
+              #t;
+            test(deque-element-data(state), value) =>
+              drop!(deque, state);
+              scan!(next-deque-element(state), count - 1);
+            otherwise =>
+              scan!(next-deque-element(state), count);
+          end case;
+        end method scan!;
   scan!(deque-head(deque), count);
   deque;
 end method remove!;
@@ -617,7 +617,7 @@ end method remove!;
 // PREDICATE.  Uses FOR-EACH to check every element of DEQUE and appends
 // those which satisfy to the new RESULT deque.
 //
-define method choose (predicate :: <function>, deque :: <deque>) 
+define method choose (predicate :: <function>, deque :: <deque>)
  => q :: <deque>;
   let result = make(<deque>);
   for (element in deque)
@@ -633,7 +633,7 @@ end method choose;
 // FOR-EACH to check each element of DEQUE and append good ones to RESULT.
 //
 define method choose-by (predicate :: <function>, test-sequence :: <sequence>,
-			 value-deque :: <deque>) => Q :: <deque>;
+                         value-deque :: <deque>) => Q :: <deque>;
   let result = make(<deque>);
   for (test-element in test-sequence,
        value-element in value-deque)
@@ -653,24 +653,24 @@ end method choose-by;
 // it is skipped.
 //
 define method remove-duplicates (deque :: <deque>,
-				 #key test = \==) => Q :: <deque>;
+                                 #key test = \==) => Q :: <deque>;
   local method member?(value, state)
-	  for (state = state then next-deque-element(state),
-	       while: state & ~test(value, deque-element-data(state)))
-	  finally
-	    state;
-	  end for;
-	end method member?,
+          for (state = state then next-deque-element(state),
+               while: state & ~test(value, deque-element-data(state)))
+          finally
+            state;
+          end for;
+        end method member?,
         method copy(state)
-	  case
-	    ~state =>
-	      make(<deque>);
-	    member?(deque-element-data(state), next-deque-element(state)) =>
-	      copy(next-deque-element, state);
-	    otherwise =>
-	      add!(copy(next-deque-element(state)), deque-element-data(state));
-	  end case;
-	end method copy;
+          case
+            ~state =>
+              make(<deque>);
+            member?(deque-element-data(state), next-deque-element(state)) =>
+              copy(next-deque-element, state);
+            otherwise =>
+              add!(copy(next-deque-element(state)), deque-element-data(state));
+          end case;
+        end method copy;
   copy(deque-head(deque));
 end method remove-duplicates;
 
@@ -686,24 +686,24 @@ end method remove-duplicates;
 // drops the element.
 //
 define method remove-duplicates! (deque :: <deque>,
-				  #key test = \==) => Q :: <deque>;
+                                  #key test = \==) => Q :: <deque>;
   local method member?(value, state)
-	  for (state = state then next-deque-element(state),
-	       while: state & ~test(value, deque-element-data(state)))
-	  finally state;
-	  end for;
-	end method member?,
+          for (state = state then next-deque-element(state),
+               while: state & ~test(value, deque-element-data(state)))
+          finally state;
+          end for;
+        end method member?,
         method scan!(state)
-	  case
-	    ~state =>
-	      #t;
-	    member?(deque-element-data(state), next-deque-element(state)) =>
-	      drop!(deque, state);
-	      scan!(next-deque-element(state));
-	    otherwise =>
-	      scan!(next-deque-element(state));
-	  end case;
-	end method scan!;
+          case
+            ~state =>
+              #t;
+            member?(deque-element-data(state), next-deque-element(state)) =>
+              drop!(deque, state);
+              scan!(next-deque-element(state));
+            otherwise =>
+              scan!(next-deque-element(state));
+          end case;
+        end method scan!;
   scan!(deque-head(deque));
   deque;
 end method remove-duplicates!;
@@ -720,25 +720,25 @@ end method remove-duplicates!;
 // element and stops before the ENDth element or at the end of the deque.
 //
 define method copy-sequence (source :: <deque>,
-			     #key start: first = 0, end: last) => Q :: <deque>;
+                             #key start: first = 0, end: last) => Q :: <deque>;
   let last = last | size(source);
-  if (first > last) 
+  if (first > last)
     error("End: (%=) is smaller than start: (%=)", last, first);
   end if;
 
   local method copy(state, first, last)
-	  case
-	    ~state =>
-	      make(<deque>);
-	    first > 0 =>
-	      copy(next-deque-element(state), first - 1, last - 1);
-	    last > 0 =>
-	      add!(copy(next-deque-element(state), first, last - 1),
-		   deque-element-data(state));
-	    otherwise =>
-	      make(<deque>);
-	  end case;
-	end method copy;
+          case
+            ~state =>
+              make(<deque>);
+            first > 0 =>
+              copy(next-deque-element(state), first - 1, last - 1);
+            last > 0 =>
+              add!(copy(next-deque-element(state), first, last - 1),
+                   deque-element-data(state));
+            otherwise =>
+              make(<deque>);
+          end case;
+        end method copy;
   copy(deque-head(source), first, last);
 end method copy-sequence;
 
@@ -749,7 +749,7 @@ end method copy-sequence;
 // deque is returned.
 //
 define method concatenate-as (cls == <deque>, sequence :: <sequence>,
-			      #rest more-sequences)
+                              #rest more-sequences)
  => result :: <deque>;
   let result = make(<deque>);
   for (element in sequence) push-last(result, element) end for;
@@ -786,7 +786,7 @@ define method reverse! (deque :: <deque>) => q :: <deque>;
   for (state = deque-head(deque) then prev-deque-element(state),
        while: state)
     let (prev, next) = values(prev-deque-element(state),
-			      next-deque-element(state));
+                              next-deque-element(state));
     prev-deque-element(state) := next;
     next-deque-element(state) := prev;
   end for;

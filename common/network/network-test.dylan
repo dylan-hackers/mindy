@@ -7,7 +7,7 @@ define method tcp-client-test()
                    "www.gwydiondylan.org"
                  end;
   let port = if(application-arguments().size > 1)
-                   string-to-integer(application-arguments()[1], 
+                   string-to-integer(application-arguments()[1],
                                      default: 80)
                  else
                    80
@@ -45,11 +45,11 @@ define method tcp-client-test()
                        *standard-input*.file-descriptor,
                        *standard-output*.file-descriptor),
       poll-list);
-  
-  map(get-events-setter, 
-      list($POLLIN, $POLLOUT, $POLLIN, $POLLOUT), 
+
+  map(get-events-setter,
+      list($POLLIN, $POLLOUT, $POLLIN, $POLLOUT),
       poll-list);
-  
+
 //  format(output-stream, "%s\n", request);
 //  force-output(output-stream);
   let running = #t;
@@ -77,7 +77,7 @@ define method udp-client-test()
                    "www.gwydiondylan.org"
                  end;
   let port = if(application-arguments().size > 1)
-                   string-to-integer(application-arguments()[1], 
+                   string-to-integer(application-arguments()[1],
                                      default: 80)
                  else
                    80
@@ -109,7 +109,7 @@ define method udp-client-test()
   end if;
 end;
 
-define method as(class == <double-float>, tv :: <timeval>) 
+define method as(class == <double-float>, tv :: <timeval>)
  => (d :: <double-float>);
   as(<double-float>, tv.get-tv-sec) +
     as(<double-float>, tv.get-tv-usec) / 1000000.0;
@@ -146,11 +146,11 @@ define class <streamer> (<object>) // class for sending out data at defined bitr
   slot data, init-keyword: data:;
 end class <streamer>;
 
-define method initialize(s :: <streamer>, 
+define method initialize(s :: <streamer>,
                          #key bitrate, target-address, #all-keys)
   force-output(*standard-output*);
   next-method();
-  s.interval := as(<double-float>, s.data.size) * 8.0 / 
+  s.interval := as(<double-float>, s.data.size) * 8.0 /
     as(<double-float>, bitrate);
 
   format-out("Interval is: %=\n", s.interval);
@@ -221,7 +221,7 @@ begin
     wanted-bitrate := string-to-integer(args[2]);
   end if;
 //  tcp-client-test();
-  let foo = make(<streamer>, target-address: target-address, 
+  let foo = make(<streamer>, target-address: target-address,
                  data: make(<byte-string>, size: data-size, fill: 'A'),
                  bitrate: wanted-bitrate);
   while(1)
@@ -234,7 +234,7 @@ begin
         if(less-time-wanted < 0.05 * foo.wanted-interval)
           foo.interval := foo.wanted-interval;
         else
-          foo.interval := foo.interval 
+          foo.interval := foo.interval
             - min(time-to-burn, less-time-wanted) * 0.05;
         end;
         format-out("Increasing bitrate to %=.\n", foo.bitrate);

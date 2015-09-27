@@ -61,10 +61,10 @@ $D2C .= ' -p$(SRCROOT)/d2c/compiler/platforms.descr';
     'getopt-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
 );
 
-unless ($features{'no_time'}) { 
-	&emit_library_rule(
-	    'time-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
-	);
+unless ($features{'no_time'}) {
+    &emit_library_rule(
+       'time-test', '$(BUILDROOT)/force.timestamp ' . $deps, '', 'compile', 'compile-mindy'
+    );
 }
 
 print <<"EOF"
@@ -79,7 +79,7 @@ if ($features{compiled_for_win32}) {
 } else {
     $run_mindy = 'DYLANPATH=$(DYLANPATH); export DYLANPATH ; $(MINDY)';
 }
-    
+
 # I only wrote this function because of the .\ for win32 vs. ./ for
 # Unix issue.
 sub emit_run_tests_rule {
@@ -87,21 +87,21 @@ sub emit_run_tests_rule {
     local ($test);
     print "run_tests : ";
     foreach $test (@tests) {
-	print "$test$dot_exe " if ($enable_d2c);
-	print "$test-lib.dbc " if ($enable_mindy);
+        print "$test$dot_exe " if ($enable_d2c);
+        print "$test-lib.dbc " if ($enable_mindy);
     }
     print "\n";
 
     foreach $test (@tests) {
-	local ($test) = &convert_path_separator("./$test");
-	print "\t$run_mindy -f $test-lib.dbc\n" if ($enable_mindy);
-	print "\t$test\n" if ($enable_d2c);
+        local ($test) = &convert_path_separator("./$test");
+        print "\t$run_mindy -f $test-lib.dbc\n" if ($enable_mindy);
+        print "\t$test\n" if ($enable_d2c);
     }
     push(@compile_dependencies, "run_tests");
 }
 
-&emit_run_tests_rule('dylan-test', 'regexp-test', 'stream-test', 
-		       'table-ext-test', 'random-test', 'matrix-test', 
-		       'coll-ext-test', 'print-test', 'format-test', 
-		       'format-out-test');
+&emit_run_tests_rule('dylan-test', 'regexp-test', 'stream-test',
+                       'table-ext-test', 'random-test', 'matrix-test',
+                       'coll-ext-test', 'print-test', 'format-test',
+                       'format-out-test');
 # time-test removed because it is broken.

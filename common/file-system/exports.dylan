@@ -26,29 +26,29 @@ define module file-system
   create copy-file,
          rename-file,
          delete-file
-	 // not yet: , file-property-setter;
-	 ;
+         // not yet: , file-property-setter;
+         ;
 
 // section 8.4: Manipulating directories
   create create-directory,
          delete-directory,
          do-directory,
          ensure-directories-exist,
-	 working-directory-setter;
+         working-directory-setter;
 
 // section 8.5: Finding out file system information
   create home-directory,
-	 root-directories,
-	 temp-directory,
-	 working-directory;
+         root-directories,
+         temp-directory,
+         working-directory;
 
 // section 8.6: Finding out file information
   create file-exists?,
     file-type
 
   /** not yet: , file-properties,
-	 file-property,
-	 file-type
+         file-property,
+         file-type
    **/ ;
 end module file-system;
 
@@ -60,11 +60,11 @@ define module types
   use dylan;
   use extensions;
 
-  use file-system, 
+  use file-system,
     import: { <file-type>,
-	     <copy/rename-disposition>,
-	     <pathname>,
-	     <file-system-error> };
+             <copy/rename-disposition>,
+             <pathname>,
+             <file-system-error> };
 end module types;
 
 define module helpers
@@ -76,10 +76,10 @@ define module helpers
 
   use file-system;
 
-  export 
+  export
     try, try-call-out,
     file-signal,
-    do-file-operation, 
+    do-file-operation,
     $path-separator,
     append, as-dir, create-pointer, \with-pointer, convert-to-string;
 end module helpers;
@@ -89,7 +89,7 @@ define module dir-commands
   use melange-support, export: all;
   use helpers;
   use file-system, import: { <pathname> };
-  
+
   export
     <char*>,
     gd-readdir, gd-opendir, gd-closedir, gd-dirent-name,

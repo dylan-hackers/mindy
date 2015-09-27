@@ -8,25 +8,25 @@ copyright: See below.
 // Copyright (c) 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -45,7 +45,7 @@ define class <time-parsing-error> (<error>)
     required-init-keyword: #"parse-state";
 
   // A format string for constructing an error message
-  constant slot error-format-string :: <string>, 
+  constant slot error-format-string :: <string>,
     required-init-keyword: #"error-format-string";
 
   // Arguments to error-format-string
@@ -64,24 +64,24 @@ define sealed method report-condition (cond :: <time-parsing-error>, stream)
      cond.error-parse-state.input-stream);
   condition-format(stream, "While handling the ");
   if (cond.error-parse-state.current-directive ~== #f)
-    condition-format(stream, "%%%c directive", 
-		     cond.error-parse-state.current-directive);
+    condition-format(stream, "%%%c directive",
+                     cond.error-parse-state.current-directive);
   else
     condition-format(stream, "format-string character");
   end if;
   condition-format(stream, " at position %d in\nformat-string %=:\n",
-		   cond.error-parse-state.format-stream.stream-position,
-		   cond.error-parse-state.time-format-string);
+                   cond.error-parse-state.format-stream.stream-position,
+                   cond.error-parse-state.time-format-string);
   apply(condition-format, stream, cond.error-format-string,
-	cond.error-format-args);
+        cond.error-format-args);
 end method report-condition;
 
 define function parse-error
     (state :: <parse-state>, format-string :: <string>, #rest format-args)
  => ();
   let err = make(<time-parsing-error>, parse-state: state,
-		 error-format-string: format-string,
-		 error-format-args: format-args);
+                 error-format-string: format-string,
+                 error-format-args: format-args);
   signal(err);
 end function parse-error;
 
@@ -99,13 +99,13 @@ end function expect;
 // want that.  (This function could probably be implemented as read-to
 // followed by unread, but this should work too)
 //
-define inline function read-while (input :: <stream>, test :: <function>) 
+define inline function read-while (input :: <stream>, test :: <function>)
  => read :: <string>;
   let res = make(<stretchy-vector>);
   block (break)
     for (c = peek(input) then peek(input))
       if (~test(c))
-	break();
+        break();
       end if;
       add!(res, read-element(input));
     end for;
@@ -151,11 +151,11 @@ define constant $month-numbers
 define class <parse-state> (<object>)
 
   // The format-string we are trying to parse the time with
-  constant slot time-format-string :: <string>, 
+  constant slot time-format-string :: <string>,
     required-init-keyword: #"format-string";
 
   // format-string, as a stream
-  constant slot format-stream :: <stream>, 
+  constant slot format-stream :: <stream>,
     required-init-keyword: #"format-stream";
 
   // The directive we're currently trying to process, or #f if we're
@@ -164,7 +164,7 @@ define class <parse-state> (<object>)
   slot current-directive :: false-or(<character>) = #f;
 
   // The stream we're trying to parse
-  constant slot input-stream :: <stream>, 
+  constant slot input-stream :: <stream>,
     required-init-keyword: #"input-stream";
 
   // A sequence of keywords and values we can pass to make(<time>)
@@ -175,7 +175,7 @@ define class <parse-state> (<object>)
   // knowing whether it's am or pm.  If we're asked to read a 24-hour
   // time, this slot isn't touched.
   slot parsed-hour :: false-or(limited(<integer>, min: 1, max: 12)) = #f;
-    
+
   // The status of am/pm, so we can process parsed-hour.
   slot pm? :: <boolean> = #f;
 
@@ -190,12 +190,12 @@ define class <parse-state> (<object>)
   // init-args.
   slot parsed-year :: false-or(<integer>) = #f;
 end class <parse-state>;
-    
+
 define sealed domain make (singleton(<parse-state>));
 define sealed domain initialize (<parse-state>);
 
-define function add-init-arg 
-    (state :: <parse-state>, keyword :: <symbol>, value :: <object>) 
+define function add-init-arg
+    (state :: <parse-state>, keyword :: <symbol>, value :: <object>)
  => ();
   add!(state.time-init-args, keyword);
   add!(state.time-init-args, value);
@@ -206,28 +206,28 @@ end function add-init-arg;
 //
 define function parse-time (input :: <stream>, format-string :: <string>)
  => res :: <decoded-time>;
-  let state 
+  let state
     = make(<parse-state>, input-stream: input, format-string: format-string,
-	   format-stream: make(<string-stream>, contents: format-string));
+           format-stream: make(<string-stream>, contents: format-string));
   block ()  // catch eof on input stream
     for (format-char = read-element(state.format-stream, on-end-of-stream: #f)
-	   then read-element(state.format-stream, on-end-of-stream: #f),
+           then read-element(state.format-stream, on-end-of-stream: #f),
        until: format-char == #f)
       if (format-char.whitespace?)
-	parse-whitespace(state);
+        parse-whitespace(state);
       elseif (format-char ~== '%')
-	expect(state, format-char);
+        expect(state, format-char);
       else
-	let format-directive = read-element(state.format-stream, 
-					    on-end-of-stream: #f);
-	if (format-directive == #f)
-	  error("Unexpected end-of-string in %=\n"
-		  "-- wanted a format directive after final %%",
-		format-string);
-	end if;
-	state.current-directive := format-directive;
-	process-format-directive(state, format-directive);
-	state.current-directive := #f;
+        let format-directive = read-element(state.format-stream,
+                                            on-end-of-stream: #f);
+        if (format-directive == #f)
+          error("Unexpected end-of-string in %=\n"
+                  "-- wanted a format directive after final %%",
+                format-string);
+        end if;
+        state.current-directive := format-directive;
+        process-format-directive(state, format-directive);
+        state.current-directive := #f;
       end if;
     end for;
   exception (<end-of-stream-error>)
@@ -256,7 +256,7 @@ define function process-format-directive
     'M' => parse-minute(state);
     'n', 't' => parse-whitespace(state);
     'p' => parse-am-or-pm(state);
-    'r' => parse-12-hour-time-with-am-pm(state); // local 12hr time 
+    'r' => parse-12-hour-time-with-am-pm(state); // local 12hr time
                                                  // with %p
     'R' => parse-hour-and-minute(state);
     'S' => parse-seconds(state);
@@ -382,8 +382,8 @@ define function parse-am-or-pm (state :: <parse-state>) => ();
   select (string by \=)
     "am" => state.pm? := #f;
     "pm" => state.pm? := #t;
-    otherwise => parse-error(state, "Expected either AM or PM, not %=", 
-			     string);
+    otherwise => parse-error(state, "Expected either AM or PM, not %=",
+                             string);
   end select;
 end function parse-am-or-pm;
 
@@ -443,10 +443,10 @@ define function parse-year-implicit-1900 (state :: <parse-state>) => ();
   let num-string = read-while(state.input-stream, digit?);
   let year = string-to-integer(num-string);
   let year = if (year > 0 & year < 100)
-	       year + 1900;
-	     else 
-	       year;
-	     end if;
+               year + 1900;
+             else
+               year;
+             end if;
   add-init-arg(state, year: year);
 end function parse-year-implicit-1900;
 

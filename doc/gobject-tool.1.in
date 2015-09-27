@@ -47,7 +47,7 @@ Additional search directories
 .BI "\-\-platform" " platform"
 The platform assumed for code generation
 .SH EXAMPLE
-.B gobject-tool 
+.B gobject-tool
 $gtk_cflags \-\-exports \-\-module gdk-internal \-\-use Dylan
 \-\-use Melange-support \-\-use glib \-\-use gdk-extra
 gdk-1.2.defs > gdk-internal-module.dylan

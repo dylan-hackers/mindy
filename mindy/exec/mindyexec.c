@@ -7,7 +7,7 @@
 **
 ** mindyexec is intended to be run as
 **
-**	mindyexec source-file [args-for-mindy-main ...]
+**        mindyexec source-file [args-for-mindy-main ...]
 **
 ** which is the form in which the #! protocol will start.
 **
@@ -24,14 +24,14 @@ int main(argc, argv) int argc; char *argv[];
 {
   int fd[2], pid;
   char *source;
-  
+
   pipe(fd);
 
   if (pipe(fd) != 0) {
     fprintf(stderr, "mindyexec: pipe failed: %s\n", strerror(errno));
     exit(1);
   }
-  
+
   pid = fork();
 
   if (pid < 0) {
@@ -40,17 +40,17 @@ int main(argc, argv) int argc; char *argv[];
   }
 
   if (argc < 2)
-    source = "-";			/* compile from standard input */
+    source = "-";                        /* compile from standard input */
   else
-    source = argv[1];			/* compile from script */
+    source = argv[1];                        /* compile from script */
 
   if (pid == 0) {
     static char *nargv[] = {
-      MINDYCOMP,			/* compile */
-      "source-script",			/* <source name here> */
-      "-q",				/* no warnings */
-      "-o",				/* output to */
-      "-",				/* stdout */
+      MINDYCOMP,                        /* compile */
+      "source-script",                        /* <source name here> */
+      "-q",                                /* no warnings */
+      "-o",                                /* output to */
+      "-",                                /* stdout */
       NULL
     };
 
@@ -64,7 +64,7 @@ int main(argc, argv) int argc; char *argv[];
     execvp(MINDYCOMP, nargv);
 
     fprintf(stderr, "mindyexec: execvp(\"%s\", ...) failed: %s\n", MINDYCOMP,
-	    strerror(errno));
+            strerror(errno));
     exit(1);
   }
 
@@ -73,15 +73,15 @@ int main(argc, argv) int argc; char *argv[];
     int nargc, oargc;
 
     nargc = 0;
-    nargv[nargc++] = "mindy";		/* interpret */
+    nargv[nargc++] = "mindy";                /* interpret */
 #if ! NO_ARGV_0
-    nargv[nargc++] = "-0";		/* command name is */
-    nargv[nargc++] = source;		/* source file */
+    nargv[nargc++] = "-0";                /* command name is */
+    nargv[nargc++] = source;                /* source file */
 #endif
-    nargv[nargc++] = "-x";		/* last file to load is */
-    nargv[nargc++] = "-";		/* stdin */
+    nargv[nargc++] = "-x";                /* last file to load is */
+    nargv[nargc++] = "-";                /* stdin */
     for (oargc = 2; oargc < argc; )
-      nargv[nargc++] = argv[oargc++];	/* rest of args for main() */
+      nargv[nargc++] = argv[oargc++];        /* rest of args for main() */
     nargv[nargc] = NULL;
 
     close(0);

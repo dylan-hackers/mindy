@@ -52,8 +52,8 @@ display-object-info						     [Function]
 	display-print-level works like the level keyword in the print function.
 
 	The output of the display-object-info function is very similar to the
-	output of the inspector function described later.  There are five major 
-	kinds of display, depending on what type the object is.  If the-object 
+	output of the inspector function described later.  There are five major
+	kinds of display, depending on what type the object is.  If the-object
 	is a class, the output will look like this:
 
 		Class <my-class>
@@ -77,12 +77,12 @@ display-object-info						     [Function]
 		  <my-superclass>
 		 Direct Subclasses:
 		  <my-subclass>
-		  
+
 	If the object is a singleton, the output will look like this:
 
 		Singleton of class <fixed-integer>
 		  Value: 1
-		  
+
 	If the object is a union, each type in the union will be listed
 	
 		Union of types
@@ -125,8 +125,8 @@ display-object-info						     [Function]
 	elements will be printed in an "Elements:" section, regardless of the
 	display-print-length setting.
 
-	If the-object is a union of types, each type will print.  To display 
-	information about these types, display-object-info must be called 
+	If the-object is a union of types, each type will print.  To display
+	information about these types, display-object-info must be called
 	explicitly on each of these.
 
 	If any of the types that display-object-info prints is a
@@ -149,7 +149,7 @@ inspect								     [Function]
 	inspect-stream :: <stream> = *standard-output*
 	inspect-print-length = 5
 	inspect-print-level = 1
-    
+
     Return Values:
 	none
 	
@@ -178,7 +178,7 @@ inspect								     [Function]
 		   .
 		   .
 		   .
-		   
+
 	Also, when viewing a slot whose specializer is <union>, inspecting the
 	slot will inspect the current value, rather than the union.  To
 	inspect the union, inspect that slot in the type of the class which
@@ -287,7 +287,7 @@ let my-test = make(<my-class>,...)
 ...
 inspect(my-test);
 
-// Once the inspector is started, the initial output will look something like 
+// Once the inspector is started, the initial output will look something like
 // this.
 
 An instance of class
@@ -297,7 +297,7 @@ An instance of class
   3] SLOT-TWO: <my-other-class> = {<my-other-class> instance, first-slot: 43,
 second-slot: #[#, #, #, #, #, ...]}
   4] SLOT-THREE: <sequence>
-  
+
 // to inspect one of these items, type the corresponding line number
 inspect>2
 
@@ -308,7 +308,7 @@ An instance of class
   2] "Hello"
   3] "World"
   4] '!'
-  
+
 // to go to the last inspected object, type 'u' or 'up'
 inspect>up
 

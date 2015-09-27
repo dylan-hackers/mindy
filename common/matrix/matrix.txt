@@ -1,7 +1,7 @@
                      Matrix Arithmetic Library for Dylan
-				
-This library implements some basic matrix operations.  These functions are not 
-guarenteed to be stable or numerically sound, neither are they very optimized, 
+
+This library implements some basic matrix operations.  These functions are not
+guarenteed to be stable or numerically sound, neither are they very optimized,
 but for smaller applications they should be suitable.
 
 
@@ -15,9 +15,9 @@ INITIALIZATION
 The generic function make will create matrices, with two keywords:
 
 dimensions: a sequence of two elements which represent the rows and columns
-	of the matrix respectively
+   of the matrix respectively
 fill: the objects that each element of matrix should be initialized to.  This
-	defaults to 0
+   defaults to 0
 
 FUNCTIONS
 
@@ -33,7 +33,7 @@ identity-matrix (#key dimensions :: <sequence>) => <matrix>        [Function]
 
    This returns a matrix filled with zeros, and having ones down the major
    diagonal. The following is an example:
-      | 1 0 0 | 
+      | 1 0 0 |
       | 0 1 0 |
       | 0 0 1 |
 
@@ -55,7 +55,7 @@ gauss-jordan (x :: <matrix>) => <matrix>                           [Function]
    then the argument matrix would be
       | 3  4 10 |
       | 2 -3  1 |
-   and gauss-jordan would return 
+   and gauss-jordan would return
       | 2 |
       | 1 |
    representing x = 2 and y = 1.  The algorithm for gauss-jordan was taken
@@ -82,11 +82,11 @@ FUTURE REVISIONS
 Write functions for row-operations, eigen-value, and eigen-vector.  Define a
 <matrix> subclass of <array>.  Add the appropriate "as" methods for <matrix>
 to <array> and back, and <matrix> to <vector> and back.
- 
+
 
 REFERENCES
 
 [1]: Sedgwick, Robert. Algorithms. 1993. Addison-Wesley Publishing Co.
 
-[2]: Strang, Gilbert. Introduction to Linear Algebra. 1993.  
-        Wellesley-Cambridge Press.  
+[2]: Strang, Gilbert. Introduction to Linear Algebra. 1993.
+        Wellesley-Cambridge Press.

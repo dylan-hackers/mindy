@@ -5,25 +5,25 @@ module: Dylan
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 //
@@ -289,7 +289,7 @@ end;
 define method \<= (x :: <float>, y :: <real>) => answer :: <boolean>;
   let (x, y) = compare-contagion(x, y);
   x <= y;
-end;  
+end;
 
 
 
@@ -304,11 +304,11 @@ define method \^ (base :: <number>, power :: <general-integer>)
       ash (1, power);
     otherwise =>
       for (power = power then ash (power, -1),
-	   total = 1 then if (odd? (power)) base * total else total end,
-	   base = base then base * base,
-	   until: zero? (power))
+           total = 1 then if (odd? (power)) base * total else total end,
+           base = base then base * base,
+           until: zero? (power))
       finally
-	total;
+        total;
       end;
   end;
 end;
@@ -361,26 +361,26 @@ define method gcd (u :: <general-integer>, v :: <general-integer>)
     zero?(v) => u;
     otherwise
       for (k from 0,
-	   u = abs(u) then ash(u, -1),
-	   v = abs(v) then ash(v, -1),
-	   until: odd?(logior(u, v)))
+           u = abs(u) then ash(u, -1),
+           v = abs(v) then ash(v, -1),
+           until: odd?(logior(u, v)))
       finally
-	block (return)
-	  for (temp = if (odd?(u)) -v else ash(u, -1) end
-		 then ash(temp, -1))
-	    if (odd?(temp))
-	      if (positive?(temp))
-		u := temp;
-	      else
-		v := -temp;
-	      end;
-	      temp := u - v;
-	      if (zero?(temp))
-		return(ash(u, k));
-	      end;
-	    end if;
-	  end for;
-	end block;
+        block (return)
+          for (temp = if (odd?(u)) -v else ash(u, -1) end
+                 then ash(temp, -1))
+            if (odd?(temp))
+              if (positive?(temp))
+                u := temp;
+              else
+                v := -temp;
+              end;
+              temp := u - v;
+              if (zero?(temp))
+                return(ash(u, k));
+              end;
+            end if;
+          end for;
+        end block;
       end for;
   end case;
 end gcd;
@@ -393,9 +393,9 @@ define method min (x :: <real>, #rest more)
       if (y < x) y else x end if;
     otherwise =>
       for (y in more,
-	   result = x then if (y < result) y else result end)
+           result = x then if (y < result) y else result end)
       finally
-	result;
+        result;
       end;
   end select;
 end;
@@ -408,7 +408,7 @@ define method max (x :: <real>, #rest more)
       if (y > x) y else x end if;
     otherwise =>
       for (y in more,
-	   result = x then if (y > result) y else result end)
+           result = x then if (y > result) y else result end)
       finally result;
       end;
   end select;
@@ -424,7 +424,7 @@ define generic integer-length (x :: <general-integer>) => res :: <integer>;
 //
 define method integer-length (x :: <integer>) => res :: <integer>;
   for (x = if (x < 0) lognot(x) else x end
-	 then ash(x, -1),
+         then ash(x, -1),
        length from 0,
        until: x == 0)
   finally
@@ -438,8 +438,8 @@ define method integer-length (x :: <extended-integer>) => res :: <integer>;
        until: x < 65536)
   finally
     for (x = as(<integer>, x) then ash(x, -1),
-	 length from length,
-	 until: x == 0)
+         length from length,
+         until: x == 0)
     finally
       length;
     end for;

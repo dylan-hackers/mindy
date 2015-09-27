@@ -22,7 +22,7 @@ dybug \- The GNU Debugger for Dylan
 \&\|]
 .RB "[\|" "\-e "\c
 .I prog\c
-\&\|]  
+\&\|]
 .RB "[\|" "\-se "\c
 .I prog\c
 \&\|]

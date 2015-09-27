@@ -1,6 +1,6 @@
 /* Unix support routines for the Dylan operating-system library
    Written by Tom Emerson, tree@tiac.net
-   
+
    Copyright (C) 1999 Thomas R. Emerson
 
    This library is free software; you can redistribute it and/or

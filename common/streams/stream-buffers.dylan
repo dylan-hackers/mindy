@@ -8,25 +8,25 @@ copyright: see below
 // Copyright (c) 1994, 1996  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
@@ -45,8 +45,8 @@ define generic buffer (stream :: <buffered-stream>)
 
 /// buffer-setter -- Internal Interface.
 ///
-define generic buffer-setter (value :: false-or(<buffer>), 
-			      stream :: <buffered-stream>)
+define generic buffer-setter (value :: false-or(<buffer>),
+                              stream :: <buffered-stream>)
  => value :: false-or(<buffer>);
 
 /// check-buffer-held -- Internal interface.
@@ -75,7 +75,7 @@ end method;
 
 /// get-input-buffer -- Exported.
 ///
-define inline method get-input-buffer 
+define inline method get-input-buffer
     (stream :: <buffered-stream>,
      #key wait? :: <boolean> = #t,
           bytes :: false-or(<integer>))
@@ -107,8 +107,8 @@ end method release-input-buffer;
 /// next-input-buffer -- Exported.
 ///
 define inline method next-input-buffer
-    (stream :: <buffered-stream>, 
-     #key wait? :: <boolean> = #t, 
+    (stream :: <buffered-stream>,
+     #key wait? :: <boolean> = #t,
           bytes :: false-or(<integer>))
  => buffer :: false-or(<buffer>);
   check-buffer-held(stream);
@@ -121,12 +121,12 @@ define inline method input-available-at-source? (stream :: <buffered-stream>)
   => input-available? :: <boolean>;
   check-buffer-held(stream);
   do-input-available-at-source?(stream);
-end method input-available-at-source?; 
+end method input-available-at-source?;
 
 /// get-output-buffer -- Exported.
 ///
 define inline method get-output-buffer
-    (stream :: <buffered-stream>, #key bytes :: <integer> = 1) 
+    (stream :: <buffered-stream>, #key bytes :: <integer> = 1)
  => buffer :: <buffer>;
   // Isolate the calling thread's access to the stream.
   lock-stream(stream);
@@ -202,7 +202,7 @@ end method;
 /// copy-into-buffer! -- Exported.
 ///
 define open generic copy-into-buffer!
-    (buf :: <buffer>, buf-start :: <buffer-index>, source :: <sequence>, 
+    (buf :: <buffer>, buf-start :: <buffer-index>, source :: <sequence>,
      #key start :: <integer>, // = 0,
           end: src-end :: false-or(<integer>)); // = source.size);
 
@@ -229,7 +229,7 @@ define sealed method copy-into-buffer!
   end;
   if ((buf-start + (stop - start))  > buf.size)
     error("Insufficient number of bytes in buffer after specified start, %d.",
-	  buf-start);
+          buf-start);
   end;
   // Do the copy.
   copy-bytes(buf, buf-start, source, start, (stop - start));
@@ -251,7 +251,7 @@ define method copy-from-buffer!
   // Do lots of bounds checking.
   if ((buf-start + (stop - start))  > buf.size)
     error("Insufficient number of bytes in buffer after specified start, %d.",
-	  buf-start);
+          buf-start);
   end;
   if (buf-start < 0)
     error("Bounds error in buffer -- %d.", buf-start);
@@ -275,8 +275,8 @@ end method copy-from-buffer!;
 /// do-get-input-buffer -- Exported.
 ///
 define open generic do-get-input-buffer
-    (stream :: <buffered-stream>, 
-     #key wait? :: <boolean>, // = #t, 
+    (stream :: <buffered-stream>,
+     #key wait? :: <boolean>, // = #t,
           bytes :: false-or(<integer>))
  => buffer :: false-or(<buffer>);
 
@@ -288,7 +288,7 @@ define open generic do-release-input-buffer (stream :: <buffered-stream>);
 ///
 define open generic do-next-input-buffer
     (stream :: <buffered-stream>,
-     #key wait? :: <boolean>, // = #t, 
+     #key wait? :: <boolean>, // = #t,
           bytes :: false-or(<integer>))
  => buffer :: false-or(<buffer>);
 
@@ -300,7 +300,7 @@ define open generic do-input-available-at-source? (stream :: <buffered-stream>)
 /// do-get-output-buffer -- Exported.
 ///
 define open generic do-get-output-buffer
-    (stream :: <buffered-stream>, #key bytes :: <integer>) //  = 1) 
+    (stream :: <buffered-stream>, #key bytes :: <integer>) //  = 1)
  => buffer :: <buffer>;
 
 /// do-release-output-buffer -- Exported.

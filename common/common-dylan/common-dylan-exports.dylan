@@ -1,7 +1,7 @@
 module: dylan-user
 
 define library common-dylan
-  use dylan, 
+  use dylan,
     export: { dylan, machine-words };
   use threads, export: { threads };
 
@@ -32,7 +32,7 @@ define module functional-extensions
   use extensions, exclude: { position }, export: { element-range-error };
   use Magic, import: {%element, %element-setter};
   use common-extensions, import: { find-element };
-  export 
+  export
     find-value;
   export
     with-bounds-checks,
@@ -117,17 +117,17 @@ define module common-extensions
              $maximum-double-float-exponent,
              $minimum-extended-float-exponent,
              $maximum-extended-float-exponent,
-	     false-or,
-	     one-of,
-	     subclass,
-	     <format-string-condition>, <simple-condition>,
-	     ignore,
-	     difference,
+             false-or,
+             one-of,
+             subclass,
+             <format-string-condition>, <simple-condition>,
+             ignore,
+             difference,
              concatenate!,
-	     register-application-exit-function,
-	     <stretchy-sequence>,
-	     <object-deque>,
-	     <stretchy-object-vector>,
+             register-application-exit-function,
+             <stretchy-sequence>,
+             <object-deque>,
+             <stretchy-object-vector>,
              <byte-character>,
              <byte-vector>};
   use %Hash-Tables,
@@ -139,8 +139,8 @@ define module common-extensions
   use streams, import: { <stream> },
     export: {<stream>};
   use simple-profiling,
-    export: { \profiling, 
-	      profiling-type-result };
+    export: { \profiling,
+              profiling-type-result };
 
   create
     true?,
@@ -232,7 +232,7 @@ define module common-dylan
   use common-extensions,
     export: all;
 end module;
-  
+
 define module locators-protocol
   create <locator>;
   create supports-open-locator?,

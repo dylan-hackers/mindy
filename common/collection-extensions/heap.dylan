@@ -1,88 +1,88 @@
-module: 	heap
-author: 	Nick Kramer (nkramer@cs.cmu.edu)
-synopsis:	Provides <heap>, a popular data structure for priority queues.
-		The semantics are basically those of a sorted sequence, with
-		particularly efficient implementations of add!, first, and pop
-		(i.e.  "remove-first").
+module:         heap
+author:         Nick Kramer (nkramer@cs.cmu.edu)
+synopsis:        Provides <heap>, a popular data structure for priority queues.
+                The semantics are basically those of a sorted sequence, with
+                particularly efficient implementations of add!, first, and pop
+                (i.e.  "remove-first").
 
 //======================================================================
 //
 // Copyright (c) 1994  Carnegie Mellon University
 // Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
 // All rights reserved.
-// 
+//
 // Use and copying of this software and preparation of derivative
 // works based on this software are permitted, including commercial
 // use, provided that the following conditions are observed:
-// 
+//
 // 1. This copyright notice must be retained in full on any copies
 //    and on appropriate parts of any derivative works.
 // 2. Documentation (paper or online) accompanying any system that
 //    incorporates this software, or any part of it, must acknowledge
 //    the contribution of the Gwydion Project at Carnegie Mellon
 //    University, and the Gwydion Dylan Maintainers.
-// 
+//
 // This software is made available "as is".  Neither the authors nor
 // Carnegie Mellon University make any warranty about the software,
 // its performance, or its conformity to any specification.
-// 
+//
 // Bug reports should be sent to <gd-bugs@gwydiondylan.org>; questions,
 // comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
-// Also, see http://www.gwydiondylan.org/ for updates and documentation. 
+// Also, see http://www.gwydiondylan.org/ for updates and documentation.
 //
 //======================================================================
 
 //============================================================================
 // A heap is an implementation of the abstract data type "sorted list". A heap
 // is a sorted sequence of items.  Most likely the user will end up writing
-// something like 
-// 
+// something like
+//
 // define class <heap-item> (<object>);
 //   slot priority;
 //   slot data;
 // end class <heap-item>;
-// 
+//
 // with appropriate methods defined for < and =. The user could, however, have
 // simply a sorted list of integers, or have some item where the priority is
-// an integral part of the item itself.  
-// 
+// an integral part of the item itself.
+//
 // make on heaps supports the less-than: keyword, which supply the heap's
-// comparison and defaults to <.  
-// 
-// Heaps support all the usual sequence operations. The most useful ones:  
-// 
+// comparison and defaults to <.
+//
+// Heaps support all the usual sequence operations. The most useful ones:
+//
 //      push(heap, item) => updated-heap
 //      pop(heap)        => smallest-element
 //      first(heap)      => smallest-element
 //      second(heap)     => second-smallest-element
 //      add!(heap, item) => updated-heap
 //      sort, sort!      => sorted-sequence
-// 
+//
 // These are all "efficient" operations (defined below).  As with <deque>,
 // push is another name for add!, and does exactly the same thing except that
 // push doesn't accept any keywords.  sort and sort! return a sequence that's
-// not a heap. Not necessarily efficient but useful anyhow:  
-// 
+// not a heap. Not necessarily efficient but useful anyhow:
+//
 //      add-new!(heap, item, #key test:, efficient:) => updated-heap
 //      remove!(heap, item, #key test:, efficient:) => updated-heap
 //      member?(heap, item, #key test:, efficient:) => <boolean>
-// 
+//
 // The efficient: keyword defaults to #f. If #t, it uses the
 // random-iteration-protocol (which is considerably more efficient, but isn't
 // really standard behavior, so it had to be optional).  Conceivably most
-// sequence methods could support such a keyword, but they don't yet.  
-// 
+// sequence methods could support such a keyword, but they don't yet.
+//
 // The user can use element-setter or the iteration protocol to change an item
 // in the heap, but changing the priority of an item is an error and Bad
 // Things(tm) will happen. No error will be signaled.  Both of these
-// operations are very inefficient.  
-// 
+// operations are very inefficient.
+//
 // Heaps are NOT <stretchy-collection>s, although add! and pop can magically
-// change the size of the heap.  
-// 
+// change the size of the heap.
+//
 // Efficiency: Approximate running times of different operations are given
-// below: (N is the size of the heap) 
-// 
+// below: (N is the size of the heap)
+//
 //     first, first-setter                             O(1)
 //     second (but not second-setter)                  O(1)
 //     size                                            O(1)
@@ -90,7 +90,7 @@ synopsis:	Provides <heap>, a popular data structure for priority queues.
 //     push                                            O(lg N)
 //     pop(heap)                                       O(lg N)
 //     sort, sort!                                     O(N * lg N)
-//     forward-iteration-protocol          
+//     forward-iteration-protocol
 //                             setup:                  O(N)
 //                             next-state:             O(lg N)
 //                             current-element:        O(1)
@@ -100,17 +100,17 @@ synopsis:	Provides <heap>, a popular data structure for priority queues.
 //                             next-state:             O(1)
 //                             current-element:        O(1)
 //                             current-element-setter: O(N)
-//     random-iteration-protocol           
+//     random-iteration-protocol
 //                             setup:                  O(1)
 //                             next-state:             O(1)
 //                             current-element:        O(1)
 //                             current-element-setter: O(1)
 //     element(heap, M)                                O(M*lg N + N)
 //     element-setter(value, heap, M)                  O(N + M*lg N + M)
-// 
+//
 // element, element-setter on arbitrary keys use the
 // forward-iteration-protocol (via the inherited methods), and have
-// accordingly bad performance.  
+// accordingly bad performance.
 //============================================================================
 
 
@@ -123,8 +123,8 @@ end class <heap>;
 // The size: keyword is accepted but ignored
 //
 define method initialize (h :: <heap>, #next next-method,
-			  #key size: size,
-			  less-than: less-than = \<)
+                          #key size: size,
+                          less-than: less-than = \<)
   next-method();
   h.heap-data      := make(<stretchy-vector>);
   h.heap-less-than := less-than;
@@ -171,34 +171,34 @@ define constant no-default = "no-default";
 // don't have to call the iteration protocol.
 //
 define method element(h :: <heap>, index == 0,
-		      #key default = no-default) => elt :: <object>;
+                      #key default = no-default) => elt :: <object>;
   if (empty?(h))
     if (default == no-default)
       error("No such element");
-    else 
+    else
       default;
     end if;
   else
     h.heap-data[0];
   end if;
-end method element;  
+end method element;
 
 
 // Special case the second as well because it can be done
 // semi-efficiently (again, no iteration protocol)
 //
 define method element(h :: <heap>, index == 1,
-		      #key default = no-default) => elt :: <object>;
+                      #key default = no-default) => elt :: <object>;
   if (size(h) < 2)
     if (default == no-default)
       error("No such element");
-    else 
+    else
       default;
     end if;
   else
     h.heap-data[smaller-child(h, 0)];
   end if;
-end method element;  
+end method element;
 
 
 // Inherit inefficient element-setter
@@ -230,15 +230,15 @@ define method add! (h :: <heap>, new-elt) => changed-heap :: <heap>;
   h;
 end method add!;
 
-define method add-new!(h :: <heap>, new-elt, 
-		       #key test: test = \=, efficient: efficient = #f)
+define method add-new!(h :: <heap>, new-elt,
+                       #key test: test = \=, efficient: efficient = #f)
     => changed-heap :: <heap>;
   if (~ member?(h, new-elt, test: test, efficient: efficient))
     add!(h, new-elt);
-  else 
+  else
     h;
   end if;
-end method add-new!;  
+end method add-new!;
 
 define method push(h :: <heap>, new-elt) => changed-heap :: <heap>;
   add!(h, new-elt);
@@ -261,11 +261,11 @@ end method pop;
 // elements to remove, THEN remove them.
 //
 define method remove!(h :: <heap>, elt,
-		      #key test: test = \=, efficient: efficient = #f)
+                      #key test: test = \=, efficient: efficient = #f)
     => changed-heap :: <heap>;
   let (init, limit, next, finished?, cur-key, cur-elt) =
     if (efficient)     random-iteration-protocol(h);
-    else 	       forward-iteration-protocol(h);
+    else                forward-iteration-protocol(h);
     end if;
 
   let kill-list = #();
@@ -289,22 +289,22 @@ define method remove!(h :: <heap>, elt,
       downheap(h, index);
     end if;
   end for;
-    
+
   h;
 end method remove!;
 
 
 define method member?(h :: <heap>, elt, #key test: test = \=,
-		      efficient: efficient = #f) => answer :: <boolean>;
+                      efficient: efficient = #f) => answer :: <boolean>;
   let (init, limit, next, finished?, cur-key, cur-elt) =
     if (efficient)     random-iteration-protocol(h);
-    else 	       forward-iteration-protocol(h);
+    else                forward-iteration-protocol(h);
     end if;
 
   block (return)
     for (state = init then next(h, state), until: finished?(h, state, limit))
       if (test(elt, cur-elt(h, state)))
-	return(#t);
+        return(#t);
       end if;
     end for;
     #f;
@@ -374,11 +374,11 @@ end method right-child;
 // Assumes the left child is valid, although the right child might not be.
 //
 define method smaller-child (h :: <heap>, index :: <integer>)
-    => smaller-child-index :: <integer>; 
+    => smaller-child-index :: <integer>;
   if (right-child(index) = size(h))
     left-child(index);            // There is no right child
   elseif (h.heap-less-than(h.heap-data [right-child(index)],
-			   h.heap-data [left-child(index)]))
+                           h.heap-data [left-child(index)]))
     right-child(index);
   else
     left-child(index);
@@ -391,8 +391,8 @@ end method;
 define method upheap (h :: <heap>, index :: <integer>);
   let item = h.heap-data [index];
 
-  while (index ~= 0   &   
-	   h.heap-less-than (item, h.heap-data [parent(index)]))
+  while (index ~= 0   &
+           h.heap-less-than (item, h.heap-data [parent(index)]))
     h.heap-data [index] := h.heap-data [parent(index)];
     index := parent(index);
   end while;
@@ -406,7 +406,7 @@ define method downheap (h :: <heap>, index :: <integer>);
   let item = h.heap-data [index];
 
   while ( left-child(index) < size(h)
-	   & h.heap-less-than(h.heap-data [smaller-child(h,index)], item))
+           & h.heap-less-than(h.heap-data [smaller-child(h,index)], item))
     h.heap-data [index] := h.heap-data [smaller-child(h,index)];
     index := smaller-child(h,index);
   end while;
@@ -436,43 +436,43 @@ define method forward-iteration-protocol (coll :: <heap>)
      current-element :: <function>, current-element-setter :: <function>,
      copy-state :: <function>);
   values(shallow-copy(coll),          // initial-state
-	 #f,                          // limit (not used)
-	                              // next-state
-	 method(h :: <heap>, state :: <heap>) => new-state :: <heap>;
-	     pop(state);
-	     state;
-	 end method,
+         #f,                          // limit (not used)
+                                      // next-state
+         method(h :: <heap>, state :: <heap>) => new-state :: <heap>;
+             pop(state);
+             state;
+         end method,
 
-	                              // finished-state?
-	 method(h :: <heap>, state :: <heap>, limit);
-	     empty?(state);
-	 end method,
+                                      // finished-state?
+         method(h :: <heap>, state :: <heap>, limit);
+             empty?(state);
+         end method,
 
-	                              // current-key
-	 method(h :: <heap>, state :: <heap>) => key :: <integer>;
-	     h.heap-size - state.heap-size;
-	 end method,
+                                      // current-key
+         method(h :: <heap>, state :: <heap>) => key :: <integer>;
+             h.heap-size - state.heap-size;
+         end method,
 
-	                              // current-element
-	 method(h :: <heap>, state :: <heap>)
-	     first(state);
-	 end method,
+                                      // current-element
+         method(h :: <heap>, state :: <heap>)
+             first(state);
+         end method,
 
-	                              // current-element-setter
-	 method(value, h :: <heap>, state :: <heap>)
-	     let index = find-index(h, first(state));
-	     h.heap-data[index] := value;
-	     state.heap-data[0] := value;
-	 end method,
+                                      // current-element-setter
+         method(value, h :: <heap>, state :: <heap>)
+             let index = find-index(h, first(state));
+             h.heap-data[index] := value;
+             state.heap-data[0] := value;
+         end method,
 
-	                              // copy-state
-	 method(h :: <heap>, state :: <heap>) => new-state :: <heap>;
-	     shallow-copy(state);
-	 end method);
+                                      // copy-state
+         method(h :: <heap>, state :: <heap>) => new-state :: <heap>;
+             shallow-copy(state);
+         end method);
 end method forward-iteration-protocol;
 
 
-// Not very efficient. Calling backwards-iteration-protocol takes n lg n 
+// Not very efficient. Calling backwards-iteration-protocol takes n lg n
 // time, after which each access is constant time (except for
 // current-element-setter, which is m lg n where m is the index of the
 // element that's being changed).
@@ -485,38 +485,38 @@ define method backwards-iteration-protocol (coll :: <heap>)
   let sorted-vector = reverse(coll);
 
   values(coll.heap-size - 1,          // initial-state
-	 -1,                          // limit
-	                              // next-state
-	 method(h :: <heap>, state :: <integer>) => new-state :: <integer>;
-	     state - 1;
-	 end method,
+         -1,                          // limit
+                                      // next-state
+         method(h :: <heap>, state :: <integer>) => new-state :: <integer>;
+             state - 1;
+         end method,
 
-	                              // finished-state?
-	 method(h :: <heap>, state :: <integer>, limit :: <integer>);
-	     state = limit;
-	 end method,
+                                      // finished-state?
+         method(h :: <heap>, state :: <integer>, limit :: <integer>);
+             state = limit;
+         end method,
 
-	                              // current-key
-	 method(h :: <heap>, state :: <integer>) => key :: <integer>;
-	     state;
-	 end method,
+                                      // current-key
+         method(h :: <heap>, state :: <integer>) => key :: <integer>;
+             state;
+         end method,
 
-	                              // current-element
-	 method(h :: <heap>, state :: <integer>)
-	     sorted-vector[state];
-	 end method,
+                                      // current-element
+         method(h :: <heap>, state :: <integer>)
+             sorted-vector[state];
+         end method,
 
-	                              // current-element-setter
-	 method(value, h :: <heap>, state :: <integer>)
-	     let index = find-index(h, sorted-vector[state]);
-	     h.heap-data[index] := value;
- 	     sorted-vector[state] := value;
-	 end method,
+                                      // current-element-setter
+         method(value, h :: <heap>, state :: <integer>)
+             let index = find-index(h, sorted-vector[state]);
+             h.heap-data[index] := value;
+              sorted-vector[state] := value;
+         end method,
 
-	                              // copy-state
-	 method(h :: <heap>, state :: <integer>) => new-state :: <integer>;
-	     state;
-	 end method);
+                                      // copy-state
+         method(h :: <heap>, state :: <integer>) => new-state :: <integer>;
+             state;
+         end method);
 end method backwards-iteration-protocol;
 
 
@@ -529,37 +529,37 @@ define method random-iteration-protocol (collection :: <heap>)
      current-element :: <function>, current-element-setter :: <function>,
      copy-state :: <function>);
   values(0,                      // initial-state
-	 size(collection),                // limit
+         size(collection),                // limit
 
-	                         // next-state
-	 method (h :: <heap>, state :: <integer>) => next-state :: <integer>;
-	   state + 1;
-	 end method,
-	 
-	                         // finished-state?
-	 method (h :: <heap>, state :: <integer>, limit :: <integer>);
-	   state = limit;
-	 end method,
+                                 // next-state
+         method (h :: <heap>, state :: <integer>) => next-state :: <integer>;
+           state + 1;
+         end method,
 
-	                         // current-key
-	 method (h :: <heap>, state :: <integer>) => key :: <integer>;
-	   error("I have no idea what the current-key is.");
-	 end method,
+                                 // finished-state?
+         method (h :: <heap>, state :: <integer>, limit :: <integer>);
+           state = limit;
+         end method,
 
-	                         // current-element
-	 method (h :: <heap>, state :: <integer>);
-	   h.heap-data [state];
-	 end method,
+                                 // current-key
+         method (h :: <heap>, state :: <integer>) => key :: <integer>;
+           error("I have no idea what the current-key is.");
+         end method,
 
-	                         // current-element-setter
-	 method (value, h :: <heap>, state :: <integer>);
-	   h.heap-data[state] := value;
-	 end method,
+                                 // current-element
+         method (h :: <heap>, state :: <integer>);
+           h.heap-data [state];
+         end method,
 
-	                         // copy-state
-	 method (h :: <heap>, state :: <integer>) => state :: <integer>;
-	   state;
-	 end method
-	);
-end method random-iteration-protocol;	 
+                                 // current-element-setter
+         method (value, h :: <heap>, state :: <integer>);
+           h.heap-data[state] := value;
+         end method,
+
+                                 // copy-state
+         method (h :: <heap>, state :: <integer>) => state :: <integer>;
+           state;
+         end method
+        );
+end method random-iteration-protocol;
 

@@ -22,9 +22,9 @@ $D2CFLAGS         # added by update-libdirs
 $plat = "posix";
 
 if ($features{'compiled_for_unix'}) {
-	# Default
+    # Default
 } elsif ($features{'compiled_for_win32'}) {
-	$plat = "win32";
+    $plat = "win32";
 } else {
     &unknown_platform_error();
 }
