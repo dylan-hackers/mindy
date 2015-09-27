@@ -418,37 +418,17 @@ EXTERN int	protect_write _ANSI_ARGS_((int fd, VOID *buf, size_t numBytes));
 #endif
 
 /*
- * Provide an error free implementation of fsync() or a simple
- * declaration.
- */
-#if NO_FSYNC
-#   define fsync(fd)	0
-#else
-#   ifndef WIN32
-        extern int fsync();
-#   endif
-#endif
-
-/*
 ** Following are the remnants of system dependent stuff from
 ** mindy files.  What's left here was not covered by one of
 ** the earlier includes in std-c.h or this file.  My inclination
 ** is to simply write:
-**	extern int select(), fsync();
-** and leave it at that.  For that matter, fsync() is a bit of
-** overkill.
+**	extern int select();
+** and leave it at that.
 */
 
 #if defined(MACH) || defined(__osf__) || defined(ultrix)
     extern int select(int nfds, fd_set *readfds, fd_set *write_fds,
 		      fd_set *except_fds, struct timeval *timeout);
-#endif
-
-/* Was #if defined(__osf__) || defined(ultrix)
- */
-#if defined(__osf__)
-    extern int fsync(int filedes);
-#   include <exc_handling.h>
 #endif
 
 /* Define a few POSIX constants in terms of the equivalent non-POSIX
