@@ -1,5 +1,0 @@
-free()
-malloc()
-calloc()
-strcmp()
-strlen()

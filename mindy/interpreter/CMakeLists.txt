@@ -14,7 +14,6 @@ SET(mindy_SOURCES
     def.c
     driver.c
     error.c
-    ext-init.c
     extern.c
     fd.c
     func.c

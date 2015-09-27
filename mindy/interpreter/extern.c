@@ -59,7 +59,6 @@ obj_t obj_CPointerClass = NULL;	  /* all instances of StaticTypeClass are
 obj_t obj_ForeignFileClass = NULL;
 obj_t obj_ArchivedFileClass = NULL;
 obj_t obj_NullPointer = NULL;
-obj_t /* <foreign-file> */ mindy_explicit_syms = NULL;
 
 static obj_t /* <foreign-file> */ mindy_dynamic_syms = NULL;
 
@@ -158,9 +157,6 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
     obj_t retval = obj_False;
 
     if (lookup == obj_Unbound) {
-	retval = find_c_function(symbol, mindy_explicit_syms);
-	if (retval != obj_False) return retval;
-
 	if (mindy_dynamic_syms == NULL)
 	    mindy_dynamic_syms = load_program_file();
 	return find_c_function(symbol, mindy_dynamic_syms);
@@ -201,9 +197,6 @@ obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
     obj_t retval = obj_False;
 
     if (lookup == obj_Unbound) {
-	retval = find_c_ptr(symbol, mindy_explicit_syms);
-	if (retval != obj_False) return retval;
-
 	if (mindy_dynamic_syms == NULL)
 	    mindy_dynamic_syms = load_program_file();
 	return find_c_ptr(symbol, mindy_dynamic_syms);
@@ -665,11 +658,6 @@ void init_c_classes(void)
 
 void init_c_functions(void)
 {
-    extern void build_explicit_syms(void);
-    
-    /* This is required by find_c_function and find_c_pointer */
-    build_explicit_syms();
-    
     define_method("find-c-function",
 		  list1(obj_ByteStringClass), FALSE,
 		  list1(pair(symbol("file"), obj_Unbound)),
@@ -764,5 +752,4 @@ void init_c_functions(void)
     obj_NullPointer = make_c_pointer(obj_CPointerClass, 0);
     add_constant_root(&obj_NullPointer);
     define_constant("null-pointer", obj_NullPointer);
-    add_variable_root(&mindy_explicit_syms);
 }

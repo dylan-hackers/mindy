@@ -55,7 +55,6 @@ struct foreign_file {
 #define FOREIGN_FILE(o) obj_ptr(struct foreign_file *, o)
 
 extern obj_t obj_CPointerClass;
-extern obj_t /* <foreign-file> */ mindy_explicit_syms;
 extern obj_t obj_ForeignFileClass;
 extern obj_t obj_ArchivedFileClass;
 
