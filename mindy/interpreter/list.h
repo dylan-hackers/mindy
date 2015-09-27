@@ -52,5 +52,4 @@ extern int length(obj_t list);
 extern obj_t list1(obj_t x);
 extern obj_t list2(obj_t x, obj_t y);
 extern obj_t list3(obj_t x, obj_t y, obj_t z);
-extern obj_t listn _ANSI_ARGS_((int n, ...));
-
+extern obj_t listn(int n, ...);

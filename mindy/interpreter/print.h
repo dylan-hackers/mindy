@@ -33,7 +33,7 @@ extern void prin1(obj_t object);
 extern void print(obj_t object);
 extern void print_nonzero_in_binary(int number);
 extern void print_number_in_binary(int number);
-extern void format _ANSI_ARGS_((char *fmt, ...));
+extern void format(char *fmt, ...);
 extern int count_format_args(char *fmt);
 extern void vformat(char *fmt, obj_t *args, int nargs);
 
@@ -43,4 +43,3 @@ extern void def_printer(obj_t class, void (*print_fn)(obj_t object));
  *  that ensures that, no matter the operating system, the character gets
  *  printed correctly.  (Particularly, '\n' on cygnus) */
 char os_safe_character_printer(char);
-

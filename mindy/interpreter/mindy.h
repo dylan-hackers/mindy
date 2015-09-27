@@ -43,7 +43,7 @@ struct object {
 #define obj_rawptr(o) ((void *)(o))
 #define rawptr_obj(p) ((obj_t)(p))
 
-extern void lose _ANSI_ARGS_((char *fmt, ...));
+extern void lose(char *fmt, ...);
 extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 
 #define assert(cond) \

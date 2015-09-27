@@ -31,8 +31,6 @@
 *
 \**********************************************************************/
 
-#define _ANSI_ARGS_(a)  () /* Hack to avoid loading "std-c.h" */
-
 #include "mindy.h"
 #include "gc.h"
 #include "bool.h"

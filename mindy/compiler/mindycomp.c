@@ -69,7 +69,7 @@ static void verror(int line, char *msg, va_list ap)
 
     nerrors++;
 }
-#if _USING_PROTOTYPES_
+
 void error(int line, char *msg, ...)
 {
     va_list ap;
@@ -78,20 +78,6 @@ void error(int line, char *msg, ...)
     verror(line, msg, ap);
     va_end(ap);
 }
-#else
-void error(va_alist) va_dcl
-{
-    va_list ap;
-    int line;
-    char *msg;
-
-    va_start(ap);
-    line = va_arg(ap, int);
-    msg = va_arg(ap, char *);
-    verror(line, msg, ap);
-    va_end(ap);
-}
-#endif
 
 static void vwarn(int line, char *msg, va_list ap)
 {
@@ -103,7 +89,6 @@ static void vwarn(int line, char *msg, va_list ap)
 	putc('\n', stderr);
 }
 
-#if _USING_PROTOTYPES_
 void warn(int line, char *msg, ...)
 {
     va_list ap;
@@ -112,20 +97,6 @@ void warn(int line, char *msg, ...)
     vwarn(line, msg, ap);
     va_end(ap);
 }
-#else
-void warn(va_alist) va_dcl
-{
-    va_list ap;
-    int line;
-    char *msg;
-
-    va_start(ap);
-    line = va_arg(ap, int);
-    msg = va_arg(ap, char *);
-    vwarn(line, msg, ap);
-    va_end(ap);
-}
-#endif
 
 static void usage(void)
 {

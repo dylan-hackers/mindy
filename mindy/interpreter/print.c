@@ -114,7 +114,6 @@ static void vvformat(char *fmt, va_list ap)
     vformat(fmt, SOVEC(vec)->contents, args);
 }
 
-#if _USING_PROTOTYPES_
 void format(char *fmt, ...)
 {
     va_list ap;
@@ -123,18 +122,6 @@ void format(char *fmt, ...)
     vvformat(fmt, ap);
     va_end(ap);
 }
-#else
-void format(va_alist) va_dcl
-{
-    va_list ap;
-    char *fmt;
-
-    va_start(ap);
-    fmt = va_arg(ap, char *);
-    vvformat(fmt, ap);
-    va_end(ap);
-}
-#endif
 
 int count_format_args(char *fmt)
 {

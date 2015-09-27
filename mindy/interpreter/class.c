@@ -314,7 +314,7 @@ static void vinit_builtin_class(obj_t class, char *name, va_list ap)
 
     define_class(name, class);
 }
-#if _USING_PROTOTYPES_
+
 void init_builtin_class(obj_t class, char *name, ...)
 {
     va_list ap;
@@ -323,20 +323,6 @@ void init_builtin_class(obj_t class, char *name, ...)
     vinit_builtin_class(class, name, ap);
     va_end(ap);
 }
-#else
-void init_builtin_class(va_alist) va_dcl
-{
-    va_list ap;
-    obj_t class;
-    char *name;
-
-    va_start(ap);
-    class = va_arg(ap, obj_t);
-    name = va_arg(ap, char *);
-    vinit_builtin_class(class, name, ap);
-    va_end(ap);
-}
-#endif
 
 
 /* Dylan functions. */

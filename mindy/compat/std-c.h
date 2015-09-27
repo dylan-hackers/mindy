@@ -43,53 +43,8 @@
 #include <config.h>
 
 /*
- * Definitions that allow this header file to be used either with or
- * without ANSI C features like function prototypes.
- */
-
-#undef _ANSI_ARGS_
-#undef CONST
-#if ((defined(__STDC__) || defined(SABER)) && !defined(NO_PROTOTYPE)) || defined(__cplusplus)
-#   define _USING_PROTOTYPES_ 1
-#   define _ANSI_ARGS_(x)	x
-#   define CONST const
-#   ifdef __cplusplus
-#       define VARARGS (...)
-#   else
-#       define VARARGS ()
-#   endif
-#else
-#   define _ANSI_ARGS_(x)	()
-#   define CONST
-#endif
-
-#ifdef __cplusplus
-#   define EXTERN extern "C"
-#else
-#   define EXTERN extern
-#endif
-
-/*
- * Macro to use instead of "void" for arguments that must have
- * type "void *" in ANSI C;  maps them to type "char *" in
- * non-ANSI systems.
- */
-
-#ifndef VOID
-#   ifdef __STDC__
-#       define VOID void
-#   else
-#       define VOID char
-#   endif
-#endif
-
-/*
  * Miscellaneous declarations.
  */
-
-#ifndef NULL
-#   define NULL 0
-#endif
 
 /*
  * Common C language include files are included here, so that
@@ -100,47 +55,14 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#ifdef NO_LIMITS_H
-#   include "std-limits.h"
-#else
-#   include <limits.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#ifdef WIN32
+#   define strcasecmp	_stricmp
+#   define strncasecmp	_memicmp
 #endif
-#ifdef NO_STDLIB_H
-#   include "std-stdlib.h"
-#else
-#   include <stdlib.h>
-#endif
-#ifdef NO_STRING_H
-#   include "std-string.h"
-#else
-#	include <string.h>
-#	ifdef WIN32
-#	    define strcasecmp	_stricmp
-#	    define strncasecmp	_memicmp
-#	endif
-#endif
-#if _USING_PROTOTYPES_
-#   include <stdarg.h>
-#else
-#   include <varargs.h>
-#endif
-
-/*
- * At present (12/91) not all stdlib.h implementations declare strtod.
- * The declaration below is here to ensure that it's declared, so that
- * the compiler won't take the default approach of assuming it returns
- * an int.  There's no ANSI prototype for it because there would end
- * up being too many conflicts with slightly-different prototypes.
- */
-
-#ifndef WIN32
-    extern double strtod();
-#endif
-
-/*
- * hpux is claimed not to implement rint(), here's a declaration.
- */
-extern double rint();
+#include <stdarg.h>
 
 /*
  * Provide a way to determine if there are any characters in a

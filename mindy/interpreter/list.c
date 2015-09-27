@@ -92,7 +92,6 @@ static obj_t vlistn(int n, va_list ap)
     return res;
 }
 
-#if _USING_PROTOTYPES_
 obj_t listn(int n, ...)
 {
     va_list ap;
@@ -104,21 +103,6 @@ obj_t listn(int n, ...)
 
     return res;
 }
-#else
-obj_t listn(va_alist) va_dcl
-{
-    va_list ap;
-    int n;
-    obj_t res;
-
-    va_start(ap);
-    n = va_arg(ap, int);
-    res = vlistn(n, ap);
-    va_end(ap);
-
-    return res;
-}
-#endif
 
 boolean memq(obj_t o, obj_t list)
 {

@@ -29,6 +29,6 @@
 *
 \**********************************************************************/
 
-extern void error _ANSI_ARGS_((char *msg, ...));
+extern void error(char *msg, ...);
 extern void type_error(obj_t value, obj_t type);
 extern obj_t check_type(obj_t thing, obj_t type);

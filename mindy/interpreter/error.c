@@ -89,7 +89,7 @@ static void verror(char *msg, va_list ap)
 	exit(1);
     }
 }
-#if _USING_PROTOTYPES_
+
 void error(char *msg, ...)
 {
     va_list ap;
@@ -97,18 +97,6 @@ void error(char *msg, ...)
     verror(msg, ap);
     va_end(ap);
 }
-#else
-void error(va_alist) va_dcl
-{
-    va_list ap;
-    char *msg;
-    
-    va_start(ap);
-    msg = va_arg(ap, char *);
-    verror(msg, ap);
-    va_end(ap);
-}
-#endif
 
 void type_error(obj_t value, obj_t type)
 {

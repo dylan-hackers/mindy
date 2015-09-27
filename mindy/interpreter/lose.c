@@ -46,7 +46,6 @@ static void vlose(char *fmt, va_list ap)
     abort();
 }
 
-#if _USING_PROTOTYPES_
 void lose(char *fmt, ...)
 {
     va_list ap;
@@ -55,15 +54,3 @@ void lose(char *fmt, ...)
     vlose(fmt, ap);
     va_end(ap);
 }
-#else
-void lose(va_alist) va_dcl
-{
-    va_list ap;
-    char *fmt;
-    va_start(ap);
-    fmt = va_arg(ap, char *);
-    vlose(fmt, ap);
-    va_end(ap);
-}
-#endif
-

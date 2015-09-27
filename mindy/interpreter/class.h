@@ -64,7 +64,7 @@ extern obj_t make_abstract_class(boolean sealed_p);
 extern obj_t make_builtin_class(int (*scavenge)(struct object *ptr),
 				obj_t (*transport)(obj_t object));
 
-extern void init_builtin_class _ANSI_ARGS_((obj_t class, char *debug_name, ...));
+extern void init_builtin_class(obj_t class, char *debug_name, ...);
 
 extern void setup_class_supers(obj_t class, obj_t supers);
 
