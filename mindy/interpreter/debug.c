@@ -2527,13 +2527,11 @@ void invoke_debugger(enum pause_reason reason)
 	explain_reason(reason);
     }
     
-#ifndef MACOS
     if ( ! isatty(fileno(stdin))
       && ! freopen("/dev/tty", open_for(), stdin)) {
         printf("STDIN is not a tty and cannot open /dev/tty.  Cannot debug.\n");
 	exit(1);
     }
-#endif
 
     while (1) {
 	thread_set_current(NULL);

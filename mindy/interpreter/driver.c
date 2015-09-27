@@ -52,9 +52,6 @@
 #   include "interp.h"
 #endif
 #include "fd.h"
-#ifdef MACOS
-#	include <Events.h>
-#endif
 
 static boolean InInterpreter = FALSE;
 static jmp_buf Catcher;
@@ -296,17 +293,6 @@ enum pause_reason do_stuff(void)
 		    thread->advance(thread);
 #endif
 		}
-#ifdef MACOS
-		{
-			EventRecord e;
-			/* Weak!!!! */
-			OSEventAvail(0, &e);
-			if( (e.modifiers & controlKey ) && (e.modifiers & cmdKey ) && (e.modifiers & optionKey ) )
-			{
-				set_pause_interrupted();
-			}
-		}
-#endif
 	    InInterpreter = FALSE;
 	    clear_interrupt_handler();
 

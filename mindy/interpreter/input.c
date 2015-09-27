@@ -45,10 +45,6 @@
 #include "def.h"
 #include "fd.h"
 
-#ifdef MACOS
-#	include<console.h>
-#endif
-
 #ifdef HAVE_READLINE_H
 #include <readline.h>
 #include <history.h>
@@ -61,18 +57,7 @@
 static int mindy_getchar ()
 {
     char c;
-#ifdef MACOS		/* SIOUX can't read just one char??? */
-	int num_read = 1;
-	/*	Should loop calling SIOUXHandleOneEvent while no keydown. 
-		Then get code direct from event, and repost to SIOUX.	
-	*/
-	c = getch();
-	WriteCharsToConsole( &c, 1 );
-	if( c == '\r' )
-		c = '\n';
-#else
     int num_read = mindy_read(0, &c, 1);
-#endif
     if (num_read < 1)
 	return EOF;
     else

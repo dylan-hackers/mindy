@@ -152,11 +152,7 @@ extern double rint();
 #   ifdef USE_BSD_FBUFEMPTYP
 #       define FBUFEMPTYP(fp)    (fp->_r <= 0)
 #   else
-#		ifdef MACOS	/* Actually CodeWarrior */
-#			define FBUFEMPTYP(fp)    (fp->buffer_len == 0)
-#		else
-#       	define FBUFEMPTYP(fp)    (fp->_cnt == 0)
-#		endif
+#      	define FBUFEMPTYP(fp)    (fp->_cnt == 0)
 #   endif
 #endif
 

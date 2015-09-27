@@ -50,10 +50,6 @@
 #include "lose.h"
 #include "../compat/cygwin.h"
 
-#ifdef MACOS
-#	include <console.h>
-#endif
-
 struct body *Program = NULL;
 
 struct symbol *LibraryName = NULL;
@@ -169,11 +165,7 @@ static void end_of_headers(char *value)
 
 static char *find_extension(char *source)
 {
-#ifdef MACOS
-    char *slash = strrchr(source, ':');
-#else
     char *slash = strrchr(source, '/');
-#endif    
     char *dot = strchr(slash ? slash : source, '.');
 
     if (dot)
@@ -213,14 +205,6 @@ int main(int argc, char *argv[])
     init_expand();
     init_compile();
     
-#ifdef MACOS
-	add_feature(symbol("macos"));
-#	ifndef SHLB
-	argc = ccommand( &argv );
-#	endif
-#endif
-
-
     while ((arg = *++argv) != NULL) {
 	if (arg[0] == '-') {
 	    switch (arg[1]) {

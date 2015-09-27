@@ -983,11 +983,7 @@ void load(char *name)
 #if WIN32
       fd = open(name, O_RDONLY | O_BINARY, 0);
 #else 
-#ifdef MACOS
-      fd = MacOpen(name, O_RDONLY | O_BINARY, 0 );	/* So we can load the data fork for self-runners */
-#else
       fd = open(name, flags_for(O_RDONLY), 0);
-#endif
 #endif
     }
     if (fd < 0)
@@ -1022,11 +1018,7 @@ void load(char *name)
 #ifdef WIN32
 #    define SEPARATOR_CHAR ';'
 #else
-#    ifdef MACOS
-#        define SEPARATOR_CHAR '\t'
-#    else
-#        define SEPARATOR_CHAR ':'
-#    endif
+#    define SEPARATOR_CHAR ':'
 #endif
 
 void load_library(obj_t name)
@@ -1045,9 +1037,7 @@ void load_library(obj_t name)
 	/* no load path, compute default_path */
 	char *dylandir = getenv("DYLANDIR");
 	char* next = default_path;
-#ifndef MACOS
 	*next++ = '.';
-#endif
 	*next++ = SEPARATOR_CHAR;
 	if (dylandir == NULL) {
 	    memcpy(next, LIBDIR, strlen(LIBDIR));
@@ -1071,11 +1061,7 @@ void load_library(obj_t name)
 	    int len = ptr - start;
 	    if (len) {
 		memcpy(path, start, len);
-#ifdef MACOS
-		path[len++] = ':';
-#else
 		path[len++] = '/';
-#endif
 	    }
 	    dst = path+len;
 	    for (src = sym_name(name); *src != '\0'; src++)

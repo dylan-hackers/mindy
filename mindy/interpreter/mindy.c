@@ -47,10 +47,6 @@
 #include "debug.h"
 #include "load.h"
 
-#ifdef MACOS
-#	include<console.h>
-#endif
-
 static void invoke_main(struct thread *thread, obj_t *vals)
 {
     obj_t *fp = thread->fp;
@@ -93,11 +89,6 @@ int main(int argc, char *argv[])
     struct variable *var;
 #if ! NO_ARGV_0
     char *argv0 = "mindy";
-#endif
-#ifdef MACOS
-#ifndef SHLB
-	argc = ccommand( &argv );
-#endif
 #endif
 
     exec_file_name = argv[0];
