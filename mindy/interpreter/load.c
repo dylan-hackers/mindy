@@ -1086,7 +1086,7 @@ void load_library(obj_t name)
 	ptr++;
     } while (c != '\0');
 
-    error("Can't find library %s", name);
+    error("Can't find library %s in %s", name, make_byte_string(load_path));
 }
 
 
