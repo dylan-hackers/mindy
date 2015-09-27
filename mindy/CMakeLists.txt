@@ -4,6 +4,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 ADD_DEFINITIONS(-DBINDIR="/opt/mindy/bin")
 ADD_DEFINITIONS(-DLIBDIR="/opt/mindy/lib/dylan")
 ADD_DEFINITIONS(-DTARGET="x86_64-darwin-gcc")
+ADD_DEFINITIONS(-DVERSION="${MINDY_VERSION_STRING}")
 
 # clang doesn't print colored diagnostics when invoked from Ninja
 IF (UNIX AND

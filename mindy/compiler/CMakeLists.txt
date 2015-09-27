@@ -60,3 +60,4 @@ ADD_EXECUTABLE(mindycomp
                ${mindycomp_HEADERS}
                ${BISON_DylanParser_OUTPUTS}
                ${FLEX_DylanScanner_OUTPUTS})
+SET_TARGET_PROPERTIES(mindycomp PROPERTIES VERSION ${MINDY_VERSION_STRING})

@@ -96,3 +96,4 @@ ADD_EXECUTABLE(mindy
                ${mindy_HEADERS}
                ${BISON_MindyParser_OUTPUTS})
 TARGET_LINK_LIBRARIES(mindy -lreadline)
+SET_TARGET_PROPERTIES(mindy PROPERTIES VERSION ${MINDY_VERSION_STRING})
