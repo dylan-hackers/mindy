@@ -1,7 +1,6 @@
 module: Format-out
 author: David Watson (dwatson@cmu.edu)
 synopsis: The Format-Out library.
-rcs-header: $Header: /scm/cvs/src/common/format-out/format-out.dylan,v 1.2 2000/01/24 04:54:19 andreas Exp $
 
 //======================================================================
 //

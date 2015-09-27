@@ -2,7 +2,6 @@ module: Test
 author: David Watson, dwatson@cmu.edu
 synopsis: Code to generate the days-since-1970 table in time.dylan
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/time/days-since-1970.dylan,v 1.2 2000/01/24 04:55:41 andreas Exp $
  
 //======================================================================
 //

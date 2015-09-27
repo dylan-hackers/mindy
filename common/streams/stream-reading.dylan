@@ -1,7 +1,6 @@
 module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading from streams.
-RCS-header: $Header: /scm/cvs/src/common/streams/stream-reading.dylan,v 1.4 2000/12/05 02:45:58 dauclair Exp $
 copyright: see below
 
 //======================================================================

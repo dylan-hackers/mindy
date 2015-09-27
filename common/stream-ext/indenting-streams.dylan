@@ -1,6 +1,5 @@
 module: indenting-streams
 author: William Lott
-rcs-header: $Header: /scm/cvs/src/common/stream-ext/indenting-streams.dylan,v 1.3 2000/01/24 04:55:03 andreas Exp $
 
 //======================================================================
 //

@@ -1,4 +1,3 @@
-rcs-header: $Header: /scm/cvs/src/demos/library-demo/fact-exports.dylan,v 1.2 2000/01/24 04:56:57 andreas Exp $
 module: dylan-user
 
 //======================================================================

@@ -1,5 +1,4 @@
 module: Dylan
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/num.dylan,v 1.2 2000/01/24 04:58:27 andreas Exp $
 
 //======================================================================
 //

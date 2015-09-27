@@ -1,7 +1,6 @@
 module: Streams
 author: Bill Chiles, Ben Folk-Williams
 synopsis: Buffered streams, Buffer Access Protocol, Stream Extension Protocol
-RCS-header: $Header: /scm/cvs/src/common/streams/stream-buffers.dylan,v 1.3 2002/12/10 00:35:03 bruce Exp $
 copyright: see below
 
 //======================================================================

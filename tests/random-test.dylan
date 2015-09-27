@@ -2,7 +2,6 @@ module: random-test
 author: David Watson, Nick Kramer
 synopsis: Test for the random library.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/tests/random-test.dylan,v 1.2 2000/01/24 04:58:40 andreas Exp $
 
 //======================================================================
 //

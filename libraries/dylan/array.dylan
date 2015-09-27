@@ -1,7 +1,6 @@
 module:   dylan
 language: infix-dylan
 author:   Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/array.dylan,v 1.2 2000/01/24 04:58:21 andreas Exp $
 
 //======================================================================
 //

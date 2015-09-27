@@ -2,7 +2,6 @@ module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Reading and writing by lines.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/stream-lines.dylan,v 1.5 2002/12/11 15:33:24 andreas Exp $
 
 //======================================================================
 //

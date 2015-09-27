@@ -3,7 +3,6 @@ author: chiles@cs.cmu.edu
 synopsis: This file implements some extensions to the Gwydion Dylan
           implementation.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/internals.dylan,v 1.3 2000/01/24 04:55:14 andreas Exp $
 
 //======================================================================
 //

@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/misc.c,v 1.3 2000/01/24 04:58:20 andreas Exp $
-*
 * This file implements the stuff we couldn't think of anyplace
 * better to put.
 *

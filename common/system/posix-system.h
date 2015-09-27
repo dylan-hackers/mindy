@@ -22,8 +22,6 @@
    E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
 
-/* $Header: /scm/cvs/src/common/system/Attic/posix-system.h,v 1.5 2003/10/23 07:38:23 housel Exp $ */
-
 #ifndef _POSIX_SYSTEM_H_
 #define _POSIX_SYSTEM_H_
 

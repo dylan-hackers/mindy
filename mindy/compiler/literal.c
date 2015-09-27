@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/literal.c,v 1.2 2000/01/24 04:58:03 andreas Exp $
-*
 * This file implements the various kinds of literal constants.
 *
 \**********************************************************************/

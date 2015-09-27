@@ -23,10 +23,6 @@
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 *  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 *
-***********************************************************************
-*
-* $Header: /scm/cvs/src/mindy/interp/class.h,v 1.3 2000/01/24 04:58:09 andreas Exp $
-*
 \**********************************************************************/
 
 /* If this enumeration changes, you must also update "type.h" */

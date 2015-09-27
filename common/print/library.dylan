@@ -2,7 +2,6 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: This file defines the Print library and modules.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/library.dylan,v 1.4 2002/11/28 13:53:43 andreas Exp $
 
 //======================================================================
 //

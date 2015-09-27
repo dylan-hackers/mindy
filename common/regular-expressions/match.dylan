@@ -3,7 +3,6 @@ author:   Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: This takes a parsed regular expression and tries to find a match
           for it.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/regular-expressions/match.dylan,v 1.2 2000/01/24 04:54:51 andreas Exp $
 
 //======================================================================
 //

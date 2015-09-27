@@ -1,5 +1,4 @@
 module:      manipulating-files
-rcs-header:  $Header: /scm/cvs/src/common/file-system/files.dylan,v 1.2 2000/10/31 13:17:02 dauclair Exp $
 author:      Douglas M. Auclair, dauclair@hotmail.com
 
 // Basic operations on files:  copying, renaming, deleting.  

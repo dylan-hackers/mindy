@@ -3,7 +3,6 @@ author:     Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Contains the library and module definitions for the Regular
             Expressions library.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/regular-expressions/library.dylan,v 1.2 2000/01/24 04:54:50 andreas Exp $
 
 //======================================================================
 //

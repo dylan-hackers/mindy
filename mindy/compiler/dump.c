@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/dump.c,v 1.4 2001/09/26 00:28:01 brent Exp $
-*
 * This file dumps the results of the compilation into a .dbc file.
 *
 \**********************************************************************/

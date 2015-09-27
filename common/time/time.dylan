@@ -3,7 +3,6 @@ author: Ben Folk-Williams, bfw@cmu.edu and
         David Watson, dwatson@cmu.edu
 synopsis: Basic Time functions.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/time/time.dylan,v 1.3 2000/10/22 21:07:13 dauclair Exp $
 
 //======================================================================
 //

@@ -4,7 +4,6 @@ synopsis: This provides a useable interface for users. Functions
 	  defined outside this file are really too strange and quirky 
           to be of use to people.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/regular-expressions/interface.dylan,v 1.3 2000/01/24 04:54:49 andreas Exp $
 
 //======================================================================
 //

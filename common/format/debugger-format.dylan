@@ -1,5 +1,4 @@
 module: debugger-format
-rcs-header: $Header: /scm/cvs/src/common/format/debugger-format.dylan,v 1.2 2000/01/24 04:54:17 andreas Exp $
 
 //======================================================================
 //

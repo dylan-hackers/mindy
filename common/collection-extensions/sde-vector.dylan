@@ -1,6 +1,5 @@
 module: SDE-vector
 author: Nick Kramer (nkramer@cs.cmu.edu)
-RCS-header: $Header: /scm/cvs/src/common/collection-extensions/sde-vector.dylan,v 1.2 2000/01/24 04:54:15 andreas Exp $
 
 //======================================================================
 //

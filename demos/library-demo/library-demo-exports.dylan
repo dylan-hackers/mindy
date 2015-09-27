@@ -1,4 +1,3 @@
-rcs-header: $Header: /scm/cvs/src/demos/library-demo/library-demo-exports.dylan,v 1.2 2000/01/24 04:56:58 andreas Exp $
 module: dylan-user
 
 //======================================================================

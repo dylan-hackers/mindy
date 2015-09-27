@@ -4,7 +4,6 @@ author:     Russell M. Schaaf (rsbe@cs.cmu.edu) and
 synopsis:   Contains the library and module definitions for the X-inspector
             library.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/inspector/x-library.dylan,v 1.2 2000/01/24 04:58:29 andreas Exp $
 
 //======================================================================
 //

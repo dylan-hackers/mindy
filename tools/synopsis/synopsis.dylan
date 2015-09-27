@@ -1,6 +1,5 @@
 module: synopsis
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/tools/synopsis/synopsis.dylan,v 1.2 2000/01/24 04:59:15 andreas Exp $
 
 //======================================================================
 //

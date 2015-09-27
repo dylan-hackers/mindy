@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/thread.c,v 1.4 2000/03/18 15:43:48 robmyers Exp $
-*
 * This file implements threads, and the various synchronization
 * primitives.
 *

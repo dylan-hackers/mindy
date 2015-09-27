@@ -1,7 +1,6 @@
 module: Streams
 author: Ben Folk-Williams, Bill Chiles
 synopsis: Writing to streams.
-RCS-header: $Header: /scm/cvs/src/common/streams/stream-writing.dylan,v 1.3 2000/10/31 13:26:20 dauclair Exp $
 copyright: see below
 
 //======================================================================

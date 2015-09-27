@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/print.c,v 1.3 2000/01/24 04:58:04 andreas Exp $
-*
 * This file prints out parts of the parse tree in a human readable
 * format for debugging purposes.
 *

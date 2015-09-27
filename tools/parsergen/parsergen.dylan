@@ -1,6 +1,5 @@
 module: parsergen
 author: William Lott, translated to Dylan by Nick Kramer
-rcs-header: $Header: /scm/cvs/src/tools/parsergen/parsergen.dylan,v 1.5 2000/10/31 13:30:25 dauclair Exp $
 
 //======================================================================
 //

@@ -23,10 +23,6 @@
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 *  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 *
-***********************************************************************
-*
-* $Header: /scm/cvs/src/mindy/interp/num.h,v 1.2 2000/01/24 04:58:20 andreas Exp $
-*
 \**********************************************************************/
 
 #define obj_is_fixnum(o) (!obj_is_ptr(o))

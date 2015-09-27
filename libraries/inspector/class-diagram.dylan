@@ -1,6 +1,5 @@
 module:     class-diagram
 author:     Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/inspector/class-diagram.dylan,v 1.2 2000/01/24 04:58:28 andreas Exp $
 
 //======================================================================
 //

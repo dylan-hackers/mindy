@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/error.c,v 1.2 2000/01/24 04:58:13 andreas Exp $
-*
 * This file implements the stuff to signal errors from C code.
 *
 \**********************************************************************/

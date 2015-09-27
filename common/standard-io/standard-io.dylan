@@ -2,7 +2,6 @@ module: Standard-io
 author: chiles@cs.cmu.edu
 synopsis: This file provides some standard I/O stuff.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/standard-io/standard-io.dylan,v 1.2 2000/01/24 04:54:58 andreas Exp $
 
 //======================================================================
 //

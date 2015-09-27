@@ -1,4 +1,3 @@
-rcs-header: $Header: /scm/cvs/src/demos/stream-demo/stream-demo-exports.dylan,v 1.2 2000/01/24 04:57:03 andreas Exp $
 module: dylan-user
 
 //======================================================================

@@ -3,7 +3,6 @@ author:   Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Everything that relates to finite automaton
           (build-NFA, NFA-to-DFA, sim-DFA)
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/regular-expressions/finite-automaton.dylan,v 1.4 2000/01/24 04:54:48 andreas Exp $
 
 //======================================================================
 //

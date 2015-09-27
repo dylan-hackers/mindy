@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/table.c,v 1.3 2000/01/24 04:58:21 andreas Exp $
-*
 * This file implements support for <table>. Specifically, that means
 * writing object-hash and merge-hash-codes, and defining
 * $permanent-hash-state. As an extension for <equal-table> and 

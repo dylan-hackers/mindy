@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/extern.h,v 1.2 2000/01/24 04:58:14 andreas Exp $
-*
 * This file exports definitions for support of raw C pointers.
 *
 \**********************************************************************/

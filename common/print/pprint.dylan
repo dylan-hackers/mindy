@@ -2,7 +2,6 @@ module: pprint
 author: wlott@cs.cmu.edu
 synopsis: Most of Dick Water's pretty printer.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/print/pprint.dylan,v 1.4 2002/06/03 22:22:12 dauclair Exp $
 
 //======================================================================
 //

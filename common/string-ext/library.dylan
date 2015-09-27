@@ -3,7 +3,6 @@ author:     Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:   Contains the library and module definitions for the String
             Extensions library.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/library.dylan,v 1.2 2000/01/24 04:55:32 andreas Exp $
 
 //======================================================================
 //

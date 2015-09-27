@@ -2,7 +2,6 @@ module: time-internal
 author: dwatson@cmu.edu
 synopsis: The Time-IO module.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/time/time-io.dylan,v 1.4 2000/12/07 12:04:30 dauclair Exp $
 
 //======================================================================
 //

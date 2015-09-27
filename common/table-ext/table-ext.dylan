@@ -1,6 +1,5 @@
 module: Table-Extensions
 author: Nick Kramer (nkramer@cs.cmu.edu), David Watson (dwatson@cmu.edu)
-rcs-header: $Header: /scm/cvs/src/common/table-ext/table-ext.dylan,v 1.5 2004/08/24 07:38:23 bruce Exp $
 
 //======================================================================
 //

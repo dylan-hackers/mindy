@@ -23,10 +23,6 @@
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 *  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 *
-***********************************************************************
-*
-* $Header: /scm/cvs/src/mindy/comp/mindycomp.h,v 1.3 2001/06/23 00:07:46 brent Exp $
-*
 \**********************************************************************/
 
 #ifdef WIN32

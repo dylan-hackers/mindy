@@ -1,6 +1,5 @@
 module: piped-exec
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/common/streams/piped-exec.dylan,v 1.2 2000/01/24 04:55:16 andreas Exp $
 copyright: see below
 
 //======================================================================

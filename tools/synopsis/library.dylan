@@ -1,6 +1,5 @@
 module: dylan-user
 author: Nick Kramer
-rcs-header: $Header: /scm/cvs/src/tools/synopsis/library.dylan,v 1.2 2000/01/24 04:59:13 andreas Exp $
 
 //======================================================================
 //

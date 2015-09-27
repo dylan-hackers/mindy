@@ -1,7 +1,6 @@
 module: regular-expressions
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/regular-expressions/parse.dylan,v 1.2 2000/01/24 04:54:52 andreas Exp $
 
 //======================================================================
 //

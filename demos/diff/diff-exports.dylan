@@ -1,5 +1,4 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/demos/diff/diff-exports.dylan,v 1.1 1998/05/03 19:55:59 andreas Exp $
 
 define library diff
   use dylan;

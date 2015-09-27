@@ -4,7 +4,6 @@ synopsis: This implements search and replace facilities, which is
           given a wrapper and called from both regular-expressions
           and substring-search.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/do-replacement.dylan,v 1.2 2000/01/24 04:55:32 andreas Exp $
 
 //======================================================================
 //

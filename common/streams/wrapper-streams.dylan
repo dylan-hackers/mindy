@@ -2,7 +2,6 @@ module: Streams
 author: Ben Folk-Williams
 synopsis: Wrapper Streams.
 copyright: See below.
-RCS-header: $Header: /scm/cvs/src/common/streams/wrapper-streams.dylan,v 1.3 2000/01/24 04:55:26 andreas Exp $
 
 //======================================================================
 //

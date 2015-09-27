@@ -1,5 +1,4 @@
 module: Dylan-User
-rcs-header: $Header: /scm/cvs/src/tests/regexp-test-exports.dylan,v 1.2 2000/01/24 04:58:41 andreas Exp $
 
 //======================================================================
 //

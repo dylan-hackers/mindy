@@ -22,8 +22,6 @@
    E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
 
-/* $Header: /scm/cvs/src/common/system/Attic/posix-system.c,v 1.7 2003/10/23 07:38:23 housel Exp $ */
-
 #ifdef WIN32
 #else
 # include <unistd.h>

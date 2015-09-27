@@ -1,5 +1,4 @@
 module: extensions
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/ext.dylan,v 1.3 2002/03/13 23:11:38 gabor Exp $
 
 //======================================================================
 //

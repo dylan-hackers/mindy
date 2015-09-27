@@ -23,8 +23,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/instance.c,v 1.4 2000/10/21 19:45:53 dauclair Exp $
-*
 * This file implements instances and user defined classes.
 *
 \**********************************************************************/

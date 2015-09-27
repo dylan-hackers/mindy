@@ -2,7 +2,6 @@ module: threads
 author: ram+@cs.cmu.edu
 synopsis: This file implements some fake thread operations
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/fake-threads.dylan,v 1.2 2000/01/24 04:55:11 andreas Exp $
 
 //======================================================================
 //

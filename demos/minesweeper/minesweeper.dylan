@@ -1,6 +1,5 @@
 module: mine-sweeper
 author: Nick Kramer (nkramer@cs.cmu.edu)
-rcs-header: $Header: /scm/cvs/src/demos/minesweeper/minesweeper.dylan,v 1.2 2000/01/24 04:57:00 andreas Exp $
 
 //======================================================================
 //

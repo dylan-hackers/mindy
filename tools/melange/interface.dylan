@@ -1,7 +1,6 @@
 documented: #t
 module: define-interface
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/tools/melange/interface.dylan,v 1.36 2004/06/01 09:52:28 cpage Exp $
 
 //======================================================================
 //

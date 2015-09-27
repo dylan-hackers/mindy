@@ -3,7 +3,6 @@ author:   Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: A useful little data structure that's not useful enough to 
           export outside the library.
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/parse-string.dylan,v 1.2 2000/01/24 04:55:33 andreas Exp $
 
 //======================================================================
 //

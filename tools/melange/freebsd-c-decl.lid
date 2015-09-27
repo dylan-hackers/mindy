@@ -1,4 +1,3 @@
-rcs-header: $Header: /scm/cvs/src/tools/melange/freebsd-c-decl.lid,v 1.5 1999/08/24 19:50:11 andreas Exp $
 library: melange-c
 unit-prefix: cdecl
 unique-id-base: 10000

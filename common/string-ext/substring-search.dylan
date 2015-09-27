@@ -8,7 +8,6 @@ synopsis:	Provides a small assortment of specialized operations for
                 (used to be strsearch.dylan in module string-search library 
 		collection-extensions)
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/substring-search.dylan,v 1.2 2000/01/24 04:55:34 andreas Exp $
 
 //======================================================================
 //

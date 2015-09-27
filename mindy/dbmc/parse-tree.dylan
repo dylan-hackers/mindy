@@ -1,5 +1,4 @@
 module: parse-tree
-rcs-header: $Header: /scm/cvs/src/mindy/dbmc/parse-tree.dylan,v 1.1 2003/02/28 04:46:20 housel Exp $
 copyright: see below
 
 //======================================================================

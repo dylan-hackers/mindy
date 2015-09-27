@@ -1,5 +1,4 @@
 module: lisp-read
-rcs-header: $Header: /scm/cvs/src/tools/parsergen/lisp-read.dylan,v 1.2 2000/01/24 04:59:02 andreas Exp $
 copyright: see below
 
 //======================================================================

@@ -2,7 +2,6 @@ module: parse-arguments
 synopsis: Parse command-line options.
 authors: Eric Kidd
 copyright: Copyright 1998 Eric Kidd
-rcs-header: $Header: /scm/cvs/src/common/getopt/getopt.dylan,v 1.14 2000/01/24 04:54:24 andreas Exp $
 
 //======================================================================
 //

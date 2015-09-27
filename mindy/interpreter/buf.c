@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/buf.c,v 1.2 2000/01/24 04:58:07 andreas Exp $
-*
 * This file implements buffers, a special byte vector used by streams.
 *
 \**********************************************************************/

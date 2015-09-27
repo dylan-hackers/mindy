@@ -1,7 +1,6 @@
 module: 	string-search
 rcs-header:	$Header&
 author: 	Robert Stockton (rgs@cs.cmu.edu)
-RCS-header:     $Header: /scm/cvs/src/common/collection-extensions/strsearch.dylan,v 1.2 2000/01/24 04:54:15 andreas Exp $
 synopsis:	Provides a small assortment of specialized operations for
 		searching and modifying <vector>s and <byte-string>s.  These
 		operations are analogous to existing collection operations but

@@ -1,4 +1,3 @@
-rcs-header: $Header: /scm/cvs/src/demos/library-demo/library-demo.dylan,v 1.1 1998/05/03 19:56:02 andreas Exp $
 module: library-demo
 
 puts("Hello, World.\n");

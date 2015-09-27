@@ -2,7 +2,6 @@ module: file-descriptors
 author: ram+@cs.cmu.edu
 synopsis: This file implements Unix FD I/O 
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/streams/fd-io.dylan,v 1.7 2002/06/08 18:02:27 gabor Exp $
 
 //======================================================================
 //

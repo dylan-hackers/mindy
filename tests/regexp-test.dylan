@@ -2,7 +2,6 @@ module: regexp-test
 author: Nick Kramer (nkramer@cs.cmu.edu)
 copyright: see below
 synopsis: A regression test for the regexp library.
-rcs-header: $Header: /scm/cvs/src/tests/regexp-test.dylan,v 1.3 2000/01/24 04:58:41 andreas Exp $
 
 //======================================================================
 //

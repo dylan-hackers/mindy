@@ -1,5 +1,4 @@
 module: dylan
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/vec.dylan,v 1.4 2001/09/21 06:15:40 housel Exp $
 
 //======================================================================
 //

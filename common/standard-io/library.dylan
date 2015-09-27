@@ -2,7 +2,6 @@ module: Dylan-User
 author: chiles@cs.cmu.edu
 synopsis: Library and module definitions.
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/standard-io/library.dylan,v 1.2 2000/01/24 04:54:57 andreas Exp $
 
 //======================================================================
 //

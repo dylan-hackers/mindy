@@ -1,6 +1,4 @@
 ##
-##  $Header: /scm/cvs/src/common/Makegen,v 1.26 2003/07/17 19:05:53 housel Exp $
-##
 ##  This is the makegen file for the libraries shared between d2c and mindy.
 ##
 

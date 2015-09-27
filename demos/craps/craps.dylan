@@ -1,4 +1,3 @@
-rcs-header: $Header: /scm/cvs/src/demos/craps/craps.dylan,v 1.2 2000/01/24 04:56:54 andreas Exp $
 module: craps
 
 //======================================================================

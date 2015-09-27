@@ -1,5 +1,4 @@
 module: 	heap
-rcs-header:	$Header: /scm/cvs/src/common/collection-extensions/heap.dylan,v 1.2 2000/01/24 04:54:14 andreas Exp $
 author: 	Nick Kramer (nkramer@cs.cmu.edu)
 synopsis:	Provides <heap>, a popular data structure for priority queues.
 		The semantics are basically those of a sorted sequence, with

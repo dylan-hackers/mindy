@@ -1,5 +1,4 @@
 module: source-locations
-rcs-header: $Header: /scm/cvs/src/tools/pidgin/src/source-locations.dylan,v 1.2 2000/01/24 04:59:09 andreas Exp $
 copyright: see below
 
 //======================================================================

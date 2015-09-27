@@ -23,10 +23,6 @@
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 *  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 *
-***********************************************************************
-*
-* $Header: /scm/cvs/src/mindy/interp/table.h,v 1.2 2000/01/24 04:58:21 andreas Exp $
-*
 \**********************************************************************/
 
 extern obj_t make_hash_state(int volatility);

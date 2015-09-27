@@ -2,7 +2,6 @@ module: parse-arguments
 synopsis: Individual option parsers.
 authors: Eric Kidd, Jeff Dubrule <igor@pobox.com>
 copyright: Copyright 1998 Eric Kidd and Jeff Dubrule
-rcs-header: $Header: /scm/cvs/src/common/getopt/parsers.dylan,v 1.5 2000/01/24 04:54:26 andreas Exp $
 
 //======================================================================
 //

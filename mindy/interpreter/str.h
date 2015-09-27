@@ -23,10 +23,6 @@
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 *  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 *
-***********************************************************************
-*
-* $Header: /scm/cvs/src/mindy/interp/str.h,v 1.4 2000/10/31 14:37:40 dauclair Exp $
-*
 \**********************************************************************/
 
 #ifndef MINDY_STR_H

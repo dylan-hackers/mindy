@@ -1,4 +1,3 @@
-rcs-header: $Header: /scm/cvs/src/tools/melange/win32-vc-decl.lid,v 1.4 2002/03/12 00:15:56 brent Exp $
 library: melange-c
 unit-prefix: cdecl
 unique-id-base: 10000

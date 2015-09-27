@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/comp/info.c,v 1.2 2000/01/24 04:58:01 andreas Exp $
-*
 * This file maintains info about builtin/magic functions/names.
 *
 \**********************************************************************/

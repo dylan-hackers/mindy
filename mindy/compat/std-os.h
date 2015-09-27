@@ -40,7 +40,6 @@
  * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- * $Header: /scm/cvs/src/mindy/compat/std-os.h,v 1.5 2003/01/26 15:35:53 andreas Exp $ SPRITE (Berkeley)
  */
 
 #ifndef _STD_OS_H_

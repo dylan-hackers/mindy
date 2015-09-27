@@ -1,5 +1,4 @@
 module: extern
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/extern.dylan,v 1.2 2000/01/24 04:58:25 andreas Exp $
 
 //======================================================================
 //

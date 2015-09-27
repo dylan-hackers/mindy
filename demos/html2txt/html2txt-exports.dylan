@@ -1,5 +1,4 @@
 Module: dylan-user
-RCS-Header: $Header: /scm/cvs/src/demos/html2txt/html2txt-exports.dylan,v 1.1 1998/05/03 19:56:00 andreas Exp $
 
 define library html
   use dylan;

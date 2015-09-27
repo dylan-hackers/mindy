@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/extern.c,v 1.4 2000/01/24 04:58:14 andreas Exp $
-*
 * This file provides support for manipulating native C pointers.
 *
 \**********************************************************************/

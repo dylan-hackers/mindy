@@ -2,7 +2,6 @@ module: Dylan-User
 author: Russ Schaaf (rsbe@andrew.cmu.edu), Nick Kramer, William Lott
 synopsis:   Extensions to the streams library
 copyright:  See below.
-rcs-header: $Header: /scm/cvs/src/common/stream-ext/library.dylan,v 1.2 2000/01/24 04:55:05 andreas Exp $
 
 //======================================================================
 //

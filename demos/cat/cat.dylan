@@ -1,5 +1,4 @@
 module: cat
-rcs-header: $Header: /scm/cvs/src/demos/cat/cat.dylan,v 1.1 1998/05/03 19:55:59 andreas Exp $
 
 // This demo demonstrates the streams library by duplicating the unix
 // ``cat'' utility.

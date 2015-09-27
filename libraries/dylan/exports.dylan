@@ -1,5 +1,4 @@
 module: dylan-user
-rcs-header: $Header: /scm/cvs/src/mindy/libraries/dylan/exports.dylan,v 1.4 2002/04/17 19:08:52 gabor Exp $
 
 //======================================================================
 //

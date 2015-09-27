@@ -3,7 +3,6 @@ module: stream-extensions
 author: Russ Schaaf (rsbe@andrew.cmu.edu)
 synopsis:   Extensions to the stream library.
 copyright:  See below.
-rcs-header: $Header: /scm/cvs/src/common/stream-ext/stream-extensions.dylan,v 1.2 2000/01/24 04:55:06 andreas Exp $
 
 //======================================================================
 //

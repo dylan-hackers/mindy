@@ -1,5 +1,4 @@
 module:		dylan-user
-rcs-header:	$Header: /scm/cvs/src/common/collection-extensions/library.dylan,v 1.3 2000/01/24 04:54:15 andreas Exp $
 
 //======================================================================
 //

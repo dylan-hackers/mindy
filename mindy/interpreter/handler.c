@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/handler.c,v 1.2 2000/01/24 04:58:17 andreas Exp $
-*
 * This file implements the low level support for exception handlers.
 *
 \**********************************************************************/

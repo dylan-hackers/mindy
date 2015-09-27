@@ -1,5 +1,4 @@
 module: 	self-organizing-list
-rcs-header:	$Header: /scm/cvs/src/common/collection-extensions/solist.dylan,v 1.2 2000/01/24 04:54:15 andreas Exp $
 author: 	Robert Stockton (rgs@cs.cmu.edu)
 synopsis:	Provides "self-organizing lists".  These explicit key
 		collections provide roughly the semantics of hash tables, but

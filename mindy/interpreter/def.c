@@ -25,8 +25,6 @@
 *
 ***********************************************************************
 *
-* $Header: /scm/cvs/src/mindy/interp/def.c,v 1.3 2000/12/19 02:07:57 andreas Exp $
-*
 * This file implements the stuff to install definitions.
 *
 \**********************************************************************/

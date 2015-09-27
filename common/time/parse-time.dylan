@@ -2,7 +2,6 @@ module: Time-Internal
 author: Nick Kramer
 synopsis: Parses a time (like the C function strptime)
 copyright: See below.
-rcs-header: $Header: /scm/cvs/src/common/time/parse-time.dylan,v 1.2 2000/01/24 04:55:42 andreas Exp $
 
 //======================================================================
 //

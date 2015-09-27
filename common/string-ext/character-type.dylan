@@ -1,7 +1,6 @@
 module:   character-type
 author:   Nick Kramer (nkramer@cs.cmu.edu)
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/character-type.dylan,v 1.2 2000/01/24 04:55:29 andreas Exp $
 
 //======================================================================
 //

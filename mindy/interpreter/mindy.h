@@ -23,10 +23,6 @@
 *  comments and suggestions are welcome at <gd-hackers@gwydiondylan.org>.
 *  Also, see http://www.gwydiondylan.org/ for updates and documentation. 
 *
-***********************************************************************
-*
-* $Header: /scm/cvs/src/mindy/interp/mindy.h,v 1.5 2003/06/25 21:57:35 brent Exp $
-*
 \**********************************************************************/
 
 extern char *exec_file_name;

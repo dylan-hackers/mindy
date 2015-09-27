@@ -2,7 +2,6 @@ module: string-hacking
 author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Random functionality for working with strings
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/string-ext/string-hacking.dylan,v 1.3 2001/04/04 10:33:03 bruce Exp $
 
 //======================================================================
 //

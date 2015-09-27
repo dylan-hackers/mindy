@@ -2,7 +2,6 @@ module: regular-expressions
 author: Nick Kramer (nkramer@cs.cmu.edu)
 synopsis: Useful code for debugging regular expressions
 copyright: see below
-rcs-header: $Header: /scm/cvs/src/common/regular-expressions/debug.dylan,v 1.2 2000/01/24 04:54:45 andreas Exp $
 
 //======================================================================
 //
