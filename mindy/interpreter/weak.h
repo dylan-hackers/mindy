@@ -29,7 +29,7 @@
 struct weak_pointer {
     obj_t class;
     obj_t object;
-    boolean broken;
+    bool broken;
     struct weak_pointer *next;
 };
 

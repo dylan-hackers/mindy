@@ -178,12 +178,12 @@ enum expr_kind {
 
 struct expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
 };
 
 struct varref_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct id *var;
     struct method *home;
     struct binding *binding;
@@ -192,13 +192,13 @@ struct varref_expr {
 
 struct literal_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct literal *lit;
 };
 
 struct call_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct expr *func;
     struct function_info *info;
     struct argument *args;
@@ -206,26 +206,26 @@ struct call_expr {
 
 struct method_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct method *method;
 };
 
 struct dot_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct expr *arg;
     struct expr *func;
 };
 
 struct body_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct body *body;
 };
 
 struct block_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     int line;
     struct id *exit_fun;
     struct body *body;
@@ -236,13 +236,13 @@ struct block_expr {
 
 struct case_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct condition_body *body;
 };
 
 struct if_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct expr *cond;
     struct body *consequent;
     int else_line;
@@ -251,7 +251,7 @@ struct if_expr {
 
 struct for_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct for_clause *clauses;
     struct expr *until;
     struct body *body;
@@ -260,7 +260,7 @@ struct for_expr {
 
 struct select_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct expr *expr;
     struct expr *by;
     struct condition_body *body;
@@ -268,7 +268,7 @@ struct select_expr {
 
 struct varset_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct id *var;
     struct method *home;
     struct binding *binding;
@@ -279,21 +279,21 @@ struct varset_expr {
 
 struct binop_series_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct expr *first_operand;
     struct binop *first_binop;
 };
 
 struct loop_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct body *body;
     int position;
 };
 
 struct repeat_expr {
     enum expr_kind kind;
-    boolean analyzed;
+    bool analyzed;
     struct loop_expr *loop;
 };
 
@@ -306,8 +306,8 @@ struct param_list {
     struct param *required_params;
     struct id *next_param;
     struct id *rest_param;
-    boolean allow_keys;
-    boolean all_keys;
+    bool allow_keys;
+    bool all_keys;
     struct keyword_param *keyword_params;
 };
 
@@ -329,7 +329,7 @@ struct keyword_param {
 
 struct id {
     struct symbol *symbol;
-    boolean internal;
+    bool internal;
     int line;
 };
 
@@ -337,7 +337,7 @@ struct method {
     struct id *name;
     int line;
     struct literal *debug_name;
-    boolean top_level;
+    bool top_level;
     struct component *component;
     struct param_list *params;
     struct expr *specializers;
@@ -357,7 +357,7 @@ struct method {
 struct binop {
     struct id *op;
     int precedence;
-    boolean left_assoc;
+    bool left_assoc;
     struct expr *operand;
     struct binop *next;
 };
@@ -383,7 +383,7 @@ struct return_type_list {
     struct return_type *req_types;
     struct return_type **req_types_tail;
     struct expr *req_types_list;
-    boolean restp;
+    bool restp;
     struct expr *rest_type;
     struct symbol *rest_temp;
     struct expr *rest_temp_varref;
@@ -481,7 +481,7 @@ struct slot_spec {
 };
 
 struct initarg_spec {
-    boolean required;
+    bool required;
     struct symbol *keyword;
     struct plist *plist;
     struct initarg_spec *next;
@@ -648,7 +648,7 @@ extern struct plist *make_property_list(void);
 extern struct plist
     *add_property(struct plist *plist, struct token *keyword,
                   struct expr *expr);
-extern struct return_type_list *make_return_type_list(boolean restp,
+extern struct return_type_list *make_return_type_list(bool restp,
                                                       struct expr *rest);
 extern struct return_type_list *add_return_type(struct return_type_list *l,
                                                 struct expr *type);
@@ -737,7 +737,7 @@ extern struct slot_spec
 extern struct class_guts
     *add_slot_spec(struct class_guts *guts, struct slot_spec *spec);
 extern struct initarg_spec
-    *make_initarg_spec(boolean required, struct token *keyword,
+    *make_initarg_spec(bool required, struct token *keyword,
                        struct plist *plist);
 extern struct class_guts
     *add_initarg_spec(struct class_guts *guts, struct initarg_spec *spec);

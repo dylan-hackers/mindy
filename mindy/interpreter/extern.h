@@ -58,6 +58,6 @@ extern obj_t obj_ArchivedFileClass;
 
 extern obj_t make_c_pointer(obj_t /* <static-pointer-class> */ cls, void *ptr);
 extern void *get_c_object(obj_t obj);
-extern obj_t convert_c_object(obj_t class, void *obj, boolean miss_ok);
+extern obj_t convert_c_object(obj_t class, void *obj, bool miss_ok);
 extern int scav_c_pointer(struct object *obj);
 extern obj_t trans_c_pointer(obj_t cptr);

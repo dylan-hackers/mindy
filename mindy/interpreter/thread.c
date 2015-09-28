@@ -366,7 +366,7 @@ void thread_kill(struct thread *thread)
 static obj_t dylan_kill_thread(obj_t thread_obj)
 {
     struct thread *thread = THREAD(thread_obj)->thread;
-    boolean me = (thread == Current);
+    bool me = (thread == Current);
 
     thread_kill(thread);
 
@@ -424,7 +424,7 @@ void thread_restart(struct thread *thread)
 
 struct lock {
     obj_t class;
-    boolean locked;
+    bool locked;
     struct thread *waiting;
     struct thread **last;
 };
@@ -435,14 +435,14 @@ obj_t make_lock(void)
 {
     obj_t res = alloc(obj_SpinLockClass, sizeof(struct lock));
 
-    LOCK(res)->locked = FALSE;
+    LOCK(res)->locked = false;
     LOCK(res)->waiting = NULL;
     LOCK(res)->last = &LOCK(res)->waiting;
 
     return res;
 }
 
-boolean lock_query(obj_t lock)
+bool lock_query(obj_t lock)
 {
     return LOCK(lock)->locked;
 }
@@ -471,7 +471,7 @@ void lock_grab(struct thread *thread, obj_t lock,
         mindy_pause(pause_PickNewThread);
     }
     else {
-        LOCK(lock)->locked = TRUE;
+        LOCK(lock)->locked = true;
         advance(thread);
     }
 }
@@ -498,7 +498,7 @@ void lock_release(obj_t lock)
         waiting->datum = obj_False;
     }
     else
-        LOCK(lock)->locked = FALSE;
+        LOCK(lock)->locked = false;
 }
 
 static obj_t dylan_lock_release(obj_t lock)
@@ -543,7 +543,7 @@ static void add_to_lock(struct thread *thread)
         thread->prev = NULL;
     }
     else {
-        LOCK(lock)->locked = TRUE;
+        LOCK(lock)->locked = true;
         thread->datum = obj_False;
     }
 }
@@ -672,7 +672,7 @@ static int scav_thread_obj(struct object *o)
 
 static obj_t trans_thread_obj(obj_t t)
 {
-    return transport(t, sizeof(struct thread_obj), TRUE);
+    return transport(t, sizeof(struct thread_obj), true);
 }
 
 static int scav_lock(struct object *o)
@@ -687,7 +687,7 @@ static int scav_lock(struct object *o)
 
 static obj_t trans_lock(obj_t lock)
 {
-    return transport(lock, sizeof(struct lock), TRUE);
+    return transport(lock, sizeof(struct lock), true);
 }
 
 static int scav_event(struct object *o)
@@ -702,7 +702,7 @@ static int scav_event(struct object *o)
 
 static obj_t trans_event(obj_t event)
 {
-    return transport(event, sizeof(struct event), TRUE);
+    return transport(event, sizeof(struct event), true);
 }
 
 static void scav_thread(struct thread *thread)
@@ -734,7 +734,7 @@ void scavenge_thread_roots(void)
 void make_thread_classes(void)
 {
     obj_ThreadClass = make_builtin_class(scav_thread_obj, trans_thread_obj);
-    obj_LockClass = make_abstract_class(FALSE);
+    obj_LockClass = make_abstract_class(false);
     obj_SpinLockClass = make_builtin_class(scav_lock, trans_lock);
     obj_EventClass = make_builtin_class(scav_event, trans_event);
 
@@ -755,30 +755,30 @@ void init_thread_classes(void)
 void init_thread_functions(void)
 {
     define_function("spawn-thread", list2(obj_ObjectClass, obj_FunctionClass),
-                    FALSE, obj_False, FALSE, obj_ThreadClass,
+                    false, obj_False, false, obj_ThreadClass,
                     dylan_spawn_thread);
-    define_function("current-thread", obj_Nil, FALSE, obj_False, FALSE,
+    define_function("current-thread", obj_Nil, false, obj_False, false,
                     obj_ThreadClass, dylan_current_thread);
-    define_function("kill-thread", list1(obj_ThreadClass), FALSE, obj_False,
-                    FALSE, obj_ThreadClass, dylan_kill_thread);
+    define_function("kill-thread", list1(obj_ThreadClass), false, obj_False,
+                    false, obj_ThreadClass, dylan_kill_thread);
 
-    define_method("make", list1(singleton(obj_LockClass)), FALSE, obj_Nil,
-                  FALSE, obj_SpinLockClass, make_lock);
-    define_method("make", list1(singleton(obj_SpinLockClass)), FALSE, obj_Nil,
-                  FALSE, obj_SpinLockClass, make_lock);
-    define_method("locked?", list1(obj_SpinLockClass), FALSE, obj_False,
-                  FALSE, obj_BooleanClass, dylan_lock_query);
-    define_method("grab-lock", list1(obj_SpinLockClass), FALSE, obj_False,
-                  FALSE, obj_ObjectClass, dylan_lock_grab);
-    define_method("release-lock", list1(obj_SpinLockClass), FALSE, obj_False,
-                  FALSE, obj_ObjectClass, dylan_lock_release);
+    define_method("make", list1(singleton(obj_LockClass)), false, obj_Nil,
+                  false, obj_SpinLockClass, make_lock);
+    define_method("make", list1(singleton(obj_SpinLockClass)), false, obj_Nil,
+                  false, obj_SpinLockClass, make_lock);
+    define_method("locked?", list1(obj_SpinLockClass), false, obj_False,
+                  false, obj_BooleanClass, dylan_lock_query);
+    define_method("grab-lock", list1(obj_SpinLockClass), false, obj_False,
+                  false, obj_ObjectClass, dylan_lock_grab);
+    define_method("release-lock", list1(obj_SpinLockClass), false, obj_False,
+                  false, obj_ObjectClass, dylan_lock_release);
 
-    define_method("make", list1(singleton(obj_EventClass)), FALSE, obj_Nil,
-                  FALSE, obj_EventClass, make_event);
+    define_method("make", list1(singleton(obj_EventClass)), false, obj_Nil,
+                  false, obj_EventClass, make_event);
     define_method("wait-for-event", list2(obj_EventClass, obj_SpinLockClass),
-                  FALSE, obj_False, FALSE, obj_ObjectClass, dylan_event_wait);
+                  false, obj_False, false, obj_ObjectClass, dylan_event_wait);
     define_method("signal-event", list1(obj_EventClass),
-                  FALSE, obj_False, FALSE, obj_ObjectClass, event_signal);
+                  false, obj_False, false, obj_ObjectClass, event_signal);
     define_method("broadcast-event", list1(obj_EventClass),
-                  FALSE, obj_False, FALSE, obj_ObjectClass, event_broadcast);
+                  false, obj_False, false, obj_ObjectClass, event_broadcast);
 }

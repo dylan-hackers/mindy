@@ -102,14 +102,14 @@ obj_t listn(int n, ...)
     return res;
 }
 
-boolean memq(obj_t o, obj_t list)
+bool memq(obj_t o, obj_t list)
 {
     while (list != obj_Nil) {
         if (o == HEAD(list))
-            return TRUE;
+            return true;
         list = TAIL(list);
     }
-    return FALSE;
+    return false;
 }
 
 obj_t nreverse(obj_t list)
@@ -249,7 +249,7 @@ static int scav_list(struct object *o)
 
 static obj_t trans_list(obj_t list)
 {
-    return transport(list, sizeof(struct list), FALSE);
+    return transport(list, sizeof(struct list), false);
 }
 
 
@@ -257,7 +257,7 @@ static obj_t trans_list(obj_t list)
 
 void make_list_classes(void)
 {
-    obj_ListClass = make_abstract_class(TRUE);
+    obj_ListClass = make_abstract_class(true);
     obj_PairClass = make_builtin_class(scav_list, trans_list);
     obj_EmptyListClass = make_builtin_class(scav_list, trans_list);
     add_constant_root(&obj_ListClass);
@@ -285,20 +285,20 @@ void init_list_classes(void)
 void init_list_functions(void)
 {
     define_function("pair", list2(obj_ObjectClass, obj_ObjectClass),
-                    FALSE, obj_False, FALSE, obj_PairClass, pair);
+                    false, obj_False, false, obj_PairClass, pair);
     define_function("head", list1(obj_ListClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass, dylan_head);
+                    false, obj_False, false, obj_ObjectClass, dylan_head);
     define_function("head-setter", list2(obj_ObjectClass, obj_ListClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass,
+                    false, obj_False, false, obj_ObjectClass,
                     dylan_head_setter);
     define_function("tail", list1(obj_ListClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass, dylan_tail);
+                    false, obj_False, false, obj_ObjectClass, dylan_tail);
     define_function("tail-setter", list2(obj_ObjectClass, obj_ListClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass,
+                    false, obj_False, false, obj_ObjectClass,
                     dylan_tail_setter);
     define_constant("list",
-                    make_raw_function("list", obj_Nil, TRUE, obj_False, FALSE,
+                    make_raw_function("list", obj_Nil, true, obj_False, false,
                                       obj_Nil, obj_ObjectClass, dylan_list));
-    define_method("size", list1(obj_ListClass), FALSE, obj_False, FALSE,
+    define_method("size", list1(obj_ListClass), false, obj_False, false,
                   obj_FixnumClass, dylan_list_size);
 }

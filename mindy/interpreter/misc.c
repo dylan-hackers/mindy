@@ -77,7 +77,7 @@ static void dylan_apply(struct thread *thread, int nargs)
     obj_t *end = thread->sp - 1;
     obj_t seq = *end;
     obj_t class = object_class(seq);
-    boolean vector;
+    bool vector;
 
     if (!(vector = (class == obj_SimpleObjectVectorClass))
         && class != obj_EmptyListClass && class != obj_PairClass) {
@@ -188,48 +188,48 @@ void init_misc_functions(void)
 {
 #if ! NO_ARGV_0
     define_generic_function("main", list1(obj_ObjectClass),
-                            TRUE, obj_False, FALSE,
+                            true, obj_False, false,
                             obj_Nil, obj_ObjectClass);
 #else
-    define_generic_function("main", obj_NIL, TRUE, obj_False, FALSE,
+    define_generic_function("main", obj_NIL, true, obj_False, false,
                             obj_Nil, obj_ObjectClass);
 #endif
-    define_function("raw-exit", list1(obj_FixnumClass), FALSE, obj_False,
-                    FALSE, obj_ObjectClass, dylan_exit);
-    define_function("get-time-of-day", obj_Nil, FALSE,
-                    obj_False, FALSE, obj_BignumClass, dylan_get_time_of_day);
-    define_function("system", list1(obj_ByteStringClass), FALSE, obj_False,
-                    FALSE, obj_FixnumClass, dylan_system);
-    define_function("getenv", list1(obj_ByteStringClass), FALSE, obj_False,
-                    FALSE, obj_ObjectClass, dylan_getenv);
-    define_function("getcwd", obj_Nil, FALSE, obj_False,
-                    FALSE, obj_ByteStringClass, dylan_getcwd);
+    define_function("raw-exit", list1(obj_FixnumClass), false, obj_False,
+                    false, obj_ObjectClass, dylan_exit);
+    define_function("get-time-of-day", obj_Nil, false,
+                    obj_False, false, obj_BignumClass, dylan_get_time_of_day);
+    define_function("system", list1(obj_ByteStringClass), false, obj_False,
+                    false, obj_FixnumClass, dylan_system);
+    define_function("getenv", list1(obj_ByteStringClass), false, obj_False,
+                    false, obj_ObjectClass, dylan_getenv);
+    define_function("getcwd", obj_Nil, false, obj_False,
+                    false, obj_ByteStringClass, dylan_getcwd);
     define_constant("invoke-debugger",
                     make_raw_function("invoke-debugger",
                                       list1(obj_ObjectClass),
-                                      FALSE, obj_False,
-                                      FALSE, obj_Nil, obj_ObjectClass,
+                                      false, obj_False,
+                                      false, obj_Nil, obj_ObjectClass,
                                       dylan_invoke_debugger));
     define_constant("values",
                     make_raw_function("values", obj_Nil,
-                                      TRUE, obj_False, FALSE,
+                                      true, obj_False, false,
                                       obj_Nil, obj_ObjectClass,
                                       dylan_values));
     define_constant("apply",
                     make_raw_function("apply",
                                       list2(obj_FunctionClass,
                                             obj_ObjectClass),
-                                      TRUE, obj_False, FALSE,
+                                      true, obj_False, false,
                                       obj_Nil, obj_ObjectClass,
                                       dylan_apply));
     generic_apply_var = find_variable(module_BuiltinStuff,
                                       symbol("generic-apply"),
-                                      FALSE, TRUE);
+                                      false, true);
     define_constant("apply-curry",
                     make_raw_function("apply-curry",
                                       list3(obj_FunctionClass, obj_SeqClass,
                                             obj_SeqClass),
-                                      FALSE, obj_False,
-                                      FALSE, obj_Nil, obj_ObjectClass,
+                                      false, obj_False,
+                                      false, obj_Nil, obj_ObjectClass,
                                       dylan_apply_curry));
 }

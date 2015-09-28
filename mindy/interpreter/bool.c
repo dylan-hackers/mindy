@@ -38,7 +38,7 @@
 #include "def.h"
 #include "list.h"
 
-struct bool {
+struct boolean {
     obj_t class;
 };
 
@@ -56,12 +56,12 @@ static obj_t dylan_not(obj_t thing)
 
 /* Printer support. */
 
-static void print_true(obj_t true)
+static void print_true(obj_t true_value)
 {
     printf("#t");
 }
 
-static void print_false(obj_t false)
+static void print_false(obj_t false_value)
 {
     printf("#f");
 }
@@ -69,14 +69,14 @@ static void print_false(obj_t false)
 
 /* GC support. */
 
-static int scav_bool(struct object *bool)
+static int scav_bool(struct object *boolean)
 {
-    return sizeof(struct bool);
+    return sizeof(struct boolean);
 }
 
-static obj_t trans_bool(obj_t bool)
+static obj_t trans_bool(obj_t boolean)
 {
-    return transport(bool, sizeof(struct bool), TRUE);
+    return transport(boolean, sizeof(struct boolean), true);
 }
 
 
@@ -84,11 +84,11 @@ static obj_t trans_bool(obj_t bool)
 
 void make_bool_classes(void)
 {
-    obj_BooleanClass = make_abstract_class(TRUE);
+    obj_BooleanClass = make_abstract_class(true);
     obj_True = alloc(make_builtin_class(scav_bool, trans_bool),
-                     sizeof(struct bool));
+                     sizeof(struct boolean));
     obj_False = alloc(make_builtin_class(scav_bool, trans_bool),
-                      sizeof(struct bool));
+                      sizeof(struct boolean));
     add_constant_root(&obj_BooleanClass);
     add_constant_root(&obj_True);
     add_constant_root(&obj_False);
@@ -97,16 +97,16 @@ void make_bool_classes(void)
 void init_bool_classes(void)
 {
     init_builtin_class(obj_BooleanClass, "<boolean>", obj_ObjectClass, NULL);
-    init_builtin_class(obj_ptr(struct bool *, obj_True)->class,
+    init_builtin_class(obj_ptr(struct boolean *, obj_True)->class,
                        "<true>", obj_BooleanClass, NULL);
-    def_printer(obj_ptr(struct bool *, obj_True)->class, print_true);
-    init_builtin_class(obj_ptr(struct bool *, obj_False)->class,
+    def_printer(obj_ptr(struct boolean *, obj_True)->class, print_true);
+    init_builtin_class(obj_ptr(struct boolean *, obj_False)->class,
                        "<false>", obj_BooleanClass, NULL);
-    def_printer(obj_ptr(struct bool *, obj_False)->class, print_false);
+    def_printer(obj_ptr(struct boolean *, obj_False)->class, print_false);
 }
 
 void init_bool_functions(void)
 {
-    define_function("~", list1(obj_ObjectClass), FALSE, obj_False, FALSE,
+    define_function("~", list1(obj_ObjectClass), false, obj_False, false,
                     obj_BooleanClass, dylan_not);
 }

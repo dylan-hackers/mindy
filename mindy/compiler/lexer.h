@@ -38,19 +38,3 @@ struct token {
 extern struct token *make_token();
 
 extern int line_count;
-
-/*
- * This file is somewhat fragile.  The flex generated lexer introduces
- * all sorts of gotchas into the compatability code, because it includes
- * unsanitized versions of headers before and after it gives control to
- * user code.  This definition supplies boolean if mindycomp.h has not
- * been previously included.
- */
-
-#ifdef WIN32
-#   define boolean unsigned char
-#else
-#   define boolean int
-#endif
-#define TRUE 1
-#define FALSE 0

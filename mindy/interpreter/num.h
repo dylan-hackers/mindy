@@ -93,4 +93,4 @@ extern obj_t obj_SingleFloatClass;
 extern obj_t obj_DoubleFloatClass;
 extern obj_t obj_ExtendedFloatClass;
 
-extern boolean idp(obj_t x, obj_t y);
+extern bool idp(obj_t x, obj_t y);

@@ -54,16 +54,16 @@ struct slot_descr {
     enum slot_allocation alloc;
     obj_t creator;
     obj_t init_function_or_value;
-    boolean init_function_p;
+    bool init_function_p;
     obj_t init_keyword;
-    boolean keyword_required;
+    bool keyword_required;
     obj_t getter;
     obj_t getter_method;
     obj_t setter;
     obj_t setter_method;
     obj_t type;
     int desired_offset;
-    boolean ever_missed;
+    bool ever_missed;
 };
 
 #define SD(o) obj_ptr(struct slot_descr *, o)
@@ -71,10 +71,10 @@ struct slot_descr {
 struct initarg_descr {
     obj_t class;
     obj_t keyword;
-    boolean required_p;
+    bool required_p;
     obj_t type;
     obj_t init_function_or_value;
-    boolean init_function_p;
+    bool init_function_p;
     obj_t initializer;
 };
 
@@ -84,7 +84,7 @@ struct inherited_descr {
     obj_t class;
     obj_t name;
     obj_t init_function_or_value;
-    boolean init_function_p;
+    bool init_function_p;
 };
 
 #define INHD(o) obj_ptr(struct inherited_descr *, o)
@@ -318,7 +318,7 @@ static void note_position(obj_t table, obj_t slot, int index)
     PT(table)->alist = pair(pair(slot, make_fixnum(index)), PT(table)->alist);
 
     if (!SD(slot)->ever_missed) {
-        SD(slot)->ever_missed = TRUE;
+        SD(slot)->ever_missed = true;
         switch (SD(slot)->alloc) {
           case alloc_INSTANCE:
             set_method_iep(SD(slot)->getter_method, slow_instance_getter);
@@ -381,13 +381,13 @@ static obj_t make_slot_descriptor(obj_t name, obj_t allocation,
             error("Can't specify both an init-function: and an init-value:");
         check_type(init_function, obj_FunctionClass);
         SD(res)->init_function_or_value = init_function;
-        SD(res)->init_function_p = TRUE;
+        SD(res)->init_function_p = true;
     }
     else {
         if (init_value != obj_Unbound && type != obj_False)
             check_type(init_value, type);
         SD(res)->init_function_or_value = init_value;
-        SD(res)->init_function_p = FALSE;
+        SD(res)->init_function_p = false;
     }
     if (req_init_keyword != obj_False) {
         if (init_function != obj_Unbound)
@@ -397,11 +397,11 @@ static obj_t make_slot_descriptor(obj_t name, obj_t allocation,
         if (init_keyword != obj_False)
             error("Can't mix required-init-keyword: and init-keyword:");
         SD(res)->init_keyword = req_init_keyword;
-        SD(res)->keyword_required = TRUE;
+        SD(res)->keyword_required = true;
     }
     else {
         SD(res)->init_keyword = init_keyword;
-        SD(res)->keyword_required = FALSE;
+        SD(res)->keyword_required = false;
     }
     SD(res)->getter = getter;
     SD(res)->getter_method = obj_False;
@@ -412,7 +412,7 @@ static obj_t make_slot_descriptor(obj_t name, obj_t allocation,
     else
         SD(res)->type = type;
     SD(res)->desired_offset = -1;
-    SD(res)->ever_missed = FALSE;
+    SD(res)->ever_missed = false;
 
     return res;
 }
@@ -428,10 +428,10 @@ static obj_t make_initarg_descr(obj_t keyword, obj_t required, obj_t type,
     if (required != obj_False) {
         if (init_function != obj_Unbound || init_value != obj_Unbound)
             error("Can't specify initial value for required init arg.");
-        INTD(res)->required_p = TRUE;
+        INTD(res)->required_p = true;
     }
     else {
-        INTD(res)->required_p = FALSE;
+        INTD(res)->required_p = false;
     }
     if (type == obj_False) {
         INTD(res)->type = obj_ObjectClass;
@@ -444,11 +444,11 @@ static obj_t make_initarg_descr(obj_t keyword, obj_t required, obj_t type,
             error("Can't specify both an init-function: and an init-value:");
         check_type(init_function, obj_FunctionClass);
         INTD(res)->init_function_or_value = init_function;
-        INTD(res)->init_function_p = TRUE;
+        INTD(res)->init_function_p = true;
     }
     else {
         INTD(res)->init_function_or_value = init_value;
-        INTD(res)->init_function_p = FALSE;
+        INTD(res)->init_function_p = false;
     }
     INTD(res)->initializer = obj_False;
 
@@ -468,11 +468,11 @@ static obj_t make_inherited_descr(obj_t name,
             error("Can't specify both an init-function: and an init-value:");
         check_type(init_function, obj_FunctionClass);
         INHD(res)->init_function_or_value = init_function;
-        INHD(res)->init_function_p = TRUE;
+        INHD(res)->init_function_p = true;
     }
     else {
         INHD(res)->init_function_or_value = init_value;
-        INHD(res)->init_function_p = FALSE;
+        INHD(res)->init_function_p = false;
     }
 
     return res;
@@ -520,7 +520,7 @@ static obj_t inherited_initializer(obj_t slot, obj_t inherited)
                             obj_False, inherited);
 }
 
-static boolean initializer_init_function_p(obj_t initializer)
+static bool initializer_init_function_p(obj_t initializer)
 {
     switch (INITIALIZER(initializer)->kind) {
       case slot_Initializer:
@@ -537,7 +537,7 @@ static boolean initializer_init_function_p(obj_t initializer)
         break;
       default:
         lose("Tried to get init_function_p from strange initializer.");
-        return FALSE;
+        return false;
     }
 }
 
@@ -716,7 +716,7 @@ static void do_init_value(struct thread *thread, obj_t *vals)
         if (value != obj_Unbound && !instancep(value, INTD(initarg)->type))
             type_error(value, INTD(initarg)->type);
         INTD(initarg)->init_function_or_value = value;
-        INTD(initarg)->init_function_p = FALSE;
+        INTD(initarg)->init_function_p = false;
         break;
       case slot_Initializer:
       case inherited_Initializer:
@@ -751,8 +751,8 @@ obj_t make_defined_class(obj_t debug_name, struct library *library)
     obj_t res = alloc(obj_DefinedClassClass, sizeof(struct defined_class));
 
     init_class_type_stuff(res);
-    DC(res)->abstract_p = FALSE;
-    DC(res)->sealed_p = FALSE;
+    DC(res)->abstract_p = false;
+    DC(res)->sealed_p = false;
     DC(res)->library = library;
     DC(res)->scavenge = scav_instance;
     DC(res)->transport = trans_instance;
@@ -846,7 +846,7 @@ static void compute_lengths(obj_t class)
 
 /* Process Slot Specifications */
 
-static void add_slot(obj_t class, obj_t new_slot, boolean inherited)
+static void add_slot(obj_t class, obj_t new_slot, bool inherited)
 {
     obj_t new_getter = SD(new_slot)->getter;
     obj_t new_setter = SD(new_slot)->setter;
@@ -945,7 +945,7 @@ static void inherit_slots(obj_t class, obj_t super)
          new_slots = TAIL(new_slots)) {
         obj_t new_slot = HEAD(new_slots);
 
-        add_slot(class, new_slot, TRUE);
+        add_slot(class, new_slot, true);
 
         switch (SD(new_slot)->alloc) {
             int offset;
@@ -1010,7 +1010,7 @@ static void process_slot(obj_t class, obj_t slot)
 
     SD(slot)->creator = class;
 
-    add_slot(class, slot, FALSE);
+    add_slot(class, slot, false);
 
     switch (SD(slot)->alloc) {
       case alloc_INSTANCE:
@@ -1018,14 +1018,14 @@ static void process_slot(obj_t class, obj_t slot)
         SD(slot)->getter_method
             = make_accessor_method(function_debug_name(SD(slot)->getter),
                                    class, SD(slot)->type,
-                                   FALSE, make_fixnum(offset),
+                                   false, make_fixnum(offset),
                                    fast_instance_getter);
         add_method(SD(slot)->getter, SD(slot)->getter_method);
         if (SD(slot)->setter != obj_False) {
             SD(slot)->setter_method
                 = make_accessor_method(function_debug_name(SD(slot)->setter),
                                        class, SD(slot)->type,
-                                       TRUE, make_fixnum(offset),
+                                       true, make_fixnum(offset),
                                        fast_instance_setter);
             add_method(SD(slot)->setter, SD(slot)->setter_method);
         }
@@ -1037,13 +1037,13 @@ static void process_slot(obj_t class, obj_t slot)
         SD(slot)->getter_method
             = make_accessor_method(function_debug_name(SD(slot)->getter),
                                    class, SD(slot)->type,
-                                   FALSE, make_fixnum(offset),
+                                   false, make_fixnum(offset),
                                    fast_each_subclass_getter);
         add_method(SD(slot)->getter, SD(slot)->getter_method);
         if (SD(slot)->setter != obj_False) {
             SD(slot)->setter_method
                 = make_accessor_method(function_debug_name(SD(slot)->setter),
-                                       class, SD(slot)->type, TRUE,
+                                       class, SD(slot)->type, true,
                                        make_fixnum(offset),
                                        fast_each_subclass_setter);
             add_method(SD(slot)->setter, SD(slot)->setter_method);
@@ -1056,13 +1056,13 @@ static void process_slot(obj_t class, obj_t slot)
         SD(slot)->getter_method
             = make_accessor_method(function_debug_name(SD(slot)->getter),
                                    class, SD(slot)->type,
-                                   FALSE, value_cell, class_getter);
+                                   false, value_cell, class_getter);
         add_method(SD(slot)->getter, SD(slot)->getter_method);
         if (SD(slot)->setter != obj_False) {
             SD(slot)->setter_method
                 = make_accessor_method(function_debug_name(SD(slot)->setter),
                                        class, SD(slot)->type,
-                                       TRUE, value_cell, class_setter);
+                                       true, value_cell, class_setter);
             add_method(SD(slot)->setter, SD(slot)->setter_method);
         }
         break;
@@ -1097,8 +1097,8 @@ static void inherit_initargs(obj_t class, obj_t super)
     for (inh_initargs = DC(super)->new_initargs; inh_initargs != obj_Nil;
          inh_initargs = TAIL(inh_initargs)) {
         obj_t inh_initarg = HEAD(inh_initargs);
-        boolean redefined = FALSE;
-        boolean inherited = FALSE;
+        bool redefined = false;
+        bool inherited = false;
 
         for (new_initargs = DC(class)->new_initargs; new_initargs != obj_Nil;
              new_initargs = TAIL(new_initargs)) {
@@ -1112,8 +1112,8 @@ static void inherit_initargs(obj_t class, obj_t super)
                 /* Determine whether initarg is required */
                 if (INTD(inh_initarg)->required_p
                       && INTD(initarg)->init_function_or_value == obj_Unbound)
-                    INTD(initarg)->required_p = TRUE;
-                redefined = TRUE;
+                    INTD(initarg)->required_p = true;
+                redefined = true;
                 break;
             }
         }
@@ -1128,7 +1128,7 @@ static void inherit_initargs(obj_t class, obj_t super)
                 if (conflicting_initargs(inh_initarg, initarg))
                     error("Conflicting inherited definitions of init arg %=",
                           INTD(initarg)->keyword);
-                inherited = TRUE;
+                inherited = true;
             }
         }
         if (!redefined && !inherited) {
@@ -1354,7 +1354,7 @@ static obj_t compute_defaulted_initargs(obj_t class, obj_t keyword_arg_pairs)
     for (initargs = DC(class)->all_initargs; initargs != obj_Nil;
          initargs = TAIL(initargs)) {
         obj_t initarg = HEAD(initargs);
-        boolean found = FALSE;
+        bool found = false;
 
         for (supplieds = supplied_initargs; supplieds != obj_Nil;
              supplieds = TAIL(supplieds)) {
@@ -1365,7 +1365,7 @@ static obj_t compute_defaulted_initargs(obj_t class, obj_t keyword_arg_pairs)
                                INTD(initarg)->type))
                     error("Keyword arg %= must have type %=",
                           INTD(initarg)->keyword, INTD(initarg)->type);
-                found = TRUE;
+                found = true;
                 break;
             }
         }
@@ -1459,7 +1459,7 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
               "the define class for it has been processed.",
               class);
 
-    if (DC(class)->abstract_p == TRUE)
+    if (DC(class)->abstract_p == true)
         error("Attempt to instantiate the abstract class %= with\n"
               "the default make method.",
               class);
@@ -1472,14 +1472,14 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
 
     for (slots = DC(class)->all_slots; slots != obj_Nil; slots = TAIL(slots)) {
         obj_t slot = HEAD(slots);
-        boolean slot_initialized_p = FALSE;
+        bool slot_initialized_p = false;
         obj_t keyword = SD(slot)->init_keyword;
 
         /* Check for keyword init value */
 
         if (keyword != obj_False && !slot_initialized_p) {
             obj_t initargs;
-            boolean suppliedp = FALSE;
+            bool suppliedp = false;
 
             for (initargs = defaulted_initargs; initargs != obj_Nil;
                  initargs = TAIL(initargs)) {
@@ -1491,8 +1491,8 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
 
                     INTD(initarg)->initializer = initializer;
                     initializers = pair(initializer, initializers);
-                    slot_initialized_p = TRUE;
-                    suppliedp = TRUE;
+                    slot_initialized_p = true;
+                    suppliedp = true;
                     break;
                 }
             }
@@ -1515,7 +1515,7 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
                       = inherited_initializer(slot, inherited);
 
                     initializers = pair(initializer, initializers);
-                    slot_initialized_p = TRUE;
+                    slot_initialized_p = true;
                     break;
                 }
             }
@@ -1527,7 +1527,7 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
             obj_t initializer = slot_initializer(slot);
 
             initializers = pair(initializer, initializers);
-            slot_initialized_p = TRUE;
+            slot_initialized_p = true;
         }
     }
 
@@ -1836,7 +1836,7 @@ static int scav_defined_class(struct object *ptr)
 
 static obj_t trans_defined_class(obj_t class)
 {
-    return transport(class, sizeof(struct defined_class), FALSE);
+    return transport(class, sizeof(struct defined_class), false);
 }
 
 static int scav_slot_descr(struct object *ptr)
@@ -1858,7 +1858,7 @@ static int scav_slot_descr(struct object *ptr)
 
 static obj_t trans_slot_descr(obj_t slot)
 {
-    return transport(slot, sizeof(struct slot_descr), FALSE);
+    return transport(slot, sizeof(struct slot_descr), false);
 }
 
 static int scav_initarg_descr(struct object *ptr)
@@ -1874,7 +1874,7 @@ static int scav_initarg_descr(struct object *ptr)
 
 static obj_t trans_initarg_descr(obj_t initarg)
 {
-    return transport(initarg, sizeof(struct initarg_descr), FALSE);
+    return transport(initarg, sizeof(struct initarg_descr), false);
 }
 
 static int scav_inherited_descr(struct object *ptr)
@@ -1889,7 +1889,7 @@ static int scav_inherited_descr(struct object *ptr)
 
 static obj_t trans_inherited_descr(obj_t inherited)
 {
-    return transport(inherited, sizeof(struct inherited_descr), FALSE);
+    return transport(inherited, sizeof(struct inherited_descr), false);
 }
 
 static int scav_postable(struct object *ptr)
@@ -1903,7 +1903,7 @@ static int scav_postable(struct object *ptr)
 
 static obj_t trans_postable(obj_t p)
 {
-    return transport(p, sizeof(struct postable), FALSE);
+    return transport(p, sizeof(struct postable), false);
 }
 
 static int scav_initializer(struct object *ptr)
@@ -1919,7 +1919,7 @@ static int scav_initializer(struct object *ptr)
 
 static obj_t trans_initializer(obj_t p)
 {
-    return transport(p, sizeof(struct initializer), FALSE);
+    return transport(p, sizeof(struct initializer), false);
 }
 
 static int scav_instance(struct object *ptr)
@@ -1941,7 +1941,7 @@ static obj_t trans_instance(obj_t instance)
 
     return transport(instance,
                      sizeof(struct instance) + sizeof(obj_t)*(nslots-1),
-                     FALSE);
+                     false);
 }
 
 
@@ -1993,89 +1993,89 @@ void init_instance_functions(void)
                           obj_FunctionClass,
                           type_union(obj_FunctionClass, obj_FalseClass),
                           type_union(obj_TypeClass, obj_FalseClass)),
-                    FALSE,
+                    false,
                     listn(4, pair(symbol("init-keyword"), obj_False),
                           pair(symbol("required-init-keyword"), obj_False),
                           pair(symbol("init-function"), obj_Unbound),
                           pair(symbol("init-value"), obj_Unbound)),
-                    FALSE, obj_SlotDescrClass, make_slot_descriptor);
+                    false, obj_SlotDescrClass, make_slot_descriptor);
     define_function("make-initarg",
                     list2(obj_ObjectClass, obj_ObjectClass),
-                    FALSE,
+                    false,
                     list3(pair(symbol("type"), obj_False),
                           pair(symbol("init-function"), obj_Unbound),
                           pair(symbol("init-value"), obj_Unbound)),
-                    FALSE, obj_InitargDescrClass, make_initarg_descr);
+                    false, obj_InitargDescrClass, make_initarg_descr);
     define_function("make-inherited",
                     list1(obj_ObjectClass),
-                    FALSE,
+                    false,
                     list2(pair(symbol("init-function"), obj_Unbound),
                           pair(symbol("init-value"), obj_Unbound)),
-                    FALSE, obj_InheritedDescrClass, make_inherited_descr);
+                    false, obj_InheritedDescrClass, make_inherited_descr);
     define_generic_function("make", list1(obj_TypeClass),
-                            FALSE, obj_Nil, TRUE,
+                            false, obj_Nil, true,
                             list1(obj_ObjectClass), obj_False);
-    define_method("make", list1(obj_ClassClass), TRUE, obj_Nil, FALSE,
+    define_method("make", list1(obj_ClassClass), true, obj_Nil, false,
                   obj_ObjectClass, dylan_make);
-    define_method("make", list1(obj_DefinedClassClass), TRUE, obj_Nil, FALSE,
+    define_method("make", list1(obj_DefinedClassClass), true, obj_Nil, false,
                   obj_ObjectClass, dylan_make_instance);
     define_generic_function("initialize", list1(obj_ObjectClass),
-                            FALSE, obj_Nil, TRUE,
+                            false, obj_Nil, true,
                             obj_Nil, obj_ObjectClass);
-    define_method("initialize", list1(obj_ObjectClass), TRUE, obj_Nil, FALSE,
+    define_method("initialize", list1(obj_ObjectClass), true, obj_Nil, false,
                   obj_ObjectClass, dylan_init);
     initialize_gf_variable =
-      find_variable(module_BuiltinStuff, symbol("initialize"), FALSE, TRUE);
+      find_variable(module_BuiltinStuff, symbol("initialize"), false, true);
 
     define_generic_function("slot-initialized?",
                             list2(obj_ObjectClass, obj_GFClass),
-                            FALSE, obj_Nil, FALSE,
+                            false, obj_Nil, false,
                             list1(obj_BooleanClass), obj_ObjectClass);
     define_method("slot-initialized?",
                   list2(obj_ObjectClass, obj_GFClass),
-                  FALSE, obj_Nil, FALSE, obj_BooleanClass,
+                  false, obj_Nil, false, obj_BooleanClass,
                   dylan_slot_initialized_p);
 
-    define_method("slot-descriptors", list1(obj_ClassClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass,
+    define_method("slot-descriptors", list1(obj_ClassClass), false,
+                  obj_False, false, obj_ObjectClass,
                   dylan_class_slot_descriptors);
-    define_method("slot-descriptors", list1(obj_DefinedClassClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass,
+    define_method("slot-descriptors", list1(obj_DefinedClassClass), false,
+                  obj_False, false, obj_ObjectClass,
                   dylan_dc_slot_descriptors);
-    define_method("slot-name", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, dylan_slot_name);
-    define_method("slot-allocation", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, dylan_slot_alloc);
-    define_method("slot-getter", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, dylan_slot_getter);
-    define_method("slot-getter-method", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, dylan_slot_getter_method);
-    define_method("slot-setter", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, dylan_slot_setter);
-    define_method("slot-setter-method", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, dylan_slot_setter_method);
-    define_method("slot-type", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, dylan_slot_type);
+    define_method("slot-name", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_ObjectClass, dylan_slot_name);
+    define_method("slot-allocation", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_ObjectClass, dylan_slot_alloc);
+    define_method("slot-getter", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_ObjectClass, dylan_slot_getter);
+    define_method("slot-getter-method", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_ObjectClass, dylan_slot_getter_method);
+    define_method("slot-setter", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_ObjectClass, dylan_slot_setter);
+    define_method("slot-setter-method", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_ObjectClass, dylan_slot_setter_method);
+    define_method("slot-type", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_ObjectClass, dylan_slot_type);
     define_generic_function("slot-value",
                             list2(obj_SlotDescrClass, obj_ObjectClass),
-                            FALSE, obj_False, FALSE,
+                            false, obj_False, false,
                             list2(obj_ObjectClass, obj_BooleanClass),
                             obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("slot-value"),
-                             FALSE, FALSE)->value,
+                             false, false)->value,
                make_raw_method("slot-value",
                                list2(obj_SlotDescrClass, obj_ObjectClass),
-                               FALSE, obj_False, FALSE,
+                               false, obj_False, false,
                                list2(obj_ObjectClass, obj_BooleanClass),
                                obj_False, dylan_slot_value));
     define_method("slot-value-setter",
                   list3(obj_ObjectClass, obj_SlotDescrClass,obj_ObjectClass),
-                  FALSE, obj_False, FALSE, obj_ObjectClass,
+                  false, obj_False, false, obj_ObjectClass,
                   dylan_slot_value_setter);
-    define_method("keyword-required?", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_BooleanClass,
+    define_method("keyword-required?", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_BooleanClass,
                   dylan_slot_keyword_required_p);
-    define_method("init-keyword", list1(obj_SlotDescrClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass,
+    define_method("init-keyword", list1(obj_SlotDescrClass), false,
+                  obj_False, false, obj_ObjectClass,
                   dylan_slot_init_keyword);
 }

@@ -92,17 +92,17 @@ struct none_of_type {
 
 /* instancep */
 
-static __inline__ boolean singleton_instancep(obj_t thing, obj_t type)
+static __inline__ bool singleton_instancep(obj_t thing, obj_t type)
 {
     return idp(thing, SING(type)->object);
 }
 
-static __inline__ boolean class_instancep(obj_t thing, obj_t class)
+static __inline__ bool class_instancep(obj_t thing, obj_t class)
 {
     obj_t thing_class = object_class(thing);
 
     static obj_t c1_cache[32], c2_cache[32];
-    static boolean result_cache[32];
+    static bool result_cache[32];
     register int cacheloc = (((long)thing_class ^ (long)class) >> 4) & 31;
 
     if (c1_cache[cacheloc] == thing_class && c2_cache[cacheloc] == class)
@@ -113,35 +113,35 @@ static __inline__ boolean class_instancep(obj_t thing, obj_t class)
     return result_cache[cacheloc] = subtypep(thing_class, class);
 }
 
-static __inline__ boolean subclass_instancep(obj_t thing, obj_t subclass)
+static __inline__ bool subclass_instancep(obj_t thing, obj_t subclass)
 {
     return instancep(thing, obj_ClassClass)
         && subtypep(thing, SUBCLASS(subclass)->of);
 }
 
-static __inline__ boolean limfix_instancep(obj_t thing, obj_t lim_int)
+static __inline__ bool limfix_instancep(obj_t thing, obj_t lim_int)
 {
     if (!obj_is_fixnum(thing))
-        return FALSE;
+        return false;
     if ((long)thing < (long)(LIMINT(lim_int)->min))
-        return FALSE;
+        return false;
     if ((long)(LIMINT(lim_int)->max) < (long)thing)
-        return FALSE;
-    return TRUE;
+        return false;
+    return true;
 }
 
-static __inline__ boolean limbig_instancep(obj_t thing, obj_t lim_int)
+static __inline__ bool limbig_instancep(obj_t thing, obj_t lim_int)
 {
     if (object_class(thing) != obj_BignumClass)
-        return FALSE;
+        return false;
     if (compare_bignums(thing, LIMINT(lim_int)->min) < 0)
-        return FALSE;
+        return false;
     if (compare_bignums(LIMINT(lim_int)->max, thing) < 0)
-        return FALSE;
-    return TRUE;
+        return false;
+    return true;
 }
 
-static __inline__ boolean union_instancep(obj_t thing, obj_t u)
+static __inline__ bool union_instancep(obj_t thing, obj_t u)
 {
     obj_t remaining;
 
@@ -149,26 +149,26 @@ static __inline__ boolean union_instancep(obj_t thing, obj_t u)
          remaining != obj_Nil;
          remaining = TAIL(remaining))
         if (instancep(thing, HEAD(remaining)))
-            return TRUE;
-    return FALSE;
+            return true;
+    return false;
 }
 
-static __inline__ boolean none_of_instancep(obj_t thing, obj_t class)
+static __inline__ bool none_of_instancep(obj_t thing, obj_t class)
 {
     obj_t remaining;
 
     if (!instancep(thing, NONEOF(class)->base))
-        return FALSE;
+        return false;
 
     for (remaining = NONEOF(class)->exclude;
          remaining != obj_Nil;
          remaining = TAIL(remaining))
         if (instancep(thing, HEAD(remaining)))
-            return FALSE;
-    return TRUE;
+            return false;
+    return true;
 }
 
-boolean instancep(obj_t thing, obj_t type)
+bool instancep(obj_t thing, obj_t type)
 {
     enum type_Id type_id = TYPE(type)->type_id;
 
@@ -196,23 +196,23 @@ boolean instancep(obj_t thing, obj_t type)
         break;
     }
     lose("instancep dispatch didn't do anything.");
-    return FALSE;
+    return false;
 }
 
 
 /* subtypep */
 
-static __inline__ boolean sing_sing_subtypep(obj_t sing1, obj_t sing2)
+static __inline__ bool sing_sing_subtypep(obj_t sing1, obj_t sing2)
 {
     return idp(SING(sing1)->object, SING(sing2)->object);
 }
 
-static __inline__ boolean sing_type_subtypep(obj_t sing, obj_t type)
+static __inline__ bool sing_type_subtypep(obj_t sing, obj_t type)
 {
     return instancep(SING(sing)->object, type);
 }
 
-static __inline__ boolean class_class_subtypep(obj_t class1, obj_t class2)
+static __inline__ bool class_class_subtypep(obj_t class1, obj_t class2)
 {
     obj_t cpl = CLASS(class1)->cpl;
     obj_t remaining;
@@ -222,27 +222,27 @@ static __inline__ boolean class_class_subtypep(obj_t class1, obj_t class2)
 
     for (remaining = cpl; remaining != obj_Nil; remaining = TAIL(remaining))
         if (HEAD(remaining) == class2) {
-            return TRUE;
+            return true;
         }
-    return FALSE;
+    return false;
 }
 
-static __inline__ boolean never_subtypep(obj_t type1, obj_t type2)
+static __inline__ bool never_subtypep(obj_t type1, obj_t type2)
 {
-    return FALSE;
+    return false;
 }
 
-static __inline__ boolean subclass_class_subtypep(obj_t sub, obj_t class)
+static __inline__ bool subclass_class_subtypep(obj_t sub, obj_t class)
 {
     return subtypep(object_class(SUBCLASS(sub)->of), class);
 }
 
-static __inline__ boolean subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
+static __inline__ bool subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
 {
     return subtypep(SUBCLASS(sub1)->of, SUBCLASS(sub2)->of);
 }
 
-static __inline__ boolean limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
+static __inline__ bool limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -252,13 +252,13 @@ static __inline__ boolean limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
     max2 = LIMINT(lim2)->max;
 
     if ((long)min1 < (long)min2)
-        return FALSE;
+        return false;
     if ((long)max1 > (long)max2)
-        return FALSE;
-    return TRUE;
+        return false;
+    return true;
 }
 
-static __inline__ boolean limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
+static __inline__ bool limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -269,36 +269,36 @@ static __inline__ boolean limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
 
     if (min1 == obj_False) {
         if (min2 != obj_False)
-            return FALSE;
+            return false;
     }
     else {
         if (min2 == obj_False || compare_bignums(min2, min1) < 0)
-            return FALSE;
+            return false;
     }
 
     if (max1 == obj_False) {
         if (max2 != obj_False)
-            return FALSE;
+            return false;
     }
     else {
         if (max2 == obj_False || compare_bignums(max2, max1) > 0)
-            return FALSE;
+            return false;
     }
 
-    return TRUE;
+    return true;
 }
 
-static __inline__ boolean limfix_type_subtypep(obj_t lim, obj_t type)
+static __inline__ bool limfix_type_subtypep(obj_t lim, obj_t type)
 {
     return subtypep(obj_FixnumClass, type);
 }
 
-static __inline__ boolean limbig_type_subtypep(obj_t lim, obj_t type)
+static __inline__ bool limbig_type_subtypep(obj_t lim, obj_t type)
 {
     return subtypep(obj_BignumClass, type);
 }
 
-static __inline__ boolean union_type_subtypep(obj_t u, obj_t type)
+static __inline__ bool union_type_subtypep(obj_t u, obj_t type)
 {
     obj_t remaining;
 
@@ -306,11 +306,11 @@ static __inline__ boolean union_type_subtypep(obj_t u, obj_t type)
          remaining != obj_Nil;
          remaining = TAIL(remaining))
         if (!subtypep(HEAD(remaining), type))
-            return FALSE;
-    return TRUE;
+            return false;
+    return true;
 }
 
-static __inline__ boolean type_union_subtypep(obj_t type, obj_t u)
+static __inline__ bool type_union_subtypep(obj_t type, obj_t u)
 {
     obj_t remaining;
 
@@ -318,35 +318,35 @@ static __inline__ boolean type_union_subtypep(obj_t type, obj_t u)
          remaining != obj_Nil;
          remaining = TAIL(remaining))
         if (subtypep(type, HEAD(remaining)))
-            return TRUE;
-    return FALSE;
+            return true;
+    return false;
 }
 
-static __inline__ boolean noneof_type_subtypep(obj_t n, obj_t type)
+static __inline__ bool noneof_type_subtypep(obj_t n, obj_t type)
 {
     return subtypep(NONEOF(n)->base, type);
 }
 
-static __inline__ boolean lim_noneof_subtypep(obj_t type, obj_t n)
+static __inline__ bool lim_noneof_subtypep(obj_t type, obj_t n)
 {
     obj_t remaining;
 
-    if (!subtypep(type, NONEOF(n)->base)) return FALSE;
+    if (!subtypep(type, NONEOF(n)->base)) return false;
 
     for (remaining = NONEOF(n)->exclude;
          remaining != obj_Nil;
          remaining = TAIL(remaining))
         if (instancep(SING(HEAD(remaining))->object, type))
-            return FALSE;
-    return TRUE;
+            return false;
+    return true;
 }
 
-boolean subtypep(obj_t type1, obj_t type2)
+bool subtypep(obj_t type1, obj_t type2)
 {
     int type1_id, type2_id;
 
     if (type1 == type2)
-        return TRUE;
+        return true;
 
     type1_id = TYPE(type1)->type_id;
     type2_id = TYPE(type2)->type_id;
@@ -464,49 +464,49 @@ boolean subtypep(obj_t type1, obj_t type2)
         break;
     }
     lose("subtypep dispatch didn't do anything.");
-    return FALSE;
+    return false;
 }
 
 
 /* overlapp */
 
-static boolean class_class_overlapp(obj_t class1, obj_t class2)
+static bool class_class_overlapp(obj_t class1, obj_t class2)
 {
     obj_t remaining;
 
     if (subtypep(class1, class2))
-        return TRUE;
+        return true;
 
     for (remaining = CLASS(class1)->all_subclasses;
          remaining != obj_Nil;
          remaining = TAIL(remaining))
         if (subtypep(HEAD(remaining), class2))
-            return TRUE;
-    return FALSE;
+            return true;
+    return false;
 }
 
-static boolean class_type_overlapp(obj_t class, obj_t type)
+static bool class_type_overlapp(obj_t class, obj_t type)
 {
     return overlapp(type, class);
 }
 
-static boolean subclass_type_overlapp(obj_t subclass, obj_t type)
+static bool subclass_type_overlapp(obj_t subclass, obj_t type)
 {
     obj_t class = SUBCLASS(subclass)->of;
     obj_t remaining;
 
     if (instancep(class, type))
-        return TRUE;
+        return true;
 
     for (remaining = CLASS(class)->all_subclasses;
          remaining != obj_Nil;
          remaining = TAIL(remaining))
         if (instancep(HEAD(remaining), type))
-            return TRUE;
-    return FALSE;
+            return true;
+    return false;
 }
 
-static boolean limfix_limfix_overlapp(obj_t lim1, obj_t lim2)
+static bool limfix_limfix_overlapp(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -516,15 +516,15 @@ static boolean limfix_limfix_overlapp(obj_t lim1, obj_t lim2)
     max2 = LIMINT(lim2)->max;
 
     if ((long)max1 < (long)min2)
-        return FALSE;
+        return false;
 
     if ((long)max2 < (long)min1)
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
-static boolean limbig_limbig_overlapp(obj_t lim1, obj_t lim2)
+static bool limbig_limbig_overlapp(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -535,31 +535,31 @@ static boolean limbig_limbig_overlapp(obj_t lim1, obj_t lim2)
 
     if (max1 != obj_False && min2 != obj_False
           && compare_bignums(max1, min2) <0)
-        return FALSE;
+        return false;
 
     if (max2 != obj_False && min1 != obj_False
           && compare_bignums(max2, min1) < 0)
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
-static boolean limfix_class_overlapp(obj_t lim, obj_t class)
+static bool limfix_class_overlapp(obj_t lim, obj_t class)
 {
     return class_class_overlapp(class, obj_FixnumClass);
 }
 
-static boolean limbig_class_overlapp(obj_t lim, obj_t class)
+static bool limbig_class_overlapp(obj_t lim, obj_t class)
 {
     return class_class_overlapp(class, obj_BignumClass);
 }
 
-static boolean lim_type_overlapp(obj_t lim, obj_t type)
+static bool lim_type_overlapp(obj_t lim, obj_t type)
 {
     return overlapp(type, lim);
 }
 
-static boolean union_type_overlapp(obj_t u, obj_t type)
+static bool union_type_overlapp(obj_t u, obj_t type)
 {
     obj_t remaining;
 
@@ -567,16 +567,16 @@ static boolean union_type_overlapp(obj_t u, obj_t type)
          remaining != obj_Nil;
          remaining = TAIL(remaining))
         if (overlapp(HEAD(remaining), type))
-            return TRUE;
-    return FALSE;
+            return true;
+    return false;
 }
 
-static boolean noneof_type_overlapp(obj_t n, obj_t type)
+static bool noneof_type_overlapp(obj_t n, obj_t type)
 {
     return overlapp(NONEOF(n)->base, type);
 }
 
-static boolean (*overlapp_table[7][7])(obj_t t1, obj_t t2) = {
+static bool (*overlapp_table[7][7])(obj_t t1, obj_t t2) = {
     /* singleton x mumble methods */
     {
         sing_sing_subtypep, sing_type_subtypep, sing_type_subtypep,
@@ -621,7 +621,7 @@ static boolean (*overlapp_table[7][7])(obj_t t1, obj_t t2) = {
     }
 };
 
-boolean overlapp(obj_t type1, obj_t type2)
+bool overlapp(obj_t type1, obj_t type2)
 {
     int type1_id = TYPE(type1)->type_id;
     int type2_id = TYPE(type2)->type_id;
@@ -1235,7 +1235,7 @@ static int scav_simp_type(struct object *o)
 
 static obj_t trans_simp_type(obj_t type)
 {
-    return transport(type, sizeof(struct singleton), TRUE);
+    return transport(type, sizeof(struct singleton), true);
 }
 
 static int scav_limint(struct object *o)
@@ -1250,7 +1250,7 @@ static int scav_limint(struct object *o)
 
 static obj_t trans_limint(obj_t limint)
 {
-    return transport(limint, sizeof(struct lim_int), TRUE);
+    return transport(limint, sizeof(struct lim_int), true);
 }
 
 static int scav_noneof(struct object *obj)
@@ -1265,7 +1265,7 @@ static int scav_noneof(struct object *obj)
 
 static obj_t trans_noneof(obj_t noneof)
 {
-    return transport(noneof, sizeof(struct none_of_type), TRUE);
+    return transport(noneof, sizeof(struct none_of_type), true);
 }
 
 
@@ -1273,7 +1273,7 @@ static obj_t trans_noneof(obj_t noneof)
 
 void make_type_classes(void)
 {
-    obj_TypeClass = make_abstract_class(TRUE);
+    obj_TypeClass = make_abstract_class(true);
     obj_SingletonClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_SubclassClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_LimIntClass = make_builtin_class(scav_limint, trans_limint);
@@ -1306,51 +1306,51 @@ void init_type_classes(void)
 
 void init_type_functions(void)
 {
-    define_function("instance?", list2(obj_ObjectClass, obj_TypeClass), FALSE,
-                    obj_False, FALSE, obj_BooleanClass, dylan_instancep);
-    define_function("subtype?", list2(obj_TypeClass, obj_TypeClass), FALSE,
-                    obj_False, FALSE, obj_BooleanClass, dylan_subtypep);
-    define_function("singleton", list1(obj_ObjectClass), FALSE,
-                    obj_False, FALSE, obj_SingletonClass, singleton);
-    define_method("make", list1(singleton(obj_SingletonClass)), FALSE,
-                  list1(pair(symbol("object"), obj_Unbound)), FALSE,
+    define_function("instance?", list2(obj_ObjectClass, obj_TypeClass), false,
+                    obj_False, false, obj_BooleanClass, dylan_instancep);
+    define_function("subtype?", list2(obj_TypeClass, obj_TypeClass), false,
+                    obj_False, false, obj_BooleanClass, dylan_subtypep);
+    define_function("singleton", list1(obj_ObjectClass), false,
+                    obj_False, false, obj_SingletonClass, singleton);
+    define_method("make", list1(singleton(obj_SingletonClass)), false,
+                  list1(pair(symbol("object"), obj_Unbound)), false,
                   obj_TypeClass, dylan_make_singleton);
     define_function("binary-type-union", list2(obj_TypeClass, obj_TypeClass),
-                    FALSE,
-                    obj_Nil, FALSE, obj_TypeClass, type_union);
-    define_method("limited", list1(singleton(obj_IntegerClass)), FALSE,
+                    false,
+                    obj_Nil, false, obj_TypeClass, type_union);
+    define_method("limited", list1(singleton(obj_IntegerClass)), false,
                   list2(pair(symbol("min"), obj_False),
                         pair(symbol("max"), obj_False)),
-                  FALSE, obj_TypeClass, dylan_limited_integer);
-    define_method("limited", list1(singleton(obj_FixnumClass)), FALSE,
+                  false, obj_TypeClass, dylan_limited_integer);
+    define_method("limited", list1(singleton(obj_FixnumClass)), false,
                   list2(pair(symbol("min"), obj_False),
                         pair(symbol("max"), obj_False)),
-                  FALSE, obj_TypeClass, dylan_limited_fixnum);
-    define_method("limited", list1(singleton(obj_BignumClass)), FALSE,
+                  false, obj_TypeClass, dylan_limited_fixnum);
+    define_method("limited", list1(singleton(obj_BignumClass)), false,
                   list2(pair(symbol("min"), obj_False),
                         pair(symbol("max"), obj_False)),
-                  FALSE, obj_TypeClass, dylan_limited_bignum);
-    define_method("limited", list1(singleton(obj_ClassClass)), FALSE,
+                  false, obj_TypeClass, dylan_limited_bignum);
+    define_method("limited", list1(singleton(obj_ClassClass)), false,
                   list1(pair(symbol("subclass-of"), obj_Unbound)),
-                  FALSE, obj_TypeClass, dylan_limited_class);
+                  false, obj_TypeClass, dylan_limited_class);
 
-    define_function("singleton-object", list1(obj_SingletonClass), FALSE,
-                    obj_False, FALSE, obj_ObjectClass, dylan_singleton_object);
-    define_function("subclass-of", list1(obj_SubclassClass), FALSE, obj_False,
-                    FALSE, obj_ClassClass, dylan_subclass_of);
+    define_function("singleton-object", list1(obj_SingletonClass), false,
+                    obj_False, false, obj_ObjectClass, dylan_singleton_object);
+    define_function("subclass-of", list1(obj_SubclassClass), false, obj_False,
+                    false, obj_ClassClass, dylan_subclass_of);
     define_function("limited-integer-base-class", list1(obj_LimIntClass),
-                    FALSE,
-                    obj_False, FALSE, obj_ClassClass, dylan_lim_int_class);
-    define_function("limited-integer-minimum", list1(obj_LimIntClass), FALSE,
-                    obj_False, FALSE,
+                    false,
+                    obj_False, false, obj_ClassClass, dylan_lim_int_class);
+    define_function("limited-integer-minimum", list1(obj_LimIntClass), false,
+                    obj_False, false,
                     type_union(object_class(obj_False), obj_IntegerClass),
                     dylan_lim_int_min);
-    define_function("limited-integer-maximum", list1(obj_LimIntClass), FALSE,
-                    obj_False, FALSE,
+    define_function("limited-integer-maximum", list1(obj_LimIntClass), false,
+                    obj_False, false,
                     type_union(object_class(obj_False), obj_IntegerClass),
                     dylan_lim_int_max);
-    define_function("union-members", list1(obj_UnionClass), FALSE, obj_False,
-                    FALSE, obj_ListClass, dylan_union_members);
+    define_function("union-members", list1(obj_UnionClass), false, obj_False,
+                    false, obj_ListClass, dylan_union_members);
 
     define_constant("<never-returns>", make_union(obj_Nil));
 }

@@ -42,8 +42,8 @@ struct debug_info {
 
 struct var_info {
     struct id *var;
-    boolean indirect;
-    boolean argument;
+    bool indirect;
+    bool argument;
     int offset;
     struct var_info *next;
 };
@@ -87,7 +87,7 @@ struct constant {
         struct method *method;
         struct {
             struct id *id;
-            boolean written;
+            bool written;
         } varref;
     } u;
 };

@@ -311,18 +311,18 @@ void vformat(char *fmt, obj_t *args, int nargs)
 
 void init_print_functions(void)
 {
-    define_function("print", list1(obj_ObjectClass), FALSE, obj_False, FALSE,
+    define_function("print", list1(obj_ObjectClass), false, obj_False, false,
                     obj_ObjectClass, dylan_print);
-    define_function("prin1", list1(obj_ObjectClass), FALSE, obj_False, FALSE,
+    define_function("prin1", list1(obj_ObjectClass), false, obj_False, false,
                     obj_ObjectClass, dylan_prin1);
-    define_function("putc", list1(obj_CharacterClass), FALSE, obj_False, FALSE,
+    define_function("putc", list1(obj_CharacterClass), false, obj_False, false,
                     obj_CharacterClass, dylan_putc);
-    define_function("puts", list1(obj_ByteStringClass), FALSE, obj_False,
-                    FALSE, obj_ByteStringClass, dylan_puts);
+    define_function("puts", list1(obj_ByteStringClass), false, obj_False,
+                    false, obj_ByteStringClass, dylan_puts);
     define_constant("format",
                     make_raw_function("format", list1(obj_ByteStringClass),
-                                      TRUE, obj_False, FALSE,
+                                      true, obj_False, false,
                                       obj_Nil, obj_False, dylan_format));
-    define_function("fflush", obj_Nil, FALSE, obj_False, FALSE,
+    define_function("fflush", obj_Nil, false, obj_False, false,
                     obj_ObjectClass, dylan_fflush);
 }

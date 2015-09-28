@@ -288,7 +288,7 @@ static int scav_sovec(struct object *ptr)
 static obj_t trans_sovec(obj_t v)
 {
     int len = SOVEC(v)->length;
-    return transport(v, sizeof(struct sovec) + sizeof(obj_t)*(len-1), FALSE);
+    return transport(v, sizeof(struct sovec) + sizeof(obj_t)*(len-1), false);
 }
 
 static int scav_bytevec(struct object *ptr)
@@ -303,7 +303,7 @@ static obj_t trans_bytevec(obj_t v)
     return transport(v,
                      sizeof(struct bytevec) + BYTEVEC(v)->length
                      - sizeof(((struct bytevec *)v)->contents),
-                     TRUE);
+                     true);
 }
 
 
@@ -311,7 +311,7 @@ static obj_t trans_bytevec(obj_t v)
 
 void make_vec_classes(void)
 {
-    obj_SimpleVectorClass = make_abstract_class(TRUE);
+    obj_SimpleVectorClass = make_abstract_class(true);
     obj_SimpleObjectVectorClass = make_builtin_class(scav_sovec, trans_sovec);
     obj_ByteVectorClass = make_builtin_class(scav_bytevec, trans_bytevec);
 
@@ -334,58 +334,58 @@ void init_vec_functions(void)
 {
     define_constant("vector",
                     make_raw_function("vector", obj_Nil,
-                                      TRUE, obj_False, FALSE,
+                                      true, obj_False, false,
                                       list1(obj_SimpleObjectVectorClass),
                                       obj_False, dylan_vector));
     define_method("element",
                     list2(obj_SimpleObjectVectorClass, obj_FixnumClass),
-                    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
+                    false, list1(pair(symbol("default"), obj_Unbound)), false,
                     obj_ObjectClass, dylan_sovec_element);
     define_method("element-setter",
                   list3(obj_ObjectClass,
                         obj_SimpleObjectVectorClass,
                         obj_FixnumClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_ObjectClass, dylan_sovec_element_setter);
     define_method("size", list1(obj_SimpleObjectVectorClass),
-                  FALSE, obj_False, FALSE, obj_FixnumClass,
+                  false, obj_False, false, obj_FixnumClass,
                   dylan_sovec_size);
-    define_method("make", list1(singleton(obj_VectorClass)), FALSE,
+    define_method("make", list1(singleton(obj_VectorClass)), false,
                   list2(pair(symbol("size"), make_fixnum(0)),
                         pair(symbol("fill"), obj_False)),
-                  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
-    define_method("make", list1(singleton(obj_SimpleVectorClass)), FALSE,
+                  false, obj_SimpleObjectVectorClass, dylan_vec_make);
+    define_method("make", list1(singleton(obj_SimpleVectorClass)), false,
                   list2(pair(symbol("size"), make_fixnum(0)),
                         pair(symbol("fill"), obj_False)),
-                  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
-    define_method("make", list1(singleton(obj_SimpleObjectVectorClass)), FALSE,
+                  false, obj_SimpleObjectVectorClass, dylan_vec_make);
+    define_method("make", list1(singleton(obj_SimpleObjectVectorClass)), false,
                   list2(pair(symbol("size"), make_fixnum(0)),
                         pair(symbol("fill"), obj_False)),
-                  FALSE, obj_SimpleObjectVectorClass, dylan_vec_make);
+                  false, obj_SimpleObjectVectorClass, dylan_vec_make);
 
     define_method("element",
                   list2(obj_ByteVectorClass, obj_FixnumClass),
-                  FALSE, list1(pair(symbol("default"), obj_Unbound)),
-                  FALSE, obj_FixnumClass, dylan_bytevec_element);
+                  false, list1(pair(symbol("default"), obj_Unbound)),
+                  false, obj_FixnumClass, dylan_bytevec_element);
     define_method("element-setter",
                   list3(obj_FixnumClass,
                         obj_ByteVectorClass,
                         obj_FixnumClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_FixnumClass, dylan_bytevec_element_setter);
     define_method("size", list1(obj_ByteVectorClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_FixnumClass, dylan_bytevec_size);
     define_method("fill!", list2(obj_SimpleObjectVectorClass, obj_ObjectClass),
-                  FALSE, list2(pair(symbol("start"), make_fixnum(0)),
+                  false, list2(pair(symbol("start"), make_fixnum(0)),
                                pair(symbol("end"), obj_Unbound)),
-                  FALSE, obj_SimpleObjectVectorClass, dylan_sovec_fill);
+                  false, obj_SimpleObjectVectorClass, dylan_sovec_fill);
     define_method("copy-sequence", list1(obj_SimpleObjectVectorClass),
-                  FALSE, list2(pair(symbol("start"), make_fixnum(0)),
+                  false, list2(pair(symbol("start"), make_fixnum(0)),
                                pair(symbol("end"), obj_Unbound)),
-                  FALSE, obj_SimpleObjectVectorClass, dylan_sovec_copy);
-    define_method("make", list1(singleton(obj_ByteVectorClass)), FALSE,
+                  false, obj_SimpleObjectVectorClass, dylan_sovec_copy);
+    define_method("make", list1(singleton(obj_ByteVectorClass)), false,
                   list2(pair(symbol("size"), make_fixnum(0)),
                         pair(symbol("fill"), make_fixnum(0))),
-                  FALSE, obj_ByteVectorClass, dylan_byte_vec_make);
+                  false, obj_ByteVectorClass, dylan_byte_vec_make);
 }

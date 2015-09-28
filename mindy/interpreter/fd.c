@@ -78,7 +78,7 @@
  */
 
 #define MAX_FDS FD_SETSIZE
-static boolean input_available_array[MAX_FDS]; /* no mutex protecting this */
+static bool input_available_array[MAX_FDS]; /* no mutex protecting this */
 static HANDLE fd_threads[MAX_FDS]; /* thread handles */
 static HANDLE update_input_available[MAX_FDS]; /* handles to events */
 static HANDLE input_available_is_updated[MAX_FDS]; /* handles to events */
@@ -95,7 +95,7 @@ static DWORD input_checker (LPDWORD param)
         char small_buffer;  /* Ignore the contents of the next two vars */
         int bytes_read;
         DWORD the_error = 0;
-        boolean read_result;
+        bool read_result;
         /* Wait until someone invalidates our last answer */
         WaitForSingleObject(update_input_available[fd], INFINITE);
         /* Now loop until we complete a read without getting a
@@ -111,7 +111,7 @@ static DWORD input_checker (LPDWORD param)
                      the_error, fd, handle);
             }
         }
-        input_available_array[fd] = TRUE;
+        input_available_array[fd] = true;
         SetEvent(input_available_is_updated[fd]);
         if (the_error == ERROR_BROKEN_PIPE) {
             /* All further read attempts will return this error.
@@ -130,13 +130,13 @@ static void setup_input_checker (int fd)
     if (fd >= MAX_FDS)
         lose("%d is too high a file descriptor number for us.", fd);
     update_input_available[fd] = CreateEvent(NULL,  /* default security */
-                                            FALSE, /* auto-reset */
-                                            TRUE,  /* init value true */
+                                            false, /* auto-reset */
+                                            true,  /* init value true */
                                             NULL); /* unnamed */
     input_available_is_updated[fd]
         = CreateEvent(NULL,  /* default security */
-                      FALSE, /* auto-reset */
-                      FALSE,  /* init value false */
+                      false, /* auto-reset */
+                      false,  /* init value false */
                       NULL); /* unnamed */
     fd_threads[fd]
         = CreateThread(NULL, 0, /* default security + stack size */
@@ -183,9 +183,9 @@ static int mindy_close (int fd)
 }
 
 /* We don't need to synchronize with anything because the only way a
-   false positive can be generated (input_available_array[fd] == TRUE
+   false positive can be generated (input_available_array[fd] == true
    when that really isn't the case) is when someone reads all the
-   input without setting input_available_array[fd] to FALSE.  But
+   input without setting input_available_array[fd] to false.  But
    that would mean someone's running this function in parallel
    with mindy_read, which we said isn't allowed.
  */
@@ -206,7 +206,7 @@ int mindy_read (int fd, char *buffer, int max_chars)
     /* We wait for check_input to finish because if we don't,
        we can't safely reset anything. */
     WaitForSingleObject(input_available_is_updated[fd], INFINITE);
-    input_available_array[fd] = FALSE;
+    input_available_array[fd] = false;
     res = read(fd, buffer, max_chars);
     if (res < 0 && GetLastError() == ERROR_BROKEN_PIPE) {
         res = 0;  /* treat broken pipes as EOF */
@@ -253,7 +253,7 @@ static void pipe_setup (STARTUPINFO *siStartInfo, int inpipes[],
                           parent,  /* Proc to give new handles to */
                           &new_stdin, /* Where new handle is stored */
                           0,  /* Parameter ignored */
-                          TRUE, /* Make new handle inheritable */
+                          true, /* Make new handle inheritable */
                           DUPLICATE_SAME_ACCESS)
       || !DuplicateHandle(parent,  /* source process */
                           /* next, handle to dup */
@@ -261,7 +261,7 @@ static void pipe_setup (STARTUPINFO *siStartInfo, int inpipes[],
                           parent,   /* Proc to give new handles to */
                           &new_stdout,  /* Where new handle is stored */
                           0,  /* Parameter ignored */
-                          TRUE, /* Make new handle inheritable */
+                          true, /* Make new handle inheritable */
                           DUPLICATE_SAME_ACCESS)) {
     lose("Failed while doing pipe stuff for fd_exec");
   }
@@ -331,12 +331,12 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
         /* pipe_setup initializes the rest of siStartInfo */
 
         saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-        saAttr.bInheritHandle = TRUE;
+        saAttr.bInheritHandle = true;
         saAttr.lpSecurityDescriptor = NULL;
 
         pipe_setup(&siStartInfo, inpipes, outpipes, old_handles);
 
-        if (! CreateProcess(NULL, command_line, NULL, NULL, TRUE, 0,
+        if (! CreateProcess(NULL, command_line, NULL, NULL, true, 0,
                             NULL, NULL, &siStartInfo, &piProcInfo)) {
             DWORD debug_info = GetLastError();
             oldargs[0] = obj_False;
@@ -653,22 +653,22 @@ void init_fd_functions(void)
 {
     define_constant("fd-close",
                     make_raw_method("fd-close", list1(obj_FixnumClass),
-                                    FALSE, obj_False, FALSE,
+                                    false, obj_False, false,
                                     list2(obj_BooleanClass, obj_ObjectClass),
                                     obj_False, fd_close));
-    define_method("fd-error-string", list1(obj_FixnumClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, fd_error_str);
+    define_method("fd-error-string", list1(obj_FixnumClass), false,
+                  obj_False, false, obj_ObjectClass, fd_error_str);
     define_constant("fd-input-available?",
                     make_raw_method("fd-input-available?",
                                     list1(obj_FixnumClass),
-                                    FALSE, obj_False, FALSE,
+                                    false, obj_False, false,
                                     list2(obj_BooleanClass, obj_ObjectClass),
                                     obj_False, fd_input_available));
     define_constant("fd-open",
                     make_raw_method("fd-open",
                                     list2(obj_ByteStringClass,
                                           obj_FixnumClass),
-                                    FALSE, obj_False, FALSE,
+                                    false, obj_False, false,
                                     list2(obj_ObjectClass, obj_ObjectClass),
                                     obj_False, fd_open));
     define_constant("fd-read",
@@ -677,7 +677,7 @@ void init_fd_functions(void)
                                           obj_BufferClass,
                                           obj_FixnumClass,
                                           obj_FixnumClass),
-                                    FALSE, obj_False, FALSE,
+                                    false, obj_False, false,
                                     list2(obj_ObjectClass, obj_ObjectClass),
                                     obj_False, fd_read));
     define_constant("fd-seek",
@@ -685,13 +685,13 @@ void init_fd_functions(void)
                                     list3(obj_FixnumClass,
                                           obj_FixnumClass,
                                           obj_FixnumClass),
-                                    FALSE, obj_False, FALSE,
+                                    false, obj_False, false,
                                     list2(obj_ObjectClass, obj_ObjectClass),
                                     obj_False, fd_seek));
     define_constant("fd-sync-output",
                     make_raw_method("fd-sync-output",
                                     list1(obj_FixnumClass),
-                                    FALSE, obj_False, FALSE,
+                                    false, obj_False, false,
                                     list2(obj_BooleanClass, obj_ObjectClass),
                                     obj_False, fd_sync_output));
     define_constant("fd-write",
@@ -700,17 +700,17 @@ void init_fd_functions(void)
                                           obj_BufferClass,
                                           obj_FixnumClass,
                                           obj_FixnumClass),
-                                    FALSE, obj_False, FALSE,
+                                    false, obj_False, false,
                                     list2(obj_ObjectClass, obj_ObjectClass),
                                     obj_False, fd_write));
     define_constant("fd-exec",
                     make_raw_method("fd-exec",
                                     list1(obj_ByteStringClass),
-                                    FALSE, obj_False, FALSE,
+                                    false, obj_False, false,
                                     list2(obj_ObjectClass, obj_ObjectClass),
                                     obj_False, fd_exec));
-    define_function("file-write-date", list1(obj_ByteStringClass), FALSE,
-                    obj_False, FALSE, obj_ObjectClass, file_write_date);
+    define_function("file-write-date", list1(obj_ByteStringClass), false,
+                    obj_False, false, obj_ObjectClass, file_write_date);
 
     define_constant("SEEK_SET", make_fixnum(SEEK_SET));
     define_constant("SEEK_CUR", make_fixnum(SEEK_CUR));
@@ -1146,8 +1146,8 @@ void init_fd_functions(void)
 #if 0
 #ifdef WIN32
     if (isatty(0)) {   /* If stdin is a tty and not redirected */
-            stdin_buffer_empty     = CreateEvent(NULL, TRUE, TRUE, NULL);
-        stdin_buffer_not_empty = CreateEvent(NULL, TRUE, FALSE, NULL);
+            stdin_buffer_empty     = CreateEvent(NULL, true, true, NULL);
+        stdin_buffer_not_empty = CreateEvent(NULL, true, false, NULL);
                /* These are nameless "manual reset" events */
         InitializeCriticalSection(&stdin_buffer_mutex);
         {

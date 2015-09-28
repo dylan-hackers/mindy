@@ -52,33 +52,33 @@ static char *InitialFeatures[]
 #    endif
      NULL};
 
-static boolean feature_present(struct symbol *sym)
+static bool feature_present(struct symbol *sym)
 {
     struct feature *feature;
 
     for (feature = Features; feature != NULL; feature = feature->next)
         if (feature->symbol == sym)
-            return TRUE;
+            return true;
 
-    return FALSE;
+    return false;
 }
 
 static struct state {
     int line;
-    boolean active;
-    boolean do_else;
-    boolean seen_else;
+    bool active;
+    bool do_else;
+    bool seen_else;
     struct state *old_state;
 } *State = NULL;
 
-static void push_state(boolean active, boolean do_else)
+static void push_state(bool active, bool do_else)
 {
     struct state *new = malloc(sizeof(struct state));
 
     new->line = line_count;
     new->active = active;
     new->do_else = do_else;
-    new->seen_else = FALSE;
+    new->seen_else = false;
     new->old_state = State;
     State = new;
 }
@@ -113,9 +113,9 @@ static void parse_error(void)
     exit(1);
 }
 
-static boolean parse_feature_expr(void);
+static bool parse_feature_expr(void);
 
-static boolean parse_feature_word(void)
+static bool parse_feature_word(void)
 {
     struct symbol *sym;
 
@@ -129,7 +129,7 @@ static boolean parse_feature_word(void)
     return feature_present(sym);
 }
 
-static boolean parse_feature_term(void)
+static bool parse_feature_term(void)
 {
     switch (yytoken) {
       case LPAREN:
@@ -159,7 +159,7 @@ static boolean parse_feature_term(void)
     }
 }
 
-static boolean parse_feature_expr(void)
+static bool parse_feature_expr(void)
 {
     int res;
 
@@ -180,13 +180,13 @@ static boolean parse_feature_expr(void)
               case '&':
                 new_token();
                 if (!parse_feature_term())
-                    res = FALSE;
+                    res = false;
                 break;
 
               case '|':
                 new_token();
                 if (parse_feature_term())
-                    res = TRUE;
+                    res = true;
                 break;
 
               default:
@@ -200,7 +200,7 @@ static boolean parse_feature_expr(void)
     }
 }
 
-static boolean parse_conditional(void)
+static bool parse_conditional(void)
 {
     /* Consume the #if or #elseif token */
     new_token();
@@ -214,7 +214,7 @@ static boolean parse_conditional(void)
 
 int yylex(void)
 {
-    boolean cond;
+    bool cond;
 
     yytoken = internal_yylex();
 
@@ -225,7 +225,7 @@ int yylex(void)
             if (State == NULL || State->active)
                 push_state(cond, !cond);
             else
-                push_state(FALSE, FALSE);
+                push_state(false, false);
             break;
 
           case FEATURE_ELSE_IF:
@@ -237,14 +237,14 @@ int yylex(void)
             }
             else if (State->seen_else) {
                 error(line_count, "#elseif after #else in one #if");
-                State->active = FALSE;
+                State->active = false;
             }
             else if (parse_conditional()) {
                 State->active = State->do_else;
-                State->do_else = FALSE;
+                State->do_else = false;
             }
             else
-                State->active = FALSE;
+                State->active = false;
             break;
 
           case FEATURE_ELSE:
@@ -252,10 +252,10 @@ int yylex(void)
                 error(line_count, "#else with no matching #if, ignoring");
             else if (State->seen_else) {
                 error(line_count, "#else after #else in one #if");
-                State->active = FALSE;
+                State->active = false;
             }
             else {
-                State->seen_else = TRUE;
+                State->seen_else = true;
                 State->active = State->do_else;
             }
             new_token();

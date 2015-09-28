@@ -58,8 +58,8 @@ obj_t make_builtin_class(int (*scavenge)(struct object *ptr),
     obj_t res = alloc(obj_ClassClass, sizeof(struct class));
 
     init_class_type_stuff(res);
-    CLASS(res)->abstract_p = FALSE;
-    CLASS(res)->sealed_p = TRUE;
+    CLASS(res)->abstract_p = false;
+    CLASS(res)->sealed_p = true;
     CLASS(res)->library = NULL;
     CLASS(res)->scavenge = scavenge;
     CLASS(res)->transport = transport;
@@ -87,11 +87,11 @@ static obj_t trans_lose(obj_t obj)
     return NULL;
 }
 
-obj_t make_abstract_class(boolean sealed_p)
+obj_t make_abstract_class(bool sealed_p)
 {
     obj_t res = make_builtin_class(scav_lose, trans_lose);
 
-    CLASS(res)->abstract_p = TRUE;
+    CLASS(res)->abstract_p = true;
     CLASS(res)->sealed_p = sealed_p;
 
     return res;
@@ -255,7 +255,7 @@ static obj_t compute_cpl(obj_t class, obj_t superclasses)
 void setup_class_supers(obj_t class, obj_t supers)
 {
     obj_t cpl, scan;
-    boolean some_static = FALSE;
+    bool some_static = false;
 
     for (scan = supers; scan != obj_Nil; scan = TAIL(scan)) {
         obj_t super = HEAD(scan);
@@ -266,7 +266,7 @@ void setup_class_supers(obj_t class, obj_t supers)
               || CLASS(super)->superclasses == NULL)
             error("Attempt to use %= before it is initialized", super);
         if (object_class(super) == obj_StaticTypeClass)
-            some_static = TRUE;
+            some_static = true;
     }
 
     if (some_static) {
@@ -381,7 +381,7 @@ static int scav_class(struct object *o)
 
 static obj_t trans_class(obj_t class)
 {
-    return transport(class, sizeof(struct class), FALSE);
+    return transport(class, sizeof(struct class), false);
 }
 
 
@@ -408,14 +408,14 @@ void init_class_classes(void)
 
 void init_class_functions(void)
 {
-    define_method("abstract?", list1(obj_ClassClass), FALSE, obj_False,
-                  FALSE, obj_ObjectClass, abstractp);
-    define_method("class-name", list1(obj_ClassClass), FALSE, obj_False,
-                  FALSE, obj_ObjectClass, class_name);
-    define_method("all-superclasses", list1(obj_ClassClass), FALSE, obj_False,
-                  FALSE, obj_ObjectClass, all_superclasses);
-    define_method("direct-superclasses", list1(obj_ClassClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, direct_superclasses);
-    define_method("direct-subclasses", list1(obj_ClassClass), FALSE,
-                  obj_False, FALSE, obj_ObjectClass, direct_subclasses);
+    define_method("abstract?", list1(obj_ClassClass), false, obj_False,
+                  false, obj_ObjectClass, abstractp);
+    define_method("class-name", list1(obj_ClassClass), false, obj_False,
+                  false, obj_ObjectClass, class_name);
+    define_method("all-superclasses", list1(obj_ClassClass), false, obj_False,
+                  false, obj_ObjectClass, all_superclasses);
+    define_method("direct-superclasses", list1(obj_ClassClass), false,
+                  obj_False, false, obj_ObjectClass, direct_superclasses);
+    define_method("direct-subclasses", list1(obj_ClassClass), false,
+                  obj_False, false, obj_ObjectClass, direct_subclasses);
 }

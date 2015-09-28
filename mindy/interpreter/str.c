@@ -286,7 +286,7 @@ static obj_t trans_byte_string(obj_t string)
                      sizeof(struct string)
                      + obj_ptr(struct string *, string)->len + 1
                      - sizeof(((struct string *)string)->chars),
-                     TRUE);
+                     true);
 }
 
 static obj_t trans_unicode_string(obj_t string)
@@ -295,7 +295,7 @@ static obj_t trans_unicode_string(obj_t string)
                      sizeof(struct string)
                      + 2 * (obj_ptr(struct string *, string)->len + 1)
                      - sizeof(((struct string *)string)->chars),
-                     TRUE);
+                     true);
 }
 
 
@@ -326,50 +326,50 @@ void init_str_functions(void)
 {
     define_method("element",
                     list2(obj_ByteStringClass, obj_FixnumClass),
-                    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
+                    false, list1(pair(symbol("default"), obj_Unbound)), false,
                     obj_ByteCharacterClass, dylan_byte_str_element);
     define_method("element",
                     list2(obj_UnicodeStringClass, obj_FixnumClass),
-                    FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
+                    false, list1(pair(symbol("default"), obj_Unbound)), false,
                     obj_CharacterClass, dylan_unicode_str_element);
     define_method("element-setter",
                   list3(obj_ByteCharacterClass,
                         obj_ByteStringClass,
                         obj_FixnumClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_ObjectClass, dylan_byte_str_element_setter);
     define_method("element-setter",
                   list3(obj_CharacterClass,
                         obj_UnicodeStringClass,
                         obj_FixnumClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_ObjectClass, dylan_unicode_str_element_setter);
 
     /* size is the same for both <byte-string> and <unicode-string>,
        but not for the general user defined instance of <string>.
     */
     define_method("size", list1(obj_ByteStringClass),
-                  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
+                  false, obj_False, false, obj_FixnumClass, dylan_str_size);
     define_method("size", list1(obj_UnicodeStringClass),
-                  FALSE, obj_False, FALSE, obj_FixnumClass, dylan_str_size);
+                  false, obj_False, false, obj_FixnumClass, dylan_str_size);
 
     define_method("=", list2(obj_ByteStringClass, obj_ByteStringClass),
-                  FALSE, obj_False, FALSE, obj_BooleanClass,
+                  false, obj_False, false, obj_BooleanClass,
                   dylan_byte_str_equal);
 
     /* make(<string>) returns a <byte-string>, even if fill happens to
        be a unicode character.
     */
-    define_method("make", list1(singleton(obj_StringClass)), FALSE,
+    define_method("make", list1(singleton(obj_StringClass)), false,
                   list2(pair(symbol("size"), make_fixnum(0)),
                         pair(symbol("fill"), int_char('\0'))),
-                  FALSE, obj_ByteStringClass, dylan_byte_str_make);
-    define_method("make", list1(singleton(obj_ByteStringClass)), FALSE,
+                  false, obj_ByteStringClass, dylan_byte_str_make);
+    define_method("make", list1(singleton(obj_ByteStringClass)), false,
                   list2(pair(symbol("size"), make_fixnum(0)),
                         pair(symbol("fill"), int_char('\0'))),
-                  FALSE, obj_ByteStringClass, dylan_byte_str_make);
-    define_method("make", list1(singleton(obj_UnicodeStringClass)), FALSE,
+                  false, obj_ByteStringClass, dylan_byte_str_make);
+    define_method("make", list1(singleton(obj_UnicodeStringClass)), false,
                   list2(pair(symbol("size"), make_fixnum(0)),
                         pair(symbol("fill"), int_char('\0'))),
-                  FALSE, obj_UnicodeStringClass, dylan_unicode_str_make);
+                  false, obj_UnicodeStringClass, dylan_unicode_str_make);
 }

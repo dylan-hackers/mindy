@@ -72,7 +72,7 @@ static unsigned hash_name(char *name)
     return hash;
 }
 
-static boolean same_name(char *name1, char *name2)
+static bool same_name(char *name1, char *name2)
 {
     char c1, c2;
 
@@ -83,12 +83,12 @@ static boolean same_name(char *name1, char *name2)
         if (c1) {
             if ((isupper(c1) ? tolower(c1) : c1)
                 != (isupper(c2) ? tolower(c2) : c2))
-                return FALSE;
+                return false;
         }
         else if (c2)
-            return FALSE;
+            return false;
         else
-            return TRUE;
+            return true;
     }
 }
 
@@ -209,7 +209,7 @@ static int scav_sym(struct object *o)
 
 static obj_t trans_sym(obj_t sym)
 {
-    return transport(sym, sizeof(struct symbol), FALSE);
+    return transport(sym, sizeof(struct symbol), false);
 }
 
 void scavenge_symbol_roots(void)
@@ -254,17 +254,17 @@ void init_sym_classes(void)
 void init_sym_functions(void)
 {
     define_generic_function("as", list2(obj_TypeClass, obj_ObjectClass),
-                            FALSE, obj_False, FALSE,
+                            false, obj_False, false,
                             list1(obj_ObjectClass), obj_False);
     define_method("as", list2(singleton(obj_SymbolClass), obj_ByteStringClass),
-                  FALSE, obj_False, FALSE, obj_SymbolClass, string_as_symbol);
+                  false, obj_False, false, obj_SymbolClass, string_as_symbol);
     define_method("as", list2(singleton(obj_StringClass), obj_SymbolClass),
-                  FALSE, obj_False, FALSE, obj_ByteStringClass,
+                  false, obj_False, false, obj_ByteStringClass,
                   symbol_as_string);
     /* same method as above, only for singleton <byte-string> */
     define_method("as", list2(singleton(obj_ByteStringClass), obj_SymbolClass),
-                  FALSE, obj_False, FALSE, obj_ByteStringClass,
+                  false, obj_False, false, obj_ByteStringClass,
                   symbol_as_string);
-    define_method("symbol-hash", list1(obj_SymbolClass), FALSE, obj_False,
-                  FALSE, obj_FixnumClass, symbol_object_hash);
+    define_method("symbol-hash", list1(obj_SymbolClass), false, obj_False,
+                  false, obj_FixnumClass, symbol_object_hash);
 }

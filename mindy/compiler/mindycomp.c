@@ -50,7 +50,7 @@ struct body *Program = NULL;
 
 struct symbol *LibraryName = NULL;
 struct symbol *ModuleName = NULL;
-boolean GiveWarnings = TRUE;
+bool GiveWarnings = true;
 
 char *current_file = "<stdin>";
 
@@ -155,8 +155,8 @@ static char *make_output_name(char *source, char *new_extension)
 
 int main(int argc, char *argv[])
 {
-    boolean print_parse = FALSE;
-    boolean print_expanded = FALSE;
+    bool print_parse = false;
+    bool print_expanded = false;
     char *arg;
     char *source_name = NULL;
     char *output_name = NULL;
@@ -177,18 +177,18 @@ int main(int argc, char *argv[])
             switch (arg[1]) {
               case 'd':
                 if (arg[2] == '\0') {
-                    print_parse = TRUE;
-                    print_expanded = TRUE;
+                    print_parse = true;
+                    print_expanded = true;
                 }
                 else {
                     char *ptr;
                     for (ptr = arg+2; *ptr != '\0'; ptr++) {
                         switch (*ptr) {
                           case 'p':
-                            print_parse = TRUE;
+                            print_parse = true;
                             break;
                           case 'e':
-                            print_expanded = TRUE;
+                            print_expanded = true;
                             break;
                           default:
                             fprintf(stderr, "Invalid thing to print: ``%c''\n",
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
                 break;
 
               case 'q':
-                GiveWarnings = FALSE;
+                GiveWarnings = false;
                 break;
 
               case 'D':

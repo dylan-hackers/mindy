@@ -25,6 +25,7 @@
 *
 \**********************************************************************/
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,14 +56,6 @@ extern int mindy_readline(char *prompt, char *buffer, int max_chars);
         if (!(cond)) \
             lose("assertion failed, line %d file %s", __LINE__, __FILE__); \
     } while (0)
-
-#ifdef WIN32
-#   define boolean unsigned char
-#else
-#   define boolean int
-#endif
-#define TRUE 1
-#define FALSE 0
 
 #ifdef GD_DEBUG
 #define SLOW_LONGJMP 1

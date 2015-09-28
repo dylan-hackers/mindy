@@ -164,6 +164,6 @@ static obj_t dylan_getc(void)
 
 void init_input_functions(void)
 {
-    define_function("getc", obj_Nil, FALSE, obj_False, FALSE,
+    define_function("getc", obj_Nil, false, obj_False, false,
                     obj_CharacterClass, dylan_getc);
 }

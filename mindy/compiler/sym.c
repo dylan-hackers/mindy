@@ -98,7 +98,7 @@ static unsigned hash_name(char *name)
     return hash;
 }
 
-static boolean same_name(char *name1, char *name2)
+static bool same_name(char *name1, char *name2)
 {
     char c1, c2;
 
@@ -109,12 +109,12 @@ static boolean same_name(char *name1, char *name2)
         if (c1) {
             if ((isupper(c1) ? tolower(c1) : c1)
                 != (isupper(c2) ? tolower(c2) : c2))
-                return FALSE;
+                return false;
         }
         else if (c2)
-            return FALSE;
+            return false;
         else
-            return TRUE;
+            return true;
     }
 }
 

@@ -55,7 +55,7 @@ static obj_t dylan_object_address(obj_t object)
 
 void make_obj_classes(void)
 {
-    obj_ObjectClass = make_abstract_class(FALSE);
+    obj_ObjectClass = make_abstract_class(false);
     add_constant_root(&obj_ObjectClass);
 }
 
@@ -66,8 +66,8 @@ void init_obj_classes(void)
 
 void init_obj_functions(void)
 {
-    define_function("object-class", list1(obj_ObjectClass), FALSE, obj_False,
-                    FALSE, obj_ClassClass, dylan_object_class);
-    define_function("object-address", list1(obj_ObjectClass), FALSE, obj_False,
-                    FALSE, obj_FixnumClass, dylan_object_address);
+    define_function("object-class", list1(obj_ObjectClass), false, obj_False,
+                    false, obj_ClassClass, dylan_object_class);
+    define_function("object-address", list1(obj_ObjectClass), false, obj_False,
+                    false, obj_FixnumClass, dylan_object_address);
 }

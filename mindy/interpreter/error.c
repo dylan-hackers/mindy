@@ -46,7 +46,7 @@
 #include "func.h"
 #include "driver.h"
 
-static boolean error_system_enabled = FALSE;
+static bool error_system_enabled = false;
 
 static struct variable *error_var = NULL;
 static struct variable *type_error_var = NULL;
@@ -123,17 +123,17 @@ obj_t check_type(obj_t thing, obj_t type)
 
 static obj_t enable_error_system(void)
 {
-    error_system_enabled = TRUE;
+    error_system_enabled = true;
     return obj_True;
 }
 
 void init_error_functions(void)
 {
-    define_function("enable-error-system", obj_Nil, FALSE, obj_False, FALSE,
+    define_function("enable-error-system", obj_Nil, false, obj_False, false,
                     obj_ObjectClass, enable_error_system);
     error_var = find_variable(module_BuiltinStuff, symbol("error"),
-                              FALSE, TRUE);
+                              false, true);
     type_error_var = find_variable(module_BuiltinStuff, symbol("type-error"),
-                                   FALSE, TRUE);
+                                   false, true);
 }
 

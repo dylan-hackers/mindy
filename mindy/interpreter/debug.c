@@ -81,8 +81,8 @@ static obj_t CurThreadObj = NULL;
 static obj_t CurComponent = NULL;
 static struct frame_info *CurFrame = NULL, *TopFrame = NULL;
 static int PrevLine = -1;
-static boolean ThreadChanged = FALSE, FrameChanged = FALSE;
-static boolean Continue;
+static bool ThreadChanged = false, FrameChanged = false;
+static bool Continue;
 
 static obj_t do_eval_func;
 static obj_t do_print_func;
@@ -205,7 +205,7 @@ static void scav_frames(struct frame_info *frame)
     }
 }
 
-static void print_frame(struct frame_info *frame, boolean print_line)
+static void print_frame(struct frame_info *frame, bool print_line)
 {
     obj_t *ptr = obj_rawptr(frame->fp[-4]);
     obj_t *end = frame->fp - 5;
@@ -239,7 +239,7 @@ static void print_frame(struct frame_info *frame, boolean print_line)
 static void set_frame(struct frame_info *frame)
 {
     if (CurFrame == NULL || frame == NULL || CurFrame->fp != frame->fp) {
-        FrameChanged = TRUE;
+        FrameChanged = true;
         PrevLine = -1;
     }
 
@@ -257,7 +257,7 @@ static void set_thread(struct thread *thread)
         CurThreadObj = thread->thread_obj;
     else
         CurThreadObj = NULL;
-    ThreadChanged = TRUE;
+    ThreadChanged = true;
     free_frames(TopFrame);
     TopFrame = top_frame(thread);
     set_frame(TopFrame);
@@ -332,8 +332,8 @@ static void validate_thread_and_frame()
         if (THREAD(CurThreadObj)->thread == NULL) {
             printf("Current thread no longer exists.\n");
             set_thread(NULL);
-            ThreadChanged = FALSE;
-            FrameChanged = FALSE;
+            ThreadChanged = false;
+            FrameChanged = false;
             return;
         }
 
@@ -462,7 +462,7 @@ static void explain_condition(struct thread *thread, obj_t condition)
         *thread->sp++ = debugger_report_var->value;
         *thread->sp++ = condition;
         thread_restart(thread);
-        Continue = TRUE;
+        Continue = true;
     }
 }
 
@@ -474,8 +474,8 @@ static void explain_debugger_invocation(void)
 
     if (thread == NULL) {
         printf("Debugger explicitly invoked, but no current thread?\n");
-        ThreadChanged = FALSE;
-        FrameChanged = FALSE;
+        ThreadChanged = false;
+        FrameChanged = false;
         return;
     }
 
@@ -498,8 +498,8 @@ static void explain_reason(enum pause_reason reason)
       case pause_NothingToRun:
         printf("All threads exited.\n");
         set_thread(NULL);
-        ThreadChanged = FALSE;
-        FrameChanged = FALSE;
+        ThreadChanged = false;
+        FrameChanged = false;
         break;
       case pause_Interrupted:
         printf("Interrupted\n");
@@ -666,22 +666,22 @@ static void quit_cmd(obj_t args)
 
 static void tron_cmd(obj_t args)
 {
-    extern boolean Tracing;
+    extern bool Tracing;
     should_be_no_args(args);
-    Tracing = TRUE;
+    Tracing = true;
 }
 
 static void troff_cmd(obj_t args)
 {
-    extern boolean Tracing;
+    extern bool Tracing;
     should_be_no_args(args);
-    Tracing = FALSE;
+    Tracing = false;
 }
 
 static void gc_cmd(obj_t args)
 {
     should_be_no_args(args);
-    collect_garbage(FALSE);
+    collect_garbage(false);
 }
 
 static void error_cmd(obj_t args)
@@ -742,7 +742,7 @@ static void frame_cmd(obj_t args)
     else {
         int num;
         if ( ! any_args(args))
-            FrameChanged = TRUE;
+            FrameChanged = true;
         else if ( ! get_fixnum(first_arg(args), &num))
             printf("Bogus frame number, should be an integer.\n");
         else if (num < 0)
@@ -765,11 +765,11 @@ static void frame_cmd(obj_t args)
     }
 }
 
-static boolean backtrace_punted;
+static bool backtrace_punted;
 
 static void punt_backtrace(void)
 {
-    backtrace_punted = TRUE;
+    backtrace_punted = true;
 }
 
 static void backtrace_cmd(obj_t args)
@@ -780,7 +780,7 @@ static void backtrace_cmd(obj_t args)
     else {
         struct frame_info *frame;
 
-        backtrace_punted = FALSE;
+        backtrace_punted = false;
         set_interrupt_handler(punt_backtrace);
 
         for (frame = TopFrame; frame != NULL; frame = frame_down(frame)) {
@@ -788,7 +788,7 @@ static void backtrace_cmd(obj_t args)
                 printf("interrupted\n");
                 break;
             }
-            print_frame(frame, TRUE);
+            print_frame(frame, true);
         }
 
         clear_interrupt_handler();
@@ -814,10 +814,10 @@ static void library_cmd(obj_t args)
     } else if (get_symbol(first_arg(args), &sym)
             || get_variable(first_arg(args), &sym, NULL, NULL)) {
         should_be_no_args(rest_args(args));
-        lib = find_library(sym, FALSE);
+        lib = find_library(sym, false);
         if (lib) {
             CurLibrary = lib;
-            CurModule = find_module(lib, symbol("Dylan-User"), FALSE, FALSE);
+            CurModule = find_module(lib, symbol("Dylan-User"), false, false);
         }
         else {
             printf("No library named %s\n", sym_name(sym));
@@ -851,7 +851,7 @@ static void module_cmd(obj_t args)
         should_be_no_args(rest_args(args));
 
         if (lib_sym != obj_False) {
-            lib = find_library(lib_sym, FALSE);
+            lib = find_library(lib_sym, false);
             if (lib == NULL) {
                 printf("No library named %s\n", sym_name(lib_sym));
                 return;
@@ -860,7 +860,7 @@ static void module_cmd(obj_t args)
         else
             lib = CurLibrary;
 
-        module = find_module(lib, sym, FALSE, FALSE);
+        module = find_module(lib, sym, false, false);
         if (module) {
             CurLibrary = lib;
             CurModule = module;
@@ -904,8 +904,8 @@ static void locals_cmd(obj_t args)
             obj_t entry = SOVEC(vec)->contents[i];
             obj_t symbol = SOVEC(entry)->contents[0];
             int loc_info = fixnum_value(SOVEC(entry)->contents[1]);
-            boolean indirect = loc_info & 2;
-            boolean argument = loc_info & 1;
+            bool indirect = loc_info & 2;
+            bool argument = loc_info & 1;
             int offset = loc_info >> 2;
             obj_t value;
 
@@ -950,14 +950,14 @@ static void flush_cmd(obj_t args)
 
     *thread->sp++ = debugger_flush_var->value;
     thread_restart(thread);
-    Continue = TRUE;
+    Continue = true;
 }
 
 
 
 /* print command. */
 
-static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
+static void eval_vars(obj_t expr, bool *okay, bool *simple)
 {
     obj_t kind = arg_kind(expr);
 
@@ -983,8 +983,8 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
                     obj_t entry = SOVEC(vec)->contents[i];
                     if (SOVEC(entry)->contents[0] == name) {
                         int loc_info = fixnum_value(SOVEC(entry)->contents[1]);
-                        boolean indirect = loc_info & 2;
-                        boolean argument = loc_info & 1;
+                        bool indirect = loc_info & 2;
+                        bool argument = loc_info & 1;
                         int offset = loc_info >> 2;
                         obj_t value;
 
@@ -1005,11 +1005,11 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
 
         if (mod_sym != obj_False) {
             if (lib_sym != obj_False) {
-                lib = find_library(lib_sym, FALSE);
+                lib = find_library(lib_sym, false);
                 if (lib == NULL) {
                     if (*okay) {
                         printf("No library named %s\n", sym_name(lib_sym));
-                        *okay = FALSE;
+                        *okay = false;
                     }
                     return;
                 }
@@ -1017,18 +1017,18 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
             else if ((lib = CurLibrary) == NULL) {
                 if (*okay) {
                     printf("No library currently selected\n");
-                    *okay = FALSE;
+                    *okay = false;
                 }
                 return;
             }
 
-            mod = find_module(lib, mod_sym, FALSE, FALSE);
+            mod = find_module(lib, mod_sym, false, false);
             if (mod == NULL) {
                 if (*okay) {
                     printf("No module named %s in library %s\n",
                            sym_name(mod_sym),
                            sym_name(library_name(lib)));
-                    *okay = FALSE;
+                    *okay = false;
                 }
                 return;
             }
@@ -1039,20 +1039,20 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
             if (mod == NULL) {
                 if (*okay) {
                     printf("No module currently selected\n");
-                    *okay = FALSE;
+                    *okay = false;
                 }
                 return;
             }
         }
 
         {
-            struct variable *var = find_variable(mod, name, FALSE, FALSE);
+            struct variable *var = find_variable(mod, name, false, false);
             if (var == NULL) {
                 printf("no variable named %s in module %s, library %s\n",
                        sym_name(name),
                        sym_name(module_name(mod)),
                        sym_name(library_name(lib)));
-                *okay = FALSE;
+                *okay = false;
             }
             else {
                 obj_t value = var->value;
@@ -1061,7 +1061,7 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
                            sym_name(name),
                            sym_name(module_name(mod)),
                            sym_name(library_name(lib)));
-                    *okay = FALSE;
+                    *okay = false;
                 }
                 else {
                     HEAD(expr) = symbol("literal");
@@ -1071,11 +1071,11 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
         }
     }
     else if (kind == symbol("debug-var"))
-        *simple = FALSE;
+        *simple = false;
     else if (kind == symbol("arg")) {
         if (CurFrame == NULL)  {
             printf("No current frame.\n");
-            *okay = FALSE;
+            *okay = false;
         }
         else {
             obj_t *fp = CurFrame->fp;
@@ -1086,7 +1086,7 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
             if (arg >= nargs) {
                 printf("%d too large -- Only %d argument%s\n", arg, nargs,
                        nargs == 1 ? "" : "s");
-                *okay = FALSE;
+                *okay = false;
             }
             else {
                 HEAD(expr) = symbol("literal");
@@ -1100,7 +1100,7 @@ static void eval_vars(obj_t expr, boolean *okay, boolean *simple)
         for (args = rest_args(expr); args != obj_Nil; args = rest_args(args))
             eval_vars(first_arg(args), okay, simple);
 
-        *simple = FALSE;
+        *simple = false;
     }
     else
         lose("Parser returned something strange.");
@@ -1228,11 +1228,11 @@ static void do_print_start(struct thread *thread, int nargs)
 }
 
 static void call_or_print(struct variable *var, obj_t args,
-                          boolean null_expr_allowed, boolean suspend_others)
+                          bool null_expr_allowed, bool suspend_others)
 {
     obj_t exprs = args;
-    boolean okay = TRUE;
-    boolean simple = TRUE;
+    bool okay = true;
+    bool simple = true;
     obj_t expr;
     struct thread *thread;
 
@@ -1245,7 +1245,7 @@ static void call_or_print(struct variable *var, obj_t args,
             printf("No expression.\n");
             return;
         }
-        simple = FALSE;
+        simple = false;
     } else {
         for (expr = exprs; expr != obj_Nil; expr = rest_args(expr)) {
             eval_vars(first_arg(expr), &okay, &simple);
@@ -1288,28 +1288,28 @@ static void call_or_print(struct variable *var, obj_t args,
 
     thread_restart(thread);
 
-    Continue = TRUE;
+    Continue = true;
 }
 
 
 static void call_cmd(obj_t args)
 {
-    call_or_print(debugger_call_var, args, FALSE, TRUE);
+    call_or_print(debugger_call_var, args, false, true);
 }
 
 static void print_cmd(obj_t args)
 {
-    call_or_print(debugger_print_var, args, FALSE, TRUE);
+    call_or_print(debugger_print_var, args, false, true);
 }
 
 static void inspect_cmd(obj_t args)
 {
-    call_or_print(debugger_inspect_var, args, TRUE, TRUE);
+    call_or_print(debugger_inspect_var, args, true, true);
 }
 
 static void xinspect_cmd(obj_t args)
 {
-    call_or_print(debugger_xinspect_var, args, TRUE, FALSE);
+    call_or_print(debugger_xinspect_var, args, true, false);
 }
 
 
@@ -1386,8 +1386,8 @@ static void kill_cmd(obj_t args)
     if (thread == CurThread) {
         printf("killed the current thread, hence it is no longer current.\n");
         set_thread(NULL);
-        ThreadChanged = FALSE;
-        FrameChanged = FALSE;
+        ThreadChanged = false;
+        FrameChanged = false;
     }
 }
 
@@ -1465,7 +1465,7 @@ static void abort_cmd(obj_t args)
 
     *thread->sp++ = debugger_abort_var->value;
     thread_restart(thread);
-    Continue = TRUE;
+    Continue = true;
 }
 
 static void describe_restarts(void)
@@ -1497,7 +1497,7 @@ static void describe_restarts(void)
     *thread->sp++ = debugger_restarts_var->value;
     *thread->sp++ = cond;
     thread_restart(thread);
-    Continue = TRUE;
+    Continue = true;
 }
 
 static void maybe_return(struct thread *thread, obj_t *vals)
@@ -1570,7 +1570,7 @@ static void do_restart(obj_t restart)
     *thread->sp++ = cond;
     *thread->sp++ = restart;
     thread_restart(thread);
-    Continue = TRUE;
+    Continue = true;
 }
 
 static void restart_cmd(obj_t args)
@@ -1623,7 +1623,7 @@ static void return_cmd(obj_t args)
     *thread->sp++ = debugger_return_var->value;
     *thread->sp++ = cond;
     thread_restart(thread);
-    Continue = TRUE;
+    Continue = true;
 }
 
 static void continue_cmd(obj_t args)
@@ -1636,7 +1636,7 @@ static void continue_cmd(obj_t args)
         switch (CurThread->status) {
           case status_Running:
           case status_Waiting:
-            Continue = TRUE;
+            Continue = true;
             return;
 
           case status_Debuggered:
@@ -1648,7 +1648,7 @@ static void continue_cmd(obj_t args)
 
           case status_Suspended:
             enable_cmd(args);
-            Continue = TRUE;
+            Continue = true;
             return;
 
           default:
@@ -1659,7 +1659,7 @@ static void continue_cmd(obj_t args)
     for (threads = all_threads(); threads != NULL; threads=threads->next) {
         enum thread_status status = threads->thread->status;
         if (status == status_Running || status == status_Waiting) {
-            Continue = TRUE;
+            Continue = true;
             return;
         }
     }
@@ -1674,7 +1674,7 @@ static void continue_cmd(obj_t args)
 
 /* Step/next commands */
 
-static void do_step_or_next(boolean ignore_calls)
+static void do_step_or_next(bool ignore_calls)
 {
     struct thread *thread = CurThread;
 
@@ -1739,7 +1739,7 @@ static void do_step_or_next(boolean ignore_calls)
             *thread->sp++ = debugger_return_var->value;
             *thread->sp++ = cond;
             thread_restart(thread);
-            Continue = TRUE;
+            Continue = true;
         }
 
         break;
@@ -1753,13 +1753,13 @@ static void do_step_or_next(boolean ignore_calls)
 static void step_cmd(obj_t args)
 {
     should_be_no_args(args);
-    do_step_or_next(FALSE);
+    do_step_or_next(false);
 }
 
 static void next_cmd(obj_t args)
 {
     should_be_no_args(args);
-    do_step_or_next(TRUE);
+    do_step_or_next(true);
 }
 
 
@@ -1772,7 +1772,7 @@ static int find_pc_for_line(obj_t component, int line)
     int n_const = COMPONENT(component)->n_constants;
     int pc = (char *)(&COMPONENT(component)->constant[n_const])
         - (char *)component;
-    boolean prev_line_before = FALSE;
+    bool prev_line_before = false;
     int i;
 
     for (i = 0; i < len; i++) {
@@ -1859,8 +1859,8 @@ static void breakpoint_cmd(obj_t args)
     if ( ! any_args(exprs))
         list_breakpoints();
     else {
-        boolean okay = TRUE;
-        boolean func_simple = TRUE;
+        bool okay = true;
+        bool func_simple = true;
         obj_t line;
 
         eval_vars(first_arg(exprs), &okay, &func_simple);
@@ -1871,7 +1871,7 @@ static void breakpoint_cmd(obj_t args)
         if (TAIL(exprs) == obj_Nil)
             line = make_fixnum(-1);
         else if (TAIL(TAIL(exprs)) == obj_Nil) {
-            boolean line_simple = TRUE;
+            bool line_simple = true;
 
             eval_vars(HEAD(TAIL(exprs)), &okay, &line_simple);
 
@@ -1922,7 +1922,7 @@ static void breakpoint_cmd(obj_t args)
 
             thread_restart(thread);
 
-            Continue = TRUE;
+            Continue = true;
         }
     }
 }
@@ -2007,7 +2007,7 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
     char buf[256], *fill = buf, *msg = "";
     int i, c;
     obj_t trailer = NULL;
-    boolean extra = FALSE;
+    bool extra = false;
 
     for (info = ByteOpInfos; info->op != NULL; info++)
         if ((info->mask & byte) == info->match) {
@@ -2056,7 +2056,7 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
               case 'n':
                 i = byte & 0xf;
                 if (i == 0xf) {
-                    extra = TRUE;
+                    extra = true;
                     i = *ptr++;
                     if (i == 0xff) {
                         i = disassem_int4(ptr);
@@ -2235,8 +2235,8 @@ static void disassemble_cmd(obj_t args)
     else if (TAIL(exprs) != obj_Nil)
         printf("Too many expressions for disassemble\n");
     else {
-        boolean okay = TRUE;
-        boolean simple = TRUE;
+        bool okay = true;
+        bool simple = true;
 
         eval_vars(HEAD(exprs), &okay, &simple);
 
@@ -2273,7 +2273,7 @@ static void disassemble_cmd(obj_t args)
 
             thread_restart(thread);
 
-            Continue = TRUE;
+            Continue = true;
         }
     }
 }
@@ -2308,8 +2308,8 @@ static void describe_cmd(obj_t args)
     else if (TAIL(exprs) != obj_Nil)
         printf("too many things to describe, one at most.\n");
     else {
-        boolean okay = TRUE;
-        boolean simple = TRUE;
+        bool okay = true;
+        bool simple = true;
 
         eval_vars(HEAD(exprs), &okay, &simple);
 
@@ -2346,7 +2346,7 @@ static void describe_cmd(obj_t args)
 
             thread_restart(thread);
 
-            Continue = TRUE;
+            Continue = true;
         }
     }
 }
@@ -2459,16 +2459,16 @@ static void do_cmd(obj_t command)
 static void maybe_print_frame(void)
 {
     if (ThreadChanged) {
-        ThreadChanged = FALSE;
+        ThreadChanged = false;
 
         if (CurThread == NULL) {
             printf("no current thread\n");
-            FrameChanged = FALSE;
+            FrameChanged = false;
         }
         else {
             printf("thread ");
             print_thread(CurThread);
-            FrameChanged = TRUE;
+            FrameChanged = true;
         }
     }
 
@@ -2476,8 +2476,8 @@ static void maybe_print_frame(void)
         if (CurFrame == NULL)
             printf("No stack.\n");
         else
-            print_frame(CurFrame, FALSE);
-        FrameChanged = FALSE;
+            print_frame(CurFrame, false);
+        FrameChanged = false;
         PrevLine = -1;
     }
 
@@ -2512,17 +2512,17 @@ static void maybe_print_frame(void)
 
 static void blow_off_cmd(void)
 {
-    longjmp(BlowOffCmd, TRUE);
+    longjmp(BlowOffCmd, true);
 }
 
 void invoke_debugger(enum pause_reason reason)
 {
-    Continue = FALSE;
+    Continue = false;
 
     explain_reason(reason);
 
     while (Continue) {
-        Continue = FALSE;
+        Continue = false;
         reason = do_stuff();
         explain_reason(reason);
     }
@@ -2559,7 +2559,7 @@ void invoke_debugger(enum pause_reason reason)
             }
         }
 
-        Continue = FALSE;
+        Continue = false;
 
         reason = do_stuff();
         explain_reason(reason);
@@ -2580,12 +2580,12 @@ void scavenge_debug_roots(void)
 void init_debug_functions(void)
 {
     do_print_func = make_raw_function("debug-print", list1(obj_ObjectClass),
-                                      FALSE, obj_False,
-                                      FALSE, obj_Nil, obj_ObjectClass,
+                                      false, obj_False,
+                                      false, obj_Nil, obj_ObjectClass,
                                       do_print_start);
     do_eval_func = make_raw_function("debug-eval", list1(obj_ObjectClass),
-                                     FALSE, obj_False,
-                                     FALSE, obj_Nil, obj_ObjectClass,
+                                     false, obj_False,
+                                     false, obj_Nil, obj_ObjectClass,
                                      do_eval_start);
 
     add_constant_root(&do_print_func);
@@ -2599,35 +2599,35 @@ void init_debug_functions(void)
 
     debugger_eval_var = find_variable(module_BuiltinStuff,
                                       symbol("debugger-eval"),
-                                      FALSE, TRUE);
+                                      false, true);
     debugger_flush_var = find_variable(module_BuiltinStuff,
                                       symbol("debugger-flush"),
-                                      FALSE, TRUE);
+                                      false, true);
     debugger_call_var = find_variable(module_BuiltinStuff,
                                       symbol("debugger-call"),
-                                      FALSE, TRUE);
+                                      false, true);
     debugger_print_var = find_variable(module_BuiltinStuff,
                                        symbol("debugger-print"),
-                                       FALSE, TRUE);
+                                       false, true);
     debugger_inspect_var = find_variable(module_BuiltinStuff,
                                          symbol("debugger-inspect"),
-                                         FALSE, TRUE);
+                                         false, true);
     debugger_xinspect_var = find_variable(module_BuiltinStuff,
                                           symbol("debugger-xinspect"),
-                                          FALSE, TRUE);
+                                          false, true);
     debugger_report_var = find_variable(module_BuiltinStuff,
                                         symbol("debugger-report-condition"),
-                                        FALSE, TRUE);
+                                        false, true);
     debugger_abort_var = find_variable(module_BuiltinStuff,
                                        symbol("debugger-abort"),
-                                       FALSE, TRUE);
+                                       false, true);
     debugger_restarts_var = find_variable(module_BuiltinStuff,
                                           symbol("debugger-describe-restarts"),
-                                          FALSE, TRUE);
+                                          false, true);
     debugger_restart_var = find_variable(module_BuiltinStuff,
                                          symbol("debugger-restart"),
-                                         FALSE, TRUE);
+                                         false, true);
     debugger_return_var = find_variable(module_BuiltinStuff,
                                         symbol("debugger-return"),
-                                        FALSE, TRUE);
+                                        false, true);
 }

@@ -135,7 +135,7 @@ static int scav_char(struct object *ptr)
 
 static obj_t trans_char(obj_t c)
 {
-    return transport(c, sizeof(struct character), TRUE);
+    return transport(c, sizeof(struct character), true);
 }
 
 
@@ -165,15 +165,15 @@ void init_char_classes()
 void init_char_functions()
 {
     define_method("as", list2(singleton(obj_CharacterClass), obj_FixnumClass),
-                  FALSE, obj_False, FALSE, obj_CharacterClass, fixnum_as_char);
+                  false, obj_False, false, obj_CharacterClass, fixnum_as_char);
     define_method("as",
                   list2(singleton(obj_ByteCharacterClass), obj_FixnumClass),
-                  FALSE, obj_False, FALSE, obj_ByteCharacterClass,
+                  false, obj_False, false, obj_ByteCharacterClass,
                   fixnum_as_byte_char);
     define_method("as", list2(singleton(obj_IntegerClass), obj_CharacterClass),
-                  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
+                  false, obj_False, false, obj_FixnumClass, char_as_fixnum);
     define_method("as", list2(singleton(obj_FixnumClass), obj_CharacterClass),
-                  FALSE, obj_False, FALSE, obj_FixnumClass, char_as_fixnum);
+                  false, obj_False, false, obj_FixnumClass, char_as_fixnum);
     define_method("<", list2(obj_CharacterClass, obj_CharacterClass),
-                  FALSE, obj_False, FALSE, obj_BooleanClass, char_less);
+                  false, obj_False, false, obj_BooleanClass, char_less);
 }

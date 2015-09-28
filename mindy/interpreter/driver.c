@@ -52,7 +52,7 @@
 #endif
 #include "fd.h"
 
-static boolean InInterpreter = FALSE;
+static bool InInterpreter = false;
 static jmp_buf Catcher;
 static enum pause_reason PauseReason;
 
@@ -61,32 +61,32 @@ static enum pause_reason PauseReason;
 
 /* signal handling. */
 static void (*SignalHandlers[NSIG])(void) = {0};
-static boolean SignalPending[NSIG] = {0};
-static boolean SignalAction[NSIG] = {0};
-static boolean SignalBlocked[NSIG] = {0};
+static bool SignalPending[NSIG] = {0};
+static bool SignalAction[NSIG] = {0};
+static bool SignalBlocked[NSIG] = {0};
 
 static void signal_handler(int sig)
 {
     if (SignalHandlers[sig]) {
-        SignalBlocked[sig] = TRUE;
+        SignalBlocked[sig] = true;
         SignalHandlers[sig]();
-        SignalBlocked[sig] = FALSE;
+        SignalBlocked[sig] = false;
     } else
-        SignalPending[sig] = TRUE;
+        SignalPending[sig] = true;
 }
 
 void set_signal_handler(int sig, void(*handler)(void))
 {
     SignalHandlers[sig] = handler;
     if (SignalPending[sig]) {
-        SignalPending[sig] = FALSE;
+        SignalPending[sig] = false;
         handler();
     }
     if ( ! SignalAction[sig]) {
         struct sigaction sa = { { 0 } };
         sa.sa_handler = signal_handler;
         sigaction(sig, &sa, NULL);
-        SignalAction[sig] = TRUE;
+        SignalAction[sig] = true;
     }
     if (SignalBlocked[sig])
       unblock_signal_handler(sig);
@@ -103,7 +103,7 @@ void unblock_signal_handler(int sig)
 {
   sigset_t set;
 
-  SignalBlocked[sig] = FALSE;
+  SignalBlocked[sig] = false;
   sigemptyset(&set);
   sigaddset(&set, sig);
   sigprocmask(SIG_UNBLOCK, &set, NULL);
@@ -135,7 +135,7 @@ static struct waiters {
 } Readers, Writers;
 static int NumFds;
 
-static void check_fds(boolean block)
+static void check_fds(bool block)
 {
     fd_set readfds, writefds;
     int nfound, fd;
@@ -265,20 +265,20 @@ enum pause_reason do_stuff(void)
 {
     struct thread *thread;
     volatile int timer;
-    volatile boolean do_select = TRUE;
+    volatile bool do_select = true;
 
     assert (!InInterpreter);
 
     do {
         if (do_select)
-            check_fds(FALSE);
+            check_fds(false);
         else
-            do_select = TRUE;
+            do_select = true;
         PauseReason = pause_NoReason;
         thread = thread_pick_next();
         if (thread) {
             timer = OPS_PER_TIME_SLICE;
-            InInterpreter = TRUE;
+            InInterpreter = true;
             set_interrupt_handler(set_pause_interrupted);
             _setjmp(Catcher);
             if (PauseReason == pause_NoReason)
@@ -292,18 +292,18 @@ enum pause_reason do_stuff(void)
                     thread->advance(thread);
 #endif
                 }
-            InInterpreter = FALSE;
+            InInterpreter = false;
             clear_interrupt_handler();
 
             if (TimeToGC)
-                collect_garbage(FALSE);
+                collect_garbage(false);
         }
         else if (all_threads() == NULL)
             PauseReason = pause_NothingToRun;
         else {
             set_interrupt_handler(set_pause_interrupted);
-            check_fds(TRUE);
-            do_select = FALSE;
+            check_fds(true);
+            do_select = false;
             clear_interrupt_handler();
         }
     } while (PauseReason == pause_NoReason
@@ -317,10 +317,10 @@ enum pause_reason single_step(struct thread *thread)
     assert(thread->status == status_Running);
     assert(thread->suspend_count == 0);
 
-    check_fds(FALSE);
+    check_fds(false);
 
     thread_set_current(thread);
-    InInterpreter = TRUE;
+    InInterpreter = true;
     PauseReason = pause_NoReason;
     set_interrupt_handler(set_pause_interrupted);
     if (_setjmp(Catcher) == 0) {
@@ -333,10 +333,10 @@ enum pause_reason single_step(struct thread *thread)
         thread->advance(thread);
 #endif
     }
-    InInterpreter = FALSE;
+    InInterpreter = false;
     clear_interrupt_handler();
     if (TimeToGC)
-        collect_garbage(FALSE);
+        collect_garbage(false);
     return PauseReason;
 }
 

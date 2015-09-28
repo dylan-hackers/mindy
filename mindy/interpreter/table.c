@@ -51,7 +51,7 @@
 
 struct hash_state {
     obj_t class;
-    boolean valid;
+    bool valid;
     int volatility;
 };
 
@@ -64,7 +64,7 @@ obj_t make_hash_state(int volatility)
 {
     obj_t state = alloc(obj_HashStateClass, sizeof(struct hash_state));
 
-    STATE(state)->valid = TRUE;
+    STATE(state)->valid = true;
     STATE(state)->volatility = volatility;
 
     return state;
@@ -72,7 +72,7 @@ obj_t make_hash_state(int volatility)
 
 void invalidate_hash_state(obj_t state)
 {
-    STATE(state)->valid = FALSE;
+    STATE(state)->valid = false;
 }
 
 /* The largest fixnum prime */
@@ -172,7 +172,7 @@ static int scav_state(struct object *o)
 
 static obj_t trans_state(obj_t state)
 {
-    return transport(state, sizeof(struct hash_state), TRUE);
+    return transport(state, sizeof(struct hash_state), true);
 }
 
 
@@ -195,27 +195,27 @@ void init_table_functions(void)
 {
     define_constant("pointer-hash",
                     make_raw_function("pointer-hash", list1(obj_ObjectClass),
-                                      FALSE, obj_False,
-                                      FALSE,
+                                      false, obj_False,
+                                      false,
                                       list2(obj_FixnumClass,
                                             obj_HashStateClass),
                                       obj_False, dylan_pointer_hash));
     define_constant("float-hash",
                     make_raw_function("float-hash", list1(obj_FloatClass),
-                                      FALSE, obj_False,
-                                      FALSE,
+                                      false, obj_False,
+                                      false,
                                       list2(obj_FixnumClass,
                                             obj_HashStateClass),
                                       obj_False, dylan_float_hash));
-    define_function("state-valid?", list1(obj_HashStateClass), FALSE,
-                    obj_False, FALSE, obj_BooleanClass, dylan_state_valid_p);
+    define_function("state-valid?", list1(obj_HashStateClass), false,
+                    obj_False, false, obj_BooleanClass, dylan_state_valid_p);
     define_function("merge-hash-ids",
-                    listn(2, obj_FixnumClass, obj_FixnumClass), FALSE,
-                    list1(pair(symbol("ordered"), obj_False)), FALSE,
+                    listn(2, obj_FixnumClass, obj_FixnumClass), false,
+                    list1(pair(symbol("ordered"), obj_False)), false,
                     obj_FixnumClass, dylan_merge_hash_ids);
     define_function("merge-hash-states",
-                    listn(2, obj_HashStateClass, obj_HashStateClass), FALSE,
-                    obj_False, FALSE,
+                    listn(2, obj_HashStateClass, obj_HashStateClass), false,
+                    obj_False, false,
                     obj_HashStateClass, dylan_merge_hash_states);
     permanent_state = make_hash_state(0);
     define_constant("$permanent-hash-state", permanent_state);

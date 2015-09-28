@@ -49,7 +49,7 @@ static void invoke_main(struct thread *thread, obj_t *vals)
     obj_t *args_end = fp - 5;
     obj_t *old_sp = pop_linkage(thread);
     struct variable *var = find_variable(module_BuiltinStuff, symbol("main"),
-                                         FALSE, FALSE);
+                                         false, false);
 
     if (var == NULL)
         lose("main undefined?");
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 
     thread = thread_make(symbol("main"));
     *thread->sp++ = make_raw_function("startup", obj_Nil,
-                                      TRUE, obj_False, FALSE,
+                                      true, obj_False, false,
                                       obj_Nil, obj_ObjectClass,
                                       startup);
 
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
             invoke_debugger(reason);
 
         var = find_variable(module_BuiltinStuff, symbol("exit"),
-                            FALSE, FALSE);
+                            false, false);
         if (var == NULL)
             lose("main undefined?");
 

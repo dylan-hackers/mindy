@@ -44,7 +44,7 @@ struct binop_info_chain {
 };
 
 static struct binop_info_chain *BinopInfos = NULL;
-static struct binop_info DefaultBinopInfo = {0, TRUE};
+static struct binop_info DefaultBinopInfo = {0, true};
 
 struct binop_info *lookup_binop_info(struct id *id)
 {
@@ -56,7 +56,7 @@ struct binop_info *lookup_binop_info(struct id *id)
     return &DefaultBinopInfo;
 }
 
-static void push_binop_info(char *name, int prec, boolean left)
+static void push_binop_info(char *name, int prec, bool left)
 {
     struct binop_info_chain *new = malloc(sizeof(struct binop_info_chain));
 
@@ -72,14 +72,14 @@ static void push_binop_info(char *name, int prec, boolean left)
 
 struct function_info_chain {
     struct symbol *symbol;
-    boolean internal;
+    bool internal;
     struct function_info_chain *next;
     struct function_info info;
 };
 
 static struct function_info_chain *FunctionInfos = NULL;
 
-struct function_info *lookup_function_info(struct id *id, boolean createp)
+struct function_info *lookup_function_info(struct id *id, bool createp)
 {
     struct function_info_chain *p;
 
@@ -103,20 +103,20 @@ struct function_info *lookup_function_info(struct id *id, boolean createp)
 
 void init_info(void)
 {
-    push_binop_info(":=", 1, FALSE);
-    push_binop_info("|", 2, FALSE);
-    push_binop_info("&", 3, FALSE);
-    push_binop_info("<", 4, TRUE);
-    push_binop_info("<=", 4, TRUE);
-    push_binop_info("=", 4, TRUE);
-    push_binop_info("~=", 4, TRUE);
-    push_binop_info("==", 4, TRUE);
-    push_binop_info("~==", 4, TRUE);
-    push_binop_info(">=", 4, TRUE);
-    push_binop_info(">", 4, TRUE);
-    push_binop_info("+", 5, TRUE);
-    push_binop_info("-", 5, TRUE);
-    push_binop_info("*", 6, TRUE);
-    push_binop_info("/", 6, TRUE);
-    push_binop_info("^", 7, FALSE);
+    push_binop_info(":=", 1, false);
+    push_binop_info("|", 2, false);
+    push_binop_info("&", 3, false);
+    push_binop_info("<", 4, true);
+    push_binop_info("<=", 4, true);
+    push_binop_info("=", 4, true);
+    push_binop_info("~=", 4, true);
+    push_binop_info("==", 4, true);
+    push_binop_info("~==", 4, true);
+    push_binop_info(">=", 4, true);
+    push_binop_info(">", 4, true);
+    push_binop_info("+", 5, true);
+    push_binop_info("-", 5, true);
+    push_binop_info("*", 6, true);
+    push_binop_info("/", 6, true);
+    push_binop_info("^", 7, false);
 }

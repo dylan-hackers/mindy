@@ -300,7 +300,7 @@ struct expr *make_varref(struct id *var)
     struct varref_expr *res = malloc(sizeof(struct varref_expr));
 
     res->kind = expr_VARREF;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->var = var;
     res->home = NULL;
     res->binding = NULL;
@@ -314,7 +314,7 @@ struct expr *make_varset(struct id *var, struct expr *expr)
     struct varset_expr *res = malloc(sizeof(struct varset_expr));
 
     res->kind = expr_VARSET;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->var = var;
     res->home = NULL;
     res->binding = NULL;
@@ -330,7 +330,7 @@ struct id *id(struct symbol *symbol)
     struct id *res = malloc(sizeof(struct id));
 
     res->symbol = symbol;
-    res->internal = TRUE;
+    res->internal = true;
     res->line = 0;
 
     return res;
@@ -355,7 +355,7 @@ struct id *make_id(struct token *token)
         ptr++;
 
     res = id(symbol(ptr));
-    res->internal = FALSE;
+    res->internal = false;
     res->line = token->line;
 
     free(token);
@@ -380,8 +380,8 @@ struct param_list *make_param_list(void)
     res->required_params = NULL;
     res->next_param = NULL;
     res->rest_param = NULL;
-    res->allow_keys = FALSE;
-    res->all_keys = FALSE;
+    res->allow_keys = false;
+    res->all_keys = false;
     res->keyword_params = NULL;
 
     return res;
@@ -432,15 +432,15 @@ struct param_list
 
 struct param_list *allow_keywords(struct param_list *param_list)
 {
-    param_list->allow_keys = TRUE;
+    param_list->allow_keys = true;
 
     return param_list;
 }
 
 struct param_list *allow_all_keywords(struct param_list *param_list)
 {
-    param_list->allow_keys = TRUE;
-    param_list->all_keys = TRUE;
+    param_list->allow_keys = true;
+    param_list->all_keys = true;
 
     return param_list;
 }
@@ -493,7 +493,7 @@ struct expr *make_literal_ref(struct literal *lit)
     struct literal_expr *res = malloc(sizeof(struct literal_expr));
 
     res->kind = expr_LITERAL;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->lit = lit;
 
     return (struct expr *)res;
@@ -507,7 +507,7 @@ struct expr *make_binop_series_expr(struct expr *operand,
             = malloc(sizeof(struct binop_series_expr));
 
         res->kind = expr_BINOP_SERIES;
-        res->analyzed = FALSE;
+        res->analyzed = false;
         res->first_operand = operand;
         res->first_binop = series->head;
 
@@ -611,11 +611,11 @@ struct expr *make_function_call(struct expr *expr, struct arglist *args)
     struct call_expr *res = malloc(sizeof(struct call_expr));
 
     res->kind = expr_CALL;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->func = expr;
     if (expr->kind == expr_VARREF)
         res->info = lookup_function_info(((struct varref_expr *)expr)->var,
-                                         FALSE);
+                                         false);
     else
         res->info = NULL;
     res->args = args->head;
@@ -630,7 +630,7 @@ struct expr *make_method_ref(struct method *method)
     struct method_expr *res = malloc(sizeof(struct method_expr));
 
     res->kind = expr_METHOD;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->method = method;
 
     return (struct expr *)res;
@@ -641,7 +641,7 @@ struct expr *make_dot_operation(struct expr *arg, struct expr *func)
     struct dot_expr *res = malloc(sizeof(struct dot_expr));
 
     res->kind = expr_DOT;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->arg = arg;
     res->func = func;
 
@@ -720,7 +720,7 @@ struct plist
     return plist;
 }
 
-struct return_type_list *make_return_type_list(boolean restp,
+struct return_type_list *make_return_type_list(bool restp,
                                                struct expr *rest)
 {
     struct return_type_list *res = malloc(sizeof(struct return_type_list));
@@ -754,7 +754,7 @@ struct return_type_list
     *set_return_type_rest_type(struct return_type_list *list,
                                struct expr *type)
 {
-    list->restp = TRUE;
+    list->restp = true;
     list->rest_type = type;
     return list;
 }
@@ -926,7 +926,7 @@ struct literal *parse_integer_token(struct token *token)
 {
     long value;
     int count, radix = 0;
-    boolean negative;
+    bool negative;
     char *ptr, *remnant;
     struct literal *res;
 
@@ -943,17 +943,17 @@ struct literal *parse_integer_token(struct token *token)
         }
         ptr += 2;
         count -= 2;
-        negative = FALSE;
+        negative = false;
     }
     else {
         radix = 10;
         if (*ptr == '-') {
-            negative = TRUE;
+            negative = true;
             count--;
             ptr++;
         }
         else {
-            negative = FALSE;
+            negative = false;
             if (*ptr == '+') {
                 count--;
                 ptr++;
@@ -1123,7 +1123,7 @@ struct expr *make_body_expr(struct body *body)
         struct body_expr *res = malloc(sizeof(struct body_expr));
 
         res->kind = expr_BODY;
-        res->analyzed = FALSE;
+        res->analyzed = false;
         res->body = body;
 
         return (struct expr *)res;
@@ -1136,7 +1136,7 @@ struct expr *make_block(int line, struct id *exit, struct body *body,
     struct block_expr *res = malloc(sizeof(struct block_expr));
 
     res->kind = expr_BLOCK;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->line = line;
     res->exit_fun = exit;
     res->body = body;
@@ -1160,7 +1160,7 @@ struct expr *make_case(struct condition_body *body)
     struct case_expr *res = malloc(sizeof(struct case_expr));
 
     res->kind = expr_CASE;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->body = body;
 
     return (struct expr *)res;
@@ -1179,7 +1179,7 @@ struct expr *make_if(struct expr *cond, struct body *consequent,
     struct if_expr *res = malloc(sizeof(struct if_expr));
 
     res->kind = expr_IF;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->cond = cond;
     if (consequent)
         res->consequent = consequent;
@@ -1214,7 +1214,7 @@ struct expr *make_for(struct for_header *header, struct body *body,
     struct for_expr *res = malloc(sizeof(struct for_expr));
 
     res->kind = expr_FOR;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->clauses = header->clauses;
     res->until = header->until;
     res->body = body;
@@ -1231,7 +1231,7 @@ struct expr *make_select(struct expr *expr, struct expr *by,
     struct select_expr *res = malloc(sizeof(struct select_expr));
 
     res->kind = expr_SELECT;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->expr = expr;
     res->by = by;
     res->body = body;
@@ -1244,7 +1244,7 @@ struct expr *make_loop(struct body *body)
     struct loop_expr *res = malloc(sizeof(struct loop_expr));
 
     res->kind = expr_LOOP;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->body = body;
     res->position = 0;
 
@@ -1256,7 +1256,7 @@ struct expr *make_repeat(void)
     struct repeat_expr *res = malloc(sizeof(struct repeat_expr));
 
     res->kind = expr_REPEAT;
-    res->analyzed = FALSE;
+    res->analyzed = false;
     res->loop = NULL;
 
     return (struct expr *)res;
@@ -1659,7 +1659,7 @@ struct class_guts *add_slot_spec(struct class_guts *guts,
 }
 
 struct initarg_spec
-  *make_initarg_spec(boolean required, struct token *key, struct plist *plist)
+  *make_initarg_spec(bool required, struct token *key, struct plist *plist)
 {
     struct initarg_spec *res = malloc(sizeof(*res));
 
@@ -1802,7 +1802,7 @@ struct method
     res->name = NULL;
     res->line = 0;
     res->debug_name = NULL;
-    res->top_level = FALSE;
+    res->top_level = false;
     res->component = NULL;
     res->params = params;
     res->specializers = NULL;
@@ -1826,7 +1826,7 @@ struct method *make_top_level_method(char *debug_name, struct body *body)
     struct method *res = make_method_description(make_param_list(),NULL,body);
 
     res->debug_name = make_string_literal(debug_name);
-    res->top_level = TRUE;
+    res->top_level = true;
     res->specializers=make_literal_ref(make_list_literal(make_literal_list()));
 
     return res;
@@ -1847,7 +1847,7 @@ struct expr *make_error_expression(void)
     struct expr *res = malloc(sizeof(struct expr));
 
     res->kind = expr_ERROR;
-    res->analyzed = FALSE;
+    res->analyzed = false;
 
     return res;
 }

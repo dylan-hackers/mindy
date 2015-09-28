@@ -151,13 +151,13 @@ void handle_byte_breakpoint(struct thread *thread)
 void remove_breakpoint(int id)
 {
     struct byte_brkpt_info **byte_prev, *byte_info;
-    boolean removed = FALSE;
+    bool removed = false;
 
     byte_prev = &ByteBreakpoints;
     while ((byte_info = *byte_prev) != NULL) {
         if (WEAK(byte_info->component)->broken) {
             if (byte_info->id == id)
-                removed = TRUE;
+                removed = true;
             else
                 printf("breakpoint %d garbage collected\n", byte_info->id);
             *byte_prev = byte_info->next;
@@ -170,7 +170,7 @@ void remove_breakpoint(int id)
             *ptr = byte_info->orig_byte;
             *byte_prev = byte_info->next;
             free(byte_info);
-            removed = TRUE;
+            removed = true;
         }
         else
             byte_prev = &byte_info->next;

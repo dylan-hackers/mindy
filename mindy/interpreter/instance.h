@@ -36,8 +36,8 @@ struct library;
 struct defined_class {
     obj_t class;
     enum type_Id type_id;
-    boolean abstract_p;
-    boolean sealed_p;
+    bool abstract_p;
+    bool sealed_p;
     struct library *library;
     int (*scavenge)(struct object *ptr);
     obj_t (*transport)(obj_t object);

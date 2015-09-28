@@ -40,7 +40,7 @@
 #include "lose.h"
 
 static void expand_expr(struct expr **ptr);
-static void expand_body(struct body *body, boolean top_level);
+static void expand_body(struct body *body, bool top_level);
 
 
 /* Utilities */
@@ -459,7 +459,7 @@ static void expand_method_for_compile(struct method *method)
 
     method->body = chain_bodies(body, method->body);
 
-    expand_body(method->body, FALSE);
+    expand_body(method->body, false);
 }
 
 
@@ -483,7 +483,7 @@ static struct method *make_initializer(char *kind, struct bindings *bindings)
     int len;
     char *debug_name;
     struct method *res;
-    boolean first;
+    bool first;
 
     len = strlen(kind) + 1 - strlen(", ");
     for (param = params->required_params; param != NULL; param = param->next)
@@ -493,10 +493,10 @@ static struct method *make_initializer(char *kind, struct bindings *bindings)
     debug_name = malloc(len);
     strcpy(debug_name, kind);
 
-    first = TRUE;
+    first = true;
     for (param = params->required_params; param != NULL; param = param->next) {
         if (first)
-            first = FALSE;
+            first = false;
         else
             strcat(debug_name, ", ");
         strcat(debug_name, (char *)param->id->symbol->name);
@@ -727,14 +727,15 @@ static void expand_defconst_for_compile(struct defconst_constituent *c)
     expand_method_for_compile(c->tlf);
 }
 
-static boolean expand_defconst_constituent(struct defconst_constituent **ptr,
-                                           boolean top_level)
+static bool expand_defconst_constituent(struct constituent **ptr,
+                                        bool top_level)
 {
+    struct defconst_constituent *dc = (struct defconst_constituent *)*ptr;
     if (top_level)
-        expand_defconst_for_compile(*ptr);
+        expand_defconst_for_compile(dc);
     else
-        error((*ptr)->line, "define constant not at top-level");
-    return FALSE;
+        error(dc->line, "define constant not at top-level");
+    return false;
 }
 
 static void expand_defvar_for_compile(struct defvar_constituent *c)
@@ -743,14 +744,15 @@ static void expand_defvar_for_compile(struct defvar_constituent *c)
     expand_method_for_compile(c->tlf);
 }
 
-static boolean expand_defvar_constituent(struct defvar_constituent **ptr,
-                                         boolean top_level)
+static bool expand_defvar_constituent(struct constituent **ptr,
+                                      bool top_level)
 {
+    struct defvar_constituent *dv = (struct defvar_constituent *)*ptr;
     if (top_level)
-        expand_defvar_for_compile(*ptr);
+        expand_defvar_for_compile(dv);
     else
-        error((*ptr)->line, "define variable not at top-level");
-    return FALSE;
+        error(dv->line, "define variable not at top-level");
+    return false;
 }
 
 static void expand_defmethod_for_compile(struct defmethod_constituent *c)
@@ -782,14 +784,15 @@ static void expand_defmethod_for_compile(struct defmethod_constituent *c)
     expand_method_for_compile(c->tlf);
 }
 
-static boolean expand_defmethod_constituent(struct defmethod_constituent **ptr,
-                                            boolean top_level)
+static bool expand_defmethod_constituent(struct constituent **ptr,
+                                         bool top_level)
 {
+    struct defmethod_constituent *dm = (struct defmethod_constituent *)*ptr;
     if (top_level)
-        expand_defmethod_for_compile(*ptr);
+        expand_defmethod_for_compile(dm);
     else
-        error((*ptr)->method->line, "define method not at top-level");
-    return FALSE;
+        error(dm->method->line, "define method not at top-level");
+    return false;
 }
 
 static void expand_defdomain_for_compile(struct defdomain_constituent *c)
@@ -826,14 +829,15 @@ static void expand_defdomain_for_compile(struct defdomain_constituent *c)
 
 }
 
-static boolean expand_defdomain_constituent(struct defdomain_constituent **ptr,
-                                            boolean top_level)
+static bool expand_defdomain_constituent(struct constituent **ptr,
+                                         bool top_level)
 {
+    struct defdomain_constituent *dd = (struct defdomain_constituent *)*ptr;
     if (top_level)
-        expand_defdomain_for_compile(*ptr);
+        expand_defdomain_for_compile(dd);
     else
-        error((*ptr)->name->line, "define sealed domain not at top-level");
-    return FALSE;
+        error(dd->name->line, "define sealed domain not at top-level");
+    return false;
 }
 
 static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
@@ -927,15 +931,16 @@ static void expand_defgeneric_for_compile(struct defgeneric_constituent *c)
     expand_method_for_compile(c->tlf);
 }
 
-static boolean
-    expand_defgeneric_constituent(struct defgeneric_constituent **ptr,
-                                  boolean top_level)
+static bool
+    expand_defgeneric_constituent(struct constituent **ptr,
+                                  bool top_level)
 {
+    struct defgeneric_constituent *dg = (struct defgeneric_constituent *)*ptr;
     if (top_level)
-        expand_defgeneric_for_compile(*ptr);
+        expand_defgeneric_for_compile(dg);
     else
-        error((*ptr)->name->line, "define generic not at top-level");
-    return FALSE;
+        error(dg->name->line, "define generic not at top-level");
+    return false;
 }
 
 static void expand_slots(struct body *body,
@@ -948,11 +953,11 @@ static void expand_slots(struct body *body,
 
     for (slot = c->slots; slot != NULL; slot = slot->next) {
         struct arglist *slot_args;
-        boolean default_setter = TRUE;
+        bool default_setter = true;
 
         /* Extract the setter name, if there is one */
         if (slot->flags & flag_CONSTANT) {
-            default_setter = FALSE;
+            default_setter = false;
         } else if (slot->plist) {
             struct property *prop, **prev;
             prev = &slot->plist->head;
@@ -961,7 +966,7 @@ static void expand_slots(struct body *body,
                     if (prop->expr->kind == expr_LITERAL
                         && ((struct literal_expr *) (prop->expr))
                         ->lit->kind == literal_FALSE) {
-                        default_setter = FALSE;
+                        default_setter = false;
                         *prev = prop->next;
                         free(prop);
                     }
@@ -1179,18 +1184,19 @@ static void expand_defclass_for_compile(struct defclass_constituent *c)
     expand_method_for_compile(c->tlf2);
 }
 
-static boolean expand_defclass_constituent(struct defclass_constituent **ptr,
-                                           boolean top_level)
+static bool expand_defclass_constituent(struct constituent **ptr,
+                                        bool top_level)
 {
+    struct defclass_constituent *dc = (struct defclass_constituent *)*ptr;
     if (top_level)
-        expand_defclass_for_compile(*ptr);
+        expand_defclass_for_compile(dc);
     else
-        error((*ptr)->name->line, "define class not at top-level");
-    return FALSE;
+        error(dc->name->line, "define class not at top-level");
+    return false;
 }
 
-static boolean expand_expr_constituent(struct constituent **ptr,
-                                       boolean top_level)
+static bool expand_expr_constituent(struct constituent **ptr,
+                                    bool top_level)
 {
     struct expr_constituent *c = (struct expr_constituent *)*ptr;
     struct expr *expr = c->expr;
@@ -1198,30 +1204,30 @@ static boolean expand_expr_constituent(struct constituent **ptr,
     if (top_level) {
         if (expr->kind == expr_BODY) {
             struct body_expr *body_expr = (struct body_expr *)expr;
-            expand_body(body_expr->body, TRUE);
-            return FALSE;
+            expand_body(body_expr->body, true);
+            return false;
         }
         else {
             *ptr = make_top_level_form("Top Level Form",
                                        (struct constituent *)c);
-            return TRUE;
+            return true;
         }
     }
     else {
         expand_expr(&c->expr);
-        return FALSE;
+        return false;
     }
 }
 
-static boolean expand_local_constituent(struct constituent **ptr,
-                                        boolean top_level)
+static bool expand_local_constituent(struct constituent **ptr,
+                                     bool top_level)
 {
     struct local_constituent *c = (struct local_constituent *)*ptr;
     struct method *method = c->methods;
 
     if (top_level) {
         *ptr = make_top_level_form("Top Level Form", (struct constituent *)c);
-        return TRUE;
+        return true;
     }
     else if (method != NULL && method->specializers == NULL) {
         struct body *body = make_body();
@@ -1230,18 +1236,18 @@ static boolean expand_local_constituent(struct constituent **ptr,
         c->next = NULL;
         add_constituent(body, (struct constituent *)c);
         *ptr = make_expr_constituent(make_body_expr(body));
-        return TRUE;
+        return true;
     }
     else {
         for (; method != NULL; method = method->next_local)
             expand_method_for_compile(method);
-        expand_body(c->body, FALSE);
-        return FALSE;
+        expand_body(c->body, false);
+        return false;
     }
 }
 
-static boolean expand_handler_constituent(struct constituent **ptr,
-                                          boolean top_level)
+static bool expand_handler_constituent(struct constituent **ptr,
+                                       bool top_level)
 {
     struct handler_constituent *h = (struct handler_constituent *)*ptr;
     struct body *body;
@@ -1249,7 +1255,7 @@ static boolean expand_handler_constituent(struct constituent **ptr,
 
     if (top_level) {
         *ptr = make_top_level_form("Top Level Form", (struct constituent *)h);
-        return TRUE;
+        return true;
     }
 
     body = make_body();
@@ -1274,20 +1280,20 @@ static boolean expand_handler_constituent(struct constituent **ptr,
     h->func = NULL;
 
     /* Now expand that body. */
-    expand_body(h->body, FALSE);
+    expand_body(h->body, false);
 
-    return FALSE;
+    return false;
 }
 
-static boolean expand_let_constituent(struct constituent **ptr,
-                                      boolean top_level)
+static bool expand_let_constituent(struct constituent **ptr,
+                                   bool top_level)
 {
     struct let_constituent *let = (struct let_constituent *)*ptr;
     struct bindings *bindings = let->bindings;
 
     if (top_level) {
         *ptr = make_top_level_form("Top Level Form",(struct constituent *)let);
-        return TRUE;
+        return true;
     }
     else {
         struct param_list *params = bindings->params;
@@ -1351,43 +1357,45 @@ static boolean expand_let_constituent(struct constituent **ptr,
                 add_constituent(body, (struct constituent *)let);
             }
             *ptr = make_expr_constituent(make_body_expr(body));
-            return TRUE;
+            return true;
         }
         else {
             expand_bindings(bindings);
-            expand_body(let->body, FALSE);
-            return FALSE;
+            expand_body(let->body, false);
+            return false;
         }
     }
 }
 
-static boolean expand_tlf_constituent(struct tlf_constituent **ptr,
-                                      boolean top_level)
+static bool expand_tlf_constituent(struct constituent **ptr,
+                                   bool top_level)
 {
-    expand_method_for_compile((*ptr)->form);
-    return FALSE;
+    struct tlf_constituent *tlf = (struct tlf_constituent *)*ptr;
+    expand_method_for_compile(tlf->form);
+    return false;
 }
 
-static boolean expand_error_constituent(struct constituent **ptr)
+static bool expand_error_constituent(struct constituent **ptr, bool top_level)
 {
     lose("Called expand on a parse tree with errors?");
-    return FALSE;
+    return false;
 }
 
 
-static boolean
-    expand_defnamespace_constituent(struct defnamespace_constituent **ptr,
-                                    boolean top_level)
+static bool
+    expand_defnamespace_constituent(struct constituent **ptr,
+                                    bool top_level)
 {
+    struct defnamespace_constituent *dn = (struct defnamespace_constituent *)*ptr;
     if (top_level)
-        expand_defnamespace(*ptr);
+        expand_defnamespace(dn);
     else
-        error((*ptr)->name->line, "define %s not at top-level",
-              (*ptr)->kind == constituent_DEFMODULE ? "module" : "library");
-    return FALSE;
+        error(dn->name->line, "define %s not at top-level",
+              dn->kind == constituent_DEFMODULE ? "module" : "library");
+    return false;
 }
 
-static boolean (*ConstituentExpanders[])() = {
+static bool (*ConstituentExpanders[])(struct constituent **, bool) = {
     expand_defconst_constituent, expand_defvar_constituent,
     expand_defmethod_constituent, expand_defdomain_constituent,
     expand_defgeneric_constituent, expand_defclass_constituent,
@@ -1397,7 +1405,7 @@ static boolean (*ConstituentExpanders[])() = {
     expand_defnamespace_constituent, expand_defnamespace_constituent
 };
 
-static boolean expand_constituent(struct constituent **ptr, boolean top_level)
+static bool expand_constituent(struct constituent **ptr, bool top_level)
 {
     return (*ConstituentExpanders[(int)(*ptr)->kind])(ptr, top_level);
 }
@@ -1597,7 +1605,7 @@ static struct body *make_unwind_protect(struct body *body,struct body *cleanup)
     return make_expr_body(expr);
 }
 
-static boolean expand_block_expr(struct expr **ptr)
+static bool expand_block_expr(struct expr **ptr)
 {
     struct block_expr *e = (struct block_expr *)*ptr;
     struct body *body = e->body;
@@ -1615,7 +1623,7 @@ static boolean expand_block_expr(struct expr **ptr)
 
     free(e);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -1664,7 +1672,7 @@ static struct expr *expand_case_body(struct condition_body *body)
         return make_literal_ref(make_false_literal());
 }
 
-static boolean expand_case_expr(struct expr **ptr)
+static bool expand_case_expr(struct expr **ptr)
 {
     struct case_expr *e = (struct case_expr *)*ptr;
 
@@ -1672,7 +1680,7 @@ static boolean expand_case_expr(struct expr **ptr)
 
     free(e);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -1960,7 +1968,7 @@ static void (*ForClauseGrovelers[])() = {
     grovel_from_for_clause
 };
 
-static boolean expand_for_expr(struct expr **ptr)
+static bool expand_for_expr(struct expr **ptr)
 {
     struct for_expr *e = (struct for_expr *)*ptr;
     struct for_info info;
@@ -2021,7 +2029,7 @@ static boolean expand_for_expr(struct expr **ptr)
     /* Free the loop expression now that we are done with it. */
     free(e);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -2084,7 +2092,7 @@ static struct expr *expand_select_body(struct condition_body *body,
     }
 }
 
-static boolean expand_select_expr(struct expr **ptr)
+static bool expand_select_expr(struct expr **ptr)
 {
     struct select_expr *e = (struct select_expr *)*ptr;
     struct symbol *valtemp = gensym();
@@ -2101,7 +2109,7 @@ static boolean expand_select_expr(struct expr **ptr)
 
     free(e);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -2117,7 +2125,7 @@ static struct expr *make_binary_fn_call(struct id *op, struct expr *left,
     return make_function_call(make_varref(op), args);
 }
 
-static boolean expand_binop_series_expr(struct expr **ptr)
+static bool expand_binop_series_expr(struct expr **ptr)
 {
     struct binop_series_expr *e = (struct binop_series_expr *)*ptr;
     struct binop *stack = NULL;
@@ -2173,25 +2181,25 @@ static boolean expand_binop_series_expr(struct expr **ptr)
 
     *ptr = right;
 
-    return TRUE;
+    return true;
 }
 
 
 /* Simple expression expanders. */
 
-static boolean expand_varref_expr(struct varref_expr **ptr)
+static bool expand_varref_expr(struct varref_expr **ptr)
 {
     /* Nothing to do. */
-    return FALSE;
+    return false;
 }
 
-static boolean expand_literal_expr(struct literal_expr **ptr)
+static bool expand_literal_expr(struct literal_expr **ptr)
 {
     /* Nothing to do. */
-    return FALSE;
+    return false;
 }
 
-static boolean expand_call_expr(struct call_expr **ptr)
+static bool expand_call_expr(struct call_expr **ptr)
 {
     struct call_expr *e = *ptr;
     struct argument *arg;
@@ -2201,23 +2209,23 @@ static boolean expand_call_expr(struct call_expr **ptr)
             lose("Source-transforming a call where the function "
                  "isn't a varref?");
         if ((*e->info->srctran)(ptr))
-            return TRUE;
+            return true;
     }
 
     expand_expr(&e->func);
     for (arg = e->args; arg != NULL; arg = arg->next)
         expand_expr(&arg->expr);
-    return FALSE;
+    return false;
 }
 
-static boolean expand_dot_expr(struct expr **ptr)
+static bool expand_dot_expr(struct expr **ptr)
 {
     struct dot_expr *e = (struct dot_expr *)*ptr;
 
     expand_expr(&e->arg);
     expand_expr(&e->func);
 
-    return FALSE;
+    return false;
 }
 
 static struct literal *extract_literal(struct body *body)
@@ -2237,7 +2245,7 @@ static struct literal *extract_literal(struct body *body)
         return ((struct literal_expr *)expr)->lit;
 }
 
-static boolean expand_if_expr(struct expr **ptr)
+static bool expand_if_expr(struct expr **ptr)
 {
     struct if_expr *e = *(struct if_expr **)ptr;
 
@@ -2255,11 +2263,11 @@ static boolean expand_if_expr(struct expr **ptr)
         }
         free_expr(e->cond);
         free(e);
-        return TRUE;
+        return true;
     }
 
-    expand_body(e->consequent, FALSE);
-    expand_body(e->alternate, FALSE);
+    expand_body(e->consequent, false);
+    expand_body(e->alternate, false);
 
     if (e->cond->kind == expr_IF) {
         struct if_expr *inner = (struct if_expr *)e->cond;
@@ -2310,7 +2318,7 @@ static boolean expand_if_expr(struct expr **ptr)
             free_body(inner->consequent);
             free_body(inner->alternate);
             free(inner);
-            return FALSE;
+            return false;
         }
         else {
             struct body *consequent = dup_body(e->consequent);
@@ -2327,73 +2335,73 @@ static boolean expand_if_expr(struct expr **ptr)
                                              make_else(0, alternate)));
                 free(inner);
 
-                return TRUE;
+                return true;
             }
             else {
                 if (consequent)
                     free_body(consequent);
                 if (alternate)
                     free_body(alternate);
-                return FALSE;
+                return false;
             }
         }
     }
     else
-        return FALSE;
+        return false;
 }
 
-static boolean expand_varset_expr(struct varset_expr **ptr)
+static bool expand_varset_expr(struct varset_expr **ptr)
 {
     struct varset_expr *e = *ptr;
 
     expand_expr(&e->value);
 
-    return FALSE;
+    return false;
 }
 
-static boolean expand_body_expr(struct body_expr **ptr)
+static bool expand_body_expr(struct body_expr **ptr)
 {
-    expand_body((*ptr)->body, FALSE);
-    return FALSE;
+    expand_body((*ptr)->body, false);
+    return false;
 }
 
-static boolean expand_method_expr(struct expr **ptr)
+static bool expand_method_expr(struct expr **ptr)
 {
     struct method_expr *e = (struct method_expr *)*ptr;
     struct method *method = e->method;
 
     if (method->specializers) {
         expand_method_for_compile(method);
-        return FALSE;
+        return false;
     }
     else {
         struct body *body = make_body();
         add_method_wrap(body, method);
         add_expr(body, (struct expr *)e);
         *ptr = make_body_expr(body);
-        return TRUE;
+        return true;
     }
 }
 
-static boolean expand_loop_expr(struct loop_expr **ptr)
+static bool expand_loop_expr(struct loop_expr **ptr)
 {
-    expand_body((*ptr)->body, FALSE);
-    return FALSE;
+    expand_body((*ptr)->body, false);
+    return false;
 }
 
-static boolean expand_repeat_expr(struct repeat_expr **ptr)
+static bool expand_repeat_expr(struct repeat_expr **ptr)
 {
     /* No nothing. */
-    return FALSE;
+    return false;
 }
 
-static boolean expand_error_expr(struct expr **ptr)
+static bool expand_error_expr(struct expr **ptr)
 {
     lose("Called expand on a parse tree with errors?");
-    return FALSE;
+    return false;
 }
 
-static boolean (*ExpressionExpanders[])() = {
+static bool (*ExpressionExpanders[])() = {
     expand_varref_expr, expand_literal_expr, expand_call_expr,
     expand_method_expr, expand_dot_expr, expand_body_expr, expand_block_expr,
     expand_case_expr, expand_if_expr, expand_for_expr, expand_select_expr,
@@ -2413,7 +2421,7 @@ static void expand_expr(struct expr **ptr)
 
 /* Expand */
 
-static void expand_body(struct body *body, boolean top_level)
+static void expand_body(struct body *body, bool top_level)
 {
     struct constituent **prev, *next;
 
@@ -2433,7 +2441,7 @@ static void expand_body(struct body *body, boolean top_level)
 
 void expand(struct body *body)
 {
-    expand_body(body, TRUE);
+    expand_body(body, true);
 }
 
 
@@ -2447,7 +2455,7 @@ static void free_function_ref(struct expr *expr)
     free(varref);
 }
 
-static boolean srctran_varref_assignment(struct expr **ptr)
+static bool srctran_varref_assignment(struct expr **ptr)
 {
     struct call_expr *e = (struct call_expr *)*ptr;
     struct argument *args = e->args;
@@ -2462,10 +2470,10 @@ static boolean srctran_varref_assignment(struct expr **ptr)
     free_function_ref(e->func);
     free(e);
 
-    return TRUE;
+    return true;
 }
 
-static boolean srctran_call_assignment(struct expr **ptr)
+static bool srctran_call_assignment(struct expr **ptr)
 {
     struct call_expr *e = (struct call_expr *)*ptr;
     struct argument *args = e->args;
@@ -2476,10 +2484,10 @@ static boolean srctran_call_assignment(struct expr **ptr)
     struct id *var;
 
     if (comb->func->kind != expr_VARREF)
-        return FALSE;
+        return false;
     var = ((struct varref_expr *)comb->func)->var;
     change_to_setter(var);
-    comb->info = lookup_function_info(var, FALSE);
+    comb->info = lookup_function_info(var, false);
 
     temp = gensym();
     body = make_body();
@@ -2498,10 +2506,10 @@ static boolean srctran_call_assignment(struct expr **ptr)
     free_function_ref(e->func);
     free(e);
 
-    return TRUE;
+    return true;
 }
 
-static boolean srctran_dot_assignment(struct expr **ptr)
+static bool srctran_dot_assignment(struct expr **ptr)
 {
     struct call_expr *e = (struct call_expr *)*ptr;
     struct argument *lhs = e->args;
@@ -2513,7 +2521,7 @@ static boolean srctran_dot_assignment(struct expr **ptr)
     struct symbol *temp;
 
     if (func->kind != expr_VARREF)
-        return FALSE;
+        return false;
     change_to_setter(((struct varref_expr *)func)->var);
 
     temp = gensym();
@@ -2534,10 +2542,10 @@ static boolean srctran_dot_assignment(struct expr **ptr)
     free_function_ref(e->func);
     free(e);
 
-    return TRUE;
+    return true;
 }
 
-static boolean srctran_assignment(struct expr **ptr)
+static bool srctran_assignment(struct expr **ptr)
 {
     struct call_expr *e = (struct call_expr *)*ptr;
     struct argument *lhs = e->args;
@@ -2546,7 +2554,7 @@ static boolean srctran_assignment(struct expr **ptr)
     if (lhs==NULL || lhs->next==NULL || lhs->next->next!=NULL) {
         struct varref_expr *func = (struct varref_expr *)e->func;
         error(func->var->line, ":= invoked with other than two arguments");
-        return FALSE;
+        return false;
     }
 
     switch (lhs->expr->kind) {
@@ -2564,11 +2572,11 @@ static boolean srctran_assignment(struct expr **ptr)
             struct varref_expr *func = (struct varref_expr *)e->func;
             error(func->var->line, ":= applied to non-assignable expression.");
         }
-        return FALSE;
+        return false;
     }
 }
 
-static boolean srctran_and(struct expr **ptr)
+static bool srctran_and(struct expr **ptr)
 {
     struct call_expr *e = (struct call_expr *)*ptr;
     struct argument *arg = e->args;
@@ -2587,10 +2595,10 @@ static boolean srctran_and(struct expr **ptr)
         *ptr = make_if(arg->expr, make_expr_body((struct expr *)e), NULL);
         free(arg);
     }
-    return TRUE;
+    return true;
 }
 
-static boolean srctran_or(struct expr **ptr)
+static bool srctran_or(struct expr **ptr)
 {
     struct call_expr *e = (struct call_expr *)*ptr;
     struct argument *arg = e->args;
@@ -2618,20 +2626,20 @@ static boolean srctran_or(struct expr **ptr)
         free(arg);
     }
 
-    return TRUE;
+    return true;
 }
 
 
 
 /* Initialization stuff. */
 
-static void set_srctran(char *name, boolean (*srctran)(), boolean internal)
+static void set_srctran(char *name, bool (*srctran)(), bool internal)
 {
     struct id *identifier = id(symbol(name));
     struct function_info *info;
 
     identifier->internal = internal;
-    info = lookup_function_info(identifier, TRUE);
+    info = lookup_function_info(identifier, true);
     info->srctran = srctran;
 
     free(identifier);
@@ -2639,10 +2647,10 @@ static void set_srctran(char *name, boolean (*srctran)(), boolean internal)
 
 void init_expand(void)
 {
-    set_srctran(":=", srctran_assignment, TRUE);
-    set_srctran(":=", srctran_assignment, FALSE);
-    set_srctran("&", srctran_and, TRUE);
-    set_srctran("&", srctran_and, FALSE);
-    set_srctran("|", srctran_or, TRUE);
-    set_srctran("|", srctran_or, FALSE);
+    set_srctran(":=", srctran_assignment, true);
+    set_srctran(":=", srctran_assignment, false);
+    set_srctran("&", srctran_and, true);
+    set_srctran("&", srctran_and, false);
+    set_srctran("|", srctran_or, true);
+    set_srctran("|", srctran_or, false);
 }

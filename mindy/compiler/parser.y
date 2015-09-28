@@ -51,7 +51,7 @@ struct token_list {
 } *yacc_recovery_list = NULL;
 
 static void yyerror(char *);
-static boolean verify_symbol_aux(struct id *id, struct token *against);
+static bool verify_symbol_aux(struct id *id, struct token *against);
 static void yacc_recover();
 static void push_yacc_recovery(int token);
 static void pop_yacc_recoveries(int count);
@@ -94,7 +94,7 @@ static void pop_yacc_recoveries(int count);
     struct class_guts *class_guts;
     struct slot_spec *slot_spec;
     struct initarg_spec *initarg_spec;
-    boolean bool;
+    bool boolean;
     struct inherited_spec *inherited_spec;
     enum slot_allocation slot_allocation;
     struct gf_suffix *gf_suffix;
@@ -267,7 +267,7 @@ static void pop_yacc_recoveries(int count);
 %type <class_guts> class_guts_opt class_guts
 %type <slot_spec> slot_spec
 %type <initarg_spec> initarg_spec
-%type <bool> required_opt
+%type <boolean> required_opt
 %type <inherited_spec> inherited_spec
 %type <slot_allocation> allocation
 %type <gf_suffix> gf_suffix
@@ -820,8 +820,8 @@ initarg_spec:
 ;
 
 required_opt:
-        REQUIRED { free($1); $$ = TRUE; }
-    | /* epsilon */ { $$ = FALSE; }
+        REQUIRED { free($1); $$ = true; }
+    | /* epsilon */ { $$ = false; }
 ;
 
 inherited_spec:
@@ -874,7 +874,7 @@ gf_suffix:
     | ARROW return_type_element property_list_opt
         { free($1);
           $$ = make_gf_suffix
-                  (add_return_type(make_return_type_list(FALSE, NULL), $2),
+                  (add_return_type(make_return_type_list(false, NULL), $2),
                    $3);
         }
     | ARROW LPAREN return_type_list RPAREN property_list_opt
@@ -984,9 +984,9 @@ return_type:
 
 return_type_list:
         /* epsilon */
-        { $$ = make_return_type_list(FALSE, NULL); }
+        { $$ = make_return_type_list(false, NULL); }
     | REST return_type_element
-        { free($1); $$ = make_return_type_list(TRUE, $2); }
+        { free($1); $$ = make_return_type_list(true, $2); }
     | return_type_list_head
         { $$ = $1; }
     | return_type_list_head COMMA REST return_type_element
@@ -995,7 +995,7 @@ return_type_list:
 
 return_type_list_head:
         return_type_element
-        { $$ = add_return_type(make_return_type_list(FALSE, NULL), $1); }
+        { $$ = add_return_type(make_return_type_list(false, NULL), $1); }
     | return_type_list_head COMMA return_type_element
         { free($2); $$ = add_return_type($1, $3); }
 ;
@@ -1319,7 +1319,7 @@ static void yyerror(char *msg)
     yacc_recover();
 }
 
-static boolean verify_symbol_aux(struct id *id, struct token *token)
+static bool verify_symbol_aux(struct id *id, struct token *token)
 {
     if (token) {
         int line = token->line;
@@ -1332,12 +1332,12 @@ static boolean verify_symbol_aux(struct id *id, struct token *token)
             error(line, "mismatched name, ``%s'' isn't ``%s''",
                   token->chars, id->symbol->name);
             free(token);
-            return TRUE;
+            return true;
         }
         else
             free(token);
     }
-    return FALSE;
+    return false;
 }
 
 static void yacc_recover()

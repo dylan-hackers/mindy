@@ -72,7 +72,7 @@ void define(char *name, obj_t value)
     struct variable *var;
 
     define_variable(module_BuiltinStuff, namesym, var_Variable);
-    var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    var = find_variable(module_BuiltinStuff, namesym, false, true);
     maybe_copy_methods(value, var->value);
     var->value = value;
     var->function = func_Maybe;
@@ -85,14 +85,14 @@ void define_constant(char *name, obj_t value)
     struct variable *var;
 
     define_variable(module_BuiltinStuff, namesym, var_Constant);
-    var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    var = find_variable(module_BuiltinStuff, namesym, false, true);
     maybe_copy_methods(value, var->value);
     var->value = value;
     var->function = func_Maybe;
 }
 
-void define_function(char *name, obj_t specializers, boolean restp,
-                     obj_t keywords, boolean all_keys, obj_t result_type,
+void define_function(char *name, obj_t specializers, bool restp,
+                     obj_t keywords, bool all_keys, obj_t result_type,
                      obj_t (*func)())
 {
     define_constant(name,
@@ -100,8 +100,8 @@ void define_function(char *name, obj_t specializers, boolean restp,
                                         all_keys, result_type, func));
 }
 
-void define_generic_function(char *name, obj_t specializers, boolean restp,
-                             obj_t keys, boolean all_keys, obj_t result_types,
+void define_generic_function(char *name, obj_t specializers, bool restp,
+                             obj_t keys, bool all_keys, obj_t result_types,
                              obj_t more_results_type)
 {
     obj_t namesym = symbol(name);
@@ -111,14 +111,14 @@ void define_generic_function(char *name, obj_t specializers, boolean restp,
                                      result_types, more_results_type);
 
     define_variable(module_BuiltinStuff, namesym, var_GenericFunction);
-    var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    var = find_variable(module_BuiltinStuff, namesym, false, true);
     maybe_copy_methods(gf, var->value);
     var->value = gf;
     var->function = func_Always;
 }
 
-void define_method(char *name, obj_t specializers, boolean restp,
-                   obj_t keywords, boolean all_keys, obj_t result_type,
+void define_method(char *name, obj_t specializers, bool restp,
+                   obj_t keywords, bool all_keys, obj_t result_type,
                    obj_t (*func)())
 {
     obj_t namesym = symbol(name);
@@ -128,7 +128,7 @@ void define_method(char *name, obj_t specializers, boolean restp,
     obj_t gf;
 
     define_variable(module_BuiltinStuff, namesym, var_Method);
-    var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    var = find_variable(module_BuiltinStuff, namesym, false, true);
     gf = var->value;
     if (gf == obj_Unbound) {
         gf = make_default_generic_function(namesym, method);
@@ -146,7 +146,7 @@ void define_class(char *name, obj_t value)
     struct variable *var;
 
     define_variable(module_BuiltinStuff, namesym, var_Class);
-    var = find_variable(module_BuiltinStuff, namesym, FALSE, TRUE);
+    var = find_variable(module_BuiltinStuff, namesym, false, true);
     maybe_copy_methods(value, var->value);
     var->value = value;
     var->function = func_No;
@@ -244,8 +244,8 @@ static obj_t defslot(obj_t getter, obj_t setter)
         var = obj_rawptr(setter);
         if (var->value == obj_Unbound)
             var->value = make_generic_function(var->name, specializers,
-                                               FALSE, obj_False,
-                                               FALSE, obj_Nil,
+                                               false, obj_False,
+                                               false, obj_Nil,
                                                obj_ObjectClass);
     }
 
@@ -253,8 +253,8 @@ static obj_t defslot(obj_t getter, obj_t setter)
     if (var->value == obj_Unbound) {
         obj_t specializers = list1(obj_ObjectClass);
         var->value = make_generic_function(var->name, specializers,
-                                           FALSE, obj_False,
-                                           FALSE, obj_Nil, obj_ObjectClass);
+                                           false, obj_False,
+                                           false, obj_Nil, obj_ObjectClass);
     }
 
     return var->name;
@@ -267,21 +267,21 @@ void init_def_functions(void)
 {
     define_function("init-variable",
                     list3(obj_ObjectClass, obj_ObjectClass, obj_ObjectClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass, init_variable);
+                    false, obj_False, false, obj_ObjectClass, init_variable);
     define_function("%define-method", list2(obj_ObjectClass, obj_ObjectClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass, defmethod);
+                    false, obj_False, false, obj_ObjectClass, defmethod);
     define_function("%define-generic",
                     listn(7, obj_ObjectClass, obj_ObjectClass, obj_ObjectClass,
                           obj_ObjectClass, obj_ObjectClass, obj_ObjectClass,
                           obj_ObjectClass),
-                    FALSE, obj_Nil, FALSE, obj_ObjectClass, defgeneric);
+                    false, obj_Nil, false, obj_ObjectClass, defgeneric);
     define_function("%define-class-1",
                     list2(obj_ObjectClass, obj_ObjectClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass, defclass1);
+                    false, obj_False, false, obj_ObjectClass, defclass1);
     define_function("%define-class-2",
                     listn(5, obj_ObjectClass, obj_ObjectClass,
                           obj_ObjectClass, obj_ObjectClass, obj_ObjectClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass, defclass2);
+                    false, obj_False, false, obj_ObjectClass, defclass2);
     define_function("%define-slot", list2(obj_ObjectClass, obj_ObjectClass),
-                    FALSE, obj_False, FALSE, obj_ObjectClass, defslot);
+                    false, obj_False, false, obj_ObjectClass, defslot);
 }

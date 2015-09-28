@@ -25,21 +25,13 @@
 *
 \**********************************************************************/
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef WIN32
-#   define boolean unsigned char
-#   include "mindy-w32.h"
-#else
-#   define boolean int
-#endif
-#define TRUE 1
-#define FALSE 0
-
 extern char *current_file;
-extern boolean GiveWarnings;
+extern bool GiveWarnings;
 
 extern void error (int line, char *msg, ...);
 extern void warn (int line, char *msg, ...);

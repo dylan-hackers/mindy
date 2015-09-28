@@ -52,8 +52,8 @@
 #define make_want(req,restp) (((req)<<1)|((restp)?1:0))
 #define want_req(want) ((want)>>1)
 #define want_restp(want) ((want)&1)
-#define SINGLE make_want(1,FALSE)
-#define NOTHING make_want(0,FALSE)
+#define SINGLE make_want(1, false)
+#define NOTHING make_want(0, false)
 
 static struct component *compile_method(struct method *method);
 static void compile_expr(struct expr *expr, struct component *component,
@@ -221,7 +221,7 @@ static int find_literal(struct component *component, struct literal *literal)
 }
 
 static int find_variable(struct component *component, struct id *id,
-                         boolean written)
+                         bool written)
 {
     int i = 0;
     struct constant *c;
@@ -231,7 +231,7 @@ static int find_variable(struct component *component, struct id *id,
             && c->u.varref.id->symbol == id->symbol
             && c->u.varref.id->internal == id->internal) {
             if (written)
-                c->u.varref.written = TRUE;
+                c->u.varref.written = true;
             return i;
         }
         else
@@ -309,7 +309,7 @@ static struct scope_info *make_scope(void)
 }
 
 static void add_var_info(struct scope_info *scope, struct id *var,
-                         boolean indirect, boolean argument, int offset)
+                         bool indirect, bool argument, int offset)
 {
     struct var_info *var_info;
 
@@ -424,10 +424,10 @@ static void compile_varref_expr(struct varref_expr *expr,
     }
     else if (want == FUNC)
         emit_op_and_arg(component, op_PUSH_FUNCTION,
-                        find_variable(component, expr->var, FALSE));
+                        find_variable(component, expr->var, false));
     else {
         emit_op_and_arg(component, op_PUSH_VALUE,
-                        find_variable(component, expr->var, FALSE));
+                        find_variable(component, expr->var, false));
         if (want != FUNC)
             canonicalize_value(component, want);
     }
@@ -659,7 +659,7 @@ static void compile_varset_expr(struct varset_expr *expr,
         if (want != NOTHING)
             emit_op(component, op_DUP);
         emit_op_and_arg(component, op_POP_VALUE,
-                        find_variable(component, expr->var, TRUE));
+                        find_variable(component, expr->var, true));
     }
     if (want != FUNC && want != NOTHING)
         canonicalize_value(component, want);
@@ -779,7 +779,7 @@ static void compile_local_constituent(struct local_constituent *c,
             emit_op(component, op_MAKE_VALUE_CELL);
             emit_op_and_arg(component, op_POP_LOCAL, binding->offset);
         }
-        add_var_info(scope, binding->id, binding->closed_over, FALSE,
+        add_var_info(scope, binding->id, binding->closed_over, false,
                      binding->offset);
     }
 
@@ -808,17 +808,17 @@ static void compile_handler_constituent(struct handler_constituent *c,
 {
     if (want == TAIL) {
         emit_op_and_arg(component, op_PUSH_FUNCTION,
-                        find_variable(component, id(sym_Apply), FALSE));
+                        find_variable(component, id(sym_Apply), false));
         emit_op_and_arg(component, op_PUSH_FUNCTION,
-                        find_variable(component, id(sym_Values), FALSE));
-        compile_handler_constituent(c, component, make_want(0, TRUE));
+                        find_variable(component, id(sym_Values), false));
+        compile_handler_constituent(c, component, make_want(0, true));
         emit_op_and_arg(component, op_CALL_TAIL, 2);
     }
     else {
         compile_body(c->body, component, want);
         emit_op_and_arg(component, op_PUSH_FUNCTION,
                         find_variable(component, id(sym_PopHandler),
-                                      FALSE));
+                                      false));
         emit_call_op_and_arg(component, op_CALL_FOR_MANY, 0);
         emit_wants(component, NOTHING);
     }
@@ -835,13 +835,13 @@ static void compile_let_constituent(struct let_constituent *c,
     compile_expr(bindings->expr, component,
                  make_want(c->required, bindings->params->rest_param));
     while (binding != c->inside) {
-        boolean indirect = binding->set && binding->closed_over;
+        bool indirect = binding->set && binding->closed_over;
         if (indirect)
             emit_op(component, op_MAKE_VALUE_CELL);
         emit_op_and_arg(component, op_POP_LOCAL, binding->offset);
         if (binding->argument)
             lose("Argument in the bindings of a let?");
-        add_var_info(scope, binding->id, indirect, FALSE, binding->offset);
+        add_var_info(scope, binding->id, indirect, false, binding->offset);
         binding = binding->next;
     }
     push_scope(component, scope);
@@ -937,13 +937,13 @@ static struct component *compile_method(struct method *method)
 
     for (over = method->closes_over; over != NULL; over = over->next) {
         binding = over->binding;
-        add_var_info(scope, binding->id, binding->set, TRUE, over->offset);
+        add_var_info(scope, binding->id, binding->set, true, over->offset);
     }
 
     for (binding = method->lexenv->bindings;
          binding != NULL && binding->home == method;
          binding = binding->next) {
-        boolean indirect = binding->set && binding->closed_over;
+        bool indirect = binding->set && binding->closed_over;
         if (indirect) {
             emit_op_and_arg(component, op_PUSH_ARG,
                             method->nargs - binding->offset - 1);
@@ -953,7 +953,7 @@ static struct component *compile_method(struct method *method)
         }
         if (!binding->argument)
             lose("Non-argument in the method bindings?");
-        add_var_info(scope, binding->id, indirect, TRUE,
+        add_var_info(scope, binding->id, indirect, true,
                      method->nargs - binding->offset - 1);
     }
 
@@ -1247,20 +1247,20 @@ static void compile_find_variable_call(struct call_expr *call,
         if (expr->binding)
             lose("find-variable called on a local variable?");
         emit_op_and_arg(component, op_PUSH_CONSTANT,
-                        find_variable(component, expr->var, FALSE));
+                        find_variable(component, expr->var, false));
         canonicalize_value(component, want);
     }
     else
         lose("find-variable called with the wrong number of arguments?");
 }
 
-static void set_compiler(char *name, void (*compiler)(), boolean internal)
+static void set_compiler(char *name, void (*compiler)(), bool internal)
 {
     struct id *identifier = id(symbol(name));
     struct function_info *info;
 
     identifier->internal = internal;
-    info = lookup_function_info(identifier, TRUE);
+    info = lookup_function_info(identifier, true);
     info->compile = compiler;
 
     free(identifier);
@@ -1268,27 +1268,27 @@ static void set_compiler(char *name, void (*compiler)(), boolean internal)
 
 void init_compile(void)
 {
-    set_compiler("check-type", compile_check_type_call, TRUE);
-    set_compiler("check-type", compile_check_type_call, FALSE);
-    set_compiler("+", compile_plus_call, TRUE);
-    set_compiler("+", compile_plus_call, FALSE);
-    set_compiler("-", compile_minus_call, TRUE);
-    set_compiler("-", compile_minus_call, FALSE);
-    set_compiler("<", compile_lt_call, TRUE);
-    set_compiler("<", compile_lt_call, FALSE);
-    set_compiler("<=", compile_le_call, TRUE);
-    set_compiler("<=", compile_le_call, FALSE);
-    set_compiler("=", compile_eq_call, TRUE);
-    set_compiler("=", compile_eq_call, FALSE);
-    set_compiler("==", compile_idp_call, TRUE);
-    set_compiler("==", compile_idp_call, FALSE);
-    set_compiler("~=", compile_ne_call, TRUE);
-    set_compiler("~=", compile_ne_call, FALSE);
-    set_compiler(">", compile_gt_call, TRUE);
-    set_compiler(">", compile_gt_call, FALSE);
-    set_compiler(">=", compile_ge_call, TRUE);
-    set_compiler(">=", compile_ge_call, FALSE);
-    set_compiler("values", compile_values_call, TRUE);
-    set_compiler("values", compile_values_call, FALSE);
-    set_compiler("find-variable", compile_find_variable_call, TRUE);
+    set_compiler("check-type", compile_check_type_call, true);
+    set_compiler("check-type", compile_check_type_call, false);
+    set_compiler("+", compile_plus_call, true);
+    set_compiler("+", compile_plus_call, false);
+    set_compiler("-", compile_minus_call, true);
+    set_compiler("-", compile_minus_call, false);
+    set_compiler("<", compile_lt_call, true);
+    set_compiler("<", compile_lt_call, false);
+    set_compiler("<=", compile_le_call, true);
+    set_compiler("<=", compile_le_call, false);
+    set_compiler("=", compile_eq_call, true);
+    set_compiler("=", compile_eq_call, false);
+    set_compiler("==", compile_idp_call, true);
+    set_compiler("==", compile_idp_call, false);
+    set_compiler("~=", compile_ne_call, true);
+    set_compiler("~=", compile_ne_call, false);
+    set_compiler(">", compile_gt_call, true);
+    set_compiler(">", compile_gt_call, false);
+    set_compiler(">=", compile_ge_call, true);
+    set_compiler(">=", compile_ge_call, false);
+    set_compiler("values", compile_values_call, true);
+    set_compiler("values", compile_values_call, false);
+    set_compiler("find-variable", compile_find_variable_call, true);
 }

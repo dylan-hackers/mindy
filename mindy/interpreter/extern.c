@@ -245,7 +245,7 @@ void *get_c_object(obj_t obj)
 }
 
 /* Tries to convert a C return value back into a dylan object. */
-obj_t convert_c_object(obj_t cls, void *obj, boolean miss_ok)
+obj_t convert_c_object(obj_t cls, void *obj, bool miss_ok)
 {
     if (cls == obj_ObjectClass)
         return make_c_pointer(obj_CPointerClass, obj);
@@ -452,7 +452,7 @@ obj_t pointer_at(obj_t /* <statically-typed-pointer> */ pointer,
         error("class is not statically typed pointer: %=", cls);
     /* pointer size object -- dereference as (void **) */
     return convert_c_object(cls, *(void **)((char *)ptr + true_offset),
-                            FALSE);
+                            false);
 }
 
 obj_t pointer_at_setter(obj_t /* <statically-typed-pointer> */ value,
@@ -504,16 +504,16 @@ obj_t c_pointer_field(obj_t pointer, obj_t offset, obj_t cls, obj_t deref)
 
     if (deref == obj_False)
         /* Don't dereference -- just increment */
-        return convert_c_object(cls, (void *)((long)ptr + true_offset), FALSE);
+        return convert_c_object(cls, (void *)((long)ptr + true_offset), false);
     else if (cls == obj_CharacterClass || cls == obj_BooleanClass)
         /* byte size object -- dereference as (char *) */
         return convert_c_object(cls,
                                 (void *)((long)*((char *)ptr + true_offset)),
-                                FALSE);
+                                false);
     else
         /* pointer size ofject -- dereference as (void **) */
         return convert_c_object(cls, *(void **)((char *)ptr + true_offset),
-                                FALSE);
+                                false);
 }
 
 /* Sets the value of a "slot" in the "structure" pointed to by a */
@@ -575,7 +575,7 @@ int scav_c_pointer(struct object *obj)
 
 obj_t trans_c_pointer(obj_t cptr)
 {
-    return transport(cptr, sizeof(struct c_pointer), TRUE);
+    return transport(cptr, sizeof(struct c_pointer), true);
 }
 
 static int scav_foreign_file(struct object *obj)
@@ -590,7 +590,7 @@ static obj_t trans_foreign_file(obj_t cptr)
     return transport(cptr,
                      sizeof(struct foreign_file)
                        + FOREIGN_FILE(cptr)->extra_size,
-                     TRUE);
+                     true);
 }
 
 static int scav_shared_file(struct object *obj)
@@ -606,7 +606,7 @@ static obj_t trans_shared_file(obj_t cptr)
                      sizeof(struct shared_file)
                      + ((obj_ptr(struct shared_file *,cptr)->file_count - 1)
                         * sizeof(shl_t)),
-                     TRUE);
+                     true);
 }
 
 void scavenge_c_roots(void)
@@ -624,7 +624,7 @@ void make_c_classes(void)
     obj_CPointerClass
         = make_builtin_class(scav_c_pointer, trans_c_pointer);
     CLASS(obj_CPointerClass)->class = obj_StaticTypeClass;
-    CLASS(obj_CPointerClass)->sealed_p = FALSE;
+    CLASS(obj_CPointerClass)->sealed_p = false;
     obj_ForeignFileClass = make_abstract_class(0);
     obj_ArchivedFileClass
         = make_builtin_class(scav_foreign_file, trans_foreign_file);
@@ -655,95 +655,95 @@ void init_c_classes(void)
 void init_c_functions(void)
 {
     define_method("find-c-function",
-                  list1(obj_ByteStringClass), FALSE,
+                  list1(obj_ByteStringClass), false,
                   list1(pair(symbol("file"), obj_Unbound)),
-                  FALSE, obj_ObjectClass, find_c_function);
+                  false, obj_ObjectClass, find_c_function);
     define_method("find-c-pointer",
-                  list1(obj_ByteStringClass), FALSE,
+                  list1(obj_ByteStringClass), false,
                   list1(pair(symbol("file"), obj_Unbound)),
-                  FALSE, obj_ObjectClass, find_c_ptr);
+                  false, obj_ObjectClass, find_c_ptr);
     define_method("load-object-file",
-                  list1(obj_ListClass), FALSE,
-                  list1(pair(symbol("include"), obj_Nil)), FALSE,
+                  list1(obj_ListClass), false,
+                  list1(pair(symbol("include"), obj_Nil)), false,
                   obj_ObjectClass, load_c_file);
-    define_method("signed-byte-at", list1(obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+    define_method("signed-byte-at", list1(obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, signed_byte_at);
     define_method("signed-byte-at-setter",
-                  list2(obj_IntegerClass, obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+                  list2(obj_IntegerClass, obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, signed_byte_at_setter);
-    define_method("unsigned-byte-at", list1(obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+    define_method("unsigned-byte-at", list1(obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, unsigned_byte_at);
     define_method("unsigned-byte-at-setter",
-                  list2(obj_IntegerClass, obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+                  list2(obj_IntegerClass, obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, unsigned_byte_at_setter);
-    define_method("signed-short-at", list1(obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+    define_method("signed-short-at", list1(obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, signed_short_at);
     define_method("signed-short-at-setter",
-                  list2(obj_IntegerClass, obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+                  list2(obj_IntegerClass, obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, signed_short_at_setter);
-    define_method("unsigned-short-at", list1(obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+    define_method("unsigned-short-at", list1(obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, unsigned_short_at);
     define_method("unsigned-short-at-setter",
-                  list2(obj_IntegerClass, obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+                  list2(obj_IntegerClass, obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, unsigned_short_at_setter);
-    define_method("signed-long-at", list1(obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+    define_method("signed-long-at", list1(obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, signed_long_at);
     define_method("signed-long-at-setter",
-                  list2(obj_IntegerClass, obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+                  list2(obj_IntegerClass, obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, signed_long_at_setter);
-    define_method("unsigned-long-at", list1(obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+    define_method("unsigned-long-at", list1(obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, unsigned_long_at);
     define_method("unsigned-long-at-setter",
-                  list2(obj_IntegerClass, obj_CPointerClass), FALSE,
-                  list1(pair(symbol("offset"), make_fixnum(0))), FALSE,
+                  list2(obj_IntegerClass, obj_CPointerClass), false,
+                  list1(pair(symbol("offset"), make_fixnum(0))), false,
                   obj_IntegerClass, unsigned_long_at_setter);
-    define_method("pointer-at", list1(obj_CPointerClass), FALSE,
+    define_method("pointer-at", list1(obj_CPointerClass), false,
                   list2(pair(symbol("offset"), make_fixnum(0)),
-                        pair(symbol("class"), obj_CPointerClass)), FALSE,
+                        pair(symbol("class"), obj_CPointerClass)), false,
                   obj_IntegerClass, pointer_at);
     define_method("pointer-at-setter",
-                  list2(obj_CPointerClass, obj_CPointerClass), FALSE,
+                  list2(obj_CPointerClass, obj_CPointerClass), false,
                   list2(pair(symbol("offset"), make_fixnum(0)),
-                        pair(symbol("class"), obj_CPointerClass)), FALSE,
+                        pair(symbol("class"), obj_CPointerClass)), false,
                   obj_IntegerClass, pointer_at_setter);
-    define_method("+", list2(obj_CPointerClass, obj_IntegerClass), FALSE,
-                  obj_False, FALSE, obj_CPointerClass, pointer_add);
-    define_method("-", list2(obj_CPointerClass, obj_CPointerClass), FALSE,
-                  obj_False, FALSE, obj_IntegerClass, pointer_subtract);
+    define_method("+", list2(obj_CPointerClass, obj_IntegerClass), false,
+                  obj_False, false, obj_CPointerClass, pointer_add);
+    define_method("-", list2(obj_CPointerClass, obj_CPointerClass), false,
+                  obj_False, false, obj_IntegerClass, pointer_subtract);
     define_method("c-pointer-slot",
                   listn(4, obj_CPointerClass, obj_IntegerClass,
                         obj_TypeClass, obj_ObjectClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_ObjectClass, c_pointer_field);
     define_method("c-pointer-slot-setter",
                   list3(obj_ObjectClass, obj_CPointerClass, obj_IntegerClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_ObjectClass, c_pointer_field_setter);
     define_method("as",
                   list2(obj_StaticTypeClass, obj_CPointerClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_ObjectClass, c_pointer_as);
     define_method("as",
-                  list2(singleton(obj_FixnumClass), obj_CPointerClass), FALSE,
-                  obj_False, FALSE,
+                  list2(singleton(obj_FixnumClass), obj_CPointerClass), false,
+                  obj_False, false,
                   obj_ObjectClass, c_ptr_as_int);
     define_method("as",
                   list2(obj_StaticTypeClass, obj_IntegerClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_ObjectClass, c_int_as_ptr);
     define_method("=", list2(obj_CPointerClass, obj_CPointerClass),
-                  FALSE, obj_False, FALSE,
+                  false, obj_False, false,
                   obj_BooleanClass, c_pointer_equal);
     obj_NullPointer = make_c_pointer(obj_CPointerClass, 0);
     add_constant_root(&obj_NullPointer);

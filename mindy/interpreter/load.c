@@ -92,8 +92,8 @@ struct load_info {
     unsigned char *buffer, *ptr, *end;
     obj_t *table, *table_end;
     int next_handle;
-    boolean swap_bytes;
-    boolean done;
+    bool swap_bytes;
+    bool done;
     struct library *library;
     struct module *module;
     obj_t mtime;
@@ -453,7 +453,7 @@ static obj_t fop_nil(struct load_info *info)
     return obj_Nil;
 }
 
-static obj_t read_list(struct load_info *info, int len, boolean dotted)
+static obj_t read_list(struct load_info *info, int len, bool dotted)
 {
     obj_t result, *prev;
 
@@ -480,87 +480,87 @@ static obj_t fop_list1(struct load_info *info)
 
 static obj_t fop_list2(struct load_info *info)
 {
-    return read_list(info, 2, FALSE);
+    return read_list(info, 2, false);
 }
 
 static obj_t fop_list3(struct load_info *info)
 {
-    return read_list(info, 3, FALSE);
+    return read_list(info, 3, false);
 }
 
 static obj_t fop_list4(struct load_info *info)
 {
-    return read_list(info, 4, FALSE);
+    return read_list(info, 4, false);
 }
 
 static obj_t fop_list5(struct load_info *info)
 {
-    return read_list(info, 5, FALSE);
+    return read_list(info, 5, false);
 }
 
 static obj_t fop_list6(struct load_info *info)
 {
-    return read_list(info, 6, FALSE);
+    return read_list(info, 6, false);
 }
 
 static obj_t fop_list7(struct load_info *info)
 {
-    return read_list(info, 7, FALSE);
+    return read_list(info, 7, false);
 }
 
 static obj_t fop_list8(struct load_info *info)
 {
-    return read_list(info, 8, FALSE);
+    return read_list(info, 8, false);
 }
 
 static obj_t fop_listn(struct load_info *info)
 {
-    return read_list(info, read_byte(info)+9, FALSE);
+    return read_list(info, read_byte(info)+9, false);
 }
 
 static obj_t fop_dotted_list1(struct load_info *info)
 {
-    return read_list(info, 1, TRUE);
+    return read_list(info, 1, true);
 }
 
 static obj_t fop_dotted_list2(struct load_info *info)
 {
-    return read_list(info, 2, TRUE);
+    return read_list(info, 2, true);
 }
 
 static obj_t fop_dotted_list3(struct load_info *info)
 {
-    return read_list(info, 3, TRUE);
+    return read_list(info, 3, true);
 }
 
 static obj_t fop_dotted_list4(struct load_info *info)
 {
-    return read_list(info, 4, TRUE);
+    return read_list(info, 4, true);
 }
 
 static obj_t fop_dotted_list5(struct load_info *info)
 {
-    return read_list(info, 5, TRUE);
+    return read_list(info, 5, true);
 }
 
 static obj_t fop_dotted_list6(struct load_info *info)
 {
-    return read_list(info, 6, TRUE);
+    return read_list(info, 6, true);
 }
 
 static obj_t fop_dotted_list7(struct load_info *info)
 {
-    return read_list(info, 7, TRUE);
+    return read_list(info, 7, true);
 }
 
 static obj_t fop_dotted_list8(struct load_info *info)
 {
-    return read_list(info, 8, TRUE);
+    return read_list(info, 8, true);
 }
 
 static obj_t fop_dotted_listn(struct load_info *info)
 {
-    return read_list(info, read_byte(info)+9, TRUE);
+    return read_list(info, read_byte(info)+9, true);
 }
 
 static obj_t read_vector(struct load_info *info, int len)
@@ -635,24 +635,24 @@ static obj_t fop_vectorn(struct load_info *info)
 
 static obj_t fop_value_cell(struct load_info *info)
 {
-    return rawptr_obj(find_variable(info->module, read_thing(info), FALSE, TRUE));
+    return rawptr_obj(find_variable(info->module, read_thing(info), false, true));
 }
 
 static obj_t fop_writable_value_cell(struct load_info *info)
 {
-    return rawptr_obj(find_variable(info->module, read_thing(info), TRUE, TRUE));
+    return rawptr_obj(find_variable(info->module, read_thing(info), true, true));
 }
 
 static obj_t fop_builtin_value_cell(struct load_info *info)
 {
     return rawptr_obj(find_variable(module_BuiltinStuff, read_thing(info),
-                                    FALSE, TRUE));
+                                    false, true));
 }
 
 static obj_t fop_builtin_writable_value_cell(struct load_info *info)
 {
     return rawptr_obj(find_variable(module_BuiltinStuff, read_thing(info),
-                                    TRUE, TRUE));
+                                    true, true));
 }
 
 static obj_t fop_note_reference(struct load_info *info)
@@ -705,8 +705,8 @@ static obj_t fop_component(struct load_info *info)
 static obj_t read_method(struct load_info *info, int param_info,
                          int nclosure_vars)
 {
-    boolean restp = param_info & 1;
-    boolean all_keys = param_info & 2;
+    bool restp = param_info & 1;
+    bool all_keys = param_info & 2;
     int nkeys = (param_info>>2)-1;
     obj_t keys;
 
@@ -752,7 +752,7 @@ static obj_t fop_in_library(struct load_info *info)
         error("Trying to library %s, but found library %s in file:\n  %s",
               currently_loading, name, make_byte_string(info->name));
 
-    info->library = find_library(name, TRUE);
+    info->library = find_library(name, true);
     if (CurLibrary == NULL)
         CurLibrary = info->library;
     return name;
@@ -761,7 +761,7 @@ static obj_t fop_in_library(struct load_info *info)
 static obj_t fop_in_module(struct load_info *info)
 {
     obj_t name = read_thing(info);
-    info->module = find_module(info->library, name, TRUE, TRUE);
+    info->module = find_module(info->library, name, true, true);
     if (CurLibrary == info->library && CurModule == NULL)
         CurModule = info->module;
     return name;
@@ -776,7 +776,7 @@ static obj_t fop_source_file(struct load_info *info)
 
 static obj_t make_top_level_method(obj_t component)
 {
-    obj_t method_info = make_method_info(FALSE, obj_False, FALSE,
+    obj_t method_info = make_method_info(false, obj_False, false,
                                          component, 0);
     return make_byte_method(method_info, obj_Nil, obj_Nil, obj_ObjectClass,
                             NULL);
@@ -807,7 +807,7 @@ static obj_t fop_define_class(struct load_info *info)
     obj_t slot;
 
     define_variable(info->module, name, var_Class);
-    var = find_variable(info->module, name, FALSE, TRUE);
+    var = find_variable(info->module, name, false, true);
 
     if (var->value != obj_Unbound)
         error("Can't both define class and define method %s", name);
@@ -865,7 +865,7 @@ static obj_t fop_define_variable(struct load_info *info)
     return queue_form(&State.top_level_forms, read_thing(info));
 }
 
-static struct defn *read_defn(struct load_info *info, boolean read_creates)
+static struct defn *read_defn(struct load_info *info, bool read_creates)
 {
     struct defn *defn = malloc(sizeof(struct defn));
     struct use *use, **prev;
@@ -896,7 +896,7 @@ static struct defn *read_defn(struct load_info *info, boolean read_creates)
 
 static obj_t fop_define_library(struct load_info *info)
 {
-    struct defn *defn = read_defn(info, FALSE);
+    struct defn *defn = read_defn(info, false);
 
     define_library(defn);
 
@@ -905,7 +905,7 @@ static obj_t fop_define_library(struct load_info *info)
 
 static obj_t fop_define_module(struct load_info *info)
 {
-    struct defn *defn = read_defn(info, TRUE);
+    struct defn *defn = read_defn(info, true);
 
     define_module(info->library, defn);
 
@@ -914,7 +914,7 @@ static obj_t fop_define_module(struct load_info *info)
 
 static obj_t fop_done(struct load_info *info)
 {
-    info->done = TRUE;
+    info->done = true;
     return obj_False;
 }
 
@@ -937,7 +937,7 @@ static void skip_header(struct load_info *info)
 
 static void load_group(struct load_info *info)
 {
-    info->done = FALSE;
+    info->done = false;
     info->next_handle = 0;
 
     skip_header(info);
@@ -956,8 +956,8 @@ struct load_info *make_load_info(char *name, int fd)
     info->buffer = (unsigned char *)malloc(BUFFER_SIZE);
     info->ptr = info->end = info->buffer;
     info->table = info->table_end = 0;
-    info->swap_bytes = FALSE;
-    info->done = FALSE;
+    info->swap_bytes = false;
+    info->done = false;
     info->library = NULL;
     info->module = NULL;
     info->mtime = make_fixnum(0);
@@ -1151,7 +1151,7 @@ static void do_first_init(struct thread *thread, int nargs)
 
 void load_do_inits(struct thread *thread)
 {
-    *thread->sp++ = make_raw_function("init", obj_Nil, FALSE, obj_False, FALSE,
+    *thread->sp++ = make_raw_function("init", obj_Nil, false, obj_False, false,
                                       obj_Nil, obj_ObjectClass,
                                       do_first_init);
     invoke(thread, 0);
@@ -1204,20 +1204,20 @@ void scavenge_load_roots(void)
 void init_load_functions(void)
 {
     define_generic_function("load", list1(obj_ByteStringClass),
-                            FALSE, obj_False, FALSE,
+                            false, obj_False, false,
                             obj_Nil, obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("load"),
-                             FALSE, FALSE)->value,
+                             false, false)->value,
                make_raw_method("load", list1(obj_ByteStringClass),
-                               FALSE, obj_False, FALSE, obj_Nil,
+                               false, obj_False, false, obj_Nil,
                                obj_False, dylan_load));
     define_generic_function("load-library", list1(obj_SymbolClass),
-                            FALSE, obj_False, FALSE,
+                            false, obj_False, false,
                             obj_Nil, obj_False);
     add_method(find_variable(module_BuiltinStuff, symbol("load-library"),
-                             FALSE, FALSE)->value,
+                             false, false)->value,
                make_raw_method("load-library", list1(obj_SymbolClass),
-                               FALSE, obj_False, FALSE, obj_Nil,
+                               false, obj_False, false, obj_Nil,
                                obj_False, dylan_load_library));
 }
 

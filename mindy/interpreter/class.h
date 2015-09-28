@@ -41,8 +41,8 @@ extern obj_t obj_StaticTypeClass; /* type of static pointer classes */
 struct class {
     obj_t class;
     enum type_Id type_id;
-    boolean abstract_p;
-    boolean sealed_p;
+    bool abstract_p;
+    bool sealed_p;
     struct library *library;
     int (*scavenge)(struct object *ptr);
     obj_t (*transport)(obj_t object);
@@ -56,7 +56,7 @@ struct class {
 
 #define CLASS(o) obj_ptr(struct class *, o)
 
-extern obj_t make_abstract_class(boolean sealed_p);
+extern obj_t make_abstract_class(bool sealed_p);
 extern obj_t make_builtin_class(int (*scavenge)(struct object *ptr),
                                 obj_t (*transport)(obj_t object));
 

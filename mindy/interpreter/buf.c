@@ -213,7 +213,7 @@ static obj_t trans_buffer(obj_t buffer)
                      sizeof(struct buffer)
                      + max(BUF(buffer)->length - sizeof(BUF(buffer)->data),
                            sizeof(BUF(buffer)->data)),
-                     TRUE);
+                     true);
 }
 
 
@@ -235,57 +235,57 @@ void init_buffer_functions(void)
     obj_t u;
 
     define_method("element", list2(obj_BufferClass, obj_FixnumClass),
-                  FALSE, list1(pair(symbol("default"), obj_Unbound)), FALSE,
+                  false, list1(pair(symbol("default"), obj_Unbound)), false,
                   obj_FixnumClass, dylan_buffer_element);
     define_method("element-setter",
                   list3(obj_FixnumClass, obj_BufferClass,
                         obj_FixnumClass),
-                  FALSE, obj_False, FALSE, obj_ObjectClass,
+                  false, obj_False, false, obj_ObjectClass,
                   dylan_buffer_element_setter);
-    define_method("size", list1(obj_BufferClass), FALSE, obj_False, FALSE,
+    define_method("size", list1(obj_BufferClass), false, obj_False, false,
                   obj_FixnumClass, dylan_buffer_size);
-    define_method("buffer-next", list1(obj_BufferClass), FALSE, obj_False,
-                  FALSE, obj_FixnumClass, dylan_buffer_next);
+    define_method("buffer-next", list1(obj_BufferClass), false, obj_False,
+                  false, obj_FixnumClass, dylan_buffer_next);
     define_method("buffer-next-setter",
-                  list2(obj_FixnumClass, obj_BufferClass), FALSE, obj_False,
-                  FALSE, obj_FixnumClass, dylan_buffer_next_setter);
-    define_method("buffer-end", list1(obj_BufferClass), FALSE, obj_False,
-                  FALSE, obj_FixnumClass, dylan_buffer_end);
+                  list2(obj_FixnumClass, obj_BufferClass), false, obj_False,
+                  false, obj_FixnumClass, dylan_buffer_next_setter);
+    define_method("buffer-end", list1(obj_BufferClass), false, obj_False,
+                  false, obj_FixnumClass, dylan_buffer_end);
     define_method("buffer-end-setter",
-                  list2(obj_FixnumClass, obj_BufferClass), FALSE, obj_False,
-                  FALSE, obj_FixnumClass, dylan_buffer_end_setter);
-    define_method("make", list1(singleton(obj_BufferClass)), FALSE,
+                  list2(obj_FixnumClass, obj_BufferClass), false, obj_False,
+                  false, obj_FixnumClass, dylan_buffer_end_setter);
+    define_method("make", list1(singleton(obj_BufferClass)), false,
                   list3(pair(symbol("size"), make_fixnum(4096)),
                         pair(symbol("next"), make_fixnum(0)),
                         pair(symbol("end"), make_fixnum(0))),
-                  FALSE, obj_BufferClass, dylan_buffer_make);
+                  false, obj_BufferClass, dylan_buffer_make);
 
     u = type_union(obj_ByteStringClass, obj_ByteVectorClass);
 
     define_method("copy-bytes",
                   listn(5, u, obj_FixnumClass, u,
                         obj_FixnumClass, obj_FixnumClass),
-                  FALSE, obj_False, FALSE, u, dylan_vec_vec_memcpy);
+                  false, obj_False, false, u, dylan_vec_vec_memcpy);
 
     define_method("copy-bytes",
                   listn(5, u, obj_FixnumClass, obj_BufferClass,
                         obj_FixnumClass, obj_FixnumClass),
-                  FALSE, obj_False, FALSE, u, dylan_vec_buf_memcpy);
+                  false, obj_False, false, u, dylan_vec_buf_memcpy);
 
     define_method("copy-bytes",
                   listn(5, obj_BufferClass, obj_FixnumClass, u,
                         obj_FixnumClass, obj_FixnumClass),
-                  FALSE, obj_False, FALSE, u, dylan_buf_vec_memcpy);
+                  false, obj_False, false, u, dylan_buf_vec_memcpy);
 
     define_method("copy-bytes",
                   listn(5, obj_BufferClass, obj_FixnumClass, obj_BufferClass,
                         obj_FixnumClass, obj_FixnumClass),
-                  FALSE, obj_False, FALSE, u, dylan_buf_buf_memcpy);
+                  false, obj_False, false, u, dylan_buf_buf_memcpy);
 
     define_method("copy-bytes",
                   listn(5, obj_UnicodeStringClass, obj_FixnumClass,
                         obj_UnicodeStringClass,
                         obj_FixnumClass, obj_FixnumClass),
-                  FALSE, obj_False, FALSE, u, dylan_unicode_memcpy);
+                  false, obj_False, false, u, dylan_unicode_memcpy);
 
 }

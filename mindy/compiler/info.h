@@ -28,17 +28,17 @@
 
 struct binop_info {
     int precedence;
-    boolean left_assoc;
+    bool left_assoc;
 };
 
 struct function_info {
-    boolean (*srctran)();
+    bool (*srctran)();
     void (*compile)();
 };
 
 extern struct binop_info *lookup_binop_info(struct id *id);
 
 extern struct function_info
-    *lookup_function_info(struct id *id, boolean createp);
+    *lookup_function_info(struct id *id, bool createp);
 
 extern void init_info(void);

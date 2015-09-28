@@ -62,7 +62,7 @@ extern void scavenge_c_roots(void);
 #define PURIFY 1
 #endif
 
-boolean TimeToGC = FALSE;
+bool TimeToGC = false;
 
 struct space {
     int n_blocks;
@@ -100,7 +100,7 @@ struct ref_list {
 #define DEFAULT_BYTES_CONSED_BETWEEN_GCS (2*1024*1024)
 
 #if PURIFY
-static boolean Purifying = FALSE;
+static bool Purifying = false;
 #endif
 static int BytesConsedBetweenGCs = DEFAULT_BYTES_CONSED_BETWEEN_GCS;
 
@@ -270,7 +270,7 @@ static void grow_space (struct space *space)
         space->cur_block->fill = space->cur_fill;
         space->cur_block->next = block;
         if (space->gc_trigger && space->bytes_in_use > space->gc_trigger)
-            TimeToGC = TRUE;
+            TimeToGC = true;
     }
     else
         /* No, so just make this this first block. */
@@ -396,7 +396,7 @@ void scavenge(obj_t *addr)
     }
 }
 
-obj_t transport(obj_t obj, int bytes, boolean read_only)
+obj_t transport(obj_t obj, int bytes, bool read_only)
 {
 #ifdef GD_DEBUG
     unsigned long *new;
@@ -461,7 +461,7 @@ static void scavenge_ref_list(struct ref_list *list)
    objects into the end of the heap.  These objects will be encountered later
    by the still-running scavenge space and processed recursively.  The net
    effect is a breadth-first search & copy. */
-static boolean scavenge_space(struct space *space)
+static bool scavenge_space(struct space *space)
 {
     struct block *block = space->scan_block;
     void *ptr = space->scan_ptr;
@@ -470,7 +470,7 @@ static boolean scavenge_space(struct space *space)
     int bytes;
 
     if (block == space->cur_block && ptr >= space->cur_fill)
-        return FALSE;
+        return false;
 
     while (block != NULL) {
         /* The reason for this double loop is so that we don't have to */
@@ -504,14 +504,14 @@ static boolean scavenge_space(struct space *space)
         }
     }
 
-    return TRUE;
+    return true;
 }
 
-void collect_garbage(boolean purify)
+void collect_garbage(bool purify)
 {
     int bytes_at_start, blocks_at_start;
     int bytes_at_end;
-    boolean print_message = print_messages_var->value != obj_False;
+    bool print_message = print_messages_var->value != obj_False;
     char strbuf[256];
 
 #if PURIFY
@@ -636,7 +636,7 @@ void collect_garbage(boolean purify)
 
     bytes_at_end = bytes_in_use(CurrentSpace);
     CurrentSpace->gc_trigger = bytes_at_end + BytesConsedBetweenGCs;
-    TimeToGC = FALSE;
+    TimeToGC = false;
 
     if (print_message) {
 #if PURIFY
@@ -669,7 +669,7 @@ void collect_garbage(boolean purify)
 
 /* interface functions. */
 
-boolean object_collected(obj_t obj)
+bool object_collected(obj_t obj)
 {
 #if PURIFY
     return object_block(obj)->space == OldSpace
@@ -715,15 +715,15 @@ void init_gc_functions(void)
 
     define_variable(module_BuiltinStuff, namesym, var_Variable);
     print_messages_var = find_variable(module_BuiltinStuff, namesym,
-                                       FALSE, TRUE);
+                                       false, true);
     print_messages_var->function = func_No;
     print_messages_var->type = obj_BooleanClass;
     print_messages_var->value = obj_False;
 
     define_constant("collect-garbage",
-                    make_raw_method("collect-garbage", obj_Nil, FALSE,
+                    make_raw_method("collect-garbage", obj_Nil, false,
                                     list1(pair(symbol("purify"), obj_False)),
-                                    FALSE, obj_Nil, obj_False, dylan_gc));
+                                    false, obj_Nil, obj_False, dylan_gc));
 
     {
         char *str = getenv("BYTES_CONSED_BETWEEN_GCS");

@@ -35,7 +35,7 @@
 #include "lexenv.h"
 
 struct binding *make_binding(struct id *id, struct symbol *type,
-                             boolean argument, int offset,
+                             bool argument, int offset,
                              struct method *home, struct binding *next)
 {
     struct binding *res = malloc(sizeof(struct binding));
@@ -43,9 +43,9 @@ struct binding *make_binding(struct id *id, struct symbol *type,
     res->id = id;
     res->type = type;
     res->home = home;
-    res->function = FALSE;
-    res->closed_over = FALSE;
-    res->set = FALSE;
+    res->function = false;
+    res->closed_over = false;
+    res->set = false;
     res->argument = argument;
     res->offset = offset;
     res->next = next;

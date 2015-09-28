@@ -60,7 +60,7 @@ static struct binding
 
     if (binding->home != method) {
         /* It is a closure var. */
-        binding->closed_over = TRUE;
+        binding->closed_over = true;
 
         do {
             for (over = method->closes_over; over != NULL; over = over->next)
@@ -114,15 +114,15 @@ static void analyze_method(struct method *method, struct lexenv *lexenv)
     }
 
     for (p = params->required_params; p != NULL; p = p->next)
-        bindings = make_binding(p->id, p->type_temp, TRUE, offset++, method,
+        bindings = make_binding(p->id, p->type_temp, true, offset++, method,
                                 bindings);
     if (params->rest_param)
-        bindings = make_binding(params->rest_param, NULL, TRUE, offset++,
+        bindings = make_binding(params->rest_param, NULL, true, offset++,
                                 method, bindings);
     for (k = params->keyword_params; k != NULL; k = k->next)
-        bindings = make_binding(k->id, NULL, TRUE, offset++, method, bindings);
+        bindings = make_binding(k->id, NULL, true, offset++, method, bindings);
     if (params->next_param)
-        bindings = make_binding(params->next_param, NULL, TRUE, offset,
+        bindings = make_binding(params->next_param, NULL, true, offset,
                                 method, bindings);
 
     method->nargs = offset+1;
@@ -222,7 +222,7 @@ static void analyze_varset_expr(struct varset_expr *expr,
         = find_and_maybe_close_over(expr->var, lexenv, &expr->over);
 
     if (binding) {
-        binding->set = TRUE;
+        binding->set = true;
         if (binding->type) {
             struct expr *type = make_varref(id(binding->type));
             expr->type = (struct varref_expr *)type;
@@ -272,7 +272,7 @@ static void analyze_expr(struct expr *expr, struct lexenv *lexenv)
     if (expr->analyzed)
         lose("Analyzing an expression we have already analyzed?");
     else {
-        expr->analyzed = TRUE;
+        expr->analyzed = true;
         (*ExprAnalyzers[(int)expr->kind])(expr, lexenv);
     }
 }
@@ -336,10 +336,10 @@ static void analyze_local_constituent(struct local_constituent *c,
     c->offset = offset;
 
     for (method = c->methods; method != NULL; method = method->next_local) {
-        struct binding *new = make_binding(method->name, NULL, FALSE, offset++,
+        struct binding *new = make_binding(method->name, NULL, false, offset++,
                                            home, NULL);
-        new->function = TRUE;
-        new->set = TRUE;
+        new->function = true;
+        new->set = true;
         *prev = new;
         prev = &new->next;
     }
@@ -378,14 +378,14 @@ static void analyze_let_constituent(struct let_constituent *let,
     let->offset = offset;
 
     for (param = params->required_params; param != NULL; param = param->next) {
-        bindings = make_binding(param->id, param->type_temp, FALSE, offset++,
+        bindings = make_binding(param->id, param->type_temp, false, offset++,
                                 home, bindings);
         req++;
     }
     let->required = req;
 
     if (params->rest_param)
-        bindings = make_binding(params->rest_param, NULL, FALSE, offset++,
+        bindings = make_binding(params->rest_param, NULL, false, offset++,
                                 home, bindings);
 
     let->lexenv = make_lexenv(home, bindings, offset);

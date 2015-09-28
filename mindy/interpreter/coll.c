@@ -54,15 +54,15 @@ obj_t obj_StringClass = 0;
 
 void make_coll_classes(void)
 {
-    obj_CollClass = make_abstract_class(FALSE);
-    obj_ExKeyCollClass = make_abstract_class(FALSE);
-    obj_MutCollClass = make_abstract_class(FALSE);
-    obj_SeqClass = make_abstract_class(FALSE);
-    obj_MutExKeyCollClass = make_abstract_class(FALSE);
-    obj_MutSeqClass = make_abstract_class(FALSE);
-    obj_ArrayClass = make_abstract_class(FALSE);
-    obj_VectorClass = make_abstract_class(FALSE);
-    obj_StringClass = make_abstract_class(FALSE);
+    obj_CollClass = make_abstract_class(false);
+    obj_ExKeyCollClass = make_abstract_class(false);
+    obj_MutCollClass = make_abstract_class(false);
+    obj_SeqClass = make_abstract_class(false);
+    obj_MutExKeyCollClass = make_abstract_class(false);
+    obj_MutSeqClass = make_abstract_class(false);
+    obj_ArrayClass = make_abstract_class(false);
+    obj_VectorClass = make_abstract_class(false);
+    obj_StringClass = make_abstract_class(false);
 
     add_constant_root(&obj_CollClass);
     add_constant_root(&obj_ExKeyCollClass);
@@ -96,14 +96,14 @@ void init_coll_classes(void)
 void init_coll_functions(void)
 {
     define_generic_function("element", list2(obj_CollClass, obj_ObjectClass),
-                            FALSE, list1(symbol("default")), FALSE,
+                            false, list1(symbol("default")), false,
                             list1(obj_ObjectClass), obj_False);
     define_generic_function("element-setter",
                             list3(obj_ObjectClass, obj_CollClass,
                                   obj_ObjectClass),
-                            FALSE, obj_False, FALSE,
+                            false, obj_False, false,
                             list1(obj_ObjectClass), obj_False);
     define_generic_function("size", list1(obj_ObjectClass),
-                            FALSE, obj_False, FALSE,
+                            false, obj_False, false,
                             obj_Nil, obj_ObjectClass);
 }

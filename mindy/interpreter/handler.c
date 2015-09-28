@@ -131,7 +131,7 @@ static int scav_handler(struct object *obj)
 
 static obj_t trans_handler(obj_t handler)
 {
-    return transport(handler, sizeof(struct handler), TRUE);
+    return transport(handler, sizeof(struct handler), true);
 }
 
 
@@ -153,27 +153,27 @@ void init_handler_functions(void)
     define_constant("push-handler",
                     make_raw_method("push-handler",
                                     list2(obj_TypeClass, obj_FunctionClass),
-                                    FALSE,
+                                    false,
                                     list2(pair(symbol("test"), obj_False),
                                           pair(symbol("init-arguments"),
                                                obj_Nil)),
-                                    FALSE, obj_Nil, obj_False, push_handler));
+                                    false, obj_Nil, obj_False, push_handler));
     define_constant("current-handler",
                     make_raw_function("current-handler", obj_Nil,
-                                      FALSE, obj_False,
-                                      FALSE, list1(obj_HandlerClass),
+                                      false, obj_False,
+                                      false, list1(obj_HandlerClass),
                                       obj_False, current_handler));
-    define_function("handler-type", list1(obj_HandlerClass), FALSE, obj_False,
-                    FALSE, obj_ObjectClass, handler_type);
-    define_function("handler-function", list1(obj_HandlerClass), FALSE,
-                    obj_False, FALSE, obj_ObjectClass, handler_function);
-    define_function("handler-test", list1(obj_HandlerClass), FALSE, obj_False,
-                    FALSE, obj_ObjectClass, handler_test);
-    define_function("handler-init-args", list1(obj_HandlerClass), FALSE,
-                    obj_False, FALSE, obj_ObjectClass, handler_init_args);
-    define_function("handler-next", list1(obj_HandlerClass), FALSE, obj_False,
-                    FALSE, obj_ObjectClass, handler_next);
+    define_function("handler-type", list1(obj_HandlerClass), false, obj_False,
+                    false, obj_ObjectClass, handler_type);
+    define_function("handler-function", list1(obj_HandlerClass), false,
+                    obj_False, false, obj_ObjectClass, handler_function);
+    define_function("handler-test", list1(obj_HandlerClass), false, obj_False,
+                    false, obj_ObjectClass, handler_test);
+    define_function("handler-init-args", list1(obj_HandlerClass), false,
+                    obj_False, false, obj_ObjectClass, handler_init_args);
+    define_function("handler-next", list1(obj_HandlerClass), false, obj_False,
+                    false, obj_ObjectClass, handler_next);
     define_constant("pop-handler",
-                    make_raw_function("pop-handler", obj_Nil, FALSE, obj_False,
-                                      FALSE, obj_Nil, obj_False, pop_handler));
+                    make_raw_function("pop-handler", obj_Nil, false, obj_False,
+                                      false, obj_Nil, obj_False, pop_handler));
 }

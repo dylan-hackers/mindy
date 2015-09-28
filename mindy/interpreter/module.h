@@ -68,12 +68,12 @@ struct defn {
 };
 
 extern void define_library(struct defn *defn);
-extern struct library *find_library(obj_t name, boolean createp);
+extern struct library *find_library(obj_t name, bool createp);
 
 extern void define_module(struct library *library, struct defn *defn);
 extern struct module *find_module(struct library *library, obj_t name,
-                                  boolean lose_if_not_there,
-                                  boolean lose_if_imported);
+                                  bool lose_if_not_there,
+                                  bool lose_if_imported);
 
 enum var_kind {
     var_Assumed, var_AssumedWriteable,
@@ -87,7 +87,7 @@ extern void define_variable(struct module *module, obj_t name,
 struct variable {
     obj_t /* symbol */ name;
     struct module *home;
-    boolean defined;
+    bool defined;
     enum var_kind kind;
     obj_t binding;
     obj_t value;
@@ -98,7 +98,7 @@ struct variable {
 };
 
 extern struct variable *find_variable(struct module *module, obj_t name,
-                                      boolean writeable, boolean createp);
+                                      bool writeable, bool createp);
 
 extern struct module *module_BuiltinStuff;
 

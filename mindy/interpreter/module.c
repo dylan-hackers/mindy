@@ -59,7 +59,7 @@ obj_t obj_BindingClass = NULL;
 #define MODULE(o) obj_ptr(struct dylan_module *, o)
 #define LIBRARY(o) obj_ptr(struct dylan_library *, o)
 
-static boolean InitializingVars = TRUE;
+static bool InitializingVars = true;
 
 struct bucket {
     obj_t symbol;
@@ -81,16 +81,16 @@ struct library {
     obj_t dylan_library;
     struct defn *defn;
     struct table *modules;
-    boolean loading;
-    boolean busy;
-    boolean completed;
+    bool loading;
+    bool busy;
+    bool completed;
     struct library *next;
 };
 
 struct entry {
     obj_t name;
     void *datum;
-    boolean exported;
+    bool exported;
     char *template;
     obj_t p1;
     obj_t p2;
@@ -103,13 +103,13 @@ struct module {
     struct library *home;
     struct defn *defn;
     struct table *variables;
-    boolean busy;
-    boolean completed;
+    bool busy;
+    bool completed;
     struct module *next;
 };
 
 struct var {
-    boolean created;
+    bool created;
     struct var *next;
     struct variable variable;
 };
@@ -283,7 +283,7 @@ static obj_t format_entry_origin( struct entry *entry)
 }
 
 static void make_entry(struct table *table, obj_t name, void *datum,
-                       boolean exported, char *template, obj_t p1, obj_t p2,
+                       bool exported, char *template, obj_t p1, obj_t p2,
                         obj_t p3)
 {
     struct entry *old_entry = table_lookup(table, name);
@@ -338,7 +338,7 @@ static obj_t prefix_or_rename(obj_t name, struct use *use)
     return prepend_prefix(name, use);
 }
 
-static boolean exported(obj_t name, struct use *use)
+static bool exported(obj_t name, struct use *use)
 {
     return use->export == obj_True || memq(name, use->export);
 }
@@ -373,9 +373,9 @@ static struct library *make_library(obj_t name)
     library->dylan_library = NULL;
     library->defn = NULL;
     library->modules = make_table(owner);
-    library->completed = FALSE;
-    library->loading = FALSE;
-    library->busy = FALSE;
+    library->completed = false;
+    library->loading = false;
+    library->busy = false;
     library->next = Libraries;
     Libraries = library;
 
@@ -384,7 +384,7 @@ static struct library *make_library(obj_t name)
     return library;
 }
 
-struct library *find_library(obj_t name, boolean createp)
+struct library *find_library(obj_t name, bool createp)
 {
     struct library *library = table_lookup(LibraryTable, name);
 
@@ -411,7 +411,7 @@ struct library *find_library(obj_t name, boolean createp)
         add_use(defn, symbol("Extensions"));
         add_use(defn, symbol("Dylan"));
 
-        make_entry(library->modules, module->name, module, FALSE,
+        make_entry(library->modules, module->name, module, false,
                    "module %s implicitly defined in library %s",
                    module->name, library->name, obj_False);
     }
@@ -421,7 +421,7 @@ struct library *find_library(obj_t name, boolean createp)
 
 void define_library(struct defn *defn)
 {
-    struct library *library = find_library(defn->name, TRUE);
+    struct library *library = find_library(defn->name, true);
 
     if (library->defn)
         error("Library %s multiply defined.\n", defn->name);
@@ -441,31 +441,31 @@ static void complete_library(struct library *library)
             error("needed the definition of library %s before the "
                   "define library was found",
                   library->name);
-        library->loading = TRUE;
+        library->loading = true;
         load_library(library->name);
         if (library->defn == NULL)
             error("loaded library %s, but never found the define library.\n",
                   library->name);
-        library->loading = FALSE;
+        library->loading = false;
         return;
     }
 
     if (library->busy)
         error("Library %s circularly defined.\n", library->name);
-    library->busy = TRUE;
+    library->busy = true;
 
     for (ptr = defn->exports; ptr != obj_Nil; ptr = TAIL(ptr)) {
         obj_t name = HEAD(ptr);
         struct module *module = make_module(name, library);
 
-        make_entry(library->modules, name, module, TRUE,
+        make_entry(library->modules, name, module, true,
                    "module %s defined in library %s",
                    name, library->name, obj_False);
     }
 
     for (use = library->defn->use; use != NULL; use = use->next) {
         obj_t use_name = use->name;
-        struct library *used_library = find_library(use_name, TRUE);
+        struct library *used_library = find_library(use_name, true);
         obj_t imports = obj_Nil;
 
         if (!used_library->completed)
@@ -539,8 +539,8 @@ static void complete_library(struct library *library)
                           library->name, HEAD(ptr));
     }
 
-    library->busy = FALSE;
-    library->completed = TRUE;
+    library->busy = false;
+    library->completed = true;
 }
 
 
@@ -559,8 +559,8 @@ static struct module *make_module(obj_t name, struct library *home)
     module->home = home;
     module->defn = NULL;
     module->variables = make_table(owner);
-    module->busy = FALSE;
-    module->completed = FALSE;
+    module->busy = false;
+    module->completed = false;
     module->next = Modules;
     Modules = module;
 
@@ -568,7 +568,7 @@ static struct module *make_module(obj_t name, struct library *home)
 }
 
 struct module *find_module(struct library *library, obj_t name,
-                           boolean lose_if_not_there, boolean lose_if_imported)
+                           bool lose_if_not_there, bool lose_if_imported)
 {
     struct entry *entry;
     struct module *module;
@@ -611,7 +611,7 @@ void define_module(struct library *library, struct defn *defn)
     }
     if (entry == NULL) {
         module = make_module(defn->name, library);
-        make_entry(library->modules, defn->name, module, FALSE,
+        make_entry(library->modules, defn->name, module, false,
                    "module %s internal to library %s",
                    defn->name, library->name, obj_False);
     }
@@ -631,7 +631,7 @@ void define_module(struct library *library, struct defn *defn)
 }
 
 static void
-    make_and_export_var(struct module *module, obj_t name, boolean created)
+    make_and_export_var(struct module *module, obj_t name, bool created)
 {
     struct entry *entry;
     struct var *var;
@@ -649,7 +649,7 @@ static void
     else
         var = make_var(name, module, var_Assumed);
 
-    make_entry(module->variables, name, var, TRUE,
+    make_entry(module->variables, name, var, true,
                created
                ? "variable %s created in module %s"
                : "variable %s defined in module %s",
@@ -669,16 +669,16 @@ static void complete_module(struct module *module)
 
     if (module->busy)
         error("Module %s circularly defined.", module->name);
-    module->busy = TRUE;
+    module->busy = true;
 
     defn = module->defn;
     if (defn == NULL)
         error("Attempt to use module %s before it is defined.", module->name);
 
     for (ptr = defn->exports; ptr != obj_Nil; ptr = TAIL(ptr))
-        make_and_export_var(module, HEAD(ptr), FALSE);
+        make_and_export_var(module, HEAD(ptr), false);
     for (ptr = defn->creates; ptr != obj_Nil; ptr = TAIL(ptr))
-        make_and_export_var(module, HEAD(ptr), TRUE);
+        make_and_export_var(module, HEAD(ptr), true);
 
     for (use = module->defn->use; use != NULL; use = use->next) {
         obj_t use_name = use->name;
@@ -686,9 +686,9 @@ static void complete_module(struct module *module)
         obj_t imports = obj_Nil;
 
         if (module->name == symbol("Dylan-User"))
-            used_module = find_module(library_Dylan, use_name, TRUE, FALSE);
+            used_module = find_module(library_Dylan, use_name, true, false);
         else
-            used_module = find_module(module->home, use_name, TRUE, FALSE);
+            used_module = find_module(module->home, use_name, true, false);
 
         if (!used_module->completed)
             complete_module(used_module);
@@ -762,8 +762,8 @@ static void complete_module(struct module *module)
                           module->name, HEAD(ptr));
     }
 
-    module->busy = FALSE;
-    module->completed = TRUE;
+    module->busy = false;
+    module->completed = true;
 }
 
 
@@ -773,13 +773,13 @@ static struct var *make_var(obj_t name, struct module *home,enum var_kind kind)
 {
     struct var *var = malloc(sizeof(struct var));
 
-    var->created = FALSE;
+    var->created = false;
     var->next = Vars;
     Vars = var;
 
     var->variable.name = name;
     var->variable.home = home;
-    var->variable.defined = FALSE;
+    var->variable.defined = false;
     var->variable.kind = kind;
     var->variable.binding = NULL;
     var->variable.value = obj_Unbound;
@@ -791,8 +791,8 @@ static struct var *make_var(obj_t name, struct module *home,enum var_kind kind)
     return var;
 }
 
-struct var *find_var(struct module *module, obj_t name, boolean writeable,
-                     boolean createp)
+struct var *find_var(struct module *module, obj_t name, bool writeable,
+                     bool createp)
 {
     struct entry *entry = table_lookup(module->variables, name);
     struct var *var;
@@ -810,7 +810,7 @@ struct var *find_var(struct module *module, obj_t name, boolean writeable,
     if (entry == NULL) {
         var = make_var(name, module,
                        writeable ? var_AssumedWriteable : var_Assumed);
-        make_entry(module->variables, name, var, FALSE,
+        make_entry(module->variables, name, var, false,
                    "variable %s internal to module %s",
                    name, module->name, obj_False);
     }
@@ -834,8 +834,8 @@ struct var *find_var(struct module *module, obj_t name, boolean writeable,
 }
 
 struct variable
-    *find_variable(struct module *module, obj_t name, boolean writeable,
-                   boolean createp)
+    *find_variable(struct module *module, obj_t name, bool writeable,
+                   bool createp)
 {
     struct var *var = find_var(module, name, writeable, createp);
 
@@ -847,7 +847,7 @@ struct variable
 
 void define_variable(struct module *module, obj_t name, enum var_kind kind)
 {
-    struct var *var = find_var(module, name, kind == var_Variable, TRUE);
+    struct var *var = find_var(module, name, kind == var_Variable, true);
 
     switch (var->variable.kind) {
       case var_Assumed:
@@ -883,7 +883,7 @@ void define_variable(struct module *module, obj_t name, enum var_kind kind)
                   name, var->variable.home->name, module->name);
     }
 
-    var->variable.defined = TRUE;
+    var->variable.defined = true;
 }
 
 
@@ -976,7 +976,7 @@ static obj_t dylan_resolve_name_in_module(obj_t name, obj_t module)
 {
     /* name is symbol */
     struct variable *variable
-        = find_variable(MODULE(module)->module, name, FALSE, FALSE);
+        = find_variable(MODULE(module)->module, name, false, false);
     if (variable == NULL) {
         return obj_False;
     } else {
@@ -988,7 +988,7 @@ static obj_t dylan_resolve_name_in_library(obj_t name, obj_t library)
 {
     /* name is symbol */
     struct module *module
-        = find_module(LIBRARY(library)->library, name, FALSE, FALSE);
+        = find_module(LIBRARY(library)->library, name, false, false);
     if (module == NULL) {
         return obj_False;
     } else {
@@ -1114,10 +1114,10 @@ static obj_t all_exported_bindings (struct module *module)
 
                 if (module->name == symbol("Dylan-User")) {
                     used_module = find_module(library_Dylan, use_name,
-                                              TRUE, FALSE);
+                                              true, false);
                 } else {
                     used_module = find_module(module->home, use_name,
-                                              TRUE, FALSE);
+                                              true, false);
                 }
                 result = pair(all_exported_bindings(used_module), result);
             } else {
@@ -1148,7 +1148,7 @@ static int scav_binding(struct object *o)
 
 static obj_t trans_binding(obj_t binding)
 {
-    return transport(binding, sizeof(struct binding), TRUE);
+    return transport(binding, sizeof(struct binding), true);
 }
 
 static int scav_dylan_module(struct object *o)
@@ -1158,7 +1158,7 @@ static int scav_dylan_module(struct object *o)
 
 static obj_t trans_dylan_module(obj_t module)
 {
-    return transport(module, sizeof(struct dylan_module), TRUE);
+    return transport(module, sizeof(struct dylan_module), true);
 }
 
 static int scav_dylan_library(struct object *o)
@@ -1168,7 +1168,7 @@ static int scav_dylan_library(struct object *o)
 
 static obj_t trans_dylan_library(obj_t library)
 {
-    return transport(library, sizeof(struct dylan_library), TRUE);
+    return transport(library, sizeof(struct dylan_library), true);
 }
 
 
@@ -1179,7 +1179,7 @@ static int scav_unbound(struct object *ptr)
 
 static obj_t trans_unbound(obj_t unbound)
 {
-    return transport(unbound, sizeof(struct object), TRUE);
+    return transport(unbound, sizeof(struct object), true);
 }
 
 static void scav_use(struct use *use)
@@ -1204,7 +1204,7 @@ static void scav_defn(struct defn *defn)
         scav_use(use);
 }
 
-static void scav_table(struct table *table, boolean of_entries)
+static void scav_table(struct table *table, bool of_entries)
 {
     int i;
     struct bucket *bucket;
@@ -1241,7 +1241,7 @@ static void scav_module(struct module *module)
         scavenge(&module->dylan_module);
     }
     scav_defn(module->defn);
-    scav_table(module->variables, TRUE);
+    scav_table(module->variables, true);
 }
 
 static void scav_library(struct library *library)
@@ -1251,7 +1251,7 @@ static void scav_library(struct library *library)
         scavenge(&library->dylan_library);
     }
     scav_defn(library->defn);
-    scav_table(library->modules, TRUE);
+    scav_table(library->modules, true);
 }
 
 void scavenge_module_roots(void)
@@ -1260,7 +1260,7 @@ void scavenge_module_roots(void)
     struct module *module;
     struct var *var;
 
-    scav_table(LibraryTable, FALSE);
+    scav_table(LibraryTable, false);
     for (library = Libraries; library != NULL; library = library->next)
         scav_library(library);
     for (module = Modules; module != NULL; module = module->next)
@@ -1275,8 +1275,8 @@ void scavenge_module_roots(void)
 void make_module_classes(void)
 {
     obj_UnboundClass = make_builtin_class(scav_unbound, trans_unbound);
-    obj_NameClass = make_abstract_class(TRUE);
-    obj_NamespaceClass = make_abstract_class(TRUE);
+    obj_NameClass = make_abstract_class(true);
+    obj_NamespaceClass = make_abstract_class(true);
     obj_LibraryClass
         = make_builtin_class(scav_dylan_library, trans_dylan_library);
     obj_ModuleClass
@@ -1298,7 +1298,7 @@ void init_modules(void)
 
     LibraryTable = make_table("the table of all libraries");
 
-    library_Dylan = find_library(dylan, TRUE);
+    library_Dylan = find_library(dylan, true);
 
     {
         /* Define the dylan-user library. */
@@ -1313,7 +1313,7 @@ void init_modules(void)
     }
 
     module_BuiltinStuff = make_module(stuff, library_Dylan);
-    make_entry(library_Dylan->modules, stuff, module_BuiltinStuff, FALSE,
+    make_entry(library_Dylan->modules, stuff, module_BuiltinStuff, false,
                "module %s internal to library %s", stuff, dylan, obj_False);
 
     obj_Unbound = alloc(obj_UnboundClass, sizeof(struct object));
@@ -1338,7 +1338,7 @@ void init_module_classes(void)
 
 void done_initializing_vars(void)
 {
-    InitializingVars = FALSE;
+    InitializingVars = false;
 }
 
 void finalize_modules(void)
@@ -1346,7 +1346,7 @@ void finalize_modules(void)
     struct library *library;
     struct module *module;
     struct var *var;
-    boolean warning_printed = FALSE;
+    bool warning_printed = false;
 
     for (library = Libraries; library != NULL; library = library->next)
         if (!library->completed)
@@ -1375,26 +1375,26 @@ void finalize_modules(void)
     }
 
     for (library = Libraries; library != NULL; library = library->next) {
-        boolean library_printed = FALSE;
+        bool library_printed = false;
         for (module = Modules; module != NULL; module = module->next) {
             if (module->home == library) {
-                boolean module_printed = FALSE;
+                bool module_printed = false;
                 for (var = Vars; var != NULL; var = var->next) {
                     if (var->variable.home==module && !var->variable.defined) {
                         if (!warning_printed) {
                             fprintf(stderr, "Warning: the following variables "
                                     "are undefined:\n");
-                            warning_printed = TRUE;
+                            warning_printed = true;
                         }
                         if (!library_printed) {
                             fprintf(stderr, "  in library %s:\n",
                                     sym_name(library->name));
-                            library_printed = TRUE;
+                            library_printed = true;
                         }
                         if (!module_printed) {
                             fprintf(stderr, "    in module %s:\n",
                                     sym_name(module->name));
-                            module_printed = TRUE;
+                            module_printed = true;
                         }
                         fprintf(stderr, "      %s",
                                 sym_name(var->variable.name));
@@ -1420,62 +1420,62 @@ void init_module_functions (void)
     obj_t false_or_name
         = type_union(obj_NameClass, singleton(obj_False));
 
-    define_function("binding-value", list1(obj_BindingClass), FALSE, obj_Nil,
-                    FALSE, list1(obj_ObjectClass), dylan_binding_value);
-    define_function("binding-type", list1(obj_BindingClass), FALSE, obj_Nil,
-                    FALSE, list1(obj_ObjectClass), dylan_binding_type);
-    define_function("binding-kind", list1(obj_BindingClass), FALSE, obj_Nil,
-                    FALSE, list1(obj_SymbolClass), dylan_binding_kind);
-    define_function("get-all-libraries", obj_Nil, FALSE, obj_Nil,
-                    FALSE, list1(obj_ListClass), dylan_get_all_libraries);
-    define_function("get-all-modules", obj_Nil, FALSE, obj_Nil,
-                    FALSE, list1(obj_ListClass), dylan_get_all_modules);
+    define_function("binding-value", list1(obj_BindingClass), false, obj_Nil,
+                    false, list1(obj_ObjectClass), dylan_binding_value);
+    define_function("binding-type", list1(obj_BindingClass), false, obj_Nil,
+                    false, list1(obj_ObjectClass), dylan_binding_type);
+    define_function("binding-kind", list1(obj_BindingClass), false, obj_Nil,
+                    false, list1(obj_SymbolClass), dylan_binding_kind);
+    define_function("get-all-libraries", obj_Nil, false, obj_Nil,
+                    false, list1(obj_ListClass), dylan_get_all_libraries);
+    define_function("get-all-modules", obj_Nil, false, obj_Nil,
+                    false, list1(obj_ListClass), dylan_get_all_modules);
 
-    define_function("binding-name", list1(obj_BindingClass), FALSE, obj_Nil,
-                    FALSE, list1(obj_SymbolClass), dylan_binding_name);
-    define_function("module-name", list1(obj_ModuleClass), FALSE, obj_Nil,
-                    FALSE, list1(obj_SymbolClass), dylan_module_name);
-    define_function("library-name", list1(obj_LibraryClass), FALSE, obj_Nil,
-                    FALSE, list1(obj_SymbolClass), dylan_library_name);
+    define_function("binding-name", list1(obj_BindingClass), false, obj_Nil,
+                    false, list1(obj_SymbolClass), dylan_binding_name);
+    define_function("module-name", list1(obj_ModuleClass), false, obj_Nil,
+                    false, list1(obj_SymbolClass), dylan_module_name);
+    define_function("library-name", list1(obj_LibraryClass), false, obj_Nil,
+                    false, list1(obj_SymbolClass), dylan_library_name);
 
     define_generic_function("resolve-name",
                             list2(obj_SymbolClass, obj_NamespaceClass),
-                            FALSE, obj_False, FALSE, list1(false_or_name),
+                            false, obj_False, false, list1(false_or_name),
                             obj_False);
     define_method("resolve-name", list2(obj_SymbolClass, obj_ModuleClass),
-                   FALSE, obj_False, FALSE, false_or_binding,
+                   false, obj_False, false, false_or_binding,
                   dylan_resolve_name_in_module);
     define_method("resolve-name", list2(obj_SymbolClass, obj_LibraryClass),
-                   FALSE, obj_False, FALSE, false_or_module,
+                   false, obj_False, false, false_or_module,
                   dylan_resolve_name_in_library);
 
     define_generic_function("exported-names", list1(obj_NamespaceClass),
-                            FALSE, obj_False, FALSE, list1(obj_ListClass),
+                            false, obj_False, false, list1(obj_ListClass),
                             obj_False);
     define_method("exported-names", list1(obj_ModuleClass),
-                  FALSE, obj_False, FALSE, obj_ListClass,
+                  false, obj_False, false, obj_ListClass,
                   dylan_exported_bindings);
     define_method("exported-names", list1(obj_LibraryClass),
-                  FALSE, obj_False, FALSE, obj_ListClass,
+                  false, obj_False, false, obj_ListClass,
                   dylan_exported_modules);
 
     define_generic_function("visible-names", list1(obj_NamespaceClass),
-                            FALSE, obj_False, FALSE, list1(obj_ListClass),
+                            false, obj_False, false, list1(obj_ListClass),
                             obj_False);
     define_method("visible-names", list1(obj_ModuleClass),
-                  FALSE, obj_False, FALSE, obj_ListClass,
+                  false, obj_False, false, obj_ListClass,
                   dylan_visible_bindings);
     define_method("visible-names", list1(obj_LibraryClass),
-                  FALSE, obj_False, FALSE, obj_ListClass,
+                  false, obj_False, false, obj_ListClass,
                   dylan_visible_modules);
 
     define_generic_function("name-home", list1(obj_NameClass),
-                            FALSE, obj_False, FALSE,
+                            false, obj_False, false,
                             list1(obj_NamespaceClass), obj_False);
     define_method("name-home", list1(obj_BindingClass),
-                  FALSE, obj_False, FALSE, obj_ModuleClass,
+                  false, obj_False, false, obj_ModuleClass,
                   dylan_name_home_for_bindings);
     define_method("name-home", list1(obj_ModuleClass),
-                  FALSE, obj_False, FALSE, obj_LibraryClass,
+                  false, obj_False, false, obj_LibraryClass,
                   dylan_name_home_for_modules);
 }

@@ -46,7 +46,7 @@
 
 static FILE *File = NULL;
 static int table_index = 0;
-static boolean ModuleDumped = FALSE;
+static bool ModuleDumped = false;
 
 static void dump_literal(struct literal *literal);
 static void dump_constant(struct constant *c);
@@ -482,7 +482,7 @@ static void dump_method(struct method *method)
     dump_component(method->component);
 }
 
-static void dump_varref(struct id *id, boolean written)
+static void dump_varref(struct id *id, bool written)
 {
     if (id->line) {
         dump_op(fop_NOTE_REFERENCE);
@@ -544,7 +544,7 @@ static void dump_defconst_or_var(struct param_list *params)
 
 
 static void dump_defnamespace(struct defnamespace_constituent *c,
-                              boolean dump_creates)
+                              bool dump_creates)
 {
     struct use_clause *use;
 
@@ -617,7 +617,7 @@ void dump_top_level_form(struct component *c)
     if (!ModuleDumped) {
         dump_op(fop_IN_MODULE);
         dump_symbol(ModuleName);
-        ModuleDumped = TRUE;
+        ModuleDumped = true;
     }
 
     dump_op(fop_TOP_LEVEL_FORM);
@@ -629,7 +629,7 @@ void dump_defmethod(struct id *name, struct component *c)
     if (!ModuleDumped) {
         dump_op(fop_IN_MODULE);
         dump_symbol(ModuleName);
-        ModuleDumped = TRUE;
+        ModuleDumped = true;
     }
 
     dump_op(fop_DEFINE_METHOD);
@@ -642,7 +642,7 @@ void dump_defgeneric(struct id *name, struct component *tlf)
     if (!ModuleDumped) {
         dump_op(fop_IN_MODULE);
         dump_symbol(ModuleName);
-        ModuleDumped = TRUE;
+        ModuleDumped = true;
     }
 
     dump_op(fop_DEFINE_GENERIC);
@@ -658,7 +658,7 @@ void dump_defclass(struct id *name, struct slot_spec *slots,
     if (!ModuleDumped) {
         dump_op(fop_IN_MODULE);
         dump_symbol(ModuleName);
-        ModuleDumped = TRUE;
+        ModuleDumped = true;
     }
 
     dump_op(fop_DEFINE_CLASS);
@@ -678,7 +678,7 @@ void dump_defconst(struct param_list *params, struct component *initializer)
     if (!ModuleDumped) {
         dump_op(fop_IN_MODULE);
         dump_symbol(ModuleName);
-        ModuleDumped = TRUE;
+        ModuleDumped = true;
     }
 
     dump_op(fop_DEFINE_CONSTANT);
@@ -691,7 +691,7 @@ void dump_defvar(struct param_list *params, struct component *initializer)
     if (!ModuleDumped) {
         dump_op(fop_IN_MODULE);
         dump_symbol(ModuleName);
-        ModuleDumped = TRUE;
+        ModuleDumped = true;
     }
 
     dump_op(fop_DEFINE_VARIABLE);
@@ -702,13 +702,13 @@ void dump_defvar(struct param_list *params, struct component *initializer)
 void dump_defmodule(struct defnamespace_constituent *c)
 {
     dump_op(fop_DEFINE_MODULE);
-    dump_defnamespace(c, TRUE);
+    dump_defnamespace(c, true);
 }
 
 void dump_deflibrary(struct defnamespace_constituent *c)
 {
     dump_op(fop_DEFINE_LIBRARY);
-    dump_defnamespace(c, FALSE);
+    dump_defnamespace(c, false);
 }
 
 void dump_finalize_output(void)
@@ -1109,13 +1109,13 @@ static void dump_error_constituent(struct constituent *c)
 static void dump_defmodule_constituent(struct defnamespace_constituent *c)
 {
     dump_op(fop_DEFINE_MODULE);
-    dump_defnamespace(c, TRUE);
+    dump_defnamespace(c, true);
 }
 
 static void dump_deflibrary_constituent(struct defnamespace_constituent *c)
 {
     dump_op(fop_DEFINE_LIBRARY);
-    dump_defnamespace(c, FALSE);
+    dump_defnamespace(c, false);
 }
 
 

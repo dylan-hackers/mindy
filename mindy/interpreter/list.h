@@ -41,7 +41,7 @@ extern obj_t obj_ListClass, obj_EmptyListClass, obj_PairClass;
 extern obj_t obj_Nil;
 
 extern obj_t pair(obj_t head, obj_t tail);
-extern boolean memq(obj_t o, obj_t list);
+extern bool memq(obj_t o, obj_t list);
 extern obj_t nreverse(obj_t list);
 extern int length(obj_t list);
 

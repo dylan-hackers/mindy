@@ -257,7 +257,7 @@ static int scav_catch(struct object *o)
 
 static obj_t trans_catch(obj_t catch)
 {
-    return transport(catch, sizeof(struct catch_block), FALSE);
+    return transport(catch, sizeof(struct catch_block), false);
 }
 
 
@@ -280,14 +280,14 @@ void init_nlx_functions(void)
     define_constant("uwp",
                     make_raw_function("uwp",
                                       list2(obj_ObjectClass, obj_ObjectClass),
-                                      FALSE, obj_False, FALSE,
+                                      false, obj_False, false,
                                       obj_Nil, obj_ObjectClass, uwp));
     define_constant("catch",
                     make_raw_function("catch", list1(obj_ObjectClass),
-                                      FALSE, obj_False, FALSE,
+                                      false, obj_False, false,
                                       obj_Nil, obj_ObjectClass, catch));
     define_constant("throw",
                     make_raw_function("throw", list1(obj_ObjectClass),
-                                      TRUE, obj_False, FALSE,
+                                      true, obj_False, false,
                                       obj_Nil, obj_ObjectClass, throw));
 }

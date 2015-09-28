@@ -45,9 +45,9 @@ struct type {
 };
 
 /* Various type predicates. */
-extern boolean instancep(obj_t thing, obj_t type);
-extern boolean subtypep(obj_t type1, obj_t type2);
-extern boolean overlapp(obj_t type1, obj_t type2);
+extern bool instancep(obj_t thing, obj_t type);
+extern bool subtypep(obj_t type1, obj_t type2);
+extern bool overlapp(obj_t type1, obj_t type2);
 
 /* Functions to create specializers. */
 extern obj_t singleton(obj_t object);

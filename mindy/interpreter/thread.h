@@ -92,7 +92,7 @@ extern void thread_stop(struct thread *thread);
 extern void thread_restart(struct thread *thread);
 
 extern obj_t make_lock(void);
-extern boolean lock_query(obj_t lock);
+extern bool lock_query(obj_t lock);
 extern void lock_grab(struct thread *thread, obj_t lock,
                       void (*advance)(struct thread *thread));
 extern void lock_release(obj_t lock);

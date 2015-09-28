@@ -54,7 +54,7 @@ obj_t make_weak_pointer(obj_t object)
     obj_t res = alloc(obj_WeakPointerClass, sizeof(struct weak_pointer));
 
     WEAK(res)->object = object;
-    WEAK(res)->broken = FALSE;
+    WEAK(res)->broken = false;
     WEAK(res)->next = NULL;
 
     return res;
@@ -111,7 +111,7 @@ static int scav_weak_pointer(struct object *obj)
 
 static obj_t trans_weak_pointer(obj_t weakptr)
 {
-    return transport(weakptr, sizeof(struct weak_pointer), FALSE);
+    return transport(weakptr, sizeof(struct weak_pointer), false);
 }
 
 void break_weak_pointers(void)
@@ -121,7 +121,7 @@ void break_weak_pointers(void)
     for (w = WeakPointers; w != NULL; w = n) {
         if (object_collected(w->object)) {
             w->object = obj_False;
-            w->broken = TRUE;
+            w->broken = true;
         }
         else
             scavenge(&w->object);
@@ -148,18 +148,18 @@ void init_weak_classes(void)
 
 void init_weak_functions(void)
 {
-    define_method("make", list1(singleton(obj_WeakPointerClass)), FALSE,
+    define_method("make", list1(singleton(obj_WeakPointerClass)), false,
                   list1(pair(symbol("object"), obj_Unbound)),
-                  FALSE, obj_WeakPointerClass, dylan_make_weak_pointer);
+                  false, obj_WeakPointerClass, dylan_make_weak_pointer);
     define_generic_function("weak-pointer-object",
                             list1(obj_WeakPointerClass),
-                            FALSE, obj_False, FALSE,
+                            false, obj_False, false,
                             list2(obj_ObjectClass, obj_BooleanClass),
                             obj_False);
     add_method(find_variable(module_BuiltinStuff,symbol("weak-pointer-object"),
-                             FALSE, FALSE)->value,
+                             false, false)->value,
                make_raw_method("weak-pointer-object",
-                               list1(obj_WeakPointerClass), FALSE, obj_False,
-                               FALSE, list2(obj_ObjectClass, obj_BooleanClass),
+                               list1(obj_WeakPointerClass), false, obj_False,
+                               false, list2(obj_ObjectClass, obj_BooleanClass),
                                obj_False, dylan_weak_pointer_object));
 }

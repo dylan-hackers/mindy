@@ -72,7 +72,7 @@ static int scav_value_cell(struct object *ptr)
 
 static obj_t trans_value_cell(obj_t value_cell)
 {
-    return transport(value_cell, sizeof(struct value_cell), TRUE);
+    return transport(value_cell, sizeof(struct value_cell), true);
 }
 
 

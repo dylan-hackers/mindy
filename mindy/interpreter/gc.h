@@ -31,14 +31,14 @@ extern void add_variable_root(obj_t *addr);
 extern obj_t alloc(obj_t class, int bytes);
 extern void shrink(obj_t obj, int old_bytes, int new_bytes);
 extern void scavenge(obj_t *addr);
-extern obj_t transport(obj_t obj, int bytes, boolean read_only);
+extern obj_t transport(obj_t obj, int bytes, bool read_only);
 
-extern void collect_garbage(boolean purify);
+extern void collect_garbage(bool purify);
 
-extern boolean object_collected(obj_t obj);
+extern bool object_collected(obj_t obj);
 extern obj_t pointer_hash_state(obj_t pointer);
 
-extern boolean TimeToGC;
+extern bool TimeToGC;
 
 #if (SIZEOF_VOID_P == 4)
 #    define ForwardingMarker ((obj_t)(0xdeadbeef))

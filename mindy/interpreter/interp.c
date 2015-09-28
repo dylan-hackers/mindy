@@ -94,7 +94,7 @@ static void canonicalize_values(struct thread *thread, obj_t *old_sp,
     int supplied = thread->sp - vals;
     int wants = decode_arg(thread);
     int fixed;
-    boolean restp;
+    bool restp;
     int i;
 
     fixed = wants >> 1;
@@ -852,7 +852,7 @@ static int scav_component(struct object *ptr)
 
 static obj_t trans_component(obj_t component)
 {
-    return transport(component, COMPONENT(component)->length, TRUE);
+    return transport(component, COMPONENT(component)->length, true);
 }
 
 
@@ -872,10 +872,10 @@ void init_interp_classes(void)
 
 void init_interpreter(void)
 {
-    plus_var = find_variable(module_BuiltinStuff, symbol("+"), FALSE, TRUE);
-    minus_var = find_variable(module_BuiltinStuff, symbol("-"), FALSE, TRUE);
-    lt_var = find_variable(module_BuiltinStuff, symbol("<"), FALSE, TRUE);
-    le_var = find_variable(module_BuiltinStuff, symbol("<="), FALSE, TRUE);
-    eq_var = find_variable(module_BuiltinStuff, symbol("="), FALSE, TRUE);
-    ne_var = find_variable(module_BuiltinStuff, symbol("~="), FALSE, TRUE);
+    plus_var = find_variable(module_BuiltinStuff, symbol("+"), false, true);
+    minus_var = find_variable(module_BuiltinStuff, symbol("-"), false, true);
+    lt_var = find_variable(module_BuiltinStuff, symbol("<"), false, true);
+    le_var = find_variable(module_BuiltinStuff, symbol("<="), false, true);
+    eq_var = find_variable(module_BuiltinStuff, symbol("="), false, true);
+    ne_var = find_variable(module_BuiltinStuff, symbol("~="), false, true);
 }
