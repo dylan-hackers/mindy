@@ -47,7 +47,7 @@
 #include "type.h"
 #include "brkpt.h"
 #include "interp.h"
-#include "../compiler/byteops.h"
+#include "shared/byteops.h"
 
 #define OPS_PER_TIME_SLICE 100
 

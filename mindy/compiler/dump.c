@@ -37,12 +37,12 @@
 #include "src.h"
 #include "literal.h"
 #include "sym.h"
-#include "fileops.h"
 #include "compile.h"
 #include "dump.h"
 #include "version.h"
 #include "envanal.h"
 #include "lose.h"
+#include "shared/fileops.h"
 
 static FILE *File = NULL;
 static int table_index = 0;

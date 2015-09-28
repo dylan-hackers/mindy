@@ -59,8 +59,8 @@
 #include "vec.h"
 #include "error.h"
 #include "def.h"
-#include "../compiler/fileops.h"
 #include "load.h"
+#include "shared/fileops.h"
 
 #if BUFSIZ > 4096
 #define BUFFER_SIZE BUFSIZ

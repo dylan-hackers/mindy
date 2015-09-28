@@ -58,7 +58,7 @@
 #include "brkpt.h"
 #include "instance.h"
 #include "parser.h"
-#include "../compiler/byteops.h"
+#include "shared/byteops.h"
 
 struct library *CurLibrary = NULL;
 struct module *CurModule = NULL;

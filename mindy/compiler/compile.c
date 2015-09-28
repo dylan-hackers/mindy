@@ -37,9 +37,9 @@
 #include "sym.h"
 #include "literal.h"
 #include "compile.h"
-#include "byteops.h"
 #include "info.h"
 #include "lose.h"
+#include "shared/byteops.h"
 
 #if defined (__arch64__) || defined(__alpha__) || defined(__ia64__)
 #define BLOCK_SIZE (8*1024)

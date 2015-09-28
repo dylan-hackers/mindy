@@ -24,14 +24,12 @@ SET(mindycomp_SOURCES
 )
 
 SET(mindycomp_HEADERS
-    byteops.h
     compile.h
     dump.h
     dup.h
     envanal.h
     expand.h
     feature.h
-    fileops.h
     free.h
     header.h
     info.h
@@ -45,7 +43,9 @@ SET(mindycomp_HEADERS
     src.h
     sym.h
     version.h
+    ../shared/byteops.h
     ../shared/compiler-support.h
+    ../shared/fileops.h
 )
 
 FIND_PACKAGE(BISON)

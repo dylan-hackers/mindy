@@ -44,6 +44,9 @@ SET(mindy_SOURCES
     vec.c
     weak.c
     ../../common/time/time-portability.c
+    ../shared/byteops.h
+    ../shared/compiler-support.h
+    ../shared/fileops.h
 )
 
 SET(mindy_HEADERS
