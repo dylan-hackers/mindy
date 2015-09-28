@@ -25,8 +25,6 @@
 *
 \**********************************************************************/
 
-#include <config.h>
-
 extern void add_constant_root(obj_t *addr);
 extern void add_variable_root(obj_t *addr);
 

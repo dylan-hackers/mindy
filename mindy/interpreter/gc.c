@@ -45,7 +45,6 @@
 #include "list.h"
 #include "str.h"
 #include "obj.h"
-#include <config.h>
 
 extern void scavenge_thread_roots(void);
 extern void scavenge_symbol_roots(void);

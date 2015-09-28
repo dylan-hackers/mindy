@@ -1,0 +1,5 @@
+#cmakedefine HAVE__LONGJMP @HAVE__LONGJMP@
+#cmakedefine HAVE__SETJMP @HAVE__SETJMP@
+#cmakedefine HAVE_DAYLIGHT @HAVE_DAYLIGHT@
+#cmakedefine HAVE_TM_GMTOFF @HAVE_TM_GMTOFF@
+#cmakedefine SIZEOF_VOID_P @SIZEOF_VOID_P@

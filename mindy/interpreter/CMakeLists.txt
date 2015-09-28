@@ -84,7 +84,6 @@ SET(mindy_HEADERS
     vec.h
     weak.h
     ../shared/compiler-support.h
-    ../config.h
 )
 
 FIND_PACKAGE(BISON)

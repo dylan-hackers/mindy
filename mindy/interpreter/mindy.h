@@ -31,6 +31,8 @@
 
 #include "../shared/compiler-support.h"
 
+#include "config.h"
+
 extern char *exec_file_name;
 
 typedef struct _object *obj_t;

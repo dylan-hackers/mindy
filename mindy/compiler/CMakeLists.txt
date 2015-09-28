@@ -46,7 +46,6 @@ SET(mindycomp_HEADERS
     sym.h
     version.h
     ../shared/compiler-support.h
-    ../config.h
 )
 
 FIND_PACKAGE(BISON)
