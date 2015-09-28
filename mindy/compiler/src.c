@@ -910,7 +910,7 @@ struct literal *parse_character_token(struct token *token)
     struct literal *res;
 
     if (c == '\\') {
-        char *cp = &token->chars[2];
+        char *cp = (char *)&token->chars[2];
         c = escape_char(&cp, token->line);
     }
 
