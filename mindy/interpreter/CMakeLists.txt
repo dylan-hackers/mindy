@@ -96,5 +96,5 @@ ADD_EXECUTABLE(mindy
                ${mindy_SOURCES}
                ${mindy_HEADERS}
                ${BISON_MindyParser_OUTPUTS})
-TARGET_LINK_LIBRARIES(mindy -lreadline)
+TARGET_LINK_LIBRARIES(mindy readline ${CMAKE_DL_LIBS})
 SET_TARGET_PROPERTIES(mindy PROPERTIES VERSION ${MINDY_VERSION_STRING})
