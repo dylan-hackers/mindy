@@ -30,8 +30,14 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
+#include <errno.h>
+#include <sys/param.h>
+#include <time.h>
+#ifdef WIN32
+#include <direct.h>
+#else
+#include <unistd.h>
+#endif
 
 #include "mindy.h"
 #include "thread.h"

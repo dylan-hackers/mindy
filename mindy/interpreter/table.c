@@ -33,7 +33,7 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
+#include <limits.h>
 
 #include "mindy.h"
 #include "thread.h"

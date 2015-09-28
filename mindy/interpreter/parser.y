@@ -30,8 +30,6 @@
 \**********************************************************************/
 
 %{
-#include "../compat/std-c.h"
-
 #include "mindy.h"
 #include "lexer.h"
 #include "parser.h"

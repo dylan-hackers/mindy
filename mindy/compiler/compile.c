@@ -29,8 +29,6 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-
 #include "mindycomp.h"
 #include "src.h"
 #include "dump.h"

@@ -15,8 +15,11 @@
 ** this grotty system stuff.
 */
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define MINDYCOMP "mindycomp"
 

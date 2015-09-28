@@ -29,10 +29,15 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
-
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/param.h>
+#ifdef WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 #include "mindy.h"
 #include "bool.h"

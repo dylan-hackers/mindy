@@ -29,8 +29,13 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
+#include <errno.h>
+#include <fcntl.h>
+
+#ifndef WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 #include "mindy.h"
 #include "list.h"

@@ -29,8 +29,7 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
+#include <errno.h>
 
 #include "mindy.h"
 #include "char.h"

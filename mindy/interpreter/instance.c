@@ -27,8 +27,6 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-
 #include "mindy.h"
 #include "gc.h"
 #include "obj.h"

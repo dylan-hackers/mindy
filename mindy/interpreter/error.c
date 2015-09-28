@@ -29,7 +29,7 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
+#include <stdarg.h>
 
 #include "mindy.h"
 #include "str.h"

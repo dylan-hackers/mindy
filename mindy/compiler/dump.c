@@ -29,8 +29,9 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
+#include <limits.h>
+#include <sys/stat.h>
+#include <time.h>
 
 #include "mindycomp.h"
 #include "src.h"

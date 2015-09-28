@@ -29,8 +29,6 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-
 #include "mindycomp.h"
 #include "literal.h"
 #include "lose.h"

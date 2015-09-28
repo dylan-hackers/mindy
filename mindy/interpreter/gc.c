@@ -29,12 +29,6 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-
-#ifdef hpux
-#include <sys/mman.h>
-#endif
-
 #include "mindy.h"
 #include "class.h"
 #include "gc.h"

@@ -29,8 +29,9 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
+#include <stdarg.h>
 
+#include "mindycomp.h"
 #include "lose.h"
 
 static MINDY_NORETURN void vlose(char *fmt, va_list ap)

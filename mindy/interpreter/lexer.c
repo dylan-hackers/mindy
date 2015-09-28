@@ -29,11 +29,6 @@
 *
 \**********************************************************************/
 
-
-
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
-
 #include "mindy.h"
 #include "lexer.h"
 #include "parser.h"

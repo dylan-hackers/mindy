@@ -29,8 +29,7 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
+#include <stdarg.h>
 
 #include "mindycomp.h"
 #include "parser.h"

@@ -32,7 +32,9 @@
 \**********************************************************************/
 
 %{
-#include "../compat/std-c.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "mindycomp.h"
 #include "header.h"

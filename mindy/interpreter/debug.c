@@ -29,10 +29,13 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
-
 #include <setjmp.h>
+#include <sys/stat.h>
+#ifdef WIN32
+#include <io.h> // for isatty.
+#else
+#include <unistd.h>
+#endif
 
 #include "mindy.h"
 #include "thread.h"

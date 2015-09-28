@@ -29,8 +29,6 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-
 #include "mindy.h"
 #include "class.h"
 #include "bool.h"

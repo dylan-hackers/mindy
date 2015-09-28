@@ -29,10 +29,11 @@
 *
 \**********************************************************************/
 
-#include "../compat/std-c.h"
-#include "../compat/std-os.h"
-
+#include <errno.h>
 #include <setjmp.h>
+#include <signal.h>
+#include <sys/select.h>
+
 #ifndef HAVE__SETJMP
 #   define _setjmp      setjmp
 #endif

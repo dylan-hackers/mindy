@@ -25,6 +25,10 @@
 *
 \**********************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef WIN32
 #   define boolean unsigned char
 #   include "mindy-w32.h"
