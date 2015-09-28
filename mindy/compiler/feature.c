@@ -47,9 +47,7 @@ static char *InitialFeatures[]
 #    ifdef WIN32
         "compiled-for-x86",
         "compiled-for-win32",
-#    elif (defined(hpux))
-        "compiled-for-hpux",
-        "compiled-for-hppa",
+#    else
         "compiled-for-unix",
 #    endif
      NULL};

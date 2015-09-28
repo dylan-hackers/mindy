@@ -58,32 +58,15 @@ extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 
 #ifdef WIN32
 #   define boolean unsigned char
-# ifdef MSVC
-#   include "mindy-w32.h"
-# endif
 #else
 #   define boolean int
 #endif
 #define TRUE 1
 #define FALSE 0
 
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
-
-#ifdef sparc
-#define SLOW_LONGJMP 1
-#endif
-
 #ifdef GD_DEBUG
 #define SLOW_LONGJMP 1
 #endif
-
-#ifdef hppa
-#define SLOW_FUNCTION_POINTERS 1
-#endif
-
 
 #ifndef SLOW_LONGJMP
 #define SLOW_LONGJMP 0

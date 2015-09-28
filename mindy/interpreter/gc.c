@@ -58,7 +58,7 @@ extern void scavenge_c_roots(void);
 /* A 'DWORD' is 64 bits in a 32-bit arch and 128 bits in a 64-bit arch */
 #define ALIGN_DWORD(p) (((p)+(sizeof(void *)*2)-1) & ~((sizeof(void *)*2)-1))
 
-#ifdef was_hpux
+#if 0
 #define PURIFY 1
 #endif
 
@@ -191,7 +191,7 @@ static int bytes_in_use(struct space *space)
 
 static struct block *alloc_block(void)
 {
-#ifdef hpux
+#if 0
 #if PURIFY
     struct block *block;
 
