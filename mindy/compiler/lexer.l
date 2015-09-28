@@ -53,6 +53,8 @@ static int make_header_end(void);
 
 %}
 
+%option nounput
+
 %x ini key val etc
 
 D [0-9]
