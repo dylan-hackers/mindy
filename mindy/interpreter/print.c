@@ -270,7 +270,6 @@ void vformat(char *fmt, obj_t *args, int nargs)
                 nargs = more_arguments(nargs);
                 check_type(*args, obj_CharacterClass);
                 fputc(char_int(*args++), stdout);
-                fputc(char_int(*args++), stdout);
                 break;
               case '=':
                 nargs = more_arguments(nargs);
