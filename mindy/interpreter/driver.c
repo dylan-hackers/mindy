@@ -83,7 +83,7 @@ void set_signal_handler(int sig, void(*handler)(void))
         handler();
     }
     if ( ! SignalAction[sig]) {
-        struct sigaction sa = { 0 };
+        struct sigaction sa = { { 0 } };
         sa.sa_handler = signal_handler;
         sigaction(sig, &sa, NULL);
         SignalAction[sig] = TRUE;
