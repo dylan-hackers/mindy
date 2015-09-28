@@ -280,7 +280,7 @@ void vformat(char *fmt, obj_t *args, int nargs)
                 /* Gotta somehow have two cases,          */
                 /* one for strings and another for errors */
                 if (instancep(*args, obj_ByteStringClass)) {
-                nargs = more_arguments(nargs);
+                    nargs = more_arguments(nargs);
                     dylan_puts(*args++);
                 }
                 else if (instancep(*args, obj_SymbolClass)) {
