@@ -831,7 +831,7 @@ static void module_cmd(obj_t args)
 {
     struct module *module;
     struct library *lib;
-    obj_t sym, lib_sym;
+    obj_t sym, lib_sym = obj_False;
 
     if (CurLibrary == NULL) {
         printf("No library currently selected.\n");
