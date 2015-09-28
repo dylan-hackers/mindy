@@ -2370,6 +2370,7 @@ static struct cmd_entry Cmds[] = {
          "backtrace\tDisplay a stack backtrace for the current thread.",
          backtrace_cmd},
     {"breakpoint", "breakpoint\tInstall a breakpoint.", breakpoint_cmd},
+    {"bt", NULL, backtrace_cmd},
     {"c", NULL, continue_cmd},
     {"call", "call expr...\tCall each expr, printing the results.", call_cmd},
     {"continue", "continue\tContinue execution.", continue_cmd},
