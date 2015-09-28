@@ -1,0 +1,15 @@
+SET(streams_SOURCES
+    library.dylan
+    internals.dylan
+    streams.dylan
+    stream-reading.dylan
+    stream-writing.dylan
+    stream-lines.dylan
+    stream-buffers.dylan
+    wrapper-streams.dylan
+    file-streams.dylan
+    bbso-stream.dylan
+    stream-reading-buf.dylan
+    piped-exec.dylan
+)
+ADD_DYLAN_LIBRARY(streams)
