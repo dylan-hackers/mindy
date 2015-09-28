@@ -25,6 +25,8 @@
 *
 \**********************************************************************/
 
+#include "../shared/compiler-support.h"
+
 extern char *exec_file_name;
 
 typedef struct _object *obj_t;
@@ -39,7 +41,7 @@ struct object {
 #define obj_rawptr(o) ((void *)(o))
 #define rawptr_obj(p) ((obj_t)(p))
 
-extern void lose(char *fmt, ...);
+extern MINDY_NORETURN void lose(char *fmt, ...);
 extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 
 #define assert(cond) \

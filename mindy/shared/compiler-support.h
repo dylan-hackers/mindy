@@ -1,7 +1,6 @@
 /**********************************************************************\
 *
-*  Copyright (c) 1994  Carnegie Mellon University
-*  Copyright (c) 1998, 1999, 2000  Gwydion Dylan Maintainers
+*  Copyright (c) 2015 Mindy contributors.
 *  All rights reserved.
 *
 *  Use and copying of this software and preparation of derivative
@@ -25,6 +24,15 @@
 *
 \**********************************************************************/
 
-#include "../shared/compiler-support.h"
+#ifndef MINDY_SHARED_COMPILER_SUPPORT_H
+#define MINDY_SHARED_COMPILER_SUPPORT_H
 
-extern MINDY_NORETURN void lose (char *fmt, ...);
+#ifdef __GNUC__
+#define MINDY_NORETURN __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define MINDY_NORETURN __declspec(noreturn)
+#else
+#define MINDY_NORETURN
+#endif
+
+#endif

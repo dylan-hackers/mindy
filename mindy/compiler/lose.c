@@ -33,7 +33,7 @@
 
 #include "lose.h"
 
-static void vlose(char *fmt, va_list ap)
+static MINDY_NORETURN void vlose(char *fmt, va_list ap)
 {
     if (fmt != NULL) {
         vfprintf(stderr, fmt, ap);

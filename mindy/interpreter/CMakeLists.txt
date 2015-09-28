@@ -85,6 +85,7 @@ SET(mindy_HEADERS
     vec.h
     weak.h
     ../compat/cygwin.h
+    ../shared/compiler-support.h
     ../config.h
 )
 

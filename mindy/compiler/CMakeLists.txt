@@ -45,6 +45,7 @@ SET(mindycomp_HEADERS
     src.h
     sym.h
     version.h
+    ../shared/compiler-support.h
     ../config.h
 )
 
