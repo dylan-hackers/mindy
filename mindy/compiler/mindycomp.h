@@ -48,23 +48,21 @@ extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;
 
 /* Don't call check_malloc yourself, always use the malloc macro.
- * Has no parameter list so that ext-init.c can read this file
- * without knowing about a size_t.
  * Also, try to keep this section consistent with interpreter/mindy.h
  */
-void *check_malloc();
+void *check_malloc(size_t, const char*, int);
 #ifdef malloc
 #undef malloc
 #endif
 #define malloc(sz) check_malloc(sz, __FILE__, __LINE__)
 
-void *check_calloc();
+void *check_calloc(size_t, size_t, const char*, int);
 #ifdef calloc
 #undef calloc
 #endif
 #define calloc(nobj,sz) check_calloc(nobj, sz, __FILE__, __LINE__)
 
-void *check_realloc();
+void *check_realloc(void*, size_t, const char*, int);
 #ifdef realloc
 #undef realloc
 #endif

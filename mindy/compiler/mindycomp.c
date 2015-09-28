@@ -358,7 +358,7 @@ int main(int argc, char *argv[])
 /* Try to keep this consistent with interpreter/mindy.c */
 
 #undef malloc
-void *check_malloc(size_t sz, char *file, int line)
+void *check_malloc(size_t sz, const char *file, int line)
 {
     void *ret = malloc(sz);
     if (ret == 0)
@@ -367,7 +367,7 @@ void *check_malloc(size_t sz, char *file, int line)
 }
 
 #undef calloc
-void *check_calloc(size_t nobj, size_t sz, char *file, int line)
+void *check_calloc(size_t nobj, size_t sz, const char *file, int line)
 {
     void *ret = calloc(nobj, sz);
     if (ret == 0)
@@ -376,7 +376,7 @@ void *check_calloc(size_t nobj, size_t sz, char *file, int line)
 }
 
 #undef realloc
-void *check_realloc(void *ptr, size_t sz, char *file, int line)
+void *check_realloc(void *ptr, size_t sz, const char *file, int line)
 {
     void *ret = realloc(ptr, sz);
     if (ret == 0)
