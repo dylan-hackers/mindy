@@ -43,7 +43,6 @@ SET(mindy_SOURCES
     value.c
     vec.c
     weak.c
-    ../compat/cygwin.c
     ../../common/time/time-portability.c
 )
 
@@ -84,7 +83,6 @@ SET(mindy_HEADERS
     value.h
     vec.h
     weak.h
-    ../compat/cygwin.h
     ../shared/compiler-support.h
     ../config.h
 )

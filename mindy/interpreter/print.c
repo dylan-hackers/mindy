@@ -47,7 +47,6 @@
 #include "error.h"
 #include "num.h"
 #include "type.h"
-#include "../compat/cygwin.h"
 
 void def_printer(obj_t class, void (*print_fn)(obj_t object))
 {
@@ -97,7 +96,7 @@ void prin1(obj_t object)
 void print(obj_t object)
 {
     prin1(object);
-    os_safe_character_printer('\n');
+    fputc('\n', stdout);
 }
 
 static void vvformat(char *fmt, va_list ap)
@@ -185,21 +184,13 @@ static obj_t dylan_prin1(obj_t obj)
 
 static obj_t dylan_putc(obj_t obj)
 {
-  os_safe_character_printer(char_int(obj));
+  fputc(char_int(obj), stdout);
   return obj;
 }
 
 static obj_t dylan_puts(obj_t obj)
 {
-  char* output_string = (char*)string_chars(obj);
-  if(cygwin()) {
-    /* check that each character is safe for printing on this os */
-    while(*output_string) {
-      os_safe_character_printer(*output_string++);
-    }
-  } else {
-    fputs(output_string, stdout);
-  }
+  fputs((const char*)string_chars(obj), stdout);
   return obj;
 }
 
@@ -278,7 +269,7 @@ void vformat(char *fmt, obj_t *args, int nargs)
               case 'C':
                 nargs = more_arguments(nargs);
                 check_type(*args, obj_CharacterClass);
-                os_safe_character_printer(char_int(*args++));
+                fputc(char_int(*args++), stdout);
                 fputc(char_int(*args++), stdout);
                 break;
               case '=':
@@ -312,7 +303,7 @@ void vformat(char *fmt, obj_t *args, int nargs)
               }
         }
         else
-            os_safe_character_printer(*fmt);
+            fputc(*fmt, stdout);
         fmt++;
     }
 }
@@ -336,18 +327,3 @@ void init_print_functions(void)
     define_function("fflush", obj_Nil, FALSE, obj_False, FALSE,
                     obj_ObjectClass, dylan_fflush);
 }
-
-/*******
- * a little routine to check for '\n' and print '\r' before it (for cygwin)
- *******/
-char os_safe_character_printer(char curr)
-{
-  static char prev = '\0';
-  if(cygwin() && '\n' == curr && prev != '\r') {
-    putchar('\r');
-  }
-  putchar(curr);
-  prev = curr;
-  return curr;
-}
-

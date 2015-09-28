@@ -34,8 +34,3 @@ extern int count_format_args(char *fmt);
 extern void vformat(char *fmt, obj_t *args, int nargs);
 
 extern void def_printer(obj_t class, void (*print_fn)(obj_t object));
-
-/** A little routine added by Douglas M. Auclair (dauclair@hotmail.com)
- *  that ensures that, no matter the operating system, the character gets
- *  printed correctly.  (Particularly, '\n' on cygnus) */
-char os_safe_character_printer(char);

@@ -44,7 +44,6 @@
 #include "obj.h"
 #include "def.h"
 #include "fd.h"
-#include "../compat/cygwin.h"
 
 /* And now, some large pieces of OS-dependent stuff. */
 
@@ -353,7 +352,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 
 static int mindy_open (const char *filename, int flags, int mode)
 {
-    return open(filename, flags_for(flags), mode);
+    return open(filename, flags, mode);
 }
 
 static int mindy_close (int fd)

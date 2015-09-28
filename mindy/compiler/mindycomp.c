@@ -46,7 +46,6 @@
 #include "dump.h"
 #include "feature.h"
 #include "lose.h"
-#include "../compat/cygwin.h"
 
 struct body *Program = NULL;
 

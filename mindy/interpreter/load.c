@@ -56,7 +56,6 @@
 #include "def.h"
 #include "../compiler/fileops.h"
 #include "load.h"
-#include "../compat/cygwin.h"
 
 #if BUFSIZ > 4096
 #define BUFFER_SIZE BUFSIZ
@@ -981,7 +980,7 @@ void load(char *name)
 #if WIN32
       fd = open(name, O_RDONLY | O_BINARY, 0);
 #else
-      fd = open(name, flags_for(O_RDONLY), 0);
+      fd = open(name, O_RDONLY, 0);
 #endif
     }
     if (fd < 0)

@@ -56,7 +56,6 @@
 #include "instance.h"
 #include "parser.h"
 #include "../compiler/byteops.h"
-#include "../compat/cygwin.h"
 
 struct library *CurLibrary = NULL;
 struct module *CurModule = NULL;
@@ -381,7 +380,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
         }
 
         if (source_directories == NULL || name[0] == '/')
-            cur_source_stream = fopen(name, open_for());
+            cur_source_stream = fopen(name, "r");
         else
             cur_source_stream = NULL;
 
@@ -2526,7 +2525,7 @@ void invoke_debugger(enum pause_reason reason)
     }
 
     if ( ! isatty(fileno(stdin))
-      && ! freopen("/dev/tty", open_for(), stdin)) {
+      && ! freopen("/dev/tty", "r", stdin)) {
         printf("STDIN is not a tty and cannot open /dev/tty.  Cannot debug.\n");
         exit(1);
     }
