@@ -308,6 +308,7 @@ static void pipe_cleanup (int inpipes[], int outpipes[], HANDLE old_handles[])
   }
 }
 
+MINDY_NORETURN
 static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *oldargs;
@@ -381,6 +382,7 @@ int mindy_read (int fd, char *buffer, int max_chars)
     return read(fd, buffer, max_chars);
 }
 
+MINDY_NORETURN
 static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 {
     int inpipes[2], outpipes[2], forkresult;
@@ -456,6 +458,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 /* End OS-specific stuff */
 
 
+MINDY_NORETURN
 static void results(struct thread *thread, obj_t *old_sp,
                     int okay, obj_t result)
 {
@@ -473,6 +476,7 @@ static void results(struct thread *thread, obj_t *old_sp,
     do_return(thread, old_sp, old_sp);
 }
 
+MINDY_NORETURN
 static void fd_close(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t fd = args[0];
@@ -485,6 +489,7 @@ static obj_t fd_error_str(obj_t xerrno)
   return make_byte_string(strerror(fixnum_value(xerrno)));
 }
 
+MINDY_NORETURN
 static void fd_input_available(obj_t self, struct thread *thread, obj_t *args)
 {
     int fd = fixnum_value(args[0]);
@@ -493,6 +498,7 @@ static void fd_input_available(obj_t self, struct thread *thread, obj_t *args)
     results(thread, args-1, res, res ? obj_True : obj_False);
 }
 
+MINDY_NORETURN
 static void fd_open(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t path = args[0];
@@ -505,6 +511,7 @@ static void fd_open(obj_t self, struct thread *thread, obj_t *args)
     results(thread, args-1, res, make_fixnum(res));
 }
 
+MINDY_NORETURN
 static void maybe_read(struct thread *thread)
 {
     obj_t *fp = thread->fp;
@@ -531,6 +538,7 @@ static void maybe_read(struct thread *thread)
     }
 }
 
+MINDY_NORETURN
 static void fd_read(obj_t self, struct thread *thread, obj_t *args)
 {
     thread->sp = args + 4;
@@ -538,6 +546,7 @@ static void fd_read(obj_t self, struct thread *thread, obj_t *args)
     maybe_read(thread);
 }
 
+MINDY_NORETURN
 static void fd_seek(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t fd = args[0];
@@ -550,6 +559,7 @@ static void fd_seek(obj_t self, struct thread *thread, obj_t *args)
     results(thread, args-1, res, make_fixnum(res));
 }
 
+MINDY_NORETURN
 static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
 {
     int res = fsync(fixnum_value(args[0]));
@@ -598,6 +608,7 @@ int output_writable(int fd)
 }
 
 
+MINDY_NORETURN
 static void maybe_write(struct thread *thread)
 {
     obj_t *fp = thread->fp;
@@ -626,6 +637,7 @@ static void maybe_write(struct thread *thread)
     }
 }
 
+MINDY_NORETURN
 static void fd_write(obj_t self, struct thread *thread, obj_t *args)
 {
     thread->sp = args + 4;

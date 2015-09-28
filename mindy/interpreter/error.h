@@ -25,6 +25,6 @@
 *
 \**********************************************************************/
 
-extern void error(char *msg, ...);
-extern void type_error(obj_t value, obj_t type);
+extern MINDY_NORETURN void error(char *msg, ...);
+extern MINDY_NORETURN void type_error(obj_t value, obj_t type);
 extern obj_t check_type(obj_t thing, obj_t type);

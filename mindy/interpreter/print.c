@@ -194,6 +194,7 @@ static obj_t dylan_puts(obj_t obj)
   return obj;
 }
 
+MINDY_NORETURN
 static void dylan_format(struct thread* thread, int nargs)
 {
   obj_t* args = thread->sp - nargs;

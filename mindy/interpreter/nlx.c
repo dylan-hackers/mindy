@@ -52,6 +52,7 @@ struct uwp {
     obj_t cleanup;
 };
 
+MINDY_NORETURN
 static void done_with_cleanup(struct thread *thread, obj_t *cleanup_vals)
 {
     obj_t *old_sp, *vals;
@@ -69,6 +70,7 @@ static void done_with_cleanup(struct thread *thread, obj_t *cleanup_vals)
     do_return(thread, old_sp, vals);
 }
 
+MINDY_NORETURN
 static void do_uwp_cleanup(struct thread *thread, obj_t *vals)
 {
     struct uwp *cur_uwp = thread->cur_uwp;
@@ -85,6 +87,7 @@ static void do_uwp_cleanup(struct thread *thread, obj_t *vals)
     invoke(thread, 0);
 }
 
+MINDY_NORETURN
 static void uwp(struct thread *thread, int nargs)
 {
     obj_t *args, *fp;
@@ -121,6 +124,7 @@ struct catch_block {
     obj_t handlers;
 };
 
+MINDY_NORETURN
 static void unlink_catch(struct thread *thread, obj_t *vals)
 {
     obj_t catch_block;
@@ -137,6 +141,7 @@ static void unlink_catch(struct thread *thread, obj_t *vals)
     do_return(thread, old_sp, vals);
 }
 
+MINDY_NORETURN
 static void catch(struct thread *thread, int nargs)
 {
     obj_t *args, *fp;
@@ -165,8 +170,10 @@ static void catch(struct thread *thread, int nargs)
 
 /* Throw */
 
+MINDY_NORETURN
 static void unwind(struct thread *thread, obj_t catch_block, obj_t *vals);
 
+MINDY_NORETURN
 static void throw(struct thread *thread, int nargs)
 {
     obj_t *args;
@@ -194,6 +201,7 @@ static void continue_unwind(struct thread *thread, obj_t *cleanup_vals)
     unwind(thread, catch_block, vals);
 }
 
+MINDY_NORETURN
 static void unwind(struct thread *thread, obj_t catch_block, obj_t *vals)
 {
     struct uwp *cur_uwp;
@@ -226,7 +234,6 @@ static void unwind(struct thread *thread, obj_t catch_block, obj_t *vals)
             dst[1] = cleanup;
             set_c_continuation(thread, continue_unwind);
             invoke(thread, 0);
-            return;
         }
         /* Unlink the catch block we just unwound past. */
         obj_ptr(struct catch_block *, cur_catch)->thread = NULL;

@@ -86,19 +86,21 @@ extern struct thread *thread_make(obj_t debug_name);
 extern void thread_push_escape(struct thread *thread);
 extern void thread_pop_escape(struct thread *thread);
 extern void thread_kill(struct thread *thread);
-extern void thread_debuggered(struct thread *thread, obj_t condition);
+extern MINDY_NORETURN void thread_debuggered(struct thread *thread, obj_t condition);
 extern void thread_buggered(struct thread *thread);
 extern void thread_stop(struct thread *thread);
 extern void thread_restart(struct thread *thread);
 
 extern obj_t make_lock(void);
 extern bool lock_query(obj_t lock);
-extern void lock_grab(struct thread *thread, obj_t lock,
-                      void (*advance)(struct thread *thread));
+extern MINDY_NORETURN void lock_grab(struct thread *thread, obj_t lock,
+                                     MINDY_NORETURN
+                                     void (*advance)(struct thread *thread));
 extern void lock_release(obj_t lock);
 
 extern obj_t make_event(void);
-extern void event_wait(struct thread *thread, obj_t event, obj_t lock,
-                       void (*advance)(struct thread *thread));
+extern MINDY_NORETURN void event_wait(struct thread *thread, obj_t event, obj_t lock,
+                                      MINDY_NORETURN
+                                      void (*advance)(struct thread *thread));
 extern obj_t event_signal(obj_t event);
 extern obj_t event_broadcast(obj_t event);

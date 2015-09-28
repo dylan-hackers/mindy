@@ -73,6 +73,7 @@ obj_t dylan_make_weak_pointer(obj_t class, obj_t object)
         return make_weak_pointer(object);
 }
 
+MINDY_NORETURN
 void dylan_weak_pointer_object(obj_t meth, struct thread *thread, obj_t *args)
 {
     obj_t weak = args[0];

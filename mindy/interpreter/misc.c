@@ -57,17 +57,20 @@
 static struct variable *generic_apply_var = NULL;
 
 
+MINDY_NORETURN
 static obj_t dylan_exit(obj_t exit_value)
 {
     exit(fixnum_value(exit_value));
 }
 
+MINDY_NORETURN
 static void dylan_values(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - nargs;
     do_return(thread, args-1, args);
 }
 
+MINDY_NORETURN
 static void dylan_apply(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - nargs;
@@ -113,6 +116,7 @@ static void dylan_apply(struct thread *thread, int nargs)
     invoke(thread, dst - args);
 }
 
+MINDY_NORETURN
 static void dylan_apply_curry(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - 3;
@@ -138,6 +142,7 @@ static void dylan_apply_curry(struct thread *thread, int nargs)
 }
 
 /* Invoking the debugger. */
+MINDY_NORETURN
 static void dylan_invoke_debugger(struct thread *thread, int nargs)
 {
     obj_t *args;

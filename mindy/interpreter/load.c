@@ -1094,14 +1094,17 @@ void load_library(obj_t name)
 
 /* Stuff to run the inits. */
 
+MINDY_NORETURN
 static void do_next_init(struct thread *thread);
 
+MINDY_NORETURN
 static void did_form(struct thread *thread, obj_t *vals)
 {
     thread->sp = vals;
     do_next_init(thread);
 }
 
+MINDY_NORETURN
 static void do_next_init(struct thread *thread)
 {
     if (State.everything.head) {
@@ -1123,6 +1126,7 @@ static void do_next_init(struct thread *thread)
         do_return(thread, pop_linkage(thread), thread->sp);
 }
 
+MINDY_NORETURN
 static void do_first_init(struct thread *thread, int nargs)
 {
     assert(nargs == 0);
@@ -1149,6 +1153,7 @@ static void do_first_init(struct thread *thread, int nargs)
     do_next_init(thread);
 }
 
+MINDY_NORETURN
 void load_do_inits(struct thread *thread)
 {
     *thread->sp++ = make_raw_function("init", obj_Nil, false, obj_False, false,
@@ -1160,6 +1165,7 @@ void load_do_inits(struct thread *thread)
 
 /* Dylan interface. */
 
+MINDY_NORETURN
 static void dylan_load(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t name = args[0];
@@ -1172,6 +1178,7 @@ static void dylan_load(obj_t self, struct thread *thread, obj_t *args)
     load_do_inits(thread);
 }
 
+MINDY_NORETURN
 static void dylan_load_library(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t name = args[0];

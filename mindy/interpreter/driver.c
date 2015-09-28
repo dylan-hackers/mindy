@@ -222,7 +222,9 @@ static void check_fds(bool block)
 #endif
 }
 
+MINDY_NORETURN
 static void wait_for_fd(struct thread *thread, int fd, struct waiters *waiters,
+                        MINDY_NORETURN
                         void (*advance)(struct thread *thread))
 {
     obj_t event;
@@ -241,13 +243,17 @@ static void wait_for_fd(struct thread *thread, int fd, struct waiters *waiters,
     event_wait(thread, event, obj_False, advance);
 }
 
+MINDY_NORETURN
 void wait_for_input(struct thread *thread, int fd,
+                    MINDY_NORETURN
                     void (*advance)(struct thread *thread))
 {
     wait_for_fd(thread, fd, &Readers, advance);
 }
 
+MINDY_NORETURN
 void wait_for_output(struct thread *thread, int fd,
+                     MINDY_NORETURN
                      void (*advance)(struct thread *thread))
 {
     wait_for_fd(thread, fd, &Writers, advance);
@@ -340,12 +346,14 @@ enum pause_reason single_step(struct thread *thread)
     return PauseReason;
 }
 
+MINDY_NORETURN
 void go_on(void)
 {
     assert(InInterpreter);
     _longjmp(Catcher, 1);
 }
 
+MINDY_NORETURN
 void mindy_pause(enum pause_reason reason)
 {
     clear_interrupt_handler();

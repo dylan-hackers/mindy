@@ -47,16 +47,19 @@ struct method_info {
 extern obj_t make_raw_function(char *debug_name, obj_t specializers,
                                bool restp, obj_t keywords, bool all_keys,
                                obj_t result_types, obj_t more_results_type,
+                               MINDY_NORETURN
                                void (*xep)(struct thread *thread, int nargs));
 
 extern obj_t make_raw_method(char *debug_name, obj_t specializers,
                              bool restp, obj_t keywords, bool all_keys,
                              obj_t result_types, obj_t more_results_type,
+                             MINDY_NORETURN
                              void (*iep)(obj_t self, struct thread *thread,
                                       obj_t *args));
 extern void set_method_iep(obj_t method,
+                           MINDY_NORETURN
                            void (*iep)(obj_t self, struct thread *thread,
-                                    obj_t *args));
+                                       obj_t *args));
 extern obj_t make_builtin_method(char *debug_name, obj_t specializers,
                                  bool restp, obj_t keys, bool all_keys,
                                  obj_t result_type, obj_t (*func)());
@@ -69,6 +72,7 @@ extern obj_t byte_method_component(obj_t byte_method);
 
 extern obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
                                   bool setter, obj_t datum,
+                                  MINDY_NORETURN
                                   void (*iep)(obj_t self, struct thread *thread,
                                            obj_t *args));
 extern obj_t accessor_method_datum(obj_t method);
@@ -88,7 +92,7 @@ extern obj_t generic_function_methods(obj_t gf);
 extern obj_t generic_function_methods_clock(obj_t gf);
 extern obj_t add_method(obj_t gf, obj_t method);
 
-extern void invoke(struct thread *thread, int nargs);
+extern MINDY_NORETURN void invoke(struct thread *thread, int nargs);
 extern obj_t *push_linkage(struct thread *thread, obj_t *args);
 extern void set_c_continuation(struct thread *thread,
                                void (*cont)(struct thread *thread, obj_t *vals));
@@ -96,7 +100,7 @@ extern obj_t *pop_linkage(struct thread *thread);
 #if SLOW_LONGJMP
 #define do_return do_return_setup
 #else
-extern void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals);
+extern MINDY_NORETURN void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals);
 #endif
 extern void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals);
 

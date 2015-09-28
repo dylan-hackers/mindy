@@ -698,6 +698,7 @@ obj_t pointer_hash_state(obj_t pointer)
 
 /* Dylan interfaces. */
 
+MINDY_NORETURN
 static void dylan_gc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t purify = args[0];

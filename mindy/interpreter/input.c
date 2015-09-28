@@ -115,6 +115,7 @@ int mindy_readline(char *prompt, char *buffer, int max_chars)
 #endif
 }
 
+MINDY_NORETURN
 static void getc_or_wait(struct thread *thread)
 {
     // if (FBUFEMPTYP(stdin) && !feof(stdin)) {
@@ -153,13 +154,13 @@ static void getc_or_wait(struct thread *thread)
     }
 }
 
+MINDY_NORETURN
 static obj_t dylan_getc(void)
 {
     getc_or_wait(thread_current());
     go_on();
     /* go_on never returns. */
     lose("go_on actually returned?");
-    return NULL;
 }
 
 void init_input_functions(void)

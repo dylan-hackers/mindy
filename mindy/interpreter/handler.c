@@ -45,6 +45,7 @@
 
 static obj_t obj_HandlerClass = NULL;
 
+MINDY_NORETURN
 static void push_handler(obj_t method, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args-1;
@@ -65,6 +66,7 @@ static void push_handler(obj_t method, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
+MINDY_NORETURN
 static void current_handler(struct thread *thread, int nargs)
 {
     obj_t *old_sp = thread->sp - 1;
@@ -100,6 +102,7 @@ static obj_t handler_next(obj_t handler)
     return HANDLER(handler)->next;
 }
 
+MINDY_NORETURN
 static void pop_handler(struct thread *thread, int nargs)
 {
     obj_t *old_sp = thread->sp - 1;
