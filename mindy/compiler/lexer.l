@@ -175,8 +175,8 @@ EOL "\n"|"\r"|"\r\n"|"\n\r"
 <etc>"=>"                       is(ARROW);
 <etc>"#("                       is(SHARP_PAREN);
 <etc>"#["                       is(SHARP_BRACKET);
-<etc>"#t"                       is(SHARP_T);
-<etc>"#f"                       is(SHARP_F);
+<etc>#[tT]                      is(SHARP_T);
+<etc>#[fF]                      is(SHARP_F);
 <etc>"#next"                    is(NEXT);
 <etc>"#rest"                    is(REST);
 <etc>"#key"                     is(KEY);
