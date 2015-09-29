@@ -1,0 +1,10 @@
+SET(collection-extensions_SOURCES
+    library.dylan
+    solist.dylan
+    subseq.dylan
+    vecsearch.dylan
+    sde-vector.dylan
+    sequence-diff.dylan
+    sequence-utils.dylan
+)
+ADD_DYLAN_LIBRARY(collection-extensions)
