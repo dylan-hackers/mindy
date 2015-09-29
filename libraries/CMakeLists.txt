@@ -1,5 +1,3 @@
-INCLUDE(AddDylan)
-
 ADD_SUBDIRECTORY(dylan)
 ADD_SUBDIRECTORY(inspector)
 ADD_SUBDIRECTORY(random)
