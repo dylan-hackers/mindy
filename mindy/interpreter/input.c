@@ -42,10 +42,6 @@
 #include "def.h"
 #include "fd.h"
 
-#ifdef HAVE_READLINE_H
-#include <readline.h>
-#include <history.h>
-#endif
 #ifdef HAVE_READLINE_READLINE_H
 #include <readline/readline.h>
 #include <readline/history.h>

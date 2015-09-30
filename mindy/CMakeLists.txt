@@ -13,6 +13,33 @@ CHECK_SYMBOL_EXISTS(daylight time.h HAVE_DAYLIGHT)
 
 CHECK_TYPE_SIZE("void*" SIZEOF_VOID_P)
 
+# Even though this is for the interpreter, we do this here
+# so that the results can make it into the config.h file.
+SET(MINDY_LIBS)
+
+IF(NOT READLINE_INCLUDE_DIR OR NOT READLINE_LIBRARY)
+  MESSAGE("-- Looking for readline/readline.h")
+  FIND_PATH(READLINE_INCLUDE_DIR readline/readline.h)
+  IF(READLINE_INCLUDE_DIR)
+    MESSAGE("-- Looking for readline/readline.h - Found (${READLINE_INCLUDE_DIR})")
+  ELSE()
+    MESSAGE("-- Looking for readline/readline.h - Not found")
+  ENDIF()
+  MESSAGE("-- Looking for libreadline")
+  FIND_LIBRARY(READLINE_LIBRARY NAMES readline)
+  IF(READLINE_LIBRARY)
+    MESSAGE("-- Looking for libreadline - Found (${READLINE_LIBRARY})")
+  ELSE()
+    MESSAGE("-- Looking for libreadline - Not found")
+  ENDIF()
+ENDIF()
+
+IF(READLINE_INCLUDE_DIR AND READLINE_LIBRARY)
+  SET(HAVE_LIBREADLINE TRUE)
+  SET(HAVE_READLINE_READLINE_H TRUE)
+  LIST(APPEND MINDY_LIBS readline)
+ENDIF()
+
 ADD_DEFINITIONS(-DBINDIR="/opt/mindy/bin")
 ADD_DEFINITIONS(-DLIBDIR="/opt/mindy/lib/dylan")
 ADD_DEFINITIONS(-DTARGET="x86_64-darwin-gcc")
