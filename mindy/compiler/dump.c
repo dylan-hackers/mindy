@@ -575,7 +575,7 @@ void dump_setup_output(char *source, FILE *file)
     File = file;
 
 #if ! NO_SHARP_BANG
-    fprintf(File, "#!%s/mindy -x\n", BINDIR);
+    fprintf(File, "#! /usr/bin/env mindy -x\n");
 #endif
     fprintf(File, "# %s (%d.%d) of %s\n", "compilation",
             file_MajorVersion, file_MinorVersion, source);
