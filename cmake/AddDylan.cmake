@@ -14,6 +14,7 @@ MACRO(ADD_DYLAN_PROJECT project_name target_directory)
   ENDFOREACH()
   ADD_CUSTOM_COMMAND(
     OUTPUT ${DYLAN_${project_name}_OUTPUT}
+    COMMAND mkdir -p ${target_directory}
     COMMAND rm ARGS -f "${DYLAN_${project_name}_OUTPUT}.tmp"
     COMMAND cat ${DYLAN_${project_name}_DBC_OUTPUTS} >> "${DYLAN_${project_name}_OUTPUT}.tmp"
     COMMAND mv "${DYLAN_${project_name}_OUTPUT}.tmp" ${DYLAN_${project_name}_OUTPUT}
