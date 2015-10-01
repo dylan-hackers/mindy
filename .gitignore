@@ -1,5 +1,2 @@
 common/system/os-constants.dylan
 common/time/time.inc
-man-pages/*.1
-man-pages/*.4
-man-pages/*.7
