@@ -756,10 +756,10 @@ static void (*const preters[0x100])(int byte, struct thread *thread)
 
 void interpret_next_byte(struct thread *thread)
 {
-  int timer = OPS_PER_TIME_SLICE ;
+    int timer = OPS_PER_TIME_SLICE;
 
-  while(timer-- > 0)
-    interpret_byte(decode_byte(thread), thread);
+    while (timer-- > 0)
+        interpret_byte(decode_byte(thread), thread);
 }
 
 
