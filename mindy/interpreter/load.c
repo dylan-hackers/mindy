@@ -1049,7 +1049,8 @@ void load_library(obj_t name)
         else {
             memcpy(next, dylandir, strlen(dylandir));
             next += strlen(dylandir);
-            const char *libdir = "/lib/dylan/" MINDY_VERSION "/" TARGET;
+            const char *libdir = "/lib/dylan/" MINDY_VERSION
+                                 "/" MINDY_TARGET_PLATFORM;
             size_t libdir_len = strlen(libdir);
             memcpy(next, libdir, libdir_len);
             next += libdir_len;
