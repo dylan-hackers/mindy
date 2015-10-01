@@ -370,7 +370,7 @@ end method import-value;
 define class <c-vector> (<vector>, <statically-typed-pointer>) end class;
 
 // C does not do bounds checking on vectors, and many of the interface files
-// make use of this weakngess.  Therefore, we do no bounds checking either.
+// make use of this weakness.  Therefore, we do no bounds checking either.
 // Caveat emptor.
 //
 define method element
@@ -380,7 +380,7 @@ define method element
 end method element;
 
 // C does not do bounds checking on vectors, and many of the interface files
-// make use of this weakngess.  Therefore, we do no bounds checking either.
+// make use of this weakness.  Therefore, we do no bounds checking either.
 // Caveat emptor.
 //
 define method element-setter
@@ -389,7 +389,7 @@ define method element-setter
   pointer-value(vec, index: index) := value;
 end method element-setter;
 
-// For "normal" ponters, the size is "#f", indicating that the size is unknown
+// For "normal" pointers, the size is "#f", indicating that the size is unknown
 // and potentially infinite.  However, subtypes can redefine this to higher
 // values and the iteration protocol will still work.
 //

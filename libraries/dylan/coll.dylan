@@ -321,7 +321,7 @@ define method any?(proc :: <function>, collection :: <collection>,
   end block;
 end method any?;
 
-// Pick off 1-collection list case for efficency.
+// Pick off 1-collection list case for efficiency.
 define method any?(proc :: <function>, collection :: <list>,
                     #next next-method, #rest more-collections)
  => answer :: <object>;
@@ -365,7 +365,7 @@ define method every?(proc :: <function>, collection :: <collection>,
   end block;
 end method every?;
 
-// Pick off 1-collection list case for efficency.
+// Pick off 1-collection list case for efficiency.
 define method every?(proc :: <function>, collection :: <list>,
                     #next next-method, #rest more-collections)
  => answer :: <boolean>;
@@ -729,7 +729,7 @@ define method fill!(sequence :: <mutable-sequence>, value :: <object>,
                     #next next-method,
                     #key start: first = 0, end: last)
  => seq :: <mutable-sequence>;
-  // The "collection" method will likely be faster if there are no keywrds.
+  // The "collection" method will likely be faster if there are no keywords.
   if (first = 0 & ~last) next-method() end if;
 
   let (init-state, limit, next-state, done?,

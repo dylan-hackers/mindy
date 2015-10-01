@@ -67,9 +67,9 @@ define variable *show-elements* :: <boolean> = #t;
 // magic characters #! and !# designate a substring as being
 // selectable (in much the same way that <a href=..> and </a> work in
 // HTML).  The object that the substring refers to is taken to be the
-// corresponding element of related-objects: The first occurence of
+// corresponding element of related-objects: The first occurrence of
 // #!..!# is the first element of related-objects, the second
-// occurence of #!..!# maps to the second element of related-objects,
+// occurrence of #!..!# maps to the second element of related-objects,
 // and so on.
 
 define class <body-component> (<object>)
@@ -335,7 +335,7 @@ define function function-info (fun :: <function>) => info :: <deque>;
                        header: "Keywords:", body: kwds-body));
 
   // Because #rest has a type, the return values is slightly different
-  // than thespecializers code.
+  // than the specializers code.
   let (return-types, rest-type) = fun.function-return-values;
   let returns-body
     = if (return-types.empty? & ~rest-type)

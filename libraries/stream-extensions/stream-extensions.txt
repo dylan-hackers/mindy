@@ -2,7 +2,7 @@ The Mindy Stream Extensions Library
 
 ------------
 This document describes the stream-extensions library for the Mindy Dylan
-environment.  Many functions in the library are specified more completly in
+environment.  Many functions in the library are specified more completely in
 the Harlequin streams library proposal.  The functions not documented in
 the Harlequin document are described here in detail.
 

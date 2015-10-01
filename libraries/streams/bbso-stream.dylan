@@ -32,7 +32,7 @@ copyright: see below
 
 /// <buffered-byte-string-output-stream> -- Exported.
 /// This class provides an efficient output mechanism. Note that it does
-/// not subclass <sequence-stream> nor any of that part of the heirarchy, so it
+/// not subclass <sequence-stream> nor any of that part of the hierarchy, so it
 /// is (counter-intuitively) NOT a <string-stream>. This is to make it
 /// easier to maintain efficiency.
 ///

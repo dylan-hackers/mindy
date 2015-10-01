@@ -755,7 +755,7 @@ end method;
 // element of the original range, by: the negative of the original by,
 // with size: the size of the original range.
 //
-// Unbounded ranges cannot be reversed.p
+// Unbounded ranges cannot be reversed.
 //
 define method reverse (range-to-reverse :: <bounded-range>)
  => new-range :: <range>;

@@ -41,7 +41,7 @@ synopsis:        Provides "self-organizing lists".  These explicit key
 // time in the best case.
 //
 // Because they have a very low overhead, self-organizing lists may
-// provide better peformance than hash tables in cases where
+// provide better performance than hash tables in cases where
 // references have a high degree of temporal locality.  They may also
 // be useful in situations where it is difficult to create a proper
 // hash function.

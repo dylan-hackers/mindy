@@ -1,7 +1,7 @@
                      Matrix Arithmetic Library for Dylan
 
 This library implements some basic matrix operations.  These functions are not
-guarenteed to be stable or numerically sound, neither are they very optimized,
+guaranteed to be stable or numerically sound, neither are they very optimized,
 but for smaller applications they should be suitable.
 
 

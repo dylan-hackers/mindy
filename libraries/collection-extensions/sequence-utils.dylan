@@ -483,7 +483,7 @@ define function alist-delete (elt, alist :: <sequence>,
          alist);
 end function alist-delete;
 
-// SATISFIES -- find the first element that satifies PRED.
+// SATISFIES -- find the first element that satisfies PRED.
 //
 define method satisfies
     (pred :: <function>, seq :: <sequence>,

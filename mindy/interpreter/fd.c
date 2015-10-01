@@ -198,7 +198,7 @@ int input_available (int fd)
 /* Like read(), except it informs check_input.
    Mindy internally uses this for reading from stdin for debugger stuff.
    Won't work if check_input thread isn't running.
-   Loading .dbc files bypasses this, because psuedo-threading isn't
+   Loading .dbc files bypasses this, because pseudo-threading isn't
    necessary there.
  */
 int mindy_read (int fd, char *buffer, int max_chars)

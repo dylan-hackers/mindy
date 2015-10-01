@@ -2010,7 +2010,7 @@ void make_num_classes(void)
     obj_RationalClass = make_abstract_class(true);
     obj_IntegerClass = make_abstract_class(true);
 
-    /* isn't really abstract, but there arn't heap instances either */
+    /* isn't really abstract, but there aren't heap instances either */
 
     obj_FixnumClass = make_abstract_class(true);
     obj_BignumClass = make_builtin_class(scav_bignum, trans_bignum);

@@ -291,7 +291,7 @@ static void *raw_alloc(int bytes, struct space *space)
         /* of bytes is a sign that something real bad is trying to happen. */
         lose("Can't allocate a negative number of bytes: %d", bytes);
 
-    /* round bytes up to the next dual-word boundy. */
+    /* round bytes up to the next dual-word boundary. */
     bytes = ALIGN_DWORD(bytes);
 
     /* check to see if the object fits in the current block */

@@ -61,7 +61,7 @@ also specify special filename "-" which will refer to the standard input.
 <P>
 On most Unix systems you should be able to make it into an executable
 script by concatenating <SAMP>cat-exports.dbc</SAMP> and <SAMP>cat.dbc</SAMP>
-into say <SAMP>mindy-cat</SAMP>, prepending the the line
+into say <SAMP>mindy-cat</SAMP>, prepending the line
 <PRE>
   #<VAR>DYLANDIR</VAR>/bin/mindy -f
 </PRE>
@@ -100,7 +100,7 @@ Usage:
 <A HREF="http://legend.gwydion.cs.cmu.edu/gwydion/dylan/docs/htdocs/tools.html">
 Makegen
 </A>
-makefile by contantenating <SAMP>diff-exports.dbc</SAMP> and <SAMP>
+makefile by concatenating <SAMP>diff-exports.dbc</SAMP> and <SAMP>
 diff.dbc</SAMP>.
 
 Limitations: Diff the stand-alone utility is meant purely as a demo.
@@ -145,12 +145,12 @@ which define the appropriate actions for starting and ending the
 "environment" defined by the tag and for dumping the collected text from
 within that environment as formatted text.  A basic control loop in
 "process-HTML" is responsible for calling the appropriate tag actions.
-This routine may be called recusively by some of the tag actions.
+This routine may be called recursively by some of the tag actions.
 <P>
 The "interface" between adjacent environments is handled via the "blank"
 parameter which is passed around extensively.  This variable states whether
 a blank line has just been printed.  Thus environments which believe that
-they must be preceded or followed by a blank line can determine whetehr
+they must be preceded or followed by a blank line can determine whether
 they must do anything about it, and we lessen the risk that multiple
 routines will emit blank lines when we only want a maximum of one.
 <P>
@@ -192,7 +192,7 @@ Under Mindy, you can run this as the other demos:
 </PRE>
 Note however that <SAMP>library-demo-lib.dbc</SAMP> does <EM>not</EM> include
 the <CODE>Fact</CODE> library.  Instead this is demand-loaded by searching on
-<SAMP>DYLANPATH</SAMP> for <SAMP>fact-lib.dbc</SAMP> (preferrably) or
+<SAMP>DYLANPATH</SAMP> for <SAMP>fact-lib.dbc</SAMP> (preferably) or
 <SAMP>fact.dbc</SAMP>.  Sometimes you can get in trouble if the
 <SAMP>-lib.dbc</SAMP> file doesn't appear in <SAMP>DYLANPATH</SAMP> before some
 other file that happens to use the unsuffixed name.

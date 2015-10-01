@@ -169,8 +169,8 @@ inspect								     [Function]
 	the object.  This was done to simplify and categorize the information
 	the user is looking for, and because it was felt that super/subclasses
 	were part of the class description and not part of the instance
-	description.  To accomodate viewing of the class from the instance, the
-	class is printed on a seperate line, with its selection number, e.g.
+	description.  To accommodate viewing of the class from the instance, the
+	class is printed on a separate line, with its selection number, e.g.
 
 		An instance of class
 		  1] <my-class>
@@ -198,7 +198,7 @@ along with all of the information you requested using the keyword flags.  Each
 item will be numbered, and to inspect a sub-object you simply type the number
 corresponding to the desired choice (in this case, even a superclass is
 considered a sub-object, because it was inspected via the main object).  This
-lets you move around the object heterarchy, but it is not very convienent.
+lets you move around the object heterarchy, but it is not very convenient.
 There are additional commands that are designed to allow easier use of the
 inspector, and these are documented here.
 

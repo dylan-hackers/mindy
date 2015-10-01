@@ -564,7 +564,7 @@ define sealed method stream-position (stream :: <fd-file-stream>)
     // Get the buffer to ensure no one else is using it and to make it
     // possible to correctly compute the actual file position.
     let buf :: <buffer> = get-input-buffer(stream, wait?: #f);
-    // Get the current position as recorded by the file-descritor module
+    // Get the current position as recorded by the file-descriptor module
     // and subtract what input we have in the buffer but haven't actually
     // read.
     let pos :: <buffer-index> =
@@ -577,7 +577,7 @@ define sealed method stream-position (stream :: <fd-file-stream>)
     // Get the buffer to ensure no one else is using it and to make it
     // possible to correctly compute the actual file position.
     let buf :: <buffer> = get-output-buffer(stream);
-    // Get the current position as recorded by the file-descritor module
+    // Get the current position as recorded by the file-descriptor module
     // and add what output we have in the buffer but haven't sent yet.
     let pos = call-fd-function(fd-seek, stream.file-descriptor, 0,
                                fd-seek-current) + buf.buffer-next;
@@ -800,7 +800,7 @@ define method file-stream-contents(stream :: <fd-file-stream>,
     // and <unicode-string>.
   let (size, res) = read-file(fd);
   unless(maybe-clear-file?(stream, buf, fd-o_rdwr, buf.buffer-end, clear?))
-    // Reset postion to where it was.
+    // Reset position to where it was.
     call-fd-function(fd-seek, fd, pos, fd-seek-set);
   end unless;
   release-input-buffer(stream);

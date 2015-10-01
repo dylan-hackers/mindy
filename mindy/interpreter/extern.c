@@ -511,7 +511,7 @@ obj_t c_pointer_field(obj_t pointer, obj_t offset, obj_t cls, obj_t deref)
                                 (void *)((long)*((char *)ptr + true_offset)),
                                 false);
     else
-        /* pointer size ofject -- dereference as (void **) */
+        /* pointer size object -- dereference as (void **) */
         return convert_c_object(cls, *(void **)((char *)ptr + true_offset),
                                 false);
 }
@@ -529,7 +529,7 @@ obj_t c_pointer_field_setter(obj_t value, obj_t /* <c-pointer> */ pointer,
         /* byte size object -- dereference as (char *) */
         *((char *)ptr + true_offset) = ((char)((long)get_c_object(value)));
     else
-        /* pointer size ofject -- dereference as (void **) */
+        /* pointer size object -- dereference as (void **) */
         *((void **)((char *)ptr + true_offset)) = get_c_object(value);
     return value;
 }

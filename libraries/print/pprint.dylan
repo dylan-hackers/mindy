@@ -374,7 +374,7 @@ define sealed domain initialize (<logical-block>);
 
 // really-start-logical-block -- internal.
 //
-// Called by maybe-output when a logical-block will not fit entirly on one
+// Called by maybe-output when a logical-block will not fit entirely on one
 // line.  We set the indentation to whatever column we are currently at, and
 // add the prefix (which is a per-line-prefix) and suffix to the total
 // per-line-prefix and suffix stored in the stream.
@@ -494,7 +494,7 @@ end;
 //
 define abstract class <queued-op> (<object>)
   //
-  // The position this op occured at.
+  // The position this op occurred at.
   slot op-posn :: <position> = 0;
 end;
 
@@ -633,7 +633,7 @@ define sealed domain make (singleton(<block-start>));
 
 // start-logical-block -- internal.
 //
-// Qeueu up the start of a logical block.  Also, add the prefix to the end
+// Queue up the start of a logical block.  Also, add the prefix to the end
 // of the buffer.
 //
 define method start-logical-block
@@ -760,7 +760,7 @@ end;
 // Figure out what column corresponds to the given index by expanding any
 // tabs that get in the way.  We just scan down the queue looking for tabs
 // that need to be expanded, keeping track of what column we are at and where
-// the latest section started.  Actaully, column and section-start hold the
+// the latest section started.  Actually, column and section-start hold the
 // delta between raw indexes and the real column (i.e. spaces added by tabs)
 // instead of the real column directly.  So we have to add the index in
 // if we want the real column.  We do this because it makes the record keeping

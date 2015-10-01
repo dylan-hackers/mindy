@@ -46,7 +46,7 @@ synopsis:        Converts a file in WWW "HyperText Markup Language" into
 // source file.
 //
 // On most unix systems you should be able to make it into an executable
-// script by prepending the the line
+// script by prepending the line
 //   #!BINDIR/mindy -f
 // to the compiled "dbc" file.  You must, of course, remember to specify the
 // MINDYPATH environment variable so that it points to the libraries "dylan",
@@ -59,12 +59,12 @@ synopsis:        Converts a file in WWW "HyperText Markup Language" into
 // "environment" defined by the tag and for dumping the collected text from
 // within that environment as formatted text.  A basic control loop in
 // "process-HTML" is responsible for calling the appropriate tag actions.
-// This routine may be called recusively by some of the tag actions.
+// This routine may be called recursively by some of the tag actions.
 //
 // The "interface" between adjacent environments is handled via the "blank"
 // parameter which is passed around extensively.  This variable states whether
 // a blank line has just been printed.  Thus environments which believe that
-// they must be preceded or followed by a blank line can determine whetehr
+// they must be preceded or followed by a blank line can determine whether
 // they must do anything about it, and we lessen the risk that multiple
 // routines will emit blank lines when we only want a maximum of one.
 //
@@ -143,7 +143,7 @@ define method rsfind(seq :: <sequence>, pred?,
 end method rsfind;
 
 // The notation "'!' * 5" is a good way to create a string of repeated
-// characters.  This variety of overloaing is becoming popular in several
+// characters.  This variety of overloading is becoming popular in several
 // modern languages (i.e. C++, Perl, and Ada).
 define method \*(ch :: <character>,
                  times :: <integer>)  => (result :: <byte-string>);
@@ -154,7 +154,7 @@ end method \*;
 //                             Basic HTML Utilities                      //
 ////////////////////////////////////////////////////////////////////////
 
-// Simply a conventient shorthand for writing to *standard-output*.
+// Simply a convenient shorthand for writing to *standard-output*.
 define method write-string(string :: <string>)
   write(*standard-output*, string);
 end method write-string;
@@ -368,7 +368,7 @@ define method process-HTML(Tag :: <symbol>, Out-Text :: <strings>,
                                                 start: first)));
         // Call the appropriate action for the tag.  This may invoke
         // a recursive call to "process-HTML" for start tags and will exit
-        // this recusive call for closing tags.
+        // this recursive call for closing tags.
         Current-Text := copy-sequence(Current-Text, start: End-Tag + 1);
         if (Is-Close)
           return(Current-Text, tag-close(Tag, New-Tag, Out-Text, blank));
@@ -401,7 +401,7 @@ define method process-HTML(Tag :: <symbol>, Out-Text :: <strings>,
   end block
 end method process-HTML;
 
-// specialized routines to open various sourts of streams and invoke
+// specialized routines to open various sorts of streams and invoke
 // "process-HTML".
 define method html2text(fd :: <stream>) => ();
   process-HTML(#"TEXT", make(<strings>), "", fd, #t);
@@ -498,7 +498,7 @@ add-tag(#["TEXT"],               // Default environment
 
 // This tag action is used for many different tags -- it simply invokes
 // "process-HTML" recursively without doing anything special to the
-// accumulated text.  This is handy for "lightweight" enviromentents like
+// accumulated text.  This is handy for "lightweight" environments like
 // "<I>".
 define constant tag-start-recurse =
   method (New-Tag :: <symbol>, Old-Tag :: <symbol>,
@@ -509,8 +509,8 @@ define constant tag-start-recurse =
   end method;
 
 // This tag action is a logical partner for "tag-start-recurse".  It simply
-// exits so that control will return to an inclosing "process-HTML" call
-// without distrubing the accumulated text.
+// exits so that control will return to an enclosing "process-HTML" call
+// without disturbing the accumulated text.
 define constant tag-close-nothing =
   method (tag :: <symbol>, Out-Text :: <strings>, blank :: <boolean>)
     blank;

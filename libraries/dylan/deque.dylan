@@ -52,7 +52,7 @@ author: David Pierce (dpierce@cs.cmu.edu)
 // <deque-element> -- internal
 //
 // Each <deque-element> has a DEQUE-ELEMENT-DATA slot and slots for the
-// prvious and next deque elements.  If there is no PREV-DEQUE-ELEMENT or
+// previous and next deque elements.  If there is no PREV-DEQUE-ELEMENT or
 // NEXT-DEQUE-ELEMENT, the marker #f should be used in these slots.
 //
 define class <deque-element> (<object>)

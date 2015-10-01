@@ -245,7 +245,7 @@ end macro;
 // ================================
 // Syntax: defargparser-aux ?:name (?supers:*) ?options end
 //
-// Explanation: This is rather staightforward; code generation is
+// Explanation: This is rather straightforward; code generation is
 // performed by auxillary macros that output
 //
 //   - (defargparser-class) a class definition for `?name'

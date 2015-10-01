@@ -489,7 +489,7 @@ define sealed method stream-input-available?
 end method stream-input-available?;
 
 
-//// Conveniece functions for reading from streams.
+//// Convenience functions for reading from streams.
 //// These functions are implemented in terms of the more primitive functions
 //// defined above.
 ////

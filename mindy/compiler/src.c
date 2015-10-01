@@ -594,7 +594,7 @@ struct expr *make_aref_or_element(int line, struct expr *expr,
 
     collection->next = args->head;
     args->head = collection;
-    /* This leaves args->tail wrong, but that doens't matter because */
+    /* This leaves args->tail wrong, but that doesn't matter because */
     /* we just pass it directly to make_function_call */
 
     if (args->head->next != NULL && args->head->next->next == NULL)

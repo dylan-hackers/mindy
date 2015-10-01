@@ -1,6 +1,6 @@
 module: Streams
 author: Ben Folk-Williams
-synopsis: Efficient buffered versions of the reading conveience functions.
+synopsis: Efficient buffered versions of the reading convenience functions.
 copyright: see below
 
 //======================================================================

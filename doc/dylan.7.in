@@ -5,7 +5,7 @@
 Dylan \- An object-oriented, dynamic language.
 .SH DESCRIPTION
 Dylan is an object-oriented, dynamic, infix, garbage\-collected programming
-language with support for multiple inheritence, multiple dispatch (an
+language with support for multiple inheritance, multiple dispatch (an
 advanced form of polymorphism), typed and untyped variables, closures and
 exceptions. Dylan also supports pattern-based hygenic macros. These allow
 you to define new control constructs and fully integrate them with the
@@ -51,7 +51,7 @@ omits the meta-object protocol and method combination rules.
 Dylan did include, however, many new features to help the compiler generate
 efficient code. Programmers can specify type declarations to help the
 compiler infer types, or they can omit the type declarations if they don't
-care about peformance. Special classes allow the efficient representation
+care about performance. Special classes allow the efficient representation
 of vectors and arrays of primitive types. Libraries can forbid their
 clients to subclass certain types, allowing method dispatch to be performed
 at compile time.
@@ -64,21 +64,21 @@ A good Dylan compiler can match a C or C++ compiler in most ways, providing
 the programmer is willing to use type declarations and avoid the more
 expensive features.
 .PP
-Harlequin's Dylan compiler can generate code which matches the performace
+Harlequin's Dylan compiler can generate code which matches the performance
 of C on many benchmarks, even those involving complex numeric calculations.
 Gwydion Dylan generates code about half as good as the underlying C
 compiler. Limited collection types must be used when processing large
 amounts of data, of course.
 .PP
 Memory usage for a Dylan program is about twice that of an equivalent C
-program, thanks to the garbage collector. However, the amortitized
+program, thanks to the garbage collector. However, the amortized
 allocation and collection speed of a good modern garbage collector is
 effectively the same as that of malloc and free.
 .PP
 Using recent research, generic function dispatch can be performed at the
 price of three or four instructions per polymorphic argument. Membership in
 a class can be determined in constant time. Graph-coloring algorithms can
-be used to optimize slot access in the presence of multiple inheritence.
+be used to optimize slot access in the presence of multiple inheritance.
 .PP
 In light of these facts, Dylan appears to be a good choice for application
 development and an entirely reasonable choice for certain kinds of systems

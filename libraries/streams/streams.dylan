@@ -328,7 +328,7 @@ end method close;
 //// See file stream-reading.dylan
 ////
 
-//// Convenience funtions for reading.
+//// Convenience functions for reading.
 ////
 //// See file stream-reading.dylan
 ////
@@ -869,7 +869,7 @@ end method;
 
 /// copy-sequence! -- Internal interface.
 ///
-/// Uses whatever copy method is most effecient for the given types.
+/// Uses whatever copy method is most efficient for the given types.
 ///
 
 /// This is the default method for sequences we don't know how to do anything

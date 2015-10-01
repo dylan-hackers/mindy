@@ -113,7 +113,7 @@ define method compute-dag-positions! (root :: <dag>) => ();
   let peer-groups = make(<vector>, fill: #(), size: 500);  // Big enough...
 
   // It's critical here that add-new! add new elements to the front,
-  // even though that's not strictly guarenteed by Dylan
+  // even though that's not strictly guaranteed by Dylan
   //
   local method form-peer-groups (dag)
           peer-groups[dag.dag-level]

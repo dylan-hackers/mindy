@@ -187,7 +187,7 @@ define inline sealed method synchronize-output
  => ();
 end method synchronize-output;
 
-/// discard-ouput
+/// discard-output
 ///
 define open generic discard-output (stream :: <stream>) => ();
 

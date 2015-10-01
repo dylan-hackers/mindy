@@ -28,7 +28,7 @@ author: William Lott (wlott@cs.cmu.edu)
 //
 //======================================================================
 //
-// This file contains the comparisons that arn't built in.
+// This file contains the comparisons that aren't built in.
 //
 
 

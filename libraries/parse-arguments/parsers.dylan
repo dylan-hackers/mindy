@@ -30,7 +30,7 @@ copyright: Copyright 1998 Eric Kidd and Jeff Dubrule
 //  <negative-option-parser>
 //======================================================================
 //  Certain options may occur in positive and negative forms. This
-//  absract class takes care of the details.
+//  abstract class takes care of the details.
 
 define abstract open primary class <negative-option-parser> (<option-parser>)
   slot negative-long-options :: <list> /* of: <string> */,

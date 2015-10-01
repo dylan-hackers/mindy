@@ -30,7 +30,7 @@ copyright: see below
 //
 //======================================================================
 
-// add has no useful guarenteed behavior on strings.
+// add has no useful guaranteed behavior on strings.
 //
 define method add-last (string :: <string>, character :: <character>)
     => new-string :: <string>;

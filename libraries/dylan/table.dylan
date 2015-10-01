@@ -542,7 +542,7 @@ define method element-setter
     element-setter(value, ht, key);
 
     // Else, there was no garbage collection, and we're safe.  (If
-    // there is a garbage collection between now and the the end of
+    // there is a garbage collection between now and the end of
     // this method, it invalidates the states we're about to write,
     // but we can just re-compute them on the next lookup)
   else
@@ -718,12 +718,12 @@ end method resize-table;
 
 
 // Rehash does its best to bring a table up to date so that all the
-// hash-id's in the table are valid. Rehash makes no guarentees about
+// hash-id's in the table are valid. Rehash makes no guarantees about
 // its success, however, so one should call it inside an until loop
 // to make sure it keeps trying until it succeeds.
 //
 // Rehash wants to get the merged-hash-states to be as accurate as
-// possible without sacraficing too much performance. This might be a
+// possible without sacrificing too much performance. This might be a
 // good function to tune.
 //
 define method rehash (ht :: <table>) => rehashed-ht :: <table>;

@@ -202,7 +202,7 @@ define module streams
     stream-element-type,
     stream-at-end?,
 
-    // Postionable Stream Protocol.
+    // Positionable Stream Protocol.
     //
     <stream-position>,
     stream-position,

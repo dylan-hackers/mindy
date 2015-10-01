@@ -66,7 +66,7 @@ synopsis:        Provides a small assortment of specialized operations for
 //
 //     As a further optimization, you may pre-compute a "compiled" dispatch
 //     table for the pattern with compile-substring and pass it in (along with
-//     the pattern itselef) via the compiled: keyword.  This will save both
+//     the pattern itself) via the compiled: keyword.  This will save both
 //     time and space if you are searching for the same pattern repeatedly.
 //
 // compile-substring pattern => compiled
@@ -75,7 +75,7 @@ synopsis:        Provides a small assortment of specialized operations for
 //     strings, thus avoiding one of the more expensive parts of the search.
 //
 // replace-substring big pattern goal #key count compiled => result
-//     Replaces all (or up to count) occurences of pattern in big with goal.
+//     Replaces all (or up to count) occurrences of pattern in big with goal.
 //     As in substring-position all three arguments must be <byte-string>s.
 //     Accepts the compiled: keyword as described above.  Returns a new string
 //     iff it finds at least one match to replace.
@@ -185,7 +185,7 @@ define method compile-substring(pattern :: <byte-string>) => (compiled);
   end if;
 end method;
 
-// Replaces all (or up to count:) occurences of pattern in big with goal.
+// Replaces all (or up to count:) occurrences of pattern in big with goal.
 // Accepts the "compiled:" keyword as described above.  Returns a new string
 // or the unmodified original.
 define method

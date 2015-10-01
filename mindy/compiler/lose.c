@@ -25,7 +25,7 @@
 *
 ***********************************************************************
 *
-* This file contains lose, the interal flame-out routine.
+* This file contains lose, the internal flame-out routine.
 *
 \**********************************************************************/
 

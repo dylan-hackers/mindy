@@ -152,7 +152,7 @@ define method \+ (matrix1 :: <matrix>, matrix2 :: <matrix>)
 end method \+ ;
 
 
-// Martix subtraction is (surprise) just like matrix addition, where the
+// Matrix subtraction is (surprise) just like matrix addition, where the
 // element i,j in (A - B) is (A[i,j] - B[i,j])
 //
 define method \- (matrix1 :: <matrix>, matrix2 :: <matrix>)
@@ -271,8 +271,8 @@ define method augment-matrix (matrix1 :: <matrix>, matrix2 :: <matrix>)
 end method;
 
 
-// This procedure does gauss-jordan elimation on a matrix of dimension N by
-// N + 1.  The first N columns are the coefficents in a set of simultaneous
+// This procedure does gauss-jordan elimination on a matrix of dimension N by
+// N + 1.  The first N columns are the coefficients in a set of simultaneous
 // equations, and the last column is a solution vector.  So if you had the
 // set of equations
 //          2(x1) + 4(x2) - 2(x3) = 2
@@ -281,7 +281,7 @@ end method;
 // The matrix representing this would be |  2  4 -2  2 |
 //                                       |  4  9 -3  8 |
 //                                       | -2 -3  7 10 |
-// And the matrix that is returned is an N by 1 matrix contaning the solution
+// And the matrix that is returned is an N by 1 matrix containing the solution
 // for each variable.  In other words, it returns | x1 |
 //                                                | x2 |
 //                                                | x3 |
@@ -337,11 +337,11 @@ end method gauss-jordan;
 
 // Finds the inverse of a matrix, by using a modified gauss-jordan elimination
 // Given any matrix, if there is an inverse, the inverse will be returned,
-// otherwise, an error will be signalled. To determine the existance of an
+// otherwise, an error will be signalled. To determine the existence of an
 // inverse, the algorithm finds the upper triangular matrix, and then
 // multiplies all of the elements along the main diagonal.  If the result of
 // this multiplication is zero, there is no inverse, otherwise, there is
-// gaurenteed to be an inverse.
+// guaranteed to be an inverse.
 //
 define method inverse (matrix1 :: <matrix>)
  => inverted-matrix :: <matrix>;

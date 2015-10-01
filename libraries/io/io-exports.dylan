@@ -10,7 +10,7 @@ define library io
   use format-out, export: {format-out};
 end library;
 
-// XXX - Redirecting *warning-ouput* and *gdb-output* in a strange place.
+// XXX - Redirecting *warning-output* and *gdb-output* in a strange place.
 // We need to redirect these so that the runtime can use the real 'format'
 // implementation when printing conditions. Ideally, we should redirect these
 // somewhere in the standard-io library, but we can't--that library is needed

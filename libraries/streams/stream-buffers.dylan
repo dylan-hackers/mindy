@@ -161,7 +161,7 @@ define inline method next-output-buffer
   do-next-output-buffer(stream, bytes: bytes);
 end method next-output-buffer;
 
-/// force-ouput-buffers -- Exported.
+/// force-output-buffers -- Exported.
 ///
 define inline method force-output-buffers (stream :: <buffered-stream>);
   check-buffer-held(stream);
@@ -313,7 +313,7 @@ define open generic do-next-output-buffer
     (stream :: <buffered-stream>, #key bytes :: <integer>) // = 1)
   => buffer :: <buffer>;
 
-/// do-force-ouput-buffers -- Exported.
+/// do-force-output-buffers -- Exported.
 ///
 define open generic do-force-output-buffers (stream :: <buffered-stream>);
 

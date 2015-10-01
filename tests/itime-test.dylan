@@ -65,7 +65,7 @@ end method itime-test;
 
 define method main (argv0 :: <byte-string>, #rest ignored)
   format("\nRegression test for the itime library.\n\n");
-  run-several-tests("interal-time", itime-test);
+  run-several-tests("internal-time", itime-test);
   if (has-errors)
     format("\n********* Warning!  Regression test failed! ***********\n");
   else
