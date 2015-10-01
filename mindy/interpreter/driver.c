@@ -393,13 +393,8 @@ static void init_waiters(struct waiters *waiters)
 
 void init_driver()
 {
-    /* By using this declaration rather than the constant NULL, we
-     * avoid a compiler bug on the Sparc.
-     */
-    void (*null)(void) = NULL;
-
     init_waiters(&Readers);
     init_waiters(&Writers);
     NumFds = 0;
-    set_interrupt_handler(null);
+    set_interrupt_handler(NULL);
 }
