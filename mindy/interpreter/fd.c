@@ -565,13 +565,17 @@ static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
 {
     int res = fsync(fixnum_value(args[0]));
 
+    // Various platforms may fail on this depending on what fd is.
+    // EINVAL means that fd is a socket and we don't care that you can't
+    //   fsync sockets.
+    // ENOTSUP happens on Mac OS X, like when communicating with the Tk code.
+    // EBADF on Windows means that the fd is a descriptor for the console.
     if ((res < 0 && errno == EINVAL)
-        /* EINVAL means the fd is a socket, not a file descriptor.  We don't */
-        /* care that you can't fsync sockets. */
+#ifdef __APPLE__
+         || (res < 0 && errno == ENOTSUP)
+#endif
 #ifdef WIN32
          || (res < 0 && errno == EBADF)
-        /* In Windows, EBADF means that the fd is a descriptor for
-           the console. */
 #endif
                 )
         results(thread, args-1, 0, obj_True);
