@@ -29,8 +29,7 @@
 *
 \**********************************************************************/
 
-#include "mindycomp.h"
+#include "config.h"
 #include "version.h"
 
-char Version[] = VERSION;
-
+char Version[] = MINDY_VERSION;
