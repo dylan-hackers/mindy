@@ -1,5 +1,5 @@
-MACRO(ADD_DYLAN_PROJECT project_name target_directory)
-  SET(DYLAN_${project_name}_OUTPUT "${target_directory}/${project_name}-lib.dbc")
+MACRO(ADD_DYLAN_PROJECT project_name target_directory suffix)
+  SET(DYLAN_${project_name}_OUTPUT "${target_directory}/${project_name}${suffix}.dbc")
   SET(DYLAN_${project_name}_DBC_OUTPUTS)
   FOREACH(_file ${${project_name}_SOURCES})
     GET_FILENAME_COMPONENT(_file_base ${_file} NAME_WE)
@@ -26,12 +26,16 @@ MACRO(ADD_DYLAN_PROJECT project_name target_directory)
 ENDMACRO()
 
 MACRO(ADD_DYLAN_LIBRARY library_name)
-  ADD_DYLAN_PROJECT(${library_name} "${CMAKE_BINARY_DIR}/${MINDY_LIB_DIR}")
+  ADD_DYLAN_PROJECT(${library_name} "${CMAKE_BINARY_DIR}/${MINDY_LIB_DIR}" "-lib")
 ENDMACRO()
 
 MACRO(ADD_DYLAN_TEST test_name)
-  ADD_DYLAN_PROJECT(${test_name} "${CMAKE_BINARY_DIR}/test-bin/")
+  ADD_DYLAN_PROJECT(${test_name} "${CMAKE_BINARY_DIR}/test-bin/" "")
   ADD_TEST(NAME "test-${test_name}"
            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/${MINDY_LIB_DIR}"
            COMMAND mindy -f ${DYLAN_${test_name}_OUTPUT})
+ENDMACRO()
+
+MACRO(ADD_DYLAN_DEMO demo_name)
+  ADD_DYLAN_PROJECT(${demo_name} "${CMAKE_BINARY_DIR}/demo-bin/" "")
 ENDMACRO()
