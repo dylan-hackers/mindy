@@ -1,6 +1,6 @@
-SET(mine-sweeper_SOURCES
+SET(minesweeper_SOURCES
     minesweeper-exports.dylan
     minesweeper.dylan
 )
 
-ADD_DYLAN_DEMO(mine-sweeper)
+ADD_DYLAN_DEMO(minesweeper)

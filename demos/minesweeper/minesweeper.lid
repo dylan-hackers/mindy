@@ -1,4 +1,4 @@
-library: mine-sweeper
+library: minesweeper
 unit-prefix: minesweeper
 executable: minesweeper
 

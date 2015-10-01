@@ -1,4 +1,4 @@
-module: mine-sweeper
+module: minesweeper
 author: Nick Kramer (nkramer@cs.cmu.edu)
 
 //======================================================================

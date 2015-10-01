@@ -6,7 +6,7 @@ Module: dylan-user
 // takes forever, but play is reasonably quick once everything's set
 // up.
 
-define library mine-sweeper
+define library minesweeper
   use dylan;
   use tk;
   use string-extensions;
@@ -14,9 +14,9 @@ define library mine-sweeper
   use standard-io;
   use format;
   use random;
-end library mine-sweeper;
+end library minesweeper;
 
-define module mine-sweeper
+define module minesweeper
   use dylan;
   use extensions;
   use tk;
@@ -26,4 +26,4 @@ define module mine-sweeper
   use format;
   use standard-io;
   use random;
-end module mine-sweeper;
+end module minesweeper;
