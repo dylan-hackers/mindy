@@ -36,6 +36,26 @@ this is very easy to do.
     ninja
     ninja test
 
+Building Documentation
+======================
+
+If you want to build the documentation, make sure that you've installed
+`Sphinx`_ and then pass ``-DMINDY_BUILD_DOCS=ON`` when invoking ``cmake``::
+
+    cmake .. -G Ninja -DMINDY_BUILD_DOCS=ON
+
+Also, make sure that you've gotten the Git submodules along with the
+sources for this repository.  You can do this by cloning recursively::
+
+    git clone --recursive https://github.com/dylan-hackers/mindy.git
+
+If you've already cloned the repository, then you can::
+
+    git submodule update --init --recursive
+
+The documentation will be present in your build directory in
+``documentation/html``.
+
 Learning More
 =============
 
@@ -78,6 +98,7 @@ Why not Mindy?
 .. _Dylan Reference Manual: http://opendylan.org/books/drm/
 .. _cmake: http://www.cmake.org/
 .. _ninja: https://martine.github.io/ninja/
+.. _Sphinx: http://www.sphinx-doc.org/
 .. _mailing list: https://lists.opendylan.org/mailman/listinfo/hackers
 .. _open issues: https://github.com/dylan-hackers/mindy/issues
 .. _open easy issues: https://github.com/dylan-hackers/mindy/issues?q=is%3Aopen+is%3Aissue+label%3AE-easy
