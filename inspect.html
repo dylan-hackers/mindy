@@ -1,0 +1,367 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Mindy Inspector &mdash; Mindy 2.7.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/opendylan.org/css/opendylan-docs.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Mindy 2.7.0 documentation" href="index.html"/>
+        <link rel="prev" title="The Mindy Debugger" href="debug.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> Mindy
+        
+
+        
+        </a>
+
+        
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="mindy.html">The Mindy Compiler and Interpreter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debug.html">The Mindy Debugger</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">The Mindy Inspector</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inspector-base">Inspector-Base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#text-inspector">Text-Inspector</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#exported-names">Exported Names</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#text-inspector-commands">Text-Inspector Commands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-history-command">The History Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-up-command">The Up Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-print-command">The Print Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-store-command">The Store Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-view-command">The View Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-help-command">The Help Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-quit-and-exit-command">The Quit and Exit Command</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#x-inspector">X-Inspector</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Mindy</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>The Mindy Inspector</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/inspect.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-mindy-inspector">
+<h1>The Mindy Inspector<a class="headerlink" href="#the-mindy-inspector" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document describes the use of the Inspector libraries for Mindy.
+The Inspector libraries are used to supplement the current Mindy
+debugger, and provide programmers with a tool for interactively
+inspecting their data structures. The Inspector has two separate
+interfaces, a text-based interface and a graphical interface. The text
+interface is similar to that of Mindy debugger. The graphical interface
+offers a pleasant if uninspiring way of inspecting objects; it also
+offers a rudimentary class diagram viewer.</p>
+<p>The Inspector is divided into three libraries, Inspector-Base,
+Text-Inspector, and X-Inspector. The first of these provides facilities
+that are common to the other two libraries. The Text-Inspector library
+implements a text interface to the Inspector and the function
+<a class="reference internal" href="#text-inspector:text-inspector:inspect"><code class="xref dylan dylan-func docutils literal"><span class="pre">inspect</span></code></a>. The X-Inspector library implements a graphical interface to
+the Inspector and the function <a class="reference internal" href="#x-inspector:x-inspector:xinspect"><code class="xref dylan dylan-func docutils literal"><span class="pre">xinspect</span></code></a>. Use of the X-Inspector
+requires Dylan/TK, which may not available on all systems.</p>
+<p>The Inspector is most often invoked via the <code class="docutils literal"><span class="pre">inspect</span></code> and <code class="docutils literal"><span class="pre">xinspect</span></code>
+debugger commands. These debugger commands evaluate their arguments and
+invoke the function <a class="reference internal" href="#text-inspector:text-inspector:inspect"><code class="xref dylan dylan-func docutils literal"><span class="pre">inspect</span></code></a> or <a class="reference internal" href="#x-inspector:x-inspector:xinspect"><code class="xref dylan dylan-func docutils literal"><span class="pre">xinspect</span></code></a> with the appropriate
+arguments. The debugger commands will automatically load the appropriate
+libraries if they have not already been loaded.</p>
+</div>
+<div class="section" id="inspector-base">
+<h2>Inspector-Base<a class="headerlink" href="#inspector-base" title="Permalink to this headline">¶</a></h2>
+<p>The Inspector-base library exists solely to support the Text-Inspector
+and X-Inspector libraries. Normal users will not find it useful.</p>
+</div>
+<div class="section" id="text-inspector">
+<h2>Text-Inspector<a class="headerlink" href="#text-inspector" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="exported-names">
+<h3>Exported Names<a class="headerlink" href="#exported-names" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt class="dylan-api" id="text-inspector:text-inspector:inspect">
+<code class="descname">inspect</code> <em class="property">Function</em><a class="headerlink" href="#text-inspector:text-inspector:inspect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="constant">
+<dt class="dylan-api" id="text-inspector:text-inspector:$all-libraries">
+<code class="descname">$all-libraries</code> <em class="property">Constant</em><a class="headerlink" href="#text-inspector:text-inspector:$all-libraries" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="text-inspector:text-inspector:display-object-info">
+<code class="descname">display-object-info</code> <em class="property">Function</em><a class="headerlink" href="#text-inspector:text-inspector:display-object-info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="text-inspector-commands">
+<h3>Text-Inspector Commands<a class="headerlink" href="#text-inspector-commands" title="Permalink to this headline">¶</a></h3>
+<p>When the text inspector starts, it will display the object you have
+passed to it, along with all of the information you requested using the
+keyword flags. Each item will be numbered, and to inspect a sub-object
+you simply type the number corresponding to the desired choice (in this
+case, even a superclass is considered a sub-object, because it was
+inspected via the main object). This lets you move around the object
+heterarchy, but it is not very convenient. There are additional commands
+that are designed to allow easier use of the inspector:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">1</span></code>, <code class="docutils literal"><span class="pre">2</span></code>, <code class="docutils literal"><span class="pre">3</span></code>, ...</li>
+<li><code class="docutils literal"><span class="pre">history</span></code></li>
+<li><code class="docutils literal"><span class="pre">up</span></code></li>
+<li><code class="docutils literal"><span class="pre">print</span></code></li>
+<li><code class="docutils literal"><span class="pre">store</span></code></li>
+<li><code class="docutils literal"><span class="pre">view</span></code></li>
+<li><code class="docutils literal"><span class="pre">?</span></code> or <code class="docutils literal"><span class="pre">help</span></code></li>
+<li><code class="docutils literal"><span class="pre">quit</span></code> or <code class="docutils literal"><span class="pre">exit</span></code></li>
+</ul>
+<p>With the exception of history, all commands may be abbreviated by their
+first letter.</p>
+</div>
+<div class="section" id="the-history-command">
+<h3>The History Command<a class="headerlink" href="#the-history-command" title="Permalink to this headline">¶</a></h3>
+<p>The history command lists all of the previously visited objects in the
+current session. A sample output may look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>Instance of &lt;my-class&gt;              &lt;--- Initial object, the one given in the argument
+Instance of &lt;sequence&gt;
+Instance of &lt;fixed-integer&gt;
+Class &lt;fixed-integer&gt;
+Class &lt;integer&gt;              &lt;--- Last object seen, the one that &quot;up&quot; goes to
+Class &lt;rational&gt;              &lt;--- The current object
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-up-command">
+<h3>The Up Command<a class="headerlink" href="#the-up-command" title="Permalink to this headline">¶</a></h3>
+<p>The up command moves you &#8220;up&#8221; the history, and lets you see the
+previously visited object. In the above example, if you moved up twice,
+the history would look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>Instance of &lt;my-class&gt;
+Instance of &lt;sequence&gt;
+Instance of &lt;fixed-integer&gt;
+Class &lt;fixed-integer&gt;
+</pre></div>
+</div>
+<p>And you would be inspecting the class <code class="docutils literal"><span class="pre">&lt;fixed-integer&gt;</span></code>.</p>
+</div>
+<div class="section" id="the-print-command">
+<h3>The Print Command<a class="headerlink" href="#the-print-command" title="Permalink to this headline">¶</a></h3>
+<p>The print command pretty-prints the current object (using the Gwydion
+Print library), but does not number the sub-objects. It is useful only
+for displaying the objects in a different, possible more informative
+manner.</p>
+</div>
+<div class="section" id="the-store-command">
+<h3>The Store Command<a class="headerlink" href="#the-store-command" title="Permalink to this headline">¶</a></h3>
+<p>The store command stores the current object in the next unused debugger
+variable. See mindy/debug.txt for information about debugger variables.</p>
+</div>
+<div class="section" id="the-view-command">
+<h3>The View Command<a class="headerlink" href="#the-view-command" title="Permalink to this headline">¶</a></h3>
+<p>The view command will allow you to redisplay the object that you are
+currently inspecting. This is mainly useful if previous commands such as
+history or view have moved the object off of the screen.</p>
+</div>
+<div class="section" id="the-help-command">
+<h3>The Help Command<a class="headerlink" href="#the-help-command" title="Permalink to this headline">¶</a></h3>
+<p>The help command will display a short help page listing all of the
+commands and a brief one line description of how they work.</p>
+</div>
+<div class="section" id="the-quit-and-exit-command">
+<h3>The Quit and Exit Command<a class="headerlink" href="#the-quit-and-exit-command" title="Permalink to this headline">¶</a></h3>
+<p>This command (both words mean the same thing) will allow you to leave
+the inspector and continue with the execution of your program. The next
+time inspect is called, it will not have any memory of the past session.
+This means that the history will initially show only the object that you
+called inspector with. If <strong>inspect</strong> was invoked from the debugger, you
+will return to the debugger.</p>
+</div>
+</div>
+<div class="section" id="x-inspector">
+<h2>X-Inspector<a class="headerlink" href="#x-inspector" title="Permalink to this headline">¶</a></h2>
+<p>The X-Inspector&#8217;s graphical interface is pretty self explanatory. In
+addition to offering all the features of the text interface, it also
+offers a rudimentary class diagram viewer. (The class diagrams are
+non-interactive&#8211;you can click all you want on them, but they won&#8217;t do
+anything) The Close button will close a single window; the Quit button
+will close all the X-Inspector windows. When there are no longer any
+open X-Inspector windows, you will be returned to the Mindy debugger
+prompt.</p>
+<p>The name X-Inspector is something of a misnomer, since it does not
+require X-Windows to work.</p>
+<p>The X-Inspector library exports the following objects:</p>
+<dl class="function">
+<dt class="dylan-api" id="x-inspector:x-inspector:xinspect">
+<code class="descname">xinspect</code> <em class="property">Function</em><a class="headerlink" href="#x-inspector:x-inspector:xinspect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="constant">
+<dt class="dylan-api" id="x-inspector:x-inspector:$all-libraries">
+<code class="descname">$all-libraries</code> <em class="property">Constant</em><a class="headerlink" href="#x-inspector:x-inspector:$all-libraries" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p><em>Caveat</em>: Both Inspectors differentiate between a binding (like a
+variable or a constant) and the object bound to that binding. If the
+binding is read-only, inspecting the binding is almost identical to
+inspecting the object it refers to. It is not exactly the same, because
+if the binding refers to a class, the X-Inspector will not offer you the
+option of a class hierarchy diagram.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="debug.html" class="btn btn-neutral" title="The Mindy Debugger" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Mindy Contributors.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'2.7.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
