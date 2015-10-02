@@ -1,5 +1,5 @@
 Mindy
-=====
+*****
 
 **An implementation of a language bearing a striking resemblance to Dylan**
 
