@@ -8,6 +8,7 @@ Mindy
 
    mindy
    debug
+   inspect
 
 Indices and tables
 ==================
