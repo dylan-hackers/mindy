@@ -9,6 +9,7 @@ Mindy
    mindy
    debug
    inspect
+   extensions
 
 Indices and tables
 ==================
