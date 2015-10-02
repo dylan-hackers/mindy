@@ -1,0 +1,417 @@
+Gwydion Extensions to Dylan
+===========================
+
+.. current-library:: dylan
+
+*Copyright (c) 1994, 1995, 1996, 1997 Carnegie Mellon University All
+rights reserved.*
+
+Introduction
+------------
+
+In the process of working with Dylan, the Gwydion Project has come up
+with numerous extensions to the Dylan language. Some of them form entire
+libraries, like the Collection-Extensions and String-Extensions
+libraries. Others have been added to the Dylan library, in such modules
+as Extensions and System.
+
+We continue to make no claims about future support for our extensions.
+However, some extensions are more likely than others to make it into our
+future compilers. This file documents those extensions which we think
+will be included in our compiler's Dylan library. Extensions which go in
+separate libraries are documented in their own files; extensions which
+are part of the Mindy Dylan library but which have a less certain future
+are documented in the Mindy documentation.
+
+For the remainder of this document, we shall refer to "Gwydion
+compilers" as a shorthand for "Mindy and other Dylan compilers that the
+Gwydion Project may write." It is not meant as a guarantee that all
+future Gwydion releases will support these extensions.
+
+Specific Gwydion compilers may support extensions not listed here; see
+their documentation for details.
+
+Dylan Language Issues
+---------------------
+
+Whenever possible, we have tried to keep the Dylan module pristine and
+unextended, preferring to add our extensions to separate modules or
+libraries. However, this is not always possible, particularly when it
+involves extending the behavior of a function or macro that is exported
+from the Dylan module. Currently, Gwydion compilers support these
+extensions to the Dylan module as described below:
+
+- Gwydion compilers support *keyed-by* clauses in for statements. The
+  format of such a clause is:
+
+  .. code-block:: dylan
+
+     var KEYED-BY key IN collection
+
+  *Var* is bound to each element in *collection*, and *key* is bound to
+  the element's key value.
+
+- Gwydion compilers supports *using* clauses in for statements. The
+  format of such a clause is:
+
+  .. code-block:: dylan
+
+     var IN collection USING protocol
+
+  *protocol* will be used instead of :drm:`forward-iteration-protocol`.
+  *protocol* must be a variable name, not an expression. Using clauses may
+  be used together with ``keyed-by``:
+
+  .. code-block:: dylan
+
+     var KEYED-BY key IN collection USING protocol
+
+- Gwydion compilers have an additional type of top level definition,
+  define function, which creates a constant binding in the current
+  module and initializes it to a new function. Define function's usage
+  is similar to define method. The following is an example:
+
+  .. code-block:: dylan
+
+     define function cube (x)
+       x * x * x;
+     end function cube;
+
+  A similar result might be had by writing
+
+  .. code-block:: dylan
+
+     define constant cube = method (x)
+                             x * x * x;
+                           end method;
+
+  or
+
+  .. code-block:: dylan
+
+     define method cube (x)
+       x * x * x;
+     end method cube;
+
+- Gwydion compilers supports subclass specializers via the ``limited``
+  function. A subclass specializer causes a method to be invoked
+  whenever the generic function was called on a value that is the
+  specified class or any subclass of the specified class. The method is
+  never invoked on a value that is an instance (direct or indirect) of
+  the specified class, only when the value is a subclass of the
+  specified class. The following is an example:
+
+  .. code-block:: dylan
+
+     define method make
+         (result-class :: limited(<class>, subclass-of: <my-class>));
+       let x = next-method();
+       do-special-logging-or-something(x);
+       x;
+     end method;
+
+Conditional Compilation
+-----------------------
+
+Gwydion compilers supports conditional compilation. The syntax is:
+
+  .. code-block:: dylan
+
+     #if (feature-expression)
+       dylan-code
+     #elseif (feature-expression)
+       dylan-code
+     #else
+       dylan-code
+      #endif
+
+(The ``#elseif`` and ``#else`` clauses are optional) A *feature-expression*
+is composed of features and the ``~``, ``&``, and ``\|`` operators, and
+may be parenthesized as usual. Features are not case sensitive. Mindy
+uses the ``-D`` and ``-U`` command line switches to define new features.
+Some features currently supported include:
+
+* ``mindy``
+* ``compiled-for-x86``
+* ``compiled-for-win32``
+* ``compiled-for-linux``
+* ``compiled-for-unix``
+* ``newlines-are-CRLF``
+
+Modules of the Dylan Library
+----------------------------
+
+In addition to containing the Dylan module, the Dylan library contains a
+variety of modules which provide extensions. Gwydion compilers export
+the following modules from the Dylan library:
+
+* `The Extensions Module`_
+* `The System Module`_
+* `The Introspection Module`_
+* `The Cheap-io Module`_
+
+The Extensions Module
+---------------------
+
+.. current-module:: extensions
+
+Ultimately, there will be several, more logically separate libraries
+that extend Dylan or provide an application framework for users. For
+now, we put any commonly used utilities in the Extensions module.
+
+Generally Useful Definitions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Extensions module exports the following generally useful
+functionality:
+
+.. class:: <byte-vector>
+
+.. class:: <byte-character>
+
+.. function:: assert
+
+.. function:: one-of
+
+   :description:
+
+     .. code-block:: dylan
+
+        one-of(#"foo", #"bar", #"baz")
+
+     is the same as:
+
+     .. code-block:: dylan
+
+        type-union(singleton(#"foo"), singleton(#"bar"), singleton(#"baz"))
+
+.. function:: false-or
+
+     .. code-block:: dylan
+
+        false-or(<integer>)
+
+     is the same as:
+
+     .. code-block:: dylan
+
+        type-union(<integer>, singleton(#f))
+
+Debugger Customizations
+~~~~~~~~~~~~~~~~~~~~~~~
+
+(A note on terminology: We use the term "debugger" here in the loose,
+Dylan sense of anything that handles an uncaught error. In Mindy, this
+debugger is indeed a full fledged debugger, but in other Gwydion
+compilers it may not be)
+
+The debugger uses the function :gf:`report-condition` to print conditions
+as error messages to users; for example, this is the function that
+implements the ``%S`` format-string directive for conditions. The debugger
+also uses the :func:`format` function exported from the ``Cheap-io`` module to
+process format strings, and it prints directly to the Unix ``stdout``. If
+any library that is used itself uses the ``Debugger-format`` library, then
+the debugger uses :func:`format` from the ``Format`` library, which is shipped
+with Gwydion compilers. You can extend how the debugger prints
+conditions, change what formatting function it uses, and direct where
+debugger output goes with the following:
+
+.. generic-function:: report-condition
+
+.. generic-function:: condition-format
+
+.. generic-function:: condition-force-output
+
+.. variable:: *warning-output*
+
+Exiting Applications
+~~~~~~~~~~~~~~~~~~~~
+
+The Extensions module exports the following functionality for
+controlling the exiting of applications:
+
+.. function:: exit
+
+Collections
+~~~~~~~~~~~
+
+The Extensions module exports the following :drm:`<collection>`
+functionality:
+
+.. generic-function:: key-exists?
+
+Integers
+~~~~~~~~
+
+Gwydion compilers have an abstract class **<general-integer>** which has
+two concrete subclasses, **<integer>** and **<extended- integer>**.
+**<integer>**\ s have a limited range of values, and **<integer>**
+arithmetic uses the computer’s underlying integer facilities.
+**<extended-integer>**\ s can take on any value, and are similar to
+Common Lisp "big-nums." Expressions involving **<extended-integer>**\ s
+produce **<extended - integer>** results because
+**<extended-integer>**\ s are contagious. If an expression involving
+only **<integer>** values would produce a result that does not fit in an
+**<integer>**, then the Gwydion compiler will signal an overflow error.
+You can use the **as** function to convert back and forth between
+**<integer>**\ s and **<extended- integer>**\ s. **As** signals an
+error when converting an **<extended-integer>** to a **<integer>**, and
+the value does not fit in a **<integer>**.
+
+The Extension module exports the following integer functionality:
+
+.. class:: <general-integer>
+   :abstract:
+
+.. class:: <extended-integer>
+
+.. constant:: $maximum-integer
+
+.. constant:: $minimum-integer
+
+Ratios
+~~~~~~
+
+The Extensions module exports the following:
+
+.. class:: <ratio>
+
+.. function:: ratio
+
+.. function:: numerator
+
+.. function:: denominator
+
+The System Module
+-----------------
+
+.. current-module:: system
+
+The System module exports the following:
+
+.. class:: <buffer>
+
+.. function:: copy-bytes
+
+.. function:: getenv
+
+.. function:: get-time-of-day
+
+.. function:: system
+
+The Introspection Module
+------------------------
+
+.. current-module:: introspection
+
+The Introspection module exports reflective operations for examining
+classes, functions, and types.
+
+Functions
+~~~~~~~~~
+
+Dylan provides some reflective operations for functions, such as
+:drm:`function-specializers` and :drm:`instance?`. With the latter, you can
+determine if a function is a :drm:`<generic-function>` or :drm:`<method>`, but
+neither Dylan nor Gwydion compilers provide exported class identifiers
+for other types of functions (such as ``block`` exit functions). The
+Subsection `Types`_ describes definitions that are also useful when
+inspecting methods because you can get detailed information about method
+specializer types.
+
+The Introspection module exports the following functions:
+
+.. function:: function-name
+
+Classes
+~~~~~~~
+
+The Introspection module exports the following for class objects:
+
+.. function:: class-name
+
+Types
+~~~~~
+
+The Introspection module exports the following for inspecting types (and
+therefore, method specializers):
+
+.. function:: singleton-object
+
+.. class:: <subclass>
+
+.. function:: subclass-of
+
+.. class:: <limited-integer>
+
+.. function:: limited-integer-base-class
+
+.. function:: limited-integer-minimum
+
+.. function:: limited-integer-maximum
+
+.. class:: <union>
+
+.. function:: union-members
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+The Introspection module exports the following miscellaneous
+functionality:
+
+.. function:: object-address
+
+The Cheap-io Module
+-------------------
+
+.. current-module:: cheap-io
+
+The ``Cheap-io`` module exports some basic, unextendable I/O
+functionality.  Gwydion compilers use the ``Cheap-io`` functions
+internally. The Gwydion Project also provides the ``Streams``,
+``Print``, and ``Format`` libraries (see the $INSTALL/doc/libraries/
+directory for documentation). It is an error to use both ``Cheap-IO``
+functions and ``Streams`` / ``Print`` / ``Format`` functions on a
+single stream. (For example, if you are using the ``Streams`` library
+``*standard-input*``, do not also use the ``Cheap-io`` input functions)
+For this reason, if any library that you load into Mindy uses the
+``Debugger-format`` library, the debugger will use :func:`format` from the
+``Format`` library.
+
+.. function:: format
+
+.. function:: print
+
+Extensions to the Streams Library
+---------------------------------
+
+.. current-module:: piped-exec
+
+The ``Piped-exec`` module is a Gwydion extension to the ``Streams``
+library. It exports the following function:
+
+.. function:: piped-exec
+
+Copyright and Terms of Use
+--------------------------
+
+Copyright (c) 1994, 1995, 1996, 1997 Carnegie Mellon University All
+rights reserved.
+
+Use and copying of this software and preparation of derivative works
+based on this software are permitted, including commercial use, provided
+that the following conditions are observed:
+
+- This copyright notice must be retained in full on any copies and on
+  appropriate parts of any derivative works.
+- Documentation (paper or online) accompanying any system that
+  incorporates this software, or any part of it, must acknowledge the
+  contribution of the Gwydion Project at Carnegie Mellon University.
+
+This software is made available *as is*. Neither the authors nor
+Carnegie Mellon University make any warranty about the software, its
+performance, or its conformity to any specification.
+
+Bug reports, questions, comments, and suggestions should be sent by
+E-mail to the Internet address gwydion-bugs@cs.cmu.edu.

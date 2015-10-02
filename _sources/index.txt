@@ -9,10 +9,10 @@ Mindy
    mindy
    debug
    inspect
+   extensions
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

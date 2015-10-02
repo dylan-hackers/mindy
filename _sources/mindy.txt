@@ -560,7 +560,7 @@ Generally Useful Definitions
 The Extensions module exports the following generally useful
 functionality:
 
-.. class:: <byte-vector>
+<byte-vector>
 
    This class is a subclass of :drm:`<vector>` that can only hold integers
    between 0 and 255 inclusively. This class is a temporary addition to
@@ -568,7 +568,7 @@ functionality:
    ``<byte-vector>`` definition. When Mindy supports limited collections,
    this may be defined within the Streams library.
 
-.. class:: <byte-character>
+<byte-character>
 
    This class is a subclass of :drm:`<character>`. Characters of this type
    represent the ASCII character set (or extensions to ASCII). Note, in
@@ -943,7 +943,7 @@ Exiting Applications
 The Extensions module exports the following functionality for
 controlling the exiting of applications:
 
-.. function:: exit
+exit
 
    :param #key exit-code: An instance of :drm:`<integer>`. Default: ``0``.
 

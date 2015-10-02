@@ -1,0 +1,700 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Gwydion Extensions to Dylan &mdash; Mindy 2.7.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/opendylan.org/css/opendylan-docs.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Mindy 2.7.0 documentation" href="index.html"/>
+        <link rel="prev" title="The Mindy Inspector" href="inspect.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> Mindy
+        
+
+        
+        </a>
+
+        
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="mindy.html">The Mindy Compiler and Interpreter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debug.html">The Mindy Debugger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inspect.html">The Mindy Inspector</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Gwydion Extensions to Dylan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dylan-language-issues">Dylan Language Issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#conditional-compilation">Conditional Compilation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modules-of-the-dylan-library">Modules of the Dylan Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-extensions-module">The Extensions Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generally-useful-definitions">Generally Useful Definitions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debugger-customizations">Debugger Customizations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exiting-applications">Exiting Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#integers">Integers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ratios">Ratios</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-system-module">The System Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-introspection-module">The Introspection Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#types">Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-cheap-io-module">The Cheap-io Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extensions-to-the-streams-library">Extensions to the Streams Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#copyright-and-terms-of-use">Copyright and Terms of Use</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Mindy</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Gwydion Extensions to Dylan</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/extensions.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="gwydion-extensions-to-dylan">
+<h1>Gwydion Extensions to Dylan<a class="headerlink" href="#gwydion-extensions-to-dylan" title="Permalink to this headline">¶</a></h1>
+<p><em>Copyright (c) 1994, 1995, 1996, 1997 Carnegie Mellon University All
+rights reserved.</em></p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>In the process of working with Dylan, the Gwydion Project has come up
+with numerous extensions to the Dylan language. Some of them form entire
+libraries, like the Collection-Extensions and String-Extensions
+libraries. Others have been added to the Dylan library, in such modules
+as Extensions and System.</p>
+<p>We continue to make no claims about future support for our extensions.
+However, some extensions are more likely than others to make it into our
+future compilers. This file documents those extensions which we think
+will be included in our compiler&#8217;s Dylan library. Extensions which go in
+separate libraries are documented in their own files; extensions which
+are part of the Mindy Dylan library but which have a less certain future
+are documented in the Mindy documentation.</p>
+<p>For the remainder of this document, we shall refer to &#8220;Gwydion
+compilers&#8221; as a shorthand for &#8220;Mindy and other Dylan compilers that the
+Gwydion Project may write.&#8221; It is not meant as a guarantee that all
+future Gwydion releases will support these extensions.</p>
+<p>Specific Gwydion compilers may support extensions not listed here; see
+their documentation for details.</p>
+</div>
+<div class="section" id="dylan-language-issues">
+<h2>Dylan Language Issues<a class="headerlink" href="#dylan-language-issues" title="Permalink to this headline">¶</a></h2>
+<p>Whenever possible, we have tried to keep the Dylan module pristine and
+unextended, preferring to add our extensions to separate modules or
+libraries. However, this is not always possible, particularly when it
+involves extending the behavior of a function or macro that is exported
+from the Dylan module. Currently, Gwydion compilers support these
+extensions to the Dylan module as described below:</p>
+<ul>
+<li><p class="first">Gwydion compilers support <em>keyed-by</em> clauses in for statements. The
+format of such a clause is:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="n">var</span> <span class="n">KEYED-BY</span> <span class="n">key</span> <span class="k">IN</span> <span class="n">collection</span>
+</pre></div>
+</div>
+<p><em>Var</em> is bound to each element in <em>collection</em>, and <em>key</em> is bound to
+the element&#8217;s key value.</p>
+</li>
+<li><p class="first">Gwydion compilers supports <em>using</em> clauses in for statements. The
+format of such a clause is:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="n">var</span> <span class="k">IN</span> <span class="n">collection</span> <span class="n">USING</span> <span class="n">protocol</span>
+</pre></div>
+</div>
+<p><em>protocol</em> will be used instead of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Operations#forward-iteration-protocol"><code class="xref drm docutils literal"><span class="pre">forward-iteration-protocol</span></code></a>.
+<em>protocol</em> must be a variable name, not an expression. Using clauses may
+be used together with <code class="docutils literal"><span class="pre">keyed-by</span></code>:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="n">var</span> <span class="n">KEYED-BY</span> <span class="n">key</span> <span class="k">IN</span> <span class="n">collection</span> <span class="n">USING</span> <span class="n">protocol</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Gwydion compilers have an additional type of top level definition,
+define function, which creates a constant binding in the current
+module and initializes it to a new function. Define function&#8217;s usage
+is similar to define method. The following is an example:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="k">define</span> <span class="nb">function</span> <span class="n">cube</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span>
+  <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>
+<span class="k">end</span> <span class="nb">function</span> <span class="n">cube</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>A similar result might be had by writing</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="k">define</span> <span class="nb">constant</span> <span class="n">cube</span> <span class="o">=</span> <span class="nb">method</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                        <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>
+                      <span class="k">end</span> <span class="nb">method</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="k">define</span> <span class="nb">method</span> <span class="n">cube</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span>
+  <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>
+<span class="k">end</span> <span class="nb">method</span> <span class="n">cube</span><span class="p">;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Gwydion compilers supports subclass specializers via the <code class="docutils literal"><span class="pre">limited</span></code>
+function. A subclass specializer causes a method to be invoked
+whenever the generic function was called on a value that is the
+specified class or any subclass of the specified class. The method is
+never invoked on a value that is an instance (direct or indirect) of
+the specified class, only when the value is a subclass of the
+specified class. The following is an example:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="k">define</span> <span class="nb">method</span> <span class="nb">make</span>
+    <span class="p">(</span><span class="n">result-class</span> <span class="p">::</span> <span class="nb">limited</span><span class="p">(</span><span class="nc">&lt;class&gt;</span><span class="p">,</span> <span class="k">subclass-of:</span> <span class="nc">&lt;my-class&gt;</span><span class="p">));</span>
+  <span class="k">let</span> <span class="n">x</span> <span class="o">=</span> <span class="nb">next-method</span><span class="p">();</span>
+  <span class="n">do-special-logging-or-something</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+  <span class="n">x</span><span class="p">;</span>
+<span class="k">end</span> <span class="nb">method</span><span class="p">;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="conditional-compilation">
+<h2>Conditional Compilation<a class="headerlink" href="#conditional-compilation" title="Permalink to this headline">¶</a></h2>
+<p>Gwydion compilers supports conditional compilation. The syntax is:</p>
+<blockquote>
+<div><div class="highlight-dylan"><div class="highlight"><pre><span class="k">#if</span> <span class="p">(</span><span class="n">feature-expression</span><span class="p">)</span>
+  <span class="n">dylan-code</span>
+<span class="k">#elseif</span> <span class="p">(</span><span class="n">feature-expression</span><span class="p">)</span>
+  <span class="n">dylan-code</span>
+<span class="k">#else</span>
+  <span class="n">dylan-code</span>
+ <span class="k">#endif</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>(The <code class="docutils literal"><span class="pre">#elseif</span></code> and <code class="docutils literal"><span class="pre">#else</span></code> clauses are optional) A <em>feature-expression</em>
+is composed of features and the <code class="docutils literal"><span class="pre">~</span></code>, <code class="docutils literal"><span class="pre">&amp;</span></code>, and <code class="docutils literal"><span class="pre">\|</span></code> operators, and
+may be parenthesized as usual. Features are not case sensitive. Mindy
+uses the <code class="docutils literal"><span class="pre">-D</span></code> and <code class="docutils literal"><span class="pre">-U</span></code> command line switches to define new features.
+Some features currently supported include:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">mindy</span></code></li>
+<li><code class="docutils literal"><span class="pre">compiled-for-x86</span></code></li>
+<li><code class="docutils literal"><span class="pre">compiled-for-win32</span></code></li>
+<li><code class="docutils literal"><span class="pre">compiled-for-linux</span></code></li>
+<li><code class="docutils literal"><span class="pre">compiled-for-unix</span></code></li>
+<li><code class="docutils literal"><span class="pre">newlines-are-CRLF</span></code></li>
+</ul>
+</div>
+<div class="section" id="modules-of-the-dylan-library">
+<h2>Modules of the Dylan Library<a class="headerlink" href="#modules-of-the-dylan-library" title="Permalink to this headline">¶</a></h2>
+<p>In addition to containing the Dylan module, the Dylan library contains a
+variety of modules which provide extensions. Gwydion compilers export
+the following modules from the Dylan library:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#the-extensions-module">The Extensions Module</a></li>
+<li><a class="reference internal" href="#the-system-module">The System Module</a></li>
+<li><a class="reference internal" href="#the-introspection-module">The Introspection Module</a></li>
+<li><a class="reference internal" href="#the-cheap-io-module">The Cheap-io Module</a></li>
+</ul>
+</div>
+<div class="section" id="the-extensions-module">
+<h2>The Extensions Module<a class="headerlink" href="#the-extensions-module" title="Permalink to this headline">¶</a></h2>
+<p>Ultimately, there will be several, more logically separate libraries
+that extend Dylan or provide an application framework for users. For
+now, we put any commonly used utilities in the Extensions module.</p>
+<div class="section" id="generally-useful-definitions">
+<h3>Generally Useful Definitions<a class="headerlink" href="#generally-useful-definitions" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following generally useful
+functionality:</p>
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[byte-vector]">
+<code class="descname">&lt;byte-vector&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-vector]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[byte-character]">
+<code class="descname">&lt;byte-character&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-character]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:assert">
+<code class="descname">assert</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:assert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:one-of">
+<code class="descname">one-of</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:one-of" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><div class="highlight-dylan"><div class="highlight"><pre><span class="nb">one-of</span><span class="p">(</span><span class="ss">#&quot;foo&quot;</span><span class="p">,</span> <span class="ss">#&quot;bar&quot;</span><span class="p">,</span> <span class="ss">#&quot;baz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>is the same as:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="nb">type-union</span><span class="p">(</span><span class="nb">singleton</span><span class="p">(</span><span class="ss">#&quot;foo&quot;</span><span class="p">),</span> <span class="nb">singleton</span><span class="p">(</span><span class="ss">#&quot;bar&quot;</span><span class="p">),</span> <span class="nb">singleton</span><span class="p">(</span><span class="ss">#&quot;baz&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:false-or">
+<code class="descname">false-or</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:false-or" title="Permalink to this definition">¶</a></dt>
+<dd><div class="highlight-dylan"><div class="highlight"><pre><span class="nb">false-or</span><span class="p">(</span><span class="nc">&lt;integer&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>is the same as:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="nb">type-union</span><span class="p">(</span><span class="nc">&lt;integer&gt;</span><span class="p">,</span> <span class="nb">singleton</span><span class="p">(</span><span class="l">#f</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="debugger-customizations">
+<h3>Debugger Customizations<a class="headerlink" href="#debugger-customizations" title="Permalink to this headline">¶</a></h3>
+<p>(A note on terminology: We use the term &#8220;debugger&#8221; here in the loose,
+Dylan sense of anything that handles an uncaught error. In Mindy, this
+debugger is indeed a full fledged debugger, but in other Gwydion
+compilers it may not be)</p>
+<p>The debugger uses the function <a class="reference internal" href="#dylan:extensions:report-condition"><code class="xref dylan dylan-gf docutils literal"><span class="pre">report-condition</span></code></a> to print conditions
+as error messages to users; for example, this is the function that
+implements the <code class="docutils literal"><span class="pre">%S</span></code> format-string directive for conditions. The debugger
+also uses the <a class="reference internal" href="#dylan:cheap-io:format"><code class="xref dylan dylan-func docutils literal"><span class="pre">format</span></code></a> function exported from the <code class="docutils literal"><span class="pre">Cheap-io</span></code> module to
+process format strings, and it prints directly to the Unix <code class="docutils literal"><span class="pre">stdout</span></code>. If
+any library that is used itself uses the <code class="docutils literal"><span class="pre">Debugger-format</span></code> library, then
+the debugger uses <a class="reference internal" href="#dylan:cheap-io:format"><code class="xref dylan dylan-func docutils literal"><span class="pre">format</span></code></a> from the <code class="docutils literal"><span class="pre">Format</span></code> library, which is shipped
+with Gwydion compilers. You can extend how the debugger prints
+conditions, change what formatting function it uses, and direct where
+debugger output goes with the following:</p>
+<dl class="generic-function">
+<dt class="dylan-api" id="dylan:extensions:report-condition">
+<code class="descname">report-condition</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:report-condition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="dylan:extensions:condition-format">
+<code class="descname">condition-format</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:condition-format" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="dylan:extensions:condition-force-output">
+<code class="descname">condition-force-output</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:condition-force-output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="variable">
+<dt class="dylan-api" id="dylan:extensions:*warning-output*">
+<code class="descname">*warning-output*</code> <em class="property">Variable</em><a class="headerlink" href="#dylan:extensions:*warning-output*" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="exiting-applications">
+<h3>Exiting Applications<a class="headerlink" href="#exiting-applications" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following functionality for
+controlling the exiting of applications:</p>
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:exit">
+<code class="descname">exit</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:exit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="collections">
+<h3>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#collection"><code class="xref drm docutils literal"><span class="pre">&lt;collection&gt;</span></code></a>
+functionality:</p>
+<dl class="generic-function">
+<dt class="dylan-api" id="dylan:extensions:key-exists?">
+<code class="descname">key-exists?</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:key-exists?" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="integers">
+<h3>Integers<a class="headerlink" href="#integers" title="Permalink to this headline">¶</a></h3>
+<p>Gwydion compilers have an abstract class <strong>&lt;general-integer&gt;</strong> which has
+two concrete subclasses, <strong>&lt;integer&gt;</strong> and <strong>&lt;extended- integer&gt;</strong>.
+<strong>&lt;integer&gt;</strong>s have a limited range of values, and <strong>&lt;integer&gt;</strong>
+arithmetic uses the computer’s underlying integer facilities.
+<strong>&lt;extended-integer&gt;</strong>s can take on any value, and are similar to
+Common Lisp &#8220;big-nums.&#8221; Expressions involving <strong>&lt;extended-integer&gt;</strong>s
+produce <strong>&lt;extended - integer&gt;</strong> results because
+<strong>&lt;extended-integer&gt;</strong>s are contagious. If an expression involving
+only <strong>&lt;integer&gt;</strong> values would produce a result that does not fit in an
+<strong>&lt;integer&gt;</strong>, then the Gwydion compiler will signal an overflow error.
+You can use the <strong>as</strong> function to convert back and forth between
+<strong>&lt;integer&gt;</strong>s and <strong>&lt;extended- integer&gt;</strong>s. <strong>As</strong> signals an
+error when converting an <strong>&lt;extended-integer&gt;</strong> to a <strong>&lt;integer&gt;</strong>, and
+the value does not fit in a <strong>&lt;integer&gt;</strong>.</p>
+<p>The Extension module exports the following integer functionality:</p>
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[general-integer]">
+<code class="descname">&lt;general-integer&gt;</code> <em class="property">Abstract Class</em><a class="headerlink" href="#dylan:extensions:[general-integer]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[extended-integer]">
+<code class="descname">&lt;extended-integer&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[extended-integer]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="constant">
+<dt class="dylan-api" id="dylan:extensions:$maximum-integer">
+<code class="descname">$maximum-integer</code> <em class="property">Constant</em><a class="headerlink" href="#dylan:extensions:$maximum-integer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="constant">
+<dt class="dylan-api" id="dylan:extensions:$minimum-integer">
+<code class="descname">$minimum-integer</code> <em class="property">Constant</em><a class="headerlink" href="#dylan:extensions:$minimum-integer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="ratios">
+<h3>Ratios<a class="headerlink" href="#ratios" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following:</p>
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[ratio]">
+<code class="descname">&lt;ratio&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[ratio]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:ratio">
+<code class="descname">ratio</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:ratio" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:numerator">
+<code class="descname">numerator</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:numerator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:denominator">
+<code class="descname">denominator</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:denominator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="the-system-module">
+<h2>The System Module<a class="headerlink" href="#the-system-module" title="Permalink to this headline">¶</a></h2>
+<p>The System module exports the following:</p>
+<dl class="class">
+<dt class="dylan-api" id="dylan:system:[buffer]">
+<code class="descname">&lt;buffer&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:system:[buffer]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:system:copy-bytes">
+<code class="descname">copy-bytes</code> <em class="property">Function</em><a class="headerlink" href="#dylan:system:copy-bytes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:system:getenv">
+<code class="descname">getenv</code> <em class="property">Function</em><a class="headerlink" href="#dylan:system:getenv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:system:get-time-of-day">
+<code class="descname">get-time-of-day</code> <em class="property">Function</em><a class="headerlink" href="#dylan:system:get-time-of-day" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:system:system">
+<code class="descname">system</code> <em class="property">Function</em><a class="headerlink" href="#dylan:system:system" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="the-introspection-module">
+<h2>The Introspection Module<a class="headerlink" href="#the-introspection-module" title="Permalink to this headline">¶</a></h2>
+<p>The Introspection module exports reflective operations for examining
+classes, functions, and types.</p>
+<div class="section" id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<p>Dylan provides some reflective operations for functions, such as
+<a class="reference external" href="http://opendylan.org/books/drm/Reflective_Operations_on_Functions#function-specializers"><code class="xref drm docutils literal"><span class="pre">function-specializers</span></code></a> and <a class="reference external" href="http://opendylan.org/books/drm/Reflective_Operations_on_Types#instance_"><code class="xref drm docutils literal"><span class="pre">instance?</span></code></a>. With the latter, you can
+determine if a function is a <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#generic-function"><code class="xref drm docutils literal"><span class="pre">&lt;generic-function&gt;</span></code></a> or <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#method"><code class="xref drm docutils literal"><span class="pre">&lt;method&gt;</span></code></a>, but
+neither Dylan nor Gwydion compilers provide exported class identifiers
+for other types of functions (such as <code class="docutils literal"><span class="pre">block</span></code> exit functions). The
+Subsection <a class="reference internal" href="#types">Types</a> describes definitions that are also useful when
+inspecting methods because you can get detailed information about method
+specializer types.</p>
+<p>The Introspection module exports the following functions:</p>
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:function-name">
+<code class="descname">function-name</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:function-name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h3>
+<p>The Introspection module exports the following for class objects:</p>
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:class-name">
+<code class="descname">class-name</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:class-name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="types">
+<h3>Types<a class="headerlink" href="#types" title="Permalink to this headline">¶</a></h3>
+<p>The Introspection module exports the following for inspecting types (and
+therefore, method specializers):</p>
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:singleton-object">
+<code class="descname">singleton-object</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:singleton-object" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:introspection:[subclass]">
+<code class="descname">&lt;subclass&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:introspection:[subclass]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:subclass-of">
+<code class="descname">subclass-of</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:subclass-of" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:introspection:[limited-integer]">
+<code class="descname">&lt;limited-integer&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:introspection:[limited-integer]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:limited-integer-base-class">
+<code class="descname">limited-integer-base-class</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:limited-integer-base-class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:limited-integer-minimum">
+<code class="descname">limited-integer-minimum</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:limited-integer-minimum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:limited-integer-maximum">
+<code class="descname">limited-integer-maximum</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:limited-integer-maximum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:introspection:[union]">
+<code class="descname">&lt;union&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:introspection:[union]" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:union-members">
+<code class="descname">union-members</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:union-members" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="miscellaneous">
+<h3>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h3>
+<p>The Introspection module exports the following miscellaneous
+functionality:</p>
+<dl class="function">
+<dt class="dylan-api" id="dylan:introspection:object-address">
+<code class="descname">object-address</code> <em class="property">Function</em><a class="headerlink" href="#dylan:introspection:object-address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="the-cheap-io-module">
+<h2>The Cheap-io Module<a class="headerlink" href="#the-cheap-io-module" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">Cheap-io</span></code> module exports some basic, unextendable I/O
+functionality.  Gwydion compilers use the <code class="docutils literal"><span class="pre">Cheap-io</span></code> functions
+internally. The Gwydion Project also provides the <code class="docutils literal"><span class="pre">Streams</span></code>,
+<code class="docutils literal"><span class="pre">Print</span></code>, and <code class="docutils literal"><span class="pre">Format</span></code> libraries (see the $INSTALL/doc/libraries/
+directory for documentation). It is an error to use both <code class="docutils literal"><span class="pre">Cheap-IO</span></code>
+functions and <code class="docutils literal"><span class="pre">Streams</span></code> / <code class="docutils literal"><span class="pre">Print</span></code> / <code class="docutils literal"><span class="pre">Format</span></code> functions on a
+single stream. (For example, if you are using the <code class="docutils literal"><span class="pre">Streams</span></code> library
+<code class="docutils literal"><span class="pre">*standard-input*</span></code>, do not also use the <code class="docutils literal"><span class="pre">Cheap-io</span></code> input functions)
+For this reason, if any library that you load into Mindy uses the
+<code class="docutils literal"><span class="pre">Debugger-format</span></code> library, the debugger will use <a class="reference internal" href="#dylan:cheap-io:format"><code class="xref dylan dylan-func docutils literal"><span class="pre">format</span></code></a> from the
+<code class="docutils literal"><span class="pre">Format</span></code> library.</p>
+<dl class="function">
+<dt class="dylan-api" id="dylan:cheap-io:format">
+<code class="descname">format</code> <em class="property">Function</em><a class="headerlink" href="#dylan:cheap-io:format" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:cheap-io:print">
+<code class="descname">print</code> <em class="property">Function</em><a class="headerlink" href="#dylan:cheap-io:print" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="extensions-to-the-streams-library">
+<h2>Extensions to the Streams Library<a class="headerlink" href="#extensions-to-the-streams-library" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">Piped-exec</span></code> module is a Gwydion extension to the <code class="docutils literal"><span class="pre">Streams</span></code>
+library. It exports the following function:</p>
+<dl class="function">
+<dt class="dylan-api" id="dylan:piped-exec:piped-exec">
+<code class="descname">piped-exec</code> <em class="property">Function</em><a class="headerlink" href="#dylan:piped-exec:piped-exec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="copyright-and-terms-of-use">
+<h2>Copyright and Terms of Use<a class="headerlink" href="#copyright-and-terms-of-use" title="Permalink to this headline">¶</a></h2>
+<p>Copyright (c) 1994, 1995, 1996, 1997 Carnegie Mellon University All
+rights reserved.</p>
+<p>Use and copying of this software and preparation of derivative works
+based on this software are permitted, including commercial use, provided
+that the following conditions are observed:</p>
+<ul class="simple">
+<li>This copyright notice must be retained in full on any copies and on
+appropriate parts of any derivative works.</li>
+<li>Documentation (paper or online) accompanying any system that
+incorporates this software, or any part of it, must acknowledge the
+contribution of the Gwydion Project at Carnegie Mellon University.</li>
+</ul>
+<p>This software is made available <em>as is</em>. Neither the authors nor
+Carnegie Mellon University make any warranty about the software, its
+performance, or its conformity to any specification.</p>
+<p>Bug reports, questions, comments, and suggestions should be sent by
+E-mail to the Internet address <a class="reference external" href="mailto:gwydion-bugs&#37;&#52;&#48;cs&#46;cmu&#46;edu">gwydion-bugs<span>&#64;</span>cs<span>&#46;</span>cmu<span>&#46;</span>edu</a>.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="inspect.html" class="btn btn-neutral" title="The Mindy Inspector" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Mindy Contributors.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'2.7.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
