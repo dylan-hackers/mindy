@@ -30,7 +30,7 @@ copyright: see below
 // ============
 //
 // defargparser is a set of macros designed to work on top of Eric Kidd's
-// getopt library.  The idea is to provide a more readable interface for
+// parse-arguments library.  The idea is to provide a more readable interface for
 // parser definition and option access.
 //
 //

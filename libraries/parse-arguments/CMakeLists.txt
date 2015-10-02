@@ -1,6 +1,6 @@
 SET(parse-arguments_SOURCES
     library.dylan
-    getopt.dylan
+    parse-arguments.dylan
     parsers.dylan
     defargparser.dylan
 )

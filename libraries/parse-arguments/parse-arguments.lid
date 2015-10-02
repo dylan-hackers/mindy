@@ -1,8 +1,8 @@
 library: parse-arguments
 unique-id-base: 1500
-unit-prefix: getopt
+unit-prefix: parse-arguments
 
 library.dylan
-getopt.dylan
+parse-arguments.dylan
 parsers.dylan
 defargparser.dylan
