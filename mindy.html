@@ -1,0 +1,2127 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Mindy Compiler and Interpreter &mdash; Mindy 2.7.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/opendylan.org/css/opendylan-docs.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Mindy 2.7.0 documentation" href="index.html"/>
+        <link rel="next" title="The Mindy Debugger" href="debug.html"/>
+        <link rel="prev" title="Mindy" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> Mindy
+        
+
+        
+        </a>
+
+        
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">The Mindy Compiler and Interpreter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hello-world">Hello, World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-main-routine">The Main Routine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multiple-files">Multiple Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#return-codes">Return Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#command-line-switches-and-environment-variables">Command Line Switches and Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#errors-and-warnings">Errors and Warnings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#syntax-errors">7.1. Syntax Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#runtime-errors">7.2. Runtime Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#warnings">7.3. Warnings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#internal-lossage">7.4. Internal Lossage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dylan-vs-mindy-language-issues">Dylan vs. Mindy Language Issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#built-in-libraries-and-modules">Built-in Libraries and Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-libraries-and-modules">Using Libraries and Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-extensions-module">The Extensions Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generally-useful-definitions">Generally Useful Definitions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debugger-customizations">Debugger Customizations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tables">Tables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exiting-applications">Exiting Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#weak-pointers">Weak Pointers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#integers">Integers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ratios">Ratios</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-system-module">The System Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-introspection-module">The Introspection Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#classes-and-instances">Classes and Instances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#types">Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-file-descriptor-module">The File-descriptor Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-cheap-io-module">The Cheap-io Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-threads-module">The Threads Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#classes-and-functions">Classes and Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-transcendental-module">The Transcendental Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#streams-library">Streams Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#miscellaneous-implementation-choices">Miscellaneous Implementation Choices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#copyright-and-terms-of-use">Copyright and Terms of Use</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="debug.html">The Mindy Debugger</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Mindy</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>The Mindy Compiler and Interpreter</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/mindy.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-mindy-compiler-and-interpreter">
+<h1>The Mindy Compiler and Interpreter<a class="headerlink" href="#the-mindy-compiler-and-interpreter" title="Permalink to this headline">¶</a></h1>
+<p>Copyright (c) 1994, 1995, 1996 Carnegie Mellon University All rights
+reserved. Refer to the end of this document for precise terms of use.</p>
+<p>The Gwydion Project would like to thank those on the net that have
+contributed code patches and bug reports for Mindy:</p>
+<p>Adam Alpern, Steve Strassman, Scott Collins, Ed Gamble, Bruno Haible,
+John Shen, Galen Hunt, Richard Lynch, Dan Ratner, Court Demas, Miles
+Bader, Kelly Murray, Nick Thompson, Brent Benson, Brian Rogoff, Alain
+Rogister, Mark Chu-Carroll, Enrico Colombini, Dave Dyer, Jonathan
+Bachrach, Michael Binz, Jonathan Sobel, Eric Kidd, John Shen, Carl Gay,
+Patrick Premont, Eric Gouriou</p>
+<p>Special thanks for major efforts to Roger Critchlow, Patrick Beard, Gary
+Palter, and Jim Studt for enhancements to Mindy.</p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Mindy is an implementation of a language that is very much like the
+language described in the <em>Dylan Reference Manual</em> (DRM). The name
+<em>Mindy</em> is derived from &#8220;Mindy Is Not Dylan Yet&#8221;, and as the name
+implies, Mindy is incomplete. Mindy is incomplete for the following
+reasons:</p>
+<ul class="simple">
+<li>We do not implement everything in the DRM.</li>
+<li>The DRM does not specify all that Apple intends Dylan to be.</li>
+<li>There&#8217;s no way to validate what a Dylan implementation is, even if we
+had a full specification.</li>
+</ul>
+<p>However, Mindy does implement most of what we believe Dylan will be.</p>
+<p>Mindy was developed by the Gwydion Project at Carnegie Mellon University
+for our own internal use as a development tool while we work on our
+<em>real</em> high-performance Dylan implementation. We have decided to make
+Mindy available for other people who want to learn about Dylan. However,
+the amount of effort that we can put into maintaining Mindy is strictly
+limited.</p>
+<p>Mindy will never be an industrial-strength implementation, and nobody
+should depend on it for real work. We will make future releases from
+time to time as we add new features and fix bugs, but this is strictly a
+sideshow for us. We would appreciate receiving bug reports (especially
+those accompanied by code patches) and suggestions for improvements, but
+we may not fix every bug reported in a timely manner, or fix it at all.
+Our work on development of the <em>real</em> Gwydion/Dylan must take
+precedence.</p>
+<p>We hope that nobody will draw any conclusions about the performance of
+our future Gwydion/Dylan compiler or the performance attainable in Dylan
+from experience using Mindy. It was not designed to be fast.</p>
+<p>Mindy comprises two C programs, a compiler that produces byte-codes and
+a byte-code interpreter. Instructions for compiling and installing Mindy
+can be found in the file INSTALL at the top level of the Mindy release.
+Instructions for obtaining the different versions of Mindy can be found
+in the file README at the top level of the Mindy release.</p>
+</div>
+<div class="section" id="hello-world">
+<h2>Hello, World<a class="headerlink" href="#hello-world" title="Permalink to this headline">¶</a></h2>
+<p>Well, the first program anyone should endeavor to write in a new
+language is, of course, Hello World. Type this into a file
+called <code class="docutils literal"><span class="pre">hw-exports.dylan</span></code>:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="na">Module</span><span class="o">:</span> <span class="s">dylan-user</span>
+
+<span class="k">define</span> <span class="nb">library</span> <span class="n">hello-world</span>
+  <span class="k">use</span> <span class="n">Dylan</span><span class="p">;</span>
+<span class="k">end</span> <span class="nb">library</span><span class="p">;</span>
+
+<span class="k">define</span> <span class="nb">module</span> <span class="n">hello-world</span>
+  <span class="k">use</span> <span class="n">dylan</span><span class="p">;</span>
+  <span class="k">use</span> <span class="n">cheap-io</span><span class="p">;</span>
+  <span class="k">use</span> <span class="n">extensions</span><span class="p">;</span>
+<span class="k">end</span> <span class="nb">module</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>And put this in <code class="docutils literal"><span class="pre">hw.dylan</span></code>:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="na">module</span><span class="o">:</span> <span class="s">Hello-World</span>
+
+<span class="c1">// This is the canonical &quot;hello, world&quot; demo.</span>
+<span class="k">define</span> <span class="nb">method</span> <span class="n">main</span> <span class="p">(</span><span class="n">argv0</span> <span class="p">::</span> <span class="nc">&lt;byte-string&gt;</span><span class="p">,</span> <span class="k">#rest</span> <span class="n">noise</span><span class="p">)</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Hello, World.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="k">end</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>To compile your program invoke $INSTALL/bin/mindycomp, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre>% $INSTALL/bin/mindycomp -lhello-world hw-exports.dylan
+% $INSTALL/bin/mindycomp -lhello-world hw.dylan
+</pre></div>
+</div>
+<p>This produces files named <code class="docutils literal"><span class="pre">hw.dbc</span></code> and <code class="docutils literal"><span class="pre">hw-exports.dbc</span></code>. The <code class="docutils literal"><span class="pre">.dbc</span></code>
+stands for <strong>&#8220;Dylan Byte Code&#8221;</strong>. To run the program, say:</p>
+<div class="highlight-python"><div class="highlight"><pre>% $INSTALL/bin/mindy -f hw-exports.dbc -f hw.dbc
+</pre></div>
+</div>
+<p>It should print &#8220;Hello, World.&#8221; to standard output and then exit.</p>
+<p>Note that even the minimal Dylan program has at least two files.
+This is because in order to do anything much at all, you must
+access additional libraries, and the only way to set up your
+namespace is to define your own library and module. But the only
+way to place code in a module is to use the <code class="docutils literal"><span class="pre">Module:</span></code> file
+header, so two files are required.</p>
+<p>Note also that a blank line is required after the <code class="docutils literal"><span class="pre">Module:</span></code> file header.</p>
+</div>
+<div class="section" id="the-main-routine">
+<h2>The Main Routine<a class="headerlink" href="#the-main-routine" title="Permalink to this headline">¶</a></h2>
+<p>After loading your program, Mindy invokes the generic function <a class="reference internal" href="#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a>
+from the Extensions module of the Dylan library. Your program must
+define a method for <a class="reference internal" href="#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a>, or Mindy will signal a <strong>no applicable
+methods</strong> error and put you in the debugger. For more information on the
+<a class="reference internal" href="#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a> function, see <a class="reference internal" href="#the-extensions-module">The Extensions Module</a>.</p>
+<p>It can be useful to load code into Mindy with no main method. Once you
+land in the debugger, you can call any function manually. This provides
+a way to test any library.</p>
+</div>
+<div class="section" id="multiple-files">
+<h2>Multiple Files<a class="headerlink" href="#multiple-files" title="Permalink to this headline">¶</a></h2>
+<p>When working with a larger program, you will probably have more than one
+<code class="docutils literal"><span class="pre">.dylan</span></code> file. In which case, you just compile them each independently,
+and then run Mindy with multiple <code class="docutils literal"><span class="pre">-f</span></code> switches:</p>
+<div class="highlight-python"><div class="highlight"><pre>% mindy -f foo.dbc -f bar.dbc -f baz.dbc
+</pre></div>
+</div>
+<p>Mindy loads the files specified with the <code class="docutils literal"><span class="pre">-f</span></code> switches in the order you
+specify the files on the command line. This becomes important when you
+define your own modules (see <a class="reference internal" href="#using-libraries-and-modules">Using Libraries and Modules</a>).</p>
+<p>If you typically load several <code class="docutils literal"><span class="pre">.dbc</span></code> files as part of a single program,
+you can combine them into one file for convenience. The mechanism for
+combining <code class="docutils literal"><span class="pre">.dbc</span></code> files is the Unix <code class="docutils literal"><span class="pre">cat</span></code> utility:</p>
+<div class="highlight-python"><div class="highlight"><pre>% cat foo.dbc bar.dbc baz.dbc &gt; big.dbc
+% mindy -f big.dbc
+</pre></div>
+</div>
+</div>
+<div class="section" id="return-codes">
+<h2>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h2>
+<p>If Mindy encounters an unrecoverable error, or if Mindy is exited via
+the debugger quit command, Mindy exits with a return code of 1. If the
+Dylan program ends with a call to <a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> and a return code is specified
+(see <a class="reference internal" href="#exiting-applications">Exiting Applications</a>), Mindy exits with that return code.
+Otherwise, the return code is 0.</p>
+</div>
+<div class="section" id="command-line-switches-and-environment-variables">
+<h2>Command Line Switches and Environment Variables<a class="headerlink" href="#command-line-switches-and-environment-variables" title="Permalink to this headline">¶</a></h2>
+<p>Mindycomp recognizes the following command line switches:</p>
+<ul class="simple">
+<li>-D<em>feature</em> : This tells the conditional compilation system that
+<em>feature</em> is present (ie, &#8220;define&#8221;). Notice that there is no space
+between -D and <em>feature</em>.</li>
+<li>-U<em>feature</em> : This tells the conditional compilation system that
+<em>feature</em> is not present (ie, &#8220;undefine&#8221;). Notice that there is no
+space between -U and <em>feature</em>.</li>
+</ul>
+<p>Mindy recognizes the following command line switches:</p>
+<ul class="simple">
+<li>-f <em>filename</em> : This tells Mindy to load file <em>filename</em>. See
+<a class="reference internal" href="#multiple-files">Multiple Files</a>.</li>
+<li>-x <em>filename</em> : This tells Mindy to load file <em>filename</em> like -f
+does, but the rest of the command line is then left uninterpretted by
+Mindy. This can be useful if your Dylan program also has a -f option.</li>
+</ul>
+<p>Mindy recognizes the following environment variables:</p>
+<ul class="simple">
+<li>BYTES_CONSED_BETWEEN_GCS : This is the number of bytes Mindy will
+allocate before invoking a garbage collection. For maximum speed,
+this should be set to the largest value possible that won&#8217;t cause
+thrashing. See also <strong>collect-garbage</strong> and <strong>*print-GC-messages*</strong>
+in <a class="reference internal" href="#the-system-module">The System Module</a>.</li>
+<li>MINDYPATH : This controls where Mindy searches for Dylan libraries.
+See <a class="reference internal" href="#using-libraries-and-modules">Using Libraries and Modules</a>.</li>
+</ul>
+</div>
+<div class="section" id="errors-and-warnings">
+<h2>Errors and Warnings<a class="headerlink" href="#errors-and-warnings" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="syntax-errors">
+<h3>7.1. Syntax Errors<a class="headerlink" href="#syntax-errors" title="Permalink to this headline">¶</a></h3>
+<p>If there are any syntax errors in your program, mindycomp will report
+them to stderr while compiling. For example, if you had left off the
+closing parenthesis in the call to <strong>puts</strong> in the above example,
+mindycomp would have reported:</p>
+<div class="highlight-python"><div class="highlight"><pre>hw.dylan:4: parse error at or before `;&#39;
+</pre></div>
+</div>
+<p>Because the line introduction, hw.dylan:4:, has the same format that the
+C compiler uses, gnu-emacs&#8217;s compile package can parse the error
+messages from mindycomp.</p>
+<p>Mindycomp&#8217;s error recovery is not the best in the world. Often, it has
+to completely punt, telling you only about the first few errors it
+found. You have to fix what it reports and try again.</p>
+<p>A hint to getting slightly tighter error recovery is to end all method
+and class definitions with &#8220;end method;&#8221; or &#8220;end class;&#8221;. For example,
+if you forget an end token for a statement inside a method definition,
+the mindycomp parser goes all the way to the end of the file and then
+reports a syntax error at the EOF position. You do not get any more
+clues. If you use &#8220;end method;&#8221;, then the parser can recover at the end
+of the method containing the bad syntax and reports the syntax error
+there. This gives you a lot tighter recovery and more information in
+this situation.</p>
+</div>
+<div class="section" id="runtime-errors">
+<h3>7.2. Runtime Errors<a class="headerlink" href="#runtime-errors" title="Permalink to this headline">¶</a></h3>
+<p>Much more common than syntax errors are runtime errors. And given the
+simplistic model of compilation mindycomp uses, most semantic errors are
+not detected until runtime. When Mindy hits a runtime error that is not
+handled via the condition system, it drops you into a debugger. From
+this debugger you can look at variables, examine the stack, and invoke
+functions. For example, if you had assumed that <strong>puts</strong> would be named
+something more reasonable, like <strong>put-string</strong>, you would have gotten
+the following when you tried to run your <em>Hello World</em> program:</p>
+<div class="highlight-python"><div class="highlight"><pre>% mindy -f hw.dbc
+
+Warning: the following variables are undefined:
+  in library Dylan-user:
+    in module Dylan-user:
+      put-string[hw.dylan, line 9]
+
+thread [0] D   main
+fp 0x1003009c: invoke-debugger({&lt;simple-error&gt; 0x101a24c9})
+mindy&gt;
+</pre></div>
+</div>
+<p>Typing help at the <code class="docutils literal"><span class="pre">mindy&gt;</span></code> prompt will list the various commands you can
+use. See the document debug.ps for more information.</p>
+</div>
+<div class="section" id="warnings">
+<h3>7.3. Warnings<a class="headerlink" href="#warnings" title="Permalink to this headline">¶</a></h3>
+<p>Mindycomp issues warnings at compile time when:</p>
+<ul class="simple">
+<li>While or until is used inside a for loop instead of while: or until:</li>
+<li>The obsolete &#8220;keyword: (default)&#8221; syntax is used instead of the
+&#8220;keyword = default&#8221; syntax.</li>
+<li>Function return values have names but not types</li>
+<li>Next-method is referenced inside a method that does not declare #next
+in the method header</li>
+</ul>
+<p>Mindy issues warnings at runtime when:</p>
+<ul class="simple">
+<li>A variable is undefined (this becomes an error if the code
+referencing the undefined variable is executed)</li>
+<li>A method&#8217;s return types do not match the generic function&#8217;s return
+types because return types were not specified for the method.</li>
+</ul>
+</div>
+<div class="section" id="internal-lossage">
+<h3>7.4. Internal Lossage<a class="headerlink" href="#internal-lossage" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes mindycomp or Mindy will get an internal error. When this
+happens, it will print a message to stderr and then abort. This results
+in the process dying due to some kind of signal. On the pmax, this
+signal is SIGILL, or Illegal Instruction. When this happens, send
+<em>gwydion-bugs&#64;cs.cmu.edu</em> a piece of mail containing the error message
+and information on what it was you did that triggered the problem.</p>
+</div>
+</div>
+<div class="section" id="dylan-vs-mindy-language-issues">
+<h2>Dylan vs. Mindy Language Issues<a class="headerlink" href="#dylan-vs-mindy-language-issues" title="Permalink to this headline">¶</a></h2>
+<p>The Dylan language is still changing slightly. Mindy implements most of
+the <em>Dylan Reference Manual</em>, as well as some features we would like to
+see in Dylan. Currently, the Mindy diverges from the DRM as described
+below:</p>
+<p>Additions:</p>
+<p>Mindy supports multiple value binding in the =/then clauses of for
+statements. The format of such a clause is</p>
+<div class="highlight-python"><div class="highlight"><pre>(var1, var2, ...) = expr1 THEN expr2
+</pre></div>
+</div>
+<p>Mindy supports <em>keyed-by</em> clauses in for statements. The format of
+such a clause is</p>
+<div class="highlight-python"><div class="highlight"><pre>var KEYED-BY key IN collection
+</pre></div>
+</div>
+<p>Var is bound to each element in collection, and key is bound to the
+element&#8217;s key value.</p>
+<p>Mindy supports <em>using</em> clauses in for statements. The format of such a
+clause is</p>
+<div class="highlight-python"><div class="highlight"><pre>var IN collection USING protocol
+</pre></div>
+</div>
+<p>protocol will be used instead of forward-iteration-protocol. protocol
+must be a variable name, not an expression. Using clauses may be used
+together with keyed-by:</p>
+<div class="highlight-python"><div class="highlight"><pre>var KEYED-BY key IN collection USING protocol
+</pre></div>
+</div>
+<p>Keyword parameters may have type information, and you can specify
+default values with either DRM syntax (which uses &#8220;= ...&#8221;) or with the
+obsolete syntax (which uses &#8220;(...)&#8221;). Using the second syntax will
+generate a compiler warning. Mindy does not enforce any congruence rules
+for keyword parameter types, so effectively, keyword type information in
+generic function declarations serves as documentation only.</p>
+<p>Mindy has an additional type of top level definition, define function,
+which creates a constant binding in the current module and initializes
+it to a new function. Define function&#8217;s usage is similar to define
+method. The following is an example:</p>
+<div class="highlight-python"><div class="highlight"><pre>define function cube (x)
+  x * x * x;
+end function cube;
+</pre></div>
+</div>
+<p>A similar result might be had by writing</p>
+<div class="highlight-python"><div class="highlight"><pre>define constant cube = method (x)
+                        x * x * x;
+                      end method;
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-python"><div class="highlight"><pre>define method cube (x)
+  x * x * x;
+end method cube;
+</pre></div>
+</div>
+<p>Mindy supports conditional compilation. The syntax is</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#if (feature-expression)</span>
+<span class="n">dylan</span><span class="o">-</span><span class="n">code</span><span class="p">;</span>
+<span class="c">#else</span>
+<span class="n">more</span><span class="o">-</span><span class="n">dylan</span><span class="o">-</span><span class="n">code</span><span class="p">;</span>
+<span class="c">#endif</span>
+</pre></div>
+</div>
+<p>(The #else clause is optional) A <em>feature-expression</em> is composed of
+features and the ~, &amp;, and operators, and may be parenthesiszed as
+usual. Features are not case sensitive. See <a class="reference internal" href="#command-line-switches-and-environment-variables">Command Line
+Switches and Environment Variables</a> for
+information on defining and undefining features.</p>
+<p>Mindy allows you to place library and module definitions in the same
+file as the actual code. See <a class="reference internal" href="#using-libraries-and-modules">Using Libraries and Modules</a> for details.</p>
+<p>Mindy supports subclass specializers via the <strong>limited</strong> function. A
+subclass specializer causes a method to be invoked whenever the generic
+function was called on a value that is the specified class or any
+subclass of the specified class. The method is never invoked on a value
+that is an instance (direct or indirect) of the specified class, only
+when the value is a subclass of the specified class. The following is an
+example:</p>
+<div class="highlight-python"><div class="highlight"><pre>define method make
+    (result-class :: limited(&lt;class&gt;, subclass-of: &lt;my-class&gt;));
+  let x = next-method();
+  do-special-logging-or-something(x);
+  x;
+end method;
+</pre></div>
+</div>
+<p>Deficiencies:</p>
+<p>Mindy does not implement macros. The DRM built-in macros (such as if
+and method-definer) can not be manipulated via the module system.</p>
+<p>Mindy does not have limited collections. (It does have limited
+integers, though)</p>
+<p>Sealed/open and primary keywords are parsed where allowed, but Mindy
+ignores this information about your program.</p>
+<p>Mindy parses the seal generic and define sealed domain forms, but does
+not enforce them.</p>
+<p>Define method does not automatically insert #next next-method in
+parameter lists. You have to explicitly add it yourself.</p>
+<p>Many of the DRM built-in macros allow the bodies to be empty. Mindy
+does not. For example, in Mindy the following is not legal:</p>
+<div class="highlight-python"><div class="highlight"><pre>if (foo)
+end if;
+</pre></div>
+</div>
+<ul class="simple">
+<li>Make(&lt;class&gt;, ...) is unsupported.</li>
+</ul>
+</div>
+<div class="section" id="built-in-libraries-and-modules">
+<h2>Built-in Libraries and Modules<a class="headerlink" href="#built-in-libraries-and-modules" title="Permalink to this headline">¶</a></h2>
+<p>Mindy has full support for modules and libraries. Mindy provides two
+built-in libraries, Dylan and Dylan-user. The Dylan library contains the
+Dylan language implementation and the following exported modules:</p>
+<dl class="docutils">
+<dt>Dylan</dt>
+<dd>This module contains the Dylan language implementation and exports all
+the built-in Dylan definitions.</dd>
+<dt>Extensions</dt>
+<dd>This module exports useful extensions to the Dylan language (see
+<a class="reference internal" href="#the-extensions-module">The Extensions Module</a>).
+Ultimately, there will be several, more logically separate libraries
+that extend Dylan or provide an
+application framework for users. For now, we put any commonly used
+utilities in the Extensions
+module.</dd>
+<dt>System</dt>
+<dd>This module exports an interface to operating system calls and
+special, low-level functionality (see <a class="reference internal" href="#the-system-module">The System Module</a>).</dd>
+<dt>Introspection</dt>
+<dd>This module exports reflective operations for examining classes,
+functions, and so on.</dd>
+<dt>File-descriptors</dt>
+<dd>This module exports an interface to most standard C system calls that
+operate on file descriptors.</dd>
+<dt>Cheap-io</dt>
+<dd>This module exports some basic, unextendable input and output
+functionality.</dd>
+<dt>Threads</dt>
+<dd>This module exports an interface to threads, locks, and objects that
+behave similarly to cthreads.h
+condition variables.</dd>
+<dt>Transcendental</dt>
+<dd>This module exports some transcendental functions and the constants
+<strong>$pi</strong> and <strong>$e</strong>.</dd>
+<dt>Debugger-format</dt>
+<dd>See <a class="reference internal" href="#debugger-customizations">Debugger Customizations</a>.</dd>
+</dl>
+<p>The <code class="docutils literal"><span class="pre">Dylan-user</span></code> library is the default library in which <code class="docutils literal"><span class="pre">mindycomp</span></code>
+compiles user code. Mindy provides this library for user convenience
+when whipping up play code or small applications for which the
+programmer does not want to bother to create a library. You cannot
+redefine the <code class="docutils literal"><span class="pre">Dylan-user</span></code> library. This library contains one module,
+<code class="docutils literal"><span class="pre">Dylan-user</span></code>, and you cannot redefine this module.</p>
+<p>The Dylan language requires every library to contain a <code class="docutils literal"><span class="pre">Dylan-user</span></code>
+module, and this module must use the <code class="docutils literal"><span class="pre">Dylan</span></code> module from the <code class="docutils literal"><span class="pre">Dylan</span></code> library
+regardless of any user specifications. This module provides a starting
+point in every library where users can begin to define modules; without
+an initial module in the library, you would be unable to write any code,
+including module definitions. Each <code class="docutils literal"><span class="pre">Dylan-user</span></code> module in Mindy also
+automatically uses the modules from the <code class="docutils literal"><span class="pre">Dylan</span></code> library described above.
+You cannot redefine the <code class="docutils literal"><span class="pre">Dylan-user</span></code> module, so if your code requires
+module other than those described above, then you must define your own
+library and module.</p>
+<p>Mindy comes bundled with several other libraries. Documentation for
+these libraries can be found in $INSTALL/doc/libraries.</p>
+</div>
+<div class="section" id="using-libraries-and-modules">
+<h2>Using Libraries and Modules<a class="headerlink" href="#using-libraries-and-modules" title="Permalink to this headline">¶</a></h2>
+<p>To compile code into a particular library use the <code class="docutils literal"><span class="pre">-l</span></code> switch to
+<code class="docutils literal"><span class="pre">mindycomp</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>% mindycomp -lmy-lib foo.dylan
+</pre></div>
+</div>
+<p>If there is no -l switch, then mindycomp compiles the code into the
+Dylan-user library. When loading a .dbc file into Mindy that was
+compiled into a particular library, one of the following conditions must
+be satisfied to avoid errors:</p>
+<ul class="simple">
+<li>The library must be the Dylan-user library. Technically, you could
+put code in the Dylan library, but do not do this.</li>
+<li>You must have defined the library in a file previously loaded (see
+<a class="reference internal" href="#multiple-files">Multiple Files</a> for information on
+loading multiple files).</li>
+<li>The first piece of code in the source file that produced the .dbc
+file must be the library definition.</li>
+</ul>
+<p>While loading a file, if Mindy processes a library definition that uses
+an undefined library, then Mindy stops loading the current file,
+searches for the undefined library, and loads it. After loading the
+undefined library, Mindy continues loading the current file and
+processing the original library definition. Mindy searches for the
+undefined library in the directories listed in the MINDYPATH environment
+variable. If MINDYPATH is undefined, then Mindy uses the pathname
+$INSTALL/lib. In each directory, Mindy first looks for the file
+&lt;library&gt;-lib.dbc, where &lt;library&gt; is the name of the undefined library,
+and if this file does not exist, then Mindy looks for &lt;library&gt;.dbc.</p>
+<p>Mindy loads the Dylan library when it first sees a reference to it. A
+reference to the Dylan library occurs when loading a file compiled to be
+in the Dylan library, or when loading a file with a library definition
+that uses the Dylan library. Mindy loads the Dylan library by looking
+for the file dylan.dbc on MINDYPATH.</p>
+<p>To make a single compiled file for a library which has multiple source
+files, compile all the files that constitute the library with the -l
+switch set to the library&#8217;s name. Then cat all the resulting .dbc files
+together (see <a class="reference internal" href="#multiple-files">Multiple Files</a>),
+making sure the file that defines the library is first. Then install the
+combined .dbc file in one of the directories in your MINDYPATH.</p>
+<p>To compile code into a particular module, use the module: file header.
+Whenever a source file lacks a module: file header, mindycomp issues a
+compiler warning and compiles the code into the Dylan-user module. This
+is the Dylan-user module of the library specified with the -l switch,
+and if there was no -l switch, it is the Dylan-user module of the
+Dylan-user library. If a file contains no file headers, it still must
+contain a leading blank line to conform to Dylan syntax.</p>
+<p>When loading a .dbc file into Mindy that was compiled into a particular
+module, one of the following conditions must be satisfied to avoid
+errors:</p>
+<ul class="simple">
+<li>The module must be the Dylan-user module.</li>
+<li>You must have defined the module in a file previously loaded (see
+<a class="reference internal" href="#multiple-files">Multiple Files</a> for information on
+loading multiple files).</li>
+<li>The first code in the source file that produced the .dbc file must be
+library and module definitions, and one of the module definitions
+must be the module in question.</li>
+</ul>
+</div>
+<div class="section" id="the-extensions-module">
+<h2>The Extensions Module<a class="headerlink" href="#the-extensions-module" title="Permalink to this headline">¶</a></h2>
+<p>Ultimately, there will be several, more logically separate libraries
+that extend Dylan or provide an application framework for users. For
+now, we put any commonly used utilities in the Extensions module.</p>
+<div class="section" id="generally-useful-definitions">
+<h3>Generally Useful Definitions<a class="headerlink" href="#generally-useful-definitions" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following generally useful
+functionality:</p>
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[byte-vector]">
+<code class="descname">&lt;byte-vector&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-vector]" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#vector"><code class="xref drm docutils literal"><span class="pre">&lt;vector&gt;</span></code></a> that can only hold integers
+between 0 and 255 inclusively. This class is a temporary addition to
+Mindy to support the requirement that the Streams library export a
+<code class="docutils literal"><span class="pre">&lt;byte-vector&gt;</span></code> definition. When Mindy supports limited collections,
+this may be defined within the Streams library.</p>
+</dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[byte-character]">
+<code class="descname">&lt;byte-character&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-character]" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>. Characters of this type
+represent the ASCII character set (or extensions to ASCII). Note, in
+Mindy the <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a> class is equivalent to unicode characters.</p>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="dylan:extensions:main">
+<code class="descname">main</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:main" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>invocation-name</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#byte-string"><code class="xref drm docutils literal"><span class="pre">&lt;byte-string&gt;</span></code></a>.</li>
+<li><strong>arguments</strong> (<em>#rest</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Has no methods, but is called by Mindy when it starts up. To make a
+standalone program, you define a method on main that does whatever you
+want it to do. <em>Invocation-name</em> is the first token on the command line
+that invoked Mindy. <em>Arguments</em> is a sequence of strings. There is a
+string in <em>arguments</em> for every argument on the command line that
+invoked Mindy, except all -f switches and the argument following each -f
+switch (that is, the file to load) is missing. Remember that any module
+that adds a method to main must use the Extensions module from the Dylan
+library.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p><strong>one-of</strong> [Function]</p>
+<p>Arguments</p>
+<p>#rest objects :: &lt;object&gt;</p>
+<p>Values</p>
+<p>type :: &lt;type&gt;</p>
+<p>Description</p>
+<p>This function takes any number of objects, and returns the type that
+is the type-union of the singletons of those objects. For example, the
+expression</p>
+<div class="highlight-python"><div class="highlight"><pre>one-of(#&quot;foo&quot;, #&quot;bar&quot;, #&quot;baz&quot;)
+</pre></div>
+</div>
+<p>is equivalent to</p>
+<div class="highlight-python"><div class="highlight"><pre>type-union(singleton(#&quot;foo&quot;), singleton(#&quot;bar&quot;), singleton(#&quot;baz&quot;))
+</pre></div>
+</div>
+<p><strong>false-or</strong> [Function]</p>
+<p>Arguments</p>
+<p>#rest objects :: &lt;object&gt;</p>
+<p>Values</p>
+<p>type :: &lt;type&gt;</p>
+<p>Description</p>
+<p>This function is useful in type expressions. It captures the common
+idiom of returning an instance of a particular type or the value #f. The
+expression</p>
+<div class="highlight-python"><div class="highlight"><pre>false-or(&lt;integer&gt;)
+</pre></div>
+</div>
+<p>is equivalent to the expression</p>
+<div class="highlight-python"><div class="highlight"><pre>type-union(&lt;integer&gt;, singleton(#f))
+</pre></div>
+</div>
+<p><strong>load</strong> [Function]</p>
+<p>Arguments</p>
+<p>name :: &lt;byte-string&gt;</p>
+<p>Values</p>
+<p>none</p>
+<p>Description</p>
+<p>This function takes the name of a .dbc file and loads the code in the
+file into Mindy as if the file had been specified on the command line to
+Mindy. There is one exception: you can only load code that defines new
+variables or adds methods. You cannot redefine existing definitions.</p>
+<p><strong>load-library</strong> [Function]</p>
+<p>Arguments</p>
+<p>name :: &lt;symbol&gt;</p>
+<p>Values</p>
+<p>none</p>
+<p>Description</p>
+<p>This function takes a library name and loads the code for the library
+into Mindy as if the library was used by another library.</p>
+</div>
+<div class="section" id="debugger-customizations">
+<h3>Debugger Customizations<a class="headerlink" href="#debugger-customizations" title="Permalink to this headline">¶</a></h3>
+<p>The debugger uses the function <strong>report-condition</strong> to print conditions
+as error messages to users; for example, this is the function that
+implements the %S format-string directive for conditions. The debugger
+also uses the <strong>format</strong> function exported from the Cheap-io module to
+process format strings, and it prints directly to the Unix stdout passed
+to the Mindy process. If any library that you load into Mindy uses the
+Debugger-format library, then the debugger uses <strong>format</strong> from the
+Format library, which is shipped with Mindy. You can extend how Mindy
+prints conditions, change what formatting function it uses, and direct
+where debugger output goes with the following:</p>
+<p><strong>report-condition</strong> [Generic Function]</p>
+<p>Arguments</p>
+<p>condition :: &lt;condition&gt;</p>
+<p>stream :: &lt;stream&gt;</p>
+<p>Values</p>
+<p>none</p>
+<p>Description</p>
+<p>This is the function Mindy uses to print condition variables as error
+messages to users. The internal <strong>format</strong> function used by Mindy uses
+<strong>report-condition</strong> for condition arguments to the %S format directive.
+The Format library&#8217;s <strong>print-message</strong> method for conditions calls
+<strong>report-condition</strong>.</p>
+<p>If you are writing a module that does no output but still provides
+<strong>report-condition</strong> methods, you should use <strong>condition-format</strong> to
+format output. Using <strong>condition-format</strong>makes your module more
+flexible for users of your module. If you call Mindy&#8217;s internal
+<strong>format</strong>, you&#8217;ll be forced to write to only one destination, Mindy&#8217;s
+stdout, ignoring the <em>stream</em> argument. If you call the Format library&#8217;s
+<strong>format</strong> function, then your module will require the Format, Print,
+and Streams libraries; therefore, users of your module may ultimately
+load these other libraries needlessly. Of course, if you want to make
+use of the extended functionality of the Format library&#8217;s format control
+strings, then you only have one choice anyway, and there&#8217;s no reason to
+use <strong>condition-format</strong>.</p>
+<p><strong>condition-format</strong> [Generic Function]</p>
+<p>Arguments</p>
+<p>stream :: &lt;object&gt;</p>
+<p>control-string :: &lt;string&gt;</p>
+<p>#rest arguments</p>
+<p>Values</p>
+<p>none</p>
+<p>Description</p>
+<p>This function serves as a firewall between the condition system and
+the Streams and Format libraries. Methods on <strong>report-condition</strong> should
+use <strong>condition-format</strong> to do their formatting. Users will generally
+use <strong>*debug-output*</strong> or <strong>*warning-output*</strong> for the <em>stream</em>
+argument, but this is not required.</p>
+<p>Mindy supplies a method for when <em>stream</em> is #&#8221;Cheap-IO&#8221;. The Gwydion
+Format library supplies a method for when <em>stream</em> is a subclass of
+<strong>&lt;stream&gt;</strong>. If you are implementing your own streams or format
+libraries, you will need to define a method on <strong>condition-format</strong> for
+your type of stream.</p>
+<p><strong>condition-force-output</strong>[Generic Function]</p>
+<p>Arguments</p>
+<p>stream :: &lt;object&gt;</p>
+<p>Values</p>
+<p>none</p>
+<p>Description</p>
+<p><strong>Condition-force-output</strong> forces any pending output from <em>stream</em>&#8216;s
+buffer to <em>stream</em>&#8216;s destination. This function is invoked by the
+debugger after a condition has been reported and before it pauses for
+user input. Unless you are writing a debugger, you do not need to call
+<strong>condition-force-output</strong> yourself.</p>
+<p>Mindy supplies a method for when <em>stream</em> is #&#8221;Cheap-IO&#8221;. The Gwydion
+Format library supplies a method for when <em>stream</em> is a subclass of
+<strong>&lt;stream&gt;</strong>. If you are implementing your own streams or format
+libraries, you will need to define a method on
+<strong>condition-force-output</strong> for your type of stream.</p>
+<p><strong>*debug-output*</strong> [Variable]
+<strong>*warning-output*</strong> [Variable]</p>
+<p>The debugger uses the value of <strong>*debug-output*</strong> when performing
+output. <strong>Default-handler</strong> for <strong>&lt;warning&gt;</strong> uses
+<strong>*warning-output*</strong> to print warning messages. Both variables must be
+either a <strong>&lt;stream&gt;</strong> from the Streams library, or #&#8221;Cheap-IO&#8221; (the
+default). When these variables are #&#8221;Cheap-IO&#8221;, the output goes to
+stderr.</p>
+<p>Using the Debugger-format module in the Format library will set both
+variables to <strong>*standard-output*</strong> (see <a class="reference internal" href="#streams-library">Streams Library</a>).</p>
+</div>
+<div class="section" id="tables">
+<h3>Tables<a class="headerlink" href="#tables" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following <strong>&lt;table&gt;</strong> subclasses:</p>
+<p><strong>&lt;equal-table&gt;</strong> [Class]</p>
+<p>This class is a subclass of <strong>&lt;table&gt;</strong> that uses the <strong>\=</strong> function
+to compare keys and the <strong>equal-hash</strong> function to generate hash codes.
+If you define your own classes and <strong>\=</strong> methods specialized on those
+classes, then you should define a method for the <strong>equal-hash</strong> function
+specialized to your classes (see <code class="xref dylan dylan-gf docutils literal"><span class="pre">equal-hash</span></code>).</p>
+<p><strong>&lt;value-table&gt;</strong> [Abstract Class]</p>
+<p>This class is a subclass of <strong>&lt;table&gt;</strong>. Users can define subclasses
+of this class and provide a method for <strong>tableprotocol</strong> that is
+specialized to their new subclass. Any subclass of <strong>&lt;value-table&gt;</strong>
+must use a hash function that never uses an object&#8217;s identity (that is,
+its location in the heap) as a means of computing a hash ID. These
+tables are specifically designed to save overhead in testing hash states
+and whether the table needs to be rehashed after garbage collections.
+The second value of the hash function should always be
+<strong>$permanenthashstate</strong>. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>define class &lt;my-table&gt; (&lt;value-table&gt;)
+end class;
+
+define method table-protocol (table :: &lt;my-table&gt;)
+  values(\=, string-hash);
+end method;
+</pre></div>
+</div>
+<p><strong>&lt;string-table&gt;</strong> [Class]</p>
+<p>This class is a subclass of <strong>&lt;value-table&gt;</strong>. It is a table that has
+<a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>s for keys (compared with <strong>\=</strong>) and <strong>&lt;object&gt;</strong>s for
+elements. It is an error to use a key that is not a <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>.</p>
+<p>The Extensions module exports the following functions to make it easier
+for users to use <strong>&lt;equal-table&gt;</strong>s and <strong>&lt;valuetable&gt;</strong>s:</p>
+<p><strong>equal-hash</strong> [Generic Function]</p>
+<p>Arguments</p>
+<p>key :: &lt;object&gt;</p>
+<p>Values</p>
+<p>hash-id :: &lt;integer&gt;</p>
+<p>hash-state :: &lt;object&gt;</p>
+<p>Description</p>
+<p>This function returns a hash ID and hash state for use with
+<strong>&lt;equal-table&gt;</strong>s. If you define your own classes and <strong>\=</strong> methods
+specialized on those classes, then you should define a method for the
+<strong>equal-hash</strong> function specialized to your classes. Specialized methods
+exist for <strong>&lt;number&gt;</strong>, <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>, <strong>&lt;function&gt;</strong>, <strong>&lt;symbol&gt;</strong>,
+and <strong>&lt;collection&gt;</strong>. The method for <strong>&lt;object&gt;</strong> returns the integer 42
+and <strong>$permanent-hash-state</strong>. This function may use an object&#8217;s
+identity (that is, its location in the heap) to produce a hash ID.</p>
+<p><strong>collection-hash</strong> [Function]</p>
+<p>Arguments</p>
+<p>collection :: &lt;collection&gt;</p>
+<p>key-hash-function :: &lt;function&gt;</p>
+<p>elt-hash-function :: &lt;function&gt;)</p>
+<p>Values</p>
+<p>hash-id :: &lt;integer&gt;</p>
+<p>hash-state :: &lt;object&gt;</p>
+<p>Description</p>
+<p>This function hashes every element of <em>collection</em> using
+<em>key-hash-function</em> on the keys and <em>element-hash-function</em> on the
+elements. Note, though two sequences may be equal according to the
+<strong>\=</strong> function, <strong>sequence-hash</strong> and <strong>collection-hash</strong> may return
+different hash codes for the sequences.</p>
+<p><strong>sequence-hash</strong> [Function]</p>
+<p>Arguments</p>
+<p>sequence :: &lt;sequence&gt;</p>
+<p>elt-hash-function :: &lt;function&gt;</p>
+<p>Values</p>
+<p>hash-id :: &lt;integer&gt;</p>
+<p>hash-state :: &lt;object&gt;</p>
+<p>Description</p>
+<p>This function hashes every element of <em>sequence</em> using
+<em>elt-hash-function</em>, merging the resulting hash codes in order. Note,
+though two sequences may be equal according to the <strong>\=</strong> function,
+s<strong>equence-hash</strong> and <strong>collection-hash</strong> may return different hash
+codes for the sequences.</p>
+<p><strong>string-hash</strong> [Function]</p>
+<p>Arguments</p>
+<p>string :: &lt;string&gt;</p>
+<p>Values</p>
+<p>hash-id :: &lt;integer&gt;</p>
+<p>hash-state :: &lt;object&gt;</p>
+<p>Description</p>
+<p>This function calls produces hash codes for strings without using the
+strings&#8217; identities. This function is suitable for use with
+<strong>&lt;value-table&gt;</strong>s.</p>
+<p><strong>value-hash</strong> [Generic Function]</p>
+<p>Arguments</p>
+<p>object :: &lt;object&gt;</p>
+<p>Values</p>
+<p>hash-id :: &lt;integer&gt;</p>
+<p>hash-state :: &lt;object&gt;</p>
+<p>Description</p>
+<p>This function produces hash codes for objects without using the
+objects&#8217; identities. This function is suitable for use with
+<strong>&lt;value-table&gt;</strong>s. Mindy provides methods specialized for the
+following types: <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>, <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>,
+<a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>, <strong>&lt;symbol&gt;</strong>, singleton(#t), and singleton(#f).</p>
+</div>
+<div class="section" id="exiting-applications">
+<h3>Exiting Applications<a class="headerlink" href="#exiting-applications" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following functionality for
+controlling the exiting of applications:</p>
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:exit">
+<code class="descname">exit</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:exit" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>exit-code</strong> (<em>#key</em>) &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>. Default: <code class="docutils literal"><span class="pre">0</span></code>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Causes the process to exit. Mindy calls this function when there is no
+code left to execute. Mindy will exit with the return code <em>exit-code</em>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:on-exit">
+<code class="descname">on-exit</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:on-exit" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>function</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#function"><code class="xref drm docutils literal"><span class="pre">&lt;function&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>meaningless</strong> &#8211; An instance of <code class="docutils literal"><span class="pre">singleton(#f)</span></code>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Arranges for the <a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> function to call the argument <em>function</em>.
+The argument <em>function</em> must take no required arguments. Users may call
+<a class="reference internal" href="#dylan:extensions:on-exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">on-exit</span></code></a> multiple times to install more than one function for
+<a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> to call, but the order in which <a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> invokes the
+functions is undefined. Calling <a class="reference internal" href="#dylan:extensions:on-exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">on-exit</span></code></a> on the same function
+repeatedly, installs that function multiple times.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="weak-pointers">
+<h3>Weak Pointers<a class="headerlink" href="#weak-pointers" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following weak-pointer functionality:</p>
+<p><strong>&lt;weak-pointer&gt;</strong> [Class]</p>
+<p>This class is a subclass of <strong>&lt;object&gt;</strong>. The <strong>make</strong> method for this
+class takes the keyword parameter <em>object:</em>. Instances of
+<strong>&lt;weak-pointer&gt;</strong> refer to the object passed to the <strong>make</strong> method as
+long as some other reference to the object exists. Whenever an instance
+of <strong>&lt;weak-pointer&gt;</strong> is the only reference to an object, and a garbage
+collection occurs, then Mindy considers the object to be garbage. When
+Mindy garbage collects an object referred to by a weak pointer, then
+Mindy marks the weak pointer as being <em>broken</em> (see the
+<strong>weak-pointer-object</strong> function).</p>
+<p><strong>weak-pointer-object</strong> [Function]</p>
+<p>Arguments</p>
+<p>wp :: &lt;weak-pointer&gt;</p>
+<p>Values</p>
+<p>object :: &lt;object&gt;</p>
+<p>broken? :: &lt;boolean&gt;</p>
+<p>Description</p>
+<p>Returns the object referred to by the weak pointer and whether the
+weak pointer is <em>broken</em>. A weak pointer is broken when it contains the
+only reference to an object, and in this situation,
+<strong>weak-pointer-object</strong> returns the values #f and #t.</p>
+</div>
+<div class="section" id="collections">
+<h3>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following <strong>&lt;collection&gt;</strong>
+functionality:</p>
+<p><strong>key-exists?</strong> [Generic Function]</p>
+<p>Arguments</p>
+<p>collection :: &lt;collection&gt;</p>
+<p>key :: &lt;object&gt;</p>
+<p>Values</p>
+<p>win? :: &lt;boolean&gt;</p>
+<p>ele :: &lt;object&gt;</p>
+<p>Description</p>
+<p>Return whether <em>key</em> is in <em>collection</em>. If the key is in the
+collection, then the second value is the element associated with <em>key</em>;
+otherwise, the second return value is #f.</p>
+</div>
+<div class="section" id="integers">
+<h3>Integers<a class="headerlink" href="#integers" title="Permalink to this headline">¶</a></h3>
+<p>Mindy has an abstract class <strong>&lt;general-integer&gt;</strong> which has two concrete
+classes, <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and <strong>&lt;extended-integer&gt;</strong>. Both concrete classes
+are direct subclasses of <strong>&lt;general-integer&gt;</strong>. <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>s have a
+limited range of values, and <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> arithmetic uses the
+computer&#8217;s underlying integer facilities. <strong>&lt;extended-integer&gt;</strong>s can
+take on any value, and are similar to Common Lisp &#8220;big-nums.&#8221;
+Expressions involving <strong>&lt;extended-integer&gt;</strong>s produce
+<strong>&lt;extendedinteger&gt;</strong> results because <strong>&lt;extended-integer&gt;</strong>s are
+contagious. If an expression involving only <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> values would
+produce a result that does not fit in an <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, then Mindy
+signals an overflow error. You can use the <strong>as</strong> function to convert
+back and forth between <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>s and <strong>&lt;extended-integer&gt;</strong>s.
+<strong>As</strong> signals an error when converting an <strong>&lt;extended-integer&gt;</strong> to a
+<a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, and the value does not fit in a <strong>&lt;integer&gt;</strong>.</p>
+<p>Mindycomp parses all integer literals as <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>s. If a literal
+does not fit in a <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, then mindycomp issues a compiler error.
+Though the compiler supports no literal syntax for
+<strong>&lt;extended-integer&gt;</strong>s, the Mindy debugger prints them in a #eDDD...
+format where each D is a decimal digit.</p>
+<p>The Extension module exports the following integer functionality:</p>
+<p><strong>&lt;general-integer&gt;</strong> [Abstract Class]
+<strong>&lt;extended-integer&gt;</strong> [Class]</p>
+<p><strong>&lt;general-integer&gt;</strong> is a subclass of <strong>&lt;rational&gt;</strong>, and is the
+superclass of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and <strong>&lt;extended-integer&gt;</strong>.</p>
+<p><strong>$maximum-integer</strong> [Constant]</p>
+<p><strong>$minimum-integer</strong> [Constant]</p>
+<p>These constants hold the largest positive <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and the
+largest negative <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</p>
+</div>
+<div class="section" id="ratios">
+<h3>Ratios<a class="headerlink" href="#ratios" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following:</p>
+<p><strong>&lt;ratio&gt;</strong>[Class]</p>
+<p>This class is a subclass of &lt;rational&gt;. The ratio is normalized so
+that it has a positive denominator, and the greatest common divisor of
+the numerator and the denominator is one. Ratios are never automatically
+converted to integers. For example, ratio(4,2) would return 2/1.</p>
+<p>A numeric operation involving two ratios produces a normalized ratio
+result. A numeric operation involving a ratio and an integer produced a
+normalized ratio result. A numeric operation involving a ratio and a
+float produces a float result.</p>
+<p><strong>ratio</strong> [Function]</p>
+<p>Arguments</p>
+<p>numerator :: &lt;general-integer&gt;</p>
+<p>denominator :: &lt;general-integer&gt;</p>
+<p>Values</p>
+<p>ratio :: &lt;ratio&gt;</p>
+<p>Description</p>
+<p>This function makes a ratio from the two integers.</p>
+<p><strong>numerator</strong> [Function]</p>
+<p>Arguments</p>
+<p>ratio :: &lt;ratio&gt;</p>
+<p>Values</p>
+<p>the-numerator :: &lt;general-integer&gt;</p>
+<p>Description</p>
+<p>This function returns the numerator part of <em>ratio</em>.</p>
+<p><strong>denominator</strong> [Function]</p>
+<p>Arguments</p>
+<p>ratio :: &lt;ratio&gt;</p>
+<p>Values</p>
+<p>the-numerator :: &lt;general-integer&gt;</p>
+<p>Description</p>
+<p>This function returns the denominator part of <em>ratio</em>.</p>
+</div>
+</div>
+<div class="section" id="the-system-module">
+<h2>The System Module<a class="headerlink" href="#the-system-module" title="Permalink to this headline">¶</a></h2>
+<p>The System module exports the following:</p>
+<p><strong>&lt;buffer&gt;</strong> [Class]</p>
+<p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#vector"><code class="xref drm docutils literal"><span class="pre">&lt;vector&gt;</span></code></a>. It is the built-in class in
+Mindy that the Streams module supports.</p>
+<p><strong>copy-bytes</strong> [Function]</p>
+<p>Arguments</p>
+<p>dst :: type_or(&lt;buffer&gt;, &lt;byte-vector&gt;, &lt;byte-string&gt;)</p>
+<p>dst-offset :: &lt;integer&gt;</p>
+<p>src :: type_or(&lt;buffer&gt;, &lt;byte-vector&gt;, &lt;byte-string&gt;)</p>
+<p>src-offset :: &lt;integer&gt;</p>
+<p>count :: &lt;integer&gt;)</p>
+<p>Values</p>
+<p>dst :: type_or(&lt;buffer, &lt;byte-vector&gt;, &lt;byte-string&gt;)</p>
+<p>Description</p>
+<p>Copies <em>count</em> bytes from <em>src</em> to <em>dst</em>, starting at <em>src-offset</em> and
+<em>dst-offset</em>, respectively. This function returns <em>dst</em>. This function
+does no bounds checking. <em>Dst</em> and <em>src</em> may be the same (<strong>\==</strong>)
+object; this function ensures that it copies bytes from to the
+destination portion correctly, regardless of overlap.</p>
+<p><strong>*print-GC-messages*</strong>[Variable]</p>
+<p>Default value</p>
+<p>#f</p>
+<p>Description</p>
+<p>This variable controls whether Mindy prints garbage collection
+information whenever the garbage collector runs.</p>
+<p><strong>collect-garbage</strong> [Function]</p>
+<p>Arguments</p>
+<p>#key purify :: &lt;boolean&gt; = #f</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>If <em>purify</em> is true, collect-garbage does a purifying garbage
+collection. Otherwise, it does a normal garbage collection. A purifying
+collection is just like a normal collection except that everything left
+over after the collection is rendered permanent and is never again
+considered for collection. This can be quite useful in reducing the
+memory demands of your programs, as the total heap you need is:</p>
+<p>overhead + permanent + newspace + oldspace</p>
+<p>with overhead being about five megabytes. Without purify, permanent
+will be 0, newspace is the amount of live data, and oldspace is the
+amount of live data plus BYTES_CONSED_BETWEEN_GCS. Note that the live
+data is being counted twice: once in newspace and once in oldspace. But
+if you purify, that live data gets moved over to permanent, and then
+only gets counted once.</p>
+<p><strong>getcwd</strong> [Function]</p>
+<p>Arguments</p>
+<p>none</p>
+<p>Values</p>
+<p>current-directory :: &lt;string&gt;</p>
+<p>Description</p>
+<p>Returns the current working directory.</p>
+<p><strong>getenv</strong> [Function]</p>
+<p>Arguments</p>
+<p>environment-variable-name :: &lt;string&gt;</p>
+<p>Values</p>
+<p>environment-variable-value :: false-or(&lt;string&gt;)</p>
+<p>Description</p>
+<p>Returns the value of the environment variable
+<em>environment-variable-name</em>. If <em>environment-variable-name</em> is
+undefined, <strong>getenv</strong> returns #f.</p>
+<p><strong>get-time-of-day</strong>[Function]</p>
+<p>Arguments</p>
+<p>none</p>
+<p>Values</p>
+<p>time-in-seconds :: &lt;general-integer&gt;</p>
+<p>Description</p>
+<p>Returns the number of seconds since midnight, January 1, 1970.</p>
+<p><strong>system</strong> [Function]</p>
+<p>Arguments</p>
+<p>command-line :: &lt;string&gt;</p>
+<p>Values</p>
+<p>return-code :: &lt;integer&gt;</p>
+<p>Description</p>
+<p>System causes <em>command-line</em> to be given to your shell as input as if
+the string had been typed as a command. If environment variable SHELL is
+found, its value will be used as the command interpreter (shell);
+otherwise sh(1) is used.</p>
+<p>Mindy will wait until the command terminates. Upon termination of the
+sub-process, system will return a negative value if the command couldn&#8217;t
+be executed, or the command&#8217;s return code if it was executed.</p>
+</div>
+<div class="section" id="the-introspection-module">
+<h2>The Introspection Module<a class="headerlink" href="#the-introspection-module" title="Permalink to this headline">¶</a></h2>
+<p>The Introspection module exports reflective operations for examining
+classes, functions, and types.</p>
+<div class="section" id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<p>Dylan provides some reflective operations for functions, such as
+<strong>function-specializers</strong> and <strong>instance?</strong>. With the latter, you can
+determine if a function is a <strong>&lt;generic-function&gt;</strong> or <strong>&lt;method&gt;</strong>, but
+neither Dylan nor Mindy provides exports class identifiers for other
+types of functions (such as <strong>block</strong> exit functions). The Subsection
+<em>Types</em> describes definitions that are also useful when inspecting
+methods because you can get detailed information about method
+specializer types.</p>
+<p>The Introspection module exports the following functions:</p>
+<p><strong>function-name</strong> [Function]</p>
+<p>Arguments</p>
+<p>function :: &lt;function&gt;</p>
+<p>Values</p>
+<p>result :: false-or(&lt;symbol&gt;)</p>
+<p>Description</p>
+<p>Returns the name of <em>function</em> as a <strong>&lt;symbol&gt;</strong> if <em>function</em> has a
+name; otherwise <strong>function-name</strong> returns #f. All functions defined with
+define generic or define method have names, and some other functions
+have names.</p>
+</div>
+<div class="section" id="classes-and-instances">
+<h3>Classes and Instances<a class="headerlink" href="#classes-and-instances" title="Permalink to this headline">¶</a></h3>
+<p>The Introspection module exports the following for class objects, slot
+descriptions, and fetching and modifying the slot values of general
+objects:</p>
+<p><strong>abstract?</strong>[Function]</p>
+<p>Arguments</p>
+<p>class :: &lt;class&gt;</p>
+<p>Values</p>
+<p>result :: &lt;boolean&gt;</p>
+<p>Description</p>
+<p>Returns #t if <em>class</em> is an abstract class; otherwise
+returns #f.</p>
+<p><strong>class-name</strong> [Function]</p>
+<p>Arguments</p>
+<p>class :: &lt;class&gt;</p>
+<p>Values</p>
+<p>result :: false-or(&lt;symbol&gt;)</p>
+<p>Description</p>
+<p>Returns the name of <em>class</em> as a <strong>&lt;symbol&gt;</strong> if class has a name;
+otherwise, this function returns #f. Mindy can always determine the name
+of classes defined with define class.</p>
+<p><strong>&lt;slot-descriptor&gt;</strong> [Class]</p>
+<p>This class is a subclass of <strong>&lt;object&gt;</strong>. The <strong>slot-descriptors</strong>
+function returns instances of this class to describe the slots of a
+class object.</p>
+<p><strong>slot-descriptors</strong> [Function]</p>
+<p>Arguments</p>
+<p>class :: &lt;class&gt;</p>
+<p>Values</p>
+<p>descriptors :: &lt;list&gt;</p>
+<p>Description</p>
+<p>Returns a list of <strong>&lt;slot-descriptor&gt;</strong>s for <em>class</em>. The result may
+be the empty list.</p>
+<p><strong>slot-name</strong> [Function]</p>
+<p>Arguments</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>Values</p>
+<p>name :: &lt;symbol&gt;</p>
+<p>Description</p>
+<p>Returns the name of <em>slot</em> as a <strong>&lt;symbol&gt;</strong>.</p>
+<p><strong>slot-allocation</strong> [Function]</p>
+<p>Arguments</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>Values</p>
+<p>allocation :: one-of(#&#8221;instance&#8221;, #&#8221;class&#8221;, #&#8221;each-subclass&#8221;,
+#&#8221;virtual&#8221;)</p>
+<p>Description</p>
+<p>Returns the allocation type for <em>slot</em> as a <strong>&lt;symbol&gt;</strong>.</p>
+<p><strong>slot-type</strong> [Function]</p>
+<p>Arguments</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>Values</p>
+<p>type :: &lt;type&gt;</p>
+<p>Description</p>
+<p>Returns the type of values permitted for <em>slot</em>.</p>
+<p><strong>slot-getter</strong> [Function]</p>
+<p>Arguments</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>Values</p>
+<p>gf :: &lt;generic-function&gt;</p>
+<p>Description</p>
+<p>Returns the generic function that accesses <em>slot</em>.</p>
+<p><strong>slot-setter</strong> [Function]</p>
+<p>Arguments</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>Values</p>
+<p>gf :: &lt;generic-function&gt;</p>
+<p>Description</p>
+<p>Returns the generic function that stores into <em>slot</em>.</p>
+<p><strong>slot-value</strong> [Function]</p>
+<p>Arguments</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>object :: &lt;object&gt;</p>
+<p>Values</p>
+<p>value :: &lt;object&gt;</p>
+<p>initialized? :: &lt;boolean&gt;</p>
+<p>Description</p>
+<p>Returns the value for <em>slot</em> in <em>object</em> and #t. If the slot in the
+object is uninitialized, then this function returns #f and #f. Note,
+this function does not go through generic function dispatch, and it
+calls no user methods; this function uses an internal primitive to fetch
+the slot&#8217;s value.</p>
+<p><strong>slot-value-setter</strong> [Function]</p>
+<p>Arguments</p>
+<p>value :: &lt;object&gt;</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>object :: &lt;object&gt;</p>
+<p>Values</p>
+<p>value :: &lt;object&gt;</p>
+<p>Description</p>
+<p>Stores <em>value</em> into <em>slot</em> of <em>object</em> and returns <em>value</em>. This
+function performs whatever type checking is necessary to ensure <em>value</em>
+is safe for <em>slot</em>.</p>
+<p><strong>init-keyword</strong> [Function]</p>
+<p>Arguments</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>Values</p>
+<p>keyword :: false-or(&lt;symbol&gt;)</p>
+<p>Description</p>
+<p>Returns the init-keyword associated with <em>slot</em>, or #f if there is
+none.</p>
+<p><strong>keyword-required?</strong> [Function]</p>
+<p>Arguments</p>
+<p>slot :: &lt;slot-descriptor&gt;</p>
+<p>Values</p>
+<p>answer :: &lt;boolean&gt;</p>
+<p>Description</p>
+<p>Returns #t if there is a required-init-keyword for <em>slot</em>, otherwise
+returns #f.</p>
+</div>
+<div class="section" id="types">
+<h3>Types<a class="headerlink" href="#types" title="Permalink to this headline">¶</a></h3>
+<p>The Introspection module exports the following for inspecting types (and
+therefore, method specializers):</p>
+<p><strong>singleton-object</strong> [Function]</p>
+<p>Arguments</p>
+<p>specializer :: &lt;singleton&gt;</p>
+<p>Values</p>
+<p>object :: &lt;object&gt;</p>
+<p>Description</p>
+<p>This function returns the object of the singleton value type.</p>
+<p><strong>&lt;subclass&gt;</strong> [Class]</p>
+<p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Type_Classes#type"><code class="xref drm docutils literal"><span class="pre">&lt;type&gt;</span></code></a>. Instances of this class
+represent subclass specializers. A subclass specializer causes a method
+to be invoked whenever the generic function was called on a value that
+is the specified class or any subclass of the specified class (see
+<a class="reference internal" href="#dylan-vs-mindy-language-issues">Dylan vs. Mindy Language Issues</a> for
+more information). The function <strong>subclass-of</strong> returns the class
+specified for the subclass specializer.</p>
+<p><strong>subclass-of</strong> [Function]</p>
+<p>Arguments</p>
+<p>specializer :: &lt;subclass&gt;</p>
+<p>Values</p>
+<p>class :: &lt;class&gt;</p>
+<p>Description</p>
+<p>Returns the class specified for the subclass specializer.</p>
+<p><strong>&lt;limited-integer&gt;</strong> [Class]</p>
+<p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Type_Classes#type"><code class="xref drm docutils literal"><span class="pre">&lt;type&gt;</span></code></a>. Instances of this class
+represent limited integer types. See the functions
+<strong>limited-integer-base-class</strong>, <strong>limited-integer-minimum</strong>, and
+<strong>limited-integer-maximum</strong>.</p>
+<p><strong>limited-integer-base-class</strong> [Function]</p>
+<p>Arguments</p>
+<p>specializer :: &lt;limited-integer&gt;</p>
+<p>Values</p>
+<p>class :: one-of(&lt;integer&gt;, &lt;extended-integer&gt;)</p>
+<p>Description</p>
+<p>Returns the class specified for the limited-integer specializer,
+either <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> or <strong>&lt;extended-integer&gt;</strong>.</p>
+<p><strong>limited-integer-minimum</strong> [Function]</p>
+<p><strong>limited-integer-maximum</strong> [Function]</p>
+<p>Arguments</p>
+<p>specializer :: &lt;limited-integer&gt;</p>
+<p>Values</p>
+<p>class :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>Return the inclusive bounds of the limited-integer specializer. If the
+minimum or maximum is unbounded, then the appropriate function returns
+#f.</p>
+<p><strong>&lt;union&gt;</strong> [Class]</p>
+<p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Type_Classes#type"><code class="xref drm docutils literal"><span class="pre">&lt;type&gt;</span></code></a>. Instances of this class
+represent union types. The function <strong>union-members</strong> returns a list of
+the member types in the union.</p>
+<p><strong>union-members</strong> [Function]</p>
+<p>Arguments</p>
+<p>specializer :: &lt;union&gt;</p>
+<p>Values</p>
+<p>types :: &lt;list&gt;</p>
+<p>Description</p>
+<p>Returns the member types of the union type. The result may contain
+more than two elements. This function collapses nested union types to a
+flat list.</p>
+</div>
+<div class="section" id="miscellaneous">
+<h3>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h3>
+<p>The Introspection module exports the following miscellaneous
+functionality:</p>
+<p><strong>object-address</strong> [Function]</p>
+<p>Arguments</p>
+<p>object :: &lt;object&gt;</p>
+<p>Values</p>
+<p>address :: &lt;integer&gt;</p>
+<p>Description</p>
+<p>Returns an integer for <em>object</em>. If the object is represented
+internally represented as immediate data, then the integer returned is
+only unique to the value of the object. If the object is represented on
+the dynamic heap, then the integer uniquely identifies the object from
+all other objects.</p>
+</div>
+</div>
+<div class="section" id="the-file-descriptor-module">
+<h2>The File-descriptor Module<a class="headerlink" href="#the-file-descriptor-module" title="Permalink to this headline">¶</a></h2>
+<p>A cleaner interface to most of these functions is available from the
+Streams library (see the document
+$INSTALL/doc/libraries/streams.{ps,txt}). You probably do not need to
+use the File-descriptor module, unless you are using <strong>fd-exec</strong> or need
+an obscure file mode.</p>
+<p>The File-descriptor module exports the following functions and
+constants:</p>
+<p><strong>fd-exec</strong> [Function]</p>
+<p>Arguments</p>
+<p>command-line :: &lt;string&gt;</p>
+<p>Values</p>
+<p>in-fd :: false-or(&lt;integer&gt;)</p>
+<p>out-fd :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>This function provides a facility for running programs and scripts
+from within Mindy. The <em>command-line</em> argument should contain the name
+of the program and all of the command line arguments for that program.
+This function returns the file descriptors for the new process&#8217;s
+standard input and output. If <strong>fd-exec</strong> is unable to start the
+process, then it returns #f and #f.</p>
+<p>This function does not work when running on a WindowsNT platform.</p>
+<p><strong>fd-open</strong> [Function]</p>
+<p>Arguments</p>
+<p>path :: &lt;byte-string&gt;</p>
+<p>flags :: &lt;integer&gt;</p>
+<p>Values</p>
+<p>fd :: false-or(&lt;integer&gt;)</p>
+<p>errno :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>This function calls the C <strong>open</strong> system call and returns the file
+descriptor and #f, if successful. If the first value is #f, then the
+second value is the error number. You can convert the error number to a
+string using the <strong>fderrorstring</strong> function.</p>
+<p><strong>fd-close</strong> [Function]</p>
+<p>Arguments</p>
+<p>fd :: &lt;integer&gt;</p>
+<p>Values</p>
+<p>win? :: &lt;boolean&gt;</p>
+<p>errno :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>This function calls the C <strong>close</strong> system call and returns #t and #f,
+if successful. If the first value is #f, then the second value is the
+error number. You can convert the error number to a string using the
+<strong>fd-error-string</strong> function.</p>
+<p><strong>fd-read</strong> [Function]</p>
+<p>Arguments</p>
+<p>fd :: &lt;integer&gt;</p>
+<p>buffer :: &lt;buffer&gt;</p>
+<p>offset :: &lt;integer&gt;</p>
+<p>count :: &lt;integer&gt;</p>
+<p>Values</p>
+<p>count :: false-or( &lt;integer&gt;)</p>
+<p>errno :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>This function calls the C <strong>read</strong> system call and returns the number
+of bytes read and #f, if successful. <em>Offset</em> is an index into <em>buffer</em>,
+and it the index at which <strong>fd-read</strong> should start writing into the
+buffer. All other arguments are the same as those described by the Unix
+man page.</p>
+<p>If the first value is #f, then the second value is the error number.
+You can convert the error number to a string using the
+<strong>fd-error-string</strong> function.</p>
+<p>This function does no bounds checking.</p>
+<p><strong>fd-write</strong> [Function]</p>
+<p>Arguments</p>
+<p>fd :: &lt;integer&gt;</p>
+<p>buffer :: &lt;buffer&gt;</p>
+<p>offset :: &lt;integer&gt;</p>
+<p>count :: &lt;integer&gt;</p>
+<p>Values</p>
+<p>count :: false-or( &lt;integer&gt;)</p>
+<p>errno :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>This function calls the C <strong>write</strong> system call and returns the number
+of bytes written and #f, if successful. <em>Offset</em> is an index into
+<em>buffer</em>, and it is the index at which <strong>fd-write</strong> should start reading
+from the buffer. All other arguments are the same as those described by
+the Unix man page.</p>
+<p>If the first value is #f, then the second value is the error number.
+You can convert the error number to a string using the
+<strong>fd-error-string</strong> function.</p>
+<p>This function does no bounds checking.</p>
+<p><strong>fd-input-available?</strong> [Function]</p>
+<p>Arguments</p>
+<p>fd :: &lt;integer&gt;</p>
+<p>Values</p>
+<p>input? :: &lt;boolean&gt;</p>
+<p>errno :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>This function returns whether there is any input available on the file
+descriptor. The second return value is #f if <strong>fd-input-available?</strong>
+could determine whether input was available. If there is an error, the
+second return value is the error number. You can convert the error
+number to a string using the <strong>fd-error-string</strong> function.</p>
+<p><strong>fd-sync-output</strong> [Function]</p>
+<p>Arguments</p>
+<p>fd :: &lt;integer&gt;</p>
+<p>Values</p>
+<p>win? :: &lt;boolean&gt;</p>
+<p>errno :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>This function calls the C <strong>fsync</strong> system call and returns #t and #f,
+if successful. If the first value is #f, then the second value is the
+error number. You can convert the error number to a string using the
+<strong>fd-error-string</strong> function.</p>
+<p><strong>fd-seek</strong> [Function]</p>
+<p>Arguments</p>
+<p>fd :: &lt;integer&gt;</p>
+<p>offset :: &lt;integer&gt;</p>
+<p>whence :: &lt;integer&gt;</p>
+<p>Values</p>
+<p>new-pos :: false-or(&lt;integer&gt;)</p>
+<p>errno :: false-or(&lt;integer&gt;)</p>
+<p>Description</p>
+<p>This function calls the C <strong>lseek</strong> system call and returns the new
+absolute position in the file and #f, if successful. If the first value
+is #f, then the second value is the error number. You can convert the
+error number to a string using the <strong>fd-error-string</strong> function.</p>
+<p><strong>fd-error-string</strong> [Function]</p>
+<p>Arguments</p>
+<p>errno :: &lt;integer&gt;</p>
+<p>Values</p>
+<p>msg :: false-or(&lt;byte-string&gt;)</p>
+<p>Description</p>
+<p>This function calls the C <strong>strerror</strong> system call and returns the
+string that describes the given error number. If the error number is
+unknown, then <strong>fd-error-string</strong> return #f.</p>
+<p><strong>SEEK_SET</strong> [Constant]</p>
+<p><strong>SEEK_CUR</strong> [Constant]</p>
+<p><strong>SEEK_END</strong> [Constant]</p>
+<p><strong>O_RDONLY</strong> [Constant]</p>
+<p><strong>O_WRONLY</strong> [Constant]</p>
+<p><strong>O_RDWR</strong> [Constant]</p>
+<p><strong>O_APPEND</strong> [Constant]</p>
+<p><strong>O_CREAT</strong> [Constant]</p>
+<p><strong>O_TRUNC</strong> [Constant]</p>
+<p><strong>O_EXCL</strong> [Constant]</p>
+<p><strong>ENOENT</strong> [Constant]</p>
+<p><strong>EIO</strong> [Constant]</p>
+<p><strong>ENXIO</strong> [Constant]</p>
+<p><strong>EACCES</strong> [Constant]</p>
+<p><strong>EFAULT</strong> [Constant]</p>
+<p><strong>EEXIST</strong> [Constant]</p>
+<p><strong>ENOTDIR</strong> [Constant]</p>
+<p><strong>EISDIR</strong> [Constant]</p>
+<p><strong>EINVAL</strong> [Constant]</p>
+<p><strong>ENFILE</strong> [Constant]</p>
+<p><strong>EMFILE</strong> [Constant]</p>
+<p><strong>ENOSPC</strong> [Constant]</p>
+<p><strong>EROFS</strong> [Constant]</p>
+<p><strong>ENAMETOOLONG</strong> [Constant]</p>
+<p><strong>EBADF</strong> [Constant]</p>
+<p><strong>EINTR</strong> [Constant]</p>
+<p><strong>EPIPE</strong> [Constant]</p>
+<p><strong>EFBIG</strong> [Constant]</p>
+<p>These constants are mostly the same constants from the standard C
+libraries, file.h and errno.h, but a few names have been changed. Those
+names that have changed should be obvious. The Filedescriptors module
+exports all the constants users need to call the functions in the
+module, or test the functions&#8217; return values.</p>
+</div>
+<div class="section" id="the-cheap-io-module">
+<h2>The Cheap-io Module<a class="headerlink" href="#the-cheap-io-module" title="Permalink to this headline">¶</a></h2>
+<p>The Cheap-io module exports some basic, unextendable I/O functionality.
+Mindy uses the Cheap-io functions internally. The Gwydion Project also
+provides the Streams, Print, and Format libraries (see the
+$INSTALL/doc/libraries/ directory for documentation). If any library
+that you load into Mindy uses the Debugger-format library, then the
+debugger uses <strong>format</strong> from the Format library.</p>
+<p><strong>format</strong> [Function]</p>
+<p>Arguments</p>
+<p>control-string :: &lt;byte-string&gt;</p>
+<p>#rest arguments</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>This <strong>format</strong> adheres to the format strings described in the <em>Dylan
+Interim Reference Manual</em> with one exception. Mindy incorrectly prints
+instances of <strong>&lt;condition&gt;</strong> supplied to the %S directive. The Format
+library provides a correct <strong>format</strong> function that supports an
+upward-compatible extension to the format control strings described in
+the DRM.</p>
+<p><strong>print</strong> [Function]</p>
+<p><strong>prin1</strong> [Function]</p>
+<p>Arguments</p>
+<p>object :: &lt;object&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Prints thing to stdout. <strong>Print</strong> follows thing with a newline. You
+cannot extend or specialize how objects are printed because these
+function&#8217;s are written in C code, within Mindy&#8217;s implementation.</p>
+<p><strong>puts</strong> [Function]</p>
+<p>Arguments</p>
+<p>string :: &lt;byte-string&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Prints the contents of <em>string</em> to stdout.</p>
+<p><strong>putc</strong> [Function]</p>
+<p>Arguments</p>
+<p>char :: &lt;byte-character&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Prints <em>char</em> to stdout.</p>
+<p><strong>getc</strong> [Function]</p>
+<p>Arguments</p>
+<p>none</p>
+<p>Values</p>
+<p>char :: &lt;byte-character&gt;</p>
+<p>Description</p>
+<p>Read and return the next character from stdin. Returns #f at EOF.</p>
+<p><strong>fflush</strong> [Function]</p>
+<p>Arguments</p>
+<p>none</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Forces out any pending output generated by <strong>format</strong>, <strong>print</strong>,
+<strong>prin1</strong>, <strong>puts</strong>, and <strong>putc</strong>.</p>
+</div>
+<div class="section" id="the-threads-module">
+<h2>The Threads Module<a class="headerlink" href="#the-threads-module" title="Permalink to this headline">¶</a></h2>
+<p>This module is in the Dylan library and exports an interface to
+<strong>&lt;thread&gt;</strong>s, <strong>&lt;lock&gt;</strong>s, and <strong>&lt;event&gt;</strong>s (objects on which
+threads can wait until a signalling thread indicates the events have
+occurred).</p>
+<div class="section" id="classes-and-functions">
+<h3>Classes and Functions<a class="headerlink" href="#classes-and-functions" title="Permalink to this headline">¶</a></h3>
+<p>The Threads module exports the following classes and functions:</p>
+<p><strong>&lt;thread&gt;</strong> [Class]</p>
+<p>This class is a subclass of <strong>&lt;object&gt;</strong>. Instances of this class are
+the handles by which programs manipulate threads.</p>
+<p><strong>spawn-thread</strong> [Function]</p>
+<p>Arguments</p>
+<p>debug-name :: &lt;byte-string&gt;</p>
+<p>init-function :: &lt;function&gt;</p>
+<p>Values</p>
+<p>thread :: &lt;thread&gt;</p>
+<p>Description</p>
+<p>Spawns a concurrent asynchronous thread and invokes <em>init-function</em> in
+that thread. The dynamic context of the thread is the same as if it were
+the main thread of a program at the beginning of the program&#8217;s
+execution.</p>
+<p><strong>kill-thread</strong> [Function]</p>
+<p>Arguments</p>
+<p>thread :: &lt;thread&gt;</p>
+<p>Values</p>
+<p>thread :: &lt;thread&gt;</p>
+<p>Description</p>
+<p>Kills <em>thread</em> immediately. After calling this function, the argument
+<em>thread</em> never executes again.</p>
+<p><strong>current-thread</strong> [Function]</p>
+<p>Arguments</p>
+<p>none</p>
+<p>Values</p>
+<p>thread :: &lt;thread&gt;</p>
+<p>Description</p>
+<p>Returns the thread handle of the current thread.</p>
+<p><strong>&lt;lock&gt;</strong> [Abstract Class]</p>
+<p>This class is a subclass of <strong>&lt;object&gt;</strong>. Instances of this class
+provide logical locks. A lock is locked when a thread successfully
+<em>grabs</em> a lock, and we say the thread <em>holds</em> the lock. Holding a lock
+in no way prohibits access to a resource. It is purely the convention of
+various threads to access a shared resource only after successfully
+grabbing a lock. If <strong>&lt;lock&gt;</strong> is passed to <strong>make</strong>, <strong>make</strong> returns a
+<strong>&lt;spinlock&gt;</strong>.</p>
+<p><strong>&lt;spinlock&gt;</strong> [Sealed Class]</p>
+<p>This class is a subclass of <strong>&lt;lock&gt;</strong>. Instances of this class
+provide a single-locking model. Whenever a <strong>&lt;spinlock&gt;</strong> is locked, any
+thread that tries to grab it will block. Whenever a <strong>&lt;spinlock&gt;</strong> is
+locked, any thread may release it. Whenever a <strong>&lt;spinlock&gt;</strong> is
+unlocked, any thread may grab it.</p>
+<p><strong>&lt;spinlock&gt;</strong>s are designed to be held for a very short period of
+time, several machine instructions at most. Threads should only hold a
+<strong>&lt;spinlock&gt;</strong> for a very short period of time because other threads
+that are waiting for the lock are blocked and could be wasting CPU
+cycles by busy looping; that is, waiting for a <strong>&lt;spinlock&gt;</strong> does not
+necessarily use anything as heavy weight as a system call to sleep the
+thread waiting for the lock. If only a couple threads are sharing a
+resource, it may be more efficient to actually hold a <strong>&lt;spinlock&gt;</strong> for
+a moderate amount of time while performing a high-level operation,
+rather than use a lock to build a more heavy-weight mutual exclusion
+mechanism (such as a semaphore) to isolate access to the shared
+resource.</p>
+<p>Unlocking a <strong>&lt;spinlock&gt;</strong> when it is already unlocked signals an
+error.</p>
+<p><strong>&lt;multilock&gt;</strong> [Sealed Class]</p>
+<p>This class is a subclass of <strong>&lt;lock&gt;</strong>. Instances of this class
+provide a multilocking model. Whenever a <strong>&lt;multilock&gt;</strong> is unlocked,
+any thread may grab it. A thread that holds a <strong>&lt;multilock&gt;</strong> may grab
+the lock repeatedly without releasing the lock. Each grab effectively
+increments a counter, and each release effectively decrements a counter.
+A <strong>&lt;multilock&gt;</strong> is available to be grabbed by any thread when the
+counter returns to zero; therefore, a thread must release the lock for
+each grabbing of the lock. This behavior is useful for implementing a
+high-level operation that needs to isolate access to a resource while
+calling a few lower-level operations that lock the resource; in this
+way, the high-level operation effectively calls all the lower-level
+operations atomically with no other threads affecting the state of the
+resource between the calls.</p>
+<p>Whenever a <strong>&lt;multilock&gt;</strong> is locked, only the thread that holds the
+lock may release it.</p>
+<p><strong>&lt;multilock&gt;</strong>s are designed to be held for as long as a thread
+requires. When other threads call the <strong>grab-lock</strong> function and block
+because a <strong>&lt;multilock&gt;</strong> is locked, the other threads are guaranteed to
+sleep until the lock is available.</p>
+<p>Unlocking a <strong>&lt;multilock&gt;</strong> when it is already unlocked signals an
+error.</p>
+<p><strong>&lt;semaphore&gt;</strong> [Sealed Class]</p>
+<p>This class is a subclass of <strong>&lt;lock&gt;</strong>. Instances of this class
+provide a single-locking model.</p>
+<p>Whenever a <strong>&lt;semaphore&gt;</strong> is unlocked, any thread may grab it.
+Whenever a <strong>&lt;semaphore&gt;</strong> is locked, any thread that tries to grab it
+will block. Whenever a d is locked, any thread may release it.</p>
+<p><strong>&lt;semaphore&gt;</strong>s are designed to be held for as long as a thread
+requires. When other threads call the <strong>grab-lock</strong> function and block
+because a <strong>&lt;semaphore&gt;</strong> is locked, the other threads are guaranteed to
+sleep until the lock is available.</p>
+<p>Unlocking a <strong>&lt;semaphore&gt;</strong> when it is already unlocked signals an
+error.</p>
+<p><strong>locked?</strong> [Function]</p>
+<p>Arguments</p>
+<p>lock :: &lt;lock&gt;</p>
+<p>Values</p>
+<p>locked? :: &lt;boolean&gt;</p>
+<p>Description</p>
+<p>Returns whether the lock is held by any thread.</p>
+<p><strong>grab-lock</strong> [Generic Function]</p>
+<p>Arguments</p>
+<p>lock :: &lt;lock&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Returns after successfully grabbing the lock. If the lock is not
+immediately available, this function waits for the lock to become
+available.</p>
+<p><strong>grab-lock</strong> [G.F. Method]</p>
+<p>Arguments</p>
+<p>lock :: &lt;spinlock&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Returns after successfully grabbing the lock. This method can only
+grab <em>lock</em> when it is unlocked. When the lock is held, this method may
+busy-loop until the lock is unlocked.</p>
+<p><strong>grab-lock</strong> [G.F. Method]</p>
+<p>Arguments</p>
+<p>lock :: &lt;semaphore&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Returns after successfully grabbing the lock. This method can only
+grab <em>lock</em> when it is unlocked. When the lock is held, this method puts
+the calling thread to sleep until the lock is available.</p>
+<p><strong>grab-lock</strong> [G.F. Method]</p>
+<p>Arguments</p>
+<p>lock :: &lt;multilock&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Returns after successfully grabbing the lock. A single thread may
+successfully call this method repeatedly, but the thread must call
+<strong>release-lock</strong> once for each call to <strong>grab-lock</strong>. If the thread
+calls <strong>release-lock</strong> fewer times than <strong>grab-lock</strong>, the lock remains
+locked, and any threads waiting for the lock will continue to wait. When
+a thread that does not hold the lock calls this method, the method puts
+the calling thread to sleep until the lock is available.</p>
+<p><strong>release-lock</strong> [Generic Function]</p>
+<p>Arguments</p>
+<p>lock :: &lt;lock&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Releases the lock. If <em>lock</em> is unlocked, this function signals an
+error.</p>
+<p><strong>release-lock</strong> [G.F. Method]</p>
+<p>Arguments</p>
+<p>lock :: union(&lt;spinlock&gt;, &lt;semaphore&gt;)</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Releases the lock. If <em>lock</em> is unlocked, this function signals an
+error. Any thread may unlock a <strong>&lt;spinlock&gt;</strong> or <strong>&lt;semaphore&gt;</strong>,
+regardless of whether it is the thread that successfully grabbed the
+lock.</p>
+<p><strong>release-lock</strong> [G.F. Method]</p>
+<p>Arguments</p>
+<p>lock :: &lt;multilock&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Releases the lock. If <em>lock</em> is unlocked, this function signals an
+error. Only the thread that holds <em>lock</em> may call this function, and if
+another thread tries to release the lock, this method signals an error.
+When this function returns, <em>lock</em> may still be locked. A thread that
+has repeatedly grabbed a <strong>&lt;multilock&gt;</strong> must call <strong>release-lock</strong> once
+for each call to <strong>grab-lock</strong>.</p>
+<p><strong>&lt;event&gt;</strong> [Class]</p>
+<p>This class is a subclass of <strong>&lt;object&gt;</strong>. Threads use events to block
+without busy looping and to communicate to other threads that they
+should wake up.</p>
+<p><strong>wait-for-event</strong> [Generic Function]</p>
+<p>Arguments</p>
+<p>event :: &lt;event&gt;</p>
+<p>lock :: &lt;lock&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Releases the lock and puts the calling thread to sleep until some
+other thread signals <em>event</em>. After this function returns, the lock is
+unheld, and the calling thread must try to grab the lock before
+accessing any shared resources. Due to implementation details, this
+function may return even when the lock is unavailable, or the event has
+not truly occurred; because of this, programs need to loop over
+<strong>wait-for-event</strong> and <strong>grab-lock</strong>, testing that the event actually
+occurred. Methods exist for both <strong>&lt;spinlock&gt;</strong>s and
+<strong>&lt;semaphore&gt;</strong>s.</p>
+<p><strong>signal-event</strong> [Function]</p>
+<p>Arguments</p>
+<p>event :: &lt;event&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Signals that the event occurred, indicating that Mindy should wake up
+a thread that is waiting on this event.</p>
+<p><strong>broadcast-event</strong> [Function]</p>
+<p>Arguments</p>
+<p>&lt;event&gt;</p>
+<p>Values</p>
+<p>meaningless :: singleton(#f)</p>
+<p>Description</p>
+<p>Signals that the event occurred and causes Mindy to wake up every
+thread that is waiting on this event.</p>
+</div>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<p>The following code shows how to use locks and events to isolate access
+to a queue:</p>
+<div class="highlight-python"><div class="highlight"><pre>// This example shows two routines, get-queue and release-queue.  Code
+// that accesses the queue should call get-queue before doing so and call
+// release-queue when done.  Any code failing to isolate access to the
+// queue in this way has undefined behavior and is incorrectly written.
+//    // This variable is #t if and only if the queue is generally available.
+//
+define variable queue-available? = #t;    // This constant holds an event object used to signal when the queue
+// becomes generally available again.
+//
+define constant queue-available = make(&lt;event&gt;);    // This constant holds a lock object used to isolate access to
+// queue-available? for testing and setting purposes.
+//
+define constant queue-lock = make(&lt;lock&gt;);    // When this function returns, the caller has exclusive access to the
+// queue.  If necessary, this function waits for the queue to become
+// available, but it does not busy loop.  This function returns #f as
+// a meaningless return value.
+//
+define method get-queue ()
+  grab-lock(queue-lock);
+  while (~ queue-available?)
+    wait-for-event(queue-available, queue-lock);
+    grab-lock(queue-lock);
+  end;
+  queue-available? := #f;
+  lock-release(queue-lock);
+  #f;
+end;
+// This function releases the queue and signals that it is released so
+// that someone waiting on the queue will be woken up.  This function
+// returns #f as a meaningless return value.
+//
+define method release-queue ()
+  grab-lock(queue-lock);
+  queue-available? := #t;
+  release-lock(queue-lock);
+  signal-event(queue-available);
+  #f;
+end;
+</pre></div>
+</div>
+<p>The following example shows how to use a lock to isolate queue access in
+a different way than the previous example:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="c1">// This constant holds an event object used to signal when an element</span>
+<span class="c1">// exists in the queue.</span>
+<span class="c1">//</span>
+<span class="k">define</span> <span class="nb">constant</span> <span class="n">something-available</span> <span class="o">=</span> <span class="nb">make</span><span class="p">(</span><span class="nc">&lt;event&gt;</span><span class="p">);</span>    <span class="c1">// This constant holds a lock that is held whenever a thread is accessing</span>
+<span class="c1">// queue.</span>
+<span class="c1">//</span>
+<span class="k">define</span> <span class="nb">constant</span> <span class="n">lock</span> <span class="o">=</span> <span class="nb">make</span><span class="p">(</span><span class="nc">&lt;lock&gt;</span><span class="p">);</span>    <span class="c1">// This constant holds a queue object.</span>
+<span class="c1">//</span>
+<span class="k">define</span> <span class="nb">constant</span> <span class="n">queue</span> <span class="o">=</span> <span class="nb">make</span><span class="p">(</span><span class="nc">&lt;deque&gt;</span><span class="p">);</span>    <span class="c1">// This function returns an element from queue.  If no element is</span>
+<span class="c1">// immediately available, then this function blocks until it can return</span>
+<span class="c1">// an element.  This function assumes only one or two other threads are</span>
+<span class="c1">// ever waiting for the queue, and it assumes pop is a fast high-level</span>
+<span class="c1">// operation.</span>
+<span class="c1">//</span>
+<span class="k">define</span> <span class="nb">method</span> <span class="n">get-something</span><span class="p">()</span>
+  <span class="n">grab-lock</span><span class="p">(</span><span class="n">lock</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="nb">empty?</span><span class="p">(</span><span class="n">queue</span><span class="p">))</span>
+    <span class="n">wait-for-event</span><span class="p">(</span><span class="n">something-available</span><span class="p">,</span> <span class="n">lock</span><span class="p">);</span>
+    <span class="n">grab-lock</span><span class="p">(</span><span class="n">lock</span><span class="p">);</span>
+  <span class="k">end</span><span class="p">;</span>
+  <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nb">pop</span><span class="p">(</span><span class="n">queue</span><span class="p">);</span>
+  <span class="n">lock-release</span><span class="p">(</span><span class="n">lock</span><span class="p">);</span>
+  <span class="n">result</span><span class="p">;</span>
+<span class="k">end</span><span class="p">;</span>    <span class="c1">// This function adds thing to queue.  It assumes only one or two other</span>
+<span class="c1">// threads are ever waiting for the queue, and it assumes push is a fast</span>
+<span class="c1">// high-level operation.</span>
+<span class="c1">//</span>
+<span class="k">define</span> <span class="nb">method</span> <span class="n">put-something</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span>
+  <span class="n">grab-lock</span><span class="p">(</span><span class="n">lock</span><span class="p">);</span>
+  <span class="nb">push</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">thing</span><span class="p">);</span>
+  <span class="n">release-lock</span><span class="p">(</span><span class="n">lock</span><span class="p">);</span>
+  <span class="n">signal-event</span><span class="p">(</span><span class="n">something-available</span><span class="p">);</span>
+<span class="k">end</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="the-transcendental-module">
+<h2>The Transcendental Module<a class="headerlink" href="#the-transcendental-module" title="Permalink to this headline">¶</a></h2>
+<p>This module is in the Dylan library and provides some common
+transcendental functions.</p>
+<p><strong>sin</strong> [Function]
+<strong>cos</strong> [Function]
+<strong>tan</strong> [Function]</p>
+<p>Arguments</p>
+<p>radians :: &lt;float&gt;</p>
+<p>Values</p>
+<p>answer :: &lt;float&gt;</p>
+<p>Description</p>
+<p><strong>sin</strong> returns the sine of the argument, <strong>cos</strong> the cosine, and
+<strong>tan</strong> the tangent. The argument is in radians. The return value is the
+same type of float as the input value.</p>
+<p><strong>asin</strong> [Function]
+<strong>acos</strong> [Function]
+<strong>atan</strong> [Function]</p>
+<p>Arguments</p>
+<p>number :: &lt;float&gt;</p>
+<p>Values</p>
+<p>answer :: &lt;float&gt;</p>
+<p>Description</p>
+<p><strong>asin</strong> returns the inverse sine of the argument. <strong>acos</strong> returns
+the inverse cosine of the argument. <strong>atan</strong> returns the inverse tangent
+of the argument. The return value is the same type of float as the input
+value.</p>
+<p><strong>atan2</strong> [Function]</p>
+<p>Arguments</p>
+<p>x :: &lt;float&gt;</p>
+<p>y :: &lt;float&gt;</p>
+<p>Values</p>
+<p>answer :: &lt;float&gt;</p>
+<p>Description</p>
+<p><strong>atan2</strong>returns the two argument inverse tangent of <em>x</em> / <em>y</em>. If
+<em>x</em> and <em>y</em> are both <strong>&lt;single-float&gt;</strong>s, the return value is a
+<strong>&lt;single-float&gt;</strong>; otherwise, the return value is a <strong>&lt;double-float&gt;</strong>.</p>
+<p><strong>sinh</strong> [Function]
+<strong>cosh</strong> [Function]
+<strong>tanh</strong> [Function]</p>
+<p>Arguments</p>
+<p>number :: &lt;float&gt;</p>
+<p>Values</p>
+<p>answer :: &lt;float&gt;</p>
+<p>Description</p>
+<p><strong>sinh</strong> returns the hyperbolic sine of the argument. <strong>cosh</strong> returns
+the hyperbolic cosine of the argument. <strong>tanh</strong> returns the hyperbolic
+tangent of the argument. The return value is the same type of float as
+the input value.</p>
+<p><strong>exp</strong> [Function]
+<strong>log</strong> [Function]
+<strong>sqrt</strong> [Function]</p>
+<p>Arguments</p>
+<p>number :: &lt;float&gt;</p>
+<p>Values</p>
+<p>answer :: &lt;float&gt;</p>
+<p>Description</p>
+<p><strong>exp</strong>returns <strong>$e</strong> raised to the power <em>number</em>, where <strong>$e</strong> is
+the base of the natural logarithm. <strong>log</strong> returns the natural logarithm
+of <em>number</em>. <strong>sqrt</strong> returns the square root of <em>number</em>. The return
+value is the same type of float as the input value.</p>
+<p><strong>^</strong> [Method]</p>
+<p>Arguments</p>
+<p>base-number :: &lt;float&gt;</p>
+<p>power-number :: &lt;float&gt;</p>
+<p>Values</p>
+<p>answer :: &lt;float&gt;</p>
+<p>Description</p>
+<p><strong>expt</strong>returns <em>base-number</em> raised to the power <em>power-number</em>. If
+both <em>base-number</em> and <em>power-number</em> are <strong>&lt;single-float&gt;</strong>s, the
+return value is a &lt;single-float&gt;; otherwise, the return value is a
+<strong>&lt;double-float&gt;</strong>.</p>
+<p><strong>$pi</strong> [Constant]
+<strong>$e</strong> [Constant]</p>
+<p><strong>$pi</strong> is the best approximation to the mathematical constant pi, in
+<strong>&lt;double-float&gt;</strong> format. <strong>$e</strong> is the best approximation to the
+mathematical constant e, the base of the natural logarithm, in
+<strong>&lt;double-float&gt;</strong> format.</p>
+</div>
+<div class="section" id="streams-library">
+<h2>Streams Library<a class="headerlink" href="#streams-library" title="Permalink to this headline">¶</a></h2>
+<p>There is a Streams library that adheres to the Gwydion streams
+specification. For documentation on the stream specification, see the
+file $INSTALL/doc/libraries/streams.{ps,txt}.</p>
+<p>The Streams library exports two modules, Streams and Standard-io. The
+Streams module exports all identifiers from the streams specification.
+The Streams module also exports <strong>&lt;fd-stream&gt;</strong>:</p>
+<p><strong>&lt;fd-stream&gt;</strong> [Class]</p>
+<p>This class is a subclass of <strong>&lt;stream&gt;</strong>. These streams are based on C
+file descriptors, and they do not adhere to the Random Access Protocol
+described in the Gwydion streams specification. The <strong>make</strong> method
+accepts the following keywords:</p>
+<p><em>direction:</em></p>
+<p>This keyword is optional and defaults to #&#8221;input&#8221;. When supplied, it
+must be either #&#8221;input&#8221; or #&#8221;output&#8221;.</p>
+<p><em>fd:</em></p>
+<p>This keyword is required and should be an open file-descriptor.</p>
+<p><em>size:</em></p>
+<p>This keyword is optional and is the size of the buffer. See the
+Streams specification for details.</p>
+<p>The Standard-io module exports the following:</p>
+<p><strong>*standard-input*</strong> [Constant]</p>
+<p><strong>*standard-output*</strong> [Constant]</p>
+<p><strong>*standard-error*</strong> [Constant]</p>
+<p>These have the following values respectively:</p>
+<div class="highlight-python"><div class="highlight"><pre>make(&lt;fd-stream&gt;, fd: 0)
+make(&lt;fd-stream&gt;, fd: 1, direction: #&quot;output&quot;)
+make(&lt;fd-stream&gt;, fd: 2, direction: #&quot;output&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="miscellaneous-implementation-choices">
+<h2>Miscellaneous Implementation Choices<a class="headerlink" href="#miscellaneous-implementation-choices" title="Permalink to this headline">¶</a></h2>
+<p>The <strong>error</strong>method specialized on <strong>&lt;byte-string&gt;</strong> applies the
+<strong>format</strong> function to the arguments passed to <strong>error</strong>. See
+<a class="reference internal" href="#the-extensions-module">The Extensions Module</a> for the details of
+<strong>format</strong> from the Cheap-io module of the Dylan library. See
+$INSTALL/doc/libraries/format.{ps,txt} for the details of <strong>format</strong>
+from the Format library.</p>
+<p>Rest arguments in Mindy are <strong>&lt;sequence&gt;</strong>s. You cannot use any
+functions on the rest argument that assumes the collection is an
+instance of any class more specific than <strong>&lt;sequence&gt;</strong>; for example,
+you cannot use the <strong>head</strong> or <strong>tail</strong> functions because they operate
+on instances of <strong>&lt;pair&gt;</strong>.</p>
+<p>Mindy&#8217;s <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a> implementation is equivalent to unicode
+characters. The <strong>&lt;byte-character&gt;</strong> class exported from the Extensions
+module of the Dylan library is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>.</p>
+</div>
+<div class="section" id="copyright-and-terms-of-use">
+<h2>Copyright and Terms of Use<a class="headerlink" href="#copyright-and-terms-of-use" title="Permalink to this headline">¶</a></h2>
+<p>Copyright (c) 1994, 1995, 1996 Carnegie Mellon University All rights
+reserved.</p>
+<p>Use and copying of this software and preparation of derivative works
+based on this software are permitted, including commercial use, provided
+that the following conditions are observed:</p>
+<ul class="simple">
+<li>This copyright notice must be retained in full on any copies and on
+appropriate parts of any derivative works.</li>
+<li>Documentation (paper or online) accompanying any system that
+incorporates this software, or any part of it, must acknowledge the
+contribution of the Gwydion Project at Carnegie Mellon University.</li>
+</ul>
+<p>This software is made available <em>as is</em>. Neither the authors nor
+Carnegie Mellon University make any warranty about the software, its
+performance, or its conformity to any specification.</p>
+<p>Bug reports, questions, comments, and suggestions should be sent by
+E-mail to the Internet address <a class="reference external" href="mailto:gwydionbugs&#37;&#52;&#48;cs&#46;cmu&#46;edu">gwydionbugs<span>&#64;</span>cs<span>&#46;</span>cmu<span>&#46;</span>edu</a>.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="debug.html" class="btn btn-neutral float-right" title="The Mindy Debugger" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Mindy" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Mindy Contributors.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'2.7.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,1007 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Mindy Debugger &mdash; Mindy 2.7.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/opendylan.org/css/opendylan-docs.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Mindy 2.7.0 documentation" href="index.html"/>
+        <link rel="prev" title="The Mindy Compiler and Interpreter" href="mindy.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> Mindy
+        
+
+        
+        </a>
+
+        
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="mindy.html">The Mindy Compiler and Interpreter</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">The Mindy Debugger</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stack-manipulation-commands">Stack Manipulation Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#examining-variables">Examining Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#libraries-and-modules">Libraries and Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluating-expressions">Evaluating Expressions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#debugger-variables">Debugger Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#restarts-and-returning">Restarts and Returning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#interrupting-and-single-stepping">Interrupting and Single Stepping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#breakpoints">Breakpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#threads">Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inspect-and-xinspect">Inspect and Xinspect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#miscellaneous-commands">Miscellaneous Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#copyright-and-terms-of-use">Copyright and Terms Of Use</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Mindy</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>The Mindy Debugger</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/debug.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-mindy-debugger">
+<h1>The Mindy Debugger<a class="headerlink" href="#the-mindy-debugger" title="Permalink to this headline">¶</a></h1>
+<p><em>Copyright (c) 1994, 1995, 1996, 1997 Carnegie Mellon University All
+rights reserved. Refer to the end of this document for precise terms
+of use.</em></p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>When something goes wrong with your program, Mindy drops into the
+debugger. From the debugger, you can examine the stack, print out
+variables, evaluate expressions, and do various other things that can be
+helpful in figuring out what went wrong.</p>
+<p>For example, if you did not define a method for main, after starting
+Mindy you would see something like the following:</p>
+<div class="highlight-python"><div class="highlight"><pre>No applicable methods for main with arguments #[&quot;mindy&quot;]
+
+thread [0] D   main
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x1023fa91})
+mindy&gt;
+</pre></div>
+</div>
+<p>The first line is the error message. The second line tells you about the
+thread that encountered the error. For more information about threads
+see <a class="reference internal" href="#threads">Threads</a>. The third line tells you about the current stack
+frame for the thread; in this example, the last function called, which
+is at the top of the stack, is the <strong>invoke-debugger</strong> function. It was
+called with one argument, a <strong>&lt;simple-error&gt;</strong>.</p>
+<p>The following sections discuss the various commands provided by the
+debugger. As a general rule, you can invoke a command by typing at least
+a unique prefix of its name. There are three commonly used commands for
+which a single letter suffices, regardless of all other command names:</p>
+<ul class="simple">
+<li>(d)own</li>
+<li>(l)ocals</li>
+<li>(c)ontinue</li>
+</ul>
+<p>Throughout this document, some examples build on previous examples, even
+when those previous examples come from previous sections of the
+document. If there is a reference to the &#8220;previous example&#8221;, then please
+look to the previous section&#8217;s text.</p>
+<p>This documentation uses the term <em>built-in</em> for definitions created in
+C code, within Mindy&#8217;s implementation. Opposed to built-in definitions
+are definitions written in Dylan code. Parts of Mindy are built-in and
+parts are defined in Dylan code. Of course, all user code is written in
+Dylan. Some debugger commands behave differently depending on whether
+the object being manipulated was defined in Dylan code or built-in.</p>
+</div>
+<div class="section" id="stack-manipulation-commands">
+<h2>Stack Manipulation Commands<a class="headerlink" href="#stack-manipulation-commands" title="Permalink to this headline">¶</a></h2>
+<p>The Mindy debugger offers a few commands for moving up and down the
+stack. The two most common commands are up and down. Mindy considers the
+most recently called function to be at the top of the stack and the
+least recently called function to be at the bottom of the stack. Hence,
+moving down the stack moves you from a callee to its caller. For
+example, if you were to type down after the previous example, you would
+see something like the following:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; down
+fp 0x10034078: error({&lt;simple-error&gt; 0x1023fa91}, #[], #())
+/afs/cs.cmu.edu/project/gwydion/mindy/src/runtime/cond.dylan
+132     signal(cond);
+mindy&gt;
+</pre></div>
+</div>
+<p>The first line tells you about the new current frame, which is a call to
+the <strong>error</strong> function. For a function written in Dylan, as opposed to a
+built-in function, the debugger tries to show the line of source code
+associated with the current frame. If the debugger could not find the
+source file, it still prints the line number from the source file.</p>
+<p>While moving down the stack, you might have expected to see a call to
+the <strong>signal</strong> function before seeing a call to the <strong>error</strong> function.
+This does not happen because <strong>signal</strong> tail calls <strong>invoke-debugger</strong>.
+When a function tail calls another function, the callee reuses the
+current stack frame of the caller.</p>
+<p>In addition to the up and down commands, you can move to a specified
+stack frame using the frame command. The debugger numbers stack frames
+starting at zero at the top of the stack. Currently, the debugger does
+not print frame numbers when it prints frame information, so moving with
+the frame command is only useful as a rough thumb bar. The following is
+an example of using this command to go to the top of the stack:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; frame 0
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x1023fa91})
+mindy&gt;
+</pre></div>
+</div>
+<p>If you use the frame command without supplying a frame number, the
+command prints the current frame&#8217;s information. This is useful if the
+description of the current frame has scrolled off the screen, and you
+want to see it again.</p>
+<p>You can view the entire stack by using the backtrace command. The
+current frame stays the same, but the backtrace command always shows the
+entire stack from the top to the bottom. The following is example output
+from this command:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; backtrace
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x1023fa91})
+fp 0x10034078: error({&lt;simple-error&gt; 0x1023fa91}, #[], #()) \
+[/afs/cs.cmu.edu/project/gwydion/mindy/src/runtime/cond.dylan, line 132]
+fp 0x10034058: main()
+mindy&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="examining-variables">
+<h2>Examining Variables<a class="headerlink" href="#examining-variables" title="Permalink to this headline">¶</a></h2>
+<p>The locals command prints the value for every local variable in the
+function associated with the current frame. If you were at the frame for
+the <strong>error</strong> call in the previous example, using the locals command
+would look like the following:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; locals
+noise: #[]
+cond: {&lt;simple-error&gt; 0x1023fa91}
+mindy&gt;
+</pre></div>
+</div>
+<p>You can use the print command to print a specific local variable. The
+following is an example of printing the <code class="docutils literal"><span class="pre">cond</span></code> variable shown in the
+previous sample output:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; print cond
+$0={&lt;simple-error&gt; 0x1023fa91}
+mindy&gt;
+</pre></div>
+</div>
+<p>The print command can also print the value of global variables:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; print size
+$1={&lt;generic-function&gt; size}
+mindy&gt;
+</pre></div>
+</div>
+<p>For information on the labels the debugger assigns to values (that is,
+the <code class="docutils literal"><span class="pre">$N</span></code> identifications), see <a class="reference internal" href="#debugger-variables">Debugger Variables</a>.</p>
+<p>If the debugger does not find a local variable with the name you
+supplied, the debugger looks for a global variable by that name in the
+current library and module. For more information about libraries and
+modules, see <a class="reference internal" href="#libraries-and-modules">Libraries and Modules</a>.</p>
+<p>You can refer to global variables in libraries and modules that are not
+the current library and module by prefixing variable names with module
+and/or library names. We support a colon notation that only works in the
+Mindy debugger and has nothing to do with legal Dylan syntax. For
+example, <code class="docutils literal"><span class="pre">foo:bar:baz</span></code> refers to the <code class="docutils literal"><span class="pre">baz</span></code> variable in the <code class="docutils literal"><span class="pre">bar</span></code>
+module of the <code class="docutils literal"><span class="pre">foo</span></code> library. There must not be any whitespace anywhere
+in the <em>identifier</em>. To refer to a variable in the current library but in a
+module that is not the current module, use the form <code class="docutils literal"><span class="pre">quux:splat</span></code>, which
+refers to the <code class="docutils literal"><span class="pre">splat</span></code> variable in the <code class="docutils literal"><span class="pre">quux</span></code> module.</p>
+<p>For more information about the print command, see <a class="reference internal" href="#evaluating-expressions">Evaluating Expressions</a>.</p>
+</div>
+<div class="section" id="libraries-and-modules">
+<h2>Libraries and Modules<a class="headerlink" href="#libraries-and-modules" title="Permalink to this headline">¶</a></h2>
+<p>When evaluating expressions, the debugger uses the <em>current library</em> and
+<em>current module</em>. When the debugger starts up, it guesses at what
+library and module to make current. If you want to access a global
+variable from another module or library, you first make another module
+or library be the current one with the library or module command. If you
+invoke the library command without an argument, it lists the available
+libraries and tells you which one is the current one. If you invoke the
+library command with an argument, the debugger makes that library be the
+current library. In the same way, the module command either lists the
+modules of the current library, or it selects another module be the
+current module. The following are examples of using the library command:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; library
+Dylan-User
+Dylan
+
+Current library is Dylan
+mindy&gt; library dylan-user
+mindy&gt;
+</pre></div>
+</div>
+<p>The following is an example of using the module command after having
+just switched to the Dylan-user library:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; module
+   Dylan-User
+ i File-Descriptors
+ i Threads
+ i Extensions
+ i System
+ i Dylan
+
+The current module is Dylan-User
+mindy&gt;
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">i</span></code> in the second column indicates that those modules are being
+imported into the <code class="docutils literal"><span class="pre">Dylan-user</span></code> library as opposed to being defined there.
+The module command also indicates which modules are exported from the
+current library. For example, if you were to switch to the <code class="docutils literal"><span class="pre">Dylan</span></code>
+library, the <code class="docutils literal"><span class="pre">module</span></code> command would produce the following output:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; library dylan
+mindy&gt; module
+   Dylan-User
+ x  File-Descriptors
+ x  Threads
+    Builtin-Stuff
+ x  Extensions
+ x  System
+ x  Dylan
+
+The current module is Dylan-User
+mindy&gt;
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">x</span></code> in the first column indicates that those modules are
+exported.  There were no xs in the listing of modules in the
+<code class="docutils literal"><span class="pre">Dylan-user</span></code> library because no modules are exported from the
+<code class="docutils literal"><span class="pre">Dylan-user</span></code> library. There were no is in the listing of modules
+for the <code class="docutils literal"><span class="pre">Dylan</span></code> library because the <code class="docutils literal"><span class="pre">Dylan</span></code> library does not
+import any modules.</p>
+<p>Whenever you change libraries with the library command, the debugger
+resets the current module to the <code class="docutils literal"><span class="pre">Dylan-user</span></code> module. This is
+because the debugger needs to make a module current in the new
+library, and every library has a <code class="docutils literal"><span class="pre">Dylan-user</span></code> module.</p>
+</div>
+<div class="section" id="evaluating-expressions">
+<h2>Evaluating Expressions<a class="headerlink" href="#evaluating-expressions" title="Permalink to this headline">¶</a></h2>
+<p>The print command can evaluate simple expressions and print their
+results. The following is an example:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; print list(1, 2, 3)
+$2=#(1, 2, 3)
+mindy&gt; print vector(4, 5, 6)
+$3=#[4, 5, 6]
+mindy&gt;
+</pre></div>
+</div>
+<p>The print command evaluates the variable <code class="docutils literal"><span class="pre">list</span></code> and then
+invokes that function with the arguments <code class="docutils literal"><span class="pre">1</span></code>, <code class="docutils literal"><span class="pre">2</span></code>, and
+<code class="docutils literal"><span class="pre">3</span></code>. The debugger labels values printed with a dollar sign
+and a number, and you can use these labels in later expressions.
+For more information on these, see <a class="reference internal" href="#debugger-variables">Debugger Variables</a>.</p>
+<p>The expressions that the debugger accepts are limited. An expression can
+be one of the following:</p>
+<ul>
+<li><p class="first">One of the following literals:</p>
+<blockquote>
+<div><ul class="simple">
+<li>decimal number (<code class="docutils literal"><span class="pre">47</span></code>)</li>
+<li>keyword (<code class="docutils literal"><span class="pre">foo:</span></code>)</li>
+<li>string (<code class="docutils literal"><span class="pre">&quot;foo&quot;</span></code>)</li>
+<li><code class="docutils literal"><span class="pre">#t</span></code></li>
+<li><code class="docutils literal"><span class="pre">#f</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">A variable name.</p>
+</li>
+<li><p class="first">A debugger variable (for example, <code class="docutils literal"><span class="pre">$5</span></code>).</p>
+</li>
+<li><p class="first">A function call (for example, <code class="docutils literal"><span class="pre">foo(a,</span> <span class="pre">b)</span></code> and <code class="docutils literal"><span class="pre">bar(c,</span> <span class="pre">quux:</span> <span class="pre">3)</span></code>).
+Note that dot notation (<code class="docutils literal"><span class="pre">object.slot</span></code>) and infix operators (<code class="docutils literal"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">y</span></code>)
+are not supported.</p>
+</li>
+<li><p class="first">The address, in hexadecimal (C format, not Dylan), of a valid dylan
+object (for example, <code class="docutils literal"><span class="pre">0x102050b1</span></code>). Note: use this feature with care,
+as a mistyped address can cause Mindy to dump core.</p>
+</li>
+</ul>
+<p>If the expression results in multiple values, all the values are printed
+on a single line:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; print values(1, 2, 3)
+$4=1, $5=2, $6=3
+</pre></div>
+</div>
+<p>If an error occurs while the debugger is evaluating the expression, it
+prints the error message, aborts the print command, and returns to the
+debugger prompt. The following is an example of this situation:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; print error(&quot;oops&quot;)
+invocation failed:
+  oops
+mindy&gt;
+</pre></div>
+</div>
+<p>The call command is like the print command, but the call command does
+not handle errors by aborting. When you use the call command, and the
+expression causes an error, the debugger returns to its prompt, but any
+stack frames that were created due to the call command are now visible
+for inspection. The following is an example of using the call command:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; call error(&quot;oops&quot;)
+
+oops
+
+thread [0] D   main
+fp 0x100341f4: invoke-debugger({&lt;simple-error&gt; 0x102456b1})
+mindy&gt;
+</pre></div>
+</div>
+<p>The print and call commands can also evaluate multiple, comma-separated
+expressions:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; print 1, 2, 3
+$7=1
+$8=2
+$9=3
+mindy&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="debugger-variables">
+<h2>Debugger Variables<a class="headerlink" href="#debugger-variables" title="Permalink to this headline">¶</a></h2>
+<p>The print or call commands label every value printed, and these labels
+identify <em>debugger variables</em>. You can use these identifiers in later
+expressions to refer to previously computed values. The following is an
+example:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; p list(1, 2, 3)
+$4=#(1, 2, 3)
+mindy&gt; p second($4)
+$5=2
+mindy&gt;
+</pre></div>
+</div>
+<p>The notation $-N provides a dynamic alternative to identifying debugger
+variables. This notation refers to previously printed values by using N
+as a count from the most recently printed value to the least recently
+printed. The counting begins at one.</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; print a:, b:, c:, d:
+$12=a
+$13=b
+$14=c
+$15=d
+mindy&gt; print $-1, $-2, $-3, $-4
+$16=d
+$17=c
+$18=b
+$19=a
+mindy&gt;
+</pre></div>
+</div>
+<p>You can use <code class="docutils literal"><span class="pre">$</span></code> as a shorthand for <code class="docutils literal"><span class="pre">$-1</span></code>, and <code class="docutils literal"><span class="pre">$$</span></code> for <code class="docutils literal"><span class="pre">$-2</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; p 2
+$20=2
+mindy&gt; p list($, 4)
+$21=#(2, 4)
+mindy&gt; p list($$, 6)
+$22=#(2, 6)
+mindy&gt;
+</pre></div>
+</div>
+<p>Mindy keeps references to all debugger variables to prevent them from
+being garbage collected. If you no longer care about previously printed
+values, you might want to use the flush command to get rid of them:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; flush
+Flushed all debugger variables.
+mindy&gt; p $0
+invocation failed:
+No debug variable $0
+mindy&gt; p list(a:, b:, c:)
+$0=#(a, b, c)
+mindy&gt;
+</pre></div>
+</div>
+<p>You can use <code class="docutils literal"><span class="pre">$aN</span></code> notation to refer to the arguments passed to the
+function call associated with the current stack frame. N is the argument
+number, counting from zero. The following is an example:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; frame
+fp 0x10034078: error({&lt;simple-error&gt; 0x1023fa91}, #[], #())
+/afs/cs.cmu.edu/project/gwydion/mindy/src/runtime/cond.dylan
+132     signal(cond);
+mindy&gt; p $a0
+$1={&lt;simple-error&gt; 0x1023fa91}
+mindy&gt; p $a1
+$2=#[]
+mindy&gt; p $a2
+$3=#()
+mindy&gt;
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">$aN</span></code> notation does not identify a debugger variable, and the
+debugger does not have to create storage for these values because they
+are already stored on the call stack. The flush command has no effect on
+argument values.</p>
+</div>
+<div class="section" id="restarts-and-returning">
+<h2>Restarts and Returning<a class="headerlink" href="#restarts-and-returning" title="Permalink to this headline">¶</a></h2>
+<p>This section discusses invoking Dylan restart handlers and returning
+values for conditions whose recovery protocols allow returning. If you
+do not know what these are, see the <em>Dylan Reference Manual</em>.</p>
+<p>The debugger has commands that allow you to try to continue executing
+your program. The most common way to continue execution is to invoke a
+Dylan restart. To either list the available restarts or invoke a
+restart, you use the restart command:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; call cerror(&quot;go on&quot;, &quot;oops&quot;)
+
+oops
+
+thread [0] D   main
+fp 0x1003428c: invoke-debugger({&lt;simple-error&gt; 0x10245361})
+mindy&gt; restart
+0 [{class &lt;simple-restart&gt;}]: go on
+1 [{class &lt;abort&gt;}]: Blow off call
+mindy&gt; restart 0
+$0=#f
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x1023fa91})
+mindy&gt;
+</pre></div>
+</div>
+<p>In this example, the restart command lists two restarts. The <strong>cerror</strong>
+function establishes the &#8220;go on&#8221; restart (numbered 0). The call command
+establishes the &#8220;Blow off call&#8221; restart (numberd 1). The restart 0
+command caused <strong>cerror</strong>to return #f, which the call command printed.</p>
+<p>The abort command invokes the first restart that handles <strong>&lt;abort&gt;</strong>
+restarts. The following is an example of this command:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; call error(&quot;oops&quot;)
+
+oops
+
+thread [0] D   main
+fp 0x100341fc: invoke-debugger({&lt;simple-error&gt; 0x10241d49})
+mindy&gt; abort
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x1023fa91})
+mindy&gt;
+</pre></div>
+</div>
+<p>If Mindy entered the debugger due to a condition that allows returning
+as part of its recovery protocol, then you can use the return command.
+For example, consider an <strong>&lt;ignorable-error&gt;</strong> condition that is a
+subclass of <strong>&lt;error&gt;</strong> and that allows returning as part of its
+recovery protocol. The following example shows returning from the
+signalling of this condition:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; call signal(make(&lt;ignorable-error&gt;))
+
+{&lt;ignorable-error&gt; 0x10247759}
+
+thread [0] D   main
+fp 0x100341d4: invoke-debugger({&lt;ignorable-error&gt; 0x10247759})
+mindy&gt; restart
+0 [{class &lt;abort&gt;}]: Blow off call
+
+Returning is allowed:
+  ignore it.
+mindy&gt; return
+$0=#f
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x10244831})
+mindy&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="interrupting-and-single-stepping">
+<h2>Interrupting and Single Stepping<a class="headerlink" href="#interrupting-and-single-stepping" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes it is useful to interrupt your program to see where it is
+currently executing. Consider the following program as an example:</p>
+<div class="highlight-python"><div class="highlight"><pre>module: Dylan-User
+
+define method main (#rest noise)
+  foo(#t);
+end;
+
+define method foo (x)
+  if (x)
+    foo(#f);
+  else
+    foo(#t);
+  end;
+end;
+</pre></div>
+</div>
+<p>If you were to run this program and then interrupt it, you would see
+output similar to the following:</p>
+<div class="highlight-python"><div class="highlight"><pre>^C
+Interrupted
+thread [0] R   main
+fp 0x10034060: foo(#f, #())
+foo.dylan
+8       if (x)
+mindy&gt;
+</pre></div>
+</div>
+<p>After interrupting the program you have the full debugger at your
+disposal, as if an error had occurred. Additionally, you can use the
+continue command to resume execution:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; continue
+</pre></div>
+</div>
+<p>You can also use the step command to advance line by line through your
+program. When stepping, if the debugger encounters a function call, it
+descends into that function and steps line by line. The following is an
+example:</p>
+<div class="highlight-python"><div class="highlight"><pre>^C
+Interrupted
+thread [0] R   main
+fp 0x10034060: foo(#f, #())
+foo.dylan
+8       if (x)
+mindy&gt; step
+foo.dylan
+11      foo(#t)
+mindy&gt; step
+foo.dylan
+8       if (x)
+mindy&gt; step
+foo.dylan
+9       foo(#f)
+mindy&gt; step
+foo.dylan
+8       if (x)
+mindy&gt;
+</pre></div>
+</div>
+<p>The next command is the same as the step command, but the next command
+tries to avoid descending into function calls.</p>
+</div>
+<div class="section" id="breakpoints">
+<h2>Breakpoints<a class="headerlink" href="#breakpoints" title="Permalink to this headline">¶</a></h2>
+<p>The easiest way to insert a breakpoint into a Mindy program is to insert
+a call to <code class="xref dylan dylan-func docutils literal"><span class="pre">break</span></code> into the program text, recompile the program, and
+rerun it. <code class="xref dylan dylan-func docutils literal"><span class="pre">break</span></code> is exported from the <code class="docutils literal"><span class="pre">Extensions</span></code> module of the
+<code class="docutils literal"><span class="pre">Dylan</span></code> library.</p>
+<p>The debugger also has a primitive facility for setting breakpoints in
+methods written in Dylan, as opposed to built-in methods. The breakpoint
+command takes two arguments, a reference to a method in which to install
+the breakpoint, and the line number at which to install the breakpoint.
+For example, consider the following program:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="na">module</span><span class="o">:</span> <span class="s">dylan-user</span>
+
+<span class="k">define</span> <span class="nb">constant</span> <span class="n">foo</span> <span class="o">=</span>
+  <span class="nb">method</span> <span class="p">()</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;this is a test</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;of breakpoints.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="l">#f</span><span class="p">;</span>
+  <span class="k">end</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>If you were to put a breakpoint at line 6 (the second puts), Mindy would
+produce output similar to the following:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; break foo, 6
+breakpoint 1 installed in {anonymous &lt;byte-method&gt; 0x10243d31\
+#()} at line 6 (pc 47)
+mindy&gt; call foo()
+this is a test
+Breakpoint
+thread [0] R   main
+fp 0x100341dc: {anonymous &lt;byte-method&gt; 0x10243d31 #()}(#())
+foo.dylan
+6       puts(&quot;of breakpoints.\n&quot;);
+mindy&gt;
+</pre></div>
+</div>
+<p>The continue and step commands can be used to continue execution (see
+<a class="reference internal" href="#interrupting-and-single-stepping">Interrupting and Single Stepping</a>):</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; step
+of breakpoints.
+foo.dylan
+7       #f;
+mindy&gt; c
+$0=#f
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x10243e49})
+mindy&gt;
+</pre></div>
+</div>
+<p>The breakpoint command evaluates its first argument, so you can use an
+arbitrary expression for the function. For example, you could use
+<strong>find-method</strong> to extract a specific method from a generic function and
+insert a breakpoint in that method:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; br find-method(size, list(&lt;table&gt;)), 886
+breakpoint 1 installed in {&lt;byte-method&gt; size #({class &lt;table&gt;})}\
+at line 886 (pc 35)
+mindy&gt;
+</pre></div>
+</div>
+<p>The breakpoint command with no arguments lists the currently installed
+breakpoints:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; breakpoint
+id  where
+ 1  pc 47 in {&lt;component&gt; 0x10204ea9}
+mindy&gt;
+</pre></div>
+</div>
+<p>The delete N command removes a breakpoint, where N is the breakpoint ID
+reported in the breakpoint listing.</p>
+<p>Sometimes the Mindy compiler has to split a single top level form into
+multiple methods. When this happens, the debugger cannot always figure
+out where to insert your breakpoint. Consider the following program:</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="na">module</span><span class="o">:</span> <span class="s">dylan-user</span>
+
+<span class="k">define</span> <span class="nb">constant</span> <span class="n">foo</span> <span class="o">=</span>
+  <span class="nb">method</span> <span class="p">()</span>
+    <span class="nb">block</span> <span class="p">(</span><span class="n">exit</span><span class="p">)</span>
+      <span class="n">puts</span><span class="p">(</span><span class="s">&quot;this is a test</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+      <span class="n">puts</span><span class="p">(</span><span class="s">&quot;of breakpoints.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+      <span class="l">#f</span><span class="p">;</span>
+    <span class="k">end</span><span class="p">;</span>
+  <span class="k">end</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>When this program is compiled, the compiler has to put the contents of
+the block in a separate method. Because of this, if you were to try to
+insert a breakpoint at line 7 it would not work:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; break foo, 7
+{anonymous &lt;byte-method&gt; 0x10243f59 #()} does not span line number 7
+mindy&gt;
+</pre></div>
+</div>
+<p>To insert a breakpoint into this method, you need to use the disassemble
+command. It disassembles a method and all Mindy-generated methods that
+might be associated with that method. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; disassemble foo
+anonymous component, from &quot;foo.dylan&quot;
+5           block (exit)
+    47: b0              push    function catch
+    48: 21              push    const(1)        {&lt;method-info&gt; 0x10205149}
+    49: b2              push    function list
+    50: a3              push    value &lt;object&gt;
+    51: 91              call    nargs = 1, for single
+    52: 0e              push    #()
+    53: 10              push    #t
+    54: 06              make-method
+    55: 71              call    nargs = 1, tail
+{&lt;method-info&gt; 0x10205149}, anonymous component, from &quot;foo.dylan&quot;
+5           block (exit)
+    51: 31              push    arg(1)
+    52: 20              push    const(0)        {&lt;method-info&gt; 0x102050b1}
+    53: b1              push    function list
+    54: 90              call    nargs = 0, for single
+    55: 0e              push    #()
+    56: 10              push    #t
+    57: 06              make-method
+    58: 60              pop     local(0)
+6             puts(&quot;this is a test\n&quot;);
+    59: b2              push    function puts
+    60: 23              push    const(3)        &quot;this is a test\n&quot;
+    61: 81 00           call    nargs = 1, for 0
+7             puts(&quot;of breakpoints.\n&quot;);
+    63: b2              push    function puts
+    64: 24              push    const(4)        &quot;of breakpoints.\n&quot;
+    65: 81 00           call    nargs = 1, for 0
+8             #f;
+    67: 11              push    #f
+    68: 02              return single
+
+{&lt;method-info&gt; 0x102050b1}, exit component, from &quot;foo.dylan&quot;
+5           block (exit)
+    39: b0              push    function apply
+    40: a1              push    value throw
+    41: 30              push    arg(0)
+    42: 32              push    arg(2)
+    43: 73              call    nargs = 3, tail
+mindy&gt;
+</pre></div>
+</div>
+<p>As you can see, the function <strong>foo</strong> has been split into three methods.
+The first one corresponds to the part of <strong>foo</strong> that is outside the
+block. The second method corresponds to the code inside the block. And
+the third one corresponds to the <strong>exit</strong> function established by the
+block. Look for the second method which spans line 7. The following
+shows how to install the breakpoint:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; br 0x10205149, 7
+breakpoint 1 installed in {&lt;method-info&gt; 0x10205149} at line 7 (pc 63)
+mindy&gt; call foo()
+this is a test
+Breakpoint
+thread [0] R   main
+fp 0x100341f8: {anonymous &lt;byte-method&gt; 0x10245f41 #({class &lt;object&gt;})}\
+({&lt;catch&gt; 0x10245f81}, #())
+foo.dylan
+7       puts(&quot;of breakpoints.\n&quot;);
+mindy&gt; c
+of breakpoints.
+$0=#f
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x10244071})
+mindy&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="threads">
+<h2>Threads<a class="headerlink" href="#threads" title="Permalink to this headline">¶</a></h2>
+<p>Normally, there is only one thread of execution, in which case you won&#8217;t
+need any of the commands in this section. When you debug a
+multi-threaded program, these commands become very useful. The thread
+command either lists the available threads or switches between them,
+depending on how you invoke it. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; p spawn-thread(foo:, curry(break, &quot;Thread foo&quot;))
+$0={&lt;thread&gt; 0x10243f49}
+mindy&gt; p spawn-thread(bar:, curry(break, &quot;Thread bar&quot;))
+$1={&lt;thread&gt; 0x10246f19}
+mindy&gt; thread
+c [0] D   main
+  [1] R   foo
+  [2] R   bar
+mindy&gt;
+</pre></div>
+</div>
+<p>In this example, the thread command lists three threads: the main (or
+original) thread and the two threads you just created. The c in the
+first column indicates which thread the debugger is currently examining.
+The [N] indicates the thread ID for each thread. The D and R
+designations indicate the status of each thread. The main, foo, and bar
+labels are the debug-names passed as the first argument to
+<strong>spawn-thread</strong>.</p>
+<p>The different thread status codes are as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre>STATUS     MEANING
+   D       current thread the debugger is examining
+   R       running/runable
+   S       suspended
+   B       blocked on a lock
+   W       waiting for an event
+</pre></div>
+</div>
+<p>Giving the thread command an argument causes the debugger to examine
+another thread. You can designate threads with either its numeric ID or
+the debug-name passed to <strong>spawn-thread</strong>:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; thread foo
+thread [1] R   foo
+fp 0x102550bc: {anonymous &lt;byte-method&gt; 0x102443d9 #({class &lt;\
+object&gt;})}({&lt;catch&gt; 0x10244421}, #(), {&lt;value-cell&gt; 0x1024436\
+9}, {&lt;breakpoint&gt; 0x102441e1})
+/afs/cs.cmu.edu/project/gwydion/mindy/src/runtime/cond.dylan
+212     init-arguments: list(format-string: &quot;Continue from break&quot;))
+mindy&gt; thread 0
+thread [0] D   main
+fp 0x10034090: invoke-debugger({&lt;simple-error&gt; 0x1023fa91})
+mindy&gt;
+</pre></div>
+</div>
+<p>Sometimes it is useful to temporarily disable some threads while
+debugging other threads. The disable &lt;thread-id-or-name&gt; command
+disables (suspends) the indicated thread, and the enable command allows
+a thread to run again:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; disable foo
+[1] S 1 foo
+mindy&gt; enable foo
+[1] R   foo
+mindy&gt;
+</pre></div>
+</div>
+<p>In this example, the status of the foo thread changes from R (runnable)
+to S (suspended) when it is disabled.</p>
+<p>If you repeatedly use the disable command on the same thread, then the
+enable command must be used the same number of times to before the
+thread&#8217;s status changes to R. The 1 after the S above is the number of
+times the thread foo has been disabled.</p>
+<p>When a thread is suspended, the continue and step commands do not
+advance the thread&#8217;s execution. The disable and enable commands can help
+you find thread synchronization problems by allowing you to explicitly
+control when each thread runs.</p>
+<p>Invoking the disable or enable command with no argument affects the
+current thread the debugger is examining.</p>
+<p>The kill &lt;thread-id-or-name&gt; command kills the indicated thread.</p>
+</div>
+<div class="section" id="inspect-and-xinspect">
+<h2>Inspect and Xinspect<a class="headerlink" href="#inspect-and-xinspect" title="Permalink to this headline">¶</a></h2>
+<p>The inspect and xinspect commands can be used to interactively examine
+an object and related objects. The inspect command is a text-based
+interface to the Inspector facilities, while xinspect is a graphical
+interface. See <a class="reference external" href="../../old-docs/maker-out/debug.htm#">the
+document</a><em>The</em><em>Mindy Object
+Inspector</em> for information on using the Inspector.</p>
+</div>
+<div class="section" id="miscellaneous-commands">
+<h2>Miscellaneous Commands<a class="headerlink" href="#miscellaneous-commands" title="Permalink to this headline">¶</a></h2>
+<p>The help command prints a one line summary of all the debugger commands.</p>
+<p>The quit command causes Mindy to exit without executing any of the
+<strong>on-exit</strong> hooks. If you want the <strong>on-exit</strong> hooks to run, you should
+invoke the <strong>exit</strong> function with the print command:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; print exit()
+</pre></div>
+</div>
+<p>The tron command turns on an internal trace facility that prints the
+arguments and results for every function call. The troff command turns
+this off.</p>
+<p>The error command repeats the error message for the condition that
+caused this thread to drop into the debugger.</p>
+<p>The gc command invokes the garbage collector.</p>
+<p>The describe command takes an expression as an argument and evaluates
+it. If the result is an instance of a class defined in Dylan, as opposed
+to a built-in class, then the debugger identifies the class, prints the
+slot names, and prints the slot values. If the result of the expression
+is an instance of a built-in class, then the debugger prints the value
+and its class. The describe command does not create or assign to
+debugger variables, but you can use debugger variables in the expression
+given to the command. The following examples show the describe command:</p>
+<div class="highlight-python"><div class="highlight"><pre>mindy&gt; describe make
+{&lt;generic-function&gt; make} is an instance of {class &lt;generic-function&gt;}
+
+mindy&gt; describe &quot;Testing&quot;
+&quot;Testing&quot; is an instance of {class &lt;byte-string&gt;}
+
+mindy&gt; describe make(&lt;table&gt;)
+{&lt;object-table&gt; 0x10245d79} is an instance of {class &lt;object-table&gt;}
+and has the following slots:
+merged-hash-state-slot: {permanent hash state}
+shrink-to-slot: 100
+shrink-when-slot: 10
+expand-to-slot: 300
+expand-when-slot: 200
+bucket-states-slot: #[{permanent hash state}, {permanent hash state}, \
+{permanent hash state}, {permanent hash state}, {permanent hash state}]
+bucket-count-slot: 5
+bucket-array-slot: #[#(), #(), #(), #(), #()]
+item-count-slot: 0
+</pre></div>
+</div>
+</div>
+<div class="section" id="copyright-and-terms-of-use">
+<h2>Copyright and Terms Of Use<a class="headerlink" href="#copyright-and-terms-of-use" title="Permalink to this headline">¶</a></h2>
+<p>Copyright (c) 1994, 1995, 1996, 1997 Carnegie Mellon University All
+rights reserved.</p>
+<p>Use and copying of this software and preparation of derivative works
+based on this software are permitted, including commercial use, provided
+that the following conditions are observed:</p>
+<ul class="simple">
+<li>This copyright notice must be retained in full on any copies and on
+appropriate parts of any derivative works.</li>
+<li>Documentation (paper or online) accompanying any system that
+incorporates this software, or any part of it, must acknowledge the
+contribution of the Gwydion Project at Carnegie Mellon University.</li>
+</ul>
+<p>This software is made available <em>as is</em>. Neither the authors nor
+Carnegie Mellon University make any warranty about the software, its
+performance, or its conformity to any specification.</p>
+<p>Bug reports, questions, comments, and suggestions should be sent by
+E-mail to the Internet address <a class="reference external" href="mailto:gwydion-bugs&#37;&#52;&#48;cs&#46;cmu&#46;edu">gwydion-bugs<span>&#64;</span>cs<span>&#46;</span>cmu<span>&#46;</span>edu</a>.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="mindy.html" class="btn btn-neutral" title="The Mindy Compiler and Interpreter" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Mindy Contributors.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'2.7.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
