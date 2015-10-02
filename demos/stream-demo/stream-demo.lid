@@ -3,5 +3,5 @@ executable: stream-demo
 unit-prefix: streamdemo
 entry-point: stream-demo:%main
 
-stream-demo-exports.dylan
+library.dylan
 stream-demo.dylan

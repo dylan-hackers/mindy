@@ -1,5 +1,5 @@
 library: fact
 unique-id-base: 35000
 
-fact-exports.dylan
+fact-library.dylan
 fact.dylan

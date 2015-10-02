@@ -1,5 +1,5 @@
 SET(html_SOURCES
-    html2txt-exports.dylan
+    library.dylan
     html2txt.dylan
 )
 

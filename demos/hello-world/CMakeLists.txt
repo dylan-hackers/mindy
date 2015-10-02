@@ -1,5 +1,5 @@
 SET(hello-world_SOURCES
-    hello-world-exports.dylan
+    library.dylan
     hello-world.dylan
 )
 

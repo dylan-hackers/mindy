@@ -1,5 +1,5 @@
 SET(minesweeper_SOURCES
-    minesweeper-exports.dylan
+    library.dylan
     minesweeper.dylan
 )
 

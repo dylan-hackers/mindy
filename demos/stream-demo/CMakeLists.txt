@@ -1,5 +1,5 @@
 SET(stream-demo_SOURCES
-    stream-demo-exports.dylan
+    library.dylan
     stream-demo.dylan
 )
 

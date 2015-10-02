@@ -2,5 +2,5 @@ library: cat
 executable: cat
 entry-point: cat:%main
 
-cat-exports.dylan
+library.dylan
 cat.dylan

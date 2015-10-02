@@ -2,5 +2,5 @@ library: craps
 executable: craps
 entry-point: craps:%main
 
-craps-exports.dylan
+library.dylan
 craps.dylan

@@ -1,5 +1,5 @@
 SET(cat_SOURCES
-    cat-exports.dylan
+    library.dylan
     cat.dylan
 )
 

@@ -1,5 +1,5 @@
 SET(diff_SOURCES
-    diff-exports.dylan
+    library.dylan
     diff.dylan
 )
 

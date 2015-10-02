@@ -2,5 +2,5 @@ library: html
 executable: tk-html2txt
 unit-prefix: tkhtml
 
-html2txt-exports.dylan
+library.dylan
 html2txt.dylan

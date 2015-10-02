@@ -1,5 +1,5 @@
 SET(craps_SOURCES
-    craps-exports.dylan
+    library.dylan
     craps.dylan
 )
 

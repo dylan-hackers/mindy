@@ -1,5 +1,5 @@
 SET(parse-arguments_SOURCES
-    getopt-exports.dylan
+    library.dylan
     getopt.dylan
     parsers.dylan
     defargparser.dylan
