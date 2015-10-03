@@ -36,7 +36,6 @@ SET(mindy_SOURCES
     num.c
     obj.c
     print.c
-    shl.c
     str.c
     sym.c
     table.c
@@ -90,6 +89,14 @@ SET(mindy_HEADERS
     weak.h
     ../shared/compiler-support.h
 )
+
+IF(WIN32)
+  LIST(APPEND mindy_SOURCES
+              shl_windows.c)
+ELSE()
+  LIST(APPEND mindy_SOURCES
+              shl_posix.c)
+ENDIF()
 
 FIND_PACKAGE(BISON)
 BISON_TARGET(MindyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser-tab.c)
