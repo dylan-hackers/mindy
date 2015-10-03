@@ -4,12 +4,18 @@ compiler:
   - gcc
   - clang
 
+addons:
+  apt:
+    packages:
+      - cmake
+      - ninja-build
+
 script:
   - mkdir build
   - cd build
-  - cmake .. -G "Unix Makefiles"
-  - make
-  - make test
+  - cmake .. -G "Ninja"
+  - ninja
+  - ninja test
 
 branches:
   only:
