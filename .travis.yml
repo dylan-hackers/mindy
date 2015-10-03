@@ -13,10 +13,13 @@ addons:
       - cmake
       - ninja-build
 
+install:
+  - pip install -q Sphinx --use-mirrors
+
 script:
   - mkdir build
   - cd build
-  - cmake .. -G "Ninja"
+  - cmake .. -G "Ninja" -DMINDY_BUILD_DOCS=ON
   - ninja
   - ninja test
 
