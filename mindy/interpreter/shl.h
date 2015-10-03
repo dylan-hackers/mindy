@@ -16,6 +16,6 @@ typedef void *shl_t;
 
 #define  PROG_HANDLE    ((void *)-1)
 
-extern shl_t shl_load ( const char *path, int flags);
-extern int shl_findsym ( shl_t *handle, const char *sym, void **value);
+extern shl_t shl_load (const char *path, int flags);
+extern int shl_findsym (shl_t *handle, const char *sym, void **value);
 #endif
