@@ -22,9 +22,8 @@ shl_t shl_load (const char *path, int flags)
     return dlopen( path, flag);
 }
 
-int shl_findsym (shl_t *handle, const char *sym, void *value)
+int shl_findsym (shl_t *handle, const char *sym, void **value)
 {
-    const void *v;
     static void *self_handle = 0;
 
     if ( *handle == 0) abort();
@@ -35,8 +34,7 @@ int shl_findsym (shl_t *handle, const char *sym, void *value)
         handle = &self_handle;
     }
 
-    v = dlsym( *handle, (char *)sym);
-    *(void **)value = (void *)v;
+    *value = dlsym(*handle, (char *)sym);
 
     return dlerror() == 0 ? 0 : -1;
 }
