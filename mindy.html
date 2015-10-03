@@ -94,17 +94,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#dylan-vs-mindy-language-issues">Dylan vs. Mindy Language Issues</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#built-in-libraries-and-modules">Built-in Libraries and Modules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#using-libraries-and-modules">Using Libraries and Modules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#the-extensions-module">The Extensions Module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generally-useful-definitions">Generally Useful Definitions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#debugger-customizations">Debugger Customizations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#tables">Tables</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#exiting-applications">Exiting Applications</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#weak-pointers">Weak Pointers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#integers">Integers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#ratios">Ratios</a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="#the-system-module">The System Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#the-introspection-module">The Introspection Module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a></li>
@@ -266,11 +255,11 @@ header, so two files are required.</p>
 </div>
 <div class="section" id="the-main-routine">
 <h2>The Main Routine<a class="headerlink" href="#the-main-routine" title="Permalink to this headline">¶</a></h2>
-<p>After loading your program, Mindy invokes the generic function <a class="reference internal" href="#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a>
+<p>After loading your program, Mindy invokes the generic function <a class="reference internal" href="extensions.html#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a>
 from the Extensions module of the Dylan library. Your program must
-define a method for <a class="reference internal" href="#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a>, or Mindy will signal a <strong>no applicable
+define a method for <a class="reference internal" href="extensions.html#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a>, or Mindy will signal a <strong>no applicable
 methods</strong> error and put you in the debugger. For more information on the
-<a class="reference internal" href="#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a> function, see <a class="reference internal" href="#the-extensions-module">The Extensions Module</a>.</p>
+<a class="reference internal" href="extensions.html#dylan:extensions:main"><code class="xref dylan dylan-gf docutils literal"><span class="pre">main</span></code></a> function, see <a class="reference internal" href="extensions.html#the-extensions-module"><span>The Extensions Module</span></a>.</p>
 <p>It can be useful to load code into Mindy with no main method. Once you
 land in the debugger, you can call any function manually. This provides
 a way to test any library.</p>
@@ -298,9 +287,9 @@ combining <code class="docutils literal"><span class="pre">.dbc</span></code> fi
 <h2>Return Codes<a class="headerlink" href="#return-codes" title="Permalink to this headline">¶</a></h2>
 <p>If Mindy encounters an unrecoverable error, or if Mindy is exited via
 the debugger quit command, Mindy exits with a return code of 1. If the
-Dylan program ends with a call to <a class="reference internal" href="extensions.html#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> and a return code is specified
-(see <a class="reference internal" href="#exiting-applications">Exiting Applications</a>), Mindy exits with that return code.
-Otherwise, the return code is 0.</p>
+Dylan program ends with a call to <a class="reference internal" href="extensions.html#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> and a return code is
+specified, Mindy exits with that return code.  Otherwise, the return
+code is <code class="docutils literal"><span class="pre">0</span></code>.</p>
 </div>
 <div class="section" id="command-line-switches-and-environment-variables">
 <h2>Command Line Switches and Environment Variables<a class="headerlink" href="#command-line-switches-and-environment-variables" title="Permalink to this headline">¶</a></h2>
@@ -532,7 +521,7 @@ Dylan language implementation and the following exported modules:</p>
 the built-in Dylan definitions.</dd>
 <dt>Extensions</dt>
 <dd>This module exports useful extensions to the Dylan language (see
-<a class="reference internal" href="#the-extensions-module">The Extensions Module</a>).
+<a class="reference internal" href="extensions.html#the-extensions-module"><span>The Extensions Module</span></a>).
 Ultimately, there will be several, more logically separate libraries
 that extend Dylan or provide an
 application framework for users. For now, we put any commonly used
@@ -558,7 +547,7 @@ condition variables.</dd>
 <dd>This module exports some transcendental functions and the constants
 <strong>$pi</strong> and <strong>$e</strong>.</dd>
 <dt>Debugger-format</dt>
-<dd>See <a class="reference internal" href="#debugger-customizations">Debugger Customizations</a>.</dd>
+<dd>See <a class="reference internal" href="extensions.html#debugger-customizations"><span>Debugger Customizations</span></a>.</dd>
 </dl>
 <p>The <code class="docutils literal"><span class="pre">Dylan-user</span></code> library is the default library in which <code class="docutils literal"><span class="pre">mindycomp</span></code>
 compiles user code. Mindy provides this library for user convenience
@@ -639,453 +628,6 @@ loading multiple files).</li>
 library and module definitions, and one of the module definitions
 must be the module in question.</li>
 </ul>
-</div>
-<div class="section" id="the-extensions-module">
-<h2>The Extensions Module<a class="headerlink" href="#the-extensions-module" title="Permalink to this headline">¶</a></h2>
-<p>Ultimately, there will be several, more logically separate libraries
-that extend Dylan or provide an application framework for users. For
-now, we put any commonly used utilities in the Extensions module.</p>
-<div class="section" id="generally-useful-definitions">
-<h3>Generally Useful Definitions<a class="headerlink" href="#generally-useful-definitions" title="Permalink to this headline">¶</a></h3>
-<p>The Extensions module exports the following generally useful
-functionality:</p>
-<dl class="class">
-<dt class="dylan-api" id="dylan:extensions:[byte-vector]">
-<code class="descname">&lt;byte-vector&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-vector]" title="Permalink to this definition">¶</a></dt>
-<dd><p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#vector"><code class="xref drm docutils literal"><span class="pre">&lt;vector&gt;</span></code></a> that can only hold integers
-between 0 and 255 inclusively. This class is a temporary addition to
-Mindy to support the requirement that the Streams library export a
-<code class="docutils literal"><span class="pre">&lt;byte-vector&gt;</span></code> definition. When Mindy supports limited collections,
-this may be defined within the Streams library.</p>
-</dd></dl>
-
-<dl class="class">
-<dt class="dylan-api" id="dylan:extensions:[byte-character]">
-<code class="descname">&lt;byte-character&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-character]" title="Permalink to this definition">¶</a></dt>
-<dd><p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>. Characters of this type
-represent the ASCII character set (or extensions to ASCII). Note, in
-Mindy the <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a> class is equivalent to unicode characters.</p>
-</dd></dl>
-
-<dl class="generic-function">
-<dt class="dylan-api" id="dylan:extensions:main">
-<code class="descname">main</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:main" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>invocation-name</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#byte-string"><code class="xref drm docutils literal"><span class="pre">&lt;byte-string&gt;</span></code></a>.</li>
-<li><strong>arguments</strong> (<em>#rest</em>) &#8211; </li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Has no methods, but is called by Mindy when it starts up. To make a
-standalone program, you define a method on main that does whatever you
-want it to do. <em>Invocation-name</em> is the first token on the command line
-that invoked Mindy. <em>Arguments</em> is a sequence of strings. There is a
-string in <em>arguments</em> for every argument on the command line that
-invoked Mindy, except all -f switches and the argument following each -f
-switch (that is, the file to load) is missing. Remember that any module
-that adds a method to main must use the Extensions module from the Dylan
-library.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<p><strong>one-of</strong> [Function]</p>
-<p>Arguments</p>
-<p>#rest objects :: &lt;object&gt;</p>
-<p>Values</p>
-<p>type :: &lt;type&gt;</p>
-<p>Description</p>
-<p>This function takes any number of objects, and returns the type that
-is the type-union of the singletons of those objects. For example, the
-expression</p>
-<div class="highlight-python"><div class="highlight"><pre>one-of(#&quot;foo&quot;, #&quot;bar&quot;, #&quot;baz&quot;)
-</pre></div>
-</div>
-<p>is equivalent to</p>
-<div class="highlight-python"><div class="highlight"><pre>type-union(singleton(#&quot;foo&quot;), singleton(#&quot;bar&quot;), singleton(#&quot;baz&quot;))
-</pre></div>
-</div>
-<p><strong>false-or</strong> [Function]</p>
-<p>Arguments</p>
-<p>#rest objects :: &lt;object&gt;</p>
-<p>Values</p>
-<p>type :: &lt;type&gt;</p>
-<p>Description</p>
-<p>This function is useful in type expressions. It captures the common
-idiom of returning an instance of a particular type or the value #f. The
-expression</p>
-<div class="highlight-python"><div class="highlight"><pre>false-or(&lt;integer&gt;)
-</pre></div>
-</div>
-<p>is equivalent to the expression</p>
-<div class="highlight-python"><div class="highlight"><pre>type-union(&lt;integer&gt;, singleton(#f))
-</pre></div>
-</div>
-<p><strong>load</strong> [Function]</p>
-<p>Arguments</p>
-<p>name :: &lt;byte-string&gt;</p>
-<p>Values</p>
-<p>none</p>
-<p>Description</p>
-<p>This function takes the name of a .dbc file and loads the code in the
-file into Mindy as if the file had been specified on the command line to
-Mindy. There is one exception: you can only load code that defines new
-variables or adds methods. You cannot redefine existing definitions.</p>
-<p><strong>load-library</strong> [Function]</p>
-<p>Arguments</p>
-<p>name :: &lt;symbol&gt;</p>
-<p>Values</p>
-<p>none</p>
-<p>Description</p>
-<p>This function takes a library name and loads the code for the library
-into Mindy as if the library was used by another library.</p>
-</div>
-<div class="section" id="debugger-customizations">
-<h3>Debugger Customizations<a class="headerlink" href="#debugger-customizations" title="Permalink to this headline">¶</a></h3>
-<p>The debugger uses the function <strong>report-condition</strong> to print conditions
-as error messages to users; for example, this is the function that
-implements the %S format-string directive for conditions. The debugger
-also uses the <strong>format</strong> function exported from the Cheap-io module to
-process format strings, and it prints directly to the Unix stdout passed
-to the Mindy process. If any library that you load into Mindy uses the
-Debugger-format library, then the debugger uses <strong>format</strong> from the
-Format library, which is shipped with Mindy. You can extend how Mindy
-prints conditions, change what formatting function it uses, and direct
-where debugger output goes with the following:</p>
-<p><strong>report-condition</strong> [Generic Function]</p>
-<p>Arguments</p>
-<p>condition :: &lt;condition&gt;</p>
-<p>stream :: &lt;stream&gt;</p>
-<p>Values</p>
-<p>none</p>
-<p>Description</p>
-<p>This is the function Mindy uses to print condition variables as error
-messages to users. The internal <strong>format</strong> function used by Mindy uses
-<strong>report-condition</strong> for condition arguments to the %S format directive.
-The Format library&#8217;s <strong>print-message</strong> method for conditions calls
-<strong>report-condition</strong>.</p>
-<p>If you are writing a module that does no output but still provides
-<strong>report-condition</strong> methods, you should use <strong>condition-format</strong> to
-format output. Using <strong>condition-format</strong>makes your module more
-flexible for users of your module. If you call Mindy&#8217;s internal
-<strong>format</strong>, you&#8217;ll be forced to write to only one destination, Mindy&#8217;s
-stdout, ignoring the <em>stream</em> argument. If you call the Format library&#8217;s
-<strong>format</strong> function, then your module will require the Format, Print,
-and Streams libraries; therefore, users of your module may ultimately
-load these other libraries needlessly. Of course, if you want to make
-use of the extended functionality of the Format library&#8217;s format control
-strings, then you only have one choice anyway, and there&#8217;s no reason to
-use <strong>condition-format</strong>.</p>
-<p><strong>condition-format</strong> [Generic Function]</p>
-<p>Arguments</p>
-<p>stream :: &lt;object&gt;</p>
-<p>control-string :: &lt;string&gt;</p>
-<p>#rest arguments</p>
-<p>Values</p>
-<p>none</p>
-<p>Description</p>
-<p>This function serves as a firewall between the condition system and
-the Streams and Format libraries. Methods on <strong>report-condition</strong> should
-use <strong>condition-format</strong> to do their formatting. Users will generally
-use <strong>*debug-output*</strong> or <strong>*warning-output*</strong> for the <em>stream</em>
-argument, but this is not required.</p>
-<p>Mindy supplies a method for when <em>stream</em> is #&#8221;Cheap-IO&#8221;. The Gwydion
-Format library supplies a method for when <em>stream</em> is a subclass of
-<strong>&lt;stream&gt;</strong>. If you are implementing your own streams or format
-libraries, you will need to define a method on <strong>condition-format</strong> for
-your type of stream.</p>
-<p><strong>condition-force-output</strong>[Generic Function]</p>
-<p>Arguments</p>
-<p>stream :: &lt;object&gt;</p>
-<p>Values</p>
-<p>none</p>
-<p>Description</p>
-<p><strong>Condition-force-output</strong> forces any pending output from <em>stream</em>&#8216;s
-buffer to <em>stream</em>&#8216;s destination. This function is invoked by the
-debugger after a condition has been reported and before it pauses for
-user input. Unless you are writing a debugger, you do not need to call
-<strong>condition-force-output</strong> yourself.</p>
-<p>Mindy supplies a method for when <em>stream</em> is #&#8221;Cheap-IO&#8221;. The Gwydion
-Format library supplies a method for when <em>stream</em> is a subclass of
-<strong>&lt;stream&gt;</strong>. If you are implementing your own streams or format
-libraries, you will need to define a method on
-<strong>condition-force-output</strong> for your type of stream.</p>
-<p><strong>*debug-output*</strong> [Variable]
-<strong>*warning-output*</strong> [Variable]</p>
-<p>The debugger uses the value of <strong>*debug-output*</strong> when performing
-output. <strong>Default-handler</strong> for <strong>&lt;warning&gt;</strong> uses
-<strong>*warning-output*</strong> to print warning messages. Both variables must be
-either a <strong>&lt;stream&gt;</strong> from the Streams library, or #&#8221;Cheap-IO&#8221; (the
-default). When these variables are #&#8221;Cheap-IO&#8221;, the output goes to
-stderr.</p>
-<p>Using the Debugger-format module in the Format library will set both
-variables to <strong>*standard-output*</strong> (see <a class="reference internal" href="#streams-library">Streams Library</a>).</p>
-</div>
-<div class="section" id="tables">
-<h3>Tables<a class="headerlink" href="#tables" title="Permalink to this headline">¶</a></h3>
-<p>The Extensions module exports the following <strong>&lt;table&gt;</strong> subclasses:</p>
-<p><strong>&lt;equal-table&gt;</strong> [Class]</p>
-<p>This class is a subclass of <strong>&lt;table&gt;</strong> that uses the <strong>\=</strong> function
-to compare keys and the <strong>equal-hash</strong> function to generate hash codes.
-If you define your own classes and <strong>\=</strong> methods specialized on those
-classes, then you should define a method for the <strong>equal-hash</strong> function
-specialized to your classes (see <code class="xref dylan dylan-gf docutils literal"><span class="pre">equal-hash</span></code>).</p>
-<p><strong>&lt;value-table&gt;</strong> [Abstract Class]</p>
-<p>This class is a subclass of <strong>&lt;table&gt;</strong>. Users can define subclasses
-of this class and provide a method for <strong>tableprotocol</strong> that is
-specialized to their new subclass. Any subclass of <strong>&lt;value-table&gt;</strong>
-must use a hash function that never uses an object&#8217;s identity (that is,
-its location in the heap) as a means of computing a hash ID. These
-tables are specifically designed to save overhead in testing hash states
-and whether the table needs to be rehashed after garbage collections.
-The second value of the hash function should always be
-<strong>$permanenthashstate</strong>. For example:</p>
-<div class="highlight-python"><div class="highlight"><pre>define class &lt;my-table&gt; (&lt;value-table&gt;)
-end class;
-
-define method table-protocol (table :: &lt;my-table&gt;)
-  values(\=, string-hash);
-end method;
-</pre></div>
-</div>
-<p><strong>&lt;string-table&gt;</strong> [Class]</p>
-<p>This class is a subclass of <strong>&lt;value-table&gt;</strong>. It is a table that has
-<a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>s for keys (compared with <strong>\=</strong>) and <strong>&lt;object&gt;</strong>s for
-elements. It is an error to use a key that is not a <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>.</p>
-<p>The Extensions module exports the following functions to make it easier
-for users to use <strong>&lt;equal-table&gt;</strong>s and <strong>&lt;valuetable&gt;</strong>s:</p>
-<p><strong>equal-hash</strong> [Generic Function]</p>
-<p>Arguments</p>
-<p>key :: &lt;object&gt;</p>
-<p>Values</p>
-<p>hash-id :: &lt;integer&gt;</p>
-<p>hash-state :: &lt;object&gt;</p>
-<p>Description</p>
-<p>This function returns a hash ID and hash state for use with
-<strong>&lt;equal-table&gt;</strong>s. If you define your own classes and <strong>\=</strong> methods
-specialized on those classes, then you should define a method for the
-<strong>equal-hash</strong> function specialized to your classes. Specialized methods
-exist for <strong>&lt;number&gt;</strong>, <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>, <strong>&lt;function&gt;</strong>, <strong>&lt;symbol&gt;</strong>,
-and <strong>&lt;collection&gt;</strong>. The method for <strong>&lt;object&gt;</strong> returns the integer 42
-and <strong>$permanent-hash-state</strong>. This function may use an object&#8217;s
-identity (that is, its location in the heap) to produce a hash ID.</p>
-<p><strong>collection-hash</strong> [Function]</p>
-<p>Arguments</p>
-<p>collection :: &lt;collection&gt;</p>
-<p>key-hash-function :: &lt;function&gt;</p>
-<p>elt-hash-function :: &lt;function&gt;)</p>
-<p>Values</p>
-<p>hash-id :: &lt;integer&gt;</p>
-<p>hash-state :: &lt;object&gt;</p>
-<p>Description</p>
-<p>This function hashes every element of <em>collection</em> using
-<em>key-hash-function</em> on the keys and <em>element-hash-function</em> on the
-elements. Note, though two sequences may be equal according to the
-<strong>\=</strong> function, <strong>sequence-hash</strong> and <strong>collection-hash</strong> may return
-different hash codes for the sequences.</p>
-<p><strong>sequence-hash</strong> [Function]</p>
-<p>Arguments</p>
-<p>sequence :: &lt;sequence&gt;</p>
-<p>elt-hash-function :: &lt;function&gt;</p>
-<p>Values</p>
-<p>hash-id :: &lt;integer&gt;</p>
-<p>hash-state :: &lt;object&gt;</p>
-<p>Description</p>
-<p>This function hashes every element of <em>sequence</em> using
-<em>elt-hash-function</em>, merging the resulting hash codes in order. Note,
-though two sequences may be equal according to the <strong>\=</strong> function,
-s<strong>equence-hash</strong> and <strong>collection-hash</strong> may return different hash
-codes for the sequences.</p>
-<p><strong>string-hash</strong> [Function]</p>
-<p>Arguments</p>
-<p>string :: &lt;string&gt;</p>
-<p>Values</p>
-<p>hash-id :: &lt;integer&gt;</p>
-<p>hash-state :: &lt;object&gt;</p>
-<p>Description</p>
-<p>This function calls produces hash codes for strings without using the
-strings&#8217; identities. This function is suitable for use with
-<strong>&lt;value-table&gt;</strong>s.</p>
-<p><strong>value-hash</strong> [Generic Function]</p>
-<p>Arguments</p>
-<p>object :: &lt;object&gt;</p>
-<p>Values</p>
-<p>hash-id :: &lt;integer&gt;</p>
-<p>hash-state :: &lt;object&gt;</p>
-<p>Description</p>
-<p>This function produces hash codes for objects without using the
-objects&#8217; identities. This function is suitable for use with
-<strong>&lt;value-table&gt;</strong>s. Mindy provides methods specialized for the
-following types: <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>, <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>,
-<a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>, <strong>&lt;symbol&gt;</strong>, singleton(#t), and singleton(#f).</p>
-</div>
-<div class="section" id="exiting-applications">
-<h3>Exiting Applications<a class="headerlink" href="#exiting-applications" title="Permalink to this headline">¶</a></h3>
-<p>The Extensions module exports the following functionality for
-controlling the exiting of applications:</p>
-<dl class="function">
-<dt class="dylan-api" id="dylan:extensions:exit">
-<code class="descname">exit</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:exit" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>exit-code</strong> (<em>#key</em>) &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>. Default: <code class="docutils literal"><span class="pre">0</span></code>.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Causes the process to exit. Mindy calls this function when there is no
-code left to execute. Mindy will exit with the return code <em>exit-code</em>.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt class="dylan-api" id="dylan:extensions:on-exit">
-<code class="descname">on-exit</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:on-exit" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>function</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#function"><code class="xref drm docutils literal"><span class="pre">&lt;function&gt;</span></code></a>.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
-<li><strong>meaningless</strong> &#8211; An instance of <code class="docutils literal"><span class="pre">singleton(#f)</span></code>.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Arranges for the <a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> function to call the argument <em>function</em>.
-The argument <em>function</em> must take no required arguments. Users may call
-<a class="reference internal" href="#dylan:extensions:on-exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">on-exit</span></code></a> multiple times to install more than one function for
-<a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> to call, but the order in which <a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> invokes the
-functions is undefined. Calling <a class="reference internal" href="#dylan:extensions:on-exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">on-exit</span></code></a> on the same function
-repeatedly, installs that function multiple times.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</div>
-<div class="section" id="weak-pointers">
-<h3>Weak Pointers<a class="headerlink" href="#weak-pointers" title="Permalink to this headline">¶</a></h3>
-<p>The Extensions module exports the following weak-pointer functionality:</p>
-<p><strong>&lt;weak-pointer&gt;</strong> [Class]</p>
-<p>This class is a subclass of <strong>&lt;object&gt;</strong>. The <strong>make</strong> method for this
-class takes the keyword parameter <em>object:</em>. Instances of
-<strong>&lt;weak-pointer&gt;</strong> refer to the object passed to the <strong>make</strong> method as
-long as some other reference to the object exists. Whenever an instance
-of <strong>&lt;weak-pointer&gt;</strong> is the only reference to an object, and a garbage
-collection occurs, then Mindy considers the object to be garbage. When
-Mindy garbage collects an object referred to by a weak pointer, then
-Mindy marks the weak pointer as being <em>broken</em> (see the
-<strong>weak-pointer-object</strong> function).</p>
-<p><strong>weak-pointer-object</strong> [Function]</p>
-<p>Arguments</p>
-<p>wp :: &lt;weak-pointer&gt;</p>
-<p>Values</p>
-<p>object :: &lt;object&gt;</p>
-<p>broken? :: &lt;boolean&gt;</p>
-<p>Description</p>
-<p>Returns the object referred to by the weak pointer and whether the
-weak pointer is <em>broken</em>. A weak pointer is broken when it contains the
-only reference to an object, and in this situation,
-<strong>weak-pointer-object</strong> returns the values #f and #t.</p>
-</div>
-<div class="section" id="collections">
-<h3>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h3>
-<p>The Extensions module exports the following <strong>&lt;collection&gt;</strong>
-functionality:</p>
-<p><strong>key-exists?</strong> [Generic Function]</p>
-<p>Arguments</p>
-<p>collection :: &lt;collection&gt;</p>
-<p>key :: &lt;object&gt;</p>
-<p>Values</p>
-<p>win? :: &lt;boolean&gt;</p>
-<p>ele :: &lt;object&gt;</p>
-<p>Description</p>
-<p>Return whether <em>key</em> is in <em>collection</em>. If the key is in the
-collection, then the second value is the element associated with <em>key</em>;
-otherwise, the second return value is #f.</p>
-</div>
-<div class="section" id="integers">
-<h3>Integers<a class="headerlink" href="#integers" title="Permalink to this headline">¶</a></h3>
-<p>Mindy has an abstract class <strong>&lt;general-integer&gt;</strong> which has two concrete
-classes, <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and <strong>&lt;extended-integer&gt;</strong>. Both concrete classes
-are direct subclasses of <strong>&lt;general-integer&gt;</strong>. <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>s have a
-limited range of values, and <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> arithmetic uses the
-computer&#8217;s underlying integer facilities. <strong>&lt;extended-integer&gt;</strong>s can
-take on any value, and are similar to Common Lisp &#8220;big-nums.&#8221;
-Expressions involving <strong>&lt;extended-integer&gt;</strong>s produce
-<strong>&lt;extendedinteger&gt;</strong> results because <strong>&lt;extended-integer&gt;</strong>s are
-contagious. If an expression involving only <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> values would
-produce a result that does not fit in an <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, then Mindy
-signals an overflow error. You can use the <strong>as</strong> function to convert
-back and forth between <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>s and <strong>&lt;extended-integer&gt;</strong>s.
-<strong>As</strong> signals an error when converting an <strong>&lt;extended-integer&gt;</strong> to a
-<a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, and the value does not fit in a <strong>&lt;integer&gt;</strong>.</p>
-<p>Mindycomp parses all integer literals as <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>s. If a literal
-does not fit in a <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, then mindycomp issues a compiler error.
-Though the compiler supports no literal syntax for
-<strong>&lt;extended-integer&gt;</strong>s, the Mindy debugger prints them in a #eDDD...
-format where each D is a decimal digit.</p>
-<p>The Extension module exports the following integer functionality:</p>
-<p><strong>&lt;general-integer&gt;</strong> [Abstract Class]
-<strong>&lt;extended-integer&gt;</strong> [Class]</p>
-<p><strong>&lt;general-integer&gt;</strong> is a subclass of <strong>&lt;rational&gt;</strong>, and is the
-superclass of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and <strong>&lt;extended-integer&gt;</strong>.</p>
-<p><strong>$maximum-integer</strong> [Constant]</p>
-<p><strong>$minimum-integer</strong> [Constant]</p>
-<p>These constants hold the largest positive <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and the
-largest negative <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</p>
-</div>
-<div class="section" id="ratios">
-<h3>Ratios<a class="headerlink" href="#ratios" title="Permalink to this headline">¶</a></h3>
-<p>The Extensions module exports the following:</p>
-<p><strong>&lt;ratio&gt;</strong>[Class]</p>
-<p>This class is a subclass of &lt;rational&gt;. The ratio is normalized so
-that it has a positive denominator, and the greatest common divisor of
-the numerator and the denominator is one. Ratios are never automatically
-converted to integers. For example, ratio(4,2) would return 2/1.</p>
-<p>A numeric operation involving two ratios produces a normalized ratio
-result. A numeric operation involving a ratio and an integer produced a
-normalized ratio result. A numeric operation involving a ratio and a
-float produces a float result.</p>
-<p><strong>ratio</strong> [Function]</p>
-<p>Arguments</p>
-<p>numerator :: &lt;general-integer&gt;</p>
-<p>denominator :: &lt;general-integer&gt;</p>
-<p>Values</p>
-<p>ratio :: &lt;ratio&gt;</p>
-<p>Description</p>
-<p>This function makes a ratio from the two integers.</p>
-<p><strong>numerator</strong> [Function]</p>
-<p>Arguments</p>
-<p>ratio :: &lt;ratio&gt;</p>
-<p>Values</p>
-<p>the-numerator :: &lt;general-integer&gt;</p>
-<p>Description</p>
-<p>This function returns the numerator part of <em>ratio</em>.</p>
-<p><strong>denominator</strong> [Function]</p>
-<p>Arguments</p>
-<p>ratio :: &lt;ratio&gt;</p>
-<p>Values</p>
-<p>the-numerator :: &lt;general-integer&gt;</p>
-<p>Description</p>
-<p>This function returns the denominator part of <em>ratio</em>.</p>
-</div>
 </div>
 <div class="section" id="the-system-module">
 <h2>The System Module<a class="headerlink" href="#the-system-module" title="Permalink to this headline">¶</a></h2>
@@ -2023,7 +1565,7 @@ make(&lt;fd-stream&gt;, fd: 2, direction: #&quot;output&quot;)
 <h2>Miscellaneous Implementation Choices<a class="headerlink" href="#miscellaneous-implementation-choices" title="Permalink to this headline">¶</a></h2>
 <p>The <strong>error</strong>method specialized on <strong>&lt;byte-string&gt;</strong> applies the
 <strong>format</strong> function to the arguments passed to <strong>error</strong>. See
-<a class="reference internal" href="#the-extensions-module">The Extensions Module</a> for the details of
+<a class="reference internal" href="extensions.html#the-extensions-module"><span>The Extensions Module</span></a> for the details of
 <strong>format</strong> from the Cheap-io module of the Dylan library. See
 $INSTALL/doc/libraries/format.{ps,txt} for the details of <strong>format</strong>
 from the Format library.</p>

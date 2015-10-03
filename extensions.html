@@ -87,7 +87,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#the-extensions-module">The Extensions Module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generally-useful-definitions">Generally Useful Definitions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#debugger-customizations">Debugger Customizations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tables">Tables</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#exiting-applications">Exiting Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#weak-pointers">Weak Pointers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#integers">Integers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#ratios">Ratios</a></li>
@@ -272,14 +274,14 @@ Some features currently supported include:</p>
 variety of modules which provide extensions. Gwydion compilers export
 the following modules from the Dylan library:</p>
 <ul class="simple">
-<li><a class="reference internal" href="#the-extensions-module">The Extensions Module</a></li>
+<li><a class="reference internal" href="#id1">The Extensions Module</a></li>
 <li><a class="reference internal" href="#the-system-module">The System Module</a></li>
 <li><a class="reference internal" href="#the-introspection-module">The Introspection Module</a></li>
 <li><a class="reference internal" href="#the-cheap-io-module">The Cheap-io Module</a></li>
 </ul>
 </div>
 <div class="section" id="the-extensions-module">
-<h2>The Extensions Module<a class="headerlink" href="#the-extensions-module" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>The Extensions Module<a class="headerlink" href="#the-extensions-module" title="Permalink to this headline">¶</a></h2>
 <p>Ultimately, there will be several, more logically separate libraries
 that extend Dylan or provide an application framework for users. For
 now, we put any commonly used utilities in the Extensions module.</p>
@@ -287,20 +289,56 @@ now, we put any commonly used utilities in the Extensions module.</p>
 <h3>Generally Useful Definitions<a class="headerlink" href="#generally-useful-definitions" title="Permalink to this headline">¶</a></h3>
 <p>The Extensions module exports the following generally useful
 functionality:</p>
-<dl class="class">
-<dt class="dylan-api" id="dylan:extensions:[byte-vector]">
-<code class="descname">&lt;byte-vector&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-vector]" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="class">
-<dt class="dylan-api" id="dylan:extensions:[byte-character]">
-<code class="descname">&lt;byte-character&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-character]" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="function">
 <dt class="dylan-api" id="dylan:extensions:assert">
 <code class="descname">assert</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:assert" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[byte-vector]">
+<code class="descname">&lt;byte-vector&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-vector]" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#vector"><code class="xref drm docutils literal"><span class="pre">&lt;vector&gt;</span></code></a> that can only hold integers
+between 0 and 255 inclusively. This class is a temporary addition to
+Mindy to support the requirement that the Streams library export a
+<code class="docutils literal"><span class="pre">&lt;byte-vector&gt;</span></code> definition. When Mindy supports limited collections,
+this may be defined within the Streams library.</p>
+</dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[byte-character]">
+<code class="descname">&lt;byte-character&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[byte-character]" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>. Characters of this type
+represent the ASCII character set (or extensions to ASCII). Note, in
+Mindy the <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a> class is equivalent to unicode characters.</p>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="dylan:extensions:main">
+<code class="descname">main</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:main" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>invocation-name</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#byte-string"><code class="xref drm docutils literal"><span class="pre">&lt;byte-string&gt;</span></code></a>.</li>
+<li><strong>arguments</strong> (<em>#rest</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Has no methods, but is called by Mindy when it starts up. To make a
+standalone program, you define a method on main that does whatever you
+want it to do. <em>Invocation-name</em> is the first token on the command line
+that invoked Mindy. <em>Arguments</em> is a sequence of strings. There is a
+string in <em>arguments</em> for every argument on the command line that
+invoked Mindy, except all -f switches and the argument following each -f
+switch (that is, the file to load) is missing. Remember that any module
+that adds a method to main must use the Extensions module from the Dylan
+library.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt class="dylan-api" id="dylan:extensions:one-of">
@@ -309,13 +347,27 @@ functionality:</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><div class="highlight-dylan"><div class="highlight"><pre><span class="nb">one-of</span><span class="p">(</span><span class="ss">#&quot;foo&quot;</span><span class="p">,</span> <span class="ss">#&quot;bar&quot;</span><span class="p">,</span> <span class="ss">#&quot;baz&quot;</span><span class="p">)</span>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>objects</strong> (<em>#rest</em>) &#8211; A sequence of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>type</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Type_Classes#type"><code class="xref drm docutils literal"><span class="pre">&lt;type&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last"><p>This function takes any number of objects, and returns the type that
+is the type-union of the singletons of those objects. For example, the
+expression</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="nb">one-of</span><span class="p">(</span><span class="ss">#&quot;foo&quot;</span><span class="p">,</span> <span class="ss">#&quot;bar&quot;</span><span class="p">,</span> <span class="ss">#&quot;baz&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>is the same as:</p>
+<p>is equivalent to</p>
 <div class="highlight-dylan"><div class="highlight"><pre><span class="nb">type-union</span><span class="p">(</span><span class="nb">singleton</span><span class="p">(</span><span class="ss">#&quot;foo&quot;</span><span class="p">),</span> <span class="nb">singleton</span><span class="p">(</span><span class="ss">#&quot;bar&quot;</span><span class="p">),</span> <span class="nb">singleton</span><span class="p">(</span><span class="ss">#&quot;baz&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
+</p>
 </td>
 </tr>
 </tbody>
@@ -325,18 +377,82 @@ functionality:</p>
 <dl class="function">
 <dt class="dylan-api" id="dylan:extensions:false-or">
 <code class="descname">false-or</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:false-or" title="Permalink to this definition">¶</a></dt>
-<dd><div class="highlight-dylan"><div class="highlight"><pre><span class="nb">false-or</span><span class="p">(</span><span class="nc">&lt;integer&gt;</span><span class="p">)</span>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>objects</strong> (<em>#rest</em>) &#8211; A sequence of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>type</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Type_Classes#type"><code class="xref drm docutils literal"><span class="pre">&lt;type&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last"><p>This function is useful in type expressions. It captures the common
+idiom of returning an instance of a particular type or the value #f. The
+expression</p>
+<div class="highlight-dylan"><div class="highlight"><pre><span class="nb">false-or</span><span class="p">(</span><span class="nc">&lt;integer&gt;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>is the same as:</p>
+<p>is equivalent to the expression</p>
 <div class="highlight-dylan"><div class="highlight"><pre><span class="nb">type-union</span><span class="p">(</span><span class="nc">&lt;integer&gt;</span><span class="p">,</span> <span class="nb">singleton</span><span class="p">(</span><span class="l">#f</span><span class="p">))</span>
 </pre></div>
 </div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:load">
+<code class="descname">load</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:load" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#byte-string"><code class="xref drm docutils literal"><span class="pre">&lt;byte-string&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function takes the name of a <code class="docutils literal"><span class="pre">.dbc</span></code> file and loads the code in the
+file into Mindy as if the file had been specified on the command line to
+Mindy. There is one exception: you can only load code that defines new
+variables or adds methods. You cannot redefine existing definitions.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:load-library">
+<code class="descname">load-library</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:load-library" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#symbol"><code class="xref drm docutils literal"><span class="pre">&lt;symbol&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function takes a library name and loads the code for the library
+into Mindy as if the library was used by another library.</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
 <div class="section" id="debugger-customizations">
-<h3>Debugger Customizations<a class="headerlink" href="#debugger-customizations" title="Permalink to this headline">¶</a></h3>
+<span id="id2"></span><h3>Debugger Customizations<a class="headerlink" href="#debugger-customizations" title="Permalink to this headline">¶</a></h3>
 <p>(A note on terminology: We use the term &#8220;debugger&#8221; here in the loose,
 Dylan sense of anything that handles an uncaught error. In Mindy, this
 debugger is indeed a full fledged debugger, but in other Gwydion
@@ -354,22 +470,347 @@ debugger output goes with the following:</p>
 <dl class="generic-function">
 <dt class="dylan-api" id="dylan:extensions:report-condition">
 <code class="descname">report-condition</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:report-condition" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>condition</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Condition_Classes#condition"><code class="xref drm docutils literal"><span class="pre">&lt;condition&gt;</span></code></a>.</li>
+<li><strong>stream</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/&lt;stream&gt;"><code class="xref drm docutils literal"><span class="pre">&lt;stream&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last"><p>This is the function Mindy uses to print condition variables
+as error messages to users. The internal <a class="reference internal" href="#dylan:cheap-io:format"><code class="xref dylan dylan-func docutils literal"><span class="pre">format</span></code></a>
+function used by Mindy uses <a class="reference internal" href="#dylan:extensions:report-condition"><code class="xref dylan dylan-gf docutils literal"><span class="pre">report-condition</span></code></a> for
+condition arguments to the <code class="docutils literal"><span class="pre">%S</span></code> format directive.
+The <code class="docutils literal"><span class="pre">Format</span></code> library&#8217;s <code class="xref dylan dylan-gf docutils literal"><span class="pre">print-message</span></code> method for
+conditions calls <a class="reference internal" href="#dylan:extensions:report-condition"><code class="xref dylan dylan-gf docutils literal"><span class="pre">report-condition</span></code></a>.</p>
+<p>If you are writing a module that does no output but still
+provides <a class="reference internal" href="#dylan:extensions:report-condition"><code class="xref dylan dylan-gf docutils literal"><span class="pre">report-condition</span></code></a> methods, you should use
+<a class="reference internal" href="#dylan:extensions:condition-format"><code class="xref dylan dylan-gf docutils literal"><span class="pre">condition-format</span></code></a> to format output. Using
+<a class="reference internal" href="#dylan:extensions:condition-format"><code class="xref dylan dylan-gf docutils literal"><span class="pre">condition-format</span></code></a> makes your module more flexible for
+users of your module. If you call Mindy&#8217;s internal
+<a class="reference internal" href="#dylan:cheap-io:format"><code class="xref dylan dylan-func docutils literal"><span class="pre">format</span></code></a>, you&#8217;ll be forced to write to only one destination,
+Mindy&#8217;s <code class="docutils literal"><span class="pre">stdout</span></code>, ignoring the <em>stream</em> argument. If you call
+the <code class="docutils literal"><span class="pre">Format</span></code> library&#8217;s <a class="reference internal" href="#dylan:cheap-io:format"><code class="xref dylan dylan-func docutils literal"><span class="pre">format</span></code></a> function, then your
+module will require the <code class="docutils literal"><span class="pre">Format</span></code>, <code class="docutils literal"><span class="pre">Print</span></code>, and <code class="docutils literal"><span class="pre">Streams</span></code>
+libraries; therefore, users of your module may ultimately
+load these other libraries needlessly. Of course, if you want
+to make use of the extended functionality of the <code class="docutils literal"><span class="pre">Format</span></code>
+library&#8217;s format control strings, then you only have one
+choice anyway, and there&#8217;s no reason to use <a class="reference internal" href="#dylan:extensions:condition-format"><code class="xref dylan dylan-gf docutils literal"><span class="pre">condition-format</span></code></a>.</p>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="generic-function">
 <dt class="dylan-api" id="dylan:extensions:condition-format">
 <code class="descname">condition-format</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:condition-format" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>stream</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+<li><strong>control-string</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>.</li>
+<li><strong>arguments</strong> (<em>#rest</em>) &#8211; Additional arguments.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last"><p>This function serves as a firewall between the condition system
+and the <code class="docutils literal"><span class="pre">Streams</span></code> and <code class="docutils literal"><span class="pre">Format</span></code> libraries. Methods on
+<a class="reference internal" href="#dylan:extensions:report-condition"><code class="xref dylan dylan-gf docutils literal"><span class="pre">report-condition</span></code></a> should use <a class="reference internal" href="#dylan:extensions:condition-format"><code class="xref dylan dylan-gf docutils literal"><span class="pre">condition-format</span></code></a> to do
+their formatting. Users will generally use <code class="xref dylan dylan-var docutils literal"><span class="pre">*debug-output*`</span></code>
+or <a class="reference internal" href="#dylan:extensions:*warning-output*"><code class="xref dylan dylan-var docutils literal"><span class="pre">*warning-output*</span></code></a> for the <em>stream</em> argument, but this
+is not required.</p>
+<p>Mindy supplies a method for when <em>stream</em> is <code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code>. The
+Gwydion <code class="docutils literal"><span class="pre">Format</span></code> library supplies a method for when <em>stream</em>
+is a subclass of <code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;stream&gt;</span></code>. If you are implementing your
+own streams or format libraries, you will need to define a method
+on <a class="reference internal" href="#dylan:extensions:condition-format"><code class="xref dylan dylan-gf docutils literal"><span class="pre">condition-format</span></code></a> for your type of stream.</p>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="generic-function">
 <dt class="dylan-api" id="dylan:extensions:condition-force-output">
 <code class="descname">condition-force-output</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:condition-force-output" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>stream</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last"><p><a class="reference internal" href="#dylan:extensions:condition-force-output"><code class="xref dylan dylan-gf docutils literal"><span class="pre">condition-force-output</span></code></a> forces any pending output from
+<em>stream</em>&#8216;s buffer to <em>stream</em>&#8216;s destination. This function
+is invoked by the debugger after a condition has been reported
+and before it pauses for user input. Unless you are writing
+a debugger, you do not need to call <a class="reference internal" href="#dylan:extensions:condition-force-output"><code class="xref dylan dylan-gf docutils literal"><span class="pre">condition-force-output</span></code></a>
+yourself.</p>
+<p>Mindy supplies a method for when <em>stream</em> is <code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code>. The
+Gwydion <code class="docutils literal"><span class="pre">Format</span></code> library supplies a method for when <em>stream</em>
+is a subclass of <code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;stream&gt;</span></code>. If you are implementing your
+own streams or format libraries, you will need to define a method on
+<a class="reference internal" href="#dylan:extensions:condition-force-output"><code class="xref dylan dylan-gf docutils literal"><span class="pre">condition-force-output</span></code></a> for your type of stream.</p>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="variable">
+<dt class="dylan-api" id="dylan:extensions:*debug-output*">
+<code class="descname">*debug-output*</code> <em class="property">Variable</em><a class="headerlink" href="#dylan:extensions:*debug-output*" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="variable">
 <dt class="dylan-api" id="dylan:extensions:*warning-output*">
 <code class="descname">*warning-output*</code> <em class="property">Variable</em><a class="headerlink" href="#dylan:extensions:*warning-output*" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The debugger uses the value of <a class="reference internal" href="#dylan:extensions:*debug-output*"><code class="xref dylan dylan-var docutils literal"><span class="pre">*debug-output*</span></code></a> when performing
+output. <a class="reference external" href="http://opendylan.org/books/drm/Operations_on_Conditions#default-handler"><code class="xref drm docutils literal"><span class="pre">default-handler</span></code></a> for <a class="reference external" href="http://opendylan.org/books/drm/Condition_Classes#warning"><code class="xref drm docutils literal"><span class="pre">&lt;warning&gt;</span></code></a> uses
+<a class="reference internal" href="#dylan:extensions:*warning-output*"><code class="xref dylan dylan-var docutils literal"><span class="pre">*warning-output*</span></code></a> to print warning messages. Both variables
+must be either a <code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;stream&gt;</span></code> from the <code class="docutils literal"><span class="pre">Streams</span></code> library,
+or <code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code> (the default). When these variables are
+<code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code>, the output goes to <code class="docutils literal"><span class="pre">stderr</span></code>.</p>
+<p>Using the <code class="docutils literal"><span class="pre">Debugger-format</span></code> module in the <code class="docutils literal"><span class="pre">Format</span></code> library
+will set both variables to <code class="xref dylan dylan-var docutils literal"><span class="pre">*standard-output*</span></code> (see
+<code class="docutils literal"><span class="pre">Streams</span></code> Library).</p>
+</dd></dl>
+
+</div>
+<div class="section" id="tables">
+<h3>Tables<a class="headerlink" href="#tables" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following <strong>&lt;table&gt;</strong> subclasses:</p>
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[equal-table]">
+<code class="descname">&lt;equal-table&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[equal-table]" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#table"><code class="xref drm docutils literal"><span class="pre">&lt;table&gt;</span></code></a> that uses the <a class="reference external" href="http://opendylan.org/books/drm/ ="><code class="xref drm docutils literal"><span class="pre"> =</span></code></a>
+function to compare keys and the <a class="reference internal" href="#dylan:extensions:equal-hash"><code class="xref dylan dylan-gf docutils literal"><span class="pre">equal-hash</span></code></a> function to
+generate hash codes. If you define your own classes and <code class="docutils literal"><span class="pre">\=</span></code>
+methods specialized on those classes, then you should define
+a method for the <a class="reference internal" href="#dylan:extensions:equal-hash"><code class="xref dylan dylan-gf docutils literal"><span class="pre">equal-hash</span></code></a> function specialized to your
+classes (see <a class="reference internal" href="#dylan:extensions:equal-hash"><code class="xref dylan dylan-gf docutils literal"><span class="pre">equal-hash</span></code></a>).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[value-table]">
+<code class="descname">&lt;value-table&gt;</code> <em class="property">Abstract Class</em><a class="headerlink" href="#dylan:extensions:[value-table]" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/&lt;table&gt;`"><code class="xref drm docutils literal"><span class="pre">&lt;table&gt;`</span></code></a>. Users can define
+subclasses of this class and provide a method for
+<code class="xref dylan dylan-gf docutils literal"><span class="pre">tableprotocol</span></code> that is specialized to their new subclass.
+Any subclass of <a class="reference internal" href="#dylan:extensions:[value-table]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;value-table&gt;</span></code></a> must use a hash function
+that never uses an object&#8217;s identity (that is, its location in
+the heap) as a means of computing a hash ID. These tables are
+specifically designed to save overhead in testing hash states
+and whether the table needs to be rehashed after garbage collections.
+The second value of the hash function should always be
+<a class="reference external" href="http://opendylan.org/books/drm/Other_Built-In_Objects_Defined#permanent-hash-state"><code class="xref drm docutils literal"><span class="pre">$permanent-hash-state</span></code></a>. For example:<div class="highlight-dylan"><div class="highlight"><pre><span class="k">define</span> <span class="nb">class</span> <span class="nc">&lt;my-table&gt;</span> <span class="p">(</span><span class="nc">&lt;value-table&gt;</span><span class="p">)</span>
+<span class="k">end</span> <span class="nb">class</span><span class="p">;</span>
+
+<span class="k">define</span> <span class="nb">method</span> <span class="nb">table-protocol</span> <span class="p">(</span><span class="n">table</span> <span class="p">::</span> <span class="nc">&lt;my-table&gt;</span><span class="p">)</span>
+  <span class="nb">values</span><span class="p">(</span><span class="n">\=</span><span class="p">,</span> <span class="n">string-hash</span><span class="p">);</span>
+<span class="k">end</span> <span class="nb">method</span><span class="p">;</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[string-table]">
+<code class="descname">&lt;string-table&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[string-table]" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">This class is a subclass of <a class="reference internal" href="#dylan:extensions:[value-table]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;value-table&gt;</span></code></a>. It is a table
+that has instances of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>&#8216; for keys (compared with
+<a class="reference external" href="http://opendylan.org/books/drm/ ="><code class="xref drm docutils literal"><span class="pre"> =</span></code></a>) and <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a> for elements. It is an error to
+use a key that is not a <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>The Extensions module exports the following functions to make it easier
+for users to use <a class="reference internal" href="#dylan:extensions:[equal-table]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;equal-table&gt;</span></code></a> and <a class="reference internal" href="#dylan:extensions:[value-table]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;value-table&gt;</span></code></a>:</p>
+<dl class="generic-function">
+<dt class="dylan-api" id="dylan:extensions:equal-hash">
+<code class="descname">equal-hash</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:equal-hash" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>key</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>hash-id</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</li>
+<li><strong>hash-state</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function returns a hash ID and hash state for use with
+<a class="reference internal" href="#dylan:extensions:[equal-table]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;equal-table&gt;</span></code></a>. If you define your own classes and
+<a class="reference external" href="http://opendylan.org/books/drm/ ="><code class="xref drm docutils literal"><span class="pre"> =</span></code></a> methods specialized on those classes, then you
+should define a method for the <a class="reference internal" href="#dylan:extensions:equal-hash"><code class="xref dylan dylan-gf docutils literal"><span class="pre">equal-hash</span></code></a> function
+specialized to your classes. Specialized methods exist for
+<a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#number"><code class="xref drm docutils literal"><span class="pre">&lt;number&gt;</span></code></a>, <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>, <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#function"><code class="xref drm docutils literal"><span class="pre">&lt;function&gt;</span></code></a>,
+<a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#symbol"><code class="xref drm docutils literal"><span class="pre">&lt;symbol&gt;</span></code></a>, and <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#collection"><code class="xref drm docutils literal"><span class="pre">&lt;collection&gt;</span></code></a>. The method for
+<a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a> returns the integer <code class="docutils literal"><span class="pre">42</span></code> and
+<a class="reference external" href="http://opendylan.org/books/drm/Other_Built-In_Objects_Defined#permanent-hash-state"><code class="xref drm docutils literal"><span class="pre">$permanent-hash-state</span></code></a>. This function may use an object&#8217;s
+identity (that is, its location in the heap) to produce a hash ID.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:collection-hash">
+<code class="descname">collection-hash</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:collection-hash" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>collection</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#collection"><code class="xref drm docutils literal"><span class="pre">&lt;collection&gt;</span></code></a>.</li>
+<li><strong>key-hash-function</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#function"><code class="xref drm docutils literal"><span class="pre">&lt;function&gt;</span></code></a>.</li>
+<li><strong>elt-hash-function</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#function"><code class="xref drm docutils literal"><span class="pre">&lt;function&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>hash-id</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</li>
+<li><strong>hash-state</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function hashes every element of <em>collection</em> using
+<em>key-hash-function</em> on the keys and <em>element-hash-function</em>
+on the elements. Note, though two sequences may be equal
+according to the <a class="reference external" href="http://opendylan.org/books/drm/ ="><code class="xref drm docutils literal"><span class="pre"> =</span></code></a> function, <a class="reference internal" href="#dylan:extensions:sequence-hash"><code class="xref dylan dylan-func docutils literal"><span class="pre">sequence-hash</span></code></a>
+and <a class="reference internal" href="#dylan:extensions:collection-hash"><code class="xref dylan dylan-gf docutils literal"><span class="pre">collection-hash</span></code></a> may return different hash codes
+for the sequences.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:sequence-hash">
+<code class="descname">sequence-hash</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:sequence-hash" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sequence</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#sequence"><code class="xref drm docutils literal"><span class="pre">&lt;sequence&gt;</span></code></a>.</li>
+<li><strong>elt-hash-function</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#function"><code class="xref drm docutils literal"><span class="pre">&lt;function&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>hash-id</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</li>
+<li><strong>hash-state</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function hashes every element of <em>sequence</em> using
+<em>elt-hash-function</em>, merging the resulting hash codes
+in order. Note, though two sequences may be equal
+according to the <code class="docutils literal"><span class="pre">\=</span></code> function, <a class="reference internal" href="#dylan:extensions:sequence-hash"><code class="xref dylan dylan-func docutils literal"><span class="pre">sequence-hash</span></code></a>
+and <a class="reference internal" href="#dylan:extensions:collection-hash"><code class="xref dylan dylan-func docutils literal"><span class="pre">collection-hash</span></code></a> may return different hash
+codes for the sequences.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:string-hash">
+<code class="descname">string-hash</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:string-hash" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>string</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>hash-id</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</li>
+<li><strong>hash-state</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function calls produces hash codes for strings
+without using the strings&#8217; identities. This function
+is suitable for use with <a class="reference internal" href="#dylan:extensions:[value-table]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;value-table&gt;</span></code></a>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="dylan:extensions:value-hash">
+<code class="descname">value-hash</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:value-hash" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>object</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>hash-id</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</li>
+<li><strong>hash-state</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function produces hash codes for objects without
+using the objects&#8217; identities. This function is suitable for
+use with <a class="reference internal" href="#dylan:extensions:[value-table]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;value-table&gt;</span></code></a>. Mindy provides methods
+specialized for the following types: <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal"><span class="pre">&lt;string&gt;</span></code></a>,
+<a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>, <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#character"><code class="xref drm docutils literal"><span class="pre">&lt;character&gt;</span></code></a>,
+<a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#symbol"><code class="xref drm docutils literal"><span class="pre">&lt;symbol&gt;</span></code></a>, <code class="docutils literal"><span class="pre">singleton(#t)</span></code>, and <code class="docutils literal"><span class="pre">singleton(#f)</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="exiting-applications">
@@ -379,7 +820,106 @@ controlling the exiting of applications:</p>
 <dl class="function">
 <dt class="dylan-api" id="dylan:extensions:exit">
 <code class="descname">exit</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:exit" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>exit-code</strong> (<em>#key</em>) &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>. Default: <code class="docutils literal"><span class="pre">0</span></code>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Causes the process to exit. Mindy calls this function when there is no
+code left to execute. Mindy will exit with the return code <em>exit-code</em>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:on-exit">
+<code class="descname">on-exit</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:on-exit" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>function</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Function_Classes#function"><code class="xref drm docutils literal"><span class="pre">&lt;function&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>meaningless</strong> &#8211; An instance of <code class="docutils literal"><span class="pre">singleton(#f)</span></code>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Arranges for the <a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> function to call the argument <em>function</em>.
+The argument <em>function</em> must take no required arguments. Users may call
+<a class="reference internal" href="#dylan:extensions:on-exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">on-exit</span></code></a> multiple times to install more than one function for
+<a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> to call, but the order in which <a class="reference internal" href="#dylan:extensions:exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">exit</span></code></a> invokes the
+functions is undefined. Calling <a class="reference internal" href="#dylan:extensions:on-exit"><code class="xref dylan dylan-func docutils literal"><span class="pre">on-exit</span></code></a> on the same function
+repeatedly, installs that function multiple times.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="weak-pointers">
+<h3>Weak Pointers<a class="headerlink" href="#weak-pointers" title="Permalink to this headline">¶</a></h3>
+<p>The Extensions module exports the following weak-pointer functionality:</p>
+<dl class="class">
+<dt class="dylan-api" id="dylan:extensions:[weak-pointer]">
+<code class="descname">&lt;weak-pointer&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[weak-pointer]" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>. The <a class="reference external" href="http://opendylan.org/books/drm/Constructing_and_Initializing_Instances#make"><code class="xref drm docutils literal"><span class="pre">make</span></code></a>
+method for this class takes the keyword parameter <code class="docutils literal"><span class="pre">object:</span></code>.
+Instances of <a class="reference internal" href="#dylan:extensions:[weak-pointer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;weak-pointer&gt;</span></code></a> refer to the object
+passed to the <a class="reference external" href="http://opendylan.org/books/drm/Constructing_and_Initializing_Instances#make"><code class="xref drm docutils literal"><span class="pre">make</span></code></a> method as long as some other
+reference to the object exists. Whenever an instance
+of <a class="reference internal" href="#dylan:extensions:[weak-pointer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;weak-pointer&gt;</span></code></a> is the only reference to an object, and
+a garbage collection occurs, then Mindy considers the object to
+be garbage. When Mindy garbage collects an object referred to
+by a weak pointer, then Mindy marks the weak pointer as being
+<em>broken</em> (see <a class="reference internal" href="#dylan:extensions:weak-pointer-object"><code class="xref dylan dylan-func docutils literal"><span class="pre">weak-pointer-object</span></code></a>).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt class="dylan-api" id="dylan:extensions:weak-pointer-object">
+<code class="descname">weak-pointer-object</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:weak-pointer-object" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>wp</strong> &#8211; An instance of <a class="reference internal" href="#dylan:extensions:[weak-pointer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;weak-pointer&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>object</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+<li><strong>broken?</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#boolean"><code class="xref drm docutils literal"><span class="pre">&lt;boolean&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Returns the object referred to by the weak pointer and whether
+the weak pointer is <em>broken</em>. A weak pointer is broken when
+it contains the only reference to an object, and in this
+situation, <a class="reference internal" href="#dylan:extensions:weak-pointer-object"><code class="xref dylan dylan-func docutils literal"><span class="pre">weak-pointer-object</span></code></a> returns the values
+<code class="docutils literal"><span class="pre">#f</span></code> and <code class="docutils literal"><span class="pre">#t</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="collections">
@@ -389,30 +929,69 @@ functionality:</p>
 <dl class="generic-function">
 <dt class="dylan-api" id="dylan:extensions:key-exists?">
 <code class="descname">key-exists?</code> <em class="property">Generic function</em><a class="headerlink" href="#dylan:extensions:key-exists?" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>collection</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Collection_Classes#collection"><code class="xref drm docutils literal"><span class="pre">&lt;collection&gt;</span></code></a>.</li>
+<li><strong>key</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>win?</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Simple_Object_Classes#boolean"><code class="xref drm docutils literal"><span class="pre">&lt;boolean&gt;</span></code></a>.</li>
+<li><strong>ele</strong> &#8211; An instance of <a class="reference external" href="http://opendylan.org/books/drm/Object_Classes#object"><code class="xref drm docutils literal"><span class="pre">&lt;object&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">Return whether <em>key</em> is in <em>collection</em>. If the key is in the
+collection, then the second value is the element associated
+with <em>key</em>; otherwise, the second return value is <code class="docutils literal"><span class="pre">#f</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="integers">
 <h3>Integers<a class="headerlink" href="#integers" title="Permalink to this headline">¶</a></h3>
-<p>Gwydion compilers have an abstract class <strong>&lt;general-integer&gt;</strong> which has
-two concrete subclasses, <strong>&lt;integer&gt;</strong> and <strong>&lt;extended- integer&gt;</strong>.
-<strong>&lt;integer&gt;</strong>s have a limited range of values, and <strong>&lt;integer&gt;</strong>
-arithmetic uses the computer’s underlying integer facilities.
-<strong>&lt;extended-integer&gt;</strong>s can take on any value, and are similar to
-Common Lisp &#8220;big-nums.&#8221; Expressions involving <strong>&lt;extended-integer&gt;</strong>s
-produce <strong>&lt;extended - integer&gt;</strong> results because
-<strong>&lt;extended-integer&gt;</strong>s are contagious. If an expression involving
-only <strong>&lt;integer&gt;</strong> values would produce a result that does not fit in an
-<strong>&lt;integer&gt;</strong>, then the Gwydion compiler will signal an overflow error.
-You can use the <strong>as</strong> function to convert back and forth between
-<strong>&lt;integer&gt;</strong>s and <strong>&lt;extended- integer&gt;</strong>s. <strong>As</strong> signals an
-error when converting an <strong>&lt;extended-integer&gt;</strong> to a <strong>&lt;integer&gt;</strong>, and
-the value does not fit in a <strong>&lt;integer&gt;</strong>.</p>
+<p>Mindy has an abstract class <a class="reference internal" href="#dylan:extensions:[general-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;general-integer&gt;</span></code></a> which
+has two concrete classes, <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and <a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a>.
+Both concrete classes are direct subclasses of <a class="reference internal" href="#dylan:extensions:[general-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;general-integer&gt;</span></code></a>.
+Instances of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> have a limited range of values, and
+<a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> arithmetic uses the computer&#8217;s underlying integer
+facilities.  Instances of <a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a> can take on
+any value, and are similar to Common Lisp &#8220;big-nums.&#8221; Expressions
+involving <a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a> produce <a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a>
+results because <a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a> are contagious. If an
+expression involving only <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> values would
+produce a result that does not fit in an <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, then Mindy
+signals an overflow error. You can use the <a class="reference external" href="http://opendylan.org/books/drm/Coercing_and_Copying_Objects#as"><code class="xref drm docutils literal"><span class="pre">as</span></code></a> function to convert
+back and forth between <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and <a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a>.
+<a class="reference external" href="http://opendylan.org/books/drm/Coercing_and_Copying_Objects#as"><code class="xref drm docutils literal"><span class="pre">as</span></code></a> signals an error when converting an <a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a>
+to a <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, and the value does not fit in a <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</p>
+<p>Mindycomp parses all integer literals as <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>. If a literal
+does not fit in a <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>, then mindycomp issues a compiler error.
+Though the compiler supports no literal syntax for
+<a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a>, the Mindy debugger prints them in a
+<code class="docutils literal"><span class="pre">#eDDD...</span></code> format where each <code class="docutils literal"><span class="pre">D</span></code> is a decimal digit.</p>
 <p>The Extension module exports the following integer functionality:</p>
 <dl class="class">
 <dt class="dylan-api" id="dylan:extensions:[general-integer]">
 <code class="descname">&lt;general-integer&gt;</code> <em class="property">Abstract Class</em><a class="headerlink" href="#dylan:extensions:[general-integer]" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><a class="reference internal" href="#dylan:extensions:[general-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;general-integer&gt;</span></code></a> is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#rational"><code class="xref drm docutils literal"><span class="pre">&lt;rational&gt;</span></code></a>,
+and is the superclass of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a> and
+<a class="reference internal" href="#dylan:extensions:[extended-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;extended-integer&gt;</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="class">
 <dt class="dylan-api" id="dylan:extensions:[extended-integer]">
@@ -422,12 +1001,28 @@ the value does not fit in a <strong>&lt;integer&gt;</strong>.</p>
 <dl class="constant">
 <dt class="dylan-api" id="dylan:extensions:$maximum-integer">
 <code class="descname">$maximum-integer</code> <em class="property">Constant</em><a class="headerlink" href="#dylan:extensions:$maximum-integer" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">This constant holds the largest positive <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="constant">
 <dt class="dylan-api" id="dylan:extensions:$minimum-integer">
 <code class="descname">$minimum-integer</code> <em class="property">Constant</em><a class="headerlink" href="#dylan:extensions:$minimum-integer" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">This constant holds the largest negative <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="ratios">
@@ -436,22 +1031,98 @@ the value does not fit in a <strong>&lt;integer&gt;</strong>.</p>
 <dl class="class">
 <dt class="dylan-api" id="dylan:extensions:[ratio]">
 <code class="descname">&lt;ratio&gt;</code> <em class="property">Class</em><a class="headerlink" href="#dylan:extensions:[ratio]" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">This class is a subclass of <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#rational"><code class="xref drm docutils literal"><span class="pre">&lt;rational&gt;</span></code></a>. The ratio
+is normalized so that it has a positive denominator, and
+the greatest common divisor of the numerator and the
+denominator is one. Ratios are never automatically
+converted to integers. For example, <code class="docutils literal"><span class="pre">ratio(4,</span> <span class="pre">2)</span></code> would
+return <code class="docutils literal"><span class="pre">2/1</span></code>.<p>A numeric operation involving two ratios produces a
+normalized ratio result. A numeric operation involving a
+ratio and an integer produced a normalized ratio result.
+A numeric operation involving a ratio and a float produces
+a float result.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt class="dylan-api" id="dylan:extensions:ratio">
 <code class="descname">ratio</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:ratio" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>numerator</strong> &#8211; An instance of <a class="reference internal" href="#dylan:extensions:[general-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;general-integer&gt;</span></code></a>.</li>
+<li><strong>denominator</strong> &#8211; An instance of <a class="reference internal" href="#dylan:extensions:[general-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;general-integer&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>ratio</strong> &#8211; An instance of <a class="reference internal" href="#dylan:extensions:[ratio]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;ratio&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function makes a ratio from the two integers.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt class="dylan-api" id="dylan:extensions:numerator">
 <code class="descname">numerator</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:numerator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ratio</strong> &#8211; An instance of <a class="reference internal" href="#dylan:extensions:[ratio]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;ratio&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>the-numerator</strong> &#8211; An instance of <a class="reference internal" href="#dylan:extensions:[general-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;general-integer&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function returns the numerator part of <em>ratio</em>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt class="dylan-api" id="dylan:extensions:denominator">
 <code class="descname">denominator</code> <em class="property">Function</em><a class="headerlink" href="#dylan:extensions:denominator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ratio</strong> &#8211; An instance of <a class="reference internal" href="#dylan:extensions:[ratio]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;ratio&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>the-numerator</strong> &#8211; An instance of <a class="reference internal" href="#dylan:extensions:[general-integer]"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;general-integer&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last">This function returns the denominator part of <em>ratio</em>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 </div>
