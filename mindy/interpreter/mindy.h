@@ -48,6 +48,11 @@ struct object {
 #define obj_rawptr(o) ((void *)(o))
 #define rawptr_obj(p) ((obj_t)(p))
 
+enum type_Id {
+    id_Singleton, id_Class, id_SubClass, id_LimFixnum, id_LimBignum,
+    id_Union, id_NoneOf
+};
+
 extern MINDY_NORETURN void lose(char *fmt, ...);
 extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 

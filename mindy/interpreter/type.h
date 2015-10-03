@@ -26,15 +26,6 @@
 \**********************************************************************/
 
 
-/* If this enumeration changes, you must also update "class.h" */
-#ifndef type_Id_defined
-#define type_Id_defined
-enum type_Id {
-    id_Singleton, id_Class, id_SubClass, id_LimFixnum, id_LimBignum,
-    id_Union, id_NoneOf
-};
-#endif
-
 extern obj_t obj_TypeClass;
 
 #define TYPE(x) obj_ptr(struct type *, x)

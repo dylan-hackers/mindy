@@ -25,15 +25,6 @@
 *
 \**********************************************************************/
 
-/* If this enumeration changes, you must also update "type.h" */
-#ifndef type_Id_defined
-#define type_Id_defined
-enum type_Id {
-    id_Singleton, id_Class, id_SubClass, id_LimFixnum, id_LimBignum,
-    id_Union, id_NoneOf
-};
-#endif
-
 extern obj_t obj_ClassClass;
 extern obj_t obj_StaticTypeClass; /* type of static pointer classes */
 
