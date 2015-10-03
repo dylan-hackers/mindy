@@ -970,14 +970,13 @@ obj_t byte_method_component(obj_t method)
 static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
 {
     int i, count;
-    obj_t *fp;
 
     /* push the closure vars */
     count = BYTE_METHOD(method)->n_closure_vars;
     for (i = 0; i < count; i++)
         *thread->sp++ = BYTE_METHOD(method)->lexenv[i];
 
-    fp = push_linkage(thread, args);
+    push_linkage(thread, args);
     set_byte_continuation(thread, BYTE_METHOD(method)->component);
 #if !SLOW_LONGJMP
     go_on();
