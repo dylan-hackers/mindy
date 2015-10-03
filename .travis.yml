@@ -14,7 +14,8 @@ addons:
       - ninja-build
 
 install:
-  - pip install -q Sphinx --use-mirrors
+  - export PATH=$HOME/.local/bin:$PATH
+  - pip install -q Sphinx --user `whoami`
 
 script:
   - mkdir build
