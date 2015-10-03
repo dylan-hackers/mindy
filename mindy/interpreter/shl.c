@@ -9,25 +9,20 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 
-shl_t shl_load (const char *path, int flags, long address)
+shl_t shl_load (const char *path, int flags)
 {
     int flag;
-
-    if ( address != 0) abort();
 
     if ( (flags & BIND_IMMEDIATE)) flag = RTLD_NOW;
     else if ( (flags & BIND_DEFERRED)) flag = RTLD_NOW;
     else abort();
 
     if ( flags & BIND_FIRST) abort();
-    if ( flags & BIND_NONFATAL) abort();
-    if ( flags & BIND_NOSTART) abort();
 
     return dlopen( path, flag);
 }
 
-int shl_findsym (shl_t *handle, const char *sym, short type,
-                 void *value)
+int shl_findsym (shl_t *handle, const char *sym, void *value)
 {
     const void *v;
     static void *self_handle = 0;

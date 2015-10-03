@@ -95,7 +95,7 @@ obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
     ret = obj_ptr(struct shared_file *, retval);
     ret->file_count = length(c_files);
     for (i = 0; c_files != obj_Nil; i++, c_files = TAIL(c_files)) {
-        handle = shl_load((const char*)string_chars(HEAD(c_files)), BIND_DEFERRED, 0);
+        handle = shl_load((const char*)string_chars(HEAD(c_files)), BIND_DEFERRED);
         if (handle == NULL) {
             error("Can't load shared library %s.", HEAD(c_files));
         };
@@ -167,7 +167,7 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
         void *ptr;
 
         for (i = 0; i < file_count; i++)
-            if (shl_findsym(&files[i], string, TYPE_PROCEDURE, &ptr) == 0)
+            if (shl_findsym(&files[i], string, &ptr) == 0)
                 return(make_c_function(make_byte_string(string), ptr));
         return retval;
     } else {
@@ -207,7 +207,7 @@ obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
         void *ptr;
 
         for (i = 0; i < file_count; i++)
-            if (shl_findsym(&files[i], string, TYPE_UNDEFINED, &ptr) == 0)
+            if (shl_findsym(&files[i], string, &ptr) == 0)
                 return(make_c_pointer(obj_CPointerClass, ptr));
         return retval;
     } else {
