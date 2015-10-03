@@ -292,7 +292,7 @@ static int make_header_val()
 static int make_header_end()
 {
   line_count += 1;
-  yylval.token = yylval.token = make_token(yytext, yyleng);
+  yylval.token = make_token(yytext, yyleng);
   return HEADER_END;
 }
 
