@@ -142,8 +142,11 @@ static void check_fds(bool block)
     struct timeval tv, *tvp;
 
     if (NumFds == 0) {
-        if (block)
-          sigsuspend(0);
+        if (block) {
+          sigset_t set;
+          sigemptyset(&set);
+          sigsuspend(&set);
+        }
         return;
     }
 
