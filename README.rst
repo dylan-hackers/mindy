@@ -1,8 +1,8 @@
 mindy
 =====
 
-.. image:: https://travis-ci.org/dylan-hackers/mindy.svg?branch=master
-    :target: https://travis-ci.org/dylan-hackers/mindy
+.. image:: https://travis-ci.org/project-mindy/mindy.svg?branch=master
+    :target: https://travis-ci.org/project-mindy/mindy
 
 Mindy is an implementation of a language that is very much like the
 language described in the `Dylan Reference Manual`_ (DRM). Mindy was
@@ -47,7 +47,7 @@ If you want to build the documentation, make sure that you've installed
 Also, make sure that you've gotten the Git submodules along with the
 sources for this repository.  You can do this by cloning recursively::
 
-    git clone --recursive https://github.com/dylan-hackers/mindy.git
+    git clone --recursive https://github.com/project-mindy/mindy.git
 
 If you've already cloned the repository, then you can::
 
@@ -100,6 +100,6 @@ Why not Mindy?
 .. _ninja: https://martine.github.io/ninja/
 .. _Sphinx: http://www.sphinx-doc.org/
 .. _mailing list: https://lists.opendylan.org/mailman/listinfo/hackers
-.. _open issues: https://github.com/dylan-hackers/mindy/issues
-.. _open easy issues: https://github.com/dylan-hackers/mindy/issues?q=is%3Aopen+is%3Aissue+label%3AE-easy
+.. _open issues: https://github.com/project-mindy/mindy/issues
+.. _open easy issues: https://github.com/project-mindy/mindy/issues?q=is%3Aopen+is%3Aissue+label%3AE-easy
 .. _Open Dylan: https://github.com/dylan-lang/opendylan
