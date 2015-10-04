@@ -103,6 +103,7 @@ void warn(int line, char *msg, ...)
     va_end(ap);
 }
 
+MINDY_NORETURN
 static void usage(void)
 {
     fprintf(stderr, "usage: mindycomp [-d[p][e]] [-l library-name] "
