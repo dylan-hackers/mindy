@@ -29,3 +29,8 @@ script:
 branches:
   only:
     - master
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/1cd1780b9ea4b1fe3eaf
