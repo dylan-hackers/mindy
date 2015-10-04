@@ -167,6 +167,8 @@ Mindycomp recognizes the following command line switches:
 - -U\ *feature* : This tells the conditional compilation system that
   *feature* is not present (ie, "undefine"). Notice that there is no
   space between -U and *feature*.
+- -fcolor-diagnostics : This tells mindycomp to always enable color
+  diagnostics.
 
 Mindy recognizes the following command line switches:
 

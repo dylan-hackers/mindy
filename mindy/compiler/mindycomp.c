@@ -107,7 +107,7 @@ MINDY_NORETURN
 static void usage(void)
 {
     fprintf(stderr, "usage: mindycomp [-d[p][e]] [-l library-name] "
-            "[-o object-name] [-Dfeature] [-Ufeature] source-name\n");
+            "[-o object-name] [-Dfeature] [-Ufeature] [-fcolor-diagnostics] source-name\n");
     exit(1);
 }
 
@@ -167,6 +167,7 @@ int main(int argc, char *argv[])
 {
     bool print_parse = false;
     bool print_expanded = false;
+    bool force_color_diagnostics = false;
     char *arg;
     char *source_name = NULL;
     char *output_name = NULL;
@@ -269,6 +270,15 @@ int main(int argc, char *argv[])
                     remove_feature(symbol(*argv));
                 break;
 
+              case 'f':
+                // In the future, we'll support more options here, but
+                // for now, just this one.
+                if (strcasecmp(arg, "-fcolor-diagnostics") == 0)
+                    force_color_diagnostics = true;
+                else
+                    usage();
+                break;
+
               default:
                 fprintf(stderr, "Invalid flag: ``%s''\n", arg);
                 usage();
@@ -285,6 +295,7 @@ int main(int argc, char *argv[])
     if (source_name == NULL)
         usage();
 
+    init_color(force_color_diagnostics);
 
     yyin = fopen(source_name, "rb");
     if (yyin == NULL) {

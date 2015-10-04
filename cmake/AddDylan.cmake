@@ -1,3 +1,9 @@
+SET(MINDY_FLAGS)
+# mindycomp doesn't print colored diagnostics when invoked from Ninja
+IF (UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
+  SET(MINDY_FLAGS "-fcolor-diagnostics")
+ENDIF()
+
 MACRO(ADD_DYLAN_PROJECT project_name target_directory suffix)
   SET(DYLAN_${project_name}_OUTPUT "${target_directory}/${project_name}${suffix}.dbc")
   SET(DYLAN_${project_name}_DBC_OUTPUTS)
@@ -6,7 +12,7 @@ MACRO(ADD_DYLAN_PROJECT project_name target_directory suffix)
     SET(file_dbc "${_file_base}.dbc")
     ADD_CUSTOM_COMMAND(
       OUTPUT ${file_dbc}
-      COMMAND mindycomp -l${project_name} ${CMAKE_CURRENT_SOURCE_DIR}/${_file} -o ${file_dbc}
+      COMMAND mindycomp -l${project_name} ${MINDY_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${_file} -o ${file_dbc}
       MAIN_DEPENDENCY ${_file}
       DEPENDS mindycomp
     )

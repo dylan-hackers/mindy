@@ -37,7 +37,7 @@
 
 #include "color_output.h"
 
-static bool WantColor = true;
+static bool WantColor = false;
 
 static bool check_env_value(const char *key, const char *desired)
 {

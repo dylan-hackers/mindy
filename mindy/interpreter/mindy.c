@@ -42,6 +42,7 @@
 #include "func.h"
 #include "debug.h"
 #include "load.h"
+#include "shared/color_output.h"
 
 static void invoke_main(struct thread *thread, obj_t *vals)
 {
@@ -89,6 +90,8 @@ int main(int argc, char *argv[])
 #endif
 
     exec_file_name = argv[0];
+
+    init_color(false);
 
     init();
 
