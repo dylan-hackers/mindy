@@ -45,6 +45,7 @@ SET(mindy_SOURCES
     vec.c
     weak.c
     ../../common/time/time-portability.c
+    ../shared/color_output.c
     ../shared/byteops.h
     ../shared/compiler-support.h
     ../shared/fileops.h
@@ -87,6 +88,7 @@ SET(mindy_HEADERS
     value.h
     vec.h
     weak.h
+    ../shared/color_output.h
     ../shared/compiler-support.h
 )
 

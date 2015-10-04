@@ -21,6 +21,7 @@ SET(mindycomp_SOURCES
     src.c
     sym.c
     version.c
+    ../shared/color_output.c
 )
 
 SET(mindycomp_HEADERS
@@ -44,6 +45,7 @@ SET(mindycomp_HEADERS
     sym.h
     version.h
     ../shared/byteops.h
+    ../shared/color_output.h
     ../shared/compiler-support.h
     ../shared/fileops.h
 )
