@@ -45,6 +45,7 @@
 #include "dump.h"
 #include "feature.h"
 #include "lose.h"
+#include "shared/color_output.h"
 
 struct body *Program = NULL;
 
@@ -58,7 +59,11 @@ static int nerrors = 0;
 
 static void verror(int line, char *msg, va_list ap)
 {
-    fprintf(stderr, "%s:%d: error: ", current_file, line);
+    mindy_color_err(MindyWhite, true);
+    fprintf(stderr, "%s:%d: ", current_file, line);
+    mindy_color_err(MindyRed, false);
+    fprintf(stderr, "error: ");
+    mindy_reset_color_err();
     vfprintf(stderr, msg, ap);
     if (msg[strlen(msg)-1] != '\n')
         putc('\n', stderr);
@@ -79,7 +84,11 @@ static void vwarn(int line, char *msg, va_list ap)
 {
     if ( ! GiveWarnings)
         return;
-    fprintf(stderr, "%s:%d: warning: ", current_file, line);
+    mindy_color_err(MindyWhite, true);
+    fprintf(stderr, "%s:%d: ", current_file, line);
+    mindy_color_err(MindyMagenta, false);
+    fprintf(stderr, "warning: ");
+    mindy_reset_color_err();
     vfprintf(stderr, msg, ap);
     if (msg[strlen(msg)-1] != '\n')
         putc('\n', stderr);
