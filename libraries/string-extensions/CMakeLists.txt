@@ -8,3 +8,4 @@ SET(string-extensions_SOURCES
     substring-search.dylan
 )
 ADD_DYLAN_LIBRARY(string-extensions)
+INSTALL_DYLAN_LIBRARY(string-extensions)

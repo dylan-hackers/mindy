@@ -35,6 +35,10 @@ MACRO(ADD_DYLAN_LIBRARY library_name)
   ADD_DYLAN_PROJECT(${library_name} "${CMAKE_BINARY_DIR}/${MINDY_LIB_DIR}" "-lib")
 ENDMACRO()
 
+MACRO(INSTALL_DYLAN_LIBRARY library_name)
+  INSTALL(FILES ${DYLAN_${library_name}_OUTPUT} DESTINATION ${CMAKE_INSTALL_PREFIX}/${MINDY_LIB_DIR})
+ENDMACRO()
+
 MACRO(ADD_DYLAN_TEST test_name)
   ADD_DYLAN_PROJECT(${test_name} "${CMAKE_BINARY_DIR}/test-bin/" "")
   ADD_TEST(NAME "test-${test_name}"

@@ -13,3 +13,4 @@ SET(streams_SOURCES
     piped-exec.dylan
 )
 ADD_DYLAN_LIBRARY(streams)
+INSTALL_DYLAN_LIBRARY(streams)

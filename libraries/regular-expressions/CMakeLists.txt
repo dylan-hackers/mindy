@@ -5,3 +5,4 @@ SET(regular-expressions_SOURCES
     interface.dylan
 )
 ADD_DYLAN_LIBRARY(regular-expressions)
+INSTALL_DYLAN_LIBRARY(regular-expressions)

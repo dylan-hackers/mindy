@@ -21,5 +21,5 @@ SET(tk_SOURCES
     tk-winfo.dylan
     tk-class.dylan
 )
-
 ADD_DYLAN_LIBRARY(tk)
+INSTALL_DYLAN_LIBRARY(tk)

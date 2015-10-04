@@ -26,5 +26,5 @@ SET(dylan_SOURCES
     transcendental.dylan
     system.dylan
 )
-
 ADD_DYLAN_LIBRARY(dylan)
+INSTALL_DYLAN_LIBRARY(dylan)

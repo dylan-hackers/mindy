@@ -5,3 +5,4 @@ SET(stream-extensions_SOURCES
     concatenated-streams.dylan
 )
 ADD_DYLAN_LIBRARY(stream-extensions)
+INSTALL_DYLAN_LIBRARY(stream-extensions)

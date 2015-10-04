@@ -8,3 +8,4 @@ SET(collection-extensions_SOURCES
     sequence-utils.dylan
 )
 ADD_DYLAN_LIBRARY(collection-extensions)
+INSTALL_DYLAN_LIBRARY(collection-extensions)

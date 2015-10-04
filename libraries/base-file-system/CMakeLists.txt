@@ -3,3 +3,4 @@ SET(base-file-system_SOURCES
     base-file-system.dylan
 )
 ADD_DYLAN_LIBRARY(base-file-system)
+INSTALL_DYLAN_LIBRARY(base-file-system)

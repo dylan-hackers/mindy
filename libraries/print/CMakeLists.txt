@@ -4,3 +4,4 @@ SET(print_SOURCES
     print.dylan
 )
 ADD_DYLAN_LIBRARY(print)
+INSTALL_DYLAN_LIBRARY(print)

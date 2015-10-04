@@ -3,3 +3,4 @@ SET(matrix_SOURCES
     matrix.dylan
 )
 ADD_DYLAN_LIBRARY(matrix)
+INSTALL_DYLAN_LIBRARY(matrix)

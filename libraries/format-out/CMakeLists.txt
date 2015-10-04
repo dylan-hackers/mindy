@@ -3,3 +3,4 @@ SET(format-out_SOURCES
     format-out.dylan
 )
 ADD_DYLAN_LIBRARY(format-out)
+INSTALL_DYLAN_LIBRARY(format-out)

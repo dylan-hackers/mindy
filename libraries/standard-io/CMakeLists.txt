@@ -3,3 +3,4 @@ SET(standard-io_SOURCES
     standard-io.dylan
 )
 ADD_DYLAN_LIBRARY(standard-io)
+INSTALL_DYLAN_LIBRARY(standard-io)

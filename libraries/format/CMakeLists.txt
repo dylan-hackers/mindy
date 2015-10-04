@@ -4,3 +4,4 @@ SET(format_SOURCES
     format-buf.dylan
 )
 ADD_DYLAN_LIBRARY(format)
+INSTALL_DYLAN_LIBRARY(format)
