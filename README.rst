@@ -72,7 +72,9 @@ What Can You Do?
 Apart from just using mindy, you're more than welcome to help us
 develop it further and improve it.
 
-* You can talk to us on IRC in ``#dylan`` on ``irc.freenode.net``.
+* You can talk to us on `Gitter`_ (similar to Slack).
+* You can also talk to us on IRC in ``#dylan`` on ``irc.freenode.net``
+  if you prefer.
 * Join our `mailing list`_.
 * Check out our list of `open issues` or our list of `open easy issues`.
 
@@ -103,6 +105,7 @@ Why not Mindy?
 .. _cmake: http://www.cmake.org/
 .. _ninja: https://martine.github.io/ninja/
 .. _Sphinx: http://www.sphinx-doc.org/
+.. _Gitter: https://gitter.im/project-mindy/mindy
 .. _mailing list: https://lists.opendylan.org/mailman/listinfo/hackers
 .. _open issues: https://github.com/project-mindy/mindy/issues
 .. _open easy issues: https://github.com/project-mindy/mindy/issues?q=is%3Aopen+is%3Aissue+label%3AE-easy
