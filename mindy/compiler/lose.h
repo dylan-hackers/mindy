@@ -27,4 +27,4 @@
 
 #include "../shared/compiler-support.h"
 
-extern MINDY_NORETURN void lose (char *fmt, ...);
+extern MINDY_NORETURN void lose (char *fmt, ...) MINDY_FORMATLIKE(1, 2);

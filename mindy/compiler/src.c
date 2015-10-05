@@ -790,7 +790,7 @@ static int unicode_escape(char **c, int line)
 
     character = strtol(*c, &term, 16);
     if (((character == 0) && (term == *c)) || (character > 255))
-        error(line, "invalid Unicode escape \\<%x>.", character);
+        error(line, "invalid Unicode escape \\<%lx>.", character);
     *c = term + 1;
     return character;
 }

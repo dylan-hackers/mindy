@@ -30,11 +30,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "shared/compiler-support.h"
+
 extern char *current_file;
 extern bool GiveWarnings;
 
-extern void error (int line, char *msg, ...);
-extern void warn (int line, char *msg, ...);
+extern void error (int line, char *msg, ...) MINDY_FORMATLIKE(2, 3);
+extern void warn (int line, char *msg, ...) MINDY_FORMATLIKE(2, 3);
 
 extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;

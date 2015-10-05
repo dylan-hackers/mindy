@@ -917,7 +917,7 @@ obj_t make_builtin_method(char *debug_name, obj_t specializers,
         num_args += length(keywords);
 
     if (num_args >= MAX_BUILTIN_METHOD_ARGS)
-        lose("Can't make a builtin method that wants %d args -- %d at most.",
+        lose("Can't make a builtin method that wants %d args -- %ld at most.",
              num_args, MAX_BUILTIN_METHOD_ARGS-1);
 
     BUILTIN_METHOD(res)->xep = method_xep;

@@ -53,7 +53,7 @@ enum type_Id {
     id_Union, id_NoneOf
 };
 
-extern MINDY_NORETURN void lose(char *fmt, ...);
+extern MINDY_NORETURN void lose(char *fmt, ...) MINDY_FORMATLIKE(1, 2);
 extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 
 #define assert(cond) \

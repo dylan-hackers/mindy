@@ -29,10 +29,13 @@
 
 #ifdef __GNUC__
 #define MINDY_NORETURN __attribute__((noreturn))
+#define MINDY_FORMATLIKE(a, b) __attribute__((format (printf, a, b)))
 #elif defined(_MSC_VER)
 #define MINDY_NORETURN __declspec(noreturn)
+#define MINDY_FORMATLIKE(a, b)
 #else
 #define MINDY_NORETURN
+#define MINDY_FORMATLIKE(a, b)
 #endif
 
 #endif
