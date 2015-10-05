@@ -23,6 +23,21 @@ What is Dylan?
 Building and Installing Mindy
 =============================
 
+Mindy has very few dependencies:
+
+* ``flex``
+* ``bison``
+* ``cmake``
+* ``ninja`` or ``make`` on all but Windows.
+* A C compiler that ``cmake`` and ``ninja`` or ``make`` know how to drive.
+
+Packages for these are typically available on all platforms or may already
+be installed by default.
+
+Mac OS X with homebrew (and Xcode already installed)::
+
+    brew install cmake ninja
+
 Mindy comes with a build system that uses `cmake`_.
 
 We recommend doing your build with `ninja`_ rather than ``make``
