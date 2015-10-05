@@ -263,10 +263,24 @@ static void set_thread(struct thread *thread)
     set_frame(TopFrame);
 }
 
+static char status_char(enum thread_status status)
+{
+    switch (status) {
+        case status_Running:    return 'R';
+        case status_Suspended:  return 'S';
+        case status_Debuggered: return 'D';
+        case status_Blocked:    return 'B';
+        case status_Waiting:    return 'W';
+        case status_Exited:     return 'X';
+        case status_Killed:     return 'K';
+    }
+    // The above switch statement fully covers the possible values.
+    abort();
+}
+
 static void print_thread(struct thread *thread)
 {
-    static char *status_chars = {"RSDBW"};
-    printf("[%d] %c ", thread->id, status_chars[(int)thread->status]);
+    printf("[%d] %c ", thread->id, status_char(thread->status));
     if (thread->suspend_count != 0)
         printf("%d ", thread->suspend_count);
     else
