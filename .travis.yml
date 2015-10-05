@@ -27,7 +27,7 @@ before_install:
 install:
   - export PYTHONUSERBASE=$HOME/.local
   - export PATH=$HOME/.local/bin:$PATH
-  - pip install -q Sphinx --user `whoami`
+  - pip install -q Sphinx --user
 
 script:
   - mkdir build
