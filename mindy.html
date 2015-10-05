@@ -211,7 +211,7 @@ in the file README at the top level of the Mindy release.</p>
 <h2>Hello, World<a class="headerlink" href="#hello-world" title="Permalink to this headline">¶</a></h2>
 <p>Well, the first program anyone should endeavor to write in a new
 language is, of course, Hello World. Type this into a file
-called <code class="docutils literal"><span class="pre">hw-exports.dylan</span></code>:</p>
+called <code class="docutils literal"><span class="pre">library.dylan</span></code>:</p>
 <div class="highlight-dylan"><div class="highlight"><pre><span class="na">Module</span><span class="o">:</span> <span class="s">dylan-user</span>
 
 <span class="k">define</span> <span class="nb">library</span> <span class="n">hello-world</span>
@@ -235,13 +235,13 @@ called <code class="docutils literal"><span class="pre">hw-exports.dylan</span><
 </pre></div>
 </div>
 <p>To compile your program invoke $INSTALL/bin/mindycomp, for example:</p>
-<div class="highlight-python"><div class="highlight"><pre>% $INSTALL/bin/mindycomp -lhello-world hw-exports.dylan
+<div class="highlight-python"><div class="highlight"><pre>% $INSTALL/bin/mindycomp -lhello-world library.dylan
 % $INSTALL/bin/mindycomp -lhello-world hw.dylan
 </pre></div>
 </div>
-<p>This produces files named <code class="docutils literal"><span class="pre">hw.dbc</span></code> and <code class="docutils literal"><span class="pre">hw-exports.dbc</span></code>. The <code class="docutils literal"><span class="pre">.dbc</span></code>
+<p>This produces files named <code class="docutils literal"><span class="pre">hw.dbc</span></code> and <code class="docutils literal"><span class="pre">library.dbc</span></code>. The <code class="docutils literal"><span class="pre">.dbc</span></code>
 stands for <strong>&#8220;Dylan Byte Code&#8221;</strong>. To run the program, say:</p>
-<div class="highlight-python"><div class="highlight"><pre>% $INSTALL/bin/mindy -f hw-exports.dbc -f hw.dbc
+<div class="highlight-python"><div class="highlight"><pre>% $INSTALL/bin/mindy -f library.dbc -f hw.dbc
 </pre></div>
 </div>
 <p>It should print &#8220;Hello, World.&#8221; to standard output and then exit.</p>
@@ -301,6 +301,8 @@ between -D and <em>feature</em>.</li>
 <li>-U<em>feature</em> : This tells the conditional compilation system that
 <em>feature</em> is not present (ie, &#8220;undefine&#8221;). Notice that there is no
 space between -U and <em>feature</em>.</li>
+<li>-fcolor-diagnostics : This tells mindycomp to always enable color
+diagnostics.</li>
 </ul>
 <p>Mindy recognizes the following command line switches:</p>
 <ul class="simple">
