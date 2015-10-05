@@ -1,5 +1,5 @@
 SET(dylan_SOURCES
-    exports.dylan
+    library.dylan
     misc.dylan
     cmp.dylan
     coll.dylan
