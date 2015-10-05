@@ -1,5 +1,9 @@
 language: c
 
+os:
+  - linux
+  - osx
+
 compiler:
   - gcc
   - clang
@@ -14,6 +18,9 @@ addons:
       - cmake-data
       - cmake
       - ninja-build
+
+before_install:
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install ninja; fi
 
 install:
   - export PATH=$HOME/.local/bin:$PATH
