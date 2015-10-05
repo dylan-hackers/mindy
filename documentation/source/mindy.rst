@@ -66,7 +66,7 @@ Hello, World
 
 Well, the first program anyone should endeavor to write in a new
 language is, of course, Hello World. Type this into a file
-called ``hw-exports.dylan``:
+called ``library.dylan``:
 
 .. code-block:: dylan
 
@@ -95,13 +95,13 @@ And put this in ``hw.dylan``:
 
 To compile your program invoke $INSTALL/bin/mindycomp, for example::
 
-    % $INSTALL/bin/mindycomp -lhello-world hw-exports.dylan
+    % $INSTALL/bin/mindycomp -lhello-world library.dylan
     % $INSTALL/bin/mindycomp -lhello-world hw.dylan
 
-This produces files named ``hw.dbc`` and ``hw-exports.dbc``. The ``.dbc``
+This produces files named ``hw.dbc`` and ``library.dbc``. The ``.dbc``
 stands for **"Dylan Byte Code"**. To run the program, say::
 
-    % $INSTALL/bin/mindy -f hw-exports.dbc -f hw.dbc
+    % $INSTALL/bin/mindy -f library.dbc -f hw.dbc
 
 It should print "Hello, World." to standard output and then exit.
 
