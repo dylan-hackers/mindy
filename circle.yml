@@ -14,14 +14,11 @@ checkout:
 
 dependencies:
   post:
-    - mkdir -p build
-    - cd build
-    - cmake .. -G "Unix Makefiles"
-    - make
+    - mkdir -p build; cd build; cmake .. -G "Unix Makefiles"; make
 
 test:
   override:
     - ctest -T Test
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/
-    - xsltproc ../admin/test/ctest2junit.xsl Testing/`head -n 1 < Testing/TAG`/Test.xml > $CIRCLE_TEST_REPORTS/junit/CTestResults.xml
+    - cd build; xsltproc ../admin/test/ctest2junit.xsl Testing/`head -n 1 < Testing/TAG`/Test.xml > $CIRCLE_TEST_REPORTS/junit/CTestResults.xml
