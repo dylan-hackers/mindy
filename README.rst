@@ -8,6 +8,9 @@ mindy
 .. image:: https://travis-ci.org/project-mindy/mindy.svg?branch=master
     :target: https://travis-ci.org/project-mindy/mindy
 
+.. image:: https://circleci.com/gh/project-mindy/mindy.svg?style=svg
+    :target: https://circleci.com/gh/project-mindy/mindy
+
 Mindy is an implementation of a language that is very much like the
 language described in the `Dylan Reference Manual`_ (DRM). Mindy was
 named for "Mindy Is Not Dylan Yet", and it still is and will probably
