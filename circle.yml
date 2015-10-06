@@ -18,7 +18,7 @@ dependencies:
 
 test:
   override:
-    - ctest -T Test
+    - cd build; ctest -T Test
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/
     - cd build; xsltproc ../admin/test/ctest2junit.xsl Testing/`head -n 1 < Testing/TAG`/Test.xml > $CIRCLE_TEST_REPORTS/junit/CTestResults.xml
