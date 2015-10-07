@@ -5,3 +5,4 @@ SET(parsergen_SOURCES
 )
 
 ADD_DYLAN_TOOL(parsergen)
+INSTALL_DYLAN_TOOL(parsergen)
