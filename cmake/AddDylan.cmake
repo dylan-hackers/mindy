@@ -49,3 +49,7 @@ ENDMACRO()
 MACRO(ADD_DYLAN_DEMO demo_name)
   ADD_DYLAN_PROJECT(${demo_name} "${CMAKE_BINARY_DIR}/demo-bin/" "")
 ENDMACRO()
+
+MACRO(ADD_DYLAN_TOOL tool_name)
+  ADD_DYLAN_PROJECT(${tool_name} "${CMAKE_BINARY_DIR}/bin/" "")
+ENDMACRO()
