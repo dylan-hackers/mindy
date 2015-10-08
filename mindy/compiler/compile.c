@@ -713,7 +713,7 @@ static void compile_expr(struct expr *expr, struct component *component,
     if (expr->analyzed)
         (*ExpressionCompilers[(int)expr->kind])(expr, component, want);
     else
-        lose("Compiling an expression that was never analized?");
+        lose("Compiling an expression that was never analyzed?");
 }
 
 
