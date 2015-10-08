@@ -969,7 +969,7 @@ define function emit-production
       format(ofile, "select (prev-state)\n");
       for (goto in gotos)
 	if (goto.head == #"otherwise")
-	  format(ofile, "           OTHERWISE => %=;\n", goto.tail.head);
+	  format(ofile, "           otherwise => %=;\n", goto.tail.head);
 	else
 	  format(ofile, "           %= => %=;\n", goto.head, goto.tail.head);
 	end if;
