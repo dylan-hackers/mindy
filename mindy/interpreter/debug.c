@@ -59,6 +59,7 @@
 #include "instance.h"
 #include "parser.h"
 #include "shared/byteops.h"
+#include "shared/color_output.h"
 
 struct library *CurLibrary = NULL;
 struct module *CurModule = NULL;
@@ -205,18 +206,31 @@ static void scav_frames(struct frame_info *frame)
     }
 }
 
-static void print_frame(struct frame_info *frame, bool print_line)
+static void print_frame(struct frame_info *frame, bool print_line, int frame_num)
 {
     obj_t *ptr = obj_rawptr(frame->fp[-4]);
     obj_t *end = frame->fp - 5;
     obj_t name = function_debug_name_or_self(*ptr++);
 
-    printf("fp 0x%08lx: ", (unsigned long)frame->fp);
+    if (frame_num != -1) {
+        if (frame == CurFrame) {
+            mindy_color(MindyGreen, false);
+            printf("->");
+        } else {
+            printf("  ");
+        }
+        printf(" #%-3d ", frame_num);
+        mindy_reset_color();
+    }
+
+    printf(" 0x%08lx: ", (unsigned long)frame->fp);
+    mindy_color(MindyWhite, true);
     if (object_class(name) == obj_SymbolClass)
         fputs(sym_name(name), stdout);
     else
         prin1(name);
-    putchar('(');
+    mindy_reset_color();
+    fputs(" (", stdout);
     if (ptr < end) {
         while (1) {
             prin1(*ptr++);
@@ -225,10 +239,11 @@ static void print_frame(struct frame_info *frame, bool print_line)
             printf(", ");
         }
     }
+    putchar(')');
     if (frame->source_file == obj_False || !print_line)
-        printf(")\n");
+        printf("\n");
     else {
-        printf(") [%s", string_chars(frame->source_file));
+        printf("\n   [%s", string_chars(frame->source_file));
         if (frame->line == 0)
             printf("]\n");
         else
@@ -797,12 +812,14 @@ static void backtrace_cmd(obj_t args)
         backtrace_punted = false;
         set_interrupt_handler(punt_backtrace);
 
-        for (frame = TopFrame; frame != NULL; frame = frame_down(frame)) {
+        int frame_num = 0;
+        for (frame = TopFrame; frame != NULL; frame = frame_down(frame))
+        {
             if (backtrace_punted) {
                 printf("interrupted\n");
                 break;
             }
-            print_frame(frame, true);
+            print_frame(frame, true, frame_num++);
         }
 
         clear_interrupt_handler();
@@ -2499,7 +2516,7 @@ static void maybe_print_frame(void)
         if (CurFrame == NULL)
             printf("No stack.\n");
         else
-            print_frame(CurFrame, false);
+            print_frame(CurFrame, false, -1);
         FrameChanged = false;
         PrevLine = -1;
     }
