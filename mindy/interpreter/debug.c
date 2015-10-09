@@ -916,13 +916,17 @@ static void locals_cmd(obj_t args)
 
     should_be_no_args(args);
     if (CurFrame == NULL) {
+        mindy_color(MindyRed, false);
         printf("No current frame.\n");
+        mindy_reset_color();
         return;
     }
 
     locals = CurFrame->locals;
     if (locals == obj_False) {
+        mindy_color(MindyRed, false);
         printf("No debug info for this frame.\n");
+        mindy_reset_color();
         return;
     }
 
@@ -947,7 +951,10 @@ static void locals_cmd(obj_t args)
             if (indirect)
                 value = value_cell_ref(value);
 
-            format("%s: %=\n", symbol, value);
+            mindy_color(MindyWhite, true);
+            format("%s", symbol);
+            mindy_reset_color();
+            format(": %=\n", value);
         }
 
         locals = TAIL(locals);
