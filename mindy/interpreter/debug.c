@@ -2209,9 +2209,11 @@ static void disassemble_component(obj_t component)
                 FILE *source = find_source_line(source_file, mtime, line);
                 if (source) {
                     int c;
+                    mindy_color(MindyWhite, true);
                     printf("\n%d\t", line);
                     while ((c = getc(source)) != EOF && c != '\n')
                         putchar(c);
+                    mindy_reset_color();
                 }
                 else
                     printf("\nline %d:", line);
