@@ -10,3 +10,10 @@
 #cmakedefine MINDY_VERSION_MINOR @MINDY_VERSION_MINOR@
 #cmakedefine MINDY_VERSION_PATCH @MINDY_VERSION_PATCH@
 #cmakedefine SIZEOF_VOID_P @SIZEOF_VOID_P@
+
+#ifndef HAVE__SETJMP
+#   define _setjmp setjmp
+#endif
+#ifndef HAVE__LONGJMP
+#   define _longjmp longjmp
+#endif

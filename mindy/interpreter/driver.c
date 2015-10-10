@@ -34,13 +34,6 @@
 #include <signal.h>
 #include <sys/select.h>
 
-#ifndef HAVE__SETJMP
-#   define _setjmp      setjmp
-#endif
-#ifndef HAVE__LONGJMP
-#   define _longjmp        longjmp
-#endif
-
 #include "mindy.h"
 #include "gc.h"
 #include "thread.h"

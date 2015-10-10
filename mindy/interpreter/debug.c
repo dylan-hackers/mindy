@@ -2561,7 +2561,7 @@ static void maybe_print_frame(void)
 
 static void blow_off_cmd(void)
 {
-    longjmp(BlowOffCmd, true);
+    _longjmp(BlowOffCmd, true);
 }
 
 void invoke_debugger(enum pause_reason reason)
@@ -2591,7 +2591,7 @@ void invoke_debugger(enum pause_reason reason)
 
             maybe_print_frame();
 
-            if (setjmp(BlowOffCmd)) {
+            if (_setjmp(BlowOffCmd)) {
                 printf("\ninterrupted\n");
                 unblock_interrupt_handler();
             } else
