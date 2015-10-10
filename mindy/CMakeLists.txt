@@ -4,6 +4,9 @@ INCLUDE(CheckStructHasMember)
 INCLUDE(CheckSymbolExists)
 INCLUDE(CheckTypeSize)
 
+OPTION(MINDY_SLOW_FUNCTION_POINTERS "(Experimental) Assume function pointers are slow." OFF)
+OPTION(MINDY_SLOW_LONGJMP "(Experimental) Assume longjmp is slow." OFF)
+
 CHECK_FUNCTION_EXISTS(_setjmp HAVE__SETJMP)
 CHECK_FUNCTION_EXISTS(_longjmp HAVE__LONGJMP)
 

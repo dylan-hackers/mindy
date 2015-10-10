@@ -40,7 +40,7 @@
 #include "driver.h"
 #include "bool.h"
 #include "gc.h"
-#if SLOW_FUNCTION_POINTERS
+#ifdef MINDY_SLOW_FUNCTION_POINTERS
 #   include "interp.h"
 #endif
 #include "fd.h"
@@ -285,7 +285,7 @@ enum pause_reason do_stuff(void)
             _setjmp(Catcher);
             if (PauseReason == pause_NoReason)
                 while (timer-- > 0) {
-#if SLOW_FUNCTION_POINTERS
+#ifdef MINDY_SLOW_FUNCTION_POINTERS
                     if (thread->advance)
                         thread->advance(thread);
                     else
@@ -326,7 +326,7 @@ enum pause_reason single_step(struct thread *thread)
     PauseReason = pause_NoReason;
     set_interrupt_handler(set_pause_interrupted);
     if (_setjmp(Catcher) == 0) {
-#if SLOW_FUNCTION_POINTERS
+#ifdef MINDY_SLOW_FUNCTION_POINTERS
         if (thread->advance)
             thread->advance(thread);
         else

@@ -232,7 +232,7 @@ void invoke(struct thread *thread, int nargs)
     }
 
     FUNC(function)->xep(thread, nargs);
-#if !SLOW_LONGJMP
+#ifndef MINDY_SLOW_LONGJMP
     go_on();
 #endif
 }
@@ -284,7 +284,7 @@ void set_c_continuation(struct thread *thread,
     thread->pc = 0;
 }
 
-#if SLOW_LONGJMP
+#ifdef MINDY_SLOW_LONGJMP
 void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 #else
 void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
@@ -309,7 +309,7 @@ void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
             lose("Attempt to return, but no continuation established.\n");
 }
 
-#if !SLOW_LONGJMP
+#ifndef MINDY_SLOW_LONGJMP
 MINDY_NORETURN
 void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 {
@@ -978,7 +978,7 @@ static void byte_method_iep(obj_t method, struct thread *thread, obj_t *args)
 
     push_linkage(thread, args);
     set_byte_continuation(thread, BYTE_METHOD(method)->component);
-#if !SLOW_LONGJMP
+#ifndef MINDY_SLOW_LONGJMP
     go_on();
 #endif
 }

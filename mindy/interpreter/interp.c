@@ -773,7 +773,7 @@ void set_byte_continuation(struct thread *thread, obj_t component)
     thread->pc = (char *)(&COMPONENT(component)->constant[n_const])
         - (char *)component;
     thread->sp = thread->fp + COMPONENT(component)->frame_size;
-#if SLOW_FUNCTION_POINTERS
+#ifdef MINDY_SLOW_FUNCTION_POINTERS
     thread->advance = NULL;
 #else
     thread->advance = interpret_next_byte;
@@ -800,7 +800,7 @@ void do_byte_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
     else
         lose("Strange call opcode: 0x%02x", opcode);
 
-#if SLOW_FUNCTION_POINTERS
+#ifdef MINDY_SLOW_FUNCTION_POINTERS
     thread->advance = NULL;
 #else
     thread->advance = interpret_next_byte;

@@ -155,7 +155,7 @@ static void return_false(struct thread *thread)
     thread->sp = old_sp + 1;
 
     do_return(thread, old_sp, old_sp);
-#if SLOW_LONGJMP
+#ifdef MINDY_SLOW_LONGJMP
     go_on();
 #endif
 }

@@ -97,7 +97,7 @@ extern obj_t *push_linkage(struct thread *thread, obj_t *args);
 extern void set_c_continuation(struct thread *thread,
                                void (*cont)(struct thread *thread, obj_t *vals));
 extern obj_t *pop_linkage(struct thread *thread);
-#if SLOW_LONGJMP
+#ifdef MINDY_SLOW_LONGJMP
 #define do_return do_return_setup
 #else
 extern MINDY_NORETURN void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals);

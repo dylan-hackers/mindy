@@ -119,7 +119,7 @@ static void skip_byte_breakpoint(struct thread *thread)
     struct byte_brkpt_info *info
         = find_byte_breakpoint(thread->component, thread->pc);
 
-#if SLOW_FUNCTION_POINTERS
+#ifdef MINDY_SLOW_FUNCTION_POINTERS
     thread->advance = NULL;
 #else
     thread->advance = interpret_next_byte;

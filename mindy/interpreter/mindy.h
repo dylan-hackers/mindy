@@ -62,18 +62,6 @@ extern int mindy_readline(char *prompt, char *buffer, int max_chars);
             lose("assertion failed, line %d file %s", __LINE__, __FILE__); \
     } while (0)
 
-#ifdef GD_DEBUG
-#define SLOW_LONGJMP 1
-#endif
-
-#ifndef SLOW_LONGJMP
-#define SLOW_LONGJMP 0
-#endif
-
-#ifndef SLOW_FUNCTION_POINTERS
-#define SLOW_FUNCTION_POINTERS 0
-#endif
-
 /* Don't call check_malloc yourself, always use the malloc macro.
  * Also, try to keep this section consistent with compiler/mindycomp.h
  */
