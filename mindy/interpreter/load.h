@@ -28,4 +28,4 @@
 
 extern void load(char *name);
 extern void load_library(obj_t name);
-extern MINDY_NORETURN void load_do_inits(struct thread *thread);
+extern void load_do_inits(struct thread *thread);

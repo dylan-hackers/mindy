@@ -1144,19 +1144,14 @@ static void eval_vars(obj_t expr, bool *okay, bool *simple)
         lose("Parser returned something strange.");
 }
 
-MINDY_NORETURN
 static void do_eval(struct thread *thread, obj_t args, int nargs);
-
-MINDY_NORETURN
 static void do_more_prints(struct thread *thread, obj_t exprs);
 
-MINDY_NORETURN
 static void eval_return(struct thread *thread, obj_t *vals)
 {
     do_return(thread, pop_linkage(thread), vals);
 }
 
-MINDY_NORETURN
 static void continue_eval(struct thread *thread, obj_t *vals)
 {
     obj_t args = vals[-2];
@@ -1168,7 +1163,6 @@ static void continue_eval(struct thread *thread, obj_t *vals)
     do_eval(thread, args, nargs);
 }
 
-MINDY_NORETURN
 static void do_eval(struct thread *thread, obj_t args, int nargs)
 {
     while (args != obj_Nil) {
@@ -1186,6 +1180,7 @@ static void do_eval(struct thread *thread, obj_t args, int nargs)
             *thread->sp++ = arg_value(arg);
             set_c_continuation(thread, continue_eval);
             invoke(thread, 1);
+            return;
         }
         else
             lose("Print command found a strange expression.");
@@ -1197,7 +1192,6 @@ static void do_eval(struct thread *thread, obj_t args, int nargs)
     invoke(thread, nargs-1);
 }
 
-MINDY_NORETURN
 static void do_eval_start(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - 1;
@@ -1209,7 +1203,6 @@ static void do_eval_start(struct thread *thread, int nargs)
     do_eval(thread, eval_args, 0);
 }
 
-MINDY_NORETURN
 static void do_print(struct thread *thread, obj_t *vals)
 {
     obj_t *old_sp = vals - 1;
@@ -1234,7 +1227,6 @@ static void do_print(struct thread *thread, obj_t *vals)
     do_more_prints(thread, exprs);
 }
 
-MINDY_NORETURN
 static void do_more_prints(struct thread *thread, obj_t exprs)
 {
     while (exprs != obj_Nil) {
@@ -1250,6 +1242,7 @@ static void do_more_prints(struct thread *thread, obj_t exprs)
             *thread->sp++ = arg_value(expr);
             set_c_continuation(thread, do_print);
             invoke(thread, 1);
+            return;
         }
         else
             lose("Print command found a strange expression.");
@@ -1262,7 +1255,6 @@ static void do_more_prints(struct thread *thread, obj_t exprs)
     }
 }
 
-MINDY_NORETURN
 static void do_print_start(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - 1;

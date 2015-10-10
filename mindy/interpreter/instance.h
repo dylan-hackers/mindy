@@ -74,6 +74,6 @@ extern obj_t obj_DefinedClassClass;
 extern void describe(obj_t thing);
 
 extern obj_t make_defined_class(obj_t debug_name, struct library *library);
-extern MINDY_NORETURN void init_defined_class(obj_t class, obj_t slots,
-                                              obj_t initargs, obj_t inheriteds,
-                                              obj_t abstractp);
+extern void init_defined_class(obj_t class, obj_t slots,
+                               obj_t initargs, obj_t inheriteds,
+                               obj_t abstractp);

@@ -32,15 +32,13 @@ enum pause_reason {
 
 extern enum pause_reason do_stuff(void);
 extern enum pause_reason single_step(struct thread *);
-extern MINDY_NORETURN void go_on(void);
-extern MINDY_NORETURN void mindy_pause(enum pause_reason reason);
+extern void go_on(void);
+extern void mindy_pause(enum pause_reason reason);
 
-extern MINDY_NORETURN void wait_for_input(struct thread *thread, int fd,
-                           MINDY_NORETURN
+extern void wait_for_input(struct thread *thread, int fd,
                            void (*advance)(struct thread *thread));
-extern MINDY_NORETURN void wait_for_output(struct thread *thread, int fd,
-                           MINDY_NORETURN
-                           void (*advance)(struct thread *thread));
+extern void wait_for_output(struct thread *thread, int fd,
+                            void (*advance)(struct thread *thread));
 
 extern void set_signal_handler(int sig, void (*handler)(void));
 extern void clear_signal_handler(int sig);

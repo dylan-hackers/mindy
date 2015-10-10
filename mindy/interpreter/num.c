@@ -855,7 +855,6 @@ static obj_t dylan_fi_fi_times(obj_t x, obj_t y)
     return make_fixnum(fixnum_value(x) * fixnum_value(y));
 }
 
-MINDY_NORETURN
 static void dylan_fi_fi_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -883,7 +882,6 @@ static void dylan_fi_fi_trunc(obj_t self, struct thread *thread, obj_t *args)
     }
 }
 
-MINDY_NORETURN
 static void dylan_fi_fi_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -911,7 +909,6 @@ static void dylan_fi_fi_floor(obj_t self, struct thread *thread, obj_t *args)
     }
 }
 
-MINDY_NORETURN
 static void dylan_fi_fi_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -940,7 +937,6 @@ static void dylan_fi_fi_ceil(obj_t self, struct thread *thread, obj_t *args)
     }
 }
 
-MINDY_NORETURN
 static void dylan_fi_fi_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1066,7 +1062,6 @@ static obj_t dylan_ei_ei_less(obj_t x, obj_t y)
         return obj_False;
 }
 
-MINDY_NORETURN
 static void dylan_ei_ei_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1104,7 +1099,6 @@ static void dylan_ei_ei_floor(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_ei_ei_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1142,7 +1136,6 @@ static void dylan_ei_ei_ceil(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_ei_ei_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1175,7 +1168,6 @@ static void dylan_ei_ei_trunc(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_ei_ei_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1405,7 +1397,6 @@ static obj_t dylan_sf_sf_divide(obj_t x, obj_t y)
     return make_single(single_value(x) / single_value(y));
 }
 
-MINDY_NORETURN
 static void dylan_sf_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1420,7 +1411,6 @@ static void dylan_sf_trunc(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_sf_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1435,7 +1425,6 @@ static void dylan_sf_floor(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_sf_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1450,7 +1439,6 @@ static void dylan_sf_ceil(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_sf_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1525,7 +1513,6 @@ static obj_t dylan_df_df_divide(obj_t x, obj_t y)
     return make_double(double_value(x) / double_value(y));
 }
 
-MINDY_NORETURN
 static void dylan_df_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1540,7 +1527,6 @@ static void dylan_df_trunc(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_df_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1555,7 +1541,6 @@ static void dylan_df_floor(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_df_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1570,7 +1555,6 @@ static void dylan_df_ceil(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_df_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1645,7 +1629,6 @@ static obj_t dylan_xf_xf_divide(obj_t x, obj_t y)
     return make_extended(extended_value(x) / extended_value(y));
 }
 
-MINDY_NORETURN
 static void dylan_xf_trunc(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1660,7 +1643,6 @@ static void dylan_xf_trunc(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_xf_floor(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1675,7 +1657,6 @@ static void dylan_xf_floor(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_xf_ceil(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;
@@ -1690,7 +1671,6 @@ static void dylan_xf_ceil(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_xf_round(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;

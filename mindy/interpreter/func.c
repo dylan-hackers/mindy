@@ -125,7 +125,7 @@ obj_t make_gf_cache(int req_args, obj_t cached_result)
 
 struct function {
     obj_t class;
-    MINDY_NORETURN void (*xep)(struct thread *thread, int nargs);
+    void (*xep)(struct thread *thread, int nargs);
     obj_t debug_name;
     int required_args;
     bool restp;
@@ -141,7 +141,6 @@ struct function {
 obj_t make_raw_function(char *debug_name, obj_t specializers,
                         bool restp, obj_t keywords, bool all_keys,
                         obj_t result_types, obj_t more_results_type,
-                        MINDY_NORETURN
                         void (*xep)(struct thread *thread, int nargs))
 {
     obj_t res = alloc(obj_RawFunctionClass, sizeof(struct function));
@@ -197,7 +196,6 @@ obj_t function_specializers(obj_t fn)
     return FUNC(fn)->specializers;
 }
 
-MINDY_NORETURN
 void invoke(struct thread *thread, int nargs)
 {
     obj_t function = thread->sp[-nargs-1];
@@ -310,7 +308,6 @@ void do_return_setup(struct thread *thread, obj_t *old_sp, obj_t *vals)
 }
 
 #ifndef MINDY_SLOW_LONGJMP
-MINDY_NORETURN
 void do_return(struct thread *thread, obj_t *old_sp, obj_t *vals)
 {
     do_return_setup(thread, old_sp, vals);
@@ -333,7 +330,7 @@ struct method {
     obj_t more_results_type;
     obj_t specializers;
     obj_t class_cache;                        /* #F or a gf_cache */
-    MINDY_NORETURN void (*iep)(obj_t self, struct thread *thread, obj_t *args);
+    void (*iep)(obj_t self, struct thread *thread, obj_t *args);
 };
 
 #define METHOD(o) obj_ptr(struct method *, o)
@@ -359,7 +356,6 @@ static obj_t *push_keywords(obj_t *sp, obj_t keywords, obj_t *args, int nargs)
     return sp;
 }
 
-MINDY_NORETURN
 static void really_invoke_methods(obj_t method, obj_t next_methods,
                                   struct thread *thread, int nargs)
 {
@@ -399,8 +395,7 @@ static void really_invoke_methods(obj_t method, obj_t next_methods,
     METHOD(method)->iep(method, thread, args);
 }
 
-MINDY_NORETURN
-static void invoke_methods(obj_t method, obj_t next_methods,
+void invoke_methods(obj_t method, obj_t next_methods,
                     struct thread *thread, int nargs)
 {
     if (method == obj_False) {
@@ -561,7 +556,6 @@ static void method_xep(struct thread *thread, int nargs)
 obj_t make_raw_method(char *debug_name, obj_t specializers, bool restp,
                       obj_t keywords, bool all_keys, obj_t result_types,
                       obj_t more_results_type,
-                      MINDY_NORETURN
                       void (*iep)(obj_t self, struct thread *thread, obj_t *args))
 {
     obj_t res = alloc(obj_RawMethodClass, sizeof(struct method));
@@ -586,7 +580,6 @@ obj_t make_raw_method(char *debug_name, obj_t specializers, bool restp,
 }
 
 void set_method_iep(obj_t method,
-                    MINDY_NORETURN
                     void (*iep)(obj_t self, struct thread *thread, obj_t *args))
 {
     METHOD(method)->iep = iep;
@@ -1059,7 +1052,6 @@ struct accessor_method {
 
 obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
                            bool setter, obj_t datum,
-                           MINDY_NORETURN
                            void (*iep)(obj_t self, struct thread *thread,
                                     obj_t *args))
 {
@@ -1718,7 +1710,6 @@ static obj_t dylan_make_gf(obj_t debug_name, obj_t required,
                                  more_res_type);
 }
 
-MINDY_NORETURN
 static void dylan_add_method(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *vals = args-1;
@@ -1733,7 +1724,6 @@ static void dylan_add_method(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, vals, vals);
 }
 
-MINDY_NORETURN
 static void dylan_function_arguments(obj_t self, struct thread *thread,
                                      obj_t *args)
 {
@@ -1752,7 +1742,6 @@ static void dylan_function_arguments(obj_t self, struct thread *thread,
     do_return(thread, vals, vals);
 }
 
-MINDY_NORETURN
 static void dylan_method_arguments(obj_t self, struct thread *thread,
                                    obj_t *args)
 {
@@ -1782,7 +1771,6 @@ static void dylan_method_arguments(obj_t self, struct thread *thread,
     do_return(thread, vals, vals);
 }
 
-MINDY_NORETURN
 static void dylan_function_return_values(obj_t self, struct thread *thread,
                                          obj_t *args)
 {
@@ -1852,7 +1840,6 @@ static obj_t dylan_remove_method(obj_t gf, obj_t method)
     return NULL;
 }
 
-MINDY_NORETURN
 static void dylan_do_next_method(obj_t self, struct thread *thread,
                                  obj_t *args)
 {

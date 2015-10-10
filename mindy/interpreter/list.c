@@ -160,7 +160,6 @@ static obj_t dylan_tail_setter(obj_t tail, obj_t list)
     return tail;
 }
 
-MINDY_NORETURN
 static void dylan_list(struct thread *thread, int nargs)
 {
     obj_t *ptr = thread->sp;

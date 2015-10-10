@@ -128,7 +128,6 @@ static obj_t obj_InitializerClass = NULL;
 
 static int find_position(obj_t pt, obj_t slot);
 
-MINDY_NORETURN
 static void slow_instance_getter(obj_t method, struct thread *thread,
                                  obj_t *args)
 {
@@ -149,7 +148,6 @@ static void slow_instance_getter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void fast_instance_getter(obj_t method, struct thread *thread,
                                  obj_t *args)
 {
@@ -168,7 +166,6 @@ static void fast_instance_getter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void slow_instance_setter(obj_t method, struct thread *thread,
                                  obj_t *args)
 {
@@ -186,7 +183,6 @@ static void slow_instance_setter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void fast_instance_setter(obj_t method, struct thread *thread,
                                  obj_t *args)
 {
@@ -202,7 +198,6 @@ static void fast_instance_setter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void slow_each_subclass_getter(obj_t method, struct thread *thread,
                                  obj_t *args)
 {
@@ -223,7 +218,6 @@ static void slow_each_subclass_getter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void fast_each_subclass_getter(obj_t method, struct thread *thread,
                                  obj_t *args)
 {
@@ -244,7 +238,6 @@ static void fast_each_subclass_getter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void slow_each_subclass_setter(obj_t method, struct thread *thread,
                                  obj_t *args)
 {
@@ -262,7 +255,6 @@ static void slow_each_subclass_setter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void fast_each_subclass_setter(obj_t method, struct thread *thread,
                                  obj_t *args)
 {
@@ -280,7 +272,6 @@ static void fast_each_subclass_setter(obj_t method, struct thread *thread,
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void class_getter(obj_t method, struct thread *thread, obj_t *args)
 {
     obj_t datum = accessor_method_datum(method);
@@ -297,7 +288,6 @@ static void class_getter(obj_t method, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void class_setter(obj_t method, struct thread *thread, obj_t *args)
 {
     obj_t datum = accessor_method_datum(method);
@@ -572,7 +562,6 @@ static obj_t initializer_init_function_or_value(obj_t initializer)
     }
 }
 
-MINDY_NORETURN
 static void do_finish_initialization(struct thread *thread, obj_t *vals)
 {
     obj_t inst_or_class = vals[-3];
@@ -739,7 +728,6 @@ static void do_init_value(struct thread *thread, obj_t *vals)
     do_initializers(thread, TAIL(initializers));
 }
 
-MINDY_NORETURN
 static void do_initialization(obj_t inst_or_class, obj_t initargs,
                               obj_t initializers)
 {
@@ -1232,7 +1220,6 @@ static obj_t process_inherited(obj_t class, obj_t inherited, obj_t overrides)
 
 /* Initialize Defined Class */
 
-MINDY_NORETURN
 void init_defined_class(obj_t class, obj_t slots,
                         obj_t initargs, obj_t inheriteds, obj_t abstractp)
 {
@@ -1451,7 +1438,6 @@ static void check_init_keyword_validity(obj_t class, obj_t initargs)
                       INTD(HEAD(scan))->keyword, class);
 }
 
-MINDY_NORETURN
 static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
 {
     int length = DC(class)->instance_length;
@@ -1560,6 +1546,8 @@ static obj_t dylan_make_instance(obj_t class, obj_t keyword_arg_pairs)
     inits = initializers;
     initializers = NULL;
     do_initialization(res, defaulted_initargs, inits);
+
+    return NULL;
 }
 
 static obj_t dylan_init(obj_t object, obj_t key_val_pairs)
@@ -1674,7 +1662,6 @@ static obj_t dylan_slot_type(obj_t slot)
     return SD(slot)->type;
 }
 
-MINDY_NORETURN
 static void dylan_slot_value(obj_t self, struct thread *thread, obj_t *args)
 {
     obj_t *old_sp = args - 1;

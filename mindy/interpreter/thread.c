@@ -146,7 +146,6 @@ static void wakeup_thread(struct thread *thread)
         set_status(thread, status_Suspended);
 }
 
-MINDY_NORETURN
 static void return_false(struct thread *thread)
 {
     obj_t *old_sp = pop_linkage(thread);
@@ -160,7 +159,6 @@ static void return_false(struct thread *thread)
 #endif
 }
 
-MINDY_NORETURN
 static void stop_thread(struct thread *thread, obj_t *vals)
 {
     obj_t thread_obj = thread->thread_obj;
@@ -382,7 +380,6 @@ static obj_t dylan_kill_thread(obj_t thread_obj)
 
 /* Thread suspending and restarting. */
 
-MINDY_NORETURN
 void thread_debuggered(struct thread *thread, obj_t condition)
 {
     assert(thread == Current);
@@ -458,9 +455,8 @@ static obj_t dylan_lock_query(obj_t lock)
         return obj_False;
 }
 
-MINDY_NORETURN
 void lock_grab(struct thread *thread, obj_t lock,
-               MINDY_NORETURN void (*advance)(struct thread *thread))
+               void (*advance)(struct thread *thread))
 {
     if (LOCK(lock)->locked) {
         suspend_thread(thread);
@@ -480,12 +476,12 @@ void lock_grab(struct thread *thread, obj_t lock,
     }
 }
 
-MINDY_NORETURN
 static obj_t dylan_lock_grab(obj_t lock)
 {
     lock_grab(Current, lock, return_false);
     /* lock_grab doesn't return. */
     lose("lock_grab actually returned?");
+    return NULL;
 }
 
 void lock_release(obj_t lock)
@@ -573,9 +569,7 @@ obj_t make_event(void)
     return res;
 }
 
-MINDY_NORETURN
 void event_wait(struct thread *thread, obj_t event, obj_t lock,
-                MINDY_NORETURN
                 void (*advance)(struct thread *thread))
 {
     if (lock != obj_False && !LOCK(lock)->locked)

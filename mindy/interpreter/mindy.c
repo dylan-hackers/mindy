@@ -60,7 +60,6 @@ static void invoke_main(struct thread *thread, obj_t *vals)
     invoke(thread, args_end - old_sp - 1);
 }
 
-MINDY_NORETURN
 static void startup(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - nargs;

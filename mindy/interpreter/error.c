@@ -51,7 +51,6 @@ static bool error_system_enabled = false;
 static struct variable *error_var = NULL;
 static struct variable *type_error_var = NULL;
 
-MINDY_NORETURN
 static void verror(char *msg, va_list ap)
 {
     int nargs = count_format_args(msg);
@@ -89,7 +88,6 @@ static void verror(char *msg, va_list ap)
     }
 }
 
-MINDY_NORETURN
 void error(char *msg, ...)
 {
     va_list ap;
@@ -98,7 +96,6 @@ void error(char *msg, ...)
     va_end(ap);
 }
 
-MINDY_NORETURN
 void type_error(obj_t value, obj_t type)
 {
     if (error_system_enabled) {

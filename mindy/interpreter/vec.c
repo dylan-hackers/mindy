@@ -67,7 +67,6 @@ obj_t make_vector(int length, obj_t *contents)
     return res;
 }
 
-MINDY_NORETURN
 static void dylan_vector(struct thread *thread, int nargs)
 {
     obj_t *args = thread->sp - nargs;

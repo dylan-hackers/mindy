@@ -78,7 +78,6 @@ void invalidate_hash_state(obj_t state)
 /* The largest fixnum prime */
 #define REALLY_BIG_PRIME 1073741789
 
-MINDY_NORETURN
 static void dylan_pointer_hash(struct thread *thread, int nargs)
 {
     obj_t *old_sp = thread->sp - 2;
@@ -97,7 +96,6 @@ static void dylan_pointer_hash(struct thread *thread, int nargs)
     do_return(thread, old_sp, old_sp);
 }
 
-MINDY_NORETURN
 static void dylan_float_hash(struct thread *thread, int nargs)
 {
     obj_t *old_sp = thread->sp - 2;

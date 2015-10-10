@@ -44,7 +44,6 @@ static MINDY_NORETURN void vlose(char *fmt, va_list ap)
     abort();
 }
 
-MINDY_NORETURN
 void lose(char *fmt, ...)
 {
     va_list ap;
