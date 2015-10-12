@@ -1,0 +1,1026 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Transcendental Library &mdash; Mindy 2.7.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/opendylan.org/css/opendylan-docs.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="Mindy 2.7.0 documentation" href="index.html"/>
+        <link rel="prev" title="Gwydion Extensions to Dylan" href="extensions.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> Mindy
+        
+
+        
+        </a>
+
+        
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="mindy.html">The Mindy Compiler and Interpreter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debug.html">The Mindy Debugger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inspect.html">The Mindy Inspector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extensions.html">Gwydion Extensions to Dylan</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Transcendental Library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exported-names">Exported Names</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Mindy</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Transcendental Library</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/transcendentals.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="transcendental-library">
+<h1>Transcendental Library<a class="headerlink" href="#transcendental-library" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">Transcendental</span></code> library implements some common mathematical functions
+and constants, such as sine and cosine. All functions in the
+<code class="docutils literal"><span class="pre">Transcendental</span></code> library signal errors when given invalid arguments, and
+Dylan floating point precision contagion rules are obeyed. Precise
+contagion rules are given for each function below.</p>
+</div>
+<div class="section" id="exported-names">
+<h2>Exported Names<a class="headerlink" href="#exported-names" title="Permalink to this headline">¶</a></h2>
+<p>The following names are exported from the <code class="docutils literal"><span class="pre">Transcendental</span></code> module of the
+<code class="docutils literal"><span class="pre">Transcendental</span></code> library:</p>
+<dl class="constant">
+<dt class="dylan-api" id="transcendental:transcendental:$single-pi">
+<code class="descname">$single-pi</code> <em class="property">Constant</em><a class="headerlink" href="#transcendental:transcendental:$single-pi" title="Permalink to this definition">¶</a></dt>
+<dd><p>The value of <em>π</em> as a single precision floating point number.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">&lt;single-float&gt;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Superclasses:</th><td class="field-body"><a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">The value of <em>π</em> as a single precision floating point number.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">See also:</th><td class="field-body"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:$double-pi"><code class="xref dylan dylan-const docutils literal"><span class="pre">$double-pi</span></code></a></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="constant">
+<dt class="dylan-api" id="transcendental:transcendental:$double-pi">
+<code class="descname">$double-pi</code> <em class="property">Constant</em><a class="headerlink" href="#transcendental:transcendental:$double-pi" title="Permalink to this definition">¶</a></dt>
+<dd><p>The value of <em>π</em> as a double precision floating point number.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">&lt;double-float&gt;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Superclasses:</th><td class="field-body"><a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">The value of <em>π</em> as a double precision floating point number.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">See also:</th><td class="field-body"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:$single-pi"><code class="xref dylan dylan-const docutils literal"><span class="pre">$single-pi</span></code></a></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="constant">
+<dt class="dylan-api" id="transcendental:transcendental:$single-e">
+<code class="descname">$single-e</code> <em class="property">Constant</em><a class="headerlink" href="#transcendental:transcendental:$single-e" title="Permalink to this definition">¶</a></dt>
+<dd><p>The value of <em>e</em>, the base of natural logarithms, as a single precision
+floating point number.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">&lt;single-float&gt;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Superclasses:</th><td class="field-body"><a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">The value of <em>e</em>, the base of natural logarithms, as a single precision
+floating point number.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">See also:</th><td class="field-body"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:$double-e"><code class="xref dylan dylan-const docutils literal"><span class="pre">$double-e</span></code></a></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="constant">
+<dt class="dylan-api" id="transcendental:transcendental:$double-e">
+<code class="descname">$double-e</code> <em class="property">Constant</em><a class="headerlink" href="#transcendental:transcendental:$double-e" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>The value of <em>e</em>, the base of natural logarithms, as a double precision
+floating point number.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">type:</th><td class="field-body">&lt;double-float&gt;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">superclasses:</th><td class="field-body"><a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">description:</th><td class="field-body">The value of <em>e</em>, the base of natural logarithms, as a double precision
+floating point number.</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:$single-e"><code class="xref dylan dylan-const docutils literal"><span class="pre">$single-e</span></code></a></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:sin">
+<code class="descname">sin</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:sin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the sine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">sin x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the sine of its argument. The floating point precision of the
+result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is a single-float
+if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:sincos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sincos</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:cos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">cos</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:tan"><code class="xref dylan dylan-gf docutils literal"><span class="pre">tan</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:sincos">
+<code class="descname">sincos</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:sincos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the sine and the cosine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">sin x =&gt; sine, cosine</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>sine</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+<li><strong>cosine</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the sine and cosine of its argument. The floating point precision of the
+result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is a single-float
+if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:sincos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sincos</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:cos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">cos</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:tan"><code class="xref dylan dylan-gf docutils literal"><span class="pre">tan</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:cos">
+<code class="descname">cos</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:cos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cosine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">cos x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the cosine of its argument. The floating point precision of the
+result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is a single-float
+if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:sin"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sin</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:sincos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sincos</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:tan"><code class="xref dylan dylan-gf docutils literal"><span class="pre">tan</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:tan">
+<code class="descname">tan</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:tan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the tangent of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">tan x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the tangent of its argument. The floating point precision of the
+result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is a single-float
+if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:sin"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sin</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:sincos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sincos</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:cos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">cos</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:asin">
+<code class="descname">asin</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:asin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the arc sine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">asin x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.
+If <code class="docutils literal"><span class="pre">x</span></code> is not in the range <cite>[-1,+1]</cite>, an error is signalled.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the arc sine of its argument. The floating point precision of
+the result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is a
+single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:acos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">acos</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:atan"><code class="xref dylan dylan-gf docutils literal"><span class="pre">atan</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:acos">
+<code class="descname">acos</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:acos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the arc cosine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">acos x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; an instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.
+If <code class="docutils literal"><span class="pre">x</span></code> is not in the range <code class="docutils literal"><span class="pre">[-1,+1]</span></code>, an error is signalled.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the arc cosine of its argument. The floating point precision of
+the result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is a
+single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:asin"><code class="xref dylan dylan-gf docutils literal"><span class="pre">asin</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:atan"><code class="xref dylan dylan-gf docutils literal"><span class="pre">atan</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:atan">
+<code class="descname">atan</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:atan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the arc tangent of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">atan x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.
+If <code class="docutils literal"><span class="pre">x</span></code> is not in the range <cite>[-1,+1]</cite>, an error is signalled.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the arc tangent of its argument. The floating point precision of
+the result is given by the precision of <em>x</em>. The result is a
+single-float if <em>x</em> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:acos"><code class="xref dylan dylan-gf docutils literal"><span class="pre">acos</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:asin"><code class="xref dylan dylan-gf docutils literal"><span class="pre">asin</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:atan2">
+<code class="descname">atan2</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:atan2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the arc tangent of one angle divided by another.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">atan2 x y =&gt; z</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The first angle, in radians.</li>
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The second angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>z</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first last"><p>Returns the arc tangent of <code class="docutils literal"><span class="pre">x</span></code> divided by <code class="docutils literal"><span class="pre">y</span></code>. <code class="docutils literal"><span class="pre">x</span></code> may be zero if <code class="docutils literal"><span class="pre">y</span></code>
+is not zero. The signs of <code class="docutils literal"><span class="pre">x</span></code> and <code class="docutils literal"><span class="pre">y</span></code> are used to derive what quadrant
+the angle falls in.</p>
+<p>The floating point precision of the result is given by the precision of
+<code class="docutils literal"><span class="pre">x</span></code>/<code class="docutils literal"><span class="pre">y</span></code>. The result is a single-float if <code class="docutils literal"><span class="pre">x/y</span></code> is an integer.</p>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:sinh">
+<code class="descname">sinh</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:sinh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the hyperbolic sine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">sinh x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the hyperbolic sine of its argument. The floating point
+precision of the result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is
+a single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:cosh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">cosh</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:tanh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">tanh</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:cosh">
+<code class="descname">cosh</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:cosh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the hyperbolic cosine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">cosh x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the hyperbolic cosine of its argument. The floating point
+precision of the result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is
+a single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:sinh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sinh</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:tanh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">tanh</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:tanh">
+<code class="descname">tanh</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:tanh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the hyperbolic tangent of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">tanh x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the hyperbolic tangent of its argument. The floating point
+precision of the result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is
+a single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:cosh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">cosh</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:sinh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sinh</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:asinh">
+<code class="descname">asinh</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:asinh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the hyperbolic arc sine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">asinh x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the hyperbolic arc sine of its argument. The floating point
+precision of the result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is
+a single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:acosh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">acosh</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:atanh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">atanh</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:acosh">
+<code class="descname">acosh</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:acosh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the hyperbolic arc cosine of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">acosh x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the hyperbolic arc cosine of its argument. The floating point
+precision of the result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is
+a single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:asinh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">asinh</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:atanh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">atanh</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:atanh">
+<code class="descname">atanh</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:atanh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the hyperbolic arc tangent of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">atanh x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>. The angle, in radians.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the hyperbolic arc tangent of its argument. The floating point
+precision of the result is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is
+a single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:acosh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">acosh</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:asinh"><code class="xref dylan dylan-gf docutils literal"><span class="pre">asinh</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:log">
+<code class="descname">log</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the natural logarithm of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">log x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the natural logarithm of <code class="docutils literal"><span class="pre">x</span></code> to the base e. If x &lt;= 0 &lt;= 1, an
+error is signalled. The floating point precision of the result is given
+by the precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is a single-float if <code class="docutils literal"><span class="pre">x</span></code> is an
+integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:exp"><code class="xref dylan dylan-gf docutils literal"><span class="pre">exp</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:exp">
+<code class="descname">exp</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:exp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <em>e</em>, the base of natural logarithms, raised to the power
+indicated by its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">exp x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns <em>e</em>, the base of natural logarithms, raised to the power <code class="docutils literal"><span class="pre">x</span></code>.
+The floating point precision is given by the precision of <code class="docutils literal"><span class="pre">x</span></code>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:^"><code class="xref dylan dylan-gf docutils literal"><span class="pre">^</span></code></a></li>
+<li><a class="reference internal" href="#transcendental:transcendental:log"><code class="xref dylan dylan-gf docutils literal"><span class="pre">log</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:^">
+<code class="descname">^</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:^" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns its first argument, raised to the power indicated by its second
+argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">^ b x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>b</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>.</li>
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first"><p>Returns <code class="docutils literal"><span class="pre">b</span></code> raised to the power <code class="docutils literal"><span class="pre">x</span></code>. If <code class="docutils literal"><span class="pre">b</span></code> is <code class="docutils literal"><span class="pre">0</span></code> and <code class="docutils literal"><span class="pre">x</span></code> is not
+positive, an error is signalled. If <code class="docutils literal"><span class="pre">b</span></code> is negative and <code class="docutils literal"><span class="pre">x</span></code> is not an
+integer, an error is signalled.</p>
+<p>If <code class="docutils literal"><span class="pre">b</span></code> and <code class="docutils literal"><span class="pre">x</span></code> are both integers, the result is an integer. If <code class="docutils literal"><span class="pre">x</span></code> is
+negative, an error is signalled.</p>
+<p>The floating point precision is given by the precision of <code class="docutils literal"><span class="pre">b</span></code>. The
+result is a single-float if <code class="docutils literal"><span class="pre">b</span></code> is an integer.</p>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:exp"><code class="xref dylan dylan-gf docutils literal"><span class="pre">exp</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt class="dylan-api" id="transcendental:transcendental:^([integer],[integer])">
+<code class="descname">^(&lt;integer&gt;, &lt;integer&gt;)</code> <em class="property">Method</em><a class="headerlink" href="#transcendental:transcendental:^([integer],[integer])" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:sqrt">
+<code class="descname">sqrt</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:sqrt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the square root of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">sqrt x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#real"><code class="xref drm docutils literal"><span class="pre">&lt;real&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#float"><code class="xref drm docutils literal"><span class="pre">&lt;float&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the square root of x. If x is less than zero an error is
+signalled. The floating point precision of the result is given by the
+precision of <code class="docutils literal"><span class="pre">x</span></code>. The result is a single-float if <code class="docutils literal"><span class="pre">x</span></code> is an integer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:isqrt"><code class="xref dylan dylan-gf docutils literal"><span class="pre">isqrt</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="generic-function">
+<dt class="dylan-api" id="transcendental:transcendental:isqrt">
+<code class="descname">isqrt</code> <em class="property">Generic function</em><a class="headerlink" href="#transcendental:transcendental:isqrt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the integer square root of its argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Signature:</th><td class="field-body"><p class="first">isqrt x =&gt; y</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Values:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> &#8211; An instance of type <a class="reference external" href="http://opendylan.org/books/drm/Number_Classes#integer"><code class="xref drm docutils literal"><span class="pre">&lt;integer&gt;</span></code></a>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Discussion:</th><td class="field-body"><p class="first">Returns the integer square root of <code class="docutils literal"><span class="pre">x</span></code>, that is the greatest integer
+less than or equal to the exact positive square root of <code class="docutils literal"><span class="pre">x</span></code>. If <code class="docutils literal"><span class="pre">x</span></code> &lt;
+<code class="docutils literal"><span class="pre">0</span></code>, an error is signalled.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">See also:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><a class="reference internal" href="#transcendental:transcendental:sqrt"><code class="xref dylan dylan-gf docutils literal"><span class="pre">sqrt</span></code></a></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="extensions.html" class="btn btn-neutral" title="Gwydion Extensions to Dylan" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Mindy Contributors.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'2.7.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

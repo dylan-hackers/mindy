@@ -109,7 +109,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#the-transcendental-module">The Transcendental Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#streams-library">Streams Library</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#miscellaneous-implementation-choices">Miscellaneous Implementation Choices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#copyright-and-terms-of-use">Copyright and Terms of Use</a></li>
@@ -118,6 +117,7 @@
 <li class="toctree-l1"><a class="reference internal" href="debug.html">The Mindy Debugger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="inspect.html">The Mindy Inspector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extensions.html">Gwydion Extensions to Dylan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transcendentals.html">Transcendental Library</a></li>
 </ul>
 
           
@@ -1451,85 +1451,6 @@ a different way than the previous example:</p>
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="the-transcendental-module">
-<h2>The Transcendental Module<a class="headerlink" href="#the-transcendental-module" title="Permalink to this headline">¶</a></h2>
-<p>This module is in the Dylan library and provides some common
-transcendental functions.</p>
-<p><strong>sin</strong> [Function]
-<strong>cos</strong> [Function]
-<strong>tan</strong> [Function]</p>
-<p>Arguments</p>
-<p>radians :: &lt;float&gt;</p>
-<p>Values</p>
-<p>answer :: &lt;float&gt;</p>
-<p>Description</p>
-<p><strong>sin</strong> returns the sine of the argument, <strong>cos</strong> the cosine, and
-<strong>tan</strong> the tangent. The argument is in radians. The return value is the
-same type of float as the input value.</p>
-<p><strong>asin</strong> [Function]
-<strong>acos</strong> [Function]
-<strong>atan</strong> [Function]</p>
-<p>Arguments</p>
-<p>number :: &lt;float&gt;</p>
-<p>Values</p>
-<p>answer :: &lt;float&gt;</p>
-<p>Description</p>
-<p><strong>asin</strong> returns the inverse sine of the argument. <strong>acos</strong> returns
-the inverse cosine of the argument. <strong>atan</strong> returns the inverse tangent
-of the argument. The return value is the same type of float as the input
-value.</p>
-<p><strong>atan2</strong> [Function]</p>
-<p>Arguments</p>
-<p>x :: &lt;float&gt;</p>
-<p>y :: &lt;float&gt;</p>
-<p>Values</p>
-<p>answer :: &lt;float&gt;</p>
-<p>Description</p>
-<p><strong>atan2</strong>returns the two argument inverse tangent of <em>x</em> / <em>y</em>. If
-<em>x</em> and <em>y</em> are both <strong>&lt;single-float&gt;</strong>s, the return value is a
-<strong>&lt;single-float&gt;</strong>; otherwise, the return value is a <strong>&lt;double-float&gt;</strong>.</p>
-<p><strong>sinh</strong> [Function]
-<strong>cosh</strong> [Function]
-<strong>tanh</strong> [Function]</p>
-<p>Arguments</p>
-<p>number :: &lt;float&gt;</p>
-<p>Values</p>
-<p>answer :: &lt;float&gt;</p>
-<p>Description</p>
-<p><strong>sinh</strong> returns the hyperbolic sine of the argument. <strong>cosh</strong> returns
-the hyperbolic cosine of the argument. <strong>tanh</strong> returns the hyperbolic
-tangent of the argument. The return value is the same type of float as
-the input value.</p>
-<p><strong>exp</strong> [Function]
-<strong>log</strong> [Function]
-<strong>sqrt</strong> [Function]</p>
-<p>Arguments</p>
-<p>number :: &lt;float&gt;</p>
-<p>Values</p>
-<p>answer :: &lt;float&gt;</p>
-<p>Description</p>
-<p><strong>exp</strong>returns <strong>$e</strong> raised to the power <em>number</em>, where <strong>$e</strong> is
-the base of the natural logarithm. <strong>log</strong> returns the natural logarithm
-of <em>number</em>. <strong>sqrt</strong> returns the square root of <em>number</em>. The return
-value is the same type of float as the input value.</p>
-<p><strong>^</strong> [Method]</p>
-<p>Arguments</p>
-<p>base-number :: &lt;float&gt;</p>
-<p>power-number :: &lt;float&gt;</p>
-<p>Values</p>
-<p>answer :: &lt;float&gt;</p>
-<p>Description</p>
-<p><strong>expt</strong>returns <em>base-number</em> raised to the power <em>power-number</em>. If
-both <em>base-number</em> and <em>power-number</em> are <strong>&lt;single-float&gt;</strong>s, the
-return value is a &lt;single-float&gt;; otherwise, the return value is a
-<strong>&lt;double-float&gt;</strong>.</p>
-<p><strong>$pi</strong> [Constant]
-<strong>$e</strong> [Constant]</p>
-<p><strong>$pi</strong> is the best approximation to the mathematical constant pi, in
-<strong>&lt;double-float&gt;</strong> format. <strong>$e</strong> is the best approximation to the
-mathematical constant e, the base of the natural logarithm, in
-<strong>&lt;double-float&gt;</strong> format.</p>
 </div>
 <div class="section" id="streams-library">
 <h2>Streams Library<a class="headerlink" href="#streams-library" title="Permalink to this headline">¶</a></h2>
