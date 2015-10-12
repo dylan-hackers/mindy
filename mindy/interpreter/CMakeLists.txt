@@ -44,7 +44,7 @@ SET(mindy_SOURCES
     value.c
     vec.c
     weak.c
-    ../../common/time/time-portability.c
+    ../../to-be-migrated/time/time-portability.c
     ../shared/color_output.c
 )
 
