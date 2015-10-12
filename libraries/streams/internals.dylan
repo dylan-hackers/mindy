@@ -40,8 +40,6 @@ copyright: See below.
 ///
 /// As methods.
 ///
-#if (mindy)
-
 define inline method as (result :: singleton(<byte-character>),
                          object :: <byte>)
  => result :: <byte-character>;
@@ -62,46 +60,6 @@ define inline method as (result :: singleton(<byte>),
     => result :: <byte>;
   as(<integer>, object);
 end method;
-
-#else
-
-/// We use add-method to make d2c happy. If we defined it normally,
-/// it would cause us to loose compile-time selection of any as methods.
-add-method(as,
-           method (result :: singleton(<byte-character>),
-                   object :: <integer>)
-            => result :: <byte-character>;
-             if (object < 0 | object > 255)
-               error("%d cannot be converted to a <byte-character>.", object);
-             end if;
-             as(<character>, object);
-           end method);
-
-add-method(as,
-           method (result :: singleton(<byte-character>),
-                   object :: <byte>)
-            => result :: <byte-character>;
-             as(<character>, object);
-           end method);
-
-add-method(as,
-           method (result :: singleton(<byte>),
-                   object :: <integer>)
-            => result :: <byte-character>;
-             if (object < 0 | object > 255)
-               error("%d cannot be converted to a <byte-character>.", object);
-             end if;
-             object;
-           end method);
-
-add-method(as,
-           method (result :: singleton(<byte>),
-                   object :: <byte-character>)
-            => result :: <byte-character>;
-             as(<integer>, object);
-           end method);
-
-#endif
 
 /// ### Should these be inlined?
 ///

@@ -30,22 +30,6 @@ copyright: See below.
 //
 //======================================================================
 
-#if (~mindy & (compiled-for-win32 | compiled-for-solaris | compiled-for-FreeBSD))
-// We need this because when fd-open is inlined into this file, the
-// identifier O_BINARY will be undeclared in the C code
-method () => ();
-  c-include("fcntl.h");
-  c-include("errno.h");
-end();
-#endif
-
-// BeOS required unistd.h at this point
-#if (~mindy & ~compiled-for-win32)
-method () => ();
-  c-include("unistd.h");
-end();
-#endif
-
 //// Fd Streams -- class definition and querying.
 ////
 
@@ -122,18 +106,10 @@ define inline sealed method stream-open? (stream :: <fd-stream>)
   if (stream.buffer) #t else #f end;
 end method;
 
-#if (mindy)
 define inline sealed method stream-element-type (stream :: <fd-stream>)
  => type :: singleton(<byte-character>);
   <byte-character>;
 end method;
-#else
-// Until d2c can deal with singleton
-define inline sealed method stream-element-type (stream :: <fd-stream>)
- => type :: <type>;
-  <byte-character>;
-end method;
-#endif
 
 define sealed method stream-at-end? (stream :: <fd-stream>)
  => at-end? :: <boolean>;
@@ -357,21 +333,12 @@ define constant file-buffer-last-use-setter = fd-direction-setter;
 define constant <file-direction>
   = one-of(#"input", #"output", #"input-output");
 
-#if (mindy)
 define sealed class <fd-file-stream> (<fd-stream>, <file-stream>)
   slot file-name :: <byte-string>;
   slot file-direction :: <file-direction>;
   slot element-type :: one-of(<byte>, <byte-character>, <unicode-character>)
     = <byte-character>;
 end class;
-#else
-// The compiler can't deal with singleton(<byte>)
-define sealed class <fd-file-stream> (<fd-stream>, <file-stream>)
-  slot file-name :: <byte-string>;
-  slot file-direction;// :: one-of(#"input", #"output", #"input-output");
-  slot element-type = <byte-character>;
-end class;
-#endif
 
 define sealed domain make (singleton(<fd-file-stream>));
 

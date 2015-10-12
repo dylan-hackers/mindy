@@ -31,13 +31,6 @@ copyright: See below.
 //======================================================================
 
 
-//// Right now this file is chopped up with #if's for workarounds to the
-//// current d2c not dealing with singleton({<byte>, <byte-character>}).
-//// Once it does, the mindy versions of everything should be used.
-//// Check file-streams.dylan, stream-writing.dylan, new-internals.dylan
-//// for the same.
-////
-
 //// Constants.
 ////
 
@@ -170,7 +163,6 @@ define open generic type-for-file-stream
      encoding :: false-or(<symbol>))
  => type :: <type>;
 
-#if (mindy)
 define inline method type-for-file-stream
     (locator :: <byte-string>,
      element-type :: one-of(#f, <byte-character>, <byte>),
@@ -178,21 +170,6 @@ define inline method type-for-file-stream
  => type :: singleton(<fd-file-stream>);
   <fd-file-stream>;
 end method;
-#else
-// The compiler can't deal with singleton(<byte>)
-//
-define inline method type-for-file-stream
-    (locator :: <byte-string>,
-     element-type :: false-or(<type>),
-     encoding :: one-of(#f, #"ANSI", #"big-endian"))
- => type :: <type>;
-  select (element-type)
-    <byte>, <byte-character> => <fd-file-stream>;
-//    <unicode-character> => <unicode-fd-file-stream>;
-    otherwise => <fd-file-stream>;
-  end select;
-end method;
-#endif
 
 /// make
 ///
@@ -388,7 +365,6 @@ define sealed method stream-element-type (stream :: <simple-sequence-stream>)
   end block
 end method stream-element-type;
 
-#if (mindy)
 define inline sealed method stream-element-type
     (stream :: <byte-string-stream>)
  => element-type :: singleton(<byte-character>);
@@ -400,19 +376,6 @@ define inline sealed method stream-element-type
  => element-type :: singleton(<unicode-character>);
   <unicode-character>;
 end method stream-element-type;
-#else
-define inline sealed method stream-element-type
-    (stream :: <byte-string-stream>)
- => element-type :: <type>;
-  <byte-character>;
-end method stream-element-type;
-
-define inline sealed method stream-element-type
-    (stream :: <unicode-string-stream>)
- => element-type :: <type>;
-  <unicode-character>;
-end method stream-element-type;
-#endif
 
 /// stream-at-end?
 ///
@@ -751,7 +714,6 @@ end method;
 /// Used by read and read-line for <buffered-stream> to determine
 /// what type of sequence to return.
 ///
-#if (mindy)
 define inline sealed method type-for-sequence
     (element-type :: <type>)
  => type :: singleton(<vector>);
@@ -775,19 +737,6 @@ define inline sealed method type-for-sequence
  => type :: singleton(<unicode-string>);
   <unicode-string>;
 end method;
-#else
-// The compiler can't deal with singleton(<byte>).
-//
-define inline sealed method type-for-sequence (element-type)
- => type;
-  select (element-type)
-    <byte> => <byte-vector>;
-    <byte-character> => <byte-string>;
-    <unicode-character> => <unicode-string>;
-    otherwise => <vector>;
-  end select;
-end method;
-#endif
 
 /// check-stream-open -- Internal interface
 /// Makes sure stream is open, signals an error if not.

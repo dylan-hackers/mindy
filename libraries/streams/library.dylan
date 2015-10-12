@@ -32,54 +32,9 @@ copyright: See below.
 
 define library streams
   use dylan;
-#if (~mindy)
-  use melange-support;
-#endif
   export
     streams, piped-exec;
 end library;
-
-#if (~mindy)
-  define module File-Descriptors
-    use dylan;
-    use extensions;
-    use system;
-    export
-      fd-seek-set,
-      fd-seek-current,
-      fd-seek-end,
-      fd-O_RDONLY,
-      fd-O_WRONLY,
-      fd-O_RDWR,
-      fd-O_CREAT,
-      fd-O_APPEND,
-      fd-O_TRUNC,
-      fd-O_EXCL,
-      fd-ENOENT,
-      fd-EEXIST,
-      fd-EACCES,
-      fd-open,
-      fd-close,
-      fd-read,
-      fd-write,
-      fd-seek,
-      fd-input-available?,
-      fd-sync-output,
-      fd-error-string;
-  end module;
-
-  define module Threads
-    use dylan;
-    use extensions;
-    export
-      <lock>,
-      <multilock>,
-      <semaphore>,
-      grab-lock,
-      release-lock,
-      locked?;
-  end module;
-#endif
 
 /// The Internals Module exports everything that is necessary to make the
 /// code in the Streams Module run, but only stuff that is of an internals
@@ -103,7 +58,6 @@ define module internals
   use threads,
     import: {<multilock>, <semaphore>, grab-lock, release-lock, locked?},
     export: all;
-#if (mindy)
   use file-descriptors,
     // This is one of two use file-descriptors clauses.  This one prefixes
     // everything with "fd-"
@@ -125,9 +79,6 @@ define module internals
     import: {fd-read, fd-write, fd-open, fd-close, fd-seek,
              fd-input-available?, fd-sync-output, fd-error-string},
     export: all;
-#else
-  use file-descriptors, export: all;
-#endif
   export
     <syscall-error>, call-fd-function;
 end module;
@@ -138,11 +89,6 @@ define module streams
     export: {<byte-vector>, <buffer>, <byte>, <buffer-index>,
              $maximum-buffer-size, buffer-end, buffer-end-setter,
              buffer-next, buffer-next-setter };
-
-#if (~mindy)
-  // This next line is a kludge for file-streams.dylan under Windows/NT
-  use system, import: { c-include };
-#endif
 
   export
     // Classes and types.
@@ -288,11 +234,7 @@ end module;
 define module piped-exec
   use dylan;
   use streams;
-#if (~mindy)
-  use melange-support;
-#else
   use file-descriptors;
-#endif
   export
     piped-exec;
 end module piped-exec;

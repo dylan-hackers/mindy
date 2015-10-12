@@ -260,36 +260,6 @@ define function fully-separated-path( path :: <filename> )
         end if;
 end function fully-separated-path;
 
-// getcwd -- Mindy defines this in the System module.  d2c does not.
-
-#if (~mindy)
-
-define function getcwd () => cwd :: <byte-string>;
-  // Something about getdrive() on MS-windows.  include <direct.h>
-  let buffer = make(<buffer>, size: 1024);
-  if (zero?(call-out("(long)getcwd", #"long",
-                     #"ptr", buffer-address(buffer),
-                     #"int", 1024)))
-    error("Can't get the current directory.");
-  else
-    let len = block (return)
-                for (index :: <integer> from 0 below 1024)
-                  if (buffer[index].zero?)
-                    return(index);
-                  end if;
-                end for;
-                error("Can't get the current directory.");
-              end block;
-    let result = make(<byte-string>, size: len);
-    for (index :: <integer> from 0 below len)
-      result[index] := as(<character>, buffer[index]);
-    end for;
-    result;
-  end if;
-end function getcwd;
-
-#endif
-
 // ### Should also include the current drive, but does not.
 //
 define function get-current-directory () => cwd :: <byte-string>;
