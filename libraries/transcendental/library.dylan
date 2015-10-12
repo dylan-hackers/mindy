@@ -34,31 +34,9 @@ define library Transcendental
   export Transcendental;
 end library Transcendental;
 
-#if (mindy)
-
 define module Transcendental
   use Dylan;
   use %Transcendental,
     import: all,
     export: all;
 end module Transcendental;
-
-#else
-
-define module Transcendental
-  use Dylan,
-    export: {\^};
-  use Extensions;
-  use System;
-
-  export
-    $double-pi, $single-pi, $double-e, $single-e,
-    sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh,
-    log, logn, exp, sqrt, isqrt
-  #if (compiled-for-hpux | compiled-for-linux | compiled-for-freebsd | compiled-for-beos)
-    , asinh, acosh, atanh
-  #endif
-    ;
-end module Transcendental;
-
-#endif
