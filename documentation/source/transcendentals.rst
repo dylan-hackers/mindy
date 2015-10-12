@@ -105,6 +105,29 @@ The following names are exported from the ``Transcendental`` module of the
 
    :seealso:
 
+     - :gf:`sincos`
+     - :gf:`cos`
+     - :gf:`tan`
+
+.. generic-function:: sincos
+
+   Returns the sine and the cosine of its argument.
+
+   :signature: sin x => sine, cosine
+
+   :parameter x: An instance of type :drm:`<real>`. The angle, in radians.
+   :value sine: An instance of type :drm:`<float>`.
+   :value cosine: An instance of type :drm:`<float>`.
+
+   :description:
+
+     Returns the sine and cosine of its argument. The floating point precision of the
+     result is given by the precision of ``x``. The result is a single-float
+     if ``x`` is an integer.
+
+   :seealso:
+
+     - :gf:`sincos`
      - :gf:`cos`
      - :gf:`tan`
 
@@ -126,6 +149,7 @@ The following names are exported from the ``Transcendental`` module of the
    :seealso:
 
      - :gf:`sin`
+     - :gf:`sincos`
      - :gf:`tan`
 
 .. generic-function:: tan
@@ -145,8 +169,9 @@ The following names are exported from the ``Transcendental`` module of the
 
    :seealso:
 
-     - :gf:`cos`
      - :gf:`sin`
+     - :gf:`sincos`
+     - :gf:`cos`
 
 .. generic-function:: asin
 

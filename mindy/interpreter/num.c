@@ -1891,6 +1891,51 @@ define_transcendental_function(exp)
 define_transcendental_function(log)
 define_transcendental_function(sqrt)
 
+static void dylan_sf_sincos(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    float x = single_value(args[0]);
+
+    thread->sp = old_sp + 2;
+
+    float sine, cosine;
+#if defined(HAVE_SINCOS)
+    sincosf(x, &sine, &cosine);
+#elif defined(HAVE___SINCOS)
+    __sincosf(x, &sine, &cosine);
+#else
+    sine = sinf(x);
+    cosine = cosf(x);
+#endif
+
+    old_sp[0] = make_single(sine);
+    old_sp[1] = make_single(cosine);
+
+    do_return(thread, old_sp, old_sp);
+}
+
+static void dylan_df_sincos(obj_t self, struct thread *thread, obj_t *args)
+{
+    obj_t *old_sp = args - 1;
+    double x = double_value(args[0]);
+
+    thread->sp = old_sp + 2;
+
+    double sine, cosine;
+#if defined(HAVE_SINCOS)
+    sincos(x, &sine, &cosine);
+#elif defined(HAVE___SINCOS)
+    __sincos(x, &sine, &cosine);
+#else
+    sine = sin(x);
+    cosine = cos(x);
+#endif
+    old_sp[0] = make_double(sine);
+    old_sp[1] = make_double(cosine);
+
+    do_return(thread, old_sp, old_sp);
+}
+
 static obj_t dylan_sf_atan2 (obj_t sf1, obj_t sf2)
 {
     return make_single((float) atan2(single_value(sf1),
@@ -2415,6 +2460,17 @@ void init_num_functions(void)
     add_transcendental_function(exp);
     add_transcendental_function(log);
     add_transcendental_function(sqrt);
+
+    define_generic_function("sincos", any_real, false, obj_False, false,
+                            two_floats, obj_False);
+    add_method(find_variable(module_BuiltinStuff, symbol("sincos"),
+                             false, false)->value,
+               make_raw_method("sincos", sf, false, obj_False, false,
+                               two_sfs, obj_False, dylan_sf_sincos));
+    add_method(find_variable(module_BuiltinStuff, symbol("sincos"),
+                             false, false)->value,
+               make_raw_method("sincos", df, false, obj_False, false,
+                               two_dfs, obj_False, dylan_df_sincos));
 
     define_generic_function("atan2", two_floats, false, obj_False, false,
                             any_float, obj_False);

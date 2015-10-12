@@ -10,6 +10,11 @@ OPTION(MINDY_SLOW_LONGJMP "(Experimental) Assume longjmp is slow." OFF)
 CHECK_FUNCTION_EXISTS(_setjmp HAVE__SETJMP)
 CHECK_FUNCTION_EXISTS(_longjmp HAVE__LONGJMP)
 
+# Linux provides this.
+CHECK_FUNCTION_EXISTS(sincos HAVE_SINCOS)
+# Mac OS X provides this.
+CHECK_FUNCTION_EXISTS(__sincos HAVE___SINCOS)
+
 CHECK_STRUCT_HAS_MEMBER("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 
 CHECK_SYMBOL_EXISTS(daylight time.h HAVE_DAYLIGHT)
