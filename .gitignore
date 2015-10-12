@@ -1,3 +1,3 @@
-common/system/os-constants.dylan
-common/time/time.inc
+to-be-migrated/system/os-constants.dylan
+to-be-migrated/time/time.inc
 documentation/build
