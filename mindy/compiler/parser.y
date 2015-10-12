@@ -1002,8 +1002,7 @@ return_type_list_head:
 
 return_type_element:
         variable_name
-        { warn($1->line, "Return value has name but no type");
-          free($1); $$ = NULL; }
+        { free($1); $$ = NULL; }
     | variable_name COLON_COLON expression { free($1); free($2); $$ = $3; }
 ;
 
