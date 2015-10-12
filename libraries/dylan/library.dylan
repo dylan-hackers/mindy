@@ -120,7 +120,7 @@ define module Builtin-Stuff
     c-pointer-slot-setter, load-object-file, null-pointer, find-c-pointer,
     find-c-function, constrain-c-function,
     sin, cos, tan, sincos, asin, acos, atan, atan2,
-    sinh, cosh, tanh,
+    sinh, cosh, tanh, asinh, acosh, atanh,
     exp, log, sqrt,
     $single-pi, $single-e, $double-pi, $double-e,
     init-keyword, keyword-required?,
@@ -420,7 +420,7 @@ define module %Transcendental
   use Extensions;
   use Builtin-stuff,
     import: { sin, cos, tan, sincos, asin, acos, atan, atan2,
-              sinh, cosh, tanh, // no inverse hyperbolic functions
+              sinh, cosh, tanh, asinh, acosh, atanh,
               exp, log, sqrt,
               $single-pi, $single-e, $double-pi, $double-e },
     export: all;

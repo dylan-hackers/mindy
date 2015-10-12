@@ -316,6 +316,66 @@ The following names are exported from the ``Transcendental`` module of the
      - :gf:`cosh`
      - :gf:`sinh`
 
+.. generic-function:: asinh
+
+   Returns the hyperbolic arc sine of its argument.
+
+   :signature: asinh x => y
+
+   :parameter x: An instance of type :drm:`<real>`. The angle, in radians.
+   :value y: An instance of type :drm:`<float>`.
+
+   :description:
+
+     Returns the hyperbolic arc sine of its argument. The floating point
+     precision of the result is given by the precision of ``x``. The result is
+     a single-float if ``x`` is an integer.
+
+   :seealso:
+
+     - :gf:`acosh`
+     - :gf:`atanh`
+
+.. generic-function:: acosh
+
+   Returns the hyperbolic arc cosine of its argument.
+
+   :signature: acosh x => y
+
+   :parameter x: An instance of type :drm:`<real>`. The angle, in radians.
+   :value y: An instance of type :drm:`<float>`.
+
+   :description:
+
+     Returns the hyperbolic arc cosine of its argument. The floating point
+     precision of the result is given by the precision of ``x``. The result is
+     a single-float if ``x`` is an integer.
+
+   :seealso:
+
+     - :gf:`asinh`
+     - :gf:`atanh`
+
+.. generic-function:: atanh
+
+   Returns the hyperbolic arc tangent of its argument.
+
+   :signature: atanh x => y
+
+   :parameter x: An instance of type :drm:`<real>`. The angle, in radians.
+   :value y: An instance of type :drm:`<float>`.
+
+   :description:
+
+     Returns the hyperbolic arc tangent of its argument. The floating point
+     precision of the result is given by the precision of ``x``. The result is
+     a single-float if ``x`` is an integer.
+
+   :seealso:
+
+     - :gf:`acosh`
+     - :gf:`asinh`
+
 .. generic-function:: log
 
    Returns the natural logarithm of its argument.
@@ -423,69 +483,3 @@ The following names are exported from the ``Transcendental`` module of the
    :seealso:
 
      - :gf:`sqrt`
-
-Unimplemented Functions
------------------------
-
-We intend to someday implement the following functions, but haven't done
-so yet:
-
-.. generic-function:: asinh
-
-   Returns the hyperbolic arc sine of its argument.
-
-   :signature: asinh x => y
-
-   :parameter x: An instance of type :drm:`<real>`. The angle, in radians.
-   :value y: An instance of type :drm:`<float>`.
-
-   :description:
-
-     Returns the hyperbolic arc sine of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
-
-   :seealso:
-
-     - :gf:`acosh`
-     - :gf:`atanh`
-
-.. generic-function:: acosh
-
-   Returns the hyperbolic arc cosine of its argument.
-
-   :signature: acosh x => y
-
-   :parameter x: An instance of type :drm:`<real>`. The angle, in radians.
-   :value y: An instance of type :drm:`<float>`.
-
-   :description:
-
-     Returns the hyperbolic arc cosine of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
-
-   :seealso:
-
-     - :gf:`asinh`
-     - :gf:`atanh`
-
-.. generic-function:: atanh
-
-   Returns the hyperbolic arc tangent of its argument.
-
-   :signature: atanh x => y
-
-   :parameter x: An instance of type :drm:`<real>`. The angle, in radians.
-   :value y: An instance of type :drm:`<float>`.
-
-   :description:
-
-     Returns the hyperbolic arc tangent of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
-
-   :seealso:
-
-     - :gf:`acosh`
-     - :gf:`asinh`

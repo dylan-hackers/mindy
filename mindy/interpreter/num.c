@@ -1887,6 +1887,9 @@ define_transcendental_function(atan)
 define_transcendental_function(sinh)
 define_transcendental_function(cosh)
 define_transcendental_function(tanh)
+define_transcendental_function(asinh)
+define_transcendental_function(acosh)
+define_transcendental_function(atanh)
 define_transcendental_function(exp)
 define_transcendental_function(log)
 define_transcendental_function(sqrt)
@@ -2457,6 +2460,9 @@ void init_num_functions(void)
     add_transcendental_function(sinh);
     add_transcendental_function(cosh);
     add_transcendental_function(tanh);
+    add_transcendental_function(asinh);
+    add_transcendental_function(acosh);
+    add_transcendental_function(atanh);
     add_transcendental_function(exp);
     add_transcendental_function(log);
     add_transcendental_function(sqrt);
