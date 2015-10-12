@@ -95,7 +95,7 @@ obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
     ret = obj_ptr(struct shared_file *, retval);
     ret->file_count = length(c_files);
     for (i = 0; c_files != obj_Nil; i++, c_files = TAIL(c_files)) {
-        handle = shl_load((const char*)string_chars(HEAD(c_files)), BIND_DEFERRED);
+        handle = shl_load((const char*)string_chars(HEAD(c_files)));
         if (handle == NULL) {
             error("Can't load shared library %s.", HEAD(c_files));
         };

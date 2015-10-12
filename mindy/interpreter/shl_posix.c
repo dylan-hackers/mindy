@@ -2,22 +2,16 @@
  */
 
 /*
-** This module approximates the HP style 'shl_' calls for shared library
-** handling for ELF based machines.
+** This module provides a simple shared library loading interface
+** for ELF based machines.
 */
 #include "shl.h"
 #include <dlfcn.h>
 #include <stdlib.h>
 
-shl_t shl_load (const char *path, int flags)
+shl_t shl_load (const char *path)
 {
-    int flag;
-
-    if ((flags & BIND_IMMEDIATE)) flag = RTLD_NOW;
-    else if ((flags & BIND_DEFERRED)) flag = RTLD_NOW;
-    else abort();
-
-    if (flags & BIND_FIRST) abort();
+    int flag = RTLD_NOW;
 
     return dlopen(path, flag);
 }
