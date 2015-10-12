@@ -10,6 +10,7 @@ Mindy
    debug
    inspect
    extensions
+   transcendentals
 
 Indices and tables
 ==================
