@@ -1,0 +1,12 @@
+PROJECT(dbclink C)
+
+SET(dbclink_SOURCES
+    dbclink.c
+)
+ADD_EXECUTABLE(dbclink
+               ${dbclink_SOURCES})
+SET_TARGET_PROPERTIES(dbclink PROPERTIES VERSION ${MINDY_VERSION})
+
+IF (NOT WIN32)
+  INSTALL(TARGETS dbclink DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+ENDIF()
