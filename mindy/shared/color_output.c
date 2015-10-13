@@ -27,7 +27,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 // Implement...
 #else
 #include <stdlib.h>
@@ -54,7 +54,7 @@ void init_color(bool force_color)
         WantColor = true;
     } else {
         WantColor = false;
-#ifdef WIN32
+#ifdef _WIN32
         // Implement...
 #else
         if (isatty(fileno(stdout)) &&

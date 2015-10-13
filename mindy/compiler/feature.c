@@ -44,7 +44,7 @@ static struct feature {
 
 static char *InitialFeatures[]
   = {"mindy",
-#    ifdef WIN32
+#    ifdef _WIN32
         "compiled-for-x86",
         "compiled-for-win32",
 #    else

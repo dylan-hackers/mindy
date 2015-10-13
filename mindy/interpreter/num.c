@@ -67,7 +67,7 @@ obj_t obj_ExtendedFloatClass = 0;
 #define MAX(m, n) (((m) > (n)) ? (m) : (n))
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #   define M_PI 3.14159265358979323846
 #   define M_E  2.7182818284590452354
 #endif

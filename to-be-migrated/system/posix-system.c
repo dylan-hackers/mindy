@@ -22,7 +22,7 @@
    E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 */
 
-#ifdef WIN32
+#ifdef _WIN32
 #else
 # include <unistd.h>
 # include <grp.h>
@@ -57,7 +57,7 @@ extern char **environ;
 */
 int primary_group_name(unsigned char *outBuf, long bufLen)
 {
-#ifdef WIN32
+#ifdef _WIN32
     typedef struct group
     {
         char* gr_name;
@@ -68,7 +68,7 @@ int primary_group_name(unsigned char *outBuf, long bufLen)
     if ((outBuf == NULL) || (bufLen <= 0))
         return 1;
 
-#ifdef WIN32
+#ifdef _WIN32
     if (1) {
         struct group fake;
         gpptr = &fake;

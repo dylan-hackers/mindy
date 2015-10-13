@@ -95,7 +95,7 @@ int mindy_readline(char *prompt, char *buffer, int max_chars)
     if (c == '\n') {
         buffer[chars_read] = c;
         chars_read++;
-#ifdef WIN32
+#ifdef _WIN32
         /* On win32, we handle CRLFs by turning the CR byte into an LF,
            and making the string one byte shorter.  (Which works because
            the LF will be at the end of the string) */

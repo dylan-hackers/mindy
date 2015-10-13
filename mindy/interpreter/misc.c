@@ -33,7 +33,7 @@
 #include <errno.h>
 #include <sys/param.h>
 #include <time.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #else
 #include <unistd.h>

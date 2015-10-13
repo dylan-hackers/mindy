@@ -146,7 +146,7 @@ static void check_fds(bool block)
     memcpy(&readfds, &Readers.fds, sizeof(readfds));
     memcpy(&writefds, &Writers.fds, sizeof(writefds));
 
-#ifdef WIN32
+#ifdef _WIN32
     do {
             for (fd = 0; fd < NumFds; fd++) {
             if (FD_ISSET(fd, &Readers.fds) && input_available(fd)) {

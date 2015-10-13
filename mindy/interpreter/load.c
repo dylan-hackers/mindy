@@ -33,7 +33,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/param.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #else
 #include <unistd.h>
@@ -1018,7 +1018,7 @@ void load(char *name)
 
 /* Library loading. */
 
-#ifdef WIN32
+#ifdef _WIN32
 #    define SEPARATOR_CHAR ';'
 #else
 #    define SEPARATOR_CHAR ':'

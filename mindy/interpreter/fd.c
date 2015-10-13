@@ -32,7 +32,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -53,7 +53,7 @@
 
 /* And now, some large pieces of OS-dependent stuff. */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 
 /* Here, we kluge around the fact that Windows/NT for non-sockets won't
@@ -564,7 +564,7 @@ static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
 #ifdef __APPLE__
          || (res < 0 && errno == ENOTSUP)
 #endif
-#ifdef WIN32
+#ifdef _WIN32
          || (res < 0 && errno == EBADF)
 #endif
                 )
@@ -584,7 +584,7 @@ int output_writable(int fd)
     FD_SET(fd, &fds);
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-#ifdef WIN32
+#ifdef _WIN32
     if (isatty(fd)) {
         return 1;   /* You can always output to a tty */
     } else {
@@ -727,7 +727,7 @@ void init_fd_functions(void)
     define_constant("O_CREAT", make_fixnum(O_CREAT));
     define_constant("O_EXCL", make_fixnum(O_EXCL));
     define_constant("O_TRUNC", make_fixnum(O_TRUNC));
-#ifndef WIN32
+#ifndef _WIN32
     define_constant("O_NONBLOCK", make_fixnum(O_NONBLOCK));
 #endif
 
@@ -1144,12 +1144,12 @@ void init_fd_functions(void)
     define_constant("EXFULL", make_fixnum(EXFULL));
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
     win32_inits();
 #endif
 
 #if 0
-#ifdef WIN32
+#ifdef _WIN32
     if (isatty(0)) {   /* If stdin is a tty and not redirected */
             stdin_buffer_empty     = CreateEvent(NULL, true, true, NULL);
         stdin_buffer_not_empty = CreateEvent(NULL, true, false, NULL);
