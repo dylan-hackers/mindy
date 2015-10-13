@@ -1,7 +1,0 @@
-usr/bin/mindy
-usr/bin/mindycomp
-usr/bin/mindyexec
-usr/share/man/man1/mindy.1
-usr/share/man/man1/mindycomp.1
-usr/share/man/man1/mindyexec.1
-usr/lib/dylan/*/*/*.dbc
