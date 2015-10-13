@@ -38,3 +38,7 @@ define constant *standard-output* :: <fd-stream>
 
 define constant *standard-error* :: <fd-stream>
   = make(<fd-stream>, fd: 2, direction: #"output");
+
+// Redirect this to the facilities provided here by standard-io.
+// This stops the output code from going through cheap-IO.
+*warning-output* := *standard-output*;

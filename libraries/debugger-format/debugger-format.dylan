@@ -45,7 +45,4 @@ define module debugger-format
   use Standard-IO;
 end;
 
-
 *debug-output* := *standard-output*;
-*warning-output* := *standard-output*;
-

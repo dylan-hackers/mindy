@@ -38,6 +38,8 @@ end library;
 
 define module Standard-IO
   use Dylan;
+  use extensions,
+     import: {*warning-output*};
   use streams,
     import: {<fd-stream>};
   export
