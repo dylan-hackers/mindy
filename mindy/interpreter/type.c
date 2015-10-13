@@ -92,12 +92,12 @@ struct none_of_type {
 
 /* instancep */
 
-static __inline__ bool singleton_instancep(obj_t thing, obj_t type)
+static MINDY_INLINE bool singleton_instancep(obj_t thing, obj_t type)
 {
     return idp(thing, SING(type)->object);
 }
 
-static __inline__ bool class_instancep(obj_t thing, obj_t class)
+static MINDY_INLINE bool class_instancep(obj_t thing, obj_t class)
 {
     obj_t thing_class = object_class(thing);
 
@@ -113,13 +113,13 @@ static __inline__ bool class_instancep(obj_t thing, obj_t class)
     return result_cache[cacheloc] = subtypep(thing_class, class);
 }
 
-static __inline__ bool subclass_instancep(obj_t thing, obj_t subclass)
+static MINDY_INLINE bool subclass_instancep(obj_t thing, obj_t subclass)
 {
     return instancep(thing, obj_ClassClass)
         && subtypep(thing, SUBCLASS(subclass)->of);
 }
 
-static __inline__ bool limfix_instancep(obj_t thing, obj_t lim_int)
+static MINDY_INLINE bool limfix_instancep(obj_t thing, obj_t lim_int)
 {
     if (!obj_is_fixnum(thing))
         return false;
@@ -130,7 +130,7 @@ static __inline__ bool limfix_instancep(obj_t thing, obj_t lim_int)
     return true;
 }
 
-static __inline__ bool limbig_instancep(obj_t thing, obj_t lim_int)
+static MINDY_INLINE bool limbig_instancep(obj_t thing, obj_t lim_int)
 {
     if (object_class(thing) != obj_BignumClass)
         return false;
@@ -141,7 +141,7 @@ static __inline__ bool limbig_instancep(obj_t thing, obj_t lim_int)
     return true;
 }
 
-static __inline__ bool union_instancep(obj_t thing, obj_t u)
+static MINDY_INLINE bool union_instancep(obj_t thing, obj_t u)
 {
     obj_t remaining;
 
@@ -153,7 +153,7 @@ static __inline__ bool union_instancep(obj_t thing, obj_t u)
     return false;
 }
 
-static __inline__ bool none_of_instancep(obj_t thing, obj_t class)
+static MINDY_INLINE bool none_of_instancep(obj_t thing, obj_t class)
 {
     obj_t remaining;
 
@@ -202,17 +202,17 @@ bool instancep(obj_t thing, obj_t type)
 
 /* subtypep */
 
-static __inline__ bool sing_sing_subtypep(obj_t sing1, obj_t sing2)
+static MINDY_INLINE bool sing_sing_subtypep(obj_t sing1, obj_t sing2)
 {
     return idp(SING(sing1)->object, SING(sing2)->object);
 }
 
-static __inline__ bool sing_type_subtypep(obj_t sing, obj_t type)
+static MINDY_INLINE bool sing_type_subtypep(obj_t sing, obj_t type)
 {
     return instancep(SING(sing)->object, type);
 }
 
-static __inline__ bool class_class_subtypep(obj_t class1, obj_t class2)
+static MINDY_INLINE bool class_class_subtypep(obj_t class1, obj_t class2)
 {
     obj_t cpl = CLASS(class1)->cpl;
     obj_t remaining;
@@ -227,22 +227,22 @@ static __inline__ bool class_class_subtypep(obj_t class1, obj_t class2)
     return false;
 }
 
-static __inline__ bool never_subtypep(obj_t type1, obj_t type2)
+static MINDY_INLINE bool never_subtypep(obj_t type1, obj_t type2)
 {
     return false;
 }
 
-static __inline__ bool subclass_class_subtypep(obj_t sub, obj_t class)
+static MINDY_INLINE bool subclass_class_subtypep(obj_t sub, obj_t class)
 {
     return subtypep(object_class(SUBCLASS(sub)->of), class);
 }
 
-static __inline__ bool subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
+static MINDY_INLINE bool subclass_subclass_subtypep(obj_t sub1, obj_t sub2)
 {
     return subtypep(SUBCLASS(sub1)->of, SUBCLASS(sub2)->of);
 }
 
-static __inline__ bool limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
+static MINDY_INLINE bool limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -258,7 +258,7 @@ static __inline__ bool limfix_limfix_subtypep(obj_t lim1, obj_t lim2)
     return true;
 }
 
-static __inline__ bool limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
+static MINDY_INLINE bool limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
 {
     obj_t min1, min2, max1, max2;
 
@@ -288,17 +288,17 @@ static __inline__ bool limbig_limbig_subtypep(obj_t lim1, obj_t lim2)
     return true;
 }
 
-static __inline__ bool limfix_type_subtypep(obj_t lim, obj_t type)
+static MINDY_INLINE bool limfix_type_subtypep(obj_t lim, obj_t type)
 {
     return subtypep(obj_FixnumClass, type);
 }
 
-static __inline__ bool limbig_type_subtypep(obj_t lim, obj_t type)
+static MINDY_INLINE bool limbig_type_subtypep(obj_t lim, obj_t type)
 {
     return subtypep(obj_BignumClass, type);
 }
 
-static __inline__ bool union_type_subtypep(obj_t u, obj_t type)
+static MINDY_INLINE bool union_type_subtypep(obj_t u, obj_t type)
 {
     obj_t remaining;
 
@@ -310,7 +310,7 @@ static __inline__ bool union_type_subtypep(obj_t u, obj_t type)
     return true;
 }
 
-static __inline__ bool type_union_subtypep(obj_t type, obj_t u)
+static MINDY_INLINE bool type_union_subtypep(obj_t type, obj_t u)
 {
     obj_t remaining;
 
@@ -322,12 +322,12 @@ static __inline__ bool type_union_subtypep(obj_t type, obj_t u)
     return false;
 }
 
-static __inline__ bool noneof_type_subtypep(obj_t n, obj_t type)
+static MINDY_INLINE bool noneof_type_subtypep(obj_t n, obj_t type)
 {
     return subtypep(NONEOF(n)->base, type);
 }
 
-static __inline__ bool lim_noneof_subtypep(obj_t type, obj_t n)
+static MINDY_INLINE bool lim_noneof_subtypep(obj_t type, obj_t n)
 {
     obj_t remaining;
 

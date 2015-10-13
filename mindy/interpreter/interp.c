@@ -63,12 +63,12 @@ static struct variable *ne_var = NULL;
 
 /* Various utility routines. */
 
-__inline__ static int decode_byte(struct thread *thread)
+MINDY_INLINE static int decode_byte(struct thread *thread)
 {
     return ((unsigned char *)(thread->component))[thread->pc++];
 }
 
-__inline__ static int decode_int4(struct thread *thread)
+MINDY_INLINE static int decode_int4(struct thread *thread)
 {
     int byte1 = decode_byte(thread);
     int byte2 = decode_byte(thread);
@@ -78,7 +78,7 @@ __inline__ static int decode_int4(struct thread *thread)
     return byte1 | (byte2 << 8) | (byte3 << 16) | (byte4 << 24);
 }
 
-__inline__ static int decode_arg(struct thread *thread)
+MINDY_INLINE static int decode_arg(struct thread *thread)
 {
     int arg = decode_byte(thread);
 
@@ -669,7 +669,7 @@ static void op_gt(int byte, struct thread *thread)
     }
 }
 
-__inline__ void interpret_byte(int byte, struct thread *thread)
+MINDY_INLINE void interpret_byte(int byte, struct thread *thread)
 {
 
 static void (*const preters[0x100])(int byte, struct thread *thread)

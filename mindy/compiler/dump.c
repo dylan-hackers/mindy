@@ -55,14 +55,14 @@ static void dump_constant(struct constant *c);
 
 /* Base output routines */
 
-__inline__ static void dump_byte(unsigned byte)
+MINDY_INLINE static void dump_byte(unsigned byte)
 {
     putc(byte, File);
 }
 
 #define dump_op dump_byte
 
-__inline__ static void dump_bytes(void *ptr, int bytes)
+MINDY_INLINE static void dump_bytes(void *ptr, int bytes)
 {
     int count;
 
@@ -73,17 +73,17 @@ __inline__ static void dump_bytes(void *ptr, int bytes)
     }
 }
 
-__inline__ static void dump_short(short value)
+MINDY_INLINE static void dump_short(short value)
 {
     dump_bytes(&value, sizeof(value));
 }
 
-__inline__ static void dump_int(int value)
+MINDY_INLINE static void dump_int(int value)
 {
     dump_bytes(&value, sizeof(value));
 }
 
-__inline__ static void dump_long(long value)
+MINDY_INLINE static void dump_long(long value)
 {
     dump_bytes(&value, sizeof(value));
 }
