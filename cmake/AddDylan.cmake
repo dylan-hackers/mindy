@@ -20,10 +20,9 @@ MACRO(ADD_DYLAN_PROJECT project_name target_directory suffix)
   ENDFOREACH()
   ADD_CUSTOM_COMMAND(
     OUTPUT ${DYLAN_${project_name}_OUTPUT}
-    COMMAND mkdir -p ${target_directory}
-    COMMAND rm ARGS -f "${DYLAN_${project_name}_OUTPUT}.tmp"
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${target_directory}
     COMMAND dbclink "${DYLAN_${project_name}_OUTPUT}.tmp" ${DYLAN_${project_name}_DBC_OUTPUTS}
-    COMMAND mv "${DYLAN_${project_name}_OUTPUT}.tmp" ${DYLAN_${project_name}_OUTPUT}
+    COMMAND ${CMAKE_COMMAND} -E rename "${DYLAN_${project_name}_OUTPUT}.tmp" ${DYLAN_${project_name}_OUTPUT}
     DEPENDS ${DYLAN_${project_name}_DBC_OUTPUTS}
   )
   ADD_CUSTOM_TARGET(${project_name}
