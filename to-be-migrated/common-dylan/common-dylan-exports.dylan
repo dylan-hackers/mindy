@@ -31,9 +31,6 @@ define module functional-extensions
   use dylan;
   use extensions, exclude: { position }, export: { element-range-error };
   use Magic, import: {%element, %element-setter};
-  use common-extensions, import: { find-element };
-  export
-    find-value;
   export
     with-bounds-checks,
     without-bounds-checks;

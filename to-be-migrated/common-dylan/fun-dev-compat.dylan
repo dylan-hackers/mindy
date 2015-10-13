@@ -37,8 +37,3 @@ define macro with-bounds-checks
         let ?=element-setter = element-setter;
         ?body}
 end;
-
-// find-value
-// simple alias to differently named equivalent d2c method
-
-define constant find-value = find-element;
