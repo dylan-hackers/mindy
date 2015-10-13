@@ -106,17 +106,9 @@ define method tautology(arg == #"numbers")
   odd?(1)                                | signal("1 is not odd!\n");
   even?(2)                                | signal("2 is not even!\n");
   zero?(0)                                | signal("0 is not zero!\n");
-#if (mindy)
   positive?(+1)                                | signal("+1 is not positive!\n");
-#else
-  positive?(1)                                | signal("+1 is not positive!\n");
-#endif
   negative?(-1)                                | signal("-1 is not negative!\n");
-#if (mindy)
   integral?(+1)                                | signal("+1 is not integral!\n");
-#else
-  integral?(1)                                | signal("+1 is not integral!\n");
-#endif
   integral?(0)                                | signal("0 is not integral!\n");
   integral?(-1)                         | signal("-1 is not integral!\n");
   (1 + 1 = 2)                                | signal("1 + 1 is not 2!\n");
@@ -140,11 +132,7 @@ define method tautology(arg == #"numbers")
   (logior(1,2) = 3)                        | signal("logior(1,2) is not 3!: it's %=\n", logior(1,2));
   (logxor(1,3) = 2)                        | signal("logxor(1,3) is not 2!: it's %=\n", logxor(1,3));
   (logand(1,3) = 1)                        | signal("logand(1,3) is not 1!: it's %=\n", logand(1,3));
-#if (mindy)
   (lognot(#x1234) = #xffffedcb)                | signal("lognot(#x1234) is not #xffffedcb!: it's %x\n", lognot(#x1234));
-#else
-  (lognot(#x1234) = -#x1235)                | signal("lognot(#x1234) is not #x-1235!: it's %x\n", lognot(#x1234));
-#endif
   logbit?(15,#x8000)                         | signal("logbit?(15,#x8000) is not true!\n");
   (ash(1,3) = 8)                        | signal("ash(1,3) is not 8!: it's %=\n", ash(1,3));
   (lcm(6,8) = 24)                        | signal("lcm(6,8) is not 24!: it's %=\n", lcm(6,8));
@@ -182,9 +170,7 @@ end method;
 define method tautology(arg == #"symbols")
   instance?(#"foo", <symbol>)                | signal("instance?(#\"foo\", <symbol>) is false!\n");
   instance?(#"foo", <symbol>)                | signal("instance?(foo:, <symbol>) is false!\n");
-#if (mindy)
   (#"foo" = #"FOO")                        | signal("#\"foo\" is not FOO:!\n");
-#endif
   (as(<symbol>, "FOO") = #"foo")        | signal("as(<symbol>, \"FOO\") is not foo:!\n");
   (as(<string>, #"Foo") = "foo")        | signal("as(<string>, Foo:) is not \"foo\"! It's %=\n",
                                                  as(<string>, Foo:));
@@ -605,36 +591,19 @@ define method tautology(arg :: <sequence>) => <integer>;
   warnings + fatals;
 end method;
 
-define inline function ensure-valid-args(args)
-  every?(rcurry(member?, tautologies), args)
-end function;
-
 define method main(argv0, #rest args)
-#if (mindy)
   if (empty?(args))
     exit(exit-code: tautology(tautologies));
   else
     let args = map(curry(as, <symbol>), args);
     if (every?(rcurry(member?, tautologies), args))
       exit(exit-code: tautology(args));
-#else
-  if (argv0 <= 1)
-    tautology(tautologies);
-  else
-    // Need to figure out how to convert a raw pointer...
-    let args = #[];
-    if (ensure-valid-args(args))
-      tautology(args);
-#endif
     else
       format("usage: tautologies [package ...]\n");
       for (arg in tautologies)
         format("\t%s\n", as(<string>, arg));
       end for;
-#if (mindy)
       exit(exit-code: -1);
-#endif
     end if;
   end if;
-//  force-output(*standard-output*);
 end method;
