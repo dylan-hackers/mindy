@@ -31,9 +31,11 @@
 
 #include <errno.h>
 #include <fcntl.h>
-
-#ifndef _WIN32
 #include <sys/stat.h>
+#include <sys/types.h>
+#ifdef _WIN32
+#include <Winsock2.h>
+#else
 #include <sys/wait.h>
 #include <unistd.h>
 #endif
