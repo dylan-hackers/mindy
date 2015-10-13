@@ -1,6 +1,6 @@
 library: date
 
-date-exports.dylan
+library.dylan
 dates-and-times.dylan
 durations.dylan
 comparing.dylan

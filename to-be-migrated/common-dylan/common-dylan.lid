@@ -2,7 +2,7 @@ library: common-dylan
 unique-id-base: 5200
 c-object-files: support.o
 
-common-dylan-exports.dylan
+library.dylan
 c-support.dylan
 extensions.dylan
 common-extensions.dylan

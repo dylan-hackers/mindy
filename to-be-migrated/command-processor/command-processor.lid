@@ -1,4 +1,4 @@
 library: command-processor
-files:  command-processor-exports
+files:  library
   command-processor
   termios
