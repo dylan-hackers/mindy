@@ -22,3 +22,7 @@
 #ifndef HAVE__LONGJMP
 #   define _longjmp longjmp
 #endif
+
+#ifdef _WIN32
+#   define strcasecmp stricmp
+#endif
