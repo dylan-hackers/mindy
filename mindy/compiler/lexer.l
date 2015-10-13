@@ -30,16 +30,11 @@
 *
 \**********************************************************************/
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "mindycomp.h"
 #include "lexer.h"
 #include "src.h"
 #include "parser-tab.h"
 
-
-extern int isatty();
-extern void warn();
 
 int line_count = 1;
 
