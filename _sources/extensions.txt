@@ -353,18 +353,40 @@ debugger output goes with the following:
      :gf:`condition-force-output` for your type of stream.
 
 .. variable:: *debug-output*
-.. variable:: *warning-output*
 
    The debugger uses the value of :var:`*debug-output*` when performing
-   output. :drm:`default-handler` for :drm:`<warning>` uses
-   :var:`*warning-output*` to print warning messages. Both variables
-   must be either a :class:`<stream>` from the ``Streams`` library,
-   or ``#"Cheap-IO"`` (the default). When these variables are
-   ``#"Cheap-IO"``, the output goes to ``stderr``.
+   output.
 
-   Using the ``Debugger-format`` module in the ``Format`` library
-   will set both variables to :var:`*standard-output*` (see
-   ``Streams`` Library).
+   :type: :class:`<stream>` or ``#"Cheap-IO"``
+
+   :value: ``#"Cheap-IO"``
+
+   :description:
+
+      When this variable is ``#"Cheap-IO"``, the output goes
+      to ``stderr``.
+
+      This variable is automatically set to :var:`*standard-output*`
+      when the ``Debugger-Format`` library is imported into the
+      program (directly or indirectly).
+
+.. variable:: *warning-output*
+
+   :drm:`default-handler` for :drm:`<warning>` uses
+   :var:`*warning-output*` to print warning messages.
+
+   :type: :class:`<stream>` or ``#"Cheap-IO"``
+
+   :value: ``#"Cheap-IO"``
+
+   :description:
+
+      When this variable is ``#"Cheap-IO"``, the output goes
+      to ``stderr``.
+
+      This variable is automatically set to :var:`*standard-output*`
+      when the ``Standard-IO`` library is imported into the
+      program (directly or indirectly).
 
 Tables
 ~~~~~~

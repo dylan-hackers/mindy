@@ -574,20 +574,47 @@ own streams or format libraries, you will need to define a method on
 <dl class="variable">
 <dt class="dylan-api" id="dylan:extensions:*debug-output*">
 <code class="descname">*debug-output*</code> <em class="property">Variable</em><a class="headerlink" href="#dylan:extensions:*debug-output*" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The debugger uses the value of <a class="reference internal" href="#dylan:extensions:*debug-output*"><code class="xref dylan dylan-var docutils literal"><span class="pre">*debug-output*</span></code></a> when performing
+output.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;stream&gt;</span></code> or <code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Value:</th><td class="field-body"><code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">When this variable is <code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code>, the output goes
+to <code class="docutils literal"><span class="pre">stderr</span></code>.<p>This variable is automatically set to <code class="xref dylan dylan-var docutils literal"><span class="pre">*standard-output*</span></code>
+when the <code class="docutils literal"><span class="pre">Debugger-Format</span></code> library is imported into the
+program (directly or indirectly).</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="variable">
 <dt class="dylan-api" id="dylan:extensions:*warning-output*">
 <code class="descname">*warning-output*</code> <em class="property">Variable</em><a class="headerlink" href="#dylan:extensions:*warning-output*" title="Permalink to this definition">¶</a></dt>
-<dd><p>The debugger uses the value of <a class="reference internal" href="#dylan:extensions:*debug-output*"><code class="xref dylan dylan-var docutils literal"><span class="pre">*debug-output*</span></code></a> when performing
-output. <a class="reference external" href="http://opendylan.org/books/drm/Operations_on_Conditions#default-handler"><code class="xref drm docutils literal"><span class="pre">default-handler</span></code></a> for <a class="reference external" href="http://opendylan.org/books/drm/Condition_Classes#warning"><code class="xref drm docutils literal"><span class="pre">&lt;warning&gt;</span></code></a> uses
-<a class="reference internal" href="#dylan:extensions:*warning-output*"><code class="xref dylan dylan-var docutils literal"><span class="pre">*warning-output*</span></code></a> to print warning messages. Both variables
-must be either a <code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;stream&gt;</span></code> from the <code class="docutils literal"><span class="pre">Streams</span></code> library,
-or <code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code> (the default). When these variables are
-<code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code>, the output goes to <code class="docutils literal"><span class="pre">stderr</span></code>.</p>
-<p>Using the <code class="docutils literal"><span class="pre">Debugger-format</span></code> module in the <code class="docutils literal"><span class="pre">Format</span></code> library
-will set both variables to <code class="xref dylan dylan-var docutils literal"><span class="pre">*standard-output*</span></code> (see
-<code class="docutils literal"><span class="pre">Streams</span></code> Library).</p>
+<dd><p><a class="reference external" href="http://opendylan.org/books/drm/Operations_on_Conditions#default-handler"><code class="xref drm docutils literal"><span class="pre">default-handler</span></code></a> for <a class="reference external" href="http://opendylan.org/books/drm/Condition_Classes#warning"><code class="xref drm docutils literal"><span class="pre">&lt;warning&gt;</span></code></a> uses
+<a class="reference internal" href="#dylan:extensions:*warning-output*"><code class="xref dylan dylan-var docutils literal"><span class="pre">*warning-output*</span></code></a> to print warning messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><code class="xref dylan dylan-class docutils literal"><span class="pre">&lt;stream&gt;</span></code> or <code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Value:</th><td class="field-body"><code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Discussion:</th><td class="field-body">When this variable is <code class="docutils literal"><span class="pre">#&quot;Cheap-IO&quot;</span></code>, the output goes
+to <code class="docutils literal"><span class="pre">stderr</span></code>.<p>This variable is automatically set to <code class="xref dylan dylan-var docutils literal"><span class="pre">*standard-output*</span></code>
+when the <code class="docutils literal"><span class="pre">Standard-IO</span></code> library is imported into the
+program (directly or indirectly).</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
