@@ -32,10 +32,10 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/param.h>
 #ifdef _WIN32
 #include <io.h>
 #else
+#include <sys/param.h>
 #include <unistd.h>
 #endif
 
