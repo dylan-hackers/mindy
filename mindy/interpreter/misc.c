@@ -31,11 +31,11 @@
 \**********************************************************************/
 
 #include <errno.h>
-#include <sys/param.h>
 #include <time.h>
 #ifdef _WIN32
 #include <direct.h>
 #else
+#include <sys/param.h>
 #include <unistd.h>
 #endif
 
