@@ -50,6 +50,8 @@ static int make_header_end(void);
 %}
 
 %option nounput
+%option nounistd
+%option never-interactive
 
 %x ini key val etc
 
