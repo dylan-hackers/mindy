@@ -31,7 +31,9 @@
 
 #include <errno.h>
 #include <setjmp.h>
+#ifdef MINDY_USE_SIGNALS
 #include <signal.h>
+#endif
 #include <sys/select.h>
 
 #include "mindy.h"
@@ -53,6 +55,7 @@ static enum pause_reason PauseReason;
 
 
 /* signal handling. */
+#ifdef MINDY_USE_SIGNALS
 static void (*SignalHandlers[NSIG])(void) = {0};
 static bool SignalPending[NSIG] = {0};
 static bool SignalAction[NSIG] = {0};
@@ -67,9 +70,11 @@ static void signal_handler(int sig)
     } else
         SignalPending[sig] = true;
 }
+#endif
 
 void set_signal_handler(int sig, void(*handler)(void))
 {
+#ifdef MINDY_USE_SIGNALS
     SignalHandlers[sig] = handler;
     if (SignalPending[sig]) {
         SignalPending[sig] = false;
@@ -83,40 +88,51 @@ void set_signal_handler(int sig, void(*handler)(void))
     }
     if (SignalBlocked[sig])
       unblock_signal_handler(sig);
+#endif
 }
 
 void clear_signal_handler(int sig)
 {
+#ifdef MINDY_USE_SIGNALS
     SignalHandlers[sig] = NULL;
     if (SignalBlocked[sig])
       unblock_signal_handler(sig);
+#endif
 }
 
 void unblock_signal_handler(int sig)
 {
+#ifdef MINDY_USE_SIGNALS
   sigset_t set;
 
   SignalBlocked[sig] = false;
   sigemptyset(&set);
   sigaddset(&set, sig);
   sigprocmask(SIG_UNBLOCK, &set, NULL);
+#endif
 }
 
 /* SIGINT handling. */
 
 void set_interrupt_handler(void (*handler)(void))
 {
+#ifdef MINDY_USE_SIGNALS
     set_signal_handler(SIGINT, handler);
+#endif
 }
 
 void clear_interrupt_handler(void)
 {
+#ifdef MINDY_USE_SIGNALS
     clear_signal_handler(SIGINT);
+#endif
 }
 
 void unblock_interrupt_handler(void)
 {
+#ifdef MINDY_USE_SIGNALS
     unblock_signal_handler(SIGINT);
+#endif
 }
 
 
@@ -136,9 +152,11 @@ static void check_fds(bool block)
 
     if (NumFds == 0) {
         if (block) {
+#ifdef MINDY_USE_SIGNALS
           sigset_t set;
           sigemptyset(&set);
           sigsuspend(&set);
+#endif
         }
         return;
     }
