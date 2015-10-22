@@ -107,8 +107,8 @@ static bool same_name(char *name1, char *name2)
         c2 = *name2++;
 
         if (c1) {
-            if ((isupper(c1) ? tolower(c1) : c1)
-                != (isupper(c2) ? tolower(c2) : c2))
+            if ((isupper((unsigned char)c1) ? tolower((unsigned char)c1) : c1)
+                != (isupper((unsigned char)c2) ? tolower((unsigned char)c2) : c2))
                 return false;
         }
         else if (c2)

@@ -1071,8 +1071,8 @@ void load_library(obj_t name)
             }
             dst = path+len;
             for (src = sym_name(name); *src != '\0'; src++)
-                if (isupper(*src))
-                    *dst++ = tolower(*src);
+                if (isupper((unsigned char)*src))
+                    *dst++ = tolower((unsigned char)*src);
                 else
                     *dst++ = *src;
             strcpy(dst, "-lib.dbc");
