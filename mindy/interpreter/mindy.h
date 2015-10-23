@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../shared/compiler-support.h"
+#include "../shared/portability.h"
 
 #include "config.h"
 

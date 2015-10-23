@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "config.h"
-#include "shared/compiler-support.h"
+#include "shared/portability.h"
 
 extern char *current_file;
 extern bool GiveWarnings;

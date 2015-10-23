@@ -46,8 +46,8 @@ SET(mindycomp_HEADERS
     version.h
     ../shared/byteops.h
     ../shared/color_output.h
-    ../shared/compiler-support.h
     ../shared/fileops.h
+    ../shared/portability.h
 )
 
 FIND_PACKAGE(BISON)

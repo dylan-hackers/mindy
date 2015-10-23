@@ -87,8 +87,8 @@ SET(mindy_HEADERS
     weak.h
     ../shared/byteops.h
     ../shared/color_output.h
-    ../shared/compiler-support.h
     ../shared/fileops.h
+    ../shared/portability.h
 )
 
 IF(WIN32)

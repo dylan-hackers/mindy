@@ -25,6 +25,6 @@
 *
 \**********************************************************************/
 
-#include "../shared/compiler-support.h"
+#include "../shared/portability.h"
 
 extern MINDY_NORETURN void lose (char *fmt, ...) MINDY_FORMATLIKE(1, 2);
