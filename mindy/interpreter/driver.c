@@ -31,9 +31,6 @@
 
 #include <errno.h>
 #include <setjmp.h>
-#ifdef MINDY_USE_SIGNALS
-#include <signal.h>
-#endif
 #ifdef _WIN32
 #include <Winsock2.h>
 #else
@@ -50,6 +47,11 @@
 #   include "interp.h"
 #endif
 #include "fd.h"
+
+// Include here after mindy.h so that config has been loaded.
+#ifdef MINDY_USE_SIGNALS
+#include <signal.h>
+#endif
 
 static bool InInterpreter = false;
 static jmp_buf Catcher;
