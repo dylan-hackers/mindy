@@ -34,9 +34,10 @@ ENDIF()
 # Mac OS X provides this.
 CHECK_SYMBOL_EXISTS(__sincos math.h HAVE___SINCOS)
 
-CHECK_STRUCT_HAS_MEMBER("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
-
-CHECK_SYMBOL_EXISTS(daylight time.h HAVE_DAYLIGHT)
+IF (NOT WIN32)
+  CHECK_STRUCT_HAS_MEMBER("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
+  CHECK_SYMBOL_EXISTS(daylight time.h HAVE_DAYLIGHT)
+ENDIF()
 
 CHECK_TYPE_SIZE("void*" SIZEOF_VOID_P)
 
