@@ -53,6 +53,9 @@
 #include "def.h"
 #include "fd.h"
 
+
+static void results(struct thread *thread, obj_t *old_sp, int okay, obj_t result); // Used in OS specific code
+
 /* And now, some large pieces of OS-dependent stuff. */
 
 #ifdef _WIN32
@@ -355,6 +358,16 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, oldargs, oldargs);
 }
 
+static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
+{
+  HANDLE fHandle = _get_osfhandle(args[0]);
+  int res = FlushFileBuffers(fHandle);
+
+  if (res == 0 && GetLastError() == ERROR_INVALID_HANDLE) // File descriptor is for console, ignore error
+    results(thread, args - 1, 0, obj_True);
+  else
+    results(thread, args - 1, res != 0, obj_True);
+}
 #else
 /* Not WIN32 -- it's assumed this means Unix */
 
@@ -454,6 +467,24 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
     }
     do_return(thread, oldargs, oldargs);
 }
+
+static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
+{
+  int res = fsync(fixnum_value(args[0]));
+
+  // Various platforms may fail on this depending on what fd is.
+  // EINVAL means that fd is a socket and we don't care that you can't
+  //   fsync sockets.
+  // ENOTSUP happens on Mac OS X, like when communicating with the Tk code.
+  if ((res < 0 && errno == EINVAL)
+#ifdef __APPLE__
+    || (res < 0 && errno == ENOTSUP)
+#endif
+    )
+    results(thread, args - 1, 0, obj_True);
+  else
+    results(thread, args - 1, res, obj_True);
+}
 #endif
 /* End Unix-specific */
 /* End OS-specific stuff */
@@ -551,28 +582,6 @@ static void fd_seek(obj_t self, struct thread *thread, obj_t *args)
     res = lseek(fixnum_value(fd), fixnum_value(offset), fixnum_value(whence));
 
     results(thread, args-1, res, make_fixnum(res));
-}
-
-static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
-{
-    int res = fsync(fixnum_value(args[0]));
-
-    // Various platforms may fail on this depending on what fd is.
-    // EINVAL means that fd is a socket and we don't care that you can't
-    //   fsync sockets.
-    // ENOTSUP happens on Mac OS X, like when communicating with the Tk code.
-    // EBADF on Windows means that the fd is a descriptor for the console.
-    if ((res < 0 && errno == EINVAL)
-#ifdef __APPLE__
-         || (res < 0 && errno == ENOTSUP)
-#endif
-#ifdef _WIN32
-         || (res < 0 && errno == EBADF)
-#endif
-                )
-        results(thread, args-1, 0, obj_True);
-    else
-        results(thread, args-1, res, obj_True);
 }
 
 /* The output version of input_available
