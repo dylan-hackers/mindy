@@ -34,6 +34,8 @@
 #include <fcntl.h>
 #ifdef _WIN32
 #include <io.h>
+#define MAXPATHLEN _MAX_PATH
+#define R_OK 04
 #else
 #include <sys/param.h>
 #include <unistd.h>

@@ -34,7 +34,11 @@
 #ifdef MINDY_USE_SIGNALS
 #include <signal.h>
 #endif
+#ifdef _WIN32
+#include <Winsock2.h>
+#else
 #include <sys/select.h>
+#endif
 
 #include "mindy.h"
 #include "gc.h"

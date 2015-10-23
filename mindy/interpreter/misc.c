@@ -34,6 +34,7 @@
 #include <time.h>
 #ifdef _WIN32
 #include <direct.h>
+#define MAXPATHLEN _MAX_PATH
 #else
 #include <sys/param.h>
 #include <unistd.h>
