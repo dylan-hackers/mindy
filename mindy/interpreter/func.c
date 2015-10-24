@@ -241,13 +241,13 @@ obj_t *push_linkage(struct thread *thread, obj_t *args)
 
     fp[-5] = rawptr_obj(thread->fp);
     fp[-4] = rawptr_obj(args-1);
-        fp[-3] = fp[-2] = rawptr_obj(NULL);
+    fp[-3] = fp[-2] = rawptr_obj(NULL);
     if (obj_is_ptr(thread->component))
-                fp[-2] = thread->component;
-        else if (thread->component == C_CONTINUATION_MARKER) {
-                fp[-3] = save_c_function_hi(thread->c_continuation);
-                fp[-2] = save_c_function_lo(thread->c_continuation);
-        }
+        fp[-2] = thread->component;
+    else if (thread->component == C_CONTINUATION_MARKER) {
+        fp[-3] = save_c_function_hi(thread->c_continuation);
+        fp[-2] = save_c_function_lo(thread->c_continuation);
+    }
     fp[-1] = make_fixnum(thread->pc);
     thread->fp = fp;
     thread->component = rawptr_obj(NULL);
@@ -262,13 +262,13 @@ obj_t *pop_linkage(struct thread *thread)
 
     thread->fp = obj_rawptr(fp[-5]);
     if (obj_is_ptr(fp[-2]))
-            thread->component = fp[-2];
-        else if (obj_is_saved_c_function(fp[-2])) {
-                thread->component = C_CONTINUATION_MARKER;
-                thread->c_continuation = restore_c_function(fp[-2], fp[-3]);
-        }
-        else
-                thread->component = rawptr_obj(NULL);
+        thread->component = fp[-2];
+    else if (obj_is_saved_c_function(fp[-2])) {
+        thread->component = C_CONTINUATION_MARKER;
+        thread->c_continuation = restore_c_function(fp[-2], fp[-3]);
+    }
+    else
+        thread->component = rawptr_obj(NULL);
     thread->pc = fixnum_value(fp[-1]);
 
     return obj_rawptr(fp[-4]);
