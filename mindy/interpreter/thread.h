@@ -52,7 +52,7 @@ struct thread_obj {
 
 #define C_CONTINUATION_MARKER rawptr_obj(0xf00)
 #define obj_is_saved_c_function(o) \
-  (((unsigned long)(o) & 0xffff) == (unsigned long)C_CONTINUATION_MARKER)
+  (((uintptr_t)(o) & 0xffff) == (uintptr_t)C_CONTINUATION_MARKER)
 #define save_c_function_hi(c) \
   rawptr_obj((unsigned long)(c) & ~1)
 #define save_c_function_lo(c) \

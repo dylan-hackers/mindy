@@ -85,9 +85,9 @@ void prin1(obj_t object)
 
     debug_name = obj_ptr(struct class *, class)->debug_name;
     if (debug_name != NULL && debug_name != obj_False)
-        printf("{%s 0x%08lx}", sym_name(debug_name), (unsigned long)object);
+        printf("{%s 0x%08lx}", sym_name(debug_name), (uintptr_t)object);
     else
-        printf("{0x%08lx}", (unsigned long)object);
+        printf("{0x%08lx}", (uintptr_t)object);
 
     depth--;
 }

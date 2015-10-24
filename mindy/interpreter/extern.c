@@ -140,7 +140,7 @@ static void print_c_pointer(obj_t ptr)
     else
         class_str = "<c-pointer>";
 
-    printf("{%s 0x%08lx}", class_str, (unsigned long)(C_PTR(ptr)->pointer));
+    printf("{%s 0x%08lx}", class_str, (uintptr_t)(C_PTR(ptr)->pointer));
 }
 
 /* Look for an object with the given name in the named file and return a

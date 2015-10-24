@@ -223,7 +223,7 @@ static void print_frame(struct frame_info *frame, bool print_line, int frame_num
         mindy_reset_color();
     }
 
-    printf(" 0x%08lx: ", (unsigned long)frame->fp);
+    printf(" 0x%08lx: ", (uintptr_t)frame->fp);
     mindy_color(MindyWhite, true);
     if (object_class(name) == obj_SymbolClass)
         fputs(sym_name(name), stdout);

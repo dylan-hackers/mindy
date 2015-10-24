@@ -175,7 +175,7 @@ void add_variable_root(obj_t *ref)
 #if PURIFY
 static struct block *object_block(obj_t obj)
 {
-    return (struct block *)((unsigned long)obj & ~(BLOCK_SIZE - 1));
+    return (struct block *)((uintptr_t)obj & ~(BLOCK_SIZE - 1));
 }
 #endif
 
@@ -201,9 +201,9 @@ static struct block *alloc_block(void)
              -1, 0);
     if (block == (void *)-1)
         return NULL;
-    if ((unsigned long)block & (BLOCK_SIZE-1)) {
+    if ((uintptr_t)block & (BLOCK_SIZE-1)) {
         struct block *aligned
-            = (struct block *)(((unsigned long)block + BLOCK_SIZE)
+            = (struct block *)(((uintptr_t)block + BLOCK_SIZE)
                                & ~(BLOCK_SIZE-1));
         long before = (char *)aligned - (char *)block;
         if (munmap((caddr_t)block, before))
@@ -314,7 +314,7 @@ static void *raw_alloc(int bytes, struct space *space)
 obj_t alloc(obj_t class, int bytes)
 {
 #ifdef GD_DEBUG
-    unsigned long *ptr;
+    uintptr_t *ptr;
 #else
     void *ptr;
 #endif
@@ -326,10 +326,10 @@ obj_t alloc(obj_t class, int bytes)
 #ifdef GD_DEBUG
 
     if (class != ptr_obj(NULL)
-          && *obj_ptr(unsigned long *, class) == COLLECTED_COOKIE)
+          && *obj_ptr(uintptr_t *, class) == COLLECTED_COOKIE)
         lose("Tried to allocate a class that wasn't scavenged.");
 
-    ptr = raw_alloc(bytes + sizeof(unsigned long)*2, CurrentSpace);
+    ptr = raw_alloc(bytes + sizeof(uintptr_t)*2, CurrentSpace);
 #else
     ptr = raw_alloc(bytes, CurrentSpace);
 #endif
@@ -356,7 +356,7 @@ obj_t alloc(obj_t class, int bytes)
 void shrink(obj_t obj, int old_bytes, int new_bytes)
 {
 #ifdef GD_DEBUG
-    unsigned long *ptr = obj_ptr(unsigned long *, obj) - 2;
+    uintptr_t *ptr = obj_ptr(uintptr_t *, obj) - 2;
 
     if (ptr[0] != ALLOC_HEADER_COOKIE)
         lose("Bogus pointer passed to shrink().");
@@ -399,8 +399,8 @@ void scavenge(obj_t *addr)
 obj_t transport(obj_t obj, int bytes, bool read_only)
 {
 #ifdef GD_DEBUG
-    unsigned long *new;
-    unsigned long *ptr = obj_ptr(unsigned long *, obj) - 2;
+    uintptr_t *new;
+    uintptr_t *ptr = obj_ptr(uintptr_t *, obj) - 2;
 #else
     void *new;
     void *ptr = obj_ptr(void *, obj);
@@ -478,7 +478,7 @@ static bool scavenge_space(struct space *space)
         while (ptr < (end = (block->next ? block->fill : space->cur_fill))) {
             do {
 #ifdef GD_DEBUG
-                unsigned long *header = ptr;
+                uintptr_t *header = ptr;
                 if (header[0] != ALLOC_HEADER_COOKIE)
                     lose("Scavenge_space found a bogus object.");
                 ptr = (char *)ptr + sizeof(long)*2;
@@ -606,11 +606,11 @@ void collect_garbage(bool purify)
         }
         OldBlocks = NULL;
         for (block = OldSpace->blocks; block != NULL; block = next) {
-            unsigned long *ptr;
+            uintptr_t *ptr;
             next = block->next;
             block->next = OldBlocks;
             OldBlocks = block;
-            for (ptr = block->base; ptr < (unsigned long *)block->end; ptr++)
+            for (ptr = block->base; ptr < (uintptr_t *)block->end; ptr++)
                 *ptr = COLLECTED_COOKIE;
         }
     }

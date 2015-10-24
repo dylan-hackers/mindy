@@ -69,7 +69,7 @@ bool Tracing = false;
 
 static void trace_call(obj_t function, obj_t *args, int nargs)
 {
-    printf("> 0x%08lx: ", (unsigned long)(args-1));
+    printf("> 0x%08lx: ", (uintptr_t)(args-1));
     prin1(function_debug_name_or_self(function));
     printf("(");
     if (nargs > 0) {
@@ -84,7 +84,7 @@ static void trace_call(obj_t function, obj_t *args, int nargs)
 
 static void trace_return(obj_t *old_sp, obj_t *vals, int nvals)
 {
-    printf("< 0x%08lx: ", (unsigned long)old_sp);
+    printf("< 0x%08lx: ", (uintptr_t)old_sp);
     if (nvals > 0) {
         prin1(*vals++);
         while (--nvals > 0) {
@@ -1876,7 +1876,7 @@ static void print_func(obj_t func)
         putchar('}');
     }
     else
-        printf("{anonymous %s 0x%08lx}", class_str, (unsigned long)func);
+        printf("{anonymous %s 0x%08lx}", class_str, (uintptr_t)func);
 }
 
 static void print_method(obj_t method)
@@ -1897,7 +1897,7 @@ static void print_method(obj_t method)
         putchar(' ');
     }
     else
-        printf("{anonymous %s 0x%08lx ", class_str, (unsigned long)method);
+        printf("{anonymous %s 0x%08lx ", class_str, (uintptr_t)method);
 
 
     prin1(METHOD(method)->specializers);

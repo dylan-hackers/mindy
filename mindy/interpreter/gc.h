@@ -62,7 +62,7 @@ extern bool TimeToGC;
 #    define ASSERT_VALID_OBJ(o) \
          if ((o) != NULL && obj_is_ptr(o) &&\
              ((obj_ptr(struct object *, o)->class == ForwardingMarker) \
-                 && obj_ptr(unsigned long *, o)[-2] != ALLOC_HEADER_COOKIE)) \
+                 && obj_ptr(uintptr_t *, o)[-2] != ALLOC_HEADER_COOKIE)) \
                  lose("Invalid object pointer encountered.")
 #else
 #    define ASSERT_VALID_OBJ(o)

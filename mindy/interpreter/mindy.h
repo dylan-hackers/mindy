@@ -42,9 +42,9 @@ struct object {
     obj_t class;
 };
 
-#define obj_is_ptr(o) (((unsigned long)(o))&1)
-#define obj_ptr(type, o) ((type)(((unsigned long)(o))-1))
-#define ptr_obj(ptr) ((obj_t)(((unsigned long)(ptr))+1))
+#define obj_is_ptr(o) (((uintptr_t)(o))&1)
+#define obj_ptr(type, o) ((type)(((uintptr_t)(o))-1))
+#define ptr_obj(ptr) ((obj_t)(((uintptr_t)(ptr))+1))
 #define obj_rawptr(o) ((void *)(o))
 #define rawptr_obj(p) ((obj_t)(p))
 
