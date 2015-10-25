@@ -263,6 +263,7 @@ define module format-out
   use dylan;
   use format;
   use standard-io;
+  use streams, import: { force-output };
 
   export format-out,
          force-out;
