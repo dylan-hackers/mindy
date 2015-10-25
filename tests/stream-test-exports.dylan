@@ -32,7 +32,7 @@ copyright: see below
 
 define library stream-test
   use dylan;
-  use streams;
+  use io;
 end library stream-test;
 
 define module stream-test

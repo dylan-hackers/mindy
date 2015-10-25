@@ -31,8 +31,7 @@ define library parse-arguments
 
 #if (~mindy)
   // for argument-parser-definer
-  use streams;
-  use format;
+  use io;
 #endif
 
   export

@@ -12,7 +12,7 @@ define library date
   use dylan;
   use collection-extensions;
   use string-extensions;
-  use streams;
+  use io;
   use time;
 
   export date;

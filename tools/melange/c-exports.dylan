@@ -45,9 +45,7 @@ define library melange-c
   use collection-extensions;
   use regular-expressions;
   use table-extensions;
-  use streams;
-  use standard-io;
-  use format;
+  use io;
 
   // General purpose utility modules.
   export

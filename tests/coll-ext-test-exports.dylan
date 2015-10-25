@@ -30,7 +30,7 @@ module: Dylan-user
 define library coll-ext-test
   use Dylan;
   use Collection-Extensions;
-  use Print;
+  use io;
 end library coll-ext-test;
 
 define module coll-ext-test

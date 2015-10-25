@@ -32,8 +32,7 @@ copyright: See below.
 
 define library Test
   use Dylan;
-  use Streams;
-  use Format;
+  use io;
 end;
 
 define module Test

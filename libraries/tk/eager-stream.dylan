@@ -29,7 +29,7 @@ module: eager-stream
 
 define library stream-extensions
   use dylan;
-  use streams;
+  use io;
 
   export eager-stream;
 end library stream-extensions;

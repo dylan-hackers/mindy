@@ -10,9 +10,7 @@ define library minesweeper
   use dylan;
   use tk;
   use string-extensions;
-  use streams;
-  use standard-io;
-  use format;
+  use io;
   use random;
 end library minesweeper;
 

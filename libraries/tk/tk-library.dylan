@@ -37,13 +37,11 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 
 define library tk
   use dylan;
-  use streams;
-  use standard-io;
+  use io;
   use string-extensions;
   use collection-extensions;
   use table-extensions;
   use regular-expressions;
-  use format;
   export tk;
   export tk-extension;
 end library tk;

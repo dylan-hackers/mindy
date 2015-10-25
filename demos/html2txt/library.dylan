@@ -2,8 +2,7 @@ Module: dylan-user
 
 define library html
   use dylan;
-  use streams;
-  use standard-io;
+  use io;
   use collection-extensions;
   use string-extensions;
 end library html;

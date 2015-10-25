@@ -29,8 +29,7 @@ module: Dylan-User
 
 define library format-test
   use Dylan;
-  use Format;
-  use Print;
+  use io;
 end library format-test;
 
 define module format-test

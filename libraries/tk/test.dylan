@@ -38,10 +38,8 @@ author: Robert Stockton (rgs@cs.cmu.edu)
 
 define library test
   use dylan;
-  use streams;
-  use standard-io;
+  use io;
   use stream-extensions;
-  use format;
   use tk;
 end library test;
 

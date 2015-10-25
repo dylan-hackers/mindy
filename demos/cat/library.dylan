@@ -2,8 +2,7 @@ module: dylan-user
 
 define library cat
   use Dylan;
-  use streams;
-  use Standard-IO;
+  use io;
 end;
 
 define module cat

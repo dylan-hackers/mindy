@@ -5,8 +5,7 @@ define library file-system
   use dylan;
   use melange-support;
   use regular-expressions;
-  use streams;
-  use format-out;
+  use io;
   use string-extensions;
   use base-file-system;
 

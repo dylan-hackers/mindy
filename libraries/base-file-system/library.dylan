@@ -3,8 +3,8 @@ author:      Douglas M. Auclair, dauclair@hotmail.com
 
 define library base-file-system
   use dylan;
+  use io;
   use regular-expressions;
-  use streams;
   use string-extensions;
 
   export base-file-system;

@@ -33,9 +33,7 @@ copyright:  See below.
 
 define library text-inspector
   use dylan;
-  use streams;
-  use standard-io;
-  use print;
+  use io;
   use string-extensions;
   use inspector-base;
   export

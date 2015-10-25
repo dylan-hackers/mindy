@@ -34,7 +34,7 @@ copyright:  See below.
 
 define library inspector-base
   use dylan;
-  use print;
+  use io;
   use string-extensions;
   use regular-expressions;
   export

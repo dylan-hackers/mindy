@@ -42,10 +42,7 @@ copyright: see below
 
 define library make-exports
   use dylan;
-  use streams;
-  use standard-io;
-  use print;
-  use format;
+  use io;
   use table-extensions;
   use string-extensions;
   use regular-expressions;

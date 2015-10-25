@@ -84,9 +84,7 @@ define library melange
   use string-extensions;
   use collection-extensions;
   use regular-expressions;
-  use streams;
-  use standard-io;
-  use format;
+  use io;
   use parse-arguments;
   use melange-c;
   export

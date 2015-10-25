@@ -27,7 +27,7 @@ copyright: see below
 
 define library getopttest
   use dylan;
-  use format-out;
+  use io;
   use parse-arguments;
 end library;
 

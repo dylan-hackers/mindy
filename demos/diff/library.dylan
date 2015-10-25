@@ -2,9 +2,7 @@ module: dylan-user
 
 define library diff
   use dylan;
-  use streams;
-  use standard-io;
-  use format;
+  use io;
   use collection-extensions;
 end library diff;
 

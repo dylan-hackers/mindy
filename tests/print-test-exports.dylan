@@ -29,7 +29,7 @@ module: Dylan-User
 
 define library print-test
   use Dylan;
-  use Print;
+  use io;
 end library print-test;
 
 define module print-test

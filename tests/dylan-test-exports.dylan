@@ -29,8 +29,7 @@ module: Dylan-user
 
 define library dylan-test
   use dylan;
-//  use streams;
-//  use standard-io;
+  // use io;
 end library dylan-test;
 
 define module dylan-test

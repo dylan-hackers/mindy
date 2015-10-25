@@ -32,9 +32,7 @@ author: Nick Kramer
 
 define library synopsis
   use dylan;
-  use streams;
-  use standard-io;
-  use format;
+  use io;
   use regular-expressions;
   use table-extensions;
 end library synopsis;

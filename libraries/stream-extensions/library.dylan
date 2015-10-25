@@ -33,7 +33,7 @@ copyright:  See below.
 
 define library stream-extensions
   use dylan;
-  use streams;
+  use io;
   export
     stream-extensions, indenting-streams, concatenated-streams;
 end library stream-extensions;

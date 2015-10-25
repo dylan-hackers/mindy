@@ -6,7 +6,7 @@ define library common-dylan
   use threads, export: { threads };
 
   use melange-support;
-  use streams;
+  use io;
   use table-extensions;
   use random;
   use transcendental,

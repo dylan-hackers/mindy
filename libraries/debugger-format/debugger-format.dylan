@@ -30,13 +30,7 @@ module: debugger-format
 
 define library debugger-format
   use Dylan;
-  use streams;
-  use Standard-IO;
-  //
-  // We use the format library even though we don't reference anything in
-  // it to make sure it is loaded.  Otherwise, there won't be a <stream>
-  // method on condition-format and condition-force-output.
-  use Format;
+  use io;
 end;
 
 define module debugger-format

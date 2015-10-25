@@ -29,10 +29,7 @@ module: dylan-user
 
 define library parsergen
   use dylan;
-  use streams;
-  use print;
-  use format;
-  use standard-io;
+  use io;
   use string-extensions;
   use regular-expressions;
 end library parsergen;

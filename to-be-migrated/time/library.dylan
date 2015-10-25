@@ -32,10 +32,8 @@ copyright: See below.
 
 define library Time
   use Dylan;
+  use io;
   use String-extensions;
-  use Streams;
-  use Print;
-  use Format;
   use Table-extensions;
 #if (~mindy)
   use Melange-support;

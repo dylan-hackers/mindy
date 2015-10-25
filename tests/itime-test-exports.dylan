@@ -30,7 +30,7 @@ module: Dylan-User
 define library itime-test
   use Dylan;
   use Internal-Time;
-  use Print;
+  use io;
 end library itime-test;
 
 define module itime-test

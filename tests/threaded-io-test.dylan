@@ -66,9 +66,7 @@ copyright: see below
 
 define library Threaded-io-test
   use dylan;
-  use streams;
-  use standard-io;
-//  use format;
+  use io;
 end library Threaded-io-test;
 
 define module threaded-io-test

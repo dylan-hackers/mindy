@@ -29,8 +29,7 @@ module: dylan-user
 
 define library stream-demo
   use dylan;
-  use streams;
-  use standard-io;
+  use io;
 end library;
 
 define module stream-demo

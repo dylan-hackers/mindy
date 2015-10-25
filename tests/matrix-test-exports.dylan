@@ -30,8 +30,7 @@ module: Dylan-User
 define library matrix-test
   use Dylan;
   use Matrix;
-  use Streams;
-  use Standard-IO;
+  use io;
 end library matrix-test;
 
 define module matrix-test

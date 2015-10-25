@@ -42,12 +42,9 @@ copyright: see below
 
 define library lisp2dylan
   use dylan;
-  use streams;
-  use print;
-  use format;
+  use io;
   use string-extensions;
   use regular-expressions;
-  use standard-io;
 end library lisp2dylan;
 
 define module lisp2dylan

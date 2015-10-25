@@ -30,8 +30,7 @@ module: Dylan-User
 define library time-test
   use Dylan;
   use Time;
-  use Streams;
-  use Standard-io;
+  use io;
 end library time-test;
 
 define module time-test
