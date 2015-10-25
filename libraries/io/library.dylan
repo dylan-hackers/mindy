@@ -264,7 +264,11 @@ define module format-out
   use format;
   use standard-io;
 
-  export format-out;
+  export format-out,
+         force-out;
+
+  export format-err,
+         force-err;
 end module format-out;
 
 define module print-internals

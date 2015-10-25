@@ -34,3 +34,15 @@ define sealed inline method format-out
  => ();
   apply(format, *standard-output*, control-string, args);
 end method format-out;
+
+define method force-out () => ()
+  force-output(*standard-output*);
+end method;
+
+define method format-err (format-string :: <string>, #rest args) => ()
+  apply(format, *standard-error*, format-string, args);
+end method;
+
+define method force-err () => ()
+  force-output(*standard-error*);
+end method;
