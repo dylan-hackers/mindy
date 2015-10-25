@@ -436,19 +436,6 @@ static void complete_library(struct library *library)
     struct use *use;
 
     defn = library->defn;
-    if (defn == NULL) {
-        if (library->loading)
-            error("needed the definition of library %s before the "
-                  "define library was found",
-                  library->name);
-        library->loading = true;
-        load_library(library->name);
-        if (library->defn == NULL)
-            error("loaded library %s, but never found the define library.\n",
-                  library->name);
-        library->loading = false;
-        return;
-    }
 
     if (library->busy)
         error("Library %s circularly defined.\n", library->name);
@@ -467,6 +454,20 @@ static void complete_library(struct library *library)
         obj_t use_name = use->name;
         struct library *used_library = find_library(use_name, true);
         obj_t imports = obj_Nil;
+
+        if (used_library->defn == NULL) {
+            if (used_library->loading)
+                error("needed the definition of library %s before the "
+                      "define library was found",
+                      use_name);
+            used_library->loading = true;
+            load_library(use_name);
+            if (used_library->defn == NULL)
+                error("loaded library %s, but never found the "
+                      "define library.\n",
+                      use_name);
+            used_library->loading = false;
+        }
 
         if (!used_library->completed)
             complete_library(used_library);
