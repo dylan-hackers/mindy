@@ -1,5 +1,22 @@
 SET(io_SOURCES
     library.dylan
+    internals.dylan
+    streams.dylan
+    stream-reading.dylan
+    stream-writing.dylan
+    stream-lines.dylan
+    stream-buffers.dylan
+    wrapper-streams.dylan
+    file-streams.dylan
+    bbso-stream.dylan
+    stream-reading-buf.dylan
+    piped-exec.dylan
+    format-out.dylan
+    format.dylan
+    format-buf.dylan
+    pprint.dylan
+    print.dylan
+    standard-io.dylan
 )
 ADD_DYLAN_LIBRARY(io)
 INSTALL_DYLAN_LIBRARY(io)
