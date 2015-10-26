@@ -7,6 +7,7 @@ INCLUDE(CheckTypeSize)
 OPTION(MINDY_SLOW_FUNCTION_POINTERS "(Experimental) Assume function pointers are slow." OFF)
 OPTION(MINDY_SLOW_LONGJMP "(Experimental) Assume longjmp is slow." OFF)
 
+SET(MINDY_USE_SIGNALS ON)
 IF(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
   SET(MINDY_USE_SIGNALS OFF)
 ENDIF()
