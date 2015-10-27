@@ -30,10 +30,6 @@ copyright: See below.
 ///======================================================================
 ///
 
-/// ### Instances of '<integer> /***/' should be changed to '<byte>'
-/// when d2c can deal with as(<byte>,...).
-///
-
 /// This code was modified at Harlequin, Inc. to work with the new Streams
 /// Library designed by Harlequin and CMU.
 ///
@@ -149,7 +145,7 @@ define method format (stream :: <buffered-stream>,
            buff-index :: <buffer-index> from bd.next-ele below bd.limit,
            until: (control-string[i] == $dispatch-char)
                     | (control-string[i] == '\n'))
-        buff[buff-index] := as(<integer> /***/, control-string[i]);
+        buff[buff-index] := as(<byte>, control-string[i]);
       finally
         bd.next-ele := buff-index;
         if (i == control-len)
@@ -169,7 +165,7 @@ define method format (stream :: <buffered-stream>,
       else
         // Parse for field within which to pad output.
         let (field, field-spec-end)
-          = if (char-classes[as(<integer> /***/, control-string[start + 1])] == #"digit")
+          = if (char-classes[as(<byte>, control-string[start + 1])] == #"digit")
               parse-integer(control-string, start + 1);
             end;
         if (field)
@@ -254,7 +250,7 @@ define function buf-do-dispatch
             get-next-output-buffer(bd, next);
             next := bd.next-ele;
           end if;
-          bd.buffer[next] := as(<integer> /***/, arg);
+          bd.buffer[next] := as(<byte>, arg);
           bd.next-ele := next + 1;
         <character> =>
           with-buffer-released(bd, curry(print-message, arg, stream));
@@ -286,7 +282,7 @@ define function buf-do-dispatch
         get-next-output-buffer(bd, next);
         next := bd.next-ele;
       end if;
-      bd.buffer[next] := as(<integer> /***/, '%');
+      bd.buffer[next] := as(<byte>, '%');
       bd.next-ele := next + 1;
       #f;
     otherwise =>
@@ -320,7 +316,7 @@ define function buf-do-dispatch-padded
       if (span > bd.limit)
         write-to-buffer(make(<byte-string>, size: padding, fill: ' '), bd);
       else
-        fill!(bd.buffer, as(<integer> /***/, ' '), start: next, end: span);
+        fill!(bd.buffer, as(<byte>, ' '), start: next, end: span);
         bd.next-ele := span;
       end if;
       write-to-buffer(output, bd);
@@ -331,7 +327,7 @@ define function buf-do-dispatch-padded
       if (span > bd.limit)
         write-to-buffer(make(<byte-string>, size: padding, fill: ' '), bd);
       else
-        fill!(bd.buffer, as(<integer> /***/, ' '), start: next, end: span);
+        fill!(bd.buffer, as(<byte>, ' '), start: next, end: span);
         bd.next-ele := span;
       end if;
   end case;
@@ -340,7 +336,7 @@ end function;
 
 
 define constant $ascii-digits
-  = map-as(<byte-vector>, curry(as, <integer> /***/), $digits);
+  = map-as(<byte-vector>, curry(as, <byte>), $digits);
 
 /// buf-format-integer -- internal
 //
@@ -415,7 +411,7 @@ define method buf-format-integer (arg :: <integer>,
       append-char($ascii-digits[remainder]);
     end method next-digit;
   if (negative?(arg))
-    append-char(as(<integer> /***/, '-'));
+    append-char(as(<byte>, '-'));
     let (quotient, remainder) = truncate/(arg, radix);
     unless (zero?(quotient))
       next-digit(- quotient);

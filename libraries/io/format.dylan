@@ -30,10 +30,6 @@ copyright: See below.
 ///======================================================================
 ///
 
-/// ### Instances of 'as(<integer> /***/' should be changed to 'as(<byte>'
-/// when d2c can deal.
-///
-
 /// This code was modified at Harlequin, Inc. to work with the new Streams
 /// Library designed by Harlequin and CMU.
 ///
@@ -133,10 +129,10 @@ define constant $dispatch-char = '%';
 
 define constant char-classes = make(<vector>, size: 256, fill: #f);
 ///
-for (i from as(<integer> /***/, '0') below (as(<integer> /***/, '9') + 1))
+for (i from as(<byte>, '0') below (as(<byte>, '9') + 1))
   char-classes[i] := #"digit";
 end;
-char-classes[as(<integer> /***/, '-')] := #"digit";
+char-classes[as(<byte>, '-')] := #"digit";
 
 
 define generic format (stream :: <stream>, control-string :: <string>,
@@ -267,10 +263,10 @@ define function parse-integer (input :: <byte-string>, index :: <integer>)
                   end;
   for (i :: <integer> = index then (i + 1),
        len :: <integer> = input.size then len,
-       ascii-zero :: <byte> = as(<integer> /***/, '0') then ascii-zero,
+       ascii-zero :: <byte> = as(<byte>, '0') then ascii-zero,
        until: ((i == len) |
-                 (~ (char-classes[as(<integer> /***/, input[i])] == #"digit"))))
-    result := ((result * 10) + (as(<integer> /***/, input[i]) - ascii-zero));
+                 (~ (char-classes[as(<byte>, input[i])] == #"digit"))))
+    result := ((result * 10) + (as(<byte>, input[i]) - ascii-zero));
   finally
     if (result == 0)
       values(#f, index);

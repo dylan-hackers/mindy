@@ -48,7 +48,7 @@ define method read-to (stream :: <buffered-stream>, element :: <object>,
     else
       let start :: <integer> = buf.buffer-next;
       let stop :: <integer> = buf.buffer-end;
-      let elt :: <byte> = as(<integer> /***/, element);
+      let elt :: <byte> = as(<byte>, element);
       for (i from start below stop, until: test(buf[i], elt))
       finally
         let seq-type :: <type> = type-for-sequence(stream.stream-element-type);
@@ -84,7 +84,7 @@ define method read-through (stream :: <buffered-stream>, element :: <object>,
     else
       let start :: <integer> = buf.buffer-next;
       let stop :: <integer> = buf.buffer-end;
-      let elt :: <byte> = as(<integer> /***/, element);
+      let elt :: <byte> = as(<byte>, element);
       for (i from start below stop, until: test(buf[i], elt))
       finally
         let seq-type :: <type> = type-for-sequence(stream.stream-element-type);
@@ -143,7 +143,7 @@ define method skip-through  (stream :: <buffered-stream>, element :: <object>,
     else
       let start :: <integer> = buf.buffer-next;
       let stop :: <integer> = buf.buffer-end;
-      let elt :: <byte> = as(<integer> /***/, element);
+      let elt :: <byte> = as(<byte>, element);
       for (i from start below stop, until: test(buf[i], elt))
       finally
         let seq-type :: <type> = type-for-sequence(stream.stream-element-type);
