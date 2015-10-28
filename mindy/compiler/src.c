@@ -924,14 +924,13 @@ struct literal *parse_character_token(struct token *token)
 
 struct literal *parse_integer_token(struct token *token)
 {
-    long value;
-    int count, radix = 0;
+    long value = 0;
+    int radix = 0;
     bool negative;
-    char *ptr, *remnant;
+    const char *ptr;
+    char *remnant;
     struct literal *res;
 
-    value = 0;
-    count = token->length;
     ptr = (char *)token->chars;
     if (*ptr == '#') {
         switch (ptr[1]) {
@@ -942,20 +941,17 @@ struct literal *parse_integer_token(struct token *token)
             lose("Strange radix marker ('%c') in integer literal", ptr[1]);
         }
         ptr += 2;
-        count -= 2;
         negative = false;
     }
     else {
         radix = 10;
         if (*ptr == '-') {
             negative = true;
-            count--;
             ptr++;
         }
         else {
             negative = false;
             if (*ptr == '+') {
-                count--;
                 ptr++;
             }
         }
