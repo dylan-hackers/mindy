@@ -1176,7 +1176,6 @@ static void c_function_xep(struct thread *thread, int nargs)
                      get_c_object(args[8]), get_c_object(args[9]));
         break;
     default:
-        result = 0;                /* make compiler happy */
         lose("Can't call a c function with more than 10 args");
     }
 
