@@ -4,10 +4,11 @@
 */
 #include "shl.h"
 #include <Windows.h>
+#include <Psapi.h>
 
 shl_t shl_load (const char *path)
 {
-	return LoadLibraryA(path);
+    return LoadLibraryA(path);
 }
 
 int shl_findsym (shl_t *handle, const char *sym, void **value)
@@ -24,5 +25,38 @@ int shl_findsym (shl_t *handle, const char *sym, void **value)
 
     *value = GetProcAddress(*handle, (char *)sym);
 
+    if (*value == NULL && handle == &self_handle)
+    {
+        // On Windows, GetProcAddress doesn't recurse into loaded libraries like it
+        // does on other operating systems. We emulate this behaviour for our own
+        // process.
+        DWORD    modules_size = sizeof(HMODULE) * 512, required_size = 0;
+        HMODULE* modules = malloc(modules_size);
+        BOOL     result = EnumProcessModulesEx(GetCurrentProcess(), modules, modules_size, &required_size,
+                                               LIST_MODULES_DEFAULT);
+        if (required_size > modules_size)
+        { // modules array not big enough, resize and try again
+            free(modules);
+            modules = malloc(required_size);
+            result = EnumProcessModulesEx(GetCurrentProcess(), modules, required_size, &required_size,
+                                          LIST_MODULES_DEFAULT);
+        }
+        modules_size = required_size;
+
+        if (result == 0)
+        {
+            free(modules);
+            return -1; // Abort on error.
+        }
+
+        for (DWORD i = 0; i < modules_size / sizeof(HMODULE); i++)
+        {
+            *value = GetProcAddress(modules[i], (char *)sym);
+            if (*value != NULL) break;
+        }
+
+        free(modules);
+    }
+    
     return *value == NULL;
 }
