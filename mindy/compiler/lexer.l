@@ -47,10 +47,13 @@ static int make_header_end(void);
 
 #define YY_DECL int internal_yylex(void)
 
+#ifndef HAVE_UNISTD_H
+#define YY_NO_UNISTD_H
+#endif
+
 %}
 
 %option nounput
-%option nounistd
 %option never-interactive
 
 %x ini key val etc
