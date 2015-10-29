@@ -800,7 +800,6 @@ static void compile_local_constituent(struct local_constituent *c,
     compile_body(c->body, component, want);
 
     pop_scope(component, scope);
-    free(scope);
 }
 
 static void compile_handler_constituent(struct handler_constituent *c,
@@ -848,7 +847,6 @@ static void compile_let_constituent(struct let_constituent *c,
     push_scope(component, scope);
     compile_body(c->body, component, want);
     pop_scope(component, scope);
-    free(scope);
 }
 
 static void compile_tlf_constituent(struct tlf_constituent *c,
@@ -964,7 +962,6 @@ static struct component *compile_method(struct method *method)
     compile_body(method->body, component, TAIL);
 
     pop_scope(component, scope);
-    free(scope);
     finish_debug_info(component);
 
     component->cur_block->end = component->fill;
