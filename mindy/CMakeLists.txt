@@ -11,6 +11,7 @@ SET(MINDY_USE_SIGNALS ON)
 IF(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
   SET(MINDY_USE_SIGNALS OFF)
 ENDIF()
+
 IF (WIN32)
   SET(MINDY_USE_SIGNALS OFF)
 ENDIF()
@@ -45,6 +46,12 @@ CHECK_TYPE_SIZE("void*" SIZEOF_VOID_P)
 # Even though this is for the interpreter, we do this here
 # so that the results can make it into the config.h file.
 SET(MINDY_LIBS)
+
+IF (WIN32)
+  # Needed for dynamic loading of symbols in automatically loaded DLL's
+  LIST(APPEND MINDY_LIBS Psapi.lib)
+  ADD_DEFINITIONS(-DPSAPI_VERSION=1)
+ENDIF()
 
 IF(NOT READLINE_INCLUDE_DIR OR NOT READLINE_LIBRARY)
   MESSAGE("-- Looking for readline/readline.h")
