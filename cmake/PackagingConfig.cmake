@@ -1,8 +1,7 @@
-SET(CPACK_PACKAGE_DESCRIPTION "A bytecode compiler and interpreter for Dylan.")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Mindy is an implementation of a language that is very much like the language described in the Dylan Reference Manual (DRM). The name Mindy is derived from 'Mindy Is Not Dylan Yet'.")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A bytecode compiler and interpreter for Dylan.")
 
 SET(CPACK_PACKAGE_VENDOR "Project Mindy")
-SET(CPACK_PACKAGE_CONTACT "Bruce Mitchener")
+SET(CPACK_PACKAGE_CONTACT "Bruce Mitchener <bruce.mitchener@gmail.com>")
 
 SET(CPACK_PACKAGE_VERSION_MAJOR "${MINDY_VERSION_MAJOR}")
 SET(CPACK_PACKAGE_VERSION_MINOR "${MINDY_VERSION_MINOR}")
@@ -22,6 +21,5 @@ SET(CPACK_SOURCE_IGNORE_FILES
 SET(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://project-mindy.org/")
 SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 SET(CPACK_DEBIAN_PACKAGE_SECTION "interpreters")
-SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
 
 INCLUDE(CPack)
