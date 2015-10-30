@@ -269,7 +269,7 @@ int yylex(void)
             new_token();
             break;
 
-          case (int)NULL:
+          case 0:
             while (State != NULL) {
                 error(State->line,
                       "#if with no matching #endif, assuming #endif at EOF.");
