@@ -30,3 +30,5 @@ ADD_SUBDIRECTORY(demos)
 IF(MINDY_BUILD_DOCS)
   ADD_SUBDIRECTORY(documentation)
 ENDIF()
+
+INCLUDE(${CMAKE_SOURCE_DIR}/cmake/PackagingConfig.cmake)
