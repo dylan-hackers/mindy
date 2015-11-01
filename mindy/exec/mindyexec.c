@@ -23,8 +23,7 @@
 
 #define MINDYCOMP "mindycomp"
 
-int main(argc, argv) int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
     int fd[2], pid;
     char *source;
