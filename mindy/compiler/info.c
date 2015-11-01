@@ -104,19 +104,19 @@ struct function_info *lookup_function_info(struct id *id, bool createp)
 void init_info(void)
 {
     push_binop_info(":=", 1, false);
-    push_binop_info("|", 2, false);
-    push_binop_info("&", 3, false);
-    push_binop_info("<", 4, true);
-    push_binop_info("<=", 4, true);
-    push_binop_info("=", 4, true);
-    push_binop_info("~=", 4, true);
-    push_binop_info("==", 4, true);
-    push_binop_info("~==", 4, true);
-    push_binop_info(">=", 4, true);
-    push_binop_info(">", 4, true);
-    push_binop_info("+", 5, true);
-    push_binop_info("-", 5, true);
-    push_binop_info("*", 6, true);
-    push_binop_info("/", 6, true);
-    push_binop_info("^", 7, false);
+    push_binop_info("|", 2, true);
+    push_binop_info("&", 2, true);
+    push_binop_info("<", 3, true);
+    push_binop_info("<=", 3, true);
+    push_binop_info("=", 3, true);
+    push_binop_info("~=", 3, true);
+    push_binop_info("==", 3, true);
+    push_binop_info("~==", 3, true);
+    push_binop_info(">=", 3, true);
+    push_binop_info(">", 3, true);
+    push_binop_info("+", 4, true);
+    push_binop_info("-", 4, true);
+    push_binop_info("*", 5, true);
+    push_binop_info("/", 5, true);
+    push_binop_info("^", 6, false);
 }
