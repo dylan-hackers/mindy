@@ -53,11 +53,11 @@ struct symbol *LibraryName = NULL;
 struct symbol *ModuleName = NULL;
 bool GiveWarnings = true;
 
-char *current_file = "<stdin>";
+const char *current_file = "<stdin>";
 
 static int nerrors = 0;
 
-static void verror(int line, char *msg, va_list ap)
+static void verror(int line, const char *msg, va_list ap)
 {
     mindy_color_err(MindyWhite, true);
     fprintf(stderr, "%s:%d: ", current_file, line);
@@ -71,7 +71,7 @@ static void verror(int line, char *msg, va_list ap)
     nerrors++;
 }
 
-void error(int line, char *msg, ...)
+void error(int line, const char *msg, ...)
 {
     va_list ap;
 
@@ -80,7 +80,7 @@ void error(int line, char *msg, ...)
     va_end(ap);
 }
 
-static void vwarn(int line, char *msg, va_list ap)
+static void vwarn(int line, const char *msg, va_list ap)
 {
     if ( ! GiveWarnings)
         return;
@@ -94,7 +94,7 @@ static void vwarn(int line, char *msg, va_list ap)
         putc('\n', stderr);
 }
 
-void warn(int line, char *msg, ...)
+void warn(int line, const char *msg, ...)
 {
     va_list ap;
 
@@ -111,7 +111,7 @@ static void usage(void)
     exit(1);
 }
 
-static void set_module(char *value)
+static void set_module(const char *value)
 {
     if (ModuleName) {
         fprintf(stderr, "multiple module: file headers.\n");
@@ -120,7 +120,7 @@ static void set_module(char *value)
     ModuleName = symbol(value);
 }
 
-static void set_library(char *value)
+static void set_library(const char *value)
 {
     if (LibraryName != NULL && strcasecmp((char *)LibraryName->name, value)) {
         fprintf(stderr,
@@ -132,7 +132,7 @@ static void set_library(char *value)
         LibraryName = symbol(value);
 }
 
-static void end_of_headers(char *value)
+static void end_of_headers(const char *value)
 {
     if ( ! ModuleName) {
         warn(line_count-1, "no module: header, assuming Dylan-User\n");
@@ -140,7 +140,7 @@ static void end_of_headers(char *value)
     }
 }
 
-static char *find_extension(char *source)
+static const char *find_extension(const char *source)
 {
     char *slash = strrchr(source, '/');
     char *dot = strchr(slash ? slash : source, '.');
@@ -151,9 +151,9 @@ static char *find_extension(char *source)
         return NULL;
 }
 
-static char *make_output_name(char *source, char *new_extension)
+static const char *make_output_name(const char *source, const char *new_extension)
 {
-    char *extension = find_extension(source);
+    const char *extension = find_extension(source);
     int base_len = extension ? extension - source - 1 : strlen(source);
     char *output = malloc(base_len + strlen(new_extension) + 1);
 
@@ -168,9 +168,9 @@ int main(int argc, char *argv[])
     bool print_parse = false;
     bool print_expanded = false;
     bool force_color_diagnostics = false;
-    char *arg;
-    char *source_name = NULL;
-    char *output_name = NULL;
+    const char *arg;
+    const char *source_name = NULL;
+    const char *output_name = NULL;
     FILE *file;
 
     add_header_handler("module", set_module);
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
                     print_expanded = true;
                 }
                 else {
-                    char *ptr;
+                    const char *ptr;
                     for (ptr = arg+2; *ptr != '\0'; ptr++) {
                         switch (*ptr) {
                           case 'p':
@@ -302,7 +302,7 @@ int main(int argc, char *argv[])
         /* Try the same filename but in the current directory */
         /* Start ptr at the null termination, and work backwards to a
            path separator. */
-        char *ptr = source_name + strlen(source_name);
+        const char *ptr = source_name + strlen(source_name);
         for ( ; ptr != source_name; ptr--) {
             if (*ptr == '/' || *ptr == '\\') {
                 /* We're pointing at the path separator, which is too far */

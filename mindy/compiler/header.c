@@ -33,14 +33,14 @@
 #include "header.h"
 
 struct header_handler {
-    char *key;
-    void (*func)(char *value);
+    const char *key;
+    void (*func)(const char *value);
     struct header_handler *next;
 };
 
 static struct header_handler *handlers = NULL;
 
-void add_header_handler(char *key, void (*func)(char *value))
+void add_header_handler(const char *key, void (*func)(const char *value))
 {
     struct header_handler *new = malloc(sizeof(struct header_handler));
 
@@ -50,7 +50,7 @@ void add_header_handler(char *key, void (*func)(char *value))
     handlers = new;
 }
 
-void process_header(char *key, char *value)
+void process_header(const char *key, const char *value)
 {
     struct header_handler *handler;
 

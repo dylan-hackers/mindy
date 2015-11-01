@@ -62,13 +62,13 @@ MINDY_INLINE static void dump_byte(unsigned byte)
 
 #define dump_op dump_byte
 
-MINDY_INLINE static void dump_bytes(void *ptr, int bytes)
+MINDY_INLINE static void dump_bytes(const void *ptr, int bytes)
 {
     int count;
 
     while (bytes > 0) {
         count = fwrite(ptr, 1, bytes, File);
-        ptr = (char *)ptr + count;
+        ptr = ptr + count;
         bytes -= count;
     }
 }
@@ -117,7 +117,7 @@ static void dump_ref(int handle)
 
 /* Utility dumpers. */
 
-static void dump_string_guts(int short_op, int long_op, char *str, int length)
+static void dump_string_guts(int short_op, int long_op, const char *str, int length)
 {
     if (length < 256) {
         dump_op(short_op);
@@ -156,8 +156,8 @@ static void dump_symbol(struct symbol *symbol)
         dump_ref(symbol->handle);
     else {
         symbol->handle = implicit_store();
-        dump_string_guts(fop_SHORT_SYMBOL, fop_SYMBOL, (char *)symbol->name,
-                         strlen((char *)symbol->name));
+        dump_string_guts(fop_SHORT_SYMBOL, fop_SYMBOL, (const char *)symbol->name,
+                         strlen((const char *)symbol->name));
     }
 }
 
@@ -200,7 +200,7 @@ static void dump_character_literal(struct character_literal *literal)
 
 static void dump_string_literal(struct string_literal *literal)
 {
-    dump_string_guts(fop_SHORT_STRING, fop_STRING, (char *)literal->chars,
+    dump_string_guts(fop_SHORT_STRING, fop_STRING, (const char *)literal->chars,
                      literal->length);
 }
 
@@ -566,7 +566,7 @@ static void dump_defnamespace(struct defnamespace_constituent *c,
 
 /* Interface to the output file dumper */
 
-void dump_setup_output(char *source, FILE *file)
+void dump_setup_output(const char *source, FILE *file)
 {
     struct stat buf;
     time_t tv;

@@ -72,7 +72,7 @@ struct literal *make_unbound_literal(void)
     return res;
 }
 
-struct literal *make_string_literal(char *str)
+struct literal *make_string_literal(const char *str)
 {
     int len = strlen(str);
     struct string_literal *res = malloc(sizeof(struct string_literal)

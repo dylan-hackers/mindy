@@ -641,7 +641,7 @@ extern struct constituent *make_let(struct bindings *bindings);
 extern struct constituent *make_handler(struct expr *type, struct expr *func,
                                         struct plist *plist);
 extern struct constituent *make_local_constituent(struct local_methods *methods);
-extern struct constituent *make_top_level_form(char *debug_name,
+extern struct constituent *make_top_level_form(const char *debug_name,
                                                struct constituent *c);
 extern struct expr *make_varref(struct id *id);
 extern struct expr *make_varset(struct id *var, struct expr *expr);
@@ -796,7 +796,7 @@ extern struct method *set_method_source(struct token *source,
                                         struct method *method);
 extern struct method *set_method_name(struct id *name,
                                       struct method *method);
-extern struct method *make_top_level_method(char *debug_name, struct body *body);
+extern struct method *make_top_level_method(const char *debug_name, struct body *body);
 extern struct method *make_method_description(struct param_list *params,
                                               struct return_type_list *rettypes,
                                               struct body *body);

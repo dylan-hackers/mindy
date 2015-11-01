@@ -34,11 +34,11 @@
 #include "config.h"
 #include "shared/portability.h"
 
-extern char *current_file;
+extern const char *current_file;
 extern bool GiveWarnings;
 
-extern void error(int line, char *msg, ...) MINDY_FORMATLIKE(2, 3);
-extern void warn(int line, char *msg, ...) MINDY_FORMATLIKE(2, 3);
+extern void error(int line, const char *msg, ...) MINDY_FORMATLIKE(2, 3);
+extern void warn(int line, const char *msg, ...) MINDY_FORMATLIKE(2, 3);
 
 extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;

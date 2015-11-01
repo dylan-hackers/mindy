@@ -42,7 +42,7 @@ static struct feature {
     struct feature *next;
 } *Features = NULL;
 
-static char *InitialFeatures[]
+static const char *InitialFeatures[]
   = {"mindy",
 #    ifdef _WIN32
         "compiled-for-x86",
@@ -311,7 +311,7 @@ void remove_feature(struct symbol *sym)
 
 void init_feature(void)
 {
-    char **ptr;
+    const char **ptr;
 
     for (ptr = InitialFeatures; *ptr != NULL; ptr++)
         add_feature(symbol(*ptr));

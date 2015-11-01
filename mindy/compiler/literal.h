@@ -118,7 +118,7 @@ struct literal_list;
 extern struct literal *make_unbound_literal(void);
 extern struct literal *make_true_literal(void);
 extern struct literal *make_false_literal(void);
-extern struct literal *make_string_literal(char *str);
+extern struct literal *make_string_literal(const char *str);
 extern struct literal *make_character_literal(int c);
 extern struct literal *make_integer_literal(long value);
 extern struct literal *make_symbol_literal(struct symbol *sym);

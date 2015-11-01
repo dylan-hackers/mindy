@@ -34,7 +34,7 @@
 #include "mindycomp.h"
 #include "lose.h"
 
-static MINDY_NORETURN void vlose(char *fmt, va_list ap)
+static MINDY_NORETURN void vlose(const char *fmt, va_list ap)
 {
     if (fmt != NULL) {
         vfprintf(stderr, fmt, ap);
@@ -45,7 +45,7 @@ static MINDY_NORETURN void vlose(char *fmt, va_list ap)
     abort();
 }
 
-void lose(char *fmt, ...)
+void lose(const char *fmt, ...)
 {
     va_list ap;
 

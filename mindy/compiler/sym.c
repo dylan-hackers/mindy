@@ -87,18 +87,18 @@ static struct table {
     struct symbol **table;
 } Symbols;
 
-static unsigned hash_name(char *name)
+static unsigned hash_name(const char *name)
 {
-    unsigned char *ptr;
+    const unsigned char *ptr;
     unsigned hash = 0;
 
-    for (ptr = (unsigned char *)name; *ptr; ptr++)
+    for (ptr = (const unsigned char *)name; *ptr; ptr++)
         hash = ((hash<<5)|(hash>>27)) ^ (*ptr & ~('a'^'A'));
 
     return hash;
 }
 
-static bool same_name(char *name1, char *name2)
+static bool same_name(const char *name1, const char *name2)
 {
     char c1, c2;
 
@@ -153,14 +153,14 @@ static void rehash_table(struct table *table)
     table->threshold = (new_length * 3) / 2;
 }
 
-static struct symbol *intern(char *name, struct table *table)
+static struct symbol *intern(const char *name, struct table *table)
 {
     unsigned hash = hash_name(name);
     int index = hash % table->length;
     struct symbol *id;
 
     for (id = table->table[index]; id != NULL; id = id->next)
-        if (id->hash == hash && same_name(name, (char *)id->name))
+        if (id->hash == hash && same_name(name, (const char *)id->name))
             return id;
 
     id = malloc(sizeof(struct symbol) + strlen(name) + 1);
@@ -177,7 +177,7 @@ static struct symbol *intern(char *name, struct table *table)
     return id;
 }
 
-struct symbol *symbol(char *name)
+struct symbol *symbol(const char *name)
 {
     return intern(name, &Symbols);
 }

@@ -281,7 +281,7 @@ struct constituent *make_local_constituent(struct local_methods *methods)
 }
 
 struct constituent
-    *make_top_level_form(char *debug_name, struct constituent *c)
+    *make_top_level_form(const char *debug_name, struct constituent *c)
 {
     struct tlf_constituent *res = malloc(sizeof(struct tlf_constituent));
 
@@ -348,7 +348,7 @@ struct id *dup_id(struct id *id)
 
 struct id *make_id(struct token *token)
 {
-    char *ptr = (char *)token->chars;
+    const char *ptr = (const char *)token->chars;
     struct id *res;
 
     if (*ptr == '\\')
@@ -1817,7 +1817,7 @@ struct method
     return res;
 }
 
-struct method *make_top_level_method(char *debug_name, struct body *body)
+struct method *make_top_level_method(const char *debug_name, struct body *body)
 {
     struct method *res = make_method_description(make_param_list(),NULL,body);
 

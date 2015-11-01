@@ -26,5 +26,5 @@
 \**********************************************************************/
 
 
-void add_header_handler(char *key, void (*func)(char *value));
-void process_header(char *key, char *value);
+void add_header_handler(const char *key, void (*func)(const char *value));
+void process_header(const char *key, const char *value);

@@ -37,7 +37,7 @@
 #include "print.h"
 #include "lose.h"
 
-static char spaces[] = "                                                            ";
+static const char spaces[] = "                                                            ";
 #define indent(x) (spaces+sizeof(spaces)-1-((x)%60))
 
 
@@ -188,7 +188,7 @@ void print_literal(struct literal *literal, int depth)
 
 /* Utility printers. */
 
-static void print_param(struct param *param, int depth, char *kind, int index)
+static void print_param(struct param *param, int depth, const char *kind, int index)
 {
     if (param->type_temp)
         printf("%s%s %d: %s :: %s\n", indent(depth), kind, index,
@@ -280,13 +280,13 @@ static void print_return_type_list(struct return_type_list *l, int depth)
     printf("%send returns\n", indent(depth));
 }
 
-static char *debug_name_string(struct literal *literal)
+static const char *debug_name_string(struct literal *literal)
 {
     switch (literal->kind) {
       case literal_SYMBOL:
-        return (char *)((struct symbol_literal *)literal)->symbol->name;
+        return (const char *)((struct symbol_literal *)literal)->symbol->name;
       case literal_STRING:
-        return (char *)((struct string_literal *)literal)->chars;
+        return (const char *)((struct string_literal *)literal)->chars;
       default:
         return "with strange debug name";
     }
@@ -479,7 +479,7 @@ static void print_for_expr(struct for_expr *e, int depth)
                 printf("%sfrom\n", indent(depth+2));
                 print_expr(c->from, depth+3);
                 if (c->to) {
-                    static char *to_kinds[] = {"to", "above", "below"};
+                    static const char *to_kinds[] = {"to", "above", "below"};
                     printf("%s%s\n", indent(depth+2),
                            to_kinds[(int)c->to_kind]);
                     print_expr(c->to, depth+3);
@@ -648,8 +648,8 @@ static void
 static void
     print_defclass_constituent(struct defclass_constituent *c, int depth)
 {
-    static char *alloc[] = {"instance", "class", "each-subclass",
-                                "constant", "virtual"};
+    static const char *alloc[] = {"instance", "class", "each-subclass",
+                                  "constant", "virtual"};
     struct superclass *super;
     struct slot_spec *slot;
     struct initarg_spec *initarg;

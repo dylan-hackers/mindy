@@ -32,10 +32,10 @@ struct symbol {
     unsigned hash;
     struct symbol *next;
     int handle;
-    unsigned char name[1];
+    const unsigned char name[1];
 };
 
-extern struct symbol *symbol(char *name);
+extern struct symbol *symbol(const char *name);
 extern struct symbol *gensym(void);
 
 extern void init_sym_table(void);
